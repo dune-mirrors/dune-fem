@@ -1,0 +1,17 @@
+# $Id$
+
+# options for gcc/g++
+# remember to run ./autogen.sh after changing these values!
+
+# name of compiler binaries
+COMP="mpicc"
+CXXCOMP="mpicxx"
+
+# flags set in any case
+FLAGS=""
+
+# additional flags for debugging
+DEBUGFLAGS="-g -DDUNE_DEVEL_MODE -D_ALU3DGRID_PARALLEL_"
+
+# additional flags for optimization
+OPTIMFLAGS="-O3 -unroll"

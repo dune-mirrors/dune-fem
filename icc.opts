@@ -1,0 +1,17 @@
+# $Id$
+
+# options for icc
+# remember to run ./autogen.sh after changing these values!
+
+# name of compiler binaries
+COMP="icc"
+CXXCOMP="icc"
+
+# flags set in any case, -wn2 shows only 2 error at once
+FLAGS="-wn2 -DHAVE_ICC -D__interface=myinterface"
+
+# additional flags for debugging
+DEBUGFLAGS="-O0 -g"
+
+# additional flags for optimization
+OPTIMFLAGS="-O3 -Ob2 -unroll"

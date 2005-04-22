@@ -4,4 +4,4 @@
 AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
-SUBDIRS = tester examples visual
+SUBDIRS = tester 

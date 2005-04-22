@@ -11,7 +11,7 @@ AC_INIT(dune-applications, 0.0, dune@hal.iwr.uni-heidelberg.de)
 AM_INIT_AUTOMAKE(dune-applications, 0.0, dune@hal.iwr.uni-heidelberg.de)
 
 # check if we're in the right directory
-AC_CONFIG_SRCDIR([tester/main.cc])
+AC_CONFIG_SRCDIR([tester/gridcheck/gridcheck.cc])
 # which header-file is created
 AM_CONFIG_HEADER(config.h)
 
