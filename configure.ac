@@ -32,8 +32,11 @@ LIBS="$DUNE_LIBS"
 AC_CONFIG_FILES([Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
+                 visual/Makefile
+                 visual/grape/Makefile
+                 visual/grape/gridview/Makefile
+                 visual/grape/datadisp/Makefile
                ])
-
 AC_OUTPUT
 
 # show search results
