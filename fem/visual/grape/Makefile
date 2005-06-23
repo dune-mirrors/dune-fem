@@ -57,14 +57,14 @@ CTAGS = ctags
 DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = ${SHELL} /usr/people/robertk/work/Dune/fvcommon/missing --run aclocal-1.9
-ALBERTA_CPPFLAGS = -DDIM=2 -DDIM_OF_WORLD=2 -I/usr/people/robertk/DuneAdds/modules/alberta-1.2-src/include
-ALBERTA_FALSE = #
-ALBERTA_LDFLAGS = -L/usr/people/robertk/DuneAdds/modules/alberta-1.2-src/lib
-ALBERTA_LIBS = -lALBERTA22_0 -lalberta_util 
-ALBERTA_TRUE = 
-ALL_PKG_CPPFLAGS =   -I/usr/people/robertk/work/Dune/official -I/usr/people/robertk/DuneAdds/modules/GrapeGentoo -pthread -DDIM=2 -DDIM_OF_WORLD=2 -I/usr/people/robertk/DuneAdds/modules/alberta-1.2-src/include -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/serial -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/duneinterface -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/parallel -DUSE_STDARG -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_STDARG_H=1 -DUSE_STDARG=1 -DMALLOC_RET_VOID=1 -DHAVE_MPI_CPP -I/usr/include/mpi2c++ -fexceptions -c -I/usr/include -DMPICH_SKIP_MPICXX
-ALL_PKG_LDFLAGS =    -L/usr/people/robertk/DuneAdds/modules/GrapeGentoo -pthread -L/usr/people/robertk/DuneAdds/modules/alberta-1.2-src/lib -L/usr/people/robertk/DuneAdds/modules/alu3dgrid/lib
-ALL_PKG_LIBS = -lm    -lgr -lGL  -lm -lX11 -lALBERTA22_0 -lalberta_util  -lalu3dgrid
+ALBERTA_CPPFLAGS = 
+ALBERTA_FALSE = 
+ALBERTA_LDFLAGS = 
+ALBERTA_LIBS = 
+ALBERTA_TRUE = #
+ALL_PKG_CPPFLAGS =   -I/usr/people/robertk/work/Dune/official -I/usr/people/robertk/DuneAdds/modules/GrapeGentoo -pthread -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/serial -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/duneinterface -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/parallel -DUSE_STDARG -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_STDARG_H=1 -DUSE_STDARG=1 -DMALLOC_RET_VOID=1 -DHAVE_MPI_CPP -I/usr/include/mpi2c++ -fexceptions -c -I/usr/include -DMPICH_SKIP_MPICXX
+ALL_PKG_LDFLAGS =    -L/usr/people/robertk/DuneAdds/modules/GrapeGentoo -pthread -L/usr/people/robertk/DuneAdds/modules/alu3dgrid/lib
+ALL_PKG_LIBS = -lm    -lgr -lGL  -lm -lX11 -lalu3dgrid
 ALU3DGRID_CPPFLAGS = -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/serial -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/duneinterface -I/usr/people/robertk/DuneAdds/modules/alu3dgrid/include/parallel -DUSE_STDARG -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_STDARG_H=1 -DUSE_STDARG=1 -DMALLOC_RET_VOID=1 -DHAVE_MPI_CPP -I/usr/include/mpi2c++ -fexceptions -c -I/usr/include -DMPICH_SKIP_MPICXX
 ALU3DGRID_FALSE = #
 ALU3DGRID_LDFLAGS = -L/usr/people/robertk/DuneAdds/modules/alu3dgrid/lib
@@ -88,15 +88,15 @@ BLAS_FALSE =
 BLAS_LDFLAGS = 
 BLAS_LIBS = 
 BLAS_TRUE = #
-CC = gcc
+CC = mpicc -cc=gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -Wall -O3 -unroll 
-CPP = gcc -E
+CFLAGS =  -g -DDUNE_DEVEL_MODE -D_ALU3DGRID_PARALLEL_
+CPP = mpicc -cc=gcc -E
 CPPFLAGS = -I/usr/people/robertk/work/Dune/official
-CXX = g++
-CXXCPP = g++ -E
+CXX = mpiCC -CC=g++
+CXXCPP = mpiCC -CC=g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -Wall -O3 -unroll 
+CXXFLAGS =  -g -DDUNE_DEVEL_MODE -D_ALU3DGRID_PARALLEL_
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -161,15 +161,15 @@ PARMETIS_LDFLAGS =
 PARMETIS_LIBS = 
 PARMETIS_TRUE = #
 PATH_SEPARATOR = :
-PROBLEMDIM = 2
-PTHREAD_CC = gcc
+PROBLEMDIM = 3
+PTHREAD_CC = mpicc -cc=gcc
 PTHREAD_CFLAGS = -pthread
 PTHREAD_LIBS = 
 RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = strip
-UG_CPPFLAGS =  -D_2
+UG_CPPFLAGS =  -D_3
 UG_FALSE = 
 UG_LDFLAGS = -L/usr/local/ug/lib
 UG_LIBS = 
@@ -183,7 +183,7 @@ X_EXTRA_LIBS =
 X_LIBS = 
 X_PRE_LIBS =  -lSM -lICE
 ac_ct_AR = ar
-ac_ct_CC = gcc
+ac_ct_CC = mpicc -cc=gcc
 ac_ct_CXX = 
 ac_ct_F77 = g77
 ac_ct_RANLIB = ranlib
