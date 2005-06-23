@@ -33,6 +33,7 @@ AC_CONFIG_FILES([Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
                  tester/gridcheck/unittests/Makefile
+                 tester/forward_facing/src/Makefile
                  visual/Makefile
                  visual/grape/Makefile
                  visual/grape/gridview/Makefile
