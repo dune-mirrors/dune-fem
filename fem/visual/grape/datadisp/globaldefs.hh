@@ -25,11 +25,11 @@ typedef GRIDNAME < DIM , DIM_OF_WORLD , tetra > GR_GridType;
 
 typedef FunctionSpace <double ,double , DIM , 1>  GR_FunctionSpaceType;
 //typedef DofManager<GR_GridType , AdaptiveLeafIndexSet<GR_GridType> > GR_DofManagerType;
-typedef
-DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerType;
+typedef DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerType;
+typedef DofManagerFactory <GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerFactoryType;
 
-typedef GR_GridType :: LeafIndexSetType GR_IndexSetType;
-//typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
+//typedef GR_GridType :: LeafIndexSetType GR_IndexSetType;
+typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
 //typedef AdaptiveLeafIndexSet<GR_GridType> GR_IndexSetType;
 //typedef DofManager<GR_GridType , DefaultGridIndexSet<GR_GridType, LevelIndex > > GR_DofManagerType;
 
