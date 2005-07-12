@@ -14,7 +14,7 @@
 #include <dune/grid/albertagrid.hh>
 #endif
 
-#include "dune/grid/alu3dgrid.hh"
+//#include "dune/grid/alu3dgrid.hh"
 
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/lagrangebase.hh>
@@ -45,7 +45,6 @@ void dunedispErrorExit(const char * msg);
 static GR_DiscFuncSpaceType * globalSpace = 0;
 static GR_IndexSetType * indexSet = 0;
 
-static Stack<GR_DofManagerType *> dmStack;
 static Stack<GR_GridType *> gridStack;
 static Stack<GrapeDispType *> dispStack;
 static Stack<GR_DiscFuncSpaceType *> fsStack;
@@ -138,8 +137,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
     GR_DiscFuncSpaceType * space = 0;
     if(!info[n].fix_mesh)
     {
-      GR_DofManagerType * dm = new GR_DofManagerType (disp->getGrid());
-      dmStack.push(dm);
+      GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
        
       GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
       indexStack.push(iSet);
@@ -153,8 +151,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
       std::cout << "We use the same space because uniform Grids! \n";
       if(!globalSpace) 
       {
-        GR_DofManagerType * dm = new GR_DofManagerType (disp->getGrid());
-        dmStack.push(dm);
+        GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
 
         indexSet = new GR_IndexSetType ( disp->getGrid() );
         globalSpace = new GR_DiscFuncSpaceType ( disp->getGrid() , *indexSet, *dm, disp->getGrid().maxlevel());
@@ -363,7 +360,6 @@ int main(int argc, char **argv)
   displayTimeScene(info,parallel);
  
   deleteObjects(funcStack);
-  deleteObjects(dmStack);
   if(globalSpace) delete globalSpace;
   deleteObjects(fsStack);
   deleteObjects(indexStack);
