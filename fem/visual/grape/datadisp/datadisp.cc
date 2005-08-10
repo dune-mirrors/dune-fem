@@ -14,7 +14,10 @@
 #include <dune/grid/albertagrid.hh>
 #endif
 
-//#include "dune/grid/alu3dgrid.hh"
+#if HAVE_ALUGRID
+#include "dune/grid/alu3dgrid.hh"
+//#include "dune/grid/alu3dgrid/includecc.cc"
+#endif
 
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/lagrangebase.hh>
