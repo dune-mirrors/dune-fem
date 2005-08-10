@@ -14,16 +14,18 @@ typedef double REAL;
 
 //**************************************************************************
 
-#define DEBUG_LEAFINDEXSET
+//#define DEBUG_LEAFINDEXSET
 
-#define GRIDNAME ALU3dGrid
-//#define GRIDNAME AlbertaGrid
-//#define GRIDNAME SGrid
+#if HAVE_ALBERTA
+#define GRIDNAME AlbertaGrid
+typedef GRIDNAME < DIM , DIM_OF_WORLD > GR_GridType; 
+#endif
 
-//typedef GRIDNAME < DIM , DIM_OF_WORLD > GR_GridType; 
-typedef GRIDNAME < DIM , DIM_OF_WORLD , tetra > GR_GridType; 
+#if HAVE_ALUGRID 
+typedef ALU3dGrid < DIM , DIM_OF_WORLD , tetra > GR_GridType; 
+#endif
 
-typedef FunctionSpace <double ,double , DIM , 1>  GR_FunctionSpaceType;
+typedef FunctionSpace <double ,double , DIM , DIM+2 >  GR_FunctionSpaceType;
 //typedef DofManager<GR_GridType , AdaptiveLeafIndexSet<GR_GridType> > GR_DofManagerType;
 typedef DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerType;
 typedef DofManagerFactory <GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerFactoryType;
