@@ -15,8 +15,8 @@
 #endif
 
 #if HAVE_ALUGRID
+#include "dune/grid/alu3dgrid/includecc.cc"
 #include "dune/grid/alu3dgrid.hh"
-//#include "dune/grid/alu3dgrid/includecc.cc"
 #endif
 
 #include <dune/fem/dfadapt.hh>
@@ -39,6 +39,8 @@ using namespace Dune;
 #endif
 
 #include <dune/io/visual/grapedatadisplay.hh>
+#include <dune/io/visual/combinedgrapedisplay.hh>
+
 #include "globaldefs.hh"
 
 static const int char_space = 2;
@@ -63,18 +65,10 @@ void deleteObjects(Stack<T *> & stack);
 void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace, 
      const char * path, const char * filename , double time , int ntime , int proc )
 {
-  char * fn = 0;
-
-  if(path) 
-  {
-    fn = new char [strlen(path) + strlen(filename) + char_space]; assert(fn);
-    sprintf(fn,"%s/%s",path,filename);
-  }
-  else 
-  {
-    fn = new char [strlen(filename) + char_space]; assert(fn);
-    sprintf(fn,"%s",filename);
-  }
+  assert(filename);
+  std::string fn (path);
+  if(path) fn += "/"; 
+  fn += filename;
 
   GR_DiscFuncType *df = new GR_DiscFuncType ( filename, fspace );
   funcStack.push(df);
@@ -91,28 +85,18 @@ GrapeDispType * readGrid(const char * path, const char * filename,
 {
   GR_GridType * grid = new GR_GridType ();
   gridStack.push(grid);
-  
+
   assert(filename);
-  char * fn = 0;
-  if(path)
-  {
-    fn = new char[ strlen(path) + strlen(filename) + char_space];
-    assert(fn);
-    sprintf(fn,"%s/%s",path,filename);
-  }
-  else 
-  {
-    fn = new char[ strlen(filename) + char_space];
-    assert(fn);
-    sprintf(fn,"%s",filename);
-  }
+  std::string fn (path);
+  if(path) fn += "/"; 
+  fn += filename;
   
   std::cout << "Make new Grapedisplay for grid = " << fn << "\n";
   dataIO.readGrid( *grid, fn , time , ntime );
   
   GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
   dispStack.push(disp);
-  if(fn) delete [] fn;
+  
   return disp;
 }
 
@@ -120,14 +104,10 @@ GrapeDispType * readGrid(const char * path, const char * filename,
 void readDofManager(GR_DofManagerType & dm, const char * path, int ntime) 
 {
   // generate dof manager name 
-  int length = 0;
-  if(path) length = strlen(path);
-  char * fn = new char [length + 10];
-  assert(fn);
-  if(path) sprintf(fn,"%s/dm",path);
-  else sprintf(fn,"dm");
-  dm.read(fn,ntime);
-  if(fn) delete [] fn;
+  std::string fn(path); 
+  if(path) fn += "/";
+  fn += "dm"; 
+  dm.read(fn.c_str(),ntime);
 }
 
 // read all data that belong to grid with name info[n].name 
@@ -187,6 +167,8 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
   double t_start = LARGE;
   double t_end = -LARGE, t_act=0.0;
   GrapeDispType *disp = 0;
+  typedef CombinedGrapeDisplay < GrapeDispType > CombinedDisplayType; 
+  CombinedGrapeDisplay < GrapeDispType > * comdisp = new CombinedDisplayType ();
   
   int  ntime, n_step = 0;
   
@@ -207,29 +189,36 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
       for(int proc=0; proc<anzProcs; proc++)
       {
         assert(path || numProcs <= 1); 
-        char * newpath = new char[strlen(path)+5];
-        sprintf(newpath,"%s_%d",path,proc); 
-        if(numProcs <= 1)
+        std::string newpath (path);
+
+        if(numProcs > 1) 
         {
-          sprintf(newpath,"%s",path); 
+          char procstr[128]; 
+          sprintf(procstr,"%d",proc);
+          newpath += "_"; 
+          newpath += procstr; 
         }
       
         GrapeDispType *newdisp = 0;
         int anz = (n > 0) ? n : 1;
         for(int i=0; i<anz; i++)
         {
-          newdisp = readGrid( newpath, info[i].name, t_act , ntime, proc );
+          newdisp = readGrid( newpath.c_str(), info[i].name, t_act , ntime, proc );
           assert(newdisp != 0);
-          info = makeData(newdisp,info,newpath,info[i].name,t_act, n ,ntime,proc);
+          assert( comdisp );
+          info = makeData(newdisp,info,newpath.c_str(),info[i].name,t_act, n ,ntime,proc);
+          comdisp->addDisplay( *newdisp );
         }
-        newdisp->addMyMeshToTimeScene(info[0].tsc,t_act,proc);
-        if(newpath) delete [] newpath;
+        //newdisp->addMyMeshToTimeScene(info[0].tsc,t_act,proc);
+        assert( comdisp );
       }
+      comdisp->addMyMeshToTimeScene(info[0].tsc,t_act,0);
     }
     else
     {
+      assert(false);
       info = makeData(disp,info,path,info[0].name,t_act,n,ntime,numProcs);
-      disp->addMyMeshToTimeScene(info[0].tsc,t_act, -1 );//proc);
+      //disp->addMyMeshToTimeScene(info[0].tsc,t_act, -1 );//proc);
       t_act = f_t_start+ntime*timestep;
     }
     printf("actual time: %f (timestep size: %e)\n\n",t_act,timestep);
