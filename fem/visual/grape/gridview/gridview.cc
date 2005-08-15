@@ -84,6 +84,7 @@ typedef AlbertaGrid<DIM,DIM_OF_WORLD> GridType;
 #define WORLDDIM 3
 
 #include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/alu3dgrid/includecc.cc>
 using namespace Dune;
 typedef ALU3dGrid<DIM,DIM_OF_WORLD,tetra> GridType;
 #endif
@@ -186,18 +187,26 @@ int main (int argc, char **argv)
   GridType grid( argv[1] );
 #endif
   grid.globalRefine (level);
-  
+ 
+  GrapeDataIO< GridType > dataIO;
+  dataIO.writeGrid(grid,ascii,"grid",0.0,0);
   //AmiraMeshWriter< GridType > am;
   //std::string fn (  "forward3d.am" );
   //am.writeGrid ( grid ,fn );
 #endif
 
+
+#if 0
 #if !BRGID
   for(int i=0; i<=grid.maxlevel(); i++)
   {
+    std::cout << "Print size of level " << i << "\n";
     std::cout << grid.size(i,0) << " number of Elements! \n";
+    std::cout << grid.size(i,1) << " number of Faces! \n";
+    std::cout << grid.size(i,2) << " number of Edges! \n";
     std::cout << grid.size(i,DIM) << " number of Points! \n";
   }
+#endif
 #endif
 
   // can be GrapeDisplay or GrapDataDisplay
