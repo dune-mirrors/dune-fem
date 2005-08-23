@@ -7,12 +7,19 @@
 
 #include <dune/common/stdstreams.cc>
 
+#ifdef _ALU3DGRID_PARALLEL_
+#define _PARALLEL_
+#endif
+
 //#include <dune/grid/sgrid.hh>
 
 #define LARGE 1.0E308
+
+/*
 #if HAVE_ALBERTA
 #include <dune/grid/albertagrid.hh>
 #endif
+*/
 
 #if HAVE_ALUGRID
 #include "dune/grid/alu3dgrid/includecc.cc"
@@ -63,18 +70,19 @@ void deleteObjects(Stack<T *> & stack);
 
 // read data from file and generate discrete function 
 void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace, 
-     const char * path, const char * filename , double time , int ntime , int proc )
+     const char * path, const DATAINFO * dinf , double time , int ntime , int proc )
 {
+  const char * filename = dinf->name;
   assert(filename);
   std::string fn (path);
   if(path) fn += "/"; 
   fn += filename;
 
-  GR_DiscFuncType *df = new GR_DiscFuncType ( filename, fspace );
+  GR_DiscFuncType *df = new GR_DiscFuncType ( filename , fspace );
   funcStack.push(df);
   
   dataIO.readData (*df, fn , ntime ) ;
-  disp.addData(*df,filename,time);
+  disp.addData(*df,filename,time,(dinf->vector) ? true : false);
 
   return ;
 }
@@ -83,7 +91,11 @@ void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace,
 GrapeDispType * readGrid(const char * path, const char * filename, 
                          double & time , int ntime, int myRank )
 {
-  GR_GridType * grid = new GR_GridType ();
+  GR_GridType * grid = new GR_GridType (
+#ifdef _ALU3DGRID_PARALLEL_
+  MPI_COMM_WORLD 
+#endif
+      );
   gridStack.push(grid);
 
   assert(filename);
@@ -147,7 +159,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
     DATAINFO * dinf = info[n].datinf;
     while (dinf) 
     {
-      readFuncData ( *disp , *space , path, dinf->name ,time, ntime,proc);
+      readFuncData ( *disp , *space , path, dinf , time, ntime,proc);
       dinf = dinf->next;
     }
   }    
@@ -209,16 +221,17 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
           info = makeData(newdisp,info,newpath.c_str(),info[i].name,t_act, n ,ntime,proc);
           comdisp->addDisplay( *newdisp );
         }
-        //newdisp->addMyMeshToTimeScene(info[0].tsc,t_act,proc);
+        newdisp->addMyMeshToTimeScene(info[0].tsc,t_act,proc);
         assert( comdisp );
       }
-      comdisp->addMyMeshToTimeScene(info[0].tsc,t_act,0);
+
+      // this is the combine object, which is put to the last time scene 
+      comdisp->addMyMeshToGlobalTimeScene(t_act,0);
     }
     else
     {
-      assert(false);
       info = makeData(disp,info,path,info[0].name,t_act,n,ntime,numProcs);
-      //disp->addMyMeshToTimeScene(info[0].tsc,t_act, -1 );//proc);
+      disp->addMyMeshToTimeScene(info[0].tsc,t_act, -1 );
       t_act = f_t_start+ntime*timestep;
     }
     printf("actual time: %f (timestep size: %e)\n\n",t_act,timestep);
@@ -238,6 +251,11 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
 int main(int argc, char **argv)
 {
   int   i, i_start, i_end;
+
+#ifdef _ALU3DGRID_PARALLEL_
+  MPI_Init(&argc,&argv);
+#endif
+  
 
   INFO * info = 0;
   int    n = 0, n_info = 10;
@@ -289,6 +307,21 @@ int main(int argc, char **argv)
       assert(dinf);
       dinf->name = argv[i+1];
       dinf->vector = 0;
+      /* seems wrong order, but grape truns it arround, we can do nothing else here */
+      dinf->next = info[n].datinf; 
+      info[n].datinf = dinf;
+
+      i += 2;
+    }
+    else if (!strcmp(argv[i], "-v"))
+    {
+      if (i+1 == argc)
+        dunedispErrorExit("usage: -v `vectorprefix'\n");
+      
+      DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
+      assert(dinf);
+      dinf->name = argv[i+1];
+      dinf->vector = 1;
       /* seems wrong order, but grape truns it arround, we can do nothing else here */
       dinf->next = info[n].datinf; 
       info[n].datinf = dinf;
@@ -358,6 +391,10 @@ int main(int argc, char **argv)
 
   deleteObjects(dispStack);
   deleteObjects(gridStack);
+
+#ifdef _ALU3DGRID_PARALLEL_
+  MPI_Finalize();
+#endif
 
   return (EXIT_SUCCESS);
 }
