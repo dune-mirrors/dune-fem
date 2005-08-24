@@ -4,31 +4,46 @@
 #include <string.h>
 
 #include <config.h>
-
 #include <dune/common/stdstreams.cc>
 
-#ifdef _ALU3DGRID_PARALLEL_
-#define _PARALLEL_
+using namespace Dune;
+
+#ifndef DIM 
+#define DIM 3
 #endif
+#ifndef DIM_OF_WORLD
+#define DIM_OF_WORLD 3
+#endif
+
+#define AGRID 0 
+#define BGRID 1 
+#define SGRID 0
 
 //#include <dune/grid/sgrid.hh>
 
 #define LARGE 1.0E308
 
-/*
-#if HAVE_ALBERTA
+#if AGRID 
 #include <dune/grid/albertagrid.hh>
-#endif
-*/
 
-#if HAVE_ALUGRID
-#include "dune/grid/alu3dgrid/includecc.cc"
-#include "dune/grid/alu3dgrid.hh"
+static const int dim = DIM; 
+static const int dimworld = DIM_OF_WORLD; 
+
+typedef AlbertaGrid<dim,dimworld> GR_GridType;
+#endif
+
+#if BGRID 
+#include <dune/grid/alu3dgrid/includecc.cc>
+#include <dune/grid/alu3dgrid.hh>
+
+static const int dim = 3; 
+static const int dimworld = 3; 
+
+typedef ALU3dGrid<dim,dimworld,tetra> GR_GridType;
 #endif
 
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/lagrangebase.hh>
-//#include <dune/fem/discfuncarray.hh>
 #include <dune/fem/dfadapt.hh>
 #include <dune/common/stack.hh>
 
@@ -37,233 +52,34 @@
 
 #include <dune/io/file/grapedataio.hh>
 
-using namespace Dune;
 
-#ifndef DIM 
-#define DIM 3 
-#endif
-
-#ifndef DIM_OF_WORLD
-#define DIM_OF_WORLD 3 
-#endif
+typedef double REAL;
 
 #include <dune/io/visual/grapedatadisplay.hh>
 #include <dune/io/visual/combinedgrapedisplay.hh>
-
-#include "globaldefs.hh"
-
-static const int char_space = 2;
-
-void dunedispErrorExit(const char * msg);
-
-static GR_DiscFuncSpaceType * globalSpace = 0;
-static GR_IndexSetType * indexSet = 0;
-
-static Stack<GR_GridType *> gridStack;
-static Stack<GrapeDispType *> dispStack;
-static Stack<GR_DiscFuncSpaceType *> fsStack;
-static Stack<GR_DiscFuncType *> funcStack;
-static Stack<GR_IndexSetType *> indexStack;
-static Stack<GR_GridPartType *> gridPartStack;
-
-static GrapeDataIO < GR_GridType> dataIO;
-
-template <class T> 
-void deleteObjects(Stack<T *> & stack);
-
-// read data from file and generate discrete function 
-void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace, 
-     const char * path, const DATAINFO * dinf , double time , int ntime , int proc )
-{
-  const char * filename = dinf->name;
-  assert(filename);
-  std::string fn (path);
-  if(path) fn += "/"; 
-  fn += filename;
-
-  GR_DiscFuncType *df = new GR_DiscFuncType ( filename , fspace );
-  funcStack.push(df);
-  
-  dataIO.readData (*df, fn , ntime ) ;
-  disp.addData(*df,filename,time,(dinf->vector) ? true : false);
-
-  return ;
-}
-
-// read Grid and create GrapeDataDisplay with Hmesh 
-GrapeDispType * readGrid(const char * path, const char * filename, 
-                         double & time , int ntime, int myRank )
-{
-  GR_GridType * grid = new GR_GridType (
-#ifdef _ALU3DGRID_PARALLEL_
-  MPI_COMM_WORLD 
-#endif
-      );
-  gridStack.push(grid);
-
-  assert(filename);
-  std::string fn (path);
-  if(path) fn += "/"; 
-  fn += filename;
-  
-  std::cout << "Make new Grapedisplay for grid = " << fn << "\n";
-  dataIO.readGrid( *grid, fn , time , ntime );
-  
-  GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
-  dispStack.push(disp);
-  
-  return disp;
-}
-
-// read dof manager from file 
-void readDofManager(GR_DofManagerType & dm, const char * path, int ntime) 
-{
-  // generate dof manager name 
-  std::string fn(path); 
-  if(path) fn += "/";
-  fn += "dm"; 
-  dm.read(fn.c_str(),ntime);
-}
-
-// read all data that belong to grid with name info[n].name 
-INFO *makeData( GrapeDispType * disp, INFO * info , const char * path, 
-    const char * filename, double & time ,int n, int ntime, bool fix_mesh,
-    int proc=0)
-{
-  if(info[n].datinf)
-  {
-    GR_DiscFuncSpaceType * space = 0;
-    if(!info[n].fix_mesh)
-    {
-      GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
-       
-      //GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
-      //indexStack.push(iSet);
-      GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());
-      gridPartStack.push(gridPart);
-      space  = new GR_DiscFuncSpaceType (*gridPart, *dm);
-      readDofManager(*dm,path,ntime); 
-      
-      fsStack.push(space);
-    }
-    else 
-    {
-      std::cout << "We use the same space because uniform Grids! \n";
-      if(!globalSpace) 
-      {
-        GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
-
-        //indexSet = new GR_IndexSetType ( disp->getGrid() );
-        GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());
-        gridPartStack.push(gridPart);
-        globalSpace = new GR_DiscFuncSpaceType (*gridPart, *dm);
-        readDofManager(*dm,path,ntime); 
-      }
-      space = globalSpace;
-    }
-    assert(space != 0);
-
-    DATAINFO * dinf = info[n].datinf;
-    while (dinf) 
-    {
-      readFuncData ( *disp , *space , path, dinf , time, ntime,proc);
-      dinf = dinf->next;
-    }
-  }    
-  else 
-  {
-    std::cout << "***  No Data, displaying only grid! ***\n";
-  }
-  // store mesh and data in timescene tree 
-  return info;
-}
-
-// setup the hole data tree for grape 
-INFO * readData(INFO * info , const char * path, int i_start, int i_end, 
-    int i_delta, int n, double timestep, int numProcs) 
-{
-  double f_t_start = LARGE;
-  double t_start = LARGE;
-  double t_end = -LARGE, t_act=0.0;
-  GrapeDispType *disp = 0;
-  typedef CombinedGrapeDisplay < GrapeDispType > CombinedDisplayType; 
-  CombinedGrapeDisplay < GrapeDispType > * comdisp = new CombinedDisplayType ();
-  
-  int  ntime, n_step = 0;
-  
-  if(info[n].fix_mesh)
-  {
-    disp = readGrid( path, info[0].name, t_act , 0, 0);
-    f_t_start = t_act;
-  }
-
-  for (ntime = i_start; ntime <= i_end; ntime += i_delta)
-  {
-    printf("timestep = %d | last timestep = %d | stepsize = %d\n", ntime, i_end, i_delta);
-    if (!info[n].fix_mesh)
-    {
-      int anzProcs = numProcs;
-      if(numProcs > 1) anzProcs--;
-      
-      for(int proc=0; proc<anzProcs; proc++)
-      {
-        assert(path || numProcs <= 1); 
-        std::string newpath (path);
-
-        if(numProcs > 1) 
-        {
-          char procstr[128]; 
-          sprintf(procstr,"%d",proc);
-          newpath += "_"; 
-          newpath += procstr; 
-        }
-      
-        GrapeDispType *newdisp = 0;
-        int anz = (n > 0) ? n : 1;
-        for(int i=0; i<anz; i++)
-        {
-          newdisp = readGrid( newpath.c_str(), info[i].name, t_act , ntime, proc );
-          assert(newdisp != 0);
-          assert( comdisp );
-          info = makeData(newdisp,info,newpath.c_str(),info[i].name,t_act, n ,ntime,proc);
-          comdisp->addDisplay( *newdisp );
-        }
-        newdisp->addMyMeshToTimeScene(info[0].tsc,t_act,proc);
-        assert( comdisp );
-      }
-
-      // this is the combine object, which is put to the last time scene 
-      comdisp->addMyMeshToGlobalTimeScene(t_act,0);
-    }
-    else
-    {
-      info = makeData(disp,info,path,info[0].name,t_act,n,ntime,numProcs);
-      disp->addMyMeshToTimeScene(info[0].tsc,t_act, -1 );
-      t_act = f_t_start+ntime*timestep;
-    }
-    printf("actual time: %f (timestep size: %e)\n\n",t_act,timestep);
-
-    if (ntime == i_start) t_start = t_end = t_act;
-    t_start = std::min(t_start, t_act);
-    t_end = std::max(t_end, t_act);
-
-    if (timestep > 0) t_act += timestep*i_delta;
-    n_step++;
-  }
-  return info;
-}
-
 #include "printhelp.cc"
+
+typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
+typedef DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerType;
+typedef DofManagerFactory <GR_DofManagerType> GR_DofManagerFactoryType;
+
+//typedef GR_GridType :: LeafIndexSetType GR_IndexSetType;
+//typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
+//typedef AdaptiveLeafIndexSet<GR_GridType> GR_IndexSetType;
+
+typedef LeafGridPart<GR_GridType> GR_GridPartType;
+typedef GR_GridPartType::IndexSetType GR_IndexSetType;
+
+typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,GR_GridPartType,0, GR_DofManagerType> GR_DiscFuncSpaceType;
+
+typedef DFAdapt < GR_DiscFuncSpaceType > GR_DiscFuncType;
+typedef GrapeDataDisplay<GR_GridType , GR_DiscFuncType > GrapeDispType;
+
+#include "readdata.cc"
 
 int main(int argc, char **argv)
 {
   int   i, i_start, i_end;
-
-#ifdef _ALU3DGRID_PARALLEL_
-  MPI_Init(&argc,&argv);
-#endif
-  
-
   INFO * info = 0;
   int    n = 0, n_info = 10;
 
@@ -287,7 +103,6 @@ int main(int argc, char **argv)
     return(0);
   }
 
-
   i_start = atoi(argv[1]);
   i_end = atoi(argv[2]);
 
@@ -301,14 +116,14 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[i], "-i"))
     {
       if (i+1 == argc)
-        dunedispErrorExit("usage: -i `increment'\n");
+        dataDispErrorExit("usage: -i `increment'\n");
       i_delta = atoi(argv[i+1]);
       i += 2;
     }
     else if (!strcmp(argv[i], "-s"))
     {
       if (i+1 == argc)
-        dunedispErrorExit("usage: -s `dataprefix'\n");
+        dataDispErrorExit("usage: -s `dataprefix'\n");
       
       DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
       assert(dinf);
@@ -323,7 +138,7 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[i], "-v"))
     {
       if (i+1 == argc)
-        dunedispErrorExit("usage: -v `vectorprefix'\n");
+        dataDispErrorExit("usage: -v `vectorprefix'\n");
       
       DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
       assert(dinf);
@@ -338,14 +153,14 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[i], "-t"))
     {
       if (i+1 == argc)
-        dunedispErrorExit("usage: -t `time step size'\n");
+        dataDispErrorExit("usage: -t `time step size'\n");
       timestep = atof(argv[i+1]);
       i += 2;
     }
     else if (!strcmp(argv[i], "-m"))
     {
       if (i+1 == argc)
-        dunedispErrorExit("usage: -m `gridprefix'\n");
+        dataDispErrorExit("usage: -m `gridprefix'\n");
       assert(n < n_info);
       info[n].name = argv[i+1];
       info[n].datinf = 0;
@@ -366,20 +181,20 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[i], "-pg"))
     {
       if (i+1 == argc)
-        dunedispErrorExit("usage: -pg `number of procs'\n");
+        dataDispErrorExit("usage: -pg `number of procs'\n");
       parallel += atoi(argv[i+1]);
       i += 2;
     }
     else if (!strcmp(argv[i], "-p"))
     {
       if (i+1 == argc)
-        dunedispErrorExit("usage: -p `path'\n");
+        dataDispErrorExit("usage: -p `path'\n");
       path = argv[i+1];
       i += 2;
     }
     else
     {
-      fprintf(stderr,"unknow option %s\n", argv[i]);
+      std::cerr << "unknown option " << argv[i] << std::endl;
       exit(1);
     }
     printf("i = %d, argc = %d\n", i, argc);
@@ -390,37 +205,7 @@ int main(int argc, char **argv)
   
   // run grape 
   displayTimeScene(info,parallel);
- 
-  deleteObjects(funcStack);
-  if(globalSpace) delete globalSpace;
-  deleteObjects(fsStack);
-  deleteObjects(indexStack);
-  deleteObjects(gridPartStack);
-  deleteObjects(dispStack);
-  deleteObjects(gridStack);
 
-#ifdef _ALU3DGRID_PARALLEL_
-  MPI_Finalize();
-#endif
-
+  deleteAllObjects();
   return (EXIT_SUCCESS);
 }
-
-template <class T> 
-void deleteObjects(Stack<T *> & stack) 
-{
-  while(! stack.empty() )
-  {
-    T * obj = stack.pop();
-    delete obj;
-  }
-  return;
-}
- 
-void dunedispErrorExit(const char * msg) 
-{
-  std::cerr << msg << std::endl; 
-  std::cerr.flush();
-  exit(EXIT_FAILURE);
-}
-
