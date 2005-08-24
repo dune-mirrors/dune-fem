@@ -28,10 +28,12 @@
 
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/lagrangebase.hh>
-#include <dune/fem/discfuncarray.hh>
+//#include <dune/fem/discfuncarray.hh>
+#include <dune/fem/dfadapt.hh>
 #include <dune/common/stack.hh>
 
 #include <dune/grid/common/leafindexset.hh>
+#include <dune/grid/common/gridpart.hh>
 
 #include <dune/io/file/grapedataio.hh>
 
@@ -62,6 +64,7 @@ static Stack<GrapeDispType *> dispStack;
 static Stack<GR_DiscFuncSpaceType *> fsStack;
 static Stack<GR_DiscFuncType *> funcStack;
 static Stack<GR_IndexSetType *> indexStack;
+static Stack<GR_GridPartType *> gridPartStack;
 
 static GrapeDataIO < GR_GridType> dataIO;
 
@@ -134,9 +137,11 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
     {
       GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
        
-      GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
-      indexStack.push(iSet);
-      space  = new GR_DiscFuncSpaceType ( disp->getGrid() , *iSet, *dm, disp->getGrid().maxlevel() );
+      //GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
+      //indexStack.push(iSet);
+      GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());
+      gridPartStack.push(gridPart);
+      space  = new GR_DiscFuncSpaceType (*gridPart, *dm);
       readDofManager(*dm,path,ntime); 
       
       fsStack.push(space);
@@ -148,8 +153,10 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
       {
         GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
 
-        indexSet = new GR_IndexSetType ( disp->getGrid() );
-        globalSpace = new GR_DiscFuncSpaceType ( disp->getGrid() , *indexSet, *dm, disp->getGrid().maxlevel());
+        //indexSet = new GR_IndexSetType ( disp->getGrid() );
+        GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());
+        gridPartStack.push(gridPart);
+        globalSpace = new GR_DiscFuncSpaceType (*gridPart, *dm);
         readDofManager(*dm,path,ntime); 
       }
       space = globalSpace;
@@ -388,7 +395,7 @@ int main(int argc, char **argv)
   if(globalSpace) delete globalSpace;
   deleteObjects(fsStack);
   deleteObjects(indexStack);
-
+  deleteObjects(gridPartStack);
   deleteObjects(dispStack);
   deleteObjects(gridStack);
 
