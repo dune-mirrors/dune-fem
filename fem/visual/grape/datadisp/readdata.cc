@@ -3,14 +3,14 @@
 
 #define LARGE 1.0E308
 
-void dataDispErrorExit(const char * msg);
+void dataDispErrorExit(std::string msg);
 
 static GR_DiscFuncSpaceType * globalSpace = 0;
 
 static Stack<GR_GridType *> gridStack;
 static Stack<GrapeDispType *> dispStack;
 static Stack<GR_DiscFuncSpaceType *> fsStack;
-static Stack<GR_DiscFuncType *> funcStack;
+static std::list <GR_DiscFuncType *> funcStack;
 static Stack<GR_IndexSetType *> indexStack;
 static Stack<GR_GridPartType *> gridPartStack;
 
@@ -21,19 +21,33 @@ void deleteObjects(Stack<T *> & stack);
 
 // read data from file and generate discrete function 
 void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace, 
-     const char * path, const DATAINFO * dinf , double time , int ntime , int proc )
+     const char * path, const DATAINFO * dinf, double time , int ntime )
 {
-  const char * filename = dinf->name;
-  assert(filename);
+  const char * name = dinf->base_name;
+  assert(name);
+
+  std::string fakename ( name );
+
+  typedef std::list <GR_DiscFuncType *> :: iterator ListIterator; 
+  for(ListIterator it = funcStack.begin(); it != funcStack.end(); ++it)
+  {
+    std::string tmpname ( (*it)->name() );
+    if(fakename == tmpname) 
+    {
+      GR_DiscFuncType * df = (*it);
+      disp.addData(*df,dinf,time); 
+      return ;
+    }
+  }
+
   std::string fn (path);
   if(path) fn += "/"; 
-  fn += filename;
+  fn += name;
 
-  GR_DiscFuncType *df = new GR_DiscFuncType ( filename , fspace );
-  funcStack.push(df);
-  
+  GR_DiscFuncType *df = new GR_DiscFuncType (name , fspace );
+  funcStack.insert(funcStack.begin(),df);
   dataIO.readData (*df, fn , ntime ) ;
-  disp.addData(*df,filename,time,(dinf->vector) ? true : false);
+  disp.addData(*df,dinf,time);
 
   return ;
 }
@@ -114,7 +128,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
     DATAINFO * dinf = info[n].datinf;
     while (dinf) 
     {
-      readFuncData ( *disp , *space , path, dinf , time, ntime,proc);
+      readFuncData( *disp , *space , path, dinf , time, ntime);
       dinf = dinf->next;
     }
   }    
@@ -212,7 +226,7 @@ void deleteObjects(Stack<T *> & stack)
   return;
 }
  
-void dataDispErrorExit(const char * msg) 
+void dataDispErrorExit(std::string msg) 
 {
   std::cerr << msg << std::endl; 
   std::cerr.flush();
@@ -221,7 +235,7 @@ void dataDispErrorExit(const char * msg)
 
 void deleteAllObjects() 
 {
-  deleteObjects(funcStack);
+  //deleteObjects(funcStack);
   if(globalSpace) delete globalSpace;
   deleteObjects(fsStack);
   deleteObjects(indexStack);

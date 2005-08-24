@@ -5,7 +5,6 @@ if GRAPE
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 
-noinst_PROGRAMS = datadisp paramdisp
+noinst_PROGRAMS = datadisp
 datadisp_SOURCES = datadisp.cc 
-paramdisp_SOURCES = paramdisp.cc 
 endif
