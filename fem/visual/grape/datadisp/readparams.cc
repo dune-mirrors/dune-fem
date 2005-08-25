@@ -52,11 +52,11 @@ int readParameterList (int argc, char **argv)
       DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
       assert(dinf);
       dinf->name = argv[i+1];
-      dinf->base_name = argv[i+1];
-      dinf->dimVal = 1;
-      /* seems wrong order, but grape truns it arround, we can do nothing else here */
-      dinf->comp = new int [1];
-      dinf->comp[0] = 0;
+      dinf->base_name = argv[i+1]; 
+
+      dinf->comp = 0;
+      dinf->dimVal = 0;
+
       dinf->next = info[n].datinf; 
       info[n].datinf = dinf;
 
@@ -71,9 +71,10 @@ int readParameterList (int argc, char **argv)
       assert(dinf);
       dinf->name = argv[i+1];
       dinf->base_name = argv[i+1];
-      dinf->dimVal = dim; 
-      dinf->comp = new int [dim];
-      for(int k=0; k<dim; k++) dinf->comp[k] = k;
+
+      dinf->comp = 0;
+      dinf->dimVal = 0;
+
       /* seems wrong order, but grape truns it arround, we can do nothing else here */
       dinf->next = info[n].datinf; 
       info[n].datinf = dinf;
@@ -128,6 +129,19 @@ int readParameterList (int argc, char **argv)
       exit(1);
     }
     printf("i = %d, argc = %d\n", i, argc);
+  }
+
+  for(int k=0; k<n+1; k++) 
+  {
+    DATAINFO * dinf = info[k].datinf; 
+    assert(dinf); 
+    while ( dinf ) 
+    {
+      if(!path) path = "./";
+      readDataInfo(path,dinf);
+      assert(dinf->comp);
+      dinf = dinf->next;
+    }
   }
 
   timeSceneInit(info, n , parallel , time_bar);

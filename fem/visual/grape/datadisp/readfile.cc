@@ -37,7 +37,6 @@ int readParameterFile (int argc, char **argv)
   readParameter(filename,"GridPrefix",dummy);
   std::string gridpref (dummy);
   std::vector < std::string > datapref(100); 
-  std::vector < std::string > basepref(100); 
   int count = 0;
   {
     bool success = readParameter(filename,"DataPrefix_0",dummy);
@@ -81,43 +80,12 @@ int readParameterFile (int argc, char **argv)
     std::string dataname(path); 
     dataname += "/"; dataname += datapref[i];
     dinf->name = datapref[i].c_str();
-
-    int fakedata;
-    bool fake = readParameter(dataname,"Fake_data",fakedata);
-    if(!fake) 
-    {
-      dinf->base_name = datapref[i].c_str();
-      dinf->dimVal = 1; 
-      dinf->comp = new int [1];
-      dinf->comp[0] = 0;
-    }
-    else 
-    {
-      readParameter(dataname,"DataBase",dummy);
-      basepref[i] += dummy;
-      dinf->base_name = basepref[i].c_str();
-            
-      int dimrange; 
-      readParameter(dataname,"Dim_Range",dimrange);
-      if(dimrange <= 0) dataDispErrorExit("wrong dimrange");
-
-      int dimVal = 1; 
-      readParameter(dataname,"DimVal",dimVal);
-      if((dimVal <= 0) || (dimVal > dimrange)) dataDispErrorExit("wrong DimVal");
-      dinf->dimVal = dimVal;
-
-      int * comp = new int [dimVal];
-      for(int k=0; k<dimVal; k++) 
-      {
-        sprintf(dummy,"%d",k); 
-        std::string compkey ("comp_");
-        compkey += dummy;
-        bool couldread = readParameter(dataname,compkey.c_str(),comp[k]);
-        if(!couldread) dataDispErrorExit("wrong " + compkey);
-      }
-      dinf->comp = comp;
-    }
+    dinf->comp = 0;
+    dinf->dimVal = 0;
     
+    readDataInfo(path,dinf);
+    assert(dinf->comp);
+
     /* seems wrong order, but grape truns it arround, we can do nothing else here */
     dinf->next = info[n].datinf; 
     info[n].datinf = dinf;

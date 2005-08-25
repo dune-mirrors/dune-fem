@@ -3,6 +3,8 @@
 
 #define LARGE 1.0E308
 
+#include <dune/io/file/asciiparser.hh>
+
 void dataDispErrorExit(std::string msg);
 
 static GR_DiscFuncSpaceType * globalSpace = 0;
@@ -242,6 +244,51 @@ void deleteAllObjects()
   deleteObjects(gridPartStack);
   deleteObjects(dispStack);
   deleteObjects(gridStack);
+  return ;
+}
+
+void readDataInfo(std::string path, DATAINFO * dinf) 
+{
+  std::cout << "Reading data base for " << dinf->name << "! \n";
+  std::string dataname(path);
+  dataname += "/"; dataname += dinf->name;
+
+  int fakedata = 1;
+  bool fake = readParameter(dataname,"Fake_data",fakedata);
+  if((!fake) || (!fakedata) )
+  {
+    dinf->base_name = dinf->name; 
+    dinf->dimVal = 1;
+    dinf->comp = new int [1];
+    dinf->comp[0] = 0;
+  }
+  else
+  {
+    char dummy[2048];
+    readParameter(dataname,"DataBase",dummy);
+    std::string * basename = new std::string (dummy);
+    dinf->base_name = basename->c_str();
+
+    int dimrange;
+    readParameter(dataname,"Dim_Range",dimrange);
+    if(dimrange <= 0) dataDispErrorExit("wrong dimrange");
+
+    int dimVal = 1;
+    readParameter(dataname,"DimVal",dimVal);
+    if((dimVal <= 0) || (dimVal > dimrange)) dataDispErrorExit("wrong DimVal");
+    dinf->dimVal = dimVal;
+
+    int * comp = new int [dimVal];
+    for(int k=0; k<dimVal; k++)
+    {
+      sprintf(dummy,"%d",k);
+      std::string compkey ("comp_");
+      compkey += dummy;
+      bool couldread = readParameter(dataname,compkey.c_str(),comp[k]);
+      if(!couldread) dataDispErrorExit("wrong " + compkey);
+    }
+    dinf->comp = comp;
+  }
   return ;
 }
 
