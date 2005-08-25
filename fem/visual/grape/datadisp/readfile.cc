@@ -29,10 +29,12 @@ int readParameterFile (int argc, char **argv)
   readParameter(filename,"StartStep",i_start);
   readParameter(filename,"EndStep",i_end);
   readParameter(filename,"SkipStep",i_delta);
-  readParameter(filename,"Processors",parallel);
-  
+  bool procs = readParameter(filename,"Processors",parallel);
   // proc + 1 
   parallel++ ;
+  
+  if(!procs) 
+    parallel = 0;
   
   readParameter(filename,"GridPrefix",dummy);
   std::string gridpref (dummy);
@@ -83,7 +85,7 @@ int readParameterFile (int argc, char **argv)
     dinf->comp = 0;
     dinf->dimVal = 0;
     
-    readDataInfo(path,dinf);
+    readDataInfo(path,dinf, (parallel > 0));
     assert(dinf->comp);
 
     /* seems wrong order, but grape truns it arround, we can do nothing else here */

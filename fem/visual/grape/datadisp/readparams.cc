@@ -11,6 +11,7 @@ int readParameterList (int argc, char **argv)
   const  char *path = 0;
   bool   time_bar = false;
   int    parallel = 1;
+  bool   paravis = false;
   
   REAL   timestep = 1.0e-3;
 
@@ -115,6 +116,7 @@ int readParameterList (int argc, char **argv)
         dataDispErrorExit("usage: -pg `number of procs'\n");
       parallel += atoi(argv[i+1]);
       i += 2;
+      paravis = true;
     }
     else if (!strcmp(argv[i], "-p"))
     {
@@ -138,7 +140,7 @@ int readParameterList (int argc, char **argv)
     while ( dinf ) 
     {
       if(!path) path = "./";
-      readDataInfo(path,dinf);
+      readDataInfo(path,dinf,paravis);
       assert(dinf->comp);
       dinf = dinf->next;
     }

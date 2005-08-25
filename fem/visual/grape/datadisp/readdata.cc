@@ -247,10 +247,14 @@ void deleteAllObjects()
   return ;
 }
 
-void readDataInfo(std::string path, DATAINFO * dinf) 
+void readDataInfo(std::string path, DATAINFO * dinf, bool parallel = false) 
 {
+  char dummy[2048];
   std::cout << "Reading data base for " << dinf->name << "! \n";
-  std::string dataname(path);
+  std::string dataname(path); 
+  if(!parallel) sprintf(dummy,"_-1");
+  else sprintf(dummy,"_0"); 
+  dataname += dummy;
   dataname += "/"; dataname += dinf->name;
 
   int fakedata = 1;
@@ -264,7 +268,6 @@ void readDataInfo(std::string path, DATAINFO * dinf)
   }
   else
   {
-    char dummy[2048];
     readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     dinf->base_name = basename->c_str();
