@@ -83,24 +83,78 @@ typedef AlbertaGrid<DIM,DIM_OF_WORLD> GridType;
 #define PROBLEMDIM 3
 #define WORLDDIM 3
 
-#include <dune/grid/alu3dgrid.hh>
 #include <dune/grid/alu3dgrid/includecc.cc>
+#include <dune/grid/alu3dgrid.hh>
 using namespace Dune;
 typedef ALU3dGrid<DIM,DIM_OF_WORLD,tetra> GridType;
 #endif
 
+#include <dune/quadrature/barycenter.hh>
 #include <dune/fem/discfuncarray.hh>
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/lagrangebase.hh>
+#include <dune/grid/common/gridpart.hh>
 
+#if AGRID 
+typedef FunctionSpace < double , double, DIM , DIM > FuncSpace;
+#else 
 typedef FunctionSpace < double , double, DIM , 1 > FuncSpace;
+#endif
 typedef DefaultGridIndexSet < GridType , GlobalIndex > IndexSetType;
-typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridType, IndexSetType , 0 > FuncSpaceType ;
+typedef LeafGridPart < GridType > GridPartType; 
+typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType, 0 > FuncSpaceType ;
 typedef DiscFuncArray < FuncSpaceType > DiscFuncType;
 typedef DFAdapt < FuncSpaceType > DFType;
 
 #include <dune/io/visual/grapedatadisplay.hh>
 #include <dune/common/stdstreams.cc>
+
+//! velocity of the transport problem
+template <class FieldVectorType> 
+void rotatingPulse(const FieldVectorType &x, FieldVectorType & velo)
+{
+  assert(velo.dim() >= 2);
+  // rotating pulse 
+  velo[0] = -4.0*x[1];
+  velo[1] =  4.0*x[0];
+  if(velo.dim() > 2) velo[2] = x[2];
+  return;
+}
+
+
+template <class GridType, class DiscFuncType> 
+void setFunc (GridType & grid, DiscFuncType & df )
+{
+  typedef typename GridType :: template Codim<0> :: LeafIterator LeafIterator;
+  typedef typename DiscFuncType :: LocalFunctionType LFType;
+
+  typedef BaryCenterQuad < 
+      typename DiscFuncType :: RangeFieldType ,
+      typename DiscFuncType::DomainType, 0 > QuadratureType;
+  LeafIterator endit = grid.template leafend<0>();
+  LeafIterator it = grid.template leafbegin<0> (); 
+
+  if( it == endit ) 
+  {
+    std::cerr << "ERROR, empty grid! \n";
+    abort();
+  }
+  
+  QuadratureType quad( *it );
+  
+  LFType lf = df.newLocalFunction ();
+  
+  for( ; it != endit; ++it)
+  {
+    FieldVector<double,DIM> velo;
+    FieldVector<double,DIM> bary = it->geometry().global( quad.point(0)); 
+    df.localFunction(*it,lf); 
+    rotatingPulse(bary,velo);
+    for(int i=0; i<lf.numberOfDofs(); i++) 
+      lf[i] = velo[i];
+  }
+}
+
 
 int main (int argc, char **argv)
 {
@@ -164,10 +218,7 @@ int main (int argc, char **argv)
 
   GridType grid( argv[1] );
   grid.globalRefine (level);
-  
-  //AmiraMeshWriter< GridType > am;
-  //std::string fn (  "bucklev" );
-  //am.writeGrid ( grid ,fn );
+
 #endif
 
 #if BGRID
@@ -179,7 +230,6 @@ int main (int argc, char **argv)
   int level = 0;
   if(argc == 3)
     level = atoi(argv[2]);
-  
  
 #ifdef _ALU3DGRID_PARALLEL_
   GridType grid( argv[1], MPI_COMM_WORLD );
@@ -189,45 +239,27 @@ int main (int argc, char **argv)
   grid.globalRefine (level);
  
   GrapeDataIO< GridType > dataIO;
-  dataIO.writeGrid(grid,ascii,"grid",0.0,0);
+  dataIO.writeGrid(grid,xdr,"grid",0.0,0);
   //AmiraMeshWriter< GridType > am;
   //std::string fn (  "forward3d.am" );
   //am.writeGrid ( grid ,fn );
 #endif
 
-
-#if 0
-#if !BRGID
-  for(int i=0; i<=grid.maxlevel(); i++)
-  {
-    std::cout << "Print size of level " << i << "\n";
-    std::cout << grid.size(i,0) << " number of Elements! \n";
-    std::cout << grid.size(i,1) << " number of Faces! \n";
-    std::cout << grid.size(i,2) << " number of Edges! \n";
-    std::cout << grid.size(i,DIM) << " number of Points! \n";
-  }
-#endif
-#endif
-
-  // can be GrapeDisplay or GrapDataDisplay
-  GrapeGridDisplay < GridType > grape(grid,-1);
-  grape.display();
-
-  /*
   {
     GrapeDataDisplay < GridType , DFType > grape(grid,-1);
     typedef DofManager< GridType > DofManagerType;
-    DofManagerType dm ( grid );
- 
+    typedef DofManagerFactory < DofManagerType> DofManagerFactoryType; 
+
+    DofManagerType & dm = DofManagerFactoryType :: getDofManager( grid );
     IndexSetType iset ( grid );
-    FuncSpaceType  linFuncSpace ( grid , iset , dm , grid.maxlevel() ); 
-    DiscFuncType df ( linFuncSpace );
-    DFType df2 ( linFuncSpace );
-    df.set(1.0);
-    df2.set(0.5);
-    grape.dataDisplay(df2);
+    
+    LeafGridPart < GridType > gpart ( grid );
+    FuncSpaceType  space( gpart , dm ); 
+    
+    DFType df ( space );
+    setFunc(grid,df);
+    grape.dataDisplay(df,true);
   }
-  */
 
 #if YGRID 
   MPI_Finalize();
