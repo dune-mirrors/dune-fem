@@ -64,10 +64,10 @@ typedef DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::O
 typedef DofManagerFactory <GR_DofManagerType> GR_DofManagerFactoryType;
 
 //typedef GR_GridType :: LeafIndexSetType GR_IndexSetType;
-//typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
+typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
 //typedef AdaptiveLeafIndexSet<GR_GridType> GR_IndexSetType;
 
-typedef LeafGridPart<GR_GridType> GR_GridPartType;
+typedef DefaultGridPart<GR_GridType,GR_IndexSetType> GR_GridPartType;
 typedef GR_GridPartType::IndexSetType GR_IndexSetType;
 
 typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,GR_GridPartType,0, GR_DofManagerType> GR_DiscFuncSpaceType;

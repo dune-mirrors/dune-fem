@@ -101,9 +101,10 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
     {
       GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
        
-      //GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
-      //indexStack.push(iSet);
-      GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());
+      GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
+      indexStack.push(iSet);
+      
+      GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid(),*iSet);
       gridPartStack.push(gridPart);
       space  = new GR_DiscFuncSpaceType (*gridPart, *dm);
       readDofManager(*dm,path,ntime); 
@@ -117,8 +118,11 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
       {
         GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
 
-        //indexSet = new GR_IndexSetType ( disp->getGrid() );
-        GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());
+        GR_IndexSetType * indexSet = new GR_IndexSetType ( disp->getGrid() );
+        indexStack.push(indexSet);
+         
+        GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid(),
+            *indexSet);
         gridPartStack.push(gridPart);
         globalSpace = new GR_DiscFuncSpaceType (*gridPart, *dm);
         readDofManager(*dm,path,ntime); 
