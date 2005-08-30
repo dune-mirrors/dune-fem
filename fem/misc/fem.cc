@@ -1,7 +1,7 @@
 #ifndef __DUNE_FEM_CC__
 #define __DUNE_FEM_CC__
 
-#include "../interpolation_tester/gausspoints.hh"
+#include "gausspoints.hh"
 
 #include <dune/fem/feoperator.hh>
 #include <dune/fem/feop/spmatrix.hh>
