@@ -21,17 +21,72 @@ class L2Projection
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
   typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
   typedef typename FunctionSpaceType::GridType GridType;
-  typedef typename FunctionSpaceType::Range Range;
-  typedef typename GridType::template codim<0>::LevelIterator LevelIterator;
+  typedef typename FunctionSpaceType::RangeType Range;
+  typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
 
 public:
+  //! a small helper for project lagrange
+template <class FunctionType>
+  void assignLagrange(FunctionType& f, 
+                      LocalFunctionType& lf, 
+                      LevelIterator& it,
+                      int polOrd, Int2Type<2>) {
+    GaussPoints gausspts;
+    std::vector<double> gp;
+
+    for (int i = 0; i < polOrd; ++i) {
+      gp.push_back(gausspts.point(polOrd, i));
+    }
+
+    for (int l = 0; l < polOrd*polOrd; ++l) {  
+      const int i = l%polOrd;
+      const int j = l/polOrd;
+      
+      FieldVector<double, 2> local;
+      local[0] = gp[i];
+      local[1] = gp[j];
+      
+      lf[l] = f(it->geometry().global(local));
+    }
+  }
+  
+  template <class FunctionType>
+  void assignLagrange(FunctionType& f,
+                      LocalFunctionType& lf, 
+                      LevelIterator& it,
+                      int polOrd, Int2Type<3>) {
+    GaussPoints gausspts;
+    std::vector<double> gp;
+    
+    for (int i = 0; i < polOrd; ++i) {
+      gp.push_back(gausspts.point(polOrd, i));
+    }
+
+    for (int l = 0; l < polOrd*polOrd*polOrd; ++l) {
+      const int i = l%polOrd;
+      const int j = (l/polOrd)%polOrd;
+      const int k = l/(polOrd*polOrd);
+      
+      FieldVector<double, 3> local;
+      local[0] = gp[i];
+      local[1] = gp[j];
+      local[2] = gp[k];
+      
+      lf[l] = f(it->geometry().global(local));
+    }
+  }
+  
+
   //! A simple projection for the lagrange test case
   template <class FunctionType>
   void projectLagrange(FunctionType& f,
                        DiscreteFunctionType& df,
                        int level) {
     enum { dimRange = FunctionSpaceType::DimRange };
+    enum { dimDomain = FunctionSpaceType::DimDomain };
     assert(dimRange == 1);
+  
+    const int polOrd = FunctionSpaceType::PolOrd;
 
     df.clear();
     const GridType& grid = df.getFunctionSpace().getGrid();
@@ -40,41 +95,24 @@ public:
     LocalFunctionType lf = df.newLocalFunction();
     Range res;
     Range phi;
-    GaussPoints gausspts;
-    std::vector<double> gp;
 
-    for (int i = 0; i < polOrd; ++i) {
-      gp.push_back(0.5*(gausspts.point(polOrd, i)+1.0));
-    }
-
-    LevelIterator endit = grid.template lend<0>(level);
-    for (LevelIterator it = grid.template lbegin<0>(level); it != endit; ++it){
+    LevelIterator endit = grid.template lend<0>(grid.maxlevel());
+    for (LevelIterator it = grid.template lbegin<0>(grid.maxlevel()); it != endit; ++it){
       df.localFunction(*it, lf);
 
-      for (int l = 0; l < polOrd*polOrd*polOrd; ++l) {
-        const int i = l%polOrd;
-        const int j = (l/polOrd)%polOrd;
-        const int k = l/(polOrd*polOrd);
-
-        FieldVector<double, 3> local;
-        local[0] = gp[i];
-        local[1] = gp[j];
-        local[2] = gp[k];
-
-        lf[l] = f(it->geometry().global(local));
-      }
+      assignLagrange(f, lf, it, polOrd, Int2Type<dimDomain>() );
     }
   }
 
   //! An optimized L2 projection for orthonormal DG base functions
   template <int polOrd, class FunctionType>
-  void projectDG(FunctionType& f,
+  void projectDG(const FunctionType& f,
                  DiscreteFunctionType& df,
                  int level) {
     //- Local typedefs
     typedef FixedOrderQuad<
-      typename FunctionSpaceType::RangeField,
-      typename FunctionSpaceType::Domain, 
+      typename FunctionSpaceType::RangeFieldType,
+      typename FunctionSpaceType::DomainType, 
       polOrd> QuadType;
 
     enum { dimRange = FunctionSpaceType::DimRange };
@@ -109,7 +147,7 @@ public:
           norm += ds*quad.weight(l)*phi[0]*phi[0];
         } // end quadrature loop
 
-          lf[i] = sum/norm;
+        lf[i] = sum/norm;
       /*
       for (int i = 0; i < baseSet.getNumberOfBaseFunctions(); ++i) {
         Range sum(0.0);
@@ -141,18 +179,18 @@ public:
                     int level) {
     //- Local typedefs
     typedef FixedOrderQuad<
-      typename FunctionSpaceType::RangeField,
-      typename FunctionSpaceType::Domain, 
+      typename FunctionSpaceType::RangeFieldType,
+      typename FunctionSpaceType::DomainType, 
       polOrd> QuadType;
     // * Hack!
-    const int nBaseFct = 3;
+    const int nBaseFct = 27;
 
     typedef FieldVector<double, nBaseFct> VectorType;
     typedef FieldMatrix<double, nBaseFct, nBaseFct> MatrixType;
 
     // * do we need that?
     df.clear();
-    GridType& grid = df.getFunctionSpace().getGrid();
+    const GridType& grid = df.getFunctionSpace().getGrid();
 
     // Temporaries
     LocalFunctionType lf = df.newLocalFunction();
@@ -167,7 +205,7 @@ public:
 
       QuadType quad(*it);
       df.localFunction(*it, lf);
-      BaseFunctionSetType& baseSet =
+      const BaseFunctionSetType& baseSet =
         df.getFunctionSpace().getBaseFunctionSet(*it);
 
       MatrixType mat(0.0);
@@ -209,19 +247,19 @@ public:
     discFunc.clear();
   
     typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename GridType::template codim<0>::LevelIterator LevelIterator;
+    typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
       
 
     GridType & grid = functionSpace_.getGrid();
 
-    typename FunctionSpaceType::Range ret (0.0);
-    typename FunctionSpaceType::Range phi (0.0);
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
 
     LevelIterator it = grid.template lbegin<0> ( level );
     LevelIterator endit = grid.template lend<0> ( level );
-    FixedOrderQuad <typename FunctionSpaceType::RangeField,
-              typename FunctionSpaceType::Domain , polOrd > quad ( *it );
+    FixedOrderQuad <typename FunctionSpaceType::RangeFieldType,
+              typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
               
     LocalFuncType lf = discFunc.newLocalFunction(); 
     
@@ -248,20 +286,20 @@ public:
   template <int polOrd, class FunctionType> 
   void lumpi (int level, FunctionType &f, DiscreteFunctionType &discFunc, double time = 0.0)
   {
-    const typename DiscreteFunctionType::FunctionSpace 
+    const typename DiscreteFunctionType::DiscreteFunctionSpaceType
         & functionSpace_= discFunc.getFunctionSpace();  
   
     typedef typename FunctionSpaceType::GridType GridType;
     typedef typename GridType::LeafIterator LeafIterator;
-    typedef typename GridType::template codim<0>::LevelIterator LevelIterator;
-    typedef typename GridType::template codim<0>::Entity EntityType;
+    typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
+    typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename DiscreteFunctionType::
         LocalFunctionType LocalFuncType;
       
-    GridType & grid = functionSpace_.getGrid();
+    const GridType & grid = functionSpace_.grid();
 
-    typename FunctionSpaceType::Range ret (0.0);
-    typename FunctionSpaceType::Range phi (0.0);
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
 
     discFunc.clear();
     LocalFuncType lf = discFunc.newLocalFunction(); 
@@ -269,8 +307,8 @@ public:
     LevelIterator endit = grid.template lend<0> ( level );
     LevelIterator it = grid.template lbegin<0> ( level ); 
     
-    FixedOrderQuad < typename FunctionSpaceType::RangeField,
-    typename FunctionSpaceType::Domain , polOrd > quad ( *it );
+    FixedOrderQuad < typename FunctionSpaceType::RangeFieldType,
+    typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
     
     double sum;
     double intWeight;
@@ -318,7 +356,7 @@ public:
 
     GridType & grid = functionSpace_.getGrid();
 
-    typename FunctionSpaceType::Range ret (0.0);
+    typename FunctionSpaceType::RangeType ret (0.0);
     LocalFuncType lf = discFunc.newLocalFunction(); 
 
     LevelIterator endit = grid.template lend<0> ( level );
@@ -411,8 +449,8 @@ public:
     
     GridType & grid = functionSpace_.getGrid();
        
-    typename FunctionSpaceType::Range ret (0.0);
-    typename FunctionSpaceType::Range phi (0.0);
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
 
     double sum = 0.0;
     LocalFuncType lf = discFunc.newLocalFunction(); 
@@ -422,8 +460,8 @@ public:
     //typename FunctionSpaceType::Domain > // , polOrd > 
     //  quad ( *it );
     
-    FixedOrderQuad < typename FunctionSpaceType::RangeField,
-               typename FunctionSpaceType::Domain , polOrd > quad ( *it );
+    FixedOrderQuad < typename FunctionSpaceType::RangeFieldType,
+               typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
     
     for(; it != endit ; ++it)
     {
