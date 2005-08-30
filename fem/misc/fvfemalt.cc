@@ -1,11 +1,13 @@
-#ifndef __DUNE_FVFEM_CC__
-#define __DUNE_FVFEM_CC__
+#ifndef DUNE_FVFEMALT_CC
+#define DUNE_FVFEMALT_CC
 
 #define MYABS(a) (( a > 0.0 ) ? (a) : -(a)) 
 #define INFTY 1.0/1.0E-16
 
 #include <dune/quadrature/fixedorder.hh>
 #include <dune/quadrature/barycenter.hh>
+#include <dune/fem/common/boundary.hh>
+
 
 namespace Dune 
 {
@@ -49,7 +51,7 @@ namespace Dune
       typedef typename DiscreteFunctionType::LocalFunctionType 
         LocalFunctionType;
 
-      typedef typename FunctionSpaceType::RangeField RangeFieldType; 
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType; 
 
       const GridType & grid = functionSpace_.getGrid();
 
@@ -59,7 +61,7 @@ namespace Dune
       FieldVector<RangeFieldType,GridType::dimension> tmp;
     
       FixedOrderQuad < RangeFieldType,
-        typename FunctionSpaceType::Domain , polOrd > quad(*it);
+        typename FunctionSpaceType::DomainType , polOrd > quad(*it);
       double volRefelem = 0.0;
       for(int i=0; i<quad.nop(); i++)
         volRefelem += quad.weight(i);
@@ -90,7 +92,7 @@ namespace Dune
         & functionSpace_= discFunc.getFunctionSpace();
 
       typedef typename FunctionSpaceType::GridType GridType;
-      typedef typename FunctionSpaceType::RangeField RangeFieldType; 
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType; 
       typedef typename GridType::template Traits<0>::LevelIterator LevelIterator;
       typedef typename DiscreteFunctionType::LocalFunctionType 
         LocalFunctionType;
@@ -105,11 +107,11 @@ namespace Dune
       FieldVector<RangeFieldType,dim> tmp;
     
       FixedOrderQuad < RangeFieldType ,    
-        typename FunctionSpaceType::Domain , polOrd > quad(*it);
+        typename FunctionSpaceType::DomainType , polOrd > quad(*it);
     
       double error = 0.0;
-      typename FunctionSpaceType::Range ret (0.0);
-      typename FunctionSpaceType::Range phi (0.0);
+      typename FunctionSpaceType::RangeType ret (0.0);
+      typename FunctionSpaceType::RangeType phi (0.0);
 
       FieldVector<RangeFieldType,dim> point;
       LocalFunctionType lf = discFunc.newLocalFunction();
@@ -163,7 +165,7 @@ namespace Dune
       enum { dimrange = FuncSpace::DimRange };
       enum { dim = GridIteratorType::dimension };
     
-      typedef typename FuncSpace::RangeField RangeFieldType; 
+      typedef typename FuncSpace::RangeFieldType RangeFieldType; 
 
       FieldVector<RangeFieldType,dim> bary = it->geometry().global(baryquad.point(0));
       FieldVector<RangeFieldType,dim> dist; 
@@ -211,8 +213,8 @@ namespace Dune
     
       LevelIterator it = grid. template lbegin<0>( level);
       LevelIterator endit = grid.template lend<0>(level);
-      FixedOrderQuad < typename FuSpace::RangeField, 
-        typename FuSpace::Domain , 1 > baryquad(*it);
+      FixedOrderQuad < typename FuSpace::RangeFieldType, 
+        typename FuSpace::DomainType , 1 > baryquad(*it);
 
       typedef typename ArgFuncType::LocalFunctionType   ArgLFType; 
       typedef typename DestFuncType::LocalFunctionType  DestLFType; 
@@ -264,21 +266,21 @@ namespace Dune
   {
     typedef typename LinFuncType::FunctionSpaceType LinFuncSpaceType;
     typedef typename LinFuncType::FunctionSpaceType::GridType GridType;
-    typedef typename LinFuncSpaceType::JacobianRange JacobianRange;
-    typedef typename LinFuncSpaceType::Domain DomainType;
+    typedef typename LinFuncSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename LinFuncSpaceType::DomainType DomainType;
 
     enum { dim = GridType::dimension };
     enum { dimrange = LinFuncType::FunctionSpaceType::DimRange };
 
-    typedef typename LinFuncType::FunctionSpaceType::RangeField  RangeFieldType;
+    typedef typename LinFuncType::FunctionSpaceType::RangeFieldType  RangeFieldType;
   
     //! the project to piecewise linear operator
     ProjectSpaces pro_;
     
     Array<double> beta_;
 
-    typedef BaryCenterQuad < typename LinFuncSpaceType::RangeField , 
-                             typename LinFuncSpaceType::Domain, 0 > QuadratureType;
+    typedef BaryCenterQuad < typename LinFuncSpaceType::RangeFieldType , 
+                             typename LinFuncSpaceType::DomainType, 0 > QuadratureType;
     QuadratureType *quad_;
 
     LinFuncSpaceType & linSpace_;
@@ -290,7 +292,7 @@ namespace Dune
     typedef typename LinFuncType::LocalFunctionType LocalFuncType; 
     LocalFuncType recLf_;
   
-    JacobianRange tmpGrad_;
+    JacobianRangeType tmpGrad_;
 
     FieldVector<RangeFieldType,dim> bary_;
     FieldVector<RangeFieldType,dim> othBary_;
@@ -382,9 +384,9 @@ namespace Dune
     
             if(nit.neighbor())
               {
-                othBary_ = nit->geometry().global(quad_->point(0));
+                othBary_ = nit.outside()->geometry().global(quad_->point(0));
          
-                arg.localFunction ( *nit , nlf );
+                arg.localFunction ( *nit.outside() , nlf );
 
                 calcGrad( en , lf);
 
@@ -426,8 +428,8 @@ namespace Dune
     void calcGrad (EntityType &en, LFType &lf )  
     {
       typedef typename LinFuncSpaceType::BaseFunctionSetType BaseFuncSetType;
-      typedef typename LinFuncSpaceType::Range  DRangeType;
-      typedef typename LinFuncSpaceType::Domain DomainType;
+      typedef typename LinFuncSpaceType::RangeType  DRangeType;
+      typedef typename LinFuncSpaceType::DomainType DomainType;
 
       reCon_.localFunction( en , recLf_ );
     
@@ -460,7 +462,7 @@ namespace Dune
                        FieldVector<ctype,dim> &othBary , double  u , double u_jl , int l)  
     {
       typedef typename LinFuncSpaceType::BaseFunctionSetType BaseFuncSetType;
-      typedef typename LinFuncSpaceType::Range  DRangeType;
+      typedef typename LinFuncSpaceType::RangeType  DRangeType;
 
       // note that this only wotks for structured Grid 
       tmpVec_ = othBary - bary;
@@ -523,24 +525,30 @@ namespace Dune
   //
   //**************************************************************************
   template <class NumericalFluxFunction, class DiscFuncType>
-  class ScalarFV 
-    : public LocalOperatorDefault <DiscFuncType,DiscFuncType, typename
-                                   DiscFuncType::RangeFieldType , ScalarFV < NumericalFluxFunction , DiscFuncType > >
+  class ScalarFV : 
+    public LocalOperatorDefault <DiscFuncType,
+                                 DiscFuncType, 
+                                 typename DiscFuncType::RangeFieldType , 
+                                 ScalarFV < NumericalFluxFunction , DiscFuncType > >
   {
     typedef ScalarFV <NumericalFluxFunction, DiscFuncType > MyType;  
 
     typedef DiscFuncType DFType;
-    typedef typename DiscFuncType::FunctionSpace FunctionSpaceType;
+    typedef typename DiscFuncType::DiscreteFunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::GridType GridType; 
     typedef typename DiscFuncType::RangeFieldType RangeFieldType;
 
     typedef typename NumericalFluxFunction::NormalType NormalType;
     typedef typename NumericalFluxFunction::ValueType ValueType;
+    typedef BoundaryManager<FunctionSpaceType> BoundaryManagerType;
 
     enum { dim = GridType::dimension };
  
     //! the numerical flux function  
     const NumericalFluxFunction fluxFcn_;
+    
+    //! Boundary manager
+    BoundaryManagerType bcManager_;
 
     //! function space of grid function 
     FunctionSpaceType& fSpace_;
@@ -552,7 +560,7 @@ namespace Dune
     bool adaptive_;
 
     //! level of interest 
-    int level_;
+    // int level_;
 
     //! timestep size 
     mutable double dtMin_;
@@ -560,7 +568,7 @@ namespace Dune
     //! timestep size 
     mutable double dtOld_;
  
-    typedef typename DiscFuncType::FunctionSpaceType::Range  DRangeType;
+    typedef typename DiscFuncType::FunctionSpaceType::RangeType  DRangeType;
     typedef typename DiscFuncType::LocalFunctionType LocalFuncType;
     typedef RangeFieldType Real;
     // help variables 
@@ -582,12 +590,12 @@ namespace Dune
     mutable DRangeType fluxEl_;
 
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
-    typedef typename GridType::template codim<1>::Entity FaceType;
+    typedef typename GridType::template Codim<1>::Entity FaceType;
 
     //! quadrature for evaluation 
     //! the quadrature points should be the mid points of the faces 
-    typedef BaryCenterQuad < typename FunctionSpaceType::RangeField ,
-                             typename FunctionSpaceType::Domain , 0 > QuadratureType;
+    typedef BaryCenterQuad < typename FunctionSpaceType::RangeFieldType ,
+                             typename FunctionSpaceType::DomainType , 0 > QuadratureType;
     QuadratureType quad_;
   
     double volRefelem_;
@@ -602,22 +610,27 @@ namespace Dune
   public:
     // Constructor 
     ScalarFV ( const NumericalFluxFunction& fluxFcn,
+               const BoundaryManagerType& bc,
                FunctionSpaceType &f,
                DiscFuncType* error,
                bool adaptive,
                bool doPrepare) :
-      fluxFcn_(fluxFcn) ,  fSpace_ ( f )
-                               , doPrepare_ ( doPrepare ), adaptive_(adaptive), mid(0.5) 
-                               , oldLf_ ( NULL ), neighLf_ (NULL) , up_ (NULL) , upNeigh_ (NULL)
-                               , quad_ ( *(f.getGrid().template lbegin<0> (0)) )  
-                               , errorFunc_ ( error )
-                               , enError_    ( errorFunc_->newLocalFunction () ) 
-                               , neighError_ ( errorFunc_->newLocalFunction () )
+      fluxFcn_(fluxFcn) ,  
+      bcManager_(bc),
+      fSpace_ ( f ),
+      doPrepare_ ( doPrepare ), 
+      adaptive_(adaptive), 
+      mid(0.5) ,
+      oldLf_ ( NULL ), neighLf_ (NULL) , up_ (NULL) , upNeigh_ (NULL),
+      quad_ ( *(f.begin()) ),
+      errorFunc_ ( error ),
+      enError_ ( errorFunc_->newLocalFunction () ) ,
+      neighError_ ( errorFunc_->newLocalFunction () )
     { 
-      level_ = f.getGrid().maxlevel();
+      //level_ = f.getGrid().maxlevel();
       typedef FieldVector<RangeFieldType,dim-1> MidType;
-      typedef FixedOrderQuad < typename FunctionSpaceType::RangeField,MidType,1> MidQuadType;
-      IntersectionIterator nit = (f.getGrid(). template lbegin<0> (0))->ibegin();
+      typedef FixedOrderQuad < typename FunctionSpaceType::RangeFieldType,MidType,1> MidQuadType;
+      IntersectionIterator nit = (f.begin())->ibegin();
       GeometryType eltype = nit.intersectionGlobal().type();
       MidQuadType midquad( eltype );
     
@@ -625,7 +638,7 @@ namespace Dune
 
       typedef FieldVector<RangeFieldType,dim> CenterType;
       typedef FixedOrderQuad <RangeFieldType, CenterType, 1> CenterQuadType;
-      CenterQuadType centerQuad(*(f.getGrid().template lbegin<0>(0)));
+      CenterQuadType centerQuad(*(f.begin()));
       centerPoint_ = centerQuad.point(0);
 
       volRefelem_ = 0.0;
@@ -737,27 +750,27 @@ namespace Dune
           // then ours ==> calculate flux 
           if( nit.neighbor() ) {
 
-            if( (*nit).globalIndex() > en.globalIndex()
-                || nit->partitionType() == GhostEntity) {
+            if( nit.outside()->globalIndex() > en.globalIndex()
+                || nit.outside()->partitionType() == GhostEntity) {
 
               // edge or face volume
                          
               // volume of neighbor 
               nvol = 
-                volRefelem_ * nit->geometry().integrationElement(centerPoint_);
+                volRefelem_ * nit.outside()->geometry().integrationElement(centerPoint_);
               double nvol_1 = 1/nvol;
           
               // get access to local functions  
-              oldSol.localFunction ( *nit , *neighLf_ );
-              update.localFunction ( *nit , *upNeigh_ );
+              oldSol.localFunction ( *nit.outside() , *neighLf_ );
+              update.localFunction ( *nit.outside() , *upNeigh_ );
         
               // evaluate the local function on the middle point of the actual face
               // * Why numberInSelf, numberInNeighbor here
               oldLf_->evaluate(en, quad_, nit.numberInSelf(), valEl_);
-              neighLf_->evaluate(*nit, quad_, nit.numberInNeighbor(), valNeigh_);
+              neighLf_->evaluate(*nit.outside(), quad_, nit.numberInNeighbor(), valNeigh_);
         
               // calculate numerical flux , g(u,v)
-              double dtLocal = fluxFcn_(valEl_, valNeigh_, normal, flux_);
+              double dtLocal = fluxFcn_(valEl_, valNeigh_, normal, normal, flux_);
               dtLocal = 
                 (dtLocal < std::numeric_limits<double>::min()) ? dtMin_ :
                 3.0*std::min(vol, nvol)/(dtLocal*h);
@@ -767,7 +780,7 @@ namespace Dune
               if (adaptive_) {
                 // Gradient estimator for density (first component)
                 //FieldVector<Real, dim> dist = en.geometry().global(centerPoint_);
-                //dist -= nit->geometry().global(centerPoint_);
+                //dist -= nit.outside()->geometry().global(centerPoint_);
                 // * zeroth element is the density
                 /* Original formulation of Gessner
                    Real eta = std::fabs(valEl_[0] - valNeigh_[0]) / dist.two_norm();
@@ -775,7 +788,7 @@ namespace Dune
                 // * Formulation by Dedner
                 Real eta = 2.0 * std::fabs(valEl_[0] - valNeigh_[0]) / (valEl_[0] + valNeigh_[0]);
                 //std::cout << "Eta = " << eta << std::endl;
-                errorFunc_->localFunction(*nit, neighError_);
+                errorFunc_->localFunction(*nit.outside(), neighError_);
                 if (enError_[0] < eta) enError_[0] = eta;
                 if (neighError_[0] < eta) neighError_[0] = eta;
               }
@@ -794,9 +807,9 @@ namespace Dune
             //std::cout << "At boundary\n";
             // evaluate boundary function
         
-            typedef typename
-              FunctionSpaceType::BoundaryManagerType::BoundaryType BoundaryType;
-            const BoundaryType& bc = fSpace_.boundaryManager().getBoundaryCondition(nit.boundaryEntity().id());
+            typedef typename BoundaryManagerType::BoundaryType BoundaryType;
+            const BoundaryType& bc = 
+              bcManager_.getBoundaryCondition(nit.boundaryEntity().id());
   
             midPoint = nit.intersectionGlobal().global(mid);
 
@@ -811,7 +824,7 @@ namespace Dune
            
               // calculate numerical flux 
               dtLocal = 
-                fluxFcn_(valEl_, bval, normal, flux_);
+                fluxFcn_(valEl_, bval, normal, normal, flux_);
               dtLocal =   
                 (dtLocal < std::numeric_limits<double>::min()) ? dtMin_ :
                 3.0*vol/(dtLocal*h);
@@ -843,370 +856,7 @@ namespace Dune
 
   }; // end class ScalarFV 
 
-
-  //****************************************************************************
-  //
-  //  Scalar Diffusion 
-  //  Discretisation via finite Differences 
-  //
-  //****************************************************************************
-
-  // Diffusion 
-  template <class Problem, class DiscFuncType>
-  class ScalarDiffusion 
-    : public LocalOperatorDefault <DiscFuncType, DiscFuncType, typename
-                                   DiscFuncType::RangeFieldType ,  
-                                   ScalarDiffusion < Problem , DiscFuncType > >
-  //: public Operator <typename DiscFuncType::RangeFieldType , DiscFuncType, DiscFuncType > 
-  {
-    typedef ScalarDiffusion <  Problem , DiscFuncType > MyType;  
-    typedef DiscFuncType DFType;
-    typedef typename DiscFuncType::FunctionSpace FunctionSpaceType;
-    typedef typename FunctionSpaceType::RangeField RangeFieldType;
-    typedef typename FunctionSpaceType::GridType GridType; 
-
-    typedef typename DiscFuncType::LocalFunctionType LocalFuncType;
-
-    typedef BaryCenterQuad < typename FunctionSpaceType::RangeField ,
-                             typename FunctionSpaceType::Domain , 0 > QuadType;
-  
-    const Problem & problem_;
-
-    FunctionSpaceType& fSpace_;
-
-    bool doPrepare_;
-    bool doFinalize_;
-
-    enum { dim      = GridType::dimension };
-    enum { dimworld = GridType::dimensionworld };
-
-    QuadType baryquad_;
-
-    mutable FieldMatrix<double,dimworld,dimworld> diffusion_;
-    mutable bool calcedDispersion_;
-
-    mutable double dtMin_;
-
-    mutable FieldVector<RangeFieldType,dimworld> bary_;
-    mutable FieldVector<RangeFieldType,dimworld> way_;
-
-    mutable LocalFuncType * oldLf_;
-    mutable LocalFuncType * up_;
-  
-    mutable LocalFuncType * neighLf_;
-    mutable LocalFuncType * upNeigh_;
-  
-    typedef typename GridType::Traits::IntersectionIterator 
-    IntersectionIterator; 
-
-    mutable IntersectionIterator nit; 
-    mutable IntersectionIterator endnit; 
-
-    int level_;
-
-    const DiscFuncType * arg_;
-    DiscFuncType * dest_;
-  
-  public:
- 
-    // Constructor 
-    ScalarDiffusion ( const Problem & p , FunctionSpaceType &f , bool doPrepare, bool doFinalize ) :
-      problem_ ( p ) , fSpace_ ( f ) , doPrepare_ (doPrepare) , doFinalize_ ( doFinalize )
-                                                                                                   , baryquad_ ( (*(f.getGrid(). template lbegin<0>(0))) ) , calcedDispersion_ ( false ) 
-                                                                                                   , oldLf_ (NULL) , up_ (NULL) , neighLf_ (NULL) , upNeigh_ (NULL) 
-                                                                                                   , nit    ( f.getGrid().template lbegin<0> (0)->ibegin() )
-                                                                                                   , endnit ( f.getGrid().template lbegin<0> (0)->iend() ) 
-                                                                                                   , level_ ( f.getGrid().maxlevel() ) {}
-
-    // Destructor 
-    ~ScalarDiffusion () 
-    {
-      if( oldLf_ ) delete oldLf_;     oldLf_ = NULL;
-      if( neighLf_ ) delete neighLf_; neighLf_ = NULL;
-      if( up_ ) delete up_;           up_ = NULL;
-      if( upNeigh_ ) delete upNeigh_; upNeigh_ = NULL;
-    }
-
-    // set update function to zero 
-    void prepareGlobal(const DiscFuncType &arg, DiscFuncType &dest)
-    {
-      arg_  = &arg.argument(); 
-      dest_ = &dest.destination();    
-      assert(arg_ != NULL); assert(dest_ != NULL);
-      DiscFuncType & argTemp = const_cast<DiscFuncType &> (*arg_);
-
-      if(doPrepare_)
-        {
-          dest.clear ();
-        }
-      calcedDispersion_ = false;
-
-      if(!oldLf_)
-        oldLf_   = new LocalFuncType ( argTemp.newLocalFunction() );     
-    
-      if(!neighLf_)
-        neighLf_ = new LocalFuncType ( argTemp.newLocalFunction() );     
-    
-      if(!up_)
-        up_      = new LocalFuncType ( dest.newLocalFunction() );     
-
-      if(!upNeigh_)
-        upNeigh_ = new LocalFuncType ( dest.newLocalFunction() );     
-    }
-
-    // return time step size if necessary 
-    void finalizeGlobal ()
-    {
-      //if(doFinalize_)
-      //{
-      problem_.setTimeStepSize(dtMin_);
-      calcedDispersion_ = false;
-      //}
-    
-      if( oldLf_ ) delete oldLf_;     oldLf_ = NULL;
-      if( neighLf_ ) delete neighLf_; neighLf_ = NULL;
-      if( up_ ) delete up_;           up_ = NULL;
-      if( upNeigh_ ) delete upNeigh_; upNeigh_ = NULL;
-    }
- 
-    // apply operator locally   
-    template <class GridIteratorType>
-    void applyLocal (GridIteratorType &it)
-    {
-      DiscFuncType & argTemp = const_cast<DiscFuncType &> (*arg_);
-      calculateLocal( it , argTemp, *dest_ );
-    }
-
-  private:
-    template <class EntityType>
-    void calculateLocal(EntityType &en, DiscFuncType &oldSol, DiscFuncType & update)
-    {
-      double localDt = 0.01;
-
-      LocalFuncType & oldLf = *oldLf_;
-      LocalFuncType & up = *up_;
-    
-      LocalFuncType & neighLf = *neighLf_;
-      LocalFuncType & upNeigh = *upNeigh_;
-    
-      // assume we have the same FunctionsSpace, i.e. no adaptation
-      oldSol.localFunction ( en , oldLf ); 
-      update.localFunction ( en , up ); 
-
-      bary_ = en.geometry().global(baryquad_.point(0));
-  
-      if( !calcedDispersion_ )
-        {
-          problem_.parameter().D ( oldLf, bary_ , diffusion_ );
-          calcedDispersion_ = problem_.parameter().constDispersion();
-        }
-    
-      double flux;
-   
-      nit = en.ibegin();
-      endnit = en.iend();
-      for( ; nit != endnit; ++nit)
-        {
-          if( nit.neighbor() )
-            {
-              EntityType &nen = *nit;
-              way_ = bary_ - nen.geometry().global(baryquad_.point(0));
-              double dist = way_.two_norm();
-              localDt = dist; 
-              way_ *= 1.0/dist;
-       
-              oldSol.localFunction ( nen , neighLf );
-              update.localFunction ( nen , upNeigh );
-
-              assert(false); // comment back in and fix error
-              //double skp = dist * (nit.integrationOuterNormal(mp) * (diffusion_ * way_));
-
-              for(int l=0; l< oldLf.numberOfDofs(); l++)
-                {
-                  //flux = (oldLf[l] - neighLf[l]) * skp;
-          
-                  // hier umgekehrtes Minus 
-                  up[ l ]      -= flux;
-                  upNeigh[ l ] += flux;
-                }
-            }
-          else if (nit.boundary() )
-            {
-
-            }
-        }
-
-      dtMin_ = localDt;
-    }
-
-  };
-
-
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //**************************************************************************
-  //
-  //  --Reaction
-  //
-  //**************************************************************************
-  template <class Problem, class DiscFuncType>
-  class Reaction 
-    : public LocalOperatorDefault <DiscFuncType,DiscFuncType, typename
-                                   DiscFuncType::RangeFieldType ,  
-                                   Reaction < Problem , DiscFuncType > >
-  //: public Operator <typename DiscFuncType::RangeFieldType , DiscFuncType, DiscFuncType > 
-  {
-    typedef Reaction < Problem, DiscFuncType > MyType;  
-
-    typedef DiscFuncType DFType;
-    typedef typename DiscFuncType::FunctionSpace FunctionSpaceType;
-    typedef typename FunctionSpaceType::GridType GridType; 
-    typedef typename DiscFuncType::LocalFunctionType LocalFuncType;
-
-    enum { dim = GridType::dimension };
- 
-    //! reference to phisycally problem description  
-    const Problem & problem_;
-  
-    //! function space of grid function 
-    FunctionSpaceType& fSpace_;
-
-    //! true if prepare and finalize should be done
-    bool doPrepare_;
-    bool doFinalize_; 
-
-    //! level of interest 
-    int level_;
-
-    //! quadrature for evaluation 
-    //! the quadrature points should be the mid points of the faces 
-    typedef BaryCenterQuad < typename FunctionSpaceType::RangeField ,
-                             typename FunctionSpaceType::Domain, 0 > QuadratureType;
-    QuadratureType quad_;
-  
-    typedef typename DiscFuncType::FunctionSpaceType::Range  DRangeType;
-    typedef typename DiscFuncType::FunctionSpaceType::RangeField  RangeFieldType;
-
-    // local storage of evaluation of the grid functions 
-    mutable DRangeType reac_;
-  
-    mutable LocalFuncType * lf_;
-    mutable LocalFuncType * up_;
-  
-    const DiscFuncType * arg_;
-    DiscFuncType * dest_;
-
-  public:
-    // Constructor 
-    Reaction ( const Problem &p, FunctionSpaceType &f , bool doPrepare, bool doFinalize ) :
-      problem_ ( p ) ,  fSpace_ ( f ) 
-                                                                                          , doPrepare_ ( doPrepare ) , doFinalize_ ( doFinalize ) 
-                                                                                          , quad_ ( *(f.getGrid(). template lbegin<0> (0)) )
-    { 
-      level_ = f.getGrid().maxlevel();
-      // create Quadrature with midpoint of each face of an element
-    }
-
-    ~Reaction()
-    {
-      if( lf_ ) delete lf_;
-      if( up_ ) delete up_;
-    }
-
-    void prepareGlobal(const DiscFuncType &arg, DiscFuncType &dest)
-    {
-      arg_  = &arg.argument(); 
-      dest_ = &dest.destination();    
-      assert(arg_ != NULL); assert(dest_ != NULL);
-      DiscFuncType & argTemp = const_cast<DiscFuncType &> (*arg_);
-      if(doPrepare_)
-        {
-          dest.clear ( );
-        }
-      lf_ = new LocalFuncType ( argTemp.newLocalFunction() );     
-      up_ = new LocalFuncType ( dest.newLocalFunction() );     
-    }
-  
-    void finalizeGlobal ()
-    {
-      if( lf_ ) delete lf_;
-      if( up_ ) delete up_;
-    }
-
-    void prepare ( DiscFuncType & arg ) 
-    {
-    }
-
-    template <class GridIteratorType>
-    void applyLocal (GridIteratorType &it)
-    {
-      DiscFuncType & argTemp = const_cast<DiscFuncType &> (*arg_);
-      calculateLocal( it , argTemp, *dest_);
-    }
-  
-  private:
-    template <class EntityType>
-    void calculateLocal(EntityType &en, DiscFuncType &oldSol, DiscFuncType &update) const 
-    {
-      LocalFuncType & lf = *lf_;
-      LocalFuncType & up = *up_;
-    
-      oldSol.localFunction( en , lf ); 
-      update.localFunction( en , up ); 
-  
-      typedef typename EntityType::Traits::Element GeometryType;
-      GeometryType & el = en.geometry();
-    
-      // get volume of actual element 
-      double weight;
-
-      for(int qp=0; qp < quad_.nop(); qp++ )
-        {
-          double vol = el.integrationElement(quad_.point(qp)); 
-          // quadrature weight 
-          weight = vol * quad_.weight(qp);
-      
-          // evaluate the right hand side 
-          problem_.parameter().q ( lf, el.global( quad_.point(qp) ) , reac_ ); 
-      
-          for(int l=0; l< lf.numberOfDofs(); l++)
-            {
-              up[l] += weight * reac_[l];
-            }
-        }
-   
-#if 0
-      // calculate local time step size 
-      if(dtSum > 0.0)
-        {
-          dtSum = vol/dtSum;
-          if( dtSum < dtMin_) dtMin_ = dtSum;
-        }
-#endif
-      return;
-    } // end calculateLocal 
-
-  }; // end class Reaction 
-
-
-} // end namespace 
+} // end namespace Dune
 
 #endif
 
