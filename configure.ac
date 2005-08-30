@@ -30,6 +30,8 @@ LIBS="$DUNE_LIBS"
 
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
+                 examples/Makefile
+		 examples/transport/Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
                  tester/gridcheck/unittests/Makefile
