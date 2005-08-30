@@ -19,8 +19,8 @@ namespace Adi {
                     DiscreteFunctionType> {
   public:
     //! Applying here just means copying
-    virtual void apply(const DiscreteFunctionType& arg,
-                       DiscreteFunctionType& dest) const {
+    virtual void operator() (const DiscreteFunctionType& arg,
+                             DiscreteFunctionType& dest) const {
       dest.clear();
       dest.addScaled(arg, 1.0);
       // * Does this really a copy?
@@ -46,8 +46,8 @@ namespace Adi {
     IdentitySolver(const MappingType& dummy) : op_() {}
 
     //! Inverting an identity is the same as applying it
-    void apply(const DiscreteFunctionType& arg,
-               DiscreteFunctionType& dest) const {
+    void operator() (const DiscreteFunctionType& arg,
+                     DiscreteFunctionType& dest) const {
       op_(arg, dest);
     }
 

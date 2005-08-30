@@ -1,7 +1,10 @@
-#ifndef __INVERSEOPERATORFACTORY_HH__
-#define __INVERSEOPERATORFACTORY_HH__
+#ifndef DUNE_INVERSEOPERATORFACTORY_HH
+#define DUNE_INVERSEOPERATORFACTORY_HH
 
 #include <dune/fem/inverseoperators.hh>
+#include <dune/common/mapping.hh>
+
+namespace Dune {
 
 /** \brief Abstract factory class for inverse operators
     Concrete factory classes derive from this class and overwrite method
@@ -71,4 +74,5 @@ private:
   int verbose_;
 };
 
+} // end namepsace Dune
 #endif

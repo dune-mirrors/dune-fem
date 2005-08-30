@@ -1,12 +1,10 @@
-#ifndef ADI_FINITE_VOLUME_HH
-#define ADI_FINITE_VOLUME_HH
+#ifndef DUNE_FINITEVOLUME_HH
+#define DUNE_FINITEVOLUME_HH
 
 // Include Dune headers
 #include <dune/common/fvector.hh>
 
-using namespace Dune;
-
-namespace Adi {
+namespace Dune {
 
   //! Base class describing interface of numerical flux function
   template <
@@ -29,15 +27,17 @@ namespace Adi {
     //! Evaluation of numerical flux function
     double operator() (const ValueType& valsEntity,
                        const ValueType& valsNeigh,
+                       const NormalType& position,
                        const NormalType& normal,
                        ValueType& result) const {
-      return asImp(valsEntity, valsNeigh, normal, result);
+      return asImp(valsEntity, valsNeigh, position, normal, result);
     }
 
     //! Evaluation of corresponding analytical flux function
     void analyticalFlux(const ValueType& vals,
+                        const NormalType& position,
                         JacobianType& result) const {
-      asImp(vals, result);
+      asImp(vals, position, result);
     }
 
   protected:
@@ -62,24 +62,25 @@ namespace Adi {
 
   //! Implementation of a linear advection flux function using upwind flux
   template <class FunctionSpaceImp>
-  class LinearAdvectionUpwindFlux : 
+  class ConstantLinearAdvectionUpwindFlux : 
     public NumericalFlux<FunctionSpaceImp,
-                         LinearAdvectionUpwindFlux<FunctionSpaceImp> >
+                         ConstantLinearAdvectionUpwindFlux<FunctionSpaceImp> >
   {
     typedef NumericalFlux<FunctionSpaceImp,
-                          LinearAdvectionUpwindFlux<FunctionSpaceImp> > BaseType;
+                          ConstantLinearAdvectionUpwindFlux<FunctionSpaceImp> > BaseType;
   public:
     typedef typename BaseType::NormalType NormalType;
     typedef typename BaseType::ValueType ValueType;
     typedef typename BaseType::JacobianType JacobianType;
 
-    LinearAdvectionUpwindFlux(const NormalType& velocity) :
+    ConstantLinearAdvectionUpwindFlux(const NormalType& velocity) :
       vel_(velocity) {}
 
-    ~LinearAdvectionUpwindFlux() {}
+    ~ConstantLinearAdvectionUpwindFlux() {}
 
     double operator() (const ValueType& valsEntity,
                        const ValueType& valsNeigh,
+                       const NormalType& position,
                        const NormalType& normal,
                        ValueType& result) const
     {
@@ -92,6 +93,7 @@ namespace Adi {
     }
 
     void analyticalFlux(const ValueType& vals,
+                        const NormalType& position,
                         JacobianType& result) const {
       for (int i = 0; i < ValueType::size; ++i) {
         result[i] = vel_;
@@ -101,8 +103,56 @@ namespace Adi {
 
   private:
     const NormalType vel_;
-  }; // end class LinearAdvectionUpwindFlux
+  }; // end class ConstantLinearAdvectionUpwindFlux
 
-} // end namespace Adi
+  template <class FunctionSpaceImp, class VelocityImp>
+  class LinearAdvectionUpwindFlux : 
+    public NumericalFlux<FunctionSpaceImp, LinearAdvectionUpwindFlux<FunctionSpaceImp, VelocityImp> >
+  {
+    typedef NumericalFlux<FunctionSpaceImp,
+                          LinearAdvectionUpwindFlux<FunctionSpaceImp, VelocityImp> > BaseType;
+  public:
+    typedef typename BaseType::NormalType NormalType;
+    typedef typename BaseType::ValueType ValueType;
+    typedef typename BaseType::JacobianType JacobianType;
+
+    LinearAdvectionUpwindFlux(const VelocityImp& velo) :
+      vel_(velo) {}
+
+    ~LinearAdvectionUpwindFlux() {}
+    
+    double operator() (const ValueType& valsEntity,
+                       const ValueType& valsNeigh,
+                       const NormalType& position,
+                       const NormalType& normal,
+                       ValueType& result) const 
+    {
+      normalizeN(normal);
+      const double project = vel_(position)*this->stdnorm_;
+      result = 0.0;
+      if (project > 0) {
+        result += valsEntity;
+      }
+      else if (project < 0) {
+        result += valsNeigh;
+      }
+      result *= project;
+      return project;
+    }
+
+    void analyticalFlux(const ValueType& vals,
+                        const NormalType& position,
+                        JacobianType& result) const {
+      for (int i = 0; i < ValueType::size; ++i) {
+        result[i] = vel_(position);
+        result[i] *= vals[i];
+      }
+    }
+    
+  public:
+    VelocityImp vel_;
+  }; // end class LinearUpwindFlux
+
+} // end namespace Dune
 
 #endif

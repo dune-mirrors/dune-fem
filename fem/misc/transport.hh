@@ -27,10 +27,10 @@ class LinearTransport
 {
 public:
   // usefull typedefs 
-  typedef typename FunctionSpaceType::Range RangeType;
-  typedef typename FunctionSpaceType::Domain DomainType;
-  typedef typename FunctionSpaceType::DomainField DomainFieldType;
-  typedef typename FunctionSpaceType::RangeField FieldType;
+  typedef typename FunctionSpaceType::RangeType RangeType;
+  typedef typename FunctionSpaceType::DomainType DomainType;
+  typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename FunctionSpaceType::RangeFieldType FieldType;
 
   enum { dimRange = RangeType::dimension };
   
