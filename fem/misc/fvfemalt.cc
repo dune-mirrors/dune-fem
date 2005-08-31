@@ -668,8 +668,8 @@ namespace Dune
     // set update function to zero 
     void prepareGlobal(const DiscFuncType &arg, DiscFuncType &dest)
     {
-      arg_  = &arg.argument(); 
-      dest_ = &dest.destination();    
+      arg_  = arg_; 
+      dest_ = dest_;    
       assert(arg_ != NULL); assert(dest_ != NULL);
       DiscFuncType & argTemp = const_cast<DiscFuncType &> (*arg_);
 
