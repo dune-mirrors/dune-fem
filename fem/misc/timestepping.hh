@@ -108,13 +108,15 @@ public:
     inv_ = tmp;
   }
 
+  virtual ~ExplicitEuler() {}
+
   // do one timestep 
   void next()
   {
-    int level = pd_.level();
+    int level = this->pd_.level();
 
-    DiscreteFunctionType * rhs = &pd_.rhs(this->time());
-    DiscreteFunctionType * temp = pd_.temporary();
+    DiscreteFunctionType * rhs = &this->pd_.rhs(this->time());
+    DiscreteFunctionType * temp = this->pd_.temporary();
 
     //std::stringstream stream;
     //stream << "temp" << this->level();
@@ -132,7 +134,7 @@ public:
 
     //dx.write(*temp, "inv");
 
-    this->sol_.add(*temp, dt());
+    this->sol_.add(*temp, this->dt());
 
     //dx.write(sol_, "aft");
  
@@ -174,18 +176,18 @@ public:
     // * Probably not used
     //int level = pd_.level();
 
-    DiscreteFunctionType * rhs = &pd_.rhs(this->time()+this->dt());
-    DiscreteFunctionType * temp = pd_.temporary();
+    DiscreteFunctionType * rhs = &this->pd_.rhs(this->time()+this->dt());
+    DiscreteFunctionType * temp = this->pd_.temporary();
 
     // Calculate D_1 u
-    pd_.D1()(sol_, *temp);
+    this->pd_.D1()(this->sol_, *temp);
    
     // Calculate inv(D_1 + dt D_0)(D_1 u)
-    (*inv_)(*temp, sol_);
+    (*inv_)(*temp, this->sol_);
 
     // Add rhs contribution
     (*inv_)(*rhs, *temp);
-    sol_.add(*temp, dt());
+    this->sol_.add(*temp, this->dt());
     
     // Temporary output
     /*    

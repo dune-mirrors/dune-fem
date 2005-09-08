@@ -1,5 +1,5 @@
-#ifndef __IDENTITY_HH__
-#define __IDENTITY_HH__
+#ifndef DUNE_IDENTITY_HH
+#define DUNE_IDENTITY_HH
 
 // Dune includes
 #include <dune/common/operator.hh>
@@ -7,9 +7,8 @@
 // Local includes
 #include "inverseoperatorfactory.hh"
 
-using namespace Dune;
 
-namespace Adi {
+namespace Dune {
   // ! The identity operator is a class, that maps an argument on itself
   template <class DiscreteFunctionType>
   class Identity : 
@@ -71,6 +70,6 @@ namespace Adi {
   };
 
 
-} // end namespace Adi
+} // end namespace Dune
 
 #endif

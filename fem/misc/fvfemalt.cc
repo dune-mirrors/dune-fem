@@ -766,8 +766,11 @@ namespace Dune
         
               // evaluate the local function on the middle point of the actual face
               // * Why numberInSelf, numberInNeighbor here
-              oldLf_->evaluate(en, quad_, nit.numberInSelf(), valEl_);
-              neighLf_->evaluate(*nit.outside(), quad_, nit.numberInNeighbor(), valNeigh_);
+              //oldLf_->evaluate(en, quad_, nit.numberInSelf(), valEl_);
+              //neighLf_->evaluate(*nit.outside(), quad_, nit.numberInNeighbor(), valNeigh_);
+
+              oldLf_->evaluate(en, quad_, 0, valEl_);
+              neighLf_->evaluate(*nit.outside(), quad_, 0, valNeigh_);
         
               // calculate numerical flux , g(u,v)
               double dtLocal = fluxFcn_(valEl_, valNeigh_, normal, normal, flux_);
@@ -814,7 +817,8 @@ namespace Dune
             midPoint = nit.intersectionGlobal().global(mid);
 
             // evaluate the local function on the middle point of the actual face
-            oldLf_->evaluate   ( en , quad_ , nit.numberInSelf() , valEl_ );
+            //oldLf_->evaluate   ( en , quad_ , nit.numberInSelf() , valEl_ );
+            oldLf_->evaluate   ( en , quad_ , 0 , valEl_ );
 
             if (bc.boundaryType() == BoundaryType::Dirichlet) {
            
