@@ -1,3 +1,3 @@
 # $Id$
 
-SUBDIRS = transport vectorial oli
+SUBDIRS = transport vectorial 
