@@ -7,6 +7,7 @@ namespace OEMSolver
 {
 
 //! this method is called from all solvers and is only a wrapper
+//! this method is mainly from SparseRowMatrix 
 template <class MatrixImp, class VectorType>
 void mult(const MatrixImp & m, const VectorType * x, VectorType * ret)
 {
