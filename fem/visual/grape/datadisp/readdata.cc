@@ -106,7 +106,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
       
       GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid(),*iSet);
       gridPartStack.push(gridPart);
-      space  = new GR_DiscFuncSpaceType (*gridPart, *dm);
+      space  = new GR_DiscFuncSpaceType (*gridPart);
       readDofManager(*dm,path,ntime); 
       
       fsStack.push(space);
@@ -124,7 +124,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
         GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid(),
             *indexSet);
         gridPartStack.push(gridPart);
-        globalSpace = new GR_DiscFuncSpaceType (*gridPart, *dm);
+        globalSpace = new GR_DiscFuncSpaceType (*gridPart);
         readDofManager(*dm,path,ntime); 
       }
       space = globalSpace;

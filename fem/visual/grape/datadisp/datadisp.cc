@@ -39,7 +39,7 @@ typedef AlbertaGrid<dim,dimworld> GR_GridType;
 static const int dim = 3; 
 static const int dimworld = 3; 
 
-typedef ALU3dGrid<dim,dimworld,tetra> GR_GridType;
+typedef ALU3dGrid<dim,dimworld,hexa> GR_GridType;
 #endif
 
 #include <dune/fem/dfadapt.hh>
@@ -59,18 +59,22 @@ typedef double REAL;
 #include <dune/io/visual/combinedgrapedisplay.hh>
 #include "printhelp.cc"
 
-typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
-typedef DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerType;
+//typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
+
+typedef FunctionSpace <double ,double , dim, 1 >  GR_FunctionSpaceType;
+
+//typedef DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerType;
+
+typedef DofManager<GR_GridType> GR_DofManagerType;
 typedef DofManagerFactory <GR_DofManagerType> GR_DofManagerFactoryType;
 
-//typedef GR_GridType :: LeafIndexSetType GR_IndexSetType;
-typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
+typedef GR_GridType:: Traits :: LeafIndexSet GR_IndexSetType;
+//typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
 //typedef AdaptiveLeafIndexSet<GR_GridType> GR_IndexSetType;
 
 typedef DefaultGridPart<GR_GridType,GR_IndexSetType> GR_GridPartType;
-typedef GR_GridPartType::IndexSetType GR_IndexSetType;
 
-typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,GR_GridPartType,0, GR_DofManagerType> GR_DiscFuncSpaceType;
+typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,GR_GridPartType,0> GR_DiscFuncSpaceType;
 
 typedef DFAdapt < GR_DiscFuncSpaceType > GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType , GR_DiscFuncType > GrapeDispType;
