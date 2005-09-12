@@ -81,7 +81,7 @@ if [ x$DUNEDIR != x ] ; then
       FULLDIR=`cd $FULLDIR/.. && pwd`
     fi
 
-    ACLOCALOPT="-I $FULLDIR/dune/m4/"
+    ACLOCALOPT="-I $FULLDIR/dune/m4/ -I ./" 
 fi
 
 # use the free compiler as default :-)
