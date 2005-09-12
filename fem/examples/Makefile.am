@@ -1,3 +1,3 @@
 # $Id$
 
-SUBDIRS = transport vectorial 
+SUBDIRS = transport vectorial poisson 
