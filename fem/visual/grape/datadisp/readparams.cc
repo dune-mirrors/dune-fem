@@ -31,6 +31,8 @@ int readParameterList (int argc, char **argv)
   i_start = atoi(argv[1]);
   i_end = atoi(argv[2]);
 
+  std::cout << "Read paramaeterlist ... "<< std::endl;
+
   i = 3;
   while (i < argc)
   {
@@ -132,7 +134,8 @@ int readParameterList (int argc, char **argv)
     }
     printf("i = %d, argc = %d\n", i, argc);
   }
-
+  
+  
   for(int k=0; k<n+1; k++) 
   {
     DATAINFO * dinf = info[k].datinf; 
@@ -145,6 +148,9 @@ int readParameterList (int argc, char **argv)
       dinf = dinf->next;
     }
   }
+  
+
+  std::cout << "Path = "<< path << std::endl;
 
   timeSceneInit(info, n , parallel , time_bar);
   readData(info, path,i_start,i_end,i_delta,n,timestep,parallel);

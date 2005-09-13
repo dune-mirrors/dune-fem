@@ -36,9 +36,9 @@ void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace,
     std::string tmpname ( (*it)->name() );
     if(fakename == tmpname) 
     {
-      GR_DiscFuncType * df = (*it);
-      disp.addData(*df,dinf,time); 
-      return ;
+      //GR_DiscFuncType * df = (*it);
+      //disp.addData(*df,dinf,time); 
+      break;//return ;
     }
   }
 
@@ -185,6 +185,13 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
           newpath += "_"; 
           newpath += procstr; 
         }
+	else
+	{
+	  newpath += "_-1";
+	}
+
+	std::cout << "NewPath = "<<newpath << std::endl;
+
       
         GrapeDispType *newdisp = 0;
         int anz = (n > 0) ? n : 1;

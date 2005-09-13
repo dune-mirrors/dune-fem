@@ -85,8 +85,24 @@ typedef GrapeDataDisplay<GR_GridType , GR_DiscFuncType > GrapeDispType;
 
 int main(int argc, char **argv)
 {
+
+  if (argc < 2)
+  {
+    print_help("datadisp");
+    return(0);
+  }   
+
+  if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "-help"))
+  {
+      print_help("dunedisp");
+      return(0);
+  }
+
+
+
   if(argc > 2) 
     return readParameterList(argc,argv);
   else 
     return readParameterFile(argc,argv);
+ 
 }
