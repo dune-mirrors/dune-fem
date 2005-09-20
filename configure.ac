@@ -33,10 +33,12 @@ AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  examples/poisson/Makefile
             		 examples/transport/Makefile
+                 examples/l2projection/Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
+                 tester/adaptation/Makefile
                  tester/gridcheck/unittests/Makefile
-                 tester/forward_facing/src/Makefile
+                 tester/basetest/Makefile
                  visual/Makefile
                  visual/grape/Makefile
                  visual/grape/gridview/Makefile
