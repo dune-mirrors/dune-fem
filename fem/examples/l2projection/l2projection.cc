@@ -302,7 +302,7 @@ int main (int argc, char **argv)
   char tmp[16]; sprintf(tmp,"%d",dimp);
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.al";
-  //std::string macroGridName ( "2drefel.al" );
+
 #if SGRID 
   const int step = 1;
 #else 
