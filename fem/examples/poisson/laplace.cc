@@ -96,7 +96,6 @@ public:
     for(IteratorType it = space.begin(); it != endit ; ++it)
     {
       discFunc.localFunction(*it,lf); 
-
       int numDof = lf.numDofs ();  
       for(int i=0; i<numDof; i++)
       {

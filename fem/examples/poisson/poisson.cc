@@ -15,17 +15,23 @@ static const int dimp = DIM;
 #include <dune/common/stdstreams.cc>
 
 #define SGRID 0
+#define AGRID 1
+
+using namespace Dune;
 
 #if SGRID
 #include <dune/grid/sgrid.hh>
-#else
+typedef SGrid  < dimp, dimw > GridType;
+#endif
+
+#if AGRID  
 #include <dune/grid/albertagrid.hh>
+typedef AlbertaGrid< dimp, dimw > GridType;
 #endif
 
 #include <dune/fem/discreteoperatorimp.hh>
 #include <dune/fem/lagrangebase.hh>
 #include <dune/fem/dfadapt.hh>
-//#include <dune/fem/discretefunction/adaptivefunction.hh>
 
 #include "laplace.hh"
 
@@ -34,14 +40,14 @@ static const int dimp = DIM;
 
 #include <dune/grid/common/referenceelements.hh>
 
+#if HAVE_GRAPE
 #include <dune/io/visual/grapedatadisplay.hh>
+#endif
 
 #include "../../solver/oemsolver/oemsolver.hh"
 
 // laplace operator and L2 projection and error 
 #include "laplace.cc"
-
-using namespace Dune;
 
 //***********************************************************************
 /*! Poisson problem: 
@@ -60,23 +66,10 @@ using namespace Dune;
 */
 //***********************************************************************
 
-
-
-#if SGRID
-typedef SGrid     < dimp, dimw > GridType;
-#else 
-typedef AlbertaGrid< dimp, dimw > GridType;
-#endif
-
 // forward declaration 
 class Tensor; 
 
-/* define the types we are using */
-//! dofmanger in not needed for DiscFuncArray, but we have to define it anyway 
-// see dune/fem/dofmanager.hh
-typedef DofManager<GridType> DofManagerType;
-typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
-
+//! the index set we are using 
 typedef DefaultGridIndexSet<GridType,LevelIndex> IndexSetType;
 //typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
 //typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
@@ -253,7 +246,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    grid.globalRefine (maxlevel);
 
    IndexSetType iset ( grid , grid.maxlevel () );
-   //const IndexSetType & iset = grid.leafIndexSet();
+
    std::cout << "\nSolving for " << iset.size(dimp) << " number of unkowns. \n\n";
    
    GridPartType part ( grid, iset );
@@ -302,11 +295,15 @@ double algorithm (const char * filename , int maxlevel, int turn )
    std::cout << "\nL2 Error : " << error << "\n\n";
 
    
+#if HAVE_GRAPE
+   // if grape was found then display solution 
    if(turn > 0)
    {
-     //GrapeDataDisplay < GridType , DiscreteFunctionType > grape(grid); 
-     //grape.dataDisplay( solution );
+     GrapeDataDisplay < GridType , DiscreteFunctionType > grape(grid); 
+     grape.dataDisplay( solution );
    }
+#endif
+
    return error;
 }
 
