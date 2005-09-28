@@ -797,7 +797,7 @@ namespace Dune
               }
 
               // add local flux to update function 
-              for(int l=0; l< oldLf_->numberOfDofs(); l++) {
+              for(int l=0; l< oldLf_->numDofs(); l++) {
                 // * bugfix? multiply with h as well
                 (*up_)[l]      += vol_1 * flux_[l] * h;
                 (*upNeigh_)[l] -= nvol_1  * flux_[l] * h;
@@ -842,7 +842,7 @@ namespace Dune
             // add local flux to update function 
             // * bugfix? multiply with area as well...
             flux_ *= vol_1 * h;
-            for(int l=0; l<oldLf_->numberOfDofs(); l++)
+            for(int l=0; l<oldLf_->numDofs(); l++)
               {
                 (*up_)[ l ] += flux_[l];
               }

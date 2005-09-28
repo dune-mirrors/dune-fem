@@ -133,7 +133,7 @@ template <class FunctionType>
       BaseFunctionSetType& baseSet =
         df.getFunctionSpace().getBaseFunctionSet(*it);
 
-      for (int i = 0; i < baseSet.getNumberOfBaseFunctions(); ++i) {
+      for (int i = 0; i < baseSet.numBaseFunctions(); ++i) {
         double sum(0.0);
         double norm = 0.0;
         for (int l = 0; l < quad.nop(); ++l) {
@@ -201,7 +201,8 @@ template <class FunctionType>
 
     LevelIterator endit = grid.template lend<0>(level);
     for (LevelIterator it = grid.template lbegin<0>(level); it != endit; ++it){
-    assert(df.getFunctionSpace().getBaseFunctionSet(*it).getNumberOfBaseFunctions() == nBaseFct);
+    assert(df.getFunctionSpace().getBaseFunctionSet(*it).numBaseFunctions() 
+           == nBaseFct);
 
       QuadType quad(*it);
       df.localFunction(*it, lf);
@@ -271,7 +272,7 @@ template <class FunctionType>
       const typename FunctionSpaceType::BaseFunctionSetType & set = 
             functionSpace_.getBaseFunctionSet(*it);
 
-      for(int i=0; i<lf.numberOfDofs(); i++)
+      for(int i=0; i<lf.numDofs(); i++)
       {
         for(int qP = 0; qP < quad.nop(); qP++)
         {
@@ -318,7 +319,7 @@ template <class FunctionType>
       EntityType & en = (*it);
       discFunc.localFunction ( en , lf );
 
-      int numDof = lf.numberOfDofs ();  
+      int numDof = lf.numDofs ();  
       for(int i=0; i<numDof; i++)
       {
         sum = 0.0;
@@ -364,7 +365,7 @@ public:
     {
       discFunc.localFunction(*it,lf); 
 
-      int numDof = lf.numberOfDofs ();  
+      int numDof = lf.numDofs ();  
       for(int i=0; i<numDof; i++)
       {
         f.evaluate(it->geometry()[i],ret);
