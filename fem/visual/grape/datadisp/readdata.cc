@@ -58,11 +58,20 @@ void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace,
 GrapeDispType * readGrid(const char * path, const char * filename, 
                          double & time , int ntime, int myRank )
 {
+
+#if SGRID
+  GR_GridType * grid = new GR_GridType ();
+  grid->globalRefine(9);
+#else
+
   GR_GridType * grid = new GR_GridType (
 #ifdef _ALU3DGRID_PARALLEL_
   MPI_COMM_WORLD 
 #endif
       );
+
+#endif
+
   gridStack.push(grid);
 
   assert(filename);
@@ -71,7 +80,11 @@ GrapeDispType * readGrid(const char * path, const char * filename,
   fn += filename;
   
   std::cout << "Make new Grapedisplay for grid = " << fn << "\n";
+#if SGRID
+
+#else
   dataIO.readGrid( *grid, fn , time , ntime );
+#endif
   
   GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
   dispStack.push(disp);
@@ -217,6 +230,7 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
       t_act = f_t_start+ntime*timestep;
     }
     printf("actual time: %f (timestep size: %e)\n\n",t_act,timestep);
+
 
     if (ntime == i_start) t_start = t_end = t_act;
     t_start = std::min(t_start, t_act);

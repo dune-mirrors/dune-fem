@@ -150,11 +150,12 @@ int readParameterList (int argc, char **argv)
   }
   
 
-  std::cout << "Path = "<< path << std::endl;
+  std::cout << "MyPath = "<< path << std::endl;
 
   timeSceneInit(info, n , parallel , time_bar);
   readData(info, path,i_start,i_end,i_delta,n,timestep,parallel);
   
+
   // run grape 
   displayTimeScene(info,parallel);
 

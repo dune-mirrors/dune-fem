@@ -9,15 +9,15 @@
 using namespace Dune;
 
 #ifndef DIM 
-#define DIM 3
+#define DIM 2
 #endif
 #ifndef DIM_OF_WORLD
-#define DIM_OF_WORLD 3
+#define DIM_OF_WORLD 2
 #endif
 
-#define AGRID 0 
-#define BGRID 1 
-#define SGRID 0
+#define AGRID 0
+#define BGRID 0 
+#define SGRID 1
 
 //#include <dune/grid/sgrid.hh>
 
@@ -42,6 +42,16 @@ static const int dimworld = 3;
 typedef ALU3dGrid<dim,dimworld,hexa> GR_GridType;
 #endif
 
+
+#if SGRID 
+#include <dune/grid/sgrid.hh>
+
+static const int dim = DIM; 
+static const int dimworld = DIM_OF_WORLD; 
+
+typedef SGrid <dim, dimworld> GR_GridType;
+#endif
+
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/lagrangebase.hh>
 #include <dune/fem/dfadapt.hh>
@@ -61,27 +71,31 @@ typedef double REAL;
 
 //typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
 
-typedef FunctionSpace <double ,double , dim, 1 >  GR_FunctionSpaceType;
+typedef FunctionSpace <double ,double , dim, 1 >        GR_FunctionSpaceType;
 
-//typedef DofManager<GR_GridType,DataCollectorInterface<GR_GridType,GR_GridType::ObjectStreamType> > GR_DofManagerType;
 
-typedef DofManager<GR_GridType> GR_DofManagerType;
-typedef DofManagerFactory <GR_DofManagerType> GR_DofManagerFactoryType;
+typedef DofManager<GR_GridType>                         GR_DofManagerType;
+typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType;
 
-typedef GR_GridType:: Traits :: LeafIndexSet GR_IndexSetType;
-//typedef DefaultGridIndexSet<GR_GridType, GlobalIndex > GR_IndexSetType;
-//typedef AdaptiveLeafIndexSet<GR_GridType> GR_IndexSetType;
+#if SGRID 
+  typedef DefaultGridIndexSet<GR_GridType,LevelIndex>   GR_IndexSetType;
+#else
+  typedef GR_GridType :: Traits :: LeafIndexSet         GR_IndexSetType;
+#endif
 
-typedef DefaultGridPart<GR_GridType,GR_IndexSetType> GR_GridPartType;
 
-typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,GR_GridPartType,0> GR_DiscFuncSpaceType;
+typedef DefaultGridPart<GR_GridType,GR_IndexSetType>    GR_GridPartType;
 
-typedef DFAdapt < GR_DiscFuncSpaceType > GR_DiscFuncType;
-typedef GrapeDataDisplay<GR_GridType , GR_DiscFuncType > GrapeDispType;
+typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,
+				     GR_GridPartType,0> GR_DiscFuncSpaceType;
+
+typedef DFAdapt < GR_DiscFuncSpaceType >                GR_DiscFuncType;
+typedef GrapeDataDisplay<GR_GridType , GR_DiscFuncType> GrapeDispType;
 
 #include "readdata.cc"
 #include "readparams.cc" 
 #include "readfile.cc" 
+
 
 int main(int argc, char **argv)
 {
