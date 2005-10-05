@@ -8,7 +8,7 @@ static void print_help(const char *funcName)
   printf("[-m grid] [-s df] [-v vecdf] [[-s drv] [-v drdv]]\n");
 
   printf("%s reads a sequence of %ddgrids with discretefunctions\n",            
-   funcName, DIM);
+   funcName, DUNE_PROBLEM_DIM);
   printf("      and displays all data with GRAPE\n");
   printf("options:\n");
   printf("   -h or -help: display this help\n");

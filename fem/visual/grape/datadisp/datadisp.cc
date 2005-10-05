@@ -8,16 +8,9 @@
 
 using namespace Dune;
 
-#ifndef DIM 
-#define DIM 2
-#endif
-#ifndef DIM_OF_WORLD
-#define DIM_OF_WORLD 2
-#endif
-
-#define AGRID 0
+#define AGRID 1 
 #define BGRID 0 
-#define SGRID 1
+#define SGRID 0
 
 //#include <dune/grid/sgrid.hh>
 
@@ -26,13 +19,14 @@ using namespace Dune;
 #if AGRID 
 #include <dune/grid/albertagrid.hh>
 
-static const int dim = DIM; 
-static const int dimworld = DIM_OF_WORLD; 
+static const int dim = DUNE_PROBLEM_DIM; 
+static const int dimworld = DUNE_WORLD_DIM; 
 
 typedef AlbertaGrid<dim,dimworld> GR_GridType;
 #endif
 
 #if BGRID 
+
 #include <dune/grid/alu3dgrid/includecc.cc>
 #include <dune/grid/alu3dgrid.hh>
 
@@ -69,9 +63,9 @@ typedef double REAL;
 #include <dune/io/visual/combinedgrapedisplay.hh>
 #include "printhelp.cc"
 
-//typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
+typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
 
-typedef FunctionSpace <double ,double , dim, 1 >        GR_FunctionSpaceType;
+//typedef FunctionSpace <double ,double , dim, 1 >        GR_FunctionSpaceType;
 
 
 typedef DofManager<GR_GridType>                         GR_DofManagerType;
@@ -81,6 +75,7 @@ typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType
   typedef DefaultGridIndexSet<GR_GridType,LevelIndex>   GR_IndexSetType;
 #else
   typedef GR_GridType :: Traits :: LeafIndexSet         GR_IndexSetType;
+  //typedef DefaultGridIndexSet<GR_GridType,GlobalIndex>   GR_IndexSetType;
 #endif
 
 

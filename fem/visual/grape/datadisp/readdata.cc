@@ -200,7 +200,7 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
         }
 	else
 	{
-	  newpath += "_-1";
+	  //newpath += "_-1";
 	}
 
 	std::cout << "NewPath = "<<newpath << std::endl;
@@ -277,10 +277,13 @@ void readDataInfo(std::string path, DATAINFO * dinf, bool parallel = false)
   char dummy[2048];
   std::cout << "Reading data base for " << dinf->name << "! \n";
   std::string dataname(path); 
-  if(!parallel) sprintf(dummy,"_-1");
-  else sprintf(dummy,"_0"); 
-  dataname += dummy;
-  dataname += "/"; dataname += dinf->name;
+  if(parallel) 
+  { 
+    sprintf(dummy,"_0"); 
+    dataname += dummy;
+  }
+  dataname += "/"; 
+  dataname += dinf->name;
 
   int fakedata = 1;
   bool fake = readParameter(dataname,"Fake_data",fakedata);
