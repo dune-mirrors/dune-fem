@@ -1,32 +1,38 @@
-#ifndef DIM_OF_WORLD 
-static const int dimw = 2;
-#else
-static const int dimw = DIM_OF_WORLD;
-#endif
-
-#ifndef DIM
-static const int dimp = 2;
-#else
-static const int dimp = DIM;
-#endif
-
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 
+//static const int dimw = DUNE_WORLD_DIM;
+//static const int dimp = DUNE_PROBLEM_DIM;
+
 #define SGRID 0
-#define AGRID 1
+#define AGRID 0
+#define BGRID 1
 
 using namespace Dune;
 
 #if SGRID
 #include <dune/grid/sgrid.hh>
 typedef SGrid  < dimp, dimw > GridType;
+static const int refinestep = 1;
 #endif
 
 #if AGRID  
 #include <dune/grid/albertagrid.hh>
 typedef AlbertaGrid< dimp, dimw > GridType;
+static const int refinestep = dimw;
+#endif
+
+#if BGRID  
+#include <dune/grid/alu3dgrid/includecc.cc>
+#include <dune/grid/alu3dgrid.hh>
+
+static const int dimw = 3;
+static const int dimp = 3;
+
+typedef ALU3dGrid < dimp, dimw , tetra > GridType;
+
+static const int refinestep = 1;
 #endif
 
 #include <dune/fem/discreteoperatorimp.hh>
@@ -53,14 +59,17 @@ typedef AlbertaGrid< dimp, dimw > GridType;
 /*! Poisson problem: 
 
   This is an example how to solve the equation on 
-  \f[\Omega = (0,1)^2 \f]
+  \f[\Omega = (0,1)^dimw \f]
 
   \f[ -\triangle u  = f \ \ \ in \Omega \f]
   \f[  \qquad u = 0  \ \ \ on  \partial\Omega \f]
-  \f[ f(x,y) = 2 ( x + y - x^2 - y^2 ) \f]
+  \f[ f(x,y,z) = 2 (x-x^2) (y-y^2) +
+                 2 (z-z^2) (y-y^2) +    
+                 2 (x-x^2) (z-z^2)
+  \f]
 
   An exact solution to this problem is given by 
-  \f[ u(x,y) = x ( 1 - x) y ( 1 - y ) \f]
+  \f[ u(x,y,z) = ( x - x^2 ) ( y - y^2 ) ( z - z^2 ) \f]
 
   with the finite element method using lagrangian elements of polynor order 1.
 */
@@ -99,9 +108,9 @@ typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
 //typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
 /****************************************/
 // or ../../solvers/oemsolver/oemsolvers.hh
-//typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
+typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
-typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
+//typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 
 //! define the type of mapping which is used by inverseOperator 
@@ -117,13 +126,23 @@ public:
   RHSFunc (FuncSpace &f)
     : Function <  FuncSpace , RHSFunc > (f) {}
    
-  // f(x,y) = 2 * (x + y - x*x -y*y )
+  //  f(x,y,z) = 2 (x-x^2) (y-y^2) +
+  //             2 (z-z^2) (y-y^2) +              
+  //             2 (x-x^2) (z-z^2)
   void evaluate (const DomainType & x , RangeType & ret) 
   {
+    enum { dim = DomainType::dimension };
     ret = 0.0;
-    for(int i=0; i<DomainType::dimension; i++)
-      ret += (x[i] -  SQR(x[i])); 
-    ret *= 2.0;
+    for(int i=0; i<dim; i++)
+    { 
+      RangeType tmp = 2.0;
+      for(int j=1; j<dim; j++)
+      {
+        int idx = (i+j) % dim;
+        tmp *= (x[idx] - SQR(x[idx]));
+      }
+      ret += tmp;
+    }
   }
 };
 
@@ -136,12 +155,12 @@ class ExactSolution : public Function < FuncSpace , ExactSolution >
 public:
   ExactSolution (FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
  
-  //! u(x,y) = x*(1-x)*y*(1-y)
+  //! u(x,y,z) = (x-x^2)*(y-y^2)*(z-z^2)
   void evaluate (const DomainType & x , RangeType & ret) 
   {
     ret = 1.0;
     for(int i=0; i<DomainType::dimension; i++)
-      ret *= x[i]*(1.0 -x[i]);
+      ret *= ( x[i] - SQR(x[i]) );
   }
   void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) 
   {
@@ -181,8 +200,6 @@ template <class EntityType, class DiscreteFunctionType>
 void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
 {
   typedef typename EntityType::IntersectionIterator NeighIt;
-  typedef typename NeighIt::BoundaryEntity BoundaryEntityType;
-
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType::GridType GridType;
 
@@ -208,7 +225,7 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
         assert( novx == dim );
         for(int j=0; j< novx ; j++)
         {
-          int vx = refElem.subentity(face,1, j , dim );
+          int vx = refElem.subEntity(face,1, j , dim );
           int row = space.mapToGlobal( en , vx );
           dit[row] = 0.0;
         }
@@ -220,7 +237,7 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
         int novx = refElem.size( face, 1 , dim );
         for(int j=0; j< novx ; j++)
         {
-          int vx = refElem.subentity(face,1, j , dim );
+          int vx = refElem.subEntity(face,1, j , dim );
           int row = space.mapToGlobal( en , vx);
           dit[row] = 0.0;
         }
@@ -245,7 +262,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    grid.globalRefine (maxlevel);
 
-   IndexSetType iset ( grid , grid.maxlevel () );
+   IndexSetType iset ( grid , grid.maxLevel () );
 
    std::cout << "\nSolving for " << iset.size(dimp) << " number of unkowns. \n\n";
    
@@ -320,24 +337,27 @@ int main (int argc, char **argv)
     fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
     exit(1);
   }
+  
   int ml = atoi( argv[1] );
   double error[2];
+
+#if AGRID
   char tmp[16]; sprintf(tmp,"%d",dimp);
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.al";
-  //std::string macroGridName ( "2drefel.al" );
-#if SGRID 
-  const int step = 1;
-#else 
-  const int step = 2;
 #endif
+
+#if BGRID 
+  std::string macroGridName ("cube.tetra");
+#endif
+  //std::string macroGridName ( "2drefel.al" );
   
-  ml -= step;
+  ml -= refinestep;
   if(ml < 0) ml = 0;
   for(int i=0; i<2; i++)
   {
     error[i] = algorithm ( macroGridName.c_str() ,  ml , i);
-    ml += step ;
+    ml += refinestep ;
   }
   double eoc = log( error[0]/error[1]) / M_LN2; 
   std::cout << "EOC = " << eoc << " \n";

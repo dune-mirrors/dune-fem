@@ -119,11 +119,11 @@ namespace Dune
                     baseSet.jacobian(i,quad,pt,grad); 
                     
                     // calc Jacobian inverse before volume is evaluated 
-                    const FieldMatrix<double,dim,dim>& inv = entity.geometry().jacobianInverse(quad.point(pt));
+                    const FieldMatrix<double,dim,dim>& inv = entity.geometry().jacobianInverseTransposed(quad.point(pt));
                     const double vol = entity.geometry().integrationElement(quad.point(pt)); 
             
                     // multiply with transpose of jacobian inverse 
-                    grad[0] = FMatrixHelp :: multTransposed ( inv, grad[0] );
+                    grad[0] = FMatrixHelp :: mult ( inv, grad[0] );
                     
                     if( i != j ) 
                         {
@@ -160,7 +160,7 @@ namespace Dune
             for ( int pt=0; pt < quad.nop(); pt++ ) {
 
                 // calc Jacobian inverse before volume is evaluated 
-                const FieldMatrix<double,dim,dim>& inv = entity.geometry().jacobianInverse(quad.point(pt));
+                const FieldMatrix<double,dim,dim>& inv = entity.geometry().jacobianInverseTransposed(quad.point(pt));
                 const double vol = entity.geometry().integrationElement(quad.point(pt));
 
                 for(int i=0; i<matSize; i++) {
@@ -168,7 +168,7 @@ namespace Dune
                     baseSet.jacobian(i,quad,pt,mygrad[i]); 
       
                     // multiply with transpose of jacobian inverse 
-                    mygrad[i][0] = FMatrixHelp :: multTransposed ( inv,mygrad[i][0] );
+                    mygrad[i][0] = FMatrixHelp :: mult ( inv,mygrad[i][0] );
                 }
                     
                 typename FunctionSpaceType::RangeType ret;
