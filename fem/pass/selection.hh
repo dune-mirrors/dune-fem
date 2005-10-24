@@ -68,8 +68,10 @@ namespace Dune {
 
   template <class Head, class Tail>
   struct MaxIndex<Pair<Head, Tail> > {
-    enum { value = (Head::value > MaxIndex<Tail>::value ?
-                    Head::value : MaxIndex<Tail>::value) };
+    enum { value = (static_cast<int>(Head::value) > 
+                    static_cast<int>(MaxIndex<Tail>::value) ?
+                    static_cast<int>(Head::value) : 
+                    static_cast<int>(MaxIndex<Tail>::value)) };
   };
 
   template <>

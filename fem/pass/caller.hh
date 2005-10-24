@@ -19,7 +19,8 @@ namespace Dune {
   struct Filter 
   {
     typedef CompileTimeChecker<
-      MaxIndex<SelectorImp>::value < Length<ArgTupleImp>::value
+      static_cast<int>(MaxIndex<SelectorImp>::value) < 
+      static_cast<int>(Length<ArgTupleImp>::value)
     > Maximal_index_of_selector_exceeds_argument_length;
 
     typedef SelectorImp SelectorType;
@@ -250,7 +251,6 @@ namespace Dune {
     //! Applies the setting on every DiscreteFunction/LocalFunction pair.
     template <class DFPointer, class LFType>
     void visit(DFPointer df, LFType& lf) {
-      std::cout << "df->localFunction" << std::endl;
       lf = df->localFunction(en_);
     }
 
@@ -279,7 +279,6 @@ namespace Dune {
     //! Triggers the evaluation of a local function
     template <class LFType, class RangeType>
     void visit(LFType& lf, RangeType& res) {
-      std::cout << "lf.evaluateLocal" << std::endl;
       lf.evaluateLocal(en_, x_, res);
     }
 
@@ -315,6 +314,45 @@ namespace Dune {
     template <class LFType, class RangeType>
     void visit(LFType& lf, RangeType& res) {
       lf.evaluate(en_, quad_, quadPoint_, res);
+    }
+
+  private:
+    EntityImp& en_;
+    QuadratureImp& quad_;
+    int quadPoint_;
+  };
+
+  template <class EntityImp, class DomainImp>
+  class LocalFunctionEvaluateJacobianLocal {
+  public:
+    LocalFunctionEvaluateJacobianLocal(EntityImp& en, DomainImp& x) :
+      en_(en),
+      x_(x)
+    {}
+
+    template <class LFType, class JRangeType>
+    void visit(LFType& lf, JRangeType& res) {
+      lf.jacobianLocal(en_, x_, res);
+    }
+
+  private:
+    EntityImp& en_;
+    DomainImp& x_;
+  };
+  
+  template <class EntityImp, class QuadratureImp>
+  class LocalFunctionEvaluateJacobianQuad {
+  public:
+    LocalFunctionEvaluateJacobianQuad(EntityImp& en, QuadratureImp& quad,
+                                      int quadPoint) :
+      en_(en),
+      quad_(quad),
+      quadPoint_(quadPoint)
+    {}
+
+    template <class LFType, class JRangeType>
+    void visit(LFType& lf, JRangeType& res) {
+      lf.jacobian(en_, quad_, quadPoint_, res);
     }
 
   private:
