@@ -98,8 +98,8 @@ namespace Dune
         //! Prepares the local operator before calling apply()
         void prepareGlobal ( const DiscFunctionType &arg, DiscFunctionType &dest ) 
         {
-            this->arg_  = &arg.argument();
-            this->dest_ = &dest.destination();
+            this->arg_  = &arg;
+            this->dest_ = &dest;
             assert(this->arg_ != 0); assert(this->dest_ != 0);
             dest.clear();
         }

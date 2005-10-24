@@ -2,23 +2,25 @@
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 
-//static const int dimw = DUNE_WORLD_DIM;
-//static const int dimp = DUNE_PROBLEM_DIM;
-
 #define SGRID 0
-#define AGRID 0
-#define BGRID 1
+#define AGRID 1
+#define BGRID 0
 
 using namespace Dune;
 
 #if SGRID
 #include <dune/grid/sgrid.hh>
+static const int dimw = DUNE_WORLD_DIM;
+static const int dimp = DUNE_PROBLEM_DIM;
 typedef SGrid  < dimp, dimw > GridType;
 static const int refinestep = 1;
 #endif
 
 #if AGRID  
 #include <dune/grid/albertagrid.hh>
+static const int dimw = DUNE_WORLD_DIM;
+static const int dimp = DUNE_PROBLEM_DIM;
+
 typedef AlbertaGrid< dimp, dimw > GridType;
 static const int refinestep = dimw;
 #endif
@@ -38,6 +40,8 @@ static const int refinestep = 1;
 #include <dune/fem/discreteoperatorimp.hh>
 #include <dune/fem/lagrangebase.hh>
 #include <dune/fem/dfadapt.hh>
+#include <dune/fem/discfuncarray.hh>
+#include <dune/fem/discretefunction/adaptivefunction.hh>
 
 #include "laplace.hh"
 
@@ -96,8 +100,8 @@ typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 > FuncSpace
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
-typedef DFAdapt < FuncSpaceType > DiscreteFunctionType;
-//typedef AdaptiveDiscreteFunction < FuncSpaceType > DiscreteFunctionType;
+//typedef DFAdapt < FuncSpaceType > DiscreteFunctionType;
+typedef AdaptiveDiscreteFunction < FuncSpaceType > DiscreteFunctionType;
 //typedef DiscFuncArray < FuncSpaceType > DiscreteFunctionType;
 
 //! define the discrete laplace operator, see ./fem.cc
@@ -105,10 +109,10 @@ typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
 // see dune/fem/inverseoperators.hh 
-//typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
+typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
 /****************************************/
 // or ../../solvers/oemsolver/oemsolvers.hh
-typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
+//typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;

@@ -47,12 +47,13 @@ public:
     FixedOrderQuad <typename FunctionSpaceType::RangeFieldType,
               typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
               
-    LocalFuncType lf = discFunc.newLocalFunction(); 
+    //LocalFuncType lf = discFunc.newLocalFunction(); 
     
     for( ; it != endit ; ++it)
     {
-      discFunc.localFunction( *it , lf ); 
-      
+      //discFunc.localFunction( *it , lf ); 
+      LocalFuncType lf = discFunc.localFunction( *it ); 
+
       const typename FunctionSpaceType::BaseFunctionSetType & set = 
             space.getBaseFunctionSet(*it);
 
@@ -90,12 +91,13 @@ public:
       
     typedef typename FunctionSpaceType::RangeType RangeType;
     RangeType ret (0.0);
-    LocalFuncType lf = discFunc.newLocalFunction(); 
+    //LocalFuncType lf = discFunc.newLocalFunction(); 
 
     IteratorType endit = space.end(); 
     for(IteratorType it = space.begin(); it != endit ; ++it)
     {
-      discFunc.localFunction(*it,lf); 
+      //discFunc.localFunction(*it,lf); 
+      LocalFuncType lf = discFunc.localFunction(*it); 
       int numDof = lf.numDofs ();  
       for(int i=0; i<numDof; i++)
       {
@@ -130,7 +132,7 @@ public:
     RangeType phi (0.0);
 
     double sum = 0.0;
-    LocalFuncType lf = discFunc.newLocalFunction(); 
+    //LocalFuncType lf = discFunc.newLocalFunction(); 
     
     IteratorType it    = space.begin();
     IteratorType endit = space.end();
@@ -143,7 +145,7 @@ public:
     
     for(; it != endit ; ++it)
     {
-      discFunc.localFunction(*it,lf); 
+      LocalFuncType lf = discFunc.localFunction(*it); 
       for(int qP = 0; qP < quad.nop(); qP++)
       {
         double det = (*it).geometry().integrationElement(quad.point(qP));
