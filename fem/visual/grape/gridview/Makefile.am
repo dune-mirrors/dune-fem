@@ -6,11 +6,8 @@ if GRAPE
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 
-noinst_PROGRAMS = gridview gridtest
-#noinst_PROGRAMS = gridtest
+noinst_PROGRAMS = gridview
 gridview_SOURCES = gridview.cc 
-gridtest_SOURCES = gridtest.cc 
 
 EXTRA_DIST = gridview.cc
-
 endif
