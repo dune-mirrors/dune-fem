@@ -6,9 +6,23 @@
 
 namespace Dune {
   void PassHelper_Test::run() {
+    selectorTest();
     filterTest();
     tupleConverterTest();
-    functorTest();
+  }
+
+  void PassHelper_Test::selectorTest() {
+    typedef Selector<0, 2, 1>::Base Selector0;
+    typedef Selector<-2, -3>::Base NegativeSelector;
+
+    const int s0 = MaxIndex<Selector0>::value;
+    _test(s0 == 2);
+
+    const int ns = MaxIndex<NegativeSelector>::value;
+    _test(ns == -1);
+
+    const int tmp = MaxIndex<double>::value;
+    _test(tmp == -1);
   }
 
   void PassHelper_Test::filterTest() {
@@ -52,7 +66,7 @@ namespace Dune {
     typedef LocalFunctionCreator<DFPairType>::ResultType LFTupleType;
     typedef Tuple<LF0, LF1, LF2>::FirstPair LFPairType;
     
-    typedef RangeVectorCreator<LFPairType>::ResultType RTupleType;
+    typedef Creator<RangeTypeEvaluator, LFPairType>::ResultType RTupleType;
     typedef Tuple<R0, R1, R2>::FirstPair RPairType;
 
     typedef Fix0::GridType GridType;
@@ -75,7 +89,7 @@ namespace Dune {
     const bool sameLf = SameType<LFPairType, LFTupleType>::value;
     _test(sameLf == true);
 
-    RTupleType rt = RangeVectorCreator<LFPairType>::apply(lft);
+    RTupleType rt = Creator<RangeTypeEvaluator, LFPairType>::apply(lft);
     //RangeVectorCreator<LFPairType> rc(lft);
     //RTupleType rt = rc.evaluate();
 
@@ -83,72 +97,5 @@ namespace Dune {
     _test(sameR == true);
   }
 
-  void PassHelper_Test::functorTest() {
-    typedef Lagrange_Fixture<0> Fix0;
-    typedef Lagrange_Fixture<1> Fix1;
-    typedef Lagrange_Fixture<0> Fix2;
-
-    typedef DFAdapt<Fix0::DiscreteFunctionSpaceType> DF0;
-    typedef DFAdapt<Fix1::DiscreteFunctionSpaceType> DF1;
-    typedef DFAdapt<Fix2::DiscreteFunctionSpaceType> DF2;
-
-    typedef DF0::LocalFunctionType LF0;
-    typedef DF1::LocalFunctionType LF1;
-    typedef DF2::LocalFunctionType LF2;
-
-    typedef LF0::RangeType R0;
-    typedef LF1::RangeType R1;
-    typedef LF2::RangeType R2;
-
-    typedef LF0::DomainType DomainType;
-
-    typedef Tuple<DF0*, DF1*, DF2*> DFTupleType;
-    typedef DFTupleType::FirstPair DFPairType;
-
-    typedef LocalFunctionCreator<DFPairType>::ResultType LFTupleType;
-    typedef Tuple<LF0, LF1, LF2>::FirstPair LFPairType;
-    
-    typedef RangeVectorCreator<LFPairType>::ResultType RTupleType;
-    typedef Tuple<R0, R1, R2>::FirstPair RPairType;
-
-    typedef Fix0::GridType GridType;
-    typedef GridType::Codim<0>::LeafIterator LeafIterator;
-    typedef LeafIterator::Entity Entity;
-
-    GridType grid(gridFile_.c_str());
-    Fix0 fix0(grid);
-    Fix1 fix1(grid);
-    Fix2 fix2(grid);
-
-    DF0 df0("null", fix0.space());
-    DF1 df1("eins", fix1.space());
-    DF2 df2("zwei", fix2.space());
-
-    LeafIterator it = grid.leafbegin<0>();
-    DomainType x(0.2);
-
-    DF0::LocalFunctionType lf = df0.localFunction(*it);
-     
-    DFTupleType dft(&df0, &df1, &df2);
-   
-    LFTupleType lft = LocalFunctionCreator<DFPairType>::apply(dft);
-
-    //LFTupleType lft2 = LocalFunctionCreator2::apply(dft);
-
-    RTupleType rt = RangeVectorCreator<LFPairType>::apply(lft);
-
-    ForEachValuePair<DFTupleType, LFTupleType> forEachDFandLf(dft, lft);
-    ForEachValuePair<LFTupleType, RTupleType> forEachLFandR(lft, rt);
-
-    LocalFunctionSetter<Entity> setter(*it);      
-    forEachDFandLf.apply(setter);
-
-    LocalFunctionEvaluateLocal<Entity, DomainType> evaluator(*it, x);
-    forEachLFandR.apply(evaluator);   
-  }
-
-  void PassHelper_Test::callerTest() {
-    _fail("not implemented");
-  }
 
 } // end namespace Dune

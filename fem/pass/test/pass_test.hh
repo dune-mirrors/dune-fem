@@ -17,6 +17,7 @@ namespace Dune {
     virtual void run();
 
   private:
+    void functorTest();
     void dummyTest();
     void dgTest();
 

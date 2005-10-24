@@ -3,8 +3,12 @@
 
 #include "test.hh"
 
-#include <dune/fem/pass/selection.hh>
-#include <dune/fem/pass/caller.hh>
+#include "../selection.hh"
+#include "../caller.hh"
+
+//- includes in dune
+//#include <dune/fem/pass/selection.hh>
+//#include <dune/fem/pass/caller.hh>
 
 #include <dune/fem/dfadapt.hh>
 #include <dune/common/utility.hh>
@@ -21,11 +25,10 @@ namespace Dune {
     virtual void run();
 
   private:
+    void selectorTest();
     void filterTest();
     void tupleConverterTest();
-    void functorTest();
-    void callerTest();
-
+  
   private:
     std::string gridFile_;
   };

@@ -18,6 +18,10 @@ namespace Dune {
   template <class ArgTupleImp, class SelectorImp>
   struct Filter 
   {
+    typedef CompileTimeChecker<
+      MaxIndex<SelectorImp>::value < Length<ArgTupleImp>::value
+    > Maximal_index_of_selector_exceeds_argument_length;
+
     typedef SelectorImp SelectorType;
     //! The index of the extracted element.
     enum { index = ElementType<0, SelectorType>::Type::value };
@@ -66,14 +70,23 @@ namespace Dune {
   struct DFTypeEvaluator {
     typedef typename TypeTraits<DFType>::PointeeType::LocalFunctionType Type;
   };
-
+ 
   /**
-   * @brief Extracts the type of the Range vector pointers from a tuple of 
+   * @brief Extracts the type of the Range vector from a tuple of 
    * LocalFunction pointers.
    */
   template <class LFType>
   struct RangeTypeEvaluator {
     typedef typename LFType::RangeType Type;
+  };
+
+  /**
+   * @brief Extracts the type of the jacobian range from a tuple of 
+   * LocalFunction pointers.
+   */
+  template <class LFType>
+  struct JacobianRangeTypeEvaluator {
+    typedef typename LFType::JacobianRangeType Type;
   };
 
 
@@ -164,57 +177,57 @@ namespace Dune {
   };
 
   /**
-   * @brief Generates a tuple with range vectors
+   * @brief Generates a tuple based on types defined by another tuple.
    */
-  template <class LFTupleType>
-  class RangeVectorCreator {};
+  template <template <class> class TypeEvaluator, class LFTupleType>
+  class Creator {};
   
   /**
-   * @brief Specialisation for standard element
+   * @brief Specialisation for standard element.
    */
-  template <class Head, class Tail>
-  class RangeVectorCreator<Pair<Head, Tail> > {
+  template <template <class> class TypeEvaluator, class Head, class Tail>
+  class Creator<TypeEvaluator, Pair<Head, Tail> > {
   private:
-    template <class T>
-    friend class RangeVectorCreator;
-    typedef typename ForEachType<RangeTypeEvaluator, Tail>::Type TailType;
+    template <template <class> class TE, class T>
+    friend class Creator;
+    typedef typename ForEachType<TypeEvaluator, Tail>::Type TailType;
   
   public:
     typedef typename ForEachType<
-      RangeTypeEvaluator, Pair<Head, Tail> >::Type ResultType;
-    typedef typename Head::RangeType RangeType;
+      TypeEvaluator, Pair<Head, Tail> >::Type ResultType;
+    typedef typename TypeEvaluator<Head>::Type ValueType;
 
   public:
     static inline ResultType apply() {
-      return ResultType(RangeType(0.0), 
-                        RangeVectorCreator<Tail>::apply());
+      return ResultType(ValueType(0.0), 
+                        Creator<TypeEvaluator, Tail>::apply());
     }
 
     static inline ResultType apply(Pair<Head, Tail>& pairs) {
-      return ResultType(RangeType(0.0), 
-                        RangeVectorCreator<Tail>::apply(pairs.second()));
+      return ResultType(ValueType(0.0), 
+                        Creator<TypeEvaluator, Tail>::apply(pairs.second()));
     }
   };
   
   /**
    * @brief Specialisation for last element
    */
-  template <class Head>
-  class RangeVectorCreator<Pair<Head, Nil> > {
-    template <class T>
-    friend class RangeVectorCreator;
+  template <template <class> class TypeEvaluator, class Head>
+  class Creator<TypeEvaluator, Pair<Head, Nil> > {
+    template <template <class> class TE, class T>
+    friend class Creator;
 
   public:
-    typedef typename Head::RangeType RangeType;
-    typedef Pair<RangeType, Nil> ResultType;
+    typedef typename TypeEvaluator<Head>::Type ValueType;
+    typedef Pair<ValueType, Nil> ResultType;
 
   public:
     static inline ResultType apply() {
-      return ResultType(RangeType(0.0), Nil());
+      return ResultType(ValueType(0.0), Nil());
     }
 
     static inline ResultType apply(Pair<Head, Nil>& pairs) {
-      return ResultType(RangeType(0.0), Nil());
+      return ResultType(ValueType(0.0), Nil());
     }
   };
 

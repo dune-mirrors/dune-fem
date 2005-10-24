@@ -61,51 +61,21 @@ namespace Dune {
     Selector();
   };
 
-  /*
-  template <class ArgumentImp, class SelectorImp, int N>
-  struct ArgumentElementHelper {
-    typedef typename ElementType<ElementType<N, typename SelectorImp::Base>::Type::value, ArgumentImp>::Type Type;
+  template <class SelectorType>
+  struct MaxIndex {
+    enum { value = -1 };
   };
 
-  template <class ProblemImp, class ArgumentImp, 
-            int N = Length<typename ProblemImp::SelectorType::Base>::value>
-  class ArgumentSelector {};
-
-  //- Specialisations
-  template <class ProblemImp, class ArgumentImp>
-  class ArgumentSelector<ProblemImp, ArgumentImp, 0> 
-  {
-  public:
-    typedef ProblemImp ProblemType;
-    typedef ArgumentImp ArgumentType;
-
-    typedef typename ProblemType::SelectorType::Base SelectorType;
-    
-    template <int N>
-    struct ArgumentElement {
-      typedef typename ArgumentElementHelper<ArgumentType, SelectorType, N>::Type Type;
-    };
-
-  public:
-    ArgumentSelector(ProblemType& p, ArgumentType& arg) :
-      p_(p),
-      arg_(arg)
-    {}
-
-
-  private:
-    ProblemType& p_;
-    ArgumentType& arg_;
-    
+  template <class Head, class Tail>
+  struct MaxIndex<Pair<Head, Tail> > {
+    enum { value = (Head::value > MaxIndex<Tail>::value ?
+                    Head::value : MaxIndex<Tail>::value) };
   };
 
-  template <class ProblemImp, class ArgumentType>
-  class ArgumentSelector<ProblemImp, ArgumentType, 1> {};
-  */
-  /*
-  template <class ProblemImp, class ArgumentType>
-  class ArgumentSelector<ProblemImp, ArgumentType, 2> {};
-  */
+  template <>
+  struct MaxIndex<Nil> {
+    enum { value = -1 };
+  };
 };
 
 #endif
