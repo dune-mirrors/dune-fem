@@ -1,3 +1,7 @@
+//**************************************************************
+//  (C) written and directecd by Robert Kloefkorn 
+//**************************************************************
+
 #ifndef __PRINTHELP_CC__
 #define __PRINTHELP_CC__
 

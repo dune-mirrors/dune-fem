@@ -1,3 +1,6 @@
+//**************************************************************
+//  (C) written and directecd by Robert Kloefkorn 
+//**************************************************************
 #ifndef __DATADISP_READDATA_CC__
 #define __DATADISP_READDATA_CC__
 

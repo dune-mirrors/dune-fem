@@ -1,3 +1,6 @@
+//**************************************************************
+//  (C) written and directecd by Robert Kloefkorn 
+//**************************************************************
 #ifndef __READ_PARAMS_CC__
 #define __READ_PARAMS_CC__
 
