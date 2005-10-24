@@ -32,7 +32,8 @@ LIBS="$DUNE_LIBS"
 AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  examples/poisson/Makefile
-            		 examples/transport/Makefile
+          	 examples/transport/Makefile
+		 examples/vectorial/Makefile
                  examples/l2projection/Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
@@ -42,6 +43,8 @@ AC_CONFIG_FILES([Makefile
                  visual/grape/Makefile
                  visual/grape/gridview/Makefile
                  visual/grape/datadisp/Makefile
+		 pass/Makefile
+		 pass/test/Makefile
                ])
 AC_OUTPUT
 
