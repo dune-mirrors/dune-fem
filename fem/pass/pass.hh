@@ -89,6 +89,11 @@ namespace Dune {
       previousPass_.allocateLocalMemory();
     }
 
+    virtual ~Pass() {
+      delete destination_;
+      destination_ = 0;
+    }
+
     //! \brief Application operator.
     //! The application operator is called by the client directly. It makes
     //! only sense to call this operator directly on the last pass.
@@ -155,6 +160,8 @@ namespace Dune {
       BaseType(pass),
       spc_(spc)
     {}
+
+    virtual ~LocalPass() {}
 
     //! Build up local memory.
     virtual void allocateLocalMemory() 

@@ -86,21 +86,21 @@ namespace Dune {
     void analyticalFlux(Entity& en, QuadratureType& quad, int quadPoint,
                         ResultType& res) {
       evaluateLocal(en, quad.point(quadPoint), res);
-      problem_.analyticalFlux(en, 0.0, x, valuesEn_.second, res);
+      problem_.analyticalFlux(en, 0.0, quad.point(quadPoint), valuesEn_.second, res);
       //CallerType::analyticalFlux(problem_, en, quad, quadPoint, valuesEn_.second, res);
     }
 
     template <class IntersectionIterator, class DomainType, class ResultType>
     double numericalFlux(IntersectionIterator& nit,
                        const DomainType& x,
-                       ResultType& res_en, ResultType& res_neigh) {
+                       ResultType& resEn, ResultType& resNeigh) {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(x),
-                    valEn_);
+                    valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(x),
-                    valNeigh_);
+                    valuesNeigh_);
       return problem_.numericalFlux(nit, 0.0, x,
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
@@ -120,9 +120,9 @@ namespace Dune {
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
-                    valEn_);
+                    valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(quad.point(quadPoint)),
-                    valNeigh_);
+                    valuesNeigh_);
       return problem_.numericalFlux(nit, 0.0, quad.point(quadPoint),
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
@@ -142,8 +142,8 @@ namespace Dune {
     void source(Entity& en, QuadratureType& quad, int quadPoint, 
                 ResultType& res) 
     {
-      evaluateLocal(en, x, valuesEn_);
-      problem_.source(en, 0.0, x, valuesEn_.second, res);
+      evaluateLocal(en, quad.point(quadPoint), valuesEn_);
+      problem_.source(en, 0.0, quad.point(quadPoint), valuesEn_.second, res);
       //CallerType::source(problem_, en, quad, quadPoint,
       //valuesEn_.second, res);
     }
@@ -152,7 +152,8 @@ namespace Dune {
     template <class Entity>
     void setter(Entity& en, LocalFunctionTupleType& tuple) {
       ForEachValue<LocalFunctionTupleType> forEach(tuple);
-      forEach.apply(LocalFunctionSetter<Entity>(en));
+      LocalFunctionSetter<Entity> setter(en);
+      forEach.apply(setter);
     }
 
     template <class Entity, class DomainType>
@@ -161,7 +162,8 @@ namespace Dune {
         LocalFunctionTupleType, RangeTupleType> forEach(p.first,
                                                         p.second);
       
-      forEach.apply(LocalFunctionEvaluateLocal<Entity, DomainType>(en, x));
+      LocalFunctionEvaluateLocal<Entity, DomainType> eval(en, x);
+      forEach.apply(eval);
     }
 
     template <class Entity, class QuadratureType>
@@ -170,9 +172,8 @@ namespace Dune {
       ForEachValuePair<
         LocalFunctionTupleType, RangeTupleType> forEach(p.first,
                                                         p.second);
-
-      forEach.apply(LocalFunctionEvaluateQuad<
-                    Entity, QuadratureType>(en, quad, quadPoint));
+      LocalFunctionEvaluateQuad<Entity, QuadratureType> eval(en, quad, quadPoint);
+      forEach.apply(eval);
     }
 
     template <class Entity, class DomainType>
@@ -181,9 +182,8 @@ namespace Dune {
       ForEachValuePair<
         LocalFunctionTupleType,JacobianRangeTupleType> forEach(valuesEn_.first,
                                                                jacobians_);
-
-      forEach.apply(LocalFunctionEvaluateJacobianLocal<
-                    Entity, DomainType>(en, x));
+      //LocalFunctionEvaluateJacobianLocal<Entity, DomainType> eval(en, x)
+      //forEach.apply(eval);
     }
 
     template <class Entity, class Quadrature>
@@ -191,9 +191,9 @@ namespace Dune {
       ForEachValuePair<
         LocalFunctionTupleType,JacobianRangeTupleType> forEach(valuesEn_.first,
                                                                jacobians_);
-
-      forEach.apply(LocalFunctionEvaluateJacobianQuad<
-                    Entity, DomainType>(en, quad, quadPoint));
+      
+      //LocalFunctionEvaluateJacobianQuad<Entity, DomainType> eval(en, quad, quadPoint);
+      //forEach.apply(eval);
     }
 
   private:

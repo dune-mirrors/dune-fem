@@ -71,8 +71,8 @@ namespace Dune {
     {}
    
 
-    ~LocalDGPass() {
-      delete caller_;
+    virtual ~LocalDGPass() {
+      //delete caller_;
     }
   private:
     //! In the preparations, store pointers to the actual arguments and 

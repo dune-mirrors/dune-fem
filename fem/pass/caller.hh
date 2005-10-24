@@ -250,6 +250,7 @@ namespace Dune {
     //! Applies the setting on every DiscreteFunction/LocalFunction pair.
     template <class DFPointer, class LFType>
     void visit(DFPointer df, LFType& lf) {
+      std::cout << "df->localFunction" << std::endl;
       lf = df->localFunction(en_);
     }
 
@@ -278,6 +279,7 @@ namespace Dune {
     //! Triggers the evaluation of a local function
     template <class LFType, class RangeType>
     void visit(LFType& lf, RangeType& res) {
+      std::cout << "lf.evaluateLocal" << std::endl;
       lf.evaluateLocal(en_, x_, res);
     }
 

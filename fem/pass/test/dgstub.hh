@@ -11,7 +11,6 @@
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/alu3dgrid.hh>
 #include <dune/fem/dfadapt.hh>
-#include <dune/fem/pass/dgpass.hh>
 #include <dune/quadrature/fixedorder.hh>
 
 namespace Dune {

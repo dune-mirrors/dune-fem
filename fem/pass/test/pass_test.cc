@@ -5,6 +5,8 @@
 #include "dgstub.hh"
 #include "lagrange_fixture.hh"
 
+#include <dune/fem/discretefunction/adaptivefunction.hh>
+
 namespace Dune {
 
   void Pass_Test::run() {
@@ -21,6 +23,10 @@ namespace Dune {
     typedef DFAdapt<Fix0::DiscreteFunctionSpaceType> DF0;
     typedef DFAdapt<Fix1::DiscreteFunctionSpaceType> DF1;
     typedef DFAdapt<Fix2::DiscreteFunctionSpaceType> DF2;
+
+    //typedef AdaptiveDiscreteFunction<Fix0::DiscreteFunctionSpaceType> DF0;
+    //typedef AdaptiveDiscreteFunction<Fix1::DiscreteFunctionSpaceType> DF1;
+    //typedef AdaptiveDiscreteFunction<Fix2::DiscreteFunctionSpaceType> DF2;
 
     typedef DF0::LocalFunctionType LF0;
     typedef DF1::LocalFunctionType LF1;
@@ -72,6 +78,10 @@ namespace Dune {
 
     LocalFunctionSetter<Entity> setter(*it);      
     forEachDFandLf.apply(setter);
+
+    ++it;
+    LocalFunctionSetter<Entity> setter2(*it);      
+    forEachDFandLf.apply(setter2);
 
     LocalFunctionEvaluateLocal<Entity, DomainType> evaluator(*it, x);
     forEachLFandR.apply(evaluator);   

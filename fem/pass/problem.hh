@@ -71,6 +71,12 @@ namespace Dune {
   class ProblemDefault : 
     public ProblemInterface<ProblemImp, FunctionSpaceImp> {
   public:
+    typedef ProblemImp ProblemType;
+    typedef FunctionSpaceImp FunctionSpaceType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    
+  public:
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
    template <
