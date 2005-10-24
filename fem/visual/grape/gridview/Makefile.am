@@ -10,4 +10,7 @@ noinst_PROGRAMS = gridview gridtest
 #noinst_PROGRAMS = gridtest
 gridview_SOURCES = gridview.cc 
 gridtest_SOURCES = gridtest.cc 
+
+EXTRA_DIST = gridview.cc
+
 endif

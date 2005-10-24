@@ -7,4 +7,6 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 
 noinst_PROGRAMS = datadisp
 datadisp_SOURCES = datadisp.cc 
+
+dist_data_DATA = datadisp.cc printhelp.cc readdata.cc readfile.cc readparams.cc
 endif
