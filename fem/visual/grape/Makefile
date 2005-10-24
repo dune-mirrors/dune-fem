@@ -220,13 +220,12 @@ localstatedir = ${prefix}/var
 mandir = ${prefix}/man
 mkdir_p = mkdir -p --
 oldincludedir = /usr/include
-prefix = /usr/local
+prefix = /usr/people/robertk/tmp/fvcommon/visual
 program_transform_name = s,x,x,
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 sysconfdir = ${prefix}/etc
 target_alias = 
-AM_CPPFLAGS = 
 SUBDIRS = gridview datadisp
 all: all-recursive
 

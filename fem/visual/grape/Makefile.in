@@ -226,7 +226,6 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-AM_CPPFLAGS = 
 SUBDIRS = gridview datadisp
 all: all-recursive
 

@@ -1,5 +1,9 @@
+//***************************************************************
+//
+//  (C) written and directed by Robert Kloefkorn 
+//
+//***************************************************************
 #include <iostream>
-
 #include <config.h>
 
 #define SGRID 0

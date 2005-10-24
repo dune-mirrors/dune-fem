@@ -1,3 +1,8 @@
+//************************************************************
+//
+//  (C) written and directed by Robert Kloefkorn 
+//
+//************************************************************
 #include <iostream>
 #include <vector>
 #include <assert.h>
@@ -27,7 +32,6 @@ typedef AlbertaGrid<dim,dimworld> GR_GridType;
 
 #if BGRID 
 
-#include <dune/grid/alu3dgrid/includecc.cc>
 #include <dune/grid/alu3dgrid.hh>
 
 static const int dim = 3; 
