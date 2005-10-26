@@ -6,6 +6,10 @@
 #include "problem.hh"
 #include "problemcaller.hh"
 
+//! \TODO Move the boundary stuff to a common base class for all discrete
+//! operators
+#include <dune/fem/common/boundary.hh>
+
 namespace Dune {
 
   //! Concrete implementation of Pass for LDG.
@@ -47,6 +51,8 @@ namespace Dune {
     typedef typename ProblemType::SelectorType SelectorType;
     typedef ProblemCaller<
       ProblemType, ArgumentType, SelectorType> ProblemCallerType;
+    typedef BoundaryManager<SpaceType> BoundaryManagerType;
+    typedef typename BoundaryManagerType::BoundaryType BoundaryType;
 
     // Range of the destination
     enum { dimRange = SpaceType::DimRange };
@@ -56,13 +62,17 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    LocalDGPass(ProblemType& problem, PreviousPassType& pass, SpaceType& spc) :
+    LocalDGPass(ProblemType& problem, 
+                PreviousPassType& pass, 
+                SpaceType& spc,
+                const BoundaryManagerType& bc) :
       BaseType(pass, spc),
       problem_(problem),
       caller_(0),
       arg_(0),
       dest_(0),
       spc_(spc),
+      boundaryManager_(bc),
       dtMin_(std::numeric_limits<double>::max()),
       dtOld_(std::numeric_limits<double>::max()),
       fMat_(0.0),
@@ -75,7 +85,7 @@ namespace Dune {
    
 
     virtual ~LocalDGPass() {
-      delete caller_;
+      //delete caller_;
     }
 
   private:
@@ -184,10 +194,9 @@ namespace Dune {
                 nit.intersectionNeighborLocal().global(faceQuad.point(l));
               
               // Evaluate flux
-              // * add estimate for dtLocal again
-              caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
+              dtLocal = 
+                caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
 
-              dtLocal = 0.1;
               dtLocal =  (dtLocal < std::numeric_limits<double>::min()) ?
                 dtMin_ : vol/(dtLocal*h);
               if(dtLocal < dtMin_) dtMin_ = dtLocal;
@@ -221,9 +230,84 @@ namespace Dune {
             
           } // end if outside etc.
         } // end if neighbor
+
         if (nit.boundary()) {
-          std::cout << "More to come" << std::endl;
-          assert(false);
+          const BoundaryType& bc = 
+            boundaryManager_.getBoundaryCondition(nit.boundaryId());
+
+          if (bc.boundaryType() == BoundaryType::Dirichlet) {
+            for (int l = 0; l < faceQuad.nop(); ++l) {
+              double integrationElement =
+                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
+              
+              DomainType xLocalEn = 
+                nit.intersectionSelfLocal().global(faceQuad.point(l));
+              DomainType xGlobal =
+                nit.intersectionGlobal().global(faceQuad.point(l));
+
+              DomainType n = nit.integrationOuterNormal(faceQuad.point(l));
+
+              RangeType boundaryValue;
+              bc.evaluate(valEn_, xGlobal, n, boundaryValue);
+     
+              // ? How to deal with boundary?
+              assert(false); // Need something like boundary flux
+              dtLocal = 
+                caller_->numericalFlux(nit, faceQuad, l, valEn_, boundaryValue);
+              dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
+                dtMin_ : vol/(dtLocal*integrationElement);
+              if (dtLocal < dtMin_) dtMin_ = dtLocal;
+                    
+              for (int k = 0; 
+                   k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
+                RangeType baseEn;
+                spc_.getBaseFunctionSet(en).evaluate(k,
+                                                     diffVar_,
+                                                     xLocalEn,
+                                                     baseEn);
+                for (int i = 0; i < dimRange; ++i) {
+                  updEn[i*dimRange + k] +=
+                    tmp_[i]*faceQuad.weight(l)*baseEn[0]*
+                    integrationElement;
+                }
+              }
+            }
+          }
+          else if (bc.boundaryType() == BoundaryType::Neumann) {
+            
+            //assert(false); // Not the way to treat Neumann, I suppose...
+            
+            for (int l = 0; l < faceQuad.nop(); ++l) {
+              double integrationElement =
+                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
+              
+              DomainType xLocalEn =
+                nit.intersectionSelfLocal().global(faceQuad.point(l));
+              DomainType xGlobal =
+                nit.intersectionGlobal().global(faceQuad.point(l));
+              
+              DomainType n = nit.integrationOuterNormal(faceQuad.point(l));
+
+              RangeType boundaryValue;
+              bc.evaluate(valEn_, xGlobal, n, tmp_);
+                           
+              for (int k = 0; 
+                   k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
+                RangeType baseEn(0.0);
+                  // * Replace with something more standard
+                  //spc_.getBaseFunctionSet(en).faces(nit.numberInSelf(),
+                  //                                  k, faceQuad)[l];
+                for (int i = 0; i < dimRange; ++i) {
+                  updEn[i*dimRange + k] +=
+                    tmp_[i]*faceQuad.weight(l)*baseEn[0]*
+                    integrationElement;
+                }
+              }
+            }
+          } else {
+            assert(false); // I don't know how to handle anything else
+          }
+          
         } // end if boundary
       }
      
@@ -248,6 +332,7 @@ namespace Dune {
     mutable DestinationType* dest_;
 
     SpaceType& spc_;
+    const BoundaryManagerType& boundaryManager_;
     mutable double dtMin_;
     mutable double dtOld_;
 
