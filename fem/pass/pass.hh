@@ -41,12 +41,12 @@ namespace Dune {
    * used in the computations of the pass. The computations must be implemented
    * in the compute method of the derived classes.
    */
-  template <class PassTraits, class PreviousPassImp>
+  template <class ProblemImp, class PreviousPassImp>
   class Pass :
     public Operator<typename PreviousPassImp::GlobalArgumentType::DofType, 
-                    typename PassTraits::DestinationType::DofType,
+                    typename ProblemImp::DestinationType::DofType,
                     typename PreviousPassImp::GlobalArgumentType, 
-                    typename PassTraits::DestinationType>
+                    typename ProblemImp::DestinationType>
   {
     template <class PT, class PP>
     friend class Pass;
@@ -56,13 +56,11 @@ namespace Dune {
     //! The index of the pass.
     enum {passNum = PreviousPassImp::passNum + 1};
 
-    //! Traits class provided by the implementor.
-    typedef PassTraits Traits;
     //! Type of the preceding pass.
     typedef PreviousPassImp PreviousPassType;
     //! Type of the discrete function which stores the result of this pass' 
     //! computations.
-    typedef typename PassTraits::DestinationType DestinationType;
+    typedef typename ProblemImp::DestinationType DestinationType;
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
     typedef typename PreviousPassType::GlobalArgumentType GlobalArgumentType;
@@ -137,18 +135,18 @@ namespace Dune {
 
   //! Specialisation of Pass which provides a grid walk-through, but leaves
   //! open what needs to be done on each elements.
-  template <class PassTraits, class PreviousPassImp>
+  template <class ProblemImp, class PreviousPassImp>
   class LocalPass :
-    public Pass<PassTraits, PreviousPassImp>
+    public Pass<ProblemImp, PreviousPassImp>
   {
   public:
     typedef PreviousPassImp PreviousPassType;
 
-    typedef Pass<PassTraits, PreviousPassImp> BaseType;
+    typedef Pass<ProblemImp, PreviousPassImp> BaseType;
     typedef typename BaseType::TotalArgumentType ArgumentType;
 
-    typedef typename PassTraits::DestinationType DestinationType;
-    typedef typename PassTraits::SpaceType SpaceType;
+    typedef typename ProblemImp::DestinationType DestinationType;
+    typedef typename ProblemImp::SpaceType SpaceType;
     typedef typename SpaceType::IteratorType IteratorType;
     typedef typename IteratorType::Entity Entity;
 

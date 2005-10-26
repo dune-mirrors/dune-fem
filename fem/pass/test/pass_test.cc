@@ -101,8 +101,8 @@ namespace Dune {
     typedef DGStubTraits::DestinationType DestinationType;
     //typedef DGStubTraits::SpaceType SpaceType;
     typedef StartPass<GlobalArgumentType> Pass0Type;
-    typedef LocalDGPass<ProblemStub, DGStubTraits, Pass0Type> Pass1Type;
-    typedef LocalDGPass<ProblemStub, DGStubTraits, Pass1Type> Pass2Type;
+    typedef LocalDGPass<ProblemStub, Pass0Type> Pass1Type;
+    typedef LocalDGPass<ProblemStub, Pass1Type> Pass2Type;
     typedef Lagrange_Fixture<1> Fix;
     typedef Fix::GridType GridType;
     typedef Fix::DiscreteFunctionSpaceType SpaceType;

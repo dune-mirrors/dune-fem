@@ -13,14 +13,14 @@
 namespace Dune {
 
   //! Concrete implementation of Pass for LDG.
-  template <class ProblemImp, class DGPassTraits, class PreviousPassImp>
+  template <class ProblemImp, class PreviousPassImp>
   class LocalDGPass :
-    public LocalPass<DGPassTraits, PreviousPassImp> 
+    public LocalPass<ProblemImp, PreviousPassImp> 
   {
   public:
     //- Typedefs and enums
     // Base class
-    typedef LocalPass<DGPassTraits, PreviousPassImp> BaseType;
+    typedef LocalPass<ProblemImp, PreviousPassImp> BaseType;
 
     // Repetition of template arguments
     typedef ProblemImp ProblemType;
@@ -42,9 +42,9 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Geometry Geometry;
 
     // Types from the traits
-    typedef typename DGPassTraits::DestinationType DestinationType;
-    typedef typename DGPassTraits::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename DGPassTraits::FaceQuadratureType FaceQuadratureType;
+    typedef typename ProblemType::DestinationType DestinationType;
+    typedef typename ProblemType::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename ProblemType::FaceQuadratureType FaceQuadratureType;
 
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;

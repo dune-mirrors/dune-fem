@@ -33,9 +33,20 @@ namespace Dune {
   public:
     typedef Selector<0>::Base SelectorType;
 
+    typedef DGStubTraits Traits;
+
+    typedef Traits::FunctionSpaceType FunctionSpaceType;
+    typedef Traits::GridType GridType;
+    typedef Traits::GridPartType GridPartType;
+    typedef Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    // * find common notation
+    typedef Traits::SpaceType SpaceType;
+    typedef Traits::DestinationType DestinationType;
+    typedef Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef Traits::FaceQuadratureType FaceQuadratureType;
+
   public:
     bool hasFlux() const { return true; }
-    bool hasNonConservativeTerm() const { return true; }
     bool hasSource() const { return true; }
 
     template <
