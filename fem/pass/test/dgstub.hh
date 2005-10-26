@@ -38,9 +38,30 @@ namespace Dune {
     bool hasNonConservativeTerm() const { return true; }
     bool hasSource() const { return true; }
 
-    void f() { std::cout << "f()" << std::endl; }
-    void g() { std::cout << "g()" << std::endl; }
-    void S() { std::cout << "S()" << std::endl; }
+    template <
+      class IntersectionIterator, class ArgumentTuple, class ResultType>
+    double numericalFlux(IntersectionIterator& it,
+                         double time, const DomainType& x,
+                         const ArgumentTuple& uLeft, 
+                         const ArgumentTuple& uRight,
+                         ResultType& gLeft,
+                         ResultType& gRight)
+    { 
+      std::cout << "f()" << std::endl; 
+      return 0.0;
+    }
+
+    template <class Entity, class ArgumentTuple, class ResultType>
+    void analyticalFlux(Entity& en,
+                        double time, const DomainType& x,
+                        const ArgumentTuple& u, ResultType& f) 
+    { std::cout << "g()" << std::endl; }
+
+    template <class Entity, class ArgumentTuple, class ResultType>
+    void source(Entity& en, 
+                double time, const DomainType& x,
+                const ArgumentTuple& u, ResultType& s)
+    { std::cout << "S()" << std::endl; }
   };
 
 } // end namespace Dune

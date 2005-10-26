@@ -82,7 +82,7 @@ namespace Dune {
 
     DFTupleType dft(&df0, &df1, &df2);
     
-    LFTupleType lft = LocalFunctionCreator<DFPairType>::apply(dft);
+    LFTupleType lft(LocalFunctionCreator<DFPairType>::apply(dft));
     //LocalFunctionCreator<DFPairType> lfc(dft);
     //   LFTupleType lft = lfc.evaluate();
 

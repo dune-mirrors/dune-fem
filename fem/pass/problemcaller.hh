@@ -85,23 +85,32 @@ namespace Dune {
     template <class Entity, class QuadratureType, class ResultType>
     void analyticalFlux(Entity& en, QuadratureType& quad, int quadPoint,
                         ResultType& res) {
-      evaluateLocal(en, quad.point(quadPoint), res);
+      // * temporary
+      ForEachValuePair<
+        LocalFunctionTupleType, RangeTupleType> forEach(valuesEn_.first,
+                                                        valuesEn_.second);
+      LocalFunctionEvaluateQuad<Entity, QuadratureType> eval(en, quad, quadPoint);
+      forEach.apply(eval);
+
+
+      //evaluateQuad(en, quad, quadPoint, valuesEn_);
       problem_.analyticalFlux(en, 0.0, quad.point(quadPoint), valuesEn_.second, res);
       //CallerType::analyticalFlux(problem_, en, quad, quadPoint, valuesEn_.second, res);
     }
 
     template <class IntersectionIterator, class DomainType, class ResultType>
     double numericalFlux(IntersectionIterator& nit,
-                       const DomainType& x,
-                       ResultType& resEn, ResultType& resNeigh) {
+                         const DomainType& x,
+                         ResultType& resEn, ResultType& resNeigh) {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
+      const Geometry& global = nit.intersectionGlobal();
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(x),
                     valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(x),
                     valuesNeigh_);
-      return problem_.numericalFlux(nit, 0.0, x,
+      return problem_.numericalFlux(nit, 0.0, global.global(x),
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
       //CallerType::numericalFlux(problem_, nit, x, 
@@ -113,17 +122,19 @@ namespace Dune {
     template <
       class IntersectionIterator, class QuadratureType, class ResultType>
     double numericalFlux(IntersectionIterator& nit,
-                       QuadratureType& quad,
-                       int quadPoint,
-                       ResultType& resEn, ResultType& resNeigh) {
+                         QuadratureType& quad,
+                         int quadPoint,
+                         ResultType& resEn, ResultType& resNeigh) {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
+      const Geometry& global = nit.intersectionGlobal();
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
                     valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(quad.point(quadPoint)),
                     valuesNeigh_);
-      return problem_.numericalFlux(nit, 0.0, quad.point(quadPoint),
+      return problem_.numericalFlux(nit, 0.0, 
+                                    global.global(quad.point(quadPoint)),
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
       //CallerType::numericalFlux(problem_, nit, quad, quadPoint,
@@ -142,7 +153,7 @@ namespace Dune {
     void source(Entity& en, QuadratureType& quad, int quadPoint, 
                 ResultType& res) 
     {
-      evaluateLocal(en, quad.point(quadPoint), valuesEn_);
+      evaluateQuad(en, quad, quadPoint, valuesEn_);
       problem_.source(en, 0.0, quad.point(quadPoint), valuesEn_.second, res);
       //CallerType::source(problem_, en, quad, quadPoint,
       //valuesEn_.second, res);
@@ -151,7 +162,8 @@ namespace Dune {
   private:
     template <class Entity>
     void setter(Entity& en, LocalFunctionTupleType& tuple) {
-      ForEachValue<LocalFunctionTupleType> forEach(tuple);
+      ForEachValuePair<DiscreteFunctionTupleType, 
+        LocalFunctionTupleType> forEach(discreteFunctions_, tuple);
       LocalFunctionSetter<Entity> setter(en);
       forEach.apply(setter);
     }

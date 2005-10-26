@@ -79,12 +79,8 @@ namespace Dune {
     LocalFunctionSetter<Entity> setter(*it);      
     forEachDFandLf.apply(setter);
 
-    ++it;
-    LocalFunctionSetter<Entity> setter2(*it);      
-    forEachDFandLf.apply(setter2);
-
     LocalFunctionEvaluateLocal<Entity, DomainType> evaluator(*it, x);
-    forEachLFandR.apply(evaluator);   
+    forEachLFandR.apply(evaluator);
   }
 
 

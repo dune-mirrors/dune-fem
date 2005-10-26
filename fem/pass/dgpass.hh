@@ -35,7 +35,7 @@ namespace Dune {
 
     // Types extracted from the underlying grids
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Geometry GeometryType;
+    typedef typename GridType::template Codim<0>::Geometry Geometry;
 
     // Types from the traits
     typedef typename DGPassTraits::DestinationType DestinationType;
@@ -63,17 +63,21 @@ namespace Dune {
       arg_(0),
       dest_(0),
       spc_(spc),
+      dtMin_(std::numeric_limits<double>::max()),
+      dtOld_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       valEn_(0.0),
       valNeigh_(0.0),
       tmp_(0.0),
-      grads_(0.0)
+      grads_(0.0),
+      diffVar_()
     {}
    
 
     virtual ~LocalDGPass() {
-      //delete caller_;
+      delete caller_;
     }
+
   private:
     //! In the preparations, store pointers to the actual arguments and 
     //! destinations. Filter out the "right" arguments for this pass.
@@ -89,47 +93,58 @@ namespace Dune {
         // * Move this initialisation garbage into the ProblemCaller
         caller_ = new ProblemCallerType(problem_, *arg_);
       }
+
+      // dt initialisation
+      dtMin_ = std::numeric_limits<double>::max();
     }
 
-    //! Nothing to do here, really.
+    //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
-    {}
+    {
+      dtOld_ = dtMin_;
+    }
 
     //! Perform the (volume and surface) integration on all elements.
     virtual void applyLocal(EntityType& en) const
     {
       std::cout << "DGLocalPass::applyLocal()" << std::endl;
       // * A first try for an implementation - far from working...
-      /*
+  
       //- Initialise quadratures and stuff
       caller_->setEntity(en);
-      LocalFunctionType updEn = dest.localFunction(en);
+      LocalFunctionType updEn = dest_->localFunction(en);
       GeometryType geom = en.geometry().type();
       
       VolumeQuadratureType volQuad(geom);
 
       double vol = volumeElement(en, volQuad);
-      double vol_1 = 1.0/vol;
       double dtLocal;
+
+      const typename SpaceType::IndexSetType& iset = spc_.indexSet();
 
       // Volumetric integral part
       for (int l = 0; l < volQuad.nop(); ++l) {
-        caller_->analyticalFlux(en, volQuad, l, "result");
+        JacobianRangeType flux(0.0);
+        caller_->analyticalFlux(en, volQuad, l, flux);
         
         // * add evaluation of source term here as well
         // caller_->source(...);
 
-        for (int k = 0; k < spc_.numberOfBaseFunctions(); ++k) {
+        for (int k = 0; k < spc_.getBaseFunctionSet(en).numBaseFunctions(); 
+             ++k) {
           // * to be replaced by something more standard
-          const std::vector<BaseJRange>& gradients =
-            spc_.getBaseFunctionSet(geom).gradients(k, volQuad);
+          //const std::vector<BaseJRange>& gradients =
+          //  spc_.getBaseFunctionSet(en).gradients(k, volQuad);
           
+          JacobianRangeType gradients(0.0);
+          spc_.getBaseFunctionSet(en).jacobian(k, volQuad, l, gradients);
+
           tmp_ = 0.0;
           grads_ = 0.0;
-          // * umv, umtv right here?
-          en.geometry().jacobianInverseTransposed
-            (volQuad.point(l)).umv(gradients[l][0], grads_);
-          fMat_.umv(grads_, tmp_);
+          // * umv, umtv right here? why gradients[0]
+          en.geometry().jacobianInverseTransposed(volQuad.point(l)).
+            umv(gradients[0], grads_);
+          flux.umv(grads_, tmp_);
 
           // Update vector
           for (int i = 0; i < dimRange; ++i) {
@@ -150,13 +165,15 @@ namespace Dune {
       
       for (; nit != endnit; ++nit) {
         if (nit.neighbor()) {
-          if (nit.outside()->globalIndex() > en.globalIndex()
+          if (iset.index(*nit.outside()) > iset.index(en)
               || nit.outside()->partitionType() == GhostEntity) {
             
-            caller_->setNeighbor(*nit);
-            LocalFunctionType updNeigh = dest.localFunction(*(nit.outside()));
+            caller_->setNeighbor(*nit.outside());
+            LocalFunctionType updNeigh = dest_->localFunction(*(nit.outside()));
 
             for (int l = 0; l < faceQuad.nop(); ++l) {
+              double h = 
+                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
               // * might be improved by using quadrature points directly
               // * (how to deal with quadrature points on neighbor?)
               DomainType xGlobal =
@@ -176,15 +193,16 @@ namespace Dune {
               if(dtLocal < dtMin_) dtMin_ = dtLocal;
               
               // * Assumption: all elements have same number of base functions
-              for (int k = 0; k < spc_.numBaseFunctions(); ++k) {
-                BaseRange baseEn;
-                spc_.getBaseFunctionSet(geom).evaluate(k,
+              for (int k = 0; 
+                   k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
+                RangeType baseEn;
+                spc_.getBaseFunctionSet(en).evaluate(k,
                                                        diffVar_,
                                                        xLocalEn,
                                                        baseEn);
 
-                BaseRange baseNeigh;
-                spc_.getBaseFunctionSet(geom).evaluate(k,
+                RangeType baseNeigh;
+                spc_.getBaseFunctionSet(en).evaluate(k,
                                                        diffVar_,
                                                        xLocalNeigh,
                                                        baseNeigh);
@@ -192,11 +210,11 @@ namespace Dune {
                 for (int i = 0; i < dimRange; ++i) {
                   //assert(dimRange == 1); // * Temporary
                   updEn[i*dimRange + k] +=
-                    tmp_[i]*baseEn[0]*faceQuad.weight(l)*
-                    nit.intersectionGlobal().integrationElement(faceQuad.point(l));
+                    tmp_[i]*baseEn[0]*faceQuad.weight(l)*h;
+
                   updNeigh[i*dimRange + k] -= 
-                    tmp_[i]*baseNeigh[0]*faceQuad.weight(l)*
-                    nit.intersectionGlobal().integrationElement(faceQuad.point(l));
+                    tmp_[i]*baseNeigh[0]*faceQuad.weight(l)*h;
+
                 } // end loop dimRange
               } // end loop base functions
             } // end loop quadrature points
@@ -208,7 +226,7 @@ namespace Dune {
           assert(false);
         } // end if boundary
       }
-      */
+     
     }
     
   private:
@@ -230,6 +248,8 @@ namespace Dune {
     mutable DestinationType* dest_;
 
     SpaceType& spc_;
+    mutable double dtMin_;
+    mutable double dtOld_;
 
     //! Some helper variables
     mutable JacobianRangeType fMat_;

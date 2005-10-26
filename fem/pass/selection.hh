@@ -78,6 +78,6 @@ namespace Dune {
   struct MaxIndex<Nil> {
     enum { value = -1 };
   };
-};
+} // end namespace Dune
 
 #endif

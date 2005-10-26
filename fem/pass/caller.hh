@@ -7,7 +7,6 @@
 
 namespace Dune {
 
-  // Template magic abound here...
   /**
    * @brief Extracts elements from a tuple based on a Selector definition
    *
@@ -93,7 +92,6 @@ namespace Dune {
 
   // * Idea: can I do the same with ForEachValue?
   // * Give tuple in constructor and get the rest with apply()
-  /*
   struct LocalFunctionCreator2 {
     template <class Head, class Tail>
     struct Traits {
@@ -109,7 +107,7 @@ namespace Dune {
     apply(Pair<Head, Nil>& p) {
       typedef typename Traits<Head, Nil>::ResultType Result;
       typedef typename Traits<Head, Nil>::LocalFunctionType LocalFunction;
-      return Result(new LocalFunction(p.first()->newLocalFunction()),
+      return Result(LocalFunction(*p.first()),
                     Nil());
     }
 
@@ -118,11 +116,11 @@ namespace Dune {
     apply(Pair<Head, Tail>& p) {
       typedef typename Traits<Head, Tail>::ResultType Result;
       typedef typename Traits<Head, Tail>::LocalFunctionType LocalFunction;
-      return Result(new LocalFunction(p.first()->newLocalFunction()), 
+      return Result(LocalFunction(*p.first()), 
                     LocalFunctionCreator2::apply(p.second()));
     }
   };
-  */
+  
   /**
    * @brief Creates a tuple of local function pointers from a tuple of 
    * discrete function pointers by calling newLocalFunction on the discrete
@@ -150,9 +148,9 @@ namespace Dune {
 
   public:
     static inline ResultType apply(Pair<Head, Tail>& pairs) {
-      return 
-        ResultType(LocalFunctionType(*pairs.first()),
-                   LocalFunctionCreator<Tail>::apply(pairs.second()));
+      LocalFunctionType tmp(*pairs.first());
+      return ResultType(tmp,
+                        LocalFunctionCreator<Tail>::apply(pairs.second()));
     }
   };
 
@@ -171,9 +169,9 @@ namespace Dune {
  
   public:
     static inline ResultType apply(Pair<Head, Nil>& pairs) {
-      return 
-        ResultType(LocalFunctionType(*pairs.first()),
-                   Nil());
+      LocalFunctionType tmp(*pairs.first());
+      Nil nil;
+      return ResultType(tmp, nil);
     }
   };
 
@@ -200,12 +198,14 @@ namespace Dune {
 
   public:
     static inline ResultType apply() {
-      return ResultType(ValueType(0.0), 
-                        Creator<TypeEvaluator, Tail>::apply());
+      ValueType tmp(0.0);
+      ResultType result(tmp, Creator<TypeEvaluator, Tail>::apply());
+      return result;
     }
 
     static inline ResultType apply(Pair<Head, Tail>& pairs) {
-      return ResultType(ValueType(0.0), 
+      ValueType tmp(0.0);
+      return ResultType(tmp,
                         Creator<TypeEvaluator, Tail>::apply(pairs.second()));
     }
   };
@@ -224,11 +224,15 @@ namespace Dune {
 
   public:
     static inline ResultType apply() {
-      return ResultType(ValueType(0.0), Nil());
+      ValueType tmp(0.0);
+      Nil nil;
+      return ResultType(tmp, nil);
     }
 
     static inline ResultType apply(Pair<Head, Nil>& pairs) {
-      return ResultType(ValueType(0.0), Nil());
+      ValueType tmp(0.0);
+      Nil nil;
+      return ResultType(tmp, nil);
     }
   };
 
@@ -250,9 +254,14 @@ namespace Dune {
 
     //! Applies the setting on every DiscreteFunction/LocalFunction pair.
     template <class DFPointer, class LFType>
-    void visit(DFPointer df, LFType& lf) {
+    void visit(DFPointer& df, LFType& lf) {
       lf = df->localFunction(en_);
     }
+
+  private:
+    LocalFunctionSetter();
+    LocalFunctionSetter(const LocalFunctionSetter&);
+    LocalFunctionSetter& operator=(const LocalFunctionSetter&);
 
   private:
     EntityImp& en_;
@@ -271,7 +280,7 @@ namespace Dune {
     //! Constructor
     //! \param en Entity on which the local function is evaluated.
     //! \param x The local coordinate on en.
-    LocalFunctionEvaluateLocal(EntityImp& en, DomainImp& x) :
+    LocalFunctionEvaluateLocal(EntityImp& en, const DomainImp& x) :
       en_(en),
       x_(x)
     {}
@@ -283,8 +292,13 @@ namespace Dune {
     }
 
   private:
+    LocalFunctionEvaluateLocal();
+    LocalFunctionEvaluateLocal(const LocalFunctionEvaluateLocal&);
+    LocalFunctionEvaluateLocal& operator=(const LocalFunctionEvaluateLocal&);
+    
+  private:
     EntityImp& en_;
-    DomainImp& x_;
+    const DomainImp& x_;
   };
 
   /**
@@ -317,6 +331,11 @@ namespace Dune {
     }
 
   private:
+    LocalFunctionEvaluateQuad();
+    LocalFunctionEvaluateQuad(const LocalFunctionEvaluateQuad&);
+    LocalFunctionEvaluateQuad& operator=(const LocalFunctionEvaluateQuad&);
+
+  private:
     EntityImp& en_;
     QuadratureImp& quad_;
     int quadPoint_;
@@ -325,7 +344,8 @@ namespace Dune {
   template <class EntityImp, class DomainImp>
   class LocalFunctionEvaluateJacobianLocal {
   public:
-    LocalFunctionEvaluateJacobianLocal(EntityImp& en, DomainImp& x) :
+    LocalFunctionEvaluateJacobianLocal(EntityImp& en, 
+                                       const DomainImp& x) :
       en_(en),
       x_(x)
     {}
@@ -336,8 +356,14 @@ namespace Dune {
     }
 
   private:
+    LocalFunctionEvaluateJacobianLocal();
+    LocalFunctionEvaluateJacobianLocal(const LocalFunctionEvaluateJacobianLocal&);
+    LocalFunctionEvaluateJacobianLocal& 
+    operator=(const LocalFunctionEvaluateJacobianLocal&);
+
+  private:
     EntityImp& en_;
-    DomainImp& x_;
+    const DomainImp& x_;
   };
   
   template <class EntityImp, class QuadratureImp>
@@ -354,6 +380,12 @@ namespace Dune {
     void visit(LFType& lf, JRangeType& res) {
       lf.jacobian(en_, quad_, quadPoint_, res);
     }
+
+  private:
+    LocalFunctionEvaluateJacobianQuad();
+    LocalFunctionEvaluateJacobianQuad(const LocalFunctionEvaluateJacobianQuad&);
+    LocalFunctionEvaluateJacobianQuad& 
+    operator=(const LocalFunctionEvaluateJacobianQuad&);
 
   private:
     EntityImp& en_;
