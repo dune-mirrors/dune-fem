@@ -128,13 +128,12 @@ void setFunc (GridType & grid, DiscFuncType & df )
   
   QuadratureType quad( *it );
   
-  LFType lf = df.newLocalFunction ();
   
   for( ; it != endit; ++it)
   {
     FieldVector<double,dim> velo;
     FieldVector<double,dim> bary = it->geometry().global( quad.point(0)); 
-    df.localFunction(*it,lf); 
+    LFType lf = df.localFunction(*it); 
     rotatingPulse(bary,velo);
     for(int i=0; i<lf.numDofs(); i++) 
       lf[i] = velo[i];
