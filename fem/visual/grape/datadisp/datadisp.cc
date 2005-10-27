@@ -78,8 +78,8 @@ typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType
 #if SGRID 
   typedef DefaultGridIndexSet<GR_GridType,LevelIndex>   GR_IndexSetType;
 #else
-  typedef GR_GridType :: Traits :: LeafIndexSet         GR_IndexSetType;
-  //typedef DefaultGridIndexSet<GR_GridType,GlobalIndex>   GR_IndexSetType;
+  //typedef GR_GridType :: Traits :: LeafIndexSet         GR_IndexSetType;
+  typedef DefaultGridIndexSet<GR_GridType,GlobalIndex>   GR_IndexSetType;
 #endif
 
 

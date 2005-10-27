@@ -142,7 +142,6 @@ int readParameterList (int argc, char **argv)
   for(int k=0; k<n+1; k++) 
   {
     DATAINFO * dinf = info[k].datinf; 
-    assert(dinf); 
     while ( dinf ) 
     {
       if(!path) path = "./";
