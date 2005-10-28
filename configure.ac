@@ -7,8 +7,8 @@
 # - put wrapper around mpi-check for consistency with other packages?
 
 AC_PREREQ(2.50)
-AC_INIT(dune-applications, 0.0, dune@hal.iwr.uni-heidelberg.de)
-AM_INIT_AUTOMAKE(dune-applications, 0.0, dune@hal.iwr.uni-heidelberg.de)
+AC_INIT(fvcommon, 0.0, dune@mathematik.uni-freiburg.de)
+AM_INIT_AUTOMAKE(fvcommon, 0.0, dune@mathematik.uni-freiburg.de)
 
 # check if we're in the right directory
 AC_CONFIG_SRCDIR([tester/gridcheck/gridcheck.cc])
@@ -32,19 +32,15 @@ LIBS="$DUNE_LIBS"
 AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  examples/poisson/Makefile
-          	 examples/transport/Makefile
-		 examples/vectorial/Makefile
+              	 examples/transport/Makefile
+            		 examples/vectorial/Makefile
                  examples/l2projection/Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
                  tester/adaptation/Makefile
                  tester/gridcheck/unittests/Makefile
-                 visual/Makefile
-                 visual/grape/Makefile
-                 visual/grape/gridview/Makefile
-                 visual/grape/datadisp/Makefile
-		 pass/Makefile
-		 pass/test/Makefile
+            		 pass/Makefile
+            		 pass/test/Makefile
                ])
 AC_OUTPUT
 
