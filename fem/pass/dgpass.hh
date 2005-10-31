@@ -9,6 +9,8 @@
 //! \TODO Move the boundary stuff to a common base class for all discrete
 //! operators
 #include <dune/fem/common/boundary.hh>
+#include <dune/common/fvector.hh>
+#include <dune/grid/common/grid.hh>
 
 namespace Dune {
 
@@ -28,8 +30,13 @@ namespace Dune {
 
     // Types from the base class
     typedef typename BaseType::Entity EntityType;
-    typedef typename BaseType::SpaceType SpaceType;
     typedef typename BaseType::ArgumentType ArgumentType;
+
+    // Types from the traits
+    typedef typename ProblemType::Traits::DestinationType DestinationType;
+    typedef typename ProblemType::Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename ProblemType::Traits::FaceQuadratureType FaceQuadratureType;
+    typedef typename ProblemType::Traits::SpaceType SpaceType;
 
     // Types extracted from the discrete function space type
     typedef typename SpaceType::GridType GridType;
@@ -41,10 +48,6 @@ namespace Dune {
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
     typedef typename GridType::template Codim<0>::Geometry Geometry;
 
-    // Types from the traits
-    typedef typename ProblemType::DestinationType DestinationType;
-    typedef typename ProblemType::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename ProblemType::FaceQuadratureType FaceQuadratureType;
 
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
@@ -62,10 +65,11 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
+    //! \param bc Container for boundary conditions for this operator
     LocalDGPass(ProblemType& problem, 
                 PreviousPassType& pass, 
                 SpaceType& spc,
-                const BoundaryManagerType& bc) :
+                BoundaryManagerType& bc) :
       BaseType(pass, spc),
       problem_(problem),
       caller_(0),
@@ -83,7 +87,6 @@ namespace Dune {
       diffVar_()
     {}
    
-
     virtual ~LocalDGPass() {
       //delete caller_;
     }
@@ -118,8 +121,7 @@ namespace Dune {
     virtual void applyLocal(EntityType& en) const
     {
       std::cout << "DGLocalPass::applyLocal()" << std::endl;
-      // * A first try for an implementation - far from working...
-  
+    
       //- Initialise quadratures and stuff
       caller_->setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
@@ -136,34 +138,30 @@ namespace Dune {
       for (int l = 0; l < volQuad.nop(); ++l) {
         JacobianRangeType flux(0.0);
         caller_->analyticalFlux(en, volQuad, l, flux);
-        
-        // * add evaluation of source term here as well
-        // caller_->source(...);
+
+        RangeType source(0.0);
+        caller_->source(en, volQuad, l, source);
 
         for (int k = 0; k < spc_.getBaseFunctionSet(en).numBaseFunctions(); 
              ++k) {
-          // * to be replaced by something more standard
-          //const std::vector<BaseJRange>& gradients =
-          //  spc_.getBaseFunctionSet(en).gradients(k, volQuad);
-          
           JacobianRangeType gradients(0.0);
+          RangeType values(0.0);
           spc_.getBaseFunctionSet(en).jacobian(k, volQuad, l, gradients);
+          spc_.getBaseFunctionSet(en).eval(k, volQuad, l, values);
 
-          tmp_ = 0.0;
-          grads_ = 0.0;
-          // * umv, umtv right here? why gradients[0]
-          en.geometry().jacobianInverseTransposed(volQuad.point(l)).
-            umv(gradients[0], grads_);
-          flux.umv(grads_, tmp_);
 
           // Update vector
           for (int i = 0; i < dimRange; ++i) {
-            // Watch out for the minus sign here!
+            grads_ = 0.0;
+            en.geometry().jacobianInverseTransposed(volQuad.point(l)).
+              umv(gradients[i], grads_);
+       
             double update =
-              tmp_[i]*volQuad.weight(l)*
+              (flux[i]*grads_+source[i]*values[i])*volQuad.weight(l)*
               en.geometry().integrationElement(volQuad.point(l));
 
-            updEn[i*dimRange + k] -= update;
+            // * is (i + k*dimRange) right?
+            updEn[i + k*dimRange] += update;
           } // end for i (dimRange)
         } // end for k (baseFunctions)
       } // end for l (quadraturePoints)
@@ -179,7 +177,8 @@ namespace Dune {
               || nit.outside()->partitionType() == GhostEntity) {
             
             caller_->setNeighbor(*nit.outside());
-            LocalFunctionType updNeigh = dest_->localFunction(*(nit.outside()));
+            LocalFunctionType updNeigh = 
+              dest_->localFunction(*(nit.outside()));
 
             for (int l = 0; l < faceQuad.nop(); ++l) {
               double h = 
@@ -206,22 +205,21 @@ namespace Dune {
                    k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
                 RangeType baseEn;
                 spc_.getBaseFunctionSet(en).evaluate(k,
-                                                       diffVar_,
-                                                       xLocalEn,
-                                                       baseEn);
+                                                     diffVar_,
+                                                     xLocalEn,
+                                                     baseEn);
 
                 RangeType baseNeigh;
                 spc_.getBaseFunctionSet(en).evaluate(k,
-                                                       diffVar_,
-                                                       xLocalNeigh,
-                                                       baseNeigh);
+                                                     diffVar_,
+                                                     xLocalNeigh,
+                                                     baseNeigh);
 
                 for (int i = 0; i < dimRange; ++i) {
-                  //assert(dimRange == 1); // * Temporary
-                  updEn[i*dimRange + k] +=
+                  updEn[i + dimRange*k] -=
                     tmp_[i]*baseEn[0]*faceQuad.weight(l)*h;
 
-                  updNeigh[i*dimRange + k] -= 
+                  updNeigh[i + dimRange*k] += 
                     tmp_[i]*baseNeigh[0]*faceQuad.weight(l)*h;
 
                 } // end loop dimRange
@@ -250,10 +248,9 @@ namespace Dune {
               RangeType boundaryValue;
               bc.evaluate(valEn_, xGlobal, n, boundaryValue);
      
-              // ? How to deal with boundary?
-              assert(false); // Need something like boundary flux
-              dtLocal = 
-                caller_->numericalFlux(nit, faceQuad, l, valEn_, boundaryValue);
+              // * How to deal with boundary?
+              //dtLocal = 
+              //  caller_->boundaryFlux(nit, faceQuad, l, boundaryValue, valEn_);
               dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
                 dtMin_ : vol/(dtLocal*integrationElement);
               if (dtLocal < dtMin_) dtMin_ = dtLocal;
@@ -266,7 +263,7 @@ namespace Dune {
                                                      xLocalEn,
                                                      baseEn);
                 for (int i = 0; i < dimRange; ++i) {
-                  updEn[i*dimRange + k] +=
+                  updEn[i + dimRange*k] -=
                     tmp_[i]*faceQuad.weight(l)*baseEn[0]*
                     integrationElement;
                 }
@@ -294,11 +291,10 @@ namespace Dune {
               for (int k = 0; 
                    k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
                 RangeType baseEn(0.0);
-                  // * Replace with something more standard
-                  //spc_.getBaseFunctionSet(en).faces(nit.numberInSelf(),
-                  //                                  k, faceQuad)[l];
+                spc_.getBaseFunctionSet(en).eval(k, xLocalEn, baseEn);
+
                 for (int i = 0; i < dimRange; ++i) {
-                  updEn[i*dimRange + k] +=
+                  updEn[i + dimRange*k] -=
                     tmp_[i]*faceQuad.weight(l)*baseEn[0]*
                     integrationElement;
                 }
@@ -313,6 +309,11 @@ namespace Dune {
      
     }
     
+  private:
+    LocalDGPass();
+    LocalDGPass(const LocalDGPass&);
+    LocalDGPass& operator=(const LocalDGPass&);
+
   private:
     double volumeElement(const EntityType& en,
                          const VolumeQuadratureType& quad) const {

@@ -44,9 +44,9 @@ namespace Dune {
   template <class ProblemImp, class PreviousPassImp>
   class Pass :
     public Operator<typename PreviousPassImp::GlobalArgumentType::DofType, 
-                    typename ProblemImp::DestinationType::DofType,
+                    typename ProblemImp::Traits::DestinationType::DofType,
                     typename PreviousPassImp::GlobalArgumentType, 
-                    typename ProblemImp::DestinationType>
+                    typename ProblemImp::Traits::DestinationType>
   {
     template <class PT, class PP>
     friend class Pass;
@@ -60,7 +60,7 @@ namespace Dune {
     typedef PreviousPassImp PreviousPassType;
     //! Type of the discrete function which stores the result of this pass' 
     //! computations.
-    typedef typename ProblemImp::DestinationType DestinationType;
+    typedef typename ProblemImp::Traits::DestinationType DestinationType;
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
     typedef typename PreviousPassType::GlobalArgumentType GlobalArgumentType;
@@ -145,8 +145,8 @@ namespace Dune {
     typedef Pass<ProblemImp, PreviousPassImp> BaseType;
     typedef typename BaseType::TotalArgumentType ArgumentType;
 
-    typedef typename ProblemImp::DestinationType DestinationType;
-    typedef typename ProblemImp::SpaceType SpaceType;
+    typedef typename ProblemImp::Traits::DestinationType DestinationType;
+    typedef typename ProblemImp::Traits::SpaceType SpaceType;
     typedef typename SpaceType::IteratorType IteratorType;
     typedef typename IteratorType::Entity Entity;
 

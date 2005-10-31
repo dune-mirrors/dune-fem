@@ -1,6 +1,8 @@
 #ifndef DUNE_PROBLEM_HH
 #define DUNE_PROBLEM_HH
 
+#include <dune/common/fvector.hh>
+
 namespace Dune {
 
   /**
@@ -18,7 +20,9 @@ namespace Dune {
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
-    
+    typedef FieldVector<typename FunctionSpaceType::DomainFieldType,
+                        FunctionSpaceType::DimDomain-1> FaceDomainType;
+
   public:
     //! Returns true if problem has a flux contribution.
     //! If you program this method to return true, make sure to implement
@@ -35,7 +39,7 @@ namespace Dune {
     template <
       class IntersectionIterator, class ArgumentTuple, class ResultType>
     double numericalFlux(IntersectionIterator& it,
-                         double time, const DomainType& x,
+                         double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          ResultType& gLeft,
@@ -51,10 +55,13 @@ namespace Dune {
     { asImp().analyticalFlux(); }
 
     //! Implements the source term of the problem.
-    template <class Entity, class ArgumentTuple, class ResultType>
+    template <
+      class Entity, class ArgumentTuple, class JacobianTuple, class ResultType>
     void source(Entity& en, 
                 double time, const DomainType& x,
-                const ArgumentTuple& u, ResultType& s) 
+                const ArgumentTuple& u, 
+                const JacobianTuple& jac, 
+                ResultType& s) 
     { asImp().source(); }
 
     // Need second source function with grad u as additional argument 
@@ -75,20 +82,23 @@ namespace Dune {
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
-    
+    typedef FieldVector<typename FunctionSpaceType::DomainFieldType,
+                        FunctionSpaceType::DimDomain-1> FaceDomainType;
   public:
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
    template <
       class IntersectionIterator, class ArgumentTuple, class ResultType>
     double numericalFlux(IntersectionIterator& it,
-                         double time, const DomainType& x,
+                         double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          ResultType& gLeft,
                          ResultType& gRight)
     { 
       assert(!this->hasFlux()); 
+      gLeft = 0.0;
+      gRight = 0.0;
       return 0.0;
     }
 
@@ -98,15 +108,23 @@ namespace Dune {
     void analyticalFlux(Entity& en,
                         double time, const DomainType& x,
                         const ArgumentTuple& u, ResultType& f)
-    { assert(!this->hasFlux()); }
+    { 
+      assert(!this->hasFlux()); 
+      f = 0.0;
+    }
 
     //! Empty implementation that fails if problem claims to have a source 
     //! term.
-    template <class Entity, class ArgumentTuple, class ResultType>
+    template <
+      class Entity, class ArgumentTuple, class JacobianTuple, class ResultType>
     void source(Entity& en, 
                 double time, const DomainType& x,
-                const ArgumentTuple& u, ResultType& s)
-    { assert(!this->hasSource()); }
+                const ArgumentTuple& u, const JacobianTuple& jac, 
+                ResultType& s)
+    { 
+      assert(!this->hasSource()); 
+      s = 0.0;
+    }
   };
 
 }  // end namespace Dune

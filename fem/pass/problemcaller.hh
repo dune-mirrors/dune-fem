@@ -103,14 +103,13 @@ namespace Dune {
                          const DomainType& x,
                          ResultType& resEn, ResultType& resNeigh) {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
-      const Geometry& global = nit.intersectionGlobal();
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(x),
                     valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(x),
                     valuesNeigh_);
-      return problem_.numericalFlux(nit, 0.0, global.global(x),
+      return problem_.numericalFlux(nit, 0.0, x,
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
       //CallerType::numericalFlux(problem_, nit, x, 
@@ -126,7 +125,6 @@ namespace Dune {
                          int quadPoint,
                          ResultType& resEn, ResultType& resNeigh) {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
-      const Geometry& global = nit.intersectionGlobal();
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
@@ -134,7 +132,7 @@ namespace Dune {
       evaluateLocal(*nit.outside(), neighLocal.global(quad.point(quadPoint)),
                     valuesNeigh_);
       return problem_.numericalFlux(nit, 0.0, 
-                                    global.global(quad.point(quadPoint)),
+                                    quad.point(quadPoint),
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
       //CallerType::numericalFlux(problem_, nit, quad, quadPoint,
@@ -142,11 +140,51 @@ namespace Dune {
       //                      res_en, res_neigh);
     }
 
+    // * Problem: bval should be a tuple as well, but how to you get it?
+    /*
+    template <class IntersectionIterator, class DomainType, class RangeType, class ResultType>
+    double boundaryFlux(IntersectionIterator& nit,
+                        const DomainType& x,
+                        const RangeType& bval,
+                        ResultType& resEn) {
+      typedef typename IntersectionIterator::LocalGeometry Geometry;
+      ResultType dummy(0.0);
+      const Geometry& global = nit.intersectionGlobal();
+      const Geometry& selfLocal = nit.intersectionSelfLocal();
+      evaluateLocal(*nit.inside(), selfLocal.global(x),
+                    valuesEn_);
+      return problem_.numericalFlux(nit, 0.0,
+                                    global.global(x),
+                                    valuesEn_.second, bval,
+                                    resEn, dummy);
+    }
+
+    template <
+      class IntersectionIterator, class QuadratureType, class RangeType, class ResultType>
+    double boundaryFlux(IntersectionIterator& nit,
+                        QuadratureType& quad,
+                        int quadPoint,
+                        const RangeType& bval,
+                        ResultType& resEn) {
+      typedef typename IntersectionIterator::LocalGeometry Geometry;
+      ResultType dummy(0.0);
+      const Geometry& global = nit.intersectionGlobal();
+      const Geometry& selfLocal = nit.intersectionSelfLocal();
+      evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
+                    valuesEn_);
+      return problem_.numericalFlux(nit, 0.0,
+                                    global.global(quad.point(quadPoint)),
+                                    valuesEn_.second, bval,
+                                    resEn, dummy);
+    }
+    */
+
     template <class Entity, class DomainType, class ResultType>
     void source(Entity& en, const DomainType& x, ResultType& res) {
       evaluateLocal(en, x, valuesEn_);
-      problem_.source(en, 0.0, x, valuesEn_.second, res);
-      //CallerType::source(problem_, en, x, valuesEn_.second, res);
+      evaluateJacobianLocal(en, x);
+      problem_.source(en, 0.0, x, valuesEn_.second, jacobians_, res);
+      //CallerType::source(problem_, en, x, valuesEn_.second, jacobians_, res);
     }
 
     template <class Entity, class QuadratureType, class ResultType>
@@ -154,9 +192,11 @@ namespace Dune {
                 ResultType& res) 
     {
       evaluateQuad(en, quad, quadPoint, valuesEn_);
-      problem_.source(en, 0.0, quad.point(quadPoint), valuesEn_.second, res);
+      evaluateJacobianQuad(en, quad, quadPoint);
+      problem_.source(en, 0.0, quad.point(quadPoint), valuesEn_.second,
+                      jacobians_, res);
       //CallerType::source(problem_, en, quad, quadPoint,
-      //valuesEn_.second, res);
+      //valuesEn_.second, jacobians_, res);
     }
 
   private:

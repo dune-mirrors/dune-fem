@@ -11,6 +11,7 @@
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/alu3dgrid.hh>
 #include <dune/fem/dfadapt.hh>
+#include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/quadrature/fixedorder.hh>
 
 namespace Dune {
@@ -22,7 +23,8 @@ namespace Dune {
    typedef LagrangeDiscreteFunctionSpace<
      FunctionSpaceType, GridPartType, 1> DiscreteFunctionSpaceType;
    typedef DiscreteFunctionSpaceType SpaceType;
-   typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
+   //typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
+   typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
    typedef FixedOrderQuad<double, FieldVector<double, 3>, 1> VolumeQuadratureType;
    typedef FixedOrderQuad<double, FieldVector<double, 2>, 1> FaceQuadratureType;
   };
@@ -45,6 +47,8 @@ namespace Dune {
     typedef Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef Traits::FaceQuadratureType FaceQuadratureType;
 
+    typedef FieldVector<double, 3> DomainType;
+    typedef FieldVector<double, 2> FaceDomainType;
   public:
     bool hasFlux() const { return true; }
     bool hasSource() const { return true; }
@@ -52,7 +56,7 @@ namespace Dune {
     template <
       class IntersectionIterator, class ArgumentTuple, class ResultType>
     double numericalFlux(IntersectionIterator& it,
-                         double time, const DomainType& x,
+                         double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          ResultType& gLeft,
@@ -68,10 +72,12 @@ namespace Dune {
                         const ArgumentTuple& u, ResultType& f) 
     { std::cout << "g()" << std::endl; }
 
-    template <class Entity, class ArgumentTuple, class ResultType>
+    template <class Entity, class ArgumentTuple, class JacobianTuple, class ResultType>
     void source(Entity& en, 
                 double time, const DomainType& x,
-                const ArgumentTuple& u, ResultType& s)
+                const ArgumentTuple& u, 
+                const JacobianTuple& jac, 
+                ResultType& s)
     { std::cout << "S()" << std::endl; }
   };
 
