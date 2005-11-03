@@ -12,16 +12,23 @@ namespace Dune {
    * of local DG passes. Users need to derive from either this class or the
    * ProblemDefault class.
    */
-  template <class ProblemImp, class FunctionSpaceImp>
+  template <class ProblemTraits>
   class ProblemInterface 
   {
   public:
-    typedef ProblemImp ProblemType;
-    typedef FunctionSpaceImp FunctionSpaceType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef FieldVector<typename FunctionSpaceType::DomainFieldType,
-                        FunctionSpaceType::DimDomain-1> FaceDomainType;
+    typedef ProblemTraits Traits;
+    typedef typename Traits::ProblemType ProblemType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef typename Traits::GridType GridType;
+    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridType::template Codim<0>::Entity EntityType;
+
+    //typedef FieldVector<typename DiscreteFunctionSpaceType::DomainFieldType,
+    //                    DiscreteFunctionSpaceType::DimDomain-1> FaceDomainType;
 
   public:
     //! Returns true if problem has a flux contribution.
@@ -36,32 +43,37 @@ namespace Dune {
 
     //! Computes the numerical flux at a cell interface.
     //! ... More to come ...
-    template <
-      class IntersectionIterator, class ArgumentTuple, class ResultType>
+    template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux(IntersectionIterator& it,
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
-                         ResultType& gLeft,
-                         ResultType& gRight)
+                         JacobianRangeType& gLeft,
+                         JacobianRangeType& gRight)
     { return asImp().numericalFlux(); }
+
+    template <class ArgumentTuple, class FaceDomainType>
+    double boundaryFlux(IntersectionIterator& it,
+                        double time, const FaceDomainType& x,
+                        const ArgumentTuple& uLeft,
+                        JacobianRangeType& gLeft)
+    { return asImp().boundaryFlux(); }
 
     //! Computes the analytical flux of the problem.
     //! ... More to come ...
-    template <class Entity, class ArgumentTuple, class ResultType>
-    void analyticalFlux(Entity& en,
+    template <class ArgumentTuple>
+    void analyticalFlux(EntityType& en,
                         double time, const DomainType& x,
-                        const ArgumentTuple& u, ResultType& f) 
+                        const ArgumentTuple& u, JacobianRangeType& f) 
     { asImp().analyticalFlux(); }
 
     //! Implements the source term of the problem.
-    template <
-      class Entity, class ArgumentTuple, class JacobianTuple, class ResultType>
-    void source(Entity& en, 
+    template <class ArgumentTuple, class JacobianTuple>
+    void source(EntityType& en, 
                 double time, const DomainType& x,
                 const ArgumentTuple& u, 
                 const JacobianTuple& jac, 
-                ResultType& s) 
+                RangeType& s) 
     { asImp().source(); }
 
     // Need second source function with grad u as additional argument 
@@ -74,27 +86,33 @@ namespace Dune {
   //! Default implementation of the ProblemInterface where methods for 
   //! the fluxes and the source term do nothing, so that the user needn't
   //! implement them if not needed.
-  template <class ProblemImp, class FunctionSpaceImp>
+  template <class ProblemTraits>
   class ProblemDefault : 
-    public ProblemInterface<ProblemImp, FunctionSpaceImp> {
+    public ProblemInterface<ProblemTraits> {
   public:
-    typedef ProblemImp ProblemType;
-    typedef FunctionSpaceImp FunctionSpaceType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef FieldVector<typename FunctionSpaceType::DomainFieldType,
-                        FunctionSpaceType::DimDomain-1> FaceDomainType;
+    typedef ProblemTraits Traits;
+    typedef typename Traits::ProblemType ProblemType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef typename Traits::GridType GridType;
+    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+
+    //typedef FieldVector<typename DiscreteFunctionSpaceType::DomainFieldType,
+    //                    DiscreteFunctionSpaceType::DimDomain-1> FaceDomainType;
   public:
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
-   template <
-      class IntersectionIterator, class ArgumentTuple, class ResultType>
+    template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux(IntersectionIterator& it,
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
-                         ResultType& gLeft,
-                         ResultType& gRight)
+                         JacobianRangeType& gLeft,
+                         JacobianRangeType& gRight)
     { 
       assert(!this->hasFlux()); 
       gLeft = 0.0;
@@ -102,12 +120,23 @@ namespace Dune {
       return 0.0;
     }
 
+    template <class ArgumentTuple, class FaceDomainType>
+    double boundaryFlux(IntersectionIterator& it,
+                        double time, const FaceDomainType& x,
+                        const ArgumentTuple& uLeft,
+                        JacobianRangeType& gLeft)
+    {
+      assert(!this->hasFlux());
+      gLeft = 0.0;
+      return 0.0;
+    }
+
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
-    template <class Entity, class ArgumentTuple, class ResultType>
-    void analyticalFlux(Entity& en,
+    template <class ArgumentTuple>
+    void analyticalFlux(EntityType& en,
                         double time, const DomainType& x,
-                        const ArgumentTuple& u, ResultType& f)
+                        const ArgumentTuple& u, JacobianRangeType& f)
     { 
       assert(!this->hasFlux()); 
       f = 0.0;
@@ -115,12 +144,11 @@ namespace Dune {
 
     //! Empty implementation that fails if problem claims to have a source 
     //! term.
-    template <
-      class Entity, class ArgumentTuple, class JacobianTuple, class ResultType>
-    void source(Entity& en, 
+    template <class ArgumentTuple, class JacobianTuple>
+    void source(EntityType& en, 
                 double time, const DomainType& x,
                 const ArgumentTuple& u, const JacobianTuple& jac, 
-                ResultType& s)
+                RangeType& s)
     { 
       assert(!this->hasSource()); 
       s = 0.0;
