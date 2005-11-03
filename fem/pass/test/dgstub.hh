@@ -15,22 +15,30 @@
 #include <dune/quadrature/fixedorder.hh>
 
 namespace Dune {
+  
+  class ProblemStub;
 
- struct DGStubTraits {
-   typedef FunctionSpace<double, double, 3, 1> FunctionSpaceType;
-   typedef ALU3dGrid<3, 3, tetra> GridType;
-   typedef LeafGridPart<GridType> GridPartType;
-   typedef LagrangeDiscreteFunctionSpace<
-     FunctionSpaceType, GridPartType, 1> DiscreteFunctionSpaceType;
-   typedef DiscreteFunctionSpaceType SpaceType;
-   //typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
-   typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
-   typedef FixedOrderQuad<double, FieldVector<double, 3>, 1> VolumeQuadratureType;
-   typedef FixedOrderQuad<double, FieldVector<double, 2>, 1> FaceQuadratureType;
+  struct DGStubTraits {
+    typedef FunctionSpace<double, double, 3, 1> FunctionSpaceType;
+    typedef ALU3dGrid<3, 3, tetra> GridType;
+    typedef LeafGridPart<GridType> GridPartType;
+    typedef LagrangeDiscreteFunctionSpace<
+      FunctionSpaceType, GridPartType, 1> DiscreteFunctionSpaceType;
+    typedef DiscreteFunctionSpaceType SpaceType;
+    //typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    typedef FixedOrderQuad<double, FieldVector<double, 3>, 1> VolumeQuadratureType;
+    typedef FixedOrderQuad<double, FieldVector<double, 2>, 1> FaceQuadratureType;
+    typedef FieldVector<double, 3> DomainType;
+    typedef FieldVector<double, 2> FaceDomainType;
+    typedef DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef ProblemStub ProblemType;
   };
   
   class ProblemStub : 
-    public ProblemDefault<ProblemStub, DGStubTraits::FunctionSpaceType>
+    public ProblemDefault<DGStubTraits>
   {
   public:
     typedef Selector<0>::Base SelectorType;
@@ -46,38 +54,52 @@ namespace Dune {
     typedef Traits::DestinationType DestinationType;
     typedef Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef Traits::FaceQuadratureType FaceQuadratureType;
-
+    typedef Traits::DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef Traits::DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef Traits::GridType GridType;
+    typedef GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef GridType::Codim<0>::Entity EntityType;
+ 
     typedef FieldVector<double, 3> DomainType;
-    typedef FieldVector<double, 2> FaceDomainType;
+  
   public:
     bool hasFlux() const { return true; }
     bool hasSource() const { return true; }
 
-    template <
-      class IntersectionIterator, class ArgumentTuple, class ResultType>
+    template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux(IntersectionIterator& it,
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
-                         ResultType& gLeft,
-                         ResultType& gRight)
+                         RangeType& gLeft,
+                         RangeType& gRight)
     { 
-      std::cout << "f()" << std::endl; 
+      std::cout << "numericalFlux()" << std::endl; 
       return 0.0;
     }
 
-    template <class Entity, class ArgumentTuple, class ResultType>
-    void analyticalFlux(Entity& en,
-                        double time, const DomainType& x,
-                        const ArgumentTuple& u, ResultType& f) 
-    { std::cout << "g()" << std::endl; }
+    template <class ArgumentTuple, class FaceDomainType>
+    double boundaryFlux(IntersectionIterator& it,
+                        double time, const FaceDomainType& x,
+                        const ArgumentTuple& uLeft,
+                        RangeType& boundaryFlux)
+    {
+      std::cout << "boundaryFlux()" << std::endl;
+      return 0.0;
+    }
 
-    template <class Entity, class ArgumentTuple, class JacobianTuple, class ResultType>
-    void source(Entity& en, 
+    template <class ArgumentTuple>
+    void analyticalFlux(EntityType& en,
+                        double time, const DomainType& x,
+                        const ArgumentTuple& u, JacobianRangeType& f) 
+    { std::cout << "analyticalFlux()" << std::endl; }
+
+    template <class ArgumentTuple, class JacobianTuple>
+    void source(EntityType& en, 
                 double time, const DomainType& x,
                 const ArgumentTuple& u, 
                 const JacobianTuple& jac, 
-                ResultType& s)
+                RangeType& s)
     { std::cout << "S()" << std::endl; }
   };
 

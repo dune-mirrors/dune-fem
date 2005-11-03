@@ -106,17 +106,15 @@ namespace Dune {
     typedef Lagrange_Fixture<1> Fix;
     typedef Fix::GridType GridType;
     typedef Fix::DiscreteFunctionSpaceType SpaceType;
-    typedef BoundaryManager<Fix::DiscreteFunctionSpaceType> BCManager;
-
+  
     GridType grid(gridFile_.c_str());
     Fix fix(grid);
     SpaceType& spc = fix.space();
     ProblemStub ps;
-    BCManager bcManager;
-
+  
     Pass0Type p0;
-    Pass1Type p1(ps, p0, spc, bcManager);
-    Pass2Type p2(ps, p1, spc, bcManager);
+    Pass1Type p1(ps, p0, spc);
+    Pass2Type p2(ps, p1, spc);
 
     GlobalArgumentType arg("Arg", spc);
     DestinationType dest("Dest", spc);

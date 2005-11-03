@@ -48,15 +48,15 @@ namespace Dune {
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
-                         JacobianRangeType& gLeft,
-                         JacobianRangeType& gRight)
+                         RangeType& gLeft,
+                         RangeType& gRight)
     { return asImp().numericalFlux(); }
 
     template <class ArgumentTuple, class FaceDomainType>
     double boundaryFlux(IntersectionIterator& it,
                         double time, const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
-                        JacobianRangeType& gLeft)
+                        RangeType& gLeft)
     { return asImp().boundaryFlux(); }
 
     //! Computes the analytical flux of the problem.
@@ -111,8 +111,8 @@ namespace Dune {
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
-                         JacobianRangeType& gLeft,
-                         JacobianRangeType& gRight)
+                         RangeType& gLeft,
+                         RangeType& gRight)
     { 
       assert(!this->hasFlux()); 
       gLeft = 0.0;
@@ -124,7 +124,7 @@ namespace Dune {
     double boundaryFlux(IntersectionIterator& it,
                         double time, const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
-                        JacobianRangeType& gLeft)
+                        RangeType& gLeft)
     {
       assert(!this->hasFlux());
       gLeft = 0.0;
