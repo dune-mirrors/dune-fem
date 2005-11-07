@@ -301,7 +301,8 @@ double algorithm (const char * filename , int maxlevel, int turn )
    //rhs.print(std::cout);
     
    bool verbose = false; 
-   InverseOperatorType cg ( laplace, 1E-3 , 1E-6 , 20000 , verbose );
+   double dummy = 12345.67890;
+   InverseOperatorType cg ( laplace, dummy , 1E-6 , 20000 , verbose );
      
    // solve linear system with cg 
    cg(rhs,solution);
