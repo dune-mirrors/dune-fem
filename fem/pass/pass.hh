@@ -7,6 +7,9 @@
 #include <dune/common/tuples.hh>
 #include <dune/common/operator.hh>
 
+// * must go away
+#include "../../misc/timenew.hh"
+
 namespace Dune {
 
   /**
@@ -30,6 +33,8 @@ namespace Dune {
     NextArgumentType localArgument() const { return Nil(); }
     //! No memory needs to be allocated.
     void allocateLocalMemory() {}
+    //! We don't need no time either
+    void setTimeProvider(const TimeProvider&) {}
   };
 
   /**
@@ -105,6 +110,12 @@ namespace Dune {
     //! Allocates the local memory of a pass, if needed.
     virtual void allocateLocalMemory() = 0;
 
+    //! Set time provider (which gives you access to the global time)
+    void setTimeProvider(const TimeProvider& time) {
+      previousPass_.setTimeProvider(time);
+      processTimeProvider(time);
+    }
+
   protected:
     // ? Really do this? Can't you allocate the memory directly?
     DestinationType* destination_;
@@ -121,6 +132,10 @@ namespace Dune {
     NextArgumentType localArgument() const {
       return NextArgumentType(destination_, previousPass_.localArgument());
     }
+
+    //! With this method, you can get access to the TimeProvider, if needed.
+    //! By default, nothing is done, ie the TimeProvider is discarded.
+    virtual void processTimeProvider(const TimeProvider& time) {}
 
   private:
     //! Does the actual computations. Needs to be overridden in the derived

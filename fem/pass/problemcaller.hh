@@ -51,6 +51,7 @@ namespace Dune {
       JacobianRangeTypeEvaluator, LocalFunctionTupleType> JacobianCreator;
 
     typedef std::pair<LocalFunctionTupleType, RangeTupleType> ValuePair;
+
   public:
     ProblemCaller(ProblemType& problem, TotalArgumentType& arg) :
       problem_(problem),
@@ -58,7 +59,8 @@ namespace Dune {
       discreteFunctions_(FilterType::apply(arg)),
       valuesEn_(LFCreator::apply(discreteFunctions_), RangeCreator::apply()),
       valuesNeigh_(LFCreator::apply(discreteFunctions_),RangeCreator::apply()),
-      jacobians_(JacobianCreator::apply())
+      jacobians_(JacobianCreator::apply()),
+      time_(0.0)
     {}
 
     void setArgument(TotalArgumentType& arg) 
@@ -87,13 +89,17 @@ namespace Dune {
       setter(en, valuesNeigh_.first);
     }
 
+    void setTime(double time) {
+      time_ = time;
+    }
+
     // Here, the interface of the problem is replicated and the Caller
     // is used to do the actual work
     void analyticalFlux(Entity& en, const DomainType& x, 
                         JacobianRangeType& res) 
     {
       evaluateLocal(en, x, valuesEn_);
-      problem_.analyticalFlux(en, 0.0, x, valuesEn_.second, res);
+      problem_.analyticalFlux(en, time_, x, valuesEn_.second, res);
       //CallerType::analyticalFlux(problem_, en, x, valuesEn_.second, res);
     }
     
@@ -112,7 +118,7 @@ namespace Dune {
 
 
       //evaluateQuad(en, quad, quadPoint, valuesEn_);
-      problem_.analyticalFlux(en, 0.0, quad.point(quadPoint), 
+      problem_.analyticalFlux(en, time_, quad.point(quadPoint), 
                               valuesEn_.second, res);
       //CallerType::analyticalFlux(problem_, en, quad, quadPoint, valuesEn_.second, res);
     }
@@ -129,7 +135,7 @@ namespace Dune {
                     valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(x),
                     valuesNeigh_);
-      return problem_.numericalFlux(nit, 0.0, x,
+      return problem_.numericalFlux(nit, time_, x,
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
       //CallerType::numericalFlux(problem_, nit, x, 
@@ -150,7 +156,7 @@ namespace Dune {
                     valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(quad.point(quadPoint)),
                     valuesNeigh_);
-      return problem_.numericalFlux(nit, 0.0, 
+      return problem_.numericalFlux(nit, time_, 
                                     quad.point(quadPoint),
                                     valuesEn_.second, valuesNeigh_.second,
                                     resEn, resNeigh);
@@ -169,7 +175,7 @@ namespace Dune {
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(x),
                     valuesEn_);
-      return problem_.boundaryFlux(nit, 0.0, x,
+      return problem_.boundaryFlux(nit, time_, x,
                                    valuesEn_.second,
                                    boundaryFlux);
     }
@@ -185,7 +191,7 @@ namespace Dune {
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
                     valuesEn_);
-      return problem_.boundaryFlux(nit, 0.0, quad.point(quadPoint),
+      return problem_.boundaryFlux(nit, time_, quad.point(quadPoint),
                                    valuesEn_.second,
                                    boundaryFlux);
     }
@@ -194,7 +200,7 @@ namespace Dune {
     {
       evaluateLocal(en, x, valuesEn_);
       evaluateJacobianLocal(en, x);
-      problem_.source(en, 0.0, x, valuesEn_.second, jacobians_, res);
+      problem_.source(en, time_, x, valuesEn_.second, jacobians_, res);
       //CallerType::source(problem_, en, x, valuesEn_.second, jacobians_, res);
     }
 
@@ -203,7 +209,7 @@ namespace Dune {
     {
       evaluateQuad(en, quad, quadPoint, valuesEn_);
       evaluateJacobianQuad(en, quad, quadPoint);
-      problem_.source(en, 0.0, quad.point(quadPoint), valuesEn_.second,
+      problem_.source(en, time_, quad.point(quadPoint), valuesEn_.second,
                       jacobians_, res);
       //CallerType::source(problem_, en, quad, quadPoint,
       //valuesEn_.second, jacobians_, res);
@@ -274,6 +280,8 @@ namespace Dune {
     ValuePair valuesEn_;
     ValuePair valuesNeigh_;
     JacobianRangeTupleType jacobians_;
+
+    double time_;
   };
 
 }

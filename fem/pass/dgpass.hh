@@ -6,6 +6,9 @@
 #include "problem.hh"
 #include "problemcaller.hh"
 
+// * needs to move
+#include "../../misc/timenew.hh"
+
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
 
@@ -74,13 +77,24 @@ namespace Dune {
       fMat_(0.0),
       valEn_(0.0),
       valNeigh_(0.0),
-      tmp_(0.0),
+      baseEn_(0.0),
+      baseNeigh_(0.0),
+      source_(0.0),
       grads_(0.0),
+      time_(0),
       diffVar_()
     {}
    
     virtual ~LocalDGPass() {
       //delete caller_;
+    }
+
+    virtual void processTimeProvider(const TimeProvider& time) {
+      time_ = &time;
+    }
+
+    double timeStepEstimate() const {
+      return dtMin_;
     }
 
   private:
@@ -99,8 +113,10 @@ namespace Dune {
         caller_ = new ProblemCallerType(problem_, *arg_);
       }
 
-      // dt initialisation
+      // time initialisation
       dtMin_ = std::numeric_limits<double>::max();
+      assert(time_);
+      caller_->setTime(time_->time());
     }
 
     //! Some timestep size management.
@@ -128,11 +144,8 @@ namespace Dune {
 
       // Volumetric integral part
       for (int l = 0; l < volQuad.nop(); ++l) {
-        JacobianRangeType flux(0.0);
-        caller_->analyticalFlux(en, volQuad, l, flux);
-
-        RangeType source(0.0);
-        caller_->source(en, volQuad, l, source);
+        caller_->analyticalFlux(en, volQuad, l, fMat_);
+        caller_->source(en, volQuad, l, source_);
 
         for (int k = 0; k < spc_.getBaseFunctionSet(en).numBaseFunctions(); 
              ++k) {
@@ -141,20 +154,25 @@ namespace Dune {
           spc_.getBaseFunctionSet(en).jacobian(k, volQuad, l, gradients);
           spc_.getBaseFunctionSet(en).eval(k, volQuad, l, values);
 
-
-          // Update vector
+          // Update dof k
+          // Scalar product between source contribution and base function k
+          double update = source_*values;
+          // Summing over all dimensions for analytical flux contribution
           for (int i = 0; i < dimRange; ++i) {
             grads_ = 0.0;
+            // Scaling
             en.geometry().jacobianInverseTransposed(volQuad.point(l)).
               umv(gradients[i], grads_);
        
-            double update =
-              (flux[i]*grads_+source[i]*values[i])*volQuad.weight(l)*
-              en.geometry().integrationElement(volQuad.point(l));
-
-            // * is (i + k*dimRange) right?
-            updEn[i + k*dimRange] += update;
+            // Scalar product for component i
+            update += fMat_[i]*grads_;
           } // end for i (dimRange)
+
+          // Scaling with quadrature weight and integration element
+          update *= volQuad.weight(l)*
+            en.geometry().integrationElement(volQuad.point(l));
+
+          updEn[k] += update;
         } // end for k (baseFunctions)
       } // end for l (quadraturePoints)
 
@@ -169,16 +187,13 @@ namespace Dune {
               || nit.outside()->partitionType() == GhostEntity) {
             
             caller_->setNeighbor(*nit.outside());
-            LocalFunctionType updNeigh = 
-              dest_->localFunction(*(nit.outside()));
+            LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
 
             for (int l = 0; l < faceQuad.nop(); ++l) {
               double h = 
                 nit.intersectionGlobal().integrationElement(faceQuad.point(l));
               // * might be improved by using quadrature points directly
               // * (how to deal with quadrature points on neighbor?)
-              DomainType xGlobal =
-                nit.intersectionGlobal().global(faceQuad.point(l));
               DomainType xLocalEn = 
                 nit.intersectionSelfLocal().global(faceQuad.point(l));
               DomainType xLocalNeigh = 
@@ -188,8 +203,6 @@ namespace Dune {
               dtLocal = 
                 caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
 
-              // * something is missing here: jacEn_ and jacNeigh_ have a contribution to upd
-
               dtLocal =  (dtLocal < std::numeric_limits<double>::min()) ?
                 dtMin_ : vol/(dtLocal*h);
               if(dtLocal < dtMin_) dtMin_ = dtLocal;
@@ -197,26 +210,21 @@ namespace Dune {
               // * Assumption: all elements have same number of base functions
               for (int k = 0;
                    k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
-                RangeType baseEn;
                 spc_.getBaseFunctionSet(en).evaluate(k,
                                                      diffVar_,
                                                      xLocalEn,
-                                                     baseEn);
+                                                     baseEn_);
 
-                RangeType baseNeigh;
                 spc_.getBaseFunctionSet(en).evaluate(k,
                                                      diffVar_,
                                                      xLocalNeigh,
-                                                     baseNeigh);
+                                                     baseNeigh_);
 
-                for (int i = 0; i < dimRange; ++i) {
-                  updEn[i + dimRange*k] -=
-                    tmp_[i]*baseEn[0]*faceQuad.weight(l)*h;
-
-                  updNeigh[i + dimRange*k] += 
-                    tmp_[i]*baseNeigh[0]*faceQuad.weight(l)*h;
-
-                } // end loop dimRange
+                updEn[k] -=
+                  (valEn_*baseEn_)*faceQuad.weight(l)*h;
+                
+                updNeigh[k] += 
+                  (valNeigh_*baseNeigh_)*faceQuad.weight(l)*h;
               } // end loop base functions
             } // end loop quadrature points
             
@@ -233,25 +241,21 @@ namespace Dune {
             DomainType xGlobal =
               nit.intersectionGlobal().global(faceQuad.point(l));
             
-            RangeType boundaryFlux(0.0);
             dtLocal = 
-              caller_->boundaryFlux(nit, faceQuad, l, boundaryFlux);
+              caller_->boundaryFlux(nit, faceQuad, l, source_);
             dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
               dtMin_ : vol/(dtLocal*integrationElement);
             if (dtLocal < dtMin_) dtMin_ = dtLocal;
                     
             for (int k = 0; 
                  k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
-              RangeType baseEn;
               spc_.getBaseFunctionSet(en).evaluate(k,
                                                    diffVar_,
                                                    xLocalEn,
-                                                   baseEn);
-              for (int i = 0; i < dimRange; ++i) {
-                updEn[i + dimRange*k] -=
-                  tmp_[i]*faceQuad.weight(l)*baseEn[0]*
-                  integrationElement;
-              }
+                                                   baseEn_);
+              updEn[k] -=
+                (source_*baseEn_)*faceQuad.weight(l)*
+                integrationElement;
             }
           }
         } // end if boundary
@@ -290,8 +294,11 @@ namespace Dune {
     mutable JacobianRangeType fMat_;
     mutable RangeType valEn_;
     mutable RangeType valNeigh_;
-    mutable RangeType tmp_;
+    mutable RangeType baseEn_;
+    mutable RangeType baseNeigh_;
+    mutable RangeType source_;
     mutable DomainType grads_;
+    const TimeProvider* time_;
     FieldVector<int, 0> diffVar_;
   };
   
