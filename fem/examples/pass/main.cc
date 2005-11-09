@@ -49,7 +49,7 @@ struct Traits {
   typedef DofManager<GridType> DofManagerType;
   typedef DofManagerFactory<DofManagerType> DofManagerFactory;
   //typedef LeafGridPart<GridType> GridPartType;
-  typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
+  typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
   typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
   typedef DiscontinuousGalerkinSpace<FuncSpace,
                                      GridPartType,
@@ -117,8 +117,8 @@ public:
 
 public:
   Fixture(std::string gridName, double epsilon, const DomainType& velo, SStruct& s) :
-    //    grid_(gridName),
-    grid_(s.n_, s.l_, s.h_),
+    grid_(gridName),
+    //grid_(s.n_, s.l_, s.h_),
     dm_(Traits::DofManagerFactory::getDofManager(grid_)),
     iset1_(grid_, grid_.maxLevel()),
     iset2_(grid_, grid_.maxLevel()),
@@ -286,11 +286,11 @@ void printIt(DFType& df)
 int main() 
 {
 
-  typedef SGrid<2, 2> MyGrid;
+  //typedef SGrid<2, 2> MyGrid;
 
-  //  typedef AlbertaGrid<2, 2> MyGrid;
+  typedef AlbertaGrid<2, 2> MyGrid;
 
-  typedef Traits<MyGrid, 3> MyTraits;
+  typedef Traits<MyGrid, 1> MyTraits;
   typedef Fixture<MyTraits> Fix;
   typedef MyTraits::Pass2Type SpaceOperatorType;
   typedef MyTraits::DomainType DomainType;
@@ -336,7 +336,6 @@ int main()
   fix.dm().resize();
   fix.dm().dofCompress();
 
-  //grid.globalRefine(globalRefineCount);
   SpaceOperatorType& op = fix.dgOperator();
   TimeOperatorType top;
 
