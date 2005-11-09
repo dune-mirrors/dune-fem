@@ -1,6 +1,9 @@
 // Global defines
-#define DIM 3
-#define DIM_OF_WORLD 3
+#undef DIM
+#undef DIM_OF_WORLD
+
+#define DIM 2
+#define DIM_OF_WORLD 2
 
 #include "../../config.h"
 
@@ -13,11 +16,14 @@
 #include "problem.hh"
 
 // Include Dune headers
+#include <dune/common/misc.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/common/boundary.hh>
-#include <dune/fem/dfadapt.hh>
+//#include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/albertagrid.hh>
+#include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/io/file/grapedataio.hh>
 #include <dune/fem/l2projection.hh>
@@ -32,7 +38,7 @@ using namespace Dune;
 //using namespace Adi;
 
 template <class GridImp, 
-          int polOrd=0 >
+          int polOrd >
 struct Traits {
   typedef GridImp GridType;
 
@@ -43,7 +49,7 @@ struct Traits {
   typedef DofManager<GridType> DofManagerType;
   typedef DofManagerFactory<DofManagerType> DofManagerFactory;
   //typedef LeafGridPart<GridType> GridPartType;
-  typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
+  typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
   typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
   typedef DiscontinuousGalerkinSpace<FuncSpace,
                                      GridPartType,
@@ -78,6 +84,31 @@ struct Traits {
   typedef LocalDGPass<Problem2Type, Pass1Type> Pass2Type;
 };
 
+struct SStruct {
+  SStruct(int n1, int n2, double lx, double ly, double hx, double hy) 
+  {
+    n_[0] = n1;
+    n_[1] = n2;
+    l_[0] = lx;
+    l_[1] = ly;
+    h_[0] = hx;
+    h_[1] = hy;
+  }
+
+  SStruct(int n, double h) {
+    n_[0] = n;
+    n_[1] = 1;
+    l_[0] = -1.0;
+    l_[1] = -h/2.0;
+    h_[0] = 1.0;
+    h_[1] = h/2.0;
+  }
+
+  int n_[2];
+  double l_[2];
+  double h_[2];
+};
+
 template <class TraitsImp>
 class Fixture {
 public:
@@ -85,8 +116,9 @@ public:
   typedef typename Traits::DomainType DomainType;
 
 public:
-  Fixture(std::string gridName, double epsilon, const DomainType& velo) :
-    grid_(gridName),
+  Fixture(std::string gridName, double epsilon, const DomainType& velo, SStruct& s) :
+    //    grid_(gridName),
+    grid_(s.n_, s.l_, s.h_),
     dm_(Traits::DofManagerFactory::getDofManager(grid_)),
     iset1_(grid_, grid_.maxLevel()),
     iset2_(grid_, grid_.maxLevel()),
@@ -135,6 +167,7 @@ private:
   typename Traits::Pass2Type pass2_;
 };
 
+/*
 template <class Loop, class GridType>
 void printData(double time, int timestep, GridType& grid, Loop& loop) 
 {
@@ -142,6 +175,7 @@ void printData(double time, int timestep, GridType& grid, Loop& loop)
   dataio.writeGrid(grid, xdr, "grid", time, timestep);
   dataio.writeData(loop.solution(), xdr, "vec", timestep);
 }
+*/
 
 template <class Loop, class SpaceType>
 void printDX(double time, int timestep, SpaceType& space, Loop& loop) 
@@ -152,11 +186,53 @@ void printDX(double time, int timestep, SpaceType& space, Loop& loop)
   dx.write(loop.solution(), "data");
 }
 
+template <class Geometry>
+void midPoint(const Geometry& geo, FieldVector<double, 2>& result) 
+{
+  result *= 0.0;
+  for (int i = 0; i < geo.corners(); ++i) {
+    result += geo[i];
+  }
+
+  result /= static_cast<double>(geo.corners());
+}
+
+template <class Loop, class SpaceType>
+void printSGrid(double time, int timestep, SpaceType& space, Loop& loop)
+{
+  typedef typename SpaceType::IteratorType Iterator;
+  typedef typename Loop::DiscreteFunctionType DiscreteFunctionType;
+  typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    
+  std::ostringstream filestream;
+  filestream << "sgrid" << timestep;
+  
+  std::ofstream ofs(filestream.str().c_str(), std::ios::out);
+
+  FieldVector<double, 2> mid(0.0);
+  FieldVector<double, 2> localMid(0.5);
+
+  FieldVector<double, 1> result;
+
+  DiscreteFunctionType& sol = loop.solution();
+
+  Iterator endit = space.end();
+  for (Iterator it = space.begin(); it != endit; ++it) {
+    midPoint(it->geometry(), mid);
+    if (mid[1] < 0.1 && mid[1] > -0.1) {
+      LocalFunctionType lf = sol.localFunction(*it);
+      lf.evaluateLocal(*it, localMid, result);
+      ofs << mid[0] << " " << result[0] << "\n";
+    }
+  }
+  ofs << std::endl;
+}
+
 class StupidFunction {
 public:
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg, RangeType& res) {
-    if (arg*arg < 100) {
+    if (arg*arg < 0.25) {
       res = 1.0;
     } 
     else {
@@ -186,14 +262,8 @@ void initialize(DFType& df)
   //- Local classes
 
   //- Actual method
-  StupidFunction f;
-  
-  const SpaceType& spc = df.getFunctionSpace();
-  for (Iterator it = spc.begin(); it != spc.end(); ++it) {
-    LocalFunction lf = df.localFunction(*it);
-    
-    L2Projection<DFType, StupidFunction, 2>::project(f, df);
-  }
+  StupidFunction f;  
+  L2Projection<DFType, StupidFunction, 2>::project(f, df);
 
   typedef typename DFType::DofIteratorType DofIterator;
   for (DofIterator it = df.dbegin(); it != df.dend(); ++it) {
@@ -201,73 +271,26 @@ void initialize(DFType& df)
   }
 }
 
-/*
-template <class GridType>
-void refine(GridType& grid, int count) 
+template <class DFType>
+void printIt(DFType& df) 
 {
-  RespProlOperatorFV<DiscreteFunctionType>* newRP_;
+  typedef typename DFType::DofIteratorType DofIt;
 
-  typename GridType::template Codim<0>::LeafIterator it = grid_->template leafbegin<0>();
-  if( it != grid_->template leafend<0>() ) {
-      switch(it->geometry().type()) {
-      case simplex :
-        if(dim == 2) {
-          // triangles 
-          newRP_ = 
-            new RestProlOperatorFV<DiscreteFunctionType>(*solution_, triangle);
-          newRP_->setFatherChildWeight(0.5);
-          break;
-        }
-        if(dim == 3) {
-          // tetrahedrons
-          newRP_ = new 
-            RestProlOperatorFV<DiscreteFunctionType>(*solution_, tetrahedron);
-          // for AlbertaGrid and ALUGrid this is different 
-          if( grid_->type() == AlbertaGrid_Id) newRP_->setFatherChildWeight(0.5);
-          else newRP_->setFatherChildWeight(0.125);
-          break;
-        }
-      case cube:
-        if(dim == 3) {
-          // hexahedrons 
-          newRP_= new 
-            RestProlOperatorFV<DiscreteFunctionType>(*solution_, hexahedron);
-          newRP_->setFatherChildWeight(0.125);
-          break;
-        }
-        if(dim == 2) {
-          // quadrilaterals  
-          newRP_= new 
-            RestProlOperatorFV<DiscreteFunctionType>(*solution_, quadrilateral);
-          newRP_->setFatherChildWeight(0.25);
-          break;
-        }
-      default:
-        std::cerr << "Wrong element type" << std::endl;
-        assert(false);
-        std::abort();
-      }
+  std::cout << "print it\n";
+  for (DofIt it = df.dbegin(); it != df.dend(); ++it) {
+    std::cout << *it << std::endl;
   }
-  
-  assert( newRP_ );
-  
-  typedef AdaptOperator<
-    GridType,
-    RestProlOperatorFV<DiscreteFunctionType>,
-    DofManagerType
-    > ADOperatorType;
-  
-  ADOperatorType adop_(grid, dm, *newRP_ );
-  AdaptMapping adaptMap_(adop_);
-  
-  grid.adapt(count);
-  adaptMap_.adapt();
+
 }
-*/
 
 int main() 
 {
-  typedef Traits<ALU3dGrid<3, 3, tetra>, 0> MyTraits;
+
+  typedef SGrid<2, 2> MyGrid;
+
+  //  typedef AlbertaGrid<2, 2> MyGrid;
+
+  typedef Traits<MyGrid, 3> MyTraits;
   typedef Fixture<MyTraits> Fix;
   typedef MyTraits::Pass2Type SpaceOperatorType;
   typedef MyTraits::DomainType DomainType;
@@ -278,15 +301,35 @@ int main()
   typedef MyTraits::GridType GridType;
 
   // parameter section
+  /*
   std::string gridFile("macro.small");
   DomainType velo(0.0); velo[0] = 1.0;
   double epsilon = 0.01;
   double dt = 0.1;
   double endTime = 1.0;
-  int globalRefineCount = 1;
+  int globalRefineCount = 2;
+
+  */
+  std::string gridFile;
+  DomainType velo(0.0);
+  double epsilon;
+  double dt;
+  double endTime;
+  int globalRefineCount;
+  
+  double veloX;
+  std::string paramfile("parameter");
+  readParameter(paramfile,"gridFile", gridFile);
+  readParameter(paramfile,"epsilon", epsilon);
+  readParameter(paramfile,"velo", veloX);
+  velo[0] = veloX;
+  readParameter(paramfile,"dt", dt);
+  readParameter(paramfile,"endTime", endTime);
+  readParameter(paramfile,"globalRefineCount", globalRefineCount);
 
   // problem creation
-  Fix fix(gridFile, epsilon, velo);
+  SStruct s(100, 0.1);
+  Fix fix(gridFile, epsilon, velo, s);
   GridType& grid = fix.grid();
 
   grid.globalRefine(globalRefineCount);
@@ -308,9 +351,18 @@ int main()
     DiscreteFunction, MappingType> loop(initial, top, op, factory, dt);
   op.setTimeProvider(loop);
 
-  printData(loop.time(), 0, fix.grid(), loop);
+  //printData(loop.time(), 0, fix.grid(), loop);
+  printSGrid(loop.time(), 0, fix.space(), loop);
   printDX(loop.time(), 0, fix.space(), loop);
-  loop.solveUntil(endTime);
-  printData(loop.time(), 1, fix.grid(), loop);
+  
+  loop.solve();
+  //printData(loop.time(), 1, fix.grid(), loop);
+  printSGrid(loop.time(), 1, fix.space(), loop);
   printDX(loop.time(), 1, fix.space(), loop);
+
+  loop.solveUntil(endTime);
+  //printData(loop.time(), 2, fix.grid(), loop);
+  printSGrid(loop.time(), 2, fix.space(), loop);
+  printDX(loop.time(), 2, fix.space(), loop);
+
 }

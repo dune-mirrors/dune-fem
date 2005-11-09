@@ -11,6 +11,7 @@
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/albertagrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/quadrature/fixedorder.hh>
 
@@ -23,17 +24,19 @@ namespace Dune {
 
   struct TransportDiffusionTraits1 
   {
-    enum { dimRange = 3 };
-    enum { dimDomain = 3 };
-    enum { polOrd = 0 };
+    enum { dimRange = 2 };
+    enum { dimDomain = 2 };
+    enum { polOrd = 3 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
     typedef FunctionSpace<
       double, double, dimDomain, 1> SingleFunctionSpaceType;
-    typedef ALU3dGrid<dimDomain, dimDomain, tetra> GridType;
+
+    //    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
+    typedef SGrid<dimDomain, dimDomain> GridType;
     //typedef LeafGridPart<GridType> GridPartType;
-    typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
+    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef DiscontinuousGalerkinSpace<
       SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
@@ -46,9 +49,9 @@ namespace Dune {
 
     // * Need to do: adapt quadrature order
     typedef FixedOrderQuad<
-      double, FieldVector<double, 3>, 5> VolumeQuadratureType;
+      double, FieldVector<double, dimDomain>, 5> VolumeQuadratureType;
     typedef FixedOrderQuad<
-      double, FieldVector<double, 2>, 5> FaceQuadratureType;
+      double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
 
     typedef TransportDiffusionProblem1 ProblemType;
   };
@@ -69,7 +72,7 @@ namespace Dune {
     TransportDiffusionProblem1() :
       identity_(0.0)
     {
-      identity_[0][0] = identity_[1][1] = identity_[2][2] = -1.0;
+      identity_[0][0] = identity_[1][1] = 1.0;
     }
 
     bool hasSource() const { return false; }
@@ -97,11 +100,12 @@ namespace Dune {
       const DomainType normal = it.integrationOuterNormal(x);
       double uMean = 
         0.5*( (Element<0>::get(uLeft))[0] + (Element<0>::get(uRight))[0]);
-
+   
       gLeft = normal;
       gRight = normal;
-      gLeft *= -uMean;
+      gLeft *= uMean;
       gRight *= uMean;
+      
       return gLeft*gLeft;
     }
 
@@ -136,14 +140,16 @@ namespace Dune {
   struct TransportDiffusionTraits2 
   {
     enum { dimRange = 1 };
-    enum { dimDomain = 3 };
-    enum { polOrd = 0 };
+    enum { dimDomain = 2 };
+    enum { polOrd = 3 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
-    typedef ALU3dGrid<dimDomain, dimDomain, tetra> GridType;
+
+    //    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
+    typedef SGrid<dimDomain, dimDomain> GridType;
     //typedef LeafGridPart<GridType> GridPartType;
-    typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
+    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
@@ -157,9 +163,9 @@ namespace Dune {
 
     // * Need to do: adapt quadrature order
     typedef FixedOrderQuad<
-      double, FieldVector<double, 3>, 5> VolumeQuadratureType;
+      double, FieldVector<double, dimDomain>, 5> VolumeQuadratureType;
     typedef FixedOrderQuad<
-      double, FieldVector<double, 2>, 5> FaceQuadratureType;
+      double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
 
     typedef TransportDiffusionProblem2 ProblemType;
   };
@@ -194,6 +200,28 @@ namespace Dune {
                          RangeType& gLeft,
                          RangeType& gRight)
     { 
+      DomainType normal = it.integrationOuterNormal(x);
+      double upwind = normal*velocity_;
+      
+      // transport contribution
+      if (upwind > 0) {
+        gLeft = Element<0>::get(uLeft);
+      }
+      else {
+        gLeft = Element<0>::get(uRight);
+      }
+      gLeft *= -upwind;
+      gRight = gLeft;
+
+      // diffusion contribution
+      DomainType vMean = 
+        Element<1>::get(uLeft) + Element<1>::get(uRight);
+      vMean *= 0.5*epsilon_;
+
+      gLeft[0] += normal*vMean;
+      gRight[0] += normal*vMean;
+    
+      /* old version
       const DomainType normal = it.integrationOuterNormal(x);
       double upwind = normal*velocity_;
       JacobianRangeType anaFlux(0.0);
@@ -210,8 +238,13 @@ namespace Dune {
       gLeft *= 0.0;
       anaFlux.umv(normal, gLeft);
       gRight = gLeft;
-      gRight *= -1.0;
-
+      /*
+      std::cout << "numericalFlux:\n";
+      std::cout << Element<0>::get(uLeft) << ", " << Element<0>::get(uRight) << std::endl;
+      std::cout << anaFlux << std::endl;
+      std::cout << normal << std::endl;
+      std::cout << "result = " << gLeft << std::endl;
+      */
       return upwind;
     }
 
@@ -229,6 +262,7 @@ namespace Dune {
       
       gLeft *= 0.0;
       anaFlux.umv(normal, gLeft);
+
       return normal*velocity_;
     }
 
@@ -244,10 +278,11 @@ namespace Dune {
       W1Type argW1 = Element<1>::get(u);
       argW1 *= epsilon_;
 
-      //f = argU*velocity_ - argW1;
+      //f = argU*velocity_ + argW1;
       f[0] = velocity_;
-      f *= argU[0];
-      f[0] -= argW1;
+      f *= -argU[0];
+      f[0] += argW1;
+ 
     }
 
   private:
