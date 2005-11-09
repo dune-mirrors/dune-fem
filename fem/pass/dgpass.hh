@@ -7,7 +7,7 @@
 #include "problemcaller.hh"
 
 // * needs to move
-#include "../../misc/timenew.hh"
+#include "../misc/timenew.hh"
 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
@@ -105,6 +105,8 @@ namespace Dune {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
 
+      dest_->clear();
+
       if (caller_) {
         caller_->setArgument(*arg_);
       }
@@ -128,7 +130,7 @@ namespace Dune {
     //! Perform the (volume and surface) integration on all elements.
     virtual void applyLocal(EntityType& en) const
     {
-      std::cout << "DGLocalPass::applyLocal()" << std::endl;
+      //std::cout << "DGLocalPass::applyLocal()" << std::endl;
     
       //- Initialise quadratures and stuff
       caller_->setEntity(en);
@@ -138,6 +140,7 @@ namespace Dune {
       VolumeQuadratureType volQuad(geom);
 
       double vol = volumeElement(en, volQuad);
+      //std::cout << "Vol = " << vol << std::endl;
       double dtLocal;
 
       const typename SpaceType::IndexSetType& iset = spc_.indexSet();
@@ -171,8 +174,9 @@ namespace Dune {
           // Scaling with quadrature weight and integration element
           update *= volQuad.weight(l)*
             en.geometry().integrationElement(volQuad.point(l));
+          update /= vol; // * right here?
 
-          updEn[k] += update;
+          updEn[k] -= update;
         } // end for k (baseFunctions)
       } // end for l (quadraturePoints)
 
@@ -220,11 +224,13 @@ namespace Dune {
                                                      xLocalNeigh,
                                                      baseNeigh_);
 
-                updEn[k] -=
-                  (valEn_*baseEn_)*faceQuad.weight(l)*h;
+                // * Warning: division by vol only correct for orthonormal bases!!!!!!!!!!!
+
+                updEn[k] +=
+                  (valEn_*baseEn_)*faceQuad.weight(l)/vol;
                 
-                updNeigh[k] += 
-                  (valNeigh_*baseNeigh_)*faceQuad.weight(l)*h;
+                updNeigh[k] -= 
+                  (valNeigh_*baseNeigh_)*faceQuad.weight(l)/vol;
               } // end loop base functions
             } // end loop quadrature points
             
@@ -253,9 +259,7 @@ namespace Dune {
                                                    diffVar_,
                                                    xLocalEn,
                                                    baseEn_);
-              updEn[k] -=
-                (source_*baseEn_)*faceQuad.weight(l)*
-                integrationElement;
+              updEn[k] += (source_*baseEn_)*faceQuad.weight(l)/vol;
             }
           }
         } // end if boundary
