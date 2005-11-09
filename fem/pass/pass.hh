@@ -8,7 +8,7 @@
 #include <dune/common/operator.hh>
 
 // * must go away
-#include "../../misc/timenew.hh"
+#include "../misc/timenew.hh"
 
 namespace Dune {
 
@@ -22,7 +22,9 @@ namespace Dune {
     //- Enums and typedefs
     //! The start pass has index 0.
     enum {passNum=0};
+    //! The argument (and destination) type of the overall operator
     typedef ArgumentImp GlobalArgumentType;
+    //! End marker for tuple of return types of the passes
     typedef Nil NextArgumentType;
     
   public:
@@ -88,10 +90,11 @@ namespace Dune {
       previousPass_(pass)
     {
       // this ensures that the last pass doesn't allocate temporary memory
-      // (its destination discrete function is provided from outside)
+      // (its destination discrete function is provided from outside).
       previousPass_.allocateLocalMemory();
     }
 
+    //! Destructor
     virtual ~Pass() {
       delete destination_;
       destination_ = 0;
@@ -110,7 +113,7 @@ namespace Dune {
     //! Allocates the local memory of a pass, if needed.
     virtual void allocateLocalMemory() = 0;
 
-    //! Set time provider (which gives you access to the global time)
+    //! Set time provider (which gives you access to the global time).
     void setTimeProvider(const TimeProvider& time) {
       previousPass_.setTimeProvider(time);
       processTimeProvider(time);
@@ -155,25 +158,34 @@ namespace Dune {
     public Pass<ProblemImp, PreviousPassImp>
   {
   public:
+    //! Type of the preceding pass
     typedef PreviousPassImp PreviousPassType;
 
+    //! Base class
     typedef Pass<ProblemImp, PreviousPassImp> BaseType;
+    //! The type of the argument (and destination) type of the overall
+    //! operator
     typedef typename BaseType::TotalArgumentType ArgumentType;
 
+    //! The discrete function representing the return value of this pass
     typedef typename ProblemImp::Traits::DestinationType DestinationType;
-    typedef typename ProblemImp::Traits::SpaceType SpaceType;
-    typedef typename SpaceType::IteratorType IteratorType;
+    //! The discrete function space belonging to DestinationType
+    typedef typename ProblemImp::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    //! Iterator over the space
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+    //! The codim 0 entity
     typedef typename IteratorType::Entity Entity;
 
   public:
     //! Constructor
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function of this pass. 
-    LocalPass(PreviousPassImp& pass, SpaceType& spc) :
+    LocalPass(PreviousPassImp& pass, DiscreteFunctionSpaceType& spc) :
       BaseType(pass),
       spc_(spc)
     {}
 
+    //! Destructor
     virtual ~LocalPass() {}
 
     //! Build up local memory.
@@ -214,7 +226,7 @@ namespace Dune {
     }    
 
   private:
-    SpaceType& spc_;
+    DiscreteFunctionSpaceType& spc_;
   };
   
 } // end namespace Dune

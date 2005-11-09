@@ -21,11 +21,12 @@ namespace Dune {
   {
   public:
     //- Typedefs and enums
-    // Base class
+    //! Base class
     typedef LocalPass<ProblemImp, PreviousPassImp> BaseType;
 
-    // Repetition of template arguments
+    //! Repetition of template arguments
     typedef ProblemImp ProblemType;
+    //! Repetition of template arguments
     typedef PreviousPassImp PreviousPassType;
 
     // Types from the base class
@@ -36,13 +37,13 @@ namespace Dune {
     typedef typename ProblemType::Traits::DestinationType DestinationType;
     typedef typename ProblemType::Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename ProblemType::Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename ProblemType::Traits::SpaceType SpaceType;
+    typedef typename ProblemType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
     // Types extracted from the discrete function space type
-    typedef typename SpaceType::GridType GridType;
-    typedef typename SpaceType::DomainType DomainType;
-    typedef typename SpaceType::RangeType RangeType;
-    typedef typename SpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     // Types extracted from the underlying grids
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
@@ -56,7 +57,7 @@ namespace Dune {
       ProblemType, ArgumentType, SelectorType> ProblemCallerType;
     
     // Range of the destination
-    enum { dimRange = SpaceType::DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   public:
     //- Public methods
     //! Constructor
@@ -65,7 +66,7 @@ namespace Dune {
     //! \param spc Space belonging to the discrete function local to this pass
     LocalDGPass(ProblemType& problem, 
                 PreviousPassType& pass, 
-                SpaceType& spc) :
+                DiscreteFunctionSpaceType& spc) :
       BaseType(pass, spc),
       problem_(problem),
       caller_(0),
@@ -85,14 +86,18 @@ namespace Dune {
       diffVar_()
     {}
    
+    //! Destructor
     virtual ~LocalDGPass() {
       //delete caller_;
     }
 
+    //! Stores the time provider passed by the base class in order to have
+    //! access to the global time
     virtual void processTimeProvider(const TimeProvider& time) {
       time_ = &time;
     }
 
+    //! Estimate for the timestep size
     double timeStepEstimate() const {
       return dtMin_;
     }
@@ -143,7 +148,7 @@ namespace Dune {
       //std::cout << "Vol = " << vol << std::endl;
       double dtLocal;
 
-      const typename SpaceType::IndexSetType& iset = spc_.indexSet();
+      const typename DiscreteFunctionSpaceType::IndexSetType& iset = spc_.indexSet();
 
       // Volumetric integral part
       for (int l = 0; l < volQuad.nop(); ++l) {
@@ -290,7 +295,7 @@ namespace Dune {
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
 
-    SpaceType& spc_;
+    DiscreteFunctionSpaceType& spc_;
     mutable double dtMin_;
     mutable double dtOld_;
 
