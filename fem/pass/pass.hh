@@ -36,7 +36,7 @@ namespace Dune {
     //! No memory needs to be allocated.
     void allocateLocalMemory() {}
     //! We don't need no time either
-    void setTimeProvider(const TimeProvider&) {}
+    void setTimeProvider(TimeProvider*) {}
   };
 
   /**
@@ -114,7 +114,7 @@ namespace Dune {
     virtual void allocateLocalMemory() = 0;
 
     //! Set time provider (which gives you access to the global time).
-    void setTimeProvider(const TimeProvider& time) {
+    void setTimeProvider(TimeProvider* time) {
       previousPass_.setTimeProvider(time);
       processTimeProvider(time);
     }
@@ -138,7 +138,7 @@ namespace Dune {
 
     //! With this method, you can get access to the TimeProvider, if needed.
     //! By default, nothing is done, ie the TimeProvider is discarded.
-    virtual void processTimeProvider(const TimeProvider& time) {}
+    virtual void processTimeProvider(TimeProvider* time) {}
 
   private:
     //! Does the actual computations. Needs to be overridden in the derived
