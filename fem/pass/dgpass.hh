@@ -93,8 +93,8 @@ namespace Dune {
 
     //! Stores the time provider passed by the base class in order to have
     //! access to the global time
-    virtual void processTimeProvider(const TimeProvider& time) {
-      time_ = &time;
+    virtual void processTimeProvider(TimeProvider* time) {
+      time_ = time;
     }
 
     //! Estimate for the timestep size
@@ -122,14 +122,21 @@ namespace Dune {
 
       // time initialisation
       dtMin_ = std::numeric_limits<double>::max();
-      assert(time_);
-      caller_->setTime(time_->time());
+      if (time_) {
+        caller_->setTime(time_->time());
+      }
+      else {
+        caller_->setTime(0.0);
+      }
     }
 
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
       dtOld_ = dtMin_;
+      if (time_) {
+        time_->provideTimeStepEstimate(dtMin_);
+      }
     }
 
     //! Perform the (volume and surface) integration on all elements.
@@ -181,7 +188,7 @@ namespace Dune {
             en.geometry().integrationElement(volQuad.point(l));
           update /= vol; // * right here?
 
-          updEn[k] -= update;
+          updEn[k] += update;
         } // end for k (baseFunctions)
       } // end for l (quadraturePoints)
 
@@ -231,10 +238,10 @@ namespace Dune {
 
                 // * Warning: division by vol only correct for orthonormal bases!!!!!!!!!!!
 
-                updEn[k] +=
+                updEn[k] -=
                   (valEn_*baseEn_)*faceQuad.weight(l)/vol;
                 
-                updNeigh[k] -= 
+                updNeigh[k] += 
                   (valNeigh_*baseNeigh_)*faceQuad.weight(l)/vol;
               } // end loop base functions
             } // end loop quadrature points
@@ -264,7 +271,7 @@ namespace Dune {
                                                    diffVar_,
                                                    xLocalEn,
                                                    baseEn_);
-              updEn[k] += (source_*baseEn_)*faceQuad.weight(l)/vol;
+              updEn[k] -= (source_*baseEn_)*faceQuad.weight(l)/vol;
             }
           }
         } // end if boundary
@@ -307,7 +314,7 @@ namespace Dune {
     mutable RangeType baseNeigh_;
     mutable RangeType source_;
     mutable DomainType grads_;
-    const TimeProvider* time_;
+    TimeProvider* time_;
     FieldVector<int, 0> diffVar_;
   };
   

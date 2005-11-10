@@ -35,7 +35,6 @@
 #include "../../visual/dx/dxdata.hh"
 
 using namespace Dune;
-//using namespace Adi;
 
 template <class GridImp, 
           int polOrd >
@@ -167,7 +166,6 @@ private:
   typename Traits::Pass2Type pass2_;
 };
 
-/*
 template <class Loop, class GridType>
 void printData(double time, int timestep, GridType& grid, Loop& loop) 
 {
@@ -175,7 +173,6 @@ void printData(double time, int timestep, GridType& grid, Loop& loop)
   dataio.writeGrid(grid, xdr, "grid", time, timestep);
   dataio.writeData(loop.solution(), xdr, "vec", timestep);
 }
-*/
 
 template <class Loop, class SpaceType>
 void printDX(double time, int timestep, SpaceType& space, Loop& loop) 
@@ -259,8 +256,6 @@ void initialize(DFType& df)
 
   typedef FieldVector<double, dim> Coordinate;
 
-  //- Local classes
-
   //- Actual method
   StupidFunction f;  
   L2Projection<DFType, StupidFunction, 2>::project(f, df);
@@ -301,15 +296,6 @@ int main()
   typedef MyTraits::GridType GridType;
 
   // parameter section
-  /*
-  std::string gridFile("macro.small");
-  DomainType velo(0.0); velo[0] = 1.0;
-  double epsilon = 0.01;
-  double dt = 0.1;
-  double endTime = 1.0;
-  int globalRefineCount = 2;
-
-  */
   std::string gridFile;
   DomainType velo(0.0);
   double epsilon;
@@ -348,7 +334,7 @@ int main()
   //CGInverseOperatorFactory<DiscreteFunction> factory(1E-6, 1E-10, 100000, 0);
   ExplicitEuler<
     DiscreteFunction, MappingType> loop(initial, top, op, factory, dt);
-  op.setTimeProvider(loop);
+  op.setTimeProvider(&loop);
 
   //printData(loop.time(), 0, fix.grid(), loop);
   printSGrid(loop.time(), 0, fix.space(), loop);

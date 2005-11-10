@@ -26,22 +26,21 @@ namespace Dune {
   {
     enum { dimRange = 2 };
     enum { dimDomain = 2 };
-    enum { polOrd = 3 };
+    enum { polOrd = 1 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
     typedef FunctionSpace<
       double, double, dimDomain, 1> SingleFunctionSpaceType;
 
-    //    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
-    typedef SGrid<dimDomain, dimDomain> GridType;
+    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
+    //typedef SGrid<dimDomain, dimDomain> GridType;
     //typedef LeafGridPart<GridType> GridPartType;
-    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
+    typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef DiscontinuousGalerkinSpace<
       SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
     typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
-    typedef DiscreteFunctionSpaceType SpaceType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef FunctionSpaceType::DomainType DomainType;
     typedef FunctionSpaceType::RangeType RangeType;
@@ -141,19 +140,18 @@ namespace Dune {
   {
     enum { dimRange = 1 };
     enum { dimDomain = 2 };
-    enum { polOrd = 3 };
+    enum { polOrd = 1 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
 
-    //    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
-    typedef SGrid<dimDomain, dimDomain> GridType;
+    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
+    //typedef SGrid<dimDomain, dimDomain> GridType;
     //typedef LeafGridPart<GridType> GridPartType;
-    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
+    typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
-    typedef DiscreteFunctionSpaceType SpaceType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
 
@@ -210,7 +208,7 @@ namespace Dune {
       else {
         gLeft = Element<0>::get(uRight);
       }
-      gLeft *= -upwind;
+      gLeft *= upwind;
       gRight = gLeft;
 
       // diffusion contribution
@@ -280,7 +278,7 @@ namespace Dune {
 
       //f = argU*velocity_ + argW1;
       f[0] = velocity_;
-      f *= -argU[0];
+      f *= argU[0];
       f[0] += argW1;
  
     }
