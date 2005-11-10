@@ -10,6 +10,8 @@
 
 namespace Dune {
 
+  //! \todo Provide shortcuts for evaluation on quadrature points once the caching is in place
+
   /**
    * @brief Wrapper class for all the template magic used to call the problem
    * methods.
