@@ -11,8 +11,8 @@ namespace Dune {
    * The problem interface prescribes the methods needed by the implementation
    * of local DG passes. Users need to derive from either this class or the
    * ProblemDefault class. The methods provided by this class are used by
-   * LocalDGPass (and possibly other classes) to solve an equate the right
-   * hand side of an equation of the form d_t u = div f(u) + s(u), where f
+   * LocalDGPass (and possibly other classes) to solve for the space 
+   * discretisation of the equation d_t u + div f(u) = s(u), where f
    * represents a flux function and s a source term. Even non-conservative
    * fluxes can be treated (for details see paper by Dedner et al).
    * \note The definition of f(u) differs from the usual definition for 
