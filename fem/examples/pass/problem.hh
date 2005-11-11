@@ -1,12 +1,12 @@
 #ifndef DUNE_EXAMPLEPROBLEM_HH
 #define DUNE_EXAMPLEPROBLEM_HH
 
-#include "../../pass/problem.hh"
+#include "../../pass/discretemodel.hh"
 #include "../../pass/selection.hh"
 
 // Dune includes
 #include <dune/common/utility.hh>
-#include <dune/fem/space/dgspace.hh>
+#include "../../space/dgspace.hh"
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
@@ -19,8 +19,8 @@ using namespace Dune;
 
 namespace Dune {
 
-  class TransportDiffusionProblem1;
-  class TransportDiffusionProblem2;
+  class TransportDiffusionDiscreteModel1;
+  class TransportDiffusionDiscreteModel2;
 
   struct TransportDiffusionTraits1 
   {
@@ -33,10 +33,10 @@ namespace Dune {
     typedef FunctionSpace<
       double, double, dimDomain, 1> SingleFunctionSpaceType;
 
-    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
-    //typedef SGrid<dimDomain, dimDomain> GridType;
+    //typedef AlbertaGrid<dimDomain, dimDomain> GridType;
+    typedef SGrid<dimDomain, dimDomain> GridType;
     //typedef LeafGridPart<GridType> GridPartType;
-    typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
+    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef DiscontinuousGalerkinSpace<
       SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
@@ -52,15 +52,15 @@ namespace Dune {
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
 
-    typedef TransportDiffusionProblem1 ProblemType;
+    typedef TransportDiffusionDiscreteModel1 DiscreteModelType;
   };
 
-  class TransportDiffusionProblem1 :
-    public ProblemDefault<TransportDiffusionTraits1> {
+  class TransportDiffusionDiscreteModel1 :
+    public DiscreteModelDefault<TransportDiffusionTraits1> {
   public:
     typedef TransportDiffusionTraits1 Traits;
 
-    typedef Selector<0>::Base SelectorType;
+    typedef Selector<0> SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef Traits::RangeType RangeType;
@@ -68,7 +68,7 @@ namespace Dune {
     typedef GridType::Codim<0>::Entity EntityType;
 
   public:
-    TransportDiffusionProblem1() :
+    TransportDiffusionDiscreteModel1() :
       identity_(0.0)
     {
       identity_[0][0] = identity_[1][1] = 1.0;
@@ -145,10 +145,10 @@ namespace Dune {
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
 
-    typedef AlbertaGrid<dimDomain, dimDomain> GridType;
-    //typedef SGrid<dimDomain, dimDomain> GridType;
+    //typedef AlbertaGrid<dimDomain, dimDomain> GridType;
+    typedef SGrid<dimDomain, dimDomain> GridType;
     //typedef LeafGridPart<GridType> GridPartType;
-    typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
+    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
@@ -165,14 +165,14 @@ namespace Dune {
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
 
-    typedef TransportDiffusionProblem2 ProblemType;
+    typedef TransportDiffusionDiscreteModel2 DiscreteModelType;
   };
 
-  class TransportDiffusionProblem2 : 
-    public ProblemDefault<TransportDiffusionTraits2> {
+  class TransportDiffusionDiscreteModel2 : 
+    public DiscreteModelDefault<TransportDiffusionTraits2> {
   public:
     typedef TransportDiffusionTraits2 Traits;
-    typedef Selector<0, 1>::Base SelectorType;
+    typedef Selector<0, 1> SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
 
@@ -182,7 +182,7 @@ namespace Dune {
     typedef GridType::Codim<0>::Entity EntityType;
 
   public:
-    TransportDiffusionProblem2(const DomainType& velocity, double epsilon) :
+    TransportDiffusionDiscreteModel2(const DomainType& velocity, double epsilon) :
       velocity_(velocity),
       epsilon_(epsilon)
     {}

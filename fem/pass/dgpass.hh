@@ -3,8 +3,8 @@
 
 #include "pass.hh"
 #include "selection.hh"
-#include "problem.hh"
-#include "problemcaller.hh"
+#include "discretemodel.hh"
+#include "modelcaller.hh"
 
 // * needs to move
 #include "../misc/timenew.hh"
@@ -53,7 +53,7 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef ProblemCaller<
+    typedef DiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
     
     // Range of the destination

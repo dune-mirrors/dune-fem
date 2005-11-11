@@ -36,7 +36,7 @@ namespace Dune {
     //! No memory needs to be allocated.
     void allocateLocalMemory() {}
     //! We don't need no time either
-    void setTimeProvider(TimeProvider*) {}
+    void timeProvider(TimeProvider*) {}
   };
 
   /**
@@ -114,8 +114,8 @@ namespace Dune {
     virtual void allocateLocalMemory() = 0;
 
     //! Set time provider (which gives you access to the global time).
-    void setTimeProvider(TimeProvider* time) {
-      previousPass_.setTimeProvider(time);
+    void timeProvider(TimeProvider* time) {
+      previousPass_.timeProvider(time);
       processTimeProvider(time);
     }
 

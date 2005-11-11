@@ -17,7 +17,7 @@
 
 // Include Dune headers
 #include <dune/common/misc.hh>
-#include <dune/fem/space/dgspace.hh>
+#include "../../space/dgspace.hh"
 #include <dune/fem/common/boundary.hh>
 //#include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
@@ -48,7 +48,7 @@ struct Traits {
   typedef DofManager<GridType> DofManagerType;
   typedef DofManagerFactory<DofManagerType> DofManagerFactory;
   //typedef LeafGridPart<GridType> GridPartType;
-  typedef DefaultGridIndexSet<GridType, GlobalIndex> IndexSetType;
+  typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
   typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
   typedef DiscontinuousGalerkinSpace<FuncSpace,
                                      GridPartType,
@@ -70,8 +70,8 @@ struct Traits {
   typedef DiscontinuousGalerkinSpace<
     SingleFuncSpace1, GridPartType, polOrd> SingleSpace1Type;
   typedef CombinedSpace<SingleSpace1Type, dim> Space1Type;
-  typedef TransportDiffusionProblem1 Problem1Type;
-  typedef LocalDGPass<Problem1Type, Pass0Type> Pass1Type;
+  typedef TransportDiffusionDiscreteModel1 DiscreteModel1Type;
+  typedef LocalDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
 
   // * types for pass2
   typedef FunctionSpace <double, double , dim , dimRange> FuncSpace2;
@@ -79,8 +79,8 @@ struct Traits {
   typedef IndexSetType GridIndexSet2;
   typedef DiscontinuousGalerkinSpace<
     FuncSpace2, GridPartType, polOrd> Space2Type;
-  typedef TransportDiffusionProblem2 Problem2Type;
-  typedef LocalDGPass<Problem2Type, Pass1Type> Pass2Type;
+  typedef TransportDiffusionDiscreteModel2 DiscreteModel2Type;
+  typedef LocalDGPass<DiscreteModel2Type, Pass1Type> Pass2Type;
 };
 
 struct SStruct {
@@ -116,8 +116,8 @@ public:
 
 public:
   Fixture(std::string gridName, double epsilon, const DomainType& velo, SStruct& s) :
-    grid_(gridName),
-    //grid_(s.n_, s.l_, s.h_),
+    //grid_(gridName),
+    grid_(s.n_, s.l_, s.h_),
     dm_(Traits::DofManagerFactory::getDofManager(grid_)),
     iset1_(grid_, grid_.maxLevel()),
     iset2_(grid_, grid_.maxLevel()),
@@ -159,8 +159,8 @@ private:
   typename Traits::SingleSpace1Type singleSpace1_;
   typename Traits::Space1Type space1_;
   typename Traits::Space2Type space2_;
-  typename Traits::Problem1Type problem1_;
-  typename Traits::Problem2Type problem2_;
+  typename Traits::DiscreteModel1Type problem1_;
+  typename Traits::DiscreteModel2Type problem2_;
   typename Traits::Pass0Type pass0_;
   typename Traits::Pass1Type pass1_;
   typename Traits::Pass2Type pass2_;
@@ -281,11 +281,11 @@ void printIt(DFType& df)
 int main() 
 {
 
-  //typedef SGrid<2, 2> MyGrid;
+  typedef SGrid<2, 2> MyGrid;
+  const int polOrd = 1;
+  //typedef AlbertaGrid<2, 2> MyGrid;
 
-  typedef AlbertaGrid<2, 2> MyGrid;
-
-  typedef Traits<MyGrid, 1> MyTraits;
+  typedef Traits<MyGrid, polOrd> MyTraits;
   typedef Fixture<MyTraits> Fix;
   typedef MyTraits::Pass2Type SpaceOperatorType;
   typedef MyTraits::DomainType DomainType;
@@ -334,7 +334,7 @@ int main()
   //CGInverseOperatorFactory<DiscreteFunction> factory(1E-6, 1E-10, 100000, 0);
   ExplicitEuler<
     DiscreteFunction, MappingType> loop(initial, top, op, factory, dt);
-  op.setTimeProvider(&loop);
+  op.timeProvider(&loop);
 
   //printData(loop.time(), 0, fix.grid(), loop);
   printSGrid(loop.time(), 0, fix.space(), loop);

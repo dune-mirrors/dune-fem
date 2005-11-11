@@ -21,8 +21,15 @@ namespace Dune {
       static_cast<int>(MaxIndex<SelectorImp>::value) < 
       static_cast<int>(Length<ArgTupleImp>::value)
     > Maximal_index_of_selector_exceeds_argument_length;
+    //typedef CompileTimeChecker<
+      //static_cast<int>(MaxIndex<typename SelectorImp::Base>::value) < 
+      //static_cast<int>(Length<ArgTupleImp>::value)
+      //> Maximal_index_of_selector_exceeds_argument_length;
 
+    
     typedef SelectorImp SelectorType;
+    //typedef typename SelectorImp::Base SelectorType;
+
     //! The index of the extracted element.
     enum { index = ElementType<0, SelectorType>::Type::value };
     //! The type of the extracted element.
