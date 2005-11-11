@@ -15,17 +15,17 @@
 namespace Dune {
 
   //! Concrete implementation of Pass for LDG.
-  template <class ProblemImp, class PreviousPassImp>
+  template <class DiscreteModelImp, class PreviousPassImp>
   class LocalDGPass :
-    public LocalPass<ProblemImp, PreviousPassImp> 
+    public LocalPass<DiscreteModelImp, PreviousPassImp> 
   {
   public:
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass<ProblemImp, PreviousPassImp> BaseType;
+    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
 
     //! Repetition of template arguments
-    typedef ProblemImp ProblemType;
+    typedef DiscreteModelImp DiscreteModelType;
     //! Repetition of template arguments
     typedef PreviousPassImp PreviousPassType;
 
@@ -34,10 +34,10 @@ namespace Dune {
     typedef typename BaseType::ArgumentType ArgumentType;
 
     // Types from the traits
-    typedef typename ProblemType::Traits::DestinationType DestinationType;
-    typedef typename ProblemType::Traits::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename ProblemType::Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename ProblemType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
+    typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
+    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
@@ -52,9 +52,9 @@ namespace Dune {
 
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
-    typedef typename ProblemType::SelectorType SelectorType;
+    typedef typename DiscreteModelType::SelectorType SelectorType;
     typedef ProblemCaller<
-      ProblemType, ArgumentType, SelectorType> ProblemCallerType;
+      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
@@ -64,7 +64,7 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    LocalDGPass(ProblemType& problem, 
+    LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 DiscreteFunctionSpaceType& spc) :
       BaseType(pass, spc),
@@ -116,8 +116,8 @@ namespace Dune {
         caller_->setArgument(*arg_);
       }
       else {
-        // * Move this initialisation garbage into the ProblemCaller
-        caller_ = new ProblemCallerType(problem_, *arg_);
+        // * Move this initialisation garbage into the DiscreteModelCaller
+        caller_ = new DiscreteModelCallerType(problem_, *arg_);
       }
 
       // time initialisation
@@ -296,8 +296,8 @@ namespace Dune {
     }
     
   private:
-    ProblemType& problem_;
-    mutable ProblemCallerType* caller_;
+    DiscreteModelType& problem_;
+    mutable DiscreteModelCallerType* caller_;
     
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;

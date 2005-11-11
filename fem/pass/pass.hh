@@ -48,12 +48,12 @@ namespace Dune {
    * used in the computations of the pass. The computations must be implemented
    * in the compute method of the derived classes.
    */
-  template <class ProblemImp, class PreviousPassImp>
+  template <class DiscreteModelImp, class PreviousPassImp>
   class Pass :
     public Operator<typename PreviousPassImp::GlobalArgumentType::DofType, 
-                    typename ProblemImp::Traits::DestinationType::DofType,
+                    typename DiscreteModelImp::Traits::DestinationType::DofType,
                     typename PreviousPassImp::GlobalArgumentType, 
-                    typename ProblemImp::Traits::DestinationType>
+                    typename DiscreteModelImp::Traits::DestinationType>
   {
     template <class PT, class PP>
     friend class Pass;
@@ -67,7 +67,7 @@ namespace Dune {
     typedef PreviousPassImp PreviousPassType;
     //! Type of the discrete function which stores the result of this pass' 
     //! computations.
-    typedef typename ProblemImp::Traits::DestinationType DestinationType;
+    typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
     typedef typename PreviousPassType::GlobalArgumentType GlobalArgumentType;
@@ -153,24 +153,24 @@ namespace Dune {
 
   //! Specialisation of Pass which provides a grid walk-through, but leaves
   //! open what needs to be done on each elements.
-  template <class ProblemImp, class PreviousPassImp>
+  template <class DiscreteModelImp, class PreviousPassImp>
   class LocalPass :
-    public Pass<ProblemImp, PreviousPassImp>
+    public Pass<DiscreteModelImp, PreviousPassImp>
   {
   public:
     //! Type of the preceding pass
     typedef PreviousPassImp PreviousPassType;
 
     //! Base class
-    typedef Pass<ProblemImp, PreviousPassImp> BaseType;
+    typedef Pass<DiscreteModelImp, PreviousPassImp> BaseType;
     //! The type of the argument (and destination) type of the overall
     //! operator
     typedef typename BaseType::TotalArgumentType ArgumentType;
 
     //! The discrete function representing the return value of this pass
-    typedef typename ProblemImp::Traits::DestinationType DestinationType;
+    typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;
     //! The discrete function space belonging to DestinationType
-    typedef typename ProblemImp::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteModelImp::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     //! Iterator over the space
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     //! The codim 0 entity
