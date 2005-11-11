@@ -5,7 +5,7 @@
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/alu3dgrid.hh>
 #include <dune/fem/dfadapt.hh>
-#include <dune/fem/pass/pass.hh>
+#include "../pass.hh"
 
 namespace Dune {
 

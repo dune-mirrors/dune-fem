@@ -4,7 +4,7 @@
 #include <string>
 
 #include "../dgpass.hh"
-#include "../problem.hh"
+#include "../discretemodel.hh"
 #include "../selection.hh"
 
 #include <dune/fem/lagrangebase.hh>
@@ -16,7 +16,7 @@
 
 namespace Dune {
   
-  class ProblemStub;
+  class DiscreteModelStub;
 
   struct DGStubTraits {
     typedef FunctionSpace<double, double, 3, 1> FunctionSpaceType;
@@ -34,11 +34,11 @@ namespace Dune {
     typedef DiscreteFunctionSpaceType::RangeType RangeType;
     typedef DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    typedef ProblemStub ProblemType;
+    typedef DiscreteModelStub DiscreteModelType;
   };
   
-  class ProblemStub : 
-    public ProblemDefault<DGStubTraits>
+  class DiscreteModelStub : 
+    public DiscreteModelDefault<DGStubTraits>
   {
   public:
     typedef Selector<0>::Base SelectorType;

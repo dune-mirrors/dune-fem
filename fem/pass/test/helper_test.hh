@@ -6,10 +6,6 @@
 #include "../selection.hh"
 #include "../caller.hh"
 
-//- includes in dune
-//#include <dune/fem/pass/selection.hh>
-//#include <dune/fem/pass/caller.hh>
-
 #include <dune/fem/dfadapt.hh>
 #include <dune/common/utility.hh>
 
