@@ -221,7 +221,7 @@ namespace Dune {
                 caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
 
               dtLocal =  (dtLocal < std::numeric_limits<double>::min()) ?
-                dtMin_ : vol/(dtLocal*h);
+                dtMin_ : vol/(dtLocal); // *h
               if(dtLocal < dtMin_) dtMin_ = dtLocal;
               
               // * Assumption: all elements have same number of base functions
@@ -263,7 +263,7 @@ namespace Dune {
             dtLocal = 
               caller_->boundaryFlux(nit, faceQuad, l, source_);
             dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
-              dtMin_ : vol/(dtLocal*integrationElement);
+              dtMin_ : vol/(dtLocal); // *integrationElement);
             if (dtLocal < dtMin_) dtMin_ = dtLocal;
                     
             for (int k = 0; 
