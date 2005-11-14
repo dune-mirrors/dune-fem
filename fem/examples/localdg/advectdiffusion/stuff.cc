@@ -4,8 +4,7 @@ class L2Projection
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   
  public:
-  static void project (FunctionType &f, DiscreteFunctionType &discFunc)
-  {
+  static void project (FunctionType &f, DiscreteFunctionType &discFunc) {
     typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
@@ -80,11 +79,11 @@ void midPoint(const Geometry& geo, FieldVector<double, 2>& result)
 
   result /= static_cast<double>(geo.corners());
 }
-template <class Loop, class SpaceType>
-void printSGrid(double time, int timestep, SpaceType& space, Loop& loop)
+template <class Sol, class SpaceType>
+void printSGrid(double time, int timestep, const SpaceType& space, const Sol& sol)
 {
   typedef typename SpaceType::IteratorType Iterator;
-  typedef typename Loop::DiscreteFunctionType DiscreteFunctionType;
+  typedef typename Sol::DiscreteFunctionType DiscreteFunctionType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   std::ostringstream filestream;
@@ -92,12 +91,12 @@ void printSGrid(double time, int timestep, SpaceType& space, Loop& loop)
 
   std::ofstream ofs(filestream.str().c_str(), std::ios::out);
 
+  ofs << "# " << time << std::endl;
+
   FieldVector<double, 2> mid(0.0);
   FieldVector<double, 2> localMid(0.5);
 
   FieldVector<double, 1> result;
-
-  DiscreteFunctionType& sol = loop;
 
   Iterator endit = space.end();
   for (Iterator it = space.begin(); it != endit; ++it) {

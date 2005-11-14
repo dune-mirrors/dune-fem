@@ -1,4 +1,3 @@
-// #define DUNE_DEPRECATED
 // Dune includes
 #include "../../../config.h"
 
@@ -43,7 +42,10 @@ public:
 };
 class TimeStepper : public TimeProvider {
  public:
-  TimeStepper(double cfl) : TimeProvider(0.), cfl_(cfl) {}
+  TimeStepper(double cfl) : 
+    TimeProvider(0.), cfl_(cfl),
+    savetime_(0.1), savestep_(1)
+  {}
   template <class Operator>
   double solve(Operator &op,
 	       typename Operator::DestinationType& U,
@@ -57,23 +59,23 @@ class TimeStepper : public TimeProvider {
     augmentTime(dt);
     return time();
   }
+  template <class Operator>
+  void printGrid(int nr, const typename Operator::SpaceType &space, 
+		  const typename Operator::DestinationType& U) {
+    if (time()>savetime_) {
+      printSGrid(time(),savestep_*10+nr,space,U);
+      ++savestep_;
+      savetime_+=0.1;
+    }
+  }
  private:
   double cfl_;
+  int savestep_;
+  double savetime_;
 };
-template <class Operator>
-double solve(Operator &op,
-	     typename Operator::DestinationType& U,
-	     typename Operator::DestinationType& Upd) {
-  Upd.clear();
-  op(U,Upd);
-  double dt=0.001;
-  Upd*=dt;
-  U+=Upd;
-  return dt;
-}
 
 int main() {
-  enum {order=0};
+  enum {order=1};
   typedef SGrid<2, 2> GridType;
   SStruct s(200, 0.1);
   GridType grid(s.n_, s.l_, s.h_);
@@ -96,9 +98,9 @@ int main() {
   LLFBurgers llfburgers(burgers);
   // ODE Solvers
   typedef TimeStepper ODEType;
-  ODEType ode(0.1);
-  ODEType odeLLF(0.1);
-  ODEType odeburgers(0.1);
+  ODEType ode(0.01);
+  ODEType odeLLF(0.01);
+  ODEType odeburgers(0.01);
   // Operators
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgTypeBurgers;
   typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgTypeLLF;
@@ -121,24 +123,23 @@ int main() {
   printSGrid(0, 1, dg.space(), U);
   printSGrid(0, 2, dg.space(), ULLF);
   printSGrid(0, 3, dg.space(), UBurgers);
-  double save=0.1;
-  int step=1;
-  double t=0;
+  double t=0,t1,t2,t3;
   while (t<1.) {
-    // t=ode.solve(dg,U,Upd);
-    t+=solve(dg,U,Upd);
-    solve(dgLLF,ULLF,Upd);
-    solve(dgBurgers,UBurgers,Upd);
-    cout << t << endl;
-    if (t>save) {
-      printSGrid(0, 10*step+1, dg.space(), U);
-      printSGrid(0, 10*step+2, dg.space(), ULLF);
-      printSGrid(0, 10*step+3, dg.space(), UBurgers);
-      save+=0.1;
-      ++step;
-    }
+    if (ode.time()<1.)
+      t1=ode.solve(dg,U,Upd);
+    if (odeLLF.time()<1.)
+      t2=odeLLF.solve(dgLLF,ULLF,Upd);
+    if (odeburgers.time()<1.)
+      t3=odeburgers.solve(dgBurgers,UBurgers,Upd);
+    t=(t1<t2)?t1:t2;
+    t=(t<t3)?t:t3;
+    cout << t << " : "  
+	 << ode.time() << " " << odeLLF.time() << " " << odeburgers.time() << endl;
+    ode.printGrid<DgType>(1,dg.space(), U);
+    odeLLF.printGrid<DgType>(2,dg.space(), ULLF);
+    odeburgers.printGrid<DgType>(3,dg.space(), UBurgers);
   }
-  printSGrid(0, 10*step+1, dg.space(), U);
-  printSGrid(0, 10*step+2, dg.space(), ULLF);
-  printSGrid(0, 10*step+3, dg.space(), UBurgers);
+  ode.printGrid<DgType>(1,dg.space(), U);
+  odeLLF.printGrid<DgType>(2,dg.space(), ULLF);
+  odeburgers.printGrid<DgType>(3,dg.space(), UBurgers);
 }

@@ -46,17 +46,18 @@ namespace Dune {
   template <class Model,int polOrd>
   class PassTraits {
   public:
-    // * Need to do: adapt quadrature order
-    typedef FixedOrderQuad<
-      double, FieldVector<double, 2>, 5> VolumeQuadratureType;
-    typedef FixedOrderQuad<
-      double, FieldVector<double, 1>, 5> FaceQuadratureType;
-
-    typedef typename Model::Traits::GridType GridType;
+    typedef typename Model::Traits ModelTraits;
+    typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
     typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef FunctionSpace<double, double, dimDomain, 1> SingleFunctionSpaceType; 
+
+    typedef FixedOrderQuad<double, typename ModelTraits::DomainType, polOrd*2> 
+      VolumeQuadratureType;
+    typedef FixedOrderQuad<double, typename ModelTraits::FaceDomainType, polOrd*2+1> 
+      FaceQuadratureType;
+
   };
   // DiscreteModelTraits
   template <class Model,class NumFlux,int polOrd >
@@ -304,6 +305,7 @@ namespace Dune {
       // Advection
       double ldt=numflux_.
 	boundaryFlux(it,time,x,argULeft,gLeft);
+      // Diffusion
       JacobianRangeType diffmatrix;
       model_.diffusion(*it.inside(),time,
 		       it.intersectionSelfLocal().global(x),
@@ -381,7 +383,7 @@ namespace Dune {
 				 DomainType& upwind) :
       upwind_(upwind),
       grid_(grid),
-      model_(numflux_.model()),
+      model_(numf.model()),
       numflux_(numf),
       iset1_(grid_,grid_.maxLevel()),
       iset2_(grid_,grid_.maxLevel()),
@@ -435,6 +437,8 @@ namespace Dune {
   public:
     LLFFlux(const Model& mod) : model_(mod) {}
     const Model& model() const {return model_;}
+    // Return value: maximum wavespeed*length of integrationOuterNormal
+    // gLeft,gRight are fluxed * length of integrationOuterNormal
     inline double numericalFlux(typename Traits::IntersectionIterator& it,
 				       double time, 
 				       const typename Traits::FaceDomainType& x,
