@@ -75,12 +75,12 @@ class TimeStepper : public TimeProvider {
 };
 
 int main() {
-  enum {order=1};
+  enum {order=2};
   double cfl;
   switch (order) {
   case 0: cfl=1.0; break;
-  case 1: cfl=0.25; break;
-  case 2: cfl=0.15; break;
+  case 1: cfl=0.1; break;
+  case 2: cfl=0.05; break;
   case 3: cfl=0.1; break;
   case 4: cfl=0.09; break;
   }
