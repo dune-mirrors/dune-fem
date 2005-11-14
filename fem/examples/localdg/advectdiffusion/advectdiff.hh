@@ -2,10 +2,10 @@
 #ifndef DUNE_EXAMPLEPROBLEM_HH
 #define DUNE_EXAMPLEPROBLEM_HH
 
-#include "../../../../pass/dgpass.hh"
-#include "../../../../pass/discretemodel.hh"
-#include "../../../../pass/selection.hh"
-#include "../../../../misc/timeutility.hh"
+#include "../../../pass/dgpass.hh"
+#include "../../../pass/discretemodel.hh"
+#include "../../../pass/selection.hh"
+#include "../../../misc/timeutility.hh"
 
 // Dune includes
 #include <dune/common/utility.hh>

@@ -1,6 +1,6 @@
 // #define DUNE_DEPRECATED
 // Dune includes
-#include "../../../../config.h"
+#include "../../../config.h"
 
 #include "advectdiff.hh"
 
