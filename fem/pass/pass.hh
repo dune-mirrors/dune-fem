@@ -8,7 +8,7 @@
 #include <dune/common/operator.hh>
 
 // * must go away
-#include "../misc/timenew.hh"
+#include "../misc/timeutility.hh"
 
 namespace Dune {
 
