@@ -57,5 +57,3 @@ DUNE_SUMMARY_ALL
 
 #set AC_PROG_CXX as desired by 
 #tester/gridcheck/Makefile.am: The usual way to define `CXX' is to add `AC_PROG_CXX'
-
-AC_PROG_CXX=g++
