@@ -5,10 +5,6 @@
 #include "advectdiff.hh"
 
 #include <dune/common/utility.hh>
-#include <dune/fem/space/dgspace.hh>
-#include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/quadrature/fixedorder.hh>
 
@@ -77,7 +73,7 @@ double solve(Operator &op,
 	     typename Operator::DestinationType& Upd) {
   Upd.clear();
   op(U,Upd);
-  double dt=0.0001;
+  double dt=0.001;
   Upd*=dt;
   U+=Upd;
   return dt;
@@ -88,9 +84,9 @@ int main() {
   typedef SGrid<2, 2> GridType;
   typedef AdvectionDiffusionModel<GridType> ModelType;
   typedef BurgersModel<GridType> BurgersType;
-  ModelType::velocity[0]=0.;
+  ModelType::velocity[0]=0.8;
   ModelType::velocity[1]=0.;
-  ModelType::epsilon=0.0;
+  ModelType::epsilon=0.01;
   BurgersType::epsilon=0.01;
   
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgTypeBurgers;
@@ -122,7 +118,7 @@ int main() {
   printSGrid(0, 1, dg.space(), U);
   printSGrid(0, 2, dg.space(), ULLF);
   printSGrid(0, 3, dg.space(), UBurgers);
-  double save=-1;
+  double save=0.1;
   int step=1;
   double t=0;
   while (t<1.) {
@@ -131,14 +127,14 @@ int main() {
     solve(dgLLF,ULLF,Upd);
     solve(dgBurgers,UBurgers,Upd);
     */
-    //t=ode.solve(dg,U,Upd);
+    // t=ode.solve(dg,U,Upd);
     t+=solve(dg,U,Upd);
     cout << t << endl;
     if (t>save) {
       printSGrid(0, 10*step+1, dg.space(), U);
       printSGrid(0, 10*step+2, dg.space(), ULLF);
       printSGrid(0, 10*step+3, dg.space(), UBurgers);
-      // save+=0.1;
+      save+=0.1;
       ++step;
     }
   }

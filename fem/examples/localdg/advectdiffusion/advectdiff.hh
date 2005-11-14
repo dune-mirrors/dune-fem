@@ -9,7 +9,7 @@
 
 // Dune includes
 #include <dune/common/utility.hh>
-#include <dune/fem/space/dgspace.hh>
+#include "../../../space/dgspace.hh"
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
@@ -382,7 +382,7 @@ namespace Dune {
       pass1_(problem1_, pass0_, space1_),
       pass2_(problem2_, pass1_, space2_)      
     {
-      // pass2_.timeProvider(&timeprovider);
+      pass2_.timeProvider(&timeprovider);
     }
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
