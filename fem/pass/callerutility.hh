@@ -177,8 +177,8 @@ namespace Dune {
   public:
     static inline ResultType apply(Pair<Head, Nil>& pairs) {
       LocalFunctionType tmp(*pairs.first());
-      Nil nil;
-      return ResultType(tmp, nil);
+      Nil n;
+      return ResultType(tmp, n);
     }
   };
 
@@ -232,14 +232,14 @@ namespace Dune {
   public:
     static inline ResultType apply() {
       ValueType tmp(0.0);
-      Nil nil;
-      return ResultType(tmp, nil);
+      Nil n;
+      return ResultType(tmp, n);
     }
 
     static inline ResultType apply(Pair<Head, Nil>& pairs) {
       ValueType tmp(0.0);
-      Nil nil;
-      return ResultType(tmp, nil);
+      Nil n;
+      return ResultType(tmp, n);
     }
   };
 
