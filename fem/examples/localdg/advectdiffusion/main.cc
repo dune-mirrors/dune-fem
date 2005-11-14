@@ -1,6 +1,6 @@
 // #define DUNE_DEPRECATED
 // Dune includes
-#include "../fvcommon/config.h"
+#include "../../../../config.h"
 
 #include "advectdiff.hh"
 
@@ -15,14 +15,10 @@
 #include <dune/common/misc.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/common/boundary.hh>
-//#include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/fem/l2projection.hh>
-#include "../fvcommon/misc/inverseoperatorfactory.hh"
-// #include "../fvcommon/misc/timenew.hh"
-#include "../fvcommon/misc/identity.hh"
 
 #include <iostream>
 #include <string>
