@@ -162,7 +162,6 @@ template <class EntityType, class DiscreteFunctionType>
 void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
 {
   typedef typename EntityType::IntersectionIterator NeighIt;
-  typedef typename NeighIt::BoundaryEntity BoundaryEntityType;
 
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType::GridType GridType;
@@ -189,7 +188,7 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
         assert( novx == dim );
         for(int j=0; j< novx ; j++)
         {
-          int vx = refElem.subentity(face,1, j , dim );
+          int vx = refElem.subEntity(face,1, j , dim );
           int row = space.mapToGlobal( en , vx );
           dit[row] = 0.0;
         }
@@ -201,7 +200,7 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
         int novx = refElem.size( face, 1 , dim );
         for(int j=0; j< novx ; j++)
         {
-          int vx = refElem.subentity(face,1, j , dim );
+          int vx = refElem.subEntity(face,1, j , dim );
           int row = space.mapToGlobal( en , vx);
           dit[row] = 0.0;
         }
@@ -226,7 +225,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    grid.globalRefine (maxlevel);
 
-   IndexSetType iset ( grid , grid.maxlevel () );
+   IndexSetType iset ( grid , grid.maxLevel () );
 
    std::cout << "\nSolving for " << iset.size(dimp) << " number of unkowns. \n\n";
    
