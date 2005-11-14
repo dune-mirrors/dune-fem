@@ -75,10 +75,10 @@ class TimeStepper : public TimeProvider {
 };
 
 int main() {
-  enum {order=0};
+  enum {order=1};
   double cfl;
   switch (order) {
-  case 0: cfl=0.9; break;
+  case 0: cfl=1.0; break;
   case 1: cfl=0.25; break;
   case 2: cfl=0.15; break;
   case 3: cfl=0.1; break;
@@ -106,9 +106,9 @@ int main() {
   LLFBurgers llfburgers(burgers);
   // ODE Solvers
   typedef TimeStepper ODEType;
-  ODEType ode(cfl);
-  ODEType odeLLF(cfl);
-  ODEType odeburgers(cfl);
+  ODEType ode(cfl*0.9);
+  ODEType odeLLF(cfl*0.9);
+  ODEType odeburgers(cfl*0.9);
   // Operators
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgTypeBurgers;
   typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgTypeLLF;
