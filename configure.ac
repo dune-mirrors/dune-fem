@@ -33,14 +33,22 @@ AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  examples/poisson/Makefile
               	 examples/transport/Makefile
-            		 examples/vectorial/Makefile
+                 examples/vectorial/Makefile
                  examples/l2projection/Makefile
+		 examples/localdg/Makefile
+		 examples/localdg/advectdiffusion/Makefile
+		 examples/pass/Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
                  tester/adaptation/Makefile
                  tester/gridcheck/unittests/Makefile
-            		 pass/Makefile
-            		 pass/test/Makefile
+                 visual/Makefile
+                 visual/grape/Makefile
+                 visual/grape/gridview/Makefile
+                 visual/grape/datadisp/Makefile
+		 pass/Makefile
+		 pass/test/Makefile
+		 space/Makefile
                ])
 AC_OUTPUT
 
