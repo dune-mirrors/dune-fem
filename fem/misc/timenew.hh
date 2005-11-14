@@ -2,49 +2,14 @@
 #define NEW_TIMESTEPPING_HH
 
 #include <memory>
-#include <limits>
+
 #include "inverseoperatorfactory.hh"
+#include "timeutility.hh"
 
 #include <strstream>
 #include "../visual/dx/dxdata.hh"
 
 using namespace Dune;
-
-class TimeProvider {
-public:
-  double time() const { return time_; }
-
-  void provideTimeStepEstimate(double dtEstimate) {
-    dtEstimate_ = std::min(dtEstimate_, dtEstimate);
-  }
-protected:
-  TimeProvider(double startTime = 0.0) : 
-    time_(startTime),
-    dtEstimate_()
-  {
-    resetTimeStepEstimate();
-  }
-
-  virtual ~TimeProvider() {}
-
-  void setTime(double time) { time_ = time; }
-  void augmentTime(double dt) { time_ += dt; }
-
-  void resetTimeStepEstimate() {
-    dtEstimate_ = std::numeric_limits<double>::max();
-  }
-
-  double timeStepEstimate() const {
-    return dtEstimate_;
-  }
-private:
-  TimeProvider(const TimeProvider&);
-  TimeProvider& operator=(const TimeProvider&);
-
-private:
-  double time_;
-  double dtEstimate_;
-};
 
 // Solve D_1 u' + D_0 u = f
 // Assume D_1 and D_0 to be linear operators, f independent from u

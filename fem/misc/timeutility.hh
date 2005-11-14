@@ -1,6 +1,8 @@
 #ifndef DUNE_TIMEUTILITY_HH
 #define DUNE_TIMEUTILITY_HH
 
+#include <limits>
+
 namespace Dune {
 
   class TimeProvider {
