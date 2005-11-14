@@ -75,7 +75,15 @@ class TimeStepper : public TimeProvider {
 };
 
 int main() {
-  enum {order=1};
+  enum {order=0};
+  double cfl;
+  switch (order) {
+  case 0: cfl=0.9; break;
+  case 1: cfl=0.25; break;
+  case 2: cfl=0.15; break;
+  case 3: cfl=0.1; break;
+  case 4: cfl=0.09; break;
+  }
   typedef SGrid<2, 2> GridType;
   SStruct s(200, 0.1);
   GridType grid(s.n_, s.l_, s.h_);
@@ -86,8 +94,8 @@ int main() {
   ModelType::DomainType velocity(0.);
   velocity[0]=0.8;
   velocity[1]=0.;
-  double epsilon=0.01;
-  ModelType advdiff(velocity,epsilon);
+  double epsilon=0.001;
+  ModelType advdiff(velocity,0.);
   BurgersType burgers(epsilon);
   // Fluxes
   typedef UpwindFlux<ModelType> UpwindAdvDiffType;
@@ -98,9 +106,9 @@ int main() {
   LLFBurgers llfburgers(burgers);
   // ODE Solvers
   typedef TimeStepper ODEType;
-  ODEType ode(0.01);
-  ODEType odeLLF(0.01);
-  ODEType odeburgers(0.01);
+  ODEType ode(cfl);
+  ODEType odeLLF(cfl);
+  ODEType odeburgers(cfl);
   // Operators
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgTypeBurgers;
   typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgTypeLLF;
