@@ -14,7 +14,7 @@
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/fem/l2projection.hh>
+#include <dune/quadrature/quadraturerules.hh>
 
 #include <iostream>
 #include <string>
@@ -23,13 +23,6 @@ using namespace Dune;
 using namespace std;
 
 #include "scalarmodels.hh"
-template <class GridType>
-double BurgersModel<GridType>::epsilon;
-template <class GridType>
-typename AdvectionDiffusionModel<GridType>::DomainType 
-       AdvectionDiffusionModel<GridType>::velocity;
-template <class GridType>
-double AdvectionDiffusionModel<GridType>::epsilon;
 
 // ***********************
 // ***********************************************
@@ -57,8 +50,8 @@ class TimeStepper : public TimeProvider {
 	       typename Operator::DestinationType& Upd) {
     resetTimeStepEstimate();
     op(U,Upd);
-    // double dt=cfl_*timeStepEstimate();
-    double dt=0.0001;
+    double dt=cfl_*timeStepEstimate();
+    //double dt=0.0001;
     Upd*=dt;
     U+=Upd;
     augmentTime(dt);
@@ -82,32 +75,42 @@ double solve(Operator &op,
 int main() {
   enum {order=0};
   typedef SGrid<2, 2> GridType;
-  typedef AdvectionDiffusionModel<GridType> ModelType;
-  typedef BurgersModel<GridType> BurgersType;
-  ModelType::velocity[0]=0.8;
-  ModelType::velocity[1]=0.;
-  ModelType::epsilon=0.01;
-  BurgersType::epsilon=0.01;
-  
-  typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgTypeBurgers;
-  typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgTypeLLF;
-  typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
-  typedef TimeStepper ODEType;
-
   SStruct s(200, 0.1);
   GridType grid(s.n_, s.l_, s.h_);
-  FieldVector<double,2> upwind;
-  upwind[0]=1.;
-  upwind[1]=1.;
 
+  // Model classes
+  typedef AdvectionDiffusionModel<GridType> ModelType;
+  typedef BurgersModel<GridType> BurgersType;
+  ModelType::DomainType velocity(0.);
+  velocity[0]=0.8;
+  velocity[1]=0.;
+  double epsilon=0.01;
+  ModelType advdiff(velocity,epsilon);
+  BurgersType burgers(epsilon);
+  // Fluxes
+  typedef UpwindFlux<ModelType> UpwindAdvDiffType;
+  typedef LLFFlux<ModelType> LLFAdvDiffType;
+  typedef LLFFlux<BurgersType> LLFBurgers;
+  UpwindAdvDiffType upwindadvdiff(advdiff);
+  LLFAdvDiffType llfadvdiff(advdiff);
+  LLFBurgers llfburgers(burgers);
+  // ODE Solvers
+  typedef TimeStepper ODEType;
   ODEType ode(0.1);
   ODEType odeLLF(0.1);
   ODEType odeburgers(0.1);
+  // Operators
+  typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgTypeBurgers;
+  typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgTypeLLF;
+  typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
+  FieldVector<double,2> upwind;
+  upwind[0]=1.;
+  upwind[1]=1.;
+  DgType dg(grid,ode,upwindadvdiff,upwind);
+  DgTypeLLF dgLLF(grid,odeLLF,llfadvdiff,upwind);
+  DgTypeBurgers dgBurgers(grid,odeburgers,llfburgers,upwind);
 
-  DgType dg(grid,ode,upwind);
-  DgTypeLLF dgLLF(grid,odeLLF,upwind);
-  DgTypeBurgers dgBurgers(grid,odeburgers,upwind);
-
+  // Grid and Data...
   DgType::DestinationType U("U", dg.space());
   DgType::DestinationType ULLF("ULLF", dg.space());
   DgType::DestinationType UBurgers("UBurgers", dg.space());
@@ -122,13 +125,10 @@ int main() {
   int step=1;
   double t=0;
   while (t<1.) {
-    /*
+    // t=ode.solve(dg,U,Upd);
     t+=solve(dg,U,Upd);
     solve(dgLLF,ULLF,Upd);
     solve(dgBurgers,UBurgers,Upd);
-    */
-    // t=ode.solve(dg,U,Upd);
-    t+=solve(dg,U,Upd);
     cout << t << endl;
     if (t>save) {
       printSGrid(0, 10*step+1, dg.space(), U);

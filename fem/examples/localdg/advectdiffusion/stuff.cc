@@ -1,3 +1,51 @@
+template <class DiscreteFunctionType, class FunctionType, int polOrd>
+class L2Projection
+{
+  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  
+ public:
+  static void project (FunctionType &f, DiscreteFunctionType &discFunc)
+  {
+    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
+    typedef typename FunctionSpaceType::Traits::GridType GridType;
+    typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+    
+    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    
+    discFunc.clear();
+    
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    
+    const int dim = GridType::dimension;
+    
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
+    
+    Iterator it = space.begin();
+    Iterator endit = space.end();
+    
+    // Get quadrature rule
+    const QuadratureRule<double, dim>& quad =
+      QuadratureRules<double, dim>::rule(it->geometry().type(), polOrd);
+    
+    for( ; it != endit ; ++it) {
+      LocalFuncType lf = discFunc.localFunction(*it);
+      
+      const typename FunctionSpaceType::BaseFunctionSetType & set =
+	space.getBaseFunctionSet(*it);
+      
+      for(int i=0; i<lf.numDofs(); i++) {
+        for(int qP = 0; qP < quad.size(); qP++) {
+	  double det =
+	    (*it).geometry().integrationElement(quad[qP].position());
+	  f.evaluate((*it).geometry().global( quad[qP].position() ), ret);
+	  set.eval(i,quad[qP].position(),phi);
+          lf[i] += det * quad[qP].weight() * (ret * phi);
+        }
+      }
+    }
+  }
+};
 struct SStruct {
   SStruct(int n1, int n2, double lx, double ly, double hx, double hy)
   {

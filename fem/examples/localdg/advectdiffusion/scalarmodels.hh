@@ -17,48 +17,52 @@ class BurgersModel {
   typedef typename Traits::GradientType GradientType;
   typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
-  static double epsilon;
-  inline static void analyticalFlux(typename Traits::EntityType& en,
+  BurgersModel(double eps) : epsilon(eps) {}
+  inline  void analyticalFlux(typename Traits::EntityType& en,
 				    double time,  
 				    const typename Traits::DomainType& x,
 				    const RangeType& u, 
-				    FluxRangeType& f) {
+				    FluxRangeType& f) const {
     f[0] = u*u*0.5;
   }
-  inline static void diffusion(typename Traits::EntityType& en,
+  inline  void diffusion(typename Traits::EntityType& en,
 			       double time, 
 			       const DomainType& x,
 			       const RangeType& u, 
-			       DiffusionRangeType& a) {
+			       DiffusionRangeType& a) const {
     a*=0;
     for (int i=0;i<dimDomain;i++)
       a[i][i]=u;
   }
-  inline static void diffusion(typename Traits::EntityType& en,
+  inline  void diffusion(typename Traits::EntityType& en,
 			       double time, 
 			       const DomainType& x,
 			       const RangeType& u, 
 			       const GradientType& v,
-			       FluxRangeType& A) {
+			       FluxRangeType& A) const {
     A[0] = v;
     A *= epsilon;
   }
-  inline static void boundaryValue(typename Traits::IntersectionIterator& it,
+  inline  void boundaryValue(typename Traits::IntersectionIterator& it,
 				   double time, 
 				   const typename Traits::FaceDomainType& x,
 				   const RangeType& uLeft, 
-				   RangeType& uRight) {
+				   RangeType& uRight) const {
     
     uRight=uLeft;
   }
-  inline static double maxSpeed(const typename Traits::DomainType& normal,
+  inline  double maxSpeed(const typename Traits::DomainType& normal,
 				double time,  
 				const typename Traits::DomainType& x,
-				const RangeType& u) {
+				const RangeType& u) const {
     return abs(normal[0]*u);
   }
+ protected:
+  double epsilon;
 };
 // ***********************
+template <class Model>
+class UpwindFlux;
 template <class GridType>
 class AdvectionDiffusionModel {
  public:
@@ -71,53 +75,55 @@ class AdvectionDiffusionModel {
   typedef typename Traits::FluxRangeType FluxRangeType;
   typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
-  static DomainType velocity;
-  static double epsilon;
-  inline static void analyticalFlux(typename Traits::EntityType& en,
-				    double time,  
-				    const typename Traits::DomainType& x,
+  AdvectionDiffusionModel(DomainType& velo,double eps) :
+    velocity(velo), epsilon(eps) {}
+  inline  void analyticalFlux(typename Traits::EntityType& en,
+			      double time,  
+			      const typename Traits::DomainType& x,
 				    const RangeType& u, 
-				    FluxRangeType& f) {
+				    FluxRangeType& f) const {
     f[0] = velocity;
     f *= u;
   }
-  inline static void diffusion(typename Traits::EntityType& en,
+  inline  void diffusion(typename Traits::EntityType& en,
 			       double time, 
 			       const DomainType& x,
 			       const RangeType& u, 
-			       DiffusionRangeType& a) {
+			       DiffusionRangeType& a) const {
     a*=0;
     for (int i=0;i<dimDomain;i++)
       a[i][i]=u;
   }
-  inline static void diffusion(typename Traits::EntityType& en,
+  inline  void diffusion(typename Traits::EntityType& en,
 			       double time, 
 			       const DomainType& x,
 			       const RangeType& u, 
 			       const GradientType& v,
-			       FluxRangeType& A) {
+			       FluxRangeType& A) const {
     
     A[0] = v;
     A *= epsilon;
   }
-  inline static void boundaryValue(typename Traits::IntersectionIterator& it,
+  inline  void boundaryValue(typename Traits::IntersectionIterator& it,
 				   double time, 
 				   const typename Traits::FaceDomainType& x,
 				   const RangeType& uLeft, 
-				   RangeType& uRight) {
+				   RangeType& uRight) const {
     
     uRight=uLeft;
   }
-  inline static double maxSpeed(const typename Traits::DomainType& normal,
+  inline  double maxSpeed(const typename Traits::DomainType& normal,
 				double time,  
 				const typename Traits::DomainType& x,
-				const RangeType& u) {
+				const RangeType& u) const {
     return abs(normal*velocity);
   }
+ protected:
+  DomainType velocity;
+  double epsilon;
+  friend class UpwindFlux<AdvectionDiffusionModel<GridType> >;
 };
 // Numerical Upwind-Flux
-template <class Model>
-class UpwindFlux;
 template <class GridType>
 class UpwindFlux<AdvectionDiffusionModel<GridType> > {
  public:
@@ -128,15 +134,17 @@ class UpwindFlux<AdvectionDiffusionModel<GridType> > {
   typedef typename Model::FluxRangeType FluxRangeType;
   typedef typename Model::DiffusionRangeType DiffusionRangeType;
  public:
-  inline static double numericalFlux(typename Traits::IntersectionIterator& it,
+  UpwindFlux(const Model& mod) : model_(mod) {}
+  const Model& model() const {return model_;}
+  inline  double numericalFlux(typename Traits::IntersectionIterator& it,
 				     double time, 
 				     const typename Traits::FaceDomainType& x,
 				     const RangeType& uLeft, 
 				     const RangeType& uRight,
 				     RangeType& gLeft,
-				     RangeType& gRight) {
+				     RangeType& gRight) const {
     const typename Traits::DomainType normal = it.integrationOuterNormal(x);    
-    double upwind = normal*Model::velocity;
+    double upwind = normal*model_.velocity;
     if (upwind>0)
       gLeft = uLeft;
     else
@@ -145,25 +153,27 @@ class UpwindFlux<AdvectionDiffusionModel<GridType> > {
     gRight = gLeft;
     return std::abs(upwind);
   }
-  inline static double boundaryFlux(typename Traits::IntersectionIterator& it,
+  inline  double boundaryFlux(typename Traits::IntersectionIterator& it,
 				    double time, 
 				    const typename Traits::FaceDomainType& x,
 				    const RangeType& uLeft, 
-				    RangeType& gLeft) {
+				    RangeType& gLeft) const {
     RangeType uRight,gRight;
-    Model::boundaryValue(it,time,x,uLeft,uRight);
+    model_.boundaryValue(it,time,x,uLeft,uRight);
     return numericalFlux(it,time,x,uLeft,uRight,gLeft,gRight);
   }
-  inline static void boundaryDiffusionFlux
+  inline  void boundaryDiffusionFlux
                     (typename Traits::IntersectionIterator& it,
 		     double time, 
 		     const typename Traits::FaceDomainType& x,
 		     const RangeType& uLeft, 
-		     DiffusionRangeType& aLeft) {
+		     DiffusionRangeType& aLeft) const {
     RangeType uRight;
-    Model::boundaryValue(it,time,x,uLeft,uRight);
-    Model::diffusion(*it.inside(),time,
+    model_.boundaryValue(it,time,x,uLeft,uRight);
+    model_.diffusion(*it.inside(),time,
 		     it.intersectionSelfLocal().global(x),
 		     uRight,aLeft);
   }
+ private:
+  const Model& model_;
 };

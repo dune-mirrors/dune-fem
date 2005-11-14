@@ -136,8 +136,12 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity EntityType;
     
   public:
-    TransportDiffusionDiscreteModel1(const DomainType& upwind) :
-      upwind_(upwind) {}
+    TransportDiffusionDiscreteModel1(const DomainType& upwind,
+				     const Model& mod,
+				     const NumFlux& numf) :
+      upwind_(upwind),
+      model_(mod),
+      numflux_(numf) {}
     bool hasSource() const { return false; }
     bool hasFlux() const { return true; }
     
@@ -156,20 +160,20 @@ namespace Dune {
       JacobianRangeType diffmatrix;
       RangeType diffflux(0.);
       /* central differences      
-      Model::diffusion(*it.inside(),time,it.intersectionSelfLocal().global(x),
+      model_.diffusion(*it.inside(),time,it.intersectionSelfLocal().global(x),
 		       argULeft,diffmatrix);
       diffmatrix.umv(normal,diffflux);
-      Model::diffusion(*it.outside(),time,it.intersectionNeighborLocal().global(x),
+      model_.diffusion(*it.outside(),time,it.intersectionNeighborLocal().global(x),
 		       argURight,diffmatrix);
       diffmatrix.umv(normal,diffflux);
       diffflux*=0.5;
       */
       if (upwind_*normal>0)
-	Model::diffusion(*it.inside(),time,
+	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
 			 argULeft,diffmatrix);
       else
-	Model::diffusion(*it.outside(),time,
+	model_.diffusion(*it.outside(),time,
 			 it.intersectionNeighborLocal().global(x),
 			 argURight,diffmatrix);
       diffmatrix.umv(normal,diffflux);
@@ -190,11 +194,11 @@ namespace Dune {
       JacobianRangeType diffmatrix;
       gLeft*=0.;
       if (upwind_*normal>0)
-	Model::diffusion(*it.inside(),time,
+	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
 			 argULeft,diffmatrix);
       else
-	NumFlux::boundaryDiffusionFlux(it,time,x,
+	numflux_.boundaryDiffusionFlux(it,time,x,
 				       argULeft,diffmatrix);
       diffmatrix.umv(normal,gLeft);
       return 1e-10; 
@@ -207,10 +211,12 @@ namespace Dune {
     { 
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       const UType& argU = Element<0>::get(u);
-      Model::diffusion(en,time,x,argU,f);
+      model_.diffusion(en,time,x,argU,f);
     }
   private:
     const DomainType& upwind_;
+    const Model& model_;
+    const NumFlux& numflux_;
   };
   template <class Model,class NumFlux,int polOrd >
   class TransportDiffusionDiscreteModel2 : 
@@ -228,8 +234,11 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
   public:
-    TransportDiffusionDiscreteModel2(const DomainType& upwind) :
-      upwind_(upwind) {}
+    TransportDiffusionDiscreteModel2(const DomainType& upwind,
+				     const Model& mod,const NumFlux& numf) :
+      upwind_(upwind),
+      model_(mod),
+      numflux_(numf) {}
 
     bool hasSource() const { return false; }
     bool hasFlux() const { return true; }
@@ -250,29 +259,29 @@ namespace Dune {
       const UType& argURight = Element<0>::get(uRight);
       const WType& argWRight = Element<1>::get(uRight);
       // Advection
-      double ldt=NumFlux::
+      double ldt=numflux_.
 	numericalFlux(it,time,x,argULeft,argURight,gLeft,gRight);
       // Diffusion
       JacobianRangeType diffmatrix;
       RangeType diffflux(0.);
       /* central 
       DomainType normal = it.integrationOuterNormal(x);
-      Model::
+      model_.
 	diffusion(*it.inside(),time,it.intersectionSelfLocal().global(x),
 		  argULeft,argWLeft,diffmatrix);
       diffmatrix.umv(normal,diffflux);
-      Model::
+      model_.
 	diffusion(*it.outside(),time,it.intersectionNeighborLocal().global(x),
 		  argURight,argWRight,diffmatrix);
       diffmatrix.umv(normal,diffflux);
       diffflux*=0.5;
       */
       if (upwind_*normal<0)
-	Model::diffusion(*it.inside(),time,
+	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
 			 argULeft,argWLeft,diffmatrix);
       else
-	Model::diffusion(*it.outside(),time,
+	model_.diffusion(*it.outside(),time,
 			 it.intersectionNeighborLocal().global(x),
 			 argURight,argWRight,diffmatrix);
       diffmatrix.umv(normal,diffflux);
@@ -293,10 +302,10 @@ namespace Dune {
       const UType& argULeft = Element<0>::get(uLeft);
       const WType& argWLeft = Element<1>::get(uLeft);
       // Advection
-      double ldt=NumFlux::
+      double ldt=numflux_.
 	boundaryFlux(it,time,x,argULeft,gLeft);
       JacobianRangeType diffmatrix;
-      Model::diffusion(*it.inside(),time,
+      model_.diffusion(*it.inside(),time,
 		       it.intersectionSelfLocal().global(x),
 		       argULeft,argWLeft,diffmatrix);
       diffmatrix.umv(normal,gLeft);
@@ -313,14 +322,16 @@ namespace Dune {
       const UType& argU = Element<0>::get(u);
       const WType argW = Element<1>::get(u);
       // Advection
-      Model::analyticalFlux(en,time,x,argU,f);
+      model_.analyticalFlux(en,time,x,argU,f);
       // Diffusion
       JacobianRangeType diffmatrix;
-      Model::diffusion(en,time,x,argU,argW,diffmatrix);
+      model_.diffusion(en,time,x,argU,argW,diffmatrix);
       f += diffmatrix;
     }
   private:
     const DomainType& upwind_;
+    const Model& model_;
+    const NumFlux& numflux_;
   };
   // The actual operator
   template <class Model,template<class M> class NumFlux,int polOrd >
@@ -366,9 +377,12 @@ namespace Dune {
 
   public:
     DGAdvectionDiffusionOperator(GridType& grid,TimeProvider& timeprovider,
+				 const NumFluxType& numf,
 				 DomainType& upwind) :
       upwind_(upwind),
-      grid_(grid) ,
+      grid_(grid),
+      model_(numflux_.model()),
+      numflux_(numf),
       iset1_(grid_,grid_.maxLevel()),
       iset2_(grid_,grid_.maxLevel()),
       gridPart1_(grid_, iset1_),
@@ -377,8 +391,8 @@ namespace Dune {
       singleSpace2_(gridPart2_),
       space1_(singleSpace1_),
       space2_(singleSpace2_),
-      problem1_(upwind_),
-      problem2_(upwind_),
+      problem1_(upwind_,model_,numflux_),
+      problem2_(upwind_,model_,numflux_),
       pass1_(problem1_, pass0_, space1_),
       pass2_(problem2_, pass1_, space2_)      
     {
@@ -394,6 +408,8 @@ namespace Dune {
   private:
     mutable DomainType upwind_;
     GridType& grid_;
+    const Model& model_;
+    const NumFluxType& numflux_;
     IndexSet1Type iset1_;
     IndexSet2Type iset2_;
     GridPart1Type gridPart1_;
@@ -417,30 +433,32 @@ namespace Dune {
     typedef typename Model::FluxRangeType FluxRangeType;
     typedef typename Model::DiffusionRangeType DiffusionRangeType;
   public:
-    inline static double numericalFlux(typename Traits::IntersectionIterator& it,
+    LLFFlux(const Model& mod) : model_(mod) {}
+    const Model& model() const {return model_;}
+    inline double numericalFlux(typename Traits::IntersectionIterator& it,
 				       double time, 
 				       const typename Traits::FaceDomainType& x,
 				       const RangeType& uLeft, 
 				       const RangeType& uRight,
 				       RangeType& gLeft,
-				       RangeType& gRight) {
+				       RangeType& gRight) const {
       const typename Traits::DomainType normal = it.integrationOuterNormal(x);  
       typename Traits::RangeType visc;
       typename Traits::FluxRangeType anaflux;
-      Model::analyticalFlux(*it.inside(), time,
+      model_.analyticalFlux(*it.inside(), time,
 			    it.intersectionSelfLocal().global(x),
 			    uLeft, anaflux);
       gLeft*=0;
       anaflux.umv(normal, gLeft);
-      Model::analyticalFlux(*it.outside(), time,
+      model_.analyticalFlux(*it.outside(), time,
 			    it.intersectionNeighborLocal().global(x),
 			    uRight, anaflux);
       anaflux.umv(normal,gLeft);
       
       double maxspeedl=
-	Model::maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uLeft);
+	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uLeft);
       double maxspeedr=
-	Model::maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uRight);
+	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uRight);
       double maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       visc=uRight;
       visc-=uLeft;
@@ -451,27 +469,29 @@ namespace Dune {
       gRight=gLeft;
       return maxspeed;
     }
-    inline static double boundaryFlux(typename Traits::IntersectionIterator& it,
+    inline double boundaryFlux(typename Traits::IntersectionIterator& it,
 				      double time, 
 				      const typename Traits::FaceDomainType& x,
 				      const RangeType& uLeft, 
-				      RangeType& gLeft) {
+				      RangeType& gLeft) const {
       RangeType uRight,gRight;
-      Model::boundaryValue(it,time,x,uLeft,uRight);
+      model_.boundaryValue(it,time,x,uLeft,uRight);
       return numericalFlux(it,time,x,uLeft,uRight,gLeft,gRight);
     }
-    inline static void boundaryDiffusionFlux
+    inline void boundaryDiffusionFlux
                       (typename Traits::IntersectionIterator& it,
 		       double time, 
 		       const typename Traits::FaceDomainType& x,
 		       const RangeType& uLeft, 
-		       DiffusionRangeType& aLeft) {
+		       DiffusionRangeType& aLeft) const {
       RangeType uRight;
-      Model::boundaryValue(it,time,x,uLeft,uRight);
-      Model::diffusion(*it.inside(),time,
+      model_.boundaryValue(it,time,x,uLeft,uRight);
+      model_.diffusion(*it.inside(),time,
 		       it.intersectionSelfLocal().global(x),
 		       uRight,aLeft);
     }
+  private:
+    const Model& model_;
   };
 }
 
