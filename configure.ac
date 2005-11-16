@@ -42,10 +42,6 @@ AC_CONFIG_FILES([Makefile
                  tester/gridcheck/Makefile
                  tester/adaptation/Makefile
                  tester/gridcheck/unittests/Makefile
-                 visual/Makefile
-                 visual/grape/Makefile
-                 visual/grape/gridview/Makefile
-                 visual/grape/datadisp/Makefile
 		 pass/Makefile
 		 pass/test/Makefile
 		 space/Makefile
