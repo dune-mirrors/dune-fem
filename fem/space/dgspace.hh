@@ -87,6 +87,9 @@ namespace Dune {
 
     //! The polynom order of the base functions
     enum { PolOrd = polOrd };
+    
+    //! The polynom order of the base functions
+    enum { polynomialOrder = polOrd };
 
     //- Constructors and destructors
     /** Constructor */
