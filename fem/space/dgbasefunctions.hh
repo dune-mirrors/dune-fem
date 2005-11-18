@@ -3,6 +3,7 @@
 
 // Dune includes
 #include <dune/fem/common/basefunctions.hh>
+#include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/fem/common/fastbase.hh>
 #include <dune/grid/common/grid.hh>
 
@@ -393,6 +394,72 @@ namespace Dune {
 
     virtual ~DGFastBaseFunctionSet() {}
       
+  };
+
+  template <class ScalarFunctionSpaceImp, int polOrd>
+  class DiscontinuousGalerkinBaseFunctionFactory : 
+    public BaseFunctionFactory<ScalarFunctionSpaceImp> 
+  {
+  public:
+    // Add compile time checker: only scalar functions allowed
+
+    typedef ScalarFunctionSpaceImp FunctionSpaceType;
+    typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory(GeometryType geo) :
+      BaseFunctionFactory<ScalarFunctionSpaceImp>(geo)
+    {}
+
+    virtual BaseFunctionType* baseFunction(int i) const {
+      switch (this->geometry()) {
+      case simplex:
+        if (FunctionSpaceType::DimDomain == 2) {
+          return new DGBaseFunction<FunctionSpaceType, triangle, polOrd>(i);
+        }
+        else {
+          return new DGBaseFunction<FunctionSpaceType, tetrahedron, polOrd>(i);
+        }
+      case cube:
+        if (FunctionSpaceType::DimDomain == 2) {
+          return new DGBaseFunction<FunctionSpaceType,quadrilateral,polOrd>(i);
+        }
+        else {
+          return new DGBaseFunction<FunctionSpaceType, hexahedron, polOrd>(i);
+        }
+      case triangle:
+        return new DGBaseFunction<FunctionSpaceType, triangle, polOrd>(i);
+      case quadrilateral:
+        return new DGBaseFunction<FunctionSpaceType, quadrilateral, polOrd>(i);
+      case tetrahedron:
+        return new DGBaseFunction<FunctionSpaceType, tetrahedron, polOrd>(i);
+      case pyramid:
+        return new DGBaseFunction<FunctionSpaceType, pyramid, polOrd>(i);
+      case prism:
+        return new DGBaseFunction<FunctionSpaceType, prism, polOrd>(i);
+      case hexahedron:
+        return new DGBaseFunction<FunctionSpaceType, hexahedron, polOrd>(i);
+      default:
+        DUNE_THROW(NotImplemented, 
+                   "The chosen geometry type is not implemented");
+      }
+      return 0;
+    }
+
+    virtual int numBaseFunctions() const {
+      switch (FunctionSpaceType::DimDomain) {
+      case 2:
+        return (polOrd + 2) * (polOrd + 1) / 2;
+      case 3:
+        return ((polOrd+1)*(polOrd+2)*(2*polOrd+3)/6 +
+                         (polOrd+1)*(polOrd+2)/2)/2;
+      default:
+        DUNE_THROW(NotImplemented, 
+                   "DGBaseFunctionWrapper only supports 2D and 3D Domain");
+      }
+      assert(false); // can't get here!
+      return -1;
+    }
+    
   };
 
 #include "orthonormalbase_mod.cc"
