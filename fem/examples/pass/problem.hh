@@ -12,6 +12,7 @@
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/alu3dgrid.hh>
 #include <dune/grid/albertagrid.hh>
+#include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/quadrature/fixedorder.hh>
 
@@ -26,7 +27,7 @@ namespace Dune {
   {
     enum { dimRange = 2 };
     enum { dimDomain = 2 };
-    enum { polOrd = 0 };
+    enum { polOrd = 2 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
@@ -140,7 +141,7 @@ namespace Dune {
   {
     enum { dimRange = 1 };
     enum { dimDomain = 2 };
-    enum { polOrd = 0 };
+    enum { polOrd = 2 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
