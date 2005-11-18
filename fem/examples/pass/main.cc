@@ -325,6 +325,18 @@ int main()
   SpaceOperatorType& op = fix.dgOperator();
   TimeOperatorType top;
 
+  // Precursor
+ 
+   {
+  DestinationType pre("pre", fix.space());
+  initialize(pre);
+
+  IdentitySolverFactory<DiscreteFunction> factory;
+  ExplicitEuler<
+    DiscreteFunction, MappingType> preLoop(pre, top, op, factory, dt);
+  preLoop.solve();
+   }
+  
   // intial data
   DestinationType initial("initial", fix.space());
   initialize(initial);
