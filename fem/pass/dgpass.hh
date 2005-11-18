@@ -108,6 +108,8 @@ namespace Dune {
     //! destinations. Filter out the "right" arguments for this pass.
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
+      std::cout << "Prepare " << this->passNumber() << std::endl;
+
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
 
@@ -134,9 +136,115 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
+      //std::cout << "Finalize " << this->passNumber() << std::endl;
+
       dtOld_ = dtMin_;
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
+      }
+
+      caller_->finalize();
+    }
+
+    void applyAlt(EntityType& en) const
+    {
+      //- typedefs
+      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+      
+      //- statements
+      caller_->setEntity(en);
+      LocalFunctionType updEn = dest_->localFunction(en);
+      GeometryType geom = en.geometry().type();
+      
+      VolumeQuadratureType volQuad(geom);
+
+      double vol = volumeElement(en, volQuad);
+      //std::cout << "Vol = " << vol << std::endl;
+      double dtLocal;
+      
+      const IndexSetType& iset = spc_.indexSet();
+      const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
+
+      // Volumetric integral part
+      for (int l = 0; l < volQuad.nop(); ++l) {
+        caller_->analyticalFlux(en, volQuad, l, fMat_);
+        caller_->source(en, volQuad, l, source_);
+
+        for (int i = 0; i < updEn.numDofs(); ++i) {
+          updEn[i] += 
+            (bsetEn.evaluateGradientSingle(i, volQuad.point(l), fMat_) +
+             bsetEn.evaluateSingle(i, volQuad.point(l), source_))*
+            volQuad.weight(l)*
+            en.geometry().integrationElement(volQuad.point(l))/vol;
+        }
+      }
+
+      // Surface integral part
+      IntersectionIterator endnit = en.iend();
+      IntersectionIterator nit = en.ibegin();
+      FaceQuadratureType faceQuad(nit.intersectionGlobal().type());
+      
+      for (; nit != endnit; ++nit) {
+        if (nit.neighbor()) {
+          if (iset.index(*nit.outside()) > iset.index(en)
+              || nit.outside()->partitionType() == GhostEntity) {
+            
+            caller_->setNeighbor(*nit.outside());
+            LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
+
+            const BaseFunctionSetType& bsetNeigh = 
+              spc_.getBaseFunctionSet(*(nit.outside()));
+  
+            for (int l = 0; l < faceQuad.nop(); ++l) {
+              double h = 
+                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
+              DomainType xLocalEn = 
+                nit.intersectionSelfLocal().global(faceQuad.point(l));
+              DomainType xLocalNeigh = 
+                nit.intersectionNeighborLocal().global(faceQuad.point(l));
+              
+              // Evaluate flux
+              dtLocal = 
+                caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
+              
+              dtLocal =  (dtLocal < std::numeric_limits<double>::min()) ?
+                dtMin_ : vol/(dtLocal*h);
+              if(dtLocal < dtMin_) dtMin_ = dtLocal;
+
+              for (int i = 0; i < updEn.numDofs(); ++i) {
+                updEn[i] -= 
+                  bsetEn.evaluateSingle(i, xLocalEn, valEn_)*
+                  faceQuad.weight(l)/vol;
+                updNeigh[i] += 
+                  bsetNeigh.evaluateSingle(i, xLocalNeigh, valNeigh_)
+                  *faceQuad.weight(l)/vol;
+              }
+            }
+
+          } // end if ...
+        } // end if neighbor
+
+        if (nit.boundary()) {
+          for (int l = 0; l < faceQuad.nop(); ++l) {
+            double integrationElement =
+              nit.intersectionGlobal().integrationElement(faceQuad.point(l));
+              
+            DomainType xLocalEn = 
+              nit.intersectionSelfLocal().global(faceQuad.point(l));
+                 
+            dtLocal = 
+              caller_->boundaryFlux(nit, faceQuad, l, source_);
+            dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
+              dtMin_ : vol/(dtLocal*integrationElement);
+            if (dtLocal < dtMin_) dtMin_ = dtLocal;
+                    
+            for (int i = 0; i < updEn.numDofs(); ++i) {
+              updEn[i] -= bsetEn.evaluateSingle(i, xLocalEn, source_)
+                *faceQuad.weight(l)/vol;
+            }
+          }
+        } // end if boundary
       }
     }
 
@@ -144,7 +252,11 @@ namespace Dune {
     virtual void applyLocal(EntityType& en) const
     {
       //std::cout << "DGLocalPass::applyLocal()" << std::endl;
-    
+      //applyOld(en);
+      applyAlt(en);
+    }
+
+    void applyOld(EntityType& en) const {
       //- Initialise quadratures and stuff
       caller_->setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
@@ -244,6 +356,7 @@ namespace Dune {
                 
                 updNeigh[k] += 
                   (valNeigh_*baseNeigh_)*faceQuad.weight(l)/vol;
+                  //volumeElement(*(nit.outside()), volQuad);
               } // end loop base functions
             } // end loop quadrature points
             
@@ -257,15 +370,14 @@ namespace Dune {
               
             DomainType xLocalEn = 
               nit.intersectionSelfLocal().global(faceQuad.point(l));
-            DomainType xGlobal =
-              nit.intersectionGlobal().global(faceQuad.point(l));
-            
+               
             dtLocal = 
               caller_->boundaryFlux(nit, faceQuad, l, source_);
             dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
               dtMin_ : vol/(dtLocal); // *integrationElement);
             if (dtLocal < dtMin_) dtMin_ = dtLocal;
-                    
+   
+                 
             for (int k = 0; 
                  k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
               spc_.getBaseFunctionSet(en).evaluate(k,

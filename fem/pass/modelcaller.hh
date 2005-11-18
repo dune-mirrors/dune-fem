@@ -53,47 +53,61 @@ namespace Dune {
     typedef Creator<
       JacobianRangeTypeEvaluator, LocalFunctionTupleType> JacobianCreator;
 
-    typedef std::pair<LocalFunctionTupleType, RangeTupleType> ValuePair;
+    typedef std::pair<LocalFunctionTupleType*, RangeTupleType> ValuePair;
 
   public:
     DiscreteModelCaller(DiscreteModelType& problem, TotalArgumentType& arg) :
       problem_(problem),
       arg_(&arg),
       discreteFunctions_(FilterType::apply(arg)),
-      valuesEn_(LFCreator::apply(discreteFunctions_), RangeCreator::apply()),
-      valuesNeigh_(LFCreator::apply(discreteFunctions_),RangeCreator::apply()),
+      valuesEn_(
+        new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_)),
+        RangeCreator::apply()),
+      valuesNeigh_(
+        new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_)),
+        RangeCreator::apply()),
       jacobians_(JacobianCreator::apply()),
       time_(0.0)
     {}
 
     void setArgument(TotalArgumentType& arg) 
     {
-      if (*arg_ != arg) {
+      //if (*arg_ != arg) {
 
-        // Set pointer
-        arg_ = &arg;
+      // Set pointer
+      arg_ = &arg;
       
-        // Filter the argument
-        discreteFunctions_ = FilterType::apply(arg);
-
-        // Build up new local function tuples
-        valuesEn_.first = LFCreator::apply(discreteFunctions_);
-        valuesNeigh_.first = LFCreator::apply(discreteFunctions_);
-      }
+      // Filter the argument
+      discreteFunctions_ = FilterType::apply(arg);
+      
+      //}
+      
+      // Build up new local function tuples
+      valuesEn_.first = 
+        new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_));
+      valuesNeigh_.first = 
+        new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_));
     }
 
     void setEntity(Entity& en) 
     {
-      setter(en, valuesEn_.first);
+      setter(en, *valuesEn_.first);
     }
 
     void setNeighbor(Entity& en) 
     {
-      setter(en, valuesNeigh_.first);
+      setter(en, *valuesNeigh_.first);
     }
 
     void setTime(double time) {
       time_ = time;
+    }
+
+    void finalize() {
+      delete valuesEn_.first;
+      valuesEn_.first = 0;
+      delete valuesNeigh_.first;
+      valuesNeigh_.first = 0;
     }
 
     // Here, the interface of the problem is replicated and the Caller
@@ -111,7 +125,7 @@ namespace Dune {
     {
       // * temporary
       ForEachValuePair<
-        LocalFunctionTupleType, RangeTupleType> forEach(valuesEn_.first,
+        LocalFunctionTupleType, RangeTupleType> forEach(*valuesEn_.first,
                                                         valuesEn_.second);
       LocalFunctionEvaluateQuad<
         Entity, VolumeQuadratureType> eval(en, 
@@ -230,7 +244,7 @@ namespace Dune {
     void evaluateLocal(Entity& en, const DomainType& x, ValuePair& p) 
     {
       ForEachValuePair<
-        LocalFunctionTupleType, RangeTupleType> forEach(p.first,
+        LocalFunctionTupleType, RangeTupleType> forEach(*p.first,
                                                         p.second);
       
       LocalFunctionEvaluateLocal<Entity, DomainType> eval(en, x);
@@ -241,7 +255,7 @@ namespace Dune {
                       ValuePair& p) 
     {
       ForEachValuePair<
-        LocalFunctionTupleType, RangeTupleType> forEach(p.first,
+        LocalFunctionTupleType, RangeTupleType> forEach(*p.first,
                                                         p.second);
       LocalFunctionEvaluateQuad<
         Entity, VolumeQuadratureType> eval(en, quad, quadPoint);
@@ -252,8 +266,8 @@ namespace Dune {
     void evaluateJacobianLocal(Entity& en, const DomainType& x)
     {
       ForEachValuePair<
-        LocalFunctionTupleType,JacobianRangeTupleType> forEach(valuesEn_.first,
-                                                               jacobians_);
+       LocalFunctionTupleType,JacobianRangeTupleType> forEach(*valuesEn_.first,
+                                                              jacobians_);
       
       LocalFunctionEvaluateJacobianLocal<Entity, DomainType> eval(en, x);
       forEach.apply(eval);
@@ -263,8 +277,8 @@ namespace Dune {
                               int quadPoint) 
     {
       ForEachValuePair<
-        LocalFunctionTupleType,JacobianRangeTupleType> forEach(valuesEn_.first,
-                                                               jacobians_);
+       LocalFunctionTupleType,JacobianRangeTupleType> forEach(*valuesEn_.first,
+                                                              jacobians_);
       LocalFunctionEvaluateJacobianQuad<
         Entity, VolumeQuadratureType> eval(en, quad, quadPoint);
       

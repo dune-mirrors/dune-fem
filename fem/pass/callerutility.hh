@@ -262,7 +262,8 @@ namespace Dune {
     //! Applies the setting on every DiscreteFunction/LocalFunction pair.
     template <class DFPointer, class LFType>
     void visit(DFPointer& df, LFType& lf) {
-      lf = df->localFunction(en_);
+      //lf = df->localFunction(en_);
+      lf.init(en_);
     }
 
   private:

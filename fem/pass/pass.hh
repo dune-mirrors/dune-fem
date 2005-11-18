@@ -82,6 +82,9 @@ namespace Dune {
     typedef Pair<DestinationType*, LocalArgumentType> NextArgumentType;
 
   public:
+    // * Hack!!!! Remove again
+    int passNumber() const { return passNum; }
+
     //- Public methods
     //! Constructor
     //! \param pass Previous pass
