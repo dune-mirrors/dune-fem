@@ -39,7 +39,7 @@ class L2Projection
 	    (*it).geometry().integrationElement(quad[qP].position());
 	  f.evaluate((*it).geometry().global( quad[qP].position() ), ret);
 	  set.eval(i,quad[qP].position(),phi);
-          lf[i] += det * quad[qP].weight() * (ret * phi);
+          lf[i] += quad[qP].weight() * (ret * phi) ;
         }
       }
     }
@@ -63,6 +63,14 @@ struct SStruct {
     l_[1] = -h/2.0;
     h_[0] = 1.5;
     h_[1] = h/2.0;
+  }
+  SStruct(int n) {
+    n_[0] = n;
+    n_[1] = 1;
+    l_[0] = -1.0;
+    l_[1] = -0.5/double(n);
+    h_[0] = 1.5;
+    h_[1] = 0.5/double(n);
   }
 
   int n_[2];

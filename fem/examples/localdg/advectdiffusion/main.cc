@@ -1,16 +1,12 @@
 // Dune includes
 #include "../../../config.h"
 
-#include "advectdiff.hh"
-
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/quadrature/fixedorder.hh>
 
 #include <dune/common/misc.hh>
-#include <dune/fem/space/dgspace.hh>
 #include <dune/fem/common/boundary.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/quadrature/quadraturerules.hh>
@@ -18,14 +14,14 @@
 #include <iostream>
 #include <string>
 
+#include "advectdiff.hh"
+#include "odesolver.hh"
+
 using namespace Dune;
 using namespace std;
-
 #include "scalarmodels.hh"
-
-// ***********************
-// ***********************************************
 #include "stuff.cc"
+// Initial Data
 class U0 {
 public:
   template <class DomainType, class RangeType>
@@ -37,117 +33,134 @@ public:
     else {
       res = 0.0;
     }
-    res*=100.; // (compensate some error in the initial projection)
   }
 };
-class TimeStepper : public TimeProvider {
- public:
-  TimeStepper(double cfl) : 
-    TimeProvider(0.), cfl_(cfl),
-    savetime_(0.1), savestep_(1)
-  {}
-  template <class Operator>
-  double solve(Operator &op,
-	       typename Operator::DestinationType& U,
-	       typename Operator::DestinationType& Upd) {
-    resetTimeStepEstimate();
-    op(U,Upd);
-    double dt=cfl_*timeStepEstimate();
-    //double dt=0.0001;
-    Upd*=dt;
-    U+=Upd;
-    augmentTime(dt);
-    return time();
-  }
-  template <class Operator>
-  void printGrid(int nr, const typename Operator::SpaceType &space, 
-		  const typename Operator::DestinationType& U) {
-    if (time()>savetime_) {
-      printSGrid(time(),savestep_*10+nr,space,U);
-      ++savestep_;
-      savetime_+=0.1;
-    }
-  }
- private:
-  double cfl_;
-  int savestep_;
-  double savetime_;
-};
-
-int main() {
-  enum {order=2};
+int main(int argc, char ** argv, char ** envp) {
+  // *** Initialization
+  enum {order=2,rksteps=1}; // Polynomial and ODE order
+  int N=100;      // Grid size
+  if (argc>1) 
+    N = atoi(argv[1]);
   double cfl;
   switch (order) {
-  case 0: cfl=1.0; break;
-  case 1: cfl=0.1; break;
-  case 2: cfl=0.05; break;
-  case 3: cfl=0.1; break;
+  case 0: cfl=1.0;  break;
+  case 1: cfl=0.2; break;
+  case 2: cfl=0.1;  break;
+  case 3: cfl=0.05;  break;
   case 4: cfl=0.09; break;
   }
   typedef SGrid<2, 2> GridType;
-  SStruct s(200, 0.1);
+  SStruct s(N);
   GridType grid(s.n_, s.l_, s.h_);
-
-  // Model classes
-  typedef AdvectionDiffusionModel<GridType> ModelType;
-  typedef BurgersModel<GridType> BurgersType;
-  ModelType::DomainType velocity(0.);
+  // Diffusion parameter
+  double epsilon=0.05;
+  if (argc>2)
+    epsilon=atof(argv[2]);
+  // *** Models
+  // Advection-Diffusion Model
+  typedef AdvectionDiffusionModel<GridType> AdvDiffType;
+  AdvDiffType::DomainType zerovelo(0.);
+  AdvDiffType::DomainType velocity(0);
   velocity[0]=0.8;
   velocity[1]=0.;
-  double epsilon=0.001;
-  ModelType advdiff(velocity,0.);
+  // Advection-Diffusion
+  AdvDiffType advdiff(velocity,epsilon);
+  // Diffusion
+  AdvDiffType diffeqn(zerovelo,epsilon);
+  // Advection
+  AdvDiffType adveqn(velocity,0.0);  
+  // Burgers Model
+  typedef BurgersModel<GridType> BurgersType;
   BurgersType burgers(epsilon);
-  // Fluxes
-  typedef UpwindFlux<ModelType> UpwindAdvDiffType;
-  typedef LLFFlux<ModelType> LLFAdvDiffType;
-  typedef LLFFlux<BurgersType> LLFBurgers;
-  UpwindAdvDiffType upwindadvdiff(advdiff);
+  // *** Fluxes
+  typedef UpwindFlux<AdvDiffType> UpwindAdvDiffType;
+  typedef LLFFlux<AdvDiffType> LLFAdvDiffType;
   LLFAdvDiffType llfadvdiff(advdiff);
+  LLFAdvDiffType llfdiffeqn(diffeqn);
+  UpwindAdvDiffType upwindadveqn(adveqn);
+  typedef LLFFlux<BurgersType> LLFBurgers;
   LLFBurgers llfburgers(burgers);
-  // ODE Solvers
-  typedef TimeStepper ODEType;
-  ODEType ode(cfl*0.9);
-  ODEType odeLLF(cfl*0.9);
-  ODEType odeburgers(cfl*0.9);
-  // Operators
-  typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgTypeBurgers;
-  typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgTypeLLF;
-  typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
+
+  // *** Operator typedefs
+  // Space:
+  typedef DGAdvectionDiffusionOperator<AdvDiffType,LLFFlux,order> DgAdvDiffType;
+  typedef DGDiffusionOperator<AdvDiffType,LLFFlux,order> DgDiffType;
+  typedef DGAdvectionOperator<AdvDiffType,UpwindFlux,order> DgAdvType;
+  typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgBurgersType;
+  // Time:
+  typedef DuneODE::ExplTimeStepper<DgAdvDiffType> ODEAdvDiffType;
+  typedef DuneODE::ExplTimeStepper<DgDiffType> ODEDiffType;
+  typedef DuneODE::ExplTimeStepper<DgAdvType> ODEAdvType;
+  typedef DuneODE::ExplTimeStepper<DgBurgersType> ODEBurgersType;
+  //typedef DuneODE::ExplRungeKutta<DgAdvDiffType> ODEAdvDiffType;
+  //typedef DuneODE::ExplRungeKutta<DgDiffType> ODEDiffType;
+  //typedef DuneODE::ExplRungeKutta<DgAdvType> ODEAdvType;
+  //typedef DuneODE::ExplTimeStepper<DgBurgersType> ODEBurgersType;
+  //typedef DuneODE::ImplTimeStepper<DgAdvDiffType> ODEAdvDiffType;
+  //typedef DuneODE::ImplTimeStepper<DgDiffType> ODEDiffType;
+  //typedef DuneODE::ImplTimeStepper<DgAdvType> ODEAdvType;
+  //typedef DuneODE::ImplTimeStepper<DgBurgersType> ODEBurgersType;
+  // *** Construction...
   FieldVector<double,2> upwind;
   upwind[0]=1.;
   upwind[1]=1.;
-  DgType dg(grid,ode,upwindadvdiff,upwind);
-  DgTypeLLF dgLLF(grid,odeLLF,llfadvdiff,upwind);
-  DgTypeBurgers dgBurgers(grid,odeburgers,llfburgers,upwind);
-
-  // Grid and Data...
-  DgType::DestinationType U("U", dg.space());
-  DgType::DestinationType ULLF("ULLF", dg.space());
-  DgType::DestinationType UBurgers("UBurgers", dg.space());
-  DgType::DestinationType Upd("Upd", dg.space());
+  // Space:
+  DgAdvDiffType dgadvdiff(grid,llfadvdiff,upwind);
+  DgDiffType dgdiffeqn(grid,llfdiffeqn,upwind);
+  DgAdvType dgadveqn(grid,upwindadveqn);
+  DgBurgersType dgburgers(grid,llfburgers,upwind); 
+  
+  // Time:
+  ODEAdvDiffType odeadvdiff(dgadvdiff,rksteps,cfl);
+  ODEDiffType odediffeqn(dgdiffeqn,rksteps,cfl);
+  ODEAdvType odeadveqn(dgadveqn,rksteps,cfl);
+  ODEBurgersType odeburgers(dgburgers,rksteps,cfl);
+  // *** Initial data
+  DgAdvDiffType::DestinationType U("U", dgadvdiff.space());
+  DgDiffType::DestinationType UDiff("DDiff", dgdiffeqn.space());
+  DgAdvType::DestinationType UAdv("UAdv", dgadveqn.space());
+  DgBurgersType::DestinationType UBurgers("UBurgers", dgburgers.space());
   initialize<U0>(U);
-  initialize<U0>(ULLF);
+  initialize<U0>(UDiff);
+  initialize<U0>(UAdv);
   initialize<U0>(UBurgers);
-  printSGrid(0, 1, dg.space(), U);
-  printSGrid(0, 2, dg.space(), ULLF);
-  printSGrid(0, 3, dg.space(), UBurgers);
-  double t=0,t1,t2,t3;
+  printSGrid(0, 1, dgadvdiff.space(), U);
+  printSGrid(0, 2, dgdiffeqn.space(), UDiff);
+  printSGrid(0, 3, dgadveqn.space(), UAdv);
+  printSGrid(0, 4, dgburgers.space(), UBurgers);
+  // *** Time loop
+  double t=0,t1,t2,t3,t4;
   while (t<1.) {
-    if (ode.time()<1.)
-      t1=ode.solve(dg,U,Upd);
-    if (odeLLF.time()<1.)
-      t2=odeLLF.solve(dgLLF,ULLF,Upd);
-    if (odeburgers.time()<1.)
-      t3=odeburgers.solve(dgBurgers,UBurgers,Upd);
-    t=(t1<t2)?t1:t2;
-    t=(t<t3)?t:t3;
+    t=1.;
+    if (odeadvdiff.time()<1.) {
+      t1=odeadvdiff.solve(U);
+      dgadvdiff.switchupwind();
+      t=t1;
+    }
+    /*
+    if (odediffeqn.time()<1.) {
+      t2=odediffeqn.solve(UDiff);
+      t=(t<t2)?t:t2;
+    }
+    if (odeadveqn.time()<1.) {
+      t3=odeadveqn.solve(UAdv);
+      t=(t<t3)?t:t3;
+    }
+    if (odeburgers.time()<1.) {
+      t4=odeburgers.solve(UBurgers);
+      t=(t<t4)?t:t4;
+    }
+    */
     cout << t << " : "  
-	 << ode.time() << " " << odeLLF.time() << " " << odeburgers.time() << endl;
-    ode.printGrid<DgType>(1,dg.space(), U);
-    odeLLF.printGrid<DgType>(2,dg.space(), ULLF);
-    odeburgers.printGrid<DgType>(3,dg.space(), UBurgers);
+	 << odeadvdiff.time() << " " << odediffeqn.time() << " " 
+	 << odeadveqn.time() << " " << odeburgers.time() << endl;
+    odeadvdiff.printGrid(1, U);
+    odediffeqn.printGrid(2, UDiff);
+    odeadveqn.printGrid(3, UAdv);
+    odeburgers.printGrid(4, UBurgers);
   }
-  ode.printGrid<DgType>(1,dg.space(), U);
-  odeLLF.printGrid<DgType>(2,dg.space(), ULLF);
-  odeburgers.printGrid<DgType>(3,dg.space(), UBurgers);
-}
+  odeadvdiff.printGrid(1, U);
+  odediffeqn.printGrid(2, UDiff);
+  odeadveqn.printGrid(3, UAdv);
+  odeburgers.printGrid(4, UBurgers);
+} 

@@ -5,6 +5,8 @@
    GradientType: vector in gradient phase-space FV<Range*Domain>
    DiffusionRangeType: matrix for diffusion flux FM<Range*Domain,Domain>
 */
+#include "modeldefault.hh"
+
 template <class GridType>
 class BurgersModel {
  public:
@@ -23,6 +25,7 @@ class BurgersModel {
 				    const typename Traits::DomainType& x,
 				    const RangeType& u, 
 				    FluxRangeType& f) const {
+    f *= 0;
     f[0] = u*u*0.5;
   }
   inline  void diffusion(typename Traits::EntityType& en,
@@ -34,14 +37,15 @@ class BurgersModel {
     for (int i=0;i<dimDomain;i++)
       a[i][i]=u;
   }
-  inline  void diffusion(typename Traits::EntityType& en,
-			       double time, 
-			       const DomainType& x,
-			       const RangeType& u, 
-			       const GradientType& v,
-			       FluxRangeType& A) const {
-    A[0] = v;
-    A *= epsilon;
+  inline double diffusion(typename Traits::EntityType& en,
+			  double time, 
+			  const DomainType& x,
+			  const RangeType& u, 
+			  const GradientType& v,
+			  FluxRangeType& A) const {
+    A *= 0;
+    A[0] = epsilon*v[0];
+    return epsilon;
   }
   inline  void boundaryValue(typename Traits::IntersectionIterator& it,
 				   double time, 
@@ -55,7 +59,7 @@ class BurgersModel {
 				double time,  
 				const typename Traits::DomainType& x,
 				const RangeType& u) const {
-    return abs(normal[0]*u);
+    return abs(normal[0]*u)+epsilon;
   }
  protected:
   double epsilon;
@@ -94,15 +98,16 @@ class AdvectionDiffusionModel {
     for (int i=0;i<dimDomain;i++)
       a[i][i]=u;
   }
-  inline  void diffusion(typename Traits::EntityType& en,
-			       double time, 
-			       const DomainType& x,
-			       const RangeType& u, 
-			       const GradientType& v,
-			       FluxRangeType& A) const {
+  inline double diffusion(typename Traits::EntityType& en,
+			 double time, 
+			 const DomainType& x,
+			 const RangeType& u, 
+			 const GradientType& v,
+			 FluxRangeType& A) const {
     
     A[0] = v;
     A *= epsilon;
+    return epsilon;
   }
   inline  void boundaryValue(typename Traits::IntersectionIterator& it,
 				   double time, 
@@ -116,7 +121,7 @@ class AdvectionDiffusionModel {
 				double time,  
 				const typename Traits::DomainType& x,
 				const RangeType& u) const {
-    return abs(normal*velocity);
+    return abs(normal*velocity)+epsilon;
   }
  protected:
   DomainType velocity;
