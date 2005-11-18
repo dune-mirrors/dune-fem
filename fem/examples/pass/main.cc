@@ -282,7 +282,7 @@ int main()
 {
 
   typedef SGrid<2, 2> MyGrid;
-  const int polOrd = 1;
+  const int polOrd = 0;
   //typedef AlbertaGrid<2, 2> MyGrid;
 
   typedef Traits<MyGrid, polOrd> MyTraits;

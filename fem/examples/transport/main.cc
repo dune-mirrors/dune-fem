@@ -1,6 +1,4 @@
 // Global defines
-#define DIM 2
-#define DIM_OF_WORLD 2
 
 #define SGRID 0
 #define AGRID 1
@@ -16,6 +14,10 @@
 #include <dune/grid/albertagrid.hh>
 #define GridName AlbertaGrid 
 #endif
+
+#define DIM 2
+#define DIM_OF_WORLD 2
+
 
 // Include system headers
 #include <iostream>

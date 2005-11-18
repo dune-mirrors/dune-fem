@@ -26,7 +26,7 @@ namespace Dune {
   {
     enum { dimRange = 2 };
     enum { dimDomain = 2 };
-    enum { polOrd = 1 };
+    enum { polOrd = 0 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
@@ -140,7 +140,7 @@ namespace Dune {
   {
     enum { dimRange = 1 };
     enum { dimDomain = 2 };
-    enum { polOrd = 1 };
+    enum { polOrd = 0 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
@@ -236,7 +236,7 @@ namespace Dune {
       gLeft *= 0.0;
       anaFlux.umv(normal, gLeft);
       gRight = gLeft;
-      /*
+
       std::cout << "numericalFlux:\n";
       std::cout << Element<0>::get(uLeft) << ", " << Element<0>::get(uRight) << std::endl;
       std::cout << anaFlux << std::endl;
