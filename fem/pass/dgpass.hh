@@ -197,7 +197,7 @@ namespace Dune {
               
               // Evaluate flux
               double dtLocalS = 
-                caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
+                caller_.numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
 	      dtLocal += dtLocalS*faceQuad.weight(l);              
 
               for (int i = 0; i < updEn.numDofs(); ++i) {
@@ -215,14 +215,11 @@ namespace Dune {
 
         if (nit.boundary()) {
           for (int l = 0; l < faceQuad.nop(); ++l) {
-            double integrationElement =
-              nit.intersectionGlobal().integrationElement(faceQuad.point(l));
-              
             DomainType xLocalEn = 
               nit.intersectionSelfLocal().global(faceQuad.point(l));
                  
             double dtLocalS = 
-              caller_->boundaryFlux(nit, faceQuad, l, source_);
+              caller_.boundaryFlux(nit, faceQuad, l, source_);
 	    dtLocal += dtLocalS*faceQuad.weight(l);
                     
             for (int i = 0; i < updEn.numDofs(); ++i) {
@@ -322,7 +319,7 @@ namespace Dune {
               
               // Evaluate flux
               double dtLocalS = 
-                caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
+                caller_.numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
 	      dtLocal += dtLocalS*faceQuad.weight(l);
               
               // * Assumption: all elements have same number of base functions
@@ -362,7 +359,7 @@ namespace Dune {
               nit.intersectionSelfLocal().global(faceQuad.point(l));
             
             double dtLocalS = 
-              caller_->boundaryFlux(nit, faceQuad, l, source_);
+              caller_.boundaryFlux(nit, faceQuad, l, source_);
 	    dtLocal += dtLocalS*faceQuad.weight(l);
                     
             for (int k = 0; 
