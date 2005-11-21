@@ -296,8 +296,7 @@ namespace Dune {
     private:
       void setter(Entity& en, LocalFunctionTupleType& tuple) 
       {
-        ForEachValuePair<DiscreteFunctionTupleType, 
-          LocalFunctionTupleType> forEach(discreteFunctions_, tuple);
+        ForEachValue<LocalFunctionTupleType> forEach(tuple);
         LocalFunctionSetter<Entity> setter(en);
         forEach.apply(setter);
       }
