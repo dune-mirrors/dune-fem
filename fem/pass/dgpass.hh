@@ -75,7 +75,6 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       dtMin_(std::numeric_limits<double>::max()),
-      dtOld_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       valEn_(0.0),
       valNeigh_(0.0),
@@ -108,8 +107,6 @@ namespace Dune {
     //! destinations. Filter out the "right" arguments for this pass.
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
-      std::cout << "Prepare " << this->passNumber() << std::endl;
-
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
 
@@ -136,9 +133,6 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
-      //std::cout << "Finalize " << this->passNumber() << std::endl;
-
-      dtOld_ = dtMin_;
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
       }
@@ -173,7 +167,7 @@ namespace Dune {
 
         for (int i = 0; i < updEn.numDofs(); ++i) {
           updEn[i] += 
-            (bsetEn.evaluateGradientSingle(i, volQuad.point(l), fMat_) +
+            (bsetEn.evaluateGradientSingle(i, en, volQuad.point(l), fMat_) +
              bsetEn.evaluateSingle(i, volQuad.point(l), source_))*
             volQuad.weight(l)*
             en.geometry().integrationElement(volQuad.point(l))/vol;
@@ -417,8 +411,7 @@ namespace Dune {
 
     DiscreteFunctionSpaceType& spc_;
     mutable double dtMin_;
-    mutable double dtOld_;
-
+  
     //! Some helper variables
     mutable JacobianRangeType fMat_;
     mutable RangeType valEn_;
