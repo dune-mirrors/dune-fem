@@ -5,12 +5,11 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
-#include <mpi.h>
-#include <pthread.h>
-#include <mpe.h>
+// #include <pthread.h>
+// #include <mpe.h>
 
 namespace DuneODE {
-
+#include "mpi.h"
   class Communicator {
   public:
     Communicator() {}
@@ -40,7 +39,10 @@ namespace DuneODE {
     void barrier() {}
     
     // MPI-wrapper
-    void allreduce(int n, double *in, double *out, MPI_Op op) const {}
+    void allreduce(int n, double *in, double *out, MPI_Op op) const {
+      for (int i=0;i<n;i++)
+        out[i]=in[i];
+    }
     
     // conversion to MPI Communicator
     operator MPI_Comm() const {}
@@ -56,6 +58,7 @@ namespace DuneODE {
     void write(const char filename[]) {}
     void read(const char filename[]) {}
   };
+
 /*
 //extern "C"{ void* communicate(void *ptr);}
 
@@ -379,8 +382,7 @@ void Communicator::barrier()
   }
   MPI_Barrier(comm);
 }
-  */
-
+*/
 
 }
 
