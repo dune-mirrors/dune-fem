@@ -7,6 +7,7 @@
 
 #include <dune/fem/dofmanager.hh>
 #include <dune/fem/common/discretefunctionspace.hh>
+#include <dune/fem/common/basefunctionsets.hh>
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
@@ -40,7 +41,8 @@ namespace Dune {
 
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
-    typedef FastBaseFunctionSet<DiscreteFunctionSpaceType> BaseFunctionSetType;
+    //typedef FastBaseFunctionSet<DiscreteFunctionSpaceType> BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<FunctionSpaceType> BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
   };
 
@@ -60,7 +62,7 @@ namespace Dune {
     typedef DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd> 
     ThisType;
 
-      public:
+  public:
     //- Public typedefs
 
     //! The traits class
@@ -82,6 +84,9 @@ namespace Dune {
     //! Index set of space
     typedef typename Traits::IndexSetType IndexSetType;
 
+   typedef DiscontinuousGalerkinBaseFunctionFactory<
+      typename Traits::FunctionSpaceType, polOrd> FactoryType;
+
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType::DimRange };
 
@@ -91,6 +96,7 @@ namespace Dune {
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
 
+  public:
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
@@ -116,13 +122,17 @@ namespace Dune {
         int dimension = static_cast<int>( EntityType::mydimension);
         GeometryIdentifier::IdentifierType id = 
           GeometryIdentifier::fromGeo(dimension, geo);
-        if(baseFuncSet_[id] == 0 )
+        if(baseFuncSet_[id] == 0 ) {
           baseFuncSet_[id] = setBaseFuncSetPointer(*it);
+          mapper_ = 
+            new typename Traits::MapperType(const_cast<IndexSetType&>(gridPart_.indexSet()),
+                                   baseFuncSet_[id]->numBaseFunctions());
+        }
       }
 
       // for empty functions space which can happen for BSGrid 
-      if(!mapper_) makeBaseSet<triangle,0>();
-      assert(mapper_);
+      //if(!mapper_) makeBaseSet<triangle,0>();
+      //assert(mapper_);
     }
 
     
@@ -224,7 +234,18 @@ namespace Dune {
     DiscontinuousGalerkinSpace(const DiscontinuousGalerkinSpace&);
     DiscontinuousGalerkinSpace& operator=(const DiscontinuousGalerkinSpace&);
 
+    template <class EntityType>
+    BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
+    {
+      typedef typename ToScalarFunctionSpace<
+        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+      
+      DiscontinuousGalerkinBaseFunctionFactory<
+        ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
+      return new BaseFunctionSetType(fac);
+    }
 
+    /*
     template <class EntityType> 
     BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) {
       switch (en.geometry().type()) {
@@ -261,7 +282,6 @@ namespace Dune {
         
       }
     }
-
     template <GeometryType ElType, int pO > 
     BaseFunctionSetType* makeBaseSet() {
       typedef DGFastBaseFunctionSet<ThisType, ElType, pO> BaseFuncSetType;
@@ -275,8 +295,9 @@ namespace Dune {
                                   
       return baseFuncSet;
     }
-
+    */
   private:
+
     // grid part
     GridPartImp& gridPart_;
 
