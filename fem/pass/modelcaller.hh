@@ -22,7 +22,6 @@ namespace Dune {
   public:
     typedef DiscreteModelImp DiscreteModelType;
     typedef ArgumentImp TotalArgumentType;
-    //typedef SelectorImp SelectorType;
     typedef typename SelectorImp::Base SelectorType;
 
     typedef typename DiscreteModelType::Traits Traits;
@@ -38,21 +37,14 @@ namespace Dune {
 
     typedef Filter<TotalArgumentType, SelectorType> FilterType;
     typedef typename FilterType::ResultType DiscreteFunctionTupleType;
-    typedef typename LocalFunctionCreator<
-      DiscreteFunctionTupleType>::ResultType LocalFunctionTupleType;
-    typedef typename Creator<
-      RangeTypeEvaluator,
-      LocalFunctionTupleType>::ResultType RangeTupleType;
-    typedef typename Creator<
-      JacobianRangeTypeEvaluator,
-      LocalFunctionTupleType>::ResultType JacobianRangeTupleType;
-    //typedef typename Caller<RangeTupleType> CallerType;
-
     typedef LocalFunctionCreator<DiscreteFunctionTupleType> LFCreator;
+    typedef typename LFCreator::ResultType LocalFunctionTupleType;
     typedef Creator<
       RangeTypeEvaluator, LocalFunctionTupleType> RangeCreator;
+    typedef typename RangeCreator::ResultType RangeTupleType;
     typedef Creator<
       JacobianRangeTypeEvaluator, LocalFunctionTupleType> JacobianCreator;
+    typedef typename JacobianCreator::ResultType JacobianRangeTupleType;
 
   public:
     DiscreteModelCaller(DiscreteModelType& problem) :
@@ -104,17 +96,6 @@ namespace Dune {
     void analyticalFlux(Entity& en, VolumeQuadratureType& quad, int quadPoint,
                         JacobianRangeType& res) 
     {
-      // * temporary
-      /*
-      ForEachValuePair<
-        LocalFunctionTupleType, RangeTupleType> forEach(*valuesEn_.first,
-                                                        valuesEn_.second);
-      LocalFunctionEvaluateQuad<
-        Entity, VolumeQuadratureType> eval(en, 
-                                           quad, 
-                                           quadPoint);
-      forEach.apply(eval);
-      */
       assert(data_.get());
 
       evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
@@ -279,18 +260,6 @@ namespace Dune {
     DiscreteModelCaller& operator=(const DiscreteModelCaller&);
 
   private:
-    /*
-    DiscreteModelType& problem_;
-    TotalArgumentType* arg_;
-
-    DiscreteFunctionTupleType discreteFunctions_;
-    ValuePair valuesEn_;
-    ValuePair valuesNeigh_;
-    JacobianRangeTupleType jacobians_;
-
-    double time_;
-    */
-
     class DataStorage {
     public:
       DataStorage(TotalArgumentType& arg) :
