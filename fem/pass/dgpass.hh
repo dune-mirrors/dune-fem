@@ -188,8 +188,6 @@ namespace Dune {
 	    double nbvol = volumeElement(*nit.outside(), volQuad);
 	    if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuad.nop(); ++l) {
-              double h = 
-                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
               DomainType xLocalEn = 
                 nit.intersectionSelfLocal().global(faceQuad.point(l));
               DomainType xLocalNeigh = 
@@ -308,8 +306,6 @@ namespace Dune {
             LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
 
             for (int l = 0; l < faceQuad.nop(); ++l) {
-              double h = 
-                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
               // * might be improved by using quadrature points directly
               // * (how to deal with quadrature points on neighbor?)
               DomainType xLocalEn = 
