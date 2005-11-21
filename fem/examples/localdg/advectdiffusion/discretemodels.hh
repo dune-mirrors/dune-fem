@@ -1,4 +1,3 @@
-// Gitterdefinition?
 #ifndef DUNE_EXAMPLEDISCRETEMODELS_HH
 #define DUNE_EXAMPLEDISCRETEMODELS_HH
 
@@ -15,8 +14,6 @@
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/quadrature/fixedorder.hh>
-
-using namespace Dune;
 
 //*************************************************************
 namespace Dune {  
@@ -183,9 +180,17 @@ namespace Dune {
 	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
 			 argULeft,diffmatrix);
-      else
-	numflux_.boundaryDiffusionFlux(it,time,x,
-				       argULeft,diffmatrix);
+      else if (model_.hasBoundaryValue(it.boundaryId())) {
+	UType uRight;
+	model_.boundaryValue(it,time,x,argULeft,uRight);
+	model_.diffusion(*it.inside(),time,
+			 it.intersectionSelfLocal().global(x),
+			 uRight,diffmatrix);
+      } else {
+	model_.diffusion(*it.inside(),time,
+			 it.intersectionSelfLocal().global(x),
+			 argULeft,diffmatrix);
+      }
       diffmatrix.umv(normal,gLeft);
       return 0.; 
     }
@@ -288,8 +293,14 @@ namespace Dune {
       const UType& argULeft = Element<0>::get(uLeft);
       const WType& argWLeft = Element<1>::get(uLeft);
       // Advection
-      double ldt=numflux_.
-	boundaryFlux(it,time,x,argULeft,gLeft);
+      double ldt=0.;
+      if (model_.hasBoundaryValue(it.boundaryId())) {
+	RangeType uRight,gRight;
+	model_.boundaryValue(it,time,x,argULeft,uRight);
+	ldt = numflux_.numericalFlux(it,time,x,argULeft,uRight,gLeft,gRight);
+      } else {
+        ldt = model_.boundaryFlux(it,time,x,argULeft,gLeft);
+      }
       // Diffusion
       JacobianRangeType diffmatrix;
       model_.diffusion(*it.inside(),time,
@@ -371,8 +382,14 @@ namespace Dune {
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       const UType& argULeft = Element<0>::get(uLeft);
       // Advection
-      double ldt=numflux_.
-	boundaryFlux(it,time,x,argULeft,gLeft);
+      double ldt=0.;
+      if (model_.hasBoundaryValue(it.boundaryId())) {
+	RangeType uRight,gRight;
+	model_.boundaryValue(it,time,x,argULeft,uRight);
+	ldt = numflux_.numericalFlux(it,time,x,argULeft,uRight,gLeft,gRight);
+      } else {
+        ldt = model_.boundaryFlux(it,time,x,argULeft,gLeft);
+      }
       return ldt;
     }
 

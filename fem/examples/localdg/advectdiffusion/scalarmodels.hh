@@ -41,12 +41,21 @@ class BurgersModel {
     A[0] = epsilon*v[0];
     return epsilon;
   }
+  inline bool hasBoundaryValue(int boundaryId) const {
+    return true;
+  }
+  inline double boundaryFlux(typename Traits::IntersectionIterator& it,
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     RangeType& gLeft) const  {
+    return 0.;
+  }
   inline  void boundaryValue(typename Traits::IntersectionIterator& it,
-				   double time, 
-				   const typename Traits::FaceDomainType& x,
-				   const RangeType& uLeft, 
-				   RangeType& uRight) const {
-    
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     RangeType& uRight) const {
     uRight=uLeft;
   }
   inline  double maxSpeed(const typename Traits::DomainType& normal,
@@ -104,6 +113,16 @@ class AdvectionDiffusionModel {
     A *= epsilon;
     return epsilon;
   }
+  inline bool hasBoundaryValue(int boundaryId) const {
+    return true;
+  }
+  inline double boundaryFlux(typename Traits::IntersectionIterator& it,
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     RangeType& gLeft) const  {
+    return 0.;
+  }
   inline  void boundaryValue(typename Traits::IntersectionIterator& it,
 				   double time, 
 				   const typename Traits::FaceDomainType& x,
@@ -153,27 +172,6 @@ class UpwindFlux<AdvectionDiffusionModel<GridType> > {
     gLeft *= upwind;
     gRight = gLeft;
     return std::abs(upwind);
-  }
-  inline  double boundaryFlux(typename Traits::IntersectionIterator& it,
-				    double time, 
-				    const typename Traits::FaceDomainType& x,
-				    const RangeType& uLeft, 
-				    RangeType& gLeft) const {
-    RangeType uRight,gRight;
-    model_.boundaryValue(it,time,x,uLeft,uRight);
-    return numericalFlux(it,time,x,uLeft,uRight,gLeft,gRight);
-  }
-  inline  void boundaryDiffusionFlux
-                    (typename Traits::IntersectionIterator& it,
-		     double time, 
-		     const typename Traits::FaceDomainType& x,
-		     const RangeType& uLeft, 
-		     DiffusionRangeType& aLeft) const {
-    RangeType uRight;
-    model_.boundaryValue(it,time,x,uLeft,uRight);
-    model_.diffusion(*it.inside(),time,
-		     it.intersectionSelfLocal().global(x),
-		     uRight,aLeft);
   }
  private:
   const Model& model_;

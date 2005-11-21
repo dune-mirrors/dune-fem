@@ -41,7 +41,7 @@ int main(int argc, char ** argv, char ** envp) {
   enum {order=1,rksteps=2}; 
   const bool with_difftstep = true;
   // Grid:
-  int N=100;                
+  int N=40;                
   if (argc>1) 
     N = atoi(argv[1]);
   typedef SGrid<2, 2> GridType;
@@ -57,7 +57,7 @@ int main(int argc, char ** argv, char ** envp) {
   case 4: cfl=0.09; break;
   }
   // Diffusion parameter:
-  double epsilon=0.05;
+  double epsilon=0.01;
   if (argc>2)
     epsilon=atof(argv[2]);
   // *** Models
@@ -76,20 +76,27 @@ int main(int argc, char ** argv, char ** envp) {
   // Burgers Model
   typedef BurgersModel<GridType> BurgersType;
   BurgersType burgers(epsilon,with_difftstep);
-  // *** Fluxes
+  typedef BurgersModel<GridType> BurgersAdvType;
+  BurgersType burgersadv(0,with_difftstep);
+  // *** Fluxes 
+  // Advection Diffusion
   typedef UpwindFlux<AdvDiffType> UpwindAdvDiffType;
   typedef LLFFlux<AdvDiffType> LLFAdvDiffType;
   LLFAdvDiffType llfadvdiff(advdiff);
   LLFAdvDiffType llfdiffeqn(diffeqn);
   UpwindAdvDiffType upwindadveqn(adveqn);
+  // Burgers Model
   typedef LLFFlux<BurgersType> LLFBurgers;
   LLFBurgers llfburgers(burgers);
+  typedef LLFFlux<BurgersAdvType> LLFBurgersAdv;
+  LLFBurgersAdv llfburgersadv(burgersadv);
   // *** Operator typedefs
   // Space:
   typedef DGAdvectionDiffusionOperator<AdvDiffType,LLFFlux,order> DgAdvDiffType;
   typedef DGDiffusionOperator<AdvDiffType,LLFFlux,order> DgDiffType;
   typedef DGAdvectionOperator<AdvDiffType,UpwindFlux,order> DgAdvType;
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgBurgersType;
+  typedef DGAdvectionOperator<BurgersAdvType,LLFFlux,order> DgBurgersAdvType;
   // Time:
   //      urspruenglich expl-rk methoden
   /*
@@ -110,6 +117,13 @@ int main(int argc, char ** argv, char ** envp) {
   typedef DuneODE::ImplTimeStepper<DgAdvType> ODEAdvType;
   typedef DuneODE::ImplTimeStepper<DgBurgersType> ODEBurgersType;
   */
+  //      dennis semiimpl-rk methoden
+  /*
+  typedef DuneODE::SemiImplTimeStepper<DgAdvType,DgDiffType> ODEAdvDiffType;
+  typedef DuneODE::ExplTimeStepper<DgDiffType> ODEDiffType;
+  typedef DuneODE::ImplTimeStepper<DgAdvType> ODEAdvType;
+  typedef DuneODE::SemiImplTimeStepper<DgBurgersAdvType,DgDiffType> ODEBurgersType;
+  */
   // *** Construction...
   FieldVector<double,2> upwind;
   upwind[0]=1.;
@@ -118,12 +132,16 @@ int main(int argc, char ** argv, char ** envp) {
   DgAdvDiffType dgadvdiff(grid,llfadvdiff,upwind);
   DgDiffType dgdiffeqn(grid,llfdiffeqn,upwind);
   DgAdvType dgadveqn(grid,upwindadveqn);
+  DgAdvType dgadv1eqn(grid,upwindadveqn);            // for semi-impl
   DgBurgersType dgburgers(grid,llfburgers,upwind); 
+  DgBurgersAdvType dgburgersadv(grid,llfburgersadv); 
   // Time:
   ODEAdvDiffType odeadvdiff(dgadvdiff,rksteps,cfl);
+  // ODEAdvDiffType odeadvdiff(dgadv1eqn,dgdiffeqn,rksteps,cfl); // semi-impl
   ODEDiffType odediffeqn(dgdiffeqn,rksteps,cfl);
   ODEAdvType odeadveqn(dgadveqn,rksteps,cfl);
   ODEBurgersType odeburgers(dgburgers,rksteps,cfl);
+  // ODEBurgersType odeburgers(dgburgersadv,dgdiffeqn,rksteps,cfl); // semi-impl
   // *** Initial data
   DgAdvDiffType::DestinationType U("U", dgadvdiff.space());
   DgDiffType::DestinationType UDiff("DDiff", dgdiffeqn.space());

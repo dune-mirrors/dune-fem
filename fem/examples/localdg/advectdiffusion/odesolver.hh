@@ -20,10 +20,10 @@
 
 namespace DuneODE {
   using namespace Dune;
-using namespace std;
+  using namespace std;
 
 template <class Operator>
-class OperatorWrapper : public DuneODE::Function {
+ class OperatorWrapper : public DuneODE::Function {
  public:
   OperatorWrapper(const Operator& op) : op_(op) {}
   void operator()(const double *u, double *f, int i = 0) {
@@ -159,6 +159,75 @@ class ImplTimeStepper : public TimeProvider {
   const Operator& op_;
   OperatorWrapper<Operator> impl_;
   DuneODE::DIRK* ode_;
+  DuneODE::GMRES<20> linsolver_;
+  double cfl_;
+  double dt_;
+  int savestep_;
+  double savetime_;
+};
+template<class OperatorExpl,class OperatorImpl>
+class SemiImplTimeStepper : public TimeProvider {
+  typedef OperatorExpl Operator;
+ public:
+  SemiImplTimeStepper(OperatorExpl& op_expl,OperatorImpl& op_impl,
+		      int pord,double cfl) :
+    opexpl_(op_expl),
+    opimpl_(op_impl),
+    expl_(op_expl),
+    impl_(op_impl),
+    ode_(0),
+    linsolver_(comm),
+    cfl_(cfl),
+    dt_(-1.0),
+    savetime_(0.1), savestep_(1)
+  {
+    op_expl.timeProvider(this);
+    linsolver_.set_tolerance(1.0e-8);
+    linsolver_.set_max_number_of_iterations(1000);
+    switch (pord) {
+    case 1: ode_=new SemiImplicitEuler(comm,impl_,expl_); break;
+    case 2: ode_=new IMEX_SSP222(comm,impl_,expl_); break;
+    case 3: ode_=new SIRK33(comm,impl_,expl_); break;
+    default : std::cerr << "Runge-Kutta method of this order not implemented" 
+			<< std::endl;
+      abort();
+    }
+    ode_->set_linear_solver(linsolver_);
+    ode_->set_tolerance(1.0e-8);
+    ode_->IterativeSolver::set_output(cout);
+    ode_->DynamicalObject::set_output(cout);
+  }
+  ~SemiImplTimeStepper() {delete ode_;}
+  double solve(typename Operator::DestinationType& U0) {
+    if (dt_<0) {
+      typename OperatorExpl::DestinationType tmp("tmp",opexpl_.space());
+      opexpl_(U0,tmp);
+      dt_ = cfl_*timeStepEstimate();
+    }
+    resetTimeStepEstimate();
+    double t=time();
+    double* u=U0.leakPointer();
+    const bool convergence = ode_->step(t, dt_, u);
+    assert(convergence);
+    setTime(t+dt_);
+    dt_ = cfl_*timeStepEstimate();
+    return time();
+  }
+  void printGrid(int nr, 
+		 const typename Operator::DestinationType& U) {
+    if (time()>savetime_) {
+      printSGrid(time(),savestep_*10+nr,opexpl_.space(),U);
+      ++savestep_;
+      savetime_+=0.1;
+    }
+  }
+ private:
+  DuneODE::Communicator comm;	  
+  const OperatorExpl& opexpl_;
+  const OperatorImpl& opimpl_;
+  OperatorWrapper<OperatorImpl> impl_;
+  OperatorWrapper<OperatorExpl> expl_;
+  DuneODE::SIRK* ode_;
   DuneODE::GMRES<20> linsolver_;
   double cfl_;
   double dt_;

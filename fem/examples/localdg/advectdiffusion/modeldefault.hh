@@ -10,7 +10,7 @@
  **** Description class for    V + div a(U)          = 0
                             dt U + div (F(U)+A(U,V)) = 0
       template <class GridType>
-      class Model {
+      class ModelInterface {
       public:
         enum { dimDomain = GridType::dimensionworld };
         enum { dimRange = 1};
@@ -21,7 +21,7 @@
         typedef typename Traits::GradientType GradientType;
         typedef typename Traits::DiffusionRangeType DiffusionRangeType;
       public:
-        Model(...) {}
+        ModelInterface(Parameters...) {}
         // F
         inline void analyticalFlux(typename Traits::EntityType& en,
 				   double time,  
@@ -41,28 +41,56 @@
 			        const RangeType& u, 
 			        const GradientType& v,
 			        FluxRangeType& A) const {}
-        // for boundary treatment: !!!! has to be implemented !!!!
+        // **** Method for boundary treatment:
+        inline bool hasBoundaryValue(int boundaryId) const {}
         // return true:  numerical flux is used with uRight given by boundaryValue
         // return false: boundaryFlux is used for flux computation
-        inline bool hasBoundaryValue(int boundaryId) {}
         inline void boundaryValue(typename Traits::IntersectionIterator& it,
 				  double time, 
 			          const typename Traits::FaceDomainType& x,
 			          const RangeType& uLeft, 
 			          RangeType& uRight) const {}
-        inline void boundaryFlux(typename Traits::IntersectionIterator& it,
-				  double time, 
-			          const typename Traits::FaceDomainType& x,
-			          const RangeType& uLeft, 
-                                  RangeType& gLeft) {} 
+        inline double boundaryFlux(typename Traits::IntersectionIterator& it,
+		  		   double time, 
+			           const typename Traits::FaceDomainType& x,
+			           const RangeType& uLeft, 
+                                   RangeType& gLeft) {} 
         // only neaded for LLFFlux for artificial diffusion
         inline double maxSpeed(const typename Traits::DomainType& normal,
        			       double time,  
 	       		       const typename Traits::DomainType& x,
 		       	       const RangeType& u) const {}
       };
+      template <class Model>
+      class FluxInterface {
+      public:
+        typedef typename Model::Traits Traits;
+        enum { dimRange = Model::dimRange };
+        typedef typename Model::RangeType RangeType;
+        typedef typename Model::FluxRangeType FluxRangeType;
+        typedef typename Model::DiffusionRangeType DiffusionRangeType;
+      public:
+        FluxInterface(const Model& mod) : model_(mod) {}
+        const Model& model() const {return model_;}
+        // Return value: maximum wavespeed*length of integrationOuterNormal
+        // gLeft,gRight are fluxed * length of integrationOuterNormal
+        inline double numericalFlux(typename Traits::IntersectionIterator& it,
+				    double time, 
+				    const typename Traits::FaceDomainType& x,
+				    const RangeType& uLeft, 
+				    const RangeType& uRight,
+				    RangeType& gLeft,
+				    RangeType& gRight) const {}
+      private:
+        const Model& model_;
+      };
 
 /**************************************************************/
+#ifndef DUNE_EXAMPLEMODELINTERFACE_HH
+#define DUNE_EXAMPLEMODELINTERFACE_HH
+
+// Dune includes
+namespace Dune {
   // Model-Traits
   template <class Grid,int dimRange2,
 	    int dimRange1=dimRange2*Grid::dimensionworld>
@@ -133,29 +161,9 @@
       gRight=gLeft;
       return maxspeed;
     }
-    // !!!! Should be removed !!!!
-    inline double boundaryFlux(typename Traits::IntersectionIterator& it,
-				      double time, 
-				      const typename Traits::FaceDomainType& x,
-				      const RangeType& uLeft, 
-				      RangeType& gLeft) const {
-      RangeType uRight,gRight;
-      model_.boundaryValue(it,time,x,uLeft,uRight);
-      return numericalFlux(it,time,x,uLeft,uRight,gLeft,gRight);
-    }
-    // !!!! Should be removed (what to do if hasBoundaryValue=false?)
-    inline void boundaryDiffusionFlux
-                      (typename Traits::IntersectionIterator& it,
-		       double time, 
-		       const typename Traits::FaceDomainType& x,
-		       const RangeType& uLeft, 
-		       DiffusionRangeType& aLeft) const {
-      RangeType uRight;
-      model_.boundaryValue(it,time,x,uLeft,uRight);
-      model_.diffusion(*it.inside(),time,
-		       it.intersectionSelfLocal().global(x),
-		       uRight,aLeft);
-    }
   private:
     const Model& model_;
   };
+}
+
+#endif
