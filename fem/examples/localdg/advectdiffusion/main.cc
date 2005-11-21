@@ -38,7 +38,8 @@ public:
 int main(int argc, char ** argv, char ** envp) {
   // *** Initialization
   // Polynomial and ODE order
-  enum {order=2,rksteps=3}; 
+  enum {order=1,rksteps=2}; 
+  const bool with_difftstep = true;
   // Grid:
   int N=100;                
   if (argc>1) 
@@ -49,13 +50,12 @@ int main(int argc, char ** argv, char ** envp) {
   // CFL:
   double cfl;
   switch (order) {
-  case 0: cfl=1.0;  break;
+  case 0: cfl=0.9;  break;
   case 1: cfl=0.2; break;
   case 2: cfl=0.1;  break;
   case 3: cfl=0.05;  break;
   case 4: cfl=0.09; break;
   }
-  cfl=5.;
   // Diffusion parameter:
   double epsilon=0.05;
   if (argc>2)
@@ -68,14 +68,14 @@ int main(int argc, char ** argv, char ** envp) {
   velocity[0]=0.8;
   velocity[1]=0.;
   // Advection-Diffusion
-  AdvDiffType advdiff(velocity,epsilon,true);
+  AdvDiffType advdiff(velocity,epsilon,with_difftstep);
   // Diffusion
-  AdvDiffType diffeqn(zerovelo,epsilon,true);
+  AdvDiffType diffeqn(zerovelo,epsilon,with_difftstep);
   // Advection
   AdvDiffType adveqn(velocity,0.0);  
   // Burgers Model
   typedef BurgersModel<GridType> BurgersType;
-  BurgersType burgers(epsilon,true);
+  BurgersType burgers(epsilon,with_difftstep);
   // *** Fluxes
   typedef UpwindFlux<AdvDiffType> UpwindAdvDiffType;
   typedef LLFFlux<AdvDiffType> LLFAdvDiffType;
@@ -84,7 +84,6 @@ int main(int argc, char ** argv, char ** envp) {
   UpwindAdvDiffType upwindadveqn(adveqn);
   typedef LLFFlux<BurgersType> LLFBurgers;
   LLFBurgers llfburgers(burgers);
-
   // *** Operator typedefs
   // Space:
   typedef DGAdvectionDiffusionOperator<AdvDiffType,LLFFlux,order> DgAdvDiffType;
@@ -92,18 +91,25 @@ int main(int argc, char ** argv, char ** envp) {
   typedef DGAdvectionOperator<AdvDiffType,UpwindFlux,order> DgAdvType;
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgBurgersType;
   // Time:
-  //typedef DuneODE::ExplRungeKutta<DgAdvDiffType> ODEAdvDiffType;
-  //typedef DuneODE::ExplRungeKutta<DgDiffType> ODEDiffType;
-  //typedef DuneODE::ExplRungeKutta<DgAdvType> ODEAdvType;
-  //typedef DuneODE::ExplRungeKutta<DgBurgersType> ODEBurgersType;
+  //      urspruenglich expl-rk methoden
+  /*
+  typedef DuneODE::ExplRungeKutta<DgAdvDiffType> ODEAdvDiffType;
+  typedef DuneODE::ExplRungeKutta<DgDiffType> ODEDiffType;
+  typedef DuneODE::ExplRungeKutta<DgAdvType> ODEAdvType;
+  typedef DuneODE::ExplRungeKutta<DgBurgersType> ODEBurgersType;
+  */
+  //      dennis expl-rk methoden
   typedef DuneODE::ExplTimeStepper<DgAdvDiffType> ODEAdvDiffType;
   typedef DuneODE::ExplTimeStepper<DgDiffType> ODEDiffType;
   typedef DuneODE::ExplTimeStepper<DgAdvType> ODEAdvType;
   typedef DuneODE::ExplTimeStepper<DgBurgersType> ODEBurgersType;
-  //typedef DuneODE::ImplTimeStepper<DgAdvDiffType> ODEAdvDiffType;
-  //typedef DuneODE::ImplTimeStepper<DgDiffType> ODEDiffType;
-  //typedef DuneODE::ImplTimeStepper<DgAdvType> ODEAdvType;
-  //typedef DuneODE::ImplTimeStepper<DgBurgersType> ODEBurgersType;
+  //      dennis impl-rk methoden
+  /*
+  typedef DuneODE::ImplTimeStepper<DgAdvDiffType> ODEAdvDiffType;
+  typedef DuneODE::ExplTimeStepper<DgDiffType> ODEDiffType;
+  typedef DuneODE::ImplTimeStepper<DgAdvType> ODEAdvType;
+  typedef DuneODE::ImplTimeStepper<DgBurgersType> ODEBurgersType;
+  */
   // *** Construction...
   FieldVector<double,2> upwind;
   upwind[0]=1.;

@@ -1,10 +1,3 @@
-/* TYPES:
-   DomainType: vector in world-space FV<dimDomain>
-   RangeType: vector in phase-space FV<dimRange>
-   FluxRangeType: matrix for analytical flux FM<Range,Domain>
-   GradientType: vector in gradient phase-space FV<Range*Domain>
-   DiffusionRangeType: matrix for diffusion flux FM<Range*Domain,Domain>
-*/
 #include "modeldefault.hh"
 
 template <class GridType>
