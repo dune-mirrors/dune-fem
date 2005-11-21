@@ -19,7 +19,8 @@ class BurgersModel {
   typedef typename Traits::GradientType GradientType;
   typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
-  BurgersModel(double eps) : epsilon(eps) {}
+  BurgersModel(double eps,bool difftimestep=true) : 
+    epsilon(eps), tstep_eps((difftimestep)?eps:0) {}
   inline  void analyticalFlux(typename Traits::EntityType& en,
 				    double time,  
 				    const typename Traits::DomainType& x,
@@ -59,10 +60,11 @@ class BurgersModel {
 				double time,  
 				const typename Traits::DomainType& x,
 				const RangeType& u) const {
-    return abs(normal[0]*u)+epsilon;
+    return abs(normal[0]*u)+tstep_eps;
   }
  protected:
   double epsilon;
+  double tstep_eps;
 };
 // ***********************
 template <class Model>
@@ -79,8 +81,8 @@ class AdvectionDiffusionModel {
   typedef typename Traits::FluxRangeType FluxRangeType;
   typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
-  AdvectionDiffusionModel(DomainType& velo,double eps) :
-    velocity(velo), epsilon(eps) {}
+  AdvectionDiffusionModel(DomainType& velo,double eps,bool diff_timestep=true) :
+    velocity(velo), epsilon(eps), tstep_eps((diff_timestep)?eps:0) {}
   inline  void analyticalFlux(typename Traits::EntityType& en,
 			      double time,  
 			      const typename Traits::DomainType& x,
@@ -121,11 +123,12 @@ class AdvectionDiffusionModel {
 				double time,  
 				const typename Traits::DomainType& x,
 				const RangeType& u) const {
-    return abs(normal*velocity)+epsilon;
+    return abs(normal*velocity)+tstep_eps;
   }
  protected:
   DomainType velocity;
   double epsilon;
+  double tstep_eps;
   friend class UpwindFlux<AdvectionDiffusionModel<GridType> >;
 };
 // Numerical Upwind-Flux

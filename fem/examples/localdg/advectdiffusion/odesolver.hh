@@ -9,7 +9,7 @@
  #include "ode/iterative_solver.cpp"  
  #include "ode/ode_solver.cpp"     
  #include "ode/sirk.cpp"   
-// #include "ode/communicator.cpp"    
+ // #include "ode/communicator.cpp"    
  #include "ode/matrix.cpp"            
  #include "ode/qr_solver.cpp"   
  #include "ode/ssp.cpp"
@@ -27,11 +27,9 @@ class OperatorWrapper : public DuneODE::Function {
  public:
   OperatorWrapper(const Operator& op) : op_(op) {}
   void operator()(const double *u, double *f, int i = 0) {
-    typename Operator::DestinationType *arg 
-      = new typename Operator::DestinationType ("ARG",op_.space(),u);
-    typename Operator::DestinationType *dest
-      = new typename Operator::DestinationType ("DEST",op_.space(),f);
-    op_(*arg,*dest);
+    typename Operator::DestinationType arg("ARG",op_.space(),u);
+    typename Operator::DestinationType dest("DEST",op_.space(),f);
+    op_(arg,dest);
   }
   int dim_of_argument(int i = 0) const 
   { 
@@ -48,19 +46,16 @@ class OperatorWrapper : public DuneODE::Function {
 };
 template<class Operator>
 class ExplTimeStepper : public TimeProvider {
-  typename Operator::DestinationType U1,U2;
  public:
   ExplTimeStepper(Operator& op,int pord,double cfl) :
-    U1("U1",op.space()),
-    U2("U2",op.space()),
     op_(op),
     expl_(op),
     ode_(0),
     cfl_(cfl),
+    dt_(-1.0),
     savetime_(0.1), savestep_(1)
   {
     op.timeProvider(this);
-    op(U1,U2);
     switch (pord) {
     case 1: ode_=new ExplicitEuler(comm,expl_); break;
     case 2: ode_=new ExplicitTVD2(comm,expl_); break;
@@ -74,13 +69,18 @@ class ExplTimeStepper : public TimeProvider {
   }
   ~ExplTimeStepper() {delete ode_;}
   double solve(typename Operator::DestinationType& U0) {
+    if (dt_<0) {
+      typename Operator::DestinationType tmp("TMP",op_.space());
+      op_(U0,tmp);
+      dt_=cfl_*timeStepEstimate();
+    }
     resetTimeStepEstimate();
     double t=time();
-    double dt=0.0019; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     double* u=U0.leakPointer();
-    const bool convergence = ode_->step(t, dt, u);
+    const bool convergence = ode_->step(t, dt_, u);
     assert(convergence);
-    setTime(t+dt);
+    setTime(t+dt_);
+    dt_=cfl_*timeStepEstimate();
     return time();
   }
   void printGrid(int nr, 
@@ -96,32 +96,30 @@ class ExplTimeStepper : public TimeProvider {
   const Operator& op_;
   OperatorWrapper<Operator> expl_;
   DuneODE::ODESolver* ode_;
-double cfl_;
+  double cfl_;
+  double dt_;
   int savestep_;
   double savetime_;
 };
 template<class Operator>
 class ImplTimeStepper : public TimeProvider {
-  typename Operator::DestinationType U1,U2;
  public:
   ImplTimeStepper(Operator& op,int pord,double cfl) :
-    U1("U1",op.space()),
-    U2("U2",op.space()),
     op_(op),
-    expl_(op),
+    impl_(op),
     ode_(0),
     linsolver_(comm),
     cfl_(cfl),
+    dt_(-1.0),
     savetime_(0.1), savestep_(1)
   {
     op.timeProvider(this);
-    op(U1,U2);
     linsolver_.set_tolerance(1.0e-8);
     linsolver_.set_max_number_of_iterations(1000);
     switch (pord) {
-    case 1: ode_=new ImplicitEuler(comm,expl_); break;
-      //case 2: ode_=new ExplicitTVD2(comm,expl_); break;
-      //case 3: ode_=new ExplicitTVD3(comm,expl_); break;
+    case 1: ode_=new ImplicitEuler(comm,impl_); break;
+    case 2: ode_=new Gauss2(comm,impl_); break;
+    case 3: ode_=new DIRK3(comm,impl_); break;
       //case 4: ode_=new ExplicitRK4(comm,expl_); break;
     default : std::cerr << "Runge-Kutta method of this order not implemented" 
 			<< std::endl;
@@ -134,18 +132,23 @@ class ImplTimeStepper : public TimeProvider {
   }
   ~ImplTimeStepper() {delete ode_;}
   double solve(typename Operator::DestinationType& U0) {
+    if (dt_<0) {
+      typename Operator::DestinationType tmp("tmp",op_.space());
+      op_(U0,tmp);
+      dt_ = cfl_*timeStepEstimate();
+    }
     resetTimeStepEstimate();
     double t=time();
-    double dt=0.0019; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     double* u=U0.leakPointer();
-    const bool convergence = ode_->step(t, dt, u);
+    const bool convergence = ode_->step(t, dt_, u);
     assert(convergence);
-    setTime(t+dt);
+    setTime(t+dt_);
+    dt_ = cfl_*timeStepEstimate();
     return time();
   }
   void printGrid(int nr, 
 		 const typename Operator::DestinationType& U) {
-    if (1 || time()>savetime_) {
+    if (time()>savetime_) {
       printSGrid(time(),savestep_*10+nr,op_.space(),U);
       ++savestep_;
       savetime_+=0.1;
@@ -154,10 +157,11 @@ class ImplTimeStepper : public TimeProvider {
  private:
   DuneODE::Communicator comm;	  
   const Operator& op_;
-  OperatorWrapper<Operator> expl_;
+  OperatorWrapper<Operator> impl_;
   DuneODE::DIRK* ode_;
   DuneODE::GMRES<20> linsolver_;
   double cfl_;
+  double dt_;
   int savestep_;
   double savetime_;
 };
@@ -228,7 +232,6 @@ public:
     // Compute Steps
     op_(U0,*(Upd[0]));
     double dt=cfl_*timeStepEstimate();
-    dt=0.0019; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     for (int i=1;i<ord_;i++) {
       (Upd[ord_])->assign(U0);
       for (int j=0;j<i;j++) 
