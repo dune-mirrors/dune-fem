@@ -155,7 +155,6 @@ namespace Dune {
 
       double vol = volumeElement(en, volQuad);
       //std::cout << "Vol = " << vol << std::endl;
-      double dtLocal;
       
       const IndexSetType& iset = spc_.indexSet();
       const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
@@ -179,6 +178,9 @@ namespace Dune {
       IntersectionIterator nit = en.ibegin();
       FaceQuadratureType faceQuad(nit.intersectionGlobal().type());
       
+      double dtLocal = 0.0;
+      double minvol = vol; 
+      
       for (; nit != endnit; ++nit) {
         if (nit.neighbor()) {
           if (iset.index(*nit.outside()) > iset.index(en)
@@ -190,6 +192,8 @@ namespace Dune {
             const BaseFunctionSetType& bsetNeigh = 
               spc_.getBaseFunctionSet(*(nit.outside()));
   
+	    double nbvol = volumeElement(*nit.outside(), volQuad);
+	    if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuad.nop(); ++l) {
               double h = 
                 nit.intersectionGlobal().integrationElement(faceQuad.point(l));
@@ -199,12 +203,9 @@ namespace Dune {
                 nit.intersectionNeighborLocal().global(faceQuad.point(l));
               
               // Evaluate flux
-              dtLocal = 
+              double dtLocalS = 
                 caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
-              
-              dtLocal =  (dtLocal < std::numeric_limits<double>::min()) ?
-                dtMin_ : vol/(dtLocal*h);
-              if(dtLocal < dtMin_) dtMin_ = dtLocal;
+	      dtLocal += dtLocalS*faceQuad.weight(l);              
 
               for (int i = 0; i < updEn.numDofs(); ++i) {
                 updEn[i] -= 
@@ -227,11 +228,9 @@ namespace Dune {
             DomainType xLocalEn = 
               nit.intersectionSelfLocal().global(faceQuad.point(l));
                  
-            dtLocal = 
+            double dtLocalS = 
               caller_->boundaryFlux(nit, faceQuad, l, source_);
-            dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
-              dtMin_ : vol/(dtLocal*integrationElement);
-            if (dtLocal < dtMin_) dtMin_ = dtLocal;
+	    dtLocal += dtLocalS*faceQuad.weight(l);
                     
             for (int i = 0; i < updEn.numDofs(); ++i) {
               updEn[i] -= bsetEn.evaluateSingle(i, xLocalEn, source_)
@@ -239,6 +238,10 @@ namespace Dune {
             }
           }
         } // end if boundary
+      }
+      if (dtLocal>2.*std::numeric_limits<double>::min()) {
+	dtLocal = minvol/dtLocal;
+	if (dtLocal < dtMin_) dtMin_ = dtLocal;
       }
     }
 
@@ -260,8 +263,7 @@ namespace Dune {
 
       double vol = volumeElement(en, volQuad);
       //std::cout << "Vol = " << vol << std::endl;
-      double dtLocal;
-
+ 
       const typename DiscreteFunctionSpaceType::IndexSetType& iset = spc_.indexSet();
 
       // Volumetric integral part
@@ -304,6 +306,9 @@ namespace Dune {
       IntersectionIterator nit = en.ibegin();
       FaceQuadratureType faceQuad(nit.intersectionGlobal().type());
       
+      double dtLocal = 0.0;
+      double minvol = vol; 
+      
       for (; nit != endnit; ++nit) {
         if (nit.neighbor()) {
           if (iset.index(*nit.outside()) > iset.index(en)
@@ -323,12 +328,9 @@ namespace Dune {
                 nit.intersectionNeighborLocal().global(faceQuad.point(l));
               
               // Evaluate flux
-              dtLocal = 
+              double dtLocalS = 
                 caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
-
-              dtLocal =  (dtLocal < std::numeric_limits<double>::min()) ?
-                dtMin_ : vol/(dtLocal); // *h
-              if(dtLocal < dtMin_) dtMin_ = dtLocal;
+	      dtLocal += dtLocalS*faceQuad.weight(l);
               
               // * Assumption: all elements have same number of base functions
               for (int k = 0;
@@ -347,10 +349,11 @@ namespace Dune {
 
                 updEn[k] -=
                   (valEn_*baseEn_)*faceQuad.weight(l)/vol;
-                
+      
+		double nbvol = volumeElement(*nit.outside(), volQuad);
                 updNeigh[k] += 
-                  (valNeigh_*baseNeigh_)*faceQuad.weight(l)/vol;
-                  //volumeElement(*(nit.outside()), volQuad);
+                  (valNeigh_*baseNeigh_)*faceQuad.weight(l)/nbvol;
+		if (nbvol<minvol) minvol=nbvol;
               } // end loop base functions
             } // end loop quadrature points
             
@@ -364,14 +367,11 @@ namespace Dune {
               
             DomainType xLocalEn = 
               nit.intersectionSelfLocal().global(faceQuad.point(l));
-               
-            dtLocal = 
+            
+            double dtLocalS = 
               caller_->boundaryFlux(nit, faceQuad, l, source_);
-            dtLocal = (dtLocal < std::numeric_limits<double>::min()) ?
-              dtMin_ : vol/(dtLocal); // *integrationElement);
-            if (dtLocal < dtMin_) dtMin_ = dtLocal;
-   
-                 
+	    dtLocal += dtLocalS*faceQuad.weight(l);
+                    
             for (int k = 0; 
                  k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
               spc_.getBaseFunctionSet(en).evaluate(k,
@@ -383,7 +383,10 @@ namespace Dune {
           }
         } // end if boundary
       }
-     
+      if (dtLocal>2.*std::numeric_limits<double>::min()) {
+	dtLocal = minvol/dtLocal;
+	if (dtLocal < dtMin_) dtMin_ = dtLocal;
+      }
     }
     
   private:
