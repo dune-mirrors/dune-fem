@@ -69,7 +69,8 @@ namespace Dune {
                 PreviousPassType& pass, 
                 DiscreteFunctionSpaceType& spc) :
       BaseType(pass, spc),
-      caller_(problem),
+      problem_(problem),
+      caller_(0),
       arg_(0),
       dest_(0),
       spc_(spc),
@@ -111,15 +112,18 @@ namespace Dune {
 
       dest_->clear();
 
-      caller_.setArgument(*arg_);
-      
+      if (!caller_) {
+        caller_ = new DiscreteModelCallerType(problem_, *arg_);
+      }
+      caller_->setArgument(*arg_);
+
       // time initialisation
       dtMin_ = std::numeric_limits<double>::max();
       if (time_) {
-        caller_.setTime(time_->time());
+        caller_->setTime(time_->time());
       }
       else {
-        caller_.setTime(0.0);
+        caller_->setTime(0.0);
       }
     }
 
@@ -130,7 +134,7 @@ namespace Dune {
         time_->provideTimeStepEstimate(dtMin_);
       }
 
-      caller_.finalize();
+      caller_->finalize();
     }
 
     void applyAlt(EntityType& en) const
@@ -140,7 +144,7 @@ namespace Dune {
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
       
       //- statements
-      caller_.setEntity(en);
+      caller_->setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
       GeometryType geom = en.geometry().type();
       
@@ -154,15 +158,18 @@ namespace Dune {
 
       // Volumetric integral part
       for (int l = 0; l < volQuad.nop(); ++l) {
-        caller_.analyticalFlux(en, volQuad, l, fMat_);
-        caller_.source(en, volQuad, l, source_);
+        caller_->analyticalFlux(en, volQuad, l, fMat_);
+        caller_->source(en, volQuad, l, source_);
 
         for (int i = 0; i < updEn.numDofs(); ++i) {
-          updEn[i] += 
+          //double update =
+          updEn[i] +=
             (bsetEn.evaluateGradientSingle(i, en, volQuad.point(l), fMat_) +
              bsetEn.evaluateSingle(i, volQuad.point(l), source_))*
             volQuad.weight(l)*
             en.geometry().integrationElement(volQuad.point(l))/vol;
+          //updEn[i] += update; 
+
         }
       }
 
@@ -179,7 +186,7 @@ namespace Dune {
           if (iset.index(*nit.outside()) > iset.index(en)
               || nit.outside()->partitionType() == GhostEntity) {
             
-            caller_.setNeighbor(*nit.outside());
+            caller_->setNeighbor(*nit.outside());
             LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
 
             const BaseFunctionSetType& bsetNeigh = 
@@ -195,7 +202,7 @@ namespace Dune {
               
               // Evaluate flux
               double dtLocalS = 
-                caller_.numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
+                caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
 	      dtLocal += dtLocalS*faceQuad.weight(l);              
 
               for (int i = 0; i < updEn.numDofs(); ++i) {
@@ -217,7 +224,7 @@ namespace Dune {
               nit.intersectionSelfLocal().global(faceQuad.point(l));
                  
             double dtLocalS = 
-              caller_.boundaryFlux(nit, faceQuad, l, source_);
+              caller_->boundaryFlux(nit, faceQuad, l, source_);
 	    dtLocal += dtLocalS*faceQuad.weight(l);
                     
             for (int i = 0; i < updEn.numDofs(); ++i) {
@@ -243,7 +250,7 @@ namespace Dune {
 
     void applyOld(EntityType& en) const {
       //- Initialise quadratures and stuff
-      caller_.setEntity(en);
+      caller_->setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
       GeometryType geom = en.geometry().type();
       
@@ -256,8 +263,8 @@ namespace Dune {
 
       // Volumetric integral part
       for (int l = 0; l < volQuad.nop(); ++l) {
-        caller_.analyticalFlux(en, volQuad, l, fMat_);
-        caller_.source(en, volQuad, l, source_);
+        caller_->analyticalFlux(en, volQuad, l, fMat_);
+        caller_->source(en, volQuad, l, source_);
 
         for (int k = 0; k < spc_.getBaseFunctionSet(en).numBaseFunctions(); 
              ++k) {
@@ -302,10 +309,12 @@ namespace Dune {
           if (iset.index(*nit.outside()) > iset.index(en)
               || nit.outside()->partitionType() == GhostEntity) {
             
-            caller_.setNeighbor(*nit.outside());
+            caller_->setNeighbor(*nit.outside());
             LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
 
             for (int l = 0; l < faceQuad.nop(); ++l) {
+              double h = 
+                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
               // * might be improved by using quadrature points directly
               // * (how to deal with quadrature points on neighbor?)
               DomainType xLocalEn = 
@@ -315,7 +324,7 @@ namespace Dune {
               
               // Evaluate flux
               double dtLocalS = 
-                caller_.numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
+                caller_->numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
 	      dtLocal += dtLocalS*faceQuad.weight(l);
               
               // * Assumption: all elements have same number of base functions
@@ -355,7 +364,7 @@ namespace Dune {
               nit.intersectionSelfLocal().global(faceQuad.point(l));
             
             double dtLocalS = 
-              caller_.boundaryFlux(nit, faceQuad, l, source_);
+              caller_->boundaryFlux(nit, faceQuad, l, source_);
 	    dtLocal += dtLocalS*faceQuad.weight(l);
                     
             for (int k = 0; 
@@ -392,7 +401,8 @@ namespace Dune {
     }
     
   private:
-    mutable DiscreteModelCallerType caller_;
+    DiscreteModelType& problem_;
+    mutable DiscreteModelCallerType* caller_;
     
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;

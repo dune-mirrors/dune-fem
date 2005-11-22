@@ -262,7 +262,7 @@ namespace Dune {
     //! Applies the setting on every DiscreteFunction/LocalFunction pair.
     template <class LFType>
     void visit(LFType& lf) {
-      lf.init(en_);
+       lf.init(en_);
     }
 
   private:
