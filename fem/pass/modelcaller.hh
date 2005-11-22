@@ -2,6 +2,7 @@
 #define DUNE_DISCRETEMODELCALLER_HH
 
 #include <utility>
+#include <memory>
 
 #include <dune/common/fvector.hh> 
 
@@ -47,14 +48,9 @@ namespace Dune {
     //typedef typename Caller<RangeTupleType> CallerType;
 
   public:
-    DiscreteModelCaller(DiscreteModelType& problem, TotalArgumentType& arg) :
+    DiscreteModelCaller(DiscreteModelType& problem) :
       problem_(problem),
-      arg_(&arg),
-      discreteFunctions_(FilterType::apply(arg)),
-      //localFunctionsSelf_(new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_))),
-      localFunctionsSelf_(0),
-       //localFunctionsNeigh_(new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_))),
-      localFunctionsNeigh_(0),
+      data_(0),
       valuesEn_(RangeCreator::apply()),
       valuesNeigh_(RangeCreator::apply()),
       jacobians_(JacobianCreator::apply()),
@@ -63,27 +59,17 @@ namespace Dune {
 
     void setArgument(TotalArgumentType& arg) 
     {
-      // Set pointer
-      arg_ = &arg;
-      
-      // Filter the argument
-      discreteFunctions_ = FilterType::apply(arg);
-      
-      // Build up new local function tuples
-      localFunctionsSelf_= 
-        new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_));
-      localFunctionsNeigh_ = 
-        new LocalFunctionTupleType(LFCreator::apply(discreteFunctions_));
+      data_.reset(new DataStorage(arg));
     }
 
     void setEntity(Entity& en) 
     {
-      setter(en, *localFunctionsSelf_);
+      data_->setSelf(en);
     }
 
     void setNeighbor(Entity& en) 
     {
-      setter(en, *localFunctionsNeigh_);
+      data_->setNeighbor(en);
     }
 
     void setTime(double time) {
@@ -91,10 +77,7 @@ namespace Dune {
     }
 
     void finalize() {
-      delete localFunctionsSelf_;
-      localFunctionsSelf_ = 0;
-      delete localFunctionsNeigh_;
-      localFunctionsNeigh_ = 0;
+      data_.reset(0);
     }
 
     // Here, the interface of the problem is replicated and the Caller
@@ -102,7 +85,7 @@ namespace Dune {
     void analyticalFlux(Entity& en, const DomainType& x, 
                         JacobianRangeType& res) 
     {
-      evaluateLocal(en, x, *localFunctionsSelf_, valuesEn_);
+      evaluateLocal(en, x, data_->localFunctionsSelf(), valuesEn_);
       problem_.analyticalFlux(en, time_, x, valuesEn_, res);
       //CallerType::analyticalFlux(problem_, en, x, valuesEn_.second, res);
     }
@@ -110,7 +93,7 @@ namespace Dune {
     void analyticalFlux(Entity& en, VolumeQuadratureType& quad, int quadPoint,
                         JacobianRangeType& res) 
     {
-      evaluateQuad(en, quad, quadPoint, *localFunctionsSelf_, valuesEn_);
+      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       problem_.analyticalFlux(en, time_, quad.point(quadPoint), 
                               valuesEn_, res);
       //CallerType::analyticalFlux(problem_, en, quad, quadPoint, valuesEn_.second, res);
@@ -125,9 +108,9 @@ namespace Dune {
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(x),
-                    *localFunctionsSelf_, valuesEn_);
+                    data_->localFunctionsSelf(), valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(x),
-                    *localFunctionsNeigh_, valuesNeigh_);
+                    data_->localFunctionsNeigh(), valuesNeigh_);
       return problem_.numericalFlux(nit, time_, x,
                                     valuesEn_, valuesNeigh_,
                                     resEn, resNeigh);
@@ -146,9 +129,9 @@ namespace Dune {
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
-                    *localFunctionsSelf_, valuesEn_);
+                    data_->localFunctionsSelf(), valuesEn_);
       evaluateLocal(*nit.outside(), neighLocal.global(quad.point(quadPoint)),
-                    *localFunctionsNeigh_, valuesNeigh_);
+                    data_->localFunctionsNeigh(), valuesNeigh_);
       return problem_.numericalFlux(nit, time_, 
                                     quad.point(quadPoint),
                                     valuesEn_, 
@@ -168,7 +151,7 @@ namespace Dune {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(x),
-                    *localFunctionsSelf_, valuesEn_);
+                    data_->localFunctionsSelf(), valuesEn_);
       return problem_.boundaryFlux(nit, time_, x,
                                    valuesEn_,
                                    boundaryFlux);
@@ -184,14 +167,14 @@ namespace Dune {
 
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
-                    *localFunctionsSelf_, valuesEn_);
+                    data_->localFunctionsSelf(), valuesEn_);
       return problem_.boundaryFlux(nit, time_, quad.point(quadPoint),
                                    valuesEn_, boundaryFlux);
     }
 
     void source(Entity& en, const DomainType& x, RangeType& res) 
     {
-      evaluateLocal(en, x, *localFunctionsSelf_, valuesEn_);
+      evaluateLocal(en, x, data_->localFunctionsSelf(), valuesEn_);
       evaluateJacobianLocal(en, x);
       problem_.source(en, time_, x, valuesEn_, jacobians_, res);
       //CallerType::source(problem_, en, x, valuesEn_.second, jacobians_, res);
@@ -200,7 +183,7 @@ namespace Dune {
     void source(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
                 RangeType& res) 
     {
-      evaluateQuad(en, quad, quadPoint, *localFunctionsSelf_, valuesEn_);
+      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       evaluateJacobianQuad(en, quad, quadPoint);
       problem_.source(en, time_, quad.point(quadPoint), valuesEn_,
                       jacobians_, res);
@@ -243,7 +226,7 @@ namespace Dune {
     {
       ForEachValuePair<
        LocalFunctionTupleType,
-        JacobianRangeTupleType> forEach(*localFunctionsSelf_,
+        JacobianRangeTupleType> forEach(data_->localFunctionsSelf(),
                                         jacobians_);
       
       LocalFunctionEvaluateJacobianLocal<Entity, DomainType> eval(en, x);
@@ -255,7 +238,7 @@ namespace Dune {
     {
       ForEachValuePair<
        LocalFunctionTupleType,
-        JacobianRangeTupleType> forEach(*localFunctionsSelf_,
+        JacobianRangeTupleType> forEach(data_->localFunctionsSelf(),
                                         jacobians_);
       LocalFunctionEvaluateJacobianQuad<
         Entity, VolumeQuadratureType> eval(en, quad, quadPoint);
@@ -268,12 +251,49 @@ namespace Dune {
     DiscreteModelCaller& operator=(const DiscreteModelCaller&);
 
   private:
-    DiscreteModelType& problem_;
-    TotalArgumentType* arg_;
+    class DataStorage 
+    {
+    public:
+      DataStorage(TotalArgumentType& arg) :
+        discreteFunctions_(FilterType::apply(arg)),
+        localFunctionsSelf_(LFCreator::apply(discreteFunctions_)),
+        localFunctionsNeigh_(LFCreator::apply(discreteFunctions_))
+      {}
 
-    DiscreteFunctionTupleType discreteFunctions_;
-    LocalFunctionTupleType* localFunctionsSelf_;
-    LocalFunctionTupleType* localFunctionsNeigh_;
+      LocalFunctionTupleType& localFunctionsSelf() {
+        return localFunctionsSelf_;
+      }
+
+      LocalFunctionTupleType& localFunctionsNeigh() {
+        return localFunctionsNeigh_;
+      }
+
+      void setSelf(Entity& en) {
+        setter(en, localFunctionsSelf_);
+      }
+
+      void setNeighbor(Entity& en) {
+        setter(en, localFunctionsNeigh_);
+      }
+
+    private:
+      void setter(Entity& en, LocalFunctionTupleType& tuple) {
+        ForEachValue<LocalFunctionTupleType> forEach(tuple);
+        LocalFunctionSetter<Entity> setter(en);
+        forEach.apply(setter);
+      }
+
+    private:
+      DiscreteFunctionTupleType discreteFunctions_;
+      LocalFunctionTupleType localFunctionsSelf_;
+      LocalFunctionTupleType localFunctionsNeigh_;
+    };
+
+  private:
+    DiscreteModelType& problem_;
+    
+    std::auto_ptr<DataStorage> data_;
+
     RangeTupleType valuesEn_;
     RangeTupleType valuesNeigh_;
     JacobianRangeTupleType jacobians_;
