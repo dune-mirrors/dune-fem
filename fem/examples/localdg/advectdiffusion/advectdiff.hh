@@ -45,10 +45,8 @@ namespace Dune {
     typedef LocalDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
     typedef LocalDGPass<DiscreteModel2Type, Pass1Type> Pass2Type;
 
-    typedef typename Traits1::SingleSpaceType
-      SingleSpace1Type;
-    typedef typename Traits2::SingleSpaceType  
-      SingleSpace2Type;
+    //typedef typename Traits1::SingleSpaceType SingleSpace1Type;
+    //typedef typename Traits2::SingleSpaceType SingleSpace2Type;
     typedef typename Traits1::DiscreteFunctionSpaceType 
       Space1Type;
     typedef typename Traits2::DiscreteFunctionSpaceType  
@@ -75,10 +73,12 @@ namespace Dune {
       iset2_(grid_,grid_.maxLevel()),
       gridPart1_(grid_, iset1_),
       gridPart2_(grid_, iset2_),
-      singleSpace1_(gridPart1_),
-      singleSpace2_(gridPart2_),
-      space1_(singleSpace1_),
-      space2_(singleSpace2_),
+      //singleSpace1_(gridPart1_),
+      //singleSpace2_(gridPart2_),
+      //space1_(singleSpace1_),
+      //space2_(singleSpace2_),
+      space1_(gridPart1_),
+      space2_(gridPart2_),
       problem1_(upwind_,model_,numflux_),
       problem2_(upwind_,model_,numflux_),
       pass1_(problem1_, pass0_, space1_),
@@ -105,8 +105,8 @@ namespace Dune {
     IndexSet2Type iset2_;
     GridPart1Type gridPart1_;
     GridPart2Type gridPart2_;
-    SingleSpace1Type singleSpace1_;
-    SingleSpace2Type singleSpace2_;
+    //SingleSpace1Type singleSpace1_;
+    //SingleSpace2Type singleSpace2_;
     Space1Type space1_;
     Space2Type space2_;
     DiscreteModel1Type problem1_;
@@ -136,10 +136,8 @@ namespace Dune {
     typedef StartPass<DiscreteFunction2Type> Pass0Type;
     typedef LocalDGPass<DiscreteModel2Type, Pass0Type> Pass2Type;
 
-    typedef typename Traits2::SingleSpaceType  
-      SingleSpace2Type;
-    typedef typename Traits2::DiscreteFunctionSpaceType  
-      Space2Type;
+    // typedef typename Traits2::SingleSpaceType SingleSpace2Type;
+    typedef typename Traits2::DiscreteFunctionSpaceType Space2Type;
     typedef typename Traits2::DestinationType Destination2Type;
     typedef Destination2Type DestinationType;
     typedef Space2Type SpaceType;
@@ -155,8 +153,9 @@ namespace Dune {
       numflux_(numf),
       iset2_(grid_,grid_.maxLevel()),
       gridPart2_(grid_, iset2_),
-      singleSpace2_(gridPart2_),
-      space2_(singleSpace2_),
+      //singleSpace2_(gridPart2_),
+      //space2_(singleSpace2_),
+      space2_(gridPart2_),
       problem2_(model_,numflux_),
       pass2_(problem2_, pass0_, space2_) 
     {}
@@ -176,7 +175,7 @@ namespace Dune {
     const NumFluxType& numflux_;
     IndexSet2Type iset2_;
     GridPart2Type gridPart2_;
-    SingleSpace2Type singleSpace2_;
+    // SingleSpace2Type singleSpace2_;
     Space2Type space2_;
     DiscreteModel2Type problem2_;
     Pass0Type pass0_;
@@ -206,10 +205,8 @@ namespace Dune {
     typedef LocalDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
     typedef LocalDGPass<DiscreteModel2Type, Pass1Type> Pass2Type;
 
-    typedef typename Traits1::SingleSpaceType
-      SingleSpace1Type;
-    typedef typename Traits2::SingleSpaceType  
-      SingleSpace2Type;
+    //typedef typename Traits1::SingleSpaceType SingleSpace1Type;
+    //typedef typename Traits2::SingleSpaceType SingleSpace2Type;
     typedef typename Traits1::DiscreteFunctionSpaceType 
       Space1Type;
     typedef typename Traits2::DiscreteFunctionSpaceType  
@@ -236,10 +233,12 @@ namespace Dune {
       iset2_(grid_,grid_.maxLevel()),
       gridPart1_(grid_, iset1_),
       gridPart2_(grid_, iset2_),
-      singleSpace1_(gridPart1_),
-      singleSpace2_(gridPart2_),
-      space1_(singleSpace1_),
-      space2_(singleSpace2_),
+      //singleSpace1_(gridPart1_),
+      //singleSpace2_(gridPart2_),
+      //space1_(singleSpace1_),
+      //space2_(singleSpace2_),
+      space1_(gridPart1_),
+      space2_(gridPart2_),
       problem1_(upwind_,model_,numflux_),
       problem2_(upwind_,model_,numflux_),
       pass1_(problem1_, pass0_, space1_),
@@ -266,8 +265,8 @@ namespace Dune {
     IndexSet2Type iset2_;
     GridPart1Type gridPart1_;
     GridPart2Type gridPart2_;
-    SingleSpace1Type singleSpace1_;
-    SingleSpace2Type singleSpace2_;
+    //SingleSpace1Type singleSpace1_;
+    //SingleSpace2Type singleSpace2_;
     Space1Type space1_;
     Space2Type space2_;
     DiscreteModel1Type problem1_;
