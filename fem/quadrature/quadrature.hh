@@ -9,6 +9,7 @@
 #include <dune/grid/common/grid.hh>
 
 #include "idprovider.hh"
+#include "gausspoints.hh"
 
 namespace Dune {
 
@@ -25,6 +26,9 @@ namespace Dune {
     typedef FieldVector<ct, dim> CoordinateType;
     
   public:
+    //! Virtual destructor
+    virtual ~QuadratureImp() {}
+
     //! Coordinates of quadrature point i.
     const CoordinateType& point(size_t i) const {
       return points_[i];
@@ -89,6 +93,8 @@ namespace Dune {
       return order_;
     }
 
+    static int maxOrder() { return GaussPoints::highestOrder; }
+
   private:
     int order_;
   };
@@ -109,6 +115,8 @@ namespace Dune {
     virtual int order() const {
       return order_;
     }
+
+    static int maxOrder() { return GaussPoints::highestOrder; }
 
   private:
     int order_;
@@ -131,6 +139,9 @@ namespace Dune {
       return order_;
     }
 
+    static int maxOrder() { return 0; }
+
+
   private:
     int order_;
   };
@@ -152,18 +163,20 @@ namespace Dune {
       return order_;
     }
 
+    static int maxOrder() { return GaussPoints::highestOrder; }
+
   private:
     int order_;
   };
 
   template <class ct>
-  class TetrahedronQuadrature : public QuadratureImp<ct, 3>
+  class TetraQuadrature : public QuadratureImp<ct, 3>
   {
   public:
     typedef FieldVector<ct, 3> CoordinateType;
 
   public:
-    TetrahedronQuadrature(int order, size_t id);
+    TetraQuadrature(int order, size_t id);
 
     virtual GeometryType geo() const {
       return simplex;
@@ -173,18 +186,20 @@ namespace Dune {
       return order_;
     }
 
+    static int maxOrder() { return 0; }
+
   private:
     int order_;
   };
 
   template <class ct>
-  class HexahedronQuadrature : public QuadratureImp<ct, 3>
+  class HexaQuadrature : public QuadratureImp<ct, 3>
   {
   public:
     typedef FieldVector<ct, 3> CoordinateType;
 
   public:
-    HexahedronQuadrature(int order, size_t id);
+    HexaQuadrature(int order, size_t id);
 
     virtual GeometryType geo() const {
       return cube;
@@ -193,6 +208,8 @@ namespace Dune {
     virtual int order() const {
       return order_;
     }
+
+    static int maxOrder() { return GaussPoints::highestOrder; }
 
   private:
     int order_;
@@ -215,6 +232,8 @@ namespace Dune {
       return order_;
     }
 
+    static int maxOrder() { return 0; }
+
   private:
     int order_;
   };
@@ -235,6 +254,8 @@ namespace Dune {
     virtual int order() const {
       return order_;
     }
+
+    static int maxOrder() { return 0; }
 
   private:
     int order_;
@@ -283,9 +304,22 @@ namespace Dune {
                                                        int order);
   };
 
-  // Specialisations
+  // Specialisaions
+
+  class QuadCreator {
+  public:
+  template <class QuadImp>
+    static const QuadImp& provideQuad(int order, std::vector<QuadImp*>& vec) {
+      assert(vec.size() > static_cast<size_t>(order));
+      if (!vec[order]) {
+        vec[order] = new QuadImp(order, IdProvider::instance().newId());
+      }
+      return *vec[order];
+    }
+  };
+
   template <typename ct>
-  class QuadratureProvider<ct, 1>
+  class QuadratureProvider<ct, 1> 
   {
   public:
     static const QuadratureImp<ct, 1>& getQuadrature(GeometryType geo, 
@@ -293,29 +327,16 @@ namespace Dune {
       assert(geo == cube  || geo == simplex || geo == line);
       assert(order >= 0);
 
-      if (!quads_[order]) {
-        makeQuad(order);
-      }
-
-      return *quads_[order];
+      return QuadCreator::provideQuad(order, quads_);
     }
   private:
     QuadratureProvider();
     QuadratureProvider(const QuadratureProvider&);
     QuadratureProvider& operator=(const QuadratureProvider&);
 
-    static void makeQuad(int order) {
-      quads_.resize(std::max(order+1, quads_.size()));
-      quads_[order] = 
-        new LineQuadrature<ct>(order, IdProvider::instance().newId());
-    }
-    
   private:
-    static std::vector<QuadratureImp<ct, 1>*> quads_;
+    static std::vector<CubeQuadrature<ct, 1>*> quads_;
   }; 
-
-  template <typename ct>
-  std::vector<QuadratureImp<ct, 1>*> QuadratureProvider<ct, 1>::quads_;
 
   template <typename ct>
   class QuadratureProvider<ct, 2> 
@@ -330,16 +351,10 @@ namespace Dune {
       switch (geo) {
       case simplex:
       case triangle:
-        if (!triangleQuads_[order]) {
-          makeTriangleQuad(order);
-        }
-        return triangleQuads_[order];
+        return QuadCreator::provideQuad(order, triangleQuads_);
       case cube:
       case quadrilateral:
-        if (!quadrilateralQuads_[order]) {
-          makeQuadrilateralQuad(order);
-        }
-        return quadrilateralQuads_[order];
+        return QuadCreator::provideQuad(order, quadrilateralQuads_);
       default:
         DUNE_THROW(RangeError, "Element type not available for dim == 2");
       }
@@ -352,30 +367,13 @@ namespace Dune {
     QuadratureProvider(const QuadratureProvider&);
     QuadratureProvider& operator=(const QuadratureProvider&);
 
-    static void makeTriangleQuad(int order) {
-      triangleQuads_.resize(std::max(order+1, triangleQuads_.size()));
-      triangleQuads_[order] = 
-        new TriangleQuadrature<ct>(order, IdProvider::instance().newId());
-    }
-
-    static void makeQuadrilateralQuad(int order) {
-      quadrilateralQuads_.resize(std::max(order+1,quadrilateralQuads_.size()));
-      quadrilateralQuads_[order] = 
-        new QuadrilateralQuadrature<ct>(order, IdProvider::instance().newId());
-    }
-
   private:
-    static std::vector<QuadratureImp<ct, 2>*> triangleQuads_;
-    static std::vector<QuadratureImp<ct, 2>*> quadrilateralQuads_;
+    static std::vector<TriangleQuadrature<ct>*> triangleQuads_;
+    static std::vector<CubeQuadrature<ct, 2>*> quadrilateralQuads_;
   };
 
-  template <typename ct>
-  std::vector<QuadratureImp<ct, 2>*> QuadratureProvider<ct, 2>::triangleQuads_;
-  template <typename ct>
-  std::vector<QuadratureImp<ct, 2>*> QuadratureProvider<ct, 2>::quadrilateralQuads_;
-
   template <class ct>
-  class QuadratureProvider<ct, 3>
+  class QuadratureProvider<ct, 3> 
   {
   public:
     static const QuadratureImp<ct, 3>& getQuadrature(GeometryType geo,
@@ -387,26 +385,14 @@ namespace Dune {
       switch (geo) {
       case simplex:
       case tetrahedron:
-        if (!tetraQuads_[order]) {
-          makeTetrahedronQuad(order);
-        }
-        return tetraQuads_[order];
+        return QuadCreator::provideQuad(order, tetraQuads_);
       case cube:
       case hexahedron:
-        if (!hexaQuads_[order]) {
-          makeHexahedronQuad(order);
-        }
-        return hexaQuads_[order];
+        return QuadCreator::provideQuad(order, hexaQuads_);
       case prism:
-        if (!prismQuads_[order]) {
-          makePrismQuad(order);
-        }
-        return prismQuads_[order];
+        return QuadCreator::provideQuad(order, prismQuads_);
       case pyramid:
-        if (!pyramidQuads_[order]) {
-          makePyramidQuad(order);
-        }
-        return pyramidQuads_[order];
+        return QuadCreator::provideQuad(order, pyramidQuads_);
       default:
         DUNE_THROW(RangeError, "Element type not available for dim == 3");
       }
@@ -419,45 +405,14 @@ namespace Dune {
     QuadratureProvider(const QuadratureProvider&);
     QuadratureProvider& operator=(const QuadratureProvider&);
 
-    static void makeTetrahedronQuad(int order) {
-      tetraQuads_.resize(std::max(order+1, tetraQuads_.size()));
-      tetraQuads_[order] = 
-        new TetrahedronQuadrature<ct>(order, IdProvider::instance().newId());
-    }
-
-    static void makeHexahedronQuad(int order) {
-      hexaQuads_.resize(std::max(order+1, hexaQuads_.size()));
-      hexaQuads_[order] = 
-        new HexahedronQuadrature<ct>(order, IdProvider::instance().newId());
-    }
-
-    static void makePrismQuad(int order) {
-      prismQuads_.resize(std::max(order+1, prismQuads_.size()));
-      prismQuads_[order] = 
-        new PrismQuadrature<ct>(order, IdProvider::instance().newId());
-    }
-
-    static void makePyramidQuad(int order) {
-      pyramidQuads_.resize(std::max(order+1, pyramidQuads_.size()));
-      pyramidQuads_[order] = 
-        new PyramidQuadrature<ct>(order, IdProvider::instance().newId());
-    }
-
   private:
-    static std::vector<QuadratureImp<ct, 3>*> tetraQuads_;
-    static std::vector<QuadratureImp<ct, 3>*> hexaQuads_;
-    static std::vector<QuadratureImp<ct, 3>*> prismQuads_;
-    static std::vector<QuadratureImp<ct, 3>*> pyramidQuads_;
+    static std::vector<TetraQuadrature<ct>*> tetraQuads_;
+    static std::vector<CubeQuadrature<ct, 3>*> hexaQuads_;
+    static std::vector<PrismQuadrature<ct>*> prismQuads_;
+    static std::vector<PyramidQuadrature<ct>*> pyramidQuads_;
   };
 
-  template <typename ct>
-  std::vector<QuadratureImp<ct, 3>*> QuadratureProvider<ct, 3>::tetraQuads_;
-  template <typename ct>
-  std::vector<QuadratureImp<ct, 3>*> QuadratureProvider<ct, 3>::hexaQuads_;
-  template <typename ct>
-  std::vector<QuadratureImp<ct, 3>*> QuadratureProvider<ct, 3>::prismQuads_;
-  template <typename ct>
-  std::vector<QuadratureImp<ct, 3>*> QuadratureProvider<ct, 3>::pyramidQuads_;
+
 } // end namespace Dune
 
 #include "quadrature.cc"

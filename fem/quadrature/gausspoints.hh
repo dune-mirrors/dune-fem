@@ -7,7 +7,7 @@ namespace Dune {
   {
   public:
     enum { MAXP=10 };
-    enum { highest_order=19 };
+    enum { highestOrder=19 };
 
     static const GaussPoints& instance() {
       if (!GaussPoints::instance_) {
@@ -33,7 +33,7 @@ namespace Dune {
       return O[m];
     }
 
-    int power (int y, int d)
+    int power (int y, int d) const
     {
       int m = 1;
       for (int i = 0; i < d; i++) m *= y;
@@ -195,6 +195,7 @@ namespace Dune {
     double W[MAXP+1][MAXP]; // weights associated with points       
     int    O[MAXP+1];       // order of the rule
   };
-} // end namespace Adi
+
+} // end namespace Dune
 
 #endif

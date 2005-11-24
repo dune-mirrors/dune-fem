@@ -2,6 +2,8 @@
 
 #include <dune/config.h>
 
+#include "include_cc.hh"
+
 #include "test.hh"
 #include "suite.hh"
 #include "quad_test.hh"
