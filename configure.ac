@@ -46,6 +46,8 @@ AC_CONFIG_FILES([Makefile
 		 pass/Makefile
 		 pass/test/Makefile
 		 space/Makefile
+		 quadrature/Makefile
+		 quadrature/test/Makefile
                ])
 AC_OUTPUT
 
