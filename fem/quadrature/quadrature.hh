@@ -22,6 +22,7 @@
 
 namespace Dune {
 
+  // Forward declaration
   template <typename ct, int dim>
   class QuadratureProvider;
 
@@ -75,7 +76,9 @@ namespace Dune {
     void addQuadraturePoint(const CoordinateType& point, ct weight);
 
   private:
+    //! Copying is forbidden!
     QuadratureImp(const QuadratureImp&);
+    //! Assignment is forbidden!
     QuadratureImp operator=(const QuadratureImp&);
 
   private:
@@ -85,6 +88,10 @@ namespace Dune {
     size_t id_;
   };
 
+  //! A generic quadrature class for simplices.
+  //! The UG quadrature rules are used here. SimplexQuadrature implements
+  //! the geometry-specific part of the quadrature and initialises the vector
+  //! of quadrature points and weights.
   template <class ct, int dim>
   class SimplexQuadrature : public QuadratureImp<ct, dim>
   {
@@ -92,22 +99,33 @@ namespace Dune {
     typedef FieldVector<ct, dim> CoordinateType;
 
   public:
+    //! Constructor
+    //! \param order The desired order (provided by the user)
+    //! \param id A unique id (provided by QuadratureProvider)
     SimplexQuadrature(int order, size_t id);
     
+    //! The geometry type is... simplex!
     virtual GeometryType geo() const {
       return simplex;
     }
     
+    //! Returns the effective order of the quadrature
+    //! (can be higher than the desired)
     virtual int order() const {
       return order_;
     }
 
+    //! The maximal order of simplex quadratures. This is to be understood
+    //! as an upper bound...
     static size_t maxOrder() { return 19; }
 
   private:
     int order_;
   };
 
+  //! A generic quadrature for cubes
+  //! This quadrature uses the 1d gauss points (and the tensorial product
+  //! thereof) as quadrature points.
   template <class ct, int dim>
   class CubeQuadrature : public QuadratureImp<ct, dim>
   {
@@ -115,22 +133,31 @@ namespace Dune {
     typedef FieldVector<ct, dim> CoordinateType;
 
   public:
+    //! Constructor
+    //! \param order The desired order (provided by the user)
+    //! \param id A unique id (provided by QuadratureProvider)
     CubeQuadrature(int order, size_t id);
     
+    //! The geometry type is... cube!
     virtual GeometryType geo() const {
       return cube;
     }
-    
+
+    //! Returns the effective order of the quadrature
+    //! (can be higher than the desired)
     virtual int order() const {
       return order_;
     }
 
+    //! The maximal order of simplex quadratures.
     static size_t maxOrder() { return GaussPoints::highestOrder; }
 
   private:
     int order_;
   };
 
+  //! A quadrature class for lines
+  //! \note This class is redundant as CubeQuadrature can be used instead
   template <class ct>
   class LineQuadrature : public QuadratureImp<ct, 1> 
   {
@@ -154,6 +181,8 @@ namespace Dune {
     int order_;
   };
 
+  //! A quadrature class for triangles
+  //! \note This class is redundant as SimplexQuadrature can be used instead.
   template <class ct>
   class TriangleQuadrature : public QuadratureImp<ct, 2>
   {
@@ -178,6 +207,8 @@ namespace Dune {
     int order_;
   };
 
+  //! A quadrature class for quadrilaterals
+  //! \note This class is redundant as CubeQuadrature can be used instead.
   template <class ct>
   class QuadrilateralQuadrature : public QuadratureImp<ct, 2>
   {
@@ -201,6 +232,8 @@ namespace Dune {
     int order_;
   };
 
+  //! A quadrature class for tetrahedra
+  //! \note This class is redundant as SimplexQuadrature can be used instead.
   template <class ct>
   class TetraQuadrature : public QuadratureImp<ct, 3>
   {
@@ -224,6 +257,8 @@ namespace Dune {
     int order_;
   };
 
+  //! A quadrature class for hexahedra
+  //! \note This class is redundant as CubeQuadrature can be used instead.
   template <class ct>
   class HexaQuadrature : public QuadratureImp<ct, 3>
   {
@@ -247,6 +282,9 @@ namespace Dune {
     int order_;
   };
 
+  //! A quadrature class for prisms
+  //! The HD stuff is used here, but needs some rework since only one rule
+  //! is provided. But since nobody here uses prisms right now...
   template <class ct>
   class PrismQuadrature : public QuadratureImp<ct, 3>
   {
@@ -254,22 +292,31 @@ namespace Dune {
     typedef FieldVector<ct, 3> CoordinateType;
 
   public:
+    //! Constructor
+    //! \param order The desired order (provided by the user)
+    //! \param id A unique id (provided by QuadratureProvider)
     PrismQuadrature(int order, size_t id);
 
+    //! The geometry type is... prism!
     virtual GeometryType geo() const {
       return prism;
     }
 
+    //! Returns the actual order.
     virtual int order() const {
       return order_;
     }
 
+    //! The maximal order of prism quadratures.
     static size_t maxOrder() { return PrismPoints::highest_order; }
 
   private:
     int order_;
   };
 
+  //! A quadrature class for pyramids
+  //! The HD stuff is used here, but needs some rework since only one rule
+  //! is provided. But since nobody here uses pyramids right now...
   template <class ct>
   class PyramidQuadrature : public QuadratureImp<ct, 3>
   {
@@ -277,16 +324,22 @@ namespace Dune {
     typedef FieldVector<ct, 3> CoordinateType;
 
   public:
+    //! Constructor
+    //! \param order The desired order (provided by the user)
+    //! \param id A unique id (provided by QuadratureProvider)
     PyramidQuadrature(int order, size_t id);
 
+    //! The geometry type is... pyramid!
     virtual GeometryType geo() const {
       return pyramid;
     }
 
+    //! Returns the actual order of the quadrature.
     virtual int order() const {
       return order_;
     }
 
+    //! The maximal order of the pyramid quadratures.
     static size_t maxOrder() { return PyramidPoints::highest_order; }
 
   private:
@@ -294,7 +347,14 @@ namespace Dune {
   };
 
 
-
+  //! The actual interface class for quadratures.
+  //! Quadrature is a proxy for the actual implementations of the quadratures.
+  //! During construction, the actual Quadrature object is configured with
+  //! an appropriate implementation object from the QuadratureProvider object
+  //! (Monostate pattern). The design goal here is to minimize the construction
+  //! time (the actual implementations can be created once and reused as often
+  //! as you like) and to insulate the user from all this initialisation and
+  //! storage stuff.
   template <typename ct, int dim>
   class Quadrature 
   {
@@ -304,30 +364,49 @@ namespace Dune {
     typedef typename QuadratureImp<ct, dim>::CoordinateType CoordinateType;
 
   public:
+    //! Constructor
+    //! \param geo The geometry type the quadrature points belong to.
+    //! \param order The order of the quadrature (i.e. polynoms up to order
+    //! are integrated exactly).
     Quadrature(GeometryType geo, int order) :
       quad_(QuadratureProvider<ct, dim>::getQuadrature(geo, order))
     {}
 
-    const CoordinateType& point(size_t i) const {
-      return quad_.point(i);
-    }
-
+    //! The total number of quadrature points.
     int nop() const {
       return quad_.nop();
     }
 
+    //! Access to the ith quadrature point.
+    const CoordinateType& point(size_t i) const {
+      return quad_.point(i);
+    }
+
+    //! Access to the weight of quadrature point i.
+    //! The quadrature weights sum up to the volume of the respective reference
+    //! element.
     const ct& weight(size_t i) const {
       return quad_.weight(i);
     }
 
+    //! A unique id per quadrature type.
+    //! Quadratures are considered as distinct when they differ in the
+    //! following points: geometry type, order, dimension and implementation.
+    //! \note At the time of writing this, there is only one implementation
+    //! per geometry type, order and dimension provided, but the concept is
+    //! easily extendible beyond that.
     size_t id() const {
       return quad_.id();
     }
 
+    //! The actual order of the quadrature.
+    //! The actual order can be higher as the desired order when no 
+    //! implementation for the desired order is found.
     int order() const {
       return quad_.order();
     }
 
+    //! The geometry type the quadrature points belong to.
     GeometryType geo() const {
       return quad_.geo();
     }
