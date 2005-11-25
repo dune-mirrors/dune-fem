@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <dune/config.h>
+#include <config.h>
 
 #include "include_cc.hh"
 
