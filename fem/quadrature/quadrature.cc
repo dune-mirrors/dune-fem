@@ -275,33 +275,4 @@ namespace Dune {
     }
   }
 
-  // static initialisation
-  template <typename ct>
-  std::vector<CubeQuadrature<ct, 1>*> QuadratureProvider<ct, 1>::
-  quads_(CubeQuadrature<ct, 1>::maxOrder(), 0);
-
-  template <typename ct>
-  std::vector<TriangleQuadrature<ct>*> QuadratureProvider<ct, 2>::
-  triangleQuads_(TriangleQuadrature<ct>::maxOrder(), 0);
-
-  template <typename ct>
-  std::vector<CubeQuadrature<ct, 2>*> QuadratureProvider<ct, 2>::
-  quadrilateralQuads_(CubeQuadrature<ct, 2>::maxOrder(), 0);
-
-  template <typename ct>
-  std::vector<TetraQuadrature<ct>*> QuadratureProvider<ct, 3>::
-  tetraQuads_(TetraQuadrature<ct>::maxOrder(), 0);
-  
-  template <typename ct>
-  std::vector<CubeQuadrature<ct, 3>*> QuadratureProvider<ct, 3>::
-  hexaQuads_(CubeQuadrature<ct, 3>::maxOrder(), 0);
-  
-  template <typename ct>
-  std::vector<PrismQuadrature<ct>*> QuadratureProvider<ct, 3>::
-  prismQuads_(PrismQuadrature<ct>::maxOrder(), 0);
-  
-  template <typename ct>
-  std::vector<PyramidQuadrature<ct>*> QuadratureProvider<ct, 3>::
-  pyramidQuads_(PyramidQuadrature<ct>::maxOrder(), 0);
-
 } // end namespace Dune
