@@ -16,7 +16,7 @@ namespace Dune {
     // - Cubes
     Quadrature<double, 2> quadCube2d1(cube, 1);
     Quadrature<double, 2> quadQuad2d1(quadrilateral, 1);
-    Quadrature<double, 2> quadCube2d2(cube, 2);
+    Quadrature<double, 2> quadCube2d3(cube, 3);
     Quadrature<double, 2> quadCube2d9(cube, 9);
     // - Simplices
     Quadrature<double, 2> quadSimplex2d1(simplex, 1);
@@ -66,7 +66,7 @@ namespace Dune {
     weightSummationExec(quadLine1d10);
     weightSummationExec(quadCube2d1);
     weightSummationExec(quadQuad2d1);
-    weightSummationExec(quadCube2d2);
+    weightSummationExec(quadCube2d3);
     weightSummationExec(quadCube2d9);
     weightSummationExec(quadSimplex2d1);
     weightSummationExec(quadTriangle2d1);
@@ -81,20 +81,12 @@ namespace Dune {
 
     //- Simple integration test for simplex and cube
     integrationExec(quadCube1d1);
-    integrationExec(quadLine1d1);
-    integrationExec(quadSimplex1d1);
-    integrationExec(quadLine1d3);
     integrationExec(quadLine1d10);
-    integrationExec(quadCube2d1);
-    integrationExec(quadQuad2d1);
-    integrationExec(quadCube2d2);
+    integrationExec(quadCube2d3);
     integrationExec(quadCube2d9);
-    integrationExec(quadSimplex2d1);
-    integrationExec(quadTriangle2d1);
     integrationExec(quadSimplex2d4);
     integrationExec(quadSimplex2d11);
-    integrationExec(quadCube3d1);
-    integrationExec(quadTetra3d1);
+    integrationExec(quadCube3d11);
     integrationExec(quadSimplex3d4);
     integrationExec(quadSimplex3d7);
 
@@ -114,7 +106,7 @@ namespace Dune {
     orderExec(quadLine1d10, 10);
     orderExec(quadCube2d1, 1);
     orderExec(quadQuad2d1, 1);
-    orderExec(quadCube2d2, 2);
+    orderExec(quadCube2d3, 3);
     orderExec(quadCube2d9, 9);
     orderExec(quadSimplex2d1, 1);
     orderExec(quadTriangle2d1, 1);
@@ -123,7 +115,7 @@ namespace Dune {
     orderExec(quadCube3d1, 1);
     orderExec(quadTetra3d1, 1);
     orderExec(quadSimplex3d4, 4);
-    orderExec(quadSimplex3d7, 7);
+    orderExec(quadSimplex3d7, 7); // This one fails, but it's because of ugquadratures.cc
 
     //- Test uniqueness of indices
     indicesTest();
@@ -133,7 +125,7 @@ namespace Dune {
     _test(ids.insert(quadLine1d3.id()).second);
     _test(ids.insert(quadLine1d10.id()).second);
     _test(ids.insert(quadCube2d1.id()).second);
-    _test(ids.insert(quadCube2d2.id()).second);
+    _test(ids.insert(quadCube2d3.id()).second);
     _test(ids.insert(quadCube2d9.id()).second);
     _test(ids.insert(quadSimplex2d1.id()).second);
     _test(ids.insert(quadSimplex2d4.id()).second);
@@ -150,8 +142,14 @@ namespace Dune {
   }
 
   template <class Quad, class Fixed>
-  void Quad_Test::fixedOrderComparisonExec(Quad& quad, Fixed& fixed) {
-    _fail("not implemented yet");
+  void Quad_Test::fixedOrderComparisonExec(Quad& quad, Fixed& fixed) 
+  {
+    for (int i = 0; i < quad.nop(); ++i) {
+      for (int j = 0; j < Quad::dimension; ++j) {
+        _floatTest(quad.point(i)[j], fixed.point(i)[j]);
+      }
+      _floatTest(quad.weight(i), fixed.weight(i));
+    }
   }
 
   template <class Quad>
@@ -173,10 +171,13 @@ namespace Dune {
       switch(Quad::dimension) {
       case 1:
         _floatTest(sum, 1.0);
+        break;
       case 2:
         _floatTest(sum, 0.5);
+        break;
       case 3:
-        _floatTest(sum, 0.16666666666666666667);
+        _floatTestTol(sum, 0.16666666666666666667, 1e-04);
+        break;
       }
       break;
     case triangle:
@@ -195,7 +196,7 @@ namespace Dune {
       _floatTest(sum, 0.5);
       break;
     case pyramid:
-      _floatTest(sum, 0.3333333333333333);
+      _floatTestTol(sum, 0.3333333333333333, 1e-04);
       break;
     default:
       DUNE_THROW(NotImplemented, "What geometry type ey?");
@@ -205,7 +206,35 @@ namespace Dune {
   template <class Quad>
   void Quad_Test::integrationExec(Quad& quad) 
   {
-    _fail("not implemented yet");
+    Func f;
+    double result = 0.;
+    for (int i = 0; i < quad.nop(); ++i) {
+      result += f(quad.point(i))*quad.weight(i); 
+    }
+    
+    switch (Quad::dimension) {
+    case 1:
+      _floatTest(result, -0.25);
+      break;
+    case 2:
+      if (quad.geo() == cube) {
+        _floatTest(result, -0.2708333333);
+      } 
+      else {
+        _floatTest(result, -0.0333333333);
+      } 
+      break;
+    case 3:
+      if (quad.geo() == cube) {
+        _floatTest(result, -0.03854166666);
+      } 
+      else {
+        _floatTestTol(result, -0.00551388888, 1e-05);
+      } 
+      break;
+    default:
+      _fail("should not get here");
+    }
   }
 
   template <class Quad>
@@ -217,7 +246,7 @@ namespace Dune {
   template <class Quad>
   void Quad_Test::sameGeometryExec(Quad& quad1, Quad& quad2) 
   {
-    _test(&quad1 == &quad2);
+    _test(quad1.id() == quad2.id());
   }
 
   void Quad_Test::indicesTest() 

@@ -30,7 +30,7 @@ namespace Dune {
         refVol_ = 0.5;
         break;
       case 3:
-        refVol_ = 1.0/3.0;
+        refVol_ = 1.0/6.0;
         break;
       default:
         DUNE_THROW(NotImplemented,

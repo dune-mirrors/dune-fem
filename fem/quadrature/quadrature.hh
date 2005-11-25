@@ -89,7 +89,7 @@ namespace Dune {
     SimplexQuadrature(int order, size_t id);
     
     virtual GeometryType geo() const {
-      return cube;
+      return simplex;
     }
     
     virtual int order() const {
