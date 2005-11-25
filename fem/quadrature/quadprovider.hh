@@ -108,7 +108,7 @@ namespace Dune {
   public:
     static const QuadratureImp<ct, 3>& getQuadrature(GeometryType geo,
                                                      int order) {
-      assert(geo == cube || geo == simplex || geo == tetrahedron ||
+      assert(geo == cube || geo == simplex || geo == hexahedron ||
              geo == tetrahedron || geo == prism || geo == pyramid);
       assert(order >= 0);
 

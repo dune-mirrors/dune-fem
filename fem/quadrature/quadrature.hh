@@ -1,5 +1,5 @@
-#ifndef DUNE_QUADRATURE_HH
-#define DUNE_QUADRATURE_HH
+#ifndef DUNE_ADIQUADRATURE_HH
+#define DUNE_ADIQUADRATURE_HH
 
 #include <vector>
 #include <cassert>
@@ -293,6 +293,8 @@ namespace Dune {
   class Quadrature 
   {
   public:
+    enum { dimension = dim };
+
     typedef typename QuadratureImp<ct, dim>::CoordinateType CoordinateType;
 
   public:
@@ -302,6 +304,10 @@ namespace Dune {
 
     const CoordinateType& point(size_t i) const {
       return quad_.point(i);
+    }
+
+    int nop() const {
+      return quad_.nop();
     }
 
     const ct& weight(size_t i) const {

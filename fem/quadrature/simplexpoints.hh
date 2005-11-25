@@ -25,10 +25,13 @@ namespace Dune {
       switch (dim) {
       case 1:
         refVol_ = 1.0;
+        break;
       case 2:
         refVol_ = 0.5;
+        break;
       case 3:
         refVol_ = 1.0/3.0;
+        break;
       default:
         DUNE_THROW(NotImplemented,
                    "Quadrature points for simplices only up to dim == 3");
