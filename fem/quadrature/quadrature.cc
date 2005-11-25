@@ -22,7 +22,11 @@ namespace Dune {
     QuadratureImp<ct, dim>(id),
     order_(order)
   {
+#if HAVE_ALBERTA
+    AlbertaSimplexPointsAdapter<dim> points(order);
+#else
     UGSimplexPointsAdapter<dim> points(order);
+#endif
 
     order_ = points.order();
 
@@ -112,7 +116,11 @@ namespace Dune {
     QuadratureImp<ct, 2>(id),
     order_(order)
   {
+#if HAVE_ALBERTA
+    AlbertaSimplexPointsAdapter<2> points(order);
+#else
     UGSimplexPointsAdapter<2> points(order);
+#endif
 
     order_ = points.order();
 
@@ -172,7 +180,11 @@ namespace Dune {
     QuadratureImp<ct, 3>(id),
     order_(order)
   {
+#if HAVE_ALBERTA
+    AlbertaSimplexPointsAdapter<3> points(order);
+#else 
     UGSimplexPointsAdapter<3> points(order);
+#endif
 
     order_ = points.order();
 
