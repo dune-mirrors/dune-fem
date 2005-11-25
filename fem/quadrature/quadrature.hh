@@ -8,6 +8,12 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
+#if HAVE_ALBERTA 
+// inlcude albertagrid.hh includes the needed alberta.h 
+#include <dune/grid/albertagrid.hh>
+#endif
+
+
 #include "quadprovider.hh"
 #include "simplexpoints.hh"
 #include "gausspoints.hh"
