@@ -1,5 +1,5 @@
-#ifndef ADI_GAUSSPOINTS_HH
-#define ADI_GAUSSPOINTS_HH
+#ifndef DUNE_GAUSSPOINTS_HH
+#define DUNE_GAUSSPOINTS_HH
 
 namespace Dune {
   //! define the one-dimensional Gauss weights

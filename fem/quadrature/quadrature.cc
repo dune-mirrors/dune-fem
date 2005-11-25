@@ -18,6 +18,20 @@ namespace Dune {
   }
 
   template <class ct, int dim>
+  SimplexQuadrature<ct, dim>::SimplexQuadrature(int order, size_t id) :
+    QuadratureImp<ct, dim>(id),
+    order_(order)
+  {
+    UGSimplexPointsAdapter<dim> points(order);
+
+    order_ = points.order();
+
+    for (int i = 0; i < points.numPoints(); ++i) {
+      this->addQuadraturePoint(points.point(i), points.weight(i));
+    }
+  }
+
+  template <class ct, int dim>
   CubeQuadrature<ct, dim>::CubeQuadrature(int order, size_t id) :
     QuadratureImp<ct, dim>(id),
     order_(order)
@@ -98,7 +112,13 @@ namespace Dune {
     QuadratureImp<ct, 2>(id),
     order_(order)
   {
+    UGSimplexPointsAdapter<2> points(order);
 
+    order_ = points.order();
+
+    for (int i = 0; i < points.numPoints(); ++i) {
+      this->addQuadraturePoint(points.point(i), points.weight(i));
+    }
   }
 
   template <class ct>
@@ -152,7 +172,13 @@ namespace Dune {
     QuadratureImp<ct, 3>(id),
     order_(order)
   {
+    UGSimplexPointsAdapter<3> points(order);
 
+    order_ = points.order();
+
+    for (int i = 0; i < points.numPoints(); ++i) {
+      this->addQuadraturePoint(points.point(i), points.weight(i));
+    }
   }
 
   template <class ct>
@@ -206,7 +232,23 @@ namespace Dune {
     QuadratureImp<ct, 3>(id),
     order_(order)
   {
+    const PrismPoints& points = PrismPoints::instance();
 
+    int m = 0;
+    for (int i = 0; i < PrismPoints::numQuads; ++i) {
+      if (points.order(i) >= order) {
+        m = i;
+        break;
+      }
+    }
+
+    if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
+    order_ = points.order(m);
+
+    // fill in the points
+    for (int i = 0; i < points.numPoints(m); ++i) {
+      this->addQuadraturePoint(points.point(m, i), points.weight(m, i));
+    }
   }
 
   template <class ct>
@@ -214,36 +256,52 @@ namespace Dune {
     QuadratureImp<ct, 3>(id),
     order_(order)
   {
+    const PyramidPoints& points = PyramidPoints::instance();
 
+    int m = 0;
+    for (int i = 0; i < PyramidPoints::numQuads; ++i) {
+      if (points.order(i) >= order) {
+        m = i;
+        break;
+      }
+    }
+
+    if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
+    order_ = points.order(m);
+
+    // fill in the points
+    for (int i = 0; i < points.numPoints(m); ++i) {
+      this->addQuadraturePoint(points.point(m, i), points.weight(m, i));
+    }
   }
 
   // static initialisation
   template <typename ct>
   std::vector<CubeQuadrature<ct, 1>*> QuadratureProvider<ct, 1>::
-  quads_(CubeQuadrature<ct, 1>::maxOrder());
+  quads_(CubeQuadrature<ct, 1>::maxOrder(), 0);
 
   template <typename ct>
   std::vector<TriangleQuadrature<ct>*> QuadratureProvider<ct, 2>::
-  triangleQuads_(TriangleQuadrature<ct>::maxOrder());
+  triangleQuads_(TriangleQuadrature<ct>::maxOrder(), 0);
 
   template <typename ct>
   std::vector<CubeQuadrature<ct, 2>*> QuadratureProvider<ct, 2>::
-  quadrilateralQuads_(CubeQuadrature<ct, 2>::maxOrder());
+  quadrilateralQuads_(CubeQuadrature<ct, 2>::maxOrder(), 0);
 
   template <typename ct>
   std::vector<TetraQuadrature<ct>*> QuadratureProvider<ct, 3>::
-  tetraQuads_(TetraQuadrature<ct>::maxOrder());
+  tetraQuads_(TetraQuadrature<ct>::maxOrder(), 0);
   
   template <typename ct>
   std::vector<CubeQuadrature<ct, 3>*> QuadratureProvider<ct, 3>::
-  hexaQuads_(CubeQuadrature<ct, 3>::maxOrder());
+  hexaQuads_(CubeQuadrature<ct, 3>::maxOrder(), 0);
   
   template <typename ct>
   std::vector<PrismQuadrature<ct>*> QuadratureProvider<ct, 3>::
-  prismQuads_(PrismQuadrature<ct>::maxOrder());
+  prismQuads_(PrismQuadrature<ct>::maxOrder(), 0);
   
   template <typename ct>
   std::vector<PyramidQuadrature<ct>*> QuadratureProvider<ct, 3>::
-  pyramidQuads_(PyramidQuadrature<ct>::maxOrder());
+  pyramidQuads_(PyramidQuadrature<ct>::maxOrder(), 0);
 
 } // end namespace Dune

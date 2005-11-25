@@ -9,7 +9,10 @@
 #include <dune/grid/common/grid.hh>
 
 #include "idprovider.hh"
+#include "simplexpoints.hh"
 #include "gausspoints.hh"
+#include "prismpoints.hh"
+#include "pyramidpoints.hh"
 
 namespace Dune {
 
@@ -77,6 +80,29 @@ namespace Dune {
   };
 
   template <class ct, int dim>
+  class SimplexQuadrature : public QuadratureImp<ct, dim>
+  {
+  public:
+    typedef FieldVector<ct, dim> CoordinateType;
+
+  public:
+    SimplexQuadrature(int order, size_t id);
+    
+    virtual GeometryType geo() const {
+      return cube;
+    }
+    
+    virtual int order() const {
+      return order_;
+    }
+
+    static size_t maxOrder() { return 19; }
+
+  private:
+    int order_;
+  };
+
+  template <class ct, int dim>
   class CubeQuadrature : public QuadratureImp<ct, dim>
   {
   public:
@@ -93,7 +119,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPoints::highestOrder; }
 
   private:
     int order_;
@@ -116,7 +142,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPoints::highestOrder; }
 
   private:
     int order_;
@@ -139,7 +165,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return 0; }
+    static size_t maxOrder() { return 0; }
 
 
   private:
@@ -163,7 +189,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPoints::highestOrder; }
 
   private:
     int order_;
@@ -186,7 +212,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return 0; }
+    static size_t maxOrder() { return 0; }
 
   private:
     int order_;
@@ -209,7 +235,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPoints::highestOrder; }
 
   private:
     int order_;
@@ -232,7 +258,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return 0; }
+    static size_t maxOrder() { return PrismPoints::highest_order; }
 
   private:
     int order_;
@@ -255,7 +281,7 @@ namespace Dune {
       return order_;
     }
 
-    static int maxOrder() { return 0; }
+    static size_t maxOrder() { return PyramidPoints::highest_order; }
 
   private:
     int order_;
