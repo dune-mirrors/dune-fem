@@ -98,6 +98,15 @@ namespace Dune {
   public:
     typedef FieldVector<ct, dim> CoordinateType;
 
+    enum { 
+#if HAVE_ALBERTA 
+      maxOrder2 = 17 , maxOrder3 = 7 
+#else 
+      maxOrder2 = 12 , maxOrder3 = 5 
+#endif
+    };
+          
+    enum { maxOrder_  = (dim == 1) ? 19 : ((dim == 2) ? maxOrder2 : maxOrder3 ) };
   public:
     //! Constructor
     //! \param order The desired order (provided by the user)
@@ -117,7 +126,7 @@ namespace Dune {
 
     //! The maximal order of simplex quadratures. This is to be understood
     //! as an upper bound...
-    static size_t maxOrder() { return 19; }
+    static size_t maxOrder() { return maxOrder_; }
 
   private:
     int order_;
@@ -200,7 +209,13 @@ namespace Dune {
       return order_;
     }
 
-    static size_t maxOrder() { return 0; }
+    static size_t maxOrder() { 
+#if HAVE_ALBERTA 
+      return 7; 
+#else 
+      return 5; 
+#endif
+    }
 
 
   private:
@@ -251,7 +266,15 @@ namespace Dune {
       return order_;
     }
 
-    static size_t maxOrder() { return 0; }
+    static size_t maxOrder() { 
+#if HAVE_ALBERTA 
+      // highest order of Alberta quads 
+      return 17; 
+#else 
+      // highest order of UG quads 
+      return 12; 
+#endif
+    }
 
   private:
     int order_;
