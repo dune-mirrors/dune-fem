@@ -1,5 +1,6 @@
-#include "quad_test.hh"
+#include<config.h>
 
+#include "quad_test.hh"
 #include <set>
 
 namespace Dune {
@@ -251,7 +252,7 @@ namespace Dune {
 
   void Quad_Test::indicesTest() 
   {
-    int id;
+    size_t id;
     {
       Quadrature<double, 1> quadTemp(line, 5);
       id = quadTemp.id();
