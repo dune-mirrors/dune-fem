@@ -66,7 +66,7 @@ namespace Dune {
     }
     
   private:
-    UGQuadratureType* quad_;
+    const UGQuadratureType* quad_;
     double refVol_;
   };
 
@@ -112,7 +112,7 @@ namespace Dune {
     }
     
   private:
-    UGQuadratureType* ugQuad_;
+    const UGQuadratureType* ugQuad_;
   };
 
   class UGTetrahedronPointsAdapter {
@@ -156,9 +156,75 @@ namespace Dune {
       return 0.166666666666666666666667*quad_->weight[i];
     }
   private:    
-    UGQuadratureType* ugQuad_;
+    const UGQuadratureType* ugQuad_;
   };
   */
+
+  template <int dim>
+  class AlbertaSimplexPointsAdapter {
+  public:
+    enum { numCorners = dim+1 };
+#if HAVE_ALBERTA 
+    typedef ALBERTA QUAD AlbertaQuadratureType;
+#else 
+    struct QUAD {
+      int degree;
+      int n_points; 
+      const double ** lambda; 
+      const double * w; 
+    };
+    typedef QUAD AlbertaQuadratureType;
+#endif
+    
+    typedef FieldVector<double, dim> CoordinateType;
+
+  public:
+    AlbertaSimplexPointsAdapter(int order) :
+      quad_(0)
+    {
+#if HAVE_ALBERTA 
+      quad_ = get_quadrature(dim,order);  
+#endif
+      assert( quad_ );
+    }
+
+    int numPoints() const 
+    {
+      assert( quad_ );
+      return quad_->n_points;
+    }
+
+    int order() const 
+    {
+      assert( quad_ );
+      //std::cout << "Order = " << quad_->degree << "\n";
+      return quad_->degree;
+    }
+
+    CoordinateType point(int i) const 
+    {
+      assert(i >= 0 && i < numPoints());
+      assert( quad_ );
+      CoordinateType result;
+      for (size_t j = 0; j < dim; ++j) {
+        // lambda is of dim+1 length, 
+        // but we jsut drop the last coordinate
+        result[j] = quad_->lambda[i][j];
+      }
+      //std::cout << result << " result \n";
+      return result;
+    }
+
+    double weight(int i) const 
+    {
+      assert(i >= 0 && i < numPoints());
+      // no scaling, because already scaled 
+      return quad_->w[i];
+    }
+    
+  private:
+    const AlbertaQuadratureType* quad_;
+  };
 
 } // end namespace Dune
 
