@@ -27,11 +27,13 @@ namespace Dune {
   class PrismQuadrature;
   template <class ct>
   class PyramidQuadrature;
- 
+
+  //! Utility class that factors out the repetitive lookup process.
   class QuadCreator {
   public:
     template <class QuadImp>
-    static const QuadImp& provideQuad(int order, std::vector<QuadImp*>& vec) {
+    static const QuadImp& provideQuad(int order, std::vector<QuadImp*>& vec) 
+    {
       assert(vec.size() > static_cast<size_t>(order));
       if (!vec[order]) {
         vec[order] = new QuadImp(order, IdProvider::instance().newId());
@@ -40,18 +42,27 @@ namespace Dune {
     }
   };
 
+  //! QuadratureProvider follows the monostate pattern. It provides a single
+  //! point of access (and storage) for the actual implementation of
+  //! quadratures so that the number of costly creations can be reduced to
+  //! a minimum.
   template <typename ct, int dim>
   class QuadratureProvider {
   public:
+    //! Access to the quadrature implementations.
+    //! Implementation: if the desired hasn't been constructed, this is
+    //! done during the call. In all subsequent calls, the stored object is
+    //! returned.
     static const QuadratureImp<ct, dim>& getQuadrature(GeometryType geo, 
                                                        int order);
   };
 
-  // Specialisaions
+  //! Specialisation for dimension 1.
   template <typename ct>
   class QuadratureProvider<ct, 1> 
   {
   public:
+    //! Access to the quadrature implementations.
     static const QuadratureImp<ct, 1>& getQuadrature(GeometryType geo, 
                                                      int order) {
       assert(geo == cube  || geo == simplex || geo == line);
@@ -68,10 +79,12 @@ namespace Dune {
     static std::vector<CubeQuadrature<ct, 1>*> quads_;
   }; 
 
+  //! Specialisation for dimension = 2
   template <typename ct>
   class QuadratureProvider<ct, 2> 
   {
   public:
+    //! Access to the quadrature implemenations.
     static const QuadratureImp<ct, 2>& getQuadrature(GeometryType geo,
                                                      int order) {
       assert(geo == triangle || geo == quadrilateral || 
@@ -102,10 +115,12 @@ namespace Dune {
     static std::vector<CubeQuadrature<ct, 2>*> quadrilateralQuads_;
   };
 
+  //! Specialisation for dimension = 3.
   template <class ct>
   class QuadratureProvider<ct, 3> 
   {
   public:
+    //! Access to the quadrature implementation.
     static const QuadratureImp<ct, 3>& getQuadrature(GeometryType geo,
                                                      int order) {
       assert(geo == cube || geo == simplex || geo == hexahedron ||

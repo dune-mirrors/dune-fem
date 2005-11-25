@@ -4,14 +4,18 @@
 #include <dune/common/fvector.hh>
 
 namespace Dune {
-
+  
+  //! Single point of reference for the quadrature points for prism.
+  //! This class is a singleton, i.e. all points for all quadratures are
+  //! created once.
   class PrismPoints
   {
   public:
     enum { numQuads = 3 };
     enum { MAXP=6 };
     enum { highest_order=2 };
-
+    
+    //! Access to the singleton object.
     static const PrismPoints& instance() {
       if (!PrismPoints::instance_) {
         PrismPoints::instance_ = new PrismPoints();
@@ -19,21 +23,25 @@ namespace Dune {
       return *PrismPoints::instance_;
     }
 
+    //! Access to the ith point of quadrature rule m.
     const FieldVector<double, 3>& point(int m, int i) const
     {
       return G[m][i];
     }
     
+    //! Access to the ith weight of quadrature rule m.
     double weight (int m, int i) const
     {
       return W[m][i];
     }
     
+    //! Actual order of quadrature rule m.
     int order (int m) const
     {
       return O[m];
     }
-
+    
+    //! Number of points in the quadrature rule m.
     int numPoints(int m) const
     {
       return N[m];

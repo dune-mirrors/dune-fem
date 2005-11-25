@@ -8,6 +8,9 @@
 
 namespace Dune {
 
+  //! Adapter to the quadratures defined by UG.
+  //! There is a 1-1 relationship between UGSimplexPointsAdapter object and
+  //! UG quadrature implementation. 
   template <int dim>
   class UGSimplexPointsAdapter {
   public:
@@ -16,6 +19,7 @@ namespace Dune {
     typedef FieldVector<double, dim> CoordinateType;
 
   public:
+    //! Constructor.
     UGSimplexPointsAdapter(int order) :
       quad_(0),
       refVol_(0.0)
@@ -38,16 +42,19 @@ namespace Dune {
       }
     }
 
+    //! Number of quadrature points.
     int numPoints() const 
     {
       return quad_->nip;
     }
 
+    //! The actual order of the quadrature.
     int order() const 
     {
       return quad_->order;
     }
 
+    //! Access to the ith quadrature point.
     CoordinateType point(int i) const 
     {
       assert(i >= 0 && i < numPoints());
@@ -58,6 +65,7 @@ namespace Dune {
       return result;
     }
 
+    //! Access to the ith quadrature weight.
     double weight(int i) const 
     {
       assert(i >= 0 && i < numPoints());

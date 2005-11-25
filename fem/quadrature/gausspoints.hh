@@ -2,13 +2,15 @@
 #define DUNE_GAUSSPOINTS_HH
 
 namespace Dune {
-  //! define the one-dimensional Gauss weights
+  //! Define the one-dimensional Gauss weights.
+  //! This class implements the Singleton pattern.
   class GaussPoints
   {
   public:
     enum { MAXP=10 };
     enum { highestOrder=19 };
 
+    //! Access to the singleton object.
     static const GaussPoints& instance() {
       if (!GaussPoints::instance_) {
         GaussPoints::instance_ = new GaussPoints();
@@ -16,23 +18,27 @@ namespace Dune {
       return *GaussPoints::instance_;
     }
 
+    //! ith point of the mth 1d quadrature
     double point (int m, int i) const
     {
       assert(m > 0 && i < m);
       return G[m][i];
     }
 
+    //! ith weight of the mth quadrature.
     double weight (int m, int i) const
     {
       assert(m > 0 && i < m);
       return W[m][i];
     }
 
+    //! The actual order of the 1d quadrature.
     int order (int m) const
     {
       return O[m];
     }
 
+    //! A simple power method.
     int power (int y, int d) const
     {
       int m = 1;
