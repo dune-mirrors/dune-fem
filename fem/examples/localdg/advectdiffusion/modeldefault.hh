@@ -116,7 +116,6 @@ namespace Dune {
     enum { dimRange = Model::dimRange };
     typedef typename Model::RangeType RangeType;
     typedef typename Model::FluxRangeType FluxRangeType;
-    typedef typename Model::DiffusionRangeType DiffusionRangeType;
   public:
     LLFFlux(const Model& mod) : model_(mod) {}
     const Model& model() const {return model_;}

@@ -39,7 +39,7 @@ class BurgersModel {
 			  FluxRangeType& A) const {
     A *= 0;
     A[0] = epsilon*v[0];
-    return epsilon;
+    return tstep_eps;
   }
   inline bool hasBoundaryValue(int boundaryId) const {
     return true;
@@ -111,7 +111,7 @@ class AdvectionDiffusionModel {
     
     A[0] = v;
     A *= epsilon;
-    return epsilon;
+    return tstep_eps;
   }
   inline bool hasBoundaryValue(int boundaryId) const {
     return true;

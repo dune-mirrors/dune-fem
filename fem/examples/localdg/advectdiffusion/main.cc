@@ -39,7 +39,7 @@ int main(int argc, char ** argv, char ** envp) {
   // *** Initialization
   // Polynomial and ODE order
   enum {order=1,rksteps=2}; 
-  const bool with_difftstep = true;
+  const bool with_difftstep = false;
   // Grid:
   int N=40;                
   if (argc>1) 
@@ -113,14 +113,14 @@ int main(int argc, char ** argv, char ** envp) {
   //      dennis impl-rk methoden
   /*
   typedef DuneODE::ImplTimeStepper<DgAdvDiffType> ODEAdvDiffType;
-  typedef DuneODE::ExplTimeStepper<DgDiffType> ODEDiffType;
+  typedef DuneODE::ImplTimeStepper<DgDiffType> ODEDiffType;
   typedef DuneODE::ImplTimeStepper<DgAdvType> ODEAdvType;
   typedef DuneODE::ImplTimeStepper<DgBurgersType> ODEBurgersType;
   */
   //      dennis semiimpl-rk methoden
   /*
   typedef DuneODE::SemiImplTimeStepper<DgAdvType,DgDiffType> ODEAdvDiffType;
-  typedef DuneODE::ExplTimeStepper<DgDiffType> ODEDiffType;
+  typedef DuneODE::ImplTimeStepper<DgDiffType> ODEDiffType;
   typedef DuneODE::ImplTimeStepper<DgAdvType> ODEAdvType;
   typedef DuneODE::SemiImplTimeStepper<DgBurgersAdvType,DgDiffType> ODEBurgersType;
   */

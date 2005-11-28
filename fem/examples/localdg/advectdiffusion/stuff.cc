@@ -101,10 +101,9 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
 
   ofs << "# " << time << std::endl;
 
-  FieldVector<double, 2> mid(0.0);
-  FieldVector<double, 2> localMid(0.5);
-
-  FieldVector<double, 1> result;
+  typename SpaceType::DomainType mid (0.0);
+  typename SpaceType::DomainType localMid (0.5);
+  typename SpaceType::RangeType result (0.0);
 
   Iterator endit = space.end();
   for (Iterator it = space.begin(); it != endit; ++it) {
@@ -112,7 +111,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
     if (mid[1] < 0.1 && mid[1] > -0.1) {
       LocalFunctionType lf = sol.localFunction(*it);
       lf.evaluateLocal(*it, localMid, result);
-      ofs << mid[0] << " " << result[0] << "\n";
+      ofs << mid[0] << " " << result << "\n";
     }
   }
   ofs << std::endl;
