@@ -7,6 +7,8 @@
 
 #include "../../config.h"
 
+#include "../../quadrature/test/include_cc.hh"
+
 // Include standard library headers
 #include <iostream>
 #include <string>
@@ -32,9 +34,9 @@
 #include "../../misc/identity.hh"
 
 // Dx includes
-#include "../../visual/dx/dxdata.hh"
+//#include "../../visual/dx/dxdata.hh"
 
-using namespace Dune;
+//using namespace Dune;
 
 template <class GridImp, 
           int polOrd >
@@ -67,9 +69,11 @@ struct Traits {
   typedef FunctionSpace<double, double, dim, 1> SingleFuncSpace1;
   typedef GridPartType GridPart1Type;
   typedef IndexSetType GridIndexSet1;
+  //typedef DiscontinuousGalerkinSpace<
+  //  SingleFuncSpace1, GridPartType, polOrd> SingleSpace1Type;
+  //typedef CombinedSpace<SingleSpace1Type, dim> Space1Type;
   typedef DiscontinuousGalerkinSpace<
-    SingleFuncSpace1, GridPartType, polOrd> SingleSpace1Type;
-  typedef CombinedSpace<SingleSpace1Type, dim> Space1Type;
+    FuncSpace1, GridPartType, polOrd> Space1Type;
   typedef TransportDiffusionDiscreteModel1 DiscreteModel1Type;
   typedef LocalDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
 
@@ -123,8 +127,9 @@ public:
     iset2_(grid_, grid_.maxLevel()),
     gridPart1_(grid_, iset1_),
     gridPart2_(grid_, iset2_),
-    singleSpace1_(gridPart1_),
-    space1_(singleSpace1_),
+    //singleSpace1_(gridPart1_),
+    //space1_(singleSpace1_),
+    space1_(gridPart1_),
     space2_(gridPart2_),
     problem1_(),
     problem2_(velo, epsilon),
@@ -156,7 +161,7 @@ private:
   typename Traits::GridIndexSet2 iset2_;
   typename Traits::GridPart1Type gridPart1_;
   typename Traits::GridPart2Type gridPart2_;
-  typename Traits::SingleSpace1Type singleSpace1_;
+  //typename Traits::SingleSpace1Type singleSpace1_;
   typename Traits::Space1Type space1_;
   typename Traits::Space2Type space2_;
   typename Traits::DiscreteModel1Type problem1_;
@@ -174,6 +179,7 @@ void printData(double time, int timestep, GridType& grid, Loop& loop)
   dataio.writeData(loop.solution(), xdr, "vec", timestep);
 }
 
+/*
 template <class Loop, class SpaceType>
 void printDX(double time, int timestep, SpaceType& space, Loop& loop) 
 {  
@@ -182,7 +188,7 @@ void printDX(double time, int timestep, SpaceType& space, Loop& loop)
   DXWriter<SpaceType, false> dx(space, filestream.str());
   dx.write(loop.solution(), "data");
 }
-
+*/
 template <class Geometry>
 void midPoint(const Geometry& geo, FieldVector<double, 2>& result) 
 {
@@ -350,16 +356,16 @@ int main()
 
   //printData(loop.time(), 0, fix.grid(), loop);
   printSGrid(loop.time(), 0, fix.space(), loop);
-  printDX(loop.time(), 0, fix.space(), loop);
+  //printDX(loop.time(), 0, fix.space(), loop);
   
   loop.solve();
   //printData(loop.time(), 1, fix.grid(), loop);
   printSGrid(loop.time(), 1, fix.space(), loop);
-  printDX(loop.time(), 1, fix.space(), loop);
+  //printDX(loop.time(), 1, fix.space(), loop);
 
   loop.solveUntil(endTime);
   //printData(loop.time(), 2, fix.grid(), loop);
   printSGrid(loop.time(), 2, fix.space(), loop);
-  printDX(loop.time(), 2, fix.space(), loop);
+  //printDX(loop.time(), 2, fix.space(), loop);
 
 }

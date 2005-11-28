@@ -14,9 +14,8 @@
 #include <dune/grid/albertagrid.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/quadrature/fixedorder.hh>
-
-using namespace Dune;
+//#include <dune/quadrature/fixedorder.hh>
+#include "../../quadrature/quadrature.hh"
 
 namespace Dune {
 
@@ -39,19 +38,25 @@ namespace Dune {
     //typedef LeafGridPart<GridType> GridPartType;
     typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
+    //typedef DiscontinuousGalerkinSpace<
+    //  SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
+    //typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
     typedef DiscontinuousGalerkinSpace<
-      SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
-    typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
+      FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef FunctionSpaceType::DomainType DomainType;
     typedef FunctionSpaceType::RangeType RangeType;
     typedef FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     // * Need to do: adapt quadrature order
+    /*
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain>, 5> VolumeQuadratureType;
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
+    */
+    typedef Quadrature<double, dimDomain> VolumeQuadratureType;
+    typedef Quadrature<double, dimDomain-1> FaceQuadratureType;
 
     typedef TransportDiffusionDiscreteModel1 DiscreteModelType;
   };
@@ -161,10 +166,14 @@ namespace Dune {
     typedef FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     // * Need to do: adapt quadrature order
+    /*
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain>, 5> VolumeQuadratureType;
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
+    */
+    typedef Quadrature<double, dimDomain> VolumeQuadratureType;
+    typedef Quadrature<double, dimDomain-1> FaceQuadratureType;
 
     typedef TransportDiffusionDiscreteModel2 DiscreteModelType;
   };
