@@ -55,8 +55,13 @@
 			           const typename Traits::FaceDomainType& x,
 			           const RangeType& uLeft, 
                                    RangeType& gLeft) {} 
-        // only neaded for LLFFlux for artificial diffusion
+        // for time-step control
         inline double maxSpeed(const typename Traits::DomainType& normal,
+       			       double time,  
+	       		       const typename Traits::DomainType& x,
+		       	       const RangeType& u) const {}
+        // only neaded in LLFFlux for artificial diffusion
+        inline double LLFDiffusion(const typename Traits::DomainType& normal,
        			       double time,  
 	       		       const typename Traits::DomainType& x,
 		       	       const RangeType& u) const {}
@@ -145,12 +150,15 @@ namespace Dune {
 			      it.intersectionSelfLocal().global(x),
 			      uRight, anaflux);
       anaflux.umv(normal,gLeft);
-      
-      double maxspeedl=
-	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uLeft);
-      double maxspeedr=
-	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uRight);
-      double maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
+
+      double maxspeedl,maxspeedr,maxspeed;
+      maxspeedl=
+	model_.LLFDiffusion(normal,time,it.intersectionSelfLocal().global(x),
+			    uLeft);
+      maxspeedr=
+	model_.LLFDiffusion(normal,time,it.intersectionSelfLocal().global(x),
+			    uRight);
+      maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       visc=uRight;
       visc-=uLeft;
       visc*=maxspeed;
@@ -158,6 +166,12 @@ namespace Dune {
       
       gLeft*=0.5;
       gRight=gLeft;
+
+      maxspeedl=
+	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uLeft);
+      maxspeedr=
+	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uRight);
+      maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       return maxspeed;
     }
   private:

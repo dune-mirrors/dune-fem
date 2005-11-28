@@ -39,7 +39,7 @@ int main(int argc, char ** argv, char ** envp) {
   // *** Initialization
   // Polynomial and ODE order
   enum {order=1,rksteps=2}; 
-  const bool with_difftstep = false;
+  const bool with_difftstep = true;
   // Grid:
   int N=40;                
   if (argc>1) 
@@ -70,7 +70,8 @@ int main(int argc, char ** argv, char ** envp) {
   // Advection-Diffusion
   AdvDiffType advdiff(velocity,epsilon,with_difftstep);
   // Diffusion
-  AdvDiffType diffeqn(zerovelo,epsilon,with_difftstep);
+  //AdvDiffType diffeqn(zerovelo,epsilon,with_difftstep);
+  AdvDiffType diffeqn(velocity,epsilon,with_difftstep);
   // Advection
   AdvDiffType adveqn(velocity,0.0);  
   // Burgers Model
@@ -82,7 +83,7 @@ int main(int argc, char ** argv, char ** envp) {
   // Advection Diffusion
   typedef UpwindFlux<AdvDiffType> UpwindAdvDiffType;
   typedef LLFFlux<AdvDiffType> LLFAdvDiffType;
-  LLFAdvDiffType llfadvdiff(advdiff);
+  UpwindAdvDiffType llfadvdiff(advdiff);
   LLFAdvDiffType llfdiffeqn(diffeqn);
   UpwindAdvDiffType upwindadveqn(adveqn);
   // Burgers Model
@@ -92,8 +93,8 @@ int main(int argc, char ** argv, char ** envp) {
   LLFBurgersAdv llfburgersadv(burgersadv);
   // *** Operator typedefs
   // Space:
-  typedef DGAdvectionDiffusionOperator<AdvDiffType,LLFFlux,order> DgAdvDiffType;
-  typedef DGDiffusionOperator<AdvDiffType,LLFFlux,order> DgDiffType;
+  typedef DGAdvectionDiffusionOperator<AdvDiffType,UpwindFlux,order> DgAdvDiffType;
+  typedef DGAdvectionDiffusionOperator<AdvDiffType,LLFFlux,order> DgDiffType;
   typedef DGAdvectionOperator<AdvDiffType,UpwindFlux,order> DgAdvType;
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgBurgersType;
   typedef DGAdvectionOperator<BurgersAdvType,LLFFlux,order> DgBurgersAdvType;

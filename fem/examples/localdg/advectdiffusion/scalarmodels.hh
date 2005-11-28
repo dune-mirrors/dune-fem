@@ -62,7 +62,13 @@ class BurgersModel {
 				double time,  
 				const typename Traits::DomainType& x,
 				const RangeType& u) const {
-    return abs(normal[0]*u)+tstep_eps;
+    return std::abs(normal[0]*u)+tstep_eps;
+  }
+  inline double LLFDiffusion(const typename Traits::DomainType& normal,
+			     double time,  
+			     const typename Traits::DomainType& x,
+			     const RangeType& u) const {
+    return std::abs(normal[0]*u);
   }
  protected:
   double epsilon;
@@ -135,7 +141,13 @@ class AdvectionDiffusionModel {
 				double time,  
 				const typename Traits::DomainType& x,
 				const RangeType& u) const {
-    return abs(normal*velocity)+tstep_eps;
+    return std::abs(normal*velocity)+tstep_eps;
+  }
+  inline double LLFDiffusion(const typename Traits::DomainType& normal,
+			     double time,  
+			     const typename Traits::DomainType& x,
+			     const RangeType& u) const {
+    return std::abs(normal*velocity);
   }
  protected:
   DomainType velocity;
@@ -171,7 +183,7 @@ class UpwindFlux<AdvectionDiffusionModel<GridType> > {
       gLeft = uRight;
     gLeft *= upwind;
     gRight = gLeft;
-    return std::abs(upwind);
+    return std::abs(upwind)+model_.tstep_eps;
   }
  private:
   const Model& model_;
