@@ -133,18 +133,20 @@ namespace Dune {
       caller_.finalize();
     }
 
-    void applyAlt(EntityType& en) const
+    void applyLocal(EntityType& en) const
     {
       //- typedefs
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
       
+      const int quadOrder = 5;
+
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
-      GeometryType geom = en.geometry().type();
+      //GeometryType geom = en.geometry().type();
       
-      VolumeQuadratureType volQuad(geom);
+      VolumeQuadratureType volQuad(en, quadOrder);
 
       double vol = volumeElement(en, volQuad);
       //std::cout << "Vol = " << vol << std::endl;
@@ -172,8 +174,13 @@ namespace Dune {
       // Surface integral part
       IntersectionIterator endnit = en.iend();
       IntersectionIterator nit = en.ibegin();
-      FaceQuadratureType faceQuad(nit.intersectionGlobal().type());
-      
+      int twistSelf = 0; // * To be revised
+      int twistNeighbor = 0; // * To be revised
+      FaceQuadratureType faceQuadInner(nit, quadOrder, twistSelf, 
+                                       FaceQuadratureType::INSIDE);
+      FaceQuadratureType faceQuadOuter(nit, quadOrder, twistNeighbor,
+                                       FaceQuadratureType::OUTSIDE);
+
       double dtLocal = 0.0;
       double minvol = vol; 
       
@@ -190,24 +197,25 @@ namespace Dune {
   
 	    double nbvol = volumeElement(*nit.outside(), volQuad);
 	    if (nbvol<minvol) minvol=nbvol;
-            for (int l = 0; l < faceQuad.nop(); ++l) {
+            for (int l = 0; l < faceQuadInner.nop(); ++l) {
               DomainType xLocalEn = 
-                nit.intersectionSelfLocal().global(faceQuad.point(l));
+                nit.intersectionSelfLocal().global(faceQuadInner.point(l));
               DomainType xLocalNeigh = 
-                nit.intersectionNeighborLocal().global(faceQuad.point(l));
+                nit.intersectionNeighborLocal().global(faceQuadOuter.point(l));
               
               // Evaluate flux
+              // * Add both quadratures to caller!
               double dtLocalS = 
-                caller_.numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
-	      dtLocal += dtLocalS*faceQuad.weight(l);              
+                caller_.numericalFlux(nit,faceQuadInner, l, valEn_, valNeigh_);
+	      dtLocal += dtLocalS*faceQuadInner.weight(l);
 
               for (int i = 0; i < updEn.numDofs(); ++i) {
                 updEn[i] -= 
                   bsetEn.evaluateSingle(i, xLocalEn, valEn_)*
-                  faceQuad.weight(l)/vol;
+                  faceQuadInner.weight(l)/vol;
                 updNeigh[i] += 
                   bsetNeigh.evaluateSingle(i, xLocalNeigh, valNeigh_)
-                  *faceQuad.weight(l)/vol;
+                  *faceQuadInner.weight(l)/vol;
               }
             }
 
@@ -215,17 +223,17 @@ namespace Dune {
         } // end if neighbor
 
         if (nit.boundary()) {
-          for (int l = 0; l < faceQuad.nop(); ++l) {
+          for (int l = 0; l < faceQuadInner.nop(); ++l) {
             DomainType xLocalEn = 
-              nit.intersectionSelfLocal().global(faceQuad.point(l));
+              nit.intersectionSelfLocal().global(faceQuadInner.point(l));
                  
             double dtLocalS = 
-              caller_.boundaryFlux(nit, faceQuad, l, source_);
-	    dtLocal += dtLocalS*faceQuad.weight(l);
+              caller_.boundaryFlux(nit, faceQuadInner, l, source_);
+	    dtLocal += dtLocalS*faceQuadInner.weight(l);
                     
             for (int i = 0; i < updEn.numDofs(); ++i) {
               updEn[i] -= bsetEn.evaluateSingle(i, xLocalEn, source_)
-                *faceQuad.weight(l)/vol;
+                *faceQuadInner.weight(l)/vol;
             }
           }
         } // end if boundary
@@ -236,150 +244,6 @@ namespace Dune {
       }
     }
 
-    //! Perform the (volume and surface) integration on all elements.
-    virtual void applyLocal(EntityType& en) const
-    {
-      //std::cout << "DGLocalPass::applyLocal()" << std::endl;
-      //applyOld(en);
-      applyAlt(en);
-    }
-
-    void applyOld(EntityType& en) const {
-      //- Initialise quadratures and stuff
-      caller_.setEntity(en);
-      LocalFunctionType updEn = dest_->localFunction(en);
-      GeometryType geom = en.geometry().type();
-      
-      VolumeQuadratureType volQuad(geom);
-
-      double vol = volumeElement(en, volQuad);
-      //std::cout << "Vol = " << vol << std::endl;
- 
-      const typename DiscreteFunctionSpaceType::IndexSetType& iset = spc_.indexSet();
-
-      // Volumetric integral part
-      for (int l = 0; l < volQuad.nop(); ++l) {
-        caller_.analyticalFlux(en, volQuad, l, fMat_);
-        caller_.source(en, volQuad, l, source_);
-
-        for (int k = 0; k < spc_.getBaseFunctionSet(en).numBaseFunctions(); 
-             ++k) {
-          JacobianRangeType gradients(0.0);
-          RangeType values(0.0);
-          spc_.getBaseFunctionSet(en).jacobian(k, volQuad, l, gradients);
-          spc_.getBaseFunctionSet(en).eval(k, volQuad, l, values);
-
-          // Update dof k
-          // Scalar product between source contribution and base function k
-          double update = source_*values;
-          // Summing over all dimensions for analytical flux contribution
-          for (int i = 0; i < dimRange; ++i) {
-            grads_ = 0.0;
-            // Scaling
-            en.geometry().jacobianInverseTransposed(volQuad.point(l)).
-              umv(gradients[i], grads_);
-       
-            // Scalar product for component i
-            update += fMat_[i]*grads_;
-          } // end for i (dimRange)
-
-          // Scaling with quadrature weight and integration element
-          update *= volQuad.weight(l)*
-            en.geometry().integrationElement(volQuad.point(l));
-          update /= vol; // * right here?
-
-          updEn[k] += update;
-        } // end for k (baseFunctions)
-      } // end for l (quadraturePoints)
-
-      // Surface integral part
-      IntersectionIterator endnit = en.iend();
-      IntersectionIterator nit = en.ibegin();
-      FaceQuadratureType faceQuad(nit.intersectionGlobal().type());
-      
-      double dtLocal = 0.0;
-      double minvol = vol; 
-      
-      for (; nit != endnit; ++nit) {
-        if (nit.neighbor()) {
-          if (iset.index(*nit.outside()) > iset.index(en)
-              || nit.outside()->partitionType() == GhostEntity) {
-            
-            caller_.setNeighbor(*nit.outside());
-            LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
-
-            for (int l = 0; l < faceQuad.nop(); ++l) {
-              double h = 
-                nit.intersectionGlobal().integrationElement(faceQuad.point(l));
-              // * might be improved by using quadrature points directly
-              // * (how to deal with quadrature points on neighbor?)
-              DomainType xLocalEn = 
-                nit.intersectionSelfLocal().global(faceQuad.point(l));
-              DomainType xLocalNeigh = 
-                nit.intersectionNeighborLocal().global(faceQuad.point(l));
-              
-              // Evaluate flux
-              double dtLocalS = 
-                caller_.numericalFlux(nit, faceQuad, l, valEn_, valNeigh_);
-	      dtLocal += dtLocalS*faceQuad.weight(l);
-              
-              // * Assumption: all elements have same number of base functions
-              for (int k = 0;
-                   k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
-                spc_.getBaseFunctionSet(en).evaluate(k,
-                                                     diffVar_,
-                                                     xLocalEn,
-                                                     baseEn_);
-
-                spc_.getBaseFunctionSet(en).evaluate(k,
-                                                     diffVar_,
-                                                     xLocalNeigh,
-                                                     baseNeigh_);
-
-                // * Warning: division by vol only correct for orthonormal bases!!!!!!!!!!!
-
-                updEn[k] -=
-                  (valEn_*baseEn_)*faceQuad.weight(l)/vol;
-      
-		double nbvol = volumeElement(*nit.outside(), volQuad);
-                updNeigh[k] += 
-                  (valNeigh_*baseNeigh_)*faceQuad.weight(l)/nbvol;
-		if (nbvol<minvol) minvol=nbvol;
-              } // end loop base functions
-            } // end loop quadrature points
-            
-          } // end if outside etc.
-        } // end if neighbor
-
-        if (nit.boundary()) {
-          for (int l = 0; l < faceQuad.nop(); ++l) {
-            double integrationElement =
-              nit.intersectionGlobal().integrationElement(faceQuad.point(l));
-              
-            DomainType xLocalEn = 
-              nit.intersectionSelfLocal().global(faceQuad.point(l));
-            
-            double dtLocalS = 
-              caller_.boundaryFlux(nit, faceQuad, l, source_);
-	    dtLocal += dtLocalS*faceQuad.weight(l);
-                    
-            for (int k = 0; 
-                 k < spc_.getBaseFunctionSet(en).numBaseFunctions(); ++k) {
-              spc_.getBaseFunctionSet(en).evaluate(k,
-                                                   diffVar_,
-                                                   xLocalEn,
-                                                   baseEn_);
-              updEn[k] -= (source_*baseEn_)*faceQuad.weight(l)/vol;
-            }
-          }
-        } // end if boundary
-      }
-      if (dtLocal>2.*std::numeric_limits<double>::min()) {
-	dtLocal = minvol/dtLocal;
-	if (dtLocal < dtMin_) dtMin_ = dtLocal;
-      }
-    }
-    
   private:
     LocalDGPass();
     LocalDGPass(const LocalDGPass&);

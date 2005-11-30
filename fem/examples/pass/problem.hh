@@ -16,6 +16,7 @@
 #include <dune/grid/common/gridpart.hh>
 //#include <dune/quadrature/fixedorder.hh>
 #include "../../quadrature/quadrature.hh"
+#include "../../quadrature/cachingquad.hh"
 
 namespace Dune {
 
@@ -26,7 +27,7 @@ namespace Dune {
   {
     enum { dimRange = 2 };
     enum { dimDomain = 2 };
-    enum { polOrd = 2 };
+    enum { polOrd = 0 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
@@ -55,8 +56,12 @@ namespace Dune {
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
     */
+    /*
     typedef Quadrature<double, dimDomain> VolumeQuadratureType;
     typedef Quadrature<double, dimDomain-1> FaceQuadratureType;
+    */
+    typedef CacheQuadrature<GridType, 0> VolumeQuadratureType;
+    typedef CacheQuadrature<GridType, 1> FaceQuadratureType;
 
     typedef TransportDiffusionDiscreteModel1 DiscreteModelType;
   };
@@ -146,7 +151,7 @@ namespace Dune {
   {
     enum { dimRange = 1 };
     enum { dimDomain = 2 };
-    enum { polOrd = 2 };
+    enum { polOrd = 0 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
@@ -172,8 +177,12 @@ namespace Dune {
     typedef FixedOrderQuad<
       double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
     */
+    /*
     typedef Quadrature<double, dimDomain> VolumeQuadratureType;
     typedef Quadrature<double, dimDomain-1> FaceQuadratureType;
+    */
+    typedef CacheQuadrature<GridType, 0> VolumeQuadratureType;
+    typedef CacheQuadrature<GridType, 1> FaceQuadratureType;
 
     typedef TransportDiffusionDiscreteModel2 DiscreteModelType;
   };

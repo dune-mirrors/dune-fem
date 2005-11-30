@@ -34,7 +34,7 @@
 #include "../../misc/identity.hh"
 
 // Dx includes
-//#include "../../visual/dx/dxdata.hh"
+#include "../../visual/dx/dxdata.hh"
 
 //using namespace Dune;
 
@@ -179,7 +179,7 @@ void printData(double time, int timestep, GridType& grid, Loop& loop)
   dataio.writeData(loop.solution(), xdr, "vec", timestep);
 }
 
-/*
+
 template <class Loop, class SpaceType>
 void printDX(double time, int timestep, SpaceType& space, Loop& loop) 
 {  
@@ -188,7 +188,7 @@ void printDX(double time, int timestep, SpaceType& space, Loop& loop)
   DXWriter<SpaceType, false> dx(space, filestream.str());
   dx.write(loop.solution(), "data");
 }
-*/
+
 template <class Geometry>
 void midPoint(const Geometry& geo, FieldVector<double, 2>& result) 
 {
@@ -288,7 +288,7 @@ int main()
 {
 
   typedef SGrid<2, 2> MyGrid;
-  const int polOrd = 2;
+  const int polOrd = 0;
   //typedef AlbertaGrid<2, 2> MyGrid;
 
   typedef Traits<MyGrid, polOrd> MyTraits;
@@ -356,16 +356,16 @@ int main()
 
   //printData(loop.time(), 0, fix.grid(), loop);
   printSGrid(loop.time(), 0, fix.space(), loop);
-  //printDX(loop.time(), 0, fix.space(), loop);
+  printDX(loop.time(), 0, fix.space(), loop);
   
   loop.solve();
   //printData(loop.time(), 1, fix.grid(), loop);
   printSGrid(loop.time(), 1, fix.space(), loop);
-  //printDX(loop.time(), 1, fix.space(), loop);
+  printDX(loop.time(), 1, fix.space(), loop);
 
   loop.solveUntil(endTime);
   //printData(loop.time(), 2, fix.grid(), loop);
   printSGrid(loop.time(), 2, fix.space(), loop);
-  //printDX(loop.time(), 2, fix.space(), loop);
+  printDX(loop.time(), 2, fix.space(), loop);
 
 }
