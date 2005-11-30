@@ -13,7 +13,6 @@
 #include <dune/grid/albertagrid.hh>
 #endif
 
-
 #include "quadprovider.hh"
 #include "simplexpoints.hh"
 #include "gausspoints.hh"

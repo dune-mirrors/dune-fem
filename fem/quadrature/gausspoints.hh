@@ -1,6 +1,8 @@
 #ifndef DUNE_GAUSSPOINTS_HH
 #define DUNE_GAUSSPOINTS_HH
 
+#include <cassert>
+
 namespace Dune {
   //! Define the one-dimensional Gauss weights.
   //! This class implements the Singleton pattern.

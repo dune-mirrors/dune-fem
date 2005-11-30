@@ -1,6 +1,8 @@
 #ifndef DUNE_IDPROVIDER_HH
 #define DUNE_IDPROVIDER_HH
 
+#include <cstdlib>
+
 namespace Dune {
   //! Singleton that manages a globally unique identifier.
   class IdProvider {
