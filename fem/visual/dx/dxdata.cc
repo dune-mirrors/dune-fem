@@ -8,35 +8,12 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/common/stdstreams.hh>
-#include <dune/grid/common/virtualrefinement.hh>
-
-//#include <dune/grid/sgrid.hh>
-//#include <dune/common/iteratorfacades.hh>
 
 //- Local includes
 
 namespace Dune {
 
-  //
-  //! Provide a dummy value for test output
-  //
-  //!\param pos Position to calculate the dummy value for
-  template <class FieldVector>
-  float dummyValue(const FieldVector &pos)
-  {
-    typedef typename FieldVector::ConstIterator Iterator;
-    
-    float result = 0;
-    Iterator posEnd = pos.end();
-    
-    int sign = 1;
-    for(Iterator i = pos.begin(); i != posEnd; ++i, sign *= -1)
-      result += sign * *i * *i;
-    
-    return result;
-  }
-  
-  //
+
   //!  Mapping from Dune::GeometryType to dx names
   //
   //!\param type The Dune representation of the geometry type, currently one of
@@ -44,7 +21,7 @@ namespace Dune {
   //
   //! Returns a reference to a static std::string.  Throws a Dune::NotImplemented for unsupported
   //! geometry types.
-  const std::string &geometryName(GeometryType type)
+  const std::string &geometryName(GeometryType type, int dim)
   {
     static const std::string triangles = "triangles";
     static const std::string tetrahedrons = "tetrahedra";
@@ -53,11 +30,19 @@ namespace Dune {
     static const std::string cubes = "cubes";
 
     switch(type) {
-    case triangle:      return triangles;
-    case tetrahedron:   return tetrahedrons;
+    case triangle:      
+      return triangles;
+    case tetrahedron:
+      return tetrahedrons;
+    case simplex:
+      return (dim == 2 ? triangles : tetrahedrons);
 
-    case quadrilateral: return quads;
-    case hexahedron:    return cubes;
+    case quadrilateral:
+      return quads;
+    case hexahedron: 
+      return cubes;
+    case cube:
+      return (dim == 2 ? quads : cubes);
 
     default: DUNE_THROW(NotImplemented, "Dune::GeometryType " << type << " is not supported by dxwriter");
     }
@@ -65,164 +50,6 @@ namespace Dune {
 
   // //////////////////////////////////////////////////////////////////////
 
-  int refinementLevel()
-  {
-    // * temp
-    return 0;
-  }
-
-  template <class Scalar>
-  std::vector<Scalar> operator+(const std::vector<Scalar> &V, const Scalar &S)
-  {
-    std::vector<Scalar> R;
-    int size = V.size();
-    R.reserve(size);
-    for(int i = 0; i < size; ++i)
-      R.push_back(V[i] + S);
-    return R;
-  }
-
-  template<class Stream, class Value>
-  Stream &operator<<(Stream &s, const std::vector<Value> &v)
-  {
-    int size = v.size();
-    char *sep = "";
-    for(int i = 0; i < size; ++i, sep = "\t")
-      s << sep << v[i];
-    return s;
-  }
-
-  template <class Grid>
-  void writeGridDX(Grid &grid, std::ostream& out)
-  {
-    //- Type definitions
-    typedef typename Grid::ctype CoordType;
-    enum { dimension = Grid::dimension };
-
-    typedef FieldVector<typename Grid::ctype, Grid::dimensionworld> PosType;
-    typedef typename PosType::ConstIterator PosIterator;
-    typedef std::vector<PosType> PosList;
-
-    typedef std::vector<int> CellType;
-    typedef std::vector<CellType> CellList;
-
-    typedef float ValueType;
-    typedef std::vector<ValueType> ValueList;
-
-    typedef typename Grid::LeafIterator LeafIterator;
-
-    typedef typename Grid::ctype CoordType;
-    typedef VirtualRefinement<dimension, CoordType> Refinement;
-
-    //- Initialisation
-    LeafIterator leafEnd = grid.template leafend<0>();
-
-    // Check if all elements are of the same type
-    GeometryType geometryType = 
-      grid.template leafbegin<0>()->geometry().type();
-    for(LeafIterator i = grid.template leafbegin<0>(); i != leafEnd; ++i)
-      if(geometryType != i->geometry().type())
-	DUNE_THROW(NotImplemented, "dxwriter supports only uniformly typed grids");
-    unsigned int cornersPerCell = 
-      grid.template leafbegin<0>()->geometry().corners();
-
-    // Count leaves
-    std::cerr << "Counting leaves" << std::endl;
-    unsigned int nCells = 0;
-    for(LeafIterator i = grid.template leafbegin<0>(); i != leafEnd; ++i)
-      ++nCells;
-    CellList cellList;
-    cellList.reserve(nCells);
-    std::cerr << "Done counting leaves" << std::endl;
-
-    // Record refinement levels
-    std::cerr << "Preprocessing" << std::endl;
-    std::vector<int> refinementLevels;
-    refinementLevels.reserve(nCells);
-    // Record starting subindex for each cell
-    std::vector<int> startingCellIndex;
-    std::vector<int> startingVertexIndex;
-    startingCellIndex.reserve(nCells);
-    startingVertexIndex.reserve(nCells);
-    // Count fineCells
-    unsigned int nFineCells = 0;
-    // Count fineVertices
-    unsigned int nFineVertices = 0;
-    for(LeafIterator i = grid.template leafbegin<0>(); i != leafEnd; ++i) {
-      Refinement &refinement = buildRefinement<dimension, CoordType>(geometryType, geometryType);
-      int level = refinementLevel();
-      refinementLevels.push_back(level);
-      startingVertexIndex.push_back(nFineVertices);
-      startingCellIndex.push_back(nFineCells);
-      nFineVertices += refinement.nVertices(level);
-      nFineCells += refinement.nElements(level);
-    }
-    std::cerr << "Preprocessing done" << std::endl;
-    
-    //- Write out mesh info
-    // write positions
-    std::cerr << "Positions" << std::endl;
-    out << "object \"positions\" class array type float category real rank 1 "
-        << "shape " << Grid::dimensionworld << " items " << nFineVertices
-        << " text data follows" << std::endl;
-    int n = 0;
-    for(LeafIterator i = grid.template leafbegin<0>(); i != leafEnd; ++n, ++i) {
-      typedef typename Refinement::VertexIterator Iterator;
-      Refinement &refinement = buildRefinement<dimension, CoordType>(geometryType, geometryType);
-      Iterator vertexEnd = refinement.vEnd(refinementLevels[n]);
-      for(Iterator j = refinement.vBegin(refinementLevels[n]); j != vertexEnd; ++j)
-	out << "\t" << i->geometry().global(j.coords()) << std::endl;
-    }
-    out << std::endl;
-    std::cerr << "Positions done" << std::endl;
-
-    // write connections
-    std::cerr << "Connections" << std::endl;
-    out << "object \"connections\" class array type int category real rank 1 "
-        << "shape " << cornersPerCell << " items " << nFineCells
-        << " text data follows" << std::endl;
-    n = 0;
-    for(LeafIterator i = grid.template leafbegin<0>(); i != leafEnd; ++n, ++i) {
-      typedef typename Refinement::ElementIterator Iterator;
-      std::cerr << "Building refinement" << std::endl;
-      Refinement &refinement = buildRefinement<dimension, CoordType>(geometryType, geometryType);
-      std::cerr << "Building elementEnd" << std::endl;
-      Iterator elementEnd = refinement.eEnd(refinementLevels[n]);
-      for(Iterator j = refinement.eBegin(refinementLevels[n]); j != elementEnd; ++j)
-	out << "\t" << (j.vertexIndices()+startingVertexIndex[n]) << std::endl;
-    }
-    out << "attribute \"ref\" string \"positions\"" << std::endl;
-    out << "attribute \"element type\" string \""<< geometryName(geometryType) << "\"" << std::endl;
-    out << std::endl;
-    std::cerr << "Connections done" << std::endl;
-    
-    //- Write data
-    // write values
-    std::cerr << "Values" << std::endl;
-    out << "object \"data\" class array type float category real rank 0 "
-        << "items " << nFineVertices
-        << " text data follows" << std::endl;
-    n = 0;
-    for(LeafIterator i = grid.template leafbegin<0>(); i != leafEnd; ++n, ++i) {
-      typedef typename Refinement::VertexIterator Iterator;
-      Refinement &refinement = buildRefinement<dimension, CoordType>(geometryType, geometryType);
-      Iterator vertexEnd = refinement.vEnd(refinementLevels[n]);
-      for(Iterator j = refinement.vBegin(refinementLevels[n]); j != vertexEnd; ++j)
-	out << "\t" << dummyValue(i->geometry().global(j.coords())) << std::endl;
-    }
-    out << "attribute \"dep\" string \"positions\"" << std::endl;
-    out << std::endl;
-    std::cerr << "Values done" << std::endl;
-    
-    // write container
-    out << "object \"all\" class field" << std::endl
-        << "\tcomponent \"positions\" value \"positions\"" << std::endl
-        << "\tcomponent \"connections\" value \"connections\"" << std::endl
-        << "\tcomponent \"data\" value \"data\"" << std::endl;
-    out << std::endl;
-    
-    out << "end" << std::endl;
-  }
 
   // * the new code follows here
   template <class FunctionSpaceT, bool binary>
@@ -293,14 +120,12 @@ namespace Dune {
     for(LeafIterator i = grid_.template leafbegin<0>();
         i != leafEnd; ++i)
       ++nCells;
-    // * what to do with cellList -> comment out (not used)
-    //CellList cellList;
-    //cellList.reserve(nCells);
+ 
     dverb << "Done counting leaves" << std::endl;
 
     // Record refinement levels
     dverb << "Preprocessing" << std::endl;
-    data_.refinementLevels_.reserve(nCells);
+
     // Record starting subindex for each cell
     data_.startingCellIndex_.reserve(nCells);
     data_.startingVertexIndex_.reserve(nCells);
@@ -311,24 +136,21 @@ namespace Dune {
     // Element type of the grid
     data_.geometryType_  = 
       grid_.template leafbegin<0>()->geometry().type();
-    // Get refinement object
-    refinement_ = 
-      &buildRefinement<GridType::dimension, CoordType>(data_.geometryType_, data_.geometryType_);
 
-    for(LeafIterator i = grid_.template leafbegin<0>();
-        i != leafEnd; ++i) {
-      data_.level_ = refinementLevel();
-      data_.refinementLevels_.push_back(data_.level_);
+    for(LeafIterator i = grid_.template leafbegin<0>(); i != leafEnd; ++i) {
       data_.startingVertexIndex_.push_back(data_.nFineVertices_);
       data_.startingCellIndex_.push_back(data_.nFineCells_);
-      data_.nFineVertices_ += refinement_->nVertices(data_.level_);
-      data_.nFineCells_ += refinement_->nElements(data_.level_);
+      data_.nFineVertices_ += data_.cornersPerCell_;
+      data_.nFineCells_ += 1;
     }
   }
 
   template <class FunctionSpaceT, bool binary>
   void DXWriter<FunctionSpaceT, binary>::writeMesh() {
     dverb << "Positions" << std::endl;
+
+    const int dimension = GridType::dimension;
+
     if (binary) {
       ofs_ << "data mode lsb binary\n";
     }
@@ -347,12 +169,11 @@ namespace Dune {
     int n = 0;
     for(LeafIterator i = grid_.template leafbegin<0>(); 
         i != leafEnd; ++n, ++i) {
-      typedef typename Refinement::VertexIterator Iterator;
-      Iterator vertexEnd = 
-        refinement_->vEnd(data_.refinementLevels_[n]);
-      for(Iterator j=refinement_->vBegin(data_.refinementLevels_[n]);
-          j != vertexEnd; ++j) {
-        x = i->geometry().global(j.coords());
+ 
+      //     for(Iterator j=refinement_->vBegin(data_.refinementLevels_[n]);
+      //  j != vertexEnd; ++j) {
+      for (int j = 0; j < data_.cornersPerCell_; ++j) {
+        x = i->geometry()[j];
         for (int k = 0; k < GridType::dimensionworld; ++k) {
           writeScalar(static_cast<float>(x[k]), Int2Type<binary>());
         }
@@ -375,33 +196,25 @@ namespace Dune {
         << " data follows" 
         << std::endl;
 
-    // temporary for later use
-    std::vector<int> indices(data_.cornersPerCell_);
     n = 0;
     for(LeafIterator i = grid_.template leafbegin<0>(); 
         i != leafEnd; ++n, ++i) {
-      typedef typename Refinement::ElementIterator Iterator;
-      dverb << "Building elementEnd" << std::endl;
       
       const int offset = data_.startingVertexIndex_[n];
-      Iterator elementEnd = 
-        refinement_->eEnd(data_.refinementLevels_[n]);
-      for(Iterator j=refinement_->eBegin(data_.refinementLevels_[n]);
-          j != elementEnd; ++j) {
-        indices = j.vertexIndices() + offset;
-        for (int k = 0; k < data_.cornersPerCell_; ++k) {
-          writeScalar(static_cast<int>(indices[k]), 
-                      Int2Type<binary>());
-        }
-        if (!binary) {
-          ofs_ << "\n";
-        }
+
+      for (int k = 0; k < data_.cornersPerCell_; ++k) {
+        writeScalar(static_cast<int>(offset + k), 
+                    Int2Type<binary>());
       }
+      if (!binary) {
+        ofs_ << "\n";
+      }
+      
     }
     // Writing out attributes
     ofs_ << "\nattribute \"ref\" string \"positions\"\n";
     ofs_ << "attribute \"element type\" string \""
-        << geometryName(data_.geometryType_) 
+        << geometryName(data_.geometryType_, dimension) 
         << "\"\n"; 
     ofs_ << std::endl;
     dverb << "Connections done" << std::endl;
@@ -436,20 +249,16 @@ namespace Dune {
         << " data follows"
         << std::endl;
 
-    RangeType result;
+    RangeType result(0.0);
     int n = 0;
     LeafIterator leafEnd = grid_.template leafend<0>();
     for(LeafIterator i = grid_.template leafbegin<0>(); 
         i != leafEnd; ++n, ++i) {
-      typedef typename Refinement::VertexIterator Iterator;
       LocalFunctionType lf = df.localFunction(*i);
 
-      Iterator vertexEnd = 
-        refinement_->vEnd(data_.refinementLevels_[n]);
-      for (Iterator j = 
-             refinement_->vBegin(data_.refinementLevels_[n]);
-           j != vertexEnd; ++j) {
-        lf.evaluate(*i, i->geometry().global(j.coords()), result);
+      for (int j = 0; j < data_.cornersPerCell_; ++j) {
+        lf.evaluateGlobal(*i, i->geometry()[j], result);
+        //lf.evaluate(*i, i->geometry().global(j.coords()), result);
 	
         for (int k =0; k < shape; ++k) {
           writeScalar(static_cast<float>(result[k]), 

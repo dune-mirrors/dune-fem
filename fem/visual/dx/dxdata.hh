@@ -20,11 +20,9 @@ namespace Dune {
   //! A helper struct to store the values for refinement
   struct RefinementData {
     //- Data members
-    std::vector<int> refinementLevels_;
     std::vector<int> startingCellIndex_;
     std::vector<int> startingVertexIndex_;
     
-    int level_;
     int nFineCells_;
     int nFineVertices_;
     int cornersPerCell_;
@@ -64,14 +62,13 @@ namespace Dune {
     typedef typename FunctionSpaceT::DomainType DomainType;
     typedef typename GridType::ctype CoordType;
     typedef typename GridType::template Codim<0>::LeafIterator LeafIterator;
-    typedef VirtualRefinement<GridType::dimension, CoordType> Refinement;
+    //typedef typename FunctionSpaceT::IteratorType Iterator;
     //- Local class
     template <int N>
     struct Int2Type {
       enum { value = N };
     };
 
- 
     //- Local methods
     void init();
     void writeMesh();
@@ -96,8 +93,6 @@ namespace Dune {
     std::string outName_;
     //! Flag triggering multifile output
     const bool multiFile_;
-    //! The refinement object
-    Refinement* refinement_;
     //! The data used by the refinement
     RefinementData data_;
     //! The format string (binary or text)
