@@ -24,75 +24,58 @@ namespace Dune {
   typename TwistProvider<ct, dim>::IteratorType
   TwistProvider<ct, dim>::addMapper(const QuadratureType& quad) 
   {
-    std::auto_ptr<TwistMapperCreator<ct, dim> > creator = 
-      TwistProvider<ct, dim>::newCreator(quad);
+    TwistMapperCreator<ct, dim> creator(quad);
     
     // The vector of TwistMapper for every possible twist
-    std::vector<TwistMapper*> mapperVec(offset_ + creator->maxTwist());
+    std::vector<TwistMapper*> mapperVec(offset_ + creator.maxTwist());
     
-    for (int twist = creator->minTwist(); twist < creator->maxTwist(); 
+    for (int twist = creator.minTwist(); twist < creator.maxTwist(); 
          ++twist) {
-      mapperVec[offset_ + twist] = creator->createMapper(twist);
+      mapperVec[offset_ + twist] = creator.createMapper(twist);
     }
 
     return mappers_.insert(std::make_pair(quad.id(), mapperVec)).first;
   }
   
   template <class ct, int dim>
-  std::auto_ptr<TwistMapperCreator<ct, 1> > 
-  TwistProvider<ct, dim>::newCreator(const Quadrature<ct, 1>& quad)
-  {
-    typedef std::auto_ptr<TwistMapperCreator<ct, 1> > AutoPtrType;
-    assert(dim == 1);
-   
-    return AutoPtrType(new LineTwistMapperCreator<ct>(quad));
-  }
-
-  template <class ct, int dim>
-  std::auto_ptr<TwistMapperCreator<ct, 2> > 
-  TwistProvider<ct, dim>::newCreator(const Quadrature<ct, 2>& quad)
-  {
-    typedef std::auto_ptr<TwistMapperCreator<ct, 2> > AutoPtrType;
-    assert(dim == 2);
-    
-    switch (quad.geo()) {
-      case triangle:
-      case simplex:
-        return AutoPtrType(new TriangleTwistMapperCreator<ct>(quad));
-      case quadrilateral:
-      case cube:
-        return AutoPtrType(new QuadrilateralTwistMapperCreator<ct>(quad));
-      default:
-        DUNE_THROW(NotImplemented, 
-                   "No creator for given GeometryType exists");   
-    } // end switch
-    
-    assert(false); // should newer get here
-    return AutoPtrType(new QuadrilateralTwistMapperCreator<ct>(quad)); // dummy
-
-
-  }
-
-  template <class ct, int dim>
   const ct TwistMapperCreator<ct, dim>::eps_ = 1.0e-5;
 
   template <class ct, int dim>
-  TwistMapperCreator<ct, dim>::TwistMapperCreator(const QuadratureType& quad,
-                                                  int minTwist,
-                                                  int maxTwist) :
+  TwistMapperCreator<ct, dim>::TwistMapperCreator(const QuadratureType& quad) :
     quad_(quad),
-    mat_(0.),
-    minTwist_(minTwist),
-    maxTwist_(maxTwist)
-  {}
+    helper_()
+  {
+    typedef std::auto_ptr<TwistMapperStrategy<ct, dim> > AutoPtrType;
+    
+    if (dim == 1) {
+      helper_ = 
+        AutoPtrType(new LineTwistMapperStrategy<ct, dim>(quad.geo()));
+    } 
+    else {
+      assert (dim == 2);
+
+      switch (quad.geo()) {
+      case triangle:
+      case simplex:
+        helper_ = 
+          AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>(quad.geo()));
+      case quadrilateral:
+      case cube:
+        helper_ = 
+         AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>(quad.geo()));
+      default:
+        DUNE_THROW(NotImplemented, 
+                   "No creator for given GeometryType exists");
+      } // end switch
+    }
+  }
 
   template <class ct, int dim>
   TwistMapper* TwistMapperCreator<ct, dim>::createMapper(int twist) const 
   {
-    TwistMapper* mapper = new TwistMapper();
-    mapper->indices_.resize(quad_.nop());
+    TwistMapper* mapper = new TwistMapper(quad_.nop());
     
-    buildTransformationMatrix(twist, mat_);
+    const MatrixType& mat = helper_->buildTransformationMatrix(twist);
 
     for (int i = 0; i < quad_.nop(); ++i) {
       PointType pFace = quad_.point(i);
@@ -104,7 +87,7 @@ namespace Dune {
       }
 
       PointType pRef(0.);     
-      mat_.umtv(c, pRef);
+      mat.umtv(c, pRef);
 
       bool found = false;
       for (int j = 0; j < quad_.nop(); ++j) {
@@ -134,66 +117,77 @@ namespace Dune {
     return result;
   }
 
-  template <class ct>
-  LineTwistMapperCreator<ct>::
-  LineTwistMapperCreator(const QuadratureType& quad) :
-    TwistMapperCreator<ct, 1>(quad, 0, 1),
-    refElem_(ReferenceElements<ct, dim>::cube(quad.geo()))
-  {}
+  template <class ct, int dim>
+  LineTwistMapperStrategy<ct, dim>::
+  LineTwistMapperStrategy(GeometryType geo) :
+    TwistMapperStrategy<ct, dim>(0, 1),
+    refElem_(ReferenceElements<ct, dim>::cube(geo)),
+    mat_(0.)
+  {
+    assert(dim == 1);
+  }
 
-  template <class ct>
-  void LineTwistMapperCreator<ct>::
-  buildTransformationMatrix(int twist, MatrixType& mat) const 
+  template <class ct, int dim>
+  const typename TwistMapperStrategy<ct, dim>::MatrixType&
+  LineTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const 
   {
     assert(twist == 0 || twist == 1);
     
     if (twist == 0) {
-      mat[0] = refElem_.position(0, 1);
-      mat[1] = refElem_.position(1, 1);
+      mat_[0] = refElem_.position(0, 1);
+      mat_[1] = refElem_.position(1, 1);
     }
     else {
-      mat[0] = refElem_.position(1, 1);
-      mat[1] = refElem_.position(0, 1);
+      mat_[0] = refElem_.position(1, 1);
+      mat_[1] = refElem_.position(0, 1);
     }
   }
 
-  template <class ct>
-  TriangleTwistMapperCreator<ct>::
-  TriangleTwistMapperCreator(const QuadratureType& quad) :
-    TwistMapperCreator<ct, 2>(quad, -3, 3),
-    refElem_(ReferenceElements<ct, dim>::simplex(quad.geo()))
-  {}
-
-  template <class ct>
-  void TriangleTwistMapperCreator<ct>::
-  buildTransformationMatrix(int twist, MatrixType& mat) const 
+  template <class ct, int dim>
+  TriangleTwistMapperStrategy<ct, dim>::
+  TriangleTwistMapperStrategy(GeometryType geo) :
+    TwistMapperStrategy<ct, dim>(-3, 3),
+    refElem_(ReferenceElements<ct, dim>::simplices(geo)),
+    mat_(0.)
   {
-   mat = 0.0;
+    assert(dim == 2);
+  }
+
+  template <class ct, int dim>
+  const typename TwistMapperStrategy<ct, dim>::MatrixType&
+  TriangleTwistMapperStrategy<ct, dim>::
+  buildTransformationMatrix(int twist) const 
+  {
+   mat_ = 0.0;
 
     for (int idx = 0; idx < dim+1; ++idx) {
       int aluIndex = FaceTopo::dune2aluVertex(idx);
       int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
-      mat[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
+      mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
   }
 
-  template <class ct>
-  QuadrilateralTwistMapperCreator<ct>::
-  QuadrilateralTwistMapperCreator(const QuadratureType& quad) :
-    TwistMapperCreator<ct, 2>(quad, -4, 4),
-    refElem_(ReferenceElements<ct, dim>::cube(quad.geo()))
-  {}
-
-  template <class ct>
-  void QuadrilateralTwistMapperCreator<ct>::
-  buildTransformationMatrix(int twist, MatrixType& mat) const 
+  template <class ct, int dim>
+  QuadrilateralTwistMapperStrategy<ct, dim>::
+  QuadrilateralTwistMapperStrategy(GeometryType geo) :
+    TwistMapperStrategy<ct, dim>(-4, 4),
+    refElem_(ReferenceElements<ct, dim>::cube(geo)),
+    mat_(0.)
   {
-    mat = 0.0;
+    assert(dim == 2);
+  }
+
+  template <class ct, int dim>
+  const typename TwistMapperStrategy<ct, dim>::MatrixType& 
+  QuadrilateralTwistMapperStrategy<ct, dim>::
+  buildTransformationMatrix(int twist) const 
+  {
+    mat_ = 0.0;
 
     for (int idx = 0; idx < dim+1; ++idx) {
       int aluIndex = FaceTopo::dune2aluVertex(idx);
       int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
-      mat[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
+      mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
   }
 
