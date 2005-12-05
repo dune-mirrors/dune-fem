@@ -84,6 +84,7 @@ namespace Dune {
     static const int offset_; 
   };
 
+  //! This class factors out all geometry dependent stuff in a strategy class
   template <class ct, int dim>
   class TwistMapperStrategy 
   {
