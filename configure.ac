@@ -30,6 +30,8 @@ LIBS="$DUNE_LIBS"
 
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
+		 caching/Makefile
+		 caching/test/Makefile
                  examples/Makefile
                  examples/poisson/Makefile
               	 examples/transport/Makefile
