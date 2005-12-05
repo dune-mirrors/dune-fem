@@ -7,6 +7,125 @@
 
 namespace Dune {
 
+  // * Idee: nur eine pointMapper-Klasse
+  // * benuetze dann swap zur initialisierung mit nur einem vector! (-> der wird dann ungueltig)
+
+  template <class ct, int dim>
+  class CachePointProvider;
+
+  // * ueberarbeiten...
+  template <class GridImp, int codim>
+  class CachePointStorage 
+  {
+  public:
+    class Key {
+    public:
+      Key(int faceIdx, int twist) :
+        faceIdx_(faceIdx),
+        twist_(twist)
+      {}
+
+      bool operator<(const Key& other) const {
+        if (faceIdx_ < other.faceIdx_) {
+          return true;
+        }
+        return (twist_ < other.twist_);
+      }
+      
+      int faceIndex() const {
+        return faceIndex_;
+      }
+
+      int twist() const {
+        return twist_;
+      }
+
+    private:
+      int faceIdx_;
+      int twist_;
+      // * Need to add that later to deal with multiple element types
+      // GeometryType elemGeo_;
+    };
+
+
+  public:
+
+  public:
+    CachePointStorage();
+    
+    void addPoints(const Key& key, const CachePointMapper& points) {
+      points_.insert(std::make_pair(key, points));
+    }
+
+    const CachePointMapper& getMapper(const Key& key) const {
+      assert(points_.find(key) != points.end());
+      return points_.find(key);
+    }
+
+  private:
+    typedef std::map<Key, CachePointMapper> MapType;
+    typedef typename MapType::iterator IteratorType;
+
+  private:
+    MapType points_;
+  };
+
+
+  template <class GridImp, int codim>
+  class CacheProvider {
+  public:
+    typedef CacheQuadrature<GridImp, codim> CacheQuadratureType;
+    typedef CachePointMapper MappingType;
+
+  public:
+    static const MappingType& getMapper(const CachingQuadratureType& quad);
+
+  private:
+    typedef CachePointStorage<GridImp, codim> CachePointStorageType;
+
+  private:
+    static const MappingType& getMapper(const CachingQuadratureType& quad,
+                                        Int2Type<true>);
+    static const MappingType& getMapper(const CachingQuadratureType& quad,
+                                        Int2Type<false>);
+
+  private:
+    static std::vector<CachePointStorageType> storage_;
+  };
+
+  template <class ct, int dim>
+  class CachePointProvider {
+  public:
+    CachePointProvider(const TwistMapper& twist,
+                       const CachePointMapper& points) :
+      mapping_(twist.numPoints())
+    {
+      for (size_t i = 0; i < twist.numPoints(); ++i) {
+        mapping_[i] = points.index(twist.index(i));
+      }
+    }
+
+    CachePointProvider(const CachePointMapper& points) :
+      mapping_(points.numPoints())
+    {
+      for (size_t i = 0; i < points.numPoints(); ++i) {
+        mapping_[i] = points.index(i);
+      }
+    }
+
+    size_t index(size_t quadPoint) const {
+      return points_[quadPoint];
+    }
+
+  private:
+    std::vector<size_t> mapping_;
+  };
+
+
+
+  // * OLD CODE
+
+
   template <class ct, int dim, bool unstructured>
   class CacheProvider {};
   template <class ct, int dim, bool unstructured>
