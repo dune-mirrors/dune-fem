@@ -13,36 +13,6 @@
 
 namespace Dune {
 
-  template <class ct, int dim>
-  class MapperStorage 
-  {
-  public:
-    typedef typename CachingTraits<ct, dim>::MapperType MapperType;
-
-  public:
-    MapperStorage() {}
-
-    MapperStorage(int numFaces) :
-      mappers_(numFaces)
-    {}
-
-    void addMapper(const MapperType& mapper, int face) {
-      assert(face >= 0 && face < mappers_.size());
-      mappers_[face] = mapper;
-    }
-    
-    const MapperType& getMapper(int face) const {
-      assert(face >= 0 && face < mappers_.size());
-      return mappers_[face];
-    }
-    
-  private:
-    typedef typename CachingTraits<ct, dim>::MapperVectorType MapperVectorType;
-
-  private:
-    MapperVectorType mappers_;
-  };
-
   template <class ct, int dim, int codim>
   class PointProvider 
   {
@@ -102,10 +72,8 @@ namespace Dune {
                                                   GeometryType elementGeo);
     
   private:
-    // * ersetze MapperStorage durch std::vector<MapperType>
-    typedef MapperStorage<ct, dim-codim> MapperStorageType;
     typedef std::map<size_t, GlobalPointVectorType> PointContainerType;
-    typedef std::map<size_t, MapperStorageType> MapperContainerType;
+    typedef std::map<size_t, MapperVectorType> MapperContainerType;
     typedef typename PointContainerType::iterator PointIteratorType;
     typedef typename MapperContainerType::iterator MapperIteratorType;
 

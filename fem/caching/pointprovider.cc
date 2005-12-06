@@ -93,7 +93,7 @@ namespace Dune {
                                     GlobalPointVectorType(numGlobalPoints)));
     MapperIteratorType mit =
       mappers_.insert(std::make_pair(quad.id(),
-                                     MapperStorageType(numFaces)));
+                                     MapperVectorType(numFaces)));
 
 
     int globalNum = 0;
@@ -107,7 +107,7 @@ namespace Dune {
         // Store point mapping
         pMap[pt] = globalNum;
       }
-      mit->second.addMapper(pMap, face);
+      mit->second[face] = pMap;
     } // end for all faces
 
     return mit->second;
