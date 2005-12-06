@@ -101,8 +101,7 @@ namespace Dune {
     enum { dim = GridImp::dimension };
 
   public:
-    typedef Quadrature<
-      typename GridImp::ctype, dim-codim> QuadratureType;
+    typedef Quadrature<typename GridImp::ctype, dim-codim> QuadratureType;
 
     //! Attributes the face either to the inside or the outside according
     //! to the definition of the intersection iterator
@@ -128,7 +127,8 @@ namespace Dune {
                   it.numberInSelf() :
                   it.numberInNeighbor()),
       // ? replace by pointer?
-      mapper_(TwistProvider<ct, dim-codim>::getTwistMapper(quad_, twist))
+      mapper_(TwistProvider<ct, dim-codim>::
+              getTwistStorage(quad_).getMapper(twist))
     {}
 
    //! The total number of quadrature points.
@@ -137,14 +137,16 @@ namespace Dune {
     }
 
     //! Access to the ith quadrature point.
-    const CoordinateType& point(size_t i) const {
+    const CoordinateType& point(int i) const {
+      assert(i >= 0 && i < nop());
       return quad_.point(i);
     }
 
     //! Access to the weight of quadrature point i.
     //! The quadrature weights sum up to the volume of the respective reference
     //! element.
-    const ct& weight(size_t i) const {
+    const ct& weight(int i) const { 
+      assert(i >= 0 && i < nop());
       return quad_.weight(i);
     }
 
@@ -179,10 +181,13 @@ namespace Dune {
     //! For codim-1 entities, the mapping consists of two stages: First,
     //! consider the twist to get the quadrature point number on the reference
     //! element face and then map it to the caching point.
-    int cachingPoint(int quadraturePoint) const {
-      assert(false); // More to do
-      return 0;
+    size_t cachingPoint(size_t quadraturePoint) const {
+      assert(quadraturePoint >= 0 && quadraturePoint < (size_t)nop());
+      return mapper_[quadraturePoint];
     }
+
+  private:
+    typedef typename CachingTraits<ct, dim>::MapperType MapperType;
 
   private:
     QuadratureType quad_;
@@ -190,7 +195,7 @@ namespace Dune {
     int faceNumber_;
     GeometryType elementGeo_;
 
-    const PointMapper& mapper_;
+    const MapperType& mapper_;
 
   };
 
