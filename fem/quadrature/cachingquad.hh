@@ -9,6 +9,7 @@
 #include "quadrature.hh"
 #include "../caching/pointmapper.hh"
 #include "../caching/twistprovider.hh"
+#include "../caching/cacheprovider.hh"
 
 namespace Dune {
 
@@ -28,11 +29,12 @@ namespace Dune {
     typedef typename GridImp::ctype ct;
 
   public:
-    // * register quadrature points here?
     //! Constructor which initializes the quadrature with a codim-0 entity
     CacheQuadrature(Entity& en, int order) :
-      quad_(en.geometry().type(), order)
-    {}
+      quad_(en.geometry().type(), order) 
+    {
+      CacheProvider<GridImp, 0>::registerQuadrature(quad_);
+    }
 
     //! The total number of quadrature points.
     int nop() const {

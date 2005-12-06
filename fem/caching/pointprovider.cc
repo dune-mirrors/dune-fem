@@ -1,3 +1,5 @@
+#include <cassert>
+
 namespace Dune {
 
   template <class ct, int dim>
@@ -5,13 +7,15 @@ namespace Dune {
   PointProvider<ct, dim, 0>::points_;
 
   template <class ct, int dim>
-  void PointProvider<ct, dim, 0>::addPoints(const QuadratureType& quad, 
-                                            GeometryType elementGeo)
+  void PointProvider<ct, dim, 0>::
+  registerQuadrature(const QuadratureType& quad)
   {
     if (points_.find(quad.id()) != points_.end()) {
       PointIteratorType it =
-        points_.insert(std::make_pair(quad.id(),
-                                      GlobalPointVectorType(quad.nop())));
+        points_.insert(std::make_pair
+                       (quad.id(),
+                        GlobalPointVectorType(quad.nop()))
+                       ).first;
       for (int i = 0; i < quad.nop(); ++i) {
         it->second[i] = quad.point(i);
       }
@@ -19,7 +23,7 @@ namespace Dune {
   }
 
   template <class ct, int dim>
-  const PointProvider<ct, dim, 0>::GlobalPointVectorType&
+  const typename PointProvider<ct, dim, 0>::GlobalPointVectorType&
   PointProvider<ct, dim, 0>::getPoints(size_t id, GeometryType elementGeo) 
   {
     assert(points_.find(id) != points_.end());
@@ -67,8 +71,7 @@ namespace Dune {
   const typename PointProvider<ct, dim, 1>::GlobalPointVectorType&
   PointProvider<ct, dim, 1>::getPoints(size_t id, GeometryType elementGeo)
   {
-    assert(PointProvider<ct, dim, 1>::points_.find(id) != 
-           PointProvider<ct, dim, 1>::points_.end());
+    assert(points_.find(id) != points_.end());
     return points_.find(id)->second;
   }
 
@@ -95,14 +98,14 @@ namespace Dune {
 
     int globalNum = 0;
     for (int face = 0; face < numFaces; ++face) {
-      PointMapper pMap(numLocalPoints);
+      MapperType pMap(numLocalPoints);
         
       for (int pt = 0; pt < numLocalPoints; ++pts, ++globalNum) {
         // Store point on reference element
         pit->second[globalNum] = refElem.global(pts[pt], face, codim);
         
         // Store point mapping
-        pMap.insert(globalNum, pt);
+        pMap[pt] = globalNum;
       }
       mit->second.addMapper(pMap, face);
     } // end for all faces

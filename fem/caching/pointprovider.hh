@@ -17,24 +17,27 @@ namespace Dune {
   class MapperStorage 
   {
   public:
+    typedef typename CachingTraits<ct, dim>::MapperType MapperType;
+
+  public:
     MapperStorage() {}
 
     MapperStorage(int numFaces) :
       mappers_(numFaces)
     {}
 
-    void addMapper(const PointMapper& mapper, int face) {
+    void addMapper(const MapperType& mapper, int face) {
       assert(face >= 0 && face < mappers_.size());
       mappers_[face] = mapper;
     }
     
-    const PointMapper& getMapper(int face) const {
+    const MapperType& getMapper(int face) const {
       assert(face >= 0 && face < mappers_.size());
       return mappers_[face];
     }
     
   private:
-    typedef std::vector<PointMapper> MapperVectorType;
+    typedef typename CachingTraits<ct, dim>::MapperVectorType MapperVectorType;
 
   private:
     MapperVectorType mappers_;
@@ -50,15 +53,15 @@ namespace Dune {
   template <class ct, int dim>
   class PointProvider<ct, dim, 0>
   {
+  private:
+    typedef CachingTraits<ct, dim> Traits;
+
   public:
-    typedef Quadrature<ct, dim> QuadratureType;
-    typedef typename QuadratureType::CoordinateType LocalPointType;
-    typedef std::vector<LocalPointType> LocalPointVectorType;
-    typedef LocalPointType GlobalPointType;
-    typedef LocalPointVectorType GlobalPointVectorType;
+    typedef typename Traits::QuadratureType QuadratureType;
+    typedef typename Traits::PointVectorType GlobalPointVectorType;
     
   public:
-    static void addPoints(const QuadratureType& quad, GeometryType elementGeo);
+    static void registerQuadrature(const QuadratureType& quad);
 
     static const GlobalPointVectorType& getPoints(size_t id,
                                                   GeometryType elementGeo);
@@ -76,14 +79,16 @@ namespace Dune {
   class PointProvider<ct, dim, 1>
   {
     enum { codim = 1 };
-    
+    typedef CachingTraits<ct, dim-codim> Traits;
+ 
   public:
-    typedef Quadrature<ct, dim-codim> QuadratureType;
-    typedef typename QuadratureType::CoordinateType LocalPointType;
-    typedef std::vector<LocalPointType> LocalPointVectorType;
+    typedef typename Traits::QuadratureType QuadratureType;
+    typedef typename Traits::PointType LocalPointType;
+    typedef typename Traits::PointVectorType LocalPointVectorType;
+    typedef typename Traits::MapperType MapperType;
+    typedef typename Traits::MapperVectorType MapperVectorType;
     typedef FieldVector<ct, dim> GlobalPointType;
-    typedef std::vector<GlobelPointType> GlobalPointVectorType;
-    typedef std::vector<PointMapper> MapperVectorType;
+    typedef std::vector<GlobalPointType> GlobalPointVectorType;
     
   public:
     static const MapperVectorType& getMappers(const QuadratureType& quad,
@@ -93,10 +98,12 @@ namespace Dune {
                                               const LocalPointVectorType& pts,
                                               GeometryType elementGeo);
 
-    static const PointVectorType& getPoints(size_t id,
-                                            GeometryType elementGeo);
+    static const GlobalPointVectorType& getPoints(size_t id,
+                                                  GeometryType elementGeo);
     
   private:
+    // * ersetze MapperStorage durch std::vector<MapperType>
+    typedef MapperStorage<ct, dim-codim> MapperStorageType;
     typedef std::map<size_t, GlobalPointVectorType> PointContainerType;
     typedef std::map<size_t, MapperStorageType> MapperContainerType;
     typedef typename PointContainerType::iterator PointIteratorType;
@@ -104,7 +111,8 @@ namespace Dune {
 
   private:
     static MapperIteratorType addEntry(const QuadratureType& quad,
-                                       const LocalPointVectorType& pts);
+                                       const LocalPointVectorType& pts,
+                                       GeometryType elementGeo);
 
   private:
     static PointContainerType points_;

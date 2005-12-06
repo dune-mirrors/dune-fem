@@ -183,6 +183,7 @@ namespace Dune {
       mat_[0] = refElem_.position(1, 1);
       mat_[1] = refElem_.position(0, 1);
     }
+    return mat_;
   }
 
   template <class ct, int dim>
@@ -207,6 +208,8 @@ namespace Dune {
       int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
       mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
+
+    return mat_;
   }
 
   template <class ct, int dim>
@@ -231,6 +234,8 @@ namespace Dune {
       int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
       mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
+
+    return mat_;
   }
 
 } // end namespace Dune
