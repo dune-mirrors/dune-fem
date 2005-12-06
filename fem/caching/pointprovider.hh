@@ -1,72 +1,118 @@
-#ifndef DUNE_CACHEPOINTPROVIDER_HH
-#define DUNE_CACHEPOINTPROVIDER_HH
+#ifndef DUNE_POINTPROVIDER_HH
+#define DUNE_POINTPROVIDER_HH
+
+//- System includes
+#include <vector>
+#include <map>
+
+//- Dune includes
+#include <dune/common/misc.hh>
+
+//- Local includes
+#include "pointmapper.hh"
 
 namespace Dune {
 
-  class PointMapper;
-
-  template <class ct, int dim, int codim>
-  class PointProvider {
-    // * right?
-    typedef CompileTimeChecker<false> Only_codim_1_implementation_exists;
-  };
-
-  // * add geo later
   template <class ct, int dim>
-  class PointProvider<ct, dim, 1> {
-  public:
-    typedef FieldVector<ct, dim> PointType;
-
-  public:
-    // * return whole vector?
-    static const PointMapper& getMapper(const QuadratureType& quad, 
-                                        int faceIdx);
-    
-    static const PointType& getPoints(size_t id);
-
-  private:
-    typedef std::map<size_t, std::vector<PointMapper*> MapperStorageType;
-    typedef std::map<size_t, std::vector<PointType> PointStorageType;
-    typedef typename MapperStorageType::Iterator MapperIteratorType;
-    typedef typename PointStorageType::Iterator PointIteratorType;
-
-  private:
-    // * define points anew
-    static void addEntry(size_t id, GeometryType elemGeo,const Points& points);
-
-  private:
-    static MapperStorageType mappers_;
-    static PointStorageType points_;
-  }
-
-  // * OLD CODE
-  // * Find better name
-  template <class ct, int dim, int codim>
-  class CachePointCalculator 
+  class MapperStorage 
   {
-  private:
-    typedef FieldMatrix<ct, dim-codim, dim> TransformationMatrixType;
-
-  private:
-    // this trick works as long as p_i+1 - p_0 = e_i on the subentities ref. element + the transformation stays linear
-    // use mat_.umtv(xLocal, xRefElem) for the transformation
-    void buildTransformationMatrix(int faceIndex) {
-      // get global index of the 0 corner of face faceIndex
-      int zeroLocal = refElem_.subEntity(faceIndex, codim, 0, dim-codim);
-      for (int i = 0; i < dim-codim; ++i) {
-        int indexLocal = refElem_.subEntity(faceIndex, codim, i, dim-codim);
-        mat_[i] = refElem.position(indexLocal, dim) -
-          refElem_.position(zeroLocal, dim);
-      }
-    }
-
-  private:
-    TransformationMatrixType mat_;
-
   public:
+    MapperStorage() {}
+
+    MapperStorage(int numFaces) :
+      mappers_(numFaces)
+    {}
+
+    void addMapper(const PointMapper& mapper, int face) {
+      assert(face >= 0 && face < mappers_.size());
+      mappers_[face] = mapper;
+    }
     
+    const PointMapper& getMapper(int face) const {
+      assert(face >= 0 && face < mappers_.size());
+      return mappers_[face];
+    }
+    
+  private:
+    typedef std::vector<PointMapper> MapperVectorType;
+
+  private:
+    MapperVectorType mappers_;
   };
 
-}
+  template <class ct, int dim, int codim>
+  class PointProvider 
+  {
+    typedef CompileTimeChecker<false> 
+    Point_Provider_exists_only_for_codims_1_and_2;
+  };
+
+  template <class ct, int dim>
+  class PointProvider<ct, dim, 0>
+  {
+  public:
+    typedef Quadrature<ct, dim> QuadratureType;
+    typedef typename QuadratureType::CoordinateType LocalPointType;
+    typedef std::vector<LocalPointType> LocalPointVectorType;
+    typedef LocalPointType GlobalPointType;
+    typedef LocalPointVectorType GlobalPointVectorType;
+    
+  public:
+    static void addPoints(const QuadratureType& quad, GeometryType elementGeo);
+
+    static const GlobalPointVectorType& getPoints(size_t id,
+                                                  GeometryType elementGeo);
+
+  private:
+    typedef std::map<size_t, GlobalPointVectorType> PointContainerType;
+    typedef typename PointContainerType::iterator PointIteratorType;
+
+  private:
+    static PointContainerType points_;
+  };
+
+  // * Add elemGeo later
+  template <class ct, int dim>
+  class PointProvider<ct, dim, 1>
+  {
+    enum { codim = 1 };
+    
+  public:
+    typedef Quadrature<ct, dim-codim> QuadratureType;
+    typedef typename QuadratureType::CoordinateType LocalPointType;
+    typedef std::vector<LocalPointType> LocalPointVectorType;
+    typedef FieldVector<ct, dim> GlobalPointType;
+    typedef std::vector<GlobelPointType> GlobalPointVectorType;
+    typedef std::vector<PointMapper> MapperVectorType;
+    
+  public:
+    static const MapperVectorType& getMappers(const QuadratureType& quad,
+                                              GeometryType elementGeo);
+    // Access for non-symmetric quadratures
+    static const MapperVectorType& getMappers(const QuadratureType& quad,
+                                              const LocalPointVectorType& pts,
+                                              GeometryType elementGeo);
+
+    static const PointVectorType& getPoints(size_t id,
+                                            GeometryType elementGeo);
+    
+  private:
+    typedef std::map<size_t, GlobalPointVectorType> PointContainerType;
+    typedef std::map<size_t, MapperStorageType> MapperContainerType;
+    typedef typename PointContainerType::iterator PointIteratorType;
+    typedef typename MapperContainerType::iterator MapperIteratorType;
+
+  private:
+    static MapperIteratorType addEntry(const QuadratureType& quad,
+                                       const LocalPointVectorType& pts);
+
+  private:
+    static PointContainerType points_;
+    static MapperContainerType mappers_;
+  };
+
+} // end namespace Dune
+
+#include "pointprovider.cc"
 
 #endif
