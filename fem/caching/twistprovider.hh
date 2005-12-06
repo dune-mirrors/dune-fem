@@ -61,23 +61,25 @@ namespace Dune {
   template <class ct, int dim>
   class TwistStorage 
   {
+    typedef CachingTraits<ct, dim> Traits;
   public:
-    typedef FieldVector<ct, dim> PointType;
-    typedef std::vector<PointType> PointVectorType;
+    typedef typename Traits::PointType PointType;
+    typedef typename Traits::PointVectorType PointVectorType;
+    typedef typename Traits::MapperType MapperType;
 
   public:
     explicit TwistStorage(int maxTwist);
 
-    void addMapper(const std::vector<size_t>& indices, int twist);
+    void addMapper(const MapperType& mapper, int twist);
     
     void addPoint(const PointType& points);
 
-    const PointMapper& getMapper(int twist) const;
+    const MapperType& getMapper(int twist) const;
     
     const PointVectorType& getPoints() const;
 
   private:
-    typedef std::vector<PointMapper> MapperVectorType;
+    typedef typename Traits::MapperVectorType MapperVectorType;
 
   private:
     MapperVectorType mappers_;
@@ -94,9 +96,10 @@ namespace Dune {
   template <class ct, int dim>
   class TwistProvider 
   {
+    typedef CachingTraits<ct, dim> Traits;
   public:
     //! Generic quadrature type
-    typedef Quadrature<ct, dim> QuadratureType;
+    typedef typename Traits::QuadratureType QuadratureType;
     //! Storage for the mappings of a specific quadrature id, alongside the
     //! resulting caching points (which may differ from the quadrature points
     //! in the case of asymmetric quadratures)
@@ -107,16 +110,15 @@ namespace Dune {
     static const TwistStorageType& getTwistStorage(const QuadratureType& quad); 
 
   private:
-    typedef std::map<size_t, const TwistStorageType*> MapperType;
-    //typedef std::map<size_t, std::vector<PointMapper*> > MapperType;
-    typedef typename MapperType::iterator IteratorType;
+    typedef std::map<size_t, const TwistStorageType*> MapperContainerType;
+    typedef typename MapperContainerType::iterator IteratorType;
     
   private:
     //! Gets called when a new mapper is created.
-    static IteratorType addMapper(const QuadratureType& quad);
+    static IteratorType createMapper(const QuadratureType& quad);
 
   private:
-    static MapperType mappers_;
+    static MapperContainerType mappers_;
     // Must be greater than the largest negative twist possible
     static const int offset_; 
   };
@@ -148,9 +150,11 @@ namespace Dune {
   template <class ct, int dim>
   class TwistMapperCreator 
   {
+    typedef CachingTraits<ct, dim> Traits;
   public:
-    typedef Quadrature<ct, dim> QuadratureType;
-    typedef typename QuadratureType::CoordinateType PointType;
+    typedef typename Traits::QuadratureType QuadratureType;
+    typedef typename Traits::PointType PointType;
+    typedef typename Traits::MapperType MapperType;
     typedef FieldVector<ct, dim+1> CoordinateType;
     typedef TwistStorage<ct, dim> TwistStorageType;
     

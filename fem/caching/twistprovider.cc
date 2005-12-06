@@ -1,7 +1,7 @@
 namespace Dune {
 
   template <class ct, int dim>
-  typename TwistProvider<ct, dim>::MapperType
+  typename TwistProvider<ct, dim>::MapperContainerType
   TwistProvider<ct, dim>::mappers_;
 
   template <class ct, int dim>
@@ -14,10 +14,10 @@ namespace Dune {
   {}
 
   template <class ct, int dim>
-  void TwistStorage<ct, dim>::addMapper(const std::vector<size_t>& indices,
+  void TwistStorage<ct, dim>::addMapper(const MapperType& mapper,
                                         int twist)
   {
-    mappers_[twist + TwistStorage<ct, dim>::offset_] = PointMapper(indices);
+    mappers_[twist + TwistStorage<ct, dim>::offset_] = mapper;
   }
 
   template <class ct, int dim>
@@ -27,7 +27,8 @@ namespace Dune {
   }
 
   template <class ct, int dim>
-  const PointMapper& TwistStorage<ct, dim>::getMapper(int twist) const 
+  const typename TwistStorage<ct, dim>::MapperType& 
+  TwistStorage<ct, dim>::getMapper(int twist) const 
   {
     return mappers_[twist + TwistStorage<ct, dim>::offset_];
   }
@@ -45,7 +46,7 @@ namespace Dune {
   {
     IteratorType it = mappers_.find(quad.id());
     if (it == mappers_.end()) {
-      it = TwistProvider<ct, dim>::addMapper(quad);
+      it = TwistProvider<ct, dim>::createMapper(quad);
     }
     
     assert(it->second);
@@ -54,16 +55,8 @@ namespace Dune {
   
   template <class ct, int dim>
   typename TwistProvider<ct, dim>::IteratorType
-  TwistProvider<ct, dim>::addMapper(const QuadratureType& quad) 
+  TwistProvider<ct, dim>::createMapper(const QuadratureType& quad) 
   {
-    // The vector of PointMapper for every possible twist
-    //std::vector<PointMapper*> mapperVec(offset_ + creator.maxTwist());
-    
-    //for (int twist = creator.minTwist(); twist < creator.maxTwist(); 
-    //     ++twist) {
-    //  mapperVec[offset_ + twist] = creator.createMapper(twist);
-    //  }
-
     TwistMapperCreator<ct, dim> creator(quad);
     const TwistStorageType* storage = creator.createStorage();
 
@@ -116,7 +109,7 @@ namespace Dune {
 
     // Loop over all twists
     for (int twist = helper_->minTwist();twist < helper_->maxTwist();++twist) {
-      std::vector<size_t> indices(quad_.nop());
+      MapperType mapper(quad_.nop());
       
       const MatrixType& mat = helper_->buildTransformationMatrix(twist);
 
@@ -136,7 +129,7 @@ namespace Dune {
         // find equivalent quadrature point
         for (int j = 0; j < quad_.nop(); ++j) {
           if (samePoint(pRef, quad_.point(j))) {
-            indices[i] = j;
+            mapper[i] = j;
             found = true;
             break;
           }
@@ -144,10 +137,10 @@ namespace Dune {
         // add point if it is not one of the quadrature points
         if (!found) {
           storage->addPoint(pRef);
-          indices.push_back(indices.size());
+          mapper.push_back(mapper.size());
         }
       } // for all quadPoints
-      storage->addMapper(indices, twist);
+      storage->addMapper(mapper, twist);
     } // for all twists
     
     return storage;
