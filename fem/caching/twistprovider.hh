@@ -107,7 +107,7 @@ namespace Dune {
 
   public:
     //! Delivers the PointMapper object for quadrature quad and twist twist.
-    static const TwistStorageType& getTwistStorage(const QuadratureType& quad); 
+    static const TwistStorageType& getTwistStorage(const QuadratureType& quad);
 
   private:
     typedef std::map<size_t, const TwistStorageType*> MapperContainerType;
