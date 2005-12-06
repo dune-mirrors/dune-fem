@@ -12,6 +12,7 @@
 #include <dune/grid/alu3dgrid/topology.hh>
 
 //- Local includes
+#include "pointmapper.hh"
 #include "../quadrature/quadrature.hh"
 
 namespace Dune {
@@ -21,7 +22,10 @@ namespace Dune {
   class TwistProvider;
   template <class ct, int dim>
   class TwistMapperCreator;
+  template <class ct, int dim>
+  class TwistStorage;
 
+  /*
   //! \brief Identifies quadrature points on faces with twists
   //! For a given quadrature type and a face with a given twist the TwistMapper
   //! provides a mapping from the quadrature point number on the twisted face
@@ -31,7 +35,7 @@ namespace Dune {
   //! face needs to be transformed to a quadrature point in the reference 
   //! element itself.
   //!
-  //! The TwistMapper objects are filled by the TwistMapperCreator and its
+  //! The PointMapper objects are filled by the TwistMapperCreator and its
   //! subclasses.
   class TwistMapper {
   private:
@@ -52,9 +56,38 @@ namespace Dune {
   private:
     std::vector<size_t> indices_;
   };
+  */
 
-  //! \brief Access point for TwistMapper
-  //! TwistMapper object get created once and are reused as often as needed. 
+  template <class ct, int dim>
+  class TwistStorage 
+  {
+  public:
+    typedef FieldVector<ct, dim> PointType;
+    typedef std::vector<PointType> PointVectorType;
+
+  public:
+    explicit TwistStorage(int maxTwist);
+
+    void addMapper(const std::vector<size_t>& indices, int twist);
+    
+    void addPoint(const PointType& points);
+
+    const PointMapper& getMapper(int twist) const;
+    
+    const PointVectorType& getPoints() const;
+
+  private:
+    typedef std::vector<PointMapper> MapperVectorType;
+
+  private:
+    MapperVectorType mappers_;
+    PointVectorType points_;
+
+    static const int offset_;
+  };
+
+  //! \brief Access point for PointMapper objects with twist information
+  //! PointMapper objects get created once and are reused as often as needed. 
   //! The TwistProvider serves in this context as the single point of access
   //! which is responsible for the creation and management of these objects.
   //! TwistProvider follows the monostate pattern.
@@ -64,14 +97,18 @@ namespace Dune {
   public:
     //! Generic quadrature type
     typedef Quadrature<ct, dim> QuadratureType;
+    //! Storage for the mappings of a specific quadrature id, alongside the
+    //! resulting caching points (which may differ from the quadrature points
+    //! in the case of asymmetric quadratures)
+    typedef typename TwistMapperCreator<ct, dim>::TwistStorageType TwistStorageType;
 
   public:
-    //! Delivers the TwistMapper object for quadrature quad and twist twist.
-    static const TwistMapper& getTwistMapper(const QuadratureType& quad,
-                                             int twist); 
+    //! Delivers the PointMapper object for quadrature quad and twist twist.
+    static const TwistStorageType& getTwistStorage(const QuadratureType& quad); 
 
   private:
-    typedef std::map<size_t, std::vector<TwistMapper*> > MapperType;
+    typedef std::map<size_t, const TwistStorageType*> MapperType;
+    //typedef std::map<size_t, std::vector<PointMapper*> > MapperType;
     typedef typename MapperType::iterator IteratorType;
     
   private:
@@ -115,13 +152,14 @@ namespace Dune {
     typedef Quadrature<ct, dim> QuadratureType;
     typedef typename QuadratureType::CoordinateType PointType;
     typedef FieldVector<ct, dim+1> CoordinateType;
-
+    typedef TwistStorage<ct, dim> TwistStorageType;
+    
   public:
     //! Constructor
     TwistMapperCreator(const QuadratureType& quad);
 
     //! Create the actual mapper for a given twist
-    TwistMapper* createMapper(int twist) const;
+    const TwistStorageType* createStorage() const;
     
     //! Lowest possible twist for the quadrature's geometry
     int minTwist() const {

@@ -1,40 +1,73 @@
 namespace Dune {
 
   template <class ct, int dim>
-  std::map<size_t, std::vector<TwistMapper*> > 
+  typename TwistProvider<ct, dim>::MapperType
   TwistProvider<ct, dim>::mappers_;
 
   template <class ct, int dim>
-  const int TwistProvider<ct, dim>::offset_ = 5;
+  const int TwistStorage<ct, dim>::offset_ = 5;
 
   template <class ct, int dim>
-  const TwistMapper& 
-  TwistProvider<ct, dim>::getTwistMapper(const QuadratureType& quad, int twist)
+  TwistStorage<ct, dim>::TwistStorage(int maxTwist) :
+    mappers_(offset_ + maxTwist),
+    points_()
+  {}
+
+  template <class ct, int dim>
+  void TwistStorage<ct, dim>::addMapper(const std::vector<size_t>& indices,
+                                        int twist)
+  {
+    mappers_[twist + TwistStorage<ct, dim>::offset_] = PointMapper(indices);
+  }
+
+  template <class ct, int dim>
+  void TwistStorage<ct, dim>::addPoint(const PointType& point)
+  {
+    points_.push_back(point);
+  }
+
+  template <class ct, int dim>
+  const PointMapper& TwistStorage<ct, dim>::getMapper(int twist) const 
+  {
+    return mappers_[twist + TwistStorage<ct, dim>::offset_];
+  }
+
+  template <class ct, int dim>
+  const typename TwistStorage<ct, dim>::PointVectorType&
+  TwistStorage<ct, dim>::getPoints() const 
+  {
+    return points_;
+  }
+
+  template <class ct, int dim>
+  const typename TwistProvider<ct, dim>::TwistStorageType& 
+  TwistProvider<ct, dim>::getTwistStorage(const QuadratureType& quad)
   {
     IteratorType it = mappers_.find(quad.id());
     if (it == mappers_.end()) {
       it = TwistProvider<ct, dim>::addMapper(quad);
     }
     
-    assert((it->second)[twist + offset_]);
-    return *(it->second)[twist + offset_];
+    assert(it->second);
+    return *(it->second);
   }
   
   template <class ct, int dim>
   typename TwistProvider<ct, dim>::IteratorType
   TwistProvider<ct, dim>::addMapper(const QuadratureType& quad) 
   {
-    TwistMapperCreator<ct, dim> creator(quad);
+    // The vector of PointMapper for every possible twist
+    //std::vector<PointMapper*> mapperVec(offset_ + creator.maxTwist());
     
-    // The vector of TwistMapper for every possible twist
-    std::vector<TwistMapper*> mapperVec(offset_ + creator.maxTwist());
-    
-    for (int twist = creator.minTwist(); twist < creator.maxTwist(); 
-         ++twist) {
-      mapperVec[offset_ + twist] = creator.createMapper(twist);
-    }
+    //for (int twist = creator.minTwist(); twist < creator.maxTwist(); 
+    //     ++twist) {
+    //  mapperVec[offset_ + twist] = creator.createMapper(twist);
+    //  }
 
-    return mappers_.insert(std::make_pair(quad.id(), mapperVec)).first;
+    TwistMapperCreator<ct, dim> creator(quad);
+    const TwistStorageType* storage = creator.createStorage();
+
+    return mappers_.insert(std::make_pair(quad.id(), storage)).first;
   }
   
   template <class ct, int dim>
@@ -71,37 +104,53 @@ namespace Dune {
   }
 
   template <class ct, int dim>
-  TwistMapper* TwistMapperCreator<ct, dim>::createMapper(int twist) const 
+  const typename TwistMapperCreator<ct, dim>::TwistStorageType* 
+  TwistMapperCreator<ct, dim>::createStorage() const 
   {
-    TwistMapper* mapper = new TwistMapper(quad_.nop());
-    
-    const MatrixType& mat = helper_->buildTransformationMatrix(twist);
+    TwistStorageType* storage = new TwistStorageType(helper_->maxTwist());
 
+    // Add quadrature points
     for (int i = 0; i < quad_.nop(); ++i) {
-      PointType pFace = quad_.point(i);
-      CoordinateType c(0.0);
-      c[0] = 1.0;
-      for (int d = 0; d < dim; ++d) {
-        c[0] -= pFace[d];
-        c[d+1] = pFace[d];
-      }
-
-      PointType pRef(0.);     
-      mat.umtv(c, pRef);
-
-      bool found = false;
-      for (int j = 0; j < quad_.nop(); ++j) {
-        if (samePoint(pRef, quad_.point(j))) {
-          mapper->indices_[i] = j;
-          found = true;
-          break;
-        }
-      }
-      // * Needs to made more generic for non-symmetric quadratures
-      assert(found);
+      storage->addPoint(quad_.point(i));
     }
+
+    // Loop over all twists
+    for (int twist = helper_->minTwist();twist < helper_->maxTwist();++twist) {
+      std::vector<size_t> indices(quad_.nop());
+      
+      const MatrixType& mat = helper_->buildTransformationMatrix(twist);
+
+      for (int i = 0; i < quad_.nop(); ++i) {
+        PointType pFace = quad_.point(i);
+        CoordinateType c(0.0);
+        c[0] = 1.0;
+        for (int d = 0; d < dim; ++d) {
+          c[0] -= pFace[d];
+          c[d+1] = pFace[d];
+        }
+
+        PointType pRef(0.);     
+        mat.umtv(c, pRef);
+
+        bool found = false;
+        // find equivalent quadrature point
+        for (int j = 0; j < quad_.nop(); ++j) {
+          if (samePoint(pRef, quad_.point(j))) {
+            indices[i] = j;
+            found = true;
+            break;
+          }
+        }
+        // add point if it is not one of the quadrature points
+        if (!found) {
+          storage->addPoint(pRef);
+          indices.push_back(indices.size());
+        }
+      } // for all quadPoints
+      storage->addMapper(indices, twist);
+    } // for all twists
     
-    return mapper;
+    return storage;
   }
 
   template <class ct, int dim>
