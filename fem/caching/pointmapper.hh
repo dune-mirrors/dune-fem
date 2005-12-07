@@ -12,6 +12,8 @@ namespace Dune {
     typedef std::vector<PointType> PointVectorType;
     typedef std::vector<size_t> MapperType;
     typedef std::vector<MapperType> MapperVectorType;
+
+    static const int twistOffset_ = 5;
   };
 
 }

@@ -5,19 +5,18 @@ namespace Dune {
   TwistProvider<ct, dim>::mappers_;
 
   template <class ct, int dim>
-  const int TwistStorage<ct, dim>::offset_ = 5;
-
-  template <class ct, int dim>
-  TwistStorage<ct, dim>::TwistStorage(int maxTwist) :
-    mappers_(offset_ + maxTwist),
-    points_()
+  TwistStorage<ct, dim>::TwistStorage(int minTwist, int maxTwist) :
+    mappers_(Traits::twistOffset_ + maxTwist),
+    points_(),
+    minTwist_(minTwist),
+    maxTwist_(maxTwist)
   {}
 
   template <class ct, int dim>
   void TwistStorage<ct, dim>::addMapper(const MapperType& mapper,
                                         int twist)
   {
-    mappers_[twist + TwistStorage<ct, dim>::offset_] = mapper;
+    mappers_[twist + Traits::twistOffset_] = mapper;
   }
 
   template <class ct, int dim>
@@ -30,7 +29,7 @@ namespace Dune {
   const typename TwistStorage<ct, dim>::MapperType& 
   TwistStorage<ct, dim>::getMapper(int twist) const 
   {
-    return mappers_[twist + TwistStorage<ct, dim>::offset_];
+    return mappers_[twist + Traits::twistOffset_];
   }
 
   template <class ct, int dim>
@@ -38,6 +37,18 @@ namespace Dune {
   TwistStorage<ct, dim>::getPoints() const 
   {
     return points_;
+  }
+
+  template <class ct, int dim>
+  int TwistStorage<ct, dim>::minTwist() const 
+  {
+    return minTwist_;
+  }
+
+  template <class ct, int dim>
+  int TwistStorage<ct, dim>::maxTwist() const 
+  {
+    return maxTwist_;
   }
 
   template <class ct, int dim>
@@ -100,7 +111,8 @@ namespace Dune {
   const typename TwistMapperCreator<ct, dim>::TwistStorageType* 
   TwistMapperCreator<ct, dim>::createStorage() const 
   {
-    TwistStorageType* storage = new TwistStorageType(helper_->maxTwist());
+    TwistStorageType* storage = 
+      new TwistStorageType(helper_->minTwist(), helper_->maxTwist());
 
     // Add quadrature points
     for (int i = 0; i < quad_.nop(); ++i) {

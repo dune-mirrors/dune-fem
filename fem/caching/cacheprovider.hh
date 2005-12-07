@@ -6,6 +6,7 @@
 
 //- Dune includes
 #include <dune/common/misc.hh>
+#include <dune/grid/utility/structureutility.hh>
 
 //- Local includes
 #include "pointmapper.hh"
@@ -14,20 +15,87 @@
 
 namespace Dune {
 
+  template <class ct, int dim, bool unstructured>
+  class CacheStorage;
+
   template <class ct, int dim>
-  class CacheStorage 
+  class CacheStorage<ct, dim, true>
   {
+  private:
     typedef CachingTraits<ct, dim> Traits;
 
   public:
     typedef typename Traits::MapperType MapperType;
     
   public:
+    CacheStorage(int numFaces, int maxTwist) :
+      mappers_(numFaces)
+    {
+      for (MapperIteratorType it = mappers_.begin(); 
+           it != mappers_.end(); ++it) {
+        it->resize(maxTwist + Traits::twistOffset_);
+      }
+    }
+
+    void addMapper(const MapperType& faceMapper, const MapperType& twistMapper,
+                   int faceIndex, int faceTwist)
+    {
+      assert(twistMapper.size() == faceMapper.size());
+
+      MapperType& mapper = 
+        mappers_[faceIndex][faceTwist + Traits::twistOffset_];
+      mapper.resize(twistMapper.size());
+
+      for (int i = 0; i < mapper.size(); ++i) {
+        mapper[i] = faceMapper[twistMapper[i]];
+      }
+
+    }
+
+    const MapperType& getMapper(int faceIndex, int faceTwist) const
+    {
+      return mappers_[faceIndex][faceTwist + Traits::twistOffset_];
+    }
 
   private:
-    
-  private:
+    typedef std::vector<std::vector<MapperType> > MapperContainerType;
+    typedef typename MapperContainerType::iterator MapperIteratorType;
 
+  private:
+    MapperContainerType mappers_;
+  };
+
+  template <class ct, int dim>
+  class CacheStorage<ct, dim, false>
+  {
+  private:
+    typedef CachingTraits<ct, dim> Traits;
+
+  public:
+    typedef typename Traits::MapperType MapperType;
+
+  public:
+    CacheStorage(int numFaces) :
+      mappers_(numFaces)
+    {}
+
+    void addMapper(const MapperType& mapper, int faceIndex) 
+    {
+      assert(faceIndex >= 0 && faceIndex < mappers_.size());
+      mappers_[faceIndex] = mapper;
+    }
+
+    const MapperType& getMapper(int faceIndex, int faceTwist) const 
+    {
+      assert(faceIndex >= 0 && faceIndex < mappers_.size());
+      return mappers_[faceIndex];
+    }
+
+  private:
+    typedef typename std::vector<MapperType> MapperContainerType;
+
+  private:
+    MapperContainerType mappers_;
   };
 
   template <class GridImp, int codim>
@@ -75,25 +143,31 @@ namespace Dune {
     {
       MapperIteratorType it = mappers_.find(quad.id());
       if (it == mappers_.end()) {
+        Int2Type<IsUnstructured<GridImp>::value> i2t;
         it = CacheProvider<GridImp, 1>::createMapper(quad, 
                                                      elementGeometry, 
-                                                     faceIndex, 
-                                                     faceTwist);
+                                                     i2t);
       }
       
       assert(it->second);
       return it->second->getMapper(faceIndex, faceTwist);
     }
+
   private:
-    typedef CacheStorage<ct, dim-codim> CacheStorageType; 
+    typedef CacheStorage<
+      ct, dim-codim, IsUnstructured<GridImp>::value> CacheStorageType; 
+    typedef typename Traits::MapperVectorType MapperVectorType;
     typedef std::map<size_t, CacheStorageType*> MapperContainerType;
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:
     MapperIteratorType createMapper(const QuadratureType& quad,
                                     GeometryType elementGeometry,
-                                    int faceIndex,
-                                    int faceTwist);
+                                    Int2Type<true>);
+
+    MapperIteratorType createMapper(const QuadratureType& quad,
+                                    GeometryType elementGeometry,
+                                    Int2Type<false>);
   private:
     static MapperContainerType mappers_;
   };

@@ -68,7 +68,7 @@ namespace Dune {
     typedef typename Traits::MapperType MapperType;
 
   public:
-    explicit TwistStorage(int maxTwist);
+    explicit TwistStorage(int minTwist, int maxTwist);
 
     void addMapper(const MapperType& mapper, int twist);
     
@@ -78,6 +78,10 @@ namespace Dune {
     
     const PointVectorType& getPoints() const;
 
+    int minTwist() const;
+    
+    int maxTwist() const;
+
   private:
     typedef typename Traits::MapperVectorType MapperVectorType;
 
@@ -85,7 +89,8 @@ namespace Dune {
     MapperVectorType mappers_;
     PointVectorType points_;
 
-    static const int offset_;
+    int minTwist_;
+    int maxTwist_;
   };
 
   //! \brief Access point for PointMapper objects with twist information
@@ -119,8 +124,6 @@ namespace Dune {
 
   private:
     static MapperContainerType mappers_;
-    // Must be greater than the largest negative twist possible
-    static const int offset_; 
   };
 
   //! This class factors out all geometry dependent stuff in a strategy class
