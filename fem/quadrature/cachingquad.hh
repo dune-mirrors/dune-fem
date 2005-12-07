@@ -75,6 +75,7 @@ namespace Dune {
       return quad_.geo();
     }
 
+    //! The geometry type of the attached element (codim-0 entity)
     GeometryType elementGeo() const {
       return geo();
     }
@@ -120,17 +121,18 @@ namespace Dune {
                     int order, 
                     int twist, // Move inside once the twist is in interface
                     Side side) :
-      quad_(side == INSIDE ? 
-            it.inside()->geometry().type() : 
-            it.outside()->geometry().type(),
+      quad_(it.intersectionGlobal().type(),
             order),
       faceTwist_(twist), // it.twistSelf(), it.twistNeighbor() later on
       faceNumber_(side == INSIDE ?
                   it.numberInSelf() :
                   it.numberInNeighbor()),
+      elementGeo_(side == INSIDE ? 
+                  it.inside()->geometry().type() : 
+                  it.outside()->geometry().type()),
       // ? replace by pointer?
-      mapper_(TwistProvider<ct, dim-codim>::
-              getTwistStorage(quad_).getMapper(twist))
+      mapper_(CacheProvider<GridImp, codim>::
+              getMapper(quad_, elementGeo_, faceNumber_, faceTwist_))
     {}
 
    //! The total number of quadrature points.

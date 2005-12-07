@@ -23,13 +23,12 @@ namespace Dune {
     const int maxTwist = twistMappers.maxTwist();
     const int minTwist = twistMappers.minTwist();
 
-    MapperIteratorType it = 
-      mappers_.insert(quad.id(), 
-                      CacheStorageType(numFaces, maxTwist)).first;
+    MapperIteratorType it = mappers_.insert
+      (std::make_pair(quad.id(), CacheStorageType(numFaces, maxTwist))).first;
 
     for (int face = 0; face < numFaces; ++face) {
       for (int twist = minTwist; twist < maxTwist; ++twist) {
-        it->second.addMapper(pointMappers.getMapper(face),
+        it->second.addMapper(pointMappers[face],
                              twistMappers.getMapper(twist),
                              face, twist);
       }
@@ -50,11 +49,12 @@ namespace Dune {
     const int numFaces = pointMappers.size();
 
     MapperIteratorType it = 
-      mappers_.insert(quad.id(),
-                      CacheStorageType(numFaces)).first;
+      mappers_.insert(std::make_pair(quad.id(),
+                                     CacheStorageType(numFaces))).first;
 
     for (int face = 0; face < numFaces; ++face) {
-      it->second.addMapper(pointMappers.getMapper(face), face);
+      it->second.addMapper(pointMappers[face], 
+                           face);
     }
 
     return it;

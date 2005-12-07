@@ -37,6 +37,10 @@ namespace Dune {
       }
     }
 
+    CacheStorage(const CacheStorage& other) :
+      mappers_(other.mappers_)
+    {}
+
     void addMapper(const MapperType& faceMapper, const MapperType& twistMapper,
                    int faceIndex, int faceTwist)
     {
@@ -79,15 +83,19 @@ namespace Dune {
       mappers_(numFaces)
     {}
 
+    CacheStorage(const CacheStorage& other) :
+      mappers_(other.mappers_)
+    {}
+
     void addMapper(const MapperType& mapper, int faceIndex) 
     {
-      assert(faceIndex >= 0 && faceIndex < mappers_.size());
+      assert(faceIndex >= 0 && faceIndex < (int) mappers_.size());
       mappers_[faceIndex] = mapper;
     }
 
     const MapperType& getMapper(int faceIndex, int faceTwist) const 
     {
-      assert(faceIndex >= 0 && faceIndex < mappers_.size());
+      assert(faceIndex >= 0 && faceIndex < (int) mappers_.size());
       return mappers_[faceIndex];
     }
 
@@ -142,6 +150,7 @@ namespace Dune {
                                        int faceTwist)
     {
       MapperIteratorType it = mappers_.find(quad.id());
+
       if (it == mappers_.end()) {
         Int2Type<IsUnstructured<GridImp>::value> i2t;
         it = CacheProvider<GridImp, 1>::createMapper(quad, 
@@ -149,25 +158,24 @@ namespace Dune {
                                                      i2t);
       }
       
-      assert(it->second);
-      return it->second->getMapper(faceIndex, faceTwist);
+      return it->second.getMapper(faceIndex, faceTwist);
     }
 
   private:
     typedef CacheStorage<
       ct, dim-codim, IsUnstructured<GridImp>::value> CacheStorageType; 
     typedef typename Traits::MapperVectorType MapperVectorType;
-    typedef std::map<size_t, CacheStorageType*> MapperContainerType;
+    typedef std::map<size_t, CacheStorageType> MapperContainerType;
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:
-    MapperIteratorType createMapper(const QuadratureType& quad,
-                                    GeometryType elementGeometry,
-                                    Int2Type<true>);
-
-    MapperIteratorType createMapper(const QuadratureType& quad,
-                                    GeometryType elementGeometry,
-                                    Int2Type<false>);
+    static MapperIteratorType createMapper(const QuadratureType& quad,
+                                           GeometryType elementGeometry,
+                                           Int2Type<true>);
+    
+    static MapperIteratorType createMapper(const QuadratureType& quad,
+                                           GeometryType elementGeometry,
+                                           Int2Type<false>);
   private:
     static MapperContainerType mappers_;
   };

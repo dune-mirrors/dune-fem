@@ -51,6 +51,8 @@ namespace Dune {
       }
       it = addEntry(quad, pts, elementGeo);
     }
+
+    return it->second;
   }
 
   template <class ct, int dim>
@@ -78,31 +80,32 @@ namespace Dune {
   template <class ct, int dim>
   typename PointProvider<ct, dim, 1>::MapperIteratorType
   PointProvider<ct, dim, 1>::addEntry(const QuadratureType& quad,
-                                      const LocalPointVectorType& pts,
+                                      const LocalPointVectorType& points,
                                       GeometryType elementGeo)
   {
     const ReferenceElement<ct, dim>& refElem =
       ReferenceElements<ct, dim>::general(elementGeo);
 
-    const int numLocalPoints = pts.size();
+    const int numLocalPoints = points.size();
     const int numFaces = refElem.size(codim);
     const int numGlobalPoints = numFaces*numLocalPoints;
     
     PointIteratorType pit = 
       points_.insert(std::make_pair(quad.id(), 
-                                    GlobalPointVectorType(numGlobalPoints)));
+                                    GlobalPointVectorType(numGlobalPoints))).first;
     MapperIteratorType mit =
       mappers_.insert(std::make_pair(quad.id(),
-                                     MapperVectorType(numFaces)));
+                                     MapperVectorType(numFaces))).first;
 
 
     int globalNum = 0;
     for (int face = 0; face < numFaces; ++face) {
       MapperType pMap(numLocalPoints);
         
-      for (int pt = 0; pt < numLocalPoints; ++pts, ++globalNum) {
+      for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
         // Store point on reference element
-        pit->second[globalNum] = refElem.global(pts[pt], face, codim);
+        pit->second[globalNum] = 
+          refElem.template global<codim>(points[pt], face, codim);
         
         // Store point mapping
         pMap[pt] = globalNum;
@@ -110,7 +113,7 @@ namespace Dune {
       mit->second[face] = pMap;
     } // end for all faces
 
-    return mit->second;
+    return mit;
   }
     
 } // end namespace Dune
