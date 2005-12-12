@@ -42,7 +42,9 @@
 			        const GradientType& v,
 			        FluxRangeType& A) const {}
         // **** Method for boundary treatment:
-        inline bool hasBoundaryValue(int boundaryId) const {}
+        inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
+			          double time, 
+			          const typename Traits::FaceDomainType& x) const {
         // return true:  numerical flux is used with uRight given by boundaryValue
         // return false: boundaryFlux is used for flux computation
         inline void boundaryValue(typename Traits::IntersectionIterator& it,
@@ -50,21 +52,28 @@
 			          const typename Traits::FaceDomainType& x,
 			          const RangeType& uLeft, 
 			          RangeType& uRight) const {}
+        // in the case that no boundary data is available:
+        // return total flux on the boundary, i.e., advecton+diffusion part
+        // Version 1: for advection-diffusion operator
+        inline double boundaryFlux(typename Traits::IntersectionIterator& it,
+		  		   double time, 
+			           const typename Traits::FaceDomainType& x,
+			           const RangeType& uLeft, 
+			           const GradientType& vLeft, 
+                                   RangeType& gLeft) {} 
+        // Version 2: for advection-diffusion operator
         inline double boundaryFlux(typename Traits::IntersectionIterator& it,
 		  		   double time, 
 			           const typename Traits::FaceDomainType& x,
 			           const RangeType& uLeft, 
                                    RangeType& gLeft) {} 
-        // for time-step control
+        // for time-step control: advspeed for advection-timestep, 
+        //                        totalspeed for timestep with diffusion
         inline double maxSpeed(const typename Traits::DomainType& normal,
        			       double time,  
 	       		       const typename Traits::DomainType& x,
-		       	       const RangeType& u) const {}
-        // only neaded in LLFFlux for artificial diffusion
-        inline double LLFDiffusion(const typename Traits::DomainType& normal,
-       			       double time,  
-	       		       const typename Traits::DomainType& x,
-		       	       const RangeType& u) const {}
+		       	       const RangeType& u,
+                               double& advspeed,double& totalpeed) const {}
       };
       template <class Model>
       class FluxInterface {
@@ -152,26 +161,21 @@ namespace Dune {
       anaflux.umv(normal,gLeft);
 
       double maxspeedl,maxspeedr,maxspeed;
-      maxspeedl=
-	model_.LLFDiffusion(normal,time,it.intersectionSelfLocal().global(x),
-			    uLeft);
-      maxspeedr=
-	model_.LLFDiffusion(normal,time,it.intersectionSelfLocal().global(x),
-			    uRight);
+      double viscparal,viscparar,viscpara;
+      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+		      uLeft,viscparal,maxspeedl);
+      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+		      uRight,viscparar,maxspeedr);
       maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
+      viscpara=(viscparal>viscparar)?viscparal:viscparar;
       visc=uRight;
       visc-=uLeft;
-      visc*=maxspeed;
+      visc*=viscpara;
       gLeft-=visc;
       
       gLeft*=0.5;
       gRight=gLeft;
 
-      maxspeedl=
-	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uLeft);
-      maxspeedr=
-	model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),uRight);
-      maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       return maxspeed;
     }
   private:

@@ -47,7 +47,7 @@ int main(int argc, char ** argv, char ** envp) {
 
 
   // Polynomial and ODE order:
-  enum {order=1,rksteps=2}; 
+  enum {order=0,rksteps=1}; 
   const bool with_difftstep = true;
   
 

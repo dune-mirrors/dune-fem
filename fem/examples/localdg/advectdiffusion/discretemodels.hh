@@ -19,6 +19,8 @@
 namespace Dune {  
   template <class Model,class NumFlux,int polOrd >
   class TransportDiffusionDiscreteModel1;
+  template <class Model,int polOrd >
+  class LimiterDiscreteModel1;
   template <class Model,class NumFlux,int polOrd,
 	    bool withDiffusion,bool withAdvection >
   class TransportDiffusionDiscreteModel2;
@@ -51,19 +53,22 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimGradRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef FunctionSpace<
-      double, double, dimDomain, dimRange> FunctionSpaceType;
+    typedef PassTraits<Model,polOrd,dimRange> Traits;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+
+    //typedef FunctionSpace<
+    //  double, double, dimDomain, dimRange> FunctionSpaceType;
     typedef typename ModelTraits::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    typedef PassTraits<Model,polOrd,dimRange> Traits;
+    //typedef PassTraits<Model,polOrd,dimRange> Traits;
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
     //typedef typename Traits::SingleFunctionSpaceType SingleFunctionSpaceType;
-    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+    //typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
     // typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
     // typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
@@ -84,19 +89,17 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef FunctionSpace<
-      double, double, dimDomain, dimRange> FunctionSpaceType;
+    typedef PassTraits<Model,polOrd,dimRange> Traits;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    typedef PassTraits<Model,polOrd,dimRange> Traits;
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
     // typedef typename Traits::SingleFunctionSpaceType SingleFunctionSpaceType;
-    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
     //typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
     //typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
@@ -106,6 +109,33 @@ namespace Dune {
     typedef DestinationType DiscreteFunctionType;
 
     typedef TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,withDiffusion,withAdvection> DiscreteModelType;
+  };
+  template <class Model,int polOrd >
+  struct LimiterTraits1 
+  {
+    typedef typename Model::Traits ModelTraits;
+    typedef typename ModelTraits::GridType GridType;
+
+    enum { dimRange = ModelTraits::dimRange };
+    enum { dimDomain = ModelTraits::dimDomain };
+
+    typedef PassTraits<Model,polOrd,dimRange> Traits;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+    typedef typename ModelTraits::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename Traits::FaceQuadratureType FaceQuadratureType;
+    typedef typename Traits::IndexSetType IndexSetType;
+    typedef typename Traits::GridPartType GridPartType;
+
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+    typedef DiscreteFunctionSpaceType SpaceType;
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    typedef DestinationType DiscreteFunctionType;
+
+    typedef LimiterDiscreteModel1<Model,polOrd> DiscreteModelType;
   };
   // Passes
   template <class Model,class NumFlux,int polOrd>
@@ -185,7 +215,7 @@ namespace Dune {
 	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
 			 argULeft,diffmatrix);
-      else if (model_.hasBoundaryValue(it.boundaryId())) {
+      else if (model_.hasBoundaryValue(it,time,x)) {
 	UType uRight;
 	model_.boundaryValue(it,time,x,argULeft,uRight);
 	model_.diffusion(*it.inside(),time,
@@ -299,19 +329,19 @@ namespace Dune {
       const WType& argWLeft = Element<1>::get(uLeft);
       // Advection
       double ldt=0.;
-      if (model_.hasBoundaryValue(it.boundaryId())) {
+      if (model_.hasBoundaryValue(it,time,x)) {
 	RangeType uRight,gRight;
 	model_.boundaryValue(it,time,x,argULeft,uRight);
 	ldt = numflux_.numericalFlux(it,time,x,argULeft,uRight,gLeft,gRight);
+	// Diffusion
+	JacobianRangeType diffmatrix;
+	model_.diffusion(*it.inside(),time,
+			 it.intersectionSelfLocal().global(x),
+			 argULeft,argWLeft,diffmatrix);
+	diffmatrix.umv(normal,gLeft);
       } else {
-        ldt = model_.boundaryFlux(it,time,x,argULeft,gLeft);
+        ldt = model_.boundaryFlux(it,time,x,argULeft,argWLeft,gLeft);
       }
-      // Diffusion
-      JacobianRangeType diffmatrix;
-      model_.diffusion(*it.inside(),time,
-		       it.intersectionSelfLocal().global(x),
-		       argULeft,argWLeft,diffmatrix);
-      diffmatrix.umv(normal,gLeft);
       return ldt;
     }
 
@@ -388,7 +418,7 @@ namespace Dune {
       const UType& argULeft = Element<0>::get(uLeft);
       // Advection
       double ldt=0.;
-      if (model_.hasBoundaryValue(it.boundaryId())) {
+      if (model_.hasBoundaryValue(it,time,x)) {
 	RangeType uRight,gRight;
 	model_.boundaryValue(it,time,x,argULeft,uRight);
 	ldt = numflux_.numericalFlux(it,time,x,argULeft,uRight,gLeft,gRight);
@@ -482,12 +512,18 @@ namespace Dune {
       const WType& argWLeft = Element<1>::get(uLeft);
       double ldt=0.;
       // Diffusion
-      gLeft*=0.;
-      JacobianRangeType diffmatrix;
-      ldt=model_.diffusion(*it.inside(),time,
-			   it.intersectionSelfLocal().global(x),
-			   argULeft,argWLeft,diffmatrix);
-      diffmatrix.umv(normal,gLeft);
+      if (model_.hasBoundaryValue(it,time,x)) {
+	gLeft*=0.;
+	RangeType uRight,gRight;
+	model_.boundaryValue(it,time,x,argULeft,uRight);
+	JacobianRangeType diffmatrix;
+	ldt=model_.diffusion(*it.inside(),time,
+			     it.intersectionSelfLocal().global(x),
+			     argULeft,argWLeft,diffmatrix);
+	diffmatrix.umv(normal,gLeft);
+      } else {
+        ldt = model_.boundaryFlux(it,time,x,argULeft,argWLeft,gLeft);
+      }
       return ldt;
     }
 
@@ -508,6 +544,35 @@ namespace Dune {
     const DomainType& upwind_;
     const Model& model_;
     const NumFlux& numflux_;
+  };
+  // **********************************************
+  // **********************************************
+  // **********************************************
+  template <class Model,int polOrd>
+  class LimiterDiscreteModel1 :
+    public DiscreteModelDefault<LimiterTraits1<Model,polOrd> > 
+  {
+  public:
+    typedef LimiterTraits1<Model,polOrd> Traits;
+    
+    typedef Selector<0> SelectorType;
+    typedef FieldVector<double, Traits::dimDomain> DomainType;
+    typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
+    typedef typename Traits::RangeType RangeType;
+    typedef typename Traits::GridType GridType;
+    typedef typename Traits::JacobianRangeType JacobianRangeType;
+    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridType::template Codim<0>::Entity EntityType;
+    
+  public:
+    LimiterDiscreteModel1(const Model& mod) :
+      model_(mod) {}
+
+    bool hasSource() const { return false; }
+    bool hasFlux() const { return false; }
+    
+  private:
+    const Model& model_;
   };
 }
 

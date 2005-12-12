@@ -177,6 +177,7 @@ bool ImplicitBulirschStoer::step(double t, double dt, double *u)
     return step_iterative(t, dt, u);
   }
   else assert(0); // linear solver needed
+  return false;
 }
 
 

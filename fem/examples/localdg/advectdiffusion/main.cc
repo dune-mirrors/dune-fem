@@ -33,12 +33,15 @@ public:
     else {
       res = 0.0;
     }
+    double diffusion_ = 0.01;
+    double t0 = 1.0;
+    res = 1./sqrt(4.*M_PI*diffusion_*t0)*exp(-(arg[0]+0.8-0.8*t0)*(arg[0]+0.8-0.8*t0)/(4.*diffusion_*t0));
   }
 };
 int main(int argc, char ** argv, char ** envp) {
   // *** Initialization
   // Polynomial and ODE order
-  enum {order=1,rksteps=2}; 
+  enum {order=0,rksteps=1}; 
   const bool with_difftstep = true;
   // Grid:
   int N=40;                

@@ -41,8 +41,18 @@ class BurgersModel {
     A[0] = epsilon*v[0];
     return tstep_eps;
   }
-  inline bool hasBoundaryValue(int boundaryId) const {
+  inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
+			       double time, 
+			       const typename Traits::FaceDomainType& x) const {
     return true;
+  }
+  inline double boundaryFlux(typename Traits::IntersectionIterator& it,
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     const GradientType& vLeft, 
+			     RangeType& gLeft) const  {
+    return 0.;
   }
   inline double boundaryFlux(typename Traits::IntersectionIterator& it,
 			     double time, 
@@ -58,17 +68,13 @@ class BurgersModel {
 			     RangeType& uRight) const {
     uRight=uLeft;
   }
-  inline  double maxSpeed(const typename Traits::DomainType& normal,
-				double time,  
-				const typename Traits::DomainType& x,
-				const RangeType& u) const {
-    return std::abs(normal[0]*u)+tstep_eps;
-  }
-  inline double LLFDiffusion(const typename Traits::DomainType& normal,
-			     double time,  
-			     const typename Traits::DomainType& x,
-			     const RangeType& u) const {
-    return std::abs(normal[0]*u);
+  inline void maxSpeed(const typename Traits::DomainType& normal,
+		       double time,  
+		       const typename Traits::DomainType& x,
+		       const RangeType& u,
+		       double& advspeed,double& totalspeed) const {
+    advspeed=std::abs(normal[0]*u);
+    totalspeed=advspeed+tstep_eps;
   }
  protected:
   double epsilon;
@@ -119,35 +125,45 @@ class AdvectionDiffusionModel {
     A *= epsilon;
     return tstep_eps;
   }
-  inline bool hasBoundaryValue(int boundaryId) const {
-    return true;
+  inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
+			       double time, 
+			       const typename Traits::FaceDomainType& x) const {
+    const DomainType normal = it.integrationOuterNormal(x);
+    int boundaryId = (std::abs(normal[0])>1e-10)? 1:2;
+    return (boundaryId==1);
+  }
+  inline double boundaryFlux(typename Traits::IntersectionIterator& it,
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     const GradientType& vLeft, 
+			     RangeType& gLeft) const  {
+    gLeft*=0.;
+    return 0.;
   }
   inline double boundaryFlux(typename Traits::IntersectionIterator& it,
 			     double time, 
 			     const typename Traits::FaceDomainType& x,
 			     const RangeType& uLeft, 
 			     RangeType& gLeft) const  {
+    gLeft*=0.;
     return 0.;
   }
   inline  void boundaryValue(typename Traits::IntersectionIterator& it,
-				   double time, 
-				   const typename Traits::FaceDomainType& x,
-				   const RangeType& uLeft, 
-				   RangeType& uRight) const {
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     RangeType& uRight) const {
     
-    uRight=uLeft;
+    uRight*=0; //uLeft;
   }
   inline  double maxSpeed(const typename Traits::DomainType& normal,
-				double time,  
-				const typename Traits::DomainType& x,
-				const RangeType& u) const {
-    return std::abs(normal*velocity)+tstep_eps;
-  }
-  inline double LLFDiffusion(const typename Traits::DomainType& normal,
-			     double time,  
-			     const typename Traits::DomainType& x,
-			     const RangeType& u) const {
-    return std::abs(normal*velocity);
+			  double time,  
+			  const typename Traits::DomainType& x,
+			  const RangeType& u,
+			  double& advspeed,double& totalspeed) const {
+    advspeed=std::abs(normal*velocity);
+    totalspeed=advspeed+tstep_eps;
   }
  protected:
   DomainType velocity;
