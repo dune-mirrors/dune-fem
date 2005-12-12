@@ -2,6 +2,7 @@
 #define DUNE_POINTMAPPER_HH
 
 #include <vector>
+#include "../quadrature/quadrature.hh"
 
 namespace Dune {
 

@@ -25,7 +25,7 @@ namespace Dune {
   template <class ct, int dim>
   class TwistStorage;
 
-  /*
+
   //! \brief Identifies quadrature points on faces with twists
   //! For a given quadrature type and a face with a given twist the TwistMapper
   //! provides a mapping from the quadrature point number on the twisted face
@@ -37,26 +37,7 @@ namespace Dune {
   //!
   //! The PointMapper objects are filled by the TwistMapperCreator and its
   //! subclasses.
-  class TwistMapper {
-  private:
-    template <class ct, int dim>
-    friend class TwistMapperCreator;
 
-    //! Default constructor
-    TwistMapper(size_t size) : indices_(size) {}
-
-  public:
-    //! The mapping from quadrature point indices on the twisted face to
-    //! the quadrature point indices on the (untwisted) reference face
-    size_t index(size_t quadPoint) const {
-      assert(quadPoint >= 0 && quadPoint < indices_.size());
-      return indices_[quadPoint];
-    }
-
-  private:
-    std::vector<size_t> indices_;
-  };
-  */
 
   template <class ct, int dim>
   class TwistStorage 
@@ -72,7 +53,7 @@ namespace Dune {
 
     void addMapper(const MapperType& mapper, int twist);
     
-    void addPoint(const PointType& points);
+    size_t addPoint(const PointType& points);
 
     const MapperType& getMapper(int twist) const;
     
@@ -227,7 +208,7 @@ namespace Dune {
     virtual const MatrixType& buildTransformationMatrix(int twist) const;
 
   private:
-    typedef FaceTopologyMapping<hexa> FaceTopo;
+    typedef FaceTopologyMapping<tetra> FaceTopo;
 
   private:
     const ReferenceSimplex<ct, dim>& refElem_;

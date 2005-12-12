@@ -23,10 +23,14 @@ namespace Dune {
     virtual void run();
 
     void globalTest();
+    void allGeometriesTest();
 
   private:
     template <int dim, int codim>
     void checkCorners(const ReferenceElement<double, dim>& refElem);
+
+    template <typename RefElemType, int codim>
+    void checkSingle(const RefElemType& ref);
 
   private:
     const ReferenceElement<double, 3>& refCube3_;
@@ -36,6 +40,6 @@ namespace Dune {
     const ReferenceElement<double, 1>& refLine_;
   };
 
-}
+} // end namespace Dune
 
 #endif

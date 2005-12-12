@@ -5,6 +5,7 @@ namespace Dune {
   void ReferenceElement_Test::run() 
   {
     globalTest();
+    allGeometriesTest();
   }
 
   void ReferenceElement_Test::globalTest() 
@@ -55,6 +56,37 @@ namespace Dune {
  
   }
 
+  void ReferenceElement_Test::allGeometriesTest() {
+    const ReferenceCube<double, 3>& rc3 = 
+      ReferenceElements<double, 3>::cube(cube);
+    checkSingle<ReferenceCube<double, 3>, 1>(rc3);
+    checkSingle<ReferenceCube<double, 3>, 2>(rc3);
+
+    const ReferenceCube<double, 2>& rc2 = 
+      ReferenceElements<double, 2>::cube(cube);
+    checkSingle<ReferenceCube<double, 2>, 1>(rc2);
+
+    const ReferenceSimplex<double, 3>& rs3 =
+      ReferenceElements<double, 3>::simplices(simplex);
+    checkSingle<ReferenceSimplex<double, 3>, 1>(rs3);
+    checkSingle<ReferenceSimplex<double, 3>, 2>(rs3);
+
+    const ReferenceSimplex<double, 2>& rs2 =
+      ReferenceElements<double, 2>::simplices(simplex);
+    checkSingle<ReferenceSimplex<double, 2>, 1>(rs2);
+
+    const ReferencePrism<double, 3>& rpr = 
+      ReferenceElements<double, 3>::pris(prism);
+    checkSingle<ReferencePrism<double, 3>, 1>(rpr);
+    checkSingle<ReferencePrism<double, 3>, 2>(rpr);
+
+    //const ReferencePyramid<double, 3>& rpy =
+    //  ReferenceElements<double, 3>::pyram(pyramid);
+    //checkSingle<ReferencePyramid<double, 3>, 1>(rpy);
+    //checkSingle<ReferencePyramid<double, 3>, 2>(rpy);
+      
+  }
+
   template <int dim, int codim>
   void ReferenceElement_Test::
   checkCorners(const ReferenceElement<double, dim>& refElem) 
@@ -78,4 +110,22 @@ namespace Dune {
     
   }
 
-}
+  template <typename RefElemType, int codim>
+  void ReferenceElement_Test::checkSingle(const RefElemType& ref)
+  {
+    const int dim = RefElemType::d;
+    
+    const ReferenceElement<double, dim-codim>& refCd = 
+      ReferenceElements<double, dim-codim>::general(ref.type(0, codim));
+
+    int globalCorner = ref.subEntity(0, codim, 0, dim);
+    FieldVector<double, dim> cornerVec = ref.position(globalCorner, dim);
+    FieldVector<double, dim> global = 
+      ref.template global<codim>(refCd.position(0, dim-codim), 0, codim);
+
+    for (int d = 0; d < dim; ++d) {
+      _floatTest(cornerVec[d], global[d]);
+    }
+  }
+  
+} // end namespace Dune

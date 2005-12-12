@@ -1,4 +1,5 @@
 #include <cassert>
+#include <dune/grid/common/referenceelements.hh>
 
 namespace Dune {
 

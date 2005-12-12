@@ -20,9 +20,12 @@ namespace Dune {
   }
 
   template <class ct, int dim>
-  void TwistStorage<ct, dim>::addPoint(const PointType& point)
+  size_t TwistStorage<ct, dim>::addPoint(const PointType& point)
   {
+    size_t indexOfPoint = points_.size();
     points_.push_back(point);
+
+    return indexOfPoint;
   }
 
   template <class ct, int dim>
@@ -96,10 +99,12 @@ namespace Dune {
       case simplex:
         helper_ = 
           AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>(quad.geo()));
+        break;
       case quadrilateral:
       case cube:
         helper_ = 
          AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>(quad.geo()));
+        break;
       default:
         DUNE_THROW(NotImplemented, 
                    "No creator for given GeometryType exists");
@@ -148,8 +153,7 @@ namespace Dune {
         }
         // add point if it is not one of the quadrature points
         if (!found) {
-          storage->addPoint(pRef);
-          mapper.push_back(mapper.size());
+          mapper[i] = storage->addPoint(pRef);
         }
       } // for all quadPoints
       storage->addMapper(mapper, twist);
@@ -174,7 +178,7 @@ namespace Dune {
   template <class ct, int dim>
   LineTwistMapperStrategy<ct, dim>::
   LineTwistMapperStrategy(GeometryType geo) :
-    TwistMapperStrategy<ct, dim>(0, 1),
+    TwistMapperStrategy<ct, dim>(0, 2),
     refElem_(ReferenceElements<ct, dim>::cube(geo)),
     mat_(0.)
   {
@@ -213,14 +217,19 @@ namespace Dune {
   TriangleTwistMapperStrategy<ct, dim>::
   buildTransformationMatrix(int twist) const 
   {
-   mat_ = 0.0;
+   mat_ *= 0.0;
 
     for (int idx = 0; idx < dim+1; ++idx) {
       int aluIndex = FaceTopo::dune2aluVertex(idx);
-      int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
+      //int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
+      // * twist or invTwist? seems buggy here... and why doesn't it matter for negative twists?
+      int twistedAluIndex = FaceTopo::invTwist(aluIndex, twist);
+      int twistedDuneIndex = FaceTopo::alu2duneVertex(twistedAluIndex);
       mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
-
+    
+    //std::cout << "Triangle with twist " << twist << ":\n";
+    //std::cout << mat_ << std::endl;
     return mat_;
   }
 
