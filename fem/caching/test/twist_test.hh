@@ -19,6 +19,6 @@ namespace Dune {
   private:
   };
 
-}
+} // end namespace Dune
 
 #endif

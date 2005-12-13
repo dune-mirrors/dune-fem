@@ -11,7 +11,7 @@ namespace Dune {
   void PointProvider<ct, dim, 0>::
   registerQuadrature(const QuadratureType& quad)
   {
-    if (points_.find(quad.id()) != points_.end()) {
+    if (points_.find(quad.id()) == points_.end()) {
       PointIteratorType it =
         points_.insert(std::make_pair
                        (quad.id(),
@@ -101,6 +101,9 @@ namespace Dune {
 
     int globalNum = 0;
     for (int face = 0; face < numFaces; ++face) {
+      // Assumption: all faces have the same type
+      // (not true for pyramids and prisms)
+      assert(sameGeometry(quad.geo(), refElem.type(face, codim)));
       MapperType pMap(numLocalPoints);
         
       for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
@@ -116,5 +119,34 @@ namespace Dune {
 
     return mit;
   }
-    
+
+  template <class ct, int dim>
+  bool PointProvider<ct, dim, 1>::sameGeometry(GeometryType geo1, 
+                                               GeometryType geo2)
+  {
+    // Assume here that the geometries belong to the same dimension
+    switch (geo1) {
+    case vertex:
+      return (geo2 == vertex || geo2 == simplex || geo2 == cube);
+    case line:
+      return (geo2 == line || geo2 == simplex || geo2 == cube);
+    case triangle:
+      return (geo2 == triangle || geo2 == simplex);
+    case quadrilateral:
+      return (geo2 == quadrilateral || geo2 == cube);
+    case tetrahedron:
+      return (geo2 == tetrahedron || geo2 == simplex);
+    case pyramid:
+      return geo2 == pyramid;
+    case prism:
+      return geo2 == prism;
+    case hexahedron:
+      return (geo2 == hexahedron || geo2 == cube);
+    case simplex:
+      return (geo2 == simplex || geo2 == triangle || geo2 == tetrahedron);
+    case cube:
+      return (geo2 == cube || geo2 == quadrilateral || geo2 == hexahedron);
+    }
+    return false;
+  }  
 } // end namespace Dune

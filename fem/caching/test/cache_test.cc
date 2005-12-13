@@ -7,4 +7,4 @@ namespace Dune {
     _fail("No tests yet");
   }
 
-}
+} // end namespace Dune

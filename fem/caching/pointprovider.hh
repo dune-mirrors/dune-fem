@@ -81,6 +81,7 @@ namespace Dune {
     static MapperIteratorType addEntry(const QuadratureType& quad,
                                        const LocalPointVectorType& pts,
                                        GeometryType elementGeo);
+    static bool sameGeometry(GeometryType geo1, GeometryType geo2);
 
   private:
     static PointContainerType points_;

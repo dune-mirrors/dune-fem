@@ -1,16 +1,18 @@
 #ifndef DUNE_CACHE_TEST_HH
 #define DUNE_CACHE_TEST_HH
 
-#include "../../misc/test.hh"
 #include "../cacheprovider.hh"
+#include "../../misc/test.hh"
+
 
 namespace Dune {
 
-  class CacheProvider_Test : public Test {
+  class CacheProvider_Test : public Test 
+  {
   public:
     virtual void run();
   };
 
-}
+} // end namespace Dune
 
 #endif

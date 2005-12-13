@@ -17,6 +17,6 @@ namespace Dune {
     static const int twistOffset_ = 5;
   };
 
-}
+} // end namespace Dune
 
 #endif
