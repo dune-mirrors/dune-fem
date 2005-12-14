@@ -64,7 +64,7 @@ namespace Dune {
     virtual int order() const = 0;
 
     //! Geometry type the quadrature defines points for.
-    virtual GeometryType geo() const = 0;
+    virtual GeometryType geometry() const = 0;
 
   protected:
     //! QuadratureImps are filled by the derived classes
@@ -113,7 +113,7 @@ namespace Dune {
     SimplexQuadrature(int order, size_t id);
     
     //! The geometry type is... simplex!
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return simplex;
     }
     
@@ -147,7 +147,7 @@ namespace Dune {
     CubeQuadrature(int order, size_t id);
     
     //! The geometry type is... cube!
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return cube;
     }
 
@@ -175,7 +175,7 @@ namespace Dune {
   public:
     LineQuadrature(int order, size_t id);
 
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return cube;
     }
 
@@ -200,7 +200,7 @@ namespace Dune {
   public:
     TriangleQuadrature(int order, size_t id);
 
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return simplex;
     }
 
@@ -232,7 +232,7 @@ namespace Dune {
   public:
     QuadrilateralQuadrature(int order, size_t id);
 
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return cube;
     }
 
@@ -257,7 +257,7 @@ namespace Dune {
   public:
     TetraQuadrature(int order, size_t id);
 
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return simplex;
     }
 
@@ -290,7 +290,7 @@ namespace Dune {
   public:
     HexaQuadrature(int order, size_t id);
 
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return cube;
     }
 
@@ -320,7 +320,7 @@ namespace Dune {
     PrismQuadrature(int order, size_t id);
 
     //! The geometry type is... prism!
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return prism;
     }
 
@@ -352,7 +352,7 @@ namespace Dune {
     PyramidQuadrature(int order, size_t id);
 
     //! The geometry type is... pyramid!
-    virtual GeometryType geo() const {
+    virtual GeometryType geometry() const {
       return pyramid;
     }
 
@@ -365,6 +365,31 @@ namespace Dune {
     static size_t maxOrder() { return PyramidPoints::highest_order; }
 
   private:
+    int order_;
+  };
+
+  template <class ct, int dim>
+  class TestQuadrature : public QuadratureImp<ct, dim>
+  {
+  public:
+    typedef FieldVector<ct, dim> CoordinateType;
+
+    // dummy value
+    enum { maxOrder_ = 10 };
+
+  public:
+    TestQuadrature(GeometryType geo, int order);
+
+    void newQuadraturePoint(const CoordinateType& c, ct weight);
+
+    virtual GeometryType geometry() const { return geo_; }
+
+    virtual int order() const { return order_; }
+    
+    static size_t maxOrder() { return maxOrder_; }
+    
+  private:
+    GeometryType geo_;
     int order_;
   };
 
@@ -392,6 +417,12 @@ namespace Dune {
     //! are integrated exactly).
     Quadrature(GeometryType geo, int order) :
       quad_(QuadratureProvider<ct, dim>::getQuadrature(geo, order))
+    {}
+
+    //! Constructor for testing purposes
+    //! \param quadImp Quadrature implementation for this test
+    Quadrature(const QuadratureImp<ct, dim>& quadImp) :
+      quad_(quadImp)
     {}
 
     //! The total number of quadrature points.
@@ -429,9 +460,10 @@ namespace Dune {
     }
 
     //! The geometry type the quadrature points belong to.
-    GeometryType geo() const {
-      return quad_.geo();
+    GeometryType geometry() const {
+      return quad_.geometry();
     }
+
   private:
     const QuadratureImp<ct, dim>& quad_;
   };

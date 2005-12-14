@@ -22,6 +22,9 @@ namespace Dune {
   template <typename GridImp>
   class CacheQuadrature<GridImp, 0> 
   {
+  public:
+    enum { codim = 0 };
+
     typedef Quadrature<
       typename GridImp::ctype, GridImp::dimension> QuadratureType;
     typedef typename QuadratureType::CoordinateType CoordinateType;
@@ -92,23 +95,21 @@ namespace Dune {
 
   };
 
-  // * Idea: to make the concepts sounder, why not transforming the 
-  // * the quadrature point into the reference element with
-  // * intersectionSelfLocal.global() ?
   //! Specialisation for codim 1
   template <class GridImp>
   class CacheQuadrature<GridImp, 1> 
   {
   private:
-    enum { codim = 1 };
     enum { dim = GridImp::dimension };
 
   public:
-    typedef Quadrature<typename GridImp::ctype, dim-codim> QuadratureType;
-
+    //! The codimension
+    enum { codim = 1 };
     //! Attributes the face either to the inside or the outside according
     //! to the definition of the intersection iterator
     enum Side { INSIDE, OUTSIDE };
+
+    typedef Quadrature<typename GridImp::ctype, dim-codim> QuadratureType;
 
     typedef typename QuadratureType::CoordinateType CoordinateType;
     typedef typename GridImp::Traits::IntersectionIterator IntersectionIterator;
@@ -200,7 +201,6 @@ namespace Dune {
     GeometryType elementGeo_;
 
     const MapperType& mapper_;
-
   };
 
 }
