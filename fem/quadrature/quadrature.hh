@@ -368,6 +368,10 @@ namespace Dune {
     int order_;
   };
 
+  //! \brief Allows injection of arbitrary points as quadrature points.
+  //! Useful to test some features of the quadrature framework in isolation
+  //! and with known input data. Each TestQuadrature object gets its own
+  //! unique id.
   template <class ct, int dim>
   class TestQuadrature : public QuadratureImp<ct, dim>
   {
@@ -378,14 +382,19 @@ namespace Dune {
     enum { maxOrder_ = 10 };
 
   public:
+    //! Constructor
     TestQuadrature(GeometryType geo, int order);
 
+    //! Adds new quadrature point/weight pair
     void newQuadraturePoint(const CoordinateType& c, ct weight);
 
+    //! Desired geometry
     virtual GeometryType geometry() const { return geo_; }
 
+    //! Dummy order method
     virtual int order() const { return order_; }
     
+    //! Dummy max order method
     static size_t maxOrder() { return maxOrder_; }
     
   private:
