@@ -1,6 +1,7 @@
 #ifndef DUNE_NEWBASE_HH
 #define DUNE_NEWBASE_HH
 
+#include <dune/fem/common/basefunctions.hh>
 #include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/fem/space/dofstorage.hh>
 #include <dune/common/fvector.hh>

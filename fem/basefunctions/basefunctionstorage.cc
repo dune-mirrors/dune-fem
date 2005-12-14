@@ -89,7 +89,7 @@ namespace Dune {
   template <class FunctionSpaceImp>
   CachingStorage<FunctionSpaceImp>::CachingStorage(const FactoryType& fac) :
     StorageBase<FunctionSpaceImp>(fac),
-    elementGeometry_(fac.geo())
+    elementGeometry_(fac.geometry())
   {}
 
   template <class FunctionSpaceImp>

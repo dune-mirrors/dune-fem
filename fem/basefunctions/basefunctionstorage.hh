@@ -72,7 +72,7 @@ namespace Dune {
   };
 
   template <class FunctionSpaceImp>
-  class CachingStorage
+  class CachingStorage : public StorageBase<FunctionSpaceImp>
   {
   public:
     typedef BaseFunctionFactory<FunctionSpaceImp> FactoryType;
