@@ -89,21 +89,21 @@ namespace Dune {
     
     if (dim == 1) {
       helper_ = 
-        AutoPtrType(new LineTwistMapperStrategy<ct, dim>(quad.geo()));
+        AutoPtrType(new LineTwistMapperStrategy<ct, dim>(quad.geometry()));
     } 
     else {
       assert (dim == 2);
 
-      switch (quad.geo()) {
+      switch (quad.geometry()) {
       case triangle:
       case simplex:
         helper_ = 
-          AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>(quad.geo()));
+          AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>(quad.geometry()));
         break;
       case quadrilateral:
       case cube:
         helper_ = 
-         AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>(quad.geo()));
+         AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>(quad.geometry()));
         break;
       default:
         DUNE_THROW(NotImplemented, 

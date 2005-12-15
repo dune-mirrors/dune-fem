@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include "cache_test.hh"
 
 namespace Dune {

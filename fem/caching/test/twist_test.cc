@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include "twist_test.hh"
 
 #include "../../quadrature/quadrature.hh"

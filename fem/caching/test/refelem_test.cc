@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include "refelem_test.hh"
 
 namespace Dune {

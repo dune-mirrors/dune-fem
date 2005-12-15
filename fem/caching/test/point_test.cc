@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include "point_test.hh"
 
 namespace Dune {

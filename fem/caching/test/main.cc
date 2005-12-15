@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include "../../misc/suite.hh"
 
 #include "refelem_test.hh"

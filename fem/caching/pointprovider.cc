@@ -27,6 +27,8 @@ namespace Dune {
   const typename PointProvider<ct, dim, 0>::GlobalPointVectorType&
   PointProvider<ct, dim, 0>::getPoints(size_t id, GeometryType elementGeo) 
   {
+    std::cout << "Codim 0" << std::endl;
+    std::cout << points_.size() << std::endl;
     assert(points_.find(id) != points_.end());
     return points_.find(id)->second;
   }
@@ -74,6 +76,7 @@ namespace Dune {
   const typename PointProvider<ct, dim, 1>::GlobalPointVectorType&
   PointProvider<ct, dim, 1>::getPoints(size_t id, GeometryType elementGeo)
   {
+    std::cout << "Codim 1" << std::endl;
     assert(points_.find(id) != points_.end());
     return points_.find(id)->second;
   }
@@ -103,7 +106,7 @@ namespace Dune {
     for (int face = 0; face < numFaces; ++face) {
       // Assumption: all faces have the same type
       // (not true for pyramids and prisms)
-      assert(sameGeometry(quad.geo(), refElem.type(face, codim)));
+      assert(sameGeometry(quad.geometry(), refElem.type(face, codim)));
       MapperType pMap(numLocalPoints);
         
       for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
@@ -146,6 +149,8 @@ namespace Dune {
       return (geo2 == simplex || geo2 == triangle || geo2 == tetrahedron);
     case cube:
       return (geo2 == cube || geo2 == quadrilateral || geo2 == hexahedron);
+    default:
+      assert(false);
     }
     return false;
   }  
