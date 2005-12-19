@@ -1,4 +1,4 @@
-#include "test.hh"
+#include "../../misc/test.hh"
 
 #include "../quadrature.hh"
 #include <dune/quadrature/fixedorder.hh>

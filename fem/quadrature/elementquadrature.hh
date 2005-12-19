@@ -97,6 +97,11 @@ namespace Dune {
       return quad_.geometry();
     }
 
+  protected:
+    const Quadrature<RealType, dimension>& quadImp() const {
+      return quad_;
+    }
+    
   private:
     Quadrature<RealType, dimension> quad_;
   };

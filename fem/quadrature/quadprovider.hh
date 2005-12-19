@@ -34,7 +34,11 @@ namespace Dune {
     template <class QuadImp>
     static const QuadImp& provideQuad(int order, std::vector<QuadImp*>& vec) 
     {
-      assert(vec.size() > static_cast<size_t>(order));
+      //assert(vec.size() > static_cast<size_t>(order));
+      if (vec.size() <= static_cast<size_t>(order)) {
+        order = vec.size()-1;
+      }
+
       if (!vec[order]) {
         vec[order] = new QuadImp(order, IdProvider::instance().newId());
       }

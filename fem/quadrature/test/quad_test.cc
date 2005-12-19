@@ -1,4 +1,4 @@
-#include<config.h>
+#include <config.h>
 
 #include "quad_test.hh"
 #include <set>
@@ -52,12 +52,16 @@ namespace Dune {
     FixedOrderQuad<double, Coord3, 7> fixedSimplex3d7(simplex);
 
     //- Test fixed order for simplex
+    #ifndef HAVE_ALBERTA 
+    // if Alberta is present, the new quadratures use the Alberta quadratures
+    // while the old ones stick to the UG quadratures
     fixedOrderComparisonExec(quadSimplex2d1, fixedSimplex2d1);
     fixedOrderComparisonExec(quadSimplex2d4, fixedSimplex2d4);
     fixedOrderComparisonExec(quadSimplex2d11, fixedSimplex2d11);
     fixedOrderComparisonExec(quadSimplex3d1, fixedSimplex3d1);
     fixedOrderComparisonExec(quadSimplex3d4, fixedSimplex3d4);
     fixedOrderComparisonExec(quadSimplex3d7, fixedSimplex3d7);
+    #endif
 
     //- Test weight summation for all
     weightSummationExec(quadCube1d1);
@@ -161,7 +165,7 @@ namespace Dune {
       sum += quad.weight(i);
     }
 
-    switch(quad.geo()) {
+    switch(quad.geometry()) {
     case line:
       _floatTest(sum, 1.0);
       break;
@@ -218,7 +222,7 @@ namespace Dune {
       _floatTest(result, -0.25);
       break;
     case 2:
-      if (quad.geo() == cube) {
+      if (quad.geometry() == cube) {
         _floatTest(result, -0.2708333333);
       } 
       else {
@@ -226,7 +230,7 @@ namespace Dune {
       } 
       break;
     case 3:
-      if (quad.geo() == cube) {
+      if (quad.geometry() == cube) {
         _floatTest(result, -0.03854166666);
       } 
       else {

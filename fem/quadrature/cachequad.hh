@@ -55,8 +55,10 @@ namespace Dune {
   public:
     //! Constructor
     CachingQuadrature(Entity& en, int order) :
-      BaseType(en, order)
-    {}
+      ElementQuadrature<GridImp, codimension>(en, order)
+    {
+      CacheProvider<GridImp, codimension>::registerQuadrature(this->quadImp());
+    }
 
     /* Probably not needed, though correct
     using BaseType::nop;
