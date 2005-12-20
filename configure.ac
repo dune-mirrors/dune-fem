@@ -31,6 +31,7 @@ LIBS="$DUNE_LIBS"
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
 		 basefunctions/Makefile
+		 basefunctions/test/Makefile
 		 caching/Makefile
 		 caching/test/Makefile
                  examples/Makefile
