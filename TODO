@@ -11,6 +11,8 @@ Quadrature:
 
 DGPass:
 - Remove assumption of orthonormal base functions by replacing vol by massMatrix
+- Remove hard-coded quadrature order
 
 Base functions:
 - Add methods to efficiently calculate massMatrix and its inverse
+- Make sure that you don't get name clashes with the classes in dune/fem/common
