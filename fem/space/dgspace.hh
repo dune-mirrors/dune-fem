@@ -7,7 +7,9 @@
 
 #include <dune/fem/dofmanager.hh>
 #include <dune/fem/common/discretefunctionspace.hh>
-#include <dune/fem/common/basefunctionsets.hh>
+//#include <dune/fem/common/basefunctionsets.hh>
+#include "../basefunctions/basefunctionsets.hh"
+#include "../basefunctions/basefunctionstorage.hh"
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
@@ -41,12 +43,13 @@ namespace Dune {
 
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
-    //typedef FastBaseFunctionSet<DiscreteFunctionSpaceType> BaseFunctionSetType;
-    typedef VectorialBaseFunctionSet<FunctionSpaceType> BaseFunctionSetType;
+ 
+    typedef VectorialBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
+    //typedef VectorialBaseFunctionSet<FunctionSpaceType, SimpleStorage> BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
   };
 
-  // * dokumentieren
+  //! A discontinuous Galerkin space
   template <class FunctionSpaceImp, class GridPartImp, int polOrd>
   class DiscontinuousGalerkinSpace : 
     public DiscreteFunctionSpaceDefault
@@ -245,57 +248,6 @@ namespace Dune {
       return new BaseFunctionSetType(fac);
     }
 
-    /*
-    template <class EntityType> 
-    BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) {
-      switch (en.geometry().type()) {
-      case triangle     : return makeBaseSet<triangle,polOrd> ();
-      case quadrilateral: return makeBaseSet<quadrilateral,polOrd> ();
-      case tetrahedron  : return makeBaseSet<tetrahedron,polOrd> ();
-      case pyramid      : return makeBaseSet<pyramid,polOrd> ();
-      case prism        : return makeBaseSet<prism,polOrd> ();
-      case hexahedron   : return makeBaseSet<hexahedron,polOrd> ();
-        
-      case simplex :
-        switch (EntityType::dimension) {
-        case 2: return makeBaseSet<triangle,polOrd> ();
-        case 3: return makeBaseSet<tetrahedron,polOrd> ();
-        default:
-          DUNE_THROW(NotImplemented, "No Lagrange function spaces for simplices of dimension " 
-                     << EntityType::dimension << "!");
-        }
-        
-      case cube :
-        switch (EntityType::dimension) {
-        case 2: return makeBaseSet<quadrilateral,polOrd> ();
-        case 3: return makeBaseSet<hexahedron,polOrd> ();
-        default:
-          DUNE_THROW(NotImplemented, 
-                     "No Lagrange function spaces for cubes of dimension " 
-                     << EntityType::dimension << "!");
-        }
-
-      default: 
-        DUNE_THROW(NotImplemented, "Element type " 
-                   << en.geometry().type() << " is not provided yet!");
-      
-        
-      }
-    }
-    template <GeometryType ElType, int pO > 
-    BaseFunctionSetType* makeBaseSet() {
-      typedef DGFastBaseFunctionSet<ThisType, ElType, pO> BaseFuncSetType;
-      typedef typename Traits::MapperType MapperType;
-      typedef typename Traits::IndexSetType IndexSetType;
-
-      BaseFunctionSetType* baseFuncSet = new BaseFuncSetType ( *this );
-      
-      mapper_ = new MapperType(const_cast<IndexSetType&>(gridPart_.indexSet()),
-                               baseFuncSet->numBaseFunctions());
-                                  
-      return baseFuncSet;
-    }
-    */
   private:
 
     // grid part
