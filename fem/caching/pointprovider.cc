@@ -84,7 +84,7 @@ namespace Dune {
                                       const LocalPointVectorType& points,
                                       GeometryType elementGeo)
   {
-    std::cout << "Add entry for id " << quad.id() << "called\n";
+    //std::cout << "Add entry for id " << quad.id() << " called\n";
 
     const ReferenceElement<ct, dim>& refElem =
       ReferenceElements<ct, dim>::general(elementGeo);
