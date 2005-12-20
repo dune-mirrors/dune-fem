@@ -11,6 +11,11 @@ namespace Dune {
   {
   public:
     virtual void run();
+
+    void hexaTest();
+    void tetraTest();
+    void triangleTest();
+    void quadTest();
   };
 
 } // end namespace Dune

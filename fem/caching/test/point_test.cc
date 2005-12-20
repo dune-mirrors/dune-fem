@@ -72,6 +72,7 @@ namespace Dune {
     typedef FieldVector<double, 1> Point1Type;
     typedef FieldVector<double, 2> Point2Type;
     typedef FieldVector<double, 3> Point3Type;
+    typedef CachingTraits<double, 2>::MapperVectorType MapperVectorType;
 
     Point2Type tmp2(0.5);
     Point3Type tmp3(0.5);
@@ -84,7 +85,14 @@ namespace Dune {
     quadImpQuad.newQuadraturePoint(ph, 1.0);
     Quadrature<double, 2> quadQuad(quadImpQuad);
 
-    PointProvider2Type::getMappers(quadQuad, cube);
+    const MapperVectorType& mvh = 
+      PointProvider2Type::getMappers(quadQuad, cube);
+    for (size_t i = 0; i < mvh.size(); ++i) {
+      std::cout << mvh[i][0] << ", ";
+    }
+    std::cout << std::endl;
+    
+
     const PointProvider2Type::GlobalPointVectorType& ptsHexa =
       PointProvider2Type::getPoints(quadQuad.id(), cube);
 

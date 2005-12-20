@@ -15,9 +15,11 @@
 
 namespace Dune {
 
+  //! Storage class for mappers.
   template <class ct, int dim, bool unstructured>
   class CacheStorage;
 
+  //! Specialisation for grids with twist (i.e. unstructured ones).
   template <class ct, int dim>
   class CacheStorage<ct, dim, true>
   {
@@ -50,7 +52,7 @@ namespace Dune {
         mappers_[faceIndex][faceTwist + Traits::twistOffset_];
       mapper.resize(twistMapper.size());
 
-      for (int i = 0; i < mapper.size(); ++i) {
+      for (size_t i = 0; i < mapper.size(); ++i) {
         mapper[i] = faceMapper[twistMapper[i]];
       }
 

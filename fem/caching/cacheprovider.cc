@@ -10,10 +10,11 @@ namespace Dune {
                                           GeometryType elementGeometry,
                                           Int2Type<true>)
   {
-    typedef typename TwistProvider<ct, dim>::TwistStorageType TwistStorageType;
+    typedef TwistProvider<ct, dim-codim> TwistProviderType;
+    typedef typename TwistProviderType::TwistStorageType TwistStorageType;
 
     const TwistStorageType& twistMappers =
-      TwistProvider<ct, dim>::getTwistStorage(quad);
+      TwistProviderType::getTwistStorage(quad);
     const MapperVectorType pointMappers =
       PointProvider<ct, dim, codim>::getMappers(quad, 
                                                 twistMappers.getPoints(),

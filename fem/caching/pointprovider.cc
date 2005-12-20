@@ -27,8 +27,6 @@ namespace Dune {
   const typename PointProvider<ct, dim, 0>::GlobalPointVectorType&
   PointProvider<ct, dim, 0>::getPoints(size_t id, GeometryType elementGeo) 
   {
-    std::cout << "Codim 0" << std::endl;
-    std::cout << points_.size() << std::endl;
     assert(points_.find(id) != points_.end());
     return points_.find(id)->second;
   }
@@ -76,7 +74,6 @@ namespace Dune {
   const typename PointProvider<ct, dim, 1>::GlobalPointVectorType&
   PointProvider<ct, dim, 1>::getPoints(size_t id, GeometryType elementGeo)
   {
-    std::cout << "Codim 1" << std::endl;
     assert(points_.find(id) != points_.end());
     return points_.find(id)->second;
   }
@@ -87,6 +84,8 @@ namespace Dune {
                                       const LocalPointVectorType& points,
                                       GeometryType elementGeo)
   {
+    std::cout << "Add entry for id " << quad.id() << "called\n";
+
     const ReferenceElement<ct, dim>& refElem =
       ReferenceElements<ct, dim>::general(elementGeo);
 
@@ -128,6 +127,7 @@ namespace Dune {
                                                GeometryType geo2)
   {
     // Assume here that the geometries belong to the same dimension
+
     switch (geo1) {
     case vertex:
       return (geo2 == vertex || geo2 == simplex || geo2 == cube);
@@ -146,9 +146,11 @@ namespace Dune {
     case hexahedron:
       return (geo2 == hexahedron || geo2 == cube);
     case simplex:
-      return (geo2 == simplex || geo2 == triangle || geo2 == tetrahedron);
+      return (geo2 == simplex || geo2 == triangle || geo2 == tetrahedron
+              || geo2 == line || (dim-1 == 1 && geo2 == cube));
     case cube:
-      return (geo2 == cube || geo2 == quadrilateral || geo2 == hexahedron);
+      return (geo2 == cube || geo2 == quadrilateral || geo2 == hexahedron
+              || geo2 == line || (dim-1 == 1 && geo2 == simplex));
     default:
       assert(false);
     }

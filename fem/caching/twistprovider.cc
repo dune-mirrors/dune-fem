@@ -221,8 +221,6 @@ namespace Dune {
 
     for (int idx = 0; idx < dim+1; ++idx) {
       int aluIndex = FaceTopo::dune2aluVertex(idx);
-      //int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
-      // * twist or invTwist? seems buggy here... and why doesn't it matter for negative twists?
       int twistedAluIndex = FaceTopo::invTwist(aluIndex, twist);
       int twistedDuneIndex = FaceTopo::alu2duneVertex(twistedAluIndex);
       mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here

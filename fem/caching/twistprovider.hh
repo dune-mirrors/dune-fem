@@ -39,6 +39,8 @@ namespace Dune {
   //! subclasses.
 
 
+  //! \brief Helper class which stores information about twist mapping for a
+  //! given quadrature id.
   template <class ct, int dim>
   class TwistStorage 
   {
@@ -49,18 +51,28 @@ namespace Dune {
     typedef typename Traits::MapperType MapperType;
 
   public:
+    //! Constructor
+    //! \param minTwist Minimal possible twist for the face
+    //! \param minTwist Maximal possible twist for the face + 1
     explicit TwistStorage(int minTwist, int maxTwist);
 
+    //! Add a new mapper for a given twist
     void addMapper(const MapperType& mapper, int twist);
     
+    //! Add a point (in the case of asymmetric quadratures)
     size_t addPoint(const PointType& points);
 
+    //! Access to a mapper
     const MapperType& getMapper(int twist) const;
     
+    //! Access to the points for all twists (in the case of symmetric 
+    //! quadratures, the points are identical with the quadrature points).
     const PointVectorType& getPoints() const;
 
+    //! Minimal twist
     int minTwist() const;
     
+    //! Maximal twist + 1
     int maxTwist() const;
 
   private:
