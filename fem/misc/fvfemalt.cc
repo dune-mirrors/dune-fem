@@ -812,7 +812,7 @@ namespace Dune
         
             typedef typename BoundaryManagerType::BoundaryType BoundaryType;
             const BoundaryType& bc = 
-              bcManager_.getBoundaryCondition(nit.boundaryEntity().id());
+              bcManager_.getBoundaryCondition(nit.boundaryId());
   
             midPoint = nit.intersectionGlobal().global(mid);
 

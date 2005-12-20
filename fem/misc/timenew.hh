@@ -7,9 +7,9 @@
 #include "timeutility.hh"
 
 #include <strstream>
-#include "../visual/dx/dxdata.hh"
+//#include "../visual/dx/dxdata.hh"
 
-using namespace Dune;
+namespace Dune {
 
 // Solve D_1 u' + D_0 u = f
 // Assume D_1 and D_0 to be linear operators, f independent from u
@@ -120,7 +120,7 @@ public:
     filestream << "upd" << this->level();
 
     DiscreteFunctionType* temp = 
-      new DiscreteFunctionType("temp", this->sol_.getFunctionSpace());
+      new DiscreteFunctionType("euler", this->sol_.getFunctionSpace());
     DiscreteFunctionType* upd = 
       new DiscreteFunctionType("upd", this->sol_.getFunctionSpace());
 
@@ -159,4 +159,5 @@ private:
   std::auto_ptr<MappingType> inv_;
 };
 
+} // end namespace Dune
 #endif
