@@ -11,20 +11,20 @@ namespace Dune {
 
   // Forward declarations
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  class StandardBaseFunctionSet;
+  class StdBaseFunctionSet;
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  class VectorialBaseFunctionSet;
+  class VecBaseFunctionSet;
 
   //! Traits class for standard base function set
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  struct StandardBaseFunctionSetTraits
+  struct StdBaseFunctionSetTraits
   {
     //! Export function space type
     typedef FunctionSpaceImp FunctionSpaceType;
     //! Type of the base function storage policy
     typedef StorageImp<FunctionSpaceType> StorageType;
     //! Exact type of the base function
-    typedef StandardBaseFunctionSet<FunctionSpaceType, 
+    typedef StdBaseFunctionSet<FunctionSpaceType, 
                                     StorageImp> BaseFunctionSetType;
     //! Factory type for the corresponding base functions (polymorphic)
     typedef BaseFunctionFactory<FunctionSpaceType> FactoryType;
@@ -33,11 +33,11 @@ namespace Dune {
 
   //! \brief Standard base function set
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  class StandardBaseFunctionSet : 
-    public BaseFunctionSetDefault<StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >
+  class StdBaseFunctionSet : 
+    public BaseFunctionSetDefault<StdBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >
   {
   public:
-    typedef StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> Traits;
+    typedef StdBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> Traits;
     typedef typename FunctionSpaceImp::DomainType DomainType;
     typedef typename FunctionSpaceImp::RangeType RangeType;
     typedef typename FunctionSpaceImp::RangeFieldType DofType;
@@ -45,7 +45,7 @@ namespace Dune {
 
   public:
     //! Constructor
-    StandardBaseFunctionSet(const typename Traits::FactoryType& factory) :
+    StdBaseFunctionSet(const typename Traits::FactoryType& factory) :
       storage_(factory),
       diffVar0_(0),
       tmp_(0.),
@@ -85,12 +85,12 @@ namespace Dune {
     mutable JacobianRangeType jTmp_;
   };
 
-  //- VectorialBaseFunctionSet
+  //- VecBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  struct VectorialBaseFunctionSetTraits 
+  struct VecBaseFunctionSetTraits 
   {
     typedef FunctionSpaceImp FunctionSpaceType;
-    typedef VectorialBaseFunctionSet<
+    typedef VecBaseFunctionSet<
       FunctionSpaceType, StorageImp> BaseFunctionSetType;
   };
 
@@ -100,12 +100,12 @@ namespace Dune {
   //! \phi_i which are extended to vectorial base functions like \Phi_j = 
   //! \phi_i e_k, where e_k = [ \kronecker_ik ]_i.
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  class VectorialBaseFunctionSet : 
-    public BaseFunctionSetDefault<VectorialBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >
+  class VecBaseFunctionSet : 
+    public BaseFunctionSetDefault<VecBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >
   {
   private:
     typedef BaseFunctionSetDefault<
-      VectorialBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> > BaseType;
+      VecBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> > BaseType;
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef typename ToScalarFunctionSpace<
       FunctionSpaceImp>::Type ScalarFunctionSpaceType;
@@ -115,7 +115,7 @@ namespace Dune {
     typedef BaseFunctionFactory<ScalarFunctionSpaceType> FactoryType;
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
     typedef StorageImp<ScalarFunctionSpaceType> StorageType;
-    typedef VectorialBaseFunctionSetTraits<FunctionSpaceImp,StorageImp> Traits;
+    typedef VecBaseFunctionSetTraits<FunctionSpaceImp,StorageImp> Traits;
  
   public:
     typedef typename FunctionSpaceType::DomainType DomainType;
@@ -127,14 +127,14 @@ namespace Dune {
         
   public:
     //! Constructor
-    VectorialBaseFunctionSet(const FactoryType& factory) :
+    VecBaseFunctionSet(const FactoryType& factory) :
       storage_(factory),
       util_(FunctionSpaceType::DimRange),
       tmp_(0.),
       jTmp_(0.)
     {}
 
-    ~VectorialBaseFunctionSet() {}
+    ~VecBaseFunctionSet() {}
 
     int numBaseFunctions() const;
 

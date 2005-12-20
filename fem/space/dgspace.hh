@@ -44,8 +44,8 @@ namespace Dune {
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
  
-    typedef VectorialBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
-    //typedef VectorialBaseFunctionSet<FunctionSpaceType, SimpleStorage> BaseFunctionSetType;
+    typedef VecBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
+    //typedef VecBaseFunctionSet<FunctionSpaceType, SimpleStorage> BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
   };
 
