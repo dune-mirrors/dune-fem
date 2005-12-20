@@ -16,7 +16,7 @@
 #include <dune/grid/common/gridpart.hh>
 //#include <dune/quadrature/fixedorder.hh>
 #include "../../quadrature/quadrature.hh"
-#include "../../quadrature/cachingquad.hh"
+#include "../../quadrature/cachequad.hh"
 
 namespace Dune {
 
@@ -27,7 +27,7 @@ namespace Dune {
   {
     enum { dimRange = 2 };
     enum { dimDomain = 2 };
-    enum { polOrd = 0 };
+    enum { polOrd = 2 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
@@ -51,17 +51,15 @@ namespace Dune {
 
     // * Need to do: adapt quadrature order
     /*
-    typedef FixedOrderQuad<
-      double, FieldVector<double, dimDomain>, 5> VolumeQuadratureType;
-    typedef FixedOrderQuad<
-      double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
-    */
-    /*
     typedef Quadrature<double, dimDomain> VolumeQuadratureType;
     typedef Quadrature<double, dimDomain-1> FaceQuadratureType;
     */
+    /*
     typedef CacheQuadrature<GridType, 0> VolumeQuadratureType;
     typedef CacheQuadrature<GridType, 1> FaceQuadratureType;
+    */
+    typedef CachingQuadrature<GridType, 0> VolumeQuadratureType;
+    typedef CachingQuadrature<GridType, 1> FaceQuadratureType;    
 
     typedef TransportDiffusionDiscreteModel1 DiscreteModelType;
   };
@@ -88,15 +86,15 @@ namespace Dune {
     bool hasSource() const { return false; }
     bool hasFlux() const { return true; }
     
-    /*
     template <class ArgumentTuple, class JacobianTuple>
     void source(EntityType& en, double time, const DomainType& x, 
                 const ArgumentTuple& u, const JacobianTuple& gradU, 
                 RangeType& s) {
       typedef typename ElementType<0, JacobianTuple>::Type GradientType;
-      s = (Element<0>::get(gradU))[0];
+      //std::cout << "x == " << en.geometry().global(x) << ": " 
+      //          << Element<0>::get(u)[0] << ", "
+      //          << Element<0>::get(gradU)[0] << std::endl;
     }
-    */
 
     template <class ArgumentTuple>
     double numericalFlux(IntersectionIterator& it,
@@ -107,6 +105,9 @@ namespace Dune {
                          RangeType& gRight)
     { 
       // central differences
+      //std::cout << "x == " << x << ": " << Element<0>::get(uLeft)[0]
+      //           << " ?= " << Element<0>::get(uRight)[0] << std::endl;
+
       const DomainType normal = it.integrationOuterNormal(x);
       double uMean = 
         0.5*( (Element<0>::get(uLeft))[0] + (Element<0>::get(uRight))[0]);
@@ -151,7 +152,7 @@ namespace Dune {
   {
     enum { dimRange = 1 };
     enum { dimDomain = 2 };
-    enum { polOrd = 0 };
+    enum { polOrd = 2 };
 
     typedef FunctionSpace<
       double, double, dimDomain, dimRange> FunctionSpaceType;
@@ -172,17 +173,15 @@ namespace Dune {
 
     // * Need to do: adapt quadrature order
     /*
-    typedef FixedOrderQuad<
-      double, FieldVector<double, dimDomain>, 5> VolumeQuadratureType;
-    typedef FixedOrderQuad<
-      double, FieldVector<double, dimDomain-1>, 5> FaceQuadratureType;
-    */
-    /*
     typedef Quadrature<double, dimDomain> VolumeQuadratureType;
     typedef Quadrature<double, dimDomain-1> FaceQuadratureType;
     */
+    /*
     typedef CacheQuadrature<GridType, 0> VolumeQuadratureType;
     typedef CacheQuadrature<GridType, 1> FaceQuadratureType;
+    */
+    typedef CachingQuadrature<GridType, 0> VolumeQuadratureType;
+    typedef CachingQuadrature<GridType, 1> FaceQuadratureType;
 
     typedef TransportDiffusionDiscreteModel2 DiscreteModelType;
   };

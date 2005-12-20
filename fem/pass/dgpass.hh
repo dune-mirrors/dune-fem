@@ -12,6 +12,8 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
+#include <dune/grid/utility/twistutility.hh>
+
 
 namespace Dune {
 
@@ -82,7 +84,8 @@ namespace Dune {
       source_(0.0),
       grads_(0.0),
       time_(0),
-      diffVar_()
+      diffVar_(),
+      twistUtil_(spc.grid())
     {}
    
     //! Destructor
@@ -160,34 +163,34 @@ namespace Dune {
         caller_.source(en, volQuad, l, source_);
 
         for (int i = 0; i < updEn.numDofs(); ++i) {
-          //double update =
           updEn[i] +=
-            (bsetEn.evaluateGradientSingle(i, en, volQuad.point(l), fMat_) +
-             bsetEn.evaluateSingle(i, volQuad.point(l), source_))*
+            (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
+             bsetEn.evaluateSingle(i, volQuad, l, source_))*
             volQuad.weight(l)*
             en.geometry().integrationElement(volQuad.point(l))/vol;
-          //updEn[i] += update; 
-
         }
       }
 
       // Surface integral part
       IntersectionIterator endnit = en.iend();
       IntersectionIterator nit = en.ibegin();
-      int twistSelf = 0; // * To be revised
-      int twistNeighbor = 0; // * To be revised
-      FaceQuadratureType faceQuadInner(nit, quadOrder, twistSelf, 
-                                       FaceQuadratureType::INSIDE);
-      FaceQuadratureType faceQuadOuter(nit, quadOrder, twistNeighbor,
-                                       FaceQuadratureType::OUTSIDE);
+      int twistSelf = twistUtil_.twistInSelf(nit); 
+      assert(twistSelf == 0);
 
       double dtLocal = 0.0;
       double minvol = vol; 
       
       for (; nit != endnit; ++nit) {
+        FaceQuadratureType faceQuadInner(nit, quadOrder, twistSelf, 
+                                         FaceQuadratureType::INSIDE);
         if (nit.neighbor()) {
           if (iset.index(*nit.outside()) > iset.index(en)
               || nit.outside()->partitionType() == GhostEntity) {
+
+            int twistNeighbor = twistUtil_.twistInNeighbor(nit);
+            assert(twistNeighbor == 0);
+            FaceQuadratureType faceQuadOuter(nit, quadOrder, twistNeighbor,
+                                             FaceQuadratureType::OUTSIDE);
             
             caller_.setNeighbor(*nit.outside());
             LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
@@ -198,24 +201,18 @@ namespace Dune {
 	    double nbvol = volumeElement(*nit.outside(), volQuad);
 	    if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuadInner.nop(); ++l) {
-              DomainType xLocalEn = 
-                nit.intersectionSelfLocal().global(faceQuadInner.point(l));
-              DomainType xLocalNeigh = 
-                nit.intersectionNeighborLocal().global(faceQuadOuter.point(l));
-              
-              // Evaluate flux
-              // * Add both quadratures to caller!
               double dtLocalS = 
-                caller_.numericalFlux(nit,faceQuadInner, l, valEn_, valNeigh_);
+                caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
+                                      l, valEn_, valNeigh_);
 	      dtLocal += dtLocalS*faceQuadInner.weight(l);
 
               for (int i = 0; i < updEn.numDofs(); ++i) {
                 updEn[i] -= 
-                  bsetEn.evaluateSingle(i, xLocalEn, valEn_)*
+                  bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_)*
                   faceQuadInner.weight(l)/vol;
                 updNeigh[i] += 
-                  bsetNeigh.evaluateSingle(i, xLocalNeigh, valNeigh_)
-                  *faceQuadInner.weight(l)/vol;
+                  bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_)
+                  *faceQuadOuter.weight(l)/vol;
               }
             }
 
@@ -224,15 +221,12 @@ namespace Dune {
 
         if (nit.boundary()) {
           for (int l = 0; l < faceQuadInner.nop(); ++l) {
-            DomainType xLocalEn = 
-              nit.intersectionSelfLocal().global(faceQuadInner.point(l));
-                 
             double dtLocalS = 
               caller_.boundaryFlux(nit, faceQuadInner, l, source_);
 	    dtLocal += dtLocalS*faceQuadInner.weight(l);
                     
             for (int i = 0; i < updEn.numDofs(); ++i) {
-              updEn[i] -= bsetEn.evaluateSingle(i, xLocalEn, source_)
+              updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_)
                 *faceQuadInner.weight(l)/vol;
             }
           }
@@ -279,6 +273,8 @@ namespace Dune {
     mutable DomainType grads_;
     TimeProvider* time_;
     FieldVector<int, 0> diffVar_;
+
+    TwistUtility<GridType> twistUtil_;
   };
   
 } // end namespace Dune

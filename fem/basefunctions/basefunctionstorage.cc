@@ -90,7 +90,9 @@ namespace Dune {
   CachingStorage<FunctionSpaceImp>::CachingStorage(const FactoryType& fac) :
     StorageBase<FunctionSpaceImp>(fac),
     elementGeometry_(fac.geometry())
-  {}
+  {
+    std::cerr << "Implement a switch for non-conforming grids!" << std::endl;
+  }
 
   template <class FunctionSpaceImp>
   CachingStorage<FunctionSpaceImp>::~CachingStorage() {}
@@ -109,7 +111,7 @@ namespace Dune {
     assert(it != ranges_.end());
 
     // calculate and return values
-    result = it->second[quad.cachingPoint(quadPoint)];
+    result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
   }
 
   template <class FunctionSpaceImp>
@@ -125,7 +127,7 @@ namespace Dune {
     assert(it != jacobians_.end());
 
     // calculate and return values
-    result = it->second[quad.cachingPoint(quadPoint)];
+    result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
   }
 
   template <class FunctionSpaceImp>
@@ -142,7 +144,12 @@ namespace Dune {
     assert(it != jacobians_.end());
 
     // calculate and return values
-    result = it->second[quad.cachingPoint(quadPoint)][diffVar[0]];
+    JacobianRangeType& jResult =
+      it->second[quad.cachingPoint(quadPoint)][baseFunct];
+    for (size_t i = 0; i < RangeType::size; ++i) {
+      result[i] = jResult[i][diffVar[0]];
+    }
+
   }
 
   template <class FunctionSpaceImp>
@@ -151,27 +158,55 @@ namespace Dune {
   CachingStorage<FunctionSpaceImp>::
   addEntry(const CacheQuadratureType& quad) const 
   {
-    typedef PointProvider<
-      RealType,DomainType::size,CacheQuadratureType::codim> PointProviderType;
+    //std::cout << "CachingStorage::addEntry for " << quad.id()<< " called" << std::endl;
+
+    enum { codimension = CacheQuadratureType::codimension };
+    enum { dimension = DomainType::size };
+
+    //std::cout << "dim == " << dimension << ", codimension == " << codimension << std::endl;
+
+    typedef PointProvider<RealType, dimension, codimension> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
 
     const PointVectorType& points = 
       PointProviderType::getPoints(quad.id(), elementGeometry_);
 
+    assert(ranges_.find(quad.id()) == ranges_.end());
     RangeIteratorType rit =
       ranges_.insert(make_pair(quad.id(), 
-                               RangeVectorType(this->numBaseFunctions()))).first;
+                               RangeVectorType(points.size()))).first;
+    assert(ranges_.find(quad.id()) != ranges_.end());
 
+    assert(jacobians_.find(quad.id()) == jacobians_.end());
     JacobianRangeIteratorType jit =
       jacobians_.insert(make_pair(quad.id(),
-                                  JacobianRangeVectorType(this->numBaseFunctions()))).first;
+                               JacobianRangeVectorType(points.size()))).first;
+    assert(jacobians_.find(quad.id()) != jacobians_.end());
 
     FieldVector<int, 0> diffVar;
+
+    //std::cout << "Id: " << quad.id() << std::endl;
+    //std::cout << "Num points: " << points.size() << std::endl;
+    //std::cout << "Num base functions: " << this->numBaseFunctions() << std::endl;
+    
     for (size_t i = 0; i < points.size(); ++i) {
-      // evaluate value and jacobian and store it 
-      this->evaluate(i, diffVar, points[i], rit->second[i]);
-      this->jacobian(i, points[i], jit->second[i]);
+      rit->second[i].resize(this->numBaseFunctions());
+      jit->second[i].resize(this->numBaseFunctions());
+
+      for (int j = 0; j < this->numBaseFunctions(); ++j) {
+        // evaluate value and jacobian and store it 
+        this->evaluate(j, diffVar, points[i], rit->second[i][j]);
+        this->jacobian(j, points[i], jit->second[i][j]);
+      }
     }
+
+    //std::cout << "Values:\n";
+    //for (int i = 0; i < rit->second.size(); ++i) {
+    //  std::cout << "Point " << i << std::endl;
+    //  for (int j = 0; j < rit->second[i].size(); ++j) {
+    //    std::cout << "\t" << j << ": " << rit->second[i][j] << std::endl;
+    //  }
+    //}
 
     return std::make_pair(rit, jit);
   }

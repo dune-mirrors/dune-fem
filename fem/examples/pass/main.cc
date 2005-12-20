@@ -231,6 +231,18 @@ void printSGrid(double time, int timestep, SpaceType& space, Loop& loop)
   ofs << std::endl;
 }
 
+class LinearFunction {
+public:
+  template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg, RangeType& res) 
+  {
+    res = 0.;
+    for (int i = 0; i < DomainType::size; ++i) {
+      res += arg[i]*static_cast<double>(i+1);
+    }
+  }
+};
+
 class StupidFunction {
 public:
   template <class DomainType, class RangeType>
@@ -263,13 +275,9 @@ void initialize(DFType& df)
   typedef FieldVector<double, dim> Coordinate;
 
   //- Actual method
-  StupidFunction f;  
-  L2Projection<DFType, StupidFunction, 2>::project(f, df);
-
-  typedef typename DFType::DofIteratorType DofIterator;
-  for (DofIterator it = df.dbegin(); it != df.dend(); ++it) {
-    std::cout << *it << std::endl;
-  }
+  typedef StupidFunction FunctionType;
+  FunctionType f;  
+  L2Projection<DFType, FunctionType, 2>::project(f, df);
 }
 
 template <class DFType>
@@ -288,7 +296,7 @@ int main()
 {
 
   typedef SGrid<2, 2> MyGrid;
-  const int polOrd = 0;
+  const int polOrd = 2;
   //typedef AlbertaGrid<2, 2> MyGrid;
 
   typedef Traits<MyGrid, polOrd> MyTraits;
@@ -332,17 +340,17 @@ int main()
   TimeOperatorType top;
 
   // Precursor
- 
-   {
-  DestinationType pre("pre", fix.space());
-  initialize(pre);
 
-  IdentitySolverFactory<DiscreteFunction> factory;
-  ExplicitEuler<
-    DiscreteFunction, MappingType> preLoop(pre, top, op, factory, dt);
-  preLoop.solve();
-   }
-  
+  {
+    DestinationType pre("pre", fix.space());
+    initialize(pre);
+    
+    IdentitySolverFactory<DiscreteFunction> factory;
+    ExplicitEuler<
+      DiscreteFunction, MappingType> preLoop(pre, top, op, factory, dt);
+    preLoop.solve();
+  }
+
   // intial data
   DestinationType initial("initial", fix.space());
   initialize(initial);

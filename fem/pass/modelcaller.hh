@@ -11,8 +11,6 @@
 
 namespace Dune {
 
-  //! \todo Provide shortcuts for evaluation on quadrature points once the caching is in place
-
   /**
    * @brief Wrapper class for all the template magic used to call the problem
    * methods.
@@ -121,19 +119,17 @@ namespace Dune {
 
     // Ensure: entities set correctly before call
     double numericalFlux(IntersectionIterator& nit,
-                         FaceQuadratureType& quad, int quadPoint,
+                         FaceQuadratureType& quadInner, 
+                         FaceQuadratureType& quadOuter, 
+                         int quadPoint,
                          RangeType& resEn, RangeType& resNeigh)
     {
-      typedef typename IntersectionIterator::LocalGeometry Geometry;
-    
-      const Geometry& selfLocal = nit.intersectionSelfLocal();
-      const Geometry& neighLocal = nit.intersectionNeighborLocal();
-      evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
-                    data_->localFunctionsSelf(), valuesEn_);
-      evaluateLocal(*nit.outside(), neighLocal.global(quad.point(quadPoint)),
-                    data_->localFunctionsNeigh(), valuesNeigh_);
+      evaluateQuad(*nit.inside(), quadInner, quadPoint,
+                   data_->localFunctionsSelf(), valuesEn_);
+      evaluateQuad(*nit.outside(), quadOuter, quadPoint,
+                   data_->localFunctionsNeigh(), valuesNeigh_);
       return problem_.numericalFlux(nit, time_, 
-                                    quad.point(quadPoint),
+                                    quadInner.localPoint(quadPoint),
                                     valuesEn_, 
                                     valuesNeigh_,
                                     resEn, resNeigh);
@@ -165,10 +161,9 @@ namespace Dune {
     {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
 
-      const Geometry& selfLocal = nit.intersectionSelfLocal();
-      evaluateLocal(*nit.inside(), selfLocal.global(quad.point(quadPoint)),
-                    data_->localFunctionsSelf(), valuesEn_);
-      return problem_.boundaryFlux(nit, time_, quad.point(quadPoint),
+      evaluateQuad(*nit.inside(), quad, quadPoint,
+                   data_->localFunctionsSelf(), valuesEn_);
+      return problem_.boundaryFlux(nit, time_, quad.localPoint(quadPoint),
                                    valuesEn_, boundaryFlux);
     }
 
@@ -210,14 +205,15 @@ namespace Dune {
       forEach.apply(eval);
     }
 
-    void evaluateQuad(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
+    template <class QuadratureType>
+    void evaluateQuad(Entity& en, QuadratureType& quad, int quadPoint, 
                       LocalFunctionTupleType& lfs, RangeTupleType& ranges) 
     {
       ForEachValuePair<
         LocalFunctionTupleType, RangeTupleType> forEach(lfs,
                                                         ranges);
       LocalFunctionEvaluateQuad<
-        Entity, VolumeQuadratureType> eval(en, quad, quadPoint);
+        Entity, QuadratureType> eval(en, quad, quadPoint);
       
       forEach.apply(eval);
     }
@@ -233,7 +229,8 @@ namespace Dune {
       forEach.apply(eval);
     }
 
-    void evaluateJacobianQuad(Entity& en, VolumeQuadratureType& quad, 
+    template <class QuadratureType>
+    void evaluateJacobianQuad(Entity& en, QuadratureType& quad, 
                               int quadPoint) 
     {
       ForEachValuePair<
@@ -241,7 +238,7 @@ namespace Dune {
         JacobianRangeTupleType> forEach(data_->localFunctionsSelf(),
                                         jacobians_);
       LocalFunctionEvaluateJacobianQuad<
-        Entity, VolumeQuadratureType> eval(en, quad, quadPoint);
+        Entity, QuadratureType> eval(en, quad, quadPoint);
       
       forEach.apply(eval);
     }
