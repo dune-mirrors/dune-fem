@@ -158,7 +158,7 @@ namespace Dune {
     }
 
     //! The maximal order of simplex quadratures.
-    static size_t maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPts::highestOrder; }
 
   private:
     int order_;
@@ -183,7 +183,7 @@ namespace Dune {
       return order_;
     }
 
-    static size_t maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPts::highestOrder; }
 
   private:
     int order_;
@@ -240,7 +240,7 @@ namespace Dune {
       return order_;
     }
 
-    static size_t maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPts::highestOrder; }
 
   private:
     int order_;
@@ -298,7 +298,7 @@ namespace Dune {
       return order_;
     }
 
-    static size_t maxOrder() { return GaussPoints::highestOrder; }
+    static size_t maxOrder() { return GaussPts::highestOrder; }
 
   private:
     int order_;

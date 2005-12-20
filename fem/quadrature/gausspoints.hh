@@ -6,18 +6,18 @@
 namespace Dune {
   //! Define the one-dimensional Gauss weights.
   //! This class implements the Singleton pattern.
-  class GaussPoints
+  class GaussPts
   {
   public:
     enum { MAXP=10 };
     enum { highestOrder=19 };
 
     //! Access to the singleton object.
-    static const GaussPoints& instance() {
-      if (!GaussPoints::instance_) {
-        GaussPoints::instance_ = new GaussPoints();
+    static const GaussPts& instance() {
+      if (!GaussPts::instance_) {
+        GaussPts::instance_ = new GaussPts();
       }
-      return *GaussPoints::instance_;
+      return *GaussPts::instance_;
     }
 
     //! ith point of the mth 1d quadrature
@@ -50,7 +50,7 @@ namespace Dune {
 
   private:
     //! initialize Gauss points on the interval for all orders
-    GaussPoints ()
+    GaussPts ()
     {
       int m = 0;
       O[m] = 0;
@@ -197,7 +197,7 @@ namespace Dune {
     }
 
   private:
-    static GaussPoints* instance_;
+    static GaussPts* instance_;
 
     double G[MAXP+1][MAXP]; // positions of Gauss points
     double W[MAXP+1][MAXP]; // weights associated with points       

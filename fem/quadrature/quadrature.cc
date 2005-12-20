@@ -42,11 +42,11 @@ namespace Dune {
   {
     typedef FieldVector<ct, dim> CoordinateType;
 
-    const GaussPoints& gp = GaussPoints::instance();
+    const GaussPts& gp = GaussPts::instance();
  
     // find the right Gauss Rule from given order
     int m = 0;
-    for (int i = 0; i <= GaussPoints::MAXP; i++) {
+    for (int i = 0; i <= GaussPts::MAXP; i++) {
       if (gp.order(i)>=order) {
         m = i;
         break;
@@ -88,10 +88,10 @@ namespace Dune {
   {
     typedef FieldVector<ct, 1> CoordinateType;
 
-    const GaussPoints& gp = GaussPoints::instance();
+    const GaussPts& gp = GaussPts::instance();
     
     int m=0;
-    for (int i = 0; i <= GaussPoints::MAXP; i++) {
+    for (int i = 0; i <= GaussPts::MAXP; i++) {
       if (gp.order(i)>=order) {
         m = i;
         break;
@@ -136,12 +136,12 @@ namespace Dune {
   {
     typedef FieldVector<ct, 2> CoordinateType;
 
-    const GaussPoints& gp = GaussPoints::instance();
+    const GaussPts& gp = GaussPts::instance();
     const int dim = 2;
 
     // find the right Gauss Rule from given order
     int m = 0;
-    for (int i = 0; i <= GaussPoints::MAXP; i++) {
+    for (int i = 0; i <= GaussPts::MAXP; i++) {
       if (gp.order(i)>=order) {
         m = i;
         break;
@@ -200,12 +200,12 @@ namespace Dune {
   {
     typedef FieldVector<ct, 3> CoordinateType;
 
-    const GaussPoints& gp = GaussPoints::instance();
+    const GaussPts& gp = GaussPts::instance();
     const int dim = 3;
 
     // find the right Gauss Rule from given order
     int m = 0;
-    for (int i = 0; i <= GaussPoints::MAXP; i++) {
+    for (int i = 0; i <= GaussPts::MAXP; i++) {
       if (gp.order(i)>=order) {
         m = i;
         break;

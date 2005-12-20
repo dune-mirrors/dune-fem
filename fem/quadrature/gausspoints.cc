@@ -1,5 +1,5 @@
 #include "gausspoints.hh"
 
 namespace Dune {
-  GaussPoints* GaussPoints::instance_ = 0;
+  GaussPts* GaussPts::instance_ = 0;
 }
