@@ -231,7 +231,7 @@ int main (int argc, char **argv)
 #endif
 
   {
-    GrapeDataDisplay < GridType , DFType > grape(grid,-1);
+    GrapeDataDisplay < GridType > grape(grid,-1);
     typedef DofManager< GridType > DofManagerType;
     typedef DofManagerFactory < DofManagerType> DofManagerFactoryType; 
 
