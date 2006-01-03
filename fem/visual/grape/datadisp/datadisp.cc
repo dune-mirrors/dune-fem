@@ -89,7 +89,7 @@ typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,
 				     GR_GridPartType,0> GR_DiscFuncSpaceType;
 
 typedef DFAdapt < GR_DiscFuncSpaceType >                GR_DiscFuncType;
-typedef GrapeDataDisplay<GR_GridType , GR_DiscFuncType> GrapeDispType;
+typedef GrapeDataDisplay<GR_GridType> GrapeDispType;
 
 #include "readdata.cc"
 #include "readparams.cc" 
