@@ -52,6 +52,10 @@ AC_CONFIG_FILES([Makefile
 		 space/Makefile
 		 quadrature/Makefile
 		 quadrature/test/Makefile
+                 visual/Makefile
+                 visual/grape/Makefile
+                 visual/grape/datadisp/Makefile
+                 visual/grape/gridview/Makefile
                ])
 AC_OUTPUT
 
