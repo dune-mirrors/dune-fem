@@ -9,8 +9,6 @@
 
 // Local includes
 
-using namespace Dune;
-
 namespace Dune {
   
   typedef int deriType;
