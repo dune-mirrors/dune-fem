@@ -25,7 +25,7 @@ using namespace std;
 class U0Smooth {
 public:
   template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg, RangeType& res) {
+  void evaluate(const DomainType& arg, RangeType& res) const {
     if (arg[0]*arg[0] < 0.25) {
       // res[0] = cos(arg[0]*M_PI*2.)+2;
       res[0] = -8.*(arg[0]*arg[0]-0.25)+1.;
@@ -122,7 +122,7 @@ int main(int argc, char ** argv, char ** envp) {
   ODEType ode(dg,rksteps,cfl);
   // *** Initial data
   DgType::DestinationType U("U", dg.space());
-  initialize<U0Smooth>(U);
+  initialize(U0Smooth(),U);
   printSGrid(0,0,dg.space(),U);
   {
     DgType::DestinationType Utmp("Utmp", dg.space());

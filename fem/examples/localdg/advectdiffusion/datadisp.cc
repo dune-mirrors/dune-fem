@@ -36,7 +36,6 @@ typedef double REAL;
 #include <dune/io/visual/grapedatadisplay.hh>
 #include <dune/io/visual/combinedgrapedisplay.hh>
 
-
 #include "../../../visual/grape/datadisp/printhelp.cc"
 
 #include "models.hh"
@@ -70,8 +69,6 @@ int main(int argc, char **argv)
       print_help("dunedisp");
       return(0);
   }
-
-
 
   if(argc > 2) 
     return readParameterList(argc,argv);

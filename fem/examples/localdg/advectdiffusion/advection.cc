@@ -25,7 +25,7 @@ using namespace std;
 class U0 {
 public:
   template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg, RangeType& res) {
+  void evaluate(const DomainType& arg, RangeType& res) const {
     double diffusion_ = 0.01;
     double t0 = 1.0;
     /*
@@ -131,7 +131,7 @@ int main(int argc, char ** argv, char ** envp) {
 
   // *** Initial data
   DgAdvDiffType::DestinationType U("U", dgadvdiff.space());
-  initialize<U0>(U);
+  initialize(U0(),U);
 
 
 
