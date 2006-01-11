@@ -161,7 +161,8 @@ namespace Dune {
     static std::vector<PyramidQuadrature<ct>*> pyramidQuads_;
   };
 
+} // end namespace Dune 
+
 #include "quadprovider.cc"
-}
 
 #endif

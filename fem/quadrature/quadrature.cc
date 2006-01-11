@@ -1,4 +1,3 @@
-
 namespace Dune {
 
   //- class QuadratureImp

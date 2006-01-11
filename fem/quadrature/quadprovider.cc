@@ -1,3 +1,6 @@
+#ifndef QUADRATURE_QUADPROVIDER_CC
+#define QUADRATURE_QUADPROVIDER_CC
+
 #include "quadprovider.hh"
 
 namespace Dune {
@@ -29,3 +32,5 @@ namespace Dune {
   std::vector<PyramidQuadrature<ct>*> QuadratureProvider<ct, 3>::
   pyramidQuads_(PyramidQuadrature<ct>::maxOrder(), 0);
 }
+
+#endif

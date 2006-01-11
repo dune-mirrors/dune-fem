@@ -16,11 +16,9 @@ namespace Dune {
     enum { highest_order=2 };
     
     //! Access to the singleton object.
-    static const PrismPoints& instance() {
-      if (!PrismPoints::instance_) {
-        PrismPoints::instance_ = new PrismPoints();
-      }
-      return *PrismPoints::instance_;
+    inline static const PrismPoints& instance() {
+      static PrismPoints prismPoints; 
+      return prismPoints; 
     }
 
     //! Access to the ith point of quadrature rule m.
@@ -128,8 +126,6 @@ namespace Dune {
     }
 
   private:
-    static PrismPoints* instance_;
-
     FieldVector<double, 3> G[numQuads][MAXP];//positions
     
     double W[numQuads][MAXP]; // weights associated with points       

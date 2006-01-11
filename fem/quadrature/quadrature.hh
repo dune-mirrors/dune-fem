@@ -78,7 +78,7 @@ namespace Dune {
     //! Copying is forbidden!
     QuadratureImp(const QuadratureImp&);
     //! Assignment is forbidden!
-    QuadratureImp operator=(const QuadratureImp&);
+    //QuadratureImp operator=(const QuadratureImp&);
 
   private:
     std::vector<CoordinateType> points_;
@@ -479,6 +479,7 @@ namespace Dune {
 
 } // end namespace Dune
 
+#include "include_cc.hh"
 #include "quadrature.cc"
 
 #endif
