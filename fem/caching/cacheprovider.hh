@@ -154,7 +154,7 @@ namespace Dune {
       MapperIteratorType it = mappers_.find(quad.id());
 
       if (it == mappers_.end()) {
-        Int2Type<IsUnstructured<GridImp>::value> i2t;
+        Int2Type<IsUnstructured<GridImp::dimension,GridImp::dimensionworld,GridImp>::value> i2t;
         it = CacheProvider<GridImp, 1>::createMapper(quad, 
                                                      elementGeometry, 
                                                      i2t);
@@ -165,7 +165,9 @@ namespace Dune {
 
   private:
     typedef CacheStorage<
-      ct, dim-codim, IsUnstructured<GridImp>::value> CacheStorageType; 
+      ct, dim-codim,
+      IsUnstructured<GridImp::dimension,GridImp::dimensionworld,GridImp>::value> 
+        CacheStorageType; 
     typedef typename Traits::MapperVectorType MapperVectorType;
     typedef std::map<size_t, CacheStorageType> MapperContainerType;
     typedef typename MapperContainerType::iterator MapperIteratorType;
