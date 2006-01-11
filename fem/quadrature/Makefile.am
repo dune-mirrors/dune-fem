@@ -2,4 +2,4 @@
 
 quadraturedir =  $(includedir)/quadrature
 quadrature_HEADERS = quadrature.hh quadrature.cc idprovider.hh \
-gausspoints.hh idprovider.cc gausspoints.cc
+gausspoints.hh prismpoints.hh pyramidpoints.hh
