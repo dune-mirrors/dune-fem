@@ -8,11 +8,9 @@ namespace Dune {
   class IdProvider {
   public:
     //! Access to the singleton object.
-    static IdProvider& instance() {
-      if (!instance_) {
-        IdProvider::instance_ = new IdProvider();
-      }
-      return *IdProvider::instance_;
+    inline static IdProvider& instance() {
+      static IdProvider idProvider; 
+      return idProvider;
     }
 
     //! Return a new identifier.
@@ -27,17 +25,10 @@ namespace Dune {
       lowestFreeId_(0)
     {}
 
-    //! Destructor
-    ~IdProvider() { 
-      delete instance_; 
-    }
-
     IdProvider(const IdProvider&);
     IdProvider& operator=(const IdProvider&);
 
   private:
-    static IdProvider* instance_;
-
     size_t lowestFreeId_;
   };
 

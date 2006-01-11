@@ -13,11 +13,9 @@ namespace Dune {
     enum { highestOrder=19 };
 
     //! Access to the singleton object.
-    static const GaussPts& instance() {
-      if (!GaussPts::instance_) {
-        GaussPts::instance_ = new GaussPts();
-      }
-      return *GaussPts::instance_;
+    inline static const GaussPts& instance() {
+      static GaussPts gaussPts; 
+      return gaussPts;
     }
 
     //! ith point of the mth 1d quadrature
@@ -197,8 +195,6 @@ namespace Dune {
     }
 
   private:
-    static GaussPts* instance_;
-
     double G[MAXP+1][MAXP]; // positions of Gauss points
     double W[MAXP+1][MAXP]; // weights associated with points       
     int    O[MAXP+1];       // order of the rule
