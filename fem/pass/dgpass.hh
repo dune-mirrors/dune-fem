@@ -69,7 +69,8 @@ namespace Dune {
     //! \param spc Space belonging to the discrete function local to this pass
     LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
-                DiscreteFunctionSpaceType& spc) :
+                DiscreteFunctionSpaceType& spc,
+		int quadOrd0=-1,int quadOrd1=-1) :
       BaseType(pass, spc),
       caller_(problem),
       arg_(0),
@@ -85,8 +86,15 @@ namespace Dune {
       grads_(0.0),
       time_(0),
       diffVar_(),
-      twistUtil_(spc.grid())
-    {}
+      twistUtil_(spc.grid()),
+      quadOrd0_(quadOrd0),
+      quadOrd1_(quadOrd1)
+    {
+      if (quadOrd0_==-1)
+	quadOrd0_ = 2*spc_.polynomOrder();
+      if (quadOrd1_==-1)
+	quadOrd1_ = 2*spc_.polynomOrder()+1;
+    }
    
     //! Destructor
     virtual ~LocalDGPass() {
@@ -142,14 +150,13 @@ namespace Dune {
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
       
-      const int quadOrder = 5;
 
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
       //GeometryType geom = en.geometry().type();
       
-      VolumeQuadratureType volQuad(en, quadOrder);
+      VolumeQuadratureType volQuad(en, quadOrd0_);
 
       double vol = volumeElement(en, volQuad);
       //std::cout << "Vol = " << vol << std::endl;
@@ -163,42 +170,41 @@ namespace Dune {
         caller_.source(en, volQuad, l, source_);
 
         for (int i = 0; i < updEn.numDofs(); ++i) {
-          updEn[i] +=
+          updEn[i] += 
             (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
              bsetEn.evaluateSingle(i, volQuad, l, source_))*
             volQuad.weight(l)*
             en.geometry().integrationElement(volQuad.point(l))/vol;
         }
       }
-
+     
       // Surface integral part
       IntersectionIterator endnit = en.iend();
       IntersectionIterator nit = en.ibegin();
-      int twistSelf = twistUtil_.twistInSelf(nit); 
-      assert(twistSelf == 0);
 
       double dtLocal = 0.0;
       double minvol = vol; 
       
       for (; nit != endnit; ++nit) {
-        FaceQuadratureType faceQuadInner(nit, quadOrder, twistSelf, 
+	int twistSelf = twistUtil_.twistInSelf(nit); 
+        FaceQuadratureType faceQuadInner(nit, quadOrd1_, twistSelf, 
                                          FaceQuadratureType::INSIDE);
-        if (nit.neighbor()) {
-          if (iset.index(*nit.outside()) > iset.index(en)
-              || nit.outside()->partitionType() == GhostEntity) {
+	if (nit.neighbor()) {
+	  EntityType& nb=*nit.outside();
+          if (iset.index(nb) > iset.index(en)
+              || nb.partitionType() == GhostEntity) {
 
             int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-            assert(twistNeighbor == 0);
-            FaceQuadratureType faceQuadOuter(nit, quadOrder, twistNeighbor,
+            FaceQuadratureType faceQuadOuter(nit, quadOrd1_, twistNeighbor,
                                              FaceQuadratureType::OUTSIDE);
             
-            caller_.setNeighbor(*nit.outside());
-            LocalFunctionType updNeigh =dest_->localFunction(*(nit.outside()));
+            caller_.setNeighbor(nb);
+            LocalFunctionType updNeigh =dest_->localFunction(nb);
 
             const BaseFunctionSetType& bsetNeigh = 
-              spc_.getBaseFunctionSet(*(nit.outside()));
+              spc_.getBaseFunctionSet(nb);
   
-	    double nbvol = volumeElement(*nit.outside(), volQuad);
+	    double nbvol = volumeElement(nb, volQuad);
 	    if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuadInner.nop(); ++l) {
               double dtLocalS = 
@@ -212,10 +218,10 @@ namespace Dune {
                   faceQuadInner.weight(l)/vol;
                 updNeigh[i] += 
                   bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_)
-                  *faceQuadOuter.weight(l)/vol;
+                  *faceQuadOuter.weight(l)/nbvol;
               }
             }
-
+                         
           } // end if ...
         } // end if neighbor
 
@@ -275,6 +281,8 @@ namespace Dune {
     FieldVector<int, 0> diffVar_;
 
     TwistUtility<GridType> twistUtil_;
+
+    int quadOrd0_,quadOrd1_;
   };
   
 } // end namespace Dune

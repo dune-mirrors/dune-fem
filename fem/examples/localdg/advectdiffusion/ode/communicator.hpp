@@ -22,10 +22,10 @@ namespace DuneODE {
     bool rb_empty(int i) {return true;}
     template<class T> void put(int dest, const T& content) {}
     template<class T> void put_all(const T& content) {}
-    template<class T> bool get(int source, T& content) {}
+    template<class T> bool get(int source, T& content) {return true;}
     template<class T> void put(int dest, const T* content, int num) {}
     template<class T> void put_all(const T* content, int num) {}
-    template<class T> bool get(int source, T* content, int num) {}
+    template<class T> bool get(int source, T* content, int num) {return true;}
     
     void send_request(int dest) {}
     void receive_request(int source) {}

@@ -4,7 +4,7 @@ class L2Projection
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   
  public:
-  static void project (FunctionType &f, DiscreteFunctionType &discFunc) {
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
     typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
@@ -24,8 +24,7 @@ class L2Projection
     Iterator endit = space.end();
     
     // Get quadrature rule
-    const QuadratureRule<double, dim>& quad =
-      QuadratureRules<double, dim>::rule(it->geometry().type(), polOrd);
+    CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
     
     for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
@@ -34,12 +33,12 @@ class L2Projection
 	space.getBaseFunctionSet(*it);
       
       for(int i=0; i<lf.numDofs(); i++) {
-        for(int qP = 0; qP < quad.size(); qP++) {
+        for(int qP = 0; qP < quad.nop(); qP++) {
 	  double det =
-	    (*it).geometry().integrationElement(quad[qP].position());
-	  f.evaluate((*it).geometry().global( quad[qP].position() ), ret);
-	  set.eval(i,quad[qP].position(),phi);
-          lf[i] += quad[qP].weight() * (ret * phi) ;
+	    (*it).geometry().integrationElement(quad.point(qP));
+	  f.evaluate((*it),quad.point(qP), ret);
+	  set.eval(i,quad,qP,phi);
+	  lf[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
     }
@@ -58,19 +57,19 @@ struct SStruct {
 
   SStruct(int n, double h) {
     n_[0] = n;
-    n_[1] = 1;
+    n_[1] = n;
     l_[0] = -1.0;
-    l_[1] = -h/2.0;
-    h_[0] = 1.5;
-    h_[1] = h/2.0;
+    l_[1] = -1.0; // h/2.0;
+    h_[0] = 1.0;
+    h_[1] = 1.0; // h/2.0;
   }
   SStruct(int n) {
     n_[0] = n;
-    n_[1] = 1;
+    n_[1] = n;
     l_[0] = -1.0;
-    l_[1] = -0.5/double(n);
-    h_[0] = 1.5;
-    h_[1] = 0.5/double(n);
+    l_[1] = -1.0; // 0.5/double(n);
+    h_[0] = 1.0;
+    h_[1] = 1.0; // 0.5/double(n);
   }
 
   int n_[2];
@@ -87,8 +86,9 @@ void midPoint(const Geometry& geo, FieldVector<double, 2>& result)
 
   result /= static_cast<double>(geo.corners());
 }
-template <class Sol, class SpaceType>
-void printSGrid(double time, int timestep, const SpaceType& space, const Sol& sol)
+template <class Sol, class SpaceType,class TopoType>
+void printSGrid(double time, int timestep, const SpaceType& space, const Sol& sol,
+		const TopoType& topo)
 {
   typedef typename SpaceType::IteratorType Iterator;
   typedef typename Sol::DiscreteFunctionType DiscreteFunctionType;
@@ -108,10 +108,14 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
   Iterator endit = space.end();
   for (Iterator it = space.begin(); it != endit; ++it) {
     midPoint(it->geometry(), mid);
-    if (mid[1] < 0.1 && mid[1] > -0.1) {
+    {
       LocalFunctionType lf = sol.localFunction(*it);
       lf.evaluateLocal(*it, localMid, result);
-      ofs << mid[0] << " " << result << "\n";
+
+      FieldVector<double,1> b;
+      topo.evaluate(*it,localMid,b);
+
+      ofs << mid[0] << " " << mid[1] << " " << b << " " << result << "\n";
     }
   }
   ofs << std::endl;
@@ -119,7 +123,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
 
 
 template <class StupidFunction,class DFType>
-void initialize(DFType& df)
+void initialize(const StupidFunction& f,DFType& df)
 {
   //- Typedefs and enums
   typedef typename DFType::Traits::DiscreteFunctionSpaceType SpaceType;
@@ -136,7 +140,6 @@ void initialize(DFType& df)
   typedef FieldVector<double, dim> Coordinate;
 
   //- Actual method
-  StupidFunction f;
   L2Projection<DFType, StupidFunction, 2>::project(f, df);
 
   typedef typename DFType::DofIteratorType DofIterator;

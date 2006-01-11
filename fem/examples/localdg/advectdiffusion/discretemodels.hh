@@ -13,7 +13,7 @@
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/quadrature/fixedorder.hh>
+#include "../../../quadrature/cachequad.hh"
 
 //*************************************************************
 namespace Dune {  
@@ -26,7 +26,7 @@ namespace Dune {
   class TransportDiffusionDiscreteModel2;
 
   // MethodOrderTraits
-  template <class Model,int polOrd,int dimRange>
+  template <class Model,int dimRange>
   class PassTraits {
   public:
     typedef typename Model::Traits ModelTraits;
@@ -34,14 +34,10 @@ namespace Dune {
     enum { dimDomain = Model::Traits::dimDomain };
     typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
-    // typedef FunctionSpace<double, double, dimDomain, 1> SingleFunctionSpaceType; 
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
 
-    typedef FixedOrderQuad<double, typename ModelTraits::DomainType, polOrd*2> 
-      VolumeQuadratureType;
-    typedef FixedOrderQuad<double, typename ModelTraits::FaceDomainType, polOrd*2+1> 
-      FaceQuadratureType;
-
+    typedef CachingQuadrature<GridType,0> VolumeQuadratureType;
+    typedef CachingQuadrature<GridType,1> FaceQuadratureType;
   };
   // DiscreteModelTraits
   template <class Model,class NumFlux,int polOrd >
@@ -53,16 +49,13 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimGradRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef PassTraits<Model,polOrd,dimRange> Traits;
+    typedef PassTraits<Model,dimRange> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
-    //typedef FunctionSpace<
-    //  double, double, dimDomain, dimRange> FunctionSpaceType;
     typedef typename ModelTraits::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    //typedef PassTraits<Model,polOrd,dimRange> Traits;
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::IndexSetType IndexSetType;
@@ -89,7 +82,7 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef PassTraits<Model,polOrd,dimRange> Traits;
+    typedef PassTraits<Model,dimRange> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -99,10 +92,6 @@ namespace Dune {
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
-    // typedef typename Traits::SingleFunctionSpaceType SingleFunctionSpaceType;
-
-    //typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
-    //typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
@@ -119,7 +108,7 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef PassTraits<Model,polOrd,dimRange> Traits;
+    typedef PassTraits<Model,dimRange> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
     typedef typename ModelTraits::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
