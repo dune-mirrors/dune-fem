@@ -36,7 +36,7 @@ class L2Projection
         for(int qP = 0; qP < quad.nop(); qP++) {
 	  double det =
 	    (*it).geometry().integrationElement(quad.point(qP));
-	  f.evaluate((*it),quad.point(qP), ret);
+	  f.evaluate((*it).geometry().global(quad.point(qP)), ret);
 	  set.eval(i,quad,qP,phi);
 	  lf[i] += quad.weight(qP) * (ret * phi) ;
         }
@@ -86,9 +86,8 @@ void midPoint(const Geometry& geo, FieldVector<double, 2>& result)
 
   result /= static_cast<double>(geo.corners());
 }
-template <class Sol, class SpaceType,class TopoType>
-void printSGrid(double time, int timestep, const SpaceType& space, const Sol& sol,
-		const TopoType& topo)
+template <class Sol, class SpaceType>
+void printSGrid(double time, int timestep, const SpaceType& space, const Sol& sol)
 {
   typedef typename SpaceType::IteratorType Iterator;
   typedef typename Sol::DiscreteFunctionType DiscreteFunctionType;
@@ -112,10 +111,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
       LocalFunctionType lf = sol.localFunction(*it);
       lf.evaluateLocal(*it, localMid, result);
 
-      FieldVector<double,1> b;
-      topo.evaluate(*it,localMid,b);
-
-      ofs << mid[0] << " " << mid[1] << " " << b << " " << result << "\n";
+      ofs << mid[0] << " " << mid[1] << " " << " " << result << "\n";
     }
   }
   ofs << std::endl;

@@ -25,7 +25,7 @@ using namespace std;
 class U0 {
 public:
   template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg, RangeType& res) {
+  void evaluate(const DomainType& arg, RangeType& res) const {
     if (arg*arg < 0.25) {
       res = 1.0;
       res = cos(arg[0]*M_PI*2.)+1;
@@ -151,10 +151,10 @@ int main(int argc, char ** argv, char ** envp) {
   DgDiffType::DestinationType UDiff("DDiff", dgdiffeqn.space());
   DgAdvType::DestinationType UAdv("UAdv", dgadveqn.space());
   DgBurgersType::DestinationType UBurgers("UBurgers", dgburgers.space());
-  initialize<U0>(U);
-  initialize<U0>(UDiff);
-  initialize<U0>(UAdv);
-  initialize<U0>(UBurgers);
+  initialize(U0(),U);
+  initialize(U0(),UDiff);
+  initialize(U0(),UAdv);
+  initialize(U0(),UBurgers);
   printSGrid(0, 1, dgadvdiff.space(), U);
   printSGrid(0, 2, dgdiffeqn.space(), UDiff);
   printSGrid(0, 3, dgadveqn.space(), UAdv);
