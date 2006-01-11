@@ -479,7 +479,6 @@ namespace Dune {
 
 } // end namespace Dune
 
-#include "include_cc.hh"
 #include "quadrature.cc"
 
 #endif
