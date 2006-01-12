@@ -606,6 +606,9 @@ namespace Dune
     DiscFuncType* errorFunc_;
     LocalFuncType enError_; 
     LocalFuncType neighError_; 
+
+    typedef typename GridType::Traits::LocalIdSet LocalIdSetType; 
+    const LocalIdSetType & localIdSet_; 
   
   public:
     // Constructor 
@@ -625,7 +628,8 @@ namespace Dune
       quad_ ( *(f.begin()) ),
       errorFunc_ ( error ),
       enError_ ( errorFunc_->newLocalFunction () ) ,
-      neighError_ ( errorFunc_->newLocalFunction () )
+      neighError_ ( errorFunc_->newLocalFunction () ),
+      localIdSet_( f.grid().localIdSet() )  
     { 
       //level_ = f.getGrid().maxlevel();
       typedef FieldVector<RangeFieldType,dim-1> MidType;
@@ -746,23 +750,27 @@ namespace Dune
           double h = normal.two_norm();
           normal *= 1.0/h;
               
-          // if intersection is with neighbor and neighbors number is bigger
-          // then ours ==> calculate flux 
           if( nit.neighbor() ) {
+            typedef EntityType :: EntityPointer EntityPointerType;
+            EntityPointerType ep = nit.outside();
+            EntityType & neighbour = *ep;
 
-            if( nit.outside()->globalIndex() > en.globalIndex()
-                || nit.outside()->partitionType() == GhostEntity) {
+            // if intersection is with neighbor and neighbors number is bigger
+            // then ours ==> calculate flux 
+            if( (localIdSet_.id(neighbour) > localIdSet_.id(en) )
+                || neighbour.partitionType() == GhostEntity) 
+            {
 
               // edge or face volume
                          
               // volume of neighbor 
               nvol = 
-                volRefelem_ * nit.outside()->geometry().integrationElement(centerPoint_);
+                volRefelem_ * neighbour.geometry().integrationElement(centerPoint_);
               double nvol_1 = 1/nvol;
           
               // get access to local functions  
-              oldSol.localFunction ( *nit.outside() , *neighLf_ );
-              update.localFunction ( *nit.outside() , *upNeigh_ );
+              oldSol.localFunction ( neighbour , *neighLf_ );
+              update.localFunction ( neighbour , *upNeigh_ );
         
               // evaluate the local function on the middle point of the actual face
               // * Why numberInSelf, numberInNeighbor here
@@ -770,7 +778,7 @@ namespace Dune
               //neighLf_->evaluate(*nit.outside(), quad_, nit.numberInNeighbor(), valNeigh_);
 
               oldLf_->evaluate(en, quad_, 0, valEl_);
-              neighLf_->evaluate(*nit.outside(), quad_, 0, valNeigh_);
+              neighLf_->evaluate(neighbour , quad_, 0, valNeigh_);
         
               // calculate numerical flux , g(u,v)
               double dtLocal = fluxFcn_(valEl_, valNeigh_, normal, normal, flux_);
@@ -791,7 +799,7 @@ namespace Dune
                 // * Formulation by Dedner
                 Real eta = 2.0 * std::fabs(valEl_[0] - valNeigh_[0]) / (valEl_[0] + valNeigh_[0]);
                 //std::cout << "Eta = " << eta << std::endl;
-                errorFunc_->localFunction(*nit.outside(), neighError_);
+                errorFunc_->localFunction(neighbour, neighError_);
                 if (enError_[0] < eta) enError_[0] = eta;
                 if (neighError_[0] < eta) neighError_[0] = eta;
               }

@@ -291,7 +291,7 @@ template <class FunctionType>
         & functionSpace_= discFunc.getFunctionSpace();  
   
     typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename GridType::LeafIterator LeafIterator;
+    typedef typename GridType::template Codim<0>::LeafIterator LeafIterator;
     typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename DiscreteFunctionType::
