@@ -1,9 +1,17 @@
 // Global defines
 #define DIM 2
 #define DIM_OF_WORLD 2
+#include <../../config.h>
 
 #define SGRID 0
 #define AGRID 1
+
+#if !HAVE_ALBERTA 
+#undef SGRID 
+#undef AGRID 
+#define SGRID 1
+#define AGRID 0
+#endif
 
 
 #if SGRID

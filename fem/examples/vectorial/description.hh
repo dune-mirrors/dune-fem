@@ -208,9 +208,9 @@ public:
 #endif
     
     std::cout << "Number of Elements: " 
-              << grid_->size(grid_->maxlevel(),0)<< "\n";
+              << grid_->size(grid_->maxLevel(),0)<< "\n";
     std::cout << "Number of Points  : " 
-              << grid_->size(grid_->maxlevel(),DIM) << "\n";
+              << grid_->size(grid_->maxLevel(),DIM) << "\n";
 
     dm_ = &DofManagerFactory<DofManagerType>::getDofManager ( *grid_ );
 
@@ -231,7 +231,7 @@ public:
     // adaptation
     if (adaptive()) {
       typename GridType::template Codim<0>::LeafIterator it =
-        grid_->leafbegin(grid_->maxlevel());
+        grid_->template leafbegin<0>();
       switch(it->geometry().type()) {
       case triangle:
         newRP_ = 
@@ -397,7 +397,7 @@ public:
     L2Projection<DiscreteFunctionType> pro;
     //for(int level=startlevel_; level<=endlevel_; level += step())
     //{
-    int level = grid_->maxlevel();
+    int level = grid_->maxLevel();
     solution_->clear();
     pro.template lumpi<1> (level, tp_->initialData() , *solution_);
     //}
@@ -428,7 +428,7 @@ public:
       std::cout << "Number of global Elements: " << grid_->global_size(0) << "\n";
     }
     L1Norm l1n;
-    std::cout << l1n.template norm<1>(grid_->maxlevel(), *solution_)  << " L1 Norm! \n";
+    std::cout << l1n.template norm<1>(grid_->maxLevel(), *solution_)  << " L1 Norm! \n";
   }
 
   GridType& grid() {
