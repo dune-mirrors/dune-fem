@@ -14,8 +14,8 @@ static const int dimp = DIM;
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 
-#define SGRID 0
-#define AGRID 1
+#define SGRID 1
+#define AGRID 0
 
 using namespace Dune;
 
@@ -275,7 +275,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    // if Grape was found, then display last solution 
    if(turn > 0)
    {
-     GrapeDataDisplay < GridType , DiscreteFunctionType > grape(grid); 
+     GrapeDataDisplay < GridType > grape(grid); 
      grape.dataDisplay( solution );
    }
 #endif
