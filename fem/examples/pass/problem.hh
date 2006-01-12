@@ -10,8 +10,15 @@
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
+
+#if HAVE_ALUGRID
 #include <dune/grid/alu3dgrid.hh>
+#endif
+
+#if HAVE_ALBERTA
 #include <dune/grid/albertagrid.hh>
+#endif
+
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 //#include <dune/quadrature/fixedorder.hh>
@@ -36,9 +43,7 @@ namespace Dune {
 
     //typedef AlbertaGrid<dimDomain, dimDomain> GridType;
     typedef SGrid<dimDomain, dimDomain> GridType;
-    //typedef LeafGridPart<GridType> GridPartType;
-    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
-    typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
+    typedef LeafGridPart<GridType> GridPartType;
     //typedef DiscontinuousGalerkinSpace<
     //  SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
     //typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;

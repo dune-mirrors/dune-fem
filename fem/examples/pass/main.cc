@@ -7,8 +7,6 @@
 
 #include "../../config.h"
 
-#include "../../quadrature/test/include_cc.hh"
-
 // Include standard library headers
 #include <iostream>
 #include <string>
@@ -23,8 +21,15 @@
 #include <dune/fem/common/boundary.hh>
 //#include <dune/fem/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
+
+#if HAVE_ALUGRID
 #include <dune/grid/alu3dgrid.hh>
+#endif
+
+#if HAVE_ALBERTA
 #include <dune/grid/albertagrid.hh>
+#endif
+
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/io/file/grapedataio.hh>
@@ -36,7 +41,7 @@
 // Dx includes
 #include "../../visual/dx/dxdata.hh"
 
-//using namespace Dune;
+using namespace Dune;
 
 template <class GridImp, 
           int polOrd >
@@ -49,9 +54,7 @@ struct Traits {
   typedef FunctionSpace < double, double , dim , dimRange> FuncSpace;
   typedef DofManager<GridType> DofManagerType;
   typedef DofManagerFactory<DofManagerType> DofManagerFactory;
-  //typedef LeafGridPart<GridType> GridPartType;
-  typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
-  typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
+  typedef LeafGridPart<GridType> GridPartType;
   typedef DiscontinuousGalerkinSpace<FuncSpace,
                                      GridPartType,
                                      polOrd> FuncSpaceType ;
@@ -67,8 +70,6 @@ struct Traits {
   // * types for pass1
   typedef FunctionSpace<double, double , dim , dim> FuncSpace1;
   typedef FunctionSpace<double, double, dim, 1> SingleFuncSpace1;
-  typedef GridPartType GridPart1Type;
-  typedef IndexSetType GridIndexSet1;
   //typedef DiscontinuousGalerkinSpace<
   //  SingleFuncSpace1, GridPartType, polOrd> SingleSpace1Type;
   //typedef CombinedSpace<SingleSpace1Type, dim> Space1Type;
@@ -78,9 +79,7 @@ struct Traits {
   typedef LocalDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
 
   // * types for pass2
-  typedef FunctionSpace <double, double , dim , dimRange> FuncSpace2;
-  typedef GridPartType GridPart2Type;
-  typedef IndexSetType GridIndexSet2;
+  typedef FuncSpace FuncSpace2;
   typedef DiscontinuousGalerkinSpace<
     FuncSpace2, GridPartType, polOrd> Space2Type;
   typedef TransportDiffusionDiscreteModel2 DiscreteModel2Type;
@@ -123,19 +122,16 @@ public:
     //grid_(gridName),
     grid_(s.n_, s.l_, s.h_),
     dm_(Traits::DofManagerFactory::getDofManager(grid_)),
-    iset1_(grid_, grid_.maxLevel()),
-    iset2_(grid_, grid_.maxLevel()),
-    gridPart1_(grid_, iset1_),
-    gridPart2_(grid_, iset2_),
-    //singleSpace1_(gridPart1_),
-    //space1_(singleSpace1_),
-    space1_(gridPart1_),
-    space2_(gridPart2_),
+    gridPart_(grid_),
+    space1_(gridPart_),
+    space2_(gridPart_),
     problem1_(),
     problem2_(velo, epsilon),
     pass0_(),
     pass1_(problem1_, pass0_, space1_),
-    pass2_(problem2_, pass1_, space2_)
+    pass2_(problem2_
+          , pass1_
+          , space2_)
   {}
 
   typename Traits::GridType& grid() {
@@ -157,11 +153,7 @@ public:
 private:
   typename Traits::GridType grid_;
   typename Traits::DofManagerType& dm_;
-  typename Traits::GridIndexSet1 iset1_;
-  typename Traits::GridIndexSet2 iset2_;
-  typename Traits::GridPart1Type gridPart1_;
-  typename Traits::GridPart2Type gridPart2_;
-  //typename Traits::SingleSpace1Type singleSpace1_;
+  typename Traits::GridPartType gridPart_;
   typename Traits::Space1Type space1_;
   typename Traits::Space2Type space2_;
   typename Traits::DiscreteModel1Type problem1_;
@@ -277,7 +269,8 @@ void initialize(DFType& df)
   //- Actual method
   typedef StupidFunction FunctionType;
   FunctionType f;  
-  L2Projection<DFType, FunctionType, 2>::project(f, df);
+  L2Projection<DFType> l2pro;
+  l2pro.template project<2> (f,df);
 }
 
 template <class DFType>
@@ -297,6 +290,7 @@ int main()
 
   typedef SGrid<2, 2> MyGrid;
   const int polOrd = 2;
+  // only use if Alberta was found 
   //typedef AlbertaGrid<2, 2> MyGrid;
 
   typedef Traits<MyGrid, polOrd> MyTraits;
@@ -346,9 +340,9 @@ int main()
     initialize(pre);
     
     IdentitySolverFactory<DiscreteFunction> factory;
-    ExplicitEuler<
-      DiscreteFunction, MappingType> preLoop(pre, top, op, factory, dt);
-    preLoop.solve();
+    //ExplicitEuler<
+    //  DiscreteFunction, MappingType> preLoop(pre, top, op, factory, dt);
+    //preLoop.solve();
   }
 
   // intial data
@@ -358,6 +352,7 @@ int main()
   // timestepping
   IdentitySolverFactory<DiscreteFunction> factory;
   //CGInverseOperatorFactory<DiscreteFunction> factory(1E-6, 1E-10, 100000, 0);
+  /*
   ExplicitEuler<
     DiscreteFunction, MappingType> loop(initial, top, op, factory, dt);
   op.timeProvider(&loop);
@@ -375,5 +370,5 @@ int main()
   //printData(loop.time(), 2, fix.grid(), loop);
   printSGrid(loop.time(), 2, fix.space(), loop);
   printDX(loop.time(), 2, fix.space(), loop);
-
+  */
 }
