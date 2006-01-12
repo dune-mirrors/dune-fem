@@ -100,10 +100,10 @@ typedef MassMatrixFEOp<DiscreteFunctionType,Tensor, polOrd + 2>  LaplaceOperator
 
 //! define the inverse operator we are using to solve the system 
 // see dune/fem/inverseoperators.hh 
-//typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
+typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
 /****************************************/
 // or ../../solvers/oemsolver/oemsolvers.hh
-typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
+//typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
