@@ -437,16 +437,14 @@ public:
         & functionSpace_= discFunc.getFunctionSpace();  
   
     typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename GridType::template Traits<0>::LevelIterator LevelIterator;
+    typedef typename FunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-    
     
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
 
     double sum = 0.0;
-    LevelIterator endit = grid.template lend<0> ( level );
-    LevelIterator it = grid.template lbegin<0> ( level );
+
     //FaceCenterQuad < typename FunctionSpaceType::RangeField,
     //typename FunctionSpaceType::Domain > // , polOrd > 
     //  quad ( *it );

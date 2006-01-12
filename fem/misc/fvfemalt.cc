@@ -176,6 +176,8 @@ namespace Dune
     typedef DiscFuncType DFType;
     typedef typename DiscFuncType::DiscreteFunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::GridType GridType; 
+    typedef typename GridType::template Codim<0>::EntityPointer
+      EntityPointerType;
     typedef typename DiscFuncType::RangeFieldType RangeFieldType;
 
     typedef typename NumericalFluxFunction::NormalType NormalType;
@@ -285,10 +287,6 @@ namespace Dune
     // Destructor 
     ~ScalarFV () 
     {
-      if( oldLf_ ) delete oldLf_; 
-      if( neighLf_ ) delete neighLf_; 
-      if( up_ ) delete up_;
-      if( upNeigh_ ) delete upNeigh_;
     }
 
     void setTimeStep(double dt) {
@@ -363,7 +361,6 @@ namespace Dune
           normal *= 1.0/h;
               
           if( nit.neighbor() ) {
-            typedef EntityType :: EntityPointer EntityPointerType;
             EntityPointerType ep = nit.outside();
             EntityType & neighbour = *ep;
 
