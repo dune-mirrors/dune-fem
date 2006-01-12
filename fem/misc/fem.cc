@@ -193,7 +193,6 @@ template <class FunctionType>
     const GridType& grid = df.getFunctionSpace().getGrid();
 
     // Temporaries
-    LocalFunctionType lf = df.newLocalFunction();
     Range res;
     Range phi_i;
     Range phi_j;
@@ -205,7 +204,7 @@ template <class FunctionType>
            == nBaseFct);
 
       QuadType quad(*it);
-      df.localFunction(*it, lf);
+      LocalFunctionType lf = df.localFunction(*it);
       const BaseFunctionSetType& baseSet =
         df.getFunctionSpace().getBaseFunctionSet(*it);
 
@@ -262,11 +261,9 @@ template <class FunctionType>
     FixedOrderQuad <typename FunctionSpaceType::RangeFieldType,
               typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
               
-    LocalFuncType lf = discFunc.newLocalFunction(); 
-    
     for( ; it != endit ; ++it)
     {
-      discFunc.localFunction( *it , lf ); 
+      LocalFuncType lf = discFunc.localFunction( *it ); 
       double det = (*it).geometry().integrationElement(quad.point(0));
       
       const typename FunctionSpaceType::BaseFunctionSetType & set = 
@@ -303,7 +300,6 @@ template <class FunctionType>
     typename FunctionSpaceType::RangeType phi (0.0);
 
     discFunc.clear();
-    LocalFuncType lf = discFunc.newLocalFunction(); 
 
     LevelIterator endit = grid.template lend<0> ( level );
     LevelIterator it = grid.template lbegin<0> ( level ); 
@@ -317,7 +313,7 @@ template <class FunctionType>
     for( ; it != endit ; ++it)
     {
       EntityType & en = (*it);
-      discFunc.localFunction ( en , lf );
+      LocalFuncType lf = discFunc.localFunction ( en );
 
       int numDof = lf.numDofs ();  
       for(int i=0; i<numDof; i++)
@@ -351,19 +347,16 @@ public:
         & functionSpace_= discFunc.getFunctionSpace();  
   
     typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename GridType::template Traits<0>::LevelIterator LevelIterator;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
       
 
-    GridType & grid = functionSpace_.getGrid();
-
     typename FunctionSpaceType::RangeType ret (0.0);
-    LocalFuncType lf = discFunc.newLocalFunction(); 
 
-    LevelIterator endit = grid.template lend<0> ( level );
-    for(LevelIterator it = grid.template lbegin<0> ( level ); it != endit ; ++it)
+    typedef typename FunctionSpaceType::IteratorType IteratorType;
+    IteratorType endit = functionSpace_.end(); 
+    for(IteratorType it = functionSpace_.begin(); it != endit ; ++it)
     {
-      discFunc.localFunction(*it,lf); 
+      LocalFuncType lf = discFunc.localFunction(*it); 
 
       int numDof = lf.numDofs ();  
       for(int i=0; i<numDof; i++)
@@ -448,26 +441,28 @@ public:
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
     
     
-    GridType & grid = functionSpace_.getGrid();
-       
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
 
     double sum = 0.0;
-    LocalFuncType lf = discFunc.newLocalFunction(); 
     LevelIterator endit = grid.template lend<0> ( level );
     LevelIterator it = grid.template lbegin<0> ( level );
     //FaceCenterQuad < typename FunctionSpaceType::RangeField,
     //typename FunctionSpaceType::Domain > // , polOrd > 
     //  quad ( *it );
     
+    typedef typename FunctionSpaceType::IteratorType IteratorType;
+    IteratorType endit = functionSpace_.end(); 
+    IteratorType it = functionSpace_.begin();
+
+    assert(it != endit );
     FixedOrderQuad < typename FunctionSpaceType::RangeFieldType,
                typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
     
     for(; it != endit ; ++it)
     {
       double det = (*it).geometry().integrationElement(quad.point(0));
-      discFunc.localFunction(*it,lf); 
+      LocalFuncType lf = discFunc.localFunction(*it); 
       for(int qP = 0; qP < quad.nop(); qP++)
       {
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
