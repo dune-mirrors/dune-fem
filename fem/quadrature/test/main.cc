@@ -8,8 +8,6 @@
 #include "cachequad_test.hh"
 #include "quad_test.hh"
 
-#include "include_cc.hh"
-
 int main() {
   std::string albertaGridFile("../../macrogrids/AlbertaGrid/2dmacro.al");
   std::string aluGridHexaFile("../../macrogrids/ALU3dGrid/cube.hexa");
