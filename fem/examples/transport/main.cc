@@ -47,6 +47,8 @@
 #include "../../misc/inverseoperatorfactory.hh"
 #include "../../misc/timestepping.hh"
 
+#include <dune/common/stdstreams.cc>
+
 using namespace Dune;
 using namespace Adi;
 
