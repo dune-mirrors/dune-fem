@@ -6,6 +6,14 @@
 #define AGRID 1
 #define BGRID 0
 
+#if !HAVE_ALBERTA 
+#undef SGRID 
+#undef AGRID 
+#define SGRID 1
+#define AGRID 0
+#endif
+
+
 using namespace Dune;
 
 #if SGRID
@@ -350,12 +358,9 @@ int main (int argc, char **argv)
   char tmp[16]; sprintf(tmp,"%d",dimp);
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.al";
-#endif
-
-#if BGRID 
+#else 
   std::string macroGridName ("cube.tetra");
 #endif
-  //std::string macroGridName ( "2drefel.al" );
   
   ml -= refinestep;
   if(ml < 0) ml = 0;
