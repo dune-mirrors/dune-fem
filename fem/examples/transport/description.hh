@@ -226,8 +226,7 @@ public:
 
     // adaptation
     if (adaptive()) {
-      typename GridType::template Codim<0>::LeafIterator it =
-        grid_->leafbegin(grid_->maxLevel());
+      typename FuncSpaceType::IteratorType it = funcSpace_->begin();
       switch(it->geometry().type()) {
       case simplex:
         newRP_ =

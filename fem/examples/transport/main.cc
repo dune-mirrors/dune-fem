@@ -3,7 +3,14 @@
 #define SGRID 0
 #define AGRID 1
 
-//#include "../config.h"
+#include "../../config.h"
+
+#if !HAVE_ALBERTA 
+#undef SGRID 
+#undef AGRID 
+#define SGRID 1
+#define AGRID 0
+#endif 
 
 #if SGRID
 #include <dune/grid/sgrid.hh>
@@ -30,6 +37,7 @@
 #include <dune/grid/common/leafindexset.hh>
 #include <dune/fem/inverseoperators.hh>
 #include <dune/fem/discfuncarray.hh>
+
 #include <dune/io/file/grapedataio.hh>
 
 // Include local headers
