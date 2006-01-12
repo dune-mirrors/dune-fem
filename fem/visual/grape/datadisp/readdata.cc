@@ -95,16 +95,6 @@ GrapeDispType * readGrid(const char * path, const char * filename,
   return disp;
 }
 
-// read dof manager from file 
-void readDofManager(GR_DofManagerType & dm, const char * path, int ntime) 
-{
-  // generate dof manager name 
-  std::string fn(path); 
-  if(path) fn += "/";
-  fn += "dm"; 
-  dm.read(fn.c_str(),ntime);
-}
-
 // read all data that belong to grid with name info[n].name 
 INFO *makeData( GrapeDispType * disp, INFO * info , const char * path, 
     const char * filename, double & time ,int n, int ntime, bool fix_mesh,
@@ -123,7 +113,6 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
       GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid(),*iSet);
       gridPartStack.push(gridPart);
       space  = new GR_DiscFuncSpaceType (*gridPart);
-      readDofManager(*dm,path,ntime); 
       
       fsStack.push(space);
     }
@@ -141,7 +130,6 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
             *indexSet);
         gridPartStack.push(gridPart);
         globalSpace = new GR_DiscFuncSpaceType (*gridPart);
-        readDofManager(*dm,path,ntime); 
       }
       space = globalSpace;
     }
@@ -201,14 +189,13 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
           newpath += "_"; 
           newpath += procstr; 
         }
-	else
-	{
-	  //newpath += "_-1";
-	}
+        else
+        {
+          //newpath += "_-1";
+        }
 
-	std::cout << "NewPath = "<<newpath << std::endl;
+      	std::cout << "NewPath = "<<newpath << std::endl;
 
-      
         GrapeDispType *newdisp = 0;
         int anz = (n > 0) ? n : 1;
         for(int i=0; i<anz; i++)

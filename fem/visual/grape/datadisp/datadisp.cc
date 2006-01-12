@@ -13,8 +13,8 @@
 
 using namespace Dune;
 
-#define AGRID 1 
-#define BGRID 0 
+#define AGRID 0 
+#define BGRID 1 
 #define SGRID 0
 
 //#include <dune/grid/sgrid.hh>
@@ -32,6 +32,7 @@ typedef AlbertaGrid<dim,dimworld> GR_GridType;
 
 #if BGRID 
 
+#include <dune/grid/alu3dgrid/includecc.cc>
 #include <dune/grid/alu3dgrid.hh>
 
 static const int dim = 3; 
@@ -58,8 +59,10 @@ typedef SGrid <dim, dimworld> GR_GridType;
 #include <dune/grid/common/leafindexset.hh>
 #include <dune/grid/common/gridpart.hh>
 
-#include <dune/io/file/grapedataio.hh>
+//#include <dune/io/file/grapedataio.hh>
 
+
+#include "../../../space/dgspace.hh"
 
 typedef double REAL;
 
@@ -68,8 +71,7 @@ typedef double REAL;
 #include "printhelp.cc"
 
 typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
-
-//typedef FunctionSpace <double ,double , dim, 1 >        GR_FunctionSpaceType;
+//typedef FunctionSpace <double ,double , dim, 1 >  GR_FunctionSpaceType;
 
 
 typedef DofManager<GR_GridType>                         GR_DofManagerType;
@@ -82,11 +84,9 @@ typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType
   typedef DefaultGridIndexSet<GR_GridType,GlobalIndex>   GR_IndexSetType;
 #endif
 
-
 typedef DefaultGridPart<GR_GridType,GR_IndexSetType>    GR_GridPartType;
-
-typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,
-				     GR_GridPartType,0> GR_DiscFuncSpaceType;
+//typedef DiscontinuousGalerkinSpace<GR_FunctionSpaceType, GR_GridPartType, 0> GR_DiscFuncSpaceType;
+typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,GR_GridPartType,0> GR_DiscFuncSpaceType;
 
 typedef DFAdapt < GR_DiscFuncSpaceType >                GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType> GrapeDispType;
