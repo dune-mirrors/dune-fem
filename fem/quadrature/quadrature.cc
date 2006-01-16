@@ -19,7 +19,7 @@ namespace Dune {
   template <class ct, int dim>
   SimplexQuadrature<ct, dim>::SimplexQuadrature(int order, size_t id) :
     QuadratureImp<ct, dim>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
 #if HAVE_ALBERTA
     AlbertaSimplexPointsAdapter<dim> points(order);
@@ -37,16 +37,16 @@ namespace Dune {
   template <class ct, int dim>
   CubeQuadrature<ct, dim>::CubeQuadrature(int order, size_t id) :
     QuadratureImp<ct, dim>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
     typedef FieldVector<ct, dim> CoordinateType;
 
     const GaussPts& gp = GaussPts::instance();
- 
+
     // find the right Gauss Rule from given order
     int m = 0;
     for (int i = 0; i <= GaussPts::MAXP; i++) {
-      if (gp.order(i)>=order) {
+      if (gp.order(i)>=order_) {
         m = i;
         break;
       }
@@ -83,7 +83,7 @@ namespace Dune {
   template <class ct>
   LineQuadrature<ct>::LineQuadrature(int order, size_t id) :
     QuadratureImp<ct, 1>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
     typedef FieldVector<ct, 1> CoordinateType;
 
@@ -91,7 +91,7 @@ namespace Dune {
     
     int m=0;
     for (int i = 0; i <= GaussPts::MAXP; i++) {
-      if (gp.order(i)>=order) {
+      if (gp.order(i)>=order_) {
         m = i;
         break;
       }
@@ -113,7 +113,7 @@ namespace Dune {
   template <class ct>
   TriangleQuadrature<ct>::TriangleQuadrature(int order, size_t id) :
     QuadratureImp<ct, 2>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
 #if HAVE_ALBERTA
     AlbertaSimplexPointsAdapter<2> points(order);
@@ -131,7 +131,7 @@ namespace Dune {
   template <class ct>
   QuadrilateralQuadrature<ct>::QuadrilateralQuadrature(int order, size_t id) :
     QuadratureImp<ct, 2>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
     typedef FieldVector<ct, 2> CoordinateType;
 
@@ -141,7 +141,7 @@ namespace Dune {
     // find the right Gauss Rule from given order
     int m = 0;
     for (int i = 0; i <= GaussPts::MAXP; i++) {
-      if (gp.order(i)>=order) {
+      if (gp.order(i)>=order_) {
         m = i;
         break;
       }
@@ -177,7 +177,7 @@ namespace Dune {
   template <class ct>
   TetraQuadrature<ct>::TetraQuadrature(int order, size_t id) :
     QuadratureImp<ct, 3>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
 #if HAVE_ALBERTA
     AlbertaSimplexPointsAdapter<3> points(order);
@@ -195,7 +195,7 @@ namespace Dune {
   template <class ct>
   HexaQuadrature<ct>::HexaQuadrature(int order, size_t id) :
     QuadratureImp<ct, 3>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
     typedef FieldVector<ct, 3> CoordinateType;
 
@@ -205,7 +205,7 @@ namespace Dune {
     // find the right Gauss Rule from given order
     int m = 0;
     for (int i = 0; i <= GaussPts::MAXP; i++) {
-      if (gp.order(i)>=order) {
+      if (gp.order(i)>=order_) {
         m = i;
         break;
       }
@@ -241,13 +241,13 @@ namespace Dune {
   template <class ct>
   PrismQuadrature<ct>::PrismQuadrature(int order, size_t id) :
     QuadratureImp<ct, 3>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
     const PrismPoints& points = PrismPoints::instance();
 
     int m = 0;
     for (int i = 0; i < PrismPoints::numQuads; ++i) {
-      if (points.order(i) >= order) {
+      if (points.order(i) >= order_) {
         m = i;
         break;
       }
@@ -265,13 +265,13 @@ namespace Dune {
   template <class ct>
   PyramidQuadrature<ct>::PyramidQuadrature(int order, size_t id) :
     QuadratureImp<ct, 3>(id),
-    order_(order)
+    order_((order <= 0) ? 1 : order)
   {
     const PyramidPoints& points = PyramidPoints::instance();
 
     int m = 0;
     for (int i = 0; i < PyramidPoints::numQuads; ++i) {
-      if (points.order(i) >= order) {
+      if (points.order(i) >= order_) {
         m = i;
         break;
       }
