@@ -67,10 +67,12 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
+    //! \param quadOrd0 defines the order of the volume quadrature which is by default 2* space polynomial order 
+    //! \param quadOrd1 defines the order of the face quadrature which is by default 2* space polynomial order 
     LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 DiscreteFunctionSpaceType& spc,
-		int quadOrd0=-1,int quadOrd1=-1) :
+		int volumeQuadOrd =-1,int faceQuadOrd=-1) :
       BaseType(pass, spc),
       caller_(problem),
       arg_(0),
@@ -87,13 +89,11 @@ namespace Dune {
       time_(0),
       diffVar_(),
       twistUtil_(spc.grid()),
-      quadOrd0_(quadOrd0),
-      quadOrd1_(quadOrd1)
+      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.polynomOrder()) : volumeQuadOrd ),
+      faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.polynomOrder()) : faceQuadOrd )
     {
-      if (quadOrd0_==-1)
-	quadOrd0_ = 2*spc_.polynomOrder();
-      if (quadOrd1_==-1)
-	quadOrd1_ = 2*spc_.polynomOrder()+1;
+      assert( volumeQuadOrd_ >= 0 );
+      assert( faceQuadOrd_ >= 0 );
     }
    
     //! Destructor
@@ -156,7 +156,7 @@ namespace Dune {
       LocalFunctionType updEn = dest_->localFunction(en);
       //GeometryType geom = en.geometry().type();
       
-      VolumeQuadratureType volQuad(en, quadOrd0_);
+      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
       double vol = volumeElement(en, volQuad);
       //std::cout << "Vol = " << vol << std::endl;
@@ -187,15 +187,15 @@ namespace Dune {
       
       for (; nit != endnit; ++nit) {
 	int twistSelf = twistUtil_.twistInSelf(nit); 
-        FaceQuadratureType faceQuadInner(nit, quadOrd1_, twistSelf, 
-                                         FaceQuadratureType::INSIDE);
+        FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
+                      FaceQuadratureType::INSIDE);
 	if (nit.neighbor()) {
 	  EntityType& nb=*nit.outside();
           if (iset.index(nb) > iset.index(en)
               || nb.partitionType() == GhostEntity) {
 
             int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-            FaceQuadratureType faceQuadOuter(nit, quadOrd1_, twistNeighbor,
+            FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
                                              FaceQuadratureType::OUTSIDE);
             
             caller_.setNeighbor(nb);
@@ -282,7 +282,7 @@ namespace Dune {
 
     TwistUtility<GridType> twistUtil_;
 
-    int quadOrd0_,quadOrd1_;
+    int volumeQuadOrd_,faceQuadOrd_;
   };
   
 } // end namespace Dune
