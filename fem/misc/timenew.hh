@@ -6,7 +6,7 @@
 #include "inverseoperatorfactory.hh"
 #include "timeutility.hh"
 
-#include <strstream>
+#include <sstream>
 //#include "../visual/dx/dxdata.hh"
 
 namespace Dune {
