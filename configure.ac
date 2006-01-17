@@ -52,15 +52,8 @@ AC_CONFIG_FILES([Makefile
 		 space/Makefile
 		 quadrature/Makefile
 		 quadrature/test/Makefile
-                 visual/Makefile
-                 visual/grape/Makefile
-                 visual/grape/datadisp/Makefile
-                 visual/grape/gridview/Makefile
                ])
 AC_OUTPUT
 
 # show search results
 DUNE_SUMMARY_ALL
-
-#set AC_PROG_CXX as desired by 
-#tester/gridcheck/Makefile.am: The usual way to define `CXX' is to add `AC_PROG_CXX'
