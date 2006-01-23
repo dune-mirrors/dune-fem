@@ -114,7 +114,7 @@ namespace Dune {
     
     //! The geometry type is... simplex!
     virtual GeometryType geometry() const {
-      return simplex;
+      return GeometryType(GeometryType::simplex,dim);
     }
     
     //! Returns the effective order of the quadrature
@@ -148,7 +148,7 @@ namespace Dune {
     
     //! The geometry type is... cube!
     virtual GeometryType geometry() const {
-      return cube;
+      return GeometryType(GeometryType::cube,dim);
     }
 
     //! Returns the effective order of the quadrature
@@ -176,7 +176,7 @@ namespace Dune {
     LineQuadrature(int order, size_t id);
 
     virtual GeometryType geometry() const {
-      return cube;
+      return GeometryType(GeometryType::cube,1);
     }
 
     virtual int order() const {
@@ -201,7 +201,7 @@ namespace Dune {
     TriangleQuadrature(int order, size_t id);
 
     virtual GeometryType geometry() const {
-      return simplex;
+      return GeometryType(GeometryType::simplex,2);
     }
 
     virtual int order() const {
@@ -233,7 +233,7 @@ namespace Dune {
     QuadrilateralQuadrature(int order, size_t id);
 
     virtual GeometryType geometry() const {
-      return cube;
+      return GeometryType(GeometryType::cube,2);
     }
 
     virtual int order() const {
@@ -258,7 +258,7 @@ namespace Dune {
     TetraQuadrature(int order, size_t id);
 
     virtual GeometryType geometry() const {
-      return simplex;
+      return GeometryType(GeometryType::simplex,3);
     }
 
     virtual int order() const {
@@ -291,7 +291,7 @@ namespace Dune {
     HexaQuadrature(int order, size_t id);
 
     virtual GeometryType geometry() const {
-      return cube;
+      return GeometryType(GeometryType::cube,3);
     }
 
     virtual int order() const {
@@ -321,7 +321,7 @@ namespace Dune {
 
     //! The geometry type is... prism!
     virtual GeometryType geometry() const {
-      return prism;
+      return GeometryType(GeometryType::prism,3);
     }
 
     //! Returns the actual order.
@@ -353,7 +353,7 @@ namespace Dune {
 
     //! The geometry type is... pyramid!
     virtual GeometryType geometry() const {
-      return pyramid;
+      return GeometryType(GeometryType::pyramid,3);
     }
 
     //! Returns the actual order of the quadrature.
