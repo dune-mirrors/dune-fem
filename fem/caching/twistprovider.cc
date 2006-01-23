@@ -91,24 +91,24 @@ namespace Dune {
       helper_ = 
         AutoPtrType(new LineTwistMapperStrategy<ct, dim>(quad.geometry()));
     } 
-    else {
+    else 
+    {
       assert (dim == 2);
 
-      switch (quad.geometry()) {
-      case triangle:
-      case simplex:
+      GeometryType geoType = quad.geometry();
+      if(geoType.isTriangle()) {
         helper_ = 
           AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>(quad.geometry()));
-        break;
-      case quadrilateral:
-      case cube:
+        return ;
+      }
+      if( geoType.isQuadrilateral())
+      {
         helper_ = 
          AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>(quad.geometry()));
-        break;
-      default:
+        return ;
+      }
         DUNE_THROW(NotImplemented, 
                    "No creator for given GeometryType exists");
-      } // end switch
     }
   }
 

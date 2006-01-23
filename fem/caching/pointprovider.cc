@@ -126,6 +126,8 @@ namespace Dune {
   bool PointProvider<ct, dim, 1>::sameGeometry(GeometryType geo1, 
                                                GeometryType geo2)
   {
+    return geo1 == geo2;
+    /*
     // Assume here that the geometries belong to the same dimension
 
     switch (geo1) {
@@ -155,5 +157,6 @@ namespace Dune {
       assert(false);
     }
     return false;
+    */
   }  
 } // end namespace Dune

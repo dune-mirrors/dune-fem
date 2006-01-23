@@ -69,7 +69,7 @@ namespace Dune {
     //! Access to the quadrature implementations.
     static const QuadratureImp<ct, 1>& getQuadrature(GeometryType geo, 
                                                      int order) {
-      assert(geo == cube  || geo == simplex || geo == line);
+      assert(geo.isCube() || geo.isSimplex() );
       assert(order >= 0);
 
       return QuadCreator::provideQuad(order, quads_);
@@ -91,20 +91,15 @@ namespace Dune {
     //! Access to the quadrature implemenations.
     static const QuadratureImp<ct, 2>& getQuadrature(GeometryType geo,
                                                      int order) {
-      assert(geo == triangle || geo == quadrilateral || 
-             geo == cube || geo == simplex);
+      assert( geo.isCube() || geo.isSimplex() );
       assert(order >= 0);
 
-      switch (geo) {
-      case simplex:
-      case triangle:
+      if(geo.isTriangle()) 
         return QuadCreator::provideQuad(order, triangleQuads_);
-      case cube:
-      case quadrilateral:
+      if(geo.isQuadrilateral())
         return QuadCreator::provideQuad(order, quadrilateralQuads_);
-      default:
-        DUNE_THROW(RangeError, "Element type not available for dim == 2");
-      }
+
+      DUNE_THROW(RangeError, "Element type not available for dim == 2");
       // dummy return
       return *triangleQuads_[0]; 
     }
@@ -127,24 +122,20 @@ namespace Dune {
     //! Access to the quadrature implementation.
     static const QuadratureImp<ct, 3>& getQuadrature(GeometryType geo,
                                                      int order) {
-      assert(geo == cube || geo == simplex || geo == hexahedron ||
-             geo == tetrahedron || geo == prism || geo == pyramid);
+      assert( geo.isTetrahedron() || geo.isHexahedron() || 
+              geo.isPrism() || geo.isPyramid() );
       assert(order >= 0);
 
-      switch (geo) {
-      case simplex:
-      case tetrahedron:
+      if(geo.isTetrahedron()) 
         return QuadCreator::provideQuad(order, tetraQuads_);
-      case cube:
-      case hexahedron:
+      if(geo.isHexahedron())
         return QuadCreator::provideQuad(order, hexaQuads_);
-      case prism:
+      if(geo.isPrism())
         return QuadCreator::provideQuad(order, prismQuads_);
-      case pyramid:
+      if(geo.isPyramid())
         return QuadCreator::provideQuad(order, pyramidQuads_);
-      default:
-        DUNE_THROW(RangeError, "Element type not available for dim == 3");
-      }
+
+      DUNE_THROW(RangeError, "Element type not available for dim == 3");
       // dummy return
       return *tetraQuads_[0];
     }
