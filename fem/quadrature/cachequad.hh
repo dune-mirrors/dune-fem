@@ -44,6 +44,8 @@ namespace Dune {
     enum { dimension = BaseType::dimension };
     //! The codimension is zero by definition.
     enum { codimension = 0 };
+
+    //enum Side { INSIDE = BaseType::INSIDE, OUTSIDE = BaseType :: OUTSIDE };
     
     //! Just another name for double...
     typedef typename BaseType::RealType RealType;
@@ -121,7 +123,9 @@ namespace Dune {
     //! consider the twist to get the quadrature point number on the reference
     //! element face and then map it to the caching point.
     size_t cachingPoint(size_t quadraturePoint) const {
-      assert(quadraturePoint >= 0 && quadraturePoint < (size_t)this->nop());
+      // this makes no sense for usigned ints ;)
+      //assert(quadraturePoint >= 0);
+      assert(quadraturePoint < (size_t)this->nop());
       return mapper_[quadraturePoint];
     }
 

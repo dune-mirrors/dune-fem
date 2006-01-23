@@ -33,6 +33,8 @@ namespace Dune {
     //! Codimension is zero by definition
     enum { codimension = 0 };
     
+    enum Side { INSIDE, OUTSIDE };
+
     //! The type for reals (mostly double)
     typedef typename GridImp::ctype RealType;
     //! Type for coordinates in the codim-0 reference element 

@@ -419,6 +419,9 @@ namespace Dune {
 
     typedef typename QuadratureImp<ct, dim>::CoordinateType CoordinateType;
 
+    //! to be revised, look at caching quad 
+    enum { codimension = 0 };
+
   public:
     //! Constructor
     //! \param geo The geometry type the quadrature points belong to.
