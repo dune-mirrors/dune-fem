@@ -2,6 +2,7 @@
 #define DUNE_DGBASEFUNCTIONS_HH
 
 // Dune includes
+#include <dune/common/geometryidentifier.hh>
 #include <dune/fem/common/basefunctions.hh>
 #include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/fem/common/fastbase.hh>
@@ -63,12 +64,12 @@ namespace Dune {
   }; // end class DGBaseFunctionWrapper
 
   //! Base class for DG base functions
-  template <class FunctionSpaceType, GeometryType ElType, int polOrd>
+  template <class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType, int polOrd>
   class DGBaseFunction;
 
   //! Specialisation for triangles
   template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, triangle, polOrd> :
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd> :
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
@@ -120,7 +121,7 @@ namespace Dune {
 
   //! Specialisation for quadrilaterals
   template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, quadrilateral, polOrd> :
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Quadrilateral, polOrd> :
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
@@ -170,7 +171,7 @@ namespace Dune {
 
   //! Specialisation for tetrahedrons
   template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, tetrahedron, polOrd> :
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Tetrahedron, polOrd> :
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
@@ -220,7 +221,7 @@ namespace Dune {
 
   //! Specialisation for pyramids
   template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, pyramid, polOrd> :
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Pyramid, polOrd> :
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
@@ -270,7 +271,7 @@ namespace Dune {
 
   //! Specialisation for prisms
   template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, prism, polOrd> :
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Prism, polOrd> :
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
@@ -320,7 +321,7 @@ namespace Dune {
 
   //! Specialisation for hexahedrons
   template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, hexahedron, polOrd> :
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd> :
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
@@ -368,7 +369,7 @@ namespace Dune {
 
   }; // end class DGBaseFunction<FunctionSpaceType, hexahedron, polOrd>
   
-  template <class FunctionSpaceImp, GeometryType elType, int polOrd>
+  template <class FunctionSpaceImp, GeometryIdentifier::IdentifierType elType, int polOrd>
   class DGFastBaseFunctionSet :
     public FastBaseFunctionSet<FunctionSpaceImp>
   {
@@ -404,41 +405,28 @@ namespace Dune {
     typedef ScalarFunctionSpaceImp FunctionSpaceType;
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
   public:
-    DiscontinuousGalerkinBaseFunctionFactory(GeometryType geo) :
+    DiscontinuousGalerkinBaseFunctionFactory(NewGeometryType geo) :
       BaseFunctionFactory<ScalarFunctionSpaceImp>(geo)
     {}
 
     virtual BaseFunctionType* baseFunction(int i) const {
-      switch (this->geometry()) {
-      case simplex:
-        if (FunctionSpaceType::DimDomain == 2) {
-          return new DGBaseFunction<FunctionSpaceType, triangle, polOrd>(i);
-        }
-        else {
-          return new DGBaseFunction<FunctionSpaceType, tetrahedron, polOrd>(i);
-        }
-      case cube:
-        if (FunctionSpaceType::DimDomain == 2) {
-          return new DGBaseFunction<FunctionSpaceType,quadrilateral,polOrd>(i);
-        }
-        else {
-          return new DGBaseFunction<FunctionSpaceType, hexahedron, polOrd>(i);
-        }
-      case triangle:
-        return new DGBaseFunction<FunctionSpaceType, triangle, polOrd>(i);
-      case quadrilateral:
-        return new DGBaseFunction<FunctionSpaceType, quadrilateral, polOrd>(i);
-      case tetrahedron:
-        return new DGBaseFunction<FunctionSpaceType, tetrahedron, polOrd>(i);
-      case pyramid:
-        return new DGBaseFunction<FunctionSpaceType, pyramid, polOrd>(i);
-      case prism:
-        return new DGBaseFunction<FunctionSpaceType, prism, polOrd>(i);
-      case hexahedron:
-        return new DGBaseFunction<FunctionSpaceType, hexahedron, polOrd>(i);
-      default:
-        DUNE_THROW(NotImplemented, 
-                   "The chosen geometry type is not implemented");
+      switch (GeometryIdentifier::fromGeo(this->geometry())) 
+      {
+        case GeometryIdentifier::Triangle:
+          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd>(i);
+        case GeometryIdentifier::Quadrilateral:
+          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Quadrilateral, polOrd>(i);
+        case GeometryIdentifier::Tetrahedron:
+          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Tetrahedron, polOrd>(i);
+        case GeometryIdentifier::Pyramid:
+          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Pyramid, polOrd>(i);
+        case GeometryIdentifier::Prism:
+          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Prism, polOrd>(i);
+        case GeometryIdentifier::Hexahedron:
+          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd>(i);
+        default:
+          DUNE_THROW(NotImplemented, 
+                     "The chosen geometry type is not implemented");
       }
       return 0;
     }
