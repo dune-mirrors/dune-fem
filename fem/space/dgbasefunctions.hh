@@ -2,7 +2,6 @@
 #define DUNE_DGBASEFUNCTIONS_HH
 
 // Dune includes
-#include <dune/common/geometryidentifier.hh>
 #include <dune/fem/common/basefunctions.hh>
 #include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/fem/common/fastbase.hh>
