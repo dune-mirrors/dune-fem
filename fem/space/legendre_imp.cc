@@ -3,6 +3,8 @@
 
 #include"legendrepoly.hh"
 
+namespace Dune {
+
 template <class FunctionSpaceType>
 double LegendreDGBaseFunctionWrapper<FunctionSpaceType>::
 eval_quadrilateral_2d_l ( int PolOrd,int i, const DomainType & xi ) const
@@ -75,4 +77,6 @@ grad_hexahedron_3d_l (int PolOrd, int i, const DomainType & xi, JacobianRangeTyp
   grad[0][2]=px.eval(x)*py.eval(y)*pz.eval1(z);
   return;
 }  
+
+} // end namespace Dune 
 #endif
