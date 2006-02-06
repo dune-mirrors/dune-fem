@@ -1,3 +1,7 @@
+#ifndef DUNE_LEGENDREPOLY_HH
+#define DUNE_LEGENDREPOLY_HH
+
+namespace Dune {
 
 class LegendrePoly
 {
@@ -205,3 +209,7 @@ class LegendrePoly
   double factor_[11];
   int num_;
 };
+
+} // end namespace Dune 
+
+#endif
