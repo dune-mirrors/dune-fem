@@ -13,6 +13,7 @@
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
+#include "legendredgbasefunctions.hh"
 
 namespace Dune {
 
@@ -21,39 +22,10 @@ namespace Dune {
   //!  DiscreteFunctionSpace for discontinuous functions 
   //  
   //**********************************************************************
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-  class DiscontinuousGalerkinSpace;
-
-  //! Traits class for DiscontinuousGalerkinSpace
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-  struct DiscontinuousGalerkinSpaceTraits {
-    typedef FunctionSpaceImp FunctionSpaceType;
-    typedef GridPartImp GridPartType;
-
-    typedef typename GridPartType::GridType GridType;
-    typedef typename GridPartType::IndexSetType IndexSetType;
-    typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
-
-    enum { DimRange = FunctionSpaceType::DimRange };
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    typedef DiscontinuousGalerkinSpace<
-      FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
- 
-    typedef VecBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
-    //typedef VecBaseFunctionSet<FunctionSpaceType, SimpleStorage> BaseFunctionSetType;
-    typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
-  };
-
-  //! A discontinuous Galerkin space
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-  class DiscontinuousGalerkinSpace : 
-    public DiscreteFunctionSpaceDefault
-  <DiscontinuousGalerkinSpaceTraits<FunctionSpaceImp, GridPartImp, polOrd> >
+  //! A discontinuous Galerkin space base for DGSpaces 
+  template <class SpaceImpTraits>
+  class DiscontinuousGalerkinSpaceBase : 
+    public DiscreteFunctionSpaceDefault <SpaceImpTraits>
   {
     // - Local enums
     enum { DGFSpaceId = 1 };
@@ -62,15 +34,21 @@ namespace Dune {
 
     // - Local typedefs
     // the type of this class
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd> 
+    typedef DiscontinuousGalerkinSpaceBase<SpaceImpTraits> 
     ThisType;
 
+    //! the actual space implementation 
+    typedef typename SpaceImpTraits::DiscreteFunctionSpaceType 
+            DiscreteFunctionSpaceImp;
   public:
     //- Public typedefs
 
     //! The traits class
-    typedef DiscontinuousGalerkinSpaceTraits<
-      FunctionSpaceImp, GridPartImp, polOrd> Traits;
+    typedef SpaceImpTraits Traits;
+
+    typedef typename Traits::GridPartType GridPartType;
+
+    enum { polOrd = Traits :: polynomialOrder };
 
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
@@ -84,10 +62,11 @@ namespace Dune {
     typedef typename Traits::IteratorType IteratorType;
     //! Grid type
     typedef typename Traits::GridType GridType;
+
     //! Index set of space
     typedef typename Traits::IndexSetType IndexSetType;
 
-   typedef DiscontinuousGalerkinBaseFunctionFactory<
+    typedef DiscontinuousGalerkinBaseFunctionFactory<
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
@@ -102,7 +81,7 @@ namespace Dune {
   public:
     //- Constructors and destructors
     /** Constructor */
-    DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
+    DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
       BaseType (DGFSpaceId),
       gridPart_(gridPart),
       mapper_(0),
@@ -117,8 +96,8 @@ namespace Dune {
       dm.addIndexSet(gridPart.grid(), 
                      const_cast<IndexSetType&>(gridPart.indexSet()));
   
+      typedef typename GridType :: template Codim<0>::Entity EntityType;
       // search the macro grid for different element types 
-      typedef typename Traits::GridType::template Codim<0>::Entity EntityType;
       IteratorType endit  = gridPart.template end<0>();
       for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it) {
         GeometryType geo = (*it).geometry().type(); // Hack
@@ -132,15 +111,11 @@ namespace Dune {
                                    baseFuncSet_[id]->numBaseFunctions());
         }
       }
-
-      // for empty functions space which can happen for BSGrid 
-      //if(!mapper_) makeBaseSet<triangle,0>();
-      //assert(mapper_);
     }
 
     
     /** Destructor */
-    virtual ~DiscontinuousGalerkinSpace () {
+    virtual ~DiscontinuousGalerkinSpaceBase () {
       for (unsigned int i = 0; i < baseFuncSet_.size(); ++i) {
         delete baseFuncSet_[i];
         baseFuncSet_[i] = 0;
@@ -232,26 +207,21 @@ namespace Dune {
       return true;
     }
  
-  private:
-    DiscontinuousGalerkinSpace();
-    DiscontinuousGalerkinSpace(const DiscontinuousGalerkinSpace&);
-    DiscontinuousGalerkinSpace& operator=(const DiscontinuousGalerkinSpace&);
+  protected:
+    DiscontinuousGalerkinSpaceBase();
+    DiscontinuousGalerkinSpaceBase(const DiscontinuousGalerkinSpaceBase&);
+    DiscontinuousGalerkinSpaceBase& operator=(const DiscontinuousGalerkinSpaceBase&);
 
     template <class EntityType>
     BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
     {
-      typedef typename ToScalarFunctionSpace<
-        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
-      
-      DiscontinuousGalerkinBaseFunctionFactory<
-        ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
-      return new BaseFunctionSetType(fac);
+      // calls static method of actual implementation to create set
+      return DiscreteFunctionSpaceImp::setBaseFuncSetPointer(en);
     }
 
-  private:
-
+  protected:
     // grid part
-    GridPartImp& gridPart_;
+    GridPartType& gridPart_;
 
     // mapper for function space 
     mutable typename Traits::MapperType* mapper_; 
@@ -260,6 +230,202 @@ namespace Dune {
     std::vector<BaseFunctionSetType*> baseFuncSet_;
   };
 
+  //********************************************************
+  // DG Space with orthonormal basis functions 
+  //********************************************************
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  class DiscontinuousGalerkinSpace;
+
+  //! Traits class for DiscontinuousGalerkinSpace
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  struct DiscontinuousGalerkinSpaceTraits {
+    enum { polynomialOrder = polOrd };
+    typedef FunctionSpaceImp FunctionSpaceType;
+    typedef GridPartImp GridPartType;
+
+    typedef typename GridPartType::GridType GridType;
+    typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
+
+    enum { DimRange = FunctionSpaceType::DimRange };
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef DiscontinuousGalerkinSpace<
+      FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+ 
+    typedef VecBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
+    typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+  };
+
+  //! A discontinuous Galerkin space
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  class DiscontinuousGalerkinSpace : 
+    public DiscontinuousGalerkinSpaceBase 
+  <DiscontinuousGalerkinSpaceTraits<FunctionSpaceImp, GridPartImp, polOrd> >
+  {
+    // - Local enums
+    enum { DGFSpaceId = 1 };
+  
+    enum { MaxNumElType = 9 };
+
+    // - Local typedefs
+    // the type of this class
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd> 
+    ThisType;
+
+  public:
+    //- Public typedefs
+
+    //! The traits class
+    typedef DiscontinuousGalerkinSpaceTraits<
+      FunctionSpaceImp, GridPartImp, polOrd> Traits;
+
+    //! Exporting the interface type
+    typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
+    //! Base function set type
+    typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
+    //! Domain vector type
+    typedef typename Traits::DomainType DomainType;
+    //! Range vector type
+    typedef typename Traits::RangeType RangeType;
+    //! Space iterator
+    typedef typename Traits::IteratorType IteratorType;
+    //! Grid type
+    typedef typename Traits::GridType GridType;
+    //! Index set of space
+    typedef typename Traits::IndexSetType IndexSetType;
+
+   typedef DiscontinuousGalerkinBaseFunctionFactory<
+      typename Traits::FunctionSpaceType, polOrd> FactoryType;
+
+    //! Dimension of the range vector field
+    enum { dimRange = Traits::FunctionSpaceType::DimRange };
+
+    //! The polynom order of the base functions
+    enum { PolOrd = polOrd };
+    
+    //! The polynom order of the base functions
+    enum { polynomialOrder = polOrd };
+
+  public:
+    //- Constructors and destructors
+    /** Constructor */
+    DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
+    DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
+
+    template <class EntityType>
+    static BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
+    {
+      typedef typename ToScalarFunctionSpace<
+        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+      
+      DiscontinuousGalerkinBaseFunctionFactory<
+        ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
+      return new BaseFunctionSetType(fac);
+    }
+  };
+
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  class LegendreDiscontinuousGalerkinSpace; 
+    
+  //! Traits class for DiscontinuousGalerkinSpace
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  struct LegendreDiscontinuousGalerkinSpaceTraits {
+    typedef FunctionSpaceImp FunctionSpaceType;
+    typedef GridPartImp GridPartType;
+    enum { polynomialOrder = polOrd };
+
+    typedef typename GridPartType::GridType GridType;
+    typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
+
+    enum { DimRange = FunctionSpaceType::DimRange };
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef LegendreDiscontinuousGalerkinSpace<
+      FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+ 
+    typedef VecBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
+    typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+  };
+
+  //! A discontinuous Galerkin space
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  class LegendreDiscontinuousGalerkinSpace : 
+    public DiscontinuousGalerkinSpaceBase
+      <LegendreDiscontinuousGalerkinSpaceTraits<FunctionSpaceImp,GridPartImp,polOrd> > 
+  {
+    // - Local enums
+    enum { DGFSpaceId = 2 };
+  
+    enum { MaxNumElType = 9 };
+
+    // - Local typedefs
+    // the type of this class
+    typedef LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd> 
+    ThisType;
+
+  public:
+    //- Public typedefs
+
+    //! The traits class
+    typedef LegendreDiscontinuousGalerkinSpaceTraits<
+      FunctionSpaceImp, GridPartImp, polOrd> Traits;
+
+    //! Exporting the interface type
+    typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
+    //! Base function set type
+    typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
+    //! Domain vector type
+    typedef typename Traits::DomainType DomainType;
+    //! Range vector type
+    typedef typename Traits::RangeType RangeType;
+    //! Space iterator
+    typedef typename Traits::IteratorType IteratorType;
+    //! Grid type
+    typedef typename Traits::GridType GridType;
+    typedef typename GridType :: template Codim<0> :: Entity EntityCodim0Type; 
+    //! Index set of space
+    typedef typename Traits::IndexSetType IndexSetType;
+
+    typedef LegendreDGBaseFunctionFactory<
+      typename Traits::FunctionSpaceType, polOrd> FactoryType;
+
+    //! Dimension of the range vector field
+    enum { dimRange = Traits::FunctionSpaceType::DimRange };
+
+    //! The polynom order of the base functions
+    enum { PolOrd = polOrd };
+    
+    //! The polynom order of the base functions
+    enum { polynomialOrder = polOrd };
+
+  public:
+    //- Constructors and destructors
+    /** Constructor */
+    LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart) :
+      DiscontinuousGalerkinSpaceBase<Traits> (gridPart) {}
+
+    template <class EntityType>
+    static BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
+    {
+      typedef typename ToScalarFunctionSpace<
+        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+      
+      LegendreDGBaseFunctionFactory<
+        ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
+      return new BaseFunctionSetType(fac);
+    }
+  };
+  
 } // end namespace Dune 
 
 #endif
