@@ -233,11 +233,12 @@ namespace Dune {
   //********************************************************
   // DG Space with orthonormal basis functions 
   //********************************************************
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+           template<class> class BaseFunctionStorageImp = SimpleStorage >
   class DiscontinuousGalerkinSpace;
 
   //! Traits class for DiscontinuousGalerkinSpace
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp>
   struct DiscontinuousGalerkinSpaceTraits {
     enum { polynomialOrder = polOrd };
     typedef FunctionSpaceImp FunctionSpaceType;
@@ -255,17 +256,17 @@ namespace Dune {
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     typedef DiscontinuousGalerkinSpace<
-      FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+      FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
  
-    typedef VecBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
+    typedef VecBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
   };
 
   //! A discontinuous Galerkin space
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
   class DiscontinuousGalerkinSpace : 
     public DiscontinuousGalerkinSpaceBase 
-  <DiscontinuousGalerkinSpaceTraits<FunctionSpaceImp, GridPartImp, polOrd> >
+  <DiscontinuousGalerkinSpaceTraits<FunctionSpaceImp, GridPartImp,polOrd,BaseFunctionStorageImp> >
   {
     // - Local enums
     enum { DGFSpaceId = 1 };
@@ -274,7 +275,7 @@ namespace Dune {
 
     // - Local typedefs
     // the type of this class
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd> 
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,BaseFunctionStorageImp> 
     ThisType;
 
   public:
@@ -282,7 +283,7 @@ namespace Dune {
 
     //! The traits class
     typedef DiscontinuousGalerkinSpaceTraits<
-      FunctionSpaceImp, GridPartImp, polOrd> Traits;
+      FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp> Traits;
 
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
@@ -329,11 +330,12 @@ namespace Dune {
     }
   };
 
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp = SimpleStorage >
   class LegendreDiscontinuousGalerkinSpace; 
     
   //! Traits class for DiscontinuousGalerkinSpace
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template
+    <class> class BaseFunctionStorageImp >
   struct LegendreDiscontinuousGalerkinSpaceTraits {
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef GridPartImp GridPartType;
@@ -351,17 +353,18 @@ namespace Dune {
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     typedef LegendreDiscontinuousGalerkinSpace<
-      FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+      FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp> DiscreteFunctionSpaceType;
  
-    typedef VecBaseFunctionSet<FunctionSpaceType, CachingStorage> BaseFunctionSetType;
+    typedef VecBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
   };
 
   //! A discontinuous Galerkin space
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+           template<class> class BaseFunctionStorageImp >
   class LegendreDiscontinuousGalerkinSpace : 
     public DiscontinuousGalerkinSpaceBase
-      <LegendreDiscontinuousGalerkinSpaceTraits<FunctionSpaceImp,GridPartImp,polOrd> > 
+      <LegendreDiscontinuousGalerkinSpaceTraits<FunctionSpaceImp,GridPartImp,polOrd,BaseFunctionStorageImp> > 
   {
     // - Local enums
     enum { DGFSpaceId = 2 };
@@ -370,7 +373,7 @@ namespace Dune {
 
     // - Local typedefs
     // the type of this class
-    typedef LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd> 
+    typedef LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,BaseFunctionStorageImp> 
     ThisType;
 
   public:
@@ -378,7 +381,7 @@ namespace Dune {
 
     //! The traits class
     typedef LegendreDiscontinuousGalerkinSpaceTraits<
-      FunctionSpaceImp, GridPartImp, polOrd> Traits;
+      FunctionSpaceImp, GridPartImp, polOrd,BaseFunctionStorageImp> Traits;
 
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
