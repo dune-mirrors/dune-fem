@@ -99,6 +99,12 @@ namespace Dune {
       return quad_.geometry();
     }
 
+    //! returns quadraturePoint, to behave like a cahcing qaud without
+    //! caching, only works for codim 0
+    size_t cachingPoint(size_t quadraturePoint) const {
+      return quadraturePoint; 
+    }
+    
   protected:
     const Quadrature<RealType, dimension>& quadImp() const {
       return quad_;
@@ -155,7 +161,7 @@ namespace Dune {
           (it.inside ()->geometry().type() == elementGeometry_ ) : 
           (it.outside()->geometry().type() == elementGeometry_ ) );
     }
-
+    
     //! The total number of quadrature points.
     int nop() const {
       return quad_.nop();
