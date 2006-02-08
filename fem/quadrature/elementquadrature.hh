@@ -145,6 +145,7 @@ namespace Dune {
       referenceGeometry_(side == INSIDE ?
                          it.intersectionSelfLocal() : 
                          it.intersectionNeighborLocal()),
+      elementGeometry_(referenceGeometry_.type().basicType(),dimension),
       faceNumber_(side == INSIDE ?
                   it.numberInSelf() :
                   it.numberInNeighbor()),
@@ -199,7 +200,7 @@ namespace Dune {
 
     //! The geometry type of the codim 0 reference element.
     GeometryType elementGeometry() const {
-      return referenceGeometry_.type();
+      return elementGeometry_;
     }
 
   protected:
@@ -216,6 +217,7 @@ namespace Dune {
   private:
     Quadrature<RealType, dimension-codimension> quad_;
     const ReferenceGeometry& referenceGeometry_;
+    GeometryType elementGeometry_;
     int faceNumber_;
 
     mutable CoordinateType dummy_;
