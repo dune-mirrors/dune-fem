@@ -152,7 +152,7 @@ namespace Dune {
       dummy_(0.)
     {
       assert( (side == INSIDE) ? 
-          (it.inside()->geometry().type()  == elementGeometry_ ) : 
+          (it.inside ()->geometry().type() == elementGeometry_ ) : 
           (it.outside()->geometry().type() == elementGeometry_ ) );
     }
 
