@@ -105,7 +105,7 @@ public:
 };
 
 
-/*
+#if 0
 // specialisation for dimRange = 1
 template <class IndexSetType, int polOrd>
 class DGMapper<IndexSetType,polOrd,1>
@@ -198,7 +198,7 @@ public:
     return numberOfDofs_ * indexSet_.additionalSizeEstimate();
   }
 };
-*/
+#endif
 
 } // end namespace Dune 
 
