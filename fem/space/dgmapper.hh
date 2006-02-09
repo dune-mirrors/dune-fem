@@ -16,13 +16,13 @@ class DGMapper
 : public DofMapperDefault < DGMapper <IndexSetType,polOrd, dimRange > >
 {
   // index set of grid, i.e. the element indices 
-  IndexSetType &indexSet_;
+  const IndexSetType &indexSet_;
 
   // number of dofs on element 
   const int numberOfDofs_;
 public:
   //! Constructor 
-  DGMapper(IndexSetType& iset , int numDof) :
+  DGMapper(const IndexSetType& iset , int numDof) :
     indexSet_ (iset), numberOfDofs_ (numDof)  {}
 
   //! return size of function space 
