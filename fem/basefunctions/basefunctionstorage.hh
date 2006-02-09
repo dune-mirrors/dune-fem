@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 
+#include <dune/common/array.hh>
 #include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/grid/common/grid.hh>
 
@@ -31,16 +32,19 @@ namespace Dune {
     virtual ~StorageBase();
 
     //! Number of base functions
+    inline
     int numBaseFunctions() const;
 
     //! Evaluation of base functions and their derivatives
     template <int diffOrd>
+    inline
     void evaluate(int baseFunct,
                   const FieldVector<int, diffOrd>& diffVar,
                   const DomainType& xLocal, 
                   RangeType& result) const;
 
     //! Evaluation of jacobians
+    inline
     void jacobian(int baseFunct, 
                   const DomainType& xLocal, 
                   JacobianRangeType& result) const;
@@ -49,7 +53,9 @@ namespace Dune {
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
   private:
-    std::vector<BaseFunctionType*> storage_;
+    int storageSize_;
+    BaseFunctionType** storage_;
+    // std::vector<BaseFunctionType*> storage_;
     mutable FieldVector<int, 1> diffVar1_;
   };
 
@@ -74,16 +80,21 @@ namespace Dune {
     using StorageBase<FunctionSpaceImp>::jacobian;
 
     template <int diffOrd, class QuadratureType>
+    inline
     void evaluate(int baseFunct, 
                   const FieldVector<int, diffOrd>& diffVar,
                   const QuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
     
     template <class QuadratureType>
+    inline
     void jacobian(int baseFunct, 
                   const QuadratureType& quad, int quadPoint, 
                   JacobianRangeType& result) const;
 
+    template <class CacheQuadratureType>
+    inline
+    void addQuadrature(const CacheQuadratureType& quad) const {}
   };
 
   //! \brief Storage scheme which caches evaluations of base function values
@@ -110,18 +121,24 @@ namespace Dune {
     using StorageBase<FunctionSpaceImp>::jacobian;
 
     template <class CacheQuadratureType>
+    inline
     void evaluate(int baseFunct,
                   const FieldVector<int, 0>& diffVar,
                   const CacheQuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
 
     template <class CacheQuadratureType>
+    inline
     void evaluate(int baseFunct,
                   const FieldVector<int, 1>& diffVar,
                   const CacheQuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
+
+    template <class CacheQuadratureType>
+    void addQuadrature(const CacheQuadratureType& quad) const;
  
     template <class CacheQuadratureType>
+    inline
     void jacobian(int baseFunct, 
                   const CacheQuadratureType& quad, int quadPoint, 
                   JacobianRangeType& result) const;
@@ -129,16 +146,22 @@ namespace Dune {
     
   private:
     typedef typename FunctionSpaceImp::RangeFieldType RealType;
-    typedef std::vector<std::vector<RangeType> > RangeVectorType;
-    typedef std::vector<std::vector<JacobianRangeType> > JacobianRangeVectorType;
+    typedef Array<Array<RangeType> > RangeVectorType;
+    typedef Array<Array<JacobianRangeType> > JacobianRangeVectorType;
+    //typedef std::vector<std::vector<RangeType> > RangeVectorType;
+    //typedef std::vector<std::vector<JacobianRangeType> > JacobianRangeVectorType;
     //typedef std::vector<RangeType>  RangeVectorType;
     //typedef std::vector<JacobianRangeType> JacobianRangeVectorType;
-    typedef std::map<size_t, RangeVectorType> RangeContainerType;
-    typedef std::map<size_t, JacobianRangeVectorType> JacobianRangeContainerType;
-    typedef typename RangeContainerType::iterator RangeIteratorType;
-    typedef typename JacobianRangeContainerType::iterator JacobianRangeIteratorType;
+    typedef std::map<size_t, bool> RangeStoredType;
+    typedef std::map<size_t, bool> JacobianRangeStoredType;
+    typedef typename RangeStoredType::iterator RangeIteratorType;
+    typedef typename JacobianRangeStoredType::iterator JacobianRangeIteratorType;
     typedef std::pair<
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
+    //typedef std::vector<RangeVectorType> RangeContainerType;
+    //typedef std::vector<JacobianRangeVectorType> JacobianRangeContainerType;
+    typedef Array<RangeVectorType> RangeContainerType;
+    typedef Array<JacobianRangeVectorType> JacobianRangeContainerType;
 
   private:
     template <class CacheQuadratureType>
@@ -149,6 +172,8 @@ namespace Dune {
 
     mutable RangeContainerType ranges_;
     mutable JacobianRangeContainerType jacobians_;
+    mutable RangeStoredType rangestored_;
+    mutable JacobianRangeStoredType jacobianstored_;
   };
 
 } // end namespace Dune

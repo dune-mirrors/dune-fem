@@ -34,4 +34,6 @@ namespace Dune {
 
 } // end namespace Dune
 
+// #include "idprovider.cc"
+
 #endif

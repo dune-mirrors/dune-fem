@@ -45,7 +45,7 @@ typedef DgType::SpaceType                               GR_FunctionSpaceType;
 typedef DofManager<GR_GridType>                         GR_DofManagerType;
 typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType;
 typedef DgType::IndexSetType                            GR_IndexSetType;
-typedef DgType::GridPartType                                GR_GridPartType;
+typedef DgType::GridPartType                            GR_GridPartType;
 typedef DgType::DiscreteFunctionSpaceType               GR_DiscFuncSpaceType;
 typedef DgType::DestinationType                         GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType > GrapeDispType;

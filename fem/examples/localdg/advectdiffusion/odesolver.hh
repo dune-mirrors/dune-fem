@@ -53,7 +53,7 @@ class ExplTimeStepper : public TimeProvider {
     ode_(0),
     cfl_(cfl),
     dt_(-1.0),
-    savetime_(0.1), savestep_(1)
+    savetime_(0.0), savestep_(1)
   {
     op.timeProvider(this);
     switch (pord) {
@@ -85,10 +85,10 @@ class ExplTimeStepper : public TimeProvider {
   }
   void printGrid(int nr, 
 		 const typename Operator::DestinationType& U) {
-    if (time()>savetime_) {
+    if (time()>=savetime_) {
       printSGrid(time(),savestep_*10+nr,op_.space(),U);
       ++savestep_;
-      savetime_+=0.1;
+      savetime_+=0.001;
     }
   }
  private:
@@ -111,7 +111,7 @@ class ImplTimeStepper : public TimeProvider {
     linsolver_(comm),
     cfl_(cfl),
     dt_(-1.0),
-    savetime_(0.1), savestep_(1)
+    savetime_(0.0), savestep_(1)
   {
     op.timeProvider(this);
     linsolver_.set_tolerance(1.0e-8);
@@ -148,10 +148,10 @@ class ImplTimeStepper : public TimeProvider {
   }
   void printGrid(int nr, 
 		 const typename Operator::DestinationType& U) {
-    if (time()>savetime_) {
+    if (time()>=savetime_) {
       printSGrid(time(),savestep_*10+nr,op_.space(),U);
       ++savestep_;
-      savetime_+=0.1;
+      savetime_+=0.001;
     }
   }
  private:
@@ -179,7 +179,7 @@ class SemiImplTimeStepper : public TimeProvider {
     linsolver_(comm),
     cfl_(cfl),
     dt_(-1.0),
-    savetime_(0.1), savestep_(1)
+    savetime_(0.0), savestep_(1)
   {
     op_expl.timeProvider(this);
     linsolver_.set_tolerance(1.0e-8);
@@ -215,10 +215,10 @@ class SemiImplTimeStepper : public TimeProvider {
   }
   void printGrid(int nr, 
 		 const typename Operator::DestinationType& U) {
-    if (time()>savetime_) {
+    if (time()>=savetime_) {
       printSGrid(time(),savestep_*10+nr,opexpl_.space(),U);
       ++savestep_;
-      savetime_+=0.1;
+      savetime_+=0.001;
     }
   }
  private:
@@ -251,7 +251,7 @@ public:
   ExplRungeKutta(Operator& op,int pord,double cfl) :
     op_(op),
     cfl_(cfl), ord_(pord), Upd(0),
-    savetime_(0.1), savestep_(1)
+    savetime_(0.0), savestep_(1)
   {
     op.timeProvider(this);
     assert(ord_>0);
@@ -318,10 +318,10 @@ public:
   }
   void printGrid(int nr, 
 		 const typename Operator::DestinationType& U) {
-    if (time()>savetime_) {
+    if (time()>=savetime_) {
       printSGrid(time(),savestep_*10+nr,op_.space(),U);
       ++savestep_;
-      savetime_+=0.1;
+      savetime_+=0.001;
     }
   }
  private:

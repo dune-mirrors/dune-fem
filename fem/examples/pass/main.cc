@@ -175,6 +175,7 @@ void printData(double time, int timestep, GridType& grid, Loop& loop)
 template <class Loop, class SpaceType>
 void printDX(double time, int timestep, SpaceType& space, Loop& loop) 
 {  
+  return;
   std::ostringstream stream, filestream;
   filestream << "sol" << timestep;
   DXWriter<SpaceType, false> dx(space, filestream.str());

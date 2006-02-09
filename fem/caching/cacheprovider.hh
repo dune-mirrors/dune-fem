@@ -173,10 +173,11 @@ namespace Dune {
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:
+    inline
     static MapperIteratorType createMapper(const QuadratureType& quad,
                                            GeometryType elementGeometry,
                                            Int2Type<true>);
-    
+    inline
     static MapperIteratorType createMapper(const QuadratureType& quad,
                                            GeometryType elementGeometry,
                                            Int2Type<false>);

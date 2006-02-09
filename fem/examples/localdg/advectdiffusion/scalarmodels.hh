@@ -1,6 +1,6 @@
 #include "modeldefault.hh"
 
-template <class GridType>
+template <class GridType,class ProblemType>
 class BurgersModel {
  public:
   enum { dimDomain = GridType::dimensionworld };
@@ -12,8 +12,11 @@ class BurgersModel {
   typedef typename Traits::GradientType GradientType;
   typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
-  BurgersModel(double eps,bool difftimestep=true) : 
-    epsilon(eps), tstep_eps((difftimestep)?eps:0) {}
+  BurgersModel(GridType& grid,
+			  const ProblemType& problem) :
+    problem_(problem),
+    epsilon(problem.epsilon), 
+    tstep_eps((problem.diff_tstep)?problem.epsilon:0) {}
   inline  void analyticalFlux(typename Traits::EntityType& en,
 				    double time,  
 				    const typename Traits::DomainType& x,
@@ -66,7 +69,11 @@ class BurgersModel {
 			     const typename Traits::FaceDomainType& x,
 			     const RangeType& uLeft, 
 			     RangeType& uRight) const {
+    // Outflow
     uRight=uLeft;
+    // Dirichlet
+    DomainType xgl=it.intersectionGlobal().global(x);
+    problem_.evaluate(time,xgl,uRight);
   }
   inline void maxSpeed(const typename Traits::DomainType& normal,
 		       double time,  
@@ -77,13 +84,14 @@ class BurgersModel {
     totalspeed=advspeed+tstep_eps;
   }
  protected:
+  const ProblemType& problem_;
   double epsilon;
   double tstep_eps;
 };
 // ***********************
 template <class Model>
 class UpwindFlux;
-template <class GridType>
+template <class GridType,class ProblemType>
 class AdvectionDiffusionModel {
  public:
   enum { dimDomain = GridType::dimensionworld };
@@ -95,13 +103,16 @@ class AdvectionDiffusionModel {
   typedef typename Traits::FluxRangeType FluxRangeType;
   typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
-  AdvectionDiffusionModel(DomainType& velo,double eps,bool diff_timestep=true) :
-    velocity(velo), epsilon(eps), tstep_eps((diff_timestep)?eps:0) {}
+  AdvectionDiffusionModel(GridType& grid,
+			  const ProblemType& problem) :
+    problem_(problem),
+    velocity(problem.velocity), epsilon(problem.epsilon), 
+    tstep_eps((problem.diff_tstep)?problem.epsilon:0) {}
   inline  void analyticalFlux(typename Traits::EntityType& en,
 			      double time,  
 			      const typename Traits::DomainType& x,
-				    const RangeType& u, 
-				    FluxRangeType& f) const {
+			      const RangeType& u, 
+			      FluxRangeType& f) const {
     f[0] = velocity;
     f *= u;
   }
@@ -128,6 +139,7 @@ class AdvectionDiffusionModel {
   inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
 			       double time, 
 			       const typename Traits::FaceDomainType& x) const {
+    return true;
     const DomainType normal = it.integrationOuterNormal(x);
     int boundaryId = (std::abs(normal[0])>1e-10)? 1:2;
     return (boundaryId==1);
@@ -156,6 +168,7 @@ class AdvectionDiffusionModel {
 			     RangeType& uRight) const {
     
     uRight*=0; //uLeft;
+    uRight = uLeft;
   }
   inline  double maxSpeed(const typename Traits::DomainType& normal,
 			  double time,  
@@ -166,16 +179,17 @@ class AdvectionDiffusionModel {
     totalspeed=advspeed+tstep_eps;
   }
  protected:
+  const ProblemType& problem_;
   DomainType velocity;
   double epsilon;
   double tstep_eps;
-  friend class UpwindFlux<AdvectionDiffusionModel<GridType> >;
+  friend class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> >;
 };
 // Numerical Upwind-Flux
-template <class GridType>
-class UpwindFlux<AdvectionDiffusionModel<GridType> > {
+template <class GridType,class ProblemType>
+class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> > {
  public:
-  typedef AdvectionDiffusionModel<GridType> Model;
+  typedef AdvectionDiffusionModel<GridType,ProblemType> Model;
   typedef typename Model::Traits Traits;
   enum { dimRange = Model::dimRange };
   typedef typename Model::RangeType RangeType;
@@ -203,4 +217,38 @@ class UpwindFlux<AdvectionDiffusionModel<GridType> > {
   }
  private:
   const Model& model_;
+};
+
+/*********************************************************************/
+template <class GridType>
+class U0 {
+public:
+  enum { dimDomain = GridType::dimensionworld };  
+  typedef FieldVector<double,dimDomain> DomainType;
+  typedef FieldVector<double,1> RangeType;
+  U0(double eps,bool diff_timestep=true) :
+    velocity(0), epsilon(eps), diff_tstep(diff_timestep) {
+      velocity[0]=0.8;
+      velocity[1]=0.;
+    }
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0,arg,res);
+  }
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    if (arg[0]*arg[0] < 0.25) {
+      res = cos(arg[0]*M_PI*2.)+1;
+    }
+    else {
+      res = 0.0;
+    }
+    double diffusion_ = 0.01;
+    double t0 = 1.0;
+    // res = 1./sqrt(4.*M_PI*diffusion_*t0)*
+    //       
+exp(-(arg[0]+0.8-0.8*t0)*(arg[0]+0.8-0.8*t0)/(4.*diffusion_*t0));
+    // res = 1.0;
+  }
+  DomainType velocity;
+  double epsilon;
+  bool diff_tstep;
 };

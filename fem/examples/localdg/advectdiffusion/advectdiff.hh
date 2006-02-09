@@ -143,6 +143,9 @@ namespace Dune {
 
     typedef typename Traits2::IndexSetType IndexSet2Type;
     typedef typename Traits2::GridPartType GridPart2Type;
+    typedef IndexSet2Type IndexSetType;
+    typedef GridPart2Type GridPartType;
+    typedef Space2Type DiscreteFunctionSpaceType;
 
   public:
     DGAdvectionOperator(GridType& grid,

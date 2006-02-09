@@ -31,8 +31,10 @@ namespace Dune {
     typedef typename Traits::PointVectorType GlobalPointVectorType;
     
   public:
+    inline
     static void registerQuadrature(const QuadratureType& quad);
-
+    
+    inline
     static const GlobalPointVectorType& getPoints(size_t id,
                                                   GeometryType elementGeo);
 
@@ -61,13 +63,15 @@ namespace Dune {
     typedef std::vector<GlobalPointType> GlobalPointVectorType;
     
   public:
+    inline
     static const MapperVectorType& getMappers(const QuadratureType& quad,
                                               GeometryType elementGeo);
     // Access for non-symmetric quadratures
+    inline
     static const MapperVectorType& getMappers(const QuadratureType& quad,
                                               const LocalPointVectorType& pts,
                                               GeometryType elementGeo);
-
+    inline
     static const GlobalPointVectorType& getPoints(size_t id,
                                                   GeometryType elementGeo);
     
@@ -78,9 +82,11 @@ namespace Dune {
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:
+    inline
     static MapperIteratorType addEntry(const QuadratureType& quad,
                                        const LocalPointVectorType& pts,
                                        GeometryType elementGeo);
+    inline
     static bool sameGeometry(GeometryType geo1, GeometryType geo2);
 
   private:

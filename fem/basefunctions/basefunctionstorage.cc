@@ -7,18 +7,21 @@ namespace Dune {
   //- class SimpleStorage
   template <class FunctionSpaceImp>
   StorageBase<FunctionSpaceImp>::StorageBase(const FactoryType& factory) :
-    storage_(),
+    // storage_(),
+    storageSize_(factory.numBaseFunctions()),
+    storage_(new BaseFunctionType*[factory.numBaseFunctions()]),
     diffVar1_(0)
   {
     for (int i = 0; i < factory.numBaseFunctions(); ++i) {
-      storage_.push_back(factory.baseFunction(i));
+      // storage_.push_back(factory.baseFunction(i));
+      storage_[i]=factory.baseFunction(i);
     }
   }
 
   template <class FunctionSpaceImp>
   StorageBase<FunctionSpaceImp>::~StorageBase()
   {
-    for (size_t i = 0; i < storage_.size(); ++i) {
+    for (size_t i = 0; i < storageSize_; ++i) {
       delete storage_[i];
       storage_[i] = 0;
     }
@@ -27,7 +30,8 @@ namespace Dune {
   template <class FunctionSpaceImp>
   int StorageBase<FunctionSpaceImp>::numBaseFunctions() const 
   {
-    return storage_.size();
+    return storageSize_;
+    // return storage_.size();
   }
 
   template <class FunctionSpaceImp>
@@ -104,14 +108,34 @@ namespace Dune {
            const CacheQuadratureType& quad, int quadPoint,
            RangeType& result) const 
   {
-    RangeIteratorType it = ranges_.find(quad.id());
+    // RangeIteratorType it = ranges_.find(quad.id());
+    /*
     if (it == ranges_.end()) {
       it = addEntry(quad).first;
     }
-    assert(it != ranges_.end());
-
+    */
+    assert(rangestored_.find(quad.id()) != rangestored_.end());
     // calculate and return values
-    result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
+    //result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
+
+    result = ranges_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+  }
+
+  template <class FunctionSpaceImp>
+  template <class CacheQuadratureType>
+  void CachingStorage<FunctionSpaceImp>::
+  addQuadrature(const CacheQuadratureType& quad) const 
+  {
+    {
+      RangeIteratorType it = rangestored_.find(quad.id());
+      if (it == rangestored_.end()) {
+	it = addEntry(quad).first;
+      }
+    }
+    {
+      assert(rangestored_.find(quad.id()) != rangestored_.end());
+      assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
+    }
   }
 
   template <class FunctionSpaceImp>
@@ -120,14 +144,17 @@ namespace Dune {
   jacobian(int baseFunct, const CacheQuadratureType& quad, int quadPoint,
            JacobianRangeType& result) const
   {
-    JacobianRangeIteratorType it = jacobians_.find(quad.id());
+    //JacobianRangeIteratorType it = jacobians_.find(quad.id());
+    /*
     if (it == jacobians_.end()) {
       it = addEntry(quad).second;
     }
-    assert(it != jacobians_.end());
+    */
+    assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
 
     // calculate and return values
-    result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
+    //result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
+    result = jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
   }
 
   template <class FunctionSpaceImp>
@@ -137,15 +164,21 @@ namespace Dune {
            const CacheQuadratureType& quad, int quadPoint,
            RangeType& result) const
   {
-    JacobianRangeIteratorType it = jacobians_.find(quad.id());
+    //JacobianRangeIteratorType it = jacobians_.find(quad.id());
+    /*
     if (it == jacobians_.end()) {
       it = addEntry(quad).second;
     }
-    assert(it != jacobians_.end());
+    */
+    assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
 
     // calculate and return values
-    JacobianRangeType& jResult =
-      it->second[quad.cachingPoint(quadPoint)][baseFunct];
+    //JacobianRangeType& jResult =
+    //  it->second[quad.cachingPoint(quadPoint)][baseFunct];
+
+    JacobianRangeType& jResult = 
+      jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+
     for (size_t i = 0; i < RangeType::size; ++i) {
       result[i] = jResult[i][diffVar[0]];
     }
@@ -171,17 +204,17 @@ namespace Dune {
     const PointVectorType& points = 
       PointProviderType::getPoints(quad.id(), elementGeometry_);
 
-    assert(ranges_.find(quad.id()) == ranges_.end());
+    assert(rangestored_.find(quad.id()) == rangestored_.end());
     RangeIteratorType rit =
-      ranges_.insert(make_pair(quad.id(), 
-                               RangeVectorType(points.size()))).first;
-    assert(ranges_.find(quad.id()) != ranges_.end());
+      rangestored_.insert(make_pair(quad.id(),true)).first; 
+    // RangeVectorType(points.size()))).first;
+    assert(rangestored_.find(quad.id()) != rangestored_.end());
 
-    assert(jacobians_.find(quad.id()) == jacobians_.end());
+    assert(jacobianstored_.find(quad.id()) == jacobianstored_.end());
     JacobianRangeIteratorType jit =
-      jacobians_.insert(make_pair(quad.id(),
-                               JacobianRangeVectorType(points.size()))).first;
-    assert(jacobians_.find(quad.id()) != jacobians_.end());
+      jacobianstored_.insert(make_pair(quad.id(),true)).first;
+    //			       JacobianRangeVectorType(points.size()))).first;
+    assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
 
     FieldVector<int, 0> diffVar;
 
@@ -189,14 +222,20 @@ namespace Dune {
     //std::cout << "Num points: " << points.size() << std::endl;
     //std::cout << "Num base functions: " << this->numBaseFunctions() << std::endl;
     
+    if (ranges_.size()<=quad.id()) ranges_.resize(quad.id()+10);
+    if (jacobians_.size()<=quad.id()) jacobians_.resize(quad.id()+10);
+
+    ranges_[quad.id()].resize(points.size());
+    jacobians_[quad.id()].resize(points.size());
+
     for (size_t i = 0; i < points.size(); ++i) {
-      rit->second[i].resize(this->numBaseFunctions());
-      jit->second[i].resize(this->numBaseFunctions());
+      ranges_[quad.id()][i].resize(this->numBaseFunctions());
+      jacobians_[quad.id()][i].resize(this->numBaseFunctions());
 
       for (int j = 0; j < this->numBaseFunctions(); ++j) {
         // evaluate value and jacobian and store it 
-        this->evaluate(j, diffVar, points[i], rit->second[i][j]);
-        this->jacobian(j, points[i], jit->second[i][j]);
+        this->evaluate(j, diffVar, points[i], ranges_[quad.id()][i][j]);
+        this->jacobian(j, points[i], jacobians_[quad.id()][i][j]);
       }
     }
 

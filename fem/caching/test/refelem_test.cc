@@ -78,7 +78,7 @@ namespace Dune {
     checkSingle<ReferenceSimplex<double, 2>, 1>(rs2);
 
     const ReferencePrism<double, 3>& rpr = 
-      ReferenceElements<double, 3>::pris(prism);
+      ReferenceElements<double, 3>::prism(prism);
     checkSingle<ReferencePrism<double, 3>, 1>(rpr);
     checkSingle<ReferencePrism<double, 3>, 2>(rpr);
 

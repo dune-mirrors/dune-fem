@@ -401,6 +401,39 @@ namespace Dune {
   };
 
   /**
+   * @brief  Calls lf.setQuad on a tuple of local function.
+   *
+   * Use this Functor in conjunction with a ForEachValue built from a tuple
+   * of local functions.
+   *
+   */
+  template <class EntityImp, class QuadratureImp>
+  class DiscreteFunctionSetQuad {
+  public:
+    //! Constructor
+    //! \param quad The quadrature in question.
+    DiscreteFunctionSetQuad(EntityImp& en,QuadratureImp& quad) :
+      quad_(quad),
+      en_(en)
+    {}
+
+    //! Set the quadrature for a local function
+    template <class LFType>
+    void visit(LFType& lf) {
+      lf->getFunctionSpace().getBaseFunctionSet(en_).addQuadrature(quad_);
+    }
+
+  private:
+    DiscreteFunctionSetQuad();
+    DiscreteFunctionSetQuad(const DiscreteFunctionSetQuad&);
+    DiscreteFunctionSetQuad& operator=(const DiscreteFunctionSetQuad&);
+
+  private:
+    QuadratureImp& quad_;
+    EntityImp& en_;
+  };
+
+  /**
    * @brief Helper class which actually calls the functions of the problem
    *
    * This class enables us to call methods by varying argument lengths.

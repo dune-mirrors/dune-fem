@@ -1,3 +1,3 @@
 # $Id$
 
-SUBDIRS = transport vectorial poisson l2projection pass localdg matrices
+SUBDIRS = transport vectorial poisson l2projection pass localdg 

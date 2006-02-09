@@ -3,7 +3,6 @@
 
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/quadrature/fixedorder.hh>
 
 #include <dune/common/misc.hh>
 #include <dune/fem/common/boundary.hh>
@@ -22,22 +21,6 @@ using namespace std;
 #include "scalarmodels.hh"
 #include "stuff.cc"
 // Initial Data
-class U0 {
-public:
-  template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg, RangeType& res) const {
-    if (arg*arg < 0.25) {
-      res = 1.0;
-      res = cos(arg[0]*M_PI*2.)+1;
-    }
-    else {
-      res = 0.0;
-    }
-    double diffusion_ = 0.01;
-    double t0 = 1.0;
-    res = 1./sqrt(4.*M_PI*diffusion_*t0)*exp(-(arg[0]+0.8-0.8*t0)*(arg[0]+0.8-0.8*t0)/(4.*diffusion_*t0));
-  }
-};
 int main(int argc, char ** argv, char ** envp) {
   // *** Initialization
   // Polynomial and ODE order
@@ -63,25 +46,23 @@ int main(int argc, char ** argv, char ** envp) {
   double epsilon=0.01;
   if (argc>2)
     epsilon=atof(argv[2]);
+  // Initial Data and Problem Description
+  U0<GridType> problem1(epsilon,with_difftstep);
+  U0<GridType> problem2(0,false);
   // *** Models
   // Advection-Diffusion Model
-  typedef AdvectionDiffusionModel<GridType> AdvDiffType;
-  AdvDiffType::DomainType zerovelo(0.);
-  AdvDiffType::DomainType velocity(0);
-  velocity[0]=0.8;
-  velocity[1]=0.;
+  typedef AdvectionDiffusionModel<GridType,U0<GridType> > AdvDiffType;
   // Advection-Diffusion
-  AdvDiffType advdiff(velocity,epsilon,with_difftstep);
+  AdvDiffType advdiff(grid,problem1);
   // Diffusion
-  //AdvDiffType diffeqn(zerovelo,epsilon,with_difftstep);
-  AdvDiffType diffeqn(velocity,epsilon,with_difftstep);
+  AdvDiffType diffeqn(grid,problem1);
   // Advection
-  AdvDiffType adveqn(velocity,0.0);  
+  AdvDiffType adveqn(grid,problem2);  
   // Burgers Model
-  typedef BurgersModel<GridType> BurgersType;
-  BurgersType burgers(epsilon,with_difftstep);
-  typedef BurgersModel<GridType> BurgersAdvType;
-  BurgersType burgersadv(0,with_difftstep);
+  typedef BurgersModel<GridType,U0<GridType> > BurgersType;
+  BurgersType burgers(grid,problem1);
+  typedef BurgersModel<GridType,U0<GridType> > BurgersAdvType;
+  BurgersType burgersadv(grid,problem2);
   // *** Fluxes 
   // Advection Diffusion
   typedef UpwindFlux<AdvDiffType> UpwindAdvDiffType;
@@ -97,7 +78,7 @@ int main(int argc, char ** argv, char ** envp) {
   // *** Operator typedefs
   // Space:
   typedef DGAdvectionDiffusionOperator<AdvDiffType,UpwindFlux,order> DgAdvDiffType;
-  typedef DGAdvectionDiffusionOperator<AdvDiffType,LLFFlux,order> DgDiffType;
+  typedef DGDiffusionOperator<AdvDiffType,LLFFlux,order> DgDiffType;
   typedef DGAdvectionOperator<AdvDiffType,UpwindFlux,order> DgAdvType;
   typedef DGAdvectionDiffusionOperator<BurgersType,LLFFlux,order> DgBurgersType;
   typedef DGAdvectionOperator<BurgersAdvType,LLFFlux,order> DgBurgersAdvType;
@@ -151,10 +132,12 @@ int main(int argc, char ** argv, char ** envp) {
   DgDiffType::DestinationType UDiff("DDiff", dgdiffeqn.space());
   DgAdvType::DestinationType UAdv("UAdv", dgadveqn.space());
   DgBurgersType::DestinationType UBurgers("UBurgers", dgburgers.space());
-  initialize(U0(),U);
-  initialize(U0(),UDiff);
-  initialize(U0(),UAdv);
-  initialize(U0(),UBurgers);
+  // Initialize data
+  initialize(problem1,U);
+  initialize(problem1,UDiff);
+  initialize(problem1,UAdv);
+  initialize(problem1,UBurgers);
+
   printSGrid(0, 1, dgadvdiff.space(), U);
   printSGrid(0, 2, dgdiffeqn.space(), UDiff);
   printSGrid(0, 3, dgadveqn.space(), UAdv);

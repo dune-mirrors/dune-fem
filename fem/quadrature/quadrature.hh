@@ -110,6 +110,7 @@ namespace Dune {
     //! Constructor
     //! \param order The desired order (provided by the user)
     //! \param id A unique id (provided by QuadratureProvider)
+    inline
     SimplexQuadrature(int order, size_t id);
     
     //! The geometry type is... simplex!

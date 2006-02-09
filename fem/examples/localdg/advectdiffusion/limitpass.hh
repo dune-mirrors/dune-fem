@@ -81,7 +81,8 @@ namespace Dune {
       source_(0.0),
       identity_(1.0),
       grads_(0.0),
-      diffVar_()
+      diffVar_(),
+      twistUtil_(spc.grid())
     {}
     
     //! Destructor
@@ -114,6 +115,7 @@ namespace Dune {
     //! Perform the limitation on all elements.
     virtual void applyLocal(EntityType& en) const
     {
+      //- typedefs
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType 
 	BaseFunctionSetType;
@@ -125,17 +127,65 @@ namespace Dune {
       GeometryType geom = en.geometry().type();
       const IndexSetType& iset = spc_.indexSet();
       const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
-      Dune::DofConversionUtility< PointBased > dofConversion(dimRange);
+      DofConversionUtility< PointBased > dofConversion(dimRange);
       int numBasis=updEn.numDofs()/dimRange;
-       
-      for (int i = 0; i < numBasis; ++i) {
-	for (int r = 0; r < dimRange; ++r) {
+      // ************************************************
+      RangeType lambda(1.),ubar;
+      for (int r=0;r<dimRange;r++) {
+	int dofIdx = dofConversion.combinedDof(0,r);
+	updEn[dofIdx]=uEn[dofIdx];
+	ubar[r]=updEn[dofIdx];
+      }
+      if (ubar[0]<1e-4) {
+	for (int r=0;r<dimRange;r++) {
+	  for (int i=0;i<numBasis;i++) {
+	    int dofIdx = dofConversion.combinedDof(i,r);
+	    updEn[dofIdx] = 0.;
+	  }
+	}
+      } else {
+	bool modified=false;
+	RangeType U;
+	DomainType corner[3];
+	corner[0][0] = 0.;
+	corner[0][1] = 0.;
+	corner[1][0] = 1.;
+	corner[1][1] = 0.;
+	corner[2][0] = 0.;
+	corner[2][1] = 1.;
+	for (int l=0;l<3;l++) {
+	  uEn.evaluateLocal(en, corner[l], U);
+ 	  if (U[0]<0.) {
+	    double lambdal=-ubar[0]/(U[0]-ubar[0]);
+	    if (lambdal<0. || lambdal>1.) {
+	      std::cerr << "LAMBDA: El(" << l << ") " 
+			<< lambdal << " " << ubar[0] << " " 
+			<< U[0] << " " << U[0]-ubar[0] << std::endl;
+	    }
+	    lambda[0]=(lambda[0]<lambdal)?lambda[0]:lambdal;
+	    modified=true;
+	  }
+	}
+	for (int i=1;i<numBasis;i++) {
+	  int dofIdx0 = dofConversion.combinedDof(i,0);
+	  updEn[dofIdx0] = lambda[0]*uEn[dofIdx0];
+	  for (int r=1;r<dimRange;r++) {
+	    int dofIdx = dofConversion.combinedDof(i,r);
+	    if (!modified) 
+	      updEn[dofIdx] = uEn[dofIdx];
+	    else 
+	      updEn[dofIdx] = updEn[dofIdx0]*ubar[r]/ubar[0];     
+	  }
+	}
+      }
+      for (int r=0;r<dimRange;r++) {
+	for (int i=0;i<numBasis;i++) {
 	  int dofIdx = dofConversion.combinedDof(i,r);
-	  updEn[dofIdx] = uEn[dofIdx];
+	  assert(uEn[dofIdx]==uEn[dofIdx]);
+	  assert(updEn[dofIdx]==updEn[dofIdx]);
 	}
       }
     }
-
     
   private:
     LimitDGPass();
@@ -161,6 +211,7 @@ namespace Dune {
     mutable RangeType identity_;
     mutable DomainType grads_;
     FieldVector<int, 0> diffVar_;
+    TwistUtility<GridType> twistUtil_;
   };
 
   }

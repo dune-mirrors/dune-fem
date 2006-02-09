@@ -55,10 +55,14 @@ namespace Dune {
     storage_.jacobian(baseFunct, quad, quadPoint, jTmp_);
 
     DofType result = 0;
-    DomainType gradScaled(0.);
+    
+    typedef FieldMatrix<DofType, FunctionSpaceImp::DimDomain,FunctionSpaceImp::DimDomain> JacobianInverseType;
+    const JacobianInverseType& jti =
+      en.geometry().jacobianInverseTransposed(quad.point(quadPoint));
+
     for (int i = 0; i < FunctionSpaceImp::DimRange; ++i) {
-      en.geometry().jacobianInverseTransposed(quad.point(quadPoint)).
-        umv(jTmp_[i], gradScaled);
+      DomainType gradScaled(0.);
+      jti.umv(jTmp_[i], gradScaled);
       result += gradScaled*factor[i];
     }
     return result;
@@ -104,6 +108,14 @@ namespace Dune {
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
+  template <class QuadratureType>
+  void VecBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  addQuadrature(QuadratureType& quad) const 
+  {
+    storage_.addQuadrature(quad);
+  }
+
+  template <class FunctionSpaceImp, template <class> class StorageImp>
   void VecBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   jacobian(int baseFunct, const DomainType& xLocal, 
            JacobianRangeType& gradPhi) const 
@@ -121,12 +133,16 @@ namespace Dune {
            JacobianRangeType& gradPhi) const 
   {
     gradPhi *= 0.;
+    storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_); 
+    gradPhi[util_.component(baseFunct)] = jTmp_[0];
 
+    /*
     for (int i = 0; i < FunctionSpaceImp::DimDomain; ++i) {
       diffVar1_[0] = i;
       storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_); 
       gradPhi[util_.component(baseFunct)][i] = jTmp_[0];
     }
+    */
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>

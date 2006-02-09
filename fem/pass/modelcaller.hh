@@ -78,6 +78,14 @@ namespace Dune {
       data_.reset(0);
     }
 
+    template <class QuadratureType>
+    void setQuad(Entity& en,QuadratureType& quad) 
+    {
+      ForEachValue<DiscreteFunctionTupleType> forEach(data_->discreteFunctions());
+      DiscreteFunctionSetQuad<Entity,QuadratureType> eval(en,quad);
+      forEach.apply(eval);
+    }
+
     // Here, the interface of the problem is replicated and the Caller
     // is used to do the actual work
     void analyticalFlux(Entity& en, const DomainType& x, 
@@ -178,7 +186,7 @@ namespace Dune {
     void source(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
                 RangeType& res) 
     {
-      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
+      // evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       evaluateJacobianQuad(en, quad, quadPoint);
       problem_.source(en, time_, quad.point(quadPoint), valuesEn_,
                       jacobians_, res);
@@ -206,6 +214,7 @@ namespace Dune {
     }
 
     template <class QuadratureType>
+    inline
     void evaluateQuad(Entity& en, QuadratureType& quad, int quadPoint, 
                       LocalFunctionTupleType& lfs, RangeTupleType& ranges) 
     {
@@ -263,6 +272,10 @@ namespace Dune {
 
       LocalFunctionTupleType& localFunctionsNeigh() {
         return localFunctionsNeigh_;
+      }
+
+      DiscreteFunctionTupleType& discreteFunctions() {
+	return discreteFunctions_;
       }
 
       void setSelf(Entity& en) {

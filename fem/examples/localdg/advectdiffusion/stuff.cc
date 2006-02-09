@@ -25,12 +25,13 @@ class L2Projection
     
     // Get quadrature rule
     CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
+    const typename FunctionSpaceType::BaseFunctionSetType & set =
+      space.getBaseFunctionSet(*it);
+    set.addQuadrature(quad);
     
     for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
       
-      const typename FunctionSpaceType::BaseFunctionSetType & set =
-	space.getBaseFunctionSet(*it);
       
       for(int i=0; i<lf.numDofs(); i++) {
         for(int qP = 0; qP < quad.nop(); qP++) {
@@ -111,7 +112,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
       LocalFunctionType lf = sol.localFunction(*it);
       lf.evaluateLocal(*it, localMid, result);
 
-      ofs << mid[0] << " " << mid[1] << " " << " " << result << "\n";
+      ofs << mid[0] << " " << mid[1] << " " << result << "\n";
     }
   }
   ofs << std::endl;

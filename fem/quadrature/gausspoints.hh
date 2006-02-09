@@ -202,4 +202,6 @@ namespace Dune {
 
 } // end namespace Dune
 
+// #include "gausspoints.cc"
+
 #endif

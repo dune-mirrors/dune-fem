@@ -1,3 +1,5 @@
+
+
 #include "modeldefault.hh"
 #include "mhd_eqns.hh"
 #include "rotator.hh"
@@ -16,7 +18,7 @@ class EulerFlux {
 // ************************************************
 template <class Model>
 class DWNumFlux;
-template <class GridType>
+template <class GridType,class ProblemType>
 class EulerModel {
  public:
   enum { dimDomain = GridType::dimensionworld };
@@ -28,7 +30,9 @@ class EulerModel {
   //typedef typename Traits::GradientType GradientType;
   //typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
-  EulerModel(double gamma,bool difftimestep=true) : gamma_(gamma)
+  EulerModel(GridType& grid,const ProblemType& problem) :
+    gamma_(problem.gamma),
+    problem_(problem)
   {}
   inline  void analyticalFlux(typename Traits::EntityType& en,
 			      double time,  
@@ -47,6 +51,14 @@ class EulerModel {
 			     const typename Traits::FaceDomainType& x,
 			     const RangeType& uLeft, 
 			     RangeType& gLeft) const  {
+    DomainType xgl=it.intersectionGlobal().global(x);
+    const typename Traits::DomainType normal = it.integrationOuterNormal(x);  
+    RangeType u;
+    problem_.evaluate(time,xgl,u);
+    FluxRangeType f;
+    EulerFlux<dimDomain>().analyticalFlux(gamma_,u,f);
+    gLeft*=0;
+    f.umv(normal,gLeft);
     return 0.;
   }
   inline  void boundaryValue(typename Traits::IntersectionIterator& it,
@@ -54,7 +66,9 @@ class EulerModel {
 			     const typename Traits::FaceDomainType& x,
 			     const RangeType& uLeft, 
 			     RangeType& uRight) const {
-    uRight=uLeft;
+    // uRight=uLeft;
+    DomainType xgl=it.intersectionGlobal().global(x);
+    problem_.evaluate(time,xgl,uRight);
   }
   inline void maxSpeed(const typename Traits::DomainType& normal,
 		       double time,  
@@ -67,15 +81,16 @@ class EulerModel {
  protected:
   double gamma_;
   double tstep_eps;
-  friend class DWNumFlux<EulerModel<GridType> >;
+  ProblemType problem_;
+  friend class DWNumFlux<EulerModel<GridType,ProblemType> >;
 };
 // ***********************
-template <class GridType>
-class DWNumFlux<EulerModel<GridType> > {
+template <class GridType,class ProblemType>
+class DWNumFlux<EulerModel<GridType,ProblemType> > {
  public:
   enum { dimDomain = GridType::dimensionworld };
   typedef Mhd::MhdSolver SolverType;
-  typedef EulerModel<GridType> Model;
+  typedef EulerModel<GridType,ProblemType> Model;
   typedef typename Model::Traits Traits;
   enum { dimRange = Model::dimRange };
   typedef typename Model::RangeType RangeType;
@@ -154,7 +169,8 @@ void EulerFlux<2>::analyticalFlux(const double gamma,
   assert(u[0]>1e-10);
   double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
   if (rhoeps<1e-10) 
-      cerr << u << " " << rhoeps << endl;
+      cerr << "negative internal energy density in analyticalFlux: "
+	   << u << " " << rhoeps << endl;
   assert(rhoeps>1e-10);
   double p = (gamma-1)*rhoeps;
   f[0][0] = u[1];                 f[0][1] = u[2];
@@ -185,7 +201,7 @@ double EulerFlux<1>::maxSpeed(const double gamma,
   double rhoeps = u[e]-0.5*u[1]*u[1]/u[0];
   assert(rhoeps>1e-10);
   double p = (gamma-1)*rhoeps;
-  double c2 = gamma*p/u[0];
+  double c2 = gamma*p/u[0]*n.two_norm2();
   assert(c2>1e-10);
   return fabs(u_normal) + sqrt(c2);
 }
@@ -211,8 +227,117 @@ double EulerFlux<3>::maxSpeed(const double gamma,
   double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2]+u[3]*u[3])/u[0];
   assert(rhoeps>1e-10);
   double p = (gamma-1)*rhoeps;
-  double c2 = gamma*p/u[0];
+  double c2 = gamma*p/u[0]*n.two_norm2();
   assert(c2>1e-10);
   return fabs(u_normal) + sqrt(c2);
 }
 
+/*****************************************************************/
+// Initial Data
+class U0Smooth1D {
+public:
+  U0Smooth1D() : gamma(1.4) {}
+  template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0,arg,res);
+  }
+  template <class DomainType, class RangeType>
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    if (arg[0]*arg[0] < 0.25) {
+      // res[0] = cos(arg[0]*M_PI*2.)+2;
+      res[0] = -8.*(arg[0]*arg[0]-0.25)+1.;
+    }
+    else {
+      res[0] = 1.0;
+    }
+    res[1] = 1.5;
+    res[2] = 0.;
+    res[3] = 10.;
+    res[1] *= res[0];
+    res[2] *= res[0];
+    res[3] += 0.5*res[1]*res[1]/res[0];
+  }
+  double gamma;
+};
+class U0RotatingCone {
+public:
+  U0RotatingCone() : gamma(1.4) {}
+  template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0,arg,res);
+  }
+  template <class DomainType, class RangeType>
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    DomainType c(0.25);
+    DomainType x=arg;
+    x-=c;
+    double r2=0.04;
+    if (x*x < r2) {
+      res[0] =cos(x*x/r2*M_PI)+2;
+    }
+    else {
+      res[0] = 1.0;
+    }
+    res[1] = arg[1];
+    res[2] = -arg[0];
+    res[3] = 2.;
+    res[1] *= res[0];
+    res[2] *= res[0];
+    res[3] += 0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
+  }
+  double gamma;
+};
+class U0VW {
+public:
+  U0VW() : gamma(1.4) {}
+  template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0,arg,res);
+  }
+  template <class DomainType, class RangeType>
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    if (arg[0]<0.25) {
+      res[0]=1.;
+      res[1]=-1.;
+      res[1]=0.;
+      res[2]=0.;
+      res[3]=1./(1.4-1.0);
+    } else {
+      res[0]=1.; 
+      res[1]=1.;
+      res[2]=0.;
+      res[3]=1.0/(1.4-1.0);
+    }
+    res[1] *= res[0];
+    res[2] *= res[0];
+    res[3] += 0.5*res[1]*res[1]/res[0];
+  }
+  double gamma;
+};
+class U0Sod {
+public:
+  U0Sod() : gamma(1.4) {}
+  template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0,arg,res);
+  }
+  template <class DomainType, class RangeType>
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    if (arg[0]<0.) {
+      res[0]=1.;
+      res[1]=0.;
+      res[1]=0.;
+      res[2]=0.;
+      res[3]=1./(1.4-1.0);
+    } else {
+      res[0]=0.125;
+      res[1]=0.;
+      res[2]=0.;
+      res[3]=0.1/(1.4-1.0);
+    }
+    res[1] *= res[0];
+    res[2] *= res[0];
+    res[3] += 0.5*res[1]*res[1]/res[0];
+  }
+  double gamma;
+};

@@ -447,8 +447,8 @@ namespace Dune {
     
   };
 
-#include "orthonormalbase_mod.cc"
-
 } // end namespace Dune
+
+#include "orthonormalbase_mod.cc"
 
 #endif

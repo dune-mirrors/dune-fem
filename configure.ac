@@ -42,7 +42,6 @@ AC_CONFIG_FILES([Makefile
 		 examples/localdg/Makefile
 		 examples/localdg/advectdiffusion/Makefile
 		 examples/pass/Makefile
-		 examples/matrices/Makefile
                  tester/Makefile
                  tester/gridcheck/Makefile
                  tester/adaptation/Makefile

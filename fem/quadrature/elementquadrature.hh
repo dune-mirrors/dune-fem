@@ -151,7 +151,7 @@ namespace Dune {
       referenceGeometry_(side == INSIDE ?
                          it.intersectionSelfLocal() : 
                          it.intersectionNeighborLocal()),
-      elementGeometry_(referenceGeometry_.type().basicType(),dimension),
+      elementGeometry_(referenceGeometry_.type().basicType() ,dimension),
       faceNumber_(side == INSIDE ?
                   it.numberInSelf() :
                   it.numberInNeighbor()),

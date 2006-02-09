@@ -65,9 +65,10 @@ namespace Dune {
 
     // typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
     // typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    // typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
 
     typedef TransportDiffusionDiscreteModel1<Model,NumFlux,polOrd> DiscreteModelType;
@@ -92,9 +93,10 @@ namespace Dune {
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    // typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
 
     typedef TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,withDiffusion,withAdvection> DiscreteModelType;
@@ -119,9 +121,10 @@ namespace Dune {
     typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
 
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    // typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
 
     typedef LimiterDiscreteModel1<Model,polOrd> DiscreteModelType;

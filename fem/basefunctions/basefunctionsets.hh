@@ -53,26 +53,31 @@ namespace Dune {
     {}
 
     //! Total number of base functions
+    inline
     int numBaseFunctions() const;
 
     template <int diffOrd>
+    inline
     void evaluate(int baseFunct,
                   const FieldVector<int, diffOrd>& diffVar,
                   const DomainType& xLocal,
                   RangeType& phi) const;
 
     template <int diffOrd, class QuadratureType>
+    inline
     void evaluate (int baseFunct, 
                    const FieldVector<int, diffOrd> &diffVariable, 
                    QuadratureType & quad, 
                    int quadPoint, RangeType & phi) const;
 
     template <class QuadratureType>
+    inline
     DofType evaluateSingle(int baseFunct,
                            const QuadratureType& quad, int quadPoint,
                            const RangeType& factor) const;
       
     template <class Entity, class QuadratureType>
+    inline
     DofType evaluateGradientSingle(int baseFunct,
                                    Entity& en,
                                    const QuadratureType& quad, int quadPoint,
@@ -136,43 +141,55 @@ namespace Dune {
 
     ~VecBaseFunctionSet() {}
 
+    inline
     int numBaseFunctions() const;
 
     template <int diffOrd>
+    inline
     void evaluate(int baseFunct,
                   const FieldVector<int, diffOrd>& diffVar,
                   const DomainType& xLocal,
                   RangeType& phi) const;
 
     template <int diffOrd, class QuadratureType>
+    inline
     void evaluate(int baseFunct, 
                   const FieldVector<deriType, diffOrd> &diffVariable, 
                   QuadratureType & quad, 
                   int quadPoint, RangeType & phi ) const;
 
+    template <class QuadratureType>
+    void addQuadrature (QuadratureType & quad) const;
+
+    inline
     void jacobian(int baseFunct, const DomainType& xLocal, 
                   JacobianRangeType& gradPhi) const;
 
     template <class QuadratureImp>
+    inline
     void jacobian(int baseFunct, QuadratureImp& quad, int quadPoint,
                   JacobianRangeType& gradPhi) const;
 
+    inline
     DofType evaluateSingle(int baseFunct, 
                            const DomainType& xLocal,
                            const RangeType& factor) const;
     
     template <class QuadratureType>
+    inline
     DofType evaluateSingle(int baseFunct,
                            const QuadratureType& quad, int quadPoint,
                            const RangeType& factor) const;
       
     template <class Entity>
+    inline
     DofType evaluateGradientSingle(int baseFunct,
                                    Entity& en,
                                    const DomainType& xLocal,
                                    const JacobianRangeType& factor) const;
     
     template <class Entity, class QuadratureType>
+    inline
     DofType evaluateGradientSingle(int baseFunct,
                                    Entity& en,
                                    const QuadratureType& quad, int quadPoint,

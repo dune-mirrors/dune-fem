@@ -41,6 +41,8 @@ namespace Dune {
     typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    //! Iterator over the space
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
 
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
@@ -89,8 +91,10 @@ namespace Dune {
       time_(0),
       diffVar_(),
       twistUtil_(spc.grid()),
-      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.polynomOrder()) : volumeQuadOrd ),
-      faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.polynomOrder()) : faceQuadOrd )
+      volumeQuadOrd_( (volumeQuadOrd < 0) ? 
+		      (2*spc_.polynomOrder()) : volumeQuadOrd ),
+      faceQuadOrd_( (faceQuadOrd < 0) ? 
+		    (2*spc_.polynomOrder()+1) : faceQuadOrd )
     {
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
@@ -150,7 +154,6 @@ namespace Dune {
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
       
-
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
@@ -158,37 +161,40 @@ namespace Dune {
       
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
-      double vol = volumeElement(en, volQuad);
+      double massVolElinv;
+      double vol = volumeElement(en, volQuad,massVolElinv);
       //std::cout << "Vol = " << vol << std::endl;
       
       const IndexSetType& iset = spc_.indexSet();
       const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
 
+      bsetEn.addQuadrature(volQuad);
+      caller_.setQuad(en,volQuad);
+
       // Volumetric integral part
       for (int l = 0; l < volQuad.nop(); ++l) {
         caller_.analyticalFlux(en, volQuad, l, fMat_);
         caller_.source(en, volQuad, l, source_);
-
+	double intel=en.geometry().integrationElement(volQuad.point(l))*
+	  massVolElinv*volQuad.weight(l);
         for (int i = 0; i < updEn.numDofs(); ++i) {
           updEn[i] += 
             (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
-             bsetEn.evaluateSingle(i, volQuad, l, source_))*
-            volQuad.weight(l)*
-            en.geometry().integrationElement(volQuad.point(l))/vol;
+             bsetEn.evaluateSingle(i, volQuad, l, source_))*intel;
         }
       }
-     
       // Surface integral part
       IntersectionIterator endnit = en.iend();
       IntersectionIterator nit = en.ibegin();
 
       double dtLocal = 0.0;
       double minvol = vol; 
-      
       for (; nit != endnit; ++nit) {
 	int twistSelf = twistUtil_.twistInSelf(nit); 
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
-                      FaceQuadratureType::INSIDE);
+                                         FaceQuadratureType::INSIDE);
+	bsetEn.addQuadrature(faceQuadInner);
+	caller_.setQuad(en,faceQuadInner);
 	if (nit.neighbor()) {
 	  EntityType& nb=*nit.outside();
           if (iset.index(nb) > iset.index(en)
@@ -203,8 +209,12 @@ namespace Dune {
 
             const BaseFunctionSetType& bsetNeigh = 
               spc_.getBaseFunctionSet(nb);
-  
-	    double nbvol = volumeElement(nb, volQuad);
+
+	    bsetNeigh.addQuadrature(faceQuadOuter);
+	    caller_.setQuad(nb,faceQuadOuter);
+ 
+	    double massVolNbinv;
+	    double nbvol = volumeElement(nb, volQuad,massVolNbinv);
 	    if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuadInner.nop(); ++l) {
               double dtLocalS = 
@@ -215,10 +225,10 @@ namespace Dune {
               for (int i = 0; i < updEn.numDofs(); ++i) {
                 updEn[i] -= 
                   bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_)*
-                  faceQuadInner.weight(l)/vol;
+                  faceQuadInner.weight(l)*massVolElinv;
                 updNeigh[i] += 
-                  bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_)
-                  *faceQuadOuter.weight(l)/nbvol;
+                  bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_)*
+                  faceQuadOuter.weight(l)*massVolNbinv;
               }
             }
                          
@@ -233,7 +243,7 @@ namespace Dune {
                     
             for (int i = 0; i < updEn.numDofs(); ++i) {
               updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_)
-                *faceQuadInner.weight(l)/vol;
+                *faceQuadInner.weight(l)*massVolElinv;
             }
           }
         } // end if boundary
@@ -251,12 +261,17 @@ namespace Dune {
 
   private:
     double volumeElement(const EntityType& en,
-                         const VolumeQuadratureType& quad) const {
+                         const VolumeQuadratureType& quad,
+			 double& massVolinv) const {
       double result = 0.0;
+      massVolinv = 0.;
       for (int qp = 0; qp < quad.nop(); ++qp) {
+	massVolinv += quad.weight(qp);
         result += 
           quad.weight(qp) * en.geometry().integrationElement(quad.point(qp));
       }
+      massVolinv /= result;
+      assert(fabs(massVolinv*en.geometry().integrationElement(quad.point(0))-1.)<1e-10);
       return result;
     }
     
