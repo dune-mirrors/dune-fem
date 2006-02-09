@@ -19,11 +19,11 @@ class DGMapper
   IndexSetType &indexSet_;
 
   // number of dofs on element 
-  int numberOfDofs_;
+  const int numberOfDofs_;
 public:
   //! Constructor 
   DGMapper(IndexSetType& iset , int numDof) :
-    indexSet_ (iset), numberOfDofs_ (numDof*dimRange)  {};
+    indexSet_ (iset), numberOfDofs_ (numDof)  {}
 
   //! return size of function space 
   //! see dofmanager.hh for definition of IndexSet, which 
@@ -105,6 +105,7 @@ public:
 };
 
 
+/*
 // specialisation for dimRange = 1
 template <class IndexSetType, int polOrd>
 class DGMapper<IndexSetType,polOrd,1>
@@ -197,6 +198,7 @@ public:
     return numberOfDofs_ * indexSet_.additionalSizeEstimate();
   }
 };
+*/
 
 } // end namespace Dune 
 
