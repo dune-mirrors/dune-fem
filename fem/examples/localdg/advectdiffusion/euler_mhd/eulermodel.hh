@@ -18,12 +18,37 @@ class EulerFlux {
 // ************************************************
 template <class Model>
 class DWNumFlux;
+// ************************************************
+template <int dimDomain>
+class ConsVec : public FieldVector<double,dimDomain+2> {
+ public:
+  explicit ConsVec (const double& t) : FieldVector<double,dimDomain+2>(t) {}
+  ConsVec () : FieldVector<double,dimDomain+2>(0) {}
+};
+template <class Grid,int dimRange2,
+	  int dimRange1=dimRange2*Grid::dimensionworld>
+class EulerModelTraits {
+ public:
+  typedef Grid GridType;
+  enum { dimDomain = GridType::dimensionworld };
+  enum { dimRange = dimRange2, dimGradRange = dimRange1 };
+  typedef FieldVector<double, dimDomain> DomainType;
+  typedef FieldVector<double, dimDomain-1> FaceDomainType;
+  typedef FieldVector<double,dimRange> RangeType;
+  // typedef ConsVec<dimDomain> RangeType;
+  typedef FieldVector<double,dimGradRange> GradientType;
+  typedef FieldMatrix<double,dimRange,dimDomain> FluxRangeType;
+  typedef FieldMatrix<double,dimGradRange,dimDomain> DiffusionRangeType;
+  typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+  typedef typename GridType::template Codim<0>::Entity EntityType;
+};
+// ************************************************
 template <class GridType,class ProblemType>
 class EulerModel {
  public:
   enum { dimDomain = GridType::dimensionworld };
   enum { dimRange = dimDomain+2};
-  typedef ModelTraits<GridType,dimRange> Traits;
+  typedef EulerModelTraits<GridType,dimRange> Traits;
   typedef typename Traits::RangeType RangeType;
   typedef typename Traits::DomainType DomainType;
   typedef typename Traits::FluxRangeType FluxRangeType;
@@ -111,12 +136,12 @@ class DWNumFlux<EulerModel<GridType,ProblemType> > {
     typename Traits::DomainType normal = it.integrationOuterNormal(x);
     double len = normal.two_norm();
     normal /= len;
-    if (std::fabs(normal.two_norm() - 1.0) > 1.0e-8)
-      cerr << normal << " " << len << endl;
 
-    RangeType ul,ur,ret;
-    rot_.rotateForth(uLeft,  ul, normal);
-    rot_.rotateForth(uRight, ur, normal);
+    RangeType ul,ur;
+    ul = uLeft;
+    ur = uRight;
+    rot_.rotateForth(ul, normal);
+    rot_.rotateForth(ur, normal);
     SolverType::Vec9 ulmhd,urmhd,retmhd;
     ulmhd[0] = ulmhd[1] = ulmhd[2] = ulmhd[3] = ulmhd[4] =
       ulmhd[5] = ulmhd[6] = ulmhd[7] = ulmhd[8] = 0.;
@@ -132,11 +157,11 @@ class DWNumFlux<EulerModel<GridType,ProblemType> > {
     urmhd[7] = ur[1+dimDomain];
     double p[3];
     double ldt=numFlux_(ulmhd,urmhd,p,retmhd);
-    ret[0] = retmhd[0];
+    gLeft[0] = retmhd[0];
     for (int i=0;i<dimDomain;++i)
-      ret[i+1] = retmhd[i+1];
-    ret[1+dimDomain] = retmhd[7];
-    rot_.rotateBack(ret,gLeft,normal);
+      gLeft[i+1] = retmhd[i+1];
+    gLeft[1+dimDomain] = retmhd[7];
+    rot_.rotateBack(gLeft,normal);
     gLeft *= len;
     gRight = gLeft;
     return ldt*len;
@@ -268,6 +293,7 @@ public:
   }
   template <class DomainType, class RangeType>
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    res*=0.;
     DomainType c(0.25);
     DomainType x=arg;
     x-=c;
@@ -278,12 +304,20 @@ public:
     else {
       res[0] = 1.0;
     }
-    res[1] = arg[1];
-    res[2] = -arg[0];
-    res[3] = 2.;
-    res[1] *= res[0];
-    res[2] *= res[0];
-    res[3] += 0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
+    if (DomainType::size>1) {
+      res[1] = arg[1]*res[0];
+      res[2] = -arg[0]*res[0];
+    } else {
+      res[1] = -1.*res[0];
+    }
+    res[DomainType::size+1] = 2.;
+    if (arg.size>1) {
+      res[DomainType::size+1] += 
+	0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
+    } else {
+      res[DomainType::size+1] += 
+	0.5*(res[1]*res[1])/res[0];
+    }
   }
   double gamma;
 };

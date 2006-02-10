@@ -167,14 +167,15 @@ class AdvectionDiffusionModel {
 			     const RangeType& uLeft, 
 			     RangeType& uRight) const {
     
-    uRight*=0; //uLeft;
-    uRight = uLeft;
+    // Dirichlet
+    DomainType xgl=it.intersectionGlobal().global(x);
+    problem_.evaluate(time,xgl,uRight);
   }
-  inline  double maxSpeed(const typename Traits::DomainType& normal,
-			  double time,  
-			  const typename Traits::DomainType& x,
-			  const RangeType& u,
-			  double& advspeed,double& totalspeed) const {
+  inline void maxSpeed(const typename Traits::DomainType& normal,
+		       double time,  
+		       const typename Traits::DomainType& x,
+		       const RangeType& u,
+		       double& advspeed,double& totalspeed) const {
     advspeed=std::abs(normal*velocity);
     totalspeed=advspeed+tstep_eps;
   }
@@ -229,7 +230,6 @@ public:
   U0(double eps,bool diff_timestep=true) :
     velocity(0), epsilon(eps), diff_tstep(diff_timestep) {
       velocity[0]=0.8;
-      velocity[1]=0.;
     }
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
@@ -244,8 +244,7 @@ public:
     double diffusion_ = 0.01;
     double t0 = 1.0;
     // res = 1./sqrt(4.*M_PI*diffusion_*t0)*
-    //       
-exp(-(arg[0]+0.8-0.8*t0)*(arg[0]+0.8-0.8*t0)/(4.*diffusion_*t0));
+    //       exp(-(arg[0]+0.8-0.8*t0)*(arg[0]+0.8-0.8*t0)/(4.*diffusion_*t0));
     // res = 1.0;
   }
   DomainType velocity;

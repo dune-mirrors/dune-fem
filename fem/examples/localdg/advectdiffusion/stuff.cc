@@ -50,35 +50,76 @@ struct SStruct {
   {
     n_[0] = n1;
     n_[1] = n2;
+    n_[2] = n2;
     l_[0] = lx;
     l_[1] = ly;
+    l_[2] = ly;
     h_[0] = hx;
     h_[1] = hy;
+    h_[2] = hy;
   }
 
   SStruct(int n, double h) {
     n_[0] = n;
     n_[1] = n;
+    n_[2] = n;
     l_[0] = -1.0;
     l_[1] = -1.0; // h/2.0;
+    l_[2] = -1.0; // h/2.0;
     h_[0] = 1.0;
     h_[1] = 1.0; // h/2.0;
+    h_[2] = 1.0; // h/2.0;
   }
   SStruct(int n) {
     n_[0] = n;
     n_[1] = n;
+    n_[2] = n;
     l_[0] = -1.0;
     l_[1] = -1.0; // 0.5/double(n);
+    l_[2] = -1.0; // 0.5/double(n);
     h_[0] = 1.0;
     h_[1] = 1.0; // 0.5/double(n);
+    h_[2] = 1.0; // 0.5/double(n);
   }
 
-  int n_[2];
-  double l_[2];
-  double h_[2];
+  int n_[3];
+  double l_[3];
+  double h_[3];
 };
+/*
+template <class Geometry>
+void midPoint(const Geometry& geo, FieldVector<double, 3>& result)
+{
+  result *= 0.0;
+  for (int i = 0; i < geo.corners(); ++i) {
+    result += geo[i];
+  }
+
+  result /= static_cast<double>(geo.corners());
+}
 template <class Geometry>
 void midPoint(const Geometry& geo, FieldVector<double, 2>& result)
+{
+  result *= 0.0;
+  for (int i = 0; i < geo.corners(); ++i) {
+    result += geo[i];
+  }
+
+  result /= static_cast<double>(geo.corners());
+}
+template <class Geometry>
+void midPoint(const Geometry& geo, FieldVector<double, 1>& result)
+{
+  result *= 0.0;
+  for (int i = 0; i < geo.corners(); ++i) {
+    result += geo[i];
+  }
+
+  result /= static_cast<double>(geo.corners());
+}
+*/
+template <class Geometry,int n>
+void midPoint(const Geometry& geo, FieldVector<double, n>& result)
 {
   result *= 0.0;
   for (int i = 0; i < geo.corners(); ++i) {
@@ -112,7 +153,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
       LocalFunctionType lf = sol.localFunction(*it);
       lf.evaluateLocal(*it, localMid, result);
 
-      ofs << mid[0] << " " << mid[1] << " " << result << "\n";
+      ofs << mid << " " << result << "\n";
     }
   }
   ofs << std::endl;

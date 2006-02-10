@@ -29,6 +29,8 @@ namespace Dune {
 
     static int numBaseFunctions(int polOrder) {
       switch (dimDomain) {
+      case 1:
+	return (polOrder + 1);
       case 2:
         return (polOrder + 2) * (polOrder + 1) / 2;
       case 3:
@@ -40,14 +42,16 @@ namespace Dune {
       assert(false); // can't get here!
       return -1;
     }
-    
+    double eval_line(int i,const DomainType & xi ) const;
     double eval_triangle_2d (int i, const DomainType & xi ) const;
     double eval_quadrilateral_2d (int i, const DomainType & xi ) const;
     double eval_tetrahedron_3d (int i, const DomainType & xi ) const;
     double eval_pyramid_3d (int i, const DomainType & xi ) const;
     double eval_prism_3d (int i, const DomainType & xi ) const;
     double eval_hexahedron_3d (int i, const DomainType & xi ) const;
-    
+   
+    void grad_line(int i, const DomainType & xi,
+                             JacobianRangeType & grad ) const;
     void grad_triangle_2d (int i, const DomainType & xi,
                             JacobianRangeType & grad ) const;
     void grad_quadrilateral_2d (int i, const DomainType & xi,
@@ -65,6 +69,58 @@ namespace Dune {
   //! Base class for DG base functions
   template <class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType, int polOrd>
   class DGBaseFunction;
+
+  //! Specialisation for triangles
+  template <class FunctionSpaceType, int polOrd>
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd> :
+    public BaseFunctionInterface<FunctionSpaceType>,
+    private DGBaseFunctionWrapper<FunctionSpaceType>
+  {
+  private:
+    //- Local data
+    int baseNum_;
+
+  private:
+    //- Local typedefs
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+  
+  public:
+    DGBaseFunction(int baseNum) :
+      DGBaseFunctionWrapper<FunctionSpaceType>(),
+      baseNum_(baseNum) {
+      // Check if base number is valid
+      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+      // Only for scalar function spaces
+      assert(FunctionSpaceType::DimRange == 1);
+    }
+
+    ~DGBaseFunction() {}
+
+    virtual void evaluate(const FieldVector<deriType, 0>& diffVar,
+                          const DomainType& x, RangeType& phi) const {
+      phi = this->eval_line(baseNum_, x);
+    }
+    
+    virtual void evaluate(const FieldVector<deriType, 1>& diffVar,
+                          const DomainType& x, RangeType& phi) const {
+      JacobianRangeType tmp;
+      this->grad_line(baseNum_, x, tmp);
+      phi = tmp[0][diffVar[0]];
+    }
+
+    virtual void evaluate(const FieldVector<deriType, 2>&diffVar,
+                          const DomainType& x, RangeType& phi) const {
+      assert(false); // Not implemented
+    }
+
+    static int numBaseFunctions() {
+      return DGBaseFunctionWrapper<FunctionSpaceType>::
+        numBaseFunctions(static_cast<int>(polOrd));
+    }
+
+  }; // end class DGBaseFunction<FunctionSpaceType, triangle, polOrd>
 
   //! Specialisation for triangles
   template <class FunctionSpaceType, int polOrd>
@@ -411,6 +467,8 @@ namespace Dune {
     virtual BaseFunctionType* baseFunction(int i) const {
       switch (GeometryIdentifier::fromGeo(this->geometry())) 
       {
+	case GeometryIdentifier::Line:
+          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd>(i);
         case GeometryIdentifier::Triangle:
           return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd>(i);
         case GeometryIdentifier::Quadrilateral:
@@ -432,6 +490,8 @@ namespace Dune {
 
     virtual int numBaseFunctions() const {
       switch (FunctionSpaceType::DimDomain) {
+      case 1:
+	return (polOrd + 1);
       case 2:
         return (polOrd + 2) * (polOrd + 1) / 2;
       case 3:

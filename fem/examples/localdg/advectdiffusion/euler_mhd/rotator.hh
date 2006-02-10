@@ -27,35 +27,35 @@ namespace Adi {
     }
 
     //! Rotate data from basic coordinate system into normal coordinate system
-    void rotateForth(const ValueType& arg, 
-                     ValueType& res, 
+    void rotateForth(ValueType& res, 
                      const NormalType& n) const {
-      rotateForth(arg, res, n, Int2Type<NormalType::size>());
+      rotateForth(res, n, Int2Type<NormalType::size>());
     }
 
     //! Rotate data from normal coordinate system into basic coordinate system
-    void rotateBack(const ValueType& arg, 
-                    ValueType& res, 
+    void rotateBack(ValueType& res, 
                     const NormalType& n) const {
-      rotateBack(arg, res, n, Int2Type<NormalType::size>());
+      rotateBack(res, n, Int2Type<NormalType::size>());
     }
 
   private:
     // Local methods
-    void rotateForth(const ValueType& arg, 
-                     ValueType& res, 
+    void rotateForth(ValueType& res, 
+                     const NormalType& n,
+                     Int2Type<1>) const;
+    void rotateForth(ValueType& res, 
                      const NormalType& n,
                      Int2Type<2>) const;
-    void rotateForth(const ValueType& arg, 
-                     ValueType& res, 
+    void rotateForth(ValueType& res, 
                      const NormalType& n,
                      Int2Type<3>) const;
-    void rotateBack(const ValueType& arg, 
-                    ValueType& res, 
+    void rotateBack(ValueType& res, 
+                    const NormalType& n,
+                    Int2Type<1>) const;
+    void rotateBack(ValueType& res, 
                     const NormalType& n,
                     Int2Type<2>) const;
-    void rotateBack(const ValueType& arg, 
-                    ValueType& res, 
+    void rotateBack(ValueType& res, 
                     const NormalType& n,
                     Int2Type<3>) const;
 

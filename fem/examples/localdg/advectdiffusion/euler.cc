@@ -28,9 +28,9 @@ int main(int argc, char ** argv, char ** envp) {
   if (argc>1) 
     N = atoi(argv[1]);
   SStruct s(N);
-  GridType grid(s.n_, s.l_, s.h_);
-  // GridType grid("quadrat.git");
-  // grid.globalRefine(N);
+  // GridType grid(s.n_, s.l_, s.h_);
+  GridType grid("quadrat.git");
+  grid.globalRefine(N);
   // CFL:
   double cfl;
   switch (order) {

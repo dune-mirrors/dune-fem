@@ -61,6 +61,26 @@ namespace Dune {
                                                        int order);
   };
 
+  //! Specialisation for dimension 0
+  template <typename ct>
+  class QuadratureProvider<ct, 0> 
+  {
+  public:
+    //! Access to the quadrature implementations.
+    static const QuadratureImp<ct, 0>& getQuadrature(GeometryType geo, 
+                                                     int order) {
+      return QuadCreator::provideQuad(order, quads_);
+    }
+  private:
+    QuadratureProvider();
+    QuadratureProvider(const QuadratureProvider&);
+    QuadratureProvider& operator=(const QuadratureProvider&);
+
+  private:
+    static std::vector<CubeQuadrature<ct, 0>*> quads_;
+  }; 
+
+  
   //! Specialisation for dimension 1.
   template <typename ct>
   class QuadratureProvider<ct, 1> 

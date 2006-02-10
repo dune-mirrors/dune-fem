@@ -80,6 +80,26 @@ namespace Dune {
 
   }
 
+  template <>
+  CubeQuadrature<double, 0>::CubeQuadrature(int order, size_t id) :
+    QuadratureImp<double, 0>(id),
+    order_((order <= 0) ? 1 : order)
+  {
+	    typedef double ct;
+    typedef FieldVector<ct, 0> CoordinateType;
+
+    order_ = 20;
+
+    // fill in all the gauss points
+   // compute coordinates and weight
+   double weight = 1.0;
+   FieldVector<ct, 0> local(0);
+
+   // put in container
+   this->addQuadraturePoint(local, weight);
+
+  }
+
   template <class ct>
   LineQuadrature<ct>::LineQuadrature(int order, size_t id) :
     QuadratureImp<ct, 1>(id),

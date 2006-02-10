@@ -9,7 +9,7 @@
    DiffusionRangeType: matrix for diffusion flux FM<Range1,Domain>
  **** Description class for    V + div a(U)          = 0
                             dt U + div (F(U)+A(U,V)) = 0
-      template <class GridType>
+      template <class GridType,class ProblemType>
       class ModelInterface {
       public:
         enum { dimDomain = GridType::dimensionworld };
@@ -21,7 +21,7 @@
         typedef typename Traits::GradientType GradientType;
         typedef typename Traits::DiffusionRangeType DiffusionRangeType;
       public:
-        ModelInterface(Parameters...) {}
+        ModelInterface(Problem& prob) {}  // set parameters from Problem class
         // F
         inline void analyticalFlux(typename Traits::EntityType& en,
 				   double time,  
@@ -69,11 +69,11 @@
                                    RangeType& gLeft) {} 
         // for time-step control: advspeed for advection-timestep, 
         //                        totalspeed for timestep with diffusion
-        inline double maxSpeed(const typename Traits::DomainType& normal,
-       			       double time,  
-	       		       const typename Traits::DomainType& x,
-		       	       const RangeType& u,
-                               double& advspeed,double& totalpeed) const {}
+        inline void maxSpeed(const typename Traits::DomainType& normal,
+       			     double time,  
+	       		     const typename Traits::DomainType& x,
+		       	     const RangeType& u,
+                             double& advspeed,double& totalpeed) const {}
       };
       template <class Model>
       class FluxInterface {

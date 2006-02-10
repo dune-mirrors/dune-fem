@@ -5,6 +5,10 @@
 
 namespace Dune {
   template <typename ct>
+  std::vector<CubeQuadrature<ct, 0>*> QuadratureProvider<ct, 0>::
+  quads_(CubeQuadrature<ct, 0>::maxOrder(), 0);
+
+  template <typename ct>
   std::vector<CubeQuadrature<ct, 1>*> QuadratureProvider<ct, 1>::
   quads_(CubeQuadrature<ct, 1>::maxOrder(), 0);
 
