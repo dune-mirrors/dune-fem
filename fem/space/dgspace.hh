@@ -100,14 +100,13 @@ namespace Dune {
       // search the macro grid for different element types 
       IteratorType endit  = gridPart.template end<0>();
       for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it) {
-        GeometryType geo = (*it).geometry().type(); // Hack
-        int dimension = static_cast<int>( EntityType::mydimension);
         GeometryIdentifier::IdentifierType id = 
-          GeometryIdentifier::fromGeo(dimension, geo);
+          GeometryIdentifier::fromGeometry((*it).geometry());
         if(baseFuncSet_[id] == 0 ) {
           baseFuncSet_[id] = setBaseFuncSetPointer(*it);
           mapper_ = 
-            new typename Traits::MapperType(const_cast<IndexSetType&>(gridPart_.indexSet()),
+            //new typename Traits::MapperType(const_cast<IndexSetType&>(gridPart_.indexSet()),
+            new typename Traits::MapperType(gridPart_.indexSet(),
                                    baseFuncSet_[id]->numBaseFunctions());
         }
       }
@@ -140,15 +139,16 @@ namespace Dune {
     //! Get base function set for a given entity
     template <class Entity>
     BaseFunctionSetType&
-    getBaseFunctionSet (const Entity& en) const {
-      GeometryType geom = en.geometry().type();
-      int dimension = static_cast<int>(Entity::mydimension);
-      assert(GeometryIdentifier::fromGeo(dimension,geom)
-             <(int) baseFuncSet_.size());
-      assert(GeometryIdentifier::fromGeo(dimension, geom) >= 0);
-      assert(baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geom)]);
-      
-      return *baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geom)];
+    getBaseFunctionSet (const Entity& en) const 
+    {
+      GeometryIdentifier::IdentifierType id = 
+        GeometryIdentifier::fromGeometry(en.geometry());
+
+      assert(id < (int) baseFuncSet_.size());
+      assert(id >= 0);
+      assert(baseFuncSet_[id]);
+     
+      return *baseFuncSet_[id];
     }
   
     //! return true if we have continuous discrete functions 
