@@ -1,3 +1,16 @@
+/**************************************************************
+ * Known problems:
+ * 1) works only with ortho-normal basefunction set
+ *    we should have multiplication with inverse mass matrix on baseset
+ * 2) Caching does not work with non-conforming grids
+ *    here a switch is required
+ * 3) would be good to pass quadrature to discrete model
+ *    prehaps also a setEntity method on the discrete model
+ * 4) hexaedrons with non-linear mapping will definitly not work
+ *    (-> diplom thesis!)
+*****************************************************************/
+
+
 #ifndef DUNE_DGPASS_HH
 #define DUNE_DGPASS_HH
 
