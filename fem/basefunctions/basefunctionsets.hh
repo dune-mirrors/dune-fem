@@ -158,9 +158,6 @@ namespace Dune {
                   QuadratureType & quad, 
                   int quadPoint, RangeType & phi ) const;
 
-    template <class QuadratureType>
-    void addQuadrature (QuadratureType & quad) const;
-
     inline
     void jacobian(int baseFunct, const DomainType& xLocal, 
                   JacobianRangeType& gradPhi) const;

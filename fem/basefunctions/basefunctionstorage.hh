@@ -8,6 +8,8 @@
 #include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/grid/common/grid.hh>
 
+#include <list>
+
 namespace Dune {
 
   //! \brief Storage policy for base function sets.
@@ -16,8 +18,78 @@ namespace Dune {
   //! CachingStorage and SimpleStorage do exactly that. The present class
   //! implements the common functionality and can be seen as a layer of
   //! abstraction in the access to basefunctions.
+  class StorageInterface; 
+
+  typedef std::list<StorageInterface *> StorageInterfaceListType;
+  typedef std::pair< size_t , int > QuadratureIdentifierType; 
+  typedef std::list< QuadratureIdentifierType > QuadratureListType; 
+  static StorageInterfaceListType storageList_;
+  static QuadratureListType quadratureList_; 
+  
+  class StorageInterface 
+  {
+    public: 
+      StorageInterface() 
+      { 
+        //std::cout << "create storage " << this<< "\n";
+        storageList_.push_back(this);
+      }
+
+      virtual ~StorageInterface() {
+        typedef StorageInterfaceListType::iterator IteratorType;
+        IteratorType endit = storageList_.end();
+        for(IteratorType it = storageList_.begin(); it != endit; ++it)
+        {
+          if( (*it) == this )
+          {
+            storageList_.erase(it); 
+            //std::cout << "remove storage from list " << this<< "\n";
+            break;
+          }
+        }
+      }
+
+      template <class StorageImp>  
+      void cacheExsistingQuadratures(StorageImp & storage) 
+      {
+        typedef QuadratureListType::iterator IteratorType;
+        IteratorType endit = quadratureList_.end();
+        for(IteratorType it = quadratureList_.begin(); it != endit; ++it)
+        {
+          size_t id = (*it).first;
+          int codim = (*it).second;
+          //std::cout << "update set for id " << id << " and cd " << codim << "\n";
+          storage.addQuadrature(id,codim);
+        }
+      }
+
+      virtual void addQuadrature(size_t id, int codim ) const = 0;
+
+      template <class QuadratureType> 
+      static void addQuadratureToList(const QuadratureType & quad) 
+      {
+        int codim = QuadratureType :: codimension;
+        addQuadratureToList(quad.id(),codim); 
+      }
+      
+      static void addQuadratureToList(size_t id, int codim) 
+      {
+        // store quadrature 
+        QuadratureIdentifierType ident(id,codim); 
+        quadratureList_.push_back(ident);
+        
+        typedef StorageInterfaceListType::iterator IteratorType;
+        IteratorType endit = storageList_.end();
+        for(IteratorType it = storageList_.begin(); it != endit; ++it)
+        {
+          //std::cout << "add quad \n";
+          (*it)->addQuadrature(id,codim); 
+        }
+      }
+  };
+  
   template <class FunctionSpaceImp>
-  class StorageBase 
+  class StorageBase : public StorageInterface 
   {
   public:
     typedef BaseFunctionFactory<FunctionSpaceImp> FactoryType;
@@ -49,6 +121,7 @@ namespace Dune {
                   const DomainType& xLocal, 
                   JacobianRangeType& result) const;
 
+    inline void addQuadrature(size_t id, int codim) const {}
   private:
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
@@ -92,9 +165,6 @@ namespace Dune {
                   const QuadratureType& quad, int quadPoint, 
                   JacobianRangeType& result) const;
 
-    template <class CacheQuadratureType>
-    inline
-    void addQuadrature(const CacheQuadratureType& quad) const {}
   };
 
   //! \brief Storage scheme which caches evaluations of base function values
@@ -111,6 +181,7 @@ namespace Dune {
     typedef typename FunctionSpaceImp::RangeType RangeType;
     typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
 
+    friend class StorageInterface ;
   public:
     //! Constructor
     CachingStorage(const FactoryType& factory);
@@ -134,9 +205,6 @@ namespace Dune {
                   const CacheQuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
 
-    template <class CacheQuadratureType>
-    void addQuadrature(const CacheQuadratureType& quad) const;
- 
     template <class CacheQuadratureType>
     inline
     void jacobian(int baseFunct, 
@@ -164,8 +232,15 @@ namespace Dune {
     typedef Array<JacobianRangeVectorType> JacobianRangeContainerType;
 
   private:
-    template <class CacheQuadratureType>
-    ReturnPairType addEntry(const CacheQuadratureType& quad) const;
+    // caches the quadrature, see also addEntry.. 
+    inline void addQuadrature(size_t id, int codim) const;
+ 
+    // here a switch-case for codim is done and then addEntry called
+    inline ReturnPairType addEntryInterface(size_t id , int codim) const;
+    
+    // here the real caching is done 
+    template <int codim>
+    inline ReturnPairType addEntry(size_t id) const;
 
   private:
     GeometryType elementGeometry_;

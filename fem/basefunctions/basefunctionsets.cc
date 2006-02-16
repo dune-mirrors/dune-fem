@@ -108,14 +108,6 @@ namespace Dune {
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  template <class QuadratureType>
-  void VecBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  addQuadrature(QuadratureType& quad) const 
-  {
-    storage_.addQuadrature(quad);
-  }
-
-  template <class FunctionSpaceImp, template <class> class StorageImp>
   void VecBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   jacobian(int baseFunct, const DomainType& xLocal, 
            JacobianRangeType& gradPhi) const 
