@@ -8,7 +8,15 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
+#ifndef HAVE_ALBERTA_FOUND
+#ifdef HAVE_ALBERTA
 #if HAVE_ALBERTA 
+#define HAVE_ALBERTA_FOUND
+#endif
+#endif
+#endif
+
+#ifdef HAVE_ALBERTA_FOUND
 // inlcude albertagrid.hh includes the needed alberta.h 
 #include <dune/grid/albertagrid.hh>
 #endif
@@ -98,7 +106,7 @@ namespace Dune {
     typedef FieldVector<ct, dim> CoordinateType;
 
     enum { 
-#if HAVE_ALBERTA 
+#ifdef HAVE_ALBERTA_FOUND
       maxOrder2 = 17 , maxOrder3 = 7 
 #else 
       maxOrder2 = 12 , maxOrder3 = 5 
@@ -210,7 +218,7 @@ namespace Dune {
     }
 
     static size_t maxOrder() { 
-#if HAVE_ALBERTA 
+#ifdef HAVE_ALBERTA_FOUND
       return 7; 
 #else 
       return 5; 
@@ -267,7 +275,7 @@ namespace Dune {
     }
 
     static size_t maxOrder() { 
-#if HAVE_ALBERTA 
+#ifdef HAVE_ALBERTA_FOUND
       // highest order of Alberta quads 
       return 17; 
 #else 
@@ -484,5 +492,6 @@ namespace Dune {
 } // end namespace Dune
 
 #include "quadrature.cc"
+#undef HAVE_ALBERTA_FOUND
 
 #endif
