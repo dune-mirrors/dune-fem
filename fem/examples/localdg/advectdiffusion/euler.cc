@@ -12,8 +12,7 @@
 #include <dune/io/file/grapedataio.hh>
 #include <iostream>
 #include <string>
-
-
+// #include <mpi.h>
 using namespace Dune;
 using namespace std;
 
@@ -27,10 +26,17 @@ int main(int argc, char ** argv, char ** envp) {
   int N=40;                
   if (argc>1) 
     N = atoi(argv[1]);
-  SStruct s(N);
+  // SStruct s(N);
   // GridType grid(s.n_, s.l_, s.h_);
   GridType grid("quadrat.git");
   grid.globalRefine(N);
+  FieldVector<double,2> yaspL;
+  FieldVector<int,2> yaspS(N);
+  FieldVector<bool,2> yaspP(false);
+  yaspL[0] = 2.;
+  yaspL[1] = 2.;
+  // MPI_Comm communicator;
+  // GridType grid(yaspL,yaspS,yaspP,0);
   // CFL:
   double cfl;
   switch (order) {
@@ -62,6 +68,7 @@ int main(int argc, char ** argv, char ** envp) {
   //typedef DofManager<GridType> DofManagerType;
   //typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
   //DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
+  /*
   {
     GrapeDataIO<GridType> dataio;
     std::string gridfile("grid");
@@ -73,10 +80,12 @@ int main(int argc, char ** argv, char ** envp) {
     nextsave+=savestep;
     ++n;
   }
+  */
   while (t<1) {
     t=ode.solve(U);
     cout << t << endl;
     ode.printGrid(1, U);
+    /*
     if (t>nextsave) {
       GrapeDataIO<GridType> dataio;
       std::string gridfile("grid");
@@ -88,6 +97,7 @@ int main(int argc, char ** argv, char ** envp) {
       nextsave+=savestep;
       ++n;
     }
+    */
   }
   ode.printGrid(1, U);
 } 

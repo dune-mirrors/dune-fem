@@ -141,8 +141,6 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
-      //DiscreteFunctionSpaceType spc(const_cast<typename
-      //    DiscreteFunctionSpaceType::GridPartType &> (spc_.gridPart()));
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
       }
@@ -159,26 +157,27 @@ namespace Dune {
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
+      int updEn_numDofs = updEn.numDofs();
+      const BaseFunctionSetType& bsetEn = updEn.getBaseFunctionSet(); 
+	// spc_.getBaseFunctionSet(en);
       //GeometryType geom = en.geometry().type();
       
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+      int volQuad_nop = volQuad.nop();
 
       double massVolElinv;
       double vol = volumeElement(en, volQuad,massVolElinv);
       //std::cout << "Vol = " << vol << std::endl;
       
       const IndexSetType& iset = spc_.indexSet();
-      const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
-
-      caller_.setQuad(en,volQuad);
 
       // Volumetric integral part
-      for (int l = 0; l < volQuad.nop(); ++l) {
+      for (int l = 0; l < volQuad_nop; ++l) {
         caller_.analyticalFlux(en, volQuad, l, fMat_);
         caller_.source(en, volQuad, l, source_);
 	double intel=en.geometry().integrationElement(volQuad.point(l))*
 	  massVolElinv*volQuad.weight(l);
-        for (int i = 0; i < updEn.numDofs(); ++i) {
+        for (int i = 0; i < updEn_numDofs; ++i) {
           updEn[i] += 
             (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
              bsetEn.evaluateSingle(i, volQuad, l, source_))*intel;
@@ -194,7 +193,7 @@ namespace Dune {
 	int twistSelf = twistUtil_.twistInSelf(nit); 
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
                                          FaceQuadratureType::INSIDE);
-	caller_.setQuad(en,faceQuadInner);
+	int faceQuadInner_nop = faceQuadInner.nop();
 	if (nit.neighbor()) {
 	  EntityType& nb=*nit.outside();
           if (iset.index(nb) > iset.index(en)
@@ -208,20 +207,19 @@ namespace Dune {
             LocalFunctionType updNeigh =dest_->localFunction(nb);
 
             const BaseFunctionSetType& bsetNeigh = 
-              spc_.getBaseFunctionSet(nb);
+	      updNeigh.getBaseFunctionSet();
+              // spc_.getBaseFunctionSet(nb);
 
-	    caller_.setQuad(nb,faceQuadOuter);
- 
 	    double massVolNbinv;
 	    double nbvol = volumeElement(nb, volQuad,massVolNbinv);
 	    if (nbvol<minvol) minvol=nbvol;
-            for (int l = 0; l < faceQuadInner.nop(); ++l) {
+            for (int l = 0; l < faceQuadInner_nop; ++l) {
               double dtLocalS = 
                 caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
                                       l, valEn_, valNeigh_);
 	      dtLocal += dtLocalS*faceQuadInner.weight(l);
 
-              for (int i = 0; i < updEn.numDofs(); ++i) {
+              for (int i = 0; i < updEn_numDofs; ++i) {
                 updEn[i] -= 
                   bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_)*
                   faceQuadInner.weight(l)*massVolElinv;
@@ -235,12 +233,12 @@ namespace Dune {
         } // end if neighbor
 
         if (nit.boundary()) {
-          for (int l = 0; l < faceQuadInner.nop(); ++l) {
+          for (int l = 0; l < faceQuadInner_nop; ++l) {
             double dtLocalS = 
               caller_.boundaryFlux(nit, faceQuadInner, l, source_);
 	    dtLocal += dtLocalS*faceQuadInner.weight(l);
                     
-            for (int i = 0; i < updEn.numDofs(); ++i) {
+            for (int i = 0; i < updEn_numDofs; ++i) {
               updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_)
                 *faceQuadInner.weight(l)*massVolElinv;
             }
@@ -262,7 +260,9 @@ namespace Dune {
     double volumeElement(const EntityType& en,
                          const VolumeQuadratureType& quad,
 			 double& massVolinv) const {
-      double result = 0.0;
+      double result = en.geometry().integrationElement(quad.point(0));
+      massVolinv = 1./result;
+      return 0.5*result;
       massVolinv = 0.;
       for (int qp = 0; qp < quad.nop(); ++qp) {
 	massVolinv += quad.weight(qp);

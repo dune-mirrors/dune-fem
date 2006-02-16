@@ -35,7 +35,6 @@ namespace Dune {
     typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
     typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
-
     typedef CachingQuadrature<GridType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridType,1> FaceQuadratureType;
   };
@@ -67,7 +66,7 @@ namespace Dune {
     // typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
-    // typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
 
@@ -95,7 +94,7 @@ namespace Dune {
     typedef typename Traits::GridPartType GridPartType;
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
-    // typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
 
@@ -123,7 +122,7 @@ namespace Dune {
 
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
-    // typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
 

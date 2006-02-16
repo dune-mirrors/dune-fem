@@ -126,13 +126,38 @@ class DWNumFlux<EulerModel<GridType,ProblemType> > {
     numFlux_(eos,mod.gamma_),
     rot_(1) {
   }
-  inline  double numericalFlux(typename Traits::IntersectionIterator& it,
-                                     double time,
-                                     const typename Traits::FaceDomainType& x,
-                                     const RangeType& uLeft,
-                                     const RangeType& uRight,
-                                     RangeType& gLeft,
-                                     RangeType& gRight) const {
+  double numericalFlux(typename Traits::IntersectionIterator& it,
+		       double time,
+		       const typename Traits::FaceDomainType& x,
+		       const RangeType& uLeft,
+		       const RangeType& uRight,
+		       RangeType& gLeft,
+		       RangeType& gRight) const;
+  const Model& model() const {return model_;}
+ private:
+  Adi::FieldRotator<Model> rot_;
+  const Model& model_;
+  const typename SolverType::Eosmode::meos_t eos;
+  mutable SolverType numFlux_;
+};
+template <class GridType,class ProblemType>
+double
+DWNumFlux<EulerModel<GridType,ProblemType> > :: 
+numericalFlux(typename DWNumFlux<EulerModel<GridType,ProblemType> >::Traits::
+	      IntersectionIterator& it,
+	      double time,
+	      const typename 
+	      DWNumFlux<EulerModel<GridType,ProblemType> >::Traits::
+	      FaceDomainType& x,
+	      const typename 
+	      DWNumFlux<EulerModel<GridType,ProblemType> >:: RangeType& uLeft,
+	      const typename
+	      DWNumFlux<EulerModel<GridType,ProblemType> > :: RangeType& uRight,
+	      typename
+	      DWNumFlux<EulerModel<GridType,ProblemType> > :: RangeType& gLeft,
+	      typename
+	      DWNumFlux<EulerModel<GridType,ProblemType> > :: RangeType& gRight)
+  const {
     typename Traits::DomainType normal = it.integrationOuterNormal(x);
     double len = normal.two_norm();
     normal /= len;
@@ -165,17 +190,10 @@ class DWNumFlux<EulerModel<GridType,ProblemType> > {
     gLeft *= len;
     gRight = gLeft;
     return ldt*len;
-  }  
-  const Model& model() const {return model_;}
- private:
-  Adi::FieldRotator<Model> rot_;
-  const Model& model_;
-  const typename SolverType::Eosmode::meos_t eos;
-  mutable SolverType numFlux_;
-};
-
+}
 // ***********************
 template <>
+inline
 void EulerFlux<1>::analyticalFlux(const double gamma,
 				  const FieldVector<double,1+2>& u,
 				  FieldMatrix<double,1+2,1>& f) const {
@@ -188,6 +206,7 @@ void EulerFlux<1>::analyticalFlux(const double gamma,
   f[e][0] = u[1]/u[0]*(u[e]+p);
 }
 template <>
+inline
 void EulerFlux<2>::analyticalFlux(const double gamma,
 				  const FieldVector<double,2+2>& u,
 				  FieldMatrix<double,2+2,2>& f) const {
@@ -204,6 +223,7 @@ void EulerFlux<2>::analyticalFlux(const double gamma,
   f[e][0] = u[1]/u[0]*(u[e]+p);   f[e][1] = u[2]/u[0]*(u[e]+p);
 }
 template <>
+inline
 void EulerFlux<3>::analyticalFlux(const double gamma,
 				  const FieldVector<double,3+2>& u,
 				  FieldMatrix<double,3+2,3>& f) const {
@@ -218,6 +238,7 @@ void EulerFlux<3>::analyticalFlux(const double gamma,
   f[e][0]=u[1]/u[0]*(u[e]+p);f[e][1]=u[2]/u[0]*(u[e]+p);f[e][2]=u[3]/u[0]*(u[e]+p);
 }
 template <>
+inline
 double EulerFlux<1>::maxSpeed(const double gamma,
 			      const FieldVector<double,1>& n,
 			      const FieldVector<double,1+2>& u) const {
@@ -231,6 +252,7 @@ double EulerFlux<1>::maxSpeed(const double gamma,
   return fabs(u_normal) + sqrt(c2);
 }
 template <>
+inline
 double EulerFlux<2>::maxSpeed(const double gamma,
 			      const FieldVector<double,2>& n,
 			      const FieldVector<double,2+2>& u) const {
@@ -244,6 +266,7 @@ double EulerFlux<2>::maxSpeed(const double gamma,
   return fabs(u_normal) + sqrt(c2);
 }
 template <>
+inline
 double EulerFlux<3>::maxSpeed(const double gamma,
 			      const FieldVector<double,3>& n,
 			      const FieldVector<double,3+2>& u) const {
@@ -294,7 +317,7 @@ public:
   template <class DomainType, class RangeType>
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
     res*=0.;
-    DomainType c(0.25);
+    DomainType c(1.25);
     DomainType x=arg;
     x-=c;
     double r2=0.04;
@@ -304,9 +327,11 @@ public:
     else {
       res[0] = 1.0;
     }
+    x=arg;
+    x-=DomainType(1.0);
     if (DomainType::size>1) {
-      res[1] = arg[1]*res[0];
-      res[2] = -arg[0]*res[0];
+      res[1] = x[1]*res[0];
+      res[2] = -x[0]*res[0];
     } else {
       res[1] = -1.*res[0];
     }

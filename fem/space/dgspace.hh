@@ -101,6 +101,9 @@ namespace Dune {
       IteratorType endit  = gridPart.template end<0>();
       for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it) {
         GeometryIdentifier::IdentifierType id = 
+	  /*
+          GeometryIdentifier::fromNewGeo<static_cast<int>(EntityType::mydimension)>(geo);
+	  */
           GeometryIdentifier::fromGeometry((*it).geometry());
         if(baseFuncSet_[id] == 0 ) {
           baseFuncSet_[id] = setBaseFuncSetPointer(*it);
@@ -139,8 +142,16 @@ namespace Dune {
     //! Get base function set for a given entity
     template <class Entity>
     BaseFunctionSetType&
-    getBaseFunctionSet (const Entity& en) const 
-    {
+    getBaseFunctionSet (const Entity& en) const {
+      /*
+      GeometryType geom = en.geometry().type();
+      int dimension = static_cast<int>(Entity::mydimension);
+      assert(GeometryIdentifier::fromGeo(dimension,geom)
+             <(int) baseFuncSet_.size());
+      assert(GeometryIdentifier::fromGeo(dimension, geom) >= 0);
+      assert(baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geom)]);
+      return *baseFuncSet_[GeometryIdentifier::fromNewGeo<static_cast<int>(Entity::mydimension)>(geom)];
+      */
       GeometryIdentifier::IdentifierType id = 
         GeometryIdentifier::fromGeometry(en.geometry());
 
@@ -182,7 +193,7 @@ namespace Dune {
     {
       return *mapper_;
     }
-
+    /*
     //! default for polOrd 0
     template <class EntityType> 
     bool evaluateLocal(int baseFunc, const EntityType &en, 
@@ -206,7 +217,7 @@ namespace Dune {
       baseSet.eval(baseFunc, quad, quadPoint, ret);
       return true;
     }
- 
+    */
   protected:
     DiscontinuousGalerkinSpaceBase();
     DiscontinuousGalerkinSpaceBase(const DiscontinuousGalerkinSpaceBase&);

@@ -157,9 +157,11 @@ namespace Dune {
                   it.numberInNeighbor()),
       dummy_(0.)
     {
+      /*
       assert( (side == INSIDE) ? 
           (it.inside ()->geometry().type() == elementGeometry_ ) : 
           (it.outside()->geometry().type() == elementGeometry_ ) );
+      */
     }
     
     //! The total number of quadrature points.

@@ -432,6 +432,30 @@ namespace Dune {
     EntityImp& en_;
   };
 
+  template <class QuadratureImp>
+  class LocalDiscreteFunctionSetQuad {
+  public:
+    //! Constructor
+    //! \param quad The quadrature in question.
+    LocalDiscreteFunctionSetQuad(QuadratureImp& quad) :
+      quad_(quad)
+    {}
+
+    //! Set the quadrature for a local function
+    template <class LFType>
+    void visit(LFType& lf) {
+     lf.getBaseFunctionSet().addQuadrature(quad_);
+    }
+
+  private:
+    LocalDiscreteFunctionSetQuad();
+    LocalDiscreteFunctionSetQuad(const LocalDiscreteFunctionSetQuad&);
+    LocalDiscreteFunctionSetQuad& operator=(const LocalDiscreteFunctionSetQuad&);
+
+  private:
+    QuadratureImp& quad_;
+  };
+
   /**
    * @brief Helper class which actually calls the functions of the problem
    *

@@ -1,5 +1,5 @@
 #include "../caching/pointprovider.hh"
-
+#include "../quadrature/cachequad.hh"
 using std::make_pair;
 
 namespace Dune {
@@ -107,37 +107,21 @@ namespace Dune {
   inline void CachingStorage<FunctionSpaceImp>::
   evaluate(int baseFunct, const FieldVector<int, 0>& diffVar,
            const CacheQuadratureType& quad, int quadPoint,
-           RangeType& result) const 
-  {
-    // RangeIteratorType it = ranges_.find(quad.id());
-    /*
-    if (it == ranges_.end()) {
-      it = addEntry(quad).first;
-    }
-    */
-    assert(rangestored_.find(quad.id()) != rangestored_.end());
-    // calculate and return values
-    //result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
-
-    result = ranges_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+           RangeType& result) const {
+    evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
   }
 
   template <class FunctionSpaceImp>
+  template <class GridType,int cdim>
   inline void CachingStorage<FunctionSpaceImp>::
-  addQuadrature(size_t id, int codim) const 
+  evaluate(int baseFunct, const FieldVector<int, 0>& diffVar,
+           const 
+	   CachingQuadrature<GridType, cdim>& quad, 
+	   int quadPoint,
+           RangeType& result) const 
   {
-    //std::cout << "CachingStorage::addQuadrature for " << id << " called" << std::endl;
-    {
-      
-      RangeIteratorType it = rangestored_.find(id);
-      if (it == rangestored_.end()) {
-      	it = addEntryInterface(id,codim).first;
-      }
-    }
-    {
-      assert(rangestored_.find(id) != rangestored_.end());
-      assert(jacobianstored_.find(id) != jacobianstored_.end());
-    }
+    assert(rangestored_.find(quad.id()) != rangestored_.end());
+    result = ranges_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
   }
 
   template <class FunctionSpaceImp>
@@ -146,16 +130,16 @@ namespace Dune {
   jacobian(int baseFunct, const CacheQuadratureType& quad, int quadPoint,
            JacobianRangeType& result) const
   {
-    //JacobianRangeIteratorType it = jacobians_.find(quad.id());
-    /*
-    if (it == jacobians_.end()) {
-      it = addEntry(quad).second;
-    }
-    */
+    jacobian(baseFunct,quad.point(quadPoint),result);
+  }
+  template <class FunctionSpaceImp>
+  template <class GridType,int cdim>
+  inline void CachingStorage<FunctionSpaceImp>::
+  jacobian(int baseFunct, 
+	   const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
+           JacobianRangeType& result) const
+  {
     assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
-
-    // calculate and return values
-    //result = it->second[quad.cachingPoint(quadPoint)][baseFunct];
     result = jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
   }
 
@@ -166,27 +150,38 @@ namespace Dune {
            const CacheQuadratureType& quad, int quadPoint,
            RangeType& result) const
   {
-    //JacobianRangeIteratorType it = jacobians_.find(quad.id());
-    /*
-    if (it == jacobians_.end()) {
-      it = addEntry(quad).second;
-    }
-    */
+    evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
+  }
+  template <class FunctionSpaceImp>
+  template <class GridType,int cdim>
+  inline void CachingStorage<FunctionSpaceImp>::
+  evaluate(int baseFunct, const FieldVector<int, 1>& diffVar,
+           const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
+           RangeType& result) const
+  {
     assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
-
-    // calculate and return values
-    //JacobianRangeType& jResult =
-    //  it->second[quad.cachingPoint(quadPoint)][baseFunct];
-
     JacobianRangeType& jResult = 
       jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
-
     for (size_t i = 0; i < RangeType::size; ++i) {
       result[i] = jResult[i][diffVar[0]];
     }
-
   }
 
+  template <class FunctionSpaceImp>
+  inline void CachingStorage<FunctionSpaceImp>::
+  addQuadrature(size_t id, int codim) const 
+  {
+    {
+      RangeIteratorType it = rangestored_.find(id);
+      if (it == rangestored_.end()) {
+      	it = addEntryInterface(id,codim).first;
+      }
+    }
+    {
+      assert(rangestored_.find(id) != rangestored_.end());
+      assert(jacobianstored_.find(id) != jacobianstored_.end());
+    }
+  }
   template <class FunctionSpaceImp>
   inline typename CachingStorage<FunctionSpaceImp>::ReturnPairType
   CachingStorage<FunctionSpaceImp>::

@@ -12,13 +12,16 @@
 
 namespace Dune {
 
+  template <class GridImp,int cdim> class CachingQuadrature;
+  class StorageInterface;
+
   //! \brief Storage policy for base function sets.
   //! In a base function set, the base function values on quadrature points
   //! can either be cached or always recalculated. The storage policies
   //! CachingStorage and SimpleStorage do exactly that. The present class
   //! implements the common functionality and can be seen as a layer of
   //! abstraction in the access to basefunctions.
-  class StorageInterface; 
+  
 
   typedef std::list<StorageInterface *> StorageInterfaceListType;
   typedef std::pair< size_t , int > QuadratureIdentifierType; 
@@ -197,6 +200,12 @@ namespace Dune {
                   const FieldVector<int, 0>& diffVar,
                   const CacheQuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
+    template <class GridType,int cdim>
+    inline
+    void evaluate(int baseFunct,
+                  const FieldVector<int, 0>& diffVar,
+                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint, 
+                  RangeType& result) const;
 
     template <class CacheQuadratureType>
     inline
@@ -204,11 +213,22 @@ namespace Dune {
                   const FieldVector<int, 1>& diffVar,
                   const CacheQuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
+    template <class GridType,int cdim>
+    inline
+    void evaluate(int baseFunct,
+                  const FieldVector<int, 1>& diffVar,
+                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint, 
+                  RangeType& result) const;
 
     template <class CacheQuadratureType>
     inline
     void jacobian(int baseFunct, 
                   const CacheQuadratureType& quad, int quadPoint, 
+                  JacobianRangeType& result) const;
+    template <class GridType,int cdim>
+    inline
+    void jacobian(int baseFunct, 
+                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint, 
                   JacobianRangeType& result) const;
 
     

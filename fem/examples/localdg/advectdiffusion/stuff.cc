@@ -25,13 +25,11 @@ class L2Projection
     
     // Get quadrature rule
     CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
-    const typename FunctionSpaceType::BaseFunctionSetType & set =
-      space.getBaseFunctionSet(*it);
     
     for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
-      
-      
+      const typename FunctionSpaceType::BaseFunctionSetType & set =
+	lf.getBaseFunctionSet();
       for(int i=0; i<lf.numDofs(); i++) {
         for(int qP = 0; qP < quad.nop(); qP++) {
 	  double det =
@@ -62,23 +60,23 @@ struct SStruct {
     n_[0] = n;
     n_[1] = n;
     n_[2] = n;
-    l_[0] = -1.0;
-    l_[1] = -1.0; // h/2.0;
-    l_[2] = -1.0; // h/2.0;
-    h_[0] = 1.0;
-    h_[1] = 1.0; // h/2.0;
-    h_[2] = 1.0; // h/2.0;
+    l_[0] = .0;
+    l_[1] = .0; // h/2.0;
+    l_[2] = .0; // h/2.0;
+    h_[0] = 2.0;
+    h_[1] = 2.0; // h/2.0;
+    h_[2] = 2.0; // h/2.0;
   }
   SStruct(int n) {
     n_[0] = n;
     n_[1] = n;
     n_[2] = n;
-    l_[0] = -1.0;
-    l_[1] = -1.0; // 0.5/double(n);
-    l_[2] = -1.0; // 0.5/double(n);
-    h_[0] = 1.0;
-    h_[1] = 1.0; // 0.5/double(n);
-    h_[2] = 1.0; // 0.5/double(n);
+    l_[0] = .0;
+    l_[1] = .0; // 0.5/double(n);
+    l_[2] = .0; // 0.5/double(n);
+    h_[0] = 2.0;
+    h_[1] = 2.0; // 0.5/double(n);
+    h_[2] = 2.0; // 0.5/double(n);
   }
 
   int n_[3];
