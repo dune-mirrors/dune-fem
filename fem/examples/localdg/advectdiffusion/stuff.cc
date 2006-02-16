@@ -27,7 +27,6 @@ class L2Projection
     CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
     const typename FunctionSpaceType::BaseFunctionSetType & set =
       space.getBaseFunctionSet(*it);
-    set.addQuadrature(quad);
     
     for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
