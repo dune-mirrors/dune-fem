@@ -20,6 +20,7 @@ namespace Dune {
       for (int i = 0; i < quad.nop(); ++i) {
         it->second[i] = quad.point(i);
       }
+      StorageInterface::addQuadratureToList(quad);
     }
   }
 
@@ -98,7 +99,6 @@ namespace Dune {
       mappers_.insert(std::make_pair(quad.id(),
                                      MapperVectorType(numFaces))).first;
 
-
     int globalNum = 0;
     for (int face = 0; face < numFaces; ++face) {
       // Assumption: all faces have the same type
@@ -117,6 +117,7 @@ namespace Dune {
       mit->second[face] = pMap;
     } // end for all faces
 
+    StorageInterface::addQuadratureToList(quad.id(),1);
     return mit;
   }
 
