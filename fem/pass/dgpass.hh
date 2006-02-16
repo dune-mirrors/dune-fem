@@ -273,9 +273,6 @@ namespace Dune {
     double volumeElement(const EntityType& en,
                          const VolumeQuadratureType& quad,
 			 double& massVolinv) const {
-      double result = en.geometry().integrationElement(quad.point(0));
-      massVolinv = 1./result;
-      return 0.5*result;
       massVolinv = 0.;
       for (int qp = 0; qp < quad.nop(); ++qp) {
 	massVolinv += quad.weight(qp);
