@@ -141,6 +141,8 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
+      //DiscreteFunctionSpaceType spc(const_cast<typename
+      //    DiscreteFunctionSpaceType::GridPartType &> (spc_.gridPart()));
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
       }
@@ -168,7 +170,6 @@ namespace Dune {
       const IndexSetType& iset = spc_.indexSet();
       const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
 
-      bsetEn.addQuadrature(volQuad);
       caller_.setQuad(en,volQuad);
 
       // Volumetric integral part
@@ -193,7 +194,6 @@ namespace Dune {
 	int twistSelf = twistUtil_.twistInSelf(nit); 
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
                                          FaceQuadratureType::INSIDE);
-	bsetEn.addQuadrature(faceQuadInner);
 	caller_.setQuad(en,faceQuadInner);
 	if (nit.neighbor()) {
 	  EntityType& nb=*nit.outside();
@@ -210,7 +210,6 @@ namespace Dune {
             const BaseFunctionSetType& bsetNeigh = 
               spc_.getBaseFunctionSet(nb);
 
-	    bsetNeigh.addQuadrature(faceQuadOuter);
 	    caller_.setQuad(nb,faceQuadOuter);
  
 	    double massVolNbinv;

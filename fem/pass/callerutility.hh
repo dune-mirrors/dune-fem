@@ -420,7 +420,6 @@ namespace Dune {
     //! Set the quadrature for a local function
     template <class LFType>
     void visit(LFType& lf) {
-      lf->getFunctionSpace().getBaseFunctionSet(en_).addQuadrature(quad_);
     }
 
   private:
