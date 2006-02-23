@@ -1,5 +1,4 @@
 #!/bin/bash
-#Aufruf zum erzeugen der makefiles fuer Mario
 
 ./autogen.sh --gnu --with-dune=$HOME/work/Dune/src/ \
 	--with-problem-dim=$1 \
@@ -7,7 +6,7 @@
   --with-grape=$HOME/DuneAdds/modules/GrapeNew \
   --with-alberta=$HOME/DuneAdds/modules/alberta-1.2 \
   --enable-blas \
-#  --with-alu3dgrid=$HOME/DuneAdds/modules/alu3dgrid \
+#  --with-alugrid=$HOME/DuneAdds/modules/alu3dgrid \
 #  --nodebug \
 #  --optim
 #  --with-alberta=$HOME/DuneAdds/modules/alberta-1.2 \
