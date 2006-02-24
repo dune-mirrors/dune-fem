@@ -460,7 +460,7 @@ namespace Dune {
     typedef ScalarFunctionSpaceImp FunctionSpaceType;
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
   public:
-    DiscontinuousGalerkinBaseFunctionFactory(NewGeometryType geo) :
+    DiscontinuousGalerkinBaseFunctionFactory(GeometryType geo) :
       BaseFunctionFactory<ScalarFunctionSpaceImp>(geo)
     {}
 
