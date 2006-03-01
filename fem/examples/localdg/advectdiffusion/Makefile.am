@@ -1,4 +1,4 @@
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) 
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS)
 
 noinst_PROGRAMS = advectdiff euler datadisp dgtest
 advectdiff_SOURCES = main.cc

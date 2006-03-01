@@ -7,18 +7,13 @@
 #include "odesolver.hh"
 
 
-// Modelle
-// #define POLORDER 1
 // Approximations Ordnung
 enum {order=POLORDER,rksteps=POLORDER+1}; 
 // Gitterauswahl
-// typedef YaspGrid<2,2> GridType;
-// typedef SGrid<2,2> GridType;
-// typedef AlbertaGrid<2,2> GridType;
 
 // Modell- und Flussauswahl
 // Skalar
-#if PROBLEM = 1
+#if PROBLEM == 1
    #include "scalarmodels.hh"
    typedef U0<GridType> InitialDataType;
    typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
@@ -27,7 +22,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    InitialDataType problem(0.01,true);
    typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
-#slif PROBLEM = 2
+#elif PROBLEM == 2
 // Euler
    #include "euler_mhd/eulermodel.hh"
    typedef U0RotatingCone InitialDataType;

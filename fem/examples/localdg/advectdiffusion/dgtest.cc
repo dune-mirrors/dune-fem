@@ -53,6 +53,7 @@ int main(int argc, char ** argv, char ** envp) {
   double savestep=0.05;
   double maxtime = 1.;
   while (t<maxtime) {
+    cout << t << endl;
     t=ode.solve(U);
   }
   MPIEND
