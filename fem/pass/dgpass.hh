@@ -274,6 +274,7 @@ namespace Dune {
                          const VolumeQuadratureType& quad,
 			 double& massVolinv) const {
       massVolinv = 0.;
+      double result = 0;
       for (int qp = 0; qp < quad.nop(); ++qp) {
 	massVolinv += quad.weight(qp);
         result += 
