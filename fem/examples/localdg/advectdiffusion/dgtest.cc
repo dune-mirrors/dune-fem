@@ -3,7 +3,6 @@
 
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
-// #include <dune/quadrature/fixedorder.hh>
 
 #include <dune/common/misc.hh>
 #include <dune/fem/common/boundary.hh>
@@ -12,7 +11,7 @@
 #include <dune/io/file/grapedataio.hh>
 #include <iostream>
 #include <string>
-// #include <mpi.h>
+
 using namespace Dune;
 using namespace std;
 
@@ -52,42 +51,11 @@ int main(int argc, char ** argv, char ** envp) {
   int n=0;
   double nextsave=0.;
   double savestep=0.05;
-  //ode.printGrid(1, U);
-  //typedef DofManager<GridType> DofManagerType;
-  //typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-  //DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
-  /*
-  {
-    GrapeDataIO<GridType> dataio;
-    std::string gridfile("grid");
-    dataio.writeGrid(grid, xdr, gridfile.c_str(), t, n);
-    std::string datafile("df");
-    dataio.writeData(U, xdr, datafile.c_str(), n);
-    //td::string dmfile("dm");
-    //dm.write(xdr, dmfile.c_str(),n);
-    nextsave+=savestep;
-    ++n;
-  }
-  */
-  while (t<1) {
+  double maxtime = 1.;
+  while (t<maxtime) {
     t=ode.solve(U);
-    cout << t << endl;
-    ode.printGrid(1, U);
-    /*
-    if (t>nextsave) {
-      GrapeDataIO<GridType> dataio;
-      std::string gridfile("grid");
-      dataio.writeGrid(grid, xdr, gridfile.c_str(), t, n);
-      std::string datafile("df");
-      dataio.writeData(U, xdr, datafile.c_str(), n);
-      //std::string dmfile("dm");
-      //dm.write(xdr, dmfile.c_str(),n);
-      nextsave+=savestep;
-      ++n;
-    }
-    */
   }
-  ode.printGrid(1, U);
+  MPIEND
 } 
 
 
