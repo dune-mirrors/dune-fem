@@ -6,4 +6,4 @@ AUTOMAKE_OPTIONS = foreign 1.5
 AM_CPPFLAGS= 
 
 # do everything in the subdirs
-SUBDIRS = caching examples tester visual pass space quadrature basefunctions
+SUBDIRS = caching macrogridparser examples tester visual pass space quadrature basefunctions

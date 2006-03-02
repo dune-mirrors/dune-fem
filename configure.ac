@@ -34,6 +34,8 @@ AC_CONFIG_FILES([Makefile
 		 basefunctions/test/Makefile
 		 caching/Makefile
 		 caching/test/Makefile
+		 macrogridparser/Makefile
+		 macrogridparser/test/Makefile
                  examples/Makefile
                  examples/poisson/Makefile
               	 examples/transport/Makefile
