@@ -262,7 +262,7 @@ int main (int argc, char **argv)
   macroGridName += "dgrid.al";
 
 #if AGRID 
-  const int step = 1;
+  const int step = 2;
 #endif
 #if AGRID
   GridType grid ( macroGridName.c_str() );
@@ -282,7 +282,6 @@ int main (int argc, char **argv)
       std::cout << "EOC = " << eoc << " \n";
     }
   }
-  /*
   std::cout << "------------   Coarsening:" << std::endl;
   for(int i=ml-1; i>=0; i-=step)
   {
@@ -292,7 +291,6 @@ int main (int argc, char **argv)
       std::cout << "EOC = " << eoc << " \n";
     }
   }
-  */
   delete [] error;
   return 0;
 }
