@@ -20,7 +20,7 @@ namespace Dune {
       for (int i = 0; i < quad.nop(); ++i) {
         it->second[i] = quad.point(i);
       }
-      StorageInterface::addQuadratureToList(quad);
+      StorageInterface::registerQuadratureToStorages(quad);
     }
   }
 
@@ -85,7 +85,6 @@ namespace Dune {
                                       const LocalPointVectorType& points,
                                       GeometryType elementGeo)
   {
-    // std::cout << "Add entry for id " << quad.id() << " called\n";
     const ReferenceElement<ct, dim>& refElem =
       ReferenceElements<ct, dim>::general(elementGeo);
     const int numLocalPoints = points.size();
@@ -117,7 +116,7 @@ namespace Dune {
       mit->second[face] = pMap;
     } // end for all faces
 
-    StorageInterface::addQuadratureToList(quad.id(),1);
+    StorageInterface::registerQuadratureToStorages(quad.id(),1);
     return mit;
   }
 
@@ -126,6 +125,15 @@ namespace Dune {
                                                GeometryType geo2)
   {
     return geo1 == geo2;
+    //return true; 
+    /*
+    if( geo1 != geo2 )
+    {
+      std::cout << "test for dim = " << dim << "\n";
+      std::cout << geo1 << " not equals " << geo2 << "\n";
+    }
+    return geo1 == geo2;
+    */
     /*
     // Assume here that the geometries belong to the same dimension
 
