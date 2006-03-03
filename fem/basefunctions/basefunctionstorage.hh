@@ -1,19 +1,17 @@
 #ifndef DUNE_BASEFUNCTIONSTORAGE_HH
 #define DUNE_BASEFUNCTIONSTORAGE_HH
 
+//- system includes 
 #include <map>
 #include <vector>
+#include <list>
 
+//- Dune includes 
 #include <dune/common/array.hh>
 #include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/grid/common/grid.hh>
 
-#include <list>
-
 namespace Dune {
-
-  template <class GridImp,int cdim> class CachingQuadrature;
-  class StorageInterface;
 
   //! \brief Storage policy for base function sets.
   //! In a base function set, the base function values on quadrature points
@@ -21,76 +19,93 @@ namespace Dune {
   //! CachingStorage and SimpleStorage do exactly that. The present class
   //! implements the common functionality and can be seen as a layer of
   //! abstraction in the access to basefunctions.
-  
-
-  typedef std::list<StorageInterface *> StorageInterfaceListType;
-  typedef std::pair< size_t , int > QuadratureIdentifierType; 
-  typedef std::list< QuadratureIdentifierType > QuadratureListType; 
-  static StorageInterfaceListType storageList_;
-  static QuadratureListType quadratureList_; 
-  
   class StorageInterface 
   {
+      typedef std::list<StorageInterface *> StorageInterfaceListType;
+      typedef std::pair< size_t , int > QuadratureIdentifierType; 
+      typedef std::list< QuadratureIdentifierType > QuadratureListType; 
+
+      // singelton implementation 
+      static StorageInterfaceListType &  storageList () 
+      {
+        static StorageInterfaceListType storageListObj;
+        return storageListObj;
+      }
+      
+      // singelton implementation 
+      static QuadratureListType & quadratureList ()  
+      {
+        static QuadratureListType quadratureListObj; 
+        return quadratureListObj;
+      }
     public: 
+      //! Constructor, add me to the list of storages 
       StorageInterface() 
       { 
-        //std::cout << "create storage " << this<< "\n";
-        storageList_.push_back(this);
+        storageList().push_back(this);
       }
 
+      //! Destructor, remove me from the list of storages 
       virtual ~StorageInterface() {
         typedef StorageInterfaceListType::iterator IteratorType;
-        IteratorType endit = storageList_.end();
-        for(IteratorType it = storageList_.begin(); it != endit; ++it)
+        IteratorType endit = storageList().end();
+        for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
           if( (*it) == this )
           {
-            storageList_.erase(it); 
-            //std::cout << "remove storage from list " << this<< "\n";
+            storageList().erase(it); 
             break;
           }
         }
       }
 
+      //! for a newly created storage cache all existing quadratures 
       template <class StorageImp>  
       void cacheExsistingQuadratures(StorageImp & storage) 
       {
         typedef QuadratureListType::iterator IteratorType;
-        IteratorType endit = quadratureList_.end();
-        for(IteratorType it = quadratureList_.begin(); it != endit; ++it)
+        IteratorType endit = quadratureList().end();
+        for(IteratorType it = quadratureList().begin(); it != endit; ++it)
         {
           size_t id = (*it).first;
           int codim = (*it).second;
-          //std::cout << "update set for id " << id << " and cd " << codim << "\n";
-          storage.addQuadrature(id,codim);
+          storage.cacheQuadrature(id,codim);
         }
       }
 
-      virtual void addQuadrature(size_t id, int codim ) const = 0;
+      //! cache quadrature for given id and codim 
+      virtual void cacheQuadrature(size_t id, int codim ) const = 0;
 
       template <class QuadratureType> 
-      static void addQuadratureToList(const QuadratureType & quad) 
+      static void registerQuadratureToStorages(const QuadratureType & quad) 
       {
         int codim = QuadratureType :: codimension;
-        addQuadratureToList(quad.id(),codim); 
+        registerQuadratureToStorages(quad.id(),codim); 
       }
-      
-      static void addQuadratureToList(size_t id, int codim) 
+     
+      //! register quadrature for all existing storages 
+      static void registerQuadratureToStorages(size_t id, int codim) 
       {
         // store quadrature 
         QuadratureIdentifierType ident(id,codim); 
-        quadratureList_.push_back(ident);
+        quadratureList().push_back(ident);
         
         typedef StorageInterfaceListType::iterator IteratorType;
-        IteratorType endit = storageList_.end();
-        for(IteratorType it = storageList_.begin(); it != endit; ++it)
+        IteratorType endit = storageList().end();
+        for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
           //std::cout << "add quad \n";
-          (*it)->addQuadrature(id,codim); 
+          (*it)->cacheQuadrature(id,codim); 
         }
       }
   };
-  
+}
+
+//- local includes 
+#include "../quadrature/cachequad.hh"
+
+namespace Dune {
+
   template <class FunctionSpaceImp>
   class StorageBase : public StorageInterface 
   {
@@ -124,7 +139,7 @@ namespace Dune {
                   const DomainType& xLocal, 
                   JacobianRangeType& result) const;
 
-    inline void addQuadrature(size_t id, int codim) const {}
+    inline void cacheQuadrature(size_t id, int codim) const {}
   private:
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
@@ -194,66 +209,62 @@ namespace Dune {
     using StorageBase<FunctionSpaceImp>::evaluate;
     using StorageBase<FunctionSpaceImp>::jacobian;
 
-    template <class CacheQuadratureType>
+    template <class QuadratureType>
     inline
     void evaluate(int baseFunct,
                   const FieldVector<int, 0>& diffVar,
-                  const CacheQuadratureType& quad, int quadPoint, 
+                  const QuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
+
     template <class GridType,int cdim>
     inline
     void evaluate(int baseFunct,
                   const FieldVector<int, 0>& diffVar,
-                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint, 
+                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
                   RangeType& result) const;
-
-    template <class CacheQuadratureType>
+    
+    template <class QuadratureType>
     inline
     void evaluate(int baseFunct,
                   const FieldVector<int, 1>& diffVar,
-                  const CacheQuadratureType& quad, int quadPoint, 
+                  const QuadratureType& quad, int quadPoint, 
                   RangeType& result) const;
+
     template <class GridType,int cdim>
     inline
     void evaluate(int baseFunct,
                   const FieldVector<int, 1>& diffVar,
-                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint, 
+                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
                   RangeType& result) const;
 
-    template <class CacheQuadratureType>
+    template <class QuadratureType>
     inline
     void jacobian(int baseFunct, 
-                  const CacheQuadratureType& quad, int quadPoint, 
-                  JacobianRangeType& result) const;
-    template <class GridType,int cdim>
-    inline
-    void jacobian(int baseFunct, 
-                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint, 
+                  const QuadratureType& quad, int quadPoint, 
                   JacobianRangeType& result) const;
 
+    template <class GridType,int cdim>
+    inline
+    void jacobian(int baseFunct,
+                  const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
+                  JacobianRangeType& result) const;
     
   private:
     typedef typename FunctionSpaceImp::RangeFieldType RealType;
     typedef Array<Array<RangeType> > RangeVectorType;
     typedef Array<Array<JacobianRangeType> > JacobianRangeVectorType;
-    //typedef std::vector<std::vector<RangeType> > RangeVectorType;
-    //typedef std::vector<std::vector<JacobianRangeType> > JacobianRangeVectorType;
-    //typedef std::vector<RangeType>  RangeVectorType;
-    //typedef std::vector<JacobianRangeType> JacobianRangeVectorType;
     typedef std::map<size_t, bool> RangeStoredType;
     typedef std::map<size_t, bool> JacobianRangeStoredType;
     typedef typename RangeStoredType::iterator RangeIteratorType;
     typedef typename JacobianRangeStoredType::iterator JacobianRangeIteratorType;
     typedef std::pair<
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
-    //typedef std::vector<RangeVectorType> RangeContainerType;
-    //typedef std::vector<JacobianRangeVectorType> JacobianRangeContainerType;
     typedef Array<RangeVectorType> RangeContainerType;
     typedef Array<JacobianRangeVectorType> JacobianRangeContainerType;
 
   private:
     // caches the quadrature, see also addEntry.. 
-    inline void addQuadrature(size_t id, int codim) const;
+    inline void cacheQuadrature(size_t id, int codim) const;
  
     // here a switch-case for codim is done and then addEntry called
     inline ReturnPairType addEntryInterface(size_t id , int codim) const;

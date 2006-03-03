@@ -1,5 +1,5 @@
 #include "../caching/pointprovider.hh"
-#include "../quadrature/cachequad.hh"
+
 using std::make_pair;
 
 namespace Dune {
@@ -103,11 +103,12 @@ namespace Dune {
   CachingStorage<FunctionSpaceImp>::~CachingStorage() {}
 
   template <class FunctionSpaceImp>
-  template <class CacheQuadratureType>
+  template <class QuadratureType>
   inline void CachingStorage<FunctionSpaceImp>::
   evaluate(int baseFunct, const FieldVector<int, 0>& diffVar,
-           const CacheQuadratureType& quad, int quadPoint,
-           RangeType& result) const {
+           const QuadratureType& quad, int quadPoint,
+           RangeType& result) const 
+  {
     evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
   }
 
@@ -115,43 +116,45 @@ namespace Dune {
   template <class GridType,int cdim>
   inline void CachingStorage<FunctionSpaceImp>::
   evaluate(int baseFunct, const FieldVector<int, 0>& diffVar,
-           const 
-	   CachingQuadrature<GridType, cdim>& quad, 
-	   int quadPoint,
-           RangeType& result) const 
+           const CachingQuadrature<GridType, cdim>& quad,
+           int quadPoint,
+           RangeType& result) const
   {
     assert(rangestored_.find(quad.id()) != rangestored_.end());
     result = ranges_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
   }
 
   template <class FunctionSpaceImp>
-  template <class CacheQuadratureType>
+  template <class QuadratureType>
   inline void CachingStorage<FunctionSpaceImp>::
-  jacobian(int baseFunct, const CacheQuadratureType& quad, int quadPoint,
+  jacobian(int baseFunct, const QuadratureType& quad, int quadPoint,
            JacobianRangeType& result) const
   {
     jacobian(baseFunct,quad.point(quadPoint),result);
   }
+
   template <class FunctionSpaceImp>
   template <class GridType,int cdim>
   inline void CachingStorage<FunctionSpaceImp>::
   jacobian(int baseFunct, 
-	   const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
+     const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
            JacobianRangeType& result) const
-  {
+  {        
     assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
+    // calculate and return values
     result = jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
   }
 
   template <class FunctionSpaceImp>
-  template <class CacheQuadratureType>
+  template <class QuadratureType>
   inline void CachingStorage<FunctionSpaceImp>::
   evaluate(int baseFunct, const FieldVector<int, 1>& diffVar,
-           const CacheQuadratureType& quad, int quadPoint,
+           const QuadratureType& quad, int quadPoint,
            RangeType& result) const
   {
     evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
   }
+
   template <class FunctionSpaceImp>
   template <class GridType,int cdim>
   inline void CachingStorage<FunctionSpaceImp>::
@@ -160,16 +163,19 @@ namespace Dune {
            RangeType& result) const
   {
     assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
+
     JacobianRangeType& jResult = 
       jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+
     for (size_t i = 0; i < RangeType::size; ++i) {
       result[i] = jResult[i][diffVar[0]];
     }
+
   }
 
   template <class FunctionSpaceImp>
   inline void CachingStorage<FunctionSpaceImp>::
-  addQuadrature(size_t id, int codim) const 
+  cacheQuadrature(size_t id, int codim) const 
   {
     {
       RangeIteratorType it = rangestored_.find(id);
@@ -182,13 +188,12 @@ namespace Dune {
       assert(jacobianstored_.find(id) != jacobianstored_.end());
     }
   }
+
   template <class FunctionSpaceImp>
   inline typename CachingStorage<FunctionSpaceImp>::ReturnPairType
   CachingStorage<FunctionSpaceImp>::
   addEntryInterface(size_t id , int codim ) const 
   {
-    //std::cout << "CachingStorage::addEntry for " << id<< " called" << std::endl;
-
     enum { dimension = DomainType::size };
     switch (codim) 
     {
@@ -208,8 +213,6 @@ namespace Dune {
   CachingStorage<FunctionSpaceImp>::
   addEntry(size_t id) const 
   {
-    //std::cout << "CachingStorage::addEntry for " << quad.id()<< " called" << std::endl;
-    //enum { codimension = CacheQuadratureType::codimension };
     enum { dimension = DomainType::size };
 
     size_t quadId = id;
@@ -223,21 +226,16 @@ namespace Dune {
     assert(rangestored_.find(quadId) == rangestored_.end());
     RangeIteratorType rit =
       rangestored_.insert(make_pair(quadId,true)).first; 
-    // RangeVectorType(points.size()))).first;
     assert(rangestored_.find(quadId) != rangestored_.end());
 
     assert(jacobianstored_.find(quadId) == jacobianstored_.end());
     JacobianRangeIteratorType jit =
       jacobianstored_.insert(make_pair(quadId,true)).first;
-    //			       JacobianRangeVectorType(points.size()))).first;
+
     assert(jacobianstored_.find(quadId) != jacobianstored_.end());
 
     FieldVector<int, 0> diffVar;
 
-    //std::cout << "Id: " << quadId << std::endl;
-    //std::cout << "Num points: " << points.size() << std::endl;
-    //std::cout << "Num base functions: " << this->numBaseFunctions() << std::endl;
-    
     if (ranges_.size()<=quadId) ranges_.resize(quadId+10);
     if (jacobians_.size()<=quadId) jacobians_.resize(quadId+10);
 
