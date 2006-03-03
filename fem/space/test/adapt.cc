@@ -49,8 +49,8 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
-// typedef AdaptiveLeafIndexSet<GridType> IndexSetType;
+//typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
+typedef AdaptiveLeafIndexSet<GridType> IndexSetType;
 typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -60,7 +60,7 @@ typedef FunctionSpace < double , double, dimp , 1 > FuncSpace;
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
 typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-	polOrd,CachingStorage> DiscreteFunctionSpaceType;
+  polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
@@ -70,7 +70,7 @@ typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 typedef AdaptOperator<GridType,
-		      RestProlOperator<DiscreteFunctionType> > ADOperatorType;
+          RestProlOperator<DiscreteFunctionType> > ADOperatorType;
 
 // ***********************************************************
 //! the exact solution to the problem for EOC calculation 
@@ -80,7 +80,7 @@ class ExactSolution : public Function < FuncSpace , ExactSolution >
   typedef FuncSpace::RangeFieldType RangeFieldType;
   typedef FuncSpace::DomainType DomainType;
 public:
-  ExactSolution (FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
+  ExactSolution (const FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
  
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
@@ -186,7 +186,7 @@ public:
 };
 // ********************************************************************
 void adapt(GridType& grid,
-	   DiscreteFunctionType& solution,int step) {
+     DiscreteFunctionType& solution,int step) {
   typedef DiscreteFunctionType::FunctionSpaceType::Traits::IteratorType Iterator;
   const DiscreteFunctionType::FunctionSpaceType
     & space = solution.getFunctionSpace();
@@ -213,14 +213,12 @@ void adapt(GridType& grid,
 }
 // ********************************************************************
 double algorithm (GridType& grid, DiscreteFunctionType& solution,
-		  int step,
-		  int turn )
+      int step,
+      int turn )
 {
   adapt(grid,solution,step);
-  IndexSetType iset ( grid );
-  GridPartType part ( grid, iset );
-  DiscreteFunctionSpaceType linFuncSpace ( part );
-  ExactSolution f ( linFuncSpace ); 
+  const DiscreteFunctionSpaceType & space = solution.getFunctionSpace();
+  ExactSolution f ( space ); 
   // calculation L2 error on refined grid
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions 
