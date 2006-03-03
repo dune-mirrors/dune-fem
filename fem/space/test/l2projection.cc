@@ -14,8 +14,8 @@ static const int dimp = DIM;
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 
-#define SGRID 1
-#define AGRID 0
+#define SGRID 0
+#define AGRID 1
 
 using namespace Dune;
 
@@ -65,7 +65,7 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-typedef DefaultGridIndexSet<GridType,LevelIndex> IndexSetType;
+typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
 typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]

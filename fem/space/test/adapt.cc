@@ -49,8 +49,8 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-  // typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
-typedef AdaptiveLeafIndexSet<GridType> IndexSetType;
+typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
+// typedef AdaptiveLeafIndexSet<GridType> IndexSetType;
 typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -196,8 +196,9 @@ void adapt(GridType& grid,
   ADOperatorType adop(grid,rp);
 
   Iterator endit = space.end();
+
   for(; it != endit ; ++it) {
-    grid.mark(1,it);
+    grid.mark(step,it);
   }
   adop.adapt();
   /*
@@ -263,7 +264,7 @@ int main (int argc, char **argv)
   macroGridName += "dgrid.al";
 
 #if AGRID 
-  const int step = 2;
+  const int step = 1;
 #endif
 #if AGRID
   GridType grid ( macroGridName.c_str() );
@@ -274,15 +275,26 @@ int main (int argc, char **argv)
   DiscreteFunctionSpaceType linFuncSpace ( part );
   DiscreteFunctionType solution ( "sol", linFuncSpace );
   solution.clear();
-  
+  std::cout << "------------    Refining:" << std::endl;
   for(int i=0; i<ml; i+=step)
   {
-    error[i] = algorithm ( grid , solution, step, 0);
+    error[i] = algorithm ( grid , solution, step, (i==ml-1));
     if (i>0) {
       double eoc = log( error[i-step]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
     }
   }
+  /*
+  std::cout << "------------   Coarsening:" << std::endl;
+  for(int i=ml-1; i>=0; i-=step)
+  {
+    error[i] = algorithm ( grid , solution,-step, 1);
+    if (i<ml-1) {
+      double eoc = log( error[i+step]/error[i]) / M_LN2; 
+      std::cout << "EOC = " << eoc << " \n";
+    }
+  }
+  */
   delete [] error;
   return 0;
 }

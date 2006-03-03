@@ -6,6 +6,13 @@
 #include "../quadrature/cachequad.hh"
 #include "dgspace.hh"
 
+/************************************************************
+1) Gewichte zwischen Vater/Sohn default Implementieren auf Gitter
+   (father.weight(son) oder so
+2) Caching der Basisfunktionen fuer Vater-BasisFunktionen fuer
+   Kinderquadraturen
+*************************************************************/
+
 namespace Dune{
 
 //***********************************************************************
@@ -43,17 +50,6 @@ public:
   {
   }
 
-  //! calculates the weight, i.e. (volume son)/(volume father)
-  template <class EntityType>
-  void calcFatherChildWeight (EntityType &father, EntityType &son) const
-  {
-  }
-  
-  //! the weight can also be seted
-  void setFatherChildWeight (const RangeFieldType& val) const
-  {
-  }
-  
   //! restrict data to father 
   template <class EntityType>
   void restrictLocal ( EntityType &father, EntityType &son, 
@@ -62,9 +58,11 @@ public:
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
     assert( !father.isLeaf() );
+    const RangeFieldType weight = 
+      (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
 
-    LocalFunctionType vati_ =df_.localFunction( father);
-    LocalFunctionType sohn_ =df_.localFunction( son   );
+    LocalFunctionType vati_ = df_.localFunction( father);
+    LocalFunctionType sohn_ = df_.localFunction( son   );
 
     QuadratureType quad(son,quadord_);
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
@@ -73,17 +71,19 @@ public:
     if(initialize) {
       for(int qP = 0; qP < nop; qP++) {
 	sohn_.evaluate(son,quad,qP,ret);
-	for(int i=0; i<sohn_.numDofs(); i++) {
+	for(int i=0; i<vati_.numDofs(); i++) {
 	  baseset.eval(i,son.geometryInFather().global(quad.point(qP)),phi);
-	  vati_[i] = quad.weight(qP) * (ret * phi) ;
+	  vati_[i] = quad.weight(qP) * weight * (ret * phi) ;
 	}
       }
     }
-    else 
-    {
-      for(int i=0; i<vati_.numDofs(); i++)
-      {
-        vati_[i] += weight_ * sohn_[i];
+    else {
+      for(int qP = 0; qP < nop; qP++) {
+	sohn_.evaluate(son,quad,qP,ret);
+	for(int i=0; i<vati_.numDofs(); i++) {
+	  baseset.eval(i,son.geometryInFather().global(quad.point(qP)),phi);
+	  vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
+	}
       }
     }
   }
@@ -115,8 +115,15 @@ public:
   }
 
 private:
-  mutable DiscreteFunctionType & df_;
+  template <class EntityType>
+  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
+  {
+    QuadratureType quad(father,1);
+    return std::abs(son.geometry().integrationElement(quad.point(0)) /
+              father.geometry().integrationElement(quad.point(0)));
+  }
 
+  mutable DiscreteFunctionType & df_;
   int quadord_;
   mutable RangeFieldType weight_;
 };
@@ -149,17 +156,6 @@ public:
     df_ (df),
     weight_(-1.0)
   {}
-
-  //! calculates the weight, i.e. (volume son)/(volume father)
-  template <class EntityType>
-  void calcFatherChildWeight (EntityType &father, EntityType &son) const
-  {
-  }
-  
-  //! the weight can also be seted
-  void setFatherChildWeight (const RangeFieldType& val) const
-  {
-  }
   
   //! restrict data to father 
   template <class EntityType>
@@ -169,23 +165,21 @@ public:
     assert( !father.isLeaf() );
 
     // if weight < 0.0 , weight has not been calculated
-    assert(weight_ > 0.0);
+    const RangeFieldType weight = 
+      (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
     
     LocalFunctionType vati_ =df_.localFunction( father);
     LocalFunctionType sohn_ =df_.localFunction( son   );
 
-    if(initialize)
-    {
-      for(int i=0; i<vati_.numDofs(); i++)
-      {
-        vati_[i] = weight_ * sohn_[i];
+    if(initialize) {
+      for(int i=0; i<vati_.numDofs(); i++) {
+        vati_[i] = weight * sohn_[i];
       }
     }
     else 
     {
-      for(int i=0; i<vati_.numDofs(); i++)
-      {
-        vati_[i] += weight_ * sohn_[i];
+      for(int i=0; i<vati_.numDofs(); i++) {
+        vati_[i] += weight * sohn_[i];
       }
     }
   }
@@ -194,18 +188,22 @@ public:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
-    //assert( son.state() == REFINED );
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
-    for(int i=0; i<vati_.numDofs(); i++)
-    {
+    const int numDofs = vati_.numDofs();
+    for(int i=0; i<numDofs; i++) {
       sohn_[i] = vati_[i];
     }
   }
 
 private:
+  template <class EntityType>
+  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
+  {
+    QuadratureType quad(father,1);
+    return std::abs(son.geometry().integrationElement(quad.point(0)) /
+              father.geometry().integrationElement(quad.point(0)));
+  }
   mutable DiscreteFunctionType & df_;
   mutable RangeFieldType weight_;
 };
