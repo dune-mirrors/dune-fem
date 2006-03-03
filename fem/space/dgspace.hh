@@ -95,24 +95,28 @@ namespace Dune {
         DofManagerFactoryType::getDofManager(gridPart.grid());
       dm.addIndexSet(gridPart.grid(), 
                      const_cast<IndexSetType&>(gridPart.indexSet()));
-  
-      typedef typename GridType :: template Codim<0>::Entity EntityType;
-      // search the macro grid for different element types 
-      IteratorType endit  = gridPart.template end<0>();
-      for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it) {
-        GeometryIdentifier::IdentifierType id = 
-	  /*
-          GeometryIdentifier::fromNewGeo<static_cast<int>(EntityType::mydimension)>(geo);
-	  */
-          GeometryIdentifier::fromGeometry((*it).geometry());
-        if(baseFuncSet_[id] == 0 ) {
-          baseFuncSet_[id] = setBaseFuncSetPointer(*it);
-          mapper_ = 
-            //new typename Traits::MapperType(const_cast<IndexSetType&>(gridPart_.indexSet()),
-            new typename Traits::MapperType(gridPart_.indexSet(),
-                                   baseFuncSet_[id]->numBaseFunctions());
+ 
+      // get types for codim 0  
+      const std::vector<GeometryType>& geomTypes =
+                  gridPart.indexSet().geomTypes(0) ;
+
+      int maxNumDofs = -1;
+      // create mappers and base sets for all existing geom types
+      for(size_t i=0; i<geomTypes.size(); ++i)
+      {
+        GeometryIdentifier::IdentifierType id =
+                    GeometryIdentifier::fromGeo(geomTypes[i]);
+        
+        if(baseFuncSet_[id] == 0 ) 
+        {
+          baseFuncSet_[id] = setBaseFuncSetPointer(geomTypes[i]);
+          maxNumDofs = std::max(maxNumDofs,baseFuncSet_[id]->numBaseFunctions());
         }
       }
+
+      assert( maxNumDofs > 0 );
+      mapper_ = new typename Traits::MapperType(gridPart_.indexSet(),maxNumDofs);
+      assert( mapper_ );
     }
 
     
@@ -329,6 +333,7 @@ namespace Dune {
     DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
     DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
 
+    /*
     template <class EntityType>
     static BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
     {
@@ -337,6 +342,17 @@ namespace Dune {
       
       DiscontinuousGalerkinBaseFunctionFactory<
         ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
+      return new BaseFunctionSetType(fac);
+    }
+    */
+    
+    static BaseFunctionSetType* setBaseFuncSetPointer(GeometryType type) 
+    {
+      typedef typename ToScalarFunctionSpace<
+        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+      
+      DiscontinuousGalerkinBaseFunctionFactory<
+        ScalarFunctionSpaceType, polOrd> fac(type);
       return new BaseFunctionSetType(fac);
     }
   };
@@ -428,6 +444,7 @@ namespace Dune {
     LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart) :
       DiscontinuousGalerkinSpaceBase<Traits> (gridPart) {}
 
+    /*
     template <class EntityType>
     static BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
     {
@@ -436,6 +453,16 @@ namespace Dune {
       
       LegendreDGBaseFunctionFactory<
         ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
+      return new BaseFunctionSetType(fac);
+    }
+    */
+    static BaseFunctionSetType* setBaseFuncSetPointer(GeometryType type) 
+    {
+      typedef typename ToScalarFunctionSpace<
+        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+      
+      LegendreDGBaseFunctionFactory<
+        ScalarFunctionSpaceType, polOrd> fac(type);
       return new BaseFunctionSetType(fac);
     }
   };
