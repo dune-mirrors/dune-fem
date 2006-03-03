@@ -127,14 +127,6 @@ namespace Dune {
     gradPhi *= 0.;
     storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_); 
     gradPhi[util_.component(baseFunct)] = jTmp_[0];
-
-    /*
-    for (int i = 0; i < FunctionSpaceImp::DimDomain; ++i) {
-      diffVar1_[0] = i;
-      storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_); 
-      gradPhi[util_.component(baseFunct)][i] = jTmp_[0];
-    }
-    */
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
