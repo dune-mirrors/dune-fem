@@ -197,10 +197,22 @@ void adapt(GridType& grid,
 
   Iterator endit = space.end();
 
-  for(; it != endit ; ++it) {
-    grid.mark(step,it);
+  int mark = step;
+  int count = 1;
+  if(step < 0) 
+  {
+    mark = -1;
+    count = std::abs(step);
   }
-  adop.adapt();
+
+  for(int i=0; i<count; ++i)
+  {
+    for(; it != endit ; ++it) {
+      grid.mark(mark,it);
+    } 
+    adop.adapt();
+  }
+  
   /*
   DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
   grid.preAdapt();
