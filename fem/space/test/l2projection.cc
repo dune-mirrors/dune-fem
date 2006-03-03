@@ -195,7 +195,7 @@ public:
 // ********************************************************************
 double algorithm (GridType& grid, int turn )
 {
-   IndexSetType iset ( grid , grid.maxLevel () );
+   IndexSetType iset ( grid );
    GridPartType part ( grid, iset );
 
    DiscreteFunctionSpaceType linFuncSpace ( part );

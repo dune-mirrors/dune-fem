@@ -49,7 +49,8 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
+  // typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
+typedef AdaptiveLeafIndexSet<GridType> IndexSetType;
 typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -69,8 +70,7 @@ typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 typedef AdaptOperator<GridType,
-		      RestProlOperator<DiscreteFunctionType>,
-		      DofManagerType > ADOperatorType;
+		      RestProlOperator<DiscreteFunctionType> > ADOperatorType;
 
 // ***********************************************************
 //! the exact solution to the problem for EOC calculation 
@@ -187,15 +187,13 @@ public:
 // ********************************************************************
 void adapt(GridType& grid,
 	   DiscreteFunctionType& solution,int step) {
-  DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
-
   typedef DiscreteFunctionType::FunctionSpaceType::Traits::IteratorType Iterator;
   const DiscreteFunctionType::FunctionSpaceType
     & space = solution.getFunctionSpace();
   Iterator it = space.begin();  
 
   RestProlOperator<DiscreteFunctionType> rp(solution,it->geometry().type());
-  ADOperatorType adop(grid,dm,rp);
+  ADOperatorType adop(grid,rp);
 
   Iterator endit = space.end();
   for(; it != endit ; ++it) {
@@ -203,6 +201,7 @@ void adapt(GridType& grid,
   }
   adop.adapt();
   /*
+  DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
   grid.preAdapt();
   dm.resizeForRestrict();
   grid.globalRefine(step);
@@ -270,7 +269,7 @@ int main (int argc, char **argv)
   GridType grid ( macroGridName.c_str() );
 #endif
 
-  IndexSetType iset ( grid , grid.maxLevel () );
+  IndexSetType iset ( grid );
   GridPartType part ( grid, iset );
   DiscreteFunctionSpaceType linFuncSpace ( part );
   DiscreteFunctionType solution ( "sol", linFuncSpace );
