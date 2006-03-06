@@ -42,9 +42,10 @@ namespace Dune{
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
   typedef CachingQuadrature<GridType,0> QuadratureType;
+   typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
 public:  
   //! Constructor
-  RestProlOperator ( DiscreteFunctionType & df , GeometryType eltype ) : 
+  RestProlOperator ( DiscreteFunctionType & df ) : 
     df_ (df) , quadord_(2*df.getFunctionSpace().polynomOrder()),
     weight_(-1.0)
   {
@@ -68,22 +69,17 @@ public:
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       vati_.getBaseFunctionSet();
     const int nop=quad.nop();
+    const Geometry& geometryInFather = son.geometryInFather();
     if(initialize) {
-      for(int qP = 0; qP < nop; qP++) {
-	sohn_.evaluate(son,quad,qP,ret);
-	for(int i=0; i<vati_.numDofs(); i++) {
-	  baseset.eval(i,son.geometryInFather().global(quad.point(qP)),phi);
-	  vati_[i] = quad.weight(qP) * weight * (ret * phi) ;
-	}
+      for(int i=0; i<vati_.numDofs(); i++) {
+	vati_[i] = 0;
       }
     }
-    else {
-      for(int qP = 0; qP < nop; qP++) {
-	sohn_.evaluate(son,quad,qP,ret);
-	for(int i=0; i<vati_.numDofs(); i++) {
-	  baseset.eval(i,son.geometryInFather().global(quad.point(qP)),phi);
-	  vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
-	}
+    for(int qP = 0; qP < nop; qP++) {
+      sohn_.evaluate(son,quad,qP,ret);
+      for(int i=0; i<vati_.numDofs(); i++) {
+	baseset.eval(i,geometryInFather.global(quad.point(qP)),phi);
+	vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
       }
     }
   }
@@ -103,10 +99,10 @@ public:
     QuadratureType quad(son,quadord_);
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       sohn_.getBaseFunctionSet();
+    const Geometry& geometryInFather = son.geometryInFather();
     const int nop=quad.nop();
     for(int qP = 0; qP < nop; qP++) {
-      vati_.evaluateLocal(father,
-			  son.geometryInFather().global(quad.point(qP)),ret);
+      vati_.evaluateLocal(father,geometryInFather.global(quad.point(qP)),ret);
       for(int i=0; i<sohn_.numDofs(); i++) {
 	baseset.eval(i,quad,qP,phi);
 	sohn_[i] += quad.weight(qP) * (ret * phi) ;
@@ -152,7 +148,7 @@ private:
   typedef CachingQuadrature<GridType,0> QuadratureType;
 public:  
   //! Constructor
-  RestProlOperator ( DiscreteFunctionType & df , GeometryType eltype ) : 
+  RestProlOperator ( DiscreteFunctionType & df ) : 
     df_ (df),
     weight_(-1.0)
   {}

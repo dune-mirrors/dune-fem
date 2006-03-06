@@ -1,27 +1,9 @@
-#ifndef DIM_OF_WORLD 
-static const int dimw = 2;
-#else
-static const int dimw = DIM_OF_WORLD;
-#endif
-
-#ifndef DIM
-static const int dimp = 2;
-#else
-static const int dimp = DIM;
-#endif
-
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
-
-#define AGRID 1
+#include "../../macrogridparser/gridtype.hh"
 
 using namespace Dune;
-
-#if AGRID  
-#include <dune/grid/albertagrid.hh>
-typedef AlbertaGrid< dimp, dimw > GridType;
-#endif
 
 #include <dune/fem/discreteoperatorimp.hh>
 #include <dune/fem/lagrangebase.hh>
@@ -55,7 +37,7 @@ typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef FunctionSpace < double , double, dimp , 1 > FuncSpace;
+typedef FunctionSpace < double , double, GRIDDIM , 1 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -190,27 +172,28 @@ void adapt(GridType& grid,
   typedef DiscreteFunctionType::FunctionSpaceType::Traits::IteratorType Iterator;
   const DiscreteFunctionType::FunctionSpaceType
     & space = solution.getFunctionSpace();
-  Iterator it = space.begin();  
 
-  RestProlOperator<DiscreteFunctionType> rp(solution,it->geometry().type());
+  RestProlOperator<DiscreteFunctionType> rp(solution);
   ADOperatorType adop(grid,rp);
-
-  Iterator endit = space.end();
 
   int mark = step;
   int count = 1;
+  
   if(step < 0) 
   {
     mark = -1;
     count = std::abs(step);
   }
-
+  
   for(int i=0; i<count; ++i)
   {
+    Iterator it = space.begin();  
+    Iterator endit = space.end();
     for(; it != endit ; ++it) {
       grid.mark(mark,it);
     } 
     adop.adapt();
+    std::cout << "Coarsening/Refining..." << std::endl;
   }
   
   /*
@@ -239,7 +222,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
 
 #if HAVE_GRAPE
   // if Grape was found, then display last solution 
-  if(turn > 0) {
+  if(0 && turn > 0) {
     GrapeDataDisplay < GridType > grape(grid); 
     grape.dataDisplay( solution );
   }
@@ -269,37 +252,32 @@ int main (int argc, char **argv)
   }
   int ml = atoi( argv[1] );
   double* error = new double[ml];
-  char tmp[16]; sprintf(tmp,"%d",dimp);
-  std::string macroGridName (tmp); 
-  macroGridName += "dgrid.al";
+  char tmp[100]; 
+  sprintf(tmp,"%ddgrid.dgf",GRIDDIM);
+  GridType* grid=MacroGridParser().generate<GridType>(tmp);
 
-#if AGRID 
-  const int step = 2;
-#endif
-#if AGRID
-  GridType grid ( macroGridName.c_str() );
-#endif
+  const int step = refStepsForHalf;
 
-  IndexSetType iset ( grid );
-  GridPartType part ( grid, iset );
+  IndexSetType iset ( *grid );
+  GridPartType part ( *grid, iset );
   DiscreteFunctionSpaceType linFuncSpace ( part );
   DiscreteFunctionType solution ( "sol", linFuncSpace );
   solution.clear();
   std::cout << "------------    Refining:" << std::endl;
-  for(int i=0; i<ml; i+=step)
+  for(int i=0; i<ml; i+=1)
   {
-    error[i] = algorithm ( grid , solution, step, (i==ml-1));
+    error[i] = algorithm ( *grid , solution, step, (i==ml-1));
     if (i>0) {
-      double eoc = log( error[i-step]/error[i]) / M_LN2; 
+      double eoc = log( error[i-1]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
     }
   }
   std::cout << "------------   Coarsening:" << std::endl;
-  for(int i=ml-1; i>=0; i-=step)
+  for(int i=ml-1; i>=0; i-=1)
   {
-    error[i] = algorithm ( grid , solution,-step, 1);
+    error[i] = algorithm ( *grid , solution,-step, 1);
     if (i<ml-1) {
-      double eoc = log( error[i+step]/error[i]) / M_LN2; 
+      double eoc = log( error[i+1]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
     }
   }
