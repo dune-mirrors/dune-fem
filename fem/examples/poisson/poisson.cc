@@ -53,7 +53,6 @@ static const int refinestep = 1;
 
 #include "laplace.hh"
 
-#include <dune/grid/common/leafindexset.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
@@ -229,7 +228,7 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
       enum { dim = EntityType :: dimension };
       GeometryType t = en.geometry().type();
       
-      if( (t == simplex) || (t == triangle) || (t == tetrahedron ) )
+      if( t.isSimplex() )
       {
         static ReferenceSimplex< coordType, dim > refElem; 
         int face = it.numberInSelf();
@@ -242,8 +241,8 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
           dit[row] = 0.0;
         }
       }
-      if( en.geometry().type() == cube )
-      {
+      if( t.isCube() )
+          {
         static ReferenceCube < coordType, dim > refElem; 
         int face = it.numberInSelf();
         int novx = refElem.size( face, 1 , dim );
