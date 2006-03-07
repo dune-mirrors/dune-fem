@@ -129,15 +129,17 @@ class L2Projection
     Iterator endit = space.end();
 
     // Get quadrature rule
-    CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
+    CachingQuadrature<GridType,0> quad(*it, 2*polOrd);
 
-    for( ; it != endit ; ++it) {
+   for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
       const typename FunctionSpaceType::BaseFunctionSetType & baseset =
         lf.getBaseFunctionSet();
-      for(int i=0; i<lf.numDofs(); i++) {
-        for(int qP = 0; qP < quad.nop(); qP++) {
-          f.evaluate((*it).geometry().global(quad.point(qP)), ret);
+      const typename GridType::template Codim<0>::Entity::Geometry& 
+	itGeom = (*it).geometry();
+      for(int qP = 0; qP < quad.nop(); qP++) {
+	f.evaluate(itGeom.global(quad.point(qP)), ret);
+	for(int i=0; i<lf.numDofs(); i++) {
           baseset.eval(i,quad,qP,phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
@@ -268,7 +270,7 @@ int main (int argc, char **argv)
     grid.globalRefine(step);
     error[i] = algorithm ( grid , 0);
     if (i>0) {
-      double eoc = log( error[i-1]/error[i]) / M_LN2; 
+      double eoc = log( error[i-step]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
     }
   }
