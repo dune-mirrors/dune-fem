@@ -1,6 +1,11 @@
 #ifndef DUNE_DISCONTINUOUSGALERKINSPACE_HH
 #define DUNE_DISCONTINUOUSGALERKINSPACE_HH
 
+/*************************************************************
+1) static method to create a space<dimRange> from a given Grid
+ *************************************************************/
+
+
 #include <vector>
 
 #include <dune/grid/common/grid.hh>
