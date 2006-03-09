@@ -1,5 +1,6 @@
 #include <cassert>
 #include <dune/grid/common/referenceelements.hh>
+#include "../basefunctions/storageinterface.hh"
 
 namespace Dune {
 
@@ -125,45 +126,5 @@ namespace Dune {
                                                GeometryType geo2)
   {
     return geo1 == geo2;
-    //return true; 
-    /*
-    if( geo1 != geo2 )
-    {
-      std::cout << "test for dim = " << dim << "\n";
-      std::cout << geo1 << " not equals " << geo2 << "\n";
-    }
-    return geo1 == geo2;
-    */
-    /*
-    // Assume here that the geometries belong to the same dimension
-
-    switch (geo1) {
-    case vertex:
-      return (geo2 == vertex || geo2 == simplex || geo2 == cube);
-    case line:
-      return (geo2 == line || geo2 == simplex || geo2 == cube);
-    case triangle:
-      return (geo2 == triangle || geo2 == simplex);
-    case quadrilateral:
-      return (geo2 == quadrilateral || geo2 == cube);
-    case tetrahedron:
-      return (geo2 == tetrahedron || geo2 == simplex);
-    case pyramid:
-      return geo2 == pyramid;
-    case prism:
-      return geo2 == prism;
-    case hexahedron:
-      return (geo2 == hexahedron || geo2 == cube);
-    case simplex:
-      return (geo2 == simplex || geo2 == triangle || geo2 == tetrahedron
-              || geo2 == line || (dim-1 == 1 && geo2 == cube));
-    case cube:
-      return (geo2 == cube || geo2 == quadrilateral || geo2 == hexahedron
-              || geo2 == line || (dim-1 == 1 && geo2 == simplex));
-    default:
-      assert(false);
-    }
-    return false;
-    */
   }  
 } // end namespace Dune
