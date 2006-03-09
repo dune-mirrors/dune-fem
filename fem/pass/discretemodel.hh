@@ -133,6 +133,20 @@ namespace Dune {
                 RangeType& s) 
     { asImp().source(); }
 
+    //! \brief Passes the active entity to the model.
+    //! This can be used, to set local functions required as data function
+    //! in the model.
+    //! \param en active Entity 
+    void setEntity(EntityType& en) 
+    { asImp().setEntity(en); }
+    //! \brief Passes the active neigbor entity to the model.
+    //! This can be used, to set local functions required as data functions 
+    //! in the model.
+    //! \param en active neighbor Entity 
+    void setNeighbor(EntityType& nb) 
+    { asImp().setNeighbor(nb); }
+
+
   private:
     DiscreteModelType& asImp() { return static_cast<DiscreteModelType&>(*this); }
     const DiscreteModelType& asImp() const { return static_cast<const DiscreteModelType&>(*this); }
@@ -208,6 +222,14 @@ namespace Dune {
       assert(!this->hasSource()); 
       s = 0.0;
     }
+
+    //! Empty implementation 
+    void setEntity(EntityType& en)
+    { }
+
+    //! Empty implementation 
+    void setNeigbor(EntityType& nb)
+    { }
   };
 
 }  // end namespace Dune

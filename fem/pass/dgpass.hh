@@ -202,7 +202,9 @@ namespace Dune {
 
       double dtLocal = 0.0;
       double minvol = vol; 
+      double nbvol;
       for (; nit != endnit; ++nit) {
+	double wspeedS = 0.0;
 	int twistSelf = twistUtil_.twistInSelf(nit); 
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
                                          FaceQuadratureType::INSIDE);
@@ -224,13 +226,14 @@ namespace Dune {
               // spc_.getBaseFunctionSet(nb);
 
 	    double massVolNbinv;
-	    double nbvol = volumeElement(nb, volQuad,massVolNbinv);
+	    nbvol = volumeElement(nb, volQuad,massVolNbinv);
 	    if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuadInner_nop; ++l) {
               double dtLocalS = 
                 caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
                                       l, valEn_, valNeigh_);
 	      dtLocal += dtLocalS*faceQuadInner.weight(l);
+	      wspeedS += dtLocalS*faceQuadInner.weight(l);
 
               for (int i = 0; i < updEn_numDofs; ++i) {
                 updEn[i] -= 
@@ -246,10 +249,13 @@ namespace Dune {
         } // end if neighbor
 
         if (nit.boundary()) {
+	  nbvol = vol;
+	  caller_.setNeighbor(en);
           for (int l = 0; l < faceQuadInner_nop; ++l) {
             double dtLocalS = 
               caller_.boundaryFlux(nit, faceQuadInner, l, source_);
 	    dtLocal += dtLocalS*faceQuadInner.weight(l);
+	    wspeedS += dtLocalS*faceQuadInner.weight(l);
                     
             for (int i = 0; i < updEn_numDofs; ++i) {
               updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_)
@@ -257,11 +263,17 @@ namespace Dune {
             }
           }
         } // end if boundary
+	if (wspeedS>2.*std::numeric_limits<double>::min()) {
+	  double minvolS = std::min(vol,nbvol);
+	  dtMin_ = std::min(dtMin_,minvolS/wspeedS);
+	}
       }
+      /*
       if (dtLocal>2.*std::numeric_limits<double>::min()) {
 	dtLocal = minvol/dtLocal;
 	if (dtLocal < dtMin_) dtMin_ = dtLocal;
       }
+      */
     }
 
   private:

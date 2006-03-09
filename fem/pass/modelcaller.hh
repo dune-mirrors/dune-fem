@@ -63,11 +63,13 @@ namespace Dune {
     void setEntity(Entity& en) 
     {
       data_->setSelf(en);
+      problem_.setEntity(en);
     }
 
-    void setNeighbor(Entity& en) 
+    void setNeighbor(Entity& nb) 
     {
-      data_->setNeighbor(en);
+      data_->setNeighbor(nb);
+      problem_.setNeighbor(nb);
     }
 
     void setTime(double time) {
