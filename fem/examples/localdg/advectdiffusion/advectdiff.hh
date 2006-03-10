@@ -321,7 +321,8 @@ namespace Dune {
 
   public:
     DGLimitedAdvectionOperator(GridType& grid,
-			       const NumFluxType& numf) :
+			       const NumFluxType& numf,
+			       DomainType& upwind) :
       grid_(grid),
       numflux_(numf),
       model_(numf.model()),
@@ -342,9 +343,11 @@ namespace Dune {
     }
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
-      // upwind_*=(-1.);
     }
-    void switchupwind() {upwind_*=(-1.);}
+    void limit(const DestinationType& arg,DestinationType& dest) const {
+      pass1_(arg,dest);
+    }
+    void switchupwind() {}
     const SpaceType& space() const {
       return space2_;
     }

@@ -11,6 +11,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
 
+#include <dune/quadrature/barycenter.hh>
+
 #include <vector>
 
 namespace Dune {
@@ -35,20 +37,23 @@ namespace Dune {
     
     // Types from the traits
     typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
-    typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteModelType::Traits::VolumeQuadratureType 
+    VolumeQuadratureType;
+    typedef typename DiscreteModelType::Traits::FaceQuadratureType 
+    FaceQuadratureType;
+    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType 
+    DiscreteFunctionSpaceType;
     
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType 
+    JacobianRangeType;
     
     // Types extracted from the underlying grids
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
     typedef typename GridType::template Codim<0>::Geometry Geometry;
-    
     
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
@@ -81,8 +86,7 @@ namespace Dune {
       source_(0.0),
       identity_(1.0),
       grads_(0.0),
-      diffVar_(),
-      twistUtil_(spc.grid())
+      diffVar_()
     {}
     
     //! Destructor
@@ -119,73 +123,81 @@ namespace Dune {
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType 
 	BaseFunctionSetType;
-      
+      GeometryType geom = en.geometry().type();
       //- statements
       caller_.setEntity(en);
+      // get U on entity
       LocalFunctionType uEn = Element<0>::get(*arg_)->localFunction(en);
-      LocalFunctionType updEn = dest_->localFunction(en);
-      GeometryType geom = en.geometry().type();
+      // get local funnction for limited values
+      LocalFunctionType limitEn = dest_->localFunction(en);
+      BaryCenterQuad<double,DomainType,0> center0(geom);
+      BaryCenterQuad<double,DomainType,1> center1(geom);
       const IndexSetType& iset = spc_.indexSet();
-      const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
-      DofConversionUtility< PointBased > dofConversion(dimRange);
-      int numBasis=updEn.numDofs()/dimRange;
-      // ************************************************
-      RangeType lambda(1.),ubar;
-      for (int r=0;r<dimRange;r++) {
-	int dofIdx = dofConversion.combinedDof(0,r);
-	updEn[dofIdx]=uEn[dofIdx];
-	ubar[r]=updEn[dofIdx];
+      const BaseFunctionSetType& bsetEn = limitEn.getBaseFunctionSet();
+      Dune::DofConversionUtility< PointBased > dofConversion(dimRange);
+
+      // number of sclar base functions
+      int numBasis=limitEn.numDofs()/dimRange;
+      
+      double areae = volumeElement(en);
+
+      // get value of U in barycenter
+      RangeType centerUe(0);
+      uEn.evaluateLocal(en,center0.point(0),centerUe);
+
+      FieldVector<bool,dimRange> limit(false);
+
+      IntersectionIterator endnit = en.iend();
+      IntersectionIterator nit = en.ibegin();
+      for (; nit != endnit; ++nit) {
+	if (nit.neighbor()) {
+          // get neighbor entity
+	  EntityType& nb = *nit.outside(); 
+	  double arean = volumeElement(nb);
+	  // get local function for U on neighbor
+	  LocalFunctionType uNeigh =Element<0>::get(*arg_)->localFunction(nb);
+	  // get U in barycenter of neighbor
+	  RangeType centerUn(0);
+	  uNeigh.evaluateLocal(nb,center0.point(0),centerUn);
+	  // get U on interface
+	  RangeType faceUe(0);
+	  RangeType faceUn(0);
+	  uEn.evaluateLocal(en
+			    ,*nit.intersectionSelfLocal().
+			    global(center1.point(0))
+			    ,faceUe);
+	  uNeigh.evaluateLocal(nb
+			       ,*nit.intersectionNeighborLocal().
+			       global(center1.point(0))
+			       ,faceUn);
+	  RangeType jump = faceUn;
+	  jump -= faceUe;
+	  jump *= 1.0;
+	  for (int r=0;r<dimRange;r++) {
+	    double jumpr = jump[r];
+	    if (1) 
+	      limit[r] = true;
+	  }
+	}
       }
-      if (ubar[0]<1e-4) {
-	for (int r=0;r<dimRange;r++) {
+      for (int r=0;r<dimRange;r++) {
+	if (limit[r]) {
+	  int dofIdx = dofConversion.combinedDof(0,r);
+	  limitEn[dofIdx] = uEn[dofIdx];
+	  for (int i=1;i<numBasis;i++) {
+	    int dofIdx = dofConversion.combinedDof(i,r);
+	    limitEn[dofIdx] = 0.;
+	  }
+	}
+	else {
 	  for (int i=0;i<numBasis;i++) {
 	    int dofIdx = dofConversion.combinedDof(i,r);
-	    updEn[dofIdx] = 0.;
+	    limitEn[dofIdx] = uEn[dofIdx];
 	  }
-	}
-      } else {
-	bool modified=false;
-	RangeType U;
-	DomainType corner[3];
-	corner[0][0] = 0.;
-	corner[0][1] = 0.;
-	corner[1][0] = 1.;
-	corner[1][1] = 0.;
-	corner[2][0] = 0.;
-	corner[2][1] = 1.;
-	for (int l=0;l<3;l++) {
-	  uEn.evaluateLocal(en, corner[l], U);
- 	  if (U[0]<0.) {
-	    double lambdal=-ubar[0]/(U[0]-ubar[0]);
-	    if (lambdal<0. || lambdal>1.) {
-	      std::cerr << "LAMBDA: El(" << l << ") " 
-			<< lambdal << " " << ubar[0] << " " 
-			<< U[0] << " " << U[0]-ubar[0] << std::endl;
-	    }
-	    lambda[0]=(lambda[0]<lambdal)?lambda[0]:lambdal;
-	    modified=true;
-	  }
-	}
-	for (int i=1;i<numBasis;i++) {
-	  int dofIdx0 = dofConversion.combinedDof(i,0);
-	  updEn[dofIdx0] = lambda[0]*uEn[dofIdx0];
-	  for (int r=1;r<dimRange;r++) {
-	    int dofIdx = dofConversion.combinedDof(i,r);
-	    if (!modified) 
-	      updEn[dofIdx] = uEn[dofIdx];
-	    else 
-	      updEn[dofIdx] = updEn[dofIdx0]*ubar[r]/ubar[0];     
-	  }
-	}
-      }
-      for (int r=0;r<dimRange;r++) {
-	for (int i=0;i<numBasis;i++) {
-	  int dofIdx = dofConversion.combinedDof(i,r);
-	  assert(uEn[dofIdx]==uEn[dofIdx]);
-	  assert(updEn[dofIdx]==updEn[dofIdx]);
 	}
       }
     }
+
     
   private:
     LimitDGPass();
@@ -193,6 +205,15 @@ namespace Dune {
     LimitDGPass& operator=(const LimitDGPass&);
     
   private:
+    double volumeElement(const EntityType& en) const {
+      BaryCenterQuad<double,DomainType,0> center(en);
+      double result = 0;
+      for (int qp = 0; qp < center.nop(); ++qp) {
+        result +=
+          center.weight(qp) * en.geometry().integrationElement(center.point(qp));
+      }
+      return result;
+    }
 
     mutable DiscreteModelCallerType caller_;
     
@@ -211,7 +232,6 @@ namespace Dune {
     mutable RangeType identity_;
     mutable DomainType grads_;
     FieldVector<int, 0> diffVar_;
-    TwistUtility<GridType> twistUtil_;
   };
 
   }
