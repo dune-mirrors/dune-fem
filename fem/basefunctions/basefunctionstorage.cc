@@ -7,13 +7,11 @@ namespace Dune {
   //- class SimpleStorage
   template <class FunctionSpaceImp>
   StorageBase<FunctionSpaceImp>::StorageBase(const FactoryType& factory) :
-    // storage_(),
     storageSize_(factory.numBaseFunctions()),
     storage_(new BaseFunctionType*[factory.numBaseFunctions()]),
     diffVar1_(0)
   {
     for (int i = 0; i < factory.numBaseFunctions(); ++i) {
-      // storage_.push_back(factory.baseFunction(i));
       storage_[i]=factory.baseFunction(i);
     }
   }
@@ -21,7 +19,7 @@ namespace Dune {
   template <class FunctionSpaceImp>
   StorageBase<FunctionSpaceImp>::~StorageBase()
   {
-    for (size_t i = 0; i < storageSize_; ++i) {
+    for (int i = 0; i < storageSize_; ++i) {
       delete storage_[i];
       storage_[i] = 0;
     }
@@ -31,7 +29,6 @@ namespace Dune {
   int StorageBase<FunctionSpaceImp>::numBaseFunctions() const 
   {
     return storageSize_;
-    // return storage_.size();
   }
 
   template <class FunctionSpaceImp>
