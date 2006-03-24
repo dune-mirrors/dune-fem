@@ -132,6 +132,7 @@ public:
       {
         int idx = (*it).second;
         assert( idx >= 0 );
+        // normaly one would check >= 0, but does not work for UGGrid
         if( (idx < actSize) && (idx > 0) )
         {
           // if id is not in the new set, then its a hole 
