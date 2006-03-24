@@ -17,15 +17,13 @@ using namespace Dune;
 #define LARGE 1.0E308
 
 static const int dim = DUNE_PROBLEM_DIM; 
-static const int dimworld = DUNE_WORLD_DIM; 
-
 
 #include <dune/fem/dfadapt.hh>
 #include <dune/fem/lagrangebase.hh>
 #include <dune/fem/dfadapt.hh>
 #include <dune/common/stack.hh>
 
-#include <dune/grid/common/leafindexset.hh>
+//#include <../../../space/dgspace/dgleafindexset.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/io/file/grapedataio.hh>
@@ -44,8 +42,10 @@ typedef GridType                                        GR_GridType;
 typedef DgType::SpaceType                               GR_FunctionSpaceType;
 typedef DofManager<GR_GridType>                         GR_DofManagerType;
 typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType;
-typedef DgType::IndexSetType                            GR_IndexSetType;
 typedef DgType::GridPartType                            GR_GridPartType;
+//typedef DefaultGridPart<GR_GridType,typename DGGridPartType::IndexSetType> GR_GridPartType; 
+typedef GR_GridPartType::IndexSetType GR_IndexSetType;
+
 typedef DgType::DiscreteFunctionSpaceType               GR_DiscFuncSpaceType;
 typedef DgType::DestinationType                         GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType > GrapeDispType;
