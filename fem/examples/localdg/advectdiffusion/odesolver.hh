@@ -1,3 +1,6 @@
+#ifndef RUNGEKUTTA_ODE_SOLVER_HH
+#define RUNGEKUTTA_ODE_SOLVER_HH
+
 #include <iostream>
 #include <cmath>
 #include "../../../misc/timeutility.hh"
@@ -331,3 +334,4 @@ public:
 };
 
 }
+#endif
