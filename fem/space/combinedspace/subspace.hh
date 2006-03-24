@@ -9,7 +9,7 @@
 #include "../common/discretefunctionspace.hh"
 #include "../common/basefunctions.hh"
 #include "../common/dofmapperinterface.hh"
-#include "dofstorage.hh"
+#include "../common/dofstorage.hh"
 
 namespace Dune {
 
