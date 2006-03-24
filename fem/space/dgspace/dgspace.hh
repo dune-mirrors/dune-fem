@@ -14,8 +14,8 @@
 
 //- local includes 
 #include <../common/discretefunctionspace.hh>
-#include "../basefunctions/basefunctionsets.hh"
-#include "../basefunctions/basefunctionstorage.hh"
+#include "../../basefunctions/basefunctionsets.hh"
+#include "../../basefunctions/basefunctionstorage.hh"
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
