@@ -32,8 +32,9 @@ namespace Dune {
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
-    typedef DefaultGridIndexSet<GridType, LevelIndex> IndexSetType;
-    typedef DefaultGridPart<GridType, IndexSetType> GridPartType;
+    // choose leaf level for iteration  
+    typedef LeafGridPart<GridType> GridPartType;
+
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
     typedef CachingQuadrature<GridType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridType,1> FaceQuadratureType;
@@ -57,7 +58,6 @@ namespace Dune {
 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
     //typedef typename Traits::SingleFunctionSpaceType SingleFunctionSpaceType;
     //typedef typename Traits::FunctionSpaceType FunctionSpaceType;
@@ -90,7 +90,6 @@ namespace Dune {
 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
