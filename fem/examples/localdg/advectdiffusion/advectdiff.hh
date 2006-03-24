@@ -2,19 +2,19 @@
 #ifndef DUNE_DGOPERATORS_HH
 #define DUNE_DGOPERATORS_HH
 
+// Dune includes
+#include <dune/common/utility.hh>
+#include <dune/grid/common/gridpart.hh>
+#include <dune/quadrature/fixedorder.hh>
+
 #include "../../../pass/dgpass.hh"
 #include "../../../pass/discretemodel.hh"
 #include "../../../pass/selection.hh"
 #include "../../../misc/timeutility.hh"
 #include "../../../space/dgspace.hh"
-
-// Dune includes
-#include <dune/common/utility.hh>
-#include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
-#include <dune/grid/common/gridpart.hh>
-#include <dune/quadrature/fixedorder.hh>
+#include "../../../space/combinedspace.hh"
+#include "../../../discretefunction/dfadapt.hh"
+#include "../../../discretefunction/adaptivefunction.hh"
 
 #include "discretemodels.hh"
 #include "limitpass.hh"
@@ -55,10 +55,7 @@ namespace Dune {
     typedef Destination2Type DestinationType;
     typedef Space2Type SpaceType;
 
-    typedef typename Traits1::IndexSetType IndexSet1Type;
-    typedef typename Traits2::IndexSetType IndexSet2Type;
-    typedef typename Traits1::GridPartType GridPart1Type;
-    typedef typename Traits2::GridPartType GridPart2Type;
+    typedef typename Traits1::GridPartType GridPartType;
 
   public:
     DGAdvectionDiffusionOperator(GridType& grid,
@@ -68,16 +65,9 @@ namespace Dune {
       grid_(grid),
       model_(numf.model()),
       numflux_(numf),
-      iset1_(grid_,grid_.maxLevel()),
-      iset2_(grid_,grid_.maxLevel()),
-      gridPart1_(grid_, iset1_),
-      gridPart2_(grid_, iset2_),
-      //singleSpace1_(gridPart1_),
-      //singleSpace2_(gridPart2_),
-      //space1_(singleSpace1_),
-      //space2_(singleSpace2_),
-      space1_(gridPart1_),
-      space2_(gridPart2_),
+      gridPart_(grid_),
+      space1_(gridPart_),
+      space2_(gridPart_),
       problem1_(upwind_,model_,numflux_),
       problem2_(upwind_,model_,numflux_),
       pass1_(problem1_, pass0_, space1_),
@@ -100,12 +90,7 @@ namespace Dune {
     GridType& grid_;
     const Model& model_;
     const NumFluxType& numflux_;
-    IndexSet1Type iset1_;
-    IndexSet2Type iset2_;
-    GridPart1Type gridPart1_;
-    GridPart2Type gridPart2_;
-    //SingleSpace1Type singleSpace1_;
-    //SingleSpace2Type singleSpace2_;
+    GridPartType gridPart_;
     Space1Type space1_;
     Space2Type space2_;
     DiscreteModel1Type problem1_;
@@ -141,10 +126,7 @@ namespace Dune {
     typedef Destination2Type DestinationType;
     typedef Space2Type SpaceType;
 
-    typedef typename Traits2::IndexSetType IndexSet2Type;
-    typedef typename Traits2::GridPartType GridPart2Type;
-    typedef IndexSet2Type IndexSetType;
-    typedef GridPart2Type GridPartType;
+    typedef typename Traits2::GridPartType GridPartType;
     typedef Space2Type DiscreteFunctionSpaceType;
 
   public:
@@ -153,11 +135,8 @@ namespace Dune {
       grid_(grid),
       model_(numf.model()),
       numflux_(numf),
-      iset2_(grid_,grid_.maxLevel()),
-      gridPart2_(grid_, iset2_),
-      //singleSpace2_(gridPart2_),
-      //space2_(singleSpace2_),
-      space2_(gridPart2_),
+      gridPart_(grid_),
+      space2_(gridPart_),
       problem2_(model_,numflux_),
       pass2_(problem2_, pass0_, space2_) 
     {}
@@ -175,9 +154,7 @@ namespace Dune {
     GridType& grid_;
     const Model& model_;
     const NumFluxType& numflux_;
-    IndexSet2Type iset2_;
-    GridPart2Type gridPart2_;
-    // SingleSpace2Type singleSpace2_;
+    GridPartType gridPart_;
     Space2Type space2_;
     DiscreteModel2Type problem2_;
     Pass0Type pass0_;
@@ -218,10 +195,7 @@ namespace Dune {
     typedef Destination2Type DestinationType;
     typedef Space2Type SpaceType;
 
-    typedef typename Traits1::IndexSetType IndexSet1Type;
-    typedef typename Traits2::IndexSetType IndexSet2Type;
-    typedef typename Traits1::GridPartType GridPart1Type;
-    typedef typename Traits2::GridPartType GridPart2Type;
+    typedef typename Traits1::GridPartType GridPartType;
 
   public:
     DGDiffusionOperator(GridType& grid,
@@ -231,16 +205,9 @@ namespace Dune {
       grid_(grid),
       model_(numf.model()),
       numflux_(numf),
-      iset1_(grid_,grid_.maxLevel()),
-      iset2_(grid_,grid_.maxLevel()),
-      gridPart1_(grid_, iset1_),
-      gridPart2_(grid_, iset2_),
-      //singleSpace1_(gridPart1_),
-      //singleSpace2_(gridPart2_),
-      //space1_(singleSpace1_),
-      //space2_(singleSpace2_),
-      space1_(gridPart1_),
-      space2_(gridPart2_),
+      gridPart_(grid_),
+      space1_(gridPart_),
+      space2_(gridPart_),
       problem1_(upwind_,model_,numflux_),
       problem2_(upwind_,model_,numflux_),
       pass1_(problem1_, pass0_, space1_),
@@ -263,12 +230,7 @@ namespace Dune {
     GridType& grid_;
     const Model& model_;
     const NumFluxType& numflux_;
-    IndexSet1Type iset1_;
-    IndexSet2Type iset2_;
-    GridPart1Type gridPart1_;
-    GridPart2Type gridPart2_;
-    //SingleSpace1Type singleSpace1_;
-    //SingleSpace2Type singleSpace2_;
+    GridPartType gridPart_;
     Space1Type space1_;
     Space2Type space2_;
     DiscreteModel1Type problem1_;
@@ -314,10 +276,7 @@ namespace Dune {
     typedef Destination2Type DestinationType;
     typedef Space2Type SpaceType;
 
-    typedef typename Traits1::IndexSetType IndexSet1Type;
-    typedef typename Traits2::IndexSetType IndexSet2Type;
-    typedef typename Traits1::GridPartType GridPart1Type;
-    typedef typename Traits2::GridPartType GridPart2Type;
+    typedef typename Traits1::GridPartType GridPartType;
 
   public:
     DGLimitedAdvectionOperator(GridType& grid,
@@ -326,12 +285,9 @@ namespace Dune {
       grid_(grid),
       numflux_(numf),
       model_(numf.model()),
-      iset1_(grid_,grid_.maxLevel()),
-      iset2_(grid_,grid_.maxLevel()),
-      gridPart1_(grid_, iset1_),
-      gridPart2_(grid_, iset2_),
-      space1_(gridPart1_),
-      space2_(gridPart2_),
+      gridPart_(grid_),
+      space1_(gridPart_),
+      space2_(gridPart_),
       problem1_(model_),
       problem2_(model_,numf),
       pass1_(problem1_, pass0_, space1_),
@@ -356,12 +312,7 @@ namespace Dune {
     GridType& grid_;
     const Model& model_;
     const NumFluxType& numflux_;
-    IndexSet1Type iset1_;
-    IndexSet2Type iset2_;
-    GridPart1Type gridPart1_;
-    GridPart2Type gridPart2_;
-    //SingleSpace1Type singleSpace1_;
-    //SingleSpace2Type singleSpace2_;
+    GridPartType gridPart_;
     Space1Type space1_;
     Space2Type space2_;
     DiscreteModel1Type problem1_;
