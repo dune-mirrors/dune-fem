@@ -9,10 +9,10 @@
 
 //- Local includes
 #include "../common/discretefunctionspace.hh"
-#include "../../basefunctions/common/basefunctions.hh"
 #include "../common/dofmapperinterface.hh"
+#include "../common/dofstorage.hh"
+#include "../../basefunctions/common/basefunctions.hh"
 #include "subspace.hh"
-#include "dofstorage.hh"
 
 namespace Dune {
   
