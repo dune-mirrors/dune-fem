@@ -61,17 +61,19 @@ void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace,
 GrapeDispType * readGrid(const char * path, const char * filename, 
                          double & time , int ntime, int myRank )
 {
-
 #if SGRID
   GR_GridType * grid = new GR_GridType ();
   grid->globalRefine(9);
 #else
 
+  GR_GridType * grid = 0 ;
+  /*
   GR_GridType * grid = new GR_GridType (
 #ifdef _ALU3DGRID_PARALLEL_
   MPI_COMM_WORLD 
 #endif
       );
+      */
 
 #endif
 
@@ -107,10 +109,10 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
     {
       GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
        
-      GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
-      indexStack.push(iSet);
+      //GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
+      //indexStack.push(iSet);
       
-      GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid(),*iSet);
+      GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());//,*iSet);
       gridPartStack.push(gridPart);
       space  = new GR_DiscFuncSpaceType (*gridPart);
       
@@ -123,11 +125,10 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
       {
         GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
 
-        GR_IndexSetType * indexSet = new GR_IndexSetType ( disp->getGrid() );
-        indexStack.push(indexSet);
+        //GR_IndexSetType * indexSet = new GR_IndexSetType ( disp->getGrid() );
+        //indexStack.push(indexSet);
          
-        GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid(),
-            *indexSet);
+        GR_GridPartType* gridPart = new GR_GridPartType(disp->getGrid());//,*indexSet);
         gridPartStack.push(gridPart);
         globalSpace = new GR_DiscFuncSpaceType (*gridPart);
       }
