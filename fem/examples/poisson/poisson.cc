@@ -91,12 +91,8 @@ static const int refinestep = 1;
 class Tensor; 
 
 //! the index set we are using 
-typedef DefaultGridIndexSet<GridType,LevelIndex> IndexSetType;
-//typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
-//typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
-//typedef GridType :: LeafIndexSet IndexSetType;
 //typedef LevelGridPart < GridType > GridPartType;
-typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
+typedef LeafGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -273,13 +269,10 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    grid.globalRefine (maxlevel);
 
-   IndexSetType iset ( grid , grid.maxLevel () );
-
-   std::cout << "\nSolving for " << iset.size(dimp) << " number of unkowns. \n\n";
-   
-   GridPartType part ( grid, iset );
+   GridPartType part ( grid );
 
    FuncSpaceType linFuncSpace ( part );
+   std::cout << "\nSolving for " << linFuncSpace.size() << " number of unkowns. \n\n";
    DiscreteFunctionType solution ( "sol", linFuncSpace );
    solution.clear();
    DiscreteFunctionType rhs ( "rhs", linFuncSpace );
