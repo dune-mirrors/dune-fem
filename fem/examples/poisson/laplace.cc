@@ -8,7 +8,7 @@
 #include "laplace.hh" 
 
 // where the quadratures are defined 
-#include <dune/quadrature/fixedorder.hh>
+#include <../../quadrature/quadrature.hh>
 
 namespace Dune 
 {
@@ -40,23 +40,23 @@ public:
     IteratorType it    = space.begin();
     IteratorType endit = space.end();
 
-    // check whether grid is empty 
-    assert( it != endit ); 
-    
-    FixedOrderQuad <typename FunctionSpaceType::RangeFieldType,
-              typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
+
+    // if grid is empty do notin' 
+    if( it == endit ) return ;
+   
+    enum { dim = GridType :: dimension };
+    Quadrature <typename FunctionSpaceType::RangeFieldType, dim> quad(
+        it->geometry().type(), polOrd);
               
-    //LocalFuncType lf = discFunc.newLocalFunction(); 
-    
     for( ; it != endit ; ++it)
     {
-      //discFunc.localFunction( *it , lf ); 
       LocalFuncType lf = discFunc.localFunction( *it ); 
 
       const typename FunctionSpaceType::BaseFunctionSetType & set = 
             space.getBaseFunctionSet(*it);
 
-      for(int i=0; i<lf.numDofs(); i++)
+      const int numDofs = lf.numDofs();
+      for(int i=0; i<numDofs; i++)
       {
         for(int qP = 0; qP < quad.nop(); qP++)
         {
