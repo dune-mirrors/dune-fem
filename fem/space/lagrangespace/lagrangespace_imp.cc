@@ -124,23 +124,6 @@ LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::mapper() c
   return *mapper_;
 }
    
-/*
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-template <class EntityType>
-typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
-BaseFunctionSetType* 
-LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
-setBaseFuncSetPointer(EntityType& en) 
-{
-  typedef typename ToScalarFunctionSpace<
-    typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
-  
-  LagrangeBaseFunctionFactory<
-    ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
-  return new BaseFunctionSetType(fac);
-}
-*/
-
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>
 typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
 BaseFunctionSetType* 

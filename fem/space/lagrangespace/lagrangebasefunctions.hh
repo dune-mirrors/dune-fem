@@ -4,11 +4,13 @@
 // - System includes 
 #include <vector>
 
+//- Dune includes 
 #include <dune/common/array.hh>
 #include <dune/grid/common/grid.hh>
 
-#include <dune/fem/common/fastbase.hh>
-#include <dune/fem/common/basefunctionfactory.hh>
+//- local includes 
+#include "../../basefunctions/common/fastbase.hh"
+#include "../../basefunctions/common/basefunctionfactory.hh"
 
 namespace Dune {
 
@@ -804,6 +806,8 @@ public:
   LagrangeBaseFunctionFactory(GeometryType geo) :
     BaseFunctionFactory<FunctionSpaceType>(geo)
   {}
+
+  virtual ~LagrangeBaseFunctionFactory() {}
 
   virtual BaseFunctionType* baseFunction(int i) const 
   {
