@@ -29,19 +29,20 @@ typedef SGrid  < dimp, dimw > GridType;
 typedef AlbertaGrid< dimp, dimw > GridType;
 #endif
 
-#include <dune/fem/discreteoperatorimp.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/fem/dfadapt.hh>
-
-#include <dune/grid/common/leafindexset.hh>
+//- Dune includes 
 #include <dune/grid/common/gridpart.hh>
-
 #include <dune/grid/common/referenceelements.hh>
 
+#include "../../operator/discreteoperatorimp.hh"
+#include "../../space/lagrangespace.hh"
+#include "../../discretefunction/dfadapt.hh"
+
+#include "../../space/leafindexset.hh"
 #if HAVE_GRAPE
 #include <dune/io/visual/grapedatadisplay.hh>
 #endif
 
+#include "../../operator/inverseoperators.hh"
 #include "../../solver/oemsolver/oemsolver.hh"
 
 // massmatrix and L2 projection and error 
@@ -72,12 +73,8 @@ const int polOrd = 2;
 class Tensor; 
 
 //! the index set we are using 
-typedef DefaultGridIndexSet<GridType,LevelIndex> IndexSetType;
-//typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
-//typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
-//typedef GridType :: LeafIndexSet IndexSetType;
 //typedef LevelGridPart < GridType > GridPartType;
-typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
+typedef LeafGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -180,7 +177,7 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
       enum { dim = EntityType :: dimension };
       GeometryType t = en.geometry().type();
       
-      if( (t == simplex) || (t == triangle) || (t == tetrahedron ) )
+      if( t.isSimplex() )
       {
         static ReferenceSimplex< coordType, dim > refElem; 
         int face = it.numberInSelf();
@@ -193,7 +190,7 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
           dit[row] = 0.0;
         }
       }
-      if( en.geometry().type() == cube )
+      if( t.isCube() )
       {
         static ReferenceCube < coordType, dim > refElem; 
         int face = it.numberInSelf();
@@ -225,13 +222,11 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    grid.globalRefine (maxlevel);
 
-   IndexSetType iset ( grid , grid.maxLevel () );
-
-   std::cout << "\nSolving for " << iset.size(dimp) << " number of unkowns. \n\n";
-   
-   GridPartType part ( grid, iset );
+   GridPartType part ( grid );
 
    FuncSpaceType linFuncSpace ( part );
+   std::cout << "\nSolving for " << linFuncSpace.size() << " number of unkowns. \n\n";
+   
    DiscreteFunctionType solution ( "sol", linFuncSpace );
    solution.clear();
    DiscreteFunctionType rhs ( "rhs", linFuncSpace );
