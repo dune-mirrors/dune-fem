@@ -7,9 +7,6 @@
 //#include <dune/fem/operator/laplace.hh>
 #include "laplace.hh" 
 
-// where the cg method is defined 
-#include <dune/fem/inverseoperators.hh>
-
 // where the quadratures are defined 
 #include <dune/quadrature/fixedorder.hh>
 

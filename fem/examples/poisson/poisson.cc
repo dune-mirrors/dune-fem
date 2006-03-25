@@ -45,22 +45,23 @@ typedef ALU3dGrid < dimp, dimw , tetra > GridType;
 static const int refinestep = 1;
 #endif
 
-#include <dune/fem/discreteoperatorimp.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/discfuncarray.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+//- Dune includes 
+#include <dune/grid/common/gridpart.hh>
+#include <dune/grid/common/referenceelements.hh>
+
+//- local inlcudes 
+#include "../../operator/discreteoperatorimp.hh"
+#include "../../space/lagrangespace.hh"
+#include "../../discretefunction/dfadapt.hh"
+#include "../../discretefunction/adaptivefunction.hh"
 
 #include "laplace.hh"
-
-#include <dune/grid/common/gridpart.hh>
-
-#include <dune/grid/common/referenceelements.hh>
 
 #if HAVE_GRAPE
 #include <dune/io/visual/grapedatadisplay.hh>
 #endif
 
+#include "../../operator/inverseoperators.hh"
 #include "../../solver/oemsolver/oemsolver.hh"
 
 // laplace operator and L2 projection and error 
@@ -109,7 +110,6 @@ typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 > FuncSpace
 //! dune/fem/discfuncarray.hh
 //typedef DFAdapt < FuncSpaceType > DiscreteFunctionType;
 typedef AdaptiveDiscreteFunction < FuncSpaceType > DiscreteFunctionType;
-//typedef DiscFuncArray < FuncSpaceType > DiscreteFunctionType;
 
 //! define the discrete laplace operator, see ./fem.cc
 typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
