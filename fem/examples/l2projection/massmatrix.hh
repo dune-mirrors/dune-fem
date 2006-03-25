@@ -5,7 +5,7 @@
 #include <dune/fem/feop/spmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrixindexset.hh>
-#include <dune/quadrature/fixedorder.hh>
+#include <../../quadrature/quadrature.hh>
 
 namespace Dune {
   
@@ -34,9 +34,9 @@ namespace Dune {
     typedef typename FunctionSpaceType::GridType GridType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     
-    //! ???
-    FixedOrderQuad < typename FunctionSpaceType::RangeFieldType, typename
-      FunctionSpaceType::DomainType , polOrd> quad;
+    //! Quadrature
+    Quadrature < typename FunctionSpaceType::RangeFieldType,
+               GridType::dimension> quad; 
     
   public:
 
@@ -51,9 +51,8 @@ namespace Dune {
     MassMatrixFEOp( const typename DiscFunctionType::FunctionSpaceType &f, OpMode opMode ):
       FEOp<DiscFunctionType,SparseRowMatrix<double>,
              MassMatrixFEOp<DiscFunctionType,TensorImp, polOrd> >( f, opMode ) ,
-          quad( *(f.begin() ))
+          quad( f.begin()->geometry().type() , polOrd )
     {
-      //quad.print(std::cout);
     }
         
     //! ???
