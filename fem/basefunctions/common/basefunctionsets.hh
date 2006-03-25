@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <dune/fem/space/dofstorage.hh>
+#include "../../space/common/dofstorage.hh"
 #include "basefunctions.hh"
 #include "basefunctionfactory.hh"
 

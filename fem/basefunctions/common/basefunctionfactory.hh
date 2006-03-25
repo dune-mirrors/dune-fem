@@ -20,6 +20,8 @@ namespace Dune {
       geo_(geo)
     {}
 
+    virtual ~BaseFunctionFactory() {}
+
     virtual BaseFunctionType* baseFunction(int num) const = 0;
 
     virtual int numBaseFunctions() const = 0;
