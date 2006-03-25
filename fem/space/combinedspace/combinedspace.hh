@@ -109,7 +109,6 @@ namespace Dune {
 
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
     typedef typename Traits::MapperType MapperType;
-    typedef typename Traits::IteratorType IteratorType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::IndexSetType IndexSetType;
 
