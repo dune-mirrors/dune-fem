@@ -51,6 +51,3 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
 */
 #endif
-// *** Operator typedefs
-// Timestepper:
-// typedef DuneODE::ExplRungeKutta<DgType> ODEType;

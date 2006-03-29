@@ -27,6 +27,11 @@ typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 int main(int argc, char ** argv, char ** envp) {
   // *** Initialization
+  if (argc<2) {
+    cout << "Call: dgtest gridfilename [ref-steps=1] [start-level=0] [epsilon=0.01] [use-grape=0]" << endl;
+    exit(EXIT_FAILURE);  
+  }
+	
   MPISTART
 						
   // Polynomial and ODE order
@@ -68,12 +73,9 @@ int main(int argc, char ** argv, char ** envp) {
 	
 	cout << epsilon << endl;
 	
-#if PROBLEM == 1 || PROBLEM ==	2
+#if PROBLEM == 1 || PROBLEM ==	2 || PROBLEM == 3
   InitialDataType problem(epsilon,true);
-#elif PROBLEM == 3
-  InitialDataType problem;
 #endif
-	
 	
 	string myoutput = "eoc.tex";
 	EocOutput eocoutput(myoutput);
@@ -135,7 +137,7 @@ int main(int argc, char ** argv, char ** envp) {
 */
 		
 		initialize(problem,U);
-		dg.limit(U,tmp);
+		// dg.limit(U,tmp);
 
 	  if(graped)
 	  {
@@ -153,7 +155,7 @@ int main(int argc, char ** argv, char ** envp) {
 	    cout << t << " " << flush;
 	    t=ode.solve(U);
 			cout << t << endl;
-			dg.limit(U,tmp);
+			// dg.limit(U,tmp);
 			dg.switchupwind();
 			if(counter%100 == 0) 
 				{

@@ -12,10 +12,11 @@
 #include "../../../pass/selection.hh"
 #include "../../../misc/timeutility.hh"
 #include "../../../space/dgspace.hh"
-#include "../../../space/combinedspace.hh"
-#include "../../../discretefunction/dfadapt.hh"
-#include "../../../discretefunction/adaptivefunction.hh"
-
+/*
+  #include "../../../space/combinedspace.hh"
+  #include "../../../discretefunction/dfadapt.hh"
+  #include "../../../discretefunction/adaptivefunction.hh"
+*/
 #include "discretemodels.hh"
 #include "limitpass.hh"
 
