@@ -194,3 +194,147 @@ void printIt(DFType& df)
   }
 
 }
+
+
+class EocOutput {
+
+string outputFile;
+	
+public:
+		
+	EocOutput(string name)
+	{
+		outputFile = name;
+		std::ostringstream filestream;
+	  filestream << outputFile;
+
+	  std::ofstream ofs(filestream.str().c_str(), std::ios::out);
+
+	  ofs << "\\documentclass[12pt,english]{article}\n"
+	       << "\\usepackage[T1]{fontenc}\n"
+	       << "\\usepackage[latin1]{inputenc}\n"
+	       << "\\usepackage{setspace}\n"
+	       << "\\onehalfspacing\n"
+	       << "\\makeatletter\n"
+	       << "\\providecommand{\\boldsymbol}[1]{\\mbox{\\boldmath $#1$}}\n"
+	       << "\\providecommand{\\tabularnewline}{\\\\}\n"
+	       << "\\usepackage{babel}\n"
+	       << "\\makeatother\n"
+	       << "\\begin{document}\n";
+				 
+		ofs.close();	
+	}
+	
+	void printTexEnd(double totaltime)
+	{
+		std::ostringstream filestream;
+	  filestream << outputFile;
+
+	  std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+		
+		ofs  << "\\end{tabular}\\\\\n\n"
+				 << "Total time: " << totaltime << "\n"
+	       << "\\end{document}\n" << std::endl;
+		
+		ofs.close();
+	}
+	
+	void printTexAddError(double error, double prevError, double time, int level, int counter)
+	{
+		std::ostringstream filestream;
+	  filestream << outputFile;
+
+	  std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+		
+		if(prevError > 0.0)
+		{	       
+	    ofs <<  "\\hline \n"
+	       << level << " & " << error << " & " << log(prevError/error)/M_LN2 << " & " << time << " & " << counter << "\n"
+	       << "\\tabularnewline\n"
+	       << "\\hline \n";
+		}
+		else
+		{	       
+	    ofs << "\\begin{tabular}{|c|c|c|c|c|}\n"
+	       << "\\hline \n"
+	       << "GlobalRefine & $\\left\\Vert u-u_{h}\\right\\Vert _{L_{2}}$ & EOC & CPU & \\#Iterations\n"
+	       << "\\tabularnewline\n"
+	       << "\\hline\n"
+				 << "\\hline\n"
+	       << level << " & " << error << " & " << "---" << " & " << time << " & " << counter << "\n"
+	       << "\\tabularnewline\n"
+	       << "\\hline \n";
+		}
+		
+		ofs.close();
+	}
+
+		
+	void printInput(InitialDataType u0, GridType *grid, int rungeksteps,int polorder, char *arg)
+	{
+		std::ostringstream filestream;
+	  filestream << outputFile;
+
+	  std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+
+	  ofs  << "Grid: " << transformToGridName(grid->type()) << "\n\n"
+	       << "Runge-Kutta Steps: " << rungeksteps << "\n\n"
+	       << "Polynomial Order: " << polorder << "\n\n" 
+				 << "Epsilon = " << u0.epsilon << "\n\n"
+				 << "Macrogrid: " << arg << "\\\\\n\n";
+		
+		ofs.close();
+		
+		u0.printmyInfo(outputFile);		
+	}
+};
+
+
+//Old version of latex output
+/*
+void printError(double totaltime, double time[10], double error[10], \
+		int maxit, InitialDataType u0, GridType *grid)
+{
+  std::ostringstream filestream;
+  filestream << "eoc.tex";
+
+  std::ofstream ofs(filestream.str().c_str(), std::ios::out);
+	
+	ofs << "\\documentclass[12pt,english]{article}\n"
+	     <<	"\\usepackage[T1]{fontenc}\n"
+			 <<	"\\usepackage[latin1]{inputenc}\n"
+			 <<	"\\usepackage{setspace}\n"
+			 <<	"\\onehalfspacing\n"
+			 <<	"\\makeatletter\n"
+			 <<	"\\providecommand{\\boldsymbol}[1]{\\mbox{\\boldmath $#1$}}\n"
+			 <<	"\\providecommand{\\tabularnewline}{\\\\}\n"
+			 <<	"\\usepackage{babel}\n"
+			 <<	"\\makeatother\n"
+			 <<	"\\begin{document}\n"
+			 <<	"\\input{eoc" << u0.myName << ".tex}\n\n"
+			 <<	"Grid: " << transformToGridName(grid->type()) << "\n\n"
+			 << "Total Time: " << totaltime << "\n\n"
+			 << "Runge-Kutta Steps: " << rksteps << "\n\n"
+			 <<	"Polynomial Order: " << order << "\\\\\n\n"
+			 <<	"\\begin{tabular}{|c|c|c|c|}\n"
+			 <<	"\\hline \n"
+			 <<	"h & $\\left\\Vert u-u_{h}\\right\\Vert _{L_{2}}$ & EOC & CPU\n"
+			 <<	"\\tabularnewline\n"
+			 <<	"\\hline\n"
+			 <<	"\\hline \n"
+			 <<	" & " << error[0] << " & --- & " << time[0] << "\n"
+			 <<	"\\tabularnewline\n"
+			 <<	"\\hline \n";
+			 
+	for(int i=1;i<maxit;++i)
+	{ 
+		ofs <<	"\\hline \n"
+			 <<	" & " << error[i] << " & " << log( error[i-1]/error[i])/M_LN2 << " & " << time[i] <<"\n"
+			 <<	"\\tabularnewline\n"
+			 <<	"\\hline \n";	
+	}
+				 
+	ofs	 <<	"\\end{tabular}\n"
+			 <<	"\\end{document}\n" << std::endl;
+}
+*/

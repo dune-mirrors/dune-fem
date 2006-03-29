@@ -44,6 +44,9 @@ class BurgersModel {
     A[0] = epsilon*v[0];
     return tstep_eps;
   }
+	inline double diffusionTimeStep() const {
+		  return 2.*tstep_eps;
+	}
   inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
 			       double time, 
 			       const typename Traits::FaceDomainType& x) const {
@@ -171,13 +174,16 @@ class AdvectionDiffusionModel {
     DomainType xgl=it.intersectionGlobal().global(x);
     problem_.evaluate(time,xgl,uRight);
   }
+	inline double diffusionTimeStep() const {
+		  return 2.*tstep_eps;
+	}
   inline void maxSpeed(const typename Traits::DomainType& normal,
 		       double time,  
 		       const typename Traits::DomainType& x,
 		       const RangeType& u,
 		       double& advspeed,double& totalspeed) const {
     advspeed=std::abs(normal*velocity);
-    totalspeed=advspeed+tstep_eps;
+    totalspeed=advspeed; // +tstep_eps;
   }
  protected:
   const ProblemType& problem_;
@@ -214,13 +220,13 @@ class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> > {
       gLeft = uRight;
     gLeft *= upwind;
     gRight = gLeft;
-    return std::abs(upwind)+model_.tstep_eps;
+    return std::abs(upwind); // +model_.tstep_eps;
   }
  private:
   const Model& model_;
 };
 
-/*********************************************************************/
+/*********************************************************************
 template <class GridType>
 class U0 {
 public:
@@ -251,3 +257,4 @@ public:
   double epsilon;
   bool diff_tstep;
 };
+*/

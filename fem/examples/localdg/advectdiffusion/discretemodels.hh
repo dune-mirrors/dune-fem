@@ -149,7 +149,9 @@ namespace Dune {
 				     const NumFlux& numf) :
       upwind_(upwind),
       model_(mod),
-      numflux_(numf) {}
+      numflux_(numf),
+      cflDiffinv_((2.*polOrd+1.))
+    {}
     bool hasSource() const { return false; }
     bool hasFlux() const { return true; }
     
@@ -187,7 +189,7 @@ namespace Dune {
       diffmatrix.umv(normal,diffflux);
       gLeft = diffflux;
       gRight = diffflux;
-      return 0.;
+      return model_.diffusionTimeStep()*cflDiffinv_;
     }
 
     template <class ArgumentTuple>
@@ -217,7 +219,7 @@ namespace Dune {
 			 argULeft,diffmatrix);
       }
       diffmatrix.umv(normal,gLeft);
-      return 0.; 
+      return model_.diffusionTimeStep()*cflDiffinv_; 
     }
 
     template <class ArgumentTuple>
@@ -233,6 +235,7 @@ namespace Dune {
     const DomainType& upwind_;
     const Model& model_;
     const NumFlux& numflux_;
+    const double cflDiffinv_;
   };
   template <class Model,class NumFlux,int polOrd>
   class TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,true,true> : 
@@ -254,7 +257,8 @@ namespace Dune {
 				     const Model& mod,const NumFlux& numf) :
       upwind_(upwind),
       model_(mod),
-      numflux_(numf) {}
+      numflux_(numf)
+    {}
 
     bool hasSource() const { return false; }
     bool hasFlux() const { return true; }

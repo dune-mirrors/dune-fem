@@ -32,6 +32,7 @@ template <class Operator>
   void operator()(const double *u, double *f, int i = 0) {
     typename Operator::DestinationType arg("ARG",op_.space(),u);
     typename Operator::DestinationType dest("DEST",op_.space(),f);
+    // op_.setTime(time());
     op_(arg,dest);
   }
   int dim_of_argument(int i = 0) const 
@@ -304,6 +305,7 @@ public:
     // Compute Steps
     op_(U0,*(Upd[0]));
     double dt=cfl_*timeStepEstimate();
+		cout << t << " " << dt << endl;
     for (int i=1;i<ord_;i++) {
       (Upd[ord_])->assign(U0);
       for (int j=0;j<i;j++) 

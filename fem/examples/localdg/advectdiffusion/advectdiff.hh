@@ -81,6 +81,8 @@ namespace Dune {
       pass2_(arg,dest);
       // upwind_*=(-1.);
     }
+    void limit(const DestinationType& arg,DestinationType& dest) const {
+    }
     void switchupwind() {upwind_*=(-1.);}
     const SpaceType& space() const {
       return space2_;
@@ -149,6 +151,9 @@ namespace Dune {
     }
     const SpaceType& space() const {
       return space2_;
+    }
+    void switchupwind() {}
+    void limit(const DestinationType& arg,DestinationType& dest) const {
     }
   private:
     GridType& grid_;
@@ -221,6 +226,8 @@ namespace Dune {
       pass2_(arg,dest);
       // upwind_*=(-1.);
     }
+    void limit(const DestinationType& arg,DestinationType& dest) const {
+		}
     void switchupwind() {upwind_*=(-1.);}
     const SpaceType& space() const {
       return space2_;

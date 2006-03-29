@@ -64,6 +64,7 @@ namespace Dune {
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange,
 	   dimDomain = DiscreteFunctionSpaceType::DimDomain};
+    typedef FieldVector<double, dimDomain-1> FaceDomainType;
   public:
     //- Public methods
     //! Constructor
@@ -130,17 +131,66 @@ namespace Dune {
       LocalFunctionType uEn = Element<0>::get(*arg_)->localFunction(en);
       // get local funnction for limited values
       LocalFunctionType limitEn = dest_->localFunction(en);
-      BaryCenterQuad<double,DomainType,0> center0(geom);
-      BaryCenterQuad<double,DomainType,1> center1(geom);
+      BaryCenterQuad<double,DomainType,1> center0(geom);
+      BaryCenterQuad<double,FaceDomainType,1> center1(geom);
       const IndexSetType& iset = spc_.indexSet();
       const BaseFunctionSetType& bsetEn = limitEn.getBaseFunctionSet();
       Dune::DofConversionUtility< PointBased > dofConversion(dimRange);
 
-      // number of sclar base functions
+      // number of scalar base functions
       int numBasis=limitEn.numDofs()/dimRange;
       
       double areae = volumeElement(en);
+			double circume = 0.0;
+			int numcorners = en.geometry().corners();
+			double radius = 0.0;
 
+			
+#if 0									
+			for(int n=0;n<numcorners;++n){
+				/*cout << "Point n+1,x = " << en.geometry()[(n+1)][0] << std::endl;
+				 cout << "Point n+1,y = " << en.geometry()[(n+1)][1] << std::endl;
+				 cout << "Point n,x = " << en.geometry()[n][0] << std::endl;
+				 cout << "Point n,y = " << en.geometry()[n][1] << std::endl;*/
+				 
+				circume += sqrt(SQR(en.geometry()[(n+1)%numcorners][0] - en.geometry()[n][0]) \
+						 + SQR(en.geometry()[(n+1)%numcorners][1] - en.geometry()[n][1]));
+			 }
+			 
+			// cout << "Using Alberta" << std::endl;
+
+#else
+				/*circume = 4.0*sqrt(SQR(en.geometry()[1][0] - en.geometry()[0][0]) \
+						 + SQR(en.geometry()[1][1] - en.geometry()[0][1]));
+				
+				cout << "Euclidean = " << circume << std::endl;
+				
+				circume = (en.geometry()[1] - en.geometry()[0]).two_norm();
+				
+				cout << "Two norm = " << circume << std::endl;*/
+				
+				double ax,ay,bx,by;
+				
+				ax = en.geometry()[0][0];
+				ay = en.geometry()[0][1];
+				
+				bx = en.geometry()[1][0];
+				by = en.geometry()[1][1];
+				
+				circume = 4.0*(fabs(bx-ax)+fabs(by-ay));
+				
+				/*cout << "Using Yaspgrid" << std::endl;
+				cout << "Point 1,x = " << en.geometry()[1][0] << std::endl;
+				cout << "Point 1,y = " << en.geometry()[1][1] << std::endl;
+				cout << "Point 0,x = " << en.geometry()[0][0] << std::endl;
+				cout << "Point 0,y = " << en.geometry()[0][1] << std::endl;*/
+				
+#endif
+						
+			cout << "Circumference = " << circume << std::endl;		
+				
+			radius = fabs(bx-ax)/sqrt(2.0);		
+				
       // get value of U in barycenter
       RangeType centerUe(0);
       uEn.evaluateLocal(en,center0.point(0),centerUe);
@@ -149,52 +199,62 @@ namespace Dune {
 
       IntersectionIterator endnit = en.iend();
       IntersectionIterator nit = en.ibegin();
-      for (; nit != endnit; ++nit) {
-	if (nit.neighbor()) {
-          // get neighbor entity
-	  EntityType& nb = *nit.outside(); 
-	  double arean = volumeElement(nb);
-	  // get local function for U on neighbor
-	  LocalFunctionType uNeigh =Element<0>::get(*arg_)->localFunction(nb);
-	  // get U in barycenter of neighbor
-	  RangeType centerUn(0);
-	  uNeigh.evaluateLocal(nb,center0.point(0),centerUn);
-	  // get U on interface
-	  RangeType faceUe(0);
-	  RangeType faceUn(0);
-	  uEn.evaluateLocal(en
-			    ,*nit.intersectionSelfLocal().
-			    global(center1.point(0))
-			    ,faceUe);
-	  uNeigh.evaluateLocal(nb
-			       ,*nit.intersectionNeighborLocal().
-			       global(center1.point(0))
-			       ,faceUn);
-	  RangeType jump = faceUn;
-	  jump -= faceUe;
-	  jump *= 1.0;
-	  for (int r=0;r<dimRange;r++) {
-	    double jumpr = jump[r];
-	    if (1) 
-	      limit[r] = true;
-	  }
-	}
-      }
+		  RangeType totaljump(0);
+			
+	     for (; nit != endnit; ++nit) {
+	       if (nit.neighbor()) {
+	               // get neighbor entity
+	         EntityType& nb = *nit.outside(); 
+	         // double arean = volumeElement(nb);
+	         // get local function for U on neighbor
+	         LocalFunctionType uNeigh =Element<0>::get(*arg_)->localFunction(nb);
+	         // get U in barycenter of neighbor
+	         RangeType centerUn(0);
+	         uNeigh.evaluateLocal(nb,center0.point(0),centerUn);
+	         // get U on interface
+	         RangeType faceUe(0);
+	         RangeType faceUn(0);
+	         uEn.evaluateLocal(en
+	               ,nit.intersectionSelfLocal().
+	               global(center1.point(0))
+	               ,faceUe);
+	         uNeigh.evaluateLocal(nb
+	                  ,nit.intersectionNeighborLocal().
+	                  global(center1.point(0))
+	                  ,faceUn);
+	         RangeType jump = faceUn;
+	         jump -= faceUe;
+	         jump *= 1.0;
+					 for (int r=0;r<dimRange;r++)
+		         totaljump[r] += fabs(jump[r]);
+	       }
+	     }
+			 
+			 double hPowPolOrder = pow(radius,((POLORDER+1.0)/2.0));
+			 			 
+			 for (int r=0;r<dimRange;r++) {
+	           double jumpr = totaljump[r];
+	           if ((jumpr/(hPowPolOrder*areae))>200.) 
+	             limit[r] = true;
+						 else
+							 limit[r] = false;
+	         }
+					 
       for (int r=0;r<dimRange;r++) {
-	if (limit[r]) {
-	  int dofIdx = dofConversion.combinedDof(0,r);
-	  limitEn[dofIdx] = uEn[dofIdx];
-	  for (int i=1;i<numBasis;i++) {
-	    int dofIdx = dofConversion.combinedDof(i,r);
-	    limitEn[dofIdx] = 0.;
-	  }
-	}
-	else {
-	  for (int i=0;i<numBasis;i++) {
-	    int dofIdx = dofConversion.combinedDof(i,r);
-	    limitEn[dofIdx] = uEn[dofIdx];
-	  }
-	}
+	     if (limit[r]) {
+	       int dofIdx = dofConversion.combinedDof(0,r);
+	       limitEn[dofIdx] = uEn[dofIdx];
+	       for (int i=1;i<numBasis;i++) {
+	         int dofIdx = dofConversion.combinedDof(i,r);
+	         limitEn[dofIdx] = 0.;
+	       }
+	     }
+	     else {
+	       for (int i=0;i<numBasis;i++) {
+	         int dofIdx = dofConversion.combinedDof(i,r);
+	         limitEn[dofIdx] = uEn[dofIdx];
+	       }
+	     }
       }
     }
 
@@ -206,7 +266,7 @@ namespace Dune {
     
   private:
     double volumeElement(const EntityType& en) const {
-      BaryCenterQuad<double,DomainType,0> center(en);
+      BaryCenterQuad<double,DomainType,1> center(en);
       double result = 0;
       for (int qp = 0; qp < center.nop(); ++qp) {
         result +=

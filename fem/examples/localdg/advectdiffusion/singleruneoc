@@ -1,0 +1,20 @@
+problem=1
+polorder=2
+gridtype=YASPGRID
+
+make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=2 POLORDER=${polorder} PROBLEM=${problem} clean dgtest
+
+epsilonne=0.0
+./dgtest grid2d.dgf 6 0 ${epsilonne}
+mv eoc.tex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
+pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
+rm -f *.{aux,log}
+
+exit 0
+
+
+#  ALUGRID_TETRA         DUNE_PROBLEM_DIM 3
+#  ALUGRID_HEXA          DUNE_PROBLEM_DIM 3
+#  ALBERTAGRID           DUNE_PROBLEM_DIM 2,3
+#  YASPGRID              DUNE_PROBLEM_DIM 2,3
+
