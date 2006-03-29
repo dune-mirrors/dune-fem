@@ -6,12 +6,18 @@ for problem in 2; do
 	for polorder in 0 1 2; do
 		for gridtype in ALBERTAGRID YASPGRID; do
 
-			make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=2 POLORDER=${polorder} PROBLEM=${problem} clean dgtest;
-			for epsilonne in 0.01 0.001 0.0; do
-				./dgtest grid2d.dgf 10 0 ${epsilonne};
-				mv eoc.tex TEXFILES/${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex;
+			if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=2 POLORDER=${polorder} PROBLEM=${problem} clean dgtest ; then
+				echo "Compile error!"
+				exit 1
+			fi
+			for epsilon in 0.01 0.001 0.0; do
+				if ! ./dgtest grid2d.dgf 10 0 ${epsilon} ; then
+					echo "Program abort!"
+					exit 1
+				fi
+				mv eoc.tex TEXFILES/${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
 				cd TEXFILES
-				pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex;
+				pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
 				rm -f *.{aux,log}
 				cd ..
 				
