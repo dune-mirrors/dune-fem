@@ -239,7 +239,7 @@ public:
 		ofs.close();
 	}
 	
-	void printTexAddError(double error, double prevError, double time, int level, int counter)
+  void printTexAddError(double error, double prevError, double time, int level, int counter,double averagedt)
 	{
 		std::ostringstream filestream;
 	  filestream << outputFile;
@@ -249,19 +249,19 @@ public:
 		if(prevError > 0.0)
 		{	       
 	    ofs <<  "\\hline \n"
-	       << level << " & " << error << " & " << log(prevError/error)/M_LN2 << " & " << time << " & " << counter << "\n"
+		<< level << " & " << error << " & " << log(prevError/error)/M_LN2 << " & " << time << " & " << counter << " & " << averagedt << "\n"
 	       << "\\tabularnewline\n"
 	       << "\\hline \n";
 		}
 		else
 		{	       
-	    ofs << "\\begin{tabular}{|c|c|c|c|c|}\n"
+	    ofs << "\\begin{tabular}{|c|c|c|c|c|c|}\n"
 	       << "\\hline \n"
-	       << "GlobalRefine & $\\left\\Vert u-u_{h}\\right\\Vert _{L_{2}}$ & EOC & CPU & \\#Iterations\n"
+	       << "GlobalRefine & $\\left\\Vert u-u_{h}\\right\\Vert _{L_{2}}$ & EOC & CPU & \\#Iterations & a-dt\n"
 	       << "\\tabularnewline\n"
 	       << "\\hline\n"
 				 << "\\hline\n"
-	       << level << " & " << error << " & " << "---" << " & " << time << " & " << counter << "\n"
+		<< level << " & " << error << " & " << "---" << " & " << time << " & " << counter << " " << averagedt << "\n"
 	       << "\\tabularnewline\n"
 	       << "\\hline \n";
 		}

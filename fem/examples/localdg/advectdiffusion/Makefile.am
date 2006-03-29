@@ -11,5 +11,5 @@ DUNE_WORLD_DIM = $(DUNE_PROBLEM_DIM)
 PROBLEM = 1
 POLORDER = 0
 
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPROBLEM=$(PROBLEM) -DPOLORDER=$(POLORDER) -D$(GRIDTYPE) -DGRIDDIMENSION=$(DUNE_PROBLEM_DIM) -w -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPROBLEM=$(PROBLEM) -DPOLORDER=$(POLORDER) -D$(GRIDTYPE) -DDUNE_PROBLEM_DIM=$(DUNE_PROBLEM_DIM) -w -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500
 

@@ -116,7 +116,7 @@ namespace Dune {
 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename Traits::IndexSetType IndexSetType;
+    // typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
 
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;

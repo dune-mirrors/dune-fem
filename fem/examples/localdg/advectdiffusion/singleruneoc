@@ -1,5 +1,5 @@
-problem=1
-polorder=2
+problem=3
+polorder=1
 gridtype=YASPGRID
 
 if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=2 POLORDER=${polorder} PROBLEM=${problem} clean dgtest;

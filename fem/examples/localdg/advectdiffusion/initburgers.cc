@@ -9,14 +9,17 @@ public:
     velocity(0), epsilon(eps), diff_tstep(diff_timestep) {
 		myName = "Burgers-Diffusion";
 	}
+  double endtime() {
+    return 0.02;
+  }
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
   }
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
-		if(epsilon < 1e-9)
-			res = ((2.0*arg[0]-1.0)<0.0)? 1.0:-1.0;
-		else
-			res = -tanh((2.0*arg[0]-1.0)/(2.*epsilon));
+    if(epsilon < 1e-9)
+      res = ((2.0*arg[0]-1.0)<0.0)? 1.0:-1.0;
+    else
+      res = -tanh((2.0*arg[0]-1.0)/(4.*epsilon));
   }
 	
 	void printmyInfo(string filename)
