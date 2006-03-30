@@ -6,10 +6,10 @@ class U0 {
   typedef FieldVector<double,1> RangeType;
   U0(double eps,bool diff_timestep=true) :
     velocity(0), epsilon(eps), diff_tstep(diff_timestep) {
-      /*velocity[0]=0.8;
-	velocity[1]=0.8;*/
-      velocity[0]=0.0;
-      velocity[1]=0.0;
+      velocity[0]=0.8;
+      velocity[1]=0.8;
+      // velocity[0]=0.0;
+      // velocity[1]=0.0;
 						
       max_n_of_coefs = 2;
 			
@@ -85,8 +85,10 @@ class U0 {
 	      *(cos_coef_z[i]*cos(common_coef_z[i]*M_PI*(arg[2]-velocity[2]*t))\
 		+ sin_coef_z[i]*sin(common_coef_z[i]*M_PI*(arg[2]-velocity[2]*t))));
       }
+    /*
     if (arg[0]-velocity[0]*t<0.5)
       res *= -1.;
+    */
   }
 	
   void printmyInfo(string filename)

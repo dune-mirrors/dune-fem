@@ -261,7 +261,7 @@ public:
 	       << "\\tabularnewline\n"
 	       << "\\hline\n"
 				 << "\\hline\n"
-		<< level << " & " << error << " & " << "---" << " & " << time << " & " << counter << " " << averagedt << "\n"
+		<< level << " & " << error << " & " << "---" << " & " << time << " & " << counter << " & " << averagedt << "\n"
 	       << "\\tabularnewline\n"
 	       << "\\hline \n";
 		}

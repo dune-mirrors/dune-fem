@@ -2,7 +2,7 @@ if [ ! -d TEXFILES ] ; then
 mkdir TEXFILES
 fi
 
-for problem in 2; do
+for problem in 1 2; do
 	for polorder in 0 1 2; do
 		for gridtype in ALBERTAGRID YASPGRID; do
 
@@ -11,16 +11,13 @@ for problem in 2; do
 				exit 1
 			fi
 			for epsilon in 0.01 0.001 0.0; do
-				if ! ./dgtest grid2d.dgf 10 0 ${epsilon} ; then
-					echo "Program abort!"
-					exit 1
+				if ./dgtest grid2d.dgf 6 0 ${epsilon} ; then
+				  mv eoc.tex TEXFILES/${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
+				  cd TEXFILES
+				  pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
+				  rm -f *.{aux,log}
+				  cd ..
 				fi
-				mv eoc.tex TEXFILES/${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
-				cd TEXFILES
-				pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
-				rm -f *.{aux,log}
-				cd ..
-				
 			done
 		done
 	done

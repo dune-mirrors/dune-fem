@@ -187,7 +187,7 @@ namespace Dune {
 				
 #endif
 						
-      cout << "Circumference = " << circume << std::endl;		
+      // cout << "Circumference = " << circume << std::endl;		
 				
       radius = fabs(bx-ax)/sqrt(2.0);		
 				
@@ -204,38 +204,43 @@ namespace Dune {
       int counter=0;
       for (; nit != endnit; ++nit) {
 	if (nit.neighbor()) {
-	  // get neighbor entity
-	  EntityType& nb = *nit.outside(); 
-	  // double arean = volumeElement(nb);
-	  // get local function for U on neighbor
-	  LocalFunctionType uNeigh =Element<0>::get(*arg_)->localFunction(nb);
-	  // get U in barycenter of neighbor
-	  RangeType centerUn(0);
-	  uNeigh.evaluateLocal(nb,center0.point(0),centerUn);
-	  // get U on interface
-	  RangeType faceUe(0);
-	  RangeType faceUn(0);
-	  uEn.evaluateLocal(en
-			    ,nit.intersectionSelfLocal().
-			    global(center1.point(0))
-			    ,faceUe);
-	  uNeigh.evaluateLocal(nb
-			       ,nit.intersectionNeighborLocal().
-			       global(center1.point(0))
-			       ,faceUn);
-	  RangeType jump = faceUe;
-	  jump -= faceUn;
-	  for (int r=0;r<dimRange;r++)
-	    totaljump[r] += (jump[r]);
-	  ++counter;
+	  FieldVector<double,dimDomain> normal = 
+	    nit.outerNormal(center1.point(0));
+	  FieldVector<double,dimDomain> velocity(0.8);
+	  if (normal*velocity<0) {
+	    // get neighbor entity
+	    EntityType& nb = *nit.outside(); 
+	    // double arean = volumeElement(nb);
+	    // get local function for U on neighbor
+	    LocalFunctionType uNeigh =Element<0>::get(*arg_)->localFunction(nb);
+	    // get U in barycenter of neighbor
+	    RangeType centerUn(0);
+	    uNeigh.evaluateLocal(nb,center0.point(0),centerUn);
+	    // get U on interface
+	    RangeType faceUe(0);
+	    RangeType faceUn(0);
+	    uEn.evaluateLocal(en
+			      ,nit.intersectionSelfLocal().
+			      global(center1.point(0))
+			      ,faceUe);
+	    uNeigh.evaluateLocal(nb
+				 ,nit.intersectionNeighborLocal().
+				 global(center1.point(0))
+				 ,faceUn);
+	    RangeType jump = faceUe;
+	    jump -= faceUn;
+	    for (int r=0;r<dimRange;r++)
+	      totaljump[r] += jump[r];
+	    ++counter;
+	  }
 	}
       }
 			 
-      double hPowPolOrder = pow(radius,((POLORDER+1.0)/2.0));
+      double hPowPolOrder = pow(4.0*radius,-((POLORDER+1.0)/2.0));
 			 			 
       for (int r=0;r<dimRange;r++) {
 	double jumpr = fabs(totaljump[r])/double(counter);
-	if ((jumpr/(hPowPolOrder))>1.) 
+	if (jumpr*hPowPolOrder>1.) 
 	  limit[r] = true;
 	else
 	  limit[r] = false;

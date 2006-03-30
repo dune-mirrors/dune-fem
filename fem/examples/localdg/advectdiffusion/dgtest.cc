@@ -68,6 +68,7 @@ int main(int argc, char ** argv, char ** envp) {
     cfl=atof(argv[6]);
 	
   cfl = cfl/3.0;
+  cfl /= 2.0;
 	
   cout << epsilon << endl;
 	
