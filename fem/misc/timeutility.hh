@@ -12,7 +12,7 @@ namespace Dune {
     void provideTimeStepEstimate(double dtEstimate) {
       dtEstimate_ = std::min(dtEstimate_, dtEstimate);
     }
-  protected:
+  public:
     TimeProvider(double startTime = 0.0) : 
       time_(startTime),
       dtEstimate_()
