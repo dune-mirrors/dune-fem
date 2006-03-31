@@ -30,7 +30,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    typedef LLFFlux<ModelType> FluxType;
    //typedef DGLimitedAdvectionOperator<ModelType,LLFFlux,order> DgType;
    typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgType;
-   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #elif PROBLEM == 3
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
