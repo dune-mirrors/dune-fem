@@ -236,7 +236,7 @@ namespace Dune {
 	}
       }
 			 
-      double hPowPolOrder = pow(4.0*radius,-((POLORDER+1.0)/2.0));
+      double hPowPolOrder = pow(4.0*sqrt(2.)*radius,-((POLORDER+1.0)/2.0));
 			 			 
       for (int r=0;r<dimRange;r++) {
 	double jumpr = fabs(totaljump[r])/double(counter);

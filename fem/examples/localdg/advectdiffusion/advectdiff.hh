@@ -92,6 +92,13 @@ namespace Dune {
     const SpaceType& space() const {
       return space2_;
     }
+    void printmyInfo(string filename) const {
+      std::ostringstream filestream;
+      filestream << filename;
+      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+      ofs << "Advection-Diffusion Op., polynomial order: " << polOrd << "\\\\\n\n";
+      ofs.close();
+    }
   private:
     mutable DomainType upwind_;
     GridType& grid_;
@@ -160,6 +167,13 @@ namespace Dune {
     }
     void switchupwind() {}
     void limit(const DestinationType& arg,DestinationType& dest) const {
+    }
+    void printmyInfo(string filename) const {
+      std::ostringstream filestream;
+      filestream << filename;
+      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+      ofs << "Advection Op., polynomial order: " << polOrd << "\\\\\n\n";
+      ofs.close();
     }
   private:
     GridType& grid_;
@@ -238,6 +252,13 @@ namespace Dune {
     const SpaceType& space() const {
       return space2_;
     }
+    void printmyInfo(string filename) const {
+      std::ostringstream filestream;
+      filestream << filename;
+      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+      ofs << "Diffusion Op., polynomial order: " << polOrd << "\\\\\n\n";
+      ofs.close();
+    }
   private:
     mutable DomainType upwind_;
     GridType& grid_;
@@ -308,7 +329,11 @@ namespace Dune {
     {}
     void timeProvider(TimeProvider* timeprovider)
     {
+      time_ = timeprovider;
       pass2_.timeProvider(timeprovider);
+    }
+    void setTime(double time) const {
+      time_->setTime(time);
     }
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
@@ -319,6 +344,13 @@ namespace Dune {
     void switchupwind() {}
     const SpaceType& space() const {
       return space2_;
+    }
+    void printmyInfo(string filename) const {
+      std::ostringstream filestream;
+      filestream << filename;
+      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+      ofs << "Limit-Advection Op., polynomial order: " << polOrd << "\\\\\n\n";
+      ofs.close();
     }
   private:
     mutable DomainType upwind_;
@@ -333,7 +365,7 @@ namespace Dune {
     Pass0Type pass0_;
     Pass1Type pass1_;
     Pass2Type pass2_;
+    mutable TimeProvider* time_;
   };
-
 }
 #endif

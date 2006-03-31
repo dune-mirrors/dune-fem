@@ -36,7 +36,7 @@ int main(int argc, char ** argv, char ** envp) {
 						
   // Polynomial and ODE order
   // Grid:
-  GridType* grid=MacroGridParser().generate<GridType>(argv[1],MPI_COMM_WORLD);
+  GridType* grid=MacroGrid<GridType>().generate(argv[1],MPI_COMM_WORLD);
 	
   int repeats = 1;
   if (argc>2)
@@ -69,12 +69,10 @@ int main(int argc, char ** argv, char ** envp) {
 	
   cfl = cfl/3.0;
   cfl /= 2.0;
-	
+
   cout << epsilon << endl;
 	
-#if PROBLEM == 1 || PROBLEM ==	2 || PROBLEM == 3
   InitialDataType problem(epsilon,true);
-#endif
 	
   string myoutput = "eoc.tex";
   EocOutput eocoutput(myoutput);
@@ -82,8 +80,6 @@ int main(int argc, char ** argv, char ** envp) {
   ModelType model(*grid,problem);
   // *** Fluxes 
   FluxType eulerflux(model);
-
-  eocoutput.printInput(problem,grid,rksteps,order,argv[1]);
 
   Timer timer;
   int maxit=0;
@@ -136,6 +132,9 @@ int main(int argc, char ** argv, char ** envp) {
     
     initialize(problem,U);
     dg.limit(U,tmp);
+
+    if (eocloop==0) 
+      eocoutput.printInput(problem,grid,ode,argv[1]);
     
     if(graped) {
       GrapeDataDisplay< GridType > grape(*grid);
@@ -168,7 +167,7 @@ int main(int argc, char ** argv, char ** envp) {
 	    GrapeDataDisplay< GridType > grape(*grid);
 	    grape.dataDisplay(U);
 	    }*/
-	  eocoutput.printTexAddError(err[0],prevfehler,-1,level,counter,averagedt);
+	  eocoutput.printTexAddError(err[0],prevfehler,-1,grid->size(0),counter,averagedt);
 	  eocoutput.printTexEnd(timer.elapsed());
 	  exit(EXIT_FAILURE);
 	}
@@ -183,7 +182,7 @@ int main(int argc, char ** argv, char ** envp) {
     
     fehler = err;		
     zeit = timer.elapsed()-prevzeit;
-    eocoutput.printTexAddError(fehler,prevfehler,zeit,level,counter,averagedt);
+    eocoutput.printTexAddError(fehler,prevfehler,zeit,grid->size(0),counter,averagedt);
     
     if(graped && eocloop == repeats-1) {
       GrapeDataDisplay< GridType > grape(*grid);

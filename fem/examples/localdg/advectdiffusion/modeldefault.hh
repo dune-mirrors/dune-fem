@@ -170,7 +170,7 @@ namespace Dune {
       viscpara=(viscparal>viscparar)?viscparal:viscparar;
       visc=uRight;
       visc-=uLeft;
-      visc*=viscpara;
+      visc*=2.*viscpara;
       gLeft-=visc;
       
       gLeft*=0.5;

@@ -52,6 +52,7 @@ template<class Operator>
 class ExplTimeStepper : public TimeProvider {
  public:
   ExplTimeStepper(Operator& op,int pord,double cfl) :
+    ord_(pord),
     op_(op),
     expl_(op),
     ode_(0),
@@ -95,7 +96,17 @@ class ExplTimeStepper : public TimeProvider {
       savetime_+=0.001;
     }
   }
+  void printmyInfo(string filename) const {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "ExplTimeStepper, steps: " << ord_ << "\n\n";
+    ofs << "                 cfl: " << cfl_ << "\\\\\n\n";
+    ofs.close();
+    op_.printmyInfo(filename);
+  }
  private:
+  int ord_;
   DuneODE::Communicator comm;
   const Operator& op_;
   OperatorWrapper<Operator> expl_;
@@ -109,6 +120,7 @@ template<class Operator>
 class ImplTimeStepper : public TimeProvider {
  public:
   ImplTimeStepper(Operator& op,int pord,double cfl) :
+    ord_(pord),
     op_(op),
     impl_(op),
     ode_(0),
@@ -158,7 +170,17 @@ class ImplTimeStepper : public TimeProvider {
       savetime_+=0.001;
     }
   }
+  void printmyInfo(string filename) const {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "ImplTimeStepper, steps: " << ord_ << "\n\n";
+    ofs << "                 cfl: " << cfl_ << "\\\\\n\n";
+    ofs.close();
+    op_.printmyInfo(filename);
+  }
  private:
+  int ord_;
   DuneODE::Communicator comm;	  
   const Operator& op_;
   OperatorWrapper<Operator> impl_;
@@ -175,6 +197,7 @@ class SemiImplTimeStepper : public TimeProvider {
  public:
   SemiImplTimeStepper(OperatorExpl& op_expl,OperatorImpl& op_impl,
 		      int pord,double cfl) :
+    ord_(pord),
     opexpl_(op_expl),
     opimpl_(op_impl),
     expl_(op_expl),
@@ -225,7 +248,26 @@ class SemiImplTimeStepper : public TimeProvider {
       savetime_+=0.001;
     }
   }
+  void printmyInfo(string filename) const {
+    std::ostringstream filestream;
+    filestream << filename;
+    {
+      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+      ofs << "SemiImplTimeStepper, steps: " << ord_ << "\n\n";
+      ofs << "                     cfl: " << cfl_ << "\\\\\n\n";
+      ofs << "Explicite Operator:\\\\\n\n";
+      ofs.close();
+      opexpl_.printmyInfo(filename);
+    }
+    {
+      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+      ofs << "Implicite Operator:\\\\\n\n";
+      ofs.close();
+      opimpl_.printmyInfo(filename);
+    }
+  }
  private:
+  int ord_;
   DuneODE::Communicator comm;	  
   const OperatorExpl& opexpl_;
   const OperatorImpl& opimpl_;
@@ -327,6 +369,15 @@ public:
       ++savestep_;
       savetime_+=0.001;
     }
+  }
+  void printmyInfo(string filename) const {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "ExplRungeKutta, steps: " << ord_ << "\n\n";
+    ofs << "                cfl: " << cfl_ << "\\\\\n\n";
+    ofs.close();
+    op_.printmyInfo(filename);
   }
  private:
   const Operator& op_;

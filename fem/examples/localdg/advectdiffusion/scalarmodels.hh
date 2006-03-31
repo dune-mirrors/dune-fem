@@ -44,9 +44,9 @@ class BurgersModel {
     A[0] = epsilon*v[0];
     return tstep_eps;
   }
-	inline double diffusionTimeStep() const {
-		  return 2.*tstep_eps;
-	}
+  inline double diffusionTimeStep() const {
+    return 2.*tstep_eps;
+  }
   inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
 			       double time, 
 			       const typename Traits::FaceDomainType& x) const {
@@ -84,7 +84,7 @@ class BurgersModel {
 		       const RangeType& u,
 		       double& advspeed,double& totalspeed) const {
     advspeed=std::abs(normal[0]*u);
-    totalspeed=advspeed+tstep_eps;
+    totalspeed=advspeed; // +tstep_eps;
   }
  protected:
   const ProblemType& problem_;

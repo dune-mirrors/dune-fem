@@ -30,7 +30,8 @@ public:
   std::ofstream ofs(filestream.str().c_str(), std::ios::app);
 	
 	ofs << "Problem: " << myName << "\n\n"
-			<< "Exact solution: $u(x,y,z,t):=\\displaystyle{-\\tanh\\left( \\frac{x}{2\\varepsilon} \\right) }$\\\\\n\n";
+	    << "Epsilon = " << epsilon << "\n\n"
+			<< "Exact solution: $u(x,y,z,t):=\\displaystyle{-\\tanh\\left( \\frac{2x-1}{4\\varepsilon} \\right) }$\\\\\n\n";
 	
 	ofs.close();
 	}

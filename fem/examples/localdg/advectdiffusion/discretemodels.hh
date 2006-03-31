@@ -150,7 +150,7 @@ namespace Dune {
       upwind_(upwind),
       model_(mod),
       numflux_(numf),
-      cflDiffinv_((2.*polOrd+1.))
+      cflDiffinv_(2.*(polOrd+1.))
     {}
     bool hasSource() const { return false; }
     bool hasFlux() const { return true; }

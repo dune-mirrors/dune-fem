@@ -85,10 +85,6 @@ class U0 {
 	      *(cos_coef_z[i]*cos(common_coef_z[i]*M_PI*(arg[2]-velocity[2]*t))\
 		+ sin_coef_z[i]*sin(common_coef_z[i]*M_PI*(arg[2]-velocity[2]*t))));
       }
-    /*
-    if (arg[0]-velocity[0]*t<0.5)
-      res *= -1.;
-    */
   }
 	
   void printmyInfo(string filename)
@@ -99,6 +95,7 @@ class U0 {
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
 	
     ofs << "Problem: " << myName << "\n\n"
+	<< "Epsilon = " << epsilon << "\n\n"
 	<< "Exact solution: $u(x,y,z,t):=\\displaystyle{\\sum_{i=0}^{" << max_n_of_coefs-1 << "}} v_i(t) \\cdot \\mu_i(x) \\cdot \\nu_i(y) \\cdot \\omega_i(z)$\n\n";
 	
     for(int i=0;i<max_n_of_coefs;++i)
@@ -118,8 +115,9 @@ class U0 {
 		<< "$\\omega_" << i << "(z):=" << cos_coef_z[i] << "\\cdot \\cos(" << common_coef_z[i] << "\\pi (z-at)) + " << sin_coef_z[i] 
 	        << "\\cdot \\sin(" << common_coef_z[i] << "\\pi (z-at)) $";
 	  }
-	ofs	<< "\\\\\n\n";
+	ofs	<< "\n\n";
       }
+    ofs	<< "\n\n";
 	
     ofs.close();
 			
@@ -139,4 +137,64 @@ class U0 {
   double common_coef_z[2];
   double sin_coef_z[2];
   double cos_coef_z[2];
+};
+template <class GridType>
+class U0Disc : public U0<GridType> {
+ public:
+  typedef U0<GridType> BaseType;
+  enum { dimDomain = GridType::dimensionworld };  
+  typedef FieldVector<double,dimDomain> DomainType;
+  typedef FieldVector<double,1> RangeType;
+  U0Disc(double eps,bool diff_timestep=true) : BaseType(0.0,diff_timestep) {
+    this->myName = "Discontinuous AdvectDiff";
+  }
+
+  double endtime() {
+    return 0.1;
+  }
+		
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0,arg,res);
+  }
+	
+	
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    BaseType::evaluate(t,arg,res); 
+    if (arg[0]-this->velocity[0]*t<0.5)
+      res *= -1.;
+  }
+	
+  void printmyInfo(string filename)
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+	
+    ofs << "Problem: " << this->myName << "\n\n"
+	<< "Exact solution: $u(x,y,z,t):=\\displaystyle{{\\rm sign}(x-\\frac{1}{2}-" << this->velocity[0] << "t)\\sum_{i=0}^{" << this->max_n_of_coefs-1 << "}} \\mu_i(x) \\cdot \\nu_i(y) \\cdot \\omega_i(z)$\n\n";
+	
+    for(int i=0;i<this->max_n_of_coefs;++i)
+      { 
+	ofs	<< "$\\mu_" << i << "(x):=" << this->cos_coef_x[i] << "\\cdot \\cos(" << this->common_coef_x[i] << "\\pi (x-at)) + " << this->sin_coef_x[i] 
+		<< "\\cdot \\sin(" << this->common_coef_x[i] << "\\pi (x-at)) $";
+	if(dimDomain > 1)
+	  {
+	    ofs << "\n\n"
+		<< "$\\nu_" << i << "(y):=" << this->cos_coef_y[i] << "\\cdot \\cos(" << this->common_coef_y[i] << "\\pi (y-at)) + " << this->sin_coef_y[i] 
+	        << "\\cdot \\sin(" << this->common_coef_y[i] << "\\pi (y-at)) $";
+	  }
+	if(dimDomain >2)
+	  {
+	    ofs << "\n\n"
+		<< "$\\omega_" << i << "(z):=" << this->cos_coef_z[i] << "\\cdot \\cos(" << this->common_coef_z[i] << "\\pi (z-at)) + " << this->sin_coef_z[i] 
+	        << "\\cdot \\sin(" << this->common_coef_z[i] << "\\pi (z-at)) $";
+	  }
+	ofs	<< "\n\n";
+      }
+    ofs	<< "\n\n";
+	
+    ofs.close();
+			
+  }
 };

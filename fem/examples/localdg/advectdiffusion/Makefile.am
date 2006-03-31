@@ -1,9 +1,10 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS)
 
-noinst_PROGRAMS = advectdiff euler datadisp dgtest
+noinst_PROGRAMS = advectdiff euler datadisp dgtest dgtest1
 advectdiff_SOURCES = main.cc
 euler_SOURCES = euler.cc
 dgtest_SOURCES = dgtest.cc
+dgtest1_SOURCES = dgtest.cc
 datadisp_SOURCES = datadisp.cc
 
 GRIDTYPE = DEFAULTGRID
