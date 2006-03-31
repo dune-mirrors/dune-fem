@@ -228,7 +228,7 @@ namespace Dune {
     { }
 
     //! Empty implementation 
-    void setNeigbor(EntityType& nb)
+    void setNeighbor(EntityType& nb)
     { }
   };
 
