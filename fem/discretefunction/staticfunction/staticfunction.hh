@@ -8,10 +8,11 @@
 //- Dune inlcudes 
 #include <dune/common/array.hh>
 
-#include <dune/fem/common/discretefunction.hh>
-#include <dune/fem/common/fastbase.hh>
-#include <dune/fem/common/localfunction.hh>
-#include <dune/fem/common/dofiterator.hh>
+//- local includes 
+#include "../common/discretefunction.hh"
+#include "../common/fastbase.hh"
+#include "../common/localfunction.hh"
+#include "../common/dofiterator.hh"
 
 
 

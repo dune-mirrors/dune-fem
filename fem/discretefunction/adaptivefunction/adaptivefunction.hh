@@ -5,11 +5,11 @@
 #include <string>
 
 //- Dune includes
-#include <dune/fem/common/discretefunction.hh>
-#include <dune/fem/common/localfunction.hh>
-#include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/space/subspace.hh>
-#include <dune/fem/dofmanager.hh>
+#include "../common/discretefunction.hh"
+#include "../common/localfunction.hh"
+#include "../../space/combinedspace/combinedspace.hh"
+#include "../../space/combinedspace/subspace.hh"
+#include "../../space/common/dofmanager.hh"
 
 //- Local includes
 #include "adaptiveimp.hh"
