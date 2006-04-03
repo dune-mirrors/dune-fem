@@ -321,8 +321,8 @@ double algorithm (const char * filename , int maxlevel, int turn )
    // if grape was found then display solution 
    if(turn > 0)
    {
-     GrapeDataDisplay < GridType > grape(grid); 
-     grape.dataDisplay( solution );
+     //GrapeDataDisplay < GridType > grape(grid); 
+     //grape.dataDisplay( solution );
    }
 #endif
 

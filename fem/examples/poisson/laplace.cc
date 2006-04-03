@@ -4,7 +4,6 @@
 // assembling of the laplace operator using the 
 // below defined getLocalMatrixMethod of the LaplaceOperator 
 
-//#include <dune/fem/operator/laplace.hh>
 #include "laplace.hh" 
 
 // where the quadratures are defined 
@@ -47,7 +46,7 @@ public:
     enum { dim = GridType :: dimension };
     Quadrature <typename FunctionSpaceType::RangeFieldType, dim> quad(
         it->geometry().type(), polOrd);
-              
+
     for( ; it != endit ; ++it)
     {
       LocalFuncType lf = discFunc.localFunction( *it ); 
