@@ -28,14 +28,14 @@ public:
   int size () const 
   {
     return asImp().size();
-  };
+  }
 
   //! map a local dof num of a given entity to a global dof num
   template <class EntityType>
   int mapToGlobal ( EntityType &en, int localNum ) const
   {
     return asImp().mapToGlobal( en , localNum );
-  };
+  }
 
   //! return new size of space, i.e. after adaptation 
   int newSize() const 
