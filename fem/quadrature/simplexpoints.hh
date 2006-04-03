@@ -3,8 +3,11 @@
 
 #include <cassert>
 
+//- Dune includes
 #include <dune/common/fvector.hh>
-#include <dune/quadrature/fixedorder/ugquadratures.hh>
+
+//- local includes 
+#include "ugquadratures.hh"
 
 namespace Dune {
 
