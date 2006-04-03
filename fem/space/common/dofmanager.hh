@@ -13,12 +13,13 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/genericiterator.hh>
 #include <dune/common/interfaces.hh>
-
-#include <dune/fem/common/dofmapperinterface.hh>
-
 // here are the default grid index set defined 
 #include <dune/grid/common/defaultindexsets.hh>
-#include <dune/fem/transfer/datacollector.hh>
+
+
+//- local includes 
+#include "dofmapperinterface.hh"
+#include "datacollector.hh"
 
 namespace Dune {
 
