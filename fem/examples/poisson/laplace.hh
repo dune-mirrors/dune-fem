@@ -3,7 +3,8 @@
 
 #include <dune/fem/feop/spmatrix.hh>
 #include <dune/fem/feop.hh>
-#include <dune/quadrature/fixedorder.hh>
+
+#include "../../quadrature/quadrature.hh"
 
 namespace Dune 
 {
@@ -47,8 +48,7 @@ namespace Dune
     public:
 
         //! ???
-        FixedOrderQuad < typename FunctionSpaceType::RangeFieldType, typename
-                   FunctionSpaceType::DomainType , polOrd > quad;
+        Quadrature <typename FunctionSpaceType::RangeFieldType, dim> quad;
         
         //! ???
         DiscFunctionType *stiffFunktion_;
@@ -61,7 +61,7 @@ namespace Dune
             FEOp<DiscFunctionType,
                  SparseRowMatrix<double>,
                  LaplaceFEOp<DiscFunctionType,TensorType, polOrd> >( f, opMode ) , 
-            quad ( *(f.begin() )), stiffFunktion_(NULL), stiffTensor_(NULL)
+            quad ( (f.begin())->geometry().type(), polOrd ), stiffFunktion_(NULL), stiffTensor_(NULL)
         {
         }
         

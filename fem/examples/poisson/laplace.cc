@@ -137,9 +137,10 @@ public:
 
     // check whether grid is empty 
     assert( it != endit ); 
-    
-    FixedOrderQuad < typename FunctionSpaceType::RangeFieldType,
-               typename FunctionSpaceType::DomainType , polOrd > quad ( *it );
+   
+    enum { dim = GridType :: dimension };
+    Quadrature <typename FunctionSpaceType::RangeFieldType, dim> quad(
+        it->geometry().type(), polOrd);
     
     for(; it != endit ; ++it)
     {
