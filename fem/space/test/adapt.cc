@@ -10,7 +10,7 @@ using namespace Dune;
 #include <dune/fem/dfadapt.hh>
 #include "../../space/dgspace.hh"
 #include "../../quadrature/cachequad.hh"
-#include "../../space/adaptoperator.hh"
+#include "../../space/dgspace/dgadaptoperator.hh"
 
 #include <dune/grid/common/leafindexset.hh>
 #include <dune/grid/common/gridpart.hh>
