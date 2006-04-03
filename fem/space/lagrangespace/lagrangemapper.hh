@@ -1,7 +1,7 @@
 #ifndef DUNE_LAGRNAGEMAPPER_HH
 #define DUNE_LAGRANGEMAPPER_HH
 
-#include <dune/fem/common/dofmapperinterface.hh>
+#include "../common/dofmapperinterface.hh"
 
 namespace Dune {
  

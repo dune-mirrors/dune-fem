@@ -27,7 +27,7 @@ namespace Dune{
 #define PARAM_FUNC_1 restrictLocal 
 #define PARAM_FUNC_2 prolongLocal 
 #define PARAM_FUNC_3 calcFatherChildWeight 
-#include <dune/fem/common/combine.hh>
+#include "../operator/common/combine.hh"
 
 /*! Combination of different AdaptOperators
 

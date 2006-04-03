@@ -9,7 +9,7 @@
 #include <dune/common/interfaces.hh>
 
 // Local includes
-#include <../../operator/mapping.hh>
+#include "../../operator/common/mapping.hh"
 #include "formula.hh"
 
 namespace Dune {
