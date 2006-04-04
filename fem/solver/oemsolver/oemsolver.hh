@@ -1,7 +1,7 @@
 #ifndef __DUNE_OEMSOLVER_HH__
 #define __DUNE_OEMSOLVER_HH__
 
-#include <dune/common/operator.hh>
+#include "../../operator/common/operator.hh"
 
 namespace OEMSolver 
 {
