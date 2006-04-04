@@ -1,8 +1,8 @@
 #ifndef DUNE_INVERSEOPERATORFACTORY_HH
 #define DUNE_INVERSEOPERATORFACTORY_HH
 
-#include <dune/fem/inverseoperators.hh>
-#include <dune/common/mapping.hh>
+#include "../operator/common/mapping.hh"
+#include "../operator/inverseoperators.hh"
 
 namespace Dune {
 
