@@ -1,6 +1,14 @@
 #ifndef DUNE_LIMITPASS_HH
 #define DUNE_LIMITPASS_HH
 
+//- system includes 
+#include <vector>
+
+//- Dune includes 
+#include <dune/common/fvector.hh>
+#include <dune/grid/common/grid.hh>
+
+//- local includes 
 #include <pass/pass.hh>
 #include <pass/selection.hh>
 #include <pass/discretemodel.hh>
@@ -8,12 +16,8 @@
 
 #include <misc/timeutility.hh>
 
-#include <dune/common/fvector.hh>
-#include <dune/grid/common/grid.hh>
+#include <quadrature/elementquadrature.hh>
 
-#include <dune/quadrature/barycenter.hh>
-
-#include <vector>
 
 namespace Dune {
   //! Concrete implementation of Pass for Limiting.
@@ -123,7 +127,7 @@ namespace Dune {
       //- typedefs
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType 
-	BaseFunctionSetType;
+    	BaseFunctionSetType;
       GeometryType geom = en.geometry().type();
       //- statements
       caller_.setEntity(en);
@@ -131,8 +135,12 @@ namespace Dune {
       LocalFunctionType uEn = Element<0>::get(*arg_)->localFunction(en);
       // get local funnction for limited values
       LocalFunctionType limitEn = dest_->localFunction(en);
-      BaryCenterQuad<double,DomainType,1> center0(geom);
-      BaryCenterQuad<double,FaceDomainType,1> center1(geom);
+      
+      // create quadrature with barycenters for 
+      // the element and for the faces 
+      ElementQuadrature<GridType,0> center0(en,0);
+      ElementQuadrature<GridType,1> center1(en,0);
+      
       const IndexSetType& iset = spc_.indexSet();
       const BaseFunctionSetType& bsetEn = limitEn.getBaseFunctionSet();
       Dune::DofConversionUtility< PointBased > dofConversion(dimRange);
@@ -272,7 +280,7 @@ namespace Dune {
     
   private:
     double volumeElement(const EntityType& en) const {
-      BaryCenterQuad<double,DomainType,1> center(en);
+      ElementQuadrature<GridType,0> center(en,0);
       double result = 0;
       for (int qp = 0; qp < center.nop(); ++qp) {
         result +=

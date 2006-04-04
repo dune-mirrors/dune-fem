@@ -1,19 +1,22 @@
 #ifndef DUNE_EXAMPLEDISCRETEMODELS_HH
 #define DUNE_EXAMPLEDISCRETEMODELS_HH
 
-#include "../../../pass/dgpass.hh"
-#include "../../../pass/discretemodel.hh"
-#include "../../../pass/selection.hh"
-#include "../../../misc/timeutility.hh"
+#include <pass/dgpass.hh>
+#include <pass/discretemodel.hh>
+#include <pass/selection.hh>
+#include <misc/timeutility.hh>
 
 // Dune includes
 #include <dune/common/utility.hh>
-#include "../../../space/dgspace.hh"
-#include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/common/gridpart.hh>
-#include "../../../quadrature/cachequad.hh"
+
+//- local includes 
+#include <space/dgspace.hh>
+#include <space/combinedspace.hh>
+
+#include <discretefunction/dfadapt.hh>
+#include <discretefunction/adaptivefunction.hh>
+#include <quadrature/cachequad.hh>
 
 //*************************************************************
 namespace Dune {  

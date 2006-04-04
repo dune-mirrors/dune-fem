@@ -2,10 +2,12 @@
 #ifndef DUNE_DGOPERATORS_HH
 #define DUNE_DGOPERATORS_HH
 
+//- system includes 
+#include <string>
+
 // Dune includes
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/quadrature/fixedorder.hh>
 
 #include "../../../pass/dgpass.hh"
 #include "../../../pass/discretemodel.hh"
@@ -92,7 +94,7 @@ namespace Dune {
     const SpaceType& space() const {
       return space2_;
     }
-    void printmyInfo(string filename) const {
+    void printmyInfo(std::string filename) const {
       std::ostringstream filestream;
       filestream << filename;
       std::ofstream ofs(filestream.str().c_str(), std::ios::app);
@@ -168,7 +170,7 @@ namespace Dune {
     void switchupwind() {}
     void limit(const DestinationType& arg,DestinationType& dest) const {
     }
-    void printmyInfo(string filename) const {
+    void printmyInfo(std::string filename) const {
       std::ostringstream filestream;
       filestream << filename;
       std::ofstream ofs(filestream.str().c_str(), std::ios::app);
@@ -252,7 +254,7 @@ namespace Dune {
     const SpaceType& space() const {
       return space2_;
     }
-    void printmyInfo(string filename) const {
+    void printmyInfo(std::string filename) const {
       std::ostringstream filestream;
       filestream << filename;
       std::ofstream ofs(filestream.str().c_str(), std::ios::app);
@@ -345,7 +347,7 @@ namespace Dune {
     const SpaceType& space() const {
       return space2_;
     }
-    void printmyInfo(string filename) const {
+    void printmyInfo(std::string filename) const {
       std::ostringstream filestream;
       filestream << filename;
       std::ofstream ofs(filestream.str().c_str(), std::ios::app);

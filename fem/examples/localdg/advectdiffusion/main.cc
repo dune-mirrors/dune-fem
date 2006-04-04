@@ -5,10 +5,11 @@
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/common/misc.hh>
-#include <dune/fem/common/boundary.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/quadrature/quadraturerules.hh>
+
+#include <space/common/boundary.hh>
 
 #include <iostream>
 #include <string>
