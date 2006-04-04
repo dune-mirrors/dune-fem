@@ -8,7 +8,7 @@
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
-#include "common/function.hh"
+#include "function.hh"
 #include "../../space/common/discretefunctionspace.hh"
 #include "dofiterator.hh"
 #include "localfunctionwrapper.hh"
