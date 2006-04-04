@@ -8,10 +8,10 @@
 
 //- Dune includes 
 #include <dune/common/array.hh>
-#include <dune/fem/common/basefunctionfactory.hh>
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
+#include "common/basefunctionfactory.hh"
 #include "storageinterface.hh"
 
 namespace Dune {

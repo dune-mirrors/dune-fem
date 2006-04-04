@@ -1,8 +1,11 @@
 #ifndef DUNE_BASEFUNCTIONS_HH
 #define DUNE_BASEFUNCTIONS_HH
 
-#include <dune/common/mapping.hh>
+//- Dune includes 
 #include <dune/common/matrix.hh>
+
+//- local includes 
+#include "../../operator/common/mapping.hh"
 
 namespace Dune{
 
