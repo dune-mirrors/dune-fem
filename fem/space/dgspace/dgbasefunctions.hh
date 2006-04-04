@@ -1,13 +1,13 @@
 #ifndef DUNE_DGBASEFUNCTIONS_HH
 #define DUNE_DGBASEFUNCTIONS_HH
 
-// Dune includes
-#include <dune/fem/common/basefunctions.hh>
-#include <dune/fem/common/basefunctionfactory.hh>
-#include <dune/fem/common/fastbase.hh>
+//- Dune includes 
 #include <dune/grid/common/grid.hh>
 
-// Local includes
+//- Local includes
+#include "../../basefunctions/common/basefunctions.hh"
+#include "../../basefunctions/common/basefunctionfactory.hh"
+#include "../../basefunctions/common/fastbase.hh"
 
 namespace Dune {
   

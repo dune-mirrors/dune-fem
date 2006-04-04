@@ -2,12 +2,12 @@
 #define DUNE_LEDENDREDGBASEFUNCTIONS_HH
 
 // Dune includes
-#include <dune/fem/common/basefunctions.hh>
-#include <dune/fem/common/basefunctionfactory.hh>
-#include <dune/fem/common/fastbase.hh>
 #include <dune/grid/common/grid.hh>
 
 // Local includes
+#include "../../basefunctions/common/basefunctions.hh"
+#include "../../basefunctions/common/basefunctionfactory.hh"
+#include "../../basefunctions/common/fastbase.hh"
 
 namespace Dune {
   

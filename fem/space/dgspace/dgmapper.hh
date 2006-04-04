@@ -1,7 +1,7 @@
 #ifndef DUNE_DGMAPPER_HH
 #define DUNE_DGMAPPER_HH
 
-#include <dune/fem/common/dofmapperinterface.hh>
+#include "../common/dofmapperinterface.hh"
 
 namespace Dune {
 
