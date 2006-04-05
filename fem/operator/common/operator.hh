@@ -24,6 +24,9 @@ template <typename DFieldType, typename RFieldType,
           typename DType , typename RType>
 class Operator : public Mapping <DFieldType,RFieldType,DType,RType>
 {
+protected: 
+  typedef Mapping <DFieldType,RFieldType,DType,RType> MappingType;
+  
 public:
   //! remember template parameters for derived classes  
   typedef DType DomainType;
