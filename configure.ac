@@ -11,7 +11,7 @@ AC_INIT(fvcommon, 0.0, dune@mathematik.uni-freiburg.de)
 AM_INIT_AUTOMAKE(fvcommon, 0.0, dune@mathematik.uni-freiburg.de)
 
 # check if we're in the right directory
-AC_CONFIG_SRCDIR([tester/gridcheck/gridcheck.cc])
+AC_CONFIG_SRCDIR([space/dgspace.hh])
 # which header-file is created
 AM_CONFIG_HEADER(config.h)
 
