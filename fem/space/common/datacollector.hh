@@ -608,7 +608,8 @@ public:
     if(leaf_ && (!en.isLeaf())) return; 
     
     LocalFunctionType lf = df_.localFunction( en );
-    for(int l=0; l<lf.numDofs(); l++)
+    const int numDofs = lf.numDofs();
+    for(int l=0; l<numDofs; ++l)
     {
       (*p.first).writeObject( lf[l] );
     }
@@ -659,7 +660,8 @@ public:
     if(leaf_ && (!en.isLeaf())) return;
     
     LocalFunctionType lf = df_.localFunction( en );
-    for(int l=0; l<lf.numDofs(); l++)
+    const int numDofs = lf.numDofs();
+    for(int l=0; l<numDofs; ++l)
     {
       (*(p.first)).readObject( lf[l] );
     }
