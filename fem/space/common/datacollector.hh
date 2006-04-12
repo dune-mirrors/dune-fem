@@ -108,7 +108,8 @@ public:
   void apply ( ParamType & p ) const 
   {
     //assert( vec_.size() > 0 );
-    for(unsigned int i=0; i<vec_.size(); i++)
+    const size_t size = vec_.size();
+    for(size_t i=0; i<size; ++i)
     {
       // vec_[i].second contains the pointer to the function that makes the
       // correct cast to the real type of vec_[i].first 

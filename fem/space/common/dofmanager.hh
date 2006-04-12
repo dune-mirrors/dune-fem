@@ -1087,10 +1087,22 @@ public:
 
   //! unpacks all data of this entity en and all child entities  
   template <class ObjectStreamType, class EntityType>
-  void scatter ( ObjectStreamType & str, EntityType & en )
+  void scatter ( ObjectStreamType & str, EntityType & en , size_t size = 0)
   {
     std::pair < ObjectStreamType * , const EntityType * > p (&str,&en);
     dataWriter_.apply( p );
+  }
+
+  //! returns true if size per entity of given dim and codim is a constant
+  bool fixedsize (int dim, int codim) const
+  {
+    return true;
+  }
+
+  //! returns true if data for this codim should be communicated
+  bool contains (int dim, int codim) const
+  {
+    return (codim==0);
   }
 
   //! packs all data of this entity to message buffer 
