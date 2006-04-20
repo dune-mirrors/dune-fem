@@ -16,12 +16,8 @@ AC_CONFIG_SRCDIR([space/dgspace.hh])
 AM_CONFIG_HEADER(config.h)
 
 # we need no more than the standard DUNE-stuff
-DUNE_CHECK_ALL
-
-# we can't possibly work without the dune headers...
-if test x$HAVE_DUNE != x1 ; then
-  AC_MSG_ERROR([Can't work without the DUNE-library. Maybe you'll have to pass a different path for --with-dune. See config.log for details])
-fi
+DUNE_CHECK_ALL_M([dunecommon])
+DUNE_CHECK_ALL_M([dunegrid])
 
 # implicitly set the Dune-flags everywhere
 CPPFLAGS="$DUNE_CPPFLAGS"
