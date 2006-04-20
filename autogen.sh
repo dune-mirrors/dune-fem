@@ -62,7 +62,7 @@ for OPT in $* ; do
 	-o|--optim)   OPTIM=1 ;;
 	-h|--help) usage ; exit 0 ;;
 	# special hack: use the with-dune-dir for aclocal-includes
-	--with-dune=*)
+	--with-dunecommon=*)
 	    eval DUNEDIR=$arg
 	    # add the option anyway
 	    CONFOPT="$CONFOPT $OPT" ;;
@@ -81,7 +81,7 @@ if [ x$DUNEDIR != x ] ; then
       FULLDIR=`cd $FULLDIR/.. && pwd`
     fi
 
-    ACLOCALOPT="-I $FULLDIR/dune/m4/ -I ./" 
+    ACLOCALOPT="-I $FULLDIR/dune/m4/ -I ./"
 fi
 
 # use the free compiler as default :-)
@@ -146,4 +146,3 @@ export CFLAGS="$COMPFLAGS"
 export CXXFLAGS="$COMPFLAGS"
 
 ./configure $DEFAULTCONFOPT $CONFOPT
-
