@@ -2,7 +2,7 @@
 #define DUNE_DISCRETEFUNCTION_CC
 
 #include <fstream>
-#include <dune/io/file/asciiparser.hh>
+#include "../../io/file/asciiparser.hh"
 
 namespace Dune 
 {
