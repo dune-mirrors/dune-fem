@@ -9,17 +9,7 @@
 
 //- Dune includes
 #include <dune/grid/common/referenceelements.hh>
-
-// is ALU3dGrid was found then also include headers 
-#ifndef HAVE_ALUGRID
-#define HAVE_ALUGRID_FOUND 0 
-#else
-#define HAVE_ALUGRID_FOUND HAVE_ALUGRID 
-#endif
-
-#if HAVE_ALUGRID_FOUND
 #include <dune/grid/alu3dgrid/topology.hh>
-#endif
 
 //- Local includes
 #include "pointmapper.hh"
@@ -230,9 +220,7 @@ namespace Dune {
     virtual const MatrixType& buildTransformationMatrix(int twist) const;
 
   private:
-#if HAVE_ALUGRID_FOUND
     typedef FaceTopologyMapping<tetra> FaceTopo;
-#endif
 
   private:
     const ReferenceSimplex<ct, dim>& refElem_;
@@ -254,9 +242,7 @@ namespace Dune {
     virtual const MatrixType& buildTransformationMatrix(int twist) const;
     
   private:
-#if HAVE_ALUGRID_FOUND
     typedef FaceTopologyMapping<hexa> FaceTopo;
-#endif
 
   private:
     const ReferenceCube<ct, dim>& refElem_;
@@ -266,6 +252,4 @@ namespace Dune {
 } // end namespace Dune
 
 #include "twistprovider.cc"
-
-#undef HAVE_ALUGRID_FOUND
 #endif

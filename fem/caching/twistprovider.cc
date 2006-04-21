@@ -220,14 +220,9 @@ namespace Dune {
    mat_ *= 0.0;
 
     for (int idx = 0; idx < dim+1; ++idx) {
-#if HAVE_ALUGRID_FOUND
       int aluIndex = FaceTopo::dune2aluVertex(idx);
       int twistedAluIndex = FaceTopo::invTwist(aluIndex, twist);
       int twistedDuneIndex = FaceTopo::alu2duneVertex(twistedAluIndex);
-#else 
-      assert(false);
-      int twistedDuneIndex = idx; // FaceTopo::alu2duneVertex(twistedAluIndex);
-#endif 
       mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
     
@@ -253,13 +248,8 @@ namespace Dune {
   {
     mat_ = 0.0;
     for (int idx = 0; idx < dim+1; ++idx) {
-#if HAVE_ALUGRID_FOUND
       int aluIndex = FaceTopo::dune2aluVertex(idx);
       int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
-#else 
-      assert(false);
-      int twistedDuneIndex = idx; //FaceTopo::alu2duneVertex(aluIndex, twist);
-#endif
       mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
 
