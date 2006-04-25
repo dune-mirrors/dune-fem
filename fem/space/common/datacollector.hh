@@ -183,13 +183,13 @@ class DummyObjectStream
   public:
     class EOFException {} ;
     template <class T>
-    void readObject (T &) { assert(false); }
-    void readObject (int) { assert(false); }
-    void readObject (double) { assert(false); }
+    void readObject (T &) { assert(false); abort(); }
+    void readObject (int) { assert(false); abort(); }
+    void readObject (double) { assert(false); abort(); }
     template <class T>
-    void writeObject (T &) { assert(false); }
-    void writeObject (int) { assert(false); }
-    void writeObject (double) { assert(false); }
+    void writeObject (T &) { assert(false);abort(); }
+    void writeObject (int) { assert(false);abort(); }
+    void writeObject (double) { assert(false);abort(); }
 };
 
 /*! Combination of different DataCollectors
