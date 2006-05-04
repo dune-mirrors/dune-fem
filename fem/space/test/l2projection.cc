@@ -29,19 +29,19 @@ typedef SGrid  < dimp, dimw > GridType;
 typedef AlbertaGrid< dimp, dimw > GridType;
 #endif
 
-#include <dune/fem/discreteoperatorimp.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/fem/dfadapt.hh>
-#include "../../space/dgspace.hh"
+#include <../../operator/discreteoperatorimp.hh>
+#include <../lagrangespace.hh>
+#include <../../discretefunction/dfadapt.hh>
+#include "../dgspace.hh"
 #include "../../quadrature/cachequad.hh"
 
-#include <dune/grid/common/leafindexset.hh>
+#include "../leafindexset.hh"
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
 
 #if HAVE_GRAPE
-#include <dune/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 // polynom approximation order of quadratures, 
@@ -65,8 +65,7 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
-typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
+typedef HierarchicGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -197,8 +196,7 @@ public:
 // ********************************************************************
 double algorithm (GridType& grid, int turn )
 {
-   IndexSetType iset ( grid );
-   GridPartType part ( grid, iset );
+   GridPartType part ( grid );
 
    DiscreteFunctionSpaceType linFuncSpace ( part );
    DiscreteFunctionType solution ( "sol", linFuncSpace );

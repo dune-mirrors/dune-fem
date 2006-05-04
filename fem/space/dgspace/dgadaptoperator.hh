@@ -3,7 +3,7 @@
 
 //- local includes  
 #include <../adaptoperator.hh>
-#include "../quadrature/cachequad.hh"
+#include "../../quadrature/cachequad.hh"
 #include "dgspace.hh"
 
 /************************************************************

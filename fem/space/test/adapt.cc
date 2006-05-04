@@ -1,29 +1,33 @@
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
-#include "../../macrogridparser/gridtype.hh"
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
 
 using namespace Dune;
 
-#include <dune/fem/discreteoperatorimp.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/fem/dfadapt.hh>
+#include "../../operator/discreteoperatorimp.hh"
+#include "../lagrangespace.hh"
+#include "../../discretefunction/dfadapt.hh"
 #include "../../space/dgspace.hh"
 #include "../../quadrature/cachequad.hh"
 #include "../../space/dgspace/dgadaptoperator.hh"
 
-#include <dune/grid/common/leafindexset.hh>
+#include "../leafindexset.hh"
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
 
 #if HAVE_GRAPE
-#include <dune/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
 const int polOrd = POLORDER;
+
+#ifndef GRIDDIM 
+#define GRIDDIM 2 
+#endif
 
 //***********************************************************************
 /*! L2 Projection of a function f: 
@@ -256,7 +260,8 @@ int main (int argc, char **argv)
   double* error = new double[ml];
   char tmp[100]; 
   sprintf(tmp,"%ddgrid.dgf",GRIDDIM);
-  GridType* grid=MacroGridParser().generate<GridType>(tmp);
+  GridPtr<GridType> gridptr(tmp,MPI_COMM_WORLD);
+  GridType* grid= gridptr.operator -> ();
 
   const int step = refStepsForHalf;
 
