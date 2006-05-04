@@ -1105,6 +1105,13 @@ public:
     return (codim==0);
   }
 
+  template <class EntityType>
+  size_t size(const EntityType & en ) const 
+  {
+    std::cerr << "WARNING: implement size method in DofManager\n";
+    return 0;
+  }
+
   //! packs all data of this entity to message buffer 
   template <class ObjectStreamType, class EntityType>
   void gather ( ObjectStreamType & str, EntityType & en )
