@@ -205,6 +205,8 @@ namespace Dune {
     {
       return *mapper_;
     }
+
+    GridPartType & gridPart () { return gridPart_; }
     /*
     //! default for polOrd 0
     template <class EntityType> 
