@@ -5,7 +5,9 @@
 
 //- Dune includes
 #include <dune/common/tuples.hh>
-#include <dune/common/operator.hh>
+
+//- local includes 
+#include "../operator/common/operator.hh"
 
 // * must go away
 #include "../misc/timeutility.hh"
@@ -168,6 +170,7 @@ namespace Dune {
     typedef Pass<DiscreteModelImp, PreviousPassImp> BaseType;
     //! The type of the argument (and destination) type of the overall
     //! operator
+    
     typedef typename BaseType::TotalArgumentType ArgumentType;
 
     //! The discrete function representing the return value of this pass
