@@ -49,12 +49,10 @@ public:
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
   {
-    const_cast<OperatorType &> (op_).prepareGlobal(Arg,Dest);
   }
 
   void finalize () const
   {
-    const_cast<OperatorType &> (op_).finalizeGlobal();
   }
 
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
@@ -170,12 +168,10 @@ public:
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
   {
-    const_cast<OperatorType &> (op_).prepareGlobal(Arg,Dest);
   }
 
   void finalize () const
   {
-    const_cast<OperatorType &> (op_).finalizeGlobal();
   }
 
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
@@ -229,12 +225,10 @@ public:
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
   {
-    const_cast<OperatorType &> (op_).prepareGlobal(Arg,Dest);
   }
 
   void finalize () const
   {
-    const_cast<OperatorType &> (op_).finalizeGlobal();
   }
 
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
@@ -284,12 +278,10 @@ public:
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
   {
-    const_cast<OperatorType &> (op_).prepareGlobal(Arg,Dest);
   }
 
   void finalize () const
   {
-    const_cast<OperatorType &> (op_).finalizeGlobal();
   }
 
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
@@ -340,12 +332,10 @@ public:
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
   {
-    const_cast<OperatorType &> (op_).prepareGlobal(Arg,Dest);
   }
 
   void finalize () const
   {
-    const_cast<OperatorType &> (op_).finalizeGlobal();
   }
 
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
