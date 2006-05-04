@@ -7,8 +7,8 @@
 # - put wrapper around mpi-check for consistency with other packages?
 
 AC_PREREQ(2.50)
-AC_INIT(fvcommon, 0.0, dune@mathematik.uni-freiburg.de)
-AM_INIT_AUTOMAKE(fvcommon, 0.0, dune@mathematik.uni-freiburg.de)
+AC_INIT(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
+AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 
 # check if we're in the right directory
 AC_CONFIG_SRCDIR([space/dgspace.hh])
@@ -26,26 +26,24 @@ LIBS="$DUNE_LIBS"
 
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
-		 basefunctions/Makefile
-		 basefunctions/test/Makefile
-		 caching/Makefile
-		 caching/test/Makefile
-		 macrogridparser/Makefile
-		 macrogridparser/test/Makefile
-                 examples/Makefile
-                 examples/poisson/Makefile
-              	 examples/transport/Makefile
-                 examples/vectorial/Makefile
-                 examples/l2projection/Makefile
-		 examples/localdg/Makefile
-		 examples/localdg/advectdiffusion/Makefile
-		 examples/pass/Makefile
-		 pass/Makefile
-		 pass/test/Makefile
-		 space/Makefile
-		 space/test/Makefile
-		 quadrature/Makefile
-		 quadrature/test/Makefile
+     basefunctions/Makefile
+     basefunctions/test/Makefile
+     caching/Makefile
+     caching/test/Makefile
+     examples/Makefile
+     examples/poisson/Makefile
+     examples/transport/Makefile
+     examples/vectorial/Makefile
+     examples/l2projection/Makefile
+     examples/localdg/Makefile
+     examples/localdg/advectdiffusion/Makefile
+     examples/pass/Makefile
+     pass/Makefile
+     pass/test/Makefile
+     space/Makefile
+     space/test/Makefile
+     quadrature/Makefile
+     quadrature/test/Makefile
                ])
 AC_OUTPUT
 
