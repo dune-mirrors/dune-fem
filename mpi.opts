@@ -4,8 +4,8 @@
 # remember to run ./autogen.sh after changing these values!
 
 # name of compiler binaries
-COMP="mpicc"
-CXXCOMP="mpicxx"
+COMP="mpicc -cc=gcc"
+CXXCOMP="mpicxx -CC=g++"
 
 # flags set in any case
 FLAGS=""
