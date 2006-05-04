@@ -181,14 +181,6 @@ public:
     if(restr || ref)
       dm_.dofCompress();
 
-    // here the communicate and load-balancing should be called 
-/*
-#ifdef _ALU3DGRID_PARALLEL_
-    grid_.loadBalance(dm_);
-    grid_.communicate(dm_);
-#endif
-*/
-    
     // do cleanup 
     grid_.postAdapt();
   }
