@@ -2,10 +2,6 @@
 # Process this file with autoconf to produce a configure script.
 # $Id$
 
-# TODO:
-#
-# - put wrapper around mpi-check for consistency with other packages?
-
 AC_PREREQ(2.50)
 AC_INIT(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
