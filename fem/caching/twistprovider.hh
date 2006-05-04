@@ -9,7 +9,7 @@
 
 //- Dune includes
 #include <dune/grid/common/referenceelements.hh>
-#include <dune/grid/alu3dgrid/topology.hh>
+#include <dune/grid/alugrid/3d/topology.hh>
 
 //- Local includes
 #include "pointmapper.hh"
