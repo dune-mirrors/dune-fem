@@ -54,7 +54,7 @@ namespace Dune {
   {
     storage_.jacobian(baseFunct, quad, quadPoint, jTmp_);
 
-    DofType result = 0;
+    DofType result = 0.0;
     
     typedef FieldMatrix<DofType, FunctionSpaceImp::DimDomain,FunctionSpaceImp::DimDomain> JacobianInverseType;
     const JacobianInverseType& jti =
