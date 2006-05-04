@@ -14,4 +14,4 @@ FLAGS="-Wall"
 DEBUGFLAGS="-g -DDUNE_DEVEL_MODE"
 
 # additional flags for optimization
-OPTIMFLAGS="-O3 -unroll "
+OPTIMFLAGS="-O3 -unroll -DNDEBUG"

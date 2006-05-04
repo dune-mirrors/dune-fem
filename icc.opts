@@ -5,7 +5,7 @@
 
 # name of compiler binaries
 COMP="icc"
-CXXCOMP="icc"
+CXXCOMP="icpc"
 
 # flags set in any case, -wn2 shows only 2 error at once
 FLAGS="-wn2 -DHAVE_ICC -D__interface=myinterface"
