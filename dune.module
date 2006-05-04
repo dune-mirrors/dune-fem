@@ -1,0 +1,6 @@
+Module: dune_fem
+Depends: dune_common dune_grid
+
+run_configure () {
+  run_default_configure "$@"
+}
