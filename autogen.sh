@@ -1,43 +1,17 @@
 #!/bin/sh
 # $Id$
 
-#### barf on errors
+# barf on errors
 set -e
-
-# may be used to force a certain automake-version e.g. 1.7
-AMVERS=
-
-# everybody who checks out the CVS wants the maintainer-mode to be enabled
-# (should be off for source distributions, this should happen automatically)
-#
-DEFAULTCONFOPT="--enable-maintainer-mode"
-
-# default values
-DEBUG=1
-OPTIM=0
 
 usage () {
     echo "Usage: ./autogen.sh [options]"
-    echo "  -i, --intel        use intel compiler"
-    echo "  -g, --gnu          use gnu compiler (default)"
-    echo "  --opts=FILE        use compiler-options from FILE"
-    echo "  -d, --debug        switch debug-opts on"
-    echo "  -n, --nodebug      switch debug-opts off"
-    echo "  -o, --optim        switch optimization on"
-    echo "  --with-dune=PATH   directory with dune/ inside"
-    echo "  -h, --help         you already found this :)"
-    echo
-    echo "Parameters not in the list above are directly passed to configure. See"
-    echo
-    echo "    ./configure --help"
-    echo
-    echo "for a list of additional options"
+    echo "  --ac=, --acversion=VERSION   use a specific VERSION of autoconf"
+    echo "  --am=, --amversion=VERSION   use a specific VERSION of automake"
+    echo "  -h,    --help                you already found this :-)"
 }
 
-# no compiler set yet
-COMPSET=0
-for OPT in $* ; do
-
+for OPT in "$@"; do
     set +e
     # stolen from configure...
     # when no option is set, this returns an error code
@@ -45,104 +19,79 @@ for OPT in $* ; do
     set -e
 
     case "$OPT" in
-	-i|--intel)   . ./icc.opts ; COMPSET=1 ;;
-	-g|--gnu)     . ./gcc.opts ; COMPSET=1 ;;
-	--mpi)     . ./mpi.opts    ; COMPSET=1 ;;
-	--opts=*)
-	    if [ -r $arg ] ; then
-	      echo "reading options from $arg..."
-	      . ./$arg ;
-	      COMPSET=1;
-	    else
-	      echo "Cannot open compiler options file $arg!" ;
-	      exit 1;
-	    fi ;;
-	-d|--debug)   DEBUG=1 ;;
-	-n|--nodebug) DEBUG=0 ;;
-	-o|--optim)   OPTIM=1 ;;
+	--ac=*|--acversion=*)
+			if test "x$arg" == "x"; then
+				usage; 
+				exit 1;
+			fi
+			ACVERSION=$arg
+			;;
+	--am=*|--amversion=*)
+			if test "x$arg" == "x"; then
+				usage; 
+				exit 1;
+			fi
+			AMVERSION=$arg
+			;;
 	-h|--help) usage ; exit 0 ;;
-	# special hack: use the with-dune-dir for aclocal-includes
-	--with-dunecommon=*)
-	    eval DUNEDIR=$arg
-	    # add the option anyway
-	    CONFOPT="$CONFOPT $OPT" ;;
-	# pass unknown opts to ./configure
-	*) CONFOPT="$CONFOPT $OPT" ;;
+	*)
+            if test -d "$OPT/m4"; then
+              ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/m4"
+            fi
+            if test -d "$OPT/am"; then
+              am_dir="$OPT/am"
+            fi
+            ;;
     esac
 done
 
-# set special m4-path if --with-dune is set
-if [ x$DUNEDIR != x ] ; then
-    # aclocal from automake 1.8 seems to need an absolute path for inclusion
-    FULLDIR=`cd $DUNEDIR && pwd`
-
-    # automagically use directory above if complete Dune-dir was supplied
-    if test `basename $FULLDIR` = "dune" ; then
-      FULLDIR=`cd $FULLDIR/.. && pwd`
-    fi
-
-    ACLOCALOPT="-I $FULLDIR/dune/m4/ -I ./"
+## report parameters
+if test "x$ACVERSION" != "x"; then
+	echo "Forcing autoconf version «$ACVERSION»"
+	if ! which autoconf$ACVERSION > /dev/null; then
+		echo
+		echo "Error: Could not find autoconf$ACVERSION"
+		echo "       Did you specify a wrong version?"
+		exit 1
+	fi
+fi
+if test "x$AMVERSION" != "x"; then
+	echo "Forcing automake version «$AMVERSION»"
+	if ! which automake$AMVERSION > /dev/null; then
+		echo
+		echo "Error: Could not find automake$AMVERSION"
+		echo "       Did you specify a wrong version?"
+		exit 1
+	fi
 fi
 
-# use the free compiler as default :-)
-if [ "$COMPSET" != "1" ] ; then
-    echo "No compiler set, using GNU compiler as default"
-    . ./gcc.opts
-fi
 
-# create flags
-COMPFLAGS="$FLAGS"
-
-# maybe add debug flag
-if [ "$DEBUG" = "1" ] ; then	
-    COMPFLAGS="$COMPFLAGS $DEBUGFLAGS"
-fi
-
-# maybe add optimization flag
-if [ "$OPTIM" = "1" ] ; then	
-    COMPFLAGS="$COMPFLAGS $OPTIMFLAGS"
-fi
-
-# check if automake-version was set
-if test "x$AMVERS" != x ; then
-  echo Warning: explicitly using automake version $AMVERS
-  # binaries are called automake-$AMVERS
-  AMVERS="-$AMVERS"
-fi
-
-#### create all autotools-files
+## run autotools
 
 echo "--> libtoolize..."
-# force to write new versions of files, otherwise upgrading libtools
-# doesn't do anything...
+# this script won't rewrite the files if they already exist. This is a
+# PITA when you want to upgrade libtool, thus I'm setting --force
 libtoolize --force
 
+# prepare everything
 echo "--> aclocal..."
-aclocal$AMVERS $ACLOCALOPT
+aclocal$AMVERSION $ACLOCAL_FLAGS
 
-# sanity check to catch missing --with-dune
-if ! grep DUNE aclocal.m4 > /dev/null ; then
-    echo "aclocal.m4 doesn't contain any DUNE-macros, this would crash autoconf"
-    echo "or automake later. Maybe you should provide a --with-dune=PATH parameter"
-    exit 1
-fi
-
+# applications should provide a config.h for now
 echo "--> autoheader..."
-autoheader
+autoheader$ACVERSION
 
+# create a link to the dune-common am directory
+echo "--> linking dune-common/am..."
+rm -f am
+ln -s $am_dir am
+
+# call automake/conf
 echo "--> automake..."
-automake$AMVERS --add-missing
+automake$AMVERSION --add-missing
 
 echo "--> autoconf..."
-autoconf
+autoconf$ACVERSION
 
-#### start configure with special environment
-
-export CC="$COMP"
-export CXX="$CXXCOMP"
-export CPP="$COMP -E"
-
-export CFLAGS="$COMPFLAGS"
-export CXXFLAGS="$COMPFLAGS"
-
-./configure $DEFAULTCONFOPT $CONFOPT
+## tell the user what to do next
+echo "Now run ./configure to setup dune-grid"
