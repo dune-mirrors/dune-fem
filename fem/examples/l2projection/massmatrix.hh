@@ -1,9 +1,6 @@
 #ifndef DUNE_MASSMATRIX_HH
 #define DUNE_MASSMATRIX_HH
 
-#include <dune/istl/bcrsmatrix.hh>
-#include <dune/istl/matrixindexset.hh>
-
 #include "../../operator/feop.hh"
 #include "../../operator/feop/spmatrix.hh"
 #include <../../quadrature/quadrature.hh>
