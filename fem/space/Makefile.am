@@ -1,4 +1,4 @@
 # $Id$
 
-SUBDIRS = test
+SUBDIRS = test dgspace 
 spacedir =  $(includedir)/space
