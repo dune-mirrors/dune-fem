@@ -7,7 +7,7 @@ AC_INIT(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 
 # check if we're in the right directory
-AC_CONFIG_SRCDIR([space/dgspace.hh])
+AC_CONFIG_SRCDIR([fem/space/dgspace.hh])
 # which header-file is created
 AM_CONFIG_HEADER(config.h)
 
@@ -22,24 +22,25 @@ LIBS="$DUNE_LIBS"
 
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
-     basefunctions/Makefile
-     basefunctions/test/Makefile
-     caching/Makefile
-     caching/test/Makefile
-     examples/Makefile
-     examples/poisson/Makefile
-     examples/transport/Makefile
-     examples/vectorial/Makefile
-     examples/l2projection/Makefile
-     examples/localdg/Makefile
-     examples/localdg/advectdiffusion/Makefile
-     examples/pass/Makefile
-     pass/Makefile
-     pass/test/Makefile
-     space/Makefile
-     space/test/Makefile
-     quadrature/Makefile
-     quadrature/test/Makefile
+     fem/Makefile
+     fem/basefunctions/Makefile
+     fem/basefunctions/test/Makefile
+     fem/caching/Makefile
+     fem/caching/test/Makefile
+     fem/examples/Makefile
+     fem/examples/poisson/Makefile
+     fem/examples/transport/Makefile
+     fem/examples/vectorial/Makefile
+     fem/examples/l2projection/Makefile
+     fem/examples/localdg/Makefile
+     fem/examples/localdg/advectdiffusion/Makefile
+     fem/examples/pass/Makefile
+     fem/pass/Makefile
+     fem/pass/test/Makefile
+     fem/space/Makefile
+     fem/space/test/Makefile
+     fem/quadrature/Makefile
+     fem/quadrature/test/Makefile
                ])
 AC_OUTPUT
 
