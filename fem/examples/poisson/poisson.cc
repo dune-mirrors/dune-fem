@@ -58,7 +58,7 @@ static const int refinestep = 1;
 #include "laplace.hh"
 
 #if HAVE_GRAPE
-#include <dune/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 #include "../../operator/inverseoperators.hh"
@@ -321,8 +321,8 @@ double algorithm (const char * filename , int maxlevel, int turn )
    // if grape was found then display solution 
    if(turn > 0)
    {
-     //GrapeDataDisplay < GridType > grape(grid); 
-     //grape.dataDisplay( solution );
+     GrapeDataDisplay < GridType > grape(grid); 
+     grape.dataDisplay( solution );
    }
 #endif
 
