@@ -86,8 +86,9 @@ namespace Dune {
                                       const LocalPointVectorType& points,
                                       GeometryType elementGeo)
   {
-    const ReferenceElement<ct, dim>& refElem =
-      ReferenceElements<ct, dim>::general(elementGeo);
+    const ReferenceElementContainer<ct, dim> refContainer;
+    const ReferenceElement<ct, dim>& refElem = refContainer(elementGeo);
+
     const int numLocalPoints = points.size();
     const int numFaces = refElem.size(codim);
     const int numGlobalPoints = numFaces*numLocalPoints;
