@@ -41,6 +41,11 @@ AC_CONFIG_FILES([Makefile
      fem/space/test/Makefile
      fem/quadrature/Makefile
      fem/quadrature/test/Makefile
+     fem/visual/Makefile
+     fem/visual/grape/Makefile
+     fem/visual/grape/datadisp/Makefile
+     fem/visual/grape/gridview/Makefile
+     fem/visual/grape/functionview/Makefile
                ])
 AC_OUTPUT
 
