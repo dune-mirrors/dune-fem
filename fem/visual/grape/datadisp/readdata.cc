@@ -6,7 +6,8 @@
 
 #define LARGE 1.0E308
 
-#include <dune/io/file/asciiparser.hh>
+#include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/io/file/grapedataio.hh>
 
 void dataDispErrorExit(std::string msg);
 
@@ -16,7 +17,7 @@ static Stack<GR_GridType *> gridStack;
 static Stack<GrapeDispType *> dispStack;
 static Stack<GR_DiscFuncSpaceType *> fsStack;
 static std::list <GR_DiscFuncType *> funcStack;
-static Stack<GR_IndexSetType *> indexStack;
+//static Stack<GR_IndexSetType *> indexStack;
 static Stack<GR_GridPartType *> gridPartStack;
 
 static GrapeDataIO < GR_GridType> dataIO;
@@ -256,7 +257,7 @@ void deleteAllObjects()
   //deleteObjects(funcStack);
   if(globalSpace) delete globalSpace;
   deleteObjects(fsStack);
-  deleteObjects(indexStack);
+//  deleteObjects(indexStack);
   deleteObjects(gridPartStack);
   deleteObjects(dispStack);
   deleteObjects(gridStack);

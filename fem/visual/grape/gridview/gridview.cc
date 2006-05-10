@@ -6,12 +6,11 @@
 #include <iostream>
 #include <config.h>
 
-#define SGRID 0
+// set exactly one of the following to 1, the others 0
+#define SGRID 1
 #define UGRID 0
-#define AGRID 1
-
+#define AGRID 0
 #define BGRID 0
-
 #define YGRID 0
 
 #if SGRID
@@ -49,6 +48,8 @@ typedef UGGrid< dim,dimworld> GridType;
 
 #if YGRID
 #include <dune/grid/yaspgrid.hh>
+static const int dim = 3;
+static const int dimworld = 3;
 using namespace Dune;
 typedef YaspGrid <dim,dimworld> GridType;
 #endif
@@ -69,77 +70,20 @@ static const int dimworld = 3;
 #define PROBLEMdim 3
 #define WORLDdim 3
 
-#include <dune/grid/alu3dgrid/includecc.cc>
-#include <dune/grid/alu3dgrid.hh>
+// the following file does not exist... renamed or what?
+//#include <dune/grid/alu3dgrid/includecc.cc>
+//#include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/alugrid.hh>
 using namespace Dune;
-typedef ALU3dGrid<dim,dimworld,tetra> GridType;
+//typedef ALU3dGrid<dim,dimworld,tetra> GridType;
+typedef ALU3dGrid<dim,dimworld,hexa> GridType;
+// the new syntax should be the following, but incurs error
+// typedef ALUCubeGrid<dim,dimworld> GridType; 
+
 #endif
 
-#include <dune/quadrature/barycenter.hh>
-#include <dune/fem/discfuncarray.hh>
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/grid/common/gridpart.hh>
-
-#if AGRID 
-typedef FunctionSpace < double , double, dim , dim > FuncSpace;
-#else 
-typedef FunctionSpace < double , double, dim , 1 > FuncSpace;
-#endif
-typedef DefaultGridIndexSet < GridType , GlobalIndex > IndexSetType;
-typedef LeafGridPart < GridType > GridPartType; 
-typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType, 0 > FuncSpaceType ;
-typedef DiscFuncArray < FuncSpaceType > DiscFuncType;
-typedef DFAdapt < FuncSpaceType > DFType;
-
-#include <dune/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/grapegriddisplay.hh>
 #include <dune/common/stdstreams.cc>
-
-//! velocity of the transport problem
-template <class FieldVectorType> 
-void rotatingPulse(const FieldVectorType &x, FieldVectorType & velo)
-{
-  assert(velo.dim() >= 2);
-  // rotating pulse 
-  velo[0] = -4.0*x[1];
-  velo[1] =  4.0*x[0];
-  if(velo.dim() > 2) velo[2] = x[2];
-  return;
-}
-
-
-template <class GridType, class DiscFuncType> 
-void setFunc (GridType & grid, DiscFuncType & df )
-{
-  typedef typename GridType :: template Codim<0> :: LeafIterator LeafIterator;
-  typedef typename DiscFuncType :: LocalFunctionType LFType;
-
-  typedef BaryCenterQuad < 
-      typename DiscFuncType :: RangeFieldType ,
-      typename DiscFuncType::DomainType, 0 > QuadratureType;
-  LeafIterator endit = grid.template leafend<0>();
-  LeafIterator it = grid.template leafbegin<0> (); 
-
-  if( it == endit ) 
-  {
-    std::cerr << "ERROR, empty grid! \n";
-    abort();
-  }
-  
-  QuadratureType quad( *it );
-  
-  
-  for( ; it != endit; ++it)
-  {
-    FieldVector<double,dim> velo;
-    FieldVector<double,dim> bary = it->geometry().global( quad.point(0)); 
-    LFType lf = df.localFunction(*it); 
-    rotatingPulse(bary,velo);
-    for(int i=0; i<lf.numDofs(); i++) 
-      lf[i] = velo[i];
-  }
-}
-
 
 int main (int argc, char **argv)
 {
@@ -182,10 +126,13 @@ int main (int argc, char **argv)
        
   std::cout << "We are using YaspGrid! \n";
 
-  Vec<double,dim> lang = 1.0;
-  Vec<int,dim>  anz = 4;
-  Vec<bool,dim> per; 
-  for(int i=0; i<dim; i++) per(i) = true;
+//  Vec<double,dim> lang = 1.0;
+//  Vec<int,dim>  anz = 4;
+//  Vec<bool,dim> per; 
+//  for(int i=0; i<dim; i++) per(i) = true;
+  FieldVector<double,dim> lang(1.0);
+  FieldVector<int,dim>  anz(4);
+  FieldVector<bool,dim> per(true); 
   
   GridType grid (MPI_COMM_WORLD, lang, anz, per ,0 );
   for(int i=0; i<6; i++)  grid.globalRefine (1);
@@ -223,26 +170,27 @@ int main (int argc, char **argv)
 #endif
   grid.globalRefine (level);
  
-  GrapeDataIO< GridType > dataIO;
-  dataIO.writeGrid(grid,xdr,"grid",0.0,0);
+  //GrapeDataIO< GridType > dataIO;
+  //dataIO.writeGrid(grid,xdr,"grid",0.0,0);
   //AmiraMeshWriter< GridType > am;
   //std::string fn (  "forward3d.am" );
   //am.writeGrid ( grid ,fn );
 #endif
 
   {
-    GrapeDataDisplay < GridType > grape(grid,-1);
-    typedef DofManager< GridType > DofManagerType;
-    typedef DofManagerFactory < DofManagerType> DofManagerFactoryType; 
+    GrapeGridDisplay < GridType > grape(grid,-1);
+    grape.display();
 
-    IndexSetType iset ( grid );
-    
-    LeafGridPart < GridType > gpart ( grid );
-    FuncSpaceType  space( gpart ); 
-    
-    DFType df ( space );
-    setFunc(grid,df);
-    grape.dataDisplay(df,true);
+//    GrapeDataDisplay < GridType > grape(grid,-1);
+//    typedef DofManager< GridType > DofManagerType;
+//    typedef DofManagerFactory < DofManagerType> DofManagerFactoryType; 
+//    IndexSetType iset ( grid );    
+//    LeafGridPart < GridType > gpart ( grid );
+//    FuncSpaceType  space( gpart ); 
+//    DFType df ( space );
+//    setFunc(grid,df);
+//    grape.dataDisplay(df,true);
+
   }
 
 #if YGRID 

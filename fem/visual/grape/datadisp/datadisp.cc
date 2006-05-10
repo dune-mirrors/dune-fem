@@ -13,8 +13,8 @@
 
 using namespace Dune;
 
-#define AGRID 0 
-#define BGRID 1 
+#define AGRID 1 
+#define BGRID 0
 #define SGRID 0
 
 //#include <dune/grid/sgrid.hh>
@@ -32,8 +32,9 @@ typedef AlbertaGrid<dim,dimworld> GR_GridType;
 
 #if BGRID 
 
-#include <dune/grid/alu3dgrid/includecc.cc>
-#include <dune/grid/alu3dgrid.hh>
+//#include <dune/grid/alu3dgrid/includecc.cc>
+//#include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/alugrid.hh>
 
 static const int dim = 3; 
 static const int dimworld = 3; 
@@ -51,12 +52,11 @@ static const int dimworld = DIM_OF_WORLD;
 typedef SGrid <dim, dimworld> GR_GridType;
 #endif
 
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/fem/dfadapt.hh>
+#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/space/lagrangespace/lagrange.hh>
 #include <dune/common/stack.hh>
 
-#include <dune/grid/common/leafindexset.hh>
+//#include <dune/grid/common/leafindexset.hh>
 #include <dune/grid/common/gridpart.hh>
 
 //#include <dune/io/file/grapedataio.hh>
@@ -66,8 +66,8 @@ typedef SGrid <dim, dimworld> GR_GridType;
 
 typedef double REAL;
 
-#include <dune/io/visual/grapedatadisplay.hh>
-#include <dune/io/visual/combinedgrapedisplay.hh>
+#include <dune/grid/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/combinedgrapedisplay.hh>
 #include "printhelp.cc"
 
 typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
@@ -81,10 +81,12 @@ typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType
   typedef DefaultGridIndexSet<GR_GridType,LevelIndex>   GR_IndexSetType;
 #else
   //typedef GR_GridType :: Traits :: LeafIndexSet         GR_IndexSetType;
-  typedef DefaultGridIndexSet<GR_GridType,GlobalIndex>   GR_IndexSetType;
+  //typedef DefaultGridIndexSet<GR_GridType,GlobalIndex>   GR_IndexSetType;
 #endif
+//typedef DefaultGridPart<GR_GridType,GR_IndexSetType>    GR_GridPartType;
+typedef LeafGridPart < GR_GridType > GR_GridPartType; 
 
-typedef DefaultGridPart<GR_GridType,GR_IndexSetType>    GR_GridPartType;
+
 //typedef DiscontinuousGalerkinSpace<GR_FunctionSpaceType, GR_GridPartType, 0> GR_DiscFuncSpaceType;
 typedef LagrangeDiscreteFunctionSpace<GR_FunctionSpaceType,GR_GridPartType,0> GR_DiscFuncSpaceType;
 

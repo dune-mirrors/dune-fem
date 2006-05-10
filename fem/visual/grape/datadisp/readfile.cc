@@ -4,7 +4,7 @@
 #ifndef __READ_FILE_CC__
 #define __READ_FILE_CC__
 
-#include <dune/io/file/asciiparser.hh>
+#include <dune/fem/io/file/asciiparser.hh>
 
 int readParameterFile (int argc, char **argv)
 {
