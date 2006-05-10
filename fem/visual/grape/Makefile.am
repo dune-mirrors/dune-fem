@@ -1,1 +1,1 @@
-SUBDIRS = gridview datadisp
+SUBDIRS = gridview datadisp functionview
