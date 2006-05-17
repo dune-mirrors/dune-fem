@@ -8,30 +8,32 @@ namespace Dune {
   CombinedSpace(ContainedDiscreteFunctionSpaceType& spc) :
     BaseType(spaceId_),
     spc_(spc),
-    mapper_(spc, spc.mapper()),
+    mapper_(spc_, spc_.mapper()),
     baseSetVec_(GeometryIdentifier::numTypes, 0)
   {
-    // initialise your basefunction set with all Geometry types found in mesh
-    IteratorType endit = spc.end();
-    for (IteratorType it = spc.begin(); it != endit; ++it) {
-      GeometryType geo = it->geometry().type();
-      const int dimension =
-        static_cast<int>(IteratorType::Entity::mydimension);
+    // get types for codim 0  
+    const std::vector<GeometryType>& geomTypes =
+                spc_.indexSet().geomTypes(0) ;
+
+    int maxNumDofs = -1;
+    // create mappers and base sets for all existing geom types
+    for(size_t i=0; i<geomTypes.size(); ++i)
+    {
       GeometryIdentifier::IdentifierType id =
-        GeometryIdentifier::fromGeo(dimension, geo);
-
-      assert(id >= 0 && id < static_cast<int>(GeometryIdentifier::numTypes));
-      if (baseSetVec_[id] == 0) {
-        baseSetVec_[id] = new BaseFunctionSetType(spc.getBaseFunctionSet(*it));
+                  GeometryIdentifier::fromGeo(geomTypes[i]);
+      if(baseSetVec_[id] == 0 )
+      {
+        baseSetVec_[id] = new BaseFunctionSetType(spc.getBaseFunctionSet(id));
+        maxNumDofs = std::max(maxNumDofs,baseSetVec_[id]->numBaseFunctions());
       }
-    } // end for
-
+    }
   }
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   ~CombinedSpace() 
   {
+    assert(false);
     for (unsigned int i = 0; i < baseSetVec_.size(); ++i) {
       delete baseSetVec_[i];
       baseSetVec_[i] = 0;
@@ -119,11 +121,23 @@ namespace Dune {
                  const RangeType& factor) const
   {
     assert(baseFunct >= 0 && 
-           baseFunct < baseFunctionSet_.numBaseFunctions()*N);
+           baseFunct < numBaseFunctions() );
 
     ContainedRangeType phi(0.);
     baseFunctionSet_.eval(util_.containedDof(baseFunct), xLocal, phi);
+    assert( util_.component(baseFunct) < RangeType :: dimension );
     return factor[util_.component(baseFunct)]*phi[0];
+  }
+
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  template <class QuadratureType> 
+  typename CombinedBaseFunctionSet<DiscreteFunctionSpaceImp,N,policy>::DofType
+  CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  evaluateSingle(int baseFunct, 
+                 const QuadratureType & quad, int qp, 
+                 const RangeType& factor) const
+  {
+    return evaluateSingle(baseFunct,quad.point(qp),factor);
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
@@ -137,7 +151,7 @@ namespace Dune {
                          const JacobianRangeType& factor) const
   {
     assert(baseFunct >= 0 && 
-           baseFunct < baseFunctionSet_.numBaseFunctions()*N);
+           baseFunct < numBaseFunctions() );
 
     //baseFunctionSet_.jacobian(baseFunct, x, phi);
     DomainType gradScaled(0.);
@@ -148,8 +162,24 @@ namespace Dune {
       umv(phi[0], gradScaled);
     //! is this right?
     //return factor[util_.component(baseFunct)]*jTmp[0];
+    assert( util_.component(baseFunct) >= 0 );
+    assert( util_.component(baseFunct) < JacobianRangeType :: rows );
+    
     return gradScaled*factor[util_.component(baseFunct)];
  }
+
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  template <class Entity, class QuadratureType>
+  typename
+  CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::DofType
+  CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  evaluateGradientSingle(int baseFunct,
+                         Entity& en,
+                         const QuadratureType & quad, int qp, 
+                         const JacobianRangeType& factor) const
+  {
+    return evaluateGradientSingle(baseFunct,en,quad.point(qp),factor);
+  }
 
 
   //- CombinedMapper
@@ -168,7 +198,7 @@ namespace Dune {
     const int containedLocal = utilLocal_.containedDof(localNum);
  
     const int containedGlobal = spc_.mapToGlobal(en, containedLocal);
-   
+    
     return utilGlobal_.combinedDof(containedGlobal, component);
   }
 
@@ -176,6 +206,7 @@ namespace Dune {
   int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   newIndex(int num) const 
   {
+    assert( false );
     DofConversionUtility<policy> 
       tmpUtilGlobal(chooseSize(N, mapper_.newSize(), Int2Type<policy>()));
 
@@ -191,6 +222,9 @@ namespace Dune {
   int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   oldIndex(int num) const 
   {
+    assert(false);
+    return newIndex(num);
+    /*
     DofConversionUtility<policy> 
       tmpUtilGlobal(chooseSize(N, mapper_.oldSize(), Int2Type<policy>()));
 
@@ -200,6 +234,7 @@ namespace Dune {
     const int containedNew = mapper_.oldIndex(contained);
 
     return tmpUtilGlobal.combinedDof(containedNew, component);
+    */
   }
  
 } // end namespace Dune

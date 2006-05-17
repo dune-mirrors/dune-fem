@@ -92,6 +92,8 @@ namespace Dune {
     CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> 
     > BaseType;
   public:
+    enum { polynomialOrder = DiscreteFunctionSpaceImp :: polynomialOrder };
+    
     //- Public typedefs and enums
     typedef CombinedSpace<DiscreteFunctionSpaceImp, N, policy> ThisType;
     typedef CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> Traits;
@@ -149,13 +151,16 @@ namespace Dune {
 
     //! access to base function set
     template <class EntityType>
-    const BaseFunctionSetType& getBaseFunctionSet(EntityType& en) const 
+    const BaseFunctionSetType& getBaseFunctionSet(const EntityType& en) const 
     {
-      GeometryType geo = en.geometry().type();
-      int dimension = static_cast<int>(EntityType::mydimension);
+      GeometryIdentifier::IdentifierType id =
+                GeometryIdentifier::fromGeometry(en.geometry()); 
 
-      assert(baseSetVec_[GeometryIdentifier::fromGeo(dimension, geo)]);
-      return *baseSetVec_[GeometryIdentifier::fromGeo(dimension, geo)];
+      assert(id < (int) baseSetVec_.size());
+      assert(id >= 0);
+
+      assert( baseSetVec_[id] );
+      return *baseSetVec_[id];
     }
 
     //! access to grid
@@ -281,6 +286,17 @@ namespace Dune {
                            const DomainType& xLocal,
                            const RangeType& factor) const;
     
+    template <class QuadratureType> 
+    DofType evaluateSingle(int baseFunct, 
+                           const QuadratureType & quad, int qp, 
+                           const RangeType& factor) const;
+    
+    template <class Entity, class QuadratureType>
+    DofType evaluateGradientSingle(int baseFunct,
+                                   Entity& en,
+                                   const QuadratureType & quad, int qp, 
+                                   const JacobianRangeType& factor) const;
+
     template <class Entity>
     DofType evaluateGradientSingle(int baseFunct,
                                    Entity& en,
