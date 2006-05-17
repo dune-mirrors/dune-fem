@@ -66,22 +66,6 @@ namespace Dune {
     expand(baseFunct, containedResult_, phi);
   }
 
-  /*
-  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  inline int CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
-  containedDof(int combinedBaseNumber) const 
-  {
-    return combinedBaseNumber/N;
-  }
-
-  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  inline int CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
-  component(int combinedBaseNumber) const 
-  {
-    return combinedBaseNumber%N;
-  }
-  */
-
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   expand(int baseFunct, const ContainedRangeType& arg, RangeType& dest) const 
@@ -123,10 +107,9 @@ namespace Dune {
     assert(baseFunct >= 0 && 
            baseFunct < numBaseFunctions() );
 
-    ContainedRangeType phi(0.);
-    baseFunctionSet_.eval(util_.containedDof(baseFunct), xLocal, phi);
+    baseFunctionSet_.eval(util_.containedDof(baseFunct), xLocal, phi_ );
     assert( util_.component(baseFunct) < RangeType :: dimension );
-    return factor[util_.component(baseFunct)]*phi[0];
+    return factor[util_.component(baseFunct)]*phi_[0];
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
@@ -137,7 +120,12 @@ namespace Dune {
                  const QuadratureType & quad, int qp, 
                  const RangeType& factor) const
   {
-    return evaluateSingle(baseFunct,quad.point(qp),factor);
+    assert(baseFunct >= 0 && 
+           baseFunct < numBaseFunctions() );
+    baseFunctionSet_.eval(util_.containedDof(baseFunct), quad, qp, phi_);
+    assert( util_.component(baseFunct) < RangeType :: dimension );
+    return factor[util_.component(baseFunct)]*phi_[0];
+    //return evaluateSingle(baseFunct,quad.point(qp),factor);
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
@@ -154,18 +142,17 @@ namespace Dune {
            baseFunct < numBaseFunctions() );
 
     //baseFunctionSet_.jacobian(baseFunct, x, phi);
-    DomainType gradScaled(0.);
-    ContainedJacobianRangeType phi(0.);
+    gradScaled_ = 0.0;
     
-    baseFunctionSet_.jacobian(util_.containedDof(baseFunct), xLocal, phi);
+    baseFunctionSet_.jacobian(util_.containedDof(baseFunct), xLocal, grad_ );
     en.geometry().jacobianInverseTransposed(xLocal).
-      umv(phi[0], gradScaled);
+      umv(grad_[0], gradScaled_ );
     //! is this right?
     //return factor[util_.component(baseFunct)]*jTmp[0];
     assert( util_.component(baseFunct) >= 0 );
     assert( util_.component(baseFunct) < JacobianRangeType :: rows );
     
-    return gradScaled*factor[util_.component(baseFunct)];
+    return gradScaled_ * factor[util_.component(baseFunct)];
  }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
@@ -178,7 +165,21 @@ namespace Dune {
                          const QuadratureType & quad, int qp, 
                          const JacobianRangeType& factor) const
   {
-    return evaluateGradientSingle(baseFunct,en,quad.point(qp),factor);
+    assert(baseFunct >= 0 && 
+           baseFunct < numBaseFunctions() );
+
+    //baseFunctionSet_.jacobian(baseFunct, x, phi);
+    gradScaled_ = 0.0;
+    
+    baseFunctionSet_.jacobian(util_.containedDof(baseFunct), quad, qp, grad_ );
+    en.geometry().jacobianInverseTransposed( quad.point(qp) ).
+      umv(grad_[0], gradScaled_ );
+    //! is this right?
+    //return factor[util_.component(baseFunct)]*jTmp[0];
+    assert( util_.component(baseFunct) >= 0 );
+    assert( util_.component(baseFunct) < JacobianRangeType :: rows );
+    
+    return gradScaled_ * factor[util_.component(baseFunct)];
   }
 
 

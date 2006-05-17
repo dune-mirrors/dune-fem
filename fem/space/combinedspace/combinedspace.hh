@@ -92,6 +92,7 @@ namespace Dune {
     CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> 
     > BaseType;
   public:
+    // polynomial Order is the same as for the single space 
     enum { polynomialOrder = DiscreteFunctionSpaceImp :: polynomialOrder };
     
     //- Public typedefs and enums
@@ -200,6 +201,7 @@ namespace Dune {
     std::vector<BaseFunctionSetType*> baseSetVec_;
 
     static const int spaceId_;
+
   }; // end class CombinedSpace  
 
   //! Wrapper class for base function sets. This class is used within 
@@ -316,6 +318,9 @@ namespace Dune {
   private:
     //- Data members
     mutable ContainedRangeType containedResult_;
+    mutable ContainedRangeType phi_;
+    mutable ContainedJacobianRangeType grad_;
+    mutable DomainType gradScaled_;
     const ContainedBaseFunctionSetType& baseFunctionSet_;
     const DofConversionUtility<PointBased> util_;
   }; // end class CombinedBaseFunctionSet
