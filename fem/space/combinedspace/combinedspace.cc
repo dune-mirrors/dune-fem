@@ -23,7 +23,7 @@ namespace Dune {
                   GeometryIdentifier::fromGeo(geomTypes[i]);
       if(baseSetVec_[id] == 0 )
       {
-        baseSetVec_[id] = new BaseFunctionSetType(spc.getBaseFunctionSet(id));
+        baseSetVec_[id] = new BaseFunctionSetType(spc_.getBaseFunctionSet(id));
         maxNumDofs = std::max(maxNumDofs,baseSetVec_[id]->numBaseFunctions());
       }
     }

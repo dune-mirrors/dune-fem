@@ -8,11 +8,12 @@
 #include <dune/common/misc.hh>
 
 //- Local includes
-#include "../common/discretefunctionspace.hh"
-#include "../common/dofmapperinterface.hh"
-#include "../common/dofstorage.hh"
-#include "../../basefunctions/common/basefunctions.hh"
+#include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/common/dofmapperinterface.hh>
+#include <dune/fem/basefunctions/common/basefunctions.hh>
 #include "subspace.hh"
+
+#include "combineddofstorage.hh"
 
 namespace Dune {
   
@@ -68,7 +69,7 @@ namespace Dune {
     typedef typename ContainedSpaceTraits::IndexSetType IndexSetType;
     typedef typename ContainedSpaceTraits::IteratorType IteratorType;
 
-    typedef DofConversionUtility<policy> DofConversionType;
+    typedef CombinedDofConversionUtility<DiscreteFunctionSpaceImp,policy> DofConversionType;
 
     enum { DimRange = FunctionSpaceType::DimRange,
            DimDomain = FunctionSpaceType::DimDomain };
@@ -230,6 +231,9 @@ namespace Dune {
     typedef typename Traits::ContainedJacobianRangeType ContainedJacobianRangeType;
 
     typedef typename Traits::RangeFieldType DofType;
+
+    typedef DofConversionUtility<PointBased>
+      DofConversionUtilityType;
   public:
     //- Public methods
     //! Constructor
@@ -322,7 +326,7 @@ namespace Dune {
     mutable ContainedJacobianRangeType grad_;
     mutable DomainType gradScaled_;
     const ContainedBaseFunctionSetType& baseFunctionSet_;
-    const DofConversionUtility<PointBased> util_;
+    const DofConversionUtilityType util_;
   }; // end class CombinedBaseFunctionSet
 
   //! Wrapper class for mappers. This class is to be used in conjunction with
@@ -346,6 +350,9 @@ namespace Dune {
       DiscreteFunctionSpaceImp, N, policy> SpaceTraits;
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceImp::Traits::MapperType ContainedMapperType;
+
+    typedef CombinedDofConversionUtility<DiscreteFunctionSpaceImp,PointBased> LocalDofConversionUtilityType; 
+    typedef CombinedDofConversionUtility<DiscreteFunctionSpaceImp,policy> GlobalDofConversionUtilityType;
   public:
     //- Public methods
     //! Constructor
@@ -353,8 +360,8 @@ namespace Dune {
                    const ContainedMapperType& mapper) :
       spc_(spc),
       mapper_(mapper),
-      utilLocal_(N),
-      utilGlobal_(policy == PointBased ? N : spc.size())
+      utilLocal_(spc_,N),
+      utilGlobal_(spc_,N)
     {}
 
     //! Total number of degrees of freedom
@@ -372,14 +379,6 @@ namespace Dune {
     //! old size
     int oldSize() const { return mapper_.oldSize()*N; }
 
-    //! calc new insertion points for dof of different codim 
-    //! (to be called once per timestep, therefore virtual )
-    void calcInsertPoints () { 
-      const_cast<ContainedMapperType&>(mapper_).calcInsertPoints(); 
-      // * is this right here?
-      utilGlobal_.newSize(mapper_.size());
-    }
-  
     //! return max number of local dofs per entity 
     int numberOfDofs () const DUNE_DEPRECATED { return mapper_.numberOfDofs()*N; }
 
@@ -427,8 +426,8 @@ namespace Dune {
     const ContainedDiscreteFunctionSpaceType& spc_;
     const ContainedMapperType& mapper_;
 
-    const DofConversionUtility<PointBased> utilLocal_;
-    DofConversionUtility<policy> utilGlobal_;
+    const LocalDofConversionUtilityType utilLocal_;
+    GlobalDofConversionUtilityType utilGlobal_;
   }; // end class CombinedMapper
 
 } // end namespace Dune
