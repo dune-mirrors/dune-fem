@@ -154,23 +154,21 @@ namespace Dune {
     //! Get base function set for a given entity
     template <class Entity>
     BaseFunctionSetType&
-    getBaseFunctionSet (const Entity& en) const {
-      /*
-      GeometryType geom = en.geometry().type();
-      int dimension = static_cast<int>(Entity::mydimension);
-      assert(GeometryIdentifier::fromGeo(dimension,geom)
-             <(int) baseFuncSet_.size());
-      assert(GeometryIdentifier::fromGeo(dimension, geom) >= 0);
-      assert(baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geom)]);
-      return *baseFuncSet_[GeometryIdentifier::fromNewGeo<static_cast<int>(Entity::mydimension)>(geom)];
-      */
+    getBaseFunctionSet (const Entity& en) const 
+    {
       GeometryIdentifier::IdentifierType id = 
         GeometryIdentifier::fromGeometry(en.geometry());
-
+      return getBaseFunctionSet(id);
+    }
+  
+    //! Get base function set for a given id of geom type (mainly used by
+    //! CombinedSpace) 
+    BaseFunctionSetType&
+    getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
+    {
       assert(id < (int) baseFuncSet_.size());
       assert(id >= 0);
       assert(baseFuncSet_[id]);
-     
       return *baseFuncSet_[id];
     }
   
