@@ -12,7 +12,7 @@
 
 //- local includes 
 #include "common/basefunctionfactory.hh"
-#include "storageinterface.hh"
+#include "common/storageinterface.hh"
 
 namespace Dune {
 
