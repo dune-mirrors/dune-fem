@@ -157,7 +157,13 @@ namespace Dune {
 
     //! provide the access to the base function set for a given entity
     template <class EntityType>
-    const BaseFunctionSetType& getBaseFunctionSet ( EntityType &en ) const;
+    const BaseFunctionSetType& 
+    getBaseFunctionSet ( const EntityType &en ) const;
+
+    //! Get base function set for a given id of geom type (mainly used by
+    //! CombinedSpace) 
+    const BaseFunctionSetType&
+    getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const;
 
     //! default for polOrd 0
     template <class EntityType> 

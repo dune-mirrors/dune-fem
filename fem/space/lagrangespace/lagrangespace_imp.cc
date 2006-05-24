@@ -67,9 +67,20 @@ template <class EntityType>
 inline const 
 typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::BaseFunctionSetType &  
 LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
-getBaseFunctionSet (EntityType &en) const 
+getBaseFunctionSet (const EntityType &en) const 
 {
+  GeometryIdentifier::IdentifierType id =
+    GeometryIdentifier::fromGeometry(en.geometry());
+  return getBaseFunctionSet(id);
+}
 
+template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+inline const 
+typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::BaseFunctionSetType &  
+LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
+{
+  /*
   GeometryType geo =  en.geometry().type();
   int dimension = static_cast<int>(EntityType::mydimension);
   assert(GeometryIdentifier::fromGeo(dimension,geo)<(int) baseFuncSet_.size());
@@ -77,8 +88,11 @@ getBaseFunctionSet (EntityType &en) const
 
   assert(baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geo)]);
   return *baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geo)];
-
-
+  */
+  assert(id < (int) baseFuncSet_.size());
+  assert(id >= 0);
+  assert(baseFuncSet_[id]);
+  return *baseFuncSet_[id];
 }
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>
