@@ -2,8 +2,8 @@
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 
-#define SGRID 0
-#define AGRID 1
+#define SGRID 1
+#define AGRID 0
 #define BGRID 0
 
 #if !HAVE_ALBERTA 
@@ -112,10 +112,10 @@ typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
 // see dune/fem/inverseoperators.hh 
-typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
+//typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
 /****************************************/
 // or ../../solvers/oemsolver/oemsolvers.hh
-//typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
+typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
@@ -300,7 +300,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    //laplace.print();
    //rhs.print(std::cout);
     
-   bool verbose = false; 
+   bool verbose = true; 
    double dummy = 12345.67890;
    InverseOperatorType cg ( laplace, dummy , 1E-6 , 20000 , verbose );
      
