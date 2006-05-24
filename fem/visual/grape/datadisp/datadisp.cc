@@ -13,11 +13,11 @@
 
 using namespace Dune;
 
-#define AGRID 1 
+#define AGRID 0 
 #define BGRID 0
-#define SGRID 0
+#define SGRID 1
 
-//#include <dune/grid/sgrid.hh>
+#include <dune/grid/sgrid.hh>
 
 #define LARGE 1.0E308
 
@@ -46,8 +46,8 @@ typedef ALU3dGrid<dim,dimworld,hexa> GR_GridType;
 #if SGRID 
 #include <dune/grid/sgrid.hh>
 
-static const int dim = DIM; 
-static const int dimworld = DIM_OF_WORLD; 
+static const int dim = 2; 
+static const int dimworld = 2; 
 
 typedef SGrid <dim, dimworld> GR_GridType;
 #endif
@@ -56,7 +56,6 @@ typedef SGrid <dim, dimworld> GR_GridType;
 #include <dune/fem/space/lagrangespace/lagrange.hh>
 #include <dune/common/stack.hh>
 
-//#include <dune/grid/common/leafindexset.hh>
 #include <dune/grid/common/gridpart.hh>
 
 //#include <dune/io/file/grapedataio.hh>
@@ -77,14 +76,9 @@ typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
 typedef DofManager<GR_GridType>                         GR_DofManagerType;
 typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType;
 
-#if SGRID 
-  typedef DefaultGridIndexSet<GR_GridType,LevelIndex>   GR_IndexSetType;
-#else
-  //typedef GR_GridType :: Traits :: LeafIndexSet         GR_IndexSetType;
-  //typedef DefaultGridIndexSet<GR_GridType,GlobalIndex>   GR_IndexSetType;
-#endif
 //typedef DefaultGridPart<GR_GridType,GR_IndexSetType>    GR_GridPartType;
 typedef LeafGridPart < GR_GridType > GR_GridPartType; 
+typedef GR_GridPartType :: IndexSetType GR_IndexSetType;
 
 
 //typedef DiscontinuousGalerkinSpace<GR_FunctionSpaceType, GR_GridPartType, 0> GR_DiscFuncSpaceType;
