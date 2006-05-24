@@ -12,7 +12,6 @@ static const int dimp = DIM;
 
 #include <iostream>
 #include <config.h>
-#include <dune/common/stdstreams.cc>
 
 #define SGRID 0
 #define AGRID 1
@@ -74,7 +73,7 @@ typedef FunctionSpace < double , double, dimp , 1 > FuncSpace;
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
 typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-	polOrd,CachingStorage> DiscreteFunctionSpaceType;
+  polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
@@ -103,94 +102,121 @@ public:
 };
  
 // ********************************************************************
-template <class DiscreteFunctionType, class FunctionType, int polOrd>
+template <class DiscreteFunctionType>
 class L2Projection
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
 
  public:
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
-    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType 
-      FunctionSpaceType;
-    typedef typename FunctionSpaceType::Traits::GridType GridType;
-    typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+  template <class FunctionType>
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc, int polOrd) 
+  {
+    typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
 
-    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const DiscreteFunctionSpaceType& space =  discFunc.getFunctionSpace();
 
     discFunc.clear();
 
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
+    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
+    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
-    Iterator it = space.begin();
     Iterator endit = space.end();
+    for(Iterator it = space.begin(); it != endit ; ++it) 
+    {
+      // Get quadrature rule
+      CachingQuadrature<GridType,0> quad(*it, polOrd);
 
-    // Get quadrature rule
-    CachingQuadrature<GridType,0> quad(*it, 2*polOrd);
-
-   for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
-      const typename FunctionSpaceType::BaseFunctionSetType & baseset =
+
+      //! Note: BaseFunctions must be ortho-normal!!!!
+      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
+      const BaseFunctionSetType & baseset =
         lf.getBaseFunctionSet();
+
       const typename GridType::template Codim<0>::Entity::Geometry& 
-	itGeom = (*it).geometry();
-      for(int qP = 0; qP < quad.nop(); qP++) {
-	f.evaluate(itGeom.global(quad.point(qP)), ret);
-	for(int i=0; i<lf.numDofs(); i++) {
+        itGeom = (*it).geometry();
+     
+      const int quadNop = quad.nop();
+      const int numDofs = lf.numDofs();
+      for(int qP = 0; qP < quadNop ; ++qP) 
+      {
+        f.evaluate(itGeom.global(quad.point(qP)), ret);
+        for(int i=0; i<numDofs; ++i) {
           baseset.eval(i,quad,qP,phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
     }
   }
+  
+  template <class FunctionType>
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) 
+  {
+    const DiscreteFunctionSpaceType& space =  discFunc.getFunctionSpace();
+    int polOrd = 2 * space.polynomOrder();
+    project(f,discFunc,polOrd);
+  }
 };
+
+
 // calculates || u-u_h ||_L2
 template <class DiscreteFunctionType>
 class L2Error
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 
 public:
-  template <int polOrd, class FunctionType>
-  double norm (FunctionType &f, DiscreteFunctionType &discFunc,
-      double time)
+  template <class FunctionType>
+  RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
+      double time, int polOrd) const
   {
-    const typename DiscreteFunctionType::FunctionSpaceType
-        & space = discFunc.getFunctionSpace();
+    const DiscreteFunctionSpaceType & space = discFunc.getFunctionSpace();
 
-    typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename FunctionSpaceType::IteratorType IteratorType;
+    typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-
-    typedef typename FunctionSpaceType::RangeType RangeType;
 
     RangeType ret (0.0);
     RangeType phi (0.0);
 
-    double sum = 0.0;
-    //LocalFuncType lf = discFunc.newLocalFunction();
+    RangeType error(0.0);
 
-    IteratorType it    = space.begin();
+    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+
     IteratorType endit = space.end();
-
-    // check whether grid is empty
-    assert( it != endit );
-
-    for(; it != endit ; ++it)
+    for(IteratorType it = space.begin(); it != endit ; ++it)
     {
       CachingQuadrature<GridType,0> quad(*it, polOrd);
       LocalFuncType lf = discFunc.localFunction(*it);
-      for(int qP = 0; qP < quad.nop(); qP++)
+      const int quadNop = quad.nop();
+      for(int qP = 0; qP < quadNop; ++qP)
       {
-        double det = (*it).geometry().integrationElement(quad.point(qP));
+        double weight = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
         lf.evaluate((*it),quad,qP,phi);
-        sum += det * quad.weight(qP) * SQR(ret[0] - phi[0]);
+
+        for(int i=0; i< dimRange; ++i)
+          error[i] += weight * SQR(ret[i] - phi[i]);
       }
     }
-    return sqrt(sum);
+
+    for(int i=0; i< dimRange; ++i) 
+      error[i] = sqrt(error[i]);
+    
+    return error;
+  }
+
+  template <class FunctionType>
+  RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
+      double time) const
+  {
+    const DiscreteFunctionSpaceType & space = discFunc.getFunctionSpace();
+    int polOrd = 2 * space.polynomOrder() + 2;
+    return norm(f,discFunc,time,polOrd);
   }
 };
 // ********************************************************************
@@ -206,14 +232,16 @@ double algorithm (GridType& grid, int turn )
    L2Error < DiscreteFunctionType > l2err;
        
    //! perform l2-projection
-   L2Projection<DiscreteFunctionType, ExactSolution, polOrd>::
+   L2Projection<DiscreteFunctionType>::
      project(f, solution);
 
    // calculation L2 error 
    // pol ord for calculation the error chould by higher than 
    // pol for evaluation the basefunctions 
-   double error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
-   std::cout << "\nL2 Error : " << error << "\n\n";
+   typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
+   RangeType error = l2err.norm(f ,solution, 0.0);
+   for(int i=0; i<RangeType::dimension; ++i)
+     std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
   
 #if HAVE_GRAPE
    // if Grape was found, then display last solution 
