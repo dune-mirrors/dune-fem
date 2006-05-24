@@ -6,4 +6,4 @@ AUTOMAKE_OPTIONS = foreign 1.5
 AM_CPPFLAGS= 
 
 # do everything in the subdirs
-SUBDIRS = caching pass space quadrature basefunctions visual
+SUBDIRS = caching pass space quadrature basefunctions
