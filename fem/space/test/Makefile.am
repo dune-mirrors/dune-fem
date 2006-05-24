@@ -7,10 +7,10 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORD) -D$(GRIDTYPE) -DGRIDDIM=$
 
 
 if ALBERTA
-ADAPTPROG = adapt
+ADAPTPROG = l2pro adapt
 endif
 
-noinst_PROGRAMS = l2pro $(ADAPTPROG)
+noinst_PROGRAMS = $(ADAPTPROG)
 l2pro_SOURCES = l2projection.cc
 if ALBERTA
 adapt_SOURCES = adapt.cc

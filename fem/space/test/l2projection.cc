@@ -16,18 +16,6 @@ static const int dimp = DIM;
 #define SGRID 0
 #define AGRID 1
 
-using namespace Dune;
-
-#if SGRID
-#include <dune/grid/sgrid.hh>
-typedef SGrid  < dimp, dimw > GridType;
-#endif
-
-#if AGRID  
-#include <dune/grid/albertagrid.hh>
-typedef AlbertaGrid< dimp, dimw > GridType;
-#endif
-
 #include <../../operator/discreteoperatorimp.hh>
 #include <../lagrangespace.hh>
 #include <../../discretefunction/dfadapt.hh>
@@ -41,6 +29,18 @@ typedef AlbertaGrid< dimp, dimw > GridType;
 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
+#endif
+
+using namespace Dune;
+
+#if SGRID
+#include <dune/grid/sgrid.hh>
+typedef SGrid  < dimp, dimw > GridType;
+#endif
+
+#if AGRID  
+#include <dune/grid/albertagrid.hh>
+typedef AlbertaGrid< dimp, dimw > GridType;
 #endif
 
 // polynom approximation order of quadratures, 
