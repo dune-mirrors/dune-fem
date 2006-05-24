@@ -33,7 +33,6 @@ namespace Dune {
   CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   ~CombinedSpace() 
   {
-    assert(false);
     for (unsigned int i = 0; i < baseSetVec_.size(); ++i) {
       delete baseSetVec_[i];
       baseSetVec_[i] = 0;

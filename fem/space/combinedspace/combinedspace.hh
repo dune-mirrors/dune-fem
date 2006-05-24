@@ -56,7 +56,7 @@ namespace Dune {
       DiscreteFunctionSpaceImp, N, policy> DiscreteFunctionSpaceType;
     typedef FunctionSpace<
       DomainFieldType, RangeFieldType, 
-      ContainedDimDomain, ContainedDimRange*N> FunctionSpaceType;
+      ContainedDimDomain, ContainedDimRange*N > FunctionSpaceType;
     typedef CombinedBaseFunctionSet<
       DiscreteFunctionSpaceImp, N, policy> BaseFunctionSetType;
     typedef CombinedMapper<DiscreteFunctionSpaceImp, N, policy> MapperType;
