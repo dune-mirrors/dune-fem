@@ -13,9 +13,9 @@
 
 using namespace Dune;
 
-#define AGRID 0 
+#define AGRID 1
 #define BGRID 0
-#define SGRID 1
+#define SGRID 0
 
 #include <dune/grid/sgrid.hh>
 
@@ -64,6 +64,7 @@ typedef SGrid <dim, dimworld> GR_GridType;
 #include "../../../space/dgspace.hh"
 
 typedef double REAL;
+
 
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #include <dune/grid/io/visual/combinedgrapedisplay.hh>
