@@ -108,7 +108,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
     GR_DiscFuncSpaceType * space = 0;
     if(!info[n].fix_mesh)
     {
-      GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
+//      GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
        
       //GR_IndexSetType * iSet = new GR_IndexSetType ( disp->getGrid() );
       //indexStack.push(iSet);
@@ -124,7 +124,7 @@ INFO *makeData( GrapeDispType * disp, INFO * info , const char * path,
       std::cout << "We use the same space because uniform Grids! \n";
       if(!globalSpace) 
       {
-        GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
+//        GR_DofManagerType * dm = & GR_DofManagerFactoryType::getDofManager (disp->getGrid());
 
         //GR_IndexSetType * indexSet = new GR_IndexSetType ( disp->getGrid() );
         //indexStack.push(indexSet);

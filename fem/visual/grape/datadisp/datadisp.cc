@@ -69,8 +69,8 @@ typedef double REAL;
 #include <dune/grid/io/visual/combinedgrapedisplay.hh>
 #include "printhelp.cc"
 
-typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
-//typedef FunctionSpace <double ,double , dim, 1 >  GR_FunctionSpaceType;
+//typedef FunctionSpace <double ,double , dim, dim+2 >  GR_FunctionSpaceType;
+typedef FunctionSpace <double ,double , dim, 1 >  GR_FunctionSpaceType;
 
 
 typedef DofManager<GR_GridType>                         GR_DofManagerType;
