@@ -1,19 +1,25 @@
-#                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-# $Id$
 
 AC_PREREQ(2.50)
 AC_INIT(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 
 # check if we're in the right directory
-AC_CONFIG_SRCDIR([fem/space/dgspace.hh])
+AC_CONFIG_SRCDIR([fem/space/dgspace/dgspace.hh])
 # which header-file is created
 AM_CONFIG_HEADER(config.h)
 
 # we need no more than the standard DUNE-stuff
 DUNE_CHECK_ALL_M([dunecommon])
 DUNE_CHECK_ALL_M([dunegrid])
+
+if test x$HAVE_DUNECOMMON != x1 ; then
+  AC_MSG_ERROR([Can't work without the dune-common module. Maybe you have to supply your dune-common directory as --with-dunecommon=dir])
+fi
+
+if test x$HAVE_DUNEGRID != x1 ; then
+  AC_MSG_ERROR([Can't work without the dune-grid module. Maybe you have to supply your dune-common directory as --with-dunegrid=dir])
+fi
 
 # implicitly set the Dune-flags everywhere
 CPPFLAGS="$DUNE_CPPFLAGS"
@@ -41,11 +47,6 @@ AC_CONFIG_FILES([Makefile
      fem/space/test/Makefile
      fem/quadrature/Makefile
      fem/quadrature/test/Makefile
-     fem/visual/Makefile
-     fem/visual/grape/Makefile
-     fem/visual/grape/datadisp/Makefile
-     fem/visual/grape/gridview/Makefile
-     fem/visual/grape/functionview/Makefile
                ])
 AC_OUTPUT
 
