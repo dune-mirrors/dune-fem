@@ -1,7 +1,7 @@
 #ifndef DUNE_CALLERUTILITY_HH
 #define DUNE_CALLERUTILITY_HH
 
-#include <dune/common/tuples.hh>
+#include "tuples.hh"
 #include <dune/common/utility.hh>
 #include <dune/common/typetraits.hh>
 

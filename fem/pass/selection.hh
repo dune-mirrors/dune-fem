@@ -1,7 +1,7 @@
 #ifndef DUNE_SELECTION_HH
 #define DUNE_SELECTION_HH
 
-#include <dune/common/tuples.hh>
+#include "tuples.hh"
 #include <dune/common/utility.hh> 
 #include <dune/common/misc.hh>
 

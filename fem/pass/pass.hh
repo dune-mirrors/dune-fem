@@ -4,7 +4,7 @@
 //- System includes
 
 //- Dune includes
-#include <dune/common/tuples.hh>
+#include "tuples.hh"
 
 //- local includes 
 #include "../operator/common/operator.hh"
