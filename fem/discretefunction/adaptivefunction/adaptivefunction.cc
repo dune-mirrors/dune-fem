@@ -87,7 +87,7 @@ namespace Dune {
   {
     assert(init_);
     assert(en.geometry().checkInside(x));
-    ret *= 0.0;
+    ret = 0.0;
     const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
 
     for (int i = 0; i < this->numDofs(); ++i) 
@@ -109,7 +109,7 @@ namespace Dune {
   {
     assert(init_);
     assert(en.geometry().checkInside(quad.point(quadPoint)));
-    ret *= 0.0;
+    ret = 0.0;
     const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
 
     for (int i = 0; i < this->numDofs(); ++i) 
@@ -132,11 +132,11 @@ namespace Dune {
     assert(init_);
     enum { dim = EntityType::dimension };
 
-    ret *= 0.0;
+    ret = 0.0;
     const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
     
     for (int i = 0; i < this->numDofs(); ++i) {
-      tmpGrad_ *= 0.0;
+      tmpGrad_ = 0.0;
       bSet.jacobian(i, x, tmpGrad_);
 
       for (int l = 0; l < dimRange; ++l) {
@@ -158,7 +158,7 @@ namespace Dune {
     assert(init_);
     enum { dim = EntityType::dimension };
 
-    ret *= 0.0;
+    ret = 0.0;
     const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
     
     typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
@@ -311,7 +311,7 @@ namespace Dune {
     assert(en.geometry().checkInside(x));
 
     const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
-    result *= 0.0;
+    result = 0.0;
 
     assert(static_cast<int>(values_.size()) == bSet.numDifferentBaseFunctions());
     for (unsigned int i = 0; i < values_.size(); ++i) {
@@ -344,15 +344,15 @@ namespace Dune {
     enum { dim = EntityType::dimension };
     //typedef FieldMatrix<DofType, RangeType::size, RangeType::size> JacobianInverseType;
     typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
-    result *= 0.0;
+    result = 0.0;
 
     const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
     const JacobianInverseType& jInv = 
       en.geometry().jacobianInverseTransposed(x);
 
     for (int i = 0; i < bSet.numDifferentBaseFunctions(); ++i) {
-      //cTmpGradRef_ *= 0.0;
-      cTmpGradReal_ *= 0.0;
+      //cTmpGradRef_ = 0.0;
+      cTmpGradReal_ = 0.0;
       bSet.jacobianScalar(i, x, cTmpGradRef_);
       jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
 

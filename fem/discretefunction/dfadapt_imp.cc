@@ -2,7 +2,8 @@
 #define DUNE_DFADAPT_CC
 
 #include <algorithm>
-
+// BUG: return values are initialized with *= 0. Problematic for nan
+// values!
 namespace Dune {
 
   template<class DiscreteFunctionSpaceType>
@@ -464,7 +465,7 @@ evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
   assert(en.geometry().checkInside(x));
-  ret *= 0.0;
+  ret = 0.0;
   const BaseFunctionSetType& bSet = getBaseFunctionSet();
 
   for (int i = 0; i < numDofs(); ++i) 
@@ -485,7 +486,7 @@ evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) 
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
   assert(en.geometry().checkInside(quad.point(quadPoint)));
-  ret *= 0.0;
+  ret = 0.0;
   const BaseFunctionSetType& bSet = getBaseFunctionSet();
 
   for (int i = 0; i < numDofs(); ++i) 
@@ -506,7 +507,7 @@ jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType
   enum { dim = EntityType::dimension };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
-  ret *= 0.0;
+  ret = 0.0;
   const BaseFunctionSetType& bSet = getBaseFunctionSet();
   typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
   const JacobianInverseType& jti = 
@@ -537,14 +538,14 @@ jacobianLocal(EntityType& en, const DomainType& x,
   enum { dim = EntityType::dimension };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
-  ret *= 0.0;
+  ret = 0.0;
   const BaseFunctionSetType& bSet = getBaseFunctionSet();
   typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
   const JacobianInverseType& jti = 
     en.geometry().jacobianInverseTransposed(x);
 
   for (int i = 0; i < numDofs(); ++i) {
-    tmpGrad_ *= 0.0;
+    tmpGrad_ = 0.0;
     bSet.jacobian(i, x, tmpGrad_);
 
     for (int l = 0; l < dimRange; ++l) {
@@ -559,7 +560,7 @@ template<class DiscreteFunctionSpaceType>
 template <class EntityType> 
 inline void LocalFunctionAdapt<DiscreteFunctionSpaceType>::
 jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const {
-  ret *= 0.0;
+  ret = 0.0;
   xtmp_ = en.geometry().local(x);
   jacobianLocal(en, xtmp_, ret);
 }
