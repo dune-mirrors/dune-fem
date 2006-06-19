@@ -66,6 +66,8 @@ GrapeDispType * readGrid(const char * path, const char * filename,
 #if SGRID
   GR_GridType * grid = new GR_GridType ();
   grid->globalRefine(9);
+#elif AGRID
+  GR_GridType * grid = new GR_GridType ();
 #else
 
   GR_GridType * grid = 0 ;
@@ -90,6 +92,7 @@ GrapeDispType * readGrid(const char * path, const char * filename,
 #if SGRID
 
 #else
+  assert(grid!=0);
   dataIO.readGrid( *grid, fn , time , ntime );
 #endif
   
