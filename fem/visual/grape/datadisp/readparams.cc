@@ -161,7 +161,24 @@ int readParameterList (int argc, char **argv)
   // run grape 
   displayTimeScene(info,parallel);
 
+  // delete info list : seems not to be required due to memcheck!!??!
+//  for(int k=0; k<n+1; k++) 
+//  {
+//    DATAINFO * dinf = info[k].datinf; 
+//    while ( dinf ) 
+//    {  
+//        if (dinf->comp)    
+//        {      
+//          delete[] dinf->comp;
+//          dinf->comp = 0;  
+//        }
+//        dinf = dinf->next;
+//    }
+//  }  
+//  delete info;
+
   deleteAllObjects();
+ 
   return (EXIT_SUCCESS);
 }
 #endif

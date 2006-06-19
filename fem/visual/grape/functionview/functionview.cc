@@ -12,6 +12,9 @@
 **-------------------------------------------------------------------------
 **
 **  $Log$
+**  Revision 1.2  2006/06/19 14:19:05  haasdonk
+**  adopted to new dune-structure
+**
 **  Revision 1.1  2006/05/10 14:32:19  haasdonk
 **  modified for latest dune-modularization
 **
@@ -30,9 +33,9 @@
 //#pragma interface
 //#pragma implementation
 
-#define SGRID 1
+#define SGRID 0
 #define UGRID 0
-#define AGRID 0
+#define AGRID 1
 #define BGRID 0
 #define YGRID 0
 
@@ -112,7 +115,8 @@ typedef ALUCubeGrid<dim,dimworld> GridType;
 #include <dune/grid/common/gridpart.hh>
 
 #if AGRID 
-typedef FunctionSpace < double , double, dim , dim > FuncSpace;
+//typedef FunctionSpace < double , double, dim , dim > FuncSpace;
+typedef FunctionSpace < double , double, dim , 1 > FuncSpace;
 #else 
 typedef FunctionSpace < double , double, dim , 1 > FuncSpace;
 #endif
@@ -186,7 +190,7 @@ void setFunc (GridType & grid, DiscFuncType & df )
 {
   typedef typename GridType :: template Codim<0> :: LeafIterator LeafIterator;
   typedef typename DiscFuncType :: LocalFunctionType LFType;
-
+  
 //  typedef BaryCenterQuad < 
 //      typename DiscFuncType :: RangeFieldType ,
 //      typename DiscFuncType::DomainType, 0 > QuadratureType;
@@ -225,7 +229,11 @@ void setFunc (GridType & grid, DiscFuncType & df )
     
 //    FieldVector<double,3> bary = it->geometry().global( quad.point(0)); 
     FVType bary = it->geometry().global( quad.point(0)); 
+    std::cout << "trying to access local function ..." << std::flush;
+    
     LFType lf = df.localFunction(*it); 
+    std::cout << " ... success\n";
+
 //    rotatingPulse(bary,velo);
     global_function(&bary[0], &domnr[0]);
 //    for(int i=0; i<lf.numDofs(); i++) 
@@ -326,8 +334,8 @@ int main (int argc, char **argv)
 
   {
     GrapeDataDisplay < GridType > grape(grid,-1);
-    typedef DofManager< GridType > DofManagerType;
-    typedef DofManagerFactory < DofManagerType> DofManagerFactoryType; 
+//    typedef DofManager< GridType > DofManagerType;
+//    typedef DofManagerFactory < DofManagerType> DofManagerFactoryType; 
 
 //    IndexSetType iset ( grid );
     
@@ -337,12 +345,10 @@ int main (int argc, char **argv)
     LeafGridPart < GridType > gpart ( grid );
 //#endif
 
-    FuncSpaceType  space( gpart ); 
-    
+    FuncSpaceType  space( gpart );     
     DFType df ( space );
     setFunc(grid,df);
     grape.dataDisplay(df,false);  // no vector data!
-//    grape.dataDisplay(df,true);
   }
 
 #if YGRID 

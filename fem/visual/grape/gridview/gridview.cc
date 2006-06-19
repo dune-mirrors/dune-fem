@@ -7,10 +7,10 @@
 #include <config.h>
 
 // set exactly one of the following to 1, the others 0
-#define SGRID 1
+#define SGRID 0
 #define UGRID 0
 #define AGRID 0
-#define BGRID 0
+#define BGRID 1
 #define YGRID 0
 
 #if SGRID
@@ -57,6 +57,8 @@ typedef YaspGrid <dim,dimworld> GridType;
 #if AGRID
 #include <dune/grid/albertagrid.hh>
 using namespace Dune;
+//static const int dim = 3;
+//static const int dimworld = 3;
 static const int dim = DUNE_PROBLEM_DIM;
 static const int dimworld = DUNE_WORLD_DIM;
 typedef AlbertaGrid<dim,dimworld> GridType;
@@ -75,8 +77,8 @@ static const int dimworld = 3;
 //#include <dune/grid/alu3dgrid.hh>
 #include <dune/grid/alugrid.hh>
 using namespace Dune;
-//typedef ALU3dGrid<dim,dimworld,tetra> GridType;
-typedef ALU3dGrid<dim,dimworld,hexa> GridType;
+typedef ALU3dGrid<dim,dimworld,tetra> GridType;
+//typedef ALU3dGrid<dim,dimworld,hexa> GridType;
 // the new syntax should be the following, but incurs error
 // typedef ALUCubeGrid<dim,dimworld> GridType; 
 

@@ -284,7 +284,8 @@ void readDataInfo(std::string path, DATAINFO * dinf, bool parallel = false)
   {
     dinf->base_name = dinf->name; 
     dinf->dimVal = 1;
-    dinf->comp = new int [1];
+    if (!dinf->comp)
+        dinf->comp = new int [1];
     dinf->comp[0] = 0;
   }
   else
