@@ -1,5 +1,5 @@
 // Dune includes
-#include "../../../config.h"
+#include <config.h>
 
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
@@ -7,9 +7,9 @@
 #include <dune/common/misc.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/quadrature/quadraturerules.hh>
+#include <dune/grid/common/quadraturerules.hh>
 
-#include <space/common/boundary.hh>
+#include <dune/fem/space/common/boundary.hh>
 
 #include <iostream>
 #include <string>

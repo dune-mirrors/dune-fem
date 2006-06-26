@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <cmath>
-#include "../../../misc/timeutility.hh"
+#include <dune/fem/misc/timeutility.hh>
 
  #include "ode/function.hpp"
  #include "ode/ode_solver.hpp"

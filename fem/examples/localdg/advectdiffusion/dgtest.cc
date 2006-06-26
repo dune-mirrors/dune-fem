@@ -6,15 +6,15 @@
 
 #include <dune/common/misc.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/quadrature/quadraturerules.hh>
+#include <dune/grid/common/quadraturerules.hh>
 
-#include "../../../io/file/grapedataio.hh"
-#include "../../../space/common/boundary.hh"
+#include <dune/fem/io/file/grapedataio.hh>
+#include <dune/fem/space/common/boundary.hh>
 
 #include <iostream>
 #include <string>
 
-#include <dune/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/grapedatadisplay.hh>
 #include <dune/common/timer.hh>
 
 using namespace Dune;
@@ -38,7 +38,7 @@ int main(int argc, char ** argv, char ** envp) {
 						
   // Polynomial and ODE order
   // Grid:
-  GridType* grid=MacroGrid<GridType>().generate(argv[1],MPI_COMM_WORLD);
+  GridPtr<GridType> grid(argv[1],MPI_COMM_WORLD);
 	
   int repeats = 1;
   if (argc>2)
@@ -136,7 +136,7 @@ int main(int argc, char ** argv, char ** envp) {
     dg.limit(U,tmp);
 
     if (eocloop==0) 
-      eocoutput.printInput(problem,grid,ode,argv[1]);
+      eocoutput.printInput(problem,*grid,ode,argv[1]);
     
     if(graped) {
       GrapeDataDisplay< GridType > grape(*grid);

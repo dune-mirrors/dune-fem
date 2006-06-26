@@ -1,8 +1,8 @@
 #undef HAVE_MPI
-#include "../../../macrogridparser/gridtype.hh"
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
-#include <dune/grid/albertagrid.hh>
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
+// #include <dune/grid/yaspgrid.hh>
+// #include <dune/grid/sgrid.hh>
+// #include <dune/grid/albertagrid.hh>
 #include "advectdiff.hh"
 #include "odesolver.hh"
 

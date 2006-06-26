@@ -9,14 +9,14 @@
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
-#include <pass/pass.hh>
-#include <pass/selection.hh>
-#include <pass/discretemodel.hh>
-#include <pass/modelcaller.hh>
+#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/selection.hh>
+#include <dune/fem/pass/discretemodel.hh>
+#include <dune/fem/pass/modelcaller.hh>
 
-#include <misc/timeutility.hh>
+#include <dune/fem/misc/timeutility.hh>
 
-#include <quadrature/elementquadrature.hh>
+#include <dune/fem/quadrature/elementquadrature.hh>
 
 
 namespace Dune {

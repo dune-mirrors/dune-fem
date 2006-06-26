@@ -270,7 +270,7 @@ class EocOutput {
   }
 
 		
-  void printInput(InitialDataType& u0, GridType *grid,ODEType& ode, 
+  void printInput(InitialDataType& u0, GridType& grid,ODEType& ode, 
 		  char *arg)
   {
     std::ostringstream filestream;
@@ -278,7 +278,7 @@ class EocOutput {
 
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
 
-    ofs  << "Grid: " << transformToGridName(grid->type()) << "\n\n"
+    ofs  << "Grid: " << transformToGridName(grid.type()) << "\n\n"
 	 << "Macrogrid: " << arg << "\\\\\n\n";
 		
     ofs.close();

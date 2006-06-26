@@ -9,11 +9,11 @@
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 
-#include <pass/dgpass.hh>
-#include <pass/discretemodel.hh>
-#include <pass/selection.hh>
-#include <misc/timeutility.hh>
-#include <space/dgspace.hh>
+#include <dune/fem/pass/dgpass.hh>
+#include <dune/fem/pass/discretemodel.hh>
+#include <dune/fem/pass/selection.hh>
+#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/space/dgspace.hh>
 /*
   #include "../../../space/combinedspace.hh"
   #include "../../../discretefunction/dfadapt.hh"
