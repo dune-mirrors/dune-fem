@@ -21,7 +21,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    // typedef LLFFlux<ModelType> FluxType;
    typedef UpwindFlux<ModelType> FluxType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #elif PROBLEM == 2
    #include "scalarmodels.hh"
    #include "initburgers.cc"
