@@ -109,7 +109,7 @@ int main(int argc, char ** argv, char ** envp) {
 
   for(int eocloop=0;eocloop < repeats; ++eocloop) {
     // *** Operator typedefs
-    DgType dg(*grid,eulerflux,upwind);
+    DgType dg(*grid,eulerflux); // ,upwind);
     ODEType ode(dg,rksteps,cfl); 
     // *** Initial data
     DgType::DestinationType U("U", dg.space());

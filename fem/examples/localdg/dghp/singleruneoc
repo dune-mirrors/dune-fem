@@ -1,5 +1,5 @@
-problem=1
-polorder=0
+problem=4
+polorder=1
 gridtype=ALBERTAGRID
 epsilonne=0.0
 grape=0
