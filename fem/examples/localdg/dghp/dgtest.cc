@@ -1,12 +1,13 @@
 // Dune includes
 #include <config.h>
 
-#include <dune/common/utility.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/pass/utility.hh>
 
 #include <dune/common/misc.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/quadraturerules.hh>
+
+#include <dune/fem/space/dgspace/dgleafindexset.hh>
 
 #include <dune/fem/io/file/grapedataio.hh>
 #include <dune/fem/space/common/boundary.hh>
@@ -24,10 +25,20 @@ using namespace std;
 #include "stuff.cc"
 #include "robstuff.cc"
 
+// include adaptation interface class
+#include "adaptation.hh"
+
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 int main(int argc, char ** argv, char ** envp) {
+
+  // *** Typedefs for adaptation 
+  typedef TimeDiscrParam                           TimeDiscParamType;
+
+  typedef Adaptation <DgType::DestinationType, 
+          TimeDiscParamType>                       AdaptationType;
+
   // *** Initialization
   if (argc<2) {
     cout << "Call: dgtest gridfilename [ref-steps=1] [start-level=0] [epsilon=0.01] [use-grape=0]" << endl;
@@ -149,10 +160,43 @@ int main(int argc, char ** argv, char ** envp) {
     cout << "Projection error " << problem.myName << ": " << projectionError << endl;
 	
     double maxdt=0.,mindt=1.e10,averagedt=0.;
+    
+    DgType::DestinationType::DiscreteFunctionSpaceType::IndexSetType * iset = new DgType::DestinationType::DiscreteFunctionSpaceType::IndexSetType ( *grid );
+    DgType::DestinationType::DiscreteFunctionSpaceType::GridPartType * gridPart_ = new DgType::DestinationType::DiscreteFunctionSpaceType::GridPartType ( *grid );
+    // initialize time discretization parameters
+    TimeDiscParamType * timeDiscParam_ = new TimeDiscParamType (0.0,0.0,0);
+    // initialize adaptation if wanted
+    const char * paramfile = 0;
+    AdaptationType *adaptation_ = new AdaptationType( *gridPart_ , *timeDiscParam_, paramfile);
+
+    adaptation_->addAdaptiveFunction(&U);
+
     // *** Time loop
-    while (t<maxtime) {
+    while (t<maxtime) 
+    {
       double ldt = -t;
       t=ode.solve(U);
+
+      timeDiscParam_->setTime(t);
+      timeDiscParam_->setTimeStepSize(ldt);
+      timeDiscParam_->setTimeStepNumber(counter);
+
+      // Local grid adaption
+      //! set indicator values for adaptation
+      adaptation_->clearIndicator();
+
+      adaptation_->calcIndicator(U);
+      
+
+      //! mark elements and adapt grid
+      adaptation_->markEntities();
+      adaptation_->adapt();
+
+      {
+	GrapeDataDisplay< GridType > grape(*grid);
+	grape.dataDisplay(U);
+      }
+     
       ldt += t;
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
@@ -168,7 +212,8 @@ int main(int argc, char ** argv, char ** envp) {
 	  /*{
 	    GrapeDataDisplay< GridType > grape(*grid);
 	    grape.dataDisplay(U);
-	    }*/
+	    }
+	  */
 	  eocoutput.printTexAddError(err[0],prevfehler,-1,grid->size(0),counter,averagedt);
 	  eocoutput.printTexEnd(timer.elapsed());
 	  exit(EXIT_FAILURE);
