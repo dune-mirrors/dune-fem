@@ -239,7 +239,8 @@ public:
   typedef IndexSetImp IndexSetType;
   
   LagrangeMapper ( const IndexSetType  & is , int numDofs ) 
-    : numberOfDofs_ (numDofs) , indexSet_ (is) {
+    : numberOfDofs_ (numDofs) , indexSet_ (is) 
+  {
     assert(numberOfDofs_ == dimrange);  
   }
 
