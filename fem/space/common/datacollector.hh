@@ -378,8 +378,10 @@ class DataCollector
   
 public:
   //! create DiscreteOperator with a LocalOperator 
-  DataCollector (GridType & grid, DofManagerType & dm, LocalDataCollectImp & ldc, bool read ) :
-    grid_(grid) , dm_ ( dm ), ldc_ (ldc) , read_(read) {}
+  DataCollector (GridType & grid, DofManagerType & dm, LocalDataCollectImp & ldc, bool read , int numChildren = 8) 
+    : grid_(grid) , dm_ ( dm ), ldc_ (ldc) 
+    , read_(read) , numChildren_(numChildren) 
+  {}
 
   //! Desctructor 
   virtual ~DataCollector () {}
@@ -484,7 +486,6 @@ public:
   void inlineData (ObjectStreamType & str, EntityType & en) const 
   {
     //std::cout << "DataCollector Inline data\n";
-    str.writeObject( grid_.maxLevel() );
     goDown(str,en,grid_.maxLevel());
   }
 
@@ -492,9 +493,18 @@ public:
   void xtractData (ObjectStreamType & str, EntityType & en) const 
   {
     //std::cout << "DataCollector xtract data\n";
-    int mxlvl = 0;
-    str.readObject( mxlvl );
-    mxlvl = std::max( mxlvl , grid_.maxLevel() );
+    int mxlvl = grid_.maxLevel();
+
+    dm_.insertNewIndex( en );
+
+    if( (int) elChunk_.size() < mxlvl ) 
+    { 
+      elChunk_.resize( mxlvl );
+      calcElementChunk( mxlvl );
+    }
+    
+    assert( elChunk_[mxlvl] > 0 );
+    dm_.reserveMemory ( elChunk_[mxlvl] ); 
 
     // dont needed anymore, because here the grid was 
     // adapted before 
@@ -518,7 +528,7 @@ private:
     return dcOp;
   }
  
-  void goDown (ObjectStreamType & str, EntityType & en, int mxlvl) const 
+  void goDown (ObjectStreamType & str, EntityType & en, const int mxlvl) const 
   {
     ParamType p( &str , &en );
 
@@ -527,8 +537,8 @@ private:
     else 
     {
       dm_.insertNewIndex( en );
-      dm_.reserveMemory ( mxlvl * 10 ); 
     }
+    
     ldc_.apply( p );
     {
       typedef typename EntityType::HierarchicIterator HierItType;
@@ -552,6 +562,16 @@ private:
     }
   }
 
+  void calcElementChunk( int mxlvl ) const 
+  {
+    int newElChunk = 1;
+    for(int i=0; i<=mxlvl; ++i) 
+    {
+      newElChunk *= numChildren_;
+      elChunk_[i] = newElChunk;
+    }
+  }
+  
   //! corresponding grid 
   mutable GridType & grid_;
 
@@ -563,6 +583,11 @@ private:
 
   //! if true inline else xtract
   bool read_;
+
+  // number of childs one element can have 
+  const int numChildren_;
+
+  mutable std::vector< int > elChunk_; 
 };
 
 
@@ -611,7 +636,7 @@ public:
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
     {
-      (*p.first).writeObject( lf[l] );
+      (*p.first).write( lf[l] );
     }
   }
 
@@ -663,7 +688,7 @@ public:
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
     {
-      (*(p.first)).readObject( lf[l] );
+      (*(p.first)).read( lf[l] );
     }
   }
 
