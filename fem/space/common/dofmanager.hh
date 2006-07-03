@@ -830,7 +830,7 @@ class DofManError : public Exception {};
  which is mostly a wrapper for the grid indices. 
 */
 template <class GridImp> 
-class DofManager 
+class DofManager : public IsDofManager 
 {
 public:  
   //! type of Grid this DofManager belongs to 
@@ -905,6 +905,8 @@ private:
   
   //! Desctructor, removes all MemObjects and IndexSetObjects 
   ~DofManager (); 
+  // for destructor 
+  friend class Conversion<DofManager<GridType>,IsDofManager>;
 
 public:
   template <class MapperType , class DofStorageType >
