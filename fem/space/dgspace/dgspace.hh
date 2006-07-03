@@ -153,7 +153,7 @@ namespace Dune {
   
     //! Get base function set for a given entity
     template <class Entity>
-    BaseFunctionSetType&
+    const BaseFunctionSetType&
     getBaseFunctionSet (const Entity& en) const 
     {
       GeometryIdentifier::IdentifierType id = 
@@ -163,7 +163,7 @@ namespace Dune {
   
     //! Get base function set for a given id of geom type (mainly used by
     //! CombinedSpace) 
-    BaseFunctionSetType&
+    const BaseFunctionSetType&
     getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
     {
       assert(id < (int) baseFuncSet_.size());
@@ -250,7 +250,7 @@ namespace Dune {
     mutable typename Traits::MapperType* mapper_; 
 
     // vector of base function sets
-    std::vector<BaseFunctionSetType*> baseFuncSet_;
+    std::vector<const BaseFunctionSetType*> baseFuncSet_;
   };
 
   //********************************************************
