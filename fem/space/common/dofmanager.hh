@@ -974,10 +974,10 @@ public:
   }
  
   //! resize the memory and set chunk size to nsize 
-  void reserveMemory (int nsize) 
+  void reserveMemory (int nsize, bool useNsize = false ) 
   {
     // remember the chunksize 
-    chunkSize_ = std::max(nsize, defaultChunkSize_ );
+    chunkSize_ = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
     assert( chunkSize_ > 0 );
     resizeMemObjs_.apply ( chunkSize_ );
   }
