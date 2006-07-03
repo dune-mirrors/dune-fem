@@ -107,7 +107,7 @@ public:
   //! for all pointer to local operators call the func pointer 
   void apply ( ParamType & p ) const 
   {
-    //assert( vec_.size() > 0 );
+    assert( vec_.size() > 0 );
     const size_t size = vec_.size();
     for(size_t i=0; i<size; ++i)
     {
@@ -380,7 +380,7 @@ public:
   //! create DiscreteOperator with a LocalOperator 
   DataCollector (GridType & grid, DofManagerType & dm, LocalDataCollectImp & ldc, bool read , int numChildren = 8) 
     : grid_(grid) , dm_ ( dm ), ldc_ (ldc) 
-    , read_(read) , numChildren_(numChildren) 
+    , rwType_((read) ? (readData) : writeData ) , numChildren_(numChildren) 
   {}
 
   //! Desctructor 
@@ -398,7 +398,7 @@ public:
     COType *newLDCOp = new COType ( ldc_  , const_cast<CopyType &> (op).getLocalOp() );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , read_ );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -418,7 +418,7 @@ public:
     COType *newLDCOp = new COType ( ldc_ + op.getLocalOp() );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , read_ );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -438,7 +438,7 @@ public:
     COType *newLDCOp = new COType ( ldc_ + op.getLocalInterfaceOp() );
     typedef DataCollector<GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , read_ );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -475,8 +475,7 @@ public:
   //! else xtractData is called 
   void apply (ObjectStreamType & str, EntityType & en) const 
   {
-    //std::cout << "apply on imp class \n";
-    if(!read_) 
+    if(rwType_ == writeData) 
       inlineData(str,en);
     else 
       xtractData(str,en);
@@ -486,32 +485,20 @@ public:
   void inlineData (ObjectStreamType & str, EntityType & en) const 
   {
     //std::cout << "DataCollector Inline data\n";
-    goDown(str,en,grid_.maxLevel());
+    goDown(str,en,grid_.maxLevel(),writeData);
   }
 
   //! read all data of all entities blowe this Entity from the stream 
   void xtractData (ObjectStreamType & str, EntityType & en) const 
   {
-    //std::cout << "DataCollector xtract data\n";
-    int mxlvl = grid_.maxLevel();
-
-    dm_.insertNewIndex( en );
-
-    if( (int) elChunk_.size() < mxlvl ) 
-    { 
-      elChunk_.resize( mxlvl );
-      calcElementChunk( mxlvl );
-    }
-    
-    assert( elChunk_[mxlvl] > 0 );
-    dm_.reserveMemory ( elChunk_[mxlvl] ); 
-
     // dont needed anymore, because here the grid was 
     // adapted before 
-    goDown(str,en,mxlvl);
+    goDown(str,en,grid_.maxLevel(),readData);
   }
   
 private:
+  enum ReadWriteType { readData , writeData };
+  
   DataCollector<GridType,LocalInterface<ParamType> > * convert ()  
   {
     typedef LocalInterface<ParamType> COType;
@@ -519,7 +506,7 @@ private:
     COType *newLDCOp = new COType ( ldc_ );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , read_ );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -528,66 +515,36 @@ private:
     return dcOp;
   }
  
-  void goDown (ObjectStreamType & str, EntityType & en, const int mxlvl) const 
+  void goDown (ObjectStreamType & str, EntityType & en, const int mxlvl, const ReadWriteType rwType) const 
   {
     ParamType p( &str , &en );
-
-    if(!read_) 
-      dm_.removeOldIndex( en );
-    else 
-    {
-      dm_.insertNewIndex( en );
-    }
-    
     ldc_.apply( p );
+
     {
       typedef typename EntityType::HierarchicIterator HierItType;
       HierItType endit = en.hend(mxlvl);
       for(HierItType it = en.hbegin(mxlvl); 
           it != endit; ++it )
       {
-        if(!read_) 
-        {
-          dm_.removeOldIndex( *it );
-        }
-        else 
-        {
-          dm_.insertNewIndex( *it );
-          dm_.checkMemorySize();
-        }
-        
         p.second = it.operator -> ();
         ldc_.apply( p );
       }
     }
   }
 
-  void calcElementChunk( int mxlvl ) const 
-  {
-    int newElChunk = 1;
-    for(int i=0; i<=mxlvl; ++i) 
-    {
-      newElChunk *= numChildren_;
-      elChunk_[i] = newElChunk;
-    }
-  }
-  
   //! corresponding grid 
   mutable GridType & grid_;
 
   //! DofManager corresponding to grid
   mutable DofManagerType & dm_;
   
-  //! Restriction and Prolongation Operator 
+  //! Local Data Writer and Reader 
   mutable LocalDataCollectImp & ldc_;
 
-  //! if true inline else xtract
-  bool read_;
-
+  const ReadWriteType rwType_;
+  
   // number of childs one element can have 
   const int numChildren_;
-
-  mutable std::vector< int > elChunk_; 
 };
 
 
@@ -697,10 +654,7 @@ private:
   
   // true if only leaf data is transferd 
   bool leaf_;
-
-  //GatherFunctionType * gatherFunc_;
 };
-
 
 /** @} end documentation group */
 
