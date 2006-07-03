@@ -187,10 +187,14 @@ int main(int argc, char ** argv, char ** envp) {
 
       adaptation_->calcIndicator(U);
       
-
+      
       //! mark elements and adapt grid
       adaptation_->markEntities();
+
+
       adaptation_->adapt();
+
+      initialize(problem,U);
 
       {
 	GrapeDataDisplay< GridType > grape(*grid);

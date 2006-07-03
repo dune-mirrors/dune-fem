@@ -20,9 +20,11 @@
 #include <dune/fem/space/dgspace/dgadaptoperator.hh>
 
 // include discrete functions
-#include <dune/fem/discretefunction/dfadapt.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/dgspace.hh>
 
+#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/quadrature/cachequad.hh>
 
 namespace Dune 
 {
@@ -93,8 +95,8 @@ public:
   // initialize functionspace, etc., for the indicator function
   typedef FunctionSpace < double, double, dim, 1 >          IndicatorFuncSpaceType;
 
-  typedef LagrangeDiscreteFunctionSpace 
-                 <IndicatorFuncSpaceType, GridPartType, 0>  IndicatorDiscFuncSpaceType;
+  typedef DiscontinuousGalerkinSpace<IndicatorFuncSpaceType, 
+			   GridPartType, 0, CachingStorage> IndicatorDiscFuncSpaceType;
 
   typedef DFAdapt < IndicatorDiscFuncSpaceType >            IndicatorDiscreteFunctionType; 
 
@@ -136,7 +138,7 @@ public:
     }
     else{
       // set default values
-      globalTolerance_ = 0.01;
+      globalTolerance_ = 100000.;
       coarsenTheta_ = 0.1;
       endTime_ = 1.0;
     }
@@ -208,7 +210,6 @@ public:
     return num;
   };
 
-
   double getLocalInTimeTolerance (){
     double dt = timeDiscrParam_.getTimeStepSize();
    
@@ -222,7 +223,10 @@ public:
 
     getLocalInTimeTolerance ();
     localTolerance_ = localInTimeTolerance_ / numberOfElements();
-    
+
+    // inserted for testing!!
+    localTolerance_ = 0.5;
+
     return localTolerance_;
   };
 
@@ -235,7 +239,7 @@ public:
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
-      //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
+      std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
       if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) )
         grid_.mark(1, it);
       else if ( (it->level() > 4) && (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
@@ -262,6 +266,7 @@ public:
     typedef typename FunctionSpaceType::GridType            GridType;
     typedef typename FunctionSpaceType::RangeType           RangeType;
     typedef typename GridType::template Codim<0>::Entity    EntityType;
+    typedef typename GridType::template Codim<0>::EntityPointer EntityPointerType; 
     typedef typename FunctionSpaceType::IteratorType        IteratorType;
     typedef typename EntityType::IntersectionIterator           IntersectionIteratorType;
 
@@ -286,18 +291,26 @@ public:
 
       IntersectionIteratorType endnit = it->iend();
       for(IntersectionIteratorType nit = it->ibegin(); nit != endnit; ++nit){
-	EntityType & outside = const_cast<EntityType &> ( *(nit.outside()));
 
-	LocalFunctionType insFunct  = func.localFunction ( inside  ); 
-	LocalFunctionType outFunct  = func.localFunction ( outside ); 
+	if( nit.neighbor() ){
 
-	insFunct.evaluate (inside,  volQuad , 0, insRet);
-	outFunct.evaluate (outside, volQuad , 0, outRet);
+	  EntityPointerType ep = nit.outside();
+	  EntityType & outside = const_cast<EntityType &> ( *ep);
 
-	val = (insRet[0] - outRet[0])*(insRet[0] - outRet[0]);
+	  LocalFunctionType insFunct  = func.localFunction ( inside  ); 
+	  LocalFunctionType outFunct  = func.localFunction ( outside ); 
 
-	addToLocalIndicator(*it, val);
+	  insFunct.evaluate (inside,  volQuad , 0, insRet);
+	  outFunct.evaluate (outside, volQuad , 0, outRet);
+
+	  outRet[0] = 0.0;
+
+
+	  val = (insRet[0] - outRet[0])*(insRet[0] - outRet[0]);
+
+	  addToLocalIndicator(*it, val);
 	
+	}
       }
 
     }
@@ -312,7 +325,7 @@ public:
  
 //    typedef AdaptOperator<GridType,RestProlImp,DofManagerType> AdaptOpImp;
 //  last template parameter is superfluous
-    typedef AdaptOperator<GridType,RestProlImp> AdaptOpImp;
+    typedef AdaptOperator<GridType,RestProlImp>              AdaptOpImp;
     
     RestProlImp *restProl;
     AdaptOpImp  *adaptOp;
