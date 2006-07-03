@@ -520,12 +520,31 @@ private:
     ParamType p( &str , &en );
     ldc_.apply( p );
 
+    if(rwType_ == writeData)
+      dm_.removeOldIndex( en );
+    else
+    {
+      dm_.insertNewIndex( en );
+    }
+
     {
       typedef typename EntityType::HierarchicIterator HierItType;
       HierItType endit = en.hend(mxlvl);
       for(HierItType it = en.hbegin(mxlvl); 
           it != endit; ++it )
       {
+        if(rwType_ == writeData)
+        {
+          dm_.removeOldIndex( *it );
+        }
+        else
+        {
+          dm_.insertNewIndex( *it );
+          // check not needed since we get the exact size of 
+          // elements to create during xtract 
+          //dm_.checkMemorySize();
+        }
+
         p.second = it.operator -> ();
         ldc_.apply( p );
       }
