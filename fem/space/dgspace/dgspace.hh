@@ -93,7 +93,6 @@ namespace Dune {
       mapper_(0),
       baseFuncSet_(MaxNumElType, 0)
     {
-      /*
       // add index set to list of indexset of dofmanager 
       typedef DofManager<typename Traits::GridType> DofManagerType;
       typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
@@ -102,7 +101,6 @@ namespace Dune {
         DofManagerFactoryType::getDofManager(gridPart.grid());
       dm.addIndexSet(gridPart.grid(), 
                      const_cast<IndexSetType&>(gridPart.indexSet()));
-        */
 
       // get types for codim 0  
       const std::vector<GeometryType>& geomTypes =
@@ -341,19 +339,6 @@ namespace Dune {
     DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
     DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
 
-    /*
-    template <class EntityType>
-    static BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
-    {
-      typedef typename ToScalarFunctionSpace<
-        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
-      
-      DiscontinuousGalerkinBaseFunctionFactory<
-        ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
-      return new BaseFunctionSetType(fac);
-    }
-    */
-    
     static BaseFunctionSetType* setBaseFuncSetPointer(GeometryType type) 
     {
       typedef typename ToScalarFunctionSpace<
@@ -452,18 +437,6 @@ namespace Dune {
     LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart) :
       DiscontinuousGalerkinSpaceBase<Traits> (gridPart) {}
 
-    /*
-    template <class EntityType>
-    static BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
-    {
-      typedef typename ToScalarFunctionSpace<
-        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
-      
-      LegendreDGBaseFunctionFactory<
-        ScalarFunctionSpaceType, polOrd> fac(en.geometry().type());
-      return new BaseFunctionSetType(fac);
-    }
-    */
     static BaseFunctionSetType* setBaseFuncSetPointer(GeometryType type) 
     {
       typedef typename ToScalarFunctionSpace<
