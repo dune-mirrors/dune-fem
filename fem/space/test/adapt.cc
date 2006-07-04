@@ -12,7 +12,8 @@ using namespace Dune;
 #include "../../quadrature/cachequad.hh"
 #include "../../space/dgspace/dgadaptoperator.hh"
 
-#include "../leafindexset.hh"
+// #include "../leafindexset.hh"
+#include "../dgspace/dgleafindexset.hh"
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
@@ -36,7 +37,7 @@ const int polOrd = POLORDER;
 
 //! the index set we are using 
 //typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
-typedef AdaptiveLeafIndexSet<GridType> IndexSetType;
+typedef DGAdaptiveLeafIndexSet<GridType> IndexSetType;
 typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -182,8 +183,8 @@ void adapt(GridType& grid,
   RestProlOperator<DiscreteFunctionType> rp(solution);
   ADOperatorType adop(grid,rp);
 
-  int mark = step;
-  int count = 1;
+  int mark = 1;
+  int count = step;
   
   if(step < 0) 
   {
