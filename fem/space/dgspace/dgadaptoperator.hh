@@ -2,7 +2,7 @@
 #define DUNE_DGADAPTOPERATORIMP_HH
 
 //- local includes  
-#include <../adaptoperator.hh>
+#include "../adaptoperator.hh"
 #include "../../quadrature/cachequad.hh"
 #include "dgspace.hh"
 
