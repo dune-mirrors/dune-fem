@@ -18,6 +18,9 @@
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
+
+#include <dune/fem/space/dgspace/dgleafindexset.hh>
+
 //*************************************************************
 namespace Dune {  
   template <class Model,class NumFlux,int polOrd >
@@ -36,7 +39,9 @@ namespace Dune {
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
     // choose leaf level for iteration  
-    typedef LeafGridPart<GridType> GridPartType;
+    //typedef LeafGridPart<GridType> GridPartType;
+    typedef DGAdaptiveLeafIndexSet<GridType> DGIndexSetType;
+    typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
 
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
     typedef CachingQuadrature<GridType,0> VolumeQuadratureType;

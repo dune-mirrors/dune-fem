@@ -214,7 +214,10 @@ public:
     double dt = timeDiscrParam_.getTimeStepSize();
    
     localInTimeTolerance_ = globalTolerance_ * dt / endTime_;
-    
+
+    // inserted for testing!!
+    localInTimeTolerance_ = 500.0;
+
     return localInTimeTolerance_;
   };
 
@@ -225,7 +228,7 @@ public:
     localTolerance_ = localInTimeTolerance_ / numberOfElements();
 
     // inserted for testing!!
-    localTolerance_ = 0.5;
+    // localTolerance_ = 0.5;
 
     return localTolerance_;
   };

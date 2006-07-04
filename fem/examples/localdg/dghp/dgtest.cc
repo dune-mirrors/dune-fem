@@ -39,6 +39,9 @@ int main(int argc, char ** argv, char ** envp) {
   typedef Adaptation <DgType::DestinationType, 
           TimeDiscParamType>                       AdaptationType;
 
+  typedef DgType::DestinationType::DiscreteFunctionSpaceType::GridPartType GridPartType;
+  typedef GridPartType::IndexSetType IndexSetType;
+
   // *** Initialization
   if (argc<2) {
     cout << "Call: dgtest gridfilename [ref-steps=1] [start-level=0] [epsilon=0.01] [use-grape=0]" << endl;
@@ -161,8 +164,9 @@ int main(int argc, char ** argv, char ** envp) {
 	
     double maxdt=0.,mindt=1.e10,averagedt=0.;
     
-    DgType::DestinationType::DiscreteFunctionSpaceType::IndexSetType * iset = new DgType::DestinationType::DiscreteFunctionSpaceType::IndexSetType ( *grid );
-    DgType::DestinationType::DiscreteFunctionSpaceType::GridPartType * gridPart_ = new DgType::DestinationType::DiscreteFunctionSpaceType::GridPartType ( *grid );
+    
+    IndexSetType * iset = new IndexSetType ( *grid );
+    GridPartType * gridPart_ = new GridPartType ( *grid, *iset );
     // initialize time discretization parameters
     TimeDiscParamType * timeDiscParam_ = new TimeDiscParamType (0.0,0.0,0);
     // initialize adaptation if wanted
@@ -194,7 +198,7 @@ int main(int argc, char ** argv, char ** envp) {
 
       adaptation_->adapt();
 
-      initialize(problem,U);
+      //initialize(problem,U);
 
       {
 	GrapeDataDisplay< GridType > grape(*grid);

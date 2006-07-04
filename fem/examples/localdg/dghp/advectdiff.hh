@@ -59,6 +59,7 @@ namespace Dune {
     typedef Space2Type SpaceType;
 
     typedef typename Traits1::GridPartType GridPartType;
+    typedef typename Traits1::GridPartType::IndexSetType IndexSetType;
 
   public:
     DGAdvectionDiffusionOperator(GridType& grid,
@@ -68,7 +69,7 @@ namespace Dune {
       grid_(grid),
       model_(numf.model()),
       numflux_(numf),
-      gridPart_(grid_),
+      gridPart_(grid_, *(new IndexSetType (grid_)) ),
       space1_(gridPart_),
       space2_(gridPart_),
       problem1_(upwind_,model_,numflux_),
@@ -144,6 +145,7 @@ namespace Dune {
     typedef Space2Type SpaceType;
 
     typedef typename Traits2::GridPartType GridPartType;
+    typedef typename Traits2::GridPartType::IndexSetType IndexSetType;
     typedef Space2Type DiscreteFunctionSpaceType;
 
   public:
@@ -152,11 +154,12 @@ namespace Dune {
       grid_(grid),
       model_(numf.model()),
       numflux_(numf),
-      gridPart_(grid_),
+      gridPart_(grid_, *(new IndexSetType (grid_)) ),
       space2_(gridPart_),
       problem2_(model_,numflux_),
       pass2_(problem2_, pass0_, space2_) 
-    {}
+    {
+    }
     void timeProvider(TimeProvider* timeprovider)
     {
       pass2_.timeProvider(timeprovider);
@@ -223,6 +226,7 @@ namespace Dune {
     typedef Space2Type SpaceType;
 
     typedef typename Traits1::GridPartType GridPartType;
+    typedef typename Traits1::GridPartType::IndexSetType IndexSetType;
 
   public:
     DGDiffusionOperator(GridType& grid,
@@ -232,7 +236,7 @@ namespace Dune {
       grid_(grid),
       model_(numf.model()),
       numflux_(numf),
-      gridPart_(grid_),
+      gridPart_(grid_, *(new IndexSetType (grid_)) ),
       space1_(gridPart_),
       space2_(gridPart_),
       problem1_(upwind_,model_,numflux_),
@@ -313,6 +317,7 @@ namespace Dune {
     typedef Space2Type SpaceType;
 
     typedef typename Traits1::GridPartType GridPartType;
+    typedef typename Traits1::GridPartType::IndexSetType IndexSetType;
 
   public:
     DGLimitedAdvectionOperator(GridType& grid,
@@ -321,7 +326,7 @@ namespace Dune {
       grid_(grid),
       numflux_(numf),
       model_(numf.model()),
-      gridPart_(grid_),
+      gridPart_(grid_, *(new IndexSetType (grid_)) ),
       space1_(gridPart_),
       space2_(gridPart_),
       problem1_(model_),

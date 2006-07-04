@@ -1,5 +1,5 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS)
-#AM_CXXFLAGS= -g -w 
+AM_CXXFLAGS= -g -w 
 
 noinst_PROGRAMS = dgtest 
 dgtest_SOURCES = dgtest.cc
