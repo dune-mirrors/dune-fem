@@ -118,6 +118,8 @@ namespace Dune {
     typedef FieldVector<double,dimRange> RangeType;
     typedef FieldVector<double,dimGradRange> GradientType;
     typedef FieldMatrix<double,dimRange,dimDomain> FluxRangeType;
+    typedef FieldMatrix<double,dimRange,dimRange> FluxJacobianType;
+    typedef FieldVector<FluxJacobianType,dimDomain> FluxJacobianRangeType;
     typedef FieldMatrix<double,dimGradRange,dimDomain> DiffusionRangeType;
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;

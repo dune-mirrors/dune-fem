@@ -5,12 +5,9 @@ class U0 {
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
   U0(double eps,bool diff_timestep=true) :
-    velocity(0), epsilon(eps), diff_tstep(diff_timestep) {
-      velocity[0]=0.8;
-      velocity[1]=0.8;
-      // velocity[0]=0.0;
-      // velocity[1]=0.0;
-						
+    velocity(1.0), epsilon(eps), diff_tstep(diff_timestep) {
+      velocity[0]=-0.1;
+ 						
       max_n_of_coefs = 2;
 			
       //x coordinate
@@ -159,8 +156,10 @@ class U0Disc : public U0<GridType> {
 	
 	
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    const double x0=0.5;
+    const double x1=1.3177653851118265;
     BaseType::evaluate(t,arg,res); 
-    if (arg[0]-this->velocity[0]*t<0.5)
+    if (arg[0]-this->velocity[0]*t<x0 || arg[0]-this->velocity[0]*t>x1)
       res *= -1.;
   }
 	

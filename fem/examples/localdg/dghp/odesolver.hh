@@ -4,298 +4,39 @@
 #include <iostream>
 #include <cmath>
 #include <dune/fem/misc/timeutility.hh>
-
- #include "../advectdiffusion/ode/function.hpp"
- #include "../advectdiffusion/ode/ode_solver.hpp"
- #include "../advectdiffusion/ode/linear_solver.hpp"
- #include "../advectdiffusion/ode/bulirsch_stoer.cpp"  
- #include "../advectdiffusion/ode/iterative_solver.cpp"  
- #include "../advectdiffusion/ode/ode_solver.cpp"     
- #include "../advectdiffusion/ode/sirk.cpp"   
- // #include "../advectdiffusion/ode/communicator.cpp"    
- #include "../advectdiffusion/ode/matrix.cpp"            
- #include "../advectdiffusion/ode/qr_solver.cpp"   
- #include "../advectdiffusion/ode/ssp.cpp"
- #include "../advectdiffusion/ode/dirk.cpp"     
- #include "../advectdiffusion/ode/runge_kutta.cpp"
- #include "../advectdiffusion/ode/vector.cpp"
-
-
 namespace DuneODE {
   using namespace Dune;
   using namespace std;
-
-template <class Operator>
- class OperatorWrapper : public DuneODE::Function {
- public:
-  OperatorWrapper(const Operator& op) : op_(op) {}
-  void operator()(const double *u, double *f, int i = 0) {
-    typename Operator::DestinationType arg("ARG",op_.space(),u);
-    typename Operator::DestinationType dest("DEST",op_.space(),f);
-    op_.setTime(time());
-    op_(arg,dest);
-  }
-  int dim_of_argument(int i = 0) const 
-  { 
-    if (i==0) return op_.space().size();
-    else assert(0);
-  }
-  int dim_of_value(int i = 0) const 
-  { 
-    if (i==0) return op_.space().size();
-    else assert(0);
-  }
- private:
-  const Operator& op_;
-};
-template<class Operator>
-class ExplTimeStepper : public TimeProvider {
- public:
-  ExplTimeStepper(Operator& op,int pord,double cfl) :
-    ord_(pord),
-    op_(op),
-    expl_(op),
-    ode_(0),
-    cfl_(cfl),
-    dt_(-1.0),
-    savetime_(0.0), savestep_(1)
-  {
-    op.timeProvider(this);
-    switch (pord) {
-    case 1: ode_=new ExplicitEuler(comm,expl_); break;
-    case 2: ode_=new ExplicitTVD2(comm,expl_); break;
-    case 3: ode_=new ExplicitTVD3(comm,expl_); break;
-    case 4: ode_=new ExplicitRK4(comm,expl_); break;
-    default : std::cerr << "Runge-Kutta method of this order not implemented" 
-			<< std::endl;
-      abort();
-    }
-    ode_->DynamicalObject::set_output(cout);
-  }
-  ~ExplTimeStepper() {delete ode_;}
-  double solve(typename Operator::DestinationType& U0) {
-    if (dt_<0) {
-      typename Operator::DestinationType tmp("TMP",op_.space());
-      op_(U0,tmp);
-      dt_=cfl_*timeStepEstimate();
-    }
-    resetTimeStepEstimate();
-    double t=time();
-    double* u=U0.leakPointer();
-    const bool convergence = ode_->step(t, dt_, u);
-    assert(convergence);
-    setTime(t+dt_);
-    dt_=cfl_*timeStepEstimate();
-    return time();
-  }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
-    if (time()>=savetime_) {
-      printSGrid(time(),savestep_*10+nr,op_.space(),U);
-      ++savestep_;
-      savetime_+=0.001;
-    }
-  }
-  void printmyInfo(string filename) const {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ExplTimeStepper, steps: " << ord_ << "\n\n";
-    ofs << "                 cfl: " << cfl_ << "\\\\\n\n";
-    ofs.close();
-    op_.printmyInfo(filename);
-  }
- private:
-  int ord_;
-  DuneODE::Communicator comm;
-  const Operator& op_;
-  OperatorWrapper<Operator> expl_;
-  DuneODE::ODESolver* ode_;
-  double cfl_;
-  double dt_;
-  int savestep_;
-  double savetime_;
-};
-template<class Operator>
-class ImplTimeStepper : public TimeProvider {
- public:
-  ImplTimeStepper(Operator& op,int pord,double cfl) :
-    ord_(pord),
-    op_(op),
-    impl_(op),
-    ode_(0),
-    linsolver_(comm),
-    cfl_(cfl),
-    dt_(-1.0),
-    savetime_(0.0), savestep_(1)
-  {
-    op.timeProvider(this);
-    linsolver_.set_tolerance(1.0e-8);
-    linsolver_.set_max_number_of_iterations(1000);
-    switch (pord) {
-    case 1: ode_=new ImplicitEuler(comm,impl_); break;
-    case 2: ode_=new Gauss2(comm,impl_); break;
-    case 3: ode_=new DIRK3(comm,impl_); break;
-      //case 4: ode_=new ExplicitRK4(comm,expl_); break;
-    default : std::cerr << "Runge-Kutta method of this order not implemented" 
-			<< std::endl;
-      abort();
-    }
-    ode_->set_linear_solver(linsolver_);
-    ode_->set_tolerance(1.0e-8);
-    ode_->IterativeSolver::set_output(cout);
-    ode_->DynamicalObject::set_output(cout);
-  }
-  ~ImplTimeStepper() {delete ode_;}
-  double solve(typename Operator::DestinationType& U0) {
-    if (dt_<0) {
-      typename Operator::DestinationType tmp("tmp",op_.space());
-      op_(U0,tmp);
-      dt_ = cfl_*timeStepEstimate();
-    }
-    resetTimeStepEstimate();
-    double t=time();
-    double* u=U0.leakPointer();
-    const bool convergence = ode_->step(t, dt_, u);
-    assert(convergence);
-    setTime(t+dt_);
-    dt_ = cfl_*timeStepEstimate();
-    return time();
-  }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
-    if (time()>=savetime_) {
-      printSGrid(time(),savestep_*10+nr,op_.space(),U);
-      ++savestep_;
-      savetime_+=0.001;
-    }
-  }
-  void printmyInfo(string filename) const {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ImplTimeStepper, steps: " << ord_ << "\n\n";
-    ofs << "                 cfl: " << cfl_ << "\\\\\n\n";
-    ofs.close();
-    op_.printmyInfo(filename);
-  }
- private:
-  int ord_;
-  DuneODE::Communicator comm;	  
-  const Operator& op_;
-  OperatorWrapper<Operator> impl_;
-  DuneODE::DIRK* ode_;
-  DuneODE::GMRES<20> linsolver_;
-  double cfl_;
-  double dt_;
-  int savestep_;
-  double savetime_;
-};
-template<class OperatorExpl,class OperatorImpl>
-class SemiImplTimeStepper : public TimeProvider {
-  typedef OperatorExpl Operator;
- public:
-  SemiImplTimeStepper(OperatorExpl& op_expl,OperatorImpl& op_impl,
-		      int pord,double cfl) :
-    ord_(pord),
-    opexpl_(op_expl),
-    opimpl_(op_impl),
-    expl_(op_expl),
-    impl_(op_impl),
-    ode_(0),
-    linsolver_(comm),
-    cfl_(cfl),
-    dt_(-1.0),
-    savetime_(0.0), savestep_(1)
-  {
-    op_expl.timeProvider(this);
-    linsolver_.set_tolerance(1.0e-8);
-    linsolver_.set_max_number_of_iterations(1000);
-    switch (pord) {
-    case 1: ode_=new SemiImplicitEuler(comm,impl_,expl_); break;
-    case 2: ode_=new IMEX_SSP222(comm,impl_,expl_); break;
-    case 3: ode_=new SIRK33(comm,impl_,expl_); break;
-    default : std::cerr << "Runge-Kutta method of this order not implemented" 
-			<< std::endl;
-      abort();
-    }
-    ode_->set_linear_solver(linsolver_);
-    ode_->set_tolerance(1.0e-8);
-    ode_->IterativeSolver::set_output(cout);
-    ode_->DynamicalObject::set_output(cout);
-  }
-  ~SemiImplTimeStepper() {delete ode_;}
-  double solve(typename Operator::DestinationType& U0) {
-    if (dt_<0) {
-      typename OperatorExpl::DestinationType tmp("tmp",opexpl_.space());
-      opexpl_(U0,tmp);
-      dt_ = cfl_*timeStepEstimate();
-    }
-    resetTimeStepEstimate();
-    double t=time();
-    double* u=U0.leakPointer();
-    const bool convergence = ode_->step(t, dt_, u);
-    assert(convergence);
-    setTime(t+dt_);
-    dt_ = cfl_*timeStepEstimate();
-    return time();
-  }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
-    if (time()>=savetime_) {
-      printSGrid(time(),savestep_*10+nr,opexpl_.space(),U);
-      ++savestep_;
-      savetime_+=0.001;
-    }
-  }
-  void printmyInfo(string filename) const {
-    std::ostringstream filestream;
-    filestream << filename;
-    {
-      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-      ofs << "SemiImplTimeStepper, steps: " << ord_ << "\n\n";
-      ofs << "                     cfl: " << cfl_ << "\\\\\n\n";
-      ofs << "Explicite Operator:\\\\\n\n";
-      ofs.close();
-      opexpl_.printmyInfo(filename);
-    }
-    {
-      std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-      ofs << "Implicite Operator:\\\\\n\n";
-      ofs.close();
-      opimpl_.printmyInfo(filename);
-    }
-  }
- private:
-  int ord_;
-  DuneODE::Communicator comm;	  
-  const OperatorExpl& opexpl_;
-  const OperatorImpl& opimpl_;
-  OperatorWrapper<OperatorImpl> impl_;
-  OperatorWrapper<OperatorExpl> expl_;
-  DuneODE::SIRK* ode_;
-  DuneODE::GMRES<20> linsolver_;
-  double cfl_;
-  double dt_;
-  int savestep_;
-  double savetime_;
-};
+#include "localfunction.hh"
 template<class Operator>
 class ExplRungeKutta : public TimeProvider {
  public:
   enum {maxord=10};
   typedef typename Operator::SpaceType SpaceType;
+  typedef typename Operator::SpaceType FunctionSpaceType;
   typedef typename Operator::DestinationType DestinationType;
+  typedef typename DestinationType::LocalFunctionType LocalFunctionType; 
  private:
   double cfl_;
   double **a;
   double *b;
   double *c;
+  double dt;
   int ord_;
+  const SpaceType& spc_;
+  DestinationType* U0;
+  LocalFunctionType* LU0;
   std::vector<DestinationType*> Upd;
+  std::vector<LocalFunctionType*> LUpd;
+  mutable LocalFuncHelper<LocalFunctionType> tmp_;
 public:
+  typedef typename DestinationType::RangeType RangeType;
+  typedef typename DestinationType::DomainType DomainType;
+  typedef typename DestinationType::JacobianRangeType JacobianRangeType;
   ExplRungeKutta(Operator& op,int pord,double cfl) :
     op_(op),
+    spc_(op.space()),
+    tmp_(op.space()),
     cfl_(cfl), ord_(pord), Upd(0),
     savetime_(0.0), savestep_(1)
   {
@@ -337,18 +78,143 @@ public:
 			<< std::endl;
               abort();
     }
-    for (int i=0;i<ord_;i++)
+    U0 = new DestinationType("Start",op_.space());
+    LU0 = new LocalFunctionType(*U0);
+    for (int i=0;i<ord_;i++) {
       Upd.push_back(new DestinationType("URK",op_.space()) );
+      LUpd.push_back(new LocalFunctionType(*(Upd[i])));
+    }
     Upd.push_back(new DestinationType("Ustep",op_.space()) );
   }
-  double solve(typename Operator::DestinationType& U0) {
+  void timecoeff(double s,double *ret) const {
+    assert(0<=s && s<=1.);
+    switch (ord_) {
+    case 4:
+      ret[0]=2./3.*s*s*s-3./2.*s*s+s;
+      ret[1]=-1./3.*s*s*s+1./2.*s*s;
+      ret[2]=-4./3.*s*s*s+2.*s*s;
+      ret[3]=s*s*s-s*s;
+      break;
+    case 3 :
+      ret[0]=(6.*c[0]-3.)*b[0]*s*s+(4.-6.*c[0])*b[0]*s;   
+      ret[1]=(6.*c[1]-3.)*b[1]*s*s+(4.-6.*c[1])*b[1]*s;   
+      ret[2]=(6.*c[2]-3.)*b[2]*s*s+(4.-6.*c[2])*b[2]*s;   
+      break;
+    case 2:
+      ret[0]=(b[0]-1.)*s*s+s;
+      ret[1]=b[1]*s*s;
+      break;
+    case 1:
+      ret[0]=s;
+      break;
+    }
+  }
+  void dtimecoeff(double s,double *ret) const {
+    assert(0<=s && s<=1.);
+    switch (ord_) {
+    case 4:
+      ret[0]=2.*s*s-3.*s+1.;
+      ret[1]=-s*s+s;
+      ret[2]=-4.*s*s+4.*s;
+      ret[3]=3.*s*s-2.*s;
+    case 3 :
+      ret[0]=(6.*c[0]-3.)*b[0]*2.*s+(4.-6.*c[0])*b[0];   
+      ret[1]=(6.*c[1]-3.)*b[1]*2.*s+(4.-6.*c[1])*b[1];   
+      ret[2]=(6.*c[2]-3.)*b[2]*2.*s+(4.-6.*c[2])*b[2];   
+      break;
+    case 2:
+      ret[0]=(b[0]-1.)*2.*s+1.;
+      ret[1]=b[1]*2.*s;
+      break;
+    case 1:
+      ret[0]=1.;
+      break;
+    }
+  }
+  /*****************************************************************/
+  template <class EntityType>
+  void setEntity(const EntityType& en) {
+    LU0->init(en);
+    for (int i=0;i<ord_;i++) {
+      LUpd[i]->init(en);
+    }
+    tmp_.init(en);
+  }
+  int numDofs() {
+    return LU0->numDofs();
+  }
+  const SpaceType& getFunctionSpace() {
+    return spc_;
+  }
+  template <class EntityType,class QuadratureType>
+  void ucomponents(const EntityType& en,
+		   const QuadratureType& quad,int l,double t,
+		   std::vector<RangeType>& comp) const {
+    assert(0<t && t<=1.);
+    RangeType ret(0);
+    double coeff[ord_];
+    timecoeff(t,coeff);
+    tmp_.assign(*LU0);
+    for (int j=0;j<ord_;j++) {
+      tmp_.addscaled((*LUpd[j]),dt*coeff[j]);
+    }
+    tmp_.components(en,quad,l,comp);
+  }
+  template <class EntityType,class QuadratureType>
+  RangeType uval(const EntityType& en,
+		 const QuadratureType& quad,int l,double t,
+		 int maxp) const {
+    assert(0<t && t<=1.);
+    RangeType ret(0);
+    double coeff[ord_];
+    timecoeff(t,coeff);
+    tmp_.assign(*LU0);
+    for (int j=0;j<ord_;j++) {
+      tmp_.addscaled((*LUpd[j]),dt*coeff[j]);
+    }
+    tmp_.evaluateLocal(en,quad,l,maxp,ret);
+    return ret;
+  }
+  template <class EntityType,class QuadratureType>
+  JacobianRangeType dxuval(const EntityType& en,
+			   const QuadratureType& quad,int l,double t,
+         int maxp) const {
+    assert(0<=t && t<=1.);
+    JacobianRangeType ret(0);
+    double coeff[ord_];
+    timecoeff(t,coeff);
+    tmp_.assign(*LU0);
+    for (int j=0;j<ord_;j++) {
+      tmp_.addscaled(*(LUpd[j]),dt*coeff[j]);
+    }
+    tmp_.jacobianLocal(en,quad,l,maxp,ret);
+    return ret;
+  }
+  template <class EntityType,class QuadratureType>
+  RangeType dtuval(const EntityType& en,
+		   const QuadratureType& quad,int l,double t,
+       int maxp) const {
+    assert(0<=t && t<=1.);
+    RangeType ret(0);
+    double coeff[ord_];
+    dtimecoeff(t,coeff);
+    tmp_.assign(0.);
+    for (int j=0;j<ord_;j++) {
+      tmp_.addscaled(*(LUpd[j]),dt*coeff[j]);     
+    }
+    tmp_.evaluateLocal(en,quad,l,maxp,ret);
+    ret /= dt;
+    return ret;
+  }
+  double solve(typename Operator::DestinationType& U) {
     resetTimeStepEstimate();
     double t=time();
+    U0->assign(U);
     // Compute Steps
-    op_(U0,*(Upd[0]));
-    double dt=cfl_*timeStepEstimate();
+    op_(U,*(Upd[0]));
+    dt=cfl_*timeStepEstimate();
     for (int i=1;i<ord_;i++) {
-      (Upd[ord_])->assign(U0);
+      (Upd[ord_])->assign(U);
       for (int j=0;j<i;j++) 
 	(Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
       setTime(t+c[i]*dt);
@@ -357,7 +223,57 @@ public:
     }
     // Perform Update
     for (int j=0;j<ord_;j++) {
-      U0.addScaled(*(Upd[j]),(b[j]*dt));
+      U.addScaled(*(Upd[j]),(b[j]*dt));
+    }
+    setTime(t+dt);
+    return time();
+  }
+  template <class Projection>
+  void project(typename Operator::DestinationType& U,
+	       Projection& proj) {
+    typedef typename Operator::DestinationType DestType;
+    typedef typename DestType::LocalFunctionType LFuncType;
+    typedef typename DestType::FunctionSpaceType::IteratorType IteratorType;
+    typedef typename DestType::FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+    IteratorType endit = U.getFunctionSpace().end();
+    // check whether grid is empty 
+    assert( it != endit );	
+    for(IteratorType it = U.getFunctionSpace().begin(); 
+	it != endit ; ++it) {
+      int deg = proj.usePolDeg(*it);
+      LFuncType lU = U.localFunction(*it);
+      for (int i = 0; i < lU.numDofs(); ++i) {
+	if (i>=numPol[deg]) {
+	  // abort();
+	  lU[i] = 0.;
+	}
+      }
+    }
+  }
+  template <class Projection>
+  double solve(typename Operator::DestinationType& U,
+	       Projection& proj) {
+    resetTimeStepEstimate();
+    double t=time();
+    project(U,proj);
+    U0->assign(U);
+    (Upd[ord_])->assign(U);
+    // project(*(Upd[ord_]),proj);
+    // Compute Steps
+    op_(*(Upd[ord_]),*(Upd[0]));
+    dt=cfl_*timeStepEstimate();
+    for (int i=1;i<ord_;i++) {
+      (Upd[ord_])->assign(U);
+      for (int j=0;j<i;j++) 
+	(Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
+      setTime(t+c[i]*dt);
+      project(*(Upd[ord_]),proj);
+      op_(*(Upd[ord_]),*(Upd[i]));
+      double ldt=cfl_*timeStepEstimate();
+    }
+    // Perform Update
+    for (int j=0;j<ord_;j++) {
+      U.addScaled(*(Upd[j]),(b[j]*dt));
     }
     setTime(t+dt);
     return time();

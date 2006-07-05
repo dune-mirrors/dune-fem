@@ -1,4 +1,5 @@
 #undef HAVE_MPI
+#undef HAVE_MPI_CPP
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
 // #include <dune/grid/yaspgrid.hh>
 // #include <dune/grid/sgrid.hh>
@@ -18,8 +19,8 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    #include "initadvectdiff.cc"
    typedef U0<GridType> InitialDataType;
    typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
-   // typedef LLFFlux<ModelType> FluxType;
-   typedef UpwindFlux<ModelType> FluxType;
+   // typedef LLFFlux<ModelType> DiscModelType;
+   typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #elif PROBLEM == 2
@@ -27,26 +28,35 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    #include "initburgers.cc"
    typedef U0<GridType> InitialDataType;
    typedef BurgersModel<GridType,InitialDataType > ModelType;
-   typedef LLFFlux<ModelType> FluxType;
+   typedef LLFFlux<ModelType> DiscModelType;
    //typedef DGLimitedAdvectionOperator<ModelType,LLFFlux,order> DgType;
-   typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgType;
+   typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #elif PROBLEM == 3
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
    typedef U0Disc<GridType> InitialDataType;
    typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
-   // typedef LLFFlux<ModelType> FluxType;
-   typedef UpwindFlux<ModelType> FluxType;
+   // typedef LLFFlux<ModelType> DiscModelType;
+   typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #elif PROBLEM == 4
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
+   typedef U0<GridType> InitialDataType;
+   typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
+   // typedef LLFFlux<ModelType> DiscModelType;
+   typedef UpwindFlux<ModelType> DiscModelType;
+   typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
+   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+#elif PROBLEM == 5
+#include "scalarmodels.hh"
+#include "initadvectdiff.cc"
    typedef U0Disc<GridType> InitialDataType;
    typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
-   // typedef LLFFlux<ModelType> FluxType;
-   typedef UpwindFlux<ModelType> FluxType;
+   // typedef LLFFlux<ModelType> DiscModelType;
+   typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #endif
