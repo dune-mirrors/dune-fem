@@ -149,6 +149,8 @@ public:
     AddToWrapper<OpType>::addToList(vec_,op);
     return *this;
   }
+
+  bool empty () const { return (vec_.size() == 0); }
  
 private:  
   mutable ListType vec_;

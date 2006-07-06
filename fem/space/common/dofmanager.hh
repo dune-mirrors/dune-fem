@@ -902,6 +902,12 @@ private:
     , defaultChunkSize_(100) 
     , indexRPop_( *this, insertIndices_ , removeIndices_ ) 
   {}
+
+  // copy of dofmanagers is forbidden 
+  DofManager(const DofManager &) {
+    std::cerr << "DofManager(const DofManager &) not allowed! \n";
+    abort();
+  }
   
   //! Desctructor, removes all MemObjects and IndexSetObjects 
   ~DofManager (); 
@@ -946,6 +952,12 @@ public:
   IndexSetRestrictProlongType & indexSetRPop () 
   {
     return indexRPop_;
+  }
+
+  //! if dofmanagers list is not empty return true 
+  bool hasIndexSets() const 
+  {
+    return ! insertIndices_.empty(); 
   }
    
   //! this method resizes the memory before restriction is done 
@@ -1209,6 +1221,10 @@ template <class IndexSetType>
 inline void DofManager<GridType>::
 addIndexSet (const GridType &grid, IndexSetType &iset)
 {
+  // if index doesn't need to be resized after adaptation, do't include
+  // into list of dof manager 
+  if( ! iset.needsCompress() ) return ;
+  
   if(&grid_ != &grid)
     DUNE_THROW(DofManError,"DofManager can only be used for one grid! \n");
 
