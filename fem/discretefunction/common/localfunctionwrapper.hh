@@ -105,6 +105,8 @@ public:
   typedef LocalFunctionWrapper < LocalFunctionImp > MyType;
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
+  enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+  enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
 
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
