@@ -296,3 +296,162 @@ class U0RotCone {
   double radius_;
 };
 
+
+template <class GridType>
+class U0BuckLev {
+ public:
+  enum { dimDomain = GridType::dimensionworld };  
+  typedef FieldVector<double,dimDomain> DomainType;
+  typedef FieldVector<double,1> RangeType;
+  U0BuckLev(double eps,bool diff_timestep=true) :
+    velocity_(0.0), epsilon(eps), diff_tstep(diff_timestep)  {
+    velocity_[0] = 1.0;
+
+    myName = "Buckley Leverett";
+  }
+
+  double endtime() {
+    return 1.0;
+  }
+
+  double f(double u) const {
+    return u*u/(u*u+0.5*(1.-u)*(1.-u));
+  }
+
+  double f1(double u) const {
+    double d=3.*u*u+1.-2.*u;
+    return -4.*u*(-1.+u)/d/d;
+  }
+
+  double f2(double u) const {
+    double d=3.*u*u+1.-2.*u;
+    return 4.*(-9.*u*u+6.*u*u*u+1.)/d/d/d;
+  }
+
+  double Newton(double u0,double xi) const {
+    double u=u0;
+    while (fabs(f1(u)-xi)>1e-8) {
+      double u1=u;
+      double df2=f2(u1);
+      assert(fabs(df2)>1e-10);
+      u=u1-(f1(u1)-xi)/df2;
+      // cerr << u1 << " " << u << " " << f1(u)-xi << endl;
+    }
+    return u;
+  }
+
+  double rp_sol(double ul,double ur,double t,double x) const {
+    double u1=(3.-sqrt(6.))/3.;
+    double u2=sqrt(3.)/3.;
+    double xi=x/t;
+    if (ul<ur) {
+      if (ul>u1) {
+	double fl=f(ul);
+	double fr=f(ur);
+	double s=(fl-fr)/(ul-ur);
+	if (xi<s) return ul;
+	else return ur;
+      } else if (ur<u1) {
+	double dfl=f1(ul);
+	double dfr=f1(ur);
+	if (xi<dfl)
+	  return ul;
+	else if (xi>dfr) 
+	  return ur;
+	else 
+	  return Newton(0.5*(ul+ur),xi);
+      } else {
+	double dfl=f1(ul);
+	double df1=f1(u1);
+	assert(dfl<df1);
+	if (xi<dfl)
+	  return ul;
+	else if (xi>df1) {
+	  double f1=f(u1);
+	  double fr=f(ur);
+	  double s=(f1-fr)/(u1-ur);
+	  if (xi<s) return u1;
+	  else return ur;
+	}
+	else 
+	  return Newton(0.5*(ul+u1),xi);      
+      }
+    }
+    else if (ul>ur) {
+      if (ul<u2) {
+	double fl=f(ul);
+	double fr=f(ur);
+	double s=(fl-fr)/(ul-ur);
+	if (xi<s) return ul;
+	else return ur;
+      } else if (ur>u2) {
+	double dfl=f1(ul);
+	double dfr=f1(ur);
+	assert(dfl<dfr);
+	if (xi<dfl)
+	  return ul;
+	else if (xi>dfr) 
+	  return ur;
+	else
+	  return Newton(0.5*(ul+ur),xi);
+      } else {
+	double dfl=f1(ul);
+	double df2=f1(u2);
+	assert(dfl<df2);
+	if (xi<dfl)
+	  return ul;
+	else if (xi>df2) {
+	  double f2=f(u2);
+	  double fr=f(ur);
+	  double s=(f2-fr)/(u2-ur);
+	  if (xi<s) return u2;
+	  else return ur;
+	}
+	else 
+	  return Newton(0.5*(ul+u2),xi);      
+      }
+    } 
+    else return ul;
+  }
+
+
+  void velocity(double t, const DomainType &x, DomainType &res) const{
+    
+    res = 0.0;
+    res[0] = 1.0;
+
+  }
+
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0.0,arg,res); 
+  }
+	
+	
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    double x = arg[0];
+    if (x>1.1)
+      res[0]=rp_sol(0.,1.,t,x-1.2);
+    else
+      res[0]=rp_sol(1.,0.,t,x-0.4);
+  }
+	
+  void printmyInfo(string filename)
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+	
+    ofs << "Problem: " << myName << "\n\n";
+    ofs	<< "\n\n";
+	
+    ofs.close();
+			
+  }
+
+  DomainType velocity_;
+  double epsilon;
+  bool diff_tstep;	
+  string myName;
+};
+
