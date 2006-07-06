@@ -56,7 +56,7 @@ namespace Dune {
     
   public:
     //! Constructor
-    CachingQuadrature(Entity& en, int order) :
+    CachingQuadrature(const Entity& en, int order) :
       ElementQuadrature<GridImp, codimension>(en, order)
     {
       CacheProvider<GridImp, codimension>::registerQuadrature(this->quadImp());
