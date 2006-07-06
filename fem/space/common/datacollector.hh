@@ -107,7 +107,6 @@ public:
   //! for all pointer to local operators call the func pointer 
   void apply ( ParamType & p ) const 
   {
-    assert( vec_.size() > 0 );
     const size_t size = vec_.size();
     for(size_t i=0; i<size; ++i)
     {
