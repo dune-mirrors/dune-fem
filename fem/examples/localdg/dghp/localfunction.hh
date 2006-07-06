@@ -1,10 +1,8 @@
 int numPol[3]={1,3,6};
 template <class LocalFuncType>
 struct LocalFuncHelper {
-  //enum { dimRange = LocalFuncType::dimRange };
-  //enum { dimDomain = LocalFuncType::dimDomain };
-  enum { dimRange = 1 };
-  enum { dimDomain = 2 };
+  enum { dimRange = LocalFuncType::dimRange };
+  enum { dimDomain = LocalFuncType::dimDomain };
   typedef typename LocalFuncType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename LocalFuncType::BaseFunctionSetType BaseFunctionSetType;
   typedef typename LocalFuncType::RangeFieldType RangeFieldType;
