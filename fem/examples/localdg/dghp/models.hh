@@ -59,4 +59,13 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+#elif PROBLEM == 6
+#include "scalarmodels.hh"
+#include "initadvectdiff.cc"
+   typedef U0RotCone<GridType> InitialDataType;
+   typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
+   // typedef LLFFlux<ModelType> DiscModelType;
+   typedef UpwindFlux<ModelType> DiscModelType;
+   typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
+   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #endif

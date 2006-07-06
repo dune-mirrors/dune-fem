@@ -1,15 +1,22 @@
-problem=4
-polorder=1
+problem=6
+epsilonne=0.0
+polorder=2
 gridtype=ALBERTAGRID
 epsilonne=0.0
-grape=0
-level=1
-repeats=5
 dimw=2
 
+#grape=1
+#level=2
+#repeats=1
+grape=1
+level=2
+repeats=2
+
+padapt=1
+hadapt=0
 
 if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean dgtest;
 then
-echo "Something went wrong"
-exit 1
+  echo "Something went wrong"
+ exit 1
 fi

@@ -234,7 +234,7 @@ int main(int argc, char ** argv, char ** envp) {
     zeit = timer.elapsed()-prevzeit;
     eocoutput.printTexAddError(fehler,prevfehler,zeit,grid->size(0),counter,averagedt);
     
-    if(graped && eocloop == repeats-1) {
+    if(graped){ // && eocloop == repeats-1) {
       GrapeDataDisplay< GridType > grape(*grid);
       grape.addData(ResiduumErr.RT_,"El-Res",-4);
       grape.addData(ResiduumErr.RS_,"Jmp-Res",-3);

@@ -1,4 +1,4 @@
-problem=5
+problem=6
 epsilonne=0.0
 polorder=1
 gridtype=ALBERTAGRID
@@ -8,11 +8,11 @@ dimw=2
 #grape=1
 #level=2
 #repeats=1
-grape=0
-level=0
-repeats=6
+grape=1
+level=2
+repeats=2
 
-padapt=1
+padapt=0
 hadapt=0
 
 if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean dgtest;
@@ -20,7 +20,7 @@ then
   echo "Something went wrong"
  exit 1
 fi
-#./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${grape} ${hadapt} ${padapt} 
+./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${grape} ${hadapt} ${padapt} 
 #mv eoc.tex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 #pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 #rm -f *.{aux,log}

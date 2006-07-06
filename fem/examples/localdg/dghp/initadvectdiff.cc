@@ -5,8 +5,8 @@ class U0 {
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
   U0(double eps,bool diff_timestep=true) :
-    velocity(1.0), epsilon(eps), diff_tstep(diff_timestep) {
-      velocity[0]=-0.1;
+    velocity_(1.0), epsilon(eps), diff_tstep(diff_timestep) {
+      velocity_[0]=-0.1;
  						
       max_n_of_coefs = 2;
 			
@@ -48,7 +48,11 @@ class U0 {
   double endtime() {
     return 0.1;
   }
-		
+	 
+  void velocity(double t, const DomainType &x, DomainType &res) const{
+    res = velocity_;
+  }
+	
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
   }
@@ -62,25 +66,25 @@ class U0 {
       {
 	if(dimDomain == 1)
 	  res += exp(-epsilon*t*(SQR(common_coef_x[i]*M_PI)))\
-	    *((cos_coef_x[i]*cos(common_coef_x[i]*M_PI*(arg[0]-velocity[0]*t))\
-	       +  sin_coef_x[i]*sin(common_coef_x[i]*M_PI*(arg[0]-velocity[0]*t))));
+	    *((cos_coef_x[i]*cos(common_coef_x[i]*M_PI*(arg[0]-velocity_[0]*t))\
+	       +  sin_coef_x[i]*sin(common_coef_x[i]*M_PI*(arg[0]-velocity_[0]*t))));
 	else if(dimDomain == 2)
 	  res += exp(-epsilon*t*(SQR(common_coef_x[i]*M_PI)+SQR(common_coef_y[i]*M_PI)))\
-	    *((cos_coef_x[i]*cos(common_coef_x[i]*M_PI*(arg[0]-velocity[0]*t))\
-	       +  sin_coef_x[i]*sin(common_coef_x[i]*M_PI*(arg[0]-velocity[0]*t)))\
+	    *((cos_coef_x[i]*cos(common_coef_x[i]*M_PI*(arg[0]-velocity_[0]*t))\
+	       +  sin_coef_x[i]*sin(common_coef_x[i]*M_PI*(arg[0]-velocity_[0]*t)))\
 	      \
-	      *(cos_coef_y[i]*cos(common_coef_y[i]*M_PI*(arg[1]-velocity[1]*t))\
-		+ sin_coef_y[i]*sin(common_coef_y[i]*M_PI*(arg[1]-velocity[1]*t))));
+	      *(cos_coef_y[i]*cos(common_coef_y[i]*M_PI*(arg[1]-velocity_[1]*t))\
+		+ sin_coef_y[i]*sin(common_coef_y[i]*M_PI*(arg[1]-velocity_[1]*t))));
 	else if(dimDomain == 3)
 	  res += exp(-epsilon*t*(SQR(common_coef_x[i]*M_PI)+SQR(common_coef_y[i]*M_PI)+SQR(common_coef_z[i]*M_PI)))\
-	    *((cos_coef_x[i]*cos(common_coef_x[i]*M_PI*(arg[0]-velocity[0]*t))\
-	       +  sin_coef_x[i]*sin(common_coef_x[i]*M_PI*(arg[0]-velocity[0]*t)))\
+	    *((cos_coef_x[i]*cos(common_coef_x[i]*M_PI*(arg[0]-velocity_[0]*t))\
+	       +  sin_coef_x[i]*sin(common_coef_x[i]*M_PI*(arg[0]-velocity_[0]*t)))\
 	      \
-	      *(cos_coef_y[i]*cos(common_coef_y[i]*M_PI*(arg[1]-velocity[1]*t))\
-		+ sin_coef_y[i]*sin(common_coef_y[i]*M_PI*(arg[1]-velocity[1]*t)))\
+	      *(cos_coef_y[i]*cos(common_coef_y[i]*M_PI*(arg[1]-velocity_[1]*t))\
+		+ sin_coef_y[i]*sin(common_coef_y[i]*M_PI*(arg[1]-velocity_[1]*t)))\
 	      \
-	      *(cos_coef_z[i]*cos(common_coef_z[i]*M_PI*(arg[2]-velocity[2]*t))\
-		+ sin_coef_z[i]*sin(common_coef_z[i]*M_PI*(arg[2]-velocity[2]*t))));
+	      *(cos_coef_z[i]*cos(common_coef_z[i]*M_PI*(arg[2]-velocity_[2]*t))\
+		+ sin_coef_z[i]*sin(common_coef_z[i]*M_PI*(arg[2]-velocity_[2]*t))));
       }
   }
 	
@@ -120,7 +124,7 @@ class U0 {
 			
   }
 		
-  DomainType velocity;
+  DomainType velocity_;
   double epsilon;
   bool diff_tstep;
   string myName;
@@ -135,6 +139,9 @@ class U0 {
   double sin_coef_z[2];
   double cos_coef_z[2];
 };
+
+
+
 template <class GridType>
 class U0Disc : public U0<GridType> {
  public:
@@ -149,7 +156,8 @@ class U0Disc : public U0<GridType> {
   double endtime() {
     return 0.1;
   }
-		
+      
+	
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
   }
@@ -159,7 +167,7 @@ class U0Disc : public U0<GridType> {
     const double x0=0.5;
     const double x1=1.3177653851118265;
     BaseType::evaluate(t,arg,res); 
-    if (arg[0]-this->velocity[0]*t<x0 || arg[0]-this->velocity[0]*t>x1)
+    if (arg[0]-this->velocity_[0]*t<x0 || arg[0]-this->velocity_[0]*t>x1)
       res *= -1.;
   }
 	
@@ -171,7 +179,7 @@ class U0Disc : public U0<GridType> {
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
 	
     ofs << "Problem: " << this->myName << "\n\n"
-	<< "Exact solution: $u(x,y,z,t):=\\displaystyle{{\\rm sign}(x-\\frac{1}{2}-" << this->velocity[0] << "t)\\sum_{i=0}^{" << this->max_n_of_coefs-1 << "}} \\mu_i(x) \\cdot \\nu_i(y) \\cdot \\omega_i(z)$\n\n";
+	<< "Exact solution: $u(x,y,z,t):=\\displaystyle{{\\rm sign}(x-\\frac{1}{2}-" << this->velocity_[0] << "t)\\sum_{i=0}^{" << this->max_n_of_coefs-1 << "}} \\mu_i(x) \\cdot \\nu_i(y) \\cdot \\omega_i(z)$\n\n";
 	
     for(int i=0;i<this->max_n_of_coefs;++i)
       { 
@@ -197,3 +205,94 @@ class U0Disc : public U0<GridType> {
 			
   }
 };
+
+
+
+template <class GridType>
+class U0RotCone {
+ public:
+  enum { dimDomain = GridType::dimensionworld };  
+  typedef FieldVector<double,dimDomain> DomainType;
+  typedef FieldVector<double,1> RangeType;
+  U0RotCone(double eps,bool diff_timestep=true) :
+    velocity_(1.0), epsilon(eps), diff_tstep(diff_timestep)  {
+    center_ = 1.0;
+    center_[0] -= 0.5;
+    radius_ = 0.2;
+
+    myName = "Rotating Cone";
+  }
+
+  double endtime() {
+    return 3.14159;
+  }
+		
+  double dist (const DomainType& x, const DomainType& y) const{
+    double ret = 0.0;
+    for(int i =0 ; i<dimDomain; ++i)
+      ret += (x[i]-y[i])*(x[i]-y[i]);
+
+    return(sqrt(ret));
+  }
+
+  void velocity(double t, const DomainType &x, DomainType &res) const{
+    
+    res = 0.0;
+
+    if(dimDomain == 1)
+      res[0] = sin(x[0]);
+    else{
+      res[0] = - (x[1]-1.0);
+      res[1] =   (x[0]-1.0);
+    }
+
+  }
+
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    
+    double r = dist(arg, center_);
+
+    res = 0.0;
+    if ( r < radius_ ){
+	res = 1.0 - r/radius_;
+	//res = 1.0;
+	//res = 1.0 - (r*r/(radius_*radius_));
+    }
+  }
+	
+	
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    DomainType x;
+    DomainType vel;
+
+    velocity(t,arg,vel);
+
+    x = vel;
+    x *= -1.0;
+    x += arg;
+
+    evaluate(x,res);
+  }
+	
+  void printmyInfo(string filename)
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+	
+    ofs << "Problem: " << myName << "\n\n";
+    ofs	<< "\n\n";
+	
+    ofs.close();
+			
+  }
+
+  DomainType velocity_;
+  double epsilon;
+  bool diff_tstep;	
+  string myName;
+  DomainType center_;
+  double radius_;
+};
+

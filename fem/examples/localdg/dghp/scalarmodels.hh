@@ -121,14 +121,16 @@ class AdvectionDiffusionModel {
   AdvectionDiffusionModel(GridType& grid,
 			  const ProblemType& problem) :
     problem_(problem),
-    velocity(problem.velocity), epsilon(problem.epsilon), 
+    velocity(problem.velocity_), epsilon(problem.epsilon), 
     tstep_eps((problem.diff_tstep)?problem.epsilon:0) {}
   inline  void analyticalFlux(const typename Traits::EntityType& en,
 			      double time,  
 			      const typename Traits::DomainType& x,
 			      const RangeType& u, 
 			      FluxRangeType& f) const {
-    f[0] = velocity;
+    DomainType vel;
+    problem_.velocity(time,en.geometry().global(x),vel);
+    f[0] = vel;
     f *= u;
   }
   inline  void jacobian(const typename Traits::EntityType& en,
@@ -138,7 +140,9 @@ class AdvectionDiffusionModel {
 			const FluxRangeType& du,
 			RangeType& A) const {
     A = 0.;
-    du.umv(velocity,A);
+    DomainType vel;
+    problem_.velocity(time,en.geometry().global(x),vel);
+    du.umv(vel,A);
   }
   inline  void diffusion(const typename Traits::EntityType& en,
 			 double time, 
@@ -234,7 +238,11 @@ class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> > {
 			       RangeType& gLeft,
 			       RangeType& gRight) const {
     const typename Traits::DomainType normal = it.integrationOuterNormal(x);    
-    double upwind = normal*model_.velocity;
+    double upwind;
+    typename Model::DomainType vel;
+    model_.problem_.velocity(time,it.intersectionGlobal().global(x),vel);
+
+    upwind = normal*vel;
     if (upwind>0)
       gLeft = uLeft;
     else
