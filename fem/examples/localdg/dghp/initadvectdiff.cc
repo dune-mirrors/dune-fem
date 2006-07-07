@@ -311,21 +311,21 @@ class U0BuckLev {
   }
 
   double endtime() {
-    return 1.0;
+    return 0.4;
   }
 
   double f(double u) const {
-    if (u<1.e-8)
+    if (u<0.0)
       return 0.;
-    if (u>1.-1.e-8)
+    if (u>1.0)
       return 1.; 
     return u*u/(u*u+0.5*(1.-u)*(1.-u));
   }
 
   double f1(double u) const {
-    if (u<1.e-8)
+    if (u<0.0)
       return 0.;
-    if (u>1.-1.e-8)
+    if (u>1.0)
       return 0.; 
     double d=3.*u*u+1.-2.*u;
     return -4.*u*(-1.+u)/d/d;

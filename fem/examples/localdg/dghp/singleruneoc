@@ -1,6 +1,6 @@
 problem=7
 epsilonne=0.0
-polorder=2
+polorder=0
 gridtype=ALBERTAGRID
 epsilonne=0.0
 dimw=2

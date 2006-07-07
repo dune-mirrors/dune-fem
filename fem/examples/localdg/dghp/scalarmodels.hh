@@ -22,9 +22,9 @@ class BurgersModel {
 			      const typename Traits::DomainType& x,
 			      const RangeType& u, 
 			      FluxRangeType& f) const {
-    f *= 0;
+    f = 0.0;
     for (int i=0;i<dimDomain;++i) {
-      f[i] = u*u*0.5;
+      f[0][i] = u*u*0.5;
     }
   }
   inline  void jacobian(const typename Traits::EntityType& en,
@@ -108,7 +108,8 @@ class BurgersModel {
 };
 
 // ***********************
-
+template <class Model>
+class UpwindFlux;
 template <class GridType,class ProblemType>
 class BuckLevModel {
  public:
@@ -131,8 +132,8 @@ class BuckLevModel {
 			      const typename Traits::DomainType& x,
 			      const RangeType& u, 
 			      FluxRangeType& f) const {
-    f *= 0;
-    f[0] = problem_.f(u[0]);
+    f = 0.;
+    f[0][0] = problem_.f(u[0]);
   }
   inline  void jacobian(const typename Traits::EntityType& en,
 			double time,  
@@ -213,11 +214,10 @@ class BuckLevModel {
   const ProblemType& problem_;
   double epsilon;
   double tstep_eps;
+  friend class UpwindFlux<BuckLevModel<GridType,ProblemType> >;
 };
 
 // ***********************
-template <class Model>
-class UpwindFlux;
 template <class GridType,class ProblemType>
 class AdvectionDiffusionModel {
  public:
@@ -363,6 +363,49 @@ class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> > {
     else
       gLeft = uRight;
     gLeft *= upwind;
+    gRight = gLeft;
+    return std::abs(upwind); // +model_.tstep_eps;
+  }
+ private:
+  const Model& model_;
+};
+
+// Numerical Upwind-Flux
+template <class GridType,class ProblemType>
+class UpwindFlux<BuckLevModel<GridType,ProblemType> > {
+ public:
+  typedef BuckLevModel<GridType,ProblemType> Model;
+  typedef typename Model::Traits Traits;
+  enum { dimRange = Model::dimRange };
+  typedef typename Model::RangeType RangeType;
+  typedef typename Model::FluxRangeType FluxRangeType;
+  typedef typename Model::DiffusionRangeType DiffusionRangeType;
+ public:
+  UpwindFlux(const Model& mod) : model_(mod) {}
+  const Model& model() const {return model_;}
+  inline  double numericalFlux(typename Traits::IntersectionIterator& it,
+			       double time, 
+			       const typename Traits::FaceDomainType& x,
+			       const RangeType& uLeft, 
+			       const RangeType& uRight,
+			       RangeType& gLeft,
+			       RangeType& gRight) const {
+    const typename Traits::DomainType normal = it.integrationOuterNormal(x);    
+    double upwind;
+    typename Model::DomainType vel;
+    model_.problem_.velocity(time,it.intersectionGlobal().global(x),vel);
+
+    upwind = normal*vel;
+    if (upwind>0){
+      gLeft[0] = model_.problem_.f(uLeft[0]);
+      gLeft *= upwind;
+      upwind *= model_.problem_.f1(uLeft[0]);
+    }
+    else{
+      gLeft[0] = model_.problem_.f(uRight[0]);
+      gLeft *= upwind;
+      upwind *= model_.problem_.f1(uRight[0]);
+    }
     gRight = gLeft;
     return std::abs(upwind); // +model_.tstep_eps;
   }

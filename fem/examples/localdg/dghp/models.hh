@@ -73,7 +73,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
 #include "initadvectdiff.cc"
    typedef U0BuckLev<GridType> InitialDataType; 
    typedef BuckLevModel<GridType,InitialDataType > ModelType;
-   typedef LLFFlux<ModelType> DiscModelType;
-   typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
+   typedef UpwindFlux<ModelType> DiscModelType;
+   typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #endif

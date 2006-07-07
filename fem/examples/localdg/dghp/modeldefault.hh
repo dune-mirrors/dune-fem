@@ -150,7 +150,7 @@ namespace Dune {
       model_.analyticalFlux(*it.inside(), time,
 			    it.intersectionSelfLocal().global(x),
 			    uLeft, anaflux);
-      gLeft*=0;
+      gLeft=0.;
       anaflux.umv(normal, gLeft);
       if (it.neighbor())
 	model_.analyticalFlux(*it.outside(), time,
