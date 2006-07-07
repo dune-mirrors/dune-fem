@@ -26,7 +26,6 @@ using namespace std;
 #include "models.hh"
 #include "stuff.cc"
 #include "robstuff.cc"
-#include "aposteriori.hh"
 
 // include adaptation interface class
 #include "adaptation.hh"
@@ -34,37 +33,7 @@ using namespace std;
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
-template <class T1,class T2,int N>
-struct GrapeTupleHelper {
-  template <class DataIO>
-  static void apply(DataIO& dataio,string name,int n,
-	     Pair<T1,T2>& tup) {
-    stringstream dataname;
-    dataname << name << "_" << N;
-    dataio.writeData(*(tup.first()), xdr, dataname.str().c_str(), n);
-    GrapeTupleHelper<typename T2::Type1,typename T2::Type2,N+1>::apply(dataio,name,n,tup.second());
-  }
-};
-template <class T1,int N>
-struct GrapeTupleHelper<T1,Nil,N> {
-  template <class DataIO>
-  static void apply(DataIO& dataio,string name,int n,
-      Pair<T1,Nil>& tup) {
-    stringstream dataname;
-    dataname << name << "_" << N;
-    dataio.writeData(*(tup.first()), xdr, dataname.str().c_str(), n);    
-  }
-};
-struct GrapeTupleOutput {
-  template <class DataIO,class GridType,class Tup>
-  static void apply(DataIO& dataio,GridType& grid,double t,int n,
-	     string name,Tup& tup) {
-    string gridname = name + "_grid";
-    dataio.writeGrid(grid, xdr, gridname.c_str(), t, n);
-      GrapeTupleHelper<typename Tup::Type1,typename Tup::Type2,0>::
-      apply(dataio,name,n,tup);
-  }
-};
+#include "grapetuple.hh"
 
 template <class DiscModel,
 	  class ODE,class Indicator,class Adapt,class DestinationType>
@@ -89,7 +58,7 @@ solve(DiscModel& model,
       adapt->param().setTimeStepSize(dt);
       adapt->param().setTimeStepNumber(counter);
       adapt->markEntities();
-      adapt->refine();
+      adapt->adapt();
       done = (error.one_norm() < adapt->getLocalTolerance());
     }
   } while (!done);
@@ -219,10 +188,8 @@ int main(int argc, char ** argv, char ** envp) {
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
     DgType::DestinationType V("Unew",dg.space());
-    typedef Residuum<GridType,DiscModelType,ODEType> IndType; 
     IndType ResiduumErr(*grid,Padapt);
-    Pair<DgType::DestinationType*,IndType::OutputType> 
-      output(&U,ResiduumErr.output());
+    OutputType output(&U,ResiduumErr.output());
     IndexSetType * iset = new IndexSetType ( *grid );
     GridPartType * gridPart_ = new GridPartType ( *grid, *iset );
     // initialize time discretization parameters
@@ -278,9 +245,9 @@ int main(int argc, char ** argv, char ** envp) {
       //initialize(problem,U);
       ++counter;
       if (repeats==1 && counter%1000==0) {
-	//GrapeDataDisplay< GridType > grape(*grid);
-	//grape.dataDisplay(U);
-	GrapeTupleOutput::apply(dataio,*grid,t,counter/200,"output",output);
+	// GrapeDataDisplay< GridType > grape(*grid);
+	// grape.dataDisplay(U);
+	GrapeTuple::output(dataio,*grid,t,counter/200,"grid","data",output);
       }
      
       timeerr += L1L1err.norm(problem,ode,t-ldt,ldt);

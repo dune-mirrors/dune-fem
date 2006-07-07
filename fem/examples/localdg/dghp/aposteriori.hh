@@ -279,7 +279,8 @@ namespace Dune {
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
 	double vol = it->geometry().volume();
-	double h = sqrt(vol);
+	double h = sqrt
+	  (it->geometry().integrationElement(DomainType(0)));
 	LConstDiscFSType lRT = RT_.localFunction(*it);
 	LConstDiscFSType lRS = RS_.localFunction(*it);
 	LConstDiscFSType lrho = rho_.localFunction(*it);

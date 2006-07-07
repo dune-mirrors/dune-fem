@@ -264,16 +264,6 @@ public:
     
     adaptMapping_.adapt();
   };
-  void refine(){
-    //std::cout << " Adaptation called !! " << std::endl;
-    
-    adaptMapping_.adapt();
-  };
-  void coarsen(){
-    //std::cout << " Adaptation called !! " << std::endl;
-    
-    adaptMapping_.adapt();
-  };
 
   template <class DiscFuncImp>
   void calcIndicator(DiscFuncImp &func){

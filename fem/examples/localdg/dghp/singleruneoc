@@ -1,18 +1,18 @@
 problem=7
 epsilonne=0.0
-polorder=0
+polorder=2
 gridtype=ALBERTAGRID
 epsilonne=0.0
 dimw=2
 
 grape=1
-level=2
+level=3
 repeats=1
 #grape=0
 #level=0
 #repeats=6
 
-padapt=0
+padapt=1
 hadapt=0
 
 if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean dgtest;

@@ -161,21 +161,26 @@ namespace Dune {
 			      it.intersectionSelfLocal().global(x),
 			      uRight, anaflux);
       anaflux.umv(normal,gLeft);
+      gLeft *= 0.5;
 
-      double maxspeedl,maxspeedr,maxspeed;
-      double viscparal,viscparar,viscpara;
+      double maxspeedl,maxspeedr,maxspeed,maxspeedm;
+      double viscparal,viscparar,viscpara,viscparam;
       model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
 		      uLeft,viscparal,maxspeedl);
       model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
 		      uRight,viscparar,maxspeedr);
       maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       viscpara=(viscparal>viscparar)?viscparal:viscparar;
+      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+		      0.5*(uRight+uLeft),viscparam,maxspeedm);
+      maxspeed=(maxspeed>maxspeedm)?maxspeed:maxspeedm;
+      viscpara=(viscpara>viscparam)?viscpara:viscparam;
+      
       visc=uRight;
       visc-=uLeft;
-      visc*=2.*viscpara;
+      visc*=viscpara;
       gLeft-=visc;
       
-      gLeft*=0.5;
       gRight=gLeft;
 
       return maxspeed;

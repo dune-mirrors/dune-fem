@@ -22,7 +22,7 @@ class BurgersModel {
 			      const typename Traits::DomainType& x,
 			      const RangeType& u, 
 			      FluxRangeType& f) const {
-    f = 0.0;
+    f = 0;
     for (int i=0;i<dimDomain;++i) {
       f[0][i] = u*u*0.5;
     }
@@ -407,7 +407,11 @@ class UpwindFlux<BuckLevModel<GridType,ProblemType> > {
       upwind *= model_.problem_.f1(uRight[0]);
     }
     gRight = gLeft;
-    return std::abs(upwind); // +model_.tstep_eps;
+    double wave = std::abs(upwind);
+    double wavem = std::abs(normal*vel)
+      *model_.problem_.f1(0.5*(uLeft[0]+uRight[0]));
+    wave = (wave >wavem)?wave:wavem;
+    return wave; // +model_.tstep_eps;
   }
  private:
   const Model& model_;
