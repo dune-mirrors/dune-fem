@@ -219,7 +219,7 @@ public:
     localInTimeTolerance_ = globalTolerance_ * dt / endTime_;
 
     // inserted for testing!!
-    localInTimeTolerance_ = 500.0;
+    //localInTimeTolerance_ = 500.0;
 
     return localInTimeTolerance_;
   };
@@ -258,6 +258,43 @@ public:
     
   };
 
+  void markRefineEntities (){
+    typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
+    
+    getLocalTolerance();
+
+    IteratorType endit = discFuncSpace_->end();
+    for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+    {
+      std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
+      if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) )
+        grid_.mark(1, it);
+      else
+	grid_.mark(0, it);
+    }
+
+    return;
+    
+  };
+
+  void markCoarsenEntities (){
+    typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
+    
+    getLocalTolerance();
+
+    IteratorType endit = discFuncSpace_->end();
+    for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+    {
+      //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
+      if ( (it->level() > 4) && (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
+      	grid_.mark(-1, it);
+      else
+	grid_.mark(0, it);
+    }
+
+    return;
+    
+  };
 
   void adapt(){
     //std::cout << " Adaptation called !! " << std::endl;

@@ -53,15 +53,20 @@ solve(DiscModel& model,
     dt = t - t0;
     error = ResiduumErr.calc(model,adapt,ode,t0,dt);
     //! mark elements and adapt grid
+    std::cout << " adapt = " << adapt << "\n";
     if (adapt) {
       adapt->param().setTime(t0);
       adapt->param().setTimeStepSize(dt);
       adapt->param().setTimeStepNumber(counter);
-      adapt->markEntities();
+      adapt->markRefineEntities();
       adapt->adapt();
-      done = (error.one_norm() < adapt->getLocalTolerance());
+      done = (error.one_norm() < adapt->getLocalInTimeTolerance());
     }
   } while (!done);
+  if (adapt) {
+    adapt->markCoarsenEntities();
+    adapt->adapt();
+  }
   return error;
 }
 template <class DiscModel,
@@ -238,9 +243,9 @@ int main(int argc, char ** argv, char ** envp) {
       U.assign(V);
       //initialize(problem,U);
       ++counter;
-      if (repeats==1 && counter%1000==0) {
-	// GrapeDataDisplay< GridType > grape(*grid);
-	// grape.dataDisplay(U);
+      if (repeats==1 && counter%10==0) {
+	GrapeDataDisplay< GridType > grape(*grid);
+	grape.dataDisplay(U);
 	//GrapeTuple::output(dataio,*grid,t,counter/200,"grid","data",output);
       }
      
