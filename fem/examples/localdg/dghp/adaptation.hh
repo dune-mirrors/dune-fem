@@ -328,55 +328,113 @@ public:
   template <class DiscFuncImp>
   void addAdaptiveFunction(DiscFuncImp *func){
     typedef RestProlOperator<DiscFuncImp>                    RestProlImp; 
- 
-//    typedef AdaptOperator<GridType,RestProlImp,DofManagerType> AdaptOpImp;
-//  last template parameter is superfluous
     typedef AdaptOperator<GridType,RestProlImp>              AdaptOpImp;
     
     RestProlImp *restProl;
     AdaptOpImp  *adaptOp;
 
-    GeometryType eltype = (*(grid_.template lbegin<0>(0))).geometry().type();
-
     restProl = new RestProlImp ( *func);
-
-    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType; 
  
     adaptOp  = new AdaptOpImp( grid_  , *restProl );
 
     adaptMapping_ = (*adaptOp);
   }
 
- template <class DiscFuncImp>
- void addAdaptiveFunction(DiscFuncImp *func, DiscFuncImp *func2){
-    typedef RestProlOperator<DiscFuncImp>                    RestProlImp; 
- 
-//    typedef AdaptOperator<GridType,RestProlImp,DofManagerType> AdaptOpImp;
-    typedef AdaptOperator<GridType,RestProlImp> AdaptOpImp;
+
+  template <class DiscFuncImp,class DiscFuncImp2>
+ void addAdaptiveFunction(DiscFuncImp *func, DiscFuncImp2 *func2){
+    typedef RestProlOperator<DiscFuncImp>                RestProlImp; 
+    typedef RestProlOperator<DiscFuncImp2>               RestProlImp2; 
+    typedef AdaptOperator<GridType,RestProlImp>          AdaptOpImp;
+    typedef AdaptOperator<GridType,RestProlImp2>         AdaptOpImp2;
  
     
     RestProlImp *restProl;
     AdaptOpImp  *adaptOp;
     
-    RestProlImp *restProl2;
-    AdaptOpImp  *adaptOp2;
-
-    GeometryType eltype = (*(grid_.template lbegin<0>(0))).geometry().type();
+    RestProlImp2 *restProl2;
+    AdaptOpImp2  *adaptOp2;
 
 
-    restProl = new RestProlImp ( *func , eltype );
+    restProl  = new RestProlImp  ( *func  );
+    restProl2 = new RestProlImp2 ( *func2 );
 
-     restProl2 = new RestProlImp ( *func2 , eltype );
+   
+    adaptOp   = new AdaptOpImp  ( grid_ , *restProl );
+    adaptOp2  = new AdaptOpImp2 ( grid_ , *restProl2 );
+
+
+    adaptMapping_ = (*adaptOp) + (*adaptOp2);
+
+  };
+
+
+ template <class DiscFuncImp,  class DiscFuncImp2, class DiscFuncImp3,
+	   class DiscFuncImp4, class DiscFuncImp5, class DiscFuncImp6, class DiscFuncImp7>
+ void addAdaptiveFunction(DiscFuncImp *func, DiscFuncImp2 *func2, DiscFuncImp3 *func3, 
+             DiscFuncImp4 *func4, DiscFuncImp5 *func5, DiscFuncImp6 *func6, DiscFuncImp7 *func7){
+  
+    typedef RestProlOperator<DiscFuncImp>                     RestProlImp;   
+    typedef RestProlOperator<DiscFuncImp2>                    RestProlImp2; 
+    typedef RestProlOperator<DiscFuncImp3>                    RestProlImp3; 
+    typedef RestProlOperator<DiscFuncImp4>                    RestProlImp4; 
+    typedef RestProlOperator<DiscFuncImp5>                    RestProlImp5; 
+    typedef RestProlOperator<DiscFuncImp6>                    RestProlImp6; 
+    typedef RestProlOperator<DiscFuncImp7>                    RestProlImp7; 
+ 
+    typedef AdaptOperator<GridType,RestProlImp> AdaptOpImp;
+    typedef AdaptOperator<GridType,RestProlImp2> AdaptOpImp2;
+    typedef AdaptOperator<GridType,RestProlImp3> AdaptOpImp3;
+    typedef AdaptOperator<GridType,RestProlImp4> AdaptOpImp4;
+    typedef AdaptOperator<GridType,RestProlImp5> AdaptOpImp5;
+    typedef AdaptOperator<GridType,RestProlImp6> AdaptOpImp6;
+    typedef AdaptOperator<GridType,RestProlImp7> AdaptOpImp7;
+ 
+    
+    RestProlImp *restProl;
+    RestProlImp2 *restProl2;
+    RestProlImp3 *restProl3;
+    RestProlImp4 *restProl4;
+    RestProlImp5 *restProl5;
+    RestProlImp6 *restProl6;
+    RestProlImp7 *restProl7;
+
+
+    AdaptOpImp  *adaptOp;
+    AdaptOpImp2  *adaptOp2;
+    AdaptOpImp3  *adaptOp3;
+    AdaptOpImp4  *adaptOp4;
+    AdaptOpImp5  *adaptOp5;
+    AdaptOpImp6  *adaptOp6;
+    AdaptOpImp7  *adaptOp7;
+
+
+    restProl  = new RestProlImp  ( *func  );
+    restProl2 = new RestProlImp2 ( *func2 );
+    restProl3 = new RestProlImp3 ( *func3 );
+    restProl4 = new RestProlImp4 ( *func4 );
+    restProl5 = new RestProlImp5 ( *func5 );
+    restProl6 = new RestProlImp6 ( *func6 );
+    restProl7 = new RestProlImp7 ( *func7 );
+
 
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType; 
    
-    adaptOp  = new AdaptOpImp( grid_ , *restProl );
-    adaptOp2  = new AdaptOpImp( grid_ , *restProl2 );
+    adaptOp   = new AdaptOpImp ( grid_ , *restProl  );
+    adaptOp2  = new AdaptOpImp2( grid_ , *restProl2 );
+    adaptOp3  = new AdaptOpImp3( grid_ , *restProl3 );
+    adaptOp4  = new AdaptOpImp4( grid_ , *restProl4 );
+    adaptOp5  = new AdaptOpImp5( grid_ , *restProl5 );
+    adaptOp6  = new AdaptOpImp6( grid_ , *restProl6 );
+    adaptOp7  = new AdaptOpImp7( grid_ , *restProl7 );
 
 
-    adaptMapping_ = (*adaptOp) + (*adaptOp);
+
+    adaptMapping_ = (*adaptOp ) + (*adaptOp2) + (*adaptOp3) + (*adaptOp4) 
+                  + (*adaptOp5) + (*adaptOp6) + (*adaptOp7);
 
   };
+
 
   //! export indicator function
   IndicatorDiscreteFunctionType& indicator () {  

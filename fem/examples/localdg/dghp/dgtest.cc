@@ -33,7 +33,7 @@ using namespace std;
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
-#include "grapetuple.hh"
+//#include "grapetuple.hh"
 
 template <class DiscModel,
 	  class ODE,class Indicator,class Adapt,class DestinationType>
@@ -200,15 +200,9 @@ int main(int argc, char ** argv, char ** envp) {
     if (repeats == 1 && Hadapt) {
       AdaptationType *adaptation_ = 
 	new AdaptationType( *gridPart_ , *timeDiscParam_, paramfile);
-      adaptation_->addAdaptiveFunction(&U);
-      adaptation_->addAdaptiveFunction(&V);
-      adaptation_->addAdaptiveFunction(&(ResiduumErr.RT_));
-      adaptation_->addAdaptiveFunction(&(ResiduumErr.RS_));
-      adaptation_->addAdaptiveFunction(&(ResiduumErr.rho_));
-      adaptation_->addAdaptiveFunction(&(ResiduumErr.lambda_));
-      adaptation_->addAdaptiveFunction(&(ResiduumErr.maxPol_));
+      adaptation_->addAdaptiveFunction(&U,&V,&(ResiduumErr.RT_),&(ResiduumErr.RS_),
+      				       &(ResiduumErr.rho_),&(ResiduumErr.lambda_),&(ResiduumErr.maxPol_));
     }
-
     if (eocloop==0) 
       eocoutput.printInput(problem,*grid,ode,argv[1]);
     
@@ -247,7 +241,7 @@ int main(int argc, char ** argv, char ** envp) {
       if (repeats==1 && counter%1000==0) {
 	// GrapeDataDisplay< GridType > grape(*grid);
 	// grape.dataDisplay(U);
-	GrapeTuple::output(dataio,*grid,t,counter/200,"grid","data",output);
+	//GrapeTuple::output(dataio,*grid,t,counter/200,"grid","data",output);
       }
      
       timeerr += L1L1err.norm(problem,ode,t-ldt,ldt);
