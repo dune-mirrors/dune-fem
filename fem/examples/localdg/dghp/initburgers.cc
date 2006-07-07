@@ -10,16 +10,22 @@ public:
 		myName = "Burgers-Diffusion";
 	}
   double endtime() {
-    return 0.02;
+    return 0.6;
   }
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
   }
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    if (arg[0]<0.1 || arg[0]>1.1) 
+      res = 0.;
+    else 
+      res = 1.-cos((arg[0]-0.1)*2.*M_PI);
+		/*
     if(epsilon < 1e-9)
       res = ((2.0*arg[0]-1.0)<0.0)? 1.0:-1.0;
     else
       res = -tanh((2.0*arg[0]-1.0)/(4.*epsilon));
+		*/
   }
 	
 	void printmyInfo(string filename)

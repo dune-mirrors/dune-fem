@@ -5,8 +5,8 @@ class U0 {
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
   U0(double eps,bool diff_timestep=true) :
-    velocity_(1.0), epsilon(eps), diff_tstep(diff_timestep) {
-      velocity_[0]=-0.1;
+    velocity_(0.1), epsilon(eps), diff_tstep(diff_timestep) {
+      velocity_[0]=-1.5;
  						
       max_n_of_coefs = 2;
 			
@@ -254,9 +254,9 @@ class U0RotCone {
 
     res = 0.0;
     if ( r < radius_ ){
-	res = 1.0 - r/radius_;
-	//res = 1.0;
-	//res = 1.0 - (r*r/(radius_*radius_));
+      //res = 1.0 - r/radius_;
+	res = 1.0;
+      //res = 1.0 - (r*r/(radius_*radius_));
     }
   }
 	
@@ -315,10 +315,18 @@ class U0BuckLev {
   }
 
   double f(double u) const {
+    if (u<1.e-8)
+      return 0.;
+    if (u>1.-1.e-8)
+      return 1.; 
     return u*u/(u*u+0.5*(1.-u)*(1.-u));
   }
 
   double f1(double u) const {
+    if (u<1.e-8)
+      return 0.;
+    if (u>1.-1.e-8)
+      return 0.; 
     double d=3.*u*u+1.-2.*u;
     return -4.*u*(-1.+u)/d/d;
   }
@@ -416,10 +424,8 @@ class U0BuckLev {
 
 
   void velocity(double t, const DomainType &x, DomainType &res) const{
-    
     res = 0.0;
     res[0] = 1.0;
-
   }
 
   void evaluate(const DomainType& arg, RangeType& res) const {

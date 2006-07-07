@@ -16,7 +16,7 @@ bool Padapt = false;
 
 #include <iostream>
 #include <string>
-
+#include <sstream>
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #include <dune/common/timer.hh>
 
@@ -33,6 +33,85 @@ using namespace std;
 
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+
+template <class T1,class T2,int N>
+struct GrapeTupleHelper {
+  template <class DataIO>
+  static void apply(DataIO& dataio,string name,int n,
+	     Pair<T1,T2>& tup) {
+    stringstream dataname;
+    dataname << name << "_" << N;
+    dataio.writeData(*(tup.first()), xdr, dataname.str().c_str(), n);
+    GrapeTupleHelper<typename T2::Type1,typename T2::Type2,N+1>::apply(dataio,name,n,tup.second());
+  }
+};
+template <class T1,int N>
+struct GrapeTupleHelper<T1,Nil,N> {
+  template <class DataIO>
+  static void apply(DataIO& dataio,string name,int n,
+      Pair<T1,Nil>& tup) {
+    stringstream dataname;
+    dataname << name << "_" << N;
+    dataio.writeData(*(tup.first()), xdr, dataname.str().c_str(), n);    
+  }
+};
+struct GrapeTupleOutput {
+  template <class DataIO,class GridType,class Tup>
+  static void apply(DataIO& dataio,GridType& grid,double t,int n,
+	     string name,Tup& tup) {
+    string gridname = name + "_grid";
+    dataio.writeGrid(grid, xdr, gridname.c_str(), t, n);
+      GrapeTupleHelper<typename Tup::Type1,typename Tup::Type2,0>::
+      apply(dataio,name,n,tup);
+  }
+};
+
+template <class DiscModel,
+	  class ODE,class Indicator,class Adapt,class DestinationType>
+typename DestinationType::RangeType
+solve(DiscModel& model,
+      ODE& ode,Indicator& ResiduumErr,
+      Adapt* adapt,
+      int counter,
+      DestinationType& U,DestinationType& V,
+      double& t,double& dt) {
+  typedef typename DestinationType::RangeType RangeType;
+  double t0 = t;
+  bool done = true;
+  RangeType error;
+  do {
+    t=ode.solve(U,V,ResiduumErr);
+    dt = t - t0;
+    error = ResiduumErr.calc(model,adapt,ode,t0,dt);
+    //! mark elements and adapt grid
+    if (adapt) {
+      adapt->param().setTime(t0);
+      adapt->param().setTimeStepSize(dt);
+      adapt->param().setTimeStepNumber(counter);
+      adapt->markEntities();
+      adapt->refine();
+      done = (error.one_norm() < adapt->getLocalTolerance());
+    }
+  } while (!done);
+  return error;
+}
+template <class DiscModel,
+	  class ODE,class Indicator,class Adapt,class DestinationType>
+void init(DiscModel& model,
+	  ODE& ode,Indicator& ResiduumErr,
+	  Adapt& adapt,
+	  DestinationType& U,DestinationType& V) {
+  for (int i=0;i<5;++i) {
+    U.set(0);
+    initialize(model.model().problem(),U);
+    double dt=ode.solve(U,V,ResiduumErr);
+    cout << "START INDICATOR: " << dt << " " 
+	 << ResiduumErr.calc(model,adapt,ode,0,dt) << endl;
+    ode.setTime(0.);
+  }
+  U.set(0);
+  initialize(model.model().problem(),U);
+}
 
 int main(int argc, char ** argv, char ** envp) {
 
@@ -56,6 +135,7 @@ int main(int argc, char ** argv, char ** envp) {
   // Polynomial and ODE order
   // Grid:
   GridPtr<GridType> grid(argv[1],MPI_COMM_WORLD);
+  GrapeDataIO<GridType> dataio;
 	
   int repeats = 1;
   if (argc>2)
@@ -73,7 +153,6 @@ int main(int argc, char ** argv, char ** envp) {
   if (argc>5)
     graped=atoi(argv[5]);
 	
-
   bool Hadapt = false;
   if (argc>6)
     Hadapt=atoi(argv[6]);
@@ -94,8 +173,8 @@ int main(int argc, char ** argv, char ** envp) {
   if (argc>8)
     cfl=atof(argv[8]);
 	
-  cfl = cfl/3.0;
-  cfl /= 2.0;
+  //cfl = cfl/3.0;
+  //cfl /= 2.0;
 
   cout << epsilon << endl;
 	
@@ -139,8 +218,11 @@ int main(int argc, char ** argv, char ** envp) {
     ODEType ode(dg,rksteps,cfl); 
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
-    DgType::DestinationType tmp("tmp",dg.space());
-    Residuum<GridType,DiscModelType,ODEType> ResiduumErr(*grid,Padapt);
+    DgType::DestinationType V("Unew",dg.space());
+    typedef Residuum<GridType,DiscModelType,ODEType> IndType; 
+    IndType ResiduumErr(*grid,Padapt);
+    Pair<DgType::DestinationType*,IndType::OutputType> 
+      output(&U,ResiduumErr.output());
     IndexSetType * iset = new IndexSetType ( *grid );
     GridPartType * gridPart_ = new GridPartType ( *grid, *iset );
     // initialize time discretization parameters
@@ -152,19 +234,19 @@ int main(int argc, char ** argv, char ** envp) {
       AdaptationType *adaptation_ = 
 	new AdaptationType( *gridPart_ , *timeDiscParam_, paramfile);
       adaptation_->addAdaptiveFunction(&U);
+      adaptation_->addAdaptiveFunction(&V);
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.RT_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.RS_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.rho_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.lambda_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.maxPol_));
     }
 
     if (eocloop==0) 
       eocoutput.printInput(problem,*grid,ode,argv[1]);
-    for (int i=0;i<5;++i) {
-      U.set(0);
-      initialize(problem,U);
-      // dg.limit(U,tmp);
-      double dt=ode.solve(U,ResiduumErr);
-      cout << "START INDICATOR: " << dt << " " 
-	   << ResiduumErr.calc(eulerflux,adaptation_,ode,0,dt) << endl;
-      ode.setTime(0.);
-    }
+    
+    init(eulerflux,ode,ResiduumErr,adaptation_,U,V);
+
     if (graped) {
       GrapeDataDisplay< GridType > grape(*grid);
       grape.addData(ResiduumErr.RT_,"El-Res",-4);
@@ -174,10 +256,7 @@ int main(int argc, char ** argv, char ** envp) {
       grape.addData(ResiduumErr.maxPol_,"poldeg",-1);
       grape.dataDisplay(U);
     }
-    U.set(0);
-    initialize(problem,U);
-    dg.limit(U,tmp);
-    ode.setTime(0.);
+
     double t=0.0;
     int counter=0;
     FieldVector<double,1> projectionError = L1err.norm(problem,U,t);  
@@ -192,33 +271,23 @@ int main(int argc, char ** argv, char ** envp) {
     // *** Time loop
     while (t<maxtime) 
     {
-      double ldt = -t;
-      t=ode.solve(U,ResiduumErr);
-      ldt += t;
-      reserr  += ResiduumErr.calc(eulerflux,adaptation_,
-				  ode,t-ldt,ldt);
-      timeDiscParam_->setTime(t);
-      timeDiscParam_->setTimeStepSize(ldt);
-      timeDiscParam_->setTimeStepNumber(counter);
-      
-      //! mark elements and adapt grid
-      if (adaptation_) {
-	adaptation_->markEntities();
-	adaptation_->adapt();
-      }
+      double ldt;
+      reserr += solve(eulerflux,ode,ResiduumErr,adaptation_,counter,
+		      U,V,t,ldt);
+      U.assign(V);
       //initialize(problem,U);
-      if (graped && repeats==1 && Hadapt) {
-	GrapeDataDisplay< GridType > grape(*grid);
-	grape.dataDisplay(U);
+      ++counter;
+      if (repeats==1 && counter%1000==0) {
+	//GrapeDataDisplay< GridType > grape(*grid);
+	//grape.dataDisplay(U);
+	GrapeTupleOutput::apply(dataio,*grid,t,counter/200,"output",output);
       }
      
       timeerr += L1L1err.norm(problem,ode,t-ldt,ldt);
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
-      dg.limit(U,tmp);
-      dg.switchupwind();
-      ++counter;
+      std::cout << counter << " " << t << " " << ldt << std::endl;
     }
     
     averagedt /= double(counter);

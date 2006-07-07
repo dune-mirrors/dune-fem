@@ -143,8 +143,11 @@ public:
       endTime_ = 1.0;
     }
 
-  };
-
+  }
+  TimeDiscrParamType &param() {
+    return timeDiscrParam_;
+  }
+  
   //! destructor
   ~Adaptation () {};
 
@@ -257,6 +260,16 @@ public:
 
 
   void adapt(){
+    //std::cout << " Adaptation called !! " << std::endl;
+    
+    adaptMapping_.adapt();
+  };
+  void refine(){
+    //std::cout << " Adaptation called !! " << std::endl;
+    
+    adaptMapping_.adapt();
+  };
+  void coarsen(){
     //std::cout << " Adaptation called !! " << std::endl;
     
     adaptMapping_.adapt();

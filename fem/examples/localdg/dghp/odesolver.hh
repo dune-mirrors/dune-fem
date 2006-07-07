@@ -252,15 +252,14 @@ public:
   }
   template <class Projection>
   double solve(typename Operator::DestinationType& U,
+	       typename Operator::DestinationType& V,
 	       Projection& proj) {
     resetTimeStepEstimate();
     double t=time();
-    project(U,proj);
     U0->assign(U);
-    (Upd[ord_])->assign(U);
-    // project(*(Upd[ord_]),proj);
+    project(*U0,proj);
     // Compute Steps
-    op_(*(Upd[ord_]),*(Upd[0]));
+    op_(*U0,*(Upd[0]));
     dt=cfl_*timeStepEstimate();
     for (int i=1;i<ord_;i++) {
       (Upd[ord_])->assign(U);
@@ -272,8 +271,9 @@ public:
       double ldt=cfl_*timeStepEstimate();
     }
     // Perform Update
+    V.assign(*U0);
     for (int j=0;j<ord_;j++) {
-      U.addScaled(*(Upd[j]),(b[j]*dt));
+      V.addScaled(*(Upd[j]),(b[j]*dt));
     }
     setTime(t+dt);
     return time();

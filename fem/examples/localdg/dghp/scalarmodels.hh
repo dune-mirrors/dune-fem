@@ -13,7 +13,7 @@ class BurgersModel {
   typedef typename Traits::DiffusionRangeType DiffusionRangeType;
  public:
   BurgersModel(GridType& grid,
-			  const ProblemType& problem) :
+	       const ProblemType& problem) :
     problem_(problem),
     epsilon(problem.epsilon), 
     tstep_eps((problem.diff_tstep)?problem.epsilon:0) {}
@@ -97,6 +97,9 @@ class BurgersModel {
 		       double& advspeed,double& totalspeed) const {
     advspeed=std::abs(normal[0]*u);
     totalspeed=advspeed; // +tstep_eps;
+  }
+  inline const ProblemType& problem() const {
+    return problem_;
   }
  protected:
   const ProblemType& problem_;
@@ -202,6 +205,9 @@ class BuckLevModel {
 		       double& advspeed,double& totalspeed) const {
     advspeed=std::abs(normal[0]*problem_.f1(u[0]));
     totalspeed=advspeed; // +tstep_eps;
+  }
+  inline const ProblemType& problem() const {
+    return problem_;
   }
  protected:
   const ProblemType& problem_;
@@ -315,6 +321,9 @@ class AdvectionDiffusionModel {
 		       double& advspeed,double& totalspeed) const {
     advspeed=std::abs(normal*velocity);
     totalspeed=advspeed; // +tstep_eps;
+  }
+  inline const ProblemType& problem() const {
+    return problem_;
   }
  protected:
   const ProblemType& problem_;

@@ -1,8 +1,9 @@
 #ifndef APOSTERIORI_HH 
 #define APOSTERIORI_HH 
 
-#include <../../../quadrature/cachequad.hh>
-#include <../../../quadrature/gausspoints.hh>
+#include <fem/quadrature/cachequad.hh>
+#include <fem/quadrature/gausspoints.hh>
+#include <fem/pass/tuples.hh>
 
 namespace Dune {
   template <class DiscModelType,class DiscreteFunctionType> 
@@ -184,6 +185,11 @@ namespace Dune {
     GridPartType part_;
     ConstDiscSType space_;
     DestinationType RT_,RS_,rho_,lambda_,maxPol_;
+    typedef Tuple<DestinationType*,DestinationType*,DestinationType*,
+		  DestinationType*,DestinationType*> OutputType;
+    OutputType output() {
+      return OutputType(&RT_,&RS_,&rho_,&lambda_,&maxPol_);
+    }
     Residuum(GridType& grid,bool doPAdapt=true) : 
       doPAdapt_(doPAdapt),
       part_(grid), space_(part_),
@@ -236,10 +242,6 @@ namespace Dune {
 	  localRes.element(model,discFunc,*it,time,dt,lmaxPol[0],infProj);
 	lRT[0] = resid.one_norm();
 	lrho[0] = h + infProj.one_norm();
-	if (lmaxPol[0] == 0 || lrho[0] > 1.0) 
-	  std::cerr << lmaxPol[0] << " " 
-		    << h << " " << infProj.one_norm() << " " 
-		    << lrho[0] << std::endl;
 	resid *= lrho[0];
 	ret += resid;
 
@@ -273,7 +275,6 @@ namespace Dune {
 	  } // end if boundary
 	}
       }
-      maxPol_.set(polOrd);
       double pot = double(polOrd+2)/double(polOrd+1);
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
@@ -285,17 +286,19 @@ namespace Dune {
 	LConstDiscFSType llam = lambda_.localFunction(*it);
 	LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
 	llam[0] = h / pow(h + h*(lRT[0]+lRS[0])/(dt*vol),pot);
-	if (fabs(llam[0])<1e-8) continue;
-	/*
+	
 	lmaxPol[0] = 
 	  localRes.computePolDeg(discFunc,*it,llam[0],doPAdapt_);
-	if (adapt)
-	  adapt->addToLocalIndicator(*it,lRT[0]+lRS[0]);
-	*/
+	/*
+	if (!doPAdapt_ || fabs(llam[0])<1e-8) continue;
 	RangeType infProj;
 	localRes.element(model,discFunc,*it,time,dt,lmaxPol[0],infProj);
 	double rho = infProj.one_norm();
-	if (rho>llam[0]) lmaxPol[0]--;
+	if (rho<h && lmaxPol[0] < polOrd) lmaxPol[0]++;
+	else if (rho>llam[0]) lmaxPol[0]--;
+	*/
+	if (adapt)
+	  adapt->addToLocalIndicator(*it,lRT[0]+lRS[0]);
       }
       return ret;
     }
