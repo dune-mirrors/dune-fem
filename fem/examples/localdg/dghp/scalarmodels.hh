@@ -103,6 +103,112 @@ class BurgersModel {
   double epsilon;
   double tstep_eps;
 };
+
+// ***********************
+
+template <class GridType,class ProblemType>
+class BuckLevModel {
+ public:
+  enum { dimDomain = GridType::dimensionworld };
+  enum { dimRange = 1};
+  typedef ModelTraits<GridType,dimRange> Traits;
+  typedef typename Traits::RangeType RangeType;
+  typedef typename Traits::DomainType DomainType;
+  typedef typename Traits::FluxRangeType FluxRangeType;
+  typedef typename Traits::GradientType GradientType;
+  typedef typename Traits::DiffusionRangeType DiffusionRangeType;
+ public:
+  BuckLevModel(GridType& grid,
+			  const ProblemType& problem) :
+    problem_(problem),
+    epsilon(problem.epsilon), 
+    tstep_eps((problem.diff_tstep)?problem.epsilon:0) {}
+  inline  void analyticalFlux(const typename Traits::EntityType& en,
+			      double time,  
+			      const typename Traits::DomainType& x,
+			      const RangeType& u, 
+			      FluxRangeType& f) const {
+    f *= 0;
+    f[0] = problem_.f(u[0]);
+  }
+  inline  void jacobian(const typename Traits::EntityType& en,
+			double time,  
+			const typename Traits::DomainType& x,
+			const RangeType& u, 
+			const FluxRangeType& du,
+			RangeType& A) const {
+    A = 0.;
+    DomainType velocity(0.0);
+    velocity[0] = problem_.f1(u[0]);
+    du.umv(velocity,A);
+  }
+  inline  void diffusion(const typename Traits::EntityType& en,
+			 double time, 
+			 const DomainType& x,
+			 const RangeType& u, 
+			 DiffusionRangeType& a) const {
+    a*=0;
+    for (int i=0;i<dimDomain;i++)
+      a[i][i]=u;
+  }
+  inline double diffusion(const typename Traits::EntityType& en,
+			  double time, 
+			  const DomainType& x,
+			  const RangeType& u, 
+			  const GradientType& v,
+			  FluxRangeType& A) const {
+    A *= 0;
+    A[0] = epsilon*v[0];
+    return tstep_eps;
+  }
+  inline double diffusionTimeStep() const {
+    return 2.*tstep_eps;
+  }
+  inline bool hasBoundaryValue(const typename Traits::IntersectionIterator& it,
+			       double time, 
+			       const typename Traits::FaceDomainType& x) const {
+    return true;
+  }
+  inline double boundaryFlux(const typename Traits::IntersectionIterator& it,
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     const GradientType& vLeft, 
+			     RangeType& gLeft) const  {
+    return 0.;
+  }
+  inline double boundaryFlux(const typename Traits::IntersectionIterator& it,
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     RangeType& gLeft) const  {
+    return 0.;
+  }
+  inline  void boundaryValue(const typename Traits::IntersectionIterator& it,
+			     double time, 
+			     const typename Traits::FaceDomainType& x,
+			     const RangeType& uLeft, 
+			     RangeType& uRight) const {
+    // Outflow
+    uRight=uLeft;
+    // Dirichlet
+    // DomainType xgl=it.intersectionGlobal().global(x);
+    // problem_.evaluate(time,xgl,uRight);
+  }
+  inline void maxSpeed(const typename Traits::DomainType& normal,
+		       double time,  
+		       const typename Traits::DomainType& x,
+		       const RangeType& u,
+		       double& advspeed,double& totalspeed) const {
+    advspeed=std::abs(normal[0]*problem_.f1(u[0]));
+    totalspeed=advspeed; // +tstep_eps;
+  }
+ protected:
+  const ProblemType& problem_;
+  double epsilon;
+  double tstep_eps;
+};
+
 // ***********************
 template <class Model>
 class UpwindFlux;
