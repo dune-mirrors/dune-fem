@@ -138,9 +138,9 @@ public:
     }
     else{
       // set default values
-      globalTolerance_ = 100000.;
+      globalTolerance_ = 1.;
       coarsenTheta_ = 0.1;
-      endTime_ = 1.0;
+      endTime_ = 0.4;
     }
 
   }

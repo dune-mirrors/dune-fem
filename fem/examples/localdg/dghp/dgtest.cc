@@ -53,7 +53,6 @@ solve(DiscModel& model,
     dt = t - t0;
     error = ResiduumErr.calc(model,adapt,ode,t0,dt);
     //! mark elements and adapt grid
-    std::cout << " adapt = " << adapt << "\n";
     if (adapt) {
       adapt->param().setTime(t0);
       adapt->param().setTimeStepSize(dt);
@@ -127,10 +126,9 @@ int main(int argc, char ** argv, char ** envp) {
   if (argc>5)
     graped=atoi(argv[5]);
 	
-  bool Hadapt = false;
   if (argc>6)
     Hadapt=atoi(argv[6]);
-  bool Padapt = false;
+  
   if (argc>7)
     Padapt=atoi(argv[7]);
   
@@ -203,8 +201,7 @@ int main(int argc, char ** argv, char ** envp) {
     const char * paramfile = 0;
     AdaptationType *adaptation_ = 0;
     if (repeats == 1 && Hadapt) {
-      AdaptationType *adaptation_ = 
-	new AdaptationType( *gridPart_ , *timeDiscParam_, paramfile);
+      adaptation_ = new AdaptationType( *gridPart_ , *timeDiscParam_, paramfile);
       adaptation_->addAdaptiveFunction(&U,&V,&(ResiduumErr.RT_),&(ResiduumErr.RS_),
       				       &(ResiduumErr.rho_),&(ResiduumErr.lambda_),&(ResiduumErr.maxPol_));
     }
