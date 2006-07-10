@@ -75,7 +75,7 @@ public:
   virtual ~DGAdaptiveLeafIndexSet () {};
 
   //! return type of index set, for GrapeDataIO
-  int type () const { return myType; }
+  static int type () { return myType; }
 
   //****************************************************************
   //

@@ -100,6 +100,7 @@ namespace Dune {
       typedef typename Traits::GridPartType::IndexSetType IndexSetType;
       DofManagerType & dm = 
         DofManagerFactoryType::getDofManager(gridPart.grid());
+
       dm.addIndexSet(gridPart.grid(), 
                      const_cast<IndexSetType&>(gridPart.indexSet()));
 
@@ -348,6 +349,25 @@ namespace Dune {
       DiscontinuousGalerkinBaseFunctionFactory<
         ScalarFunctionSpaceType, polOrd> fac(type);
       return new BaseFunctionSetType(fac);
+    }
+
+    static ThisType & instance (GridType & grid) 
+    {
+      // add index set to list of indexset of dofmanager 
+      typedef DofManager<typename Traits::GridType> DofManagerType;
+      typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+      
+      DofManagerType & dm = 
+        DofManagerFactoryType::getDofManager(grid);
+      typedef typename Traits::GridPartType::IndexSetType IndexSetType;
+
+      IndexSetType & indexSet = dm.template getIndexSet<IndexSetType> ();
+      
+      // get types for codim 0  
+      static GridPartImp gridPart(grid,indexSet);
+      static ThisType space(gridPart);
+      
+      return space;
     }
   };
 
