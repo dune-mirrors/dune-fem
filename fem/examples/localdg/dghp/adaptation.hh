@@ -138,7 +138,7 @@ public:
     }
     else{
       // set default values
-      globalTolerance_ = 1.;
+      globalTolerance_ = 0.1;
       coarsenTheta_ = 0.1;
       endTime_ = 0.4;
     }
@@ -245,7 +245,7 @@ public:
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
-      std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
+      // std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
       if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) )
         grid_.mark(1, it);
       else if ( (it->level() > 4) && (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
@@ -266,7 +266,7 @@ public:
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
-      std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
+      //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
       if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) )
         grid_.mark(1, it);
       else
@@ -407,9 +407,9 @@ public:
 
 
  template <class DiscFuncImp,  class DiscFuncImp2, class DiscFuncImp3,
-	   class DiscFuncImp4, class DiscFuncImp5, class DiscFuncImp6, class DiscFuncImp7>
+	   class DiscFuncImp4, class DiscFuncImp5, class DiscFuncImp6, class DiscFuncImp7, class DiscFuncImp8>
  void addAdaptiveFunction(DiscFuncImp *func, DiscFuncImp2 *func2, DiscFuncImp3 *func3, 
-             DiscFuncImp4 *func4, DiscFuncImp5 *func5, DiscFuncImp6 *func6, DiscFuncImp7 *func7){
+			  DiscFuncImp4 *func4, DiscFuncImp5 *func5, DiscFuncImp6 *func6, DiscFuncImp7 *func7, DiscFuncImp8 *func8){
   
     typedef RestProlOperator<DiscFuncImp>                     RestProlImp;   
     typedef RestProlOperator<DiscFuncImp2>                    RestProlImp2; 
@@ -418,6 +418,7 @@ public:
     typedef RestProlOperator<DiscFuncImp5>                    RestProlImp5; 
     typedef RestProlOperator<DiscFuncImp6>                    RestProlImp6; 
     typedef RestProlOperator<DiscFuncImp7>                    RestProlImp7; 
+    typedef RestProlOperator<DiscFuncImp8>                    RestProlImp8; 
  
     typedef AdaptOperator<GridType,RestProlImp> AdaptOpImp;
     typedef AdaptOperator<GridType,RestProlImp2> AdaptOpImp2;
@@ -426,6 +427,7 @@ public:
     typedef AdaptOperator<GridType,RestProlImp5> AdaptOpImp5;
     typedef AdaptOperator<GridType,RestProlImp6> AdaptOpImp6;
     typedef AdaptOperator<GridType,RestProlImp7> AdaptOpImp7;
+    typedef AdaptOperator<GridType,RestProlImp8> AdaptOpImp8;
  
     
     RestProlImp *restProl;
@@ -435,6 +437,7 @@ public:
     RestProlImp5 *restProl5;
     RestProlImp6 *restProl6;
     RestProlImp7 *restProl7;
+    RestProlImp8 *restProl8;
 
 
     AdaptOpImp  *adaptOp;
@@ -444,6 +447,7 @@ public:
     AdaptOpImp5  *adaptOp5;
     AdaptOpImp6  *adaptOp6;
     AdaptOpImp7  *adaptOp7;
+    AdaptOpImp8  *adaptOp8;
 
 
     restProl  = new RestProlImp  ( *func  );
@@ -453,6 +457,7 @@ public:
     restProl5 = new RestProlImp5 ( *func5 );
     restProl6 = new RestProlImp6 ( *func6 );
     restProl7 = new RestProlImp7 ( *func7 );
+    restProl8 = new RestProlImp8 ( *func8 );
 
 
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType; 
@@ -464,11 +469,12 @@ public:
     adaptOp5  = new AdaptOpImp5( grid_ , *restProl5 );
     adaptOp6  = new AdaptOpImp6( grid_ , *restProl6 );
     adaptOp7  = new AdaptOpImp7( grid_ , *restProl7 );
+    adaptOp8  = new AdaptOpImp8( grid_ , *restProl8 );
 
 
 
     adaptMapping_ = (*adaptOp ) + (*adaptOp2) + (*adaptOp3) + (*adaptOp4) 
-                  + (*adaptOp5) + (*adaptOp6) + (*adaptOp7);
+      + (*adaptOp5) + (*adaptOp6) + (*adaptOp7) + (*adaptOp8);
 
   };
 

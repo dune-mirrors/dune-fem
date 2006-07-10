@@ -132,7 +132,9 @@ namespace Dune {
     template <class EntityType>
     int computePolDeg(DiscreteFunctionType &discFunc,
 		      const EntityType& en,
+		      int maxp,
 		      double lambda,
+		      double& projErr,
 		      bool doPAdapt=true) {
       discFunc.setEntity(en);
       typedef typename FunctionSpaceType::GridType GridType;
@@ -140,8 +142,10 @@ namespace Dune {
         & space = discFunc.getFunctionSpace();  
       int polOrd = space.polynomOrder();
       int quadOrd = 2 * space.polynomOrder() + 2;
-      if (!doPAdapt)
+      projErr = 0.;
+      if (!doPAdapt) {
 	return polOrd;
+      }
       CachingQuadrature <GridType , 0 > quad(en,quadOrd);
       RangeType maxOrd(polOrd); 
       for (int r=0;r<dimR;r++) {
@@ -158,6 +162,13 @@ namespace Dune {
 	  maxOrd[r] = p;
 	}
       }
+      for(int qP = 0; qP < quad.nop(); qP++) {
+	double det = quad.weight(qP) 
+	  * en.geometry().integrationElement(quad.point(qP));
+	RangeType proj = discFunc.uval(en,quad,qP,1.,maxOrd[0]);
+	proj -= discFunc.uval(en,quad,qP,1.,maxp);
+	projErr += proj.one_norm()*det; 
+      }
       return maxOrd[0];
     }
   };
@@ -172,7 +183,10 @@ namespace Dune {
     enum { dimR = RangeType :: dimension };
     enum { dimD = DomainType :: dimension };
     // Result Functions
-    typedef LeafGridPart<GridType> GridPartType;
+    // typedef LeafGridPart<GridType> GridPartType;
+    typedef DGAdaptiveLeafIndexSet<GridType> DGIndexSetType;
+    typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
+
     typedef FunctionSpace < double , double, dimD , 1 > ScalarFSType;
     typedef DiscontinuousGalerkinSpace<ScalarFSType, GridPartType, 0> 
     ConstDiscSType;
@@ -182,22 +196,30 @@ namespace Dune {
     bool doPAdapt_;
   public:  
     typedef ConstDiscFSType DestinationType;
+    DGIndexSetType iset_;
     GridPartType part_;
     ConstDiscSType space_;
-    DestinationType RT_,RS_,rho_,lambda_,maxPol_;
+    DestinationType ind_;
+    DestinationType RT_,RS_,RP_,rho_,lambda_,maxPol_,maxPolNew_;
     typedef Tuple<DestinationType*,DestinationType*,DestinationType*,
 		  DestinationType*,DestinationType*> OutputType;
     OutputType output() {
       return OutputType(&RT_,&RS_,&rho_,&lambda_,&maxPol_);
     }
-    Residuum(GridType& grid,bool doPAdapt=true) : 
+    Residuum(GridType& grid,int maxOrd,
+	     bool doPAdapt=true) : 
       doPAdapt_(doPAdapt),
-      part_(grid), space_(part_),
+      iset_(grid),
+      part_(grid,iset_), 
+      space_(part_),
+      ind_("Indicator",space_),
       RT_("Element Res.",space_),
       RS_("Jump Res.",space_),
+      RP_("Proj Res.",space_),
       rho_("rho",space_),
       lambda_("lambda",space_),
-      maxPol_("PolDeg",space_) {
+      maxPol_("PolDeg",space_),
+      maxPolNew_("PolDeg",space_) {
 	typedef typename FunctionSpaceType::IteratorType IteratorType;
 	IteratorType endit = space_.end();
 	// check whether grid is empty 
@@ -205,13 +227,18 @@ namespace Dune {
 	for(IteratorType it = space_.begin(); 
 	    it != endit ; ++it) {
 	  LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
-	  lmaxPol[0] = 2;
+	  LConstDiscFSType lmaxPolNew = maxPolNew_.localFunction(*it);
+	  lmaxPol[0] = maxOrd;
+	  lmaxPolNew[0] = maxOrd;
 	}
       }
     template <class EntityType>
     int usePolDeg(const EntityType& en) {
       LConstDiscFSType lmaxPol = maxPol_.localFunction(en);
       return int(lmaxPol[0]);
+    }
+    void reset() {
+      maxPol_.assign(maxPolNew_);
     }
     template <class Adapt>
     RangeType calc (const DiscModelType& model,
@@ -279,17 +306,21 @@ namespace Dune {
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
 	double vol = it->geometry().volume();
-	double h = sqrt
-	  (it->geometry().integrationElement(DomainType(0)));
+	double h = sqrt(it->geometry().integrationElement(DomainType(0)));
 	LConstDiscFSType lRT = RT_.localFunction(*it);
 	LConstDiscFSType lRS = RS_.localFunction(*it);
+	LConstDiscFSType lRP = RP_.localFunction(*it);
 	LConstDiscFSType lrho = rho_.localFunction(*it);
 	LConstDiscFSType llam = lambda_.localFunction(*it);
 	LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
+	LConstDiscFSType lmaxPolNew = maxPolNew_.localFunction(*it);
 	llam[0] = h / pow(h + h*(lRT[0]+lRS[0])/(dt*vol),pot);
-	
-	lmaxPol[0] = 
-	  localRes.computePolDeg(discFunc,*it,llam[0],doPAdapt_);
+	lmaxPolNew[0] = 
+	  localRes.computePolDeg(discFunc,*it,lmaxPol[0],llam[0],lRP[0],doPAdapt_);
+	double projErr = lRP[0] * lrho[0];
+	ret += projErr;
+	if (lmaxPol[0]<lmaxPolNew[0])
+	  lmaxPol[0] = lmaxPolNew[0];
 	/*
 	if (!doPAdapt_ || fabs(llam[0])<1e-8) continue;
 	RangeType infProj;
@@ -298,9 +329,12 @@ namespace Dune {
 	if (rho<h && lmaxPol[0] < polOrd) lmaxPol[0]++;
 	else if (rho>llam[0]) lmaxPol[0]--;
 	*/
+	LConstDiscFSType lind = ind_.localFunction(*it);
+	lind[0] = 2.*(lRT[0]+lRS[0]+lRP[0])*lrho[0];
 	if (adapt)
-	  adapt->addToLocalIndicator(*it,lRT[0]+lRS[0]);
+	  adapt->addToLocalIndicator(*it,lind[0]);
       }
+      ret*=2.;
       return ret;
     }
   };

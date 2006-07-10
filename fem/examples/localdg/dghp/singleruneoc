@@ -1,13 +1,18 @@
-problem=7
+problem=6
 epsilonne=0.0
-polorder=1
+polorder=2
 gridtype=ALBERTAGRID
 epsilonne=0.0
 dimw=2
 
 grape=1
-level=2
+level=1
 repeats=1
+#grape=0
+#level=0
+#repeats=6
+
+probflag = 1
 
 padapt=1
 hadapt=1
@@ -17,7 +22,7 @@ then
   echo "Something went wrong"
  exit 1
 fi
-nice ./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${grape} ${hadapt} ${padapt} 
+nice ./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${probflag} ${grape} ${hadapt} ${padapt} 
 #mv eoc.tex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 #pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 #rm -f *.{aux,log}

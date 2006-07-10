@@ -1,10 +1,11 @@
+#include <complex>
 template <class GridType>
 class U0 {
  public:
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0(double eps,bool diff_timestep=true) :
+  U0(double eps,int flag,bool diff_timestep=true) :
     velocity_(0.1), epsilon(eps), diff_tstep(diff_timestep) {
       velocity_[0]=-1.5;
  						
@@ -149,7 +150,7 @@ class U0Disc : public U0<GridType> {
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0Disc(double eps,bool diff_timestep=true) : BaseType(0.0,diff_timestep) {
+  U0Disc(double eps,int flag,bool diff_timestep=true) : BaseType(0.0,diff_timestep) {
     this->myName = "Discontinuous AdvectDiff";
   }
 
@@ -214,8 +215,8 @@ class U0RotCone {
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0RotCone(double eps,bool diff_timestep=true) :
-    velocity_(1.0), epsilon(eps), diff_tstep(diff_timestep)  {
+  U0RotCone(double eps,int flag,bool diff_timestep=true) :
+    velocity_(1.0), epsilon(eps), flag_(flag), diff_tstep(diff_timestep)  {
     center_ = 1.0;
     center_[0] -= 0.5;
     radius_ = 0.2;
@@ -254,22 +255,39 @@ class U0RotCone {
 
     res = 0.0;
     if ( r < radius_ ){
-      //res = 1.0 - r/radius_;
-	res = 1.0;
-      //res = 1.0 - (r*r/(radius_*radius_));
+      switch (flag_) {
+      case 0:  
+        res = 1.0 - r/radius_;
+        break;
+      case 1: 
+        res = 1.0;
+        break;
+      case 2:
+        // res = 1.0 - (r*r/(radius_*radius_));
+        double x = r/radius_;
+        res = pow(0.25*cos(x*M_PI)+0.25 , 4.);
+        break;
+      }
     }
   }
 	
 	
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
-    DomainType x;
-    DomainType vel;
+    DomainType x(0);
+    DomainType vel(0);
 
-    velocity(t,arg,vel);
+    // velocity(t,arg,vel);
+    
+    std::complex<double> z(arg[0]-1.,arg[1]-1.);
+    double phi = std::arg(z);
+    phi -= t;
+    double r = std::abs(z);
+    x[0] = cos(phi)*r + 1.0;
+    x[1] = sin(phi)*r + 1.0;
 
-    x = vel;
-    x *= -1.0;
-    x += arg;
+    // x = vel;
+    // x *= -1.0;
+    // x += arg;
 
     evaluate(x,res);
   }
@@ -281,7 +299,16 @@ class U0RotCone {
 
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
 	
-    ofs << "Problem: " << myName << "\n\n";
+    ofs << "Problem: " << myName << " ";
+    switch (flag_) {
+      case 0: ofs << "linear ";
+        break;
+      case 1: ofs << "discont ";
+        break;
+      case 2: ofs << "quadratic ";
+        break;
+    }
+    ofs << "\n\n";
     ofs	<< "\n\n";
 	
     ofs.close();
@@ -290,6 +317,7 @@ class U0RotCone {
 
   DomainType velocity_;
   double epsilon;
+  int flag_;
   bool diff_tstep;	
   string myName;
   DomainType center_;
@@ -303,7 +331,7 @@ class U0BuckLev {
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0BuckLev(double eps,bool diff_timestep=true) :
+  U0BuckLev(double eps,int flag,bool diff_timestep=true) :
     velocity_(0.0), epsilon(eps), diff_tstep(diff_timestep)  {
     velocity_[0] = 1.0;
 

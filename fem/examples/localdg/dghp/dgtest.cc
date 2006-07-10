@@ -1,5 +1,3 @@
-bool Hadapt = false;
-bool Padapt = false;
 // Dune includes
 #include <config.h>
 
@@ -62,6 +60,7 @@ solve(DiscModel& model,
       done = (error.one_norm() < adapt->getLocalInTimeTolerance());
     }
   } while (!done);
+  ResiduumErr.reset();
   if (adapt) {
     adapt->markCoarsenEntities();
     adapt->adapt();
@@ -74,13 +73,22 @@ void init(DiscModel& model,
 	  ODE& ode,Indicator& ResiduumErr,
 	  Adapt& adapt,
 	  DestinationType& U,DestinationType& V) {
+  double dt;
   for (int i=0;i<5;++i) {
     U.set(0);
     initialize(model.model().problem(),U);
-    double dt=ode.solve(U,V,ResiduumErr);
+    dt=ode.solve(U,V,ResiduumErr);
     cout << "START INDICATOR: " << dt << " " 
 	 << ResiduumErr.calc(model,adapt,ode,0,dt) << endl;
     ode.setTime(0.);
+    ResiduumErr.reset();
+    if (adapt) {
+      adapt->param().setTime(0.0);
+      adapt->param().setTimeStepSize(dt);
+      adapt->param().setTimeStepNumber(0);
+      adapt->markRefineEntities();
+      adapt->adapt();
+    }
   }
   U.set(0);
   initialize(model.model().problem(),U);
@@ -121,36 +129,41 @@ int main(int argc, char ** argv, char ** envp) {
   double epsilon = 0.01;
   if (argc>4)
     epsilon=atof(argv[4]);
-	
+
+  int probflag = 0;
+  if (argc>5) 
+    probflag = atoi(argv[5]);
+
   int graped = 0;
-  if (argc>5)
-    graped=atoi(argv[5]);
-	
   if (argc>6)
-    Hadapt=atoi(argv[6]);
-  
+    graped=atoi(argv[6]);
+	
+  bool Hadapt = false;
   if (argc>7)
-    Padapt=atoi(argv[7]);
+    Hadapt=atoi(argv[7]);
+  bool Padapt = false;
+  if (argc>8)
+    Padapt=atoi(argv[8]);
   
   // CFL:
   double cfl;
   switch (order) {
   case 0: cfl=0.9;  break;
-  case 1: cfl=0.2; break;
-  case 2: cfl=0.1;  break;
+  case 1: cfl=0.3; break;
+  case 2: cfl=0.25;  break;
   case 3: cfl=0.05;  break;
   case 4: cfl=0.09; break;
   }
 	
-  if (argc>8)
-    cfl=atof(argv[8]);
+  if (argc>9)
+    cfl=atof(argv[9]);
 	
   //cfl = cfl/3.0;
   //cfl /= 2.0;
 
   cout << epsilon << endl;
 	
-  InitialDataType problem(epsilon,true);
+  InitialDataType problem(epsilon,probflag,true);
 	
   string myoutput = "eoc.tex";
   EocOutput eocoutput(myoutput);
@@ -168,7 +181,7 @@ int main(int argc, char ** argv, char ** envp) {
 	
   L1Error<DgType::DestinationType> L1err;
   L1L1Error<ODEType> L1L1err;
-  DgType::DestinationType::RangeType err,timeerr,reserr;
+  DgType::DestinationType::RangeType err,timeerr,reserr,prevreserr;
 
   // printSGrid(0,0,dg.space(),U);
 	
@@ -191,7 +204,7 @@ int main(int argc, char ** argv, char ** envp) {
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
     DgType::DestinationType V("Unew",dg.space());
-    IndType ResiduumErr(*grid,Padapt);
+    IndType ResiduumErr(*grid,order,Padapt);
     OutputType output(&U,ResiduumErr.output());
     IndexSetType * iset = new IndexSetType ( *grid );
     GridPartType * gridPart_ = new GridPartType ( *grid, *iset );
@@ -201,9 +214,24 @@ int main(int argc, char ** argv, char ** envp) {
     const char * paramfile = 0;
     AdaptationType *adaptation_ = 0;
     if (repeats == 1 && Hadapt) {
+      /*
       adaptation_ = new AdaptationType( *gridPart_ , *timeDiscParam_, paramfile);
-      adaptation_->addAdaptiveFunction(&U,&V,&(ResiduumErr.RT_),&(ResiduumErr.RS_),
-      				       &(ResiduumErr.rho_),&(ResiduumErr.lambda_),&(ResiduumErr.maxPol_));
+      adaptation_->addAdaptiveFunction(&U);
+      adaptation_->addAdaptiveFunction(&V);
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.RT_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.RS_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.rho_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.lambda_));
+      adaptation_->addAdaptiveFunction(&(ResiduumErr.maxPol_));
+      */
+      adaptation_ = new AdaptationType( *gridPart_ , *timeDiscParam_, paramfile);
+      adaptation_->addAdaptiveFunction(&U,&V,
+				       &(ResiduumErr.RT_),
+				       &(ResiduumErr.RS_),
+      				       &(ResiduumErr.rho_),
+				       &(ResiduumErr.lambda_),
+				       &(ResiduumErr.maxPol_),
+				       &(ResiduumErr.maxPolNew_));
     }
     if (eocloop==0) 
       eocoutput.printInput(problem,*grid,ode,argv[1]);
@@ -240,8 +268,13 @@ int main(int argc, char ** argv, char ** envp) {
       U.assign(V);
       //initialize(problem,U);
       ++counter;
-      if (repeats==1 && counter%10==0) {
+      if (repeats==1 && counter%100==0) {
 	GrapeDataDisplay< GridType > grape(*grid);
+	grape.addData(ResiduumErr.RT_,"El-Res",-4);
+	grape.addData(ResiduumErr.RS_,"Jmp-Res",-3);
+	grape.addData(ResiduumErr.rho_,"rho",-2);
+	grape.addData(ResiduumErr.lambda_,"lam",-1);
+	grape.addData(ResiduumErr.maxPol_,"poldeg",-1);
 	grape.dataDisplay(U);
 	//GrapeTuple::output(dataio,*grid,t,counter/200,"grid","data",output);
       }
@@ -250,7 +283,8 @@ int main(int argc, char ** argv, char ** envp) {
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
-      std::cout << counter << " " << t << " " << ldt << std::endl;
+      if (repeats==1) 
+	std::cout << counter << " " << t << " " << ldt << std::endl;
     }
     
     averagedt /= double(counter);
@@ -264,7 +298,7 @@ int main(int argc, char ** argv, char ** envp) {
     cout << endl;
     fehler = err;		
     zeit = timer.elapsed()-prevzeit;
-    eocoutput.printTexAddError(fehler,prevfehler,zeit,grid->size(0),counter,averagedt);
+    eocoutput.printTexAddError(fehler,prevfehler,reserr.one_norm(),prevreserr.one_norm(),zeit,grid->size(0),counter,averagedt);
     
     if(graped){ // && eocloop == repeats-1) {
       GrapeDataDisplay< GridType > grape(*grid);
@@ -285,6 +319,7 @@ int main(int argc, char ** argv, char ** envp) {
     }
     prevzeit = zeit;
     prevfehler = fehler;
+    prevreserr = reserr;
     ++maxit;
   }
   

@@ -239,7 +239,9 @@ class EocOutput {
     ofs.close();
   }
 	
-  void printTexAddError(double error, double prevError, double time, int level, int counter,double averagedt)
+  void printTexAddError(double error, double prevError, 
+                        double indi, double prevIndi,
+                        double time, int level, int counter,double averagedt)
   {
     std::ostringstream filestream;
     filestream << outputFile;
@@ -249,7 +251,10 @@ class EocOutput {
     if(prevError > 0.0)
       {	       
 	ofs <<  "\\hline \n"
-	    << level << " & " << error << " & " << log(prevError/error)/M_LN2 << " & " << time << " & " << counter << " & " << averagedt << "\n"
+	    << level << " & "
+      << error << " & " << log(prevError/error)/M_LN2 << " & " 
+      << indi << " & " << log(prevIndi/indi)/M_LN2 << " & "
+      << time << " & " << counter << " & " << averagedt << "\n"
 	    << "\\tabularnewline\n"
 	    << "\\hline \n";
       }
@@ -257,11 +262,17 @@ class EocOutput {
       {	       
 	ofs << "\\begin{tabular}{|c|c|c|c|c|c|}\n"
 	    << "\\hline \n"
-	    << "Size & $\\left\\Vert u-u_{h}\\right\\Vert _{L_{2}}$ & EOC & CPU & \\#Iterations & a-dt\n"
+	    << "Size & "
+      << "$\\left\\Vert u-u_{h}\\right\\Vert _{L_{2}}$ & EOC & "
+      << "Indicator & EOC & "
+      << "CPU & \\#Iterations & a-dt\n"
 	    << "\\tabularnewline\n"
 	    << "\\hline\n"
 	    << "\\hline\n"
-	    << level << " & " << error << " & " << "---" << " & " << time << " & " << counter << " & " << averagedt << "\n"
+	    << level 
+      << " & " << error << " & " << "---" 
+      << " & " << indi << " & " << "---"
+      << " & " << time << " & " << counter << " & " << averagedt << "\n"
 	    << "\\tabularnewline\n"
 	    << "\\hline \n";
       }
