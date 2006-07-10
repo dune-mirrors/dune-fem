@@ -373,6 +373,8 @@ public:
   // return address of index set 
   virtual void * address () const = 0;
 
+  virtual int typeOfSet () const = 0;
+
   // read and write method of index sets 
   virtual void read_xdr(const char * filename, int timestep) = 0;
   virtual void write_xdr(const char * filename, int timestep) const = 0;
@@ -420,6 +422,11 @@ public:
   void * address() const 
   {
     return (void *)&indexSet_;
+  }
+
+  int typeOfSet() const 
+  { 
+    return indexSet_.type();
   }
 
   //! call read_xdr of index set 
@@ -924,6 +931,14 @@ public:
 public:
   //! add new index set to the list of the indexsets of this dofmanager
   template <class IndexSetType>
+  inline IndexSetType & createIndexSet (); 
+
+  //! add new index set to the list of the indexsets of this dofmanager
+  template <class IndexSetType>
+  inline IndexSetType & getIndexSet (); 
+
+  //! add new index set to the list of the indexsets of this dofmanager
+  template <class IndexSetType>
   inline void addIndexSet (const GridType &grid, IndexSetType &iset); 
 
   //! add new index set to the list of the indexsets of this dofmanager
@@ -1221,10 +1236,6 @@ template <class IndexSetType>
 inline void DofManager<GridType>::
 addIndexSet (const GridType &grid, IndexSetType &iset)
 {
-  // if index doesn't need to be resized after adaptation, do't include
-  // into list of dof manager 
-  if( ! iset.needsCompress() ) return ;
-  
   if(&grid_ != &grid)
     DUNE_THROW(DofManError,"DofManager can only be used for one grid! \n");
 
@@ -1251,10 +1262,53 @@ addIndexSet (const GridType &grid, IndexSetType &iset)
     indexList_.push_back( iobj );
     indexSets_ += *indexSet;
 
+    // if index doesn't need to be resized after adaptation, do't include
+    // into list of dof manager 
+    if( ! iset.needsCompress() ) return ;
+  
     insertIndices_ += (*indexSet).insertIndexObj();
     removeIndices_ += (*indexSet).removeIndexObj();
   }
   return ; 
+}
+
+template <class GridType>
+template <class IndexSetType>
+inline IndexSetType & DofManager<GridType>::createIndexSet() 
+{
+  IndexSetType * set = new IndexSetType(grid_);
+  std::cout << "Created index set " << set << "\n";
+  addIndexSet(grid_,*set);
+
+  return *set;
+}
+
+template <class GridType>
+template <class IndexSetType>
+inline IndexSetType & 
+DofManager<GridType>::getIndexSet () 
+{
+  typedef typename GridType::template Codim<0>::Entity EntityType;
+
+  IndexSetObjectInterface * indexSet = 0;
+  
+  IndexListIteratorType endit = indexList_.end();
+  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+  {
+    if( (*it)->typeOfSet() == IndexSetType::type() )
+    {
+      indexSet = ((*it));
+      break;
+    }
+  }
+
+  if( !indexSet) 
+  {
+    return this->template createIndexSet<IndexSetType>();
+  }
+
+  IndexSetType * set= ((IndexSetType *) (indexSet->address()));
+  return *set;
 }
 
 template <class GridType>
