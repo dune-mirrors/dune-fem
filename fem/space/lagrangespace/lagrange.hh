@@ -78,6 +78,8 @@ namespace Dune {
     typedef LagrangeDiscreteFunctionSpace< 
       FunctionSpaceImp, GridPartImp, polOrd
       > LagrangeDiscreteFunctionSpaceType;
+
+    typedef LagrangeDiscreteFunctionSpaceType ThisType; 
  
     //! my Traits 
     typedef LagrangeDiscreteFunctionSpaceTraits<
@@ -132,7 +134,7 @@ namespace Dune {
   public:
     //! remember polynomial order 
     enum { polynomialOrder =  polOrd };
-  
+
     //! Constructor generating for each different element type of the grid a 
     //! LagrangeBaseSet with polOrd 
     LagrangeDiscreteFunctionSpace(GridPartType & g);
@@ -184,6 +186,8 @@ namespace Dune {
     //! Return index set
     const IndexSetType& indexSet() const { return grid_.indexSet(); }
 
+    GridPartType & gridPart () { return grid_; }
+
     //! level
     int level() const { return grid_.level(); }
 
@@ -196,6 +200,40 @@ namespace Dune {
 
     //! Return the dof mapper of the space
     const MapperType& mapper() const;
+
+    static ThisType & instance (GridType & grid)
+    {                
+      // add index set to list of indexset of dofmanager 
+      typedef DofManager<typename Traits::GridType> DofManagerType;
+      typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+                  
+      DofManagerType & dm =
+        DofManagerFactoryType::getDofManager(grid);
+      typedef typename Traits::GridPartType::IndexSetType IndexSetType;
+      
+      IndexSetType & indexSet = dm.template getIndexSet<IndexSetType> ();
+     
+      typedef std::pair < GridType * , ThisType * > GridSpacePair; 
+      typedef std::list< GridSpacePair > SpaceListType; 
+      
+      static SpaceListType spaceList;
+
+      typedef typename SpaceListType :: iterator IteratorType;
+      IteratorType end = spaceList.end();
+      ThisType * space = 0;
+      for( IteratorType it = spaceList.begin(); it != end; ++it )
+      {
+        if( (*it).first == & grid ) return *((*it).second); 
+      }
+
+      GridPartType * part = new GridPartType(grid,indexSet);
+      space = new ThisType(*part);
+      std::cout << "Created new space " << space << "\n";
+
+      GridSpacePair p ( &grid, space );
+      spaceList.push_back( p );
+      return *space;
+    }     
 
   protected:
     // create functions space with basefunction set for given level

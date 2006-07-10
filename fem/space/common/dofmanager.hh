@@ -1276,11 +1276,10 @@ template <class GridType>
 template <class IndexSetType>
 inline IndexSetType & DofManager<GridType>::createIndexSet() 
 {
-  IndexSetType * set = new IndexSetType(grid_);
-  std::cout << "Created index set " << set << "\n";
-  addIndexSet(grid_,*set);
-
-  return *set;
+  IndexSetType & set = IndexSetType::instance(grid_);
+  std::cout << "Created index set " << &set << "\n";
+  addIndexSet(grid_,set);
+  return set;
 }
 
 template <class GridType>

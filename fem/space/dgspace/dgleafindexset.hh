@@ -52,6 +52,12 @@ private:
 
   mutable bool compressed_;
 public:
+  static ThisType & instance (const GridType & grid) 
+  {
+    static ThisType set(grid);
+    return set;
+  }
+  
   //! type traits of this class
   typedef LeafIteratorTypes<GridType> Traits; 
 
