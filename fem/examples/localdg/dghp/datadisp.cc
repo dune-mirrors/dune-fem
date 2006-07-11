@@ -47,7 +47,7 @@ typedef OutputType GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType > GrapeDispType;
 
 #include <dune/fem/visual/grape/datadisp/readtupledata.cc>
-#include <dune/fem/visual/grape/datadisp/readparams.cc> 
+#include <dune/fem/visual/grape/datadisp/readtupparams.cc> 
 #include <dune/fem/visual/grape/datadisp/readfile.cc>
 
 
