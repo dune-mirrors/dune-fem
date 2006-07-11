@@ -13,13 +13,14 @@
 
 
 //- local includes 
-#include "../common/discretefunctionspace.hh"
-#include "../../basefunctions/basefunctionsets.hh"
-#include "../../basefunctions/basefunctionstorage.hh"
+#include "common/discretefunctionspace.hh"
+#include "common/dofmanager.hh"
+#include "../basefunctions/basefunctionsets.hh"
+#include "../basefunctions/basefunctionstorage.hh"
 
-#include "dgmapper.hh"
-#include "dgbasefunctions.hh"
-#include "legendredgbasefunctions.hh"
+#include "dgspace/dgmapper.hh"
+#include "dgspace/dgbasefunctions.hh"
+#include "dgspace/legendredgbasefunctions.hh"
 
 namespace Dune {
 
@@ -203,7 +204,7 @@ namespace Dune {
       return *mapper_;
     }
 
-    GridPartType & gridPart () { return gridPart_; }
+    GridPartType & gridPart () const { return gridPart_; }
     /*
     //! default for polOrd 0
     template <class EntityType> 
