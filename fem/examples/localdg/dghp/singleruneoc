@@ -7,17 +7,14 @@ dimw=2
 grape=1
 level=1
 repeats=1
-#grape=0
-#level=0
-#repeats=6
 
 probflag=1
 
 padapt=1
-hadapt=0.1
+hadapt=1.0
 
-make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean datadisp
-exit 0
+#make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean datadisp
+#exit 0
 
 if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean dgtest;
 then

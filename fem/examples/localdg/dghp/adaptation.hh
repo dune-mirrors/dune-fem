@@ -118,9 +118,9 @@ public:
 
 public:
   //! constructor
-  Adaptation (GridPartType &gridPart, TimeDiscrParamType &param,  const char * paramfile = 0) 
+  Adaptation (GridPartType &gridPart, TimeDiscrParamType &param,  const double tol) 
     : gridPart_(gridPart) , grid_(const_cast<GridType &>(gridPart_.grid()))
-    , timeDiscrParam_(param)
+    , timeDiscrParam_(param), globalTolerance_(tol)
   {
     // initialize discrete function space
     discFuncSpace_ = new IndicatorDiscFuncSpaceType( gridPart_ );
@@ -129,19 +129,11 @@ public:
     indicator_ = new IndicatorDiscreteFunctionType ("indicator", *discFuncSpace_);
     indicator_->set(0.0);
 
-
-    // parameter die noch eingelesen werden muessen
-    if(paramfile){
-      readParameter(paramfile,"TOL",globalTolerance_);
-      readParameter(paramfile,"Theta",coarsenTheta_);
-      readParameter(paramfile,"EndTime",endTime_);
-    }
-    else{
-      // set default values
-      globalTolerance_ = 5.;
-      coarsenTheta_ = 0.1;
-      endTime_ = M_PI;
-    }
+    // set default values
+    initialTheta_ = 0.00001;
+    coarsenTheta_ = 0.1;
+    endTime_ = M_PI;
+    alphaSigSet_ = 0.1;
 
   }
   TimeDiscrParamType &param() {
@@ -213,13 +205,33 @@ public:
     return num;
   };
 
+
+  int calcSignificantElements (){
+    typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
+
+    int num = 0;
+
+    tolSigSet_ = 0.0;
+  
+    IteratorType endit = discFuncSpace_->end();
+    for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+    {
+      double help = getLocalIndicator(*it);
+      if( help < localTolerance_ * alphaSigSet_){
+	tolSigSet_ += help;
+      }
+      else{
+	num++;
+      }
+    }
+
+    return num;
+  };
+
   double getLocalInTimeTolerance (){
     double dt = timeDiscrParam_.getTimeStepSize();
    
-    localInTimeTolerance_ = globalTolerance_ * dt / endTime_;
-
-    // inserted for testing!!
-    //localInTimeTolerance_ = 500.0;
+    localInTimeTolerance_ =  (1. - initialTheta_) * globalTolerance_ * dt / endTime_;
 
     return localInTimeTolerance_;
   };
@@ -230,12 +242,51 @@ public:
     getLocalInTimeTolerance ();
     localTolerance_ = localInTimeTolerance_ / numberOfElements();
 
-    // inserted for testing!!
-    // localTolerance_ = 0.5;
+    double num = calcSignificantElements();
+
+    std::cout << "Tol_Sig = " << (localInTimeTolerance_ - tolSigSet_) << "   Tol = " << localInTimeTolerance_ << 
+      " Num Sig El: " << num << "\n";
+    localTolerance_  = (localInTimeTolerance_ - tolSigSet_)/num;
 
     return localTolerance_;
   };
 
+  double getInitLocalTolerance (){
+
+    localTolerance_ =  initialTheta_ * globalTolerance_  / numberOfElements();
+
+    double num = calcSignificantElements();
+
+    std::cout << "Tol_Sig = " << (initialTheta_ * globalTolerance_ - tolSigSet_) << "   Tol = " << initialTheta_ * globalTolerance_ << 
+      " Num Sig El: " << num << "\n";
+    localTolerance_  = (initialTheta_ * globalTolerance_ - tolSigSet_)/num;
+
+    return localTolerance_;
+  };
+
+  void markNeighbours (){
+    typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
+    typedef typename IndicatorDiscFuncSpaceType::GridType      GridType;
+    typedef typename GridType::template Codim<0>::Entity      EntityType;
+    typedef typename EntityType::IntersectionIterator         IntersectionIteratorType;
+    
+
+    IteratorType endit = discFuncSpace_->end();
+    for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+    {     
+      if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) ){
+	IntersectionIteratorType endnit = it->iend();
+	for(IntersectionIteratorType nit = it->ibegin(); nit != endnit; ++nit){
+	  if( nit.neighbor() ){
+	    grid_.mark(1,nit.outside());
+	  }
+	}
+      }
+    }
+
+    return;
+    
+  };
 
   void markEntities (){
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
@@ -258,6 +309,28 @@ public:
     
   };
 
+  void markInitRefineEntities (){
+    typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
+ 
+    getInitLocalTolerance();
+
+    IteratorType endit = discFuncSpace_->end();
+    for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+    {
+      //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
+      if( (getLocalIndicator(*it) > localTolerance_) )
+        grid_.mark(1, it);
+      else
+	grid_.mark(0, it);
+    }
+
+
+    markNeighbours ();
+
+    return;
+    
+  };
+
   void markRefineEntities (){
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
     
@@ -272,6 +345,8 @@ public:
       else
 	grid_.mark(0, it);
     }
+
+    markNeighbours ();
 
     return;
     
@@ -505,6 +580,10 @@ private:
   double localInTimeTolerance_;
   double localTolerance_;
   double coarsenTheta_;
+  double initialTheta_;
+
+  double alphaSigSet_;
+  double tolSigSet_;
 
   //! timestep size in time discretization parameters und endTime 
   TimeDiscrParamType & timeDiscrParam_;

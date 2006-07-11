@@ -94,7 +94,7 @@ void init(DiscModel& model,
       adapt->param().setTime(0.0);
       adapt->param().setTimeStepSize(dt);
       adapt->param().setTimeStepNumber(0);
-      adapt->markRefineEntities();
+      adapt->markInitRefineEntities();
       cout << " ADAPT " << adapt->getLocalInTimeTolerance() << flush;
       adapt->adapt();
       done = (error.one_norm() < adapt->getLocalInTimeTolerance());
@@ -196,10 +196,9 @@ int main(int argc, char ** argv, char ** envp) {
     IndType ResiduumErr(dg.part(),order,Padapt);
     OutputType output(&U,ResiduumErr.output());
     TimeDiscParamType * timeDiscParam_ = new TimeDiscParamType (0.0,0.0,0);
-    const char * paramfile = 0;
     AdaptationType *adaptation_ = 0;
     if (repeats == 1 && Hadapt) {
-      adaptation_ = new AdaptationType( dg.part() , *timeDiscParam_, paramfile);
+      adaptation_ = new AdaptationType( dg.part() , *timeDiscParam_, hadapt_tol);
       adaptation_->addAdaptiveFunction(&U,&V,
 				       &(ResiduumErr.RT_),
 				       &(ResiduumErr.RS_),
