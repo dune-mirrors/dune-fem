@@ -95,9 +95,9 @@ void init(DiscModel& model,
       adapt->param().setTimeStepSize(dt);
       adapt->param().setTimeStepNumber(0);
       adapt->markInitRefineEntities();
-      cout << " ADAPT " << adapt->getLocalInTimeTolerance() << flush;
+      cout << " ADAPT " << adapt->getInitTolerance() << flush;
       adapt->adapt();
-      done = (error.one_norm() < adapt->getLocalInTimeTolerance());
+      done = (error.one_norm() < adapt->getInitTolerance());
     }
     cout << endl;
   } while (!done);

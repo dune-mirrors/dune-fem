@@ -236,6 +236,12 @@ public:
     return localInTimeTolerance_;
   };
 
+  double getInitTolerance (){
+
+    return (initialTheta_ * globalTolerance_ );
+
+  };
+
 
   double getLocalTolerance (){
 
