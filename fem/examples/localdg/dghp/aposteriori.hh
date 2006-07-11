@@ -6,6 +6,22 @@
 #include <fem/pass/tuples.hh>
 
 namespace Dune {
+template <class TupType>
+struct TupleToPair {
+  typedef Pair<typename TupType::Type1,
+	       typename TupleToPair<typename TupType::Type2>::ReturnType> ReturnType;
+  static ReturnType convert(TupType tup) {
+    return ReturnType(tup.first(),
+		      TupleToPair<typename TupType::Type2>::convert(tup.second()));
+  }
+};
+template <class T>
+struct TupleToPair<Pair<T,Nil> > {
+  typedef Pair<T,Nil> ReturnType;
+  static ReturnType convert(Pair<T,Nil> tup) {
+    return ReturnType(tup.first(),Nil());
+  }
+};
   template <class DiscModelType,class DiscreteFunctionType> 
   class LocalResiduum {
     typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -172,20 +188,22 @@ namespace Dune {
       return maxOrd[0];
     }
   };
-  template <class GridType,class DiscModelType,class DiscreteFunctionType> 
+  template <class GridPartType,class DiscModelType,class DiscreteFunctionType> 
   class Residuum {
     typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
     typedef typename DiscreteFunctionType::RangeType RangeType;
     typedef typename DiscreteFunctionType::DomainType DomainType;
     typedef typename DiscreteFunctionType::JacobianRangeType JacobianRangeType;
     typedef typename DiscreteFunctionType::DestinationType DiscFuncType;
+    typedef typename GridPartType::GridType GridType;
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
     enum { dimR = RangeType :: dimension };
     enum { dimD = DomainType :: dimension };
     // Result Functions
     // typedef LeafGridPart<GridType> GridPartType;
-    typedef DGAdaptiveLeafIndexSet<GridType> DGIndexSetType;
-    typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
+    //typedef DGAdaptiveLeafIndexSet<GridType> DGIndexSetType;
+    // typedef typename LeafGridPart<GridType>::IndexSetType DGIndexSetType;
+    //typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
 
     typedef FunctionSpace < double , double, dimD , 1 > ScalarFSType;
     typedef DiscontinuousGalerkinSpace<ScalarFSType, GridPartType, 0> 
@@ -196,21 +214,24 @@ namespace Dune {
     bool doPAdapt_;
   public:  
     typedef ConstDiscFSType DestinationType;
-    DGIndexSetType iset_;
-    GridPartType part_;
+    // DGIndexSetType iset_;
+    GridPartType& part_;
     ConstDiscSType space_;
     DestinationType ind_;
     DestinationType RT_,RS_,RP_,rho_,lambda_,maxPol_,maxPolNew_;
     typedef Tuple<DestinationType*,DestinationType*,DestinationType*,
-		  DestinationType*,DestinationType*> OutputType;
+		  DestinationType*,DestinationType*> OutputTType;
+    typedef typename TupleToPair<OutputTType>::ReturnType OutputType;
     OutputType output() {
-      return OutputType(&RT_,&RS_,&rho_,&lambda_,&maxPol_);
+      return TupleToPair<OutputTType>::convert
+	(OutputTType(&RT_,&RS_,&rho_,&lambda_,&maxPol_));
     }
-    Residuum(GridType& grid,int maxOrd,
+    Residuum(GridPartType& part,int maxOrd,
 	     bool doPAdapt=true) : 
       doPAdapt_(doPAdapt),
-      iset_(grid),
-      part_(grid,iset_), 
+      // iset_(grid),
+      // part_(grid,iset_),
+      part_(part),
       space_(part_),
       ind_("Indicator",space_),
       RT_("Element Res.",space_),
@@ -222,8 +243,6 @@ namespace Dune {
       maxPolNew_("PolDeg",space_) {
 	typedef typename FunctionSpaceType::IteratorType IteratorType;
 	IteratorType endit = space_.end();
-	// check whether grid is empty 
-	assert( it != endit );	
 	for(IteratorType it = space_.begin(); 
 	    it != endit ; ++it) {
 	  LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
@@ -251,11 +270,9 @@ namespace Dune {
       int polOrd = space.polynomOrder();
       if (adapt)
 	adapt->clearIndicator();
-       RangeType ret(0.);
+      RangeType ret(0.);
       LocalResiduum<DiscModelType,DiscreteFunctionType> localRes;
       IteratorType endit = space.end();
-      // check whether grid is empty 
-      assert( it != endit );	
       RS_.clear();
       RT_.clear();
       for(IteratorType it = space.begin(); 
@@ -302,6 +319,7 @@ namespace Dune {
 	  } // end if boundary
 	}
       }
+      ret = 0;
       double pot = double(polOrd+2)/double(polOrd+1);
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
@@ -318,7 +336,7 @@ namespace Dune {
 	lmaxPolNew[0] = 
 	  localRes.computePolDeg(discFunc,*it,lmaxPol[0],llam[0],lRP[0],doPAdapt_);
 	double projErr = lRP[0] * lrho[0];
-	ret += projErr;
+	// ret += projErr;
 	if (lmaxPol[0]<lmaxPolNew[0])
 	  lmaxPol[0] = lmaxPolNew[0];
 	/*
@@ -331,10 +349,10 @@ namespace Dune {
 	*/
 	LConstDiscFSType lind = ind_.localFunction(*it);
 	lind[0] = 2.*(lRT[0]+lRS[0]+lRP[0])*lrho[0];
+	ret += lind[0];
 	if (adapt)
 	  adapt->addToLocalIndicator(*it,lind[0]);
       }
-      ret*=2.;
       return ret;
     }
   };

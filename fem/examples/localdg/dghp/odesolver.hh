@@ -236,8 +236,6 @@ public:
     typedef typename DestType::FunctionSpaceType::IteratorType IteratorType;
     typedef typename DestType::FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
     IteratorType endit = U.getFunctionSpace().end();
-    // check whether grid is empty 
-    assert( it != endit );	
     for(IteratorType it = U.getFunctionSpace().begin(); 
 	it != endit ; ++it) {
       int deg = proj.usePolDeg(*it);

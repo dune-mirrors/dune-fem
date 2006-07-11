@@ -138,9 +138,9 @@ public:
     }
     else{
       // set default values
-      globalTolerance_ = 0.1;
+      globalTolerance_ = 5.;
       coarsenTheta_ = 0.1;
-      endTime_ = 0.4;
+      endTime_ = M_PI;
     }
 
   }
@@ -267,7 +267,7 @@ public:
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
       //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
-      if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) )
+      if( (getLocalIndicator(*it) > localTolerance_) )
         grid_.mark(1, it);
       else
 	grid_.mark(0, it);
@@ -286,7 +286,7 @@ public:
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
       //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
-      if ( (it->level() > 4) && (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
+      if ( (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
       	grid_.mark(-1, it);
       else
 	grid_.mark(0, it);

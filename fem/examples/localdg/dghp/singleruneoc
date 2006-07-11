@@ -2,7 +2,6 @@ problem=6
 epsilonne=0.0
 polorder=2
 gridtype=ALBERTAGRID
-epsilonne=0.0
 dimw=2
 
 grape=1
@@ -12,10 +11,13 @@ repeats=1
 #level=0
 #repeats=6
 
-probflag = 1
+probflag=1
 
 padapt=1
-hadapt=1
+hadapt=0.1
+
+make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean datadisp
+exit 0
 
 if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean dgtest;
 then

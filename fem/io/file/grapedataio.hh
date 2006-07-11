@@ -8,7 +8,7 @@
 #include <dune/common/capabilities.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
-
+#include <dune/fem/space/common/dofmanager.hh>
 
 //- Local includes 
 #include "asciiparser.hh"
@@ -329,7 +329,6 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
   double time, int timestep, int precision )
 {
   bool hasDm = false;
-  /*
   // write dof manager, that corresponds to grid 
   {
     typedef DofManager<GridImp> DofManagerType; 
@@ -339,7 +338,6 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
     dmname += "_dm";
     hasDm = DMFactoryType::writeDofManager(grid,dmname,timestep);
   }
-  */
  
   // write Grid itself 
   {
@@ -416,7 +414,6 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
         }
   }
  
-  /*
   // write dof manager, that corresponds to grid 
   if(hasDm)
   {
@@ -430,7 +427,6 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
     DMFactoryType::getDofManager(grid);
     succeded = DMFactoryType::writeDofManager(grid,dmname,timestep);
   }
-  */
   return succeded;
 }
 
@@ -459,6 +455,7 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     file << "Format: " << ftype << std::endl;
     file << "Precision: " << precision << std::endl;
     file << "Polynom_order: " << df.getFunctionSpace().polynomOrder() << std::endl;
+    file << "DataBase: " << df.name() << std::endl;
     file.close();
   }
 

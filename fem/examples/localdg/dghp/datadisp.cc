@@ -18,41 +18,37 @@ using namespace Dune;
 
 static const int dim = DUNE_PROBLEM_DIM; 
 
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/fem/dfadapt.hh>
+//#include <dune/fem/space/lagrangebase.hh>
+#include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/common/stack.hh>
 
 //#include <../../../space/dgspace/dgleafindexset.hh>
 #include <dune/grid/common/gridpart.hh>
 
-#include <dune/io/file/grapedataio.hh>
+#include <dune/fem/io/file/grapedataio.hh>
 
 
 typedef double REAL;
 
-#include <dune/io/visual/grapedatadisplay.hh>
-#include <dune/io/visual/combinedgrapedisplay.hh>
+#include <dune/grid/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/combinedgrapedisplay.hh>
 
-#include "../../../visual/grape/datadisp/printhelp.cc"
+#include <dune/fem/visual/grape/datadisp/printhelp.cc>
 
 #include "models.hh"
 
 typedef GridType                                        GR_GridType;
-typedef DgType::SpaceType                               GR_FunctionSpaceType;
 typedef DofManager<GR_GridType>                         GR_DofManagerType;
 typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType;
 typedef DgType::GridPartType                            GR_GridPartType;
-//typedef DefaultGridPart<GR_GridType,typename DGGridPartType::IndexSetType> GR_GridPartType; 
 typedef GR_GridPartType::IndexSetType GR_IndexSetType;
 
-typedef DgType::DiscreteFunctionSpaceType               GR_DiscFuncSpaceType;
-typedef DgType::DestinationType                         GR_DiscFuncType;
+typedef OutputType GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType > GrapeDispType;
 
-#include "../../../visual/grape/datadisp/readdata.cc"
-#include "../../../visual/grape/datadisp/readparams.cc" 
-#include "../../../visual/grape/datadisp/readfile.cc" 
+#include <dune/fem/visual/grape/datadisp/readtupledata.cc>
+#include <dune/fem/visual/grape/datadisp/readparams.cc> 
+#include <dune/fem/visual/grape/datadisp/readfile.cc>
 
 
 int main(int argc, char **argv)

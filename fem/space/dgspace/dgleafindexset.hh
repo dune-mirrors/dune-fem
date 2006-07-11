@@ -109,8 +109,10 @@ public:
   {
     // this IndexWrapper provides specialisations for each codim 
     // see this class above 
-    assert( cd == 0 ); // only set for codim 0
-    return codimLeafSet_.index( hIndexSet_.index( en ) );
+    // assert( cd == 0 ); // only set for codim 0
+    if (cd == 0) 
+      return codimLeafSet_.index( hIndexSet_.index( en ) );
+    else return 0;
   }
 
   //! return size of grid entities per level and codim 

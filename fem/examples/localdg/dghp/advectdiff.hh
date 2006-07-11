@@ -167,6 +167,9 @@ namespace Dune {
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
     }
+    GridPartType& part() {
+      return gridPart_;
+    }
     const SpaceType& space() const {
       return space2_;
     }

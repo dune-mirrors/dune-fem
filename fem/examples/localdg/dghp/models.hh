@@ -78,5 +78,8 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #endif
 #include "aposteriori.hh"
-typedef Residuum<GridType,DiscModelType,ODEType> IndType; 
+#include "adaptation.hh"
+typedef Residuum<DgType::GridPartType,DiscModelType,ODEType> IndType; 
 typedef Pair<DgType::DestinationType*,IndType::OutputType> OutputType;
+typedef TimeDiscrParam TimeDiscParamType;
+typedef Adaptation <DgType::DestinationType,TimeDiscParamType>  AdaptationType;

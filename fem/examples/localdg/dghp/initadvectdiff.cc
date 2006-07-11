@@ -1,3 +1,4 @@
+#include <string>
 #include <complex>
 template <class GridType>
 class U0 {
@@ -89,7 +90,7 @@ class U0 {
       }
   }
 	
-  void printmyInfo(string filename)
+  void printmyInfo(std::string filename)
   {
     std::ostringstream filestream;
     filestream << filename;
@@ -128,7 +129,7 @@ class U0 {
   DomainType velocity_;
   double epsilon;
   bool diff_tstep;
-  string myName;
+  std::string myName;
   int max_n_of_coefs;
   double common_coef_x[2];
   double sin_coef_x[2];
@@ -172,7 +173,7 @@ class U0Disc : public U0<GridType> {
       res *= -1.;
   }
 	
-  void printmyInfo(string filename)
+  void printmyInfo(std::string filename)
   {
     std::ostringstream filestream;
     filestream << filename;
@@ -292,7 +293,7 @@ class U0RotCone {
     evaluate(x,res);
   }
 	
-  void printmyInfo(string filename)
+  void printmyInfo(std::string filename)
   {
     std::ostringstream filestream;
     filestream << filename;
@@ -319,7 +320,7 @@ class U0RotCone {
   double epsilon;
   int flag_;
   bool diff_tstep;	
-  string myName;
+  std::string myName;
   DomainType center_;
   double radius_;
 };
@@ -469,7 +470,7 @@ class U0BuckLev {
       res[0]=rp_sol(1.,0.,t,x-0.4);
   }
 	
-  void printmyInfo(string filename)
+  void printmyInfo(std::string filename)
   {
     std::ostringstream filestream;
     filestream << filename;
@@ -486,6 +487,6 @@ class U0BuckLev {
   DomainType velocity_;
   double epsilon;
   bool diff_tstep;	
-  string myName;
+  std::string myName;
 };
 
