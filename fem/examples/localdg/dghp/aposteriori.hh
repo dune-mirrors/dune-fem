@@ -167,7 +167,7 @@ struct TupleToPair<Pair<T,Nil> > {
       for (int r=0;r<dimR;r++) {
 	for(int qP = 0; qP < quad.nop(); qP++) {
 	  RangeType average = discFunc.uval(en,quad,qP,1.,0);
-	  int p = maxOrd[r];
+	  int p = int(maxOrd[r]);
 	  for (; p>0;--p) { 
 	    RangeType u = discFunc.uval(en,quad,qP,1.,p);
 	    u -= average;
@@ -181,11 +181,11 @@ struct TupleToPair<Pair<T,Nil> > {
       for(int qP = 0; qP < quad.nop(); qP++) {
 	double det = quad.weight(qP) 
 	  * en.geometry().integrationElement(quad.point(qP));
-	RangeType proj = discFunc.uval(en,quad,qP,1.,maxOrd[0]);
+	RangeType proj = discFunc.uval(en,quad,qP,1.,int(maxOrd[0]));
 	proj -= discFunc.uval(en,quad,qP,1.,maxp);
 	projErr += proj.one_norm()*det; 
       }
-      return maxOrd[0];
+      return int(maxOrd[0]);
     }
   };
   template <class GridPartType,class DiscModelType,class DiscreteFunctionType> 
@@ -283,7 +283,7 @@ struct TupleToPair<Pair<T,Nil> > {
 	double h = sqrt(it->geometry().volume());
 	RangeType infProj;
 	RangeType resid = 
-	  localRes.element(model,discFunc,*it,time,dt,lmaxPol[0],infProj);
+	  localRes.element(model,discFunc,*it,time,dt,int(lmaxPol[0]),infProj);
 	lRT[0] = resid.one_norm();
 	lrho[0] = h + infProj.one_norm();
 	resid *= lrho[0];
@@ -301,7 +301,7 @@ struct TupleToPair<Pair<T,Nil> > {
 		maxPol_.localFunction(*(nit.outside()));
 	      RangeType resjmp = 
 		localRes.jump(model,discFunc,nit,time,dt,
-			      lmaxPol[0],lmaxPolnb[0]);
+			      int(lmaxPol[0]),int(lmaxPolnb[0]));
 	      resjmp *= maxh;
 	      double jump = resjmp.one_norm();
 	      {
@@ -334,7 +334,8 @@ struct TupleToPair<Pair<T,Nil> > {
 	LConstDiscFSType lmaxPolNew = maxPolNew_.localFunction(*it);
 	llam[0] = h / pow(h + h*(lRT[0]+lRS[0])/(dt*vol),pot);
 	lmaxPolNew[0] = 
-	  localRes.computePolDeg(discFunc,*it,lmaxPol[0],llam[0],lRP[0],doPAdapt_);
+	  localRes.computePolDeg(discFunc,*it,int(lmaxPol[0]),
+				 llam[0],lRP[0],doPAdapt_);
 	double projErr = lRP[0] * lrho[0];
 	// ret += projErr;
 	if (lmaxPol[0]<lmaxPolNew[0])

@@ -273,6 +273,7 @@ public:
     for (int j=0;j<ord_;j++) {
       V.addScaled(*(Upd[j]),(b[j]*dt));
     }
+    project(V,proj);
     setTime(t+dt);
     return time();
   }

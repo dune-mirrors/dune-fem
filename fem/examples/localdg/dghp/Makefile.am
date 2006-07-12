@@ -1,7 +1,7 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS)
-AM_CXXFLAGS= -g -w
-AM_CXXFLAGS=-unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500 
-CXXFLAGS = 
+# AM_CXXFLAGS= -g -w
+AM_CXXFLAGS= -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500 
+CXXFLAGS =
 
 noinst_PROGRAMS = dgtest datadisp
 dgtest_SOURCES = dgtest.cc

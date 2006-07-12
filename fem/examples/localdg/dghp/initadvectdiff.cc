@@ -226,7 +226,7 @@ class U0RotCone {
   }
 
   double endtime() {
-    return 3.14159;
+    return M_PI*0.5;
   }
 		
   double dist (const DomainType& x, const DomainType& y) const{

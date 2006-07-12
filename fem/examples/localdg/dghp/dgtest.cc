@@ -89,7 +89,6 @@ void init(DiscModel& model,
     cout << "START INDICATOR: " << dt << " " 
 	 <<  error << " " << flush;
     ode.setTime(0.);
-    ResiduumErr.reset();
     if (adapt) {
       adapt->param().setTime(0.0);
       adapt->param().setTimeStepSize(dt);
@@ -100,6 +99,7 @@ void init(DiscModel& model,
       done = (error.one_norm() < adapt->getInitTolerance());
     }
     cout << endl;
+    ResiduumErr.reset();
   } while (!done);
   U.set(0);
   initialize(model.model().problem(),U);
@@ -212,7 +212,12 @@ int main(int argc, char ** argv, char ** envp) {
     
     init(eulerflux,ode,ResiduumErr,adaptation_,U,V);
 
-    GrapeTuple<OutputType>::output(dataio,*grid,0.0,0,"sol",".",output);
+    if (repeats>1) {
+      GrapeTuple<OutputType>::output(dataio,*grid,0.0,eocloop*10,
+				     "sol",".",output);
+    } else {
+      GrapeTuple<OutputType>::output(dataio,*grid,0.0,0,"sol",".",output);
+    }
     if (graped) {
       GrapeDataDisplay< GridType > grape(dg.part());
       grape.addData(ResiduumErr.RT_,"El-Res",-4);
@@ -256,7 +261,10 @@ int main(int argc, char ** argv, char ** envp) {
 	  grape.addData(ResiduumErr.maxPol_,"poldeg",-1);
 	  grape.dataDisplay(U);
 	}
-      }
+      } else if (repeats>1 && t-ldt<maxtime*0.25 && t>maxtime*0.25) {
+	GrapeTuple<OutputType>::output(dataio,*grid,0.0,eocloop*10+1,
+				     "sol",".",output);
+      } 
       timeerr += L1L1err.norm(problem,ode,t-ldt,ldt);
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
@@ -279,7 +287,13 @@ int main(int argc, char ** argv, char ** envp) {
     eocoutput.printTexAddError(fehler,prevfehler,reserr.one_norm(),prevreserr.one_norm(),zeit,grid->size(0),counter,averagedt);
     
     outputcounter++;
-    GrapeTuple<OutputType>::output(dataio,*grid,t,outputcounter,"sol",".",output);
+    if (repeats>1) {
+      GrapeTuple<OutputType>::output(dataio,*grid,0.0,eocloop*10+2,
+				     "sol",".",output);
+    }     
+    else 
+      GrapeTuple<OutputType>::
+	output(dataio,*grid,t,outputcounter,"sol",".",output);
     if(graped) {
       GrapeDataDisplay< GridType > grape(dg.part());
       grape.addData(ResiduumErr.RT_,"El-Res",-4);

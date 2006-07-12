@@ -42,6 +42,96 @@ class L2Projection
     }
   }
 };
+template <class DiscreteFunctionType, class FunctionType, int polOrd>
+class LagrangeProjection
+{
+  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
+  typedef typename FunctionSpaceType::Traits::GridType GridType;
+  typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+  typedef typename FunctionSpaceType::DomainType DomainType;
+  typedef typename FunctionSpaceType::RangeType RangeType;
+  enum {dim = GridType::dimension};
+ public:
+  static double base(int p,int i,const DomainType& x) {
+    double bary[3]={1.-x[0]-x[1],x[0],x[1]};
+    if (p==1) {
+      return bary[i];
+    }
+    else {
+      if (i<3)
+	return bary[i]*(2.*bary[i]-1.);
+      else {
+	int j=i-3;
+	return 4.*bary[(j+1)%3]*bary[(j+2)%3];
+      }
+    }
+  }
+  template <class EntityType>
+  static void lag_evaluate(int order,
+			   const FunctionType &f,
+			   const EntityType& en,
+			   const DomainType& x,RangeType& ret) {
+    RangeType val[6];
+    DomainType pkt[6];
+    pkt[0][0] = 0. , pkt[0][1] = 0.;
+    pkt[1][0] = 1. , pkt[1][1] = 0.;
+    pkt[2][0] = 0. , pkt[2][1] = 1.;
+    pkt[3][0] = 0.5 , pkt[3][1] = 0.5;
+    pkt[4][0] = 0.0 , pkt[4][1] = 0.5;
+    pkt[5][0] = 0.5 , pkt[5][1] = 0.0;
+    ret = 0;
+    if (order == 2) {
+      for (int i=0;i<6;i++) {
+	f.evaluate(en.geometry().global(pkt[i]),val[i]);
+	val[i] *= base(2,i,x);
+	ret += val[i];
+      }
+    }
+    else {
+      for (int i=0;i<3;i++) {
+	f.evaluate(en.geometry().global(pkt[i]),val[i]);
+	val[i] *= base(1,i,x);
+	ret += val[i];
+      }
+    }
+    // f.evaluate(en.geometry().global(x), ret);
+  }
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
+    
+    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    int ord = space.polynomOrder();
+
+    discFunc.clear();
+    
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
+    
+    Iterator it = space.begin();
+    Iterator endit = space.end();
+    
+    // Get quadrature rule
+    CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
+    
+    for( ; it != endit ; ++it) {
+      LocalFuncType lf = discFunc.localFunction(*it);
+      const typename FunctionSpaceType::BaseFunctionSetType & set =
+	lf.getBaseFunctionSet();
+      for(int i=0; i<lf.numDofs(); i++) {
+        for(int qP = 0; qP < quad.nop(); qP++) {
+	  double det =
+	    (*it).geometry().integrationElement(quad.point(qP));
+	  // f.evaluate((*it).geometry().global(quad.point(qP)), ret);
+	  lag_evaluate(ord,f,*it,quad.point(qP),ret);
+	  set.eval(i,quad,qP,phi);
+	  lf[i] += quad.weight(qP) * (ret * phi) ;
+        }
+      }
+    }
+  }
+};
 struct SStruct {
   SStruct(int n1, int n2, double lx, double ly, double hx, double hy)
   {
@@ -83,38 +173,6 @@ struct SStruct {
   double l_[3];
   double h_[3];
 };
-/*
-template <class Geometry>
-void midPoint(const Geometry& geo, FieldVector<double, 3>& result)
-{
-  result *= 0.0;
-  for (int i = 0; i < geo.corners(); ++i) {
-    result += geo[i];
-  }
-
-  result /= static_cast<double>(geo.corners());
-}
-template <class Geometry>
-void midPoint(const Geometry& geo, FieldVector<double, 2>& result)
-{
-  result *= 0.0;
-  for (int i = 0; i < geo.corners(); ++i) {
-    result += geo[i];
-  }
-
-  result /= static_cast<double>(geo.corners());
-}
-template <class Geometry>
-void midPoint(const Geometry& geo, FieldVector<double, 1>& result)
-{
-  result *= 0.0;
-  for (int i = 0; i < geo.corners(); ++i) {
-    result += geo[i];
-  }
-
-  result /= static_cast<double>(geo.corners());
-}
-*/
 template <class Geometry,int n>
 void midPoint(const Geometry& geo, FieldVector<double, n>& result)
 {
@@ -175,7 +233,8 @@ void initialize(const StupidFunction& f,DFType& df)
   typedef FieldVector<double, dim> Coordinate;
 
   //- Actual method
-  L2Projection<DFType, StupidFunction, 2>::project(f, df);
+  // L2Projection<DFType, StupidFunction, 2>::project(f, df);
+  LagrangeProjection<DFType, StupidFunction, 2>::project(f, df);
 
   typedef typename DFType::DofIteratorType DofIterator;
   /*for (DofIterator it = df.dbegin(); it != df.dend(); ++it) {
@@ -260,7 +319,7 @@ class EocOutput {
       }
     else
       {	       
-	ofs << "\\begin{tabular}{|c|c|c|c|c|c|}\n"
+	ofs << "\\begin{tabular}{|c|c|c|c|c|c|c|c|}\n"
 	    << "\\hline \n"
 	    << "Size & "
       << "$\\left\\Vert u-u_{h}\\right\\Vert _{L_{2}}$ & EOC & "

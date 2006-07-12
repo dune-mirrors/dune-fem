@@ -5,13 +5,16 @@ gridtype=ALBERTAGRID
 dimw=2
 
 grape=1
-level=1
+level=0
 repeats=1
+#grape=0
+#level=0
+#repeats=6
 
-probflag=1
+probflag=0
 
-padapt=1
-hadapt=1.0
+padapt=0
+hadapt=0.1
 
 #make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean datadisp
 #exit 0
@@ -21,7 +24,7 @@ then
   echo "Something went wrong"
  exit 1
 fi
-nice ./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${probflag} ${grape} ${hadapt} ${padapt} 
+#nice ./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${probflag} ${grape} ${hadapt} ${padapt} 
 #mv eoc.tex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 #pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 #rm -f *.{aux,log}
