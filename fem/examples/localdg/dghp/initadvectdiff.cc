@@ -220,13 +220,14 @@ class U0RotCone {
     velocity_(1.0), epsilon(eps), flag_(flag), diff_tstep(diff_timestep)  {
     center_ = 1.0;
     center_[0] -= 0.5;
+    center_[1] -= 0.5;
     radius_ = 0.2;
 
     myName = "Rotating Cone";
   }
 
   double endtime() {
-    return M_PI*0.5;
+    return 0.5;
   }
 		
   double dist (const DomainType& x, const DomainType& y) const{
@@ -239,14 +240,16 @@ class U0RotCone {
 
   void velocity(double t, const DomainType &x, DomainType &res) const{
     
-    res = 0.0;
-
+    res = DomainType(0.17);
+    res[0]=0.75;
+    /*
     if(dimDomain == 1)
       res[0] = sin(x[0]);
     else{
       res[0] = - (x[1]-1.0);
       res[1] =   (x[0]-1.0);
     }
+    */
 
   }
 
@@ -277,19 +280,19 @@ class U0RotCone {
     DomainType x(0);
     DomainType vel(0);
 
-    // velocity(t,arg,vel);
-    
+    velocity(t,arg,vel);
+    x = vel;
+    x *= -t;
+    x += arg;
+
+    /*
     std::complex<double> z(arg[0]-1.,arg[1]-1.);
     double phi = std::arg(z);
     phi -= t;
     double r = std::abs(z);
     x[0] = cos(phi)*r + 1.0;
     x[1] = sin(phi)*r + 1.0;
-
-    // x = vel;
-    // x *= -1.0;
-    // x += arg;
-
+    */
     evaluate(x,res);
   }
 	

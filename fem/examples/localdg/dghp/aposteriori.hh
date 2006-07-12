@@ -138,20 +138,21 @@ struct TupleToPair<Pair<T,Nil> > {
 	  fRight.umv(normal,normalFRight);
 	  for(int k=0; k<dimR; ++k) {
 	    error[k] += ldet * 
-	      fabs(gLeft[k]+gRight[k]-normalFLeft[k]-normalFRight[k])*
-	      fabs(uLeft[k]-uRight[k]);
+	      fabs(gLeft[k]+gRight[k]-normalFLeft[k]-normalFRight[k]);
 	  }
 	}
       }
       return error;
     }
     template <class EntityType>
-    int computePolDeg(DiscreteFunctionType &discFunc,
+    int computePolDeg(const DiscModelType& model,
+		      DiscreteFunctionType &discFunc,
 		      const EntityType& en,
 		      int maxp,
 		      double lambda,
 		      double& projErr,
-		      bool doPAdapt=true) {
+		      bool doPAdapt,
+		      bool start) {
       discFunc.setEntity(en);
       typedef typename FunctionSpaceType::GridType GridType;
       const typename DiscreteFunctionType::FunctionSpaceType 
@@ -181,8 +182,16 @@ struct TupleToPair<Pair<T,Nil> > {
       for(int qP = 0; qP < quad.nop(); qP++) {
 	double det = quad.weight(qP) 
 	  * en.geometry().integrationElement(quad.point(qP));
-	RangeType proj = discFunc.uval(en,quad,qP,1.,int(maxOrd[0]));
-	proj -= discFunc.uval(en,quad,qP,1.,maxp);
+	RangeType proj(0);
+	if (start) 
+	  model.model().problem().
+	    evaluate(en.geometry().global(quad.point(qP)),proj);
+	else
+	  proj = discFunc.uval(en,quad,qP,1.0,maxp);
+	if (start)
+	  proj -= discFunc.uval(en,quad,qP,0.0,int(maxOrd[0]));
+	else
+	  proj -= discFunc.uval(en,quad,qP,1.0,int(maxOrd[0]));
 	projErr += proj.one_norm()*det; 
       }
       return int(maxOrd[0]);
@@ -215,6 +224,7 @@ struct TupleToPair<Pair<T,Nil> > {
   public:  
     typedef ConstDiscFSType DestinationType;
     // DGIndexSetType iset_;
+    FieldVector<int,10> padapt_num;
     GridPartType& part_;
     ConstDiscSType space_;
     DestinationType ind_;
@@ -240,7 +250,8 @@ struct TupleToPair<Pair<T,Nil> > {
       rho_("rho",space_),
       lambda_("lambda",space_),
       maxPol_("PolDeg",space_),
-      maxPolNew_("PolDeg",space_) {
+      maxPolNew_("PolDeg",space_),
+      padapt_num(0) {
 	typedef typename FunctionSpaceType::IteratorType IteratorType;
 	IteratorType endit = space_.end();
 	for(IteratorType it = space_.begin(); 
@@ -259,11 +270,15 @@ struct TupleToPair<Pair<T,Nil> > {
     void reset() {
       maxPol_.assign(maxPolNew_);
     }
+    int numPAdapt() {
+      return padapt_num[0]+padapt_num[1];
+    }
     template <class Adapt>
     RangeType calc (const DiscModelType& model,
 		    Adapt& adapt,
 		    DiscreteFunctionType &discFunc,
-		    double time,double dt) {
+		    double time,double dt,
+		    bool start = false) {
       typedef typename FunctionSpaceType::IteratorType IteratorType;
       const typename DiscreteFunctionType::FunctionSpaceType 
         & space = discFunc.getFunctionSpace();  
@@ -275,6 +290,7 @@ struct TupleToPair<Pair<T,Nil> > {
       IteratorType endit = space.end();
       RS_.clear();
       RT_.clear();
+      padapt_num = 0;
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
 	LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
@@ -332,24 +348,20 @@ struct TupleToPair<Pair<T,Nil> > {
 	LConstDiscFSType llam = lambda_.localFunction(*it);
 	LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
 	LConstDiscFSType lmaxPolNew = maxPolNew_.localFunction(*it);
-	llam[0] = h / pow(h + h*(lRT[0]+lRS[0])/(dt*vol),pot);
+	llam[0] = h / pow(h + h*(lRT[0]+lRS[0])/(vol*dt),pot);
 	lmaxPolNew[0] = 
-	  localRes.computePolDeg(discFunc,*it,int(lmaxPol[0]),
-				 llam[0],lRP[0],doPAdapt_);
-	double projErr = lRP[0] * lrho[0];
-	// ret += projErr;
-	if (lmaxPol[0]<lmaxPolNew[0])
-	  lmaxPol[0] = lmaxPolNew[0];
-	/*
-	if (!doPAdapt_ || fabs(llam[0])<1e-8) continue;
-	RangeType infProj;
-	localRes.element(model,discFunc,*it,time,dt,lmaxPol[0],infProj);
-	double rho = infProj.one_norm();
-	if (rho<h && lmaxPol[0] < polOrd) lmaxPol[0]++;
-	else if (rho>llam[0]) lmaxPol[0]--;
-	*/
+	  localRes.computePolDeg(model,
+				 discFunc,*it,int(lmaxPol[0]),
+				 llam[0],lRP[0],doPAdapt_,start);
+	//if (lmaxPol[0]<lmaxPolNew[0]) ;
+	  // lmaxPol[0] = lmaxPolNew[0];
+	if (polOrd>lmaxPolNew[0] || polOrd>lmaxPol[0])
+	  padapt_num[int(lmaxPolNew[0])] += 1;
 	LConstDiscFSType lind = ind_.localFunction(*it);
-	lind[0] = 2.*(lRT[0]+lRS[0]+lRP[0])*lrho[0];
+	if (start)
+	  lind[0] = lRP[0];
+	else
+	  lind[0] = 2.*(lRT[0]+lRS[0]+lRP[0])*lrho[0];
 	ret += lind[0];
 	if (adapt)
 	  adapt->addToLocalIndicator(*it,lind[0]);

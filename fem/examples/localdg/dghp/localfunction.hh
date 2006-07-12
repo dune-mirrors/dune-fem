@@ -25,15 +25,15 @@ struct LocalFuncHelper {
   void init(EntityType& en) {
     bSet_ = &(spc_.getBaseFunctionSet(en));
     numDofs_ = bSet_->numBaseFunctions();
-    dat_.resize(numDofs_);
+    dat_.resize(numDofs_);			
+  }
+  void assign(double val) {
+    for (int i=0;i<numDofs_;++i) 
+      dat_[i] = val;
   }
   void assign(const LocalFuncType& lf) {
     for (int i=0;i<numDofs_;++i) 
       dat_[i] = lf[i];
-  }
-  void assign(const double a) {
-    for (int i=0;i<numDofs_;++i) 
-      dat_[i] = a;
   }
   void addscaled(LocalFuncType& lf,double l) {
     for (int i=0;i<numDofs_;++i) 

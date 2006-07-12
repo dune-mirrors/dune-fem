@@ -59,12 +59,13 @@ solve(DiscModel& model,
       adapt->markRefineEntities();
       adapt->adapt();
       done = (error.one_norm() < adapt->getLocalInTimeTolerance());
-      std::cerr << int(done) << " " 
+      std::cerr << "   " << int(done) << " " 
 		<< error.one_norm() << " "
 		<< adapt->getLocalInTimeTolerance() << std::endl;
     }
   } while (!done);
   ResiduumErr.reset();
+  ode.project(V,ResiduumErr);
   if (adapt) {
     adapt->markCoarsenEntities();
     adapt->adapt();
@@ -81,28 +82,44 @@ void init(DiscModel& model,
   double dt;
   bool done = true;
   RangeType error(0); 
+  int padapt_num = 0;
   do {
     U.set(0);
     initialize(model.model().problem(),U);
     dt=ode.solve(U,V,ResiduumErr);
-    error =  ResiduumErr.calc(model,adapt,ode,0,dt);
+    error =  ResiduumErr.calc(model,adapt,ode,0,dt,true);
     cout << "START INDICATOR: " << dt << " " 
 	 <<  error << " " << flush;
     ode.setTime(0.);
+
     if (adapt) {
-      adapt->param().setTime(0.0);
+      adapt->param().setTime(0);
       adapt->param().setTimeStepSize(dt);
       adapt->param().setTimeStepNumber(0);
       adapt->markInitRefineEntities();
-      cout << " ADAPT " << adapt->getInitTolerance() << flush;
-      adapt->adapt();
       done = (error.one_norm() < adapt->getInitTolerance());
+      std::cerr << int(done) << " " 
+		<< error.one_norm() << " "
+		<< adapt->getInitTolerance() << std::endl;
+      adapt->adapt();
+    } else {
+      done = (padapt_num >= ResiduumErr.numPAdapt());
+      padapt_num = ResiduumErr.numPAdapt();
+      std::cout << "number of p-adaptive elements " << padapt_num << std::endl;
     }
     cout << endl;
     ResiduumErr.reset();
   } while (!done);
+  ode.setTime(0.);
   U.set(0);
   initialize(model.model().problem(),U);
+  ode.project(U,ResiduumErr);
+  double t = 0.0;
+  solve(model,ode,ResiduumErr,adapt,0,U,V,t,dt);
+  ode.setTime(0.);
+  U.set(0);
+  initialize(model.model().problem(),U);
+  ode.project(U,ResiduumErr);
 }
 
 int main(int argc, char ** argv, char ** envp) {
@@ -198,7 +215,8 @@ int main(int argc, char ** argv, char ** envp) {
     TimeDiscParamType * timeDiscParam_ = new TimeDiscParamType (0.0,0.0,0);
     AdaptationType *adaptation_ = 0;
     if (repeats == 1 && Hadapt) {
-      adaptation_ = new AdaptationType( dg.part() , *timeDiscParam_, hadapt_tol);
+      adaptation_ = new AdaptationType( dg.part() , *timeDiscParam_, hadapt_tol,
+					problem.endtime());
       adaptation_->addAdaptiveFunction(&U,&V,
 				       &(ResiduumErr.RT_),
 				       &(ResiduumErr.RS_),

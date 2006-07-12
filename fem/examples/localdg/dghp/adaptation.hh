@@ -26,10 +26,36 @@
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
+#include "localfunction.hh"
+
 namespace Dune 
 {
-
-
+/*
+template <class DiscFuncType> 
+class CoarseningError {
+  typedef typename DiscFuncType::LocalFunctionType LDiscFuncType;
+  typedef typename LDiscFuncType::BaseFunctionSetType BaseSetType;
+  typedef typename DiscFuncType::RangeType RangeType;
+  typedef typename DiscFuncType::DomainType DomainType;
+  typedef typename DiscFuncType::FunctionSpaceType FunctionSpaceType;
+  typedef typename FunctionSpaceType::GridType GridType;
+  typedef typename GridType::template Codim<0>::Entity::Geometry GeometryType;
+  template <class EntityType>
+  static void compute(const DiscFuncTye& df,
+		      const EntityType& en) {
+    const FunctionSpaceType& space = df.getFunctionSpace();  
+    const BaseSetType& bset = space.getBaseFunctionSet();
+    int quadOrd = 2 * space.polynomOrder() + 2;
+    CachingQuadrature <GridType , 0 > quad(en,quadOrd);
+    LocalFunctionHelper father(space);
+    father.init(en);
+    father.assign(0);
+    for (
+	    const GeometryType& geometryInFather = son.geometryInFather();
+  
+  }
+};
+ */
 // class that holds the parameter for time discretization, like dt, time, ...
 class TimeDiscrParam
 {
@@ -118,7 +144,7 @@ public:
 
 public:
   //! constructor
-  Adaptation (GridPartType &gridPart, TimeDiscrParamType &param,  const double tol) 
+  Adaptation (GridPartType &gridPart, TimeDiscrParamType &param,  const double tol,double T) 
     : gridPart_(gridPart) , grid_(const_cast<GridType &>(gridPart_.grid()))
     , timeDiscrParam_(param), globalTolerance_(tol)
   {
@@ -130,9 +156,9 @@ public:
     indicator_->set(0.0);
 
     // set default values
-    initialTheta_ = 0.00001;
-    coarsenTheta_ = 0.1;
-    endTime_ = M_PI;
+    initialTheta_ = 0.01;
+    coarsenTheta_ = 0.01;
+    endTime_ = T;
     alphaSigSet_ = 0.1;
 
   }
@@ -200,7 +226,7 @@ public:
       num++;
     }
     
-    std::cout << "Num El: "<< num << std::endl;
+    std::cout << "    Num El: "<< num << std::endl;
 
     return num;
   };
@@ -250,7 +276,7 @@ public:
 
     double num = calcSignificantElements();
 
-    std::cout << "Tol_Sig = " << (localInTimeTolerance_ - tolSigSet_) << "   Tol = " << localInTimeTolerance_ << 
+    std::cout << "    Tol_Sig = " << (localInTimeTolerance_ - tolSigSet_) << "   Tol = " << localInTimeTolerance_ << 
       " Num Sig El: " << num << "\n";
     localTolerance_  = (localInTimeTolerance_ - tolSigSet_)/num;
 
@@ -263,7 +289,7 @@ public:
 
     double num = calcSignificantElements();
 
-    std::cout << "Tol_Sig = " << (initialTheta_ * globalTolerance_ - tolSigSet_) << "   Tol = " << initialTheta_ * globalTolerance_ << 
+    std::cout << "   Tol_Sig = " << (initialTheta_ * globalTolerance_ - tolSigSet_) << "   Tol = " << initialTheta_ * globalTolerance_ << 
       " Num Sig El: " << num << "\n";
     localTolerance_  = (initialTheta_ * globalTolerance_ - tolSigSet_)/num;
 
@@ -303,7 +329,7 @@ public:
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
       // std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
-      if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) )
+      if( getLocalIndicator(*it) > localTolerance_ )
         grid_.mark(1, it);
       else if ( (it->level() > 4) && (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
       	grid_.mark(-1, it);
@@ -492,6 +518,7 @@ public:
  void addAdaptiveFunction(DiscFuncImp *func, DiscFuncImp2 *func2, DiscFuncImp3 *func3, 
 			  DiscFuncImp4 *func4, DiscFuncImp5 *func5, DiscFuncImp6 *func6, DiscFuncImp7 *func7, DiscFuncImp8 *func8){
   
+    typedef RestProlOperator<IndicatorDiscreteFunctionType>   RestProlImp0;   
     typedef RestProlOperator<DiscFuncImp>                     RestProlImp;   
     typedef RestProlOperator<DiscFuncImp2>                    RestProlImp2; 
     typedef RestProlOperator<DiscFuncImp3>                    RestProlImp3; 
@@ -501,6 +528,7 @@ public:
     typedef RestProlOperator<DiscFuncImp7>                    RestProlImp7; 
     typedef RestProlOperator<DiscFuncImp8>                    RestProlImp8; 
  
+    typedef AdaptOperator<GridType,RestProlImp0> AdaptOpImp0;
     typedef AdaptOperator<GridType,RestProlImp> AdaptOpImp;
     typedef AdaptOperator<GridType,RestProlImp2> AdaptOpImp2;
     typedef AdaptOperator<GridType,RestProlImp3> AdaptOpImp3;
@@ -511,7 +539,8 @@ public:
     typedef AdaptOperator<GridType,RestProlImp8> AdaptOpImp8;
  
     
-    RestProlImp *restProl;
+    RestProlImp0 *restProl0;
+    RestProlImp  *restProl;
     RestProlImp2 *restProl2;
     RestProlImp3 *restProl3;
     RestProlImp4 *restProl4;
@@ -521,7 +550,8 @@ public:
     RestProlImp8 *restProl8;
 
 
-    AdaptOpImp  *adaptOp;
+    AdaptOpImp0  *adaptOp0;
+    AdaptOpImp   *adaptOp;
     AdaptOpImp2  *adaptOp2;
     AdaptOpImp3  *adaptOp3;
     AdaptOpImp4  *adaptOp4;
@@ -531,6 +561,7 @@ public:
     AdaptOpImp8  *adaptOp8;
 
 
+    restProl0 = new RestProlImp0 ( *indicator_  );
     restProl  = new RestProlImp  ( *func  );
     restProl2 = new RestProlImp2 ( *func2 );
     restProl3 = new RestProlImp3 ( *func3 );
@@ -539,10 +570,8 @@ public:
     restProl6 = new RestProlImp6 ( *func6 );
     restProl7 = new RestProlImp7 ( *func7 );
     restProl8 = new RestProlImp8 ( *func8 );
-
-
-    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType; 
    
+    adaptOp0  = new AdaptOpImp0( grid_ , *restProl0  );
     adaptOp   = new AdaptOpImp ( grid_ , *restProl  );
     adaptOp2  = new AdaptOpImp2( grid_ , *restProl2 );
     adaptOp3  = new AdaptOpImp3( grid_ , *restProl3 );
@@ -554,7 +583,8 @@ public:
 
 
 
-    adaptMapping_ = (*adaptOp ) + (*adaptOp2) + (*adaptOp3) + (*adaptOp4) 
+    adaptMapping_ = (*adaptOp0 ) 
+      + (*adaptOp ) + (*adaptOp2) + (*adaptOp3) + (*adaptOp4) 
       + (*adaptOp5) + (*adaptOp6) + (*adaptOp7) + (*adaptOp8);
 
   };
