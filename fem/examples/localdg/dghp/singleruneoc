@@ -5,7 +5,7 @@ gridtype=ALBERTAGRID
 dimw=2
 
 grape=1
-level=0
+level=2
 repeats=1
 #grape=0
 #level=0
@@ -13,7 +13,7 @@ repeats=1
 
 probflag=0
 
-padapt=0
+padapt=1
 hadapt=0.1
 
 #make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean datadisp

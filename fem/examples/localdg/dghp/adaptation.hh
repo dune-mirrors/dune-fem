@@ -258,43 +258,28 @@ public:
   };
 
 
-  int numberOfElements (){
-    typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
-
-    int num = 0;
-
-    IteratorType endit = discFuncSpace_->end();
-    for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
-    {
-      num++;
-    }
-    
-    std::cout << "    Num El: "<< num << std::endl;
-
-    return num;
+  inline int numberOfElements (){
+    /*std::cout << "    Num El: "<< indicator_->size() << std::endl;*/
+    return indicator_->size();
   };
 
 
   int calcSignificantElements (){
-    typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
+    typedef typename IndicatorDiscreteFunctionType::DofIteratorType DofIteratorType;
 
-    int num = 0;
-
+    numSigSet_ = 1;
     tolSigSet_ = 0.0;
-  
-    IteratorType endit = discFuncSpace_->end();
-    for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+    
+    DofIteratorType endit = indicator_->dend();
+    for (DofIteratorType it = indicator_->dbegin(); it != endit; ++it)
     {
-      double help = getLocalIndicator(*it);
-      if( help < localTolerance_ * alphaSigSet_){
-	      tolSigSet_ += help;
-      }
-      else{
-	      num++;
-      }
+       double help = *it;
+       if( help < localTolerance_ * alphaSigSet_)
+	 tolSigSet_ += help;
+       else
+	 numSigSet_++;
     }
-
-    return num;
+    return numSigSet_;   
   };
 
   double getLocalInTimeTolerance (){
@@ -305,10 +290,8 @@ public:
     return localInTimeTolerance_;
   };
 
-  double getInitTolerance (){
-
+  inline double getInitTolerance (){
     return (initialTheta_ * globalTolerance_ );
-
   };
 
 
@@ -320,7 +303,7 @@ public:
     int num = calcSignificantElements();
 
     std::cout << "    Tol_Sig = " << (localInTimeTolerance_ - tolSigSet_) << "   Tol = " << localInTimeTolerance_ << 
-      " Num Sig El: " << num << "\n";
+      "  Num Sig El: " << num << "  Num El: " <<  numberOfElements() << "\n";
     if (1 || num == 0) 
       localTolerance_ = localToleranceOrig_;
     else
@@ -335,9 +318,10 @@ public:
 
     int num = calcSignificantElements();
 
-    std::cout << "   Tol_Sig = " << (initialTheta_ * globalTolerance_ - tolSigSet_) << "   Tol = " << initialTheta_ * globalTolerance_ << 
-      " Num Sig El: " << num << "\n";
-    localTolerance_  = (initialTheta_ * globalTolerance_ - tolSigSet_)/double(num);
+    std::cout << "   Tol_Sig = " << (getInitTolerance () - tolSigSet_) 
+	      << "   Tol = " << getInitTolerance () 
+	      << " Num Sig El: " << num << "\n";
+    localTolerance_  = (getInitTolerance () - tolSigSet_)/double(num);
 
     return localTolerance_;
   };
@@ -348,14 +332,15 @@ public:
     typedef typename GridType::template Codim<0>::Entity      EntityType;
     typedef typename EntityType::IntersectionIterator         IntersectionIteratorType;
     
+    int maxlevel = grid_.maxLevel();
 
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {     
-      if( (it->level() < 15) && (getLocalIndicator(*it) > localTolerance_) ){
+      if( getLocalIndicator(*it) > localTolerance_ ){
 	IntersectionIteratorType endnit = it->iend();
 	for(IntersectionIteratorType nit = it->ibegin(); nit != endnit; ++nit){
-	  if( nit.neighbor() ){
+	  if( nit.neighbor() && (nit.outside().level() >= it->level()  ) ){
 	    grid_.mark(1,nit.outside());
 	  }
 	}
@@ -364,7 +349,7 @@ public:
 
     return;
     
-  };
+  };  
 
   void markEntities (){
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
@@ -390,18 +375,39 @@ public:
   void markInitRefineEntities (){
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
  
+    
+    double tolSigSetPlusMaxlevel = tolSigSet_;
+    int maxlevel = grid_.maxLevel();
+    int num = 0;
+
     getInitLocalTolerance();
 
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
       //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
-      if( (getLocalIndicator(*it) > localTolerance_) )
-        grid_.mark(1, it);
+      double help = getLocalIndicator(*it);
+      if( (help > localTolerance_) ){
+	if ( it->level() == maxlevel){
+	  tolSigSetPlusMaxlevel += help;
+	  num++;
+	}
+	grid_.mark(1, it);
+
+      }
       else
 	grid_.mark(0, it);
     }
 
+    if( (tolSigSetPlusMaxlevel < (alphaSigSet_ * getInitTolerance ())) && (num < numSigSet_*alphaSigSet_) ){
+      std::cout << "    Init: AVOID MAXLEVEL REFINEMENT ... " << "\n";
+      IteratorType endit = discFuncSpace_->end();
+      for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+	{
+	  if ( it->level() == maxlevel)
+	      grid_.mark(0, it);
+	}
+    }
 
     markNeighbours ();
 
@@ -411,20 +417,41 @@ public:
 
   void markRefineEntities (){
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
-    
+     
+    double tolSigSetPlusMaxlevel = tolSigSet_;
+    int maxlevel = grid_.maxLevel();
+    int num = 0;
+
     getLocalTolerance();
+    std::cout << "    LocalRef: MARK FOR REFINEMENT ...   MaxLevel = " << maxlevel << "\n";
 
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
       //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
-      if( (getLocalIndicator(*it) > localTolerance_) )
+      double help = getLocalIndicator(*it);
+      if( (help > localTolerance_) ){
+	if ( it->level() == maxlevel){
+	  tolSigSetPlusMaxlevel += help;
+	  num++;
+	}
         grid_.mark(1, it);
+      }
       else
 	grid_.mark(0, it);
     }
 
-    markNeighbours ();
+    if( (tolSigSetPlusMaxlevel < (alphaSigSet_ * localInTimeTolerance_)) && (num < numSigSet_*alphaSigSet_*2) ){
+      std::cout << "    LocalRef: AVOID MAXLEVEL REFINEMENT ... " << "\n";
+      IteratorType endit = discFuncSpace_->end();
+      for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
+	{
+	  if ( it->level() == maxlevel)
+	      grid_.mark(0, it);
+	}
+    }
+    else
+      markNeighbours ();
 
     return;
     
@@ -674,6 +701,7 @@ private:
 
   double alphaSigSet_;
   double tolSigSet_;
+  int    numSigSet_;
 
   //! timestep size in time discretization parameters und endTime 
   TimeDiscrParamType & timeDiscrParam_;
