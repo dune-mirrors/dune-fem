@@ -268,6 +268,7 @@ public:
     typedef typename IndicatorDiscreteFunctionType::DofIteratorType DofIteratorType;
 
     numSigSet_ = 1;
+    tolSigSetInv_ = 0.0;
     tolSigSet_ = 0.0;
     
     DofIteratorType endit = indicator_->dend();
@@ -275,9 +276,11 @@ public:
     {
        double help = *it;
        if( help < localTolerance_ * alphaSigSet_)
+	 tolSigSetInv_ += help;
+       else{
 	 tolSigSet_ += help;
-       else
-	 numSigSet_++;
+	 numSigSet_++;	 
+       }
     }
     return numSigSet_;   
   };
@@ -302,12 +305,12 @@ public:
 
     int num = calcSignificantElements();
 
-    std::cout << "    Tol_Sig = " << (localInTimeTolerance_ - tolSigSet_) << "   Tol = " << localInTimeTolerance_ << 
+    std::cout << "    Tol_Sig = " << (localInTimeTolerance_ - tolSigSetInv_) << "   Tol = " << localInTimeTolerance_ << 
       "  Num Sig El: " << num << "  Num El: " <<  numberOfElements() << "\n";
     if (1 || num == 0) 
       localTolerance_ = localToleranceOrig_;
     else
-      localTolerance_  = (localInTimeTolerance_ - tolSigSet_)/double(num);
+      localTolerance_  = (localInTimeTolerance_ - tolSigSetInv_)/double(num);
 
     return localTolerance_;
   };
@@ -318,10 +321,10 @@ public:
 
     int num = calcSignificantElements();
 
-    std::cout << "   Tol_Sig = " << (getInitTolerance () - tolSigSet_) 
+    std::cout << "   Tol_Sig = " << (getInitTolerance () - tolSigSetInv_) 
 	      << "   Tol = " << getInitTolerance () 
 	      << " Num Sig El: " << num << "\n";
-    localTolerance_  = (getInitTolerance () - tolSigSet_)/double(num);
+    localTolerance_  = (getInitTolerance () - tolSigSetInv_)/double(num);
 
     return localTolerance_;
   };
@@ -376,7 +379,7 @@ public:
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
  
     
-    double tolSigSetPlusMaxlevel = tolSigSet_;
+    double tolSigSetPlusMaxlevel = tolSigSetInv_;
     int maxlevel = grid_.maxLevel();
     int num = 0;
 
@@ -418,7 +421,8 @@ public:
   void markRefineEntities (){
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
      
-    double tolSigSetPlusMaxlevel = tolSigSet_;
+    double tolMaxlevel = 0.0;
+    double tolRest = 0.0;
     int maxlevel = grid_.maxLevel();
     int num = 0;
 
@@ -432,16 +436,18 @@ public:
       double help = getLocalIndicator(*it);
       if( (help > localTolerance_) ){
 	if ( it->level() == maxlevel){
-	  tolSigSetPlusMaxlevel += help;
+	  tolMaxlevel += help;
 	  num++;
 	}
+	else
+	  tolRest += help;
         grid_.mark(1, it);
       }
       else
 	grid_.mark(0, it);
     }
 
-    if( (tolSigSetPlusMaxlevel < (alphaSigSet_ * localInTimeTolerance_)) && (num < numSigSet_*alphaSigSet_*2) ){
+    if( ( (tolMaxlevel + tolSigSetInv_ + (tolSigSet_ - tolMaxlevel)*0.25) < localInTimeTolerance_) ){
       std::cout << "    LocalRef: AVOID MAXLEVEL REFINEMENT ... " << "\n";
       IteratorType endit = discFuncSpace_->end();
       for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
@@ -450,8 +456,8 @@ public:
 	      grid_.mark(0, it);
 	}
     }
-    else
-      markNeighbours ();
+    // else
+    //  markNeighbours ();
 
     return;
     
@@ -701,6 +707,7 @@ private:
 
   double alphaSigSet_;
   double tolSigSet_;
+  double tolSigSetInv_;
   int    numSigSet_;
 
   //! timestep size in time discretization parameters und endTime 
