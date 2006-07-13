@@ -6,6 +6,7 @@
 #include <string>
 
 // Dune includes
+#include <dune/fem/pass/tuples.hh>
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 
