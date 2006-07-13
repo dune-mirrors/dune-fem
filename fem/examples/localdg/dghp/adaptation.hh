@@ -30,32 +30,74 @@
 
 namespace Dune 
 {
-/*
 template <class DiscFuncType> 
-class CoarseningError {
+struct CoarseningError {
   typedef typename DiscFuncType::LocalFunctionType LDiscFuncType;
   typedef typename LDiscFuncType::BaseFunctionSetType BaseSetType;
   typedef typename DiscFuncType::RangeType RangeType;
   typedef typename DiscFuncType::DomainType DomainType;
   typedef typename DiscFuncType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType::GridType GridType;
+  typedef typename GridType::template Codim<0>::Entity EntityType;
   typedef typename GridType::template Codim<0>::Entity::Geometry GeometryType;
-  template <class EntityType>
-  static void compute(const DiscFuncTye& df,
-		      const EntityType& en) {
+  static bool compute(const DiscFuncType& df,
+		      const EntityType& father,
+		      RangeType& error) {
+    error = 0.;
     const FunctionSpaceType& space = df.getFunctionSpace();  
-    const BaseSetType& bset = space.getBaseFunctionSet();
-    int quadOrd = 2 * space.polynomOrder() + 2;
-    CachingQuadrature <GridType , 0 > quad(en,quadOrd);
-    LocalFunctionHelper father(space);
-    father.init(en);
-    father.assign(0);
-    for (
-	    const GeometryType& geometryInFather = son.geometryInFather();
-  
+    const BaseSetType& bset = space.getBaseFunctionSet(father);
+    int polOrd = space.polynomOrder();
+    int quadOrd = 2 * polOrd + 2;
+    CachingQuadrature <GridType , 0 > quad(father,quadOrd);
+    LocalFuncHelper<LDiscFuncType> ldffather(space);
+    ldffather.init(father);
+    ldffather.assign(0);
+    RangeType u(0.0);
+    RangeType v(0.0);
+    RangeType phi(0.0);
+    if(!father.isLeaf()) {
+      typedef typename EntityType::HierarchicIterator HierarchicIterator;
+      { // set function in father
+	HierarchicIterator it = father.hbegin( father.level() + 1 );
+	HierarchicIterator endit = father.hend  ( father.level() + 1 );
+	double invdet = 1./father.geometry().integrationElement(DomainType(0.));
+	for( ; it != endit; ++it) {
+	  if (!(it->isLeaf())) return false;
+	  LDiscFuncType ldfson = df.localFunction(*it);
+	  const GeometryType& geometryInFather = it->geometryInFather();
+	  for(int qP = 0; qP < quad.nop(); ++qP) {
+	    double det = quad.weight(qP)
+	      * it->geometry().integrationElement(quad.point(qP)) * invdet;
+	    ldfson.evaluate(*it,quad,qP,u);
+	    DomainType x = geometryInFather.global(quad.point(qP));
+	    for (int i=0;i<ldffather.numDofs();++i) {
+	      bset.eval(i,quad,qP,phi);
+	      ldffather[i] += det * (u * phi);
+	    }
+	  }
+	}
+      }
+      { // compute error
+ 	HierarchicIterator it = father.hbegin( father.level() + 1 );
+	HierarchicIterator endit = father.hend  ( father.level() + 1 );
+	for( ; it != endit; ++it) {
+	  LDiscFuncType ldfson = df.localFunction(*it);
+	  const GeometryType& geometryInFather = it->geometryInFather();
+	  for(int qP = 0; qP < quad.nop(); ++qP) {
+	    double det = quad.weight(qP)
+	      * it->geometry().integrationElement(quad.point(qP));
+	    ldfson.evaluate(*it,quad,qP,u);
+	    DomainType x = geometryInFather.global(quad.point(qP));
+	    ldffather.evaluateLocal(father,x,polOrd,v);
+	    v -= u;
+	    error += det*v.one_norm();
+	  }
+	}
+      }
+    }
+    return true;
   }
 };
- */
 // class that holds the parameter for time discretization, like dt, time, ...
 class TimeDiscrParam
 {
@@ -107,6 +149,7 @@ public:
 
   // discrete function type of adaptive functions
   typedef DiscFuncType                                      DiscreteFunctionType;
+  typedef typename DiscFuncType::RangeType                  RangeType;
   typedef typename DiscreteFunctionType::FunctionSpaceType  DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::GridType      GridType;
   typedef typename DiscreteFunctionSpaceType::GridPartType  GridPartType;
@@ -157,7 +200,7 @@ public:
 
     // set default values
     initialTheta_ = 0.01;
-    coarsenTheta_ = 0.01;
+    coarsenTheta_ = 0.2;
     endTime_ = T;
     alphaSigSet_ = 0.1;
 
@@ -244,10 +287,10 @@ public:
     {
       double help = getLocalIndicator(*it);
       if( help < localTolerance_ * alphaSigSet_){
-	tolSigSet_ += help;
+	      tolSigSet_ += help;
       }
       else{
-	num++;
+	      num++;
       }
     }
 
@@ -272,26 +315,29 @@ public:
   double getLocalTolerance (){
 
     getLocalInTimeTolerance ();
-    localTolerance_ = localInTimeTolerance_ / numberOfElements();
+    localToleranceOrig_ = localInTimeTolerance_ / numberOfElements();
 
-    double num = calcSignificantElements();
+    int num = calcSignificantElements();
 
     std::cout << "    Tol_Sig = " << (localInTimeTolerance_ - tolSigSet_) << "   Tol = " << localInTimeTolerance_ << 
       " Num Sig El: " << num << "\n";
-    localTolerance_  = (localInTimeTolerance_ - tolSigSet_)/num;
+    if (1 || num == 0) 
+      localTolerance_ = localToleranceOrig_;
+    else
+      localTolerance_  = (localInTimeTolerance_ - tolSigSet_)/double(num);
 
     return localTolerance_;
   };
 
   double getInitLocalTolerance (){
 
-    localTolerance_ =  initialTheta_ * globalTolerance_  / numberOfElements();
+    localToleranceOrig_ =  initialTheta_ * globalTolerance_  / numberOfElements();
 
-    double num = calcSignificantElements();
+    int num = calcSignificantElements();
 
     std::cout << "   Tol_Sig = " << (initialTheta_ * globalTolerance_ - tolSigSet_) << "   Tol = " << initialTheta_ * globalTolerance_ << 
       " Num Sig El: " << num << "\n";
-    localTolerance_  = (initialTheta_ * globalTolerance_ - tolSigSet_)/num;
+    localTolerance_  = (initialTheta_ * globalTolerance_ - tolSigSet_)/double(num);
 
     return localTolerance_;
   };
@@ -383,8 +429,8 @@ public:
     return;
     
   };
-
-  void markCoarsenEntities (){
+  template <class DFType,class RhoType>
+  void markCoarsenEntities (DFType& df,RhoType& rho) {
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
     
     getLocalTolerance();
@@ -392,9 +438,16 @@ public:
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
-      //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
-      if ( (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
-      	grid_.mark(-1, it);
+      double localInd = getLocalIndicator(*it);
+      if ( (localInd < coarsenTheta_ * localTolerance_) ) {
+	RangeType cerror(0);
+	bool leafs = CoarseningError<DFType>::compute(df,*(it->father()),cerror);
+	if (leafs) {
+	  double cInd = cerror.one_norm() * rho.localFunction(*it)[0] ;
+	  if (localInd+cInd < coarsenTheta_ * localTolerance_)
+	    grid_.mark(-1, it);
+	}
+      }
       else
 	grid_.mark(0, it);
     }
@@ -614,6 +667,7 @@ private:
   //! parameters for adaptation
   double globalTolerance_;
   double localInTimeTolerance_;
+  double localToleranceOrig_;
   double localTolerance_;
   double coarsenTheta_;
   double initialTheta_;

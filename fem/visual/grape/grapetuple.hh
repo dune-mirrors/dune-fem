@@ -95,7 +95,7 @@ struct GrapeTuple {
   typedef typename TupType::Type2 T2;
   typedef typename GrapeTupleHelper<T1,T2,0>::ReturnType ReturnType;
   template <class DataIO,class GridType>
-  static ReturnType* input(DataIO& dataio,GridType*& grid,double t,int n,
+  static ReturnType* input(DataIO& dataio,GridType*& grid,double& t,int n,
 			   const char* path,
 			   std::string name) {
     grid = new GridType();
@@ -114,12 +114,15 @@ struct GrapeTuple {
     std::cout << "Reading data from " << dname << std::endl;
     ReturnType* ret =
       new ReturnType(GrapeTupleHelper<T1,T2,0>::input(dataio,dname,n,*grid));
+    std::cout << "Reading Dof Manager" << std::endl;
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DMFactoryType;
     std::string dmname;
     dmname = gname + "_dm";
     DMFactoryType::getDofManager(*grid);
+    std::cout << "    from file " << dmname << std::endl;
     DMFactoryType::readDofManager(*grid,dmname,n);
+    std::cout << "    FINISHED!" << std::endl;
     return ret;
   }
   template <class DataIO,class GridType>

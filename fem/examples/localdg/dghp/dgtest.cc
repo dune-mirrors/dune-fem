@@ -12,9 +12,6 @@
 #include <dune/fem/io/file/grapedataio.hh>
 #include <dune/fem/space/common/boundary.hh>
 
-#include <iostream>
-#include <string>
-#include <sstream>
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #include <dune/fem/visual/grape/grapetuple.hh>
 #include <dune/common/timer.hh>
@@ -41,7 +38,8 @@ solve(DiscModel& model,
       Adapt* adapt,
       int counter,
       DestinationType& U,DestinationType& V,
-      double& t,double& dt) {
+      double& t,double& dt,
+      bool doCoarsen=true) {
   typedef typename DestinationType::RangeType RangeType;
   double t0 = t;
   bool done = true;
@@ -66,8 +64,8 @@ solve(DiscModel& model,
   } while (!done);
   ResiduumErr.reset();
   ode.project(V,ResiduumErr);
-  if (adapt) {
-    adapt->markCoarsenEntities();
+  if (doCoarsen && adapt) {
+    adapt->markCoarsenEntities(V,ResiduumErr.rho_);
     adapt->adapt();
   }
   return error;
@@ -115,7 +113,7 @@ void init(DiscModel& model,
   initialize(model.model().problem(),U);
   ode.project(U,ResiduumErr);
   double t = 0.0;
-  solve(model,ode,ResiduumErr,adapt,0,U,V,t,dt);
+  solve(model,ode,ResiduumErr,adapt,0,U,V,t,dt,false);
   ode.setTime(0.);
   U.set(0);
   initialize(model.model().problem(),U);

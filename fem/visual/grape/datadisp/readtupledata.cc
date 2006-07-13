@@ -38,9 +38,11 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
 
   GrapeTuple<GR_DiscFuncType>::ReturnType* tup = 
     GrapeTuple<GR_DiscFuncType>::input(dataIO,grid,time,ntime,path,fn);
+  std::cout << "Finished reading grid" << std::endl;
   
-  // GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
-  GrapeDispType * disp = new GrapeDispType ( tup->first()->getFunctionSpace().gridPart(), myRank );  
+  GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
+  //GrapeDispType * disp = 
+  //  new GrapeDispType ( tup->first()->getFunctionSpace().gridPart(), myRank );  
   dispStack.push(disp);
   GrapeTuple<GR_DiscFuncType>::addToDisplay(*disp,dinf,time,*tup);
 

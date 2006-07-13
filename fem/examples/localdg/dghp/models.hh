@@ -1,6 +1,10 @@
 #undef HAVE_MPI
 #undef HAVE_MPI_CPP
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <vector> 
 // #include <dune/grid/yaspgrid.hh>
 // #include <dune/grid/sgrid.hh>
 // #include <dune/grid/albertagrid.hh>

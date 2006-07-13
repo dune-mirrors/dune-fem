@@ -15,7 +15,7 @@ struct LocalFuncHelper {
   JacobianRangeType tmpJRT_,tmpGrad_;
   RangeType tmpRT_;
   int numDofs_;
-  vector<double> dat_;
+  std::vector<double> dat_;
   /****************/
   LocalFuncHelper(const DiscreteFunctionSpaceType& spc) :
     spc_(spc),
@@ -58,6 +58,22 @@ struct LocalFuncHelper {
         bSet_->eval(i, quad,l, tmpRT_);
         for (int l = 0; l < dimRange; ++l) {
   	      comp[i][l] = dat_[i] * tmpRT_[l];
+        }
+      }
+    }
+  }
+  template <class EntityType>
+  void evaluateLocal(const EntityType& en,
+		     const DomainType& x,
+		     int maxp,
+		     RangeType & ret) {
+    ret    = 0.0;
+    tmpRT_ = 0.0;
+    for (int i = 0; i < numDofs_; ++i) {
+      if (i<numPol[maxp]) {
+        bSet_->eval(i, x, tmpRT_);
+	for (int l = 0; l < dimRange; ++l) {
+	  ret[l] += dat_[i] * tmpRT_[l];
         }
       }
     }
