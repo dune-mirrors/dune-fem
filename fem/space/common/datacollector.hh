@@ -184,9 +184,13 @@ class DummyObjectStream
   public:
     class EOFException {} ;
     template <class T>
+    void read (T &) const { assert(false); abort(); }
+    template <class T>
     void readObject (T &) { assert(false); abort(); }
     void readObject (int) { assert(false); abort(); }
     void readObject (double) { assert(false); abort(); }
+    template <class T>
+    void write (const T &) { assert(false);abort(); }
     template <class T>
     void writeObject (T &) { assert(false);abort(); }
     void writeObject (int) { assert(false);abort(); }
