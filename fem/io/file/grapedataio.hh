@@ -5,10 +5,12 @@
 
 //- Dune includes 
 #include <dune/common/misc.hh>
-#include <dune/common/capabilities.hh>
+#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
+
 #include <dune/fem/space/common/dofmanager.hh>
+
 
 //- Local includes 
 #include "asciiparser.hh"
@@ -343,7 +345,7 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
   {
     const char *path = "";
     std::fstream file (fnprefix.c_str(),std::ios::out);
-    file << "Grid: "   << transformToGridName(grid.type()) << std::endl;
+    file << "Grid: "   << grid.name() << std::endl;
     file << "Format: " << ftype <<  std::endl;
     file << "Precision: " << precision << std::endl;
     int writeDm = (hasDm)? 1 : 0;
@@ -381,9 +383,9 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
   readParameter(fnprefix,"Grid",gridname);
   std::string gname (gridname);
 
-  if(transformToGridName(grid.type()) != gname)
+  if(grid.name() != gname)
   {
-    std::cerr << "\nERROR: " << transformToGridName(grid.type()) << " tries to read " << gname << " file. \n";
+    std::cerr << "\nERROR: " << grid.name() << " tries to read " << gname << " file. \n";
     abort();
   }
 
@@ -455,7 +457,6 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     file << "Format: " << ftype << std::endl;
     file << "Precision: " << precision << std::endl;
     file << "Polynom_order: " << df.getFunctionSpace().polynomOrder() << std::endl;
-    file << "DataBase: " << df.name() << std::endl;
     file.close();
   }
 
