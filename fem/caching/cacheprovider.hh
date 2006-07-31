@@ -6,7 +6,7 @@
 
 //- Dune includes
 #include <dune/common/misc.hh>
-#include <dune/grid/utility/structureutility.hh>
+#include <dune/grid/common/capabilities.hh>
 
 //- Local includes
 #include "pointmapper.hh"
@@ -154,7 +154,7 @@ namespace Dune {
       MapperIteratorType it = mappers_.find(quad.id());
 
       if (it == mappers_.end()) {
-        Int2Type<IsUnstructured<GridImp::dimension,GridImp::dimensionworld,GridImp>::value> i2t;
+        Int2Type< Capabilities::IsUnstructured<GridImp>::v> i2t;
         it = CacheProvider<GridImp, 1>::createMapper(quad, 
                                                      elementGeometry, 
                                                      i2t);
@@ -166,7 +166,7 @@ namespace Dune {
   private:
     typedef CacheStorage<
       ct, dim-codim,
-      IsUnstructured<GridImp::dimension,GridImp::dimensionworld,GridImp>::value> 
+       Capabilities::IsUnstructured<GridImp>::v> 
         CacheStorageType; 
     typedef typename Traits::MapperVectorType MapperVectorType;
     typedef std::map<size_t, CacheStorageType> MapperContainerType;
