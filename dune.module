@@ -1,5 +1,5 @@
 Module: dune_fem
-Depends: dune_common dune_grid
+Depends: dune-common dune-grid
 
 run_configure () {
   run_default_configure "$@"
