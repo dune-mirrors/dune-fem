@@ -3,7 +3,6 @@
 
 //- Dune includes
 #include <dune/common/misc.hh>
-#include <dune/grid/utility/structureutility.hh>
 
 //- Local includes
 #include "elementquadrature.hh"
