@@ -28,6 +28,27 @@ public:
   enum { ncodim = GridType::dimension + 1 };
 
   enum INDEXSTATE { NEW, USED, UNUSED };
+
+  template <class CodimLeafSet,class HIndexSet, int codim>
+  struct SubIndex
+  {
+    template <class EntityType> 
+    static int subIndex(CodimLeafSet & lset, HIndexSet & hset, const EntityType & en) 
+    {
+      return 0;
+    }
+  };
+  
+  template <class CodimLeafSet,class HIndexSet>
+  struct SubIndex<CodimLeafSet,HIndexSet,0>
+  {
+    template <class EntityType> 
+    static int subIndex(CodimLeafSet & lset, HIndexSet & hset, const EntityType & en) 
+    {
+      return lset.index( hset.index( en ) );
+    }
+  };
+  
 private:
 
   //! type of this class 
@@ -109,10 +130,7 @@ public:
   {
     // this IndexWrapper provides specialisations for each codim 
     // see this class above 
-    // assert( cd == 0 ); // only set for codim 0
-    if (cd == 0) 
-      return codimLeafSet_.index( hIndexSet_.index( en ) );
-    else return 0;
+    return SubIndex<CodimLeafIndexSet,HIndexSetType,cd>::subIndex(codimLeafSet_,hIndexSet_,en);
   }
 
   //! return size of grid entities per level and codim 
