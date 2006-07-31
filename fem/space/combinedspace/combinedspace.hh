@@ -66,6 +66,7 @@ namespace Dune {
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     typedef typename ContainedSpaceTraits::GridType GridType;
+    typedef typename ContainedSpaceTraits::GridPartType GridPartType;
     typedef typename ContainedSpaceTraits::IndexSetType IndexSetType;
     typedef typename ContainedSpaceTraits::IteratorType IteratorType;
 
@@ -114,6 +115,7 @@ namespace Dune {
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
     typedef typename Traits::MapperType MapperType;
     typedef typename Traits::GridType GridType;
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::IndexSetType IndexSetType;
 
     typedef typename Traits::DofConversionType DofConversionType;
@@ -167,6 +169,11 @@ namespace Dune {
 
     //! access to grid
     const GridType& grid() const { return spc_.grid(); }
+    
+    //! access to gridPart
+    GridPartType& gridPart() { return spc_.gridPart(); }
+    //! access to gridPart
+    const GridPartType& gridPart() const { return spc_.gridPart(); }
 
     const IndexSetType& indexSet() const { return spc_.indexSet(); }
 
