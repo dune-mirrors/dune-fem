@@ -76,6 +76,9 @@ namespace Dune {
     typedef DiscontinuousGalerkinBaseFunctionFactory<
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
+    typedef DofManager<typename Traits::GridType> DofManagerType;
+    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType::DimRange };
 
@@ -92,11 +95,10 @@ namespace Dune {
       BaseType (DGFSpaceId),
       gridPart_(gridPart),
       mapper_(0),
-      baseFuncSet_(MaxNumElType, 0)
+      baseFuncSet_(MaxNumElType, 0),
+      dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
     {
       // add index set to list of indexset of dofmanager 
-      typedef DofManager<typename Traits::GridType> DofManagerType;
-      typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
       typedef typename Traits::GridPartType::IndexSetType IndexSetType;
       DofManagerType & dm = 
         DofManagerFactoryType::getDofManager(gridPart.grid());
@@ -127,6 +129,8 @@ namespace Dune {
       assert( mapper_ );
     }
 
+    //! returns index of sequence in grid sequences 
+    int sequence () const { return dm_.sequence(); }
     
     /** Destructor */
     virtual ~DiscontinuousGalerkinSpaceBase () {
@@ -254,6 +258,8 @@ namespace Dune {
 
     // vector of base function sets
     std::vector<const BaseFunctionSetType*> baseFuncSet_;
+
+    const DofManagerType & dm_;
   };
 
   //********************************************************
@@ -372,6 +378,7 @@ namespace Dune {
       
       return space;
     }
+
   };
 
   template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp = SimpleStorage >

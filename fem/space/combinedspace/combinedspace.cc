@@ -9,7 +9,8 @@ namespace Dune {
     BaseType(spaceId_),
     spc_(spc),
     mapper_(spc_, spc_.mapper()),
-    baseSetVec_(GeometryIdentifier::numTypes, 0)
+    baseSetVec_(GeometryIdentifier::numTypes, 0),
+    dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
   {
     // get types for codim 0  
     const std::vector<GeometryType>& geomTypes =

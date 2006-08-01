@@ -102,6 +102,9 @@ namespace Dune {
     typedef CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> Traits;
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
     
+    typedef DofManager<typename Traits::GridType> DofManagerType;
+    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+
     typedef typename Traits::IteratorType IteratorType;
 
     typedef typename Traits::RangeType RangeType;
@@ -184,6 +187,8 @@ namespace Dune {
     //! number of components
     int numComponents() const { return N; }
 
+    int sequence () const { return dm_.sequence(); }
+
     //! policy of this space
     DofStoragePolicy myPolicy() const{ return DofConversionType::policy(); }
   private:
@@ -209,6 +214,8 @@ namespace Dune {
     std::vector<BaseFunctionSetType*> baseSetVec_;
 
     static const int spaceId_;
+
+    const DofManagerType & dm_;
 
   }; // end class CombinedSpace  
 
