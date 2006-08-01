@@ -836,6 +836,7 @@ class DofManError : public Exception {};
  created. The default value for the IndexSet is the DefaultIndexSet class
  which is mostly a wrapper for the grid indices. 
 */
+// --DofManager 
 template <class GridImp> 
 class DofManager : public IsDofManager 
 {
@@ -895,6 +896,9 @@ private:
 
   //! if chunk size if small then defaultChunkSize is used 
   const int defaultChunkSize_; 
+
+  //! number of sequence, incremented every resize is called
+  int sequence_; 
   
 public: 
   typedef IndexSetRestrictProlong< MyType , LocalIndexSetObjectsType > IndexSetRestrictProlongType;
@@ -907,6 +911,7 @@ private:
     : grid_(grid) 
     , chunkSize_ (100)
     , defaultChunkSize_(100) 
+    , sequence_(0)
     , indexRPop_( *this, insertIndices_ , removeIndices_ ) 
   {}
 
@@ -1009,9 +1014,15 @@ public:
     resizeMemObjs_.apply ( chunkSize_ );
   }
 
+  //! return number of sequence 
+  int sequence () const { return sequence_; }
+
   //! resize indexsets memory due to what the mapper has as new size 
   void resize()
   {
+    // new number in grid series 
+    ++sequence_;
+
     IndexListIteratorType endit = indexList_.end();
     for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
     {
