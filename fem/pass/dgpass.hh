@@ -60,12 +60,13 @@ namespace Dune {
 
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     // Types extracted from the underlying grids
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
     typedef typename GridType::template Codim<0>::Geometry Geometry;
 
 
@@ -94,6 +95,7 @@ namespace Dune {
       arg_(0),
       dest_(0),
       spc_(spc),
+      gridPart_(spc_.gridPart()),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       valEn_(0.0),
@@ -196,13 +198,15 @@ namespace Dune {
              bsetEn.evaluateSingle(i, volQuad, l, source_))*intel;
         }
       }
-      // Surface integral part
-      IntersectionIterator endnit = en.iend();
 
+      
+      // Surface integral part
       double dtLocal = 0.0;
       double minvol = vol; 
       double nbvol;
-      for (IntersectionIterator nit = en.ibegin(); nit != endnit; ++nit) 
+
+      IntersectionIteratorType endnit = gridPart_.iend(en);
+      for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
       {
       	double wspeedS = 0.0;
 	      int twistSelf = twistUtil_.twistInSelf(nit); 
@@ -310,6 +314,8 @@ namespace Dune {
     mutable DestinationType* dest_;
 
     DiscreteFunctionSpaceType& spc_;
+    const GridPartType & gridPart_;
+
     mutable double dtMin_;
   
     //! Some helper variables
