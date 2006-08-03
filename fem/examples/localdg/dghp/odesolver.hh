@@ -150,7 +150,7 @@ public:
   void ucomponents(const EntityType& en,
 		   const QuadratureType& quad,int l,double t,
 		   std::vector<RangeType>& comp) const {
-    assert(0<t && t<=1.);
+    assert(0<=t && t<=1.);
     RangeType ret(0);
     double coeff[ord_];
     timecoeff(t,coeff);
@@ -164,7 +164,7 @@ public:
   RangeType uval(const EntityType& en,
 		 const QuadratureType& quad,int l,double t,
 		 int maxp) const {
-    assert(0<t && t<=1.);
+    assert(0<=t && t<=1.);
     RangeType ret(0);
     double coeff[ord_];
     timecoeff(t,coeff);

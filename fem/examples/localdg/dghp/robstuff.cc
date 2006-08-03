@@ -61,6 +61,70 @@ public:
 
     return error;
   }
+  template <class FunctionType,class ResType> 
+  RangeType norm (FunctionType &f, DiscreteFunctionType &discFunc,
+		  double time = 0.0,
+		  ResType& res)
+  {
+    const typename DiscreteFunctionType::FunctionSpaceType 
+        & space = discFunc.getFunctionSpace();  
+
+    int polOrd = 2 * space.polynomOrder() + 2;
+  
+    typedef typename FunctionSpaceType::GridType GridType;
+    typedef typename FunctionSpaceType::IteratorType IteratorType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+   
+    RangeType ret (0.0);
+    RangeType phi (0.0);
+
+    RangeType error(0.0);
+    
+    IteratorType it    = space.begin();
+    IteratorType endit = space.end();
+
+    // check whether grid is empty 
+    assert( it != endit ); 
+    
+    CachingQuadrature <GridType , 0 > quad(*it,polOrd);
+		
+    enum { dimR = RangeType :: dimension };
+    
+    res.set(0);
+    typedef typename ResType::LocalFunctionType LResType;
+
+    for(; it != endit ; ++it)
+    {
+      LocalFuncType lf = discFunc.localFunction(*it); 
+      RangeType locerr(0);
+      for(int qP = 0; qP < quad.nop(); qP++)
+      {
+	double vol = pow(0.5,it->level()*0.5);
+        double det = quad.weight(qP) * vol; 
+	// quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
+        f.evaluate(time,(*it).geometry().global(quad.point(qP)), ret);
+        lf.evaluate((*it),quad,qP,phi);
+        for(int k=0; k<dimR; ++k) {
+          error[k] += det * fabs(ret[k] - phi[k]);
+	  locerr[k] += det * fabs(ret[k] - phi[k]);
+	}
+	/*
+	std::cerr << det << " " <<  quad.weight(qP) << " " 
+		  << (*it).geometry().integrationElement(quad.point(qP)) << " " 
+		  <<  vol << " "
+		  << ret[0] << " " << phi[0] << std::endl;
+	*/
+      }
+      LResType lres = res.localFunction(*it);
+      std::cerr << locerr[0] << std::endl;
+      lres[0] = locerr[0];
+    }
+    
+    //for(int k=0; k<dimR; ++k)
+    //  error[k] = sqrt(error[k]);
+
+    return error;
+  }
 };
 // calculates || u-u_h ||_L1
 template <class DiscreteFunctionType> 

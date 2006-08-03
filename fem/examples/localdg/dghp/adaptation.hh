@@ -200,7 +200,7 @@ public:
 
     // set default values
     initialTheta_ = 0.01;
-    coarsenTheta_ = 0.2;
+    coarsenTheta_ = 0.25;
     endTime_ = T;
     alphaSigSet_ = 0.01;
     maxLevFlag_ = 1;
@@ -259,9 +259,9 @@ public:
   };
 
 
-  inline int numberOfElements (){
+  inline double numberOfElements (){
     /*std::cout << "    Num El: "<< indicator_->size() << std::endl;*/
-    return indicator_->size();
+    return double(grid_.size(0));
   };
 
 
@@ -281,18 +281,17 @@ public:
     {     
       double help = getLocalIndicator(*it);
       if( help < localTolerance_ * alphaSigSet_){
-	tolSigSetInv_ += help;
+	      tolSigSetInv_ += help;
       }
-      else if ( it->level() == maxlevel){
-	tolMaxLevSet_ += help;
-	numMaxLev_++;
+      if ( it->level() == maxlevel){
+	      tolMaxLevSet_ += help;
+	      numMaxLev_++;
       }
       else{
-	tolSigSet_ += help;
-	numSigSet_++;
+	      tolSigSet_ += help;
+	      numSigSet_++;
       }
     }
-
     if( (numSigSet_ > 1) && (tolMaxLevSet_ + tolSigSetInv_) < (localInTimeTolerance_ * 0.5) ){
       std::cout << "    CalcSigSet: AVOID MAXLEVEL REFINEMENT ... " << "\n";
       maxLevFlag_ = 0;
@@ -304,9 +303,19 @@ public:
       numSigSet_ += numMaxLev_;
       tolSigSet_ += tolMaxLevSet_;
     }
-
+    // maxLevFlag_ = 1;
     return numSigSet_;
-
+    double num = double(numberOfElements());
+    maxLevAlpha_=10.;
+    maxLevBeta_=(num-maxLevAlpha_*double(numMaxLev_))/(num-double(numMaxLev_));
+    std::cout << "    ALPHA: " << " " << num << " " << numMaxLev_ << " " << maxLevAlpha_ << " " << maxLevBeta_ << std::endl;
+    if (maxLevBeta_<0.25) {
+      std::cout << "     No MaxLevel FIX!!!!!!!!" << std::endl;
+      maxLevBeta_ = maxLevAlpha_ = 1.0;
+    }
+    assert(maxLevBeta_>0);
+    return numSigSet_;
+    
     /*
     typedef typename IndicatorDiscreteFunctionType::DofIteratorType DofIteratorType;
 
@@ -347,6 +356,7 @@ public:
 
     getLocalInTimeTolerance ();
     localToleranceOrig_ = localInTimeTolerance_ / numberOfElements();
+    localTolerance_ = localToleranceOrig_;
 
     int num = calcSignificantElements();
 
@@ -356,8 +366,28 @@ public:
 	      << "   Num Sig El: " << num 
 	      << "   Num El: " <<  numberOfElements() << "\n";
    
-    //localTolerance_  = (localInTimeTolerance_ - tolSigSetInv_)/double(num);
+    // localTolerance_  = (localInTimeTolerance_ - tolSigSetInv_)/double(num);
     localTolerance_ = localToleranceOrig_;
+
+    return localTolerance_;
+  };
+
+  double getLocalCrsTolerance (){
+
+    getLocalInTimeTolerance ();
+    localToleranceOrig_ = localInTimeTolerance_ / numberOfElements();
+    localTolerance_ = localToleranceOrig_;
+
+    int num = calcSignificantElements();
+
+    std::cout << "   Estimator = " <<  tolSigSetInv_ + tolSigSet_ 
+	      << "   Tol_Sig = " << (localInTimeTolerance_ - tolSigSetInv_) 
+	      << "   Tol = " << localInTimeTolerance_ 
+	      << "   Num Sig El: " << num 
+	      << "   Num El: " <<  numberOfElements() << "\n";
+   
+    localTolerance_  = (localInTimeTolerance_ - tolSigSetInv_)/double(num);
+    // localTolerance_ = localToleranceOrig_;
 
     return localTolerance_;
   };
@@ -467,13 +497,19 @@ public:
       //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
       double help = getLocalIndicator(*it);
       if( (help > localTolerance_) ){
-	if ( maxLevFlag_)
-	  grid_.mark(1, it);
-	else if (it->level() < maxlevel)
-	  grid_.mark(1, it);
+	      if ( maxLevFlag_)
+	        grid_.mark(1, it);
+	      else if (it->level() < maxlevel)
+	        grid_.mark(1, it);
       }
+      /*
+      if (it->level() == maxlevel && help > localTolerance_*maxLevAlpha_)
+        grid_.mark(1,it);
+      else if (it->level()<maxlevel && help > localTolerance_*maxLevBeta_)
+        grid_.mark(1,it);
       else
-	grid_.mark(0, it);
+	      grid_.mark(0, it);
+        */
     }
    
     return;
@@ -498,30 +534,29 @@ public:
       //std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
       double help = getLocalIndicator(*it);
       if( (help > localTolerance_) ){
-	if ( it->level() == maxlevel){
-	  tolMaxlevel += help;
-	  num++;
-	}
-	else
-	  tolRest += help;
+	      if ( it->level() == maxlevel){
+	        tolMaxlevel += help;
+	        num++;
+	      }
+	      else
+	        tolRest += help;
         grid_.mark(1, it);
       }
       else
-	grid_.mark(0, it);
+	      grid_.mark(0, it);
     }
 
     if( ( (tolMaxlevel + tolSigSetInv_ + (tolSigSet_ - tolMaxlevel)*0.25) < localInTimeTolerance_) ){
       std::cout << "    LocalRef: AVOID MAXLEVEL REFINEMENT ... " << "\n";
       IteratorType endit = discFuncSpace_->end();
       for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
-	{
-	  if ( it->level() == maxlevel)
-	      grid_.mark(0, it);
-	}
-    }
+	    {
+	      if ( it->level() == maxlevel)
+	        grid_.mark(0, it);
+	      } 
+      }
     // else
     //  markNeighbours ();
-
     return;
     
   };
@@ -530,26 +565,32 @@ public:
   template <class DFType,class RhoType>
   void markCoarsenEntities (DFType& df,RhoType& rho) {
     typedef typename IndicatorDiscFuncSpaceType::IteratorType IteratorType;
-    
-    getLocalTolerance();
+    int marked=0,wouldhave=0;
+    getLocalCrsTolerance();
 
     IteratorType endit = discFuncSpace_->end();
     for (IteratorType it = discFuncSpace_->begin(); it != endit; ++it)
     {
       double localInd = getLocalIndicator(*it);
-      if ( (localInd < coarsenTheta_ * localTolerance_) ) {
+      if ( it->level()>0 && (localInd < coarsenTheta_ * localTolerance_) ) {
 	RangeType cerror(0);
 	bool leafs = CoarseningError<DFType>::compute(df,*(it->father()),cerror);
 	if (leafs) {
 	  double cInd = cerror.one_norm() * rho.localFunction(*it)[0] ;
-	  if (localInd+cInd < coarsenTheta_ * localTolerance_)
+	  if (localInd+cInd < coarsenTheta_ * localTolerance_) {
 	    grid_.mark(-1, it);
+	    marked++;
+	  }
+	  else {
+	    grid_.mark(0, it);
+	    wouldhave++;
+	  }
 	}
       }
       else
 	grid_.mark(0, it);
     }
-
+    std::cout << "     HCOARSEN: marked = " << marked << " from = " << wouldhave+marked << std::endl;
     return;
     
   };
@@ -778,7 +819,9 @@ private:
   int    numSigSet_;
   int    numMaxLev_;
   int    maxLevFlag_;
-
+  double maxLevAlpha_;
+  double maxLevBeta_;
+    
   //! timestep size in time discretization parameters und endTime 
   TimeDiscrParamType & timeDiscrParam_;
   double endTime_;

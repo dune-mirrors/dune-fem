@@ -50,6 +50,10 @@ class U0 {
   double endtime() {
     return 0.1;
   }
+
+  double saveinterval() {
+    return 0.01;
+  }
 	 
   void velocity(double t, const DomainType &x, DomainType &res) const{
     res = velocity_;
@@ -155,11 +159,6 @@ class U0Disc : public U0<GridType> {
     this->myName = "Discontinuous AdvectDiff";
   }
 
-  double endtime() {
-    return 0.1;
-  }
-      
-	
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
   }
@@ -218,16 +217,20 @@ class U0RotCone {
   typedef FieldVector<double,1> RangeType;
   U0RotCone(double eps,int flag,bool diff_timestep=true) :
     velocity_(1.0), epsilon(eps), flag_(flag), diff_tstep(diff_timestep)  {
-    center_ = 1.0;
-    center_[0] -= 0.5;
-    center_[1] -= 0.5;
-    radius_ = 0.2;
+    center_[0] = 0.15;
+    center_[1] = 0.15;
+    radius_ = 0.1;
 
     myName = "Rotating Cone";
   }
 
   double endtime() {
-    return 0.5;
+<<<<<<< initadvectdiff.cc
+    return 5.;
+  }
+
+  double saveinterval() {
+    return 0.02;
   }
 		
   double dist (const DomainType& x, const DomainType& y) const{
@@ -240,6 +243,11 @@ class U0RotCone {
 
   void velocity(double t, const DomainType &x, DomainType &res) const{
     
+<<<<<<< initadvectdiff.cc
+    res = DomainType(0.);
+    res[0]=2.25;
+    res[1]=0.22;
+    /*
     res = DomainType(0.17);
     res[0]=0.75;
     /*
@@ -269,7 +277,7 @@ class U0RotCone {
       case 2:
         // res = 1.0 - (r*r/(radius_*radius_));
         double x = r/radius_;
-        res = pow(0.25*cos(x*M_PI)+0.25 , 4.);
+        res = 16.*pow(0.25*cos(x*M_PI)+0.25 , 4.);
         break;
       }
     }
@@ -336,7 +344,8 @@ class U0BuckLev {
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
   U0BuckLev(double eps,int flag,bool diff_timestep=true) :
-    velocity_(0.0), epsilon(eps), diff_tstep(diff_timestep)  {
+    velocity_(0.0), epsilon(eps), diff_tstep(diff_timestep),
+    flag_(flag) {
     velocity_[0] = 1.0;
 
     myName = "Buckley Leverett";
@@ -344,6 +353,10 @@ class U0BuckLev {
 
   double endtime() {
     return 0.4;
+  }
+
+  double saveinterval() {
+    return 0.02;
   }
 
   double f(double u) const {
@@ -461,16 +474,31 @@ class U0BuckLev {
   }
 
   void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0.0,arg,res); 
+    DomainType x(0.6);
+    if (flag_ == 1) {
+      x -= arg;
+      x[1] *= 0.66;
+      double r = x.two_norm();
+      if (r<0.3) 
+	res = 0.;
+      else
+	res = 1.;
+    } else
+      evaluate(0.0,arg,res); 
   }
 	
 	
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
-    double x = arg[0];
-    if (x>1.1)
-      res[0]=rp_sol(0.,1.,t,x-1.2);
-    else
-      res[0]=rp_sol(1.,0.,t,x-0.4);
+    res = 0.;
+    if (flag_ == 1)
+      return;
+    else {
+      double x = arg[0];
+      if (x>1.1)
+	res[0]=rp_sol(0.,1.,t,x-1.2);
+      else
+	res[0]=rp_sol(1.,0.,t,x-0.4);
+    }
   }
 	
   void printmyInfo(std::string filename)
@@ -486,7 +514,7 @@ class U0BuckLev {
     ofs.close();
 			
   }
-
+  int flag_;
   DomainType velocity_;
   double epsilon;
   bool diff_tstep;	

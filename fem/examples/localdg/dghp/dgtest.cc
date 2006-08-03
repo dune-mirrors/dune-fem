@@ -39,32 +39,42 @@ solve(DiscModel& model,
       int counter,
       DestinationType& U,DestinationType& V,
       double& t,double& dt,
-      bool doCoarsen=true) {
+      double& locerror,
+      bool start=false) {
   typedef typename DestinationType::RangeType RangeType;
   double t0 = t;
   bool done = true;
   RangeType error;
+  L1L1Error<ODE> L1L1err;
   do {
     ode.setTime(t0);
     t=ode.solve(U,V,ResiduumErr);
     dt = t - t0;
+    locerror = L1L1err.norm(model.model().problem(),ode,t0,dt);
     error = ResiduumErr.calc(model,adapt,ode,t0,dt);
     //! mark elements and adapt grid
     if (adapt) {
+      int old_size = ResiduumErr.part_.grid().size(0);
       adapt->param().setTime(t0);
       adapt->param().setTimeStepSize(dt);
       adapt->param().setTimeStepNumber(counter);
       adapt->markRefineEntities();
       adapt->adapt();
-      done = (error.one_norm() < adapt->getLocalInTimeTolerance());
-      std::cerr << "   " << int(done) << " " 
+      std::cout << "   " << "loop:" << counter << " " << int(done) << " " 
 		<< error.one_norm() << " "
-		<< adapt->getLocalInTimeTolerance() << std::endl;
+		<< adapt->getLocalInTimeTolerance() << " " 
+		<< ResiduumErr.numPAdapt() << "    "
+		<< old_size << " " << ResiduumErr.part_.grid().size(0) << " " 
+		<< std::endl;
+      done = (error.one_norm() < adapt->getLocalInTimeTolerance());
     }
   } while (!done);
   ResiduumErr.reset();
   ode.project(V,ResiduumErr);
-  if (doCoarsen && adapt) {
+  if (!start && adapt) {
+    adapt->param().setTime(t0);
+    adapt->param().setTimeStepSize(dt);
+    adapt->param().setTimeStepNumber(counter);
     adapt->markCoarsenEntities(V,ResiduumErr.rho_);
     adapt->adapt();
   }
@@ -81,6 +91,7 @@ void init(DiscModel& model,
   bool done = true;
   RangeType error(0); 
   int padapt_num = 0;
+  if (adapt) {
   do {
     U.set(0);
     initialize(model.model().problem(),U);
@@ -96,7 +107,7 @@ void init(DiscModel& model,
       adapt->param().setTimeStepNumber(0);
       adapt->markInitRefineEntities();
       done = (error.one_norm() < adapt->getInitTolerance());
-      std::cerr << int(done) << " " 
+      std::cout << int(done) << " " 
 		<< error.one_norm() << " "
 		<< adapt->getInitTolerance() << std::endl;
       adapt->adapt();
@@ -108,16 +119,21 @@ void init(DiscModel& model,
     cout << endl;
     ResiduumErr.reset();
   } while (!done);
+  }
   ode.setTime(0.);
   U.set(0);
   initialize(model.model().problem(),U);
+  if (adapt) {
   ode.project(U,ResiduumErr);
-  double t = 0.0;
-  solve(model,ode,ResiduumErr,adapt,0,U,V,t,dt,false);
-  ode.setTime(0.);
-  U.set(0);
-  initialize(model.model().problem(),U);
-  ode.project(U,ResiduumErr);
+  for (int i=0;i<15;i++) {
+    double t = 0.0,locerror;
+    solve(model,ode,ResiduumErr,adapt,0,U,V,t,dt,locerror,true);
+    ode.setTime(0.);
+    U.set(0);
+    initialize(model.model().problem(),U);
+    ode.project(U,ResiduumErr);
+  }
+  }
 }
 
 int main(int argc, char ** argv, char ** envp) {
@@ -152,7 +168,7 @@ int main(int argc, char ** argv, char ** envp) {
   bool Hadapt = false;
   double hadapt_tol = 0.;
   if (argc>7) {
-    hadapt_tol=atof(argv[7]);
+    hadapt_tol=atof(argv[7])*1.;
     if (hadapt_tol>1e-20) 
       Hadapt = true;
   }
@@ -193,8 +209,8 @@ int main(int argc, char ** argv, char ** envp) {
   DgType::DestinationType::RangeType err,timeerr,reserr,prevreserr;
 
   int n=0;
-  double nextsave=0.;
-  double savestep=0.05;
+  double savestep = problem.saveinterval();
+  double nextsave = savestep;
   double maxtime = problem.endtime();
   int level=0;
 	
@@ -218,7 +234,7 @@ int main(int argc, char ** argv, char ** envp) {
       adaptation_->addAdaptiveFunction(&U,&V,
 				       &(ResiduumErr.RT_),
 				       &(ResiduumErr.RS_),
-      				       &(ResiduumErr.rho_),
+      				 &(ResiduumErr.rho_),
 				       &(ResiduumErr.lambda_),
 				       &(ResiduumErr.maxPol_),
 				       &(ResiduumErr.maxPolNew_));
@@ -255,16 +271,21 @@ int main(int argc, char ** argv, char ** envp) {
     timeerr = 0.;
     err = 0.;
     reserr = 0.;
+
+    int totalsize = grid->size(0);
     
     // *** Time loop
     while (t<maxtime) 
     {
       double ldt;
+      double locerror;
       reserr += solve(eulerflux,ode,ResiduumErr,adaptation_,counter,
-		      U,V,t,ldt);
+		      U,V,t,ldt,locerror);
+      totalsize += grid->size(0);
       U.assign(V);
       ++counter;
-      if (repeats==1 && counter%50==0) {
+      if (repeats==1 && t>nextsave) {
+        nextsave += savestep;
 	outputcounter++;
         GrapeTuple<OutputType>::
 	  output(dataio,*grid,t,outputcounter,"sol",".",output);
@@ -281,12 +302,15 @@ int main(int argc, char ** argv, char ** envp) {
 	GrapeTuple<OutputType>::output(dataio,*grid,0.0,eocloop*10+1,
 				     "sol",".",output);
       } 
-      timeerr += L1L1err.norm(problem,ode,t-ldt,ldt);
+      timeerr += locerror;
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
       if (repeats==1) 
-	std::cout << counter << " " << t << " " << ldt << std::endl;
+	std::cout << counter << " " << t << " " << ldt << " "
+		  << locerror/ldt << " " << reserr << " "
+      << ResiduumErr.numPAdapt() << " "
+		  << "# time-steps" << std::endl;
     }
     
     averagedt /= double(counter);
@@ -300,7 +324,9 @@ int main(int argc, char ** argv, char ** envp) {
     cout << endl;
     fehler = err;		
     zeit = timer.elapsed()-prevzeit;
-    eocoutput.printTexAddError(fehler,prevfehler,reserr.one_norm(),prevreserr.one_norm(),zeit,grid->size(0),counter,averagedt);
+    eocoutput.printTexAddError(fehler,prevfehler,
+			       reserr.one_norm(),prevreserr.one_norm(),
+			       zeit,totalsize,counter,averagedt);
     
     outputcounter++;
     if (repeats>1) {

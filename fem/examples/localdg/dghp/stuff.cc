@@ -71,7 +71,8 @@ class LagrangeProjection
   static void lag_evaluate(int order,
 			   const FunctionType &f,
 			   const EntityType& en,
-			   const DomainType& x,RangeType& ret) {
+			   const DomainType& x,RangeType& ret,
+			   double t) {
     RangeType val[6];
     DomainType pkt[6];
     pkt[0][0] = 0. , pkt[0][1] = 0.;
@@ -83,21 +84,22 @@ class LagrangeProjection
     ret = 0;
     if (order == 2) {
       for (int i=0;i<6;i++) {
-	f.evaluate(en.geometry().global(pkt[i]),val[i]);
+	f.evaluate(t,en.geometry().global(pkt[i]),val[i]);
 	val[i] *= base(2,i,x);
 	ret += val[i];
       }
     }
     else {
       for (int i=0;i<3;i++) {
-	f.evaluate(en.geometry().global(pkt[i]),val[i]);
+	f.evaluate(t,en.geometry().global(pkt[i]),val[i]);
 	val[i] *= base(1,i,x);
 	ret += val[i];
       }
     }
     // f.evaluate(en.geometry().global(x), ret);
   }
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc,
+		       double t) {
     
     const FunctionSpaceType& space =  discFunc.getFunctionSpace();
     int ord = space.polynomOrder();
@@ -124,7 +126,7 @@ class LagrangeProjection
 	  double det =
 	    (*it).geometry().integrationElement(quad.point(qP));
 	  // f.evaluate((*it).geometry().global(quad.point(qP)), ret);
-	  lag_evaluate(ord,f,*it,quad.point(qP),ret);
+	  lag_evaluate(ord,f,*it,quad.point(qP),ret,t);
 	  set.eval(i,quad,qP,phi);
 	  lf[i] += quad.weight(qP) * (ret * phi) ;
         }
@@ -216,7 +218,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
 
 
 template <class StupidFunction,class DFType>
-void initialize(const StupidFunction& f,DFType& df)
+void initialize(const StupidFunction& f,DFType& df,double t=0.0)
 {
   //- Typedefs and enums
   typedef typename DFType::Traits::DiscreteFunctionSpaceType SpaceType;
@@ -234,7 +236,7 @@ void initialize(const StupidFunction& f,DFType& df)
 
   //- Actual method
   // L2Projection<DFType, StupidFunction, 2>::project(f, df);
-  LagrangeProjection<DFType, StupidFunction, 2>::project(f, df);
+  LagrangeProjection<DFType, StupidFunction, 2>::project(f, df,t);
 
   typedef typename DFType::DofIteratorType DofIterator;
   /*for (DofIterator it = df.dbegin(); it != df.dend(); ++it) {
@@ -257,11 +259,11 @@ void printIt(DFType& df)
 
 class EocOutput {
 
-  string outputFile;
+  std::string outputFile;
 	
  public:
 		
-  EocOutput(string name)
+  EocOutput(std::string name)
   {
     outputFile = name;
     std::ostringstream filestream;

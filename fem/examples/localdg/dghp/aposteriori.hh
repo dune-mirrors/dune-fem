@@ -334,13 +334,13 @@ struct TupleToPair<Pair<T,Nil> > {
 	  if (nit.boundary()) {
 	  } // end if boundary
 	}
-      }
+  }
       ret = 0;
-      double pot = double(polOrd+2)/double(polOrd+1);
+      double pot = 2.*(polOrd+1); // double(polOrd+2)/double(polOrd+1);
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
 	double vol = it->geometry().volume();
-	double h = sqrt(it->geometry().integrationElement(DomainType(0)));
+	double h = sqrt(vol); // 0.5*sqrt(it->geometry().integrationElement(DomainType(0))); // 0.001
 	LConstDiscFSType lRT = RT_.localFunction(*it);
 	LConstDiscFSType lRS = RS_.localFunction(*it);
 	LConstDiscFSType lRP = RP_.localFunction(*it);
@@ -353,8 +353,8 @@ struct TupleToPair<Pair<T,Nil> > {
 	  localRes.computePolDeg(model,
 				 discFunc,*it,int(lmaxPol[0]),
 				 llam[0],lRP[0],doPAdapt_,start);
-	//if (lmaxPol[0]<lmaxPolNew[0]) ;
-	  // lmaxPol[0] = lmaxPolNew[0];
+	if (lmaxPol[0]<lmaxPolNew[0]) ;
+	   lmaxPol[0] = lmaxPolNew[0];
 	if (polOrd>lmaxPolNew[0] || polOrd>lmaxPol[0])
 	  padapt_num[int(lmaxPolNew[0])] += 1;
 	LConstDiscFSType lind = ind_.localFunction(*it);
