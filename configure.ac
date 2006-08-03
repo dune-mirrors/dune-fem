@@ -40,6 +40,7 @@ AC_CONFIG_FILES([Makefile
      fem/examples/l2projection/Makefile
      fem/examples/localdg/Makefile
      fem/examples/localdg/advectdiffusion/Makefile
+     fem/examples/localdg/dghp/Makefile
      fem/examples/pass/Makefile
      fem/pass/Makefile
      fem/pass/test/Makefile
