@@ -233,8 +233,8 @@ namespace Dune {
 
     FieldVector<int, 0> diffVar;
 
-    if (ranges_.size()<=quadId) ranges_.resize(quadId+10);
-    if (jacobians_.size()<=quadId) jacobians_.resize(quadId+10);
+    if ((size_t)ranges_.size()   <= quadId) ranges_.resize(quadId+10);
+    if ((size_t)jacobians_.size()<= quadId) jacobians_.resize(quadId+10);
 
     ranges_[quadId].resize(points.size());
     jacobians_[quadId].resize(points.size());
