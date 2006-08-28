@@ -612,7 +612,12 @@ private:
 
   mutable CodimLeafIndexSet codimLeafSet_[ncodim];
 
-  typedef typename GridType :: HierarchicIndexSet HIndexSetType;
+  // type of Hset Selector 
+  typedef HierarchicIndexSetSelector<GridType> SelectorType;
+
+  // my index set type 
+  typedef typename SelectorType :: HierarchicIndexSet HIndexSetType;
+
   typedef typename GridType :: template Codim<0> :: Entity EntityCodim0Type;
   const HIndexSetType & hIndexSet_; 
 
@@ -639,7 +644,7 @@ public:
   //! Constructor
   AdaptiveLeafIndexSet (const GridType & grid) 
     : DefaultGridIndexSetBase <GridType> (grid) ,  
-    hIndexSet_( grid.hierarchicIndexSet() ) , 
+    hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) , 
     marked_ (false) , markAllU_ (false) , higherCodims_ (false) 
     //marked_ (false) , markAllU_ (false) , higherCodims_ (true) 
     , compressed_(true) // at start the set is compressed 
