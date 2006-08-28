@@ -50,7 +50,7 @@ public:
     // if not exists, create it, ref count is 1  
     if(!objVal.first)
     {
-      ObjectType * obj = new ObjectType ( key );
+      ObjectType * obj = createObject( key );
       assert( obj );
       // store pointer and ref count
       ValueType val ( obj , new size_t(1) );
@@ -95,23 +95,29 @@ public:
   }
 
 protected:
+  //! overload this method to create Objects with different constructors 
+  static ObjectType * createObject ( const KeyType & key )
+  {
+    return new ObjectType ( key );
+  }
+  
   static void eraseItem(ListIteratorType & it) 
   {
     ValueType val = (*it).second; 
     assert( *(val.second) > 0 );
-    //std::cout << (*(val.second)) << " ref count is \n";
+    // if only one reference left, remove object 
     if( *(val.second) == 1 )
     {
+      // remove from list
       singletonList().erase( it );
-      //std::cout << "Deleting obj = " << val.first << "\n";
+      // delete objects 
       delete val.first;
       delete val.second;
     }
     else 
     {
-      //std::cout << "descreasing refcount for obj = " << val.first << "\n";
+      // decrease reference count 
       --(*(val.second));
-      //std::cout << (*(val.second)) << " ref count is \n";
     }
     return;
   }
