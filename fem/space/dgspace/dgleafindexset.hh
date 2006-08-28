@@ -1,10 +1,113 @@
 #ifndef DUNE_DGLEAFINDEXSET_HH
 #define DUNE_DGLEAFINDEXSET_HH
 
+//- Dune includes 
+#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/space/common/singletonlist.hh>
+
 //- local includes 
 #include "../leafindexset.hh"
 
 namespace Dune { 
+
+// forward deklaration 
+template <class GridType>
+class DGAdaptiveLeafIndexSet; 
+template <class GridImp,PartitionIteratorType pitype>
+struct DGAdaptiveLeafGridPart;
+
+//! Type definitions for the LeafGridPart class
+template <class GridImp,PartitionIteratorType pitype>
+struct DGAdaptiveLeafGridPartTraits {
+  typedef GridImp GridType;
+  typedef DGAdaptiveLeafGridPart<GridImp,pitype> GridPartType;
+  typedef DGAdaptiveLeafIndexSet<GridImp> IndexSetType;
+
+  typedef typename GridType::template Codim<0>::Entity::
+    LeafIntersectionIterator IntersectionIteratorType;
+  
+  template <int cd>
+  struct Codim {
+    typedef typename GridImp::template Codim<cd>::template Partition<pitype>::LeafIterator IteratorType;
+  };
+};
+
+template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 
+class DGAdaptiveLeafGridPart
+: public GridPartDefault<DGAdaptiveLeafGridPartTraits<GridImp,pitype> > 
+{
+  typedef SingletonList<GridImp,typename DGAdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > IndexSetProviderType;  
+public:
+  //- Public typedefs and enums
+  //! Type definitions
+  typedef DGAdaptiveLeafGridPartTraits<GridImp,pitype> Traits;
+  //! Grid implementation type
+  typedef typename Traits::GridType GridType;
+  //! The leaf index set of the grid implementation
+  typedef typename Traits::IndexSetType IndexSetType;
+  
+  //! The corresponding IntersectionIterator 
+  typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
+  
+  //! Struct providing types of the leaf iterators on codimension cd
+  template <int cd>
+  struct Codim {
+    typedef typename Traits::template Codim<cd>::IteratorType IteratorType;
+  };
+
+private:
+  typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
+
+  const IndexSetType & myIndexSet_;
+
+public:
+  //- Public methods
+  //! Constructor
+  DGAdaptiveLeafGridPart(const GridType& grid) :
+    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(grid) ) ,
+    myIndexSet_(this->indexSet()) 
+  {}
+
+  ~DGAdaptiveLeafGridPart() 
+  { 
+    IndexSetProviderType::removeObject(myIndexSet_);
+  }
+
+  //! Begin iterator on the leaf level
+  template <int cd>
+  typename Traits::template Codim<cd>::IteratorType begin() const {
+    return this->grid().template leafbegin<cd,pitype>();
+  }
+
+  //! End iterator on the leaf level
+  template <int cd>
+  typename Traits::template Codim<cd>::IteratorType end() const {
+    return this->grid().template leafend<cd,pitype>();
+  }
+
+  //! ibegin of corresponding intersection iterator for given entity
+  IntersectionIteratorType ibegin(const EntityCodim0Type & en) const 
+  {
+    return en.ileafbegin();
+  }
+  
+  //! iend of corresponding intersection iterator for given entity
+  IntersectionIteratorType iend(const EntityCodim0Type & en) const 
+  {
+    return en.ileafend();
+  }
+
+  //! Returns maxlevel of the grid
+  int level() const { return this->grid().maxLevel(); }
+
+  //! corresponding communication method for this grid part
+  template <class DataHandleImp,class DataType>
+  void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
+                   InterfaceType iftype, CommunicationDirection dir) const 
+  {
+    this->grid().communicate(data,iftype,dir);
+  }
+};
 
 //******************************************************************
 //
@@ -33,7 +136,7 @@ public:
   struct SubIndex
   {
     template <class EntityType> 
-    static int subIndex(CodimLeafSet & lset, HIndexSet & hset, const EntityType & en) 
+    static int subIndex(CodimLeafSet & lset, const HIndexSet & hset, const EntityType & en) 
     {
       return 0;
     }
@@ -43,14 +146,13 @@ public:
   struct SubIndex<CodimLeafSet,HIndexSet,0>
   {
     template <class EntityType> 
-    static int subIndex(CodimLeafSet & lset, HIndexSet & hset, const EntityType & en) 
+    static int subIndex(CodimLeafSet & lset, const HIndexSet & hset, const EntityType & en) 
     {
       return lset.index( hset.index( en ) );
     }
   };
   
 private:
-
   //! type of this class 
   typedef DGAdaptiveLeafIndexSet < GridType > ThisType;
   
@@ -59,7 +161,12 @@ private:
 
   mutable CodimLeafIndexSet codimLeafSet_;
 
-  typedef typename GridType :: HierarchicIndexSet HIndexSetType;
+  // type of Hset Selector 
+  typedef HierarchicIndexSetSelector<GridType> SelectorType;
+
+  // my index set type 
+  typedef typename SelectorType :: HierarchicIndexSet HIndexSetType;
+
   typedef typename GridType :: template Codim<0> :: Entity EntityCodim0Type;
   const HIndexSetType & hIndexSet_; 
 
@@ -85,7 +192,7 @@ public:
   //! Constructor
   DGAdaptiveLeafIndexSet (const GridType & grid) 
     : DefaultGridIndexSetBase <GridType> (grid) 
-    , hIndexSet_( grid.hierarchicIndexSet() ) 
+    , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
     , marked_ (false) 
     , markAllU_ (false)  
     , compressed_(true) // at start the set is compressed 
@@ -126,7 +233,7 @@ public:
   //! return subIndex of given entity
   // see specialisation for codim 0 below 
   template <int cd>
-  int subIndex (const EntityCodim0Type & en, int num) const
+  int subIndex (const EntityCodim0Type & en, int) const
   {
     // this IndexWrapper provides specialisations for each codim 
     // see this class above 
