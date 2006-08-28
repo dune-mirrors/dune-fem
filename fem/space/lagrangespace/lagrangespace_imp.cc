@@ -7,13 +7,14 @@ namespace Dune {
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>
 inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
-LagrangeDiscreteFunctionSpace (GridPartType & g) :
+LagrangeDiscreteFunctionSpace (GridPartType & gridPart) :
     DefaultType(id),
     baseFuncSet_(GeometryIdentifier::numTypes,0),
-    grid_(g), 
-    mapper_(0)
+    grid_(gridPart), 
+    mapper_(0),
+    dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
 {
-  makeFunctionSpace(g);
+  makeFunctionSpace(gridPart);
 }
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>
