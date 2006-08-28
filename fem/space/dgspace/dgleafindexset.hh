@@ -32,6 +32,8 @@ struct DGAdaptiveLeafGridPartTraits {
   };
 };
 
+/** \brief GridPart for DGAdapitveLeafIndexSet. The underlying index set is
+    a singleton for each different grid. */
 template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 
 class DGAdaptiveLeafGridPart
 : public GridPartDefault<DGAdaptiveLeafGridPartTraits<GridImp,pitype> > 
@@ -58,19 +60,18 @@ public:
 private:
   typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
-  const IndexSetType & myIndexSet_;
-
 public:
   //- Public methods
   //! Constructor
   DGAdaptiveLeafGridPart(const GridType& grid) :
-    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(grid) ) ,
-    myIndexSet_(this->indexSet()) 
+    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(grid) )
   {}
 
+  /** \brief Desctrutor removing index set. When only one reference is
+      left, index set object is deleted. */
   ~DGAdaptiveLeafGridPart() 
   { 
-    IndexSetProviderType::removeObject(myIndexSet_);
+    IndexSetProviderType::removeObject(this->indexSet());
   }
 
   //! Begin iterator on the leaf level
