@@ -8,7 +8,6 @@
 #include <list>
 
 //- Dune includes 
-#include <dune/common/dlist.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/genericiterator.hh>
@@ -16,8 +15,8 @@
 // here are the default grid index set defined 
 #include <dune/grid/common/defaultindexsets.hh>
 
-
 //- local includes 
+#include "singletonlist.hh"
 #include "dofmapperinterface.hh"
 #include "datacollector.hh"
 
@@ -846,7 +845,9 @@ public:
 
 private:  
   typedef DofManager<GridType> MyType;
+  friend class SingletonList<GridType,MyType>; 
   friend class DofManagerFactory<MyType>;
+  
 public:
   typedef typename GridObjectStreamOrDefault<
     GridType, DummyObjectStream>::ObjectStreamType ObjectStreamType;
@@ -1287,6 +1288,7 @@ template <class GridType>
 template <class IndexSetType>
 inline IndexSetType & DofManager<GridType>::createIndexSet() 
 {
+  assert( false );
   IndexSetType & set = IndexSetType::instance(grid_);
   std::cout << "Created index set " << &set << "\n";
   addIndexSet(grid_,set);
@@ -1326,6 +1328,7 @@ template <class IndexSetType>
 inline bool DofManager<GridType>::
 checkIndexSetExists (const IndexSetType &iset) const
 {
+  assert(false);
   ConstIndexListIteratorType endit  = indexList_.end();
   for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
   {
@@ -1443,62 +1446,33 @@ read_xdr(const std::string filename , int timestep)
   return true;
 }
 
+
 //! DofManagerFactory guarantees that only one instance of a dofmanager 
 //! per grid is generated. If getDofManager is called with a grid for which
 //! already a mamager exists, then the reference to this manager is returned. 
 template <class DofManagerImp>
 class DofManagerFactory 
 {
+  // type of Base class 
+  typedef SingletonList<typename DofManagerImp :: GridType, DofManagerImp> DMProviderType;
+  
   typedef DofManagerImp DofManagerType;
   typedef typename DofManagerType :: GridType GridType; 
-  typedef DoubleLinkedList < std::pair < const GridType * , DofManagerType * > > ListType;
-  typedef typename ListType::Iterator ListIteratorType;
 
-  //! list that store pairs of grid/dofmanager pointers 
-  //! singleton grid list 
-  inline static ListType & gridList() 
-  {
-    //! list that store pairs of grid/dofmanager pointers 
-    static ListType gridList_; 
-    return gridList_; 
-  }
-  
 public:  
   //! return reference to the DofManager for the given grid. 
   //! If the object does not exist, then it is created first.
   inline static DofManagerType & getDofManager (const GridType & grid) 
   {
-    // search list for dof manager 
-    DofManagerType * dm = getDmFromList(grid);
-
-    // if not exists, create it 
-    if(!dm)
-    {
-      dm = new DofManagerType ( grid );
-      assert( dm );
-      std::pair < const GridType * , DofManagerType * > tmp ( & grid , dm );
-      gridList().insert_after( gridList().rbegin() , tmp ); 
-    }
-
-    return *dm; 
+    DofManagerType * dm = getDmFromList(grid); 
+    if(!dm) return DMProviderType::getObject(grid);
+    return *dm;
   } 
 
   //! delete the dof manager that belong to the given grid 
   inline static void deleteDofManager (DofManagerType & dm ) 
   {
-    ListIteratorType endit = gridList().end();
-    for(ListIteratorType it = gridList().begin(); it!=endit; ++it)
-    {
-      if( (*it).second == (& dm ))
-      {
-        gridList().erase( it );
-        DofManagerType * tmp = & dm ;
-        std::cout << "Deleting dm = " << tmp << "\n";
-        if( tmp ) delete tmp;
-        return;
-      }
-    }
-    std::cerr << "DofManager could not deleted, because is not in list anymore! \n";
+    DMProviderType::removeObject(dm);
   }
 
   //! writes DofManager of corresponding grid, when DofManager exists 
@@ -1523,32 +1497,7 @@ private:
   // return pointer to dof manager for given grid 
   inline static DofManagerType * getDmFromList(const GridType &grid)
   {
-    ListIteratorType endit = gridList().end();
-    for(ListIteratorType it = gridList().begin(); it!=endit; ++it)
-    {
-      if( (*it).first == & grid )
-      {
-        return ((*it).second);
-      }
-    }
-    return 0;
-  }
-  
-  // constructor 
-  DofManagerFactory () {};  
-
-public:  
-  // destructor 
-  ~DofManagerFactory () 
-  { 
-    while (gridList().rbegin() != gridList().rend())
-    {
-      ListIteratorType it = gridList().rbegin();
-      DofManagerType * tmp = (*it);
-      gridList().erase( it );
-      std::cout << "Deleting dm = " << tmp << "\n";
-      if( tmp ) delete tmp;
-    }
+    return (DMProviderType::getObjFromList(grid)).first;
   }
 };
 
