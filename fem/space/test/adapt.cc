@@ -258,10 +258,11 @@ int main (int argc, char **argv)
     exit(1);
   }
   int ml = atoi( argv[1] );
-  double* error = new double[ml];
+  std::vector<double> error(ml);
+
   char tmp[100]; 
   sprintf(tmp,"%ddgrid.dgf",GRIDDIM);
-  GridPtr<GridType> gridptr(tmp,MPI_COMM_WORLD);
+  GridPtr<GridType> gridptr(tmp);
   GridType* grid= gridptr.operator -> ();
 
   const int step = refStepsForHalf;
@@ -289,7 +290,6 @@ int main (int argc, char **argv)
       std::cout << "EOC = " << eoc << " \n";
     }
   }
-  delete [] error;
   return 0;
 }
 
