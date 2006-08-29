@@ -36,9 +36,8 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-//typedef DefaultGridIndexSet<GridType,GlobalIndex> IndexSetType;
-typedef DGAdaptiveLeafIndexSet<GridType> IndexSetType;
-typedef DefaultGridPart<GridType,IndexSetType> GridPartType;
+typedef DGAdaptiveLeafGridPart<GridType> GridPartType; 
+//typedef AdaptiveLeafGridPart<GridType> GridPartType; 
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -267,8 +266,7 @@ int main (int argc, char **argv)
 
   const int step = refStepsForHalf;
 
-  IndexSetType iset ( *grid );
-  GridPartType part ( *grid, iset );
+  GridPartType part ( *grid );
   DiscreteFunctionSpaceType linFuncSpace ( part );
   DiscreteFunctionType solution ( "sol", linFuncSpace );
   solution.clear();
