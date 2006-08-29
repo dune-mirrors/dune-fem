@@ -5,6 +5,7 @@
 #include <dune/common/misc.hh>
 #include <dune/common/array.hh>
 #include <dune/grid/common/defaultindexsets.hh>
+#include <dune/grid/common/gridpart.hh>
 
 namespace Dune { 
 
