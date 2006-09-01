@@ -18,8 +18,8 @@ using namespace Dune;
 
 #if SGRID
 #include <dune/grid/sgrid.hh>
-static const int dimw = DUNE_WORLD_DIM;
-static const int dimp = DUNE_PROBLEM_DIM;
+static const int dimw = GRIDDIM;
+static const int dimp = dimw;
 typedef SGrid  < dimp, dimw > GridType;
 static const int refinestep = 1;
 #endif
@@ -206,17 +206,20 @@ public:
 template <class EntityType, class DiscreteFunctionType> 
 void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
 {
-  typedef typename EntityType::IntersectionIterator NeighIt;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename FunctionSpaceType::GridType GridType;
+  typedef typename FunctionSpaceType::GridPartType GridPartType;
+  typedef typename GridPartType :: IntersectionIteratorType
+    IntersectionIteratorType;
 
   const FunctionSpaceType & space = rhs.getFunctionSpace();
+  const GridPartType & gridPart = space.gridPart();
     
   typedef typename DiscreteFunctionType::DofIteratorType DofIterator;
   DofIterator dit = rhs.dbegin();
       
-  NeighIt endit = en.iend();
-  for(NeighIt it = en.ibegin(); it != endit; ++it)
+  IntersectionIteratorType endit = gridPart.iend(en);
+  for(IntersectionIteratorType it = gridPart.ibegin(en); 
+      it != endit; ++it)
   {
     if(it.boundary())
     {
