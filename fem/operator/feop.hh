@@ -90,6 +90,8 @@ public:
     return (*this->matrix_);
   }
  
+  bool hasPcMatrix() const { return false; }
+  MatrixType & pcMatrix() const { return myMatrix(); }
   
   //! methods for global application of the operator
   void initialize(){
@@ -148,7 +150,6 @@ public:
     typedef typename FunctionSpaceType::GridType GridType; 
     
     typedef typename EntityType::IntersectionIterator NeighIt;
-    typedef typename NeighIt::BoundaryEntity BoundaryEntityType;
     
     typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
 
@@ -213,11 +214,13 @@ public:
     // eliminate the Dirichlet rows and columns 
     typedef typename DiscFunctionType::FunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename EntityType::IntersectionIterator NeighIt;
-    typedef typename NeighIt::BoundaryEntity BoundaryEntityType;
+    typedef typename FunctionSpaceType::GridPartType GridPartType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
  
     const DiscFunctionType & arg  = (*arg_);
     DiscFunctionType & dest = (*dest_);
+
+    const GridPartType & gridPart = arg.getFunctionsSpace().gridPart();
 
     typedef typename DiscFunctionType::DofIteratorType DofIteratorType;
     typedef typename DiscFunctionType::ConstDofIteratorType ConstDofIteratorType;
@@ -227,8 +230,8 @@ public:
 
     const GeometryType t = en.geometry().type();
 
-    NeighIt endnit = en.iend();
-    for(NeighIt nit = en.ibegin(); nit != endnit ; ++nit)
+    const IntersectionIteratorType endnit = gridPart.iend(en);
+    for(IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit ; ++nit)
     {
       if(nit.boundary())
       {
@@ -240,8 +243,7 @@ public:
 
         if(t.isSimplex())
         {
-          const BoundaryEntityType & bEl = nit.boundaryEntity();
-          if( bEl.id() != 0 )
+          if( nit.boundaryId() != 0 )
           {
             static ReferenceSimplex< coordType, dim > refElem;
             int novx = refElem.size( face, faceCodim , dim );
@@ -354,21 +356,24 @@ protected:
   
   //! \todo Please doc me!
   template <class GridIteratorType>
-  void bndCorrectOnGrid ( GridIteratorType &it, GridIteratorType &endit) const
+  void bndCorrectOnGrid ( GridIteratorType &it, const GridIteratorType &endit) const
   {
     // eliminate the Dirichlet rows and columns 
     typedef typename DiscFunctionType::FunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::GridType GridType; 
     typedef typename GridType::template Codim<0>::Entity EntityType;
-    typedef typename EntityType::IntersectionIterator NeighIt;
-        
+    typedef typename FunctionSpaceType::GridPartType GridPartType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+ 
+    const GridPartType & gridPart = functionSpace_.gridPart();
+
     for( ; it != endit; ++it ) 
     {
       const EntityType & en = *it; 
 
       const GeometryType t = en.geometry().type();
-      NeighIt endnit = en.iend();
-      for(NeighIt nit = en.ibegin(); nit != endnit ; ++nit)
+      const IntersectionIteratorType endnit = gridPart.iend(en);
+      for(IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit ; ++nit)
       {
         if(nit.boundary())
         {
