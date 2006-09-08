@@ -407,7 +407,7 @@ LocalFunctionAdapt( const DiscreteFunctionSpaceType &f ,
   dofVec_ ( dofVec ),
   baseSet_(0),
   init_(false),
-  geoType_(0)
+  geoType_(0) // init as Vertex
   //,id_(-1),
   //idSet_(f.grid().localIdSet())
 {}
