@@ -313,7 +313,8 @@ namespace Dune {
 
     mutable bool init_;
     mutable const BaseFunctionSetType* baseSet_;
-  
+
+    mutable GeometryType geoType_;
   }; // end class AdaptiveLocalFunction
 
   //- Specialisations

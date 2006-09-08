@@ -15,7 +15,8 @@ namespace Dune {
     values_(),
     tmp_(0.0),
     tmpGrad_(0.0),
-    init_(false)
+    init_(false),
+    geoType_(0) // init as Vertex 
   {}
   
   template <class DiscreteFunctionSpaceImp>
@@ -26,7 +27,8 @@ namespace Dune {
     values_(),
     tmp_(0.0),
     tmpGrad_(0.0),
-    init_(false)
+    init_(false),
+    geoType_(0) // init as Vertex 
   {}
 
   template <class DiscreteFunctionSpaceImp>
@@ -191,16 +193,25 @@ namespace Dune {
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
   init(const EntityType& en) 
   {
-    baseSet_ = &spc_.getBaseFunctionSet(en);
+    if( (geoType_ != en.geometry().type()) || (!init_) )
+    {
+      baseSet_ = &spc_.getBaseFunctionSet(en);
 
-    int numOfDof = baseSet_->numBaseFunctions();
-    values_.resize(numOfDof);
+      int numOfDof = baseSet_->numBaseFunctions();
+      values_.resize(numOfDof);
 
-    for (int i = 0; i < numOfDof; ++i) {
+      init_ = true;
+      geoType_ = en.geometry().type();
+    }
+
+    assert( geoType_ == en.geometry().type() );
+    const int numOfDof = numDofs(); 
+    for (int i = 0; i < numOfDof; ++i) 
+    {
       values_[i] = &(this->dofVec_[spc_.mapToGlobal(en, i)]);
     }
 
-    init_ = true;
+    return ;
   }
   //- AdaptiveDiscreteFunction (specialisation)
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
