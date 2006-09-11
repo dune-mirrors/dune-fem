@@ -30,6 +30,8 @@ const int polOrd = POLORDER;
 #define GRIDDIM 2 
 #endif
 
+#define GENERIC_ADAPT 1
+
 //***********************************************************************
 /*! L2 Projection of a function f: 
 */
@@ -37,6 +39,7 @@ const int polOrd = POLORDER;
 
 //! the index set we are using 
 typedef DGAdaptiveLeafGridPart<GridType> GridPartType; 
+//typedef HierarchicGridPart<GridType> GridPartType; 
 //typedef AdaptiveLeafGridPart<GridType> GridPartType; 
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -114,10 +117,12 @@ class L2Projection
       const typename FunctionSpaceType::BaseFunctionSetType & baseset =
         lf.getBaseFunctionSet();
       const typename GridType::template Codim<0>::Entity::Geometry& 
-	itGeom = (*it).geometry();
-      for(int qP = 0; qP < quad.nop(); qP++) {
-	f.evaluate(itGeom.global(quad.point(qP)), ret);
-	for(int i=0; i<lf.numDofs(); i++) {
+                  itGeom = (*it).geometry();
+      for(int qP = 0; qP < quad.nop(); qP++) 
+      {
+        f.evaluate(itGeom.global(quad.point(qP)), ret);
+        for(int i=0; i<lf.numDofs(); i++) 
+        {
           baseset.eval(i,quad,qP,phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
@@ -180,17 +185,29 @@ void adapt(GridType& grid,
     & space = solution.getFunctionSpace();
 
   RestProlOperator<DiscreteFunctionType> rp(solution);
+
+#if GENERIC_ADAPT 
   ADOperatorType adop(grid,rp);
+#else 
+  DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
+#endif  
+
+  std::string message;
 
   int mark = 1;
   int count = step;
   
   if(step < 0) 
   {
+    message += "Coarsening...";
     mark = -1;
     count = std::abs(step);
   }
+  else 
+    message += "Refining...";
+
   
+#if GENERIC_ADAPT
   for(int i=0; i<count; ++i)
   {
     Iterator it = space.begin();  
@@ -199,9 +216,20 @@ void adapt(GridType& grid,
       grid.mark(mark,it);
     } 
     adop.adapt();
-    std::cout << "Coarsening/Refining..." << std::endl;
+    std::cout << message << std::endl;
   }
-  
+#else 
+  //for(int i=0; i<count; ++i)
+  {
+    Iterator it = space.begin();  
+    Iterator endit = space.end();
+    for(; it != endit ; ++it) {
+      grid.mark(step,it);
+    } 
+    grid.adapt(dm,rp);
+    std::cout << message << std::endl;
+  }
+#endif
   /*
   DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
   grid.preAdapt();
