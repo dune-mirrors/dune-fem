@@ -70,16 +70,23 @@ public:
       vati_.getBaseFunctionSet();
     const int nop=quad.nop();
     const Geometry& geometryInFather = son.geometryInFather();
-    if(initialize) {
-      for(int i=0; i<vati_.numDofs(); i++) {
-	vati_[i] = 0;
+
+    const int vati_numDofs = vati_.numDofs();
+    if(initialize) 
+    {
+      for(int i=0; i<vati_numDofs; ++i) 
+      {
+      	vati_[i] = 0.0;
       }
     }
-    for(int qP = 0; qP < nop; qP++) {
+    
+    for(int qP = 0; qP < nop; ++qP) 
+    {
       sohn_.evaluate(son,quad,qP,ret);
-      for(int i=0; i<vati_.numDofs(); i++) {
-	baseset.eval(i,geometryInFather.global(quad.point(qP)),phi);
-	vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
+      for(int i=0; i<vati_numDofs; ++i) 
+      {
+      	baseset.eval(i,geometryInFather.global(quad.point(qP)),phi);
+      	vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
       }
     }
   }
@@ -93,19 +100,21 @@ public:
     typename FunctionSpaceType::RangeType phi (0.0);
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
-    for(int i=0; i<sohn_.numDofs(); i++) 
-      sohn_[i] = 0.;
+    const int sohn_numDofs = sohn_.numDofs();
+    for(int i=0; i<sohn_numDofs; ++i) sohn_[i] = 0.;
 
     QuadratureType quad(son,quadord_);
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       sohn_.getBaseFunctionSet();
     const Geometry& geometryInFather = son.geometryInFather();
     const int nop=quad.nop();
-    for(int qP = 0; qP < nop; qP++) {
+    for(int qP = 0; qP < nop; ++qP) 
+    {
       vati_.evaluateLocal(father,geometryInFather.global(quad.point(qP)),ret);
-      for(int i=0; i<sohn_.numDofs(); i++) {
-	baseset.eval(i,quad,qP,phi);
-	sohn_[i] += quad.weight(qP) * (ret * phi) ;
+      
+      for(int i=0; i<sohn_numDofs; ++i) {
+      	baseset.eval(i,quad,qP,phi);
+      	sohn_[i] += quad.weight(qP) * (ret * phi) ;
       }
     }
   }
