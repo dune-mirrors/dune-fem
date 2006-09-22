@@ -2,17 +2,30 @@
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 
+#if ALBERTAGRID
+#define SGRID 0
+#define AGRID 1
+#define BGRID 0
+#endif
+
+#if ALUGRID
+#define SGRID 0
+#define AGRID 0
+#define BGRID 1
+#endif
+
+#if DEFAULTGRID
 #define SGRID 1
 #define AGRID 0
 #define BGRID 0
-
-#if !HAVE_ALBERTA 
-#undef SGRID 
-#undef AGRID 
-#define SGRID 1
-#define AGRID 0
 #endif
 
+//#if !HAVE_ALBERTA 
+//#undef SGRID 
+//#undef AGRID 
+//#define SGRID 1
+//#define AGRID 0
+//#endif
 
 using namespace Dune;
 
@@ -34,14 +47,18 @@ static const int refinestep = dimw;
 #endif
 
 #if BGRID  
-#include <dune/grid/alu3dgrid/includecc.cc>
-#include <dune/grid/alu3dgrid.hh>
 
-static const int dimw = 3;
-static const int dimp = 3;
+//#include <dune/grid/alu3dgrid/includecc.cc>
+//#include <dune/grid/alu3dgrid.hh>
+//#include <dune/grid/alugrid/3d/grid.hh>
+//static const int dimw = 3;
+//static const int dimp = 3;
+//typedef ALU3dGrid < dimp, dimw , tetra > GridType;
 
-typedef ALU3dGrid < dimp, dimw , tetra > GridType;
-
+#include <dune/grid/alugrid.hh>
+static const int dimw = DUNE_PROBLEM_DIM;
+static const int dimp = DUNE_PROBLEM_DIM;
+typedef ALUSimplexGrid < dimp, dimw > GridType;
 static const int refinestep = 1;
 #endif
 
