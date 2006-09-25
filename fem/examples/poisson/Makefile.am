@@ -3,11 +3,5 @@ LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) -lblas
 noinst_PROGRAMS = poisson
 poisson_SOURCES = poisson.cc
 
-#GRIDTYPE = ALBERTAGRID
-#GRIDTYPE = DEFAULTGRID
-GRIDTYPE = ALUGRID
-DUNE_PROBLEM_DIM = 2
-DUNE_WORLD_DIM = $(DUNE_PROBLEM_DIM)
-
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -D$(GRIDTYPE) -DDUNE_PROBLEM_DIM=$(DUNE_PROBLEM_DIM) -DDUNE_WORLD_DIM=$(DUNE_WORLD_DIM) -w -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500 -DGRIDDIM=$(DUNE_PROBLEM_DIM) -DGRIDDIMWORLD=$(DUNE_WORLD_DIM)
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -D$(GRIDTYPE) -w -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500
 

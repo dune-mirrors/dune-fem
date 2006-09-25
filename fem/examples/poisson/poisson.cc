@@ -1,66 +1,83 @@
+/**************************************************************************
+**       Title: poisson.cc
+**    $RCSfile$
+**   $Revision$$Name$
+**       $Date$
+**   Copyright: GPL $Author$
+** Description: File demonstrating a simple numerics problem on arbitrary
+**              grids: poisson-problem with known solution is given
+**              and compared with numerical solution (EOC)
+**              Dune grid parser is used.
+**
+**              For changing grid-types, compile with
+**
+**              make clean
+**
+**              and one of the following
+**           
+**              make GRIDTYPE=ALBERTAGRID
+**                    -> compiles and works correctly
+**              make GRIDTYPE=SGRID
+**                    -> compiles, but currently exception is thrown
+**                       (unknown partition type in dgf-parser)
+**              make GRIDTYPE=YASPGRID       (default)
+**                    -> compiles, but currently exception is thrown
+**              make GRIDTYPE=ALUGRID_SIMPLEX
+**                    -> currently compile error
+**              make GRIDTYPE=ALUGRID_CUBE
+**                    -> currently multiple compile errors
+**              make
+**                    -> currently compile error 
+** 
+**
+**-------------------------------------------------------------------------
+**
+**  $Log$
+**  Revision 1.16  2006/09/25 11:39:15  haasdonk
+**  adjusting to dune-grid-parser
+**
+**
+**************************************************************************/
+
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
-
-#if ALBERTAGRID
-#define SGRID 0
-#define AGRID 1
-#define BGRID 0
-#endif
-
-#if ALUGRID
-#define SGRID 0
-#define AGRID 0
-#define BGRID 1
-#endif
-
-#if DEFAULTGRID
-#define SGRID 1
-#define AGRID 0
-#define BGRID 0
-#endif
-
-//#if !HAVE_ALBERTA 
-//#undef SGRID 
-//#undef AGRID 
-//#define SGRID 1
-//#define AGRID 0
-//#endif
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
 
 using namespace Dune;
 
-#if SGRID
-#include <dune/grid/sgrid.hh>
-static const int dimw = GRIDDIM;
-static const int dimp = dimw;
-typedef SGrid  < dimp, dimw > GridType;
-static const int refinestep = 1;
-#endif
+// #if SGRID
+// #include <dune/grid/sgrid.hh>
+// static const int dimworld = GRIDDIM;
+// static const int dimworld = dimworld;
+// typedef SGrid  < dimworld, dimworld > GridType;
+// static const int refStepsForHalf = 1;
+// #endif
 
-#if AGRID  
-#include <dune/grid/albertagrid.hh>
-static const int dimw = DUNE_WORLD_DIM;
-static const int dimp = DUNE_PROBLEM_DIM;
+// #if AGRID  
+// #include <dune/grid/albertagrid.hh>
+// static const int dimworld = DUNE_WORLD_DIM;
+// static const int dimworld = DUNE_PROBLEM_DIM;
 
-typedef AlbertaGrid< dimp, dimw > GridType;
-static const int refinestep = dimw;
-#endif
+// typedef AlbertaGrid< dimworld, dimworld > GridType;
+// static const int refStepsForHalf = dimworld;
+// #endif
 
-#if BGRID  
+// #if BGRID  
 
-//#include <dune/grid/alu3dgrid/includecc.cc>
-//#include <dune/grid/alu3dgrid.hh>
-//#include <dune/grid/alugrid/3d/grid.hh>
-//static const int dimw = 3;
-//static const int dimp = 3;
-//typedef ALU3dGrid < dimp, dimw , tetra > GridType;
+// //#include <dune/grid/alu3dgrid/includecc.cc>
+// //#include <dune/grid/alu3dgrid.hh>
+// //#include <dune/grid/alugrid/3d/grid.hh>
+// //static const int dimworld = 3;
+// //static const int dimworld = 3;
+// //typedef ALU3dGrid < dimworld, dimworld , tetra > GridType;
 
-#include <dune/grid/alugrid.hh>
-static const int dimw = DUNE_PROBLEM_DIM;
-static const int dimp = DUNE_PROBLEM_DIM;
-typedef ALUSimplexGrid < dimp, dimw > GridType;
-static const int refinestep = 1;
-#endif
+// #include <dune/grid/alugrid.hh>
+// static const int dimworld = DUNE_PROBLEM_DIM;
+// static const int dimworld = DUNE_PROBLEM_DIM;
+// typedef ALUSimplexGrid < dimworld, dimworld > GridType;
+// static const int refStepsForHalf = 1;
+// #endif
 
 //- Dune includes 
 #include <dune/grid/common/gridpart.hh>
@@ -88,7 +105,7 @@ static const int refinestep = 1;
 /*! Poisson problem: 
 
   This is an example how to solve the equation on 
-  \f[\Omega = (0,1)^dimw \f]
+  \f[\Omega = (0,1)^dimworld \f]
 
   \f[ -\triangle u  = f \ \ \ in \Omega \f]
   \f[  \qquad u = 0  \ \ \ on  \partial\Omega \f]
@@ -113,7 +130,7 @@ typedef LeafGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef FunctionSpace < double , double, dimp , 1 > FuncSpace;
+typedef FunctionSpace < double , double, dimworld , 1 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -193,9 +210,9 @@ public:
 };
  
 // diffusion coefficient for this problem the id 
-class Tensor : public Function < FunctionSpace < double , double, dimp , 1 >, Tensor >
+class Tensor : public Function < FunctionSpace < double , double, dimworld , 1 >, Tensor >
 {
-  typedef FunctionSpace< double , double, dimp , 1 >  FuncSpace;
+  typedef FunctionSpace< double , double, dimworld , 1 >  FuncSpace;
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::DomainType DomainType;
 
@@ -275,21 +292,23 @@ void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
 
 double algorithm (const char * filename , int maxlevel, int turn )
 {
-  // we dont not use all levels of grid for calculation, only maxlevel
-#if SGRID
-   // this leads to the same number of points for SGrid and AlbertGrid
-   int n[dimp];
-   double h[dimp];
-   for(int i=0; i<dimp; i++)  { n[i] = 2; h[i] = 1.0; }
+//   // we dont not use all levels of grid for calculation, only maxlevel
+// #if SGRID
+//    // this leads to the same number of points for SGrid and AlbertGrid
+//    int n[dimworld];
+//    double h[dimworld];
+//    for(int i=0; i<dimworld; i++)  { n[i] = 2; h[i] = 1.0; }
 
-   GridType grid ((int *) &n, (double *) &h );
-#else
-   GridType grid ( filename );
-#endif
+//    GridType grid ((int *) &n, (double *) &h );
+// #else
 
-   grid.globalRefine (maxlevel);
+   GridPtr<GridType> gridptr(filename); 
+//   GridType grid ( filename );
+//#endif
 
-   GridPartType part ( grid );
+   gridptr->globalRefine (maxlevel);
+
+   GridPartType part ( *gridptr );
 
    FuncSpaceType linFuncSpace ( part );
    std::cout << "\nSolving for " << linFuncSpace.size() << " number of unkowns. \n\n";
@@ -341,7 +360,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    // if grape was found then display solution 
    if(turn > 0)
    {
-     GrapeDataDisplay < GridType > grape(grid); 
+     GrapeDataDisplay < GridType > grape(*gridptr); 
      grape.dataDisplay( solution );
    }
 #endif
@@ -366,20 +385,27 @@ int main (int argc, char **argv)
   int ml = atoi( argv[1] );
   double error[2];
 
-#if AGRID
-  char tmp[16]; sprintf(tmp,"%d",dimp);
-  std::string macroGridName (tmp); 
-  macroGridName += "dgrid.al";
+// #if AGRID
+//   char tmp[16]; sprintf(tmp,"%d",dimworld);
+//   std::string macroGridName (tmp); 
+//   macroGridName += "dgrid.al";
+// #else 
+// #endif
+
+#if defined ALBERTAGRID || ALUGRID_SIMPLEX   
+  std::string macroGridName ("square_simplex.dgf");
 #else 
-  std::string macroGridName ("cube.tetra");
+  std::string macroGridName ("square_cube.dgf");
 #endif
+
+  std::cout << "loading dgf " << macroGridName << "\n";
   
-  ml -= refinestep;
+  ml -= refStepsForHalf;
   if(ml < 0) ml = 0;
   for(int i=0; i<2; i++)
   {
     error[i] = algorithm ( macroGridName.c_str() ,  ml , i);
-    ml += refinestep ;
+    ml += refStepsForHalf ;
   }
   double eoc = log( error[0]/error[1]) / M_LN2; 
   std::cout << "EOC = " << eoc << " \n";
