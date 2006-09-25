@@ -3,7 +3,7 @@
 **    $RCSfile$
 **   $Revision$$Name$
 **       $Date$
-**   Copyright: GPL $Author$
+**   Copyright: GPL Author: robertk 
 ** Description: File demonstrating a simple numerics problem on arbitrary
 **              grids: poisson-problem with known solution is given
 **              and compared with numerical solution (EOC)
@@ -15,24 +15,24 @@
 **
 **              and one of the following
 **           
+**              make GRIDTYPE=YASPGRID       (default)
+**                    -> compiles and works correctly
+**              make
+**                    -> compiles and works correctly
 **              make GRIDTYPE=ALBERTAGRID
 **                    -> compiles and works correctly
 **              make GRIDTYPE=SGRID
-**                    -> compiles, but currently exception is thrown
-**                       (unknown partition type in dgf-parser)
-**              make GRIDTYPE=YASPGRID       (default)
-**                    -> compiles, but currently exception is thrown
+**                    -> compiles and works correctly
 **              make GRIDTYPE=ALUGRID_SIMPLEX
-**                    -> currently compile error
-**              make GRIDTYPE=ALUGRID_CUBE
-**                    -> currently multiple compile errors
-**              make
-**                    -> currently compile error 
+**                    -> compiles and runs, but EOCs are too low
 ** 
 **
 **-------------------------------------------------------------------------
 **
 **  $Log$
+**  Revision 1.17  2006/09/25 12:30:10  haasdonk
+**  now working for all grids except UG
+**
 **  Revision 1.16  2006/09/25 11:39:15  haasdonk
 **  adjusting to dune-grid-parser
 **
@@ -392,11 +392,12 @@ int main (int argc, char **argv)
 // #else 
 // #endif
 
-#if defined ALBERTAGRID || ALUGRID_SIMPLEX   
-  std::string macroGridName ("square_simplex.dgf");
-#else 
-  std::string macroGridName ("square_cube.dgf");
-#endif
+//#if defined ALBERTAGRID || ALUGRID_SIMPLEX   
+//  std::string macroGridName ("square_simplex.dgf");
+//#else 
+//  std::string macroGridName ("square_cube.dgf");
+//#endif
+  std::string macroGridName ("square.dgf");
 
   std::cout << "loading dgf " << macroGridName << "\n";
   
