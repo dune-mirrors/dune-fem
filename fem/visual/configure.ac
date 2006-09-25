@@ -14,15 +14,19 @@ AM_CONFIG_HEADER(config.h)
 AC_PREFIX_DEFAULT([`pwd`])
 
 # we need no more than the standard DUNE-stuff
-DUNE_CHECK_ALL
+DUNE_CHECK_ALL_M([dune-common])
+DUNE_CHECK_ALL_M([dune-grid])
+
+if test x$HAVE_DUNE_COMMON != x1 ; then
+  AC_MSG_ERROR([Can't work without the dune-common module. Maybe you have to supply your dune-common directory as --with-dunecommon=dir])
+fi
+
+if test x$HAVE_DUNE_GRID != x1 ; then
+  AC_MSG_ERROR([Can't work without the dune-grid module. Maybe you have to supply your dune-common directory as --with-dunegrid=dir])
+fi
 
 # defines libtool to build the lib
 AC_PROG_LIBTOOL
-
-# we can't possibly work without the dune headers...
-if test x$HAVE_DUNE != x1 ; then
-  AC_MSG_ERROR([Can't work without the DUNE-library. Maybe you'll have to pass a different path for --with-dune. See config.log for details])
-fi
 
 # implicitly set the Dune-flags everywhere
 CPPFLAGS="$DUNE_CPPFLAGS"
@@ -34,6 +38,7 @@ AC_CONFIG_FILES([Makefile
                  grape/Makefile
                  grape/gridview/Makefile
                  grape/datadisp/Makefile
+                 grape/functionview/Makefile
                ])
 AC_OUTPUT
 

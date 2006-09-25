@@ -6,7 +6,7 @@ set -e
 AMVERS=
 
 if test x$1 = "x" ; then
-  echo "Usage: ./autogen.sh DUNEDIR"
+  echo "Usage: ./autogen.sh DUNECOMMONDIR"
   exit 1
 fi
 
