@@ -10,5 +10,5 @@ poisson_SOURCES = poisson.cc
 GRIDTYPE=YASPGRID
 GRIDDIM=2
 
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -D$(GRIDTYPE)  -w -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -D$(GRIDTYPE) -DGRIDDIM=$(GRIDDIM) -w -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500
 
