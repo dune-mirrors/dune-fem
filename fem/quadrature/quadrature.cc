@@ -81,7 +81,7 @@ namespace Dune {
   }
 
   template <>
-  CubeQuadrature<double, 0>::CubeQuadrature(int order, size_t id) :
+  inline CubeQuadrature<double, 0>::CubeQuadrature(int order, size_t id) :
     QuadratureImp<double, 0>(id),
     order_((order <= 0) ? 1 : order)
   {
