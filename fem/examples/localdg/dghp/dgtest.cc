@@ -143,11 +143,10 @@ int main(int argc, char ** argv, char ** envp) {
     exit(EXIT_FAILURE);  
   }
 	
-  MPISTART
-						
+  
   // Polynomial and ODE order
   // Grid:
-  GridPtr<GridType> grid(argv[1],MPI_COMM_WORLD);
+  GridPtr<GridType> grid(argv[1]);
   GrapeDataIO<GridType> dataio;
 	
   int repeats = 1;
@@ -361,7 +360,6 @@ int main(int argc, char ** argv, char ** envp) {
   
   eocoutput.printTexEnd(timer.elapsed());
   
-  MPIEND
 } 
 
 

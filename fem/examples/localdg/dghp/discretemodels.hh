@@ -39,10 +39,10 @@ namespace Dune {
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
     // choose leaf level for iteration  
-    // typedef LeafGridPart<GridType> GridPartType;
-    typedef DGAdaptiveLeafIndexSet<GridType> DGIndexSetType;
+    typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
+    //typedef DGAdaptiveLeafIndexSet<GridType> DGIndexSetType;
     // typedef typename LeafGridPart<GridType>::IndexSetType DGIndexSetType;
-    typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
+    //typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
 
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
     typedef CachingQuadrature<GridType,0> VolumeQuadratureType;

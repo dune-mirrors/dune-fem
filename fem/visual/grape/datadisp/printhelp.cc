@@ -11,8 +11,8 @@ static void print_help(const char *funcName)
   printf(" [-h] [-help] [-p path] ");
   printf("[-m grid] [-s df] [-v vecdf] [[-s drv] [-v drdv]]\n");
 
-  printf("%s reads a sequence of %ddgrids with discretefunctions\n",            
-   funcName, DUNE_PROBLEM_DIM);
+  printf("%s reads a sequence of grids with discretefunctions\n",            
+   funcName);
   printf("      and displays all data with GRAPE\n");
   printf("options:\n");
   printf("   -h or -help: display this help\n");

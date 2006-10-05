@@ -16,7 +16,7 @@ using namespace Dune;
 
 #define LARGE 1.0E308
 
-static const int dim = DUNE_PROBLEM_DIM; 
+static const int dim = GRIDDIM; 
 
 //#include <dune/fem/space/lagrangebase.hh>
 #include <dune/fem/discretefunction/dfadapt.hh>
@@ -48,7 +48,7 @@ typedef GR_GridPartType::IndexSetType GR_IndexSetType;
 typedef OutputType GR_DiscFuncType;
 typedef OutputType GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType > GrapeDispType;
-
+/*
 void addError(GrapeDispType& disp,GR_GridType& grid,double time,
 	      DgType::DestinationType& Uh) {
   typedef DgType::DestinationType::DiscreteFunctionSpaceType SpaceType;
@@ -77,7 +77,7 @@ void addError(GrapeDispType& disp,GR_GridType& grid,double time,
   disp.addData(*l1err,"l1-err",time);  
   
 }
-
+*/
 #include <dune/fem/visual/grape/datadisp/readtupledata.cc>
 #include <dune/fem/visual/grape/datadisp/readtupparams.cc> 
 #include <dune/fem/visual/grape/datadisp/readfile.cc>

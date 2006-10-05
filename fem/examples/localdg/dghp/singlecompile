@@ -1,3 +1,8 @@
+     ###################3
+# name=datadisp
+name=dgtest
+
+
 problem=6
 epsilonne=0.0
 polorder=2
@@ -5,17 +10,9 @@ gridtype=ALBERTAGRID
 epsilonne=0.0
 dimw=2
 
-#grape=1
-#level=2
-#repeats=1
-grape=1
-level=2
-repeats=2
-
-padapt=1
-hadapt=0
-
-if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} clean dgtest;
+\rm ${name}.o
+\rm ${name}
+if ! make GRIDTYPE=${gridtype} GRIDDIM=${dimw} POLORDER=${polorder} PROBLEM=${problem} ${name};
 then
   echo "Something went wrong"
  exit 1

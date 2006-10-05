@@ -373,7 +373,7 @@ namespace Dune {
       IndexSetType & indexSet = dm.template getIndexSet<IndexSetType> ();
       
       // get types for codim 0  
-      static GridPartImp gridPart(grid,indexSet);
+      static GridPartImp gridPart(grid);
       static ThisType space(gridPart);
       
       return space;

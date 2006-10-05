@@ -350,8 +350,8 @@ class EocOutput {
 
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
 
-    ofs  << "Grid: " << transformToGridName(grid.type()) << "\n\n"
-	 << "Macrogrid: " << arg << "\\\\\n\n";
+    ofs  << "Grid: " << grid.name() << "\n\n"
+	       << "Macrogrid: " << arg << "\\\\\n\n";
 		
     ofs.close();
     ode.printmyInfo(outputFile);

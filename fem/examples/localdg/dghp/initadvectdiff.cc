@@ -225,8 +225,7 @@ class U0RotCone {
   }
 
   double endtime() {
-<<<<<<< initadvectdiff.cc
-    return 5.;
+    return 0.5; 
   }
 
   double saveinterval() {
@@ -243,7 +242,6 @@ class U0RotCone {
 
   void velocity(double t, const DomainType &x, DomainType &res) const{
     
-<<<<<<< initadvectdiff.cc
     res = DomainType(0.);
     res[0]=2.25;
     res[1]=0.22;

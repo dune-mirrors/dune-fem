@@ -28,7 +28,10 @@ struct GrapeTupleHelper {
     df = new T1 (dataname.str().c_str(), *space);
     */
     std::cout << "    Dataset from " << dataname.str() << std::endl;
-    SpaceType* space = &SpaceType::instance(grid);
+    // SpaceType* space = &SpaceType::instance(grid);
+    typedef typename SpaceType::GridPartType GridPartType;
+    GridPartType* gridPart = new GridPartType(grid);
+    SpaceType* space = new SpaceType(*gridPart);
     T1* df = new T1 (dataname.str().c_str(), *space);
     dataio.readData(*df, dataname.str().c_str(), n);
     return ReturnType(df,NextType::input(dataio,name,n,grid));
@@ -70,7 +73,10 @@ struct GrapeTupleHelper<T1,Nil,N> {
     part = new GridPartType(grid,*iset);
     */
     std::cout << "    Dataset from " << dataname.str() << std::endl;
-    SpaceType* space = &SpaceType::instance(grid);
+    // SpaceType* space = &SpaceType::instance(grid);
+    typedef typename SpaceType::GridPartType GridPartType;
+    GridPartType* gridPart = new GridPartType(grid);
+    SpaceType* space = new SpaceType(*gridPart);
     T1* df = new T1 (dataname.str().c_str(), *space);
     dataio.readData(*df, dataname.str().c_str(), n);  
     return ReturnType(df,Nil());
@@ -98,13 +104,13 @@ struct GrapeTuple {
   static ReturnType* input(DataIO& dataio,GridType*& grid,double& t,int n,
 			   const char* path,
 			   std::string name) {
-    grid = new GridType();
     std::string gname;
     if (path) gname += path;
     else gname += ".";
     gname += "/g";
     gname += name;
     std::cout << "Reading grid from " << gname << std::endl;
+    grid = new GridType();
     dataio.readGrid(*grid, gname.c_str(), t, n);
     std::string dname;
     if (path) dname += path;

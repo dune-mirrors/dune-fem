@@ -302,11 +302,13 @@ struct TupleToPair<Pair<T,Nil> > {
 	  localRes.element(model,discFunc,*it,time,dt,int(lmaxPol[0]),infProj);
 	lRT[0] = resid.one_norm();
 	lrho[0] = h + infProj.one_norm();
+	assert(lrho[0] == lrho[0]);
+	assert(lrho[0] < 1e10);
 	resid *= lrho[0];
 	ret += resid;
 
-	IntersectionIterator endnit = it->iend();
-	IntersectionIterator nit = it->ibegin();
+	IntersectionIterator endnit = it->ileafend();
+	IntersectionIterator nit = it->ileafbegin();
       
 	double maxh = lrho[0]; 
 	for (; nit != endnit; ++nit) {

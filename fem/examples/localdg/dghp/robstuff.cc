@@ -116,7 +116,6 @@ public:
 	*/
       }
       LResType lres = res.localFunction(*it);
-      std::cerr << locerr[0] << std::endl;
       lres[0] = locerr[0];
     }
     

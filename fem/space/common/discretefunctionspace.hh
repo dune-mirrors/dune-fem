@@ -149,7 +149,7 @@ namespace Dune{
                   if( geo.isSimplex() ) return Triangle;
                   if( geo.isCube() )    return Quadrilateral;
                   
-                  std::cerr<<"Wrong GeometryType in fremGrom \n";
+                  std::cerr<<"Wrong GeometryType in fromGeom in " << __FILE__ << " " << __LINE__ << "\n";
                   DUNE_THROW(NotImplemented,"GeometryType not implemented");
                   abort();
                   return Unknown;
@@ -161,13 +161,13 @@ namespace Dune{
                   if(geo.isPyramid()) return Pyramid;
                   if(geo.isPrism()  ) return Prism;
 
-                  std::cerr<<"Wrong GeometryType in fremGrom \n";
+                  std::cerr<<"Wrong GeometryType in fromGeom in " << __FILE__ << " " << __LINE__ << "\n";
                   DUNE_THROW(NotImplemented,"GeometryType not implemented");
                   abort();
                   return Unknown;
                 }
       default:
-        std::cerr<<"Wrong GeometryType in fremGrom \n";
+        std::cerr<<"Wrong GeometryType in fromGeom in " << __FILE__ << " " << __LINE__ << "\n";
         DUNE_THROW(NotImplemented,"GeometryType not implemented");
         abort();
         return Unknown;
