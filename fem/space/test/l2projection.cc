@@ -30,18 +30,8 @@ static const int dimp = DIM;
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
-
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
 using namespace Dune;
-
-#if SGRID
-#include <dune/grid/sgrid.hh>
-typedef SGrid  < dimp, dimw > GridType;
-#endif
-
-#if AGRID  
-#include <dune/grid/albertagrid.hh>
-typedef AlbertaGrid< dimp, dimw > GridType;
-#endif
 
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
@@ -78,6 +68,11 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
 typedef DFAdapt < DiscreteFunctionSpaceType > DiscreteFunctionType;
+
+//! Get the Dofmanager type
+typedef DofManager<GridType> DofManagerType;
+typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+
 
 //! the exact solution to the problem for EOC calculation 
 class ExactSolution : public Function < FuncSpace , ExactSolution > 
@@ -220,14 +215,14 @@ public:
   }
 };
 // ********************************************************************
-double algorithm (GridType& grid, int turn )
+double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
 {
    GridPartType part ( grid );
-
    DiscreteFunctionSpaceType linFuncSpace ( part );
+   /*
    DiscreteFunctionType solution ( "sol", linFuncSpace );
    solution.clear();
-      
+   */ 
    ExactSolution f ( linFuncSpace ); 
    L2Error < DiscreteFunctionType > l2err;
        
@@ -272,29 +267,23 @@ int main (int argc, char **argv)
   double* error = new double[ml];
   char tmp[16]; sprintf(tmp,"%d",dimp);
   std::string macroGridName (tmp); 
-  macroGridName += "dgrid.al";
+  macroGridName += "dgrid.dgf";
 
-#if SGRID 
-  const int step = 1;
-#else 
-  const int step = 2;
-#endif
-#if SGRID
-   // this leads to the same number of points for SGrid and AlbertGrid
-   int n[dimp];
-   double h[dimp];
-   for(int i=0; i<dimp; i++)  { n[i] = 2; h[i] = 1.0; }
+  const int step = refStepsForHalf;
+  GridPtr<GridType> gridptr(macroGridName);
+  GridType& grid=*gridptr;
 
-   GridType grid ((int *) &n, (double *) &h );
-#else
-   GridType grid ( macroGridName.c_str() );
-#endif
-
+  GridPartType part ( grid );
+  DiscreteFunctionSpaceType linFuncSpace ( part );
+  DiscreteFunctionType solution ( "sol", linFuncSpace );
+  solution.clear();
   
   for(int i=0; i<ml; i+=step)
   {
     grid.globalRefine(step);
-    error[i] = algorithm ( grid , 0);
+    DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
+    dm.resize();
+    error[i] = algorithm ( grid , solution , 0);
     if (i>0) {
       double eoc = log( error[i-step]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";

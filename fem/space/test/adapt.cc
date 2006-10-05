@@ -27,7 +27,7 @@ using namespace Dune;
 const int polOrd = POLORDER;
 
 #ifndef GRIDDIM 
-#define GRIDDIM 2 
+#define GRIDDIM dimworld 
 #endif
 
 #define GENERIC_ADAPT 1
@@ -38,8 +38,8 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-typedef DGAdaptiveLeafGridPart<GridType> GridPartType; 
-//typedef HierarchicGridPart<GridType> GridPartType; 
+//typedef DGAdaptiveLeafGridPart<GridType> GridPartType; 
+typedef HierarchicGridPart<GridType> GridPartType; 
 //typedef AdaptiveLeafGridPart<GridType> GridPartType; 
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -183,7 +183,6 @@ void adapt(GridType& grid,
   typedef DiscreteFunctionType::FunctionSpaceType::Traits::IteratorType Iterator;
   const DiscreteFunctionType::FunctionSpaceType
     & space = solution.getFunctionSpace();
-
   RestProlOperator<DiscreteFunctionType> rp(solution);
 
 #if GENERIC_ADAPT 
@@ -195,13 +194,12 @@ void adapt(GridType& grid,
   std::string message;
 
   int mark = 1;
-  int count = step;
+  int count = std::abs(step);
   
   if(step < 0) 
   {
     message += "Coarsening...";
     mark = -1;
-    count = std::abs(step);
   }
   else 
     message += "Refining...";
@@ -219,15 +217,15 @@ void adapt(GridType& grid,
     std::cout << message << std::endl;
   }
 #else 
-  //for(int i=0; i<count; ++i)
+  for(int i=0; i<count; ++i)
   {
     Iterator it = space.begin();  
     Iterator endit = space.end();
     for(; it != endit ; ++it) {
-      grid.mark(step,it);
+      grid.mark(mark,it);
     } 
     grid.adapt(dm,rp);
-    std::cout << message << std::endl;
+    std::cout << message << "NOT GERNERIC!" << std::endl;
   }
 #endif
   /*
@@ -245,7 +243,24 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
       int step,
       int turn )
 {
+  {
+    const DiscreteFunctionSpaceType & space = solution.getFunctionSpace();
+    ExactSolution f ( space ); 
+    L2Projection<DiscreteFunctionType, ExactSolution, polOrd>::
+      project(f, solution);
+    L2Error < DiscreteFunctionType > l2err;
+    double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
+    std::cout << "before ref." << new_error << "\n\n"; 
+  }
   adapt(grid,solution,step);
+#if HAVE_GRAPE
+  // if Grape was found, then display last solution 
+  if(0 && turn > 0) {
+    std::cerr << "GRAPE 1" << std::endl;
+    GrapeDataDisplay < GridType > grape(grid); 
+    grape.dataDisplay( solution );
+  }
+#endif
   const DiscreteFunctionSpaceType & space = solution.getFunctionSpace();
   ExactSolution f ( space ); 
   // calculation L2 error on refined grid
@@ -257,6 +272,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
 #if HAVE_GRAPE
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
+    std::cerr << "GRAPE 2" << std::endl;
     GrapeDataDisplay < GridType > grape(grid); 
     grape.dataDisplay( solution );
   }
@@ -267,6 +283,16 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
     project(f, solution);
   double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
+#if HAVE_GRAPE
+  // if Grape was found, then display last solution 
+  if(0 && turn > 0) {
+    std::cerr << "SIZE: " << solution.getFunctionSpace().size() 
+	      << " GRID: " << grid.size(0) << std::endl;
+    std::cerr << "GRAPE 3" << std::endl;
+    GrapeDataDisplay < GridType > grape(grid); 
+    grape.dataDisplay( solution );
+  }
+#endif
   
   return error;
 }
