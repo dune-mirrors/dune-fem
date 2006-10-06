@@ -15,7 +15,10 @@ namespace Dune {
     memPair_(dm_.addDofSet(&dofVec_, f.mapper(), name_)),
     dofVec_ ( *memPair_.second ),
     localFunc_(*this)
-{}
+{
+  //std::cout << "create func= " << name_ << " "<< &dofVec_ << "\n";
+
+}
 
   // Constructor making discrete function  
   template<class DiscreteFunctionSpaceType>
@@ -27,7 +30,9 @@ namespace Dune {
     memPair_(dm_.addDofSet(&dofVec_, f.mapper(), name_)),
     dofVec_ ( *memPair_.second ),
     localFunc_(*this)
-  {}
+  {
+  //std::cout << "create func= " << name_ << " "<< &dofVec_ << "\n";
+  }
 
   // Constructor making discrete function  
   template<class DiscreteFunctionSpaceType>
@@ -40,7 +45,9 @@ namespace Dune {
     memPair_(dm_.addDummyDofSet(&dofVec_, f.mapper(), name_, vector )),
     dofVec_ ( *memPair_.second ),
     localFunc_(*this)
-  {}
+  {
+  //std::cout << "create func= " << name_ << " "<< &dofVec_ << "\n";
+  }
 
 template<class DiscreteFunctionSpaceType>
 inline DFAdapt< DiscreteFunctionSpaceType>::
@@ -54,6 +61,7 @@ DFAdapt(const DFAdapt <DiscreteFunctionSpaceType> & df ) :
 {
   // copy values of array 
   dofVec_ = df.dofVec_;
+  //std::cout << "create func= " << name_ << " "<< &dofVec_ << "\n";
 }
 
 
@@ -484,6 +492,9 @@ template <class EntityType, class QuadratureType>
 inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
 evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) const 
 {
+  //if(STATIC_lockFuncOutPut)
+  //  std::cout << "evaluate Local Func Quadrautre of func= "<< &dofVec_ << "\n";
+  
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
   assert(en.geometry().checkInside(quad.point(quadPoint)));
@@ -580,32 +591,44 @@ LocalFunctionAdapt < DiscreteFunctionSpaceType>::getBaseFunctionSet() const {
 template<class DiscreteFunctionSpaceType> 
 template <class EntityType> 
 inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
-init (const EntityType &en ) const
+init (const EntityType &en) const
 {
   // if id of element is the same, then no init has to be done 
   // NOTE: this might fail for adaptive grids, unless 
   // a method of the grid tells wether the grid is new or not 
   //if( id_ == idSet_.id(en) ) return;
+ 
+  // NOTE: if init is false, then LocalFunction has been create before. 
+  // if fSpace_.multipleGeometryTypes() is true, then grid has elements 
+  // of different geometry type (hybrid grid) and we have to check geometry
+  // type again, if not we skip this part, because calling the entity's
+  // geometry method is not a cheep call 
   
-  if( (geoType_ != en.geometry().type()) ||
-      (!init_) )
+  if( !init_ || ( ! fSpace_.multipleGeometryTypes() ) )
   {
-    baseSet_  = &fSpace_.getBaseFunctionSet(en);
-    numOfDof_ = baseSet_->numBaseFunctions();
+    if(geoType_ != en.geometry().type()) 
+    {
+      baseSet_  = &fSpace_.getBaseFunctionSet(en);
+      numOfDof_ = baseSet_->numBaseFunctions();
     
-    if(numOfDof_ > this->values_.size())
-      this->values_.resize( numOfDof_ );
+      if(numOfDof_ > this->values_.size())
+      {
+        this->values_.resize( numOfDof_ );
+      }
 
-    init_ = true;
-    geoType_ = en.geometry().type();
+      init_ = true;
+      geoType_ = en.geometry().type();
+    }
   }
 
+  // make sure that the base functions set we have is for right geom type
   assert( geoType_ == en.geometry().type() );
-  //id_=idSet_.id(en);
+  // id_ = idSet_.id(en); 
 
   for(int i=0; i<numOfDof_; ++i)
+  {
     values_ [i] = &(this->dofVec_[ fSpace_.mapToGlobal ( en , i) ]);
-
+  }
   return;
 } 
 

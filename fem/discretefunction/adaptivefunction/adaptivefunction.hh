@@ -565,8 +565,11 @@ namespace Dune {
     mutable ContainedJacobianRangeType cTmpGradRef_;
     mutable ContainedJacobianRangeType cTmpGradReal_;
     mutable RangeType tmp_;
+
+    mutable bool init_;
     mutable const BaseFunctionSetType* baseSet_;
 
+    mutable GeometryType geoType_;
   }; // end class AdaptiveLocalFunction (specialised for CombinedSpace)
   
 } // end namespace Dune

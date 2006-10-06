@@ -16,6 +16,7 @@ namespace Dune {
     tmp_(0.0),
     tmpGrad_(0.0),
     init_(false),
+    baseSet_(0),
     geoType_(0) // init as Vertex 
   {}
   
@@ -28,6 +29,7 @@ namespace Dune {
     tmp_(0.0),
     tmpGrad_(0.0),
     init_(false),
+    baseSet_(0),
     geoType_(0) // init as Vertex 
   {}
 
@@ -188,20 +190,30 @@ namespace Dune {
   }
   
 
+  // --init
   template <class DiscreteFunctionSpaceImp>
   template <class EntityType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
   init(const EntityType& en) 
   {
-    if( (geoType_ != en.geometry().type()) || (!init_) )
+    // NOTE: if init is false, then LocalFunction has been create before. 
+    // if fSpace_.multipleGeometryTypes() is true, then grid has elements 
+    // of different geometry type (hybrid grid) and we have to check geometry
+    // type again, if not we skip this part, because calling the entity's
+    // geometry method is not a cheep call 
+    
+    if( (!init_) || ( ! spc_.multipleGeometryTypes() ) )
     {
-      baseSet_ = &spc_.getBaseFunctionSet(en);
+      if( geoType_ != en.geometry().type() )
+      {
+        baseSet_ = &spc_.getBaseFunctionSet(en);
 
-      int numOfDof = baseSet_->numBaseFunctions();
-      values_.resize(numOfDof);
+        int numOfDof = baseSet_->numBaseFunctions();
+        values_.resize(numOfDof);
 
-      init_ = true;
-      geoType_ = en.geometry().type();
+        init_ = true;
+        geoType_ = en.geometry().type();
+      }
     }
 
     assert( geoType_ == en.geometry().type() );
@@ -251,7 +263,10 @@ namespace Dune {
     cTmp_(0.0),
     cTmpGradRef_(0.0),
     cTmpGradReal_(0.0),
-    tmp_(0.0)
+    tmp_(0.0),
+    init_(false),
+    baseSet_(0),
+    geoType_(0) // init as Vertex 
   {}
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -263,7 +278,10 @@ namespace Dune {
     cTmp_(0.0),
     cTmpGradRef_(0.0),
     cTmpGradReal_(0.0),
-    tmp_(0.0)
+    tmp_(0.0),
+    init_(false),
+    baseSet_(0),
+    geoType_(0) // init as Vertex 
   {}
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -402,17 +420,41 @@ namespace Dune {
      return values_.size();
   }
 
+  // --init
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   template <class EntityType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  init(const EntityType& en) {
-    baseSet_ = &spc_.getBaseFunctionSet(en);
-    int numOfDof =
-      baseSet_.numDifferentBaseFunctions();
-    values_.resize(numOfDof);
+  init(const EntityType& en) 
+  {
 
-    for (int i = 0; i < numOfDof; ++i) {
-      for (SizeType j = 0; j < N; ++j) {
+    // NOTE: if init is false, then LocalFunction has been create before. 
+    // if fSpace_.multipleGeometryTypes() is true, then grid has elements 
+    // of different geometry type (hybrid grid) and we have to check geometry
+    // type again, if not we skip this part, because calling the entity's
+    // geometry method is not a cheep call 
+    
+    if( (!init_) || ( ! spc_.multipleGeometryTypes() ) )
+    {
+      if( geoType_ != en.geometry().type() )
+      {
+        baseSet_ = &spc_.getBaseFunctionSet(en);
+
+        int numDof = baseSet_->numBaseFunctions();
+        values_.resize(numDof);
+
+        init_ = true;
+        geoType_ = en.geometry().type();
+      }
+    }
+
+    assert( geoType_ == en.geometry().type() );
+
+    const int numDof = numDofs();
+    assert( values_.size() == numDof );
+    for (int i = 0; i < numDof; ++i) 
+    {
+      for (SizeType j = 0; j < N; ++j) 
+      {
         values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, i*N+j)]);
       } // end for j
     } // end for i
