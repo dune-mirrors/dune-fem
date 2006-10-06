@@ -92,7 +92,7 @@ namespace Dune {
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
-      BaseType (DGFSpaceId),
+      BaseType (gridPart,DGFSpaceId),
       gridPart_(gridPart),
       mapper_(0),
       baseFuncSet_(MaxNumElType, 0),
@@ -359,26 +359,6 @@ namespace Dune {
         ScalarFunctionSpaceType, polOrd> fac(type);
       return new BaseFunctionSetType(fac);
     }
-
-    static ThisType & instance (GridType & grid) 
-    {
-      // add index set to list of indexset of dofmanager 
-      typedef DofManager<typename Traits::GridType> DofManagerType;
-      typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-      
-      DofManagerType & dm = 
-        DofManagerFactoryType::getDofManager(grid);
-      typedef typename Traits::GridPartType::IndexSetType IndexSetType;
-
-      IndexSetType & indexSet = dm.template getIndexSet<IndexSetType> ();
-      
-      // get types for codim 0  
-      static GridPartImp gridPart(grid);
-      static ThisType space(gridPart);
-      
-      return space;
-    }
-
   };
 
   template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp = SimpleStorage >

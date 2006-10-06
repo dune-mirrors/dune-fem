@@ -223,6 +223,7 @@ namespace Dune {
 
     //! the index set, used by the mapper for mapping between grid and space 
     GridPartType& grid_;
+
   private:
     //! the corresponding LagrangeMapper 
     MapperType *mapper_; 

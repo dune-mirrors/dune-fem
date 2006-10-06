@@ -972,6 +972,10 @@ public:
   //! returns the index set restrinction and prolongation operator
   IndexSetRestrictProlongType & indexSetRPop () 
   {
+    // hier muss statt dessen ein Combiniertes Object erzeugt werden. 
+    // dafuer sollte bei einhaengen der IndexSets ein Methoden Pointer
+    // erzeugt werden, welcher die den IndexSet mit einem anderen Object
+    // kombiniert 
     return indexRPop_;
   }
 

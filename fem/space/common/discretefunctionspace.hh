@@ -305,13 +305,23 @@ namespace Dune{
   public:
     //! The implementation type
     typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename FunctionSpaceTraits::GridPartType  GridPartType;
 
   public:
     //! Constructor
-    DiscreteFunctionSpaceDefault(int id) : 
-      DiscreteFunctionSpaceInterface<FunctionSpaceTraits>(id)
-    {}
+    DiscreteFunctionSpaceDefault(GridPartType & gridPart, int id) 
+      : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>(id) 
+      , multipleGeometryTypes_( gridPart.indexSet().geomTypes(0).size() > 1 ) 
+    {
+    }
 
+    //! returns true if grid has more than one geometry type (hybrid grid)
+    bool multipleGeometryTypes() const { return multipleGeometryTypes_; }
+
+  protected: 
+    //! true if grid has more than one geometry type (hybrid grids)
+    const bool multipleGeometryTypes_;
+ 
   private:
     //! Barton-Nackman trick 
     DiscreteFunctionSpaceType& asImp() 

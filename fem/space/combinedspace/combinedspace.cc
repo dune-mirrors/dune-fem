@@ -6,7 +6,7 @@ namespace Dune {
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   CombinedSpace(ContainedDiscreteFunctionSpaceType& spc) :
-    BaseType(spaceId_),
+    BaseType(spc.gridPart(),spaceId_),
     spc_(spc),
     mapper_(spc_, spc_.mapper()),
     baseSetVec_(GeometryIdentifier::numTypes, 0),

@@ -38,6 +38,8 @@ namespace Dune {
     enum { CombinedDimRange = CombinedTraits::DimRange };
 
   public:
+    typedef typename CombinedTraits::GridPartType GridPartType;
+    
     // Assumption: only scalar contained function spaces
     enum { DimDomain = CombinedTraits::DimDomain,
            DimRange = 1 };

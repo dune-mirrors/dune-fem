@@ -8,7 +8,7 @@ namespace Dune {
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>
 inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
 LagrangeDiscreteFunctionSpace (GridPartType & gridPart) :
-    DefaultType(id),
+    DefaultType(gridPart,id),
     baseFuncSet_(GeometryIdentifier::numTypes,0),
     grid_(gridPart), 
     mapper_(0),
@@ -50,8 +50,12 @@ inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
 ~LagrangeDiscreteFunctionSpace () 
 {
   for(unsigned int i=0; i<baseFuncSet_.size(); i++)
+  {
     if (baseFuncSet_[i] != 0)
+    {
       delete baseFuncSet_[i];
+    }
+  }
 
   delete(mapper_);
 }  
