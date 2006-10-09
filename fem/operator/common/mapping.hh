@@ -33,11 +33,14 @@ template<typename DFieldType,typename RFieldType, class DType, class RType>
 class Mapping //: public Vector < RFieldType > 
 {
 public:
-  //! domain vector space (for usage in derived classes)
+  //! domain vector space (for usage in derived classes) 
+  //! \todo please insert an example here: is it the vector-type, e.g. 
+  //! FieldVector<5> or the vector space, or something else? 
   typedef DType DomainType;
   //! range vector space
   typedef RType  RangeType;
-  //! integral type used in the construction of the domain vector space
+  //! integral type used in the construction of the domain vector space, 
+  // ??? e.g. double or float ???
   typedef DFieldType DomainFieldType;
   //! integral type used in the construction of the range vector space
   typedef RFieldType RangeFieldType;
