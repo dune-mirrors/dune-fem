@@ -177,6 +177,24 @@ add(const DiscreteFunctionType& g, RangeFieldType scalar)
   return asImp();
 }
 
+// print 
+template<class DiscreteFunctionTraits >
+inline void 
+DiscreteFunctionDefault<DiscreteFunctionTraits >::
+print(std::ostream & s) const 
+{
+  typedef DiscreteFunctionDefault<
+    DiscreteFunctionTraits 
+    > DiscreteFunctionDefaultType;
+    
+  s << this->name() << std::endl;
+  ConstDofIteratorType endit = this->dend ();
+  for(ConstDofIteratorType it = this->dbegin(); it != endit; ++it) 
+  {
+    s << (*it) << std::endl;
+  }
+}
+
 } // end namespace Dune
 
 #endif

@@ -221,6 +221,9 @@ namespace Dune{
       return this->functionSpace_.continuous();
     }
 
+    //! print all dof values of this function to stream 
+    void print(std::ostream & ) const ;
+    
     //! Set all elements to zero
     void clear();
 
