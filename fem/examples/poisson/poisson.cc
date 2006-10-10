@@ -24,12 +24,15 @@
 **              make GRIDTYPE=SGRID
 **                    -> compiles and works correctly
 **              make GRIDTYPE=ALUGRID_SIMPLEX
-**                    -> compiles and runs, but EOCs are too low
+**                    -> compiles and works correctly
 ** 
 **
 **-------------------------------------------------------------------------
 **
 **  $Log$
+**  Revision 1.18  2006/10/10 12:41:01  gersbach
+**  changed comment
+**
 **  Revision 1.17  2006/09/25 12:30:10  haasdonk
 **  now working for all grids except UG
 **
