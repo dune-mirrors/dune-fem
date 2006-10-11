@@ -124,7 +124,6 @@ public:
     functionSpace_( fuspace ),  matrix_ (0), matrix_assembled_( false ),
     arg_ ( NULL ), dest_ (NULL) , opMode_(opMode) , leaf_ (leaf) {};
 
-  //! \todo Please doc me!
 /*======================================================================*/
 /*! 
  *   destructor: In case of allocation of global operator matrix
@@ -277,6 +276,7 @@ public:
  */
 /*======================================================================*/
   void prepareGlobal(const DiscFunctionType &Arg, DiscFunctionType & Dest )  
+  DUNE_DEPRECATED 
   { 
     arg_  = &Arg.argument();
     dest_ = &Dest.destination();
@@ -296,7 +296,7 @@ public:
  */
 /*======================================================================*/
 
-  void finalizeGlobal()  
+  void finalizeGlobal()  DUNE_DEPRECATED
   { 
     arg_ = NULL; dest_ = NULL;
   };
