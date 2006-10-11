@@ -1,7 +1,6 @@
 #ifndef DUNE_TWISTPROVIDER_HH
 #define DUNE_TWISTPROVIDER_HH
 
-
 //- System includes
 #include <vector>
 #include <map>
