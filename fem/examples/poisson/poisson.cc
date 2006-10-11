@@ -30,6 +30,9 @@
 **-------------------------------------------------------------------------
 **
 **  $Log$
+**  Revision 1.19  2006/10/11 11:48:30  gersbach
+**   ob es wohl klappt
+**
 **  Revision 1.18  2006/10/10 12:41:01  gersbach
 **  changed comment
 **
@@ -41,7 +44,7 @@
 **
 **
 **************************************************************************/
-
+// dies ist ein Test
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
