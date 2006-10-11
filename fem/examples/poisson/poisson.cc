@@ -30,6 +30,9 @@
 **-------------------------------------------------------------------------
 **
 **  $Log$
+**  Revision 1.21  2006/10/11 14:58:18  gersbach
+**  Test rueckgaengig gemacht
+**
 **  Revision 1.20  2006/10/11 11:51:35  gersbach
 **  Test rueckgaengig gemacht
 **
@@ -47,6 +50,7 @@
 **
 **
 **************************************************************************/
+
 
 #include <iostream>
 #include <config.h>
