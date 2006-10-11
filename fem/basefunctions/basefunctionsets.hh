@@ -66,6 +66,9 @@ namespace Dune {
                   const DomainType& xLocal,
                   RangeType& phi) const;
 
+
+    //! This method should not be used directly. It is called by methods
+    //! eval, jacobian, hessian, which appropriately set diffVariable.
     template <int diffOrd, class QuadratureType>
     inline
     void evaluate (int baseFunct, 
