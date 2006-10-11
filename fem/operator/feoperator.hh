@@ -234,14 +234,14 @@ namespace Dune {
 
   public:
     //! Store argument and destination 
-    void prepareGlobal(const DiscFunctionType &Arg, DiscFunctionType & Dest )  
+    void prepareGlobal(const DiscFunctionType &Arg, DiscFunctionType & Dest ) DUNE_DEPRECATED
     { 
       arg_  = &Arg.argument();
       dest_ = &Dest.destination();
       assert(arg_ != NULL); assert(dest_ != NULL);
     }
     //! Set argument and dest to NULL 
-    void finalizeGlobal()  
+    void finalizeGlobal()  DUNE_DEPRECATED
     { 
       arg_  = NULL; dest_ = NULL;
     }
