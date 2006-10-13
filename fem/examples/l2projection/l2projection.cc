@@ -39,7 +39,7 @@ typedef AlbertaGrid< dimp, dimw > GridType;
 
 #include "../../space/leafindexset.hh"
 #if HAVE_GRAPE
-#include <dune/io/visual/grapedatadisplay.hh>
+#include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 #include "../../operator/inverseoperators.hh"
