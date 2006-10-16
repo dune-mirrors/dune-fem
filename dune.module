@@ -1,4 +1,4 @@
-Module: dune_fem
+Module: dune-fem
 Depends: dune-common dune-grid
 
 run_configure () {
