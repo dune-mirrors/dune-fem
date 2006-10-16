@@ -13,6 +13,8 @@ AM_CONFIG_HEADER(config.h)
 DUNE_CHECK_ALL_M([dune-common])
 DUNE_CHECK_ALL_M([dune-grid])
 
+DUNE_SUMMARY_ALL
+
 if test x$HAVE_DUNE_COMMON != x1 ; then
   AC_MSG_ERROR([Can't work without the dune-common module. Maybe you have to supply your dune-common directory as --with-dunecommon=dir])
 fi
@@ -21,10 +23,9 @@ if test x$HAVE_DUNE_GRID != x1 ; then
   AC_MSG_ERROR([Can't work without the dune-grid module. Maybe you have to supply your dune-common directory as --with-dunegrid=dir])
 fi
 
-# implicitly set the Dune-flags everywhere
-CPPFLAGS="$DUNE_CPPFLAGS"
-LDFLAGS="$DUNE_LDFLAGS"
-LIBS="$DUNE_LIBS"
+# preset variable to path such that #include <dune/...> works
+AC_SUBST(AM_CPPFLAGS, '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
+AC_SUBST(AM_LDFLAGS, '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
 
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
@@ -48,8 +49,5 @@ AC_CONFIG_FILES([Makefile
      fem/space/test/Makefile
      fem/quadrature/Makefile
      fem/quadrature/test/Makefile
-               ])
+     dune-fem.pc])
 AC_OUTPUT
-
-# show search results
-DUNE_SUMMARY_ALL
