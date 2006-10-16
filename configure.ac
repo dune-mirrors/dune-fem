@@ -27,6 +27,11 @@ fi
 AC_SUBST(AM_CPPFLAGS, '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
 AC_SUBST(AM_LDFLAGS, '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
 
+# implicitly set the Dune-flags everywhere
+CPPFLAGS="$DUNE_CPPFLAGS"
+LDFLAGS="$DUNE_LDFLAGS"
+LIBS="$DUNE_LIBS"
+
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
      fem/Makefile
