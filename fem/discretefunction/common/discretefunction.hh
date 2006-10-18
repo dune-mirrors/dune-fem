@@ -35,6 +35,8 @@ namespace Dune{
   //! implemented. It contains a local function and a dof iterator which can 
   //! iterate over all dofs of one level. Via the method access the local
   //! dofs and basis functions can be accessed for a given entity.
+  //! The DOF-Iterators are STL-like Iterators, i.e. they can be dereferenced
+  //! giving the corresponding DOF.
   //! 
   //************************************************************************
   template<class DiscreteFunctionTraits>
@@ -72,7 +74,7 @@ namespace Dune{
     //! Type of the local function implementation
     typedef typename DiscreteFunctionTraits::LocalFunctionType LocalFunctionType;
 
-    //! Type of the dof iterator used in the discrete function implementation
+    //! Type of the dof iterator used in the discrete function implementation.
     typedef typename DiscreteFunctionTraits::DofIteratorType DofIteratorType;
 
     //! Type of the constantdof iterator used in the discrete function implementation
