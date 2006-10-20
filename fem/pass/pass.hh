@@ -145,13 +145,13 @@ namespace Dune {
     //! By default, nothing is done, ie the TimeProvider is discarded.
     virtual void processTimeProvider(TimeProvider* time) {}
 
-  private:
+  protected:
     //! Does the actual computations. Needs to be overridden in the derived
     //! clases
     virtual void compute(const TotalArgumentType& arg, 
                          DestinationType& dest) const = 0;
 
-  private:
+  protected:
     PreviousPassType& previousPass_;
   }; // end class Pass
 
@@ -202,7 +202,7 @@ namespace Dune {
       }
     }
 
-  private:
+  protected:
     //! Actions to be carried out before a global grid walkthrough.
     //! To be overridden in a derived class.
     virtual void prepare(const ArgumentType& arg, 
@@ -215,7 +215,7 @@ namespace Dune {
     //! class.
     virtual void applyLocal(Entity& en) const = 0;
 
-  private:
+  protected:
     //! The actual computations are performed as follows. First, prepare
     //! the grid walkthrough, then call applyLocal on each entity and then
     //! call finalize.
