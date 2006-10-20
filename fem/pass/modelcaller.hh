@@ -111,7 +111,6 @@ namespace Dune {
     {
       evaluateLocal(en, x, data_->localFunctionsSelf(), valuesEn_);
       problem_.analyticalFlux(en, time_, x, valuesEn_, res);
-      //CallerType::analyticalFlux(problem_, en, x, valuesEn_.second, res);
     }
     
     void analyticalFlux(Entity& en, VolumeQuadratureType& quad, int quadPoint,
@@ -120,7 +119,6 @@ namespace Dune {
       evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       problem_.analyticalFlux(en, time_, quad.point(quadPoint), 
                               valuesEn_, res);
-      //CallerType::analyticalFlux(problem_, en, quad, quadPoint, valuesEn_.second, res);
     }
 
     template <class FaceDomainType>
@@ -131,10 +129,6 @@ namespace Dune {
 
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
-      //evaluateLocal(*nit.inside(), selfLocal.global(x),
-      //              data_->localFunctionsSelf(), valuesEn_);
-      //evaluateLocal(*nit.outside(), neighLocal.global(x),
-      //              data_->localFunctionsNeigh(), valuesNeigh_);
       evaluateLocal(data_->self(), selfLocal.global(x),
                     data_->localFunctionsSelf(), valuesEn_);
       evaluateLocal(data_->neighbor(), neighLocal.global(x),
@@ -142,9 +136,6 @@ namespace Dune {
       return problem_.numericalFlux(nit, time_, x,
                                     valuesEn_, valuesNeigh_,
                                     resEn, resNeigh);
-      //CallerType::numericalFlux(problem_, nit, x, 
-      //                      valuesEn_.second, valuesNeigh_.second,
-      //                      res_en, res_neigh);
     }
 
     // Ensure: entities set correctly before call
@@ -154,10 +145,6 @@ namespace Dune {
                          int quadPoint,
                          RangeType& resEn, RangeType& resNeigh)
     {
-      //evaluateQuad(*nit.inside(), quadInner, quadPoint,
-      //             data_->localFunctionsSelf(), valuesEn_);
-      //evaluateQuad(*nit.outside(), quadOuter, quadPoint,
-      //             data_->localFunctionsNeigh(), valuesNeigh_);
       evaluateQuad(data_->self(), quadInner, quadPoint,
                    data_->localFunctionsSelf(), valuesEn_);
       evaluateQuad(data_->neighbor(), quadOuter, quadPoint,
@@ -167,9 +154,6 @@ namespace Dune {
                                     valuesEn_, 
                                     valuesNeigh_,
                                     resEn, resNeigh);
-      //CallerType::numericalFlux(problem_, nit, quad, quadPoint,
-      //                      valuesEn_.second, valuesNeigh_.second,
-      //                      res_en, res_neigh);
     }
 
 
@@ -206,18 +190,22 @@ namespace Dune {
       evaluateLocal(en, x, data_->localFunctionsSelf(), valuesEn_);
       evaluateJacobianLocal(en, x);
       problem_.source(en, time_, x, valuesEn_, jacobians_, res);
-      //CallerType::source(problem_, en, x, valuesEn_.second, jacobians_, res);
     }
 
     void source(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
                 RangeType& res) 
     {
-      // evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       evaluateJacobianQuad(en, quad, quadPoint);
       problem_.source(en, time_, quad.point(quadPoint), valuesEn_,
                       jacobians_, res);
-      //CallerType::source(problem_, en, quad, quadPoint,
-      //valuesEn_.second, jacobians_, res);
+    }
+
+    void rightHandSide(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
+                       RangeType& res) 
+    {
+      evaluateJacobianQuad(en, quad, quadPoint);
+      problem_.rightHandSide(en, time_, quad.point(quadPoint), valuesEn_,
+                             jacobians_, res);
     }
 
   private:
@@ -290,8 +278,8 @@ namespace Dune {
         discreteFunctions_(FilterType::apply(arg)),
         localFunctionsSelf_(LFCreator::apply(discreteFunctions_)),
         localFunctionsNeigh_(LFCreator::apply(discreteFunctions_)),
-	self_(NULL),
-	neighbor_(NULL)
+      	self_(0),
+      	neighbor_(0)
       {}
 
       LocalFunctionTupleType& localFunctionsSelf() {
@@ -315,12 +303,12 @@ namespace Dune {
       }
 
       void setSelf(Entity& en) {
-	self_ = &en;
+      	self_ = &en;
         setter(en, localFunctionsSelf_);
       }
 
       void setNeighbor(Entity& en) {
-	neighbor_=&en;
+      	neighbor_=&en;
         setter(en, localFunctionsNeigh_);
       }
 
@@ -336,8 +324,8 @@ namespace Dune {
       LocalFunctionTupleType localFunctionsSelf_;
       LocalFunctionTupleType localFunctionsNeigh_;
 
-    Entity* self_;
-    Entity* neighbor_;
+      Entity* self_;
+      Entity* neighbor_;
     
     };
 
