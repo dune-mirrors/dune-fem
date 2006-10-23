@@ -221,7 +221,8 @@ namespace Dune {
           EntityPointerType ep = nit.outside();
 	        EntityType & nb = *ep;
     
-          if (iset.index(nb) > iset.index(en)
+          if ((iset.index(nb) > iset.index(en) && en.level()==nb.level())
+              || en.level() > nb.level()
               || nb.partitionType() != InteriorEntity) 
           {
 

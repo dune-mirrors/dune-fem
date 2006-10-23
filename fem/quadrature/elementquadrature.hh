@@ -146,6 +146,27 @@ namespace Dune {
     //! \param it Intersection iterator
     //! \param order Desired order of the quadrature
     //! \param side Is either INSIDE or OUTSIDE
+    ElementQuadrature(const IntersectionIterator& it, int order, int twist,  Side side) :
+      quad_(it.intersectionGlobal().type(), order),
+      referenceGeometry_(side == INSIDE ?
+                         it.intersectionSelfLocal() : 
+                         it.intersectionNeighborLocal()),
+      elementGeometry_(referenceGeometry_.type().basicType() ,dimension),
+      faceNumber_(side == INSIDE ?
+                  it.numberInSelf() :
+                  it.numberInNeighbor()),
+      dummy_(0.)
+    {
+      /*
+      assert( (side == INSIDE) ? 
+          (it.inside ()->geometry().type() == elementGeometry_ ) : 
+          (it.outside()->geometry().type() == elementGeometry_ ) );
+      */
+    }
+    //! Constructor
+    //! \param it Intersection iterator
+    //! \param order Desired order of the quadrature
+    //! \param side Is either INSIDE or OUTSIDE
     ElementQuadrature(const IntersectionIterator& it, int order, Side side) :
       quad_(it.intersectionGlobal().type(), order),
       referenceGeometry_(side == INSIDE ?
