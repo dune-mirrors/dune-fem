@@ -46,7 +46,7 @@ template <class DiscreteFunctionType, class FunctionType, int polOrd>
 class LagrangeProjection
 {
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
+  // typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType::Traits::GridType GridType;
   typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
   typedef typename FunctionSpaceType::DomainType DomainType;
@@ -82,9 +82,11 @@ class LagrangeProjection
     pkt[4][0] = 0.0 , pkt[4][1] = 0.5;
     pkt[5][0] = 0.5 , pkt[5][1] = 0.0;
     ret = 0;
-    if (order == 2) {
+    if (order >= 2) {
       for (int i=0;i<6;i++) {
 	f.evaluate(t,en.geometry().global(pkt[i]),val[i]);
+	//std::cerr << i << " " << en.geometry().global(pkt[i]) << " " 
+	//	  << val[i] << " " << base(2,i,x) << std::endl;
 	val[i] *= base(2,i,x);
 	ret += val[i];
       }
@@ -126,10 +128,28 @@ class LagrangeProjection
 	  double det =
 	    (*it).geometry().integrationElement(quad.point(qP));
 	  // f.evaluate((*it).geometry().global(quad.point(qP)), ret);
+	  // std::cerr << "Next Element " << det << " : " << std::flush;
 	  lag_evaluate(ord,f,*it,quad.point(qP),ret,t);
 	  set.eval(i,quad,qP,phi);
 	  lf[i] += quad.weight(qP) * (ret * phi) ;
         }
+      }
+      {
+	RangeType val;
+	DomainType pkt[6];
+	pkt[0][0] = 0. , pkt[0][1] = 0.;
+	pkt[1][0] = 1. , pkt[1][1] = 0.;
+	pkt[2][0] = 0. , pkt[2][1] = 1.;
+	pkt[3][0] = 0.5 , pkt[3][1] = 0.5;
+	pkt[4][0] = 0.0 , pkt[4][1] = 0.5;
+	pkt[5][0] = 0.5 , pkt[5][1] = 0.0;
+  /*
+	for (int i=0;i<6;i++) {
+	  f.evaluate(0,(*it).geometry().global(pkt[i]),val);
+	  lf.evaluateLocal(*it,pkt[i],ret);
+	  if (fabs(ret[0]-val[0])>1e-10) abort();
+	}
+  */
       }
     }
   }

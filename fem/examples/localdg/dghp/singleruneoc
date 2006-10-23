@@ -1,5 +1,5 @@
 grape=0
-level=1
+level=0
 repeats=1
 #grape=0
 #level=0
@@ -9,7 +9,8 @@ probflag=0
 epsilonne=0
 
 padapt=1
-hadapt=0.1
+hadapt=0.125
+# 0.8
 
 nice ./dgtest grid2d.dgf ${repeats} ${level} ${epsilonne} ${probflag} ${grape} ${hadapt} ${padapt} 
 

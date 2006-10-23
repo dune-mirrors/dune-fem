@@ -180,16 +180,15 @@ int main(int argc, char ** argv, char ** envp) {
   switch (order) {
   case 0: cfl=0.9;  break;
   case 1: cfl=0.3; break;
-  case 2: cfl=0.25;  break;
-  case 3: cfl=0.05;  break;
-  case 4: cfl=0.09; break;
+  case 2: cfl=0.24;  break;
+  case 3: cfl=0.19;  break;
+  case 4: cfl=0.15; break;
   }	
   if (argc>9)
     cfl=atof(argv[9]);
-	
-  //cfl = cfl/3.0;
-  //cfl /= 2.0;
 
+  // cfl *= 2.;
+	
   InitialDataType problem(epsilon,probflag,true);
   ModelType model(*grid,problem);
   DiscModelType eulerflux(model);

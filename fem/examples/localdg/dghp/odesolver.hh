@@ -8,10 +8,10 @@ namespace DuneODE {
   using namespace Dune;
   using namespace std;
 #include "localfunction.hh"
-template<class Operator>
+template<class Operator,int STEPS>
 class ExplRungeKutta : public TimeProvider {
  public:
-  enum {maxord=10};
+  enum {maxord=10,ord_=STEPS};
   typedef typename Operator::SpaceType SpaceType;
   typedef typename Operator::SpaceType FunctionSpaceType;
   typedef typename Operator::DestinationType DestinationType;
@@ -22,7 +22,7 @@ class ExplRungeKutta : public TimeProvider {
   double *b;
   double *c;
   double dt;
-  int ord_;
+  // int ord_;
   const SpaceType& spc_;
   DestinationType* U0;
   LocalFunctionType* LU0;
@@ -37,7 +37,9 @@ public:
     op_(op),
     spc_(op.space()),
     tmp_(op.space()),
-    cfl_(cfl), ord_(pord), Upd(0),
+    cfl_(cfl), 
+    // ord_(pord), 
+    Upd(0),
     savetime_(0.0), savestep_(1)
   {
     op.timeProvider(this);
@@ -257,7 +259,10 @@ public:
     U0->assign(U);
     project(*U0,proj);
     // Compute Steps
-    op_(*U0,*(Upd[0]));
+    if (1 || t<1e-8)
+      op_(*U0,*(Upd[0]));
+    else
+      (*Upd[0]).assign(*(Upd[ord_-1]));
     dt=cfl_*timeStepEstimate();
     for (int i=1;i<ord_;i++) {
       (Upd[ord_])->assign(U);

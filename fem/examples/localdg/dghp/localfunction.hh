@@ -1,4 +1,5 @@
-int numPol[3]={1,3,6};
+const int degimpl = 5;
+int numPol[degimpl+1]={1,3,6,10,15};
 template <class LocalFuncType>
 struct LocalFuncHelper {
   enum { dimRange = LocalFuncType::dimRange };

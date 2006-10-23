@@ -63,7 +63,7 @@ public:
   }
   template <class FunctionType,class ResType> 
   RangeType norm (FunctionType &f, DiscreteFunctionType &discFunc,
-		  double time = 0.0,
+		  double time ,
 		  ResType& res)
   {
     const typename DiscreteFunctionType::FunctionSpaceType 

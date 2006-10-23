@@ -45,8 +45,9 @@ namespace Dune {
     //typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
 
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
+    typedef ElementQuadrature<GridType,1> FaceQuadratureType;
     typedef CachingQuadrature<GridType,0> VolumeQuadratureType;
-    typedef CachingQuadrature<GridType,1> FaceQuadratureType;
+    // typedef CachingQuadrature<GridType,1> FaceQuadratureType;
   };
   // DiscreteModelTraits
   template <class Model,class NumFlux,int polOrd >

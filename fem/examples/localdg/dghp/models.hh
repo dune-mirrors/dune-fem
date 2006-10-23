@@ -13,7 +13,8 @@
 
 
 // Approximations Ordnung
-enum {order=POLORDER,rksteps=POLORDER+1}; 
+enum {order=POLORDER,rksteps=POLORDER+2}; 
+// enum {order=POLORDER,rksteps=POLORDER}; 
 // Gitterauswahl
 
 // Modell- und Flussauswahl
@@ -26,7 +27,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    // typedef LLFFlux<ModelType> DiscModelType;
    typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #elif PROBLEM == 2
    #include "scalarmodels.hh"
    #include "initburgers.cc"
@@ -35,7 +36,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    typedef LLFFlux<ModelType> DiscModelType;
    //typedef DGLimitedAdvectionOperator<ModelType,LLFFlux,order> DgType;
    typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #elif PROBLEM == 3
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
@@ -44,7 +45,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    // typedef LLFFlux<ModelType> DiscModelType;
    typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #elif PROBLEM == 4
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
@@ -53,7 +54,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    // typedef LLFFlux<ModelType> DiscModelType;
    typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #elif PROBLEM == 5
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
@@ -62,7 +63,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    // typedef LLFFlux<ModelType> DiscModelType;
    typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #elif PROBLEM == 6
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
@@ -71,7 +72,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    // typedef LLFFlux<ModelType> DiscModelType;
    typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #elif PROBLEM == 7
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
@@ -79,7 +80,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    typedef BuckLevModel<GridType,InitialDataType > ModelType;
    typedef UpwindFlux<ModelType> DiscModelType;
    typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #endif
 #include "aposteriori.hh"
 #include "adaptation.hh"

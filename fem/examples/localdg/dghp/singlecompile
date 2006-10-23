@@ -6,7 +6,7 @@ name=dgtest
 problem=6
 epsilonne=0.0
 polorder=2
-gridtype=ALBERTAGRID
+gridtype=ALUGRID_SIMPLEX
 epsilonne=0.0
 dimw=2
 

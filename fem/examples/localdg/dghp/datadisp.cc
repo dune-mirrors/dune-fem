@@ -48,11 +48,13 @@ typedef GR_GridPartType::IndexSetType GR_IndexSetType;
 typedef OutputType GR_DiscFuncType;
 typedef OutputType GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType > GrapeDispType;
-/*
+
 void addError(GrapeDispType& disp,GR_GridType& grid,double time,
 	      DgType::DestinationType& Uh) {
   typedef DgType::DestinationType::DiscreteFunctionSpaceType SpaceType;
-  SpaceType* space = &SpaceType::instance(grid);
+  typedef SpaceType::GridPartType GridPartType;
+  GridPartType* gridPart = new GridPartType(grid);
+  SpaceType* space = new SpaceType(*gridPart);
   DgType::DestinationType* lsg = new DgType::DestinationType("lsg",*space);
   lsg->set(0);
   InitialDataType problem(0.0,1,false);
@@ -68,7 +70,7 @@ void addError(GrapeDispType& disp,GR_GridType& grid,double time,
   typedef FunctionSpace < double , double, dimD , 1 > ScalarFSType;
   typedef DiscontinuousGalerkinSpace<ScalarFSType, GridPartType, 0>
     ConstDiscSType;
-  ConstDiscSType* sspace = &ConstDiscSType::instance(grid);
+  ConstDiscSType* sspace = new ConstDiscSType(*gridPart);
   typedef DFAdapt<ConstDiscSType> ConstDiscFSType;
   ConstDiscFSType* l1err = new ConstDiscFSType("l1err",*sspace);
   l1err->set(1.);
@@ -77,7 +79,7 @@ void addError(GrapeDispType& disp,GR_GridType& grid,double time,
   disp.addData(*l1err,"l1-err",time);  
   
 }
-*/
+
 #include <dune/fem/visual/grape/datadisp/readtupledata.cc>
 #include <dune/fem/visual/grape/datadisp/readtupparams.cc> 
 #include <dune/fem/visual/grape/datadisp/readfile.cc>

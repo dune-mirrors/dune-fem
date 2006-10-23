@@ -45,7 +45,7 @@ struct TupleToPair<Pair<T,Nil> > {
       int quadOrd = 2 * space.polynomOrder() + 2;
       const GaussPts& timeQuad = GaussPts::instance();
       discFunc.setEntity(en);
-      CachingQuadrature <GridType , 0 > quad(en,quadOrd);
+      CachingQuadrature <GridType , 0 > quad(en,quadOrd/2);
       RangeType u    (0.0);
       RangeType dtu  (0.0);
       RangeType divfu(0.0);
@@ -102,14 +102,20 @@ struct TupleToPair<Pair<T,Nil> > {
       EntityPointerType ep = nit.inside();
       EntityType & en = *ep;
       int twistSelf = twistUtil.twistInSelf(nit); 
-      CachingQuadrature<GridType,1> 
-	faceQuadInner(nit, quadOrd, twistSelf, 
+      ElementQuadrature<GridType,1> 
+	faceQuadInner(nit, quadOrd/2, twistSelf, 
 		      CachingQuadrature<GridType,1>::INSIDE);
+      //CachingQuadrature<GridType,1> 
+	//faceQuadInner(nit, quadOrd, twistSelf, 
+		//      CachingQuadrature<GridType,1>::INSIDE);
       int faceQuadInner_nop = faceQuadInner.nop();
       int twistNeighbor = twistUtil.twistInNeighbor(nit);
-      CachingQuadrature<GridType,1> 
-	faceQuadOuter(nit, quadOrd, twistNeighbor,
+      ElementQuadrature<GridType,1> 
+	faceQuadOuter(nit, quadOrd/2, twistNeighbor,
 		      CachingQuadrature<GridType,1>::OUTSIDE);
+      //CachingQuadrature<GridType,1> 
+	//faceQuadOuter(nit, quadOrd, twistNeighbor,
+		//      CachingQuadrature<GridType,1>::OUTSIDE);
       RangeType uLeft(0.0),uRight(0.0);
       RangeType gLeft(0.0),gRight(0.0);
       RangeType normalFLeft(0.0),normalFRight(0.0);
@@ -163,7 +169,7 @@ struct TupleToPair<Pair<T,Nil> > {
       if (!doPAdapt) {
 	return polOrd;
       }
-      CachingQuadrature <GridType , 0 > quad(en,quadOrd);
+      CachingQuadrature <GridType , 0 > quad(en,quadOrd/2);
       RangeType maxOrd(polOrd); 
       for (int r=0;r<dimR;r++) {
 	for(int qP = 0; qP < quad.nop(); qP++) {
@@ -313,14 +319,16 @@ struct TupleToPair<Pair<T,Nil> > {
 	double maxh = lrho[0]; 
 	for (; nit != endnit; ++nit) {
 	  if (nit.neighbor()) {
-	    if (part_.indexSet().index(*(nit.outside())) > 
-		part_.indexSet().index(*it)) {
+	    if ((part_.indexSet().index(*(nit.outside())) > 
+		      part_.indexSet().index(*it) && (*(nit.outside())).level() == (*it).level()) ||
+          ((*(nit.outside())).level() < (*it).level()) ) {
 	      LConstDiscFSType lmaxPolnb = 
 		maxPol_.localFunction(*(nit.outside()));
 	      RangeType resjmp = 
 		localRes.jump(model,discFunc,nit,time,dt,
 			      int(lmaxPol[0]),int(lmaxPolnb[0]));
-	      resjmp *= maxh;
+		    LConstDiscFSType lrhonb = rho_.localFunction(*(nit.outside()));
+	      resjmp *= std::max( maxh, lrhonb[0]);
 	      double jump = resjmp.one_norm();
 	      {
 		LConstDiscFSType lRS = RS_.localFunction(*it);
@@ -338,7 +346,8 @@ struct TupleToPair<Pair<T,Nil> > {
 	}
   }
       ret = 0;
-      double pot = 2.*(polOrd+1); // double(polOrd+2)/double(polOrd+1);
+      // double pot = 2.*(polOrd+1); 
+      double pot = double(polOrd+2)/double(polOrd+1);
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
 	double vol = it->geometry().volume();
@@ -359,7 +368,7 @@ struct TupleToPair<Pair<T,Nil> > {
 	   lmaxPol[0] = lmaxPolNew[0];
 	if (polOrd>lmaxPolNew[0] || polOrd>lmaxPol[0])
 	  padapt_num[int(lmaxPolNew[0])] += 1;
-	LConstDiscFSType lind = ind_.localFunction(*it);
+    LConstDiscFSType lind = ind_.localFunction(*it);
 	if (start)
 	  lind[0] = lRP[0];
 	else
