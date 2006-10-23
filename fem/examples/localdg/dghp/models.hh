@@ -13,7 +13,7 @@
 
 
 // Approximations Ordnung
-enum {order=POLORDER,rksteps=POLORDER+2}; 
+enum {order=POLORDER,rksteps=POLORDER+1}; 
 // enum {order=POLORDER,rksteps=POLORDER}; 
 // Gitterauswahl
 
