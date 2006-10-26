@@ -46,7 +46,7 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
   dispStack.push(disp);
   GrapeTuple<GR_DiscFuncType>::addToDisplay(*disp,dinf,time,*tup);
 
-  // addError(*disp,*grid,time,*(tup->first()));
+  addError(*disp,*grid,time,*(tup->first()));
 
   return disp;
 }
