@@ -1,10 +1,20 @@
 DGF
-Interval
-0 0   #p0
-2 0.4 #p1
-10 2   #nx ny nz
+Vertex       
+ -1 -1
+ 1 -1
+ 1 1
+ -1 1
 #
+Simplexgenerator
+min-angle 30    % quality enhancment
+max-area 0.1   % area restriction
+display 0       % show result using Triangle viewer
 
-BOUNDARYDOMAIN
--1    -1 -1   30 30
-#BOUNDARYDOMAIN
+% to use Triangle from a certain path, uncomment this path line
+%path $HOME/bin      % path to Triangle
+#
+BOUNDARYSEGMENTS
+1 0 1 2 3 0
+#
+# examplegrid2d.dgf
+

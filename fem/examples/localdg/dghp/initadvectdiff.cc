@@ -350,7 +350,7 @@ class U0BuckLev {
   }
 
   double endtime() {
-    return 0.4;
+    return 0.3;
   }
 
   double saveinterval() {
@@ -465,10 +465,14 @@ class U0BuckLev {
     else return ul;
   }
 
+  double velo() const {
+    return 1.3;
+  }
 
   void velocity(double t, const DomainType &x, DomainType &res) const{
     res = 0.0;
     res[0] = 1.0;
+    res[1] = velo();
   }
 
   void evaluate(const DomainType& arg, RangeType& res) const {
@@ -481,8 +485,7 @@ class U0BuckLev {
 	res = 0.;
       else
 	res = 1.;
-    } else
-      evaluate(0.0,arg,res); 
+    } else evaluate(0.0,arg,res); 
   }
 	
 	
@@ -490,6 +493,36 @@ class U0BuckLev {
     res = 0.;
     if (flag_ == 1)
       return;
+    if (flag_ == 2) {
+      DomainType x(arg);
+      x[1] -= velo()*t;
+      // x[0] += 0.4*x[1];
+      if (fabs(x[1]+0.35)<0.5) {
+	double x1d = x[0];
+	double y1d = x[1]+0.35;
+	if (y1d>0) x1d-=0.4*y1d;
+	else x1d+=0.4*y1d;
+	double uminus = 0.5*(1.-cos(M_PI*y1d/0.5));
+	if (x[0]>0.2) {
+	  res[0]=rp_sol(uminus,1.,t,x1d-0.25);
+	  double test = rp_sol(1.,uminus,t,x1d+0.85);
+	  if (fabs(test-uminus)>1e-5) {
+	    std::cerr << "ERROR in LSG: (t,x1d,y1d): " << t << " " 
+		      << x1d << " " << y1d << " right RP to fast" << " "
+		      << uminus << " " << test << " " << res[0] << std::endl;
+	  }
+	}
+	else {
+	  res[0]=rp_sol(1.,uminus,t,x1d+0.85);
+	  double test = rp_sol(uminus,1.,t,x1d-0.25);
+	  if (fabs(test-uminus)>1e-5) {
+	    std::cerr << "ERROR in LSG: (t,x1d,y1d): " << t << " " 
+		      << x1d << " " << y1d << " left RP to fast" << " "
+		      << uminus << " " << test << " " << res[0] << std::endl;
+	  }
+	}
+      } else res[0] = 1.;
+    }
     else {
       double x = arg[0];
       if (x>1.1)

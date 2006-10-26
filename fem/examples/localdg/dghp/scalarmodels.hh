@@ -134,6 +134,7 @@ class BuckLevModel {
 			      FluxRangeType& f) const {
     f = 0.;
     f[0][0] = problem_.f(u[0]);
+    f[0][1] = problem_.velo()*u[0];
   }
   inline  void jacobian(const typename Traits::EntityType& en,
 			double time,  
@@ -144,6 +145,7 @@ class BuckLevModel {
     A = 0.;
     DomainType velocity(0.0);
     velocity[0] = problem_.f1(u[0]);
+    velocity[1] = problem_.velo();
     du.umv(velocity,A);
   }
   inline  void diffusion(const typename Traits::EntityType& en,
@@ -151,6 +153,7 @@ class BuckLevModel {
 			 const DomainType& x,
 			 const RangeType& u, 
 			 DiffusionRangeType& a) const {
+    abort();
     a*=0;
     for (int i=0;i<dimDomain;i++)
       a[i][i]=u;
@@ -161,6 +164,7 @@ class BuckLevModel {
 			  const RangeType& u, 
 			  const GradientType& v,
 			  FluxRangeType& A) const {
+    abort();
     A *= 0;
     A[0] = epsilon*v[0];
     return tstep_eps;
@@ -397,14 +401,16 @@ class UpwindFlux<BuckLevModel<GridType,ProblemType> > {
 
     upwind = normal*vel;
     if (upwind>0){
-      gLeft[0] = model_.problem_.f(uLeft[0]);
-      gLeft *= upwind;
-      upwind *= model_.problem_.f1(uLeft[0]);
+      vel[0] = model_.problem_.f(uLeft[0]);
+      gLeft[0] = normal*vel;
+      vel[0] = model_.problem_.f1(uLeft[0]);
+      upwind = normal*vel;
     }
     else{
-      gLeft[0] = model_.problem_.f(uRight[0]);
-      gLeft *= upwind;
-      upwind *= model_.problem_.f1(uRight[0]);
+      vel[0] = model_.problem_.f(uRight[0]);
+      gLeft[0] = normal*vel;
+      vel[0] = model_.problem_.f1(uRight[0]);
+      upwind = normal*vel;
     }
     gRight = gLeft;
     double wave = std::abs(upwind);

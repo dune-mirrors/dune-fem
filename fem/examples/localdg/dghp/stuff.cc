@@ -238,7 +238,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
 
 
 template <class StupidFunction,class DFType>
-void initialize(const StupidFunction& f,DFType& df,double t=0.0)
+void initialize(const StupidFunction& f,DFType& df,double t=0.)
 {
   //- Typedefs and enums
   typedef typename DFType::Traits::DiscreteFunctionSpaceType SpaceType;

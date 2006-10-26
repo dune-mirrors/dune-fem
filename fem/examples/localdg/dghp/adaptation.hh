@@ -200,7 +200,7 @@ public:
 
     // set default values
     initialTheta_ = 0.01;
-    coarsenTheta_ = 0.25;
+    coarsenTheta_ = 0.4;
     endTime_ = T;
     alphaSigSet_ = 0.01;
     maxLevFlag_ = 1;
@@ -447,7 +447,7 @@ public:
       // std::cout << " ind  tol: " << getLocalIndicator(*it) << "  " <<  localTolerance_ << std::endl;
       if( getLocalIndicator(*it) > localTolerance_ )
         grid_.mark(1, it);
-      else if ( (it->level() > 4) && (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
+      else if ( (getLocalIndicator(*it) < coarsenTheta_ * localTolerance_) )
       	grid_.mark(-1, it);
       else
 	grid_.mark(0, it);

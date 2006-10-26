@@ -46,7 +46,6 @@ typedef DgType::GridPartType                            GR_GridPartType;
 typedef GR_GridPartType::IndexSetType GR_IndexSetType;
 
 typedef OutputType GR_DiscFuncType;
-typedef OutputType GR_DiscFuncType;
 typedef GrapeDataDisplay<GR_GridType > GrapeDispType;
 
 void addError(GrapeDispType& disp,GR_GridType& grid,double time,
@@ -57,7 +56,8 @@ void addError(GrapeDispType& disp,GR_GridType& grid,double time,
   SpaceType* space = new SpaceType(*gridPart);
   DgType::DestinationType* lsg = new DgType::DestinationType("lsg",*space);
   lsg->set(0);
-  InitialDataType problem(0.0,1,false);
+  std::cerr << "Adding solution and errors for time " << time << std::endl;
+  InitialDataType problem(0,2,false);
   initialize(problem,*lsg,time);
   disp.addData(*lsg,"Lsg.",time);
   DgType::DestinationType* err = new DgType::DestinationType("err",*space);
@@ -77,7 +77,6 @@ void addError(GrapeDispType& disp,GR_GridType& grid,double time,
   L1Error<DgType::DestinationType> L1err;
   L1err.norm(problem,Uh,time,*l1err);  
   disp.addData(*l1err,"l1-err",time);  
-  
 }
 
 #include <dune/fem/visual/grape/datadisp/readtupledata.cc>

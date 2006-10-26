@@ -188,6 +188,70 @@ namespace Dune {
   private:
     const Model& model_;
   };
+  // The Lax-Friedrichs Flux Function
+  template <class Model>
+  class LFFlux {
+  public:
+    typedef typename Model::Traits Traits;
+    enum { dimRange = Model::dimRange };
+    typedef typename Model::RangeType RangeType;
+    typedef typename Model::FluxRangeType FluxRangeType;
+  public:
+    LFFlux(const Model& mod) : model_(mod) {}
+    const Model& model() const {return model_;}
+    // Return value: maximum wavespeed*length of integrationOuterNormal
+    // gLeft,gRight are fluxed * length of integrationOuterNormal
+    inline double numericalFlux(typename Traits::IntersectionIterator& it,
+				       double time, 
+				       const typename Traits::FaceDomainType& x,
+				       const RangeType& uLeft, 
+				       const RangeType& uRight,
+				       RangeType& gLeft,
+				       RangeType& gRight) const {
+      const typename Traits::DomainType normal = it.integrationOuterNormal(x);  
+      typename Traits::RangeType visc;
+      typename Traits::FluxRangeType anaflux;
+      model_.analyticalFlux(*it.inside(), time,
+			    it.intersectionSelfLocal().global(x),
+			    uLeft, anaflux);
+      gLeft=0.;
+      anaflux.umv(normal, gLeft);
+      if (it.neighbor())
+	model_.analyticalFlux(*it.outside(), time,
+			      it.intersectionNeighborLocal().global(x),
+			      uRight, anaflux);
+      else
+	model_.analyticalFlux(*it.inside(), time,
+			      it.intersectionSelfLocal().global(x),
+			      uRight, anaflux);
+      anaflux.umv(normal,gLeft);
+      gLeft *= 0.5;
+
+      double maxspeedl,maxspeedr,maxspeed,maxspeedm;
+      double viscparal,viscparar,viscpara,viscparam;
+      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+		      uLeft,viscparal,maxspeedl);
+      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+		      uRight,viscparar,maxspeedr);
+      maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
+      viscpara=(viscparal>viscparar)?viscparal:viscparar;
+      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+		      0.5*(uRight+uLeft),viscparam,maxspeedm);
+      maxspeed=(maxspeed>maxspeedm)?maxspeed:maxspeedm;
+      viscpara=(viscpara>viscparam)?viscpara:viscparam;
+      
+      visc=uRight;
+      visc-=uLeft;
+      visc*=normal.two_norm();
+      gLeft-=visc;
+      
+      gRight=gLeft;
+
+      return maxspeed;
+    }
+  private:
+    const Model& model_;
+  };
 }
 
 #endif

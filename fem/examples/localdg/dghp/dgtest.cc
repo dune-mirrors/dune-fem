@@ -189,7 +189,7 @@ int main(int argc, char ** argv, char ** envp) {
 
   // cfl *= 2.;
 	
-  InitialDataType problem(epsilon,probflag,true);
+  InitialDataType problem(epsilon,probflag,false);
   ModelType model(*grid,problem);
   DiscModelType eulerflux(model);
 
@@ -258,7 +258,7 @@ int main(int argc, char ** argv, char ** envp) {
       grape.dataDisplay(U);
     }
 
-    double t=0.0;
+    double t=0.;
     int counter=0;
     int outputcounter=0;
     FieldVector<double,1> projectionError = L1err.norm(problem,U,t);  
