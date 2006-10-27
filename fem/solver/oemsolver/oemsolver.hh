@@ -69,7 +69,7 @@ public:
     int size = arg.getFunctionSpace().size();
     
     OEMSolver::cghs
-      (size,op_.myMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+      (size,op_.systemMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
 
     // finalize operator  
     finalize ();
@@ -188,7 +188,7 @@ public:
     int size = arg.getFunctionSpace().size();
     
     OEMSolver::cghsParallel
-      (comm_,size,op_.myMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+      (comm_,size,op_.systemMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
 
     // finalize operator  
     finalize ();
@@ -243,7 +243,7 @@ public:
     
     //int iter = 
     OEMSolver::bicgstab
-      (size,op_.myMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+      (size,op_.systemMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
 
     // finalize operator  
     finalize ();
@@ -296,7 +296,7 @@ public:
     
     //int iter = 
     OEMSolver::bicgsq
-      (size,op_.myMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+      (size,op_.systemMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
 
     // finalize operator  
     finalize ();
@@ -349,7 +349,7 @@ public:
     int inner = (size > 1000) ? 1000 : size;
 
     OEMSolver::gmres
-      (inner,size,op_.myMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+      (inner,size,op_.systemMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
 
     // finalize operator  
     finalize ();
