@@ -1,9 +1,9 @@
 #ifndef DUNE_MASSMATRIX_HH
 #define DUNE_MASSMATRIX_HH
 
-#include "../../operator/feop.hh"
-#include "../../operator/feop/spmatrix.hh"
-#include <../../quadrature/quadrature.hh>
+#include <dune/fem/examples/poisson/feop.hh>
+#include <dune/fem/operator/feop/spmatrix.hh>
+#include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune {
   
