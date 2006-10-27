@@ -67,7 +67,7 @@ namespace Dune {
 
     // Types extracted from the underlying grids
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    typedef typename GridType::template Codim<0>::Geometry Geometry;
+    typedef typename GridType::template Codim<0>::Geometry GeometryType;
 
 
     // Various other types
@@ -75,6 +75,8 @@ namespace Dune {
     typedef typename DiscreteModelType::SelectorType SelectorType;
     typedef DiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+
+    typedef GrapeDataDisplay<GridType> GrapeDataDisplayType;
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
@@ -89,7 +91,7 @@ namespace Dune {
     LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 DiscreteFunctionSpaceType& spc,
-		int volumeQuadOrd =-1,int faceQuadOrd=-1) :
+    int volumeQuadOrd =-1,int faceQuadOrd=-1) :
       BaseType(pass, spc),
       caller_(problem),
       arg_(0),
@@ -108,9 +110,9 @@ namespace Dune {
       diffVar_(),
       twistUtil_(spc.grid()),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
-		      (2*spc_.polynomOrder()) : volumeQuadOrd ),
+          (2*spc_.polynomOrder()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
-		    (2*spc_.polynomOrder()+1) : faceQuadOrd )
+        (2*spc_.polynomOrder()+1) : faceQuadOrd )
     {
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
@@ -118,7 +120,6 @@ namespace Dune {
    
     //! Destructor
     virtual ~LocalDGPass() {
-      //delete caller_;
     }
 
     //! Stores the time provider passed by the base class in order to have
@@ -160,7 +161,6 @@ namespace Dune {
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
       }
-
       caller_.finalize();
     }
 
@@ -177,10 +177,13 @@ namespace Dune {
       const BaseFunctionSetType& bsetEn = updEn.getBaseFunctionSet(); 
       
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
-      int volQuad_nop = volQuad.nop();
+      const int volQuad_nop = volQuad.nop();
+
+      // only call geometry once, who know what is done in this function 
+      const GeometryType & geo = en.geometry();
 
       double massVolElinv;
-      double vol = volumeElement(en, volQuad,massVolElinv);
+      double vol = volumeElement(geo, volQuad,massVolElinv);
       
       const IndexSetType& iset = spc_.indexSet();
 
@@ -189,8 +192,8 @@ namespace Dune {
         caller_.analyticalFlux(en, volQuad, l, fMat_);
         caller_.source(en, volQuad, l, source_);
         
-      	double intel=en.geometry().integrationElement(volQuad.point(l))*
-	                      massVolElinv*volQuad.weight(l);
+        double intel=geo.integrationElement(volQuad.point(l))*
+                        massVolElinv*volQuad.weight(l);
         
         for (int i = 0; i < updEn_numDofs; ++i) {
           updEn[i] += 
@@ -208,18 +211,18 @@ namespace Dune {
       IntersectionIteratorType endnit = gridPart_.iend(en);
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
       {
-      	double wspeedS = 0.0;
-	      int twistSelf = twistUtil_.twistInSelf(nit); 
+        double wspeedS = 0.0;
+        int twistSelf = twistUtil_.twistInSelf(nit); 
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
                                          FaceQuadratureType::INSIDE);
         
-      	const int faceQuadInner_nop = faceQuadInner.nop();
-	      if (nit.neighbor()) 
+        const int faceQuadInner_nop = faceQuadInner.nop();
+        if (nit.neighbor()) 
         {
 
           // get neighbor 
           EntityPointerType ep = nit.outside();
-	        EntityType & nb = *ep;
+          EntityType & nb = *ep;
     
           if ((iset.index(nb) > iset.index(en) && en.level()==nb.level())
               || en.level() > nb.level()
@@ -235,17 +238,18 @@ namespace Dune {
 
             const BaseFunctionSetType& bsetNeigh = updNeigh.getBaseFunctionSet();
 
-      	    double massVolNbinv;
-	          nbvol = volumeElement(nb, volQuad,massVolNbinv);
-	          if (nbvol<minvol) minvol=nbvol;
+            const GeometryType & nbGeo = nb.geometry();
+            double massVolNbinv;
+            nbvol = volumeElement(nbGeo, volQuad,massVolNbinv);
+            if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuadInner_nop; ++l) 
             {
               double dtLocalS = 
                 caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
                                       l, valEn_, valNeigh_);
               
-      	      dtLocal += dtLocalS*faceQuadInner.weight(l);
-	            wspeedS += dtLocalS*faceQuadInner.weight(l);
+              dtLocal += dtLocalS*faceQuadInner.weight(l);
+              wspeedS += dtLocalS*faceQuadInner.weight(l);
 
               for (int i = 0; i < updEn_numDofs; ++i) {
                 updEn[i] -= 
@@ -262,15 +266,15 @@ namespace Dune {
 
         if (nit.boundary()) 
         {
-      	  nbvol = vol;
-	        caller_.setNeighbor(en);
+          nbvol = vol;
+          caller_.setNeighbor(en);
           for (int l = 0; l < faceQuadInner_nop; ++l) 
           {
             double dtLocalS = 
               caller_.boundaryFlux(nit, faceQuadInner, l, source_);
             
-    	      dtLocal += dtLocalS*faceQuadInner.weight(l);
-	          wspeedS += dtLocalS*faceQuadInner.weight(l);
+            dtLocal += dtLocalS*faceQuadInner.weight(l);
+            wspeedS += dtLocalS*faceQuadInner.weight(l);
                     
             for (int i = 0; i < updEn_numDofs; ++i) {
               updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_)
@@ -279,11 +283,11 @@ namespace Dune {
           }
         } // end if boundary
         
-    	  if (wspeedS>2.*std::numeric_limits<double>::min()) 
+        if (wspeedS>2.*std::numeric_limits<double>::min()) 
         {
-	        double minvolS = std::min(vol,nbvol);
-	        dtMin_ = std::min(dtMin_,minvolS/wspeedS);
-	      }
+          double minvolS = std::min(vol,nbvol);
+          dtMin_ = std::min(dtMin_,minvolS/wspeedS);
+        }
       }
     }
 
@@ -293,18 +297,20 @@ namespace Dune {
     LocalDGPass& operator=(const LocalDGPass&);
 
   private:
-    double volumeElement(const EntityType& en,
+    double volumeElement(const GeometryType& geo,
                          const VolumeQuadratureType& quad,
-			 double& massVolinv) const {
+                         double& massVolinv) const 
+    {
       massVolinv = 0.;
       double result = 0;
-      for (int qp = 0; qp < quad.nop(); ++qp) {
-	massVolinv += quad.weight(qp);
+      for (int qp = 0; qp < quad.nop(); ++qp) 
+      {
+        massVolinv += quad.weight(qp);
         result += 
-          quad.weight(qp) * en.geometry().integrationElement(quad.point(qp));
+          quad.weight(qp) * geo.integrationElement(quad.point(qp));
       }
       massVolinv /= result;
-      assert(fabs(massVolinv*en.geometry().integrationElement(quad.point(0))-1.)<1e-10);
+      assert(fabs(massVolinv*geo.integrationElement(quad.point(0))-1.)<1e-10);
       return result;
     }
     
