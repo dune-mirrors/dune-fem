@@ -2,15 +2,16 @@
 #define DUNE_PASS_HH
 
 //- System includes
+#include <string>
 
 //- Dune includes
 #include "tuples.hh"
 
 //- local includes 
-#include "../operator/common/operator.hh"
+#include <dune/fem/operator/common/operator.hh>
 
 // * must go away
-#include "../misc/timeutility.hh"
+#include <dune/fem/misc/timeutility.hh>
 
 namespace Dune {
 
@@ -32,7 +33,8 @@ namespace Dune {
   public:
     //- Public methods
     //! The pass method does nothing.
-    void pass(const GlobalArgumentType& arg) const {}
+    void pass(const GlobalArgumentType& arg) const {
+    }
     //! Returns the closure of the destination tuple.
     NextArgumentType localArgument() const { return Nil(); }
     //! No memory needs to be allocated.
@@ -70,6 +72,7 @@ namespace Dune {
     //! Type of the discrete function which stores the result of this pass' 
     //! computations.
     typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;
+
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
     typedef typename PreviousPassType::GlobalArgumentType GlobalArgumentType;
@@ -122,6 +125,12 @@ namespace Dune {
     void timeProvider(TimeProvider* time) {
       previousPass_.timeProvider(time);
       processTimeProvider(time);
+    }
+
+    const DestinationType & destination () const 
+    {
+      assert(destination_);
+      return *destination_;
     }
 
   protected:
@@ -186,9 +195,11 @@ namespace Dune {
     //! Constructor
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function of this pass. 
-    LocalPass(PreviousPassImp& pass, DiscreteFunctionSpaceType& spc) :
+    LocalPass(PreviousPassImp& pass, const DiscreteFunctionSpaceType& spc,
+              std::string passName = "LocalPass") :
       BaseType(pass),
-      spc_(spc)
+      spc_(spc),
+      passName_(passName )
     {}
 
     //! Destructor
@@ -198,7 +209,9 @@ namespace Dune {
     virtual void allocateLocalMemory() 
     {
       if (!this->destination_) {
-        this->destination_ = new DestinationType("temp", spc_);
+        std::ostringstream funcName;
+        funcName << passName_ << "_" << this->passNumber();
+        this->destination_ = new DestinationType(funcName.str(), spc_);
       }
     }
 
@@ -232,7 +245,8 @@ namespace Dune {
     }    
 
   private:
-    DiscreteFunctionSpaceType& spc_;
+    const DiscreteFunctionSpaceType& spc_;
+    const std::string passName_;
   };
   
 } // end namespace Dune
