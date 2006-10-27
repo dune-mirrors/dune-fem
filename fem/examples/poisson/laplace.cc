@@ -7,7 +7,7 @@
 #include "laplace.hh" 
 
 // where the quadratures are defined 
-#include <../../quadrature/quadrature.hh>
+#include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune 
 {
@@ -103,57 +103,6 @@ public:
         lf[i] = ret[0];
       }
     }
-  }
-};
-
-// calculates || u-u_h ||_L2
-template <class DiscreteFunctionType> 
-class L2Error
-{
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  
-public:  
-  template <int polOrd, class FunctionType> 
-  double norm (FunctionType &f, DiscreteFunctionType &discFunc,
-      double time)
-  {
-    const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
-  
-    typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename FunctionSpaceType::IteratorType IteratorType;
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-   
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    
-    RangeType ret (0.0);
-    RangeType phi (0.0);
-
-    double sum = 0.0;
-    //LocalFuncType lf = discFunc.newLocalFunction(); 
-    
-    IteratorType it    = space.begin();
-    IteratorType endit = space.end();
-
-    // check whether grid is empty 
-    assert( it != endit ); 
-   
-    enum { dim = GridType :: dimension };
-    Quadrature <typename FunctionSpaceType::RangeFieldType, dim> quad(
-        it->geometry().type(), polOrd);
-    
-    for(; it != endit ; ++it)
-    {
-      LocalFuncType lf = discFunc.localFunction(*it); 
-      for(int qP = 0; qP < quad.nop(); qP++)
-      {
-        double det = (*it).geometry().integrationElement(quad.point(qP));
-        f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
-        lf.evaluate((*it),quad,qP,phi);
-        sum += det * quad.weight(qP) * SQR(ret[0] - phi[0]);
-      }
-    }
-    return sqrt(sum);
   }
 };
 

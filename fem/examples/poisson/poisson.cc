@@ -25,37 +25,14 @@
 **                    -> compiles and works correctly
 **              make GRIDTYPE=ALUGRID_SIMPLEX
 **                    -> compiles and works correctly
-** 
-**
-**-------------------------------------------------------------------------
-**
-**  $Log$
-**  Revision 1.21  2006/10/11 14:58:18  gersbach
-**  Test rueckgaengig gemacht
-**
-**  Revision 1.20  2006/10/11 11:51:35  gersbach
-**  Test rueckgaengig gemacht
-**
-**  Revision 1.19  2006/10/11 11:48:30  gersbach
-**   ob es wohl klappt
-**
-**  Revision 1.18  2006/10/10 12:41:01  gersbach
-**  changed comment
-**
-**  Revision 1.17  2006/09/25 12:30:10  haasdonk
-**  now working for all grids except UG
-**
-**  Revision 1.16  2006/09/25 11:39:15  haasdonk
-**  adjusting to dune-grid-parser
-**
 **
 **************************************************************************/
-
 
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/fem/misc/l2error.hh>
 
 using namespace Dune;
 

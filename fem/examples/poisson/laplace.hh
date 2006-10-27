@@ -1,8 +1,8 @@
 #ifndef DUNE_LAPLACE_HH
 #define DUNE_LAPLACE_HH
 
-#include "../../operator/feop.hh"
-#include "../../quadrature/quadrature.hh"
+#include "feop.hh"
+#include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune 
 {
