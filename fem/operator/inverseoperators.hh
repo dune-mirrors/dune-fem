@@ -192,7 +192,7 @@ namespace Dune {
         }
       if(_verbose > 0)
         std::cerr << "\n";
-      op_.finalizeGlobal();
+      op_.finalize();
     }
   
   private:
