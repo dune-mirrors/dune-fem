@@ -127,7 +127,8 @@ class LagrangeProjection
         for(int qP = 0; qP < quad.nop(); qP++) {
 	  double det =
 	    (*it).geometry().integrationElement(quad.point(qP));
-	  // f.evaluate((*it).geometry().global(quad.point(qP)), ret);
+    if (ord!=2 && ord!=1) 
+	    f.evaluate((*it).geometry().global(quad.point(qP)), ret);
 	  // std::cerr << "Next Element " << det << " : " << std::flush;
 	  lag_evaluate(ord,f,*it,quad.point(qP),ret,t);
 	  set.eval(i,quad,qP,phi);

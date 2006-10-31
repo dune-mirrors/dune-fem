@@ -46,11 +46,12 @@ solve(DiscModel& model,
   bool done = true;
   RangeType error;
   L1L1Error<ODE> L1L1err;
+  locerror = 0.;
   do {
     ode.setTime(t0);
     t=ode.solve(U,V,ResiduumErr);
     dt = t - t0;
-    locerror = L1L1err.norm(model.model().problem(),ode,t0,dt);
+    // locerror = L1L1err.norm(model.model().problem(),ode,t0,dt);
     error = ResiduumErr.calc(model,adapt,ode,t0,dt);
     //! mark elements and adapt grid
     if (adapt) {
@@ -60,7 +61,7 @@ solve(DiscModel& model,
       adapt->param().setTimeStepNumber(counter);
       adapt->markRefineEntities();
       adapt->adapt();
-      std::cout << "   " << "loop:" << counter << " " << int(done) << " " 
+      std::cout << "   " << "loop:" << int(done) << " " << counter<< " "
 		<< error.one_norm() << " "
 		<< adapt->getLocalInTimeTolerance() << " " 
 		<< ResiduumErr.numPAdapt() << "    "
@@ -178,7 +179,7 @@ int main(int argc, char ** argv, char ** envp) {
   // CFL:
   double cfl;
   switch (order) {
-  case 0: cfl=0.9;  break;
+  case 0: cfl=0.475;  break;
   case 1: cfl=0.3; break;
   case 2: cfl=0.24;  break;
   case 3: cfl=0.19;  break;

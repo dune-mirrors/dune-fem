@@ -348,10 +348,11 @@ struct TupleToPair<Pair<T,Nil> > {
       ret = 0;
       // double pot = 2.*(polOrd+1); 
       double pot = double(polOrd+2)/double(polOrd+1);
+      // double pot = double(2.)/double(1);
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
 	double vol = it->geometry().volume();
-	double h = sqrt(vol); // 0.5*sqrt(it->geometry().integrationElement(DomainType(0))); // 0.001
+	double h = sqrt(it->geometry().integrationElement(DomainType(0)));// sqrt(vol); // 0.5*sqrt(it->geometry().integrationElement(DomainType(0))); // 0.001
 	LConstDiscFSType lRT = RT_.localFunction(*it);
 	LConstDiscFSType lRS = RS_.localFunction(*it);
 	LConstDiscFSType lRP = RP_.localFunction(*it);

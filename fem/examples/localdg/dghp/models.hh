@@ -13,8 +13,8 @@
 
 
 // Approximations Ordnung
-enum {order=POLORDER,rksteps=POLORDER+1}; 
-// enum {order=POLORDER,rksteps=POLORDER}; 
+// enum {order=POLORDER,rksteps=POLORDER+1}; 
+enum {order=POLORDER,rksteps=POLORDER}; 
 // Gitterauswahl
 
 // Modell- und Flussauswahl

@@ -198,10 +198,10 @@ class BuckLevModel {
 			     const RangeType& uLeft, 
 			     RangeType& uRight) const {
     // Outflow
-    uRight=uLeft;
+    // uRight=uLeft;
     // Dirichlet
-    // DomainType xgl=it.intersectionGlobal().global(x);
-    // problem_.evaluate(time,xgl,uRight);
+    DomainType xgl=it.intersectionGlobal().global(x);
+    problem_.evaluate(time,xgl,uRight);
   }
   inline void maxSpeed(const typename Traits::DomainType& normal,
 		       double time,  

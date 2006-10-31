@@ -1,6 +1,6 @@
 grape=0
-level=5
-repeats=1
+level=1
+repeats=7
 #grape=0
 #level=0
 #repeats=6
@@ -13,6 +13,7 @@ hadapt=0
 # 0.8
 
 nice ./dgtest grid2d.dgf ${repeats} ${level} ${epsilonne} ${probflag} ${grape} ${hadapt} ${padapt} 
+
 
 exit 0
 

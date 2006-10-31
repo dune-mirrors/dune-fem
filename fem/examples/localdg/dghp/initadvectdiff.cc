@@ -349,11 +349,11 @@ class U0BuckLev {
     myName = "Buckley Leverett";
   }
 
-  double endtime() {
-    return 0.3;
+  double endtime() const {
+    return 0.35;
   }
 
-  double saveinterval() {
+  double saveinterval() const {
     return 0.02;
   }
 
@@ -490,6 +490,12 @@ class U0BuckLev {
 	
 	
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    /*
+    if (t>0.01 && t<endtime()*0.9) {
+      std::cerr << "calling solution between t0,t1!" << std::endl;
+      abort();
+    }
+    */
     res = 0.;
     if (flag_ == 1)
       return;
@@ -497,15 +503,22 @@ class U0BuckLev {
       DomainType x(arg);
       x[1] -= velo()*t;
       // x[0] += 0.4*x[1];
-      if (fabs(x[1]+0.35)<0.5) {
-	double x1d = x[0];
+  if (fabs(x[1]+0.35)<0.4) {
+	double x1d = x[0]+0.075;
 	double y1d = x[1]+0.35;
 	if (y1d>0) x1d-=0.4*y1d;
 	else x1d+=0.4*y1d;
-	double uminus = 0.5*(1.-cos(M_PI*y1d/0.5));
-	if (x[0]>0.2) {
-	  res[0]=rp_sol(uminus,1.,t,x1d-0.25);
-	  double test = rp_sol(1.,uminus,t,x1d+0.85);
+	// double uminus = 0.5*(1.-cos(M_PI*y1d/0.5));
+  
+	double uminus = 1.;
+	if (y1d<=0 && y1d>-0.4) 
+	  uminus = 0.5*(1.-cos(M_PI*y1d/0.4))*pow(cos(M_PI*y1d/0.4*2.),2.);
+	else if (y1d>=0 && y1d<0.4) 
+	  uminus = 0.5*(1.-cos(M_PI*y1d/0.4))*pow(cos(M_PI*y1d/0.4*4.),2.);
+	
+	if (x1d>0.25) {
+	  res[0]=rp_sol(uminus,1.,t,x1d-0.3);
+	  double test = rp_sol(1.,uminus,t,x1d+0.8);
 	  if (fabs(test-uminus)>1e-5) {
 	    std::cerr << "ERROR in LSG: (t,x1d,y1d): " << t << " " 
 		      << x1d << " " << y1d << " right RP to fast" << " "
@@ -513,8 +526,8 @@ class U0BuckLev {
 	  }
 	}
 	else {
-	  res[0]=rp_sol(1.,uminus,t,x1d+0.85);
-	  double test = rp_sol(uminus,1.,t,x1d-0.25);
+	  res[0]=rp_sol(1.,uminus,t,x1d+0.8);
+	  double test = rp_sol(uminus,1.,t,x1d-0.3);
 	  if (fabs(test-uminus)>1e-5) {
 	    std::cerr << "ERROR in LSG: (t,x1d,y1d): " << t << " " 
 		      << x1d << " " << y1d << " left RP to fast" << " "
