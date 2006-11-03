@@ -58,7 +58,8 @@ class ExplTimeStepper : public TimeProvider {
     ode_(0),
     cfl_(cfl),
     dt_(-1.0),
-    savetime_(0.0), savestep_(1)
+    savestep_(1),
+    savetime_(0.0)
   {
     op.timeProvider(this);
     switch (pord) {
@@ -127,7 +128,8 @@ class ImplTimeStepper : public TimeProvider {
     linsolver_(comm),
     cfl_(cfl),
     dt_(-1.0),
-    savetime_(0.0), savestep_(1)
+    savestep_(1),
+    savetime_(0.0)
   {
     op.timeProvider(this);
     linsolver_.set_tolerance(1.0e-8);
