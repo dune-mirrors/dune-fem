@@ -177,14 +177,20 @@ void SparseRowMatrix<T>::multOEM(const VECtype *x, VECtype *ret) const
 {
   for(register int row=0; row<dim_[0]; ++row)
   {
-    ret[row] = 0.0;
+    double sum = 0.0;
+    int thisCol = row*nz_ ;
     for(register int col=0; col<nz_; ++col)
     {
-      int thisCol = row*nz_ + col;
       int realCol = col_[ thisCol ];
-      if ( realCol < 0 ) continue;
-      ret[row] += values_[thisCol] * x[ realCol ];
+      if ( realCol < 0 ) 
+      {
+        ++thisCol; 
+        break;
+      }
+      sum += values_[thisCol] * x[ realCol ];
+      ++thisCol; 
     }
+    ret[row] = sum;
   }
   return; 
 }
