@@ -121,6 +121,21 @@ namespace Dune {
                               valuesEn_, res);
     }
 
+    void analyticalFluxAndSource(Entity& en, VolumeQuadratureType& quad, int quadPoint,
+                                 JacobianRangeType& fluxRes, RangeType& sourceRes) 
+    {
+      // evaluate local functions 
+      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
+      // evaluate local gradients 
+      evaluateJacobianQuad(en, quad, quadPoint);
+      
+      problem_.analyticalFlux(en, time_, quad.point(quadPoint), 
+                              valuesEn_, fluxRes);
+
+      problem_.source(en, time_, quad.point(quadPoint), valuesEn_,
+                      jacobians_, sourceRes);
+    }
+
     template <class FaceDomainType>
     double numericalFlux(IntersectionIterator& nit, const FaceDomainType& x,
                          RangeType& resEn, RangeType& resNeigh) 
@@ -195,6 +210,7 @@ namespace Dune {
     void source(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
                 RangeType& res) 
     {
+      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(), valuesEn_);
       evaluateJacobianQuad(en, quad, quadPoint);
       problem_.source(en, time_, quad.point(quadPoint), valuesEn_,
                       jacobians_, res);
@@ -291,14 +307,16 @@ namespace Dune {
       }
 
       DiscreteFunctionTupleType& discreteFunctions() {
-	return discreteFunctions_;
+      	return discreteFunctions_;
       }
 
       Entity& self() {
+        assert( self_ );
         return *self_;
       }
 
       Entity& neighbor() {
+        assert( neighbor_ );
         return *neighbor_;
       }
 
@@ -326,7 +344,6 @@ namespace Dune {
 
       Entity* self_;
       Entity* neighbor_;
-    
     };
 
   private:
