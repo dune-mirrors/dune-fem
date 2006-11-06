@@ -188,9 +188,11 @@ namespace Dune {
       const IndexSetType& iset = spc_.indexSet();
 
       // Volumetric integral part
-      for (int l = 0; l < volQuad_nop; ++l) {
-        caller_.analyticalFlux(en, volQuad, l, fMat_);
-        caller_.source(en, volQuad, l, source_);
+      for (int l = 0; l < volQuad_nop; ++l) 
+      {
+        caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
+        //caller_.analyticalFlux(en, volQuad, l, fMat_);
+        //caller_.source(en, volQuad, l, source_);
         
         double intel=geo.integrationElement(volQuad.point(l))*
                         massVolElinv*volQuad.weight(l);
