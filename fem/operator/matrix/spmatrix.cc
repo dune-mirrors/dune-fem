@@ -158,18 +158,7 @@ void SparseRowMatrix<T>::multScalar(int row, int col, T val)
 template <class T> template <class VECtype>
 void SparseRowMatrix<T>::mult(const VECtype *x, VECtype *ret) const
 {
-  for(int row=0; row<dim_[0]; row++)
-  {
-    ret[row] = 0.0;
-    for(int col=0; col<nz_; col++)
-    {
-      int thisCol = row*nz_ + col;
-      int realCol = col_[ thisCol ];
-      if ( realCol < 0 ) continue;
-      ret[row] += values_[thisCol] * x[ realCol ];
-    }
-  }
-  return; 
+  multOEM(x,ret);
 }
 
 template <class T> template <class VECtype>
@@ -177,17 +166,14 @@ void SparseRowMatrix<T>::multOEM(const VECtype *x, VECtype *ret) const
 {
   for(register int row=0; row<dim_[0]; ++row)
   {
-    double sum = 0.0;
+    T sum = 0;
     int thisCol = row*nz_ ;
-    for(register int col=0; col<nz_; ++col)
+    const T * localValues = &values_[thisCol];
+    for(int col=0; col<nz_; ++col)
     {
       int realCol = col_[ thisCol ];
-      if ( realCol < 0 ) 
-      {
-        ++thisCol; 
-        break;
-      }
-      sum += values_[thisCol] * x[ realCol ];
+      if ( realCol < 0 ) break;
+      sum += localValues[col] * x[ realCol ];
       ++thisCol; 
     }
     ret[row] = sum;
