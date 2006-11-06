@@ -1,7 +1,7 @@
 #ifndef DUNE_MATRIXHANDLER_HH
 #define DUNE_MATRIXHANDLER_HH
 
-#include <src/heat/sparsematrix/blockmatrix.hh>
+#include "blockmatrix.hh"
 
 #if HAVE_DUNE_ISTL 
 #include <dune/istl/bcrsmatrix.hh>
@@ -15,6 +15,7 @@ namespace Dune {
     typedef typename SpaceType::GridType::template Codim<0>::Entity EntityType;
   public:  
     typedef SparseRowMatrix<double> MatrixType;
+    typedef MatrixType PreconditionMatrixType;
     
     template <class MatrixImp> 
     class MatrixNonSymetricHandle
@@ -135,6 +136,14 @@ namespace Dune {
         pcMatrix_.clear();
       }
     }
+
+    void clearMass() 
+    {
+      if(hasMassMatrix())
+      {
+        massMatrix_.clear();
+      }
+    } 
   };
 
 
@@ -145,6 +154,7 @@ namespace Dune {
     typedef typename SpaceType::GridType::template Codim<0>::Entity EntityType;
   public:  
     typedef BlockMatrix<double> MatrixType;
+    typedef MatrixType PreconditionMatrixType;
     
     template <class MatrixImp> 
     class MatrixNonSymetricHandle
@@ -424,6 +434,7 @@ namespace Dune {
     //typedef FieldMatrix<double,1,1> LittleBlockType; 
     typedef FieldMatrix<double,6,6> LittleBlockType; 
     typedef ImprovedBCRSMatrix< LittleBlockType > MatrixType;
+    typedef MatrixType PreconditionMatrixType;
     
     template <class MatrixImp> 
     class MatrixNonSymetricHandle
