@@ -133,11 +133,7 @@ namespace Dune {
       return *destination_;
     }
 
-  protected:
-    // ? Really do this? Can't you allocate the memory directly?
-    DestinationType* destination_;
-
-  private:
+  public:
     //! Same as application operator, but uses own memory instead of the
     //! discrete function provided by the client. This method is called on all
     //! passes except the last one.
@@ -161,6 +157,10 @@ namespace Dune {
                          DestinationType& dest) const = 0;
 
   protected:
+    // ? Really do this? Can't you allocate the memory directly?
+    DestinationType* destination_;
+
+    // previous pass 
     PreviousPassType& previousPass_;
   }; // end class Pass
 
@@ -208,7 +208,8 @@ namespace Dune {
     //! Build up local memory.
     virtual void allocateLocalMemory() 
     {
-      if (!this->destination_) {
+      if (!this->destination_) 
+      {
         std::ostringstream funcName;
         funcName << passName_ << "_" << this->passNumber();
         this->destination_ = new DestinationType(funcName.str(), spc_);
