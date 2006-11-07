@@ -76,9 +76,9 @@ namespace Dune{
       return asImp().baseFunctionSet( en );
     }
   
+    //! deprecated 
     template <class EntityType>
-    const BaseFunctionSetType&  getBaseFunctionSet ( EntityType &en ) const DUNE_DEPRECATED 
-    {
+    const BaseFunctionSetType&  getBaseFunctionSet ( EntityType &en ) const {
       return asImp().getBaseFunctionSet( en );
     }
   
