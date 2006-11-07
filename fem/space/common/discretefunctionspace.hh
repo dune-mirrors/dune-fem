@@ -5,9 +5,9 @@
 #include <assert.h>
 
 //- Dune includes 
+#include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/basefunctions/common/basefunctions.hh>
-#include <dune/fem/space/common/geometryconversion.hh>
 
 //- local includes 
 
@@ -77,7 +77,7 @@ namespace Dune{
     }
   
     template <class EntityType>
-    const BaseFunctionSetType&  getBaseFunctionSet ( EntityType &en ) const 	DUNE_DEPRECATED 
+    const BaseFunctionSetType&  getBaseFunctionSet ( EntityType &en ) const DUNE_DEPRECATED 
     {
       return asImp().getBaseFunctionSet( en );
     }
