@@ -13,7 +13,7 @@ FastBaseFunctionSet(FunctionSpaceType& fuspace,
   util_(DimRange)
 {
   for(int i=0; i<numDiffOrd; i++)
-    evaluateQuad_[i] = DynamicType::undefined;
+    evaluateQuad_[i] = undefinedQuad;
 
   baseFunctionList_.resize( numOfBaseFct );
 

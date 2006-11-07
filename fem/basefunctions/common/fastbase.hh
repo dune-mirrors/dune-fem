@@ -1,12 +1,13 @@
 #ifndef DUNE_FASTBASE_HH
 #define DUNE_FASTBASE_HH
 
-
 //- local includes 
 #include "basefunctions.hh"
 #include "../../space/common/dofstorage.hh"
 
 namespace Dune {
+
+  
 
 /** @defgroup FastBaseFunctionSet The FastBaseFunctionSet 
   @ingroup BaseFunction
@@ -64,6 +65,10 @@ public:
   typedef BaseFunctionSetDefault<
     FastBaseFunctionSetTraits<FunctionSpaceType> > BaseType;
 public:
+  typedef int IdentifierType;
+  //! Definition for undefined value
+  static const IdentifierType undefinedQuad = -1;
+
   typedef FastBaseFunctionSetTraits<FunctionSpaceType> BaseFunctionSetType;
   typedef FastBaseFunctionSetTraits<BaseFunctionSetType> Traits;
 

@@ -5,7 +5,7 @@
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
-#include "../common/discretefunctionspace.hh"
+#include <dune/fem/space/common/discretefunctionspace.hh>
 #include "lagrangebasefunctions.hh"
 #include "lagrangemapper.hh"
 
@@ -103,6 +103,7 @@ namespace Dune {
     /** \todo Please doc me! */
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
+    typedef int IdentifierType;
     //! id is neighbor of the beast
     static const IdentifierType id = 665;
 
