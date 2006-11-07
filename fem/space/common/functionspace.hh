@@ -2,13 +2,13 @@
 #define DUNE_FUNCTIONSPACE_HH
 
 #include <dune/common/fmatrix.hh>
-#include "dynamictype.hh"
 
 namespace Dune{
 
 /** @defgroup FunctionSpace FunctionSpace
   @ingroup Function
-  This provides the interfaces for discrete function spaces. 
+  This provides the interfaces for continuous function spaces. 
+  A function space is characterized by it's domain and range field type and  the dimension of values of this types. 
   
   @{
  */
@@ -17,7 +17,7 @@ namespace Dune{
     Base class for specific function spaces.
 */
 template< typename DomainFieldImp, typename RangeFieldImp, int n, int m >
-class FunctionSpace : public DynamicType {
+class FunctionSpace {
 public:
 
 /** Intrinsic type used for values in the domain field (usually a double) */
@@ -25,9 +25,9 @@ public:
 /** Intrinsic type used for values in the range field (usually a double) */
   typedef RangeFieldImp  RangeFieldType;
   
-/** \todo Please doc me! */
+/** Intrinsic type used for the jacobian values */
     typedef FieldMatrix <RangeFieldImp, m, n> JacobianRangeType;
-/** \todo Please doc me! */
+/** Intrinsic type used for the hessian values */
   typedef FieldVector<FieldMatrix<RangeFieldImp, n, n>, m> HessianRangeType;
 
 /** Type of domain vector (using type of domain field) */
@@ -38,8 +38,10 @@ public:
 /** Remember the dimensions of the domain and range field */
   enum { DimDomain = n, DimRange = m};
 
-/** Constructor taking an identifier */
-  FunctionSpace ( int ident ) : DynamicType (ident){} ;
+  /** Constructor taking an identifier */
+  FunctionSpace ( int ident ) DUNE_DEPRECATED {} 
+  /** empty constructor */ 
+  FunctionSpace () {} 
 
 };
 
