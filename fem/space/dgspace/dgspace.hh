@@ -92,7 +92,7 @@ namespace Dune {
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
-      BaseType (gridPart,DGFSpaceId),
+      BaseType (gridPart),
       gridPart_(gridPart),
       mapper_(0),
       baseFuncSet_(MaxNumElType, 0),
@@ -158,22 +158,36 @@ namespace Dune {
     //! Get base function set for a given entity
     template <class Entity>
     const BaseFunctionSetType&
-    getBaseFunctionSet (const Entity& en) const 
+    baseFunctionSet (const Entity& en) const 
     {
       GeometryIdentifier::IdentifierType id = 
         GeometryIdentifier::fromGeometry(en.geometry());
-      return getBaseFunctionSet(id);
+      return this->baseFunctionSet(id);
+    }
+  
+    //! Get base function set for a given entity
+    template <class Entity>
+    const BaseFunctionSetType&
+    getBaseFunctionSet (const Entity& en) const
+    {
+      return this->baseFunctionSet( en );
     }
   
     //! Get base function set for a given id of geom type (mainly used by
     //! CombinedSpace) 
     const BaseFunctionSetType&
-    getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
+    baseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
     {
       assert(id < (int) baseFuncSet_.size());
       assert(id >= 0);
       assert(baseFuncSet_[id]);
       return *baseFuncSet_[id];
+    }
+  
+    const BaseFunctionSetType&
+    getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const
+    {
+      return this->baseFunctionSet(id);
     }
   
     //! return true if we have continuous discrete functions 
@@ -212,31 +226,7 @@ namespace Dune {
     GridPartType & gridPart () { return gridPart_; }
     //! return reference to the spaces grid part
     const GridPartType & gridPart () const { return gridPart_; }
-    /*
-    //! default for polOrd 0
-    template <class EntityType> 
-    bool evaluateLocal(int baseFunc, const EntityType &en, 
-                       const DomainType &local, RangeType & ret) const 
-    {
-      enum { dim = EntityType::dimension };
-      const BaseFunctionSetType & baseSet = getBaseFunctionSet(en);  
-      baseSet.eval(baseFunc, local, ret);
-      return true;
-    }
-    
-    //! default for polOrd 0
-    template <class EntityType, class QuadratureType> 
-    bool evaluateLocal ( int baseFunc, const EntityType &en, 
-                         const QuadratureType &quad, 
-                         int quadPoint, RangeType & ret) const 
-    {
-      enum { dim = EntityType::dimension };
-      const BaseFunctionSetType & baseSet = getBaseFunctionSet(en);  
-      
-      baseSet.eval(baseFunc, quad, quadPoint, ret);
-      return true;
-    }
-    */
+
   protected:
     DiscontinuousGalerkinSpaceBase();
     DiscontinuousGalerkinSpaceBase(const DiscontinuousGalerkinSpaceBase&);
