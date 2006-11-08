@@ -97,7 +97,7 @@ class L2Projection
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
 
-    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const FunctionSpaceType& space =  discFunc.space();
 
     discFunc.clear();
 
@@ -142,7 +142,7 @@ public:
       double time)
   {
     const typename DiscreteFunctionType::FunctionSpaceType
-        & space = discFunc.getFunctionSpace();
+        & space = discFunc.space();
 
     typedef typename FunctionSpaceType::GridType GridType;
     typedef typename FunctionSpaceType::IteratorType IteratorType;
@@ -182,7 +182,7 @@ void adapt(GridType& grid,
      DiscreteFunctionType& solution,int step) {
   typedef DiscreteFunctionType::FunctionSpaceType::Traits::IteratorType Iterator;
   const DiscreteFunctionType::FunctionSpaceType
-    & space = solution.getFunctionSpace();
+    & space = solution.space();
   RestProlOperator<DiscreteFunctionType> rp(solution);
 
 #if GENERIC_ADAPT 
@@ -244,7 +244,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
       int turn )
 {
   {
-    const DiscreteFunctionSpaceType & space = solution.getFunctionSpace();
+    const DiscreteFunctionSpaceType & space = solution.space();
     ExactSolution f ( space ); 
     L2Projection<DiscreteFunctionType, ExactSolution, polOrd>::
       project(f, solution);
@@ -261,7 +261,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
     grape.dataDisplay( solution );
   }
 #endif
-  const DiscreteFunctionSpaceType & space = solution.getFunctionSpace();
+  const DiscreteFunctionSpaceType & space = solution.space();
   ExactSolution f ( space ); 
   // calculation L2 error on refined grid
   // pol ord for calculation the error chould by higher than 
@@ -286,7 +286,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
 #if HAVE_GRAPE
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
-    std::cerr << "SIZE: " << solution.getFunctionSpace().size() 
+    std::cerr << "SIZE: " << solution.space().size() 
 	      << " GRID: " << grid.size(0) << std::endl;
     std::cerr << "GRAPE 3" << std::endl;
     GrapeDataDisplay < GridType > grape(grid); 
