@@ -1,20 +1,9 @@
-#ifndef DIM_OF_WORLD 
-static const int dimw = 2;
-#else
-static const int dimw = DIM_OF_WORLD;
-#endif
-
-#ifndef DIM
-static const int dimp = 2;
-#else
-static const int dimp = DIM;
-#endif
-
 #include <iostream>
 #include <config.h>
 
-#define SGRID 0
-#define AGRID 1
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
+static const int dimw = dimworld;
+static const int dimp = dimworld;
 
 #include <../../operator/discreteoperatorimp.hh>
 #include <../lagrangespace.hh>
@@ -30,7 +19,6 @@ static const int dimp = DIM;
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
 using namespace Dune;
 
 // polynom approximation order of quadratures, 
@@ -109,7 +97,7 @@ class L2Projection
     typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
 
-    const DiscreteFunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const DiscreteFunctionSpaceType& space =  discFunc.space();
 
     discFunc.clear();
 
@@ -150,7 +138,7 @@ class L2Projection
   template <class FunctionType>
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc) 
   {
-    const DiscreteFunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const DiscreteFunctionSpaceType& space =  discFunc.space();
     int polOrd = 2 * space.polynomOrder();
     project(f,discFunc,polOrd);
   }
@@ -169,7 +157,7 @@ public:
   RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
       double time, int polOrd) const
   {
-    const DiscreteFunctionSpaceType & space = discFunc.getFunctionSpace();
+    const DiscreteFunctionSpaceType & space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
@@ -209,7 +197,7 @@ public:
   RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
       double time) const
   {
-    const DiscreteFunctionSpaceType & space = discFunc.getFunctionSpace();
+    const DiscreteFunctionSpaceType & space = discFunc.space();
     int polOrd = 2 * space.polynomOrder() + 2;
     return norm(f,discFunc,time,polOrd);
   }
