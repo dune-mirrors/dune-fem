@@ -5,6 +5,7 @@
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/modelcaller.hh>
+#include <dune/fem/pass/tuples.hh>
 
 // * needs to move
 #include <dune/fem/misc/timeutility.hh>
@@ -12,6 +13,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/utility/twistutility.hh>
+#include <dune/fem/misc/boundaryidentifier.hh>
 
 namespace Dune {
 
@@ -36,6 +38,7 @@ namespace Dune {
     typedef typename BaseType::Entity EntityType; 
     typedef typename EntityType::EntityPointer EntityPointerType;
     typedef typename BaseType::ArgumentType ArgumentType;
+    typedef typename BaseType::GlobalArgumentType GlobalArgumentType;
 
     // Types from the traits
     typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
@@ -95,6 +98,9 @@ namespace Dune {
       spc_(spc)
     {
     }
+
+    //! don't allocate memory here 
+    virtual void allocateLocalMemory() {}
    
     //! return reference to caller 
     DiscreteModelCallerType & caller () { return caller_; }
@@ -113,6 +119,11 @@ namespace Dune {
 
     void applyLocal(EntityType& en) const
     {
+    }
+
+    void operator () (const GlobalArgumentType& arg, DestinationType& dest) const 
+    {
+      abort();
     }
 
     void prepare(const ArgumentType& arg, DestinationType& dest) const
@@ -218,23 +229,13 @@ namespace Dune {
     typedef GradJacobianRangeType GradientJacobianRangeType;
     enum { GradDimRange = GradientRangeType :: dimension };
     
-    //typedef MatrixHandlerSPMat<DiscreteFunctionSpaceType,DiscreteGradientSpaceType>
-    //  MatrixHandlerType;
-    //typedef MatrixHandlerBM<DiscreteFunctionSpaceType,DiscreteGradientSpaceType>
-    //  MatrixHandlerType;
-    //typedef MatrixHandlerISTL<DiscreteFunctionSpaceType,DiscreteGradientSpaceType>
-    //  MatrixHandlerType;
-    
     typedef typename DiscreteModelType :: Traits :: Traits ::template
       MatrixHandler<DiscreteFunctionSpaceType,DiscreteGradientSpaceType> ::
       MatrixHandlerType MatrixHandlerType; 
 
     typedef typename MatrixHandlerType::MatrixAddHandleType MatrixAddHandleType;
+    typedef typename MatrixHandlerType::PreconditionMatrixType PreconditionMatrixType;
     
-    //typedef typename MatrixHandlerType :: ParameterSymetricType MatrixParameterSymetricType; 
-    //typedef typename MatrixHandlerType :: ParameterNonSymetricType MatrixParameterNonSymetricType; 
-
-    typedef typename  MatrixHandlerType::MatrixType MatrixType;
     typedef typename DiscreteModelType :: BoundaryIdentifierType BoundaryIdentifierType;    
 
   public:
@@ -265,6 +266,7 @@ namespace Dune {
       gradRhs_("FEPass::gradRhs",gradientSpace_),
       massTmp_(0),
       multTmp_("FEPass::multTmp",spc_),
+      diag_(0),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       fMatNb_(0.0),
@@ -291,7 +293,7 @@ namespace Dune {
       volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.polynomOrder()+1) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.polynomOrder()+1) : faceQuadOrd ),
       maxNumberUnknowns_(10* (spc_.getBaseFunctionSet(*(spc_.begin())).numBaseFunctions())),
-      matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),false),
+      matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
       beta_(0.0),
       matrixAssembled_(false)                                                              
     {
@@ -304,7 +306,14 @@ namespace Dune {
         massTmp_ = new GradDestinationType ("FEPass::massTmp",gradientSpace_);
       }
 
+      if(matrixHandler_.hasPcMatrix())
+      {
+        diag_ = new DestinationType("FEPass::diag",spc_);
+      }
+
       for(int i=0; i<GradDimRange; ++i) one_[i][i] = 1.0;
+      upwind_[0] = M_PI;
+      upwind_[1] = M_LN2;
 
       if(problem_.hasSource())
       {
@@ -315,6 +324,8 @@ namespace Dune {
    
     //! Destructor
     virtual ~LocalDGElliptOperator() {
+      delete diag_;
+      delete massTmp_;
     }
 
     //! Stores the time provider passed by the base class in order to have
@@ -367,6 +378,8 @@ namespace Dune {
             matrixHandler_.pcMatrix().add(i,i,val);
           }
         }
+
+        //matrixHandler_.pcMatrix().printReal(std::cout);
       }
 
       double * rhsPtr = gradRhs_.leakPointer();
@@ -387,12 +400,25 @@ namespace Dune {
       }
     }
 
-    template <class FuncType, class GradFuncType>
-    void gradient( const FuncType & u, GradFuncType & grad )
+    // --gradient
+    template <class FuncType, class GradType> 
+    void evalGradient(const FuncType & u, GradType & grad) const
     {
       grad.clear();
-      matrixHandler_.gradMatrix().multOEM(u.leakPointer(),grad.leakPointer());
-      grad += gradRhs_;
+      if(gradProblem_.hasSource())
+      {
+        assert( massTmp_ );
+        double * massTmpPointer = massTmp_->leakPointer();
+        matrixHandler_.gradMatrix().multOEM(u.leakPointer(),massTmpPointer);
+        (*massTmp_) += gradRhs_;
+        matrixHandler_.massMatrix().multOEM(massTmpPointer,grad.leakPointer());
+      } 
+      else 
+      {
+        matrixHandler_.gradMatrix().multOEM(u.leakPointer(),grad.leakPointer());
+        grad += gradRhs_;
+      }
+      //std::cout << grad.size() << " g | grhs " << gradRhs_.size() << "\n";
     }
 
     void multOEM(const double * arg, double * dest) const
@@ -420,10 +446,11 @@ namespace Dune {
       }
     }
 
+    const ThisType & systemMatrix () const { return *this; }
     const ThisType & myMatrix () const { return *this; }
     
-    const MatrixType & pcMatrix () const { return matrixHandler_.pcMatrix(); }
-    bool hasPcMatrix() const  { return matrixHandler_.hasPcMatrix(); }
+    const PreconditionMatrixType & preconditionMatrix () const { return matrixHandler_.pcMatrix(); }
+    bool hasPreconditionMatrix() const  { return matrixHandler_.hasPcMatrix(); }
            
     //! In the preparations, store pointers to the actual arguments and 
     //! destinations. Filter out the "right" arguments for this pass.
@@ -525,7 +552,11 @@ namespace Dune {
         // create rightHandSide
         ////////////////////////////////////
         {
+          // set default value 
+          rhs_ = 0.0;
+
           // eval rightHandSide function 
+          // if empty, rhs stays 0.0
           caller_.rightHandSide(en, volQuad, l, rhs_ );
 
           // scale with quadrature weight  
@@ -913,6 +944,157 @@ namespace Dune {
 
     } // end apply local 
 
+    void update(const ArgumentType& arg, DestinationType& dest) const
+    {
+      prepare(arg, dest);
+
+      typedef typename DiscreteFunctionSpaceType :: IteratorType  IteratorType ;
+      IteratorType endit = spc_.end();
+      for (IteratorType it = spc_.begin(); it != endit; ++it)
+      {
+        updateLocal(*it);
+      }
+
+      finalize(arg, dest);
+    }
+
+    void updateMatrix( const ArgumentType & arg,
+                       DestinationType & rhs )
+    {
+      if(matrixHandler_.hasMassMatrix())
+      {
+        matrixHandler_.clearMass();
+
+        const int singleSize = spc_.size();
+        
+        /*
+        if(matrixHandler_.hasPcMatrix())
+        {
+          assert(diag_);
+          
+          // resize matrices 
+          double * sRhsPtr = rhs.leakPointer();
+          {
+            matrixHandler_.pcMatrix().getDiag(*diag_);
+            double * diagPtr = diag_->leakPointer();
+            // remove old diag value from rhs 
+            for(register int i=0; i<singleSize; ++i)
+            {
+              sRhsPtr[i] /= diagPtr[i];
+            }
+          }
+        }
+          */
+
+        this->update(arg,rhs);
+        matrixAssembled_ = true;
+
+        if(matrixHandler_.hasPcMatrix())
+        {
+          matrixHandler_.clearPcMatrix(); 
+          
+          matrixHandler_.divMatrix().getDiag( matrixHandler_.massMatrix(), matrixHandler_.gradMatrix() , *diag_ );
+          matrixHandler_.stabMatrix().getDiag( multTmp_ );
+
+          double * diagPtr = diag_->leakPointer();
+          double * diag2Ptr = multTmp_.leakPointer();
+          //double * sRhsPtr = rhs.leakPointer();
+
+          for(register int i=0; i<singleSize; ++i)
+          {
+            double val = diagPtr[i] + diag2Ptr[i];
+            assert( std::abs( val ) > 0.0 );
+            val = 1.0/val;
+
+            // set pcMatrix Value  
+            matrixHandler_.pcMatrix().add(i,i,val);
+
+            /*
+            // multiply rhs 
+            sRhsPtr[i] *= val;
+            */
+          }
+        }
+      }
+    }
+
+
+    void updateLocal(EntityType& en) const
+    {
+      // local function for gradient right hand side 
+      typedef typename GradDestinationType :: LocalFunctionType GradLFType; 
+      GradLFType gradRhs = gradRhs_.localFunction(en); //rhs
+      
+      //- typedefs
+      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+
+      MatrixAddHandleType massMatrixEn (matrixHandler_.massMatrix(),
+                                     en, gradientSpace_, en, gradientSpace_ ); 
+      
+      typedef typename DiscreteGradientSpaceType::IndexSetType GradientIndexSetType;
+      typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
+
+      //- statements
+      caller_.setEntity(en);
+      gradCaller_.setEntity(en);
+
+      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+
+      double massVolElInv = massVolumeInv(en);
+      
+      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.getBaseFunctionSet(en);
+      const int gradientNumDofs = grdbsetEn.numBaseFunctions();
+      
+      /////////////////////////////////
+      // Volumetric integral part
+      /////////////////////////////////
+
+      //set default values 
+      gradSource_   = 1.0;
+      gradSourceNb_ = 1.0;
+      // set to id matrix 
+      gradFMat_   = one_;
+      gradFMatNb_ = one_;
+
+      fMat_       = 1.0;
+      fMatNb_     = 1.0;
+      
+      const int quadNop = volQuad.nop();
+      GradJacobianRangeType helpmatr(one_);
+
+      for (int l = 0; l < quadNop ; ++l) 
+      {
+        // calc factor for bas functions 
+        double intel = volQuad.weight(l)*
+            en.geometry().integrationElement(volQuad.point(l))*massVolElInv;
+        
+        if(gradProblem_.hasSource())
+        {
+          // call source of gradient discrete model 
+          gradCaller_.source(en, volQuad, l, gradSource_ );
+        }
+
+        for(int k = 0; k < gradientNumDofs; ++k)
+        {
+          // eval tau_k 
+          grdbsetEn.eval(k, volQuad, l, tau_[0] );
+          
+          if(gradProblem_.hasSource())
+          {
+            gradSourceNb_ = gradSource_; 
+            // multiply tau with source
+            for(int i=0; i<GradDimRange; ++i) gradSourceNb_[i] *= tau_[0][i];
+            
+            double val = grdbsetEn.evaluateSingle(k, volQuad, l, gradSourceNb_ ) * intel;
+
+            // scalar product of basis functions is 1 (supposed to)
+            massMatrixEn.add(k,k,val);
+          }
+        }
+      } // end element integral 
+    }
+  
   private:
     LocalDGElliptOperator();
     LocalDGElliptOperator(const LocalDGElliptOperator&);
@@ -1029,6 +1211,7 @@ namespace Dune {
     mutable GradDestinationType gradRhs_; 
     mutable GradDestinationType * massTmp_; 
     mutable DestinationType multTmp_;
+    mutable DestinationType * diag_;
     mutable double dtMin_;
   
     //! Some helper variables
@@ -1055,7 +1238,7 @@ namespace Dune {
     mutable RangeType gradEval_;
     mutable DomainType grads_;
 
-    const DomainType upwind_;
+    DomainType upwind_;
     TimeProvider* time_;
 
     TwistUtility<GridType> twistUtil_;
@@ -1087,6 +1270,8 @@ namespace Dune {
     typedef DiscreteModelImp DiscreteModelType;
     //! Repetition of template arguments
     typedef PreviousPassImp GradFePassImp;
+
+    typedef typename GradFePassImp :: DestinationType GradDestinationType;
 
     // Types from the base class
     typedef typename BaseType::Entity EntityType;
@@ -1126,13 +1311,16 @@ namespace Dune {
     enum { cols = JacobianRangeType :: cols };
     enum { rows = JacobianRangeType :: rows };
 
-    typedef StartPass<DestinationType> ElliptPrevPassType;
+    // define previous pass of grad pass as previous pass of hole ellipt
+    // pass
+    typedef typename GradFePassImp :: PreviousPassType ElliptPrevPassType;
+    // define ellipt operator 
     typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
 
     DiscreteModelType& problem_; 
     DiscreteFunctionSpaceType& spc_;
     
-    ElliptPrevPassType feStartPass_;
+    //ElliptPrevPassType feStartPass_;
     mutable FEOperatorType op_;
 
     // define type of inverse operator 
@@ -1163,8 +1351,7 @@ namespace Dune {
       : BaseType(pass.previousPass(),spc)
       , problem_(problem)
       , spc_(spc) 
-      , feStartPass_()
-      , op_(problem,pass,feStartPass_,spc)
+      , op_(problem,pass,pass.previousPass(),spc)
       , eps_(eps)
       , maxIterFactor_(maxIterFactor) 
       , maxIter_( maxIterFactor_ * spc_.size() )
@@ -1183,9 +1370,16 @@ namespace Dune {
       // if grid has changed, recalc matrices  
       if(sequence_ != spc_.sequence())
       {
+        // only clear destination if matrix has really changed 
+        // otherwise keep old value as initial value 
+        dest.clear();
         op_.prepare(arg,rhs_);
         op_.buildMatrix(arg,  rhs_ );
         sequence_ = spc_.sequence();
+      }
+      else 
+      {
+        op_.updateMatrix( arg, rhs_ );
       }
     }
 
@@ -1199,8 +1393,6 @@ namespace Dune {
       // prepare operator 
       prepare(arg,dest);
 
-      // clear destination 
-      dest.clear();
       // calculate new maxIter  
       maxIter_ = maxIterFactor_ * spc_.size();
 
@@ -1211,13 +1403,149 @@ namespace Dune {
       invOp_(rhs_,dest);
     } 
 
-    template <class FuncType, class GradFuncType>
-    void gradient( const FuncType & u, GradFuncType & grad )
+    template <class FuncType, class GradType>
+    void evalGradient(const FuncType & u, GradType & grad ) const
     {
-      op_.gradient(u,grad);
+      op_.evalGradient(u,grad);
+    }
+  };
+
+  //! Concrete implementation of Pass for LDG.
+  template <class DiscreteModelImp, class PreviousPassImp>
+  class LocalDGElliptGradPass :
+    public LocalPass<DiscreteModelImp, PreviousPassImp> 
+  {
+  public:
+    //- Typedefs and enums
+    //! Base class
+    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
+
+    typedef LocalDGElliptGradPass<DiscreteModelImp,PreviousPassImp> ThisType;
+
+    //! Repetition of template arguments
+    typedef DiscreteModelImp DiscreteModelType;
+    //! Repetition of template arguments
+    typedef PreviousPassImp PreviousPassType;
+
+    // Types from the base class
+    typedef typename BaseType::Entity EntityType; 
+    typedef typename EntityType::EntityPointer EntityPointerType;
+    typedef typename BaseType::ArgumentType ArgumentType;
+    typedef typename BaseType::GlobalArgumentType GlobalArgumentType;
+
+    // Types from the traits
+    typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
+    typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
+    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+        
+    
+    // Types extracted from the discrete function space type
+    typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    
+    // Types extracted from the underlying grid
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename GridType::template Codim<0>::Geometry Geometry;
+
+
+    // Various other types
+    typedef typename DestinationType::LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteModelType::SelectorType SelectorType;
+    typedef DiscreteModelCaller<
+      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+
+    // Range of the destination
+    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
+    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { cols = JacobianRangeType :: cols };
+    enum { rows = JacobianRangeType :: rows };
+    
+
+    typedef FieldMatrix<double,rows,rows> TensorType;
+    
+    //my Typedefs
+    enum { dimGradRange = dimDomain * dimRange };
+    enum { polOrd =DiscreteFunctionSpaceType::polOrd};
+
+    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+
+  public:
+    //- Public methods
+    //! Constructor
+    //! \param problem Actual problem definition (see problem.hh)
+    //! \param pass Previous pass
+    //! \param spc Space belonging to the discrete function local to this pass
+    //! \param quadOrd0 defines the order of the volume quadrature which is by default 2* space polynomial order 
+    //! \param quadOrd1 defines the order of the face quadrature which is by default 2* space polynomial order 
+    LocalDGElliptGradPass(DiscreteModelType& problem, 
+                    PreviousPassType& pass, 
+                    DiscreteFunctionSpaceType& spc) 
+      : BaseType(pass, spc),
+      caller_(problem),
+      problem_(problem),
+      spc_(spc),
+      prevPass_(pass)
+    {
     }
 
+    //! don't allocate memory here 
+    virtual void allocateLocalMemory() {}
+   
+    //! return reference to caller 
+    DiscreteModelCallerType & caller () { return caller_; }
+
+    //! return previous pass of this pass 
+    PreviousPassType & previousPass() { return this->previousPass_; }
+
+    //! return problem for real fe pass 
+    DiscreteModelType & problem () { return problem_; }
+
+    const DiscreteFunctionSpaceType & space () const { return spc_; }
+   
+    //! Destructor
+    virtual ~LocalDGElliptGradPass() {
+    }
+
+    void applyLocal(EntityType& en) const
+    {
+    }
+
+    void operator () (const GlobalArgumentType& arg, DestinationType& dest) const 
+    {
+      // normal call procedure 
+      prevPass_.pass(arg);
+
+      // now get gradient from previous pass 
+      prevPass_.evalGradient(prevPass_.destination(),dest);
+
+      /*
+      GrapeDataDisplay<GridType> grape(dest.space().grid());
+      grape.addData(prevPass_.destination());
+      grape.dataDisplay(dest);
+      */
+    }
+
+    void prepare(const ArgumentType& arg, DestinationType& dest) const
+    {
+    }
+
+    //! Some timestep size management.
+    void finalize(const ArgumentType& arg, DestinationType& dest) const
+    {
+    }
+
+  private:
+    mutable DiscreteModelCallerType caller_;
+    DiscreteModelType& problem_; 
+    DiscreteFunctionSpaceType& spc_;
+    mutable PreviousPassImp & prevPass_;
   };
+
 } // end namespace Dune
 
 #endif
