@@ -157,9 +157,17 @@ namespace Dune{
     typedef typename FunctionSpaceTraits::GridPartType  GridPartType;
 
   public:
-    //! Constructor
-    DiscreteFunctionSpaceDefault(GridPartType & gridPart, int id) 
+    //! Constructor (deprecated)
+    DiscreteFunctionSpaceDefault(GridPartType & gridPart, int id)
+      DUNE_DEPRECATED 
       : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>(id) 
+      , multipleGeometryTypes_( gridPart.indexSet().geomTypes(0).size() > 1 ) 
+    {
+    }
+
+    //! Constructor
+    DiscreteFunctionSpaceDefault(GridPartType & gridPart) 
+      : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>() 
       , multipleGeometryTypes_( gridPart.indexSet().geomTypes(0).size() > 1 ) 
     {
     }
