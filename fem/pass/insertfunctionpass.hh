@@ -73,7 +73,7 @@ namespace Dune {
     //! \param pass Previous pass
     InsertFunctionPass(DestinationType & dest, 
               PreviousPassType& pass) 
-      : BaseType(pass,dest.getFunctionSpace())
+      : BaseType(pass,dest.space())
       , realDestination_(dest)
     {
       //std::cout << "create dummy pass " <<  realDestination_.name() <<  "\n";
