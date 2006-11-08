@@ -46,7 +46,7 @@ namespace Dune{
 public:  
   //! Constructor
   RestProlOperator ( DiscreteFunctionType & df ) : 
-    df_ (df) , quadord_(2*df.getFunctionSpace().polynomOrder()),
+    df_ (df) , quadord_(2*df.space().polynomOrder()),
     weight_(-1.0)
   {
   }
