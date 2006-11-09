@@ -21,14 +21,15 @@
 //
 // ============================================================================
 
+#include <utility>
 
 // ohne Vorkonditionierer
 template< class MATRIX >
-inline int
+inline std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps );
 
 template< class MATRIX >
-inline int
+inline std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps,
       bool detailed );
 
@@ -40,12 +41,12 @@ cghsParallel( CommunicatorType  & comm, unsigned N, const MATRIX &A, const doubl
 
 // mit Vorkonditionierer
 template< class MATRIX, class PC_MATRIX >
-inline int
+inline std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const PC_MATRIX &C,
       const double *b, double *x, double eps );
 
 template< class MATRIX, class PC_MATRIX >
-inline int
+inline std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const PC_MATRIX &C,
       const double *b, double *x, double eps, bool detailed );
 
@@ -135,13 +136,16 @@ cghsParallel( CommunicatorType & comm, unsigned N, const MATRIX &A, const double
 }
 
 template< class MATRIX >
-inline
-int
+inline 
+std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps,
       bool detailed ) 
 {
   if ( N==0 )
-    return -1;
+  {
+    std::cerr << "WARNING: N = 0 in cghs, file: " << __FILE__ << " line:" << __LINE__ << "\n";
+    return std::pair<int,double> (-1,0.0);
+  }
 #if 1
   cghsMem.resize( 3*N ); 
 
@@ -162,7 +166,8 @@ cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps,
   daxpy(N,-1.,b,1,g,1);
   dscal(N,-1.,g,1);
   dcopy(N,g,1,r,1);
-  while ( ddot(N,g,1,g,1)>err ) {
+  while ( ddot(N,g,1,g,1)>err ) 
+  {
     mult(A,r,p);
     rho=ddot(N,p,1,p,1);
     sig=ddot(N,r,1,p,1);
@@ -174,9 +179,11 @@ cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps,
     dscal(N,gam,r,1);
     daxpy(N,1.,g,1,r,1);
     if ( detailed )
-      std::cout<<"cghs "<<its<<"\t"<<dnrm2(N,g,1)<<std::endl;
+      std::cout<<"cghs "<<its<<"\t"<<dnrm2(N,g,1)<< std::endl;
     ++its;
   }
+  std::pair<int,double> val (its,dnrm2(N,g,1));
+  
 #if 1
   cghsMem.reset();
 #else 
@@ -184,11 +191,13 @@ cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps,
   delete[] r;
   delete[] p;
 #endif
-  return its;
+  return val;
 }
 
 
-template< class MATRIX > inline int
+template< class MATRIX > 
+inline 
+std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps ) {
   return cghs(N,A,b,x,eps,false);
 }
@@ -199,11 +208,16 @@ cghs( unsigned N, const MATRIX &A, const double *b, double *x, double eps ) {
 
 template< class MATRIX, class PC_MATRIX >
 inline
-int
+std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const PC_MATRIX &C,
-      const double *b, double *x, double eps, bool detailed ) {
+      const double *b, double *x, double eps, bool detailed ) 
+{
   if ( N==0 )
-    return 0;
+  {
+    std::cerr << "WARNING: N = 0 in cghs, file: " << __FILE__ << " line:" << __LINE__ << "\n";
+    return std::pair<int,double> (-1,0.0);
+  }
+
   double *r = new double[N];
   double *d = new double[N];
   double *h = new double[N];
@@ -212,14 +226,13 @@ cghs( unsigned N, const MATRIX &A, const PC_MATRIX &C,
   double rh, alpha, beta;
   double err=eps*eps*ddot(N,b,1,b,1);
   
-  assert(false);
-  
   mult(A,x,r);
   daxpy(N,-1.,b,1,r,1);
   mult(A,r,d);
   dcopy(N,d,1,h,1);
   rh=ddot(N,r,1,h,1);
-  while ( ddot(N,r,1,r,1)>err ) {
+  while ( ddot(N,r,1,r,1)> err ) 
+  {
     mult(A,d,Ad);
     alpha=rh/ddot(N,d,1,Ad,1);
     daxpy(N,-alpha,d,1,x,1);
@@ -229,16 +242,22 @@ cghs( unsigned N, const MATRIX &A, const PC_MATRIX &C,
     dscal(N,beta,d,1);
     daxpy(N,1.,h,1,d,1);
     if ( detailed )
-      std::cout<<"cghs "<<its<<"\t"<<dnrm2(N,r,1)<<std::endl;
+    {
+      std::cout<<"cghs "<<its<<"\t"<<dnrm2(N,r,1)<< " " << error << std::endl;
+    }
     ++its;
   }
+  std::pair<int,double> val(its,dnrm2(N,r,1)); 
   delete[] r;
   delete[] d;
   delete[] h;
-  return its;
+
+  return val; 
 }
 
-template< class MATRIX, class PC_MATRIX > inline int
+template< class MATRIX, class PC_MATRIX > 
+inline
+std::pair < int , double > 
 cghs( unsigned N, const MATRIX &A, const PC_MATRIX &C,
       const double *b, double *x, double eps ) {
   return cghs(N,A,C,b,x,eps,false);
