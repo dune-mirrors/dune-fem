@@ -1,6 +1,9 @@
 #ifndef DUNE_OEMSOLVER_HH
 #define DUNE_OEMSOLVER_HH
 
+//- system includes 
+#include <utility>
+
 //- Dune includes 
 #include <dune/common/typetraits.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -280,11 +283,13 @@ private:
   int maxIter_;
   bool verbose_ ;
 
+  typedef std::pair < int , double > ReturnValueType;
+  
   template <class OperatorImp, bool hasPreconditioning> 
   struct SolverCaller 
   {
     template <class DiscreteFunctionImp> 
-    static int call(OperatorImp & op, 
+    static ReturnValueType call(OperatorImp & op, 
                      const DiscreteFunctionImp & arg, 
                      DiscreteFunctionImp & dest, 
                      double eps, bool verbose)
@@ -309,7 +314,7 @@ private:
   struct SolverCaller<OperatorImp,false> 
   {
     template <class DiscreteFunctionImp> 
-    static int call(OperatorImp & op, 
+    static ReturnValueType call(OperatorImp & op, 
                      const DiscreteFunctionImp & arg, 
                      DiscreteFunctionImp & dest, 
                      double eps, bool verbose)
@@ -344,7 +349,7 @@ public:
 
     int size = arg.space().size();
 
-    int iter = 
+    ReturnValueType val = 
       SolverCaller<OperatorType,
                    // check wheter operator has precondition methods 
                    // to enable preconditioning derive your operator from 
@@ -352,8 +357,9 @@ public:
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                      // call solver, see above 
                      call(op_,arg,dest,epsilon_,verbose_);
+    
+    std::cout << "OEM-BICGstab: " << val.first << " iterations! Error: " << val.second << "\n";
 
-    std::cout << "OEM-BICGGstab: " << iter << " iterations!\n";
     // finalize operator  
     finalize ();
   }
@@ -434,11 +440,13 @@ private:
   int maxIter_;
   bool verbose_ ;
 
+  typedef std::pair < int , double > ReturnValueType;
+  
   template <class OperatorImp, bool hasPreconditioning> 
   struct SolverCaller 
   {
     template <class DiscreteFunctionImp> 
-    static int call(OperatorImp & op, 
+    static ReturnValueType call(OperatorImp & op, 
                      const DiscreteFunctionImp & arg, 
                      DiscreteFunctionImp & dest, 
                      int inner, double eps, bool verbose)
@@ -464,7 +472,7 @@ private:
   struct SolverCaller<OperatorImp,false>
   {
     template <class DiscreteFunctionImp> 
-    static int call(OperatorImp & op, 
+    static ReturnValueType call(OperatorImp & op, 
                      const DiscreteFunctionImp & arg, 
                      DiscreteFunctionImp & dest, 
                      int inner, double eps, bool verbose)
@@ -500,7 +508,7 @@ public:
     int size = arg.space().size();
     int inner = (size > 1000) ? 1000 : size;
 
-    int iter = 
+    ReturnValueType val = 
       SolverCaller<OperatorType,
                    // check wheter operator has precondition methods 
                    // to enable preconditioning derive your operator from 
@@ -509,7 +517,7 @@ public:
                      // call solver, see above 
                      call(op_,arg,dest,inner,epsilon_,verbose_);
 
-    std::cout << "OEM-GMRES: " << iter << " iterations! \n";
+    std::cout << "OEM-GMRES: " << val.first << " iterations! Error: " << val.second << "\n";
 
     // finalize operator  
     finalize ();

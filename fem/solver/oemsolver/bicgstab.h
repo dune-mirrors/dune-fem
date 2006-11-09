@@ -22,28 +22,29 @@
 // ============================================================================
 
 
+#include <utility>
 
 template< class MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A,
 	  const double *b, double *x, double eps );
 
 
 template< class MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A,
 	  const double *b, double *x, double eps, bool detailed );
 
 
 
 template< class MATRIX, class PC_MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A, const PC_MATRIX &C,
 	  const double *b, double *x, double eps );
 
 
 template< class MATRIX, class PC_MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A, const PC_MATRIX &C,
 	  const double *b, double *x, double eps, bool detailed );
 
@@ -60,10 +61,15 @@ bicgstab( unsigned N, const MATRIX &A, const PC_MATRIX &C,
 static OEMTmpMem bicgMem;
 
 template< class MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A,
 	  const double *b, double *x, double eps, bool detailed ) 
 {
+  if(N == 0) 
+  {
+    std::cerr << "WARNING: N = 0 in bicgstab, file: " << __FILE__ << " line:" << __LINE__ << "\n";
+    return std::pair<int,double> (-1,0.0);
+  }
 
 #if 1
   bicgMem.resize ( 7*N ); 
@@ -147,13 +153,13 @@ bicgstab( unsigned N, const MATRIX &A,
   delete[] t;
 #endif
   
-  return its;
+  return std::pair<int,double> (its,sqrt(rTr));
 }
 
 
 
 template< class MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A,
 	  const double *b, double *x, double eps ) {
   return bicgstab(N,A,b,x,eps,false);
@@ -162,10 +168,15 @@ bicgstab( unsigned N, const MATRIX &A,
 // ============================================================================
 
 template< class MATRIX, class PC_MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A, const PC_MATRIX & C,
 	  const double *rhs, double *x, double eps, bool detailed ) 
 {
+  if(N == 0) 
+  {
+    std::cerr << "WARNING: N = 0 in bicgstab, file: " << __FILE__ << " line:" << __LINE__ << "\n";
+    return std::pair<int,double> (-1,0.0);
+  }
 
 #if 1
   bicgMem.resize ( 9*N ); 
@@ -263,13 +274,13 @@ bicgstab( unsigned N, const MATRIX &A, const PC_MATRIX & C,
   delete[] tmp;
 #endif
   
-  return its;
+  return std::pair<int,double> (its,sqrt(rTr));
 }
 
 
 
 template< class MATRIX , class PC_MATRIX > inline
-int
+std::pair<int,double> 
 bicgstab( unsigned N, const MATRIX &A, const PC_MATRIX & C,
 	  const double *b, double *x, double eps ) {
   return bicgstab(N,A,C,b,x,eps,false);
