@@ -24,24 +24,54 @@ void mult(const MatrixImp & m, const VectorType * x, VectorType * ret)
 }
 
 //! mult method when given pre conditioning matrix 
-template <class Matrix , class PC_Matrix >
-void mult_pc (const Matrix &A, const PC_Matrix & C, const double *arg ,
-    double *dest , double * tmp)
+template <class Matrix , class PC_Matrix , bool >
+struct Mult
 {
-  assert( tmp );
+  typedef void mult_t(const Matrix &A,
+                      const PC_Matrix & C, 
+                      const double *arg,
+                      double *dest , 
+                      double * tmp);
+  
+  static void mult_pc (const Matrix &A, const PC_Matrix & C, const double *arg,
+        double *dest , double * tmp)
+  {
+    assert( tmp );
 
-  // call mult of Matrix A 
-  mult(A,arg,tmp);
-  // call mult of Matrix PC
-  mult(C,tmp,dest);
-}
+    // call mult of Matrix A 
+    mult(A,arg,tmp);
+    // call mult of Matrix PC
+    mult(C,tmp,dest);
+  }
+};
+
+//! mult method when no pre conditioning matrix 
+template <class Matrix>
+struct Mult<Matrix,Matrix,false>
+{
+  typedef void mult_t(const Matrix &A,
+                      const Matrix & C, 
+                      const double *arg,
+                      double *dest , 
+                      double * tmp);
+  
+  static void mult_pc(const Matrix &A, const Matrix & C, const double *arg ,
+                      double *dest , double * tmp)
+  {
+    // tmp has to be 0
+    assert( tmp == 0 );
+    // C is just a fake 
+    assert( &A == &C );
+    // call mult of Matrix A 
+    mult(A,arg,dest);
+  }
+};
 
 #define USE_MEMPROVIDER   
 #include "bicgstab.h"
 #include "cghs.h"
 #include "gmres.h"
 #include "bicgsq.h"
-
 #undef USE_MEMPROVIDER
   
 } // end namespace OEMSolver 
@@ -83,8 +113,7 @@ private:
       if(op.hasPreconditionMatrix())
       {
         return OEMSolver::cghs(arg.space().grid().comm(),
-                   size,op.systemMatrix(),
-                   op.preconditionMatrix(),
+                   size,op.systemMatrix(),op.preconditionMatrix(),
                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
       else 
@@ -190,12 +219,14 @@ private:
    
       if(op.hasPreconditionMatrix())
       {
-        return OEMSolver::bicgstab(size,op.systemMatrix(),op.preconditionMatrix(),
-                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        return OEMSolver::bicgstab(arg.space().grid().comm(),
+                  size,op.systemMatrix(),op.preconditionMatrix(),
+                  arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
       else 
       {
-        return OEMSolver::bicgstab(size,op.systemMatrix(),
+        return OEMSolver::bicgstab(arg.space().grid().comm(),
+                  size,op.systemMatrix(),
                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
     }
@@ -212,7 +243,8 @@ private:
                      double eps, bool verbose)
     {
       int size = arg.space().size();
-      return OEMSolver::bicgstab(size,op.systemMatrix(),
+      return OEMSolver::bicgstab(arg.space().grid().comm(),
+                size,op.systemMatrix(),
                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
     }
   };
