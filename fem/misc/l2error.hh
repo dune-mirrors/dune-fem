@@ -10,11 +10,12 @@
 **
 **************************************************************************/
 
-#ifndef __DUNE_L2ERROR_HH__
-#define __DUNE_L2ERROR_HH__
+#ifndef DUNE_L2ERROR_HH
+#define DUNE_L2ERROR_HH
 
 // where the quadratures are defined 
-#include <dune/fem/quadrature/quadrature.hh>
+#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/grid/utility/twistutility.hh>
 
 namespace Dune 
 {
@@ -38,7 +39,7 @@ class L2Error
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 
-  enum { spacePolOrd = DiscreteFunctionSpaceType :: polOrd };
+  enum { spacePolOrd = DiscreteFunctionSpaceType :: polynomialOrder };
   
 public:  
 /*======================================================================*/
