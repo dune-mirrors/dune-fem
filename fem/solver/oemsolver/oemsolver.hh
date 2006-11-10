@@ -125,8 +125,6 @@ public:
     // prepare operator 
     prepare ( arg, dest );
 
-    int size = arg.space().size();
-   
     ReturnValueType val = 
       SolverCaller<OperatorType,
                    // check wheter operator has precondition methods 
@@ -346,8 +344,6 @@ public:
 
     // prepare operator 
     prepare ( arg, dest );
-
-    int size = arg.space().size();
 
     ReturnValueType val = 
       SolverCaller<OperatorType,

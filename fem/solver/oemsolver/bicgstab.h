@@ -202,7 +202,7 @@ bicgstab( unsigned N, const MATRIX &A, const PC_MATRIX & C,
   double * tmp = new double[N];
 #endif
 
-  for(register int i=0; i<N; ++i) newRhs[i] = 0.0;
+  for(register size_t i=0; i<N; ++i) newRhs[i] = 0.0;
   // create new rhs 
   mult(C,rhs,newRhs);
   const double * b = newRhs;
