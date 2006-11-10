@@ -35,7 +35,10 @@ namespace Dune
 template <class DiscreteFunctionType> 
 class L2Error
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+
+  enum { spacePolOrd = DiscreteFunctionSpaceType :: polOrd };
   
 public:  
 /*======================================================================*/
@@ -50,58 +53,59 @@ public:
  *
  *   \param discFunc the discrete function
  *
+ *   \para, polOrd for Quadrature to use, default is 2 * spaceOrd + 2 
  *   \param time the time, at which the functions should 
  *          be evaluated
  *
- *   \return the norm of the L2-Error
+ *   \return the norm of the L2-Error as RangeType of DiscreteFunction 
  */
 /*======================================================================*/
 
-  template <int polOrd, class FunctionType> 
-  double norm (FunctionType &f, DiscreteFunctionType &discFunc,
-      double time)
+  template <class FunctionType> 
+  RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
+                  int polOrd = (2 * spacePolOrd + 2), 
+                  double time = 0.0)
   {
-    const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
-  
-    typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename FunctionSpaceType::IteratorType IteratorType;
+    const DiscreteFunctionSpaceType & space = discFunc.space();  
+
+    typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
    
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    
     RangeType ret (0.0);
     RangeType phi (0.0);
-
-    double sum = 0.0;
-    //LocalFuncType lf = discFunc.newLocalFunction(); 
     
-    IteratorType it    = space.begin();
+    RangeType error(0.0);
+
+    enum { dimR = RangeType :: dimension };
+    
     IteratorType endit = space.end();
-
-    // check whether grid is empty 
-    assert( it != endit ); 
-   
-    enum { dim = GridType :: dimension };
-    Quadrature <typename FunctionSpaceType::RangeFieldType, dim> quad(
-        it->geometry().type(), polOrd);
-    
-    for(; it != endit ; ++it)
+    for(IteratorType it = space.begin(); it != endit ; ++it)
     {
+      // create quadrature for given geometry type 
+      CachingQuadrature <GridType , 0 > quad(*it,polOrd); 
+      // get local function 
       LocalFuncType lf = discFunc.localFunction(*it); 
-      for(int qP = 0; qP < quad.nop(); qP++)
+
+      // integrate 
+      const int quadNop = quad.nop();
+      for(int qP = 0; qP < quadNop; ++qP)
       {
-        double det = (*it).geometry().integrationElement(quad.point(qP));
-        f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
+        double det = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
+        f.evaluate((*it).geometry().global(quad.point(qP)),ret);
         lf.evaluate((*it),quad,qP,phi);
-        sum += det * quad.weight(qP) * SQR(ret[0] - phi[0]);
+
+        for(int k=0; k<dimR; ++k)
+          error[k] += det * SQR(ret[k] - phi[k]);
       }
     }
-    return sqrt(sum);
+    
+    for(int k=0; k<dimR; ++k)
+      error[k] = sqrt(error[k]);
+
+    return error;
   }
 }; // end of class L2Error
 
 } // end namespace 
-
 #endif
-
