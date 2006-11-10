@@ -15,6 +15,9 @@
 #include <dune/grid/utility/twistutility.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
 
+#include <dune/common/typetraits.hh>
+#include <dune/fem/solver/oemsolver/preconditioning.hh>
+
 namespace Dune {
 
   //! Concrete implementation of Pass for LDG.
@@ -149,8 +152,9 @@ namespace Dune {
   //! Concrete implementation of Pass for LDG.
   template <class DiscreteModelImp, class GradientPassImp, 
             class PreviousPassImp>
-  class LocalDGElliptOperator :
-    public LocalPass<DiscreteModelImp, PreviousPassImp> 
+  class LocalDGElliptOperator 
+    : public LocalPass<DiscreteModelImp, PreviousPassImp> 
+    , public OEMSolver::PreconditionInterface
   {
   public:
     //- Typedefs and enums
@@ -1096,7 +1100,11 @@ namespace Dune {
     }
   
   private:
+    // needs to be friend for conversion check 
+    friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
+    //! empty constructor not defined 
     LocalDGElliptOperator();
+    //! copy constructor not defined 
     LocalDGElliptOperator(const LocalDGElliptOperator&);
 
   private:
