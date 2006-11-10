@@ -25,7 +25,7 @@ namespace Dune{
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
   
     typedef DFAdapt<DiscreteFunctionSpaceImp> DiscreteFunctionType;
-    typedef LocalFunctionAdapt<DiscreteFunctionSpaceImp> LocalFunctionImp;
+    typedef LocalFunctionAdapt<DiscreteFunctionType> LocalFunctionImp;
     typedef LocalFunctionWrapper< DiscreteFunctionType > LocalFunctionType;
 
     typedef typename DofArray<
@@ -59,7 +59,6 @@ private:
     DFAdaptTraits<DiscreteFunctionSpaceType> 
   > DiscreteFunctionDefaultType;
   friend class DiscreteFunctionDefault< DFAdaptTraits<DiscreteFunctionSpaceType> >;
- 
   
   enum { myId_ = 0};
 
@@ -79,8 +78,9 @@ public:
     
   //! type of this class 
   typedef DFAdapt <DiscreteFunctionSpaceType> DiscreteFunctionType;
+  typedef DiscreteFunctionType ThisType;
   //! LocalFunctionImp is the implementation 
-  typedef LocalFunctionAdapt < DiscreteFunctionSpaceType > LocalFunctionImp;
+  typedef LocalFunctionAdapt < DiscreteFunctionType > LocalFunctionImp;
 
   //! LocalFunctionType is the exported lf type 
   typedef LocalFunctionWrapper < DiscreteFunctionType > LocalFunctionType;
@@ -93,6 +93,7 @@ public:
   
   typedef LocalFunctionStorage< DiscreteFunctionType > LocalFunctionStorageType; 
 
+  friend class LocalFunctionAdapt< ThisType> ;
 public:
 
   //! Constructor make Discrete Function
@@ -249,6 +250,7 @@ private:
 
   // one local function 
   LocalFunctionType localFunc_;
+
   
 }; // end class DFAdapt 
 
@@ -260,16 +262,17 @@ private:
 //! Implementation of the local functions 
 //
 //**************************************************************************
-template < class DiscreteFunctionSpaceType> 
+template < class DiscreteFunctionType> 
 class LocalFunctionAdapt 
-: public LocalFunctionDefault <DiscreteFunctionSpaceType ,
-  LocalFunctionAdapt <DiscreteFunctionSpaceType>  >
+: public LocalFunctionDefault <typename DiscreteFunctionType::DiscreteFunctionSpaceType ,
+  LocalFunctionAdapt <DiscreteFunctionType>  >
 {
 public:
+  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-  typedef LocalFunctionAdapt<DiscreteFunctionSpaceType> MyType;
-  typedef DFAdapt<DiscreteFunctionSpaceType> DiscFuncType;
-  friend class LocalFunctionWrapper< DiscFuncType >; 
+  typedef LocalFunctionAdapt<DiscreteFunctionType> MyType;
+  typedef DiscreteFunctionType DiscFuncType;
+  friend class LocalFunctionWrapper< DiscreteFunctionType >; 
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
 
@@ -288,13 +291,16 @@ public:
   //! Constructor 
 
 public:
+  //! Constructor taking DiscreteFunctionSpace and DofArrayType
   inline
-  LocalFunctionAdapt ( const DiscreteFunctionSpaceType &f , 
-                       DofArrayType & dofVec );
+  LocalFunctionAdapt (const DiscreteFunctionType &df);
 
   //! Destructor 
   inline
   ~LocalFunctionAdapt ();
+
+  //! return name of local function 
+  std::string name () const;
 
   //! access to dof number num, all dofs of the dof entity
   inline
@@ -367,6 +373,9 @@ protected:
   //! number of all dofs 
   mutable int numOfDof_;
 
+  //! DiscreteFunction we belong to
+  const DiscreteFunctionType & df_; 
+  
   //! the corresponding function space which provides the base function set
   const DiscreteFunctionSpaceType& fSpace_;
   
@@ -384,10 +393,7 @@ protected:
 
   //! actual geometry type 
   mutable GeometryType geoType_;
-  //! id of last initialized entity
-  //mutable IdType id_;
-  //! corresponding local id set 
-  //const LocalIdSetType& idSet_;
+
 }; // end LocalFunctionAdapt 
 
 } // end namespace Dune

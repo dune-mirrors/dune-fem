@@ -122,11 +122,11 @@ localFunction ( const EntityType &en , LocalFunctionType &lf )
 }
 
 template<class DiscreteFunctionSpaceType> 
-inline LocalFunctionAdapt<DiscreteFunctionSpaceType> *
+inline LocalFunctionAdapt<DFAdapt< DiscreteFunctionSpaceType> > *
 DFAdapt< DiscreteFunctionSpaceType>::
 newLocalFunctionObject ( ) const
 {
-  return new LocalFunctionAdapt<DiscreteFunctionSpaceType> ( this->functionSpace_ , dofVec_ );
+  return new LocalFunctionAdapt<ThisType> ( *this );
 }
 
 template<class DiscreteFunctionSpaceType> 
@@ -402,73 +402,80 @@ setLocal( EntityType &en , const RangeFieldType & scalar )
 //**********************************************************************
 //  --LocalFunctionAdapt 
 //**********************************************************************
-template<class DiscreteFunctionSpaceType>
-inline LocalFunctionAdapt < DiscreteFunctionSpaceType>::
-LocalFunctionAdapt( const DiscreteFunctionSpaceType &f , 
-                    DofArrayType & dofVec ) :
+template<class DiscreteFunctionType>
+inline LocalFunctionAdapt<DiscreteFunctionType>::
+LocalFunctionAdapt(const DiscreteFunctionType &df) :
   tmp_(0.0),
   xtmp_(0.0),
   tmpGrad_(0.0),
   numOfDof_(-1),
-  fSpace_ ( f ),
+  df_(df),
+  fSpace_ ( df.space() ),
   values_ (),
-  dofVec_ ( dofVec ),
+  dofVec_ ( df.dofVec_ ),
   baseSet_(0),
   init_(false),
   geoType_(0) // init as Vertex
-  //,id_(-1),
-  //idSet_(f.grid().localIdSet())
 {}
       
 
-template<class DiscreteFunctionSpaceType>
-inline LocalFunctionAdapt < DiscreteFunctionSpaceType>::~LocalFunctionAdapt() 
+template<class DiscreteFunctionType>
+inline LocalFunctionAdapt<DiscreteFunctionType>::~LocalFunctionAdapt() 
 {
 }
 
-template<class DiscreteFunctionSpaceType>
-inline typename LocalFunctionAdapt < DiscreteFunctionSpaceType>::RangeFieldType & 
-LocalFunctionAdapt < DiscreteFunctionSpaceType>::operator [] (int num) 
+template<class DiscreteFunctionType>
+inline std::string  
+LocalFunctionAdapt<DiscreteFunctionType>::name() const 
+{
+  std::ostringstream nombre; 
+  nombre << df_.name() << "_local"; 
+  return nombre.str();
+}
+
+template<class DiscreteFunctionType>
+inline typename LocalFunctionAdapt<DiscreteFunctionType>::RangeFieldType & 
+LocalFunctionAdapt<DiscreteFunctionType>::operator [] (int num) 
 {
   // check that storage (dofVec_) and mapper are in sync:
   assert(dofVec_.size() >= fSpace_.size());
   return (* (values_[num]));
 }
 
-template<class DiscreteFunctionSpaceType>
-inline const typename LocalFunctionAdapt < DiscreteFunctionSpaceType>::RangeFieldType & 
-LocalFunctionAdapt < DiscreteFunctionSpaceType>::operator [] (int num) const
+template<class DiscreteFunctionType>
+inline const typename LocalFunctionAdapt<DiscreteFunctionType>::RangeFieldType & 
+LocalFunctionAdapt<DiscreteFunctionType>::operator [] (int num) const
 { 
   // check that storage (dofVec_) and mapper are in sync:
   assert(dofVec_.size() >= fSpace_.size());
   return (* (values_[num]));
 }
 
-template<class DiscreteFunctionSpaceType>
-inline int LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+template<class DiscreteFunctionType>
+inline int LocalFunctionAdapt<DiscreteFunctionType>::
 numberOfDofs () const
 {
   return numOfDof_;
 }
 
-template<class DiscreteFunctionSpaceType>
-inline int LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+template<class DiscreteFunctionType>
+inline int LocalFunctionAdapt<DiscreteFunctionType>::
 numDofs () const 
 {
   return numOfDof_;
 }
 
 // hier noch evaluate mit Quadrature Regel einbauen 
-template<class DiscreteFunctionSpaceType> template <class EntityType> 
-inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+template<class DiscreteFunctionType> template <class EntityType> 
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 evaluate (EntityType &en, const DomainType & x, RangeType & ret) const {
   ret = 0.0;
   xtmp_ = en.geometry().local(x);
   evaluateLocal(en, xtmp_, ret);
 }
 
-template<class DiscreteFunctionSpaceType> template <class EntityType> 
-inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+template<class DiscreteFunctionType> template <class EntityType> 
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
@@ -487,9 +494,9 @@ evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
 }
 
 // hier noch evaluate mit Quadrature Regel einbauen 
-template<class DiscreteFunctionSpaceType> 
+template<class DiscreteFunctionType> 
 template <class EntityType, class QuadratureType> 
-inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) const 
 {
   //if(STATIC_lockFuncOutPut)
@@ -510,9 +517,9 @@ evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) 
 }
 
 // hier noch evaluate mit Quadrature Regel einbauen 
-template<class DiscreteFunctionSpaceType> 
+template<class DiscreteFunctionType> 
 template <class EntityType, class QuadratureType> 
-inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType & ret) const 
 {
   assert(init_);
@@ -539,9 +546,9 @@ jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType
     jti.umv(tmp[l],ret[l]);
 }
 
-template<class DiscreteFunctionSpaceType> 
+template<class DiscreteFunctionType> 
 template <class EntityType> 
-inline void LocalFunctionAdapt<DiscreteFunctionSpaceType>::
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 jacobianLocal(EntityType& en, const DomainType& x,
               JacobianRangeType& ret) const 
 {
@@ -568,9 +575,9 @@ jacobianLocal(EntityType& en, const DomainType& x,
   }
 }
 
-template<class DiscreteFunctionSpaceType> 
+template<class DiscreteFunctionType> 
 template <class EntityType> 
-inline void LocalFunctionAdapt<DiscreteFunctionSpaceType>::
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const {
   ret = 0.0;
   xtmp_ = en.geometry().local(x);
@@ -578,26 +585,21 @@ jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const {
 }
 
 
-template<class DiscreteFunctionSpaceType> 
+template<class DiscreteFunctionType> 
 inline 
 const typename 
-LocalFunctionAdapt < DiscreteFunctionSpaceType>::BaseFunctionSetType& 
-LocalFunctionAdapt < DiscreteFunctionSpaceType>::getBaseFunctionSet() const {
+LocalFunctionAdapt<DiscreteFunctionType>::BaseFunctionSetType& 
+LocalFunctionAdapt<DiscreteFunctionType>::getBaseFunctionSet() const {
   assert(init_ && baseSet_);
   return *baseSet_;
 }
 
 
-template<class DiscreteFunctionSpaceType> 
+template<class DiscreteFunctionType> 
 template <class EntityType> 
-inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 init (const EntityType &en) const
 {
-  // if id of element is the same, then no init has to be done 
-  // NOTE: this might fail for adaptive grids, unless 
-  // a method of the grid tells wether the grid is new or not 
-  //if( id_ == idSet_.id(en) ) return;
- 
   // NOTE: if init is false, then LocalFunction has been create before. 
   // if fSpace_.multipleGeometryTypes() is true, then grid has elements 
   // of different geometry type (hybrid grid) and we have to check geometry
@@ -623,7 +625,6 @@ init (const EntityType &en) const
 
   // make sure that the base functions set we have is for right geom type
   assert( geoType_ == en.geometry().type() );
-  // id_ = idSet_.id(en); 
 
   for(int i=0; i<numOfDof_; ++i)
   {
@@ -632,8 +633,8 @@ init (const EntityType &en) const
   return;
 } 
 
-template<class DiscreteFunctionSpaceType> 
-inline void LocalFunctionAdapt < DiscreteFunctionSpaceType>::
+template<class DiscreteFunctionType> 
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
 assign(int numDof, const RangeType& dofs) 
 {
   assert(false); // untested and most probably wrong
