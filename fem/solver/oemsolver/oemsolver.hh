@@ -36,18 +36,19 @@ void mult_pc (const Matrix &A, const PC_Matrix & C, const double *arg ,
   mult(C,tmp,dest);
 }
 
-  
+#define USE_MEMPROVIDER   
 #include "bicgstab.h"
 #include "cghs.h"
 #include "gmres.h"
 #include "bicgsq.h"
+
+#undef USE_MEMPROVIDER
   
 } // end namespace OEMSolver 
 
 
 namespace Dune 
 {
-
 
 // CG scheme after Hestenes and Stiefel
 template <class DiscreteFunctionType, class OperatorType>
@@ -74,16 +75,22 @@ private:
                      DiscreteFunctionImp & dest, 
                      double eps, bool verbose)
     {
+      // use communication class of grid
+      // see dune-common/common/collectivecommunication.hh 
+      // for interface 
       int size = arg.space().size();
-   
+
       if(op.hasPreconditionMatrix())
       {
-        return OEMSolver::cghs(size,op.systemMatrix(),op.preconditionMatrix(),
+        return OEMSolver::cghs(arg.space().grid().comm(),
+                   size,op.systemMatrix(),
+                   op.preconditionMatrix(),
                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
       else 
       {
-        return OEMSolver::cghs(size,op.systemMatrix(),
+        return OEMSolver::cghs(arg.space().grid().comm(),
+                  size,op.systemMatrix(),
                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
     }
@@ -99,8 +106,12 @@ private:
                      DiscreteFunctionImp & dest, 
                      double eps, bool verbose)
     {
+      // use communication class of grid
+      // see dune-common/common/collectivecommunication.hh 
+      // for interface 
       int size = arg.space().size();
-      return OEMSolver::cghs(size,op.systemMatrix(),
+      return OEMSolver::cghs(arg.space().grid().comm(),
+                size,op.systemMatrix(),
                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
     }
   };
@@ -134,7 +145,10 @@ public:
                      // call solver, see above 
                      call(op_,arg,dest,epsilon_,verbose_);
 
-    std::cout << "OEM-CG: " << val.first << " iterations! Error: " << val.second << "\n";
+    if(arg.space().grid().comm().rank() == 0)
+    {
+      std::cout << "OEM-CG: " << val.first << " iterations! Error: " << val.second << "\n";
+    }
 
     // finalize operator  
     finalize ();
@@ -144,126 +158,6 @@ public:
   {
     apply(arg,dest);
   }
-
-};
-
-
-// cummunicate the unkown of the CG Method 
-template <class Writer , class Reader>
-class CommunicateVector
-{
-  Writer & dataWriter_;
-  Reader & dataReader_;
-public:
-  CommunicateVector ( Writer & w, Reader & r ) : dataWriter_(w), dataReader_(r) {}
-
-  template <class ObjectStreamType, class EntityType>
-  void inlineData ( ObjectStreamType & str, EntityType & en )
-  {
-    assert(false);
-  }
-
-  template <class ObjectStreamType, class EntityType>
-  void xtractData ( ObjectStreamType & str, EntityType & en )
-  {
-    assert(false);
-  }
-
-  template <class ObjectStreamType, class EntityType>
-  void scatter ( ObjectStreamType & str, EntityType & en )
-  {
-    std::pair < ObjectStreamType * , EntityType * > p (&str,&en);
-    dataWriter_.apply( p );
-  }
-
-  template <class ObjectStreamType, class EntityType>
-  void gather ( ObjectStreamType & str, EntityType & en )
-  {
-    std::pair < ObjectStreamType * , EntityType * > p (&str,&en);
-    dataReader_.apply( p );
-  }
-};
-
-// LocalCommType = CommunicateVector
-template <class GridCommType , class LocalCommType>
-class CommunicateCG
-{
-  GridCommType & gc_;
-  LocalCommType & comm_;
-public:
-  CommunicateCG ( GridCommType & gc , LocalCommType & comm )
-    : gc_(gc), comm_(comm) {}
-
-  void communicate ()
-  {
-    gc_.communicate(comm_);
-  }
-
-  double globalSum( double val )
-  {
-    return gc_.globalSum(val);
-  }
-
-  void globalSumVec ( double * send, int s , double * recv)
-  {
-    gc_.globalSum(send,s,recv);
-  }
-};
-
-//! Parallel version of above CG scheme
-template <class CommunicatorType , class DiscreteFunctionType, class OperatorType>
-class OEMCGOpParallel : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> {
-
-private:
-  // no const reference, we make const later 
-  OperatorType &op_;
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-  CommunicatorType & comm_;
-public:
-
-  OEMCGOpParallel( CommunicatorType & comm, OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
-        comm_(comm), op_(op), epsilon_ ( absLimit ) ,
-        maxIter_ (maxIter ) , verbose_ ( verbose ) {
-  }
-
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    typedef typename DiscreteFunctionType::FunctionSpace FunctionSpaceType;
-    typedef typename FunctionSpaceType::RangeField Field;
-    typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
-    typedef typename DiscreteFunctionType::ConstDofIteratorType ConstDofIteratorType;
-    typedef typename FunctionSpaceType::GridType GridType;
-
-    // prepare operator 
-    prepare ( arg, dest );
-
-    int size = arg.space().size();
-    
-    OEMSolver::cghsParallel
-      (comm_,size,op_.systemMatrix(),arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
-
-    // finalize operator  
-    finalize ();
-  }
-
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-
 };
 
 
