@@ -11,7 +11,7 @@ max-area 0.1   % area restriction
 display 0       % show result using Triangle viewer
 
 % to use Triangle from a certain path, uncomment this path line
-%path $HOME/bin      % path to Triangle
+path /hosts/morgoth/raid5/dune/modules/Triangle       % path to Triangle
 #
 BOUNDARYSEGMENTS
 1 0 1 2 3 0
