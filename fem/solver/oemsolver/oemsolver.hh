@@ -377,13 +377,14 @@ private:
    
       if(op.hasPreconditionMatrix())
       {
-        return OEMSolver::gmres_pc
-                (inner,size,op.systemMatrix(),op.preconditionMatrix(),
+        return OEMSolver::gmres(arg.space().grid().comm(),
+                 inner,size,op.systemMatrix(),op.preconditionMatrix(),
                  arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
       else 
       {
-        return OEMSolver::gmres(inner,size,op.systemMatrix(),
+        return OEMSolver::gmres(arg.space().grid().comm(),
+                 inner,size,op.systemMatrix(),
                  arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
     }
@@ -400,7 +401,8 @@ private:
                      int inner, double eps, bool verbose)
     {
       int size = arg.space().size();
-      return OEMSolver::gmres(inner,size,op.systemMatrix(),
+      return OEMSolver::gmres(arg.space().grid().comm(),
+               inner,size,op.systemMatrix(),
                arg.leakPointer(),dest.leakPointer(),eps,verbose);
     }
   };

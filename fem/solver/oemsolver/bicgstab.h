@@ -164,6 +164,7 @@ bicgstab_algo( const CommunicatorType & comm,
     {
       omega = st/tt;
     }
+
     daxpy(N,-omega,t,1,r,1);
     daxpy(N,-alpha,d,1,x,1);
     daxpy(N,-omega,s,1,x,1);
@@ -201,6 +202,7 @@ bicgstab_algo( const CommunicatorType & comm,
   delete[] u;
   delete[] Ad;
   delete[] t;
+  if( usePC ) delete [] tmp;
 #endif
   // delete buffer 
   delete [] rtBuff;

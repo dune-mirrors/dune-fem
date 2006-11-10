@@ -16,26 +16,9 @@
 // ============================================================================
 
 #include <utility>
-
-template< class Matrix >
-inline 
-std::pair<int,double> 
-gmres( int m, int N, const Matrix &A, const double *b, double *x, double eps );
-
-
-template< class Matrix >
-inline 
-std::pair<int,double> 
-gmres( int m, int N, const Matrix &A, const double *b, double *x, double eps,
-       bool detailed );
-
-
-// ============================================================================
-
-
 #include "cblas.h"
 
-
+#if 0
 template< class Matrix >
 inline 
 std::pair<int,double> 
@@ -139,11 +122,16 @@ gmres( int m, int n, const Matrix &A, const double *b, double *x, double eps,
 
   return std::pair<int,double> (its,error);
 }
+#endif
 
-template< class Matrix , class PC_Matrix >
+template<bool usePC ,
+         class CommunicatorType, 
+         class Matrix , 
+         class PC_Matrix >
 inline
 std::pair<int,double> 
-gmres_pc ( int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs , double *x, double eps,
+gmres_algo (const CommunicatorType & comm,
+       int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs , double *x, double eps,
        bool detailed ) 
 {
   if ( n<=0 )
@@ -152,13 +140,11 @@ gmres_pc ( int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs
     return std::pair<int,double> (-1,0.0);
   }
 
-  double * newRhs = new double[n];
-  double * tmp = new double[n];
-  for(register int i=0; i<n; ++i) newRhs[i] = 0.0;
+  typedef Mult<Matrix,PC_Matrix,usePC> MultType;
+  typedef typename MultType :: mult_t mult_t;
+  // get appropriate mult method 
+  mult_t * mult_pc = MultType :: mult_pc;
 
-  mult(C,rhs,newRhs);
-  const double * b = newRhs;
-  
   typedef double *doubleP;
   double *V  = new double[n*(m+1)];
   double *U  = new double[m*(m+1)/2];
@@ -168,6 +154,18 @@ gmres_pc ( int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs
   double *s  = new double[m];
   double **v = new doubleP[m+1];
 
+  // tmp mem for pc mult 
+  double * tmp = 0; 
+  double * newRhs = 0;
+
+  if( usePC ) 
+  {
+    tmp = new double[n];
+    newRhs = new double[n];
+    mult(C,rhs,newRhs);
+  }
+  const double * b = (usePC) ? newRhs : rhs;
+  
   double error = -1.0;
 
   for ( int i=0; i<=m; ++i ) 
@@ -180,13 +178,12 @@ gmres_pc ( int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs
   {
     double beta, h, rd, dd, nrm2b;
     int j, io, uij, u0j;
-    nrm2b=dnrm2(n,b,1);
+    nrm2b = dnrm2(n,b,1);
     
     io=0;
     do  
     { // "aussere Iteration
       ++io;
-      for(register int k=0; k<n; ++k) tmp[k] = 0.0;
       mult_pc(A,C,x,r,tmp);
       daxpy(n,-1.,b,1,r,1);
       beta=dnrm2(n,r,1);
@@ -199,7 +196,6 @@ gmres_pc ( int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs
       do 
       { // innere Iteration j=0,...,m-1
         u0j=uij;
-        for(register int k=0; k<n; ++k) tmp[k] = 0.0;
         mult_pc(A,C,v[j],v[j+1],tmp);
         dgemv(Transpose,n,j+1,1.,V,n,v[j+1],1,0.,U+u0j,1);
         dgemv(NoTranspose,n,j+1,-1.,V,n,U+u0j,1,1.,v[j+1],1);
@@ -254,20 +250,38 @@ gmres_pc ( int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs
   delete[] c;
   delete[] s;
   delete[] v;
-  delete[] newRhs;
-  delete[] tmp;
+
+  if( usePC ) 
+  {
+    delete[] newRhs;
+    delete[] tmp;
+  }
   
   return std::pair<int,double> (its,error);
 }
 
-
 // ============================================================================
 
-template< class Matrix >
+template<class CommunicatorType, 
+         class Matrix > 
 inline 
 std::pair<int,double> 
-gmres( int m, int n, const Matrix &A, const double *b, double *x, double eps ){
-  return gmres(m,n,A,b,x,eps,false);
+gmres( const CommunicatorType & comm, 
+      int m, int n, const Matrix &A, const double *b, double *x, double eps , bool verbose )
+{
+  return gmres_algo<false> (comm,m,n,A,A,b,x,eps,verbose);
+}
+
+template<class CommunicatorType, 
+         class Matrix,
+         class PC_Matrix > 
+inline 
+std::pair<int,double> 
+gmres( const CommunicatorType & comm, 
+      int m, int n, const Matrix &A, const PC_Matrix & C ,
+      const double *b, double *x, double eps , bool verbose )
+{
+  return gmres_algo<true> (comm,m,n,A,C,b,x,eps,verbose);
 }
 
 // ============================================================================
