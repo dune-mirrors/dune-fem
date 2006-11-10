@@ -124,12 +124,12 @@ typedef FunctionSpace < double , double, dimworld , 1 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
-typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 > FuncSpaceType ;
+typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 > DiscreteFunctionSpaceType ;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
-//typedef DFAdapt < FuncSpaceType > DiscreteFunctionType;
-typedef AdaptiveDiscreteFunction < FuncSpaceType > DiscreteFunctionType;
+//typedef DFAdapt < DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! define the discrete laplace operator, see ./fem.cc
 typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
@@ -160,7 +160,7 @@ public:
   //  f(x,y,z) = 2 (x-x^2) (y-y^2) +
   //             2 (z-z^2) (y-y^2) +              
   //             2 (x-x^2) (z-z^2)
-  void evaluate (const DomainType & x , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeType & ret) const
   {
     enum { dim = DomainType::dimension };
     ret = 0.0;
@@ -187,13 +187,13 @@ public:
   ExactSolution (FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
  
   //! u(x,y,z) = (x-x^2)*(y-y^2)*(z-z^2)
-  void evaluate (const DomainType & x , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeType & ret) const
   {
     ret = 1.0;
     for(int i=0; i<DomainType::dimension; i++)
       ret *= ( x[i] - SQR(x[i]) );
   }
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
     evaluate ( x , ret );
   }
@@ -211,15 +211,15 @@ public:
   Tensor (FuncSpace &f)
     : Function < FuncSpace , Tensor > ( f )  { } ;
   // eval Tensor 
-  void evaluate (int i, int j, const DomainType & x1 , RangeType & ret)
+  void evaluate (int i, int j, const DomainType & x1 , RangeType & ret) const
   {
     evaluate(x1,0.0,ret);
   }
-  void evaluate (const DomainType & x1 , RangeType & ret)
+  void evaluate (const DomainType & x1 , RangeType & ret) const
   {
     evaluate(x1,0.0,ret);
   }
-  void evaluate (const DomainType & x1 ,double time, RangeType & ret)
+  void evaluate (const DomainType & x1 ,double time, RangeType & ret) const
   {
     ret[0] = 1.0;
   }
@@ -300,7 +300,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    GridPartType part ( *gridptr );
 
-   FuncSpaceType linFuncSpace ( part );
+   DiscreteFunctionSpaceType linFuncSpace ( part );
    std::cout << "\nSolving for " << linFuncSpace.size() << " number of unkowns. \n\n";
    DiscreteFunctionType solution ( "sol", linFuncSpace );
    solution.clear();
@@ -317,7 +317,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    l2pro.project<polOrd> ( f , rhs );
     
    { 
-     typedef FuncSpaceType :: IteratorType IteratorType; 
+     typedef DiscreteFunctionSpaceType :: IteratorType IteratorType; 
      // set Dirichlet Boundary to zero 
      IteratorType endit  = linFuncSpace.end();
      for(IteratorType it = linFuncSpace.begin(); it != endit; ++it ) 
@@ -342,9 +342,9 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    // pol ord for calculation the error chould by higher than 
    // pol for evaluation the basefunctions 
-   double error = l2err.norm<polOrd + 2> (u ,solution, 0.0);
+   typedef DiscreteFunctionSpaceType :: RangeType RangeType;
+   RangeType error = l2err.norm(u ,solution);
    std::cout << "\nL2 Error : " << error << "\n\n";
-
    
 #if HAVE_GRAPE
    // if grape was found then display solution 
@@ -355,7 +355,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    }
 #endif
 
-   return error;
+   return error[0];
 }
 
 
