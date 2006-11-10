@@ -47,12 +47,14 @@ public:
   Function (const FunctionSpaceType & f) : functionSpace_ (f) {} ;  
 
   //! application operator
-  virtual void operator()(const DomainType & arg, RangeType & dest) const {
+  virtual void operator()(const DomainType & arg, RangeType & dest) const 
+  {
     evaluate(arg,dest);
   }
 
   //! evaluate Function
-  void evaluate(const DomainType & arg, RangeType & dest) const {
+  void evaluate(const DomainType & arg, RangeType & dest) const 
+  {
     asImp().evaluate(arg, dest);
   }
 
