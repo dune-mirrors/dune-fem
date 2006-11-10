@@ -221,33 +221,34 @@ cghs( unsigned N, const MATRIX &A, const PC_MATRIX &C,
   double *r = new double[N];
   double *d = new double[N];
   double *h = new double[N];
+
   double *Ad = h;
   int its=0;
   double rh, alpha, beta;
   double err=eps*eps*ddot(N,b,1,b,1);
-  
+
   mult(A,x,r);
   daxpy(N,-1.,b,1,r,1);
-  mult(A,r,d);
+  mult(C,r,d);
   dcopy(N,d,1,h,1);
   rh=ddot(N,r,1,h,1);
-  while ( ddot(N,r,1,r,1)> err ) 
+  while ( ddot(N,r,1,r,1)>err ) 
   {
     mult(A,d,Ad);
     alpha=rh/ddot(N,d,1,Ad,1);
     daxpy(N,-alpha,d,1,x,1);
     daxpy(N,-alpha,Ad,1,r,1);
-    mult(A,r,h);
+    mult(C,r,h);
     beta=1./rh; rh=ddot(N,r,1,h,1); beta*=rh;
     dscal(N,beta,d,1);
     daxpy(N,1.,h,1,d,1);
     if ( detailed )
-    {
-      std::cout<<"cghs "<<its<<"\t"<<dnrm2(N,r,1)<< " " << error << std::endl;
-    }
+      cout<<"cghs "<<its<<"\t"<<dnrm2(N,r,1)<<endl;
     ++its;
   }
-  std::pair<int,double> val(its,dnrm2(N,r,1)); 
+
+  std::pair<int,double> val(its,dnrm2(N,r,1));
+  
   delete[] r;
   delete[] d;
   delete[] h;
