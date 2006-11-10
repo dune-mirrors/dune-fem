@@ -224,7 +224,6 @@ bicgstab( const CommunicatorType & comm,
     unsigned int N, const MATRIX &A,
 	  const double *b, double *x, double eps, bool verbose ) 
 {
-  std::cout << "Using bicgstab without precon \n";
   return bicgstab_algo<false>(comm,N,A,A,b,x,eps,verbose);
 }
 
@@ -238,7 +237,6 @@ bicgstab( const CommunicatorType & comm,
     unsigned int N, const MATRIX &A, const PC_MATRIX & C,
 	  const double *b,double *x, double eps, bool verbose ) 
 {
-  std::cout << "Using bicgstab with precon \n";
   return bicgstab_algo<true>(comm,N,A,C,b,x,eps,verbose);
 }
 
