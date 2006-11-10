@@ -288,11 +288,6 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
                 SpaceOperatorType; 
   typedef typename SpaceOperatorType :: DestinationType DestinationType;
    
-  NumericalFluxType numericalFlux(model);
-  
-  LaplaceModelType lpm(model, numericalFlux);
-  GradientModelType gm(model, numericalFlux);
-
   // initialize grid
   char dummyfile [4096];
   const char * paramfile = paramFile.c_str();
@@ -312,8 +307,17 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   int verbose = 0;
   readParameter(paramfile,"verbose",verbose);
 
+  int precon = 0;
+  readParameter(paramfile,"Preconditioning",precon);
+  bool preConditioning = (precon == 1) ? true : false;
+
   int eocsteps = 2;
   readParameter(paramfile,"EOCSteps",eocsteps);
+
+  NumericalFluxType numericalFlux(model);
+  
+  LaplaceModelType lpm(model, numericalFlux, preConditioning);
+  GradientModelType gm(model, numericalFlux, preConditioning);
 
   SpaceOperatorType spaceOp(grid , gm, lpm , eps, (verbose == 0) ? false : true, eocsteps );
   

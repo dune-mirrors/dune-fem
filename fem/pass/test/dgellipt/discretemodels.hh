@@ -11,6 +11,7 @@
 // Dune includes
 #include <dune/common/utility.hh>
 #include <dune/fem/space/combinedspace.hh>
+#include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/common/gridpart.hh>
 //#include "dune/fem/quadrature/cachingquad.hh"
 #include <dune/grid/common/referenceelements.cc>
@@ -46,8 +47,8 @@ namespace LDGExample {
     typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd> ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
     
-    typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
-    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
+    //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
     
     template <class RowSpaceType, class ColSpaceType> 
     struct MatrixHandler
@@ -60,8 +61,8 @@ namespace LDGExample {
     { 
       //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
     };
   };
 
@@ -123,13 +124,15 @@ namespace LDGExample {
     enum { dimRange = Traits::dimRange };
 
   public:
-    GradientDiscreteModel(const Model& mod,const NumFlux& numf) :
+    GradientDiscreteModel(const Model& mod,const NumFlux& numf, bool preCon = false) :
       model_(mod),
-      numflux_(numf) {}
+      numflux_(numf),
+      preCon_(preCon)
+    {}
 
     const Model & data () const { return model_; }
 
-    bool preconditioning () const { return false; }
+    bool preconditioning () const { return preCon_; }
     bool hasSource() const { return true; }
     bool hasFlux() const { return false; }
 
@@ -206,6 +209,7 @@ namespace LDGExample {
   private:
     const Model& model_;
     const NumFlux& numflux_;
+    const bool preCon_;
   };
 
   ///////////////////////////////////////////////////////////
@@ -264,13 +268,15 @@ namespace LDGExample {
     typedef BoundaryIdentifier BoundaryIdentifierType ;
 
   public:
-    LaplaceDiscreteModel(const Model& mod,const NumFlux& numf) :
+    LaplaceDiscreteModel(const Model& mod,const NumFlux& numf, bool preCon = false) :
       model_(mod),
-      numflux_(numf) {}
+      numflux_(numf),
+      preCon_(preCon)
+    {}
 
     const Model & data () const { return model_; }
 
-    bool preconditioning () const { return false; }
+    bool preconditioning () const { return preCon_; }
     bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
 
@@ -354,6 +360,7 @@ namespace LDGExample {
   private:
     const Model& model_;
     const NumFlux& numflux_;
+    const bool preCon_;
   };
 
 }

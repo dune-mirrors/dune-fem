@@ -8,7 +8,10 @@ EOCSteps: 3
 CGeps: 1e-12
 
 % cg output 
-verbose: 0
+verbose: 1
+
+% use Preconditioning 0 == no, 1 == yes  
+Preconditioning: 0
 
 % MacroTriang for 2d simul 
 Grid: ./grid2d.dgf
