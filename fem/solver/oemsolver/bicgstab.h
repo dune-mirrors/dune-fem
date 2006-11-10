@@ -52,6 +52,9 @@ bicgstab_algo( const CommunicatorType & comm,
     return std::pair<int,double> (-1,0.0);
   }
 
+  // just to remember that parallel is not tested yet 
+  assert( comm.size() == 1 );
+
   typedef Mult<MATRIX,PC_MATRIX,usePC> MultType; 
   typedef typename MultType :: mult_t mult_t; 
   // get appropriate mult method 

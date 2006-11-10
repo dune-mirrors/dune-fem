@@ -140,6 +140,12 @@ gmres_algo (const CommunicatorType & comm,
     return std::pair<int,double> (-1,0.0);
   }
 
+  if(comm.size() > 1) 
+  {
+    std::cerr << "ERROR: parallel computation prepared, but not implemented yet! in:" << __FILE__ << " line: " << __LINE__ << "\n";
+    abort();
+  }
+
   typedef Mult<Matrix,PC_Matrix,usePC> MultType;
   typedef typename MultType :: mult_t mult_t;
   // get appropriate mult method 
@@ -224,7 +230,7 @@ gmres_algo (const CommunicatorType & comm,
           y[j]   = c[j]*y[j];
         }
         ++j;
-        if ( detailed )
+        if ( detailed && (comm.rank() == 0))
         {
           std::cout<<"gmres("<<m<<")\t"<<io<<"\t"<<j<<"\t"<<std::abs(y[j])<<std::endl;
         }

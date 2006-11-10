@@ -280,7 +280,10 @@ public:
                      // call solver, see above 
                      call(op_,arg,dest,epsilon_,verbose_);
     
-    std::cout << "OEM-BICGstab: " << val.first << " iterations! Error: " << val.second << "\n";
+    if(arg.space().grid().comm().rank() == 0)
+    {
+      std::cout << "OEM-BICGstab: " << val.first << " iterations! Error: " << val.second << "\n";
+    }
 
     // finalize operator  
     finalize ();
@@ -441,7 +444,10 @@ public:
                      // call solver, see above 
                      call(op_,arg,dest,inner,epsilon_,verbose_);
 
-    std::cout << "OEM-GMRES: " << val.first << " iterations! Error: " << val.second << "\n";
+    if(arg.space().grid().comm().rank() == 0)
+    {
+      std::cout << "OEM-GMRES: " << val.first << " iterations! Error: " << val.second << "\n";
+    }
 
     // finalize operator  
     finalize ();

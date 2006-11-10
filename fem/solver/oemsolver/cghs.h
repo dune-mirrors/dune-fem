@@ -43,6 +43,10 @@ cghs( const CommunicatorType & comm,
     std::cerr << "WARNING: N = 0 in cghs, file: " << __FILE__ << " line:" << __LINE__ << "\n";
     return std::pair<int,double> (-1,0.0);
   }
+
+  // just to remember that parallel is not tested yet 
+  assert( comm.size() == 1 );
+  
 #ifdef USE_MEMPROVIDER
   cghsMem.resize( 3*N ); 
 
@@ -134,6 +138,9 @@ cghs( const CommunicatorType & comm,
     std::cerr << "WARNING: N = 0 in cghs, file: " << __FILE__ << " line:" << __LINE__ << "\n";
     return std::pair<int,double> (-1,0.0);
   }
+
+  // just to remember that parallel is not tested yet 
+  assert( comm.size() == 1 );
 
 #ifdef USE_MEMPROVIDER
   cghsMem.resize( 3*N ); 
