@@ -1,0 +1,12 @@
+DGF
+Interval
+0  0        % first corner 
+1  1        % second corner
+1  1        % 1 cells in x and 1 in y direction
+#
+Simplex
+#
+BOUNDARYDOMAIN
+default 1     % default boundary id
+#BOUNDARYDOMAIN
+# grid.dgf

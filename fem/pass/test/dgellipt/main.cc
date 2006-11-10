@@ -1,0 +1,67 @@
+#include <iostream>
+#include <fstream>
+
+#include <config.h>
+
+#include <dune/common/stdstreams.cc>
+#include <dune/common/misc.hh>
+#include <dune/common/timer.hh>
+
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
+
+using namespace Dune;
+
+const int dim = dimworld;
+const int ncomp = 1;
+
+// include file with the description of the convection diffusion problem
+#include "discretization.hh"
+
+using namespace LDGExample;
+
+template <typename Field, class GridImp, int dimR, int polOrd=0 >
+struct DescriptionTraits
+{
+  enum { dim      = GridImp::dimension };
+  enum { dimworld = GridImp::dimensionworld };
+
+  enum { dimRange = dimR };
+
+  typedef Field   FieldType;
+  typedef GridImp GridType;
+
+  // the model 
+  typedef ModelParam  <FieldType,GridType,dimRange>  ModelParamType;
+  typedef Model       <ModelParamType>  ModelType;
+
+  // the discretisation 
+  typedef DiscrParam  <ModelType,polOrd>  DiscrParamType;
+};
+
+int main (int argc, char **argv)
+{
+  // error message if called without parameter file
+  if(argc < 2)
+  {
+    fprintf(stderr,"usage: %s <parameter file>\n",argv[0]);
+  }
+  
+  // read data from the parameter file
+  const char * paramname = "parameter";
+  if(argc == 2) paramname = argv[1];
+
+  std::string paramfile ( paramname );
+
+  typedef DescriptionTraits <double,GridType,ncomp,1> DescrType;
+  typedef DescrType :: ModelType ModelType;
+  typedef DescrType :: DiscrParamType DiscrParamType;
+
+  ModelType model;
+
+  Timer timer;
+  simul<DiscrParamType>(model,paramfile);
+  std::cout << "CPUtime: " << timer.elapsed() << " sec!\n";
+
+  return 0;
+}
+
