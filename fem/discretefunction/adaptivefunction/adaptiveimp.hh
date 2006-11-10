@@ -92,7 +92,7 @@ namespace Dune {
     //! return pointer to underlying array 
     const DofType * leakPointer () const { return dofVec_.leakPointer(); }
   protected:
-    const DiscreteFunctionSpaceType& space() const { return spc_; }
+
     DofStorageType& dofStorage() { return dofVec_; }
 
     AdaptiveFunctionImplementation(std::string name,
