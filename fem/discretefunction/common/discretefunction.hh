@@ -229,6 +229,9 @@ namespace Dune{
     //! Set all elements to zero
     void clear();
 
+    //! Set all elements to value
+    void set(const RangeFieldType & value); 
+
     //! daxpy operation
     void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c);
 

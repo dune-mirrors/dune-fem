@@ -11,11 +11,20 @@ namespace Dune
 //  Default Implementations 
 //************************************************************
 template <class DiscreteFunctionTraits>
-void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear() {
+void DiscreteFunctionDefault<DiscreteFunctionTraits>::
+set(const RangeFieldType & value) 
+{
   DofIteratorType endit = this->dend();
-  for (DofIteratorType it = this->dbegin(); it != endit; ++it) {
-    *it = 0.0;
+  for (DofIteratorType it = this->dbegin(); it != endit; ++it) 
+  {
+    (*it) = value;
   }
+}
+
+template <class DiscreteFunctionTraits>
+void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear() 
+{
+  this->set(RangeFieldType(0.0));
 }
 
 template <class DiscreteFunctionTraits>
@@ -24,8 +33,9 @@ addScaled(const DiscreteFunctionType& g, const RangeFieldType& c) {
   assert(this->size() == g.size());
   DofIteratorType endit = this->dend();
   ConstDofIteratorType oit = g.dbegin();
-  for (DofIteratorType it = this->dbegin(); it != endit; ++it, ++oit) {
-    *it += *oit*c;
+  for (DofIteratorType it = this->dbegin(); it != endit; ++it, ++oit) 
+  {
+    (*it) += (*oit) * c;
   }
 }
 
