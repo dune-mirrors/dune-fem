@@ -1,14 +1,14 @@
 % initial refine level 
-StartLevel: 0
+StartLevel: 3
 
 % do EOCSteps eoc steps
-EOCSteps: 1
+EOCSteps: 2
 
 % CG epsilon 
 CGeps: 1e-15
 
 % cg output 
-verbose: 0
+verbose: 1
 
 % use Preconditioning 0 == no, 1 == yes  
 Preconditioning: 0

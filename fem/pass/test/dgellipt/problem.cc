@@ -14,7 +14,7 @@
 
 #include <math.h>
 
-#define PROBLEM 1
+#define PROBLEM 3
 
 // shift solutions to avoid dirichlet 0 bnd 
 static const double globalShift = 2.0;
