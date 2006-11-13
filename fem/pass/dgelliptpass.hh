@@ -500,13 +500,13 @@ namespace Dune {
                           , rhsData 
                           , gradRhsData); 
       
-      if(gridPart_.grid().comm().rank() == 0)
-        matrixHandler_.stabMatrix().print(std::cout);
+      //if(gridPart_.grid().comm().rank() == 0)
+      //  matrixHandler_.stabMatrix().print(std::cout);
 
-      gridPart_.communicate( allData, InteriorBorder_All_Interface , ForwardCommunication);
+      //gridPart_.communicate( allData, InteriorBorder_All_Interface , ForwardCommunication);
 
-      if(gridPart_.grid().comm().rank() == 0)
-        matrixHandler_.stabMatrix().print(std::cout);
+      //if(gridPart_.grid().comm().rank() == 0)
+      //  matrixHandler_.stabMatrix().print(std::cout);
     }
 
     const ThisType & systemMatrix () const { return *this; }
@@ -712,11 +712,20 @@ namespace Dune {
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
            FaceQuadratureType::INSIDE);
       
+        int bndChecker = (nit.boundary()) ? 1 : 0;
+
         // if neighbor exists 
         if (nit.neighbor()) 
         {
           EntityPointerType neighEp = nit.outside();
           EntityType&            nb = *neighEp;
+
+          if(nb.partitionType() != InteriorEntity)
+          {
+            bndChecker++; 
+          }
+          else 
+          {
 
           int twistNeighbor = twistUtil_.twistInNeighbor(nit);
           FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
@@ -863,10 +872,12 @@ namespace Dune {
               }
             }
           }
+          }
         } // end if neighbor 
 
         // if intersection with boundary 
-        if (nit.boundary()) 
+        //if (nit.boundary()) 
+        if (bndChecker > 0) 
         { 
           fMat_ = 1.0;
           const int quadNop = faceQuadInner.nop();
@@ -878,9 +889,13 @@ namespace Dune {
             // get boundary value 
             RangeType dirichletValue(0.0);
 
-            BoundaryIdentifierType bndType = 
-              problem_.boundaryValue(nit,t,
-                  faceQuadInner.localPoint(l),dirichletValue);
+            //BoundaryIdentifierType bndType = BoundaryIdentifierType(BoundaryIdentifierType::DirichletZero);
+            BoundaryIdentifierType bndType = BoundaryIdentifierType(BoundaryIdentifierType::NeumannZero);
+            if(bndChecker == 1)
+            {
+              bndType = problem_.boundaryValue(nit,t,
+                faceQuadInner.localPoint(l),dirichletValue);
+            }
 
             if(gradProblem_.hasSource())
             {
