@@ -7,6 +7,14 @@
 #include <dune/istl/bcrsmatrix.hh>
 #endif
 
+/*
+#include <dune/fem/pass/tuples.hh>
+#include <dune/fem/pass/utility.hh> 
+#include <dune/fem/pass/typetraits.hh> 
+#include <dune/fem/pass/selection.hh>
+#include <dune/fem/pass/leng.hh>
+*/
+
 namespace Dune {
 
   template <class SpaceType, class GradientSpaceType> 
@@ -59,6 +67,9 @@ namespace Dune {
       MatrixNonSymetricHandle(const MatrixNonSymetricHandle &);
 
     public:
+      int rows () const { return row_.size(); }
+      int cols () const { return col_.size(); }
+
       void add(int localRow, int localCol , const double value)
       {
         assert( localRow >= 0 );
@@ -67,6 +78,16 @@ namespace Dune {
         assert( localRow < (int) row_.size() );
         assert( localCol < (int) col_.size() );
         matrix_.add(row_[localRow],col_[localCol],value);
+      }
+
+      double get(int localRow, int localCol) const 
+      {
+        assert( localRow >= 0 );
+        assert( localCol >= 0 );
+
+        assert( localRow < (int) row_.size() );
+        assert( localCol < (int) col_.size() );
+        return matrix_(row_[localRow],col_[localCol]);
       }
     };
 
@@ -144,6 +165,14 @@ namespace Dune {
         massMatrix_.clear();
       }
     } 
+    
+    void clearPcMatrix() 
+    {
+      if(hasPcMatrix())
+      {
+        pcMatrix_.clear();
+      }
+    } 
   };
 
 
@@ -199,6 +228,9 @@ namespace Dune {
       }
 
     public:
+      int rows () const { return localMatrix_.rows(); }
+      int cols () const { return localMatrix_.cols(); }
+
       void add(int localRow, int localCol , const double value)
       {
         assert( localRow >= 0 );
@@ -208,6 +240,17 @@ namespace Dune {
         assert( localCol < localMatrix_.cols() );
 
         localMatrix_[localRow][localCol] += value; 
+      }
+
+      double get(int localRow, int localCol ) const 
+      {
+        assert( localRow >= 0 );
+        assert( localCol >= 0 );
+
+        assert( localRow < localMatrix_.rows() );
+        assert( localCol < localMatrix_.cols() );
+
+        return localMatrix_[localRow][localCol]; 
       }
     };
 
@@ -566,6 +609,327 @@ namespace Dune {
     }
   };
 #endif // HAVE_DUNE_ISTL
+
+  template <class MatrixImp,class LocalMatrixType, class RowSpaceImp, class ColSpaceImp>
+  class MatrixDataHandler 
+  {
+  public:  
+    typedef MatrixImp MatrixType;
+    typedef typename RowSpaceImp::RangeFieldType DataType;
+
+  private:  
+    MatrixType & matrix_;
+    const RowSpaceImp & rowSpace_;
+    const ColSpaceImp & colSpace_; 
+  public:
+    MatrixDataHandler(MatrixType & matrix, 
+                      const RowSpaceImp & rowSpace,
+                      const ColSpaceImp & colSpace)
+      : matrix_(matrix)
+      , rowSpace_(rowSpace)
+      , colSpace_(colSpace)
+    {
+    }
+
+    bool contains (int dim, int codim) const
+    {
+      return (codim == 0);
+    }
+
+    bool fixedsize (int dim, int codim) const
+    {
+      return true;
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void gather (MessageBufferImp& buff, const EntityType& en) const
+    {
+      LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
+      for(int i=0; i<localMat.rows(); ++i) 
+      {
+        for(int j=0; j<localMat.cols(); ++j)
+        {
+          buff.write( localMat.get(i,j) );
+        }
+      }
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+    {
+      LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
+      assert( n ==  size(en) );
+      for(int i=0; i<localMat.rows(); ++i) 
+      {
+        for(int j=0; j<localMat.cols(); ++j)
+        {
+          double val;
+          buff.read( val );
+          localMat.add(i,j,val);
+        }
+      }
+    }
+
+    template<class EntityType>
+    size_t size (const EntityType& en) const
+    {
+      LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
+      size_t s = localMat.rows() * localMat.cols();
+      return s;
+    }
+  };
+
+  template <class DiscreteFunctionImp> 
+  class DiscreteFunctionAddHandler 
+   //: public CommDataHandleIF< 
+   //  DiscreteFunctionAddHandler <DiscreteFunctionImp > ,
+   //  typename DiscreteFunctionImp :: RangeFieldType > 
+  {
+  public:  
+    typedef DiscreteFunctionImp DiscreteFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteFunctionType::RangeFieldType DataType;
+  private:  
+    mutable DiscreteFunctionType & discreteFunction_; 
+  public:
+    DiscreteFunctionAddHandler(DiscreteFunctionType & df) 
+      : discreteFunction_(df) 
+    {
+    }
+
+    bool contains (int dim, int codim) const
+    {
+      return (codim == 0);
+    }
+
+    bool fixedsize (int dim, int codim) const
+    {
+      return true;
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void gather (MessageBufferImp& buff, const EntityType& en) const
+    {
+      LocalFunctionType lf = discreteFunction_.localFunction(en);
+      const int numDofs = lf.numDofs(); 
+      for(int i=0; i<numDofs; ++i) 
+      {
+        buff.write( lf[i] );
+      }
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+    {
+      assert( n ==  size(en) );
+      LocalFunctionType lf = discreteFunction_.localFunction(en);
+      const int numDofs = lf.numDofs(); 
+      DataType val; 
+      for(int i=0; i<numDofs; ++i) 
+      {
+        buff.read( val );
+        lf[i] += val;
+      }
+    }
+
+    template<class EntityType>
+    size_t size (const EntityType& en) const
+    {
+      LocalFunctionType lf = discreteFunction_.localFunction(en);
+      return lf.numDofs(); 
+    }
+  };
+
+  class EmptyDataHandler 
+  {
+  public:
+    EmptyDataHandler() {}
+    EmptyDataHandler(const EmptyDataHandler &) {}
+
+    static EmptyDataHandler & instance () 
+    {
+      static EmptyDataHandler emptyData;
+      return emptyData;
+    }
+
+    bool contains (int dim, int codim) const
+    {
+      return false;
+    }
+
+    bool fixedsize (int dim, int codim) const
+    {
+      return true;
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void gather (MessageBufferImp& buff, const EntityType& en) const
+    {
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+    {
+    }
+
+    template<class EntityType>
+    size_t size (const EntityType& en) const
+    {
+      return 0;
+    }
+  };
+
+
+
+  template <class DataImpOne 
+            , class DataImpTwo   = EmptyDataHandler  
+            , class DataImpThree = EmptyDataHandler
+            , class DataImpFour  = EmptyDataHandler 
+            , class DataImpFive  = EmptyDataHandler 
+            , class DataImpSix   = EmptyDataHandler > 
+  class MatrixDataCombined 
+   : public CommDataHandleIF< 
+       MatrixDataCombined < DataImpOne , 
+                            DataImpTwo ,
+                            DataImpThree ,
+                            DataImpFour ,
+                            DataImpFive ,
+                            DataImpSix > , 
+                            typename DataImpOne ::DataType >
+  {
+    template <class BufferImp, class EntityImp>
+    class MatrixDataGather{
+    public:
+      //! Constructor
+      MatrixDataGather(BufferImp & buff, const EntityImp & en) 
+      : buff_(buff)
+      , en_(en)
+      {}
+
+      //! Set the quadrature for a local function
+      template <class DataHandlerImp>
+      void visit(DataHandlerImp & dh) {
+        dh.gather(buff_,en_);
+      }
+
+    private:
+      BufferImp & buff_;
+      const EntityImp & en_;
+    };
+
+    template <class BufferImp, class EntityImp>
+    class MatrixDataScatter{
+    public:
+      //! Constructor
+      //! \param quad The quadrature in question.
+      MatrixDataScatter(BufferImp & buff, const EntityImp & en, size_t n) 
+      : buff_(buff)
+      , en_(en)
+      , size_(n)         
+      {}
+
+      //! Set the quadrature for a local function
+      template <class DataHandlerImp>
+      void visit(DataHandlerImp & dh) {
+        dh.scatter(buff_,en_,size_);
+      }
+
+    private:
+      BufferImp & buff_;
+      const EntityImp & en_;
+      const size_t size_;
+    };
+
+    template <class EntityImp>
+    class MatrixDataSize
+    {
+    public:
+      //! Constructor
+      //! \param quad The quadrature in question.
+      MatrixDataSize(const EntityImp & en) 
+      : en_(en) 
+      , size_(0) 
+      {}
+
+      //! Set the quadrature for a local function
+      template <class DataHandlerImp>
+      void visit(DataHandlerImp & dh) 
+      {
+        size_ += dh.size(en_);
+      }
+
+      size_t size() const { return size_; }
+
+    private:
+      const EntityImp & en_;
+      size_t size_;
+    };
+
+    DataImpOne   & one_;
+    DataImpTwo   & two_;
+    DataImpThree & three_;
+    DataImpFour  & four_;
+    DataImpFive  & five_;
+    DataImpSix   & six_;
+
+    typedef Tuple<  DataImpOne 
+                  , DataImpTwo 
+                  , DataImpThree 
+                  , DataImpFour 
+                  , DataImpFive  
+                  , DataImpSix > DataHandlerTupleType;
+
+    mutable DataHandlerTupleType data_; 
+  public:
+    typedef typename DataImpOne :: DataType DataType;
+
+    MatrixDataCombined(DataImpOne & one
+              , DataImpTwo   & two     = EmptyDataHandler::instance() 
+              , DataImpThree & three = EmptyDataHandler::instance()
+              , DataImpFour  & four   = EmptyDataHandler::instance()
+              , DataImpFive  & five   = EmptyDataHandler::instance() 
+              , DataImpSix   & six    = EmptyDataHandler::instance() )
+      : one_(one) , two_(two) , three_(three) , four_(four) 
+      , five_(five) , six_(six_)
+      , data_( one_ , two_, three_, four_, five_, six_ )
+    {
+    }
+
+    bool contains (int dim, int codim) const
+    {
+      return (codim == 0);
+    }
+
+    bool fixedsize (int dim, int codim) const
+    {
+      return true;
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void gather (MessageBufferImp& buff, const EntityType& en) const
+    {
+      ForEachValue<DataHandlerTupleType> forEach(data_);
+      MatrixDataGather<MessageBufferImp,EntityType> gatherData(buff,en);
+      forEach.apply(gatherData);
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+    {
+      ForEachValue<DataHandlerTupleType> forEach(data_);
+      MatrixDataScatter<MessageBufferImp,EntityType> scatterData(buff,en,n);
+      forEach.apply(scatterData);
+    }
+
+    template<class EntityType>
+    size_t size (const EntityType& en) const
+    {
+      ForEachValue<DataHandlerTupleType> forEach(data_);
+      MatrixDataSize<EntityType> dataSize(en);
+      forEach.apply(dataSize);
+      return dataSize.size();
+    }
+  };
 
 } // end namespace Dune
 #endif

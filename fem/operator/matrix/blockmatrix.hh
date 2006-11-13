@@ -112,6 +112,20 @@ public:
   }
     
   // result = this * vec 
+  void multOEM(const T * vec, T * result) const 
+  {
+    assert( (int) result.size() == rows() );
+    for(int row=0; row<rows(); ++row)
+    {
+      result[row] = 0;
+      for(int col=0; col<cols(); ++col) 
+      {
+        result[row] += matrix_[row][col]*vec[col]; 
+      }
+    }
+  }
+    
+  // result = this * vec 
   void mult(const RowType & vec, RowType & result) const 
   {
     this->mult(&vec[0],result);
