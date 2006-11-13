@@ -2,10 +2,9 @@
 #define DUNE_ELLIPTPASS_HH
 
 #include <dune/fem/pass/pass.hh>
-#include <dune/fem/pass/selection.hh>
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/modelcaller.hh>
-#include <dune/fem/pass/tuples.hh>
+//#include <dune/fem/pass/tuples.hh>
 
 // * needs to move
 #include <dune/fem/misc/timeutility.hh>
@@ -238,6 +237,7 @@ namespace Dune {
       MatrixHandlerType MatrixHandlerType; 
 
     typedef typename MatrixHandlerType::MatrixAddHandleType MatrixAddHandleType;
+    typedef typename MatrixHandlerType::MatrixType MatrixType;
     typedef typename MatrixHandlerType::PreconditionMatrixType PreconditionMatrixType;
     
     typedef typename DiscreteModelType :: BoundaryIdentifierType BoundaryIdentifierType;    
@@ -354,6 +354,7 @@ namespace Dune {
       dest_ = &rhs;
       // build matrix and rhs 
       this->compute(arg,rhs);
+      cummunicate(rhs);
 
       matrixAssembled_ = true;
 
@@ -448,6 +449,51 @@ namespace Dune {
       {
         dest[i] += multTmpPointer[i];
       }
+    }
+
+    void cummunicate(DestinationType & rhs )
+    {
+      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
+         DiscreteFunctionSpaceType , DiscreteFunctionSpaceType >
+           SingleDataHandleType; 
+      SingleDataHandleType stabData( matrixHandler_.stabMatrix() , spc_ , spc_ );
+
+      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
+              DiscreteFunctionSpaceType, DiscreteGradientSpaceType> DivDataHandleType;
+      DivDataHandleType divData( matrixHandler_.divMatrix() , spc_,  gradientSpace_ );
+
+      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
+              DiscreteGradientSpaceType, DiscreteFunctionSpaceType> GradDataHandleType;
+      GradDataHandleType gradData( matrixHandler_.gradMatrix() , gradientSpace_ , spc_ );
+
+      typedef DiscreteFunctionAddHandler<DestinationType> RhsDataHandleType;
+      RhsDataHandleType rhsData(rhs);
+
+      typedef DiscreteFunctionAddHandler<GradDestinationType> GradRhsDataHandleType;
+      GradRhsDataHandleType gradRhsData(gradRhs_);
+
+
+      typedef MatrixDataCombined< 
+              SingleDataHandleType ,
+              DivDataHandleType ,
+              GradDataHandleType,
+              RhsDataHandleType, 
+              GradRhsDataHandleType > OverallDataHandleType; 
+
+      OverallDataHandleType allData(stabData 
+                          , divData 
+                          , gradData 
+                          , rhsData 
+                          , gradRhsData); 
+
+      gridPart_.communicate( allData, InteriorBorder_All_Interface , ForwardCommunication);
+
+      /*
+      IteratorType endit = spc_.end();
+      for (IteratorType it = spc_.begin(); it != endit; ++it) {
+        std::cout << allData.size(*it) << " size \n";
+      }
+      */
     }
 
     const ThisType & systemMatrix () const { return *this; }
