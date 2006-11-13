@@ -7,14 +7,6 @@
 #include <dune/istl/bcrsmatrix.hh>
 #endif
 
-/*
-#include <dune/fem/pass/tuples.hh>
-#include <dune/fem/pass/utility.hh> 
-#include <dune/fem/pass/typetraits.hh> 
-#include <dune/fem/pass/selection.hh>
-#include <dune/fem/pass/leng.hh>
-*/
-
 namespace Dune {
 
   template <class SpaceType, class GradientSpaceType> 
@@ -612,12 +604,20 @@ namespace Dune {
 
   template <class MatrixImp,class LocalMatrixType, class RowSpaceImp, class ColSpaceImp>
   class MatrixDataHandler 
+   : public CommDataHandleIF< 
+      MatrixDataHandler<MatrixImp,LocalMatrixType,RowSpaceImp,ColSpaceImp>,
+      typename RowSpaceImp::RangeFieldType > 
   {
   public:  
     typedef MatrixImp MatrixType;
     typedef typename RowSpaceImp::RangeFieldType DataType;
+    typedef RowSpaceImp RowSpaceType;
+    typedef ColSpaceImp ColSpaceType;
+
+    typedef typename RowSpaceType :: GridType GridType;
 
   private:  
+    
     MatrixType & matrix_;
     const RowSpaceImp & rowSpace_;
     const ColSpaceImp & colSpace_; 
@@ -630,6 +630,13 @@ namespace Dune {
       , colSpace_(colSpace)
     {
     }
+    
+    MatrixDataHandler(const MatrixDataHandler & org) 
+      : matrix_(org.matrix_)
+      , rowSpace_(org.rowSpace_)
+      , colSpace_(org.colSpace_)
+    {
+    }
 
     bool contains (int dim, int codim) const
     {
@@ -644,12 +651,32 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void gather (MessageBufferImp& buff, const EntityType& en) const
     {
-      LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
-      for(int i=0; i<localMat.rows(); ++i) 
       {
-        for(int j=0; j<localMat.cols(); ++j)
+        LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
+        writeToBuff(buff,localMat);
+      }
+
+      typedef typename RowSpaceType :: GridPartType GridPartType; 
+      typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType; 
+     
+      const GridPartType & gridPart = rowSpace_.gridPart();
+      
+      {
+        IntersectionIteratorType endnit = gridPart.iend(en);
+        for (IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit; ++nit)
         {
-          buff.write( localMat.get(i,j) );
+          if(nit.neighbor())
+          {
+            typedef typename GridPartType :: GridType :: template
+              Codim<0>::EntityPointer EntityPointerType; 
+            typedef typename GridPartType :: GridType :: template
+              Codim<0>::Entity EntityImp; 
+            EntityPointerType neighEp = nit.outside();
+            EntityImp&            nb = *neighEp;
+
+            LocalMatrixType localMat(matrix_,en, rowSpace_, nb, colSpace_ );
+            writeToBuff(buff,localMat);
+          }
         }
       }
     }
@@ -657,15 +684,32 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
     {
-      LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
-      assert( n ==  size(en) );
-      for(int i=0; i<localMat.rows(); ++i) 
       {
-        for(int j=0; j<localMat.cols(); ++j)
+        LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
+        readFromBuff(buff,localMat);
+      }
+      
+      typedef typename RowSpaceType :: GridPartType GridPartType; 
+      typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType; 
+     
+      const GridPartType & gridPart = rowSpace_.gridPart();
+     
+      {
+        IntersectionIteratorType endnit = gridPart.iend(en);
+        for (IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit; ++nit)
         {
-          double val;
-          buff.read( val );
-          localMat.add(i,j,val);
+          if(nit.neighbor())
+          {
+            typedef typename GridPartType :: GridType :: template
+              Codim<0>::EntityPointer EntityPointerType; 
+            typedef typename GridPartType :: GridType :: template
+              Codim<0>::Entity EntityImp; 
+            EntityPointerType neighEp = nit.outside();
+            EntityImp&  nb = *neighEp;
+            
+            LocalMatrixType localMat(matrix_,en, rowSpace_, nb, colSpace_ );
+            readFromBuff(buff,localMat);
+          }
         }
       }
     }
@@ -675,15 +719,48 @@ namespace Dune {
     {
       LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
       size_t s = localMat.rows() * localMat.cols();
-      return s;
+      enum { factor = ((dim+1)*2 + 1) };
+      return factor * s;
+    }
+  private:  
+    template <class MessageBufferImp>
+    void writeToBuff(MessageBufferImp& buff, const LocalMatrixType &
+        localMat ) const
+    {
+      const int rows = localMat.rows();
+      const int cols = localMat.cols();
+      for(int i=0; i<rows; ++i) 
+      {
+        for(int j=0; j<cols; ++j)
+        {
+          buff.write( localMat.get(i,j) );
+        }
+      }
+    }
+    
+    template <class MessageBufferImp>
+    void readFromBuff(MessageBufferImp& buff, LocalMatrixType &
+        localMat ) 
+    {
+      const int rows = localMat.rows();
+      const int cols = localMat.cols();
+      DataType val;
+      for(int i=0; i<rows; ++i) 
+      {
+        for(int j=0; j<cols; ++j)
+        {
+          buff.read( val );
+          localMat.add(i,j,val);
+        }
+      }
     }
   };
 
   template <class DiscreteFunctionImp> 
   class DiscreteFunctionAddHandler 
-   //: public CommDataHandleIF< 
-   //  DiscreteFunctionAddHandler <DiscreteFunctionImp > ,
-   //  typename DiscreteFunctionImp :: RangeFieldType > 
+   : public CommDataHandleIF< 
+     DiscreteFunctionAddHandler <DiscreteFunctionImp > ,
+     typename DiscreteFunctionImp :: RangeFieldType > 
   {
   public:  
     typedef DiscreteFunctionImp DiscreteFunctionType;
@@ -695,6 +772,13 @@ namespace Dune {
     DiscreteFunctionAddHandler(DiscreteFunctionType & df) 
       : discreteFunction_(df) 
     {
+      //std::cout << "Create AddHandler for grid = " << &(df.space().grid())
+      //  << " Rank = " << df.space().grid().comm().rank() << "\n";
+    }
+    
+    DiscreteFunctionAddHandler(const DiscreteFunctionAddHandler & org)
+      : discreteFunction_(org.discreteFunction_) 
+    {
     }
 
     bool contains (int dim, int codim) const
@@ -710,6 +794,8 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void gather (MessageBufferImp& buff, const EntityType& en) const
     {
+      //std::cout << "P = " << discreteFunction_.space().grid().comm().rank();
+      //std::cout << " Gather on en=" << discreteFunction_.space().indexSet().index(en) <<"\n";
       LocalFunctionType lf = discreteFunction_.localFunction(en);
       const int numDofs = lf.numDofs(); 
       for(int i=0; i<numDofs; ++i) 
@@ -721,14 +807,19 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
     {
-      assert( n ==  size(en) );
+      //std::cout << n << " size in scatter \n";
+      //assert( n ==  1 );
+      //std::cout << "P = " << discreteFunction_.space().grid().comm().rank();
+      //std::cout << " Scatter on en=" << discreteFunction_.space().indexSet().index(en) <<"\n";
       LocalFunctionType lf = discreteFunction_.localFunction(en);
       const int numDofs = lf.numDofs(); 
       DataType val; 
-      for(int i=0; i<numDofs; ++i) 
       {
-        buff.read( val );
-        lf[i] += val;
+        for(int i=0; i<numDofs; ++i) 
+        {
+          buff.read( val );
+          lf[i] += val;
+        }
       }
     }
 
@@ -786,7 +877,8 @@ namespace Dune {
             , class DataImpThree = EmptyDataHandler
             , class DataImpFour  = EmptyDataHandler 
             , class DataImpFive  = EmptyDataHandler 
-            , class DataImpSix   = EmptyDataHandler > 
+            , class DataImpSix   = EmptyDataHandler  
+            , class DataImpSeven = EmptyDataHandler > 
   class MatrixDataCombined 
    : public CommDataHandleIF< 
        MatrixDataCombined < DataImpOne , 
@@ -794,7 +886,8 @@ namespace Dune {
                             DataImpThree ,
                             DataImpFour ,
                             DataImpFive ,
-                            DataImpSix > , 
+                            DataImpSix  , 
+                            DataImpSeven > , 
                             typename DataImpOne ::DataType >
   {
     template <class BufferImp, class EntityImp>
@@ -871,13 +964,15 @@ namespace Dune {
     DataImpFour  & four_;
     DataImpFive  & five_;
     DataImpSix   & six_;
+    DataImpSeven & seven_;
 
     typedef Tuple<  DataImpOne 
                   , DataImpTwo 
                   , DataImpThree 
                   , DataImpFour 
                   , DataImpFive  
-                  , DataImpSix > DataHandlerTupleType;
+                  , DataImpSix
+                  , DataImpSeven > DataHandlerTupleType;
 
     mutable DataHandlerTupleType data_; 
   public:
@@ -888,10 +983,11 @@ namespace Dune {
               , DataImpThree & three = EmptyDataHandler::instance()
               , DataImpFour  & four   = EmptyDataHandler::instance()
               , DataImpFive  & five   = EmptyDataHandler::instance() 
-              , DataImpSix   & six    = EmptyDataHandler::instance() )
+              , DataImpSix   & six    = EmptyDataHandler::instance() 
+              , DataImpSeven & seven    = EmptyDataHandler::instance() )
       : one_(one) , two_(two) , three_(three) , four_(four) 
-      , five_(five) , six_(six_)
-      , data_( one_ , two_, three_, four_, five_, six_ )
+      , five_(five) , six_(six_) , seven_(seven)
+      , data_( one_ , two_, three_, four_, five_, six_ , seven_ )
     {
     }
 
@@ -908,6 +1004,7 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void gather (MessageBufferImp& buff, const EntityType& en) const
     {
+      //std::cout << "gather  data on \n";
       ForEachValue<DataHandlerTupleType> forEach(data_);
       MatrixDataGather<MessageBufferImp,EntityType> gatherData(buff,en);
       forEach.apply(gatherData);
@@ -916,6 +1013,9 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
     {
+      // only check that here 
+      assert( size(en) == n );
+      //std::cout << "Scatter data \n";
       ForEachValue<DataHandlerTupleType> forEach(data_);
       MatrixDataScatter<MessageBufferImp,EntityType> scatterData(buff,en,n);
       forEach.apply(scatterData);
