@@ -45,7 +45,7 @@ cghs( const CommunicatorType & comm,
   }
 
   // just to remember that parallel is not tested yet 
-  assert( comm.size() == 1 );
+  //assert( comm.size() == 1 );
   
 #ifdef USE_MEMPROVIDER
   cghsMem.resize( 3*N ); 
@@ -62,8 +62,9 @@ cghs( const CommunicatorType & comm,
   int its=0;
   double t, gam;
   // send and recive buffer for rho,tau and sig
-  double * commVal  = new double [3];
-  assert( commVal );
+  //double * commVal  = new double [3];
+  double commVal[3] = { 0.0,0.0,0.0} ; 
+  //std::vector<double> commVal(3);
   
   double & rho = commVal[0];
   double & sig = commVal[1];
@@ -85,9 +86,13 @@ cghs( const CommunicatorType & comm,
     rho=ddot(N,p,1,p,1);
     sig=ddot(N,r,1,p,1);
     tau=ddot(N,g,1,r,1);
+
+    rho = comm.sum( rho );
+    sig = comm.sum( sig );
+    tau = comm.sum( tau );
     
     // global sum of scalar products 
-    comm.sum ( commVal , 3 );
+    //comm.sum ( commVal , 3 );
     
     t=tau/sig;
     daxpy(N,t,r,1,x,1);
@@ -115,7 +120,7 @@ cghs( const CommunicatorType & comm,
   delete[] r;
   delete[] p;
 #endif
-  delete [] commVal ;
+  //delete [] commVal ;
   
   return val;
 }
