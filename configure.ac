@@ -51,6 +51,7 @@ AC_CONFIG_FILES([Makefile
      fem/examples/pass/Makefile
      fem/pass/Makefile
      fem/pass/test/Makefile
+     fem/pass/test/dgellipt/Makefile
      fem/space/Makefile
      fem/space/test/Makefile
      fem/quadrature/Makefile
