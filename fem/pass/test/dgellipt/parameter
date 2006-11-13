@@ -1,5 +1,5 @@
 % initial refine level 
-StartLevel: 4
+StartLevel: 1
 
 % do EOCSteps eoc steps
 EOCSteps: 3

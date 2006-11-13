@@ -8,6 +8,7 @@
 #include <dune/common/timer.hh>
 
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/common/mpihelper.hh>
 
 using namespace Dune;
 
@@ -40,6 +41,10 @@ struct DescriptionTraits
 
 int main (int argc, char **argv)
 {
+  // this method calls MPI_Init, if MPI is enabled
+ // MPIHelper & mpiHelper = 
+    MPIHelper::instance(argc,argv);
+
   // error message if called without parameter file
   if(argc < 2)
   {

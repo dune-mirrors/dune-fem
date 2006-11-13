@@ -61,8 +61,8 @@ namespace LDGExample {
     { 
       //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
     };
   };
 

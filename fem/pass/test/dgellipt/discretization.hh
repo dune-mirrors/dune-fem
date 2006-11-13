@@ -239,8 +239,13 @@ public:
       }
     }
 
-    GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-    grape.dataDisplay( dest );
+#if HAVE_GRAPE
+    if( gridPart_.grid().comm().rank() == 0)
+    {
+      GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
+      grape.dataDisplay( dest );
+    }
+#endif
   }
 
   template <class TimeProviderType>
@@ -297,9 +302,15 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   int level;
   readParameter(paramfile,"StartLevel",level);
 
-  GridPtr<GridType> gridptr(macroGridName); 
-  GridType & grid = *gridptr;
+  //GridPtr<GridType> gridptr(macroGridName,MPIHelper::getCommunicator()); 
+  //GridType & grid = *gridptr;
+  FieldVector<double,dimworld> lang(1.0);
+  FieldVector<int,dimworld>    anz(2);
+  FieldVector<bool,dimworld>   per(false);
+
+  GridType grid(MPIHelper::getCommunicator(),lang, anz, per , 1 );
   grid.globalRefine(refStepsForHalf*level);
+  grid.loadBalance();
   std::cout << "Grid size = " << grid.size(0) << "\n";
 
   double eps = 1e-20;
