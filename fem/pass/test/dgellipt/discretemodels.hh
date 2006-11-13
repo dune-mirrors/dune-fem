@@ -35,6 +35,7 @@ namespace LDGExample {
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
     
+    //typedef LeafGridPart<GridType, All_Partition > GridPartType;
     typedef LeafGridPart<GridType> GridPartType;
     //typedef HierarchicGridPart<GridType> GridPartType;
 
@@ -133,7 +134,7 @@ namespace LDGExample {
     const Model & data () const { return model_; }
 
     bool preconditioning () const { return preCon_; }
-    bool hasSource() const { return true; }
+    bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
 
     template <class ArgumentTuple, class ReturnType>

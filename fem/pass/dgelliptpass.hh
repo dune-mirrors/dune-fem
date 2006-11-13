@@ -354,11 +354,12 @@ namespace Dune {
       dest_ = &rhs;
       // build matrix and rhs 
       this->compute(arg,rhs);
-      cummunicate(rhs);
+      communicate(rhs);
 
       matrixAssembled_ = true;
 
       const int singleSize = spc_.size();
+      std::cout << "SingleSize = " << singleSize << "\n";
       if(matrixHandler_.hasPcMatrix())
       {
         DestinationType diag("FEPass::diag",spc_);
@@ -403,6 +404,7 @@ namespace Dune {
       {
         singleRhsPtr[i] -= multTmpPointer[i];      
       }
+      
     }
 
     // --gradient
@@ -451,8 +453,11 @@ namespace Dune {
       }
     }
 
-    void cummunicate(DestinationType & rhs )
+    void communicate(DestinationType & rhs )
     {
+      // if serial run, just return 
+      if(gridPart_.grid().comm().size() <= 1) return;
+      
       typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
          DiscreteFunctionSpaceType , DiscreteFunctionSpaceType >
            SingleDataHandleType; 
@@ -466,6 +471,13 @@ namespace Dune {
               DiscreteGradientSpaceType, DiscreteFunctionSpaceType> GradDataHandleType;
       GradDataHandleType gradData( matrixHandler_.gradMatrix() , gradientSpace_ , spc_ );
 
+      /*
+      assert( matrixHandler_.hasMassMatrix() );
+      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
+              DiscreteGradientSpaceType, DiscreteGradientSpaceType> MassDataHandleType;
+      MassDataHandleType massData( matrixHandler_.massMatrix() , gradientSpace_ , gradientSpace_ );
+      */
+
       typedef DiscreteFunctionAddHandler<DestinationType> RhsDataHandleType;
       RhsDataHandleType rhsData(rhs);
 
@@ -477,23 +489,24 @@ namespace Dune {
               SingleDataHandleType ,
               DivDataHandleType ,
               GradDataHandleType,
+              //MassDataHandleType,
               RhsDataHandleType, 
               GradRhsDataHandleType > OverallDataHandleType; 
 
       OverallDataHandleType allData(stabData 
                           , divData 
                           , gradData 
+                          //, massData 
                           , rhsData 
                           , gradRhsData); 
+      
+      if(gridPart_.grid().comm().rank() == 0)
+        matrixHandler_.stabMatrix().print(std::cout);
 
       gridPart_.communicate( allData, InteriorBorder_All_Interface , ForwardCommunication);
 
-      /*
-      IteratorType endit = spc_.end();
-      for (IteratorType it = spc_.begin(); it != endit; ++it) {
-        std::cout << allData.size(*it) << " size \n";
-      }
-      */
+      if(gridPart_.grid().comm().rank() == 0)
+        matrixHandler_.stabMatrix().print(std::cout);
     }
 
     const ThisType & systemMatrix () const { return *this; }

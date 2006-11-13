@@ -1,5 +1,7 @@
 # $Id$
 
+SUBDIRS = dgellipt
+
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) 
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
 #AM_LDFLAGS = $(top_builddir)/lib/libdune.la

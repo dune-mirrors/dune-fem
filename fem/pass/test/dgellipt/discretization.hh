@@ -59,6 +59,7 @@ struct DiscrParam
   typedef typename ModelType::FieldType            FieldType;
   typedef typename ModelType::FuncSpaceType        FuncSpaceType;
 
+  //typedef LeafGridPart < GridType, All_Partition > GridPartType ;
   typedef LeafGridPart < GridType > GridPartType ;
 };
 
@@ -302,13 +303,9 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   int level;
   readParameter(paramfile,"StartLevel",level);
 
-  //GridPtr<GridType> gridptr(macroGridName,MPIHelper::getCommunicator()); 
-  //GridType & grid = *gridptr;
-  FieldVector<double,dimworld> lang(1.0);
-  FieldVector<int,dimworld>    anz(2);
-  FieldVector<bool,dimworld>   per(false);
+  GridPtr<GridType> gridptr(macroGridName,MPIHelper::getCommunicator()); 
+  GridType & grid = *gridptr;
 
-  GridType grid(MPIHelper::getCommunicator(),lang, anz, per , 1 );
   grid.globalRefine(refStepsForHalf*level);
   grid.loadBalance();
   std::cout << "Grid size = " << grid.size(0) << "\n";
