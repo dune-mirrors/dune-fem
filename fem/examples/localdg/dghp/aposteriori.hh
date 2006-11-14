@@ -41,7 +41,7 @@ struct TupleToPair<Pair<T,Nil> > {
 		       RangeType& infProj) {
       typedef typename FunctionSpaceType::GridType GridType;
       const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
       int quadOrd = 2 * space.polynomOrder() + 2;
       const GaussPts& timeQuad = GaussPts::instance();
       discFunc.setEntity(en);
@@ -92,7 +92,7 @@ struct TupleToPair<Pair<T,Nil> > {
       typedef typename EntityType :: EntityPointer EntityPointerType;
       typedef typename FunctionSpaceType::GridType GridType;
       const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
       const GaussPts& timeQuad = GaussPts::instance();
       TwistUtility<GridType> twistUtil(space.grid());
       int quadOrd = 2 * space.polynomOrder() + 2;
@@ -160,7 +160,7 @@ struct TupleToPair<Pair<T,Nil> > {
       typedef typename EntityType :: EntityPointer EntityPointerType;
       typedef typename FunctionSpaceType::GridType GridType;
       const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
       const GaussPts& timeQuad = GaussPts::instance();
       TwistUtility<GridType> twistUtil(space.grid());
       int quadOrd = 2 * space.polynomOrder() + 2;
@@ -222,7 +222,7 @@ struct TupleToPair<Pair<T,Nil> > {
       discFunc.setEntity(en);
       typedef typename FunctionSpaceType::GridType GridType;
       const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
       int polOrd = space.polynomOrder();
       int quadOrd = 2 * space.polynomOrder() + 2;
       projErr = 0.;
@@ -356,7 +356,7 @@ struct TupleToPair<Pair<T,Nil> > {
 		    bool start = false) {
       typedef typename FunctionSpaceType::IteratorType IteratorType;
       const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
       int polOrd = space.polynomOrder();
       if (adapt)
 	adapt->clearIndicator();

@@ -453,10 +453,10 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     file << "RangeField: " << r << std::endl;
     file << "Dim_Domain: " << n << std::endl;
     file << "Dim_Range: " << m << std::endl;
-    file << "Space: " << df.getFunctionSpace().type() << std::endl;
+    file << "Space: " << df.space().type() << std::endl;
     file << "Format: " << ftype << std::endl;
     file << "Precision: " << precision << std::endl;
-    file << "Polynom_order: " << df.getFunctionSpace().polynomOrder() << std::endl;
+    file << "Polynom_order: " << df.space().polynomOrder() << std::endl;
     file << "DataBase: " << df.name() << std::endl;
     file.close();
   }

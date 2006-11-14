@@ -145,7 +145,7 @@ public:
   int numDofs() {
     return LU0->numDofs();
   }
-  const SpaceType& getFunctionSpace() {
+  const SpaceType& space() {
     return spc_;
   }
   /*
@@ -239,8 +239,8 @@ public:
     typedef typename DestType::LocalFunctionType LFuncType;
     typedef typename DestType::FunctionSpaceType::IteratorType IteratorType;
     typedef typename DestType::FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-    IteratorType endit = U.getFunctionSpace().end();
-    for(IteratorType it = U.getFunctionSpace().begin(); 
+    IteratorType endit = U.space().end();
+    for(IteratorType it = U.space().begin(); 
 	it != endit ; ++it) {
       int deg = proj.usePolDeg(*it);
       LFuncType lU = U.localFunction(*it);

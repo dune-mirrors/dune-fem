@@ -44,7 +44,7 @@ struct CoarseningError {
 		      const EntityType& father,
 		      RangeType& error) {
     error = 0.;
-    const FunctionSpaceType& space = df.getFunctionSpace();  
+    const FunctionSpaceType& space = df.space();  
     const BaseSetType& bset = space.getBaseFunctionSet(father);
     int polOrd = space.polynomOrder();
     int quadOrd = 2 * polOrd + 2;
@@ -615,7 +615,7 @@ public:
 
     typedef CachingQuadrature<GridType,0>                   VolumeQuadratureType;
 
-    const FunctionSpaceType & functionSpace_= func.getFunctionSpace();
+    const FunctionSpaceType & functionSpace_= func.space();
 
     // get iterator from space 
     IteratorType it = functionSpace_.begin();

@@ -2,7 +2,7 @@
 # name=datadisp
 name=dgtest
 
-problem=7
+problem=12
 epsilonne=0.0
 polorder=1
 gridtype=ALUGRID_SIMPLEX

@@ -11,7 +11,7 @@ class L2ProjectionLocal
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
     
-    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const FunctionSpaceType& space =  discFunc.space();
     
     discFunc.clear();
     
@@ -59,7 +59,7 @@ class L2Projection
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
     
-    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const FunctionSpaceType& space =  discFunc.space();
     
     discFunc.clear();
     
@@ -156,7 +156,7 @@ class LagrangeProjection
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc,
 		       double t) {
     
-    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const FunctionSpaceType& space =  discFunc.space();
     int ord = space.polynomOrder();
 
     discFunc.clear();

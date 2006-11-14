@@ -19,7 +19,7 @@ public:
       double time = 0.0)
   {
     const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
 
     int polOrd = 2 * space.polynomOrder() + 2;
   
@@ -67,7 +67,7 @@ public:
 		  ResType& res)
   {
     const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
 
     int polOrd = 2 * space.polynomOrder() + 2;
   
@@ -138,7 +138,7 @@ public:
 		  double time = 0.0,double dt = 1.0)
   {
     const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
 
     int polOrd = 2 * space.polynomOrder() + 2;
   
