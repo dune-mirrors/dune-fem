@@ -92,7 +92,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    typedef DGAdvectionOperator<ModelType,LFFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #elif PROBLEM == 12
-#include "euler_mhd/eulermodel.hh"
+#include <fem/examples/localdg/advectdiff/euler_mhd/eulermodel.hh"
    typedef FFS InitialDataType; 
    typedef EulerModel<GridType,InitialDataType > ModelType;
    //typedef DWNumFlux<ModelType> DiscModelType;
