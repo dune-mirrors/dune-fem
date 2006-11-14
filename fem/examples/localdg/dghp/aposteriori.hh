@@ -52,7 +52,7 @@ struct TupleToPair<Pair<T,Nil> > {
       JacobianRangeType dxu  (0.0);
       RangeType error(0.0);
       std::vector<RangeType> U(quad.nop()*nopTime);
-      FieldVector<RangeType,nopTime> average(0);
+      FieldVector<RangeType,nopTime> average(RangeType(0));
       double vol = en.geometry().volume();
       for(int qP = 0; qP < quad.nop(); qP++) {
 	double det = quad.weight(qP) 
@@ -106,7 +106,7 @@ struct TupleToPair<Pair<T,Nil> > {
 	faceQuadInner(nit, quadOrd/2, twistSelf, 
 		      CachingQuadrature<GridType,1>::INSIDE);
       //CachingQuadrature<GridType,1> 
-	//faceQuadInner(nit, quadOrd, twistSelf, 
+	//faceQuadInner(nit, quadOrd/2, twistSelf, 
 		//      CachingQuadrature<GridType,1>::INSIDE);
       int faceQuadInner_nop = faceQuadInner.nop();
       int twistNeighbor = twistUtil.twistInNeighbor(nit);
@@ -114,7 +114,7 @@ struct TupleToPair<Pair<T,Nil> > {
 	faceQuadOuter(nit, quadOrd/2, twistNeighbor,
 		      CachingQuadrature<GridType,1>::OUTSIDE);
       //CachingQuadrature<GridType,1> 
-	//faceQuadOuter(nit, quadOrd, twistNeighbor,
+	//faceQuadOuter(nit, quadOrd/2, twistNeighbor,
 		//      CachingQuadrature<GridType,1>::OUTSIDE);
       RangeType uLeft(0.0),uRight(0.0);
       RangeType gLeft(0.0),gRight(0.0);
@@ -145,6 +145,66 @@ struct TupleToPair<Pair<T,Nil> > {
 	  for(int k=0; k<dimR; ++k) {
 	    error[k] += ldet * 
 	      fabs(gLeft[k]+gRight[k]-normalFLeft[k]-normalFRight[k]);
+	  }
+	}
+      }
+      return error;
+    }
+    template <class IIteratorType>
+    RangeType jump (const DiscModelType& model,DiscreteFunctionType &discFunc,
+		    IIteratorType &nit,
+		    double time,
+		    double dt,
+		    int maxpen) {
+      typedef typename IIteratorType::Entity EntityType;
+      typedef typename EntityType :: EntityPointer EntityPointerType;
+      typedef typename FunctionSpaceType::GridType GridType;
+      const typename DiscreteFunctionType::FunctionSpaceType 
+        & space = discFunc.getFunctionSpace();  
+      const GaussPts& timeQuad = GaussPts::instance();
+      TwistUtility<GridType> twistUtil(space.grid());
+      int quadOrd = 2 * space.polynomOrder() + 2;
+      RangeType error(0.0);
+      EntityPointerType ep = nit.inside();
+      EntityType & en = *ep;
+      int twistSelf = twistUtil.twistInSelf(nit); 
+      ElementQuadrature<GridType,1> 
+	faceQuadInner(nit, quadOrd/2, twistSelf, 
+		      CachingQuadrature<GridType,1>::INSIDE);
+      //CachingQuadrature<GridType,1> 
+	//faceQuadInner(nit, quadOrd/2, twistSelf, 
+		//      CachingQuadrature<GridType,1>::INSIDE);
+      int faceQuadInner_nop = faceQuadInner.nop();
+      RangeType uLeft(0.0),uRight(0.0);
+      RangeType gLeft(0.0),gRight(0.0);
+      RangeType normalFLeft(0.0),normalFRight(0.0);
+      JacobianRangeType fLeft(0.0),fRight(0.0);
+      for (int l = 0; l < faceQuadInner_nop; ++l) {
+	DomainType normal = 
+	  nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+	for (int qT=0;qT<nopTime;++qT) {
+	  double s = timeQuad.point(nopTime,qT);	
+	  double ldet = dt*timeQuad.weight(nopTime,qT);
+	  discFunc.setEntity(en);
+	  uLeft = discFunc.uval(en,faceQuadInner,l,s,maxpen);
+	  if (model.model().
+	      hasBoundaryValue(nit,time+dt*s,faceQuadInner.localPoint(l))) {
+	    model.model().boundaryValue(nit,time+dt*s,faceQuadInner.localPoint(l),
+					uLeft,uRight);
+	    model.numericalFlux(nit,time+dt*s,faceQuadInner.localPoint(l),
+				uLeft,uRight,gLeft,gRight);
+	  } else {
+	    model.model().boundaryFlux(nit,time+dt*s,faceQuadInner.localPoint(l),
+				       uLeft,gLeft);
+	    gRight = gLeft;
+	  }
+	  model.model().analyticalFlux(en,time+dt*s,faceQuadInner.point(l),
+				       uLeft,fLeft);
+	  normalFLeft = 0.0;
+	  fLeft.umv(normal,normalFLeft);
+	  for(int k=0; k<dimR; ++k) {
+	    error[k] += ldet * 
+	      fabs(2.*gLeft[k]-2.*normalFLeft[k]);
 	  }
 	}
       }
@@ -198,7 +258,7 @@ struct TupleToPair<Pair<T,Nil> > {
 	  proj -= discFunc.uval(en,quad,qP,0.0,int(maxOrd[0]));
 	else
 	  proj -= discFunc.uval(en,quad,qP,1.0,int(maxOrd[0]));
-	projErr += proj.one_norm()*det; 
+	projErr += fabs(proj[0])*det; // .one_norm()*det; 
       }
       return int(maxOrd[0]);
     }
@@ -214,11 +274,6 @@ struct TupleToPair<Pair<T,Nil> > {
     typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
     enum { dimR = RangeType :: dimension };
     enum { dimD = DomainType :: dimension };
-    // Result Functions
-    // typedef LeafGridPart<GridType> GridPartType;
-    //typedef DGAdaptiveLeafIndexSet<GridType> DGIndexSetType;
-    // typedef typename LeafGridPart<GridType>::IndexSetType DGIndexSetType;
-    //typedef DefaultGridPart<GridType,DGIndexSetType> GridPartType;
 
     typedef FunctionSpace < double , double, dimD , 1 > ScalarFSType;
     typedef DiscontinuousGalerkinSpace<ScalarFSType, GridPartType, 0> 
@@ -229,7 +284,6 @@ struct TupleToPair<Pair<T,Nil> > {
     bool doPAdapt_;
   public:  
     typedef ConstDiscFSType DestinationType;
-    // DGIndexSetType iset_;
     FieldVector<int,10> padapt_num;
     GridPartType& part_;
     ConstDiscSType space_;
@@ -245,8 +299,6 @@ struct TupleToPair<Pair<T,Nil> > {
     Residuum(GridPartType& part,int maxOrd,
 	     bool doPAdapt=true) : 
       doPAdapt_(doPAdapt),
-      // iset_(grid),
-      // part_(grid,iset_),
       part_(part),
       space_(part_),
       ind_("Indicator",space_),
@@ -279,6 +331,23 @@ struct TupleToPair<Pair<T,Nil> > {
     int numPAdapt() {
       return padapt_num[0]+padapt_num[1];
     }
+    template <class EntityType>
+    double localH(const EntityType& en) {
+      double vol = en.geometry().volume();
+      double det = en.geometry().integrationElement(DomainType(0));
+      IntersectionIterator endnit = en.ileafend();
+      IntersectionIterator nit = en.ileafbegin();
+      double h = 1e5;
+      for (; nit != endnit; ++nit) {
+	DomainType normal = nit.integrationOuterNormal(0);
+	double len = normal.two_norm();
+	double hi = 2.*vol/len;
+	h = (hi<h)?hi:h;
+      }
+      return h;
+      return sqrt(vol); 
+      // return sqrt(det); 
+    }
     template <class Adapt>
     RangeType calc (const DiscModelType& model,
 		    Adapt& adapt,
@@ -302,34 +371,32 @@ struct TupleToPair<Pair<T,Nil> > {
 	LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
 	LConstDiscFSType lRT = RT_.localFunction(*it);
 	LConstDiscFSType lrho = rho_.localFunction(*it);
-	double h = sqrt(it->geometry().volume());
-	RangeType infProj;
+	// double h = sqrt(it->geometry().volume());
+	double h = localH(*it);
+	RangeType infProj; 
 	RangeType resid = 
 	  localRes.element(model,discFunc,*it,time,dt,int(lmaxPol[0]),infProj);
-	lRT[0] = resid.one_norm();
-	lrho[0] = h + infProj.one_norm();
+	lRT[0] = fabs(resid[0]); // .one_norm();
+	lrho[0] = h + fabs(infProj[0]); // .one_norm();
 	assert(lrho[0] == lrho[0]);
 	assert(lrho[0] < 1e10);
 	resid *= lrho[0];
 	ret += resid;
-
+ 
 	IntersectionIterator endnit = it->ileafend();
 	IntersectionIterator nit = it->ileafbegin();
       
-	double maxh = lrho[0]; 
 	for (; nit != endnit; ++nit) {
 	  if (nit.neighbor()) {
 	    if ((part_.indexSet().index(*(nit.outside())) > 
-		      part_.indexSet().index(*it) && (*(nit.outside())).level() == (*it).level()) ||
-          ((*(nit.outside())).level() < (*it).level()) ) {
+		 part_.indexSet().index(*it) && 
+		 (*(nit.outside())).level() == (*it).level()) ||
+		((*(nit.outside())).level() < (*it).level()) ) {
 	      LConstDiscFSType lmaxPolnb = 
 		maxPol_.localFunction(*(nit.outside()));
-	      RangeType resjmp = 
-		localRes.jump(model,discFunc,nit,time,dt,
-			      int(lmaxPol[0]),int(lmaxPolnb[0]));
-		    LConstDiscFSType lrhonb = rho_.localFunction(*(nit.outside()));
-	      resjmp *= std::max( maxh, lrhonb[0]);
-	      double jump = resjmp.one_norm();
+	      RangeType resjmp = localRes.jump(model,discFunc,nit,time,dt,
+					       int(lmaxPol[0]),int(lmaxPolnb[0]));
+	      double jump = fabs(resjmp[0]); // .one_norm();
 	      {
 		LConstDiscFSType lRS = RS_.localFunction(*it);
 		lRS[0] += jump*0.5;
@@ -342,17 +409,25 @@ struct TupleToPair<Pair<T,Nil> > {
 	    } // end if ...
 	  } // end if neighbor
 	  if (nit.boundary()) {
+	      RangeType resjmp = localRes.jump(model,discFunc,nit,time,dt,
+					       int(lmaxPol[0]));
+	      double jump = fabs(resjmp[0]); // .one_norm();
+	      {
+		LConstDiscFSType lRS = RS_.localFunction(*it);
+		lRS[0] += jump;
+	      }
+	      ret += resjmp;	    
 	  } // end if boundary
 	}
-  }
+      }
       ret = 0;
       // double pot = 2.*(polOrd+1); 
-      double pot = double(polOrd+2)/double(polOrd+1);
-      // double pot = double(2.)/double(1);
+      // double pot = double(polOrd+2)/double(polOrd+1);
+      double pot = double(2.)/double(1);
       for(IteratorType it = space.begin(); 
 	  it != endit ; ++it) {
 	double vol = it->geometry().volume();
-	double h = sqrt(it->geometry().integrationElement(DomainType(0)));// sqrt(vol); // 0.5*sqrt(it->geometry().integrationElement(DomainType(0))); // 0.001
+	double h = localH(*it);
 	LConstDiscFSType lRT = RT_.localFunction(*it);
 	LConstDiscFSType lRS = RS_.localFunction(*it);
 	LConstDiscFSType lRP = RP_.localFunction(*it);
@@ -360,6 +435,7 @@ struct TupleToPair<Pair<T,Nil> > {
 	LConstDiscFSType llam = lambda_.localFunction(*it);
 	LConstDiscFSType lmaxPol = maxPol_.localFunction(*it);
 	LConstDiscFSType lmaxPolNew = maxPolNew_.localFunction(*it);
+	// llam[0] = vol / pow(vol + vol*(lRT[0]+lRS[0])/(vol*dt),pot);
 	llam[0] = h / pow(h + h*(lRT[0]+lRS[0])/(vol*dt),pot);
 	lmaxPolNew[0] = 
 	  localRes.computePolDeg(model,
@@ -369,14 +445,14 @@ struct TupleToPair<Pair<T,Nil> > {
 	   lmaxPol[0] = lmaxPolNew[0];
 	if (polOrd>lmaxPolNew[0] || polOrd>lmaxPol[0])
 	  padapt_num[int(lmaxPolNew[0])] += 1;
-    LConstDiscFSType lind = ind_.localFunction(*it);
+	LConstDiscFSType lind = ind_.localFunction(*it);
 	if (start)
 	  lind[0] = lRP[0];
 	else
 	  lind[0] = 2.*(lRT[0]+lRS[0]+lRP[0])*lrho[0];
-	ret += lind[0];
+	ret[0] += lind[0];
 	if (adapt)
-	  adapt->addToLocalIndicator(*it,lind[0]);
+	  adapt->addToLocalIndicator(*it,lind[0]); 
       }
       return ret;
     }

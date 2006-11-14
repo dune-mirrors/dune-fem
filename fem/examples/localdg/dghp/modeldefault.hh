@@ -209,7 +209,7 @@ namespace Dune {
 				       RangeType& gLeft,
 				       RangeType& gRight) const {
       const typename Traits::DomainType normal = it.integrationOuterNormal(x);  
-      typename Traits::RangeType visc;
+      typename Traits::RangeType visc,uM;
       typename Traits::FluxRangeType anaflux;
       model_.analyticalFlux(*it.inside(), time,
 			    it.intersectionSelfLocal().global(x),
@@ -235,8 +235,11 @@ namespace Dune {
 		      uRight,viscparar,maxspeedr);
       maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       viscpara=(viscparal>viscparar)?viscparal:viscparar;
+      uM = uRight;
+      uM -= uLeft;
+      uM *= 0.5;
       model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
-		      0.5*(uRight+uLeft),viscparam,maxspeedm);
+		     uM,viscparam,maxspeedm);
       maxspeed=(maxspeed>maxspeedm)?maxspeed:maxspeedm;
       viscpara=(viscpara>viscparam)?viscpara:viscparam;
       

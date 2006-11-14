@@ -199,7 +199,7 @@ public:
     indicator_->set(0.0);
 
     // set default values
-    initialTheta_ = 0.01;
+    initialTheta_ = 0.05;
     coarsenTheta_ = 0.4;
     endTime_ = T;
     alphaSigSet_ = 0.01;

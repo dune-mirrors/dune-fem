@@ -13,8 +13,8 @@
 
 
 // Approximations Ordnung
-// enum {order=POLORDER,rksteps=POLORDER+1}; 
-enum {order=POLORDER,rksteps=POLORDER}; 
+enum {order=POLORDER,rksteps=POLORDER+1}; 
+// enum {order=POLORDER,rksteps=POLORDER}; 
 // Gitterauswahl
 
 // Modell- und Flussauswahl
@@ -82,6 +82,22 @@ enum {order=POLORDER,rksteps=POLORDER};
    typedef DGAdvectionOperator<ModelType,LFFlux,order> DgType;
    // typedef UpwindFlux<ModelType> DiscModelType;
    // typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
+#elif PROBLEM == 11
+#include "euler_mhd/eulermodel.hh"
+   typedef U0Sod InitialDataType; 
+   typedef EulerModel<GridType,InitialDataType > ModelType;
+   //typedef DWNumFlux<ModelType> DiscModelType;
+   typedef LFFlux<ModelType> DiscModelType;
+   typedef DGAdvectionOperator<ModelType,LFFlux,order> DgType;
+   typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
+#elif PROBLEM == 12
+#include "euler_mhd/eulermodel.hh"
+   typedef FFS InitialDataType; 
+   typedef EulerModel<GridType,InitialDataType > ModelType;
+   //typedef DWNumFlux<ModelType> DiscModelType;
+   typedef LFFlux<ModelType> DiscModelType;
+   typedef DGAdvectionOperator<ModelType,LFFlux,order> DgType;
    typedef DuneODE::ExplRungeKutta<DgType,rksteps> ODEType;
 #endif
 #include "aposteriori.hh"

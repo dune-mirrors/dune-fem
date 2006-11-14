@@ -351,10 +351,12 @@ class U0BuckLev {
 
   double endtime() const {
     return 0.35;
+    // return 0.5;
   }
 
   double saveinterval() const {
     return 0.02;
+    // return 0.005;
   }
 
   double f(double u) const {
@@ -512,9 +514,9 @@ class U0BuckLev {
   
 	double uminus = 1.;
 	if (y1d<=0 && y1d>-0.4) 
-	  uminus = 0.5*(1.-cos(M_PI*y1d/0.4))*pow(cos(M_PI*y1d/0.4*2.),2.);
+	  uminus = 0.5*(1.-cos(M_PI*y1d/0.4))*pow(cos(M_PI*y1d/0.4*1.75),2.);
 	else if (y1d>=0 && y1d<0.4) 
-	  uminus = 0.5*(1.-cos(M_PI*y1d/0.4))*pow(cos(M_PI*y1d/0.4*4.),2.);
+	  uminus = 0.5*(1.-cos(M_PI*y1d/0.4))*pow(cos(M_PI*y1d/0.4*3.5),2.);
 	
 	if (x1d>0.25) {
 	  res[0]=rp_sol(uminus,1.,t,x1d-0.3);

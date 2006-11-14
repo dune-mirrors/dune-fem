@@ -17,10 +17,12 @@ struct LocalFuncHelper {
   RangeType tmpRT_;
   int numDofs_;
   std::vector<double> dat_;
+  Dune::DofConversionUtility< PointBased > util_;
   /****************/
   LocalFuncHelper(const DiscreteFunctionSpaceType& spc) :
     spc_(spc),
-    bSet_(0), tmpJRT_(0), tmpGrad_(0), tmpRT_(0), numDofs_(-1), dat_(0) {
+    bSet_(0), tmpJRT_(0), tmpGrad_(0), tmpRT_(0), numDofs_(-1), dat_(0),
+    util_(dimRange) {
   }
   template <class EntityType>
   void init(EntityType& en) {
@@ -50,6 +52,7 @@ struct LocalFuncHelper {
   int numDofs () const {
     return numDofs_;
   }
+  /*
   template <class EntityType,class QuadratureType>
   void ucomponents(const EntityType& en,
 		   const QuadratureType& quad,int l,
@@ -63,6 +66,7 @@ struct LocalFuncHelper {
       }
     }
   }
+  */
   template <class EntityType>
   void evaluateLocal(const EntityType& en,
 		     const DomainType& x,
@@ -71,11 +75,11 @@ struct LocalFuncHelper {
     ret    = 0.0;
     tmpRT_ = 0.0;
     for (int i = 0; i < numDofs_; ++i) {
-      if (i<numPol[maxp]) {
+      int phiord = util_.containedDof(i);
+      if (phiord<numPol[maxp]) {
         bSet_->eval(i, x, tmpRT_);
-	for (int l = 0; l < dimRange; ++l) {
-	  ret[l] += dat_[i] * tmpRT_[l];
-        }
+	tmpRT_ *= dat_[i];
+	ret += tmpRT_;
       }
     }
   }
@@ -87,11 +91,11 @@ struct LocalFuncHelper {
     ret    = 0.0;
     tmpRT_ = 0.0;
     for (int i = 0; i < numDofs_; ++i) {
-      if (i<numPol[maxp]) {
+      int phiord = util_.containedDof(i);
+      if (phiord<numPol[maxp]) {
         bSet_->eval(i, quad,p, tmpRT_);
-       for (int l = 0; l < dimRange; ++l) {
-	  ret[l] += dat_[i] * tmpRT_[l];
-        }
+	tmpRT_ *= dat_[i];
+	ret += tmpRT_;
       }
     }
   }
@@ -106,8 +110,8 @@ struct LocalFuncHelper {
     const JacobianInverseType& jti =
       en.geometry().jacobianInverseTransposed(quad.point(p));
     for (int i = 0; i < numDofs_; ++i) {
-      // tmpGrad_ = 0;
-      if (i<numPol[maxp]) { 
+      int phiord = util_.containedDof(i);
+      if (phiord<numPol[maxp]) {
         bSet_->jacobian(i, quad,p, tmpGrad_);
         tmpGrad_ *= dat_[i];
         tmpJRT_  += tmpGrad_;

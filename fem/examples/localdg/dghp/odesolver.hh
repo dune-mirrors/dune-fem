@@ -148,6 +148,7 @@ public:
   const SpaceType& getFunctionSpace() {
     return spc_;
   }
+  /*
   template <class EntityType,class QuadratureType>
   void ucomponents(const EntityType& en,
 		   const QuadratureType& quad,int l,double t,
@@ -162,6 +163,7 @@ public:
     }
     tmp_.components(en,quad,l,comp);
   }
+  */
   template <class EntityType,class QuadratureType>
   RangeType uval(const EntityType& en,
 		 const QuadratureType& quad,int l,double t,
@@ -242,9 +244,10 @@ public:
 	it != endit ; ++it) {
       int deg = proj.usePolDeg(*it);
       LFuncType lU = U.localFunction(*it);
+      Dune::DofConversionUtility< PointBased > dofConversion(RangeType::size);
       for (int i = 0; i < lU.numDofs(); ++i) {
-	if (i>=numPol[deg]) {
-	  // abort();
+	int phiord = dofConversion.containedDof(i);
+	if (phiord>=numPol[deg]) {
 	  lU[i] = 0.;
 	}
       }
@@ -259,10 +262,7 @@ public:
     U0->assign(U);
     project(*U0,proj);
     // Compute Steps
-    if (1 || t<1e-8)
-      op_(*U0,*(Upd[0]));
-    else
-      (*Upd[0]).assign(*(Upd[ord_-1]));
+    op_(*U0,*(Upd[0]));
     dt=cfl_*timeStepEstimate();
     for (int i=1;i<ord_;i++) {
       (Upd[ord_])->assign(U);

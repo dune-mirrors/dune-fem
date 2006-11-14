@@ -92,7 +92,6 @@ void init(DiscModel& model,
   bool done = true;
   RangeType error(0); 
   int padapt_num = 0;
-  if (adapt) {
   do {
     U.set(0);
     initialize(model.model().problem(),U);
@@ -101,7 +100,6 @@ void init(DiscModel& model,
     cout << "START INDICATOR: " << dt << " " 
 	 <<  error << " " << flush;
     ode.setTime(0.);
-
     if (adapt) {
       adapt->param().setTime(0);
       adapt->param().setTimeStepSize(dt);
@@ -120,20 +118,20 @@ void init(DiscModel& model,
     cout << endl;
     ResiduumErr.reset();
   } while (!done);
-  }
+  
   ode.setTime(0.);
   U.set(0);
   initialize(model.model().problem(),U);
   if (adapt) {
-  ode.project(U,ResiduumErr);
-  for (int i=0;i<15;i++) {
-    double t = 0.0,locerror;
-    solve(model,ode,ResiduumErr,adapt,0,U,V,t,dt,locerror,true);
-    ode.setTime(0.);
-    U.set(0);
-    initialize(model.model().problem(),U);
     ode.project(U,ResiduumErr);
-  }
+    for (int i=0;i<15;i++) {
+      double t = 0.0,locerror;
+      solve(model,ode,ResiduumErr,adapt,0,U,V,t,dt,locerror);
+      ode.setTime(0.);
+      U.set(0);
+      initialize(model.model().problem(),U);
+      ode.project(U,ResiduumErr);
+    }
   }
 }
 
@@ -262,7 +260,7 @@ int main(int argc, char ** argv, char ** envp) {
     double t=0.;
     int counter=0;
     int outputcounter=0;
-    FieldVector<double,1> projectionError = L1err.norm(problem,U,t);  
+    FieldVector<double,1> projectionError = L1err.norm(problem,U,t).two_norm();  
     cout << "Projection error " << 
       problem.myName << ": " << projectionError << endl;
 	
@@ -280,8 +278,9 @@ int main(int argc, char ** argv, char ** envp) {
       double locerror;
       reserr += solve(eulerflux,ode,ResiduumErr,adaptation_,counter,
 		      U,V,t,ldt,locerror);
-      totalsize += grid->size(0);
+      // t=ode.solve(U,V,ResiduumErr);
       U.assign(V);
+      totalsize += grid->size(0);
       ++counter;
       if (repeats==1 && t>nextsave) {
         nextsave += savestep;
@@ -308,7 +307,7 @@ int main(int argc, char ** argv, char ** envp) {
       if (repeats==1) 
 	std::cout << counter << " " << t << " " << ldt << " "
 		  << locerror/ldt << " " << reserr << " "
-      << ResiduumErr.numPAdapt() << " "
+		  << ResiduumErr.numPAdapt() << " "
 		  << "# time-steps" << std::endl;
     }
     
@@ -321,7 +320,7 @@ int main(int argc, char ** argv, char ** envp) {
     cout << "Residuum-Error " << 
       problem.myName << ": " << reserr << endl;
     cout << endl;
-    fehler = err;		
+    fehler = err.two_norm();		
     zeit = timer.elapsed()-prevzeit;
     eocoutput.printTexAddError(fehler,prevfehler,
 			       reserr.one_norm(),prevreserr.one_norm(),

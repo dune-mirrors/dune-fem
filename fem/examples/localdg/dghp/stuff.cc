@@ -1,3 +1,52 @@
+
+template <class DiscreteFunctionType, class FunctionType, int polOrd>
+class L2ProjectionLocal
+{
+  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  
+ public:
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
+	  std::cerr << " WARNING: using constant initial projection\n\n"; 
+    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
+    typedef typename FunctionSpaceType::Traits::GridType GridType;
+    typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+    
+    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    
+    discFunc.clear();
+    
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef typename FunctionType::LocalFunctionType FLocalFuncType;
+    
+    const int dim = GridType::dimension;
+    
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
+    
+    Iterator it = space.begin();
+    Iterator endit = space.end();
+    
+    // Get quadrature rule
+    CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
+    const typename FunctionSpaceType::BaseFunctionSetType & set =
+      space.getBaseFunctionSet(*it);
+    
+    for( ; it != endit ; ++it) {
+      LocalFuncType lf = discFunc.localFunction(*it);
+      FLocalFuncType locf = f.localFunction(*it);
+      
+      for(int i=0; i<lf.numDofs(); i++) {
+        for(int qP = 0; qP < quad.nop(); qP++) {
+	  double det =
+	    (*it).geometry().integrationElement(quad.point(qP));
+	  locf.evaluateLocal((*it),quad.point(qP), ret);
+	  set.eval(i,quad,qP,phi);
+	  lf[i] += quad.weight(qP) * (ret * phi) ;
+        }
+      }
+    }
+  }
+};
 template <class DiscreteFunctionType, class FunctionType, int polOrd>
 class L2Projection
 {
@@ -5,6 +54,7 @@ class L2Projection
   
  public:
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
+	  std::cerr << " WARNING: using constant initial projection\n\n"; 
     typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
@@ -25,16 +75,19 @@ class L2Projection
     
     // Get quadrature rule
     CachingQuadrature<GridType,0> quad(*it, 2*polOrd+1);
+    CachingQuadrature<GridType,0> mid(*it, 0);
+    const typename FunctionSpaceType::BaseFunctionSetType & set =
+      space.getBaseFunctionSet(*it);
     
     for( ; it != endit ; ++it) {
+      f.evaluate((*it).geometry().global(mid.point(0)), ret);
       LocalFuncType lf = discFunc.localFunction(*it);
-      const typename FunctionSpaceType::BaseFunctionSetType & set =
-	lf.getBaseFunctionSet();
       for(int i=0; i<lf.numDofs(); i++) {
         for(int qP = 0; qP < quad.nop(); qP++) {
 	  double det =
 	    (*it).geometry().integrationElement(quad.point(qP));
-	  f.evaluate((*it).geometry().global(quad.point(qP)), ret);
+	  //f.evaluate((*it),quad.point(qP), ret);
+	  //f.evaluate((*it).geometry().global(quad.point(qP)), ret);
 	  set.eval(i,quad,qP,phi);
 	  lf[i] += quad.weight(qP) * (ret * phi) ;
         }
@@ -127,30 +180,13 @@ class LagrangeProjection
         for(int qP = 0; qP < quad.nop(); qP++) {
 	  double det =
 	    (*it).geometry().integrationElement(quad.point(qP));
-    if (ord!=2 && ord!=1) 
+	  if (ord==2 && ord==1) 
+	    lag_evaluate(ord,f,*it,quad.point(qP),ret,t);
+    else 
 	    f.evaluate((*it).geometry().global(quad.point(qP)), ret);
-	  // std::cerr << "Next Element " << det << " : " << std::flush;
-	  lag_evaluate(ord,f,*it,quad.point(qP),ret,t);
 	  set.eval(i,quad,qP,phi);
 	  lf[i] += quad.weight(qP) * (ret * phi) ;
         }
-      }
-      {
-	RangeType val;
-	DomainType pkt[6];
-	pkt[0][0] = 0. , pkt[0][1] = 0.;
-	pkt[1][0] = 1. , pkt[1][1] = 0.;
-	pkt[2][0] = 0. , pkt[2][1] = 1.;
-	pkt[3][0] = 0.5 , pkt[3][1] = 0.5;
-	pkt[4][0] = 0.0 , pkt[4][1] = 0.5;
-	pkt[5][0] = 0.5 , pkt[5][1] = 0.0;
-  /*
-	for (int i=0;i<6;i++) {
-	  f.evaluate(0,(*it).geometry().global(pkt[i]),val);
-	  lf.evaluateLocal(*it,pkt[i],ret);
-	  if (fabs(ret[0]-val[0])>1e-10) abort();
-	}
-  */
       }
     }
   }
@@ -258,11 +294,6 @@ void initialize(const StupidFunction& f,DFType& df,double t=0.)
   //- Actual method
   // L2Projection<DFType, StupidFunction, 2>::project(f, df);
   LagrangeProjection<DFType, StupidFunction, 2>::project(f, df,t);
-
-  typedef typename DFType::DofIteratorType DofIterator;
-  /*for (DofIterator it = df.dbegin(); it != df.dend(); ++it) {
-    std::cout << *it << std::endl;
-    }*/
 }
 
 template <class DFType>
