@@ -8,9 +8,21 @@ template <int dimDomain>
 class EulerFlux {
   enum { e = dimDomain+1};
  public:
+  typedef FieldVector<double,dimDomain+2> RangeType;
+  typedef FieldMatrix<double,dimDomain+2,dimDomain> FluxRangeType;
+  typedef FieldVector<double, dimDomain> DomainType;
   inline void analyticalFlux(const double gamma,
-			     const FieldVector<double,dimDomain+2>& u,
-			     FieldMatrix<double,dimDomain+2,dimDomain>& f) const;
+			     const RangeType& u,
+			     FluxRangeType& f) const;
+  inline  void jacobian(const double gamma,
+			const RangeType& u, 
+			const FluxRangeType& du,
+			RangeType& A) const; /* {
+    A = 0.;
+    DomainType velocity(u[0]);
+    du.umv(velocity,A);
+    }*/
+  inline double pressure(const double gamma,const RangeType& u) const;
   inline double maxSpeed(const double gamma,
 			 const FieldVector<double,dimDomain>& n,
 			 const FieldVector<double,dimDomain+2>& u) const;
@@ -66,10 +78,18 @@ class EulerModel {
 			      FluxRangeType& f) const {
     EulerFlux<dimDomain>().analyticalFlux(gamma_,u,f);
   }
+  inline  void jacobian(const typename Traits::EntityType& en,
+			double time,  
+			const typename Traits::DomainType& x,
+			const RangeType& u, 
+			const FluxRangeType& du,
+			RangeType& A) const {
+    EulerFlux<dimDomain>().jacobian(gamma_,u,du,A);
+  }
   inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
 			       double time, 
 			       const typename Traits::FaceDomainType& x) const {
-    return true;
+    return (it.boundaryId() != -4);
   }
   inline double boundaryFlux(typename Traits::IntersectionIterator& it,
 			     double time, 
@@ -77,13 +97,12 @@ class EulerModel {
 			     const RangeType& uLeft, 
 			     RangeType& gLeft) const  {
     DomainType xgl=it.intersectionGlobal().global(x);
-    const typename Traits::DomainType normal = it.integrationOuterNormal(x);  
-    RangeType u;
-    problem_.evaluate(time,xgl,u);
-    FluxRangeType f;
-    EulerFlux<dimDomain>().analyticalFlux(gamma_,u,f);
-    gLeft*=0;
-    f.umv(normal,gLeft);
+    const typename Traits::DomainType normal = it.integrationOuterNormal(x); 
+    double p = EulerFlux<dimDomain>().pressure(gamma_,uLeft);
+    gLeft = 0;
+    for (int i=0;i<dimDomain;i++) {
+      gLeft[i+1] = normal[i]*p;
+    }
     return 0.;
   }
   inline  void boundaryValue(typename Traits::IntersectionIterator& it,
@@ -91,9 +110,23 @@ class EulerModel {
 			     const typename Traits::FaceDomainType& x,
 			     const RangeType& uLeft, 
 			     RangeType& uRight) const {
-    // uRight=uLeft;
-    DomainType xgl=it.intersectionGlobal().global(x);
-    problem_.evaluate(time,xgl,uRight);
+    uRight=uLeft;
+    if (it.boundaryId() == -1) {
+      const typename Traits::DomainType normal = it.integrationOuterNormal(x);  
+      double len2 = normal.two_norm2();
+      double y = 0.;
+      for (int i=0;i<dimDomain;i++) 
+        y += uLeft[i+1]*normal[i];
+      y *= 2./len2;
+      for (int i=0;i<dimDomain;i++) 
+        uRight[i+1] -= y*normal[i];
+    } else if (it.boundaryId() == -2) {
+      DomainType xgl=it.intersectionGlobal().global(x);
+      problem_.evaluate(time,xgl,uRight);
+    } else if (it.boundaryId() == -3) {
+    } else {
+      std::cerr << "Wrong Boundary ID " << it.boundaryId() << "\n\n";
+    }
   }
   inline void maxSpeed(const typename Traits::DomainType& normal,
 		       double time,  
@@ -102,6 +135,9 @@ class EulerModel {
 		       double& advspeed,double& totalspeed) const {
     advspeed=EulerFlux<dimDomain>().maxSpeed(gamma_,normal,u);
     totalspeed=advspeed;
+  }
+  inline const ProblemType& problem() const {
+    return problem_;
   }
  protected:
   double gamma_;
@@ -207,14 +243,31 @@ void EulerFlux<1>::analyticalFlux(const double gamma,
 }
 template <>
 inline
+double EulerFlux<2>::pressure(const double gamma,const RangeType& u) const {
+  assert(u[0]>1e-10);
+  double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
+  /*
+  if (rhoeps<1e-10) 
+    cerr << "negative internal energy density " << rhoeps 
+	 << " in analyticalFlux: "
+	 << u << endl;
+   */
+  assert(rhoeps>1e-10);
+  return (gamma-1)*rhoeps;
+}
+template <>
+inline
 void EulerFlux<2>::analyticalFlux(const double gamma,
 				  const FieldVector<double,2+2>& u,
 				  FieldMatrix<double,2+2,2>& f) const {
   assert(u[0]>1e-10);
   double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
+  /*
   if (rhoeps<1e-10) 
-      cerr << "negative internal energy density in analyticalFlux: "
-	   << u << " " << rhoeps << endl;
+    cerr << "negative internal energy density " << rhoeps 
+	 << " in analyticalFlux: "
+	 << u << endl;
+  */
   assert(rhoeps>1e-10);
   double p = (gamma-1)*rhoeps;
   f[0][0] = u[1];                 f[0][1] = u[2];
@@ -239,6 +292,42 @@ void EulerFlux<3>::analyticalFlux(const double gamma,
 }
 template <>
 inline
+void EulerFlux<2>::jacobian(const double gamma,
+			const EulerFlux<2>::RangeType& u, 
+			const EulerFlux<2>::FluxRangeType& du,
+			EulerFlux<2>::RangeType& A) const {
+  assert(u[0]>1e-10);
+  double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
+  /*
+  if (rhoeps<1e-10) 
+    cerr << "negative internal energy density " << rhoeps 
+	 << " in analyticalFlux: "
+	 << u << endl;
+  */
+  assert(rhoeps>1e-10);
+  double v[2] = {u[1]/u[0],u[2]/u[0]};
+  
+  A[0] = du[1][0] + du[1][1];
+  A[1] = du[0][0]*((gamma-3.0)/2.0*v[0]*v[0] +(gamma-1.0)/2.0*v[1]*v[1])-
+    du[0][1]*v[0]*v[1];
+  A[1] += du[1][0]*(3.0-gamma)*v[0] + du[1][1]*v[1];
+  A[1] += du[2][0]*(1.0-gamma)*v[1] + du[2][1]*v[0];
+  A[1] += du[3][0]*(gamma-1.0);
+  A[2] = du[0][1]*((gamma-3.0)/2.0*v[1]*v[1] +(gamma-1.0)/2.0*v[0]*v[0])-
+    du[0][0]*v[0]*v[1];
+  A[2] += du[1][1]*(1.0-gamma)*v[0] + du[1][0]*v[1];
+  A[2] += du[2][1]*(3.0-gamma)*v[1] + du[2][0]*v[0];
+  A[2] += du[3][1]*(gamma-1.0);
+  A[3] = du[0][0]*(-gamma*u[3]*v[0]/u[0]+(gamma-1.0)*v[0]*(v[0]*v[0]+v[1]*v[1]))+
+    du[0][1]*(-gamma*u[3]*v[1]/u[0]+(gamma-1.0)*v[1]*(v[0]*v[0]+v[1]*v[1]));
+  A[3] += du[1][0]*(gamma*u[3]/u[0]-(gamma-1.0)/2.0*(3.0*v[0]*v[0]+v[1]*v[1]))-
+    du[1][1]*(gamma-1.0)*v[0]*v[1];
+  A[3] += -du[2][0]*(gamma-1.0)*v[0]*v[1]+
+    du[2][1]*(gamma*u[3]/u[0]-(gamma-1.0)/2.0*(v[0]*v[0]+3.0*v[1]*v[1]));
+  A[3] += du[3][0]*gamma*v[0] + du[3][1]*gamma*v[1];
+}
+template <>
+inline
 double EulerFlux<1>::maxSpeed(const double gamma,
 			      const FieldVector<double,1>& n,
 			      const FieldVector<double,1+2>& u) const {
@@ -249,6 +338,10 @@ double EulerFlux<1>::maxSpeed(const double gamma,
   double p = (gamma-1)*rhoeps;
   double c2 = gamma*p/u[0]*n.two_norm2();
   assert(c2>1e-10);
+  if (0>c2) {
+    printf("Negative sound speed!\n");
+    // abort();
+  }
   return fabs(u_normal) + sqrt(c2);
 }
 template <>
@@ -263,6 +356,11 @@ double EulerFlux<2>::maxSpeed(const double gamma,
   double p = (gamma-1)*rhoeps;
   double c2 = gamma*p/u[0]*n.two_norm2();
   assert(c2>1e-10);
+  if (0>c2) {
+    // printf("Negative sound speed!\n");
+    // abort();
+    // c2 = 0;
+  }
   return fabs(u_normal) + sqrt(c2);
 }
 template <>
@@ -277,6 +375,10 @@ double EulerFlux<3>::maxSpeed(const double gamma,
   double p = (gamma-1)*rhoeps;
   double c2 = gamma*p/u[0]*n.two_norm2();
   assert(c2>1e-10);
+  if (0>c2) {
+    printf("Negative sound speed!\n");
+    abort();
+  }
   return fabs(u_normal) + sqrt(c2);
 }
 
@@ -375,7 +477,14 @@ public:
 };
 class U0Sod {
 public:
-  U0Sod() : gamma(1.4) {}
+  U0Sod() : gamma(1.4) {myName = "RP-Sod";}
+  U0Sod(double eps,int flag,bool diff_timestep=true) : gamma(1.4) {myName = "RP-Sod";}
+  double endtime() {
+    return 0.4;
+  }
+  double saveinterval() {
+    return 0.01;
+  }
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
@@ -385,18 +494,69 @@ public:
     if (arg[0]<0.) {
       res[0]=1.;
       res[1]=0.;
-      res[1]=0.;
       res[2]=0.;
-      res[3]=1./(1.4-1.0);
+      res[3]=1./(gamma-1.0);
     } else {
       res[0]=0.125;
       res[1]=0.;
       res[2]=0.;
-      res[3]=0.1/(1.4-1.0);
+      res[3]=0.1/(gamma-1.0);
     }
     res[1] *= res[0];
     res[2] *= res[0];
-    res[3] += 0.5*res[1]*res[1]/res[0];
+    res[3] += 0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
+  }
+  void printmyInfo(std::string filename)
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+	
+    ofs << "Problem: " << myName << "\n\n"
+	<< "gamma = " << gamma << "\n\n";
+    ofs	<< "\n\n";
+	
+    ofs.close();
+			
   }
   double gamma;
+  std::string myName;
+};
+class FFS {
+public:
+  FFS(double eps,int flag,bool diff_timestep=true) : gamma(1.4) {myName = "FFS";}
+  double endtime() {
+    return 3.0;
+  }
+  double saveinterval() {
+    return 0.1;
+  }
+  template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg, RangeType& res) const {
+    evaluate(0,arg,res);
+  }
+  template <class DomainType, class RangeType>
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    res[0]=1.4;
+    res[1]=3.0*1.4;
+    res[2]=0.;
+    res[3]=8.8;
+  }
+  void printmyInfo(std::string filename)
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+	
+    ofs << "Problem: " << myName << "\n\n"
+	<< "gamma = " << gamma << "\n\n";
+    ofs	<< "\n\n";
+	
+    ofs.close();
+			
+  }
+  double gamma;
+  std::string myName;
 };
