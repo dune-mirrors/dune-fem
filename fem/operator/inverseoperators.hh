@@ -137,6 +137,12 @@ namespace Dune {
     {
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType FunctionSpaceType;
       typedef typename FunctionSpaceType::RangeFieldType Field;
+      typedef typename FunctionSpaceType :: GridType GridType; 
+
+      typedef typename GridType :: Traits :: CollectiveCommunication
+        CommunicatorType; 
+
+      const CommunicatorType & comm = arg.space().grid().comm();
 
       int count = 0;
       Field spa=0, spn, q, quad;
@@ -160,39 +166,50 @@ namespace Dune {
       p -= h;
 
       spn = r.scalarProductDofs( r );
+
+      // global sum 
+      spn = comm.sum( spn );
    
       while((spn > epsilon_) && (count++ < maxIter_)) 
-        {
-          // fall ab der zweiten iteration *************
-      
-          if(count > 1)
-            { 
-              const Field e = spn / spa;
-              p *= e;
-              p -= r;
-            }
-
-          // grund - iterations - schritt **************
-      
-          op_( p, h );
-      
-          quad = p.scalarProductDofs( h );
-          q    = spn / quad;
-
-          dest.add( p, q );
-          r.add( h, q );
-
-          spa = spn;
-      
-          // residuum neu berechnen *********************
-      
-          spn = r.scalarProductDofs( r ); 
-          if(_verbose > 0)
-            std::cerr << count << " cg-Iterationen  " << count << " Residuum:" << spn << "        \r";
+      {
+        // fall ab der zweiten iteration *************
+    
+        if(count > 1)
+        { 
+          const Field e = spn / spa;
+          p *= e;
+          p -= r;
         }
-      if(_verbose > 0)
+
+        // grund - iterations - schritt **************
+    
+        op_( p, h );
+    
+        quad = p.scalarProductDofs( h );
+
+        // global sum 
+        quad = comm.sum( quad );
+        
+        q    = spn / quad;
+
+        dest.add( p, q );
+        r.add( h, q );
+
+        spa = spn;
+    
+        // residuum neu berechnen *********************
+    
+        spn = r.scalarProductDofs( r ); 
+        // global sum 
+        spn = comm.sum( spn );
+        
+        if((_verbose > 0) && (comm.rank() == 0))
+          std::cerr << count << " cg-Iterationen  " << count << " Residuum:" << spn << "        \r";
+      }
+      if((_verbose > 0) && (comm.rank() == 0))
         std::cerr << "\n";
-      op_.finalize();
+
+      //op_.finalize(arg,dest);
     }
   
   private:
