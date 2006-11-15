@@ -76,8 +76,6 @@ namespace Dune {
     typedef DiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
-    typedef GrapeDataDisplay<GridType> GrapeDataDisplayType;
-    
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   public:
@@ -110,9 +108,9 @@ namespace Dune {
       diffVar_(),
       twistUtil_(spc.grid()),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
-          (2*spc_.polynomOrder()) : volumeQuadOrd ),
+          (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
-        (2*spc_.polynomOrder()+1) : faceQuadOrd )
+        (2*spc_.order()+1) : faceQuadOrd )
     {
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
