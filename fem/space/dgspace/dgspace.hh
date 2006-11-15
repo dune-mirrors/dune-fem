@@ -15,8 +15,8 @@
 //- local includes 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
+#include <dune/fem/basefunctions/basefunctionsets.hh>
+#include <dune/fem/basefunctions/basefunctionstorage.hh>
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
@@ -264,7 +264,7 @@ namespace Dune {
   // DG Space with orthonormal basis functions 
   //********************************************************
   template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-           template<class> class BaseFunctionStorageImp = SimpleStorage >
+            template<class> class BaseFunctionStorageImp = SimpleStorage >
   class DiscontinuousGalerkinSpace;
 
   //! Traits class for DiscontinuousGalerkinSpace

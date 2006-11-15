@@ -101,27 +101,6 @@ getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const
 }
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-template< class EntityType> 
-inline bool LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
-evaluateLocal ( int baseFunc, EntityType &en, const DomainType &local, RangeType & ret) const 
-{
-  const BaseFunctionSetType & baseSet = getBaseFunctionSet(en);
-  baseSet.eval( baseFunc , local , ret);
-  return (polOrd != 0);
-}
-
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-template< class EntityType, class QuadratureType> 
-inline bool LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
-evaluateLocal (  int baseFunc, EntityType &en, QuadratureType &quad, 
-      int quadPoint, RangeType & ret) const
-{
-  const BaseFunctionSetType & baseSet = getBaseFunctionSet(en);  
-  baseSet.eval( baseFunc , quad, quadPoint , ret);
-  return (polOrd != 0);
-}
-
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
 inline int LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
 size () const
 {
