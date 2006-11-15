@@ -6,7 +6,91 @@
 
 namespace Dune {
 
-  /** \brief Inversion operator using CG algorithm
+
+  template <class OperatorType, class DiscreteFunctionType>
+  struct CGAlgorithm 
+  {
+    /** solve Op(arg) - dest = 0 */      
+    static void cg (const OperatorType & op, 
+                    const DiscreteFunctionType& arg,
+                    DiscreteFunctionType& dest ,
+                    double epsilon , int maxIter , bool verbose ) 
+    {
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType FunctionSpaceType;
+      typedef typename FunctionSpaceType::RangeFieldType Field;
+      typedef typename FunctionSpaceType :: GridType GridType; 
+
+      typedef typename GridType :: Traits :: CollectiveCommunication
+        CommunicatorType; 
+
+      const CommunicatorType & comm = arg.space().grid().comm();
+
+      int count = 0;
+      Field spa=0, spn, q, quad;
+
+      Field b = arg.scalarProductDofs( arg );
+      b = comm.sum( b );
+      const Field err = epsilon * b;
+
+      DiscreteFunctionType r ( arg );
+      DiscreteFunctionType h ( arg );
+      DiscreteFunctionType p ( arg );
+    
+      op( dest, h );
+
+      r.assign(h) ;
+      r -= arg;
+
+      p.assign(arg);
+      p -= h;
+
+      spn = r.scalarProductDofs( r );
+
+      // global sum 
+      spn = comm.sum( spn );
+   
+      while((spn > err ) && (count++ < maxIter)) 
+      {
+        // fall ab der zweiten iteration *************
+    
+        if(count > 1)
+        { 
+          const Field e = spn / spa;
+          p *= e;
+          p -= r;
+        }
+
+        // grund - iterations - schritt **************
+        op( p, h );
+    
+        quad = p.scalarProductDofs( h );
+
+        // global sum 
+        quad = comm.sum( quad );
+        
+        q    = spn / quad;
+
+        dest.add( p, q );
+        r.add( h, q );
+
+        spa = spn;
+    
+        // residuum neu berechnen *********************
+    
+        spn = r.scalarProductDofs( r ); 
+        // global sum 
+        spn = comm.sum( spn );
+        
+        if( verbose && (comm.rank() == 0))
+          std::cerr << count << " cg-Iterationen  " << count << " Residuum:" << spn << "        \r";
+      }
+      if( verbose && (comm.rank() == 0))
+        std::cerr << "\n";
+    }
+  };
+  
+  /** \brief Inversion operator using CG algorithm, operator type is
+   * Mapping 
    */
   template <class DiscreteFunctionType>
   class CGInverseOperator : public Operator<
@@ -34,57 +118,9 @@ namespace Dune {
     virtual void operator()(const DiscreteFunctionType& arg, 
                             DiscreteFunctionType& dest ) const 
     {
-      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType FunctionSpaceType;
-      typedef typename FunctionSpaceType::RangeFieldType Field;
-
-      int count = 0;
-      Field spa=0, spn, q, quad;
-    
-      DiscreteFunctionType r( arg );
-      DiscreteFunctionType p( arg );
-      DiscreteFunctionType h( arg );
-
-      op_( dest, h );
-
-      r.assign(h);
-      r -= arg;
-
-      p.assign(arg);
-      p -= h;
-
-      spn = r.scalarProductDofs( r );
-   
-      while((spn > epsilon_) && (count++ < maxIter_)) 
-        {
-          // fall ab der zweiten iteration *************
-      
-          if(count > 1)
-            { 
-              const Field e = spn / spa;
-              p *= e;
-              p -= r;
-            }
-
-          // grund - iterations - schritt **************
-      
-          op_( p, h );
-      
-          quad = p.scalarProductDofs( h );
-          q    = spn / quad;
-
-          dest.add( p, q );
-          r.add( h, q );
-
-          spa = spn;
-      
-          // residuum neu berechnen *********************
-      
-          spn = r.scalarProductDofs( r ); 
-          if(_verbose > 0)
-            std::cerr << count << " cg-Iterationen  " << count << " Residuum:" << spn << "        \r";
-        }
-      if(_verbose > 0)
-        std::cerr << "\n";
+      //op_.prepare(arg,dest);
+      CGAlgorithm<MappingType,DiscreteFunctionType>::cg(op_,arg,dest,epsilon_,maxIter_,(_verbose >0));
+      //op_.finalize(arg,dest);
     }
 
   private:
@@ -118,97 +154,15 @@ namespace Dune {
       _redEps ( redEps ),
       epsilon_ ( absLimit*absLimit ) , 
       maxIter_ (maxIter ) ,
-      _verbose ( verbose ) , 
-      r_(0),
-      p_(0), 
-      h_(0) {} 
-
-    /** \todo Please doc me! */             
-    ~CGInverseOp()
-    {
-      if(p_) delete p_;
-      if(r_) delete r_;
-      if(h_) delete h_;
-    }
+      _verbose ( verbose )  
+    {} 
 
     /** \todo Please doc me! */      
     virtual void operator() (const DiscreteFunctionType& arg,
                              DiscreteFunctionType& dest ) const 
     {
-      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType FunctionSpaceType;
-      typedef typename FunctionSpaceType::RangeFieldType Field;
-      typedef typename FunctionSpaceType :: GridType GridType; 
-
-      typedef typename GridType :: Traits :: CollectiveCommunication
-        CommunicatorType; 
-
-      const CommunicatorType & comm = arg.space().grid().comm();
-
-      int count = 0;
-      Field spa=0, spn, q, quad;
-
-      if(!p_) p_ = new DiscreteFunctionType ( arg );
-      if(!r_) r_ = new DiscreteFunctionType ( arg );
-      if(!h_) h_ = new DiscreteFunctionType ( arg );
-    
-      DiscreteFunctionType & r = *r_;
-      DiscreteFunctionType & p = *p_;
-      DiscreteFunctionType & h = *h_;
-
-      //op_.prepareGlobal(arg,dest);
-
-      op_( dest, h );
-
-      r.assign(h) ;
-      r -= arg;
-
-      p.assign(arg);
-      p -= h;
-
-      spn = r.scalarProductDofs( r );
-
-      // global sum 
-      spn = comm.sum( spn );
-   
-      while((spn > epsilon_) && (count++ < maxIter_)) 
-      {
-        // fall ab der zweiten iteration *************
-    
-        if(count > 1)
-        { 
-          const Field e = spn / spa;
-          p *= e;
-          p -= r;
-        }
-
-        // grund - iterations - schritt **************
-    
-        op_( p, h );
-    
-        quad = p.scalarProductDofs( h );
-
-        // global sum 
-        quad = comm.sum( quad );
-        
-        q    = spn / quad;
-
-        dest.add( p, q );
-        r.add( h, q );
-
-        spa = spn;
-    
-        // residuum neu berechnen *********************
-    
-        spn = r.scalarProductDofs( r ); 
-        // global sum 
-        spn = comm.sum( spn );
-        
-        if((_verbose > 0) && (comm.rank() == 0))
-          std::cerr << count << " cg-Iterationen  " << count << " Residuum:" << spn << "        \r";
-      }
-      if((_verbose > 0) && (comm.rank() == 0))
-        std::cerr << "\n";
-
+      //op_.prepare(arg,dest);
+      CGAlgorithm<OperatorType,DiscreteFunctionType>::cg(op_,arg,dest,epsilon_,maxIter_,(_verbose >0));
       //op_.finalize(arg,dest);
     }
   
@@ -227,15 +181,7 @@ namespace Dune {
 
     // level of output 
     int _verbose ;
-
-    // tmp variables 
-    mutable DiscreteFunctionType* r_;
-    mutable DiscreteFunctionType* p_;
-    mutable DiscreteFunctionType* h_;
   };
 
-
 } // end namespace Dune
-
 #endif
-
