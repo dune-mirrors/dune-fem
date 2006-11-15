@@ -20,7 +20,10 @@
 #include <dune/fem/misc/boundaryidentifier.hh>
 
 #include <dune/fem/operator/matrix/matrixhandler.hh>
+#if HAVE_BLAS
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
+#endif
+#include <dune/fem/operator/inverseoperators.hh>
 
 //*************************************************************
 namespace LDGExample {  
@@ -60,10 +63,13 @@ namespace LDGExample {
     template <class DiscreteFunctionImp, class OperatorImp> 
     struct InverseOperator
     { 
-      //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+#if HAVE_BLAS
       //typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+#else 
+      typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+#endif
     };
   };
 
