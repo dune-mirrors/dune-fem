@@ -110,6 +110,15 @@ namespace Dune{
     {
       return asImp().mapToGlobal ( en , localNum );
     }
+
+    //! returns index of sequence in grid sequences 
+    int sequence () const { return asImp().sequence(); }
+
+    //! get global order of space  
+    int order () const 
+    {
+      return asImp().order();
+    } 
   
     //! Iterator over the entities of a space 
     //! The index set specifies the subset of grid entities of all available 
