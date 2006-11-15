@@ -44,9 +44,6 @@ cghs( const CommunicatorType & comm,
     return std::pair<int,double> (-1,0.0);
   }
 
-  // just to remember that parallel is not tested yet 
-  //assert( comm.size() == 1 );
-  
 #ifdef USE_MEMPROVIDER
   cghsMem.resize( 3*N ); 
 
@@ -59,12 +56,18 @@ cghs( const CommunicatorType & comm,
   double *p = new double[N];
 #endif
   
+  for(size_t k =0 ; k<N; ++k) 
+  {
+    g[k] = 0.0;
+    r[k] = 0.0;
+    p[k] = 0.0;
+  }
+  
   int its=0;
   double t, gam;
   // send and recive buffer for rho,tau and sig
-  //double * commVal  = new double [3];
   double commVal[3] = { 0.0,0.0,0.0} ; 
-  //std::vector<double> commVal(3);
+  double * commBuff = (double *) &commVal[0];
   
   double & rho = commVal[0];
   double & sig = commVal[1];
@@ -83,19 +86,16 @@ cghs( const CommunicatorType & comm,
   while ( ddo>err ) 
   {
     mult(A,r,p);
+
     rho=ddot(N,p,1,p,1);
     sig=ddot(N,r,1,p,1);
     tau=ddot(N,g,1,r,1);
+    
+    comm.sum ( commBuff , 3 );
 
-    rho = comm.sum( rho );
-    sig = comm.sum( sig );
-    tau = comm.sum( tau );
-    
-    // global sum of scalar products 
-    //comm.sum ( commVal , 3 );
-    
     t=tau/sig;
     daxpy(N,t,r,1,x,1);
+    
     daxpy(N,-t,p,1,g,1);
     gam=(t*t*rho-tau)/tau;
     dscal(N,gam,r,1);
@@ -104,7 +104,7 @@ cghs( const CommunicatorType & comm,
     gg = ddot(N,g,1,g,1);
     ddo = comm.sum( gg );
     
-    if ( detailed && comm.rank() == 0)
+    if ( detailed && (comm.rank() == 0) )
     {
       std::cout<<"cghs "<<its<<"\t"<<sqrt(ddo)<< std::endl;
     }
@@ -120,7 +120,6 @@ cghs( const CommunicatorType & comm,
   delete[] r;
   delete[] p;
 #endif
-  //delete [] commVal ;
   
   return val;
 }

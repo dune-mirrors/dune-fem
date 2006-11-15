@@ -52,9 +52,6 @@ bicgstab_algo( const CommunicatorType & comm,
     return std::pair<int,double> (-1,0.0);
   }
 
-  // just to remember that parallel is not tested yet 
-  assert( comm.size() == 1 );
-
   typedef Mult<MATRIX,PC_MATRIX,usePC> MultType; 
   typedef typename MultType :: mult_t mult_t; 
   // get appropriate mult method 
@@ -89,13 +86,15 @@ bicgstab_algo( const CommunicatorType & comm,
   // f"ur's Abbruchkriterium (*)  -- r enth"alt immer das Residuum r=Ax-b
   unsigned int its=0;
 
-  double * rtBuff = new double [2];
-  double & rTr = rtBuff[0];
-  double & rTh = rtBuff[1];
+  double rtVal[2];
+  double & rTr = rtVal[0];
+  double & rTh = rtVal[1];
+  double * rtBuff = ((double *) &rtVal[0]);
   
-  double * stBuff = new double [2];
-  double & st = stBuff[0];
-  double & tt = stBuff[1];
+  double stVal[2];
+  double & st = stVal[0];
+  double & tt = stVal[1];
+  double * stBuff = ((double *) &stVal[0]);
   
   double rtTmp;
   double rTAd, alpha, beta, omega;
@@ -207,9 +206,6 @@ bicgstab_algo( const CommunicatorType & comm,
   delete[] t;
   if( usePC ) delete [] tmp;
 #endif
-  // delete buffer 
-  delete [] rtBuff;
-  delete [] stBuff;
   
   return val;
 }
