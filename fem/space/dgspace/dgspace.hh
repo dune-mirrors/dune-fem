@@ -13,10 +13,10 @@
 
 
 //- local includes 
-#include "../common/discretefunctionspace.hh"
-#include "../common/dofmanager.hh"
-#include "../../basefunctions/basefunctionsets.hh"
-#include "../../basefunctions/basefunctionstorage.hh"
+#include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/basefunctions/basefunctionsets.hh>
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
@@ -27,7 +27,9 @@ namespace Dune {
   //**********************************************************************
   //
   //!  DiscreteFunctionSpace for discontinuous functions 
-  //  
+  //!  NOTE: To use this space for adaptive calcuations one has to
+  //!  use an index set that is capable for adaptive calculations, e.g
+  //!  DGAdaptiveLeafIndexSet and DGAdaptiveLeafGridPart.
   //**********************************************************************
   //! A discontinuous Galerkin space base for DGSpaces 
   template <class SpaceImpTraits>
@@ -196,10 +198,16 @@ namespace Dune {
       return false;
     }
   
-    //! get maximal global polynom order 
-    int polynomOrder () const
+    //! get global order of space  
+    int order () const
     {
       return polOrd;
+    }
+    
+    //! get global order of space  
+    int polynomOrder () const DUNE_DEPRECATED
+    {
+      return order();
     }
   
     //! length of the dof vector  

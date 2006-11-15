@@ -60,6 +60,9 @@ namespace Dune {
   //! If you want to use the Lagrangespace with an index set only
   //! supportting the index set interface, then use the IndexSetWrapper
   //! class which will add the needed functionalty.
+  //! NOTE: For adaptive calculations one have to use Index Sets that are
+  //! capable for adaptation, i.e. the method adaptive returns true, see 
+  //! AdaptiveLeafIndexSet. 
   //!
   //****************************************************************
   template<class FunctionSpaceImp, class GridPartImp, int polOrd>
@@ -153,7 +156,9 @@ namespace Dune {
     DFSpaceIdentifier type () const;
 
     //! returns polynomial order
-    int polynomOrder() const { return polynomialOrder; }
+    int order() const { return polynomialOrder; }
+
+    int polynomOrder () const DUNE_DEPRECATED { return order(); } 
 
     //! begin iterator
     IteratorType begin() const { return grid_.template begin<0>(); }
@@ -171,16 +176,6 @@ namespace Dune {
     const BaseFunctionSetType&
     getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const;
 
-    //! default for polOrd 0
-    template <class EntityType> 
-    bool evaluateLocal (int baseFunc, EntityType &en, const DomainType &local, RangeType & ret) const; 
-
-    //! default for polOrd 0
-    template <class EntityType, class QuadratureType> 
-    bool evaluateLocal ( int baseFunc, EntityType &en, QuadratureType &quad, 
-                         int quadPoint, RangeType & ret) const;
-
-
     //! get dimension of value 
     int dimensionOfValue () const;
   
@@ -195,9 +190,6 @@ namespace Dune {
     //! return reference to the spaces grid part
     const GridPartType & gridPart () const { return grid_; }
 
-    //! level
-    int level() const { return grid_.level(); }
-
     //! number of unknows for this function space   
     int size () const;
 
@@ -208,7 +200,15 @@ namespace Dune {
     //! Return the dof mapper of the space
     const MapperType& mapper() const;
 
+    //! \brief return index in grid sequences 
     int sequence () const { return dm_.sequence(); }
+
+    //! return corresponding lagrange points for this space 
+    /*
+    const LagrangePointsType & lagrangePoints (const GeometryType & type) const 
+    { 
+      return lagrangePoints_;
+    }*/
 
   protected:
     // create functions space with basefunction set for given level

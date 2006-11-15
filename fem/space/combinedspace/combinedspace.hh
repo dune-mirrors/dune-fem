@@ -81,7 +81,10 @@ namespace Dune {
     friend class CombinedMapper<DiscreteFunctionSpaceImp, N, policy>;
   };
 
-  //! Class to combine N scalar spaces
+  //! Class to combine N scalar spaces 
+  //! Policies PointBased and VariableBased decide, how dof are stored in
+  //! vectors, PointBased stores all local dofs consecutive, 
+  //! VectorBased stores all dofs for one component consecutive 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased>
   class CombinedSpace :
     public DiscreteFunctionSpaceDefault<
@@ -141,6 +144,9 @@ namespace Dune {
     //! polynom order
     int polynomOrder() const { return spc_.polynomOrder(); }
 
+    //! polynom order
+    int order() const { return spc_.order(); }
+
     //! begin iterator
     IteratorType begin() const { return spc_.begin(); }
 
@@ -158,7 +164,7 @@ namespace Dune {
 
     //! access to base function set
     template <class EntityType>
-    const BaseFunctionSetType& getBaseFunctionSet(const EntityType& en) const 
+    const BaseFunctionSetType& baseFunctionSet(const EntityType& en) const 
     {
       GeometryIdentifier::IdentifierType id =
                 GeometryIdentifier::fromGeometry(en.geometry()); 
@@ -170,6 +176,13 @@ namespace Dune {
       return *baseSetVec_[id];
     }
 
+    //! access to base function set
+    template <class EntityType>
+    const BaseFunctionSetType& getBaseFunctionSet(const EntityType& en) const 
+    {
+      return this->baseFunctionSet(en); 
+    }
+
     //! access to grid
     const GridType& grid() const { return spc_.grid(); }
     
@@ -178,6 +191,7 @@ namespace Dune {
     //! access to gridPart
     const GridPartType& gridPart() const { return spc_.gridPart(); }
 
+    //! \brief return corresponding index set  
     const IndexSetType& indexSet() const { return spc_.indexSet(); }
 
     //! access to mapper
@@ -187,6 +201,7 @@ namespace Dune {
     //! number of components
     int numComponents() const { return N; }
 
+    //! return index in grid sequence 
     int sequence () const { return dm_.sequence(); }
 
     //! policy of this space
