@@ -1,6 +1,10 @@
 // Dune includes
 #include <config.h>
 
+// use dune-fem tuples 
+#include <dune/fem/pass/tuples.hh>
+#include <dune/fem/pass/utility.hh>
+
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 
@@ -13,12 +17,13 @@
 
 #include <iostream>
 #include <string>
+using namespace std;
 
+#include "models.hh"
 #include "advectdiff.hh"
 #include "odesolver.hh"
 
 using namespace Dune;
-using namespace std;
 #include "scalarmodels.hh"
 #include "stuff.cc"
 // Initial Data

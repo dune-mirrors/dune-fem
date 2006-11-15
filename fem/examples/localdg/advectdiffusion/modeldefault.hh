@@ -99,7 +99,7 @@
         const Model& model_;
       };
 
-/**************************************************************/
+**************************************************************/
 #ifndef DUNE_EXAMPLEMODELINTERFACE_HH
 #define DUNE_EXAMPLEMODELINTERFACE_HH
 

@@ -1,3 +1,6 @@
+#ifndef DUNE_SCALARMODELS_HH
+#define DUNE_SCALARMODELS_HH
+
 #include "modeldefault.hh"
 
 template <class GridType,class ProblemType>
@@ -258,3 +261,4 @@ public:
   bool diff_tstep;
 };
 */
+#endif

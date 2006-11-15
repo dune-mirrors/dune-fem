@@ -94,6 +94,7 @@ namespace Dune {
     const SpaceType& space() const {
       return space2_;
     }
+    
     void printmyInfo(std::string filename) const {
       std::ostringstream filestream;
       filestream << filename;
@@ -166,6 +167,8 @@ namespace Dune {
     }
     const SpaceType& space() const {
       return space2_;
+    }
+    void setTime(double time) const {
     }
     void switchupwind() {}
     void limit(const DestinationType& arg,DestinationType& dest) const {
@@ -253,6 +256,8 @@ namespace Dune {
     void switchupwind() {upwind_*=(-1.);}
     const SpaceType& space() const {
       return space2_;
+    }
+    void setTime(double time) const {
     }
     void printmyInfo(std::string filename) const {
       std::ostringstream filestream;
