@@ -22,6 +22,8 @@ using namespace Dune;
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+#include <dune/fem/io/file/grapedataio.hh>
+
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
 const int polOrd = POLORDER;
@@ -38,8 +40,8 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-//typedef DGAdaptiveLeafGridPart<GridType> GridPartType; 
-typedef HierarchicGridPart<GridType> GridPartType; 
+typedef DGAdaptiveLeafGridPart<GridType> GridPartType; 
+//typedef HierarchicGridPart<GridType> GridPartType; 
 //typedef AdaptiveLeafGridPart<GridType> GridPartType; 
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -293,6 +295,9 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
     grape.dataDisplay( solution );
   }
 #endif
+  GrapeDataIO< GridType > dataio; 
+  dataio.writeGrid( grid, xdr, "gridout", 0.0, turn );
+  dataio.writeData( solution, xdr, "sol", turn );
   
   return error;
 }
