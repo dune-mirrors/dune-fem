@@ -2,8 +2,10 @@
 #define DUNE_DGADAPTOPERATORIMP_HH
 
 //- local includes  
-#include "../adaptoperator.hh"
-#include "../../quadrature/cachequad.hh"
+#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/quadrature/cachequad.hh>
+
+//- local includes 
 #include "dgspace.hh"
 
 /************************************************************
@@ -46,7 +48,7 @@ namespace Dune{
 public:  
   //! Constructor
   RestProlOperator ( DiscreteFunctionType & df ) : 
-    df_ (df) , quadord_(2*df.space().polynomOrder()),
+    df_ (df) , quadord_(2*df.space().order()),
     weight_(-1.0)
   {
   }

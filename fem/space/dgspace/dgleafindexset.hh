@@ -6,7 +6,7 @@
 #include <dune/fem/space/common/singletonlist.hh>
 
 //- local includes 
-#include "../leafindexset.hh"
+#include <dune/fem/space/common/codimindexset.hh>
 
 namespace Dune { 
 
@@ -125,7 +125,7 @@ public:
 */
 template <class GridType>
 class DGAdaptiveLeafIndexSet : 
-  public IndexSet<GridType, DGAdaptiveLeafIndexSet<GridType>, LeafIteratorTypes<GridType> >,
+  public IndexSet<GridType, DGAdaptiveLeafIndexSet<GridType>, DefaultLeafIteratorTypes<GridType> >,
   public DefaultGridIndexSetBase <GridType>
 {
 public:
@@ -160,7 +160,8 @@ private:
   // my type, to be revised 
   enum { myType = 665 };
 
-  mutable CodimLeafIndexSet codimLeafSet_;
+  typedef CodimIndexSet CodimIndexSetType;
+  mutable CodimIndexSetType codimLeafSet_;
 
   // type of Hset Selector 
   typedef HierarchicIndexSetSelector<GridType> SelectorType;
@@ -187,8 +188,8 @@ public:
     return set;
   }
   
-  //! type traits of this class
-  typedef LeafIteratorTypes<GridType> Traits; 
+  //! type traits of this class (see defaultindexsets.hh)
+  typedef DefaultLeafIteratorTypes<GridType> Traits; 
 
   //! Constructor
   DGAdaptiveLeafIndexSet (const GridType & grid) 
@@ -238,7 +239,7 @@ public:
   {
     // this IndexWrapper provides specialisations for each codim 
     // see this class above 
-    return SubIndex<CodimLeafIndexSet,HIndexSetType,cd>::subIndex(codimLeafSet_,hIndexSet_,en);
+    return SubIndex<CodimIndexSetType,HIndexSetType,cd>::subIndex(codimLeafSet_,hIndexSet_,en);
   }
 
   //! return size of grid entities per level and codim 
@@ -264,7 +265,7 @@ public:
    *  Here the grids leaf iterator is used 
    */
   template<int cd, PartitionIteratorType pitype>
-  typename LeafIteratorTypes<GridType>::template Codim<cd>::
+  typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
     template Partition<pitype>::Iterator end () const
   {
     return this->grid_.template leafend<cd,pitype> ();
@@ -274,7 +275,7 @@ public:
    *  Here the grids leaf iterator is used 
    */
   template<int cd, PartitionIteratorType pitype>
-  typename LeafIteratorTypes<GridType>::template Codim<cd>::
+  typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
     template Partition<pitype>::Iterator begin () const
   {
     return this->grid_.template leafbegin<cd,pitype> ();
