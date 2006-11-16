@@ -17,6 +17,8 @@
 #include <dune/common/typetraits.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
+#include <dune/fem/discretefunction/common/dfcommunication.hh>
+
 namespace Dune {
 
   //! Concrete implementation of Pass for LDG.
@@ -294,8 +296,8 @@ namespace Dune {
       upwind_(1.0),
       time_(0),
       twistUtil_(spc.grid()),
-      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.polynomOrder()+1) : volumeQuadOrd ),
-      faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.polynomOrder()+1) : faceQuadOrd ),
+      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()+1) : volumeQuadOrd ),
+      faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
       maxNumberUnknowns_(10* (spc_.getBaseFunctionSet(*(spc_.begin())).numBaseFunctions())),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
       beta_(0.0),
@@ -327,7 +329,8 @@ namespace Dune {
     }
    
     //! Destructor
-    virtual ~LocalDGElliptOperator() {
+    virtual ~LocalDGElliptOperator() 
+    {
       delete diag_;
       delete massTmp_;
     }
@@ -343,8 +346,10 @@ namespace Dune {
       return dtMin_;
     }
 
-    void buildMatrix( const ArgumentType & arg, DestinationType & rhs )
+    void buildMatrix( const ArgumentType & arg, DestinationType & rhs, bool
+        preCond = false )
     {
+      preCond_ = preCond;
       // resize matrices 
       matrixHandler_.resizeAndClear();
      
@@ -354,7 +359,6 @@ namespace Dune {
       dest_ = &rhs;
       // build matrix and rhs 
       this->compute(arg,rhs);
-      communicate(rhs);
 
       matrixAssembled_ = true;
 
@@ -428,12 +432,22 @@ namespace Dune {
       //std::cout << grad.size() << " g | grhs " << gradRhs_.size() << "\n";
     }
 
+    // do matrix vector multiplication, used by InverseOp  
+    void operator () (const DestinationType & arg, DestinationType& dest) const 
+    {
+      multOEM( arg.leakPointer(), dest.leakPointer());
+    }
+    
+    // do matrix vector multiplication, used by OEM-Solver  
     void multOEM(const double * arg, double * dest) const
     {
       double * multTmpPointer = multTmp_.leakPointer();
       double * gradTmpPointer = gradTmp_.leakPointer();
       
+      communicate( arg );
       matrixHandler_.gradMatrix().multOEM(arg, gradTmpPointer );
+      doCommunicate( gradTmp_ );
+
       if(gradProblem_.hasSource())
       {
         assert( massTmp_ );
@@ -453,62 +467,50 @@ namespace Dune {
       }
     }
 
-    void communicate(DestinationType & rhs )
+  private:   
+    void communicate(const double * x) const
+    {
+      DestinationType dest("DGEllipt::communicate_tmp",spc_,x);
+      doCommunicate(dest);
+    }
+      
+    template <class DiscreteFuncType>
+    void doCommunicate(DiscreteFuncType & dest) const
     {
       // if serial run, just return 
       if(gridPart_.grid().comm().size() <= 1) return;
       
-      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
-         DiscreteFunctionSpaceType , DiscreteFunctionSpaceType >
-           SingleDataHandleType; 
-      SingleDataHandleType stabData( matrixHandler_.stabMatrix() , spc_ , spc_ );
-
-      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
-              DiscreteFunctionSpaceType, DiscreteGradientSpaceType> DivDataHandleType;
-      DivDataHandleType divData( matrixHandler_.divMatrix() , spc_,  gradientSpace_ );
-
-      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
-              DiscreteGradientSpaceType, DiscreteFunctionSpaceType> GradDataHandleType;
-      GradDataHandleType gradData( matrixHandler_.gradMatrix() , gradientSpace_ , spc_ );
-
-      /*
-      assert( matrixHandler_.hasMassMatrix() );
-      typedef MatrixDataHandler<MatrixType, MatrixAddHandleType, 
-              DiscreteGradientSpaceType, DiscreteGradientSpaceType> MassDataHandleType;
-      MassDataHandleType massData( matrixHandler_.massMatrix() , gradientSpace_ , gradientSpace_ );
-      */
-
-      typedef DiscreteFunctionAddHandler<DestinationType> RhsDataHandleType;
-      RhsDataHandleType rhsData(rhs);
-
-      typedef DiscreteFunctionAddHandler<GradDestinationType> GradRhsDataHandleType;
-      GradRhsDataHandleType gradRhsData(gradRhs_);
-
-
-      typedef MatrixDataCombined< 
-              SingleDataHandleType ,
-              DivDataHandleType ,
-              GradDataHandleType,
-              //MassDataHandleType,
-              RhsDataHandleType, 
-              GradRhsDataHandleType > OverallDataHandleType; 
-
-      OverallDataHandleType allData(stabData 
-                          , divData 
-                          , gradData 
-                          //, massData 
-                          , rhsData 
-                          , gradRhsData); 
+      typedef DiscreteFunctionCommunicationHandler<DiscreteFuncType> DataHandleType;
+      DataHandleType dataHandle(dest);
       
-      //if(gridPart_.grid().comm().rank() == 0)
-      //  matrixHandler_.stabMatrix().print(std::cout);
+/*
+      typedef CombinedDataHandle<  
+              DataHandleType  
+              ,  DataHandleType  
+              ,  DataHandleType  
+              ,  DataHandleType  
+              ,  DataHandleType  
+              ,  DataHandleType  
+              ,  DataHandleType  
+              ,  DataHandleType  
+              >
+        CType; 
+      CType dh( dataHandle 
+          , dataHandle 
+          , dataHandle 
+          , dataHandle 
+          , dataHandle 
+          , dataHandle 
+          , dataHandle 
+          , dataHandle 
+          );
+          */
 
-      //gridPart_.communicate( allData, InteriorBorder_All_Interface , ForwardCommunication);
-
-      //if(gridPart_.grid().comm().rank() == 0)
-      //  matrixHandler_.stabMatrix().print(std::cout);
+      gridPart_.communicate( dataHandle, InteriorBorder_All_Interface , ForwardCommunication);
+      //gridPart_.communicate( dh, InteriorBorder_All_Interface , ForwardCommunication);
     }
-
+    
+  public:
     const ThisType & systemMatrix () const { return *this; }
     const ThisType & myMatrix () const { return *this; }
     
@@ -699,8 +701,7 @@ namespace Dune {
       /////////////////////////////////
       // Surface integral part
       /////////////////////////////////
-
-
+      
       IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
       { 
@@ -720,7 +721,9 @@ namespace Dune {
           EntityPointerType neighEp = nit.outside();
           EntityType&            nb = *neighEp;
 
-          if(nb.partitionType() != InteriorEntity)
+          bndChecker = (nit.boundary()) ? 1 : 0;
+
+          if( preCond_ ) 
           {
             bndChecker++; 
           }
@@ -877,7 +880,7 @@ namespace Dune {
 
         // if intersection with boundary 
         //if (nit.boundary()) 
-        if (bndChecker > 0) 
+        if( bndChecker > 0 )
         { 
           fMat_ = 1.0;
           const int quadNop = faceQuadInner.nop();
@@ -889,9 +892,9 @@ namespace Dune {
             // get boundary value 
             RangeType dirichletValue(0.0);
 
-            //BoundaryIdentifierType bndType = BoundaryIdentifierType(BoundaryIdentifierType::DirichletZero);
-            BoundaryIdentifierType bndType = BoundaryIdentifierType(BoundaryIdentifierType::NeumannZero);
-            if(bndChecker == 1)
+            BoundaryIdentifierType bndType =
+              BoundaryIdentifierType::NeumannZero;
+            if(bndChecker == 1) 
             {
               bndType = problem_.boundaryValue(nit,t,
                 faceQuadInner.localPoint(l),dirichletValue);
@@ -1045,25 +1048,6 @@ namespace Dune {
 
         const int singleSize = spc_.size();
         
-        /*
-        if(matrixHandler_.hasPcMatrix())
-        {
-          assert(diag_);
-          
-          // resize matrices 
-          double * sRhsPtr = rhs.leakPointer();
-          {
-            matrixHandler_.pcMatrix().getDiag(*diag_);
-            double * diagPtr = diag_->leakPointer();
-            // remove old diag value from rhs 
-            for(register int i=0; i<singleSize; ++i)
-            {
-              sRhsPtr[i] /= diagPtr[i];
-            }
-          }
-        }
-          */
-
         this->update(arg,rhs);
         matrixAssembled_ = true;
 
@@ -1086,11 +1070,6 @@ namespace Dune {
 
             // set pcMatrix Value  
             matrixHandler_.pcMatrix().add(i,i,val);
-
-            /*
-            // multiply rhs 
-            sRhsPtr[i] *= val;
-            */
           }
         }
       }
@@ -1219,7 +1198,10 @@ namespace Dune {
       uflux_beta_0(normal,phiLeft,phiRight,gLeft,gRight);
 
       // now part, if beta != 0.0 
+      //double h = normal.two_norm();
+      
       double scaling = upwind_*normal;//normal.two_norm();
+      //double scaling = normal.two_norm();
       scaling *=beta_;
 
       static RangeType tmpLeft;
@@ -1253,6 +1235,7 @@ namespace Dune {
       }
       // second part
       double scaling = upwind_*normal; //SQR(normal.two_norm());
+      //double scaling = normal.two_norm();
       scaling *=beta_;
       
       sigmaLeft  *= (0.5 + scaling); //  + scaling*tmpLeft; 
@@ -1332,6 +1315,7 @@ namespace Dune {
 
     const double beta_;
     mutable bool matrixAssembled_;
+    mutable bool preCond_;
 
   };
   
@@ -1456,6 +1440,8 @@ namespace Dune {
         // otherwise keep old value as initial value 
         dest.clear();
         op_.prepare(arg,rhs_);
+        //op_.buildMatrix(arg,  rhs_ , true );
+        //invOp_(rhs_,dest);
         op_.buildMatrix(arg,  rhs_ );
         sequence_ = spc_.sequence();
       }
