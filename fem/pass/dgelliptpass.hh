@@ -359,38 +359,10 @@ namespace Dune {
       dest_ = &rhs;
       // build matrix and rhs 
       this->compute(arg,rhs);
-
       matrixAssembled_ = true;
 
-      const int singleSize = spc_.size();
-      std::cout << "SingleSize = " << singleSize << "\n";
-      if(matrixHandler_.hasPcMatrix())
-      {
-        DestinationType diag("FEPass::diag",spc_);
-        if(gradProblem_.hasSource())
-        {
-          matrixHandler_.divMatrix().getDiag( matrixHandler_.massMatrix(), matrixHandler_.gradMatrix() , diag );
-        }
-        else 
-        {
-          matrixHandler_.divMatrix().getDiag( matrixHandler_.gradMatrix() , diag );
-        }
-
-        matrixHandler_.stabMatrix().addDiag( diag );
-
-        double * diagPtr = diag.leakPointer();
-        for(register int i=0; i<singleSize; ++i) 
-        {
-          double val = diagPtr[i]; 
-          assert( std::abs( val ) > 0.0 );
-          {
-            val = 1.0/val; 
-            matrixHandler_.pcMatrix().add(i,i,val);
-          }
-        }
-
-        //matrixHandler_.pcMatrix().printReal(std::cout);
-      }
+      // create pre-condition matrix if activated 
+      createPreconditionMatrix();
 
       double * rhsPtr = gradRhs_.leakPointer();
       if(gradProblem_.hasSource())
@@ -404,6 +376,8 @@ namespace Dune {
       // adjust rhs 
       double * multTmpPointer  = multTmp_.leakPointer();
       matrixHandler_.divMatrix().multOEM(rhsPtr,multTmpPointer );
+
+      const int singleSize = spc_.size();
       for(register int i=0; i<singleSize; ++i) 
       {
         singleRhsPtr[i] -= multTmpPointer[i];      
@@ -429,7 +403,6 @@ namespace Dune {
         matrixHandler_.gradMatrix().multOEM(u.leakPointer(),grad.leakPointer());
         grad += gradRhs_;
       }
-      //std::cout << grad.size() << " g | grhs " << gradRhs_.size() << "\n";
     }
 
     // do matrix vector multiplication, used by InverseOp  
@@ -446,7 +419,6 @@ namespace Dune {
       
       communicate( arg );
       matrixHandler_.gradMatrix().multOEM(arg, gradTmpPointer );
-      doCommunicate( gradTmp_ );
 
       if(gradProblem_.hasSource())
       {
@@ -455,6 +427,13 @@ namespace Dune {
         matrixHandler_.massMatrix().multOEM(gradTmpPointer,massTmpPointer);
         // use mass tmp now 
         gradTmpPointer = massTmpPointer;
+        // if we have mass, communicate mass 
+        doCommunicate( *massTmp_ );
+      }
+      else 
+      {
+        // otherwise communicate grad 
+        doCommunicate( gradTmp_ );
       }
 
       matrixHandler_.divMatrix().multOEM(gradTmpPointer, multTmpPointer );
@@ -713,22 +692,11 @@ namespace Dune {
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
            FaceQuadratureType::INSIDE);
       
-        int bndChecker = (nit.boundary()) ? 1 : 0;
-
         // if neighbor exists 
         if (nit.neighbor()) 
         {
           EntityPointerType neighEp = nit.outside();
           EntityType&            nb = *neighEp;
-
-          bndChecker = (nit.boundary()) ? 1 : 0;
-
-          if( preCond_ ) 
-          {
-            bndChecker++; 
-          }
-          else 
-          {
 
           int twistNeighbor = twistUtil_.twistInNeighbor(nit);
           FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
@@ -875,12 +843,10 @@ namespace Dune {
               }
             }
           }
-          }
         } // end if neighbor 
 
         // if intersection with boundary 
-        //if (nit.boundary()) 
-        if( bndChecker > 0 )
+        if (nit.boundary()) 
         { 
           fMat_ = 1.0;
           const int quadNop = faceQuadInner.nop();
@@ -892,13 +858,8 @@ namespace Dune {
             // get boundary value 
             RangeType dirichletValue(0.0);
 
-            BoundaryIdentifierType bndType =
-              BoundaryIdentifierType::NeumannZero;
-            if(bndChecker == 1) 
-            {
-              bndType = problem_.boundaryValue(nit,t,
+            BoundaryIdentifierType bndType = problem_.boundaryValue(nit,t,
                 faceQuadInner.localPoint(l),dirichletValue);
-            }
 
             if(gradProblem_.hasSource())
             {
@@ -1046,35 +1007,49 @@ namespace Dune {
       {
         matrixHandler_.clearMass();
 
-        const int singleSize = spc_.size();
-        
         this->update(arg,rhs);
         matrixAssembled_ = true;
 
-        if(matrixHandler_.hasPcMatrix())
+        createPreconditionMatrix();
+      }
+    }
+
+    // calculate pre-condition matrix 
+    void createPreconditionMatrix()
+    {
+      if(matrixHandler_.hasPcMatrix())
+      {
+        const int singleSize = spc_.size();
+
+        assert( diag_ );
+        DestinationType & diag = *diag_; 
+        
+        if(gradProblem_.hasSource())
         {
-          matrixHandler_.clearPcMatrix(); 
-          
-          matrixHandler_.divMatrix().getDiag( matrixHandler_.massMatrix(), matrixHandler_.gradMatrix() , *diag_ );
-          matrixHandler_.stabMatrix().getDiag( multTmp_ );
+          matrixHandler_.divMatrix().getDiag( matrixHandler_.massMatrix(), matrixHandler_.gradMatrix() , diag );
+        }
+        else 
+        {
+          matrixHandler_.divMatrix().getDiag( matrixHandler_.gradMatrix() , diag );
+        }
 
-          double * diagPtr = diag_->leakPointer();
-          double * diag2Ptr = multTmp_.leakPointer();
-          //double * sRhsPtr = rhs.leakPointer();
+        matrixHandler_.stabMatrix().addDiag( diag );
 
-          for(register int i=0; i<singleSize; ++i)
+        double * diagPtr = diag.leakPointer();
+        for(register int i=0; i<singleSize; ++i) 
+        {
+          double val = diagPtr[i]; 
+          // when using parallel Version , we could have zero on diagonal
+          // for ghost elements 
+          assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0 ) );
+          if( std::abs( val ) > 0.0 )
           {
-            double val = diagPtr[i] + diag2Ptr[i];
-            assert( std::abs( val ) > 0.0 );
-            val = 1.0/val;
-
-            // set pcMatrix Value  
+            val = 1.0/val; 
             matrixHandler_.pcMatrix().add(i,i,val);
           }
         }
       }
     }
-
 
     void updateLocal(EntityType& en) const
     {
@@ -1440,8 +1415,6 @@ namespace Dune {
         // otherwise keep old value as initial value 
         dest.clear();
         op_.prepare(arg,rhs_);
-        //op_.buildMatrix(arg,  rhs_ , true );
-        //invOp_(rhs_,dest);
         op_.buildMatrix(arg,  rhs_ );
         sequence_ = spc_.sequence();
       }
@@ -1590,12 +1563,6 @@ namespace Dune {
 
       // now get gradient from previous pass 
       prevPass_.evalGradient(prevPass_.destination(),dest);
-
-      /*
-      GrapeDataDisplay<GridType> grape(dest.space().grid());
-      grape.addData(prevPass_.destination());
-      grape.dataDisplay(dest);
-      */
     }
 
     void prepare(const ArgumentType& arg, DestinationType& dest) const
