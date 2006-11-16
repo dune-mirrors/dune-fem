@@ -139,7 +139,7 @@ class L2Projection
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc) 
   {
     const DiscreteFunctionSpaceType& space =  discFunc.space();
-    int polOrd = 2 * space.polynomOrder();
+    int polOrd = 2 * space.order();
     project(f,discFunc,polOrd);
   }
 };
@@ -198,7 +198,7 @@ public:
       double time) const
   {
     const DiscreteFunctionSpaceType & space = discFunc.space();
-    int polOrd = 2 * space.polynomOrder() + 2;
+    int polOrd = 2 * space.order() + 2;
     return norm(f,discFunc,time,polOrd);
   }
 };

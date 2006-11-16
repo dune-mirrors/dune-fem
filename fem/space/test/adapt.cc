@@ -58,7 +58,7 @@ typedef DFAdapt < DiscreteFunctionSpaceType > DiscreteFunctionType;
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
-typedef AdaptOperator<GridType,
+typedef AdaptationManager <GridType,
           RestProlOperator<DiscreteFunctionType> > ADOperatorType;
 
 // ***********************************************************
