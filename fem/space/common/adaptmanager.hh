@@ -27,7 +27,7 @@ namespace Dune{
 #define PARAM_FUNC_1 restrictLocal 
 #define PARAM_FUNC_2 prolongLocal 
 #define PARAM_FUNC_3 calcFatherChildWeight 
-#include "../operator/common/combine.hh"
+#include <dune/fem/operator/common/combine.hh>
 
 /*! Combination of different AdaptationManagers
 
@@ -35,21 +35,21 @@ namespace Dune{
  AdaptationOperators. It is the same principle as with Mapping and
  DiscreteOperatorImp. 
 */ 
-class AdaptMapping 
+class AdaptationManagerInterface 
 {
 public:
   //! default constructor 
-  AdaptMapping () : am_ (0) {}
+  AdaptationManagerInterface () : am_ (0) {}
 
   //! destructor 
-  virtual ~AdaptMapping () {}
+  virtual ~AdaptationManagerInterface () {}
   
   //! all adaptation operators have this method which adapts the
   //! corresponding grid and organizes the restriction prolongation process
   //! of the underlying function spaces
   virtual void adapt () const 
   {
-    //std::cout << "called AdaptMapping::adapt()" << std::endl;
+    //std::cout << "called AdaptationManagerInterface::adapt()" << std::endl;
     if(am_) am_->adapt();  
     else 
     {
@@ -58,14 +58,14 @@ public:
   };
 
     //! Assignement operator
-  AdaptMapping & operator = (const AdaptMapping & am)
+  AdaptationManagerInterface & operator = (const AdaptationManagerInterface & am)
   {
       /** \todo This const-casting seems strange to me! */
-    am_ = const_cast<AdaptMapping *> (&am);
+    am_ = const_cast<AdaptationManagerInterface *> (&am);
     return (*this);
   }
 private: 
-  AdaptMapping *am_;
+  AdaptationManagerInterface *am_;
 };
 
 
@@ -77,7 +77,7 @@ private:
 template <class GridType, class RestProlOperatorImp >
 class AdaptationManager 
 : 
-public AdaptMapping , public ObjPointerStorage 
+public AdaptationManagerInterface , public ObjPointerStorage 
 {  
   typedef AdaptationManager<GridType,RestProlOperatorImp> MyType;
   typedef DofManager< GridType > DofManagerType; 
