@@ -305,7 +305,7 @@ namespace Dune {
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
       maxNumberUnknowns_(10* (spc_.getBaseFunctionSet(*(spc_.begin())).numBaseFunctions())),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
-      beta_(0.0),
+      beta_(10.0),
       eta_(1.0),
       matrixAssembled_(false)                                                              
     {
@@ -752,7 +752,7 @@ namespace Dune {
 
               RangeType valEn(0.0),valNeigh(0.0); 
             
-              sigmaflux(unitNormal,fMat_[0],fMatNb_[0],sigmaEn,sigmaNb);
+              sigmaflux(unitNormal,faceVol,fMat_[0],fMatNb_[0],sigmaEn,sigmaNb);
 
               for(int j=0; j<numDofs; ++j)
               {
@@ -766,7 +766,7 @@ namespace Dune {
                 RangeType argEn(gradFMat_[0][0]);
                 RangeType argNb(gradFMatNb_[0][0]);
                 
-                uflux(unitNormal,argEn,argNb,enflux,neighflux);
+                uflux(unitNormal,faceVol,argEn,argNb,enflux,neighflux);
                 
                 {
                   double enVal= tau_[0] * unitNormal;
@@ -845,6 +845,7 @@ namespace Dune {
             DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
             double faceVol = unitNormal.two_norm();
             unitNormal *= 1.0/faceVol;
+            
             const double bndFactor = faceQuadInner.weight(l) * massVolElInv;
             const double intel = bndFactor * faceVol;
             
@@ -885,7 +886,7 @@ namespace Dune {
 
                 GradientRangeType sigmaFluxEn,sigmaFluxFake; 
                 
-                sigmaflux(unitNormal,fMat_[0],fMat_[0],sigmaFluxEn,sigmaFluxFake);
+                sigmaflux(unitNormal,faceVol,fMat_[0],fMat_[0],sigmaFluxEn,sigmaFluxFake);
                 
                 // factor 2, becasue on boundary flux is identity, see
                 // sigmaflux  
@@ -1160,15 +1161,28 @@ namespace Dune {
     }
 
     // --uflux 
-    void uflux(const DomainType& integrationNormal,const RangeType & phiLeft,const RangeType& phiRight, 
+    void uflux(const DomainType& unitNormal,const double faceVol, const RangeType & phiLeft,const RangeType& phiRight, 
                RangeType & gLeft, RangeType & gRight)const
     {
       // evaluate flux for beta = 0.0 
-      uflux_beta_0(integrationNormal,phiLeft,phiRight,gLeft,gRight);
+      uflux_beta_0(unitNormal,phiLeft,phiRight,gLeft,gRight);
 
       // now part, if beta != 0.0 
       //double h = integrationNormal.two_norm();
+     
+      DomainType left(unitNormal);
+      DomainType right(unitNormal);
       
+      left  *= phiLeft[0];
+      right *= -phiRight[0];
+      
+      DomainType scaling(unitNormal);
+      scaling *= beta_ * SQR(faceVol);
+      
+      gLeft  += scaling * left; 
+      gRight += scaling * right;
+      
+      /*
       double scaling = upwind_*integrationNormal;//integrationNormal.two_norm();
       //double scaling = integrationNormal.two_norm();
       scaling *=beta_;
@@ -1184,24 +1198,39 @@ namespace Dune {
       // add to flux 
       gLeft  -= tmpLeft;
       gRight += tmpRight;
+      */
     }
 
     // --sigmaflux
     template<class argType>
-    void sigmaflux(const DomainType& integrationNormal,
+    void sigmaflux(const DomainType& unitNormal, const double faceVol,
        const argType& tauleft,
        const argType& tauright,
        GradientRangeType & sigmaLeft,
        GradientRangeType  & sigmaRight ) const 
     {
-      sigmaLeft  = integrationNormal; 
-      sigmaRight = integrationNormal;
+      sigmaLeft  = unitNormal; 
+      sigmaRight = unitNormal;
 
       for(int j=0; j<dimGradRange; ++j) 
       {
-        sigmaLeft[j]  *= tauleft[j];
-        sigmaRight[j] *= tauright[j];
+        sigmaLeft[j]  *= 0.5*tauleft[j];
+        sigmaRight[j] *= 0.5*tauright[j];
       }
+
+      DomainType scaling(unitNormal);
+      scaling *= beta_ * SQR(faceVol);
+
+      DomainType jumpLeft(scaling);
+      DomainType jumpRight(scaling);
+
+      jumpLeft  *= (unitNormal * tauleft);
+      jumpRight *= (unitNormal * tauright);
+      
+      sigmaLeft  -= jumpLeft;
+      sigmaRight += jumpRight; 
+      
+      /*
       // second part
       double scaling = upwind_*integrationNormal; //SQR(integrationNormal.two_norm());
       //double scaling = integrationNormal.two_norm();
@@ -1209,6 +1238,7 @@ namespace Dune {
       
       sigmaLeft  *= (0.5 + scaling);
       sigmaRight *= (0.5 - scaling); 
+      */
       return ;
     }
 
