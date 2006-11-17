@@ -7,6 +7,7 @@
 
 //- local includes 
 #include <dune/fem/space/common/codimindexset.hh>
+#include <dune/fem/space/common/persistentindexset.hh>
 
 namespace Dune { 
 
@@ -16,12 +17,31 @@ class DGAdaptiveLeafIndexSet;
 template <class GridImp,PartitionIteratorType pitype>
 struct DGAdaptiveLeafGridPart;
 
+template <class GridImp, bool isGood> 
+struct GoodGridChooser
+{
+  typedef DGAdaptiveLeafIndexSet<GridImp> IndexSetType;
+};
+
+// the same for shitty grids 
+template <class GridImp> 
+struct GoodGridChooser<GridImp,false>
+{
+  typedef DefaultAdaptiveLeafIndexSet<GridImp> IndexSetType;
+};
+
+template <class GridType>
+class DGAdaptiveLeafIndexSet; 
+
 //! Type definitions for the LeafGridPart class
 template <class GridImp,PartitionIteratorType pitype>
 struct DGAdaptiveLeafGridPartTraits {
+  
   typedef GridImp GridType;
+  
   typedef DGAdaptiveLeafGridPart<GridImp,pitype> GridPartType;
-  typedef DGAdaptiveLeafIndexSet<GridImp> IndexSetType;
+  // choose index set dependend on grid type  
+  typedef typename GoodGridChooser<GridImp,Conversion<GridImp,HasHierarchicIndexSet>::exists>::IndexSetType IndexSetType;
 
   typedef typename GridType::template Codim<0>::Entity::
     LeafIntersectionIterator IntersectionIteratorType;
