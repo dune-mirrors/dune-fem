@@ -177,10 +177,10 @@ public:
   typedef RestProlOperator<IndicatorDiscreteFunctionType>   IndicatorRestProlType; 
 
 
-  typedef AdaptOperator<GridType,RestProlType>              AdaptOperatorType;
-  typedef AdaptOperator<GridType,IndicatorRestProlType>     IndicatorAdaptOperatorType;
+  typedef AdaptationManager<GridType,RestProlType>              AdaptOperatorType;
+  typedef AdaptationManager<GridType,IndicatorRestProlType>     IndicatorAdaptOperatorType;
 
-  typedef AdaptMapping                                      AdaptMappingType;
+  typedef AdaptationManagerInterface                                 AdaptMappingType;
 
 
 
@@ -665,7 +665,7 @@ public:
   template <class DiscFuncImp>
   void addAdaptiveFunction(DiscFuncImp *func){
     typedef RestProlOperator<DiscFuncImp>                    RestProlImp; 
-    typedef AdaptOperator<GridType,RestProlImp>              AdaptOpImp;
+    typedef AdaptationManager<GridType,RestProlImp>              AdaptOpImp;
     
     RestProlImp *restProl;
     AdaptOpImp  *adaptOp;
@@ -682,8 +682,8 @@ public:
  void addAdaptiveFunction(DiscFuncImp *func, DiscFuncImp2 *func2){
     typedef RestProlOperator<DiscFuncImp>                RestProlImp; 
     typedef RestProlOperator<DiscFuncImp2>               RestProlImp2; 
-    typedef AdaptOperator<GridType,RestProlImp>          AdaptOpImp;
-    typedef AdaptOperator<GridType,RestProlImp2>         AdaptOpImp2;
+    typedef AdaptationManager<GridType,RestProlImp>          AdaptOpImp;
+    typedef AdaptationManager<GridType,RestProlImp2>         AdaptOpImp2;
  
     
     RestProlImp *restProl;
@@ -721,15 +721,15 @@ public:
     typedef RestProlOperator<DiscFuncImp7>                    RestProlImp7; 
     typedef RestProlOperator<DiscFuncImp8>                    RestProlImp8; 
  
-    typedef AdaptOperator<GridType,RestProlImp0> AdaptOpImp0;
-    typedef AdaptOperator<GridType,RestProlImp> AdaptOpImp;
-    typedef AdaptOperator<GridType,RestProlImp2> AdaptOpImp2;
-    typedef AdaptOperator<GridType,RestProlImp3> AdaptOpImp3;
-    typedef AdaptOperator<GridType,RestProlImp4> AdaptOpImp4;
-    typedef AdaptOperator<GridType,RestProlImp5> AdaptOpImp5;
-    typedef AdaptOperator<GridType,RestProlImp6> AdaptOpImp6;
-    typedef AdaptOperator<GridType,RestProlImp7> AdaptOpImp7;
-    typedef AdaptOperator<GridType,RestProlImp8> AdaptOpImp8;
+    typedef AdaptationManager<GridType,RestProlImp0> AdaptOpImp0;
+    typedef AdaptationManager<GridType,RestProlImp> AdaptOpImp;
+    typedef AdaptationManager<GridType,RestProlImp2> AdaptOpImp2;
+    typedef AdaptationManager<GridType,RestProlImp3> AdaptOpImp3;
+    typedef AdaptationManager<GridType,RestProlImp4> AdaptOpImp4;
+    typedef AdaptationManager<GridType,RestProlImp5> AdaptOpImp5;
+    typedef AdaptationManager<GridType,RestProlImp6> AdaptOpImp6;
+    typedef AdaptationManager<GridType,RestProlImp7> AdaptOpImp7;
+    typedef AdaptationManager<GridType,RestProlImp8> AdaptOpImp8;
  
     
     RestProlImp0 *restProl0;
