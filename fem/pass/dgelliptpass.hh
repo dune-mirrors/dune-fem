@@ -202,7 +202,7 @@ namespace Dune {
     
     // Types extracted from the underlying grid
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    typedef typename GridType::template Codim<0>::Geometry Geometry;
+    typedef typename GridType::template Codim<0>::Geometry GeometryType;
 
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
@@ -306,6 +306,7 @@ namespace Dune {
       maxNumberUnknowns_(10* (spc_.getBaseFunctionSet(*(spc_.begin())).numBaseFunctions())),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
       beta_(0.0),
+      eta_(1.0),
       matrixAssembled_(false)                                                              
     {
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
@@ -330,15 +331,6 @@ namespace Dune {
       {
         std::cerr << "Source for FEPass not supported yet. \n";
         abort();
-      }
-
-      {
-        typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
-        SingleCommunicationManagerType cm(spc_);
-      }
-      {
-        typedef CommunicationManager<DiscreteGradientSpaceType> CommunicationManagerType; 
-        CommunicationManagerType cm(gradientSpace_);
       }
     }
    
@@ -553,7 +545,9 @@ namespace Dune {
 
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
-      double massVolElInv = massVolumeInv(en);
+      const VolumeQuadratureType massQuad(en, 0 );   
+      const GeometryType & geo = en.geometry();
+      const double massVolElInv = massVolumeInv(geo,massQuad);
       
       const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
       const int numDofs = bsetEn.numBaseFunctions();
@@ -582,7 +576,7 @@ namespace Dune {
       {
         // calc factor for bas functions 
         double intel = volQuad.weight(l)*
-            en.geometry().integrationElement(volQuad.point(l))*massVolElInv;
+            geo.integrationElement(volQuad.point(l))*massVolElInv;
         
         ////////////////////////////////////
         // create rightHandSide
@@ -712,7 +706,12 @@ namespace Dune {
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
           {
-            DomainType normal = nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+            DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
+            double faceVol = unitNormal.two_norm();
+            unitNormal *= 1.0/faceVol; 
+
+            const double innerIntel = faceQuadInner.weight(l) * massVolElInv * faceVol ; 
+            const double outerIntel = faceQuadOuter.weight(l) * massVolElInv * faceVol ; 
 
             if(gradProblem_.hasSource())
             {
@@ -753,7 +752,7 @@ namespace Dune {
 
               RangeType valEn(0.0),valNeigh(0.0); 
             
-              sigmaflux(normal,fMat_[0],fMatNb_[0],sigmaEn,sigmaNb);
+              sigmaflux(unitNormal,fMat_[0],fMatNb_[0],sigmaEn,sigmaNb);
 
               for(int j=0; j<numDofs; ++j)
               {
@@ -767,16 +766,16 @@ namespace Dune {
                 RangeType argEn(gradFMat_[0][0]);
                 RangeType argNb(gradFMatNb_[0][0]);
                 
-                uflux(normal,argEn,argNb,enflux,neighflux);
+                uflux(unitNormal,argEn,argNb,enflux,neighflux);
                 
                 {
-                  double enVal=tau_[0]*normal*massVolElInv;
+                  double enVal= tau_[0] * unitNormal;
                   double neighVal= enVal;
                   
-                  enVal    *=faceQuadInner.weight(l);
+                  enVal    *=innerIntel;
                   enVal    *=enflux[0]*phi_[0];
                   
-                  neighVal *=faceQuadOuter.weight(l);
+                  neighVal *=outerIntel;
                   neighVal *=neighflux[0]*phiNeigh_[0];
                  
                   // add value to matrix for en,nb
@@ -791,12 +790,12 @@ namespace Dune {
                   divmatValen = sigmaEn * tau_[0];
                   divmatValen *=phi_[0];
                   
-                  divmatValen *=-faceQuadInner.weight(l)* massVolElInv   ;
+                  divmatValen *=-innerIntel;
                    
                   divmatValnb = sigmaNb * tauneigh_[0];
                   divmatValnb *=phi_[0]; 
                   
-                  divmatValnb *=-faceQuadOuter.weight(l)* massVolElInv  ;
+                  divmatValnb *=-outerIntel; 
                 
                   // add value to div matrix for en,en 
                   divMatrixEn.add( j, i , divmatValen );
@@ -809,17 +808,15 @@ namespace Dune {
                 argEn = gradSource_[0]; 
                 argNb = gradSourceNb_[0];
                 
-                sigmaFluxStability(normal,argEn,argNb,staben,stabneigh);
+                sigmaFluxStability(unitNormal,faceVol,argEn,argNb,staben,stabneigh);
                 
                 if(i==0)
                 {
                   for(int k=0;k<numDofs;++k)
                   {
-                    double stabvalen,stabvalnb;
-                    stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,staben)
-                                  *faceQuadInner.weight(l)*massVolElInv; 
-                    stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l,stabneigh)
-                                  *faceQuadInner.weight(l)*massVolElInv;
+                    double stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,staben)    * innerIntel; 
+
+                    double stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l,stabneigh) * outerIntel;
 
                     // todo: make it right 
                     stabvalen *= phi_[0]; 
@@ -844,7 +841,12 @@ namespace Dune {
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
           {
-            const DomainType normal = nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+            //const DomainType integrationNormal = nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+            DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
+            double faceVol = unitNormal.two_norm();
+            unitNormal *= 1.0/faceVol;
+            const double bndFactor = faceQuadInner.weight(l) * massVolElInv;
+            const double intel = bndFactor * faceVol;
             
             double t = 0.0;
             // get boundary value 
@@ -883,12 +885,12 @@ namespace Dune {
 
                 GradientRangeType sigmaFluxEn,sigmaFluxFake; 
                 
-                sigmaflux(normal,fMat_[0],fMat_[0],sigmaFluxEn,sigmaFluxFake);
+                sigmaflux(unitNormal,fMat_[0],fMat_[0],sigmaFluxEn,sigmaFluxFake);
                 
                 // factor 2, becasue on boundary flux is identity, see
                 // sigmaflux  
                 double sigmaFlux = sigmaFluxEn * tau_[0];
-                sigmaFlux *= 2.0 * faceQuadInner.weight(l) * massVolElInv;
+                sigmaFlux *= 2.0 * intel;
 
                 // dirichlet boundary value for sigma 
                 if(bndType.isDirichletNonZero())
@@ -933,7 +935,7 @@ namespace Dune {
                         // only valid for dim range = 1
                         double rhsVal1 = bndVal[0] * phi_[0];
                         
-                        rhsVal1 *= faceQuadInner.weight(l)* massVolElInv;
+                        rhsVal1 *= bndFactor;
                         rhsVal1 *= gradSource_[0];
                         singleRhs[j] += rhsVal1;
                       }
@@ -943,10 +945,9 @@ namespace Dune {
                         double fluxEn=0;
                         double stabvalen=0.0;
                         // note that only gLeft is used here 
-                        sigmaFluxStability(normal,phi_[0],phi_[0],fluxEn,stabvalen);           
+                        sigmaFluxStability(unitNormal,faceVol,phi_[0],phi_[0],fluxEn,stabvalen);           
                         
-                        stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,fluxEn)
-                                      *faceQuadInner.weight(l)*massVolElInv;
+                        stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,fluxEn) * intel;
                         
                         stabvalen *= gradSource_[0];
                         //stabvalen *= fMat_[0][0];
@@ -964,7 +965,7 @@ namespace Dune {
                       RangeType bndVal (dirichletValue);
                       // dirichlet boundary values for u 
                       bndVal *= phi_[0];
-                      bndVal *= faceQuadInner.weight(l)* massVolElInv;
+                      bndVal *= bndFactor;
                       singleRhs[j] += bndVal[0];
                     }
                   }
@@ -1065,7 +1066,9 @@ namespace Dune {
 
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
-      double massVolElInv = massVolumeInv(en);
+      const VolumeQuadratureType massQuad(en, 0 );   
+      const GeometryType & geo = en.geometry();
+      const double massVolElInv = massVolumeInv(geo,massQuad);
       
       const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.getBaseFunctionSet(en);
       const int gradientNumDofs = grdbsetEn.numBaseFunctions();
@@ -1091,7 +1094,7 @@ namespace Dune {
       {
         // calc factor for bas functions 
         double intel = volQuad.weight(l)*
-            en.geometry().integrationElement(volQuad.point(l))*massVolElInv;
+            geo.integrationElement(volQuad.point(l))*massVolElInv;
         
         if(gradProblem_.hasSource())
         {
@@ -1128,10 +1131,9 @@ namespace Dune {
     LocalDGElliptOperator(const LocalDGElliptOperator&);
 
   private:
-    double massVolumeInv(const EntityType& en) const
+    double massVolumeInv(const GeometryType& geo, const VolumeQuadratureType & quad ) const
                          
     {
-      const VolumeQuadratureType quad(en, 0 );   
       double result = 0.0;
       double massVolInv = 0.0;
       const int quadNop = quad.nop();
@@ -1139,14 +1141,14 @@ namespace Dune {
       {
         massVolInv += quad.weight(qp);//volumen referenzelement
         result += 
-          quad.weight(qp) * en.geometry().integrationElement(quad.point(qp));
+          quad.weight(qp) * geo.integrationElement(quad.point(qp));
       }
       massVolInv /= result;
       return massVolInv;
     }
 
     // --uflux 
-    void uflux_beta_0(const DomainType& normal,const RangeType & phiLeft,const RangeType& phiRight, 
+    void uflux_beta_0(const DomainType& integrationNormal,const RangeType & phiLeft,const RangeType& phiRight, 
                       RangeType & gLeft, RangeType & gRight) const
     {
       gLeft  = phiLeft; 
@@ -1158,17 +1160,17 @@ namespace Dune {
     }
 
     // --uflux 
-    void uflux(const DomainType& normal,const RangeType & phiLeft,const RangeType& phiRight, 
+    void uflux(const DomainType& integrationNormal,const RangeType & phiLeft,const RangeType& phiRight, 
                RangeType & gLeft, RangeType & gRight)const
     {
       // evaluate flux for beta = 0.0 
-      uflux_beta_0(normal,phiLeft,phiRight,gLeft,gRight);
+      uflux_beta_0(integrationNormal,phiLeft,phiRight,gLeft,gRight);
 
       // now part, if beta != 0.0 
-      //double h = normal.two_norm();
+      //double h = integrationNormal.two_norm();
       
-      double scaling = upwind_*normal;//normal.two_norm();
-      //double scaling = normal.two_norm();
+      double scaling = upwind_*integrationNormal;//integrationNormal.two_norm();
+      //double scaling = integrationNormal.two_norm();
       scaling *=beta_;
 
       static RangeType tmpLeft;
@@ -1186,14 +1188,14 @@ namespace Dune {
 
     // --sigmaflux
     template<class argType>
-    void sigmaflux(const DomainType& normal,
+    void sigmaflux(const DomainType& integrationNormal,
        const argType& tauleft,
        const argType& tauright,
        GradientRangeType & sigmaLeft,
        GradientRangeType  & sigmaRight ) const 
     {
-      sigmaLeft  = normal; 
-      sigmaRight = normal;
+      sigmaLeft  = integrationNormal; 
+      sigmaRight = integrationNormal;
 
       for(int j=0; j<dimGradRange; ++j) 
       {
@@ -1201,29 +1203,28 @@ namespace Dune {
         sigmaRight[j] *= tauright[j];
       }
       // second part
-      double scaling = upwind_*normal; //SQR(normal.two_norm());
-      //double scaling = normal.two_norm();
+      double scaling = upwind_*integrationNormal; //SQR(integrationNormal.two_norm());
+      //double scaling = integrationNormal.two_norm();
       scaling *=beta_;
       
-      sigmaLeft  *= (0.5 + scaling); //  + scaling*tmpLeft; 
-      sigmaRight *= (0.5 - scaling); //- scaling*tmpRight; 
-      //sigmaLeft  = (0.5 + scaling) * tmpLeft;//  + scaling*tmpLeft; 
-      //sigmaRight = (0.5 - scaling) * tmpRight; //- scaling*tmpRight; 
+      sigmaLeft  *= (0.5 + scaling);
+      sigmaRight *= (0.5 - scaling); 
       return ;
     }
 
     // --sigmaflux
-    void sigmaFluxStability(const DomainType& normal,
-       const RangeType& phileft,
-       const RangeType& phiright,
-       double & gLeft,
-       double & gRight ) const 
+    void sigmaFluxStability(const DomainType& integrationNormal, const double faceVol,
+                            const RangeType& phileft,
+                            const RangeType& phiright,
+                            double & gLeft,
+                            double & gRight ) const 
     {
-      //double h_e=normal.two_norm();
-      //double factor=normal*normal;
-      //double factor = (1/h_e);
+      const double factor = eta_ / faceVol;
       gLeft   =  phileft; 
       gRight  = -phiright; 
+
+      gLeft  *= factor;
+      gRight *= factor;
     }
 
   private:
@@ -1284,6 +1285,7 @@ namespace Dune {
     mutable MatrixHandlerType matrixHandler_;
 
     const double beta_;
+    const double eta_;
     mutable bool matrixAssembled_;
     mutable bool preCond_;
 

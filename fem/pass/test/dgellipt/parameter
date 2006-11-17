@@ -5,7 +5,7 @@ StartLevel: 3
 EOCSteps: 2
 
 % CG epsilon 
-CGeps: 1e-10
+CGeps: 1e-15
 
 % cg output, 0 == no output, 1 == print output   
 verbose: 1

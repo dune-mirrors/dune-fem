@@ -65,8 +65,8 @@ namespace LDGExample {
     { 
 #if HAVE_BLAS
       //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
 #else 

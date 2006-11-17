@@ -171,7 +171,7 @@ bool boundaryDataFunction(const double x[dim], double & val)
 
 #if PROBLEM == 2
   val = exactSolution( x ); 
-  //if(x[0] <= 0.0) return false;
+  if(x[0] <= 0.0) return false;
   return true; 
 #endif
 
