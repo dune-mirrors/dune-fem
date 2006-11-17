@@ -56,12 +56,16 @@ template <class Operator>
 class OperatorWrapper : public Function {
  public:
   OperatorWrapper(const Operator& op) : op_(op) {}
+
+  //! apply operator 
   void operator()(const double *u, double *f, int i = 0) {
     typename Operator::DestinationType arg("ARG",op_.space(),u);
     typename Operator::DestinationType dest("DEST",op_.space(),f);
     op_.setTime(time());
     op_(arg,dest);
   }
+
+  //! return size of argument 
   int dim_of_argument(int i = 0) const 
   { 
     if (i==0) return op_.space().size();
@@ -72,6 +76,8 @@ class OperatorWrapper : public Function {
       return -1;
     }
   }
+  
+  //! return size of destination  
   int dim_of_value(int i = 0) const 
   { 
     if (i==0) return op_.space().size();
@@ -432,6 +438,35 @@ public:
   const Operator& op_;
   int savestep_;
   double savetime_;
+};
+
+template <class OperatorImp>
+class SolverInterfaceImpl : public Function 
+{
+  const OperatorImp & op_;
+  int size_; 
+public:
+  SolverInterfaceImpl(const OperatorImp & op, int size = 0) 
+    : op_(op), size_(size) 
+  {}
+
+  void setSize( int size ) { size_ = size; }
+
+  void operator () (const double *arg, double * dest, int i = 0 ) 
+  {
+    op_.multOEM(arg,dest);
+  }
+  
+  int dim_of_argument(int i = 0) const 
+  { 
+    assert( i == 0 );
+    return size_;
+  }
+  int dim_of_value(int i = 0) const 
+  { 
+    assert( i == 0 );
+    return size_;
+  }
 };
 
 }
