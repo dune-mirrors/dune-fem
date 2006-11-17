@@ -27,6 +27,7 @@
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/utility/twistutility.hh>
 
+#include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
 
@@ -76,6 +77,9 @@ namespace Dune {
     typedef DiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
+    // type of Communication Manager 
+    typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType;
+    
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   public:
@@ -96,6 +100,7 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
+      communicationManager_(spc_),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       valEn_(0.0),
@@ -156,6 +161,9 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
+      // communicate calculated function 
+      communicationManager_.exchange( dest );
+      
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
       }
@@ -188,9 +196,8 @@ namespace Dune {
       // Volumetric integral part
       for (int l = 0; l < volQuad_nop; ++l) 
       {
+        // evaluate analytical flux and source 
         caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
-        //caller_.analyticalFlux(en, volQuad, l, fMat_);
-        //caller_.source(en, volQuad, l, source_);
         
         double intel=geo.integrationElement(volQuad.point(l))*
                         massVolElinv*volQuad.weight(l);
@@ -322,6 +329,7 @@ namespace Dune {
 
     DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
+    mutable CommunicationManagerType communicationManager_;
 
     mutable double dtMin_;
   
