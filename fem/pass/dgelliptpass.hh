@@ -424,12 +424,6 @@ namespace Dune {
       multOEM( arg.leakPointer(), dest.leakPointer());
     }
     
-    // do matrix vector multiplication, used by Dennis linear solvers   
-    void operator () (const double * arg, double * dest) const 
-    {
-      multOEM(arg, dest);
-    }
-    
     // do matrix vector multiplication, used by OEM-Solver  
     void multOEM(const double * arg, double * dest) const
     {
