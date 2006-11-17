@@ -94,7 +94,7 @@ class OperatorWrapper : public Function {
 template<class Operator>
 class ExplTimeStepper : public TimeProvider {
  public:
-  ExplTimeStepper(Operator& op,int pord,double cfl) :
+  ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = true) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
@@ -115,33 +115,46 @@ class ExplTimeStepper : public TimeProvider {
 			<< std::endl;
       abort();
     }
-    ode_->DynamicalObject::set_output(cout);
+    if(verbose)
+    {
+      ode_->DynamicalObject::set_output(cout);
+    }
   }
-  ~ExplTimeStepper() {delete ode_;}
-  double solve(typename Operator::DestinationType& U0) {
-    if (dt_<0) {
+  ~ExplTimeStepper() { delete ode_; }
+  
+  double solve(typename Operator::DestinationType& U0) 
+  {
+    if (dt_<0) 
+    {
       typename Operator::DestinationType tmp("TMP",op_.space());
       op_(U0,tmp);
       dt_=cfl_*timeStepEstimate();
     }
+    
     resetTimeStepEstimate();
     double t=time();
     double* u=U0.leakPointer();
     const bool convergence = ode_->step(t, dt_, u);
+
+    // calculate global min of dt 
+    dt_ = op_.space().grid().comm().min( dt_ );
+    
     assert(convergence);
     setTime(t+dt_);
     dt_=cfl_*timeStepEstimate();
     return time();
   }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
-    if (time()>=savetime_) {
+  void printGrid(int nr, const typename Operator::DestinationType& U) 
+  {
+    if (time()>=savetime_) 
+    {
       printSGrid(time(),savestep_*10+nr,op_.space(),U);
       ++savestep_;
       savetime_+=0.001;
     }
   }
-  void printmyInfo(string filename) const {
+  void printmyInfo(string filename) const 
+  {
     std::ostringstream filestream;
     filestream << filename;
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
@@ -164,7 +177,7 @@ class ExplTimeStepper : public TimeProvider {
 template<class Operator>
 class ImplTimeStepper : public TimeProvider {
  public:
-  ImplTimeStepper(Operator& op,int pord,double cfl) :
+  ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = true) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
@@ -190,8 +203,11 @@ class ImplTimeStepper : public TimeProvider {
     }
     ode_->set_linear_solver(linsolver_);
     ode_->set_tolerance(1.0e-8);
-    ode_->IterativeSolver::set_output(cout);
-    ode_->DynamicalObject::set_output(cout);
+    if( verbose ) 
+    {
+      ode_->IterativeSolver::set_output(cout);
+      ode_->DynamicalObject::set_output(cout);
+    }
   }
   ~ImplTimeStepper() {delete ode_;}
   double solve(typename Operator::DestinationType& U0) {
@@ -204,6 +220,10 @@ class ImplTimeStepper : public TimeProvider {
     double t=time();
     double* u=U0.leakPointer();
     const bool convergence =  ode_->step(t, dt_, u);
+
+    // calculate global min of dt 
+    dt_ = op_.space().grid().comm().min( dt_ );
+    
     assert(convergence);
     if(!convergence) 
     {
@@ -249,7 +269,7 @@ class SemiImplTimeStepper : public TimeProvider {
   typedef OperatorExpl Operator;
  public:
   SemiImplTimeStepper(OperatorExpl& op_expl,OperatorImpl& op_impl,
-		      int pord,double cfl) :
+		      int pord,double cfl, bool verbose = true ) :
     ord_(pord),
     comm_(Communicator::instance()),
     opexpl_(op_expl),
@@ -275,11 +295,15 @@ class SemiImplTimeStepper : public TimeProvider {
     }
     ode_->set_linear_solver(linsolver_);
     ode_->set_tolerance(1.0e-8);
-    ode_->IterativeSolver::set_output(cout);
-    ode_->DynamicalObject::set_output(cout);
+    if( verbose ) 
+    { 
+      ode_->IterativeSolver::set_output(cout);
+      ode_->DynamicalObject::set_output(cout);
+    }
   }
   ~SemiImplTimeStepper() {delete ode_;}
-  double solve(typename Operator::DestinationType& U0) {
+  double solve(typename Operator::DestinationType& U0) 
+  {
     if (dt_<0) {
       typename OperatorExpl::DestinationType tmp("tmp",opexpl_.space());
       opexpl_(U0,tmp);
@@ -290,6 +314,10 @@ class SemiImplTimeStepper : public TimeProvider {
     double* u=U0.leakPointer();
     const bool convergence = ode_->step(t, dt_, u);
     assert(convergence);
+
+    // calculate global min of dt 
+    dt_ = op_.space().grid().comm().min( dt_ );
+    
     setTime(t+dt_);
     dt_ = cfl_*timeStepEstimate();
     return time();
@@ -336,11 +364,13 @@ class SemiImplTimeStepper : public TimeProvider {
   double savetime_;
 };
 template<class Operator>
-class ExplRungeKutta : public TimeProvider {
+class ExplRungeKutta : public TimeProvider 
+{
  public:
   enum {maxord=10};
   typedef typename Operator::SpaceType SpaceType;
   typedef typename Operator::DestinationType DestinationType;
+  typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
  private:
   double cfl_;
   double **a;
@@ -349,7 +379,7 @@ class ExplRungeKutta : public TimeProvider {
   int ord_;
   std::vector<DestinationType*> Upd;
 public:
-  ExplRungeKutta(Operator& op,int pord,double cfl) :
+  ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) :
     op_(op),
     cfl_(cfl), ord_(pord), Upd(0),
     savetime_(0.0), savestep_(1)
@@ -393,10 +423,15 @@ public:
               abort();
     }
     for (int i=0;i<ord_;i++)
+    {
       Upd.push_back(new DestinationType("URK",op_.space()) );
+    }
+    
     Upd.push_back(new DestinationType("Ustep",op_.space()) );
   }
-  double solve(typename Operator::DestinationType& U0) {
+  double solve(typename Operator::DestinationType& U0) 
+  {
+    const DuneCommunicatorType & duneComm = op_.space().grid().comm();
     resetTimeStepEstimate();
     double t=time();
     // Compute Steps
@@ -405,7 +440,13 @@ public:
     for (int i=1;i<ord_;i++) {
       (Upd[ord_])->assign(U0);
       for (int j=0;j<i;j++) 
-	(Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
+      {
+      	(Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
+      }
+
+      // calculate global min of dt 
+      dt_ = duneComm.min( dt_ );
+    
       setTime(t+c[i]*dt);
       op_(*(Upd[ord_]),*(Upd[i]));
       double ldt=cfl_*timeStepEstimate();
