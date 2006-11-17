@@ -316,7 +316,7 @@ class SemiImplTimeStepper : public TimeProvider {
     assert(convergence);
 
     // calculate global min of dt 
-    dt_ = op_.space().grid().comm().min( dt_ );
+    dt_ = opexpl_.space().grid().comm().min( dt_ );
     
     setTime(t+dt_);
     dt_ = cfl_*timeStepEstimate();
@@ -445,7 +445,7 @@ public:
       }
 
       // calculate global min of dt 
-      dt_ = duneComm.min( dt_ );
+      dt = duneComm.min( dt );
     
       setTime(t+c[i]*dt);
       op_(*(Upd[ord_]),*(Upd[i]));
