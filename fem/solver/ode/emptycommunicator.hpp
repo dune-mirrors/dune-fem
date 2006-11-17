@@ -1,21 +1,26 @@
-#ifndef ODE_EMPTY_COMMUNICATOR_HPP
-#define ODE_EMPTY_COMMUNICATOR_HPP
+#ifndef COMMUNICATOR_HPP
+#define COMMUNICATOR_HPP
 
 #include "thread.hpp"
 #include <iostream>
 #include <vector>
 #include <cassert>
 
-class EmptyCommunicator 
+// some dummy typedefs to make the code compile  
+typedef int MPI_Comm;
+typedef int MPI_Op;
+enum { MPI_SUM = 0 };
+
+class Communicator 
 {
-  EmptyCommunicator() {}
+  Communicator() {}
 public:
-  static EmptyCommunicator & instance () 
+  static Communicator & instance () 
   { 
-    EmptyCommunicator comm;
+    static Communicator comm;
     return comm;
   }
-  ~EmptyCommunicator() {}
+  ~Communicator() {}
   void set_output(std::ostream &os) {}
   int id() const {return 0;}
   int size() const {return 1;}
@@ -45,8 +50,8 @@ public:
       out[i]=in[i];
   }
   
-  // conversion to MPI EmptyCommunicator
-  operator MPI_Comm() const {}
+  // conversion to MPI Communicator
+  operator MPI_Comm() const { return 1; }
   
   // Timings
   double time() const {return 0.;}
