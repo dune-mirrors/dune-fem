@@ -17,6 +17,14 @@
 #include <dune/fem/misc/timeutility.hh>
 
 namespace DuneODE {
+// include first, because of typedef 
+#if HAVE_MPI 
+#include "ode/communicator.cpp"    
+#include "ode/buffer.cpp"
+#else 
+#include "ode/emptycommunicator.hpp"
+#endif
+
   
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
@@ -26,15 +34,6 @@ namespace DuneODE {
 #include "ode/ode_solver.cpp"     
 #include "ode/sirk.cpp"   
 
-#if HAVE_MPI 
-#include "ode/communicator.cpp"    
-typedef Communicator CommunicatorType;
-#else 
-#include "ode/emptycommunicator.hpp"
-typedef EmptyCommunicator CommunicatorType;
-#endif
-
-#include "ode/buffer.cpp"
 #include "ode/matrix.cpp"            
 #include "ode/qr_solver.cpp"   
 #include "ode/ssp.cpp"
@@ -147,7 +146,7 @@ class ExplTimeStepper : public TimeProvider {
   }
  private:
   int ord_;
-  CommunicatorType & comm_;
+  Communicator & comm_;
   const Operator& op_;
   OperatorWrapper<Operator> expl_;
   DuneODE::ODESolver* ode_;
@@ -228,7 +227,7 @@ class ImplTimeStepper : public TimeProvider {
   }
  private:
   int ord_;
-  CommunicatorType & comm_;	  
+  Communicator & comm_;	  
   const Operator& op_;
   OperatorWrapper<Operator> impl_;
   DuneODE::DIRK* ode_;
@@ -317,7 +316,7 @@ class SemiImplTimeStepper : public TimeProvider {
   }
  private:
   int ord_;
-  CommunicatorType & comm_;	  
+  Communicator & comm_;	  
   const OperatorExpl& opexpl_;
   const OperatorImpl& opimpl_;
   OperatorWrapper<OperatorImpl> impl_;
