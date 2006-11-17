@@ -68,6 +68,8 @@ private:
   AdaptationManagerInterface *am_;
 };
 
+typedef AdaptationManagerInterface AdaptMapping;
+
 
 /*! \brief This class manages the adaptation process. 
  If the method adapt is called, then the grid is adapted and also 
