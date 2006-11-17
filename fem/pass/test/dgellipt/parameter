@@ -5,13 +5,16 @@ StartLevel: 3
 EOCSteps: 2
 
 % CG epsilon 
-CGeps: 1e-15
+CGeps: 1e-10
 
-% cg output 
+% cg output, 0 == no output, 1 == print output   
 verbose: 1
 
 % use Preconditioning 0 == no, 1 == yes  
 Preconditioning: 0
+
+% display using Grape, 0 == no, 1 == yes  
+display: 1
 
 % MacroTriang for 2d simul 
 Grid: ./grid2d.dgf

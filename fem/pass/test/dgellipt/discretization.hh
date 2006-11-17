@@ -187,7 +187,7 @@ public:
         dm_.resize();
       }
 
-      Arg.set(2.5);
+      Arg.set(1002.5);
       FuncSpaceType sp; 
       ExactSolution exact(sp); 
 
@@ -240,13 +240,6 @@ public:
       }
     }
 
-#if HAVE_GRAPE
-    if( gridPart_.grid().comm().rank() == 0)
-    {
-      GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-      grape.dataDisplay( dest );
-    }
-#endif
   }
 
   template <class TimeProviderType>
@@ -319,6 +312,9 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   readParameter(paramfile,"Preconditioning",precon);
   bool preConditioning = (precon == 1) ? true : false;
 
+  int display = 0;
+  readParameter(paramfile,"display",display);
+
   int eocsteps = 2;
   readParameter(paramfile,"EOCSteps",eocsteps);
 
@@ -337,6 +333,13 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   solution->set(0.5);
   spaceOp(*tmpRhs,*solution);
 
+#if HAVE_GRAPE
+  if( (grid.comm().rank() == 0) && (display == 1) )
+  {
+    GrapeDataDisplay < GridType > grape( grid ); 
+    grape.dataDisplay( *solution );
+  }
+#endif
   delete solution; 
   delete tmpRhs;
 }
