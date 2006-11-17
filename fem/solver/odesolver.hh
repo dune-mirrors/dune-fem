@@ -124,11 +124,18 @@ class ExplTimeStepper : public TimeProvider {
   
   double solve(typename Operator::DestinationType& U0) 
   {
+    typedef typename Operator:: DestinationType :: GridType :: Traits ::
+      CollectiveCommunication DuneCommunicatorType; 
+    const DuneCommunicatorType & duneComm = op_.space().grid().comm();
+
     if (dt_<0) 
     {
       typename Operator::DestinationType tmp("TMP",op_.space());
       op_(U0,tmp);
       dt_=cfl_*timeStepEstimate();
+
+      // global min of dt 
+      dt_ = duneComm.min( dt_ );
     }
     
     resetTimeStepEstimate();
@@ -136,12 +143,12 @@ class ExplTimeStepper : public TimeProvider {
     double* u=U0.leakPointer();
     const bool convergence = ode_->step(t, dt_, u);
 
-    // calculate global min of dt 
-    dt_ = op_.space().grid().comm().min( dt_ );
-    
     assert(convergence);
     setTime(t+dt_);
     dt_=cfl_*timeStepEstimate();
+
+    // global min of dt 
+    dt_ = duneComm.min( dt_ );
     return time();
   }
   void printGrid(int nr, const typename Operator::DestinationType& U) 
@@ -210,20 +217,28 @@ class ImplTimeStepper : public TimeProvider {
     }
   }
   ~ImplTimeStepper() {delete ode_;}
-  double solve(typename Operator::DestinationType& U0) {
-    if (dt_<0) {
+  double solve(typename Operator::DestinationType& U0) 
+  {
+    typedef typename Operator:: DestinationType :: GridType :: Traits ::
+      CollectiveCommunication DuneCommunicatorType; 
+    const DuneCommunicatorType & duneComm = op_.space().grid().comm();
+
+    if (dt_<0) 
+    {
       typename Operator::DestinationType tmp("tmp",op_.space());
+
       op_(U0,tmp);
+
       dt_ = cfl_*timeStepEstimate();
+      
+      // calculate global min of dt 
+      dt_ = duneComm.min( dt_ );
     }
     resetTimeStepEstimate();
     double t=time();
     double* u=U0.leakPointer();
     const bool convergence =  ode_->step(t, dt_, u);
 
-    // calculate global min of dt 
-    dt_ = op_.space().grid().comm().min( dt_ );
-    
     assert(convergence);
     if(!convergence) 
     {
@@ -232,6 +247,10 @@ class ImplTimeStepper : public TimeProvider {
     }
     setTime(t+dt_);
     dt_ = cfl_*timeStepEstimate();
+    
+    // calculate global min of dt 
+    dt_ = duneComm.min( dt_ );
+    
     return time();
   }
   void printGrid(int nr, 
@@ -304,10 +323,17 @@ class SemiImplTimeStepper : public TimeProvider {
   ~SemiImplTimeStepper() {delete ode_;}
   double solve(typename Operator::DestinationType& U0) 
   {
+    typedef typename Operator:: DestinationType :: GridType :: Traits ::
+      CollectiveCommunication DuneCommunicatorType; 
+    const DuneCommunicatorType & duneComm = opexpl_.space().grid().comm();
+
     if (dt_<0) {
       typename OperatorExpl::DestinationType tmp("tmp",opexpl_.space());
       opexpl_(U0,tmp);
       dt_ = cfl_*timeStepEstimate();
+      
+      // calculate global min of dt 
+      dt_ = duneComm.min( dt_ );
     }
     resetTimeStepEstimate();
     double t=time();
@@ -315,11 +341,11 @@ class SemiImplTimeStepper : public TimeProvider {
     const bool convergence = ode_->step(t, dt_, u);
     assert(convergence);
 
-    // calculate global min of dt 
-    dt_ = opexpl_.space().grid().comm().min( dt_ );
-    
     setTime(t+dt_);
     dt_ = cfl_*timeStepEstimate();
+
+    // calculate global min of dt 
+    dt_ = duneComm.min( dt_ );
     return time();
   }
   void printGrid(int nr, 
@@ -437,16 +463,18 @@ public:
     // Compute Steps
     op_(U0,*(Upd[0]));
     double dt=cfl_*timeStepEstimate();
-    for (int i=1;i<ord_;i++) {
+
+    // calculate global min of dt 
+    dt = duneComm.min( dt );
+    
+    for (int i=1;i<ord_;i++) 
+    {
       (Upd[ord_])->assign(U0);
       for (int j=0;j<i;j++) 
       {
       	(Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
       }
 
-      // calculate global min of dt 
-      dt = duneComm.min( dt );
-    
       setTime(t+c[i]*dt);
       op_(*(Upd[ord_]),*(Upd[i]));
       double ldt=cfl_*timeStepEstimate();
