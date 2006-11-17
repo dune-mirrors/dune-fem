@@ -164,7 +164,8 @@ namespace Dune {
                   JacobianRangeType& result) const;
     
   private:
-    typedef typename FunctionSpaceImp::RangeFieldType RealType;
+    // typedef typename FunctionSpaceImp::RangeFieldType RealType;
+    typedef typename FunctionSpaceImp::DomainFieldType RealType;
     typedef Array<Array<RangeType> > RangeVectorType;
     typedef Array<Array<JacobianRangeType> > JacobianRangeVectorType;
     typedef std::map<size_t, bool> RangeStoredType;
