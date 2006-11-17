@@ -46,7 +46,6 @@ template <class Grid>
     typedef FieldVector<double,dimGradRange> GradientType;
     typedef FieldMatrix<double,dimDomain+1,dimDomain> FluxRangeType;
     typedef FieldMatrix<double,dimGradRange,dimDomain> DiffusionRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
    };
 
@@ -86,7 +85,6 @@ public:
   typedef typename GradFuncSpaceType::JacobianRangeType    GradJacobianRangeType;
   
   typedef typename GridType::template Codim<0>::Entity Entity;
-  typedef typename Entity::IntersectionIterator        IntersectionIterator; 
 
 public:
   struct Traits
@@ -97,7 +95,6 @@ public:
     enum {dimGradRange = dimDomain * dimRange };
     typedef FieldVector< FieldType, dimDomain-1 > FaceDomainType;
     typedef typename GridType::template Codim<0>::Entity Entity;
-    typedef typename Entity::IntersectionIterator        IntersectionIterator;
 
     typedef FunctionSpace < FieldType , FieldType, dim , dimRange > FuncSpaceType;
     typedef typename FuncSpaceType::RangeType          RangeType;
