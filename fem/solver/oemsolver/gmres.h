@@ -140,12 +140,6 @@ gmres_algo (const CommunicatorType & comm,
     return std::pair<int,double> (-1,0.0);
   }
 
-  if(comm.size() > 1) 
-  {
-    std::cerr << "ERROR: parallel computation prepared, but not implemented yet! in:" << __FILE__ << " line: " << __LINE__ << "\n";
-    abort();
-  }
-
   typedef Mult<Matrix,PC_Matrix,usePC> MultType;
   typedef typename MultType :: mult_t mult_t;
   // get appropriate mult method 
@@ -185,6 +179,8 @@ gmres_algo (const CommunicatorType & comm,
     double beta, h, rd, dd, nrm2b;
     int j, io, uij, u0j;
     nrm2b = dnrm2(n,b,1);
+    // global sum 
+    nrm2b = comm.sum ( nrm2b );
     
     io=0;
     do  
@@ -193,6 +189,10 @@ gmres_algo (const CommunicatorType & comm,
       mult_pc(A,C,x,r,tmp);
       daxpy(n,-1.,b,1,r,1);
       beta=dnrm2(n,r,1);
+
+      // global sum 
+      beta = comm.sum( beta );
+      
       dcopy(n,r,1,v[0],1);
       dscal(n,1./beta,v[0],1);
 
@@ -204,8 +204,18 @@ gmres_algo (const CommunicatorType & comm,
         u0j=uij;
         mult_pc(A,C,v[j],v[j+1],tmp);
         dgemv(Transpose,n,j+1,1.,V,n,v[j+1],1,0.,U+u0j,1);
+
+        // global sum 
+        double & Uu0j = *(U+u0j);
+        Uu0j = comm.sum( Uu0j );
+        
         dgemv(NoTranspose,n,j+1,-1.,V,n,U+u0j,1,1.,v[j+1],1);
+        //comm.sum( v[j+1], j+1 );
+
         h=dnrm2(n,v[j+1],1);
+        // global sum 
+        h = comm.sum( h );
+        
         dscal(n,1./h,v[j+1],1);
         
         for ( register int i=0; i<j; ++i ) 

@@ -11,6 +11,8 @@
 //- local includes 
 #include "preconditioning.hh"
 
+#include "../odesolver.hh"
+
 namespace OEMSolver 
 {
 
@@ -216,7 +218,6 @@ private:
                      double eps, bool verbose)
     {
       int size = arg.space().size();
-   
       if(op.hasPreconditionMatrix())
       {
         return OEMSolver::bicgstab(arg.space().grid().comm(),
@@ -377,7 +378,6 @@ private:
                      int inner, double eps, bool verbose)
     {
       int size = arg.space().size();
-   
       if(op.hasPreconditionMatrix())
       {
         return OEMSolver::gmres(arg.space().grid().comm(),
@@ -453,6 +453,80 @@ public:
     finalize ();
   }
 
+  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    apply(arg,dest);
+  }
+
+};
+
+/////////////////////////////////////////////////////////////////
+//
+//  GMRES Version of Dennis code
+//
+/////////////////////////////////////////////////////////////////
+//! \brief GMRES implementation from Dennis D.
+template <class DiscreteFunctionType, class OperatorType>
+class GMRESOp : public Operator<
+      typename DiscreteFunctionType::DomainFieldType,
+      typename DiscreteFunctionType::RangeFieldType,
+            DiscreteFunctionType,DiscreteFunctionType> 
+{
+
+private:
+  // solver 
+  mutable DuneODE::GMRES solver_;
+  // wrapper to fit interface of GMRES operator 
+  mutable DuneODE::SolverInterfaceImpl<OperatorType> op_; 
+  
+  typename DiscreteFunctionType::RangeFieldType epsilon_;
+  int maxIter_;
+  bool verbose_ ;
+
+  typedef std::pair < int , double > ReturnValueType;
+  
+public:
+  GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
+      : solver_(DuneODE::Communicator::instance(),20)
+      , op_(op), epsilon_ ( absLimit ) 
+      , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+  {
+  }
+
+  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+  {
+  }
+
+  void finalize () const
+  {
+  }
+
+  //! solve the system 
+  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    // prepare operator 
+    prepare ( arg, dest );
+
+    int size = arg.space().size();
+    op_.setSize(size);
+
+    solver_.set_tolerance(epsilon_);
+    solver_.set_max_number_of_iterations(size);
+
+    if(verbose_)
+    {
+      solver_.IterativeSolver::set_output(std::cout);
+      solver_.DynamicalObject::set_output(std::cout);
+    }
+
+    // note argument and destination are toggled 
+    solver_.solve(op_, dest.leakPointer() , arg.leakPointer() );
+
+    // finalize operator  
+    finalize ();
+  }
+
+  //! solve the system 
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     apply(arg,dest);
