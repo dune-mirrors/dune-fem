@@ -387,16 +387,14 @@ public:
 
 template <class GridType>
 class DefaultAdaptiveLeafIndexSet : 
-  public IndexSet<GridType, DefaultAdaptiveLeafIndexSet<GridType>, LeafIteratorTypes<GridType> >,
+  public IndexSet<GridType, DefaultAdaptiveLeafIndexSet<GridType>, DefaultLeafIteratorTypes<GridType> >,
   public DefaultGridIndexSetBase <GridType>
 {
 public:
   enum { ncodim = GridType::dimension + 1 };
 
 private:
-
   // busines as usual 
-
 
   // count elements of set by iterating the grid 
   template <class AdLeafSet, int codim >
@@ -600,11 +598,11 @@ private:
   mutable bool higherCodims_;
 
   typedef PersistentLeafIndexSet<LocalIdSetType,LeafIndexSetType,0> PersistentLeafIndexSetType;
-  mutable PersistentLeafIndexSetType * pLeafSet_;
+  mutable PersistentLeafIndexSetType pLeafSet_;
 
 public:
   //! type traits of this class
-  typedef LeafIteratorTypes<GridType> Traits; 
+  typedef DefaultLeafIteratorTypes<GridType> Traits; 
 
   //! Constructor
   DefaultAdaptiveLeafIndexSet (const GridType & grid) 
@@ -612,9 +610,8 @@ public:
     leafSet_( grid.leafIndexSet() ) , 
     idSet_  ( grid.localIdSet() ), 
     marked_ (false) , markAllU_ (false) , higherCodims_ (true), 
-    pLeafSet_(0)
+    pLeafSet_(idSet_,leafSet_)
   {
-    if(!pLeafSet_) pLeafSet_ = new PersistentLeafIndexSetType(idSet_,leafSet_); 
     // codim 0 is used by default
     codimUsed_[0] = true;
 
@@ -686,7 +683,7 @@ public:
    *  Here the grids leaf iterator is used 
    */
   template<int cd, PartitionIteratorType pitype>
-  typename LeafIteratorTypes<GridType>::template Codim<cd>::
+  typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
     template Partition<pitype>::Iterator end () const
   {
     return leafSet_.template end<cd,pitype> ();
@@ -696,7 +693,7 @@ public:
    *  Here the grids leaf iterator is used 
    */
   template<int cd, PartitionIteratorType pitype>
-  typename LeafIteratorTypes<GridType>::template Codim<cd>::
+  typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
     template Partition<pitype>::Iterator begin () const
   {
     return leafSet_.template begin<cd,pitype> ();
@@ -830,7 +827,6 @@ private:
   // false if not , otherwise return true
   bool insertNewIndex (const EntityCodim0Type & en, bool isLeaf , bool canInsert )
   {
-    assert( pLeafSet_ );
     // if entity isLeaf then we insert index 
     if(isLeaf)
     {
@@ -862,13 +858,11 @@ private:
 
   PersistentLeafIndexSetType & persistentLeafSet() 
   { 
-    assert( pLeafSet_ );
-    return *pLeafSet_; 
+    return pLeafSet_; 
   }
   const PersistentLeafIndexSetType & persistentLeafSet() const 
   { 
-    assert( pLeafSet_ );
-    return *pLeafSet_; 
+    return pLeafSet_; 
   }
 
   //! mark indices that are still used and give new indices to 

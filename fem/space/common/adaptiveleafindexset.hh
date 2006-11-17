@@ -7,6 +7,8 @@
 //- local includes 
 #include <dune/fem/space/common/codimindexset.hh>
 
+namespace Dune {
+
 //******************************************************************
 //
 // Indexset that provides consecutive indicies for the leaf level
