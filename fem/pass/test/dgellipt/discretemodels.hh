@@ -64,9 +64,11 @@ namespace LDGExample {
     struct InverseOperator
     { 
 #if HAVE_BLAS
+      //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
 #else 
       typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
 #endif
@@ -140,7 +142,7 @@ namespace LDGExample {
     const Model & data () const { return model_; }
 
     bool preconditioning () const { return preCon_; }
-    bool hasSource() const { return false; }
+    bool hasSource() const { return true; }
     bool hasFlux() const { return false; }
 
     template <class ArgumentTuple, class ReturnType>
