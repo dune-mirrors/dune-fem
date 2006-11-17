@@ -4,7 +4,6 @@
 #include <dune/fem/pass/pass.hh>
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/modelcaller.hh>
-//#include <dune/fem/pass/tuples.hh>
 
 // * needs to move
 #include <dune/fem/misc/timeutility.hh>
@@ -18,6 +17,8 @@
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
 #include <dune/fem/discretefunction/common/dfcommunication.hh>
+
+#include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
 
@@ -244,6 +245,8 @@ namespace Dune {
     
     typedef typename DiscreteModelType :: BoundaryIdentifierType BoundaryIdentifierType;    
 
+    typedef CommunicationManager<DiscreteFunctionSpaceType> SingleCommunicationManagerType; 
+    typedef CommunicationManager<DiscreteGradientSpaceType> GradCommunicationManagerType; 
   public:
     //- Public methods
     //! Constructor
@@ -268,6 +271,8 @@ namespace Dune {
       spc_(spc),
       gridPart_(spc_.gridPart()),
       gradientSpace_(gradPass_.space()),
+      singleCommunicate_(spc_),
+      gradCommunicate_(gradientSpace_),
       gradTmp_("FEPass::gradTmp",gradientSpace_),
       gradRhs_("FEPass::gradRhs",gradientSpace_),
       massTmp_(0),
@@ -326,6 +331,15 @@ namespace Dune {
         std::cerr << "Source for FEPass not supported yet. \n";
         abort();
       }
+
+      {
+        typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
+        SingleCommunicationManagerType cm(spc_);
+      }
+      {
+        typedef CommunicationManager<DiscreteGradientSpaceType> CommunicationManagerType; 
+        CommunicationManagerType cm(gradientSpace_);
+      }
     }
    
     //! Destructor
@@ -382,7 +396,6 @@ namespace Dune {
       {
         singleRhsPtr[i] -= multTmpPointer[i];      
       }
-      
     }
 
     // --gradient
@@ -411,6 +424,12 @@ namespace Dune {
       multOEM( arg.leakPointer(), dest.leakPointer());
     }
     
+    // do matrix vector multiplication, used by Dennis linear solvers   
+    void operator () (const double * arg, double * dest) const 
+    {
+      multOEM(arg, dest);
+    }
+    
     // do matrix vector multiplication, used by OEM-Solver  
     void multOEM(const double * arg, double * dest) const
     {
@@ -428,12 +447,14 @@ namespace Dune {
         // use mass tmp now 
         gradTmpPointer = massTmpPointer;
         // if we have mass, communicate mass 
-        doCommunicate( *massTmp_ );
+        //doCommunicate( *massTmp_ );
+        gradCommunicate_.exchange( *massTmp_ );
       }
       else 
       {
+        gradCommunicate_.exchange( gradTmp_ );
         // otherwise communicate grad 
-        doCommunicate( gradTmp_ );
+        //doCommunicate( gradTmp_ );
       }
 
       matrixHandler_.divMatrix().multOEM(gradTmpPointer, multTmpPointer );
@@ -450,7 +471,8 @@ namespace Dune {
     void communicate(const double * x) const
     {
       DestinationType dest("DGEllipt::communicate_tmp",spc_,x);
-      doCommunicate(dest);
+      singleCommunicate_.exchange( dest );
+      //doCommunicate(dest);
     }
       
     template <class DiscreteFuncType>
@@ -462,31 +484,7 @@ namespace Dune {
       typedef DiscreteFunctionCommunicationHandler<DiscreteFuncType> DataHandleType;
       DataHandleType dataHandle(dest);
       
-/*
-      typedef CombinedDataHandle<  
-              DataHandleType  
-              ,  DataHandleType  
-              ,  DataHandleType  
-              ,  DataHandleType  
-              ,  DataHandleType  
-              ,  DataHandleType  
-              ,  DataHandleType  
-              ,  DataHandleType  
-              >
-        CType; 
-      CType dh( dataHandle 
-          , dataHandle 
-          , dataHandle 
-          , dataHandle 
-          , dataHandle 
-          , dataHandle 
-          , dataHandle 
-          , dataHandle 
-          );
-          */
-
       gridPart_.communicate( dataHandle, InteriorBorder_All_Interface , ForwardCommunication);
-      //gridPart_.communicate( dh, InteriorBorder_All_Interface , ForwardCommunication);
     }
     
   public:
@@ -1247,6 +1245,9 @@ namespace Dune {
     DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
     const DiscreteGradientSpaceType & gradientSpace_;
+    mutable SingleCommunicationManagerType singleCommunicate_;
+    mutable GradCommunicationManagerType gradCommunicate_;
+    
     mutable GradDestinationType gradTmp_; 
     mutable GradDestinationType gradRhs_; 
     mutable GradDestinationType * massTmp_; 
