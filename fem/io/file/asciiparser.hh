@@ -2,6 +2,7 @@
 #define DUNE_ASCIIPARSER_HH
 
 #include <fstream>
+#include <string>
 
 namespace Dune {
 
@@ -12,7 +13,7 @@ static const int MAXTAB = 30;
 //! the token '%' stands for comment 
 template <class T> 
 bool readParameter (const std::basic_string<char> filename, 
-    const char keywd[], T & data, bool verbose = true) 
+    const std::string keyword, T & data, bool verbose = true) 
 {
   std::fstream file (filename.c_str(),std::ios::in);
   if( !file.is_open() ) 
@@ -21,7 +22,6 @@ bool readParameter (const std::basic_string<char> filename,
     DUNE_THROW(IOError,"cannot open file " << filename << std::endl);
   }
 
-  std::basic_string<char> keyword ( keywd );
   bool readData = false;
   char ch[1024];
   while (! file.eof() )
