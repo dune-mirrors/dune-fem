@@ -26,8 +26,9 @@ namespace Dune {
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename Traits::GridType GridType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType GridPartType;
+    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity Entity;
 
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;

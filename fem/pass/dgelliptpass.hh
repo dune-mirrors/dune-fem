@@ -298,14 +298,14 @@ namespace Dune {
       tauneigh_(0.0),
       phiNeigh_(0.0),
       grads_(0.0),
-      upwind_(1.0),
+      //upwind_(1.0),
       time_(0),
       twistUtil_(spc.grid()),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()+1) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
       maxNumberUnknowns_(10* (spc_.getBaseFunctionSet(*(spc_.begin())).numBaseFunctions())),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
-      beta_(10.0),
+      beta_(0.01),
       eta_(1.0),
       matrixAssembled_(false)                                                              
     {
@@ -324,8 +324,8 @@ namespace Dune {
       }
 
       for(int i=0; i<GradDimRange; ++i) one_[i][i] = 1.0;
-      upwind_[0] = M_PI;
-      upwind_[1] = M_LN2;
+      //upwind_[0] = M_PI;
+      //upwind_[1] = M_LN2;
 
       if(problem_.hasSource())
       {
@@ -1304,7 +1304,7 @@ namespace Dune {
     mutable RangeType gradEval_;
     mutable DomainType grads_;
 
-    DomainType upwind_;
+    //DomainType upwind_;
     TimeProvider* time_;
 
     TwistUtility<GridType> twistUtil_;

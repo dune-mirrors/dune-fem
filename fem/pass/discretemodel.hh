@@ -35,10 +35,12 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     //! Matrix type of the function space's jacobian
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    //! Type of GridPart 
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
     //! Type of the grid
-    typedef typename Traits::GridType GridType;
+    typedef typename GridPartType::GridType GridType;
     //! Intersection iterator of the grid
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     //! Element (codim 0 entity) of the grid
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
@@ -166,9 +168,10 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    typedef typename Traits::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
+    typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
 
   public:
     //! Empty implementation that fails if problem claims to have a flux

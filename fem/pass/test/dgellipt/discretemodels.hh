@@ -125,7 +125,8 @@ namespace LDGExample {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType GridPartType; 
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIterator; 
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
     typedef BoundaryIdentifier BoundaryIdentifierType ;
@@ -271,7 +272,8 @@ namespace LDGExample {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType GridPartType; 
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIterator; 
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
     typedef BoundaryIdentifier BoundaryIdentifierType ;
