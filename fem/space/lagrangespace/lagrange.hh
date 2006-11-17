@@ -169,12 +169,19 @@ namespace Dune {
     //! provide the access to the base function set for a given entity
     template <class EntityType>
     const BaseFunctionSetType& 
-    getBaseFunctionSet ( const EntityType &en ) const;
+    baseFunctionSet ( const EntityType &en ) const;
 
+    template <class EntityType>
+    const BaseFunctionSetType& 
+    getBaseFunctionSet ( const EntityType &en ) const
+    { 
+      return this->baseFunctionSet(en); 
+    }
+    
     //! Get base function set for a given id of geom type (mainly used by
     //! CombinedSpace) 
     const BaseFunctionSetType&
-    getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const;
+    baseFunctionSet (const GeometryIdentifier::IdentifierType id) const;
 
     //! get dimension of value 
     int dimensionOfValue () const;
