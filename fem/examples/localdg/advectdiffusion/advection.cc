@@ -15,7 +15,8 @@
 #include <string>
 
 #include "advectdiff.hh"
-#include "odesolver.hh"
+
+#include <dune/fem/solver/odesolver.hh>
 
 using namespace Dune;
 using namespace std;

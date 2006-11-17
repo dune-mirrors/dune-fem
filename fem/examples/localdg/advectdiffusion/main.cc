@@ -21,7 +21,8 @@ using namespace std;
 
 #include "models.hh"
 #include "advectdiff.hh"
-#include "odesolver.hh"
+
+#include <dune/fem/solver/odesolver.hh>
 
 using namespace Dune;
 #include "scalarmodels.hh"
