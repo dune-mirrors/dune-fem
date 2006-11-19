@@ -107,7 +107,7 @@ public:
     typedef typename FunctionSpaceType::GridType GridType;
     typedef typename FunctionSpaceType::IteratorType IteratorType;
     // the corresponding grid 
-    const FunctionSpaceType & functionSpace_= dest.getFunctionSpace();
+    const FunctionSpaceType & functionSpace_= dest.space();
     
     // get iterator from space 
     IteratorType it = functionSpace_.begin();
