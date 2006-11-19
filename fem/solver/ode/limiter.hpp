@@ -16,6 +16,7 @@ namespace pardg
   class Limiter
   {
   public:
+    virtual ~Limiter () {}
     virtual void operator()(double *u) = 0;
   };
   
@@ -30,6 +31,7 @@ namespace pardg
     PCLimiter(int dim_system, int num_base_polys, 
 	      MeshBase &mesh, DG &dg);
     
+    virtual ~PCLimiter () {}
     // from Limiter
     virtual void operator()(double *U);
 

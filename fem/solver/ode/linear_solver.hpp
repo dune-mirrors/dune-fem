@@ -19,6 +19,7 @@ class DirectLinearSolver
 {
 public:
   DirectLinearSolver();
+  virtual ~DirectLinearSolver() {}
 
   // decomposition of matrix a, a can be modified
   virtual void prepare(int dim, double *a);
