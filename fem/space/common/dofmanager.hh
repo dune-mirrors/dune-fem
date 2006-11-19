@@ -845,7 +845,7 @@ public:
 
 private:  
   typedef DofManager<GridType> MyType;
-  friend class SingletonList<GridType,MyType>; 
+  friend class DefaultSingletonFactory<GridType,MyType>; 
   friend class DofManagerFactory<MyType>;
   
 public:

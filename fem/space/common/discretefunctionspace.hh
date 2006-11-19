@@ -10,6 +10,7 @@
 #include <dune/fem/basefunctions/common/basefunctions.hh>
 
 //- local includes 
+#include "singletonlist.hh"
 
 namespace Dune{
 
@@ -200,9 +201,26 @@ namespace Dune{
       return static_cast<const DiscreteFunctionSpaceType&>(*this); 
     }
   };
-  
+
+  template <class KeyImp, class ObjectImp, class ObjectFactoryImp>
+  class BaseFunctionSetSingletonFactory
+  { 
+    public:
+    // create new BaseFunctionSet 
+    static ObjectImp * createObject( const KeyImp & key )
+    {
+      ObjectFactoryImp fac(key); 
+      return new ObjectImp(fac); 
+    }
+
+    // check equality of keys, just checks equality of geometry tpyes 
+    static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
+    {
+      return (keyOne == keyTwo);
+    }
+  };
+
   /** @} end documentation group */
 
 } // end namespace Dune 
-
 #endif
