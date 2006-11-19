@@ -12,10 +12,32 @@
 
 namespace Dune { 
 
-//! DofManagerFactory guarantees that only one instance of a dofmanager 
-//! per grid is generated. If getDofManager is called with a grid for which
-//! already a mamager exists, then the reference to this manager is returned. 
+//! DefaultFactory that tells SingletonList how to create objects and how
+//to compare object keys. 
+//! Default is calling ObjectImp(key) as constructor and compare pointer to
+//! keys.
 template <class KeyImp, class ObjectImp>
+struct DefaultSingletonFactory  
+{
+  //! overload this method to create Objects with different constructors 
+  static ObjectImp * createObject ( const KeyImp & key )
+  {
+    return new ObjectImp ( key );
+  }
+
+  //! overload this method to create Objects with different constructors 
+  static bool checkEquality(const KeyImp & keyOne , const KeyImp & keyTwo )
+  {
+    // default is to check equality of addresses
+    return (&keyOne == &keyTwo);
+  }
+};
+
+//! Singleton list for key/object pairs that guarantees that for a given key only on object is created.
+//! FactoryImp tells SingleList how to create objects and how to compare
+//! keys. 
+template <class KeyImp, class ObjectImp, class FactoryImp =
+  DefaultSingletonFactory<KeyImp,ObjectImp> >
 class SingletonList 
 {
   typedef SingletonList<KeyImp,ObjectImp> ThisType;
@@ -39,9 +61,9 @@ class SingletonList
   }
   
 public:  
-  //! return reference to the DofManager for the given grid. 
+  //! return reference to the object for given key. 
   //! If the object does not exist, then it is created first, otherwise the
-  //! reference counter is increased 
+  //! reference counter is increased. 
   inline static ObjectType & getObject(const KeyType & key) 
   {
     // search list for dof manager 
@@ -50,7 +72,7 @@ public:
     // if not exists, create it, ref count is 1  
     if(!objVal.first)
     {
-      ObjectType * obj = createObject( key );
+      ObjectType * obj = FactoryImp::createObject( key );
       assert( obj );
       // store pointer and ref count
       ValueType val ( obj , new size_t(1) );
@@ -64,14 +86,15 @@ public:
     return *(objVal.first);
   } 
 
-  //! delete the dof manager that belong to the given grid 
+  //! decrease ref counter for this object, 
+  //! if ref counter is zero, object is deleted 
   inline static void removeObject (const ObjectType & obj) 
   {
     ListIteratorType endit = singletonList().end();
     for(ListIteratorType it = singletonList().begin(); it!=endit; ++it)
     {
       ValueType val = (*it).second; 
-      if( val.first == (& obj))
+      if( val.first == & obj )
       {
         eraseItem(it);
         return;
@@ -80,13 +103,13 @@ public:
     std::cerr << "Object could not be deleted, because it is not in the list anymore! \n";
   }
 
-  // return pointer to dof manager for given grid 
+  // return pair < Object * , refCounter *> 
   inline static ValueType getObjFromList(const KeyType & key)
   {
     ListIteratorType endit = singletonList().end();
     for(ListIteratorType it = singletonList().begin(); it!=endit; ++it)
     {
-      if( (*it).first == & key )
+      if( FactoryImp::checkEquality( *((*it).first), key ) )
       {
         return (*it).second; 
       }
@@ -95,12 +118,6 @@ public:
   }
 
 protected:
-  //! overload this method to create Objects with different constructors 
-  static ObjectType * createObject ( const KeyType & key )
-  {
-    return new ObjectType ( key );
-  }
-  
   static void eraseItem(ListIteratorType & it) 
   {
     ValueType val = (*it).second; 
@@ -132,7 +149,6 @@ private:
   ~SingletonList () 
   { 
   }
-
 }; // end SingletonList 
 
 } // end namespace Dune 
