@@ -4,7 +4,7 @@
 //- Dune includes 
 #include <dune/grid/common/gridpart.hh>
 #include <dune/fem/space/common/singletonlist.hh>
-#include <dune/fem/space/common/persistentindexset.hh>
+#include <dune/fem/space/common/idbasedleafindexset.hh>
 
 //- local includes 
 #include "dgadaptiveleafindexset.hh"
@@ -25,7 +25,7 @@ struct GoodGridChooser
 template <class GridImp> 
 struct GoodGridChooser<GridImp,false>
 {
-  typedef DefaultAdaptiveLeafIndexSet<GridImp> IndexSetType;
+  typedef IdBasedLeafIndexSet<GridImp> IndexSetType;
 };
 
 template <class GridType>
