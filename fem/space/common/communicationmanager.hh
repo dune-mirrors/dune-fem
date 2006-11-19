@@ -15,14 +15,20 @@
 
 //- Dune-fem includes 
 #include <dune/fem/discretefunction/common/dfcommunication.hh>
+#include <dune/fem/space/common/singletonlist.hh>
 
 namespace Dune { 
 
   // only if ALUGrid found and was build for parallel runs 
 #if HAVE_ALUGRID && ALU3DGRID_PARALLEL
+  //! class to build up a map of all dofs of entities to be exchanged
+  //! during a communication procedure. This speeds up the communication
+  //! procedure, because no grid traversal is necessary to exchange data.
+  //! this class is singleton for different discrete function space,
+  //! because the dof mapping is always the same.
   template <class SpaceImp, 
             class OperationImp = DFCommunicationOperation::Copy >
-  class CommunicationManager 
+  class CommunicationManagerObject 
   {
     // index map for send and receive data 
     class CommunicationIndexMap
@@ -143,12 +149,13 @@ namespace Dune {
       
         // Interior entities belong to send area and other entities, i.e.
         // Overlap and Ghost, belong to receive area 
-        const bool interiorEn = en.partitionType() == InteriorEntity; 
+        const bool interiorEn = (en.partitionType() == InteriorEntity); 
         
         // read links and insert mapping 
         DataType val;
         
         buff.read( val );  
+        // size of sendIndexMap_ is equal to number of procs 
         assert( val <= (int) sendIndexMap_.size() );
         assert( val >= 0 );
       
@@ -174,7 +181,9 @@ namespace Dune {
       }
     };
 
+    //! type of discrete function space 
     typedef SpaceImp SpaceType; 
+    //! type of grid part 
     typedef typename SpaceType :: GridPartType GridPartType; 
 
     const SpaceType & space_; 
@@ -200,12 +209,13 @@ namespace Dune {
 
     int sequence_;
     std::vector < int > linkRank_;
-    std::vector< ObjectStreamType > osv_;
+
+    std::vector< ObjectStreamType > buffer_;
     // do not copy this class 
-    CommunicationManager(const CommunicationManager &);
+    CommunicationManagerObject(const CommunicationManagerObject &);
   public:
     //! constructor taking space 
-    CommunicationManager(const SpaceType & space)
+    CommunicationManagerObject(const SpaceType & space)
       : space_(space) , gridPart_(space_.gridPart()) 
       , myRank_(gridPart_.grid().comm().rank())
       , mySize_(gridPart_.grid().comm().size())
@@ -223,22 +233,28 @@ namespace Dune {
   template <class DiscreteFunctionType> 
   void exchange(DiscreteFunctionType & df) 
   {
+    // if serial run, just return   
+    if(mySize_ <= 1) return;
+     
     if(sequence_ != space_.sequence()) buildMaps();
     
     const int links = mpAccess_.nlinks();
     // write buffers 
     for(int l=0; l<links; ++l) 
     {
-      writeBuffer(osv_[l], sendIndexMap_[ linkRank_[l] ], df.leakPointer());
+      // reset buffers, keeps memory  
+      buffer_[l].clear();
+
+      writeBuffer( buffer_[l], sendIndexMap_[ linkRank_[l] ], df.leakPointer());
     }
 
     // exchange data to other procs 
-    osv_ = mpAccess_.exchange( osv_ );
+    buffer_ = mpAccess_.exchange( buffer_ );
     
     // read buffers 
     for(int l=0; l<links; ++l) 
     {
-      readBuffer(osv_[l], recvIndexMap_[ linkRank_[l] ], df.leakPointer() );
+      readBuffer( buffer_[l], recvIndexMap_[ linkRank_[l] ], df.leakPointer() );
     }
   }
 
@@ -267,7 +283,7 @@ namespace Dune {
       else 
       {
         // case of ALUGrid, where we have only the interior ghost situation 
-        gridPart_.communicate( handle, All_All_Interface , BackwardCommunication );
+        gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
       }
 
       // remove old linkage 
@@ -279,18 +295,23 @@ namespace Dune {
       linkRank_ = mpAccess_.dest();
 
       // resize buffer vector 
-      osv_.resize( mpAccess_.nlinks() );
+      buffer_.resize( mpAccess_.nlinks() );
 
       // store actual sequence number 
       sequence_ = space_.sequence();
     }
 
     // write data to object stream 
+    template <class DataImp> 
     void writeBuffer(ObjectStreamType & os, 
                      const IndexMapType & indexMap , 
-                     const double * data) const 
+                     const DataImp * data) const 
     {
       const int size = indexMap.size();
+
+      // reserve buffer memory at once 
+      os.reserve( size * sizeof(DataImp) );
+
       for(int i=0; i<size; ++i)
       {
         os.write( data[ indexMap[i] ] );
@@ -298,9 +319,10 @@ namespace Dune {
     }
   
     // read data from object stream to data vector 
+    template <class DataImp> 
     void readBuffer(ObjectStreamType & os, 
                     const IndexMapType & indexMap , 
-                    double * data) const 
+                    DataImp * data) const 
     {
       double val;
       const int size = indexMap.size();
@@ -312,6 +334,92 @@ namespace Dune {
       }
     }
   };
+
+  //! Key for CommManager singleton list 
+  template <class SpaceImp>
+  class CommManagerSingletonKey
+  {
+    const SpaceImp & space_;
+    CommManagerSingletonKey(const CommManagerSingletonKey &);
+  public:
+    CommManagerSingletonKey(const SpaceImp & space) : space_(space) {}
+    // returns true if indexSet pointer and numDofs are equal 
+    bool operator == (const CommManagerSingletonKey & otherKey) const
+    {
+      // mapper of space is singleton 
+      return (&(space_.mapper()) == & (otherKey.space_.mapper()) );
+    }
+
+    // return reference to index set 
+    const SpaceImp & space() const { return space_; }
+  };
+
+  //! Factory class for SingletonList to tell how objects are created and
+  //! how compared.
+  template <class KeyImp, class ObjectImp>
+  class CommManagerFactory
+  {
+    public:
+    // create new mapper  
+    static ObjectImp * createObject( const KeyImp & key )
+    {
+      return new ObjectImp(key.space());
+    }
+
+    // check equality of keys by checking memory adresses
+    static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
+    {
+      return (keyOne == keyTwo);
+    }
+  };
+
+  //! Proxy class to CommunicationManagerObject which is singleton per space 
+  template <class SpaceImp, 
+            class OperationImp = DFCommunicationOperation::Copy >
+  class CommunicationManager 
+  {
+    // type of communication manager object which does communication 
+    typedef CommunicationManagerObject<SpaceImp,OperationImp> CommunicationManagerObjectType;
+
+    typedef CommManagerSingletonKey<SpaceImp> KeyType;
+    typedef CommManagerFactory<KeyType, CommunicationManagerObjectType> FactoryType;
+
+    typedef SingletonList< KeyType , CommunicationManagerObjectType , FactoryType > CommunicationProviderType;
+
+    typedef SpaceImp SpaceType;
+    const SpaceType & space_; 
+
+    // is singleton per space 
+    CommunicationManagerObjectType & comm_;
+  public:  
+    //! constructor taking space 
+    CommunicationManager(const SpaceType & space) 
+      : space_(space)
+      , comm_(CommunicationProviderType::getObject(space_)) 
+    {
+    }
+
+    //! copy constructor getting singleton 
+    CommunicationManager(const CommunicationManager & org) 
+      : space_(org.space_) 
+      , comm_(CommunicationProviderType::getObject(space_)) 
+    {}
+
+    //! remove object comm
+    ~CommunicationManager() 
+    {
+      CommunicationProviderType::removeObject(comm_);
+    }
+
+    //! exchange discrete function to all procs we share data with 
+    //! by using given OperationImp when receiving data from other procs 
+    template <class DiscreteFunctionType> 
+    void exchange(DiscreteFunctionType & df) 
+    {
+      comm_.exchange( df );
+    }
+  };
+
 #else 
 #warning "No Parallel ALUGrid found, using default CommunicationManager!"
   // if no ALUGrid found, supply default implementation 
