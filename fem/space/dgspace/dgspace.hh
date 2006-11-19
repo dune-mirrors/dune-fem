@@ -24,6 +24,46 @@
 
 namespace Dune {
 
+  //! Key for Mapper singleton list 
+  template <class KeyImp>
+  class DGMapperSingletonKey 
+  {
+    const KeyImp & key_; 
+    const int numDofs_; 
+    DGMapperSingletonKey(const DGMapperSingletonKey &);
+  public:
+    DGMapperSingletonKey(const KeyImp & key, int numDofs ) : key_(key) ,  numDofs_(numDofs) {}
+    // returns true if indexSet pointer and numDofs are equal 
+    bool operator == (const DGMapperSingletonKey & otherKey) const 
+    {
+      return ((&key_ == &otherKey.key_) && (numDofs_ == otherKey.numDofs_));
+    }
+
+    // return reference to index set 
+    const KeyImp & key() const { return key_; }
+    // return number of dofs 
+    const int numDofs () const { return numDofs_; }
+  };
+
+  //! Factory class for SingletonList to tell how objects are created and
+  //! how compared.
+  template <class KeyImp, class ObjectImp>
+  class DGMapperSingletonFactory
+  {
+    public:
+    // create new mapper  
+    static ObjectImp * createObject( const KeyImp & key )
+    {
+      return new ObjectImp(key.key(),key.numDofs());
+    }
+
+    // check equality of keys, using operator == 
+    static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
+    {
+      return (keyOne == keyTwo);
+    } 
+  };
+
   //**********************************************************************
   //
   //!  DiscreteFunctionSpace for discontinuous functions 
@@ -90,6 +130,14 @@ namespace Dune {
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
 
+    typedef typename Traits::MapperType MapperType; 
+    typedef DGMapperSingletonKey< IndexSetType > DGMapperSingletonKeyType;
+    typedef DGMapperSingletonFactory< DGMapperSingletonKeyType , 
+              MapperType > DGMapperSingletonFactoryType;
+
+    typedef SingletonList< DGMapperSingletonKeyType , MapperType ,
+            DGMapperSingletonFactoryType > MapperProviderType;
+
   public:
     //- Constructors and destructors
     /** Constructor */
@@ -121,25 +169,33 @@ namespace Dune {
         
         if(baseFuncSet_[id] == 0 ) 
         {
-          baseFuncSet_[id] = setBaseFuncSetPointer(geomTypes[i]);
+          baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
           maxNumDofs = std::max(maxNumDofs,baseFuncSet_[id]->numBaseFunctions());
         }
       }
 
       assert( maxNumDofs > 0 );
-      mapper_ = new typename Traits::MapperType(gridPart_.indexSet(),maxNumDofs);
+      DGMapperSingletonKeyType key(gridPart_.indexSet(),maxNumDofs);
+      mapper_ = & MapperProviderType::getObject(key);
+
       assert( mapper_ );
+      assert( mapper_->numDofs() == maxNumDofs );
     }
 
     //! returns index of sequence in grid sequences 
     int sequence () const { return dm_.sequence(); }
     
     /** Destructor */
-    virtual ~DiscontinuousGalerkinSpaceBase () {
-      for (unsigned int i = 0; i < baseFuncSet_.size(); ++i) {
-        delete baseFuncSet_[i];
+    virtual ~DiscontinuousGalerkinSpaceBase () 
+    {
+      for (unsigned int i = 0; i < baseFuncSet_.size(); ++i) 
+      {
+        BaseFunctionSetType * set = (BaseFunctionSetType *) baseFuncSet_[i]; 
+        if( set ) removeBaseFuncSetPointer( *set );
         baseFuncSet_[i] = 0;
       }
+
+      MapperProviderType::removeObject( *mapper_ );
     }
   
     //- Methods
@@ -214,19 +270,20 @@ namespace Dune {
     //! size knows the correct way to calculate the size of the functionspace
     int size () const 
     {
-      return mapper_->size();
+      return mapper().size();
     }
 
     //! for given entity map local dof number to global dof number 
     template <class EntityType>
     int mapToGlobal ( EntityType &en, int localNum ) const
     {
-      return mapper_->mapToGlobal ( en , localNum );
+      return mapper().mapToGlobal ( en , localNum );
     }
 
     //! Return dof mapper of the space
-    const typename Traits::MapperType& mapper() const 
+    const MapperType& mapper() const 
     {
+      assert( mapper_ );
       return *mapper_;
     }
 
@@ -241,10 +298,16 @@ namespace Dune {
     DiscontinuousGalerkinSpaceBase& operator=(const DiscontinuousGalerkinSpaceBase&);
 
     template <class EntityType>
-    BaseFunctionSetType* setBaseFuncSetPointer(EntityType& en) 
+    BaseFunctionSetType& setBaseFuncSetPointer(EntityType& en) 
     {
       // calls static method of actual implementation to create set
       return DiscreteFunctionSpaceImp::setBaseFuncSetPointer(en);
+    }
+
+    void removeBaseFuncSetPointer(BaseFunctionSetType& set) 
+    {
+      // calls static method of actual implementation to remove set
+      DiscreteFunctionSpaceImp::removeBaseFuncSetPointer(set);
     }
 
   protected:
@@ -252,7 +315,7 @@ namespace Dune {
     GridPartType& gridPart_;
 
     // mapper for function space 
-    mutable typename Traits::MapperType* mapper_; 
+    mutable MapperType* mapper_; 
 
     // vector of base function sets
     std::vector<const BaseFunctionSetType*> baseFuncSet_;
@@ -330,7 +393,8 @@ namespace Dune {
     //! Index set of space
     typedef typename Traits::IndexSetType IndexSetType;
 
-   typedef DiscontinuousGalerkinBaseFunctionFactory<
+    //! type of base function set factory 
+    typedef DiscontinuousGalerkinBaseFunctionFactory<
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
@@ -342,20 +406,37 @@ namespace Dune {
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
 
+    //! scalar space type 
+    typedef typename ToScalarFunctionSpace<
+      typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+
+    // type of base function factory 
+    typedef DiscontinuousGalerkinBaseFunctionFactory<
+      ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
+
+    // type of singleton factory 
+    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+                ScalarFactoryType> SingletonFactoryType; 
+
+    // type of singleton list  
+    typedef SingletonList< GeometryType, BaseFunctionSetType,
+            SingletonFactoryType > SingletonProviderType;
+
   public:
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
     DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
 
-    static BaseFunctionSetType* setBaseFuncSetPointer(GeometryType type) 
+    //! get object from singleton list 
+    static BaseFunctionSetType& setBaseFuncSetPointer(GeometryType type) 
     {
-      typedef typename ToScalarFunctionSpace<
-        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
-      
-      DiscontinuousGalerkinBaseFunctionFactory<
-        ScalarFunctionSpaceType, polOrd> fac(type);
-      return new BaseFunctionSetType(fac);
+      return SingletonProviderType::getObject(type);
+    }
+    //! remove object from singleton list 
+    static void removeBaseFuncSetPointer(BaseFunctionSetType& set) 
+    {
+      SingletonProviderType::removeObject(set);
     }
   };
 
@@ -440,20 +521,37 @@ namespace Dune {
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
 
+    //! type of scalar space 
+    typedef typename ToScalarFunctionSpace<
+      typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+    
+    // type of base function factory 
+    typedef LegendreDGBaseFunctionFactory<
+      ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
+
+    // type of singleton factory  
+    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+                ScalarFactoryType> SingletonFactoryType; 
+
+    // type of singleton list  
+    typedef SingletonList< GeometryType, BaseFunctionSetType,
+            SingletonFactoryType > SingletonProviderType;
+
   public:
     //- Constructors and destructors
     /** Constructor */
     LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart) :
       DiscontinuousGalerkinSpaceBase<Traits> (gridPart) {}
 
-    static BaseFunctionSetType* setBaseFuncSetPointer(GeometryType type) 
+    //! get base set from singleton list 
+    static BaseFunctionSetType& setBaseFuncSetPointer(GeometryType type) 
     {
-      typedef typename ToScalarFunctionSpace<
-        typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
-      
-      LegendreDGBaseFunctionFactory<
-        ScalarFunctionSpaceType, polOrd> fac(type);
-      return new BaseFunctionSetType(fac);
+      return SingletonProviderType::getObject(type);
+    }
+    //! remove base set 
+    static void removeBaseFuncSetPointer(BaseFunctionSetType& set) 
+    {
+      SingletonProviderType::removeObject(set);
     }
   };
   
