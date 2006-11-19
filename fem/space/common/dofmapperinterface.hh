@@ -96,8 +96,50 @@ private:
   //! Barton-Nackman trick 
   const DofMapperImp &asImp() const { return static_cast<const DofMapperImp &>(*this); };
 }; 
+
+//! Key for Mapper singleton list 
+template <class KeyImp>
+class MapperSingletonKey 
+{
+  const KeyImp & key_; 
+  const int numDofs_; 
+public:
+  //! constructor taking index set and numDofs 
+  MapperSingletonKey(const KeyImp & key, int numDofs ) : key_(key) ,  numDofs_(numDofs) {}
+  //! copy constructor 
+  MapperSingletonKey(const MapperSingletonKey &org) : key_(org.key_) , numDofs_(org.numDofs_) {}
+  //! returns true if indexSet pointer and numDofs are equal 
+  bool operator == (const MapperSingletonKey & otherKey) const 
+  {
+    return ((&key_ == &otherKey.key_) && (numDofs_ == otherKey.numDofs_));
+  }
+
+  //! return reference to index set 
+  const KeyImp & key() const { return key_; }
+  //! return number of dofs 
+  const int numDofs () const { return numDofs_; }
+};
+
+//! Factory class for SingletonList to tell how objects are created and
+//! how compared.
+template <class KeyImp, class ObjectImp>
+class MapperSingletonFactory
+{
+  public:
+  // create new mapper  
+  static ObjectImp * createObject( const KeyImp & key )
+  {
+    return new ObjectImp(key.key(),key.numDofs());
+  }
+
+  // check equality of keys, using operator == 
+  static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
+  {
+    return (keyOne == keyTwo);
+  } 
+};
+
 /** @} end documentation group */
 
 } // end namespace Dune
-
 #endif

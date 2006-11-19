@@ -24,46 +24,6 @@
 
 namespace Dune {
 
-  //! Key for Mapper singleton list 
-  template <class KeyImp>
-  class DGMapperSingletonKey 
-  {
-    const KeyImp & key_; 
-    const int numDofs_; 
-    DGMapperSingletonKey(const DGMapperSingletonKey &);
-  public:
-    DGMapperSingletonKey(const KeyImp & key, int numDofs ) : key_(key) ,  numDofs_(numDofs) {}
-    // returns true if indexSet pointer and numDofs are equal 
-    bool operator == (const DGMapperSingletonKey & otherKey) const 
-    {
-      return ((&key_ == &otherKey.key_) && (numDofs_ == otherKey.numDofs_));
-    }
-
-    // return reference to index set 
-    const KeyImp & key() const { return key_; }
-    // return number of dofs 
-    const int numDofs () const { return numDofs_; }
-  };
-
-  //! Factory class for SingletonList to tell how objects are created and
-  //! how compared.
-  template <class KeyImp, class ObjectImp>
-  class DGMapperSingletonFactory
-  {
-    public:
-    // create new mapper  
-    static ObjectImp * createObject( const KeyImp & key )
-    {
-      return new ObjectImp(key.key(),key.numDofs());
-    }
-
-    // check equality of keys, using operator == 
-    static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
-    {
-      return (keyOne == keyTwo);
-    } 
-  };
-
   //**********************************************************************
   //
   //!  DiscreteFunctionSpace for discontinuous functions 
@@ -130,13 +90,17 @@ namespace Dune {
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
 
+    //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 
-    typedef DGMapperSingletonKey< IndexSetType > DGMapperSingletonKeyType;
-    typedef DGMapperSingletonFactory< DGMapperSingletonKeyType , 
-              MapperType > DGMapperSingletonFactoryType;
+    //! mapper singleton key 
+    typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
+    //! mapper factory 
+    typedef MapperSingletonFactory< MapperSingletonKeyType , 
+              MapperType > MapperSingletonFactoryType;
 
-    typedef SingletonList< DGMapperSingletonKeyType , MapperType ,
-            DGMapperSingletonFactoryType > MapperProviderType;
+    //! singleton list of mappers 
+    typedef SingletonList< MapperSingletonKeyType , MapperType ,
+            MapperSingletonFactoryType > MapperProviderType;
 
   public:
     //- Constructors and destructors

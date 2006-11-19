@@ -36,11 +36,16 @@ makeFunctionSpace (GridPartType& gridPart)
   {
     GeometryIdentifier::IdentifierType id =
                 GeometryIdentifier::fromGeo(geomTypes[i]);
-    if(baseFuncSet_[id] == 0 ) {
+
+    if(baseFuncSet_[id] == 0) 
+    {
       baseFuncSet_[id] = setBaseFuncSetPointer(geomTypes[i]);
-      mapper_ = new typename 
-        Traits::MapperType(const_cast<IndexSetType&>(gridPart.indexSet()),
-                           baseFuncSet_[id]->numBaseFunctions());
+      int numDofs = baseFuncSet_[id]->numBaseFunctions();
+      MapperSingletonKeyType key(gridPart.indexSet(),numDofs);
+      mapper_ = & MapperProviderType::getObject(key);
+
+      // make sure we got the right mapper 
+      assert( mapper_->numDofs() == numDofs );
     }
   }
 }
@@ -57,7 +62,7 @@ inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
     }
   }
 
-  delete(mapper_);
+  MapperProviderType::removeObject(*mapper_);
 }  
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>

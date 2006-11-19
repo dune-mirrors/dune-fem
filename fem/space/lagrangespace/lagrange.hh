@@ -114,8 +114,18 @@ namespace Dune {
     /** \todo Please doc me! */
     enum { DimRange = FunctionSpaceType::DimRange };
   
-    /** \todo Please doc me! */
-    typedef LagrangeMapper<IndexSetType,polOrd,DimRange> MapperType; 
+    //! mapper used to implement mapToGlobal */
+    typedef typename Traits :: MapperType MapperType; 
+
+    //! mapper singleton key  
+    typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
+    //! mapper factory 
+    typedef MapperSingletonFactory< MapperSingletonKeyType ,    
+              MapperType > MapperSingletonFactoryType;
+
+    //! mapper singleton list 
+    typedef SingletonList< MapperSingletonKeyType , MapperType ,
+            MapperSingletonFactoryType > MapperProviderType;
 
     /** \todo Please doc me! */
     typedef typename FunctionSpaceType::DomainType DomainType;
