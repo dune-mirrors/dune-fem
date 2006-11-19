@@ -44,7 +44,8 @@ template <class GridImp, PartitionIteratorType pitype = Interior_Partition >
 class AdaptiveLeafGridPart
 : public GridPartDefault<AdaptiveLeafGridPartTraits<GridImp,pitype> > 
 {
-  typedef SingletonList<GridImp,typename AdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > IndexSetProviderType;  
+  // singleton list for index set , key type is const pointer to grid 
+  typedef SingletonList<GridImp,typename AdaptiveLeafGridPartTraits<const GridImp* ,pitype>::IndexSetType > IndexSetProviderType;  
 public:
   //- Public typedefs and enums
   //! Type definitions
@@ -70,7 +71,7 @@ public:
   //- Public methods
   //! Constructor
   AdaptiveLeafGridPart(const GridType& grid) :
-    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(grid) )
+    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(&grid) )
   {}
 
   /** \brief Destrcutor removeing index set, if only one reference left, index set

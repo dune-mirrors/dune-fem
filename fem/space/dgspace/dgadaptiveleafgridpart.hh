@@ -56,7 +56,8 @@ template <class GridImp, PartitionIteratorType pitype = Interior_Partition >
 class DGAdaptiveLeafGridPart
 : public GridPartDefault<DGAdaptiveLeafGridPartTraits<GridImp,pitype> > 
 {
-  typedef SingletonList<GridImp,typename DGAdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > IndexSetProviderType;  
+  //! singleton list , key type is const pointer to grid 
+  typedef SingletonList< const GridImp* ,typename DGAdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > IndexSetProviderType;  
 public:
   //- Public typedefs and enums
   //! Type definitions
@@ -82,7 +83,7 @@ public:
   //- Public methods
   //! Constructor
   DGAdaptiveLeafGridPart(const GridType& grid) :
-    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(grid) )
+    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(&grid) )
   {}
 
   /** \brief Desctrutor removing index set. When only one reference is

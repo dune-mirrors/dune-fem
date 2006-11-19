@@ -139,7 +139,7 @@ namespace Dune {
       }
 
       assert( maxNumDofs > 0 );
-      DGMapperSingletonKeyType key(gridPart_.indexSet(),maxNumDofs);
+      MapperSingletonKeyType key(gridPart_.indexSet(),maxNumDofs);
       mapper_ = & MapperProviderType::getObject(key);
 
       assert( mapper_ );
@@ -358,8 +358,8 @@ namespace Dune {
     typedef typename Traits::IndexSetType IndexSetType;
 
     //! type of base function set factory 
-    typedef DiscontinuousGalerkinBaseFunctionFactory<
-      typename Traits::FunctionSpaceType, polOrd> FactoryType;
+    //typedef DiscontinuousGalerkinBaseFunctionFactory<
+    //  typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType::DimRange };

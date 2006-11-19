@@ -845,7 +845,7 @@ public:
 
 private:  
   typedef DofManager<GridType> MyType;
-  friend class DefaultSingletonFactory<GridType,MyType>; 
+  friend class DefaultSingletonFactory<const GridType* , MyType>; 
   friend class DofManagerFactory<MyType>;
   
 public:
@@ -1457,26 +1457,29 @@ read_xdr(const std::string filename , int timestep)
 template <class DofManagerImp>
 class DofManagerFactory 
 {
-  // type of Base class 
-  typedef SingletonList<typename DofManagerImp :: GridType, DofManagerImp> DMProviderType;
-  
   typedef DofManagerImp DofManagerType;
   typedef typename DofManagerType :: GridType GridType; 
+  typedef const GridType* KeyType;
 
+  // type of Base class 
+  typedef SingletonList< KeyType , DofManagerImp> DMProviderType;
 public:  
   //! return reference to the DofManager for the given grid. 
   //! If the object does not exist, then it is created first.
   inline static DofManagerType & getDofManager (const GridType & grid) 
   {
     DofManagerType * dm = getDmFromList(grid); 
-    if(!dm) return DMProviderType::getObject(grid);
+    if(!dm) 
+    {
+      return DMProviderType::getObject(&grid);
+    }
     return *dm;
   } 
 
   //! delete the dof manager that belong to the given grid 
   inline static void deleteDofManager (DofManagerType & dm ) 
   {
-    DMProviderType::removeObject(dm);
+    DMProviderType::removeObject(&dm);
   }
 
   //! writes DofManager of corresponding grid, when DofManager exists 
@@ -1501,7 +1504,7 @@ private:
   // return pointer to dof manager for given grid 
   inline static DofManagerType * getDmFromList(const GridType &grid)
   {
-    return (DMProviderType::getObjFromList(grid)).first;
+    return (DMProviderType::getObjFromList( &grid )).first;
   }
 };
 

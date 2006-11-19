@@ -39,7 +39,7 @@ makeFunctionSpace (GridPartType& gridPart)
 
     if(baseFuncSet_[id] == 0) 
     {
-      baseFuncSet_[id] = setBaseFuncSetPointer(geomTypes[i]);
+      baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
       int numDofs = baseFuncSet_[id]->numBaseFunctions();
       MapperSingletonKeyType key(gridPart.indexSet(),numDofs);
       mapper_ = & MapperProviderType::getObject(key);
@@ -58,7 +58,8 @@ inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
   {
     if (baseFuncSet_[i] != 0)
     {
-      delete baseFuncSet_[i];
+      BaseFunctionSetType * set = (BaseFunctionSetType *) baseFuncSet_[i]; 
+      SingletonProviderType::removeObject(*set);
     }
   }
 
@@ -129,16 +130,11 @@ LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::mapper() c
    
 template <class FunctionSpaceImp, class GridPartImp, int polOrd>
 typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
-BaseFunctionSetType* 
+BaseFunctionSetType& 
 LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
 setBaseFuncSetPointer(GeometryType type) 
 {
-  typedef typename ToScalarFunctionSpace<
-    typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
-  
-  LagrangeBaseFunctionFactory<
-    ScalarFunctionSpaceType, polOrd> fac(type);
-  return new BaseFunctionSetType(fac);
+  return SingletonProviderType::getObject(type);
 }
 
 } // end namespace Dune 

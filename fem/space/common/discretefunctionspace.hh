@@ -205,18 +205,13 @@ namespace Dune{
   template <class KeyImp, class ObjectImp, class ObjectFactoryImp>
   class BaseFunctionSetSingletonFactory
   { 
-    public:
+  public:
     // create new BaseFunctionSet 
     static ObjectImp * createObject( const KeyImp & key )
     {
+      std::cout << "Create new base Function Object\n";
       ObjectFactoryImp fac(key); 
       return new ObjectImp(fac); 
-    }
-
-    // check equality of keys, just checks equality of geometry tpyes 
-    static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
-    {
-      return (keyOne == keyTwo);
     }
   };
 

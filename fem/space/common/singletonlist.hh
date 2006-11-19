@@ -12,24 +12,15 @@
 
 namespace Dune { 
 
-//! DefaultFactory that tells SingletonList how to create objects and how
-//to compare object keys. 
-//! Default is calling ObjectImp(key) as constructor and compare pointer to
-//! keys.
+//! DefaultFactory that tells SingletonList how to create objects. 
+//! Default is calling ObjectImp(*key) as constructor.
 template <class KeyImp, class ObjectImp>
 struct DefaultSingletonFactory  
 {
   //! overload this method to create Objects with different constructors 
-  static ObjectImp * createObject ( const KeyImp & key )
+  static ObjectImp * createObject ( KeyImp key )
   {
-    return new ObjectImp ( key );
-  }
-
-  //! overload this method to create Objects with different constructors 
-  static bool checkEquality(const KeyImp & keyOne , const KeyImp & keyTwo )
-  {
-    // default is to check equality of addresses
-    return (&keyOne == &keyTwo);
+    return new ObjectImp ( *key );
   }
 };
 
@@ -46,7 +37,7 @@ class SingletonList
   typedef ObjectImp ObjectType;
 
   typedef std::pair < ObjectType * , size_t * > ValueType; 
-  typedef std::pair < const KeyType * , ValueType > ListObjType;
+  typedef std::pair < KeyType , ValueType > ListObjType;
   
   typedef DoubleLinkedList < ListObjType > ListType;
   typedef typename ListType::Iterator ListIteratorType;
@@ -64,6 +55,7 @@ public:
   //! return reference to the object for given key. 
   //! If the object does not exist, then it is created first, otherwise the
   //! reference counter is increased. 
+  //inline static ObjectType & getObject(KeyType key) 
   inline static ObjectType & getObject(const KeyType & key) 
   {
     // search list for dof manager 
@@ -77,7 +69,7 @@ public:
       // store pointer and ref count
       ValueType val ( obj , new size_t(1) );
       // store key and value 
-      ListObjType tmp( &key , val ); 
+      ListObjType tmp( key , val ); 
       singletonList().insert_after( singletonList().rbegin() , tmp ); 
       return *obj;
     }
@@ -109,7 +101,7 @@ public:
     ListIteratorType endit = singletonList().end();
     for(ListIteratorType it = singletonList().begin(); it!=endit; ++it)
     {
-      if( FactoryImp::checkEquality( *((*it).first), key ) )
+      if( (*it).first == key )
       {
         return (*it).second; 
       }

@@ -98,24 +98,24 @@ private:
 }; 
 
 //! Key for Mapper singleton list 
-template <class KeyImp>
+template <class IndexSetImp>
 class MapperSingletonKey 
 {
-  const KeyImp & key_; 
+  const IndexSetImp & indexSet_; 
   const int numDofs_; 
 public:
   //! constructor taking index set and numDofs 
-  MapperSingletonKey(const KeyImp & key, int numDofs ) : key_(key) ,  numDofs_(numDofs) {}
+  MapperSingletonKey(const IndexSetImp & indexSet, int numDofs ) : indexSet_(indexSet) ,  numDofs_(numDofs) {}
   //! copy constructor 
-  MapperSingletonKey(const MapperSingletonKey &org) : key_(org.key_) , numDofs_(org.numDofs_) {}
+  MapperSingletonKey(const MapperSingletonKey &org) : indexSet_(org.indexSet_) , numDofs_(org.numDofs_) {}
   //! returns true if indexSet pointer and numDofs are equal 
   bool operator == (const MapperSingletonKey & otherKey) const 
   {
-    return ((&key_ == &otherKey.key_) && (numDofs_ == otherKey.numDofs_));
+    return ((&indexSet_ == &otherKey.indexSet_) && (numDofs_ == otherKey.numDofs_));
   }
 
   //! return reference to index set 
-  const KeyImp & key() const { return key_; }
+  const IndexSetImp & indexSet() const { return indexSet_; }
   //! return number of dofs 
   const int numDofs () const { return numDofs_; }
 };
@@ -129,14 +129,9 @@ class MapperSingletonFactory
   // create new mapper  
   static ObjectImp * createObject( const KeyImp & key )
   {
-    return new ObjectImp(key.key(),key.numDofs());
+    // create Object of MapperType = ObjectImp 
+    return new ObjectImp(key.indexSet(),key.numDofs());
   }
-
-  // check equality of keys, using operator == 
-  static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
-  {
-    return (keyOne == keyTwo);
-  } 
 };
 
 /** @} end documentation group */

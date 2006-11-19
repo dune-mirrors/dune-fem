@@ -139,8 +139,24 @@ namespace Dune {
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
 
     //! The base function factory
+    //typedef LagrangeBaseFunctionFactory<
+    //  typename Traits::FunctionSpaceType, polOrd> FactoryType;
+
+    //! scalar space type 
+    typedef typename ToScalarFunctionSpace<
+      typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+
+    // type of base function factory 
     typedef LagrangeBaseFunctionFactory<
-      typename Traits::FunctionSpaceType, polOrd> FactoryType;
+      ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
+
+    // type of singleton factory 
+    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+                ScalarFactoryType> SingletonFactoryType;
+
+    // type of singleton list  
+    typedef SingletonList< GeometryType, BaseFunctionSetType,
+            SingletonFactoryType > SingletonProviderType;
 
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
@@ -224,6 +240,12 @@ namespace Dune {
     /*
     const LagrangePointsType & lagrangePoints (const GeometryType & type) const 
     { 
+      GeometryIdentifier::IdentifierType id =
+        GeometryIdentifier::fromGeometry(type);
+      assert(id < (int) baseFuncSet_.size());
+      assert(id >= 0);
+      assert(baseFuncSet_[id]);
+
       return lagrangePoints_;
     }*/
 
@@ -232,7 +254,7 @@ namespace Dune {
     void makeFunctionSpace (GridPartType& gridPart); 
   
     //! get the right BaseFunctionSet for a given Entity 
-    BaseFunctionSetType* setBaseFuncSetPointer(GeometryType type);
+    BaseFunctionSetType& setBaseFuncSetPointer(GeometryType type);
 
   protected:
     //! the corresponding vector of base function sets

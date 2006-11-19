@@ -340,17 +340,19 @@ namespace Dune {
   class CommManagerSingletonKey
   {
     const SpaceImp & space_;
-    CommManagerSingletonKey(const CommManagerSingletonKey &);
   public:
+    //! constructor taking space 
     CommManagerSingletonKey(const SpaceImp & space) : space_(space) {}
-    // returns true if indexSet pointer and numDofs are equal 
+    //! copy constructor  
+    CommManagerSingletonKey(const CommManagerSingletonKey & org) : space_(org.space_) {}
+    //! returns true if indexSet pointer and numDofs are equal 
     bool operator == (const CommManagerSingletonKey & otherKey) const
     {
       // mapper of space is singleton 
       return (&(space_.mapper()) == & (otherKey.space_.mapper()) );
     }
 
-    // return reference to index set 
+    //! return reference to index set 
     const SpaceImp & space() const { return space_; }
   };
 
@@ -363,13 +365,8 @@ namespace Dune {
     // create new mapper  
     static ObjectImp * createObject( const KeyImp & key )
     {
+      std::cout << "Create new comm object \n";
       return new ObjectImp(key.space());
-    }
-
-    // check equality of keys by checking memory adresses
-    static bool checkEquality(const KeyImp & keyOne, const KeyImp & keyTwo )
-    {
-      return (keyOne == keyTwo);
     }
   };
 
@@ -389,20 +386,24 @@ namespace Dune {
     typedef SpaceImp SpaceType;
     const SpaceType & space_; 
 
+    const KeyType key_;
+
     // is singleton per space 
     CommunicationManagerObjectType & comm_;
   public:  
     //! constructor taking space 
     CommunicationManager(const SpaceType & space) 
       : space_(space)
-      , comm_(CommunicationProviderType::getObject(space_)) 
+      , key_(space_)
+      , comm_(CommunicationProviderType::getObject(key_)) 
     {
     }
 
     //! copy constructor getting singleton 
     CommunicationManager(const CommunicationManager & org) 
       : space_(org.space_) 
-      , comm_(CommunicationProviderType::getObject(space_)) 
+      , key_(org.key_)
+      , comm_(CommunicationProviderType::getObject(key_)) 
     {}
 
     //! remove object comm
