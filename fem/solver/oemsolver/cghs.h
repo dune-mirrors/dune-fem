@@ -143,9 +143,6 @@ cghs( const CommunicatorType & comm,
     return std::pair<int,double> (-1,0.0);
   }
 
-  // just to remember that parallel is not tested yet 
-  assert( comm.size() == 1 );
-
 #ifdef USE_MEMPROVIDER
   cghsMem.resize( 3*N ); 
 
@@ -168,7 +165,9 @@ cghs( const CommunicatorType & comm,
   daxpy(N,-1.,b,1,r,1);
   mult(C,r,d);
   dcopy(N,d,1,h,1);
-  rh=ddot(N,r,1,h,1);
+
+  rh = ddot(N,r,1,h,1);
+  rh = comm.sum( rh );
 
   double rr = ddot(N,r,1,r,1);
   double ddo = comm.sum( rr );
@@ -182,7 +181,10 @@ cghs( const CommunicatorType & comm,
     daxpy(N,-alpha,d,1,x,1);
     daxpy(N,-alpha,Ad,1,r,1);
     
+    // note, here a communication is neccessary when C is not a diagonla
+    // matrix 
     mult(C,r,h);
+
     beta=1./rh; 
     sig = ddot(N,r,1,h,1); 
     rh = comm.sum( sig );
