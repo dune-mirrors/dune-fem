@@ -1,7 +1,7 @@
 #ifndef DUNE_PASS_UTILITY_HH
 #define DUNE_PASS_UTILITY_HH
 
-#include "tuples.hh"
+#include <dune/common/tuples.hh>
 
 namespace Dune {
 

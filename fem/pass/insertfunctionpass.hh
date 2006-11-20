@@ -5,7 +5,7 @@
 #include <string>
 
 //- local includes 
-#include "tuples.hh"
+#include <dune/common/tuples.hh>
 #include "discretemodel.hh"
 #include "pass.hh"
 

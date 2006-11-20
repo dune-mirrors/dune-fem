@@ -1,6 +1,6 @@
 // $Id$
-#ifndef DUNE_LEN_HH
 #define DUNE_LEN_HH
+#ifndef DUNE_LEN_HH
 
 #include<ostream>
 

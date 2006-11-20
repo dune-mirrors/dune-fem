@@ -5,7 +5,7 @@
 #include <string>
 
 //- Dune includes
-#include "tuples.hh"
+#include <dune/common/tuples.hh>
 
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
