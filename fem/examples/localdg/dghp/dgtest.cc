@@ -7,7 +7,7 @@
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/quadraturerules.hh>
 
-#include <dune/fem/space/dgspace/dgleafindexset.hh>
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 
 #include <dune/fem/io/file/grapedataio.hh>
 #include <dune/fem/space/common/boundary.hh>

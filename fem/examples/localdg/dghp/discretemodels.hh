@@ -19,7 +19,7 @@
 #include <dune/fem/quadrature/cachequad.hh>
 
 
-#include <dune/fem/space/dgspace/dgleafindexset.hh>
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 
 //*************************************************************
 namespace Dune {  

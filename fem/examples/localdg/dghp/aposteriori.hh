@@ -1,10 +1,10 @@
 #ifndef APOSTERIORI_HH 
 #define APOSTERIORI_HH 
 
-#include <fem/quadrature/cachequad.hh>
-#include <fem/quadrature/gausspoints.hh>
-#include <fem/pass/tuples.hh>
-#include <fem/pass/utility.hh>
+#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/gausspoints.hh>
+#include <dune/common/tuples.hh>
+#include <dune/fem/pass/utility.hh>
 // include restricion, prolongation and adaptation operator classes for discrete functions
 #include <dune/fem/space/dgspace/dgadaptoperator.hh>
 

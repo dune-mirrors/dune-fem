@@ -10,7 +10,7 @@
 // #include <dune/grid/albertagrid.hh>
 #include "advectdiff.hh"
 
-#include <dune/fem/solver/odesolver.hh>
+#include "odesolver.hh"
 
 // Approximations Ordnung
 enum {order=POLORDER,rksteps=POLORDER+1}; 
