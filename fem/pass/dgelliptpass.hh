@@ -298,17 +298,18 @@ namespace Dune {
       tauneigh_(0.0),
       phiNeigh_(0.0),
       grads_(0.0),
-      //upwind_(1.0),
       time_(0),
       twistUtil_(spc.grid()),
-      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()+1) : volumeQuadOrd ),
+      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
-      maxNumberUnknowns_(10* (spc_.getBaseFunctionSet(*(spc_.begin())).numBaseFunctions())),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
-      beta_(0.01),
+      beta_(1.0),
+      power_(1.0),
       eta_(1.0),
       matrixAssembled_(false)                                                              
     {
+      readParameter("parameter","beta",beta_);
+      readParameter("parameter","power",power_);
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
@@ -324,8 +325,6 @@ namespace Dune {
       }
 
       for(int i=0; i<GradDimRange; ++i) one_[i][i] = 1.0;
-      //upwind_[0] = M_PI;
-      //upwind_[1] = M_LN2;
 
       if(problem_.hasSource())
       {
@@ -851,10 +850,10 @@ namespace Dune {
             
             double t = 0.0;
             // get boundary value 
-            RangeType dirichletValue(0.0);
+            RangeType boundaryValue(0.0);
 
             BoundaryIdentifierType bndType = problem_.boundaryValue(nit,t,
-                faceQuadInner.localPoint(l),dirichletValue);
+                faceQuadInner.localPoint(l),boundaryValue);
 
             if(gradProblem_.hasSource())
             {
@@ -886,7 +885,7 @@ namespace Dune {
 
                 GradientRangeType sigmaFluxEn,sigmaFluxFake; 
                 
-                sigmaflux(unitNormal,faceVol,fMat_[0],fMat_[0],sigmaFluxEn,sigmaFluxFake);
+                sigmaflux_beta_0(unitNormal,faceVol,fMat_[0],fMat_[0],sigmaFluxEn,sigmaFluxFake);
                 
                 // factor 2, becasue on boundary flux is identity, see
                 // sigmaflux  
@@ -897,9 +896,10 @@ namespace Dune {
                 if(bndType.isDirichletNonZero())
                 {
                   // u^ on \gamma_D
-                  RangeType bndVal(dirichletValue);
-                  bndVal *= sigmaFlux; 
-                  bndVal *= gradFMat_[0][0];
+                  RangeType bndVal(boundaryValue);
+                  bndVal *= tau_[0] * unitNormal; // sigmaFlux; 
+                  bndVal *= intel;
+                  //bndVal *= gradFMat_[0][0];
                   gradRhs[i] += bndVal[0];
                 }
                               
@@ -920,7 +920,6 @@ namespace Dune {
                   if(bndType.isNeumannType())
                   {
                     Val *= gradFMat_[0][0];
-                    // substract value when neumann boundary 
                     gradMatrixEn.add( i , j , Val );
                   }
                   
@@ -931,7 +930,7 @@ namespace Dune {
                       // dirichlet boundary values for u 
                       if(bndType.isDirichletNonZero())
                       {
-                        RangeType bndVal (dirichletValue);
+                        RangeType bndVal (boundaryValue);
                           
                         // only valid for dim range = 1
                         double rhsVal1 = bndVal[0] * phi_[0];
@@ -963,7 +962,7 @@ namespace Dune {
                     // Neumann boundary
                     if(i==0)
                     {
-                      RangeType bndVal (dirichletValue);
+                      RangeType bndVal (boundaryValue);
                       // dirichlet boundary values for u 
                       bndVal *= phi_[0];
                       bndVal *= bndFactor;
@@ -1167,9 +1166,6 @@ namespace Dune {
       // evaluate flux for beta = 0.0 
       uflux_beta_0(unitNormal,phiLeft,phiRight,gLeft,gRight);
 
-      // now part, if beta != 0.0 
-      //double h = integrationNormal.two_norm();
-     
       DomainType left(unitNormal);
       DomainType right(unitNormal);
       
@@ -1177,33 +1173,16 @@ namespace Dune {
       right *= -phiRight[0];
       
       DomainType scaling(unitNormal);
-      scaling *= beta_ * SQR(faceVol);
+      //scaling *= beta_ * faceVol;
+      scaling *= beta_ * std::pow(faceVol,power_);
       
       gLeft  += scaling * left; 
       gRight += scaling * right;
-      
-      /*
-      double scaling = upwind_*integrationNormal;//integrationNormal.two_norm();
-      //double scaling = integrationNormal.two_norm();
-      scaling *=beta_;
-
-      static RangeType tmpLeft;
-      static RangeType tmpRight; 
-      tmpLeft  = phiLeft; 
-      tmpRight = phiRight;
-      
-      tmpLeft  *= scaling;
-      tmpRight *= scaling;
-     
-      // add to flux 
-      gLeft  -= tmpLeft;
-      gRight += tmpRight;
-      */
     }
 
     // --sigmaflux
     template<class argType>
-    void sigmaflux(const DomainType& unitNormal, const double faceVol,
+    void sigmaflux_beta_0(const DomainType& unitNormal, const double faceVol,
        const argType& tauleft,
        const argType& tauright,
        GradientRangeType & sigmaLeft,
@@ -1217,9 +1196,20 @@ namespace Dune {
         sigmaLeft[j]  *= 0.5*tauleft[j];
         sigmaRight[j] *= 0.5*tauright[j];
       }
+    };
+
+    // --sigmaflux
+    template<class argType>
+    void sigmaflux(const DomainType& unitNormal, const double faceVol,
+       const argType& tauleft,
+       const argType& tauright,
+       GradientRangeType & sigmaLeft,
+       GradientRangeType  & sigmaRight ) const 
+    {
+      sigmaflux_beta_0(unitNormal,faceVol,tauleft,tauright,sigmaLeft,sigmaRight);
 
       DomainType scaling(unitNormal);
-      scaling *= beta_ * SQR(faceVol);
+      scaling *= beta_ * std::pow(faceVol,power_);
 
       DomainType jumpLeft(scaling);
       DomainType jumpRight(scaling);
@@ -1230,15 +1220,6 @@ namespace Dune {
       sigmaLeft  -= jumpLeft;
       sigmaRight += jumpRight; 
       
-      /*
-      // second part
-      double scaling = upwind_*integrationNormal; //SQR(integrationNormal.two_norm());
-      //double scaling = integrationNormal.two_norm();
-      scaling *=beta_;
-      
-      sigmaLeft  *= (0.5 + scaling);
-      sigmaRight *= (0.5 - scaling); 
-      */
       return ;
     }
 
@@ -1304,17 +1285,16 @@ namespace Dune {
     mutable RangeType gradEval_;
     mutable DomainType grads_;
 
-    //DomainType upwind_;
     TimeProvider* time_;
 
     TwistUtility<GridType> twistUtil_;
 
     int volumeQuadOrd_,faceQuadOrd_;
 
-    int maxNumberUnknowns_;
     mutable MatrixHandlerType matrixHandler_;
 
-    const double beta_;
+    double beta_;
+    double power_;
     const double eta_;
     mutable bool matrixAssembled_;
     mutable bool preCond_;
