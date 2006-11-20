@@ -9,7 +9,7 @@ class L2Projection
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
     
-    const FunctionSpaceType& space =  discFunc.getFunctionSpace();
+    const FunctionSpaceType& space =  discFunc.space();
     
     discFunc.clear();
     

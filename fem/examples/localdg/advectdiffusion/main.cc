@@ -2,7 +2,6 @@
 #include <config.h>
 
 // use dune-fem tuples 
-#include <dune/fem/pass/tuples.hh>
 #include <dune/fem/pass/utility.hh>
 
 #include <dune/common/utility.hh>
@@ -25,6 +24,7 @@ using namespace std;
 #include <dune/fem/solver/odesolver.hh>
 
 using namespace Dune;
+//#include "scalarmodels.hh"			
 #include "scalarmodels.hh"
 #include "stuff.cc"
 // Initial Data
