@@ -141,9 +141,16 @@ class ExplTimeStepper : public TimeProvider {
     resetTimeStepEstimate();
     double t=time();
     double* u=U0.leakPointer();
+    
     const bool convergence = ode_->step(t, dt_, u);
 
     assert(convergence);
+    if(!convergence) 
+    {
+      std::cerr << "No Convergence of ExplTimeStepper! \n";
+      abort();
+    }
+
     setTime(t+dt_);
     dt_=cfl_*timeStepEstimate();
 

@@ -542,10 +542,46 @@ class FGMRESOp : public Operator<
 {
 
 private:
+  template <class SolverType, bool hasPreconditioning> 
+  struct SolverCaller 
+  {
+    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+    static void  call(SolverType & solver, 
+               OperatorImp & op, 
+               const PreConMatrix & pm, 
+               const DiscreteFunctionImp & arg, 
+               DiscreteFunctionImp & dest) 
+    {
+      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm); 
+      solver.set_preconditioner(pre);
+
+      // note argument and destination are toggled 
+      solver.solve(op, dest.leakPointer() , arg.leakPointer() );
+    }
+  };
+
+  // without any preconditioning 
+  template <class SolverType> 
+  struct SolverCaller<SolverType,false>
+  {
+    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+    static void  call(SolverType & solver, 
+               OperatorImp & op, 
+               const PreConMatrix & pm, 
+               const DiscreteFunctionImp & arg, 
+               DiscreteFunctionImp & dest)
+    {
+      // note argument and destination are toggled 
+      solver.solve(op, dest.leakPointer() , arg.leakPointer() );
+    }
+  };
+
   // solver 
   mutable DuneODE::FGMRES solver_;
   // wrapper to fit interface of FGMRES operator 
+  typedef DuneODE::FGMRES SolverType;
   mutable DuneODE::SolverInterfaceImpl<OperatorType> op_; 
+  mutable OperatorType & orgOp_;
   
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
@@ -556,7 +592,7 @@ private:
 public:
   FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
       : solver_(DuneODE::Communicator::instance(),20)
-      , op_(op), epsilon_ ( absLimit ) 
+      , op_(op), orgOp_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
   }
@@ -587,8 +623,21 @@ public:
       solver_.DynamicalObject::set_output(std::cout);
     }
 
-    // note argument and destination are toggled 
-    solver_.solve(op_, dest.leakPointer() , arg.leakPointer() );
+    if( orgOp_.hasPreconditionMatrix())
+    {
+      SolverCaller<SolverType,
+                   // check wheter operator has precondition methods 
+                   // to enable preconditioning derive your operator from 
+                   // OEMSolver::PreconditionInterface
+                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                     // call solver, see above 
+                     call(solver_,op_,orgOp_.preconditionMatrix(), arg,dest);
+      
+    }
+    else 
+    {
+      assert(false);
+    }
 
     // finalize operator  
     finalize ();
