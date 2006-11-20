@@ -35,8 +35,10 @@ public:
   //! maximum 'nz' non zero values in each row 
   //! and intialize all values with 'val'
   SparseRowMatrix(int rows, int cols, int nz, const T& val);
-  
-  void makeSpMat(int rows, int cols, int nz, const T& val);
+ 
+  //! reserve memory for given rows, and number of non zeros, set all
+  //! entries to value of val
+  void reserve(int rows, int cols, int nz, const T& val);
 
   //! free memory for values_ and col_
   ~SparseRowMatrix();

@@ -88,7 +88,9 @@ namespace Dune {
 
     const SpaceType & singleSpace_; 
     const GradientSpaceType & gradientSpace_;
-    const int maxNumberUnknowns_;
+    
+    int singleMaxNumbers_;
+    int gradMaxNumbers_;
 
     MatrixType stabMatrix_; 
     MatrixType gradMatrix_;
@@ -104,15 +106,18 @@ namespace Dune {
                        bool hasPcMatrix = false )
       : singleSpace_(singleSpace)
       , gradientSpace_(gradientSpace) 
-      , maxNumberUnknowns_(10* (singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
-      , stabMatrix_(singleSpace_.size(),singleSpace_.size(),maxNumberUnknowns_,0.0)
-      , gradMatrix_(gradientSpace_.size(),singleSpace_.size(),maxNumberUnknowns_,0.0)
-      , divMatrix_(singleSpace_.size(),gradientSpace_.size(),maxNumberUnknowns_,0.0)
-      , massMatrix_(gradientSpace_.size(),gradientSpace_.size(),1,0.0) // diagonal matrix 
-      , pcMatrix_(singleSpace_.size(),singleSpace_.size(),1,0.0) // diagonal matrix 
+      , singleMaxNumbers_(-1)
+      , gradMaxNumbers_ (-1) 
+      , stabMatrix_()
+      , gradMatrix_()
+      , divMatrix_()
+      , massMatrix_() // diagonal matrix 
+      , pcMatrix_() // diagonal matrix 
       , hasMassMatrix_(hasMassMatrix)
       , hasPcMatrix_(hasPcMatrix)
-    {}
+    {
+      reserve();
+    }
 
     MatrixType & stabMatrix() { return stabMatrix_; }
     MatrixType & gradMatrix() { return gradMatrix_; }
@@ -124,29 +129,36 @@ namespace Dune {
 
     void resizeAndClear() 
     {
-      int singleSize = singleSpace_.size();
-      int gradSize   = gradientSpace_.size();
-      std::cout << "Resize Matrix with " << singleSize << "\n";
-
-      gradMatrix_.resize(gradSize,singleSize);
-      gradMatrix_.clear();
-        
-      divMatrix_.resize(singleSize,gradSize);
-      divMatrix_.clear();
-  
-      stabMatrix_.resize(singleSize,singleSize);
-      stabMatrix_.clear();
-
-      if(hasMassMatrix())
+      if( ! hasBeenSetup() ) 
       {
-        massMatrix_.resize(gradSize,gradSize);
-        massMatrix_.clear();
+        reserve(); 
       }
-
-      if(hasPcMatrix()) 
+      else 
       {
-        pcMatrix_.resize(singleSize);
-        pcMatrix_.clear();
+        int singleSize = singleSpace_.size();
+        int gradSize   = gradientSpace_.size();
+        std::cout << "Resize Matrix with " << singleSize << "\n";
+
+        gradMatrix_.resize(gradSize,singleSize);
+        gradMatrix_.clear();
+          
+        divMatrix_.resize(singleSize,gradSize);
+        divMatrix_.clear();
+    
+        stabMatrix_.resize(singleSize,singleSize);
+        stabMatrix_.clear();
+
+        if(hasMassMatrix())
+        {
+          massMatrix_.resize(gradSize,gradSize);
+          massMatrix_.clear();
+        }
+
+        if(hasPcMatrix()) 
+        {
+          pcMatrix_.resize(singleSize);
+          pcMatrix_.clear();
+        }
       }
     }
 
@@ -165,6 +177,44 @@ namespace Dune {
         pcMatrix_.clear();
       }
     } 
+
+    bool hasBeenSetup () const 
+    {
+      return (singleMaxNumbers_ > 0) && (gradMaxNumbers_ > 0);
+    }
+
+    void reserve() 
+    {
+      // if empty grid do nothing (can appear in parallel runs)
+      if( (singleSpace_.begin()   != singleSpace_.end()) && 
+          (gradientSpace_.begin() != gradientSpace_.end()) )
+      {
+        singleMaxNumbers_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
+        gradMaxNumbers_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
+
+        assert( singleMaxNumbers_ > 0 );
+        assert( gradMaxNumbers_ > 0 );
+
+        // upper estimate for number of neighbors 
+        enum { dim = SpaceType :: GridType :: dimension };
+        singleMaxNumbers_ *= dim * 2; // e.g. 6 for dim = 3
+        gradMaxNumbers_   *= dim * 2;
+
+        stabMatrix_.reserve(singleSpace_.size(),singleSpace_.size(),singleMaxNumbers_,0.0);
+        gradMatrix_.reserve(gradientSpace_.size(),singleSpace_.size(),singleMaxNumbers_,0.0);
+        divMatrix_.reserve(singleSpace_.size(),gradientSpace_.size(),gradMaxNumbers_,0.0);
+        
+        if( hasMassMatrix() ) 
+        {
+          massMatrix_.reserve(gradientSpace_.size(),gradientSpace_.size(),1,0.0);
+        }
+
+        if( hasPcMatrix() )
+        {
+          pcMatrix_.reserve(singleSpace_.size(),singleSpace_.size(),1,0.0);
+        }
+      }
+    }
   };
 
 

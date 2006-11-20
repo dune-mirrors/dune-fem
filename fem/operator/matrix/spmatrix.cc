@@ -29,7 +29,7 @@ SparseRowMatrix<T>::~SparseRowMatrix()
 
 template <class T> 
 void SparseRowMatrix<T>::
-makeSpMat(int rows, int cols, int nz,const T& val )
+reserve(int rows, int cols, int nz,const T& val )
 {
   dim_[0] = rows;
   dim_[1] = cols;
@@ -54,7 +54,7 @@ template <class T>
 SparseRowMatrix<T>::
 SparseRowMatrix(int rows, int cols, int nz, const T& val)
 {
-  makeSpMat(rows,cols,nz,val);
+  reserve(rows,cols,nz,val);
 }
 
 template <class T> 
@@ -75,7 +75,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
 {
   int whichCol = -1;
   int thisCol = 0;
-  for(int i=0; i<nz_; i++)
+  for(int i=0; i<nz_; ++i)
   {
     thisCol = col_[row*nz_ +i];
     if(col == thisCol) return i;
@@ -85,6 +85,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
   //assert(whichCol != -1);
   if(whichCol < 0) 
   {
+    std::cout << "Writing colIndex for, nz = " << nz_ <<  " , " << col << "\n";
     for(int i=0; i<nz_; ++i) 
     {
       std::cout << col_[row*nz_ +i] << " ";
@@ -534,7 +535,7 @@ void SparseRowMatrix<T>::resize (int newRow, int newCol)
       if(col_) delete [] col_;
 
       T tmp = 0;
-      makeSpMat(newRow,newCol,nz_,tmp);
+      reserve(newRow,newCol,nz_,tmp);
     }
     else 
     {
