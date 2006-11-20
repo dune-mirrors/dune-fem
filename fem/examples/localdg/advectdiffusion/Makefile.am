@@ -1,9 +1,9 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS)
 
-noinst_PROGRAMS = advectdiff #euler dgtest dgtest1 #datadisp 
+noinst_PROGRAMS = advectdiff dgtest #euler dgtest dgtest1 #datadisp 
 advectdiff_SOURCES = main.cc
 #euler_SOURCES = euler.cc
-#dgtest_SOURCES = dgtest.cc
+dgtest_SOURCES = dgtest.cc
 #dgtest1_SOURCES = dgtest.cc
 #datadisp_SOURCES = datadisp.cc
 

@@ -20,7 +20,7 @@ public:
     const typename DiscreteFunctionType::FunctionSpaceType 
         & space = discFunc.getFunctionSpace();  
 
-    int polOrd = 2 * space.polynomOrder() + 2;
+    int polOrd = 2 * space.order() + 2;
   
     typedef typename FunctionSpaceType::GridType GridType;
     typedef typename FunctionSpaceType::IteratorType IteratorType;

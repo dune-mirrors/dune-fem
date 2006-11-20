@@ -350,7 +350,7 @@ namespace Dune {
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       typedef typename ElementType<1, ArgumentTuple>::Type WType;
       const UType& argU = Element<0>::get(u);
-      const WType argW = Element<1>::get(u);
+      const WType& argW = Element<1>::get(u);
       // Advection
       model_.analyticalFlux(en,time,x,argU,f);
       // Diffusion

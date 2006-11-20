@@ -34,11 +34,9 @@ int main(int argc, char ** argv, char ** envp) {
     exit(EXIT_FAILURE);  
   }
 	
-  MPISTART
-						
   // Polynomial and ODE order
   // Grid:
-  GridPtr<GridType> grid(argv[1],MPI_COMM_WORLD);
+  GridPtr<GridType> grid(argv[1]); // ,MPI_COMM_WORLD);
 	
   int repeats = 1;
   if (argc>2)
@@ -61,7 +59,7 @@ int main(int argc, char ** argv, char ** envp) {
   switch (order) {
   case 0: cfl=0.9;  break;
   case 1: cfl=0.2; break;
-  case 2: cfl=0.1;  break;
+  case 2: cfl=0.15;  break;
   case 3: cfl=0.05;  break;
   case 4: cfl=0.09; break;
   }
@@ -69,9 +67,6 @@ int main(int argc, char ** argv, char ** envp) {
   if (argc>6)
     cfl=atof(argv[6]);
 	
-  cfl = cfl/3.0;
-  cfl /= 2.0;
-
   cout << epsilon << endl;
 	
   InitialDataType problem(epsilon,true);
@@ -205,7 +200,6 @@ int main(int argc, char ** argv, char ** envp) {
   
   eocoutput.printTexEnd(timer.elapsed());
   
-  MPIEND
 } 
 
 
