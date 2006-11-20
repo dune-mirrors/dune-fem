@@ -15,8 +15,6 @@ class L2Projection
     
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
     
-    const int dim = GridType::dimension;
-    
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
     
@@ -29,11 +27,9 @@ class L2Projection
     for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
       const typename FunctionSpaceType::BaseFunctionSetType & set =
-	lf.getBaseFunctionSet();
+	lf.baseFunctionSet();
       for(int i=0; i<lf.numDofs(); i++) {
         for(int qP = 0; qP < quad.nop(); qP++) {
-	  double det =
-	    (*it).geometry().integrationElement(quad.point(qP));
 	  f.evaluate((*it).geometry().global(quad.point(qP)), ret);
 	  set.eval(i,quad,qP,phi);
 	  lf[i] += quad.weight(qP) * (ret * phi) ;
