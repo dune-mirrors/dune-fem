@@ -25,6 +25,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
+#include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/utility/twistutility.hh>
 
 #include <dune/fem/space/common/communicationmanager.hh>
@@ -189,7 +190,7 @@ namespace Dune {
       const GeometryType & geo = en.geometry();
 
       double massVolElinv;
-      double vol = volumeElement(geo, volQuad,massVolElinv);
+      double vol = volumeElement(geo, massVolElinv);
       
       const IndexSetType& iset = spc_.indexSet();
 
@@ -247,7 +248,7 @@ namespace Dune {
 
             const GeometryType & nbGeo = nb.geometry();
             double massVolNbinv;
-            nbvol = volumeElement(nbGeo, volQuad,massVolNbinv);
+            nbvol = volumeElement(nbGeo, massVolNbinv);
             if (nbvol<minvol) minvol=nbvol;
             for (int l = 0; l < faceQuadInner_nop; ++l) 
             {
@@ -305,20 +306,18 @@ namespace Dune {
 
   private:
     double volumeElement(const GeometryType& geo,
-                         const VolumeQuadratureType& quad,
                          double& massVolinv) const 
     {
-      massVolinv = 0.;
-      double result = 0;
-      for (int qp = 0; qp < quad.nop(); ++qp) 
-      {
-        massVolinv += quad.weight(qp);
-        result += 
-          quad.weight(qp) * geo.integrationElement(quad.point(qp));
-      }
-      massVolinv /= result;
-      assert(fabs(massVolinv*geo.integrationElement(quad.point(0))-1.)<1e-10);
-      return result;
+      double volume = geo.volume(); 
+
+      typedef typename GeometryType :: ctype coordType; 
+      const ReferenceElement< coordType, dim > & refElem =
+             ReferenceElements< coordType, dim >::general(geo.type());
+      
+      double volRef = refElem.volume();
+
+      massVolinv = volRef/volume;
+      return volume;
     }
     
   private:
