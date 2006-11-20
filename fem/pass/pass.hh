@@ -114,7 +114,8 @@ namespace Dune {
     void operator()(const GlobalArgumentType& arg, DestinationType& dest) const
     {
       previousPass_.pass(arg);
-      const TotalArgumentType totalArg(&arg, previousPass_.localArgument());
+      typename PreviousPassType::NextArgumentType prevArg=previousPass_.localArgument();
+      const TotalArgumentType totalArg(&arg, prevArg);
       this->compute(totalArg, dest);
     }
 

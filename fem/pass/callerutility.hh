@@ -42,7 +42,8 @@ namespace Dune {
     //! Extracts the elements specified by the selector template argument.
     //! \param arg Argument tuple.
     static inline ResultType apply(ArgTupleImp& arg) {
-      return ResultType(Element<index>::get(arg), NextFilterType::apply(arg));
+      typename NextFilterType::ResultType nextFilter = NextFilterType::apply(arg);
+      return ResultType(Element<index>::get(arg), nextFilter);
     }
   };
   
@@ -154,10 +155,10 @@ namespace Dune {
       Head>::PointeeType::LocalFunctionType LocalFunctionType;
 
   public:
-    static inline ResultType apply(Pair<Head, Tail>& pairs) {
+    static inline ResultType apply(const Pair<Head, Tail>& pairs) {
       LocalFunctionType tmp(*pairs.first());
-      return ResultType(tmp,
-                        LocalFunctionCreator<Tail>::apply(pairs.second()));
+      typename LocalFunctionCreator<Tail>::ResultType localFunc = LocalFunctionCreator<Tail>::apply(pairs.second());
+      return ResultType(tmp,localFunc);
     }
   };
 
@@ -175,7 +176,7 @@ namespace Dune {
     typedef Pair<LocalFunctionType, Nil> ResultType;
  
   public:
-    static inline ResultType apply(Pair<Head, Nil>& pairs) {
+    static inline ResultType apply(const Pair<Head, Nil>& pairs) {
       LocalFunctionType tmp(*pairs.first());
       Nil n;
       return ResultType(tmp, n);
@@ -206,14 +207,15 @@ namespace Dune {
   public:
     static inline ResultType apply() {
       ValueType tmp(0.0);
-      ResultType result(tmp, Creator<TypeEvaluator, Tail>::apply());
+      typename Creator<TypeEvaluator, Tail>::ResultType created = Creator<TypeEvaluator, Tail>::apply();
+      ResultType result(tmp, created);
       return result;
     }
 
     static inline ResultType apply(Pair<Head, Tail>& pairs) {
       ValueType tmp(0.0);
-      return ResultType(tmp,
-                        Creator<TypeEvaluator, Tail>::apply(pairs.second()));
+      typename Creator<TypeEvaluator, Tail>::ResultType created = Creator<TypeEvaluator, Tail>::apply(pairs.second());
+      return ResultType(tmp,created);
     }
   };
   
