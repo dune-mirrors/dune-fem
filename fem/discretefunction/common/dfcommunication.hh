@@ -1,7 +1,7 @@
 #ifndef DUNE_DFCOMMUNICATION_HH
 #define DUNE_DFCOMMUNICATION_HH
 
-#include <dune/fem/pass/tuples.hh>
+#include <dune/common/tuples.hh>
 //- Dune includes 
 
 #include <dune/grid/common/datahandleif.hh>
