@@ -144,7 +144,8 @@ namespace Dune {
 
     //! Returns a compilation of the results of the preceding passes
     NextArgumentType localArgument() const {
-      return NextArgumentType(destination_, previousPass_.localArgument());
+      typename PreviousPassType :: NextArgumentType nextArg( previousPass_.localArgument() );
+      return NextArgumentType(destination_, nextArg );
     }
 
     //! With this method, you can get access to the TimeProvider, if needed.
