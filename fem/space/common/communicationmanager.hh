@@ -422,7 +422,9 @@ namespace Dune {
   };
 
 #else 
+#ifndef NDEBUG
 #warning "No Parallel ALUGrid found, using default CommunicationManager!"
+#endif
   // if no ALUGrid found, supply default implementation 
    
   //! \brief Default CommunicationManager class just using the grids communicate
