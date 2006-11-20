@@ -19,6 +19,9 @@ public:
 
   typedef SparseRowMatrix<T> ThisType;
 
+  enum { defaultCol = -1 };
+  enum { firstCol = defaultCol + 1 };
+
 private:
   T* values_ ;       //! data values (nz_ elements)
   int* col_;        //! row_ptr (dim_[0]+1 elements)
