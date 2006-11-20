@@ -36,7 +36,7 @@ namespace Dune {
     void pass(const GlobalArgumentType& arg) const {
     }
     //! Returns the closure of the destination tuple.
-    NextArgumentType localArgument() const { return Nil(); }
+    NextArgumentType localArgument() const { return nullType(); }
     //! No memory needs to be allocated.
     void allocateLocalMemory() {}
     //! We don't need no time either

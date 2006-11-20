@@ -63,7 +63,7 @@ namespace Dune {
     
     //! Provides the closure of the filtered tuple
     static inline ResultType apply(ArgTupleImp& arg) {
-      return Nil();
+      return nullType();
     }
   };
 
@@ -115,8 +115,7 @@ namespace Dune {
     apply(Pair<Head, Nil>& p) {
       typedef typename Traits<Head, Nil>::ResultType Result;
       typedef typename Traits<Head, Nil>::LocalFunctionType LocalFunction;
-      return Result(LocalFunction(*p.first()),
-                    Nil());
+      return Result(LocalFunction(*p.first()),nullType());
     }
 
     template <class Head, class Tail>
@@ -178,8 +177,7 @@ namespace Dune {
   public:
     static inline ResultType apply(const Pair<Head, Nil>& pairs) {
       LocalFunctionType tmp(*pairs.first());
-      Nil n;
-      return ResultType(tmp, n);
+      return ResultType(tmp, nullType());
     }
   };
 
@@ -234,14 +232,12 @@ namespace Dune {
   public:
     static inline ResultType apply() {
       ValueType tmp(0.0);
-      Nil n;
-      return ResultType(tmp, n);
+      return ResultType(tmp, nullType());
     }
 
     static inline ResultType apply(Pair<Head, Nil>& pairs) {
       ValueType tmp(0.0);
-      Nil n;
-      return ResultType(tmp, n);
+      return ResultType(tmp, nullType());
     }
   };
 
