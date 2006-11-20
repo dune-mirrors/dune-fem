@@ -292,7 +292,8 @@ namespace Dune {
                   JacobianRangeType& ret) const;
 
     //! get the base function set
-    const BaseFunctionSetType& getBaseFunctionSet() const;
+    const BaseFunctionSetType& baseFunctionSet() const;
+    const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED {return baseFunctionSet();}
   private:
     //- Forbidden methods
     //! assignment operator

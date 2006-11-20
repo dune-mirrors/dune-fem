@@ -228,9 +228,13 @@ public:
     localFunc().init(en);
   } 
 
-  const BaseFunctionSetType& getBaseFunctionSet() const 
+  const BaseFunctionSetType& baseFunctionSet() const 
   {
-    return localFunc().getBaseFunctionSet();
+    return localFunc().baseFunctionSet();
+  }
+  const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED
+  {
+    return localFunc().baseFunctionSet();
   }
 
 private:

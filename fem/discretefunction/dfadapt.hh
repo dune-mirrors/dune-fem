@@ -348,7 +348,9 @@ public:
   void assign(int numDof, const RangeType& dofs);
   
   inline
-  const BaseFunctionSetType& getBaseFunctionSet() const;
+  const BaseFunctionSetType& baseFunctionSet() const;
+  inline
+  const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED {return baseFunctionSet();}
 protected: 
   //! update local function for given Entity  
   template <class EntityType > 

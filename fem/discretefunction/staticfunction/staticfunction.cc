@@ -464,7 +464,7 @@ evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
   assert(init_);
   assert(en.geometry().checkInside(x));
   ret *= 0.0;
-  const BaseFunctionSetType& bSet = fSpace_.getBaseFunctionSet(en);
+  const BaseFunctionSetType& bSet = fSpace_.baseFunctionSet(en);
 
   for (int i = 0; i < bSet.numBaseFunctions(); ++i)
   {
@@ -513,7 +513,7 @@ jacobianLocal(EntityType& en, const DomainType& x,
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
   ret *= 0.0;
-  const BaseFunctionSetType& bSet = fSpace_.getBaseFunctionSet(en);
+  const BaseFunctionSetType& bSet = fSpace_.baseFunctionSet(en);
 
   for (int i = 0; i < bSet.numBaseFunctions(); ++i) {
     tmpGrad_ *= 0.0;
@@ -534,9 +534,9 @@ init (const EntityType &en ) const
   if(!uniform_ || !init_)
   {
     numOfDof_ = 
-      fSpace_.getBaseFunctionSet(en).numBaseFunctions();
+      fSpace_.baseFunctionSet(en).numBaseFunctions();
     numOfDifferentDofs_ = 
-      fSpace_.getBaseFunctionSet(en).numDifferentBaseFunctions();
+      fSpace_.baseFunctionSet(en).numDifferentBaseFunctions();
 
     if(numOfDof_ > values_.size())
       values_.resize( numOfDof_ );

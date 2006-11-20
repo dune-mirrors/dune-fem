@@ -482,7 +482,7 @@ evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
   assert(init_);
   assert(en.geometry().checkInside(x));
   ret = 0.0;
-  const BaseFunctionSetType& bSet = getBaseFunctionSet();
+  const BaseFunctionSetType& bSet = baseFunctionSet();
 
   for (int i = 0; i < numDofs(); ++i) 
   {
@@ -506,7 +506,7 @@ evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) 
   assert(init_);
   assert(en.geometry().checkInside(quad.point(quadPoint)));
   ret = 0.0;
-  const BaseFunctionSetType& bSet = getBaseFunctionSet();
+  const BaseFunctionSetType& bSet = baseFunctionSet();
 
   for (int i = 0; i < numDofs(); ++i) 
   {
@@ -527,7 +527,7 @@ jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
   ret = 0.0;
-  const BaseFunctionSetType& bSet = getBaseFunctionSet();
+  const BaseFunctionSetType& bSet = baseFunctionSet();
   typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
   const JacobianInverseType& jti = 
     en.geometry().jacobianInverseTransposed(quad.point(quadPoint));
@@ -558,7 +558,7 @@ jacobianLocal(EntityType& en, const DomainType& x,
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
   ret = 0.0;
-  const BaseFunctionSetType& bSet = getBaseFunctionSet();
+  const BaseFunctionSetType& bSet = baseFunctionSet();
   typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
   const JacobianInverseType& jti = 
     en.geometry().jacobianInverseTransposed(x);
@@ -589,7 +589,7 @@ template<class DiscreteFunctionType>
 inline 
 const typename 
 LocalFunctionAdapt<DiscreteFunctionType>::BaseFunctionSetType& 
-LocalFunctionAdapt<DiscreteFunctionType>::getBaseFunctionSet() const {
+LocalFunctionAdapt<DiscreteFunctionType>::baseFunctionSet() const {
   assert(init_ && baseSet_);
   return *baseSet_;
 }
@@ -610,7 +610,7 @@ init (const EntityType &en) const
   {
     if(geoType_ != en.geometry().type()) 
     {
-      baseSet_  = &fSpace_.getBaseFunctionSet(en);
+      baseSet_  = &fSpace_.baseFunctionSet(en);
       numOfDof_ = baseSet_->numBaseFunctions();
     
       if(numOfDof_ > this->values_.size())

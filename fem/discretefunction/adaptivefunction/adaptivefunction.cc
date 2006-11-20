@@ -92,7 +92,7 @@ namespace Dune {
     assert(init_);
     assert(en.geometry().checkInside(x));
     ret = 0.0;
-    const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
     for (int i = 0; i < this->numDofs(); ++i) 
     {
@@ -114,7 +114,7 @@ namespace Dune {
     assert(init_);
     assert(en.geometry().checkInside(quad.point(quadPoint)));
     ret = 0.0;
-    const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
     for (int i = 0; i < this->numDofs(); ++i) 
     {
@@ -137,7 +137,7 @@ namespace Dune {
     enum { dim = EntityType::dimension };
 
     ret = 0.0;
-    const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     
     for (int i = 0; i < this->numDofs(); ++i) {
       tmpGrad_ = 0.0;
@@ -163,7 +163,7 @@ namespace Dune {
     enum { dim = EntityType::dimension };
 
     ret = 0.0;
-    const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     
     typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
     const JacobianInverseType& jti = 
@@ -184,7 +184,7 @@ namespace Dune {
   template <class DiscreteFunctionSpaceImp>
   const typename
   AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::BaseFunctionSetType& 
-  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::getBaseFunctionSet() const {
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::baseFunctionSet() const {
     assert(baseSet_);
     return *baseSet_;
   }
@@ -206,7 +206,7 @@ namespace Dune {
     {
       if( geoType_ != en.geometry().type() )
       {
-        baseSet_ = &spc_.getBaseFunctionSet(en);
+        baseSet_ = &spc_.baseFunctionSet(en);
 
         int numOfDof = baseSet_->numBaseFunctions();
         values_.resize(numOfDof);
@@ -339,7 +339,7 @@ namespace Dune {
   {
     assert(en.geometry().checkInside(x));
 
-    const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     result = 0.0;
 
     assert(static_cast<int>(values_.size()) == bSet.numDifferentBaseFunctions());
@@ -375,7 +375,7 @@ namespace Dune {
     typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
     result = 0.0;
 
-    const BaseFunctionSetType& bSet = this->getBaseFunctionSet();
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const JacobianInverseType& jInv = 
       en.geometry().jacobianInverseTransposed(x);
 
@@ -437,7 +437,7 @@ namespace Dune {
     {
       if( geoType_ != en.geometry().type() )
       {
-        baseSet_ = &spc_.getBaseFunctionSet(en);
+        baseSet_ = &spc_.baseFunctionSet(en);
 
         int numDof = baseSet_->numBaseFunctions();
         values_.resize(numDof);
