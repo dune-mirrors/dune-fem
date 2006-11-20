@@ -181,7 +181,7 @@ namespace Dune {
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
       const int updEn_numDofs = updEn.numDofs();
-      const BaseFunctionSetType& bsetEn = updEn.getBaseFunctionSet(); 
+      const BaseFunctionSetType& bsetEn = updEn.baseFunctionSet(); 
       
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
@@ -244,7 +244,7 @@ namespace Dune {
             caller_.setNeighbor(nb);
             LocalFunctionType updNeigh =dest_->localFunction(nb);
 
-            const BaseFunctionSetType& bsetNeigh = updNeigh.getBaseFunctionSet();
+            const BaseFunctionSetType& bsetNeigh = updNeigh.baseFunctionSet();
 
             const GeometryType & nbGeo = nb.geometry();
             double massVolNbinv;
@@ -311,6 +311,7 @@ namespace Dune {
       double volume = geo.volume(); 
 
       typedef typename GeometryType :: ctype coordType; 
+      enum { dim = GridType :: dimension };
       const ReferenceElement< coordType, dim > & refElem =
              ReferenceElements< coordType, dim >::general(geo.type());
       
