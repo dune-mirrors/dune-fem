@@ -46,7 +46,7 @@ struct CoarseningError {
     error = 0.;
     const FunctionSpaceType& space = df.space();  
     const BaseSetType& bset = space.getBaseFunctionSet(father);
-    int polOrd = space.polynomOrder();
+    int polOrd = space.order();
     int quadOrd = 2 * polOrd + 2;
     CachingQuadrature <GridType , 0 > quad(father,quadOrd);
     LocalFuncHelper<LDiscFuncType> ldffather(space);
@@ -171,14 +171,13 @@ public:
 
   typedef typename IndicatorDiscreteFunctionType::LocalFunctionType IndicatorLocalFuncType;
 
-
   // initialize restricion, prolongation and adaptation operator for discrete functions
   typedef RestProlOperator<DiscreteFunctionType>            RestProlType; 
   typedef RestProlOperator<IndicatorDiscreteFunctionType>   IndicatorRestProlType; 
 
 
-  typedef AdaptationManager<GridType,RestProlType>              AdaptOperatorType;
-  typedef AdaptationManager<GridType,IndicatorRestProlType>     IndicatorAdaptOperatorType;
+  typedef AdaptationManager<GridType,RestProlType>              AdaptationManagerType;
+  typedef AdaptationManager<GridType,IndicatorRestProlType>     IndicatorAdaptationManagerType;
 
   typedef AdaptationManagerInterface                                 AdaptMappingType;
 
@@ -708,9 +707,11 @@ public:
 
  template <class DiscFuncImp,  class DiscFuncImp2, class DiscFuncImp3,
 	   class DiscFuncImp4, class DiscFuncImp5, class DiscFuncImp6, class DiscFuncImp7, class DiscFuncImp8>
- void addAdaptiveFunction(DiscFuncImp *func, DiscFuncImp2 *func2, DiscFuncImp3 *func3, 
-			  DiscFuncImp4 *func4, DiscFuncImp5 *func5, DiscFuncImp6 *func6, DiscFuncImp7 *func7, DiscFuncImp8 *func8){
-  
+ void addAdaptiveFunction(DiscFuncImp *func, 
+			  DiscFuncImp2 *func2, DiscFuncImp3 *func3, 
+			  DiscFuncImp4 *func4, DiscFuncImp5 *func5, 
+			  DiscFuncImp6 *func6, DiscFuncImp7 *func7, 
+			  DiscFuncImp8 *func8){
     typedef RestProlOperator<IndicatorDiscreteFunctionType>   RestProlImp0;   
     typedef RestProlOperator<DiscFuncImp>                     RestProlImp;   
     typedef RestProlOperator<DiscFuncImp2>                    RestProlImp2; 

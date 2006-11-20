@@ -157,7 +157,7 @@ class LagrangeProjection
 		       double t) {
     
     const FunctionSpaceType& space =  discFunc.space();
-    int ord = space.polynomOrder();
+    int ord = space.order();
 
     discFunc.clear();
     

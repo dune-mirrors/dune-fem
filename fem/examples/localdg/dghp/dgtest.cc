@@ -231,7 +231,7 @@ int main(int argc, char ** argv, char ** envp) {
       adaptation_->addAdaptiveFunction(&U,&V,
 				       &(ResiduumErr.RT_),
 				       &(ResiduumErr.RS_),
-      				 &(ResiduumErr.rho_),
+				       &(ResiduumErr.rho_),
 				       &(ResiduumErr.lambda_),
 				       &(ResiduumErr.maxPol_),
 				       &(ResiduumErr.maxPolNew_));
@@ -240,7 +240,6 @@ int main(int argc, char ** argv, char ** envp) {
       eocoutput.printInput(problem,*grid,ode,argv[1]);
     
     init(eulerflux,ode,ResiduumErr,adaptation_,U,V);
-
     if (repeats>1) {
       GrapeTuple<OutputType>::output(dataio,*grid,0.0,eocloop*10,
 				     "sol",".",output);
@@ -297,7 +296,7 @@ int main(int argc, char ** argv, char ** envp) {
 	  grape.dataDisplay(U);
 	}
       } else if (repeats>1 && t-ldt<maxtime*0.25 && t>maxtime*0.25) {
-	GrapeTuple<OutputType>::output(dataio,*grid,0.0,eocloop*10+1,
+	 GrapeTuple<OutputType>::output(dataio,*grid,0.0,eocloop*10+1,
 				     "sol",".",output);
       } 
       timeerr += locerror;
@@ -334,7 +333,7 @@ int main(int argc, char ** argv, char ** envp) {
     else 
       GrapeTuple<OutputType>::
 	output(dataio,*grid,t,outputcounter,"sol",".",output);
-    if(graped) {
+  if(graped) {
       GrapeDataDisplay< GridType > grape(dg.part());
       grape.addData(ResiduumErr.RT_,"El-Res",-4);
       grape.addData(ResiduumErr.RS_,"Jmp-Res",-3);

@@ -4,24 +4,11 @@
 #include <fem/quadrature/cachequad.hh>
 #include <fem/quadrature/gausspoints.hh>
 #include <fem/pass/tuples.hh>
+#include <fem/pass/utility.hh>
+// include restricion, prolongation and adaptation operator classes for discrete functions
+#include <dune/fem/space/dgspace/dgadaptoperator.hh>
 
 namespace Dune {
-template <class TupType>
-struct TupleToPair {
-  typedef Pair<typename TupType::Type1,
-	       typename TupleToPair<typename TupType::Type2>::ReturnType> ReturnType;
-  static ReturnType convert(TupType tup) {
-    return ReturnType(tup.first(),
-		      TupleToPair<typename TupType::Type2>::convert(tup.second()));
-  }
-};
-template <class T>
-struct TupleToPair<Pair<T,Nil> > {
-  typedef Pair<T,Nil> ReturnType;
-  static ReturnType convert(Pair<T,Nil> tup) {
-    return ReturnType(tup.first(),Nil());
-  }
-};
   template <class DiscModelType,class DiscreteFunctionType> 
   class LocalResiduum {
     typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -42,7 +29,7 @@ struct TupleToPair<Pair<T,Nil> > {
       typedef typename FunctionSpaceType::GridType GridType;
       const typename DiscreteFunctionType::FunctionSpaceType 
         & space = discFunc.space();  
-      int quadOrd = 2 * space.polynomOrder() + 2;
+      int quadOrd = 2 * space.order() + 2;
       const GaussPts& timeQuad = GaussPts::instance();
       discFunc.setEntity(en);
       CachingQuadrature <GridType , 0 > quad(en,quadOrd/2);
@@ -95,7 +82,7 @@ struct TupleToPair<Pair<T,Nil> > {
         & space = discFunc.space();  
       const GaussPts& timeQuad = GaussPts::instance();
       TwistUtility<GridType> twistUtil(space.grid());
-      int quadOrd = 2 * space.polynomOrder() + 2;
+      int quadOrd = 2 * space.order() + 2;
       RangeType error(0.0);
       EntityPointerType np = nit.outside();
       EntityType & nb = *np;
@@ -163,7 +150,7 @@ struct TupleToPair<Pair<T,Nil> > {
         & space = discFunc.space();  
       const GaussPts& timeQuad = GaussPts::instance();
       TwistUtility<GridType> twistUtil(space.grid());
-      int quadOrd = 2 * space.polynomOrder() + 2;
+      int quadOrd = 2 * space.order() + 2;
       RangeType error(0.0);
       EntityPointerType ep = nit.inside();
       EntityType & en = *ep;
@@ -223,8 +210,8 @@ struct TupleToPair<Pair<T,Nil> > {
       typedef typename FunctionSpaceType::GridType GridType;
       const typename DiscreteFunctionType::FunctionSpaceType 
         & space = discFunc.space();  
-      int polOrd = space.polynomOrder();
-      int quadOrd = 2 * space.polynomOrder() + 2;
+      int polOrd = space.order();
+      int quadOrd = 2 * space.order() + 2;
       projErr = 0.;
       if (!doPAdapt) {
 	return polOrd;
@@ -291,10 +278,21 @@ struct TupleToPair<Pair<T,Nil> > {
     DestinationType RT_,RS_,RP_,rho_,lambda_,maxPol_,maxPolNew_;
     typedef Tuple<DestinationType*,DestinationType*,DestinationType*,
 		  DestinationType*,DestinationType*> OutputTType;
+    typedef Tuple<RestProlOperator<DestinationType>*,
+		  RestProlOperator<DestinationType>*,
+		  RestProlOperator<DestinationType>*,
+		  RestProlOperator<DestinationType>*,
+		  RestProlOperator<DestinationType>*,
+		  RestProlOperator<DestinationType>*> AdaptTType;		  
     typedef typename TupleToPair<OutputTType>::ReturnType OutputType;
-    OutputType output() {
-      return TupleToPair<OutputTType>::convert
-	(OutputTType(&RT_,&RS_,&rho_,&lambda_,&maxPol_));
+    typedef typename TupleToPair<AdaptTType>::ReturnType AdaptType;
+    OutputType output_; 
+    OutputType& output() {
+      return output_;
+    }
+    AdaptType adaptTuple() {
+      return TupleToPair<AdaptTType>::convert
+	(AdaptTType(&RT_,&RS_,&rho_,&lambda_,&maxPol_,&maxPolNew_));
     }
     Residuum(GridPartType& part,int maxOrd,
 	     bool doPAdapt=true) : 
@@ -309,7 +307,8 @@ struct TupleToPair<Pair<T,Nil> > {
       lambda_("lambda",space_),
       maxPol_("PolDeg",space_),
       maxPolNew_("PolDeg",space_),
-      padapt_num(0) {
+      padapt_num(0),
+      output_(TupleToPair<OutputTType>::convert(OutputTType(&RT_,&RS_,&rho_,&lambda_,&maxPol_))) {    
 	typedef typename FunctionSpaceType::IteratorType IteratorType;
 	IteratorType endit = space_.end();
 	for(IteratorType it = space_.begin(); 
@@ -357,7 +356,7 @@ struct TupleToPair<Pair<T,Nil> > {
       typedef typename FunctionSpaceType::IteratorType IteratorType;
       const typename DiscreteFunctionType::FunctionSpaceType 
         & space = discFunc.space();  
-      int polOrd = space.polynomOrder();
+      int polOrd = space.order();
       if (adapt)
 	adapt->clearIndicator();
       RangeType ret(0.);
