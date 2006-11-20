@@ -209,7 +209,6 @@ namespace Dune{
     // create new BaseFunctionSet 
     static ObjectImp * createObject( const KeyImp & key )
     {
-      std::cout << "Create new base Function Object\n";
       ObjectFactoryImp fac(key); 
       return new ObjectImp(fac); 
     }

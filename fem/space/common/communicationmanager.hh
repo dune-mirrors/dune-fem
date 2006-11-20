@@ -334,7 +334,6 @@ namespace Dune {
     // create new mapper  
     static ObjectImp * createObject( const KeyImp & key )
     {
-      std::cout << "Create new comm object \n";
       return new ObjectImp(key.space());
     }
   };
