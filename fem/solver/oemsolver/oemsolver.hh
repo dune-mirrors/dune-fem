@@ -433,7 +433,7 @@ public:
     prepare ( arg, dest );
 
     int size = arg.space().size();
-    int inner = (size > 1000) ? 1000 : size;
+    int inner = (size > 20) ? 20 : size;
 
     ReturnValueType val = 
       SolverCaller<OperatorType,
@@ -488,6 +488,148 @@ private:
 public:
   GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
       : solver_(DuneODE::Communicator::instance(),20)
+      , op_(op), epsilon_ ( absLimit ) 
+      , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+  {
+  }
+
+  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+  {
+  }
+
+  void finalize () const
+  {
+  }
+
+  //! solve the system 
+  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    // prepare operator 
+    prepare ( arg, dest );
+
+    int size = arg.space().size();
+    op_.setSize(size);
+
+    solver_.set_tolerance(epsilon_);
+    solver_.set_max_number_of_iterations(size);
+
+    if(verbose_)
+    {
+      solver_.IterativeSolver::set_output(std::cout);
+      solver_.DynamicalObject::set_output(std::cout);
+    }
+
+    // note argument and destination are toggled 
+    solver_.solve(op_, dest.leakPointer() , arg.leakPointer() );
+
+    // finalize operator  
+    finalize ();
+  }
+
+  //! solve the system 
+  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    apply(arg,dest);
+  }
+
+};
+ 
+template <class DiscreteFunctionType, class OperatorType>
+class FGMRESOp : public Operator<
+      typename DiscreteFunctionType::DomainFieldType,
+      typename DiscreteFunctionType::RangeFieldType,
+            DiscreteFunctionType,DiscreteFunctionType> 
+{
+
+private:
+  // solver 
+  mutable DuneODE::FGMRES solver_;
+  // wrapper to fit interface of FGMRES operator 
+  mutable DuneODE::SolverInterfaceImpl<OperatorType> op_; 
+  
+  typename DiscreteFunctionType::RangeFieldType epsilon_;
+  int maxIter_;
+  bool verbose_ ;
+
+  typedef std::pair < int , double > ReturnValueType;
+  
+public:
+  FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
+      : solver_(DuneODE::Communicator::instance(),20)
+      , op_(op), epsilon_ ( absLimit ) 
+      , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+  {
+  }
+
+  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+  {
+  }
+
+  void finalize () const
+  {
+  }
+
+  //! solve the system 
+  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    // prepare operator 
+    prepare ( arg, dest );
+
+    int size = arg.space().size();
+    op_.setSize(size);
+
+    solver_.set_tolerance(epsilon_);
+    solver_.set_max_number_of_iterations(size);
+
+    if(verbose_)
+    {
+      solver_.IterativeSolver::set_output(std::cout);
+      solver_.DynamicalObject::set_output(std::cout);
+    }
+
+    // note argument and destination are toggled 
+    solver_.solve(op_, dest.leakPointer() , arg.leakPointer() );
+
+    // finalize operator  
+    finalize ();
+  }
+
+  //! solve the system 
+  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    apply(arg,dest);
+  }
+
+};
+ 
+/////////////////////////////////////////////////////////////////
+//
+//  BICGstab Version of Dennis code
+//
+/////////////////////////////////////////////////////////////////
+//! \brief GMRES implementation from Dennis D.
+template <class DiscreteFunctionType, class OperatorType>
+class BICGSTABOp : public Operator<
+      typename DiscreteFunctionType::DomainFieldType,
+      typename DiscreteFunctionType::RangeFieldType,
+            DiscreteFunctionType,DiscreteFunctionType> 
+{
+
+private:
+  // solver 
+  mutable DuneODE::BICGSTAB solver_;
+  // wrapper to fit interface of GMRES operator 
+  mutable DuneODE::SolverInterfaceImpl<OperatorType> op_; 
+  
+  typename DiscreteFunctionType::RangeFieldType epsilon_;
+  int maxIter_;
+  bool verbose_ ;
+
+  typedef std::pair < int , double > ReturnValueType;
+  
+public:
+  BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
+      : solver_(DuneODE::Communicator::instance())
       , op_(op), epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
