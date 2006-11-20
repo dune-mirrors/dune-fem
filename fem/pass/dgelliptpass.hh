@@ -742,30 +742,42 @@ namespace Dune {
               for(int i=0; i<dimGradRange; ++i) gradSourceNb_[i] *= fMatNb_[0][i];
             }
 
+            ////////////////////////////////////////////////////////////
+            //  
+            //  FLUX evaluation 
+            //  
+            ////////////////////////////////////////////////////////////
+            GradientRangeType sigmaEn,sigmaNb;
+            sigmaflux(unitNormal,faceVol,fMat_[0],fMatNb_[0],sigmaEn,sigmaNb);
+
+            RangeType enflux(0.0);
+            RangeType neighflux(0.0);
+
+            RangeType argEn(gradFMat_[0][0]);
+            RangeType argNb(gradFMatNb_[0][0]);
+            
+            uflux(unitNormal,faceVol,argEn,argNb,enflux,neighflux);
+            
+            double staben=0.0,stabneigh=0.0;
+            argEn = gradSource_[0]; 
+            argNb = gradSourceNb_[0];
+               
+            sigmaFluxStability(unitNormal,faceVol,argEn,argNb,staben,stabneigh);
+            ////////////////////////////////////////////////////////////
+
             for(int i=0;i < gradientNumDofs;++i)
             {
               grdbsetEn.eval(i,faceQuadInner,l, tau_[0]);      
               gradbsetNeigh.eval(i,faceQuadOuter,l, tauneigh_[0]);
               
-              GradientRangeType sigmaEn,sigmaNb;
 
               RangeType valEn(0.0),valNeigh(0.0); 
-            
-              sigmaflux(unitNormal,faceVol,fMat_[0],fMatNb_[0],sigmaEn,sigmaNb);
 
               for(int j=0; j<numDofs; ++j)
               {
                 //gradMAtrix
                 bsetEn.   eval(j, faceQuadInner, l, phi_); 
                 bsetNeigh.eval(j, faceQuadOuter, l, phiNeigh_ );
-                
-                RangeType enflux(0.0);
-                RangeType neighflux(0.0);
-
-                RangeType argEn(gradFMat_[0][0]);
-                RangeType argNb(gradFMatNb_[0][0]);
-                
-                uflux(unitNormal,faceVol,argEn,argNb,enflux,neighflux);
                 
                 {
                   double enVal= tau_[0] * unitNormal;
@@ -803,12 +815,6 @@ namespace Dune {
                   divMatrixNb.add( j, i , divmatValnb );
                 }
 
-                double staben=0.0,stabneigh=0.0;
-                argEn = gradSource_[0]; 
-                argNb = gradSourceNb_[0];
-                
-                sigmaFluxStability(unitNormal,faceVol,argEn,argNb,staben,stabneigh);
-                
                 if(i==0)
                 {
                   for(int k=0;k<numDofs;++k)
