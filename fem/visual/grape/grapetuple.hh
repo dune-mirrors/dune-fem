@@ -1,6 +1,6 @@
 #include <string>
 #include <dune/common/typetraits.hh>
-#include <fem/pass/tuples.hh>
+#include <dune/common/tuples.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 namespace Dune {
 template <int N,class DiscFuncType>
