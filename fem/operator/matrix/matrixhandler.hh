@@ -189,16 +189,25 @@ namespace Dune {
       if( (singleSpace_.begin()   != singleSpace_.end()) && 
           (gradientSpace_.begin() != gradientSpace_.end()) )
       {
+        
+        std::cout << "Resize Matrix with " << singleSpace_.size() << "\n";
         singleMaxNumbers_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
         gradMaxNumbers_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
 
+        singleMaxNumbers_ *= singleMaxNumbers_;
+        gradMaxNumbers_   *= gradMaxNumbers_;
+
+        //std::cout << singleMaxNumbers_ << " " << gradMaxNumbers_ << "\n";
+        
         assert( singleMaxNumbers_ > 0 );
         assert( gradMaxNumbers_ > 0 );
 
         // upper estimate for number of neighbors 
         enum { dim = SpaceType :: GridType :: dimension };
-        singleMaxNumbers_ *= dim * 2; // e.g. 6 for dim = 3
-        gradMaxNumbers_   *= dim * 2;
+        singleMaxNumbers_ *= (dim * 2) + 1; // e.g. 6 for dim = 3
+        gradMaxNumbers_   *= (dim * 2) + 1;
+
+        //std::cout << singleMaxNumbers_ << " " << gradMaxNumbers_ << "\n";
 
         stabMatrix_.reserve(singleSpace_.size(),singleSpace_.size(),singleMaxNumbers_,0.0);
         gradMatrix_.reserve(gradientSpace_.size(),singleSpace_.size(),singleMaxNumbers_,0.0);
