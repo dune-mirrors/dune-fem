@@ -202,6 +202,7 @@ public:
   typedef typename BaseFunctionSetTraits::BaseFunctionSetType BaseFunctionSetType;
   typedef typename BaseFunctionSetTraits::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
   enum { dimRow = JacobianRangeType::rows };
   enum { dimCol = JacobianRangeType::cols };
   

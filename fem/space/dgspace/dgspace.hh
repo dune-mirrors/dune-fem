@@ -311,6 +311,7 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
@@ -371,8 +372,7 @@ namespace Dune {
     enum { polynomialOrder = polOrd };
 
     //! scalar space type 
-    typedef typename ToScalarFunctionSpace<
-      typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+    typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     // type of base function factory 
     typedef DiscontinuousGalerkinBaseFunctionFactory<
@@ -425,6 +425,7 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     typedef LegendreDiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp> DiscreteFunctionSpaceType;
@@ -486,8 +487,7 @@ namespace Dune {
     enum { polynomialOrder = polOrd };
 
     //! type of scalar space 
-    typedef typename ToScalarFunctionSpace<
-      typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+    typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
     
     // type of base function factory 
     typedef LegendreDGBaseFunctionFactory<

@@ -3,9 +3,9 @@
 
 #include <vector>
 
-#include "../../space/common/dofstorage.hh"
-#include "basefunctions.hh"
-#include "basefunctionfactory.hh"
+#include <dune/fem/space/common/dofstorage.hh>
+#include <dune/fem/basefunctions/common/basefunctions.hh>
+#include <dune/fem/basefunctions/common/basefunctionfactory.hh>
 
 namespace Dune {
 
@@ -87,8 +87,7 @@ namespace Dune {
     typedef BaseFunctionSetDefault<
       VectorialBaseFunctionSetTraits<FunctionSpaceImp> > BaseType;
     typedef FunctionSpaceImp FunctionSpaceType;
-    typedef typename ToScalarFunctionSpace<
-      FunctionSpaceImp>::Type ScalarFunctionSpaceType;
+    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
     typedef typename ScalarFunctionSpaceType::RangeType ScalarRangeType;
     typedef typename ScalarFunctionSpaceType::JacobianRangeType 
       ScalarJacobianRangeType;

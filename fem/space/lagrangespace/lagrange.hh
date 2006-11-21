@@ -41,6 +41,7 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     typedef LagrangeDiscreteFunctionSpace<
       FunctionSpaceImp, GridPartImp, polOrd> DiscreteFunctionSpaceType;
@@ -143,8 +144,7 @@ namespace Dune {
     //  typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
     //! scalar space type 
-    typedef typename ToScalarFunctionSpace<
-      typename Traits::FunctionSpaceType>::Type ScalarFunctionSpaceType;
+    typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     // type of base function factory 
     typedef LagrangeBaseFunctionFactory<

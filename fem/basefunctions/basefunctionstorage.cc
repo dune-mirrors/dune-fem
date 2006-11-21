@@ -49,10 +49,10 @@ namespace Dune {
     assert(baseFunct >= 0 && baseFunct < numBaseFunctions());
     RangeType tmp;
     
-    for (int i = 0; i < DomainType::size; ++i) {
+    for (int i = 0; i < DomainType::dimension; ++i) {
       diffVar1_[0] = i;
       storage_[baseFunct]->evaluate(diffVar1_, xLocal, tmp);
-      for (int j = 0; j < RangeType::size; ++j) {
+      for (int j = 0; j < RangeType::dimension; ++j) {
         result[j][i] = tmp[j];
       }
     }
@@ -164,7 +164,7 @@ namespace Dune {
     JacobianRangeType& jResult = 
       jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
 
-    for (size_t i = 0; i < RangeType::size; ++i) {
+    for (size_t i = 0; i < RangeType::dimension; ++i) {
       result[i] = jResult[i][diffVar[0]];
     }
 
@@ -191,7 +191,7 @@ namespace Dune {
   CachingStorage<FunctionSpaceImp>::
   addEntryInterface(size_t id , int codim ) const 
   {
-    enum { dimension = DomainType::size };
+    enum { dimension = DomainType::dimension };
     switch (codim) 
     {
       case 0: return addEntry<0>(id);
@@ -210,7 +210,7 @@ namespace Dune {
   CachingStorage<FunctionSpaceImp>::
   addEntry(size_t id) const 
   {
-    enum { dimension = DomainType::size };
+    enum { dimension = DomainType::dimension };
 
     size_t quadId = id;
 

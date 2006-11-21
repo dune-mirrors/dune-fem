@@ -409,7 +409,7 @@ namespace Dune {
                           const DomainType& x, RangeType& phi) const {
       JacobianRangeType tmp;
       this->grad_hexahedron_3d(baseNum_, x, tmp);
-      phi = tmp[0][diffVar[0]];
+      phi = tmp[0][diffVar[0]]; 
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVar,
