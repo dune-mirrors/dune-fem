@@ -100,12 +100,12 @@ bool GMRES::solve(Function &op, double *u, const double *b)
 
       // apply the linear operator (perhaps in combination with the 
       // preconditioner)
-      if (preconditioner){
-	(*preconditioner)(vj, z);
-	op(z, vjp);
+      if (preconditioner)
+      {
+	      (*preconditioner)(vj, z);
+      	op(z, vjp);
       }
       else op(vj, vjp);
-
 
       cblas_dgemv(CblasRowMajor, CblasNoTrans, 
 		  j+1, dim, 1.0, v, dim, vjp, 1, 0.0, local_dot, 1);

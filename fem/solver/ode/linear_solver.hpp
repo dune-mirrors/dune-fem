@@ -42,6 +42,12 @@ public:
 
   virtual void set_preconditioner(Function &preconditioner);
 
+  // set pointer to predonditioner to zero 
+  virtual void unset_preconditioner() 
+  {
+    preconditioner = 0;
+  }
+  
   // solve Au = b,   A = linear_operator
   // return convergence
   virtual bool solve(Function &op, double *u, const double *b) = 0;
