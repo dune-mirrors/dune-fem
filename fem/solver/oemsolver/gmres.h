@@ -101,7 +101,7 @@ gmres_algo (const CommunicatorType & comm,
     nrm2b = dnrm2(n,b,1);
     
     // global sum 
-    //nrm2b = comm.sum ( nrm2b );
+    nrm2b = comm.sum ( nrm2b );
     
     io=0;
     do  
@@ -112,7 +112,7 @@ gmres_algo (const CommunicatorType & comm,
       beta = dnrm2(n,r,1);
 
       // global sum 
-      //beta = comm.sum( beta );
+      beta = comm.sum( beta );
       
       dcopy(n,r,1,v[0],1);
       dscal(n,1./beta,v[0],1);
@@ -129,13 +129,13 @@ gmres_algo (const CommunicatorType & comm,
         // global sum 
         //double & Uu0j = U[uij];
         //Uu0j = comm.sum( Uu0j );
-        //comm.sum( U+u0j, j+1 );
+        comm.sum( U+u0j, j+1 );
         
         dgemv(NoTranspose,n,j+1,-1.,V,n,U+u0j,1,1.,v[j+1],1);
 
         h = dnrm2(n,v[j+1],1);
         // global sum 
-        //h = comm.sum( h );
+        h = comm.sum( h );
         
         dscal(n,1./h,v[j+1],1);
         

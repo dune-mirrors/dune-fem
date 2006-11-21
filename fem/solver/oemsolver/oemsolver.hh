@@ -76,8 +76,55 @@ struct Mult<Matrix,Matrix,false>
 #include "bicgsq.h"
 #undef USE_MEMPROVIDER
   
-} // end namespace OEMSolver 
 
+//! fake conditioner which just is id for internal parts of vector and zero
+//! for other parts, needed by parallel gmres 
+class FakeConditioner 
+{
+  // size of vectors 
+  const int size_;
+
+  // indices of external values 
+  std::vector<int> indices_;
+public:
+  template <class SolverOperatorImp>
+  FakeConditioner(int size, SolverOperatorImp& op) : size_(size) 
+  {
+    double * diag = new double [size_];
+    assert( diag );
+    for(int i=0; i<size_; ++i) diag[i] = 1.0;
+
+    op(diag,diag);
+
+    int newSize = (int) 0.25 * size_; 
+    indices_.reserve( newSize );
+    indices_.resize( 0 );
+    // now diag contains only non-zeros for all internal entries
+    // these are set to 1.0 to be the id mapping 
+    for(int i=0; i<size_; ++i) 
+    {
+      if( ! (std::abs (diag[i]) > 0.0) ) 
+      {
+        indices_.push_back( i ); 
+      }
+    }
+    delete [] diag;
+  }
+
+  // only keep internal parts of arg 
+  void multOEM(const double * arg, double * dest) const 
+  {
+    std::memcpy( dest, arg , size_ * sizeof(double) );
+
+    const int s = indices_.size();
+    for(int i=0; i<s; ++i) 
+    {
+      dest[indices_[i]] = 0.0; 
+    }
+  }
+};
+
+} // end namespace OEMSolver 
 
 namespace Dune 
 {
@@ -351,8 +398,6 @@ public:
   }
 
 };
-
-
 template <class DiscreteFunctionType, class OperatorType>
 class OEMGMRESOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -360,6 +405,9 @@ class OEMGMRESOp : public Operator<
             DiscreteFunctionType,DiscreteFunctionType> {
 
 private:
+  // type of internal projector if no preconditioner given 
+  typedef OEMSolver :: FakeConditioner FakeConditionerType;
+  
   // no const reference, we make const later 
   OperatorType &op_;
   typename DiscreteFunctionType::RangeFieldType epsilon_;
@@ -384,6 +432,15 @@ private:
                  inner,size,op.systemMatrix(),op.preconditionMatrix(),
                  arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
+      // in parallel case we need special treatment, if no preconditoner exist
+      else if( arg.space().grid().comm().size() > 1 )
+      {
+        DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+        FakeConditionerType preConditioner(size,opSolve);
+        return OEMSolver::gmres(arg.space().grid().comm(),
+                 inner,size,op.systemMatrix(),preConditioner,
+                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
+      }
       else 
       {
         return OEMSolver::gmres(arg.space().grid().comm(),
@@ -404,9 +461,20 @@ private:
                      int inner, double eps, bool verbose)
     {
       int size = arg.space().size();
-      return OEMSolver::gmres(arg.space().grid().comm(),
-               inner,size,op.systemMatrix(),
-               arg.leakPointer(),dest.leakPointer(),eps,verbose);
+      if( arg.space().grid().comm().size() > 1 )
+      {
+        DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+        FakeConditionerType preConditioner(size,opSolve);
+        return OEMSolver::gmres(arg.space().grid().comm(),
+                 inner,size,op.systemMatrix(),preConditioner,
+                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
+      }
+      else 
+      {
+        return OEMSolver::gmres(arg.space().grid().comm(),
+                 inner,size,op.systemMatrix(),
+                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
+      }
     }
   };
 
@@ -427,8 +495,6 @@ public:
 
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
-    typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-
     // prepare operator 
     prepare ( arg, dest );
 
@@ -472,12 +538,109 @@ class GMRESOp : public Operator<
       typename DiscreteFunctionType::RangeFieldType,
             DiscreteFunctionType,DiscreteFunctionType> 
 {
-
 private:
+  typedef OEMSolver :: FakeConditioner FakeConditioner;
+
+  template <class SolverType, bool hasPreconditioning> 
+  struct SolverCaller 
+  {
+    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+    static void solve(SolverType & solver, 
+               OperatorImp & op, 
+               const PreConMatrix & pm, 
+               const DiscreteFunctionImp & arg, 
+               DiscreteFunctionImp & dest) 
+    {
+      int size = arg.space().size();
+      solver.set_max_number_of_iterations(size);
+
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+      opSolve.setSize(size);
+
+      // in parallel runs we need fake pre conditioner to 
+      // project vectors onto interior  
+      if(op.hasPreconditionMatrix())
+      {
+        DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm); 
+        solver.set_preconditioner(pre);
+        
+        // note argument and destination are toggled 
+        solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+
+        solver.unset_preconditioner();
+        return ;
+      }
+      
+      // for parallel run we need fake pre con
+      if( arg.space().grid().comm().size() > 1 )
+      {
+        OEMSolver :: FakeConditioner fake(size,opSolve);
+        DuneODE::SolverInterfaceImpl<FakeConditioner> pre(fake);
+        solver.set_preconditioner(pre);
+
+        // note argument and destination are toggled 
+        solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+        solver.unset_preconditioner();
+
+        return ;
+      }
+      
+      // note argument and destination are toggled 
+      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+    }
+    
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void call(SolverType & solver, 
+                     OperatorImp & op, 
+                     const DiscreteFunctionImp & arg, 
+                     DiscreteFunctionImp & dest)
+    {
+      solve(solver,op,op.preconditionMatrix(),arg,dest); 
+    }
+  };
+
+  // without any preconditioning 
+  template <class SolverType> 
+  struct SolverCaller<SolverType,false>
+  {
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void call(SolverType & solver, 
+                     OperatorImp & op, 
+                     const DiscreteFunctionImp & arg, 
+                     DiscreteFunctionImp & dest)
+    {
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+      
+      int size = arg.space().size();
+      opSolve.setSize(size);
+      solver.set_max_number_of_iterations(size);
+
+      // in parallel runs we need fake pre conditioner to 
+      // project vectors onto interior  
+      if(arg.space().grid().comm().size() > 1)
+      {
+        FakeConditioner fake(size,opSolve);
+        DuneODE::SolverInterfaceImpl<FakeConditioner> pre(fake);
+        solver.set_preconditioner(pre);
+
+        // note argument and destination are toggled 
+        solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+        solver.unset_preconditioner();
+      }
+      else 
+      {
+        // note argument and destination are toggled 
+        solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+      }
+    }
+  };
+
   // solver 
-  mutable DuneODE::GMRES solver_;
-  // wrapper to fit interface of GMRES operator 
-  mutable DuneODE::SolverInterfaceImpl<OperatorType> op_; 
+  typedef DuneODE::GMRES SolverType;
+  mutable SolverType solver_;
+  
+  // wrapper to fit interface of FGMRES operator 
+  mutable OperatorType & op_;
   
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
@@ -488,7 +651,7 @@ private:
 public:
   GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
       : solver_(DuneODE::Communicator::instance(),20)
-      , op_(op), epsilon_ ( absLimit ) 
+      , op_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
   }
@@ -507,11 +670,7 @@ public:
     // prepare operator 
     prepare ( arg, dest );
 
-    int size = arg.space().size();
-    op_.setSize(size);
-
     solver_.set_tolerance(epsilon_);
-    solver_.set_max_number_of_iterations(size);
 
     if(verbose_)
     {
@@ -519,9 +678,14 @@ public:
       solver_.DynamicalObject::set_output(std::cout);
     }
 
-    // note argument and destination are toggled 
-    solver_.solve(op_, dest.leakPointer() , arg.leakPointer() );
-
+    SolverCaller<SolverType,
+                   // check wheter operator has precondition methods 
+                   // to enable preconditioning derive your operator from 
+                   // OEMSolver::PreconditionInterface
+                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                   // call solver, see above 
+                   call(solver_,op_.systemMatrix(),arg,dest);
+      
     // finalize operator  
     finalize ();
   }
@@ -531,7 +695,6 @@ public:
   {
     apply(arg,dest);
   }
-
 };
  
 template <class DiscreteFunctionType, class OperatorType>
@@ -542,21 +705,45 @@ class FGMRESOp : public Operator<
 {
 
 private:
+  typedef OEMSolver :: FakeConditioner FakeConditionerType;
+
   template <class SolverType, bool hasPreconditioning> 
   struct SolverCaller 
   {
     template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
-    static void  call(SolverType & solver, 
+    static void solve(SolverType & solver, 
                OperatorImp & op, 
                const PreConMatrix & pm, 
                const DiscreteFunctionImp & arg, 
                DiscreteFunctionImp & dest) 
     {
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
       DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm); 
       solver.set_preconditioner(pre);
+      
+      int size = arg.space().size();
+      opSolve.setSize(size);
+      solver.set_max_number_of_iterations(size);
 
       // note argument and destination are toggled 
-      solver.solve(op, dest.leakPointer() , arg.leakPointer() );
+      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+      solver.unset_preconditioner();
+    }
+    
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void call(SolverType & solver, 
+                     OperatorImp & op, 
+                     const DiscreteFunctionImp & arg, 
+                     DiscreteFunctionImp & dest)
+    {
+      if(op.hasPreconditionMatrix() )
+      {
+        solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
+      }
+      else 
+      {
+        SolverCaller<SolverType,false>::call(solver,op,arg,dest);
+      }
     }
   };
 
@@ -564,24 +751,36 @@ private:
   template <class SolverType> 
   struct SolverCaller<SolverType,false>
   {
-    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
-    static void  call(SolverType & solver, 
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void solve(SolverType & solver, 
                OperatorImp & op, 
-               const PreConMatrix & pm, 
                const DiscreteFunctionImp & arg, 
-               DiscreteFunctionImp & dest)
+               DiscreteFunctionImp & dest) 
     {
-      // note argument and destination are toggled 
-      solver.solve(op, dest.leakPointer() , arg.leakPointer() );
+      int size = arg.space().size();
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+      FakeConditionerType fake(size,opSolve);
+      SolverCaller<SolverType,true>::solve(solver,op,fake,arg,dest);
+    }
+    
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void call(SolverType & solver, 
+                     OperatorImp & op, 
+                     const DiscreteFunctionImp & arg, 
+                     DiscreteFunctionImp & dest)
+    {
+      // not working yet 
+      assert( false ); 
+      solve(solver,op.systemMatrix(),arg,dest);
     }
   };
 
   // solver 
-  mutable DuneODE::FGMRES solver_;
-  // wrapper to fit interface of FGMRES operator 
   typedef DuneODE::FGMRES SolverType;
-  mutable DuneODE::SolverInterfaceImpl<OperatorType> op_; 
-  mutable OperatorType & orgOp_;
+  mutable SolverType solver_;
+  
+  // wrapper to fit interface of FGMRES operator 
+  mutable OperatorType & op_;
   
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
@@ -592,7 +791,7 @@ private:
 public:
   FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
       : solver_(DuneODE::Communicator::instance(),20)
-      , op_(op), orgOp_(op) , epsilon_ ( absLimit ) 
+      , op_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
   }
@@ -611,11 +810,7 @@ public:
     // prepare operator 
     prepare ( arg, dest );
 
-    int size = arg.space().size();
-    op_.setSize(size);
-
     solver_.set_tolerance(epsilon_);
-    solver_.set_max_number_of_iterations(size);
 
     if(verbose_)
     {
@@ -623,22 +818,14 @@ public:
       solver_.DynamicalObject::set_output(std::cout);
     }
 
-    if( orgOp_.hasPreconditionMatrix())
-    {
-      SolverCaller<SolverType,
+    SolverCaller<SolverType,
                    // check wheter operator has precondition methods 
                    // to enable preconditioning derive your operator from 
                    // OEMSolver::PreconditionInterface
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
-                     // call solver, see above 
-                     call(solver_,op_,orgOp_.preconditionMatrix(), arg,dest);
+                   // call solver, see above 
+                   call(solver_,op_.systemMatrix(),arg,dest);
       
-    }
-    else 
-    {
-      assert(false);
-    }
-
     // finalize operator  
     finalize ();
   }
@@ -663,12 +850,84 @@ class BICGSTABOp : public Operator<
       typename DiscreteFunctionType::RangeFieldType,
             DiscreteFunctionType,DiscreteFunctionType> 
 {
-
 private:
+  template <class SolverType, bool hasPreconditioning> 
+  struct SolverCaller 
+  {
+    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+    static void solve(SolverType & solver, 
+               OperatorImp & op, 
+               const PreConMatrix & pm, 
+               const DiscreteFunctionImp & arg, 
+               DiscreteFunctionImp & dest) 
+    {
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+      int size = arg.space().size();
+      opSolve.setSize(size);
+      solver.set_max_number_of_iterations(size);
+
+      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm); 
+      solver.set_preconditioner(pre);
+
+      // note argument and destination are toggled 
+      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+      solver.unset_preconditioner();
+    }
+    
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void call(SolverType & solver, 
+                     OperatorImp & op, 
+                     const DiscreteFunctionImp & arg, 
+                     DiscreteFunctionImp & dest)
+    {
+      if(op.hasPreconditionMatrix())
+      {
+#ifndef NDEBUG
+        std::cerr << "DuneODE::BICGSTAB: use of precoditioner not implemented right now! \n"; 
+#endif
+        //solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
+        SolverCaller<SolverType,false>::call(solver,op,arg,dest);
+      }
+      else 
+      {
+        SolverCaller<SolverType,false>::call(solver,op,arg,dest);
+      }
+    }
+  };
+
+  // without any preconditioning 
+  template <class SolverType> 
+  struct SolverCaller<SolverType,false>
+  {
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void solve(SolverType & solver, 
+               OperatorImp & op, 
+               const DiscreteFunctionImp & arg, 
+               DiscreteFunctionImp & dest) 
+    {
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+      int size = arg.space().size();
+      opSolve.setSize(size);
+      solver.set_max_number_of_iterations(size);
+
+      // note argument and destination are toggled 
+      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+    }
+    template <class OperatorImp, class DiscreteFunctionImp> 
+    static void call(SolverType & solver, 
+                     OperatorImp & op, 
+                     const DiscreteFunctionImp & arg, 
+                     DiscreteFunctionImp & dest)
+    {
+      solve(solver,op.systemMatrix(),arg,dest); 
+    }
+  };
+
   // solver 
-  mutable DuneODE::BICGSTAB solver_;
+  typedef DuneODE::BICGSTAB SolverType;
+  mutable SolverType solver_;
   // wrapper to fit interface of GMRES operator 
-  mutable DuneODE::SolverInterfaceImpl<OperatorType> op_; 
+  mutable OperatorType & op_; 
   
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
@@ -698,11 +957,7 @@ public:
     // prepare operator 
     prepare ( arg, dest );
 
-    int size = arg.space().size();
-    op_.setSize(size);
-
     solver_.set_tolerance(epsilon_);
-    solver_.set_max_number_of_iterations(size);
 
     if(verbose_)
     {
@@ -710,9 +965,14 @@ public:
       solver_.DynamicalObject::set_output(std::cout);
     }
 
-    // note argument and destination are toggled 
-    solver_.solve(op_, dest.leakPointer() , arg.leakPointer() );
-
+    SolverCaller<SolverType,
+                   // check wheter operator has precondition methods 
+                   // to enable preconditioning derive your operator from 
+                   // OEMSolver::PreconditionInterface
+                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                   // call solver, see above 
+                   call(solver_,op_,arg,dest);
+      
     // finalize operator  
     finalize ();
   }
@@ -726,5 +986,4 @@ public:
 };
  
 } // end namespace Dune 
-
 #endif
