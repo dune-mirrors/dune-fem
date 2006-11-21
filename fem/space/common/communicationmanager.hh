@@ -263,6 +263,7 @@ namespace Dune {
       // remember number of links 
       nLinks_ = mpAccess.nlinks();
 
+      std::cout << "Build dependency cache. Size = " << sendIndexMap_[linkRank_[0 ]].size() <<"\n";
     }
 
     // write data to object stream 
@@ -275,7 +276,7 @@ namespace Dune {
       const int size = indexMap.size();
 
       // reserve buffer memory at once 
-      os.reserve( os.size() + size * sizeof(DataImp) );
+      os.reserve( size * sizeof(DataImp) );
 
       for(int i=0; i<size; ++i)
       {
