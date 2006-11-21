@@ -5,15 +5,15 @@
 
 using namespace Dune;
 
-#include "../../operator/discreteoperatorimp.hh"
-#include "../lagrangespace.hh"
-#include "../../discretefunction/dfadapt.hh"
-#include "../../space/dgspace.hh"
-#include "../../quadrature/cachequad.hh"
-#include "../../space/dgspace/dgadaptoperator.hh"
+#include <dune/fem/operator/discreteoperatorimp.hh>
+#include <dune/fem/sapce/lagrangespace.hh>
+#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/space/dgspace/dgadaptoperator.hh>
 
 // #include "../leafindexset.hh"
-#include "../dgspace/dgleafindexset.hh"
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
@@ -46,7 +46,7 @@ typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef FunctionSpace < double , double, GRIDDIM , 1 > FuncSpace;
+typedef MatrixFunctionSpace < double , double, GRIDDIM , 2,5 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -117,7 +117,7 @@ class L2Projection
     for( ; it != endit ; ++it) {
       LocalFuncType lf = discFunc.localFunction(*it);
       const typename FunctionSpaceType::BaseFunctionSetType & baseset =
-        lf.getBaseFunctionSet();
+        lf.baseFunctionSet();
       const typename GridType::template Codim<0>::Entity::Geometry& 
                   itGeom = (*it).geometry();
       for(int qP = 0; qP < quad.nop(); qP++) 

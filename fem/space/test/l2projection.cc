@@ -3,15 +3,14 @@
 
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
 static const int dimw = dimworld;
-static const int dimp = dimworld;
 
-#include <../../operator/discreteoperatorimp.hh>
-#include <../lagrangespace.hh>
-#include <../../discretefunction/dfadapt.hh>
-#include "../dgspace.hh"
-#include "../../quadrature/cachequad.hh"
+#include <dune/fem/operator/discreteoperatorimp.hh>
+#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/quadrature/cachequad.hh>
 
-#include "../leafindexset.hh"
+#include <dune/fem/space/common/adaptiveleafgridpart.hh> 
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
@@ -46,7 +45,8 @@ typedef HierarchicGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef FunctionSpace < double , double, dimp , 1 > FuncSpace;
+typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
+// typedef FunctionSpace < double , double, dimw , 2 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -75,8 +75,9 @@ public:
   void evaluate (const DomainType & x , RangeType & ret)  const
   {
     ret = 2.; // maximum of function is 2
-    for(int i=0; i<DomainType::dimension; i++)
-      ret *= x[i]*(1.0 -x[i])*4.;
+    for (int j=0;j<RangeType::dimension; j++) 
+      for(int i=0; i<DomainType::dimension; i++)
+	ret[j] *= pow(x[i]*(1.0 -x[i])*4.,double(j));
   }
   void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
@@ -117,7 +118,7 @@ class L2Projection
       //! Note: BaseFunctions must be ortho-normal!!!!
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
       const BaseFunctionSetType & baseset =
-        lf.getBaseFunctionSet();
+        lf.baseFunctionSet();
 
       const typename GridType::template Codim<0>::Entity::Geometry& 
         itGeom = (*it).geometry();
@@ -186,7 +187,7 @@ public:
           error[i] += weight * SQR(ret[i] - phi[i]);
       }
     }
-
+    
     for(int i=0; i< dimRange; ++i) 
       error[i] = sqrt(error[i]);
     
@@ -225,17 +226,17 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
    RangeType error = l2err.norm(f ,solution, 0.0);
    for(int i=0; i<RangeType::dimension; ++i)
      std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
-  
+
 #if HAVE_GRAPE
    // if Grape was found, then display last solution 
    if(turn > 0)
    {
-     GrapeDataDisplay < GridType > grape(grid); 
+     GrapeDataDisplay < GridType > grape(part); 
      grape.dataDisplay( solution );
    }
 #endif
    
-   return error;
+   return sqrt(error*error);
 }
 
 
@@ -253,7 +254,7 @@ int main (int argc, char **argv)
   }
   int ml = atoi( argv[1] );
   double* error = new double[ml];
-  char tmp[16]; sprintf(tmp,"%d",dimp);
+  char tmp[16]; sprintf(tmp,"%d",dimw);
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.dgf";
 
@@ -271,7 +272,7 @@ int main (int argc, char **argv)
     grid.globalRefine(step);
     DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
     dm.resize();
-    error[i] = algorithm ( grid , solution , 0);
+    error[i] = algorithm ( grid , solution , i==ml-1);
     if (i>0) {
       double eoc = log( error[i-step]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
