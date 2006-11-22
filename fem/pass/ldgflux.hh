@@ -76,9 +76,9 @@ public:
     // call part of flux for beta == 0
     sigmaFluxBetaZero(unitNormal,faceVol,uLeft,uRight,sigmaLeft,sigmaRight);
 
+    // only calculate this part if |beta| > 0
     if( betaNotZero_ )
     {
-      // add part wiht beta != 0 
       DomainType scaling(unitNormal);
       scaling *= beta_ * std::pow(faceVol,power_);
 
@@ -147,6 +147,7 @@ public:
     uFluxBetaZero(unitNormal,faceVol,uLeft,uRight,
                   sigmaLeft,sigmaRight,gLeft,gRight);
 
+    // only calculate this part if |beta| > 0
     if( betaNotZero_ )
     {
       DomainType left(unitNormal);
@@ -156,7 +157,6 @@ public:
       right *= -uRight[0];
 
       DomainType scaling(unitNormal);
-      //scaling *= beta_ * faceVol;
       scaling *= beta_ * std::pow(faceVol,power_);
 
       gLeft  += scaling * left;
