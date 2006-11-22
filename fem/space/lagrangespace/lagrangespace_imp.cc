@@ -91,15 +91,6 @@ typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, Ba
 LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 baseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
 {
-  /*
-  GeometryType geo =  en.geometry().type();
-  int dimension = static_cast<int>(EntityType::mydimension);
-  assert(GeometryIdentifier::fromGeo(dimension,geo)<(int) baseFuncSet_.size());
-  assert(GeometryIdentifier::fromGeo(dimension, geo) >= 0);
-
-  assert(baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geo)]);
-  return *baseFuncSet_[GeometryIdentifier::fromGeo(dimension, geo)];
-  */
   assert(id < (int) baseFuncSet_.size());
   assert(id >= 0);
   assert(baseFuncSet_[id]);
