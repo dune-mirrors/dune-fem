@@ -7,7 +7,7 @@
 //- Dune includes 
 #include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/basefunctions/common/basefunctions.hh>
+#include <dune/fem/space/common/basefunctioninterface.hh>
 
 //- local includes 
 #include "singletonlist.hh"

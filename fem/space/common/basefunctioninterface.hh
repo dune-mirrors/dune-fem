@@ -213,7 +213,7 @@ public:
   virtual ~BaseFunctionSetDefault() {}
 
   //! default evaluate using the evaluate interface 
-  void eval(int baseFunct, const DomainType & x, RangeType & phi) const DUNE_DEPRECATED  
+  void eval(int baseFunct, const DomainType & x, RangeType & phi) const 
   {
     asImp().evaluate(baseFunct, diffVariable_ , x , phi);
     return;
@@ -228,7 +228,7 @@ public:
 
   //! default implementation for evaluation 
   template <class QuadratureImp>
-  void eval(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const DUNE_DEPRECATED 
+  void eval(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const 
   {
     asImp().evaluate( baseFunct, diffVariable_ , quad, quadPoint, phi );
     return;
