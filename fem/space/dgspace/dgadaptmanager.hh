@@ -28,7 +28,7 @@ namespace Dune{
  class RestrictProlongDefault<DiscFunc<
    DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> 
  > > : 
-  public RestrictProlongInterface<RestProlOperator<DiscFunc<
+  public RestrictProlongInterface<RestrictProlongDefault<DiscFunc<
     DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp
      > > >
  {
@@ -46,7 +46,7 @@ namespace Dune{
    typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
 public:  
   //! Constructor
-  RestProlOperator ( DiscreteFunctionType & df ) : 
+  RestrictProlongDefault ( DiscreteFunctionType & df ) : 
     df_ (df) , quadord_(2*df.space().order()),
     weight_(-1.0)
   {
@@ -141,9 +141,13 @@ private:
   	  class FunctionSpaceImp, 
    	  class GridPartImp, 
    	  template <class> class StorageImp> 
- class RestProlOperator<DiscFunc<
+ class RestrictProlongDefault<DiscFunc<
    DiscontinuousGalerkinSpace<FunctionSpaceImp,GridPartImp,0,StorageImp> 
- > > 
+ > > : 
+  public RestrictProlongInterface<RestrictProlongDefault<DiscFunc<
+    DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, 0,StorageImp
+     > > >
+ 
  {
    typedef DiscFunc<DiscontinuousGalerkinSpace<FunctionSpaceImp, 
 					       GridPartImp, 
@@ -158,7 +162,7 @@ private:
   typedef CachingQuadrature<GridType,0> QuadratureType;
 public:  
   //! Constructor
-  RestProlOperator ( DiscreteFunctionType & df ) : 
+  RestrictProlongDefault ( DiscreteFunctionType & df ) : 
     df_ (df),
     weight_(-1.0)
   {}
