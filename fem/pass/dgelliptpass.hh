@@ -303,13 +303,8 @@ namespace Dune {
       volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
-      beta_(1.0),
-      power_(1.0),
-      eta_(1.0),
       matrixAssembled_(false)                                                              
     {
-      readParameter("parameter","beta",beta_);
-      readParameter("parameter","power",power_);
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
@@ -747,22 +742,35 @@ namespace Dune {
             //  FLUX evaluation 
             //  
             ////////////////////////////////////////////////////////////
+            GradientRangeType sL,sR;
+            RangeType uL,uR;
+
+            // evaluate uFlux 
+            gradCaller_.numericalFlux(nit,
+                                      faceQuadInner,
+                                      faceQuadOuter,
+                                      l,
+                                      sL,sR,
+                                      uL,uR);
+
+            RangeType enflux(uL);
+            RangeType neighflux(uR);
+
             GradientRangeType sigmaEn,sigmaNb;
-            sigmaflux(unitNormal,faceVol,fMat_[0],fMatNb_[0],sigmaEn,sigmaNb);
 
-            RangeType enflux(0.0);
-            RangeType neighflux(0.0);
+            // evaluate sigmaFlux 
+            caller_.numericalFlux(nit,
+                                  faceQuadInner,
+                                  faceQuadOuter,
+                                  l,
+                                  sigmaEn,sigmaNb,
+                                  uL,uR);
 
-            RangeType argEn(gradFMat_[0][0]);
-            RangeType argNb(gradFMatNb_[0][0]);
-            
-            uflux(unitNormal,faceVol,argEn,argNb,enflux,neighflux);
-            
-            double staben=0.0,stabneigh=0.0;
-            argEn = gradSource_[0]; 
-            argNb = gradSourceNb_[0];
-               
-            sigmaFluxStability(unitNormal,faceVol,argEn,argNb,staben,stabneigh);
+            double staben = uL; 
+            double stabneigh = uR; 
+            // to be revised 
+            staben *= gradSource_[0]; 
+            stabneigh *= gradSourceNb_[0];
             ////////////////////////////////////////////////////////////
 
             for(int i=0;i < gradientNumDofs;++i)
@@ -770,7 +778,6 @@ namespace Dune {
               grdbsetEn.eval(i,faceQuadInner,l, tau_[0]);      
               gradbsetNeigh.eval(i,faceQuadOuter,l, tauneigh_[0]);
               
-
               RangeType valEn(0.0),valNeigh(0.0); 
 
               for(int j=0; j<numDofs; ++j)
@@ -885,14 +892,16 @@ namespace Dune {
             }
 
             {
+              RangeType fluxEn;
+              GradientRangeType sigmaFluxEn,sigmaFluxFake; 
+              caller_.boundaryFlux(nit, // intersection iterator 
+                                   faceQuadInner,l, // quad and point number 
+                                   sigmaFluxEn, fluxEn );
+                
               for(int i=0; i<gradientNumDofs; ++i)
               { 
                 grdbsetEn.eval(i,faceQuadInner,l, tau_[0]);
 
-                GradientRangeType sigmaFluxEn,sigmaFluxFake; 
-                
-                sigmaflux_beta_0(unitNormal,faceVol,fMat_[0],fMat_[0],sigmaFluxEn,sigmaFluxFake);
-                
                 // factor 2, becasue on boundary flux is identity, see
                 // sigmaflux  
                 double sigmaFlux = sigmaFluxEn * tau_[0];
@@ -946,14 +955,14 @@ namespace Dune {
                         singleRhs[j] += rhsVal1;
                       }
                       
-                      for (int k=0;k<numDofs;++k)
+                      for(int k=0; k<numDofs; ++k)
                       {
-                        double fluxEn=0;
                         double stabvalen=0.0;
-                        // note that only gLeft is used here 
-                        sigmaFluxStability(unitNormal,faceVol,phi_[0],phi_[0],fluxEn,stabvalen);           
                         
-                        stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,fluxEn) * intel;
+                        // note that only gLeft is used here 
+                        RangeType fluxEnTmp =  fluxEn[0] * phi_[0];  
+                        
+                        stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,fluxEnTmp) * intel;
                         
                         stabvalen *= gradSource_[0];
                         //stabvalen *= fMat_[0][0];
@@ -1153,97 +1162,6 @@ namespace Dune {
       return massVolInv;
     }
 
-    // --uflux 
-    void uflux_beta_0(const DomainType& integrationNormal,const RangeType & phiLeft,const RangeType& phiRight, 
-                      RangeType & gLeft, RangeType & gRight) const
-    {
-      gLeft  = phiLeft; 
-      gRight = phiRight;
-
-      gLeft  *= 0.5;
-      gRight *= 0.5;
-      return ;
-    }
-
-    // --uflux 
-    void uflux(const DomainType& unitNormal,const double faceVol, const RangeType & phiLeft,const RangeType& phiRight, 
-               RangeType & gLeft, RangeType & gRight)const
-    {
-      // evaluate flux for beta = 0.0 
-      uflux_beta_0(unitNormal,phiLeft,phiRight,gLeft,gRight);
-
-      DomainType left(unitNormal);
-      DomainType right(unitNormal);
-      
-      left  *= phiLeft[0];
-      right *= -phiRight[0];
-      
-      DomainType scaling(unitNormal);
-      //scaling *= beta_ * faceVol;
-      scaling *= beta_ * std::pow(faceVol,power_);
-      
-      gLeft  += scaling * left; 
-      gRight += scaling * right;
-    }
-
-    // --sigmaflux
-    template<class argType>
-    void sigmaflux_beta_0(const DomainType& unitNormal, const double faceVol,
-       const argType& tauleft,
-       const argType& tauright,
-       GradientRangeType & sigmaLeft,
-       GradientRangeType  & sigmaRight ) const 
-    {
-      sigmaLeft  = unitNormal; 
-      sigmaRight = unitNormal;
-
-      for(int j=0; j<dimGradRange; ++j) 
-      {
-        sigmaLeft[j]  *= 0.5*tauleft[j];
-        sigmaRight[j] *= 0.5*tauright[j];
-      }
-    };
-
-    // --sigmaflux
-    template<class argType>
-    void sigmaflux(const DomainType& unitNormal, const double faceVol,
-       const argType& tauleft,
-       const argType& tauright,
-       GradientRangeType & sigmaLeft,
-       GradientRangeType  & sigmaRight ) const 
-    {
-      sigmaflux_beta_0(unitNormal,faceVol,tauleft,tauright,sigmaLeft,sigmaRight);
-
-      DomainType scaling(unitNormal);
-      scaling *= beta_ * std::pow(faceVol,power_);
-
-      DomainType jumpLeft(scaling);
-      DomainType jumpRight(scaling);
-
-      jumpLeft  *= (unitNormal * tauleft);
-      jumpRight *= (unitNormal * tauright);
-      
-      sigmaLeft  -= jumpLeft;
-      sigmaRight += jumpRight; 
-      
-      return ;
-    }
-
-    // --sigmaflux
-    void sigmaFluxStability(const DomainType& integrationNormal, const double faceVol,
-                            const RangeType& phileft,
-                            const RangeType& phiright,
-                            double & gLeft,
-                            double & gRight ) const 
-    {
-      const double factor = eta_ / faceVol;
-      gLeft   =  phileft; 
-      gRight  = -phiright; 
-
-      gLeft  *= factor;
-      gRight *= factor;
-    }
-
   private:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
@@ -1299,12 +1217,8 @@ namespace Dune {
 
     mutable MatrixHandlerType matrixHandler_;
 
-    double beta_;
-    double power_;
-    const double eta_;
     mutable bool matrixAssembled_;
     mutable bool preCond_;
-
   };
   
   //! Concrete implementation of Pass for LDG.
