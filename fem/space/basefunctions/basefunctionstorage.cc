@@ -1,4 +1,4 @@
-#include "../caching/pointprovider.hh"
+#include <dune/fem/caching/pointprovider.hh>
 
 using std::make_pair;
 

@@ -15,8 +15,8 @@
 //- local includes 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/basefunctions/basefunctionsets.hh>
-#include <dune/fem/basefunctions/basefunctionstorage.hh>
+#include <dune/fem/space/basefunctions/basefunctionsets.hh>
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"

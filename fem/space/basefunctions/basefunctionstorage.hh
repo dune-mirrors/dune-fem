@@ -11,8 +11,8 @@
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
-#include "common/basefunctionfactory.hh"
-#include "common/storageinterface.hh"
+#include <dune/fem/space/common/basefunctionfactory.hh>
+#include "storageinterface.hh"
 
 namespace Dune {
 
@@ -200,5 +200,4 @@ namespace Dune {
 } // end namespace Dune
 
 #include "basefunctionstorage.cc"
-
 #endif

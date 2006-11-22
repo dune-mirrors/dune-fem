@@ -9,8 +9,8 @@
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
-#include "../../basefunctions/common/fastbase.hh"
-#include "../../basefunctions/common/basefunctionfactory.hh"
+//#include "../../basefunctions/common/fastbase.hh"
+#include <dune/fem/space/common/basefunctionfactory.hh>
 
 namespace Dune {
 

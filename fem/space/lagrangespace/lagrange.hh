@@ -6,11 +6,13 @@
 
 //- local includes 
 #include <dune/fem/space/common/discretefunctionspace.hh>
+
 #include "lagrangebasefunctions.hh"
 #include "lagrangemapper.hh"
 
-#include "../common/dofmanager.hh"
-#include "../common/basefunctionfactory.hh"
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/basefunctionfactory.hh>
+#include <dune/fem/space/common/basefunctionsets.hh>
 
 // * Note: the dofmanager could be removed from the space altogether now.
 // (Maybe this wouldn't be a clever move, though. In my view of a perfect Dune,

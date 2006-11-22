@@ -6,8 +6,8 @@
 #include <dune/common/fvector.hh>
 
 //- local includes 
-#include <dune/fem/basefunctions/common/basefunctions.hh>
-#include <dune/fem/basefunctions/common/basefunctionfactory.hh>
+#include <dune/fem/space/common/basefunctioninterface.hh>
+#include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/common/dofstorage.hh>
 
 namespace Dune {
@@ -211,5 +211,4 @@ namespace Dune {
 } // end namespace Dune
 
 #include "basefunctionsets.cc"
-
 #endif

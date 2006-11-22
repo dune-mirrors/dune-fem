@@ -1,7 +1,7 @@
 #include <cassert>
 #include <dune/grid/common/referenceelements.hh>
 
-#include <dune/fem/basefunctions/common/storageinterface.hh>
+#include <dune/fem/space/basefunctions/storageinterface.hh>
 
 namespace Dune {
 
