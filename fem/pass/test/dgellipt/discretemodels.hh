@@ -146,14 +146,60 @@ namespace LDGExample {
     bool hasSource() const { return true; }
     bool hasFlux() const { return false; }
 
-    template <class ArgumentTuple, class ReturnType>
-    double numericalFlux(IntersectionIterator& it,
-                         double time, const FaceDomainType& x,
+    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    double numericalFlux(const IntersectionIterator& it,
+                         const double time, 
+                         const FaceDomainType& x,
                          const ArgumentTuple& uLeft,
                          const ArgumentTuple& uRight,
-                         ReturnType& gLeft,
-                         ReturnType& gRight) const 
+                         SigmaFluxType & sigmaLeft, 
+                         SigmaFluxType & sigmaRight,
+                         UFluxType & gLeft,
+                         UFluxType & gRight) const 
     {
+      // calculate unit normal and face volume  
+      DomainType unitNormal = it.integrationOuterNormal(x);
+      const double faceVol = unitNormal.two_norm();
+      unitNormal *= 1.0/faceVol;
+
+      // get saturation 
+      typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      const UType param(1.0);
+      //const UType& argULeft  = Element<0>::get(uLeft);
+      //const UType& argURight = Element<0>::get(uRight);
+
+      numflux_.uFlux(unitNormal,faceVol,
+                     param,param, 
+                     sigmaLeft,sigmaRight,
+                     gLeft,gRight);
+      return 0.0;
+    }
+
+    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    double boundaryFlux(const IntersectionIterator& it,
+                        const double time, 
+                        const FaceDomainType& x,
+                        const ArgumentTuple& uLeft,
+                        SigmaFluxType & sigmaLeft, 
+                        UFluxType & gLeft) const 
+    {
+      // calculate unit normal and face volume  
+      DomainType unitNormal = it.integrationOuterNormal(x);
+      const double faceVol = unitNormal.two_norm();
+      unitNormal *= 1.0/faceVol;
+
+      // get saturation 
+      typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      const UType param(1.0);
+      SigmaFluxType dummy;
+      UFluxType gDummy; 
+      //const UType& argULeft  = Element<0>::get(uLeft);
+      //const UType& argURight = Element<0>::get(uRight);
+
+      numflux_.uFluxBetaZero(unitNormal,faceVol,
+                             param,param, 
+                             sigmaLeft,dummy,
+                             gLeft,gDummy);
       return 0.0;
     }
 
@@ -291,23 +337,68 @@ namespace LDGExample {
     bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
 
-    template <class ArgumentTuple, class ReturnType>
-    double numericalFlux(IntersectionIterator& it,
-                         double time, const FaceDomainType& x,
+    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    double numericalFlux(const IntersectionIterator& it,
+                         const double time, 
+                         const FaceDomainType& x,
                          const ArgumentTuple& uLeft,
                          const ArgumentTuple& uRight,
-                         ReturnType& gLeft,
-                         ReturnType& gRight) const 
+                         SigmaFluxType & sigmaLeft, 
+                         SigmaFluxType & sigmaRight,
+                         UFluxType & gLeft,
+                         UFluxType & gRight) const 
     {
+      // calculate unit normal and face volume  
+      DomainType unitNormal = it.integrationOuterNormal(x);
+      const double faceVol = unitNormal.two_norm();
+      unitNormal *= 1.0/faceVol;
+
+      // get saturation 
+      typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      const UType param(1.0);
+      //const UType& argULeft  = Element<0>::get(uLeft);
+      //const UType& argURight = Element<0>::get(uRight);
+
+      numflux_.sigmaFlux(unitNormal,faceVol,
+                             param,param, 
+                             sigmaLeft,sigmaRight,
+                             gLeft,gRight);
       return 0.0;
     }
 
-    template <class ArgumentTuple, class ReturnType >
-    double boundaryFlux(IntersectionIterator& it,
-                        double time, const FaceDomainType& x,
+
+    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    double boundaryFlux(const IntersectionIterator& it,
+                        const double time, 
+                        const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
-                        ReturnType& gLeft) const
+                        SigmaFluxType & sigmaLeft, 
+                        UFluxType & gLeft) const 
     {
+      // calculate unit normal and face volume  
+      DomainType unitNormal = it.integrationOuterNormal(x);
+      const double faceVol = unitNormal.two_norm();
+      unitNormal *= 1.0/faceVol;
+
+      SigmaFluxType sigmaRight;
+      UFluxType gRight; 
+
+      // get saturation 
+      typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      const UType param(1.0);
+      //const UType& argULeft  = Element<0>::get(uLeft);
+      //const UType& argURight = Element<0>::get(uRight);
+
+      // don't apply beta stabilization at boundary 
+      numflux_.sigmaFluxBetaZero(unitNormal,faceVol,
+                                 param,param, 
+                                 sigmaLeft,sigmaRight);
+      
+      // don't apply stabilization at boundary 
+      numflux_.sigmaFluxStability(unitNormal,faceVol,
+                                  param,param, 
+                                  gLeft,gRight);
+
       return 0.0;
     }
 
