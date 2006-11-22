@@ -5,8 +5,8 @@
 
 namespace Dune {
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 LagrangeDiscreteFunctionSpace (GridPartType & gridPart) :
     DefaultType(gridPart),
     baseFuncSet_(GeometryIdentifier::numTypes,0),
@@ -17,8 +17,8 @@ LagrangeDiscreteFunctionSpace (GridPartType & gridPart) :
   makeFunctionSpace(gridPart);
 }
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-inline void LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+inline void LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 makeFunctionSpace (GridPartType& gridPart) 
 {
   // add index set to list of indexset of dofmanager 
@@ -50,8 +50,8 @@ makeFunctionSpace (GridPartType& gridPart)
   }
 }
   
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 ~LagrangeDiscreteFunctionSpace () 
 {
   for(unsigned int i=0; i<baseFuncSet_.size(); i++)
@@ -66,18 +66,18 @@ inline LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
   MapperProviderType::removeObject(*mapper_);
 }  
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-inline DFSpaceIdentifier LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+inline DFSpaceIdentifier LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 type () const 
 {
   return LagrangeSpace_id;
 }
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 template <class EntityType> 
 inline const 
-typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::BaseFunctionSetType &  
-LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BaseFunctionSetType &  
+LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 baseFunctionSet (const EntityType &en) const 
 {
   GeometryIdentifier::IdentifierType id =
@@ -85,10 +85,10 @@ baseFunctionSet (const EntityType &en) const
   return this->baseFunctionSet(id);
 }
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 inline const 
-typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::BaseFunctionSetType &  
-LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BaseFunctionSetType &  
+LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 baseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
 {
   /*
@@ -106,32 +106,32 @@ baseFunctionSet (const GeometryIdentifier::IdentifierType id) const
   return *baseFuncSet_[id];
 }
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-inline int LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+inline int LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 size () const
 {
   return mapper_->size ();
 }
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 template< class EntityType> 
-inline int LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+inline int LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 mapToGlobal ( EntityType &en, int localNum ) const
 {
   return mapper_->mapToGlobal ( en , localNum );
 }
 
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-const typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::MapperType&
-LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::mapper() const {
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+const typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::MapperType&
+LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::mapper() const {
   assert(mapper_);
   return *mapper_;
 }
    
-template <class FunctionSpaceImp, class GridPartImp, int polOrd>
-typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+typename LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 BaseFunctionSetType& 
-LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd>::
+LagrangeDiscreteFunctionSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 setBaseFuncSetPointer(GeometryType type) 
 {
   return SingletonProviderType::getObject(type);

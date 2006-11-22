@@ -12,7 +12,8 @@
 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/basefunctionfactory.hh>
-#include <dune/fem/space/common/basefunctionsets.hh>
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
+#include <dune/fem/space/basefunctions/basefunctionsets.hh>
 
 // * Note: the dofmanager could be removed from the space altogether now.
 // (Maybe this wouldn't be a clever move, though. In my view of a perfect Dune,
@@ -22,10 +23,12 @@
 namespace Dune {
 
   // Forfard declarations
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+            template<class> class BaseFunctionStorageImp = SimpleStorage >
   class LagrangeDiscreteFunctionSpace;
 
-  template <class FunctionSpaceImp,class GridPartImp, int polOrd> 
+  template <class FunctionSpaceImp,class GridPartImp, int polOrd,
+            template <class> class BaseFunctionStorageImp > 
   struct LagrangeDiscreteFunctionSpaceTraits 
   {   
     typedef FunctionSpaceImp FunctionSpaceType;
@@ -44,9 +47,9 @@ namespace Dune {
     typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     typedef LagrangeDiscreteFunctionSpace<
-      FunctionSpaceImp, GridPartImp, polOrd> DiscreteFunctionSpaceType;
-    //typedef FastBaseFunctionSet<DiscreteFunctionSpaceType> BaseFunctionSetType;
-    typedef VectorialBaseFunctionSet<FunctionSpaceImp> BaseFunctionSetType;
+      FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
+    
+    typedef VecBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef LagrangeMapper<IndexSetType,polOrd,DimRange> MapperType;
   };
 
@@ -66,12 +69,13 @@ namespace Dune {
   //! AdaptiveLeafIndexSet. 
   //!
   //****************************************************************
-  template<class FunctionSpaceImp, class GridPartImp, int polOrd>
+  template<class FunctionSpaceImp, class GridPartImp, int polOrd, 
+           template <class> class BaseFunctionStorageImp >
   class LagrangeDiscreteFunctionSpace : 
     public DiscreteFunctionSpaceDefault
   <
     LagrangeDiscreteFunctionSpaceTraits<FunctionSpaceImp, GridPartImp, 
-                                        polOrd> 
+                                        polOrd, BaseFunctionStorageImp > 
   >
   {
  public:
@@ -80,14 +84,14 @@ namespace Dune {
 
     /** \todo Please doc me! */
     typedef LagrangeDiscreteFunctionSpace< 
-      FunctionSpaceImp, GridPartImp, polOrd
+      FunctionSpaceImp, GridPartImp, polOrd , BaseFunctionStorageImp
       > LagrangeDiscreteFunctionSpaceType;
 
     typedef LagrangeDiscreteFunctionSpaceType ThisType; 
  
     //! my Traits 
     typedef LagrangeDiscreteFunctionSpaceTraits<
-      FunctionSpaceImp, GridPartImp, polOrd
+      FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp
       > Traits;
 
     /** \todo Please doc me! */
