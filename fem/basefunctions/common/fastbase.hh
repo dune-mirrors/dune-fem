@@ -1,6 +1,8 @@
 #ifndef DUNE_FASTBASE_HH
 #define DUNE_FASTBASE_HH
 
+#error "Check use of this file !!"
+
 //- local includes 
 #include "basefunctions.hh"
 #include "../../space/common/dofstorage.hh"
