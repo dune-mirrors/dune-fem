@@ -1,16 +1,5 @@
-/*******************************************************************
- Problem description in domain D_gdl + D_cat:
-
-    M4) Mass and momentum balance for liquid and gas flow in a porous media
-           -input   variables:
-           -free    variables: water saturation (s_w), global pressure (p), global velocity (u)
-           -derived variables: 
-
-  ****************************************************************
-  
-*/
-#ifndef FUELCELL_FCM4_CC
-#define FUELCELL_FCM4_CC
+#ifndef ELLIPTPROBLEM_CC
+#define ELLIPTPROBLEM_CC
 
 #include <math.h>
 
@@ -81,6 +70,10 @@ double rhsFunction(const double x[dim])
 #if PROBLEM == 4 
   val = frhs( x );
 #endif
+  
+#if PROBLEM == 5 
+  val = 0.0;
+#endif
 
   val *= exactFactor();
   return val;
@@ -94,6 +87,40 @@ double exactPol(const double x[dim])
   return ret;
 }
 
+double inSpringingCorner(const double x[dim])
+{
+  double ret = 0.0;
+  const double Pi= M_PI; 
+  double tmp2=0.0;
+
+  double s = 0.0 ;
+  for(int i=0; i<dim; ++i) s += x[i]*x[i];
+  double r = sqrt(s); 
+ 
+  double phi=0.0;
+  double fac=2.0;
+  fac/=3;
+ 
+  ret=pow(r,fac);
+  if(x[1]>=0.0)
+  {
+    tmp2=x[0];
+    tmp2/=r;
+    phi=acos(tmp2);
+    phi*=fac;
+    ret*=sin(phi);
+  }
+  else
+  {
+    tmp2=-x[0];
+    tmp2/=r;
+    phi=acos(tmp2);
+    phi+=Pi;
+    phi*=fac;
+    ret*=sin(phi);
+  }
+  return ret;
+}
 
 double exactSolution(const double x[dim])
 {
@@ -112,6 +139,10 @@ double exactSolution(const double x[dim])
 
 #if PROBLEM == 4 
   val = exactPol( x );
+#endif
+
+#if PROBLEM == 5 
+  val = inSpringingCorner( x );
 #endif
 
   val += globalShift;
@@ -152,6 +183,10 @@ void exactGradient(const double x[dim], double grad[dim])
 
 #if PROBLEM == 4 
   exactPol( x , grad );
+#endif
+  
+#if PROBLEM == 5 
+  grad[0] = grad[1] = 0.0; 
 #endif
   for(int i=0; i<dim; ++i) grad[i] *= exactFactor();
 }
@@ -197,7 +232,13 @@ bool boundaryDataFunction(const double x[dim], double & val)
   return true; 
 #endif
 
+#if PROBLEM == 5 
+  val = inSpringingCorner( x ); 
+  val += globalShift;
+  return true; 
+#endif
 
+  return true;
 }
 
 namespace Twophase {
