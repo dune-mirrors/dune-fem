@@ -6,7 +6,7 @@
 using namespace Dune;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
-#include <dune/fem/sapce/lagrangespace.hh>
+#include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/quadrature/cachequad.hh>

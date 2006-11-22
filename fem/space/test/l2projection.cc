@@ -45,8 +45,8 @@ typedef HierarchicGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
-// typedef FunctionSpace < double , double, dimw , 2 > FuncSpace;
+//typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
+typedef FunctionSpace < double , double, dimw , 2 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
