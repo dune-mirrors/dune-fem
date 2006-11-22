@@ -49,7 +49,7 @@ namespace Dune {
     typedef LagrangeDiscreteFunctionSpace<
       FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
     
-    typedef VecBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef LagrangeMapper<IndexSetType,polOrd,DimRange> MapperType;
   };
 
