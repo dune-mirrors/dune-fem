@@ -153,6 +153,20 @@ template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
 class MatrixFunctionSpace : public
       FunctionSpaceBase<MatrixSpaceTraits<DomainFieldImp,RangeFieldImp,n,m1,m2> > {};
 
+
+//! convert functions space to scalar function space
+template <class FunctionSpaceImp>
+struct ToScalarFunctionSpace {};
+
+//! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange> 
+template <
+  class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange>
+struct ToScalarFunctionSpace<
+  FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange> >
+{
+  typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, 1> Type;
+};
+
 /** @} end documentation group */
 
 }
