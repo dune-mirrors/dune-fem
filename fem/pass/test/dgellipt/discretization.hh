@@ -37,7 +37,7 @@
 // definition of L2Error 
 #include <dune/fem/misc/l2error.hh>
 
-#include "upwindflux.cc"
+#include "ldgflux.cc"
 
 using namespace Dune;
 
@@ -278,7 +278,11 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   enum { polOrd = DiscrType::polyOrder };
 
   // choice of fluxes 
-  typedef UpwindFlux<ModelType> NumericalFluxType;
+  //typedef UpwindFlux<ModelType> NumericalFluxType;
+  //typedef LDGFluxSigma<ModelType> LDGFluxType;
+  typedef LDGFlux<ModelType> NumericalFluxType;
+
+
 
   typedef LaplaceDiscreteModel < ModelType, NumericalFluxType, polOrd > LaplaceModelType;
   typedef GradientDiscreteModel < ModelType, NumericalFluxType, polOrd > GradientModelType;
@@ -318,7 +322,23 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   int eocsteps = 2;
   readParameter(paramfile,"EOCSteps",eocsteps);
 
-  NumericalFluxType numericalFlux(model);
+  // read parameter for LDGFlux 
+  double beta = 0.0;
+  if(!readParameter(paramfile,"beta",beta))
+  {
+    std::cout << "Using beta = "<< beta << "\n";
+  }
+  double power = 1.0;
+  if(!readParameter(paramfile,"power",power))
+  {
+    std::cout << "Using power of h = "<< power << "\n";
+  }
+  double eta = 1.0;
+  if(!readParameter(paramfile,"eta",eta))
+  {
+    std::cout << "Using eta = "<< eta << "\n";
+  }
+  NumericalFluxType numericalFlux(model,beta,power,eta);
   
   LaplaceModelType lpm(model, numericalFlux, preConditioning);
   GradientModelType gm(model, numericalFlux, preConditioning);
