@@ -37,7 +37,8 @@
 // definition of L2Error 
 #include <dune/fem/misc/l2error.hh>
 
-#include "ldgflux.cc"
+// implementation of ldg flux 
+#include <dune/fem/pass/ldgflux.hh>
 
 using namespace Dune;
 
