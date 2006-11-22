@@ -61,18 +61,19 @@ public:
     return asImp().oldIndex(); 
   }
     
-  // return new index in dof array of given index ( for dof compress ) 
+  //! return new index in dof array of given index ( for dof compress ) 
   int newIndex (int num) const 
   { 
     return asImp().newIndex(); 
   }
 
-  // return estimate for size additional need for restriction of data
+  //! return estimate for size additional need for restriction of data
   int additionalSizeEstimate() const 
   {  
     return asImp().additionalSizeEstimate(); 
   }
 
+  //! return true if compress will affect data  
   bool needsCompress () const 
   {
     return asImp().needsCompress ();

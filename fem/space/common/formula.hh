@@ -1,6 +1,8 @@
 #ifndef DUNE_FORMULA_HH
 #define DUNE_FORMULA_HH
 
+#warning "File deprecated !!"
+
 //- Dune includes
 #include <dune/common/interfaces.hh>
 
