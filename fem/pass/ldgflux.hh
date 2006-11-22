@@ -17,6 +17,7 @@ public:
     , beta_(beta)
     , power_(power)
     , eta_(eta)
+    , betaNotZero_( std::abs( beta_ ) > 0.0 )
   {
   }
 
@@ -75,28 +76,31 @@ public:
     // call part of flux for beta == 0
     sigmaFluxBetaZero(unitNormal,faceVol,uLeft,uRight,sigmaLeft,sigmaRight);
 
-    // add part wiht beta != 0 
-    DomainType scaling(unitNormal);
-    scaling *= beta_ * std::pow(faceVol,power_);
+    if( betaNotZero_ )
+    {
+      // add part wiht beta != 0 
+      DomainType scaling(unitNormal);
+      scaling *= beta_ * std::pow(faceVol,power_);
 
-    DomainType jumpLeft(scaling);
-    DomainType jumpRight(scaling);
+      DomainType jumpLeft(scaling);
+      DomainType jumpRight(scaling);
 
-    /*
-    DomainType valLeft(unitNormal);
-    valLeft  *= uLeft[0];
-    DomainType valRight(unitNormal);
-    valRight *= uRight[0];
-    */
+      /*
+      DomainType valLeft(unitNormal);
+      valLeft  *= uLeft[0];
+      DomainType valRight(unitNormal);
+      valRight *= uRight[0];
+      */
 
-    //jumpLeft  *= (unitNormal * valLeft);
-    //jumpRight *= (unitNormal * valRight);
+      //jumpLeft  *= (unitNormal * valLeft);
+      //jumpRight *= (unitNormal * valRight);
 
-    jumpLeft  *= (uLeft[0]);//nitNormal * valLeft);
-    jumpRight *= (uRight[0]);//nitNormal * valRight);
+      jumpLeft  *= (uLeft[0]);//nitNormal * valLeft);
+      jumpRight *= (uRight[0]);//nitNormal * valRight);
 
-    sigmaLeft  -= jumpLeft;
-    sigmaRight += jumpRight;
+      sigmaLeft  -= jumpLeft;
+      sigmaRight += jumpRight;
+    }
 
     sigmaFluxStability(unitNormal,faceVol,uLeft,uRight,gLeft,gRight);
     return 0.0;
@@ -143,18 +147,21 @@ public:
     uFluxBetaZero(unitNormal,faceVol,uLeft,uRight,
                   sigmaLeft,sigmaRight,gLeft,gRight);
 
-    DomainType left(unitNormal);
-    DomainType right(unitNormal);
+    if( betaNotZero_ )
+    {
+      DomainType left(unitNormal);
+      DomainType right(unitNormal);
 
-    left  *= uLeft[0];
-    right *= -uRight[0];
+      left  *= uLeft[0];
+      right *= -uRight[0];
 
-    DomainType scaling(unitNormal);
-    //scaling *= beta_ * faceVol;
-    scaling *= beta_ * std::pow(faceVol,power_);
+      DomainType scaling(unitNormal);
+      //scaling *= beta_ * faceVol;
+      scaling *= beta_ * std::pow(faceVol,power_);
 
-    gLeft  += scaling * left;
-    gRight += scaling * right;
+      gLeft  += scaling * left;
+      gRight += scaling * right;
+    }
     return 0.0;
   }
 
@@ -163,6 +170,7 @@ private:
   const double beta_;
   const double power_;
   const double eta_;
+  const bool betaNotZero_;
 };
 
 #endif
