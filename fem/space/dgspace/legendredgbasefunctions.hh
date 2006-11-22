@@ -5,9 +5,8 @@
 #include <dune/grid/common/grid.hh>
 
 // Local includes
-#include "../../basefunctions/common/basefunctions.hh"
-#include "../../basefunctions/common/basefunctionfactory.hh"
-#include "../../basefunctions/common/fastbase.hh"
+#include <dune/fem/space/common/basefunctioninterface.hh>
+#include <dune/fem/space/common/basefunctionfactory.hh>
 
 namespace Dune {
   
@@ -157,6 +156,7 @@ namespace Dune {
 
   }; // end class LegendreDGBaseFunction<FunctionSpaceType, hexahedron, polOrd>
 
+  /*
   template <class FunctionSpaceImp, GeometryIdentifier::IdentifierType elType, int polOrd>
   class LegendreDGFastBaseFunctionSet :
     public FastBaseFunctionSet<FunctionSpaceImp>
@@ -181,6 +181,7 @@ namespace Dune {
 
     virtual ~LegendreDGFastBaseFunctionSet() {}
   };
+  */
 
   template <class ScalarFunctionSpaceImp, int polOrd>
   class LegendreDGBaseFunctionFactory : 

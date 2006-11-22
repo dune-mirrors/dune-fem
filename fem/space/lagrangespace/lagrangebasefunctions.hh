@@ -748,6 +748,7 @@ struct LagrangeDefinition< GeometryIdentifier::Hexahedron , polOrd, dimrange >
 */ 
 //
 //*********************************************************************
+/*
 template<class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType, int polOrd > 
 class LagrangeFastBaseFunctionSet 
   : public FastBaseFunctionSet<FunctionSpaceType > 
@@ -793,6 +794,7 @@ public:
   }
 
 };
+*/
 
 //! Factory class for base functions
 template <class ScalarFunctionSpaceImp, int polOrd>
@@ -879,5 +881,4 @@ public:
 } // end namespace Dune
 
 #include "p2lagrangebasefunctions.hh"
-
 #endif

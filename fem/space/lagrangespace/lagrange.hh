@@ -10,9 +10,7 @@
 #include "lagrangemapper.hh"
 
 #include "../common/dofmanager.hh"
-
-#include "../../basefunctions/common/basefunctionsets.hh"
-#include "../../basefunctions/common/basefunctionfactory.hh"
+#include "../common/basefunctionfactory.hh"
 
 // * Note: the dofmanager could be removed from the space altogether now.
 // (Maybe this wouldn't be a clever move, though. In my view of a perfect Dune,
