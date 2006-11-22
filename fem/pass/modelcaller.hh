@@ -172,6 +172,56 @@ namespace Dune {
                                     resEn, resNeigh);
     }
 
+    // Ensure: entities set correctly before call
+    template <class GradientRangeType, class SingleRangeType> 
+    double numericalFlux(const IntersectionIterator& nit,
+                         const FaceQuadratureType& quadInner, 
+                         const FaceQuadratureType& quadOuter, 
+                         const int quadPoint,
+                         GradientRangeType & sigmaEn, 
+                         GradientRangeType & sigmaNeigh,
+                         SingleRangeType& uEn, 
+                         SingleRangeType& uNeigh)
+    {
+      // we need default values to be 1.0, if no data is evaluated 
+      resetEvaluation(1.0); 
+
+      // evaluate data functions 
+      evaluateQuad(data_->self(), quadInner, quadPoint,
+                   data_->localFunctionsSelf(), valuesEn_);
+      evaluateQuad(data_->neighbor(), quadOuter, quadPoint,
+                   data_->localFunctionsNeigh(), valuesNeigh_);
+
+      return problem_.numericalFlux(nit, time_, 
+                                    quadInner.localPoint(quadPoint),
+                                    valuesEn_, 
+                                    valuesNeigh_,
+                                    sigmaEn,sigmaNeigh,
+                                    uEn, uNeigh);
+    }
+
+    // Ensure: entities set correctly before call
+    template <class GradientRangeType, class SingleRangeType> 
+    double boundaryFlux(const IntersectionIterator& nit,
+                        const FaceQuadratureType& quadInner, 
+                        const int quadPoint,
+                        GradientRangeType & sigmaEn, 
+                        SingleRangeType& uEn)
+    {
+      // we need default values to be 1.0, if no data is evaluated 
+      resetEvaluation(1.0,valuesEn_); 
+
+      // evaluate data functions 
+      evaluateQuad(data_->self(), quadInner, quadPoint,
+                   data_->localFunctionsSelf(), valuesEn_);
+      
+      return problem_.boundaryFlux(nit, time_, 
+                                   quadInner.localPoint(quadPoint),
+                                   valuesEn_, 
+                                   sigmaEn,
+                                   uEn);
+    }
+
 
     template <class IntersectionIterator, class FaceDomainType>
     double boundaryFlux(IntersectionIterator& nit,
@@ -225,6 +275,13 @@ namespace Dune {
                              jacobians_, res);
     }
 
+    //! sets valuesEn_ and valuesNb_ to val 
+    inline
+    void resetEvaluation(const double val) 
+    {
+      resetEvaluation(val,valuesEn_);
+      resetEvaluation(val,valuesNeigh_);
+    }
   private:
     void setter(Entity& en, LocalFunctionTupleType& tuple) 
     {
@@ -244,10 +301,21 @@ namespace Dune {
       forEach.apply(eval);
     }
 
+
+    //! sets valuesEn_ and valuesNb_ to val 
+    inline
+    void resetEvaluation(double val, RangeTupleType& ranges) 
+    {
+      ForEachValue<RangeTupleType> forEach(ranges); 
+      ResetTuple reset(val);
+      forEach.apply(reset);
+    }
+
     template <class QuadratureType>
     inline
     void evaluateQuad(Entity& en, QuadratureType& quad, int quadPoint, 
-                      LocalFunctionTupleType& lfs, RangeTupleType& ranges) 
+                      LocalFunctionTupleType& lfs, 
+                      RangeTupleType& ranges) 
     {
       ForEachValuePair<
         LocalFunctionTupleType, RangeTupleType> forEach(lfs,
