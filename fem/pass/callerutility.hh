@@ -273,30 +273,6 @@ namespace Dune {
   };
 
   /**
-   * @brief Functor class which resets a tuple of RangeTypes to a given default value. 
-   *
-   * This Functor as an argument to ForEachValue with a tuple of
-   * RangeTypes.
-   */
-  class ResetTuple {
-  public:
-    //! Constructor
-    //! \param val default value to set 
-    ResetTuple(double val) : val_(val)
-    {}
-
-    //! Applies the setting on every RangeType.
-    template <class RangeType>
-    void visit(RangeType& r) 
-    {
-       r = val_; 
-    }
-
-  private:
-    const double val_;
-  };
-
-  /**
    * @brief Calls lf.evaluateLocal on a tuple of local functions with a 
    * corresponding tuple of results.
    *
