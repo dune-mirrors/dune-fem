@@ -42,8 +42,7 @@ struct DescriptionTraits
 int main (int argc, char **argv)
 {
   // this method calls MPI_Init, if MPI is enabled
- // MPIHelper & mpiHelper = 
-    MPIHelper::instance(argc,argv);
+  MPIHelper::instance(argc,argv);
 
   // error message if called without parameter file
   if(argc < 2)
