@@ -22,6 +22,8 @@ BICGSTAB::~BICGSTAB()
 
 void BICGSTAB::set_preconditioner(Function &preconditioner)
 {
+  unset_preconditioner();
+  
   this->preconditioner = &preconditioner;
   if (dim > 0)
   {
@@ -35,7 +37,7 @@ void BICGSTAB::set_preconditioner(Function &preconditioner)
 void BICGSTAB::unset_preconditioner()
 {
   this->preconditioner = 0; 
-  if( z ) delete [] z;  
+  delete [] z;  
   z = 0;
 }
 
