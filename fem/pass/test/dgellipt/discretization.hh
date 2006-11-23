@@ -220,10 +220,10 @@ public:
       error[i] = l2err.norm(exact , dest);
 
       for(int k=0; k<RangeType::dimension; k++)
-        std::cout << "\nError["<<i<<"] : " << error[i][k] << "\n";
+        std::cout << "\nError["<<k<<"] : " << error[i][k] << "\n";
       
       for(int k=0; k<GradRangeType::dimension; k++)
-        std::cout << "GradError["<<i<<"] : " << gradError[i][k] << "\n";
+        std::cout << "GradError["<<k<<"] : " << gradError[i][k] << "\n";
     
       if( i > 0 )
       {
