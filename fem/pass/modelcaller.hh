@@ -173,19 +173,15 @@ namespace Dune {
     }
 
     // Ensure: entities set correctly before call
-    template <class GradientRangeType, class SingleRangeType> 
     double numericalFlux(const IntersectionIterator& nit,
                          const FaceQuadratureType& quadInner, 
                          const FaceQuadratureType& quadOuter, 
                          const int quadPoint,
-                         GradientRangeType & sigmaEn, 
-                         GradientRangeType & sigmaNeigh,
-                         SingleRangeType& uEn, 
-                         SingleRangeType& uNeigh)
+                         RangeType & sigmaPartLeft, 
+                         RangeType & sigmaPartRight,
+                         RangeType& uPartLeft, 
+                         RangeType& uPartRight)
     {
-      // we need default values to be 1.0, if no data is evaluated 
-      resetEvaluation(1.0); 
-
       // evaluate data functions 
       evaluateQuad(data_->self(), quadInner, quadPoint,
                    data_->localFunctionsSelf(), valuesEn_);
@@ -196,21 +192,17 @@ namespace Dune {
                                     quadInner.localPoint(quadPoint),
                                     valuesEn_, 
                                     valuesNeigh_,
-                                    sigmaEn,sigmaNeigh,
-                                    uEn, uNeigh);
+                                    sigmaPartLeft,sigmaPartRight,
+                                    uPartLeft, uPartRight);
     }
 
     // Ensure: entities set correctly before call
-    template <class GradientRangeType, class SingleRangeType> 
     double boundaryFlux(const IntersectionIterator& nit,
                         const FaceQuadratureType& quadInner, 
                         const int quadPoint,
-                        GradientRangeType & sigmaEn, 
-                        SingleRangeType& uEn)
+                        RangeType & sigmaPartLeft, 
+                        RangeType & uPartLeft)
     {
-      // we need default values to be 1.0, if no data is evaluated 
-      resetEvaluation(1.0,valuesEn_); 
-
       // evaluate data functions 
       evaluateQuad(data_->self(), quadInner, quadPoint,
                    data_->localFunctionsSelf(), valuesEn_);
@@ -218,8 +210,8 @@ namespace Dune {
       return problem_.boundaryFlux(nit, time_, 
                                    quadInner.localPoint(quadPoint),
                                    valuesEn_, 
-                                   sigmaEn,
-                                   uEn);
+                                   sigmaPartLeft,
+                                   uPartLeft);
     }
 
 
@@ -275,13 +267,6 @@ namespace Dune {
                              jacobians_, res);
     }
 
-    //! sets valuesEn_ and valuesNb_ to val 
-    inline
-    void resetEvaluation(const double val) 
-    {
-      resetEvaluation(val,valuesEn_);
-      resetEvaluation(val,valuesNeigh_);
-    }
   private:
     void setter(Entity& en, LocalFunctionTupleType& tuple) 
     {
@@ -299,16 +284,6 @@ namespace Dune {
       
       LocalFunctionEvaluateLocal<Entity, DomainType> eval(en, x);
       forEach.apply(eval);
-    }
-
-
-    //! sets valuesEn_ and valuesNb_ to val 
-    inline
-    void resetEvaluation(double val, RangeTupleType& ranges) 
-    {
-      ForEachValue<RangeTupleType> forEach(ranges); 
-      ResetTuple reset(val);
-      forEach.apply(reset);
     }
 
     template <class QuadratureType>
