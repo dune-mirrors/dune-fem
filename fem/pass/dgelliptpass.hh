@@ -742,21 +742,19 @@ namespace Dune {
             //  FLUX evaluation 
             //  
             ////////////////////////////////////////////////////////////
-            GradientRangeType sL,sR;
-            RangeType uL,uR;
+            GradientRangeType uFluxSigmaLeft,uFluxSigmaRight;
+            GradientRangeType uFluxULeft,uFluxURight;
 
             // evaluate uFlux 
             gradCaller_.numericalFlux(nit,
                                       faceQuadInner,
                                       faceQuadOuter,
                                       l,
-                                      sL,sR,
-                                      uL,uR);
-
-            RangeType enflux(uL);
-            RangeType neighflux(uR);
+                                      uFluxSigmaLeft,uFluxSigmaRight,
+                                      uFluxULeft,uFluxURight);
 
             GradientRangeType sigmaEn,sigmaNb;
+            RangeType ul,ur;
 
             // evaluate sigmaFlux 
             caller_.numericalFlux(nit,
@@ -764,10 +762,11 @@ namespace Dune {
                                   faceQuadOuter,
                                   l,
                                   sigmaEn,sigmaNb,
-                                  uL,uR);
+                                  ul,ur);
 
-            double staben = uL; 
-            double stabneigh = uR; 
+            double staben = ul; 
+            double stabneigh = ur; 
+            
             // to be revised 
             staben *= gradSource_[0]; 
             stabneigh *= gradSourceNb_[0];
@@ -787,14 +786,15 @@ namespace Dune {
                 bsetNeigh.eval(j, faceQuadOuter, l, phiNeigh_ );
                 
                 {
-                  double enVal= tau_[0] * unitNormal;
-                  double neighVal= enVal;
+                  // eval tau * (un)  (scalar procduct) 
+                  double enVal    = tau_[0] * uFluxULeft;
+                  double neighVal = tau_[0] * uFluxURight; 
                   
-                  enVal    *=innerIntel;
-                  enVal    *=enflux[0]*phi_[0];
+                  enVal    *= innerIntel;
+                  enVal    *= phi_[0];
                   
-                  neighVal *=outerIntel;
-                  neighVal *=neighflux[0]*phiNeigh_[0];
+                  neighVal *= outerIntel;
+                  neighVal *= phiNeigh_[0];
                  
                   // add value to matrix for en,nb
                   gradMatrixEn.add( i, j, enVal );

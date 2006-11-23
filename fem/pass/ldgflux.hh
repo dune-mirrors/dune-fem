@@ -107,24 +107,23 @@ public:
   }
 
   //! evaluates { u } = 0.5 * ( uLeft + uRight )
-  template <class SigmaFluxType, class UFluxType>
+  template <class SigmaRangeType>
   double uFluxBetaZero(const DomainType & unitNormal,
                const double faceVol, 
-               const UFluxType & uLeft,
-               const UFluxType & uRight, 
-               SigmaFluxType & sigmaLeft,
-               SigmaFluxType & sigmaRight,
-               UFluxType & gLeft,
-               UFluxType & gRight) const
+               const SigmaRangeType & uLeft,
+               const SigmaRangeType & uRight, 
+               SigmaRangeType & sigmaLeft,
+               SigmaRangeType & sigmaRight,
+               SigmaRangeType & gLeft,
+               SigmaRangeType & gRight) const
   {
     // this flux has not sigma parts 
     sigmaLeft  = 0.0;
     sigmaRight = 0.0;
-    
-    // call part of flux for beta == 0
-    gLeft  = uLeft;
-    gRight = uRight;
 
+    gLeft  = uLeft; 
+    gRight = uRight; 
+    
     gLeft  *= 0.5;
     gRight *= 0.5;
     
@@ -133,15 +132,15 @@ public:
 
 
   //! evaluates uFLuxBetaZero + stabilization 
-  template <class SigmaFluxType, class UFluxType>
+  template <class SigmaRangeType>
   double uFlux(const DomainType & unitNormal,
                const double faceVol, 
-               const UFluxType & uLeft,
-               const UFluxType & uRight, 
-               SigmaFluxType & sigmaLeft,
-               SigmaFluxType & sigmaRight,
-               UFluxType & gLeft,
-               UFluxType & gRight) const
+               const SigmaRangeType & uLeft,
+               const SigmaRangeType & uRight, 
+               SigmaRangeType & sigmaLeft,
+               SigmaRangeType & sigmaRight,
+               SigmaRangeType & gLeft,
+               SigmaRangeType & gRight) const
   {
     // call part of flux for beta == 0
     uFluxBetaZero(unitNormal,faceVol,uLeft,uRight,
@@ -150,17 +149,16 @@ public:
     // only calculate this part if |beta| > 0
     if( betaNotZero_ )
     {
-      DomainType left(unitNormal);
-      DomainType right(unitNormal);
+      SigmaRangeType left(uLeft);
+      SigmaRangeType right(uRight); 
+      
+      const double scaling = beta_ * std::pow(faceVol,power_);
 
-      left  *= uLeft[0];
-      right *= -uRight[0];
+      left  *= scaling;
+      right *= scaling;
 
-      DomainType scaling(unitNormal);
-      scaling *= beta_ * std::pow(faceVol,power_);
-
-      gLeft  += scaling * left;
-      gRight += scaling * right;
+      gLeft  += left;
+      gRight += right;
     }
     return 0.0;
   }
