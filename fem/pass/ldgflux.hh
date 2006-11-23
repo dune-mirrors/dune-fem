@@ -24,14 +24,14 @@ public:
   const ModelType& model() const {return model_;}
 
   //! evaluates { sigma } = 0.5 ( sigmaLeft + sigmaRight )
-  template <class UFluxType>
+  template <class URangeType>
   double sigmaFluxBetaZero(
                        const DomainType & unitNormal,
                        const double faceVol, 
-                       const UFluxType & uLeft,
-                       const UFluxType & uRight, 
-                       UFluxType & sigmaLeft,
-                       UFluxType & sigmaRight) const
+                       const URangeType & uLeft,
+                       const URangeType & uRight, 
+                       URangeType & sigmaLeft,
+                       URangeType & sigmaRight) const
   {
     sigmaLeft  = uLeft;
     sigmaRight = uRight;
@@ -43,13 +43,13 @@ public:
   }
   
   //! evaluates sigmaBetaZero + stabilization 
-  template <class UFluxType>
+  template <class URangeType>
   double sigmaFluxStability(const DomainType & unitNormal,
                             const double faceVol, 
-                            const UFluxType & uLeft,
-                            const UFluxType & uRight, 
-                            UFluxType & gLeft,
-                            UFluxType & gRight) const
+                            const URangeType & uLeft,
+                            const URangeType & uRight, 
+                            URangeType & gLeft,
+                            URangeType & gRight) const
   {
     // stabilization term 
     const double factor = eta_ / faceVol;
@@ -63,15 +63,15 @@ public:
   }
 
   //! evaluates sigmaBetaZero + stabilization 
-  template <class UFluxType>
+  template <class URangeType>
   double sigmaFlux(const DomainType & unitNormal,
                    const double faceVol, 
-                   const UFluxType & uLeft,
-                   const UFluxType & uRight, 
-                   UFluxType & sigmaLeft,
-                   UFluxType & sigmaRight,
-                   UFluxType & gLeft,
-                   UFluxType & gRight) const
+                   const URangeType & uLeft,
+                   const URangeType & uRight, 
+                   URangeType & sigmaLeft,
+                   URangeType & sigmaRight,
+                   URangeType & gLeft,
+                   URangeType & gRight) const
   {
     // call part of flux for beta == 0
     sigmaFluxBetaZero(unitNormal,faceVol,uLeft,uRight,sigmaLeft,sigmaRight);
@@ -81,8 +81,8 @@ public:
     {
       const double scaling = beta_ * std::pow(faceVol,power_);
 
-      UFluxType jumpLeft(uLeft);
-      UFluxType jumpRight(uRight);
+      URangeType jumpLeft(uLeft);
+      URangeType jumpRight(uRight);
 
       jumpLeft  *= scaling;
       jumpRight *= scaling;
