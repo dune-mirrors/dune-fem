@@ -40,11 +40,20 @@ GMRES::~GMRES()
 
 void GMRES::set_preconditioner(Function &preconditioner)
 {
+  unset_preconditioner();
+
   this->preconditioner = &preconditioner;
   if (dim > 0){
     z = new double[size()];
     assert(z);
   }
+}
+
+void GMRES::unset_preconditioner()
+{
+  this->preconditioner = 0; 
+  delete [] z;
+  z = 0;
 }
 
 

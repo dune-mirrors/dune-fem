@@ -119,6 +119,8 @@ public:
   GMRES(Communicator &comm, int m);
   virtual ~GMRES();
   virtual void set_preconditioner(Function &preconditioner);
+  // set pointer to predonditioner to zero 
+  virtual void unset_preconditioner();
 
   // from Function, solve Au = b, Au = linear_operator(u)
   virtual bool solve(Function &linear_operator, double *u, const double *b);
@@ -172,6 +174,9 @@ public:
   BICGSTAB(Communicator &comm);
   ~BICGSTAB();
 
+  virtual void set_preconditioner(Function &preconditioner);
+  virtual void unset_preconditioner();
+
   // from IterativeLinearSolver, solve Au = b, Au = linear_operator(u)
   virtual bool solve(Function &linear_operator, double *u, const double *b);
   virtual bool solve_old(Function &linear_operator,double *u,const double *b);
@@ -182,7 +187,7 @@ protected:
   virtual void resize(int new_size, int component);
 
 private:
-  double *r, *r_star, *p, *s, *tmp;
+  double *r, *r_star, *p, *s, *tmp, *z;
 };
 
 
