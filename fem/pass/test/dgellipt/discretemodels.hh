@@ -127,6 +127,7 @@ namespace LDGExample {
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType GridPartType; 
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIterator; 
+    typedef typename GridType::template Codim<0>::EntityPointer  EntityPointerType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
     typedef BoundaryIdentifier BoundaryIdentifierType ;
@@ -137,8 +138,11 @@ namespace LDGExample {
     GradientDiscreteModel(const Model& mod,const NumFlux& numf, bool preCon = false) :
       model_(mod),
       numflux_(numf),
-      preCon_(preCon)
-    {}
+      preCon_(preCon),
+      one_(0.0)
+    {
+      for(int i=0; i<dimRange; ++i) one_[i][i] = 1.0;
+    }
 
     const Model & data () const { return model_; }
 
@@ -146,60 +150,93 @@ namespace LDGExample {
     bool hasSource() const { return true; }
     bool hasFlux() const { return false; }
 
-    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    template <class ArgumentTuple> 
     double numericalFlux(const IntersectionIterator& it,
                          const double time, 
-                         const FaceDomainType& x,
+                         const FaceDomainType& local,
                          const ArgumentTuple& uLeft,
                          const ArgumentTuple& uRight,
-                         SigmaFluxType & sigmaLeft, 
-                         SigmaFluxType & sigmaRight,
-                         UFluxType & gLeft,
-                         UFluxType & gRight) const 
+                         RangeType & sigmaLeft, 
+                         RangeType & sigmaRight,
+                         RangeType & gLeft,
+                         RangeType & gRight) const 
     {
       // calculate unit normal and face volume  
-      DomainType unitNormal = it.integrationOuterNormal(x);
+      DomainType unitNormal = it.integrationOuterNormal(local);
       const double faceVol = unitNormal.two_norm();
       unitNormal *= 1.0/faceVol;
 
-      // get saturation 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType param(1.0);
-      //const UType& argULeft  = Element<0>::get(uLeft);
-      //const UType& argURight = Element<0>::get(uRight);
+      if( hasFlux() )
+      {
+        DomainType dom = it.intersectionGlobal().global(local);
+        // default is id matrix 
+        JacobianRangeType anaFluxLeft(one_);
+        JacobianRangeType anaFluxRight(one_);
 
-      numflux_.uFlux(unitNormal,faceVol,
-                     param,param, 
-                     sigmaLeft,sigmaRight,
-                     gLeft,gRight);
+        RangeType tmpLeft(0.0);
+        RangeType tmpRight(0.0);
+        
+        {
+          EntityPointerType ep = it.inside();
+          const EntityType & en = *ep;
+          analyticalFlux(en,time,dom,
+                         uLeft,anaFluxLeft);
+        }
+                      
+        {
+          assert( it.neighbor() );
+          EntityPointerType ep = it.outside();
+          const EntityType & en = *ep;
+          analyticalFlux(en,time,dom,
+                         uRight,anaFluxRight);
+        }
+
+        anaFluxLeft.umv(unitNormal,tmpLeft); 
+        anaFluxRight.umv(unitNormal,tmpRight); 
+        
+        // evaluate u part of ldg flux 
+        numflux_.uFlux(unitNormal,faceVol,
+                       tmpLeft,tmpRight, 
+                       sigmaLeft,sigmaRight,
+                       gLeft,gRight);
+      }
+      else 
+      {
+        // evaluate u part of ldg flux 
+        numflux_.uFlux(unitNormal,faceVol,
+                       unitNormal,unitNormal, 
+                       sigmaLeft,sigmaRight,
+                       gLeft,gRight);
+      }
       return 0.0;
     }
 
-    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    template <class ArgumentTuple>
+    void analyticalFlux(const EntityType& en,
+                        const double time, 
+                        const DomainType& local,
+                        const ArgumentTuple& u, 
+                        JacobianRangeType& f) const
+    {
+      model_.diffusion(en,time,local,f);
+      double tmp = f[0][0];
+      tmp = sqrt(tmp);
+
+      for(int i=0;i<dimRange; ++i) f[i][i] = tmp;
+      
+      //std::cout << f << " f \n";
+    }
+
+    template <class ArgumentTuple> 
     double boundaryFlux(const IntersectionIterator& it,
                         const double time, 
-                        const FaceDomainType& x,
+                        const FaceDomainType& local,
                         const ArgumentTuple& uLeft,
-                        SigmaFluxType & sigmaLeft, 
-                        UFluxType & gLeft) const 
+                        RangeType & sigmaLeft, 
+                        RangeType & gLeft) const 
     {
-      // calculate unit normal and face volume  
-      DomainType unitNormal = it.integrationOuterNormal(x);
-      const double faceVol = unitNormal.two_norm();
-      unitNormal *= 1.0/faceVol;
-
-      // get saturation 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType param(1.0);
-      SigmaFluxType dummy;
-      UFluxType gDummy; 
-      //const UType& argULeft  = Element<0>::get(uLeft);
-      //const UType& argURight = Element<0>::get(uRight);
-
-      numflux_.uFluxBetaZero(unitNormal,faceVol,
-                             param,param, 
-                             sigmaLeft,dummy,
-                             gLeft,gDummy);
+      assert(false);
+      abort();
       return 0.0;
     }
 
@@ -224,20 +261,6 @@ namespace LDGExample {
       return BoundaryIdentifierType::undefined; 
     }
     
-    template <class ArgumentTuple>
-    void analyticalFlux(EntityType& en,
-                        double time, const DomainType& x,
-                        const ArgumentTuple& u, JacobianRangeType& f)
-    {
-      model_.diffusion(en,time,x,f);
-      double tmp = f[0][0];
-      tmp = sqrt(tmp);
-
-      for(int i=0;i<dimRange; ++i) f[i][i] = tmp;
-      
-      //std::cout << f << " f \n";
-    }
-
     template <class EntityType , class DomainType,
               class ArgumentTuple, class JacobianTuple>
     void source(EntityType &en,
@@ -266,6 +289,7 @@ namespace LDGExample {
     const Model& model_;
     const NumFlux& numflux_;
     const bool preCon_;
+    JacobianRangeType one_;
   };
 
   ///////////////////////////////////////////////////////////
@@ -320,6 +344,7 @@ namespace LDGExample {
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType GridPartType; 
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIterator; 
+    typedef typename GridType::template Codim<0>::EntityPointer  EntityPointerType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
     typedef BoundaryIdentifier BoundaryIdentifierType ;
@@ -337,66 +362,107 @@ namespace LDGExample {
     bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
 
-    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    template <class ArgumentTuple> 
     double numericalFlux(const IntersectionIterator& it,
                          const double time, 
-                         const FaceDomainType& x,
+                         const FaceDomainType& local,
                          const ArgumentTuple& uLeft,
                          const ArgumentTuple& uRight,
-                         SigmaFluxType & sigmaLeft, 
-                         SigmaFluxType & sigmaRight,
-                         UFluxType & gLeft,
-                         UFluxType & gRight) const 
+                         RangeType & sigmaLeft, 
+                         RangeType & sigmaRight,
+                         RangeType & gLeft,
+                         RangeType & gRight) const 
     {
       // calculate unit normal and face volume  
-      DomainType unitNormal = it.integrationOuterNormal(x);
+      DomainType unitNormal = it.integrationOuterNormal(local);
       const double faceVol = unitNormal.two_norm();
       unitNormal *= 1.0/faceVol;
 
-      // get saturation 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType param(1.0);
-      //const UType& argULeft  = Element<0>::get(uLeft);
-      //const UType& argURight = Element<0>::get(uRight);
+      RangeType tmpLeft(1.0);
+      RangeType tmpRight(1.0);
 
+      if( hasFlux() )
+      {
+        DomainType dom = it.intersectionGlobal().global(local);
+        // default is id matrix 
+        JacobianRangeType anaFluxLeft;
+        anaFluxLeft[0] = unitNormal;
+        JacobianRangeType anaFluxRight;
+        anaFluxRight[0] = unitNormal;
+
+        {
+          EntityPointerType ep = it.inside();
+          const EntityType & en = *ep;
+          analyticalFlux(en,time,dom,
+                         uLeft,anaFluxLeft);
+          anaFluxLeft.umv(unitNormal,tmpLeft); 
+        }
+                      
+        if( it.neighbor() )
+        {
+          EntityPointerType ep = it.outside();
+          const EntityType & en = *ep;
+          analyticalFlux(en,time,dom,
+                         uRight,anaFluxRight);
+          anaFluxRight.umv(unitNormal,tmpRight); 
+        }
+        
+        tmpLeft  = unitNormal * anaFluxLeft[0];
+        tmpRight = unitNormal * anaFluxRight[0];
+      }
+      
       numflux_.sigmaFlux(unitNormal,faceVol,
-                             param,param, 
-                             sigmaLeft,sigmaRight,
-                             gLeft,gRight);
+                         tmpLeft,tmpRight, 
+                         sigmaLeft,sigmaRight,
+                         gLeft,gRight);
       return 0.0;
     }
 
 
-    template <class ArgumentTuple, class SigmaFluxType, class UFluxType>
+    template <class ArgumentTuple> 
     double boundaryFlux(const IntersectionIterator& it,
                         const double time, 
-                        const FaceDomainType& x,
+                        const FaceDomainType& local,
                         const ArgumentTuple& uLeft,
-                        SigmaFluxType & sigmaLeft, 
-                        UFluxType & gLeft) const 
+                        RangeType & sigmaLeft, 
+                        RangeType & gLeft) const 
     {
       // calculate unit normal and face volume  
-      DomainType unitNormal = it.integrationOuterNormal(x);
+      DomainType unitNormal = it.integrationOuterNormal(local);
       const double faceVol = unitNormal.two_norm();
       unitNormal *= 1.0/faceVol;
 
-      SigmaFluxType sigmaRight;
-      UFluxType gRight; 
+      RangeType sigmaRight;
+      RangeType gRight; 
 
-      // get saturation 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType param(1.0);
-      //const UType& argULeft  = Element<0>::get(uLeft);
-      //const UType& argURight = Element<0>::get(uRight);
+      RangeType tmpLeft(1.0);
+      
+      if( hasFlux() )
+      {
+        DomainType dom = it.intersectionGlobal().global(local);
+        // default is id matrix 
+        JacobianRangeType anaFluxLeft;
+        anaFluxLeft[0] = unitNormal;
 
+        {
+          EntityPointerType ep = it.inside();
+          const EntityType & en = *ep;
+          analyticalFlux(en,time,dom,
+                         uLeft,anaFluxLeft);
+          anaFluxLeft.umv(unitNormal,tmpLeft); 
+        }
+                      
+        tmpLeft  = unitNormal * anaFluxLeft[0];
+      }
+          
       // don't apply beta stabilization at boundary 
       numflux_.sigmaFluxBetaZero(unitNormal,faceVol,
-                                 param,param, 
+                                 tmpLeft,tmpLeft, 
                                  sigmaLeft,sigmaRight);
       
       // don't apply stabilization at boundary 
       numflux_.sigmaFluxStability(unitNormal,faceVol,
-                                  param,param, 
+                                  tmpLeft,tmpLeft, 
                                   gLeft,gRight);
 
       return 0.0;
@@ -425,9 +491,9 @@ namespace LDGExample {
     }
     
     template <class ArgumentTuple>
-    void analyticalFlux(EntityType& en,
+    void analyticalFlux(const EntityType& en,
                         double time, const DomainType& x,
-                        const ArgumentTuple& u, JacobianRangeType& f)
+                        const ArgumentTuple& u, JacobianRangeType& f) const
     {
       model_.diffusion(en,time,x,f);
       double tmp = f[0][0];
