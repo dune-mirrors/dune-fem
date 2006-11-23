@@ -24,20 +24,20 @@ public:
   const ModelType& model() const {return model_;}
 
   //! evaluates { sigma } = 0.5 ( sigmaLeft + sigmaRight )
-  template <class SigmaFluxType, class UFluxType>
+  template <class UFluxType>
   double sigmaFluxBetaZero(
                        const DomainType & unitNormal,
                        const double faceVol, 
                        const UFluxType & uLeft,
                        const UFluxType & uRight, 
-                       SigmaFluxType & sigmaLeft,
-                       SigmaFluxType & sigmaRight) const
+                       UFluxType & sigmaLeft,
+                       UFluxType & sigmaRight) const
   {
-    sigmaLeft  = unitNormal;
-    sigmaRight = unitNormal;
-
-    sigmaLeft  *= 0.5*uLeft[0];
-    sigmaRight *= 0.5*uRight[0];
+    sigmaLeft  = uLeft;
+    sigmaRight = uRight;
+    
+    sigmaLeft  *= 0.5;
+    sigmaRight *= 0.5;
 
     return 0.0;
   }
@@ -63,13 +63,13 @@ public:
   }
 
   //! evaluates sigmaBetaZero + stabilization 
-  template <class SigmaFluxType, class UFluxType>
+  template <class UFluxType>
   double sigmaFlux(const DomainType & unitNormal,
                    const double faceVol, 
                    const UFluxType & uLeft,
                    const UFluxType & uRight, 
-                   SigmaFluxType & sigmaLeft,
-                   SigmaFluxType & sigmaRight,
+                   UFluxType & sigmaLeft,
+                   UFluxType & sigmaRight,
                    UFluxType & gLeft,
                    UFluxType & gRight) const
   {
@@ -79,24 +79,13 @@ public:
     // only calculate this part if |beta| > 0
     if( betaNotZero_ )
     {
-      DomainType scaling(unitNormal);
-      scaling *= beta_ * std::pow(faceVol,power_);
+      const double scaling = beta_ * std::pow(faceVol,power_);
 
-      DomainType jumpLeft(scaling);
-      DomainType jumpRight(scaling);
+      UFluxType jumpLeft(uLeft);
+      UFluxType jumpRight(uRight);
 
-      /*
-      DomainType valLeft(unitNormal);
-      valLeft  *= uLeft[0];
-      DomainType valRight(unitNormal);
-      valRight *= uRight[0];
-      */
-
-      //jumpLeft  *= (unitNormal * valLeft);
-      //jumpRight *= (unitNormal * valRight);
-
-      jumpLeft  *= (uLeft[0]);//nitNormal * valLeft);
-      jumpRight *= (uRight[0]);//nitNormal * valRight);
+      jumpLeft  *= scaling;
+      jumpRight *= scaling;
 
       sigmaLeft  -= jumpLeft;
       sigmaRight += jumpRight;
