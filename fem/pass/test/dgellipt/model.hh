@@ -131,7 +131,7 @@ public:
   }
   
   template <class EntityType , class FaceDomainType> 
-  void diffusion(EntityType & en, double time ,
+  void diffusion(const EntityType & en, const double time ,
                  const FaceDomainType &x ,
                  GradRangeType & ret) const
   {
@@ -140,7 +140,7 @@ public:
   }
 
   template <class EntityType , class FaceDomainType> 
-  void diffusion(EntityType & en, double time ,
+  void diffusion(const EntityType & en, const double time ,
                  const FaceDomainType &x, 
                  GradJacobianRangeType & ret) const
   {
@@ -153,7 +153,7 @@ public:
   }
 
   template <class EntityType , class FaceDomainType> 
-  void diffusion(EntityType & en, double time ,
+  void diffusion(const EntityType & en, const double time ,
                  const FaceDomainType &x, 
                  JacobianRangeType & ret) const
   {
