@@ -742,10 +742,10 @@ namespace Dune {
             //  FLUX evaluation 
             //  
             ////////////////////////////////////////////////////////////
-            GradientRangeType uFluxSigmaLeft,uFluxSigmaRight;
-            GradientRangeType uFluxULeft,uFluxURight;
+            GradientRangeType uFluxSigmaLeft,uFluxSigmaRight; // sigma parts of uFlux 
+            GradientRangeType uFluxULeft,uFluxURight; // u parts of uFlux 
 
-            // evaluate uFlux 
+            // evaluate uFlux, return type is vector  
             gradCaller_.numericalFlux(nit,
                                       faceQuadInner,
                                       faceQuadOuter,
@@ -753,23 +753,20 @@ namespace Dune {
                                       uFluxSigmaLeft,uFluxSigmaRight,
                                       uFluxULeft,uFluxURight);
 
-            GradientRangeType sigmaEn,sigmaNb;
-            RangeType ul,ur;
+            RangeType sigmaFluxSigmaLeft,sigmaFluxSigmaRight; // sigma  parts of sigmaFlux 
+            RangeType ul,ur; // u parts of sigmaFlux 
 
-            // evaluate sigmaFlux 
+            // evaluate sigmaFlux, return type is scalar 
             caller_.numericalFlux(nit,
                                   faceQuadInner,
                                   faceQuadOuter,
                                   l,
-                                  sigmaEn,sigmaNb,
+                                  sigmaFluxSigmaLeft,sigmaFluxSigmaRight,
                                   ul,ur);
 
-            double staben = ul; 
-            double stabneigh = ur; 
-            
             // to be revised 
-            staben *= gradSource_[0]; 
-            stabneigh *= gradSourceNb_[0];
+            ul *= gradSource_[0]; 
+            ur *= gradSourceNb_[0];
             ////////////////////////////////////////////////////////////
 
             for(int i=0;i < gradientNumDofs;++i)
@@ -804,15 +801,16 @@ namespace Dune {
                 }
 
                 {
-                  double divmatValen,divmatValnb;
-                  divmatValen = sigmaEn * tau_[0];
-                  divmatValen *=phi_[0];
-                  
+                  // value en 
+                  double divmatValen = unitNormal * tau_[0];
+                  divmatValen *= sigmaFluxSigmaLeft;
+                  divmatValen *= phi_[0];
                   divmatValen *=-innerIntel;
                    
-                  divmatValnb = sigmaNb * tauneigh_[0];
-                  divmatValnb *=phi_[0]; 
-                  
+                  // value neighbor 
+                  double divmatValnb = unitNormal * tauneigh_[0];
+                  divmatValnb *= sigmaFluxSigmaRight;
+                  divmatValnb *= phi_[0]; 
                   divmatValnb *=-outerIntel; 
                 
                   // add value to div matrix for en,en 
@@ -826,9 +824,9 @@ namespace Dune {
                 {
                   for(int k=0;k<numDofs;++k)
                   {
-                    double stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,staben)    * innerIntel; 
+                    double stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l, ul)    * innerIntel; 
 
-                    double stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l,stabneigh) * outerIntel;
+                    double stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l, ur) * outerIntel;
 
                     // todo: make it right 
                     stabvalen *= phi_[0]; 
@@ -893,7 +891,8 @@ namespace Dune {
 
             {
               RangeType fluxEn;
-              GradientRangeType sigmaFluxEn,sigmaFluxFake; 
+              RangeType sigmaFluxEn; 
+              
               caller_.boundaryFlux(nit, // intersection iterator 
                                    faceQuadInner,l, // quad and point number 
                                    sigmaFluxEn, fluxEn );
@@ -904,8 +903,8 @@ namespace Dune {
 
                 // factor 2, becasue on boundary flux is identity, see
                 // sigmaflux  
-                double sigmaFlux = sigmaFluxEn * tau_[0];
-                sigmaFlux *= 2.0 * intel;
+                double sigmaFlux = unitNormal * tau_[0];
+                sigmaFlux *= 2.0 * intel * sigmaFluxEn;
 
                 // dirichlet boundary value for sigma 
                 if(bndType.isDirichletNonZero())
