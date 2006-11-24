@@ -123,6 +123,7 @@ namespace Dune {
     //! return problem for real fe pass 
     DiscreteModelType & problem () { return problem_; }
 
+    //! return reference to space 
     const DiscreteFunctionSpaceType & space () const { return spc_; }
    
     //! Destructor
@@ -333,7 +334,7 @@ namespace Dune {
 
       if(problem_.hasSource())
       {
-        std::cerr << "Source for FEPass not supported yet. \n";
+        std::cerr << "Source for DGElliptPass not supported yet. \n";
         abort();
       }
     }
@@ -356,6 +357,7 @@ namespace Dune {
       return dtMin_;
     }
 
+    //! setup matrix 
     void buildMatrix( const ArgumentType & arg, DestinationType & rhs, bool
         preCond = false )
     {
@@ -367,12 +369,18 @@ namespace Dune {
       rhs.clear();
       
       dest_ = &rhs;
+
+      std::cout << "Start buildMatrix\n";
       // build matrix and rhs 
       this->compute(arg,rhs);
       matrixAssembled_ = true;
 
       // create pre-condition matrix if activated 
       createPreconditionMatrix();
+      std::cout << "buildMatrix done! \n";
+
+      // resort matrices for cache efficiency 
+      matrixHandler_.resort();
 
       double * rhsPtr = gradRhs_.leakPointer();
       if(gradProblem_.hasSource())
@@ -394,7 +402,7 @@ namespace Dune {
       }
     }
 
-    // --gradient
+    //! calculates M^-1 B * u, is u is the solution then outcome is grad u 
     template <class FuncType, class GradType> 
     void evalGradient(const FuncType & u, GradType & grad) const
     {
@@ -416,7 +424,7 @@ namespace Dune {
       }
     }
 
-    // do matrix vector multiplication, used by InverseOp  
+    //! do matrix vector multiplication, used by InverseOp  
     void operator () (const DestinationType & arg, DestinationType& dest) const 
     {
       multOEM( arg.leakPointer(), dest.leakPointer());
@@ -495,11 +503,63 @@ namespace Dune {
 
   public:
     //! return reference to function space 
-    const DiscreteFunctionSpaceType & space() const {
+    const DiscreteFunctionSpaceType & space() const 
+    {
       return spc_;
     }
 
   public:
+    //! set all entries to zero
+    void clearLocalMatrix(MatrixAddHandleType & matrix) 
+    {
+      const int rows = matrix.rows();
+      const int cols = matrix.cols();
+      for(int i=0; i<rows; ++i) 
+      {
+        for(int j=0; j<cols; ++j) matrix.set(i,j,0.0); 
+      }
+    }
+    
+    //! set all data belonging to this entity to zero 
+    void clear(EntityType& en) const
+    {
+      {
+        // local function for right hand side 
+        typedef typename DestinationType :: LocalFunctionType SingleLFType; 
+        SingleLFType singleRhs = dest_->localFunction(en); //rhs
+
+        const int numDofs = singleRhs.numDofs();
+        for(int i=0; i<numDofs; ++i) singleRhs[i] = 0.0;
+      }
+      
+      {
+        // local function for gradient right hand side 
+        typedef typename GradDestinationType :: LocalFunctionType GradLFType; 
+        GradLFType gradRhs = gradRhs_.localFunction(en); //rhs
+
+        const int numDofs = gradRhs.numDofs();
+        for(int i=0; i<numDofs; ++i) gradRhs[i] = 0.0;
+      }
+      
+      {
+
+        MatrixAddHandleType stabMatrixEn(matrixHandler_.stabMatrix(),
+                                       en, spc_, en, spc_ ); 
+        stabMatrixEn.clear();
+      }
+      
+      MatrixAddHandleType gradMatrixEn(matrixHandler_.gradMatrix(),
+                                     en, gradientSpace_, en, spc_ ); 
+      gradMatrixEn.clear();
+      MatrixAddHandleType divMatrixEn (matrixHandler_.divMatrix(),
+                                     en, spc_, en, gradientSpace_ ); 
+      divMatrixEn.clear();
+      
+      MatrixAddHandleType massMatrixEn (matrixHandler_.massMatrix(),
+                                     en, gradientSpace_, en, gradientSpace_ ); 
+      massMatrixEn.clear();
+    }
+    
     //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
@@ -528,7 +588,7 @@ namespace Dune {
       typedef typename DiscreteGradientSpaceType::IndexSetType GradientIndexSetType;
       typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
 
-      //- statements
+      // make entities known in callers
       caller_.setEntity(en);
       gradCaller_.setEntity(en);
 
