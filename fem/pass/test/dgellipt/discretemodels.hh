@@ -48,7 +48,7 @@ namespace LDGExample {
     // typical tpye of space 
     typedef FunctionSpace<double, double, dimDomain, dimRange > SingleFunctionSpaceType; 
     typedef SingleFunctionSpaceType FunctionSpaceType;
-    typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd> ContainedSpaceType;
+    typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
     
     //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
@@ -65,10 +65,11 @@ namespace LDGExample {
     { 
 #if HAVE_BLAS
       //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef BICGSTABOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
 #else 
       typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
 #endif
