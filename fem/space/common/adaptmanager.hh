@@ -9,11 +9,18 @@
 #include <dune/fem/operator/common/objpointer.hh>
 namespace Dune{
 
-/** @defgroup AdaptationManagerImp AdaptationManagerImp
+/** @defgroup Adaptation Adaptation
+ * Concept for local grid refinement
+ * @{
+ **/
+
+
+  
+/** @defgroup AdaptationManagerImp Adaptation Manager
     @ingroup Adaptation
     
-  @{
- */
+    @{
+**/
 
 /*! This could be seen as a hack, but is not
   With this method we define the class CombineRestProl which is only 
@@ -246,6 +253,8 @@ private:
   mutable RestProlOperatorImp & rpOp_;
 };
 }
+/** @} end documentation group */
+/** @} end documentation group */
 
 
 #endif

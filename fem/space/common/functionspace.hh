@@ -6,7 +6,7 @@
 namespace Dune{
 
 /** @defgroup FunctionSpace FunctionSpace
-  @ingroup Function
+  @ingroup FunctionCommon
   This provides the interfaces for continuous function spaces. 
   A function space is characterized by it's domain and range field type and  
   the two vector spaces over these fields. All corresponding types 

@@ -99,7 +99,6 @@ private:
 };
 
 
-/** @} end documentation group */
 
 }
 

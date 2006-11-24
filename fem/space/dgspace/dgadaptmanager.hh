@@ -16,6 +16,8 @@
 *************************************************************/
 
 namespace Dune{
+/** @ingroup RestrictProlongInterface
+**/
 
 //***********************************************************************
 /** \brief This is a restriction/prolongation operator for DG data. 

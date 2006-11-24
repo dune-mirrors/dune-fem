@@ -3,7 +3,7 @@
 
 namespace Dune{
 
-  /** @defgroup AlgebraCommon Functions and Operators
+  /** @defgroup AlgebraCommon Operators
       The Functions and Operators Module contains objects of 
       arbitrary vector spaces and mappings between them.
   @{

@@ -1,7 +1,9 @@
 #ifndef RESTRICTPROLONGINTERFACE
 #define RESTRICTPROLONGINTERFACE
-/** @defgroup RestrictProlongInterface RestrictProlongInterface
+
+/** @defgroup RestrictProlongInterface Restrict Prolong Interface
     @ingroup Adaptation
+    Interface for restrict prolong operation on single elements.
   @{
  */
 

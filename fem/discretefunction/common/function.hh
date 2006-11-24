@@ -12,6 +12,7 @@ namespace Dune{
     @ingroup Functions
     Functions are Mappings from \f$K^n\f$ into \f$L^m\f$ where 
     \f$K\f$ and \f$L\f$ are fields.
+    @{
  */
 
 //! type of derivative identifier 
