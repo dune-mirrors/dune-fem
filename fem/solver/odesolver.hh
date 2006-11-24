@@ -94,7 +94,7 @@ class OperatorWrapper : public Function {
 template<class Operator>
 class ExplTimeStepper : public TimeProvider {
  public:
-  ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = true) :
+  ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
@@ -191,7 +191,7 @@ class ExplTimeStepper : public TimeProvider {
 template<class Operator>
 class ImplTimeStepper : public TimeProvider {
  public:
-  ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = true) :
+  ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = false) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
@@ -295,7 +295,7 @@ class SemiImplTimeStepper : public TimeProvider {
   typedef OperatorExpl Operator;
  public:
   SemiImplTimeStepper(OperatorExpl& op_expl,OperatorImpl& op_impl,
-		      int pord,double cfl, bool verbose = true ) :
+		      int pord,double cfl, bool verbose = false ) :
     ord_(pord),
     comm_(Communicator::instance()),
     opexpl_(op_expl),
