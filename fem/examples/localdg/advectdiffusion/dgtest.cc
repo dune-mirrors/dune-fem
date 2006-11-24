@@ -9,7 +9,6 @@
 #include <dune/grid/common/quadraturerules.hh>
 
 #include <dune/fem/io/file/grapedataio.hh>
-#include <dune/fem/space/common/boundary.hh>
 
 #include <iostream>
 #include <string>
@@ -100,7 +99,7 @@ int main(int argc, char ** argv, char ** envp) {
   upwind[0] *= 0.37;
 	
   for(level=0; level < startlevel ; ++level)
-    grid->globalRefine(refStepsForHalf);
+    grid->globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
 
   for(int eocloop=0;eocloop < repeats; ++eocloop) {
     // *** Operator typedefs
@@ -112,7 +111,7 @@ int main(int argc, char ** argv, char ** envp) {
     // DofManagerType& dm = DofManagerFactoryType :: getDofManager( *grid );  
     // grid->preAdapt();
     // dm.resizeForRestrict();
-    // grid->globalRefine(refStepsForHalf);
+    // grid->globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
     // dm.resize();
     // dm.dofCompress();
     // grid->postAdapt();
@@ -190,7 +189,7 @@ int main(int argc, char ** argv, char ** envp) {
       break;
     
     if(eocloop < repeats-1) {
-      grid->globalRefine(refStepsForHalf);
+      grid->globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
       ++level;
     }
     prevzeit = zeit;

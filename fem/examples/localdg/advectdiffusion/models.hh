@@ -6,7 +6,7 @@
 #include "advectdiff.hh"
 
 #include <dune/fem/solver/odesolver.hh>
-
+// #include "odesolver.hh"
 // Approximations Ordnung
 enum {order=POLORDER,rksteps=POLORDER+1}; 
 // Gitterauswahl
@@ -21,7 +21,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    // typedef LLFFlux<ModelType> FluxType;
    typedef UpwindFlux<ModelType> FluxType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+   typedef DuneODE::ImplTimeStepper<DgType> ODEType;
 #elif PROBLEM == 2
    #include "scalarmodels.hh"
    #include "initburgers.cc"

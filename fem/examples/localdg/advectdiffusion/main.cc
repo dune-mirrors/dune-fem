@@ -1,7 +1,6 @@
 // Dune includes
 #include <config.h>
 
-// use dune-fem tuples 
 #include <dune/fem/pass/utility.hh>
 
 #include <dune/common/utility.hh>
@@ -11,8 +10,6 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/quadraturerules.hh>
-
-#include <dune/fem/space/common/boundary.hh>
 
 #include <iostream>
 #include <string>

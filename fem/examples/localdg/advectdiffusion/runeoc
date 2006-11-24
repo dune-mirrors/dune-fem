@@ -2,16 +2,15 @@ if [ ! -d TEXFILES ] ; then
 mkdir TEXFILES
 fi
 
-for problem in 2; do
+for problem in 1 ; do
 	for polorder in 0 1 2; do
-		for gridtype in YASPGRID ALBERTAGRID ; do
-
-			if ! make GRIDTYPE=${gridtype} DUNE_PROBLEM_DIM=2 POLORDER=${polorder} PROBLEM=${problem} clean dgtest ; then
+		for gridtype in YASPGRID ALUGRID_SIMPLEX ALBERTAGRID ; do 
+			if ! make GRIDTYPE=${gridtype} GRIDDIM=2 POLORDER=${polorder} PROBLEM=${problem} clean dgtest ; then
 				echo "Compile error!"
 				exit 1
 			fi
 			for epsilon in 0.0; do
-				if ./dgtest grid2d.dgf 6 0 ${epsilon} ; then
+				if ./dgtest grid2d.dgf 3 0 ${epsilon} ; then
 				  mv eoc.tex TEXFILES/${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
 				  cd TEXFILES
 				  pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilon}.tex;
