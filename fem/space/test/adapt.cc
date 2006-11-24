@@ -61,7 +61,7 @@ typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 typedef AdaptationManager <GridType,
-          RestProlOperator<DiscreteFunctionType> > ADOperatorType;
+          RestrictProlongDefault<DiscreteFunctionType> > ADOperatorType;
 
 // ***********************************************************
 //! the exact solution to the problem for EOC calculation 
@@ -185,7 +185,8 @@ void adapt(GridType& grid,
   typedef DiscreteFunctionType::FunctionSpaceType::Traits::IteratorType Iterator;
   const DiscreteFunctionType::FunctionSpaceType
     & space = solution.space();
-  RestProlOperator<DiscreteFunctionType> rp(solution);
+  RestrictProlongDefault<DiscreteFunctionType> rp(solution);
+  rp.setFatherChildWeight(DGFGridInfo<GridType>::refineWeight());
 
 #if GENERIC_ADAPT 
   ADOperatorType adop(grid,rp);
@@ -323,7 +324,7 @@ int main (int argc, char **argv)
   GridPtr<GridType> gridptr(tmp);
   GridType* grid= gridptr.operator -> ();
 
-  const int step = refStepsForHalf;
+  const int step = DGFGridInfo<GridType>::refineStepsForHalf();
 
   GridPartType part ( *grid );
   DiscreteFunctionSpaceType linFuncSpace ( part );

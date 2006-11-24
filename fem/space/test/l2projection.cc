@@ -8,6 +8,7 @@ static const int dimw = dimworld;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
 #include <dune/fem/space/common/adaptiveleafgridpart.hh> 
@@ -51,7 +52,7 @@ typedef FunctionSpace < double , double, dimw , 2 > FuncSpace;
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
 typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-  polOrd,CachingStorage> DiscreteFunctionSpaceType;
+	polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
@@ -258,9 +259,9 @@ int main (int argc, char **argv)
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.dgf";
 
-  const int step = refStepsForHalf;
   GridPtr<GridType> gridptr(macroGridName);
   GridType& grid=*gridptr;
+  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
 
   GridPartType part ( grid );
   DiscreteFunctionSpaceType linFuncSpace ( part );
