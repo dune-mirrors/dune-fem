@@ -249,6 +249,8 @@ public:
     pass1_.timeProvider(&tp);
   }
 
+  GridPartType & gridPart () { return gridPart_; }
+
   DestinationType * createDestinationFct (std::string name) 
   {
     return new DestinationType (name , lastSpace_ );
@@ -304,8 +306,9 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   GridPtr<GridType> gridptr(macroGridName,MPIHelper::getCommunicator()); 
   GridType & grid = *gridptr;
 
-  grid.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf()*level);
+  grid.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf() * level);
   grid.loadBalance();
+  
   std::cout << "Grid size = " << grid.size(0) << "\n";
 
   double eps = 1e-20;
@@ -357,7 +360,7 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
 #if HAVE_GRAPE
   if( (grid.comm().rank() == 0) && (display == 1) )
   {
-    GrapeDataDisplay < GridType > grape( grid ); 
+    GrapeDataDisplay < GridType > grape( spaceOp.gridPart() ); 
     grape.dataDisplay( *solution );
   }
 #endif
