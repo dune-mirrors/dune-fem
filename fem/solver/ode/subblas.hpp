@@ -237,8 +237,8 @@ void cblas_dgemv(const enum CBLAS_ORDER order,
   
     for(int i=0; i<m; i++){
       double sum = 0.0;
-      for(int j=0; j<n; j++) sum += A[lda*i + j] * x[j];
-      y[i] = beta * y[i] + sum;
+      for(int j=0; j<n; j++) sum += A[lda*i + j] * x[incx*j];
+      y[incy*i] = beta * y[incy*i] + alpha * sum;
     }     
   }
   else{
@@ -247,8 +247,8 @@ void cblas_dgemv(const enum CBLAS_ORDER order,
 
     for(int i=0; i<m; i++){
       double sum = 0.0;
-      for(int j=0; j<n; j++) sum += A[lda*j + i] * x[j];
-      y[i] = beta * y[i] + alpha * sum;
+      for(int j=0; j<n; j++) sum += A[lda*j + i] * x[incx*j];
+      y[incy*i] = beta * y[incy*i] + alpha * sum;
     }     
   }
 }
