@@ -200,7 +200,7 @@ namespace Dune {
       const GeometryType & geo = en.geometry();
 
       double massVolElinv;
-      double vol = volumeElement(geo, massVolElinv);
+      const double vol = volumeElement(geo, massVolElinv);
       
       const IndexSetType& iset = spc_.indexSet();
 
@@ -210,10 +210,11 @@ namespace Dune {
         // evaluate analytical flux and source 
         caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
         
-        double intel=geo.integrationElement(volQuad.point(l))*
-                        massVolElinv*volQuad.weight(l);
+        const double intel = geo.integrationElement(volQuad.point(l))
+                             * massVolElinv*volQuad.weight(l);
         
-        for (int i = 0; i < updEn_numDofs; ++i) {
+        for (int i = 0; i < updEn_numDofs; ++i) 
+        {
           updEn[i] += 
             (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
              bsetEn.evaluateSingle(i, volQuad, l, source_))*intel;
