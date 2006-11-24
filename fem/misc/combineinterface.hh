@@ -30,60 +30,92 @@ struct CombineInterface;
 /*! Use as base class for all InterfacePair classes. Handles
     storage of interface objects and defines
     first() and second() method to access the two interface objects.
+
+    At the time being we only allow combinations of reference types
+    to interfaces since copying is difficult for BN
  */
 template <class T1,class T2>  
-struct PairOfInterfaces {  
+struct PairOfInterfaces {
   //! First interface classes as non-reference types
   typedef typename TypeTraits<T1>::ReferredType T1Type;
   //! Second interface classes as non-reference types
   typedef typename TypeTraits<T2>::ReferredType T2Type;
   //! Constructor taking two interface instances
-  PairOfInterfaces(T1 t1,T2 t2) : p2(t2,n), p(t1,p2) {}
+  PairOfInterfaces(T1 t1,T2 t2); 
+  //! Access first interface instance
+  T1Type& first();
+  //! Access second interface instance
+  T2Type& second();
+  //! const Access first interface instance
+  const T1Type& first();
+  //! const Access second interface instance
+  const T2Type& second();
+};
+template <class T1,class T2>  
+struct PairOfInterfaces<T1&,T2&> {  
+  //! First interface classes as non-reference types
+  typedef typename TypeTraits<T1>::ReferredType T1Type;
+  //! Second interface classes as non-reference types
+  typedef typename TypeTraits<T2>::ReferredType T2Type;
+  //! Constructor taking two interface instances
+  PairOfInterfaces(T1& t1,T2& t2) : p2(t2,n), p(t1,p2) {}
   //! Access first interface instance
   T1Type& first() {return p.first();}
   //! Access second interface instance
   T2Type& second() {return p.second().first();}
+  //! const Access first interface instance
+  const T1Type& first() const {return p.first();}
+  //! const Access second interface instance
+  const T2Type& second() const {return p.second().first();}
 private:
-  typedef Pair<T2,Nil> Pair2Type;
-  typedef Pair<T1,Pair2Type> PairType;
+  typedef Pair<T2&,Nil> Pair2Type;
+  typedef Pair<T1&,Pair2Type> PairType;
   Nil n;
   Pair2Type p2;
   PairType p;
 };
 template <class T1,class T2>  
-struct PairOfInterfaces<T1*,T2> {  
+struct PairOfInterfaces<T1*,T2&> {  
   //! First interface classes as non-reference types
   typedef typename TypeTraits<T1>::ReferredType T1Type;
   //! Second interface classes as non-reference types
   typedef typename TypeTraits<T2>::ReferredType T2Type;
   //! Constructor taking two interface instances
-  PairOfInterfaces(T1* t1,T2 t2) : p2(t2,n), p(t1,p2) {}
+  PairOfInterfaces(T1* t1,T2& t2) : p2(t2,n), p(t1,p2) {}
   //! Access first interface instance
   T1Type& first() {return *(p.first());}
   //! Access second interface instance
-  T2Type second() {return p.second().first();}
+  T2Type& second() {return p.second().first();}
+  //! Access first interface instance
+  const T1Type& first() const {return *(p.first());}
+  //! Access second interface instance
+  const T2Type& second() const {return p.second().first();}
 private:
-  typedef Pair<T2,Nil> Pair2Type;
+  typedef Pair<T2&,Nil> Pair2Type;
   typedef Pair<T1*,Pair2Type> PairType;
   Nil n;
   Pair2Type p2;
   PairType p;
 };
 template <class T1,class T2>  
-struct PairOfInterfaces<T1,T2*> {  
+struct PairOfInterfaces<T1&,T2*> {  
   //! First interface classes as non-reference types
   typedef typename TypeTraits<T1>::ReferredType T1Type;
   //! Second interface classes as non-reference types
   typedef typename TypeTraits<T2>::ReferredType T2Type;
   //! Constructor taking two interface instances
-  PairOfInterfaces(T1 t1,T2* t2) : p2(t2,n), p(t1,p2) {}
+  PairOfInterfaces(T1& t1,T2* t2) : p2(t2,n), p(t1,p2) {}
   //! Access first interface instance
   T1Type& first() {return p.first();}
   //! Access second interface instance
-  T2Type second() {return *(p.second().first());}
+  T2Type& second() {return *(p.second().first());}
+  //! Access first interface instance
+  const T1Type& first() const {return p.first();}
+  //! Access second interface instance
+  const T2Type& second() const {return *(p.second().first());}
 private:
   typedef Pair<T2*,Nil> Pair2Type;
-  typedef Pair<T1,Pair2Type> PairType;
+  typedef Pair<T1&,Pair2Type> PairType;
   Nil n;
   Pair2Type p2;
   PairType p;
@@ -97,9 +129,13 @@ struct PairOfInterfaces<T1*,T2*> {
   //! Constructor taking two interface instances
   PairOfInterfaces(T1* t1,T2* t2) : p2(t2,n), p(t1,p2) {}
   //! Access first interface instance
-  T1Type first() {return *(p.first());}
+  T1Type& first() {return *(p.first());}
   //! Access second interface instance
-  T2Type second() {return *(p.second().first());}
+  T2Type& second() {return *(p.second().first());}
+  //! Access first interface instance
+  const T1Type& first() const {return *(p.first());}
+  //! Access second interface instance
+  const T2Type& second() const {return *(p.second().first());}
 private:
   typedef Pair<T2*,Nil> Pair2Type;
   typedef Pair<T1*,Pair2Type> PairType;
@@ -107,11 +143,22 @@ private:
   Pair2Type p2;
   PairType p;
 };
+/*****************************************************************/
+/*****************************************************************/
+/*****************************************************************/
 // Helper class for combining Operators
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3,class T4,
-	  class T5,class T6,class T7,class T8,class T9>
-struct CombMultInterHelper;
+template<template <class T11,class T21> class CI,
+	 typename T1, typename T2, typename T3, typename T4, typename T5,
+	 typename T6, typename T7, typename T8, typename T9>
+struct TupleToInterfacePair {
+  typedef CI<T1,typename 
+	     TupleToInterfacePair<CI,T2,T3,T4,T5,T6,T7,T8,T9,Nil>::Type&> Type;
+};
+template<template <class T11,class T21> class CI,
+	 typename T1,typename T2>
+struct TupleToInterfacePair<CI,T1,T2,Nil,Nil,Nil,Nil,Nil,Nil,Nil> {
+  typedef CI<T1,T2> Type;
+};
 /*!  Wrapper class to combine interface objects to a single interface object.
 
      Template arguments: the class for combining two single interfaces and
@@ -124,95 +171,77 @@ struct CombMultInterHelper;
 template <template <class T11,class T21> class CI,
 	  class T1,class T2,class T3,class T4,
 	  class T5,class T6,class T7,class T8,class T9>
-struct CombineInterface : public CombMultInterHelper<CI,T1,T2,T3,T4,T5,T6,T7,T8,T9> {
-  CombineInterface(T1 t1,T2 t2,T3 t3=Nil(),T4 t4=Nil(),
-		   T5 t5=Nil(),T6 t6=Nil(),T7 t7=Nil(),T8 t8=Nil(),T9 t9=Nil()) 
-    : CombMultInterHelper<CI,T1,T2,T3,T4,T5,T6,T7,T8,T9>(t1,t2,t3,t4,t5,t6,t7,t8,t9)
-  {}
+struct CombineInterface : 
+  public TupleToInterfacePair<CI,T1,T2,T3,T4,T5,T6,T7,T8,T9>::Type {
+  typedef CombineInterface<CI,T1,T2,T3,T4,T5,T6,T7,T8,T9> ThisType;
+  typedef CombineInterface<CI,T2,T3,T4,T5,T6,T7,T8,T9,Nil> NextType;
+  typedef typename TupleToInterfacePair<CI,T1,T2,T3,T4,T5,T6,T7,T8,T9>::Type
+  BaseType;
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2,
+		   typename TupleAccessTraits<T3>::ParameterType t3,
+		   typename TupleAccessTraits<T4>::ParameterType t4,
+		   typename TupleAccessTraits<T5>::ParameterType t5,
+		   typename TupleAccessTraits<T6>::ParameterType t6,
+		   typename TupleAccessTraits<T7>::ParameterType t7,
+		   typename TupleAccessTraits<T8>::ParameterType t8,
+		   typename TupleAccessTraits<T9>::ParameterType t9)
+    : next(t2,t3,t4,t5,t6,t7,t8,t9), BaseType(t1,next) {}
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2,
+		   typename TupleAccessTraits<T3>::ParameterType t3,
+		   typename TupleAccessTraits<T4>::ParameterType t4,
+		   typename TupleAccessTraits<T5>::ParameterType t5,
+		   typename TupleAccessTraits<T6>::ParameterType t6,
+		   typename TupleAccessTraits<T7>::ParameterType t7,
+		   typename TupleAccessTraits<T8>::ParameterType t8)
+    : next(t2,t3,t4,t5,t6,t7,t8), BaseType(t1,next) {}
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2,
+		   typename TupleAccessTraits<T3>::ParameterType t3,
+		   typename TupleAccessTraits<T4>::ParameterType t4,
+		   typename TupleAccessTraits<T5>::ParameterType t5,
+		   typename TupleAccessTraits<T6>::ParameterType t6,
+		   typename TupleAccessTraits<T7>::ParameterType t7)
+    : next(t2,t3,t4,t5,t6,t7), BaseType(t1,next) {}
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2,
+		   typename TupleAccessTraits<T3>::ParameterType t3,
+		   typename TupleAccessTraits<T4>::ParameterType t4,
+		   typename TupleAccessTraits<T5>::ParameterType t5,
+		   typename TupleAccessTraits<T6>::ParameterType t6)
+    : next(t2,t3,t4,t5,t6), BaseType(t1,next) {}
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2,
+		   typename TupleAccessTraits<T3>::ParameterType t3,
+		   typename TupleAccessTraits<T4>::ParameterType t4,
+		   typename TupleAccessTraits<T5>::ParameterType t5)
+    : next(t2,t3,t4,t5), BaseType(t1,next) {}
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2,
+		   typename TupleAccessTraits<T3>::ParameterType t3,
+		   typename TupleAccessTraits<T4>::ParameterType t4)
+    : next(t2,t3,t4), BaseType(t1,next) {}
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2,
+		   typename TupleAccessTraits<T3>::ParameterType t3)
+    : next(t2,t3), BaseType(t1,next) {}
+  CombineInterface(const ThisType& ci)
+    : next(ci.next), BaseType(ci.first(),next) {}
+  NextType next;
 };
-/********************************************************************/
-// The helper classes which take care of different number of
-// template parameters
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3,class T4,
-	  class T5,class T6,class T7,class T8,class T9>
-struct CombMultInterHelper : 
-    public CI<T1,CombMultInterHelper<CI,T2,T3,T4,T5,T6,T7,T8,T9,Nil> >  {
-  typedef CombMultInterHelper<CI,T2,T3,T4,T5,T6,T7,T8,T9,Nil> NextType;
-  typedef CI<T1,NextType> BaseType;
-  CombMultInterHelper(T1 t1,T2 t2,T3 t3,T4 t4,T5 t5,T6 t6,T7 t7,T8 t8,T9 t9) :
-    BaseType(t1,NextType(t2,t3,t4,t5,t6,t7,t8,t9,Nil())) {}
-}; 
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3,class T4,
-	  class T5,class T6,class T7,class T8>
-struct CombMultInterHelper<CI,T1,T2,T3,T4,T5,T6,T7,T8,Nil> : 
-    public CI<T1,CombMultInterHelper<CI,T2,T3,T4,T5,T6,T7,T8,Nil,Nil> >  {
-  typedef CombMultInterHelper<CI,T2,T3,T4,T5,T6,T7,T8,Nil,Nil> NextType;
-  typedef CI<T1,NextType> BaseType;
-  CombMultInterHelper(T1 t1,T2 t2,T3 t3,T4 t4,T5 t5,T6 t6,T7 t7,T8 t8,
-		      Nil n9) :
-    BaseType(t1,NextType(t2,t3,t4,t5,t6,t7,t8,Nil(),Nil())) {}
-}; 
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3,class T4,
-	  class T5,class T6,class T7>
-struct CombMultInterHelper<CI,T1,T2,T3,T4,T5,T6,T7,Nil,Nil> : 
-    public CI<T1,CombMultInterHelper<CI,T2,T3,T4,T5,T6,T7,Nil,Nil,Nil> >  {
-  typedef CombMultInterHelper<CI,T2,T3,T4,T5,T6,T7,Nil,Nil,Nil> NextType;
-  typedef CI<T1,NextType> BaseType;
-  CombMultInterHelper(T1 t1,T2 t2,T3 t3,T4 t4,T5 t5,T6 t6,T7 t7,
-		      Nil n8,Nil n9) :
-    BaseType(t1,NextType(t2,t3,t4,t5,t6,t7,Nil(),Nil(),Nil())) {}
-}; 
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3,class T4,
-	  class T5,class T6>
-struct CombMultInterHelper<CI,T1,T2,T3,T4,T5,T6,Nil,Nil,Nil> : 
-    public CI<T1,CombMultInterHelper<CI,T2,T3,T4,T5,T6,Nil,Nil,Nil,Nil> >  {
-  typedef CombMultInterHelper<CI,T2,T3,T4,T5,T6,Nil,Nil,Nil,Nil> NextType;
-  typedef CI<T1,NextType> BaseType;
-  CombMultInterHelper(T1 t1,T2 t2,T3 t3,T4 t4,T5 t5,T6 t6,
-		      Nil n7,Nil n8,Nil n9) :
-    BaseType(t1,NextType(t2,t3,t4,t5,t6,Nil(),Nil(),Nil(),Nil())) {}
-}; 
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3,class T4,
-	  class T5>
-struct CombMultInterHelper<CI,T1,T2,T3,T4,T5,Nil,Nil,Nil,Nil> : 
-    public CI<T1,CombMultInterHelper<CI,T2,T3,T4,T5,Nil,Nil,Nil,Nil,Nil> >  {
-  typedef CombMultInterHelper<CI,T2,T3,T4,T5,Nil,Nil,Nil,Nil,Nil> NextType;
-  typedef CI<T1,NextType> BaseType;
-  CombMultInterHelper(T1 t1,T2 t2,T3 t3,T4 t4,T5 t5,
-		      Nil n6,Nil n7,Nil n8,Nil n9) :
-    BaseType(t1,NextType(t2,t3,t4,t5,Nil(),Nil(),Nil(),Nil(),Nil())) {}
-}; 
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3,class T4>
-struct CombMultInterHelper<CI,T1,T2,T3,T4,Nil,Nil,Nil,Nil,Nil> : 
-    public CI<T1,CombMultInterHelper<CI,T2,T3,T4,Nil,Nil,Nil,Nil,Nil,Nil> >  {
-  typedef CombMultInterHelper<CI,T2,T3,T4,Nil,Nil,Nil,Nil,Nil,Nil> NextType;
-  typedef CI<T1,NextType> BaseType;
-  CombMultInterHelper(T1 t1,T2 t2,T3 t3,T4 t4,
-		      Nil n5,Nil n6,Nil n7,Nil n8,Nil n9) :
-    BaseType(t1,NextType(t2,t3,t4,Nil(),Nil(),Nil(),Nil(),Nil(),Nil())) {}
-}; 
-template <template <class T11,class T21> class CI,
-	  class T1,class T2,class T3>
-struct CombMultInterHelper<CI,T1,T2,T3,Nil,Nil,Nil,Nil,Nil,Nil> : 
-    public CI<T1,CombMultInterHelper<CI,T2,T3,Nil,Nil,Nil,Nil,Nil,Nil,Nil> >  {
-  typedef CombMultInterHelper<CI,T2,T3,Nil,Nil,Nil,Nil,Nil,Nil,Nil> NextType;  
-  typedef CI<T1,NextType> BaseType;
-  CombMultInterHelper(T1 t1,T2 t2,T3 t3,
-		      Nil n4,Nil n5,Nil n6,Nil n7,Nil n8,Nil n9) :
-    BaseType(t1,NextType(t2,t3,Nil(),Nil(),Nil(),Nil(),Nil(),Nil(),Nil())) {}
-}; 
-template <template <class T11,class T21> class CI,
-	  class T1,class T2>
-struct CombMultInterHelper<CI,T1,T2,Nil,Nil,Nil,Nil,Nil,Nil,Nil> : public CI<T1,T2>  {
-  CombMultInterHelper(T1 t1,T2 t2,
-		      Nil n3,Nil n4,Nil n5,Nil n6,Nil n7,Nil n8,Nil n9) :  
-    CI<T1,T2>(t1,t2) {}
+template <template <class T11,class T21> class CI,class T1,class T2> 
+struct CombineInterface<CI,T1,T2,Nil,Nil,Nil,Nil,Nil,Nil,Nil>
+  : public CI<T1,T2> {
+ public:
+  typedef CI<T1,T2> BaseType;
+  typedef CombineInterface<CI,T1,T2,Nil,Nil,Nil,Nil,Nil,Nil,Nil> 
+  ThisType;  
+  CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
+		   typename TupleAccessTraits<T2>::ParameterType t2)
+    : BaseType(t1,t2) {}
+  CombineInterface(const ThisType& ci) 
+    : BaseType(ci.first(),ci.second()) {}
 };
 // *******************************************************
 // *******************************************************

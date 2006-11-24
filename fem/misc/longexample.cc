@@ -71,10 +71,6 @@ struct GlobalInter2 {
   }
   enum {q=20};
   typedef LocalInter2<GlobalInter2<G> > LocalType;
-  typedef LocalInter2<GlobalInter2<G> > RefLocalType; 
-  LocalType local() {
-    return LocalType();
-  }
   LocalType& reflocal() {
     return local_;
   }
@@ -97,16 +93,18 @@ struct CombLocalInter : public PairOfInterfaces<T1,T2> {
 // Kombination von "globalen" Interfaceklassen
 template <class T1,class T2> 
 struct CombGlobalInter : public PairOfInterfaces<T1,T2> {
+ private:
+  CombGlobalInter(const CombGlobalInter&) ;
+  CombGlobalInter();
+ public:
   // erstmal die Typen:
   typedef PairOfInterfaces<T1,T2> BaseType;
   typedef typename BaseType::T1Type T1Type;
   typedef typename BaseType::T2Type T2Type;
   typedef typename BaseType::T1Type::GType GType;// wobei GType fuer alle
                                                       // Interfaces gleich sein muss
-  typedef CombLocalInter<typename T1Type::LocalType,
-                         typename T2Type::LocalType> LocalType;
-  typedef CombLocalInter<typename T1Type::RefLocalType&,
-                         typename T2Type::RefLocalType&> RefLocalType;
+  typedef CombLocalInter<typename T1Type::LocalType&,
+                         typename T2Type::LocalType&> LocalType;
   // ob der GType und die Referenz in T1 und T2 gleich sind kann leicht
   // getestet werden ...
   typedef typename T2Type::GType G2Type;  
@@ -116,7 +114,7 @@ struct CombGlobalInter : public PairOfInterfaces<T1,T2> {
     // same type?
     IsTrue<SameType<GType,G2Type>::value>::yes();
     // same reference?
-    if (&(t1.g())!=&(t2.g())) abort();
+    // if (&(t1.g())!=&(t2.g())) abort();
   }
   // Nun die Interface-Methoden
   G2Type& g() {return this->first().g();}
@@ -125,19 +123,13 @@ struct CombGlobalInter : public PairOfInterfaces<T1,T2> {
     return this->first().a(i) + this->second().a(i);
   }
   enum {q=T1Type::q+T2Type::q};
-  LocalType local() {
-    // Hier werden die lokalen Objekte sehr haeufig Kopiert (>130), da die
-    // Methode local() keine Referenzen zurueckgeben, bzw.
-    // die LocalType kein Referenztype ist
-    return LocalType(this->first().local(),this->second().local());
-  }
-  RefLocalType& reflocal() {
+  LocalType& reflocal() {
     // Hier werden die lokalen Objekte sehr haeufig Kopiert (>130), da die
     // Methode local() keine Referenzen zurueckgeben, bzw.
     // die LocalType kein Referenztype ist
     return local_;
   }
-  RefLocalType local_;
+  LocalType local_;
 };
 /*****************************************************/
 int main() {
@@ -152,13 +144,13 @@ int main() {
   co12Type co12(o1,o2);
   // Combiniere II12 mit II2 (ginge auch mit
   //                          CombineInterface<CombGlobalInter,co12Type,II2&>
-  typedef CombGlobalInter<co12Type&,II2&> co122Type;
+  typedef CombineInterface<CombGlobalInter,co12Type&,II2&> co122Type;
   co122Type co122(co12,o3);
   // Jetzt legen wir richtig los
-  typedef CombineInterface<CombGlobalInter,co12Type&,II2&,co12Type> co12212Type;
+  typedef CombineInterface<CombGlobalInter,co12Type&,II2&,co12Type&> co12212Type;
   co12212Type co12212(co12,o3,co12);
   // und noch mehr (im Moment Maximum = 4)
-  typedef CombineInterface<CombGlobalInter,II2&,co12212Type,co12212Type,II2&>
+  typedef CombineInterface<CombGlobalInter,II2&,co12212Type&,co12212Type&,II2&>
     co212212122122Type;
   // co212212122122 ist mir zu lang...
   typedef co212212122122Type coType;
@@ -177,11 +169,7 @@ int main() {
   // Gemeinsamme Typen und Referenzen koennen durchgereicht werden
   coType::GType& grid=co.g();
   grid.hallo();
-  // Aber auch lokale Interface Typen koennen automatisch kombiniert werden
-  // etwa durch Konstruktion (Achtung copy-constructor ohne Ende...)
-  // coType::LocalType local=co.local();
-  // local.test();
   // oder durch Kombination von Referenzobjekten
-  coType::RefLocalType& rlocal=co.reflocal();
+  coType::LocalType& rlocal=co.reflocal();
   rlocal.test();
 }

@@ -3,6 +3,11 @@
 
 template <class Impl>
 struct InterfaceA {
+ protected:
+  InterfaceA(const InterfaceA<Impl>& a);
+  InterfaceA() {}
+  const InterfaceA& operator=(const InterfaceA&);
+ public:
   int a(int i) {return asImp().a(i);}
   Impl& asImp() {return static_cast<Impl&>(*this);}
 };
@@ -33,11 +38,10 @@ int test2(InterfaceA<A1>& impl1,
 	  InterfaceA<A2>& impl2) {
   typedef InterfaceA<A1> I1Type;
   typedef InterfaceA<A2> I2Type;
-  // Can now further combine the interfaces also using reference, pointer, or
-  // simple types
+  // Can now further combine the interfaces also using reference and pointer
   typedef Dune::CombineInterface<InterfaceAPair,I1Type*,I1Type&,I1Type&,
     InterfaceAImpl1&,InterfaceAImpl1&,InterfaceAImpl2&,InterfaceAImpl2&,
-    I2Type&,I2Type> CIType;
+    I2Type&,I2Type&> CIType;
   InterfaceAImpl1 a1;
   InterfaceAImpl2 a2;
   CIType ci(&impl1,impl1,impl1,a1,a1,a2,a2,impl2,impl2);
@@ -51,7 +55,8 @@ int main() {
   InterfaceAImpl122 i122(i1,i2,i3);
   // InterfaceAImpl122 is again an interface implementation...
   typedef Dune::CombineInterface<InterfaceAPair,
-    InterfaceAImpl1,InterfaceAImpl122,InterfaceAImpl1,InterfaceAImpl122> InterfaceAImpl11221122;
+    InterfaceAImpl1&,InterfaceAImpl122&,InterfaceAImpl1&,InterfaceAImpl122&> 
+    InterfaceAImpl11221122;
   InterfaceAImpl11221122 i11221122(i1,i122,i1,i122);
   // now use the interface method:
   std::cout << test1(i1) << " " << test1(i2) << " " << test1(i3) 
