@@ -28,10 +28,11 @@ namespace Dune{
  class RestrictProlongDefault<DiscFunc<
    DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> 
  > > : 
-  public RestrictProlongInterface<RestrictProlongDefault<DiscFunc<
+  public RestrictProlongInterface<RestrictProlongTraits<RestrictProlongDefault<DiscFunc<
     DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp
-     > > >
+     > > > > >
  {
+   public:
    typedef DiscFunc<DiscontinuousGalerkinSpace<FunctionSpaceImp, 
 					       GridPartImp, 
 					      polOrd,
@@ -43,13 +44,20 @@ namespace Dune{
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
   typedef CachingQuadrature<GridType,0> QuadratureType;
-   typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
-public:  
+  typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
+ public:  
   //! Constructor
   RestrictProlongDefault ( DiscreteFunctionType & df ) : 
     df_ (df) , quadord_(2*df.space().order()),
     weight_(-1.0)
   {
+  }
+  //! if weight is set, then ists assumend that we have always the same
+  //! proportion between fahter and son volume 
+  void setFatherChildWeight (const RangeFieldType& val) const
+  {
+    // volume of son / volume of father  
+    weight_ = val; 
   }
 
   //! restrict data to father 
@@ -144,11 +152,12 @@ private:
  class RestrictProlongDefault<DiscFunc<
    DiscontinuousGalerkinSpace<FunctionSpaceImp,GridPartImp,0,StorageImp> 
  > > : 
-  public RestrictProlongInterface<RestrictProlongDefault<DiscFunc<
+  public RestrictProlongInterface<RestrictProlongTraits<RestrictProlongDefault<DiscFunc<
     DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, 0,StorageImp
-     > > >
+     > > > > >
  
  {
+   public:
    typedef DiscFunc<DiscontinuousGalerkinSpace<FunctionSpaceImp, 
 					       GridPartImp, 
 					       0,
@@ -160,12 +169,19 @@ private:
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
   typedef CachingQuadrature<GridType,0> QuadratureType;
-public:  
+  public:  
   //! Constructor
   RestrictProlongDefault ( DiscreteFunctionType & df ) : 
     df_ (df),
     weight_(-1.0)
   {}
+  //! if weight is set, then ists assumend that we have always the same
+  //! proportion between fahter and son volume 
+  void setFatherChildWeight (const RangeFieldType& val) const
+  {
+    // volume of son / volume of father  
+    weight_ = val; 
+  }
   
   //! restrict data to father 
   template <class EntityType>
