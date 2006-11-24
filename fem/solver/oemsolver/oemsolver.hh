@@ -90,6 +90,8 @@ public:
   template <class SolverOperatorImp>
   FakeConditioner(int size, SolverOperatorImp& op) : size_(size) 
   {
+    assert( size_ > 0 );
+
     double * diag = new double [size_];
     assert( diag );
     for(int i=0; i<size_; ++i) diag[i] = 1.0;
@@ -554,14 +556,13 @@ private:
       int size = arg.space().size();
       solver.set_max_number_of_iterations(size);
 
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
-      opSolve.setSize(size);
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
 
       // in parallel runs we need fake pre conditioner to 
       // project vectors onto interior  
       if(op.hasPreconditionMatrix())
       {
-        DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm); 
+        DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
         solver.set_preconditioner(pre);
         
         // note argument and destination are toggled 
@@ -575,7 +576,7 @@ private:
       if( arg.space().grid().comm().size() > 1 )
       {
         OEMSolver :: FakeConditioner fake(size,opSolve);
-        DuneODE::SolverInterfaceImpl<FakeConditioner> pre(fake);
+        DuneODE::SolverInterfaceImpl<FakeConditioner> pre(fake,size);
         solver.set_preconditioner(pre);
 
         // note argument and destination are toggled 
@@ -609,10 +610,9 @@ private:
                      const DiscreteFunctionImp & arg, 
                      DiscreteFunctionImp & dest)
     {
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
-      
       int size = arg.space().size();
-      opSolve.setSize(size);
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      
       solver.set_max_number_of_iterations(size);
 
       // in parallel runs we need fake pre conditioner to 
@@ -717,12 +717,11 @@ private:
                const DiscreteFunctionImp & arg, 
                DiscreteFunctionImp & dest) 
     {
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
-      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm); 
+      int size = arg.space().size();
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
       solver.set_preconditioner(pre);
       
-      int size = arg.space().size();
-      opSolve.setSize(size);
       solver.set_max_number_of_iterations(size);
 
       // note argument and destination are toggled 
@@ -758,7 +757,7 @@ private:
                DiscreteFunctionImp & dest) 
     {
       int size = arg.space().size();
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       FakeConditionerType fake(size,opSolve);
       SolverCaller<SolverType,true>::solve(solver,op,fake,arg,dest);
     }
@@ -861,12 +860,11 @@ private:
                const DiscreteFunctionImp & arg, 
                DiscreteFunctionImp & dest) 
     {
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
       int size = arg.space().size();
-      opSolve.setSize(size);
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       solver.set_max_number_of_iterations(size);
 
-      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm); 
+      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
       solver.set_preconditioner(pre);
 
       // note argument and destination are toggled 
@@ -882,11 +880,7 @@ private:
     {
       if(op.hasPreconditionMatrix())
       {
-#ifndef NDEBUG
-        std::cerr << "DuneODE::BICGSTAB: use of precoditioner not implemented right now! \n"; 
-#endif
-        //solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
-        SolverCaller<SolverType,false>::call(solver,op,arg,dest);
+        solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
       }
       else 
       {
@@ -905,9 +899,8 @@ private:
                const DiscreteFunctionImp & arg, 
                DiscreteFunctionImp & dest) 
     {
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
       int size = arg.space().size();
-      opSolve.setSize(size);
+      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       solver.set_max_number_of_iterations(size);
 
       // note argument and destination are toggled 
