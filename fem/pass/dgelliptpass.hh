@@ -101,8 +101,6 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    //! \param quadOrd0 defines the order of the volume quadrature which is by default 2* space polynomial order 
-    //! \param quadOrd1 defines the order of the face quadrature which is by default 2* space polynomial order 
     LocalDGElliptGradientPass(DiscreteModelType& problem, 
                     PreviousPassType& pass, 
                     DiscreteFunctionSpaceType& spc) 
@@ -131,15 +129,18 @@ namespace Dune {
     virtual ~LocalDGElliptGradientPass() {
     }
 
+    //! do nothing here 
     void applyLocal(EntityType& en) const
     {
     }
 
+    //! do nothing here  
     void operator () (const GlobalArgumentType& arg, DestinationType& dest) const 
     {
       abort();
     }
 
+    //! do nothing here 
     void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
     }
@@ -262,8 +263,8 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    //! \param quadOrd0 defines the order of the volume quadrature which is by default 2* space polynomial order 
-    //! \param quadOrd1 defines the order of the face quadrature which is by default 2* space polynomial order 
+    //! \param volumeQuadOrd defines the order of the volume quadrature which is by default 2* space polynomial order 
+    //! \param faceQuadOrd defines the order of the face quadrature which is by default 2* space polynomial order 
     LocalDGElliptOperator(DiscreteModelType& problem, 
                 GradientPassType & gradPass,
                 PreviousPassType& pass, 
@@ -398,6 +399,7 @@ namespace Dune {
     void evalGradient(const FuncType & u, GradType & grad) const
     {
       grad.clear();
+      // if source then apply also mass matrix 
       if(gradProblem_.hasSource())
       {
         assert( massTmp_ );
@@ -408,6 +410,7 @@ namespace Dune {
       } 
       else 
       {
+        // only apply grad matrix here 
         matrixHandler_.gradMatrix().multOEM(u.leakPointer(),grad.leakPointer());
         grad += gradRhs_;
       }
@@ -419,7 +422,7 @@ namespace Dune {
       multOEM( arg.leakPointer(), dest.leakPointer());
     }
     
-    // do matrix vector multiplication, used by OEM-Solver  
+    //! do matrix vector multiplication, used by OEM-Solver and DuneODE Solvers  
     void multOEM(const double * arg, double * dest) const
     {
       double * multTmpPointer = multTmp_.leakPointer();
@@ -436,14 +439,12 @@ namespace Dune {
         // use mass tmp now 
         gradTmpPointer = massTmpPointer;
         // if we have mass, communicate mass 
-        //doCommunicate( *massTmp_ );
         gradCommunicate_.exchange( *massTmp_ );
       }
       else 
       {
-        gradCommunicate_.exchange( gradTmp_ );
         // otherwise communicate grad 
-        //doCommunicate( gradTmp_ );
+        gradCommunicate_.exchange( gradTmp_ );
       }
 
       matrixHandler_.divMatrix().multOEM(gradTmpPointer, multTmpPointer );
@@ -457,30 +458,22 @@ namespace Dune {
     }
 
   private:   
+    //! create discrete function from double * and communicate data 
+    //! assumes that x has size of single space 
     void communicate(const double * x) const
     {
       DestinationType dest("DGEllipt::communicate_tmp",spc_,x);
       singleCommunicate_.exchange( dest );
-      //doCommunicate(dest);
     }
       
-    template <class DiscreteFuncType>
-    void doCommunicate(DiscreteFuncType & dest) const
-    {
-      // if serial run, just return 
-      if(gridPart_.grid().comm().size() <= 1) return;
-      
-      typedef DiscreteFunctionCommunicationHandler<DiscreteFuncType> DataHandleType;
-      DataHandleType dataHandle(dest);
-      
-      gridPart_.communicate( dataHandle, InteriorBorder_All_Interface , ForwardCommunication);
-    }
-    
   public:
+    //! return refernence to system matrix, used by OEM-Solver
     const ThisType & systemMatrix () const { return *this; }
-    const ThisType & myMatrix () const { return *this; }
     
+    //! return reference to preconditioning matrix, used by OEM-Solver
     const PreconditionMatrixType & preconditionMatrix () const { return matrixHandler_.pcMatrix(); }
+
+    //! returns true if preconditioning matrix has been build 
     bool hasPreconditionMatrix() const  { return matrixHandler_.hasPcMatrix(); }
            
     //! In the preparations, store pointers to the actual arguments and 
@@ -501,20 +494,13 @@ namespace Dune {
     }
 
   public:
+    //! return reference to function space 
     const DiscreteFunctionSpaceType & space() const {
       return spc_;
     }
 
   public:
-    void prepareGlobal(const ArgumentType& arg, DestinationType& dest) const{
-      prepare(arg,dest);
-    }
-
-    void finalizeGlobal() {
-      finalize(*arg_,*dest_); 
-      matrixAssembled_ =false;
-    }
-
+    //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
       // local function for right hand side 
@@ -548,14 +534,15 @@ namespace Dune {
 
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
-      const VolumeQuadratureType massQuad(en, 0 );   
       const GeometryType & geo = en.geometry();
-      const double massVolElInv = massVolumeInv(geo,massQuad);
+      const double massVolElInv = massVolumeInv(geo);
       
-      const BaseFunctionSetType& bsetEn = spc_.getBaseFunctionSet(en);
+      // get base function set of single space 
+      const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(en);
       const int numDofs = bsetEn.numBaseFunctions();
       
-      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.getBaseFunctionSet(en);
+      // get base function set of gradient space 
+      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.baseFunctionSet(en);
       const int gradientNumDofs = grdbsetEn.numBaseFunctions();
       
       /////////////////////////////////
@@ -702,15 +689,16 @@ namespace Dune {
           MatrixAddHandleType divMatrixNb (matrixHandler_.divMatrix(),
                                          en , spc_, nb , gradientSpace_ ); 
           
-          const BaseFunctionSetType& bsetNeigh = 
-            spc_.getBaseFunctionSet(nb);
-          const GradientBaseFunctionSetType& gradbsetNeigh = gradientSpace_.getBaseFunctionSet(nb);
+          // get base function set 
+          const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
+          const GradientBaseFunctionSetType& gradbsetNeigh 
+                                  = gradientSpace_.baseFunctionSet(nb);
          
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
           {
             DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
-            double faceVol = unitNormal.two_norm();
+            const double faceVol = unitNormal.two_norm();
             unitNormal *= 1.0/faceVol; 
 
             const double innerIntel = faceQuadInner.weight(l) * massVolElInv * faceVol ; 
@@ -722,28 +710,6 @@ namespace Dune {
               // todo: quadrature is not right here  
               gradCaller_.source(en, volQuad, l , gradSource_ );
               gradCaller_.source(nb, volQuad, l , gradSourceNb_ );
-            }
-
-            if(gradProblem_.hasFlux())
-            {
-              // call anayltical flux 
-              // todo: quadrature is not right here  
-              gradCaller_.analyticalFlux(en, volQuad, l , gradFMat_ );
-              gradCaller_.analyticalFlux(nb, volQuad, l , gradFMatNb_ );
-
-              for(int i=0; i<dimGradRange; ++i) gradSource_[i] *= gradFMat_[0][i];
-              for(int i=0; i<dimGradRange; ++i) gradSourceNb_[i] *= gradFMatNb_[0][i];
-            }
-
-            if(problem_.hasFlux())
-            {
-              // call anayltical flux 
-              // todo: quadrature is not right here  
-              caller_.analyticalFlux(en, volQuad, l , fMat_   );
-              caller_.analyticalFlux(nb, volQuad, l , fMatNb_ );
-
-              for(int i=0; i<dimGradRange; ++i) gradSource_[i] *= fMat_[0][i];
-              for(int i=0; i<dimGradRange; ++i) gradSourceNb_[i] *= fMatNb_[0][i];
             }
 
             ////////////////////////////////////////////////////////////
@@ -763,7 +729,7 @@ namespace Dune {
                                       uFluxULeft,uFluxURight);
 
             RangeType sigmaFluxSigmaLeft,sigmaFluxSigmaRight; // sigma  parts of sigmaFlux 
-            RangeType ul,ur; // u parts of sigmaFlux 
+            RangeType sigmaFluxULeft,sigmaFluxURight; // u parts of sigmaFlux 
 
             // evaluate sigmaFlux, return type is scalar 
             caller_.numericalFlux(nit,
@@ -771,11 +737,11 @@ namespace Dune {
                                   faceQuadOuter,
                                   l,
                                   sigmaFluxSigmaLeft,sigmaFluxSigmaRight,
-                                  ul,ur);
+                                  sigmaFluxULeft,sigmaFluxURight);
 
             // to be revised 
-            ul *= gradSource_[0]; 
-            ur *= gradSourceNb_[0];
+            sigmaFluxULeft  *= gradSource_[0]; 
+            sigmaFluxURight *= gradSourceNb_[0];
             ////////////////////////////////////////////////////////////
 
             for(int i=0;i < gradientNumDofs;++i)
@@ -833,9 +799,11 @@ namespace Dune {
                 {
                   for(int k=0;k<numDofs;++k)
                   {
-                    double stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l, ul)    * innerIntel; 
+                    double stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l, sigmaFluxULeft) 
+                                       * innerIntel; 
 
-                    double stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l, ur) * outerIntel;
+                    double stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l, sigmaFluxURight) 
+                                       * outerIntel;
 
                     // todo: make it right 
                     stabvalen *= phi_[0]; 
@@ -882,22 +850,6 @@ namespace Dune {
               gradCaller_.source(en, volQuad, l , gradSource_ );
             }
 
-            if(gradProblem_.hasFlux())
-            {
-              // call anayltical flux 
-              // todo: quadrature is not right here  
-              gradCaller_.analyticalFlux(en, volQuad, l , gradFMat_ );
-              for(int i=0; i<dimGradRange; ++i) gradSource_[i] *= gradFMat_[0][i];
-            }
-            
-            if(problem_.hasFlux())
-            {
-              // call anayltical flux 
-              // todo: quadrature is not right here  
-              caller_.analyticalFlux(en, volQuad, l , fMat_ );
-              for(int i=0; i<dimGradRange; ++i) gradSource_[i] *= fMat_[0][i];
-            }
-
             {
               RangeType fluxEn;
               RangeType sigmaFluxEn; 
@@ -922,7 +874,6 @@ namespace Dune {
                   RangeType bndVal(boundaryValue);
                   bndVal *= tau_[0] * unitNormal; // sigmaFlux; 
                   bndVal *= intel;
-                  //bndVal *= gradFMat_[0][0];
                   gradRhs[i] += bndVal[0];
                 }
                               
@@ -1002,6 +953,7 @@ namespace Dune {
 
     } // end apply local 
 
+    //! only calculate mass matrix new
     void update(const ArgumentType& arg, DestinationType& dest) const
     {
       prepare(arg, dest);
@@ -1016,6 +968,7 @@ namespace Dune {
       finalize(arg, dest);
     }
 
+    //! only calculate mass matrix new on entity 
     void updateMatrix( const ArgumentType & arg,
                        DestinationType & rhs )
     {
@@ -1089,11 +1042,10 @@ namespace Dune {
 
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
-      const VolumeQuadratureType massQuad(en, 0 );   
       const GeometryType & geo = en.geometry();
-      const double massVolElInv = massVolumeInv(geo,massQuad);
+      const double massVolElInv = massVolumeInv(geo);
       
-      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.getBaseFunctionSet(en);
+      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.baseFunctionSet(en);
       const int gradientNumDofs = grdbsetEn.numBaseFunctions();
       
       /////////////////////////////////
@@ -1101,28 +1053,21 @@ namespace Dune {
       /////////////////////////////////
 
       //set default values 
-      gradSource_   = 1.0;
-      gradSourceNb_ = 1.0;
-      // set to id matrix 
-      gradFMat_   = one_;
-      gradFMatNb_ = one_;
-
-      fMat_       = 1.0;
-      fMatNb_     = 1.0;
+      GradientRangeType gradSource(1.0);
+      GradientRangeType gradSourceNb(1.0);
       
+      // cache number of integration points 
       const int quadNop = volQuad.nop();
-      GradJacobianRangeType helpmatr(one_);
-
       for (int l = 0; l < quadNop ; ++l) 
       {
         // calc factor for bas functions 
-        double intel = volQuad.weight(l)*
+        const double intel = volQuad.weight(l)*
             geo.integrationElement(volQuad.point(l))*massVolElInv;
         
         if(gradProblem_.hasSource())
         {
           // call source of gradient discrete model 
-          gradCaller_.source(en, volQuad, l, gradSource_ );
+          gradCaller_.source(en, volQuad, l, gradSource );
         }
 
         for(int k = 0; k < gradientNumDofs; ++k)
@@ -1132,11 +1077,11 @@ namespace Dune {
           
           if(gradProblem_.hasSource())
           {
-            gradSourceNb_ = gradSource_; 
+            gradSourceNb = gradSource; 
             // multiply tau with source
-            for(int i=0; i<GradDimRange; ++i) gradSourceNb_[i] *= tau_[0][i];
+            for(int i=0; i<GradDimRange; ++i) gradSourceNb[i] *= tau_[0][i];
             
-            double val = grdbsetEn.evaluateSingle(k, volQuad, l, gradSourceNb_ ) * intel;
+            double val = grdbsetEn.evaluateSingle(k, volQuad, l, gradSourceNb ) * intel;
 
             // scalar product of basis functions is 1 (supposed to)
             massMatrixEn.add(k,k,val);
@@ -1154,20 +1099,20 @@ namespace Dune {
     LocalDGElliptOperator(const LocalDGElliptOperator&);
 
   private:
-    double massVolumeInv(const GeometryType& geo, const VolumeQuadratureType & quad ) const
+    double massVolumeInv(const GeometryType& geo) const
                          
     {
-      double result = 0.0;
-      double massVolInv = 0.0;
-      const int quadNop = quad.nop();
-      for (int qp = 0; qp < quadNop; ++qp) 
-      {
-        massVolInv += quad.weight(qp);//volumen referenzelement
-        result += 
-          quad.weight(qp) * geo.integrationElement(quad.point(qp));
-      }
-      massVolInv /= result;
-      return massVolInv;
+      double volume = geo.volume();
+      
+      typedef typename GeometryType :: ctype coordType;
+      enum { dim = GridType :: dimension };
+      const ReferenceElement< coordType, dim > & refElem =
+             ReferenceElements< coordType, dim >::general(geo.type());
+             
+      double volRef = refElem.volume();
+
+      double massVolinv = volRef/volume;
+      return massVolinv;
     }
 
   private:
@@ -1314,12 +1259,17 @@ namespace Dune {
     mutable int sequence_;
     const bool verbose_;
       
+    typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
+    mutable CommunicationManagerType comm_;
   public:
     //- Public methods
     //! Constructor
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
+    //! \param eps epsilon for interative solver 
+    //! \param maxIterFactor factor for number of max iterations 
+    //! \param verbose if true some output is given 
     LocalDGElliptPass(DiscreteModelType& problem, 
                 PreviousPassImp & pass, 
                 DiscreteFunctionSpaceType& spc,
@@ -1335,8 +1285,10 @@ namespace Dune {
       , rhs_("FEPass::RHS",spc)
       , sequence_(-1)
       , verbose_(verbose)
+      , comm_(spc_)
     {}
 
+    //! do nothing here 
     void applyLocal(EntityType& en) const
     {
     }
@@ -1377,6 +1329,9 @@ namespace Dune {
 
       // solve the system 
       invOp_(rhs_,dest);
+
+      // do data exchange 
+      comm_.exchange ( dest );
     } 
 
     template <class FuncType, class GradType>
@@ -1450,6 +1405,7 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
+    typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
   public:
     //- Public methods
     //! Constructor
@@ -1465,7 +1421,8 @@ namespace Dune {
       caller_(problem),
       problem_(problem),
       spc_(spc),
-      prevPass_(pass)
+      prevPass_(pass),
+      comm_(spc_)
     {
     }
 
@@ -1487,10 +1444,7 @@ namespace Dune {
     virtual ~LocalDGElliptGradPass() {
     }
 
-    void applyLocal(EntityType& en) const
-    {
-    }
-
+    //! calls evalGradient of previous pass 
     void operator () (const GlobalArgumentType& arg, DestinationType& dest) const 
     {
       // normal call procedure 
@@ -1498,13 +1452,22 @@ namespace Dune {
 
       // now get gradient from previous pass 
       prevPass_.evalGradient(prevPass_.destination(),dest);
+
+      // exchange data 
+      comm_.exchange( dest );
     }
 
+    //! nothing to do here
+    void applyLocal(EntityType& en) const
+    {
+    }
+    
+    //! nothing to do here
     void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
     }
 
-    //! Some timestep size management.
+    //! nothing to do here 
     void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
     }
@@ -1514,6 +1477,7 @@ namespace Dune {
     DiscreteModelType& problem_; 
     DiscreteFunctionSpaceType& spc_;
     mutable PreviousPassImp & prevPass_;
+    mutable CommunicationManagerType comm_;
   };
 
 } // end namespace Dune
