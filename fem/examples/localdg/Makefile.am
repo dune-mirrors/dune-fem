@@ -1,3 +1,3 @@
 # $Id$
 
-SUBDIRS = advectdiffusion dghp
+SUBDIRS = advectdiffusion
