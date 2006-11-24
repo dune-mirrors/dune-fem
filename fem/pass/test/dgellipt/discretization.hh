@@ -184,7 +184,7 @@ public:
       if(i > 0)
       {
         // refineGlobal is defined in description.hh
-        grid_.globalRefine(refStepsForHalf);
+        grid_.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
         dm_.resize();
       }
 
@@ -304,7 +304,7 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   GridPtr<GridType> gridptr(macroGridName,MPIHelper::getCommunicator()); 
   GridType & grid = *gridptr;
 
-  grid.globalRefine(refStepsForHalf*level);
+  grid.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf()*level);
   grid.loadBalance();
   std::cout << "Grid size = " << grid.size(0) << "\n";
 
