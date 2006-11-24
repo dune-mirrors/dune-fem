@@ -87,17 +87,20 @@ class FakeConditioner
   // indices of external values 
   std::vector<int> indices_;
 public:
+  // use with care, not sure that working correctly already 
   template <class SolverOperatorImp>
   FakeConditioner(int size, SolverOperatorImp& op) : size_(size) 
   {
     assert( size_ > 0 );
 
-    double * diag = new double [size_];
+    double * diag  = new double [size_];
+    double * tmp   = new double [size_];
+
     assert( diag );
-    for(int i=0; i<size_; ++i) diag[i] = 1.0;
-
-    op(diag,diag);
-
+    assert( tmp );
+    for(int i=0; i<size_; ++i) tmp[i] = i;
+    op(tmp,diag);
+    
     int newSize = (int) 0.25 * size_; 
     indices_.reserve( newSize );
     indices_.resize( 0 );
@@ -110,10 +113,12 @@ public:
         indices_.push_back( i ); 
       }
     }
+    
     delete [] diag;
+    delete [] tmp;
   }
 
-  // only keep internal parts of arg 
+  //! only keep internal parts of arg 
   void multOEM(const double * arg, double * dest) const 
   {
     std::memcpy( dest, arg , size_ * sizeof(double) );
