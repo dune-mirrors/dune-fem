@@ -35,8 +35,6 @@ LIBS="$DUNE_LIBS"
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
      fem/Makefile
-     fem/basefunctions/Makefile
-     fem/basefunctions/test/Makefile
      fem/caching/Makefile
      fem/caching/test/Makefile
      fem/examples/Makefile
@@ -47,7 +45,6 @@ AC_CONFIG_FILES([Makefile
      fem/examples/l2projection/Makefile
      fem/examples/localdg/Makefile
      fem/examples/localdg/advectdiffusion/Makefile
-     fem/examples/localdg/dghp/Makefile
      fem/examples/pass/Makefile
      fem/pass/Makefile
      fem/pass/test/Makefile
