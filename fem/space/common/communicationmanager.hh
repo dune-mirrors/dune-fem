@@ -20,7 +20,7 @@
 namespace Dune { 
 
   // only if ALUGrid found and was build for parallel runs 
-#if HAVE_ALUGRID && ALU3DGRID_PARALLEL
+#if HAVE_ALUGRID && ALU3DGRID_PARALLEL 
   //! class to build up a map of all dofs of entities to be exchanged
   //! during a communication procedure. This speeds up the communication
   //! procedure, because no grid traversal is necessary to exchange data.
@@ -437,7 +437,11 @@ namespace Dune {
 #else 
   // if no ALUGrid found, supply default implementation 
 #ifndef NDEBUG 
-#warning "No Parallel ALUGrid found, using default CommunicationManager!"
+#if HAVE_MPI == 0
+  #warning "HAVE_MPI == 0, therefore default CommunicationManager is used!"
+#elif !ALU3DGRID_PARALLEL 
+  #warning "No Parallel ALUGrid found, using default CommunicationManager!"
+#endif 
 #endif
    
   //! \brief Default CommunicationManager class just using the grids communicate
