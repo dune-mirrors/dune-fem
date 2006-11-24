@@ -370,12 +370,12 @@ int main (int argc, char **argv)
 
   std::cout << "loading dgf " << macroGridName << "\n";
   
-  ml -= refStepsForHalf;
+  ml -= DGFGridInfo<GridType>::refineStepsForHalf();
   if(ml < 0) ml = 0;
   for(int i=0; i<2; i++)
   {
     error[i] = algorithm ( macroGridName.c_str() ,  ml , i);
-    ml += refStepsForHalf ;
+    ml += DGFGridInfo<GridType>::refineStepsForHalf() ;
   }
   double eoc = log( error[0]/error[1]) / M_LN2; 
   std::cout << "EOC = " << eoc << " \n";
