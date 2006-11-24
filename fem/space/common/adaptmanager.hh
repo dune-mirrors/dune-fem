@@ -5,9 +5,8 @@
 #include <dune/common/array.hh>
 
 //- local includes 
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/operator/common/objpointer.hh>
-#include <dune/fem/quadrature/elementquadrature.hh>
-
 namespace Dune{
 
 /** @defgroup AdaptationManagerImp AdaptationManagerImp
@@ -70,16 +69,14 @@ private:
 
 typedef AdaptationManagerInterface AdaptMapping;
 
-
 /*! \brief This class manages the adaptation process. 
  If the method adapt is called, then the grid is adapted and also 
  all the data belonging to the given dof manager will be rearranged 
  for data set where it is necessary to keep the data.
  */
 template <class GridType, class RestProlOperatorImp >
-class AdaptationManager 
-: 
-public AdaptationManagerInterface , public ObjPointerStorage 
+class AdaptationManager :
+  public AdaptationManagerInterface , public ObjPointerStorage 
 {  
   typedef AdaptationManager<GridType,RestProlOperatorImp> MyType;
   typedef DofManager< GridType > DofManagerType; 
@@ -142,7 +139,9 @@ public:
       dm_.resizeForRestrict();
       
       typedef typename DofManagerType :: IndexSetRestrictProlongType IndexSetRPType;
-      typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
+      // typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
+      // COType tmpop ( dm_.indexSetRPop() , rpOp_ );
+      typedef CombineInterface<RestrictProlongPair,IndexSetRPType&,RestProlOperatorImp&> COType;
       COType tmpop ( dm_.indexSetRPop() , rpOp_ );
 
       typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
@@ -246,97 +245,7 @@ private:
   //! Restriction and Prolongation Operator 
   mutable RestProlOperatorImp & rpOp_;
 };
-
-
-//***********************************************************************
-
-/** \brief This is a simple restriction/prolongation operator for
- piecewise constant data stored on elements. 
-*/
-template <class DiscreteFunctionType>
-class RestProlOperatorFV
-{
-  typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-  typedef typename DiscreteFunctionType::GridType GridType;
-
-  typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-  typedef typename DiscreteFunctionType::DomainType DomainType;
-  typedef ElementQuadrature<GridType,0> BaryQuadType;
-public:  
-  //! Constructor
-  RestProlOperatorFV ( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
-  {
-  }
-
-  //! if weight is set, then ists assumend that we have always the same
-  //! proportion between fahter and son volume 
-  void setFatherChildWeight (const RangeFieldType& val) const
-  {
-    // volume of son / volume of father  
-    weight_ = val; 
-  }
-  
-  //! restrict data to father 
-  template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) const
-  {
-    assert( !father.isLeaf() );
-
-    const RangeFieldType weight = (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
-
-    assert( weight > 0.0 );
-    
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
-
-    const int numDofs = vati.numDofs();
-    if(initialize)
-    {
-      for(int i=0; i<numDofs; ++i)
-      {
-        vati[i] = weight * sohn[i];
-      }
-    }
-    else 
-    {
-      for(int i=0; i<numDofs; ++i)
-      {
-        vati[i] += weight * sohn[i];
-      }
-    }
-  }
-
-  //! prolong data to children 
-  template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
-  {
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
-    const int numDofs = vati.numDofs();
-    for(int i=0; i<numDofs; ++i)
-    {
-      sohn[i] = vati[i];
-    }
-  }
-
-private:
-  //! calculates the weight, i.e. (volume son)/(volume father)
-  template <class EntityType>
-  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
-  {
-    const BaryQuadType quad(father,0);
-    return std::abs(son.geometry().integrationElement(quad.point(0)) /
-              father.geometry().integrationElement(quad.point(0)));
-  }
-  
-  mutable DiscreteFunctionType & df_;
-  mutable RangeFieldType weight_;
-};
-
-
-/** @} end documentation group */
-
 }
+
 
 #endif

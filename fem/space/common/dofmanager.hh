@@ -14,6 +14,7 @@
 #include <dune/common/interfaces.hh>
 // here are the default grid index set defined 
 #include <dune/grid/common/defaultindexsets.hh>
+#include <dune/fem/space/common/restrictprolonginterface.hh>
 
 //- local includes 
 #include "singletonlist.hh"
@@ -25,7 +26,6 @@ namespace Dune {
 // forward declaration 
 template <class GridType> class DofManager;
 template <class DofManagerImp> class DofManagerFactory;
-
 
 //! oriented to the STL Allocator funtionality 
 template <class T>
@@ -781,7 +781,8 @@ public:
 // and prolongation process for adding and removing indices to and from
 // index sets which belong to functions that belong to that dofmanager
 template <class DofManagerType , class RestrictProlongIndexSetType> 
-class IndexSetRestrictProlong 
+class IndexSetRestrictProlong  : 
+  public RestrictProlongInterface<RestrictProlongTraits<IndexSetRestrictProlong<DofManagerType,RestrictProlongIndexSetType> > >
 {
   DofManagerType & dm_;
   
@@ -792,10 +793,9 @@ public:
   IndexSetRestrictProlong ( DofManagerType & dm , RestrictProlongIndexSetType & is, RestrictProlongIndexSetType & rm ) 
     : dm_(dm) , insert_(is), remove_(rm) {}
 
-  // just for interface reasons 
-  template <class EntityType>
-  void calcFatherChildWeight (EntityType &father, EntityType &son) const
-  {
+  // required for interface
+  typedef double RangeFieldType;
+  void setFatherChildWeight (const RangeFieldType& val) const {
   }
 
   //! restrict data to father 
