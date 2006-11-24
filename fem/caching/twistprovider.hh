@@ -53,7 +53,7 @@ namespace Dune {
   public:
     //! Constructor
     //! \param minTwist Minimal possible twist for the face
-    //! \param minTwist Maximal possible twist for the face + 1
+    //! \param maxTwist Maximal possible twist for the face + 1
     explicit TwistStorage(int minTwist, int maxTwist);
 
     //! Add a new mapper for a given twist

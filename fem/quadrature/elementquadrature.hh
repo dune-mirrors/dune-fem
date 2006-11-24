@@ -145,6 +145,7 @@ namespace Dune {
     //! Constructor
     //! \param it Intersection iterator
     //! \param order Desired order of the quadrature
+    //! \param twist the twist of the codim 1 entity
     //! \param side Is either INSIDE or OUTSIDE
     ElementQuadrature(const IntersectionIterator& it, int order, int twist,  Side side) :
       quad_(it.intersectionGlobal().type(), order),

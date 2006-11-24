@@ -409,6 +409,7 @@ namespace Dune {
   class DiscreteFunctionSetQuad {
   public:
     //! Constructor
+    //! \param en the entity
     //! \param quad The quadrature in question.
     DiscreteFunctionSetQuad(EntityImp& en,QuadratureImp& quad) :
       quad_(quad),

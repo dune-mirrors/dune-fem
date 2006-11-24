@@ -81,18 +81,18 @@ namespace Dune {
 
     ~LegendreDGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVar,
+    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       phi = this->eval_quadrilateral_2d_l(polOrd,baseNum_,x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVar,
+    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       JacobianRangeType tmp;
       this->grad_quadrilateral_2d_l(polOrd,baseNum_, x, tmp);
-      phi = tmp[0][diffVar[0]];
+      phi = tmp[0][diffVariable[0]];
     }
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVar,
+    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
       assert(false); // Not implemented
       abort();
@@ -130,20 +130,20 @@ namespace Dune {
 
     ~LegendreDGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVar,
+    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       
       phi = this->eval_hexahedron_3d_l(polOrd,baseNum_,x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVar,
+    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       JacobianRangeType tmp;
       this->grad_hexahedron_3d_l(polOrd,baseNum_, x, tmp);
-      phi = tmp[0][diffVar[0]];
+      phi = tmp[0][diffVariable[0]];
     }
     
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVar,
+    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
       assert(false); // Not implemented
       abort();

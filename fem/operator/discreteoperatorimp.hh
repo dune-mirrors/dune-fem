@@ -31,7 +31,6 @@ namespace Dune{
   same types of DiscreteFunctions but all doing different things on one
   entity. An example how to use this operator class can be found in 
   duneapps/tester/operator. 
-  @{
  */
   
 /*!
@@ -201,7 +200,6 @@ public:
   bool printMsg_;
 };
 
-/** @} end documentation group */
 
 }
 

@@ -20,7 +20,6 @@ namespace Dune{
   another discrete operator or by multiplying with a scalar. 
   The result of a sum has to be a mapping ( :-( ). 
    
-  @{
  */
 
 /** \brief Base class for discrete finite element operators
@@ -245,7 +244,6 @@ private:
   }
 };
 
-/** @} end documentation group */
 
 }
 

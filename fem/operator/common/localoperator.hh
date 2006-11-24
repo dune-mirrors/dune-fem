@@ -8,7 +8,6 @@ namespace Dune
 
 /** @ingroup  DiscreteOperator 
 
-  @{
  */
 
 //***********************************************************************
@@ -514,7 +513,6 @@ inline void ScaledLocalOperator<A,ScalarType>::applyLocal(EntityType &en1, Entit
 }
 
 
-/** @} end documentation group */
 
 } // end namespace Dune
 

@@ -201,6 +201,7 @@ namespace Dune {
     //! Constructor
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function of this pass. 
+    //! \param passName an identifier for this pass
     LocalPass(PreviousPassImp& pass, const DiscreteFunctionSpaceType& spc,
               std::string passName = "LocalPass") :
       BaseType(pass),

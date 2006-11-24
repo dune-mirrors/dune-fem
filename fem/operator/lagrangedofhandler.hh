@@ -128,7 +128,7 @@ public:
  *   base functions with support on the face are accessed.
  *
  *   \param faceNum local number of face in entity
- *
+ *   \param faceCodim codimension of face in entity
  *   \param faceDofNum number of DOF in face (0...numDofsOnFace()) 
  *
  *   \return the DOF number in the entity, e.g. for indexing localFunctions.
