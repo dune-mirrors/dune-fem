@@ -17,10 +17,17 @@ SparseRowMatrix<T>::SparseRowMatrix()
 }
 
 template <class T>
-SparseRowMatrix<T>::~SparseRowMatrix()
+void SparseRowMatrix<T>::removeObj()
 {
   if(values_) delete values_;
   if(col_) delete col_;
+  if(nonZeros_) delete nonZeros_;
+}
+
+template <class T>
+SparseRowMatrix<T>::~SparseRowMatrix()
+{
+  removeObj();
 }
 
 /***********************************/
@@ -44,12 +51,20 @@ reserve(int rows, int cols, int nz,const T& val )
   
   values_ = new T [dim_[0]*nz_];
   col_ = new int [dim_[0]*nz_];
+  nonZeros_ = new int [ dim_[0] ];
 
-  for(int i=0; i<dim_[0]*nz_; i++)
+  // make resize 
+  newValues_.resize( nz_ );
+  
+  // only reserve for indices 
+  newIndices_.reserve( nz_ );
+
+  for(int i=0; i<dim_[0]*nz_; ++i)
   { 
     values_[i] = val;
     col_[i] = defaultCol;
   }
+  for(int i=0; i<rows; ++i) nonZeros_[i] = nz_;
 }
 
 template <class T> 
@@ -120,6 +135,70 @@ void SparseRowMatrix<T>::clear()
 }
 
 template <class T> 
+void SparseRowMatrix<T>::clearRow(int row)
+{
+  int col = row * nz_;
+  nonZeros_[row] = nz_;
+  for(int i=0; i<nz_; ++i)
+  {
+    values_ [col] = 0;
+    col_[col] = defaultCol;
+    ++col;
+  }
+}
+
+template <class T> 
+void SparseRowMatrix<T>::resort()
+{
+  const int nRows = rows();
+  for(int row=0; row<nRows; ++row)
+  {
+    resortRow(row);
+  }
+}
+
+template <class T> 
+void SparseRowMatrix<T>::resortRow(const int row)
+{
+  newIndices_.resize(0);
+  int thisCol = row * nz_;
+  
+  for(int col=0; col<nz_; ++col)
+  {
+    int realCol =  col_[ thisCol + col ] ;
+    if( realCol > defaultCol )
+    {
+      newIndices_.push_back( realCol );
+    }
+  }
+   
+  // set number of non zeros for row 
+  const int nZero = newIndices_.size();
+  nonZeros_[row] = nZero;
+  //std::cout << "found nz = " << nZero << "\n";
+
+  // make values cache efficient 
+  std::sort( newIndices_.begin(), newIndices_.end() );
+  for(int col=0; col<nZero; ++col)
+  {
+    int val = col_[ thisCol + col ];
+    const double value = values_[ thisCol + col ];
+    for(int j=0; j<nZero; ++j) 
+    {
+      if( newIndices_[j] == val ) 
+        newValues_[j] = value; 
+    }
+  }
+
+  for(int col=0; col<nZero; ++col)
+  {
+    values_[ thisCol ] = newValues_[col];
+    col_[ thisCol ] = newIndices_[col];
+    ++thisCol;
+  }
+}
+
+template <class T> 
 void SparseRowMatrix<T>::set(int row, int col, T val)
 {
   int whichCol = colIndex(row,col);
@@ -172,10 +251,11 @@ void SparseRowMatrix<T>::multOEM(const VECtype *x, VECtype *ret) const
     T sum = 0;
     int thisCol = row*nz_ + firstCol ;
     const T * localValues = &values_[thisCol];
-    for(int col = firstCol ; col<nz_; ++col)
+    const int nonZero = nonZeros_[row];
+    for(int col = firstCol ; col<nonZero; ++col)
     {
       int realCol = col_[ thisCol ];
-      if ( realCol == defaultCol ) break;
+      assert( realCol > defaultCol );
       sum += localValues[col] * x[ realCol ];
       ++thisCol; 
     }
@@ -194,11 +274,12 @@ void SparseRowMatrix<T>::multOEM_t(const VECtype *x, VECtype *ret) const
 
   for(register int row=0; row<dim_[0]; ++row)
   {
-    for(register int col=0; col<nz_; ++col)
+    const int nonZero = nonZeros_[row];
+    for(register int col=0; col<nonZero; ++col)
     {
       int thisCol = row*nz_ + col;
       int realCol = col_[ thisCol ];
-      if ( realCol == defaultCol ) continue;
+      assert( realCol > defaultCol );
       ret[realCol] += values_[thisCol] * x[ row ];
     }
   }
@@ -346,47 +427,6 @@ void SparseRowMatrix<T>::checkSym()
   }
 } 
 
-
-// diagonal conditioning  
-template <class T> template <class DiscFuncType>
-void SparseRowMatrix<T>::diagCond(DiscFuncType &rhs)  
-{
-  typedef typename DiscFuncType::DofIteratorType DofIteratorType;  
-
-  //! we assume that the dimension of the functionspace of f is the same as
-  //! the size of the matrix 
-  DofIteratorType it = rhs.dbegin(); 
-
-  for(int row=0; row<dim_[0]; row++)
-  {
-    double diag_1 = this->operator() (row,row);
-    if(std::abs(diag_1) > 0.0)
-    {
-      diag_1 = 1.0/diag_1;
-    }
-    else 
-    {
-      diag_1 = 1.0;
-    }
-
-    // multipy rhs with 1/diag 
-    (*it) *= diag_1;
-    ++it;
-   
-    //! DofIteratorType schould be the same 
-    for(int col=0; col<nz_; col++)
-    {
-      int thisCol = nz_ * row + col;
-      //int realCol = col_[thisCol];
-      //if( realCol < 0 ) continue;        
-      values_[thisCol] *= diag_1;
-    }
-  } 
-
-  return; 
-
-}
-
 // diagonal conditioning  
 template <class T> template <class DiscFuncType>
 void SparseRowMatrix<T>::getDiag(const ThisType & mass,
@@ -502,8 +542,7 @@ void SparseRowMatrix<T>::resize (int newRow, int newCol)
   {
     if(newRow != memSize_)
     {
-      if(values_) delete [] values_;
-      if(col_) delete [] col_;
+      removeObj();
 
       T tmp = 0;
       reserve(newRow,newCol,nz_,tmp);

@@ -17,6 +17,7 @@ namespace Dune {
     typedef SparseRowMatrix<double> MatrixType;
     typedef MatrixType PreconditionMatrixType;
     
+    //! LocalMatrix 
     template <class MatrixImp> 
     class MatrixNonSymetricHandle
     {
@@ -30,6 +31,7 @@ namespace Dune {
       std::vector<int> col_;
       
     public:  
+      //! constructor taking entity and spaces for using mapToGlobal
       template <class EntityImp, class RowSpaceType, class ColSpaceType> 
       MatrixNonSymetricHandle(MatrixType & m,
                       const EntityImp & rowEntity,
@@ -56,12 +58,16 @@ namespace Dune {
       }
 
     private: 
+      //! copy not allowed 
       MatrixNonSymetricHandle(const MatrixNonSymetricHandle &);
 
     public:
+      //! return number of rows 
       int rows () const { return row_.size(); }
+      //! return number of cols 
       int cols () const { return col_.size(); }
 
+      //! add value to matrix entry
       void add(int localRow, int localCol , const double value)
       {
         assert( localRow >= 0 );
@@ -72,6 +78,7 @@ namespace Dune {
         matrix_.add(row_[localRow],col_[localCol],value);
       }
 
+      //! get matrix entry 
       double get(int localRow, int localCol) const 
       {
         assert( localRow >= 0 );
@@ -80,6 +87,27 @@ namespace Dune {
         assert( localRow < (int) row_.size() );
         assert( localCol < (int) col_.size() );
         return matrix_(row_[localRow],col_[localCol]);
+      }
+      
+      //! set matrix enrty to value 
+      void set(int localRow, int localCol, const double value)
+      {
+        assert( localRow >= 0 );
+        assert( localCol >= 0 );
+
+        assert( localRow < (int) row_.size() );
+        assert( localCol < (int) col_.size() );
+        matrix_.set(row_[localRow],col_[localCol],value);
+      }
+
+      //! clear all entries belonging to local matrix 
+      void clear ()
+      {
+        const int row = rows();
+        for(int i=0; i<row; ++i)
+        {
+          matrix_.clearRow( row_[i] );
+        }
       }
     };
 
@@ -100,6 +128,7 @@ namespace Dune {
     bool hasMassMatrix_;
     bool hasPcMatrix_;
 
+    //! setup matrix handler 
     MatrixHandlerSPMat(const SpaceType & singleSpace, 
                        const GradientSpaceType & gradientSpace, 
                        bool  hasMassMatrix = false , 
@@ -119,14 +148,22 @@ namespace Dune {
       reserve();
     }
 
+    //! return reference to stability matrix 
     MatrixType & stabMatrix() { return stabMatrix_; }
+    //! return reference to gradient matrix 
     MatrixType & gradMatrix() { return gradMatrix_; }
+    //! return reference to divergence matrix 
     MatrixType & divMatrix()  { return divMatrix_; }
+    //! return reference to mass matrix 
     MatrixType & massMatrix() { return massMatrix_; }
+    //! return reference to preconditioning matrix 
     MatrixType & pcMatrix() { return pcMatrix_; }
+    //! return true if mass matrix is used 
     bool hasMassMatrix() const { return hasMassMatrix_; }
+    //! return true if preconditioning matrix is used 
     bool hasPcMatrix() const { return hasPcMatrix_; }
 
+    //! resize all matrices and clear them 
     void resizeAndClear() 
     {
       if( ! hasBeenSetup() ) 
@@ -162,6 +199,7 @@ namespace Dune {
       }
     }
 
+    //! clear mass matrix 
     void clearMass() 
     {
       if(hasMassMatrix())
@@ -170,6 +208,7 @@ namespace Dune {
       }
     } 
     
+    //! clear preconditioning matrix 
     void clearPcMatrix() 
     {
       if(hasPcMatrix())
@@ -178,11 +217,13 @@ namespace Dune {
       }
     } 
 
+    //! returns true if memory has been reserved
     bool hasBeenSetup () const 
     {
       return (singleMaxNumbers_ > 0) && (gradMaxNumbers_ > 0);
     }
 
+    //! reserve memory corresponnding to size of spaces 
     void reserve() 
     {
       // if empty grid do nothing (can appear in parallel runs)
@@ -215,6 +256,18 @@ namespace Dune {
         {
           pcMatrix_.reserve(singleSpace_.size(),singleSpace_.size(),1,0.0);
         }
+      }
+    }
+
+    //! resort row numbering in matrix to have ascending numbering 
+    void resort() 
+    {
+      gradMatrix_.resort();
+      divMatrix_.resort();
+      stabMatrix_.resort();
+      if( hasMassMatrix() )
+      {
+        massMatrix_.resort(); 
       }
     }
   };
