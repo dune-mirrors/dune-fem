@@ -1,7 +1,7 @@
 #ifndef ADI_BOUNDARY_HH
 #define ADI_BOUNDARY_HH
 
-#warning "File deprecated !!"
+#error "File deprecated !!"
 // System header includes
 #include <map>
 #include <utility>
