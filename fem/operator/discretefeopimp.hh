@@ -6,8 +6,7 @@
 
 namespace Dune{
 
-/** @defgroup DiscreteFEOp DiscreteFEOp
-    @ingroup DiscreteOperator
+/** @ingroup DiscreteOperator
 
   A discrete operator of this type consists of a local operator and a grid
   walkthrough. On each Entity then the local operator is called. 

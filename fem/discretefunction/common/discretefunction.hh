@@ -159,9 +159,9 @@ namespace Dune{
   //! Default implementation of the discrete function. This class provides 
   //! is responsible for the dof storage. Different implementations of the
   //! discrete function use different dof storage. 
-  //! The default implementation provides +=, -= ans so on operators and 
+  //! The default implementation provides +=, -= and so on operators and 
   //! a DofIterator access, which can run over all dofs in an efficient way. 
-  //! Furthermore with an entity you can access an local function to evaluate
+  //! Furthermore with an entity you can access a local function to evaluate
   //! the discrete function by multiplying the dofs and the basefunctions. 
   //! 
   //*************************************************************************

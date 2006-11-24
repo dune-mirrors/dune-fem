@@ -108,7 +108,7 @@ public:
  *
  *   \param faceNum local number of face in entity
  *
- *   \param faceCoDim codimension of face in entity
+ *   \param faceCodim codimension of face in entity
  *
  *   \return number of Lagrange-Nodes on the specified face
  */
@@ -128,8 +128,6 @@ public:
  *   base functions with support on the face are accessed.
  *
  *   \param faceNum local number of face in entity
- *
- *   \param faceCoDim codimension of face in entity
  *
  *   \param faceDofNum number of DOF in face (0...numDofsOnFace()) 
  *

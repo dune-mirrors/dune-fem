@@ -1,6 +1,9 @@
 #include <dune/common/tuples.hh>
 namespace Dune {
-/*! @defgroup CombineInterface Interface helpers
+/*! @defgroup InterfaceHelper Interface helper methods
+ */
+/*! @defgroup CombineInterface Combining interface instances
+ * @ingroup InterfaceHelper
     A general strategy for combining up to nine instances of an 
     interface class. The resulting type again satisfies the 
     interface so it can again be combined for further instances or
@@ -16,7 +19,7 @@ namespace Dune {
     Note that to avoid copying of instances reference or pointer
     types should be used. 
 
-    @example @include /home/andreas/dune/testing/example.cc
+    @include example.cc
 
     Further usage showing for example how to use types defined
     in the interface class and how to automatically

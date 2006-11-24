@@ -11,7 +11,7 @@ namespace Dune{
 
 
 /** @defgroup Mapping Mapping
-  \ingroup AlgebraCommon
+  \ingroup OperatorCommon
   Mappings in Dune always map from one vector space into another vector space.
 
   @{

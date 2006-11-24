@@ -65,7 +65,7 @@ public:
   //! differentiation order
   //! \param x The local coordinate in the reference element
   virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
-                          const DomainType & , RangeType &) const = 0;
+                          const DomainType &x , RangeType &) const = 0;
 
   //! diffVariable contain the component of the gradient which is delivered.
   //! for example gradient of the basefunction x component ==>

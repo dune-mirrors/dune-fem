@@ -17,8 +17,6 @@ namespace Dune{
 
   
 /** @defgroup AdaptationManagerImp Adaptation Manager
-    @ingroup Adaptation
-    
     @{
 **/
 
@@ -252,9 +250,7 @@ private:
   //! Restriction and Prolongation Operator 
   mutable RestProlOperatorImp & rpOp_;
 };
+/** @} end documentation group */
 }
-/** @} end documentation group */
-/** @} end documentation group */
-
 
 #endif

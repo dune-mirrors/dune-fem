@@ -4,19 +4,7 @@
 **   $Revision$$Name$
 **       $Date$
 **   Copyright: GPL $Author$
-** Description: several implementations of element-matrix and 
-**              element-rhs-integrators, 
-**              which can be accumulated for solving a general 
-**              elliptic problems (or simplifications of it) with the FEOp 
-**              class:
-**
-**   - div(a(x)*grad(u)) + div (b(x)*u) + c(x)*u = f(x)       in Omega
-**                                             u = g_D(x)   in \Gamma_D
-**                      (a(x)*grad(u) -b(x)*u) n = g_N(x)   in \Gamma_N
-**            (a(x)*grad(u) -b(x)*u) n + alpha*u = g_R(x)   in \Gamma_R
-**
 **************************************************************************/
-
 #ifndef DUNE_ELEMENTINTEGRATOR_HH
 #define DUNE_ELEMENTINTEGRATOR_HH
 
@@ -28,6 +16,21 @@
 
 namespace Dune 
 {
+/*! @defgroup CGFiniteElement Continuous Finite Elements
+ *  @ingroup OperatorCommon
+ * Description: several implementations of element-matrix and 
+**              element-rhs-integrators, 
+**              which can be accumulated for solving a general 
+**              elliptic problems (or simplifications of it) with the FEOp 
+**              class:
+** \f{eqnarray*}
+**   - div(a(x)*grad(u)) + div (b(x)*u) + c(x)*u &=& f(x)     \quad\mbox{in}\quad \Omega    \\
+**                                             u &=& g_D(x)   \quad\mbox{in}\quad \Gamma_D \\
+**                      (a(x)*grad(u) -b(x)*u) n &=& g_N(x)   \quad\mbox{in}\quad \Gamma_N \\
+**            (a(x)*grad(u) -b(x)*u) n + alpha*u &=& g_R(x)   \quad\mbox{in}\quad \Gamma_R 
+** \f}
+** @{
+**************************************************************************/
 /*======================================================================*/
 /*!
  *  \class ElementMatrixIntegratorInterface
@@ -78,9 +81,9 @@ public:
  *
  *   This method has to be provided by derived classes.
  *
- *   \param the entity, a reference to an 
- *          instance of the local matrix implementation and the scaling 
- *          coefficient
+ *   \param entity a reference to an 
+ *   \param mat instance of the local matrix implementation 
+ *   \param coef the scaling coefficient
  */
 /*======================================================================*/
 
@@ -170,7 +173,7 @@ protected:
  *   if a local-matrix interface is used, which directly accesses the 
  *   global matrix?
  *
- *   \param an instance of the model providing the data functions
+ *   \param model instance of the model providing the data functions
  */
 /*======================================================================*/
 
@@ -242,9 +245,9 @@ protected:
  *  The method is used for the diffusive flux of general elliptic problems.
  *  The following matrix is computed, where i,j run over the local dofs
  *  of base functions, which have support on an entity.
- *                  
+ *  \f[
  *     L_ij :=  \int_\entity   [a     grad(phi_j) ]^T  grad(phi_i) 
- *
+ *  \f]
  *  The model class is assumed to have a diffusiveFlux() method.
  *
  *  the method must be a template method, such that the model requirements
@@ -325,9 +328,9 @@ protected:
  *  The method is used for the convective flux of general elliptic problems.
  *  The following matrix is computed, where i,j run over the local dofs
  *  of base functions, which have support on an entity.
- *                  
+ *  \f[                
  *     L_ij :=  \int_\entity   [-  b   phi_j]^T         grad(phi_i) 
- *
+ *  \f]
  *  The model class is assumed to have a convectiveFlux() method.
  *
  *  the method must be a template method, such that the model requirements
@@ -418,9 +421,9 @@ protected:
  *  The method is used for the mass term of general elliptic problems.
  *  The following matrix is computed, where i,j run over the local dofs
  *  of base functions, which have support on an entity.
- *                  
+ *  \f[
  *     L_ij :=  \int_\entity   c          phi_i        phi_j
- *
+ *  \f]
  *  The model class is assumed to have a mass() method.
  *
  *  the method must be a template method, such that the model requirements
@@ -508,9 +511,9 @@ protected:
  *  The method is used for the robin boundary of general elliptic problems.
  *  The following matrix is computed, where i,j run over the local dofs
  *  of base functions, which have support on an entity.
- *                  
+ *  \f[
  *     L_ij :=  +  \int_\Gamma_R alpha      phi_i        phi_j     
- *
+ *  \f]
  *  The model class is assumed to have an alpha() and a
  *  boundaryType() member method.
  *
@@ -643,7 +646,7 @@ protected:
  * 
  *   \param entity the entity over which integration is performed
  *
- *   \param rhs storage, which is to be increased, writable access by 
+ *   \param elRhs storage, which is to be increased, writable access by 
  *          operator[] should be possible, i.e. a "LocalFunction" access
  *          is assumed. 
  *
@@ -766,9 +769,9 @@ public:
  *   ElementRhsIntegrators.
  * 
  *   The elRhs vector is increased by the following values:
- * 
+ *   \f[
  *      b_i + = coef * \int_{entity}  source * phi_i 
- *
+ *   \f]
  *   By accessing only the local basis functions, only few 
  *   values b_i are updated.
  *
@@ -781,7 +784,7 @@ public:
  *
  *  \param entity the entity over which the intrgration is performed
  *
- *  \param mat reference ot the local function to be increased
+ *  \param elRhs reference ot the local function to be increased
  *
  *  \param coef an optional weighting coefficient, which is multiplied to the
  *         increase before addition
@@ -839,9 +842,9 @@ public:
  *   ElementRhsIntegrators.
  * 
  *   The elRhs vector is increased by the following values:
- * 
+ *   \f[
  *      b_i + = coef * \int_{neumann_boundary of entity} neumannValues * phi_i 
- *
+ *   \f]
  *   By accessing only the local basis functions, only few 
  *   values b_i are updated.
  *
@@ -854,7 +857,7 @@ public:
  *
  *  \param entity the entity over which the intrgration is performed
  *
- *  \param mat reference ot the local function to be increased
+ *  \param elRhs reference ot the local function to be increased
  *
  *  \param coef an optional weighting coefficient, which is multiplied to the
  *         increase before addition
@@ -940,9 +943,9 @@ public:
  *   ElementRhsIntegrators.
  * 
  *   The elRhs vector is increased by the following values:
- * 
+ *   \f[
  *      b_i + = coef * \int_{robin_boundary of entity} robinValues * phi_i 
- *
+ *   \f]
  *   By accessing only the local basis functions, only few 
  *   values b_i are updated.
  *
@@ -955,7 +958,7 @@ public:
  *
  *  \param entity the entity over which the intrgration is performed
  *
- *  \param mat reference ot the local function to be increased
+ *  \param elRhs reference ot the local function to be increased
  *
  *  \param coef an optional weighting coefficient, which is multiplied to the
  *         increase before addition
@@ -1045,21 +1048,25 @@ private:
  *         general finite element problem including boundary correction
  *
  *  The right hand side for a Lagrange-basis of order 1 is assembled, i.e.
+ *  \f{eqnarray*}
+ *    b_i := \left\{\begin{array}{ll}
+ *           g_D(x_i)   &  \mbox{if}\; x_i \;\mbox{is Dirichlet-Bnd.Point}
+ *           \\
+ *           XX_i       &  \mbox{otherwise}
+ *           \end{array}\right.
+ *  \f}
  *
- *           /    g_D(x_i)                     if x_i is Dirichlet-Bnd.Point
- *    b_i :=<   
- *           \    XX_i                         otherwise
- *
- *  where XX_i is determined by grid-walkthorugh and calling of the 
+ *  where \f$ XX_i \f$ is determined by grid-walkthorugh and calling of the 
  *  ElementRhsIntegrator on each Element.
  *  For instance for a full general elliptic problem
- * 
- *                 - div(a*grad(u) - b*u) + c*u = f       in Omega
- *                                            u = g_D   in \Gamma_D
- *                           (a*grad(u) -b*u) n = g_N   in \Gamma_N
- *                 (a*grad(u) -b*u) n + alpha*u = g_R   in \Gamma_R
- * 
- *  where a,b,c,g_D,g_N,g_R are space dependent, alpha a constant and the 
+ *  \f{eqnarray*}
+ *                 - div(a*grad(u) - b*u) + c*u &=& f   \quad\mbox{in}\quad \Omega  \\
+ *                                            u &=& g_D \quad\mbox{in}\quad \Gamma_D\\
+ *                           (a*grad(u) -b*u) n &=& g_N \quad\mbox{in}\quad \Gamma_N\\
+ *                 (a*grad(u) -b*u) n + alpha*u &=& g_R \quad\mbox{in}\quad \Gamma_R
+ *  \f}
+ *
+ *  where \f$ a,b,c,g_D,g_N,g_R \f$ are space dependent, alpha a constant and the 
  *  quantities denote
  *              "stiffness"        a(x) 
  *              "velocity"         b(x) 
@@ -1072,11 +1079,11 @@ private:
  *
  *  the EllipticElementRhsIntegrator in fem/examples/elliptic/elliptic.cc 
  *  results in
- *  
- *    XX_i = \       int_\Omega   f   phi_i
- *            \   + \int_\Gamma_N g_N phi_i
- *             \  + \int_\Gamma_R g_R phi_i                   
- *
+ *  \f[
+ *    XX_i =    \int_\Omega   f   phi_i
+ *            + \int_\Gamma_N g_N phi_i
+ *            + \int_\Gamma_R g_R phi_i                   
+ *  \f]
  *  The corresponding Matrix is generated by FEOp. Additionally that class 
  *  allows an additional dirichlet-boundary treatment of both the matrix and 
  *  the Rhs
@@ -1268,7 +1275,7 @@ private:
   //! a reference to the elementRhsIntegrator, which is to be used
   ElementRhsIntegratorType& elRhsInt_;
 }; // end class RhsAssembler
-
+//! @}
 } // end namespace dune
 
 #endif

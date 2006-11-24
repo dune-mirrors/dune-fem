@@ -21,8 +21,17 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
+/*! @defgroup PassEllipt Local Discontinous Galerkin for second order elliptic equations
+ *  @ingroup Pass
+ * Description: Solver for equations of the form
+** \f{eqnarray*}
+**   div(A(x)\nabla u) + &=& f(x)  \quad\mbox{in}\quad \Omega    \\
+** \f}
+** where \f$ v \f$ is to be computed.
+** @{
+**************************************************************************/
 
-  //! Concrete implementation of Pass for LDG.
+  //! Concrete implementation of Pass for elliptic equations using LDG
   template <class DiscreteModelImp, class PreviousPassImp>
   class LocalDGElliptGradientPass :
     public LocalPass<DiscreteModelImp, PreviousPassImp> 

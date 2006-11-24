@@ -107,8 +107,8 @@ namespace Dune {
   //! \brief Special base function implementation that takes advantage
   //! of the vectorial structure of the base functions.
   //! This base function can be used in conjunction with scalar basefunctions
-  //! \phi_i which are extended to vectorial base functions like \Phi_j = 
-  //! \phi_i e_k, where e_k = [ \kronecker_ik ]_i.
+  //! \f$ \phi_i \f$ which are extended to vectorial base functions like 
+  //! \f$ \Phi_j = \phi_i e_k \f$, where \f$ e_k = [ \kronecker_ik ]_i \f$.
   template <class FunctionSpaceImp, template <class> class StorageImp>
   class VectorialBaseFunctionSet : 
     public BaseFunctionSetDefault<VectorialBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >

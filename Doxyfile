@@ -433,7 +433,7 @@ WARN_FORMAT            = "$file:$line: $text"
 # and error messages should be written. If left blank the output is written 
 # to stderr.
 
-WARN_LOGFILE           = 
+WARN_LOGFILE           = doc/doxygen.out
 
 #---------------------------------------------------------------------------
 # configuration options related to the input files
@@ -444,7 +444,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = 
+INPUT                  = fem
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -465,25 +465,25 @@ RECURSIVE              = YES
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = ./dune/
+EXCLUDE                = ./dune/ ./fem/solver ./fem/examples
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 
 # from the input.
 
-EXCLUDE_SYMLINKS       = NO
+EXCLUDE_SYMLINKS       = YES
 
 # If the value of the INPUT tag contains directories, you can use the 
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude 
 # certain files from those directories.
 
-EXCLUDE_PATTERNS       = 
+EXCLUDE_PATTERNS       = *.cc *.cpp
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or 
 # directories that contain example code fragments that are included (see 
 # the \include command).
 
-EXAMPLE_PATH           = 
+EXAMPLE_PATH           = fem/misc fem/example
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the 
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -830,7 +830,7 @@ RTF_EXTENSIONS_FILE    =
 # If the GENERATE_MAN tag is set to YES (the default) Doxygen will 
 # generate man pages
 
-GENERATE_MAN           = NO
+GENERATE_MAN           = YES
 
 # The MAN_OUTPUT tag is used to specify where the man pages will be put. 
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be 
@@ -849,7 +849,7 @@ MAN_EXTENSION          = .3
 # only source the real man page, but without them the man command 
 # would be unable to find the correct page. The default is NO.
 
-MAN_LINKS              = NO
+MAN_LINKS              = YES
 
 #---------------------------------------------------------------------------
 # configuration options related to the XML output

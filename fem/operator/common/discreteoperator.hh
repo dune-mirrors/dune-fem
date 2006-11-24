@@ -10,7 +10,7 @@
 namespace Dune{
 
 
-/** @defgroup DiscreteOperator DiscreteOperator
+/** @defgroup DiscreteOperator Discrete Operator Interface
     @ingroup OperatorCommon
 
   @{

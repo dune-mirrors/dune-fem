@@ -6,8 +6,7 @@
 namespace Dune 
 {
 
-/** @defgroup LocalOperator LocalOperator
-    @ingroup  DiscreteOperator 
+/** @ingroup  DiscreteOperator 
 
   @{
  */

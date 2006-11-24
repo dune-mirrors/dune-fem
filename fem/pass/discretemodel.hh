@@ -144,7 +144,7 @@ namespace Dune {
     //! \brief Passes the active neigbor entity to the model.
     //! This can be used, to set local functions required as data functions 
     //! in the model.
-    //! \param en active neighbor Entity 
+    //! \param nb active neighbor Entity 
     void setNeighbor(EntityType& nb) 
     { asImp().setNeighbor(nb); }
 

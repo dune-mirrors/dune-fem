@@ -26,7 +26,7 @@
 namespace Dune {
 
 /*======================================================================*/
-/*!
+/*! @ingroup CGFiniteElement  
  *  \class FEOp 
  *  \brief The FEOp class provides an example of a Finite Element Operator 
  *     
@@ -38,13 +38,14 @@ namespace Dune {
  *  element matrix provider is now specified by a template-parameter. 
  *
  *  The class is used for general elliptic problems + boundary treatment: 
- * 
- *                 - div(a*grad(u) - b*u) + c*u = f       in Omega
- *                                            u = g_D   in \Gamma_D
- *                           (a*grad(u) -b*u) n = g_N   in \Gamma_N
- *                 (a*grad(u) -b*u) n + alpha*u = g_R   in \Gamma_R
- * 
- *  where a,b,c,g_D,g_N,g_R are space dependent, alpha a constant and the 
+ *  \f{eqnarray*}
+ *                 - div(a*grad(u) - b*u) + c*u = f     in Omega    \\
+ *                                            u = g_D   in \Gamma_D \\
+ *                           (a*grad(u) -b*u) n = g_N   in \Gamma_N \\
+ *                 (a*grad(u) -b*u) n + alpha*u = g_R   in \Gamma_R 
+ *  \f}
+ *
+ *  where \l$ a,b,c,g_D,g_N,g_R \l$ are space dependent, alpha a constant and the 
  *  quantities denote
  *              "stiffness"        a(x) 
  *              "velocity"         b(x) 

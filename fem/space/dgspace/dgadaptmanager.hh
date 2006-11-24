@@ -237,8 +237,6 @@ private:
 };
 
 
-/** @} end documentation group */
-
 }
 
 #endif

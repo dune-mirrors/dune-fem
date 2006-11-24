@@ -31,8 +31,18 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
+/*! @defgroup PassHyp Local Discontinous Galerkin for first order hyperbolic equations
+ *  @ingroup Pass
+ * Description: Solver for equations of the form
+** \f{eqnarray*}
+**   v + div(f(x,u)) + A(x,u)\nabla u &=& S(x,u)  \quad\mbox{in}\quad \Omega    \\
+** \f}
+** where \f$ u \f$ is the argument and \f$ v \f$ is computed.
+** @{
+**************************************************************************/
 
-  //! Concrete implementation of Pass for LDG.
+  //! Concrete implementation of Pass for first hyperbolic systems using
+  //! LDG
   template <class DiscreteModelImp, class PreviousPassImp>
   class LocalDGPass :
     public LocalPass<DiscreteModelImp, PreviousPassImp> 
@@ -89,8 +99,8 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    //! \param quadOrd0 defines the order of the volume quadrature which is by default 2* space polynomial order 
-    //! \param quadOrd1 defines the order of the face quadrature which is by default 2* space polynomial order 
+    //! \param volumeQuadOrd defines the order of the volume quadrature which is by default 2* space polynomial order 
+    //! \param faceQuadOrd defines the order of the face quadrature which is by default 2* space polynomial order 
     LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 DiscreteFunctionSpaceType& spc,
@@ -348,7 +358,7 @@ namespace Dune {
 
     int volumeQuadOrd_,faceQuadOrd_;
   };
-  
+//! @}  
 } // end namespace Dune
 
 #endif

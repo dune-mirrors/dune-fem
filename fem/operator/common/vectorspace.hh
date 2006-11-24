@@ -3,14 +3,9 @@
 
 namespace Dune{
 
-  /** @defgroup AlgebraCommon Operators
-      The Functions and Operators Module contains objects of 
-      arbitrary vector spaces and mappings between them.
-  @{
-  */
-
- /** @defgroup Vector Elements of Vector Spaces
-     An instance of this class is an element of an vector space. 
+ /** @defgroup Vector Elements of Vector Spacesa
+  *  @ingroup OperatorCommon
+  * An instance of this class is an element of an vector space. 
      Elements of vector spaces can be added and multiplied by a 
      scalar.
   @{

@@ -30,7 +30,7 @@ namespace Dune {
   public:
     //! Constructor
     //! \param size Number of global dofs per component.
-    CombinedDofConversionUtility(const DiscreteFunctionSpaceImp & spc, int) :
+    CombinedDofConversionUtility(const DiscreteFunctionSpaceImp & spc, int size) :
       spc_(spc)
     {}
 

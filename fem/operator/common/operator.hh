@@ -6,11 +6,10 @@
 namespace Dune
 {
 /** @defgroup OperatorCommon Operators
-  @ingroup AlgebraCommon
   Operators are mappings from function spaces into function spaces.
  */
 
-/** @defgroup Operator Operator
+/** @defgroup Operator Operator Interface
     @ingroup OperatorCommon
 
   @{

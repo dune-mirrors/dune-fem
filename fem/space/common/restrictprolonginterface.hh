@@ -1,6 +1,9 @@
 #ifndef RESTRICTPROLONGINTERFACE
 #define RESTRICTPROLONGINTERFACE
 
+#include <dune/fem/quadrature/elementquadrature.hh>
+#include <dune/fem/misc/combineinterface.hh>
+namespace Dune{
 /** @defgroup RestrictProlongInterface Restrict Prolong Interface
     @ingroup Adaptation
     Interface for restrict prolong operation on single elements.
@@ -10,9 +13,6 @@
 /*! \brief Interface class defining the local behaviour of the
     restrict/prolong operation (using BN)
  */
-#include <dune/fem/quadrature/elementquadrature.hh>
-#include <dune/fem/misc/combineinterface.hh>
-namespace Dune{
 template <class RestProlImpTraits>
 class RestrictProlongInterface {
 public:  

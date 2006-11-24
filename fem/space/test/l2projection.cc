@@ -63,7 +63,7 @@ typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 
-//! the exact solution to the problem for EOC calculation 
+// the exact solution to the problem for EOC calculation 
 class ExactSolution : public Function < FuncSpace , ExactSolution > 
 {
   typedef FuncSpace::RangeType RangeType;

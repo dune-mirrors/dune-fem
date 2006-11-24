@@ -4,6 +4,7 @@
 namespace Dune {
 
 /** @defgroup DofMapper  DofMapperInterface 
+ *  @ingroup DiscreteFunction
 
   @{
  */

@@ -15,7 +15,11 @@
 
 namespace Dune {
 
-  /**
+  /*! @defgroup Pass Pass concept
+   *  @ingroup OperatorCommon
+   *
+   */
+  /*!
    * @brief End marker for a compile-time list of passes.
    *
    */

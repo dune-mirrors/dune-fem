@@ -64,7 +64,7 @@ typedef AdaptationManager <GridType,
           RestrictProlongDefault<DiscreteFunctionType> > ADOperatorType;
 
 // ***********************************************************
-//! the exact solution to the problem for EOC calculation 
+// the exact solution to the problem for EOC calculation 
 class ExactSolution : public Function < FuncSpace , ExactSolution > 
 {
   typedef FuncSpace::RangeType RangeType;

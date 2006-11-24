@@ -40,7 +40,7 @@ namespace Dune {
 #define _floatTest(arg1, arg2) \
   doFloatTest(arg1, arg2, #arg1, #arg2, __FILE__, __LINE__)
 
-//! \brief Tests if \c arg1 and \c arg2 are identical up to a relative difference \tol
+//! \brief Tests if \c arg1 and \c arg2 are identical up to a relative difference \c tol
 //! Use this macro to test the equality of float types. A user-prescribed 
 //! tolerance of \c tol for the relative difference is allowed before the test
 //! fails.

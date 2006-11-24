@@ -143,7 +143,7 @@ operator -= ( const MappingType& g )
 template<class DiscreteFunctionTraits >
 inline DiscreteFunctionDefault<DiscreteFunctionTraits>&
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator*=(const typename DiscreteFunctionSpaceType::RangeFieldType & scalar)
+operator*=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::RangeFieldType & scalar)
 {
   DofIteratorType endit = this->dend ();
   for(DofIteratorType it = this->dbegin(); it != endit; ++it) 
@@ -156,7 +156,7 @@ operator*=(const typename DiscreteFunctionSpaceType::RangeFieldType & scalar)
 template<class DiscreteFunctionTraits>
 inline DiscreteFunctionDefault<DiscreteFunctionTraits > &
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator/=(const typename DiscreteFunctionSpaceType::RangeFieldType & scalar)
+operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::RangeFieldType & scalar)
 {
   (*this) *= (1./scalar);
   return *this;
