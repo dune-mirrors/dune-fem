@@ -34,13 +34,13 @@ namespace Dune{
     DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp
      > > > > >
  {
-   public:
+ public:
    typedef DiscFunc<DiscontinuousGalerkinSpace<FunctionSpaceImp, 
 					       GridPartImp, 
 					      polOrd,
 					      StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename DiscreteFunctionType::GridType GridType;
+  typedef typename FunctionSpaceType :: GridType GridType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
@@ -165,7 +165,7 @@ private:
 					       0,
 					       StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename DiscreteFunctionType::GridType GridType;
+  typedef typename FunctionSpaceType ::GridType GridType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
@@ -196,18 +196,20 @@ private:
     const RangeFieldType weight = 
       (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
     
-    LocalFunctionType vati_ =df_.localFunction( father);
-    LocalFunctionType sohn_ =df_.localFunction( son   );
+    LocalFunctionType vati = df_.localFunction( father);
+    LocalFunctionType sohn = df_.localFunction( son   );
 
+    const int numDofs = vati.numDofs();
+    assert( sohn.numDofs() == numDofs );
     if(initialize) {
-      for(int i=0; i<vati_.numDofs(); i++) {
-        vati_[i] = weight * sohn_[i];
+      for(int i=0; i<numDofs; i++) {
+        vati[i] = weight * sohn[i];
       }
     }
     else 
     {
-      for(int i=0; i<vati_.numDofs(); i++) {
-        vati_[i] += weight * sohn_[i];
+      for(int i=0; i<numDofs; i++) {
+        vati[i] += weight * sohn[i];
       }
     }
   }
@@ -216,11 +218,12 @@ private:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
-    LocalFunctionType vati_ = df_.localFunction( father);
-    LocalFunctionType sohn_ = df_.localFunction( son   );
-    const int numDofs = vati_.numDofs();
+    LocalFunctionType vati = df_.localFunction( father);
+    LocalFunctionType sohn = df_.localFunction( son   );
+    const int numDofs = vati.numDofs();
+    assert( sohn.numDofs() == numDofs );
     for(int i=0; i<numDofs; i++) {
-      sohn_[i] = vati_[i];
+      sohn[i] = vati[i];
     }
   }
 
