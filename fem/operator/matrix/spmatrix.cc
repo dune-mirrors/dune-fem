@@ -14,14 +14,15 @@ SparseRowMatrix<T>::SparseRowMatrix()
   dim_[0] = 0;
   dim_[1] = 0;
   nz_ = 0;
+  nonZeros_ = 0;
 }
 
 template <class T>
 void SparseRowMatrix<T>::removeObj()
 {
-  if(values_) delete values_;
-  if(col_) delete col_;
-  if(nonZeros_) delete nonZeros_;
+  if(values_) delete [] values_;
+  if(col_) delete [] col_;
+  if(nonZeros_) delete [] nonZeros_;
 }
 
 template <class T>
@@ -33,11 +34,40 @@ SparseRowMatrix<T>::~SparseRowMatrix()
 /***********************************/
 /*  Construct from storage vectors */
 /***********************************/
-
 template <class T> 
 void SparseRowMatrix<T>::
 reserve(int rows, int cols, int nz,const T& val )
 {
+  T * newValues = new T [ rows*nz ];
+  int * newCol  = new int [ rows*nz ];
+  int * newNonZeros = new int [ rows ];
+
+  assert( newValues );
+  assert( newCol );
+  assert( newNonZeros );
+
+  for(int i=0; i<rows*nz; ++i)
+  { 
+    newValues[i] = val;
+    newCol[i] = defaultCol;
+  }
+  int newNZ = nz + firstCol;
+  for(int i=0; i<rows; ++i) newNonZeros[i] = newNZ; 
+
+  if( (dim_[0] > 0) && (nz_ > 0 ))
+  {
+    int copySize = std::min( dim_[0] , rows );
+    std::memcpy(newValues, values_,  copySize * nz_ * sizeof(T) );
+    std::memcpy(newCol, col_ , copySize * nz_ * sizeof(int) );
+    std::memcpy(newNonZeros, nonZeros_, copySize * sizeof(int) );
+  }
+
+  removeObj();
+
+  values_ = newValues;
+  col_ = newCol; 
+  nonZeros_ = newNonZeros;
+
   dim_[0] = rows;
   dim_[1] = cols;
 
@@ -49,22 +79,11 @@ reserve(int rows, int cols, int nz,const T& val )
   assert( dim_[0] > 0 );
   assert( dim_[1] > 0 );
   
-  values_ = new T [dim_[0]*nz_];
-  col_ = new int [dim_[0]*nz_];
-  nonZeros_ = new int [ dim_[0] ];
-
   // make resize 
   newValues_.resize( nz_ );
   
   // only reserve for indices 
   newIndices_.reserve( nz_ );
-
-  for(int i=0; i<dim_[0]*nz_; ++i)
-  { 
-    values_[i] = val;
-    col_[i] = defaultCol;
-  }
-  for(int i=0; i<rows; ++i) nonZeros_[i] = nz_;
 }
 
 template <class T> 
@@ -138,6 +157,9 @@ template <class T>
 void SparseRowMatrix<T>::clearRow(int row)
 {
   int col = row * nz_;
+  assert( nonZeros_ );
+  assert( values_ );
+  assert( col_ );
   nonZeros_[row] = nz_;
   for(int i=0; i<nz_; ++i)
   {
@@ -542,8 +564,6 @@ void SparseRowMatrix<T>::resize (int newRow, int newCol)
   {
     if(newRow != memSize_)
     {
-      removeObj();
-
       T tmp = 0;
       reserve(newRow,newCol,nz_,tmp);
     }
