@@ -109,6 +109,16 @@ namespace Dune {
           matrix_.clearRow( row_[i] );
         }
       }
+
+      //! resort all global rows of matrix to have ascending numbering 
+      void resort ()
+      {
+        const int row = rows();
+        for(int i=0; i<row; ++i)
+        {
+          matrix_.resortRow( row_[i] );
+        }
+      }
     };
 
   public:
@@ -164,7 +174,17 @@ namespace Dune {
     bool hasPcMatrix() const { return hasPcMatrix_; }
 
     //! resize all matrices and clear them 
-    void resizeAndClear() 
+    void clear() 
+    {
+      gradMatrix_.clear(); 
+      divMatrix_.clear();
+      stabMatrix_.clear();
+      massMatrix_.clear();
+      pcMatrix_.clear();
+    }
+
+    //! resize all matrices and clear them 
+    void resize() 
     {
       if( ! hasBeenSetup() ) 
       {
@@ -177,24 +197,17 @@ namespace Dune {
         std::cout << "Resize Matrix with " << singleSize << "\n";
 
         gradMatrix_.resize(gradSize,singleSize);
-        gradMatrix_.clear();
-          
         divMatrix_.resize(singleSize,gradSize);
-        divMatrix_.clear();
-    
         stabMatrix_.resize(singleSize,singleSize);
-        stabMatrix_.clear();
 
         if(hasMassMatrix())
         {
           massMatrix_.resize(gradSize,gradSize);
-          massMatrix_.clear();
         }
 
         if(hasPcMatrix()) 
         {
           pcMatrix_.resize(singleSize);
-          pcMatrix_.clear();
         }
       }
     }
@@ -231,7 +244,7 @@ namespace Dune {
           (gradientSpace_.begin() != gradientSpace_.end()) )
       {
         
-        std::cout << "Resize Matrix with " << singleSpace_.size() << "\n";
+        std::cout << "Reserve Matrix with " << singleSpace_.size() << "\n";
         singleMaxNumbers_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
         gradMaxNumbers_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
 
