@@ -207,6 +207,7 @@ namespace Dune {
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename GridPartType :: GridType :: Traits :: LocalIdSet LocalIdSetType; 
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
@@ -258,6 +259,9 @@ namespace Dune {
 
     typedef CommunicationManager<DiscreteFunctionSpaceType> SingleCommunicationManagerType; 
     typedef CommunicationManager<DiscreteGradientSpaceType> GradCommunicationManagerType; 
+
+    typedef typename LocalIdSetType :: IdType LocalIdType;
+    typedef std::map< LocalIdType , bool > EntityMarkerType; 
   public:
     //- Public methods
     //! Constructor
@@ -281,6 +285,7 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
+      localIdSet_(gridPart_.grid().localIdSet()),
       gradientSpace_(gradPass_.space()),
       singleCommunicate_(spc_),
       gradCommunicate_(gradientSpace_),
@@ -314,6 +319,7 @@ namespace Dune {
       volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
+      entityMarker_(),
       matrixAssembled_(false)                                                              
     {
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
@@ -325,7 +331,7 @@ namespace Dune {
         massTmp_ = new GradDestinationType ("FEPass::massTmp",gradientSpace_);
       }
 
-      if(matrixHandler_.hasPcMatrix())
+      //if(matrixHandler_.hasPcMatrix())
       {
         diag_ = new DestinationType("FEPass::diag",spc_);
       }
@@ -358,29 +364,25 @@ namespace Dune {
     }
 
     //! setup matrix 
-    void buildMatrix( const ArgumentType & arg, DestinationType & rhs, bool
-        preCond = false )
+    void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
-      preCond_ = preCond;
       // resize matrices 
-      matrixHandler_.resizeAndClear();
+      matrixHandler_.resize();
+
+      // clear matrices 
+      matrixHandler_.clear();
      
       gradRhs_.clear();
       rhs.clear();
       
       dest_ = &rhs;
 
-      std::cout << "Start buildMatrix\n";
       // build matrix and rhs 
-      this->compute(arg,rhs);
+      this->compute( arg, rhs );
       matrixAssembled_ = true;
 
       // create pre-condition matrix if activated 
       createPreconditionMatrix();
-      std::cout << "buildMatrix done! \n";
-
-      // resort matrices for cache efficiency 
-      matrixHandler_.resort();
 
       double * rhsPtr = gradRhs_.leakPointer();
       if(gradProblem_.hasSource())
@@ -390,15 +392,104 @@ namespace Dune {
         rhsPtr = massTmpPointer;
       } 
 
-      double * singleRhsPtr = rhs.leakPointer();
       // adjust rhs 
       double * multTmpPointer  = multTmp_.leakPointer();
       matrixHandler_.divMatrix().multOEM(rhsPtr,multTmpPointer );
 
+      double * singleRhsPtr = rhs.leakPointer();
       const int singleSize = spc_.size();
       for(register int i=0; i<singleSize; ++i) 
       {
         singleRhsPtr[i] -= multTmpPointer[i];      
+      }
+    }
+
+    //! rebuild matrix after adaptation 
+    void reBuildMatrix(const ArgumentType & arg, DestinationType & rhs)
+    {
+      // set dest to rhs 
+      dest_ = &rhs;
+
+      // resize matrices 
+      matrixHandler_.resize();
+
+      assert( diag_ );
+      // set tmp variable to zero, all visited entities set to 1.0 
+      diag_->clear();
+
+      prepare (arg, rhs);
+      typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+      {
+        IteratorType end = spc_.end();
+        for(IteratorType it = spc_.begin(); it != end; ++it)
+        {
+          EntityType & en = *it; 
+          if(en.wasRefined()) 
+          {
+            entityMarker_[ localIdSet_.id( en ) ] = true;
+            IntersectionIteratorType endnit = gridPart_.iend(en); 
+            for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
+            { 
+              if(nit.neighbor())
+              {
+                EntityPointerType ep = nit.outside();
+                EntityType & nb = *ep;
+                entityMarker_[ localIdSet_.id( nb ) ] = true;
+              }
+            }
+          }
+        }
+      }
+
+      // rebuild matrix for all marked entities 
+      {
+        IteratorType end = spc_.end();
+        typedef typename EntityMarkerType :: iterator iterator ;
+        iterator markerEnd = entityMarker_.end();
+        for(IteratorType it = spc_.begin(); it != end; ++it)
+        {
+          EntityType & en = *it; 
+          // if entity was marked for rebuild 
+          if( entityMarker_.find( localIdSet_.id(en ) ) != markerEnd )
+          {
+            // clear all entries belonging to this entity 
+            clearLocal(en);
+            // build local matrices 
+            applyLocal(en);
+          }
+        }
+      }
+
+      // unset all markers  
+      finalize( arg, rhs );
+
+      matrixAssembled_ = true;
+
+      // create pre-condition matrix if activated 
+      createPreconditionMatrix();
+
+      double * rhsPtr = gradRhs_.leakPointer();
+      if(gradProblem_.hasSource())
+      {
+        double * massTmpPointer = massTmp_->leakPointer();
+        matrixHandler_.massMatrix().multOEM(rhsPtr,massTmpPointer);
+        rhsPtr = massTmpPointer;
+      } 
+
+      // adjust rhs 
+      double * multTmpPointer  = multTmp_.leakPointer();
+      matrixHandler_.divMatrix().multOEM(rhsPtr,multTmpPointer );
+
+      double * singleRhsPtr = rhs.leakPointer();
+      const double * diagPtr = diag_->leakPointer();
+
+      const int singleSize = spc_.size();
+      assert( rhs.size() == singleSize );
+      // adjust only new vlaues of rhs 
+      // ( diag contians 0.0 where old values are and 1.0 where new )
+      for(int i=0; i<singleSize; ++i) 
+      {
+        singleRhsPtr[i] -= (diagPtr[i] * multTmpPointer[i]);      
       }
     }
 
@@ -499,6 +590,9 @@ namespace Dune {
     {
       caller_.finalize();
       gradCaller_.finalize();
+
+      // empty all marked entities 
+      entityMarker_.clear();
     }
 
   public:
@@ -509,19 +603,31 @@ namespace Dune {
     }
 
   public:
-    //! set all entries to zero
-    void clearLocalMatrix(MatrixAddHandleType & matrix) 
+    //! set all data belonging to this entity to zero 
+    void restrictLocal(const EntityType& fahter, const EntityType & son, bool ) const
     {
-      const int rows = matrix.rows();
-      const int cols = matrix.cols();
-      for(int i=0; i<rows; ++i) 
-      {
-        for(int j=0; j<cols; ++j) matrix.set(i,j,0.0); 
+    }
+
+    //! set all data belonging to this entity to zero 
+    void prolongLocal(const EntityType& father, const EntityType & son, bool ) const
+    {
+      // insert new entity and all neighbors 
+      entityMarker_[ localIdSet_.id( son ) ] = true;
+
+      IntersectionIteratorType endnit = gridPart_.iend(son); 
+      for (IntersectionIteratorType nit = gridPart_.ibegin(son); nit != endnit; ++nit) 
+      { 
+        if(nit.neighbor())
+        {
+          EntityPointerType ep = nit.outside();
+          EntityType & nb = *ep;
+          entityMarker_[ localIdSet_.id( nb ) ] = true;
+        }
       }
     }
-    
+
     //! set all data belonging to this entity to zero 
-    void clear(EntityType& en) const
+    void clearLocal(EntityType& en) const
     {
       {
         // local function for right hand side 
@@ -529,7 +635,17 @@ namespace Dune {
         SingleLFType singleRhs = dest_->localFunction(en); //rhs
 
         const int numDofs = singleRhs.numDofs();
+        assert( numDofs > 0 );
         for(int i=0; i<numDofs; ++i) singleRhs[i] = 0.0;
+      }
+      
+      {
+        // local function for right hand side 
+        typedef typename DestinationType :: LocalFunctionType SingleLFType; 
+        SingleLFType rhsM = diag_->localFunction(en); //rhs
+
+        const int numDofs = rhsM.numDofs();
+        for(int i=0; i<numDofs; ++i) rhsM[i] = 1.0;
       }
       
       {
@@ -542,7 +658,6 @@ namespace Dune {
       }
       
       {
-
         MatrixAddHandleType stabMatrixEn(matrixHandler_.stabMatrix(),
                                        en, spc_, en, spc_ ); 
         stabMatrixEn.clear();
@@ -555,9 +670,12 @@ namespace Dune {
                                      en, spc_, en, gradientSpace_ ); 
       divMatrixEn.clear();
       
-      MatrixAddHandleType massMatrixEn (matrixHandler_.massMatrix(),
+      if(gradProblem_.hasSource())
+      {
+        MatrixAddHandleType massMatrixEn (matrixHandler_.massMatrix(),
                                      en, gradientSpace_, en, gradientSpace_ ); 
-      massMatrixEn.clear();
+        massMatrixEn.clear();
+      }
     }
     
     //! apply operator on entity 
@@ -1011,6 +1129,14 @@ namespace Dune {
 
       } // end intersection iterator 
 
+      stabMatrixEn.resort(); 
+      gradMatrixEn.resort();
+      divMatrixEn.resort();
+     
+      if( gradProblem_.hasSource())
+      {
+        massMatrixEn.resort();
+      }
     } // end apply local 
 
     //! only calculate mass matrix new
@@ -1048,6 +1174,8 @@ namespace Dune {
     {
       if(matrixHandler_.hasPcMatrix())
       {
+        matrixHandler_.clearPcMatrix();
+
         const int singleSize = spc_.size();
 
         assert( diag_ );
@@ -1160,7 +1288,6 @@ namespace Dune {
 
   private:
     double massVolumeInv(const GeometryType& geo) const
-                         
     {
       double volume = geo.volume();
       
@@ -1187,6 +1314,7 @@ namespace Dune {
 
     DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
+    const LocalIdSetType & localIdSet_;
     const DiscreteGradientSpaceType & gradientSpace_;
     mutable SingleCommunicationManagerType singleCommunicate_;
     mutable GradCommunicationManagerType gradCommunicate_;
@@ -1229,9 +1357,10 @@ namespace Dune {
     int volumeQuadOrd_,faceQuadOrd_;
 
     mutable MatrixHandlerType matrixHandler_;
+    // marker for new entities 
+    mutable  EntityMarkerType entityMarker_;
 
     mutable bool matrixAssembled_;
-    mutable bool preCond_;
   };
   
   //! Concrete implementation of Pass for LDG.
@@ -1346,7 +1475,8 @@ namespace Dune {
       , sequence_(-1)
       , verbose_(verbose)
       , comm_(spc_)
-    {}
+    {
+    }
 
     //! do nothing here 
     void applyLocal(EntityType& en) const
@@ -1355,14 +1485,21 @@ namespace Dune {
 
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
-      // if grid has changed, recalc matrices  
-      if(sequence_ != spc_.sequence())
+      // for first time buildMatrix 
+      if( sequence_ < 0 ) 
+      {
+        dest.clear();
+        op_.prepare(arg,rhs_);
+        op_.buildMatrix( arg, rhs_ );
+        sequence_ = spc_.sequence();
+      }
+      else if(sequence_ != spc_.sequence())
       {
         // only clear destination if matrix has really changed 
         // otherwise keep old value as initial value 
         dest.clear();
         op_.prepare(arg,rhs_);
-        op_.buildMatrix(arg,  rhs_ );
+        op_.reBuildMatrix( arg, rhs_ );
         sequence_ = spc_.sequence();
       }
       else 
