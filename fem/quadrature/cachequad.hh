@@ -77,6 +77,10 @@ namespace Dune {
     int cachingPoint(int quadraturePoint) const {
       return quadraturePoint;
     }
+
+    //! always true for this type of quadrature 
+    bool conforming () const { return true; }
+
   };
   
   //! \brief Specialisation for codimension 1.
@@ -107,15 +111,18 @@ namespace Dune {
     //! \param order The desired order of the quadrature.
     //! \param twist Twist of the face (is 0 in structured grids)
     //! \param side Is either INSIDE or OUTSIDE
+    //! \param conforming is true if current intersection is conform
     CachingQuadrature(const IntersectionIterator& it, 
                       int order, 
                       int twist,
-                      typename BaseType::Side side) :
+                      typename BaseType::Side side, bool conforming = false ) :
       BaseType(it, order, side),
       mapper_(CacheProvider<GridImp, codimension>::
               getMapper(this->quadImp(), this->elementGeometry(), 
-                        this->faceNumber(), twist))
-    {}
+                        this->faceNumber(), twist)),
+      conforming_(conforming)
+    {
+    }
       
     //! Additional method to map quadrature points to caching points.
     //! For codim-1 entities, the mapping consists of two stages: First,
@@ -128,11 +135,15 @@ namespace Dune {
       return mapper_[quadraturePoint];
     }
 
+    //! returns true if intersection is conforming 
+    bool conforming() const { return conforming_; }
+
   private:
     typedef typename CachingTraits<RealType, dimension>::MapperType MapperType;
 
   private:
     const MapperType& mapper_;
+    const bool conforming_;
   };
 }
 
