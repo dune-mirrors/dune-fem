@@ -87,7 +87,7 @@ namespace Dune {
     ScalarRangeType tmp;
     storage_.evaluate(util_.containedDof(baseFunct), diffVar, xLocal, tmp);
     
-    phi *= 0.0;
+    phi = 0.0;
     phi[util_.component(baseFunct)] = tmp[0];
   }
 
@@ -103,7 +103,7 @@ namespace Dune {
     storage_.evaluate(util_.containedDof(baseFunct), diffVar, quad, quadPoint,
                       tmp);
 
-    phi *= 0.;
+    phi = 0.;
     phi[util_.component(baseFunct)] = tmp[0];
   }
 
@@ -112,7 +112,7 @@ namespace Dune {
   jacobian(int baseFunct, const DomainType& xLocal, 
            JacobianRangeType& gradPhi) const 
   {
-    gradPhi *= 0.;
+    gradPhi = 0.;
     
     storage_.jacobian(util_.containedDof(baseFunct), xLocal, jTmp_); 
     gradPhi[util_.component(baseFunct)] = jTmp_[0];
@@ -124,7 +124,7 @@ namespace Dune {
   jacobian(int baseFunct, QuadratureImp& quad, int quadPoint, 
            JacobianRangeType& gradPhi) const 
   {
-    gradPhi *= 0.;
+    gradPhi = 0.;
     storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_); 
     gradPhi[util_.component(baseFunct)] = jTmp_[0];
   }
