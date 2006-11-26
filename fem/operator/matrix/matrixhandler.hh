@@ -251,10 +251,13 @@ namespace Dune {
         assert( singleMaxNumbers_ > 0 );
         assert( gradMaxNumbers_ > 0 );
 
+        // factor for non-conforming grid is 4 in 3d and 2 in 2d  
+        const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+
         // upper estimate for number of neighbors 
         enum { dim = SpaceType :: GridType :: dimension };
-        singleMaxNumbers_ *= (dim * 2) + 1; // e.g. 7 for dim = 3
-        gradMaxNumbers_   *= (dim * 2) + 1;
+        singleMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
+        gradMaxNumbers_   *= (factor * dim * 2) + 1;
 
         stabMatrix_.reserve(singleSpace_.size(),singleSpace_.size(),singleMaxNumbers_,0.0);
         gradMatrix_.reserve(gradientSpace_.size(),singleSpace_.size(),singleMaxNumbers_,0.0);
