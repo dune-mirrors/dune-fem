@@ -861,9 +861,12 @@ namespace Dune {
         gradSource_   = 1.0;
         gradSourceNb_ = 1.0;
 
+        const bool conforming = twistUtil_.conforming(nit);
+        
         int twistSelf = twistUtil_.twistInSelf(nit); 
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
-           FaceQuadratureType::INSIDE);
+           FaceQuadratureType::INSIDE,
+           conforming);
       
         // if neighbor exists 
         if (nit.neighbor()) 
@@ -873,7 +876,8 @@ namespace Dune {
 
           int twistNeighbor = twistUtil_.twistInNeighbor(nit);
           FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
-                                           FaceQuadratureType::OUTSIDE);
+                                           FaceQuadratureType::OUTSIDE,
+                                           conforming);
           
           caller_.setNeighbor(nb);
           gradCaller_.setNeighbor(nb);
