@@ -132,6 +132,9 @@ namespace Dune {
       maxTwist_(maxTwist)
     {}
 
+    //! virtual desctructor because of virtual functions 
+    virtual ~TwistMapperStrategy() {}
+
     virtual const MatrixType& buildTransformationMatrix(int twist) const = 0;
 
     int minTwist() const { return minTwist_; }
@@ -199,6 +202,9 @@ namespace Dune {
   public:
     LineTwistMapperStrategy(GeometryType geo);
     
+    //! virtual desctructor because of virtual functions 
+    virtual ~LineTwistMapperStrategy() {}
+
     virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
     
   private:
@@ -216,6 +222,8 @@ namespace Dune {
 
   public:
     TriangleTwistMapperStrategy(GeometryType geo);
+    //! virtual desctructor because of virtual functions 
+    virtual ~TriangleTwistMapperStrategy() {}
 
     virtual const MatrixType& buildTransformationMatrix(int twist) const;
 
@@ -238,6 +246,9 @@ namespace Dune {
 
   public:   
     QuadrilateralTwistMapperStrategy(GeometryType geo);
+
+    //! virtual desctructor because of virtual functions 
+    virtual ~QuadrilateralTwistMapperStrategy() {}
     
     virtual const MatrixType& buildTransformationMatrix(int twist) const;
     
