@@ -49,9 +49,15 @@ public:
   //! and intialize all values with 'val'
   SparseRowMatrix(int rows, int cols, int nz, const T& val);
  
-  //! reserve memory for given rows, and number of non zeros, set all
-  //! entries to value of val
+  //! reserve memory for given rows, and number of non zeros, 
+  //! set all entries to value of val
   void reserve(int rows, int cols, int nz, const T& val);
+
+  //! resize keeping old values if possible, assuming rows == cols  
+  void resize ( int newSize );
+
+  //! resize keeping old values if possible   
+  void resize ( int newRow, int newCol );
 
   //! free memory for values_ and col_
   ~SparseRowMatrix();
@@ -218,12 +224,6 @@ public:
 
   //! check symetry 
   void checkSym ();
-
-  //! resize assuming rows == cols  
-  void resize ( int newSize );
-
-  //! with new number of rows and cols 
-  void resize ( int newRow, int newCol );
 
   // res = this * B 
   void multiply(const ThisType & B, ThisType & res) const;

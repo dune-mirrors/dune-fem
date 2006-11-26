@@ -38,35 +38,23 @@ template <class T>
 void SparseRowMatrix<T>::
 reserve(int rows, int cols, int nz,const T& val )
 {
-  T * newValues = new T [ rows*nz ];
-  int * newCol  = new int [ rows*nz ];
-  int * newNonZeros = new int [ rows ];
+  removeObj();
 
-  assert( newValues );
-  assert( newCol );
-  assert( newNonZeros );
+  values_ = new T [ rows*nz ];
+  col_    = new int [ rows*nz ];
+  nonZeros_ = new int [ rows ];
+
+  assert( values_ );
+  assert( col_ );
+  assert( nonZeros_ );
 
   for(int i=0; i<rows*nz; ++i)
   { 
-    newValues[i] = val;
-    newCol[i] = defaultCol;
+    values_[i] = val;
+    col_[i] = defaultCol;
   }
   int newNZ = nz + firstCol;
-  for(int i=0; i<rows; ++i) newNonZeros[i] = newNZ; 
-
-  if( (dim_[0] > 0) && (nz_ > 0 ))
-  {
-    int copySize = std::min( dim_[0] , rows );
-    std::memcpy(newValues, values_,  copySize * nz_ * sizeof(T) );
-    std::memcpy(newCol, col_ , copySize * nz_ * sizeof(int) );
-    std::memcpy(newNonZeros, nonZeros_, copySize * sizeof(int) );
-  }
-
-  removeObj();
-
-  values_ = newValues;
-  col_ = newCol; 
-  nonZeros_ = newNonZeros;
+  for(int i=0; i<rows; ++i) nonZeros_[i] = newNZ; 
 
   dim_[0] = rows;
   dim_[1] = cols;
@@ -84,6 +72,52 @@ reserve(int rows, int cols, int nz,const T& val )
   
   // only reserve for indices 
   newIndices_.reserve( nz_ );
+}
+
+// resize with rows = cols = newSize  
+template <class T>
+void SparseRowMatrix<T>::resize (int newSize)  
+{
+  resize(newSize,newSize);
+}
+
+// resize matrix 
+template <class T>
+void SparseRowMatrix<T>::resize (int newRow, int newCol)  
+{
+  if(newRow != this->size(0) || newCol != this->size(1))
+  {
+    if(newRow != memSize_)
+    {
+      T tmp = 0;
+      T * oldValues = values_;       values_ = 0;
+      int * oldCol  = col_;          col_ = 0;
+      int * oldNonZeros = nonZeros_; nonZeros_ = 0;
+      int oldNz = nz_;
+      int copySize = std::min( dim_[0] , newRow );
+      int oldSize = dim_[0];
+
+      // reserve new memory 
+      reserve(newRow,newCol,nz_,tmp);
+
+      if( (oldSize > 0) && (oldNz > 0 ))
+      {
+        std::memcpy(values_  , oldValues  , copySize * nz_ * sizeof(T) );
+        std::memcpy(col_     , oldCol     , copySize * nz_ * sizeof(int) );
+        std::memcpy(nonZeros_, oldNonZeros, copySize * sizeof(int) );
+      }
+
+      delete [] oldValues;
+      delete [] oldCol; 
+      delete [] oldNonZeros; 
+    }
+    else 
+    {
+      assert(newRow > 0);
+      dim_[0] = newRow;
+      dim_[1] = newCol;
+    }
+  }
 }
 
 template <class T> 
@@ -549,33 +583,6 @@ void SparseRowMatrix<T>::addDiag(DiscFuncType &diag) const
   }
   return; 
 }
-// resize with rows = cols = newSize  
-template <class T>
-void SparseRowMatrix<T>::resize (int newSize)  
-{
-  resize(newSize,newSize);
-}
-
-// resize matrix 
-template <class T>
-void SparseRowMatrix<T>::resize (int newRow, int newCol)  
-{
-  if(newRow != this->size(0) && newCol != this->size(1))
-  {
-    if(newRow != memSize_)
-    {
-      T tmp = 0;
-      reserve(newRow,newCol,nz_,tmp);
-    }
-    else 
-    {
-      assert(newRow > 0);
-      dim_[0] = newRow;
-      dim_[1] = newCol;
-    }
-  }
-}
-
 template <class T> 
 void SparseRowMatrix<T>::multiply(const SparseRowMatrix<T> & B,
     SparseRowMatrix<T> & res) const 
