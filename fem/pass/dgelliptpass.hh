@@ -261,7 +261,8 @@ namespace Dune {
     typedef CommunicationManager<DiscreteGradientSpaceType> GradCommunicationManagerType; 
 
     typedef typename LocalIdSetType :: IdType LocalIdType;
-    typedef std::map< LocalIdType , bool > EntityMarkerType; 
+    typedef std::set< LocalIdType > EntityMarkerType; 
+    //typedef std::map< LocalIdType , bool > EntityMarkerType; 
   public:
     //- Public methods
     //! Constructor
@@ -331,7 +332,7 @@ namespace Dune {
         massTmp_ = new GradDestinationType ("FEPass::massTmp",gradientSpace_);
       }
 
-      //if(matrixHandler_.hasPcMatrix())
+      if(matrixHandler_.hasPcMatrix())
       {
         diag_ = new DestinationType("FEPass::diag",spc_);
       }
@@ -413,20 +414,20 @@ namespace Dune {
       // resize matrices 
       matrixHandler_.resize();
 
-      assert( diag_ );
-      // set tmp variable to zero, all visited entities set to 1.0 
-      diag_->clear();
-
+      // prepare operator 
       prepare (arg, rhs);
+
+      // marking should be done in restrictLocal and prolongLocal
+      // find better way to also makr all neighbors of marked entities 
       typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
       {
         IteratorType end = spc_.end();
         for(IteratorType it = spc_.begin(); it != end; ++it)
         {
           EntityType & en = *it; 
-          if(en.wasRefined()) 
+          if(en.wasRefined() || ( entityMarker_.find( localIdSet_.id( en ) ) != entityMarker_.end() ) )
           {
-            entityMarker_[ localIdSet_.id( en ) ] = true;
+            entityMarker_.insert( localIdSet_.id( en ) );
             IntersectionIteratorType endnit = gridPart_.iend(en); 
             for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
             { 
@@ -434,12 +435,32 @@ namespace Dune {
               {
                 EntityPointerType ep = nit.outside();
                 EntityType & nb = *ep;
-                entityMarker_[ localIdSet_.id( nb ) ] = true;
+                entityMarker_.insert( localIdSet_.id( nb ) );
               }
             }
           }
         }
       }
+
+      // vector to new all new dofs 
+      std::vector<int> newDofs;
+
+      // if only one geometry type, we can reserve memory at once 
+      if( ! spc_.multipleGeometryTypes() )
+      {
+        IteratorType it = spc_.begin();
+        if( it != spc_.end() )
+        {
+          // get base function set of single space 
+          typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+          const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(*it);
+          const int numDofs = bsetEn.numBaseFunctions();
+          newDofs.reserve( numDofs * entityMarker_.size() );
+        }
+      }
+
+      // reset vector 
+      newDofs.resize( 0 );
 
       // rebuild matrix for all marked entities 
       {
@@ -453,21 +474,25 @@ namespace Dune {
           if( entityMarker_.find( localIdSet_.id(en ) ) != markerEnd )
           {
             // clear all entries belonging to this entity 
-            clearLocal(en);
+            // and create map for all dofs that belong to spc_ for this entity
+            clearLocal(en, newDofs );
+
             // build local matrices 
             applyLocal(en);
           }
         }
       }
 
-      // unset all markers  
+      // unset pointer to discrete functions 
       finalize( arg, rhs );
 
+      // matrix is build up now 
       matrixAssembled_ = true;
 
       // create pre-condition matrix if activated 
       createPreconditionMatrix();
 
+      // adjust right hand side 
       double * rhsPtr = gradRhs_.leakPointer();
       if(gradProblem_.hasSource())
       {
@@ -481,16 +506,17 @@ namespace Dune {
       matrixHandler_.divMatrix().multOEM(rhsPtr,multTmpPointer );
 
       double * singleRhsPtr = rhs.leakPointer();
-      const double * diagPtr = diag_->leakPointer();
 
-      const int singleSize = spc_.size();
-      assert( rhs.size() == singleSize );
       // adjust only new vlaues of rhs 
       // ( diag contians 0.0 where old values are and 1.0 where new )
-      for(int i=0; i<singleSize; ++i) 
+      const int size = newDofs.size();
+      for(int i=0; i<size; ++i) 
       {
-        singleRhsPtr[i] -= (diagPtr[i] * multTmpPointer[i]);      
+        singleRhsPtr[ newDofs[i] ] -= multTmpPointer[ newDofs[i] ];      
       }
+
+      // empty all marked entities 
+      entityMarker_.clear();
     }
 
     //! calculates M^-1 B * u, is u is the solution then outcome is grad u 
@@ -591,8 +617,6 @@ namespace Dune {
       caller_.finalize();
       gradCaller_.finalize();
 
-      // empty all marked entities 
-      entityMarker_.clear();
     }
 
   public:
@@ -604,30 +628,24 @@ namespace Dune {
 
   public:
     //! set all data belonging to this entity to zero 
-    void restrictLocal(const EntityType& fahter, const EntityType & son, bool ) const
+    void restrictLocal(const EntityType& father, const EntityType & son, bool firstCall ) const
     {
+      if( firstCall ) 
+      {
+        // insert new entity 
+        entityMarker_.insert( localIdSet_.id( father ) );
+      }
     }
 
     //! set all data belonging to this entity to zero 
     void prolongLocal(const EntityType& father, const EntityType & son, bool ) const
     {
-      // insert new entity and all neighbors 
-      entityMarker_[ localIdSet_.id( son ) ] = true;
-
-      IntersectionIteratorType endnit = gridPart_.iend(son); 
-      for (IntersectionIteratorType nit = gridPart_.ibegin(son); nit != endnit; ++nit) 
-      { 
-        if(nit.neighbor())
-        {
-          EntityPointerType ep = nit.outside();
-          EntityType & nb = *ep;
-          entityMarker_[ localIdSet_.id( nb ) ] = true;
-        }
-      }
+      // insert new entity  
+      entityMarker_.insert( localIdSet_.id( son ) );
     }
 
     //! set all data belonging to this entity to zero 
-    void clearLocal(EntityType& en) const
+    void clearLocal(EntityType& en, std::vector<int> & newDofs ) const
     {
       {
         // local function for right hand side 
@@ -635,17 +653,18 @@ namespace Dune {
         SingleLFType singleRhs = dest_->localFunction(en); //rhs
 
         const int numDofs = singleRhs.numDofs();
-        assert( numDofs > 0 );
-        for(int i=0; i<numDofs; ++i) singleRhs[i] = 0.0;
-      }
-      
-      {
-        // local function for right hand side 
-        typedef typename DestinationType :: LocalFunctionType SingleLFType; 
-        SingleLFType rhsM = diag_->localFunction(en); //rhs
+        if( spc_.multipleGeometryTypes() )
+        {
+          newDofs.reserve( newDofs.size() + numDofs );
+        }
 
-        const int numDofs = rhsM.numDofs();
-        for(int i=0; i<numDofs; ++i) rhsM[i] = 1.0;
+        assert( numDofs > 0 );
+        for(int i=0; i<numDofs; ++i) 
+        {
+          singleRhs[i] = 0.0;
+          // remember dof num of new dofs 
+          newDofs.push_back( spc_.mapToGlobal( en, i ) );
+        }
       }
       
       {
@@ -1427,6 +1446,10 @@ namespace Dune {
     // define ellipt operator 
     typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
 
+    //! type of restrict and prolong operator during adaptation 
+    typedef FEOperatorType RestrictProlongOperatorType;
+
+  private:  
     DiscreteModelType& problem_; 
     DiscreteFunctionSpaceType& spc_;
     
@@ -1483,6 +1506,9 @@ namespace Dune {
     {
     }
 
+    //! return restrict and prolong operator for fe-pass 
+    RestrictProlongOperatorType & restrictProlongOperator () { return op_; }
+
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
       // for first time buildMatrix 
@@ -1499,6 +1525,7 @@ namespace Dune {
         // otherwise keep old value as initial value 
         dest.clear();
         op_.prepare(arg,rhs_);
+        //op_.buildMatrix( arg, rhs_ );
         op_.reBuildMatrix( arg, rhs_ );
         sequence_ = spc_.sequence();
       }
