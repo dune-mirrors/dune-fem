@@ -58,7 +58,7 @@ namespace Dune {
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
   private:
-    int storageSize_;
+    const int storageSize_;
     BaseFunctionType** storage_;
     // std::vector<BaseFunctionType*> storage_;
     mutable FieldVector<int, 1> diffVar1_;
@@ -107,6 +107,7 @@ namespace Dune {
   template <class FunctionSpaceImp>
   class CachingStorage : public StorageBase<FunctionSpaceImp>
   {
+    typedef CachingStorage<FunctionSpaceImp> ThisType;
   public:
     typedef BaseFunctionFactory<FunctionSpaceImp> FactoryType;
     typedef typename FunctionSpaceImp::DomainType DomainType;
@@ -114,6 +115,125 @@ namespace Dune {
     typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
 
     friend class StorageInterface ;
+
+    template<class CachingStorageType, bool useCaching> 
+    struct Evaluate
+    {
+      typedef typename CachingStorageType :: RangeType RangeType;
+      typedef typename CachingStorageType :: JacobianRangeType JacobianRangeType;
+
+      template <class GridType, int cdim, class RangeContainerType> 
+      static void evaluate(const CachingStorageType &, 
+                  const int baseFunct, 
+                  const FieldVector<int, 0>& diffVar,
+                  const CachingQuadrature<GridType, cdim>& quad, 
+                  const int quadPoint,
+                  const RangeContainerType & ranges,
+                  RangeType& result) 
+      {
+        result = ranges[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+      }
+
+      template <class GridType, int cdim, class JacobianRangeContainerType> 
+      static void jacobian(const CachingStorageType &, 
+                  const int baseFunct, 
+                  const CachingQuadrature<GridType, cdim>& quad, 
+                  const int quadPoint,
+                  const JacobianRangeContainerType & jacobians,
+                  JacobianRangeType& result) 
+      {
+        result = jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+      }
+
+      template <class GridType, int cdim, class JacobianRangeContainerType> 
+      static void evaluate(const CachingStorageType &, 
+                  const int baseFunct, 
+                  const FieldVector<int, 1>& diffVar,
+                  const CachingQuadrature<GridType, cdim>& quad, 
+                  const int quadPoint,
+                  const JacobianRangeContainerType & jacobians,
+                  RangeType& result) 
+      {
+        const JacobianRangeType& jResult = 
+          jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+
+        for (size_t i = 0; i < RangeType::dimension; ++i) 
+        {
+          result[i] = jResult[i][diffVar[0]];
+        }
+      }
+    };
+
+    //! version where one cannot use caching, e.g non-conform and cdim = 1 
+    //! here we have to check whether actual face is non-conform or not 
+    template<class CachingStorageType> 
+    struct Evaluate<CachingStorageType,false>
+    {
+      typedef typename CachingStorageType :: RangeType RangeType;
+      typedef typename CachingStorageType :: JacobianRangeType JacobianRangeType;
+
+      template <class GridType, int cdim, class RangeContainerType> 
+      static void evaluate(const CachingStorageType & storage, 
+                  const int baseFunct, 
+                  const FieldVector<int, 0>& diffVar,
+                  const CachingQuadrature<GridType, cdim>& quad, 
+                  const int quadPoint,
+                  const RangeContainerType &ranges,
+                  RangeType& result) 
+      {
+        if( quad.conforming() )
+        {
+          Evaluate<CachingStorageType,true>::evaluate
+            (storage,baseFunct,diffVar,quad,quadPoint,ranges,result);
+        }
+        else 
+        {
+          // in non-conform situations use default evaluate procedure 
+          storage.evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
+        }
+      }
+
+      template <class GridType, int cdim, class JacobianRangeContainerType> 
+      static void jacobian(const CachingStorageType &storage, 
+                  const int baseFunct, 
+                  const CachingQuadrature<GridType, cdim>& quad, 
+                  const int quadPoint,
+                  const JacobianRangeContainerType &jacobians,
+                  JacobianRangeType& result) 
+      {
+        if( quad.conforming() )
+        {
+          Evaluate<CachingStorageType,true>::jacobian
+            (storage,baseFunct,quad,quadPoint,jacobians,result);
+        }
+        else 
+        {
+          // in non-conform situations use default jacobian procedure 
+          storage.jacobian(baseFunct,quad.point(quadPoint),result);
+        }
+      }
+
+      template <class GridType, int cdim, class JacobianRangeContainerType> 
+      static void evaluate(const CachingStorageType & storage, 
+                  const int baseFunct, 
+                  const FieldVector<int, 1>& diffVar,
+                  const CachingQuadrature<GridType, cdim>& quad, 
+                  const int quadPoint,
+                  const JacobianRangeContainerType & jacobians,
+                  RangeType& result) 
+      {
+        if( quad.conforming() )
+        {
+          Evaluate<CachingStorageType,true>::evaluate
+            (storage,baseFunct,diffVar,quad,quadPoint,jacobians,result);
+        }
+        else 
+        {
+          // in non-conform situations use default evaluate procedure 
+          storage.evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
+        }
+      }
+    };
   public:
     //! Constructor
     CachingStorage(const FactoryType& factory);

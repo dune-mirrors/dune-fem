@@ -92,7 +92,6 @@ namespace Dune {
     StorageBase<FunctionSpaceImp>(fac),
     elementGeometry_(fac.geometry())
   {
-    std::cerr << "Implement a switch for non-conforming grids!" << std::endl;
     this->cacheExsistingQuadratures(*this);
   }
 
@@ -117,8 +116,15 @@ namespace Dune {
            int quadPoint,
            RangeType& result) const
   {
-    assert(rangestored_.find(quad.id()) != rangestored_.end());
-    result = ranges_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+#ifndef NDEBUG 
+    bool check = (Capabilities::isLeafwiseConforming<GridType>::v) ? true : (cdim != 1); 
+    assert( (check) ? (rangestored_.find(quad.id()) != rangestored_.end()): 1);
+#endif
+    // only when non-conform and cdim == 1 then switch is enabled 
+    // then proceedAsNormal is false (see basefunctionstorage.hh)
+    enum { proceedAsNormal = (Capabilities::isLeafwiseConforming<GridType>::v) ? true : (cdim != 1) };
+    Evaluate<ThisType,proceedAsNormal>::
+      evaluate(*this,baseFunct,diffVar,quad,quadPoint, ranges_ , result ); 
   }
 
   template <class FunctionSpaceImp>
@@ -137,9 +143,15 @@ namespace Dune {
      const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
            JacobianRangeType& result) const
   {        
-    assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
-    // calculate and return values
-    result = jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+#ifndef NDEBUG 
+    bool check = (Capabilities::isLeafwiseConforming<GridType>::v) ? true : (cdim != 1); 
+    assert( (check) ? (jacobianstored_.find(quad.id()) != jacobianstored_.end()) : 1 );
+#endif
+    // only when non-conform and cdim == 1 then switch is enabled 
+    // then proceedAsNormal is false (see basefunctionstorage.hh)
+    enum { proceedAsNormal = (Capabilities::isLeafwiseConforming<GridType>::v) ? true : (cdim != 1) };
+    Evaluate<ThisType,proceedAsNormal>::
+      jacobian(*this,baseFunct,quad,quadPoint, jacobians_ , result ); 
   }
 
   template <class FunctionSpaceImp>
@@ -159,15 +171,15 @@ namespace Dune {
            const CachingQuadrature<GridType, cdim>& quad, int quadPoint,
            RangeType& result) const
   {
-    assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
-
-    JacobianRangeType& jResult = 
-      jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
-
-    for (size_t i = 0; i < RangeType::dimension; ++i) {
-      result[i] = jResult[i][diffVar[0]];
-    }
-
+#ifndef NDEBUG 
+    bool check = (Capabilities::isLeafwiseConforming<GridType>::v) ? true : (cdim != 1); 
+    assert( (check) ? (jacobianstored_.find(quad.id()) != jacobianstored_.end()) : 1 );
+#endif
+    // only when non-conform and cdim == 1 then switch is enabled 
+    // then proceedAsNormal is false (see basefunctionstorage.hh)
+    enum { proceedAsNormal = (Capabilities::isLeafwiseConforming<GridType>::v) ? true : (cdim != 1) };
+    Evaluate<ThisType,proceedAsNormal>::
+      evaluate(*this,baseFunct,diffVar,quad,quadPoint, jacobians_ , result, jacobians_ ); 
   }
 
   template <class FunctionSpaceImp>
@@ -249,14 +261,6 @@ namespace Dune {
         this->jacobian(j, points[i], jacobians_[quadId][i][j]);
       }
     }
-
-    //std::cout << "Values:\n";
-    //for (int i = 0; i < rit->second.size(); ++i) {
-    //  std::cout << "Point " << i << std::endl;
-    //  for (int j = 0; j < rit->second[i].size(); ++j) {
-    //    std::cout << "\t" << j << ": " << rit->second[i][j] << std::endl;
-    //  }
-    //}
 
     return std::make_pair(rit, jit);
   }
