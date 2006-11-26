@@ -40,6 +40,8 @@
 // implementation of ldg flux 
 #include <dune/fem/pass/ldgflux.hh>
 
+#include <dune/fem/space/dgspace/dgadaptmanager.hh>
+
 using namespace Dune;
 
 namespace LDGExample { 
@@ -166,6 +168,42 @@ public:
   {
     const_cast<ThisType&> (*this).apply(arg,dest);
   }
+
+  /*
+  void adaptGrid (DestinationType& dest) 
+  {
+    //typedef RestrictProlongDefault<DestinationType> RPOpType; 
+    //RPOpType rp(dest);
+    //rp.setFatherChildWeight(DGFGridInfo<GridType>::refineWeight());
+    typedef typename LastPassType :: RestrictProlongOperatorType
+      RPOpType;
+
+    typedef AdaptationManager <GridType, RPOpType> AdaptManagerType;
+    AdaptManagerType adop(grid_,lastPass_.restrictProlongOperator() );
+
+    typedef typename LastSpaceType :: IteratorType IteratorType;
+    std::cout << "Old size of space is " << lastSpace_.size() << "\n";
+    int count = 0;
+
+    IteratorType endit = lastSpace_.end();
+    for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
+    {
+      if(count < 20) 
+      {
+        //std::cout << "Mark entity \n";
+        grid_.mark(1,it);
+      }
+      else if( count < 40 ) 
+      {
+        grid_.mark(-1,it);
+      }
+      ++count;
+    }
+
+    adop.adapt();
+    std::cout << "New size of space is " << lastSpace_.size() << "\n";
+  }
+  */
   
   // apply space discretisation 
   void apply(const DestinationType& arg, DestinationType& dest)
@@ -187,6 +225,8 @@ public:
         grid_.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
         dm_.resize();
       }
+
+      //if( i > 0 ) adaptGrid(Arg);
 
       Arg.set(1002.5);
       FuncSpaceType sp; 
@@ -211,8 +251,8 @@ public:
 
       }
 
-      //GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-      //grape.dataDisplay( dest , false );
+      GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
+      grape.dataDisplay( dest );
 
       L2Error < DestinationType > l2err;
       // pol ord for calculation the error chould by higher than 
