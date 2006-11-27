@@ -69,15 +69,15 @@ public:
   {
     const DiscreteFunctionSpaceType & space = discFunc.space();  
 
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
-    const GridType & grid = space.grid();
-    typedef typename GridType :: Traits :: CollectiveCommunication
+    const GridPartType & gridPart = space.gridPart();
+    typedef typename GridPartType :: GridType :: Traits :: CollectiveCommunication
       CommunicatorType; 
 
-    const CommunicatorType & comm = grid.comm();
+    const CommunicatorType & comm = gridPart.grid().comm();
    
     RangeType ret (0.0);
     RangeType phi (0.0);
@@ -90,7 +90,7 @@ public:
     for(IteratorType it = space.begin(); it != endit ; ++it)
     {
       // create quadrature for given geometry type 
-      CachingQuadrature <GridType , 0 > quad(*it,polOrd); 
+      CachingQuadrature <GridPartType , 0 > quad(*it,polOrd); 
       // get local function 
       LocalFuncType lf = discFunc.localFunction(*it); 
 
