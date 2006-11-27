@@ -23,6 +23,7 @@ public:
     int polOrd = 2 * space.order() + 2;
   
     typedef typename FunctionSpaceType::GridType GridType;
+    typedef typename FunctionSpaceType::GridPartType GridPartType;
     typedef typename FunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
    
@@ -37,7 +38,7 @@ public:
     // check whether grid is empty 
     assert( it != endit ); 
     
-    CachingQuadrature <GridType , 0 > quad(*it,polOrd);
+    CachingQuadrature <GridPartType , 0 > quad(*it,polOrd);
 		
     enum { dimR = RangeType :: dimension };
     

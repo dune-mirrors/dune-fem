@@ -1,12 +1,9 @@
 #undef HAVE_MPI
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
-// #include <dune/grid/yaspgrid.hh>
-// #include <dune/grid/sgrid.hh>
-// #include <dune/grid/albertagrid.hh>
 #include "advectdiff.hh"
 
-#include <dune/fem/solver/odesolver.hh>
-// #include "odesolver.hh"
+// #include <dune/fem/solver/odesolver.hh>
+#include "odesolver.hh"
 // Approximations Ordnung
 enum {order=POLORDER,rksteps=POLORDER+1}; 
 // Gitterauswahl

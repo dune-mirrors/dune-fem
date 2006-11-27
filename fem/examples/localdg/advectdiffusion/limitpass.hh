@@ -50,6 +50,7 @@ namespace Dune {
     
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType 
@@ -138,8 +139,8 @@ namespace Dune {
       
       // create quadrature with barycenters for 
       // the element and for the faces 
-      ElementQuadrature<GridType,0> center0(en,0);
-      ElementQuadrature<GridType,1> center1(en,0);
+      ElementQuadrature<GridPartType,0> center0(en,0);
+      ElementQuadrature<GridPartType,1> center1(en,0);
       
       const IndexSetType& iset = spc_.indexSet();
       const BaseFunctionSetType& bsetEn = limitEn.getBaseFunctionSet();
@@ -280,7 +281,7 @@ namespace Dune {
     
   private:
     double volumeElement(const EntityType& en) const {
-      ElementQuadrature<GridType,0> center(en,0);
+      ElementQuadrature<GridPartType,0> center(en,0);
       double result = 0;
       for (int qp = 0; qp < center.nop(); ++qp) {
         result +=
