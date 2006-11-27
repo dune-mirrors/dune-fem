@@ -36,9 +36,8 @@ struct AdaptiveLeafGridPartTraits {
     typedef typename GridImp::template Codim<cd>::template Partition<pitype>::LeafIterator IteratorType;
   };
 
-
   //! \brief is true if grid on this view only has conforming intersections 
-  enum { conforming = Capabilities::isLeafWiseConforming<GridType>::v };
+  enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
 };
 
 /** \brief GridPart for AdaptiveLeafIndexSet. Used underlying index set is
