@@ -241,11 +241,14 @@ namespace Dune {
     typedef DiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
 
     typedef typename DiscreteFunctionSpaceType:: IteratorType IteratorType ;
+    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
 
     typedef typename DiscreteGradientSpaceType::RangeType GradientRangeType;
     typedef typename DiscreteGradientSpaceType::JacobianRangeType GradJacobianRangeType;
     typedef GradJacobianRangeType GradientJacobianRangeType;
     enum { GradDimRange = GradientRangeType :: dimension };
+    
+    typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
     
     typedef typename DiscreteModelType :: Traits :: Traits ::template
       MatrixHandler<DiscreteFunctionSpaceType,DiscreteGradientSpaceType> ::
@@ -708,10 +711,6 @@ namespace Dune {
       typedef typename GradDestinationType :: LocalFunctionType GradLFType; 
       GradLFType gradRhs = gradRhs_.localFunction(en); //rhs
       
-      //- typedefs
-      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-
       MatrixAddHandleType stabMatrixEn(matrixHandler_.stabMatrix(),
                                      en, spc_, en, spc_ ); 
       MatrixAddHandleType gradMatrixEn(matrixHandler_.gradMatrix(),
@@ -722,9 +721,6 @@ namespace Dune {
       MatrixAddHandleType massMatrixEn (matrixHandler_.massMatrix(),
                                      en, gradientSpace_, en, gradientSpace_ ); 
       
-      typedef typename DiscreteGradientSpaceType::IndexSetType GradientIndexSetType;
-      typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
-
       // make entities known in callers
       caller_.setEntity(en);
       gradCaller_.setEntity(en);
@@ -762,7 +758,7 @@ namespace Dune {
       for (int l = 0; l < quadNop ; ++l) 
       {
         // calc factor for bas functions 
-        double intel = volQuad.weight(l)*
+        const double intel = volQuad.weight(l)*
             geo.integrationElement(volQuad.point(l))*massVolElInv;
         
         ////////////////////////////////////
@@ -861,164 +857,46 @@ namespace Dune {
         gradSource_   = 1.0;
         gradSourceNb_ = 1.0;
 
-        const bool conforming = twistUtil_.conforming(nit);
-        
-        int twistSelf = twistUtil_.twistInSelf(nit); 
+        const int twistSelf = twistUtil_.twistInSelf(nit); 
         FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
-           FaceQuadratureType::INSIDE,
-           conforming);
+           FaceQuadratureType::INSIDE);
       
         // if neighbor exists 
         if (nit.neighbor()) 
         {
-          EntityPointerType neighEp = nit.outside();
-          EntityType&            nb = *neighEp;
-
-          int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-          FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
-                                           FaceQuadratureType::OUTSIDE,
-                                           conforming);
-          
-          caller_.setNeighbor(nb);
-          gradCaller_.setNeighbor(nb);
-
-          // create matrix handles for neighbor 
-          MatrixAddHandleType stabMatrixNb(matrixHandler_.stabMatrix(),
-                                         en, spc_, nb, spc_ ); 
-          MatrixAddHandleType gradMatrixNb(matrixHandler_.gradMatrix(),
-                                         en, gradientSpace_, nb, spc_ ); 
-          MatrixAddHandleType divMatrixNb (matrixHandler_.divMatrix(),
-                                         en , spc_, nb , gradientSpace_ ); 
-          
-          // get base function set 
-          const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
-          const GradientBaseFunctionSetType& gradbsetNeigh 
-                                  = gradientSpace_.baseFunctionSet(nb);
-         
-          const int quadNop = faceQuadInner.nop();
-          for (int l = 0; l < quadNop ; ++l) 
+          if( twistUtil_.conforming(nit) ) 
           {
-            DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
-            const double faceVol = unitNormal.two_norm();
-            unitNormal *= 1.0/faceVol; 
+            int twistNeighbor = twistUtil_.twistInNeighbor(nit);
+            FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
+                                             FaceQuadratureType::OUTSIDE);
 
-            const double innerIntel = faceQuadInner.weight(l) * massVolElInv * faceVol ; 
-            const double outerIntel = faceQuadOuter.weight(l) * massVolElInv * faceVol ; 
+            // apply neighbor part 
+            applyLocalNeighbor(nit,en,massVolElInv,volQuad,
+                  faceQuadInner,faceQuadOuter, 
+                  bsetEn,grdbsetEn,
+                  stabMatrixEn,gradMatrixEn,divMatrixEn);
+          }
+          else 
+          {
+            // we only should get here whne a non-conforming situation 
+            // occurs in a non-conforming grid 
+            assert( GridPartType :: conforming == false );
+            
+            typedef typename FaceQuadratureType :: NonConformingQuadratureType 
+              NonConformingFaceQuadratureType;
+            
+            NonConformingFaceQuadratureType ncfaceQuadInner(nit, faceQuadOrd_, twistSelf, 
+               NonConformingFaceQuadratureType::INSIDE);
+        
+            int twistNeighbor = twistUtil_.twistInNeighbor(nit);
+            NonConformingFaceQuadratureType ncfaceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
+                                             NonConformingFaceQuadratureType::OUTSIDE);
 
-            if(gradProblem_.hasSource())
-            {
-              // call anayltical flux 
-              // todo: quadrature is not right here  
-              gradCaller_.source(en, volQuad, l , gradSource_ );
-              gradCaller_.source(nb, volQuad, l , gradSourceNb_ );
-            }
-
-            ////////////////////////////////////////////////////////////
-            //  
-            //  FLUX evaluation 
-            //  
-            ////////////////////////////////////////////////////////////
-            GradientRangeType uFluxSigmaLeft,uFluxSigmaRight; // sigma parts of uFlux 
-            GradientRangeType uFluxULeft,uFluxURight; // u parts of uFlux 
-
-            // evaluate uFlux, return type is vector  
-            gradCaller_.numericalFlux(nit,
-                                      faceQuadInner,
-                                      faceQuadOuter,
-                                      l,
-                                      uFluxSigmaLeft,uFluxSigmaRight,
-                                      uFluxULeft,uFluxURight);
-
-            RangeType sigmaFluxSigmaLeft,sigmaFluxSigmaRight; // sigma  parts of sigmaFlux 
-            RangeType sigmaFluxULeft,sigmaFluxURight; // u parts of sigmaFlux 
-
-            // evaluate sigmaFlux, return type is scalar 
-            caller_.numericalFlux(nit,
-                                  faceQuadInner,
-                                  faceQuadOuter,
-                                  l,
-                                  sigmaFluxSigmaLeft,sigmaFluxSigmaRight,
-                                  sigmaFluxULeft,sigmaFluxURight);
-
-            // to be revised 
-            sigmaFluxULeft  *= gradSource_[0]; 
-            sigmaFluxURight *= gradSourceNb_[0];
-            ////////////////////////////////////////////////////////////
-
-            for(int i=0;i < gradientNumDofs;++i)
-            {
-              grdbsetEn.eval(i,faceQuadInner,l, tau_[0]);      
-              gradbsetNeigh.eval(i,faceQuadOuter,l, tauneigh_[0]);
-              
-              RangeType valEn(0.0),valNeigh(0.0); 
-
-              for(int j=0; j<numDofs; ++j)
-              {
-                //gradMAtrix
-                bsetEn.   eval(j, faceQuadInner, l, phi_); 
-                bsetNeigh.eval(j, faceQuadOuter, l, phiNeigh_ );
-                
-                {
-                  // eval tau * (un)  (scalar procduct) 
-                  double enVal    = tau_[0] * uFluxULeft;
-                  double neighVal = tau_[0] * uFluxURight; 
-                  
-                  enVal    *= innerIntel;
-                  enVal    *= phi_[0];
-                  
-                  neighVal *= outerIntel;
-                  neighVal *= phiNeigh_[0];
-                 
-                  // add value to matrix for en,nb
-                  gradMatrixEn.add( i, j, enVal );
-
-                  // add value to matrix for en,nb 
-                  gradMatrixNb.add( i, j, neighVal );
-                }
-
-                {
-                  // value en 
-                  double divmatValen = unitNormal * tau_[0];
-                  divmatValen *= sigmaFluxSigmaLeft;
-                  divmatValen *= phi_[0];
-                  divmatValen *=-innerIntel;
-                   
-                  // value neighbor 
-                  double divmatValnb = unitNormal * tauneigh_[0];
-                  divmatValnb *= sigmaFluxSigmaRight;
-                  divmatValnb *= phi_[0]; 
-                  divmatValnb *=-outerIntel; 
-                
-                  // add value to div matrix for en,en 
-                  divMatrixEn.add( j, i , divmatValen );
-                  
-                  // add value to div matrix for en,nb 
-                  divMatrixNb.add( j, i , divmatValnb );
-                }
-
-                if(i==0)
-                {
-                  for(int k=0;k<numDofs;++k)
-                  {
-                    double stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l, sigmaFluxULeft) 
-                                       * innerIntel; 
-
-                    double stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l, sigmaFluxURight) 
-                                       * outerIntel;
-
-                    // todo: make it right 
-                    stabvalen *= phi_[0]; 
-
-                    // add value to stqab matrix for en,en 
-                    stabMatrixEn.add( k , j , stabvalen );
-
-                    stabvalnb *= phiNeigh_[0];
-                    // add value to stqab matrix for en,nb 
-                    stabMatrixNb.add( k , j , stabvalnb );
-                  }
-                }
-              }
-            }
+            // apply neighbor part 
+            applyLocalNeighbor(nit,en,massVolElInv,volQuad,
+                  ncfaceQuadInner,ncfaceQuadOuter, 
+                  bsetEn,grdbsetEn,
+                  stabMatrixEn,gradMatrixEn,divMatrixEn);
           }
         } // end if neighbor 
 
@@ -1152,6 +1030,7 @@ namespace Dune {
 
       } // end intersection iterator 
 
+      // resort corresponding matrix rows for ascending numbering 
       stabMatrixEn.resort(); 
       gradMatrixEn.resort();
       divMatrixEn.resort();
@@ -1162,6 +1041,167 @@ namespace Dune {
       }
     } // end apply local 
 
+
+    template <class QuadratureImp> 
+    void applyLocalNeighbor(IntersectionIteratorType & nit, 
+                            EntityType & en, const double massVolElInv,
+                            VolumeQuadratureType & volQuad,
+                            const QuadratureImp & faceQuadInner, 
+                            const QuadratureImp & faceQuadOuter, 
+                            const BaseFunctionSetType & bsetEn, 
+                            const GradientBaseFunctionSetType & grdbsetEn, 
+                            MatrixAddHandleType & stabMatrixEn, 
+                            MatrixAddHandleType & gradMatrixEn, 
+                            MatrixAddHandleType & divMatrixEn) const
+    {
+      const int numDofs = bsetEn.numBaseFunctions();
+      const int gradientNumDofs = grdbsetEn.numBaseFunctions();
+
+      EntityPointerType neighEp = nit.outside();
+      EntityType&            nb = *neighEp;
+
+      caller_.setNeighbor(nb);
+      gradCaller_.setNeighbor(nb);
+
+      // create matrix handles for neighbor 
+      MatrixAddHandleType stabMatrixNb(matrixHandler_.stabMatrix(),
+                                     en, spc_, nb, spc_ ); 
+      MatrixAddHandleType gradMatrixNb(matrixHandler_.gradMatrix(),
+                                     en, gradientSpace_, nb, spc_ ); 
+      MatrixAddHandleType divMatrixNb (matrixHandler_.divMatrix(),
+                                     en , spc_, nb , gradientSpace_ ); 
+      
+      // get base function set 
+      const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
+      const GradientBaseFunctionSetType& gradbsetNeigh 
+                              = gradientSpace_.baseFunctionSet(nb);
+     
+      const int quadNop = faceQuadInner.nop();
+      for (int l = 0; l < quadNop ; ++l) 
+      {
+        DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
+        const double faceVol = unitNormal.two_norm();
+        unitNormal *= 1.0/faceVol; 
+
+        const double innerIntel = faceQuadInner.weight(l) * massVolElInv * faceVol ; 
+        const double outerIntel = faceQuadOuter.weight(l) * massVolElInv * faceVol ; 
+
+        if(gradProblem_.hasSource())
+        {
+          // call anayltical flux 
+          // todo: quadrature is not right here  
+          gradCaller_.source(en, volQuad, l , gradSource_ );
+          gradCaller_.source(nb, volQuad, l , gradSourceNb_ );
+        }
+
+        ////////////////////////////////////////////////////////////
+        //  
+        //  FLUX evaluation 
+        //  
+        ////////////////////////////////////////////////////////////
+        GradientRangeType uFluxSigmaLeft,uFluxSigmaRight; // sigma parts of uFlux 
+        GradientRangeType uFluxULeft,uFluxURight; // u parts of uFlux 
+
+        // evaluate uFlux, return type is vector  
+        gradCaller_.numericalFlux(nit,
+                                  faceQuadInner,
+                                  faceQuadOuter,
+                                  l,
+                                  uFluxSigmaLeft,uFluxSigmaRight,
+                                  uFluxULeft,uFluxURight);
+
+        RangeType sigmaFluxSigmaLeft,sigmaFluxSigmaRight; // sigma  parts of sigmaFlux 
+        RangeType sigmaFluxULeft,sigmaFluxURight; // u parts of sigmaFlux 
+
+        // evaluate sigmaFlux, return type is scalar 
+        caller_.numericalFlux(nit,
+                              faceQuadInner,
+                              faceQuadOuter,
+                              l,
+                              sigmaFluxSigmaLeft,sigmaFluxSigmaRight,
+                              sigmaFluxULeft,sigmaFluxURight);
+
+        // to be revised 
+        sigmaFluxULeft  *= gradSource_[0]; 
+        sigmaFluxURight *= gradSourceNb_[0];
+        ////////////////////////////////////////////////////////////
+
+        for(int i=0;i < gradientNumDofs;++i)
+        {
+          grdbsetEn.eval(i,faceQuadInner,l, tau_[0]);      
+          gradbsetNeigh.eval(i,faceQuadOuter,l, tauneigh_[0]);
+          
+          RangeType valEn(0.0),valNeigh(0.0); 
+
+          for(int j=0; j<numDofs; ++j)
+          {
+            //gradMAtrix
+            bsetEn.   eval(j, faceQuadInner, l, phi_); 
+            bsetNeigh.eval(j, faceQuadOuter, l, phiNeigh_ );
+            
+            {
+              // eval tau * (un)  (scalar procduct) 
+              double enVal    = tau_[0] * uFluxULeft;
+              double neighVal = tau_[0] * uFluxURight; 
+              
+              enVal    *= innerIntel;
+              enVal    *= phi_[0];
+              
+              neighVal *= outerIntel;
+              neighVal *= phiNeigh_[0];
+             
+              // add value to matrix for en,nb
+              gradMatrixEn.add( i, j, enVal );
+
+              // add value to matrix for en,nb 
+              gradMatrixNb.add( i, j, neighVal );
+            }
+
+            {
+              // value en 
+              double divmatValen = unitNormal * tau_[0];
+              divmatValen *= sigmaFluxSigmaLeft;
+              divmatValen *= phi_[0];
+              divmatValen *=-innerIntel;
+               
+              // value neighbor 
+              double divmatValnb = unitNormal * tauneigh_[0];
+              divmatValnb *= sigmaFluxSigmaRight;
+              divmatValnb *= phi_[0]; 
+              divmatValnb *=-outerIntel; 
+            
+              // add value to div matrix for en,en 
+              divMatrixEn.add( j, i , divmatValen );
+              
+              // add value to div matrix for en,nb 
+              divMatrixNb.add( j, i , divmatValnb );
+            }
+
+            if(i==0)
+            {
+              for(int k=0;k<numDofs;++k)
+              {
+                double stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l, sigmaFluxULeft) 
+                                   * innerIntel; 
+
+                double stabvalnb = bsetEn.evaluateSingle(k, faceQuadInner, l, sigmaFluxURight) 
+                                   * outerIntel;
+
+                // todo: make it right 
+                stabvalen *= phi_[0]; 
+
+                // add value to stqab matrix for en,en 
+                stabMatrixEn.add( k , j , stabvalen );
+
+                stabvalnb *= phiNeigh_[0];
+                // add value to stqab matrix for en,nb 
+                stabMatrixNb.add( k , j , stabvalnb );
+              }
+            }
+          }
+        }
+      }
+    }
     //! only calculate mass matrix new
     void update(const ArgumentType& arg, DestinationType& dest) const
     {
@@ -1529,8 +1569,17 @@ namespace Dune {
         // otherwise keep old value as initial value 
         dest.clear();
         op_.prepare(arg,rhs_);
-        //op_.buildMatrix( arg, rhs_ );
-        op_.reBuildMatrix( arg, rhs_ );
+
+        // for unstructured grids we can use the re-build method 
+        if(Capabilities::IsUnstructured<GridType>::v)
+        {
+          op_.reBuildMatrix( arg, rhs_ );
+        }
+        else 
+        {
+          // otherwise just make all new 
+          op_.buildMatrix( arg, rhs_ );
+        }
         sequence_ = spc_.sequence();
       }
       else 
@@ -1551,9 +1600,6 @@ namespace Dune {
 
       // calculate new maxIter  
       maxIter_ = maxIterFactor_ * spc_.size();
-
-      // set parameter which might have changed
-      //invOp_.setParameters(eps_,maxIter_,verbose_);
 
       // solve the system 
       invOp_(rhs_,dest);
