@@ -15,7 +15,7 @@ namespace Dune {
   //! this identical information. As a consequence, ElementQuadrature is
   //! not a generic quadrature anymore, but depends on the situation in
   //! which it is used.
-  template <typename GridImp, int codim>
+  template <typename GridPartImp, int codim>
   class ElementQuadrature {
     typedef CompileTimeChecker<false> Only_implementation_for_codim_1_exists; 
   };
@@ -24,23 +24,26 @@ namespace Dune {
   //! For codim-0 element quadratures, there is no additional information
   //! from the context needes, in consequence, the quadrature behaves like
   //! a generic quadrature class, independent from the situation in the grid.
-  template <typename GridImp>
-  class ElementQuadrature<GridImp, 0>
+  template <typename GridPartImp>
+  class ElementQuadrature<GridPartImp, 0>
   {
+    typedef typename GridPartImp :: GridType GridType;
+    
   public:
     //! Dimension of the world
-    enum { dimension = GridImp::dimension };
+    enum { dimension = GridType::dimension };
     //! Codimension is zero by definition
     enum { codimension = 0 };
     
     enum Side { INSIDE, OUTSIDE };
 
     //! The type for reals (mostly double)
-    typedef typename GridImp::ctype RealType;
+    typedef typename GridType::ctype RealType;
     //! Type for coordinates in the codim-0 reference element 
     typedef typename Quadrature<RealType, dimension>::CoordinateType CoordinateType;
+    
     //! Type of the codim-0 entity
-    typedef typename GridImp::template Codim<0>::Entity Entity;
+    typedef typename GridType::template Codim<0>::Entity Entity;
 
   public:
     //! Constructor
@@ -120,36 +123,41 @@ namespace Dune {
   //! intersection. Plus, the user must decide if the quadrature shall live
   //! on the reference element of the outside or inside element of the 
   //! intersection.
-  template <typename GridImp>
-  class ElementQuadrature<GridImp, 1> 
+  template <typename GridPartImp>
+  class ElementQuadrature<GridPartImp, 1> 
   {
+    typedef ElementQuadrature<GridPartImp, 1> ThisType;
+    typedef typename GridPartImp :: GridType GridType;
   public:
     //! Dimension of the world
-    enum { dimension = GridImp::dimension };
+    enum { dimension = GridType::dimension };
     //! The codimension is one by definition
     enum { codimension = 1 };
     
     enum Side { INSIDE, OUTSIDE };
 
     //! Type of the reals (just a fancy name for a double...)
-    typedef typename GridImp::ctype RealType;
+    typedef typename GridType::ctype RealType;
+
     //! Type of coordinates in codim-0 reference element
     typedef typename Quadrature<RealType, dimension>::CoordinateType CoordinateType;
     //! Type of coordinate in codim-1 reference element
     typedef typename Quadrature<
       RealType, dimension-codimension>::CoordinateType LocalCoordinateType;
     //! Type of the intersection iterator
-    typedef typename GridImp::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridPartImp::IntersectionIteratorType IntersectionIterator;
 
+    //! specify quadrature for use on conforming and non-conforming
+    //! intersections 
+    typedef ThisType NonConformingQuadratureType;
+    
   public:
     //! Constructor
     //! \param it Intersection iterator
     //! \param order Desired order of the quadrature
     //! \param twist the twist of the codim 1 entity
     //! \param side Is either INSIDE or OUTSIDE
-    //! \param conforming not used in this quadrature (just to have the
-    //! same constructor as CachingQuadrature) 
-    ElementQuadrature(const IntersectionIterator& it, int order, int twist,  Side side, bool conforming = false ) :
+    ElementQuadrature(const IntersectionIterator& it, int order, int twist,  Side side) :
       quad_(it.intersectionGlobal().type(), order),
       referenceGeometry_(side == INSIDE ?
                          it.intersectionSelfLocal() : 
@@ -250,5 +258,4 @@ namespace Dune {
   };
 
 } // end namespace Dune
-
 #endif
