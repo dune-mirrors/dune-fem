@@ -9,7 +9,7 @@
 #include <dune/common/interfaces.hh>
 
 //- local includes 
-#include "../../operator/common/objpointer.hh"
+#include <dune/fem/operator/common/objpointer.hh>
 
 namespace Dune{
 
@@ -35,7 +35,7 @@ template <class LocalOp, class ParamType> class LocalInlinePlus;
 #define PARAM_CLASSNAME CombinedLocalDataCollect 
 #define PARAM_INHERIT LocalInlinePlus  
 #define PARAM_FUNC_1 apply 
-#include "../../operator/common/combine.hh"
+#include <dune/fem/operator/common/combine.hh>
 
 template <class ParamT>
 class LocalInterface : public ObjPointerStorage
@@ -110,6 +110,8 @@ public:
     const size_t size = vec_.size();
     for(size_t i=0; i<size; ++i)
     {
+      assert( vec_[i].second );
+      assert( vec_[i].first );
       // vec_[i].second contains the pointer to the function that makes the
       // correct cast to the real type of vec_[i].first 
       (*vec_[i].second)( *(vec_[i].first) , p );
@@ -140,6 +142,21 @@ public:
   {
     copyList(vec_,op);
     return *this;
+  }
+
+  template <class OpType>
+  void remove(const OpType & op)
+  {
+    typedef typename ListType :: iterator iterator; 
+    iterator end = vec_.end(); 
+    for(iterator it = vec_.begin(); it != end; ++it)
+    {
+      if( &op == (*it).first ) 
+      {
+        vec_.erase( it ); 
+        return ;
+      }
+    }
   }
   
   template <class OpType>

@@ -456,6 +456,7 @@ public:
 //****************************************************************
 //
 // MemObject 
+// --MemObject 
 //
 //****************************************************************
 //! interface of MemObjects to store for DofManager 
@@ -502,6 +503,7 @@ template <class MemObjectType> class ResizeMemoryObjects;
 template <class MapperType , class DofArrayType>
 class MemObject : public MemObjectInterface
 {
+  typedef LocalInterface< int > MemObjectCheckType;
 private:
   typedef MemObject < MapperType , DofArrayType> MemObjectType;
   
@@ -517,11 +519,31 @@ private:
   CheckMemObjectResize < MemObjectType > checkResize_; 
   ResizeMemoryObjects  < MemObjectType > resizeMemObj_; 
 
+  MemObjectCheckType & resizeList_; 
+  MemObjectCheckType & memResizeList_; 
+
 public:  
   // Constructor of MemObject, only to call from DofManager 
-  MemObject ( const MapperType & mapper, std::string name ) 
-    : mapper_ (mapper) , array_( mapper_.size() ), name_ (name) , 
-      checkResize_(*this) , resizeMemObj_(*this) {} 
+  MemObject ( const MapperType & mapper, std::string name ,
+    MemObjectCheckType & resizeList, 
+    MemObjectCheckType & memResizeList) 
+    : mapper_ (mapper) , array_( mapper_.size() ), name_ (name) 
+    , checkResize_(*this) , resizeMemObj_(*this) 
+    , resizeList_(resizeList) , memResizeList_(memResizeList)
+  {
+    // add the special object to the checkResize list object 
+    resizeList_ += checkResize_; 
+  
+    // the same for the resize call  
+    memResizeList_ += resizeMemObj_; 
+  } 
+
+  virtual ~MemObject() 
+  {
+    // remove from list 
+    resizeList_.remove( checkResize_ );
+    memResizeList_.remove( resizeMemObj_ );
+  }
 
   //! returns name of this vector 
   const char * name () const { return name_.c_str(); }
@@ -581,18 +603,6 @@ public:
     array_.realloc ( newSize() );
   }
  
-  //! return object that checks for resize
-  CheckMemObjectResize < MemObjectType > & checkResizeObj () 
-  { 
-    return checkResize_; 
-  }
-
-  //! return object that makes the resize 
-  ResizeMemoryObjects < MemObjectType > & resizeMemObject() 
-  {
-    return resizeMemObj_;  
-  }
-
   //! return reference to array for DiscreteFunction 
   DofArrayType & getArray() { return array_; } 
 };
@@ -682,18 +692,6 @@ public:
   {
     assert( (size() != newSize()) ? 
         (std::cerr << "WARNING: DummyMemObject's may not compress vectors! \n" , 1) : 1);
-  }
- 
-  //! return object that checks for resize
-  CheckMemObjectResize < MemObjectType > & checkResizeObj () 
-  { 
-    return checkResize_; 
-  }
-
-  //! return object that makes the resize 
-  ResizeMemoryObjects < MemObjectType > & resizeMemObject() 
-  {
-    return resizeMemObj_;  
   }
 
   //! return reference to array for DiscreteFunction 
@@ -1237,6 +1235,7 @@ removeDofSet (const MemObjectInterface & obj)
       // alloc new mem and copy old mem 
       MemObjectInterface * mobj = (*it);
       memList_.erase( it );  
+      
       dverb << "Removing '" << obj.name() << "' from DofManager!\n";
       if(mobj) delete mobj;
       removed = true;
@@ -1289,63 +1288,6 @@ addIndexSet (const GridType &grid, IndexSetType &iset)
 }
 
 template <class GridType>
-template <class IndexSetType>
-inline IndexSetType & DofManager<GridType>::createIndexSet() 
-{
-  assert( false );
-  IndexSetType & set = IndexSetType::instance(grid_);
-  std::cout << "Created index set " << &set << "\n";
-  addIndexSet(grid_,set);
-  return set;
-}
-
-template <class GridType>
-template <class IndexSetType>
-inline IndexSetType & 
-DofManager<GridType>::getIndexSet () 
-{
-  typedef typename GridType::template Codim<0>::Entity EntityType;
-
-  IndexSetObjectInterface * indexSet = 0;
-  
-  IndexListIteratorType endit = indexList_.end();
-  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-  {
-    if( (*it)->typeOfSet() == IndexSetType::type() )
-    {
-      indexSet = ((*it));
-      break;
-    }
-  }
-
-  if( !indexSet) 
-  {
-    return this->template createIndexSet<IndexSetType>();
-  }
-
-  IndexSetType * set= ((IndexSetType *) (indexSet->address()));
-  return *set;
-}
-
-template <class GridType>
-template <class IndexSetType>
-inline bool DofManager<GridType>::
-checkIndexSetExists (const IndexSetType &iset) const
-{
-  assert(false);
-  ConstIndexListIteratorType endit  = indexList_.end();
-  for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-  {
-    if( (*it)->address() == &iset ) 
-    {
-      return true; 
-    }
-  }
-  return false;
-}
-
-
-template <class GridType>
 template <class DofStorageType, class MapperType >
 std::pair<MemObjectInterface*, DofStorageType*>
 DofManager<GridType>::
@@ -1355,14 +1297,9 @@ addDofSet(const DofStorageType * ds, const MapperType & mapper, std::string name
   dverb << "Adding '" << name << "' to DofManager! \n";
 
   typedef MemObject<MapperType,DofStorageType> MemObjectType; 
-  MemObjectType * obj = new MemObjectType ( mapper, name ); 
+  MemObjectType * obj = 
+    new MemObjectType ( mapper, name , checkResize_ , resizeMemObjs_ ); 
   memList_.push_back( obj );    
-
-  // add the special object to the checkResize list object 
-  checkResize_ += (*obj).checkResizeObj(); 
-  
-  // the same for the resize call  
-  resizeMemObjs_ += (*obj).resizeMemObject();
 
   return std::pair<
     MemObjectInterface*, DofStorageType*>(obj, & (obj->getArray()) );
