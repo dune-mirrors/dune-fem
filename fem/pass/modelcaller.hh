@@ -155,9 +155,10 @@ namespace Dune {
     }
 
     // Ensure: entities set correctly before call
+    template <class QuadratureType>
     double numericalFlux(IntersectionIterator& nit,
-                         FaceQuadratureType& quadInner, 
-                         FaceQuadratureType& quadOuter, 
+                         QuadratureType& quadInner, 
+                         QuadratureType& quadOuter, 
                          int quadPoint,
                          RangeType& resEn, RangeType& resNeigh)
     {
@@ -173,9 +174,10 @@ namespace Dune {
     }
 
     // Ensure: entities set correctly before call
+    template <class QuadratureType>
     double numericalFlux(const IntersectionIterator& nit,
-                         const FaceQuadratureType& quadInner, 
-                         const FaceQuadratureType& quadOuter, 
+                         const QuadratureType& quadInner, 
+                         const QuadratureType& quadOuter, 
                          const int quadPoint,
                          RangeType & sigmaPartLeft, 
                          RangeType & sigmaPartRight,
