@@ -3,6 +3,7 @@
 
 //- Dune includes
 #include <dune/common/misc.hh>
+#include <dune/grid/utility/twistutility.hh>
 
 //- Local includes
 #include "elementquadrature.hh"
@@ -77,7 +78,8 @@ namespace Dune {
   {
     typedef ElementQuadrature<GridPartImp, 1> BaseType;
 
-    typedef typename GridPartImp :: GridType GridType;
+    typedef GridPartImp GridPartType; 
+    typedef typename GridPartType :: GridType GridType;
 
   public:
     //! Dimeinsion of the world
@@ -94,6 +96,9 @@ namespace Dune {
 
     //! type of quadrature used for non-conforming intersections  
     typedef BaseType NonConformingQuadratureType; 
+
+    //! type of twist utility 
+    typedef TwistUtility<GridType> TwistUtilityType;
   public:
     //! Constructor
     //! \param it Intersection iterator.
@@ -103,12 +108,34 @@ namespace Dune {
     CachingQuadrature(const IntersectionIterator& it, 
                       int order, 
                       int twist,
+                      typename BaseType::Side side) DUNE_DEPRECATED 
+      : BaseType(it, order, side)
+      , mapper_(CacheProvider<GridType, codimension>::
+                getMapper(this->quadImp(), this->elementGeometry(), 
+                          this->faceNumber(), twist))
+
+    {
+    }
+
+    //! Constructor
+    //! \param gridPart grid part to get twist from twist utility 
+    //! \param it Intersection iterator.
+    //! \param order The desired order of the quadrature.
+    //! \param side Is either INSIDE or OUTSIDE
+    CachingQuadrature(const GridPartType & gridPart, 
+                      const IntersectionIterator& it, 
+                      int order, 
                       typename BaseType::Side side) :
       BaseType(it, order, side),
       mapper_(CacheProvider<GridType, codimension>::
               getMapper(this->quadImp(), this->elementGeometry(), 
-                        this->faceNumber(), twist))
+                        this->faceNumber(), (side == BaseType :: INSIDE) ? 
+                           TwistUtilityType::twistInSelf(gridPart.grid(),it) : 
+                           TwistUtilityType::twistInNeighbor(gridPart.grid(),it)))
     {
+      // make sure CachingQuadrature is only created for conforming
+      // intersections 
+      assert( TwistUtilityType::conforming(gridPart.grid(),it) );
     }
 
     //! Additional method to map quadrature points to caching points.

@@ -127,7 +127,8 @@ namespace Dune {
   class ElementQuadrature<GridPartImp, 1> 
   {
     typedef ElementQuadrature<GridPartImp, 1> ThisType;
-    typedef typename GridPartImp :: GridType GridType;
+    typedef GridPartImp GridPartType;
+    typedef typename GridPartType :: GridType GridType;
   public:
     //! Dimension of the world
     enum { dimension = GridType::dimension };
@@ -157,7 +158,7 @@ namespace Dune {
     //! \param order Desired order of the quadrature
     //! \param twist the twist of the codim 1 entity
     //! \param side Is either INSIDE or OUTSIDE
-    ElementQuadrature(const IntersectionIterator& it, int order, int twist,  Side side) :
+    ElementQuadrature(const IntersectionIterator& it, int order, int twist,  Side side) DUNE_DEPRECATED :
       quad_(it.intersectionGlobal().type(), order),
       referenceGeometry_(side == INSIDE ?
                          it.intersectionSelfLocal() : 
@@ -169,6 +170,27 @@ namespace Dune {
       dummy_(0.)
     {
     }
+    
+    //! Constructor
+    //! \param gridPart s dummy parameter here 
+    //! \param it Intersection iterator
+    //! \param order Desired order of the quadrature
+    //! \param side Is either INSIDE or OUTSIDE
+    ElementQuadrature(const GridPartType & gridPart, 
+                      const IntersectionIterator& it, 
+                      int order, Side side) :
+      quad_(it.intersectionGlobal().type(), order),
+      referenceGeometry_(side == INSIDE ?
+                         it.intersectionSelfLocal() : 
+                         it.intersectionNeighborLocal()),
+      elementGeometry_(referenceGeometry_.type().basicType() ,dimension),
+      faceNumber_(side == INSIDE ?
+                  it.numberInSelf() :
+                  it.numberInNeighbor()),
+      dummy_(0.)
+    {
+    }
+
     //! Constructor
     //! \param it Intersection iterator
     //! \param order Desired order of the quadrature
