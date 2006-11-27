@@ -76,6 +76,7 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
 
     // Types extracted from the underlying grids
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
@@ -185,7 +186,8 @@ namespace Dune {
     {
       //- typedefs
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+
+      const IndexSetType& iset = spc_.indexSet();
       
       //- statements
       caller_.setEntity(en);
@@ -193,18 +195,18 @@ namespace Dune {
       const int updEn_numDofs = updEn.numDofs();
       const BaseFunctionSetType& bsetEn = updEn.baseFunctionSet(); 
       
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
-      const int volQuad_nop = volQuad.nop();
 
       // only call geometry once, who know what is done in this function 
       const GeometryType & geo = en.geometry();
 
       double massVolElinv;
       const double vol = volumeElement(geo, massVolElinv);
-      
-      const IndexSetType& iset = spc_.indexSet();
 
+      ///////////////////////////////
       // Volumetric integral part
+      ///////////////////////////////
+      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+      const int volQuad_nop = volQuad.nop();
       for (int l = 0; l < volQuad_nop; ++l) 
       {
         // evaluate analytical flux and source 
@@ -221,24 +223,18 @@ namespace Dune {
         }
       }
 
-      
+      /////////////////////////////
       // Surface integral part
+      /////////////////////////////
       double dtLocal = 0.0;
-      double minvol = vol; 
       double nbvol;
 
       IntersectionIteratorType endnit = gridPart_.iend(en);
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
       {
         double wspeedS = 0.0;
-        int twistSelf = twistUtil_.twistInSelf(nit); 
-        FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
-                                         FaceQuadratureType::INSIDE);
-        
-        const int faceQuadInner_nop = faceQuadInner.nop();
         if (nit.neighbor()) 
         {
-
           // get neighbor 
           EntityPointerType ep = nit.outside();
           EntityType & nb = *ep;
@@ -247,46 +243,64 @@ namespace Dune {
               || en.level() > nb.level()
               || nb.partitionType() != InteriorEntity) 
           {
-
-            int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-            FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
-                                             FaceQuadratureType::OUTSIDE);
-            
-            caller_.setNeighbor(nb);
-            LocalFunctionType updNeigh =dest_->localFunction(nb);
-
-            const BaseFunctionSetType& bsetNeigh = updNeigh.baseFunctionSet();
-
-            const GeometryType & nbGeo = nb.geometry();
-            double massVolNbinv;
-            nbvol = volumeElement(nbGeo, massVolNbinv);
-            if (nbvol<minvol) minvol=nbvol;
-            for (int l = 0; l < faceQuadInner_nop; ++l) 
+            // for conforming situations apply Quadrature given
+            if( twistUtil_.conforming(nit) )
             {
-              double dtLocalS = 
-                caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
-                                      l, valEn_, valNeigh_);
-              
-              dtLocal += dtLocalS*faceQuadInner.weight(l);
-              wspeedS += dtLocalS*faceQuadInner.weight(l);
+              const int twistSelf = twistUtil_.twistInSelf(nit); 
+              FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
+                                             FaceQuadratureType::INSIDE);
+        
+              const int twistNeighbor = twistUtil_.twistInNeighbor(nit);
+              FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
+                                             FaceQuadratureType::OUTSIDE);
 
-              for (int i = 0; i < updEn_numDofs; ++i) {
-                updEn[i] -= 
-                  bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_)*
-                  faceQuadInner.weight(l)*massVolElinv;
-                updNeigh[i] += 
-                  bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_)*
-                  faceQuadOuter.weight(l)*massVolNbinv;
-              }
+              // apply neighbor part, return is volume of neighbor which is
+              // needed below 
+              nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
+                        faceQuadInner,faceQuadOuter,
+                        bsetEn,updEn_numDofs,updEn,
+                        dtLocal,wspeedS);
             }
-                         
-          } // end if ...
+            else
+            {
+              // for non-conforming situations apply the non-conforming 
+              // type of the qaudrature 
+               
+              // we only should get here whne a non-conforming situation 
+              // occurs in a non-conforming grid 
+              assert( GridPartType :: conforming == false );
+
+              typedef typename FaceQuadratureType :: NonConformingQuadratureType
+                NonConformingFaceQuadratureType;
+
+              const int twistSelf = twistUtil_.twistInSelf(nit); 
+              NonConformingFaceQuadratureType ncFaceQuadInner(nit, faceQuadOrd_, twistSelf,
+                                               NonConformingFaceQuadratureType::INSIDE);
+
+              const int twistNeighbor = twistUtil_.twistInNeighbor(nit);
+              NonConformingFaceQuadratureType ncFaceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
+                                               NonConformingFaceQuadratureType::OUTSIDE);
+
+              // apply neighbor part, return is volume of neighbor which is
+              // needed below 
+              nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
+                        ncFaceQuadInner,ncFaceQuadOuter,
+                        bsetEn,updEn_numDofs,updEn,
+                        dtLocal,wspeedS);
+            }
+
+          }
+            
         } // end if neighbor
 
         if (nit.boundary()) 
         {
+          const int twistSelf = twistUtil_.twistInSelf(nit); 
+          FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
+                                           FaceQuadratureType::INSIDE);
           nbvol = vol;
           caller_.setNeighbor(en);
+          const int faceQuadInner_nop = faceQuadInner.nop();
           for (int l = 0; l < faceQuadInner_nop; ++l) 
           {
             double dtLocalS = 
@@ -295,7 +309,8 @@ namespace Dune {
             dtLocal += dtLocalS*faceQuadInner.weight(l);
             wspeedS += dtLocalS*faceQuadInner.weight(l);
                     
-            for (int i = 0; i < updEn_numDofs; ++i) {
+            for (int i = 0; i < updEn_numDofs; ++i) 
+            {
               updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_)
                 *faceQuadInner.weight(l)*massVolElinv;
             }
@@ -310,6 +325,53 @@ namespace Dune {
       }
     }
 
+    template <class QuadratureImp>  
+    double applyLocalNeighbor(IntersectionIteratorType & nit, 
+            EntityType & en, EntityType & nb, 
+            const double massVolElinv, 
+            const QuadratureImp & faceQuadInner, 
+            const QuadratureImp & faceQuadOuter,
+            const BaseFunctionSetType & bsetEn, 
+            const int updEn_numDofs, 
+            LocalFunctionType & updEn,
+            double & dtLocal, 
+            double & wspeedS) const 
+    {
+      // make Entity known in caller  
+      caller_.setNeighbor(nb);
+      
+      // get local function  
+      LocalFunctionType updNeigh = dest_->localFunction(nb);
+      const BaseFunctionSetType& bsetNeigh = updNeigh.baseFunctionSet();
+
+      // get goemetry of neighbor 
+      const GeometryType & nbGeo = nb.geometry();
+      double massVolNbinv;
+      double nbvol = volumeElement(nbGeo, massVolNbinv);
+      
+      const int faceQuadInner_nop = faceQuadInner.nop();
+      for (int l = 0; l < faceQuadInner_nop; ++l) 
+      {
+        double dtLocalS = 
+          caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
+                                l, valEn_, valNeigh_);
+        
+        dtLocal += dtLocalS*faceQuadInner.weight(l);
+        wspeedS += dtLocalS*faceQuadInner.weight(l);
+
+        for (int i = 0; i < updEn_numDofs; ++i) 
+        {
+          updEn[i] -= 
+            bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_)*
+            faceQuadInner.weight(l)*massVolElinv;
+          updNeigh[i] += 
+            bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_)*
+            faceQuadOuter.weight(l)*massVolNbinv;
+        }
+      }
+      return nbvol;
+    }
+                         
   private:
     LocalDGPass();
     LocalDGPass(const LocalDGPass&);
