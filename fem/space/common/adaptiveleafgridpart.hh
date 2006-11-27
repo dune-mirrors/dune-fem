@@ -48,7 +48,9 @@ class AdaptiveLeafGridPart
 : public GridPartDefault<AdaptiveLeafGridPartTraits<GridImp,pitype> > 
 {
   // singleton list for index set , key type is const pointer to grid 
-  typedef SingletonList<GridImp,typename AdaptiveLeafGridPartTraits<const GridImp* ,pitype>::IndexSetType > IndexSetProviderType;  
+  typedef SingletonList<const GridImp *,
+          typename AdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > 
+            IndexSetProviderType;  
 public:
   //- Public typedefs and enums
   //! Type definitions
