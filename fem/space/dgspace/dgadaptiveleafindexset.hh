@@ -239,6 +239,9 @@ public:
     markAllBelowOld ();
   }
 
+  //! this index set can be used for adaptive calculations 
+  bool adaptive () const { return true; }
+
   //! make to index numbers consecutive 
   //! return true, if at least one hole existed  
   bool compress ()

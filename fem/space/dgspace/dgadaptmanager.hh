@@ -53,6 +53,8 @@ namespace Dune{
     df_ (df) , quadord_(2*df.space().order()),
     weight_(-1.0)
   {
+    // make sure that index set is used that can handle adaptivity 
+    assert( df.space().indexSet().adaptive() );
   }
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
@@ -176,7 +178,10 @@ private:
   RestrictProlongDefault ( DiscreteFunctionType & df ) : 
     df_ (df),
     weight_(-1.0)
-  {}
+  {
+    // make sure that index set is used that can handle adaptivity 
+    assert( df.space().indexSet().adaptive() );
+  }
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
   void setFatherChildWeight (const RangeFieldType& val) const
