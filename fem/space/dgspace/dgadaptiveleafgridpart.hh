@@ -48,6 +48,9 @@ struct DGAdaptiveLeafGridPartTraits {
   struct Codim {
     typedef typename GridImp::template Codim<cd>::template Partition<pitype>::LeafIterator IteratorType;
   };
+      
+  //! \brief is true if grid on this view only has conforming intersections 
+  enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
 };
 
 /** \brief GridPart for DGAdapitveLeafIndexSet. The underlying index set is
@@ -75,6 +78,9 @@ public:
   struct Codim {
     typedef typename Traits::template Codim<cd>::IteratorType IteratorType;
   };
+
+  //! \brief is true if grid on this view only has conforming intersections 
+  enum { conforming = Traits :: conforming };
 
 private:
   typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
