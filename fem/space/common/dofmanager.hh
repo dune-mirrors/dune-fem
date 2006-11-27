@@ -935,19 +935,7 @@ public:
 public:
   //! add new index set to the list of the indexsets of this dofmanager
   template <class IndexSetType>
-  inline IndexSetType & createIndexSet (); 
-
-  //! add new index set to the list of the indexsets of this dofmanager
-  template <class IndexSetType>
-  inline IndexSetType & getIndexSet (); 
-
-  //! add new index set to the list of the indexsets of this dofmanager
-  template <class IndexSetType>
   inline void addIndexSet (const GridType &grid, IndexSetType &iset); 
-
-  //! add new index set to the list of the indexsets of this dofmanager
-  template <class IndexSetType>
-  inline bool checkIndexSetExists (const IndexSetType &iset) const; 
 
   //! add dofset to dof manager 
   //! this method should be called at signIn of DiscreteFucntion, and there
@@ -986,10 +974,8 @@ public:
   //! this method resizes the memory before restriction is done 
   void resizeForRestrict () 
   {
-    ListIteratorType it    = memList_.begin();
-    ListIteratorType endit = memList_.end();
-
-    for( ; it != endit ; ++it)
+    ListIteratorType endit  = memList_.end();
+    for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
     {
       int addSize = (*it)->additionalSizeEstimate();
       chunkSize_ = std::max( addSize , chunkSize_ );
@@ -1052,10 +1038,8 @@ private:
   //! resize the MemObject if necessary 
   void resizeDofMem()
   {
-    ListIteratorType it    = memList_.begin();
-    ListIteratorType endit = memList_.end();
-
-    for( ; it != endit ; ++it)
+    ListIteratorType endit  = memList_.end();
+    for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
     {
       int size  = (*it)->size();
       int nSize = (*it)->newSize();

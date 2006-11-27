@@ -108,6 +108,8 @@ public:
   //! Constructor
   RestProlOperatorFV ( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
   {
+    // make sure index set can be used for adaptive computations 
+    assert( df.space().indexSet().adaptive() );
   }
 
   //! if weight is set, then ists assumend that we have always the same
