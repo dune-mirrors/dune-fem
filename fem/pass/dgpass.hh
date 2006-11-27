@@ -123,7 +123,6 @@ namespace Dune {
       grads_(0.0),
       time_(0),
       diffVar_(),
-      twistUtil_(spc.grid()),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
           (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
@@ -243,16 +242,15 @@ namespace Dune {
               || en.level() > nb.level()
               || nb.partitionType() != InteriorEntity) 
           {
+            typedef TwistUtility<GridType> TwistUtilityType;
             // for conforming situations apply Quadrature given
-            if( twistUtil_.conforming(nit) )
+            if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
             {
-              const int twistSelf = twistUtil_.twistInSelf(nit); 
-              FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
-                                             FaceQuadratureType::INSIDE);
+              FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                               FaceQuadratureType::INSIDE);
         
-              const int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-              FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
-                                             FaceQuadratureType::OUTSIDE);
+              FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
+                                               FaceQuadratureType::OUTSIDE);
 
               // apply neighbor part, return is volume of neighbor which is
               // needed below 
@@ -273,18 +271,19 @@ namespace Dune {
               typedef typename FaceQuadratureType :: NonConformingQuadratureType
                 NonConformingFaceQuadratureType;
 
-              const int twistSelf = twistUtil_.twistInSelf(nit); 
-              NonConformingFaceQuadratureType ncFaceQuadInner(nit, faceQuadOrd_, twistSelf,
-                                               NonConformingFaceQuadratureType::INSIDE);
+              NonConformingFaceQuadratureType 
+                  nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                             NonConformingFaceQuadratureType::INSIDE);
 
-              const int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-              NonConformingFaceQuadratureType ncFaceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
-                                               NonConformingFaceQuadratureType::OUTSIDE);
+              NonConformingFaceQuadratureType 
+                  nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
+                                             NonConformingFaceQuadratureType::OUTSIDE);
 
               // apply neighbor part, return is volume of neighbor which is
               // needed below 
               nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
-                        ncFaceQuadInner,ncFaceQuadOuter,
+                        nonConformingFaceQuadInner,
+                        nonConformingFaceQuadOuter,
                         bsetEn,updEn_numDofs,updEn,
                         dtLocal,wspeedS);
             }
@@ -295,8 +294,7 @@ namespace Dune {
 
         if (nit.boundary()) 
         {
-          const int twistSelf = twistUtil_.twistInSelf(nit); 
-          FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
+          FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_, 
                                            FaceQuadratureType::INSIDE);
           nbvol = vol;
           caller_.setNeighbor(en);
@@ -416,8 +414,6 @@ namespace Dune {
     mutable DomainType grads_;
     TimeProvider* time_;
     FieldVector<int, 0> diffVar_;
-
-    TwistUtility<GridType> twistUtil_;
 
     int volumeQuadOrd_,faceQuadOrd_;
   };

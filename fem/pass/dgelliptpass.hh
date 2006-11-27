@@ -319,7 +319,6 @@ namespace Dune {
       phiNeigh_(0.0),
       grads_(0.0),
       time_(0),
-      twistUtil_(spc.grid()),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
@@ -633,6 +632,7 @@ namespace Dune {
     //! set all data belonging to this entity to zero 
     void restrictLocal(const EntityType& father, const EntityType & son, bool firstCall ) const
     {
+      assert( gridPart_.indexSet().adaptive() );
       if( firstCall ) 
       {
         // insert new entity 
@@ -643,6 +643,7 @@ namespace Dune {
     //! set all data belonging to this entity to zero 
     void prolongLocal(const EntityType& father, const EntityType & son, bool ) const
     {
+      assert( gridPart_.indexSet().adaptive() );
       // insert new entity  
       entityMarker_.insert( localIdSet_.id( son ) );
     }
@@ -857,17 +858,18 @@ namespace Dune {
         gradSource_   = 1.0;
         gradSourceNb_ = 1.0;
 
-        const int twistSelf = twistUtil_.twistInSelf(nit); 
-        FaceQuadratureType faceQuadInner(nit, faceQuadOrd_, twistSelf, 
-           FaceQuadratureType::INSIDE);
-      
         // if neighbor exists 
         if (nit.neighbor()) 
         {
-          if( twistUtil_.conforming(nit) ) 
+          // type of TwistUtility 
+          typedef TwistUtility<GridType> TwistUtilityType;
+          // check conformity 
+          if( TwistUtilityType::conforming(gridPart_.grid(),nit) ) 
           {
-            int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-            FaceQuadratureType faceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
+            FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                             FaceQuadratureType::INSIDE);
+      
+            FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
                                              FaceQuadratureType::OUTSIDE);
 
             // apply neighbor part 
@@ -885,16 +887,18 @@ namespace Dune {
             typedef typename FaceQuadratureType :: NonConformingQuadratureType 
               NonConformingFaceQuadratureType;
             
-            NonConformingFaceQuadratureType ncfaceQuadInner(nit, faceQuadOrd_, twistSelf, 
-               NonConformingFaceQuadratureType::INSIDE);
+            NonConformingFaceQuadratureType 
+              nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                         NonConformingFaceQuadratureType::INSIDE);
         
-            int twistNeighbor = twistUtil_.twistInNeighbor(nit);
-            NonConformingFaceQuadratureType ncfaceQuadOuter(nit, faceQuadOrd_, twistNeighbor,
-                                             NonConformingFaceQuadratureType::OUTSIDE);
+            NonConformingFaceQuadratureType 
+              nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
+                                         NonConformingFaceQuadratureType::OUTSIDE);
 
             // apply neighbor part 
             applyLocalNeighbor(nit,en,massVolElInv,volQuad,
-                  ncfaceQuadInner,ncfaceQuadOuter, 
+                  nonConformingFaceQuadInner,
+                  nonConformingFaceQuadOuter, 
                   bsetEn,grdbsetEn,
                   stabMatrixEn,gradMatrixEn,divMatrixEn);
           }
@@ -904,6 +908,10 @@ namespace Dune {
         if (nit.boundary()) 
         { 
           fMat_ = 1.0;
+          
+          FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                           FaceQuadratureType::INSIDE);
+
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
           {
@@ -1415,7 +1423,6 @@ namespace Dune {
 
     TimeProvider* time_;
 
-    TwistUtility<GridType> twistUtil_;
 
     int volumeQuadOrd_,faceQuadOrd_;
 
