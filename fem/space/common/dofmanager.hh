@@ -386,6 +386,7 @@ template <class IndexSetType, class EntityType>
 class IndexSetObject : public IndexSetObjectInterface ,
         public LocalInlinePlus < IndexSetObject<IndexSetType,EntityType> , EntityType >
 {
+  typedef LocalInterface<EntityType> LocalIndexSetObjectsType;
 private:
   // the dof set stores number of dofs on entity for each codim
   IndexSetType & indexSet_;
@@ -394,10 +395,37 @@ private:
   InsertIndicesToSet   <IndexSetType,EntityType> insertIdxObj_;
   RemoveIndicesFromSet <IndexSetType,EntityType> removeIdxObj_;
 
+  LocalIndexSetObjectsType & indexSetList_; 
+  LocalIndexSetObjectsType & insertList_; 
+  LocalIndexSetObjectsType & removeList_; 
 public:  
   // Constructor of MemObject, only to call from DofManager 
-  IndexSetObject ( IndexSetType & iset ) : indexSet_ (iset) 
-   , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_) {} 
+  IndexSetObject ( IndexSetType & iset 
+      , LocalIndexSetObjectsType & indexSetList
+      , LocalIndexSetObjectsType & insertList 
+      , LocalIndexSetObjectsType & removeList) : indexSet_ (iset) 
+   , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_) 
+   , indexSetList_(indexSetList) 
+   , insertList_(insertList) 
+   , removeList_(removeList)
+  {
+    indexSetList_ += *this;
+    if( indexSet_.needsCompress() ) 
+    {
+      insertList_ += insertIdxObj_; 
+      removeList_ += removeIdxObj_;
+    }
+  } 
+
+  ~IndexSetObject () 
+  {
+    indexSetList_.remove( *this );
+    if( indexSet_.needsCompress() ) 
+    {
+      insertList_.remove( insertIdxObj_ ); 
+      removeList_.remove( removeIdxObj_ );
+    }
+  }
 
   //! wrap resize of index set 
   void resize () 
@@ -438,18 +466,6 @@ public:
   virtual void write_xdr(const char * filename, int timestep) const
   {
     indexSet_.write_xdr(filename,timestep);
-  }
-   
-  //! return reference to insertObj
-  InsertIndicesToSet<IndexSetType,EntityType> & insertIndexObj() 
-  {
-    return insertIdxObj_; 
-  }
-  
-  //! return reference to removeObj
-  RemoveIndicesFromSet<IndexSetType,EntityType> & removeIndexObj() 
-  {
-    return removeIdxObj_;    
   }
 };
 
@@ -1255,18 +1271,10 @@ addIndexSet (const GridType &grid, IndexSetType &iset)
   
   if(!indexSet) 
   { 
-    indexSet = new IndexSetObjectType ( iset );
+    indexSet = new IndexSetObjectType ( iset, indexSets_ , insertIndices_ , removeIndices_  );
       
     IndexSetObjectInterface * iobj = indexSet;
     indexList_.push_back( iobj );
-    indexSets_ += *indexSet;
-
-    // if index doesn't need to be resized after adaptation, do't include
-    // into list of dof manager 
-    if( ! iset.needsCompress() ) return ;
-  
-    insertIndices_ += (*indexSet).insertIndexObj();
-    removeIndices_ += (*indexSet).removeIndexObj();
   }
   return ; 
 }
