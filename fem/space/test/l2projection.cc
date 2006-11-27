@@ -96,7 +96,7 @@ class L2Projection
   template <class FunctionType>
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc, int polOrd) 
   {
-    typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
 
     const DiscreteFunctionSpaceType& space =  discFunc.space();
@@ -112,7 +112,7 @@ class L2Projection
     for(Iterator it = space.begin(); it != endit ; ++it) 
     {
       // Get quadrature rule
-      CachingQuadrature<GridType,0> quad(*it, polOrd);
+      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
 
       LocalFuncType lf = discFunc.localFunction(*it);
 
@@ -161,7 +161,7 @@ public:
   {
     const DiscreteFunctionSpaceType & space = discFunc.space();
 
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
@@ -175,7 +175,7 @@ public:
     IteratorType endit = space.end();
     for(IteratorType it = space.begin(); it != endit ; ++it)
     {
-      CachingQuadrature<GridType,0> quad(*it, polOrd);
+      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
       LocalFuncType lf = discFunc.localFunction(*it);
       const int quadNop = quad.nop();
       for(int qP = 0; qP < quadNop; ++qP)

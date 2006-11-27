@@ -40,12 +40,12 @@ namespace Dune{
 					      polOrd,
 					      StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename FunctionSpaceType :: GridType GridType;
+  typedef typename FunctionSpaceType :: GridPartType GridPartType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
-  typedef CachingQuadrature<GridType,0> QuadratureType;
+  typedef CachingQuadrature<GridPartType,0> QuadratureType;
   typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
  public:  
   //! Constructor
@@ -165,12 +165,12 @@ private:
 					       0,
 					       StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename FunctionSpaceType ::GridType GridType;
+  typedef typename FunctionSpaceType ::GridPartType GridPartType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
-  typedef CachingQuadrature<GridType,0> QuadratureType;
+  typedef CachingQuadrature<GridPartType,0> QuadratureType;
   public:  
   //! Constructor
   RestrictProlongDefault ( DiscreteFunctionType & df ) : 
