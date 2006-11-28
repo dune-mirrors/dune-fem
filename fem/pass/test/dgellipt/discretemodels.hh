@@ -13,7 +13,6 @@
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/grid/common/gridpart.hh>
-//#include "dune/fem/quadrature/cachingquad.hh"
 #include <dune/grid/common/referenceelements.cc>
 #include <dune/fem/quadrature/cachequad.hh>
 
@@ -24,6 +23,9 @@
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #endif
 #include <dune/fem/operator/inverseoperators.hh>
+
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
+#include <dune/fem/space/common/adaptiveleafgridpart.hh>
 
 //*************************************************************
 namespace LDGExample {  
@@ -39,11 +41,14 @@ namespace LDGExample {
     enum { dimDomain = Model::Traits::dimDomain };
     
     //typedef LeafGridPart<GridType, All_Partition > GridPartType;
-    typedef LeafGridPart<GridType> GridPartType;
+    typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
+    //typedef AdaptiveLeafGridPart<GridType> GridPartType;
     //typedef HierarchicGridPart<GridType> GridPartType;
 
-    typedef CachingQuadrature<GridType,0> VolumeQuadratureType;
-    typedef CachingQuadrature<GridType,1> FaceQuadratureType;
+    typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
+    typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
+    //typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
+    //typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
     
     // typical tpye of space 
     typedef FunctionSpace<double, double, dimDomain, dimRange > SingleFunctionSpaceType; 
@@ -148,7 +153,7 @@ namespace LDGExample {
     const Model & data () const { return model_; }
 
     bool preconditioning () const { return preCon_; }
-    bool hasSource() const { return true; }
+    bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
 
     template <class ArgumentTuple> 
@@ -425,8 +430,8 @@ namespace LDGExample {
                         const double time, 
                         const FaceDomainType& local,
                         const ArgumentTuple& uLeft,
-                        RangeType & sigmaLeft, 
-                        RangeType & gLeft) const 
+                        RangeType & sigmaLeft ) const 
+                      //, RangeType & gLeft) const 
     {
       // calculate unit normal and face volume  
       DomainType unitNormal = it.integrationOuterNormal(local);
@@ -461,11 +466,6 @@ namespace LDGExample {
                                  tmpLeft,tmpLeft, 
                                  sigmaLeft,sigmaRight);
       
-      // don't apply stabilization at boundary 
-      numflux_.sigmaFluxStability(unitNormal,faceVol,
-                                  tmpLeft,tmpLeft, 
-                                  gLeft,gRight);
-
       return 0.0;
     }
 
