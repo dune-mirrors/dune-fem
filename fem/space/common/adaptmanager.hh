@@ -144,10 +144,10 @@ public:
       dm_.resizeForRestrict();
       
       typedef typename DofManagerType :: IndexSetRestrictProlongType IndexSetRPType;
-      // typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
-      // COType tmpop ( dm_.indexSetRPop() , rpOp_ );
-      typedef CombineInterface<RestrictProlongPair,IndexSetRPType&,RestProlOperatorImp&> COType;
+      typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
       COType tmpop ( dm_.indexSetRPop() , rpOp_ );
+      //typedef CombineInterface<RestrictProlongPair,IndexSetRPType&,RestProlOperatorImp&> COType;
+      //COType tmpop ( dm_.indexSetRPop() , rpOp_ );
 
       typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
 
@@ -175,9 +175,9 @@ public:
       typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
 
       // make run through grid 
-      LevelIterator endit = grid_.template lend<0>   ( 0 );
-      for(LevelIterator it    = grid_.template lbegin<0> ( 0 );
-            it != endit; ++it )
+      LevelIterator endit = grid_.template lend<0> ( 0 );
+      for(LevelIterator it = grid_.template lbegin<0> ( 0 );
+          it != endit; ++it )
       {
         hierarchicProlong( *it , tmpop );
       }
@@ -212,9 +212,10 @@ private:
       
       for( ; it != endit; ++it)
       {
-        if( (*it).mightBeCoarsened() )
+        EntityType & son = *it;
+        if( son.mightBeCoarsened() )
         {
-          restop.restrictLocal( en , *it, initialize);     
+          restop.restrictLocal( en , son, initialize);     
           initialize = false;
         }
       }
@@ -229,13 +230,14 @@ private:
     bool initialize = true;
     
     HierarchicIterator endit  = en.hend  ( grid_.maxLevel() );
-    for(HierarchicIterator it = en.hbegin( grid_.maxLevel() ) ; 
+    for(HierarchicIterator it = en.hbegin( grid_.maxLevel() ); 
         it != endit; ++it)
     {
       assert( !en.isLeaf() );
-      if( (*it).wasRefined() )
+      EntityType & son = *it; 
+      if( son.wasRefined() )
       {
-        prolop.prolongLocal( *(it->father()), *it , initialize );     
+        prolop.prolongLocal( *(son.father()), son , initialize );     
         initialize = false;
       }
     }
