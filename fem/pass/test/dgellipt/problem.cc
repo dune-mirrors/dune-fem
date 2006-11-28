@@ -3,16 +3,16 @@
 
 #include <math.h>
 
-#define PROBLEM 6
+#define PROBLEM 7
 
 // shift solutions to avoid dirichlet 0 bnd 
 static const double globalShift = 2.0;
 
 double exactFactor() 
 {
-  return 1.0/(5.24*1e5);
+  //return 1.0/(5.24*1e5);
   //return 2.0;
-  //return 1.;
+  return 1.;
   //return (5.24*1e5);
 }
 
@@ -48,6 +48,15 @@ double coscos(const double x[dim])
   double cos_y = cos(2.0*M_PI*x[1]);
        
   double val = -8.0 * M_PI*M_PI* cos_x * cos_y ;
+  return -val;
+}
+
+double coscosHalf(const double x[dim]) 
+{
+  double cos_x = cos(0.5*M_PI*x[0]);
+  double cos_y = cos(0.5*M_PI*x[1]);
+       
+  double val = -0.5 * M_PI*M_PI* cos_x * cos_y ;
   return -val;
 }
 
@@ -87,6 +96,10 @@ double rhsFunction(const double x[dim])
 
 #if PROBLEM == 6 
   val = expProblemRhs( x ); 
+#endif
+
+#if PROBLEM == 7
+  val = coscosHalf( x );
 #endif
 
   val *= exactFactor();
@@ -169,6 +182,10 @@ double exactSolution(const double x[dim])
   val = exactExpProblem( x );
 #endif
 
+#if PROBLEM == 7
+  val = cos(0.5*M_PI*x[0]) * cos(0.5*M_PI*x[1]);
+#endif
+
   val += globalShift;
   return val;
 }
@@ -212,6 +229,12 @@ void exactGradient(const double x[dim], double grad[dim])
 #if PROBLEM == 5 
   grad[0] = grad[1] = 0.0; 
 #endif
+  
+#if PROBLEM == 7
+  grad[0] = 0.5*M_PI*-sin(0.5*M_PI*x[0])*cos(0.5*M_PI*x[1]);
+  grad[1] = 0.5*M_PI*cos(0.5*M_PI*x[0])*-sin(0.5*M_PI*x[1]);
+#endif
+
   for(int i=0; i<dim; ++i) grad[i] *= exactFactor();
 }
 
@@ -224,7 +247,7 @@ bool boundaryDataFunction(const double x[dim], double & val)
 {
 #if PROBLEM == 1 
   val = exactSolution( x ); 
-  if(x[0] <= 0.0) return false;
+  //if(x[0] <= 0.0) return false;
   return true; 
 #endif
 
@@ -263,8 +286,13 @@ bool boundaryDataFunction(const double x[dim], double & val)
 #endif
 
 #if PROBLEM == 6 
-  val = exactExpProblem( x ); 
-  val += globalShift;
+  val = exactSolution( x ); 
+  return true; 
+#endif
+
+#if PROBLEM == 7
+  val = exactSolution( x ); 
+  if(x[0] <= 0.0) return false;
   return true; 
 #endif
 
