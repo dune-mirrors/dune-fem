@@ -198,25 +198,6 @@ namespace Dune {
                                     uPartLeft, uPartRight);
     }
 
-    // Ensure: entities set correctly before call
-    double boundaryFlux(const IntersectionIterator& nit,
-                        const FaceQuadratureType& quadInner, 
-                        const int quadPoint,
-                        RangeType & sigmaPartLeft, 
-                        RangeType & uPartLeft)
-    {
-      // evaluate data functions 
-      evaluateQuad(data_->self(), quadInner, quadPoint,
-                   data_->localFunctionsSelf(), valuesEn_);
-      
-      return problem_.boundaryFlux(nit, time_, 
-                                   quadInner.localPoint(quadPoint),
-                                   valuesEn_, 
-                                   sigmaPartLeft,
-                                   uPartLeft);
-    }
-
-
     template <class IntersectionIterator, class FaceDomainType>
     double boundaryFlux(IntersectionIterator& nit,
                         const FaceDomainType& x,

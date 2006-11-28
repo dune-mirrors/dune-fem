@@ -1,23 +1,25 @@
 #ifndef DUNE_ELLIPTPASS_HH
 #define DUNE_ELLIPTPASS_HH
 
+//- system includes 
+#include <set>
+
+//- Dune includes 
+#include <dune/common/typetraits.hh>
+#include <dune/common/fvector.hh>
+#include <dune/grid/common/grid.hh>
+#include <dune/grid/utility/twistutility.hh>
+
+//- local includes 
 #include <dune/fem/pass/pass.hh>
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/modelcaller.hh>
 
-// * needs to move
 #include <dune/fem/misc/timeutility.hh>
-
-#include <dune/common/fvector.hh>
-#include <dune/grid/common/grid.hh>
-#include <dune/grid/utility/twistutility.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
-
-#include <dune/common/typetraits.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
 #include <dune/fem/discretefunction/common/dfcommunication.hh>
-
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
@@ -408,8 +410,15 @@ namespace Dune {
     }
 
     //! rebuild matrix after adaptation 
-    void reBuildMatrix(const ArgumentType & arg, DestinationType & rhs)
+    void reBuildMatrix(const ArgumentType & arg, DestinationType & rhs,
+        bool check )
     {
+      if( check && entityMarker_.empty() ) 
+      {
+        buildMatrix( arg, rhs );
+        return ;
+      } 
+      
       // set dest to rhs 
       dest_ = &rhs;
 
@@ -938,12 +947,11 @@ namespace Dune {
             }
 
             {
-              RangeType fluxEn;
               RangeType sigmaFluxEn; 
               
               caller_.boundaryFlux(nit, // intersection iterator 
                                    faceQuadInner,l, // quad and point number 
-                                   sigmaFluxEn, fluxEn );
+                                   sigmaFluxEn);
                 
               for(int i=0; i<gradientNumDofs; ++i)
               { 
@@ -1006,9 +1014,9 @@ namespace Dune {
                         double stabvalen=0.0;
                         
                         // note that only gLeft is used here 
-                        RangeType fluxEnTmp =  fluxEn[0] * phi_[0];  
+                        RangeType fluxEnTmp = phi_[0];  
                         
-                        stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,fluxEnTmp) * intel;
+                        stabvalen = bsetEn.evaluateSingle(k, faceQuadInner, l,fluxEnTmp) * bndFactor;
                         
                         stabvalen *= gradSource_[0];
                         //stabvalen *= fMat_[0][0];
@@ -1580,7 +1588,7 @@ namespace Dune {
         // for unstructured grids we can use the re-build method 
         if(Capabilities::IsUnstructured<GridType>::v)
         {
-          op_.reBuildMatrix( arg, rhs_ );
+          op_.reBuildMatrix( arg, rhs_ , true );
         }
         else 
         {
