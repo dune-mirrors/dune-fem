@@ -238,7 +238,7 @@ public:
   static const double eps = 1e-10;
   static const double q = 1.0; // q>0 => non-unit diffusivity
   static const double r = 1.0; // r>0 => mass term activated 
-  static const double s = 0.000; // 0.001; // s>0 => convective term activated
+  static const double s = 1.0; // 0.001; // s>0 => convective term activated
   
 //  typedef typename TraitsType::EntityType EntityType;
 //  typedef typename TraitsType::ElementQuadratureType ElementQuadratureType;
@@ -270,7 +270,8 @@ public:
   inline TraitsType::BoundaryType boundaryType(EntityType& en, 
 					       QuadratureType& quad, int p)
         {
-#if 1 // temporary check: only Dirichlet Bnd
+#if 1 // Full problem: Dirichlet, Neuman and Dirichlet-boundary
+//#if 0 // temporary check: only Dirichlet Bnd
 	  const DomainType& glob = en.geometry().global(quad.point(p)); 
 	  if (glob[0]<eps)
 	    return TraitsType::Neumann;
@@ -356,8 +357,8 @@ public:
                    DomainType& ret)
         {
           const DomainType& glob = en.geometry().global(quad.point(p));     
-	  ret[0] = - glob[1] * s;
-	  ret[1] = - glob[1] * s;
+	  ret[0] = - glob[1] * s * phi[0];
+	  ret[1] = - glob[1] * s * phi[0];
         }
 
   //! the coefficient for robin boundary condition
@@ -560,9 +561,9 @@ public:
                    DomainType& ret)
         {
           const DomainType& glob = en.geometry().global(quad.point(p));     
-	  ret[0] = - glob[1];
-	  ret[1] = - glob[1];
-	  ret[2] = - glob[1];
+	  ret[0] = - glob[1]*phi[0];
+	  ret[1] = - glob[1]*phi[0];
+	  ret[2] = - glob[1]*phi[0];
         }
 
   //! the coefficient for robin boundary condition

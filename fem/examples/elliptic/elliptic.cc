@@ -19,6 +19,8 @@
 **
 **              Dune grid parser is used. For changing grid-types, compile with
 **
+**         FOR POISSON:
+**
 **              make clean
 **
 **              and one of the following
@@ -36,6 +38,39 @@
 **              make GRIDTYPE=ALUGRID_SIMPLEX
 **                   Compilieren OK, EOC 1.97 bis 2.000
 **
+**         FOR ELLIPTIC2D:
+**
+**              make clean
+**
+**              and one of the following
+**
+**              make
+**              make GRIDTYPE=YASPGRID       (default)
+**                   YASPGRID: EOC non-informative, as error is immediately small (~1e-14)
+**              make GRIDTYPE=SGRID
+**                   EOC is about 1, very large error at beginning
+**              make GRIDTYPE=ALBERTAGRID
+**                   EOC is about 2, very nice convergence
+**              make GRIDTYPE=ALUGRID_SIMPLEX
+**                   EOC is about 2, very nice convergence
+**                   results seem identical to ALBERTAGRID
+**
+**         FOR ELLIPTIC3D:
+**
+**              make clean
+**
+**              and one of the following
+**
+**              make
+**              make GRIDDIM=3 GRIDTYPE=YASPGRID       (default)
+**                   YASPGRID: EOC non-informative, as error is immediately small (~1e-14)
+**              make GRIDDIM=3 GRIDTYPE=SGRID
+**                   YASPGRID: EOC non-informative, as error is immediately small (~1e-14)
+**              make GRIDDIM=3 GRIDTYPE=ALBERTAGRID
+**                   EOC fine, going down from 3 to 2 with refinement
+**              make GRIDDIM=3 GRIDTYPE=ALUGRID_SIMPLEX
+**                   terminate called after throwing an instance of 'Dune::FMatrixError'
+**
 **************************************************************************/
 
 #include <iostream>
@@ -45,6 +80,12 @@
 // select problem Type by uncommenting one of the two following
 //#define POISSON
 #define ELLIPTIC
+
+// select, whether Kronecker-Treatment of Matrix should be performed
+//#define ACTIVATE_KRONECKER_TREATMENT 0
+#define ACTIVATE_KRONECKER_TREATMENT 1
+
+
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
@@ -302,6 +343,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    std::cout << "assembled Rhs with Dirichlet treatment\n";
 
    // if symmetrization of system is wanted, execute the following
+#if ACTIVATE_KRONECKER_TREATMENT
    elliptOp.matrixKroneckerColumnsTreatment();
    std::cout << "finished matrix Kronecker column treatment\n";
 
@@ -309,6 +351,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    elliptOp.rhsKroneckerColumnsTreatment(rhs);
    std::cout << "finished Rhs Kronecker column treatment\n";
+#endif
    
    bool verbose = true; 
    double dummy = 12345.67890;
@@ -365,7 +408,7 @@ int main (int argc, char **argv)
 #if PDIM == 2
   std::string macroGridName ("square.dgf");
 #else
-  std::string macroGridName ("square_cube.dgf");
+  std::string macroGridName ("cube.dgf");
 #endif
 
   std::cout << "loading dgf " << macroGridName << "\n";
