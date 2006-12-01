@@ -120,21 +120,24 @@ namespace Dune {
       dm.addIndexSet(gridPart.grid(), 
                      const_cast<IndexSetType&>(gridPart.indexSet()));
 
-      // get types for codim 0  
-      const std::vector<GeometryType>& geomTypes =
-                  gridPart.indexSet().geomTypes(0) ;
-
       int maxNumDofs = -1;
-      // create mappers and base sets for all existing geom types
-      for(size_t i=0; i<geomTypes.size(); ++i)
+      for(int cd=0; cd<2; ++cd)
       {
-        GeometryIdentifier::IdentifierType id =
-                    GeometryIdentifier::fromGeo(geomTypes[i]);
-        
-        if(baseFuncSet_[id] == 0 ) 
+        // get types for codim 0  
+        const std::vector<GeometryType>& geomTypes =
+                    gridPart.indexSet().geomTypes(cd) ;
+
+        // create mappers and base sets for all existing geom types
+        for(size_t i=0; i<geomTypes.size(); ++i)
         {
-          baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
-          maxNumDofs = std::max(maxNumDofs,baseFuncSet_[id]->numBaseFunctions());
+          GeometryIdentifier::IdentifierType id =
+                      GeometryIdentifier::fromGeo(geomTypes[i]);
+        
+          if(baseFuncSet_[id] == 0 ) 
+          {
+            baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
+            maxNumDofs = std::max(maxNumDofs,baseFuncSet_[id]->numBaseFunctions());
+          }
         }
       }
 
@@ -175,6 +178,16 @@ namespace Dune {
     DFSpaceIdentifier type () const 
     {
       return DGSpace_id;
+    }
+  
+    //! Get base function set for a given entity
+    template<class Geometry>
+    const BaseFunctionSetType&
+    subBaseFunctionSet (const Geometry & geo) const 
+    {
+      GeometryIdentifier::IdentifierType id = 
+        GeometryIdentifier::fromGeometry(geo);
+      return this->baseFunctionSet(id);
     }
   
     //! Get base function set for a given entity
