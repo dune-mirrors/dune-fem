@@ -42,6 +42,7 @@ namespace DuneODE {
 #include "ode/gmres.cpp"
 #include "ode/fgmres.cpp"
 #include "ode/bicgstab.cpp"
+#include "ode/cg.cpp"
 #include "ode/vector.cpp"
 
 // use Dennis namespace pardg
@@ -105,6 +106,7 @@ class ExplTimeStepper : public TimeProvider {
     savestep_(1),
     savetime_(0.0)
   {
+    assert( cfl_ <= 1.0 );
     op.timeProvider(this);
     switch (pord) {
     case 1: ode_=new ExplicitEuler(comm_,expl_); break;
