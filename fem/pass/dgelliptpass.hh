@@ -321,8 +321,10 @@ namespace Dune {
       phiNeigh_(0.0),
       grads_(0.0),
       time_(0),
-      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*spc_.order()) : volumeQuadOrd ),
-      faceQuadOrd_( (faceQuadOrd < 0) ? (2*spc_.order()+1) : faceQuadOrd ),
+      elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
+      faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
+      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*elemOrder_) : volumeQuadOrd ),
+      faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_) : faceQuadOrd ),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
       entityMarker_(),
       matrixAssembled_(false)                                                              
@@ -926,7 +928,7 @@ namespace Dune {
           {
             //const DomainType integrationNormal = nit.integrationOuterNormal(faceQuadInner.localPoint(l));
             DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
-            double faceVol = unitNormal.two_norm();
+            const double faceVol = unitNormal.two_norm();
             unitNormal *= 1.0/faceVol;
             
             const double bndFactor = faceQuadInner.weight(l) * massVolElInv;
@@ -1432,6 +1434,7 @@ namespace Dune {
     TimeProvider* time_;
 
 
+    const int elemOrder_,faceOrder_;
     int volumeQuadOrd_,faceQuadOrd_;
 
     mutable MatrixHandlerType matrixHandler_;
