@@ -142,11 +142,12 @@ public:
       SigmaRangeType right(uRight); 
       
       const double scaling = beta_ * std::pow(faceVol,power_);
+      //const double scaling = beta_ * faceVol;
 
       left  *= scaling;
       right *= scaling;
 
-      gLeft  += left;
+      gLeft  -= left;
       gRight += right;
     }
     return 0.0;
