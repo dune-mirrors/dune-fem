@@ -8,13 +8,19 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
+/*
 #ifndef HAVE_ALBERTA_FOUND
 #ifdef HAVE_ALBERTA
 #if HAVE_ALBERTA 
 #define HAVE_ALBERTA_FOUND
+#warning "Use ALBERTA quadratures!"
 #endif
 #endif
 #endif
+*/
+
+// undef HAVE_ALBERTA_FOUND, because quaratures boogie  
+#undef HAVE_ALBERTA_FOUND
 
 #ifdef HAVE_ALBERTA_FOUND
 // inlcude albertagrid.hh includes the needed alberta.h 

@@ -81,101 +81,14 @@ namespace Dune {
     double refVol_;
   };
 
-  /* Not used: UGSimplexPointsAdapter does the same
-  class UGTrianglePointsAdapter {
-  public:
-    enum { dim = 2 };
-    enum { numCorners = 3 };
-    typedef UG_Quadratures::QUADRATURE UGQuadratureType;
-    typedef FieldVector<double, dim> CoordinateType;
 
-  public:
-    UGTrianglePointsAdapter(int order) :
-      quad_(0) 
-    {
-      quad_ = UG_Quadratures::GetQuadratureRule(dim, numCorners, order);
-    }
-
-    int numPoints() const 
-    {
-      return quad_->nip;
-    }
-
-    int order() const 
-    {
-      return quad_->order;
-    }
-
-    CoordinateType point(int i) const 
-    {
-      assert(i >= 0; i < numPoints());
-      CoordinateType result;
-      result[0] = quad_->local[i][0];
-      result[1] = quad_->local[i][1];
-      return result;
-    }
-
-    double weight(int i) const 
-    {
-      assert(i >= 0; i < numPoints());
-      // scale with volume of reference element!
-      return 0.5*quad_->weight[i];
-    }
-    
-  private:
-    const UGQuadratureType* ugQuad_;
-  };
-
-  class UGTetrahedronPointsAdapter {
-  public:
-    enum { dim = 2 };
-    enum { numCorners = 3 };
-    typedef UG_Quadratures::QUADRATURE UGQuadratureType;
-    typedef FieldVector<double, dim> CoordinateType;
-
-  public:
-    UGTetrahedronPointsAdapter(int order) :
-      quad_(0) 
-    {
-      quad_ = UG_Quadratures::GetQuadratureRule(dim, numCorners, order);
-    }
-
-    int numPoints() const 
-    {
-      return quad_->nip;
-    }
-
-    int order() const 
-    {
-      return quad_->order;
-    }
-
-    CoordinateType point(int i) const 
-    {
-      assert(i >= 0; i < numPoints());
-      CoordinateType result;
-      result[0] = quad_->local[i][0];
-      result[1] = quad_->local[i][1];
-      result[2] = quad_->local[i][2];
-      return result;
-    }
-
-    double weight(int i) const 
-    {
-      assert(i >= 0; i < numPoints());
-      // scale with volume of reference element!
-      return 0.166666666666666666666667*quad_->weight[i];
-    }
-  private:    
-    const UGQuadratureType* ugQuad_;
-  };
-  */
-
+  //! check this implementation, does not work with 
+  //! cached quadrature 
   template <int dim>
   class AlbertaSimplexPointsAdapter {
   public:
     enum { numCorners = dim+1 };
-#if HAVE_ALBERTA 
+#ifdef HAVE_ALBERTA_FOUND
     typedef ALBERTA QUAD AlbertaQuadratureType;
 #else 
     struct QUAD {
@@ -193,7 +106,7 @@ namespace Dune {
     AlbertaSimplexPointsAdapter(int order) :
       quad_(0)
     {
-#if HAVE_ALBERTA 
+#ifdef HAVE_ALBERTA_FOUND
       quad_ = get_quadrature(dim,order);  
 #endif
       assert( quad_ );
@@ -208,7 +121,6 @@ namespace Dune {
     int order() const 
     {
       assert( quad_ );
-      //std::cout << "Order = " << quad_->degree << "\n";
       return quad_->degree;
     }
 
@@ -217,12 +129,12 @@ namespace Dune {
       assert(i >= 0 && i < numPoints());
       assert( quad_ );
       CoordinateType result;
-      for (size_t j = 0; j < dim; ++j) {
+      for (size_t j = 0; j < dim; ++j) 
+      {
         // lambda is of dim+1 length, 
         // but we jsut drop the last coordinate
         result[j] = quad_->lambda[i][j];
       }
-      //std::cout << result << " result \n";
       return result;
     }
 
