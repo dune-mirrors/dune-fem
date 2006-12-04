@@ -298,7 +298,7 @@ namespace Dune {
       gradTmp_("FEPass::gradTmp",gradientSpace_),
       gradRhs_("FEPass::gradRhs",gradientSpace_),
       massTmp_(0),
-      multTmp_("FEPass::multTmp",spc_),
+      //multTmp_("FEPass::multTmp",spc_),
       diag_(0),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
@@ -332,6 +332,9 @@ namespace Dune {
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
+
+      // need for multTmpPointer 
+      assert( spc_.size() <= gradientSpace_.size() );
 
       if(gradProblem_.hasSource())
       {
@@ -400,9 +403,9 @@ namespace Dune {
       } 
 
       // adjust rhs 
-      double * multTmpPointer  = multTmp_.leakPointer();
-      matrixHandler_.divMatrix().multOEM(rhsPtr,multTmpPointer );
-
+      double * multTmpPointer = gradTmp_.leakPointer();
+      matrixHandler_.divMatrix().multOEM(rhsPtr, multTmpPointer);
+      
       double * singleRhsPtr = rhs.leakPointer();
       const int singleSize = spc_.size();
       for(register int i=0; i<singleSize; ++i) 
@@ -515,7 +518,7 @@ namespace Dune {
       } 
 
       // adjust rhs 
-      double * multTmpPointer  = multTmp_.leakPointer();
+      double * multTmpPointer = gradTmp_.leakPointer();
       matrixHandler_.divMatrix().multOEM(rhsPtr,multTmpPointer );
 
       double * singleRhsPtr = rhs.leakPointer();
@@ -563,7 +566,6 @@ namespace Dune {
     //! do matrix vector multiplication, used by OEM-Solver and DuneODE Solvers  
     void multOEM(const double * arg, double * dest) const
     {
-      double * multTmpPointer = multTmp_.leakPointer();
       double * gradTmpPointer = gradTmp_.leakPointer();
       
       communicate( arg );
@@ -585,14 +587,10 @@ namespace Dune {
         gradCommunicate_.exchange( gradTmp_ );
       }
 
-      matrixHandler_.divMatrix().multOEM(gradTmpPointer, multTmpPointer );
-      matrixHandler_.stabMatrix().multOEM(arg,dest);
-      
-      const int size = spc_.size();
-      for(register int i=0; i<size; ++i) 
-      {
-        dest[i] += multTmpPointer[i];
-      }
+      // calc dest = divMatrix * gradTmp 
+      matrixHandler_.divMatrix().multOEM(gradTmpPointer, dest );
+      // calc dest += stabMatrix * arg 
+      matrixHandler_.stabMatrix().multOEMAdd(arg,dest);
     }
 
   private:   
@@ -1403,7 +1401,7 @@ namespace Dune {
     mutable GradDestinationType gradTmp_; 
     mutable GradDestinationType gradRhs_; 
     mutable GradDestinationType * massTmp_; 
-    mutable DestinationType multTmp_;
+    //mutable DestinationType multTmp_;
     mutable DestinationType * diag_;
     mutable double dtMin_;
   
