@@ -48,16 +48,11 @@ reserve(int rows, int cols, int nz,const T& val )
   assert( col_ );
   assert( nonZeros_ );
 
-  for(int i=0; i<rows*nz; ++i)
-  { 
-    values_[i] = val;
-    col_[i] = defaultCol;
-  }
-  int newNZ = nz + firstCol;
-  for(int i=0; i<rows; ++i) nonZeros_[i] = newNZ; 
-
   dim_[0] = rows;
   dim_[1] = cols;
+
+  // set all values to default values 
+  clear();
 
   memSize_ = rows;
   nz_ = nz;
@@ -130,12 +125,18 @@ SparseRowMatrix(int rows, int cols, int nz, const T& val)
 template <class T> 
 T SparseRowMatrix<T>::operator()(int row, int col) const
 {
-  for (int i=0; i<nz_; i++)
+  assert( row >= 0 );
+  assert( row < dim_[0] );
+
+  const int nonZ = nonZeros_[row]; 
+  int thisCol = row*nz_;
+  for (int i=firstCol; i<nonZ; ++i)
   { 
-    if(col_[row*nz_ +i] == col)
+    if(col_[thisCol] == col)
     {
-      return values_[row*nz_ +i];
+      return values_[thisCol];
     }
+    ++thisCol; 
   }
   return 0;
 }
@@ -143,13 +144,20 @@ T SparseRowMatrix<T>::operator()(int row, int col) const
 template <class T> 
 int SparseRowMatrix<T>::colIndex(int row, int col)
 {
+  assert( row >= 0 );
+  assert( row < dim_[0] );
+
   int whichCol = defaultCol;
   int thisCol = 0;
   for(int i=firstCol; i<nz_; ++i)
   {
     thisCol = col_[row*nz_ +i];
     if(col == thisCol) return i;
-    if(thisCol == defaultCol ) return i;
+    if(thisCol == defaultCol ) 
+    {
+      ++nonZeros_[row];
+      return i;
+    }
   }
   
   if(whichCol == defaultCol ) 
@@ -185,16 +193,22 @@ void SparseRowMatrix<T>::clear()
     values_ [i] = 0;
     col_[i] = defaultCol;
   }
+  for(register int i=0; i<dim_[0]; ++i)
+  {
+    nonZeros_[i] = 0;
+  }
 }
 
 template <class T> 
 void SparseRowMatrix<T>::clearRow(int row)
 {
-  int col = row * nz_;
   assert( nonZeros_ );
   assert( values_ );
   assert( col_ );
-  nonZeros_[row] = nz_;
+
+  nonZeros_[row] = firstCol;
+  
+  int col = row * nz_;
   for(int i=0; i<nz_; ++i)
   {
     values_ [col] = 0;
@@ -230,7 +244,10 @@ void SparseRowMatrix<T>::resortRow(const int row)
    
   // set number of non zeros for row 
   const int nZero = newIndices_.size();
-  nonZeros_[row] = nZero;
+
+  // nonZeros should be already at right size 
+  assert( nonZeros_[row] == nZero );
+  //nonZeros_[row] = nZero;
   //std::cout << "found nz = " << nZero << "\n";
 
   // make values cache efficient 
@@ -321,6 +338,27 @@ void SparseRowMatrix<T>::multOEM(const VECtype *x, VECtype *ret) const
 }
 
 template <class T> template <class VECtype>
+void SparseRowMatrix<T>::multOEMAdd(const VECtype *x, VECtype *ret) const
+{
+  for(register int row=0; row<dim_[0]; ++row)
+  {
+    T sum = 0;
+    int thisCol = row*nz_ + firstCol ;
+    const T * localValues = &values_[thisCol];
+    const int nonZero = nonZeros_[row];
+    for(int col = firstCol ; col<nonZero; ++col)
+    {
+      int realCol = col_[ thisCol ];
+      assert( realCol > defaultCol );
+      sum += localValues[col] * x[ realCol ];
+      ++thisCol; 
+    }
+    ret[row] += sum;
+  }
+  return; 
+}
+
+template <class T> template <class VECtype>
 void SparseRowMatrix<T>::multOEM_t(const VECtype *x, VECtype *ret) const
 {
   for(register int col=0; col<dim_[1]; ++col)
@@ -349,6 +387,9 @@ void SparseRowMatrix<T>::multOEM_t(const VECtype *x, VECtype *ret) const
 template <class T> template <class DiscFType , class DiscFuncType>
 void SparseRowMatrix<T>::apply(const DiscFType &f, DiscFuncType &ret) const 
 {
+  multOEM(f.leakPointer(),ret.leakPointer());
+  /*
+  
   typedef typename DiscFuncType::DofIteratorType DofIteratorType;  
   typedef typename DiscFuncType::ConstDofIteratorType ConstDofIteratorType;  
 
@@ -361,7 +402,12 @@ void SparseRowMatrix<T>::apply(const DiscFType &f, DiscFuncType &ret) const
   {
     (*ret_it) = 0.0;
     
+    T sum = 0;
+    int thisCol = row*nz_ + firstCol ;
+
     //! DofIteratorType schould be the same 
+    const T * localValues = &values_[thisCol];
+    const int nonZero = nonZeros_[row];
     for(int col=firstCol; col<nz_; col++)
     {
       int thisCol = row*nz_ + col;
@@ -373,6 +419,7 @@ void SparseRowMatrix<T>::apply(const DiscFType &f, DiscFuncType &ret) const
 
     ++ret_it;
   } 
+  */
 
   return; 
 }
@@ -502,14 +549,16 @@ void SparseRowMatrix<T>::getDiag(const ThisType & mass,
   for(int row=0; row<this->size(0); row++)
   {
     T sum = 0.0;
-    for(register int col=0; col<nz_; ++col)
+    int thisCol = row*nz_;
+    const T * localValues = &values_[thisCol];
+    const int nZeros = nonZeros_[row];
+    for(register int col=0; col<nZeros; ++col)
     {
-      int thisCol = row*nz_ + col;
       int realCol = col_[ thisCol ];
-      if ( realCol < 0 ) continue;
-      
+      assert( realCol != defaultCol );
       double diag = mass(realCol,realCol);
-      sum += diag * values_[ thisCol ] * B(realCol,row);
+      sum += diag * localValues[col] * B(realCol,row);
+      ++thisCol;
     }
 
     (*it) = sum;

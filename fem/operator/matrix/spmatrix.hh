@@ -175,6 +175,10 @@ public:
   template <class VECtype> 
   void multOEM(const VECtype *x, VECtype * ret) const;
 
+  //! calculates ret += A * x 
+  template <class VECtype> 
+  void multOEMAdd(const VECtype *x, VECtype * ret) const;
+
   //! same as apply A^T * x = ret, used by OEM-Solvers 
   template <class VECtype> 
   void multOEM_t(const VECtype *x, VECtype * ret) const;
