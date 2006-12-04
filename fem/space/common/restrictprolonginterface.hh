@@ -99,11 +99,12 @@ template <class DiscreteFunctionType>
 {
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-  typedef typename DiscreteFunctionType::GridType GridType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType SpaceType; 
+  typedef typename SpaceType :: GridPartType GridPartType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
-  typedef ElementQuadrature<GridType,0> BaryQuadType;
+  typedef ElementQuadrature<GridPartType,0> BaryQuadType;
 public:  
   //! Constructor
   RestProlOperatorFV ( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
