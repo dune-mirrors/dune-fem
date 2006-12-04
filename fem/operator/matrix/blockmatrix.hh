@@ -57,6 +57,8 @@ public:
 
   void resize(int rows, int cols)
   { 
+    if( (rows == rows_) && (cols == cols_) ) return ;
+    
     matrix_.resize(rows);
     rows_ = rows; 
     cols_ = cols;
@@ -114,7 +116,6 @@ public:
   // result = this * vec 
   void multOEM(const T * vec, T * result) const 
   {
-    assert( (int) result.size() == rows() );
     for(int row=0; row<rows(); ++row)
     {
       result[row] = 0;
@@ -131,6 +132,20 @@ public:
     this->mult(&vec[0],result);
   }
     
+  // result = this^T * vec 
+  void multTransposed(const RowType & vec, RowType & result) const 
+  {
+    assert( (int) result.size() == cols() );
+    for(int col=0; col<cols(); ++col) 
+    {
+      result[col] = 0;
+      for(int row=0; row<rows(); ++row)
+      {
+        result[col] += matrix_[row][col]*vec[row]; 
+      }
+    }
+  }
+    
   // this = A * B
   void multiply(const DenseMatrix & A, const DenseMatrix & B)
   {
@@ -138,12 +153,36 @@ public:
    
     resize(A.rows() , B.cols());
     
-    for(register int row=0; row<rows(); ++row)
+    for(int row=0; row<rows(); ++row)
     {
-      for(register int col=0; col<cols(); ++col)
+      for(int col=0; col<cols(); ++col)
       {
-        for(register int k=0; k<A.cols(); ++k)
-          matrix_[row][col] += A[row][k] * B[k][col];
+        T sum = 0;
+        for(int k=0; k<A.cols(); ++k)
+        {
+          sum += A[row][k] * B[k][col];
+        }
+        matrix_[row][col] = sum; 
+      }
+    } 
+  };
+
+  // this = A * B
+  void multiply_AT_A(const DenseMatrix & A) 
+  {
+    resize(A.cols() , A.cols());
+    
+    for(int row=0; row<rows(); ++row)
+    {
+      for(int col=0; col<cols(); ++col)
+      {
+        T sum = 0;
+        const int aRows = A.rows();
+        for(int k=0; k<aRows; ++k)
+        {
+          sum += A[k][row] * A[k][col];
+        }
+        matrix_[row][col] = sum; 
       }
     } 
   };
@@ -161,9 +200,9 @@ public:
   {
     assert( rows() == rows() );
     assert( cols() == org.cols() );
-    for(register int row=0; row<rows(); ++row)
+    for(int row=0; row<rows(); ++row)
     {
-      for(register int col=0; col<cols(); ++col) 
+      for(int col=0; col<cols(); ++col) 
         matrix_[row][col] += org.matrix_[row][col];
     }
     return *this;
@@ -173,9 +212,9 @@ public:
   {
     assert( rows() == rows() );
     assert( cols() == org.cols() );
-    for(register int row=0; row<rows(); ++row)
+    for(int row=0; row<rows(); ++row)
     {
-      for(register int col=0; col<cols(); ++col) 
+      for(int col=0; col<cols(); ++col) 
         matrix_[row][col] -= org.matrix_[row][col];
     }
     return *this;
@@ -194,9 +233,9 @@ public:
   // set all matrix entries to zero 
   void clear() 
   {
-    for(register int row=0; row<rows(); ++row)
+    for(int row=0; row<rows(); ++row)
     {
-      for(register int col=0; col<cols(); ++col) 
+      for(int col=0; col<cols(); ++col) 
         matrix_[row][col] = 0; 
     }
   }
