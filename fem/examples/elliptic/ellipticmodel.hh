@@ -139,7 +139,7 @@ public:
         }
 
   //! the coefficient for robin boundary condition
-  inline int alpha()
+  inline double alpha()
         { 
           return 1.0;
         }
@@ -362,7 +362,7 @@ public:
         }
 
   //! the coefficient for robin boundary condition
-  inline int alpha()
+  inline double alpha()
         { 
           return 1.0;
         }
@@ -567,7 +567,7 @@ public:
         }
 
   //! the coefficient for robin boundary condition
-  inline int alpha()
+  inline double alpha()
         { 
           return 1.0;
         }
