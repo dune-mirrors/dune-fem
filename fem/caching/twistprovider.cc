@@ -125,13 +125,18 @@ namespace Dune {
     }
 
     // Loop over all twists
+    // and find all mapped quad points 
     for (int twist = helper_->minTwist();twist < helper_->maxTwist();++twist) {
       MapperType mapper(quad_.nop());
       
       const MatrixType& mat = helper_->buildTransformationMatrix(twist);
 
-      for (int i = 0; i < quad_.nop(); ++i) {
+      for (int i = 0; i < quad_.nop(); ++i) 
+      {
+        // get local quad point 
         PointType pFace = quad_.point(i);
+
+        // create barycentric coordinate
         CoordinateType c(0.0);
         c[0] = 1.0;
         for (int d = 0; d < dim; ++d) {
@@ -139,22 +144,32 @@ namespace Dune {
           c[d+1] = pFace[d];
         }
 
+        // apply mapping 
         PointType pRef(0.);     
         mat.umtv(c, pRef);
 
         bool found = false;
         // find equivalent quadrature point
-        for (int j = 0; j < quad_.nop(); ++j) {
-          if (samePoint(pRef, quad_.point(j))) {
+        for (int j = 0; j < quad_.nop(); ++j) 
+        {
+          if (samePoint(pRef, quad_.point(j))) 
+          {
             mapper[i] = j;
             found = true;
             break;
           }
         }
+
         // add point if it is not one of the quadrature points
         if (!found) {
-          mapper[i] = storage->addPoint(pRef);
+          //if point not found, something is wrong,
+          //could be the quadratue or the mapping 
+          assert( found ); 
+          std::cout << "TwistMapperCreator<ct, dim>::createStorage failed! in: "<<__FILE__<<" line: " << __LINE__ <<"\n";
+          abort();
+        //  mapper[i] = storage->addPoint(pRef);
         }
+        
       } // for all quadPoints
       storage->addMapper(mapper, twist);
     } // for all twists
@@ -217,12 +232,12 @@ namespace Dune {
   TriangleTwistMapperStrategy<ct, dim>::
   buildTransformationMatrix(int twist) const 
   {
-   mat_ *= 0.0;
+    mat_ = 0.0;
 
-    for (int idx = 0; idx < dim+1; ++idx) {
+    for (int idx = 0; idx < dim+1; ++idx) 
+    {
       int aluIndex = FaceTopo::dune2aluVertex(idx);
-      int twistedAluIndex = FaceTopo::invTwist(aluIndex, twist);
-      int twistedDuneIndex = FaceTopo::alu2duneVertex(twistedAluIndex);
+      int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
       mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
     }
     
