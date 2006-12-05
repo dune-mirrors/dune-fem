@@ -314,7 +314,7 @@ public:
   //! this method use the write method of the implementation of the
   //! discrete function
   template <class DiscreteFunctionType>
-  inline bool writeData(DiscreteFunctionType & df,
+  inline bool writeData(const DiscreteFunctionType & df,
      const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, 
       int timestep, int precision = 6);
 
@@ -434,7 +434,7 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
 
 template <class GridType>
 template <class DiscreteFunctionType> 
-inline bool GrapeDataIO<GridType> :: writeData(DiscreteFunctionType & df, 
+inline bool GrapeDataIO<GridType> :: writeData(const DiscreteFunctionType & df, 
 const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timestep, int  precision )
 {
   {
