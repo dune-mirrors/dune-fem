@@ -47,7 +47,6 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
   GrapeTuple<GR_DiscFuncType>::addToDisplay(*disp,dinf,time,*tup);
 
   addError(*disp,*grid,time,*(tup->first()));
-
   return disp;
 }
 
@@ -55,10 +54,8 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
 INFO * readData(INFO * info , const char * path, int i_start, int i_end, 
     int i_delta, int n, double timestep, int numProcs) 
 {
-  double f_t_start = LARGE;
   double t_start = LARGE;
   double t_end = -LARGE, t_act=0.0;
-  GrapeDispType *disp = 0;
   typedef CombinedGrapeDisplay < GrapeDispType > CombinedDisplayType; 
   CombinedGrapeDisplay < GrapeDispType > * comdisp = new CombinedDisplayType ();
   
@@ -94,14 +91,13 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
         int anz = n; // (n > 0) ? n : 1;
         for(int i=0; i<anz; i++)
         {
-	  newdisp = readTupleData 
-	    (newpath.c_str(), info[i].name, t_act , i , ntime, proc,
-	     info);
+      	  newdisp = readTupleData(newpath.c_str(), info[i].name, 
+                                t_act , i , ntime, proc,   info);
           assert(newdisp != 0);
           assert( comdisp );
           comdisp->addDisplay( *newdisp );
         }
-	assert(newdisp);
+	      assert(newdisp);
         newdisp->addMyMeshToTimeScene(info[0].tsc,t_act,proc);
         assert( comdisp );
       }

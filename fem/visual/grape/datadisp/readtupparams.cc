@@ -147,9 +147,6 @@ int readParameterList (int argc, char **argv)
     }
   }
   
-
-  std::cout << "MyPath = "<< path << std::endl;
-
   timeSceneInit(info, n , parallel , time_bar);
   readData(info, path,i_start,i_end,i_delta,n,timestep,parallel);
   
