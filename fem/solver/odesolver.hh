@@ -126,7 +126,8 @@ class ExplTimeStepper : public TimeProvider {
   
   double solve(typename Operator::DestinationType& U0) 
   {
-    typedef typename Operator:: DestinationType :: GridType :: Traits ::
+    typedef typename Operator:: DestinationType ::
+      DiscreteFunctionSpaceType :: GridType :: Traits ::
       CollectiveCommunication DuneCommunicatorType; 
     const DuneCommunicatorType & duneComm = op_.space().grid().comm();
 
@@ -332,8 +333,8 @@ class SemiImplTimeStepper : public TimeProvider {
   ~SemiImplTimeStepper() {delete ode_;}
   double solve(typename Operator::DestinationType& U0) 
   {
-    typedef typename Operator:: DestinationType :: GridType :: Traits ::
-      CollectiveCommunication DuneCommunicatorType; 
+    typedef typename Operator:: DestinationType :: DiscreteFunctionSpaceType :: 
+          GridType :: Traits ::  CollectiveCommunication DuneCommunicatorType; 
     const DuneCommunicatorType & duneComm = opexpl_.space().grid().comm();
 
     if (dt_<0) {
