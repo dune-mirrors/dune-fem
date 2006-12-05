@@ -280,6 +280,7 @@ namespace Dune {
                 GradientPassType & gradPass,
                 PreviousPassType& pass, 
                 DiscreteFunctionSpaceType& spc,
+                bool verbose = false, 
                 int volumeQuadOrd =-1,int faceQuadOrd=-1) 
       : BaseType(pass, spc),
       caller_(problem),
@@ -327,7 +328,8 @@ namespace Dune {
       faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_) : faceQuadOrd ),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
       entityMarker_(),
-      matrixAssembled_(false)                                                              
+      matrixAssembled_(false),
+      verbose_(verbose)
     {
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
@@ -354,6 +356,8 @@ namespace Dune {
         abort();
       }
     }
+
+
    
     //! Destructor
     virtual ~LocalDGElliptOperator() 
@@ -377,7 +381,7 @@ namespace Dune {
     void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
       // resize matrices 
-      matrixHandler_.resize();
+      matrixHandler_.resize(verbose_);
 
       // clear matrices 
       matrixHandler_.clear();
@@ -428,7 +432,7 @@ namespace Dune {
       dest_ = &rhs;
 
       // resize matrices 
-      matrixHandler_.resize();
+      matrixHandler_.resize(verbose_);
 
       // prepare operator 
       prepare (arg, rhs);
@@ -1356,6 +1360,8 @@ namespace Dune {
         }
       } // end element integral 
     }
+
+    GradDestinationType & tmpMemory() { return gradTmp_; }
   
   private:
     // needs to be friend for conversion check 
@@ -1440,6 +1446,7 @@ namespace Dune {
     mutable  EntityMarkerType entityMarker_;
 
     mutable bool matrixAssembled_;
+    const bool verbose_;
   };
   
   //! Concrete implementation of Pass for LDG.
@@ -1520,6 +1527,8 @@ namespace Dune {
     typedef typename DiscreteModelType :: Traits :: Traits :: template 
       InverseOperator<DestinationType,FEOperatorType>:: InverseOperatorType InverseOperatorType;
 
+    typedef typename PreviousPassType :: DestinationType GradDestinationType;
+
     const double eps_;
     const int maxIterFactor_; 
     mutable int maxIter_;
@@ -1549,7 +1558,7 @@ namespace Dune {
       : BaseType(pass.previousPass(),spc)
       , problem_(problem)
       , spc_(spc) 
-      , op_(problem,pass,pass.previousPass(),spc)
+      , op_(problem,pass,pass.previousPass(),spc,verbose)
       , eps_(eps)
       , maxIterFactor_(maxIterFactor) 
       , maxIter_( maxIterFactor_ * spc_.size() )
@@ -1565,6 +1574,8 @@ namespace Dune {
     void applyLocal(EntityType& en) const
     {
     }
+    
+    GradDestinationType & tmpMemory() { return op_.tmpMemory(); }
 
     //! return restrict and prolong operator for fe-pass 
     RestrictProlongOperatorType & restrictProlongOperator () { return op_; }
@@ -1589,7 +1600,8 @@ namespace Dune {
         // for unstructured grids we can use the re-build method 
         if(Capabilities::IsUnstructured<GridType>::v)
         {
-          op_.reBuildMatrix( arg, rhs_ , true );
+          //op_.reBuildMatrix( arg, rhs_ , true );
+          op_.buildMatrix( arg, rhs_ );
         }
         else 
         {
