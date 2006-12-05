@@ -394,6 +394,15 @@ public:
   {
     return this->grid_.template leafbegin<cd,pitype> ();
   }
+ 
+  //! \brief returns true if entity is contained in index set 
+  template <class EntityType>
+  bool contains (const EntityType & en) const
+  {
+    enum { codim = EntityType::codimension };
+    assert( codimUsed_[codim] );
+    return codimLeafSet_[codim].exists( hIndexSet_.index( en ) ); 
+  }
 
   //****************************************************************
   //
@@ -507,7 +516,7 @@ public:
   // --insert
   void insert (const EntityCodim0Type & en)
   {
-    if( !codimLeafSet_[0].exsits( hIndexSet_.index(en) ) ) 
+    if( !codimLeafSet_[0].exists( hIndexSet_.index(en) ) ) 
     {
       codimLeafSet_[0].insert ( hIndexSet_.index(en) );
       if(higherCodims_)
@@ -524,7 +533,7 @@ public:
   void remove (const EntityCodim0Type & en)
   {
     // if state is NEW or USED the index of all entities is removed 
-    if( codimLeafSet_[0].exsits( hIndexSet_.index(en) ) ) 
+    if( codimLeafSet_[0].exists( hIndexSet_.index(en) ) ) 
     {
       codimLeafSet_[0].remove ( hIndexSet_.index(en) );
       if(higherCodims_)

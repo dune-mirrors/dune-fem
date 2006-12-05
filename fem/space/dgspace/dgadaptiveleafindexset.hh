@@ -178,6 +178,14 @@ public:
     return this->grid_.template leafbegin<cd,pitype> ();
   }
 
+  //! \brief returns true if entity is contained in index set 
+  template <class EntityType>
+  bool contains(const EntityType & en) const
+  {
+    enum { codim = EntityType::codimension };
+    return (codim == 0) ? codimLeafSet_.exists( hIndexSet_.index( en ) ) : false;
+  }
+  
   //****************************************************************
   //
   //  METHODS for Adaptation with DofManger 
@@ -270,7 +278,7 @@ public:
   void insert (const EntityCodim0Type & en)
   {
     const int idx = hIndexSet_.index(en);
-    if( !codimLeafSet_.exsits( idx ) ) 
+    if( !codimLeafSet_.exists( idx ) ) 
     {
       codimLeafSet_.insert ( idx );
       compressed_ = false;
@@ -283,7 +291,7 @@ public:
   {
     const int idx = hIndexSet_.index(en);
     // if state is NEW or USED the index of all entities is removed 
-    if( codimLeafSet_.exsits( idx ) ) 
+    if( codimLeafSet_.exists( idx ) ) 
     {
       codimLeafSet_.remove ( idx );
       compressed_ = false;

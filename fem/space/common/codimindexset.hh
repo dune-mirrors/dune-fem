@@ -281,7 +281,13 @@ public:
   }
   
   //! return state of index for given hierarchic number  
-  bool exsits ( int num ) const
+  bool exsits ( int num ) const DUNE_DEPRECATED 
+  {
+    return (state(num) != UNUSED);
+  }
+ 
+  //! return state of index for given hierarchic number  
+  bool exists ( int num ) const
   {
     return (state(num) != UNUSED);
   }
