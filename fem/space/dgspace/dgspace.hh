@@ -191,6 +191,15 @@ namespace Dune {
     }
   
     //! Get base function set for a given entity
+    const BaseFunctionSetType&
+    subBaseFunctionSet (const GeometryType & type, bool ) const 
+    {
+      GeometryIdentifier::IdentifierType id = 
+        GeometryIdentifier::fromGeo(type.dim(),type);
+      return this->baseFunctionSet(id);
+    }
+  
+    //! Get base function set for a given entity
     template <class Entity>
     const BaseFunctionSetType&
     baseFunctionSet (const Entity& en) const 
