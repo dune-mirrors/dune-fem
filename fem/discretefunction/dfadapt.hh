@@ -197,7 +197,7 @@ public:
   //! write data of discrete function to file filename|timestep 
   //! with xdr methods 
   inline
-  bool write_xdr(std::string filename);
+  bool write_xdr(std::string filename) const ;
 
   //! write data of discrete function to file filename|timestep 
   //! with xdr methods 
@@ -206,7 +206,7 @@ public:
 
   //! write function data to file filename|timestep in ascii Format
   inline
-  bool write_ascii(std::string filename);
+  bool write_ascii(std::string filename) const ;
 
   //! read function data from file filename|timestep in ascii Format
   inline
@@ -214,7 +214,7 @@ public:
 
   //! write function data in pgm fromat file
   inline
-  bool write_pgm(std::string filename);
+  bool write_pgm(std::string filename) const;
 
   //! read function data from pgm fromat file
   inline

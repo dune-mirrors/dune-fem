@@ -169,7 +169,7 @@ DFAdapt< DiscreteFunctionSpaceType>::dend () const
 //**************************************************************************
 template<class DiscreteFunctionSpaceType>
 inline bool DFAdapt< DiscreteFunctionSpaceType>::
-write_xdr(std::string fn)
+write_xdr(std::string fn) const
 {
   FILE  *file;
   XDR   xdrs;
@@ -216,7 +216,7 @@ read_xdr(std::string fn)
 
 template<class DiscreteFunctionSpaceType>
 inline bool DFAdapt< DiscreteFunctionSpaceType>::
-write_ascii(std::string fn)
+write_ascii(std::string fn) const
 {
   std::fstream outfile( fn.c_str() , std::ios::out );
   if (!outfile)
@@ -229,8 +229,8 @@ write_ascii(std::string fn)
   {
     int length = this->functionSpace_.size();
     outfile << length << "\n";
-    DofIteratorType enddof = dend ( );
-    for(DofIteratorType itdof = dbegin ( );itdof != enddof; ++itdof) 
+    ConstDofIteratorType enddof = dend ( );
+    for(ConstDofIteratorType itdof = dbegin ( );itdof != enddof; ++itdof) 
     {
       outfile << (*itdof) << " ";
     }
@@ -266,7 +266,7 @@ read_ascii(std::string fn)
 
 template<class DiscreteFunctionSpaceType>
 inline bool DFAdapt< DiscreteFunctionSpaceType>::
-write_pgm(std::string fn)
+write_pgm(std::string fn) const
 {
   std::ofstream out( fn.c_str() );
 
@@ -277,8 +277,8 @@ write_pgm(std::string fn)
     int danz = 129; 
   
     out << "P2\n " << danz << " " << danz <<"\n255\n";
-    DofIteratorType enddof = dend ();
-    for(DofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
+    ConstDofIteratorType enddof = dend ();
+    for(ConstDofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
       out << (int)((*itdof)*255.) << "\n";
     }
     out.close();
