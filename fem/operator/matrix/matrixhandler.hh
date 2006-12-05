@@ -155,7 +155,7 @@ namespace Dune {
       , hasMassMatrix_(hasMassMatrix)
       , hasPcMatrix_(hasPcMatrix)
     {
-      reserve();
+      reserve(true);
     }
 
     //! return reference to stability matrix 
@@ -184,7 +184,7 @@ namespace Dune {
     }
 
     //! resize all matrices and clear them 
-    void resize() 
+    void resize(bool verbose = false) 
     {
       if( ! hasBeenSetup() ) 
       {
@@ -194,7 +194,9 @@ namespace Dune {
       {
         int singleSize = singleSpace_.size();
         int gradSize   = gradientSpace_.size();
-        std::cout << "Resize Matrix with " << singleSize << "\n";
+
+        if(verbose)
+          std::cout << "Resize Matrix with (" << singleSize << "," << gradSize << ")\n";
 
         gradMatrix_.resize(gradSize,singleSize);
         divMatrix_.resize(singleSize,gradSize);
@@ -237,22 +239,28 @@ namespace Dune {
     }
 
     //! reserve memory corresponnding to size of spaces 
-    void reserve() 
+    void reserve(bool verbose = false ) 
     {
       // if empty grid do nothing (can appear in parallel runs)
       if( (singleSpace_.begin()   != singleSpace_.end()) && 
           (gradientSpace_.begin() != gradientSpace_.end()) )
       {
         
-        std::cout << "Reserve Matrix with " << singleSpace_.size() << "\n";
         singleMaxNumbers_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
         gradMaxNumbers_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
+
+        if(verbose) 
+        {
+          std::cout << "Reserve Matrix with (" << singleSpace_.size() << "," << gradientSpace_.size()<< ")\n";
+          std::cout << "Number of base functions = (" << singleMaxNumbers_ << "," << gradMaxNumbers_ << ")\n";
+        }
 
         assert( singleMaxNumbers_ > 0 );
         assert( gradMaxNumbers_ > 0 );
 
         // factor for non-conforming grid is 4 in 3d and 2 in 2d  
-        const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+        //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+        const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
 
         // upper estimate for number of neighbors 
         enum { dim = SpaceType :: GridType :: dimension };
@@ -410,6 +418,7 @@ namespace Dune {
 
     void resizeAndClear() 
     {
+      abort();
       size_ = singleSpace_.indexSet().size(0); 
 
       gradMatrix_.resize(size_);

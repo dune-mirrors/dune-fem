@@ -13,6 +13,7 @@ SparseRowMatrix<T>::SparseRowMatrix()
   col_ = 0;
   dim_[0] = 0;
   dim_[1] = 0;
+  memSize_ = 0;
   nz_ = 0;
   nonZeros_ = 0;
 }
@@ -80,9 +81,10 @@ void SparseRowMatrix<T>::resize (int newSize)
 template <class T>
 void SparseRowMatrix<T>::resize (int newRow, int newCol)  
 {
-  if(newRow != this->size(0) || newCol != this->size(1))
+  if(newRow != this->size(0))
   {
-    if(newRow != memSize_)
+    int memHalf = (int) memSize_/2;
+    if((newRow > memSize_) || (newRow < memHalf))
     {
       T tmp = 0;
       T * oldValues = values_;       values_ = 0;
@@ -113,6 +115,9 @@ void SparseRowMatrix<T>::resize (int newRow, int newCol)
       dim_[1] = newCol;
     }
   }
+
+  assert( this->size(0)  == newRow );
+  assert( this->size(1)  == newCol );
 }
 
 template <class T> 
@@ -126,7 +131,7 @@ template <class T>
 T SparseRowMatrix<T>::operator()(int row, int col) const
 {
   assert( row >= 0 );
-  assert( row < dim_[0] );
+  assert( (row < dim_[0]) ? 1 : (std::cout << row << " bigger " << dim_[0] <<"\n", 0));
 
   const int nonZ = nonZeros_[row]; 
   int thisCol = row*nz_;
@@ -546,7 +551,7 @@ void SparseRowMatrix<T>::getDiag(const ThisType & mass,
   assert( mass.size(0) == mass.size(1) ); 
   assert( mass.size(0) == this->size(1) );
 
-  for(int row=0; row<this->size(0); row++)
+  for(int row=0; row<this->size(0); ++row)
   {
     T sum = 0.0;
     int thisCol = row*nz_;
