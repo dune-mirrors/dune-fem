@@ -1,3 +1,6 @@
+#ifndef DUNE_GRAPETUPLES_HH
+#define DUNE_GRAPETUPLES_HH
+
 #include <string>
 #include <dune/common/typetraits.hh>
 #include <dune/common/tuples.hh>
@@ -21,7 +24,7 @@ struct GrapeTupleCaller {
   }
   template <class DataIO>
   static void output(DataIO& dataio,std::string name,int n,
-		     DiscFuncType& df) {
+		     const DiscFuncType& df) {
     std::stringstream dataname;
     dataname << name << "_" << N;
     dataio.writeData(df, xdr, dataname.str().c_str(), n);
@@ -48,7 +51,7 @@ struct GrapeTupleHelper {
   }
   template <class DataIO>
   static void output(DataIO& dataio,std::string name,int n,
-		     ThisType& tup) {
+		     const ThisType& tup) {
     GrapeTupleCaller<N,T1>::output(dataio,name,n,*(tup.first()));
     NextType::output(dataio,name,n,tup.second());
   }
@@ -70,7 +73,7 @@ struct GrapeTupleHelper<T1,Nil,N> {
   }
   template <class DataIO>
   static void output(DataIO& dataio,std::string name,int n,
-		     ThisType& tup) {
+		     const ThisType& tup) {
     GrapeTupleCaller<N,T1>::output(dataio,name,n,*(tup.first()));
   }
   template <class Disp,class DINFO>
@@ -86,10 +89,11 @@ struct GrapeTuple {
   typedef typename GrapeTupleHelper<T1,T2,0>::ReturnType ReturnType;
   template <class DataIO,class GridType>
   static ReturnType* input(DataIO& dataio,GridType*& grid,double& t,int n,
-			   const char* path,
-			   std::string name) {
+			   std::string path,
+			   std::string name) 
+  {
     std::string gname;
-    if (path) gname += path;
+    if (path != "") gname += path;
     else gname += ".";
     gname += "/g";
     gname += name;
@@ -97,7 +101,7 @@ struct GrapeTuple {
     grid = new GridType();
     dataio.readGrid(*grid, gname.c_str(), t, n);
     std::string dname;
-    if (path) dname += path;
+    if (path != "") dname += path;
     else dname += ".";
     dname += "/d";
     dname += name;
@@ -117,19 +121,19 @@ struct GrapeTuple {
   }
   template <class DataIO,class GridType>
   static void output(DataIO& dataio,GridType& grid,double t,int n,
-		     const char* path,
-		     std::string name, Pair<T1*,T2>& tup) {
+		     std::string path,
+		     std::string name, const Pair<T1*,T2>& tup) {
     std::string gname;
     gname += name;
     gname += "/g";
-    if (path) gname += path;
+    if (path != "") gname += path;
     else gname += ".";
     std::cout << "Writing grid to " << gname << std::endl;
     dataio.writeGrid(grid, xdr, gname.c_str(), t, n);
     std::string dname;
     dname += name;
     dname += "/d";
-    if (path) dname += path;
+    if (path != "") dname += path;
     else dname += ".";
     std::cout << "Writing data to " << dname << std::endl;
     GrapeTupleHelper<T1,T2,0>::output(dataio,dname,n,tup);
@@ -142,3 +146,4 @@ struct GrapeTuple {
 };
 
 };
+#endif
