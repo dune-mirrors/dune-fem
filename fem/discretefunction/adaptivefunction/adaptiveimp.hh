@@ -66,20 +66,20 @@ namespace Dune {
   
     //! write data of discrete function to file filename|timestep 
     //! with xdr methods 
-    bool write_xdr(std::string filename);
+    bool write_xdr(std::string filename) const;
 
     //! write data of discrete function to file filename|timestep 
     //! with xdr methods 
     bool read_xdr(std::string filename);
     
     //! write function data to file filename|timestep in ascii Format
-    bool write_ascii(std::string filename);
+    bool write_ascii(std::string filename) const;
     
     //! read function data from file filename|timestep in ascii Format
     bool read_ascii(std::string filename);
 
     //! write function data in pgm fromat file
-    bool write_pgm(std::string filename);
+    bool write_pgm(std::string filename) const;
     
     //! read function data from pgm fromat file
     bool read_pgm(std::string filename); 

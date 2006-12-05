@@ -146,7 +146,7 @@ namespace Dune {
   //- Read/write methods
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  write_xdr(std::string fn)
+  write_xdr(std::string fn) const
   {
     FILE  *file;
     XDR   xdrs;
@@ -193,7 +193,7 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  write_ascii(std::string fn)
+  write_ascii(std::string fn) const
   {
     std::fstream outfile( fn.c_str() , std::ios::out );
     if (!outfile)
@@ -206,8 +206,8 @@ namespace Dune {
     {
       int length = spc_.size();
       outfile << length << "\n";
-      DofIteratorType enddof = dend ( );
-      for(DofIteratorType itdof = dbegin ( );itdof != enddof; ++itdof) 
+      ConstDofIteratorType enddof = dend ( );
+      for(ConstDofIteratorType itdof = dbegin ( );itdof != enddof; ++itdof) 
         {
           outfile << (*itdof) << " ";
         }
@@ -243,7 +243,7 @@ namespace Dune {
 
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  write_pgm(std::string fn)
+  write_pgm(std::string fn) const
   {
     std::ofstream out( fn.c_str() );
     
@@ -253,8 +253,8 @@ namespace Dune {
       int danz = 129; 
       
       out << "P2\n " << danz << " " << danz <<"\n255\n";
-      DofIteratorType enddof = dend ();
-      for(DofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
+      ConstDofIteratorType enddof = dend ();
+      for(ConstDofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
         out << (int)((*itdof)*255.) << "\n";
       }
       out.close();
