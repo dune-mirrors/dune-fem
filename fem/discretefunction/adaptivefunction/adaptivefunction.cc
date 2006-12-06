@@ -82,7 +82,6 @@ namespace Dune {
   evaluate(const DomainType& x, RangeType& ret) const 
   {
     assert(init_);
-    assert(en.geometry().checkInside(x));
     ret = 0.0;
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
@@ -126,7 +125,6 @@ namespace Dune {
            RangeType& ret) const 
   {
     assert(init_);
-    assert(en.geometry().checkInside(quad.point(quadPoint)));
     ret = 0.0;
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
