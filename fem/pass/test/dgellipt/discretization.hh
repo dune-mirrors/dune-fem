@@ -250,10 +250,10 @@ public:
         gradError[i] = l2errGrad.norm(exactGrad , grad);
 
       }
-
+#if HAVE_GRAPE
       GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
       grape.dataDisplay( dest );
-
+#endif
       L2Error < DestinationType > l2err;
       // pol ord for calculation the error chould by higher than 
       // pol for evaluation the basefunctions 
