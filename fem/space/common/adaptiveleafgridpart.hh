@@ -78,7 +78,7 @@ private:
 public:
   //- Public methods
   //! Constructor
-  AdaptiveLeafGridPart(const GridType& grid) :
+  AdaptiveLeafGridPart(GridType& grid) :
     GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(&grid) )
   {}
 

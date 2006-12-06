@@ -88,7 +88,7 @@ private:
 public:
   //- Public methods
   //! Constructor
-  DGAdaptiveLeafGridPart(const GridType& grid) :
+  DGAdaptiveLeafGridPart(GridType& grid) :
     GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(&grid) )
   {}
 
