@@ -255,13 +255,13 @@ namespace Dune {
     //! ibegin of corresponding intersection iterator for given entity
     IntersectionIteratorType ibegin(const EntityCodim0Type & en) const 
     {
-      return typename ThisType::IntersectionIteratorType::ibegin(en);
+      return typename ThisType::IntersectionIteratorType(this, filter_, en, false);
     }
     
     //! iend of corresponding intersection iterator for given entity
     IntersectionIteratorType iend(const EntityCodim0Type & en) const 
     {
-      return typename ThisType::IntersectionIteratorType::iend(en);
+      return typename ThisType::IntersectionIteratorType(this, filter_, en, true);
     }
 
     //! Returns maxlevel of the grid
@@ -334,12 +334,13 @@ namespace Dune {
     template <class GridPartType, class IteratorType>
     struct IntersectionIteratorWrapper : public IteratorType {
 
-      // type of codim 0 entity
-      typedef typename GridPartType::EntityCodim0Type EntityCodim0Type;
+      // type of codim 0 entity      
+      // typedef typename GridPartType::EntityCodim0Type EntityCodim0Type;
+      typedef typename GridPartType::GridType::template Codim<0>::Entity EntityCodim0Type;
 
       struct neighborInfo {    
         neighborInfo() : boundary_(false), boundaryId_(-1), neighbor_(false) { }
-        neighborInfo(const neighborInfo & org) : boundary_(org.boudary_), 
+        neighborInfo(const neighborInfo & org) : boundary_(org.boundary_), 
           boundaryId_(org.boundaryId_), neighbor_(org.neighbor_){ }
         neighborInfo & operator = (const neighborInfo & org) {
           boundary_ = org.boundary_;
@@ -372,7 +373,7 @@ namespace Dune {
             IteratorType::operator++();
           if (*this!=endIter_) {    
             if (IteratorType::neighbor()) {
-              EntityCodim0Type neigh = *(this->outside());
+              EntityCodim0Type& neigh = *(this->outside());
               if (filter_.has0Entity(neigh)) {
                 nInfo.boundary = false;
 	        nInfo.boundaryId = 0;
