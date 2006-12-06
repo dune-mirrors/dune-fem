@@ -217,7 +217,7 @@ void printSGrid(double time, int timestep, SpaceType& space, Loop& loop)
     midPoint(it->geometry(), mid);
     if (mid[1] < 0.1 && mid[1] > -0.1) {
       LocalFunctionType lf = sol.localFunction(*it);
-      lf.evaluateLocal(*it, localMid, result);
+      lf.evaluate(*it, localMid, result);
       ofs << mid[0] << " " << result[0] << "\n";
     }
   }
