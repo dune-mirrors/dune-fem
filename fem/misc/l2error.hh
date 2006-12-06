@@ -108,7 +108,7 @@ public:
 	} else if (n==1) {
 	  
 	  f.evaluate((*it).geometry().global(quad.point(qP)),time,ret);
-	  lf.evaluate((*it),quad,qP,phi);
+	  lf.evaluate(quad,qP,phi);
 	  for(int k=0; k<dimR; ++k) {
 	    error[k] += det * SQR(ret[k] - phi[k]);
 	  }
