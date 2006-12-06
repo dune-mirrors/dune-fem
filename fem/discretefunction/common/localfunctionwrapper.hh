@@ -99,6 +99,10 @@ public:
   typedef typename DiscreteFunctionImp::LocalFunctionImp  LocalFunctionImp; 
   typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
+  //! Iterator over the space
+  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+  //! The codim 0 entity
+  typedef typename IteratorType::Entity Entity;
 
   typedef DiscreteFunctionImp  DiscreteFunctionType;  
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
@@ -106,7 +110,9 @@ public:
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+  enum { DimRange = DiscreteFunctionSpaceType::DimRange };
   enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
+  enum { DimDomain = DiscreteFunctionSpaceType::DimDomain };
 
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
@@ -176,26 +182,38 @@ public:
 
   //! return number of degrees of freedom 
   int numDofs () const { return localFunc().numDofs(); }
-
+  #if OLDFEM
   //! sum over all local base functions 
   template <class EntityType> 
-  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const 
+  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const
   {
     localFunc().evaluate( en , x , ret );
   }
-  
+  #endif
+  //! sum over all local base functions 
+  void evaluate (const DomainType & x, RangeType & ret) const
+  {
+    localFunc().evaluate( x , ret );
+  }
+  #if OLDFEM
   //! sum over all local base functions but local 
   template <class EntityType>
-  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const 
+  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const
   {
     localFunc().evaluateLocal( en , x , ret );
   }
-  
   //! sum over all local base functions evaluated on given quadrature point
   template <class EntityType, class QuadratureType> 
   void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const
   {
     localFunc().evaluate( en , quad, quadPoint , ret );
+  }
+  #endif
+  //! sum over all local base functions evaluated on given quadrature point
+  template <class QuadratureType> 
+  void evaluate (QuadratureType &quad, int quadPoint , RangeType & ret) const
+  {
+    localFunc().evaluate( quad, quadPoint , ret );
   }
   
   //! sum over all local base functions evaluated on given quadrature point

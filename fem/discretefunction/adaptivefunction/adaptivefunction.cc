@@ -64,18 +64,11 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp>
   int AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  numberOfDofs() const
-  {
-    return values_.size();
-  }
-
-  template <class DiscreteFunctionSpaceImp>
-  int AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   numDofs() const
   {
     return values_.size();
   }
-
+  /*
   template <class DiscreteFunctionSpaceImp>
   template <class EntityType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
@@ -83,11 +76,10 @@ namespace Dune {
   {
     evaluateLocal( en, en.geometry().local(x), ret);
   }
-  
+  */
   template <class DiscreteFunctionSpaceImp>
-  template <class EntityType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  evaluateLocal(EntityType& en, const DomainType& x, RangeType& ret) const 
+  evaluate(const DomainType& x, RangeType& ret) const 
   {
     assert(init_);
     assert(en.geometry().checkInside(x));
@@ -102,12 +94,34 @@ namespace Dune {
       }
     }
   }
-
+  /*
   template <class DiscreteFunctionSpaceImp>
   template <class EntityType, class QuadratureType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   evaluate(EntityType& en, 
            QuadratureType& quad, 
+           int quadPoint, 
+           RangeType& ret) const 
+  {
+    assert(init_);
+    assert(en.geometry().checkInside(quad.point(quadPoint)));
+    ret = 0.0;
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+
+    for (int i = 0; i < this->numDofs(); ++i) 
+    {
+      bSet.eval(i, quad,quadPoint, tmp_);
+      for (int l = 0; l < dimRange; ++l) {
+        ret[l] += (*values_[i]) * tmp_[l];
+      }
+    }
+    // evaluateLocal(en, quad.point(quadPoint), ret);
+  }
+  */
+  template <class DiscreteFunctionSpaceImp>
+  template <class QuadratureType>
+  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
+  evaluate(QuadratureType& quad, 
            int quadPoint, 
            RangeType& ret) const 
   {
@@ -310,18 +324,11 @@ namespace Dune {
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   int AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  numberOfDofs() const 
-  {
-    return values_.size()*N;
-  }
-
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  int AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   numDofs() const 
   {
     return values_.size()*N;
   }
-
+  /*
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   template <class EntityType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
@@ -329,19 +336,14 @@ namespace Dune {
   {
     evaluateLocal( en, en.geometry().local(x), ret);
   }
-  
+  */
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template <class EntityType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  evaluateLocal(EntityType& en, 
-                const DomainType& x, 
-                RangeType& result) const
+  evaluate(const DomainType& x, 
+           RangeType& result) const
   {
-    assert(en.geometry().checkInside(x));
-
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
     result = 0.0;
-
     assert(static_cast<int>(values_.size()) == bSet.numDifferentBaseFunctions());
     for (unsigned int i = 0; i < values_.size(); ++i) {
       // Assumption: scalar contained base functions
@@ -351,7 +353,7 @@ namespace Dune {
       }
     }
   }
-
+  /*DEP
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   template <class EntityType, class QuadratureType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
@@ -360,7 +362,28 @@ namespace Dune {
            int quadPoint, 
            RangeType& ret) const
   {
-    evaluateLocal(en, quad.point(quadPoint), ret);
+    evaluateLocal(quad.point(quadPoint), ret);
+  }
+  */
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  template <class QuadratureType>
+  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  evaluate(QuadratureType& quad, 
+           int quadPoint, 
+           RangeType& ret) const
+  {
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    ret = 0.0;
+
+    assert(static_cast<int>(values_.size()) == bSet.numDifferentBaseFunctions());
+    for (unsigned int i = 0; i < values_.size(); ++i) {
+      // Assumption: scalar contained base functions
+      // bSet.evaluateScalar(i, x, cTmp_);
+      bSet.evaluateScalar(i, quad,quadPoint, cTmp_);
+      for (SizeType j = 0; j < N; ++j) {
+        ret[j] += cTmp_[0]*(*values_[i][j]);
+      }
+    }
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>

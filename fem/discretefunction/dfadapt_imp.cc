@@ -85,7 +85,9 @@ inline void DFAdapt< DiscreteFunctionSpaceType>::set ( RangeFieldType x )
 template<class DiscreteFunctionSpaceType>
 inline void DFAdapt< DiscreteFunctionSpaceType>::clear ()
 {
-  set ( 0.0 ); 
+  int size = dofVec_.size();
+  DofArrayType &vec = dofVec_;
+  for(int i=0; i<size; ++i) vec[i] = 0.0; 
 }
 
 template<class DiscreteFunctionSpaceType>
@@ -112,6 +114,7 @@ DFAdapt< DiscreteFunctionSpaceType>::localFunction(const EntityType& en) const
   return LocalFunctionType (en,*this);
 }
 
+/*
 template<class DiscreteFunctionSpaceType> 
 template <class EntityType>
 inline void
@@ -120,6 +123,7 @@ localFunction ( const EntityType &en , LocalFunctionType &lf )
 {
   lf.init ( en );
 }
+*/
 
 template<class DiscreteFunctionSpaceType> 
 inline LocalFunctionAdapt<DFAdapt< DiscreteFunctionSpaceType> > *
@@ -129,6 +133,7 @@ newLocalFunctionObject ( ) const
   return new LocalFunctionAdapt<ThisType> ( *this );
 }
 
+/*
 template<class DiscreteFunctionSpaceType> 
 inline typename DFAdapt< DiscreteFunctionSpaceType>:: LocalFunctionType 
 DFAdapt< DiscreteFunctionSpaceType>::
@@ -136,6 +141,7 @@ newLocalFunction ()
 {
   return LocalFunctionType (*this);
 }
+*/
 
 template<class DiscreteFunctionSpaceType> 
 inline typename DFAdapt<DiscreteFunctionSpaceType>::DofIteratorType 
@@ -451,12 +457,14 @@ LocalFunctionAdapt<DiscreteFunctionType>::operator [] (int num) const
   return (* (values_[num]));
 }
 
+/*
 template<class DiscreteFunctionType>
 inline int LocalFunctionAdapt<DiscreteFunctionType>::
 numberOfDofs () const
 {
   return numOfDof_;
 }
+*/
 
 template<class DiscreteFunctionType>
 inline int LocalFunctionAdapt<DiscreteFunctionType>::
@@ -464,7 +472,7 @@ numDofs () const
 {
   return numOfDof_;
 }
-
+/*
 // hier noch evaluate mit Quadrature Regel einbauen 
 template<class DiscreteFunctionType> template <class EntityType> 
 inline void LocalFunctionAdapt<DiscreteFunctionType>::
@@ -476,11 +484,17 @@ evaluate (EntityType &en, const DomainType & x, RangeType & ret) const {
 
 template<class DiscreteFunctionType> template <class EntityType> 
 inline void LocalFunctionAdapt<DiscreteFunctionType>::
-evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const 
+evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const {
+  evaluate(x,ret);
+}
+*/ 
+template<class DiscreteFunctionType> 
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
+evaluate (const DomainType & x, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
-  assert(en.geometry().checkInside(x));
+  // assert(en.geometry().checkInside(x));
   ret = 0.0;
   const BaseFunctionSetType& bSet = baseFunctionSet();
 
@@ -492,19 +506,27 @@ evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
     }
   }
 }
-
+/*DEP
 // hier noch evaluate mit Quadrature Regel einbauen 
 template<class DiscreteFunctionType> 
 template <class EntityType, class QuadratureType> 
 inline void LocalFunctionAdapt<DiscreteFunctionType>::
 evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) const 
 {
+  evaluate(quad,quadPoint,ret);
+}
+*/
+template<class DiscreteFunctionType> 
+template <class QuadratureType> 
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
+evaluate (QuadratureType &quad, int quadPoint, RangeType & ret) const 
+{
   //if(STATIC_lockFuncOutPut)
   //  std::cout << "evaluate Local Func Quadrautre of func= "<< &dofVec_ << "\n";
   
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
-  assert(en.geometry().checkInside(quad.point(quadPoint)));
+  // assert(en.geometry().checkInside(quad.point(quadPoint)));
   ret = 0.0;
   const BaseFunctionSetType& bSet = baseFunctionSet();
 

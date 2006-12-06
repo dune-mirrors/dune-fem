@@ -70,8 +70,8 @@ namespace Dune {
         
         q    = spn / quad;
 
-        dest.add( p, q );
-        r.add( h, q );
+        dest.addScaled( p, q );
+        r.addScaled( h, q );
 
         spa = spn;
     

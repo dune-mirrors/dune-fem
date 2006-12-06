@@ -9,7 +9,7 @@
 
 //- local includes 
 #include "function.hh"
-#include "../../space/common/discretefunctionspace.hh"
+#include <dune/fem/space/common/discretefunctionspace.hh>
 #include "dofiterator.hh"
 #include "localfunctionwrapper.hh"
 
@@ -125,18 +125,11 @@ namespace Dune{
       return asImp().dend ();
     };
 
-    //! Get new local function
-    //! The local function is uninitialised and needs to be set to a specific
-    //! entity
-    LocalFunctionType newLocalFunction() {
-      return asImp().newLocalFunction();
+    //! return local function for given entity
+    template <class EntityType>
+    LocalFunctionType localFunction(const EntityType& en) const {
+      return asImp().localFunction(en);
     }
-
-    //! Set local function to an entity
-    template<class EntityType>
-    void localFunction(const EntityType& en, LocalFunctionType& lf) const {
-      asImp().localFunction(en, lf);
-    } 
 
   private:
     // Barton-Nackman trick 
@@ -151,7 +144,6 @@ namespace Dune{
       return static_cast<const DiscreteFunctionType&>(*this); 
     }
   };
-
   //*************************************************************************
   //
   //  --DiscreteFunctionDefault
@@ -219,7 +211,7 @@ namespace Dune{
       DiscreteFunctionInterfaceType ( f ) , lfStorage_ (*this) {}
 
     //! Continuous data
-    bool continuous() const {
+    bool continuous() const DUNE_DEPRECATED {
       return this->functionSpace_.continuous();
     }
 
@@ -230,7 +222,7 @@ namespace Dune{
     void clear();
 
     //! Set all elements to value
-    void set(const RangeFieldType & value); 
+    void set(const RangeFieldType & value) DUNE_DEPRECATED; 
 
     //! daxpy operation
     void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c);
@@ -258,20 +250,29 @@ namespace Dune{
 
     //! add scalar * g to discrete function 
     DiscreteFunctionType& 
-    add(const DiscreteFunctionType &g , RangeFieldType scalar );
+    add(const DiscreteFunctionType &g , RangeFieldType scalar ) DUNE_DEPRECATED;
 
   //! evaluate Function (which just dies because there is no meaningful implementation)
-  void eval(const DomainType & arg, RangeType & dest) const {
+  void eval(const DomainType & arg, RangeType & dest) const DUNE_DEPRECATED {
     // Die a horrible death! Never call that one...
     assert(false);
   }
+  //! evaluate Function f  
+  //! \param arg: global coordinate
+  //! \param dest: f(arg)
+  void evaluate (const DomainType & arg, RangeType & dest) const {
+    // Die a horrible death! Never call that one...
+    assert(false); abort();
+  }
 
   //! evaluate function and derivatives (just dies)
+  //! \param arg: global coordinate
+  //! \param dest: f(arg)
   template <int derivation>
   void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
                    const DomainType& arg, RangeType & dest) const { 
     // Die a horrible death! Never call that one...
-    assert(false);
+    assert(false); abort();
   }
 
 protected: 

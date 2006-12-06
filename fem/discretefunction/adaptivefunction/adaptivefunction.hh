@@ -246,33 +246,40 @@ namespace Dune {
     const DofType& operator[] (int num) const;
 
     //- Methods
-    //! Number of dofs on this element
-    inline
-    int numberOfDofs() const DUNE_DEPRECATED;
 
     //! Number of dofs on this element
     inline
     int numDofs() const;
 
     //! Evaluation of the discrete function
+    inline
+    void evaluate(const DomainType& x, 
+                  RangeType & ret) const;
+    #if OLDFEM
+    //! Evaluation of the discrete function
     template <class EntityType>
     inline
     void evaluate(EntityType& en, 
                   const DomainType& x, 
-                  RangeType & ret) const;
-
+                  RangeType & ret) const {evaluate(en.gemoetry().local(x),ret);}
     //! Evaluation of the discrete function
     template <class EntityType>
     inline
     void evaluateLocal(EntityType& en, 
                        const DomainType& x, 
-                       RangeType & ret) const;
-
+                       RangeType & ret) const {evaluate(x,ret);}
     //! Evaluation of the discrete function
     template <class EntityType, class QuadratureType>
     inline
     void evaluate(EntityType& en, 
                   QuadratureType& quad,
+                  int quadPoint,
+                  RangeType& ret) const {evaluate(quad,quadPoint,ret);}
+    #endif
+    //! Evaluation of the discrete function
+    template <class QuadratureType>
+    inline
+    void evaluate(QuadratureType& quad,
                   int quadPoint,
                   RangeType& ret) const;
 
@@ -491,36 +498,42 @@ namespace Dune {
      inline
    const DofType& operator[] (int num) const;
 
-    //- Methods
-    inline
-    int numberOfDofs() const DUNE_DEPRECATED;
-
     //! Number of degrees of freedom
     inline
     int numDofs() const;
 
     //! Evaluation
+    inline
+    void evaluate(const DomainType& x, 
+                  RangeType & ret) const;
+    #if OLDFEM
+    //! Evaluation
     template <class EntityType>
     inline
     void evaluate(EntityType& en, 
                   const DomainType& x, 
-                  RangeType & ret) const;
-
+                  RangeType & ret) const {evaluate(en.geometry().local(x),ret);}
     //! Evaluation
     template <class EntityType>
     inline
     void evaluateLocal(EntityType& en, 
                        const DomainType& x, 
-                       RangeType & ret) const;
-
+                       RangeType & ret) const {evaluate(en,x,ret);}
     //! Evaluation
     template <class EntityType, class QuadratureType>
     inline
     void evaluate(EntityType& en,
                   QuadratureType& quad,
                   int quadPoint, 
-                  RangeType & ret) const;
+                  RangeType & ret) const {evaluate(quad,quadPoint,ret);}
+    #endif
 
+    //! Evaluation
+    template <class QuadratureType>
+    inline
+    void evaluate(QuadratureType& quad,
+                  int quadPoint, 
+                  RangeType & ret) const;
     //! Evaluation
     template <class EntityType>
     inline

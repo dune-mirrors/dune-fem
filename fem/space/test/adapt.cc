@@ -172,7 +172,7 @@ public:
       {
         double det = (*it).geometry().integrationElement(quad.point(qP));
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
-        lf.evaluate((*it),quad,qP,phi);
+        lf.evaluate(quad,qP,phi);
         sum += det * quad.weight(qP) * SQR(ret[0] - phi[0]);
       }
     }

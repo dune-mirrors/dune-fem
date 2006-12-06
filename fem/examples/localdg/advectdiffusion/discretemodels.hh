@@ -15,7 +15,7 @@
 #include <dune/fem/space/combinedspace.hh>
 
 #include <dune/fem/discretefunction/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+// #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
 //*************************************************************

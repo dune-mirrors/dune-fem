@@ -145,7 +145,7 @@ void printSGrid(double time, int timestep, const SpaceType& space, const Sol& so
     midPoint(it->geometry(), mid);
     {
       LocalFunctionType lf = sol.localFunction(*it);
-      lf.evaluateLocal(*it, localMid, result);
+      lf.evaluate(localMid, result);
 
       ofs << mid << " " << result << "\n";
     }

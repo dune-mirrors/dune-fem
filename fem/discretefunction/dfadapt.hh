@@ -116,26 +116,16 @@ public:
   //! function 
   ~DFAdapt ();
  
-  DiscreteFunctionType & argument    () { return *this; }
-  const DiscreteFunctionType & argument () const { return *this; }
-  DiscreteFunctionType & destination () { return *this; }
+  DiscreteFunctionType & argument    () DUNE_DEPRECATED { return *this; }
+  const DiscreteFunctionType & argument () const DUNE_DEPRECATED { return *this; }
+  DiscreteFunctionType & destination () DUNE_DEPRECATED { return *this; }
        
   // ***********  Interface  *************************
-  //! return empty object of a local fucntion 
-  //! old function, will be removed soon 
-  inline
-  LocalFunctionType newLocalFunction () DUNE_DEPRECATED;
 
   //! return local function for given entity
   template <class EntityType>
   inline
   LocalFunctionType localFunction(const EntityType& en) const;
-
-  //! update LocalFunction to given Entity en  
-  //! old function, will be removed soon 
-  template <class EntityType> 
-  inline
-  void localFunction ( const EntityType &en, LocalFunctionType & lf) DUNE_DEPRECATED; 
 
   //! points to the first dof of type cc
   inline
@@ -159,9 +149,9 @@ public:
 
   //! set all dof to value x 
   inline
-  void set( RangeFieldType x ); 
+  void set( RangeFieldType x ) DUNE_DEPRECATED; 
 
-  //! \todo Please do me!
+  //! Add scalar*g to discrete function
   inline
   void addScaled (const DFAdapt <DiscreteFunctionSpaceType> & g,
       const RangeFieldType &scalar); 
@@ -171,24 +161,24 @@ public:
   inline
   void addScaledLocal (EntityType &en, 
       const DFAdapt <DiscreteFunctionSpaceType> & g,
-      const RangeFieldType &scalar); 
+      const RangeFieldType &scalar) DUNE_DEPRECATED; 
  
   //! add g to this on local entity
   template <class EntityType>
   inline
   void addLocal (EntityType &it, 
-      const DFAdapt <DiscreteFunctionSpaceType> & g); 
+      const DFAdapt <DiscreteFunctionSpaceType> & g) DUNE_DEPRECATED; 
   
   //! add g to this on local entity
   template <class EntityType>
   inline
   void subtractLocal (EntityType &it, 
-                      const DFAdapt <DiscreteFunctionSpaceType> & g); 
+                      const DFAdapt <DiscreteFunctionSpaceType> & g) DUNE_DEPRECATED; 
 
   //! \todo Please do me!
   template <class EntityType>
   inline
-  void setLocal (EntityType &it, const RangeFieldType &scalar);
+  void setLocal (EntityType &it, const RangeFieldType &scalar) DUNE_DEPRECATED;
   
   //! print all dofs 
   inline
@@ -223,12 +213,14 @@ public:
   //! return name of this discrete function
   std::string name () const { return name_; }
 
-  //! return siz fo this discrete function
+  //! return size for this discrete function
   int size() const { return dofVec_.size(); }
 
-  //! return pointer to internal array for use of BLAS routines 
+  // special methods for DFAdapt
+public:
+  //! return pointer to internal array for use of BLAS routines - no interface method
   DofType * leakPointer () { return dofVec_.leakPointer();  };
-  //! return pointer to internal array for use of BLAS routines 
+  //! return pointer to internal array for use of BLAS routines - no interface method
   const DofType * leakPointer () const { return dofVec_.leakPointer(); };
 
 private:  
@@ -275,6 +267,7 @@ public:
   friend class LocalFunctionWrapper< DiscreteFunctionType >; 
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
+  enum { DimRange = DiscreteFunctionSpaceType::DimRange };
 
   friend class DFAdapt <DiscreteFunctionSpaceType>;
   typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
@@ -288,7 +281,6 @@ public:
   typedef typename DiscreteFunctionSpaceType::GridType GridType;
   typedef typename GridType::Traits::LocalIdSet LocalIdSetType;
   typedef typename LocalIdSetType::IdType IdType;
-  //! Constructor 
 
 public:
   //! Constructor taking DiscreteFunctionSpace and DofArrayType
@@ -312,40 +304,51 @@ public:
 
   //! return number of degrees of freedom 
   inline
-  int numberOfDofs () const DUNE_DEPRECATED;
-
-  //! return number of degrees of freedom 
-  inline
   int numDofs () const;
-
-  //! sum over all local base functions 
+  #if OLDFEM
   template <class EntityType> 
   inline
-  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const ;
-  
+  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const DUNE_DEPRECATED {evaluate(en.geometry().local(x),ret);}
   template <class EntityType>
   inline
-  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const ;
+  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const DUNE_DEPRECATED {evaluate(x,ret);}
   //! sum over all local base functions evaluated on given quadrature point
   template <class EntityType, class QuadratureType> 
   inline
-  void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const;
-  
+  void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const DUNE_DEPRECATED {evaluate(quad,quadPoint,ret);}
+  #endif
   //! sum over all local base functions evaluated on given quadrature point
   template <class EntityType, class QuadratureType> 
   inline
-  void jacobian (EntityType &en, QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const;
+  void jacobian (EntityType &en, QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const ;
+  template <class EntityType>
+  inline
+  void jacobianLocal(EntityType& en, const DomainType& x, JacobianRangeType& ret) const DUNE_DEPRECATED;
+  template <class EntityType>
+  inline
+  void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const ;
+  /*******************************************************/
+  //! evaluate the local function in a given local coordinate
+  //! \param x: local coordinate
+  //! \param ret: localfunction(x)
+  inline
+  void evaluate(const DomainType & x, RangeType & ret) const ;
+  //! sum over all local base functions evaluated on given quadrature point
+  template <class QuadratureType> 
+  inline
+  void evaluate (QuadratureType &quad, int quadPoint , RangeType & ret) const;
   
-  template <class EntityType>
+  //! sum over all local base functions evaluated on given quadrature point
+  /*
+  template <class QuadratureType> 
   inline
-  void jacobianLocal(EntityType& en, const DomainType& x, JacobianRangeType& ret) const ;
-
-  template <class EntityType>
+  void jacobian (QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const;
+  //! evaluate gradient function 
   inline
-  void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const;
-
+  void jacobian(const DomainType& x, JacobianRangeType& ret) const;
+  */
   inline
-  void assign(int numDof, const RangeType& dofs);
+  void assign(int numDof, const RangeType& dofs) DUNE_DEPRECATED;
   
   inline
   const BaseFunctionSetType& baseFunctionSet() const;

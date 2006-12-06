@@ -78,7 +78,7 @@ public:
     ret = 2.; // maximum of function is 2
     for (int j=0;j<RangeType::dimension; j++) 
       for(int i=0; i<DomainType::dimension; i++)
-	ret[j] *= pow(x[i]*(1.0 -x[i])*4.,double(j));
+	ret[j] *= pow(x[i]*(1.0 -x[i])*4.,double(j+1));
   }
   void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
@@ -182,7 +182,7 @@ public:
       {
         double weight = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
-        lf.evaluate((*it),quad,qP,phi);
+        lf.evaluate(quad,qP,phi);
 
         for(int i=0; i< dimRange; ++i)
           error[i] += weight * SQR(ret[i] - phi[i]);
@@ -209,10 +209,6 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
 {
    GridPartType part ( grid );
    DiscreteFunctionSpaceType linFuncSpace ( part );
-   /*
-   DiscreteFunctionType solution ( "sol", linFuncSpace );
-   solution.clear();
-   */ 
    ExactSolution f ( linFuncSpace ); 
    L2Error < DiscreteFunctionType > l2err;
        
@@ -230,7 +226,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
 
 #if HAVE_GRAPE
    // if Grape was found, then display last solution 
-   if(turn > 0)
+   if(0 && turn > 0)
    {
      GrapeDataDisplay < GridType > grape(part); 
      grape.dataDisplay( solution );

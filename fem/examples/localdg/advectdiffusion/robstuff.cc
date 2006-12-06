@@ -49,7 +49,7 @@ public:
       {
         double det = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
         f.evaluate(time,(*it).geometry().global(quad.point(qP)), ret);
-        lf.evaluate((*it),quad,qP,phi);
+        lf.evaluate(quad,qP,phi);
         for(int k=0; k<dimR; ++k)
           error[k] += det * SQR(ret[k] - phi[k]);
       }

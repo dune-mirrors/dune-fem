@@ -47,18 +47,11 @@ public:
   }
 
   //! return the number of local dof of this local function 
-  //! use numDofs instead
-  int numberOfDofs () const 
-  { 
-    return asImp().numberOfDofs ();
-  }
-
-  //! return the number of local dof of this local function 
   int numDofs() const 
   {
     return asImp().numDofs();
   }
-
+  #if OLDFEM
   //! evaluate local function. is replaced by evaluateLocal (evaluateLocal 
   //! stands for local (reference element) coordinate x, whereas evaluateGlobal
   //! gets an x in physical (real world) coordinates
@@ -76,7 +69,13 @@ public:
   {
     asImp().evaluateLocal(en,x,ret);
   }
-
+  #endif
+  //! evaluate local function.
+  //! gets an x in local coordinates
+  void evaluate (const DomainType & x, RangeType & ret)
+  {
+    asImp().evaluate(x,ret);
+  }
   //! evaluate jacobian on reference element coordinate x
   template <class EntityType>
   void jacobianLocal(EntityType& en, 
@@ -86,7 +85,7 @@ public:
     asImp().jacobianLocal(en,x,ret);
   }
 
-  void assign(int dofNum, const RangeType& dofs) {
+  void assign(int dofNum, const RangeType& dofs) DUNE_DEPRECATED {
     asImp().assign(dofNum, dofs);
   }
 private:
@@ -136,7 +135,7 @@ public:
     xLoc_ = en.geometry().local(x);
     evaluateLocal(en,xLoc_,ret);
   }
-
+  #if OLDFEM
   //! Evaluation using a quadrature
   template <class EntityType, class QuadratureType>
   void evaluate(EntityType& en,
@@ -144,9 +143,17 @@ public:
                 int quadPoint,
                 RangeType& ret)
   {
-    evaluateLocal(en, quad.point(quadPoint), ret);
+    evaluate(quad.point(quadPoint), ret);
   }
-
+  #endif
+  //! Evaluation using a quadrature
+  template <class QuadratureType>
+  void evaluate(QuadratureType& quad,
+                int quadPoint,
+                RangeType& ret)
+  {
+    evaluate(quad.point(quadPoint), ret);
+  }
   //! jacobian of the local function using real world coordinate x
   template <class EntityType>
   void jacobianGlobal(EntityType& en, 

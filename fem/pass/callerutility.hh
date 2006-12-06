@@ -293,7 +293,7 @@ namespace Dune {
     //! Triggers the evaluation of a local function
     template <class LFType, class RangeType>
     void visit(LFType& lf, RangeType& res) {
-      lf.evaluateLocal(en_, x_, res);
+      lf.evaluate(x_, res);
     }
 
   private:
@@ -332,7 +332,7 @@ namespace Dune {
     //! Evaluation of a local function
     template <class LFType, class RangeType>
     void visit(LFType& lf, RangeType& res) {
-      lf.evaluate(en_, quad_, quadPoint_, res);
+      lf.evaluate(quad_, quadPoint_, res);
     }
 
   private:

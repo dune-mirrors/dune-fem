@@ -95,7 +95,7 @@ namespace Dune{
     
     for(int qP = 0; qP < nop; ++qP) 
     {
-      sohn_.evaluate(son,quad,qP,ret);
+      sohn_.evaluate(quad,qP,ret);
       for(int i=0; i<vati_numDofs; ++i) 
       {
       	baseset.eval(i,geometryInFather.global(quad.point(qP)),phi);
@@ -123,7 +123,7 @@ namespace Dune{
     const int nop=quad.nop();
     for(int qP = 0; qP < nop; ++qP) 
     {
-      vati_.evaluateLocal(father,geometryInFather.global(quad.point(qP)),ret);
+      vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
       
       for(int i=0; i<sohn_numDofs; ++i) {
       	baseset.eval(i,quad,qP,phi);
