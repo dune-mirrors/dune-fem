@@ -166,9 +166,10 @@ namespace Dune {
         weigh += geom[i];
       weigh /= geom.corners();
       weigh -= center_;
-      if (weigh[0]>0 && weigh[1]<0) return 0; else return 1;
+      // return 1;
+      // if (weigh[0]>0 && weigh[1]<0) return 0; else return 1;
       double dist = weigh.two_norm();
-      return (dist >= radius_) ? 0 : 1;
+      return (dist <= radius_) ? 0 : 1;
     }
     template <class IntersectionIteratorType>
     inline bool intersectionBoundary(IntersectionIteratorType & it) const {
@@ -347,6 +348,7 @@ namespace Dune {
 
       // type of codim 0 entity      
       //typedef typename GridPartType::EntityCodim0Type EntityCodim0Type;
+      typedef typename GridPartType::GridType::template Codim<0>::EntityPointer EntityPointerCodim0Type;
       typedef typename GridPartType::GridType::template Codim<0>::Entity EntityCodim0Type;
       
       private:
@@ -381,7 +383,7 @@ namespace Dune {
       private:
         inline void writeNeighborInfo() {
           if (IteratorType::neighbor()) { 
-            EntityCodim0Type& neigh = *(this->outside());
+            EntityPointerCodim0Type neigh = this->outside();
             if (filter_.has0Entity(neigh)) {
               nInfo.boundary_ = false;
               nInfo.boundaryId_ = 0;
