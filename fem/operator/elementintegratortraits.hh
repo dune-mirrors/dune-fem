@@ -17,6 +17,7 @@
 #include <config.h>
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
+#include <dune/fem/space/common/filteredgrid.hh>
 #include "matrixadapter.hh"
 
 namespace Dune
@@ -71,12 +72,19 @@ class DefaultElementIntegratorTraits
 public:
   //! specific choices for types, based on GridType from inclusion of 
   //! gridtype.hh
-  typedef LeafGridPart<GridType> GridPartType;
+
+  typedef  LeafGridPart<GridType> GridPartType;
+  // if filteredgridpart is wanted:
+  //typedef LeafGridPart<GridType> GridPartImpType;
+  //typedef RadialFilter<GridType> FilterType;   // type of the filter we use
+  //typedef FilteredGridPart<GridPartImpType,FilterType> GridPartType;
+
   typedef FunctionSpace < double , double, dimworld , 1 > FunctionSpaceType;
   typedef LagrangeDiscreteFunctionSpace < FunctionSpaceType, GridPartType, 1 > 
           DiscreteFunctionSpaceType ;
   typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > 
           DiscreteFunctionType;
+
   enum   {elementMatrixSize = 100};  
   typedef FieldMatrixAdapter< FieldMatrix<double, 
                                           elementMatrixSize, 
