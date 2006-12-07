@@ -93,7 +93,7 @@ public:
  */
 /*======================================================================*/
 
-  const FieldVector<typename EntityType::ctype, EntityType::dimension >& 
+  const FieldVector<typename EntityType::ctype, EntityType::dimension > 
   point(int p)
         {
           return geo_.local(geo_[p]);
