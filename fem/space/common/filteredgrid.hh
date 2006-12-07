@@ -93,17 +93,20 @@ namespace Dune {
       CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entitiy(e)));
       return asImp().has0Entity(e);
     }
-    inline bool boundary() const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().boundary()));
-      return asImp().boundary();
+    template<class IntersectionIteratorType>
+    inline bool intersectionBoundary(IntersectionIteratorType & it) const {
+      CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionBoundary<IntersectionIteratorType>(it)));
+      return asImp().intersectionBoundary<IntersectionIteratorType>(it);
     }
-    inline int boundaryId() const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().boundaryId()));
-      return asImp().boundaryId();
+    template<class IntersectionIteratorType>
+    inline int intersectionBoundaryId(IntersectionIteratorType & it) const {
+      CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionBoundaryId<IntersectionIteratorType>(it)));
+      return asImp().intersectionBoundaryId<IntersectionIteratorType>(it);
     }
-     inline bool neighbor() const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().neighbor()));
-      return asImp().neighbor();
+    template<class IntersectionIteratorType>
+    inline bool intersectionNeighbor(IntersectionIteratorType & it) const {
+      CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionNeighbor<IntersectionIteratorType>(it)));
+      return asImp().intersectionNeighbor<IntersectionIteratorType>(it);
     }
   protected: 
     //! do not create explict instances of this class 
@@ -163,14 +166,16 @@ namespace Dune {
       double dist = weigh.two_norm();
       return (dist >= radius_) ? 0 : 1;
     }
-
-    inline bool boundary() const {
+    template <class IntersectionIteratorType>
+    inline bool intersectionBoundary(IntersectionIteratorType & it) const {
       return true;
     }
-    inline int boundaryId() const {
+    template <class IntersectionIteratorType>
+    inline int intersectionBoundaryId(IntersectionIteratorType & it) const {
       return 1;
     }
-    inline bool neighbor() const {
+    template <class IntersectionIteratorType>
+    inline bool intersectionNeighbor(IntersectionIteratorType & it) const {
       return true;
     }
 
@@ -199,11 +204,11 @@ namespace Dune {
     // type of this
     typedef FilteredGridPart<GridPartImp, FilterImp, pitype> ThisType;
     // type of underlying GridPart
-    typedef GridPartImp GridPartType;
+    //typedef GridPartImp GridPartType;
     // type of filter
     typedef FilterImp FilterType;
     // the codim 0 entities type
-    typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
+    //typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
     // the original IntersectionIteratorType
     typedef typename GridPartImp::IntersectionIteratorType IntersectionIteratorImpType;
 
@@ -211,24 +216,26 @@ namespace Dune {
     //- Public typedefs and enums    
     //! Grid implementation type
     typedef typename GridPartImp::GridType GridType;
+    typedef FilteredGridPart<GridPartImp, FilterImp, pitype> GridPartType;
     //! The leaf index set of the grid implementation
     typedef typename GridPartImp::IndexSetType IndexSetType;
     //! The corresponding IntersectionIterator 
-    typedef IntersectionIteratorWrapper<GridPartType, IntersectionIteratorImpType> IntersectionIteratorType;
-    
+    typedef IntersectionIteratorWrapper<GridPartImp, IntersectionIteratorImpType> IntersectionIteratorType;
+    // the codim 0 entities type
+    typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
     //! Struct providing types of the iterators on codimension cd
     template <int cd>
     struct Codim {
     private:
       typedef typename GridPartImp::template Codim<cd>::IteratorType IteratorImpType;
     public:
-      typedef IteratorWrapper<GridPartType, cd, IteratorImpType> IteratorType;
+      typedef IteratorWrapper<GridPartImp, cd, IteratorImpType> IteratorType;
     };
 
   public:
     //- Public methods
     //! Constructor
-    FilteredGridPart(const GridType& grid, FilterType &filter) :
+    FilteredGridPart(GridType& grid, FilterType &filter) :
       GridPartImp(grid),   // This is only legal for LeafGridPart and HierarchicGridParts!
                            // A constructor LevelGridPart(GridType grid) exists, but will  
                            // return a LevelGridPart<GridType, maxLevel>.
@@ -335,10 +342,12 @@ namespace Dune {
     struct IntersectionIteratorWrapper : public IteratorType {
 
       // type of codim 0 entity      
-      // typedef typename GridPartType::EntityCodim0Type EntityCodim0Type;
+      //typedef typename GridPartType::EntityCodim0Type EntityCodim0Type;
       typedef typename GridPartType::GridType::template Codim<0>::Entity EntityCodim0Type;
-
-      struct neighborInfo {    
+      
+      private:
+      struct neighborInfo {   
+        public:
         neighborInfo() : boundary_(false), boundaryId_(-1), neighbor_(false) { }
         neighborInfo(const neighborInfo & org) : boundary_(org.boundary_), 
           boundaryId_(org.boundaryId_), neighbor_(org.neighbor_){ }
@@ -361,42 +370,48 @@ namespace Dune {
         filter_(filter),          
        	endIter_(gridPart->template iend(en))
         { 
-	        //if (!endIter)
-	        //  if(!filter_.has0Entity(*this))
-       	  //    operator++();           
-          //return *this;
+          writeNeighborInfo();
         }
-       
+        
+      private:
+        inline void writeNeighborInfo() {
+          if (IteratorType::neighbor()) { 
+            EntityCodim0Type& neigh = *(this->outside());
+            if (filter_.has0Entity(neigh)) {
+              nInfo.boundary_ = false;
+              nInfo.boundaryId_ = 0;
+              nInfo.neighbor_ = true;
+            }
+            else {
+              nInfo.boundary_ =
+                filter_.intersectionBoundary(static_cast<IteratorType &>(*this));
+              nInfo.boundaryId_ =
+                filter_.intersectionBoundaryId(static_cast<IteratorType &>(*this));
+              nInfo.neighbor_ =
+                filter_.intersectionNeighbor(static_cast<IteratorType &>(*this));
+            }
+          }
+          else {
+            nInfo.boundary_ = true;
+            nInfo.boundaryId_ =
+              filter_.intersectionBoundaryId(static_cast<IteratorType &>(*this));
+            nInfo.neighbor_ = false;
+          }    
+        }
+    
+        public:
         inline IntersectionIteratorWrapper & operator++()
         {         
           if (*this!=endIter_)
             IteratorType::operator++();
-          if (*this!=endIter_) {    
-            if (IteratorType::neighbor()) {
-              EntityCodim0Type& neigh = *(this->outside());
-              if (filter_.has0Entity(neigh)) {
-                nInfo.boundary = false;
-	        nInfo.boundaryId = 0;
-       	        nInfo.neighbor_ = true;	  
-	      }
-              else{
-                nInfo.boundary = filter_.intersectionBoundary();
-       	        nInfo.boundaryId = filter_.intersectionBoundaryId();
-	        nInfo.neighbor_ = filter_.intersectionNeighbor();	  
-              }
-            }
-            else {
-              nInfo.boundary = filter_.intersectionBoundary();
-     	      nInfo.boundaryId = filter_.intersectionBoundaryId();
-	      nInfo.neighbor_ = false;	  
-	    }
-      	  }          
+          if (*this!=endIter_)    
+            writeNeighborInfo();
           return *this;
         }
           
-        inline bool boundary() { return nInfo.boundary_; }
-        inline int boundaryId() { return nInfo.boundaryId_; }
-        inline bool neighbor(){ return nInfo.neighbor_; }
+        inline bool boundary() const  { return nInfo.boundary_; }
+        inline int boundaryId() const { return nInfo.boundaryId_; }
+        inline bool neighbor() const { return nInfo.neighbor_; }
 
       private:
         const GridPartType * gridPart_;        
