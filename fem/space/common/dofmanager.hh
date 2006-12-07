@@ -23,6 +23,7 @@
 
 namespace Dune {
 
+
 // forward declaration 
 template <class GridType> class DofManager;
 template <class DofManagerImp> class DofManagerFactory;
@@ -288,7 +289,9 @@ public:
     assert(nsize >= 0);
 
     if(!myProperty_) 
+    {
       DUNE_THROW(OutOfMemoryError,"Not my property to change mem size!");
+    }
 
     if(nsize <= memSize_) 
     {
@@ -296,10 +299,14 @@ public:
       return ;
     }
 
+    // make new memory 10% larger 
+    const double memoryFactor = 1.1;
+
     // nsize is the minimum needed size of the vector 
     // we double this size to reserve some memory and minimize
     // reallocations 
-    int nMemSize = 2 * nsize; 
+    int nMemSize = (int) memoryFactor * nsize; 
+
     vec_ = AllocatorType :: realloc (vec_,size_,nMemSize);
 
     size_ = nsize;
@@ -988,8 +995,11 @@ public:
   }
    
   //! this method resizes the memory before restriction is done 
+  //! this will increase the sequence counter by 1 
   void resizeForRestrict () 
   {
+    ++sequence_;
+    
     ListIteratorType endit  = memList_.end();
     for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
     {
@@ -1011,18 +1021,23 @@ public:
   }
  
   //! resize the memory and set chunk size to nsize 
+  //! this will increase the sequence counter by 1 
   void reserveMemory (int nsize, bool useNsize = false ) 
   {
+    ++sequence_;
     // remember the chunksize 
     chunkSize_ = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
     assert( chunkSize_ > 0 );
     resizeMemObjs_.apply ( chunkSize_ );
   }
 
-  //! return number of sequence 
+  //! return number of sequence, if dofmanagers memory was changed by
+  //! calling some method like resize, then also this number will increase
+  //! \note The increase of this number could be larger than 1 
   int sequence () const { return sequence_; }
 
   //! resize indexsets memory due to what the mapper has as new size 
+  //! this will increase the sequence counter by 1 
   void resize()
   {
     // new number in grid series 
@@ -1066,6 +1081,7 @@ private:
 
 public:
   //! compress all data that is hold by this dofmanager 
+  //! this will increase the sequence counter by 1 
   void dofCompress() 
   {
     // compress indexsets first 
@@ -1091,6 +1107,7 @@ public:
         (*it)->dofCompress () ;
       }
     }
+    ++sequence_;
   }
 
   //! add data handler for data inlining to dof manager
