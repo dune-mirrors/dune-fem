@@ -1588,10 +1588,10 @@ namespace Dune {
 
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
+      //std::cout << "prepare op = ("<<sequence_ << "," << spc_.sequence() << ")\n" ;
       // for first time buildMatrix 
       if( sequence_ < 0 ) 
       {
-        //dest.clear();
         op_.prepare(arg,rhs_);
         op_.buildMatrix( arg, rhs_ );
         sequence_ = spc_.sequence();
@@ -1600,7 +1600,6 @@ namespace Dune {
       {
         // only clear destination if matrix has really changed 
         // otherwise keep old value as initial value 
-        //dest.clear();
         op_.prepare(arg,rhs_);
 
         // for unstructured grids we can use the re-build method 
@@ -1614,6 +1613,7 @@ namespace Dune {
           // otherwise just make all new 
           op_.buildMatrix( arg, rhs_ );
         }
+        
         sequence_ = spc_.sequence();
       }
       else 
