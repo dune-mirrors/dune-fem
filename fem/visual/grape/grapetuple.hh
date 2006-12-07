@@ -98,8 +98,10 @@ struct GrapeTuple {
     gname += "/g";
     gname += name;
     std::cout << "Reading grid from " << gname << std::endl;
-    grid = new GridType();
-    dataio.readGrid(*grid, gname.c_str(), t, n);
+    
+    // grid is created inside of restore grid method
+    grid = dataio.restoreGrid(gname.c_str(), t, n); 
+    
     std::string dname;
     if (path != "") dname += path;
     else dname += ".";
