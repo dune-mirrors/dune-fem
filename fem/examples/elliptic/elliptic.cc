@@ -46,9 +46,11 @@
 **
 **              make
 **              make GRIDTYPE=YASPGRID       (default)
-**                   YASPGRID: EOC non-informative, as error is immediately small (~1e-14)
+**                   YASPGRID: EOC non-informative, as error is immediately 
+**                   small (~1e-14)
+**                   (reason probably: exact solution is polynomial!)
 **              make GRIDTYPE=SGRID
-**                   EOC is about 1, very large error at beginning
+**                   EOC non-informative, as error is immediately small
 **              make GRIDTYPE=ALBERTAGRID
 **                   EOC is about 2, very nice convergence
 **              make GRIDTYPE=ALUGRID_SIMPLEX
@@ -63,13 +65,16 @@
 **
 **              make
 **              make GRIDDIM=3 GRIDTYPE=YASPGRID       (default)
-**                   YASPGRID: EOC non-informative, as error is immediately small (~1e-14)
+**                   YASPGRID: EOC non-informative, as error is immediately 
+**                             small (~1e-14)
 **              make GRIDDIM=3 GRIDTYPE=SGRID
-**                   YASPGRID: EOC non-informative, as error is immediately small (~1e-14)
+**                   YASPGRID: EOC non-informative, as error is immediately 
+**                             small (~1e-14)
 **              make GRIDDIM=3 GRIDTYPE=ALBERTAGRID
 **                   EOC fine, going down from 3 to 2 with refinement
 **              make GRIDDIM=3 GRIDTYPE=ALUGRID_SIMPLEX
-**                   terminate called after throwing an instance of 'Dune::FMatrixError'
+**                   terminate called after throwing an instance 
+**                   of 'Dune::FMatrixError'
 **
 **************************************************************************/
 
@@ -84,8 +89,6 @@
 // select, whether Kronecker-Treatment of Matrix should be performed
 //#define ACTIVATE_KRONECKER_TREATMENT 0
 #define ACTIVATE_KRONECKER_TREATMENT 1
-
-
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
@@ -111,7 +114,7 @@ using namespace Dune;
 #include <dune/grid/common/referenceelements.hh>
 
 // if no visualization is wanted, uncomment this line:
-#define SKIP_GRAPE
+//#define SKIP_GRAPE
 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
@@ -122,6 +125,7 @@ using namespace Dune;
 #include <dune/fem/operator/feop.hh>
 #include <dune/fem/misc/l2error.hh>
 #include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/common/filteredgrid.hh>
 #include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/fem/discretefunction/adaptivefunction.hh>
 #include <dune/fem/operator/inverseoperators.hh>
@@ -130,33 +134,12 @@ using namespace Dune;
 #include <dune/fem/operator/elementintegratortraits.hh>
 #include "ellipticmodel.hh"
 
-//! the grid part we are using 
-//typedef LevelGridPart < GridType > GridPartType;
-typedef LeafGridPart<GridType> GridPartType;
-
-//! define the function space, \f[ \R^2 \rightarrow \R \f]
-// see dune/common/functionspace.hh
-typedef FunctionSpace < double , double, dimworld , 1 > FuncSpace;
-
-//! define the function space our unkown belong to 
-//! see dune/fem/lagrangebase.hh
-typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 > 
-        FuncSpaceType ;
-
-//! define the type of discrete function we are using , see
-//! dune/fem/discfuncarray.hh
-//typedef DFAdapt < FuncSpaceType > DiscreteFunctionType;
-typedef AdaptiveDiscreteFunction < FuncSpaceType > DiscreteFunctionType;
-
-//! define the discrete laplace operator, see ./fem.cc
-// typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
 
 //! definition of model class, see ellipticmodel.hh
 
 #ifdef POISSON
 typedef PoissonModel EllipticModelType;
 #endif
-
 
 #ifdef ELLIPTIC
 #if PDIM==2
@@ -181,9 +164,40 @@ typedef Elliptic3dExactSolution ExactSolutionType;
 #endif
 #endif // elliptic
 
-//! definition of traits class
+//! definition of traits class, which already defines various 
+//! basic settings such as gridparts, etc.
+//! if you want another settings, simply generate your own Traits class
 typedef EllipticModelType::TraitsType 
         ElementIntegratorTraitsType;
+
+//! the grid part we are using 
+//typedef LevelGridPart < GridType > GridPartType;
+//typedef LeafGridPart<GridType> GridPartImpType;
+//typedef HierarchicGridPart<GridType> GridPartType;  // the underlying GridPart
+//typedef RadialFilter<GridType> FilterType;   // type of the filter we use
+//typedef FilteredGridPart<GridPartImpType,FilterType> GridPartType;
+typedef ElementIntegratorTraitsType::GridPartType GridPartType;
+
+//! define the function space, \f[ \R^2 \rightarrow \R \f]
+// see dune/common/functionspace.hh
+//typedef FunctionSpace < double , double, dimworld , 1 > FuncSpace;
+
+//! define the function space our unkown belong to 
+//! see dune/fem/lagrangebase.hh
+typedef ElementIntegratorTraitsType::DiscreteFunctionSpaceType 
+                                     DiscreteFunctionSpaceType;
+
+//typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 > 
+//        FuncSpaceType ;
+
+//! define the type of discrete function we are using , see
+//! dune/fem/discfuncarray.hh
+//typedef DFAdapt < FuncSpaceType > DiscreteFunctionType;
+//typedef AdaptiveDiscreteFunction < FuncSpaceType > DiscreteFunctionType;
+typedef ElementIntegratorTraitsType::DiscreteFunctionType DiscreteFunctionType;
+
+//! define the discrete laplace operator, see ./fem.cc
+// typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
 
 //! definition of the problem specific ElementRhsIntegrator
 class MyElementRhsIntegrator: 
@@ -294,15 +308,21 @@ typedef OEMBICGSTABOp<DiscreteFunctionType,EllipticOperatorType> InverseOperator
 //typedef OEMGMRESOp<DiscreteFunctionType,EllipticOperatorType> InverseOperatorType;
 
 //! define the type of mapping which is used by inverseOperator 
-typedef Mapping<double ,double,DiscreteFunctionType,DiscreteFunctionType > MappingType;
+//typedef Mapping<double ,double,DiscreteFunctionType,DiscreteFunctionType > MappingType;
 
 double algorithm (const char * filename , int maxlevel, int turn )
 {
    GridPtr<GridType> gridptr(filename); 
    gridptr->globalRefine (maxlevel);
    std::cout << "maxlevel = "<< maxlevel << "\n";
-   GridPartType part ( *gridptr );
-   FuncSpaceType linFuncSpace ( part );
+   // if a filteredgridpart is used
+   //Dune::FieldVector<GridType::ctype,GridType::dimension> C(0.5);
+   //ElementIntegratorTraitsType::FilterType filter(C, 0.4);
+   //
+   //GridPartType part(*gridptr,filter);
+   GridPartType part(*gridptr);
+
+   DiscreteFunctionSpaceType linFuncSpace ( part );
    std::cout << "\nSolving for " << linFuncSpace.size() << 
        " number of unkowns. \n\n";
    DiscreteFunctionType solution ( "sol", linFuncSpace );
@@ -412,13 +432,18 @@ int main (int argc, char **argv)
 #endif
 
   std::cout << "loading dgf " << macroGridName << "\n";
-  
-  ml -= DGFGridInfo<GridType>::refineStepsForHalf();
+  // old:
+    ml -= refStepsForHalf;
+    // new:
+    //ml -= DGFGridInfo<GridType>::refineStepsForHalf();
   if(ml < 0) ml = 0;
   for(int i=0; i<2; i++)
   {
     error[i] = algorithm ( macroGridName.c_str() ,  ml , i);
-    ml += DGFGridInfo<GridType>::refineStepsForHalf() ;
+    // old:
+    ml += refStepsForHalf;
+    // new:
+    // ml += DGFGridInfo<GridType>::refineStepsForHalf() ;
   }
   double eoc = log( error[0]/error[1]) / M_LN2; 
   std::cout << "EOC = " << eoc << " \n";

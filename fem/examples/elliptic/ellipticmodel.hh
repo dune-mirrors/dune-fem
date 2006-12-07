@@ -77,9 +77,15 @@ public:
   inline void dirichletValues(EntityType& en, QuadratureType& quad, int p, 
                               RangeType& ret)
         {
-	  //const DomainType& glob = en.geometry().global(quad.point(p)); 
+	  const DomainType& glob = en.geometry().global(quad.point(p)); 
           //ret[0] = glob[0]+glob[1]; // 1.0;
-          ret[0] = 0.0;
+          //ret[0] = 0.0;
+          ret[0] = 1.0;
+          for(int i=0; i<DomainType::dimension; i++)
+              ret[0] *= ( glob[i] - SQR(glob[i]) );
+    //    ret[0] += x[0]+x[1]; 
+    // ret += 1.0;   // add dirichlet-values!!
+
         }
 
 //! determine neumann value in a boundary point used in a quadrature
