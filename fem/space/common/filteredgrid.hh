@@ -25,6 +25,9 @@
 //! very easy - imO only the constructor has to be changed (see below).
 //! The codim 0 entities that belong to the FilteredGrid are defined by a 
 //! filter class. 
+//! On a codim 0 entitiy there is a method 
+//!   hasBoundaryIntersection().
+//! This method will not work correctly since the entity is not wrapped. 
 //! Again: Be careful, yet we have only iterators for codim 0 entities on the 
 //! FilteredGridPart!
 //
@@ -163,6 +166,7 @@ namespace Dune {
         weigh += geom[i];
       weigh /= geom.corners();
       weigh -= center_;
+      if (weigh[0]>0 && weigh[1]<0) return 0; else return 1;
       double dist = weigh.two_norm();
       return (dist >= radius_) ? 0 : 1;
     }
@@ -364,13 +368,14 @@ namespace Dune {
 
       public:
       inline IntersectionIteratorWrapper(const GridPartType * gridPart, FilterType & filter, 
-                                         EntityCodim0Type &en, bool endIter):
-        IteratorType(endIter?gridPart->template iend(en):gridPart->template ibegin(en)),
+                                         const EntityCodim0Type & en, bool endIter):
+        IteratorType(endIter?gridPart->iend(en):gridPart->ibegin(en)),
         gridPart_(gridPart),
         filter_(filter),          
-       	endIter_(gridPart->template iend(en))
+       	endIter_(gridPart->iend(en))
         { 
-          writeNeighborInfo();
+          if(!endIter) 
+            writeNeighborInfo();
         }
         
       private:
