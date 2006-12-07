@@ -337,6 +337,12 @@ namespace Dune {
 
       // need for multTmpPointer 
       assert( spc_.size() <= gradientSpace_.size() );
+      if( spc_.size() > gradientSpace_.size() )
+      {
+        std::cerr << "Overall gradient space size should be greater or";
+        std::cerr << " equal to size of single space due to memory issues! \n";
+        abort();
+      }
 
       if(gradProblem_.hasSource())
       {
@@ -1585,7 +1591,7 @@ namespace Dune {
       // for first time buildMatrix 
       if( sequence_ < 0 ) 
       {
-        dest.clear();
+        //dest.clear();
         op_.prepare(arg,rhs_);
         op_.buildMatrix( arg, rhs_ );
         sequence_ = spc_.sequence();
@@ -1594,7 +1600,7 @@ namespace Dune {
       {
         // only clear destination if matrix has really changed 
         // otherwise keep old value as initial value 
-        dest.clear();
+        //dest.clear();
         op_.prepare(arg,rhs_);
 
         // for unstructured grids we can use the re-build method 
