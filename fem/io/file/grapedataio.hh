@@ -36,7 +36,7 @@ public:
   inline static bool readGrid (GridType & grid, 
       const GrapeIOStringType & fnprefix , double & time , int timestep);
   
-  //! get Grid from file with time and timestep , return true if ok 
+  //! get Grid from file with time and timestep , return grid pointer if ok 
   inline static GridType * restoreGrid (
       const GrapeIOStringType & fnprefix , double & time , int timestep)
   {
