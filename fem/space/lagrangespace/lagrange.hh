@@ -52,23 +52,29 @@ namespace Dune {
     typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef LagrangeMapper<IndexSetType,polOrd,DimRange> MapperType;
   };
-
-  //****************************************************************
   //
   //  --LagrangeDiscreteFunctionSpace
   //
-  //! Provides access to base function set for different element 
-  //! type in one grid and size of functionspace 
-  //! and map from local to global dof number 
-  //! NOTE: This space can only be used with a special set of index sets.
-  //! If you want to use the Lagrangespace with an index set only
-  //! supportting the index set interface, then use the IndexSetWrapper
-  //! class which will add the needed functionalty.
-  //! NOTE: For adaptive calculations one have to use Index Sets that are
-  //! capable for adaptation, i.e. the method adaptive returns true, see 
-  //! AdaptiveLeafIndexSet. 
-  //!
-  //****************************************************************
+
+  /** @defgroup LagrangeDFSpace Lagrange Function Space
+      @ingroup DiscreteFunctionSpace
+
+      Provides access to base function set for different element 
+   type in one grid and size of functionspace 
+   and map from local to global dof number 
+   NOTE: This space can only be used with a special set of index sets.
+   If you want to use the Lagrangespace with an index set only
+   supportting the index set interface, then use the IndexSetWrapper
+   class which will add the needed functionalty.
+   NOTE: For adaptive calculations one have to use Index Sets that are
+   capable for adaptation, i.e. the method adaptive returns true, see 
+   AdaptiveLeafIndexSet. 
+   @{
+  **/
+
+  /** @brief 
+      Lagrange Function Space 
+      **/
   template<class FunctionSpaceImp, class GridPartImp, int polOrd, 
            template <class> class BaseFunctionStorageImp >
   class LagrangeDiscreteFunctionSpace : 
@@ -275,7 +281,7 @@ namespace Dune {
     // reference to dof manager 
     const DofManagerType & dm_;
   }; // end class LagrangeDiscreteFunctionSpace
-  
+/** @} **/  
 } // end namespace Dune
 
 // contains the implementation of LagrangeSpace

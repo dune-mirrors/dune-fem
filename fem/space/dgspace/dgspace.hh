@@ -24,13 +24,14 @@
 
 namespace Dune {
 
-  //**********************************************************************
-  //
-  //!  DiscreteFunctionSpace for discontinuous functions 
-  //!  NOTE: To use this space for adaptive calcuations one has to
-  //!  use an index set that is capable for adaptive calculations, e.g
-  //!  DGAdaptiveLeafIndexSet and DGAdaptiveLeafGridPart.
-  //**********************************************************************
+  /** @defgroup DGDSpace Discontinuous Galerkin Space
+      @ingroup DiscreteFunctionSpace
+  
+   DiscreteFunctionSpace for discontinuous functions 
+   NOTE: To use this space for adaptive calcuations one has to
+   use an index set that is capable for adaptive calculations, e.g
+  DGAdaptiveLeafIndexSet and DGAdaptiveLeafGridPart.
+  **/
   //! A discontinuous Galerkin space base for DGSpaces 
   template <class SpaceImpTraits>
   class DiscontinuousGalerkinSpaceBase : 

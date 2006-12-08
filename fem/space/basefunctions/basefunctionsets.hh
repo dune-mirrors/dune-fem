@@ -10,7 +10,10 @@
 #include <dune/fem/space/common/dofstorage.hh>
 
 namespace Dune {
-
+/** @defgroup VectorialBaseFunction Vectorial Base Function Set
+    @ingroup BaseFunction
+@{
+**/
   // Forward declarations
   template <class FunctionSpaceImp, template <class> class StorageImp>
   class StandardBaseFunctionSet;
@@ -206,7 +209,7 @@ namespace Dune {
     mutable ScalarJacobianRangeType jTmp_;
   };
 
-
+/** @} **/
 } // end namespace Dune
 
 #include "basefunctionsets.cc"
