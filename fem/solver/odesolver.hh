@@ -536,6 +536,11 @@ public:
     op_.multOEM(arg,dest);
   }
   
+  void mult(const double *arg, double * dest) const
+  {
+    op_.multOEM(arg,dest);
+  }
+  
   int dim_of_argument(int i = 0) const 
   { 
     assert( i == 0 );
