@@ -52,8 +52,11 @@ struct DGAdaptiveLeafGridPartTraits {
   //! \brief is true if grid on this view only has conforming intersections 
   enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
 };
-
-/** \brief GridPart for DGAdapitveLeafIndexSet. The underlying index set is
+/** @ingroup AdaptiveLeafGP
+    @brief
+    Special implementation of the AdaptiveLeafGridPart with
+    an underlying index set only defined for entities with codimension 0.
+    The underlying index set is
     a singleton for each different grid. */
 template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 
 class DGAdaptiveLeafGridPart

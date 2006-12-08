@@ -39,8 +39,15 @@ struct AdaptiveLeafGridPartTraits {
   //! \brief is true if grid on this view only has conforming intersections 
   enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
 };
+/** @defgroup AdaptiveLeafGP Adaptive Leaf Grid Part
+    @ingroup GridPart
+    
+    Uses the very efficient Dune::AdaptiveLeafIndexSet specially
+    designed for problems with constantly changing underlying grid.
+ **/
 
-/** \brief GridPart for AdaptiveLeafIndexSet. Used underlying index set is
+/** @ingroup AdaptiveLeafGP
+    \brief GridPart for Dune::AdaptiveLeafIndexSet. Used underlying index set is
     singleton for each grid object.   
 */
 template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 

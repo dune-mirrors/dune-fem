@@ -16,25 +16,18 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
-//***************************************************************************
-//! A FilteredGridPart is a subset of a GridPart and a GridPart itself 
-//! (without iterators for codim \neq 0). FilteredGridPart will work with
-//! LeafGridPart and HierarchicGridPart but not with a LevelGridPart. If 
-//! you wish to use FilteredGridPart together with a LevelGridPart you are
-//! asked to write a specialization of FilteredGridPart, which should be 
-//! very easy - imO only the constructor has to be changed (see below).
-//! The codim 0 entities that belong to the FilteredGrid are defined by a 
-//! filter class. 
-//! On a codim 0 entitiy there is a method 
-//!   hasBoundaryIntersection().
-//! This method will not work correctly since the entity is not wrapped. 
-//! Again: Be careful, yet we have only iterators for codim 0 entities on the 
-//! FilteredGridPart!
-//
-// @author Christoph Gersbacher
-//***************************************************************************
-
 namespace Dune {
+/** @defgroup GridPart Grid Parts
+ @ingroup FunctionCommon
+
+ Grid parts allow to define a view on a given Grid, treating
+ the underlying grid as a container for entities. 
+ All parts of the dune-fem package rely on GridParts to access
+ the entities of the grid, e.g., discrete functions are defined on
+ the set of entities accesseable by the given GridPart implementation
+ by using the iterator and index set provided by the GridPart.
+**/
+
 
   // forward declarations
   template <class FilterImp, class GridImp>
@@ -74,7 +67,10 @@ namespace Dune {
 // FilteredInterface
 //
 //***************************************************************************
-  
+/** @ingroup FilterGridPart 
+ @brief
+ Interface class for filter to use with a Dune::FilteredGridPart
+ **/
   template <class FilterTraits>
   class FilterInterface
   {
@@ -193,8 +189,29 @@ namespace Dune {
 // 
 // FilteredGridPart
 //
-//***************************************************************************
+/** @defgroup FilterGridPart Filtered Grid Part
+   @ingroup GridPart
+ 
+ A FilteredGridPart is a subset of a GridPart and a GridPart itself 
+ (without iterators for codim \neq 0). FilteredGridPart will work with
+ LeafGridPart and HierarchicGridPart but not with a LevelGridPart. If 
+ you wish to use FilteredGridPart together with a LevelGridPart you are
+ asked to write a specialization of FilteredGridPart, which should be 
+ very easy - imO only the constructor has to be changed (see below).
+ The codim 0 entities that belong to the FilteredGrid are defined by a 
+ filter class. 
+ On a codim 0 entitiy there is a method 
+   hasBoundaryIntersection().
+ This method will not work correctly since the entity is not wrapped. 
+ Again: Be careful, yet we have only iterators for codim 0 entities on the 
+ FilteredGridPart!
+**/
 
+/** @ingroup FilterGridPart
+ @brief
+ A FilteredGridPart allows to extract a set of entities from a grid
+ satisfying a given constrainted defined through a filter class.
+**/ 
   template <class GridPartImp, class FilterImp, PartitionIteratorType pitype = Interior_Partition>
   class FilteredGridPart :
     public GridPartImp
@@ -427,7 +444,6 @@ namespace Dune {
     }; // end IntersectionIteratorWrapper
    
   }; // end FilteredGridPart
-
 }  // end namespace Dune
 
 #endif
