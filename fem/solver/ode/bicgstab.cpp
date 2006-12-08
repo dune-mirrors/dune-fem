@@ -232,8 +232,6 @@ bool BICGSTAB::solveOEM(const OperatorType &op, double *x, const double *b)
     *IterativeSolver::os << "BiCGstab " << comm.id() 
 			 << ":  number of iterations: " 
 			 << iterations
-       << " res: "
-       << res 
 			 << std::endl;
   }
 
