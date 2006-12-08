@@ -103,10 +103,12 @@ public:
   void mult(const T * vec, RowType & result) const 
   {
     assert( (int) result.size() == rows() );
-    for(int row=0; row<rows(); ++row)
+    const int nRow= rows();
+    const int nCol= cols();
+    for(int row=0; row<nRow; ++row)
     {
       result[row] = 0;
-      for(int col=0; col<cols(); ++col) 
+      for(int col=0; col<nCol; ++col) 
       {
         result[row] += matrix_[row][col]*vec[col]; 
       }
@@ -116,10 +118,12 @@ public:
   // result = this * vec 
   void multOEM(const T * vec, T * result) const 
   {
-    for(int row=0; row<rows(); ++row)
+    const int nRow= rows();
+    const int nCol= cols();
+    for(int row=0; row<nRow; ++row)
     {
       result[row] = 0;
-      for(int col=0; col<cols(); ++col) 
+      for(int col=0; col<nCol; ++col) 
       {
         result[row] += matrix_[row][col]*vec[col]; 
       }
