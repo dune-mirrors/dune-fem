@@ -181,8 +181,9 @@ public:
   typedef GenericIterator<const ThisType, const T> ConstDofIteratorType;
 
   //! create array of length size
+  //! if size is <= 0 then vec of lenght 1 is created (parallel runs)
   DofArray(int size) 
-    : size_(size) , memSize_(size) , vec_(0) , myProperty_ (true)
+    : size_((size<=0) ? 1 : size) , memSize_(size_) , vec_(0) , myProperty_ (true)
   {
     vec_ = AllocatorType :: malloc (size_);
     assert( vec_ );
@@ -223,20 +224,16 @@ public:
   int size () const { return size_; }  
 
   //! return reference to entry i
-  T&       operator [] ( int i )       
+  T& operator [] ( int i )       
   { 
-    assert( ((i<0) || (i>=size()) ? (std::cout << std::endl << i << " i|size " << size() << 
-#ifdef _ALU3DGRID_PARALLEL_
-                                     //            " on p=" << __MyRank__ << 
-#endif
-            std::endl, 0) : 1));
+    assert( ((i<0) || (i>=size()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
     return vec_[i]; 
   }
   
   //! return reference to const entry i
   const T& operator [] ( int i ) const 
   { 
-    //assert( ((i<0) || (i>=size()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
+    assert( ((i<0) || (i>=size()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
     return vec_[i]; 
   }
 
@@ -258,7 +255,8 @@ public:
   //! Comparison operator
   //! The comparison operator checks for object identity, i.e. if this and
   //! other are the same objects in memory rather than containing the same data
-  bool operator==(const DofArray<T>& other) const {
+  bool operator==(const DofArray<T>& other) const 
+  {
     return vec_ == other.vec_;
   }
 
@@ -283,6 +281,8 @@ public:
       return false;
   } 
 
+  //! reallocate vector with new size nsize
+  //! if nsize is smaller then actual memSize, size is just set to new value
   void realloc ( int nsize )
   {
     assert(myProperty_);
@@ -312,6 +312,12 @@ public:
     size_ = nsize;
     memSize_ = nMemSize;
   }
+
+  //! return size of vector in bytes 
+  int usedMemorySize() const 
+  {
+    return memSize_ * sizeof(T);
+  } 
 };
 
 //! specialisation for int 
@@ -507,6 +513,9 @@ public:
   virtual bool resizeNeeded () const = 0;
   //! returns size of memory per element
   virtual int  elementMemory() const = 0;
+
+  //! return size of mem used by MemObject 
+  virtual int usedMemorySize() const = 0;
 };
 
 
@@ -528,7 +537,7 @@ class MemObject : public MemObjectInterface
 {
   typedef LocalInterface< int > MemObjectCheckType;
 private:
-  typedef MemObject < MapperType , DofArrayType> MemObjectType;
+  typedef MemObject < MapperType , DofArrayType> ThisType;
   
   // the dof set stores number of dofs on entity for each codim
   const MapperType & mapper_;
@@ -539,8 +548,8 @@ private:
   // name of mem object, i.e. name of discrete function 
   std::string name_;
 
-  CheckMemObjectResize < MemObjectType > checkResize_; 
-  ResizeMemoryObjects  < MemObjectType > resizeMemObj_; 
+  CheckMemObjectResize < ThisType > checkResize_; 
+  ResizeMemoryObjects  < ThisType > resizeMemObj_; 
 
   MemObjectCheckType & resizeList_; 
   MemObjectCheckType & memResizeList_; 
@@ -628,6 +637,12 @@ public:
  
   //! return reference to array for DiscreteFunction 
   DofArrayType & getArray() { return array_; } 
+
+  //! return used memory size 
+  int usedMemorySize() const 
+  {
+    return sizeof(ThisType) + array_.usedMemorySize(); 
+  }
 };
 
 
@@ -641,6 +656,7 @@ class DummyMemObject : public MemObjectInterface
 {
 private:
   typedef DummyMemObject < MapperType , DofArrayType, VectorPointerType > MemObjectType;
+  typedef DummyMemObject < MapperType , DofArrayType, VectorPointerType > ThisType;
   
   // the dof set stores number of dofs on entity for each codim
   const MapperType & mapper_;
@@ -654,8 +670,8 @@ private:
   // vector represented by array 
   VectorPointerType * vector_;
 
-  CheckMemObjectResize < MemObjectType > checkResize_; 
-  ResizeMemoryObjects  < MemObjectType > resizeMemObj_; 
+  CheckMemObjectResize < ThisType > checkResize_; 
+  ResizeMemoryObjects  < ThisType > resizeMemObj_; 
 
 public:  
   // Constructor of MemObject, only to call from DofManager 
@@ -719,6 +735,12 @@ public:
 
   //! return reference to array for DiscreteFunction 
   DofArrayType & getArray() { return array_; } 
+  
+  //! return used memory size 
+  int usedMemorySize() const 
+  {
+    return sizeof(ThisType) + array_.usedMemorySize(); 
+  }
 };
 
 template <class IndexSetType, class EntityType>
@@ -878,6 +900,7 @@ public:
 private:  
   typedef std::list<MemObjectInterface*> ListType;
   typedef typename ListType::iterator ListIteratorType;
+  typedef typename ListType::const_iterator ConstListIteratorType;
 
   typedef LocalInterface< int > MemObjectCheckType;
   
@@ -994,6 +1017,18 @@ public:
     return ! insertIndices_.empty(); 
   }
    
+  //! return used memory size of all MemObjects in bytes 
+  int usedMemorySize () const 
+  {
+    int used = 0;
+    ConstListIteratorType endit = memList_.end();
+    for(ConstListIteratorType it = memList_.begin(); it != endit ; ++it)
+    {
+      used += (*it)->usedMemorySize(); 
+    }
+    return used;
+  }
+  
   //! this method resizes the memory before restriction is done 
   //! this will increase the sequence counter by 1 
   void resizeForRestrict () 
