@@ -92,7 +92,11 @@ class OperatorWrapper : public Function {
  private:
   const Operator& op_;
 };
-template<class Operator>
+  /** @defgroup ODESolver ODE Solver
+   *  @ingroup OperatorCommon
+   @{
+   **/
+   template<class Operator>
 class ExplTimeStepper : public TimeProvider {
  public:
   ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
@@ -552,6 +556,6 @@ public:
     return size_;
   }
 };
-
+/** @} **/
 }
 #endif
