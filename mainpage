@@ -1,0 +1,23 @@
+/** \mainpage dune-fem Automatic Documentation
+
+\section intro Introduction
+
+Welcome to the %dune-fem documentation pages. This documentation has been
+generated using Doxygen, a free source code documentation system for
+documenting C/C++ code.
+
+\section mods Modules
+
+The best way to start is from the page \ref modules which gives
+you access to the documentation by category.
+
+\section concept Concept
+
+The dune-fem modules is based on the dune-grid interface library. extemding
+the grid interface by a number of discretization routins for solving
+non-linear systems of partial differential equations.
+
+*/
+
+/** \page modules Modules
+*/
