@@ -135,6 +135,10 @@ public:
 
 namespace Dune 
 {
+  /** @defgroup OEMSolver Inverting Operator
+   *  @ingroup OperatorCommon
+   @{
+   **/
 
 // CG scheme after Hestenes and Stiefel
 template <class DiscreteFunctionType, class OperatorType>
@@ -982,6 +986,9 @@ public:
   }
 
 };
+  /**
+   @}
+   **/
  
 } // end namespace Dune 
 #endif
