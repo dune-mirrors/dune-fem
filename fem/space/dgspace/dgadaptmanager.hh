@@ -41,6 +41,7 @@ namespace Dune{
 					      StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType :: GridPartType GridPartType;
+  typedef typename FunctionSpaceType :: GridType GridType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
@@ -54,7 +55,7 @@ namespace Dune{
     weight_(-1.0)
   {
     // make sure that index set is used that can handle adaptivity 
-    assert( df.space().indexSet().adaptive() );
+    assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
   }
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
@@ -168,6 +169,7 @@ private:
 					       StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType ::GridPartType GridPartType;
+  typedef typename FunctionSpaceType ::GridType GridType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
@@ -180,7 +182,7 @@ private:
     weight_(-1.0)
   {
     // make sure that index set is used that can handle adaptivity 
-    assert( df.space().indexSet().adaptive() );
+    assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
   }
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
