@@ -1533,8 +1533,6 @@ namespace Dune {
     typedef typename DiscreteModelType :: Traits :: Traits :: template 
       InverseOperator<DestinationType,FEOperatorType>:: InverseOperatorType InverseOperatorType;
 
-    typedef typename PreviousPassType :: DestinationType GradDestinationType;
-
     const double eps_;
     const int maxIterFactor_; 
     mutable int maxIter_;
