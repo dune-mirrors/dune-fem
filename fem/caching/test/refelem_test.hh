@@ -11,13 +11,23 @@ namespace Dune {
 
   class ReferenceElement_Test : public Test 
   {
+    GeometryType cube3_;
+    GeometryType cube2_;
+    GeometryType simplex3_;
+    GeometryType simplex2_;
+    GeometryType simplex1_;
   public:
     ReferenceElement_Test() :
-      refCube3_(ReferenceElements<double, 3>::general(cube)),
-      refSimplex3_(ReferenceElements<double, 3>::general(simplex)),
-      refCube2_(ReferenceElements<double, 2>::general(cube)),
-      refSimplex2_(ReferenceElements<double, 2>::general(simplex)),
-      refLine_(ReferenceElements<double, 1>::general(simplex))
+      cube3_(GeometryType(GeometryType::cube,3)),
+      cube2_(GeometryType(GeometryType::cube,2)),
+      simplex3_(GeometryType(GeometryType::simplex,3)),
+      simplex2_(GeometryType(GeometryType::simplex,2)),
+      simplex1_(GeometryType(GeometryType::simplex,1)),
+      refCube3_(ReferenceElements<double, 3>::general(cube3_)),
+      refSimplex3_(ReferenceElements<double, 3>::general(simplex3_)),
+      refCube2_(ReferenceElements<double, 2>::general(cube2_)),
+      refSimplex2_(ReferenceElements<double, 2>::general(simplex2_)),
+      refLine_(ReferenceElements<double, 1>::general(simplex1_))
     {}
 
     virtual void run();

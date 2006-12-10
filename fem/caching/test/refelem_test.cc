@@ -60,23 +60,24 @@ namespace Dune {
 
   void ReferenceElement_Test::allGeometriesTest() {
     const ReferenceCube<double, 3>& rc3 = 
-      ReferenceElements<double, 3>::cube(cube);
+      ReferenceElements<double, 3>::cube(cube3_);
     checkSingle<ReferenceCube<double, 3>, 1>(rc3);
     checkSingle<ReferenceCube<double, 3>, 2>(rc3);
 
     const ReferenceCube<double, 2>& rc2 = 
-      ReferenceElements<double, 2>::cube(cube);
+      ReferenceElements<double, 2>::cube(cube2_);
     checkSingle<ReferenceCube<double, 2>, 1>(rc2);
 
     const ReferenceSimplex<double, 3>& rs3 =
-      ReferenceElements<double, 3>::simplices(simplex);
+      ReferenceElements<double, 3>::simplices(simplex3_);
     checkSingle<ReferenceSimplex<double, 3>, 1>(rs3);
     checkSingle<ReferenceSimplex<double, 3>, 2>(rs3);
 
     const ReferenceSimplex<double, 2>& rs2 =
-      ReferenceElements<double, 2>::simplices(simplex);
+      ReferenceElements<double, 2>::simplices(simplex2_);
     checkSingle<ReferenceSimplex<double, 2>, 1>(rs2);
 
+    GeometryType prism(GeometryType::prism,3);
     const ReferencePrism<double, 3>& rpr = 
       ReferenceElements<double, 3>::prism(prism);
     checkSingle<ReferencePrism<double, 3>, 1>(rpr);

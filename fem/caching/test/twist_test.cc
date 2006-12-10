@@ -16,6 +16,10 @@ namespace Dune {
 
   void TwistProvider_Test::lineTest() 
   {
+
+    GeometryType line(GeometryType::simplex,1);
+
+
     typedef FieldVector<double, 1> CoordinateType;
     typedef TwistProvider<double, 1>::TwistStorageType TwistStorageType;
     typedef TwistStorageType::PointVectorType PointVectorType;
@@ -55,6 +59,7 @@ namespace Dune {
 
   void TwistProvider_Test::triangleTest() 
   {
+    GeometryType simplex(GeometryType::simplex,2);
     typedef FieldVector<double, 2> CoordinateType;
     typedef TwistProvider<double, 2>::TwistStorageType TwistStorageType;
     typedef TwistStorageType::PointVectorType PointVectorType;
@@ -129,6 +134,7 @@ namespace Dune {
 
   void TwistProvider_Test::quadrilateralTest() 
   {
+    GeometryType cube(GeometryType::cube,2);
     typedef FieldVector<double, 2> CoordinateType;
     typedef TwistProvider<double, 2>::TwistStorageType TwistStorageType;
     typedef TwistStorageType::PointVectorType PointVectorType;
@@ -233,6 +239,7 @@ namespace Dune {
     CoordinateType begin(0.1);
     CoordinateType end(0.9);
     
+    GeometryType line(GeometryType::simplex,1);
     TestQuadrature<double, 1> quadImp(line, 0);
     quadImp.newQuadraturePoint(begin, 0.5);
     

@@ -16,15 +16,18 @@ namespace Dune {
     const int dim = 2;
     typedef PointProvider<double,dim,0>::GlobalPointVectorType PointVectorType;
 
-    Quadrature<double, dim> quad(simplex, 2);
+    GeometryType simplex(GeometryType::simplex,dim);
+
+    Quadrature<double, dim> quad(simplex, dim);
 
     PointProvider<double, dim, 0>::registerQuadrature(quad);
 
     const PointVectorType& points = 
       PointProvider<double, dim, 0>::getPoints(quad.id(), simplex);
 
-    _test(points.size() == quad.nop());
-    for (size_t i = 0; i < points.size(); ++i) {
+    _test( (int) points.size() == quad.nop() );
+    for (size_t i = 0; i < points.size(); ++i) 
+    {
       for (int j = 0; j < dim; ++j) {
         _floatTest(points[i][j], quad.point(i)[j]);
       }
@@ -42,7 +45,10 @@ namespace Dune {
     LocalPointType first(0.5);
     LocalPointType second(0.6);
 
-    TestQuadrature<double, 1> quadImp(simplex, 0);
+    GeometryType simplex(GeometryType::simplex,dim);
+    GeometryType line(GeometryType::simplex,dim-1);
+
+    TestQuadrature<double, 1> quadImp(line, 0);
     quadImp.newQuadraturePoint(first, 0.5);
     quadImp.newQuadraturePoint(second, 0.5);
 
@@ -67,6 +73,10 @@ namespace Dune {
 
   void PointProvider_Test::transformationTest()
   {
+    GeometryType quadrilateral(GeometryType::cube,2);
+    GeometryType triangle(GeometryType::simplex,2);
+    GeometryType line(GeometryType::simplex,1);
+
     typedef PointProvider<double, 2, 1> PointProvider1Type;
     typedef PointProvider<double, 3, 1> PointProvider2Type;
     typedef FieldVector<double, 1> Point1Type;
@@ -81,12 +91,13 @@ namespace Dune {
 
     // Hexa test
     Point2Type ph(0.5);
+
     TestQuadrature<double, 2> quadImpQuad(quadrilateral, 0);
     quadImpQuad.newQuadraturePoint(ph, 1.0);
     Quadrature<double, 2> quadQuad(quadImpQuad);
 
     const MapperVectorType& mvh = 
-      PointProvider2Type::getMappers(quadQuad, cube);
+      PointProvider2Type::getMappers(quadQuad, quadrilateral);
     for (size_t i = 0; i < mvh.size(); ++i) {
       std::cout << mvh[i][0] << ", ";
     }
@@ -94,7 +105,7 @@ namespace Dune {
     
 
     const PointProvider2Type::GlobalPointVectorType& ptsHexa =
-      PointProvider2Type::getPoints(quadQuad.id(), cube);
+      PointProvider2Type::getPoints(quadQuad.id(), quadrilateral);
 
     _test(ptsHexa.size() == 6);
     tmp3[0] = 0.;    
@@ -116,9 +127,9 @@ namespace Dune {
     quadImpTri.newQuadraturePoint(pt, 1.0);
     Quadrature<double, 2> quadTri(quadImpTri);
 
-    PointProvider2Type::getMappers(quadTri, simplex);
+    PointProvider2Type::getMappers(quadTri, triangle);
     const PointProvider2Type::GlobalPointVectorType& ptsTetra =
-      PointProvider2Type::getPoints(quadTri.id(), simplex);
+      PointProvider2Type::getPoints(quadTri.id(), triangle);
     
     _test(ptsTetra.size() == 4);
     tmp3 = oneThird;
@@ -136,9 +147,9 @@ namespace Dune {
     quadImpLine.newQuadraturePoint(pl, 1.0);
     Quadrature<double, 1> quadLine(quadImpLine);
 
-    PointProvider1Type::getMappers(quadLine, cube);
+    PointProvider1Type::getMappers(quadLine, line);
     const PointProvider1Type::GlobalPointVectorType& ptsQuad = 
-      PointProvider1Type::getPoints(quadLine.id(), cube);
+      PointProvider1Type::getPoints(quadLine.id(), line);
 
     _test(ptsQuad.size() == 4);
     tmp2[0] = 0.;
@@ -154,9 +165,9 @@ namespace Dune {
     TestQuadrature<double, 1> quadImpLine2(line, 0);
     quadImpLine2.newQuadraturePoint(pl, 1.0);
     Quadrature<double, 1> quadLine2(quadImpLine2);
-    PointProvider1Type::getMappers(quadLine2, simplex);
+    PointProvider1Type::getMappers(quadLine2, line);
     const PointProvider1Type::GlobalPointVectorType& ptsTri = 
-      PointProvider1Type::getPoints(quadLine2.id(), simplex);
+      PointProvider1Type::getPoints(quadLine2.id(), line);
 
     _test(ptsTri.size() == 3);
     tmp2 = 0.5;

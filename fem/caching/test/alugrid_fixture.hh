@@ -1,7 +1,7 @@
 #ifndef DUNE_ALUGRID_FIXTURE_HH
 #define DUNE_ALUGRID_FIXTURE_HH
 
-#include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/alugrid.hh>
 
 namespace Dune {
 

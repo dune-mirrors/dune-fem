@@ -6,7 +6,8 @@
 
 namespace Dune {
 
-  class PointProvider_Test : public Test {
+  class PointProvider_Test : public Test 
+  {
   public:
     virtual void run();
 

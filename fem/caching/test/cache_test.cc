@@ -1,7 +1,8 @@
 #include <config.h>
 
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/alu3dgrid.hh>
+
+#include <dune/grid/alugrid.hh>
 #include <dune/grid/albertagrid.hh>
 
 #include "sgrid_fixture.hh"
@@ -33,8 +34,8 @@ namespace Dune {
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-    GeometryType elemGeo = cube;
-    GeometryType faceGeo = cube;
+    GeometryType elemGeo = GeometryType(GeometryType::cube,3);
+    GeometryType faceGeo = GeometryType(GeometryType::cube,2);
 
     // Get reference element
     const ReferenceElement<double, dim>& refElem =
@@ -80,8 +81,8 @@ namespace Dune {
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-    GeometryType elemGeo = simplex;
-    GeometryType faceGeo = simplex;
+    GeometryType elemGeo = GeometryType(GeometryType::simplex,3);
+    GeometryType faceGeo = GeometryType(GeometryType::simplex,2);
 
     // Get reference element
     const ReferenceElement<double, dim>& refElem =
@@ -125,8 +126,8 @@ namespace Dune {
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-    GeometryType elemGeo = simplex;
-    GeometryType faceGeo = simplex;
+    GeometryType elemGeo = GeometryType(GeometryType::simplex,2);
+    GeometryType faceGeo = GeometryType(GeometryType::simplex,1);
 
     // Get reference element
     const ReferenceElement<double, dim>& refElem =
@@ -169,8 +170,8 @@ namespace Dune {
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-    GeometryType elemGeo = cube;
-    GeometryType faceGeo = cube;
+    GeometryType elemGeo = GeometryType(GeometryType::cube,2);
+    GeometryType faceGeo = GeometryType(GeometryType::cube,1);
 
     // Get reference element
     const ReferenceElement<double, dim>& refElem =
