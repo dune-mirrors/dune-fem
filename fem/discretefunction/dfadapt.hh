@@ -308,14 +308,14 @@ public:
   #if OLDFEM
   template <class EntityType> 
   inline
-  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const DUNE_DEPRECATED {evaluate(en.geometry().local(x),ret);}
+  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const {evaluate(en.geometry().local(x),ret);}
   template <class EntityType>
   inline
-  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const DUNE_DEPRECATED {evaluate(x,ret);}
+  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const {evaluate(x,ret);}
   //! sum over all local base functions evaluated on given quadrature point
   template <class EntityType, class QuadratureType> 
   inline
-  void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const DUNE_DEPRECATED {evaluate(quad,quadPoint,ret);}
+  void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const {evaluate(quad,quadPoint,ret);}
   #endif
   //! sum over all local base functions evaluated on given quadrature point
   template <class EntityType, class QuadratureType> 
