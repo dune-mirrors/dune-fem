@@ -132,16 +132,15 @@ bool GMRES::solve(Function &op, double *u, const double *b)
 //       cblas_dgemv(CblasRowMajor, CblasTrans,
 // 		  dim, j+1, -1.0, v, dim,  global_dot, 1,  1.0, vjp, 1);
 
-
-
       local_dot[0] = cblas_ddot(dim, vjp, 1, vjp, 1);
       comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
       H(j+1,j) = sqrt(global_dot[0]); 
       cblas_dscal(dim, 1.0/H(j+1,j), vjp, 1);
 
       // perform Givens rotation
-      for(int i=0; i<j; i++){
-	cblas_drot(1, &H(i+1,j), 1, &H(i,j), 1, c[i], s[i]);
+      for(int i=0; i<j; i++)
+      {
+      	cblas_drot(1, &H(i+1,j), 1, &H(i,j), 1, c[i], s[i]);
       }
       const double h_j_j = H(j,j);
       const double h_jp_j = H(j+1,j);
@@ -155,7 +154,7 @@ bool GMRES::solve(Function &op, double *u, const double *b)
 
       iterations++;
       if (fabs(g[j+1]) < _tolerance 
-	  || iterations >= max_num_of_iterations) break;
+	        || iterations >= max_num_of_iterations) break;
     }
     
     //
@@ -171,26 +170,34 @@ bool GMRES::solve(Function &op, double *u, const double *b)
     }    
 
     // update the approx. solution
-    if (preconditioner){
+    if (preconditioner)
+    {
       // u += M^{-1} (v[0], ..., v[last-1]) y	
       double *u_tmp = v + m*dim; // we don't need this vector anymore
       dset(dim, 0.0, u_tmp, 1);
-      for(int i=0; i<last; i++){
-	double *vi = v + i*dim;
-	cblas_daxpy(dim, y[i], vi, 1, u_tmp, 1);
+      for(int i=0; i<last; i++)
+      {
+	      double *vi = v + i*dim;
+	      cblas_daxpy(dim, y[i], vi, 1, u_tmp, 1);
       }
       (*preconditioner)(u_tmp, z);
       cblas_daxpy(dim, 1.0, z, 1, u, 1);
     }
     else{
       // u += (v[0], ..., v[last-1]) y
-      for(int i=0; i<last; i++){
-	double *vi = v + i*dim;
-	cblas_daxpy(dim, y[i], vi, 1, u, 1);
+      for(int i=0; i<last; i++)
+      {
+      	double *vi = v + i*dim;
+      	cblas_daxpy(dim, y[i], vi, 1, u, 1);
       }
     }
 
     if (fabs(g[last]) < _tolerance) break;
+    if (IterativeSolver::os)
+    {
+      *IterativeSolver::os << "GMRES " << iterations << " : " <<  fabs(g[last]) << std::endl; 
+    }
+
   }
 
   // output
