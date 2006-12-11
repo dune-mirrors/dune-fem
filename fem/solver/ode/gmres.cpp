@@ -195,7 +195,7 @@ bool GMRES::solve(Function &op, double *u, const double *b)
     if (fabs(g[last]) < _tolerance) break;
     if (IterativeSolver::os)
     {
-      *IterativeSolver::os << "GMRES " << iterations << " : " <<  fabs(g[last]) << std::endl; 
+      *IterativeSolver::os << "GMRES "<< comm.id() << " it: " << iterations << " : " <<  fabs(g[last]) << std::endl; 
     }
 
   }

@@ -128,7 +128,7 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
     if (res < _tolerance || iterations >= max_num_of_iterations) break; 
     if (IterativeSolver::os)
     {
-      *IterativeSolver::os << "BiCGstab " << iterations << " : " << res << std::endl;
+      *IterativeSolver::os << "BiCGstab " << comm.id() << " it: " << iterations << " : " << res << std::endl;
     }
   }
     
