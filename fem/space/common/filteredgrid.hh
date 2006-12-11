@@ -239,7 +239,7 @@ namespace Dune {
     //! Grid implementation type
     typedef typename GridPartImp::GridType GridType;
     typedef FilteredGridPart<GridPartImp, FilterImp, pitype> GridPartType;
-    //! The leaf index set of the grid implementation
+    //! The index set of the gridpart implementation
     typedef typename GridPartImp::IndexSetType IndexSetType;
     //! The corresponding IntersectionIterator 
     typedef IntersectionIteratorWrapper<GridPartImp, IntersectionIteratorImpType> IntersectionIteratorType;
@@ -267,14 +267,14 @@ namespace Dune {
       updateStatus();
     }
 
-    //! Begin iterator on the leaf level
+    //! Begin iterator defined by the gridpart implementation
     template <int cd>
     typename ThisType::template Codim<cd>::IteratorType begin() const {
       //typedef typename ThisType::template Codim<cd>::IteratorType IteratorType;
       return typename ThisType::template Codim<cd>::IteratorType(this, filter_, false);
     }
 
-    //! End iterator on the leaf level
+    //! End iterator defined by the gridpart implementation
     template <int cd>
     typename ThisType::template Codim<cd>::IteratorType end() const {
       //typedef typename ThisType::template Codim<cd>::IteratorType IteratorType;
