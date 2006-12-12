@@ -207,10 +207,10 @@ class MyElementRhsIntegrator:
 {
 public:
   //! constructor with model must be implemented as a forward to Base class
-  MyElementRhsIntegrator(EllipticModelType& model)
+  MyElementRhsIntegrator(EllipticModelType& model, int verbose=0)
           : DefaultElementRhsIntegrator<ElementIntegratorTraitsType, 
                                         EllipticModelType, 
-                                        MyElementRhsIntegrator>(model)
+                                        MyElementRhsIntegrator>(model,verbose)
         {};
   //! access function, which is the essence and can be used to implement 
   //! arbitrary operators
@@ -267,11 +267,11 @@ public:
   //! constructor with model instance is implemented in default-class, so a
   //! similar constructor is required in derived classes, which simply
   //! calls the base-class constructor
-  MyElementMatrixIntegrator(ModelType& model)
+  MyElementMatrixIntegrator(ModelType& model, int verbose=0)
           :   DefaultElementMatrixIntegrator<
                                ElementIntegratorTraitsType, 
                                EllipticModelType,
-                               MyElementMatrixIntegrator> (model) 
+                               MyElementMatrixIntegrator> (model, verbose) 
         {};  
 
   //! The crucial method for matrix computation: collecting of contributions
@@ -330,20 +330,22 @@ double algorithm (const char * filename , int maxlevel, int turn )
    DiscreteFunctionType rhs ( "rhs", linFuncSpace );
    rhs.clear();
    
+   int verbose = 1;
+   
    // initialize Model and Exact solution
    EllipticModelType model(linFuncSpace);
    std::cout << "initialized model\n";
 
    // initialize elementmatrix-provider
-   ElementMatrixIntegratorType elMatInt(model);
+   ElementMatrixIntegratorType elMatInt(model, verbose);
    std::cout << "initialized element-matrix integrator\n";
 
    // initialize ElementRhsIntegrator
-   ElementRhsIntegratorType elRhsInt(model);
+   ElementRhsIntegratorType elRhsInt(model, verbose);
    std::cout << "initialized element-rhs integrator\n";
 
    // initialize RhsAssembler
-   RhsAssemblerType rhsAssembler(elRhsInt);
+   RhsAssemblerType rhsAssembler(elRhsInt, verbose);
    std::cout << "initialized rhs assembler\n";
    
    // initialize Operator  
@@ -351,7 +353,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    EllipticOperatorType elliptOp 
         ( elMatInt , 
           EllipticOperatorType::ASSEMBLED,
-          numNonZero);
+          numNonZero, verbose);
    std::cout << "initialized operator (= matrix assembler)\n";
 
    // assemble matrix and perform dirichlet-row killing
@@ -373,9 +375,9 @@ double algorithm (const char * filename , int maxlevel, int turn )
    std::cout << "finished Rhs Kronecker column treatment\n";
 #endif
    
-   bool verbose = true; 
+   bool bverbose = true; 
    double dummy = 12345.67890;
-   InverseOperatorType cg ( elliptOp, dummy , 1E-15 , 20000 , verbose );
+   InverseOperatorType cg ( elliptOp, dummy , 1E-15 , 20000 , bverbose );
      
    // solve linear system with cg 
    cg(rhs,solution);
@@ -433,17 +435,17 @@ int main (int argc, char **argv)
 
   std::cout << "loading dgf " << macroGridName << "\n";
   // old:
-    ml -= refStepsForHalf;
+  //ml -= refStepsForHalf;
     // new:
-    //ml -= DGFGridInfo<GridType>::refineStepsForHalf();
+    ml -= DGFGridInfo<GridType>::refineStepsForHalf();
   if(ml < 0) ml = 0;
   for(int i=0; i<2; i++)
   {
     error[i] = algorithm ( macroGridName.c_str() ,  ml , i);
     // old:
-    ml += refStepsForHalf;
+    //ml += refStepsForHalf;
     // new:
-    // ml += DGFGridInfo<GridType>::refineStepsForHalf() ;
+     ml += DGFGridInfo<GridType>::refineStepsForHalf() ;
   }
   double eoc = log( error[0]/error[1]) / M_LN2; 
   std::cout << "EOC = " << eoc << " \n";
