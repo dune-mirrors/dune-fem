@@ -20,6 +20,7 @@
 //- local includes 
 #include "common/operator.hh"
 #include "common/localoperator.hh"
+//#include "matrix/spmatrix.hh"
 #include "feop/spmatrix.hh"
 #include "lagrangedofhandler.hh"
 
@@ -212,7 +213,8 @@ public:
   FEOp( ElementMatrixIntegratorType &elMatInt, 
         OpMode opMode = ASSEMBLED,
 //        DirichletTreatmentMode dirichletMode = KRONECKER_ROWS,
-        int maxNonZerosPerRow = 50) :
+        int maxNonZerosPerRow = 50,
+        int verbose = 0) :
 
           functionSpace_( elMatInt.model().discreteFunctionSpace()),  
           matrix_ (0), 
@@ -225,8 +227,12 @@ public:
           elMatInt_(elMatInt),
           isDirichletDOF_(0),
           isDirichletDOF_assembled_(false),
-          matrixDirichletColumns_(0)
+          matrixDirichletColumns_(0),
+          verbose_(verbose)
         {
+          if (verbose_)
+              std::cout << "entered constructor of FEOp\n";
+
           // class currently only implemented for non-symmetrized matrix/rhs!
           assert(opMode == ASSEMBLED);
         };
@@ -240,6 +246,9 @@ public:
 
   ~FEOp( ) 
         {
+          if (verbose_)
+              std::cout << "entered destructor of FEOp\n";
+
           if ( matrix_ ) 
               delete matrix_;
           if ( isDirichletDOF_ ) 
@@ -256,6 +265,8 @@ public:
 
   void print () const 
   {
+    if (verbose_)
+        std::cout << "entered print() of FEOp\n";
     assert(opMode_==ASSEMBLED);
     if(!this->matrix_assembled_) 
         this->assemble();
@@ -277,6 +288,8 @@ public:
   
   SystemMatrixType& systemMatrix() 
         {
+          if (verbose_)
+              std::cout << "entered systemMatrix() of FEOp\n";
           assert(opMode_==ASSEMBLED);
           //assert(matrix_assembled_ == true);
           if ( !this->matrix_assembled_ )
@@ -585,6 +598,9 @@ public:
 
   void assemble ( ) const
   {
+    if (verbose_)
+        std::cout << "entered assemble() of FEOp\n";
+
     assert(opMode_==ASSEMBLED);
         
     if(!this->matrix_) 
@@ -609,6 +625,9 @@ public:
     // in case of dirichletTreatment by Kronecker-kill: eliminate columns
     //if (dirichletMode_==KRONECKER_ROWS_COLS)
     //    matrixKroneckerColumnsTreatment();
+
+    if (verbose_)
+        determineRealNonZeros();
     
     matrix_assembled_ = true;
   };
@@ -668,6 +687,8 @@ public:
 
   void markForReassembling()
         {
+          if (verbose_)
+              std::cout << "entered markForReassembling() of FEOp\n";
           isDirichletDOF_assembled_ = false;
           matrix_assembled_ = false;
         };
@@ -696,6 +717,8 @@ public:
 
   void matrixKroneckerColumnsTreatment() const
         {
+          if (verbose_)
+              std::cout << "entered matrixKroneckerColumnsTreatment of FEOp\n";
           assert(isDirichletDOF_);
           assert(matrix_);
           
@@ -733,8 +756,11 @@ public:
               isDirichletDOF_->rbegin(0);
           for (;it!=isDirichletDOF_->rend(0);++it)
               matrix_->unitCol(it.col());          
+          
+          if (verbose_)
+              determineRealNonZeros();
         };
-
+  
 /*======================================================================*/
 /*! 
  *   rhsKroneckerColumnsTreatment: modify computed right-hand side for 
@@ -768,7 +794,8 @@ public:
           assert(matrixDirichletColumns_);
           assert ( rhs.size() == isDirichletDOF_->cols() );
           
-          std::cout << "entered rhsKroneckerColumnsTreatment\n";
+          if (verbose_)
+              std::cout << "entered rhsKroneckerColumnsTreatment\n";
 
           // temporary store current values rhs[i] for Dirichlet-DOFs
           SparseRowMatrix<double> 
@@ -783,11 +810,14 @@ public:
           
           // modify values of rhs-vector for non-dirichlet-DOFs 
           dit = rhs.dbegin();
+          if (verbose_)
+              std::cout << "Searching non-Dirichlet-DOFs for modification: " << flush ;
+                
           for (int i=0; i!=matrix_->rows(); i++, ++dit)
               if ((*isDirichletDOF_)(0,i)==0.0) // so is non-Dirichlet
               {
-                std::cout << "found non-Dirichlet-DOF " << i 
-                          <<" for modification\n";
+                if (verbose_)
+                    std::cout << " " << i << flush;
                 SparseRowMatrix<int>::ColumnIterator it = 
                     isDirichletDOF_->rbegin(0);
                 const SparseRowMatrix<int>::ColumnIterator endit = 
@@ -805,6 +835,9 @@ public:
 //                  std::cout << "setting of  Dirichlet DOF finished\n";         
                 }
               }
+          if (verbose_)
+              std::cout << " finished\n";
+
 //          std::cout << "finished Rhs-KroneckerColumnTreatment\n";
         }
   
@@ -835,6 +868,14 @@ private:
           // int maxNonZerosPerRow_ = 15 * (dim-1);
           
           // SystemMatrixType* 
+          if (verbose_)
+              std::cout << "entered allocateSystemMatrix() of FEOp\n";
+
+          if (verbose_)
+              std::cout << "allocating matrix of size " <<
+                  this->functionSpace_.size ( ) << " times " << 
+                  maxNonZerosPerRow_ << " nonzeros \n";
+          
           matrix_ =
               new SystemMatrixType( 
                   this->functionSpace_.size ( ) , 
@@ -860,6 +901,9 @@ private:
   void assembleOnGrid ( GridIteratorType &it, GridIteratorType &endit, 
                               ElementMatrixImp &mat) const
         {
+          if (verbose_)
+              std::cout << "entered assembleOnGrid() of FEOp\n";
+
           typedef typename 
               DiscreteFunctionType::FunctionSpaceType::BaseFunctionSetType 
               BaseFunctionSetType;
@@ -902,6 +946,8 @@ private:
   
   void searchDirichletDOFs() const
         {
+          if (verbose_)
+              std::cout << "entered searchDirichletDOFs() of FEOp\n";
           typedef typename 
               DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
           typedef typename DiscreteFunctionSpaceType::GridType GridType; 
@@ -1004,6 +1050,9 @@ private:
 //  template <class GridIteratorType>
   void bndCorrectMatrix() const
         {
+          if (verbose_)
+              std::cout << "entered bndCorrectMatrix() of FEOp\n";
+
           if (!isDirichletDOF_assembled_)
               searchDirichletDOFs();
           
@@ -1036,6 +1085,35 @@ private:
 //         {
 //           ...
 //         };
+
+
+
+/*======================================================================*/
+/*! 
+ *   determineRealNonZeros()
+ *
+ *   \return the maximum real number of nonzero entries in the system matrix
+ */
+/*======================================================================*/
+
+  int determineRealNonZeros() const
+  {
+    // search number of nonzeros
+    int maxnonzeros = -1;
+    
+    for (int i=0; i!=matrix_->rows(); i++)
+    {
+      int nonzeros = 0;
+      for (int j=0; j!=matrix_->cols(); j++)
+          if ((*matrix_)(i,j)!=0.0) nonzeros++;
+      
+      if (nonzeros > maxnonzeros)
+          maxnonzeros = nonzeros;
+    }
+    std::cout << " current real nonzeros per row:" << maxnonzeros << " \n";
+    
+    return maxnonzeros;
+  }
   
 //! member variables:
 private: 
@@ -1079,6 +1157,9 @@ private:
   //! allocation. 
   int  maxNonZerosPerRow_;
 
+  //! verbosity flag
+  int verbose_;
+  
   // //! pointers to storage of argument and destination, only required in 
   // LocalOperator Mode
   // const DiscreteFunctionType * arg_;

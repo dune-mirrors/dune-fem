@@ -4,6 +4,17 @@
 **   $Revision$$Name$
 **       $Date$
 **   Copyright: GPL $Author$
+** Description: several implementations of element-matrix and 
+**              element-rhs-integrators, 
+**              which can be accumulated for solving a general 
+**              elliptic problems (or simplifications of it) with the FEOp 
+**              class:
+**
+**   - div(a(x)*grad(u)) + div (b(x)*u) + c(x)*u = f(x)       in Omega
+**                                             u = g_D(x)   in \Gamma_D
+**                      (a(x)*grad(u) -b(x)*u) n = g_N(x)   in \Gamma_N
+**            (a(x)*grad(u) -b(x)*u) n + alpha*u = g_R(x)   in \Gamma_R
+**
 **************************************************************************/
 #ifndef DUNE_ELEMENTINTEGRATOR_HH
 #define DUNE_ELEMENTINTEGRATOR_HH
@@ -173,41 +184,50 @@ protected:
  *   if a local-matrix interface is used, which directly accesses the 
  *   global matrix?
  *
- *   \param model instance of the model providing the data functions
+ *   \param model an instance of the model providing the data functions
+ *
+ *   \param verbose an optional verbosity flag
  */
 /*======================================================================*/
 
-    DefaultElementMatrixIntegrator(ModelType& model): model_(model) 
+    DefaultElementMatrixIntegrator(ModelType& model, int verbose = 0): 
+            model_(model), verbose_(verbose) 
           {
             // determine number of basis functions on first entity 
-            std::cout << "entered constructor of " 
-                      << " DefaultElementMatrixIntegrator\n";
+            if (verbose_)
+                std::cout << "entered constructor of " 
+                          << " DefaultElementMatrixIntegrator\n";
             
             DiscreteFunctionSpaceType& fspace = 
                 this->model().discreteFunctionSpace();    
 
-            std::cout << "got discrete functionspace\n";
+            if (verbose_)
+                std::cout << "got discrete functionspace\n";
 
             EntityPointerType ep = fspace.begin();
             EntityType& entity = *ep;     
 
-            std::cout << "got first entity\n";
+            if (verbose_)
+                std::cout << "got first entity\n";
             
             const typename EntityType::Geometry& geo = entity.geometry();
 
-            std::cout << "successful got geometry\n";
+            if (verbose_)
+                std::cout << "successful got geometry\n";
             
             const BaseFunctionSetType & baseSet = 
                 fspace.getBaseFunctionSet(entity);
 
-            std::cout << "got base function set\n";
-
+            if (verbose_)
+                std::cout << "got base function set\n";
+            
             numBaseFunctions_ =  baseSet.numBaseFunctions();
             
             gradPhiPtr_ = new  
                 JacobianRangeType[numBaseFunctions_];     
 
-            std::cout << "allocated temporary storage for gradients\n";
+            if (verbose_)
+                std::cout << "allocated temporary storage for gradients\n";
 
           };
 
@@ -221,8 +241,12 @@ protected:
  */
 /*======================================================================*/
 
-  ModelType& model() 
+  inline ModelType& model() 
         {
+// this is simply called too often
+//          if (verbose_)
+//              std::cout << "entered model() of " 
+//                        << "DefaultElementMatrixIntegrator";
           return model_;
         }
 
@@ -235,6 +259,9 @@ protected:
 
   ~DefaultElementMatrixIntegrator()
         {
+          if (verbose_)
+              std::cout << "entered descructor of " 
+                        << "DefaultElementMatrixIntegrator";
           delete[] gradPhiPtr_;
         }
 
@@ -600,6 +627,8 @@ protected:
   protected:
     //! Reference to the data model
     ModelType& model_;
+    //! verbosity flag
+    int verbose_;
     //! number of basis functions
     int numBaseFunctions_;  
     //! storage for basis-function gradients
@@ -740,12 +769,18 @@ public:
  *   The local reference model_ is initialized
  *
  *   \param model the model which provides the data functions
+ *
+ *   \param verbose an optional verbosity flag
  */
 /*======================================================================*/  
 
-  DefaultElementRhsIntegrator(ModelType& model):
-    model_(model)
-  {};
+  DefaultElementRhsIntegrator(ModelType& model, int verbose = 0):
+          model_(model), verbose_(verbose)
+  {
+    if (verbose_)
+        std::cout << "entered constructor of " 
+                  << "DefaultElementRhsIntegrator";
+  };
 
 /*======================================================================*/
 /*! 
@@ -755,8 +790,12 @@ public:
  */
 /*======================================================================*/  
 
-  ModelType& model() 
+  inline ModelType& model() 
   {
+//  this method is simply called too often
+//    if (verbose_)
+//        std::cout << "entered model() of " 
+//                  << "DefaultElementRhsIntegrator";
     return model_;
   };
 
@@ -1035,10 +1074,12 @@ public:
 	} // end of isboundary
   };
 
-private:
-  //! reference to the underlying model specified during construction
-  ModelType& model_;
-}; // end class DefaultElementRhsIntegrator
+  private:
+    //! reference to the underlying model specified during construction
+    ModelType& model_;
+    //! verbosity flag;
+    int verbose_;
+  }; // end class DefaultElementRhsIntegrator
      
 
 /*======================================================================*/
@@ -1128,12 +1169,18 @@ public:
  *   constructor: store a reference to the elementRhsIntegrator
  *
  *   \param elRhsInt the ElementRhsIntegrator to be used
+ *
+ *   \param verbose an optional verbosity flag
  */
 /*======================================================================*/
   
-  RhsAssembler(ElementRhsIntegratorType& elRhsInt)
-          : elRhsInt_(elRhsInt)
-        {};
+  RhsAssembler(ElementRhsIntegratorType& elRhsInt, int verbose = 0)
+          : elRhsInt_(elRhsInt), verbose_(verbose)
+        {
+          if (verbose_)
+              std::cout << "entered model() of " 
+                        << "RhsAssembler";
+        };
 
 /*======================================================================*/
 /*! 
@@ -1145,6 +1192,9 @@ public:
   
   void assemble(DiscreteFunctionType& rhs)
         {
+          if (verbose_)
+              std::cout << "entered assemble() of " 
+                        << "RhsAssembler";
           rhs.clear();
           
           // grid walkthrough for accumulating rhs
@@ -1163,7 +1213,8 @@ public:
           
           // final dirichlet treatment
           this->bndCorrect(rhs);
-          std::cout << "finished bndCorrect(rhs) \n";
+          if (verbose_)
+              std::cout << "finished bndCorrect(rhs) \n";
         };
   
 private:
@@ -1180,6 +1231,10 @@ private:
 
   void bndCorrect(DiscreteFunctionType& rhs)
         {
+          if (verbose_)
+              std::cout << "entered bndCorrect() of " 
+                        << "RhsAssembler";
+
           // grid walkthrough for setting Dirichlet-DOFs
           ModelType& model 
               = elRhsInt_.model();
@@ -1274,6 +1329,8 @@ private:
 private:
   //! a reference to the elementRhsIntegrator, which is to be used
   ElementRhsIntegratorType& elRhsInt_;
+  //! verbosity flag
+  int verbose_;
 }; // end class RhsAssembler
 //! @}
 } // end namespace dune
