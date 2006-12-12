@@ -187,7 +187,7 @@ bicgstab_algo( const CommunicatorType & comm,
 
     if ( detailed && (comm.rank() == 0) )
     {
-      std::cout<<"bicgstab "<<its<<"\t"<<sqrt(rTr)<<std::endl;
+      std::cout<<"bicgstab "<<its<<"\t  tol: " << err << "   err: "<<rTr<< std::endl;
     }
     ++its;
   }
