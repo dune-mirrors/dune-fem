@@ -76,6 +76,7 @@ public:
   {
     asImp().evaluate(x,ret);
   }
+  #if OLDFEM
   //! evaluate jacobian on reference element coordinate x
   template <class EntityType>
   void jacobianLocal(EntityType& en, 
@@ -84,7 +85,15 @@ public:
   {
     asImp().jacobianLocal(en,x,ret);
   }
-
+  #endif 
+  //! evaluate jacobian on reference element coordinate x
+  template <class EntityType>
+  void jacobian(EntityType& en, 
+		const DomainType& x, 
+		JacobianRangeType& ret) 
+  {
+    asImp().jacobian(en,x,ret);
+  }
   void assign(int dofNum, const RangeType& dofs) DUNE_DEPRECATED {
     asImp().assign(dofNum, dofs);
   }
@@ -165,6 +174,7 @@ public:
     jacobianLocal(en,xLoc_,ret);
   }
 
+  #if OLDFEM
   //! Evaluation of jacobian using a quadrature
   template <class EntityType, class QuadratureType>
   void jacobian(EntityType& en,
@@ -173,6 +183,16 @@ public:
                 JacobianRangeType& ret)
   {
     jacobianLocal(en, quad.point(quadPoint), ret);
+  }
+  #endif
+  //! Evaluation of jacobian using a quadrature
+  template <class EntityType, class QuadratureType>
+  void jacobian(EntityType& en,
+                QuadratureType& quad,
+                int quadPoint,
+                JacobianRangeType& ret)
+  {
+    jacobian(en, quad.point(quadPoint), ret);
   }
 
 private:

@@ -567,12 +567,19 @@ jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType
   for (int l = 0; l < dimRange; ++l) 
     jti.umv(tmp[l],ret[l]);
 }
-
+#if OLDFEM
 template<class DiscreteFunctionType> 
 template <class EntityType> 
 inline void LocalFunctionAdapt<DiscreteFunctionType>::
 jacobianLocal(EntityType& en, const DomainType& x,
-              JacobianRangeType& ret) const 
+	      JacobianRangeType& ret) const 
+{jacobian(en,x,ret);}
+#endif
+template<class DiscreteFunctionType> 
+template <class EntityType> 
+inline void LocalFunctionAdapt<DiscreteFunctionType>::
+jacobian(EntityType& en, const DomainType& x,
+	 JacobianRangeType& ret) const 
 {
   assert(init_);
   assert( en.geometry().checkInside(x) );
@@ -596,7 +603,7 @@ jacobianLocal(EntityType& en, const DomainType& x,
     }
   }
 }
-
+/*
 template<class DiscreteFunctionType> 
 template <class EntityType> 
 inline void LocalFunctionAdapt<DiscreteFunctionType>::
@@ -605,7 +612,7 @@ jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const {
   xtmp_ = en.geometry().local(x);
   jacobianLocal(en, xtmp_, ret);
 }
-
+*/
 
 template<class DiscreteFunctionType> 
 inline 

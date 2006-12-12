@@ -137,13 +137,22 @@ namespace Dune {
     }
     // evaluateLocal(en, quad.point(quadPoint), ret);
   }
-
+  #if OLDFEM
   template <class DiscreteFunctionSpaceImp>
   template <class EntityType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   jacobianLocal(EntityType& en, 
-                const DomainType& x, 
-                JacobianRangeType& ret) const
+		const DomainType& x, 
+		JacobianRangeType& ret) const {
+    jacobian(en,x,ret);
+  }
+  #endif
+  template <class DiscreteFunctionSpaceImp>
+  template <class EntityType>
+  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
+  jacobian(EntityType& en, 
+	   const DomainType& x, 
+	   JacobianRangeType& ret) const
   {
     assert(init_);
     enum { dim = EntityType::dimension };
@@ -383,13 +392,22 @@ namespace Dune {
       }
     }
   }
-
+  #if OLDFEM
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   template <class EntityType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   jacobianLocal(EntityType& en, 
                 const DomainType& x, 
-                JacobianRangeType& result) const
+                JacobianRangeType& result) const {
+    return jacobian(en,x,result);
+  }
+  #endif
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  template <class EntityType>
+  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  jacobian(EntityType& en, 
+	   const DomainType& x, 
+	   JacobianRangeType& result) const
   {
     enum { dim = EntityType::dimension };
     //typedef FieldMatrix<DofType, RangeType::size, RangeType::size> JacobianInverseType;

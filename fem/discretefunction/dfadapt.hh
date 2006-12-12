@@ -321,9 +321,11 @@ public:
   template <class EntityType, class QuadratureType> 
   inline
   void jacobian (EntityType &en, QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const ;
+  #if OLDFEM
   template <class EntityType>
   inline
   void jacobianLocal(EntityType& en, const DomainType& x, JacobianRangeType& ret) const DUNE_DEPRECATED;
+  #endif
   template <class EntityType>
   inline
   void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const ;
@@ -337,16 +339,6 @@ public:
   template <class QuadratureType> 
   inline
   void evaluate (QuadratureType &quad, int quadPoint , RangeType & ret) const;
-  
-  //! sum over all local base functions evaluated on given quadrature point
-  /*
-  template <class QuadratureType> 
-  inline
-  void jacobian (QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const;
-  //! evaluate gradient function 
-  inline
-  void jacobian(const DomainType& x, JacobianRangeType& ret) const;
-  */
   inline
   void assign(int numDof, const RangeType& dofs) DUNE_DEPRECATED;
   

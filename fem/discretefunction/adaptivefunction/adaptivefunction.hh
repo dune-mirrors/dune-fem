@@ -282,14 +282,20 @@ namespace Dune {
     void evaluate(QuadratureType& quad,
                   int quadPoint,
                   RangeType& ret) const;
-
+    #if OLDFEM
     //! Jacobian of the discrete function
     template <class EntityType>
     inline
     void jacobianLocal(EntityType& en, 
                        const DomainType& x, 
                        JacobianRangeType& ret) const; 
-
+    #endif
+    //! Jacobian of the discrete function
+    template <class EntityType>
+    inline
+    void jacobian(EntityType& en, 
+		  const DomainType& x, 
+		  JacobianRangeType& ret) const; 
     //! Jacobian of the discrete function
     template <class EntityType, class QuadratureType>
     inline
@@ -534,13 +540,20 @@ namespace Dune {
     void evaluate(QuadratureType& quad,
                   int quadPoint, 
                   RangeType & ret) const;
+    #if OLDFEM
     //! Evaluation
     template <class EntityType>
     inline
     void jacobianLocal(EntityType& en, 
                        const DomainType& x, 
                        JacobianRangeType& ret) const;
-
+    #endif
+    //! Evaluation
+    template <class EntityType>
+    inline
+    void jacobian(EntityType& en, 
+		  const DomainType& x, 
+		  JacobianRangeType& ret) const;
     //! Evaluation
     template <class EntityType, class QuadratureType>
     inline

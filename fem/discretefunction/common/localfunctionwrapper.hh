@@ -218,24 +218,29 @@ public:
   
   //! sum over all local base functions evaluated on given quadrature point
   template <class EntityType, class QuadratureType> 
-  void jacobian (EntityType &en, QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const
+  void jacobian (EntityType &en, QuadratureType &quad, 
+		 int quadPoint , JacobianRangeType & ret) const
   {
     localFunc().jacobian( en, quad, quadPoint, ret ); 
   }
  
+  #if OLDFEM
   //! sum over all local base functions evaluated on given quadrature
   //point, but local 
   template <class EntityType>
-  void jacobianLocal(EntityType& en, const DomainType& x, JacobianRangeType& ret) const
+  void jacobianLocal(EntityType& en, const DomainType& x, 
+		     JacobianRangeType& ret) const
   {
     localFunc().jacobianLocal( en, x , ret ); 
   }
-
-  //! sum over all local base functions evaluated on given point x 
+  #endif
+  //! sum over all local base functions evaluated on given quadrature
+  //point, but local 
   template <class EntityType>
-  void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const
+  void jacobian(EntityType& en, const DomainType& x, 
+		JacobianRangeType& ret) const
   {
-    localFunc().jacobian( en, x, ret); 
+    localFunc().jacobian( en, x , ret ); 
   }
 
   //! update local function for given Entity  

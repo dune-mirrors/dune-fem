@@ -357,7 +357,7 @@ namespace Dune {
 
     template <class LFType, class JRangeType>
     void visit(LFType& lf, JRangeType& res) {
-      lf.jacobianLocal(en_, x_, res);
+      lf.jacobian(en_, x_, res);
     }
 
   private:
