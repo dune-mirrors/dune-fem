@@ -15,6 +15,7 @@
 
 #include <config.h>
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/fem/misc/entityfunction.hh>
 
 namespace Dune 
 {
@@ -188,8 +189,16 @@ private:
     //! interpolation routine
 /*======================================================================*/
 /*! 
- *   interpolate: interpolate analytical function into Lagrange Discrete
- *                function
+ *   interpolFunction: interpolate analytical function into Lagrange Discrete
+ *                     function
+ *
+ *   This method can be used, if a function is given, which can be evaluated
+ *   globally by an evaluate(glob, ret) method. In constrast: Functions, which
+ *   are based on discrete functions cannot be used by this method, but must
+ *   use interpolateEntityFunction.
+ *
+ *   nothing else than calling interpolateEntityFunction with suitable
+ *   Wrapper around FunctionType is performed
  *
  *   \param f analytical function (derived from Dune::Function)
  *
@@ -198,17 +207,52 @@ private:
 /*======================================================================*/
 
     template <int polOrd, class FunctionType, class DiscreteFunctionType> 
-        void interpolate (FunctionType &f, DiscreteFunctionType &discFunc)
-        {
-          typedef typename DiscreteFunctionType::FunctionSpaceType 
-              DiscreteFunctionSpaceType;
-          
-          typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
-          typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-          typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-          typedef typename DiscreteFunctionType::LocalFunctionType 
-              LocalFunctionType;
-         
+        void interpolFunction (FunctionType &f, 
+                               DiscreteFunctionType &discFunc)
+          {
+            EntityFunctionWrapper<FunctionType> enf(f);
+            interpolEntityFunction<polOrd> 
+                (enf, discFunc);            
+          };
+    
+/*======================================================================*/
+/*! 
+ *   interpolEntityFunction: interpolate entity-function into Lagrange 
+ *                 Discrete function
+ *
+ *   interpolation of functions, which cannot be evaluated globally, but have
+ *   a quadrature-style access method on entities, i.e.
+ *   f.evaluate(EntityType& en, QuadratureType& quad, int p, RangeType& ret)
+ *   by this, functions, which depend on discretefunction can also be 
+ *   interpolated, etc.
+ *
+ *   The only difference in the code below compared to the method interpol() 
+ *   above is in the evaluation line... So code redundancy should be removed 
+ *   sometime as soon as a Datastructure for en EntityFunction is existing
+ *   and an EntityFunctionWrapper<FunctionType> is provided
+ *
+ *   \param f a class, which allows evaluation in a "quadrature"-style 
+ *             request, i.e. analytical function (not necessarily a 
+ *             Dune::Function)
+ *
+ *   \param discFunc reference to discrete lagrange-function
+ */
+/*======================================================================*/
+    
+    template <int polOrd, class EntityFunctionType, 
+              class DiscreteFunctionType> 
+    void interpolEntityFunction (EntityFunctionType &f, 
+                                 DiscreteFunctionType &discFunc)
+          {
+            typedef typename DiscreteFunctionType::FunctionSpaceType 
+                DiscreteFunctionSpaceType;
+            
+            typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
+            typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+            typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+            typedef typename DiscreteFunctionType::LocalFunctionType 
+                LocalFunctionType;
+            
           const DiscreteFunctionSpaceType
               & functionSpace = discFunc.getFunctionSpace();  
           
@@ -229,13 +273,15 @@ private:
             DomainType local(0.0);
             for(int i=0; i<lf.numDofs(); i++)
             {
-              local = dofHandler.point(i);            
-              DomainType glob = (*it).geometry().global(local);            
-              f.evaluate(glob, ret);
+              f.evaluate(*it, dofHandler, i, ret);
+              //local = dofHandler.point(i);            
+              //DomainType glob = (*it).geometry().global(local);            
+              //f.evaluate(glob, ret);
               lf[i] = ret[0];
             }
           }
         }
+
   }; // end class LagrangeInterpolator
   
 }; // end namespace dune
