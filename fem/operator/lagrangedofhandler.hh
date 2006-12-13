@@ -1,6 +1,7 @@
 /**************************************************************************
 **       Title: Class collecting and giving access to information about 
-**              LagrangeDofs in a Lagrange basis
+**              LagrangePoints in a Lagrange basis
+**              A corresponding Interpolation is provided
 **    $RCSfile$
 **   $Revision$$Name$
 **       $Date$
@@ -88,6 +89,8 @@ public:
  *          specifying the entity!
  *
  *   \param p integer specifying the Lagrange-Point number within the entity 
+ *            the number is assumed to be identical with local-function 
+ *            dof index.
  *
  *   \return the local coordinates of the Lagrange-Point
  */
@@ -158,6 +161,83 @@ private:
 
 }; // end class LagrangeDofHandler
 
+/*======================================================================*/
+/*!
+ *  \class LagrangeInterpolator 
+ *  \brief The LagrangeInterpolator class performs lagrange
+ *         interpolation of an analytical function (Dune::Function) 
+ *
+ *  could also be implemented as a singleton, as only functionality is 
+ *  provided by a template method
+ */
+/*======================================================================*/
+  
+  class LagrangeInterpolator
+  {
+    public:
+    //! constructor
+    LagrangeInterpolator()
+        {
+        }
+    
+    //! destructor
+    ~LagrangeInterpolator()
+        {
+        }
+    
+    //! interpolation routine
+/*======================================================================*/
+/*! 
+ *   interpolate: interpolate analytical function into Lagrange Discrete
+ *                function
+ *
+ *   \param f analytical function (derived from Dune::Function)
+ *
+ *   \param discFunc reference to discrete lagrange-function
+ */
+/*======================================================================*/
+
+    template <int polOrd, class FunctionType, class DiscreteFunctionType> 
+        void interpolate (FunctionType &f, DiscreteFunctionType &discFunc)
+        {
+          typedef typename DiscreteFunctionType::FunctionSpaceType 
+              DiscreteFunctionSpaceType;
+          
+          typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
+          typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+          typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+          typedef typename DiscreteFunctionType::LocalFunctionType 
+              LocalFunctionType;
+         
+          const DiscreteFunctionSpaceType
+              & functionSpace = discFunc.getFunctionSpace();  
+          
+          discFunc.clear();      
+          
+          RangeType ret (0.0);
+          
+          Iterator it = functionSpace.begin();
+          Iterator endit = functionSpace.end();
+          
+          for( ; it != endit ; ++it)
+          {
+            LagrangeDofHandler<DiscreteFunctionSpaceType> 
+                dofHandler(functionSpace, *it);
+            
+            LocalFunctionType lf = discFunc.localFunction( *it ); 
+            
+            DomainType local(0.0);
+            for(int i=0; i<lf.numDofs(); i++)
+            {
+              local = dofHandler.point(i);            
+              DomainType glob = (*it).geometry().global(local);            
+              f.evaluate(glob, ret);
+              lf[i] = ret[0];
+            }
+          }
+        }
+  }; // end class LagrangeInterpolator
+  
 }; // end namespace dune
 
 #endif
