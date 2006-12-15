@@ -24,6 +24,9 @@
 #include "feop/spmatrix.hh"
 #include "lagrangedofhandler.hh"
 
+//for saving the systemmatrix
+//#include "/usr/people/haasdonk/fuelcell/src/rbasis/auxiliary.hh"
+
 namespace Dune {
 
 /*======================================================================*/
@@ -272,6 +275,23 @@ public:
         this->assemble();
     this->matrix_->print(std::cout);
   }
+
+// the following can be used if including fuelcell/src/rbasis/auxiliary.hh
+// /*======================================================================*/
+// /*! 
+//  *   saveMatrix: save matrix to binary file, only makes sense in ASSEMBLED 
+//  *               mode 
+//  */
+// /*======================================================================*/
+//
+//   void saveMatrix (const char* filename) const 
+//         {
+//           assert(opMode_==ASSEMBLED);
+//           if(!this->matrix_assembled_) 
+//               this->assemble();
+//           // call function in fuelcell/misc/rbasis/auxiliary.hh
+//           saveSparseMatrix(filename, *matrix_);    
+//         }
  
 /*======================================================================*/
 /*! 
@@ -608,6 +628,8 @@ public:
 
     assert(this->matrix_);
     
+    matrix_->clear();
+   
     {
       // allocate local matrix storage, assumed default constructor on class
       ElementMatrixType mat;      
@@ -736,7 +758,8 @@ public:
           matrixDirichletColumns_ = new SparseRowMatrix<double>
               (matrix_->rows(), 
                matrix_->cols(), 
-               nDirDOFs);
+               maxNonZerosPerRow_);
+// tooo much!!!:         nDirDOFs);
           
           assert(matrixDirichletColumns_);
           
@@ -811,13 +834,14 @@ public:
           // modify values of rhs-vector for non-dirichlet-DOFs 
           dit = rhs.dbegin();
           if (verbose_)
-              std::cout << "Searching non-Dirichlet-DOFs for modification: " << flush ;
+              std::cout << "Searching non-Dirichlet-DOFs for modification: " 
+                        << std::flush ;
                 
           for (int i=0; i!=matrix_->rows(); i++, ++dit)
               if ((*isDirichletDOF_)(0,i)==0.0) // so is non-Dirichlet
               {
                 if (verbose_)
-                    std::cout << " " << i << flush;
+                    std::cout << " " << i << std::flush;
                 SparseRowMatrix<int>::ColumnIterator it = 
                     isDirichletDOF_->rbegin(0);
                 const SparseRowMatrix<int>::ColumnIterator endit = 
