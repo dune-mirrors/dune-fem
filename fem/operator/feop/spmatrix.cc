@@ -4,9 +4,13 @@
 
 namespace Dune 
 {
-
-#define EPS 1.0E-15
- 
+  
+  //! remove DEFINE as this leads to error
+  namespace 
+  {
+    const double spmatrix_eps=1.0E-15;
+  }
+  
 template <class T>
 T SparseRowMatrix<T>::staticZero = T(0);
  
@@ -140,7 +144,8 @@ void SparseRowMatrix<T>::resize(int M, int N)
 template <class T>
 void SparseRowMatrix<T>::clear()
 {
-    col_.set(-1);
+  values_.set(0.0);
+  col_.set(-1);
 }
 
 /*********************/
@@ -179,7 +184,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
 template <class T> 
 void SparseRowMatrix<T>::set(int row, int col, const T& val)
 {
-  if(std::abs(val) < EPS)
+  if(std::abs(val) < spmatrix_eps)
     return;
 
   int whichCol = colIndex(row,col);
@@ -221,7 +226,7 @@ void SparseRowMatrix<T>::add(int row, int col, const T& val)
   if (std::numeric_limits<T>::has_quiet_NaN &&
       std::numeric_limits<T>::quiet_NaN() == val)
     DUNE_THROW(MathError, "trying to add NAN to a matrix entry.");
-  if(std::abs(val) < EPS)
+  if(std::abs(val) < spmatrix_eps)
     return;
 
   int whichCol = colIndex(row,col);
