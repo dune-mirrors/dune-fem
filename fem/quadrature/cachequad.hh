@@ -133,6 +133,19 @@ namespace Dune {
                            TwistUtilityType::twistInSelf(gridPart.grid(),it) : 
                            TwistUtilityType::twistInNeighbor(gridPart.grid(),it)))
     {
+#ifndef NDEBUG
+      int faceIndex = this->faceNumber();
+      int faceTwist = (side == BaseType :: INSIDE) ?
+                           TwistUtilityType::twistInSelf(gridPart.grid(),it) :
+                           TwistUtilityType::twistInNeighbor(gridPart.grid(),it);
+      std::cout << "Got Mapper for face=" << faceIndex << " | twist = " << faceTwist <<"\n";
+      for(size_t i=0; i<mapper_.size(); ++i)
+      {
+        std::cout << mapper_[i] << "\n";
+      } 
+#endif
+ 
+      
       // make sure CachingQuadrature is only created for conforming
       // intersections 
       assert( TwistUtilityType::conforming(gridPart.grid(),it) );
@@ -142,11 +155,27 @@ namespace Dune {
     //! For codim-1 entities, the mapping consists of two stages: First,
     //! consider the twist to get the quadrature point number on the reference
     //! element face and then map it to the caching point.
-    size_t cachingPoint(size_t quadraturePoint) const {
+    size_t cachingPoint(size_t quadraturePoint) const 
+    {
       // this makes no sense for usigned ints ;)
-      //assert(quadraturePoint >= 0);
+      assert(quadraturePoint >= 0);
       assert(quadraturePoint < (size_t)this->nop());
+
       return mapper_[quadraturePoint];
+    }
+
+    size_t localCachingPoint(size_t quadraturePoint) const 
+    {
+      // this makes no sense for usigned ints ;)
+      assert(quadraturePoint >= 0);
+      assert(quadraturePoint < (size_t)this->nop());
+
+      int faceIndex = this->faceNumber();
+      int point = mapper_[quadraturePoint] - faceIndex*mapper_.size();
+      assert( mapper_[quadraturePoint] >= 0 );
+
+      assert( point < this->nop());
+      return point;
     }
 
   private:

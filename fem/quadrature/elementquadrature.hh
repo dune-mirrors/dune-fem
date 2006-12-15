@@ -259,6 +259,16 @@ namespace Dune {
       return elementGeometry_;
     }
 
+    //! returns quadraturePoint, to behave like a cahcing qaud without
+    //! caching, only works for codim 0
+    size_t cachingPoint(size_t quadraturePoint) const {
+      return quadraturePoint; 
+    }
+    
+    size_t localCachingPoint(size_t quadraturePoint) const {
+      return quadraturePoint; 
+    }
+    
   protected:
     int faceNumber() const { return faceNumber_; }
 
