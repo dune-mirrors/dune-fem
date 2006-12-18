@@ -181,7 +181,7 @@ public:
           Function < FunctionSpaceType , PoissonExactSolution > ( f ) {}
  
   //! u(x,y,z) = (x-x^2)*(y-y^2)*(z-z^2)
-  void evaluate (const DomainType & x , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeType & ret) const
   {
     ret = 1.0;
     for(int i=0; i<DomainType::dimension; i++)
@@ -190,7 +190,7 @@ public:
     // ret += 1.0;   // add dirichlet-values!!
   }
 
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
     evaluate ( x , ret );
   }
@@ -401,11 +401,11 @@ public:
   Elliptic2dExactSolution (FunctionSpaceType &f) : 
           Function < FunctionSpaceType , Elliptic2dExactSolution > ( f ) {}
  
-  void evaluate (const DomainType & x , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeType & ret) const
   {
     ret = x[0]*x[1] + x[0];
   }
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
     evaluate ( x , ret );
   }
@@ -606,11 +606,11 @@ public:
   Elliptic3dExactSolution (FunctionSpaceType &f) : 
           Function < FunctionSpaceType , Elliptic3dExactSolution > ( f ) {}
  
-  void evaluate (const DomainType & x , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeType & ret) const
   {
     ret = x[0]*x[1]*x[2] + x[0];
   }
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
     evaluate ( x , ret );
   }

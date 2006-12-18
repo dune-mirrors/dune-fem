@@ -391,8 +391,9 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
    // pol ord for calculation the error chould by higher than 
    // pol for evaluation the basefunctions 
-   double error = l2err.norm<EllipticModelType::TraitsType::quadDegree + 2> 
-       (u ,solution, 0.0);
+   // double error = l2err.norm<EllipticModelType::TraitsType::quadDegree + 2> 
+   //    (u ,solution, 0.0);
+   double error = l2err.norm(u ,solution, 0.0);
    std::cout << "\nL2 Error : " << error << "\n\n";
 
 #if HAVE_GRAPE
