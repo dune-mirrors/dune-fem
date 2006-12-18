@@ -91,6 +91,7 @@ namespace Dune {
     
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
+    CompileTimeChecker<(polOrd>=0)> only_use_DGSpace_with_positive_polOrd;
 
     //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 
