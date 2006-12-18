@@ -39,6 +39,12 @@ template <class T>
 void SparseRowMatrix<T>::
 reserve(int rows, int cols, int nz,const T& val )
 {
+  if( (rows == dim_[0]) && (cols == dim_[1]) && (nz == nz_)) 
+  {
+    clear();
+    return;
+  }
+
   removeObj();
 
   values_ = new T [ rows*nz ];
@@ -51,9 +57,6 @@ reserve(int rows, int cols, int nz,const T& val )
 
   dim_[0] = rows;
   dim_[1] = cols;
-
-  // set all values to default values 
-  clear();
 
   memSize_ = rows;
   nz_ = nz;
@@ -68,6 +71,9 @@ reserve(int rows, int cols, int nz,const T& val )
   
   // only reserve for indices 
   newIndices_.reserve( nz_ );
+
+  // set all values to default values 
+  clear();
 }
 
 // resize with rows = cols = newSize  
@@ -193,11 +199,13 @@ bool SparseRowMatrix<T>::find (int row, int col) const
 template <class T> 
 void SparseRowMatrix<T>::clear()
 {
+  T init = 0;
   for(register int i=0; i<dim_[0]*nz_; ++i)
   {
-    values_ [i] = 0;
+    values_ [i] = init;
     col_[i] = defaultCol;
   }
+
   for(register int i=0; i<dim_[0]; ++i)
   {
     nonZeros_[i] = 0;
@@ -260,7 +268,7 @@ void SparseRowMatrix<T>::resortRow(const int row)
   for(int col=0; col<nZero; ++col)
   {
     int val = col_[ thisCol + col ];
-    const double value = values_[ thisCol + col ];
+    T value = values_[ thisCol + col ];
     for(int j=0; j<nZero; ++j) 
     {
       if( newIndices_[j] == val ) 
@@ -322,22 +330,28 @@ void SparseRowMatrix<T>::mult(const VECtype *x, VECtype *ret) const
 }
 
 template <class T> template <class VECtype>
+T SparseRowMatrix<T>::multOEMRow(const VECtype *x, const int row) const
+{
+  T sum = 0;
+  int thisCol = row*nz_ + firstCol ;
+  const T * localValues = &values_[thisCol];
+  const int nonZero = nonZeros_[row];
+  for(int col = firstCol ; col<nonZero; ++col)
+  {
+    int realCol = col_[ thisCol ];
+    assert( realCol > defaultCol );
+    sum += localValues[col] * x[ realCol ];
+    ++thisCol; 
+  }
+  return sum; 
+}
+
+template <class T> template <class VECtype>
 void SparseRowMatrix<T>::multOEM(const VECtype *x, VECtype *ret) const
 {
   for(register int row=0; row<dim_[0]; ++row)
   {
-    T sum = 0;
-    int thisCol = row*nz_ + firstCol ;
-    const T * localValues = &values_[thisCol];
-    const int nonZero = nonZeros_[row];
-    for(int col = firstCol ; col<nonZero; ++col)
-    {
-      int realCol = col_[ thisCol ];
-      assert( realCol > defaultCol );
-      sum += localValues[col] * x[ realCol ];
-      ++thisCol; 
-    }
-    ret[row] = sum;
+    ret[row] = multOEMRow( x, row ); 
   }
   return; 
 }
@@ -347,18 +361,7 @@ void SparseRowMatrix<T>::multOEMAdd(const VECtype *x, VECtype *ret) const
 {
   for(register int row=0; row<dim_[0]; ++row)
   {
-    T sum = 0;
-    int thisCol = row*nz_ + firstCol ;
-    const T * localValues = &values_[thisCol];
-    const int nonZero = nonZeros_[row];
-    for(int col = firstCol ; col<nonZero; ++col)
-    {
-      int realCol = col_[ thisCol ];
-      assert( realCol > defaultCol );
-      sum += localValues[col] * x[ realCol ];
-      ++thisCol; 
-    }
-    ret[row] += sum;
+    ret[row] += multOEMRow( x, row ); 
   }
   return; 
 }

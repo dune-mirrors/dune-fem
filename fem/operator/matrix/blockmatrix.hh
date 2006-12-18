@@ -266,7 +266,6 @@ private:
 
   typedef std::stack< DenseMatrixType * > MatrixStackType;
 
-  DenseMatrixType * init_;
   BlockMatrixType matrix_;
   int localRows_;
   int localCols_;
@@ -274,21 +273,23 @@ private:
   bool rowWise_; 
 
   mutable MatrixStackType freeStack_;
+
+  int nonZeros_;
   
 public:
-  BlockMatrix(); //! makes Matrix of zero length
+  //! makes Matrix of zero length
+  BlockMatrix() : matrix_(), localRows_(0), localCols_(0) ,
+    rowWise_(true), nonZeros_(0) {} 
   BlockMatrix(const BlockMatrix<T> &S); //! Copy Constructor
 
   //! make matrix with 'rows' rows and 'cols' columns,
   //! maximum 'nz' non zero values in each row 
   //! and intialize all values with 'val'
-  BlockMatrix(int rows, int cols, int lrows, int lcols, int nonZeros, bool
-      rowWise = true) 
-    : init_(0)
-    , matrix_(rows,cols,nonZeros,init_,false)
-    , localRows_(lrows),localCols_(lcols) 
-    , rowWise_(rowWise)
-  {}
+  BlockMatrix(int rows, int cols, int lrows, 
+              int lcols, int nonZeros, bool rowWise = true) 
+  {
+    reserve(rows,cols,lrows,lcols,nonZeros,rowWise);
+  }
   
   //! free memory for values_ and col_
   ~BlockMatrix()
@@ -301,6 +302,17 @@ public:
       freeStack_.pop();
       delete dm; 
     }
+  }
+  
+  void reserve(int rows, int cols, int lrows, int lcols, 
+               int nonZeros, bool rowWise = true) 
+  {
+    DenseMatrixType * init = 0;
+    localRows_ = lrows; 
+    localCols_ = lcols; 
+    rowWise_ = rowWise;
+    nonZeros_ = nonZeros;
+    matrix_.reserve(rows,cols,nonZeros,init);
   }
   
   DenseMatrixType & getMatrix() const 
@@ -378,16 +390,27 @@ public:
 
   void resize( int nsize) 
   {
-    matrix_.clear();
-    matrix_.resize(nsize);
-  }
-  
-  void resize( int n, int m) 
-  {
-    matrix_.clear();
-    matrix_.resize(n,m);
+    //clear();
+    //DenseMatrixType * init = 0;
+    //matrix_.reserve(nsize,nsize,nonZeros_,init);
+    matrix_.resize( nsize ); 
   }
 
+  void resort () 
+  {
+    const int rows = matrix_.size(0); 
+    for (int i =0 ; i<rows; ++i) 
+    {
+      resortRow(i);
+    }
+
+  }
+
+  void resortRow ( int row ) 
+  {
+    matrix_.resortRow( row );
+  }
+  
 #if 0
   void multiply(const ThisType & A , const ThisType & B )
   {
@@ -473,7 +496,7 @@ public:
   */
 
   // result = this * vec 
-  void multOEM(const T * vec, T * result)
+  void multOEM(const T * vec, T * result) const
   {
     std::vector< T > v(localCols_); 
     std::vector< T > ret(localRows_); 
@@ -485,6 +508,33 @@ public:
       // set right hand side to zero 
       for(register int k=0; k<localRows_; ++k) result[row+k] = 0;
       
+      for(register int c=0; c<matrix_.NumNonZeros();++c)
+      {
+        std::pair< DenseMatrixType * , int > p = matrix_.realValue(r,c);
+        if(p.first) 
+        {
+          const int col = p.second * localCols_;
+          const T * v = &vec[col];
+          p.first->mult(v,ret);
+
+          for(register int k=0; k<localRows_; ++k)
+            result[row+k] += ret[k];
+        }
+        else break;
+      }
+    }
+  }
+  
+  // result = this * vec 
+  void multOEMAdd(const T * vec, T * result) const
+  {
+    std::vector< T > v(localCols_); 
+    std::vector< T > ret(localRows_); 
+
+    for(register int r=0; r<size(0); ++r)
+    {
+      const int row = r * localRows_;
+
       for(register int c=0; c<matrix_.NumNonZeros();++c)
       {
         std::pair< DenseMatrixType * , int > p = matrix_.realValue(r,c);

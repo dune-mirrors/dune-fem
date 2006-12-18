@@ -345,7 +345,10 @@ namespace Dune {
 
       void addLocalMatrix() 
       {
-        matrix_.add(rowIndex_,colIndex_, localMatrix_ );
+        if( matrix_.size(0) > 0 )
+        {
+          matrix_.add(rowIndex_,colIndex_, localMatrix_ );
+        }
       }
 
     public:
@@ -373,6 +376,31 @@ namespace Dune {
 
         return localMatrix_[localRow][localCol]; 
       }
+
+      //! set matrix enrty to value 
+      void set(int localRow, int localCol, const double value)
+      {
+        assert( localRow >= 0 );
+        assert( localCol >= 0 );
+
+        assert( localRow < localMatrix_.rows() );
+        assert( localCol < localMatrix_.cols() );
+
+        localMatrix_[localRow][localCol] = value; 
+      }
+
+      //! clear all entries belonging to local matrix 
+      void clear ()
+      {
+        localMatrix_.clear();
+      }
+
+      //! resort all global rows of matrix to have ascending numbering 
+      void resort ()
+      {
+        assert( matrix_.size(0) > 0 );
+        //matrix_.resortRow( rowIndex_ );
+      }
     };
 
   public:
@@ -381,23 +409,32 @@ namespace Dune {
     const SpaceType & singleSpace_; 
     const GradientSpaceType & gradientSpace_;
     int size_;
-    const int numSingleBaseFct_;
-    const int numGradBaseFct_;
+
+    int numSingleBaseFct_;
+    int numGradBaseFct_;
 
     const int maxNumberUnknowns_;
+
+    int singleMaxNumbers_;
+    int gradMaxNumbers_;
 
     MatrixType stabMatrix_; 
     MatrixType gradMatrix_;
     MatrixType divMatrix_;
+    MatrixType pcMatrix_;
+    MatrixType massMatrix_;
+
+    bool hasMassMatrix_;
+    bool hasPcMatrix_;
 
     MatrixHandlerBM(const SpaceType & singleSpace, 
-                    const GradientSpaceType & gradientSpace)
+                    const GradientSpaceType & gradientSpace,
+                    bool hasMassMatrix, bool hasPcMatrix )
       : singleSpace_(singleSpace)
       , gradientSpace_(gradientSpace) 
       , size_(singleSpace_.indexSet().size(0))
-      , numSingleBaseFct_(singleSpace_.getBaseFunctionSet( *singleSpace_.begin()).numBaseFunctions())
-      , numGradBaseFct_(gradientSpace_.getBaseFunctionSet( *gradientSpace_.begin()).numBaseFunctions())
       , maxNumberUnknowns_(10* (singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
+     /*
       , stabMatrix_(size_,size_,
           numSingleBaseFct_,
           numSingleBaseFct_,
@@ -410,25 +447,154 @@ namespace Dune {
           , numSingleBaseFct_
           , numGradBaseFct_
           , maxNumberUnknowns_)
-    {}
+          */
+      , hasMassMatrix_(hasMassMatrix)
+      , hasPcMatrix_(hasPcMatrix)
+    {
+      reserve();
+    }
+
+    void reserve(bool verbose = false)
+    {
+      // if empty grid do nothing (can appear in parallel runs)
+      if( (singleSpace_.begin()   != singleSpace_.end()) && 
+          (gradientSpace_.begin() != gradientSpace_.end()) )
+      {
+        size_ = singleSpace_.indexSet().size(0); 
+        numSingleBaseFct_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
+        numGradBaseFct_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
+
+        if(verbose) 
+        {
+          std::cout << "Reserve Matrix with (" << singleSpace_.size() << "," << gradientSpace_.size()<< ")\n";
+          std::cout << "Number of base functions = (" << numSingleBaseFct_ << "," << numGradBaseFct_ << ")\n";
+        }
+
+        singleMaxNumbers_ = numSingleBaseFct_;
+        gradMaxNumbers_   = numGradBaseFct_;
+
+        assert( singleMaxNumbers_ > 0 );
+        assert( gradMaxNumbers_ > 0 );
+
+        // factor for non-conforming grid is 4 in 3d and 2 in 2d  
+        //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+        //const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+        //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+
+        // upper estimate for number of neighbors 
+        enum { dim = SpaceType :: GridType :: dimension };
+
+        const int factor =  (dim * 2) + 1; 
+        singleMaxNumbers_ *= factor; // e.g. 7 for dim = 3
+        gradMaxNumbers_   *= factor;
+
+        stabMatrix_.reserve(size_,size_,numSingleBaseFct_,numSingleBaseFct_,singleMaxNumbers_);
+        gradMatrix_.reserve(size_,size_,numGradBaseFct_, numSingleBaseFct_,singleMaxNumbers_); 
+        divMatrix_.reserve(size_,size_,numSingleBaseFct_,numGradBaseFct_,gradMaxNumbers_); 
+        
+        if( hasMassMatrix() ) 
+        {
+          massMatrix_.reserve(size_,size_, numGradBaseFct_, numGradBaseFct_, singleMaxNumbers_); 
+        }
+
+        if( hasPcMatrix() )
+        {
+          pcMatrix_.reserve(size_,size_,numSingleBaseFct_,numSingleBaseFct_,singleMaxNumbers_);
+        }
+      }
+      else 
+      {
+        size_ = 0;
+      }
+    }
 
     MatrixType & stabMatrix() { return stabMatrix_; }
     MatrixType & gradMatrix() { return gradMatrix_; }
     MatrixType & divMatrix() { return divMatrix_; }
+    MatrixType & pcMatrix() { return pcMatrix_; }
+    MatrixType & massMatrix() { return massMatrix_; }
 
-    void resizeAndClear() 
+    //! return true if mass matrix is used 
+    bool hasMassMatrix() const { return hasMassMatrix_; }
+    //! return true if preconditioning matrix is used 
+    bool hasPcMatrix() const { return hasPcMatrix_; }
+
+    //! resize all matrices and clear them 
+    void clear() 
     {
-      abort();
-      size_ = singleSpace_.indexSet().size(0); 
-
-      gradMatrix_.resize(size_);
-      gradMatrix_.clear();
-        
-      divMatrix_.resize(size_);
+      gradMatrix_.clear(); 
       divMatrix_.clear();
-  
-      stabMatrix_.resize(size_);
       stabMatrix_.clear();
+      massMatrix_.clear();
+      pcMatrix_.clear();
+    }
+
+
+    //! clear mass matrix 
+    void clearMass() 
+    {
+      /*
+      if(hasMassMatrix())
+      {
+        massMatrix_.clear();
+      }
+      */
+    } 
+    
+    //! clear preconditioning matrix 
+    void clearPcMatrix() 
+    {
+      /*
+      if(hasPcMatrix())
+      {
+        pcMatrix_.clear();
+      }
+      */
+    } 
+
+    //! returns true if memory has been reserved
+    bool hasBeenSetup () const 
+    {
+      return (singleMaxNumbers_ > 0) && (gradMaxNumbers_ > 0);
+    }
+
+    //! resize all matrices and clear them 
+    void resize(bool verbose = false) 
+    {
+      if( ! hasBeenSetup() ) 
+      {
+        reserve(); 
+      }
+      else 
+      {
+        size_ = singleSpace_.indexSet().size(0); 
+        if(verbose) 
+        {
+          std::cout << "Reserve Matrix with (" << size_ << "," << size_ << ")\n";
+          std::cout << "Number of base functions = (" << numSingleBaseFct_ << "," << numGradBaseFct_ << ")\n";
+        }
+
+        //gradMatrix_,clear();
+        gradMatrix_.resize(size_);
+
+        //divMatrix_.clear();
+        divMatrix_.resize(size_);
+
+        //stabMatrix_.clear();
+        stabMatrix_.resize(size_);
+      }
+    }
+
+    //! resort row numbering in matrix to have ascending numbering 
+    void resort() 
+    {
+      gradMatrix_.resort();
+      divMatrix_.resort();
+      stabMatrix_.resort();
+      if( hasMassMatrix() )
+      {
+        massMatrix_.resort(); 
+      }
     }
   };
 

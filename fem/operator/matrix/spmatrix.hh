@@ -68,15 +68,23 @@ public:
   //! length of array used to store matrix 
   int numberOfValues () const { return dim_[0]*nz_; }
   //! matrix value taken from real array 
-  T&      val(int i) 
+  T&  val(int i) 
   { 
     assert( i >= 0 );
-    assert( i <= numberOfValues () );
+    assert( i < numberOfValues () );
+    return values_[i]; 
+  }
+
+  //! return reference to value on given entry 
+  const T&  val(int i) const { 
+    assert( i >= 0 );
+    assert( i < numberOfValues () );
     return values_[i]; 
   }
 
   //! return value and clear matrix entry 
-  T popValue (int i) { 
+  T popValue (int i) 
+  { 
     T v = val(i); 
     values_[i] = 0;
     col_[i] = -1;
@@ -124,9 +132,6 @@ public:
   //! returns true if entry (row,col) exists in matrix 
   bool find (int row, int col) const;
 
-  //! return reference to value on given entry 
-  const T&  val(int i) const { return values_[i]; }
-
   //! return number of rows = 0, cols = 1
   int dim(int i) const {return dim_[i];}
   //! return number of rows = 0, cols = 1
@@ -170,6 +175,10 @@ public:
   //! same as apply A * x = ret 
   template <class VECtype> 
   void mult(const VECtype *x, VECtype * ret) const;
+
+  //! same as apply A * x = ret, used by OEM-Solvers 
+  template <class VECtype> 
+  T multOEMRow (const VECtype *x , const int row ) const;
 
   //! same as apply A * x = ret, used by OEM-Solvers 
   template <class VECtype> 
@@ -247,5 +256,4 @@ private:
 } // end namespace Sparselib
 
 #include "spmatrix.cc"
-
 #endif  
