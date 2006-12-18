@@ -1,7 +1,11 @@
 #ifndef DUNE_LAGRANGESPACE_CC
 #define DUNE_LAGRANGESPACE_CC
 
+//- system includes 
 #include <algorithm>
+
+//- Dune includes 
+#include <dune/fem/space/common/allgeomtypes.hh>
 
 namespace Dune {
 
@@ -25,12 +29,16 @@ makeFunctionSpace (GridPartType& gridPart)
   typedef DofManager<GridType> DofManagerType;
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
   DofManagerType & dm = DofManagerFactoryType::getDofManager(gridPart.grid());
-  dm.addIndexSet(gridPart.grid(), const_cast<typename GridPartType::IndexSetType&>(gridPart.indexSet()));
+  dm.addIndexSet(gridPart.grid(), 
+      const_cast<typename GridPartType::IndexSetType&>(gridPart.indexSet()));
   
   //std::cout << "Constructor of LagrangeDiscreteFunctionSpace! \n";
   // search the macro grid for diffrent element types 
-  const std::vector<GeometryType>& geomTypes = 
-    gridPart.indexSet().geomTypes(0) ;
+  AllGeomTypes< typename GridPartType::IndexSetType ,
+                typename GridPartType::GridType > 
+            allGeomTypes(gridPart.indexSet());
+  
+  const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(0);
 
   for(size_t i=0; i<geomTypes.size(); ++i)
   {
@@ -41,6 +49,7 @@ makeFunctionSpace (GridPartType& gridPart)
     {
       baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
       int numDofs = baseFuncSet_[id]->numBaseFunctions();
+      
       MapperSingletonKeyType key(gridPart.indexSet(),numDofs);
       mapper_ = & MapperProviderType::getObject(key);
 

@@ -706,7 +706,7 @@ template <int polOrd , int dimrange >
 struct LagrangeDefinition< GeometryIdentifier::Tetrahedron , polOrd, dimrange > 
 {
     /** \bug This formula is wrong! */
-  enum { numOfBaseFct = (polOrd == 0) ? (1*dimrange) : (dimrange * 4 * polOrd) }; 
+  enum { numOfBaseFct = (polOrd == 0) ? (dimrange) : (dimrange * 4 * polOrd) }; 
 };
 
 //! Lagrange Definition for Pyramids
@@ -714,7 +714,7 @@ struct LagrangeDefinition< GeometryIdentifier::Tetrahedron , polOrd, dimrange >
 template <int polOrd, int dimrange > 
 struct LagrangeDefinition< GeometryIdentifier::Pyramid , polOrd, dimrange > 
 {
-    enum { numOfBaseFct = dimrange * 5};
+    enum { numOfBaseFct = (polOrd == 0) ? (dimrange) : (dimrange * 5) };
 };
 
 //! Lagrange Definition for Prisms
@@ -722,7 +722,7 @@ struct LagrangeDefinition< GeometryIdentifier::Pyramid , polOrd, dimrange >
 template <int polOrd, int dimrange > 
 struct LagrangeDefinition< GeometryIdentifier::Prism , polOrd, dimrange > 
 {
-    enum { numOfBaseFct = dimrange * 6};
+    enum { numOfBaseFct = (polOrd == 0) ? (dimrange) : (dimrange * 6) };
 };
 
 //! Lagrange Definition for Hexahedrons 
