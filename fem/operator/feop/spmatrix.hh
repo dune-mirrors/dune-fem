@@ -5,17 +5,19 @@
 #include <dsp_defs.h>
 #endif
 
-#include <dune/common/simplevector.hh>
+//#include "simplevector.hh"
 
 namespace Dune
 {
 
 //*****************************************************************
-//
-//  --SparseRowMatrix
-//  
 //! Compressed row sparse matrix, where only the nonzeros of a row are
 //! kept.
+//!
+//! This class should be removed and ../matrix/spmatrix.cc should be 
+//! used. However, exchange in feop.hh is a larger task, so 
+//! temporarily this SparseRowMatrix class is kept for keeping the
+//! FEOp-example running.
 //*****************************************************************
 template <class T>
 class SparseRowMatrix 
@@ -186,7 +188,7 @@ public:
     void multOEM(const CArrayType * x, CArrayType * ret) const;
     
     //! Multiply with a SimpleVector
-    SimpleVector<T> operator*(const SimpleVector<T>& v) const;
+    //SimpleVector<T> operator*(const SimpleVector<T>& v) const;
 
     /** \brief Multiply with a vector on the topmost level of the grid
      *
@@ -202,7 +204,7 @@ public:
 
     /** \brief Multiply the transpose with a vector
      */
-    void apply_t(const SimpleVector<T> &f, SimpleVector<T> &ret) const;
+    //void apply_t(const SimpleVector<T> &f, SimpleVector<T> &ret) const;
 
     /** \brief For an argument \f$ A \f$, this computes \f$ M A M^T \f$
      * \todo This routine's complexity still scales linearly with the total number

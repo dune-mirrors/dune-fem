@@ -311,13 +311,13 @@ void SparseRowMatrix<T>::multOEM(const CArrayType * x, CArrayType * ret) const
   }
 }
 
-template <class T>
-SimpleVector<T> SparseRowMatrix<T>::operator*(const SimpleVector<T>& v) const
-{
-    SimpleVector<T> result;
-    mult(result, v);
-    return result;
-}
+// template <class T>
+// SimpleVector<T> SparseRowMatrix<T>::operator*(const SimpleVector<T>& v) const
+// {
+//     SimpleVector<T> result;
+//     mult(result, v);
+//     return result;
+// }
 
 template <class T>
 SparseRowMatrix<T> SparseRowMatrix<T>::applyFromLeftAndRightTo(const SparseRowMatrix<T>& A) const
@@ -419,25 +419,25 @@ void SparseRowMatrix<T>::apply_t(const DiscFuncType &f, DiscFuncType &ret) const
 }
 
 // apply to transposed matrix to a SimpleVector 
-template <class T>
-void SparseRowMatrix<T>::apply_t(const SimpleVector<T> &f, SimpleVector<T> &ret) const 
-{
-    assert(f.size() == rows());
+// template <class T>
+// void SparseRowMatrix<T>::apply_t(const SimpleVector<T> &f, SimpleVector<T> &ret) const 
+// {
+//     assert(f.size() == rows());
 
-    ret.resize(cols());
-    ret.set(0);
+//     ret.resize(cols());
+//     ret.set(0);
 
-    for (int row=0; row<rows(); row++) {
+//     for (int row=0; row<rows(); row++) {
  
-        for (int col=0; col<nz_; col++) {
+//         for (int col=0; col<nz_; col++) {
 
-            if (col_[row*nz_+col] >= 0)
-                ret[col_[row*nz_+col]] += f[row]*values_[row*nz_+col];
+//             if (col_[row*nz_+col] >= 0)
+//                 ret[col_[row*nz_+col]] += f[row]*values_[row*nz_+col];
 
-        }
-    }
+//         }
+//     }
 
-}
+// }
 
 
 template <class T> 
