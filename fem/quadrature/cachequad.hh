@@ -133,19 +133,6 @@ namespace Dune {
                            TwistUtilityType::twistInSelf(gridPart.grid(),it) : 
                            TwistUtilityType::twistInNeighbor(gridPart.grid(),it)))
     {
-#ifndef NDEBUG
-      int faceIndex = this->faceNumber();
-      int faceTwist = (side == BaseType :: INSIDE) ?
-                           TwistUtilityType::twistInSelf(gridPart.grid(),it) :
-                           TwistUtilityType::twistInNeighbor(gridPart.grid(),it);
-      std::cout << "Got Mapper for face=" << faceIndex << " | twist = " << faceTwist <<"\n";
-      for(size_t i=0; i<mapper_.size(); ++i)
-      {
-        std::cout << mapper_[i] << "\n";
-      } 
-#endif
- 
-      
       // make sure CachingQuadrature is only created for conforming
       // intersections 
       assert( TwistUtilityType::conforming(gridPart.grid(),it) );
