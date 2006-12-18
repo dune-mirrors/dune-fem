@@ -15,6 +15,7 @@
 //- local includes 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 
@@ -121,12 +122,15 @@ namespace Dune {
       dm.addIndexSet(gridPart.grid(), 
                      const_cast<IndexSetType&>(gridPart.indexSet()));
 
+      // create info for all geom types 
+      AllGeomTypes<IndexSetType,typename Traits::GridType>
+        allGeomTypes(gridPart.indexSet());
+      
       int maxNumDofs = -1;
       for(int cd=0; cd<2; ++cd)
       {
-        // get types for codim 0  
-        const std::vector<GeometryType>& geomTypes =
-                    gridPart.indexSet().geomTypes(cd) ;
+        // get types for codim 0 and 1   
+        const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(cd);
 
         // create mappers and base sets for all existing geom types
         for(size_t i=0; i<geomTypes.size(); ++i)
