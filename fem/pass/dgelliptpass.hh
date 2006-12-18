@@ -211,6 +211,8 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename GridPartType :: GridType :: Traits :: LocalIdSet LocalIdSetType; 
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    typedef FieldVector<double,DomainType::dimension-1> FaceDomainType;
+
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
     
@@ -386,12 +388,9 @@ namespace Dune {
     //! setup matrix 
     void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
-      // resize matrices 
-      matrixHandler_.resize(verbose_);
+      // reserve memory and clear matrices 
+      matrixHandler_.reserve(verbose_);
 
-      // clear matrices 
-      matrixHandler_.clear();
-     
       gradRhs_.clear();
       rhs.clear();
       
@@ -887,6 +886,7 @@ namespace Dune {
           {
             FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
                                              FaceQuadratureType::INSIDE);
+
       
             FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
                                              FaceQuadratureType::OUTSIDE);
@@ -1261,6 +1261,7 @@ namespace Dune {
     // calculate pre-condition matrix 
     void createPreconditionMatrix()
     {
+      /*
       if(matrixHandler_.hasPcMatrix())
       {
         matrixHandler_.clearPcMatrix();
@@ -1295,6 +1296,7 @@ namespace Dune {
           }
         }
       }
+      */
     }
 
     void updateLocal(EntityType& en) const

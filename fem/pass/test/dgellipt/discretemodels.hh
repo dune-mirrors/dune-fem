@@ -40,8 +40,8 @@ namespace LDGExample {
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
     
-    //typedef LeafGridPart<GridType, All_Partition > GridPartType;
-    typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
+    typedef LeafGridPart<GridType, All_Partition > GridPartType;
+    //typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
     //typedef AdaptiveLeafGridPart<GridType> GridPartType;
     //typedef HierarchicGridPart<GridType> GridPartType;
 
@@ -62,7 +62,8 @@ namespace LDGExample {
     template <class RowSpaceType, class ColSpaceType> 
     struct MatrixHandler
     { 
-      typedef MatrixHandlerSPMat<RowSpaceType,ColSpaceType> MatrixHandlerType; 
+      //typedef MatrixHandlerSPMat<RowSpaceType,ColSpaceType> MatrixHandlerType; 
+      typedef MatrixHandlerBM<RowSpaceType,ColSpaceType> MatrixHandlerType; 
     };
     
     template <class DiscreteFunctionImp, class OperatorImp> 
@@ -70,9 +71,9 @@ namespace LDGExample {
     { 
 #if HAVE_BLAS
       //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef BICGSTABOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
 #else 
