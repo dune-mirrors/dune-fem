@@ -97,9 +97,16 @@ public:
  */
 /*======================================================================*/
 
-  const FieldVector<typename EntityType::ctype, EntityType::dimension > 
+//  const FieldVector<typename EntityType::ctype, EntityType::dimension > 
+  const FieldVector<typename EntityType::ctype, 
+                    EntityType::Geometry::mydimension > 
   point(int p)
         {
+          //const  FieldVector<typename EntityType::ctype, 
+          //    EntityType::Geometry::mydimension > 
+          //    ret =  geo_.local(geo_[p]);
+          //std::cout << "original point: " <<  geo_.local(geo_[p]);
+          //std::cout << "new point     : " <<  ret;
           return geo_.local(geo_[p]);
         };
 

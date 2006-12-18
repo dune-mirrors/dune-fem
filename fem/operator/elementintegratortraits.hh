@@ -91,8 +91,8 @@ public:
                                           elementMatrixSize> >
           ElementMatrixType; 
 
-  typedef ElementQuadrature<GridType,0> ElementQuadratureType; 
-  typedef ElementQuadrature<GridType,1> IntersectionQuadratureType; 
+  typedef ElementQuadrature<GridPartType,0> ElementQuadratureType; 
+  typedef ElementQuadrature<GridPartType,1> IntersectionQuadratureType; 
   enum {quadDegree = 5}; //<! degree of quadrature
   
   //! derived types
