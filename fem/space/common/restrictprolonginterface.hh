@@ -110,7 +110,6 @@ public:
   RestProlOperatorFV ( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
   {
     // make sure index set can be used for adaptive computations 
-    assert( df.space().indexSet().adaptive() );
   }
 
   //! if weight is set, then ists assumend that we have always the same
@@ -125,6 +124,8 @@ public:
   template <class EntityType>
   void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
+    assert( df_.space().indexSet().adaptive() );
+
     assert( !father.isLeaf() );
 
     const RangeFieldType weight = (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
@@ -155,6 +156,8 @@ public:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
+    assert( df_.space().indexSet().adaptive() );
+    
     LocalFunctionType vati = df_.localFunction( father);
     LocalFunctionType sohn = df_.localFunction( son   );
     const int numDofs = vati.numDofs();
