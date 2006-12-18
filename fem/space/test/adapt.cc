@@ -18,7 +18,13 @@ using namespace Dune;
 
 #include <dune/grid/common/referenceelements.hh>
 
-#if HAVE_GRAPE
+#if HAVE_GRAPE && GRIDDIM > 1 
+#define USE_GRAPE 1
+#else 
+#define USE_GRAPE 0
+#endif
+
+#if USE_GRAPE && GRIDDIM > 1 
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
@@ -256,7 +262,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
     std::cout << "before ref." << new_error << "\n\n"; 
   }
   adapt(grid,solution,step);
-#if HAVE_GRAPE
+#if USE_GRAPE
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
     std::cerr << "GRAPE 1" << std::endl;
@@ -272,7 +278,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
   L2Error < DiscreteFunctionType > l2err;
   double error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
 
-#if HAVE_GRAPE
+#if USE_GRAPE
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
     std::cerr << "GRAPE 2" << std::endl;
@@ -286,7 +292,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
     project(f, solution);
   double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
-#if HAVE_GRAPE
+#if USE_GRAPE
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
     std::cerr << "SIZE: " << solution.space().size() 
