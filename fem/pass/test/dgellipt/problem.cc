@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-#define PROBLEM 7
+#define PROBLEM 1
 
 // shift solutions to avoid dirichlet 0 bnd 
 static const double globalShift = 2.0;
