@@ -228,9 +228,11 @@ public:
 
       //if( i > 0 ) adaptGrid(Arg);
 
-      Arg.set(1002.5);
+      Arg.clear();
       FuncSpaceType sp; 
       ExactSolution exact(sp); 
+
+      dest.clear();
 
       lastPass_(arg,dest);
 
@@ -325,10 +327,8 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   //typedef LDGFluxSigma<ModelType> LDGFluxType;
   typedef LDGFlux<ModelType> NumericalFluxType;
 
-
-
   typedef LaplaceDiscreteModel < ModelType, NumericalFluxType, polOrd > LaplaceModelType;
-  typedef GradientDiscreteModel < ModelType, NumericalFluxType, polOrd > GradientModelType;
+  typedef GradientDiscreteModel < ModelType, NumericalFluxType, polOrd-1 > GradientModelType;
   
   typedef MySpaceOperator <  GradientModelType, LaplaceModelType > 
                 SpaceOperatorType; 
