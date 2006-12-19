@@ -24,7 +24,11 @@ set(const RangeFieldType & value)
 template <class DiscreteFunctionTraits>
 void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear() 
 {
-  this->set(RangeFieldType(0.0));
+  DofIteratorType endit = this->dend();
+  for (DofIteratorType it = this->dbegin(); it != endit; ++it) 
+  {
+    (*it) = 0;
+  }
 }
 
 template <class DiscreteFunctionTraits>
