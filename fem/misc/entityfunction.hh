@@ -34,20 +34,50 @@ namespace Dune
  */
 /*======================================================================*/
   
-  template <class EntityFunctionImp>
+  template <class EntityType, class EntityFunctionImp>
   class EntityFunction
   {
   public:
-    //! interface function, which must be provided by derived classes
-    template <class EntityType, class QuadratureType, class RangeType>
-    void evaluate(EntityType& en, QuadratureType& quad, int p, RangeType& ret)
+
+/*======================================================================*/
+/*! 
+ *  init: interface function, which must be provided by derived classes
+ *        method should be called for setting the entity, on which (repeated)
+ *        evaluations then can be performed by evaluate(...)
+ *
+ *   \param en the entity, on which subsequent evaluation will be performed
+ */
+/*======================================================================*/
+
+    void init(const EntityType& en)
           {
             CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( 
-                (  asImp().template evaluate<EntityType, QuadratureType, 
-                   RangeType>( en, quad, p, ret) ) );
+                (  asImp().template init<EntityType>( en ) ) );
             
-            asImp().template evaluate<EntityType, QuadratureType, 
-                RangeType> ( en, quad, p, ret);
+            asImp().init( en );
+          }
+
+/*======================================================================*/
+/*! 
+ *  interface function, which must be provided by derived classes
+ *  should perform local evaluation on the entity, which is 
+ *  assumed to be set by init(...)
+ *
+ *   \param loc local coordinates of point to be evaluated
+ *
+ *   \param ret the return value of the local function evaluation
+ */
+/*======================================================================*/
+
+    template <class DomainType, class RangeType>
+    void evaluate(const DomainType& loc, RangeType& ret) const
+          {
+            CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( 
+                (  asImp().template evaluate<DomainType, 
+                   RangeType>(loc, ret) ) );
+            
+            asImp().template evaluate<DomainType, 
+                RangeType> ( loc, ret);
           }
     
   protected:
@@ -67,39 +97,48 @@ namespace Dune
   
 /*======================================================================*/
 /*!
- *  \class EntityFunctionWrapper
- *  \brief The EntityFunctionWrapper provides an entity evaluation method
+ *  \class EntityFunctionAdapter
+ *
+ *  \brief The EntityFunctionAdapter provides an entity evaluation method
  *         based on an instance of a Dune::Function
  */
 /*======================================================================*/
   
-  template <class FunctionType>
-  class EntityFunctionWrapper : EntityFunction 
-  < EntityFunctionWrapper <FunctionType> >
+  template <class EntityType, class FunctionType>
+  class EntityFunctionAdapter : EntityFunction 
+  < EntityType, EntityFunctionAdapter <EntityType, FunctionType> >
   {
   public:
     //! constructor with function as argument
-    EntityFunctionWrapper(FunctionType& function)
-            : function_(function)        
+    EntityFunctionAdapter(FunctionType& function)
+            : function_(function), entityPtr_(NULL)
           {
+          };
+
+    //! implementation of the init-method as required by EntityFunction:
+    //! does nothing except storing the adress of the entity
+
+    inline void init(const EntityType& en)
+          { 
+            entityPtr_ = &en;
           };
     
-    //! implemetation of the evaluation method as required by EntityFunction
-    template <class EntityType, class QuadratureType, class RangeType>
-    inline void evaluate(EntityType& en, QuadratureType& quad, 
-                         int p, RangeType& ret)
-          {
-            typedef typename EntityType::ctype CoordType;
-            enum { dim = EntityType::dimension};
+    //! implemetation of the evaluation-method as required by EntityFunction
+    //! as a simple mapping of the local to the global function
+    //! Caution has to be taken in use: The entityPtr is assumed to be 
+    //! valid! No check is performed here
 
-            const FieldVector< CoordType, dim > & 
-                glob = en.geometry().global(quad.point(p));            
+    template <class DomainType, class RangeType>
+    inline void evaluate(const DomainType& loc, RangeType& ret) const
+          {
+            const DomainType& glob = entityPtr_->geometry().global(loc);    
             function_.evaluate(glob, ret);
           };
-
+    
   private:
     FunctionType& function_;    
-  }; // end class EntityFunctionWrapper
+    EntityType const * entityPtr_;
+  }; // end class EntityFunctionAdapter
   
 } // end namespace Dune
 

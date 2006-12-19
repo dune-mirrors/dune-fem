@@ -201,8 +201,8 @@ namespace Dune
                   it->geometry().integrationElement(quad.point(qp));
               
             // the following demonstrates a very strange effect:
-              lf1.evaluateLocal(*it, quad.point(qp), lv1);
-              lf2.evaluateLocal(*it, quad.point(qp), lv2);
+              lf1.evaluate(quad.point(qp), lv1);
+              lf2.evaluate(quad.point(qp), lv2);
               ret += det * quad.weight( qp) * (lv1 - lv2) * (lv1 - lv2);
             } // end qp iteration
             
