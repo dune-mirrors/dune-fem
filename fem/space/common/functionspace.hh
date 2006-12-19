@@ -5,7 +5,7 @@
 
 namespace Dune{
 
-/** @defgroup FunctionSpace FunctionSpace
+/*! @defgroup FunctionSpace FunctionSpace
   @ingroup FunctionCommon
   This provides the interfaces for continuous function spaces. 
   A function space is characterized by it's domain and range field type and  
@@ -14,32 +14,31 @@ namespace Dune{
   @{
  */
 
-/** \brief An arbitrary function space
+/*! \brief An arbitrary function space
     Base class for specific function spaces.
 */
 template<typename FunctionSpaceTraits> 
 class FunctionSpaceBase {
 public:
-/** Dimensions of the domain and range field */
+/*! Dimensions of the domain and range field */
   enum { DimDomain = FunctionSpaceTraits::DimDomain, 
 	 DimRange = FunctionSpaceTraits::DimRange};
-/** Intrinsic type used for values in the domain field (usually a double) */
+/*! Intrinsic type used for values in the domain field (usually a double) */
   typedef typename FunctionSpaceTraits::DomainFieldType DomainFieldType;
-/** Intrinsic type used for values in the range field (usually a double) */
+/*! Intrinsic type used for values in the range field (usually a double) */
   typedef typename FunctionSpaceTraits::RangeFieldType RangeFieldType;
-/** Type of domain vector (using type of domain field) */
+/*! Type of domain vector (using type of domain field) */
   typedef typename FunctionSpaceTraits::DomainType DomainType;
-/** Type of range vector (using type of range field) */
+/*! Type of range vector (using type of range field) */
   typedef typename FunctionSpaceTraits::RangeType RangeType;
-/** Intrinsic type used for the jacobian values */
+/*! Intrinsic type used for the jacobian values */
   typedef typename FunctionSpaceTraits::LinearMappingType JacobianRangeType;
-/** Intrinsic type used for the hessian values */
+/*! Intrinsic type used for the hessian values */
   typedef FieldVector<JacobianRangeType, DimRange> HessianRangeType;
-/** Type of corresponding scalar space */
+/*! Type of corresponding scalar space */
   typedef typename FunctionSpaceTraits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 };
-/** \brief Base class for vector valued function spaces.
-*/
+//! \brief Base class for vector valued function spaces.
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 class FunctionSpace;
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
@@ -56,12 +55,12 @@ template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 class FunctionSpace : public
       FunctionSpaceBase<VectorSpaceTraits<DomainFieldImp,RangeFieldImp,n,m> > {};
 
-/** \brief Base class for matrix valued function spaces.
+/*! \brief Base class for matrix valued function spaces.
 */
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
 class MatrixFunctionSpace;
 
-/** \brief RangeType class for matrix valued functions -
+/*! \brief RangeType class for matrix valued functions -
     derived from FieldMatrix but has representation as vector
 */
 template <typename K,int n,int m> 
@@ -77,11 +76,11 @@ class RangeMatrix : public FieldMatrix<K,n,m> {
     dimension = BaseType::rows*BaseType::cols
   };
   //===== constructors
-  /** \brief Default constructor
+  /*! \brief Default constructor
    */
   RangeMatrix () : BaseType() {}
   
-  /** \brief Constructor initializing the whole matrix with a scalar
+  /*! \brief Constructor initializing the whole matrix with a scalar
    */
   RangeMatrix (const K& k) : BaseType(k) {}
 
@@ -111,7 +110,7 @@ class RangeMatrix : public FieldMatrix<K,n,m> {
   }
 
 };
-/** \brief JacobianRangeType class for matrix valued functions -
+/*! \brief JacobianRangeType class for matrix valued functions -
     derived from FieldMatrix 
 */
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
@@ -125,10 +124,10 @@ class MatrixMapping :
   typedef RangeFieldImp RangeFieldType;
   typedef RangeMatrix<RangeFieldImp, m1,m2> RangeType;
   //===== constructors
-  /** \brief Default constructor
+  /*! \brief Default constructor
    */
   MatrixMapping () : BaseType() {}
-  /** \brief Constructor initializing the whole matrix with a scalar
+  /*! \brief Constructor initializing the whole matrix with a scalar
    */
   MatrixMapping (const RangeFieldImp& k) : BaseType(k) {}
   
@@ -167,7 +166,7 @@ struct ToScalarFunctionSpace<
   typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, 1> Type;
 };
 
-/** @} end documentation group */
+/*! @} end documentation group */
 
 }
 
