@@ -89,6 +89,7 @@ namespace Dune {
 
     //! Local function implementation 
     typedef typename Traits::LocalFunctionImp LocalFunctionImp;
+    typedef typename Traits::GridType GridType;
     
     //! Local function type
     typedef typename Traits::LocalFunctionType LocalFunctionType;
