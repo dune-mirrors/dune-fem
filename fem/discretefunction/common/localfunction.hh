@@ -174,17 +174,6 @@ public:
     jacobianLocal(en,xLoc_,ret);
   }
 
-  #if OLDFEM
-  //! Evaluation of jacobian using a quadrature
-  template <class EntityType, class QuadratureType>
-  void jacobian(EntityType& en,
-                QuadratureType& quad,
-                int quadPoint,
-                JacobianRangeType& ret)
-  {
-    jacobianLocal(en, quad.point(quadPoint), ret);
-  }
-  #endif
   //! Evaluation of jacobian using a quadrature
   template <class EntityType, class QuadratureType>
   void jacobian(EntityType& en,
