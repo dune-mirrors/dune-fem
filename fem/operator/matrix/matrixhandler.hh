@@ -210,7 +210,9 @@ namespace Dune {
         {
           massMatrix_.resize(gradSize,gradSize);
         }
+
         // pcMatrix_ is resized by dof manager 
+        assert( (pcMatrix_) ? (pcMatrix_->size() == singleSize) : 1);
       }
     }
 
