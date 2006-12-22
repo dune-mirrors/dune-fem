@@ -394,7 +394,7 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   DestinationType *tmpRhs = spaceOp.createDestinationFct("tmpRhs");
 
   // initial data != 0
-  solution->set(0.5);
+  solution->clear();
   spaceOp(*tmpRhs,*solution);
 
 #if HAVE_GRAPE

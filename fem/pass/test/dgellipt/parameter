@@ -1,20 +1,28 @@
 % initial refine level 
-StartLevel: 3
+StartLevel: 4
 
 % do EOCSteps eoc steps
 EOCSteps: 2
 
 % CG epsilon 
-CGeps: 1e-15
+CGeps: 1e-12
 
 % cg output, 0 == no output, 1 == print output   
 verbose: 1
 
 % use Preconditioning 0 == no, 1 == yes  
-Preconditioning: 0
+Preconditioning: 1
 
 % display using Grape, 0 == no, 1 == yes  
-display: 1
+display: 0
 
 % MacroTriang for 2d simul 
-Grid: ./grid2d.dgf
+%Grid: ./grid2d.dgf
+Grid: ./one.dgf
+%Grid: ./one3d.dgf
+%Grid: ./corner2d.dgf
+
+% parameter for LDG flux 
+beta: 0.0
+power: 1.0
+eta: 1.0

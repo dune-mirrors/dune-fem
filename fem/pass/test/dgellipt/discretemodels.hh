@@ -45,10 +45,10 @@ namespace LDGExample {
     //typedef AdaptiveLeafGridPart<GridType> GridPartType;
     //typedef HierarchicGridPart<GridType> GridPartType;
 
-    typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
-    typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
-    //typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
-    //typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
+    //typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
+    //typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
+    typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
+    typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
     
     // typical tpye of space 
     typedef FunctionSpace<double, double, dimDomain, dimRange > SingleFunctionSpaceType; 
@@ -62,8 +62,8 @@ namespace LDGExample {
     template <class RowSpaceType, class ColSpaceType> 
     struct MatrixHandler
     { 
-      //typedef MatrixHandlerSPMat<RowSpaceType,ColSpaceType> MatrixHandlerType; 
-      typedef MatrixHandlerBM<RowSpaceType,ColSpaceType> MatrixHandlerType; 
+      typedef MatrixHandlerSPMat<RowSpaceType,ColSpaceType> MatrixHandlerType; 
+      //typedef MatrixHandlerBM<RowSpaceType,ColSpaceType> MatrixHandlerType; 
     };
     
     template <class DiscreteFunctionImp, class OperatorImp> 
@@ -154,7 +154,7 @@ namespace LDGExample {
     const Model & data () const { return model_; }
 
     bool preconditioning () const { return preCon_; }
-    bool hasSource() const { return false; }
+    bool hasSource() const { return true; }
     bool hasFlux() const { return false; }
 
     template <class ArgumentTuple> 
