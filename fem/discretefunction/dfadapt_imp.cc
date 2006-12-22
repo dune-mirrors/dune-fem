@@ -85,7 +85,7 @@ inline void DFAdapt< DiscreteFunctionSpaceType>::set ( RangeFieldType x )
 template<class DiscreteFunctionSpaceType>
 inline void DFAdapt< DiscreteFunctionSpaceType>::clear ()
 {
-  int size = dofVec_.size();
+  const int size = dofVec_.size();
   DofArrayType &vec = dofVec_;
   for(int i=0; i<size; ++i) vec[i] = 0.0; 
 }
