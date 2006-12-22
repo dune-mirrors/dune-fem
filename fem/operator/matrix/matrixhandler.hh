@@ -15,7 +15,7 @@ namespace Dune {
     typedef typename SpaceType::GridType::template Codim<0>::Entity EntityType;
   public:  
     typedef SparseRowMatrix<double> MatrixType;
-    typedef MatrixType PreconditionMatrixType;
+    typedef DFAdapt<SpaceType> PreconditionMatrixType;
     
     //! LocalMatrix 
     template <class MatrixImp> 
@@ -134,7 +134,8 @@ namespace Dune {
     MatrixType gradMatrix_;
     MatrixType divMatrix_;
     MatrixType massMatrix_;
-    MatrixType pcMatrix_;
+    PreconditionMatrixType* pcMatrix_;
+
     bool hasMassMatrix_;
     bool hasPcMatrix_;
 
@@ -151,7 +152,7 @@ namespace Dune {
       , gradMatrix_()
       , divMatrix_()
       , massMatrix_() // diagonal matrix 
-      , pcMatrix_() // diagonal matrix 
+      , pcMatrix_(0) 
       , hasMassMatrix_(hasMassMatrix)
       , hasPcMatrix_(hasPcMatrix)
     {
@@ -167,7 +168,10 @@ namespace Dune {
     //! return reference to mass matrix 
     MatrixType & massMatrix() { return massMatrix_; }
     //! return reference to preconditioning matrix 
-    MatrixType & pcMatrix() { return pcMatrix_; }
+    PreconditionMatrixType & pcMatrix() { 
+      assert( pcMatrix_ );
+      return *pcMatrix_; 
+    }
     //! return true if mass matrix is used 
     bool hasMassMatrix() const { return hasMassMatrix_; }
     //! return true if preconditioning matrix is used 
@@ -206,11 +210,7 @@ namespace Dune {
         {
           massMatrix_.resize(gradSize,gradSize);
         }
-
-        if(hasPcMatrix()) 
-        {
-          pcMatrix_.resize(singleSize);
-        }
+        // pcMatrix_ is resized by dof manager 
       }
     }
 
@@ -228,7 +228,8 @@ namespace Dune {
     {
       if(hasPcMatrix())
       {
-        pcMatrix_.clear();
+        assert( pcMatrix_ );
+        pcMatrix_->clear();
       }
     } 
 
@@ -278,7 +279,8 @@ namespace Dune {
 
         if( hasPcMatrix() )
         {
-          pcMatrix_.reserve(singleSpace_.size(),singleSpace_.size(),1,0.0);
+          if(!pcMatrix_) pcMatrix_ = new PreconditionMatrixType("PCMatrix",singleSpace_); 
+          pcMatrix_->clear();
         }
       }
     }
@@ -295,7 +297,6 @@ namespace Dune {
       }
     }
   };
-
 
   // --BlockMatrixHandle
   template <class SpaceType, class GradientSpaceType> 
@@ -398,7 +399,7 @@ namespace Dune {
       //! resort all global rows of matrix to have ascending numbering 
       void resort ()
       {
-        assert( matrix_.size(0) > 0 );
+        //assert( matrix_.size(0) > 0 );
         //matrix_.resortRow( rowIndex_ );
       }
     };
@@ -418,11 +419,13 @@ namespace Dune {
     int singleMaxNumbers_;
     int gradMaxNumbers_;
 
-    MatrixType stabMatrix_; 
+    MatrixType * stabMatrix_; 
+    MatrixType * divMatrix_;
+
     MatrixType gradMatrix_;
-    MatrixType divMatrix_;
-    MatrixType pcMatrix_;
     MatrixType massMatrix_;
+
+    MatrixType systemMatrix_; 
 
     bool hasMassMatrix_;
     bool hasPcMatrix_;
@@ -434,20 +437,8 @@ namespace Dune {
       , gradientSpace_(gradientSpace) 
       , size_(singleSpace_.indexSet().size(0))
       , maxNumberUnknowns_(10* (singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
-     /*
-      , stabMatrix_(size_,size_,
-          numSingleBaseFct_,
-          numSingleBaseFct_,
-          maxNumberUnknowns_)
-      , gradMatrix_(size_,size_
-          , numGradBaseFct_
-          , numSingleBaseFct_
-          ,maxNumberUnknowns_)
-      , divMatrix_(size_,size_
-          , numSingleBaseFct_
-          , numGradBaseFct_
-          , maxNumberUnknowns_)
-          */
+      , stabMatrix_(0)
+      , divMatrix_ (0) 
       , hasMassMatrix_(hasMassMatrix)
       , hasPcMatrix_(hasPcMatrix)
     {
@@ -460,13 +451,15 @@ namespace Dune {
       if( (singleSpace_.begin()   != singleSpace_.end()) && 
           (gradientSpace_.begin() != gradientSpace_.end()) )
       {
+        // get number of elements 
         size_ = singleSpace_.indexSet().size(0); 
+
         numSingleBaseFct_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
         numGradBaseFct_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
 
         if(verbose) 
         {
-          std::cout << "Reserve Matrix with (" << singleSpace_.size() << "," << gradientSpace_.size()<< ")\n";
+          std::cout << "Reserve Matrix with (" << size_ << "," << size_ << ")\n";
           std::cout << "Number of base functions = (" << numSingleBaseFct_ << "," << numGradBaseFct_ << ")\n";
         }
 
@@ -484,22 +477,27 @@ namespace Dune {
         // upper estimate for number of neighbors 
         enum { dim = SpaceType :: GridType :: dimension };
 
-        const int factor =  (dim * 2) + 1; 
+        // number of neighbors + 1 
+        const int factor = (dim * 2) + 1; 
+        // double stencil for system matrix 
+        const int doubleFactor = (dim * 4) + 1; 
+        
         singleMaxNumbers_ *= factor; // e.g. 7 for dim = 3
         gradMaxNumbers_   *= factor;
 
-        stabMatrix_.reserve(size_,size_,numSingleBaseFct_,numSingleBaseFct_,singleMaxNumbers_);
-        gradMatrix_.reserve(size_,size_,numGradBaseFct_, numSingleBaseFct_,singleMaxNumbers_); 
-        divMatrix_.reserve(size_,size_,numSingleBaseFct_,numGradBaseFct_,gradMaxNumbers_); 
+        if( !stabMatrix_ ) stabMatrix_ = new MatrixType ();
+        stabMatrix().reserve(size_,size_,numSingleBaseFct_,numSingleBaseFct_,factor);
         
+        if( !divMatrix_ ) divMatrix_ = new MatrixType ();
+        divMatrix().reserve(size_,size_,numSingleBaseFct_,numGradBaseFct_,factor); 
+        
+        gradMatrix_.reserve(size_,size_,numGradBaseFct_, numSingleBaseFct_,factor); 
+
+        systemMatrix_.reserve(size_,size_,numSingleBaseFct_,numSingleBaseFct_,2*doubleFactor); 
+
         if( hasMassMatrix() ) 
         {
-          massMatrix_.reserve(size_,size_, numGradBaseFct_, numGradBaseFct_, singleMaxNumbers_); 
-        }
-
-        if( hasPcMatrix() )
-        {
-          pcMatrix_.reserve(size_,size_,numSingleBaseFct_,numSingleBaseFct_,singleMaxNumbers_);
+          massMatrix_.reserve(size_,size_, numGradBaseFct_, numGradBaseFct_, 1 ); 
         }
       }
       else 
@@ -508,11 +506,25 @@ namespace Dune {
       }
     }
 
-    MatrixType & stabMatrix() { return stabMatrix_; }
+    MatrixType & stabMatrix() 
+    { 
+      assert( stabMatrix_ );
+      return *stabMatrix_; 
+    }
+    
     MatrixType & gradMatrix() { return gradMatrix_; }
-    MatrixType & divMatrix() { return divMatrix_; }
-    MatrixType & pcMatrix() { return pcMatrix_; }
+    MatrixType & divMatrix() 
+    { 
+      assert( divMatrix_ );
+      return *divMatrix_; 
+    }
+    MatrixType & pcMatrix() 
+    { 
+      return systemMatrix_; 
+    }
     MatrixType & massMatrix() { return massMatrix_; }
+
+    MatrixType & systemMatrix() { return systemMatrix_; }
 
     //! return true if mass matrix is used 
     bool hasMassMatrix() const { return hasMassMatrix_; }
@@ -523,33 +535,44 @@ namespace Dune {
     void clear() 
     {
       gradMatrix_.clear(); 
-      divMatrix_.clear();
-      stabMatrix_.clear();
+      divMatrix().clear();
+      stabMatrix().clear();
       massMatrix_.clear();
-      pcMatrix_.clear();
+      systemMatrix_.clear();
     }
 
+    void generateSystemMatrix () 
+    {
+      if( hasMassMatrix() )
+      {
+        MatrixType tmp;
+        tmp.multiply( massMatrix_, gradMatrix_ );
+        systemMatrix_.multiply( divMatrix() , tmp );
+      }
+      else 
+      {
+        systemMatrix_.multiply( divMatrix() , gradMatrix_ );
+      }
+
+      systemMatrix_.add( stabMatrix() );
+      systemMatrix_.resort();
+
+      delete divMatrix_; divMatrix_ = 0;
+      delete stabMatrix_; stabMatrix_ = 0;
+    }
 
     //! clear mass matrix 
     void clearMass() 
     {
-      /*
       if(hasMassMatrix())
       {
         massMatrix_.clear();
       }
-      */
     } 
     
     //! clear preconditioning matrix 
     void clearPcMatrix() 
     {
-      /*
-      if(hasPcMatrix())
-      {
-        pcMatrix_.clear();
-      }
-      */
     } 
 
     //! returns true if memory has been reserved
@@ -574,14 +597,13 @@ namespace Dune {
           std::cout << "Number of base functions = (" << numSingleBaseFct_ << "," << numGradBaseFct_ << ")\n";
         }
 
-        //gradMatrix_,clear();
         gradMatrix_.resize(size_);
 
-        //divMatrix_.clear();
-        divMatrix_.resize(size_);
+        if( !divMatrix_ ) divMatrix_ = new MatrixType ();
+        divMatrix().resize(size_);
 
-        //stabMatrix_.clear();
-        stabMatrix_.resize(size_);
+        if( !stabMatrix_ ) stabMatrix_ = new MatrixType ();
+        stabMatrix().resize(size_);
       }
     }
 
@@ -589,8 +611,8 @@ namespace Dune {
     void resort() 
     {
       gradMatrix_.resort();
-      divMatrix_.resort();
-      stabMatrix_.resort();
+      divMatrix().resort();
+      stabMatrix().resort();
       if( hasMassMatrix() )
       {
         massMatrix_.resort(); 

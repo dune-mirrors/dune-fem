@@ -94,6 +94,7 @@ public:
   //! return real column number for (row,localCol) 
   int realCol (int row, int fakeCol) const 
   {
+    assert( row < dim_[0] );
     int pos = row*nz_ + fakeCol;
     return col_[pos];
   }
@@ -101,6 +102,7 @@ public:
   //! return pair< value, column >, used by BlockMatrix 
   std::pair < T , int > realValue(int row, int fakeCol) 
   {
+    assert( row < dim_[0] );
     assert( fakeCol < nz_ );
     int pos = row*nz_ + fakeCol;
     return realValue(pos);
@@ -109,6 +111,7 @@ public:
   //! return pair< value, column >, used by BlockMatrix 
   std::pair < const T , int > realValue(int row, int fakeCol) const 
   {
+    assert( row < dim_[0] );
     assert( fakeCol < nz_ );
     int pos = row*nz_ + fakeCol;
     return realValue(pos);
@@ -247,6 +250,15 @@ public:
   void resort();
   //! resort row to have ascending column numbering 
   void resortRow(const int row);
+
+  //! our preconditioning is left wise 
+  bool rightPrecondition() const { return false; }
+  //! same as apply A * x = ret, used by OEM-Solvers 
+  template <class VECtype> 
+  void precondition (const VECtype *x , VECtype * result ) const
+  {
+    multOEM(x,result);
+  }
 
 private:
   //! delete memory 

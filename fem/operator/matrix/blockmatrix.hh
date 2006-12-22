@@ -102,7 +102,8 @@ public:
   // result = this * vec 
   void mult(const T * vec, RowType & result) const 
   {
-    assert( (int) result.size() == rows() );
+    assert( ((int) result.size() != rows()) ? 
+        (std::cout << result.size() << " s|r " << rows() << "\n",0) : 1 );
     const int nRow= rows();
     const int nCol= cols();
     for(int row=0; row<nRow; ++row)
@@ -140,10 +141,12 @@ public:
   void multTransposed(const RowType & vec, RowType & result) const 
   {
     assert( (int) result.size() == cols() );
-    for(int col=0; col<cols(); ++col) 
+    const int nCols = cols();
+    const int nRows = rows();
+    for(int col=0; col<nCols; ++col) 
     {
       result[col] = 0;
-      for(int row=0; row<rows(); ++row)
+      for(int row=0; row<nRows; ++row)
       {
         result[col] += matrix_[row][col]*vec[row]; 
       }
@@ -155,7 +158,31 @@ public:
   {
     assert( A.cols() == B.rows() );
    
-    resize(A.rows() , B.cols());
+    resize( A.rows() , B.cols() );
+    
+    const int nRows = rows();
+    const int nCols = cols();
+    const int Acols = A.cols();
+    for(int row=0; row<nRows; ++row)
+    {
+      for(int col=0; col<nCols; ++col)
+      {
+        T sum = 0;
+        for(int k=0; k<Acols; ++k)
+        {
+          sum += A[row][k] * B[k][col];
+        }
+        matrix_[row][col] = sum; 
+      }
+    } 
+  };
+
+  // this = A * B
+  void multiplyTransposed(const DenseMatrix & A, const DenseMatrix & B)
+  {
+    assert( A.cols() == B.cols() );
+   
+    resize(A.rows() , B.rows());
     
     for(int row=0; row<rows(); ++row)
     {
@@ -164,7 +191,7 @@ public:
         T sum = 0;
         for(int k=0; k<A.cols(); ++k)
         {
-          sum += A[row][k] * B[k][col];
+          sum += A[row][k] * B[col][k];
         }
         matrix_[row][col] = sum; 
       }
@@ -189,7 +216,7 @@ public:
         matrix_[row][col] = sum; 
       }
     } 
-  };
+  }
 
   DenseMatrix<T> & operator = (const DenseMatrix & org)
   {
@@ -202,12 +229,16 @@ public:
   
   DenseMatrix<T> & operator += (const DenseMatrix & org)
   {
-    assert( rows() == rows() );
-    assert( cols() == org.cols() );
-    for(int row=0; row<rows(); ++row)
+    const int nRows = rows();
+    const int nCols = cols();
+    assert( nRows == org.rows() );
+    assert( nCols == org.cols() );
+    for(int row=0; row<nRows; ++row)
     {
-      for(int col=0; col<cols(); ++col) 
+      for(int col=0; col<nCols; ++col) 
+      {
         matrix_[row][col] += org.matrix_[row][col];
+      }
     }
     return *this;
   } 
@@ -275,7 +306,7 @@ private:
   mutable MatrixStackType freeStack_;
 
   int nonZeros_;
-  
+
 public:
   //! makes Matrix of zero length
   BlockMatrix() : matrix_(), localRows_(0), localCols_(0) ,
@@ -303,16 +334,27 @@ public:
       delete dm; 
     }
   }
-  
+
   void reserve(int rows, int cols, int lrows, int lcols, 
                int nonZeros, bool rowWise = true) 
   {
     DenseMatrixType * init = 0;
-    localRows_ = lrows; 
-    localCols_ = lcols; 
+
     rowWise_ = rowWise;
+
+    localRows_ = (rowWise_) ? lrows : lcols; 
+    localCols_ = (rowWise_) ? lcols : lrows; 
     nonZeros_ = nonZeros;
-    matrix_.reserve(rows,cols,nonZeros,init);
+
+    int r = (rowWise_) ? rows : cols; 
+    int c = (rowWise_) ? cols : rows; 
+    matrix_.reserve(r,c,nonZeros,init);
+  }
+  
+  void freeMatrix(DenseMatrixType & dm) const 
+  {
+    dm.clear();
+    freeStack_.push(&dm); 
   }
   
   DenseMatrixType & getMatrix() const 
@@ -339,8 +381,7 @@ public:
       DenseMatrixType * dm = matrix_.popValue(i);
       if(dm)
       {
-        dm->clear();
-        freeStack_.push(dm); 
+        freeMatrix(*dm);
       }
     }
   }
@@ -353,15 +394,21 @@ public:
   int littleRows() const { return localRows_;}
   int littleCols() const { return localCols_;}
 
-  DenseMatrixType & operator() (int i, int j) 
+  DenseMatrixType & operator() (int row, int col) 
   {
-    DenseMatrixType * dm = matrix_(i,j);
+    int r = (rowWise_) ? row : col; 
+    int c = (rowWise_) ? col : row; 
+    
+    DenseMatrixType * dm = matrix_(r,c);
     return *dm;
   }        
   
-  const DenseMatrixType & operator() (int i, int j) const        
+  const DenseMatrixType & operator() (int row, int col) const        
   {
-    DenseMatrixType * dm = matrix_(i,j);
+    int r = (rowWise_) ? row : col; 
+    int c = (rowWise_) ? col : row; 
+    
+    DenseMatrixType * dm = matrix_(r,c);
     return *dm;
   }        
 
@@ -390,10 +437,12 @@ public:
 
   void resize( int nsize) 
   {
-    //clear();
-    //DenseMatrixType * init = 0;
-    //matrix_.reserve(nsize,nsize,nonZeros_,init);
-    matrix_.resize( nsize ); 
+    resize( nsize, nsize );
+  }
+
+  void resize( int rows, int cols ) 
+  {
+    matrix_.resize( rows , cols ); 
   }
 
   void resort () 
@@ -403,7 +452,6 @@ public:
     {
       resortRow(i);
     }
-
   }
 
   void resortRow ( int row ) 
@@ -411,89 +459,105 @@ public:
     matrix_.resortRow( row );
   }
   
-#if 0
   void multiply(const ThisType & A , const ThisType & B )
   {
     assert( A.size(1) == B.size(0) );
+    // A has to be rowWise oriented matrix 
+    assert( A.rowWise_ == true );
+    // B has to be colWise oriented matrix 
+    //assert( B.rowWise_ == false );
 
-    //matrix_.clear();
-    
     std::cout << "Multiply: resize Matrix \n";
-    resize(A.size(0), B.size(1));
-    matrix_.clear();
+    clear();
+
+    //if( nonZeros_ == 0) nonZeros_ = 2*std::max(A.nonZeros_, B.nonZeros_ ); 
+    if( nonZeros_ == 0) nonZeros_ = std::max(A.nonZeros_, B.nonZeros_ ); 
+
+    // reserve memory and set right new block sizes
+    reserve( A.size(0), B.size(1), 
+             A.littleRows(), 
+             B.littleCols(), 
+             nonZeros_  );
     
-    const int r = A.littleRows();
-    const int c = B.littleCols();
-
-    assert( A.matrix_.NumNonZeros() == B.matrix_.NumNonZeros() );
-
     DenseMatrixType tmp;
-
     for(int row=0; row<size(0); ++row)
     {
       for(int j=0; j<size(1); ++j)
       {
-        DenseMatrixType dm(r,c);
+        // get empty matrix from stack 
+        DenseMatrixType & dm = getMatrix();
+
         bool hasValue = false;
-        for(int k=0; k<A.matrix_.NumNonZeros(); ++k)
+        // get number of nonZeros of row 
+        const int nonZeros = A.matrix_.NumNonZeros(row);
+        for(int k=0; k<nonZeros; ++k)
         {
           std::pair < DenseMatrixType *, int> a = A.matrix_.realValue(row,k);
-          if(!a.first) break;
+          // use A.resort to achieve this feature 
+          assert( a.first );
+          //if(!a.first) break;
           
+          // serach corresponding matrix entry in B  
           DenseMatrixType * b = B.matrix_ (a.second,j);
+          // if not available, continue 
           if(!b) continue;
-
+          
           tmp.multiply(*a.first,*b);
           dm += tmp;
           hasValue = true;
         }
-        if(hasValue) set(row,j,dm);
-      }
-    }
-    std::cout << "Done Multiply\n";
-  }
-#endif
-  
-  /*
-  void multiply(const ThisType & A , const ThisType & B )
-  {
-    assert( A.size(1) == B.size(0) );
-
-    //matrix_.clear();
-    
-    std::cout << "Multiply: resize Matrix \n";
-    resize(A.size(0), B.size(1));
-    matrix_.clear();
-    
-    const int r = A.littleRows();
-    const int c = B.littleCols();
-
-    DenseMatrixType tmp;
-
-    for(int i=0; i<size(0); ++i)
-    {
-      for(int j=0; j<size(1); ++j)
-      {
-        DenseMatrixType dm(r,c);
-        bool hasValue = false;
-        for(int k=0; k<A.size(1); ++k)
+        
+        // if value found, set entry in matrix 
+        if(hasValue) 
         {
-          DenseMatrixType * a = A.matrix_ (i,k);
-          if(!a) continue;
-          
-          DenseMatrixType * b = B.matrix_ (k,j);
-          if(!b) continue;
-
-          tmp.multiply(*a,*b);
-          dm += tmp;
-          hasValue = true;
+          set(row,j,dm);
         }
-        if(hasValue) set(i,j,dm);
+        // else free memory 
+        else 
+        {
+          // clears dm and put to stack 
+          freeMatrix(dm);
+        }
       }
     }
+    //print(std::cout);
     std::cout << "Done Multiply\n";
   }
-  */
+
+  void add(const ThisType & A)
+  {
+    std::cout << "Start add of Matrices \n";
+    assert( A.size(0)  == this->size(0) );
+    assert( A.size(1)  == this->size(1) );
+    assert( A.rowWise_ == rowWise_);
+
+    const int nRows = size(0);
+    for(int row=0; row<nRows; ++row)
+    {
+      const int nonZeros = A.matrix_.NumNonZeros(row); 
+      for(int k=0; k<nonZeros; ++k)
+      {
+        std::pair < DenseMatrixType *, int> a = A.matrix_.realValue(row,k);
+        assert( a.first );
+
+        // serach corresponding matrix entry in B  
+        DenseMatrixType * b = matrix_(row,a.second);
+        // if not available, continue 
+        if(!b)
+        {
+          // get empty matrix from stack 
+          DenseMatrixType & dm = getMatrix();
+          dm = *a.first;
+          set(row,a.second,dm);
+        }
+        else 
+        {
+          *b += (*a.first);
+        }
+      }
+    }
+    std::cout << "Done Add\n";
+  }
 
   // result = this * vec 
   void multOEM(const T * vec, T * result) const
@@ -501,26 +565,24 @@ public:
     std::vector< T > v(localCols_); 
     std::vector< T > ret(localRows_); 
 
-    for(register int r=0; r<size(0); ++r)
+    for(int r=0; r<size(0); ++r)
     {
       const int row = r * localRows_;
 
       // set right hand side to zero 
-      for(register int k=0; k<localRows_; ++k) result[row+k] = 0;
+      for(int k=0; k<localRows_; ++k) result[row+k] = 0;
       
-      for(register int c=0; c<matrix_.NumNonZeros();++c)
+      const int nonZeros = matrix_.NumNonZeros(r);
+      for(int c=0; c<nonZeros; ++c)
       {
         std::pair< DenseMatrixType * , int > p = matrix_.realValue(r,c);
-        if(p.first) 
-        {
-          const int col = p.second * localCols_;
-          const T * v = &vec[col];
-          p.first->mult(v,ret);
+        assert( p.first );
+        const int col = p.second * localCols_;
+        const T * v = &vec[col];
+        p.first->mult(v,ret);
 
-          for(register int k=0; k<localRows_; ++k)
-            result[row+k] += ret[k];
-        }
-        else break;
+        for(register int k=0; k<localRows_; ++k)
+          result[row+k] += ret[k];
       }
     }
   }
@@ -552,35 +614,143 @@ public:
     }
   }
   
-  // this += A 
-  void add(const BlockMatrix<T> & A)
+  //! this precondition is from right side 
+  bool rightPrecondition () const { return true; }
+  
+  // result = this * vec 
+  void precondition(const T * u, T * x) const
   {
-    assert( matrix_.NumNonZeros() == A.matrix_.NumNonZeros() );
-    assert( size(0) == A.size(0) );
-    assert( size(1) == A.size(1) );
-    
-    const int nz = matrix_.NumNonZeros();
-    const int vecSize = size(0) * nz; 
-    
-    for(register int r=0; r< vecSize; ++r)
-    {
-#ifndef NDEBUG
-      std::pair< DenseMatrixType * , int > p = matrix_.realValue(r);
-      std::pair< DenseMatrixType * , int > a = A.matrix_.realValue(r);
-      // assert that column number is the same 
-      assert( a.second == p.second );
-#endif
-      DenseMatrixType * m = matrix_.val(r);
-      if(m) 
-      {
-        DenseMatrixType * a = A.val(r);
-        assert( a );
+    const int nRows = matrix_.size(0);
+    const double omega = 1.1;
 
-        *m += *a; 
+    const T * uox = x;
+    
+    // (D - omega E) x = x_old (=u)  
+    for(int r=0; r<nRows; ++r)
+    {
+      const int nonZeros = matrix_.NumNonZeros(r);
+      int row = r * localRows_;
+      for(int i=0; i<localRows_; ++i)
+      {
+        double dot = 0.0;
+        double diag = 1.0;
+
+        for(int k=0; k<nonZeros; ++k)
+        {
+          std::pair < DenseMatrixType *, int> a = matrix_.realValue(r,k);
+          assert( a.first );
+
+          DenseMatrixType & dm = *a.first;
+          if( a.second < r ) 
+          {
+            int col = a.second * localCols_;
+            for(int c=0; c<localCols_; ++c)
+            {
+              dot += dm[i][c] * uox[col];
+              ++col;
+            }
+          }
+          if( a.second == r ) 
+          {
+            int col = a.second * localCols_;
+            for(int c=0; c<i; ++c)
+            {
+              dot += dm[i][c] * uox[col];
+              ++col;
+            }
+            diag = dm[i][i];
+          }
+        }
+          
+        x[row] = (u[row] - omega*dot) / diag;
+        ++row;
+      }
+    }
+
+    // (D - omega E) x = x_old (=u)  
+    for(int r=nRows-1; r>= 0; --r)
+    {
+      const int nonZeros = matrix_.NumNonZeros(r);
+      for(int i=localRows_-1; i>=0; --i)
+      {
+        int row = (r * localRows_) +i;
+        double dot = 0.0;
+        double diag = 1.0;
+
+        for(int k=0; k<nonZeros; ++k)
+        {
+          std::pair < DenseMatrixType *, int> a = matrix_.realValue(r,k);
+          DenseMatrixType & dm = *a.first;
+          if( a.second > r ) 
+          {
+            int col = a.second * localCols_;
+            for(int c=0; c<localCols_; ++c)
+            {
+              dot += dm[i][c] * uox[col];
+              ++col;
+            }
+          }
+          if( a.second == r ) 
+          {
+            int col = (a.second * localCols_) + i+1;
+            for(int c=i+1; c<localCols_; ++c)
+            {
+              dot += dm[i][c] * uox[col];
+              ++col;
+            }
+            diag = dm[i][i];
+          }
+        }
+         
+        x[row] -= omega * dot / diag; 
+      }
+    }
+  }
+  
+  // result = this * vec 
+  void setDiag(const T * diag)
+  {
+    const int nRows = size(0);
+    for(int r=0; r<nRows; ++r)
+    {
+      const int row = r * localRows_;
+
+      const int nonZeros = matrix_.NumNonZeros(r); 
+      for(int c=0; c<nonZeros; ++c)
+      {
+        std::pair< DenseMatrixType * , int > p = matrix_.realValue(r,c);
+        assert( p.first );
+        const int littleR = p.first->rows();
+        DenseMatrixType & dm = *p.first;
+        for(int i=0; i<littleR; ++i)
+        {
+          double val = diag[row+i];
+          const int littleC = dm.cols();
+          for(int lc = 0; lc<littleC; ++lc)
+          {
+            dm[i][lc] *= val; 
+          }
+        }
       }
     }
   }
 
+  void getDiag(T * diag) 
+  {
+    const int nRows = size(0); 
+    for(int r=0; r<nRows; ++r)
+    {
+      const int row = r * localRows_;
+      
+      DenseMatrixType * d = matrix_(r,r);
+      assert( d );
+      DenseMatrixType & dm = *d; 
+      
+      // set right hand side to zero 
+      for(int k=0; k<localRows_; ++k) diag[row+k] = dm[k][k];
+    }
+  }
+  
   void print(std::ostream & s) const 
   {
     for(int i=0; i<matrix_.size(0); ++i) 
