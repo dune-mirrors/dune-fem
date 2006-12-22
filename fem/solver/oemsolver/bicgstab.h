@@ -70,7 +70,6 @@ bicgstab_algo( const CommunicatorType & comm,
   double *s   = bicgMem.getMem( N );
   double *d   = bicgMem.getMem( N );
   double *rT  = bicgMem.getMem( N );
-
   if( usePC ) tmp = bicgMem.getMem( N );
 #else 
   double *rT  = new double[N];
@@ -102,9 +101,9 @@ bicgstab_algo( const CommunicatorType & comm,
   double err=eps*eps;
   double bb = 0.0;
 
-  mult_pc(A,C,x,r,tmp);
+  bool rightPreCon = MultType :: first_mult(A,C,x,r,tmp);
   // if pc matrix, recalc rhs 
-  if( usePC )
+  if( usePC && (!rightPreCon) )
   {
     mult(C,rhs,tmp);
     daxpy(N,-1.,tmp,1,r,1);
@@ -122,7 +121,6 @@ bicgstab_algo( const CommunicatorType & comm,
   dcopy(N,d,1,s,1);
   dcopy(N,s,1,rT,1);
  
-  //std::cout << ddot(N,rT,1,rT,1) << "  Start err \n";
   assert( ddot(N,rT,1,rT,1)>1e-40 );
   
   rTr = ddot(N,r,1,r,1);
@@ -133,7 +131,7 @@ bicgstab_algo( const CommunicatorType & comm,
   
   while( rTr>err ) 
   {
-    //mult(A,d,Ad);
+    // do multiply 
     mult_pc(A,C,d,Ad,tmp);
     rtTmp = ddot(N,rT,1,Ad,1);
    
@@ -146,7 +144,7 @@ bicgstab_algo( const CommunicatorType & comm,
     daxpy(N,-alpha,Ad,1,r,1);
     daxpy(N,-alpha,Ad,1,s,1);
     
-    //mult(A,s,t);
+    // do multiply 
     mult_pc(A,C,s,t,tmp);
 
     daxpy(N,1.,t,1,u,1);
@@ -192,6 +190,9 @@ bicgstab_algo( const CommunicatorType & comm,
     ++its;
   }
 
+  // if right preconditioning then do back solve 
+  MultType :: back_solve(N,C,x,tmp);
+       
   std::pair<int,double> val (its,sqrt(rTr));
 
 #ifdef USE_MEMPROVIDER

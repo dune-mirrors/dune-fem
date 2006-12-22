@@ -34,16 +34,64 @@ struct Mult
                       const double *arg,
                       double *dest , 
                       double * tmp);
-  
-  static void mult_pc (const Matrix &A, const PC_Matrix & C, const double *arg,
-        double *dest , double * tmp)
+
+  static bool first_mult(const Matrix &A, const PC_Matrix & C,
+              const double *arg, double *dest , double * tmp)
   {
     assert( tmp );
 
-    // call mult of Matrix A 
-    mult(A,arg,tmp);
-    // call mult of Matrix PC
-    mult(C,tmp,dest);
+    bool rightPreCon = C.rightPrecondition();
+    // check type of preconditioning 
+    if( rightPreCon )
+    {
+      // call mult of Matrix A 
+      mult(A,arg,dest);
+    }
+    else 
+    {
+      // call mult of Matrix A 
+      mult(A,arg,tmp);
+
+      // call precondition of Matrix PC
+      C.precondition(tmp,dest);
+    }
+    return rightPreCon;
+  }
+  
+  static void back_solve(const int size, 
+        const PC_Matrix & C, double* solution, double* tmp)
+  {
+    assert( tmp );
+    if( C.rightPrecondition() )
+    {
+      C.precondition(solution,tmp); 
+      // copy modified solution 
+      std::memcpy(solution,tmp, size * sizeof(double));
+    }
+  }
+  
+  static void mult_pc (const Matrix &A, const PC_Matrix & C, 
+        const double *arg, double *dest , double * tmp)
+  {
+    assert( tmp );
+
+    // check type of preconditioning 
+    if( C.rightPrecondition() )
+    {
+      // call precondition of Matrix PC
+      C.precondition(arg,tmp);    
+      
+      // call mult of Matrix A 
+      mult(A,tmp,dest);
+    }
+    else 
+    {
+      // call mult of Matrix A 
+      mult(A,arg,tmp);
+
+      // call precondition of Matrix PC
+      C.precondition(tmp,dest);
+    }
   }
 };
 
@@ -52,10 +100,31 @@ template <class Matrix>
 struct Mult<Matrix,Matrix,false>
 {
   typedef void mult_t(const Matrix &A,
-                      const Matrix & C, 
+                      const Matrix &C, 
                       const double *arg,
                       double *dest , 
                       double * tmp);
+  
+  static bool first_mult(const Matrix &A, const Matrix & C,
+              const double *arg, double *dest , double * tmp)
+  {
+    // tmp has to be 0
+    assert( tmp == 0 );
+    // C is just a fake 
+    assert( &A == &C );
+
+    // call mult of Matrix A 
+    mult(A,arg,dest);
+
+    // first mult like right precon  
+    return true;
+  }
+
+  static void back_solve(const int size, 
+        const Matrix & C, double* solution, double* tmp)
+  {
+    // do nothing here
+  }
   
   static void mult_pc(const Matrix &A, const Matrix & C, const double *arg ,
                       double *dest , double * tmp)
@@ -64,6 +133,7 @@ struct Mult<Matrix,Matrix,false>
     assert( tmp == 0 );
     // C is just a fake 
     assert( &A == &C );
+    
     // call mult of Matrix A 
     mult(A,arg,dest);
   }
