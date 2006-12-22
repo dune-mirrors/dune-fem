@@ -327,7 +327,7 @@ namespace Dune {
       elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
       faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*elemOrder_) : volumeQuadOrd ),
-      faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_) : faceQuadOrd ),
+      faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_ + 1) : faceQuadOrd ),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
       entityMarker_(),
       matrixAssembled_(false),
@@ -421,6 +421,32 @@ namespace Dune {
       {
         singleRhsPtr[i] -= multTmpPointer[i];      
       }
+
+      /*
+      // call generate mass before generate system matrix 
+      matrixHandler_.generateSystemMatrix();
+      
+      if(matrixHandler_.hasPcMatrix())
+      {
+        double * diagPtr = diag_->leakPointer();
+        matrixHandler_.systemMatrix().getDiag( diagPtr );
+        for(register int i=0; i<singleSize; ++i) 
+        {
+          double val = diagPtr[i]; 
+          // when using parallel Version , we could have zero on diagonal
+          // for ghost elements 
+          assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0 ) );
+          if( std::abs( val ) > 0.0 )
+          {
+            val = 1.0/val; 
+            diagPtr[i] = val;
+            //matrixHandler_.pcMatrix().add(i,i,val);
+            singleRhsPtr[i] *= val;      
+          }
+        }
+        matrixHandler_.systemMatrix().setDiag( diagPtr );
+      }
+      */
     }
 
     //! rebuild matrix after adaptation 
@@ -573,6 +599,7 @@ namespace Dune {
     }
     
     //! do matrix vector multiplication, used by OEM-Solver and DuneODE Solvers  
+    // --multOEM
     void multOEM(const double * arg, double * dest) const
     {
       double * gradTmpPointer = gradTmp_.leakPointer();
@@ -598,6 +625,7 @@ namespace Dune {
 
       // calc dest = divMatrix * gradTmp 
       matrixHandler_.divMatrix().multOEM(gradTmpPointer, dest );
+
       // calc dest += stabMatrix * arg 
       matrixHandler_.stabMatrix().multOEMAdd(arg,dest);
     }
@@ -614,6 +642,12 @@ namespace Dune {
   public:
     //! return refernence to system matrix, used by OEM-Solver
     const ThisType & systemMatrix () const { return *this; }
+    /*
+    const MatrixType & systemMatrix () const 
+    { 
+      return matrixHandler_.systemMatrix(); 
+    }
+    */
     
     //! return reference to preconditioning matrix, used by OEM-Solver
     const PreconditionMatrixType & preconditionMatrix () const { return matrixHandler_.pcMatrix(); }
@@ -1105,6 +1139,22 @@ namespace Dune {
       const int quadNop = faceQuadInner.nop();
       for (int l = 0; l < quadNop ; ++l) 
       {
+        /*
+#ifndef NDEBUG
+        typedef FieldVector<double,DomainType::dimension-1> FaceDomainType;
+        const FaceDomainType pIn = faceQuadInner.localPoint( 
+            faceQuadInner.localCachingPoint( l ));
+        const FaceDomainType pOut = faceQuadOuter.localPoint(
+            faceQuadOuter.localCachingPoint( l ));
+
+        if( (pIn - pOut).two_norm() > 1e-8 )
+        {
+          std::cout << faceQuadInner.cachingPoint( l ) << " , ";
+          std::cout << faceQuadOuter.cachingPoint( l ) << "\n";
+          std::cout << pIn << " | " << pOut << "\n";
+        }
+#endif
+*/
         DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
         const double faceVol = unitNormal.two_norm();
         unitNormal *= 1.0/faceVol; 
@@ -1261,15 +1311,9 @@ namespace Dune {
     // calculate pre-condition matrix 
     void createPreconditionMatrix()
     {
-      /*
       if(matrixHandler_.hasPcMatrix())
       {
-        matrixHandler_.clearPcMatrix();
-
-        const int singleSize = spc_.size();
-
-        assert( diag_ );
-        DestinationType & diag = *diag_; 
+        PreconditionMatrixType & diag = matrixHandler_.pcMatrix(); 
         
         if(gradProblem_.hasSource())
         {
@@ -1283,6 +1327,7 @@ namespace Dune {
         matrixHandler_.stabMatrix().addDiag( diag );
 
         double * diagPtr = diag.leakPointer();
+        const int singleSize = spc_.size();
         for(register int i=0; i<singleSize; ++i) 
         {
           double val = diagPtr[i]; 
@@ -1292,11 +1337,10 @@ namespace Dune {
           if( std::abs( val ) > 0.0 )
           {
             val = 1.0/val; 
-            matrixHandler_.pcMatrix().add(i,i,val);
+            diagPtr[i] = val;
           }
         }
       }
-      */
     }
 
     void updateLocal(EntityType& en) const
