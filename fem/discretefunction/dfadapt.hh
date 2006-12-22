@@ -216,6 +216,24 @@ public:
   //! return size for this discrete function
   int size() const { return dofVec_.size(); }
 
+  //! apply this*x = ret 
+  void precondition(const DofType * x, DofType * ret) const
+  {
+    const int vecsize = size();
+    for(int i=0; i<vecsize; ++i) 
+    {
+      ret[i] = x[i]*dofVec_[i];
+    }
+  }
+
+  void multOEM (const DofType * x, DofType * ret) const 
+  {
+    precondition(x,ret);
+  }
+
+  //! return false as this is left precondition
+  bool rightPrecondition () const { return false; }
+
   // special methods for DFAdapt
 public:
   //! return pointer to internal array for use of BLAS routines - no interface method
