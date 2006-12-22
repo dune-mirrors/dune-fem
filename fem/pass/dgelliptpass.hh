@@ -302,7 +302,6 @@ namespace Dune {
       gradRhs_("FEPass::gradRhs",gradientSpace_),
       massTmp_(0),
       //multTmp_("FEPass::multTmp",spc_),
-      diag_(0),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       fMatNb_(0.0),
@@ -351,11 +350,6 @@ namespace Dune {
         massTmp_ = new GradDestinationType ("FEPass::massTmp",gradientSpace_);
       }
 
-      if(matrixHandler_.hasPcMatrix())
-      {
-        diag_ = new DestinationType("FEPass::diag",spc_);
-      }
-
       for(int i=0; i<GradDimRange; ++i) one_[i][i] = 1.0;
 
       if(problem_.hasSource())
@@ -370,7 +364,6 @@ namespace Dune {
     //! Destructor
     virtual ~LocalDGElliptOperator() 
     {
-      delete diag_;
       delete massTmp_;
     }
 
@@ -1460,7 +1453,6 @@ namespace Dune {
     mutable GradDestinationType gradRhs_; 
     mutable GradDestinationType * massTmp_; 
     //mutable DestinationType multTmp_;
-    mutable DestinationType * diag_;
     mutable double dtMin_;
   
     //! Some helper variables
