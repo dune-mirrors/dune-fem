@@ -35,6 +35,13 @@ struct GrapeTupleCaller {
     std::cout << "adding to display " << df.name() << std::endl;
     disp.addData(df,dinf,time);
   }
+  
+  template <class Disp>
+  static void addToDisplay(Disp& disp, DiscFuncType& df) 
+  {
+    std::cout << "adding to display " << df.name() << std::endl;
+    disp.addData(df);
+  }
 };
 template <class T1,class T2,int N>
 struct GrapeTupleHelper {
@@ -61,6 +68,12 @@ struct GrapeTupleHelper {
     NextType::addToDisplay(disp,dinf->next,time,tup.second());
     GrapeTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
   }
+  template <class Disp>
+  static void addToDisplay(Disp& disp, ThisType& tup) 
+  {
+    NextType::addToDisplay(disp,tup.second());
+    GrapeTupleCaller<N,T1>::addToDisplay(disp,*(tup.first()));
+  }
 };
 template <class T1,int N>
 struct GrapeTupleHelper<T1,Nil,N> {
@@ -80,6 +93,11 @@ struct GrapeTupleHelper<T1,Nil,N> {
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
 			   ThisType& tup) {
     GrapeTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
+  }
+  template <class Disp>
+  static void addToDisplay(Disp& disp,ThisType& tup) 
+  {
+    GrapeTupleCaller<N,T1>::addToDisplay(disp,*(tup.first()));
   }
 };
 template <class TupType>
@@ -144,6 +162,12 @@ struct GrapeTuple {
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
 			   Pair<T1*,T2>& tup) {
     GrapeTupleHelper<T1,T2,0>::addToDisplay(disp,dinf,time,tup);
+  }
+
+  template <class Disp>
+  static void addToDisplay(Disp& disp, Pair<T1*,T2>& tup) 
+  {
+    GrapeTupleHelper<T1,T2,0>::addToDisplay(disp,tup);
   }
 };
 
