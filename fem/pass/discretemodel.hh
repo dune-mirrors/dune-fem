@@ -235,5 +235,76 @@ namespace Dune {
     { }
   };
 
+  //! Default implementation of the DiscreteModelInterface where methods for 
+  //! the fluxes and the source term do nothing, so that the user needn't
+  //! implement them if not needed.
+  template <class DiscreteModelTraits>
+  class DiscreteModelDefaultWithInsideOutSide : 
+    public DiscreteModelDefault<DiscreteModelTraits> 
+  {
+  public:
+    typedef DiscreteModelTraits Traits;
+    typedef typename Traits::DiscreteModelType DiscreteModelType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
+    typedef typename GridPartType::GridType GridType;
+    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+
+  public:
+    DiscreteModelDefaultWithInsideOutSide() 
+      : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0) 
+    {}
+
+    //! set entity and get volume  
+    void setEntity(EntityType& en)
+    { 
+      en_ = &en;
+      enVol_ = en.geometry().volume();
+    }
+
+    //! set neighbor and get volume  
+    void setNeighbor(EntityType& nb)
+    { 
+      nb_ = &nb;
+      nbVol_ = nb.geometry().volume();
+    }
+    
+    EntityType & inside()  
+    {
+      assert( en_ );
+      return *en_;
+    }
+    
+    EntityType & outside()
+    {
+      assert( nb_ );
+      return *nb_;
+    }
+    
+
+    double enVolume() const 
+    { 
+      assert(enVol_ > 0.0);
+      return enVol_; 
+    }
+
+    double nbVolume() const 
+    {
+      assert( nbVol_ > 0.0 );
+      return nbVol_;
+    }
+  private:
+    double enVol_;
+    double nbVol_;
+
+    EntityType* en_;
+    EntityType* nb_;
+  };
+
 }  // end namespace Dune
 #endif
