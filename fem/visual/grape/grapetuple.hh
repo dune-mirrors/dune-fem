@@ -39,7 +39,7 @@ struct GrapeTupleCaller {
   template <class Disp>
   static void addToDisplay(Disp& disp, DiscFuncType& df) 
   {
-    std::cout << "adding to display " << df.name() << std::endl;
+    //std::cout << "adding to display " << df.name() << std::endl;
     disp.addData(df);
   }
 };
