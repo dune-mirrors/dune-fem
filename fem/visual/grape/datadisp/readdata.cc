@@ -4,6 +4,8 @@
 #ifndef __DATADISP_READDATA_CC__
 #define __DATADISP_READDATA_CC__
 
+#include <stack>
+
 #define LARGE 1.0E308
 
 #include <dune/fem/io/file/asciiparser.hh>
@@ -14,17 +16,17 @@ void dataDispErrorExit(std::string msg);
 
 static GR_DiscFuncSpaceType * globalSpace = 0;
 
-static Stack<GR_GridType *> gridStack;
-static Stack<GrapeDispType *> dispStack;
-static Stack<GR_DiscFuncSpaceType *> fsStack;
+static std::stack<GR_GridType *> gridStack;
+static std::stack<GrapeDispType *> dispStack;
+static std::stack<GR_DiscFuncSpaceType *> fsStack;
 static std::list <GR_DiscFuncType *> funcStack;
-//static Stack<GR_IndexSetType *> indexStack;
-static Stack<GR_GridPartType *> gridPartStack;
+//static std::stack<GR_IndexSetType *> indexStack;
+static std::stack<GR_GridPartType *> gridPartStack;
 
 static GrapeDataIO < GR_GridType> dataIO;
 
 template <class T> 
-void deleteObjects(Stack<T *> & stack);
+void deleteObjects(std::stack<T *> & stack);
 
 // read data from file and generate discrete function 
 void readFuncData ( GrapeDispType& disp, GR_DiscFuncSpaceType &fspace, 
@@ -239,11 +241,12 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
 }
 
 template <class T> 
-void deleteObjects(Stack<T *> & stack) 
+void deleteObjects(std::stack<T *> & stack) 
 {
   while(! stack.empty() )
   {
-    T * obj = stack.pop();
+    T * obj = stack.top();
+    stack.pop();
     delete obj;
   }
   return;

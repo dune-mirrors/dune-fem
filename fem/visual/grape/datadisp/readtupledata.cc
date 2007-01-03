@@ -4,6 +4,8 @@
 #ifndef __DATADISP_READDATA_CC__
 #define __DATADISP_READDATA_CC__
 
+#include <stack> 
+
 #define LARGE 1.0E308
 
 #include <dune/fem/io/file/asciiparser.hh>
@@ -12,15 +14,14 @@
 
 void dataDispErrorExit(std::string msg);
 
-
-static Stack<GR_GridType *> gridStack;
-static Stack<GrapeDispType *> dispStack;
-static Stack<GR_GridPartType *> gridPartStack;
+static std::stack<GR_GridType *> gridStack;
+static std::stack<GrapeDispType *> dispStack;
+static std::stack<GR_GridPartType *> gridPartStack;
 
 static GrapeDataIO < GR_GridType> dataIO;
 
 template <class T> 
-void deleteObjects(Stack<T *> & stack);
+void deleteObjects(std::stack<T *> & stack);
 
 
 GrapeDispType * readTupleData(const char * path, const char * filename, 
@@ -119,15 +120,14 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
 }
 
 template <class T> 
-void deleteObjects(Stack<T *> & stack) 
+void deleteObjects(std::stack<T *> & stack) 
 {
-  /*
   while(! stack.empty() )
   {
-    T * obj = stack.pop();
+    T * obj = stack.top();
+    stack.pop();
     delete obj;
   }
-  */
   return;
 }
  
@@ -142,14 +142,14 @@ void deleteAllObjects()
 {
   /*
   //deleteObjects(funcStack);
-  if(globalSpace) delete globalSpace;
-  deleteObjects(fsStack);
-//  deleteObjects(indexStack);
+  //if(globalSpace) delete globalSpace;
+  //deleteObjects(fsStack);
+  //deleteObjects(indexStack);
   deleteObjects(gridPartStack);
   deleteObjects(dispStack);
   deleteObjects(gridStack);
-  */
   return ;
+  */
 }
 
 void readDataInfo(std::string path, DATAINFO * dinf, int k, bool parallel = false) 
