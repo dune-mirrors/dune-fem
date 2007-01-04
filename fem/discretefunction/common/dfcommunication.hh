@@ -2,6 +2,8 @@
 #define DUNE_DFCOMMUNICATION_HH
 
 #include <dune/common/tuples.hh>
+#include <dune/common/utility.hh>
+#include <dune/common/typetraits.hh>
 //- Dune includes 
 
 #include <dune/grid/common/datahandleif.hh>
