@@ -74,9 +74,19 @@ namespace Dune {
     InsertFunctionPass(DestinationType & destination, 
               PreviousPassType& pass) 
       : BaseType(pass,destination.space())
-      , realDestination_(destination)
     {
+      this->destination_ = &destination;
       //std::cout << "create dummy pass " <<  realDestination_.name() <<  "\n";
+    }
+
+    //- Public methods
+    //! Constructor
+    //! \param space to be stored in this base pass 
+    //! \param pass Previous pass
+    InsertFunctionPass(const DiscreteFunctionSpaceType& space, PreviousPassType& pass) 
+      : BaseType(pass,space)
+    {
+      assert( this->destination_ == 0 );
     }
 
     //! Destructor
@@ -88,13 +98,7 @@ namespace Dune {
     //! Allocates the local memory of a pass, if needed.
     virtual void allocateLocalMemory() 
     {
-      if(!this->destination_)
-      {
-        //std::cout << "Destination points to " << realDestination_.name() << "\n";
-        this->destination_ = &realDestination_;
-      }
-      // make sure that destination_ point to inserted function 
-      assert( this->destination_ == &realDestination_ );
+      // do not allocate memory here 
     }
 
     //! empty method here
@@ -117,9 +121,11 @@ namespace Dune {
     {
     }
 
-  private:
-    //! function to be stored from outside 
-    DestinationType & realDestination_;
+    //! set internal destination pointer to dest 
+    void setDestination(DestinationType& dest) 
+    {
+      this->destination_ = &dest;
+    }
   }; // end class InsertFunctionPass
 
 
