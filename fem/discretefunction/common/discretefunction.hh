@@ -27,6 +27,12 @@ namespace Dune{
       @{
   */
 
+  //! empty object for Conversion Utility 
+  class IsDiscreteFunction
+  {
+  };
+  
+  
   //************************************************************************
   //
   //  --DiscreteFunctionInterface
@@ -41,6 +47,7 @@ namespace Dune{
   //************************************************************************
   template<class DiscreteFunctionTraits>
   class DiscreteFunctionInterface : 
+    public IsDiscreteFunction , 
     public Function<typename DiscreteFunctionTraits::DiscreteFunctionSpaceType,
                     DiscreteFunctionInterface<DiscreteFunctionTraits> > 
   {
