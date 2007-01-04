@@ -5,6 +5,8 @@
 #include <dune/common/utility.hh>
 #include <dune/common/typetraits.hh>
 
+#include "selection.hh"
+
 namespace Dune {
 
   /**
