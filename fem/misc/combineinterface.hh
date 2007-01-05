@@ -50,9 +50,9 @@ struct PairOfInterfaces {
   //! Access second interface instance
   T2Type& second();
   //! const Access first interface instance
-  const T1Type& first();
+  const T1Type& first() const ;
   //! const Access second interface instance
-  const T2Type& second();
+  const T2Type& second() const;
 };
 template <class T1,class T2>  
 struct PairOfInterfaces<T1&,T2&> {  
