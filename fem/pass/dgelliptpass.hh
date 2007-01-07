@@ -269,7 +269,6 @@ namespace Dune {
 
     typedef typename LocalIdSetType :: IdType LocalIdType;
     typedef std::set< LocalIdType > EntityMarkerType; 
-    //typedef std::map< LocalIdType , bool > EntityMarkerType; 
   public:
     //- Public methods
     //! Constructor
@@ -281,7 +280,7 @@ namespace Dune {
     LocalDGElliptOperator(DiscreteModelType& problem, 
                 GradientPassType & gradPass,
                 PreviousPassType& pass, 
-                DiscreteFunctionSpaceType& spc,
+                const DiscreteFunctionSpaceType& spc,
                 bool verbose = false, 
                 int volumeQuadOrd =-1,int faceQuadOrd=-1) 
       : BaseType(pass, spc),
@@ -358,8 +357,6 @@ namespace Dune {
         abort();
       }
     }
-
-
    
     //! Destructor
     virtual ~LocalDGElliptOperator() 
@@ -1442,7 +1439,7 @@ namespace Dune {
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
 
-    DiscreteFunctionSpaceType& spc_;
+    const DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
     const LocalIdSetType & localIdSet_;
     const DiscreteGradientSpaceType & gradientSpace_;
@@ -1562,7 +1559,7 @@ namespace Dune {
 
   private:  
     DiscreteModelType& problem_; 
-    DiscreteFunctionSpaceType& spc_;
+    const DiscreteFunctionSpaceType& spc_;
     
     //ElliptPrevPassType feStartPass_;
     mutable FEOperatorType op_;
@@ -1610,6 +1607,36 @@ namespace Dune {
       , verbose_(verbose)
       , comm_(spc_)
     {
+      assert( this->destination_ );
+    }
+
+    //- Public methods
+    //! Constructor
+    //! \param problem Actual problem definition (see problem.hh)
+    //! \param pass Previous pass
+    //! \param spc Space belonging to the discrete function local to this pass
+    //! \param eps epsilon for interative solver 
+    //! \param maxIterFactor factor for number of max iterations 
+    //! \param verbose if true some output is given 
+    LocalDGElliptPass(DiscreteModelType& problem, 
+                PreviousPassImp & pass, 
+                DestinationType & dest,
+                double eps = 1e-10 , int maxIterFactor = 3 , bool verbose = false )
+      : BaseType(pass.previousPass(),dest.space())
+      , problem_(problem)
+      , spc_(dest.space()) 
+      , op_(problem,pass,pass.previousPass(),spc_,verbose)
+      , eps_(eps)
+      , maxIterFactor_(maxIterFactor) 
+      , maxIter_( maxIterFactor_ * spc_.size() )
+      , invOp_(op_,eps,eps,maxIter_,verbose)
+      , rhs_("FEPass::RHS",spc_)
+      , sequence_(-1)
+      , verbose_(verbose)
+      , comm_(spc_)
+    {
+      assert( this->destination_ == 0 );
+      this->destination_ = &dest;
     }
 
     //! do nothing here 
@@ -1770,6 +1797,19 @@ namespace Dune {
     {
     }
 
+    LocalDGElliptGradPass(
+                    DiscreteModelType& problem, 
+                    PreviousPassType& pass, 
+                    DestinationType& dest) 
+      : BaseType(pass, dest.space() ),
+      caller_(problem),
+      problem_(problem),
+      spc_(dest.space()),
+      prevPass_(pass),
+      comm_(spc_)
+    {
+    }
+
     //! don't allocate memory here 
     virtual void allocateLocalMemory() {}
    
@@ -1819,7 +1859,7 @@ namespace Dune {
   private:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
-    DiscreteFunctionSpaceType& spc_;
+    const DiscreteFunctionSpaceType& spc_;
     mutable PreviousPassImp & prevPass_;
     mutable CommunicationManagerType comm_;
   };
