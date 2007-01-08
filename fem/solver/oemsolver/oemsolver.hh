@@ -188,6 +188,14 @@ public:
     delete [] tmp;
   }
 
+  bool rightPrecondition() const { return false; }
+
+  //! only keep internal parts of arg 
+  void precondition(const double * arg, double * dest) const 
+  {
+    multOEM(arg,dest);
+  }
+  
   //! only keep internal parts of arg 
   void multOEM(const double * arg, double * dest) const 
   {
