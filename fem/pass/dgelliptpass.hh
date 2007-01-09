@@ -22,6 +22,8 @@
 #include <dune/fem/discretefunction/common/dfcommunication.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
+#include "dgelliptprimal.hh"
+
 namespace Dune {
 /*! @defgroup PassEllipt Local Discontinous Galerkin for second order elliptic equations
  *  @ingroup Pass
@@ -820,7 +822,7 @@ namespace Dune {
 
           for (int j = 0; j < numDofs; ++j) 
           {
-            double val = bsetEn.evaluateSingle(j, volQuad, l, rhs_ );//*intel;
+            double val = bsetEn.evaluateSingle(j, volQuad, l, rhs_ );
             singleRhs[j] += val;
           }
         }
@@ -1552,7 +1554,8 @@ namespace Dune {
     // pass
     typedef typename GradFePassImp :: PreviousPassType ElliptPrevPassType;
     // define ellipt operator 
-    typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
+    //typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
+    typedef LocalDGPrimalOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
 
     //! type of restrict and prolong operator during adaptation 
     typedef FEOperatorType RestrictProlongOperatorType;
@@ -1561,7 +1564,6 @@ namespace Dune {
     DiscreteModelType& problem_; 
     const DiscreteFunctionSpaceType& spc_;
     
-    //ElliptPrevPassType feStartPass_;
     mutable FEOperatorType op_;
 
     // define type of inverse operator 
@@ -1607,7 +1609,7 @@ namespace Dune {
       , verbose_(verbose)
       , comm_(spc_)
     {
-      assert( this->destination_ );
+      //assert( this->destination_ );
     }
 
     //- Public methods
