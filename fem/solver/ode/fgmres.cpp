@@ -130,6 +130,12 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
     for(int i=0; i<last; i++) cblas_daxpy(dim, y[i], z+i*dim, 1, u, 1);
     
     if (fabs(g[last]) < tolerance) break;
+    if (IterativeSolver::os)
+    {
+      *IterativeSolver::os<< "FGMRES " << comm.id() 
+			    << ": its: " << iterations << "  err: " 
+          << fabs(g[last]) << std::endl; 
+    }
   }
 
   // output
