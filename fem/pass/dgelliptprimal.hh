@@ -553,30 +553,29 @@ namespace Dune {
                 bsetEn.eval(k,faceQuadInner,l, phi_k);
                 double tau_k = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);
 
-                // dirichlet boundary values for u 
-                if(bndType.isDirichletNonZero())
-                {
-                  // only valid for dim range = 1
-                  double rhsVal1 = boundaryValue[0] * tau_k;
-
-                  rhsVal1 *= bilinIntel;
-                  singleRhs[k] += rhsVal1;
-                }
-
-                // dirichlet boundary values for u 
-                if(bndType.isNeumannNonZero())
-                {
-                  //std::cout << "Adding neumann value " << boundaryValue[0] << "\n";
-                  // only valid for dim range = 1
-                  double rhsVal1 = boundaryValue[0] * phi_k[0];
-
-                  rhsVal1 *= intel;
-                  singleRhs[k] -= rhsVal1;
-                }
-
                 // if not Babuska-Zlamal method, add boundary terms 
                 if( !zlamal_ )
                 {
+                  if( bndType.isDirichletNonZero())
+                  {
+                    // only valid for dim range = 1
+                    double rhsVal1 = boundaryValue[0] * tau_k;
+
+                    rhsVal1 *= bilinIntel;
+                    singleRhs[k] += rhsVal1;
+                  }
+
+                  // dirichlet boundary values for u 
+                  if(bndType.isNeumannNonZero())
+                  {
+                    //std::cout << "Adding neumann value " << boundaryValue[0] << "\n";
+                    // only valid for dim range = 1
+                    double rhsVal1 = boundaryValue[0] * phi_k[0];
+
+                    rhsVal1 *= intel;
+                    singleRhs[k] -= rhsVal1;
+                  }
+
                   for (int j = 0; j < numDofs; ++j) 
                   {
                     bsetEn.eval(j, faceQuadInner, l, phi_j );
@@ -606,6 +605,15 @@ namespace Dune {
                     double phiVal = bsetEn.evaluateSingle(j, faceQuadInner, l, phi_k);
                     phiVal *= facBeta;
                     matrixEn.add( k , j , phiVal );
+                  }
+                  
+                  // dirichlet boundary values for u 
+                  if(bndType.isDirichletNonZero())
+                  {
+                    // only valid for dim range = 1
+                    double rhsVal1 = boundaryValue[0] * phi_k;
+                    rhsVal1 *= facBeta;
+                    singleRhs[k] += rhsVal1;
                   }
                 } 
               }
