@@ -1554,8 +1554,8 @@ namespace Dune {
     // pass
     typedef typename GradFePassImp :: PreviousPassType ElliptPrevPassType;
     // define ellipt operator 
-    //typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
-    typedef LocalDGPrimalOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
+    typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
+    //typedef LocalDGPrimalOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
 
     //! type of restrict and prolong operator during adaptation 
     typedef FEOperatorType RestrictProlongOperatorType;
