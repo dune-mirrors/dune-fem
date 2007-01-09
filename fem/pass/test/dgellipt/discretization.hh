@@ -236,6 +236,7 @@ public:
 
       lastPass_(arg,dest);
 
+      /*
       {
         GradFuncType grad("gradient",gradSpace_);
 
@@ -250,8 +251,9 @@ public:
           exactGrad(gradSpace_);
 
         gradError[i] = l2errGrad.norm(exactGrad , grad);
-
       }
+      */
+      
 #if HAVE_GRAPE
       GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
       grape.dataDisplay( dest );

@@ -53,7 +53,7 @@ namespace LDGExample {
     // typical tpye of space 
     typedef FunctionSpace<double, double, dimDomain, dimRange > SingleFunctionSpaceType; 
     typedef SingleFunctionSpaceType FunctionSpaceType;
-    typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
+    typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
     
     //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
@@ -154,7 +154,7 @@ namespace LDGExample {
     const Model & data () const { return model_; }
 
     bool preconditioning () const { return preCon_; }
-    bool hasSource() const { return true; }
+    bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
 
     template <class ArgumentTuple> 
@@ -476,6 +476,7 @@ namespace LDGExample {
               class ReturnType >
     BoundaryIdentifierType 
     boundaryValue(const IntersectionIteratorType& it,
+                  const DomainType& unitNormal, 
                   double time, const FaceDomType& x,
                   ReturnType& bndVal) const
     {
@@ -484,10 +485,9 @@ namespace LDGExample {
 
       if(!dirich)
       {
-        const DomainType normal = it.integrationOuterNormal(x);
         DomainType grad;
         rhsNeumann(&p[0],&grad[0]);
-        bndVal = grad * normal;
+        bndVal = grad * unitNormal;
       }
       return (dirich) ? BoundaryIdentifierType::DirichletNonZero : BoundaryIdentifierType::NeumannNonZero;
     }
