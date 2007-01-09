@@ -104,9 +104,11 @@ namespace Dune {
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
     enum { cols = JacobianRangeType :: cols };
     enum { rows = JacobianRangeType :: rows };
+    enum { dim = GridType :: dimension };
     
 
     typedef FieldMatrix<double,rows,rows> TensorType;
+    typedef FieldMatrix<double,dim,dim> JacobianInverseType;
     
     //my Typedefs
     enum { dimGradRange = dimDomain * dimRange };
@@ -160,7 +162,6 @@ namespace Dune {
       caller_(problem),
       problem_(problem),
       gradPass_(gradPass),
-      gradCaller_(gradPass_.caller()),
       gradProblem_(gradPass_.problem()),
       arg_(0),
       dest_(0),
@@ -189,7 +190,6 @@ namespace Dune {
       phi_(0.0),
       source_(0.0),
       sourceNb_(0.0),
-      rhs_(0.0),
       tau_(0.0),
       tauNeigh_(0.0),
       phiNeigh_(0.0),
@@ -198,36 +198,41 @@ namespace Dune {
       elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
       faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*elemOrder_) : volumeQuadOrd ),
-      faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_ + 1) : faceQuadOrd ),
-      matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
+      faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_) : faceQuadOrd ),
+      matrixHandler_(spc_,gradientSpace_,
+                     gradProblem_.hasSource(),problem_.preconditioning()),
       entityMarker_(),
       matrixAssembled_(false),
       verbose_(verbose),
       beta_(0.0),
       xsi_(1.0),
-      zamal_(false)                                                       
+      power_( 2*spc_.order() ),
+      zlamal_(false),
+      betaNotZero_(false)
     {
       readParameter("parameter","beta",beta_);
-      readParameter("parameter","eta",xsi_);
-      int zamal = 0;
-      readParameter("parameter","zamal",zamal);
-      zamal_ = (zamal == 1) ? true : false;
+      int xsi = -1;
+      readParameter("parameter","xsi",xsi);
+      assert( (xsi == 1) || (xsi == -1) ); 
+      xsi_ = xsi;
+      int zlamal = 0;
+      readParameter("parameter","zlamal",zlamal);
+      zlamal_ = (zlamal == 1) ? true : false;
+
+      betaNotZero_ = (std::abs(beta_) > 0.0);
+      assert( (zlamal_) ? (std::abs(beta_) > 0.0) : 1);
       
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
 
-      // need for multTmpPointer 
-      //assert( spc_.size() <= gradientSpace_.size() );
-      /*
-      if( spc_.size() > gradientSpace_.size() )
+      if( ! (spc_.order() > 0))
       {
-        std::cerr << "Overall gradient space size should be greater or";
-        std::cerr << " equal to size of single space due to memory issues! \n";
+        std::cerr << "DG Primal operator only working for spaces with polynomial order > 0! \n";
+        assert(false);
         abort();
       }
-      */
-
+      
       if(gradProblem_.hasSource())
       {
         massTmp_ = new GradDestinationType ("FEPass::massTmp",gradientSpace_);
@@ -276,10 +281,6 @@ namespace Dune {
 
       // create pre-condition matrix if activated 
       createPreconditionMatrix();
-
-      //rhs.print(std::cout);
-      //matrixHandler_.stabMatrix().print(std::cout);
-      //abort();
     }
 
     //! do matrix vector multiplication, used by InverseOp  
@@ -326,15 +327,12 @@ namespace Dune {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
       caller_.setArgument(*arg_);
-      gradCaller_.setArgument(*arg_);
     }
 
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
       caller_.finalize();
-      gradCaller_.finalize();
-
     }
 
   public:
@@ -397,9 +395,9 @@ namespace Dune {
       }
       
       {
-        MatrixAddHandleType stabMatrixEn(matrixHandler_.stabMatrix(),
+        MatrixAddHandleType matrixEn(matrixHandler_.stabMatrix(),
                                        en, spc_, en, spc_ ); 
-        stabMatrixEn.clear();
+        matrixEn.clear();
       }
     }
     
@@ -410,19 +408,17 @@ namespace Dune {
       typedef typename DestinationType :: LocalFunctionType SingleLFType; 
       SingleLFType singleRhs = dest_->localFunction(en); //rhs
       
-      MatrixAddHandleType stabMatrixEn(matrixHandler_.stabMatrix(),
+      MatrixAddHandleType matrixEn(matrixHandler_.stabMatrix(),
                                      en, spc_, en, spc_ ); 
       
       // make entities known in callers
       caller_.setEntity(en);
-      gradCaller_.setEntity(en);
 
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
       const GeometryType & geo = en.geometry();
-      const double volume = geo.volume();
+      //const double volume = geo.volume();
       const double massVolElInv = massVolumeInv(geo);
-      //const double massVolElInv = 1.0;//massVolumeInv(geo);
 
       // get base function set of single space 
       const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(en);
@@ -431,77 +427,68 @@ namespace Dune {
       /////////////////////////////////
       // Volumetric integral part
       /////////////////////////////////
-
-      //set default values 
-      gradSource_   = 1.0;
-      gradSourceNb_ = 1.0;
-      // set to id matrix 
-      gradFMat_   = one_;
-      gradFMatNb_ = one_;
-
-      fMat_       = 1.0;
-      fMatNb_     = 1.0;
-      
       const int quadNop = volQuad.nop();
       GradJacobianRangeType helpmatr(one_);
 
       for (int l = 0; l < quadNop ; ++l) 
       {
         // calc factor for bas functions 
-        const double intel = volQuad.weight(l)*
-            geo.integrationElement(volQuad.point(l))*massVolElInv;
-        
+        const double rhsFactor = volQuad.weight(l)
+            *geo.integrationElement(volQuad.point(l));
+
+        const double intel = rhsFactor * massVolElInv;
+
+        const JacobianInverseType& inv =
+          geo.jacobianInverseTransposed(volQuad.point(l));
+
         ////////////////////////////////////
         // create rightHandSide
         ////////////////////////////////////
         {
+          RangeType rhsval(0.0);
           // set default value 
-          rhs_ = 0.0;
 
           // eval rightHandSide function 
           // if empty, rhs stays 0.0
-          caller_.rightHandSide(en, volQuad, l, rhs_ );
+          caller_.rightHandSide(en, volQuad, l, rhsval );
 
           // scale with quadrature weight  
-          rhs_ *= volQuad.weight(l);
-          //rhs_ *= intel;
+          rhsval *= volQuad.weight(l); 
 
           for (int j = 0; j < numDofs; ++j) 
           {
-            double val = bsetEn.evaluateSingle(j, volQuad, l, rhs_ );//*intel;
-            singleRhs[j] += val;
+            singleRhs[j] += bsetEn.evaluateSingle(j, volQuad, l, rhsval );
           }
         }
         
-        if(gradProblem_.hasSource())
-        {
-          // call source of gradient discrete model 
-          gradCaller_.source(en, volQuad, l, gradSource_ );
-        }
-
-        if(gradProblem_.hasFlux())
-        {
-          // call anayltical flux of gradient discrete model 
-          gradCaller_.analyticalFlux(en, volQuad, l, gradFMat_ );
-        }
-
+        ///////////////////////////////
+        //  evaluate coefficients 
+        ///////////////////////////////
         if(problem_.hasFlux())
         {
           // call anayltical flux of discrete model 
           caller_.analyticalFlux(en, volQuad, l, fMat_ );
         }
 
-        JacobianRangeType psi(0.0);
+        JacobianRangeType psitmp(0.0);
         for(int k = 0; k < numDofs; ++k)
         {
           // eval grad psi 
-          bsetEn.jacobian( k, volQuad, l, psi );
+          bsetEn.jacobian( k, volQuad, l, psitmp );
+
+          JacobianRangeType psi(0.0);
+          // apply inverse jacobian 
+          for(int i=0; i<dimRange; ++i) 
+          {
+            inv.umv(psitmp[i], psi[i]);
+          }
 
           for (int j = 0; j < numDofs; ++j) 
           {
             // eval grad tau  
-            double val = bsetEn.evaluateGradientSingle(j, en, volQuad, l, psi ) * intel;
-            stabMatrixEn.add( k , j , val );
+            double val = bsetEn.evaluateGradientSingle(j, en, volQuad, l, psi )
+                       * intel;
+            matrixEn.add( k , j , val );
           }
         }
       } // end element integral 
@@ -513,10 +500,6 @@ namespace Dune {
       IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
       { 
-        // set default values 
-        gradSource_   = 1.0;
-        gradSourceNb_ = 1.0;
-
         // if neighbor exists 
         if (nit.neighbor()) 
         {
@@ -535,7 +518,7 @@ namespace Dune {
             // apply neighbor part 
             applyLocalNeighbor(nit,en,massVolElInv,volQuad,
                   faceQuadInner,faceQuadOuter, 
-                  bsetEn,stabMatrixEn);
+                  bsetEn,matrixEn);
           }
           else 
           {
@@ -558,30 +541,25 @@ namespace Dune {
             applyLocalNeighbor(nit,en,massVolElInv,volQuad,
                   nonConformingFaceQuadInner,
                   nonConformingFaceQuadOuter, 
-                  bsetEn,stabMatrixEn);
+                  bsetEn,matrixEn);
           }
         } // end if neighbor 
 
         // if intersection with boundary 
         if (nit.boundary()) 
         { 
-          fMat_ = 1.0;
-          
           FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
                                            FaceQuadratureType::INSIDE);
 
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
           {
-            //const DomainType integrationNormal = nit.integrationOuterNormal(faceQuadInner.localPoint(l));
             DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
             const double faceVol = unitNormal.two_norm();
             unitNormal *= 1.0/faceVol;
-            
+
             const double bndFactor = faceQuadInner.weight(l) * massVolElInv;
             const double intel = bndFactor * faceVol;
-
-            const double vol = geo.volume();
 
             double t = 0.0;
             // get boundary value 
@@ -608,23 +586,22 @@ namespace Dune {
                   double rhsVal1 = bndVal[0] * phi_[0];
 
                   rhsVal1 *= bndFactor;
-                  //rhsVal1 *= gradSource_[0];
                   singleRhs[i] += rhsVal1;
                 }
 
                 for (int j = 0; j < numDofs; ++j) 
                 {
-                  bsetEn.eval(j, faceQuadInner, l, phiNeigh_);
+                  bsetEn.eval(j, faceQuadInner, l, phiNeigh_ );
                   double tauNeigh = bsetEn.evaluateGradientSingle(j,en,faceQuadInner,l, norm);
                   
-                  if( !zamal_ )
+                  if( !zlamal_ )
                   {
                     {
                       // u+ in u^
                       double val = tauEn;
                       val *= phiNeigh_[0] * intel;
 
-                      stabMatrixEn.add( i , j , -val );
+                      matrixEn.add( i , j , -val );
                     }
 
                     {
@@ -632,17 +609,19 @@ namespace Dune {
                       double val = tauNeigh;
                       val *= xsi_ * phi_[0] * intel;
 
-                      stabMatrixEn.add( i , j , val );
+                      matrixEn.add( i , j , val );
                     }
                   }
+                }
                   
-                  if( std::abs(beta_) > 0.0)
+                if( betaNotZero_ )
+                {
+                  // stabilization 
+                  for (int j = 0; j < numDofs; ++j) 
                   {
-                    // stabilization 
-                    double val = beta_/vol * phiNeigh_[0];
-                    val *= phi_[0] * bndFactor;
-
-                    stabMatrixEn.add( i , j , val );
+                    double phiVal = bsetEn.evaluateSingle(j, faceQuadInner, l, phi_);
+                    phiVal *= factorBeta(intel,faceVol);
+                    matrixEn.add( i , j , phiVal );
                   }
                 } 
               }
@@ -653,9 +632,20 @@ namespace Dune {
       } // end intersection iterator 
 
       // resort corresponding matrix rows for ascending numbering 
-      //stabMatrixEn.resort(); 
+      matrixEn.resort(); 
     } // end apply local 
 
+    double factorBeta(double intel, double faceVol) const 
+    {
+      if(zlamal_)
+      {
+        return (beta_ * intel * pow(faceVol , -power_ )); 
+      }
+      else 
+      {
+        return (beta_ * intel / faceVol);
+      }
+    }
 
     template <class QuadratureImp> 
     void applyLocalNeighbor(IntersectionIteratorType & nit, 
@@ -664,7 +654,7 @@ namespace Dune {
                             const QuadratureImp & faceQuadInner, 
                             const QuadratureImp & faceQuadOuter, 
                             const BaseFunctionSetType & bsetEn, 
-                            MatrixAddHandleType & stabMatrixEn) const
+                            MatrixAddHandleType & matrixEn) const
     {
       const int numDofs = bsetEn.numBaseFunctions();
 
@@ -672,12 +662,9 @@ namespace Dune {
       EntityType&            nb = *neighEp;
 
       caller_.setNeighbor(nb);
-      gradCaller_.setNeighbor(nb);
-
-      const double vol = en.geometry().volume();
 
       // create matrix handles for neighbor 
-      MatrixAddHandleType stabMatrixNb(matrixHandler_.stabMatrix(),
+      MatrixAddHandleType matrixNb(matrixHandler_.stabMatrix(),
                                      en, spc_, nb, spc_ ); 
       
       // get base function set 
@@ -690,7 +677,9 @@ namespace Dune {
         const double faceVol = unitNormal.two_norm();
         unitNormal *= 1.0/faceVol; 
 
-        const double innerIntel = faceQuadInner.weight(l) * massVolElInv * faceVol ; 
+        const double bndFactor = faceQuadInner.weight(l) * massVolElInv;
+        const double innerIntel = faceVol * bndFactor; 
+        //const double innerIntel = faceQuadInner.weight(l) * massVolElInv * faceVol ; 
         //const double outerIntel = faceQuadOuter.weight(l) * massVolElInv * faceVol ; 
 
         ////////////////////////////////////////////////////////////
@@ -707,7 +696,7 @@ namespace Dune {
           bsetEn.eval(i,faceQuadInner,l, phi_);      
           double tauEn = bsetEn.evaluateGradientSingle(i, en, faceQuadInner,l, norm );
           
-          if(!zamal_)
+          if(!zlamal_)
           {
             for(int j=0; j<numDofs; ++j)
             {
@@ -721,13 +710,12 @@ namespace Dune {
                 double valLeft = resultLeft[0];
                 valLeft *= -innerIntel;
 
-                stabMatrixEn.add( i , j , valLeft );
+                matrixEn.add( i , j , valLeft );
 
                 double valRight = resultRight[0];
-                //valRight *= -outerIntel;
                 valRight *= -innerIntel;
 
-                stabMatrixNb.add( i , j , valRight );
+                matrixNb.add( i , j , valRight );
               }
             }
 
@@ -741,19 +729,20 @@ namespace Dune {
                 double valLeft = resultLeft;
                 valLeft *= xsi_ * innerIntel;
 
-                stabMatrixEn.add( i , j , valLeft );
+                matrixEn.add( i , j , valLeft );
 
                 double valRight = resultRight;
-                //valRight *= xsi_ * outerIntel;
                 valRight *= xsi_ * innerIntel;
 
-                stabMatrixNb.add( i , j , valRight );
+                matrixNb.add( i , j , valRight );
               }
             }
           }
 
-          if( std::abs(beta_) > 0.0 )
+          if( betaNotZero_ )
           {
+            const double betaFactor = factorBeta(innerIntel, faceVol); 
+            
             for(int j=0; j<numDofs; ++j)
             {
               phi2 = bsetEn.evaluateSingle(j,faceQuadInner,l, phi_);      
@@ -763,16 +752,15 @@ namespace Dune {
                 
                 numericalFluxStab(phi2, phiNeigh_ , resLeft, resRight);
 
-                double valLeft = beta_/vol * resLeft;
-                valLeft *= innerIntel;
+                double valLeft = betaFactor;
+                valLeft  *= resLeft;
 
-                stabMatrixEn.add( i , j , valLeft );
+                matrixEn.add( i , j , valLeft );
 
-                double valRight = beta_/vol * resRight;
-                //valRight *= outerIntel;
-                valRight *= innerIntel;
+                double valRight = betaFactor;
+                valRight *= resRight;
 
-                stabMatrixNb.add( i , j , valRight );
+                matrixNb.add( i , j , valRight );
               }
             }
           }
@@ -904,7 +892,6 @@ namespace Dune {
 
       //- statements
       caller_.setEntity(en);
-      gradCaller_.setEntity(en);
 
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
@@ -930,12 +917,6 @@ namespace Dune {
         const double intel = volQuad.weight(l)*
             geo.integrationElement(volQuad.point(l))*massVolElInv;
         
-        if(gradProblem_.hasSource())
-        {
-          // call source of gradient discrete model 
-          gradCaller_.source(en, volQuad, l, gradSource );
-        }
-
         for(int k = 0; k < gradientNumDofs; ++k)
         {
           // eval tau_k 
@@ -980,13 +961,13 @@ namespace Dune {
 
       double massVolinv = volRef/volume;
       return massVolinv;
+      //return 1.0;
     }
 
   private:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
     GradientPassType & gradPass_; 
-    mutable GradientModelCallerType & gradCaller_; 
     GradientDiscreteModelType& gradProblem_; 
     
     mutable ArgumentType* arg_;
@@ -1020,7 +1001,6 @@ namespace Dune {
     mutable RangeType phi_;
     mutable RangeType source_;
     mutable RangeType sourceNb_;
-    mutable RangeType rhs_;
 
     //mutable GradientRangeType tau_;
     mutable JacobianRangeType tau_;
@@ -1030,7 +1010,6 @@ namespace Dune {
     mutable DomainType grads_;
 
     TimeProvider* time_;
-
 
     const int elemOrder_,faceOrder_;
     int volumeQuadOrd_,faceQuadOrd_;
@@ -1043,7 +1022,9 @@ namespace Dune {
     const bool verbose_;
     double beta_;
     double xsi_;
-    bool zamal_;
+    double power_;
+    bool zlamal_;
+    bool betaNotZero_;
   };
   
 } // end namespace Dune
