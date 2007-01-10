@@ -476,7 +476,6 @@ namespace LDGExample {
               class ReturnType >
     BoundaryIdentifierType 
     boundaryValue(const IntersectionIteratorType& it,
-                  const DomainType& unitNormal, 
                   double time, const FaceDomType& x,
                   ReturnType& bndVal) const
     {
@@ -487,7 +486,7 @@ namespace LDGExample {
       {
         DomainType grad;
         rhsNeumann(&p[0],&grad[0]);
-        bndVal = grad * unitNormal;
+        bndVal = grad * it.integrationOuterNormal(x);
       }
       return (dirich) ? BoundaryIdentifierType::DirichletNonZero : BoundaryIdentifierType::NeumannNonZero;
     }

@@ -149,7 +149,7 @@ public:
 
   MySpaceOperator ( GridType & grid , 
                     GradientModelType & gm, 
-                    LaplaceModelType & lpm , double eps, bool verbose , int steps = 2 ) 
+                    LaplaceModelType & lpm , std::string paramfile)
     : grid_(grid)
     , dm_(DofManagerFactoryType::getDofManager(grid_))
     , gridPart_(grid_)
@@ -157,9 +157,11 @@ public:
     , lastSpace_(gridPart_)
     , pass0_()
     , pass1_( gm , pass0_, gradSpace_)
-    , lastPass_( lpm, pass1_, lastSpace_ , eps , 3 , verbose )
-    , steps_(steps)
+    , lastPass_( lpm, pass1_, lastSpace_ , paramfile )
+    , steps_(2)
   {
+    readParameter(paramfile,"EOCSteps",steps_);
+
     std::cout << "Created SpaceOperator \n";
     std::cout.flush();
   }
@@ -314,7 +316,7 @@ private:
   mutable GradPassType pass1_;
   mutable LastPassType lastPass_;
 
-  const int steps_; 
+  int steps_; 
 };
 
 template <class DiscrType> 
@@ -353,20 +355,12 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   
   std::cout << "Grid size = " << grid.size(0) << "\n";
 
-  double eps = 1e-20;
-  readParameter(paramfile,"CGeps",eps);
-  int verbose = 0;
-  readParameter(paramfile,"verbose",verbose);
-
   int precon = 0;
   readParameter(paramfile,"Preconditioning",precon);
   bool preConditioning = (precon == 1) ? true : false;
 
   int display = 0;
   readParameter(paramfile,"display",display);
-
-  int eocsteps = 2;
-  readParameter(paramfile,"EOCSteps",eocsteps);
 
   // read parameter for LDGFlux 
   double beta = 0.0;
@@ -389,7 +383,7 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   LaplaceModelType lpm(model, numericalFlux, preConditioning);
   GradientModelType gm(model, numericalFlux, preConditioning);
 
-  SpaceOperatorType spaceOp(grid , gm, lpm , eps, (verbose == 0) ? false : true, eocsteps );
+  SpaceOperatorType spaceOp(grid , gm, lpm , paramfile );
   
   //! storage for the discrete solution and its update
   DestinationType *solution = spaceOp.createDestinationFct("solution");
