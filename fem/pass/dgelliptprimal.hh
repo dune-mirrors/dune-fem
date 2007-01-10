@@ -551,7 +551,7 @@ namespace Dune {
               norm[i] = unitNormal;
             }
 
-            double bndFac = (bndType.isNeumannNonZero()) ? 0.5 : 1.0;
+            const double bndFac = (bndType.isNeumannNonZero()) ? 0.0 : 1.0;
                
             for(int k=0; k<numDofs; ++k)
             { 
@@ -997,6 +997,9 @@ namespace Dune {
     mutable MatrixHandlerType matrixHandler_;
     // marker for new entities 
     mutable  EntityMarkerType entityMarker_;
+
+    std::vector<double> tau_;
+    std::vector<RangeType> phi_;
 
     mutable bool matrixAssembled_;
     const bool verbose_;
