@@ -100,7 +100,7 @@ public:
 //  const FieldVector<typename EntityType::ctype, EntityType::dimension > 
   const FieldVector<typename EntityType::ctype, 
                     EntityType::Geometry::mydimension > 
-  point(int p)
+  point(int p) const
         {
           //const  FieldVector<typename EntityType::ctype, 
           //    EntityType::Geometry::mydimension > 
@@ -125,7 +125,7 @@ public:
  */
 /*======================================================================*/
 
-  int numDofsOnFace(int faceNum, int faceCodim)
+  int numDofsOnFace(int faceNum, int faceCodim) const
         {
           return refElem_.size( faceNum, faceCodim , dim );
         };
@@ -146,7 +146,7 @@ public:
  */
 /*======================================================================*/
 
-  int entityDofNum(int faceNum, int faceCodim , int faceDofNum )
+  int entityDofNum(int faceNum, int faceCodim , int faceDofNum ) const
         {
           return refElem_.subEntity(faceNum, faceCodim , 
                                     faceDofNum , dim);
@@ -217,7 +217,14 @@ private:
         void interpolFunction (FunctionType &f, 
                                DiscreteFunctionType &discFunc)
           {
-            EntityFunctionWrapper<FunctionType> enf(f);
+            // these types are not available!!
+            //                typename DiscreteFunctionType::GridType::EntityType, 
+            //                typename DiscreteFunctionType::GridPartType::EntityType, 
+            //            typename DiscreteFunctionType::DiscreteFunctionSpaceType::GridPartType::EntityType, 
+            typedef typename DiscreteFunctionType::GridType::template Codim<0>::Entity   EntityType;
+            EntityFunctionAdapter<
+                EntityType,
+                FunctionType> enf(f);
             interpolEntityFunction<polOrd> 
                 (enf, discFunc);            
           };
@@ -227,22 +234,13 @@ private:
  *   interpolEntityFunction: interpolate entity-function into Lagrange 
  *                 Discrete function
  *
- *   interpolation of functions, which cannot be evaluated globally, but have
- *   a quadrature-style access method on entities, i.e.
- *   f.evaluate(EntityType& en, QuadratureType& quad, int p, RangeType& ret)
- *   by this, functions, which depend on discretefunction can also be 
+ *   interpolation of EntityFunctions, which cannot be evaluated globally, but 
+ *   locally. By this, functions, which depend on discretefunction can also be 
  *   interpolated, etc.
  *
- *   The only difference in the code below compared to the method interpol() 
- *   above is in the evaluation line... So code redundancy should be removed 
- *   sometime as soon as a Datastructure for en EntityFunction is existing
- *   and an EntityFunctionWrapper<FunctionType> is provided
+ *   \param f an the entityfunction to be interpolated 
  *
- *   \param f a class, which allows evaluation in a "quadrature"-style 
- *             request, i.e. analytical function (not necessarily a 
- *             Dune::Function)
- *
- *   \param discFunc reference to discrete lagrange-function
+ *   \param discFunc reference to the generated discrete lagrange-function
  */
 /*======================================================================*/
     
@@ -275,12 +273,15 @@ private:
             LagrangeDofHandler<DiscreteFunctionSpaceType> 
                 dofHandler(functionSpace, *it);
             
+            // initialize functions
             LocalFunctionType lf = discFunc.localFunction( *it ); 
+            f.init(*it);
             
-            DomainType local(0.0);
+            //DomainType local(0.0);
             for(int i=0; i<lf.numDofs(); i++)
             {
-              f.evaluate(*it, dofHandler, i, ret);
+              // f.evaluate(*it, dofHandler, i, ret);
+              f.evaluate(dofHandler.point(i), ret);
               //local = dofHandler.point(i);            
               //DomainType glob = (*it).geometry().global(local);            
               //f.evaluate(glob, ret);
