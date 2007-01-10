@@ -1,5 +1,5 @@
-#ifndef DUNE_NEWELLIPTPASS_HH
-#define DUNE_NEWELLIPTPASS_HH
+#ifndef DUNE_DGPRIMALOPERATOR_HH
+#define DUNE_DGPRIMALOPERATOR_HH
 
 //- system includes 
 #include <set>
@@ -34,13 +34,13 @@ namespace Dune {
 **************************************************************************/
   ////////////////////////////////////////////////////////////
   //
-  //  --LocalDGPrimalOperator 
+  //  --DGPrimalOperator 
   //
   ////////////////////////////////////////////////////////////
   //! Concrete implementation of Pass for LDG.
   template <class DiscreteModelImp, class GradientPassImp, 
             class PreviousPassImp>
-  class LocalDGPrimalOperator 
+  class DGPrimalOperator 
     : public LocalPass<DiscreteModelImp, PreviousPassImp> 
     , public OEMSolver::PreconditionInterface
   {
@@ -49,7 +49,7 @@ namespace Dune {
     //! Base class
     typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
 
-    typedef LocalDGPrimalOperator<DiscreteModelImp,GradientPassImp,PreviousPassImp> ThisType;
+    typedef DGPrimalOperator<DiscreteModelImp,GradientPassImp,PreviousPassImp> ThisType;
 
     typedef GradientPassImp GradientPassType; 
     typedef typename GradientPassType :: DiscreteModelType
@@ -150,14 +150,20 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    //! \param volumeQuadOrd defines the order of the volume quadrature which is by default 2* space polynomial order 
-    //! \param faceQuadOrd defines the order of the face quadrature which is by default 2* space polynomial order 
-    LocalDGPrimalOperator(DiscreteModelType& problem, 
+    //! \param paramFile parameter file to read necessary parameters, if empty 
+    //!         default parameters will be applied 
+    //!
+    //!  NOTE: possible parameters are
+    //!     - beta if beta = 0 then Baumann-Oden is chosen, otherwise beta > 0, default is 0
+    //!     - B{+,-} choose between B_+ and B_-, 1 == B_+ | 0 == B_- ,default is B_+
+    //!     - Babuska-Zlamal 1 means we take Babuska-Zlamal method, 0 not, default is 0 
+    //!       if Babuska-Zlamal is chosen, beta > 0 is needed
+    //!         
+    DGPrimalOperator(DiscreteModelType& problem, 
                 GradientPassType & gradPass,
                 PreviousPassType& pass, 
                 const DiscreteFunctionSpaceType& spc,
-                bool verbose = false, 
-                int volumeQuadOrd =-1,int faceQuadOrd=-1) 
+                const std::string paramFile = "")
       : BaseType(pass, spc),
       caller_(problem),
       problem_(problem),
@@ -174,36 +180,18 @@ namespace Dune {
       time_(0),
       elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
       faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
-      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*elemOrder_) : volumeQuadOrd ),
-      faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_) : faceQuadOrd ),
+      volumeQuadOrd_(2*elemOrder_),
+      faceQuadOrd_(2*faceOrder_+1),
       matrixHandler_(spc_,gradientSpace_,
                      gradProblem_.hasSource(),problem_.preconditioning()),
       entityMarker_(),
       matrixAssembled_(false),
-      verbose_(verbose),
       beta_(0.0),
       bilinearPlus_(true),
       power_( 2*spc_.order() ),
-      babuskaZlamal_(false),
+      notBabuskaZlamal_(true),
       betaNotZero_(false)
     {
-      readParameter("parameter","beta",beta_);
-      int bplus = 1;
-      readParameter("parameter","B{+,-}",bplus);
-      assert( (bplus == 0) || (bplus == 1) ); 
-      bilinearPlus_ = (bplus == 0) ? false : true; 
-
-      int zlamal = 0;
-      readParameter("parameter","zlamal",zlamal);
-      babuskaZlamal_ = (zlamal == 1) ? true : false;
-
-      betaNotZero_ = (std::abs(beta_) > 0.0);
-      assert( (babuskaZlamal_) ? (std::abs(beta_) > 0.0) : 1);
-      
-      assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
-      assert( volumeQuadOrd_ >= 0 );
-      assert( faceQuadOrd_ >= 0 );
-
       if( ! (spc_.order() > 0))
       {
         std::cerr << "DG Primal operator only working for spaces with polynomial order > 0! \n";
@@ -211,6 +199,56 @@ namespace Dune {
         abort();
       }
       
+      // if parameter file is not empty read parameter 
+      if(paramFile != "")
+      {
+        readParameter(paramFile,"beta",beta_);
+        int bplus = 1;
+        readParameter(paramFile,"B{+,-}",bplus);
+        assert( (bplus == 0) || (bplus == 1) ); 
+        bilinearPlus_ = (bplus == 0) ? false : true; 
+
+        int zlamal = 0;
+        readParameter(paramFile,"Babuska-Zlamal",zlamal);
+        notBabuskaZlamal_ = (zlamal == 1) ? false : true;
+      }
+
+      betaNotZero_ = (std::abs(beta_) > 0.0);
+
+      if( !betaNotZero_ && !notBabuskaZlamal_)
+      {
+        std::cerr << "ERROR: beta == 0.0 and Babuska-Zlamal == 1 !";
+        std::cerr << " Choose either beta > 0 or Babuska-Zlamal = 1" << std::endl;
+        exit(1);
+      }
+
+      if( !betaNotZero_ )
+      {
+        std::cout << "DGPrimalOperator: using Baumann-Oden method!\n"; 
+      }
+      else 
+      {
+        if( notBabuskaZlamal_ )
+        {
+          if(bilinearPlus_ )
+          {
+            std::cout << "DGPrimalOperator: using NIPG method, beta = " << beta_ << " !\n"; 
+          }
+          else 
+          {
+            std::cout << "DGPrimalOperator: using Interior Penalty method, beta = " << beta_ << " !\n"; 
+          }
+        }
+        else 
+        {
+          std::cout << "DGPrimalOperator: using Babuska-Zlamal method, beta = " << beta_ << " !\n"; 
+        }
+      }
+      
+      assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
+      assert( volumeQuadOrd_ >= 0 );
+      assert( faceQuadOrd_ >= 0 );
+
       if(problem_.hasSource())
       {
         std::cerr << "Source for DGElliptPass not supported yet. \n";
@@ -219,7 +257,7 @@ namespace Dune {
     }
 
     //! Destructor
-    virtual ~LocalDGPrimalOperator() 
+    virtual ~DGPrimalOperator() 
     {
     }
 
@@ -238,7 +276,7 @@ namespace Dune {
     void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
       // reserve memory and clear matrices 
-      matrixHandler_.reserve(verbose_);
+      matrixHandler_.reserve(false);
 
       rhs.clear();
       dest_ = &rhs;
@@ -386,6 +424,10 @@ namespace Dune {
       // get base function set of single space 
       const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(en);
       const int numDofs = bsetEn.numBaseFunctions();
+
+      // resize caches 
+      if( (int) tau_.size() != numDofs) tau_.resize(numDofs);
+      if( (int) phi_.size() != numDofs) phi_.resize(numDofs);
       
       /////////////////////////////////
       // Volumetric integral part
@@ -446,12 +488,26 @@ namespace Dune {
             inv.umv(psitmp[i], psi[i]);
           }
 
-          for (int j = 0; j < numDofs; ++j) 
+          // add diagonal entry
+          {
+            double val = bsetEn.evaluateGradientSingle(k, en, volQuad, l, psi )
+                         * intel;
+            matrixEn.add( k , k , val );
+          }
+
+          // add secondary diagonal
+          // assume matrix is symectric
+          // entry (k,j) == entry (j,k)
+          for (int j = k+1; j < numDofs; ++j) 
           {
             // eval grad tau  
             double val = bsetEn.evaluateGradientSingle(j, en, volQuad, l, psi )
                        * intel;
+            // add k,j 
             matrixEn.add( k , j , val );
+
+            // add j,k
+            matrixEn.add( j , k , val );
           }
         }
       } // end element integral 
@@ -517,9 +573,6 @@ namespace Dune {
           // get time if time ptovider exists  
           const double t = (time_) ? (time_->time()) : 0.0;
 
-          RangeType phi_j(0.0);
-          RangeType phi_k(0.0);
-
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
           {
@@ -542,7 +595,7 @@ namespace Dune {
             RangeType boundaryValue(0.0);
 
             BoundaryIdentifierType bndType = 
-              problem_.boundaryValue(nit,unitNormal,t,
+              problem_.boundaryValue(nit,t,
                 faceQuadInner.localPoint(l),boundaryValue);
 
             JacobianRangeType norm;
@@ -551,41 +604,44 @@ namespace Dune {
               norm[i] = unitNormal;
             }
 
-            const double bndFac = (bndType.isNeumannNonZero()) ? 0.0 : 1.0;
+            // cache base functions evaluations
+            for(int k=0; k<numDofs; ++k)
+            { 
+              tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);  
+              bsetEn.eval(k,faceQuadInner,l, phi_[k]);
+            }
                
             for(int k=0; k<numDofs; ++k)
             { 
-              bsetEn.eval(k,faceQuadInner,l, phi_k);
-              double tau_k = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);
-
               // if not Babuska-Zlamal method, add boundary terms 
-              if( !babuskaZlamal_ )
+              if( notBabuskaZlamal_ )
               {
                 if( bndType.isDirichletNonZero())
                 {
                   // only valid for dim range = 1
-                  double rhsVal1 = boundaryValue[0] * tau_k;
+                  double rhsVal1 = boundaryValue[0] * tau_[k];
 
                   rhsVal1 *= bilinIntel;
                   singleRhs[k] += rhsVal1;
                 }
 
-                for (int j = 0; j < numDofs; ++j) 
+                // grad w * v 
+                if( ! bndType.isNeumannNonZero() )
                 {
-                  bsetEn.eval(j, faceQuadInner, l, phi_j );
-                  double tau_j = bsetEn.evaluateGradientSingle(j,en,faceQuadInner,l, norm);
-                
-                  // grad w * v 
+                  for (int j = 0; j < numDofs; ++j) 
                   {
-                    double val = bndFac * tau_j * phi_k[0];
+                    double val = tau_[j] * phi_[k][0];
                     val *= -intel;
                     matrixEn.add( k , j , val );
                   }
+                }
                   
-                  // w * grad v
-                  if(bndType.isDirichletType())
+                // w * grad v
+                if(bndType.isDirichletType())
+                {
+                  for (int j = 0; j < numDofs; ++j) 
                   {
-                    double val = tau_k * phi_j[0];
+                    double val = tau_[k] * phi_[j][0];
                     val *= bilinIntel;
                     matrixEn.add( k , j , val );
                   }
@@ -596,9 +652,9 @@ namespace Dune {
               if(bndType.isNeumannNonZero())
               {
                 // only valid for dim range = 1
-                double rhsVal1 = boundaryValue[0] * phi_k[0];
+                double rhsVal1 = boundaryValue[0] * phi_[k][0];
 
-                rhsVal1 *= intel;
+                rhsVal1 *= intelFactor;
                 singleRhs[k] += rhsVal1;
               }
 
@@ -609,7 +665,7 @@ namespace Dune {
                 {
                   for (int j = 0; j < numDofs; ++j) 
                   {
-                    double phiVal = bsetEn.evaluateSingle(j, faceQuadInner, l, phi_k);
+                    double phiVal = phi_[k] * phi_[j]; 
                     phiVal *= facBeta;
                     matrixEn.add( k , j , phiVal );
                   }
@@ -619,7 +675,7 @@ namespace Dune {
                 if(bndType.isDirichletNonZero())
                 {
                   // only valid for dim range = 1
-                  double rhsVal1 = boundaryValue[0] * phi_k;
+                  double rhsVal1 = boundaryValue[0] * phi_[k];
                   rhsVal1 *= facBeta;
                   singleRhs[k] += rhsVal1;
                 }
@@ -636,13 +692,13 @@ namespace Dune {
 
     double factorBeta(const double intelFactor, const double faceVol) const 
     {
-      if(babuskaZlamal_)
+      if(notBabuskaZlamal_)
       {
-        return (beta_ * intelFactor * faceVol * pow(faceVol , -power_ )); 
+        return (beta_ * intelFactor);
       }
       else 
       {
-        return (beta_ * intelFactor);
+        return (beta_ * intelFactor * faceVol * pow(faceVol , -power_ )); 
       }
     }
 
@@ -690,33 +746,36 @@ namespace Dune {
         RangeType resultLeft(0.0);
         RangeType resultRight(0.0);
 
-        RangeType phi_k;
         RangeType phi_j;
         RangeType phiNeigh;
 
-        JacobianRangeType tau2;
         JacobianRangeType norm; 
         for(int i=0; i<dimRange; ++i)
         {
           norm[i] = unitNormal;
         }
                
+        // cache base functions evaluations
+        for(int k=0; k<numDofs; ++k)
+        { 
+          // eval base functions 
+          bsetEn.eval(k,faceQuadInner,l, phi_[k]);
+          // eval gradient 
+          tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);  
+        }
+               
         for(int k=0; k<numDofs; ++k)
         {
-          bsetEn.eval(k,faceQuadInner,l, phi_k );      
-          double tau_k = bsetEn.evaluateGradientSingle(k, en, faceQuadInner,l, norm );
-          
           // this terms dissapear if Babuska-Zlamal is used 
-          if(!babuskaZlamal_)
+          if(notBabuskaZlamal_)
           {
             for(int j=0; j<numDofs; ++j)
             {
-              double tau_j = bsetEn.evaluateGradientSingle(j,en,faceQuadInner,l, norm);      
               double tauNeigh = bsetNeigh.evaluateGradientSingle(j,nb,faceQuadOuter,l, norm);      
 
               // v^+ * (grad w^+  + grad w^-)
               {
-                numericalFlux2(phi_k , tau_j , tauNeigh, resultLeft, resultRight);
+                numericalFlux2(phi_[k] , tau_[j] , tauNeigh, resultLeft, resultRight);
 
                 double valLeft = resultLeft[0];
                 valLeft *= -intel;
@@ -729,12 +788,11 @@ namespace Dune {
                 matrixNb.add( k , j , valRight );
               }
 
-              bsetEn.eval(j,faceQuadInner,l, phi_j );      
               bsetNeigh.eval(j,faceQuadOuter,l, phiNeigh );      
               
               // v^+ * (grad w^+  + grad w^-)
               {
-                numericalFlux(tau_k , phi_j , phiNeigh , resultLeft, resultRight);
+                numericalFlux(tau_[k] , phi_[j] , phiNeigh , resultLeft, resultRight);
 
                 double valLeft = resultLeft;
                 valLeft *= bilinIntel;
@@ -753,8 +811,8 @@ namespace Dune {
           {
             for(int j=0; j<numDofs; ++j)
             {
-              phi_j = bsetEn.evaluateSingle(j,faceQuadInner,l, phi_k );      
-              phiNeigh = bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phi_k );      
+              phi_j = bsetEn.evaluateSingle(j,faceQuadInner,l, phi_[k] );      
+              phiNeigh = bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phi_[k] );      
               {
                 RangeType resLeft, resRight;
                 
@@ -852,17 +910,6 @@ namespace Dune {
         PreconditionMatrixType & diag = matrixHandler_.pcMatrix(); 
         diag.clear();
         
-        /*
-        if(gradProblem_.hasSource())
-        {
-          matrixHandler_.divMatrix().getDiag( matrixHandler_.massMatrix(), matrixHandler_.gradMatrix() , diag );
-        }
-        else 
-        {
-          matrixHandler_.divMatrix().getDiag( matrixHandler_.gradMatrix() , diag );
-        }
-        */
-
         matrixHandler_.stabMatrix().addDiag( diag );
 
         double * diagPtr = diag.leakPointer();
@@ -872,12 +919,14 @@ namespace Dune {
           double val = diagPtr[i]; 
           // when using parallel Version , we could have zero on diagonal
           // for ghost elements 
-          assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0 ) );
+          //assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0 ) );
           if( std::abs( val ) > 0.0 )
           {
             val = 1.0/val; 
             diagPtr[i] = val;
           }
+          else 
+            diagPtr[i] = 1.0;
         }
       }
     }
@@ -951,9 +1000,9 @@ namespace Dune {
     // needs to be friend for conversion check 
     friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
     //! empty constructor not defined 
-    LocalDGPrimalOperator();
+    DGPrimalOperator();
     //! copy constructor not defined 
-    LocalDGPrimalOperator(const LocalDGPrimalOperator&);
+    DGPrimalOperator(const DGPrimalOperator&);
 
   private:
     double massVolumeInv(const GeometryType& geo) const
@@ -998,17 +1047,17 @@ namespace Dune {
     // marker for new entities 
     mutable  EntityMarkerType entityMarker_;
 
-    std::vector<double> tau_;
-    std::vector<RangeType> phi_;
+    // caches for base function evaluation 
+    mutable std::vector<RangeFieldType> tau_;
+    mutable std::vector<RangeType> phi_;
 
     mutable bool matrixAssembled_;
-    const bool verbose_;
     double beta_;
 
     // if true B_+ is used otherwise B_-
     bool bilinearPlus_;
     double power_;
-    bool babuskaZlamal_;
+    bool notBabuskaZlamal_;
     bool betaNotZero_;
   };
   
