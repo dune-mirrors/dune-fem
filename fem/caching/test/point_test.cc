@@ -75,7 +75,9 @@ namespace Dune {
   {
     GeometryType quadrilateral(GeometryType::cube,2);
     GeometryType triangle(GeometryType::simplex,2);
-    GeometryType line(GeometryType::simplex,1);
+    GeometryType lineC(GeometryType::cube,1);
+
+    GeometryType lineS(GeometryType::simplex,1);
 
     typedef PointProvider<double, 2, 1> PointProvider1Type;
     typedef PointProvider<double, 3, 1> PointProvider2Type;
@@ -143,13 +145,13 @@ namespace Dune {
 
      // Quadrilateral test
     Point1Type pl(0.5);
-    TestQuadrature<double, 1> quadImpLine(line, 0);
+    TestQuadrature<double, 1> quadImpLine(lineC, 0);
     quadImpLine.newQuadraturePoint(pl, 1.0);
     Quadrature<double, 1> quadLine(quadImpLine);
 
-    PointProvider1Type::getMappers(quadLine, line);
+    PointProvider1Type::getMappers(quadLine, lineC);
     const PointProvider1Type::GlobalPointVectorType& ptsQuad = 
-      PointProvider1Type::getPoints(quadLine.id(), line);
+      PointProvider1Type::getPoints(quadLine.id(), lineC);
 
     _test(ptsQuad.size() == 4);
     tmp2[0] = 0.;
@@ -162,12 +164,13 @@ namespace Dune {
     _test(findPoint(tmp2, ptsQuad));
 
     // Triangle test
-    TestQuadrature<double, 1> quadImpLine2(line, 0);
+    TestQuadrature<double, 1> quadImpLine2(lineS, 0);
     quadImpLine2.newQuadraturePoint(pl, 1.0);
+
     Quadrature<double, 1> quadLine2(quadImpLine2);
-    PointProvider1Type::getMappers(quadLine2, line);
+    PointProvider1Type::getMappers(quadLine2, lineS);
     const PointProvider1Type::GlobalPointVectorType& ptsTri = 
-      PointProvider1Type::getPoints(quadLine2.id(), line);
+      PointProvider1Type::getPoints(quadLine2.id(), lineS);
 
     _test(ptsTri.size() == 3);
     tmp2 = 0.5;
