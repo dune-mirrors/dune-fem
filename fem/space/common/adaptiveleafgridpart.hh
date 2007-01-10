@@ -6,7 +6,7 @@
 
 //- local includes 
 #include "adaptiveleafindexset.hh"
-
+#include "singletonlist.hh"
 namespace Dune {
 
 /////////////////////////////////////////////////////////////////////////
