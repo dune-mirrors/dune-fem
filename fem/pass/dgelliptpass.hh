@@ -283,8 +283,7 @@ namespace Dune {
                 GradientPassType & gradPass,
                 PreviousPassType& pass, 
                 const DiscreteFunctionSpaceType& spc,
-                bool verbose = false, 
-                int volumeQuadOrd =-1,int faceQuadOrd=-1) 
+                const std::string paramFile = "")
       : BaseType(pass, spc),
       caller_(problem),
       problem_(problem),
@@ -326,12 +325,12 @@ namespace Dune {
       time_(0),
       elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
       faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
-      volumeQuadOrd_( (volumeQuadOrd < 0) ? (2*elemOrder_) : volumeQuadOrd ),
-      faceQuadOrd_( (faceQuadOrd < 0) ? (2*faceOrder_ + 1) : faceQuadOrd ),
+      volumeQuadOrd_(2*elemOrder_),
+      faceQuadOrd_(2*faceOrder_ + 1),
       matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
       entityMarker_(),
       matrixAssembled_(false),
-      verbose_(verbose)
+      verbose_(readVerbose(paramFile))
     {
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
@@ -968,7 +967,7 @@ namespace Dune {
             const double bndFactor = faceQuadInner.weight(l) * massVolElInv;
             const double intel = bndFactor * faceVol;
             
-            double t = 0.0;
+            double t = (time_) ? time_->time() : 0.0;
             // get boundary value 
             RangeType boundaryValue(0.0);
 
@@ -1431,6 +1430,15 @@ namespace Dune {
       return massVolinv;
     }
 
+    //! read verbose value from parameter file 
+    bool readVerbose(const std::string& paramFile) const 
+    {
+      if( paramFile == "" ) return false;
+      int val = 0;
+      readParameter(paramFile,"verbose",val);
+      return (val == 1) ? true : false;
+    }
+    
   private:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
@@ -1554,8 +1562,8 @@ namespace Dune {
     // pass
     typedef typename GradFePassImp :: PreviousPassType ElliptPrevPassType;
     // define ellipt operator 
-    typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
-    //typedef LocalDGPrimalOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
+    //typedef LocalDGElliptOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
+    typedef DGPrimalOperator<DiscreteModelImp,GradFePassImp,ElliptPrevPassType> FEOperatorType;
 
     //! type of restrict and prolong operator during adaptation 
     typedef FEOperatorType RestrictProlongOperatorType;
@@ -1564,6 +1572,7 @@ namespace Dune {
     DiscreteModelType& problem_; 
     const DiscreteFunctionSpaceType& spc_;
     
+    const bool verbose_;
     mutable FEOperatorType op_;
 
     // define type of inverse operator 
@@ -1579,7 +1588,6 @@ namespace Dune {
     mutable DestinationType rhs_;
 
     mutable int sequence_;
-    const bool verbose_;
       
     typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
     mutable CommunicationManagerType comm_;
@@ -1589,24 +1597,26 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    //! \param eps epsilon for interative solver 
-    //! \param maxIterFactor factor for number of max iterations 
-    //! \param verbose if true some output is given 
+    //! \param paramFile file name of parameter file to read various variables 
+    //! 
+    //!  NOTE: parameter read by this class 
+    //!         - InvSolverEps epsilon for interative solver, default is 1e-10 
+    //!         - verbose if true some output is given, default is false
     LocalDGElliptPass(DiscreteModelType& problem, 
                 PreviousPassImp & pass, 
                 DiscreteFunctionSpaceType& spc,
-                double eps = 1e-10 , int maxIterFactor = 3 , bool verbose = false )
+                const std::string paramFile = "")
       : BaseType(pass.previousPass(),spc)
       , problem_(problem)
       , spc_(spc) 
-      , op_(problem,pass,pass.previousPass(),spc,verbose)
-      , eps_(eps)
-      , maxIterFactor_(maxIterFactor) 
+      , verbose_(readVerbose(paramFile))
+      , op_(problem,pass,pass.previousPass(),spc,paramFile)
+      , eps_(readEps(paramFile))
+      , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
-      , invOp_(op_,eps,eps,maxIter_,verbose)
+      , invOp_(op_,eps_,eps_,maxIter_,verbose_)
       , rhs_("FEPass::RHS",spc)
       , sequence_(-1)
-      , verbose_(verbose)
       , comm_(spc_)
     {
       //assert( this->destination_ );
@@ -1623,18 +1633,18 @@ namespace Dune {
     LocalDGElliptPass(DiscreteModelType& problem, 
                 PreviousPassImp & pass, 
                 DestinationType & dest,
-                double eps = 1e-10 , int maxIterFactor = 3 , bool verbose = false )
+                const std::string paramFile = "")
       : BaseType(pass.previousPass(),dest.space())
       , problem_(problem)
       , spc_(dest.space()) 
-      , op_(problem,pass,pass.previousPass(),spc_,verbose)
-      , eps_(eps)
-      , maxIterFactor_(maxIterFactor) 
+      , verbose_(readVerbose(paramFile))
+      , op_(problem,pass,pass.previousPass(),spc_,verbose_)
+      , eps_(readEps(paramFile))
+      , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
-      , invOp_(op_,eps,eps,maxIter_,verbose)
+      , invOp_(op_,eps_,eps_,maxIter_,verbose_)
       , rhs_("FEPass::RHS",spc_)
       , sequence_(-1)
-      , verbose_(verbose)
       , comm_(spc_)
     {
       assert( this->destination_ == 0 );
@@ -1712,6 +1722,23 @@ namespace Dune {
     {
       op_.evalGradient(u,grad);
     }
+  private:
+    bool readVerbose(const std::string& paramFile) const 
+    {
+      if( paramFile == "" ) return false;
+      int val = 0;
+      readParameter(paramFile,"verbose",val);
+      return (val == 1) ? true : false;
+    }
+    
+    double readEps(const std::string& paramFile) const 
+    {
+      double eps = 1e-10; 
+      if( paramFile == "" ) return eps;
+      readParameter(paramFile,"InvSolverEps",eps);
+      return eps;
+    }
+    
   };
 
   //! Concrete implementation of Pass for LDG.
