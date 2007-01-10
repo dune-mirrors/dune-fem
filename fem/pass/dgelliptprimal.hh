@@ -184,7 +184,7 @@ namespace Dune {
       beta_(0.0),
       bilinearPlus_(true),
       power_( 2*spc_.order() ),
-      zlamal_(false),
+      babuskaZlamal_(false),
       betaNotZero_(false)
     {
       readParameter("parameter","beta",beta_);
@@ -195,10 +195,10 @@ namespace Dune {
 
       int zlamal = 0;
       readParameter("parameter","zlamal",zlamal);
-      zlamal_ = (zlamal == 1) ? true : false;
+      babuskaZlamal_ = (zlamal == 1) ? true : false;
 
       betaNotZero_ = (std::abs(beta_) > 0.0);
-      assert( (zlamal_) ? (std::abs(beta_) > 0.0) : 1);
+      assert( (babuskaZlamal_) ? (std::abs(beta_) > 0.0) : 1);
       
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
@@ -261,6 +261,8 @@ namespace Dune {
     // --multOEM
     void multOEM(const double * arg, double * dest) const
     {
+      // exchange data 
+      communicate( arg );
       // calc dest = stabMatrix * arg 
       matrixHandler_.stabMatrix().multOEM(arg,dest);
     }
@@ -270,6 +272,8 @@ namespace Dune {
     //! assumes that x has size of single space 
     void communicate(const double * x) const
     {
+      if( spc_.grid().comm().size() <= 1 ) return ;
+
       DestinationType dest("DGEllipt::communicate_tmp",spc_,x);
       singleCommunicate_.exchange( dest );
     }
@@ -546,77 +550,80 @@ namespace Dune {
             {
               norm[i] = unitNormal;
             }
+
+            double bndFac = (bndType.isNeumannNonZero()) ? 0.5 : 1.0;
                
-            {
-              for(int k=0; k<numDofs; ++k)
-              { 
-                bsetEn.eval(k,faceQuadInner,l, phi_k);
-                double tau_k = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);
+            for(int k=0; k<numDofs; ++k)
+            { 
+              bsetEn.eval(k,faceQuadInner,l, phi_k);
+              double tau_k = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);
 
-                // if not Babuska-Zlamal method, add boundary terms 
-                if( !zlamal_ )
+              // if not Babuska-Zlamal method, add boundary terms 
+              if( !babuskaZlamal_ )
+              {
+                if( bndType.isDirichletNonZero())
                 {
-                  if( bndType.isDirichletNonZero())
-                  {
-                    // only valid for dim range = 1
-                    double rhsVal1 = boundaryValue[0] * tau_k;
+                  // only valid for dim range = 1
+                  double rhsVal1 = boundaryValue[0] * tau_k;
 
-                    rhsVal1 *= bilinIntel;
-                    singleRhs[k] += rhsVal1;
+                  rhsVal1 *= bilinIntel;
+                  singleRhs[k] += rhsVal1;
+                }
+
+                for (int j = 0; j < numDofs; ++j) 
+                {
+                  bsetEn.eval(j, faceQuadInner, l, phi_j );
+                  double tau_j = bsetEn.evaluateGradientSingle(j,en,faceQuadInner,l, norm);
+                
+                  // grad w * v 
+                  {
+                    double val = bndFac * tau_j * phi_k[0];
+                    val *= -intel;
+                    matrixEn.add( k , j , val );
                   }
-
-                  // dirichlet boundary values for u 
-                  if(bndType.isNeumannNonZero())
-                  {
-                    //std::cout << "Adding neumann value " << boundaryValue[0] << "\n";
-                    // only valid for dim range = 1
-                    double rhsVal1 = boundaryValue[0] * phi_k[0];
-
-                    rhsVal1 *= intel;
-                    singleRhs[k] -= rhsVal1;
-                  }
-
-                  for (int j = 0; j < numDofs; ++j) 
-                  {
-                    bsetEn.eval(j, faceQuadInner, l, phi_j );
-                    double tau_j = bsetEn.evaluateGradientSingle(j,en,faceQuadInner,l, norm);
                   
-                    // grad v * w 
-                    {
-                      double val = tau_j * phi_k[0];
-                      val *= -intel;
-                      matrixEn.add( k , j , val );
-                    }
-                    
-                    // w * grad v
-                    {
-                      double val = tau_k * phi_j[0];
-                      val *= bilinIntel;
-                      matrixEn.add( k , j , val );
-                    }
+                  // w * grad v
+                  if(bndType.isDirichletType())
+                  {
+                    double val = tau_k * phi_j[0];
+                    val *= bilinIntel;
+                    matrixEn.add( k , j , val );
                   }
                 }
-                  
-                if( betaNotZero_ )
+              }
+                
+              // dirichlet boundary values for u 
+              if(bndType.isNeumannNonZero())
+              {
+                // only valid for dim range = 1
+                double rhsVal1 = boundaryValue[0] * phi_k[0];
+
+                rhsVal1 *= intel;
+                singleRhs[k] += rhsVal1;
+              }
+
+              if( betaNotZero_ )
+              {
+                // stabilization 
+                if( bndType.isDirichletType())
                 {
-                  // stabilization 
                   for (int j = 0; j < numDofs; ++j) 
                   {
                     double phiVal = bsetEn.evaluateSingle(j, faceQuadInner, l, phi_k);
                     phiVal *= facBeta;
                     matrixEn.add( k , j , phiVal );
                   }
-                  
-                  // dirichlet boundary values for u 
-                  if(bndType.isDirichletNonZero())
-                  {
-                    // only valid for dim range = 1
-                    double rhsVal1 = boundaryValue[0] * phi_k;
-                    rhsVal1 *= facBeta;
-                    singleRhs[k] += rhsVal1;
-                  }
-                } 
-              }
+                }
+                
+                // dirichlet boundary values for u 
+                if(bndType.isDirichletNonZero())
+                {
+                  // only valid for dim range = 1
+                  double rhsVal1 = boundaryValue[0] * phi_k;
+                  rhsVal1 *= facBeta;
+                  singleRhs[k] += rhsVal1;
+                }
+              } 
             }
           }
         } // end if boundary
@@ -629,7 +636,7 @@ namespace Dune {
 
     double factorBeta(const double intelFactor, const double faceVol) const 
     {
-      if(zlamal_)
+      if(babuskaZlamal_)
       {
         return (beta_ * intelFactor * faceVol * pow(faceVol , -power_ )); 
       }
@@ -700,7 +707,7 @@ namespace Dune {
           double tau_k = bsetEn.evaluateGradientSingle(k, en, faceQuadInner,l, norm );
           
           // this terms dissapear if Babuska-Zlamal is used 
-          if(!zlamal_)
+          if(!babuskaZlamal_)
           {
             for(int j=0; j<numDofs; ++j)
             {
@@ -998,7 +1005,7 @@ namespace Dune {
     // if true B_+ is used otherwise B_-
     bool bilinearPlus_;
     double power_;
-    bool zlamal_;
+    bool babuskaZlamal_;
     bool betaNotZero_;
   };
   
