@@ -172,7 +172,19 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    //! Selector for data tuple to use as arguments for all methods;
+    //! this fixes the template type ArgumentTuple.
+    //! If this discrete model is used for a pass n+1, i.e., follwoing
+    //! passes p0,p1,..,pn then the return type of pass i (i=0,..,n)
+    //! can be used by adding the interger number i in the Selector.
+    //! Assume the following: \$ u_{n+1} = p_{n+1}(u_n,u_{n-1},..,u_1,u_0) \$
+    //! where $u_0=u$ is the global argument of the combined passes.
+    //! If \$ p_{n+1} \$ only depends on \$ u_0,u_2,u_n \$ then the
+    //! following selector can be used: \c Selector<0,2,n>. Then
+    //! ArgumentTuple is now filled with the values of these three
+    //! functions and can be accessed by...
 
+    typedef Selector<0> SelectorType;
   public:
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
