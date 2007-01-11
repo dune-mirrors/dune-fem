@@ -10,8 +10,8 @@ static const double globalShift = 2.0;
 
 double exactFactor() 
 {
-  //return 1.0/(5.24*1e5);
-  return 2.0;
+  return 1.0/(5.24*1e5);
+  //return 2.0;
   //return 1.;
   //return (5.24*1e5);
 }
@@ -235,12 +235,12 @@ void exactGradient(const double x[dim], double grad[dim])
   grad[1] = 0.5*M_PI*cos(0.5*M_PI*x[0])*-sin(0.5*M_PI*x[1]);
 #endif
 
-  //for(int i=0; i<dim; ++i) grad[i] *= exactFactor();
 }
 
 void rhsNeumann(const double x[dim], double grad[dim])
 {
   exactGradient(x,grad);
+  for(int i=0; i<dim; ++i) grad[i] *= exactFactor();
 }
 
 bool boundaryDataFunction(const double x[dim], double & val)
