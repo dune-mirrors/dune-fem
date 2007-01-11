@@ -25,8 +25,9 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
   };
   
   /**
