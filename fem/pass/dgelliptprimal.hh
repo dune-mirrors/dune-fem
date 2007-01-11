@@ -445,11 +445,9 @@ namespace Dune {
       
       for (int l = 0; l < quadNop ; ++l) 
       {
-        // calc factor for bas functions 
-        const double rhsFactor = volQuad.weight(l)
-            *geo.integrationElement(volQuad.point(l));
-
-        const double intel = rhsFactor * massVolElInv;
+        // calc integration element 
+        const double intel = volQuad.weight(l)
+            *geo.integrationElement(volQuad.point(l)) * massVolElInv;
 
         const JacobianInverseType& inv =
           geo.jacobianInverseTransposed(volQuad.point(l));
@@ -659,7 +657,8 @@ namespace Dune {
                 }
 
                 // grad w * v 
-                if( ! bndType.isNeumannNonZero() )
+                // only on non Neumann type boundaries
+                if( ! bndType.isNeumannType() )
                 {
                   for (int j = 0; j < numDofs; ++j) 
                   {
