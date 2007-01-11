@@ -1,4 +1,3 @@
-// $Id$
 #define DUNE_LEN_HH
 #ifndef DUNE_LEN_HH
 
