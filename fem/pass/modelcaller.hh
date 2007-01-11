@@ -198,6 +198,50 @@ namespace Dune {
                                     uPartLeft, uPartRight);
     }
 
+    // Ensure: entities set correctly before call
+    template <class QuadratureType, class CoefficientType>
+    void evaluateCoefficientFace(const IntersectionIterator& nit,
+                         const QuadratureType& quadInner, 
+                         const QuadratureType& quadOuter, 
+                         const int quadPoint,
+                         CoefficientType& coeffLeft, 
+                         CoefficientType& coeffRight) 
+    {
+      // evaluate data functions 
+      evaluateQuad(data_->self(), quadInner, quadPoint,
+                   data_->localFunctionsSelf(), valuesEn_);
+      evaluateQuad(data_->neighbor(), quadOuter, quadPoint,
+                   data_->localFunctionsNeigh(), valuesNeigh_);
+
+      problem_.coefficientFace(nit, time_, 
+                               quadInner.localPoint(quadPoint),
+                               valuesEn_, 
+                               valuesNeigh_,
+                               coeffLeft,coeffRight);
+    }
+
+    // Ensure: entities set correctly before call
+    template <class QuadratureType, class CoefficientType>
+    void evaluateCoefficientBoundary(const IntersectionIterator& nit,
+                         const QuadratureType& quadInner, 
+                         const int quadPoint,
+                         CoefficientType& coeff) 
+    {
+      evaluateQuad(data_->self(), quadInner, quadPoint,
+                   data_->localFunctionsSelf(), valuesEn_);
+      problem_.coefficient(data_->self(), time_, quadInner.point(quadPoint), 
+                           valuesEn_, coeff);
+    }
+      
+    template <class CoefficientType>
+    void evaluateCoefficient(Entity& en, VolumeQuadratureType& quad, int quadPoint,
+                        CoefficientType& coeff) 
+    {
+      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
+      problem_.coefficient(en, time_, quad.point(quadPoint), 
+                           valuesEn_, coeff);
+    }
+
     template <class IntersectionIterator, class FaceDomainType>
     double boundaryFlux(IntersectionIterator& nit,
                         const FaceDomainType& x,
