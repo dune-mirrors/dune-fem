@@ -257,7 +257,7 @@ namespace Dune {
     typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
     
     typedef typename DiscreteModelType :: Traits :: Traits ::template
-      MatrixHandler<DiscreteFunctionSpaceType,DiscreteGradientSpaceType> ::
+      MatrixObject<DiscreteFunctionSpaceType,DiscreteGradientSpaceType> ::
       MatrixHandlerType MatrixHandlerType; 
 
     typedef typename MatrixHandlerType::MatrixAddHandleType MatrixAddHandleType;
@@ -566,21 +566,9 @@ namespace Dune {
     void evalGradient(const FuncType & u, GradType & grad) const
     {
       grad.clear();
-      // if source then apply also mass matrix 
-      if(gradProblem_.hasSource())
-      {
-        assert( massTmp_ );
-        double * massTmpPointer = massTmp_->leakPointer();
-        matrixHandler_.gradMatrix().multOEM(u.leakPointer(),massTmpPointer);
-        (*massTmp_) += gradRhs_;
-        matrixHandler_.massMatrix().multOEM(massTmpPointer,grad.leakPointer());
-      } 
-      else 
-      {
-        // only apply grad matrix here 
-        matrixHandler_.gradMatrix().multOEM(u.leakPointer(),grad.leakPointer());
-        grad += gradRhs_;
-      }
+      // only apply grad matrix here 
+      matrixHandler_.gradMatrix().multOEM(u.leakPointer(),grad.leakPointer());
+      grad += gradRhs_;
     }
 
     //! do matrix vector multiplication, used by InverseOp  
