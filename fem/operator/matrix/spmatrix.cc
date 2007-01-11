@@ -7,7 +7,7 @@ namespace Dune
 /*  Constructor(s)           */
 /*****************************/
 template <class T>
-SparseRowMatrix<T>::SparseRowMatrix()
+SparseRowMatrix<T>::SparseRowMatrix(double omega) : omega_(omega)
 {
   values_ = 0;
   col_ = 0;
@@ -682,5 +682,65 @@ void SparseRowMatrix<T>::add(const SparseRowMatrix<T> & B)
     values_ [i] += B.values_[i];
   }
 }
+
+template <class T> 
+void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const 
+{
+  const double omega = omega_;
+
+  // (D - omega E) x = x_old (=u)  
+  for(int row=0; row<dim_[0]; ++row)
+  {
+    double diag=1.0, dot=0.0;
+    // get row stuff 
+    int thisCol = row*nz_ + firstCol ;
+    const T * localValues = &values_[thisCol];
+    const int nonZero = nonZeros_[row];
+    for(int col = firstCol ; col<nonZero; ++col)
+    {
+      const int realCol = col_[ thisCol ];
+      assert( realCol > defaultCol );
+      
+      if (realCol < row) 
+      {
+        dot += localValues[col] * x[realCol];
+      }
+      else if (realCol == row) 
+      {
+        diag = localValues[col];
+      }
+      ++thisCol;
+    }
+
+    x[row] = (u[row] - omega*dot) / diag;
+  }
+
+  // D^{-1} (D - omega F) x = x_old (=x)
+  for(int row=dim_[0]-1; row>=0; --row)
+  {
+    double diag=1.0, dot=0.0;
+    int thisCol = row*nz_ + firstCol ;
+    const T * localValues = &values_[thisCol];
+    const int nonZero = nonZeros_[row];
+    for(int col = firstCol ; col<nonZero; ++col)
+    {
+      const int realCol = col_[ thisCol ];
+      assert( realCol > defaultCol );
+      
+      if (realCol > row) 
+      {
+        dot += localValues[col] * x[realCol];
+      }
+      else if (realCol == row) 
+      {
+        diag = localValues[col];
+      }
+      ++thisCol;
+    }
+    x[row] -= omega * dot / diag;
+  }
+}
+
+
 
 } // end namespace Dune

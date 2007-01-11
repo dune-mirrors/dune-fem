@@ -3,8 +3,8 @@
 
 // FR passes 
 #include <dune/fem/pass/dgpass.hh>
-#include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/selection.hh>
+#include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/misc/timeutility.hh>
 #include <dune/fem/space/dgspace.hh>
 
@@ -60,9 +60,14 @@ namespace LDGExample {
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
     
     template <class RowSpaceType, class ColSpaceType> 
-    struct MatrixHandler
+    struct MatrixObject
     { 
+      // old type 
       typedef MatrixHandlerSPMat<RowSpaceType,ColSpaceType> MatrixHandlerType; 
+      
+      // new type 
+      typedef SparseRowMatrixObject<RowSpaceType,ColSpaceType> MatrixObjectType; 
+      //typedef BlockMatrixObject<RowSpaceType,ColSpaceType> MatrixObjectType; 
       //typedef MatrixHandlerBM<RowSpaceType,ColSpaceType> MatrixHandlerType; 
     };
     
@@ -336,7 +341,7 @@ namespace LDGExample {
 
   template <class Model,class NumFlux,int polOrd>
   class LaplaceDiscreteModel : 
-    public DiscreteModelDefault<LaplaceTraits<Model,NumFlux,polOrd> >
+    public DiscreteModelDefaultWithInsideOutSide<LaplaceTraits<Model,NumFlux,polOrd> >
   { 
   public:
     enum { polynomialOrder = polOrd };
@@ -368,6 +373,7 @@ namespace LDGExample {
     bool preconditioning () const { return preCon_; }
     bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
+    bool hasCoefficient() const { return true; }
 
     template <class ArgumentTuple> 
     double numericalFlux(const IntersectionIterator& it,
@@ -497,11 +503,30 @@ namespace LDGExample {
                         const ArgumentTuple& u, JacobianRangeType& f) const
     {
       model_.diffusion(en,time,x,f);
-      double tmp = f[0][0];
-      tmp = sqrt(tmp);
-      f = tmp;
     }
 
+    template <class ArgumentTuple,class CoefficientType>
+    void coefficient(const EntityType& en,
+                     double time, const DomainType& x,
+                     const ArgumentTuple& u, CoefficientType& coeff) const
+    {
+      model_.diffusion(en,time,x,coeff);
+    }
+
+    template <class ArgumentTuple, class CoefficientType> 
+    void coefficientFace(const IntersectionIterator& it,
+                         const double time, 
+                         const FaceDomainType& local,
+                         const ArgumentTuple& uLeft,
+                         const ArgumentTuple& uRight,
+                         CoefficientType & coeffLeft, 
+                         CoefficientType & coeffRight) const 
+    {
+      assert( it.neighbor() );
+      model_.diffusion(this->inside(),time,local,coeffLeft);
+      model_.diffusion(this->outside(),time,local,coeffRight);
+    }
+    
     template <class EntityType , class DomainType,
               class ArgumentTuple, class JacobianTuple, class RanType>
     void source(EntityType &en,

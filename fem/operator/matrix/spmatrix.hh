@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <dune/fem/discretefunction/dfadapt.hh>
+
 namespace Dune
 {
 
@@ -37,12 +39,15 @@ private:
   // temporary mem for resort 
   std::vector<int> newIndices_;
   std::vector<T> newValues_;
+
+  // omega for ssor preconditioning
+  const double omega_;
   
+  //! Copy Constructor prohibited 
+  SparseRowMatrix(const SparseRowMatrix<T> &S);
 public:
-  //! makes Matrix of zero length
-  SparseRowMatrix(); 
-  //! Copy Constructor
-  SparseRowMatrix(const SparseRowMatrix<T> &S); 
+  //! makes Matrix of zero length, omega is 1.1 by default 
+  SparseRowMatrix(double omega = 1.1); 
 
   //! make matrix with 'rows' rows and 'cols' columns,
   //! maximum 'nz' non zero values in each row 
@@ -251,21 +256,288 @@ public:
   //! resort row to have ascending column numbering 
   void resortRow(const int row);
 
-  //! our preconditioning is left wise 
-  bool rightPrecondition() const { return false; }
-  //! same as apply A * x = ret, used by OEM-Solvers 
-  template <class VECtype> 
-  void precondition (const VECtype *x , VECtype * result ) const
-  {
-    multOEM(x,result);
-  }
+  //! SSOR preconditioning 
+  void ssorPrecondition (const T*, T*) const;
+
+  //! returns true if preconditioing is called before matrix multiply 
+  bool rightPrecondition() const { return true; }
+  
+  //! apply preconditioning, calls ssorPreconditioning at the moment 
+  void precondition (const T*u , T*x) const {  ssorPrecondition(u,x); }
 
 private:
   //! delete memory 
   void removeObj();
 };
 
-} // end namespace Sparselib
+template <class RowSpaceType, class ColumnSpaceType> 
+class SparseRowMatrixObject
+{
+  typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
+
+  typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> ThisType;
+public:  
+  typedef SparseRowMatrix<double> MatrixType;
+  typedef MatrixType PreconditionMatrixType;
+  //typedef DFAdapt<RowSpaceType> PreconditionMatrixType;
+  
+  //! LocalMatrix 
+  template <class MatrixImp> 
+  class LocalMatrix
+  {
+    typedef MatrixImp MatrixType;
+    MatrixType & matrix_; 
+    
+    const int rowIndex_;
+    const int colIndex_;
+
+    std::vector<int> row_;
+    std::vector<int> col_;
+    
+  public:  
+    //! constructor taking entity and spaces for using mapToGlobal
+      //, class RowSpaceType, class ColSpaceType> 
+    LocalMatrix(MatrixType & m,
+                const EntityType& rowEntity,
+                const RowSpaceType & rowSpace,
+                const EntityType& colEntity,
+                const ColumnSpaceType & colSpace)
+      : matrix_(m)
+      , rowIndex_(rowSpace.indexSet().index(rowEntity))
+      , colIndex_(colSpace.indexSet().index(colEntity))
+    {
+      row_.resize(rowSpace.getBaseFunctionSet(rowEntity).numBaseFunctions());
+      col_.resize(colSpace.getBaseFunctionSet(colEntity).numBaseFunctions());
+
+      {
+        const size_t rows = row_.size();
+        for(size_t i=0; i<rows; ++i) 
+          row_[i] = rowSpace.mapToGlobal( rowEntity, i );
+      }
+      {
+        const size_t cols = col_.size();
+        for(size_t i=0; i<cols; ++i) 
+          col_[i] = colSpace.mapToGlobal( colEntity, i );
+      }
+    }
+
+  private: 
+    //! copy not allowed 
+    LocalMatrix(const LocalMatrix &);
+
+  public:
+    //! return number of rows 
+    int rows () const { return row_.size(); }
+    //! return number of cols 
+    int cols () const { return col_.size(); }
+
+    //! add value to matrix entry
+    void add(int localRow, int localCol , const double value)
+    {
+      assert( localRow >= 0 );
+      assert( localCol >= 0 );
+
+      assert( localRow < (int) row_.size() );
+      assert( localCol < (int) col_.size() );
+      matrix_.add(row_[localRow],col_[localCol],value);
+    }
+
+    //! get matrix entry 
+    double get(int localRow, int localCol) const 
+    {
+      assert( localRow >= 0 );
+      assert( localCol >= 0 );
+
+      assert( localRow < (int) row_.size() );
+      assert( localCol < (int) col_.size() );
+      return matrix_(row_[localRow],col_[localCol]);
+    }
+    
+    //! set matrix enrty to value 
+    void set(int localRow, int localCol, const double value)
+    {
+      assert( localRow >= 0 );
+      assert( localCol >= 0 );
+
+      assert( localRow < (int) row_.size() );
+      assert( localCol < (int) col_.size() );
+      matrix_.set(row_[localRow],col_[localCol],value);
+    }
+
+    //! clear all entries belonging to local matrix 
+    void clear ()
+    {
+      const int row = rows();
+      for(int i=0; i<row; ++i)
+      {
+        matrix_.clearRow( row_[i] );
+      }
+    }
+
+    //! resort all global rows of matrix to have ascending numbering 
+    void resort ()
+    {
+      const int row = rows();
+      for(int i=0; i<row; ++i)
+      {
+        matrix_.resortRow( row_[i] );
+      }
+    }
+  };
+
+public:
+  typedef LocalMatrix<MatrixType> LocalMatrixType;
+
+  const RowSpaceType & rowSpace_; 
+  const ColumnSpaceType & colSpace_;
+  
+  int rowMaxNumbers_;
+
+  MatrixType matrix_; 
+  const bool preconditioning_;
+  PreconditionMatrixType * pcMatrix_;
+
+  //! setup matrix handler 
+  SparseRowMatrixObject(const RowSpaceType & rowSpace, 
+                        const ColumnSpaceType & colSpace,
+                        bool preconditioning) 
+    : rowSpace_(rowSpace)
+    , colSpace_(colSpace) 
+    , rowMaxNumbers_(-1)
+    , matrix_()
+    , preconditioning_(preconditioning)
+    , pcMatrix_(0)
+  {
+    reserve(true);
+  }
+
+  //! return reference to stability matrix 
+  MatrixType & matrix() { return matrix_; }
+
+  //! resize all matrices and clear them 
+  void clear() 
+  {
+    matrix_.clear();
+  }
+
+  //! return true if precoditioning matrix is provided 
+  bool hasPcMatrix () const { return preconditioning_; }
+
+  PreconditionMatrixType& pcMatrix () { 
+    //assert( pcMatrix_ );
+    //return *pcMatrix_; 
+    return matrix_;
+  }
+
+  //! resize all matrices and clear them 
+  void resize(bool verbose = false) 
+  {
+    if( ! hasBeenSetup() ) 
+    {
+      reserve(); 
+    }
+    else 
+    {
+      int rowSize = rowSpace_.size();
+      int colSize = colSpace_.size();
+
+      if(verbose)
+      {
+        std::cout << "Resize Matrix with (" << rowSize << "," << colSize << ")\n";
+      }
+
+      matrix_.resize(rowSize,colSize);
+    }
+  }
+
+  //! returns true if memory has been reserved
+  bool hasBeenSetup () const 
+  {
+    return (rowMaxNumbers_ > 0);
+  }
+
+  //! reserve memory corresponnding to size of spaces 
+  void reserve(bool verbose = false ) 
+  {
+    // if empty grid do nothing (can appear in parallel runs)
+    if( (rowSpace_.begin() != rowSpace_.end()) && 
+        (colSpace_.begin() != colSpace_.end()) )
+    {
+      
+      rowMaxNumbers_ = rowSpace_.getBaseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
+
+      if(verbose) 
+      {
+        std::cout << "Reserve Matrix with (" << rowSpace_.size() << "," << colSpace_.size()<< ")\n";
+        std::cout << "Number of base functions = (" << rowMaxNumbers_ << ")\n";
+      }
+
+      assert( rowMaxNumbers_ > 0 );
+
+      // factor for non-conforming grid is 4 in 3d and 2 in 2d  
+      //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+      const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+
+      // upper estimate for number of neighbors 
+      enum { dim = RowSpaceType :: GridType :: dimension };
+      rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
+
+      matrix_.reserve(rowSpace_.size(),colSpace_.size(),rowMaxNumbers_,0.0);
+
+      /*
+      if(hasPcMatrix())
+      {
+        pcMatrix_ = new PreconditionMatrixType("pcMatrix",rowSpace_);
+      }
+      */
+    }
+  }
+
+  //! mult method of matrix object used by oem solver
+  void multOEM(const double * arg, double * dest) const 
+  {
+    matrix_.multOEM(arg,dest);
+  }
+
+  //! resort row numbering in matrix to have ascending numbering 
+  void resort() 
+  {
+    matrix_.resort();
+  }
+
+  void createPreconditionMatrix()
+  { 
+    /*
+    if(hasPcMatrix())
+    {
+      PreconditionMatrixType & diag = pcMatrix(); 
+      diag.clear();
+      
+      matrix_.addDiag( diag );
+  
+      double * diagPtr = diag.leakPointer();
+      const int singleSize = rowSpace_.size();
+      for(register int i=0; i<singleSize; ++i) 
+      {
+        double val = diagPtr[i];
+        // when using parallel Version , we could have zero on diagonal
+        // for ghost elements 
+        //assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0
+        if( std::abs( val ) > 0.0 )
+        {
+          val = 1.0/val;
+          diagPtr[i] = val;
+        }
+        else
+          diagPtr[i] = 1.0;
+      }
+    }
+    */
+  }
+
+};
+
+} // end namespace Dune 
 
 #include "spmatrix.cc"
 #endif  

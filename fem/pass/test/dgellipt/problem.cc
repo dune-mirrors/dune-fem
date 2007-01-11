@@ -11,8 +11,8 @@ static const double globalShift = 2.0;
 double exactFactor() 
 {
   //return 1.0/(5.24*1e5);
-  //return 2.0;
-  return 1.;
+  return 2.0;
+  //return 1.;
   //return (5.24*1e5);
 }
 

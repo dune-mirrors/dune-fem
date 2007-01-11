@@ -777,5 +777,235 @@ std::ostream& operator<< (std::ostream& s, const BlockMatrix<K> & matrix)
   return s;
 }
 
+template <class RowSpaceType, class ColumnSpaceType> 
+class BlockMatrixObject
+{
+  typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
+
+  typedef BlockMatrixObject<RowSpaceType,ColumnSpaceType> ThisType;
+public:  
+
+  typedef BlockMatrix<double> MatrixType;
+  typedef MatrixType PreconditionMatrixType;
+    
+  template <class MatrixImp> 
+  class LocalMatrix
+  {
+    typedef MatrixImp MatrixType;
+    typedef DenseMatrix<double> LittleBlockType;
+
+    MatrixType & matrix_; 
+    
+    const int rowIndex_;
+    const int colIndex_;
+
+    LittleBlockType & localMatrix_;
+
+  public:  
+    LocalMatrix(MatrixType & m,
+                const EntityType& rowEntity,
+                const RowSpaceType & rowSpace,
+                const EntityType& colEntity,
+                const ColumnSpaceType & colSpace)
+      : matrix_(m)
+      , rowIndex_(rowSpace.indexSet().index(rowEntity))
+      , colIndex_(colSpace.indexSet().index(colEntity))
+      , localMatrix_(matrix_.getMatrix())
+    {
+    }
+
+    // add block to block matrix 
+    ~LocalMatrix()
+    {
+      // finalize by adding block to global matrix 
+      addLocalMatrix();
+    }
+
+  private: 
+    LocalMatrix(const LocalMatrix &);
+
+    void addLocalMatrix() 
+    {
+      if( matrix_.size(0) > 0 )
+      {
+        matrix_.add(rowIndex_,colIndex_, localMatrix_ );
+      }
+    }
+
+  public:
+    int rows () const { return localMatrix_.rows(); }
+    int cols () const { return localMatrix_.cols(); }
+
+    void add(int localRow, int localCol , const double value)
+    {
+      assert( localRow >= 0 );
+      assert( localCol >= 0 );
+
+      assert( localRow < localMatrix_.rows() );
+      assert( localCol < localMatrix_.cols() );
+
+      localMatrix_[localRow][localCol] += value; 
+    }
+
+    double get(int localRow, int localCol ) const 
+    {
+      assert( localRow >= 0 );
+      assert( localCol >= 0 );
+
+      assert( localRow < localMatrix_.rows() );
+      assert( localCol < localMatrix_.cols() );
+
+      return localMatrix_[localRow][localCol]; 
+    }
+
+    //! set matrix enrty to value 
+    void set(int localRow, int localCol, const double value)
+    {
+      assert( localRow >= 0 );
+      assert( localCol >= 0 );
+
+      assert( localRow < localMatrix_.rows() );
+      assert( localCol < localMatrix_.cols() );
+
+      localMatrix_[localRow][localCol] = value; 
+    }
+
+    //! clear all entries belonging to local matrix 
+    void clear ()
+    {
+      localMatrix_.clear();
+    }
+
+    //! resort all global rows of matrix to have ascending numbering 
+    void resort ()
+    {
+      //assert( matrix_.size(0) > 0 );
+      //matrix_.resortRow( rowIndex_ );
+    }
+  };
+
+  
+public:
+  typedef LocalMatrix<MatrixType> LocalMatrixType;
+
+  const RowSpaceType & rowSpace_; 
+  const ColumnSpaceType & colSpace_;
+
+  int size_;
+  
+  int numRowBaseFct_;
+  int numColBaseFct_;
+
+  MatrixType matrix_; 
+  const bool preconditioning_;
+
+  //! setup matrix handler 
+  BlockMatrixObject(const RowSpaceType & rowSpace, 
+                    const ColumnSpaceType & colSpace,
+                    bool preconditioning) 
+    : rowSpace_(rowSpace)
+    , colSpace_(colSpace) 
+    , size_(-1)
+    , numRowBaseFct_(-1)
+    , numColBaseFct_(-1)
+    , matrix_()
+    , preconditioning_(preconditioning)
+  {
+    assert( rowSpace_.indexSet().size(0) == 
+            colSpace_.indexSet().size(0) ); 
+    reserve(true);
+  }
+
+  //! return reference to stability matrix 
+  MatrixType & matrix() { return matrix_; }
+
+  //! resize all matrices and clear them 
+  void clear() 
+  {
+    matrix_.clear();
+  }
+
+  //! return true if precoditioning matrix is provided 
+  bool hasPcMatrix () const { return preconditioning_; }
+  PreconditionMatrixType& pcMatrix () { return matrix_; }
+
+  //! resize all matrices and clear them 
+  void resize(bool verbose = false) 
+  {
+    if( ! hasBeenSetup() ) 
+    {
+      reserve(); 
+    }
+    else 
+    {
+      size_ = rowSpace_.indexSet().size(0); 
+      if(verbose)
+      {
+        std::cout << "Resize Matrix with (" << size_ << "," << size_ << ")\n";
+      }
+      matrix_.resize(size_);
+    }
+  }
+
+  //! returns true if memory has been reserved
+  bool hasBeenSetup () const 
+  {
+    return (numRowBaseFct_ > 0);
+  }
+
+  //! reserve memory corresponnding to size of spaces 
+  void reserve(bool verbose = false ) 
+  {
+    // if empty grid do nothing (can appear in parallel runs)
+    if( (rowSpace_.begin() != rowSpace_.end()) && 
+        (colSpace_.begin() != colSpace_.end()) )
+    {
+      // get number of elements 
+      size_ = rowSpace_.indexSet().size(0); 
+
+      numRowBaseFct_ = rowSpace_.getBaseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
+      numColBaseFct_ = colSpace_.getBaseFunctionSet(*(colSpace_.begin())).numBaseFunctions();
+
+      if(verbose) 
+      {
+        std::cout << "Reserve Matrix with (" << size_ << "," << size_ << ")\n";
+        std::cout << "Number of base functions = (" << numRowBaseFct_ << "," << numColBaseFct_ << ")\n";
+      }
+
+      // factor for non-conforming grid is 4 in 3d and 2 in 2d  
+      //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+
+      // upper estimate for number of neighbors 
+      enum { dim = RowSpaceType :: GridType :: dimension };
+
+      // number of neighbors + 1 
+      const int factor = (dim * 2) + 1; 
+
+      // upper estimate for number of neighbors 
+      //enum { dim = RowSpaceType :: GridType :: dimension };
+      //rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
+      matrix_.reserve(size_,size_,numRowBaseFct_,numColBaseFct_,factor);
+    }
+  }
+
+  //! mult method of matrix object used by oem solver
+  void multOEM(const double * arg, double * dest) const 
+  {
+    matrix_.multOEM(arg,dest);
+  }
+
+  //! resort row numbering in matrix to have ascending numbering 
+  void resort() 
+  {
+    matrix_.resort();
+  }
+
+  //! empty method as we use right preconditioning here
+  void createPreconditionMatrix() {}
+};
+
+
+
+
 } // end namespace Dune 
 #endif  
