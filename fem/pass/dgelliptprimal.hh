@@ -130,12 +130,12 @@ namespace Dune {
     typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
     
     typedef typename DiscreteModelType :: Traits :: Traits ::template
-      MatrixHandler<DiscreteFunctionSpaceType,DiscreteGradientSpaceType> ::
-      MatrixHandlerType MatrixHandlerType; 
+      MatrixObject<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType> ::
+      MatrixObjectType MatrixObjectType; 
 
-    typedef typename MatrixHandlerType::MatrixAddHandleType MatrixAddHandleType;
-    typedef typename MatrixHandlerType::MatrixType MatrixType;
-    typedef typename MatrixHandlerType::PreconditionMatrixType PreconditionMatrixType;
+    typedef typename MatrixObjectType::LocalMatrixType LocalMatrixType;
+    typedef typename MatrixObjectType::MatrixType MatrixType;
+    typedef typename MatrixObjectType::PreconditionMatrixType PreconditionMatrixType;
     
     typedef typename DiscreteModelType :: BoundaryIdentifierType BoundaryIdentifierType;    
 
@@ -144,6 +144,8 @@ namespace Dune {
 
     typedef typename LocalIdSetType :: IdType LocalIdType;
     typedef std::set< LocalIdType > EntityMarkerType; 
+
+    typedef GradJacobianRangeType FluxRangeType; 
   public:
     //- Public methods
     //! Constructor
@@ -155,7 +157,7 @@ namespace Dune {
     //!
     //!  NOTE: possible parameters are
     //!     - beta if beta = 0 then Baumann-Oden is chosen, otherwise beta > 0, default is 0
-    //!     - B{+,-} choose between B_+ and B_-, 1 == B_+ | 0 == B_- ,default is B_+
+    //!     - B_{+,-} choose between B_+ and B_-, 1 == B_+ | 0 == B_- ,default is B_+
     //!     - Babuska-Zlamal 1 means we take Babuska-Zlamal method, 0 not, default is 0 
     //!       if Babuska-Zlamal is chosen, beta > 0 is needed
     //!         
@@ -181,10 +183,11 @@ namespace Dune {
       elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
       faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
       volumeQuadOrd_(2*elemOrder_),
-      faceQuadOrd_(2*faceOrder_+1),
-      matrixHandler_(spc_,gradientSpace_,
-                     gradProblem_.hasSource(),problem_.preconditioning()),
+      faceQuadOrd_(2*faceOrder_),
+      matrixObj_(spc_,spc_, problem_.preconditioning()),
       entityMarker_(),
+      coeffEn_(1.0),
+      coeffNb_(1.0),
       matrixAssembled_(false),
       beta_(0.0),
       bilinearPlus_(true),
@@ -204,7 +207,7 @@ namespace Dune {
       {
         readParameter(paramFile,"beta",beta_);
         int bplus = 1;
-        readParameter(paramFile,"B{+,-}",bplus);
+        readParameter(paramFile,"B_{+,-}",bplus);
         assert( (bplus == 0) || (bplus == 1) ); 
         bilinearPlus_ = (bplus == 0) ? false : true; 
 
@@ -245,7 +248,7 @@ namespace Dune {
         }
       }
       
-      assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
+      //assert( matrixObj_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
 
@@ -276,7 +279,7 @@ namespace Dune {
     void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
       // reserve memory and clear matrices 
-      matrixHandler_.reserve(false);
+      matrixObj_.reserve(false);
 
       rhs.clear();
       dest_ = &rhs;
@@ -286,7 +289,7 @@ namespace Dune {
       matrixAssembled_ = true;
 
       // create pre-condition matrix if activated 
-      createPreconditionMatrix();
+      matrixObj_.createPreconditionMatrix();
     }
 
     //! do matrix vector multiplication, used by InverseOp  
@@ -302,7 +305,7 @@ namespace Dune {
       // exchange data 
       communicate( arg );
       // calc dest = stabMatrix * arg 
-      matrixHandler_.stabMatrix().multOEM(arg,dest);
+      matrixObj_.multOEM(arg,dest);
     }
 
   private:   
@@ -322,12 +325,12 @@ namespace Dune {
     
     //! return reference to preconditioning matrix, used by OEM-Solver
     const PreconditionMatrixType & preconditionMatrix () const { 
-      return matrixHandler_.pcMatrix(); 
+      return matrixObj_.pcMatrix(); 
     }
 
     //! returns true if preconditioning matrix has been build 
     bool hasPreconditionMatrix() const  { 
-      return matrixHandler_.hasPcMatrix(); 
+      return matrixObj_.hasPcMatrix(); 
     }
            
     //! In the preparations, store pointers to the actual arguments and 
@@ -396,7 +399,7 @@ namespace Dune {
       }
       
       {
-        MatrixAddHandleType matrixEn(matrixHandler_.stabMatrix(),
+        LocalMatrixType matrixEn(matrixObj_.matrix(),
                                        en, spc_, en, spc_ ); 
         matrixEn.clear();
       }
@@ -409,7 +412,7 @@ namespace Dune {
       typedef typename DestinationType :: LocalFunctionType SingleLFType; 
       SingleLFType singleRhs = dest_->localFunction(en); //rhs
       
-      MatrixAddHandleType matrixEn(matrixHandler_.stabMatrix(),
+      LocalMatrixType matrixEn(matrixObj_.matrix(),
                                      en, spc_, en, spc_ ); 
       
       // make entities known in callers
@@ -435,6 +438,10 @@ namespace Dune {
       const int quadNop = volQuad.nop();
 
       RangeType rhsval(0.0);
+
+      // set default value to fMat 
+      coeffEn_ = 1.0;
+      coeffNb_ = 1.0;
       
       for (int l = 0; l < quadNop ; ++l) 
       {
@@ -469,10 +476,10 @@ namespace Dune {
         ///////////////////////////////
         //  evaluate coefficients 
         ///////////////////////////////
-        if(problem_.hasFlux())
+        if(problem_.hasCoefficient())
         {
           // call anayltical flux of discrete model 
-          //caller_.analyticalFlux(en, volQuad, l, fMat_ );
+          caller_.evaluateCoefficient(en, volQuad, l, coeffEn_ );
         }
 
         JacobianRangeType psitmp(0.0);
@@ -486,6 +493,17 @@ namespace Dune {
           for(int i=0; i<dimRange; ++i) 
           {
             inv.umv(psitmp[i], psi[i]);
+          }
+
+          // apply coefficient 
+          if(problem_.hasCoefficient())
+          {
+            for(int i=0; i<dimRange; ++i)
+            {
+              psitmp[i] = psi[i];
+              psi[i] = 0.0;
+              coeffEn_.umv(psitmp[i],psi[i]);
+            }
           }
 
           // add diagonal entry
@@ -598,10 +616,25 @@ namespace Dune {
               problem_.boundaryValue(nit,t,
                 faceQuadInner.localPoint(l),boundaryValue);
 
-            JacobianRangeType norm;
-            for(int i=0; i<dimRange; ++i)
+            ///////////////////////////////
+            //  evaluate coefficients 
+            ///////////////////////////////
+            JacobianRangeType norm(0.0);
+            if(problem_.hasCoefficient())
             {
-              norm[i] = unitNormal;
+              // call anayltical flux of discrete model 
+              caller_.evaluateCoefficientBoundary(nit,faceQuadInner,l,coeffEn_);
+              for(int i=0; i<dimRange; ++i)
+              {
+                coeffEn_.umv(unitNormal,norm[i]);
+              }
+            }
+            else 
+            {
+              for(int i=0; i<dimRange; ++i)
+              {
+                norm[i] = unitNormal;
+              }
             }
 
             // cache base functions evaluations
@@ -709,7 +742,7 @@ namespace Dune {
                             const QuadratureImp & faceQuadInner, 
                             const QuadratureImp & faceQuadOuter, 
                             const BaseFunctionSetType & bsetEn, 
-                            MatrixAddHandleType & matrixEn) const
+                            LocalMatrixType & matrixEn) const
     {
       const int numDofs = bsetEn.numBaseFunctions();
 
@@ -719,8 +752,8 @@ namespace Dune {
       caller_.setNeighbor(nb);
 
       // create matrix handles for neighbor 
-      MatrixAddHandleType matrixNb(matrixHandler_.stabMatrix(),
-                                     en, spc_, nb, spc_ ); 
+      LocalMatrixType matrixNb(matrixObj_.matrix(),
+                               en, spc_, nb, spc_ ); 
       
       // get base function set 
       const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
@@ -749,10 +782,29 @@ namespace Dune {
         RangeType phi_j;
         RangeType phiNeigh;
 
-        JacobianRangeType norm; 
-        for(int i=0; i<dimRange; ++i)
+        JacobianRangeType normEn(0.0);
+        JacobianRangeType normNb(0.0);
+        ///////////////////////////////
+        //  evaluate coefficients 
+        ///////////////////////////////
+        if(problem_.hasCoefficient())
         {
-          norm[i] = unitNormal;
+          // call anayltical flux of discrete model 
+          caller_.evaluateCoefficientFace(nit,
+              faceQuadInner,faceQuadOuter,l,coeffEn_,coeffNb_);
+          for(int i=0; i<dimRange; ++i)
+          {
+            coeffEn_.umv(unitNormal,normEn[i]);
+            coeffNb_.umv(unitNormal,normNb[i]);
+          }
+        }
+        else 
+        {
+          for(int i=0; i<dimRange; ++i)
+          {
+            normEn[i] = unitNormal;
+            normNb[i] = unitNormal;
+          }
         }
                
         // cache base functions evaluations
@@ -761,7 +813,7 @@ namespace Dune {
           // eval base functions 
           bsetEn.eval(k,faceQuadInner,l, phi_[k]);
           // eval gradient 
-          tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);  
+          tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, normEn);  
         }
                
         for(int k=0; k<numDofs; ++k)
@@ -771,7 +823,7 @@ namespace Dune {
           {
             for(int j=0; j<numDofs; ++j)
             {
-              double tauNeigh = bsetNeigh.evaluateGradientSingle(j,nb,faceQuadOuter,l, norm);      
+              double tauNeigh = bsetNeigh.evaluateGradientSingle(j,nb,faceQuadOuter,l, normNb);      
 
               // v^+ * (grad w^+  + grad w^-)
               {
@@ -891,44 +943,6 @@ namespace Dune {
     void updateMatrix( const ArgumentType & arg,
                        DestinationType & rhs )
     {
-      if(matrixHandler_.hasMassMatrix())
-      {
-        matrixHandler_.clearMass();
-
-        this->update(arg,rhs);
-        matrixAssembled_ = true;
-
-        createPreconditionMatrix();
-      }
-    }
-
-    // calculate pre-condition matrix 
-    void createPreconditionMatrix()
-    {
-      if(matrixHandler_.hasPcMatrix())
-      {
-        PreconditionMatrixType & diag = matrixHandler_.pcMatrix(); 
-        diag.clear();
-        
-        matrixHandler_.stabMatrix().addDiag( diag );
-
-        double * diagPtr = diag.leakPointer();
-        const int singleSize = spc_.size();
-        for(register int i=0; i<singleSize; ++i) 
-        {
-          double val = diagPtr[i]; 
-          // when using parallel Version , we could have zero on diagonal
-          // for ghost elements 
-          //assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0 ) );
-          if( std::abs( val ) > 0.0 )
-          {
-            val = 1.0/val; 
-            diagPtr[i] = val;
-          }
-          else 
-            diagPtr[i] = 1.0;
-        }
-      }
     }
 
     void updateLocal(EntityType& en) const
@@ -942,7 +956,7 @@ namespace Dune {
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
 
-      MatrixAddHandleType massMatrixEn (matrixHandler_.massMatrix(),
+      MatrixAddHandleType massMatrixEn (matrixObj_.massMatrix(),
                                      en, gradientSpace_, en, gradientSpace_ ); 
       
       typedef typename DiscreteGradientSpaceType::IndexSetType GradientIndexSetType;
@@ -1043,10 +1057,13 @@ namespace Dune {
     const int elemOrder_,faceOrder_;
     int volumeQuadOrd_,faceQuadOrd_;
 
-    mutable MatrixHandlerType matrixHandler_;
+    mutable MatrixObjectType matrixObj_;
     // marker for new entities 
     mutable  EntityMarkerType entityMarker_;
 
+    // return type of analyticalFlux 
+    mutable FluxRangeType coeffEn_;
+    mutable FluxRangeType coeffNb_;
     // caches for base function evaluation 
     mutable std::vector<RangeFieldType> tau_;
     mutable std::vector<RangeType> phi_;
