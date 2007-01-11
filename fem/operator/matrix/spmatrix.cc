@@ -708,6 +708,7 @@ void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const
       else if (realCol == row) 
       {
         diag = localValues[col];
+        assert( std::abs(diag) > 0.0 );
       }
       ++thisCol;
     }
@@ -734,6 +735,7 @@ void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const
       else if (realCol == row) 
       {
         diag = localValues[col];
+        assert( std::abs(diag) > 0.0 );
       }
       ++thisCol;
     }
