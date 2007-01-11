@@ -248,6 +248,10 @@ public:
       veloPass_(arg,velo);
 
       {
+        // only for LDG method
+        //velo.clear();
+        //lastPass_.evalGradient(dest,velo);
+        
         L2Error < DestinationType > l2errGrad;
         ExactGradient< VeloSpaceType > exactGrad(gradSpace_);
 

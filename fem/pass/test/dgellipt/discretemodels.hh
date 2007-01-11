@@ -159,7 +159,7 @@ namespace LDGExample {
     const Model & data () const { return model_; }
 
     bool preconditioning () const { return preCon_; }
-    bool hasSource() const { return false; }
+    bool hasSource() const { return true; }
     bool hasFlux() const { return false; }
 
     template <class ArgumentTuple> 
