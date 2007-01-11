@@ -62,23 +62,26 @@ struct DiscrParam
   typedef typename ModelType::FieldType            FieldType;
   typedef typename ModelType::FuncSpaceType        FuncSpaceType;
 
-  //typedef LeafGridPart < GridType, All_Partition > GridPartType ;
   typedef LeafGridPart < GridType > GridPartType ;
 };
 
 
 // The actual operator
-template <class GradientModelType, class LaplaceModelType> 
+template <class GradientModelType, class LaplaceModelType,
+          class VelocityModelType> 
 class MySpaceOperator :
  public Operator<
     double,
     double,
-    typename LaplaceModelType::Traits::DestinationType,
-    typename LaplaceModelType::Traits::DestinationType>
+    typename VelocityModelType::Traits::DestinationType,
+    typename VelocityModelType::Traits::DestinationType>
+    //typename LaplaceModelType::Traits::DestinationType,
+    //typename LaplaceModelType::Traits::DestinationType>
 {
-  typedef typename LaplaceModelType :: Traits Traits;
+  typedef typename VelocityModelType :: Traits Traits;
 public:
-  typedef MySpaceOperator<GradientModelType,LaplaceModelType> ThisType;
+  typedef MySpaceOperator<GradientModelType,
+    LaplaceModelType,VelocityModelType> ThisType;
   enum { polOrd = LaplaceModelType :: polynomialOrder };
   
   typedef typename Traits:: DestinationType DestinationType;
@@ -87,21 +90,25 @@ public:
   typedef typename Traits::GridPartType GridPartType ;
   typedef typename GridPartType :: Traits :: GridType GridType;
 
+  typedef typename LaplaceModelType::Traits::DestinationType SolutionType;
+  typedef typename SolutionType :: DiscreteFunctionSpaceType LastSpaceType;
+
   typedef DofManager<GridType> DofManagerType; 
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
   typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename GradientModelType::Traits::DiscreteFunctionSpaceType GradDiscreteFunctionSpaceType;
 
+  typedef DiscreteFunctionSpaceType VeloSpaceType;
   typedef StartPass<DiscreteFunctionType> Pass0Type;
   // note, the destination type of the pass 0 is the argument type of pass 1
   typedef LocalDGElliptGradientPass<GradientModelType , Pass0Type> GradPassType;
   typedef LocalDGElliptPass<LaplaceModelType, GradPassType> LastPassType;
+  typedef LocalDGPass<VelocityModelType,LastPassType> VeloPassType;
 
   typedef GradDiscreteFunctionSpaceType GradSpaceType;
-  typedef DiscreteFunctionSpaceType LastSpaceType;
 
-  typedef typename Traits :: FunctionSpaceType FuncSpaceType;
+  typedef typename LastSpaceType :: FunctionSpaceType FuncSpaceType;
   typedef typename FuncSpaceType::RangeType RangeType;
 
   //! the exact solution to the problem for EOC calculation 
@@ -149,15 +156,19 @@ public:
 
   MySpaceOperator ( GridType & grid , 
                     GradientModelType & gm, 
-                    LaplaceModelType & lpm , std::string paramfile)
+                    LaplaceModelType & lpm , 
+                    VelocityModelType& vm,
+                    std::string paramfile)
     : grid_(grid)
     , dm_(DofManagerFactoryType::getDofManager(grid_))
     , gridPart_(grid_)
     , gradSpace_(gridPart_)
     , lastSpace_(gridPart_)
+    , veloSpace_(gridPart_)
     , pass0_()
     , pass1_( gm , pass0_, gradSpace_)
     , lastPass_( lpm, pass1_, lastSpace_ , paramfile )
+    , veloPass_( vm, lastPass_, veloSpace_ )
     , steps_(2)
   {
     readParameter(paramfile,"EOCSteps",steps_);
@@ -208,10 +219,8 @@ public:
   */
   
   // apply space discretisation 
-  void apply(const DestinationType& arg, DestinationType& dest)
+  void apply(const DestinationType& arg, DestinationType& velo)
   {
-    DestinationType& Arg = const_cast<DestinationType&> (arg);
-
     typedef typename GradientModelType::Traits::DestinationType  GradFuncType; 
     typedef typename GradientModelType::Traits::DiscreteFunctionSpaceType GradientDiscreteFunctionSpaceType; 
     typedef typename GradientDiscreteFunctionSpaceType :: RangeType  GradRangeType;
@@ -230,37 +239,27 @@ public:
 
       //if( i > 0 ) adaptGrid(Arg);
 
-      Arg.clear();
       FuncSpaceType sp; 
       ExactSolution exact(sp); 
 
+      SolutionType& dest = const_cast<SolutionType&> (lastPass_.destination());
       dest.clear();
 
-      lastPass_(arg,dest);
+      veloPass_(arg,velo);
 
-      /*
       {
-        GradFuncType grad("gradient",gradSpace_);
+        L2Error < DestinationType > l2errGrad;
+        ExactGradient< VeloSpaceType > exactGrad(gradSpace_);
 
-        typedef typename GradFuncType :: FunctionSpaceType
-          DFSpaceType; 
-        typedef typename DFSpaceType :: RangeType RType; 
-
-        lastPass_.evalGradient(dest,grad);
-
-        L2Error < GradFuncType > l2errGrad;
-        ExactGradient< GradientDiscreteFunctionSpaceType >
-          exactGrad(gradSpace_);
-
-        gradError[i] = l2errGrad.norm(exactGrad , grad);
+        gradError[i] = l2errGrad.norm(exactGrad , velo);
       }
-      */
       
 #if HAVE_GRAPE
       GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
+      grape.addData( velo );
       grape.dataDisplay( dest );
 #endif
-      L2Error < DestinationType > l2err;
+      L2Error < SolutionType > l2err;
       // pol ord for calculation the error chould by higher than 
       // pol for evaluation the basefunctions 
       error[i] = l2err.norm(exact , dest);
@@ -299,7 +298,7 @@ public:
 
   DestinationType * createDestinationFct (std::string name) 
   {
-    return new DestinationType (name , lastSpace_ );
+    return new DestinationType (name , veloSpace_ );
   }
 
 private:
@@ -311,10 +310,12 @@ private:
 
   mutable GradSpaceType gradSpace_;
   mutable LastSpaceType lastSpace_;
+  mutable VeloSpaceType veloSpace_;
 
   mutable Pass0Type pass0_;
   mutable GradPassType pass1_;
   mutable LastPassType lastPass_;
+  mutable VeloPassType veloPass_;
 
   int steps_; 
 };
@@ -333,8 +334,11 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
 
   typedef LaplaceDiscreteModel < ModelType, NumericalFluxType, polOrd > LaplaceModelType;
   typedef GradientDiscreteModel < ModelType, NumericalFluxType, polOrd-1 > GradientModelType;
+  typedef VelocityDiscreteModel < ModelType, polOrd-1 > VelocityModelType;
   
-  typedef MySpaceOperator <  GradientModelType, LaplaceModelType > 
+  typedef MySpaceOperator <  GradientModelType, 
+                             LaplaceModelType,
+                             VelocityModelType> 
                 SpaceOperatorType; 
   typedef typename SpaceOperatorType :: DestinationType DestinationType;
    
@@ -382,8 +386,9 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   
   LaplaceModelType lpm(model, numericalFlux, preConditioning);
   GradientModelType gm(model, numericalFlux, preConditioning);
+  VelocityModelType vm(model);
 
-  SpaceOperatorType spaceOp(grid , gm, lpm , paramfile );
+  SpaceOperatorType spaceOp(grid , gm, lpm , vm, paramfile );
   
   //! storage for the discrete solution and its update
   DestinationType *solution = spaceOp.createDestinationFct("solution");

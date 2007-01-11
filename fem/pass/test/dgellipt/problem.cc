@@ -235,7 +235,7 @@ void exactGradient(const double x[dim], double grad[dim])
   grad[1] = 0.5*M_PI*cos(0.5*M_PI*x[0])*-sin(0.5*M_PI*x[1]);
 #endif
 
-  for(int i=0; i<dim; ++i) grad[i] *= exactFactor();
+  //for(int i=0; i<dim; ++i) grad[i] *= exactFactor();
 }
 
 void rhsNeumann(const double x[dim], double grad[dim])
