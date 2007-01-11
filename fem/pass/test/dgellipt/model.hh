@@ -170,6 +170,28 @@ public:
   {
     assert(false);
   }
+
+
+  template <class EntityType, class DomType, class RanType, 
+            class DiffusionRangeType>
+  void gradient(const EntityType& en,
+             const double time,
+             const DomType& x,
+             const RanType& s,
+             DiffusionRangeType& a) const
+  {
+    enum { rows = DiffusionRangeType :: rows };
+    enum { cols = DiffusionRangeType :: cols };
+
+    assert( (int) rows == (int) dimDomain );
+    assert( (int) cols == (int) dimDomain );
+
+    a=0.0;
+    for (int i=0; i<dimDomain; ++i)
+    {
+      a[i][i] = -s[0];
+    }
+  }
   
   //! interface methods for the initial data
   class InitialData : public Function < FuncSpaceType , InitialData > {

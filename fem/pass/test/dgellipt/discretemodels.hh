@@ -557,5 +557,142 @@ namespace LDGExample {
     const bool preCon_;
   };
 
+  template <class ModelImp,int polOrd>
+  class VelocityDiscreteModel;
+
+  // DiscreteModelTraits
+  template <class ModelImp,int polOrd >
+  struct VelocityTraits
+  {
+    enum { myPolOrd = polOrd };
+
+    typedef typename ModelImp::Traits ModelTraits;
+    typedef typename ModelTraits::GridType GridType;
+
+    enum { dimRange = ModelTraits::dimGradRange };
+    enum { dimDomain = ModelTraits::dimDomain };
+
+    typedef ElliptPassTraits<ModelImp,myPolOrd,dimRange> Traits;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+
+    typedef typename ModelTraits::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename Traits::FaceQuadratureType FaceQuadratureType;
+    typedef typename Traits::GridPartType GridPartType;
+
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+    typedef DiscreteFunctionType DestinationType;
+
+
+    typedef VelocityDiscreteModel<ModelImp,polOrd> DiscreteModelType;
+  };
+  template <class ModelImp,int polOrd>
+  class VelocityDiscreteModel :
+    public DiscreteModelDefaultWithInsideOutSide<VelocityTraits<ModelImp,polOrd> >
+  {
+    // do not copy this class 
+    VelocityDiscreteModel(const VelocityDiscreteModel&);
+  public:
+    typedef VelocityTraits<ModelImp,polOrd> Traits;
+
+    // select Pressure, which comes from pass before 
+    typedef Dune::Selector<1> SelectorType;
+    typedef FieldVector<double, Traits::dimDomain> DomainType;
+    typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
+    typedef typename Traits::RangeType RangeType;
+    typedef typename Traits::GridType GridType;
+    typedef typename Traits::JacobianRangeType JacobianRangeType;
+    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename GridType::template Codim<0>::Entity EntityType;
+
+    enum { polynomialOrder = polOrd };
+
+  public:
+    VelocityDiscreteModel(const ModelImp& mod)
+      : model_(mod) {}
+
+    bool hasSource() const { return false; }
+    bool hasFlux() const   { return true; }
+
+    template <class ArgumentTuple>
+    double numericalFlux(IntersectionIteratorType& it,
+                         double time, const FaceDomainType& x,
+                         const ArgumentTuple& uLeft,
+                         const ArgumentTuple& uRight,
+                         RangeType& gLeft,
+                         RangeType& gRight)
+    {
+      const DomainType normal = it.integrationOuterNormal(x);
+
+      // get saturation 
+      typedef typename ElementType<0, ArgumentTuple>::Type SType;
+      const SType& argSLeft  = Element<0>::get(uLeft);
+      const SType& argSRight = Element<0>::get(uRight);
+
+      JacobianRangeType diffmatrix;
+
+      RangeType diffflux(0.);
+
+      model_.gradient( this->inside(),time,
+            it.intersectionSelfLocal().global(x),
+            argSLeft,diffmatrix);
+            //pressure,tmp,diffmatrix);
+
+      diffmatrix.umv(normal,diffflux);
+      model_.gradient( this->outside(),time,
+            it.intersectionNeighborLocal().global(x),
+            argSRight,diffmatrix);
+            //pressure,tmp,diffmatrix);
+      diffmatrix.umv(normal,diffflux);
+      diffflux*=0.5;
+
+      gLeft = diffflux;
+      gRight = diffflux;
+      return 0.;
+    }
+
+    template <class ArgumentTuple>
+    double boundaryFlux(IntersectionIteratorType& it,
+                        double time, const FaceDomainType& x,
+                        const ArgumentTuple& uLeft,
+                        RangeType& gLeft)
+    {
+      const DomainType normal = it.integrationOuterNormal(x);
+      // get saturation 
+      typedef typename ElementType<0, ArgumentTuple>::Type SType;
+      const SType& argSLeft  = Element<0>::get(uLeft);
+
+      JacobianRangeType diffmatrix;
+      gLeft = 0.0;
+
+      {
+        model_.gradient( this->inside(),time,
+            it.intersectionSelfLocal().global(x),
+            argSLeft,diffmatrix);
+      }
+
+      diffmatrix.umv(normal,gLeft);
+      return 0.0;
+    }
+
+    template <class ArgumentTuple>
+    void analyticalFlux(EntityType& en,
+                        double time, const DomainType& x,
+                        const ArgumentTuple& u, JacobianRangeType& f)
+    {
+      typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      const UType& argU = Element<0>::get(u);
+      // get saturation 
+      model_.gradient(en,time,x,argU,f);
+    }
+  private:
+    const ModelImp & model_;
+  };
+
+
 }
 #endif
