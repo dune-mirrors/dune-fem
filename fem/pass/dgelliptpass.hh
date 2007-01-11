@@ -1638,7 +1638,7 @@ namespace Dune {
       , problem_(problem)
       , spc_(dest.space()) 
       , verbose_(readVerbose(paramFile))
-      , op_(problem,pass,pass.previousPass(),spc_,verbose_)
+      , op_(problem,pass,pass.previousPass(),spc_,paramFile)
       , eps_(readEps(paramFile))
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
