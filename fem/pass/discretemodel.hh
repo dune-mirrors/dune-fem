@@ -2,6 +2,7 @@
 #define DUNE_DISCRETEMODEL_HH
 
 #include <dune/common/fvector.hh>
+#include "selection.hh"
 
 namespace Dune {
 
@@ -286,18 +287,17 @@ namespace Dune {
       nbVol_ = nb.geometry().volume();
     }
     
-    EntityType & inside()  
+    const EntityType & inside() const  
     {
       assert( en_ );
       return *en_;
     }
     
-    EntityType & outside()
+    const EntityType & outside() const 
     {
       assert( nb_ );
       return *nb_;
     }
-    
 
     double enVolume() const 
     { 
