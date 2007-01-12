@@ -27,6 +27,11 @@
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>
 
+#include <dune/fem/operator/2order/ldgelliptoperator.hh>
+#include <dune/fem/operator/2order/dgprimaloperator.hh>
+
+#include <dune/fem/pass/dgelliptpass.hh>
+
 //*************************************************************
 namespace LDGExample {  
 
@@ -59,32 +64,6 @@ namespace LDGExample {
     //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
     
-    template <class RowSpaceType, class ColSpaceType> 
-    struct MatrixObject
-    { 
-      // old type 
-      typedef MatrixHandlerSPMat<RowSpaceType,ColSpaceType> MatrixHandlerType; 
-      
-      // new type 
-      typedef SparseRowMatrixObject<RowSpaceType,ColSpaceType> MatrixObjectType; 
-      //typedef BlockMatrixObject<RowSpaceType,ColSpaceType> MatrixObjectType; 
-      //typedef MatrixHandlerBM<RowSpaceType,ColSpaceType> MatrixHandlerType; 
-    };
-    
-    template <class DiscreteFunctionImp, class OperatorImp> 
-    struct InverseOperator
-    { 
-#if HAVE_BLAS
-      //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMBICGSTABOp <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef BICGSTABOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-#else 
-      typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-#endif
-    };
   };
 
   ///////////////////////////////////////////////////////
@@ -337,6 +316,42 @@ namespace LDGExample {
     typedef DiscreteFunctionType DestinationType;
 
     typedef LaplaceDiscreteModel<Model,NumFlux,polOrd> DiscreteModelType;
+    typedef DiscreteModelType ThisType;
+
+    template <class PreviousPassType>
+    struct LocalOperatorSelector
+    {
+      //! select one pass before fake gradient pass 
+      typedef typename PreviousPassType :: PreviousPassType ElliptPrevPassType;
+        
+      // get type of gradient pass 
+      typedef typename PreviousPassType :: DiscreteFunctionSpaceType
+        PrevSpaceType;
+
+      // old type 
+      typedef MatrixHandlerSPMat<DiscreteFunctionSpaceType,
+                                 PrevSpaceType> MatrixHandlerType; 
+      
+      // new type 
+      typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
+                                    DiscreteFunctionSpaceType> MatrixObjectType; 
+      //typedef BlockMatrixObject<DiscreteFunctionSpaceType,
+      //                          DiscreteFunctionSpaceType> MatrixObjectType; 
+
+      typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
+      //typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
+
+#if HAVE_BLAS
+      //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef BICGSTABOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+#else 
+      typedef CGInverseOp   <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+#endif
+    };
   };
 
   template <class Model,class NumFlux,int polOrd>
