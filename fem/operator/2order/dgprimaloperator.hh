@@ -222,12 +222,19 @@ namespace Dune {
       {
         std::cerr << "ERROR: beta == 0.0 and Babuska-Zlamal == 1 !";
         std::cerr << " Choose either beta > 0 or Babuska-Zlamal = 1" << std::endl;
+        assert(false);
         exit(1);
       }
 
       if( !betaNotZero_ )
       {
         std::cout << "DGPrimalOperator: using Baumann-Oden method!\n"; 
+        if(spc_.order() < 2)
+        {
+          std::cerr << "WARNING: Baumann-Oden method only working for polynomial degree >= 2! \n";
+          assert(false);
+          exit(1);
+        }
       }
       else 
       {
