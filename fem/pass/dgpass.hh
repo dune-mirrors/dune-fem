@@ -147,7 +147,7 @@ namespace Dune {
       return dtMin_;
     }
 
-  private:
+  protected:
     //! In the preparations, store pointers to the actual arguments and 
     //! destinations. Filter out the "right" arguments for this pass.
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
@@ -392,7 +392,7 @@ namespace Dune {
       return volume;
     }
     
-  private:
+  protected:
     mutable DiscreteModelCallerType caller_;
     
     mutable ArgumentType* arg_;
@@ -415,7 +415,7 @@ namespace Dune {
     TimeProvider* time_;
     FieldVector<int, 0> diffVar_;
 
-    int volumeQuadOrd_,faceQuadOrd_;
+    const int volumeQuadOrd_, faceQuadOrd_;
   };
 //! @}  
 } // end namespace Dune
