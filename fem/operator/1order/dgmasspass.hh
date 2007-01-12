@@ -14,20 +14,14 @@
 #ifndef DUNE_DGMASSPASS_HH
 #define DUNE_DGMASSPASS_HH
 
-#include "pass.hh"
-#include "selection.hh"
-#include "discretemodel.hh"
-#include "modelcaller.hh"
-
-// * needs to move
-// #include "../misc/timenew.hh"
-#include "../misc/timeutility.hh"
-
+//- Dune includes 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/utility/twistutility.hh>
 
+//- Dune-fem includes 
+#include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
