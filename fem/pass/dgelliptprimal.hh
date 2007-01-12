@@ -39,7 +39,7 @@ namespace Dune {
   ////////////////////////////////////////////////////////////
   //! Concrete implementation of Pass for LDG.
   template <class DiscreteModelImp, class GradientPassImp, 
-            class PreviousPassImp>
+            class PreviousPassImp, class MatrixObjectImp>
   class DGPrimalOperator 
     : public LocalPass<DiscreteModelImp, PreviousPassImp> 
     , public OEMSolver::PreconditionInterface
@@ -49,7 +49,8 @@ namespace Dune {
     //! Base class
     typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
 
-    typedef DGPrimalOperator<DiscreteModelImp,GradientPassImp,PreviousPassImp> ThisType;
+    typedef DGPrimalOperator<DiscreteModelImp,GradientPassImp,
+            PreviousPassImp,MatrixObjectImp> ThisType;
 
     typedef GradientPassImp GradientPassType; 
     typedef typename GradientPassType :: DiscreteModelType
@@ -129,9 +130,8 @@ namespace Dune {
     
     typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
     
-    typedef typename DiscreteModelType :: Traits :: Traits ::template
-      MatrixObject<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType> ::
-      MatrixObjectType MatrixObjectType; 
+    //! type of underlying matrix implementation 
+    typedef MatrixObjectImp MatrixObjectType; 
 
     typedef typename MatrixObjectType::LocalMatrixType LocalMatrixType;
     typedef typename MatrixObjectType::MatrixType MatrixType;
