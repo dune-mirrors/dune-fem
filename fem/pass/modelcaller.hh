@@ -286,6 +286,15 @@ namespace Dune {
                       jacobians_, res);
     }
 
+    void mass(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
+              JacobianRangeType& res) 
+    {
+      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(), valuesEn_);
+      evaluateJacobianQuad(en, quad, quadPoint);
+      problem_.mass(en, time_, quad.point(quadPoint), valuesEn_,
+                    jacobians_, res);
+    }
+
     void rightHandSide(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
                        RangeType& res) 
     {

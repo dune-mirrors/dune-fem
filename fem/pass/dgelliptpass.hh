@@ -468,17 +468,19 @@ namespace Dune {
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
     //! \param applyMassMatrix, if true also mass matrix (if exsists) 
-    //! is applied when evaluating the gradient
+    //! is applied when evaluating the gradient, default is true 
     LocalDGElliptGradPass(DiscreteModelType& problem, 
                     PreviousPassType& pass, 
                     const DiscreteFunctionSpaceType& spc,
-                    bool applyMassMatrix = false) 
+                    double factor = -1.0,
+                    bool applyMassMatrix = true) 
       : BaseType(pass, spc),
       caller_(problem),
       problem_(problem),
       spc_(spc),
       prevPass_(pass),
       comm_(spc_),
+      factor_(factor),
       applyMassMatrix_(applyMassMatrix)
     {
     }
@@ -511,6 +513,9 @@ namespace Dune {
       prevPass_.evalGradient(prevPass_.destination(), dest,
                              applyMassMatrix_);
 
+      // return -grad p 
+      dest *= factor_;
+
       // exchange data 
       comm_.exchange( dest );
     }
@@ -536,6 +541,7 @@ namespace Dune {
     const DiscreteFunctionSpaceType& spc_;
     mutable PreviousPassImp & prevPass_;
     mutable CommunicationManagerType comm_;
+    const double factor_;
     const bool applyMassMatrix_;
   };
 
