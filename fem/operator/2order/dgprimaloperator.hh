@@ -328,7 +328,8 @@ namespace Dune {
       
   public:
     //! return refernence to system matrix, used by OEM-Solver
-    const ThisType & systemMatrix () const { return *this; }
+    //const ThisType & systemMatrix () const { return *this; }
+    const MatrixObjectType & systemMatrix () const { return matrixObj_; }
     
     //! return reference to preconditioning matrix, used by OEM-Solver
     const PreconditionMatrixType & preconditionMatrix () const { 
@@ -420,7 +421,7 @@ namespace Dune {
       SingleLFType singleRhs = dest_->localFunction(en); //rhs
       
       LocalMatrixType matrixEn(matrixObj_.matrix(),
-                                     en, spc_, en, spc_ ); 
+                               en, spc_, en, spc_ ); 
       
       // make entities known in callers
       caller_.setEntity(en);
