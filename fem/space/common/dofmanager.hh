@@ -313,6 +313,12 @@ public:
     memSize_ = nMemSize;
   }
 
+  //! compatiblity with std::vector 
+  void resize ( int nsize )
+  {
+    realloc(nsize);
+  }
+
   //! return size of vector in bytes 
   int usedMemorySize() const 
   {
@@ -607,13 +613,13 @@ public:
   //! reallocate the memory with the new size 
   void realloc () 
   {
-    array_.realloc( newSize() );
+    array_.resize( newSize() );
   }
 
   //! reallocate the memory with the new size 
   void realloc ( int nSize ) 
   {
-    array_.realloc( nSize );
+    array_.resize( nSize );
   }
 
   //! copy the dof from the rear section of the vector to the holes 
@@ -632,7 +638,7 @@ public:
     }
 
     // store new size, which is should be smaller then actual size 
-    array_.realloc ( newSize() );
+    array_.resize( newSize() );
   }
  
   //! return reference to array for DiscreteFunction 
@@ -641,7 +647,8 @@ public:
   //! return used memory size 
   int usedMemorySize() const 
   {
-    return sizeof(ThisType) + array_.usedMemorySize(); 
+    //return sizeof(ThisType) + array_.usedMemorySize(); 
+    return 0; 
   }
 };
 
