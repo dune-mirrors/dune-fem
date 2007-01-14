@@ -14,7 +14,7 @@ verbose: 1
 Preconditioning: 0
 
 % display using Grape, 0 == no, 1 == yes  
-display: 0
+display: 1
 
 % MacroTriang for 2d simul 
 Grid: ./grid2d.dgf

@@ -42,6 +42,9 @@
 
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
 
+#include <dune/istl/bvector.hh>
+#include <dune/fem/discretefunction/staticfunction.hh>
+
 using namespace Dune;
 
 namespace LDGExample { 
@@ -107,7 +110,9 @@ public:
   typedef LocalDGPass<VelocityModelType,LastPassType> VeloPassType;
 
   typedef GradDiscreteFunctionSpaceType GradSpaceType;
-
+  
+  typedef StaticDiscreteFunction<LastSpaceType, 
+              BlockVector< FieldVector<double,6> > > IstlFunctionType;
   typedef typename LastSpaceType :: FunctionSpaceType FuncSpaceType;
   typedef typename FuncSpaceType::RangeType RangeType;
 
@@ -170,6 +175,7 @@ public:
     , lastPass_( lpm, pass1_, lastSpace_ , paramfile )
     , veloPass_( vm, lastPass_, veloSpace_ )
     , steps_(2)
+    , istlfunc_("test",lastSpace_)
   {
     readParameter(paramfile,"EOCSteps",steps_);
 
@@ -263,6 +269,7 @@ public:
       grape.addData( velo );
       grape.dataDisplay( dest );
 #endif
+
       L2Error < SolutionType > l2err;
       // pol ord for calculation the error chould by higher than 
       // pol for evaluation the basefunctions 
@@ -322,6 +329,7 @@ private:
   mutable VeloPassType veloPass_;
 
   int steps_; 
+  IstlFunctionType istlfunc_;
 };
 
 template <class DiscrType> 

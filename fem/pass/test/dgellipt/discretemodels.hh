@@ -22,6 +22,10 @@
 #if HAVE_BLAS
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #endif
+//#if HAVE_ISTL
+#include <dune/fem/operator/matrix/istlmatrix.hh>
+#include <dune/fem/solver/istlsolver.hh>
+
 #include <dune/fem/operator/inverseoperators.hh>
 
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
@@ -31,6 +35,10 @@
 #include <dune/fem/operator/2order/dgprimaloperator.hh>
 
 #include <dune/fem/pass/dgelliptpass.hh>
+
+#include <dune/istl/bvector.hh>
+#include <dune/fem/discretefunction/staticfunction.hh>
+
 
 //*************************************************************
 namespace LDGExample {  
@@ -312,7 +320,11 @@ namespace LDGExample {
 
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename Traits::ContainedSpaceType ContainedSpaceType;
-    typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+
+    typedef StaticDiscreteFunction<DiscreteFunctionSpaceType, 
+                         BlockVector< FieldVector<double,6> > > DiscreteFunctionType;
+
+    //typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
     typedef DiscreteFunctionType DestinationType;
 
     typedef LaplaceDiscreteModel<Model,NumFlux,polOrd> DiscreteModelType;
@@ -333,17 +345,20 @@ namespace LDGExample {
                                  PrevSpaceType> MatrixHandlerType; 
       
       // new type 
-      typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
-                                    DiscreteFunctionSpaceType> MatrixObjectType; 
+      //typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
+      //                              DiscreteFunctionSpaceType> MatrixObjectType; 
       //typedef BlockMatrixObject<DiscreteFunctionSpaceType,
       //                          DiscreteFunctionSpaceType> MatrixObjectType; 
+      typedef ISTLMatrixObject<DiscreteFunctionSpaceType,
+                               DiscreteFunctionSpaceType> MatrixObjectType; 
 
       typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
       //typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
 
 #if HAVE_BLAS
       //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      //typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
       //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
