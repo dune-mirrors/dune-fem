@@ -264,6 +264,42 @@ namespace Dune {
     }
   };
 
+  //! implementing default all method, because YaspGrid is programmed as it
+  //! is programmed :( 
+  class DefaultDiscreteFunctionComm 
+  {
+  public:  
+    typedef int DataType;
+
+    bool contains (int dim, int codim) const
+    {
+      return false;
+    }
+
+    bool fixedsize (int dim, int codim) const
+    {
+      return true;
+    }
+
+    //! read buffer and apply operation 
+    template<class MessageBufferImp, class EntityType>
+    void gather (MessageBufferImp& buff, const EntityType& en) const
+    {
+    }
+
+    //! read buffer and apply operation 
+    template<class MessageBufferImp, class EntityType>
+    void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+    {
+    }
+
+    //! return local dof size to be communicated 
+    template<class EntityType>
+    size_t size (const EntityType& en) const
+    {
+      return 0;
+    }
+  };
   ////////////////////////////////////////////////////////////////
   //
   //  --DiscreteFunctionCommunications 
@@ -324,10 +360,13 @@ namespace Dune {
   class DiscreteFunctionCommunicationHandler 
    : public CommDataHandleIF< 
      DiscreteFunctionCommunicationHandler <DiscreteFunctionImp , OperationImp > ,
-     typename DiscreteFunctionImp :: RangeFieldType > 
+     typename DiscreteFunctionImp :: RangeFieldType > ,
+     public DefaultDiscreteFunctionComm
   {
   public:  
     typedef DiscreteFunctionImp DiscreteFunctionType;
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType ::
+      GridType :: template Codim<0> :: Entity EntityType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteFunctionType::RangeFieldType DataType;
   private:  
@@ -357,6 +396,11 @@ namespace Dune {
     {
     }
 
+    // use default implementations for higher codims 
+    using DefaultDiscreteFunctionComm :: gather;
+    using DefaultDiscreteFunctionComm :: scatter;
+    using DefaultDiscreteFunctionComm :: size;
+
     bool contains (int dim, int codim) const
     {
       return (codim == containedCodim_);
@@ -368,7 +412,7 @@ namespace Dune {
     }
 
     //! read buffer and apply operation 
-    template<class MessageBufferImp, class EntityType>
+    template<class MessageBufferImp>
     void gather (MessageBufferImp& buff, const EntityType& en) const
     {
       // get local function 
@@ -382,7 +426,7 @@ namespace Dune {
     }
 
     //! read buffer and apply operation 
-    template<class MessageBufferImp, class EntityType>
+    template<class MessageBufferImp>
     void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
     {
       LocalFunctionType lf = discreteFunction_.localFunction(en);
@@ -400,7 +444,6 @@ namespace Dune {
     }
 
     //! return local dof size to be communicated 
-    template<class EntityType>
     size_t size (const EntityType& en) const
     {
       // return size of local function 
