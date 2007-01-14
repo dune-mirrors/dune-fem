@@ -324,6 +324,7 @@ namespace Dune {
       {
         op_.prepare(arg,rhs_);
         op_.buildMatrix( arg, rhs_ );
+
         sequence_ = spc_.sequence();
       }
       else if(sequence_ != spc_.sequence())
@@ -369,7 +370,7 @@ namespace Dune {
       invOp_(rhs_,dest);
 
       // do data exchange 
-      comm_.exchange ( dest );
+      comm_.exchange( dest );
     } 
 
     template <class FuncType, class GradType>
