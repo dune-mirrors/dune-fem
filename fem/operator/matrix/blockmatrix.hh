@@ -1000,6 +1000,11 @@ public:
     matrix_.resort();
   }
 
+  void print(std::ostream & s) const 
+  {
+    matrix_.print(s);
+  }
+
   //! empty method as we use right preconditioning here
   void createPreconditionMatrix() {}
 };
