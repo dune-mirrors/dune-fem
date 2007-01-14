@@ -10,11 +10,8 @@
 
 //- local includes 
 #include "../common/discretefunction.hh"
-#include "../common/fastbase.hh"
 #include "../common/localfunction.hh"
 #include "../common/dofiterator.hh"
-
-
 
 namespace Dune{
 
@@ -34,15 +31,58 @@ struct StaticDiscreteFunctionTraits {
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
 };
 
-namespace DofTypeWrapper { 
+template <class DofType>
+struct DofTypeWrapper
+{
+  enum { blockSize = DofType :: dimension };
+  static typename DofType::field_type & convert(DofType & val, int idx) 
+  { 
+    return val[idx]; 
+  }
+};
+
+template <>
+struct DofTypeWrapper<double>
+{
+  enum { blockSize = 1 };
+  static double & convert(double  & val, int idx) { return val; }
+};
+
+template < class DofStorageImp, class DofImp >
+class DoubleArrayWrapper
+{
+public:
+  typedef DofImp DofType;
+  typedef DofStorageImp DofStorageType;
+  typedef typename DofStorageType :: block_type DofBlockType;
+  typedef DoubleArrayWrapper<DofStorageType,DofType> ThisType;
+
+  typedef DofTypeWrapper<DofBlockType> DofWrapperType;
+  enum { blockSize = DofWrapperType :: blockSize };
   
-template <class DofType>
-static DofType & convert(FieldVector<DofType,1> & val) { return val[0]; }
+  //! Constructor (const)
+  DoubleArrayWrapper(DofStorageType & dofArray)
+    :  dofArray_ (dofArray) {}
+  
+  DofType& operator [] (int idx) 
+  {
+    int newIdx = idx%blockSize; 
+    int count  = idx/blockSize; 
+    return dofArray_[count][newIdx];
+  }
 
-template <class DofType>
-static const DofType & convert(DofType & val) { return val; }
+  const DofType& operator [] (int idx) const
+  {
+    int newIdx = idx%blockSize; 
+    int count  = idx/blockSize; 
+    return dofArray_[count][newIdx];
+  }
 
-}
+private:
+  //! the array holding the dofs 
+  DofStorageType & dofArray_;  
+}; // end DofIteratorStaticDiscreteFunction 
+
 
 //**********************************************************************
 //
@@ -71,12 +111,17 @@ public:
 
   //! Type of the range field
   typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
-  
-  /** \brief For ISTL-compatibility */
-  typedef FieldVector<RangeFieldType,1> block_type;
 
-    //! Type of the grid
+  /** \brief For ISTL-compatibility */
+  //typedef FieldVector<RangeFieldType,1> block_type;
+  typedef typename DofStorageImp :: block_type block_type; 
+
+  //! Type of the grid
   typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
+
+  //! dof manager 
+  typedef DofManager<GridType> DofManagerType;
+  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
   //! the local function implementation e 
   typedef StaticDiscreteLocalFunction<DiscreteFunctionSpaceType,DofStorageType> LocalFunctionImp;
@@ -100,6 +145,8 @@ public:
 
   //! the type of the unknowns 
   typedef RangeFieldType DofType;
+  typedef block_type DofBlockType;
+  typedef DoubleArrayWrapper<DofStorageType,DofType> LeakPointerType;
   
   //! Constructor makes Discrete Function  
   StaticDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
@@ -108,7 +155,7 @@ public:
   StaticDiscreteFunction ( const DiscreteFunctionSpaceType & f, const DofStorageType & org ) ;
   
   //! Constructor makes Discrete Function with name 
-  StaticDiscreteFunction ( const char * name, const DiscreteFunctionSpaceType & f ) ;
+  StaticDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) ;
   
   //! Constructor makes Discrete Function from copy 
   StaticDiscreteFunction (const StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType> & df); 
@@ -116,10 +163,6 @@ public:
   //! delete stack of free local functions belonging to this discrete
   //! function 
   ~StaticDiscreteFunction ();
-
-  // ***********  Interface  *************************
-  //! return object of type LocalFunctionType 
-  LocalFunctionType newLocalFunction () DUNE_DEPRECATED;
 
   //! return local function for given entity
   template <class EntityType>
@@ -129,18 +172,6 @@ public:
   template <class EntityType> 
   void localFunction ( const EntityType &en, LocalFunctionType & lf) DUNE_DEPRECATED; 
 
-  //! return reference to this 
-  //! this methods is only to fullfill the interface as parameter classes 
-  DiscreteFunctionType & argument    () { return *this; }
-
-  //! return reference to this 
-  //! this methods is only to fullfill the interface as parameter classes 
-  const DiscreteFunctionType & argument () const { return *this; }
-
-  //! return reference to this 
-  //! this methods is only to fullfill the interface as parameter classes 
-  DiscreteFunctionType & destination () { return *this; }
- 
   //! we use the default implementation 
   DofIteratorType dbegin ();
   
@@ -163,19 +194,10 @@ public:
   //! set all dofs to zero  
   void clear( );
 
-  //! set all dof to value x 
-  void set( RangeFieldType x ); 
-
   //! add g * scalar to discrete function 
   void addScaled ( const DiscreteFunctionType & g,
       const RangeFieldType &scalar); 
   
-  /** \todo Please to me! */
-  template <class GridIteratorType>
-  void addScaledLocal (GridIteratorType &it, 
-      const DiscreteFunctionType & g,
-      const RangeFieldType &scalar); 
- 
   //! add g to this on local entity
   template <class GridIteratorType>
   void addLocal (GridIteratorType &it, 
@@ -214,28 +236,39 @@ public:
   bool read_pgm(const char *filename); 
 
   //! return pointer to internal array for use of BLAS routines 
-  DofType * leakPointer () { return &(dofVec_[0]);  };
+  LeakPointerType& leakPointer () { return leakPointer_;  }
   //! return pointer to internal array for use of BLAS routines 
-  const DofType * leakPointer () const { return &(dofVec_[0]); };
+  const LeakPointerType& leakPointer () const { return leakPointer_; }
+
+  //! return reference to internal block vector 
+  DofStorageType& blockVector () const { return dofVec_; }
 
 private:  
   //! return object pointer of type LocalFunctionImp 
   LocalFunctionImp * newLocalFunctionObject () const;
 
-  // get memory for discrete function
-  void getMemory(); 
-
   //! the name of the function
   std::string name_;
+
+  typedef DGMapper<typename DiscreteFunctionSpaceType :: IndexSetType ,0,1> MapperType;
+  MapperType mapper_;
+
+  DofManagerType & dm_;
+
+  // MemObject that manages the memory for the dofs of this function
+  std::pair<MemObjectInterface*, DofStorageType*> memPair_;
 
   //! true if memory was allocated
   bool built_;
 
+  //! the dofs stored in an array
+  mutable DofStorageType& dofVec_;
+
   //! hold one object for addLocal and setLocal and so on 
   LocalFunctionImp localFunc_;
 
-  //! the dofs stored in an array
-  mutable DofStorageType dofVec_;
+  //! pretend to be double array
+  mutable LeakPointerType leakPointer_;
 }; // end class StaticDiscreteFunction 
 
 
@@ -256,11 +289,17 @@ class StaticDiscreteLocalFunction
   typedef StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageImp> DiscFuncType;
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
+  //CompileTimeChecker<dimrange == 1> check; 
   typedef typename DiscreteFunctionSpaceType::Traits::DomainType DomainType;
   typedef typename DiscreteFunctionSpaceType::Traits::RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType::Traits::JacobianRangeType JacobianRangeType;
+
+  typedef typename DiscreteFunctionSpaceType::Traits::GridType :: template
+    Codim<0> :: Entity EntityType;
   typedef DofStorageImp DofStorageType;
+
+  typedef typename DofStorageType :: block_type DofBlockType;
 
   friend class StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType>;
   friend class LocalFunctionWrapper < StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType> >;
@@ -278,35 +317,45 @@ public:
   const RangeFieldType & operator [] (int num) const;
 
   //! return number of degrees of freedom 
-  int numberOfDofs () const DUNE_DEPRECATED;
-
-  //! return number of degrees of freedom 
   int numDofs () const;
 
   //! sum over all local base functions 
-  template <class EntityType> 
   void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const ;
   
-  template <class EntityType>
+  //! sum over all local base functions 
+  void evaluate (const DomainType & x, RangeType & ret) const ;
+  
+  void evaluateLocal(const DomainType & x, RangeType & ret) const ;
   void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const ;
   //! sum over all local base functions evaluated on given quadrature point
-  template <class EntityType, class QuadratureType>
+  template <class QuadratureType>
   void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const;
 
+  template <class QuadratureType>
+  void evaluate (QuadratureType &quad, int quadPoint , RangeType & ret) const;
+
   //! sum over all local base functions evaluated on given quadrature point
-  template <class EntityType, class QuadratureType>
+  template < class QuadratureType>
   void jacobian (EntityType &en, QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const;
 
-  template <class EntityType>
   void jacobianLocal(EntityType& en, const DomainType& x, JacobianRangeType& ret) const ;
 
-  template <class EntityType>
   void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const;
   
 protected:
   //! update local function for given Entity  
-  template <class EntityType > 
-  void init ( const EntityType &en ) const;
+  template <class EntityImp> 
+  void init ( const EntityImp &en ) const;
+
+  //! return reference to entity
+  const EntityType& en() const 
+  {
+    assert( en_ ); 
+    return *en_;
+  }
+
+  //! actual entity 
+  mutable const EntityType* en_;
 
   //! the corresponding function space which provides the base function set
   const DiscreteFunctionSpaceType &fSpace_;
@@ -330,9 +379,6 @@ protected:
   //! number of all dofs 
   mutable int numOfDof_;
 
-  //! for example number of corners for linear elements 
-  mutable int numOfDifferentDofs_;
- 
   //! do we have the same base function set for all elements
   bool uniform_;
 
@@ -358,26 +404,35 @@ public:
   typedef DofImp DofType;
   typedef DofStorageImp DofStorageType;
   typedef DofIteratorStaticDiscreteFunction<DofStorageType,DofType> ThisType;
+
+  typedef typename DofStorageType :: block_type DofBlockType;
+  typedef DofTypeWrapper<DofBlockType> DofWrapperType;
+  enum { blockSize = DofWrapperType :: blockSize };
   
   //! Default constructor
   DofIteratorStaticDiscreteFunction() :
     dofArray_ (0) ,
-    count_() {}
+    count_(0),
+    idx_(0)
+  {}
 
   //! Constructor (const)
   DofIteratorStaticDiscreteFunction ( const DofStorageType & dofArray , int count )
     :  dofArray_ (const_cast<DofStorageType*>(&dofArray)) ,
-       count_ (count) {}
+       count_(count),
+       idx_(0) {}
   
   //! Constructor
   DofIteratorStaticDiscreteFunction(DofStorageType& dofArray, int count)
     : dofArray_(&dofArray),
-      count_(count) {}
+      count_(count),
+      idx_(0) {}
 
   //! Copy Constructor
   DofIteratorStaticDiscreteFunction (const ThisType& other)
     : dofArray_(other.dofArray_)
     , count_(other.count_) 
+    , idx_(other.idx_)
   {}
 
   //! Assignment operator
@@ -387,6 +442,7 @@ public:
     {
       dofArray_ = other.dofArray_;
       count_ = other.count_;
+      idx_   = other.idx_;
     }
     return *this;
   }
@@ -395,45 +451,34 @@ public:
   DofType & operator *()
   {
     assert((count_ >=0) && (count_ < dofArray_->size()));
-    //return GetValue::get((*dofArray_) [ count_ ]);
-    return DofTypeWrapper::template convert<DofType>((*dofArray_)[count_]);
-    //return (*dofArray_) [ count_ ];
+    //return DofWrapperType::convert((*dofArray_)[count_],idx_);
+    return ((*dofArray_)[count_][idx_]);
   }
 
   //! return dof read only 
   const DofType & operator * () const
   {
     assert((count_ >=0) && (count_ < dofArray_->size()));
-    //return GetValue::get((*dofArray_) [ count_ ]);
-    return DofTypeWrapper::template convert<DofType>((*dofArray_)[count_]);
-    //return (*dofArray_) [ count_ ];
+    //return DofWrapperType::convert((*dofArray_)[count_],idx_);
+    return ((*dofArray_)[count_][idx_]);
   }
 
   //! go next dof
   ThisType & operator++ ()
   {
-    ++count_;
+    ++idx_;
+    if(idx_ >= blockSize) 
+    {
+      idx_ = 0;
+      ++count_;
+    }
     return (*this);
   }
   
-  //! random access 
-  DofType& operator[] (int i)
-  {
-    assert((i >=0) && (i < dofArray_->size()));
-    return (*dofArray_)[i];
-  }
-
-  //! random access read only 
-  const DofType& operator[] (int i) const
-  {
-    assert((i >=0) && (i < dofArray_->size()));
-    return (*dofArray_)[i];
-  }
-
   //! compare
   bool operator == (const ThisType & I ) const
   {
-    return count_ == I.count_;
+    return (count_ == I.count_) && (idx_ == I.idx_);
   }
 
   //! compare 
@@ -446,7 +491,7 @@ public:
   int index () const { return count_; }
 
   //! set dof iterator back to begin , for const and not const Iterators
-  void reset () { count_ = 0; }
+  void reset () { count_ = 0; idx_ = 0; }
   
 private:
   //! the array holding the dofs 
@@ -454,9 +499,9 @@ private:
   
   //! index 
   mutable int count_;
+  mutable int idx_;
 
 }; // end DofIteratorStaticDiscreteFunction 
-
 
 } // end namespace Dune
 

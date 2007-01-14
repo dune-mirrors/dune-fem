@@ -10,9 +10,13 @@ inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
 StaticDiscreteFunction(const DiscreteFunctionSpaceType & f) 
 : DiscreteFunctionDefaultType ( f )  
   , name_ ( "no name" )
+  , mapper_(f.indexSet())
+  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
+  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
+  , dofVec_( *memPair_.second ) 
   , localFunc_ ( f , dofVec_ ) 
+  , leakPointer_(dofVec_)                             
 {
-  getMemory();
 }
 
 // Constructor making discrete function  
@@ -21,44 +25,47 @@ inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
 StaticDiscreteFunction(const DiscreteFunctionSpaceType & f, const DofStorageType & org ) 
 : DiscreteFunctionDefaultType ( f )  
   , name_ ( "no name" )
+  , mapper_(f.indexSet(),1)
+  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
+  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
+  , dofVec_( *memPair_.second ) 
   , localFunc_ ( f , dofVec_ ) 
+  , leakPointer_(dofVec_)                             
 {
-  getMemory();
   dofVec_ = org;
 }
 
 // Constructor making discrete function  
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-StaticDiscreteFunction(const char * name, const DiscreteFunctionSpaceType & f ) 
+StaticDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType & f ) 
 : DiscreteFunctionDefaultType ( f )  
   , name_ ( name )
+  , mapper_(f.indexSet(),1)
+  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
+  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
+  , dofVec_( *memPair_.second ) 
   , localFunc_ ( f , dofVec_ ) 
+  , leakPointer_(dofVec_)                             
 {
-  getMemory();
 }
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
 StaticDiscreteFunction(const StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp > & df ) :
   DiscreteFunctionDefaultType ( df.functionSpace_ ) 
-  , localFunc_ ( df.localFunc_ )
+  , mapper_(df.functionSpace_.indexSet(),1)
+  , dm_(df.dm_)
+  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
+  , dofVec_( *memPair_.second ) 
+  , localFunc_ ( this->functionSpace_ , dofVec_ )
+  , leakPointer_(dofVec_)        
 {
   name_ = df.name_;
   built_ = df.built_; 
 
   dofVec_ = df.dofVec_;
 } 
-
-template<class DiscreteFunctionSpaceType, class DofStorageImp >
-inline void StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::getMemory() 
-{
-  // the last level is done always
-  int length = this->functionSpace_.size();
-  dofVec_.resize( length );
-  for( int j=0; j<length; j++) dofVec_[j] = 0.0;
-  built_ = true;
-}
 
 // Desctructor 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
@@ -67,29 +74,21 @@ inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
 {
 }
 
-
-template<class DiscreteFunctionSpaceType, class DofStorageImp >
-inline void StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::set ( RangeFieldType x )
-{
-  for(int i=0; i<dofVec_.size(); i++)
-    dofVec_[i] = x; 
-}  
-
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline void StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::clear ()
 {
-  set ( 0.0 ); 
+  const int size = dofVec_.size();
+  for(int i=0; i<size; ++i) dofVec_[i] = 0.0; 
 }
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline void StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::print(std::ostream &s ) const
 {
-    s << "StaticDiscreteFunction '" << name_ << "'\n";
+  s << "StaticDiscreteFunction '" << name_ << "'\n";
   ConstDofIteratorType enddof = this->dend ();
   for(ConstDofIteratorType itdof = this->dbegin (); itdof != enddof; ++itdof) 
   {
-      //s << (*itdof) << " \n";
-      printf("%3.15e \n", *itdof);
+    s << (*itdof) << " \n";
   } 
 }
 //*************************************************************************
@@ -103,28 +102,22 @@ localFunction ( const EntityType &en , LocalFunctionType &lf )
   lf.init ( en );
 }
 
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline typename StaticDiscreteFunction<
+DiscreteFunctionSpaceType,DofStorageImp >:: LocalFunctionImp *
+StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
+newLocalFunctionObject () const
+
+{
+    return new LocalFunctionImp ( this->functionSpace_ , dofVec_ );
+}
+
 template<class DiscreteFunctionSpaceType, class DofStorageImp > template <class EntityType>
 inline typename StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >:: LocalFunctionType 
 StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >:: localFunction ( const EntityType &en ) const
 {
   return LocalFunctionType (en,*this);
 }
-
-template<class DiscreteFunctionSpaceType, class DofStorageImp > 
-inline typename StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >:: LocalFunctionImp * 
-StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-newLocalFunctionObject () const
-  
-{
-  return new LocalFunctionImp ( this->functionSpace_ , dofVec_ );
-} 
-
-template<class DiscreteFunctionSpaceType, class DofStorageImp > 
-inline typename StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >:: LocalFunctionType 
-StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >:: newLocalFunction ()
-{
-  return LocalFunctionType (*this);
-} 
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp > 
 inline typename StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::DofIteratorType 
@@ -207,8 +200,6 @@ read_xdr( const char *fn )
   // read xdr 
   xdrstdio_create(&xdrs, file, XDR_DECODE);     
 
-  getMemory();
-
   dofVec_.processXdr(&xdrs);
   
   xdr_destroy(&xdrs);
@@ -254,7 +245,6 @@ read_ascii( const char *fn )
     abort();
   }
   {
-    getMemory();
     int length;
     fscanf(infile,"%d \n",&length); 
     if(length != this->functionSpace_.size()) 
@@ -303,7 +293,6 @@ read_pgm( const char *fn )
   FILE *in;
   int v;
 
-  getMemory();
   in = fopen( fn, "r" );
   assert(in);
   fscanf( in, "P2\n%d %d\n%d\n", &v, &v, &v );
@@ -330,52 +319,6 @@ addScaled( const StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp
     dofVec_[i] += scalar*gvec[i];
 }
 
-template<class DiscreteFunctionSpaceType, class DofStorageImp >
-template<class GridIteratorType>
-inline void StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-addScaledLocal( GridIteratorType &it , 
-    const StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp > &g, const RangeFieldType &scalar )
-{
-  localFunction( *it , localFunc_ );
-  
-  StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp > &G = 
-      const_cast<StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp > &> (g);
-  G.localFunction(*it,G.localFunc_);
-
-  int length = localFunc_.numberOfDofs();
-  if(scalar == 1.)
-  {
-    for(int i=0; i<length; i++)
-      localFunc_[i] += G.localFunc_[i];
-  }
-  else if ( scalar == -1. )
-  {
-    for(int i=0; i<length; i++)
-      localFunc_[i] -= G.localFunc_[i];
-  }
-  else 
-  {
-    for(int i=0; i<length; i++)
-      localFunc_[i] += scalar * G.localFunc_[i];
-  }
-}
-
-template<class DiscreteFunctionSpaceType, class DofStorageImp >
-template<class GridIteratorType>
-inline void StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-addLocal( GridIteratorType &it , 
- const StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp > &g)
-{
-  localFunction( *it , localFunc_ );
-  
-  StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp > &G = 
-      const_cast<StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp > &> (g);
-  G.localFunction(*it,G.localFunc_);
-
-  int length = localFunc_.numberOfDofs();
-  for(int i=0; i<length; i++)
-    localFunc_[i] += G.localFunc_[i];
-}
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 template<class GridIteratorType>
@@ -411,7 +354,7 @@ template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 StaticDiscreteLocalFunction( const DiscreteFunctionSpaceType &f , 
               DofStorageImp & dofVec )
- : fSpace_ ( f ), dofVec_ ( dofVec ) 
+ : en_(0), fSpace_ ( f ), dofVec_ ( dofVec ) 
  , uniform_(true), init_(false) {}
       
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
@@ -435,19 +378,12 @@ StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::operat
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline int StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
-numberOfDofs () const 
-{
-  return numOfDof_;
-}
-
-template<class DiscreteFunctionSpaceType, class DofStorageImp >
-inline int StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 numDofs () const 
 {
   return numOfDof_;
 }
 
-template<class DiscreteFunctionSpaceType, class DofStorageImp > template <class EntityType>
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 evaluate (EntityType &en, const DomainType & x, RangeType & ret) const 
 {
@@ -456,7 +392,16 @@ evaluate (EntityType &en, const DomainType & x, RangeType & ret) const
   evaluateLocal(en, xtmp_, ret);
 }
 
-template<class DiscreteFunctionSpaceType, class DofStorageImp > template <class EntityType>
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
+evaluate (const DomainType & x, RangeType & ret) const 
+{
+  ret = 0.0;
+  xtmp_ = en().geometry().local(x);
+  evaluateLocal(xtmp_, ret);
+}
+
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
 {
@@ -475,16 +420,44 @@ evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
   }
 }
 
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
+evaluateLocal(const DomainType & x, RangeType & ret) const
+{
+  enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+  assert(init_);
+  //assert(en().geometry().checkInside(x));
+  ret = 0.0;
+  const BaseFunctionSetType& bSet = fSpace_.baseFunctionSet(en());
+
+  for (int i = 0; i < bSet.numBaseFunctions(); ++i)
+  {
+    bSet.eval(i, x, tmp_);
+    for (int l = 0; l < dimRange; ++l) 
+    {
+      ret[l] += (*values_[i]) * tmp_[l];
+    }
+  }
+}
+
 template<class DiscreteFunctionSpaceType, class DofStorageImp > 
-template <class EntityType, class QuadratureType> 
+template <class QuadratureType> 
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) const 
 {
   evaluateLocal(en, quad.point(quadPoint), ret);
 }
 
+template<class DiscreteFunctionSpaceType, class DofStorageImp > 
+template <class QuadratureType> 
+inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
+evaluate (QuadratureType &quad, int quadPoint, RangeType & ret) const 
+{
+  evaluateLocal(quad.point(quadPoint), ret);
+}
+
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
-template <class EntityType, class QuadratureType>
+template <class QuadratureType>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType & ret) const
 {
@@ -492,7 +465,6 @@ jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType
 }
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
-template <class EntityType>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 jacobian(EntityType& en, const DomainType& x,
          JacobianRangeType& ret) const
@@ -503,7 +475,6 @@ jacobian(EntityType& en, const DomainType& x,
 }
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
-template <class EntityType>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 jacobianLocal(EntityType& en, const DomainType& x,
               JacobianRangeType& ret) const
@@ -520,23 +491,22 @@ jacobianLocal(EntityType& en, const DomainType& x,
     bSet.jacobian(i, x, tmpGrad_);
 
     for (int l = 0; l < dimRange; ++l) {
-      tmpGrad_[l] *= (*values_)[i];
+      tmpGrad_[l] *= *(values_[i]);
         // * umtv or umv?
       en.geometry().jacobianInverseTransposed(x).umv(tmpGrad_[l], ret[l]);
     }
   }
 }
 
-template<class DiscreteFunctionSpaceType, class DofStorageImp > template <class EntityType> 
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+template <class EntityImp>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
-init (const EntityType &en ) const
+init (const EntityImp &en ) const
 {
   if(!uniform_ || !init_)
   {
     numOfDof_ = 
       fSpace_.baseFunctionSet(en).numBaseFunctions();
-    numOfDifferentDofs_ = 
-      fSpace_.baseFunctionSet(en).numDifferentBaseFunctions();
 
     if(numOfDof_ > values_.size())
       values_.resize( numOfDof_ );
@@ -544,8 +514,11 @@ init (const EntityType &en ) const
     init_ = true;
   }
 
-  for(int i=0; i<numOfDof_; i++)
-    values_ [i] = &(DofTypeWrapper::convert(dofVec_[fSpace_.mapToGlobal ( en , i)]));
+  en_ = &en;
+
+  DofBlockType& dofs = dofVec_[fSpace_.indexSet().index(en)] ;
+  assert( numOfDof_ == DofBlockType :: dimension );
+  for(int i=0; i<numOfDof_; i++) values_ [i] = &dofs[i]; 
   return ;
 } 
 
