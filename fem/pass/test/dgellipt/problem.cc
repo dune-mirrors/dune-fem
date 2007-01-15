@@ -6,13 +6,13 @@
 #define PROBLEM 1
 
 // shift solutions to avoid dirichlet 0 bnd 
-static const double globalShift = 0.0;
+static const double globalShift = 2.0;
 
 double exactFactor() 
 {
-  //return 1.0/(5.24*1e5);
+  return 1.0/(5.24*1e5);
   //return 2.0;
-  return 1.;
+  //return 1.;
   //return (5.24*1e5);
 }
 
@@ -247,7 +247,7 @@ bool boundaryDataFunction(const double x[dim], double & val)
 {
 #if PROBLEM == 1 
   val = exactSolution( x ); 
-  //if(x[0] <= 0.0) return false;
+  if(x[0] <= 0.0) return false;
   return true; 
 #endif
 
