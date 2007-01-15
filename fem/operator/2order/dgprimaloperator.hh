@@ -139,9 +139,6 @@ namespace Dune {
     
     typedef typename DiscreteModelType :: BoundaryIdentifierType BoundaryIdentifierType;    
 
-    typedef CommunicationManager<DiscreteFunctionSpaceType> SingleCommunicationManagerType; 
-    typedef CommunicationManager<DiscreteGradientSpaceType> GradCommunicationManagerType; 
-
     typedef typename LocalIdSetType :: IdType LocalIdType;
     typedef std::set< LocalIdType > EntityMarkerType; 
 
@@ -177,7 +174,6 @@ namespace Dune {
       gridPart_(spc_.gridPart()),
       localIdSet_(gridPart_.grid().localIdSet()),
       gradientSpace_(gradPass_.space()),
-      singleCommunicate_(spc_),
       dtMin_(std::numeric_limits<double>::max()),
       time_(0),
       elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
@@ -309,26 +305,11 @@ namespace Dune {
     // --multOEM
     void multOEM(const double * arg, double * dest) const
     {
-      // exchange data 
-      communicate( arg );
-      // calc dest = stabMatrix * arg 
-      matrixObj_.multOEM(arg,dest);
+      matrixObj_.multOEM( arg, dest );
     }
 
-  private:   
-    //! create discrete function from double * and communicate data 
-    //! assumes that x has size of single space 
-    void communicate(const double * x) const
-    {
-      if( spc_.grid().comm().size() <= 1 ) return ;
-
-      DestinationType dest("DGEllipt::communicate_tmp",spc_,x);
-      singleCommunicate_.exchange( dest );
-    }
-      
   public:
-    //! return refernence to system matrix, used by OEM-Solver
-    //const ThisType & systemMatrix () const { return *this; }
+    //! return refernence to system matrix, used by Solvers
     const MatrixObjectType & systemMatrix () const { return matrixObj_; }
     
     //! return reference to preconditioning matrix, used by OEM-Solver
@@ -1055,7 +1036,6 @@ namespace Dune {
     const GridPartType & gridPart_;
     const LocalIdSetType & localIdSet_;
     const DiscreteGradientSpaceType & gradientSpace_;
-    mutable SingleCommunicationManagerType singleCommunicate_;
     
     mutable double dtMin_;
   
