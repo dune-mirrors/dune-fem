@@ -333,7 +333,8 @@ namespace Dune {
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
 
-    enum { DimRange = FunctionSpaceType::DimRange };
+    enum { DimRange  = FunctionSpaceType::DimRange };
+    enum { DimDomain = FunctionSpaceType::DimDomain };
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -346,6 +347,11 @@ namespace Dune {
  
     typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+    
+    //! number of base functions 
+    enum { numBaseFunctions = DimRange * 
+        DGNumberOfBaseFunctions<polOrd,DimDomain>::numBaseFunctions }; 
+
   };
 
   //! A discontinuous Galerkin space
@@ -386,10 +392,6 @@ namespace Dune {
     //! Index set of space
     typedef typename Traits::IndexSetType IndexSetType;
 
-    //! type of base function set factory 
-    //typedef DiscontinuousGalerkinBaseFunctionFactory<
-    //  typename Traits::FunctionSpaceType, polOrd> FactoryType;
-
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType::DimRange };
 
@@ -403,8 +405,7 @@ namespace Dune {
     enum { polynomialOrder = polOrd };
 
     //! number of base functions 
-    enum { numBaseFunctions = dimRange * 
-        DGNumberOfBaseFunctions<polOrd,dimDomain>::numBaseFunctions }; 
+    enum { numBaseFunctions = Traits::numBaseFunctions };
 
     //! scalar space type 
     typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
