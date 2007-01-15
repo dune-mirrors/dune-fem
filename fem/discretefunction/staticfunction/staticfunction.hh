@@ -338,10 +338,14 @@ public:
   template < class QuadratureType>
   void jacobian (EntityType &en, QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const;
 
+  //! evaluate jacobian of local function 
   void jacobianLocal(EntityType& en, const DomainType& x, JacobianRangeType& ret) const ;
 
+  //! evaluate jacobian of local function 
   void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const;
   
+  //! return reference to base function set
+  const BaseFunctionSetType& baseFunctionSet() const;
 protected:
   //! update local function for given Entity  
   template <class EntityImp> 
@@ -384,6 +388,9 @@ protected:
 
   //! is it initialised?
   mutable bool init_;
+
+  //! corresponding base function set 
+  mutable const BaseFunctionSetType* baseSet_; 
   
 }; // end StaticDiscreteLocalFunction 
 

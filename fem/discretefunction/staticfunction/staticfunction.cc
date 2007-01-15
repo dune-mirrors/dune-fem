@@ -355,7 +355,10 @@ inline StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >:
 StaticDiscreteLocalFunction( const DiscreteFunctionSpaceType &f , 
               DofStorageImp & dofVec )
  : en_(0), fSpace_ ( f ), dofVec_ ( dofVec ) 
- , uniform_(true), init_(false) {}
+ , uniform_(! (fSpace_.multipleGeometryTypes()))
+ , init_(false)
+ , baseSet_(0)
+{}
       
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::~StaticDiscreteLocalFunction() 
@@ -394,26 +397,17 @@ evaluate (EntityType &en, const DomainType & x, RangeType & ret) const
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
-evaluate (const DomainType & x, RangeType & ret) const 
-{
-  ret = 0.0;
-  xtmp_ = en().geometry().local(x);
-  evaluateLocal(xtmp_, ret);
-}
-
-template<class DiscreteFunctionSpaceType, class DofStorageImp >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
-evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
+evaluate (const DomainType & local, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
-  assert(en.geometry().checkInside(x));
-  ret *= 0.0;
-  const BaseFunctionSetType& bSet = fSpace_.baseFunctionSet(en);
+  assert(en().geometry().checkInside(local));
+  ret = 0.0;
+  const BaseFunctionSetType& bSet = baseFunctionSet();
 
   for (int i = 0; i < bSet.numBaseFunctions(); ++i)
   {
-    bSet.eval(i, x, tmp_);
+    bSet.eval(i, local , tmp_);
     for (int l = 0; l < dimRange; ++l) {
       ret[l] += (*values_[i]) * tmp_[l];
     }
@@ -422,13 +416,20 @@ evaluateLocal (EntityType &en, const DomainType & x, RangeType & ret) const
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
+evaluateLocal (EntityType &en, const DomainType & local, RangeType & ret) const
+{
+  evaluate(local,ret);
+}
+
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 evaluateLocal(const DomainType & x, RangeType & ret) const
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
-  //assert(en().geometry().checkInside(x));
+  assert(en().geometry().checkInside(x));
   ret = 0.0;
-  const BaseFunctionSetType& bSet = fSpace_.baseFunctionSet(en());
+  const BaseFunctionSetType& bSet = baseFunctionSet();
 
   for (int i = 0; i < bSet.numBaseFunctions(); ++i)
   {
@@ -483,8 +484,8 @@ jacobianLocal(EntityType& en, const DomainType& x,
   enum { dim = EntityType::dimension };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
-  ret *= 0.0;
-  const BaseFunctionSetType& bSet = fSpace_.baseFunctionSet(en);
+  ret = 0.0;
+  const BaseFunctionSetType& bSet = baseFunctionSet();
 
   for (int i = 0; i < bSet.numBaseFunctions(); ++i) {
     tmpGrad_ *= 0.0;
@@ -499,14 +500,25 @@ jacobianLocal(EntityType& en, const DomainType& x,
 }
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline
+const typename
+StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >:: BaseFunctionSetType&
+StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
+baseFunctionSet() const 
+{
+  assert(init_ && baseSet_);
+  return *baseSet_;
+}
+
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
 template <class EntityImp>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >::
 init (const EntityImp &en ) const
 {
   if(!uniform_ || !init_)
   {
-    numOfDof_ = 
-      fSpace_.baseFunctionSet(en).numBaseFunctions();
+    baseSet_  = &fSpace_.baseFunctionSet(en);
+    numOfDof_ = baseSet_->numBaseFunctions();
 
     if(numOfDof_ > values_.size())
       values_.resize( numOfDof_ );
