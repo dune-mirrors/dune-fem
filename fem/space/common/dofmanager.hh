@@ -688,20 +688,17 @@ private:
   // name of mem object, i.e. name of discrete function 
   std::string name_;
 
-  // vector represented by array 
-  VectorPointerType * vector_;
-
   CheckMemObjectResize < ThisType > checkResize_; 
   ResizeMemoryObjects  < ThisType > resizeMemObj_; 
 
 public:  
   // Constructor of MemObject, only to call from DofManager 
   DummyMemObject ( const MapperType & mapper, 
-                   std::string name , VectorPointerType * vector ) 
-    : mapper_ (mapper) , array_( mapper_.size() , vector ), name_ (name) 
-    , vector_ (vector) , checkResize_(*this) , resizeMemObj_(*this) 
+                   std::string name , const VectorPointerType * vector ) 
+    : mapper_ (mapper) 
+    , array_( mapper_.size() , const_cast<VectorPointerType *> (vector) ), name_ (name) 
+    , checkResize_(*this) , resizeMemObj_(*this) 
     {
-      assert( vector_ );
     } 
 
   //! returns name of this vector 
@@ -760,7 +757,99 @@ public:
   //! return used memory size 
   int usedMemorySize() const 
   {
-    return sizeof(ThisType) + array_.usedMemorySize(); 
+    return sizeof(ThisType) + UsedMemorySize<DofArrayType>::used(array_); 
+  }
+};
+
+//! Dummy Object storing array, here pointer and array are of the same type 
+template <class MapperType,class VectorPointerType>
+class DummyMemObject<MapperType,VectorPointerType,VectorPointerType> : public MemObjectInterface
+{
+private:
+  typedef VectorPointerType DofArrayType;
+  typedef DummyMemObject < MapperType , DofArrayType, VectorPointerType > MemObjectType;
+  typedef DummyMemObject < MapperType , DofArrayType, VectorPointerType > ThisType;
+  
+  // the dof set stores number of dofs on entity for each codim
+  const MapperType & mapper_;
+
+  // Array which the dofs are stored in 
+  DofArrayType& array_;
+
+  // name of mem object, i.e. name of discrete function 
+  std::string name_;
+
+  CheckMemObjectResize < ThisType > checkResize_; 
+  ResizeMemoryObjects  < ThisType > resizeMemObj_; 
+
+public:  
+  // Constructor of MemObject, only to call from DofManager 
+  DummyMemObject ( const MapperType & mapper, 
+                   std::string name , const VectorPointerType * vector ) 
+    : mapper_ (mapper) 
+    , array_(const_cast<VectorPointerType&> (*vector)), name_ (name) 
+    , checkResize_(*this) , resizeMemObj_(*this) 
+  {
+    assert( vector );
+  } 
+
+  //! returns name of this vector 
+  const char * name () const { return name_.c_str(); }
+
+  //! if grid changed, then calulate new size of dofset 
+  int newSize () const { return mapper_.newSize(); }  
+
+  //! return size of underlying array 
+  int size () const { return array_.size(); }
+
+  //! return true if array needs resize 
+  bool resizeNeeded () const 
+  {
+    assert( (size() != newSize()) ? 
+        (std::cerr << "WARNING: DummyMemObject's vector is not up to date! \n" , 0) : 1);
+    return false; 
+  }
+
+  //! return number of dofs on one element 
+  int elementMemory () const 
+  {
+    return mapper_.numDofs();
+  }
+
+  //! return number of entities  
+  int additionalSizeEstimate () const 
+  { 
+    return mapper_.additionalSizeEstimate(); 
+  }
+
+  //! resize the memory with the new size 
+  void resize () 
+  {
+    assert( (size() != newSize()) ? 
+        (std::cerr << "WARNING: DummyMemObject's may not resize vectors! \n" , 1) : 1);
+  }
+
+  //! resize the memory with the new size 
+  void resize ( int nSize ) 
+  {
+    assert( (size() != newSize()) ? 
+        (std::cerr << "WARNING: DummyMemObject's may not resize vectors! \n" , 1) : 1);
+  }
+
+  //! copy the dof from the rear section of the vector to the holes 
+  void dofCompress () 
+  {
+    assert( (size() != newSize()) ? 
+        (std::cerr << "WARNING: DummyMemObject's may not compress vectors! \n" , 1) : 1);
+  }
+
+  //! return reference to array for DiscreteFunction 
+  DofArrayType & getArray() { return array_; } 
+  
+  //! return used memory size 
+  int usedMemorySize() const 
+  {
+    return sizeof(ThisType) + UsedMemorySize<DofArrayType>::used(array_); 
   }
 };
 
@@ -1016,7 +1105,7 @@ public:
   //! we know our DofStorage which is the actual DofArray  
   template <class DofStorageType, class MapperType , class VectorPointerType >
   std::pair<MemObjectInterface*, DofStorageType*>
-  addDummyDofSet(const DofStorageType* ds, const MapperType& mapper, std::string name, VectorPointerType * vec );
+  addDummyDofSet(const DofStorageType* ds, const MapperType& mapper, std::string name, const VectorPointerType * vec );
 
   //! remove MemObject, is called from DiscreteFucntionSpace at sign out of
   //! DiscreteFunction 
@@ -1374,7 +1463,8 @@ template <class GridType>
 template <class DofStorageType, class MapperType , class VectorPointerType >
 std::pair<MemObjectInterface*, DofStorageType*>
 DofManager<GridType>::
-addDummyDofSet(const DofStorageType * ds, const MapperType & mapper, std::string name, VectorPointerType * vector )
+addDummyDofSet(const DofStorageType * ds, const MapperType & mapper, 
+               std::string name, const VectorPointerType * vector )
 {
   assert( name.c_str() != 0);
   dverb << "Adding '" << name << "' to DofManager! \n";

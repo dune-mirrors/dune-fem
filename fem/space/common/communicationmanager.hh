@@ -270,7 +270,7 @@ namespace Dune {
     template <class DataImp> 
     void writeBuffer(const int link,
                      ObjectStreamType & os, 
-                     const DataImp * data) const 
+                     const DataImp data) const 
     {
       const IndexMapType & indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
@@ -278,9 +278,11 @@ namespace Dune {
       // reserve buffer memory at once 
       os.reserve( size * sizeof(DataImp) );
 
+      double val= 0.0;
       for(int i=0; i<size; ++i)
       {
-        os.write( data[ indexMap[i] ] );
+        val = data[ indexMap[i] ];
+        os.write( val );
       }
     }
   
@@ -288,7 +290,7 @@ namespace Dune {
     template <class DataImp, class OperationImp> 
     void readBuffer(const int link ,
                     ObjectStreamType & os, 
-                    DataImp * data,
+                    DataImp data,
                     const OperationImp *) const 
     {
       const IndexMapType & indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
