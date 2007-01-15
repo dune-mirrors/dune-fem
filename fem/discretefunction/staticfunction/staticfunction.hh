@@ -55,6 +55,7 @@ struct DofTypeWrapper<double>
   static double & convert(double  & val, int idx) { return val; }
 };
 
+//! conversion class to behave BlockVector like double *
 template < class DofStorageImp, class DofImp >
 class DoubleArrayWrapper
 {
@@ -71,6 +72,9 @@ public:
   DoubleArrayWrapper(DofStorageType & dofArray)
     :  dofArray_ (dofArray) {}
   
+  DoubleArrayWrapper(const DoubleArrayWrapper& org)
+    : dofArray_(org.dofArray_) {}
+
   DofType& operator [] (int idx) 
   {
     int newIdx = idx%blockSize; 
@@ -160,11 +164,11 @@ public:
   //! Constructor makes Discrete Function  
   StaticDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
   
-  //! Constructor makes Discrete Function  
-  StaticDiscreteFunction ( const DiscreteFunctionSpaceType & f, const DofStorageType & org ) ;
-  
   //! Constructor makes Discrete Function with name 
   StaticDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) ;
+  
+  //! Constructor makes Discrete Function  
+  StaticDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const DofStorageType & data ) ;
   
   //! Constructor makes Discrete Function from copy 
   StaticDiscreteFunction (const StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType> & df); 

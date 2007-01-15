@@ -22,22 +22,6 @@ StaticDiscreteFunction(const DiscreteFunctionSpaceType & f)
 // Constructor making discrete function  
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-StaticDiscreteFunction(const DiscreteFunctionSpaceType & f, const DofStorageType & org ) 
-: DiscreteFunctionDefaultType ( f )  
-  , name_ ( "no name" )
-  , mapper_(f.indexSet(),1)
-  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
-  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
-  , dofVec_( *memPair_.second ) 
-  , localFunc_ ( f , mapper_ , dofVec_ ) 
-  , leakPointer_(dofVec_)                             
-{
-  dofVec_ = org;
-}
-
-// Constructor making discrete function  
-template<class DiscreteFunctionSpaceType, class DofStorageImp >
-inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
 StaticDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType & f ) 
 : DiscreteFunctionDefaultType ( f )  
   , name_ ( name )
@@ -46,6 +30,22 @@ StaticDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType &
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
   , localFunc_ ( f , mapper_, dofVec_ ) 
+  , leakPointer_(dofVec_)                             
+{
+}
+
+// Constructor making discrete function  
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
+StaticDiscreteFunction(const std::string name, 
+    const DiscreteFunctionSpaceType & f, const DofStorageType & data ) 
+: DiscreteFunctionDefaultType ( f )  
+  , name_ ( name )
+  , mapper_(f.indexSet(),1)
+  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
+  , memPair_(dm_.addDummyDofSet(&dofVec_, mapper_, name_, &data)) 
+  , dofVec_( *memPair_.second ) 
+  , localFunc_ ( f , mapper_ , dofVec_ ) 
   , leakPointer_(dofVec_)                             
 {
 }
@@ -72,6 +72,7 @@ template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
 ~StaticDiscreteFunction() 
 {
+  dm_.removeDofSet(*memPair_.first);
 }
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
