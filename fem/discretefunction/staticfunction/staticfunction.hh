@@ -7,6 +7,7 @@
 
 //- Dune inlcudes 
 #include <dune/common/array.hh>
+#include <dune/istl/bvector.hh>
 
 //- local includes 
 #include "../common/discretefunction.hh"
@@ -113,13 +114,13 @@ public:
   typedef StaticDiscreteFunction < DiscreteFunctionSpaceType, DofStorageType > DiscreteFunctionType;
 
   //! Type of the range field
-  typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
   /** \brief For ISTL-compatibility */
-  typedef typename DofStorageImp :: block_type block_type; 
+  typedef typename DofStorageType :: block_type block_type; 
 
   //! Type of the grid
-  typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
+  typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
   //! dof manager 
   typedef DofManager<GridType> DofManagerType;
@@ -140,10 +141,6 @@ public:
 
   //! The associated discrete function space
   typedef DiscreteFunctionSpaceType FunctionSpaceType;
-
-  //! our traits, like DofIterator etc. 
-  typedef StaticDiscreteFunctionTraits 
-    <DiscreteFunctionSpaceType,DofStorageType > Traits;
 
   //! the type of the unknowns 
   typedef RangeFieldType DofType;
@@ -292,7 +289,6 @@ class StaticDiscreteLocalFunction
   typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
   typedef StaticDiscreteLocalFunction < DiscreteFunctionType > ThisType;
-  typedef DiscreteFunctionImp DiscreteFunctionType;
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
   //CompileTimeChecker<dimrange == 1> check; 
