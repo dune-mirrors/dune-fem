@@ -5,13 +5,15 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/preconditioners.hh>
 
+#include <dune/fem/discretefunction/staticfunction.hh>
+
 namespace Dune { 
 
 //#if HAVE_DUNE_ISTL 
   ///////////////////////////////////////////////////////
   // --BlockMatrixHandle
   //////////////////////////////////////////////////////
-  template <class LittleBlockType> 
+  template <class LittleBlockType, class DiscreteFunctionType> 
   class ImprovedBCRSMatrix : public BCRSMatrix<LittleBlockType> 
   {
     public:
@@ -58,10 +60,37 @@ namespace Dune {
       /** \brief Const iterator over the matrix rows */
       typedef typename BaseType :: ConstRowIterator ConstRowIterator;
 
+      //! type of discrete function space 
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType SpaceType;
+
+      //! type of block vector 
+      typedef typename DiscreteFunctionType :: DofStorageType  BlockVectorType; 
+
+      //! type of used communication manager  
+      typedef CommunicationManager<SpaceType> CommunicationManagerType; 
+
+      //! our function space  
+      const SpaceType* space_; 
+
+      //! communication manager 
+      mutable CommunicationManagerType* comm_;
     public:
+      ImprovedBCRSMatrix(const SpaceType & space, 
+                         CommunicationManagerType& comm,
+                         size_type rows, size_type cols, size_type nz)
+        : BaseType (rows,cols, BaseType::row_wise)
+        , nz_(nz)
+        , space_(&space)
+        , comm_(&comm)         
+      {
+        std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
+      }
+
       ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
         : BaseType (rows,cols, BaseType::row_wise)
         , nz_(nz)
+        , space_(0)
+        , comm_(0)         
       {
         std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
@@ -173,6 +202,46 @@ namespace Dune {
         }
       }
 
+      void communicate(const BlockVectorType& arg) const 
+      {
+        if(comm_)
+        {
+          assert( space_ );
+          // if serial run, just return 
+          if(space_->grid().comm().size() <= 1) 
+          {
+            std::cout << "Only one process, returning! \n";
+            return;
+          }
+
+          // exchange data 
+          DiscreteFunctionType tmp("ImprovedBCRSMatrix::communicate_tmp",*space_,arg);
+          comm_->exchange( tmp );
+        }
+      }
+
+      //! mult y = Ax 
+      void mult(const BlockVectorType& x, BlockVectorType& y) const 
+      {
+        // exchange data 
+        communicate( x );
+
+        /*
+        ConstRowIterator endi=this->end();
+        for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+        {
+          ConstColIterator endj = (*i).end();
+          for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          {
+            FMatrixHelp::multAssign((*j),x[j.index()],y[i.index()]);
+          }
+        }
+        */
+
+        // multiply 
+        y = 0;
+        this->umv(x,y);
+      }
   };
 
   template <class RowSpaceType, class ColumnSpaceType> 
@@ -186,9 +255,11 @@ namespace Dune {
     typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
     
     typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
-    typedef ImprovedBCRSMatrix< LittleBlockType > MatrixType;
-   
     typedef BlockVector< FieldVector<RangeFieldType, littleRows> > BlockVectorType; 
+
+    typedef StaticDiscreteFunction< RowSpaceType , BlockVectorType>  DiscreteFunctionType; 
+    typedef ImprovedBCRSMatrix< LittleBlockType , DiscreteFunctionType > MatrixType;
+   
     typedef SeqILUn<MatrixType,BlockVectorType,BlockVectorType> PreconditionMatrixType;
 
     template <class MatrixImp> 
@@ -252,6 +323,7 @@ namespace Dune {
 
   public:
     typedef LocalMatrix<MatrixType> LocalMatrixType;
+    typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
 
     const RowSpaceType & rowSpace_;
     const ColumnSpaceType & colSpace_;
@@ -261,6 +333,8 @@ namespace Dune {
 
     mutable MatrixType* matrix_;
     mutable PreconditionMatrixType* preconder_;
+
+    CommunicationManagerType comm_;
 
     const int numIterations_; 
     const double relaxFactor_; 
@@ -277,6 +351,7 @@ namespace Dune {
       , size_(-1)
       , matrix_(0)
       , preconder_(0)
+      , comm_(rowSpace_)
       , numIterations_(5)
       , relaxFactor_(1.1)
       , preconditioning_(preconditioning)
@@ -325,7 +400,7 @@ namespace Dune {
         delete matrix_;
         delete preconder_; preconder_ = 0;
         size_ = rowSpace_.indexSet().size(0);
-        matrix_ = new MatrixType(rowSpace_.indexSet().size(0),colSpace_.indexSet().size(0),factor_);
+        matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0),factor_);
         matrix().setup(rowSpace_,colSpace_);
       }
     }
