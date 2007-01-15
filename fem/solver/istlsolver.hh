@@ -10,6 +10,44 @@
 
 namespace Dune {
 
+
+  //! Default implementation for the scalar case
+  template<class X ,class CommunicatorType>
+  class ParaScalarProduct : public ScalarProduct<X>
+  {
+    const CommunicatorType& comm_;
+  public:
+    ParaScalarProduct(const CommunicatorType& comm) : comm_(comm) {} 
+
+    //! export types
+    typedef X domain_type;
+    typedef typename X::field_type field_type;
+    
+    //! define the category
+    enum {category=SolverCategory::sequential};
+    
+    /*! \brief Dot product of two vectors. 
+      It is assumed that the vectors are consistent on the interior+border
+      partition.
+     */
+    virtual field_type dot (const X& x, const X& y)
+    {
+      field_type val = x*y;
+      val = comm_.sum( val );
+      return val;
+    }
+
+    /*! \brief Norm of a right-hand side vector. 
+      The vector must be consistent on the interior+border partition
+     */
+    virtual double norm (const X& x)
+    {
+      double val = x.two_norm();
+      val = comm_.sum( val ); 
+      return val;
+    }
+  };
+
   template<class X, class Y>
   class EmptyPreconditioner : public Preconditioner<X,Y> {
   public:
@@ -75,6 +113,52 @@ namespace Dune {
     virtual ~EmptyPreconditioner () {}
   };
 
+  //=====================================================================
+  // Implementation for ISTL-matrix based operator
+  //=====================================================================
+
+  /*! 
+    \brief Adapter to turn a matrix into a linear operator.
+    Adapts a matrix to the assembled linear operator interface
+  */
+  template<class MatrixType, class X, class Y>
+  class ParallelMatrixAdapter 
+    : public AssembledLinearOperator<MatrixType,X,Y>
+  {
+  public:
+    //! export types
+    typedef MatrixType  matrix_type;
+    typedef X domain_type;
+    typedef Y range_type;
+    typedef typename X::field_type field_type;
+
+    //! define the category
+    enum {category=SolverCategory::sequential};
+
+    //! constructor: just store a reference to a matrix
+    ParallelMatrixAdapter (const MatrixType& A) : matrix_(A) {}
+
+    //! apply operator to x:  \f$ y = A(x) \f$
+    virtual void apply (const X& x, Y& y) const
+    {
+      matrix_.mult(x,y);
+    }
+
+    //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+    {
+      matrix_.usmv(alpha,x,y);
+    }
+
+    //! get matrix via *
+    virtual const MatrixType& getmat () const
+    {
+      return matrix_;
+    }
+
+  private:
+    const MatrixType& matrix_;
+  };
 
   
 // BICG STAB scheme 
@@ -106,36 +190,40 @@ private:
       if( op.hasPreconditionMatrix() ) 
       {
         solve(op.systemMatrix().matrix(),op.preconditionMatrix(),
-              arg,dest,eps,maxIter,verbose);
+              arg,dest,arg.space().grid().comm(),eps,maxIter,verbose);
       }
       else 
       {
         EmptyPreconditioner<BlockVectorType,BlockVectorType> preconditioner;
         solve(op.systemMatrix().matrix(),preconditioner,
-            arg,dest,eps,maxIter,verbose);
+            arg,dest,arg.space().grid().comm(),eps,maxIter,verbose);
       }
     }
 
     template <class MatrixType, 
               class PreconditionerType,
-              class DiscreteFunctionImp>
+              class DiscreteFunctionImp,
+              class CommunicatorType>
     static void solve(const MatrixType & m,
                  const PreconditionerType & preconditioner,
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
+                 const CommunicatorType& comm,
                  double eps, int maxIter, bool verbose)
     {
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      typedef MatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
+      typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
       MatrixOperatorType mat(const_cast<MatrixType&> (m));
 
       int verb = (verbose) ? 2 : 0;
         
-      BiCGSTABSolver<BlockVectorType> solver(mat,
+      ParaScalarProduct<BlockVectorType,CommunicatorType> scp(comm); 
+      BiCGSTABSolver<BlockVectorType> solver(mat,scp,
           const_cast<PreconditionerType&> (preconditioner),
           eps,maxIter,verb);    
 
       InverseOperatorResult returnInfo;
+  
       solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
     }
   };
