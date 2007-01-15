@@ -281,9 +281,9 @@ public:
       return false;
   } 
 
-  //! reallocate vector with new size nsize
+  //! resize vector with new size nsize
   //! if nsize is smaller then actual memSize, size is just set to new value
-  void realloc ( int nsize )
+  void resize ( int nsize )
   {
     assert(myProperty_);
     assert(nsize >= 0);
@@ -311,12 +311,6 @@ public:
 
     size_ = nsize;
     memSize_ = nMemSize;
-  }
-
-  //! compatiblity with std::vector 
-  void resize ( int nsize )
-  {
-    realloc(nsize);
   }
 
   //! return size of vector in bytes 
@@ -361,6 +355,27 @@ inline bool DofArray<double>::processXdr(XDR *xdrs)
   else
     return false;
 }
+
+template<class ArrayType>
+struct UsedMemorySize
+{
+  typedef typename ArrayType :: block_type ValueType;
+  static size_t used(const ArrayType & array)  
+  {
+    return array.size() * sizeof(ValueType);
+  }
+};
+
+template<class ValueType>
+struct UsedMemorySize<DofArray<ValueType> >
+{
+  typedef DofArray<ValueType> ArrayType;
+  static size_t used(const ArrayType & array)  
+  {
+    return array.usedMemorySize();
+  }
+};
+
 //******************************************************************
 //
 //  IndexSetObject
@@ -500,10 +515,10 @@ class MemObjectInterface
 public:
   virtual ~MemObjectInterface() {};
   
-  //! reallocate memory 
-  virtual void realloc () = 0;
-  //! reallocate memory 
-  virtual void realloc (int newSize) = 0;
+  //! resize memory 
+  virtual void resize () = 0;
+  //! resize memory 
+  virtual void resize (int newSize) = 0;
   //! size of space, i.e. mapper.size()
   virtual int size () const = 0;
   //! additional size needed for restrict 
@@ -610,14 +625,14 @@ public:
     return mapper_.additionalSizeEstimate(); 
   }
 
-  //! reallocate the memory with the new size 
-  void realloc () 
+  //! resize the memory with the new size 
+  void resize () 
   {
     array_.resize( newSize() );
   }
 
-  //! reallocate the memory with the new size 
-  void realloc ( int nSize ) 
+  //! resize the memory with the new size 
+  void resize ( int nSize ) 
   {
     array_.resize( nSize );
   }
@@ -647,8 +662,7 @@ public:
   //! return used memory size 
   int usedMemorySize() const 
   {
-    //return sizeof(ThisType) + array_.usedMemorySize(); 
-    return 0; 
+    return sizeof(ThisType) + UsedMemorySize<DofArrayType>::used(array_); 
   }
 };
 
@@ -719,15 +733,15 @@ public:
     return mapper_.additionalSizeEstimate(); 
   }
 
-  //! reallocate the memory with the new size 
-  void realloc () 
+  //! resize the memory with the new size 
+  void resize () 
   {
     assert( (size() != newSize()) ? 
         (std::cerr << "WARNING: DummyMemObject's may not resize vectors! \n" , 1) : 1);
   }
 
-  //! reallocate the memory with the new size 
-  void realloc ( int nSize ) 
+  //! resize the memory with the new size 
+  void resize ( int nSize ) 
   {
     assert( (size() != newSize()) ? 
         (std::cerr << "WARNING: DummyMemObject's may not resize vectors! \n" , 1) : 1);
@@ -823,7 +837,7 @@ public:
   // resize with own size plus chunksize 
   void apply ( int & nsize )
   {
-    memobj_.realloc ( memobj_.size() + memobj_.elementMemory() * nsize );  
+    memobj_.resize ( memobj_.size() + memobj_.elementMemory() * nsize );  
   }
 };
 
@@ -1047,7 +1061,7 @@ public:
     {
       int addSize = (*it)->additionalSizeEstimate();
       chunkSize_ = std::max( addSize , chunkSize_ );
-      (*it)->realloc ( (*it)->size() + addSize );
+      (*it)->resize ( (*it)->size() + addSize );
     }
   }
   
@@ -1117,7 +1131,7 @@ private:
       int size  = (*it)->size();
       int nSize = (*it)->newSize();
       chunkSize_ = std::max( std::abs(nSize - size) , chunkSize_ );
-      (*it)->realloc ( nSize );
+      (*it)->resize ( nSize );
     }
   }
 
