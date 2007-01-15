@@ -112,7 +112,7 @@ namespace Dune {
     
     //my Typedefs
     enum { dimGradRange = dimDomain * dimRange };
-    enum { polOrd =DiscreteFunctionSpaceType::polOrd};
+    enum { polOrd =DiscreteFunctionSpaceType::polynomialOrder };
 
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
