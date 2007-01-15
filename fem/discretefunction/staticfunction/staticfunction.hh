@@ -16,7 +16,7 @@
 namespace Dune{
 
 template <class DiscreteFunctionSpaceType,  class DofStorageImp = Array<typename DiscreteFunctionSpaceType::RangeFieldType> > class StaticDiscreteFunction;
-template <class DiscreteFunctionSpaceType,  class DofStorageImp> class StaticDiscreteLocalFunction;
+template <class DiscreteFunctionType> class StaticDiscreteLocalFunction;
 template <class DofStorageImp,class DofImp> class DofIteratorStaticDiscreteFunction;
 
 
@@ -25,7 +25,7 @@ struct StaticDiscreteFunctionTraits {
   typedef DofStorageImp DofStorageType;
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
   typedef StaticDiscreteFunction<DiscreteFunctionSpaceImp,DofStorageType> DiscreteFunctionType;
-  typedef StaticDiscreteLocalFunction<DiscreteFunctionSpaceImp,DofStorageType> LocalFunctionImp;
+  typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
   typedef LocalFunctionWrapper<DiscreteFunctionType> LocalFunctionType;
   typedef DofIteratorStaticDiscreteFunction<DofStorageType,typename DiscreteFunctionSpaceImp::RangeFieldType> DofIteratorType;
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
@@ -103,6 +103,9 @@ class StaticDiscreteFunction
 
   enum { myId_ = 0};
 public:
+  //! traits of this type 
+  typedef StaticDiscreteFunctionTraits<DiscreteFunctionSpaceType,DofStorageImp> Traits;
+  
   //! type of underlying array
   typedef DofStorageImp DofStorageType;
 
@@ -113,7 +116,6 @@ public:
   typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
 
   /** \brief For ISTL-compatibility */
-  //typedef FieldVector<RangeFieldType,1> block_type;
   typedef typename DofStorageImp :: block_type block_type; 
 
   //! Type of the grid
@@ -124,10 +126,10 @@ public:
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
   //! the local function implementation e 
-  typedef StaticDiscreteLocalFunction<DiscreteFunctionSpaceType,DofStorageType> LocalFunctionImp;
+  typedef typename Traits :: LocalFunctionImp LocalFunctionImp;
 
   //! LocalFunctionType is the exported lf type 
-  typedef LocalFunctionWrapper < DiscreteFunctionType > LocalFunctionType;
+  typedef typename Traits :: LocalFunctionType LocalFunctionType;
 
   // the storage of the local functions 
   typedef LocalFunctionStorage< DiscreteFunctionType > LocalFunctionStorageType;
@@ -148,6 +150,9 @@ public:
   typedef block_type DofBlockType;
   typedef DoubleArrayWrapper<DofStorageType,DofType> LeakPointerType;
   
+  //! needs additional mapper 
+  typedef DGMapper<typename DiscreteFunctionSpaceType :: IndexSetType ,0,1> MapperType;
+
   //! Constructor makes Discrete Function  
   StaticDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
   
@@ -250,7 +255,6 @@ private:
   //! the name of the function
   std::string name_;
 
-  typedef DGMapper<typename DiscreteFunctionSpaceType :: IndexSetType ,0,1> MapperType;
   MapperType mapper_;
 
   DofManagerType & dm_;
@@ -279,14 +283,16 @@ private:
 //! Implementation of the local functions 
 //
 //**************************************************************************
-template < class DiscreteFunctionSpaceType , class DofStorageImp > 
+template < class DiscreteFunctionImp > 
 class StaticDiscreteLocalFunction 
-: public LocalFunctionDefault <DiscreteFunctionSpaceType ,
-  StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp >  >
+: public LocalFunctionDefault < typename DiscreteFunctionImp :: DiscreteFunctionSpaceType ,
+                                StaticDiscreteLocalFunction < DiscreteFunctionImp > > 
 {
+  typedef  DiscreteFunctionImp DiscreteFunctionType;
+  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-  typedef StaticDiscreteLocalFunction < DiscreteFunctionSpaceType, DofStorageImp > MyType;
-  typedef StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageImp> DiscFuncType;
+  typedef StaticDiscreteLocalFunction < DiscreteFunctionType > ThisType;
+  typedef DiscreteFunctionImp DiscreteFunctionType;
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
   //CompileTimeChecker<dimrange == 1> check; 
@@ -295,9 +301,11 @@ class StaticDiscreteLocalFunction
   typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType::Traits::JacobianRangeType JacobianRangeType;
 
+  typedef typename DiscreteFunctionType :: MapperType MapperType;
+
   typedef typename DiscreteFunctionSpaceType::Traits::GridType :: template
     Codim<0> :: Entity EntityType;
-  typedef DofStorageImp DofStorageType;
+  typedef typename DiscreteFunctionType :: DofStorageType DofStorageType;
 
   typedef typename DofStorageType :: block_type DofBlockType;
 
@@ -305,7 +313,9 @@ class StaticDiscreteLocalFunction
   friend class LocalFunctionWrapper < StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType> >;
 public:
   //! Constructor 
-  StaticDiscreteLocalFunction ( const DiscreteFunctionSpaceType &f , DofStorageType & dofVec );
+  StaticDiscreteLocalFunction ( const DiscreteFunctionSpaceType &f , 
+                                const MapperType& mapper, 
+                                DofStorageType & dofVec );
 
   //! Destructor 
   ~StaticDiscreteLocalFunction ();
@@ -358,12 +368,14 @@ protected:
     return *en_;
   }
 
+  //! the corresponding function space which provides the base function set
+  const DiscreteFunctionSpaceType &fSpace_;
+
+  const MapperType& mapper_;
+  
   //! actual entity 
   mutable const EntityType* en_;
 
-  //! the corresponding function space which provides the base function set
-  const DiscreteFunctionSpaceType &fSpace_;
-  
   //! dofVec from all levels of the discrete function 
   DofStorageType & dofVec_;
 
