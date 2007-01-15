@@ -76,6 +76,7 @@ public:
   inline static GridType * restoreGrid (
       const GrapeIOStringType & fnprefix , double & time , int timestep)
   {
+    assert(false);
     return 0;
   }
 };
