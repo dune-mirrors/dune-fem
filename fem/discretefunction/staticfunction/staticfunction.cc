@@ -526,14 +526,15 @@ init (const EntityImp &en ) const
     init_ = true;
   }
 
+  // cache entity 
   en_ = &en;
 
+  // cache local dofs 
   DofBlockType& dofs = dofVec_[fSpace_.indexSet().index(en)] ;
   assert( numOfDof_ == DofBlockType :: dimension );
   for(int i=0; i<numOfDof_; i++) values_ [i] = &dofs[i]; 
   return ;
 } 
 
-} // end namespace 
-
+} // end namespace Dune 
 #endif
