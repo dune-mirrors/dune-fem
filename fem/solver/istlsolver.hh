@@ -1,6 +1,10 @@
 #ifndef DUNE_ISTLSOLVERS_HH 
 #define DUNE_ISTLSOLVERS_HH 
 
+
+//- Dune includes 
+#include <dune/fem/operator/common/operator.hh>
+
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
@@ -96,45 +100,51 @@ private:
                      DiscreteFunctionImp & dest,
                      double eps, int maxIter, bool verbose)
     {
-      solve(op.systemMatrix().matrix(),arg,dest,eps,maxIter,verbose);
+      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
+      typedef typename OperatorImp :: PreconditionMatrixType PreconMatrix;
+      
+      if( op.hasPreconditionMatrix() ) 
+      {
+        solve(op.systemMatrix().matrix(),op.preconditionMatrix(),
+              arg,dest,eps,maxIter,verbose);
+      }
+      else 
+      {
+        EmptyPreconditioner<BlockVectorType,BlockVectorType> preconditioner;
+        solve(op.systemMatrix().matrix(),preconditioner,
+            arg,dest,eps,maxIter,verbose);
+      }
     }
 
-    template <class MatrixType, class DiscreteFunctionImp>
+    template <class MatrixType, 
+              class PreconditionerType,
+              class DiscreteFunctionImp>
     static void solve(const MatrixType & m,
+                 const PreconditionerType & preconditioner,
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
                  double eps, int maxIter, bool verbose)
     {
-      //int size = arg.space().size();
-      //if(op.hasPreconditionMatrix())
-      {
-        //int numIterations = 10;
-        //double relaxationFactor = 1.1;
-        typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-        //SeqILUn<MatrixType,BlockVectorType,BlockVectorType> 
-        //  preconditioner(m,numIterations,relaxationFactor); 
+      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
+      typedef MatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
+      MatrixOperatorType mat(const_cast<MatrixType&> (m));
+
+      int verb = (verbose) ? 2 : 0;
         
-        EmptyPreconditioner<BlockVectorType,BlockVectorType> preconditioner;
-        typedef MatrixAdapter<MatrixType,BlockVectorType,BlockVectorType>
-          MatrixOperatorType;
-        MatrixOperatorType mat(const_cast<MatrixType&> (m));
+      BiCGSTABSolver<BlockVectorType> solver(mat,
+          const_cast<PreconditionerType&> (preconditioner),
+          eps,maxIter,verb);    
 
-        BiCGSTABSolver<BlockVectorType> solver(mat,preconditioner,
-                                               eps,maxIter,2);    
-
-        InverseOperatorResult returnInfo;
-        solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
-      }
+      InverseOperatorResult returnInfo;
+      solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
     }
   };
 
-
-
 public:
   ISTLBICGSTABOp(OperatorType & op , double  redEps , double absLimit , 
-                int maxIter , bool verbose ) :
-        op_(op), epsilon_ ( absLimit ) ,
-        maxIter_ (maxIter ) , verbose_ ( verbose ) 
+                int maxIter , bool verbose ) 
+    : op_(op), epsilon_ ( sqrt(absLimit) ) 
+    , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
   }
 
