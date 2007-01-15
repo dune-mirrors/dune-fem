@@ -1,7 +1,9 @@
 #ifndef DUNE_ISTLMATRIXWRAPPER_HH
 #define DUNE_ISTLMATRIXWRAPPER_HH
 
+#include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/preconditioners.hh>
 
 namespace Dune { 
 
@@ -45,13 +47,16 @@ namespace Dune {
       };
 
       /** \brief Iterator for the entries of each row */
-      typedef typename row_type::iterator ColIterator;
+      typedef typename BaseType :: ColIterator ColIterator;
+
+      /** \brief Iterator for the entries of each row */
+      typedef typename BaseType :: ConstColIterator ConstColIterator;
 
       /** \brief Const iterator over the matrix rows */
-      typedef typename BlockVector<row_type>::const_iterator ConstRowIterator;
+      typedef typename BaseType :: RowIterator RowIterator;
 
-      /** \brief Const iterator for the entries of each row */
-      typedef typename row_type::const_iterator ConstColIterator;
+      /** \brief Const iterator over the matrix rows */
+      typedef typename BaseType :: ConstRowIterator ConstRowIterator;
 
     public:
       ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
@@ -175,10 +180,17 @@ namespace Dune {
   {
     typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
   public:  
-    typedef FieldMatrix<double,6,6> LittleBlockType; 
-    typedef ImprovedBCRSMatrix< LittleBlockType > MatrixType;
-    typedef MatrixType PreconditionMatrixType;
+    enum { littleRows = RowSpaceType :: numBaseFunctions };
+    enum { littleCols = ColumnSpaceType :: numBaseFunctions };
     
+    typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
+    
+    typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
+    typedef ImprovedBCRSMatrix< LittleBlockType > MatrixType;
+   
+    typedef BlockVector< FieldVector<RangeFieldType, littleRows> > BlockVectorType; 
+    typedef SeqILUn<MatrixType,BlockVectorType,BlockVectorType> PreconditionMatrixType;
+
     template <class MatrixImp> 
     class LocalMatrix
     {
@@ -247,7 +259,12 @@ namespace Dune {
 
     int size_;
 
-    MatrixType* matrix_;
+    mutable MatrixType* matrix_;
+    mutable PreconditionMatrixType* preconder_;
+
+    const int numIterations_; 
+    const double relaxFactor_; 
+      
     const bool preconditioning_;
 
     //! setup matrix handler 
@@ -259,7 +276,9 @@ namespace Dune {
       , factor_((dim * 2) + 1)
       , size_(-1)
       , matrix_(0)
-                 //rowSpace_.indexSet().size(0),colSpace_.indexSet().size(0),factor_)
+      , preconder_(0)
+      , numIterations_(5)
+      , relaxFactor_(1.1)
       , preconditioning_(preconditioning)
     {
       assert( rowSpace_.indexSet().size(0) ==
@@ -267,18 +286,23 @@ namespace Dune {
       reserve(true);
     }
 
-    const MatrixType & matrix() const 
+    MatrixType & matrix() const 
     { 
       assert( matrix_ );
       return *matrix_; 
     }
-    MatrixType & matrix() { 
-      assert( matrix_ );
-      return *matrix_; 
-    }
+    
     //! return true if precoditioning matrix is provided 
     bool hasPcMatrix () const { return preconditioning_; }
-    PreconditionMatrixType& pcMatrix () { return matrix(); }
+    const PreconditionMatrixType& pcMatrix () const  
+    { 
+      if( !preconder_ )
+      {
+        preconder_ = new PreconditionMatrixType( matrix() , 
+                             numIterations_ , relaxFactor_ );
+      }
+      return *preconder_; 
+    }
 
     bool hasBeenSetup () const
     {
@@ -299,6 +323,7 @@ namespace Dune {
     {
       {
         delete matrix_;
+        delete preconder_; preconder_ = 0;
         size_ = rowSpace_.indexSet().size(0);
         matrix_ = new MatrixType(rowSpace_.indexSet().size(0),colSpace_.indexSet().size(0),factor_);
         matrix().setup(rowSpace_,colSpace_);
