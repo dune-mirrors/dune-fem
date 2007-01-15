@@ -22,7 +22,9 @@
 #if HAVE_BLAS
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #endif
-//#if HAVE_ISTL
+
+#define USE_DUNE_ISTL 0
+
 #include <dune/fem/operator/matrix/istlmatrix.hh>
 #include <dune/fem/solver/istlsolver.hh>
 
@@ -313,6 +315,7 @@ namespace LDGExample {
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
@@ -321,10 +324,14 @@ namespace LDGExample {
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename Traits::ContainedSpaceType ContainedSpaceType;
 
+#if USE_DUNE_ISTL
+    //! only working for DGSpace     
+    enum { numBaseFunctions = DiscreteFunctionSpaceType :: numBaseFunctions };
     typedef StaticDiscreteFunction<DiscreteFunctionSpaceType, 
-                         BlockVector< FieldVector<double,6> > > DiscreteFunctionType;
-
-    //typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+                         BlockVector< FieldVector<RangeFieldType,numBaseFunctions> > > DiscreteFunctionType;
+#else 
+    typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+#endif
     typedef DiscreteFunctionType DestinationType;
 
     typedef LaplaceDiscreteModel<Model,NumFlux,polOrd> DiscreteModelType;
@@ -345,20 +352,23 @@ namespace LDGExample {
                                  PrevSpaceType> MatrixHandlerType; 
       
       // new type 
-      //typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
-      //                              DiscreteFunctionSpaceType> MatrixObjectType; 
-      //typedef BlockMatrixObject<DiscreteFunctionSpaceType,
-      //                          DiscreteFunctionSpaceType> MatrixObjectType; 
+#if USE_DUNE_ISTL                                
       typedef ISTLMatrixObject<DiscreteFunctionSpaceType,
                                DiscreteFunctionSpaceType> MatrixObjectType; 
-
+#else 
+      typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
+                                    DiscreteFunctionSpaceType> MatrixObjectType; 
+      //typedef BlockMatrixObject<DiscreteFunctionSpaceType,
+      //                          DiscreteFunctionSpaceType> MatrixObjectType; 
+#endif
       typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
       //typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
 
-#if HAVE_BLAS
-      //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+#if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+#elif HAVE_BLAS
+      //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
       //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
       //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
