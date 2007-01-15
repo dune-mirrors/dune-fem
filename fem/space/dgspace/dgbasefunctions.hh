@@ -12,6 +12,35 @@ namespace Dune {
   
   typedef int deriType;
 
+  template <int polOrder, int dimDomain> 
+  struct DGNumberOfBaseFunctions
+  {
+    enum { numBaseFunctions = 0 };
+  };
+  
+  //! number of base functions for dimDomain = 1 
+  template <int polOrder> 
+  struct DGNumberOfBaseFunctions<polOrder,1> 
+  {
+    enum { numBaseFunctions = polOrder + 1 };
+  };
+  
+  //! number of base functions for dimDomain = 2 
+  template <int polOrder> 
+  struct DGNumberOfBaseFunctions<polOrder,2> 
+  {
+    enum { numBaseFunctions = (polOrder + 2) * (polOrder + 1) / 2};
+  };
+
+  //! number of base functions for dimDomain = 3 
+  template <int polOrder> 
+  struct DGNumberOfBaseFunctions<polOrder,3> 
+  {
+    enum { numBaseFunctions = ((polOrder+1)
+            *(polOrder+2)*(2*polOrder+3)/6 
+              + (polOrder+1)*(polOrder+2)/2)/2 };
+  };
+
   //! Wrapper interface for DG base functions
   template <class FunctionSpaceType>
   class DGBaseFunctionWrapper {
@@ -29,7 +58,7 @@ namespace Dune {
     static int numBaseFunctions(int polOrder) {
       switch (dimDomain) {
       case 1:
-	return (polOrder + 1);
+        return (polOrder + 1);
       case 2:
         return (polOrder + 2) * (polOrder + 1) / 2;
       case 3:
@@ -468,7 +497,7 @@ namespace Dune {
     virtual BaseFunctionType* baseFunction(int i) const {
       switch (GeometryIdentifier::fromGeo(this->geometry())) 
       {
-	case GeometryIdentifier::Line:
+  case GeometryIdentifier::Line:
           return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd>(i);
         case GeometryIdentifier::Triangle:
           return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd>(i);
@@ -492,7 +521,7 @@ namespace Dune {
     virtual int numBaseFunctions() const {
       switch (FunctionSpaceType::DimDomain) {
       case 1:
-	return (polOrd + 1);
+  return (polOrd + 1);
       case 2:
         return (polOrd + 2) * (polOrd + 1) / 2;
       case 3:

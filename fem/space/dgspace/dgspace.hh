@@ -393,11 +393,18 @@ namespace Dune {
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType::DimRange };
 
+    //! Dimension of the domain vector field
+    enum { dimDomain = Traits::FunctionSpaceType::DimDomain };
+
     //! The polynom order of the base functions
     enum { PolOrd = polOrd };
     
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
+
+    //! number of base functions 
+    enum { numBaseFunctions = dimRange * 
+        DGNumberOfBaseFunctions<polOrd,dimDomain>::numBaseFunctions }; 
 
     //! scalar space type 
     typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
