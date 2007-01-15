@@ -888,6 +888,10 @@ public:
 public:
   typedef LocalMatrix<MatrixType> LocalMatrixType;
 
+  typedef AdaptiveDiscreteFunction<RowSpaceType> DestinationType;
+
+  typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
+
   const RowSpaceType & rowSpace_; 
   const ColumnSpaceType & colSpace_;
 
@@ -898,6 +902,8 @@ public:
 
   MatrixType matrix_; 
   const bool preconditioning_;
+
+  mutable CommunicationManagerType communicate_;
 
   //! setup matrix handler 
   BlockMatrixObject(const RowSpaceType & rowSpace, 
@@ -910,6 +916,7 @@ public:
     , numColBaseFct_(-1)
     , matrix_()
     , preconditioning_(preconditioning)
+    , communicate_(rowSpace_)
   {
     assert( rowSpace_.indexSet().size(0) == 
             colSpace_.indexSet().size(0) ); 
@@ -991,8 +998,22 @@ public:
   //! mult method of matrix object used by oem solver
   void multOEM(const double * arg, double * dest) const 
   {
+    // communicate data 
+    communicate( arg );
+    
+    // matrix multiplication 
     matrix_.multOEM(arg,dest);
   }
+
+  //! communicate data 
+  void communicate(const double * arg) const
+  {
+    if( rowSpace_.grid().comm().size() <= 1 ) return ;
+
+    DestinationType tmp("BlockMatrixObject::communicate_tmp",rowSpace_,arg);
+    communicate_.exchange( tmp );
+  }
+
 
   //! resort row numbering in matrix to have ascending numbering 
   void resort() 
