@@ -9,6 +9,8 @@
 #include <dune/common/array.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dune/fem/space/dgspace/dgmapper.hh>
+
 //- local includes 
 #include "../common/discretefunction.hh"
 #include "../common/localfunction.hh"
@@ -22,13 +24,17 @@ template <class DofStorageImp,class DofImp> class DofIteratorStaticDiscreteFunct
 
 
 template <class DiscreteFunctionSpaceImp, class DofStorageImp>
-struct StaticDiscreteFunctionTraits {
+struct StaticDiscreteFunctionTraits 
+{
   typedef DofStorageImp DofStorageType;
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-  typedef StaticDiscreteFunction<DiscreteFunctionSpaceImp,DofStorageType> DiscreteFunctionType;
+  
+  typedef StaticDiscreteFunction<DiscreteFunctionSpaceType,DofStorageType> DiscreteFunctionType;
   typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
+  
   typedef LocalFunctionWrapper<DiscreteFunctionType> LocalFunctionType;
-  typedef DofIteratorStaticDiscreteFunction<DofStorageType,typename DiscreteFunctionSpaceImp::RangeFieldType> DofIteratorType;
+  typedef DofIteratorStaticDiscreteFunction<DofStorageType,
+            typename DofStorageType::field_type> DofIteratorType;
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
 };
 
@@ -136,8 +142,8 @@ public:
   typedef LocalFunctionStorage< DiscreteFunctionType > LocalFunctionStorageType;
   
   //! the dof iterator type of this function
-  typedef DofIteratorStaticDiscreteFunction <DofStorageType,typename DiscreteFunctionSpaceType::RangeFieldType> DofIteratorType;
-  typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
+  typedef typename Traits :: DofIteratorType DofIteratorType;
+  typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
   //! The associated discrete function space
   typedef DiscreteFunctionSpaceType FunctionSpaceType;
@@ -147,8 +153,9 @@ public:
   typedef block_type DofBlockType;
   typedef DoubleArrayWrapper<DofStorageType,DofType> LeakPointerType;
   
+  typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
   //! needs additional mapper 
-  typedef DGMapper<typename DiscreteFunctionSpaceType :: IndexSetType ,0,1> MapperType;
+  typedef DGMapper<IndexSetType,0,1> MapperType;
 
   //! Constructor makes Discrete Function  
   StaticDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
@@ -219,23 +226,23 @@ public:
 
   //! write data of discrete function to file filename 
   //! with xdr methods 
-  bool write_xdr( const char *filename );
+  bool write_xdr( std::string filename ) const;
 
   //! write data of discrete function to file filename 
   //! with xdr methods 
-  bool read_xdr( const char *filename );
+  bool read_xdr( std::string filename );
 
   //! write function data to file filename in ascii Format
-  bool write_ascii(const char *filename);
+  bool write_ascii(std::string filename) const;
 
   //! read function data from file filename in ascii Format
-  bool read_ascii(const char *filename);
+  bool read_ascii(std::string filename);
 
   //! write function data in pgm fromat file
-  bool write_pgm(const char *filename) ;
+  bool write_pgm(std::string filename) const;
 
   //! read function data from pgm fromat file
-  bool read_pgm(const char *filename); 
+  bool read_pgm(std::string filename); 
 
   //! return pointer to internal array for use of BLAS routines 
   LeakPointerType& leakPointer () { return leakPointer_;  }
@@ -246,6 +253,11 @@ public:
   DofStorageType& blockVector () const { return dofVec_; }
 
 private:  
+  //! write data to xdr stream 
+  bool writeXdrs(XDR * xdrs) const;
+  //! read data from xdr stream 
+  bool readXdrs(XDR * xdrs);
+  
   //! return object pointer of type LocalFunctionImp 
   LocalFunctionImp * newLocalFunctionObject () const;
 

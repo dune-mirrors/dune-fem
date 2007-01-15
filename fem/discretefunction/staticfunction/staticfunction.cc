@@ -158,8 +158,9 @@ StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::dend ( ) cons
 //**************************************************************************
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-write_xdr( const char *fn )
+write_xdr( std::string filename ) const
 {
+  const char * fn = filename.c_str();
   FILE  *file;
   XDR   xdrs;
 
@@ -172,8 +173,8 @@ write_xdr( const char *fn )
   }
 
   xdrstdio_create(&xdrs, file, XDR_ENCODE);   
-
-  dofVec_.processXdr(&xdrs);
+  
+  writeXdrs(&xdrs);
 
   xdr_destroy(&xdrs);
   fclose(file);
@@ -183,8 +184,42 @@ write_xdr( const char *fn )
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-read_xdr( const char *fn )
+writeXdrs(XDR * xdrs) const  
 {
+  int len = dofVec_.size();
+  xdr_int( xdrs, &len );
+ 
+  enum { blockSize = DofBlockType :: dimension };
+  for(int i=0; i<len; ++i) 
+  {
+    DofBlockType &dof = dofVec_[i];
+    xdr_vector(xdrs,(char *) &dof[0], blockSize , sizeof(RangeFieldType) ,(xdrproc_t)xdr_double);
+  }
+  return true;
+}
+
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
+readXdrs(XDR * xdrs)   
+{
+  int len = 0 ;
+  xdr_int( xdrs, &len );
+  assert( len == (int) dofVec_.size() );
+ 
+  enum { blockSize = DofBlockType :: dimension };
+  for(int i=0; i<len; ++i) 
+  {
+    DofBlockType &dof = dofVec_[i];
+    xdr_vector(xdrs,(char *) &dof[0], blockSize , sizeof(RangeFieldType) ,(xdrproc_t)xdr_double);
+  }
+  return true;
+}
+
+template<class DiscreteFunctionSpaceType, class DofStorageImp >
+inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
+read_xdr( std::string filename)
+{
+  const char * fn = filename.c_str();
   FILE   *file;
   XDR     xdrs;
 
@@ -200,7 +235,7 @@ read_xdr( const char *fn )
   // read xdr 
   xdrstdio_create(&xdrs, file, XDR_DECODE);     
 
-  dofVec_.processXdr(&xdrs);
+  readXdrs(&xdrs);
   
   xdr_destroy(&xdrs);
   fclose(file);
@@ -209,15 +244,16 @@ read_xdr( const char *fn )
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-write_ascii( const char *fn )
+write_ascii( std::string filename ) const
 {
+  const char * fn = filename.c_str();
   std::fstream outfile( fn , std::ios::out );
   if(outfile)
   {
     int length = this->functionSpace_.size();
     outfile << length << std::endl;
-    DofIteratorType enddof = this->dend ();
-    for(DofIteratorType itdof = this->dbegin ();itdof != enddof; ++itdof) 
+    ConstDofIteratorType enddof = this->dend ();
+    for(ConstDofIteratorType itdof = this->dbegin ();itdof != enddof; ++itdof) 
     {
       outfile << (*itdof) << std::endl;
     }
@@ -235,8 +271,9 @@ write_ascii( const char *fn )
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-read_ascii( const char *fn )
+read_ascii( std::string filename )
 {
+  const char * fn = filename.c_str();
   FILE *infile=NULL;
   infile = fopen( fn, "r" );
   if(!infile)
@@ -264,8 +301,9 @@ read_ascii( const char *fn )
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-write_pgm( const char *fn )
+write_pgm( std::string filename ) const
 {
+  const char * fn = filename.c_str();
   std::ofstream out( fn );
 
   enum { dim = GridType::dimension };
@@ -278,8 +316,8 @@ write_pgm( const char *fn )
   */
   
   out << "P2\n " << danz << " " << danz <<"\n255\n";
-  DofIteratorType enddof = this->dend ( );
-  for(DofIteratorType itdof = this->dbegin ( ); itdof != enddof; ++itdof) {
+  ConstDofIteratorType enddof = this->dend ( );
+  for(ConstDofIteratorType itdof = this->dbegin ( ); itdof != enddof; ++itdof) {
     out << (int)((*itdof)*255.) << "\n";
   }
   out.close();
@@ -288,8 +326,9 @@ write_pgm( const char *fn )
 
 template<class DiscreteFunctionSpaceType, class DofStorageImp >
 inline bool StaticDiscreteFunction< DiscreteFunctionSpaceType,DofStorageImp >::
-read_pgm( const char *fn )
+read_pgm( std::string filename )
 {
+  const char * fn = filename.c_str();
   FILE *in;
   int v;
 
