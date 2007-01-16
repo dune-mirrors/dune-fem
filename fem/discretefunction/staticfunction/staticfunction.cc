@@ -15,7 +15,6 @@ StaticDiscreteFunction(const DiscreteFunctionSpaceType & f)
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
   , localFunc_ ( f , mapper_ , dofVec_ ) 
-  , leakPointer_(dofVec_)                             
 {
 }
 
@@ -30,7 +29,6 @@ StaticDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType &
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
   , localFunc_ ( f , mapper_, dofVec_ ) 
-  , leakPointer_(dofVec_)                             
 {
 }
 
@@ -46,7 +44,6 @@ StaticDiscreteFunction(const std::string name,
   , memPair_(dm_.addDummyDofSet(&dofVec_, mapper_, name_, &data)) 
   , dofVec_( *memPair_.second ) 
   , localFunc_ ( f , mapper_ , dofVec_ ) 
-  , leakPointer_(dofVec_)                             
 {
 }
 
@@ -59,7 +56,6 @@ StaticDiscreteFunction(const StaticDiscreteFunction< DiscreteFunctionSpaceType,D
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
   , localFunc_ ( this->functionSpace_ , mapper_, dofVec_ )
-  , leakPointer_(dofVec_)        
 {
   name_ = df.name_;
   built_ = df.built_; 

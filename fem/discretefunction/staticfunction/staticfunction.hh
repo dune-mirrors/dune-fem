@@ -55,46 +55,6 @@ struct DofTypeWrapper<double>
   static double & convert(double  & val, int idx) { return val; }
 };
 
-//! conversion class to behave BlockVector like double *
-template < class DofStorageImp, class DofImp >
-class DoubleArrayWrapper
-{
-public:
-  typedef DofImp DofType;
-  typedef DofStorageImp DofStorageType;
-  typedef typename DofStorageType :: block_type DofBlockType;
-  typedef DoubleArrayWrapper<DofStorageType,DofType> ThisType;
-
-  typedef DofTypeWrapper<DofBlockType> DofWrapperType;
-  enum { blockSize = DofWrapperType :: blockSize };
-  
-  //! Constructor (const)
-  DoubleArrayWrapper(DofStorageType & dofArray)
-    :  dofArray_ (dofArray) {}
-  
-  DoubleArrayWrapper(const DoubleArrayWrapper& org)
-    : dofArray_(org.dofArray_) {}
-
-  DofType& operator [] (int idx) 
-  {
-    int newIdx = idx%blockSize; 
-    int count  = idx/blockSize; 
-    return dofArray_[count][newIdx];
-  }
-
-  const DofType& operator [] (int idx) const
-  {
-    int newIdx = idx%blockSize; 
-    int count  = idx/blockSize; 
-    return dofArray_[count][newIdx];
-  }
-
-private:
-  //! the array holding the dofs 
-  DofStorageType & dofArray_;  
-}; // end DofIteratorStaticDiscreteFunction 
-
-
 //**********************************************************************
 //
 //  --StaticDiscreteFunction 
@@ -155,7 +115,6 @@ public:
   //! the type of the unknowns 
   typedef RangeFieldType DofType;
   typedef block_type DofBlockType;
-  typedef DoubleArrayWrapper<DofStorageType,DofType> LeakPointerType;
   
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
   //! needs additional mapper 
@@ -249,9 +208,9 @@ public:
   bool read_pgm(std::string filename); 
 
   //! return pointer to internal array for use of BLAS routines 
-  LeakPointerType& leakPointer () { return leakPointer_;  }
+  DofType* leakPointer () { return (DofType *) &dofVec_[0][0];  }
   //! return pointer to internal array for use of BLAS routines 
-  const LeakPointerType& leakPointer () const { return leakPointer_; }
+  const DofType* leakPointer () const { return (DofType *) &dofVec_[0][0];  }
 
   //! return reference to internal block vector 
   DofStorageType& blockVector () const { return dofVec_; }
@@ -284,8 +243,6 @@ private:
   //! hold one object for addLocal and setLocal and so on 
   LocalFunctionImp localFunc_;
 
-  //! pretend to be double array
-  mutable LeakPointerType leakPointer_;
 }; // end class StaticDiscreteFunction 
 
 
