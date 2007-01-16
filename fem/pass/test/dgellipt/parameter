@@ -1,5 +1,5 @@
 % initial refine level 
-StartLevel: 4
+StartLevel: 0
 
 % do EOCSteps eoc steps
 EOCSteps: 2
@@ -11,7 +11,7 @@ InvSolverEps: 1e-12
 verbose: 1
 
 % use Preconditioning 0 == no, 1 == yes  
-Preconditioning: 0
+Preconditioning: 1
 
 % display using Grape, 0 == no, 1 == yes  
 display: 1
