@@ -264,42 +264,6 @@ namespace Dune {
     }
   };
 
-  //! implementing default all method, because YaspGrid is programmed as it
-  //! is programmed :( 
-  class DefaultDiscreteFunctionComm 
-  {
-  public:  
-    typedef int DataType;
-
-    bool contains (int dim, int codim) const
-    {
-      return false;
-    }
-
-    bool fixedsize (int dim, int codim) const
-    {
-      return true;
-    }
-
-    //! read buffer and apply operation 
-    template<class MessageBufferImp, class EntityType>
-    void gather (MessageBufferImp& buff, const EntityType& en) const
-    {
-    }
-
-    //! read buffer and apply operation 
-    template<class MessageBufferImp, class EntityType>
-    void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
-    {
-    }
-
-    //! return local dof size to be communicated 
-    template<class EntityType>
-    size_t size (const EntityType& en) const
-    {
-      return 0;
-    }
-  };
   ////////////////////////////////////////////////////////////////
   //
   //  --DiscreteFunctionCommunications 
@@ -360,13 +324,75 @@ namespace Dune {
   class DiscreteFunctionCommunicationHandler 
    : public CommDataHandleIF< 
      DiscreteFunctionCommunicationHandler <DiscreteFunctionImp , OperationImp > ,
-     typename DiscreteFunctionImp :: RangeFieldType > ,
-     public DefaultDiscreteFunctionComm
+     typename DiscreteFunctionImp :: RangeFieldType >
   {
+
+    //! empty for higher codims 
+    template <class MessageBufferImp, class EntityType, int codim> 
+    struct HandleData
+    {
+      static void gather (DiscreteFunctionImp& discreteFunction,
+                          MessageBufferImp& buff, const EntityType& en)
+      {
+      }
+      static void scatter (DiscreteFunctionImp& discreteFunction,
+          MessageBufferImp& buff, const EntityType& en, size_t n)
+      {
+      }
+      static size_t size (DiscreteFunctionImp& discreteFunction,const EntityType& en)
+      {
+        return 0;
+      }
+    };  
+    
+    template <class MessageBufferImp, class EntityType> 
+    struct HandleData<MessageBufferImp,EntityType,0>
+    {
+      typedef typename DiscreteFunctionImp :: LocalFunctionType LocalFunctionType; 
+
+      //! gather data 
+      static void gather (DiscreteFunctionImp& discreteFunction,
+                          MessageBufferImp& buff, const EntityType& en)
+      {
+        // get local function 
+        LocalFunctionType lf = discreteFunction.localFunction(en);
+        const int numDofs = lf.numDofs(); 
+        // for all local dofs, write data to buffer 
+        for(int i=0; i<numDofs; ++i) 
+        {
+          buff.write( lf[i] );
+        }
+      }
+      
+      //! scatter data 
+      static void scatter (DiscreteFunctionImp& discreteFunction,
+          MessageBufferImp& buff, const EntityType& en, size_t n)
+      {
+        LocalFunctionType lf = discreteFunction.localFunction(en);
+        const int numDofs = lf.numDofs(); 
+        DataType val; 
+        // for all local dofs, read data from buffer 
+        // and apply operation 
+        for(int i=0; i<numDofs; ++i) 
+        {
+          buff.read( val );
+
+          // apply given operation  
+          OperationImp::apply(val , lf[i]);
+        }
+      }
+      
+      //! return local dof size to be communicated 
+      static size_t size (DiscreteFunctionImp& discreteFunction,const EntityType& en)
+      {
+        // return size of local function 
+        LocalFunctionType lf = discreteFunction.localFunction(en);
+        return lf.numDofs(); 
+      }
+    };
+    
   public:  
     typedef DiscreteFunctionImp DiscreteFunctionType;
-    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType ::
-      GridType :: template Codim<0> :: Entity EntityType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteFunctionType::RangeFieldType DataType;
   private:  
@@ -396,11 +422,6 @@ namespace Dune {
     {
     }
 
-    // use default implementations for higher codims 
-    using DefaultDiscreteFunctionComm :: gather;
-    using DefaultDiscreteFunctionComm :: scatter;
-    using DefaultDiscreteFunctionComm :: size;
-
     bool contains (int dim, int codim) const
     {
       return (codim == containedCodim_);
@@ -412,43 +433,27 @@ namespace Dune {
     }
 
     //! read buffer and apply operation 
-    template<class MessageBufferImp>
+    template<class MessageBufferImp, class EntityType>
     void gather (MessageBufferImp& buff, const EntityType& en) const
     {
-      // get local function 
-      LocalFunctionType lf = discreteFunction_.localFunction(en);
-      const int numDofs = lf.numDofs(); 
-      // for all local dofs, write data to buffer 
-      for(int i=0; i<numDofs; ++i) 
-      {
-        buff.write( lf[i] );
-      }
+      enum { codim = EntityType :: codimension };
+      HandleData<MessageBufferImp,EntityType,codim>::gather(discreteFunction_,buff,en);
     }
 
     //! read buffer and apply operation 
-    template<class MessageBufferImp>
+    template<class MessageBufferImp, class EntityType>
     void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
     {
-      LocalFunctionType lf = discreteFunction_.localFunction(en);
-      const int numDofs = lf.numDofs(); 
-      DataType val; 
-      // for all local dofs, read data from buffer 
-      // and apply operation 
-      for(int i=0; i<numDofs; ++i) 
-      {
-        buff.read( val );
-
-        // apply given operation  
-        OperationImp::apply(val , lf[i]);
-      }
+      enum { codim = EntityType :: codimension };
+      HandleData<MessageBufferImp,EntityType,codim>::scatter(discreteFunction_,buff,en,n);
     }
 
     //! return local dof size to be communicated 
+    template <class EntityType>
     size_t size (const EntityType& en) const
     {
-      // return size of local function 
-      LocalFunctionType lf = discreteFunction_.localFunction(en);
-      return lf.numDofs(); 
+      enum { codim = EntityType :: codimension };
+      return HandleData<EntityType,EntityType,codim>::size(discreteFunction_,en);
     }
   };
 
