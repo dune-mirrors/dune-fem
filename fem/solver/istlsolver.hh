@@ -147,7 +147,7 @@ namespace Dune {
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
     {
-      matrix_.usmv(alpha,x,y);
+      matrix_.multAdd(alpha,x,y);
     }
 
     //! get matrix via *
