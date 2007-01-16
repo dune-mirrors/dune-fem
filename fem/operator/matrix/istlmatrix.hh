@@ -6,6 +6,7 @@
 #include <dune/istl/preconditioners.hh>
 
 #include <dune/fem/discretefunction/staticfunction.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune { 
 
