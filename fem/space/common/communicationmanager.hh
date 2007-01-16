@@ -205,8 +205,18 @@ namespace Dune {
 
     // ALUGrid send/recv buffers 
     typedef ALU3DSPACE ObjectStream ObjectStreamType; 
+    // ALUGrid communicatior Class 
+    ALU3DSPACE MpAccessMPI mpAccess_;
 
+    //! communication buffers 
+    std::vector< ObjectStreamType > buffer_;
+
+    //! number of links 
     int nLinks_;
+
+    //! know grid sequence number 
+    int sequence_; 
+    
     // do not copy this class 
     DependencyCache(const DependencyCache &);
   public:
@@ -219,14 +229,16 @@ namespace Dune {
       , recvIndexMap_(mySize_)
       , sendIndexMap_(mySize_)
       , linkRank_()
+      // create mpAccess with communicator from grid 
+      , mpAccess_(gridPart_.grid().comm().operator MPI_Comm())
       , nLinks_(0)
+      , sequence_(-1)
     {
     }
 
   public:
     // build linkage and index maps 
-    template <class MPAccessType>
-    void buildMaps(MPAccessType & mpAccess) 
+    void buildMaps() 
     {
       linkStorage_.clear();
       for(int i=0; i<mySize_; ++i)
@@ -253,24 +265,64 @@ namespace Dune {
       }
 
       // remove old linkage 
-      mpAccess.removeLinkage(); 
+      mpAccess_.removeLinkage(); 
       // create new linkage 
-      mpAccess.insertRequestSymetric ( linkStorage_ );
+      mpAccess_.insertRequestSymetric ( linkStorage_ );
 
       // get real rank numbers for each link 
-      linkRank_ = mpAccess.dest();
+      linkRank_ = mpAccess_.dest();
 
       // remember number of links 
-      nLinks_ = mpAccess.nlinks();
+      nLinks_ = mpAccess_.nlinks();
 
+      buffer_.resize( nLinks_ );
       //std::cout << "Build dependency cache. Size = " << sendIndexMap_[linkRank_[0 ]].size() <<"\n";
     }
 
+    //! return number of links 
+    int nlinks () const { return nLinks_; }
+
+    //! exchange data of discrete function 
+    template<class DiscreteFunctionType, class OperationImp>
+    void exchange(DiscreteFunctionType& df, const OperationImp *)
+    {
+      // if serial run, just return   
+      if(mySize_ <= 1) return;
+       
+      if(sequence_ != space_.sequence()) 
+      {
+        buildMaps();
+
+        // store actual sequence number 
+        sequence_ = space_.sequence();
+      }
+      
+      const int links = nlinks();
+      // write buffers 
+      for(int l=0; l<links; ++l) 
+      {
+        // reset buffers, keeps memory  
+        buffer_[l].clear();
+
+        writeBuffer( l , buffer_[l] , df.leakPointer());
+      }
+
+      // exchange data to other procs 
+      buffer_ = mpAccess_.exchange( buffer_ );
+      
+      // read buffers 
+      for(int l=0; l<links; ++l) 
+      {
+        readBuffer( l , buffer_[l] , df.leakPointer() , (OperationImp *) 0 );
+      }
+    }
+
+  private:  
     // write data to object stream 
     template <class DataImp> 
     void writeBuffer(const int link,
                      ObjectStreamType & os, 
-                     const DataImp data) const 
+                     const DataImp* data) const 
     {
       const IndexMapType & indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
@@ -290,7 +342,7 @@ namespace Dune {
     template <class DataImp, class OperationImp> 
     void readBuffer(const int link ,
                     ObjectStreamType & os, 
-                    DataImp data,
+                    DataImp* data,
                     const OperationImp *) const 
     {
       const IndexMapType & indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
@@ -303,8 +355,6 @@ namespace Dune {
         OperationImp::apply(val , data[ indexMap[i] ] );
       }
     }
-
-    int nlinks () const { return nLinks_; }
   };
 
   //! Key for CommManager singleton list 
@@ -359,38 +409,21 @@ namespace Dune {
 
     const KeyType key_;
 
-    // ALUGrid send/recv buffers 
-    typedef ALU3DSPACE ObjectStream ObjectStreamType; 
-    // ALUGrid communicatior Class 
-    ALU3DSPACE MpAccessMPI mpAccess_;
-
-    int sequence_;
     const int mySize_;
 
-    std::vector< ObjectStreamType > buffer_;
     
     // is singleton per space 
     DependencyCacheType & cache_;
+    CommunicationManager(const CommunicationManager & org);
   public:  
     //! constructor taking space 
     CommunicationManager(const SpaceType & space) 
       : space_(space)
       , key_(space_)
-      , mpAccess_(MPI_COMM_WORLD)
-      , sequence_(-1)
       , mySize_(space_.grid().comm().size())
       , cache_(CommunicationProviderType::getObject(key_)) 
     {
     }
-
-    /*
-    //! copy constructor getting singleton 
-    CommunicationManager(const CommunicationManager & org) 
-      : space_(org.space_) 
-      , key_(org.key_)
-      , cache_(CommunicationProviderType::getObject(key_)) 
-    {}
-    */
 
     //! remove object comm
     ~CommunicationManager() 
@@ -403,36 +436,7 @@ namespace Dune {
     template <class DiscreteFunctionType> 
     void exchange(DiscreteFunctionType & df) 
     {
-      // if serial run, just return   
-      if(mySize_ <= 1) return;
-       
-      if(sequence_ != space_.sequence()) 
-      {
-        cache_.buildMaps(mpAccess_);
-        buffer_.resize( cache_.nlinks() );
-
-        // store actual sequence number 
-        sequence_ = space_.sequence();
-      }
-      
-      const int links = cache_.nlinks();
-      // write buffers 
-      for(int l=0; l<links; ++l) 
-      {
-        // reset buffers, keeps memory  
-        buffer_[l].clear();
-
-        cache_.writeBuffer( l , buffer_[l] , df.leakPointer());
-      }
-
-      // exchange data to other procs 
-      buffer_ = mpAccess_.exchange( buffer_ );
-      
-      // read buffers 
-      for(int l=0; l<links; ++l) 
-      {
-        cache_.readBuffer( l , buffer_[l] , df.leakPointer() , (OperationImp *) 0 );
-      }
+      cache_.exchange( df, (OperationImp*) 0 );
     }
   };
 
