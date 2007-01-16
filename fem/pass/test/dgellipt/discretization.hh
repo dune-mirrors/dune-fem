@@ -252,7 +252,6 @@ public:
       dest.clear();
 
       veloPass_(arg,velo);
-
       {
         // only for LDG method
         //velo.clear();
@@ -265,9 +264,9 @@ public:
       }
       
 #if HAVE_GRAPE
-      GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-      grape.addData( velo );
-      grape.dataDisplay( dest );
+      //GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
+      //grape.addData( velo );
+      //grape.dataDisplay( dest );
 #endif
 
       L2Error < SolutionType > l2err;
@@ -299,6 +298,12 @@ public:
 
   }
 
+  SolutionType& solution () 
+  {
+    SolutionType& dest = const_cast<SolutionType&> (lastPass_.destination());
+    return dest;
+  }
+  
   template <class TimeProviderType>
   void timeProvider(TimeProviderType & tp )
   {
@@ -411,10 +416,10 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   spaceOp(*tmpRhs,*solution);
 
 #if HAVE_GRAPE
-  if( (grid.comm().rank() == 0) && (display == 1) )
+  if( display == 1 )
   {
     GrapeDataDisplay < GridType > grape( spaceOp.gridPart() ); 
-    grape.dataDisplay( *solution );
+    grape.dataDisplay( spaceOp.solution() );
   }
 #endif
   delete solution; 

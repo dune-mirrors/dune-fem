@@ -55,7 +55,7 @@ namespace LDGExample {
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
     
-    typedef LeafGridPart<GridType, All_Partition > GridPartType;
+    typedef LeafGridPart<GridType> GridPartType;
     //typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
     //typedef AdaptiveLeafGridPart<GridType> GridPartType;
     //typedef HierarchicGridPart<GridType> GridPartType;
@@ -367,12 +367,12 @@ namespace LDGExample {
 #if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
 #elif HAVE_BLAS
-      //typedef GMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef GMRESOp    <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
       typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
-      //typedef OEMGMRESOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef OEMCGOp       <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef CGInverseOp   <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
-      //typedef BICGSTABOp    <DiscreteFunctionImp, OperatorImp> InverseOperatorType;
+      //typedef OEMGMRESOp    <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      //typedef OEMCGOp       <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      //typedef CGInverseOp   <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      //typedef BICGSTABOp    <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
 #else 
       typedef CGInverseOp   <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
 #endif
