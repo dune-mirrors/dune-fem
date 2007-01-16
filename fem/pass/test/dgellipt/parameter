@@ -11,7 +11,7 @@ InvSolverEps: 1e-12
 verbose: 1
 
 % use Preconditioning 0 == no, 1 == yes  
-Preconditioning: 1
+Preconditioning: 0
 % number of iterations 
 ILU-iteration: 2 
 % relaxation factor 
