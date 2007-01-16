@@ -87,9 +87,9 @@ namespace Dune {
       //! constructor used by ISTLMatrixObject
       ImprovedBCRSMatrix(const SpaceType & space, 
                          CommunicationManagerType& comm,
-                         size_type rows, size_type cols, size_type nz)
-        : BaseType (rows,cols, BaseType::row_wise)
-        , nz_(nz)
+                         size_type rows, size_type cols)
+        : BaseType (rows,cols,BaseType::row_wise)
+        , nz_(0)
         , space_(&space)
         , comm_(&comm)         
       {
@@ -142,7 +142,8 @@ namespace Dune {
                 template <class,PartitionIteratorType> class GridPartType> 
       void setup(const RowSpaceType & rowSpace, 
                  const ColSpaceType & colSpace,
-                 const GridPartType<GridType,pitype> & gridPart) 
+                 const GridPartType<GridType,pitype> & gridPart,
+                 bool verbose = false) 
       { 
         int size = rowSpace.indexSet().size(0);
         size = (int) size / 10;
@@ -197,6 +198,10 @@ namespace Dune {
         }
         clear();
         std::sort(overlapRows_.begin(), overlapRows_.end());
+        if(verbose)  
+        {
+          std::cout << "ISTLMatrix::setup: finished assembly of matrix structure! \n";
+        }
       }
 
       //! clear Matrix, i.e. set all entires to 0
@@ -375,55 +380,12 @@ namespace Dune {
       }
     };
 
-    //! default number of non-zeros per row 
-    template <class GridImp>
-    struct NonZeros
-    {
-      enum { dimension = GridImp::dimension };
-      static int bound() 
-      {
-        // upper bound is number of max number of neighbors + myself
-        return (2 * dimension) + 1;
-      }
-    };
-
-    //! default number of non-zeros per row 
-    template <int dim, int dimworld>
-    struct NonZeros<ALUSimplexGrid<dim,dimworld> > 
-    {
-      enum { dimension = dim };
-      static int bound() 
-      {
-        // we have dim+1 neighbors when conforming
-        // we have 2 * dim-1 (4 or 2) neihbors on each face when
-        // non-conforming
-        // upper bound is number of max number of neighbors + myself
-        return (dimension+1) * (2 * dimension-1) + 1;
-      }
-    };
-
-    //! default number of non-zeros per row 
-    template <int dim, int dimworld>
-    struct NonZeros<ALUCubeGrid<dim,dimworld> >
-    {
-      enum { dimension = dim };
-      static int bound() 
-      {
-        // we have 2 * dim neighbors when conforming
-        // we have 2 * dim-1 (4 or 2) neihbors on each face when
-        // non-conforming
-        // upper bound is number of max number of neighbors + myself
-        return (2* dimension) * (2 * dimension-1) + 1;
-      }
-    };
-
   public:
     typedef LocalMatrix<MatrixType> LocalMatrixType;
     typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
 
     const RowSpaceType & rowSpace_;
     const ColumnSpaceType & colSpace_;
-    const int factor_; 
 
     int size_;
 
@@ -444,7 +406,6 @@ namespace Dune {
                      const std::string& paramfile)
       : rowSpace_(rowSpace)
       , colSpace_(colSpace)
-      , factor_( NonZeros<GridType>::bound() )
       , size_(-1)
       , matrix_(0)
       , preconder_(0)
@@ -504,20 +465,7 @@ namespace Dune {
         delete preconder_; preconder_ = 0;
         size_ = rowSpace_.indexSet().size(0);
 
-        /*
-        { 
-          typedef typename RowSpaceType :: IteratorType IteratorType;
-          int rows = 0;
-          IteratorType endit = rowSpace_.end();
-          for(IteratorType it = rowSpace_.begin(); it != endit; ++it)
-          {
-            ++rows;   
-          }
-          size_ = rows;
-        }
-        */
-        
-        matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0),factor_);
+        matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0));
         matrix().setup(rowSpace_,colSpace_,rowSpace_.gridPart());
       }
     }
