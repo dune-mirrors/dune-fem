@@ -631,7 +631,7 @@ namespace Dune {
 
     //typedef FieldMatrix<double,1,1> LittleBlockType; 
     typedef FieldMatrix<double,6,6> LittleBlockType; 
-    typedef ImprovedBCRSMatrix< LittleBlockType > MatrixType;
+    typedef ImprovedBCRSMatrix< LittleBlockType , SpaceType > MatrixType;
     typedef MatrixType PreconditionMatrixType;
     
     template <class MatrixImp> 
