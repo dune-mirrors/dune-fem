@@ -908,7 +908,8 @@ public:
   //! setup matrix handler 
   BlockMatrixObject(const RowSpaceType & rowSpace, 
                     const ColumnSpaceType & colSpace,
-                    bool preconditioning) 
+                    bool preconditioning,
+                    const std::string& paramfile) 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
     , size_(-1)

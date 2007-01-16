@@ -180,7 +180,7 @@ namespace Dune {
       faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
       volumeQuadOrd_(2*elemOrder_),
       faceQuadOrd_(2*faceOrder_),
-      matrixObj_(spc_,spc_, problem_.preconditioning()),
+      matrixObj_(spc_,spc_, problem_.preconditioning(),paramFile ),
       entityMarker_(),
       coeffEn_(1.0),
       coeffNb_(1.0),

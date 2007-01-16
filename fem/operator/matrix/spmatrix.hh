@@ -406,7 +406,8 @@ public:
   //! setup matrix handler 
   SparseRowMatrixObject(const RowSpaceType & rowSpace, 
                         const ColumnSpaceType & colSpace,
-                        bool preconditioning) 
+                        bool preconditioning,
+                        const std::string& paramfile ) 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
     , rowMaxNumbers_(-1)

@@ -1,12 +1,18 @@
 #ifndef DUNE_ISTLMATRIXWRAPPER_HH
 #define DUNE_ISTLMATRIXWRAPPER_HH
 
+//- system includes 
+#include <vector> 
+
+//- Dune istl includes 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/preconditioners.hh>
 
+//- Dune fem includes 
 #include <dune/fem/discretefunction/staticfunction.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/io/file/asciiparser.hh>
 
 namespace Dune { 
 
@@ -294,7 +300,8 @@ namespace Dune {
   template <class RowSpaceType, class ColumnSpaceType> 
   class ISTLMatrixObject  
   {
-    typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
+    typedef typename RowSpaceType::GridType GridType; 
+    typedef typename GridType::template Codim<0>::Entity EntityType;
   public:  
     enum { littleRows = RowSpaceType :: numBaseFunctions };
     enum { littleCols = ColumnSpaceType :: numBaseFunctions };
@@ -368,6 +375,48 @@ namespace Dune {
       }
     };
 
+    //! default number of non-zeros per row 
+    template <class GridImp>
+    struct NonZeros
+    {
+      enum { dimension = GridImp::dimension };
+      static int bound() 
+      {
+        // upper bound is number of max number of neighbors + myself
+        return (2 * dimension) + 1;
+      }
+    };
+
+    //! default number of non-zeros per row 
+    template <int dim, int dimworld>
+    struct NonZeros<ALUSimplexGrid<dim,dimworld> > 
+    {
+      enum { dimension = dim };
+      static int bound() 
+      {
+        // we have dim+1 neighbors when conforming
+        // we have 2 * dim-1 (4 or 2) neihbors on each face when
+        // non-conforming
+        // upper bound is number of max number of neighbors + myself
+        return (dimension+1) * (2 * dimension-1) + 1;
+      }
+    };
+
+    //! default number of non-zeros per row 
+    template <int dim, int dimworld>
+    struct NonZeros<ALUCubeGrid<dim,dimworld> >
+    {
+      enum { dimension = dim };
+      static int bound() 
+      {
+        // we have 2 * dim neighbors when conforming
+        // we have 2 * dim-1 (4 or 2) neihbors on each face when
+        // non-conforming
+        // upper bound is number of max number of neighbors + myself
+        return (2* dimension) * (2 * dimension-1) + 1;
+      }
+    };
+
   public:
     typedef LocalMatrix<MatrixType> LocalMatrixType;
     typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
@@ -383,18 +432,19 @@ namespace Dune {
 
     CommunicationManagerType comm_;
 
-    const int numIterations_; 
-    const double relaxFactor_; 
+    int numIterations_; 
+    double relaxFactor_; 
       
     const bool preconditioning_;
 
     //! setup matrix handler 
     ISTLMatrixObject(const RowSpaceType & rowSpace,
                      const ColumnSpaceType & colSpace,
-                     bool preconditioning)
+                     bool preconditioning,
+                     const std::string& paramfile)
       : rowSpace_(rowSpace)
       , colSpace_(colSpace)
-      , factor_((dim * 2) + 1)
+      , factor_( NonZeros<GridType>::bound() )
       , size_(-1)
       , matrix_(0)
       , preconder_(0)
@@ -403,6 +453,12 @@ namespace Dune {
       , relaxFactor_(1.1)
       , preconditioning_(preconditioning)
     {
+      if(paramfile != "")
+      {
+        readParameter(paramfile,"ILU-iteration",numIterations_);
+        readParameter(paramfile,"ILU-relaxation",relaxFactor_);
+      }
+      
       assert( rowSpace_.indexSet().size(0) ==
               colSpace_.indexSet().size(0) );
       reserve(true);
