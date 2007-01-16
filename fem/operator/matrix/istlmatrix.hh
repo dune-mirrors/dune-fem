@@ -129,10 +129,17 @@ namespace Dune {
       }
 
       //! setup matrix entires 
-      template <class RowSpaceType, class ColSpaceType> 
+      template <class RowSpaceType, class ColSpaceType,
+                class GridType,
+                PartitionIteratorType pitype,
+                template <class,PartitionIteratorType> class GridPartType> 
       void setup(const RowSpaceType & rowSpace, 
-                 const ColSpaceType & colSpace) 
-      {
+                 const ColSpaceType & colSpace,
+                 const GridPartType<GridType,pitype> & gridPart) 
+      { 
+        int size = rowSpace.indexSet().size(0);
+        size = (int) size / 10;
+        overlapRows_.reserve( size );
         overlapRows_.resize(0);
         {
           
@@ -141,22 +148,20 @@ namespace Dune {
           CreateIteratorType create = this->createbegin();
           CreateIteratorType endcreate = this->createend();
 
-          //typedef typename RowSpaceType :: IteratorType IteratorType; 
-          typedef typename RowSpaceType :: GridType GridType;
-          typedef typename GridType :: template Codim<0> :: Entity EntityType;
-          typedef typename GridType :: template Codim<0> :: LeafIterator IteratorType; 
-          typedef typename RowSpaceType :: GridPartType:: IntersectionIteratorType 
-            IntersectionIteratorType; 
+          //! we need all partition iterator here  
+          typedef GridPartType<GridType,All_Partition> AllPartType; 
+          typedef typename AllPartType :: template Codim<0> :: IteratorType  IteratorType;
+          AllPartType allPart(const_cast<GridType&> (rowSpace.grid()));
           
-          //IteratorType endit = rowSpace.end();
-          //for(IteratorType it = rowSpace.begin(); it != endit; ++it)
-          IteratorType endit = rowSpace.grid().template leafend<0> ();
-          for(IteratorType it = rowSpace.grid().template leafbegin<0> (); it != endit; ++it)
+          typedef typename GridType :: template Codim<0> :: Entity EntityType;
+          typedef typename AllPartType:: IntersectionIteratorType IntersectionIteratorType; 
+          
+          IteratorType endit = allPart.template end<0> ();
+          for(IteratorType it = allPart.template begin<0> (); it != endit; ++it)
           {
             assert( create != endcreate );
 
             EntityType & en = *it;
-            //assert( en.partitionType() == InteriorEntity );
 
             localRows_ = rowSpace.getBaseFunctionSet(en).numBaseFunctions();
             localCols_ = colSpace.getBaseFunctionSet(en).numBaseFunctions();
@@ -184,6 +189,7 @@ namespace Dune {
           }
         }
         clear();
+        std::sort(overlapRows_.begin(), overlapRows_.end());
       }
 
       //! clear Matrix, i.e. set all entires to 0
@@ -246,32 +252,21 @@ namespace Dune {
         }
       }
 
-      //! mult y = Ax 
+      //! apply matrix: \f$ y = A(x) \f$
       void mult(const BlockVectorType& x, BlockVectorType& y) const 
       {
         // exchange data 
         communicate( x );
 
-        /*
-        ConstRowIterator endi=this->end();
-        for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-        {
-          ConstColIterator endj = (*i).end();
-          for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          {
-            FMatrixHelp::multAssign((*j),x[j.index()],y[i.index()]);
-          }
-        }
-        */
-
         // multiply 
         y = 0;
         this->umv(x,y);
+
         // delete non interior entries 
         deleteNonInterior(y);
       }
 
-      //! mult y = Ax 
+      //! apply scaled: \f$ y = y + \alpha A(x) \f$
       void multAdd(field_type alpha, const BlockVectorType& x, BlockVectorType& y) const 
       {
         // exchange data 
@@ -466,7 +461,7 @@ namespace Dune {
         */
         
         matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0),factor_);
-        matrix().setup(rowSpace_,colSpace_);
+        matrix().setup(rowSpace_,colSpace_,rowSpace_.gridPart());
       }
     }
 
