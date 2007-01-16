@@ -397,6 +397,9 @@ namespace Dune {
     //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
+      // only build Matrix in interior 
+      assert( en.partitionType() == InteriorEntity );
+      
       // local function for right hand side 
       typedef typename DestinationType :: LocalFunctionType SingleLFType; 
       SingleLFType singleRhs = dest_->localFunction(en); //rhs

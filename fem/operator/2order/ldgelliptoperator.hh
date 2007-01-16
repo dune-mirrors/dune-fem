@@ -505,12 +505,6 @@ namespace Dune {
   public:
     //! return refernence to system matrix, used by OEM-Solver
     const ThisType & systemMatrix () const { return *this; }
-    /*
-    const MatrixType & systemMatrix () const 
-    { 
-      return matrixHandler_.systemMatrix(); 
-    }
-    */
     
     //! return reference to preconditioning matrix, used by OEM-Solver
     const PreconditionMatrixType & preconditionMatrix () const { return matrixHandler_.pcMatrix(); }
@@ -619,6 +613,9 @@ namespace Dune {
     //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
+      // only build Matrix in interior 
+      assert( en.partitionType() == InteriorEntity );
+      
       // local function for right hand side 
       typedef typename DestinationType :: LocalFunctionType SingleLFType; 
       SingleLFType singleRhs = dest_->localFunction(en); //rhs
