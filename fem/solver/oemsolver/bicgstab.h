@@ -82,6 +82,8 @@ bicgstab_algo( const CommunicatorType & comm,
   if( usePC ) tmp = new double[N];
 #endif
 
+  const double bicgeps = 1e-40;
+
   // f"ur's Abbruchkriterium (*)  -- r enth"alt immer das Residuum r=Ax-b
   unsigned int its=0;
 
@@ -121,7 +123,7 @@ bicgstab_algo( const CommunicatorType & comm,
   dcopy(N,d,1,s,1);
   dcopy(N,s,1,rT,1);
  
-  assert( ddot(N,rT,1,rT,1)>1e-40 );
+  assert( ddot(N,rT,1,rT,1)> bicgeps );
   
   rTr = ddot(N,r,1,r,1);
   rTh = ddot(N,rT,1,s,1);
@@ -138,7 +140,10 @@ bicgstab_algo( const CommunicatorType & comm,
     // communicate rTAd
     rTAd = comm.sum( rtTmp );
     
-    assert( fabs(rTAd)>1e-40 );
+    //assert( fabs(rTAd)> bicgeps );
+    // if no error, return 
+    if( fabs(rTAd) <= bicgeps ) break;
+
     alpha=rTh/rTAd;
 
     daxpy(N,-alpha,Ad,1,r,1);
@@ -156,7 +161,7 @@ bicgstab_algo( const CommunicatorType & comm,
     // communicate st and tt 
     comm.sum( stBuff, 2 );
     
-    if ( fabs(st)<1e-40 || fabs(tt)<1e-40 )
+    if ( fabs(st)<bicgeps || fabs(tt)<bicgeps )
     {
       omega = 0.;
     }
