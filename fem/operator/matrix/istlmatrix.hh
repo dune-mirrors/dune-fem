@@ -74,7 +74,10 @@ namespace Dune {
 
       //! communication manager 
       mutable CommunicationManagerType* comm_;
+
+      std::vector<int> overlapRows_;
     public:
+      //! constructor used by ISTLMatrixObject
       ImprovedBCRSMatrix(const SpaceType & space, 
                          CommunicationManagerType& comm,
                          size_type rows, size_type cols, size_type nz)
@@ -86,6 +89,7 @@ namespace Dune {
         std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
 
+      //! constuctor used by ILU preconditioner 
       ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
         : BaseType (rows,cols, BaseType::row_wise)
         , nz_(nz)
@@ -95,6 +99,7 @@ namespace Dune {
         std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
 
+      //! matrix multiplication for OEM solvers 
       void multOEM (const double * arg, double * dest)
       {
         RowIteratorType endi=this->end();
@@ -123,34 +128,44 @@ namespace Dune {
         }
       }
 
+      //! setup matrix entires 
       template <class RowSpaceType, class ColSpaceType> 
       void setup(const RowSpaceType & rowSpace, 
                  const ColSpaceType & colSpace) 
       {
+        overlapRows_.resize(0);
         {
+          
           typedef typename BaseType :: CreateIterator CreateIteratorType; 
 
           CreateIteratorType create = this->createbegin();
           CreateIteratorType endcreate = this->createend();
 
-          typedef typename RowSpaceType :: IteratorType IteratorType; 
-          typedef typename RowSpaceType :: GridType:: template Codim<0> ::
-            Entity EntityType;
+          //typedef typename RowSpaceType :: IteratorType IteratorType; 
+          typedef typename RowSpaceType :: GridType GridType;
+          typedef typename GridType :: template Codim<0> :: Entity EntityType;
+          typedef typename GridType :: template Codim<0> :: LeafIterator IteratorType; 
           typedef typename RowSpaceType :: GridPartType:: IntersectionIteratorType 
             IntersectionIteratorType; 
           
-          IteratorType endit = rowSpace.end();
-          for(IteratorType it = rowSpace.begin(); it != endit; ++it)
+          //IteratorType endit = rowSpace.end();
+          //for(IteratorType it = rowSpace.begin(); it != endit; ++it)
+          IteratorType endit = rowSpace.grid().template leafend<0> ();
+          for(IteratorType it = rowSpace.grid().template leafbegin<0> (); it != endit; ++it)
           {
             assert( create != endcreate );
 
             EntityType & en = *it;
+            //assert( en.partitionType() == InteriorEntity );
 
             localRows_ = rowSpace.getBaseFunctionSet(en).numBaseFunctions();
             localCols_ = colSpace.getBaseFunctionSet(en).numBaseFunctions();
 
             const int elIndex = rowSpace.indexSet().index(en);
             create.insert( elIndex );
+            
+            if(en.partitionType() != InteriorEntity) 
+              overlapRows_.push_back( elIndex );
 
             typedef typename RowSpaceType :: BaseFunctionSetType RowBaseSetType;
             typedef typename ColSpaceType :: BaseFunctionSetType ColBaseSetType;
@@ -162,17 +177,16 @@ namespace Dune {
               if(nit.neighbor())
               {
                 const int nbIndex = rowSpace.indexSet().index( *nit.outside() );
-
                 create.insert( nbIndex );
               }
             }
             ++create;
           }
         }
-
         clear();
       }
 
+      //! clear Matrix, i.e. set all entires to 0
       void clear() 
       {
         {
@@ -184,6 +198,19 @@ namespace Dune {
             {
               (*j) = 0.0;
             }
+          }
+        }
+
+        // for non-interior entities set diag to 1 for ILU Preconditioner 
+        const int overlap = overlapRows_.size();
+        for(int i=0; i<overlap; ++i)
+        {
+          const int idx = overlapRows_[i]; 
+          LittleBlockType& diag = this->operator[](idx)[idx];
+          CompileTimeChecker<LittleBlockType :: rows == LittleBlockType :: cols > ();
+          for(int k=0; k<LittleBlockType :: rows; ++k)  
+          {
+            diag[k][k] = 1.0;
           }
         }
       }
@@ -210,7 +237,6 @@ namespace Dune {
           // if serial run, just return 
           if(space_->grid().comm().size() <= 1) 
           {
-            std::cout << "Only one process, returning! \n";
             return;
           }
 
@@ -241,6 +267,31 @@ namespace Dune {
         // multiply 
         y = 0;
         this->umv(x,y);
+        // delete non interior entries 
+        deleteNonInterior(y);
+      }
+
+      //! mult y = Ax 
+      void multAdd(field_type alpha, const BlockVectorType& x, BlockVectorType& y) const 
+      {
+        // exchange data 
+        communicate( x );
+
+        this->usmv(alpha,x,y);
+
+        // delete non interior entries 
+        deleteNonInterior(y);
+      }
+
+    private:  
+      void deleteNonInterior(BlockVectorType& y) const
+      {
+        // set all entries belonging to non-interior elements to zero 
+        const int overlap = overlapRows_.size();
+        for(int i=0; i<overlap; ++i)
+        {
+          y[overlapRows_[i]] = 0;
+        }
       }
   };
 
@@ -316,9 +367,9 @@ namespace Dune {
         matrix_ = 0.0;
       }
 
-       void resort() 
-       {
-       }
+      void resort() 
+      {
+      }
     };
 
   public:
@@ -400,6 +451,20 @@ namespace Dune {
         delete matrix_;
         delete preconder_; preconder_ = 0;
         size_ = rowSpace_.indexSet().size(0);
+
+        /*
+        { 
+          typedef typename RowSpaceType :: IteratorType IteratorType;
+          int rows = 0;
+          IteratorType endit = rowSpace_.end();
+          for(IteratorType it = rowSpace_.begin(); it != endit; ++it)
+          {
+            ++rows;   
+          }
+          size_ = rows;
+        }
+        */
+        
         matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0),factor_);
         matrix().setup(rowSpace_,colSpace_);
       }
