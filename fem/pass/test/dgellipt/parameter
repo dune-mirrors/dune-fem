@@ -12,6 +12,10 @@ verbose: 1
 
 % use Preconditioning 0 == no, 1 == yes  
 Preconditioning: 1
+% number of iterations 
+ILU-iteration: 2 
+% relaxation factor 
+ILU-relaxation: 0.9
 
 % display using Grape, 0 == no, 1 == yes  
 display: 1
