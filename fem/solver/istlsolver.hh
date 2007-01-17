@@ -48,71 +48,6 @@ namespace Dune {
     }
   };
 
-  template<class X, class Y>
-  class EmptyPreconditioner : public Preconditioner<X,Y> {
-  public:
-
-    EmptyPreconditioner () {}
-    //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
-    //! \brief The range type of the preconditioner.
-    typedef Y range_type;
-    //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
-
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::sequential};
-
-    /*! \brief Prepare the preconditioner. 
-
-    A solver solves a linear operator equation A(x)=b by applying 
-        one or several steps of the preconditioner. The method pre()
-        is called before before the first apply operation. 
-        x and b are right hand side and solution vector of the linear
-        system. It may. e.g., scale the system, allocate memory or
-        compute a (I)LU decomposition.
-      Note: The ILU decomposition could also be computed in the constructor
-        or with a separate method of the derived method if several
-        linear systems with the same matrix are to be solved.
-
-        \param x The left hand side of the equation.
-        \param b The right hand side of the equation.
-    */
-    virtual void pre (X& x, Y& b) {
-      //x = b; 
-    }
-
-    /*! \brief Apply one step of the preconditioner to the system A(v)=d. 
-
-        On entry v=0 and d=b-A(x) (although this might not be 
-        computed in that way. On exit v contains the update, i.e
-        one step computes \f$ v = M^{-1} d \f$ where \f$ M \f$ is the
-        approximate inverse of the operator \f$ A \f$ characterizing 
-        the preconditioner.
-        \param[out] v The update to be computed
-        \param d The current defect.
-    */
-    virtual void apply (X& v, const Y& d)
-    {
-      v = d;
-    }
-
-    /*! \brief Clean up.
-
-    This method is called after the last apply call for the
-        linear system to be solved. Memory may be deallocated safely
-        here. x is the solution of the linear equation.
-
-        \param x The right hand side of the equation.
-    */
-    virtual void post (X& x) {
-    }
-
-    // every abstract base class has a virtual destructor
-    virtual ~EmptyPreconditioner () {}
-  };
-
   //=====================================================================
   // Implementation for ISTL-matrix based operator
   //=====================================================================
@@ -187,17 +122,10 @@ private:
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
       typedef typename OperatorImp :: PreconditionMatrixType PreconMatrix;
       
-      if( op.hasPreconditionMatrix() ) 
-      {
-        solve(op.systemMatrix().matrix(),op.preconditionMatrix(),
-              arg,dest,arg.space().grid().comm(),eps,maxIter,verbose);
-      }
-      else 
-      {
-        EmptyPreconditioner<BlockVectorType,BlockVectorType> preconditioner;
-        solve(op.systemMatrix().matrix(),preconditioner,
+      typedef Preconditioner<BlockVectorType,BlockVectorType> PreconditionerType; 
+      const PreconditionerType& pre = op.preconditionMatrix();
+      solve(op.systemMatrix().matrix(),pre,
             arg,dest,arg.space().grid().comm(),eps,maxIter,verbose);
-      }
     }
 
     template <class MatrixType, 
