@@ -177,7 +177,7 @@ namespace Dune {
       dtMin_(std::numeric_limits<double>::max()),
       time_(0),
       elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
-      faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
+      faceOrder_(std::max(spc_.order(),gradientSpace_.order())),
       volumeQuadOrd_(2*elemOrder_),
       faceQuadOrd_(2*faceOrder_),
       matrixObj_(spc_,spc_, problem_.preconditioning(),paramFile ),
@@ -372,52 +372,27 @@ namespace Dune {
     //! set all data belonging to this entity to zero 
     void restrictLocal(const EntityType& father, const EntityType & son, bool firstCall ) const
     {
-      assert( gridPart_.indexSet().adaptive() );
-      if( firstCall ) 
-      {
-        // insert new entity 
-        entityMarker_.insert( localIdSet_.id( father ) );
-      }
     }
 
     //! set all data belonging to this entity to zero 
     void prolongLocal(const EntityType& father, const EntityType & son, bool ) const
     {
-      assert( gridPart_.indexSet().adaptive() );
-      // insert new entity  
-      entityMarker_.insert( localIdSet_.id( son ) );
     }
 
-    //! set all data belonging to this entity to zero 
-    void clearLocal(EntityType& en, std::vector<int> & newDofs ) const
+    void resizeCaches(const size_t numDofs) const
     {
-      {
-        // local function for right hand side 
-        typedef typename DestinationType :: LocalFunctionType SingleLFType; 
-        SingleLFType singleRhs = dest_->localFunction(en); //rhs
-
-        const int numDofs = singleRhs.numDofs();
-        if( spc_.multipleGeometryTypes() )
-        {
-          newDofs.reserve( newDofs.size() + numDofs );
-        }
-
-        assert( numDofs > 0 );
-        for(int i=0; i<numDofs; ++i) 
-        {
-          singleRhs[i] = 0.0;
-          // remember dof num of new dofs 
-          newDofs.push_back( spc_.mapToGlobal( en, i ) );
-        }
-      }
-      
-      {
-        LocalMatrixType matrixEn(matrixObj_.matrix(),
-                                       en, spc_, en, spc_ ); 
-        matrixEn.clear();
+      // resize caches 
+      if(tau_.size() != numDofs) 
+      { 
+        tau_.resize(numDofs);
+        tauNeigh_.resize(numDofs);
+        phi_.resize(numDofs);
+        phiNeigh_.resize(numDofs);
+        psi_.resize(numDofs);
+        coeffPsi_.resize(numDofs);
       }
     }
-    
+      
     //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
@@ -443,10 +418,10 @@ namespace Dune {
       // get base function set of single space 
       const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(en);
       const int numDofs = bsetEn.numBaseFunctions();
+      assert( numDofs > 0 );
 
       // resize caches 
-      if( (int) tau_.size() != numDofs) tau_.resize(numDofs);
-      if( (int) phi_.size() != numDofs) phi_.resize(numDofs);
+      resizeCaches(numDofs);
       
       /////////////////////////////////
       // Volumetric integral part
@@ -496,17 +471,20 @@ namespace Dune {
           caller_.evaluateCoefficient(en, volQuad, l, coeffEn_ );
         }
 
-        JacobianRangeType psitmp(0.0);
+        // reset tmp variable 
         for(int k = 0; k < numDofs; ++k)
         {
-          // eval grad psi 
-          bsetEn.jacobian( k, volQuad, l, psitmp );
+          JacobianRangeType& psi = psi_[k]; 
+          JacobianRangeType& coeffPsi = coeffPsi_[k];
 
-          JacobianRangeType psi(0.0);
+          // eval grad psi 
+          bsetEn.jacobian( k, volQuad, l, psitmp_ );
+  
           // apply inverse jacobian 
           for(int i=0; i<dimRange; ++i) 
           {
-            inv.umv(psitmp[i], psi[i]);
+            psi[i] = 0.0; 
+            inv.umv(psitmp_[i], psi[i]);
           }
 
           // apply coefficient 
@@ -514,16 +492,27 @@ namespace Dune {
           {
             for(int i=0; i<dimRange; ++i)
             {
-              psitmp[i] = psi[i];
-              psi[i] = 0.0;
-              coeffEn_.umv(psitmp[i],psi[i]);
+              coeffPsi[i] = 0.0;
+              coeffEn_.umv(psi[i],coeffPsi[i]);
             }
           }
+          else 
+          {
+            coeffPsi = psi;
+          }
+        }
 
+        // fill element matrix 
+        for(int k = 0; k < numDofs; ++k)
+        {
           // add diagonal entry
           {
-            double val = bsetEn.evaluateGradientSingle(k, en, volQuad, l, psi )
-                         * intel;
+            double val = 0.0;
+            for (int i = 0; i <dimRange; ++i) 
+            {
+              val += coeffPsi_[k][i] * psi_[k][i];
+            }
+            val *= intel;
             matrixEn.add( k , k , val );
           }
 
@@ -532,9 +521,13 @@ namespace Dune {
           // entry (k,j) == entry (j,k)
           for (int j = k+1; j < numDofs; ++j) 
           {
-            // eval grad tau  
-            double val = bsetEn.evaluateGradientSingle(j, en, volQuad, l, psi )
-                       * intel;
+            double val = 0.0;
+            for (int i = 0; i <dimRange; ++i) 
+            {
+              val += coeffPsi_[k][i] * psi_[j][i];
+            }
+            val *= intel;
+            
             // add k,j 
             matrixEn.add( k , j , val );
 
@@ -547,52 +540,58 @@ namespace Dune {
       /////////////////////////////////
       // Surface integral part
       /////////////////////////////////
-      
       IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
       { 
         // if neighbor exists 
         if (nit.neighbor()) 
         {
-          // type of TwistUtility 
-          typedef TwistUtility<GridType> TwistUtilityType;
-          // check conformity 
-          if( TwistUtilityType::conforming(gridPart_.grid(),nit) ) 
-          {
-            FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
-                                             FaceQuadratureType::INSIDE);
+          EntityPointerType neighEp = nit.outside();
+          EntityType&            nb = *neighEp;
 
-      
-            FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
-                                             FaceQuadratureType::OUTSIDE);
-
-            // apply neighbor part 
-            applyLocalNeighbor(nit,en,massVolElInv,volQuad,
-                  faceQuadInner,faceQuadOuter, 
-                  bsetEn,matrixEn);
-          }
-          else 
+          // only once per intersection 
+          if(localIdSet_.id(en) > localIdSet_.id(nb))
           {
-            // we only should get here whne a non-conforming situation 
-            // occurs in a non-conforming grid 
-            assert( GridPartType :: conforming == false );
-            
-            typedef typename FaceQuadratureType :: NonConformingQuadratureType 
-              NonConformingFaceQuadratureType;
-            
-            NonConformingFaceQuadratureType 
-              nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
-                                         NonConformingFaceQuadratureType::INSIDE);
+            // type of TwistUtility 
+            typedef TwistUtility<GridType> TwistUtilityType;
+            // check conformity 
+            if( TwistUtilityType::conforming(gridPart_.grid(),nit) ) 
+            {
+              FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                               FaceQuadratureType::INSIDE);
+
         
-            NonConformingFaceQuadratureType 
-              nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
-                                         NonConformingFaceQuadratureType::OUTSIDE);
+              FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
+                                               FaceQuadratureType::OUTSIDE);
 
-            // apply neighbor part 
-            applyLocalNeighbor(nit,en,massVolElInv,volQuad,
-                  nonConformingFaceQuadInner,
-                  nonConformingFaceQuadOuter, 
-                  bsetEn,matrixEn);
+              // apply neighbor part 
+              applyLocalNeighbor(nit,en,nb,massVolElInv,volQuad,
+                    faceQuadInner,faceQuadOuter, 
+                    bsetEn,matrixEn);
+            }
+            else 
+            {
+              // we only should get here whne a non-conforming situation 
+              // occurs in a non-conforming grid 
+              assert( GridPartType :: conforming == false );
+              
+              typedef typename FaceQuadratureType :: NonConformingQuadratureType 
+                NonConformingFaceQuadratureType;
+              
+              NonConformingFaceQuadratureType 
+                nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                           NonConformingFaceQuadratureType::INSIDE);
+          
+              NonConformingFaceQuadratureType 
+                nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
+                                           NonConformingFaceQuadratureType::OUTSIDE);
+
+              // apply neighbor part 
+              applyLocalNeighbor(nit,en,nb,massVolElInv,volQuad,
+                    nonConformingFaceQuadInner,
+                    nonConformingFaceQuadOuter, 
+                    bsetEn,matrixEn);
+            }
           }
         } // end if neighbor 
 
@@ -752,7 +751,9 @@ namespace Dune {
 
     template <class QuadratureImp> 
     void applyLocalNeighbor(IntersectionIteratorType & nit, 
-                            EntityType & en, const double massVolElInv,
+                            EntityType & en, 
+                            EntityType & nb,
+                            const double massVolElInv,
                             VolumeQuadratureType & volQuad,
                             const QuadratureImp & faceQuadInner, 
                             const QuadratureImp & faceQuadOuter, 
@@ -760,9 +761,6 @@ namespace Dune {
                             LocalMatrixType & matrixEn) const
     {
       const int numDofs = bsetEn.numBaseFunctions();
-
-      EntityPointerType neighEp = nit.outside();
-      EntityType&            nb = *neighEp;
 
       caller_.setNeighbor(nb);
 
@@ -779,6 +777,14 @@ namespace Dune {
       // create matrix handles for neighbor 
       LocalMatrixType matrixNb(matrixObj_.matrix(),
                                en, spc_, nb, spc_ ); 
+      
+      // create matrix handles for neighbor 
+      LocalMatrixType enMatrix(matrixObj_.matrix(),
+                               nb, spc_, en, spc_ ); 
+      
+      // create matrix handles for neighbor 
+      LocalMatrixType nbMatrix(matrixObj_.matrix(),
+                               nb, spc_, nb, spc_ ); 
       
       // get base function set 
       const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
@@ -830,8 +836,13 @@ namespace Dune {
         { 
           // eval base functions 
           bsetEn.eval(k,faceQuadInner,l, phi_[k]);
-          // eval gradient 
-          tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, normEn);  
+          // eval gradient for en 
+          tau_[k] = bsetEn.evaluateGradientSingle(k, en, faceQuadInner, l, normEn);  
+
+          // neighbor stuff 
+          bsetNeigh.eval(k,faceQuadOuter,l, phiNeigh_[k] );      
+          // eval gradient for nb 
+          tauNeigh_[k] = bsetNeigh.evaluateGradientSingle(k, nb, faceQuadOuter, l, normNb);      
         }
                
         // this terms dissapear if Babuska-Zlamal is used 
@@ -841,11 +852,9 @@ namespace Dune {
           {
             for(int j=0; j<numDofs; ++j)
             {
-              double tauNeigh = bsetNeigh.evaluateGradientSingle(j,nb,faceQuadOuter,l, normNb);      
-
               // v^+ * (grad w^+  + grad w^-)
               {
-                numericalFlux2(phi_[k] , tau_[j] , tauNeigh, resultLeft, resultRight);
+                numericalFlux2(phi_[k] , tau_[j] , tauNeigh_[j] , resultLeft, resultRight);
 
                 double valLeft = resultLeft[0];
                 valLeft *= -intel;
@@ -858,11 +867,24 @@ namespace Dune {
                 matrixNb.add( k , j , valRight );
               }
 
-              bsetNeigh.eval(j,faceQuadOuter,l, phiNeigh );      
-              
               // v^+ * (grad w^+  + grad w^-)
               {
-                numericalFlux(tau_[k] , phi_[j] , phiNeigh , resultLeft, resultRight);
+                numericalFlux2(phiNeigh_[k] , tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
+
+                double valLeft = resultLeft[0];
+                valLeft *= intel;
+
+                nbMatrix.add( k , j , valLeft );
+
+                double valRight = resultRight[0];
+                valRight *= intel;
+
+                enMatrix.add( k , j , valRight );
+              }
+
+              // v^+ * (grad w^+  + grad w^-)
+              {
+                numericalFlux(tau_[k] , phi_[j] , phiNeigh_[j] , resultLeft, resultRight);
 
                 double valLeft = resultLeft;
                 valLeft *= bilinIntel;
@@ -873,6 +895,21 @@ namespace Dune {
                 valRight *= bilinIntel;
 
                 matrixNb.add( k , j , valRight );
+              }
+              
+              // v^+ * (grad w^+  + grad w^-)
+              {
+                numericalFlux(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
+
+                double valLeft = -resultLeft;
+                valLeft *= bilinIntel;
+
+                nbMatrix.add( k , j , valLeft );
+
+                double valRight = -resultRight;
+                valRight *= bilinIntel;
+
+                enMatrix.add( k , j , valRight );
               }
             }
           }
@@ -998,7 +1035,12 @@ namespace Dune {
     mutable FluxRangeType coeffNb_;
     // caches for base function evaluation 
     mutable std::vector<RangeFieldType> tau_;
+    mutable std::vector<RangeFieldType> tauNeigh_;
     mutable std::vector<RangeType> phi_;
+    mutable std::vector<RangeType> phiNeigh_;
+    mutable std::vector<JacobianRangeType> psi_;
+    mutable std::vector<JacobianRangeType> coeffPsi_;
+    mutable JacobianRangeType psitmp_;
 
     mutable bool matrixAssembled_;
     double beta_;
