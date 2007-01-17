@@ -302,6 +302,67 @@ namespace Dune {
       }
   };
 
+  template<class X, class Y>
+  class PreconditionerWrapper : public Preconditioner<X,Y>
+  {
+    typedef Preconditioner<X,Y> PreconditionerInterfaceType;
+    PreconditionerInterfaceType* preconder_; 
+  public:
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+
+    enum {
+      //! \brief The category the precondtioner is part of.
+      category=SolverCategory::sequential};
+
+    //! set preconder to zero 
+    PreconditionerWrapper () : preconder_(0) {}
+    
+    //! create preconditioner of given type 
+    template <class MatrixType, class PreconditionerType>
+    PreconditionerWrapper(MatrixType & m, int iter, field_type relax, const PreconditionerType*) 
+      : preconder_(new PreconditionerType(m,iter,relax)) {}
+    
+    //! create preconditioner of given type 
+    template <class MatrixType, class PreconditionerType>
+    PreconditionerWrapper(MatrixType & m, field_type relax, const PreconditionerType*) 
+      : preconder_(new PreconditionerType(m,relax)) {}
+    
+    //! \copydoc Preconditioner 
+    virtual void pre (X& x, Y& b) 
+    {
+      if( preconder_ ) preconder_->pre(x,b);
+    }
+
+    //! \copydoc Preconditioner 
+    virtual void apply (X& v, const Y& d)
+    {
+      if( preconder_ ) 
+      {
+        preconder_->apply(v,d);
+      }
+      else 
+      {
+        v = d;
+      }
+    }
+
+    //! \copydoc Preconditioner 
+    virtual void post (X& x) {
+      if( preconder_ ) preconder_->post(x);
+    }
+
+    // every abstract base class has a virtual destructor
+    virtual ~PreconditionerWrapper () 
+    {
+      delete preconder_;
+    }
+  };
+
   template <class RowSpaceType, class ColumnSpaceType> 
   class ISTLMatrixObject  
   {
@@ -319,7 +380,8 @@ namespace Dune {
     typedef StaticDiscreteFunction< RowSpaceType , BlockVectorType>  DiscreteFunctionType; 
     typedef ImprovedBCRSMatrix< LittleBlockType , DiscreteFunctionType > MatrixType;
    
-    typedef SeqILUn<MatrixType,BlockVectorType,BlockVectorType> PreconditionMatrixType;
+    typedef PreconditionerWrapper<BlockVectorType,BlockVectorType> PreconditionMatrixType;
+    typedef Preconditioner<BlockVectorType,BlockVectorType> PreconditionerInterfaceType;
 
     template <class MatrixImp> 
     class LocalMatrix
@@ -397,7 +459,7 @@ namespace Dune {
     int numIterations_; 
     double relaxFactor_; 
       
-    const bool preconditioning_;
+    int preconditioning_;
 
     //! setup matrix handler 
     ISTLMatrixObject(const RowSpaceType & rowSpace,
@@ -412,17 +474,17 @@ namespace Dune {
       , comm_(rowSpace_)
       , numIterations_(5)
       , relaxFactor_(1.1)
-      , preconditioning_(preconditioning)
+      , preconditioning_(0)
     {
       if(paramfile != "")
       {
+        readParameter(paramfile,"Preconditioning",preconditioning_);
         readParameter(paramfile,"ILU-iteration",numIterations_);
         readParameter(paramfile,"ILU-relaxation",relaxFactor_);
       }
       
       assert( rowSpace_.indexSet().size(0) ==
               colSpace_.indexSet().size(0) );
-      reserve(true);
     }
 
     MatrixType & matrix() const 
@@ -431,14 +493,14 @@ namespace Dune {
       return *matrix_; 
     }
     
-    //! return true if precoditioning matrix is provided 
-    bool hasPcMatrix () const { return preconditioning_; }
+    //! return true, because in case of no preconditioning we have empty
+    //! preconditioner 
+    bool hasPcMatrix () const { return true; }
     const PreconditionMatrixType& pcMatrix () const  
     { 
       if( !preconder_ )
       {
-        preconder_ = new PreconditionMatrixType( matrix() , 
-                             numIterations_ , relaxFactor_ );
+        preconder_ = createPreconditioner();
       }
       return *preconder_; 
     }
@@ -487,6 +549,68 @@ namespace Dune {
     void print(std::ostream & s) const 
     { 
       matrix().print(std::cout);
+    }
+
+  private:  
+    PreconditionMatrixType* createPreconditioner() const
+    {
+      // no preconditioner 
+      if( preconditioning_ == 0 )
+      {
+        return new PreconditionMatrixType();
+      }
+      // SSOR 
+      else if( preconditioning_ == 1 )
+      {
+        typedef SeqSSOR<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
+      }
+      // SOR 
+      else if(preconditioning_ == 2)
+      {
+        typedef SeqSOR<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
+      }
+      // ILU-0 
+      else if(preconditioning_ == 3)
+      {
+        typedef SeqILU0<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        return new PreconditionMatrixType(matrix(), relaxFactor_, (PreconditionerType*)0);
+      }
+      // ILU-n
+      else if(preconditioning_ == 4)
+      {
+        typedef SeqILUn<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
+      }
+      // Gauss-Seidel
+      else if(preconditioning_ == 5)
+      {
+        typedef SeqGS<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
+      }
+      // Jacobi 
+      else if(preconditioning_ == 6)
+      {
+        typedef SeqJac<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
+      }
+      else 
+      {
+        std::cerr << "Wrong precoditioning number (p = " << preconditioning_;
+        std::cerr <<" in ISTLMatrixObject! \n";
+        std::cerr <<"Valid values are: \n";
+        std::cerr <<"0 == no \n";
+        std::cerr <<"1 == SSOR \n";
+        std::cerr <<"2 == SOR \n";
+        std::cerr <<"3 == ILU-0 \n";
+        std::cerr <<"4 == ILU-n \n";
+        std::cerr <<"5 == Gauss-Seidel \n";
+        std::cerr <<"6 == Jacobi \n";
+        assert(false);
+        abort();
+      }
+      return 0;
     }
   };
 //#endif // HAVE_DUNE_ISTL
