@@ -284,6 +284,29 @@ namespace Dune {
       // reserve memory and clear matrices 
       matrixObj_.reserve(false);
 
+      // compute matrix entries 
+      computeMatrix( arg, rhs );
+    }
+
+    //! only calculate mass matrix new on entity 
+    void updateMatrix( const ArgumentType & arg,
+                       DestinationType & rhs )
+    {
+      // prepare 
+      prepare( arg, rhs );
+
+      // clear matrix 
+      matrixObj_.clear();
+      
+      // compute matrix entries 
+      computeMatrix(arg, rhs );
+    }
+
+  private:  
+    //! compute matrix entries 
+    void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
+    {
+      // clear right hand side 
       rhs.clear();
       dest_ = &rhs;
 
@@ -295,6 +318,7 @@ namespace Dune {
       matrixObj_.createPreconditionMatrix();
     }
 
+  public:  
     //! do matrix vector multiplication, used by InverseOp  
     void operator () (const DestinationType & arg, DestinationType& dest) const 
     {
@@ -742,6 +766,16 @@ namespace Dune {
 
       caller_.setNeighbor(nb);
 
+      ////////////////////////////////////////////////////////////
+      RangeType resultLeft(0.0);
+      RangeType resultRight(0.0);
+
+      RangeType phi_j;
+      RangeType phiNeigh;
+
+      JacobianRangeType normEn;
+      JacobianRangeType normNb;
+
       // create matrix handles for neighbor 
       LocalMatrixType matrixNb(matrixObj_.matrix(),
                                en, spc_, nb, spc_ ); 
@@ -766,15 +800,6 @@ namespace Dune {
         // overall beta factor 
         const double facBeta = factorBeta(intelFactor,faceVol);
 
-        ////////////////////////////////////////////////////////////
-        RangeType resultLeft(0.0);
-        RangeType resultRight(0.0);
-
-        RangeType phi_j;
-        RangeType phiNeigh;
-
-        JacobianRangeType normEn(0.0);
-        JacobianRangeType normNb(0.0);
         ///////////////////////////////
         //  evaluate coefficients 
         ///////////////////////////////
@@ -785,6 +810,8 @@ namespace Dune {
               faceQuadInner,faceQuadOuter,l,coeffEn_,coeffNb_);
           for(int i=0; i<dimRange; ++i)
           {
+            normEn[i] = 0.0;
+            normNb[i] = 0.0;
             coeffEn_.umv(unitNormal,normEn[i]);
             coeffNb_.umv(unitNormal,normNb[i]);
           }
@@ -807,10 +834,10 @@ namespace Dune {
           tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, normEn);  
         }
                
-        for(int k=0; k<numDofs; ++k)
+        // this terms dissapear if Babuska-Zlamal is used 
+        if(notBabuskaZlamal_)
         {
-          // this terms dissapear if Babuska-Zlamal is used 
-          if(notBabuskaZlamal_)
+          for(int k=0; k<numDofs; ++k)
           {
             for(int j=0; j<numDofs; ++j)
             {
@@ -849,25 +876,26 @@ namespace Dune {
               }
             }
           }
+        }
 
-          if( betaNotZero_ )
+        if( betaNotZero_ )
+        {
+          for(int k=0; k<numDofs; ++k)
           {
             for(int j=0; j<numDofs; ++j)
             {
               phi_j = bsetEn.evaluateSingle(j,faceQuadInner,l, phi_[k] );      
               phiNeigh = bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phi_[k] );      
               {
-                RangeType resLeft, resRight;
-                
-                numericalFluxStab(phi_j, phiNeigh , resLeft, resRight);
+                numericalFluxStab(phi_j, phiNeigh , resultLeft, resultRight);
 
                 double valLeft = facBeta;
-                valLeft  *= resLeft;
+                valLeft  *= resultLeft;
 
                 matrixEn.add( k , j , valLeft );
 
                 double valRight = facBeta;
-                valRight *= resRight;
+                valRight *= resultRight;
 
                 matrixNb.add( k , j , valRight );
               }
@@ -915,92 +943,6 @@ namespace Dune {
       resultRight = -phiRight; 
     }
     
-    //! only calculate mass matrix new
-    void update(const ArgumentType& arg, DestinationType& dest) const
-    {
-      prepare(arg, dest);
-
-      typedef typename DiscreteFunctionSpaceType :: IteratorType  IteratorType ;
-      IteratorType endit = spc_.end();
-      for (IteratorType it = spc_.begin(); it != endit; ++it)
-      {
-        updateLocal(*it);
-      }
-
-      finalize(arg, dest);
-    }
-
-    //! only calculate mass matrix new on entity 
-    void updateMatrix( const ArgumentType & arg,
-                       DestinationType & rhs )
-    {
-    }
-
-    void updateLocal(EntityType& en) const
-    {
-      /*
-      // local function for gradient right hand side 
-      typedef typename GradDestinationType :: LocalFunctionType GradLFType; 
-      GradLFType gradRhs = gradRhs_.localFunction(en); //rhs
-      
-      //- typedefs
-      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-
-      MatrixAddHandleType massMatrixEn (matrixObj_.massMatrix(),
-                                     en, gradientSpace_, en, gradientSpace_ ); 
-      
-      typedef typename DiscreteGradientSpaceType::IndexSetType GradientIndexSetType;
-      typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
-
-      //- statements
-      caller_.setEntity(en);
-
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
-
-      const GeometryType & geo = en.geometry();
-      const double massVolElInv = massVolumeInv(geo);
-      
-      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.baseFunctionSet(en);
-      const int gradientNumDofs = grdbsetEn.numBaseFunctions();
-      
-      /////////////////////////////////
-      // Volumetric integral part
-      /////////////////////////////////
-
-      //set default values 
-      GradientRangeType gradSource(1.0);
-      GradientRangeType gradSourceNb(1.0);
-      
-      // cache number of integration points 
-      const int quadNop = volQuad.nop();
-      for (int l = 0; l < quadNop ; ++l) 
-      {
-        // calc factor for bas functions 
-        const double intel = volQuad.weight(l)*
-            geo.integrationElement(volQuad.point(l))*massVolElInv;
-        
-        for(int k = 0; k < gradientNumDofs; ++k)
-        {
-          // eval tau_k 
-          grdbsetEn.eval(k, volQuad, l, tau_[0] );
-          
-          if(gradProblem_.hasSource())
-          {
-            gradSourceNb = gradSource; 
-            // multiply tau with source
-            for(int i=0; i<GradDimRange; ++i) gradSourceNb[i] *= tau_[0][i];
-            
-            double val = grdbsetEn.evaluateSingle(k, volQuad, l, gradSourceNb ) * intel;
-
-            // scalar product of basis functions is 1 (supposed to)
-            massMatrixEn.add(k,k,val);
-          }
-        }
-      } // end element integral 
-      */
-    }
-
   private:
     // needs to be friend for conversion check 
     friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
