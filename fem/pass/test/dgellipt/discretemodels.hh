@@ -60,15 +60,15 @@ namespace LDGExample {
     //typedef AdaptiveLeafGridPart<GridType> GridPartType;
     //typedef HierarchicGridPart<GridType> GridPartType;
 
-    //typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
-    //typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
-    typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
-    typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
+    typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
+    typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
+    //typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
+    //typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
     
     // typical tpye of space 
     typedef FunctionSpace<double, double, dimDomain, dimRange > SingleFunctionSpaceType; 
     typedef SingleFunctionSpaceType FunctionSpaceType;
-    typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd > ContainedSpaceType;
+    typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
     
     //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
@@ -136,10 +136,9 @@ namespace LDGExample {
     enum { dimRange = Traits::dimRange };
 
   public:
-    GradientDiscreteModel(const Model& mod,const NumFlux& numf, bool preCon = false) :
+    GradientDiscreteModel(const Model& mod,const NumFlux& numf) :
       model_(mod),
       numflux_(numf),
-      preCon_(preCon),
       one_(0.0)
     {
       for(int i=0; i<dimRange; ++i) one_[i][i] = 1.0;
@@ -147,7 +146,6 @@ namespace LDGExample {
 
     const Model & data () const { return model_; }
 
-    bool preconditioning () const { return preCon_; }
     bool hasSource() const { return true; }
     bool hasFlux() const { return false; }
 
@@ -289,7 +287,6 @@ namespace LDGExample {
   private:
     const Model& model_;
     const NumFlux& numflux_;
-    const bool preCon_;
     JacobianRangeType one_;
   };
 
@@ -356,10 +353,10 @@ namespace LDGExample {
       typedef ISTLMatrixObject<DiscreteFunctionSpaceType,
                                DiscreteFunctionSpaceType> MatrixObjectType; 
 #else 
-      typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
-                                    DiscreteFunctionSpaceType> MatrixObjectType; 
-      //typedef BlockMatrixObject<DiscreteFunctionSpaceType,
-      //                          DiscreteFunctionSpaceType> MatrixObjectType; 
+      //typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
+      //                              DiscreteFunctionSpaceType> MatrixObjectType; 
+      typedef BlockMatrixObject<DiscreteFunctionSpaceType,
+                                DiscreteFunctionSpaceType> MatrixObjectType; 
 #endif
       typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
       //typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
@@ -402,15 +399,13 @@ namespace LDGExample {
     typedef BoundaryIdentifier BoundaryIdentifierType ;
 
   public:
-    LaplaceDiscreteModel(const Model& mod,const NumFlux& numf, bool preCon = false) :
+    LaplaceDiscreteModel(const Model& mod,const NumFlux& numf) :
       model_(mod),
-      numflux_(numf),
-      preCon_(preCon)
+      numflux_(numf)
     {}
 
     const Model & data () const { return model_; }
 
-    bool preconditioning () const { return preCon_; }
     bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
     bool hasCoefficient() const { return true; }
@@ -594,7 +589,6 @@ namespace LDGExample {
   private:
     const Model& model_;
     const NumFlux& numflux_;
-    const bool preCon_;
   };
 
   template <class ModelImp,int polOrd>
