@@ -65,8 +65,15 @@ namespace Dune {
   {
     template <class PT, class PP>
     friend class Pass;
-
   public:
+    //! little interface class for deleting discrete function 
+    //! held by this class 
+    template <class ObjectToDelete> 
+    struct MemHandler
+    {
+      virtual void freeLocalMemory(ObjectToDelete * obj) = 0;
+    };
+
     //- Enums and typedefs
     //! The index of the pass.
     enum {passNum = PreviousPassImp::passNum + 1};
@@ -76,6 +83,9 @@ namespace Dune {
     //! Type of the discrete function which stores the result of this pass' 
     //! computations.
     typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;
+    
+    //! type of mem handler, which deletes destination 
+    typedef MemHandler<DestinationType> MemHandlerType;
 
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
@@ -99,6 +109,7 @@ namespace Dune {
     //! \param pass Previous pass
     Pass(PreviousPassType& pass) :
       destination_(0),
+      memHandler_(0),
       previousPass_(pass)
     {
       // this ensures that the last pass doesn't allocate temporary memory
@@ -107,9 +118,10 @@ namespace Dune {
     }
 
     //! Destructor
-    virtual ~Pass() {
-      delete destination_;
-      destination_ = 0;
+    virtual ~Pass() 
+    {
+      // if memHandler was set by derived class, then use to delete destination_ 
+      if( memHandler_ ) memHandler_->freeLocalMemory(destination_);
     }
 
     //! \brief Application operator.
@@ -165,9 +177,12 @@ namespace Dune {
   protected:
     // ? Really do this? Can't you allocate the memory directly?
     DestinationType* destination_;
+    //! object to delete destination_ 
+    MemHandlerType * memHandler_; 
 
     // previous pass 
     PreviousPassType& previousPass_;
+    
   }; // end class Pass
 
 
@@ -175,7 +190,9 @@ namespace Dune {
   //! open what needs to be done on each elements.
   template <class DiscreteModelImp, class PreviousPassImp>
   class LocalPass :
-    public Pass<DiscreteModelImp, PreviousPassImp>
+    public Pass<DiscreteModelImp, PreviousPassImp>,
+    public Pass<DiscreteModelImp, PreviousPassImp>::template 
+              MemHandler<typename DiscreteModelImp::Traits::DestinationType>
   {
   public:
     //! Type of the preceding pass
@@ -220,7 +237,16 @@ namespace Dune {
         std::ostringstream funcName;
         funcName << passName_ << "_" << this->passNumber();
         this->destination_ = new DestinationType(funcName.str(), spc_);
+        // set memHandler for deleting destination_ 
+        this->memHandler_ = this;
       }
+    }
+
+    //! deletes destination_ 
+    virtual void freeLocalMemory(DestinationType * obj) 
+    {
+      delete this->destination_;
+      this->destination_ = 0;
     }
 
   protected:
