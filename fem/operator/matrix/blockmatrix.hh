@@ -901,14 +901,13 @@ public:
   int numColBaseFct_;
 
   MatrixType matrix_; 
-  const bool preconditioning_;
+  bool preconditioning_;
 
   mutable CommunicationManagerType communicate_;
 
   //! setup matrix handler 
   BlockMatrixObject(const RowSpaceType & rowSpace, 
                     const ColumnSpaceType & colSpace,
-                    bool preconditioning,
                     const std::string& paramfile) 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
@@ -916,12 +915,19 @@ public:
     , numRowBaseFct_(-1)
     , numColBaseFct_(-1)
     , matrix_()
-    , preconditioning_(preconditioning)
+    , preconditioning_(false)
     , communicate_(rowSpace_)
   {
+    if( paramfile != "" )
+    {
+      int precon = 0;
+      readParameter(paramfile,"Preconditioning",precon);
+      preconditioning_ = (precon == 1) ? true : false;
+    } 
     assert( rowSpace_.indexSet().size(0) == 
             colSpace_.indexSet().size(0) ); 
     reserve(true);
+    
   }
 
   //! return reference to stability matrix 

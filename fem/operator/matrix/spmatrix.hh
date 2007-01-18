@@ -398,7 +398,7 @@ public:
   int rowMaxNumbers_;
 
   MatrixType matrix_; 
-  const bool preconditioning_;
+  bool preconditioning_;
   PreconditionMatrixType * pcMatrix_;
 
   mutable CommunicationManagerType communicate_;
@@ -406,16 +406,21 @@ public:
   //! setup matrix handler 
   SparseRowMatrixObject(const RowSpaceType & rowSpace, 
                         const ColumnSpaceType & colSpace,
-                        bool preconditioning,
                         const std::string& paramfile ) 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
     , rowMaxNumbers_(-1)
     , matrix_()
-    , preconditioning_(preconditioning)
+    , preconditioning_(false)
     , pcMatrix_(0)
     , communicate_(rowSpace_)
   {
+    if( paramfile != "" )
+    {
+      int precon = 0;
+      readParameter(paramfile,"Preconditioning",precon);
+      preconditioning_ = (precon == 1) ? true : false;
+    }
     reserve(true);
   }
 
