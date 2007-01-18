@@ -68,11 +68,13 @@ namespace Dune {
   public:
     //! little interface class for deleting discrete function 
     //! held by this class 
-    template <class ObjectToDelete> 
     struct MemHandler
     {
-      virtual void freeLocalMemory(ObjectToDelete * obj) = 0;
+      //! call freeLocalMemory of class that allocated local Memory 
+      virtual void freeLocalMemory() = 0;
     };
+    //! type of mem handler, which deletes destination 
+    typedef MemHandler MemHandlerType;
 
     //- Enums and typedefs
     //! The index of the pass.
@@ -84,9 +86,6 @@ namespace Dune {
     //! computations.
     typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;
     
-    //! type of mem handler, which deletes destination 
-    typedef MemHandler<DestinationType> MemHandlerType;
-
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
     typedef typename PreviousPassType::GlobalArgumentType GlobalArgumentType;
@@ -121,7 +120,7 @@ namespace Dune {
     virtual ~Pass() 
     {
       // if memHandler was set by derived class, then use to delete destination_ 
-      if( memHandler_ ) memHandler_->freeLocalMemory(destination_);
+      if( memHandler_ ) memHandler_->freeLocalMemory();
     }
 
     //! \brief Application operator.
@@ -191,8 +190,7 @@ namespace Dune {
   template <class DiscreteModelImp, class PreviousPassImp>
   class LocalPass :
     public Pass<DiscreteModelImp, PreviousPassImp>,
-    public Pass<DiscreteModelImp, PreviousPassImp>::template 
-              MemHandler<typename DiscreteModelImp::Traits::DestinationType>
+    public Pass<DiscreteModelImp, PreviousPassImp>::MemHandler
   {
   public:
     //! Type of the preceding pass
@@ -237,13 +235,14 @@ namespace Dune {
         std::ostringstream funcName;
         funcName << passName_ << "_" << this->passNumber();
         this->destination_ = new DestinationType(funcName.str(), spc_);
-        // set memHandler for deleting destination_ 
+        
+        // set mem handle for deleting destination_ 
         this->memHandler_ = this;
       }
     }
 
     //! deletes destination_ 
-    virtual void freeLocalMemory(DestinationType * obj) 
+    virtual void freeLocalMemory() 
     {
       delete this->destination_;
       this->destination_ = 0;
