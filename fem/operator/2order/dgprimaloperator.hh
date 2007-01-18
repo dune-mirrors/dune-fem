@@ -1,14 +1,14 @@
 #ifndef DUNE_DGPRIMALOPERATOR_HH
 #define DUNE_DGPRIMALOPERATOR_HH
 
-//- system includes 
-#include <set>
-
 //- Dune includes 
 #include <dune/common/typetraits.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/array.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/utility/twistutility.hh>
+
+#define DOUBLE_FEATURE 
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
@@ -107,9 +107,8 @@ namespace Dune {
     enum { rows = JacobianRangeType :: rows };
     enum { dim = GridType :: dimension };
     
-
-    typedef FieldMatrix<double,rows,rows> TensorType;
-    typedef FieldMatrix<double,dim,dim> JacobianInverseType;
+    typedef typename GridType :: ctype ctype;
+    typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
     
     //my Typedefs
     enum { dimGradRange = dimDomain * dimRange };
@@ -140,7 +139,6 @@ namespace Dune {
     typedef typename DiscreteModelType :: BoundaryIdentifierType BoundaryIdentifierType;    
 
     typedef typename LocalIdSetType :: IdType LocalIdType;
-    typedef std::set< LocalIdType > EntityMarkerType; 
 
     typedef GradJacobianRangeType FluxRangeType; 
   public:
@@ -167,21 +165,15 @@ namespace Dune {
       caller_(problem),
       problem_(problem),
       gradPass_(gradPass),
-      gradProblem_(gradPass_.problem()),
       arg_(0),
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
       localIdSet_(gridPart_.grid().localIdSet()),
-      gradientSpace_(gradPass_.space()),
-      dtMin_(std::numeric_limits<double>::max()),
       time_(0),
-      elemOrder_(std::max(spc_.order(),gradientSpace_.order())),
-      faceOrder_(std::max(spc_.order(),gradientSpace_.order())),
-      volumeQuadOrd_(2*elemOrder_),
-      faceQuadOrd_(2*faceOrder_),
-      matrixObj_(spc_,spc_, problem_.preconditioning(),paramFile ),
-      entityMarker_(),
+      volumeQuadOrd_(2* spc_.order() ),
+      faceQuadOrd_(2*spc_.order() + 1),
+      matrixObj_(spc_,spc_, paramFile ),
       coeffEn_(1.0),
       coeffNb_(1.0),
       matrixAssembled_(false),
@@ -251,7 +243,6 @@ namespace Dune {
         }
       }
       
-      //assert( matrixObj_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
 
@@ -275,10 +266,10 @@ namespace Dune {
 
     //! Estimate for the timestep size
     double timeStepEstimate() const {
-      return dtMin_;
+      return 0.0;
     }
 
-    //! setup matrix 
+    //! reallocate new memory for matrix and compute entries 
     void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
       // reserve memory and clear matrices 
@@ -288,13 +279,10 @@ namespace Dune {
       computeMatrix( arg, rhs );
     }
 
-    //! only calculate mass matrix new on entity 
+    //! clears matrix and re-computes entries 
     void updateMatrix( const ArgumentType & arg,
                        DestinationType & rhs )
     {
-      // prepare 
-      prepare( arg, rhs );
-
       // clear matrix 
       matrixObj_.clear();
       
@@ -306,9 +294,11 @@ namespace Dune {
     //! compute matrix entries 
     void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
+      // prepare 
+      prepare( arg, rhs );
+
       // clear right hand side 
       rhs.clear();
-      dest_ = &rhs;
 
       // build matrix and rhs 
       this->compute( arg, rhs );
@@ -316,6 +306,9 @@ namespace Dune {
 
       // create pre-condition matrix if activated 
       matrixObj_.createPreconditionMatrix();
+      
+      // finalize 
+      finalize( arg, rhs );
     }
 
   public:  
@@ -379,7 +372,7 @@ namespace Dune {
     {
     }
 
-    void resizeCaches(const size_t numDofs) const
+    void resizeCaches(const int numDofs) const
     {
       // resize caches 
       if(tau_.size() != numDofs) 
@@ -434,6 +427,7 @@ namespace Dune {
       coeffEn_ = 1.0;
       coeffNb_ = 1.0;
       
+      // loop over all quadrature points 
       for (int l = 0; l < quadNop ; ++l) 
       {
         // calc integration element 
@@ -447,8 +441,6 @@ namespace Dune {
         // create rightHandSide
         ////////////////////////////////////
         {
-          // set default value 
-
           // eval rightHandSide function 
           // if empty, rhs stays 0.0
           caller_.rightHandSide(en, volQuad, l, rhsval );
@@ -471,13 +463,15 @@ namespace Dune {
           caller_.evaluateCoefficient(en, volQuad, l, coeffEn_ );
         }
 
-        // reset tmp variable 
+        /////////////////////////////////
+        // fill element matrix 
+        /////////////////////////////////
         for(int k = 0; k < numDofs; ++k)
         {
           JacobianRangeType& psi = psi_[k]; 
           JacobianRangeType& coeffPsi = coeffPsi_[k];
 
-          // eval grad psi 
+          // eval grad psi on reference element
           bsetEn.jacobian( k, volQuad, l, psitmp_ );
   
           // apply inverse jacobian 
@@ -498,6 +492,7 @@ namespace Dune {
           }
           else 
           {
+            // if no coeffictient, base function equal each other
             coeffPsi = psi;
           }
         }
@@ -547,10 +542,12 @@ namespace Dune {
         if (nit.neighbor()) 
         {
           EntityPointerType neighEp = nit.outside();
-          EntityType&            nb = *neighEp;
+          EntityType& nb = *neighEp;
 
           // only once per intersection 
-          if(localIdSet_.id(en) > localIdSet_.id(nb))
+#ifdef DOUBLE_FEATURE
+          if(localIdSet_.id(en) < localIdSet_.id(nb))
+#endif
           {
             // type of TwistUtility 
             typedef TwistUtility<GridType> TwistUtilityType;
@@ -598,15 +595,18 @@ namespace Dune {
         // if intersection with boundary 
         if (nit.boundary()) 
         { 
+          // create quadrature 
           FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
                                            FaceQuadratureType::INSIDE);
 
           // get time if time ptovider exists  
           const double t = (time_) ? (time_->time()) : 0.0;
 
+          // loop over quadrature points 
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
           {
+            // calculate normal 
             DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
             const double faceVol = unitNormal.two_norm();
             unitNormal *= 1.0/faceVol;
@@ -625,20 +625,26 @@ namespace Dune {
             // get boundary value 
             RangeType boundaryValue(0.0);
 
+            // call boundary value function 
             BoundaryIdentifierType bndType = 
               problem_.boundaryValue(nit,t,
                 faceQuadInner.localPoint(l),boundaryValue);
 
+            // only Dirichlet and Neumann Boundary supported right now 
+            assert( bndType.isDirichletType() || bndType.isNeumannType() );
+
             ///////////////////////////////
             //  evaluate coefficients 
             ///////////////////////////////
-            JacobianRangeType norm(0.0);
+            assert( psi_.size() > 0 );
+            JacobianRangeType& norm = psi_[0];
             if(problem_.hasCoefficient())
             {
-              // call anayltical flux of discrete model 
+              // evaluate coefficient on boundary
               caller_.evaluateCoefficientBoundary(nit,faceQuadInner,l,coeffEn_);
               for(int i=0; i<dimRange; ++i)
               {
+                norm[i] = 0.0;
                 coeffEn_.umv(unitNormal,norm[i]);
               }
             }
@@ -653,74 +659,93 @@ namespace Dune {
             // cache base functions evaluations
             for(int k=0; k<numDofs; ++k)
             { 
+              // evaluate normal * grad phi 
               tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);  
+              // evaluate phi 
               bsetEn.eval(k,faceQuadInner,l, phi_[k]);
             }
                
-            for(int k=0; k<numDofs; ++k)
-            { 
-              // if not Babuska-Zlamal method, add boundary terms 
-              if( notBabuskaZlamal_ )
+            // if not Babuska-Zlamal method, add boundary terms 
+            if( notBabuskaZlamal_ )
+            {
+              if( bndType.isDirichletNonZero())
               {
-                if( bndType.isDirichletNonZero())
-                {
+                // fill right hand side  
+                for(int k=0; k<numDofs; ++k)
+                {  
                   // only valid for dim range = 1
                   double rhsVal1 = boundaryValue[0] * tau_[k];
 
                   rhsVal1 *= bilinIntel;
                   singleRhs[k] += rhsVal1;
                 }
+              }
 
-                // grad w * v 
-                // only on non Neumann type boundaries
-                if( ! bndType.isNeumannType() )
-                {
+              // only on non Neumann type boundaries
+              if( bndType.isDirichletType() )
+              {
+                // fill matrix entries 
+                for(int k=0; k<numDofs; ++k)
+                {  
                   for (int j = 0; j < numDofs; ++j) 
                   {
-                    double val = tau_[j] * phi_[k][0];
-                    val *= -intel;
-                    matrixEn.add( k , j , val );
+                    {
+                      // grad w * v 
+                      double val = tau_[j] * phi_[k][0];
+                      val *= -intel;
+                      matrixEn.add( k , j , val );
+                    }
+                    
+                    {
+                      // w * grad v
+                      double val = tau_[k] * phi_[j][0];
+                      val *= bilinIntel;
+                      matrixEn.add( k , j , val );
+                    }
                   }
                 }
-                  
-                // w * grad v
-                if(bndType.isDirichletType())
-                {
+              }
+            }
+                
+            // dirichlet boundary values for u 
+            if(bndType.isNeumannNonZero())
+            {
+              // fill matrix entries 
+              for(int k=0; k<numDofs; ++k)
+              {  
+                // only valid for dim range = 1
+                double rhsVal = boundaryValue * phi_[k];
+
+                rhsVal *= intelFactor;
+                //rhsVal *= intel;
+                singleRhs[k] += rhsVal;
+              }
+            }
+
+            if( betaNotZero_ )
+            {
+              // stabilization 
+              if( bndType.isDirichletType())
+              {
+                // fill matrix entries 
+                for(int k=0; k<numDofs; ++k)
+                {  
                   for (int j = 0; j < numDofs; ++j) 
                   {
-                    double val = tau_[k] * phi_[j][0];
-                    val *= bilinIntel;
-                    matrixEn.add( k , j , val );
+                    // phi_j * phi_k 
+                    double phiVal = phi_[j] * phi_[k]; 
+                    phiVal *= facBeta;
+                    matrixEn.add( k , j , phiVal );
                   }
                 }
               }
                 
               // dirichlet boundary values for u 
-              if(bndType.isNeumannNonZero())
+              if(bndType.isDirichletNonZero())
               {
-                // only valid for dim range = 1
-                double rhsVal1 = boundaryValue[0] * phi_[k][0];
-
-                rhsVal1 *= intelFactor;
-                singleRhs[k] += rhsVal1;
-              }
-
-              if( betaNotZero_ )
-              {
-                // stabilization 
-                if( bndType.isDirichletType())
-                {
-                  for (int j = 0; j < numDofs; ++j) 
-                  {
-                    double phiVal = phi_[k] * phi_[j]; 
-                    phiVal *= facBeta;
-                    matrixEn.add( k , j , phiVal );
-                  }
-                }
-                
-                // dirichlet boundary values for u 
-                if(bndType.isDirichletNonZero())
-                {
+                // fill right hand side 
+                for(int k=0; k<numDofs; ++k)
+                {  
                   // only valid for dim range = 1
                   double rhsVal1 = boundaryValue[0] * phi_[k];
                   rhsVal1 *= facBeta;
@@ -769,15 +794,21 @@ namespace Dune {
       RangeType resultRight(0.0);
 
       RangeType phi_j;
+      RangeType phiNeigh_j;
+      RangeType phiEn;
       RangeType phiNeigh;
 
-      JacobianRangeType normEn;
-      JacobianRangeType normNb;
+      // reuse cache mem 
+      assert( psi_.size() > 0 );
+      assert( coeffPsi_.size() > 0 );
+      JacobianRangeType& normEn = psi_[0];
+      JacobianRangeType& normNb = coeffPsi_[0];
 
       // create matrix handles for neighbor 
       LocalMatrixType matrixNb(matrixObj_.matrix(),
                                en, spc_, nb, spc_ ); 
-      
+     
+#ifdef DOUBLE_FEATURE
       // create matrix handles for neighbor 
       LocalMatrixType enMatrix(matrixObj_.matrix(),
                                nb, spc_, en, spc_ ); 
@@ -785,21 +816,30 @@ namespace Dune {
       // create matrix handles for neighbor 
       LocalMatrixType nbMatrix(matrixObj_.matrix(),
                                nb, spc_, nb, spc_ ); 
-      
+#endif
       // get base function set 
       const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
      
+      // loop over all quadrature points 
       const int quadNop = faceQuadInner.nop();
       for (int l = 0; l < quadNop ; ++l) 
       {
+        // cacluate outer normal 
         DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
         const double faceVol = unitNormal.two_norm();
         unitNormal *= 1.0/faceVol; 
 
+        // make sure we have the same factors 
+        assert( std::abs(faceQuadInner.weight(l) - faceQuadOuter.weight(l)) < 1e-10);
         // integration element factor 
         const double intelFactor = faceQuadInner.weight(l) * massVolElInv; 
         const double intel = faceVol * intelFactor; 
-
+#ifdef DOUBLE_FEATURE
+        // use opposite signs here
+        const double outerIntel = -faceVol * faceQuadOuter.weight(l) * massVolElInv; 
+        // intel switching between bilinear from B_+ and B_-  
+        const double outerBilinIntel = (bilinearPlus_) ? outerIntel : -outerIntel;
+#endif
         // intel switching between bilinear from B_+ and B_-  
         const double bilinIntel = (bilinearPlus_) ? intel : -intel;
 
@@ -832,6 +872,7 @@ namespace Dune {
         }
                
         // cache base functions evaluations
+        // leads to major speedup
         for(int k=0; k<numDofs; ++k)
         { 
           // eval base functions 
@@ -852,6 +893,7 @@ namespace Dune {
           {
             for(int j=0; j<numDofs; ++j)
             {
+              // view from inner entity en 
               // v^+ * (grad w^+  + grad w^-)
               {
                 numericalFlux2(phi_[k] , tau_[j] , tauNeigh_[j] , resultLeft, resultRight);
@@ -867,21 +909,7 @@ namespace Dune {
                 matrixNb.add( k , j , valRight );
               }
 
-              // v^+ * (grad w^+  + grad w^-)
-              {
-                numericalFlux2(phiNeigh_[k] , tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
-
-                double valLeft = resultLeft[0];
-                valLeft *= intel;
-
-                nbMatrix.add( k , j , valLeft );
-
-                double valRight = resultRight[0];
-                valRight *= intel;
-
-                enMatrix.add( k , j , valRight );
-              }
-
+              // view from inner entity en 
               // v^+ * (grad w^+  + grad w^-)
               {
                 numericalFlux(tau_[k] , phi_[j] , phiNeigh_[j] , resultLeft, resultRight);
@@ -896,21 +924,39 @@ namespace Dune {
 
                 matrixNb.add( k , j , valRight );
               }
-              
+#ifdef DOUBLE_FEATURE 
+              // view from outer entity nb 
+              // v^+ * (grad w^+  + grad w^-)
+              {
+                numericalFlux2(phiNeigh_[k] , tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
+
+                double valLeft = resultLeft[0];
+                valLeft *= -outerIntel;
+
+                nbMatrix.add( k , j , valLeft );
+
+                double valRight = resultRight[0];
+                valRight *= -outerIntel;
+
+                enMatrix.add( k , j , valRight );
+              }
+
+              // view from outer entity nb 
               // v^+ * (grad w^+  + grad w^-)
               {
                 numericalFlux(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
 
-                double valLeft = -resultLeft;
-                valLeft *= bilinIntel;
+                double valLeft = resultLeft;
+                valLeft *= outerBilinIntel;
 
                 nbMatrix.add( k , j , valLeft );
 
-                double valRight = -resultRight;
-                valRight *= bilinIntel;
+                double valRight = resultRight;
+                valRight *= outerBilinIntel;
 
                 enMatrix.add( k , j , valRight );
               }
+#endif
             }
           }
         }
@@ -921,8 +967,17 @@ namespace Dune {
           {
             for(int j=0; j<numDofs; ++j)
             {
-              phi_j = bsetEn.evaluateSingle(j,faceQuadInner,l, phi_[k] );      
-              phiNeigh = bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phi_[k] );      
+              // phi_j * phi_k on entity 
+              phi_j    = phi_[j] * phi_[k]; 
+              // product with nb 
+              phiNeigh = phiNeigh_[j] * phi_[k]; //bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phi_[k] );      
+              
+              // phi_j * phi_k on neighbour  
+              phiNeigh_j = phiNeigh_[j] * phiNeigh_[k];//bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phiNeigh_[k] );      
+              // product with nb 
+              phiEn = phi_[j] * phiNeigh_[k]; //bsetEn.evaluateSingle(j,faceQuadInner,l, phiNeigh_[k]); 
+
+              // view from inner entity en 
               {
                 numericalFluxStab(phi_j, phiNeigh , resultLeft, resultRight);
 
@@ -936,6 +991,23 @@ namespace Dune {
 
                 matrixNb.add( k , j , valRight );
               }
+              
+#ifdef DOUBLE_FEATURE
+              // view from outer entity nb
+              {
+                numericalFluxStab(phiNeigh_j, phiEn , resultLeft, resultRight);
+
+                double valLeft = facBeta;
+                valLeft  *= resultLeft;
+
+                nbMatrix.add( k , j , valLeft );
+
+                double valRight = facBeta;
+                valRight *= resultRight;
+
+                enMatrix.add( k , j , valRight );
+              }
+#endif
             }
           }
         }
@@ -1002,14 +1074,12 @@ namespace Dune {
 
       double massVolinv = volRef/volume;
       return massVolinv;
-      //return 1.0;
     }
 
   private:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
     GradientPassType & gradPass_; 
-    GradientDiscreteModelType& gradProblem_; 
     
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
@@ -1017,29 +1087,25 @@ namespace Dune {
     const DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
     const LocalIdSetType & localIdSet_;
-    const DiscreteGradientSpaceType & gradientSpace_;
     
-    mutable double dtMin_;
-  
+    // time provider 
     TimeProvider* time_;
 
-    const int elemOrder_,faceOrder_;
-    int volumeQuadOrd_,faceQuadOrd_;
+    const int volumeQuadOrd_;
+    const int faceQuadOrd_;
 
     mutable MatrixObjectType matrixObj_;
-    // marker for new entities 
-    mutable  EntityMarkerType entityMarker_;
 
     // return type of analyticalFlux 
     mutable FluxRangeType coeffEn_;
     mutable FluxRangeType coeffNb_;
     // caches for base function evaluation 
-    mutable std::vector<RangeFieldType> tau_;
-    mutable std::vector<RangeFieldType> tauNeigh_;
-    mutable std::vector<RangeType> phi_;
-    mutable std::vector<RangeType> phiNeigh_;
-    mutable std::vector<JacobianRangeType> psi_;
-    mutable std::vector<JacobianRangeType> coeffPsi_;
+    mutable Array<RangeFieldType> tau_;
+    mutable Array<RangeFieldType> tauNeigh_;
+    mutable Array<RangeType> phi_;
+    mutable Array<RangeType> phiNeigh_;
+    mutable Array<JacobianRangeType> psi_;
+    mutable Array<JacobianRangeType> coeffPsi_;
     mutable JacobianRangeType psitmp_;
 
     mutable bool matrixAssembled_;
@@ -1051,6 +1117,6 @@ namespace Dune {
     bool notBabuskaZlamal_;
     bool betaNotZero_;
   };
-  
+#undef DOUBLE_FEATURE  
 } // end namespace Dune
 #endif
