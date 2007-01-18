@@ -170,6 +170,8 @@ private:
   // true if this class allocated the vector 
   bool myProperty_; 
   
+  // make new memory memFactor larger 
+  const double memoryFactor_;
 public:
   //! definition conforming to STL  
   typedef T value_type;
@@ -182,8 +184,11 @@ public:
 
   //! create array of length size
   //! if size is <= 0 then vec of lenght 1 is created (parallel runs)
-  DofArray(int size) 
-    : size_((size<=0) ? 1 : size) , memSize_(size_) , vec_(0) , myProperty_ (true)
+  DofArray(int size, double memFactor = 1.5 ) 
+    : size_((size<=0) ? 1 : size) 
+    , memSize_(size_) 
+    , vec_(0) , myProperty_ (true)
+    , memoryFactor_(memFactor)
   {
     vec_ = AllocatorType :: malloc (size_);
     assert( vec_ );
@@ -194,7 +199,9 @@ public:
   //! only const may be casted away 
   template <class VectorPointerType> 
   DofArray(int size, VectorPointerType * vector ) 
-    : size_(size) , memSize_(size) , vec_(const_cast<T *>(vector)) , myProperty_ (false)
+    : size_(size) , memSize_(size) 
+    , vec_(const_cast<T *>(vector)) , myProperty_ (false)
+    , memoryFactor_(0.0)
   {
     assert( vec_ );
   }
@@ -299,13 +306,10 @@ public:
       return ;
     }
 
-    // make new memory 10% larger 
-    const double memoryFactor = 1.1;
-
     // nsize is the minimum needed size of the vector 
     // we double this size to reserve some memory and minimize
     // reallocations 
-    int nMemSize = (int) memoryFactor * nsize; 
+    int nMemSize = (int) memoryFactor_ * nsize; 
 
     vec_ = AllocatorType :: realloc (vec_,size_,nMemSize);
 
@@ -1386,8 +1390,7 @@ template <class GridType>
 inline bool DofManager<GridType>::
 removeDofSet (const MemObjectInterface & obj)
 {
-  bool removed = false;
-
+  // search list starting from tail  
   ListIteratorType endit = memList_.end();
   for( ListIteratorType it = memList_.begin();
        it != endit ; ++it)
@@ -1397,14 +1400,15 @@ removeDofSet (const MemObjectInterface & obj)
       // alloc new mem and copy old mem 
       MemObjectInterface * mobj = (*it);
       memList_.erase( it );  
-      
-      dverb << "Removing '" << obj.name() << "' from DofManager!\n";
-      if(mobj) delete mobj;
-      removed = true;
-      break;
+     
+      assert(mobj);
+      dvverb << "Remove '" << obj.name() << "' from DofManager!\n";
+      delete mobj;
+      return true;
     }
   }
-  return removed;
+  // object not found return false 
+  return false;
 }
 
 
@@ -1453,7 +1457,9 @@ addDofSet(const DofStorageType * ds, const MapperType & mapper, std::string name
   typedef MemObject<MapperType,DofStorageType> MemObjectType; 
   MemObjectType * obj = 
     new MemObjectType ( mapper, name , checkResize_ , resizeMemObjs_ ); 
-  memList_.push_back( obj );    
+  
+  // push_front, makes search faster 
+  memList_.push_front( obj );    
 
   return std::pair<
     MemObjectInterface*, DofStorageType*>(obj, & (obj->getArray()) );
@@ -1471,7 +1477,9 @@ addDummyDofSet(const DofStorageType * ds, const MapperType & mapper,
 
   typedef DummyMemObject<MapperType,DofStorageType,VectorPointerType> MemObjectType; 
   MemObjectType * obj = new MemObjectType ( mapper, name , vector ); 
-  memList_.push_back( obj );    
+
+  // push_front, makes search faster 
+  memList_.push_front( obj );    
 
   // obj is not inserted in resize lists because mem is coming from outside 
   return std::pair<
