@@ -63,17 +63,21 @@ struct DofTypeWrapper<double>
 //! array for storing the dofs.  
 //!
 //**********************************************************************
-template<class DiscreteFunctionSpaceType , class DofStorageImp> 
+template<class DiscreteFunctionSpaceImp , class DofStorageImp> 
 class StaticDiscreteFunction 
-: public DiscreteFunctionDefault <StaticDiscreteFunctionTraits<DiscreteFunctionSpaceType,DofStorageImp> > 
+: public DiscreteFunctionDefault <StaticDiscreteFunctionTraits<DiscreteFunctionSpaceImp,DofStorageImp> > 
 {
-  typedef DiscreteFunctionDefault<StaticDiscreteFunctionTraits <DiscreteFunctionSpaceType,DofStorageImp> >
+  typedef DiscreteFunctionDefault<StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp,DofStorageImp> >
   DiscreteFunctionDefaultType;
 
-  friend class DiscreteFunctionDefault< StaticDiscreteFunctionTraits <DiscreteFunctionSpaceType,DofStorageImp > > ;
+  friend class DiscreteFunctionDefault< 
+    StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp,DofStorageImp > > ;
 
   enum { myId_ = 0};
 public:
+  //! type of discrete functions space 
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+
   //! traits of this type 
   typedef StaticDiscreteFunctionTraits<DiscreteFunctionSpaceType,DofStorageImp> Traits;
   
