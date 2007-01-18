@@ -54,11 +54,14 @@ namespace Dune {
       //! object is created 
       QuadImp& getQuadrature(size_t order) 
       {
+        assert( order <= vec_.size() );
+        /*
         if(vec_.size() <= order) 
         {
           std::cerr << "WARNING: couldn't create quadrature of order=" << order << " in: " __FILE__ << " line: "<< __LINE__ <<"\n";
           order = vec_.size()-1;
         }
+        */
         
         // if not exists, create quadrature  
         if(!vec_[order]) 
