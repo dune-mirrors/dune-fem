@@ -60,7 +60,6 @@ namespace Dune {
   private:
     const int storageSize_;
     BaseFunctionType** storage_;
-    // std::vector<BaseFunctionType*> storage_;
     mutable FieldVector<int, 1> diffVar1_;
   };
 

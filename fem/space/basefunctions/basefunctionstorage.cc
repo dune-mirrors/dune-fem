@@ -22,9 +22,12 @@ namespace Dune {
   {
     for (int i = 0; i < storageSize_; ++i) 
     {
+      // delete base functions 
       delete storage_[i];
       storage_[i] = 0;
     }
+    // delete storage vector 
+    delete [] storage_;
   }
 
   template <class FunctionSpaceImp>
