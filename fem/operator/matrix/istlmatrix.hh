@@ -464,7 +464,6 @@ namespace Dune {
     //! setup matrix handler 
     ISTLMatrixObject(const RowSpaceType & rowSpace,
                      const ColumnSpaceType & colSpace,
-                     bool preconditioning,
                      const std::string& paramfile)
       : rowSpace_(rowSpace)
       , colSpace_(colSpace)
@@ -485,6 +484,12 @@ namespace Dune {
       
       assert( rowSpace_.indexSet().size(0) ==
               colSpace_.indexSet().size(0) );
+    }
+
+    ~ISTLMatrixObject() 
+    {
+      delete preconder_;
+      delete matrix_;
     }
 
     MatrixType & matrix() const 
