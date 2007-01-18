@@ -345,8 +345,6 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   enum { polOrd = DiscrType::polyOrder };
 
   // choice of fluxes 
-  //typedef UpwindFlux<ModelType> NumericalFluxType;
-  //typedef LDGFluxSigma<ModelType> LDGFluxType;
   typedef LDGFlux<ModelType> NumericalFluxType;
 
   typedef LaplaceDiscreteModel < ModelType, NumericalFluxType, polOrd > LaplaceModelType;
@@ -373,12 +371,11 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
 
   grid.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf() * level);
   grid.loadBalance();
+
+  //int bla;
+  //fscanf(stdin,"%d",&bla);
   
   std::cout << "Grid size = " << grid.size(0) << "\n";
-
-  int precon = 0;
-  readParameter(paramfile,"Preconditioning",precon);
-  bool preConditioning = (precon == 1) ? true : false;
 
   int display = 0;
   readParameter(paramfile,"display",display);
@@ -401,11 +398,12 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   }
   NumericalFluxType numericalFlux(model,beta,power,eta);
   
-  LaplaceModelType lpm(model, numericalFlux, preConditioning);
-  GradientModelType gm(model, numericalFlux, preConditioning);
+  LaplaceModelType lpm(model, numericalFlux);
+  GradientModelType gm(model, numericalFlux);
   VelocityModelType vm(model);
 
   SpaceOperatorType spaceOp(grid , gm, lpm , vm, paramfile );
+  //fscanf(stdin,"%d",&bla);
   
   //! storage for the discrete solution and its update
   DestinationType *solution = spaceOp.createDestinationFct("solution");
