@@ -68,13 +68,28 @@ namespace Dune {
   public:
     //! little interface class for deleting discrete function 
     //! held by this class 
-    struct MemHandler
+    template <class ObjectToDelete>
+    class DeleteHandler
     {
-      //! call freeLocalMemory of class that allocated local Memory 
-      virtual void freeLocalMemory() = 0;
+    protected:  
+      // don't create intances of this class 
+      DeleteHandler () {}
+    public:  
+      //! destructor 
+      virtual ~DeleteHandler () {} 
+      //! default implementation just deletes obj 
+      virtual void freeLocalMemory(ObjectToDelete * obj) 
+      {
+        delete obj;
+      }
+
+      //! return reference to default object deleter 
+      static DeleteHandler<ObjectToDelete>& instance () 
+      {
+        static DeleteHandler<ObjectToDelete> mh;
+        return mh;
+      }
     };
-    //! type of mem handler, which deletes destination 
-    typedef MemHandler MemHandlerType;
 
     //- Enums and typedefs
     //! The index of the pass.
@@ -86,6 +101,9 @@ namespace Dune {
     //! computations.
     typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;
     
+    //! type of mem handler, which deletes destination 
+    typedef DeleteHandler<DestinationType> DeleteHandlerType;
+
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
     typedef typename PreviousPassType::GlobalArgumentType GlobalArgumentType;
@@ -108,7 +126,7 @@ namespace Dune {
     //! \param pass Previous pass
     Pass(PreviousPassType& pass) :
       destination_(0),
-      memHandler_(0),
+      deleteHandler_(0),
       previousPass_(pass)
     {
       // this ensures that the last pass doesn't allocate temporary memory
@@ -119,8 +137,10 @@ namespace Dune {
     //! Destructor
     virtual ~Pass() 
     {
-      // if memHandler was set by derived class, then use to delete destination_ 
-      if( memHandler_ ) memHandler_->freeLocalMemory();
+      // if deleteHandler was set by derived class, 
+      // then use to delete destination_ 
+      if( deleteHandler_ ) deleteHandler_->freeLocalMemory(destination_);
+      destination_ = 0;
     }
 
     //! \brief Application operator.
@@ -135,6 +155,8 @@ namespace Dune {
     }
 
     //! Allocates the local memory of a pass, if needed.
+    //! If memory is allocated, then deleteHandler must be set for removal of
+    //! memory to avoid leaks 
     virtual void allocateLocalMemory() = 0;
 
     //! Set time provider (which gives you access to the global time).
@@ -177,7 +199,7 @@ namespace Dune {
     // ? Really do this? Can't you allocate the memory directly?
     DestinationType* destination_;
     //! object to delete destination_ 
-    MemHandlerType * memHandler_; 
+    DeleteHandlerType* deleteHandler_; 
 
     // previous pass 
     PreviousPassType& previousPass_;
@@ -189,8 +211,8 @@ namespace Dune {
   //! open what needs to be done on each elements.
   template <class DiscreteModelImp, class PreviousPassImp>
   class LocalPass :
-    public Pass<DiscreteModelImp, PreviousPassImp>,
-    public Pass<DiscreteModelImp, PreviousPassImp>::MemHandler
+    public Pass<DiscreteModelImp, PreviousPassImp>
+    //public Pass<DiscreteModelImp, PreviousPassImp>::DeleteHandler
   {
   public:
     //! Type of the preceding pass
@@ -237,15 +259,8 @@ namespace Dune {
         this->destination_ = new DestinationType(funcName.str(), spc_);
         
         // set mem handle for deleting destination_ 
-        this->memHandler_ = this;
+        this->deleteHandler_ = &(BaseType::DeleteHandlerType::instance());
       }
-    }
-
-    //! deletes destination_ 
-    virtual void freeLocalMemory() 
-    {
-      delete this->destination_;
-      this->destination_ = 0;
     }
 
   protected:
