@@ -384,10 +384,16 @@ namespace Dune {
   class CommManagerFactory
   {
     public:
-    // create new mapper  
+    //! create new communiaction manager   
     static ObjectImp * createObject( const KeyImp & key )
     {
       return new ObjectImp(key.space());
+    }
+    
+    //! delete comm manager  
+    static void deleteObject( ObjectImp * obj )
+    {
+      delete obj; 
     }
   };
 

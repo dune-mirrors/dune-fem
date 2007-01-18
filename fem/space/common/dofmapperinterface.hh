@@ -128,11 +128,16 @@ template <class KeyImp, class ObjectImp>
 class MapperSingletonFactory
 {
   public:
-  // create new mapper  
+  //! create new mapper  
   static ObjectImp * createObject( const KeyImp & key )
   {
     // create Object of MapperType = ObjectImp 
     return new ObjectImp(key.indexSet(),key.numDofs());
+  }
+  //! delete mapper object 
+  static void deleteObject( ObjectImp * obj )
+  {
+    delete obj;
   }
 };
 

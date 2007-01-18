@@ -22,6 +22,12 @@ struct DefaultSingletonFactory
   {
     return new ObjectImp ( *key );
   }
+
+  //! method for deleting pointer 
+  static void deleteObject( ObjectImp * obj )
+  {
+    delete obj;
+  }
 };
 
 //! Singleton list for key/object pairs that guarantees that for a given key only on object is created.
@@ -42,13 +48,45 @@ class SingletonList
   typedef DoubleLinkedList < ListObjType > ListType;
   typedef typename ListType::Iterator ListIteratorType;
 
+  // destructor 
+  class SingletonListStorage
+  {
+    ListType singletonList_; 
+  public:  
+    SingletonListStorage () {}
+    
+    ~SingletonListStorage () 
+    { 
+      ListIteratorType endit = singletonList().rend();
+      ListIteratorType it = singletonList().rbegin(); 
+      while( it != endit )
+      {
+        deleteItem( it );
+        it = singletonList().rbegin();
+      }
+    }
+
+    ListType& singletonList() { return singletonList_; }
+
+    void deleteItem(ListIteratorType & it) 
+    {
+      ValueType val = (*it).second; 
+      // remove from list
+      singletonList().erase( it );
+      // delete objects 
+      FactoryImp::deleteObject( val.first );
+      delete val.second;
+    }
+  };
+
+
   //! list that store pairs of key/object pointers 
   //! singleton list 
   inline static ListType & singletonList() 
   {
+    static SingletonListStorage s; 
     //! list that store pairs of key/object pointers 
-    static ListType singletonList_; 
-    return singletonList_; 
+    return s.singletonList(); 
   }
   
 public:  
@@ -118,10 +156,7 @@ protected:
     if( *(val.second) == 1 )
     {
       // remove from list
-      singletonList().erase( it );
-      // delete objects 
-      delete val.first;
-      delete val.second;
+      deleteItem( it );
     }
     else 
     {
@@ -132,15 +167,20 @@ protected:
   }
 
 private:  
+  static void deleteItem(ListIteratorType & it) 
+  {
+    ValueType val = (*it).second; 
+    // remove from list
+    singletonList().erase( it );
+    // delete objects 
+    FactoryImp::deleteObject( val.first );
+    delete val.second;
+  }
   // constructor, ony this class is allowed to construct itself, prevent
   // from derivation 
   SingletonList () {};  
   SingletonList (const SingletonList &) {};  
 
-  // destructor 
-  ~SingletonList () 
-  { 
-  }
 }; // end SingletonList 
 
 } // end namespace Dune 

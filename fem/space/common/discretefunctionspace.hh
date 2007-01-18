@@ -212,6 +212,12 @@ namespace Dune{
       ObjectFactoryImp fac(key); 
       return new ObjectImp(fac); 
     }
+    
+    //! delete BaseFunctionSet 
+    static void deleteObject( ObjectImp * obj ) 
+    {
+      delete obj;
+    }
   };
 
   /** @} end documentation group */
