@@ -29,20 +29,55 @@ namespace Dune {
   class PyramidQuadrature;
 
   //! Utility class that factors out the repetitive lookup process.
-  class QuadCreator {
-  public:
-    template <class QuadImp>
-    static const QuadImp& provideQuad(int order, std::vector<QuadImp*>& vec) 
+  class QuadCreator 
+  {
+    //! class holding vector with pointer to quadrature objects 
+    template<class QuadImp>
+    class QuadratureStorage  
     {
-      //assert(vec.size() > static_cast<size_t>(order));
-      if (vec.size() <= static_cast<size_t>(order)) {
-        order = vec.size()-1;
+      // vector holding pointer to quadratures 
+      std::vector<QuadImp*> vec_;
+    public:   
+      //! constructor creating empty vec of length maxOrder
+      QuadratureStorage() : vec_(QuadImp::maxOrder(),0) {}
+      
+      //! deletes all quadratures
+      ~QuadratureStorage() 
+      {
+        for(size_t i=0; i<vec_.size(); ++i) 
+        {
+          delete vec_[i];
+        }
       }
 
-      if (!vec[order]) {
-        vec[order] = new QuadImp(order, IdProvider::instance().newId());
-      }
-      return *vec[order];
+      //! return reference to quadrature, if pointer not exists
+      //! object is created 
+      QuadImp& getQuadrature(size_t order) 
+      {
+        if(vec_.size() <= order) 
+        {
+          std::cerr << "WARNING: couldn't create quadrature of order=" << order << " in: " __FILE__ << " line: "<< __LINE__ <<"\n";
+          order = vec_.size()-1;
+        }
+        
+        // if not exists, create quadrature  
+        if(!vec_[order]) 
+        {
+          vec_[order] = new QuadImp(order, IdProvider::instance().newId());
+        }
+        return *(vec_[order]);    
+      }      
+    }; // end class QuadratureStorage 
+  
+  public:
+    //! provide quadrature, stores internal singleton holding list 
+    //! with existing quadratures
+    template <class QuadImp>
+    static const QuadImp& provideQuad(int order)
+    {
+      // vector holding pointers 
+      static QuadratureStorage<QuadImp> storage;
+      return storage.getQuadrature(order);
     }
   };
 
@@ -68,16 +103,15 @@ namespace Dune {
   public:
     //! Access to the quadrature implementations.
     static const QuadratureImp<ct, 0>& getQuadrature(GeometryType geo, 
-                                                     int order) {
-      return QuadCreator::provideQuad(order, quads_);
+                                                     int order) 
+    {
+      return QuadCreator::template 
+        provideQuad<CubeQuadrature<ct, 0> >(order);
     }
   private:
     QuadratureProvider();
     QuadratureProvider(const QuadratureProvider&);
     QuadratureProvider& operator=(const QuadratureProvider&);
-
-  private:
-    static std::vector<CubeQuadrature<ct, 0>*> quads_;
   }; 
 
   
@@ -92,15 +126,12 @@ namespace Dune {
       assert(geo.isCube() || geo.isSimplex() );
       assert(order >= 0);
 
-      return QuadCreator::provideQuad(order, quads_);
+      return QuadCreator::template provideQuad<CubeQuadrature<ct, 1> > (order);
     }
   private:
     QuadratureProvider();
     QuadratureProvider(const QuadratureProvider&);
     QuadratureProvider& operator=(const QuadratureProvider&);
-
-  private:
-    static std::vector<CubeQuadrature<ct, 1>*> quads_;
   }; 
 
   //! Specialisation for dimension = 2
@@ -115,23 +146,19 @@ namespace Dune {
       assert(order >= 0);
 
       if(geo.isTriangle()) 
-        return QuadCreator::provideQuad(order, triangleQuads_);
+        return QuadCreator::template provideQuad<SimplexQuadrature<ct, 2> >(order);
       if(geo.isQuadrilateral())
-        return QuadCreator::provideQuad(order, quadrilateralQuads_);
+        return QuadCreator::template provideQuad<CubeQuadrature<ct, 2> >(order);
 
       DUNE_THROW(RangeError, "Element type not available for dim == 2");
       // dummy return
-      return *triangleQuads_[0]; 
+      return QuadCreator::template provideQuad<SimplexQuadrature<ct, 2> >(0);
     }
 
   private:
     QuadratureProvider();
     QuadratureProvider(const QuadratureProvider&);
     QuadratureProvider& operator=(const QuadratureProvider&);
-
-  private:
-    static std::vector<SimplexQuadrature<ct, 2>*> triangleQuads_;
-    static std::vector<CubeQuadrature<ct, 2>*> quadrilateralQuads_;
   };
 
   //! Specialisation for dimension = 3.
@@ -147,33 +174,24 @@ namespace Dune {
       assert(order >= 0);
 
       if(geo.isTetrahedron()) 
-        return QuadCreator::provideQuad(order, tetraQuads_);
+        return QuadCreator::template provideQuad<SimplexQuadrature<ct, 3> > (order);
       if(geo.isHexahedron())
-        return QuadCreator::provideQuad(order, hexaQuads_);
+        return QuadCreator::template provideQuad<CubeQuadrature<ct, 3> > (order);
       if(geo.isPrism())
-        return QuadCreator::provideQuad(order, prismQuads_);
+        return QuadCreator::template provideQuad<PrismQuadrature<ct> > (order);
       if(geo.isPyramid())
-        return QuadCreator::provideQuad(order, pyramidQuads_);
+        return QuadCreator::template provideQuad<PyramidQuadrature<ct> > (order);
 
       DUNE_THROW(RangeError, "Element type not available for dim == 3");
       // dummy return
-      return *tetraQuads_[0];
+      return QuadCreator::template provideQuad<CubeQuadrature<ct, 3> > (0);
     }
 
   private:
     QuadratureProvider();
     QuadratureProvider(const QuadratureProvider&);
     QuadratureProvider& operator=(const QuadratureProvider&);
-
-  private:
-    static std::vector<SimplexQuadrature<ct, 3>*> tetraQuads_;
-    static std::vector<CubeQuadrature<ct, 3>*> hexaQuads_;
-    static std::vector<PrismQuadrature<ct>*> prismQuads_;
-    static std::vector<PyramidQuadrature<ct>*> pyramidQuads_;
   };
 
 } // end namespace Dune 
-
-#include "quadprovider.cc"
-
 #endif
