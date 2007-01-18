@@ -39,7 +39,7 @@ namespace Dune {
       std::vector<QuadImp*> vec_;
     public:   
       //! constructor creating empty vec of length maxOrder
-      QuadratureStorage() : vec_(QuadImp::maxOrder(),0) {}
+      QuadratureStorage() : vec_(QuadImp::maxOrder()+1 , 0) {}
       
       //! deletes all quadratures
       ~QuadratureStorage() 
