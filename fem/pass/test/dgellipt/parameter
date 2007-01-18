@@ -2,29 +2,38 @@
 StartLevel: 0
 
 % do EOCSteps eoc steps
-EOCSteps: 2
+EOCSteps: 1
 
 % epsilon for iterative solver 
-InvSolverEps: 1e-12
+InvSolverEps: 1e-14
 
 % cg output, 0 == no output, 1 == print output   
 verbose: 1
 
 % use Preconditioning 0 == no, 1 == yes  
+% when using istl matrices the following preconditioners are available:
+% 0 == no pre
+% 1 == SSOR 
+% 2 == SOR 
+% 3 == ILU-0
+% 4 == ILU-n 
+% 5 == Gauss-Seidel
+% 6 == Jacobi
 Preconditioning: 0
 % number of iterations 
 ILU-iteration: 2 
 % relaxation factor 
-ILU-relaxation: 0.9
+ILU-relaxation: 1.1
 
 % display using Grape, 0 == no, 1 == yes  
-display: 1
+display: 0
 
 % MacroTriang for 2d simul 
-Grid: ./grid2d.dgf
+%Grid: ./grid2d.dgf
 %Grid: ./one.dgf
 %Grid: ./one3d.dgf
 %Grid: ./corner2d.dgf
+Grid: ./fuel.dgf
 
 % parameter for LDG flux 
 
