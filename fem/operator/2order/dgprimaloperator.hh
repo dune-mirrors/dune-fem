@@ -264,7 +264,7 @@ namespace Dune {
       time_ = time;
     }
 
-    //! Estimate for the timestep size
+    //! Estimate for the timestep size, return value is 0 
     double timeStepEstimate() const {
       return 0.0;
     }
