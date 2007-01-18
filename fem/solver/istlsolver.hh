@@ -120,9 +120,7 @@ private:
                      double eps, int maxIter, bool verbose)
     {
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      typedef typename OperatorImp :: PreconditionMatrixType PreconMatrix;
-      
-      typedef Preconditioner<BlockVectorType,BlockVectorType> PreconditionerType; 
+      typedef typename OperatorImp :: PreconditionMatrixType PreconditionerType; 
       const PreconditionerType& pre = op.preconditionMatrix();
       solve(op.systemMatrix().matrix(),pre,
             arg,dest,arg.space().grid().comm(),eps,maxIter,verbose);
