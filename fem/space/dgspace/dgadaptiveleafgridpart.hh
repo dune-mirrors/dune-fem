@@ -15,17 +15,29 @@ namespace Dune {
 template <class GridImp,PartitionIteratorType pitype>
 struct DGAdaptiveLeafGridPart;
 
-template <class GridImp, bool isGood> 
+//! default is to use DGAdaptiveLeafIndexSet
+template <class GridImp, bool unStructured, bool isGood> 
 struct GoodGridChooser
 {
+  // choose the adative index based on hierarhic index set
   typedef DGAdaptiveLeafIndexSet<GridImp> IndexSetType;
 };
 
-// the same for shitty grids 
+// the same for shitty unstructured grids 
 template <class GridImp> 
-struct GoodGridChooser<GridImp,false>
+struct GoodGridChooser<GridImp,true,false>
 {
+  // choose the leaf index set based on local ids 
   typedef IdBasedLeafIndexSet<GridImp> IndexSetType;
+};
+
+// for structured grids with no hierarchic index set choose 
+// the grids leaf index set 
+template <class GridImp> 
+struct GoodGridChooser<GridImp,false,false>
+{
+  // the grids leaf index set wrapper for good 
+  typedef WrappedLeafIndexSet<GridImp> IndexSetType;
 };
 
 template <class GridType>
@@ -39,7 +51,12 @@ struct DGAdaptiveLeafGridPartTraits {
   
   typedef DGAdaptiveLeafGridPart<GridImp,pitype> GridPartType;
   // choose index set dependend on grid type  
-  typedef typename GoodGridChooser<GridImp,Conversion<GridImp,HasHierarchicIndexSet>::exists>::IndexSetType IndexSetType;
+  typedef GoodGridChooser<GridImp,
+           Capabilities::IsUnstructured<GridType>::v,
+           Conversion<GridImp,HasHierarchicIndexSet>::exists
+         > IndexSetChooserType;
+              
+  typedef typename IndexSetChooserType :: IndexSetType IndexSetType;
 
   typedef typename GridType::template Codim<0>::Entity::
     LeafIntersectionIterator IntersectionIteratorType;
