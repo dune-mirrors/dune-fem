@@ -23,7 +23,7 @@ public:
   void project (FunctionType &f, DiscreteFunctionType &discFunc)
   {
     const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.getFunctionSpace();  
+        & space = discFunc.space();  
   
     discFunc.clear();
   

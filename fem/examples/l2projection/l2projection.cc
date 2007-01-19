@@ -37,13 +37,15 @@ typedef AlbertaGrid< dimp, dimw > GridType;
 #include "../../space/lagrangespace.hh"
 #include "../../discretefunction/dfadapt.hh"
 
-#include "../../space/leafindexset.hh"
+#include <dune/fem/space/common/adaptiveleafgridpart.hh>
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 #include "../../operator/inverseoperators.hh"
 #include "../../solver/oemsolver/oemsolver.hh"
+
+#include <dune/fem/misc/l2error.hh>
 
 // massmatrix and L2 projection and error 
 #include "../poisson/laplace.cc"
@@ -115,13 +117,13 @@ public:
   ExactSolution (FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
  
   //! f(x,y) = x*(1-x)*y*(1-y)
-  void evaluate (const DomainType & x , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeType & ret) const
   {
     ret = 1.0;
     for(int i=0; i<DomainType::dimension; i++)
       ret *= x[i]*(1.0 -x[i]);
   }
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) 
+  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
     evaluate ( x , ret );
   }
@@ -158,18 +160,20 @@ public:
 template <class EntityType, class DiscreteFunctionType> 
 void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
 {
-  typedef typename EntityType::IntersectionIterator NeighIt;
-
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  typedef typename FunctionSpaceType::GridPartType GridPartType;
   typedef typename FunctionSpaceType::GridType GridType;
 
-  const FunctionSpaceType & space = rhs.getFunctionSpace();
+  typedef typename GridPartType :: IntersectionIteratorType NeighIt;
+
+  const FunctionSpaceType & space = rhs.space();
+  const GridPartType& gridPart = space.gridPart();
     
   typedef typename DiscreteFunctionType::DofIteratorType DofIterator;
   DofIterator dit = rhs.dbegin();
       
-  NeighIt endit = en.iend();
-  for(NeighIt it = en.ibegin(); it != endit; ++it)
+  NeighIt endit = gridPart.iend(en);
+  for(NeighIt it = gridPart.ibegin(en); it != endit; ++it)
   {
     if(it.boundary())
     {
@@ -263,7 +267,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    // calculation L2 error 
    // pol ord for calculation the error chould by higher than 
    // pol for evaluation the basefunctions 
-   double error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
+   double error = l2err.norm( f ,solution);
    std::cout << "\nL2 Error : " << error << "\n\n";
   
 #if HAVE_GRAPE
