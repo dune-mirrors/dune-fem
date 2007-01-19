@@ -27,7 +27,8 @@ namespace Dune {
     MapperIteratorType it = mappers_.insert
       (std::make_pair(quad.id(), CacheStorageType(numFaces, maxTwist))).first;
 
-    for (int face = 0; face < numFaces; ++face) {
+    for (int face = 0; face < numFaces; ++face) 
+    {
       for (int twist = minTwist; twist < maxTwist; ++twist) {
         it->second.addMapper(pointMappers[face],
                              twistMappers.getMapper(twist),

@@ -152,7 +152,8 @@ namespace Dune {
         // find equivalent quadrature point
         for (int j = 0; j < quad_.nop(); ++j) 
         {
-          if (samePoint(pRef, quad_.point(j))) 
+          // check if | pRef - quad_j | < eps 
+          if( (pRef - quad_.point(j)).infinity_norm() < eps_)
           {
             mapper[i] = j;
             found = true;
@@ -167,7 +168,6 @@ namespace Dune {
           assert( found ); 
           std::cout << "TwistMapperCreator<ct, dim>::createStorage failed! in: "<<__FILE__<<" line: " << __LINE__ <<"\n";
           abort();
-        //  mapper[i] = storage->addPoint(pRef);
         }
         
       } // for all quadPoints
@@ -175,19 +175,6 @@ namespace Dune {
     } // for all twists
     
     return storage;
-  }
-
-  template <class ct, int dim>
-  bool TwistMapperCreator<ct, dim>::samePoint(const PointType& first,
-                                              const PointType& second) const
-  {
-    bool result = true;
-    for (int i = 0; i < dim; ++i) {
-      result &= (first[i] < (second[i] + eps_) 
-                 && first[i] > (second[i] - eps_));
-    }
-    
-    return result;
   }
 
   template <class ct, int dim>

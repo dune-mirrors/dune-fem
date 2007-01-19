@@ -181,9 +181,6 @@ namespace Dune {
     TwistMapperCreator(const TwistMapperCreator&);
     TwistMapperCreator& operator=(const TwistMapperCreator&);
  
-    //! Are two points the same (floating point comparison with tolerance eps)
-    bool samePoint(const PointType& first, const PointType& second) const;
-
   private:
     const QuadratureType& quad_;    
     std::auto_ptr<TwistMapperStrategy<ct, dim> > helper_;
