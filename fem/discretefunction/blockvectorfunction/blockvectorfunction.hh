@@ -497,8 +497,5 @@ private:
 
 } // end namespace Dune
 
-#include "staticfunction.cc"
-
+#include "blockvectorfunction_inline.hh"
 #endif
-
-
