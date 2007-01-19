@@ -35,8 +35,6 @@ LIBS="$DUNE_LIBS"
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
      fem/Makefile
-     fem/caching/Makefile
-     fem/caching/test/Makefile
      fem/examples/Makefile
      fem/examples/poisson/Makefile
      fem/examples/elliptic/Makefile
@@ -51,7 +49,32 @@ AC_CONFIG_FILES([Makefile
      fem/pass/test/dgellipt/Makefile
      fem/space/Makefile
      fem/space/test/Makefile
+     fem/space/basefunctions/Makefile
+     fem/space/dgspace/Makefile
+     fem/space/lagrangespace/Makefile
+     fem/space/combinedspace/Makefile
+     fem/space/common/Makefile
      fem/quadrature/Makefile
      fem/quadrature/test/Makefile
+     fem/quadrature/caching/Makefile
+     fem/quadrature/caching/test/Makefile
+     fem/discretefunction/Makefile
+     fem/discretefunction/common/Makefile
+     fem/discretefunction/adaptivefunction/Makefile
+     fem/discretefunction/blockvectorfunction/Makefile
+     fem/operator/Makefile
+     fem/operator/common/Makefile
+     fem/operator/0order/Makefile
+     fem/operator/1order/Makefile
+     fem/operator/2order/Makefile
+     fem/operator/matrix/Makefile
+     fem/operator/projection/Makefile
+     fem/io/Makefile
+     fem/io/file/Makefile
+     fem/io/visual/Makefile
+     fem/io/visual/grape/Makefile
+     fem/io/visual/grape/datadisp/Makefile
+     fem/io/visual/grape/gridview/Makefile
+     fem/io/visual/grape/functionview/Makefile
      dune-fem.pc])
 AC_OUTPUT
