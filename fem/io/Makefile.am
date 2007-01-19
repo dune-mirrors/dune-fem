@@ -3,4 +3,4 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 iodir =  $(includedir)/io
 # do everything in the subdirs
-SUBDIRS = file 
+SUBDIRS = file visual
