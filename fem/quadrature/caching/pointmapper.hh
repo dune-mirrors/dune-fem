@@ -1,8 +1,11 @@
 #ifndef DUNE_POINTMAPPER_HH
 #define DUNE_POINTMAPPER_HH
 
+//- system includes 
 #include <vector>
-#include "../quadrature/quadrature.hh"
+
+//- Dune includes 
+#include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune {
 

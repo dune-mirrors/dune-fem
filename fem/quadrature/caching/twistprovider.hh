@@ -10,10 +10,10 @@
 //- Dune includes
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/alugrid/3d/topology.hh>
+#include <dune/fem/quadrature/quadrature.hh>
 
 //- Local includes
 #include "pointmapper.hh"
-#include "../quadrature/quadrature.hh"
 
 namespace Dune {
 

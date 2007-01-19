@@ -7,8 +7,8 @@
 
 //- Local includes
 #include "elementquadrature.hh"
-#include "../caching/pointmapper.hh"
-#include "../caching/cacheprovider.hh"
+#include "caching/pointmapper.hh"
+#include "caching/cacheprovider.hh"
 
 
 namespace Dune {
