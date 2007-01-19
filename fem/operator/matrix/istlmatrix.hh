@@ -10,7 +10,7 @@
 #include <dune/istl/preconditioners.hh>
 
 //- Dune fem includes 
-#include <dune/fem/discretefunction/staticfunction.hh>
+#include <dune/fem/discretefunction/blockvectorfunction.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 
