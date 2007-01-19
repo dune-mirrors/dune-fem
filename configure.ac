@@ -79,5 +79,6 @@ AC_CONFIG_FILES([Makefile
      fem/solver/Makefile 
      fem/solver/ode/Makefile 
      fem/solver/oemsolver/Makefile 
+     fem/misc/Makefile
      dune-fem.pc])
 AC_OUTPUT
