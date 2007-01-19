@@ -76,5 +76,8 @@ AC_CONFIG_FILES([Makefile
      fem/io/visual/grape/datadisp/Makefile
      fem/io/visual/grape/gridview/Makefile
      fem/io/visual/grape/functionview/Makefile
+     fem/solver/Makefile 
+     fem/solver/ode/Makefile 
+     fem/solver/oemsolver/Makefile 
      dune-fem.pc])
 AC_OUTPUT
