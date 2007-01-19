@@ -4,4 +4,4 @@ AUTOMAKE_OPTIONS = foreign 1.5
 SUBDIRS = ode oemsolver 
 
 solverdir =  $(includedir)/solver
-solver_HEADERS =  istlsolver.h hodesolver.hh oemsolver.hh
+solver_HEADERS =  istlsolver.hh odesolver.hh oemsolver.hh
