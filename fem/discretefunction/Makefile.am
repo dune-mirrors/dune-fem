@@ -5,4 +5,4 @@ SUBDIRS = common adaptivefunction blockvectorfunction
 
 discretefunctiondir =  $(includedir)/discretefunction
 discretefunction_HEADERS = adaptivefunction.hh  dfadapt.hh  dfadapt_imp.cc \
-staticfunction.hh
+blockvectorfunction.hh
