@@ -39,7 +39,7 @@
 #include <dune/fem/pass/dgelliptpass.hh>
 
 #include <dune/istl/bvector.hh>
-#include <dune/fem/discretefunction/staticfunction.hh>
+#include <dune/fem/discretefunction/blockvectorfunction.hh>
 
 
 //*************************************************************
@@ -56,14 +56,9 @@ namespace LDGExample {
     enum { dimDomain = Model::Traits::dimDomain };
     
     typedef LeafGridPart<GridType> GridPartType;
-    //typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
-    //typedef AdaptiveLeafGridPart<GridType> GridPartType;
-    //typedef HierarchicGridPart<GridType> GridPartType;
 
     typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
-    //typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
-    //typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
     
     // typical tpye of space 
     typedef FunctionSpace<double, double, dimDomain, dimRange > SingleFunctionSpaceType; 
@@ -71,9 +66,8 @@ namespace LDGExample {
     typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
     
-    //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
-    
+    typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
+    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   };
 
   ///////////////////////////////////////////////////////
