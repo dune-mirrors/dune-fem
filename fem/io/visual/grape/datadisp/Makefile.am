@@ -1,9 +1,7 @@
 # only build this stuff if GRAPE was found
-if GRAPE
 # einfach alle Pakete verwenden, die überhaupt gefunden wurden
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
-endif
 
 datadispdir =  $(includedir)/datadisp
 datadisp_HEADERS = leng.hh       readdata.cc  readparams.cc\
