@@ -521,12 +521,8 @@ template <class QuadratureType>
 inline void LocalFunctionAdapt<DiscreteFunctionType>::
 evaluate (QuadratureType &quad, int quadPoint, RangeType & ret) const 
 {
-  //if(STATIC_lockFuncOutPut)
-  //  std::cout << "evaluate Local Func Quadrautre of func= "<< &dofVec_ << "\n";
-  
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
-  // assert(en.geometry().checkInside(quad.point(quadPoint)));
   ret = 0.0;
   const BaseFunctionSetType& bSet = baseFunctionSet();
 
