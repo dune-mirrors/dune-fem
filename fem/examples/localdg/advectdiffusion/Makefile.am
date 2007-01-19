@@ -1,5 +1,4 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) 
-CXXFLAGS =
 noinst_PROGRAMS = advectdiff dgtest #euler dgtest dgtest1 #datadisp 
 advectdiff_SOURCES = main.cc
 #euler_SOURCES = euler.cc
