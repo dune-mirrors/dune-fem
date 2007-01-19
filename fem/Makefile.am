@@ -4,4 +4,4 @@ AUTOMAKE_OPTIONS = foreign 1.5
 AM_CPPFLAGS= 
 
 # do everything in the subdirs
-SUBDIRS = pass space discretefunction quadrature operator solver io
+SUBDIRS = pass space discretefunction quadrature operator solver io misc
