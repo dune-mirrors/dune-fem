@@ -2,7 +2,8 @@
 
 SUBDIRS = test
 
-fempassdir =  $(includedir)/dune/fem/pass
-fempass_HEADERS = pass.hh selection.hh discretemodel.hh dgpass.hh \
-	modelcaller.hh callerutility.hh
-
+passdir =  $(includedir)/pass
+pass_HEADERS = callerutility.hh  insertfunctionpass.hh \
+modelcaller.hh  typetraits.hh dgelliptpass.hh   ldgflux.hh\
+pass.hh	 utility.hh dgpass.hh	  leng.hh		 selection.hh\
+discretemodel.hh  misc.hh		 tuples.hh
