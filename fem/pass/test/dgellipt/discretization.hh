@@ -42,9 +42,6 @@
 
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
 
-#include <dune/istl/bvector.hh>
-#include <dune/fem/discretefunction/staticfunction.hh>
-
 using namespace Dune;
 
 namespace LDGExample { 
