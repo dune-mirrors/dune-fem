@@ -1,1 +1,0 @@
-SUBDIRS = gridview datadisp functionview
