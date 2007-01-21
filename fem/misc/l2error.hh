@@ -172,8 +172,6 @@ namespace Dune
     
     double ret=0;  
     
-    RangeType error(0.0);
-    
     assert( dimrange == 1); // currently only scalar functions supported
     
     const DiscFuncSpaceType& dfsp = f1.getFunctionSpace();  
@@ -186,40 +184,31 @@ namespace Dune
     // does not change. Get rule which is exact for product of df1,df2, 
     // assuming them to be polynomial
     
-    GeometryType geo = it->geometry().type();
-    Quadrature<coordType,dim> quad(geo,(polOrd*dim)*(polOrd*dim));
+    int quadOrd = (polOrd*dim)*(polOrd*dim);
                     
-          // iterate over all elements defining the function
-          for (IteratorType it = dfsp.begin(); it!=eit; ++it)
-          {
-            // get local functions on current element
-            LocalFunctionType lf1 = f1.localFunction( *it ); 
-            LocalFunctionType lf2 = f2.localFunction( *it );
-            for (int qp = 0; qp < quad.nop(); qp++)
-            {
-              const double det = 
-                  it->geometry().integrationElement(quad.point(qp));
-              
-            // the following demonstrates a very strange effect:
-              lf1.evaluate(quad.point(qp), lv1);
-              lf2.evaluate(quad.point(qp), lv2);
-              ret += det * quad.weight( qp) * (lv1 - lv2) * (lv1 - lv2);
-            } // end qp iteration
-            
-          } // end element iteration
-          
-          return sqrt(ret);
-          
-    //comm.sum( &error[0] , dimR );
-
-    for(int k=0; k<dimR; ++k)
+    // iterate over all elements defining the function
+    for (IteratorType it = dfsp.begin(); it!=eit; ++it)
     {
-      error[k] = comm.sum( error[k] );
-      error[k] = sqrt(error[k]);
-    }
+      CachingQuadrature <GridPartType , 0 > quad(*it,quadOrd); 
+      // get local functions on current element
+      LocalFunctionType lf1 = f1.localFunction( *it ); 
+      LocalFunctionType lf2 = f2.localFunction( *it );
+      for (int qp = 0; qp < quad.nop(); qp++)
+      {
+        const double det = 
+            it->geometry().integrationElement(quad.point(qp));
+        
+      // the following demonstrates a very strange effect:
+        lf1.evaluate(quad.point(qp), lv1);
+        lf2.evaluate(quad.point(qp), lv2);
+        ret += det * quad.weight( qp) * (lv1 - lv2) * (lv1 - lv2);
+      } // end qp iteration
+      
+    } // end element iteration
     
-    return error;
-        }; // end method
+    ret = comm.sum(ret);
+    return sqrt(ret);
+  }; // end method
   
 }; // end of class L2Error
 
