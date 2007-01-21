@@ -242,8 +242,6 @@ namespace Dune {
 
     mutable DestinationType rhs_;
 
-    mutable int sequence_;
-      
     typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
     mutable CommunicationManagerType comm_;
   public:
@@ -271,7 +269,6 @@ namespace Dune {
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,eps_,eps_,maxIter_,verbose_)
       , rhs_("FEPass::RHS",spc)
-      , sequence_(-1)
       , comm_(spc_)
     {
       //assert( this->destination_ );
@@ -299,7 +296,6 @@ namespace Dune {
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,eps_,eps_,maxIter_,verbose_)
       , rhs_("FEPass::RHS",spc_)
-      , sequence_(-1)
       , comm_(spc_)
     {
       assert( this->destination_ == 0 );
@@ -318,39 +314,8 @@ namespace Dune {
 
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
-      //std::cout << "prepare op = ("<<sequence_ << "," << spc_.sequence() << ")\n" ;
-      // for first time buildMatrix 
-      if( sequence_ < 0 ) 
-      {
-        op_.prepare(arg,rhs_);
-        op_.buildMatrix( arg, rhs_ );
-
-        sequence_ = spc_.sequence();
-      }
-      else if(sequence_ != spc_.sequence())
-      {
-        // only clear destination if matrix has really changed 
-        // otherwise keep old value as initial value 
-        op_.prepare(arg,rhs_);
-
-        // for unstructured grids we can use the re-build method 
-        if(Capabilities::IsUnstructured<GridType>::v)
-        {
-          //op_.reBuildMatrix( arg, rhs_ , true );
-          op_.buildMatrix( arg, rhs_ );
-        }
-        else 
-        {
-          // otherwise just make all new 
-          op_.buildMatrix( arg, rhs_ );
-        }
-        
-        sequence_ = spc_.sequence();
-      }
-      else 
-      {
-        op_.updateMatrix( arg, rhs_ );
-      }
+      // re-compute matrix 
+      op_.computeMatrix( arg, rhs_ );
     }
 
     //! Some timestep size management.
