@@ -303,19 +303,28 @@ public:
   int numDofs () const;
 
   //! sum over all local base functions 
-  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const ;
-  
-  //! sum over all local base functions 
   void evaluate (const DomainType & x, RangeType & ret) const ;
+ 
+  //! sum over all local base functions evaluated on given quadrature point
+  template <class QuadratureType>
+  void evaluate (const QuadratureType &quad, const int quadPoint , RangeType & ret) const;
+
+  //! evaluate jacobian of local function on point x
+  void jacobian(const DomainType& x, JacobianRangeType& ret) const ;
+
+  //! evaluate jacobian of local function on quadrature point quadPoint
+  template <class QuadratureType>
+  void jacobian(const QuadratureType &quad, const int quadPoint , JacobianRangeType & ret) const;
+
+  #ifdef OLDFEM
+  //! sum over all local base functions 
+  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const ;
   
   void evaluateLocal(const DomainType & x, RangeType & ret) const ;
   void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const ;
   //! sum over all local base functions evaluated on given quadrature point
   template <class QuadratureType>
   void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const;
-
-  template <class QuadratureType>
-  void evaluate (QuadratureType &quad, int quadPoint , RangeType & ret) const;
 
   //! sum over all local base functions evaluated on given quadrature point
   template < class QuadratureType>
@@ -326,6 +335,7 @@ public:
 
   //! evaluate jacobian of local function 
   void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const;
+  #endif
   
   //! return reference to base function set
   const BaseFunctionSetType& baseFunctionSet() const;
@@ -344,6 +354,7 @@ protected:
   //! the corresponding function space which provides the base function set
   const DiscreteFunctionSpaceType &fSpace_;
 
+  //! special mapper of block vector functions
   const MapperType& mapper_;
   
   //! actual entity 
@@ -357,7 +368,6 @@ protected:
 
   //! needed once 
   mutable RangeType tmp_;
-  mutable DomainType xtmp_;
 
   //! needed once 
   mutable JacobianRangeType tmpGrad_;

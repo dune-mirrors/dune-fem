@@ -1,5 +1,5 @@
-#ifndef DUNE_DISCFUNCARRAY_CC
-#define DUNE_DISCFUNCARRAY_CC
+#ifndef DUNE_BLOCKVECTORFUNCTION_INLINE_HH
+#define DUNE_BLOCKVECTORFUNCTION_INLINE_HH
 
 namespace Dune 
 {
@@ -394,7 +394,8 @@ StaticDiscreteLocalFunction(
     DofStorageType & dofVec )
  : fSpace_ ( f )
  , mapper_(mapper)
- , en_(0), dofVec_ ( dofVec ) 
+ , en_(0)
+ , dofVec_ ( dofVec ) 
  , uniform_(! (fSpace_.multipleGeometryTypes()))
  , init_(false)
  , baseSet_(0)
@@ -429,14 +430,60 @@ numDofs () const
   return numOfDof_;
 }
 
+#ifdef OLDFEM
 template<class DiscreteFunctionType >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
 evaluate (EntityType &en, const DomainType & x, RangeType & ret) const 
 {
-  ret = 0.0;
-  xtmp_ = en.geometry().local(x);
-  evaluateLocal(en, xtmp_, ret);
+  evaluate(x,ret);
 }
+
+template<class DiscreteFunctionType >
+inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+evaluateLocal (EntityType &en, const DomainType & local, RangeType & ret) const
+{
+  evaluate(local,ret);
+}
+
+template<class DiscreteFunctionType >
+inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+evaluateLocal(const DomainType & x, RangeType & ret) const
+{
+  evaluate(x,ret);
+}
+
+template<class DiscreteFunctionType > 
+template <class QuadratureType> 
+inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) const 
+{
+  evaluate(quad,quadPoint,ret);
+}
+template<class DiscreteFunctionType >
+template <class QuadratureType>
+inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType & ret) const
+{
+  jacobian(quad,quadPoint,ret);
+}
+
+template<class DiscreteFunctionType >
+inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+jacobian(EntityType& en, const DomainType& x,
+         JacobianRangeType& ret) const
+{
+  jacobian(x,ret);
+}
+
+template<class DiscreteFunctionType >
+inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+jacobianLocal(EntityType& en, const DomainType& x,
+              JacobianRangeType& ret) const
+{
+  jacobian(x,ret);
+}
+
+#endif
 
 template<class DiscreteFunctionType >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
@@ -457,87 +504,75 @@ evaluate (const DomainType & local, RangeType & ret) const
   }
 }
 
-template<class DiscreteFunctionType >
+template<class DiscreteFunctionType > 
+template <class QuadratureType> 
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluateLocal (EntityType &en, const DomainType & local, RangeType & ret) const
-{
-  evaluate(local,ret);
-}
-
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluateLocal(const DomainType & x, RangeType & ret) const
+evaluate (const QuadratureType &quad, const int quadPoint, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   assert(init_);
-  assert(en().geometry().checkInside(x));
+
   ret = 0.0;
   const BaseFunctionSetType& bSet = baseFunctionSet();
-
-  for (int i = 0; i < bSet.numBaseFunctions(); ++i)
+  const int numBaseFunctions = bSet.numBaseFunctions();
+  for (int i = 0; i < numBaseFunctions; ++i)
   {
-    bSet.eval(i, x, tmp_);
-    for (int l = 0; l < dimRange; ++l) 
-    {
-      ret[l] += (*values_[i]) * tmp_[l];
-    }
+    bSet.eval(i, quad, quadPoint , tmp_);
+    tmp_ *= (*values_[i]);
+    ret += tmp_;
   }
 }
 
-template<class DiscreteFunctionType > 
-template <class QuadratureType> 
+template<class DiscreteFunctionType >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) const 
+jacobian(const DomainType& x,
+         JacobianRangeType& ret) const
 {
-  evaluateLocal(en, quad.point(quadPoint), ret);
-}
+  assert(init_);
+  enum { dim = EntityType::dimension };
+  enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+  typedef typename DiscreteFunctionSpaceType::GridType::ctype ctype;
 
-template<class DiscreteFunctionType > 
-template <class QuadratureType> 
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluate (QuadratureType &quad, int quadPoint, RangeType & ret) const 
-{
-  evaluateLocal(quad.point(quadPoint), ret);
+  ret = 0.0;
+  const BaseFunctionSetType& bSet = baseFunctionSet();
+  const FieldMatrix<ctype,dim,dim>& inv =
+    en().geometry().jacobianInverseTransposed(x);
+
+  const int numBaseFct = bSet.numBaseFunctions();
+  for (int i = 0; i < numBaseFct; ++i) 
+  {
+    bSet.jacobian(i, x , tmpGrad_);
+    for (int l = 0; l < dimRange; ++l) 
+    {
+      tmpGrad_[l] *= *(values_[i]);
+      inv.umv(tmpGrad_[l], ret[l]);
+    }
+  }
 }
 
 template<class DiscreteFunctionType >
 template <class QuadratureType>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType & ret) const
-{
-  jacobianLocal(en, quad.point(quadPoint), ret);
-}
-
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-jacobian(EntityType& en, const DomainType& x,
-         JacobianRangeType& ret) const
-{
-  ret *= 0.0;
-  xtmp_ = en.geometry().local(x);
-  jacobianLocal(en, xtmp_, ret);
-}
-
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-jacobianLocal(EntityType& en, const DomainType& x,
-              JacobianRangeType& ret) const
+jacobian (const QuadratureType &quad, const int quadPoint, JacobianRangeType & ret) const
 {
   assert(init_);
   enum { dim = EntityType::dimension };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+  typedef typename DiscreteFunctionSpaceType::GridType::ctype ctype;
 
   ret = 0.0;
   const BaseFunctionSetType& bSet = baseFunctionSet();
+  const FieldMatrix<ctype,dim,dim>& inv =
+    en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
-  for (int i = 0; i < bSet.numBaseFunctions(); ++i) {
-    tmpGrad_ *= 0.0;
-    bSet.jacobian(i, x, tmpGrad_);
-
-    for (int l = 0; l < dimRange; ++l) {
+  const int numBaseFct = bSet.numBaseFunctions();
+  for (int i = 0; i < numBaseFct; ++i) 
+  {
+    bSet.jacobian(i, quad, quadPoint , tmpGrad_);
+    for (int l = 0; l < dimRange; ++l) 
+    {
       tmpGrad_[l] *= *(values_[i]);
-        // * umtv or umv?
-      en.geometry().jacobianInverseTransposed(x).umv(tmpGrad_[l], ret[l]);
+      inv.umv(tmpGrad_[l], ret[l]);
     }
   }
 }
