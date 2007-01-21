@@ -777,13 +777,17 @@ std::ostream& operator<< (std::ostream& s, const BlockMatrix<K> & matrix)
   return s;
 }
 
-template <class RowSpaceType, class ColumnSpaceType> 
+//! matrix object holding a blockamtrix
+template <class RowSpaceImp, class ColumnSpaceImp> 
 class BlockMatrixObject
 {
+public:  
+  typedef RowSpaceImp RowSpaceType;
+  typedef ColumnSpaceImp ColumnSpaceType ;
+
   typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
 
   typedef BlockMatrixObject<RowSpaceType,ColumnSpaceType> ThisType;
-public:  
 
   typedef BlockMatrix<double> MatrixType;
   typedef MatrixType PreconditionMatrixType;
@@ -896,6 +900,8 @@ public:
   const ColumnSpaceType & colSpace_;
 
   int size_;
+
+  int sequence_;
   
   int numRowBaseFct_;
   int numColBaseFct_;
@@ -905,13 +911,18 @@ public:
 
   mutable CommunicationManagerType communicate_;
 
-  //! setup matrix handler 
+  //! constructor 
+  //! \param rowSpace space defining row structure 
+  //! \param colSpace space defining column structure 
+  //! \param paramfile parameter file to read variables 
+  //!         - Preconditioning: {0 == no, 1 == yes} used is SSOR 
   BlockMatrixObject(const RowSpaceType & rowSpace, 
                     const ColumnSpaceType & colSpace,
                     const std::string& paramfile) 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
     , size_(-1)
+    , sequence_(-1)
     , numRowBaseFct_(-1)
     , numColBaseFct_(-1)
     , matrix_()
@@ -926,14 +937,12 @@ public:
     } 
     assert( rowSpace_.indexSet().size(0) == 
             colSpace_.indexSet().size(0) ); 
-    reserve(true);
-    
   }
 
   //! return reference to stability matrix 
   MatrixType & matrix() { return matrix_; }
 
-  //! resize all matrices and clear them 
+  //! set all matrix entries to zero  
   void clear() 
   {
     matrix_.clear();
@@ -941,64 +950,46 @@ public:
 
   //! return true if precoditioning matrix is provided 
   bool hasPcMatrix () const { return preconditioning_; }
+
+  //! return reference to preconditioner (here also systemMatrix)
   PreconditionMatrixType& pcMatrix () { return matrix_; }
-
-  //! resize all matrices and clear them 
-  void resize(bool verbose = false) 
-  {
-    if( ! hasBeenSetup() ) 
-    {
-      reserve(); 
-    }
-    else 
-    {
-      size_ = rowSpace_.indexSet().size(0); 
-      if(verbose)
-      {
-        std::cout << "Resize Matrix with (" << size_ << "," << size_ << ")\n";
-      }
-      matrix_.resize(size_);
-    }
-  }
-
-  //! returns true if memory has been reserved
-  bool hasBeenSetup () const 
-  {
-    return (numRowBaseFct_ > 0);
-  }
 
   //! reserve memory corresponnding to size of spaces 
   void reserve(bool verbose = false ) 
   {
-    // if empty grid do nothing (can appear in parallel runs)
-    if( (rowSpace_.begin() != rowSpace_.end()) && 
-        (colSpace_.begin() != colSpace_.end()) )
+    if(sequence_ != rowSpace_.sequence() )
     {
-      // get number of elements 
-      size_ = rowSpace_.indexSet().size(0); 
-
-      numRowBaseFct_ = rowSpace_.getBaseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
-      numColBaseFct_ = colSpace_.getBaseFunctionSet(*(colSpace_.begin())).numBaseFunctions();
-
-      if(verbose) 
+      // if empty grid do nothing (can appear in parallel runs)
+      if( (rowSpace_.begin() != rowSpace_.end()) && 
+          (colSpace_.begin() != colSpace_.end()) )
       {
-        std::cout << "Reserve Matrix with (" << size_ << "," << size_ << ")\n";
-        std::cout << "Number of base functions = (" << numRowBaseFct_ << "," << numColBaseFct_ << ")\n";
+        // get number of elements 
+        size_ = rowSpace_.indexSet().size(0); 
+
+        numRowBaseFct_ = rowSpace_.getBaseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
+        numColBaseFct_ = colSpace_.getBaseFunctionSet(*(colSpace_.begin())).numBaseFunctions();
+
+        if(verbose) 
+        {
+          std::cout << "Reserve Matrix with (" << size_ << "," << size_ << ")\n";
+          std::cout << "Number of base functions = (" << numRowBaseFct_ << "," << numColBaseFct_ << ")\n";
+        }
+
+        // factor for non-conforming grid is 4 in 3d and 2 in 2d  
+        //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+
+        // upper estimate for number of neighbors 
+        enum { dim = RowSpaceType :: GridType :: dimension };
+
+        // number of neighbors + 1 
+        const int factor = (dim * 2) + 1; 
+
+        // upper estimate for number of neighbors 
+        //enum { dim = RowSpaceType :: GridType :: dimension };
+        //rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
+        matrix_.reserve(size_,size_,numRowBaseFct_,numColBaseFct_,factor);
       }
-
-      // factor for non-conforming grid is 4 in 3d and 2 in 2d  
-      //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
-
-      // upper estimate for number of neighbors 
-      enum { dim = RowSpaceType :: GridType :: dimension };
-
-      // number of neighbors + 1 
-      const int factor = (dim * 2) + 1; 
-
-      // upper estimate for number of neighbors 
-      //enum { dim = RowSpaceType :: GridType :: dimension };
-      //rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
-      matrix_.reserve(size_,size_,numRowBaseFct_,numColBaseFct_,factor);
+      sequence_ = rowSpace_.sequence();
     }
   }
 
@@ -1021,13 +1012,13 @@ public:
     communicate_.exchange( tmp );
   }
 
-
   //! resort row numbering in matrix to have ascending numbering 
   void resort() 
   {
     matrix_.resort();
   }
 
+  //! print matrix 
   void print(std::ostream & s) const 
   {
     matrix_.print(s);

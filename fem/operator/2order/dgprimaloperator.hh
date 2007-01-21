@@ -269,34 +269,18 @@ namespace Dune {
       return 0.0;
     }
 
-    //! reallocate new memory for matrix and compute entries 
-    void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
-    {
-      // reserve memory and clear matrices 
-      matrixObj_.reserve(false);
-
-      // compute matrix entries 
-      computeMatrix( arg, rhs );
-    }
-
-    //! clears matrix and re-computes entries 
-    void updateMatrix( const ArgumentType & arg,
-                       DestinationType & rhs )
-    {
-      // clear matrix 
-      matrixObj_.clear();
-      
-      // compute matrix entries 
-      computeMatrix(arg, rhs );
-    }
-
-  private:  
     //! compute matrix entries 
     void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
       // prepare 
       prepare( arg, rhs );
 
+      // if grid has changed, then matrix structure is re-build
+      matrixObj_.reserve();
+
+      // clear matrix 
+      matrixObj_.clear();
+      
       // clear right hand side 
       rhs.clear();
 
@@ -1014,6 +998,7 @@ namespace Dune {
       }
     }
 
+  private:  
     void numericalFlux(const double & grad, 
                        const RangeType & phiLeft,
                        const RangeType & phiRight, 
@@ -1052,7 +1037,6 @@ namespace Dune {
       resultRight = -phiRight; 
     }
     
-  private:
     // needs to be friend for conversion check 
     friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
     //! empty constructor not defined 

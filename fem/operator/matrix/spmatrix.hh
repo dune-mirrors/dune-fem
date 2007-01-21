@@ -270,11 +270,15 @@ private:
   void removeObj();
 };
 
-template <class RowSpaceType, class ColumnSpaceType> 
+template <class RowSpaceImp, class ColumnSpaceImp> 
 class SparseRowMatrixObject
 {
-  typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
+public:
+  typedef RowSpaceImp RowSpaceType;
+  typedef ColumnSpaceImp ColumnSpaceType;
 
+private:
+  typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
   typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> ThisType;
 public:  
   typedef SparseRowMatrix<double> MatrixType;
@@ -396,6 +400,7 @@ public:
   const ColumnSpaceType & colSpace_;
   
   int rowMaxNumbers_;
+  int sequence_;
 
   MatrixType matrix_; 
   bool preconditioning_;
@@ -410,6 +415,7 @@ public:
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
     , rowMaxNumbers_(-1)
+    , sequence_(-1)
     , matrix_()
     , preconditioning_(false)
     , pcMatrix_(0)
@@ -421,7 +427,6 @@ public:
       readParameter(paramfile,"Preconditioning",precon);
       preconditioning_ = (precon == 1) ? true : false;
     }
-    reserve(true);
   }
 
   //! return reference to stability matrix 
@@ -442,67 +447,44 @@ public:
     return matrix_;
   }
 
-  //! resize all matrices and clear them 
-  void resize(bool verbose = false) 
-  {
-    if( ! hasBeenSetup() ) 
-    {
-      reserve(); 
-    }
-    else 
-    {
-      int rowSize = rowSpace_.size();
-      int colSize = colSpace_.size();
-
-      if(verbose)
-      {
-        std::cout << "Resize Matrix with (" << rowSize << "," << colSize << ")\n";
-      }
-
-      matrix_.resize(rowSize,colSize);
-    }
-  }
-
-  //! returns true if memory has been reserved
-  bool hasBeenSetup () const 
-  {
-    return (rowMaxNumbers_ > 0);
-  }
-
   //! reserve memory corresponnding to size of spaces 
   void reserve(bool verbose = false ) 
   {
-    // if empty grid do nothing (can appear in parallel runs)
-    if( (rowSpace_.begin() != rowSpace_.end()) && 
-        (colSpace_.begin() != colSpace_.end()) )
+    if(sequence_ != rowSpace_.sequence())
     {
-      
-      rowMaxNumbers_ = rowSpace_.getBaseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
-
-      if(verbose) 
+      // if empty grid do nothing (can appear in parallel runs)
+      if( (rowSpace_.begin() != rowSpace_.end()) && 
+          (colSpace_.begin() != colSpace_.end()) )
       {
-        std::cout << "Reserve Matrix with (" << rowSpace_.size() << "," << colSpace_.size()<< ")\n";
-        std::cout << "Number of base functions = (" << rowMaxNumbers_ << ")\n";
+        
+        rowMaxNumbers_ = rowSpace_.getBaseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
+
+        if(verbose) 
+        {
+          std::cout << "Reserve Matrix with (" << rowSpace_.size() << "," << colSpace_.size()<< ")\n";
+          std::cout << "Number of base functions = (" << rowMaxNumbers_ << ")\n";
+        }
+
+        assert( rowMaxNumbers_ > 0 );
+
+        // factor for non-conforming grid is 4 in 3d and 2 in 2d  
+        //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+        const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+
+        // upper estimate for number of neighbors 
+        enum { dim = RowSpaceType :: GridType :: dimension };
+        rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
+
+        matrix_.reserve(rowSpace_.size(),colSpace_.size(),rowMaxNumbers_,0.0);
+
+        /*
+        if(hasPcMatrix())
+        {
+          pcMatrix_ = new PreconditionMatrixType("pcMatrix",rowSpace_);
+        }
+        */
       }
-
-      assert( rowMaxNumbers_ > 0 );
-
-      // factor for non-conforming grid is 4 in 3d and 2 in 2d  
-      //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
-      const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
-
-      // upper estimate for number of neighbors 
-      enum { dim = RowSpaceType :: GridType :: dimension };
-      rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
-
-      matrix_.reserve(rowSpace_.size(),colSpace_.size(),rowMaxNumbers_,0.0);
-
-      /*
-      if(hasPcMatrix())
-      {
-        pcMatrix_ = new PreconditionMatrixType("pcMatrix",rowSpace_);
-      }
-      */
+      sequence_ = rowSpace_.sequence();
     }
   }
 

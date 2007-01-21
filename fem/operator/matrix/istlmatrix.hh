@@ -16,7 +16,6 @@
 
 namespace Dune { 
 
-//#if HAVE_DUNE_ISTL 
   ///////////////////////////////////////////////////////
   // --BlockMatrixHandle
   //////////////////////////////////////////////////////
@@ -196,7 +195,6 @@ namespace Dune {
             ++create;
           }
         }
-        clear();
         std::sort(overlapRows_.begin(), overlapRows_.end());
         if(verbose)  
         {
@@ -233,6 +231,7 @@ namespace Dune {
         }
       }
 
+      //! print matrix 
       void print(std::ostream & s) const 
       {
         std::cout << "Print ISTLMatrix \n";
@@ -247,6 +246,7 @@ namespace Dune {
         }
       }
 
+      //! communicate block vector 
       void communicate(const BlockVectorType& arg) const 
       {
         if(comm_)
@@ -291,6 +291,7 @@ namespace Dune {
       }
 
     private:  
+      // delete all vector entries that belong not to interior entities 
       void deleteNonInterior(BlockVectorType& y) const
       {
         // set all entries belonging to non-interior elements to zero 
@@ -302,6 +303,9 @@ namespace Dune {
       }
   };
 
+  //! wrapper class to store perconditioner 
+  //! as the interface class does not have to category 
+  //! enum 
   template<class X, class Y>
   class PreconditionerWrapper : public Preconditioner<X,Y>
   {
@@ -363,12 +367,20 @@ namespace Dune {
     }
   };
 
-  template <class RowSpaceType, class ColumnSpaceType> 
+  //! MatrixObject handling an istl matrix 
+  template <class RowSpaceImp, class ColumnSpaceImp> 
   class ISTLMatrixObject  
   {
+  public:  
+    //! type of space defining row structure 
+    typedef RowSpaceImp RowSpaceType;
+    //! type of space defining column structure 
+    typedef ColumnSpaceImp ColumnSpaceType;
+
+  private:  
     typedef typename RowSpaceType::GridType GridType; 
     typedef typename GridType::template Codim<0>::Entity EntityType;
-  public:  
+
     enum { littleRows = RowSpaceType :: numBaseFunctions };
     enum { littleCols = ColumnSpaceType :: numBaseFunctions };
     
@@ -378,11 +390,15 @@ namespace Dune {
     typedef BlockVector< FieldVector<RangeFieldType, littleRows> > BlockVectorType; 
 
     typedef StaticDiscreteFunction< RowSpaceType , BlockVectorType>  DiscreteFunctionType; 
+
+  public:
+    //! type of used matrix 
     typedef ImprovedBCRSMatrix< LittleBlockType , DiscreteFunctionType > MatrixType;
    
+    //! type of preconditioner 
     typedef PreconditionerWrapper<BlockVectorType,BlockVectorType> PreconditionMatrixType;
-    typedef Preconditioner<BlockVectorType,BlockVectorType> PreconditionerInterfaceType;
 
+    //! LocalMatrix 
     template <class MatrixImp> 
     class LocalMatrix
     {
@@ -437,19 +453,25 @@ namespace Dune {
         matrix_ = 0.0;
       }
 
+      //! empty as the little matrices are already sorted
       void resort() 
       {
       }
     };
 
   public:
+    //! type of local matrix 
     typedef LocalMatrix<MatrixType> LocalMatrixType;
+
+  private:  
     typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
 
     const RowSpaceType & rowSpace_;
     const ColumnSpaceType & colSpace_;
 
     int size_;
+
+    int sequence_;
 
     mutable MatrixType* matrix_;
     mutable PreconditionMatrixType* preconder_;
@@ -461,13 +483,21 @@ namespace Dune {
       
     int preconditioning_;
 
-    //! setup matrix handler 
+  public:  
+    //! constructor 
+    //! \param rowSpace space defining row structure 
+    //! \param colSpace space defining column structure 
+    //! \param paramfile parameter file to read variables 
+    //!         - Preconditioning: {0,1,2,3,4,5,6} put -1 to get info
+    //!         - Pre-iteration: number of iteration of preconditioner
+    //!         - Pre-relaxation: relaxation factor   
     ISTLMatrixObject(const RowSpaceType & rowSpace,
                      const ColumnSpaceType & colSpace,
                      const std::string& paramfile)
       : rowSpace_(rowSpace)
       , colSpace_(colSpace)
       , size_(-1)
+      , sequence_(-1)
       , matrix_(0)
       , preconder_(0)
       , comm_(rowSpace_)
@@ -478,20 +508,22 @@ namespace Dune {
       if(paramfile != "")
       {
         readParameter(paramfile,"Preconditioning",preconditioning_);
-        readParameter(paramfile,"ILU-iteration",numIterations_);
-        readParameter(paramfile,"ILU-relaxation",relaxFactor_);
+        readParameter(paramfile,"Pre-iteration",numIterations_);
+        readParameter(paramfile,"Pre-relaxation",relaxFactor_);
       }
       
       assert( rowSpace_.indexSet().size(0) ==
               colSpace_.indexSet().size(0) );
     }
 
+    //! destructor 
     ~ISTLMatrixObject() 
     {
       delete preconder_;
       delete matrix_;
     }
 
+    //! return reference to system matrix 
     MatrixType & matrix() const 
     { 
       assert( matrix_ );
@@ -501,6 +533,8 @@ namespace Dune {
     //! return true, because in case of no preconditioning we have empty
     //! preconditioner 
     bool hasPcMatrix () const { return true; }
+
+    //! return reference to preconditioner
     const PreconditionMatrixType& pcMatrix () const  
     { 
       if( !preconder_ )
@@ -510,23 +544,17 @@ namespace Dune {
       return *preconder_; 
     }
 
-    bool hasBeenSetup () const
-    {
-      return (size_ > 0);
-    }
-
+    //! set all matrix entries to zero 
     void clear()
     {
       matrix().clear();
     }
 
-    void resize(bool verbose = false)
-    {
-      reserve(verbose);
-    }
-
+    //! reserve matrix with right size 
     void reserve(bool verbose = false) 
     {
+      // if grid sequence number changed, rebuild matrix 
+      if(sequence_ != rowSpace_.sequence())
       {
         delete matrix_;
         delete preconder_; preconder_ = 0;
@@ -534,12 +562,14 @@ namespace Dune {
 
         matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0));
         matrix().setup(rowSpace_,colSpace_,rowSpace_.gridPart());
+        sequence_ = rowSpace_.sequence();
       }
     }
 
     //! mult method of matrix object used by oem solver
     void multOEM(const double * arg, double * dest) const
     {
+      matrix().multOEM(arg,dest);
     }
 
     //! resort row numbering in matrix to have ascending numbering 
@@ -547,10 +577,13 @@ namespace Dune {
     {
     }
 
+    //! create precondition matrix does nothing because preconditioner is
+    //! created only when requested 
     void createPreconditionMatrix() 
     {
     }
 
+    //! print matrix 
     void print(std::ostream & s) const 
     { 
       matrix().print(std::cout);
@@ -618,7 +651,6 @@ namespace Dune {
       return 0;
     }
   };
-//#endif // HAVE_DUNE_ISTL
 
 } // end namespace Dune 
 #endif
