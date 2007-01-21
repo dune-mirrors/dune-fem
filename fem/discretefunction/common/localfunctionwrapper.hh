@@ -175,10 +175,10 @@ public:
   }
 
   //! access to dof number num, all dofs of the dof entity
-  RangeFieldType & operator [] (int num) { return localFunc()[num]; }
+  RangeFieldType & operator [] (const int num) { return localFunc()[num]; }
   
   //! access to dof number num, all dofs of the dof entity
-  const RangeFieldType & operator [] (int num) const { return localFunc()[num]; }
+  const RangeFieldType & operator [] (const int num) const { return localFunc()[num]; }
 
   //! return number of degrees of freedom 
   int numDofs () const { return localFunc().numDofs(); }
@@ -211,7 +211,7 @@ public:
   #endif
   //! sum over all local base functions evaluated on given quadrature point
   template <class QuadratureType> 
-  void evaluate (QuadratureType &quad, int quadPoint , RangeType & ret) const
+  void evaluate (const QuadratureType &quad, int quadPoint , RangeType & ret) const
   {
     localFunc().evaluate( quad, quadPoint , ret );
   }
@@ -222,6 +222,15 @@ public:
 		 int quadPoint , JacobianRangeType & ret) const
   {
     localFunc().jacobian( en, quad, quadPoint, ret ); 
+  }
+ 
+  //! sum over all local base functions evaluated on given quadrature point
+  template <class QuadratureType> 
+  void jacobian (const QuadratureType &quad, 
+		             const int quadPoint , 
+                 JacobianRangeType & ret) const
+  {
+    localFunc().jacobian(quad, quadPoint, ret ); 
   }
  
   #if OLDFEM
@@ -241,6 +250,14 @@ public:
 		JacobianRangeType& ret) const
   {
     localFunc().jacobian( en, x , ret ); 
+  }
+
+  //! sum over all local base functions evaluated on given quadrature
+  //point, but local 
+  void jacobian(const DomainType& x, 
+            		JacobianRangeType& ret) const
+  {
+    localFunc().jacobian( x , ret ); 
   }
 
   //! update local function for given Entity  
