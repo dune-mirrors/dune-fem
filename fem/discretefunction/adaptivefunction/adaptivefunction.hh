@@ -3,8 +3,10 @@
 
 //- System includes
 #include <string>
+#include <vector>
 
 //- Dune includes
+#include <dune/common/array.hh>
 #include "../common/discretefunction.hh"
 #include "../common/localfunction.hh"
 #include "../../space/combinedspace/combinedspace.hh"
@@ -223,6 +225,10 @@ namespace Dune {
     //! Dimension of the range field
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
+    //! type of codim 0 entity
+    typedef typename DiscreteFunctionSpaceType :: GridType :: template
+      Codim<0> :: Entity EntityType;
+
   public:
     //- Public methods
     //- Constructors and destructors
@@ -240,11 +246,11 @@ namespace Dune {
     //- Operators
     //! Random access operator
     inline
-    DofType& operator[] (int num);
+    DofType& operator[] (const int num);
 
      //! Cosnt random access operator
     inline
-    const DofType& operator[] (int num) const;
+    const DofType& operator[] (const int num) const;
 
     //- Methods
 
@@ -256,9 +262,28 @@ namespace Dune {
     inline
     void evaluate(const DomainType& x, 
                   RangeType & ret) const;
+
+    //! Evaluation of the discrete function
+    template <class QuadratureType>
+    inline
+    void evaluate(const QuadratureType& quad,
+                  const int quadPoint,
+                  RangeType& ret) const;
+
+    //! Jacobian of the discrete function
+    inline
+    void jacobian(const DomainType& x, 
+            		  JacobianRangeType& ret) const; 
+
+    //! Jacobian of the discrete function
+    template <class QuadratureType>
+    inline
+    void jacobian(const QuadratureType& quad,
+                  const int quadPoint,
+                  JacobianRangeType& ret) const;
+
     #if OLDFEM
     //! Evaluation of the discrete function
-    template <class EntityType>
     inline
     void evaluate(EntityType& en, 
                   const DomainType& x, 
@@ -270,41 +295,32 @@ namespace Dune {
                        const DomainType& x, 
                        RangeType & ret) const {evaluate(x,ret);}
     //! Evaluation of the discrete function
-    template <class EntityType, class QuadratureType>
+    template <class QuadratureType>
     inline
     void evaluate(EntityType& en, 
                   QuadratureType& quad,
                   int quadPoint,
                   RangeType& ret) const {evaluate(quad,quadPoint,ret);}
-    #endif
-    //! Evaluation of the discrete function
-    template <class QuadratureType>
-    inline
-    void evaluate(QuadratureType& quad,
-                  int quadPoint,
-                  RangeType& ret) const;
-    #if OLDFEM
     //! Jacobian of the discrete function
-    template <class EntityType>
     inline
     void jacobianLocal(EntityType& en, 
                        const DomainType& x, 
                        JacobianRangeType& ret) const; 
-    #endif
+
     //! Jacobian of the discrete function
-    template <class EntityType>
     inline
     void jacobian(EntityType& en, 
 		  const DomainType& x, 
 		  JacobianRangeType& ret) const; 
     //! Jacobian of the discrete function
-    template <class EntityType, class QuadratureType>
+    template <class QuadratureType>
     inline
     void jacobian(EntityType& en,
                   QuadratureType& quad,
                   int quadPoint,
                   JacobianRangeType& ret) const;
 
+    #endif
     //! get the base function set
     const BaseFunctionSetType& baseFunctionSet() const;
     const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED {return baseFunctionSet();}
@@ -313,21 +329,30 @@ namespace Dune {
     //! assignment operator
     ThisType& operator=(const ThisType& other);
 
-    template <class EntityType>
+    //! init local function 
     inline
     void init(const EntityType& en);
+
   private:
+    // return reference to actual entity
+    const EntityType& en() const;
+
     //- Data members
     const DiscreteFunctionSpaceType& spc_;
     DofStorageType& dofVec_;
     
-    mutable std::vector<RangeFieldType*> values_;
+    // vector holding pointer to local dofs 
+    mutable Array<RangeFieldType*> values_;
  
     mutable RangeType tmp_;
     mutable JacobianRangeType tmpGrad_;
 
     mutable bool init_;
+    const bool multipleGeometryTypes_;
+
     mutable const BaseFunctionSetType* baseSet_;
+
+    mutable const EntityType* en_;
 
     mutable GeometryType geoType_;
   }; // end class AdaptiveLocalFunction
@@ -587,7 +612,7 @@ namespace Dune {
     const DiscreteFunctionSpaceType& spc_;
     DofStorageType& dofVec_;
     
-    mutable std::vector<FieldVector<DofType*, N> > values_;
+    mutable Array<FieldVector<DofType*, N> > values_;
  
     mutable ContainedRangeType cTmp_;
     mutable ContainedJacobianRangeType cTmpGradRef_;

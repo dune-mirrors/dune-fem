@@ -16,7 +16,9 @@ namespace Dune {
     tmp_(0.0),
     tmpGrad_(0.0),
     init_(false),
+    multipleGeometryTypes_(spc_.multipleGeometryTypes()),
     baseSet_(0),
+    en_(0),
     geoType_(0) // init as Vertex 
   {}
   
@@ -29,7 +31,9 @@ namespace Dune {
     tmp_(0.0),
     tmpGrad_(0.0),
     init_(false),
+    multipleGeometryTypes_(spc_.multipleGeometryTypes()),
     baseSet_(0),
+    en_(0),
     geoType_(0) // init as Vertex 
   {}
 
@@ -40,7 +44,7 @@ namespace Dune {
   template <class DiscreteFunctionSpaceImp>
   typename AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::DofType&
   AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  operator[] (int num) 
+  operator[] (const int num) 
   {
     assert(init_);
     assert(num >= 0 && num < numDofs());
@@ -52,7 +56,7 @@ namespace Dune {
   template <class DiscreteFunctionSpaceImp>
   const typename AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::DofType&
   AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  operator[] (int num) const 
+  operator[] (const int num) const 
   {
     assert(init_);
     assert(num >= 0 && num < numDofs());
@@ -85,99 +89,101 @@ namespace Dune {
     ret = 0.0;
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
-    for (int i = 0; i < this->numDofs(); ++i) 
+    const int numDof = this->numDofs();
+    for (int i = 0; i < numDof; ++i) 
     {
       bSet.eval(i, x, tmp_);
-      for (int l = 0; l < dimRange; ++l) {
-        ret[l] += (*values_[i]) * tmp_[l];
-      }
+      tmp_ *= (*values_[i]);
+      ret += tmp_;
     }
   }
-  /*
-  template <class DiscreteFunctionSpaceImp>
-  template <class EntityType, class QuadratureType>
-  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  evaluate(EntityType& en, 
-           QuadratureType& quad, 
-           int quadPoint, 
-           RangeType& ret) const 
-  {
-    assert(init_);
-    assert(en.geometry().checkInside(quad.point(quadPoint)));
-    ret = 0.0;
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
-    for (int i = 0; i < this->numDofs(); ++i) 
-    {
-      bSet.eval(i, quad,quadPoint, tmp_);
-      for (int l = 0; l < dimRange; ++l) {
-        ret[l] += (*values_[i]) * tmp_[l];
-      }
-    }
-    // evaluateLocal(en, quad.point(quadPoint), ret);
-  }
-  */
   template <class DiscreteFunctionSpaceImp>
   template <class QuadratureType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  evaluate(QuadratureType& quad, 
-           int quadPoint, 
+  evaluate(const QuadratureType& quad, 
+           const int quadPoint, 
            RangeType& ret) const 
   {
     assert(init_);
     ret = 0.0;
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
-    for (int i = 0; i < this->numDofs(); ++i) 
+    const int numDof = this->numDofs();
+    for (int i = 0; i < numDof; ++i) 
     {
       bSet.eval(i, quad,quadPoint, tmp_);
-      for (int l = 0; l < dimRange; ++l) {
-        ret[l] += (*values_[i]) * tmp_[l];
-      }
+      tmp_ *= (*values_[i]);
+      ret  += tmp_;
     }
-    // evaluateLocal(en, quad.point(quadPoint), ret);
   }
+
   #if OLDFEM
   template <class DiscreteFunctionSpaceImp>
-  template <class EntityType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   jacobianLocal(EntityType& en, 
 		const DomainType& x, 
 		JacobianRangeType& ret) const {
-    jacobian(en,x,ret);
+    jacobian(x,ret);
   }
-  #endif
+
   template <class DiscreteFunctionSpaceImp>
-  template <class EntityType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   jacobian(EntityType& en, 
 	   const DomainType& x, 
 	   JacobianRangeType& ret) const
   {
+    jacobian(x,ret);
+  }
+
+  template <class DiscreteFunctionSpaceImp>
+  template <class QuadratureType>
+  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
+  jacobian(EntityType& en, 
+           QuadratureType& quad, 
+           int quadPoint, 
+           JacobianRangeType& ret) const
+  {
+    jacobian(quad,quadPoint,ret);
+  }
+  #endif
+
+  template <class DiscreteFunctionSpaceImp>
+  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
+  jacobian(const DomainType& x, JacobianRangeType& ret) const
+  {
     assert(init_);
     enum { dim = EntityType::dimension };
+    typedef typename DiscreteFunctionSpaceImp::GridType::ctype ctype;
+
+    // get jacobian inverse 
+    typedef FieldMatrix<ctype, dim, dim> JacobianInverseType;
+    const JacobianInverseType& jti = 
+          en().geometry().jacobianInverseTransposed(x);
 
     ret = 0.0;
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
     
-    for (int i = 0; i < this->numDofs(); ++i) {
-      tmpGrad_ = 0.0;
+    const int numDof = this->numDofs();
+    for (int i = 0; i < numDof; ++i) 
+    {
+      // evaluate gradient on reference element
       bSet.jacobian(i, x, tmpGrad_);
 
-      for (int l = 0; l < dimRange; ++l) {
+      // apply element specific values 
+      for (int l = 0; l < dimRange; ++l) 
+      {
         tmpGrad_[l] *= *values_[i];
-        // * umtv or umv?
-        en.geometry().jacobianInverseTransposed(x).umv(tmpGrad_[l], ret[l]);
+        jti.umv(tmpGrad_[l], ret[l]);
       }
     }    
   }
 
   template <class DiscreteFunctionSpaceImp>
-  template <class EntityType, class QuadratureType>
+  template <class QuadratureType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  jacobian(EntityType& en, 
-           QuadratureType& quad, 
-           int quadPoint, 
+  jacobian(const QuadratureType& quad, 
+           const int quadPoint, 
            JacobianRangeType& ret) const
   {
     assert(init_);
@@ -185,13 +191,29 @@ namespace Dune {
 
     ret = 0.0;
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    typedef typename DiscreteFunctionSpaceImp::GridType::ctype ctype;
     
-    typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
+    typedef FieldMatrix<ctype, dim, dim> JacobianInverseType;
     const JacobianInverseType& jti = 
-      en.geometry().jacobianInverseTransposed(quad.point(quadPoint));
+      en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
-    JacobianRangeType tmp(0.0);
+    //JacobianRangeType tmp(0.0);
 
+    const int numDof = this->numDofs();
+    for (int i = 0; i < numDof; ++i) 
+    {
+      // evaluate gradient on reference element
+      bSet.jacobian(i, quad,quadPoint, tmpGrad_);
+
+      // apply element specific values 
+      for (int l = 0; l < dimRange; ++l) 
+      {
+        tmpGrad_[l] *= *(values_[i]);
+        jti.umv(tmpGrad_[l], ret[l]);
+      }
+    }
+
+    /*
     for (int i = 0; i < this->numDofs(); ++i) 
     {
       bSet.jacobian(i, quad,quadPoint, tmpGrad_);
@@ -200,6 +222,7 @@ namespace Dune {
     }    
     for (int l = 0; l < dimRange; ++l) 
       jti.umv(tmp[l],ret[l]);
+    */
   }
 
   template <class DiscreteFunctionSpaceImp>
@@ -210,10 +233,18 @@ namespace Dune {
     return *baseSet_;
   }
   
+  template <class DiscreteFunctionSpaceImp>
+  const typename
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::EntityType & 
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::en() const 
+  {
+    assert( en_ );
+    return *en_;
+  }
+  
 
   // --init
   template <class DiscreteFunctionSpaceImp>
-  template <class EntityType>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
   init(const EntityType& en) 
   {
@@ -223,7 +254,7 @@ namespace Dune {
     // type again, if not we skip this part, because calling the entity's
     // geometry method is not a cheep call 
     
-    if( (!init_) || ( ! spc_.multipleGeometryTypes() ) )
+    if( !init_ || multipleGeometryTypes_ )
     {
       if( geoType_ != en.geometry().type() )
       {
@@ -236,6 +267,9 @@ namespace Dune {
         geoType_ = en.geometry().type();
       }
     }
+
+    // cache entity
+    en_ = &en;
 
     assert( geoType_ == en.geometry().type() );
     const int numOfDof = numDofs(); 
@@ -441,7 +475,7 @@ namespace Dune {
            int quadPoint, 
            JacobianRangeType& ret) const 
   {
-    jacobianLocal(en, quad.point(quadPoint), ret);
+    jacobian(en, quad.point(quadPoint), ret);
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -472,7 +506,7 @@ namespace Dune {
     // type again, if not we skip this part, because calling the entity's
     // geometry method is not a cheep call 
     
-    if( (!init_) || ( ! spc_.multipleGeometryTypes() ) )
+    if( (!init_) || ( spc_.multipleGeometryTypes() ) )
     {
       if( geoType_ != en.geometry().type() )
       {
