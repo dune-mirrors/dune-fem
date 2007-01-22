@@ -631,7 +631,7 @@ init (const EntityType &en) const
   // type again, if not we skip this part, because calling the entity's
   // geometry method is not a cheep call 
   
-  if( !init_ || ( ! fSpace_.multipleGeometryTypes() ) )
+  if( !init_ || ( fSpace_.multipleGeometryTypes() ) )
   {
     if(geoType_ != en.geometry().type()) 
     {
