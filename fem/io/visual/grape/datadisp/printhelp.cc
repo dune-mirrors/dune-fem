@@ -9,7 +9,7 @@ static void print_help(const char *funcName)
 {
   printf("usage: %s <i_start> <i_end> -i increment", funcName);
   printf(" [-h] [-help] [-p path] ");
-  printf("[-m grid] [-s df] [-v vecdf] [[-s drv] [-v drdv]]\n");
+  printf("[-m grid] [-s df] [-v vecdf] [[-s drv] [-v drdv]] [-replay manager.replay file]\n");
 
   printf("%s reads a sequence of grids with discretefunctions\n",            
    funcName);

@@ -140,7 +140,6 @@ void dataDispErrorExit(std::string msg)
 
 void deleteAllObjects() 
 {
-  /*
   //deleteObjects(funcStack);
   //if(globalSpace) delete globalSpace;
   //deleteObjects(fsStack);
@@ -149,7 +148,6 @@ void deleteAllObjects()
   deleteObjects(dispStack);
   deleteObjects(gridStack);
   return ;
-  */
 }
 
 void readDataInfo(std::string path, DATAINFO * dinf, int k, bool parallel = false) 

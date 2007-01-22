@@ -14,6 +14,7 @@ int readParameterList (int argc, char **argv)
 
   int    i_delta = 1;
   const  char *path = 0;
+  const  char *replay = 0;
   bool   time_bar = false;
   int    parallel = 1;
   bool   paravis = false;
@@ -124,14 +125,31 @@ int readParameterList (int argc, char **argv)
       path = argv[i+1];
       i += 2;
     }
+    else if (!strcmp(argv[i], "-replay"))
+    {
+      if (i+1 == argc)
+        dataDispErrorExit("usage: -p `path'\n");
+      replay = argv[i+1];
+      i += 2;
+    }
     else
     {
-      std::cerr << "unknown option " << argv[i] << std::endl;
+      std::cerr << "unknown * option " << argv[i] << std::endl;
       exit(1);
     }
     printf("i = %d, argc = %d\n", i, argc);
   }
-  
+ 
+  if(replay) 
+  {
+    if(!strcmp(replay, "manager.replay"))
+    {
+      std::string cmd("ln -s ");
+      cmd += replay;
+      cmd += " manager.replay";
+      system(cmd.c_str());
+    }  
+  }
   
   for(int k=0; k<n; k++) 
   {

@@ -14,6 +14,7 @@ int readParameterList (int argc, char **argv)
 
   int    i_delta = 1;
   const  char *path = 0;
+  const  char *replay = 0;
   bool   time_bar = false;
   int    parallel = 1;
   bool   paravis = false;
@@ -124,6 +125,13 @@ int readParameterList (int argc, char **argv)
       path = argv[i+1];
       i += 2;
     }
+    else if (!strcmp(argv[i], "-replay"))
+    {
+      if (i+1 == argc)
+        dataDispErrorExit("usage: -p `path'\n");
+      replay = argv[i+1];
+      i += 2;
+    }
     else
     {
       std::cerr << "unknown option " << argv[i] << std::endl;
@@ -131,7 +139,23 @@ int readParameterList (int argc, char **argv)
     }
     printf("i = %d, argc = %d\n", i, argc);
   }
-  
+ 
+  if(replay)
+  {
+    std::string replayfile(replay);
+    // if strcmp > 0 then strins not equal 
+    if(replayfile != "manager.replay")
+    {
+      std::string cmd("ln -s ");
+      cmd += replayfile;
+      cmd += " manager.replay";
+
+      //std::cout << "call : " << cmd << "\n";
+      int result = system(cmd.c_str());
+
+      if(result != 0) replay = 0;
+    }
+  }
   
   for(int k=0; k<n; k++) 
   {
@@ -153,25 +177,15 @@ int readParameterList (int argc, char **argv)
 
   // run grape 
   displayTimeScene(info,parallel);
+  
+  if(replay) 
+  {
+    std::string cmd("rm manager.replay");
+    system(cmd.c_str());
+  }
 
-  // delete info list : seems not to be required due to memcheck!!??!
-//  for(int k=0; k<n+1; k++) 
-//  {
-//    DATAINFO * dinf = info[k].datinf; 
-//    while ( dinf ) 
-//    {  
-//        if (dinf->comp)    
-//        {      
-//          delete[] dinf->comp;
-//          dinf->comp = 0;  
-//        }
-//        dinf = dinf->next;
-//    }
-//  }  
-//  delete info;
+  //deleteAllObjects();
 
-  deleteAllObjects();
- 
   return (EXIT_SUCCESS);
 }
 #endif
