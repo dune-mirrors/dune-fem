@@ -1,6 +1,8 @@
 #ifndef DUNE_ISTLMATRIXWRAPPER_HH
 #define DUNE_ISTLMATRIXWRAPPER_HH
 
+#if HAVE_DUNE_ISTL
+
 //- system includes 
 #include <vector> 
 
@@ -653,4 +655,6 @@ namespace Dune {
   };
 
 } // end namespace Dune 
+#endif
+
 #endif
