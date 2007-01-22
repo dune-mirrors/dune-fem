@@ -9,6 +9,7 @@
 
 //- Dune includes 
 #include <dune/common/dlist.hh>
+#include <dune/fem/space/basefunctions/storageinterface.hh>
 
 namespace Dune { 
 
@@ -79,11 +80,13 @@ class SingletonList
     }
   };
 
-
   //! list that store pairs of key/object pointers 
   //! singleton list 
   inline static ListType & singletonList() 
   {
+    //! make sure that singletons are create in right order 
+    StorageInterface::initialize();
+    
     static SingletonListStorage s; 
     //! list that store pairs of key/object pointers 
     return s.singletonList(); 
