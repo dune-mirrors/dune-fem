@@ -389,9 +389,9 @@ namespace Dune {
     typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
     
     typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
-    typedef BlockVector< FieldVector<RangeFieldType, littleRows> > BlockVectorType; 
 
-    typedef StaticDiscreteFunction< RowSpaceType , BlockVectorType>  DiscreteFunctionType; 
+    typedef StaticDiscreteFunction< RowSpaceType >  DiscreteFunctionType; 
+    typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType; 
 
   public:
     //! type of used matrix 
