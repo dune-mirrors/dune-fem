@@ -5,31 +5,37 @@
 #include <fstream>
 #include <rpc/xdr.h>
 
+#if ! HAVE_DUNE_ISTL 
+#error "Dune-ISTL is needed for this type of discrete function! Re-configure with --with-dune-istl! "
+#endif
+
 //- Dune inlcudes 
 #include <dune/common/array.hh>
-#include <dune/istl/bvector.hh>
-
 #include <dune/fem/space/dgspace/dgmapper.hh>
+#include <dune/istl/bvector.hh>
 
 //- local includes 
 #include "../common/discretefunction.hh"
 #include "../common/localfunction.hh"
 #include "../common/dofiterator.hh"
 
+
 namespace Dune{
 
-template <class DiscreteFunctionSpaceType,  class DofStorageImp = Array<typename DiscreteFunctionSpaceType::RangeFieldType> > class StaticDiscreteFunction;
+template <class DiscreteFunctionSpaceType> class StaticDiscreteFunction;
 template <class DiscreteFunctionType> class StaticDiscreteLocalFunction;
 template <class DofStorageImp,class DofImp> class DofIteratorStaticDiscreteFunction;
 
 
-template <class DiscreteFunctionSpaceImp, class DofStorageImp>
+template <class DiscreteFunctionSpaceImp>
 struct StaticDiscreteFunctionTraits 
 {
-  typedef DofStorageImp DofStorageType;
+  enum { numBaseFunctions = DiscreteFunctionSpaceImp :: numBaseFunctions };
+  typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
+  typedef BlockVector< FieldVector<RangeFieldType, numBaseFunctions> > DofStorageType;
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
   
-  typedef StaticDiscreteFunction<DiscreteFunctionSpaceType,DofStorageType> DiscreteFunctionType;
+  typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
   
   typedef LocalFunctionWrapper<DiscreteFunctionType> LocalFunctionType;
@@ -63,29 +69,31 @@ struct DofTypeWrapper<double>
 //! array for storing the dofs.  
 //!
 //**********************************************************************
-template<class DiscreteFunctionSpaceImp , class DofStorageImp> 
+template<class DiscreteFunctionSpaceImp> 
 class StaticDiscreteFunction 
-: public DiscreteFunctionDefault <StaticDiscreteFunctionTraits<DiscreteFunctionSpaceImp,DofStorageImp> > 
+: public DiscreteFunctionDefault <StaticDiscreteFunctionTraits<DiscreteFunctionSpaceImp> > 
 {
-  typedef DiscreteFunctionDefault<StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp,DofStorageImp> >
+  typedef DiscreteFunctionDefault<StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp> >
   DiscreteFunctionDefaultType;
 
   friend class DiscreteFunctionDefault< 
-    StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp,DofStorageImp > > ;
+    StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp> > ;
 
+  typedef StaticDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
   enum { myId_ = 0};
 public:
   //! type of discrete functions space 
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
   //! traits of this type 
-  typedef StaticDiscreteFunctionTraits<DiscreteFunctionSpaceType,DofStorageImp> Traits;
+  typedef StaticDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
   
   //! type of underlying array
-  typedef DofStorageImp DofStorageType;
+  typedef typename Traits :: DofStorageType DofStorageType;
 
   //! my type 
-  typedef StaticDiscreteFunction < DiscreteFunctionSpaceType, DofStorageType > DiscreteFunctionType;
+  typedef StaticDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
+  
 
   //! Type of the range field
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
@@ -134,7 +142,7 @@ public:
   StaticDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const DofStorageType & data ) ;
   
   //! Constructor makes Discrete Function from copy 
-  StaticDiscreteFunction (const StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType> & df); 
+  StaticDiscreteFunction (const ThisType & df); 
 
   //! delete stack of free local functions belonging to this discrete
   //! function 
@@ -282,8 +290,8 @@ class StaticDiscreteLocalFunction
 
   typedef typename DofStorageType :: block_type DofBlockType;
 
-  friend class StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType>;
-  friend class LocalFunctionWrapper < StaticDiscreteFunction <DiscreteFunctionSpaceType,DofStorageType> >;
+  friend class StaticDiscreteFunction <DiscreteFunctionSpaceType>;
+  friend class LocalFunctionWrapper < StaticDiscreteFunction <DiscreteFunctionSpaceType> >;
 public:
   //! Constructor 
   StaticDiscreteLocalFunction ( const DiscreteFunctionSpaceType &f , 
