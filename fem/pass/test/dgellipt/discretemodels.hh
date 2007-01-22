@@ -23,7 +23,6 @@
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #endif
 
-#define USE_DUNE_ISTL 0
 
 #include <dune/fem/operator/matrix/istlmatrix.hh>
 #include <dune/fem/solver/istlsolver.hh>
@@ -38,9 +37,12 @@
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
+#if HAVE_DUNE_ISTL
 #include <dune/istl/bvector.hh>
 #include <dune/fem/discretefunction/blockvectorfunction.hh>
+#endif
 
+#define USE_DUNE_ISTL HAVE_DUNE_ISTL
 
 //*************************************************************
 namespace LDGExample {  
@@ -66,8 +68,8 @@ namespace LDGExample {
     typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
     
-    typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
-    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
+    //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   };
 
   ///////////////////////////////////////////////////////
