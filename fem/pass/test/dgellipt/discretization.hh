@@ -108,8 +108,6 @@ public:
 
   typedef GradDiscreteFunctionSpaceType GradSpaceType;
   
-  typedef StaticDiscreteFunction<LastSpaceType, 
-              BlockVector< FieldVector<double,6> > > IstlFunctionType;
   typedef typename LastSpaceType :: FunctionSpaceType FuncSpaceType;
   typedef typename FuncSpaceType::RangeType RangeType;
 
@@ -172,7 +170,6 @@ public:
     , lastPass_( lpm, pass1_, lastSpace_ , paramfile )
     , veloPass_( vm, lastPass_, veloSpace_ )
     , steps_(2)
-    , istlfunc_("test",lastSpace_)
   {
     readParameter(paramfile,"EOCSteps",steps_);
 
@@ -331,7 +328,6 @@ private:
   mutable VeloPassType veloPass_;
 
   int steps_; 
-  IstlFunctionType istlfunc_;
 };
 
 template <class DiscrType> 
