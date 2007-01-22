@@ -21,7 +21,7 @@ namespace Dune {
       typedef std::list< QuadratureIdentifierType > QuadratureListType;
 
       // singelton implementation 
-      static StorageInterfaceListType &  storageList ()
+      static StorageInterfaceListType & storageList ()
       {
         static StorageInterfaceListType storageListObj;
         return storageListObj;
@@ -34,6 +34,13 @@ namespace Dune {
         return quadratureListObj;
       }
     public:
+      //! initialize singletons 
+      static void initialize() 
+      {
+        storageList();
+        quadratureList();
+      }
+      
       //! Constructor, add me to the list of storages 
       StorageInterface()
       {
@@ -41,7 +48,8 @@ namespace Dune {
       }
 
       //! Destructor, remove me from the list of storages 
-      virtual ~StorageInterface() {
+      virtual ~StorageInterface() 
+      {
         typedef StorageInterfaceListType::iterator IteratorType;
         IteratorType endit = storageList().end();
         for(IteratorType it = storageList().begin(); it != endit; ++it)
