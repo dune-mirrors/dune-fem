@@ -2,6 +2,7 @@
 #define DUNE_ISTLSOLVERS_HH 
 
 
+#if HAVE_DUNE_ISTL 
 //- Dune includes 
 #include <dune/fem/operator/common/operator.hh>
 
@@ -9,7 +10,6 @@
 #include <dune/istl/solvers.hh>
 
 namespace Dune {
-
 
   //! Default implementation for the scalar case
   template<class X ,class CommunicatorType>
@@ -183,4 +183,6 @@ public:
 
 
 }
+#endif
+
 #endif
