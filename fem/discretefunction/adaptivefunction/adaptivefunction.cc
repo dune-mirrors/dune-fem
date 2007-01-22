@@ -13,6 +13,7 @@ namespace Dune {
     spc_(spc),
     dofVec_(dofVec),
     values_(),
+    numDofs_(0),
     tmp_(0.0),
     tmpGrad_(0.0),
     init_(false),
@@ -28,6 +29,7 @@ namespace Dune {
     spc_(other.spc_),
     dofVec_(other.dofVec_),
     values_(),
+    numDofs_(0),
     tmp_(0.0),
     tmpGrad_(0.0),
     init_(false),
@@ -70,17 +72,10 @@ namespace Dune {
   int AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   numDofs() const
   {
-    return values_.size();
+    assert( numDofs_ == values_.size() );
+    return numDofs_;
   }
-  /*
-  template <class DiscreteFunctionSpaceImp>
-  template <class EntityType>
-  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  evaluate(EntityType& en, const DomainType& x, RangeType& ret) const 
-  {
-    evaluateLocal( en, en.geometry().local(x), ret);
-  }
-  */
+
   template <class DiscreteFunctionSpaceImp>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   evaluate(const DomainType& x, RangeType& ret) const 
@@ -249,7 +244,7 @@ namespace Dune {
   init(const EntityType& en) 
   {
     // NOTE: if init is false, then LocalFunction has been create before. 
-    // if fSpace_.multipleGeometryTypes() is true, then grid has elements 
+    // if multipleGeometryTypes_ is true, then grid has elements 
     // of different geometry type (hybrid grid) and we have to check geometry
     // type again, if not we skip this part, because calling the entity's
     // geometry method is not a cheep call 
@@ -260,8 +255,8 @@ namespace Dune {
       {
         baseSet_ = &spc_.baseFunctionSet(en);
 
-        int numOfDof = baseSet_->numBaseFunctions();
-        values_.resize(numOfDof);
+        numDofs_ = baseSet_->numBaseFunctions();
+        values_.resize(numDofs_);
 
         init_ = true;
         geoType_ = en.geometry().type();
@@ -315,12 +310,15 @@ namespace Dune {
     spc_(spc),
     dofVec_(dofVec),
     values_(),
+    numDofs_(0),
     cTmp_(0.0),
     cTmpGradRef_(0.0),
     cTmpGradReal_(0.0),
     tmp_(0.0),
     init_(false),
+    multipleGeometryTypes_(spc_.multipleGeometryTypes()),
     baseSet_(0),
+    en_(0),
     geoType_(0) // init as Vertex 
   {}
 
@@ -330,12 +328,15 @@ namespace Dune {
     spc_(other.spc_),
     dofVec_(other.dofVec_),
     values_(),
+    numDofs_(0),
     cTmp_(0.0),
     cTmpGradRef_(0.0),
     cTmpGradReal_(0.0),
     tmp_(0.0),
     init_(false),
+    multipleGeometryTypes_(spc_.multipleGeometryTypes()),
     baseSet_(0),
+    en_(0),
     geoType_(0) // init as Vertex 
   {}
 
@@ -347,7 +348,7 @@ namespace Dune {
   typename AdaptiveLocalFunction<
     CombinedSpace<ContainedFunctionSpaceImp, N, p> >::DofType&
   AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  operator[] (int num) 
+  operator[] (const int num) 
   {
     assert(num >= 0 && num < numDofs());
     return *values_[num/N][static_cast<SizeType>(num%N)];
@@ -357,7 +358,7 @@ namespace Dune {
   const typename AdaptiveLocalFunction<
     CombinedSpace<ContainedFunctionSpaceImp, N, p> >::DofType&
   AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  operator[] (int num) const 
+  operator[] (const int num) const 
   {
     assert(num >= 0 && num < numDofs());
     return *values_[num/N][static_cast<SizeType>(num%N)];
@@ -367,17 +368,11 @@ namespace Dune {
   int AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   numDofs() const 
   {
-    return values_.size()*N;
+    //return values_.size()*N;
+    assert( numDofs_ == (values_.size()*N) );
+    return numDofs_;
   }
-  /*
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template <class EntityType>
-  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  evaluate(EntityType& en, const DomainType& x, RangeType& ret) const 
-  {
-    evaluateLocal( en, en.geometry().local(x), ret);
-  }
-  */
+
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   evaluate(const DomainType& x, 
@@ -385,39 +380,33 @@ namespace Dune {
   {
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
     result = 0.0;
-    assert(static_cast<int>(values_.size()) == bSet.numDifferentBaseFunctions());
-    for (unsigned int i = 0; i < values_.size(); ++i) {
+    assert((values_.size()) == bSet.numDifferentBaseFunctions());
+    const int valSize = values_.size();
+    for (int i = 0; i < valSize; ++i) 
+    {
       // Assumption: scalar contained base functions
       bSet.evaluateScalar(i, x, cTmp_);
-      for (SizeType j = 0; j < N; ++j) {
+      for (SizeType j = 0; j < N; ++j) 
+      {
         result[j] += cTmp_[0]*(*values_[i][j]);
       }
     }
   }
-  /*DEP
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template <class EntityType, class QuadratureType>
-  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  evaluate(EntityType& en, 
-           QuadratureType& quad, 
-           int quadPoint, 
-           RangeType& ret) const
-  {
-    evaluateLocal(quad.point(quadPoint), ret);
-  }
-  */
+
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   template <class QuadratureType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  evaluate(QuadratureType& quad, 
-           int quadPoint, 
+  evaluate(const QuadratureType& quad, 
+           const int quadPoint, 
            RangeType& ret) const
   {
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
     ret = 0.0;
 
-    assert(static_cast<int>(values_.size()) == bSet.numDifferentBaseFunctions());
-    for (unsigned int i = 0; i < values_.size(); ++i) {
+    assert((values_.size()) == bSet.numDifferentBaseFunctions());
+    const int valSize = values_.size();
+    for (int i = 0; i < valSize; ++i) 
+    {
       // Assumption: scalar contained base functions
       // bSet.evaluateScalar(i, x, cTmp_);
       bSet.evaluateScalar(i, quad,quadPoint, cTmp_);
@@ -428,31 +417,37 @@ namespace Dune {
   }
   #if OLDFEM
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template <class EntityType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   jacobianLocal(EntityType& en, 
                 const DomainType& x, 
                 JacobianRangeType& result) const {
-    return jacobian(en,x,result);
+    jacobian(en,x,result);
   }
   #endif
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template <class EntityType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   jacobian(EntityType& en, 
 	   const DomainType& x, 
 	   JacobianRangeType& result) const
   {
+    jacobian(x,result);
+  }
+
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  jacobian(const DomainType& x, JacobianRangeType& result) const
+  {
     enum { dim = EntityType::dimension };
-    //typedef FieldMatrix<DofType, RangeType::size, RangeType::size> JacobianInverseType;
     typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
     result = 0.0;
 
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const JacobianInverseType& jInv = 
-      en.geometry().jacobianInverseTransposed(x);
+      en().geometry().jacobianInverseTransposed(x);
 
-    for (int i = 0; i < bSet.numDifferentBaseFunctions(); ++i) {
+    const int numDiffBaseFct = bSet.numDifferentBaseFunctions();
+    for (int i = 0; i < numDiffBaseFct; ++i) 
+    {
       //cTmpGradRef_ = 0.0;
       cTmpGradReal_ = 0.0;
       bSet.jacobianScalar(i, x, cTmpGradRef_);
@@ -468,14 +463,24 @@ namespace Dune {
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template<class EntityType, class QuadratureType>
+  template<class QuadratureType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   jacobian(EntityType& en, 
            QuadratureType& quad, 
            int quadPoint, 
            JacobianRangeType& ret) const 
   {
-    jacobian(en, quad.point(quadPoint), ret);
+    jacobian(quad.point(quadPoint), ret);
+  }
+
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  template<class QuadratureType>
+  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  jacobian(const QuadratureType& quad, 
+           const int quadPoint, 
+           JacobianRangeType& ret) const 
+  {
+    jacobian(quad.point(quadPoint), ret);
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -489,13 +494,13 @@ namespace Dune {
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   int AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  numDifferentBaseFunctions() const {
-     return values_.size();
+  numDifferentBaseFunctions() const 
+  {
+    return values_.size();
   }
 
   // --init
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template <class EntityType>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   init(const EntityType& en) 
   {
@@ -506,14 +511,17 @@ namespace Dune {
     // type again, if not we skip this part, because calling the entity's
     // geometry method is not a cheep call 
     
-    if( (!init_) || ( spc_.multipleGeometryTypes() ) )
+    if( !init_ || multipleGeometryTypes_ )
     {
       if( geoType_ != en.geometry().type() )
       {
         baseSet_ = &spc_.baseFunctionSet(en);
 
-        int numDof = baseSet_->numBaseFunctions();
-        values_.resize(numDof);
+        numDofs_ = baseSet_->numBaseFunctions();
+        values_.resize(numDofs_);
+
+        // real dof number is larger 
+        numDofs_ *= N;
 
         init_ = true;
         geoType_ = en.geometry().type();
@@ -522,6 +530,9 @@ namespace Dune {
 
     assert( geoType_ == en.geometry().type() );
 
+    // cache entity
+    en_ = &en;
+    
     const int numDof = numDofs();
     assert( values_.size() == numDof );
     for (int i = 0; i < numDof; ++i) 
@@ -531,7 +542,25 @@ namespace Dune {
         values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, i*N+j)]);
       } // end for j
     } // end for i
+  }
+  
+  // --baseFunctionSet 
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  const typename AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >:: BaseFunctionSetType& 
+  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  baseFunctionSet() const 
+  {
+    assert( baseSet_ );
+    return *baseSet_;
+  }
 
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  const typename AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >:: EntityType& 
+  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  en() const 
+  {
+    assert( en_ );
+    return *en_;
   }
   
 } // end namespace Dune

@@ -343,6 +343,8 @@ namespace Dune {
     
     // vector holding pointer to local dofs 
     mutable Array<RangeFieldType*> values_;
+    //! number of local dofs 
+    int numDofs_;
  
     mutable RangeType tmp_;
     mutable JacobianRangeType tmpGrad_;
@@ -507,6 +509,9 @@ namespace Dune {
     
     typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
     typedef typename Traits::DofStorageType DofStorageType;
+
+    typedef typename DiscreteFunctionSpaceType::GridType::
+      template Codim<0>:: Entity EntityType;
   public:
     //- Public methods
     //- Constructors and destructors
@@ -524,11 +529,11 @@ namespace Dune {
     //- Operators
     //! Random access operator
     inline
-    DofType& operator[] (int num);
+    DofType& operator[] (const int num);
 
-     //! Cosnt random access operator
-     inline
-   const DofType& operator[] (int num) const;
+    //! Cosnt random access operator
+    inline
+    const DofType& operator[] (const int num) const;
 
     //! Number of degrees of freedom
     inline
@@ -540,19 +545,17 @@ namespace Dune {
                   RangeType & ret) const;
     #if OLDFEM
     //! Evaluation
-    template <class EntityType>
     inline
     void evaluate(EntityType& en, 
                   const DomainType& x, 
                   RangeType & ret) const {evaluate(en.geometry().local(x),ret);}
     //! Evaluation
-    template <class EntityType>
     inline
     void evaluateLocal(EntityType& en, 
                        const DomainType& x, 
                        RangeType & ret) const {evaluate(en,x,ret);}
     //! Evaluation
-    template <class EntityType, class QuadratureType>
+    template <class QuadratureType>
     inline
     void evaluate(EntityType& en,
                   QuadratureType& quad,
@@ -563,29 +566,40 @@ namespace Dune {
     //! Evaluation
     template <class QuadratureType>
     inline
-    void evaluate(QuadratureType& quad,
-                  int quadPoint, 
+    void evaluate(const QuadratureType& quad,
+                  const int quadPoint, 
                   RangeType & ret) const;
     #if OLDFEM
     //! Evaluation
-    template <class EntityType>
     inline
     void jacobianLocal(EntityType& en, 
                        const DomainType& x, 
                        JacobianRangeType& ret) const;
     #endif
     //! Evaluation
-    template <class EntityType>
     inline
     void jacobian(EntityType& en, 
 		  const DomainType& x, 
 		  JacobianRangeType& ret) const;
+    
     //! Evaluation
-    template <class EntityType, class QuadratureType>
+    template <class QuadratureType>
     inline
     void jacobian(EntityType& en,
                   QuadratureType& quad,
                   int quadPoint,
+                  JacobianRangeType& ret) const;
+
+    //! Evaluation
+    inline
+    void jacobian(const DomainType& x, 
+            		  JacobianRangeType& ret) const;
+    
+    //! Evaluation
+    template <class QuadratureType>
+    inline
+    void jacobian(const QuadratureType& quad,
+                  const int quadPoint,
                   JacobianRangeType& ret) const;
 
     //- Additional methods for specialisation
@@ -597,12 +611,17 @@ namespace Dune {
     inline
     int numDifferentBaseFunctions() const;
 
+    //! return reference to actual base function set
+    inline 
+    const BaseFunctionSetType& baseFunctionSet() const;
+
   private:
     //- Private methods
-    template <class EntityType>
     inline
     void init(const EntityType& en);
 
+    //! return reference to entity 
+    const EntityType& en() const;
   private:
     //- Typedefs
     typedef typename FieldVector<DofType*, N>::size_type SizeType;
@@ -613,6 +632,8 @@ namespace Dune {
     DofStorageType& dofVec_;
     
     mutable Array<FieldVector<DofType*, N> > values_;
+
+    int numDofs_;
  
     mutable ContainedRangeType cTmp_;
     mutable ContainedJacobianRangeType cTmpGradRef_;
@@ -620,7 +641,10 @@ namespace Dune {
     mutable RangeType tmp_;
 
     mutable bool init_;
+    const bool multipleGeometryTypes_;
     mutable const BaseFunctionSetType* baseSet_;
+
+    mutable const EntityType* en_;
 
     mutable GeometryType geoType_;
   }; // end class AdaptiveLocalFunction (specialised for CombinedSpace)
