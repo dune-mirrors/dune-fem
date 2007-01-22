@@ -97,20 +97,20 @@ public:
 public:
 
   //! Constructor make Discrete Function
-  DFAdapt(const DiscreteFunctionSpaceType& f);
+  DFAdapt(const DiscreteFunctionSpaceType& f) DUNE_DEPRECATED ;
 
   //! Constructor creating discrete functions with name name  
   //! for given functions space f 
-  DFAdapt (std::string name, const DiscreteFunctionSpaceType & f ) ;
+  DFAdapt (std::string name, const DiscreteFunctionSpaceType & f ) DUNE_DEPRECATED ;
   
   //! Constructor creating discrete functions with name name  
   //! for given functions space f and using given double * as vector 
   //! VectorPointerType should be of the underlying array pointer type 
   template <class VectorPointerType>
-  DFAdapt (std::string name, const DiscreteFunctionSpaceType & f , VectorPointerType * vec ) ;
+  DFAdapt (std::string name, const DiscreteFunctionSpaceType & f , VectorPointerType * vec ) DUNE_DEPRECATED  ;
   
   //! Constructor make Discrete Function   
-  DFAdapt (const DFAdapt <DiscreteFunctionSpaceType> & df); 
+  DFAdapt (const DFAdapt <DiscreteFunctionSpaceType> & df) DUNE_DEPRECATED ; 
 
   //! delete stack of free local functions belonging to this discrete
   //! function 
