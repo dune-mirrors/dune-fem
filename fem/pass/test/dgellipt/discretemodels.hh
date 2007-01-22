@@ -68,7 +68,6 @@ namespace LDGExample {
     typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
     
-    //typedef DFAdapt<DiscreteFunctionSpaceType> DiscreteFunctionType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   };
 
@@ -319,9 +318,7 @@ namespace LDGExample {
 
 #if USE_DUNE_ISTL
     //! only working for DGSpace     
-    enum { numBaseFunctions = DiscreteFunctionSpaceType :: numBaseFunctions };
-    typedef StaticDiscreteFunction<DiscreteFunctionSpaceType, 
-                         BlockVector< FieldVector<RangeFieldType,numBaseFunctions> > > DiscreteFunctionType;
+    typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
 #else 
     typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
 #endif
