@@ -489,7 +489,7 @@ public:
 
         bool hasValue = false;
         // get number of nonZeros of row 
-        const int nonZeros = A.matrix_.NumNonZeros(row);
+        const int nonZeros = A.matrix_.numNonZeros(row);
         for(int k=0; k<nonZeros; ++k)
         {
           std::pair < DenseMatrixType *, int> a = A.matrix_.realValue(row,k);
@@ -534,7 +534,7 @@ public:
     const int nRows = size(0);
     for(int row=0; row<nRows; ++row)
     {
-      const int nonZeros = A.matrix_.NumNonZeros(row); 
+      const int nonZeros = A.matrix_.numNonZeros(row); 
       for(int k=0; k<nonZeros; ++k)
       {
         std::pair < DenseMatrixType *, int> a = A.matrix_.realValue(row,k);
@@ -572,7 +572,7 @@ public:
       // set right hand side to zero 
       for(int k=0; k<localRows_; ++k) result[row+k] = 0;
       
-      const int nonZeros = matrix_.NumNonZeros(r);
+      const int nonZeros = matrix_.numNonZeros(r);
       for(int c=0; c<nonZeros; ++c)
       {
         std::pair< DenseMatrixType * , int > p = matrix_.realValue(r,c);
@@ -597,7 +597,7 @@ public:
     {
       const int row = r * localRows_;
 
-      for(register int c=0; c<matrix_.NumNonZeros();++c)
+      for(register int c=0; c<matrix_.numNonZeros();++c)
       {
         std::pair< DenseMatrixType * , int > p = matrix_.realValue(r,c);
         if(p.first) 
@@ -628,7 +628,7 @@ public:
     // (D - omega E) x = x_old (=u)  
     for(int r=0; r<nRows; ++r)
     {
-      const int nonZeros = matrix_.NumNonZeros(r);
+      const int nonZeros = matrix_.numNonZeros(r);
       int row = r * localRows_;
       for(int i=0; i<localRows_; ++i)
       {
@@ -670,7 +670,7 @@ public:
     // (D - omega E) x = x_old (=u)  
     for(int r=nRows-1; r>= 0; --r)
     {
-      const int nonZeros = matrix_.NumNonZeros(r);
+      const int nonZeros = matrix_.numNonZeros(r);
       for(int i=localRows_-1; i>=0; --i)
       {
         int row = (r * localRows_) +i;
@@ -715,7 +715,7 @@ public:
     {
       const int row = r * localRows_;
 
-      const int nonZeros = matrix_.NumNonZeros(r); 
+      const int nonZeros = matrix_.numNonZeros(r); 
       for(int c=0; c<nonZeros; ++c)
       {
         std::pair< DenseMatrixType * , int > p = matrix_.realValue(r,c);

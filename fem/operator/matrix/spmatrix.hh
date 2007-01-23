@@ -29,7 +29,7 @@ public:
   enum { firstCol = defaultCol + 1 };
 
 private:
-  T* values_ ;      //! data values (nz_ elements)
+  T* values_ ;      //! data values (nz_ * dim_[0] elements)
   int* col_;        //! row_ptr (dim_[0]+1 elements)
   int* nonZeros_;   //! row_ptr (dim_[0]+1 elements)
   int dim_[2];      //! dim_[0] x dim_[1] Matrix
@@ -58,8 +58,10 @@ public:
                   double omega = 1.1);
  
   //! reserve memory for given rows, and number of non zeros, 
-  //! set all entries to value dummy 
-  //! !!!!!! setting not yet implemented !!!!!!! 
+  //! set all entries to value dummy.... What is the use of this value?
+  //! only initializing with 0 makes sense, so this argument is renamed
+  //! 'dummy', by the way, nothing is happening with this argument, so 
+  //! might be completely removed.
   void reserve(int rows, int cols, int nz, const T& dummy);
 
   //! resize keeping old values if possible, assuming rows == cols  
@@ -174,8 +176,9 @@ public:
   //! set all entries in row to zero 
   void clearRow (int row);
 
-  //! set all matrix entries to predefined value (default zero) 
-  void clear(const T& init = 0);
+  //! set all matrix entries to zero, no other value makes sense for 
+  //! sparse matrix 
+  void clear();
   
   //! add value to row,col entry 
   void add(int row, int col, T val);

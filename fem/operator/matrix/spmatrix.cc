@@ -21,7 +21,7 @@ SparseRowMatrix<T>::SparseRowMatrix(double omega) : omega_(omega)
 
 template <class T>
 SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz, 
-                                    const T& val, double omega)
+                                    const T& dummy, double omega)
         : omega_(omega)
 {
   // standard settings as above
@@ -32,12 +32,12 @@ SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz,
   memSize_ = 0;
   nz_ = 0;
   nonZeros_ = 0;
-
+   
   // resize and get storage 
-  reserve(rows,cols,nz,val);
+  reserve(rows,cols,nz,dummy);
   
   // fill with value
-  clear(val);
+  clear();
    
 }
 
@@ -220,9 +220,9 @@ bool SparseRowMatrix<T>::find (int row, int col) const
 }
 
 template <class T> 
-void SparseRowMatrix<T>::clear(const T& init)
+void SparseRowMatrix<T>::clear()
 {
-//  T init = 0;
+  T init = 0;
   for(register int i=0; i<dim_[0]*nz_; ++i)
   {
     values_ [i] = init;
@@ -669,9 +669,9 @@ void SparseRowMatrix<T>::multiply(const SparseRowMatrix<T> & B,
 {
   //res.resize( B.size(0) );
   res.clear();
-  //assert( res.NumNonZeros() == B.NumNonZeros() );
+  //assert( res.numNonZeros() == B.numNonZeros() );
 
-  //std::cout << res.NumNonZeros() << "\n";
+  //std::cout << res.numNonZeros() << "\n";
   for(int row=0; row<this->size(0); row++)
   {
     for(int col=0; col<B.size(1); col++)
