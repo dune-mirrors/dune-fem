@@ -4,6 +4,8 @@
 #include <vector>
 
 #include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/discretefunction/adaptivefunction/adaptivefunction.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune
 {
@@ -392,6 +394,7 @@ public:
 public:
   typedef LocalMatrix<MatrixType> LocalMatrixType;
 
+// commented out, as AdaptiveDiscreteFunction is not known as type
   typedef AdaptiveDiscreteFunction<RowSpaceType> DestinationType;
 
   typedef CommunicationManager<RowSpaceType> CommunicationManagerType; 
