@@ -123,6 +123,8 @@ using namespace Dune;
 // local includes 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/operator/feop.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
+//#include "spmatrix.hh"
 #include <dune/fem/misc/l2error.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/common/filteredgrid.hh>
@@ -369,8 +371,14 @@ double algorithm (const char * filename , int maxlevel, int turn )
    elliptOp.matrixKroneckerColumnsTreatment();
    std::cout << "finished matrix Kronecker column treatment\n";
 
-   //elliptOp.print();
-
+   std::cout << "Values of matrix: \n";
+   elliptOp.systemMatrix().printReal(std::cout);
+   std::cout << "Columns of matrix: \n";
+   elliptOp.systemMatrix().printColumns(std::cout);
+   std::cout << "Nonzero-Array of matrix: \n";
+   elliptOp.systemMatrix().printNonZeros(std::cout);
+   std::cout << "\n";
+   
    elliptOp.rhsKroneckerColumnsTreatment(rhs);
    std::cout << "finished Rhs Kronecker column treatment\n";
 #endif
