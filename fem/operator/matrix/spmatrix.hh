@@ -53,12 +53,14 @@ public:
 
   //! make matrix with 'rows' rows and 'cols' columns,
   //! maximum 'nz' non zero values in each row 
-  //! and intialize all values with 'val'
-  SparseRowMatrix(int rows, int cols, int nz, const T& val);
+  //! and intialize all values with 'val' and set omega_ to omega
+  SparseRowMatrix(int rows, int cols, int nz, const T& val = 0, 
+                  double omega = 1.1);
  
   //! reserve memory for given rows, and number of non zeros, 
-  //! set all entries to value of val
-  void reserve(int rows, int cols, int nz, const T& val);
+  //! set all entries to value dummy 
+  //! !!!!!! setting not yet implemented !!!!!!! 
+  void reserve(int rows, int cols, int nz, const T& dummy);
 
   //! resize keeping old values if possible, assuming rows == cols  
   void resize ( int newSize );
@@ -154,10 +156,10 @@ public:
   int cols() const {return dim_[1];}
 
   //! return max number of non zeros 
-  int NumNonZeros() const {return nz_;}
+  int numNonZeros() const {return nz_;}
   
   //! return number of non zeros in row 
-  int NumNonZeros(int i) const 
+  int numNonZeros(int i) const 
   { 
     assert( nonZeros_ );
     return nonZeros_[i]; 
@@ -171,11 +173,13 @@ public:
   
   //! set all entries in row to zero 
   void clearRow (int row);
-  //! set all matrix entries to zero 
-  void clear();
+
+  //! set all matrix entries to predefined value (default zero) 
+  void clear(const T& init = 0);
   
   //! add value to row,col entry 
   void add(int row, int col, T val);
+
   //! muliply with scalar value 
   void multScalar(int row, int col, T val);
   
@@ -250,11 +254,16 @@ public:
 
   // res = this * B 
   void multiply(const ThisType & B, ThisType & res) const;
+
+  //! multiply this matrix with scalar 
+  void scale(const T& factor);
+  
   //! add other matrix to this matrix 
   void add(const ThisType & B ); 
 
   //! resort to have ascending column numbering 
   void resort();
+
   //! resort row to have ascending column numbering 
   void resortRow(const int row);
 

@@ -18,6 +18,29 @@ SparseRowMatrix<T>::SparseRowMatrix(double omega) : omega_(omega)
   nonZeros_ = 0;
 }
 
+
+template <class T>
+SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz, 
+                                    const T& val, double omega)
+        : omega_(omega)
+{
+  // standard settings as above
+  values_ = 0;
+  col_ = 0;
+  dim_[0] = 0;
+  dim_[1] = 0;
+  memSize_ = 0;
+  nz_ = 0;
+  nonZeros_ = 0;
+
+  // resize and get storage 
+  reserve(rows,cols,nz,val);
+  
+  // fill with value
+  clear(val);
+   
+}
+
 template <class T>
 void SparseRowMatrix<T>::removeObj()
 {
@@ -37,7 +60,7 @@ SparseRowMatrix<T>::~SparseRowMatrix()
 /***********************************/
 template <class T> 
 void SparseRowMatrix<T>::
-reserve(int rows, int cols, int nz,const T& val )
+reserve(int rows, int cols, int nz,const T& dummy )
 {
   if( (rows == dim_[0]) && (cols == dim_[1]) && (nz == nz_)) 
   {
@@ -126,12 +149,12 @@ void SparseRowMatrix<T>::resize (int newRow, int newCol)
   assert( this->size(1)  == newCol );
 }
 
-template <class T> 
-SparseRowMatrix<T>::
-SparseRowMatrix(int rows, int cols, int nz, const T& val)
-{
-  reserve(rows,cols,nz,val);
-}
+//template <class T> 
+//SparseRowMatrix<T>::
+//SparseRowMatrix(int rows, int cols, int nz, const T& val)
+//{
+//  reserve(rows,cols,nz,val);
+//}
 
 template <class T> 
 T SparseRowMatrix<T>::operator()(int row, int col) const
@@ -197,9 +220,9 @@ bool SparseRowMatrix<T>::find (int row, int col) const
 }
 
 template <class T> 
-void SparseRowMatrix<T>::clear()
+void SparseRowMatrix<T>::clear(const T& init)
 {
-  T init = 0;
+//  T init = 0;
   for(register int i=0; i<dim_[0]*nz_; ++i)
   {
     values_ [i] = init;
@@ -680,6 +703,15 @@ void SparseRowMatrix<T>::add(const SparseRowMatrix<T> & B)
   {
     assert( col_ [i] == B.col_ [i] );
     values_ [i] += B.values_[i];
+  }
+}
+
+template <class T> 
+void SparseRowMatrix<T>::scale(const T& factor)
+{
+  for(register int i=0; i<dim_[0]*nz_; ++i)
+  {
+    values_ [i] *= factor;
   }
 }
 
