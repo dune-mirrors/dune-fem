@@ -1,7 +1,7 @@
 /**************************************************************************
 **       Title: feop
-**    $RCSfile$
-**   $Revision$$Name$
+**    $RCSfile: feop.hh,v $
+**   $Revision$$Name:  $
 **       $Date$
 **   Copyright: GPL $Author$
 ** Description: Implementation of a finite element operator class for 
@@ -25,7 +25,9 @@
 #include "lagrangedofhandler.hh"
 
 //for saving the systemmatrix
-//#include "/usr/people/haasdonk/fuelcell/src/rbasis/auxiliary.hh"
+#ifdef FEOP_SAVE_MATRIX_WANTED
+#include "/usr/people/haasdonk/fuelcell/src/rbasis/auxiliary.hh"
+#endif
 
 namespace Dune {
 
@@ -276,23 +278,25 @@ public:
     this->matrix_->print(std::cout);
   }
 
-// the following can be used if including fuelcell/src/rbasis/auxiliary.hh
-// /*======================================================================*/
-// /*! 
-//  *   saveMatrix: save matrix to binary file, only makes sense in ASSEMBLED 
-//  *               mode 
-//  */
-// /*======================================================================*/
-//
-//   void saveMatrix (const char* filename) const 
-//         {
-//           assert(opMode_==ASSEMBLED);
-//           if(!this->matrix_assembled_) 
-//               this->assemble();
-//           // call function in fuelcell/misc/rbasis/auxiliary.hh
-//           saveSparseMatrix(filename, *matrix_);    
-//         }
- 
+//the following can be used if including fuelcell/src/rbasis/auxiliary.hh
+#ifdef FEOP_SAVE_MATRIX_WANTED
+/*======================================================================*/
+/*! 
+ *   saveMatrix: save matrix to binary file, only makes sense in ASSEMBLED 
+ *               mode 
+ */
+/*======================================================================*/
+
+  void saveMatrix (const char* filename) const 
+        {
+          assert(opMode_==ASSEMBLED);
+          if(!this->matrix_assembled_) 
+              this->assemble();
+          // call function in fuelcell/misc/rbasis/auxiliary.hh
+          saveSparseMatrix(filename, *matrix_);    
+        }
+#endif 
+
 /*======================================================================*/
 /*! 
  *   systemMatrix: return reference to systemMatrix for oem solvers. 
@@ -747,6 +751,9 @@ public:
           // delete storage if allocated
           if (matrixDirichletColumns_)
               delete(matrixDirichletColumns_);
+
+          if (verbose_)
+              std::cout << "deleted old storage for submatrix\n";
           
           // count new number of Dirichlet-DOFs
           int nDirDOFs = 0;
@@ -754,6 +761,10 @@ public:
               if ((*isDirichletDOF_)(0,i)) // so is Dirichlet-DOF
                   nDirDOFs++;
           
+          if (verbose_)
+              std::cout << "counted number of dirichletDOFs : " << 
+                  nDirDOFs << " \n";
+
           // allocate new storage for to be deleted matrix entries
           matrixDirichletColumns_ = new SparseRowMatrix<double>
               (matrix_->rows(), 
@@ -761,12 +772,18 @@ public:
                maxNonZerosPerRow_);
 // tooo much!!!:         nDirDOFs);
           
+          if (verbose_)
+              std::cout << "allocated new storage for submatrix\n";
+          
           assert(matrixDirichletColumns_);
           
           // save matrix entries 
           matrixDirichletColumns_->clear();
           for (int i=0; i!=matrix_->rows(); i++)
           {
+            if (i%100 == 0)
+                if (verbose_)
+                    std::cout << " processing row no " << i << " \n";
             SparseRowMatrix<int>::ColumnIterator it = 
                 isDirichletDOF_->rbegin(0);
             for (;it!=isDirichletDOF_->rend(0);++it)
@@ -778,7 +795,11 @@ public:
           SparseRowMatrix<int>::ColumnIterator it = 
               isDirichletDOF_->rbegin(0);
           for (;it!=isDirichletDOF_->rend(0);++it)
-              matrix_->unitCol(it.col());          
+          {
+            if (verbose_)
+                std::cout << " setting unitcolumn no " << it.col() << " \n";
+            matrix_->unitCol(it.col());          
+          }
           
           if (verbose_)
               determineRealNonZeros();
@@ -824,6 +845,9 @@ public:
           SparseRowMatrix<double> 
               rhsDirichletValues(1,isDirichletDOF_->cols(),
                                  isDirichletDOF_->numNonZeros());
+         if (verbose_)
+              std::cout << "allocated storage for rhsDirichletvalues\n";
+
           rhsDirichletValues.clear();          
           DofIteratorType dit = rhs.dbegin();
           for (int i=0; i!=matrix_->rows(); i++, ++dit)
@@ -989,9 +1013,13 @@ private:
               isDirichletDOF_ = new SparseRowMatrix<int>
                   (1, 
                    functionSpace_.size(),
-                   functionSpace_.size());
+                   functionSpace_.size()
+                   );
           
           assert(this->isDirichletDOF_);
+
+          if (verbose_)
+              std::cout << " allocating of isDirichletDofs successful\n";
           
           // start by filling all DOFs with zero
           isDirichletDOF_->clear(); 
@@ -1000,9 +1028,18 @@ private:
           IteratorType endit = functionSpace_.end(); 
           
           GridPartType & gridPart = functionSpace_.gridPart();
+
+          if (verbose_)
+              std::cout << " starting loop over grid: \n";
           
-          for( ; it != endit; ++it ) 
+          int numit = 0;
+          for( ; it != endit; ++it, numit++ ) 
           {
+            
+            if (numit%100 == 0)
+                if (verbose_)
+                    std::cout << " processing entity no " << numit << " \n";
+
             const EntityType & en = *it; 
             
             const GeometryType t = en.geometry().type();
@@ -1055,6 +1092,9 @@ private:
             }
           }
 
+          if (verbose_)
+              std::cout << " finished searchDirichletDOFs \n";
+
           isDirichletDOF_assembled_ = true;
           
         }; // end of searchDirichletDOFs 
@@ -1087,8 +1127,16 @@ private:
               endit = isDirichletDOF_->rend(0);
           
           for (;it!=endit;++it)
-              matrix_->unitRow(it.col());          
-        }; // end of bndCorrectMatrixOnGrid
+          {
+            if (verbose_)
+                std::cout << " setting unit row " << it.col() << " \n";  
+            matrix_->unitRow(it.col());          
+          }
+
+          if (verbose_)
+              std::cout << " enf of bndCorrectMatrix \n";  
+          
+        }; // end of bndCorrectMatrix
 
 // /*======================================================================*/
 // /*! 
@@ -1123,13 +1171,30 @@ private:
   int determineRealNonZeros() const
   {
     // search number of nonzeros
+    if (verbose_)
+        std::cout << "entered determineRealNonZeros() of FEOp \n";  
+
     int maxnonzeros = -1;
     
     for (int i=0; i!=matrix_->rows(); i++)
     {
+      if (verbose_ && (i%100==0)) 
+          std::cout << " counting nonzeros in row " << i <<" \n";  
+      
       int nonzeros = 0;
-      for (int j=0; j!=matrix_->cols(); j++)
-          if ((*matrix_)(i,j)!=0.0) nonzeros++;
+      
+      typename SystemMatrixType::ColumnIterator 
+          it = matrix_->rbegin(i); 
+      typename SystemMatrixType::ColumnIterator 
+          endit = matrix_->rend(i);
+      
+      for (;it!=endit;++it)
+          if (*it!=0.0) nonzeros++;
+      
+//      for (int j=0; j!=matrix_->cols(); j++)
+//          if ((*matrix_)(i,j)!=0.0) nonzeros++;
+//      for (int j=0; j!=matrix_->cols(); j++)
+//          if ((*matrix_)(i,j)!=0.0) nonzeros++;
       
       if (nonzeros > maxnonzeros)
           maxnonzeros = nonzeros;
