@@ -13,7 +13,7 @@
 //- local includes 
 #include <dune/fem/pass/pass.hh>
 #include <dune/fem/pass/discretemodel.hh>
-#include <dune/fem/pass/modelcaller.hh>
+#include <dune/fem/pass/ellipticmodelcaller.hh>
 
 #include <dune/fem/misc/timeutility.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
@@ -97,7 +97,7 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef DiscreteModelCaller<
+    typedef EllipticDiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
     // Range of the destination
@@ -330,6 +330,13 @@ namespace Dune {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
       caller_.setArgument(*arg_);
+
+      if (time_) {
+        caller_.setTime(time_->time());
+      }
+      else {
+        caller_.setTime(0.0);
+      }
     }
 
     //! Some timestep size management.
@@ -583,9 +590,6 @@ namespace Dune {
           FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
                                            FaceQuadratureType::INSIDE);
 
-          // get time if time ptovider exists  
-          const double t = (time_) ? (time_->time()) : 0.0;
-
           // loop over quadrature points 
           const int quadNop = faceQuadInner.nop();
           for (int l = 0; l < quadNop ; ++l) 
@@ -611,8 +615,7 @@ namespace Dune {
 
             // call boundary value function 
             BoundaryIdentifierType bndType = 
-              problem_.boundaryValue(nit,t,
-                faceQuadInner.localPoint(l),boundaryValue);
+              caller_.boundaryValue(nit,faceQuadInner,l,boundaryValue);
 
             // only Dirichlet and Neumann Boundary supported right now 
             assert( bndType.isDirichletType() || bndType.isNeumannType() );
