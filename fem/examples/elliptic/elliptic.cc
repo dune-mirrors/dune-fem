@@ -17,7 +17,13 @@
 **               (a grad u - bu ) n = g_N on Neuman boundary                
 **     (a grad u - bu ) n + alpha u = g_R on Robin boundary      
 **
-**              Dune grid parser is used. For changing grid-types, compile with
+**
+**         Three problems of above type are implemented, which can be selected
+**         By setting the defines below appropriately: either #define POISSON
+**         or #define ELLIPTIC
+**         The dimensionality is taken from the gridtype: As the Dune grid 
+**         parser is used, the Gridtype and the dimension can be specified
+**         during compile-time:
 **
 **         FOR POISSON:
 **
@@ -30,9 +36,7 @@
 **                   ./elliptic 4 ==> EOC 2.00029 
 **              make GRIDTYPE=SGRID
 **                    ./elliptic 4 ==> EOC = 2.00029
-**                    ./elliptic 5 ==> longlong 
-**                                     waiting (rhsKroneckerColumnstreatment) 
-**                                     but correct EOC = 2.00029        
+**                    ./elliptic 5 ==> correct EOC = 2.00004        
 **              make GRIDTYPE=ALBERTAGRID
 **                   Compilieren OK, EOC 1.98 bis 2.005
 **              make GRIDTYPE=ALUGRID_SIMPLEX
@@ -44,7 +48,6 @@
 **
 **              and one of the following
 **
-**              make
 **              make GRIDTYPE=YASPGRID       (default)
 **                   YASPGRID: EOC non-informative, as error is immediately 
 **                   small (~1e-14)
@@ -63,8 +66,7 @@
 **
 **              and one of the following
 **
-**              make
-**              make GRIDDIM=3 GRIDTYPE=YASPGRID       (default)
+**              make GRIDDIM=3 GRIDTYPE=YASPGRID       
 **                   YASPGRID: EOC non-informative, as error is immediately 
 **                             small (~1e-14)
 **              make GRIDDIM=3 GRIDTYPE=SGRID
@@ -83,8 +85,8 @@
 #include <dune/common/stdstreams.cc>
 
 // select problem Type by uncommenting one of the two following
-//#define POISSON
-#define ELLIPTIC
+#define POISSON
+//#define ELLIPTIC
 
 // select, whether Kronecker-Treatment of Matrix should be performed
 //#define ACTIVATE_KRONECKER_TREATMENT 0
@@ -332,7 +334,9 @@ double algorithm (const char * filename , int maxlevel, int turn )
    DiscreteFunctionType rhs ( "rhs", linFuncSpace );
    rhs.clear();
    
-   int verbose = 1;
+   // decide, whether you want to have detailed verbosity output 
+   //   int verbose = 1;
+   int verbose = 0;
    
    // initialize Model and Exact solution
    EllipticModelType model(linFuncSpace);
@@ -351,12 +355,15 @@ double algorithm (const char * filename , int maxlevel, int turn )
    std::cout << "initialized rhs assembler\n";
    
    // initialize Operator  
-   const int numNonZero = 50;   
+   const int numNonZero = 27;   
    EllipticOperatorType elliptOp 
         ( elMatInt , 
           EllipticOperatorType::ASSEMBLED,
           numNonZero, verbose);
    std::cout << "initialized operator (= matrix assembler)\n";
+
+   assert(elliptOp.systemMatrix().checkConsistency());
+   std::cout << "\n";
 
    // assemble matrix and perform dirichlet-row killing
    elliptOp.assemble();
@@ -371,21 +378,29 @@ double algorithm (const char * filename , int maxlevel, int turn )
    elliptOp.matrixKroneckerColumnsTreatment();
    std::cout << "finished matrix Kronecker column treatment\n";
 
-   std::cout << "Values of matrix: \n";
-   elliptOp.systemMatrix().printReal(std::cout);
-   std::cout << "Columns of matrix: \n";
-   elliptOp.systemMatrix().printColumns(std::cout);
-   std::cout << "Nonzero-Array of matrix: \n";
-   elliptOp.systemMatrix().printNonZeros(std::cout);
-   std::cout << "\n";
+   if (verbose)
+   {
+     std::cout << "Values of matrix: \n";
+     elliptOp.systemMatrix().printReal(std::cout);
+     std::cout << "Columns of matrix: \n";
+     elliptOp.systemMatrix().printColumns(std::cout);
+     std::cout << "Nonzero-Array of matrix: \n";
+     elliptOp.systemMatrix().printNonZeros(std::cout);
+     std::cout << "\n";
+     assert(elliptOp.systemMatrix().checkConsistency());
+     std::cout << "\n";
+     
+     elliptOp.rhsKroneckerColumnsTreatment(rhs);
+     std::cout << "finished Rhs Kronecker column treatment\n";
+   }
    
-   elliptOp.rhsKroneckerColumnsTreatment(rhs);
-   std::cout << "finished Rhs Kronecker column treatment\n";
 #endif
    
-   bool bverbose = true; 
+   // cg-operator needs only boolean verbosity flag
+   bool bverbose = (verbose>0);
+
    double dummy = 12345.67890;
-   InverseOperatorType cg ( elliptOp, dummy , 1E-15 , 20000 , bverbose );
+   InverseOperatorType cg ( elliptOp, dummy , 1E-15 , 20000 , bverbose);
      
    // solve linear system with cg 
    cg(rhs,solution);
