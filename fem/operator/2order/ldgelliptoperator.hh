@@ -12,8 +12,8 @@
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
-#include <dune/fem/pass/discretemodel.hh>
-#include <dune/fem/pass/modelcaller.hh>
+#include <dune/fem/pass/ellipticdiscretemodel.hh>
+#include <dune/fem/pass/ellipticmodelcaller.hh>
 
 #include <dune/fem/misc/timeutility.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
@@ -98,7 +98,7 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef DiscreteModelCaller<
+    typedef EllipticDiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
     // Range of the destination
@@ -198,9 +198,10 @@ namespace Dune {
       faceOrder_(std::max(spc_.order(),gradientSpace_.order())+1),
       volumeQuadOrd_(2*elemOrder_),
       faceQuadOrd_(2*faceOrder_ + 1),
-      matrixHandler_(spc_,gradientSpace_,gradProblem_.hasSource(),problem_.preconditioning()),
+      matrixHandler_(spc_,gradientSpace_,paramFile,gradProblem_.hasSource()),
       entityMarker_(),
       matrixAssembled_(false),
+      sequence_(-1),
       verbose_(readVerbose(paramFile))
     {
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
@@ -248,6 +249,20 @@ namespace Dune {
     }
 
     //! setup matrix 
+    void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
+    {
+      if(sequence_ != spc_.sequence())
+      {
+        buildMatrix(arg,rhs);
+        sequence_ = spc_.sequence();
+      }
+      else 
+      {
+        updateMatrix(arg,rhs);
+      }
+    }
+    
+    //! setup matrix 
     void buildMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
       // reserve memory and clear matrices 
@@ -263,7 +278,7 @@ namespace Dune {
       matrixAssembled_ = true;
 
       // create pre-condition matrix if activated 
-      createPreconditionMatrix();
+      matrixHandler_.createPreconditionMatrix();
 
       double * rhsPtr = gradRhs_.leakPointer();
       if(gradProblem_.hasSource())
@@ -403,7 +418,7 @@ namespace Dune {
       matrixAssembled_ = true;
 
       // create pre-condition matrix if activated 
-      createPreconditionMatrix();
+      matrixHandler_.createPreconditionMatrix();
 
       // adjust right hand side 
       double * rhsPtr = gradRhs_.leakPointer();
@@ -836,12 +851,11 @@ namespace Dune {
             const double bndFactor = faceQuadInner.weight(l) * massVolElInv;
             const double intel = bndFactor * faceVol;
             
-            double t = (time_) ? time_->time() : 0.0;
             // get boundary value 
             RangeType boundaryValue(0.0);
 
-            BoundaryIdentifierType bndType = problem_.boundaryValue(nit,t,
-                faceQuadInner.localPoint(l),boundaryValue);
+            BoundaryIdentifierType bndType = 
+              caller_.boundaryValue(nit,faceQuadInner,l,boundaryValue);
 
             if(gradProblem_.hasSource())
             {
@@ -1164,42 +1178,7 @@ namespace Dune {
         this->update(arg,rhs);
         matrixAssembled_ = true;
 
-        createPreconditionMatrix();
-      }
-    }
-
-    // calculate pre-condition matrix 
-    void createPreconditionMatrix()
-    {
-      if(matrixHandler_.hasPcMatrix())
-      {
-        PreconditionMatrixType & diag = matrixHandler_.pcMatrix(); 
-        
-        if(gradProblem_.hasSource())
-        {
-          matrixHandler_.divMatrix().getDiag( matrixHandler_.massMatrix(), matrixHandler_.gradMatrix() , diag );
-        }
-        else 
-        {
-          matrixHandler_.divMatrix().getDiag( matrixHandler_.gradMatrix() , diag );
-        }
-
-        matrixHandler_.stabMatrix().addDiag( diag );
-
-        double * diagPtr = diag.leakPointer();
-        const int singleSize = spc_.size();
-        for(register int i=0; i<singleSize; ++i) 
-        {
-          double val = diagPtr[i]; 
-          // when using parallel Version , we could have zero on diagonal
-          // for ghost elements 
-          assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0 ) );
-          if( std::abs( val ) > 0.0 )
-          {
-            val = 1.0/val; 
-            diagPtr[i] = val;
-          }
-        }
+        matrixHandler_.createPreconditionMatrix();
       }
     }
 
@@ -1366,6 +1345,7 @@ namespace Dune {
     mutable  EntityMarkerType entityMarker_;
 
     mutable bool matrixAssembled_;
+    int sequence_;
     const bool verbose_;
   };
 
