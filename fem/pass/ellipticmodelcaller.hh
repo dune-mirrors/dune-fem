@@ -128,17 +128,6 @@ namespace Dune {
                              this->jacobians_, res);
     }
 
-    void mass(Entity& en, VolumeQuadratureType& quad, int quadPoint,
-              JacobianRangeType& res)
-    {
-      this->evaluateQuad(en, quad, quadPoint, 
-                         this->data_->localFunctionsSelf(), this->valuesEn_);
-      this->evaluateJacobianQuad(en, quad, quadPoint);
-      problem_.mass(en, this->time_, quad.point(quadPoint), 
-                    this->valuesEn_,
-                    this->jacobians_, res);
-    }
-
   private:
     // our problem 
     DiscreteModelType& problem_;
