@@ -7,6 +7,8 @@
 #include "istlmatrix.hh"
 #endif
 
+#include <dune/fem/discretefunctions/adaptivefuntion.hh>
+
 namespace Dune {
 
 
