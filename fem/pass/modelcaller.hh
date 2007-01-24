@@ -44,7 +44,6 @@ namespace Dune {
     typedef Creator<
       JacobianRangeTypeEvaluator, LocalFunctionTupleType> JacobianCreator;
     typedef typename JacobianCreator::ResultType JacobianRangeTupleType;
-    //typedef typename Caller<RangeTupleType> CallerType;
 
   public:
     DiscreteModelCaller(DiscreteModelType& problem) :
@@ -198,50 +197,6 @@ namespace Dune {
                                     uPartLeft, uPartRight);
     }
 
-    // Ensure: entities set correctly before call
-    template <class QuadratureType, class CoefficientType>
-    void evaluateCoefficientFace(const IntersectionIterator& nit,
-                         const QuadratureType& quadInner, 
-                         const QuadratureType& quadOuter, 
-                         const int quadPoint,
-                         CoefficientType& coeffLeft, 
-                         CoefficientType& coeffRight) 
-    {
-      // evaluate data functions 
-      evaluateQuad(data_->self(), quadInner, quadPoint,
-                   data_->localFunctionsSelf(), valuesEn_);
-      evaluateQuad(data_->neighbor(), quadOuter, quadPoint,
-                   data_->localFunctionsNeigh(), valuesNeigh_);
-
-      problem_.coefficientFace(nit, time_, 
-                               quadInner.localPoint(quadPoint),
-                               valuesEn_, 
-                               valuesNeigh_,
-                               coeffLeft,coeffRight);
-    }
-
-    // Ensure: entities set correctly before call
-    template <class QuadratureType, class CoefficientType>
-    void evaluateCoefficientBoundary(const IntersectionIterator& nit,
-                         const QuadratureType& quadInner, 
-                         const int quadPoint,
-                         CoefficientType& coeff) 
-    {
-      evaluateQuad(data_->self(), quadInner, quadPoint,
-                   data_->localFunctionsSelf(), valuesEn_);
-      problem_.coefficient(data_->self(), time_, quadInner.point(quadPoint), 
-                           valuesEn_, coeff);
-    }
-      
-    template <class CoefficientType>
-    void evaluateCoefficient(Entity& en, VolumeQuadratureType& quad, int quadPoint,
-                        CoefficientType& coeff) 
-    {
-      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
-      problem_.coefficient(en, time_, quad.point(quadPoint), 
-                           valuesEn_, coeff);
-    }
-
     template <class IntersectionIterator, class FaceDomainType>
     double boundaryFlux(IntersectionIterator& nit,
                         const FaceDomainType& x,
@@ -286,24 +241,7 @@ namespace Dune {
                       jacobians_, res);
     }
 
-    void mass(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
-              JacobianRangeType& res) 
-    {
-      evaluateQuad(en, quad, quadPoint, data_->localFunctionsSelf(), valuesEn_);
-      evaluateJacobianQuad(en, quad, quadPoint);
-      problem_.mass(en, time_, quad.point(quadPoint), valuesEn_,
-                    jacobians_, res);
-    }
-
-    void rightHandSide(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
-                       RangeType& res) 
-    {
-      evaluateJacobianQuad(en, quad, quadPoint);
-      problem_.rightHandSide(en, time_, quad.point(quadPoint), valuesEn_,
-                             jacobians_, res);
-    }
-
-  private:
+  protected:
     void setter(Entity& en, LocalFunctionTupleType& tuple) 
     {
       ForEachValue<LocalFunctionTupleType> forEach(tuple);
@@ -428,7 +366,8 @@ namespace Dune {
 
   private:
     DiscreteModelType& problem_;
-    
+
+  protected:  
     std::auto_ptr<DataStorage> data_;
 
     RangeTupleType valuesEn_;
