@@ -7,6 +7,7 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 
 //- local includes 
+#include <dune/fem/misc/boundaryidentifier.hh>
 #include "selection.hh"
 #include "discretemodel.hh"
 
