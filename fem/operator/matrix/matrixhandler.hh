@@ -9,13 +9,55 @@
 
 namespace Dune {
 
+
+  template <class SpaceType>
+  class PreconditioningAdapter
+  {
+  public:  
+    typedef AdaptiveDiscreteFunction<SpaceType> DiscreteFunctionType;
+    typedef typename SpaceType :: RangeFieldType DofType;
+  public:
+    PreconditioningAdapter(std::string name, const SpaceType& space)
+      : space_(space), diag_(name,space_) {} 
+    
+    //! apply this*x = ret 
+    void precondition(const DofType * x, DofType * ret) const
+    {
+      const DofType* dofVec = diag_.leakPointer();
+      const int vecsize = diag_.size();
+      for(int i=0; i<vecsize; ++i) 
+      {
+        ret[i] = x[i]*dofVec[i];
+      }
+    } 
+      
+    //! multOEM interface 
+    void multOEM (const DofType * x, DofType * ret) const  
+    {
+      precondition(x,ret);
+    }   
+      
+    //! return false as this is left precondition
+    bool rightPrecondition () const { return false; }
+
+    //! clear matrix 
+    void clear() { diag_.clear(); }
+
+    DiscreteFunctionType& diag() { return diag_; }
+  private:  
+    const SpaceType& space_;
+    DiscreteFunctionType diag_;
+
+    PreconditioningAdapter(const PreconditioningAdapter&) {}
+  };
+
   template <class SpaceType, class GradientSpaceType> 
   class MatrixHandlerSPMat
   {
     typedef typename SpaceType::GridType::template Codim<0>::Entity EntityType;
   public:  
     typedef SparseRowMatrix<double> MatrixType;
-    typedef DFAdapt<SpaceType> PreconditionMatrixType;
+    typedef PreconditioningAdapter<SpaceType> PreconditionMatrixType;
     
     //! LocalMatrix 
     template <class MatrixImp> 
@@ -142,8 +184,8 @@ namespace Dune {
     //! setup matrix handler 
     MatrixHandlerSPMat(const SpaceType & singleSpace, 
                        const GradientSpaceType & gradientSpace, 
-                       bool  hasMassMatrix = false , 
-                       bool hasPcMatrix = false )
+                       const std::string& paramFile,
+                       bool  hasMassMatrix = false)
       : singleSpace_(singleSpace)
       , gradientSpace_(gradientSpace) 
       , singleMaxNumbers_(-1)
@@ -154,9 +196,12 @@ namespace Dune {
       , massMatrix_() // diagonal matrix 
       , pcMatrix_(0) 
       , hasMassMatrix_(hasMassMatrix)
-      , hasPcMatrix_(hasPcMatrix)
+      , hasPcMatrix_(false)
     {
-      reserve(true);
+      if(paramFile != "")
+      {
+        readParameter(paramFile,"Preconditioning",hasPcMatrix_);
+      }
     }
 
     //! return reference to stability matrix 
@@ -296,6 +341,42 @@ namespace Dune {
       if( hasMassMatrix() )
       {
         massMatrix_.resort(); 
+      }
+    }
+
+    void createPreconditionMatrix()
+    {
+      if(hasPcMatrix())
+      {
+        typedef typename PreconditionMatrixType :: DiscreteFunctionType
+          DiscreteFunctionType; 
+        DiscreteFunctionType & diag = pcMatrix().diag();
+
+        if(hasMassMatrix())
+        {
+          divMatrix().getDiag( massMatrix(), gradMatrix() , diag );
+        }
+        else
+        {
+          divMatrix().getDiag( gradMatrix() , diag );
+        }
+
+        stabMatrix().addDiag( diag );
+
+        double * diagPtr = diag.leakPointer();
+        const int singleSize = singleSpace_.size();
+        for(register int i=0; i<singleSize; ++i)
+        {
+          double val = diagPtr[i];
+          // when using parallel Version , we could have zero on diagonal
+          // for ghost elements 
+          assert( (singleSpace_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0 ) );
+          if( std::abs( val ) > 0.0 )
+          {
+            val = 1.0/val;
+            diagPtr[i] = val;
+          }
+        }
       }
     }
   };
@@ -620,6 +701,8 @@ namespace Dune {
         massMatrix_.resort(); 
       }
     }
+
+    void createPreconditionMatrix() {}
   };
 
 #if HAVE_DUNE_ISTL 
