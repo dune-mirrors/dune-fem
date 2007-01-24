@@ -260,8 +260,8 @@ protected:
   ~DefaultElementMatrixIntegrator()
         {
           if (verbose_)
-              std::cout << "entered descructor of " 
-                        << "DefaultElementMatrixIntegrator";
+              std::cout << "entered destructor of " 
+                        << "DefaultElementMatrixIntegrator\n";
           delete[] gradPhiPtr_;
         }
 
@@ -779,7 +779,7 @@ public:
   {
     if (verbose_)
         std::cout << "entered constructor of " 
-                  << "DefaultElementRhsIntegrator";
+                  << "DefaultElementRhsIntegrator\n";
   };
 
 /*======================================================================*/
@@ -1179,7 +1179,7 @@ public:
         {
           if (verbose_)
               std::cout << "entered model() of " 
-                        << "RhsAssembler";
+                        << "RhsAssembler\n";
         };
 
 /*======================================================================*/
@@ -1194,7 +1194,7 @@ public:
         {
           if (verbose_)
               std::cout << "entered assemble() of " 
-                        << "RhsAssembler";
+                        << "RhsAssembler\n";
           rhs.clear();
           
           // grid walkthrough for accumulating rhs
@@ -1233,7 +1233,7 @@ private:
         {
           if (verbose_)
               std::cout << "entered bndCorrect() of " 
-                        << "RhsAssembler";
+                        << "RhsAssembler\n";
 
           // grid walkthrough for setting Dirichlet-DOFs
           ModelType& model 

@@ -21,7 +21,11 @@
 #include "common/operator.hh"
 #include "common/localoperator.hh"
 //#include "matrix/spmatrix.hh"
-#include "feop/spmatrix.hh"
+
+// include temporary old and new sparsematrix class
+// #include "feop/spmatrix.hh"
+#include "matrix/spmatrix.hh"
+
 #include "lagrangedofhandler.hh"
 
 //for saving the systemmatrix
@@ -134,6 +138,19 @@ namespace Dune {
  *
  *  In this case, the deleted matrix entries are stored, as they are 
  *  required for every subsequent right hand side modification.
+ *  This Kronecker-Column Treatment is performed by storing the following
+ *  temporary objects:
+ *
+ *    d_dir := vector with 0 for non-Dirichlet DOFs, 1 for DirichletDOFs
+ *    M_dir := Null-matrix with all Dirichlet-Columns of M  - diag(d_dir)
+ *             i.e. Dirichlet-Rows are completely zero
+ *    g_D := vector with 0 for non-Dirichlet DOFs, 
+             Dirichlet-Value for DirichletDOFs
+ *
+ *  Then, the symmetrization can compactly be written as
+ *
+ *    M_sym = M - M_dir 
+ *    b_sym = b - M_dir * g_D
  *
  *  The class depends on two template parameters, a SystemMatrixImp and an 
  *  ElementMatrixIntegratorImp class
@@ -141,9 +158,8 @@ namespace Dune {
  *  The SystemMatrixImp class must provide a storage type for the global 
  *  operator matrix and some arithmetics and basic functionality. In 
  *  particular a print() method and an apply() method are assumed to exist.
- *  Additionally a constructor with three arguments is required as 
- *  explained in allocateSystemMatrix. An add(row,col,val) method is assumed 
- *  to exist. An unitRow(row) and a unitCol(col) method are assumed to exist
+ *  Currently the SparseRowMatrix satisfies the interface required for a
+ *  SystemMatrixImp class.
  * 
  *  The ElementMatrixIntegratorImp class provides functionality for 
  *  computing a
@@ -220,7 +236,6 @@ public:
 //        DirichletTreatmentMode dirichletMode = KRONECKER_ROWS,
         int maxNonZerosPerRow = 50,
         int verbose = 0) :
-
           functionSpace_( elMatInt.model().discreteFunctionSpace()),  
           matrix_ (0), 
           matrix_assembled_( false ),
@@ -230,8 +245,10 @@ public:
 //          dirichletMode_(dirichletMode),
           maxNonZerosPerRow_(maxNonZerosPerRow),
           elMatInt_(elMatInt),
+//          isDirichletDOF_old_(0),
           isDirichletDOF_(0),
           isDirichletDOF_assembled_(false),
+//          matrixDirichletColumns_old_(0),
           matrixDirichletColumns_(0),
           verbose_(verbose)
         {
@@ -256,8 +273,12 @@ public:
 
           if ( matrix_ ) 
               delete matrix_;
+//          if ( isDirichletDOF_old_ ) 
+//              delete isDirichletDOF_old_;
           if ( isDirichletDOF_ ) 
               delete isDirichletDOF_;
+//          if ( matrixDirichletColumns_old_ ) 
+//              delete matrixDirichletColumns_old_;
           if ( matrixDirichletColumns_ ) 
               delete matrixDirichletColumns_;
         };
@@ -718,7 +739,7 @@ public:
           isDirichletDOF_assembled_ = false;
           matrix_assembled_ = false;
         };
-
+  
 /*======================================================================*/
 /*! 
  *   matrixKroneckerColumnsTreatment: produce kronecker-columns in matrix
@@ -745,10 +766,13 @@ public:
         {
           if (verbose_)
               std::cout << "entered matrixKroneckerColumnsTreatment of FEOp\n";
+//          assert(isDirichletDOF_old_);
           assert(isDirichletDOF_);
           assert(matrix_);
           
           // delete storage if allocated
+//          if (matrixDirichletColumns_old_)
+//              delete(matrixDirichletColumns_old_);
           if (matrixDirichletColumns_)
               delete(matrixDirichletColumns_);
 
@@ -756,49 +780,94 @@ public:
               std::cout << "deleted old storage for submatrix\n";
           
           // count new number of Dirichlet-DOFs
+//          int nDirDOFs_old = 0;
+//          for (int i=0; i!=matrix_->rows(); i++)
+//              if ((*isDirichletDOF_old_)(0,i)) // so is Dirichlet-DOF
+//                  nDirDOFs_old++;
+
           int nDirDOFs = 0;
           for (int i=0; i!=matrix_->rows(); i++)
               if ((*isDirichletDOF_)(0,i)) // so is Dirichlet-DOF
                   nDirDOFs++;
-          
+ 
+//          assert(nDirDOFs == nDirDOFs_old);
+                   
           if (verbose_)
               std::cout << "counted number of dirichletDOFs : " << 
                   nDirDOFs << " \n";
 
           // allocate new storage for to be deleted matrix entries
-          matrixDirichletColumns_ = new SparseRowMatrix<double>
+//          matrixDirichletColumns_old_ = new 
+//                           OldSparseRowMatrix<double>
+//              (matrix_->rows(), 
+//               matrix_->cols(), 
+//               maxNonZerosPerRow_);
+// tooo much!!!:         nDirDOFs);
+
+          matrixDirichletColumns_ = new 
+                           SparseRowMatrix<double>
               (matrix_->rows(), 
                matrix_->cols(), 
-               maxNonZerosPerRow_);
-// tooo much!!!:         nDirDOFs);
+               maxNonZerosPerRow_, 
+               0.0);
           
           if (verbose_)
               std::cout << "allocated new storage for submatrix\n";
           
+//          assert(matrixDirichletColumns_old_);
           assert(matrixDirichletColumns_);
           
           // save matrix entries 
+//          matrixDirichletColumns_old_->clear();
+//          for (int i=0; i!=matrix_->rows(); i++)
+//          {
+//            if (i%100 == 0)
+//                if (verbose_)
+//                    std::cout << " processing row no " << i << " \n";
+//            typename OldSparseRowMatrix<int>::ColumnIterator it = 
+//                isDirichletDOF_old_->rbegin(0);
+//            for (;it!=isDirichletDOF_old_->rend(0);++it)
+//                matrixDirichletColumns_old_->set(i,it.col(),
+//                                            (*matrix_)(i,it.col()));
+//          }
+
           matrixDirichletColumns_->clear();
+          
           for (int i=0; i!=matrix_->rows(); i++)
           {
             if (i%100 == 0)
                 if (verbose_)
                     std::cout << " processing row no " << i << " \n";
-            SparseRowMatrix<int>::ColumnIterator it = 
-                isDirichletDOF_->rbegin(0);
-            for (;it!=isDirichletDOF_->rend(0);++it)
-                matrixDirichletColumns_->set(i,it.col(),
-                                            (*matrix_)(i,it.col()));
+            // for each non-Dirichlet-row
+            if (!(*isDirichletDOF_)(0,i)) 
+            {
+              // copy all dirichlet-DOF-entries from matrix              
+              int numNonZeros = matrix_-> numNonZeros(i);
+              for (int fakeCol =0; fakeCol!= numNonZeros; fakeCol++)
+              {
+                int realCol = matrix_->
+                    realCol(i,fakeCol);
+                if ((realCol != SparseRowMatrix<int>::defaultCol)
+                    && ((*isDirichletDOF_)(0,realCol))) 
+                    matrixDirichletColumns_->set(i, realCol,
+                                                 (*matrix_)(i,realCol));
+              }
+            }
           }
-          
-          // delete matrix columns
-          SparseRowMatrix<int>::ColumnIterator it = 
-              isDirichletDOF_->rbegin(0);
-          for (;it!=isDirichletDOF_->rend(0);++it)
+           
+          // delete matrix columns by subtracting matrices
+                    
+          int numNonZeros = isDirichletDOF_->numNonZeros(0);
+          for (int fakeCol = 0; fakeCol!=numNonZeros; fakeCol++)
           {
-            if (verbose_)
-                std::cout << " setting unitcolumn no " << it.col() << " \n";
-            matrix_->unitCol(it.col());          
+            int realCol = isDirichletDOF_->realCol(0,fakeCol);
+            if (realCol!=SparseRowMatrix<int>::defaultCol)
+            { 
+              if (verbose_)
+                  std::cout << " setting unitcolumn no " << 
+                      realCol << " \n";
+              matrix_->unitCol( realCol );    
+            }
           }
           
           if (verbose_)
@@ -825,9 +894,6 @@ public:
  *   the provided vector b_j, which is used for implementation instead of
  *   reevaluating the boundary values. 
  *
- *   Current implementation is quite slow, should be improved by
- *   rewriting as matrix-vector multiplication.
- *
  *   \param rhs a reference to the assembled rhs b
  */
 /*======================================================================*/
@@ -836,58 +902,31 @@ public:
         {
           assert(isDirichletDOF_);
           assert(matrixDirichletColumns_);
+
           assert ( rhs.size() == isDirichletDOF_->cols() );
           
           if (verbose_)
               std::cout << "entered rhsKroneckerColumnsTreatment\n";
 
-          // temporary store current values rhs[i] for Dirichlet-DOFs
-          SparseRowMatrix<double> 
-              rhsDirichletValues(1,isDirichletDOF_->cols(),
-                                 isDirichletDOF_->numNonZeros());
-         if (verbose_)
-              std::cout << "allocated storage for rhsDirichletvalues\n";
-
-          rhsDirichletValues.clear();          
-          DofIteratorType dit = rhs.dbegin();
-          for (int i=0; i!=matrix_->rows(); i++, ++dit)
-              if ((*isDirichletDOF_)(0,i)) // so is Dirichlet-DOF
-                  rhsDirichletValues.set(0,i,*dit);
-//          std::cout << "temporarily stored current-Rhs values\n";
+          // allocate storage for update vector
           
-          // modify values of rhs-vector for non-dirichlet-DOFs 
-          dit = rhs.dbegin();
-          if (verbose_)
-              std::cout << "Searching non-Dirichlet-DOFs for modification: " 
-                        << std::flush ;
-                
-          for (int i=0; i!=matrix_->rows(); i++, ++dit)
-              if ((*isDirichletDOF_)(0,i)==0.0) // so is non-Dirichlet
-              {
-                if (verbose_)
-                    std::cout << " " << i << std::flush;
-                SparseRowMatrix<int>::ColumnIterator it = 
-                    isDirichletDOF_->rbegin(0);
-                const SparseRowMatrix<int>::ColumnIterator endit = 
-                    isDirichletDOF_->rend(0);
-//                std::cout << "initialized column iterator \n";         
-                for (;it!=endit;++it) 
-                {
-//                  std::cout << "entered DOF-setting loop with " 
-//                            << "column iterator  it pointing to col = " 
-//                            << it.col() 
-//                            << "   \n";         
-                    *dit -= 
-                        (*matrixDirichletColumns_)(i,it.col())
-                        * rhsDirichletValues(0,it.col()); 
-//                  std::cout << "setting of  Dirichlet DOF finished\n";         
-                }
-              }
+          const typename DiscreteFunctionType::DiscreteFunctionSpaceType & 
+              discFuncSpace = rhs.space();
+          
+          DiscreteFunctionType update = 
+              DiscreteFunctionType( "update", discFuncSpace);
+          
+          // determine update = M_dir * b = M_dir * 
+          matrixDirichletColumns_->apply(rhs, update );
+          
+          // compute rhs = b_sym = b - M_dir * b = rhs - update
+          rhs -=update;
+          
           if (verbose_)
               std::cout << " finished\n";
-
+          
 //          std::cout << "finished Rhs-KroneckerColumnTreatment\n";
-        }
+        };
   
 // private methods used by the public ones.
 private:
@@ -984,7 +1023,7 @@ private:
 /*! 
  *   searchDirichletDOFs: determine lookup table for dirichlet-values
  *
- *   method fills the local vector isDirichletDOF_ as multiple operations with
+ *   method fills the local vector isDirichletDOF_old_ as multiple operations with
  *   Dirichlet-boundaries are necessary, e.g. matrix-boundary treatment, 
  *   NOT rhs-assembly but later symmetrization of the system. By this multiple 
  *   global grid walkthroughs can be prevented and replaced by single run 
@@ -1004,25 +1043,34 @@ private:
           typedef typename GridPartType::IntersectionIteratorType 
               IntersectionIteratorType;
           typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-
           // allocate isDirichlet-Vector if not already done:
           // to be sure: worst case: all DOFS are Dirichlet... undoubtedly 
           // memory waste in highly resolved case, but no idea... 
           // give maximum in Model? Or where?
+
+//          if (!this->isDirichletDOF_old_)
+//              isDirichletDOF_old_ = new OldSparseRowMatrix<int>
+//                  (1, 
+//                   functionSpace_.size(),
+//                   functionSpace_.size()
+//                   );
+
           if (!this->isDirichletDOF_)
               isDirichletDOF_ = new SparseRowMatrix<int>
                   (1, 
                    functionSpace_.size(),
-                   functionSpace_.size()
-                   );
+                   functionSpace_.size(),
+                   0);
           
+//          assert(this->isDirichletDOF_old_);
           assert(this->isDirichletDOF_);
 
           if (verbose_)
               std::cout << " allocating of isDirichletDofs successful\n";
           
           // start by filling all DOFs with zero
-          isDirichletDOF_->clear(); 
+//          isDirichletDOF_old_->clear(); 
+          // new one already initialized with 0
           
           IteratorType it    = functionSpace_.begin(); 
           IteratorType endit = functionSpace_.end(); 
@@ -1085,6 +1133,7 @@ private:
                     // get global dof numbers of this vertices 
                     int row = functionSpace_.mapToGlobal( en, vx);
                     // store DOF as DirichletDOF
+//                    isDirichletDOF_old_->set(0,row,1);                    
                     isDirichletDOF_->set(0,row,1);                    
                   }
                 }
@@ -1120,19 +1169,23 @@ private:
           if (!isDirichletDOF_assembled_)
               searchDirichletDOFs();
           
-          // eliminate the Dirichlet rows by converting to unit-rows      
-          typename SparseRowMatrix<int>::ColumnIterator 
-              it = isDirichletDOF_->rbegin(0); 
-          typename SparseRowMatrix<int>::ColumnIterator 
-              endit = isDirichletDOF_->rend(0);
-          
-          for (;it!=endit;++it)
-          {
-            if (verbose_)
-                std::cout << " setting unit row " << it.col() << " \n";  
-            matrix_->unitRow(it.col());          
-          }
+          int numNonZeros = isDirichletDOF_->numNonZeros(0);
 
+          // eliminate the Dirichlet rows by converting to unit-rows      
+          for (int fakeCol = 0; fakeCol!=numNonZeros;++fakeCol)
+          {
+            int realCol = isDirichletDOF_->realCol(0,fakeCol);
+            if (realCol!=SparseRowMatrix<int>::defaultCol)
+            {
+              if ((*isDirichletDOF_)(0,realCol))
+              {
+                if (verbose_)
+                    std::cout << " setting unit row " << realCol << " \n";  
+                matrix_->unitRow(realCol);          
+              }
+            } 
+          }
+          
           if (verbose_)
               std::cout << " enf of bndCorrectMatrix \n";  
           
@@ -1182,14 +1235,23 @@ private:
           std::cout << " counting nonzeros in row " << i <<" \n";  
       
       int nonzeros = 0;
+      int numNonZeros = matrix_->numNonZeros(i);
       
-      typename SystemMatrixType::ColumnIterator 
-          it = matrix_->rbegin(i); 
-      typename SystemMatrixType::ColumnIterator 
-          endit = matrix_->rend(i);
+      for (int fakeCol=0; fakeCol!=numNonZeros ; fakeCol++ )
+      {
+        int realCol = matrix_->realCol(i,fakeCol);
+        if (realCol != SystemMatrixType::defaultCol)
+            if ((*matrix_)(i,realCol)!=0.0)
+                nonzeros++;
+      }
       
-      for (;it!=endit;++it)
-          if (*it!=0.0) nonzeros++;
+//      typename SystemMatrixType::ColumnIterator 
+//          it = matrix_->rbegin(i); 
+//      typename SystemMatrixType::ColumnIterator 
+//          endit = matrix_->rend(i);
+      
+//      for (;it!=endit;++it)
+//          if (*it!=0.0) nonzeros++;
       
 //      for (int j=0; j!=matrix_->cols(); j++)
 //          if ((*matrix_)(i,j)!=0.0) nonzeros++;
@@ -1222,6 +1284,7 @@ private:
   //! vector (matrix with single row), which indicates the Dirichlet-DOFs 
   //! This type is made explicit, as not much optimization can be performed 
   //! here, or? 
+//  mutable OldSparseRowMatrix<int> *isDirichletDOF_old_;
   mutable SparseRowMatrix<int> *isDirichletDOF_;
 
   //! flag indicating whether the DirichletDOF lookup table is assembled 
@@ -1231,6 +1294,7 @@ private:
   //! during symmetrization, but required for RHS modification 
   //! This type is made explicit, as not much optimization can be performed 
   //! here, or? 
+//  mutable OldSparseRowMatrix<double> *matrixDirichletColumns_old_;
   mutable SparseRowMatrix<double> *matrixDirichletColumns_;
 
   //! reference to element matrix generator provided during initialization
@@ -1254,7 +1318,7 @@ private:
   // const DiscreteFunctionType * arg_;
   // DiscreteFunctionType * dest_;
 
-};
+}; // end class FEOp
 
 } // end namespace
 
