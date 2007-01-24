@@ -246,11 +246,12 @@ namespace LDGExample {
     // returns true, when Dirichlet boundary, false when other boundary
     // (Neumann) 
     template <class IntersectionIteratorType, class FaceDomType, 
-              class ReturnType >
+              class ArgumentTuple>
     BoundaryIdentifierType 
     boundaryValue(const IntersectionIteratorType& it,
                   double time, const FaceDomType& x,
-                  ReturnType& bndVal) const
+                  const ArgumentTuple& u,               
+                  RangeType& bndVal) const
     {
       return BoundaryIdentifierType::undefined; 
     }
@@ -507,11 +508,12 @@ namespace LDGExample {
     // returns true, when Dirichlet boundary, false when other boundary
     // (Neumann) 
     template <class IntersectionIteratorType, class FaceDomType, 
-              class ReturnType >
+              class ArgumentTuple>
     BoundaryIdentifierType 
     boundaryValue(const IntersectionIteratorType& it,
                   double time, const FaceDomType& x,
-                  ReturnType& bndVal) const
+                  const ArgumentTuple& u,               
+                  RangeType& bndVal) const
     {
       DomainType p = it.intersectionGlobal().global(x);
       bool dirich = boundaryDataFunction(&p[0],bndVal[0]);
