@@ -9,14 +9,31 @@
 
 namespace Dune
 {
-
+  
+  //! anonymous namespace, such that variable is only known within 
+  //! SparseRowMatrix and other classes located here
+  namespace
+  {    
+//! If you have problems with this sparsematrix class, this might be due to
+//! inconsistencies produced in some methods.  
+//! In this case, you should turn on the consistencycheck of all non-const 
+//! methods by setting the following variable to 1 / 0 and by this locate the 
+//! buggy member method. Default is 0 = Check Off
+    const int checkNonConstMethods = 0;
+  }
+  
 //*****************************************************************
 //
 //  --SparseRowMatrix
 //  
-//! Compressed row sparse matrix, where only the nonzeros of a row a 
-//! keeped
+//! Compressed row sparse matrix, where only the nonzeros of a row are
+//! keeped 
+//! (except if you "set" a single element explicitly 
+//! with the value 0, which is not forbidden and an element entry is 
+//! created)
+//!
 //*****************************************************************
+  
 template <class T>
 class SparseRowMatrix 
 {
@@ -96,15 +113,18 @@ public:
   //! return value and clear matrix entry 
   T popValue (int i) 
   { 
+    if (checkNonConstMethods) assert(checkConsistency());
     T v = val(i); 
     values_[i] = 0;
     col_[i] = -1;
+    if (checkNonConstMethods) assert(checkConsistency());
     return v;
   }
 
   //! return real column number for (row,localCol) 
   int realCol (int row, int fakeCol) const 
   {
+    assert(fakeCol<dim_[1]);
     assert( row < dim_[0] );
     int pos = row*nz_ + fakeCol;
     return col_[pos];
@@ -170,7 +190,10 @@ public:
   //! return value of entry (i,j)
   T  operator() (int i, int j) const;        
 
-  //! set entry to value 
+  //! set entry to value
+  //! note, that every entry is performed into the matrix!
+  //! also setting of value 0 will result in an entry. So these
+  //! calls should be ommited on a higher level 
   void set(int row, int col, T val);
   
   //! set all entries in row to zero 
@@ -246,6 +269,26 @@ public:
   //! print values 
   void printReal (std::ostream& s) const;
      
+  //! print columns
+  void printColumns(std::ostream& s) const;
+  
+  //! print row-wise stored number of nonzeros 
+  //! No counting is performed, but the member variable nonZeros_[]
+  //! is reported. So here inconsistencies can occur to the true 
+  //! nonzero entries in the matrix.
+  void printNonZeros(std::ostream& s) const;
+  
+  //! check consistency, i.e. whether number of stored nonzeros
+  //! corresponds to the counters in nonZeros[] and check, whether all
+  //! columns within this range have reasonable values
+  //! true == consistent
+  //! false == non consistent
+  //! an assert(checkConsistency()) can be called at entry and exit of
+  //! non-const sparsematrix operations for ensuring maintaining of
+  //! consistence. This can be made conditional by the member variable 
+  //! checkNonConstMethods
+  bool checkConsistency() const;
+
   //! make row a row with 1 on diagonal and all other entries 0 
   void unitRow(int row);
 

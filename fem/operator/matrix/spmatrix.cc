@@ -1,7 +1,9 @@
 namespace Dune 
 {
 
-#define EPS 1.0E-15
+// where is the following used?? 
+// it is not used in this class => commented out
+// #define EPS 1.0E-15
   
 /*****************************/
 /*  Constructor(s)           */
@@ -16,6 +18,7 @@ SparseRowMatrix<T>::SparseRowMatrix(double omega) : omega_(omega)
   memSize_ = 0;
   nz_ = 0;
   nonZeros_ = 0;
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 
@@ -32,27 +35,35 @@ SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz,
   memSize_ = 0;
   nz_ = 0;
   nonZeros_ = 0;
-   
+  
   // resize and get storage 
   reserve(rows,cols,nz,dummy);
   
   // fill with value
   clear();
-   
+  
+  if (checkNonConstMethods) assert(checkConsistency());   
 }
 
 template <class T>
 void SparseRowMatrix<T>::removeObj()
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   if(values_) delete [] values_;
   if(col_) delete [] col_;
   if(nonZeros_) delete [] nonZeros_;
+  values_ = 0;
+  col_ = 0;
+  nonZeros_ = 0;
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T>
 SparseRowMatrix<T>::~SparseRowMatrix()
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   removeObj();
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 /***********************************/
@@ -62,30 +73,31 @@ template <class T>
 void SparseRowMatrix<T>::
 reserve(int rows, int cols, int nz,const T& dummy )
 {
+// if (checkNonConstMethods) assert(checkConsistency());
   if( (rows == dim_[0]) && (cols == dim_[1]) && (nz == nz_)) 
   {
     clear();
     return;
   }
-
+  
   removeObj();
-
+  
   values_ = new T [ rows*nz ];
   col_    = new int [ rows*nz ];
   nonZeros_ = new int [ rows ];
-
+  
   assert( values_ );
   assert( col_ );
   assert( nonZeros_ );
-
+  
   dim_[0] = rows;
   dim_[1] = cols;
-
+  
   memSize_ = rows;
   nz_ = nz;
   // add first col for offset
   nz_ += firstCol ;
-
+  
   assert( dim_[0] > 0 );
   assert( dim_[1] > 0 );
   
@@ -97,6 +109,8 @@ reserve(int rows, int cols, int nz,const T& dummy )
 
   // set all values to default values 
   clear();
+  if (checkNonConstMethods) assert(checkConsistency());
+  
 }
 
 // resize with rows = cols = newSize  
@@ -178,6 +192,7 @@ T SparseRowMatrix<T>::operator()(int row, int col) const
 template <class T> 
 int SparseRowMatrix<T>::colIndex(int row, int col)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   assert( row >= 0 );
   assert( row < dim_[0] );
 
@@ -203,6 +218,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
     }
     std::cout << std::endl;
   }
+  if (checkNonConstMethods) assert(checkConsistency());
   return whichCol;
 }
 
@@ -233,11 +249,13 @@ void SparseRowMatrix<T>::clear()
   {
     nonZeros_[i] = 0;
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
 void SparseRowMatrix<T>::clearRow(int row)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   assert( nonZeros_ );
   assert( values_ );
   assert( col_ );
@@ -251,21 +269,25 @@ void SparseRowMatrix<T>::clearRow(int row)
     col_[col] = defaultCol;
     ++col;
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
 void SparseRowMatrix<T>::resort()
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   const int nRows = rows();
   for(int row=0; row<nRows; ++row)
   {
     resortRow(row);
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
 void SparseRowMatrix<T>::resortRow(const int row)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   newIndices_.resize(0);
   int thisCol = row * nz_;
   
@@ -305,32 +327,42 @@ void SparseRowMatrix<T>::resortRow(const int row)
     col_[ thisCol ] = newIndices_[col];
     ++thisCol;
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
 void SparseRowMatrix<T>::set(int row, int col, T val)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
+  assert((col>=0) && (col <= dim_[1]));
+  assert((row>=0) && (row <= dim_[0]));
+
   int whichCol = colIndex(row,col);
   assert( whichCol != defaultCol );
-
   {
     values_[row*nz_ + whichCol] = val; 
+    if (whichCol >= nonZeros_[row]) 
+        nonZeros_[row]++;
     col_[row*nz_ + whichCol] = col;
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
 void SparseRowMatrix<T>::add(int row, int col, T val)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   int whichCol = colIndex(row,col);
   assert( whichCol != defaultCol );
   values_[row*nz_ + whichCol] += val; 
   col_[row*nz_ + whichCol] = col;
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
 void SparseRowMatrix<T>::multScalar(int row, int col, T val)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   int whichCol = colIndex(row,col);
   
   if(whichCol == defaultCol )
@@ -342,6 +374,7 @@ void SparseRowMatrix<T>::multScalar(int row, int col, T val)
     values_[row*nz_ + whichCol] *= val; 
     col_[row*nz_ + whichCol] = col;
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 /***************************************/
 /*  Matrix-MV_Vector multiplication    */
@@ -484,7 +517,6 @@ void SparseRowMatrix<T>::apply_t(const DiscFuncType &f, DiscFuncType &ret) const
 
     ++ret_it;
   } 
-
   return; 
 }
 
@@ -518,15 +550,89 @@ void SparseRowMatrix<T>::printReal(std::ostream& s) const
 }
 
 template <class T> 
+void SparseRowMatrix<T>::printColumns(std::ostream& s) const
+{
+  for(int row=0; row<dim_[0]; row++)
+  {
+    for(int col=0; col<nz_; col++)
+    {
+      s << col_[row*nz_ + col] << " ";
+    }
+    s << "\n";
+  }
+  return; 
+}
+
+template <class T> 
+void SparseRowMatrix<T>::printNonZeros(std::ostream& s) const
+{
+  for(int row=0; row<dim_[0]; row++)
+  {
+    s << nonZeros_[row] << " ";
+  }
+  s << "\n";
+  return; 
+}
+
+template <class T>
+bool SparseRowMatrix<T>::checkConsistency() const
+{
+  // check, whether nonzeros per row indeed correspond to reasonable 
+  // column-entries 
+  
+  bool consistent = true;
+    
+  // only perform check, if there is any data:
+  if (nonZeros_ || values_ || col_)
+  {    
+    for(int row=0; row<dim_[0]; row++)
+    {
+      if (nonZeros_[row]<0 || nonZeros_[row]> dim_[1])
+      {
+        std::cout << "error in consistency of row " << row << 
+            ": NonZeros_[row] = "<< nonZeros_[row] <<  
+            " is not within reasonable range "
+                  << " of dim = (" << dim_[0]<<","<< dim_[1]<< ")\n";
+        consistent = false;
+        return(consistent); 
+      }
+      
+      for (int fakeCol =0; fakeCol < nonZeros_[row]; fakeCol++)
+          if ((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
+          {
+            
+            std::cout << "error in consistency of row " << row << 
+                ": NonZeros_[row] = "<< nonZeros_[row] << 
+                ", fakeCol = " << fakeCol << ", realCol(fakeCol) = " 
+                      << realCol(row,fakeCol) << "\n" ;
+            consistent = false;
+            return(consistent); 
+          }    
+    }
+   
+    return(consistent); 
+  }
+
+//  std::cout << "consistent = " << consistent << "\n";
+ 
+  assert(consistent);
+
+  return(consistent); 
+}
+
+template <class T> 
 void SparseRowMatrix<T>::kroneckerKill(int row, int col) 
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   unitRow(row);
   unitCol(col);
+  if (checkNonConstMethods) assert(checkConsistency());
 } 
 
 template <class T> 
 void SparseRowMatrix<T>::unitRow(int row) 
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   for(int i=1; i<nz_; i++) 
   {
     values_[row*nz_ + i] = 0.0;
@@ -534,19 +640,29 @@ void SparseRowMatrix<T>::unitRow(int row)
   }
   values_[row*nz_] = 1.0;
   col_[row*nz_] = row;
+  nonZeros_[row] = 1;
+  if (checkNonConstMethods) assert(checkConsistency());
 } 
 
 template <class T> 
 void SparseRowMatrix<T>::unitCol(int col) 
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   for(int i=0; i<dim_[0]; i++) 
-    if (i != col) set(i,col,0.0); 
-    else set(col,col,1.0); 
+      if (i != col) 
+      {
+        // only set 0 if nonzero column entry exists in current row
+        if ((*this)(i,col) != 0)
+            set(i,col,0); 
+      }
+      else set(col,col,1.0); 
+  if (checkNonConstMethods) assert(checkConsistency());
 } 
 
 template <class T> 
 void SparseRowMatrix<T>::checkSym() 
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   double val;
   for(int i=0; i<this->size(0); i++)
   {
@@ -559,6 +675,7 @@ void SparseRowMatrix<T>::checkSym()
       }
     }  
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 } 
 
 // diagonal conditioning  
@@ -663,6 +780,7 @@ void SparseRowMatrix<T>::addDiag(DiscFuncType &diag) const
   }
   return; 
 }
+
 template <class T> 
 void SparseRowMatrix<T>::multiply(const SparseRowMatrix<T> & B,
     SparseRowMatrix<T> & res) const 
@@ -696,6 +814,7 @@ void SparseRowMatrix<T>::multiply(const SparseRowMatrix<T> & B,
 template <class T> 
 void SparseRowMatrix<T>::add(const SparseRowMatrix<T> & B)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   assert( this->size(0) == B.size(0) );
   assert( nz_ == B.nz_ );
   
@@ -704,15 +823,18 @@ void SparseRowMatrix<T>::add(const SparseRowMatrix<T> & B)
     assert( col_ [i] == B.col_ [i] );
     values_ [i] += B.values_[i];
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
 void SparseRowMatrix<T>::scale(const T& factor)
 {
+  if (checkNonConstMethods) assert(checkConsistency());
   for(register int i=0; i<dim_[0]*nz_; ++i)
   {
     values_ [i] *= factor;
   }
+  if (checkNonConstMethods) assert(checkConsistency());
 }
 
 template <class T> 
@@ -774,7 +896,5 @@ void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const
     x[row] -= omega * dot / diag;
   }
 }
-
-
 
 } // end namespace Dune
