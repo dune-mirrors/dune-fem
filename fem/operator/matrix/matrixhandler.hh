@@ -1,13 +1,19 @@
 #ifndef DUNE_MATRIXHANDLER_HH
 #define DUNE_MATRIXHANDLER_HH
 
-#include "blockmatrix.hh"
+//- system includes 
+#include <vector>
 
+//- Dune istl includes 
 #if HAVE_DUNE_ISTL
 #include "istlmatrix.hh"
 #endif
 
-#include <dune/fem/discretefunctions/adaptivefuntion.hh>
+//- Dune includes 
+#include <dune/fem/discretefunction/adaptivefunction.hh>
+
+//- local includes 
+#include "blockmatrix.hh"
 
 namespace Dune {
 
