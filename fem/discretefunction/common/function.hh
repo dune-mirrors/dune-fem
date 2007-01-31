@@ -30,7 +30,11 @@ class Function :
     public Mapping < typename FunctionSpaceImp::DomainFieldType,
                      typename FunctionSpaceImp::RangeFieldType ,
                      typename FunctionSpaceImp::DomainType, 
-                     typename FunctionSpaceImp::RangeType > {
+                     typename FunctionSpaceImp::RangeType > 
+{
+
+  // type of this 
+  typedef Function<FunctionSpaceImp,FunctionImp> FunctionType;
 
 public:
   //! type of function space this function belongs to 	
@@ -102,8 +106,114 @@ private:
   }
 };
 
+
+//! adapter to provide local function for a function
+template <class FunctionImp, class GridType>
+class LocalFunctionAdapter
+{
+  // type of function 
+  typedef FunctionImp FunctionType;
+
+  //! domain type (from function space)
+  typedef typename FunctionType::DomainType DomainType ;
+  //! range type (from function space)
+  typedef typename FunctionType::RangeType RangeType ;
+  //! jacobian type (from function space)
+  typedef typename FunctionType::JacobianRangeType JacobianRangeType;
+
+  //! type of codim 0 entity
+  typedef typename GridType :: template Codim<0> :: Entity EntityType; 
+
+  private:
+  class LocalFunction
+  {
+    //! type of geometry 
+    typedef typename EntityType :: Geometry GeometryImp;
+  public:  
+    //! constructor initializing local function 
+    LocalFunction(const FunctionType& function, 
+                  const EntityType& en)
+      : function_(function) 
+      , geometry_(&(en.geometry())) 
+    {}
+
+    //! copy constructor 
+    LocalFunction(const LocalFunction& org) 
+      : function_(org.function_) 
+      , geometry_(org.geometry_)  
+    {}
+
+    //! evaluate local function 
+    void evaluate(const DomainType& local, RangeType& result) const
+    {
+      DomainType global = geometry_->global(local);
+      function_.evaluate(global,result);
+    }
+
+    //! evaluate local function 
+    template <class QuadratureType>
+    void evaluate(const QuadratureType& quad,
+                  const int quadPoint, 
+                  RangeType& result) const 
+    {
+      function_.evaluate(quad.point(quadPoint), result);
+    }
+
+    //! evaluate local function 
+    void jacobian(const DomainType& local, RangeType& result) const
+    {
+      assert(false);
+      DomainType global = geometry_->global(local);
+      function_.evaluate(global,result);
+    }
+
+    //! evaluate local function 
+    template <class QuadratureType>
+    void jacobian(const QuadratureType& quad,
+                  const int quadPoint, 
+                  RangeType& result) const 
+    {
+      assert(false);
+      function_.evaluate(quad.point(quadPoint), result);
+    }
+
+    //! init local function
+    void init(const EntityType& en) 
+    {
+      geometry_ = &(en.geometry());
+    } 
+
+  private:
+    const FunctionType& function_;
+    const GeometryImp* geometry_;
+  };
+
+  public:
+  //! type of local function to export 
+  typedef LocalFunction LocalFunctionType; 
+
+  // reference to function this local belongs to
+  LocalFunctionAdapter(const FunctionType& f) 
+    : function_(f)
+  {}
+
+  //! evaluate function on local coordinate local 
+  void evaluate(const DomainType& global, RangeType& result) const 
+  {
+    function_.evaluate(global,result);  
+  }
+
+  //! return local function object 
+  LocalFunctionType localFunction(const EntityType& en) const 
+  {
+    return LocalFunctionType(function_,en);
+  }
+private:    
+  //! reference to function 
+  const FunctionType& function_; 
+};
+
 /** @} end documentation group */
 
 }
-
 #endif
