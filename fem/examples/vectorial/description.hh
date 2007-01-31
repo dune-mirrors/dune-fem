@@ -2,9 +2,7 @@
 #define __DESCRIPTION_HH__
 
 // Dune headers
-//#include <dune/fem/dfadapt.hh>
-//#include <dune/fem/discfuncarray.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/transfer/adaptoperator.hh>
 #include <dune/fem/common/boundary.hh>
 #include <dune/grid/common/gridpart.hh>

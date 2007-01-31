@@ -9,7 +9,7 @@
 #include "../../space/dgspace.hh"
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 
 #if HAVE_ALUGRID
 #include <dune/grid/alu3dgrid.hh>
