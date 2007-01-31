@@ -18,8 +18,8 @@ bool readParameter (const std::basic_string<char> filename,
   std::fstream file (filename.c_str(),std::ios::in);
   if( !file.is_open() ) 
   {
-    std::cerr << "ERROR: cannot open file '" << filename << "' in " <<  __FILE__<< " line: " << __LINE__ << std::endl;
-    DUNE_THROW(IOError,"cannot open file " << filename << std::endl);
+    std::cerr << "WARNING: couldn't open file '" << filename << "' in " <<  __FILE__<< " line: " << __LINE__ << std::endl;
+    return false;
   }
 
   bool readData = false;
