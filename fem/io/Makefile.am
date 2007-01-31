@@ -1,6 +1,6 @@
 # don't follow the full GNU-standard; we definitely need automake >= 1.5
 AUTOMAKE_OPTIONS = foreign 1.5
 
-iodir =  $(includedir)/io
+iodir =  $(includedir)/dune/fem/io
 # do everything in the subdirs
 SUBDIRS = file visual

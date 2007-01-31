@@ -3,5 +3,5 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 SUBDIRS = datadisp functionview gridview 
 
-grapedir =  $(includedir)/grape
+grapedir =  $(includedir)/dune/fem/io/visual/grape
 grape_HEADERS = grapetuple.hh

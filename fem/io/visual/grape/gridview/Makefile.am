@@ -11,5 +11,5 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -D$(GRIDTYPE) -DGRIDDIM=$(GRIDDIM)
 #noinst_PROGRAMS = gridview
 #gridview_SOURCES = gridview.cc 
 
-gridviewdir =  $(includedir)/gridview
+gridviewdir =  $(includedir)/dune/fem/io/visual/grape/gridview
 gridview_HEADERS = gridview.cc
