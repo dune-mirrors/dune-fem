@@ -1,4 +1,4 @@
-odedir = $(includedir)/ode
+odedir = $(includedir)/dune/fem/solver/ode
 ode_HEADERS = gmres.cpp       pc_limiter.cpp\
 bicgstab.cpp         iterative_solver.cpp  qr_solver.cpp\
 blas.hpp         iterative_solver.hpp  quasi_exact_newton.cpp\

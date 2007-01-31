@@ -1,2 +1,2 @@
-0orderdir =  $(includedir)/0order
+0orderdir =  $(includedir)/dune/fem/operator/0order
 0order_HEADERS = 

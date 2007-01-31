@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 SUBDIRS = common 0order 1order 2order matrix projection 
 
-operatordir =  $(includedir)/operator
+operatordir =  $(includedir)/dune/fem/operator
 operator_HEADERS = discretefeopimp.hh      elementintegratortraits.hh\
 inverseoperators.hh discreteoperatorimp.hh  feop.hh\
 lagrangedofhandler.hh elementintegrators.hh   feoperator.hh\
