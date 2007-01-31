@@ -14,11 +14,6 @@
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/misc/timeutility.hh>
 #include <dune/fem/space/dgspace.hh>
-/*
-  #include "../../../space/combinedspace.hh"
-  #include "../../../discretefunction/dfadapt.hh"
-  #include "../../../discretefunction/adaptivefunction.hh"
-*/
 #include "discretemodels.hh"
 #include "limitpass.hh"
 
