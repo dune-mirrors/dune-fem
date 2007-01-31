@@ -3,8 +3,7 @@
 
 #include <vector>
 
-#include <dune/fem/discretefunction/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction/adaptivefunction.hh>
+#include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune
@@ -340,7 +339,6 @@ private:
 public:  
   typedef SparseRowMatrix<double> MatrixType;
   typedef MatrixType PreconditionMatrixType;
-  //typedef DFAdapt<RowSpaceType> PreconditionMatrixType;
   
   //! LocalMatrix 
   template <class MatrixImp> 

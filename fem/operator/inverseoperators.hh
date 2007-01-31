@@ -1,8 +1,8 @@
 #ifndef DUNE_INVERSE_OPERATORS_HH
 #define DUNE_INVERSE_OPERATORS_HH
 
-#include "../discretefunction/common/discretefunction.hh"
-#include "common/operator.hh"
+#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/operator/common/operator.hh>
 
 namespace Dune {
 

@@ -10,7 +10,7 @@
 #endif
 
 //- Dune includes 
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 
 //- local includes 
 #include "blockmatrix.hh"
