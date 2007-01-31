@@ -14,7 +14,7 @@
 #endif
 
 //- Dune-fem includes 
-#include <dune/fem/discretefunction/common/dfcommunication.hh>
+#include <dune/fem/function/common/dfcommunication.hh>
 #include <dune/fem/space/common/singletonlist.hh>
 
 namespace Dune { 
