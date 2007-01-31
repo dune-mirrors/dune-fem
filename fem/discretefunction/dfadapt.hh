@@ -9,10 +9,10 @@
 #include <dune/common/array.hh>
 #include <dune/common/geometrytype.hh>
 
-#include "common/discretefunction.hh"
-#include "common/localfunction.hh"
-#include "common/dofiterator.hh"
-#include "../space/common/dofmanager.hh"
+#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/common/localfunction.hh>
+#include <dune/fem/function/common/dofiterator.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune{
 
