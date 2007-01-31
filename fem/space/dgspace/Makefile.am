@@ -1,4 +1,4 @@
-dgspacedir =  $(includedir)/dgspace
+dgspacedir =  $(includedir)/dune/fem/space/dgspace
 dgspace_HEADERS = dgbasefunctions.hh  legendredgbasefunctions.hh \
 dgadaptiveleafgridpart.hh  dgleafindexset.hh   legendrepoly.hh \
 dgadaptiveleafindexset.hh  dgmapper.hh  orthonormalbase_mod.cc \

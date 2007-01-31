@@ -1,4 +1,4 @@
-commondir =  $(includedir)/common
+commondir =  $(includedir)/dune/fem/space/common
 common_HEADERS = codimindexset.hh filteredgrid.hh \
 adaptiveleafgridpart.hh   communicationmanager.hh   formula.hh \
 adaptiveleafindexset.hh   datacollector.hh          functionspace.hh \
