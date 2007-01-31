@@ -9,9 +9,8 @@
 
 #include <dune/fem/lagrangebase.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/alu3dgrid.hh>
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/grid/alugrid.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/quadrature/fixedorder.hh>
 
 namespace Dune {
