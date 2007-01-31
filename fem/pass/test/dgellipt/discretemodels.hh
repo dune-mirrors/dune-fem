@@ -11,7 +11,7 @@
 // Dune includes
 #include <dune/common/utility.hh>
 #include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/referenceelements.cc>
 #include <dune/fem/quadrature/cachequad.hh>
@@ -39,7 +39,7 @@
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bvector.hh>
-#include <dune/fem/discretefunction/blockvectorfunction.hh>
+#include <dune/fem/function/blockvectorfunction.hh>
 #endif
 
 #define USE_DUNE_ISTL HAVE_DUNE_ISTL

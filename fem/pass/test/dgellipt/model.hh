@@ -13,7 +13,7 @@ using namespace Dune;
 
 // include function space
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/discretefunction/common/function.hh>
+#include <dune/fem/function/common/function.hh>
 
 namespace LDGExample { 
 

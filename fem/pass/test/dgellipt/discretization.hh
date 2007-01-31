@@ -10,7 +10,6 @@
 
 // choose discrete function type
 #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/discretefunction/dfadapt.hh>
 
 #include <dune/grid/common/gridpart.hh>
 
