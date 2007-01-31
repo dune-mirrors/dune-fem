@@ -122,6 +122,7 @@ namespace Dune {
     jacobian(x,ret);
   }
 
+  #endif
   template <class DiscreteFunctionSpaceImp>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   jacobian(EntityType& en, 
@@ -141,7 +142,6 @@ namespace Dune {
   {
     jacobian(quad,quadPoint,ret);
   }
-  #endif
 
   template <class DiscreteFunctionSpaceImp>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::

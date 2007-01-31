@@ -307,6 +307,7 @@ namespace Dune {
                        const DomainType& x, 
                        JacobianRangeType& ret) const; 
 
+    #endif
     //! Jacobian of the discrete function
     inline
     void jacobian(EntityType& en, 
@@ -320,7 +321,6 @@ namespace Dune {
                   int quadPoint,
                   JacobianRangeType& ret) const;
 
-    #endif
     //! get the base function set
     const BaseFunctionSetType& baseFunctionSet() const;
     const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED {return baseFunctionSet();}
