@@ -58,10 +58,10 @@ AC_CONFIG_FILES([Makefile
      fem/quadrature/test/Makefile
      fem/quadrature/caching/Makefile
      fem/quadrature/caching/test/Makefile
-     fem/discretefunction/Makefile
-     fem/discretefunction/common/Makefile
-     fem/discretefunction/adaptivefunction/Makefile
-     fem/discretefunction/blockvectorfunction/Makefile
+     fem/function/Makefile
+     fem/function/common/Makefile
+     fem/function/adaptivefunction/Makefile
+     fem/function/blockvectorfunction/Makefile
      fem/operator/Makefile
      fem/operator/common/Makefile
      fem/operator/0order/Makefile
