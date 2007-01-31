@@ -16,7 +16,7 @@
 #include <dune/fem/misc/boundaryidentifier.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
-#include <dune/fem/discretefunction/common/dfcommunication.hh>
+#include <dune/fem/function/common/dfcommunication.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
