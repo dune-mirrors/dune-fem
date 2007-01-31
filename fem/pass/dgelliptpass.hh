@@ -9,8 +9,8 @@
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
-#include <dune/fem/pass/discretemodel.hh>
-#include <dune/fem/pass/modelcaller.hh>
+#include <dune/fem/pass/ellipticdiscretemodel.hh>
+#include <dune/fem/pass/ellipticmodelcaller.hh>
 
 #include <dune/fem/misc/timeutility.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
@@ -75,7 +75,7 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef DiscreteModelCaller<
+    typedef EllipticDiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
     // Range of the destination
