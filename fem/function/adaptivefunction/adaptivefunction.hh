@@ -7,13 +7,13 @@
 
 //- Dune includes
 #include <dune/common/array.hh>
-#include "../common/discretefunction.hh"
-#include "../common/localfunction.hh"
-#include "../../space/combinedspace/combinedspace.hh"
-#include "../../space/combinedspace/subspace.hh"
-#include "../../space/common/dofmanager.hh"
+#include <dune/fem/space/combinedspace/combinedspace.hh>
+#include <dune/fem/space/combinedspace/subspace.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 //- Local includes
+#include "../common/discretefunction.hh"
+#include "../common/localfunction.hh"
 #include "adaptiveimp.hh"
 
 namespace Dune {
