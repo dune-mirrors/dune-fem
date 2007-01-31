@@ -2,8 +2,8 @@
 #define ADI_VECDISCFUNC_HH
 
 // Dune Includes
-#include <dune/fem/common/discretefunction.hh>
-#include <dune/fem/common/localfunction.hh>
+#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/common/localfunction.hh>
 #include <dune/common/array.hh>
 
 using namespace Dune;
