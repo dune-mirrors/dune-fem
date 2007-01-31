@@ -16,6 +16,8 @@
 #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
+#include <dune/fem/io/file/asciiparser.hh>
+
 //- local includes 
 #include "singletonlist.hh"
 #include "dofmapperinterface.hh"
@@ -171,7 +173,7 @@ private:
   bool myProperty_; 
   
   // make new memory memFactor larger 
-  const double memoryFactor_;
+  double memoryFactor_;
 public:
   //! definition conforming to STL  
   typedef T value_type;
@@ -184,11 +186,11 @@ public:
 
   //! create array of length size
   //! if size is <= 0 then vec of lenght 1 is created (parallel runs)
-  DofArray(int size, double memFactor = 1.5 ) 
+  DofArray(int size) 
     : size_((size<=0) ? 1 : size) 
     , memSize_(size_) 
     , vec_(0) , myProperty_ (true)
-    , memoryFactor_(memFactor)
+    , memoryFactor_(1.0)
   {
     vec_ = AllocatorType :: malloc (size_);
     assert( vec_ );
@@ -206,8 +208,15 @@ public:
     assert( vec_ );
   }
   
+  //! set memory factor
+  void setMemoryFactor(const double memFactor)
+  {
+    memoryFactor_ = memFactor;
+  }
+
   //! Destructor 
-  ~DofArray() {
+  ~DofArray() 
+  {
     if( vec_ && myProperty_ ) AllocatorType :: free ( vec_ );
   }
 
@@ -360,25 +369,34 @@ inline bool DofArray<double>::processXdr(XDR *xdrs)
     return false;
 }
 
+
 template<class ArrayType>
-struct UsedMemorySize
+struct SpecialArrayFeatures
 {
   typedef typename ArrayType :: block_type ValueType;
   static size_t used(const ArrayType & array)  
   {
     return array.size() * sizeof(ValueType);
   }
+  static void setMemoryFactor(ArrayType & array, const double memFactor) 
+  {
+  }
 };
 
 template<class ValueType>
-struct UsedMemorySize<DofArray<ValueType> >
+struct SpecialArrayFeatures<DofArray<ValueType> >
 {
   typedef DofArray<ValueType> ArrayType;
   static size_t used(const ArrayType & array)  
   {
     return array.usedMemorySize();
   }
+  static void setMemoryFactor(ArrayType & array, const double memFactor) 
+  {
+    array.setMemoryFactor(memFactor);
+  }
 };
+
 
 //******************************************************************
 //
@@ -583,7 +601,8 @@ public:
   // Constructor of MemObject, only to call from DofManager 
   MemObject ( const MapperType & mapper, std::string name ,
     MemObjectCheckType & resizeList, 
-    MemObjectCheckType & memResizeList) 
+    MemObjectCheckType & memResizeList,
+    const double memFactor) 
     : mapper_ (mapper) , array_( mapper_.size() ), name_ (name) 
     , checkResize_(*this) , resizeMemObj_(*this) 
     , resizeList_(resizeList) , memResizeList_(memResizeList)
@@ -593,6 +612,9 @@ public:
   
     // the same for the resize call  
     memResizeList_ += resizeMemObj_; 
+    
+    // set memory over estimate factor, only for DofArray 
+    SpecialArrayFeatures<DofArrayType>::setMemoryFactor(array_,memFactor);
   } 
 
   virtual ~MemObject() 
@@ -666,7 +688,7 @@ public:
   //! return used memory size 
   int usedMemorySize() const 
   {
-    return sizeof(ThisType) + UsedMemorySize<DofArrayType>::used(array_); 
+    return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
   }
 };
 
@@ -761,7 +783,7 @@ public:
   //! return used memory size 
   int usedMemorySize() const 
   {
-    return sizeof(ThisType) + UsedMemorySize<DofArrayType>::used(array_); 
+    return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
   }
 };
 
@@ -853,7 +875,7 @@ public:
   //! return used memory size 
   int usedMemorySize() const 
   {
-    return sizeof(ThisType) + UsedMemorySize<DofArrayType>::used(array_); 
+    return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
   }
 };
 
@@ -1062,7 +1084,11 @@ private:
 public: 
   typedef IndexSetRestrictProlong< MyType , LocalIndexSetObjectsType > IndexSetRestrictProlongType;
 private:
+  // combine object holding all index set for restrict and prolong 
   IndexSetRestrictProlongType indexRPop_; 
+  
+  //! memory over estimation factor for re-allocation 
+  double memoryFactor_;
   //**********************************************************
   //**********************************************************
   //! Constructor 
@@ -1072,7 +1098,14 @@ private:
     , defaultChunkSize_(100) 
     , sequence_(0)
     , indexRPop_( *this, insertIndices_ , removeIndices_ ) 
-  {}
+    , memoryFactor_(1.1)
+  {
+    std::string file("dofmanager.param");
+    readParameter(file,"MemoryFactor",memoryFactor_);
+    assert( memoryFactor_ >= 1.0 );
+
+    std::cout << "Created DofManager: memoryFactor = "<<memoryFactor_<<"!\n";
+  }
 
   // copy of dofmanagers is forbidden 
   DofManager(const DofManager &) {
@@ -1456,7 +1489,8 @@ addDofSet(const DofStorageType * ds, const MapperType & mapper, std::string name
 
   typedef MemObject<MapperType,DofStorageType> MemObjectType; 
   MemObjectType * obj = 
-    new MemObjectType ( mapper, name , checkResize_ , resizeMemObjs_ ); 
+    new MemObjectType ( mapper, name , 
+                        checkResize_ , resizeMemObjs_ , memoryFactor_ ); 
   
   // push_front, makes search faster 
   memList_.push_front( obj );    
