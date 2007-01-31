@@ -2,7 +2,7 @@
 AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
-SUBDIRS = pass space discretefunction quadrature operator solver io misc
+SUBDIRS = pass space function quadrature operator solver io misc
 
 # install all files to dune/fem 
 femdir = $(includedir)/dune/fem
