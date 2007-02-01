@@ -42,7 +42,7 @@ using namespace Dune;
 // operator/matrix/spmatrix or old spmatrix  class in 
 // operator/feop/spmatrix
 
-#if 0
+#ifdef USE_OLD_SPARSEMATRIX
 // old spmatrix-class:
 template <class SparseRowMatrix>
 int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
@@ -69,6 +69,7 @@ int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
   int totalnonzeros = 0;  
   for (int r=0; r<nrows; r++)
   {
+    int nonzero = matrix.numNonZeros(r);    
     for (int c = 0; c < nonzero ; c ++)
     {  
       typename SparseRowMatrix::ColumnIterator it = 
@@ -83,7 +84,7 @@ int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
   // write all nonzero entries
   for (int r=0; r<nrows; r++)
   {
-    int nonzero = matrix.numNonZeros();
+    int nonzero = matrix.numNonZeros(r);
     for (int c = 0; c < nonzero ; c ++)
     {  
       typename SparseRowMatrix::ColumnIterator it = 
@@ -131,6 +132,7 @@ int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
   int totalnonzeros = 0;  
   for (int r=0; r<nrows; r++)
   {
+    int nonzero = matrix.numNonZeros(r);
     for (int fakeCol = 0; fakeCol < nonzero ; fakeCol ++)
     {  
       int realCol = matrix.realCol(r,fakeCol);
@@ -144,7 +146,7 @@ int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
   // write all nonzero entries
   for (int r=0; r<nrows; r++)
   {
-    int nonzero = matrix.numNonZeros();
+    int nonzero = matrix.numNonZeros(r);
 //    for (int c = 0; c < nonzero ; c ++)
 //    {  
     
