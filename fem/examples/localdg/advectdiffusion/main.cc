@@ -35,7 +35,7 @@ int main(int argc, char ** argv, char ** envp) {
   int N=40;                
   if (argc>1) 
     N = atoi(argv[1]);
-  typedef SGrid<2, 2> GridType;
+
   SStruct s(N);
   GridType grid(s.n_, s.l_, s.h_);
   // CFL:
@@ -51,12 +51,14 @@ int main(int argc, char ** argv, char ** envp) {
   double epsilon=0.01;
   if (argc>2)
     epsilon=atof(argv[2]);
+
+  typedef U0<GridType> U0Type; 
   // Initial Data and Problem Description
-  U0<GridType> problem1(epsilon,with_difftstep);
-  U0<GridType> problem2(0,false);
+  U0Type problem1(epsilon,with_difftstep);
+  U0Type problem2(0,false);
   // *** Models
   // Advection-Diffusion Model
-  typedef AdvectionDiffusionModel<GridPartType,U0<GridType> > AdvDiffType;
+  typedef AdvectionDiffusionModel<GridPartType, U0Type > AdvDiffType;
   // Advection-Diffusion
   AdvDiffType advdiff(grid,problem1);
   // Diffusion
@@ -64,9 +66,9 @@ int main(int argc, char ** argv, char ** envp) {
   // Advection
   AdvDiffType adveqn(grid,problem2);  
   // Burgers Model
-  typedef BurgersModel<GridPartType,U0<GridType> > BurgersType;
+  typedef BurgersModel<GridPartType, U0Type > BurgersType;
   BurgersType burgers(grid,problem1);
-  typedef BurgersModel<GridPartType,U0<GridType> > BurgersAdvType;
+  typedef BurgersModel<GridPartType, U0Type > BurgersAdvType;
   BurgersType burgersadv(grid,problem2);
   // *** Fluxes 
   // Advection Diffusion

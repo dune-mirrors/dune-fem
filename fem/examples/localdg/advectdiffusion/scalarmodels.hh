@@ -96,8 +96,11 @@ class BurgersModel {
   double tstep_eps;
 };
 // ***********************
+// forward declaration of UpwindFlux 
 template <class Model>
 class UpwindFlux;
+
+
 template <class GridPartType,class ProblemType>
 class AdvectionDiffusionModel {
  public:
@@ -195,7 +198,7 @@ class AdvectionDiffusionModel {
   DomainType velocity;
   double epsilon;
   double tstep_eps;
-  friend class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> >;
+  friend class UpwindFlux<AdvectionDiffusionModel<GridPartType,ProblemType> >;
 };
 // Numerical Upwind-Flux
 template <class GridPartType,class ProblemType>
