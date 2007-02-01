@@ -80,17 +80,27 @@
 **
 **************************************************************************/
 
-#include <iostream>
-#include <config.h>
-#include <dune/common/stdstreams.cc>
-
 // select problem Type by uncommenting one of the two following
-#define POISSON
-//#define ELLIPTIC
+//#define POISSON
+#define ELLIPTIC
 
 // select, whether Kronecker-Treatment of Matrix should be performed
 //#define ACTIVATE_KRONECKER_TREATMENT 0
 #define ACTIVATE_KRONECKER_TREATMENT 1
+
+// select, whether matrix and rhs are to be written to file or not:
+// i.e. comment or uncomment the following
+#define FEOP_SAVE_MATRIX_WANTED
+
+// choose old SparseMatrix class from feop/spmatrix.hh 
+// otherwise new SparseMatrix class in matrix/spmatrix.hh is used
+// this variable is also checked in ioutils.hh
+//#define USE_OLD_SPARSEMATRIX
+
+#include <iostream>
+#include <config.h>
+#include <dune/common/stdstreams.cc>
+#include <dune/fem/io/file/ioutils.hh>
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
@@ -124,8 +134,15 @@ using namespace Dune;
 
 // local includes 
 #include <dune/fem/operator/discreteoperatorimp.hh>
+
+#ifdef USE_OLD_SPARSEMATRIX
+#include <dune/fem/operator/feop_old.hh>
+#include <dune/fem/operator/feop/spmatrix.hh>
+#else
 #include <dune/fem/operator/feop.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
+#endif
+
 //#include "spmatrix.hh"
 #include <dune/fem/misc/l2error.hh>
 #include <dune/fem/space/lagrangespace.hh>
@@ -137,7 +154,6 @@ using namespace Dune;
 #include <dune/fem/operator/elementintegrators.hh>
 #include <dune/fem/operator/elementintegratortraits.hh>
 #include "ellipticmodel.hh"
-
 
 //! definition of model class, see ellipticmodel.hh
 
@@ -362,8 +378,11 @@ double algorithm (const char * filename , int maxlevel, int turn )
           numNonZero, verbose);
    std::cout << "initialized operator (= matrix assembler)\n";
 
+// checkConsistency only required for new SparseMatrix
+#ifndef USE_OLD_SPARSEMATRIX
    assert(elliptOp.systemMatrix().checkConsistency());
    std::cout << "\n";
+#endif
 
    // assemble matrix and perform dirichlet-row killing
    elliptOp.assemble();
@@ -372,6 +391,24 @@ double algorithm (const char * filename , int maxlevel, int turn )
    // build right hand side and dirichlet-Dof setting
    rhsAssembler.assemble(rhs);
    std::cout << "assembled Rhs with Dirichlet treatment\n";
+
+#ifdef FEOP_SAVE_MATRIX_WANTED
+   {     
+   // save matrix and rhs after kronecker-treatment
+   ostringstream oss;
+   oss << "linearmatrix_before_symm" << turn << ".bin";
+   string matfn(oss.str());
+   
+   ostringstream oss2;
+   oss2 << "rhsdofvector_before_symm" << turn << ".bin";
+   string rhsfn(oss2.str());
+   
+   saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
+   saveDofVectorBinary(rhsfn.c_str(),rhs);
+   }
+#endif
+
+
 
    // if symmetrization of system is wanted, execute the following
 #if ACTIVATE_KRONECKER_TREATMENT
@@ -382,6 +419,8 @@ double algorithm (const char * filename , int maxlevel, int turn )
    {
      std::cout << "Values of matrix: \n";
      elliptOp.systemMatrix().printReal(std::cout);
+
+#ifndef USE_OLD_SPARSEMATRIX
      std::cout << "Columns of matrix: \n";
      elliptOp.systemMatrix().printColumns(std::cout);
      std::cout << "Nonzero-Array of matrix: \n";
@@ -389,9 +428,30 @@ double algorithm (const char * filename , int maxlevel, int turn )
      std::cout << "\n";
      assert(elliptOp.systemMatrix().checkConsistency());
      std::cout << "\n";
-     
-     elliptOp.rhsKroneckerColumnsTreatment(rhs);
+#endif
+   }
+   
+   elliptOp.rhsKroneckerColumnsTreatment(rhs);
+   if (verbose)
+   {
      std::cout << "finished Rhs Kronecker column treatment\n";
+   }
+   
+#endif
+
+#ifdef FEOP_SAVE_MATRIX_WANTED
+   // save matrix and rhs after kronecker-treatment
+   {     
+     ostringstream oss;
+     oss << "linearmatrix_after_symm" << turn << ".bin";
+     string matfn(oss.str());
+     
+     ostringstream oss2;
+     oss2 << "rhsdofvector_after_symm" << turn << ".bin";
+     string rhsfn(oss2.str());
+     
+     saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
+     saveDofVectorBinary(rhsfn.c_str(),rhs);
    }
    
 #endif
