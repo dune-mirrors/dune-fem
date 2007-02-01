@@ -15,6 +15,7 @@
 #include <string>
 using namespace std;
 
+
 #include "models.hh"
 #include "advectdiff.hh"
 
@@ -55,7 +56,7 @@ int main(int argc, char ** argv, char ** envp) {
   U0<GridType> problem2(0,false);
   // *** Models
   // Advection-Diffusion Model
-  typedef AdvectionDiffusionModel<GridType,U0<GridType> > AdvDiffType;
+  typedef AdvectionDiffusionModel<GridPartType,U0<GridType> > AdvDiffType;
   // Advection-Diffusion
   AdvDiffType advdiff(grid,problem1);
   // Diffusion
@@ -63,9 +64,9 @@ int main(int argc, char ** argv, char ** envp) {
   // Advection
   AdvDiffType adveqn(grid,problem2);  
   // Burgers Model
-  typedef BurgersModel<GridType,U0<GridType> > BurgersType;
+  typedef BurgersModel<GridPartType,U0<GridType> > BurgersType;
   BurgersType burgers(grid,problem1);
-  typedef BurgersModel<GridType,U0<GridType> > BurgersAdvType;
+  typedef BurgersModel<GridPartType,U0<GridType> > BurgersAdvType;
   BurgersType burgersadv(grid,problem2);
   // *** Fluxes 
   // Advection Diffusion

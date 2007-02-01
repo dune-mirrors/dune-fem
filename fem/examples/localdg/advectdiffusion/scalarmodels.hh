@@ -3,12 +3,13 @@
 
 #include "modeldefault.hh"
 
-template <class GridType,class ProblemType>
+template <class GridPartType,class ProblemType>
 class BurgersModel {
  public:
+  typedef typename GridPartType	:: GridType GridType;
   enum { dimDomain = GridType::dimensionworld };
   enum { dimRange = 1};
-  typedef ModelTraits<GridType,dimRange> Traits;
+  typedef ModelTraits<GridPartType,dimRange> Traits;
   typedef typename Traits::RangeType RangeType;
   typedef typename Traits::DomainType DomainType;
   typedef typename Traits::FluxRangeType FluxRangeType;
@@ -97,12 +98,13 @@ class BurgersModel {
 // ***********************
 template <class Model>
 class UpwindFlux;
-template <class GridType,class ProblemType>
+template <class GridPartType,class ProblemType>
 class AdvectionDiffusionModel {
  public:
+  typedef typename GridPartType :: GridType GridType;	 
   enum { dimDomain = GridType::dimensionworld };
   enum { dimRange = 1};
-  typedef ModelTraits<GridType,dimRange,dimRange*dimDomain> Traits;
+  typedef ModelTraits<GridPartType,dimRange,dimRange*dimDomain> Traits;
   typedef typename Traits::DomainType DomainType;
   typedef typename Traits::RangeType RangeType;
   typedef typename Traits::GradientType GradientType;
@@ -196,10 +198,10 @@ class AdvectionDiffusionModel {
   friend class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> >;
 };
 // Numerical Upwind-Flux
-template <class GridType,class ProblemType>
-class UpwindFlux<AdvectionDiffusionModel<GridType,ProblemType> > {
+template <class GridPartType,class ProblemType>
+class UpwindFlux<AdvectionDiffusionModel<GridPartType,ProblemType> > {
  public:
-  typedef AdvectionDiffusionModel<GridType,ProblemType> Model;
+  typedef AdvectionDiffusionModel<GridPartType,ProblemType> Model;
   typedef typename Model::Traits Traits;
   enum { dimRange = Model::dimRange };
   typedef typename Model::RangeType RangeType;

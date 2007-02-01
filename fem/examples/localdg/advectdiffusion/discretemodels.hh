@@ -143,7 +143,7 @@ namespace Dune {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     
   public:
@@ -252,7 +252,7 @@ namespace Dune {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
   public:
@@ -375,7 +375,7 @@ namespace Dune {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
   public:
@@ -451,7 +451,7 @@ namespace Dune {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
   public:
@@ -558,7 +558,7 @@ namespace Dune {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     
   public:

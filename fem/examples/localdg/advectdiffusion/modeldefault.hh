@@ -106,11 +106,12 @@
 // Dune includes
 namespace Dune {
   // Model-Traits
-  template <class Grid,int dimRange2,
-	    int dimRange1=dimRange2*Grid::dimensionworld>
+  template <class GridPart,int dimRange2,
+	    int dimRange1=dimRange2* GridPart::GridType::dimensionworld>
   class ModelTraits {
   public:
-    typedef Grid GridType;
+    typedef GridPart GridPartType;
+    typedef typename GridPartType :: GridType GridType;
     enum { dimDomain = GridType::dimensionworld };
     enum { dimRange = dimRange2, dimGradRange = dimRange1 };
     typedef FieldVector<double, dimDomain> DomainType;
@@ -119,7 +120,7 @@ namespace Dune {
     typedef FieldVector<double,dimGradRange> GradientType;
     typedef FieldMatrix<double,dimRange,dimDomain> FluxRangeType;
     typedef FieldMatrix<double,dimGradRange,dimDomain> DiffusionRangeType;
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
    };
   // The Local Lax-Friedrichs Flux Function

@@ -1,4 +1,5 @@
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/common/gridpart.hh>
 #include "advectdiff.hh"
 
 #include <dune/fem/solver/odesolver.hh>
@@ -7,13 +8,15 @@
 enum {order=POLORDER,rksteps=POLORDER+1}; 
 // Gitterauswahl
 
+typedef LeafGridPart<GridType> GridPartType;
+//typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 // Modell- und Flussauswahl
 // Skalar
 #if PROBLEM == 1
    #include "scalarmodels.hh"
    #include "initadvectdiff.cc"
    typedef U0<GridType> InitialDataType;
-   typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
+   typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
    // typedef LLFFlux<ModelType> FluxType;
    typedef UpwindFlux<ModelType> FluxType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
@@ -22,7 +25,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
    #include "scalarmodels.hh"
    #include "initburgers.cc"
    typedef U0<GridType> InitialDataType;
-   typedef BurgersModel<GridType,InitialDataType > ModelType;
+   typedef BurgersModel<GridPartType,InitialDataType > ModelType;
    typedef LLFFlux<ModelType> FluxType;
    //typedef DGLimitedAdvectionOperator<ModelType,LLFFlux,order> DgType;
    typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgType;
@@ -31,7 +34,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
    typedef U0Disc<GridType> InitialDataType;
-   typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
+   typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
    // typedef LLFFlux<ModelType> FluxType;
    typedef UpwindFlux<ModelType> FluxType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
@@ -40,7 +43,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
    typedef U0Disc<GridType> InitialDataType;
-   typedef AdvectionDiffusionModel<GridType,InitialDataType> ModelType;
+   typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
    // typedef LLFFlux<ModelType> FluxType;
    typedef UpwindFlux<ModelType> FluxType;
    typedef DGLimitedAdvectionOperator<ModelType,UpwindFlux,order> DgType;

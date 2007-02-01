@@ -7,9 +7,10 @@ dgtest_SOURCES = dgtest.cc
 #datadisp_SOURCES = datadisp.cc
 
 GRIDTYPE = YASPGRID
-DUNE_WORLD_DIM = $(GRIDDIM)
+GRIDDIM = 2
 PROBLEM = 1
 POLORDER = 0
 
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DGRIDDIM=$(GRIDDIM) -DPROBLEM=$(PROBLEM) -DPOLORDER=$(POLORDER) -D$(GRIDTYPE) -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500 
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DGRIDDIM=$(GRIDDIM) -DPROBLEM=$(PROBLEM) -DPOLORDER=$(POLORDER) -D$(GRIDTYPE) -w
+#-O3 -unroll -DNDEBUG --param max-inline-insns-single=1000  --param large-function-growth=1500 
 
