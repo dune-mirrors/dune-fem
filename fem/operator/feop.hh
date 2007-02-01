@@ -26,6 +26,8 @@
 // #include "feop/spmatrix.hh"
 #include "matrix/spmatrix.hh"
 
+#include<dune/fem/io/file/ioutils.hh>
+
 #include "lagrangedofhandler.hh"
 
 //for saving the systemmatrix
@@ -298,25 +300,6 @@ public:
         this->assemble();
     this->matrix_->print(std::cout);
   }
-
-//the following can be used if including fuelcell/src/rbasis/auxiliary.hh
-#ifdef FEOP_SAVE_MATRIX_WANTED
-/*======================================================================*/
-/*! 
- *   saveMatrix: save matrix to binary file, only makes sense in ASSEMBLED 
- *               mode 
- */
-/*======================================================================*/
-
-  void saveMatrix (const char* filename) const 
-        {
-          assert(opMode_==ASSEMBLED);
-          if(!this->matrix_assembled_) 
-              this->assemble();
-          // call function in fuelcell/misc/rbasis/auxiliary.hh
-          saveSparseMatrix(filename, *matrix_);    
-        }
-#endif 
 
 /*======================================================================*/
 /*! 
@@ -902,11 +885,14 @@ public:
         {
           assert(isDirichletDOF_);
           assert(matrixDirichletColumns_);
-
+          
           assert ( rhs.size() == isDirichletDOF_->cols() );
           
           if (verbose_)
               std::cout << "entered rhsKroneckerColumnsTreatment\n";
+
+//          saveSparseMatrixBinary("dircol_matrix.bin",*matrixDirichletColumns_);
+//          saveDofVectorBinary("rhs_before_symm.bin",rhs);
 
           // allocate storage for update vector
           
@@ -915,12 +901,18 @@ public:
           
           DiscreteFunctionType update = 
               DiscreteFunctionType( "update", discFuncSpace);
+
+//          saveDofVectorBinary("update_before_mult.bin",rhs);
           
           // determine update = M_dir * b = M_dir * 
           matrixDirichletColumns_->apply(rhs, update );
+
+//          saveDofVectorBinary("update_after_mult.bin",rhs);
           
           // compute rhs = b_sym = b - M_dir * b = rhs - update
+//          saveDofVectorBinary("rhs_before_subtracting.bin",rhs);
           rhs -=update;
+//          saveDofVectorBinary("rhs_after_subtracting.bin",rhs);
           
           if (verbose_)
               std::cout << " finished\n";
