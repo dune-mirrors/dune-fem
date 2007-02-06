@@ -94,6 +94,7 @@ public:
     nextFreeIndex_ = indexSet_.size(codim);
     oldLeafIndex_.clear();
     oldLeafIndex_ = leafIndex_;
+
     leafId_.clear();
     leafIndex_.clear();
     oldIds_ = 0;
@@ -215,8 +216,6 @@ public:
     
     //checkConsecutive();
     return true; 
-
-    
   }
 
   void checkConsecutive()
@@ -251,9 +250,10 @@ public:
 
   //! return leaf index for given hierarchic number  
   template <class EntityType> 
-  int index ( const EntityType & en, int num ) const
+  int index ( const EntityType & en, int ) const
   {
     // assert if index was not set yet 
+    assert( exists( en ) );
     assert( leafIndex_ [ idSet_.id(en) ] < size() );
     return leafIndex_ [ idSet_.id(en) ];
   }
@@ -612,9 +612,6 @@ public:
     // all higher codims are not used by default
     for(int i=1; i<ncodim; i++) codimUsed_[i] = false;
     //for(int i=1; i<ncodim; i++) codimUsed_[i] = true;
-
-    // set the codim of each Codim Set. 
-    //for(int i=0; i<ncodim; i++) codimLeafSet_[i].setCodim( i );
   }
 
   //! Destructor
@@ -622,6 +619,9 @@ public:
 
   //! return type of index set, for GrapeDataIO
   int type () const { return myType; }
+
+  //! this index set can be used for adaptive computations 
+  bool adaptive () const { return true; }
 
   //****************************************************************
   //
@@ -691,6 +691,13 @@ public:
     template Partition<pitype>::Iterator begin () const
   {
     return leafSet_.template begin<cd,pitype> ();
+  }
+
+  //! \brief returns true if entity is contained in index set 
+  template <class EntityType>
+  bool contains (const EntityType & en) const
+  {
+    return persistentLeafSet().exists(en); 
   }
 
   //****************************************************************
