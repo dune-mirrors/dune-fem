@@ -31,6 +31,9 @@ namespace Dune {
     {
       return indexSet_.geomTypes(codim);
     }
+
+    //! UGGrid might have different geom types 
+    static bool multipleGeomTypes () { return false; }
   };
 
 #if HAVE_UG 
@@ -91,6 +94,9 @@ namespace Dune {
       assert( codim < ncodim );
       return geomTypes_[codim];
     }
+
+    //! UGGrid might have different geom types 
+    static bool multipleGeomTypes () { return true; }
   };
 #endif
 

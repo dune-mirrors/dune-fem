@@ -9,7 +9,9 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
 
+
 //- local includes 
+#include "allgeomtypes.hh"
 #include "singletonlist.hh"
 
 namespace Dune{
@@ -167,18 +169,12 @@ namespace Dune{
     typedef typename FunctionSpaceTraits::GridPartType  GridPartType;
 
   public:
-    //! Constructor (deprecated)
-    DiscreteFunctionSpaceDefault(GridPartType & gridPart, int id)
-      DUNE_DEPRECATED 
-      : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>(id) 
-      , multipleGeometryTypes_( gridPart.indexSet().geomTypes(0).size() > 1 ) 
-    {
-    }
-
     //! Constructor
     DiscreteFunctionSpaceDefault(GridPartType & gridPart) 
       : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>() 
-      , multipleGeometryTypes_( gridPart.indexSet().geomTypes(0).size() > 1 ) 
+      , multipleGeometryTypes_( 
+          AllGeomTypes< typename GridPartType::IndexSetType ,
+                        typename GridPartType::GridType > :: multipleGeomTypes() )
     {
     }
 
