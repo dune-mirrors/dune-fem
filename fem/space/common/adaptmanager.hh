@@ -146,21 +146,31 @@ public:
       typedef typename DofManagerType :: IndexSetRestrictProlongType IndexSetRPType;
       typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
       COType tmpop ( dm_.indexSetRPop() , rpOp_ );
-      //typedef CombineInterface<RestrictProlongPair,IndexSetRPType&,RestProlOperatorImp&> COType;
-      //COType tmpop ( dm_.indexSetRPop() , rpOp_ );
 
       typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
 
-      // make run through grid 
-      for(int l=0; l<grid_.maxLevel(); l++)
+      // make a hierarchical run through grid 
       {
-        LevelIterator endit  = grid_.template lend<0>   ( l );
-        for(LevelIterator it = grid_.template lbegin<0> ( l );
-              it != endit; ++it )
+        // get macro iterator 
+        LevelIterator endit  = grid_.template lend<0>   ( 0 );
+        for(LevelIterator it = grid_.template lbegin<0> ( 0 );
+            it != endit; ++it )
         {
           hierarchicRestrict( *it , tmpop );
         }
       }
+
+      /*
+      for(int l=0; l<grid_.maxLevel(); l++)
+      {
+        LevelIterator endit  = grid_.template lend<0>   ( l );
+        for(LevelIterator it = grid_.template lbegin<0> ( l );
+            it != endit; ++it )
+        {
+          hierarchicRestrict( *it , tmpop );
+        }
+      }
+      */
     }
     
     bool ref = grid_.adapt();
@@ -194,6 +204,47 @@ public:
 private:
   // make hierarchic walk trough 
   template <class EntityType, class RestrictOperatorType  >
+  bool hierarchicRestrict ( EntityType &en, RestrictOperatorType & restop ) const 
+  {
+    if(!en.isLeaf())
+    {
+      // true means we are going to restrict data 
+      bool doRestrict = true;
+      
+      // if the children have children then we have to go deeper 
+      const int childLevel = en.level() + 1;
+      typedef typename EntityType::HierarchicIterator HierarchicIterator; 
+      
+      // check all children first 
+      {
+        HierarchicIterator endit  = en.hend  ( childLevel );
+        for(HierarchicIterator it = en.hbegin( childLevel ); it != endit; ++it)
+        {
+          doRestrict &= hierarchicRestrict( *it , restop );
+        }
+      }
+
+      // if doRestrict is still true, restrict data 
+      if(doRestrict)
+      {
+        // true for first child, otherwise false 
+        bool initialize = true;
+        HierarchicIterator endit  = en.hend  ( childLevel );
+        for(HierarchicIterator it = en.hbegin( childLevel ); it != endit; ++it)
+        {
+          restop.restrictLocal( en , *it , initialize);     
+          initialize = false;
+        }
+      }
+    }
+    // if all children return mightBeCoarsened,
+    // then doRestrict on father remains true 
+    return en.mightBeCoarsened();
+  }
+
+  /*
+  // make hierarchic walk trough 
+  template <class EntityType, class RestrictOperatorType  >
   void hierarchicRestrict ( EntityType &en, RestrictOperatorType & restop ) const 
   {
     if(!en.isLeaf())
@@ -203,9 +254,10 @@ private:
 
       // if the children have children then we have to go deeper 
       HierarchicIterator endit = en.hend  ( en.level() + 1 );
-     
+   
+      assert( it != endit );
       // ok because we checked en.isLeaf 
-      if(!it->isLeaf()) return;
+      if( ! it->isLeaf() ) return; 
       
       // true for first child, otherwise false 
       bool initialize = true;
@@ -221,6 +273,7 @@ private:
       }
     }
   }
+  */
 
   template <class EntityType, class ProlongOperatorType >
   void hierarchicProlong ( EntityType &en, ProlongOperatorType & prolop ) const 
