@@ -6,7 +6,7 @@ static const int dimw = dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/cachequad.hh>
@@ -56,7 +56,7 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
-typedef DFAdapt < DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! Get the Dofmanager type
 typedef DofManager<GridType> DofManagerType;

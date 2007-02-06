@@ -7,7 +7,7 @@ using namespace Dune;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
@@ -60,8 +60,7 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
   polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
-//! dune/fem/discfuncarray.hh
-typedef DFAdapt < DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
