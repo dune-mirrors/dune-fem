@@ -293,7 +293,7 @@ namespace Dune {
         JacobianRangeTupleType> forEach(data_->localFunctionsSelf(),
                                         jacobians_);
       
-      LocalFunctionEvaluateJacobianLocal<Entity, DomainType> eval(en, x);
+      LocalFunctionEvaluateJacobianLocal<DomainType> eval(x);
       forEach.apply(eval);
     }
 
@@ -306,7 +306,7 @@ namespace Dune {
         JacobianRangeTupleType> forEach(data_->localFunctionsSelf(),
                                         jacobians_);
       LocalFunctionEvaluateJacobianQuad<
-        Entity, QuadratureType> eval(en, quad, quadPoint);
+            QuadratureType> eval(quad, quadPoint);
       
       forEach.apply(eval);
     }

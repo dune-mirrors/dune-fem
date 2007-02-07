@@ -348,18 +348,16 @@ namespace Dune {
     int quadPoint_;
   };
 
-  template <class EntityImp, class DomainImp>
+  template <class DomainImp>
   class LocalFunctionEvaluateJacobianLocal {
   public:
-    LocalFunctionEvaluateJacobianLocal(EntityImp& en, 
-                                       const DomainImp& x) :
-      en_(en),
+    LocalFunctionEvaluateJacobianLocal(const DomainImp& x) :
       x_(x)
     {}
 
     template <class LFType, class JRangeType>
     void visit(LFType& lf, JRangeType& res) {
-      lf.jacobian(en_, x_, res);
+      lf.jacobian(x_, res);
     }
 
   private:
@@ -369,23 +367,21 @@ namespace Dune {
     operator=(const LocalFunctionEvaluateJacobianLocal&);
 
   private:
-    EntityImp& en_;
     const DomainImp& x_;
   };
   
-  template <class EntityImp, class QuadratureImp>
+  template <class QuadratureImp>
   class LocalFunctionEvaluateJacobianQuad {
   public:
-    LocalFunctionEvaluateJacobianQuad(EntityImp& en, QuadratureImp& quad,
+    LocalFunctionEvaluateJacobianQuad(QuadratureImp& quad,
                                       int quadPoint) :
-      en_(en),
       quad_(quad),
       quadPoint_(quadPoint)
     {}
 
     template <class LFType, class JRangeType>
     void visit(LFType& lf, JRangeType& res) {
-      lf.jacobian(en_, quad_, quadPoint_, res);
+      lf.jacobian(quad_, quadPoint_, res);
     }
 
   private:
@@ -395,7 +391,6 @@ namespace Dune {
     operator=(const LocalFunctionEvaluateJacobianQuad&);
 
   private:
-    EntityImp& en_;
     QuadratureImp& quad_;
     int quadPoint_;
   };
