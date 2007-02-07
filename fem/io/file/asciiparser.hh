@@ -10,7 +10,7 @@ static const int MAXTAB = 30;
 
 //! reads data folowing the given keyword 
 //! if verbose is true then an output of what was read is given
-//! the token '%' stands for comment 
+//! the token '%' or '#' stands for comment 
 template <class T> 
 bool readParameter (const std::basic_string<char> filename, 
     const std::string keyword, T & data, bool verbose = true) 
@@ -23,15 +23,16 @@ bool readParameter (const std::basic_string<char> filename,
   }
 
   bool readData = false;
-  char ch[1024];
   while (! file.eof() )
   {
-    std::basic_string <char> keyHelp;
+    std::string  keyHelp;
     file >> keyHelp;
-    
-    if(keyHelp[0] == '%')
+   
+    // % or # means comment 
+    if((keyHelp[0] == '%') || (keyHelp[0] == '#'))
     {
-      file.getline(ch,1024,'\n');
+      std::string tmp;
+      std::getline(file,tmp);
     }
     else 
     {
@@ -49,7 +50,7 @@ bool readParameter (const std::basic_string<char> filename,
       else 
         pos = 0;
 
-      std::basic_string <char> key  (keyHelp,0,keyHelp.size() - pos);
+      std::string key (keyHelp,0,keyHelp.size() - pos);
       if(key == keyword)
       {
         file >> data;
