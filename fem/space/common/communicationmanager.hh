@@ -7,6 +7,7 @@
 #include <vector>
 
 //- Dune includes  
+#include <dune/common/mpihelper.hh>
 #include <dune/grid/common/datahandleif.hh>
 #if HAVE_ALUGRID
 // inlcude alugrid to have to communicator class from ALUGrid 
@@ -205,8 +206,12 @@ namespace Dune {
 
     // ALUGrid send/recv buffers 
     typedef ALU3DSPACE ObjectStream ObjectStreamType; 
+    
+    typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
+    typedef ALU3DSPACE MpAccessMPI   MPAccessImplType; 
+
     // ALUGrid communicatior Class 
-    ALU3DSPACE MpAccessMPI mpAccess_;
+    MPAccessInterfaceType * mpAccess_;
 
     //! communication buffers 
     std::vector< ObjectStreamType > buffer_;
@@ -230,10 +235,18 @@ namespace Dune {
       , sendIndexMap_(mySize_)
       , linkRank_()
       // create mpAccess with communicator from grid 
-      , mpAccess_(gridPart_.grid().comm().operator MPI_Comm())
+      // only when size > 1 
+      , mpAccess_( (mySize_ > 1) ? 
+          (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0)
       , nLinks_(0)
       , sequence_(-1)
     {
+    }
+
+    //! destrcutor removeing mpAccess 
+    ~DependencyCache()
+    {
+      delete mpAccess_;
     }
 
   public:
@@ -265,15 +278,15 @@ namespace Dune {
       }
 
       // remove old linkage 
-      mpAccess_.removeLinkage(); 
+      mpAccess().removeLinkage(); 
       // create new linkage 
-      mpAccess_.insertRequestSymetric ( linkStorage_ );
+      mpAccess().insertRequestSymetric ( linkStorage_ );
 
       // get real rank numbers for each link 
-      linkRank_ = mpAccess_.dest();
+      linkRank_ = mpAccess().dest();
 
       // remember number of links 
-      nLinks_ = mpAccess_.nlinks();
+      nLinks_ = mpAccess().nlinks();
 
       buffer_.resize( nLinks_ );
       //std::cout << "Build dependency cache. Size = " << sendIndexMap_[linkRank_[0 ]].size() <<"\n";
@@ -308,7 +321,7 @@ namespace Dune {
       }
 
       // exchange data to other procs 
-      buffer_ = mpAccess_.exchange( buffer_ );
+      buffer_ = mpAccess().exchange( buffer_ );
       
       // read buffers 
       for(int l=0; l<links; ++l) 
@@ -318,6 +331,13 @@ namespace Dune {
     }
 
   private:  
+    //! return reference to mpAccess object
+    MPAccessInterfaceType& mpAccess() 
+    {   
+      assert( mpAccess_ );
+      return *mpAccess_;
+    }
+    
     // write data to object stream 
     template <class DataImp> 
     void writeBuffer(const int link,
