@@ -234,7 +234,7 @@ namespace Dune {
       , recvIndexMap_(mySize_)
       , sendIndexMap_(mySize_)
       , linkRank_()
-      // create mpAccess with communicator from grid 
+      // create mpAccess with world communicator  
       // only when size > 1 
       , mpAccess_( (mySize_ > 1) ? 
           (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0)
