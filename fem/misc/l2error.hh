@@ -15,7 +15,6 @@
 
 // where the quadratures are defined 
 #include <dune/fem/quadrature/cachequad.hh>
-#include <dune/grid/utility/twistutility.hh>
 
 namespace Dune 
 {
