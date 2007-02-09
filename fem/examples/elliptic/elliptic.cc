@@ -100,7 +100,7 @@
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
-#include <dune/fem/io/file/ioutils.hh>
+#include <dune/fem/io/file/matlabhelper.hh>
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
@@ -403,8 +403,9 @@ double algorithm (const char * filename , int maxlevel, int turn )
    oss2 << "rhsdofvector_before_symm" << turn << ".bin";
    string rhsfn(oss2.str());
    
-   saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
-   saveDofVectorBinary(rhsfn.c_str(),rhs);
+   MatlabHelper mhelp; 
+   mhelp.saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
+   mhelp.saveDofVectorBinary(rhsfn.c_str(),rhs);
    }
 #endif
 
@@ -450,8 +451,9 @@ double algorithm (const char * filename , int maxlevel, int turn )
      oss2 << "rhsdofvector_after_symm" << turn << ".bin";
      string rhsfn(oss2.str());
      
-     saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
-     saveDofVectorBinary(rhsfn.c_str(),rhs);
+     MatlabHelper mhelp;     
+     mhelp.saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
+     mhelp.saveDofVectorBinary(rhsfn.c_str(),rhs);
    }
    
 #endif
