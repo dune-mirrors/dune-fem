@@ -18,7 +18,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/referenceelements.hh>
-#include <dune/grid/utility/twistutility.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
 
 //- Dune-fem includes 
 #include <dune/fem/pass/dgpass.hh>
