@@ -3,10 +3,10 @@
 
 //- Dune includes
 #include <dune/common/misc.hh>
-#include <dune/grid/utility/twistutility.hh>
 
 //- Local includes
 #include "elementquadrature.hh"
+#include "caching/twistutility.hh"
 #include "caching/pointmapper.hh"
 #include "caching/cacheprovider.hh"
 
