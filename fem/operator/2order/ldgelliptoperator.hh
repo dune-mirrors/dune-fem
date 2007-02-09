@@ -8,7 +8,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/utility/twistutility.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>

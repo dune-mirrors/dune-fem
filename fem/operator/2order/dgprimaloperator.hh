@@ -6,7 +6,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/array.hh>
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/utility/twistutility.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
 
 #define DOUBLE_FEATURE 
 
