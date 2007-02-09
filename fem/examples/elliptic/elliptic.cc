@@ -75,8 +75,8 @@
 **              make GRIDDIM=3 GRIDTYPE=ALBERTAGRID
 **                   EOC fine, going down from 3 to 2 with refinement
 **              make GRIDDIM=3 GRIDTYPE=ALUGRID_SIMPLEX
-**                   terminate called after throwing an instance 
-**                   of 'Dune::FMatrixError'
+**                   EOC sequence: 1.21079, 1.21079, 1.67512,  1.84767
+**                   increasing
 **
 **************************************************************************/
 
@@ -471,12 +471,18 @@ double algorithm (const char * filename , int maxlevel, int turn )
    // calculation of L2 error 
 
    L2Error < DiscreteFunctionType > l2err;
+   DiscreteFunctionType err ( "error", linFuncSpace );
 
+   LagrangeInterpolator interpol;
+   interpol.interpolFunction(u, err);
+   err -= solution;
+   
    // pol ord for calculation the error chould by higher than 
    // pol for evaluation the basefunctions 
    // double error = l2err.norm<EllipticModelType::TraitsType::quadDegree + 2> 
    //    (u ,solution, 0.0);
-   double error = l2err.norm(u ,solution, 0.0);
+   double error = l2err.norm
+       (u ,solution, EllipticModelType::TraitsType::quadDegree, 0.0);
    std::cout << "\nL2 Error : " << error << "\n\n";
 
 #if HAVE_GRAPE
@@ -486,7 +492,13 @@ double algorithm (const char * filename , int maxlevel, int turn )
 #ifdef SKIP_GRAPE
 #else
      GrapeDataDisplay < GridType > grape(*gridptr); 
-     grape.dataDisplay( solution );
+//     grape.dataDisplay( solution );
+     double time = 0.0;
+     bool vector = false;
+     grape.addData(solution, solution.name(), 
+                          time, vector);
+     grape.addData(err, "error", time , vector);
+     grape.display();
 #endif
    }
 #endif
