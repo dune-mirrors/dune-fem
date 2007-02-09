@@ -3,5 +3,5 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 SUBDIRS = common adaptivefunction blockvectorfunction 
 
-discretefunctiondir =  $(includedir)/dune/fem/discretefunction
-discretefunction_HEADERS = adaptivefunction.hh  blockvectorfunction.hh
+functiondir =  $(includedir)/dune/fem/function
+function_HEADERS = adaptivefunction.hh blockvectorfunction.hh
