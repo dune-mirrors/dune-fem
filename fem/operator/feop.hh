@@ -26,14 +26,9 @@
 // #include "feop/spmatrix.hh"
 #include "matrix/spmatrix.hh"
 
-#include<dune/fem/io/file/ioutils.hh>
+//#include<dune/fem/io/file/ioutils.hh>
 
 #include "lagrangedofhandler.hh"
-
-//for saving the systemmatrix
-#ifdef FEOP_SAVE_MATRIX_WANTED
-#include "/usr/people/haasdonk/fuelcell/src/rbasis/auxiliary.hh"
-#endif
 
 namespace Dune {
 
