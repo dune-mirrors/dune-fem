@@ -74,7 +74,7 @@ namespace Dune{
     typename FunctionSpaceType::RangeType phi (0.0);
     assert( !father.isLeaf() );
     const RangeFieldType weight = 
-      (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
+      (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
 
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
@@ -134,14 +134,6 @@ namespace Dune{
   }
 
 private:
-  template <class EntityType>
-  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
-  {
-    QuadratureType quad(father,1);
-    return std::abs(son.geometry().integrationElement(quad.point(0)) /
-              father.geometry().integrationElement(quad.point(0)));
-  }
-
   mutable DiscreteFunctionType & df_;
   int quadord_;
   mutable RangeFieldType weight_;
@@ -201,7 +193,7 @@ private:
 
     // if weight < 0.0 , weight has not been calculated
     const RangeFieldType weight = 
-      (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
+      (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
     
     LocalFunctionType vati = df_.localFunction( father);
     LocalFunctionType sohn = df_.localFunction( son   );
@@ -235,13 +227,6 @@ private:
   }
 
 private:
-  template <class EntityType>
-  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
-  {
-    QuadratureType quad(father,1);
-    return std::abs(son.geometry().integrationElement(quad.point(0)) /
-              father.geometry().integrationElement(quad.point(0)));
-  }
   mutable DiscreteFunctionType & df_;
   mutable RangeFieldType weight_;
 };

@@ -35,6 +35,16 @@ public:
 		      bool initialize ) const {
     asImp().prolongLocal(father,son,initialize);
   }
+
+protected:  
+  //! calculates the weight, i.e. (volume son)/(volume father)
+  template <class EntityType>
+  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
+  {
+    assert( (son.geometry().volume() / father.geometry().volume()) > 0.0 );
+    return (son.geometry().volume() / father.geometry().volume());
+  }
+  
 private:
   RestProlImp& asImp() {
     return static_cast<RestProlImp&>(*this);
@@ -127,7 +137,7 @@ public:
 
     assert( !father.isLeaf() );
 
-    const RangeFieldType weight = (weight_ < 0.0) ? (calcWeight(father,son)) : weight_; 
+    const RangeFieldType weight = (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
 
     assert( weight > 0.0 );
     
@@ -167,14 +177,6 @@ public:
   }
 
 private:
-  //! calculates the weight, i.e. (volume son)/(volume father)
-  template <class EntityType>
-  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
-  {
-    assert( (son.geometry().volume() / father.geometry().volume()) > 0.0 );
-    return (son.geometry().volume() / father.geometry().volume());
-  }
-  
   mutable DiscreteFunctionType & df_;
   mutable RangeFieldType weight_;
 };
