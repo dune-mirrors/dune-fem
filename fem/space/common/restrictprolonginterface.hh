@@ -104,7 +104,6 @@ template <class DiscreteFunctionType>
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
-  typedef ElementQuadrature<GridPartType,0> BaryQuadType;
 public:  
   //! Constructor
   RestProlOperatorFV ( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
@@ -172,9 +171,8 @@ private:
   template <class EntityType>
   RangeFieldType calcWeight (EntityType &father, EntityType &son) const
   {
-    const BaryQuadType quad(father,0);
-    return std::abs(son.geometry().integrationElement(quad.point(0)) /
-              father.geometry().integrationElement(quad.point(0)));
+    assert( (son.geometry().volume() / father.geometry().volume()) > 0.0 );
+    return (son.geometry().volume() / father.geometry().volume());
   }
   
   mutable DiscreteFunctionType & df_;
