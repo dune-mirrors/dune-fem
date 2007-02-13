@@ -180,10 +180,12 @@ namespace Dune
     RangeType lv1,lv2;
     
     // get quadrature rule for first entity and hope that the geometry 
-    // does not change. Get rule which is exact for product of df1,df2, 
+    // does not change. Get rule which is exact for difference of df1,df2, 
     // assuming them to be polynomial
     
-    int quadOrd = (polOrd*dim)*(polOrd*dim);
+    // for product:
+    //int quadOrd = (polOrd*dim)*(polOrd*dim);
+    int quadOrd = polOrd;
                     
     // iterate over all elements defining the function
     for (IteratorType it = dfsp.begin(); it!=eit; ++it)
