@@ -100,7 +100,7 @@
 #include <iostream>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
-#include <dune/fem/io/file/matlabhelper.hh>
+#include <dune/fem/io/matlab/matlabhelper.hh>
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
