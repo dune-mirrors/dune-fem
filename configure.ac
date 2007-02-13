@@ -71,6 +71,7 @@ AC_CONFIG_FILES([Makefile
      fem/operator/projection/Makefile
      fem/io/Makefile
      fem/io/file/Makefile
+     fem/io/matlab/Makefile
      fem/io/visual/Makefile
      fem/io/visual/grape/Makefile
      fem/io/visual/grape/datadisp/Makefile
