@@ -10,6 +10,7 @@
 //- Local includes
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmapperinterface.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
 #include "subspace.hh"
 
