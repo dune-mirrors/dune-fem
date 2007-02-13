@@ -213,7 +213,7 @@ private:
  */
 /*======================================================================*/
 
-    template <int polOrd, class FunctionType, class DiscreteFunctionType> 
+    template <class FunctionType, class DiscreteFunctionType> 
         void interpolFunction (FunctionType &f, 
                                DiscreteFunctionType &discFunc)
           {
@@ -225,7 +225,7 @@ private:
             EntityFunctionAdapter<
                 EntityType,
                 FunctionType> enf(f);
-            interpolEntityFunction<polOrd> 
+            interpolEntityFunction 
                 (enf, discFunc);            
           };
     
@@ -244,7 +244,7 @@ private:
  */
 /*======================================================================*/
     
-    template <int polOrd, class EntityFunctionType, 
+    template < class EntityFunctionType, 
               class DiscreteFunctionType> 
     void interpolEntityFunction (EntityFunctionType &f, 
                                  DiscreteFunctionType &discFunc)
