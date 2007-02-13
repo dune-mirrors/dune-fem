@@ -6,8 +6,8 @@ if ALBERTA
 ADAPTPROG = l2pro adapt
 endif
 
-noinst_PROGRAMS = $(ADAPTPROG)
-l2pro_SOURCES = l2projection.cc
+check_PROGRAMS = $(ADAPTPROG)
 if ALBERTA
+l2pro_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
 endif
