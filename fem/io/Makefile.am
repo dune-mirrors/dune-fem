@@ -3,4 +3,4 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 iodir =  $(includedir)/dune/fem/io
 # do everything in the subdirs
-SUBDIRS = file visual
+SUBDIRS = file visual matlab
