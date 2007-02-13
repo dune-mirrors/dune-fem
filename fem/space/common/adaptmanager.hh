@@ -159,20 +159,9 @@ public:
           hierarchicRestrict( *it , tmpop );
         }
       }
-
-      /*
-      for(int l=0; l<grid_.maxLevel(); l++)
-      {
-        LevelIterator endit  = grid_.template lend<0>   ( l );
-        for(LevelIterator it = grid_.template lbegin<0> ( l );
-            it != endit; ++it )
-        {
-          hierarchicRestrict( *it , tmpop );
-        }
-      }
-      */
     }
     
+    // adapt grid due to preset markers
     bool ref = grid_.adapt();
 
     if(ref)
@@ -241,39 +230,6 @@ private:
     // then doRestrict on father remains true 
     return en.mightBeCoarsened();
   }
-
-  /*
-  // make hierarchic walk trough 
-  template <class EntityType, class RestrictOperatorType  >
-  void hierarchicRestrict ( EntityType &en, RestrictOperatorType & restop ) const 
-  {
-    if(!en.isLeaf())
-    {
-      typedef typename EntityType::HierarchicIterator HierarchicIterator; 
-      HierarchicIterator it    = en.hbegin( en.level() + 1 );
-
-      // if the children have children then we have to go deeper 
-      HierarchicIterator endit = en.hend  ( en.level() + 1 );
-   
-      assert( it != endit );
-      // ok because we checked en.isLeaf 
-      if( ! it->isLeaf() ) return; 
-      
-      // true for first child, otherwise false 
-      bool initialize = true;
-      
-      for( ; it != endit; ++it)
-      {
-        EntityType & son = *it;
-        if( son.mightBeCoarsened() )
-        {
-          restop.restrictLocal( en , son, initialize);     
-          initialize = false;
-        }
-      }
-    }
-  }
-  */
 
   template <class EntityType, class ProlongOperatorType >
   void hierarchicProlong ( EntityType &en, ProlongOperatorType & prolop ) const 
