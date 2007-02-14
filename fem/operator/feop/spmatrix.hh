@@ -1,6 +1,8 @@
 #ifndef DUNE_SPMATRIX_HH
 #define DUNE_SPMATRIX_HH
 
+#warning "SparseMatrix-class deprecated! Use operator/matrix/spmatrix.hh instead"
+
 #ifdef HAVE_SUPERLU
 #include <dsp_defs.h>
 #endif
@@ -15,9 +17,8 @@ namespace Dune
 //! kept.
 //!
 //! This class should be removed and ../matrix/spmatrix.cc should be 
-//! used. However, exchange in feop.hh is a larger task, so 
-//! temporarily this SparseRowMatrix class is kept for keeping the
-//! FEOp-example running.
+//! used. Temporarily this SparseRowMatrix class is kept for keeping the
+//! fem/examples running.
 //*****************************************************************
 template <class T>
 class SparseRowMatrix 
