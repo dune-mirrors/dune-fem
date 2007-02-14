@@ -29,6 +29,8 @@
 //#include<dune/fem/io/file/ioutils.hh>
 
 #include "lagrangedofhandler.hh"
+#include "../solver/oemsolver/preconditioning.hh"
+
 
 namespace Dune {
 
@@ -176,12 +178,12 @@ namespace Dune {
 
 template <class SystemMatrixImp, class ElementMatrixIntegratorImp>
 class FEOp : 
+        public OEMSolver::PreconditionInterface,
         public Operator<
            typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType::DomainFieldType, 
            typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType::RangeFieldType,
            typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType,
-           typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType>
-
+    typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType>
 {
   
 public:
@@ -232,7 +234,7 @@ public:
         OpMode opMode = ASSEMBLED,
 //        DirichletTreatmentMode dirichletMode = KRONECKER_ROWS,
         int maxNonZerosPerRow = 50,
-        int verbose = 0) :
+        int verbose = 0, bool preconditionSSOR = false) :
           functionSpace_( elMatInt.model().discreteFunctionSpace()),  
           matrix_ (0), 
           matrix_assembled_( false ),
@@ -247,7 +249,8 @@ public:
           isDirichletDOF_assembled_(false),
 //          matrixDirichletColumns_old_(0),
           matrixDirichletColumns_(0),
-          verbose_(verbose)
+          verbose_(verbose),
+          preconditionSSOR_(preconditionSSOR)
         {
           if (verbose_)
               std::cout << "entered constructor of FEOp\n";
@@ -914,6 +917,22 @@ public:
           
 //          std::cout << "finished Rhs-KroneckerColumnTreatment\n";
         };
+
+
+
+  //! method required for preconditioning in bicgstab, to be provided for 
+  //! PreconditioningInterface
+  bool hasPreconditionMatrix() const 
+        { 
+          return preconditionSSOR_; 
+        }
+
+  //! method required for preconditioning in bicgstab, to be provided for 
+  //! PreconditioningInterface
+  const SystemMatrixType& preconditionMatrix() const
+        {
+          return *matrix_;
+        }
   
 // private methods used by the public ones.
 private:
@@ -1252,7 +1271,7 @@ private:
     
     return maxnonzeros;
   }
-  
+      
 //! member variables:
 private: 
   
@@ -1299,7 +1318,9 @@ private:
    
   //! verbosity flag
   int verbose_;
-  
+
+  bool preconditionSSOR_;
+ 
   // //! pointers to storage of argument and destination, only required in 
   // LocalOperator Mode
   // const DiscreteFunctionType * arg_;
