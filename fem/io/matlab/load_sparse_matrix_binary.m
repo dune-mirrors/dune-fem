@@ -25,8 +25,8 @@ function A = load_sparse_matrix_binary(filename)
   magicdouble = fread(fid,1,'double');
   
   if (magicint~=111) | (magicdouble~=111.0)
-    error('magic numbers not read correctly, change the binary format in' ...
-	   ' this reading routine!!');
+    error(['magic numbers not read correctly, change the binary format in' ...
+	   ' this reading routine!!']);
   end;
   
   nrows = fread(fid,1,'int');

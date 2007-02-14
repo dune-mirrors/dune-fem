@@ -231,7 +231,7 @@ function A = load_sparse_matrix(filename)
               }
             }
             fid.close();  
-            return 0; 
+            return 0;  // error return is to be implemented!!
           }
     
 #endif
@@ -248,39 +248,6 @@ function A = load_sparse_matrix(filename)
  *
  * The code for the Matlab-reading method can be extracted from this file.
  */
-/*======================================================================*/
-
-/*======================================================================*/
-/* MATLAB-Code for reading: save the following as load_dof_vector.m
-
-function v = load_dof_vector(filename)
-%function A = load_dof_vector(filename)
-%
-% load binary file, which represents a vector of double values
-%
-% format: 
-% magic numbers: int 111, double 111
-% number of entries
-% for 0.. numer_of_entries-1 double v   
-
-% Bernard Haasdonk 15.12.2006
-
-  fid = fopen(filename,'r');
-  %fid = fopen(filename,'r','ieee-be');
-  
-  magicint = fread(fid,1,'int');
-  magicdouble = fread(fid,1,'double');
-  
-  if (magicint~=111) | (magicdouble~=111.0)
-    error('magic numbers not read correctly!');
-  end;
-  
-  nentries = fread(fid,1,'int');
-  
-  disp(['generating and reading vector with ',num2str(nentries),' entries.']);
-
-  v = fread(fid,nentries,'double');
-*/ /* END OF MATLAB CODE*/
 /*======================================================================*/
     
     template <class DiscreteFunctionType>
@@ -313,6 +280,9 @@ function v = load_dof_vector(filename)
               fid.write((char*)&entry,sizeof(double));
             } // end element iteration 
             fid.close();
+
+            return(0); // error return is to be implemented!!
+            
           }
     
   }; // end class MatlabHelper

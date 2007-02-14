@@ -24,7 +24,7 @@ function v = load_dof_vector_binary(filename)
   
   if (magicint~=111) | (magicdouble~=111.0)
     error(['magic numbers not read correctly, change the binary format in' ...
-	   ' this reading routine!');
+	   ' this reading routine!']);
   end;
   
   nentries = fread(fid,1,'int');
