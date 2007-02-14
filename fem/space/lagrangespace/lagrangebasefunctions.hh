@@ -41,20 +41,24 @@ public:
   virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
                           const DomainType & x, RangeType & phi) const 
   {
-    phi = 0.0;
-    phi[baseNum_] = 1.0;
+    phi = 0;
+    phi[baseNum_] = 1;
+//    phi = 0.0;
+//    phi[baseNum_] = 1.0;
   }
 
   virtual void evaluate ( const FieldVector<deriType, 1> &diffVariable, 
                           const DomainType & x, RangeType & phi) const 
   {
-    phi = 0.0;
+    phi = 0;
+//    phi = 0.0;
   }
 
   virtual void evaluate ( const FieldVector<deriType, 2> &diffVariable, 
                           const DomainType & x, RangeType & phi) const 
   {
-    phi = 0.0 ;
+    phi = 0 ;
+//    phi = 0.0 ;
   }
 
 };

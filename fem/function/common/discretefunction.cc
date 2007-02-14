@@ -162,7 +162,8 @@ inline DiscreteFunctionDefault<DiscreteFunctionTraits > &
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
 operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::RangeFieldType & scalar)
 {
-  (*this) *= (1./scalar);
+//  (*this) *= (1./scalar);
+  (*this) *= (RangeFieldType(1)/scalar);
   return *this;
 }
 

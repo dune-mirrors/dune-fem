@@ -53,7 +53,7 @@ public:
   //! create Mappiung with empty linear combination  
   Mapping( ) 
   {
-    lincomb_.push_back( term( *this, 1.0 ) );
+    lincomb_.push_back( term( *this, 1 ) );
   }
   
   //! delete linear combination if necessary  

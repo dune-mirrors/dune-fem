@@ -142,8 +142,10 @@ namespace Dune {
     VectorialBaseFunctionSet(const FactoryType& factory) :
       storage_(factory),
       util_(FunctionSpaceType::DimRange),
-      tmp_(0.),
-      jTmp_(0.)
+      tmp_(0),
+      jTmp_(0) // changed to integer in case of integer func-space
+//      tmp_(0.),
+//      jTmp_(0.)
     {}
 
     ~VectorialBaseFunctionSet() {}
