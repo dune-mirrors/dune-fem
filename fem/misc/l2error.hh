@@ -173,7 +173,8 @@ namespace Dune
     
     assert( dimrange == 1); // currently only scalar functions supported
     
-    const DiscFuncSpaceType& dfsp = f1.getFunctionSpace();  
+//    const DiscFuncSpaceType& dfsp = f1.getFunctionSpace();  
+    const DiscFuncSpaceType& dfsp = f1.space();  
     
     IteratorType it = dfsp.begin();  
     IteratorType eit = dfsp.end();  
