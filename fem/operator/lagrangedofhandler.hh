@@ -78,7 +78,8 @@ public:
         {
           // currently only implementation for order-1 base functions is
           // realized with correspondence of grid-points to lagrange-points
-          assert(fspace.polynomOrder() == 1);
+//          assert(fspace.polynomOrder() == 1);
+          assert(fspace.order() == 1);
 //          geo_= entity_.geometry();
 //          geotype_ = geo_.type();
 //          refElem_ = refElemCont_(geotype_);
@@ -259,7 +260,8 @@ private:
                 LocalFunctionType;
             
           const DiscreteFunctionSpaceType
-              & functionSpace = discFunc.getFunctionSpace();  
+//              & functionSpace = discFunc.getFunctionSpace();  
+              & functionSpace = discFunc.space();  
           
           discFunc.clear();      
           

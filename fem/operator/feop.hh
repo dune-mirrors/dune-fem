@@ -1268,6 +1268,19 @@ private:
   //! flag indicating whether the global matrix is assembled 
   mutable bool matrix_assembled_;
 
+  //! operator mode 
+  OpMode opMode_;
+
+  //! maximal number of nonzeros per row in the global matrix. Used for 
+  //! allocation. 
+  int  maxNonZerosPerRow_;
+
+  //! reference to element matrix generator provided during initialization
+  ElementMatrixIntegratorType& elMatInt_;
+
+  //! dirichlet-treatment mode 
+  // DirichletTreatmentMode dirichletMode_;
+
   //! vector (matrix with single row), which indicates the Dirichlet-DOFs 
   //! This type is made explicit, as not much optimization can be performed 
   //! here, or? 
@@ -1283,20 +1296,7 @@ private:
   //! here, or? 
 //  mutable OldSparseRowMatrix<double> *matrixDirichletColumns_old_;
   mutable SparseRowMatrix<double> *matrixDirichletColumns_;
-
-  //! reference to element matrix generator provided during initialization
-  ElementMatrixIntegratorType& elMatInt_;
    
-  //! operator mode 
-  OpMode opMode_;
-
-  //! dirichlet-treatment mode 
-  // DirichletTreatmentMode dirichletMode_;
-
-  //! maximal number of nonzeros per row in the global matrix. Used for 
-  //! allocation. 
-  int  maxNonZerosPerRow_;
-
   //! verbosity flag
   int verbose_;
   

@@ -210,7 +210,7 @@ protected:
             if (verbose_)
                 std::cout << "got first entity\n";
             
-            const typename EntityType::Geometry& geo = entity.geometry();
+//            const typename EntityType::Geometry& geo = entity.geometry();
 
             if (verbose_)
                 std::cout << "successful got geometry\n";
