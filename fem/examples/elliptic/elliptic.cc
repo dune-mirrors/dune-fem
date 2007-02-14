@@ -84,7 +84,10 @@
 //#define POISSON
 #define ELLIPTIC
 
-// select, whether Kronecker-Treatment of Matrix should be performed
+// select, whether Kronecker-Treatment of Matrix should be performed,
+// i.e. kronecker rows are extended to kronecker columns. For symmetric 
+// problems this is beneficial as the matrix gets symmetric
+
 //#define ACTIVATE_KRONECKER_TREATMENT 0
 #define ACTIVATE_KRONECKER_TREATMENT 1
 
@@ -92,10 +95,8 @@
 // i.e. comment or uncomment the following
 #define FEOP_SAVE_MATRIX_WANTED
 
-// choose old SparseMatrix class from feop/spmatrix.hh 
-// otherwise new SparseMatrix class in matrix/spmatrix.hh is used
-// this variable is also checked in ioutils.hh
-//#define USE_OLD_SPARSEMATRIX
+// for debugging: force Neumann-Boundary-Values in Models
+// #define FORCENEUMANN
 
 #include <iostream>
 #include <config.h>
@@ -135,20 +136,15 @@ using namespace Dune;
 // local includes 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 
-#ifdef USE_OLD_SPARSEMATRIX
-#include <dune/fem/operator/feop_old.hh>
-#include <dune/fem/operator/feop/spmatrix.hh>
-#else
 #include <dune/fem/operator/feop.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
-#endif
 
 //#include "spmatrix.hh"
 #include <dune/fem/misc/l2error.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/common/filteredgrid.hh>
-#include <dune/fem/discretefunction/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+//#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/inverseoperators.hh>
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/elementintegrators.hh>
@@ -332,6 +328,7 @@ typedef OEMBICGSTABOp<DiscreteFunctionType,EllipticOperatorType> InverseOperator
 
 double algorithm (const char * filename , int maxlevel, int turn )
 {
+
    GridPtr<GridType> gridptr(filename); 
    gridptr->globalRefine (maxlevel);
    std::cout << "maxlevel = "<< maxlevel << "\n";
@@ -379,10 +376,8 @@ double algorithm (const char * filename , int maxlevel, int turn )
    std::cout << "initialized operator (= matrix assembler)\n";
 
 // checkConsistency only required for new SparseMatrix
-#ifndef USE_OLD_SPARSEMATRIX
    assert(elliptOp.systemMatrix().checkConsistency());
    std::cout << "\n";
-#endif
 
    // assemble matrix and perform dirichlet-row killing
    elliptOp.assemble();
@@ -421,7 +416,6 @@ double algorithm (const char * filename , int maxlevel, int turn )
      std::cout << "Values of matrix: \n";
      elliptOp.systemMatrix().printReal(std::cout);
 
-#ifndef USE_OLD_SPARSEMATRIX
      std::cout << "Columns of matrix: \n";
      elliptOp.systemMatrix().printColumns(std::cout);
      std::cout << "Nonzero-Array of matrix: \n";
@@ -429,7 +423,6 @@ double algorithm (const char * filename , int maxlevel, int turn )
      std::cout << "\n";
      assert(elliptOp.systemMatrix().checkConsistency());
      std::cout << "\n";
-#endif
    }
    
    elliptOp.rhsKroneckerColumnsTreatment(rhs);

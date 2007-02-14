@@ -67,9 +67,15 @@ public:
 
 //! return boundary type of a boundary point p used in a quadrature
   template <class EntityType, class QuadratureType>  
-  inline TraitsType::BoundaryType boundaryType(EntityType& en, QuadratureType& quad, int p)
+  inline TraitsType::BoundaryType boundaryType(EntityType& en, 
+                                               QuadratureType& quad, int p)
         {
+#ifdef FORCENEUMANN
+#warning "POISSONMODEL HAS ONLY NEUMANN-BOUNDARY!"
+          return TraitsType::Neumann;
+#else          
           return TraitsType::Dirichlet;
+#endif // FORCENEUMANN         
         }
 
 //! determine dirichlet value in a boundary point used in a quadrature
@@ -93,7 +99,12 @@ public:
   inline void neumannValues(EntityType& en, QuadratureType& quad, int p, 
                             RangeType& ret)
         {
+	  const DomainType& glob = en.geometry().global(quad.point(p)); 
+          //ret[0] = glob[0]+glob[1]; // 1.0;
+          //ret[0] = 0.0;
           ret[0] = 0.0;
+          for(int i=0; i<DomainType::dimension; i++)
+              ret[0] += - ( glob[i] - SQR(glob[i]) );
         }
 
 //! determine robin value in a boundary point used in a quadrature
@@ -276,6 +287,10 @@ public:
   inline TraitsType::BoundaryType boundaryType(EntityType& en, 
 					       QuadratureType& quad, int p)
         {
+#ifdef FORCENEUMANN
+#warning "ELLIPTIC2DMODEL HAS ONLY NEUMANN-BOUNDARY!"
+          return TraitsType::Neumann;	    
+#else
 #if 1 // Full problem: Dirichlet, Neuman and Dirichlet-boundary
 //#if 0 // temporary check: only Dirichlet Bnd
 	  const DomainType& glob = en.geometry().global(quad.point(p)); 
@@ -286,6 +301,7 @@ public:
 	  else 
 #endif 
 	    return TraitsType::Dirichlet;	    
+#endif // FORCENEUMANN
         }
 
 //! determine dirichlet value in a boundary point used in a quadrature
@@ -303,7 +319,7 @@ public:
                             RangeType& ret)
   {
     const DomainType& glob = en.geometry().global(quad.point(p)); 
-    assert(glob[0]<eps);
+//    assert(glob[0]<eps);
     ret[0] = - (1+q) * (glob[1] +1);
   }
 
@@ -486,6 +502,10 @@ public:
   inline TraitsType::BoundaryType boundaryType(EntityType& en, 
 					       QuadratureType& quad, int p)
         {
+#ifdef FORCENEUMANN
+#warning "ELLIPTIC3DMODEL HAS ONLY NEUMANN-BOUNDARY!"
+          return TraitsType::Neumann;
+#else
 	  const DomainType& glob = en.geometry().global(quad.point(p)); 
 	  if (glob[0]<eps)
 	    return TraitsType::Neumann;
@@ -493,6 +513,7 @@ public:
 	    return TraitsType::Robin;
 	  else 
 	    return TraitsType::Dirichlet;	    
+#endif // FORCENEUMANN
         }
 
 //! determine dirichlet value in a boundary point used in a quadrature
