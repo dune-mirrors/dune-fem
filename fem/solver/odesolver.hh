@@ -96,22 +96,38 @@ class OperatorWrapper : public Function {
    *  @ingroup OperatorCommon
    @{
    **/
-   template<class Operator>
-class ExplTimeStepper : public TimeProvider {
- public:
-  ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
+
+template <class Operator>
+class OdeSolverInterface {
+protected:
+  OdeSolverInterface () {}    
+
+  typedef typename Operator :: DestinationType DestinationType;
+public:
+  //! destructor 
+  virtual ~OdeSolverInterface () {}
+  
+  //! solve system 
+  virtual void solve(DestinationType&) = 0;
+
+  //! set dt for next step
+  virtual void setDeltaT(const double ) = 0;
+};
+
+template<class Operator>
+class ExplTimeStepperBase 
+{
+public:
+  ExplTimeStepperBase(Operator& op,int pord, double cfl, bool verbose) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
     expl_(op),
     ode_(0),
     cfl_(cfl),
-    dt_(-1.0),
-    savestep_(1),
-    savetime_(0.0)
+    dt_(-1.0)
   {
     assert( cfl_ <= 1.0 );
-    op.timeProvider(this);
     switch (pord) {
     case 1: ode_=new ExplicitEuler(comm_,expl_); break;
     case 2: ode_=new ExplicitTVD2(comm_,expl_); break;
@@ -126,30 +142,108 @@ class ExplTimeStepper : public TimeProvider {
       ode_->DynamicalObject::set_output(cout);
     }
   }
-  ~ExplTimeStepper() { delete ode_; }
+  
+  ~ExplTimeStepperBase() { delete ode_; }
+  
+protected:
+  int ord_;
+  Communicator & comm_;
+  const Operator& op_;
+  OperatorWrapper<Operator> expl_;
+  DuneODE::ODESolver* ode_;
+  double cfl_;
+  double dt_;
+};
+
+//! ExplicitOdeSolver 
+template<class Operator>
+class ExplicitOdeSolver : 
+  public OdeSolverInterface<Operator> ,
+  public ExplTimeStepperBase<Operator>  
+{
+  typedef ExplTimeStepperBase<Operator> BaseType;
+  typedef typename Operator::DestinationType DestinationType; 
+ public:
+  //! constructor 
+  ExplicitOdeSolver(Operator& op, const TimeProvider& tp, int pord, double cfl, bool verbose = false) :
+    BaseType(op,pord,cfl,verbose),
+    timeProvider_(tp)
+  {
+  }
+
+  //! destructor 
+  virtual ~ExplicitOdeSolver() {}
+  
+  //! solve system 
+  void solve(DestinationType& U0) 
+  {
+    if (this->dt_<0) 
+    {
+      DestinationType tmp("TMP",this->op_.space());
+      this->op_(U0,tmp);
+      this->dt_= this->cfl_ * timeProvider_.timeStepEstimate();
+
+      return ;
+    }
+    
+    double t  = timeProvider_.time();
+    double* u = U0.leakPointer();
+    
+    const bool convergence = this->ode_->step(t, this->dt_, u);
+
+    assert(convergence);
+    if(!convergence) 
+    {
+      std::cerr << "No Convergence of ExplTimeStepper! \n";
+      abort();
+    }
+  }
+
+  //! set delta t 
+  void setDeltaT(const double dt) 
+  {
+    this->dt_ = dt;
+  }
+ private:
+  const TimeProvider& timeProvider_;
+};
+
+template<class Operator>
+class ExplTimeStepper : public TimeProvider, 
+                        public ExplTimeStepperBase<Operator>  
+{
+  typedef ExplTimeStepperBase<Operator> BaseType;
+ public:
+  ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
+    BaseType(op,pord,cfl,verbose),
+    savestep_(1),
+    savetime_(0.0)
+  {
+    op.timeProvider(this);
+  }
   
   double solve(typename Operator::DestinationType& U0) 
   {
     typedef typename Operator:: DestinationType ::
       DiscreteFunctionSpaceType :: GridType :: Traits ::
       CollectiveCommunication DuneCommunicatorType; 
-    const DuneCommunicatorType & duneComm = op_.space().grid().comm();
+    const DuneCommunicatorType & duneComm = this->op_.space().grid().comm();
 
-    if (dt_<0) 
+    if (this->dt_<0) 
     {
-      typename Operator::DestinationType tmp("TMP",op_.space());
-      op_(U0,tmp);
-      dt_=cfl_*timeStepEstimate();
+      typename Operator::DestinationType tmp("TMP",this->op_.space());
+      this->op_(U0,tmp);
+      this->dt_= this->cfl_ * timeStepEstimate();
 
       // global min of dt 
-      dt_ = duneComm.min( dt_ );
+      this->dt_ = duneComm.min( this->dt_ );
     }
     
     resetTimeStepEstimate();
     double t=time();
     double* u=U0.leakPointer();
     
-    const bool convergence = ode_->step(t, dt_, u);
+    const bool convergence = this->ode_->step(t, this->dt_, u);
 
     assert(convergence);
     if(!convergence) 
@@ -158,18 +252,18 @@ class ExplTimeStepper : public TimeProvider {
       abort();
     }
 
-    setTime(t+dt_);
-    dt_=cfl_*timeStepEstimate();
+    setTime(t+ this->dt_);
+    this->dt_ = this->cfl_ * timeStepEstimate();
 
     // global min of dt 
-    dt_ = duneComm.min( dt_ );
+    this->dt_ = duneComm.min( this->dt_ );
     return time();
   }
   void printGrid(int nr, const typename Operator::DestinationType& U) 
   {
     if (time()>=savetime_) 
     {
-      printSGrid(time(),savestep_*10+nr,op_.space(),U);
+      printSGrid(time(),savestep_*10+nr,this->op_.space(),U);
       ++savestep_;
       savetime_+=0.001;
     }
@@ -179,26 +273,26 @@ class ExplTimeStepper : public TimeProvider {
     std::ostringstream filestream;
     filestream << filename;
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ExplTimeStepper, steps: " << ord_ << "\n\n";
-    ofs << "                 cfl: " << cfl_ << "\\\\\n\n";
+    ofs << "ExplTimeStepper, steps: " << this->ord_ << "\n\n";
+    ofs << "                 cfl: " << this->cfl_ << "\\\\\n\n";
     ofs.close();
-    op_.printmyInfo(filename);
+    this->op_.printmyInfo(filename);
   }
  private:
-  int ord_;
-  Communicator & comm_;
-  const Operator& op_;
-  OperatorWrapper<Operator> expl_;
-  DuneODE::ODESolver* ode_;
-  double cfl_;
-  double dt_;
   int savestep_;
   double savetime_;
 };
+
+//////////////////////////////////////////////////////////////////
+//
+//  --ImplTimeStepperBase
+//
+//////////////////////////////////////////////////////////////////
 template<class Operator>
-class ImplTimeStepper : public TimeProvider {
+class ImplTimeStepperBase
+{
  public:
-  ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = false) :
+  ImplTimeStepperBase(Operator& op,int pord,double cfl, bool verbose) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
@@ -206,11 +300,8 @@ class ImplTimeStepper : public TimeProvider {
     ode_(0),
     linsolver_(comm_,cycle),
     cfl_(cfl),
-    dt_(-1.0),
-    savestep_(1),
-    savetime_(0.0)
+    dt_(-1.0)
   {
-    op.timeProvider(this);
     linsolver_.set_tolerance(1.0e-8);
     linsolver_.set_max_number_of_iterations(1000);
     switch (pord) {
@@ -230,61 +321,11 @@ class ImplTimeStepper : public TimeProvider {
       ode_->DynamicalObject::set_output(cout);
     }
   }
-  ~ImplTimeStepper() {delete ode_;}
-  double solve(typename Operator::DestinationType& U0) 
-  {
-    typedef typename Operator:: DestinationType :: GridType :: Traits ::
-      CollectiveCommunication DuneCommunicatorType; 
-    const DuneCommunicatorType & duneComm = op_.space().grid().comm();
-
-    if (dt_<0) 
-    {
-      typename Operator::DestinationType tmp("tmp",op_.space());
-
-      op_(U0,tmp);
-
-      dt_ = cfl_*timeStepEstimate();
-      
-      // calculate global min of dt 
-      dt_ = duneComm.min( dt_ );
-    }
-    resetTimeStepEstimate();
-    double t=time();
-    double* u=U0.leakPointer();
-    const bool convergence =  ode_->step(t, dt_, u);
-
-    assert(convergence);
-    if(!convergence) 
-    {
-      std::cerr << "No Convergence of ImplTimeStepper! \n";
-      abort();
-    }
-    setTime(t+dt_);
-    dt_ = cfl_*timeStepEstimate();
-    
-    // calculate global min of dt 
-    dt_ = duneComm.min( dt_ );
-    
-    return time();
-  }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
-    if (time()>=savetime_) {
-      printSGrid(time(),savestep_*10+nr,op_.space(),U);
-      ++savestep_;
-      savetime_+=0.001;
-    }
-  }
-  void printmyInfo(string filename) const {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ImplTimeStepper, steps: " << ord_ << "\n\n";
-    ofs << "                 cfl: " << cfl_ << "\\\\\n\n";
-    ofs.close();
-    op_.printmyInfo(filename);
-  }
- private:
+  
+  //! destructor 
+  ~ImplTimeStepperBase() {delete ode_;}
+  
+protected:
   int ord_;
   Communicator & comm_;	  
   const Operator& op_;
@@ -294,9 +335,152 @@ class ImplTimeStepper : public TimeProvider {
   enum { cycle = 20 };
   double cfl_;
   double dt_;
+};
+
+
+///////////////////////////////////////////////////////
+//
+//  --ImplicitOdeSolver 
+//
+///////////////////////////////////////////////////////
+template<class Operator>
+class ImplicitOdeSolver : 
+  public OdeSolverInterface<Operator> ,
+  public ImplTimeStepperBase<Operator> 
+{
+  typedef ImplTimeStepperBase<Operator> BaseType;
+  typedef typename Operator::DestinationType DestinationType;
+public:
+  ImplicitOdeSolver(Operator& op, const TimeProvider& tp,
+                    int pord, double cfl, bool verbose = false) :
+    BaseType(op,pord,cfl,verbose),
+    timeProvider_(tp)
+  {
+  }
+
+  virtual ~ImplicitOdeSolver() {}
+  
+  void solve(DestinationType& U0) 
+  {
+    if(this->dt_ < 0.0) 
+    {
+      DestinationType tmp("tmp",this->op_.space());
+
+      this->op_(U0,tmp);
+
+      this->dt_ = this->cfl_ * timeProvider_.timeStepEstimate();
+
+      return ;
+    }
+
+    double t  = timeProvider_.time();
+    double* u = U0.leakPointer();
+    const bool convergence =  this->ode_->step(t, this->dt_, u);
+
+    assert(convergence);
+    if(!convergence) 
+    {
+      std::cerr << "No Convergence of ImplicitOdeSolver! \n";
+      abort();
+    }
+  }
+
+  void setDeltaT(const double dt) 
+  {
+    assert( dt < 1.0 );
+    this->dt_ = dt;
+  }
+
+ private:
+  const TimeProvider& timeProvider_;
+};
+
+
+///////////////////////////////////////////////////////
+//
+//  --ImplTimeStepper 
+//
+///////////////////////////////////////////////////////
+template<class Operator>
+class ImplTimeStepper : public TimeProvider ,
+                        public ImplTimeStepperBase<Operator> 
+{
+  typedef ImplTimeStepperBase<Operator> BaseType;
+  typedef typename Operator::DestinationType DestinationType;
+public:
+  ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = false) :
+    TimeProvider(),
+    BaseType(op,pord,cfl,verbose),
+    savestep_(1),
+    savetime_(0.0)
+  {
+    op.timeProvider(this);
+  }
+  
+  double solve(DestinationType& U0) 
+  {
+    typedef typename DestinationType :: GridType :: Traits ::
+      CollectiveCommunication DuneCommunicatorType; 
+    const DuneCommunicatorType & duneComm = this->op_.space().grid().comm();
+
+    if (this->dt_<0) 
+    {
+      DestinationType tmp("tmp",this->op_.space());
+
+      this->op_(U0,tmp);
+
+      this->dt_ = this->cfl_ * timeStepEstimate();
+      
+      // calculate global min of dt 
+      this->dt_ = duneComm.min( this->dt_ );
+    }
+    resetTimeStepEstimate();
+    double t=time();
+    double* u=U0.leakPointer();
+    const bool convergence =  this->ode_->step(t, this->dt_, u);
+
+    assert(convergence);
+    if(!convergence) 
+    {
+      std::cerr << "No Convergence of ImplTimeStepper! \n";
+      abort();
+    }
+    setTime(t+ this->dt_);
+    this->dt_ = this->cfl_ * timeStepEstimate();
+    
+    // calculate global min of dt 
+    this->dt_ = duneComm.min( this->dt_ );
+    
+    return time();
+  }
+  void printGrid(int nr, 
+		 const typename Operator::DestinationType& U) {
+    if (time()>=savetime_) {
+      printSGrid(time(),savestep_*10+nr,this->op_.space(), U);
+      ++savestep_;
+      savetime_+=0.001;
+    }
+  }
+  void printmyInfo(string filename) const {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "ImplTimeStepper, steps: " << this->ord_ << "\n\n";
+    ofs << "                 cfl: " << this->cfl_ << "\\\\\n\n";
+    ofs.close();
+    this->op_.printmyInfo(filename);
+  }
+ private:
   int savestep_;
   double savetime_;
 };
+
+
+//////////////////////////////////////////////////////////////
+//
+//
+//
+//////////////////////////////////////////////////////////////
 template<class OperatorExpl,class OperatorImpl>
 class SemiImplTimeStepper : public TimeProvider {
   typedef OperatorExpl Operator;
