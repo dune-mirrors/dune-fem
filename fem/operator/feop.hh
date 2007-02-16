@@ -656,7 +656,27 @@ public:
 
     if (verbose_)
         determineRealNonZeros();
+   
+
+    // in case of use of SSOR preconditioning, the matrix must not have
+    // zero diagonal entries. Therefore zero-rows are transformed
+    // to unit-rows and a global matrix diagonal check is performed.
     
+    if (preconditionSSOR_)
+    {
+      // set unit rows in empty rows
+      for (int i=0; i!=matrix_->rows(); i++)
+          if (matrix_->numNonZeros(i) == 0)
+              matrix_->set(i,i,1.0);
+      
+      // check diagonal     
+      bool has_zero_entry = false;
+      for (int i=0; i!=matrix_->rows(); i++)
+          if ((*matrix_)(i,i) == 0.0) // has zero entry
+              has_zero_entry = true;
+      assert(!has_zero_entry);      
+    }
+       
     matrix_assembled_ = true;
   };
 
@@ -757,7 +777,7 @@ public:
           if (matrixDirichletColumns_)
               delete(matrixDirichletColumns_);
 
-          if (verbose_)
+          if (verbose_>=2)
               std::cout << "deleted old storage for submatrix\n";
           
           // count new number of Dirichlet-DOFs
@@ -773,7 +793,7 @@ public:
  
 //          assert(nDirDOFs == nDirDOFs_old);
                    
-          if (verbose_)
+          if (verbose_>=2)
               std::cout << "counted number of dirichletDOFs : " << 
                   nDirDOFs << " \n";
 
@@ -792,7 +812,7 @@ public:
                maxNonZerosPerRow_, 
                0.0);
           
-          if (verbose_)
+          if (verbose_>=2)
               std::cout << "allocated new storage for submatrix\n";
           
 //          assert(matrixDirichletColumns_old_);
@@ -817,7 +837,7 @@ public:
           for (int i=0; i!=matrix_->rows(); i++)
           {
             if (i%100 == 0)
-                if (verbose_)
+                if (verbose_>=2)
                     std::cout << " processing row no " << i << " \n";
             // for each non-Dirichlet-row
             if (!(*isDirichletDOF_)(0,i)) 
@@ -844,14 +864,14 @@ public:
             int realCol = isDirichletDOF_->realCol(0,fakeCol);
             if (realCol!=SparseRowMatrix<int>::defaultCol)
             { 
-              if (verbose_)
+              if (verbose_>=2)
                   std::cout << " setting unitcolumn no " << 
                       realCol << " \n";
               matrix_->unitCol( realCol );    
             }
           }
           
-          if (verbose_)
+          if (verbose_>=2)
               determineRealNonZeros();
         };
   
@@ -912,7 +932,7 @@ public:
           rhs -=update;
 //          saveDofVectorBinary("rhs_after_subtracting.bin",rhs);
           
-          if (verbose_)
+          if (verbose_>=2)
               std::cout << " finished\n";
           
 //          std::cout << "finished Rhs-KroneckerColumnTreatment\n";
@@ -1091,7 +1111,7 @@ private:
           {
             
             if (numit%100 == 0)
-                if (verbose_)
+                if (verbose_>=2)
                     std::cout << " processing entity no " << numit << " \n";
 
             const EntityType & en = *it; 
@@ -1147,7 +1167,7 @@ private:
             }
           }
 
-          if (verbose_)
+          if (verbose_>=2)
               std::cout << " finished searchDirichletDOFs \n";
 
           isDirichletDOF_assembled_ = true;
@@ -1185,15 +1205,15 @@ private:
             {
               if ((*isDirichletDOF_)(0,realCol))
               {
-                if (verbose_)
+                if (verbose_ >= 2)
                     std::cout << " setting unit row " << realCol << " \n";  
                 matrix_->unitRow(realCol);          
               }
             } 
           }
           
-          if (verbose_)
-              std::cout << " enf of bndCorrectMatrix \n";  
+          if (verbose_>=2)
+              std::cout << " end of bndCorrectMatrix \n";  
           
         }; // end of bndCorrectMatrix
 
@@ -1237,7 +1257,7 @@ private:
     
     for (int i=0; i!=matrix_->rows(); i++)
     {
-      if (verbose_ && (i%100==0)) 
+      if ((verbose_>=2) && (i%100==0)) 
           std::cout << " counting nonzeros in row " << i <<" \n";  
       
       int nonzeros = 0;
