@@ -459,7 +459,8 @@ public:
   IndexSetObject ( IndexSetType & iset 
       , LocalIndexSetObjectsType & indexSetList
       , LocalIndexSetObjectsType & insertList 
-      , LocalIndexSetObjectsType & removeList) : indexSet_ (iset) 
+      , LocalIndexSetObjectsType & removeList) 
+   : indexSet_ (iset) 
    , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_) 
    , indexSetList_(indexSetList) 
    , insertList_(insertList) 
@@ -668,17 +669,19 @@ public:
   {
     if( mapper_.needsCompress() )
     {
+      const int nSize = newSize();
       // run over all holes and copy array vules to new place 
       const int holes = mapper_.numberOfHoles(); 
       for(int i=0; i<holes; ++i)
       {
+        assert( mapper_.newIndex(i) < nSize );
         // copy value 
         array_[ mapper_.newIndex(i) ] 
           = array_[ mapper_.oldIndex(i) ];
       }
     }
 
-    // store new size, which is should be smaller then actual size 
+    // store new size, which should be smaller then actual size 
     array_.resize( newSize() );
   }
  
@@ -1057,10 +1060,6 @@ private:
   mutable DataCollectorType dataInliner_;
   mutable DataCollectorType dataXtractor_;
  
-  typedef typename DataCollectorType::LocalInterfaceType LocalDataCollectorType;
-  mutable LocalDataCollectorType dataWriter_;
-  mutable LocalDataCollectorType dataReader_;
-
   typedef LocalInterface<typename GridType::
         template Codim<0>::Entity> LocalIndexSetObjectsType;
 
@@ -1126,6 +1125,9 @@ public:
   };
   
 public:
+  //! return factor to over estimate new memory allocation 
+  double memoryFactor() const { return memoryFactor_; }
+  
   //! add new index set to the list of the indexsets of this dofmanager
   template <class IndexSetType>
   inline void addIndexSet (const GridType &grid, IndexSetType &iset); 
@@ -1260,7 +1262,7 @@ private:
       (*it)->resize ( nSize );
     }
   }
-
+  
 public:
   //! compress all data that is hold by this dofmanager 
   //! this will increase the sequence counter by 1 
@@ -1306,20 +1308,6 @@ public:
     dataXtractor_ += d;
   }
 
-  //! add data handler for data write to dof manager
-  template <class DataCollType>
-  void addDataWriter ( DataCollType & d)
-  {
-    dataWriter_ += d;
-  }
-
-  //! add data handler for data read to dof manager
-  template <class DataCollType>
-  void addDataReader ( DataCollType & d)
-  {
-    dataReader_ += d;
-  }
-
   //! packs all data of this entity en and all child entities  
   template <class ObjectStreamType, class EntityType>
   void inlineData ( ObjectStreamType & str, EntityType & en )
@@ -1327,48 +1315,12 @@ public:
     dataInliner_.apply(str,en);
   }
 
-  //! unpacks all data of this entity en and all child entities  
-  template <class ObjectStreamType, class EntityType>
-  void scatter ( ObjectStreamType & str, EntityType & en , size_t size = 0)
-  {
-    std::pair < ObjectStreamType * , const EntityType * > p (&str,&en);
-    dataWriter_.apply( p );
-  }
-
-  //! returns true if size per entity of given dim and codim is a constant
-  bool fixedsize (int dim, int codim) const
-  {
-    return true;
-  }
-
-  //! returns true if data for this codim should be communicated
-  bool contains (int dim, int codim) const
-  {
-    return (codim==0);
-  }
-
-  template <class EntityType>
-  size_t size(const EntityType & en ) const 
-  {
-    std::cerr << "WARNING: implement size method in DofManager\n";
-    return 0;
-  }
-
-  //! packs all data of this entity to message buffer 
-  template <class ObjectStreamType, class EntityType>
-  void gather ( ObjectStreamType & str, EntityType & en )
-  {
-    std::pair < ObjectStreamType * , const EntityType * > p (&str,&en);
-    dataReader_.apply( p );
-  }
-  
   //! unpacks all data of this entity from message buffer 
   template <class ObjectStreamType, class EntityType>
   void xtractData ( ObjectStreamType & str, EntityType & en )
   {
-    // here the elements already have been created that means we can 
-    // all resize and the memory is adapted
-    //resize();
+    // here the elements already have been created 
+    // that means we can xtract data
     dataXtractor_.apply(str,en);
   }
 
