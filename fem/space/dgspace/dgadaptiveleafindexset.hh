@@ -98,7 +98,7 @@ public:
     codimLeafSet_.setCodim( 0 );
 
     // give all entities that lie below the old entities new numbers 
-    markAllUsed ();
+    markAllUsed<All_Partition> ();
   }
 
   //! Destructor
@@ -247,17 +247,22 @@ public:
 
   //! make to index numbers consecutive 
   //! return true, if at least one hole existed  
+  //- --compress 
   bool compress ()
   {
     // in parallel runs skip this check 
-    if(compressed_ && this->grid_.comm().size() <= 1) return false;
+    if(compressed_ && this->grid_.comm().size() <= 1) 
+    {
+      return false;
+    }
 
     // mark all leaf elements  
     // needs a leaf traversal 
-    markAllUsed(); 
+    markAllUsed<All_Partition> (); 
 
     // true if a least one dof must be copied 
     bool haveToCopy = codimLeafSet_.compress(); 
+
 
     compressed_ = true;
     return haveToCopy;
@@ -273,7 +278,18 @@ public:
     const int idx = hIndexSet_.index(en);
     if( !codimLeafSet_.exists( idx ) ) 
     {
-      codimLeafSet_.insert ( idx );
+#if HAVE_MPI 
+      // we need special treatment for ghosts 
+      // ghosts should not be inlcuded in holes list 
+      if(en.partitionType() == GhostEntity) 
+      {
+        codimLeafSet_.insertGhost ( idx );
+      }
+      else   
+#endif
+      {
+        codimLeafSet_.insert ( idx );
+      }
       compressed_ = false;
     }
 
@@ -370,6 +386,7 @@ private:
 
   //! mark indices that are still used and give new indices to 
   //! elements that need one 
+  template <PartitionIteratorType pitype>
   void markAllUsed () 
   {
     // make correct size of vectors 
@@ -378,10 +395,11 @@ private:
     // unset all indices 
     codimLeafSet_.set2Unused(); 
     
-    typedef typename GridType:: template Codim<0> :: LeafIterator LeafIteratorType; 
+    typedef typename GridType:: template Codim<0> :: template 
+        Partition<pitype> :: LeafIterator LeafIteratorType; 
     // walk over leaf level and locate all needed entities  
-    LeafIteratorType endit  = this->grid_.template leafend<0>   ();
-    for(LeafIteratorType it = this->grid_.template leafbegin<0> (); 
+    LeafIteratorType endit  = this->grid_.template leafend<0,pitype>   ();
+    for(LeafIteratorType it = this->grid_.template leafbegin<0,pitype> (); 
         it != endit ; ++it )
     {
       this->insert( *it );
