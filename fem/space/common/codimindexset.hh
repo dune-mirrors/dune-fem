@@ -112,14 +112,17 @@ private:
 
   int actSize_;
   
-  const int factor_; 
-
   int myCodim_; 
+
+  const double memFactor_;
 
 public:
   //! Constructor
-  CodimIndexSet () : nextFreeIndex_ (0), actSize_(0), 
-    factor_(2) , myCodim_(-1) 
+  CodimIndexSet (double memoryFactor = 1.1) 
+    : nextFreeIndex_ (0)
+    , actSize_(0)
+    , myCodim_(-1) 
+    , memFactor_(memoryFactor) 
   {
   }
 
@@ -136,25 +139,30 @@ public:
   }
 
   //! reallocate the vector for new size
-  void resize ( int newSize )
+  void resize ( const int newSize )
   {
-    int oldSize = leafIndex_.size();
+    const int oldSize = leafIndex_.size();
     if(oldSize > newSize) return;
 
-    leafIndex_.realloc( newSize );
-    state_.realloc( newSize );
+    const int newMemSize = ((int) memFactor_ * newSize);
+    
+    leafIndex_.realloc( newMemSize );
+    state_.realloc( newMemSize );
 
     // reset new created parts of the vector 
-    for(int i=oldSize; i<leafIndex_.size(); ++i)
+    const int leafSize = leafIndex_.size();
+    for(int i=oldSize; i<leafSize; ++i)
     {
       leafIndex_[i] = -1;
       state_[i] = UNUSED;
     }
   }
 
+  //! set all entries to unused 
   void set2Unused() 
   {
-    for(int i=0; i<state_.size(); ++i) state_[i] = UNUSED;
+    const int size = state_.size();
+    for(int i=0; i<size; ++i) state_[i] = UNUSED;
   }
 
   //! make to index numbers consecutive 
@@ -245,7 +253,14 @@ public:
     // this call only sets the size of the vectors 
     oldIdx_.resize(holes);
     newIdx_.resize(holes);
-
+/*
+#ifndef NDEBUG
+    for(int i=0; i<oldIdx_.size(); ++i) 
+    {
+      assert( newIdx_[i] < leafIndex_.size() );
+    }
+#endif
+*/
     // the next index that can be given away is equal to size
     nextFreeIndex_ = actSize_;
     return haveToCopy;
@@ -277,15 +292,11 @@ public:
   int state ( int num ) const
   {
     // assert if index was not set yet 
+    assert( num >= 0 );
+    assert( num < state_.size() );
     return state_ [ num ];
   }
   
-  //! return state of index for given hierarchic number  
-  bool exsits ( int num ) const DUNE_DEPRECATED 
-  {
-    return (state(num) != UNUSED);
-  }
- 
   //! return state of index for given hierarchic number  
   bool exists ( int num ) const
   {
