@@ -231,10 +231,16 @@ public:
 
           assert(actHole >= 0);
 
-          // remember old and new index 
-          oldIdx_[holes] = leafIndex_[i]; 
-          newIdx_[holes] = holes_[actHole];
-          ++holes;
+#if HAVE_MPI 
+          // only for none-ghost elements hole storage is applied
+          if( state_[i] == USED ) 
+#endif
+          {
+            // remember old and new index 
+            oldIdx_[holes] = leafIndex_[i]; 
+            newIdx_[holes] = holes_[actHole];
+            ++holes;
+          }
           
           leafIndex_[i] = holes_[actHole];
 
@@ -253,14 +259,7 @@ public:
     // this call only sets the size of the vectors 
     oldIdx_.resize(holes);
     newIdx_.resize(holes);
-/*
-#ifndef NDEBUG
-    for(int i=0; i<oldIdx_.size(); ++i) 
-    {
-      assert( newIdx_[i] < leafIndex_.size() );
-    }
-#endif
-*/
+
     // the next index that can be given away is equal to size
     nextFreeIndex_ = actSize_;
     return haveToCopy;
@@ -322,7 +321,7 @@ public:
   }
 
   // insert element and create index for element number  
-  void insert (int num )
+  void insert (const int num )
   {
     assert(num < leafIndex_.size() );
     if(leafIndex_[num] < 0)
@@ -331,6 +330,18 @@ public:
       nextFreeIndex_++;
     }
     state_[num] = USED;
+  }
+  
+  // insert element and create index for element number  
+  void insertGhost (const int num )
+  {
+    assert(num < leafIndex_.size() );
+    if(leafIndex_[num] < 0)
+    {
+      leafIndex_[num] = nextFreeIndex_;
+      nextFreeIndex_++;
+    }
+    state_[num] = NEW;
   }
   
   // read/write from/to xdr stream 
