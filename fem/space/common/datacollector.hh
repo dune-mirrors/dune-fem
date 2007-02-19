@@ -400,9 +400,12 @@ class DataCollector
   
 public:
   //! create DiscreteOperator with a LocalOperator 
-  DataCollector (GridType & grid, DofManagerType & dm, LocalDataCollectImp & ldc, bool read , int numChildren = 8) 
+  DataCollector (GridType & grid, DofManagerType & dm, LocalDataCollectImp & ldc, 
+                 bool read , bool leaf , int numChildren = 8) 
     : grid_(grid) , dm_ ( dm ), ldc_ (ldc) 
-    , rwType_((read) ? (readData) : writeData ) , numChildren_(numChildren) 
+    , rwType_((read) ? (readData) : writeData )
+    , leaf_(leaf) 
+    , numChildren_(numChildren) 
   {}
 
   //! Desctructor 
@@ -460,7 +463,7 @@ public:
     COType *newLDCOp = new COType ( ldc_ + op.getLocalInterfaceOp() );
     typedef DataCollector<GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) , leaf_ );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -506,16 +509,39 @@ public:
   //! write all data of all entities blowe this Entity to the stream 
   void inlineData (ObjectStreamType & str, EntityType & en) const 
   {
-    //std::cout << "DataCollector Inline data\n";
-    goDown(str,en,grid_.maxLevel(),writeData);
+    const int mxlvl = grid_.maxLevel();
+
+    // read/write macro element
+    inlineLocal(str,en);
+    
+    {
+      typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
+      HierarchicIteratorType endit  = en.hend(mxlvl);
+      for(HierarchicIteratorType it = en.hbegin(mxlvl); 
+          it != endit; ++it )
+      {
+        inlineLocal(str, *it); 
+      }
+    }
   }
 
   //! read all data of all entities blowe this Entity from the stream 
   void xtractData (ObjectStreamType & str, EntityType & en) const 
   {
-    // dont needed anymore, because here the grid was 
-    // adapted before 
-    goDown(str,en,grid_.maxLevel(),readData);
+    const int mxlvl = grid_.maxLevel();
+
+    // read/write macro element
+    xtractLocal(str,en);
+    
+    {
+      typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
+      HierarchicIteratorType endit  = en.hend(mxlvl);
+      for(HierarchicIteratorType it = en.hbegin(mxlvl); 
+          it != endit; ++it )
+      {
+        xtractLocal(str, *it); 
+      }
+    }
   }
   
 private:
@@ -528,7 +554,7 @@ private:
     COType *newLDCOp = new COType ( ldc_ );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData), leaf_ );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -537,42 +563,40 @@ private:
     return dcOp;
   }
  
-  void goDown (ObjectStreamType & str, EntityType & en, const int mxlvl, const ReadWriteType rwType) const 
+  // write data of entity 
+  void inlineLocal(ObjectStreamType & str, EntityType& en) const 
   {
+    assert( rwType_ == writeData );
+
+    // if only leaf data is inlined then 
+    // check whether en is leaf element 
+    if( leaf_ && !en.isLeaf() ) return;
+
     ParamType p( &str , &en );
+    // apply local operators 
     ldc_.apply( p );
 
-    if(rwType_ == writeData)
-      dm_.removeOldIndex( en );
-    else
-    {
-      dm_.insertNewIndex( en );
-    }
-
-    {
-      typedef typename EntityType::HierarchicIterator HierItType;
-      HierItType endit = en.hend(mxlvl);
-      for(HierItType it = en.hbegin(mxlvl); 
-          it != endit; ++it )
-      {
-        if(rwType_ == writeData)
-        {
-          dm_.removeOldIndex( *it );
-        }
-        else
-        {
-          dm_.insertNewIndex( *it );
-          // check not needed since we get the exact size of 
-          // elements to create during xtract 
-          //dm_.checkMemorySize();
-        }
-
-        p.second = it.operator -> ();
-        ldc_.apply( p );
-      }
-    }
+    // remove entity from index sets 
+    dm_.removeOldIndex( en );
   }
+  
+  // read data of entity 
+  void xtractLocal(ObjectStreamType & str, EntityType& en) const 
+  {
+    assert( rwType_ == readData );
+    
+    // if only leaf data is inlined then 
+    // check whether en is leaf element 
+    if( leaf_ && !en.isLeaf() ) return;
 
+    // insert entity into index sets 
+    dm_.insertNewIndex( en );
+
+    ParamType p( &str , &en );
+    // apply local operators 
+    ldc_.apply( p );
+  }
+  
   //! corresponding grid 
   mutable GridType & grid_;
 
@@ -582,7 +606,11 @@ private:
   //! Local Data Writer and Reader 
   mutable LocalDataCollectImp & ldc_;
 
+  //! determines whether data is read or written
   const ReadWriteType rwType_;
+
+  //! true if only leaf data is packed 
+  const bool leaf_;
   
   // number of childs one element can have 
   const int numChildren_;
@@ -617,32 +645,34 @@ public:
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
-  
+
 public:  
-  DataInliner ( DiscreteFunctionType & df , bool leaf = true ) 
-    : df_ (df) , leaf_(leaf) {}
+  DataInliner ( DiscreteFunctionType & df ) 
+    : df_ (df) 
+  {}
 
   //! store data to stream  
   void apply ( ParamType & p ) const 
   {
     assert( p.first && p.second );
-    EntityType & en = const_cast<EntityType &> (*(p.second));
-    
-    if(leaf_ && (!en.isLeaf())) return; 
+    this->apply( *p.first, *p.second );
+  }
+
+  //! store data to stream  
+  void apply ( ObjectStreamType& str, const EntityType& en ) const 
+  {
+    assert( df_.space().indexSet().contains( en ) );
     
     LocalFunctionType lf = df_.localFunction( en );
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
     {
-      (*p.first).write( lf[l] );
+      str.write( lf[l] );
     }
   }
 
 private:
   mutable DiscreteFunctionType & df_;
-  
-  // true if only leaf data is transferd 
-  bool leaf_;
 };
 
 
@@ -669,32 +699,34 @@ public:
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
-
 public:  
-  DataXtractor ( DiscreteFunctionType & df , bool leaf = true) 
-    : df_ (df) , leaf_(leaf) {}
+  DataXtractor ( DiscreteFunctionType & df ) 
+    : df_ (df) 
+    {}
 
   //! store data to stream  
   void apply ( ParamType & p ) const 
   {
     assert( p.first && p.second );
-    EntityType & en = const_cast<EntityType &> (*(p.second));
+    this->apply( *p.first, *p.second );
+  }
 
-    if(leaf_ && (!en.isLeaf())) return;
+  //! store data to stream  
+  void apply (ObjectStreamType & str, const EntityType & en ) const 
+  {
+    // make sure entity is contained in set 
+    assert( df_.space().indexSet().contains( en ) );
     
     LocalFunctionType lf = df_.localFunction( en );
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
     {
-      (*(p.first)).read( lf[l] );
+      str.read( lf[l] );
     }
   }
 
 private:
   mutable DiscreteFunctionType & df_;
-  
-  // true if only leaf data is transferd 
-  bool leaf_;
 };
 
 /** @} end documentation group */
