@@ -71,13 +71,12 @@ private:
 
   enum { dim = GridType :: dimension };
 
-  // true if all entities that we use are marked as USED 
-  bool marked_;
-
-  // true if the used entities were marked by grid walkthrough 
-  bool markAllU_;
-
+  //! true if set is consecutive without any holes 
   mutable bool compressed_;
+
+  typedef DofManager<GridType> DofManagerType; 
+  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+  
 public:
   static ThisType & instance (const GridType & grid) 
   {
@@ -91,15 +90,13 @@ public:
   //! Constructor
   DGAdaptiveLeafIndexSet (const GridType & grid) 
     : DefaultGridIndexSetBase <GridType> (grid) 
+    , codimLeafSet_( DofManagerFactoryType::getDofManager(grid).memoryFactor() )
     , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
-    , marked_ (false) 
-    , markAllU_ (false)  
     , compressed_(true) // at start the set is compressed 
   {
     // set the codim of this codim set, here always 0
     codimLeafSet_.setCodim( 0 );
 
-    resizeVectors();
     // give all entities that lie below the old entities new numbers 
     markAllUsed ();
   }
@@ -194,7 +191,7 @@ public:
 
   //! insert index for father, mark childs index for removal  
   template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) 
+  void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
     // important, first remove old, because 
     // on father indices might be used aswell 
@@ -204,7 +201,7 @@ public:
 
   //! insert indices for children , mark fathers index for removal  
   template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) 
+  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
     // important, first remove old, because 
     // on children indices might be used aswell 
@@ -215,18 +212,16 @@ public:
   //! insert new index to set 
   void insertNewIndex (const typename GridType::template Codim<0>::Entity & en )  
   {
-    // here we have to add the support of higher codims 
     resizeVectors();
     
+    // insert entity in set 
     this->insert( en );
-    marked_ = true;
   }
 
   //! Unregister entity which will be removed from the grid
   void removeOldIndex (const typename GridType::template Codim<0>::Entity & en )
   {
     this->remove( en ); 
-    marked_ = true;
   }
 
   //! reallocate the vector for new size
@@ -254,18 +249,16 @@ public:
   //! return true, if at least one hole existed  
   bool compress ()
   {
-    if(compressed_) return false;
+    // in parallel runs skip this check 
+    if(compressed_ && this->grid_.comm().size() <= 1) return false;
 
-    //std::cout << "Marking the low level for " << this << "\n";
+    // mark all leaf elements  
+    // needs a leaf traversal 
     markAllUsed(); 
 
     // true if a least one dof must be copied 
     bool haveToCopy = codimLeafSet_.compress(); 
 
-    // next turn mark again 
-    marked_   = false;
-    markAllU_ = false;
-    
     compressed_ = true;
     return haveToCopy;
   }
@@ -283,6 +276,8 @@ public:
       codimLeafSet_.insert ( idx );
       compressed_ = false;
     }
+
+    assert( codimLeafSet_.exists( idx ) );
   }
 
   //! set indices to unsed so that they are cleaned on compress  
@@ -311,6 +306,8 @@ public:
   int index (const EntityType & en, int num) const
   {
     assert( codim == 0 );
+    // make sure that requested index was generated before 
+    assert( codimLeafSet_.index( hIndexSet_.index( en )) >= 0 );
     return codimLeafSet_.index( hIndexSet_.index( en )); 
   }
  
@@ -375,18 +372,20 @@ private:
   //! elements that need one 
   void markAllUsed () 
   {
+    // make correct size of vectors 
+    resizeVectors();
+    
     // unset all indices 
     codimLeafSet_.set2Unused(); 
     
     typedef typename GridType:: template Codim<0> :: LeafIterator LeafIteratorType; 
-    // walk over leaf level on locate all needed entities  
+    // walk over leaf level and locate all needed entities  
     LeafIteratorType endit  = this->grid_.template leafend<0>   ();
     for(LeafIteratorType it = this->grid_.template leafbegin<0> (); 
         it != endit ; ++it )
     {
       this->insert( *it );
     }
-    marked_ = true;
   }
   
   //! give all entities that lie below the old entities new numbers 
@@ -426,10 +425,6 @@ private:
 
       } // end grid walk trough
     } // end for all levels 
-
-    // means on compress we have to mark the leaf level 
-    marked_ = false;
-    markAllU_ = true;
   }
 
   // print interal data, for debugging only 
