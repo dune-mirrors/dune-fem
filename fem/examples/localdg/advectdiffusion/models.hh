@@ -48,4 +48,12 @@ typedef LeafGridPart<GridType> GridPartType;
    typedef UpwindFlux<ModelType> FluxType;
    typedef DGLimitedAdvectionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+#elif PROBLEM == 5
+#include "euler_mhd/eulermodel.hh"
+   typedef U0Smooth1D InitialDataType;
+   typedef EulerModel<GridPartType,InitialDataType> ModelType;
+   typedef DWNumFlux<ModelType> FluxType;
+   typedef DGAdvectionOperator<ModelType,DWNumFlux,order> DgType;
+   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+   // typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #endif

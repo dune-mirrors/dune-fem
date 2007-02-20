@@ -9,13 +9,15 @@
 // Dune includes
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 
 //- local includes 
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
-#include <dune/fem/discretefunction/dfadapt.hh>
-// #include <dune/fem/discretefunction/adaptivefunction.hh>
+// #include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+// #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
 //*************************************************************
@@ -29,18 +31,26 @@ namespace Dune {
   class TransportDiffusionDiscreteModel2;
 
   // MethodOrderTraits
-  template <class Model,int dimRange>
+  template <class Model,int dimRange,int polOrd>
   class PassTraits {
   public:
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
-    // choose leaf level for iteration  
-    typedef LeafGridPart<GridType> GridPartType;
+    typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 
-    typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
     typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
+
+    // typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
+    // typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
+    //           polOrd,CachingStorage> DiscreteFunctionSpaceType;
+    typedef FunctionSpace<double, double, dimDomain, 1> FunctionSpaceType; 
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
+               polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
+    typedef CombinedSpace<SingleDiscreteFunctionSpaceType, dimRange> 
+            DiscreteFunctionSpaceType; 
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
   };
   // DiscreteModelTraits
   template <class Model,class NumFlux,int polOrd >
@@ -52,26 +62,21 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimGradRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef PassTraits<Model,dimRange> Traits;
+    typedef PassTraits<Model,dimRange,polOrd> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
-    typedef typename ModelTraits::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::GridPartType GridPartType;
-    //typedef typename Traits::SingleFunctionSpaceType SingleFunctionSpaceType;
-    //typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
-    // typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd> SingleSpaceType;
-    // typedef CombinedSpace<SingleSpaceType, dimRange> DiscreteFunctionSpaceType;
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
-    typedef DiscreteFunctionSpaceType SpaceType;
-    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
-    typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename Traits::DestinationType DestinationType;
     typedef DestinationType DiscreteFunctionType;
+
+    typedef typename ModelTraits::DomainType DomainType;
+    typedef typename DestinationType::RangeType RangeType;
+    typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
     typedef TransportDiffusionDiscreteModel1<Model,NumFlux,polOrd> DiscreteModelType;
   };
@@ -85,20 +90,19 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef PassTraits<Model,dimRange> Traits;
+    typedef PassTraits<Model,dimRange,polOrd> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::GridPartType GridPartType;
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
-    typedef DiscreteFunctionSpaceType SpaceType;
-    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
-    typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename Traits::DestinationType DestinationType;
     typedef DestinationType DiscreteFunctionType;
+
+    typedef typename DestinationType::DomainType DomainType;
+    typedef typename DestinationType::RangeType RangeType;
+    typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
     typedef TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,withDiffusion,withAdvection> DiscreteModelType;
   };
@@ -111,22 +115,20 @@ namespace Dune {
     enum { dimRange = ModelTraits::dimRange };
     enum { dimDomain = ModelTraits::dimDomain };
 
-    typedef PassTraits<Model,dimRange> Traits;
+    typedef PassTraits<Model,dimRange,polOrd> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
-    typedef typename ModelTraits::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
-    // typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::GridPartType GridPartType;
 
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
-    typedef DiscreteFunctionSpaceType SpaceType;
-    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
-    typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef DestinationType DiscreteFunctionType;
+
+    typedef typename DestinationType::DomainType DomainType;
+    typedef typename DestinationType::RangeType RangeType;
+    typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
     typedef LimiterDiscreteModel1<Model,polOrd> DiscreteModelType;
   };
@@ -394,7 +396,6 @@ namespace Dune {
                          RangeType& gLeft,
                          RangeType& gRight)
     { 
-      const DomainType normal = it.integrationOuterNormal(x);
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       const UType& argULeft = Element<0>::get(uLeft);
       const UType& argURight = Element<0>::get(uRight);

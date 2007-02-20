@@ -85,7 +85,7 @@ int main(int argc, char ** argv, char ** envp) {
   double prevfehler=0.;
 	
   L2Error<DgType::DestinationType> L2err;
-  FieldVector<double,1> err;
+  FieldVector<double,ModelType::dimRange> err;
 
   // printSGrid(0,0,dg.space(),U);
 	
@@ -139,7 +139,7 @@ int main(int argc, char ** argv, char ** envp) {
     
     double t=0.0;
     int counter=0;
-    FieldVector<double,1> projectionError = L2err.norm(problem,U,t);  
+    FieldVector<double,ModelType::dimRange> projectionError = L2err.norm(problem,U,t);  
     cout << "Projection error " << problem.myName << ": " << projectionError << endl;
 	
     double maxdt=0.,mindt=1.e10,averagedt=0.;
@@ -151,11 +151,11 @@ int main(int argc, char ** argv, char ** envp) {
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
-      dg.limit(U,tmp);
-      dg.switchupwind();
-      if(counter%100 == 0) {
+      // dg.limit(U,tmp);
+      // dg.switchupwind();
+      if(0 && counter%100 == 0) {
 	err = L2err.norm(problem,U,t);
-	if(err > 1e5 || ldt < 1e-10) {
+	if(err.one_norm() > 1e5 || ldt < 1e-10) {
 	  averagedt /= double(counter);
 	  cout << "Solution doing nasty things!" << std::endl;
 	  cout << t << endl;
@@ -176,7 +176,7 @@ int main(int argc, char ** argv, char ** envp) {
     err = L2err.norm(problem,U,t);
     cout << "Error " << problem.myName << ": " << err << endl;
     
-    fehler = err;		
+    fehler = err.two_norm();		
     zeit = timer.elapsed()-prevzeit;
     eocoutput.printTexAddError(fehler,prevfehler,zeit,grid->size(0),counter,averagedt);
     
