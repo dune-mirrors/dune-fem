@@ -90,6 +90,12 @@ namespace Dune {
                                    Entity& en,
                                    const QuadratureType& quad, int quadPoint,
                                    const JacobianRangeType& factor) const;
+    template <class Entity, class QuadratureType>
+    inline
+    DofType evaluateGradientTransformed(int baseFunct,
+                                        Entity& en,
+                                        const QuadratureType& quad, int quadPoint,
+                                        const JacobianRangeType& factor) const;
   private:
     typename Traits::StorageType storage_;
     
@@ -200,6 +206,12 @@ namespace Dune {
                                    Entity& en,
                                    const QuadratureType& quad, int quadPoint,
                                    const JacobianRangeType& factor) const;
+    template <class Entity, class QuadratureType>
+    inline
+    DofType evaluateGradientTransformed(int baseFunct,
+                                        Entity& en,
+                                        const QuadratureType& quad, int quadPoint,
+                                        const JacobianRangeType& factor) const;
   
   private:
     StorageType storage_;

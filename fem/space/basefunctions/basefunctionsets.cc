@@ -67,6 +67,31 @@ namespace Dune {
     }
     return result;
   }
+  template <class FunctionSpaceImp, template <class> class StorageImp>
+  template <class Entity, class QuadratureType>
+  typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  evaluateGradientTransformed(int baseFunct,
+                              Entity& en,
+                              const QuadratureType& quad, int quadPoint,
+                              const JacobianRangeType& factor) const 
+  {
+    storage_.jacobian(baseFunct, quad, quadPoint, jTmp_);
+
+    DofType result = 0.0;
+    
+    typedef FieldMatrix<DofType, FunctionSpaceImp::DimDomain,FunctionSpaceImp::DimDomain> JacobianInverseType;
+    //const JacobianInverseType& jti =
+    //  en.geometry().jacobianInverseTransposed(quad.point(quadPoint));
+
+    for (int i = 0; i < FunctionSpaceImp::DimRange; ++i) {
+      DomainType gradScaled(0.);
+      //jti.umv(jTmp_[i], gradScaled);
+      //result += gradScaled*factor[i];
+      result += jTmp_[i]*factor[i];
+    }
+    return result;
+  }
   
   //- class VectorialBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>
@@ -187,6 +212,24 @@ namespace Dune {
     en.geometry().jacobianInverseTransposed(quad.point(quadPoint)).
       umv(jTmp_[0], gradScaled);
     return gradScaled*factor[util_.component(baseFunct)];
+  }
+  template <class FunctionSpaceImp, template <class> class StorageImp>
+  template <class Entity, class QuadratureType>
+  typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  evaluateGradientTransformed(int baseFunct,
+                              Entity& en,
+                              const QuadratureType& quad, int quadPoint,
+                              const JacobianRangeType& factor) const 
+  {
+    storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_);
+    return jTmp_[0]*factor[util_.component(baseFunct)];
+    /*
+    DomainType gradScaled(0.);
+    en.geometry().jacobianInverseTransposed(quad.point(quadPoint)).
+      umv(jTmp_[0], gradScaled);
+    return gradScaled*factor[util_.component(baseFunct)];
+    */
   }
 } // end namespace Dune
 

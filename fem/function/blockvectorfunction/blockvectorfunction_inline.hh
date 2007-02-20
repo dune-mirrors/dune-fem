@@ -350,9 +350,12 @@ addScaled( const StaticDiscreteFunction<DiscreteFunctionSpaceType> &g,
   int length = dofVec_.size();
   const DofStorageType &gvec = g.dofVec_;
   assert(length == gvec.size());
-  
+  dofVec_.axpy(scalar,gvec);
+  /*
   for(int i=0; i<length; i++)
-    dofVec_[i] += scalar*gvec[i];
+    for(int i
+    dofVec_[i] += gvec[i]*scalar;
+    */
 }
 
 

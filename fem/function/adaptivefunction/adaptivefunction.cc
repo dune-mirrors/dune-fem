@@ -370,7 +370,6 @@ namespace Dune {
   int AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   numDofs() const 
   {
-    //return values_.size()*N;
     assert( numDofs_ == (values_.size()*N) );
     return numDofs_;
   }
@@ -519,11 +518,13 @@ namespace Dune {
       {
         baseSet_ = &spc_.baseFunctionSet(en);
 
-        numDofs_ = baseSet_->numBaseFunctions();
+        numDofs_ = baseSet_->numDifferentBaseFunctions();
+        // numDofs_ = baseSet_->numBaseFunctions();
+        // std::cerr << "adaptiveDF::init " << numDofs_ << std::endl;
         values_.resize(numDofs_);
+        numDofs_ *= N;
 
         // real dof number is larger 
-        numDofs_ *= N;
 
         init_ = true;
         geoType_ = en.geometry().type();
@@ -535,9 +536,9 @@ namespace Dune {
     // cache entity
     en_ = &en;
     
-    const int numDof = numDofs();
-    assert( values_.size() == numDof );
-    for (int i = 0; i < numDof; ++i) 
+    const int numDDof = values_.size();
+    assert( values_.size()*N == numDofs_);
+    for (int i = 0; i < numDDof; ++i) 
     {
       for (SizeType j = 0; j < N; ++j) 
       {

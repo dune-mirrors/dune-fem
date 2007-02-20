@@ -132,6 +132,8 @@ namespace Dune {
     //- Public methods
     //! constructor
     CombinedSpace(ContainedDiscreteFunctionSpaceType& spc);
+    //! constructor
+    CombinedSpace(GridPartType& gridpart);
 
     //! destructor
     ~CombinedSpace();
@@ -224,7 +226,7 @@ namespace Dune {
 
   private:
     //- Member data  
-    ContainedDiscreteFunctionSpaceType& spc_;
+    ContainedDiscreteFunctionSpaceType spc_;
 
     MapperType mapper_;
     std::vector<BaseFunctionSetType*> baseSetVec_;
@@ -312,10 +314,20 @@ namespace Dune {
     void evaluateScalar(int baseFunct, 
                         const DomainType& x, 
                         ContainedRangeType& phi) const;
+   //! evaluate base function
+    template <class QuadratureType> 
+    void evaluateScalar(int baseFunct, 
+                        const QuadratureType & quad, int qp, 
+                        ContainedRangeType& phi) const;
     
     //! evaluate base function at quadrature point
     void jacobianScalar(int baseFunct, 
                         const DomainType& x,
+                        ContainedJacobianRangeType& phi) const;
+    //! evaluate base function at quadrature point
+    template <class QuadratureType> 
+    void jacobianScalar(int baseFunct, 
+                        const QuadratureType & quad, int qp, 
                         ContainedJacobianRangeType& phi) const;
    
     DofType evaluateSingle(int baseFunct, 
@@ -327,6 +339,11 @@ namespace Dune {
                            const QuadratureType & quad, int qp, 
                            const RangeType& factor) const;
     
+    template <class Entity, class QuadratureType>
+    DofType evaluateGradientTransformed(int baseFunct,
+                                        Entity& en,
+                                        const QuadratureType & quad, int qp, 
+                                        const JacobianRangeType& factor) const;
     template <class Entity, class QuadratureType>
     DofType evaluateGradientSingle(int baseFunct,
                                    Entity& en,

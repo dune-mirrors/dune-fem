@@ -228,8 +228,8 @@ numericalFlux(typename DWNumFlux<EulerModel<GridPartType,ProblemType> >::Traits:
     }
     ulmhd[7] = ul[1+dimDomain];
     urmhd[7] = ur[1+dimDomain];
-    
-    double ldt=numFlux_(ulmhd,urmhd,dummy_,retmhd);
+    double p[3];
+    double ldt=numFlux_(ulmhd,urmhd,p,retmhd);
     
     gLeft[0] = retmhd[0];
     for (int i=0;i<dimDomain;++i)

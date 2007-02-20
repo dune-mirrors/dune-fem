@@ -324,6 +324,17 @@ public:
   {
     return evaluateGradientSingle(baseFunct, en, quad.point(quadPoint),factor);
   }
+  //! \brief evaluate gradient of basefunction on quadrature point 
+  //! on given entity (uses
+  //! jacobianInverseTransposed) and multiply with factor, return is DofType 
+  template <class Entity, class QuadratureType>
+  DofType evaluateGradientTransformed(int baseFunct,
+                                      Entity& en,
+                                      const QuadratureType& quad, int quadPoint,
+                                      const JacobianRangeType& factor) const
+  {
+    return evaluateGradientTransformed(baseFunct, en, quad.point(quadPoint),factor);
+  }
 
 private: 
   //! just diffVariable for evaluation of the functions 

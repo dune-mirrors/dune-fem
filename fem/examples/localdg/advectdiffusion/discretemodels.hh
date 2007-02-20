@@ -42,14 +42,14 @@ namespace Dune {
     typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
 
-    // typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
-    // typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
-    //           polOrd,CachingStorage> DiscreteFunctionSpaceType;
-    typedef FunctionSpace<double, double, dimDomain, 1> FunctionSpaceType; 
+    typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
-               polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-    typedef CombinedSpace<SingleDiscreteFunctionSpaceType, dimRange> 
-            DiscreteFunctionSpaceType; 
+               polOrd,CachingStorage> DiscreteFunctionSpaceType;
+    //typedef FunctionSpace<double, double, dimDomain, 1> FunctionSpaceType; 
+    //typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
+    //           polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
+    //typedef CombinedSpace<SingleDiscreteFunctionSpaceType, dimRange> 
+    //        DiscreteFunctionSpaceType; 
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
   };
   // DiscreteModelTraits

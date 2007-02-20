@@ -29,6 +29,32 @@ namespace Dune {
       }
     }
   }
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
+  CombinedSpace(GridPartType& gridpart) :
+    BaseType(gridpart), // ,spaceId_),
+    spc_(gridpart),
+    mapper_(spc_, spc_.mapper()),
+    baseSetVec_(GeometryIdentifier::numTypes, 0),
+    dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
+  {
+    // get types for codim 0  
+    const std::vector<GeometryType>& geomTypes =
+                spc_.indexSet().geomTypes(0) ;
+
+    int maxNumDofs = -1;
+    // create mappers and base sets for all existing geom types
+    for(size_t i=0; i<geomTypes.size(); ++i)
+    {
+      GeometryIdentifier::IdentifierType id =
+                  GeometryIdentifier::fromGeo(geomTypes[i]);
+      if(baseSetVec_[id] == 0 )
+      {
+        baseSetVec_[id] = new BaseFunctionSetType(spc_.getBaseFunctionSet(id));
+        maxNumDofs = std::max(maxNumDofs,baseSetVec_[id]->numBaseFunctions());
+      }
+    }
+  }
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
@@ -85,7 +111,29 @@ namespace Dune {
            baseFunct < baseFunctionSet_.numBaseFunctions());
     baseFunctionSet_.eval(baseFunct, x, phi);
   }
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  template <class QuadratureType> 
+  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  evaluateScalar(int baseFunct, 
+                 const QuadratureType & quad, int p, 
+                 ContainedRangeType& phi) const
+  {
+    assert(baseFunct >= 0 && 
+           baseFunct < baseFunctionSet_.numBaseFunctions());
+    baseFunctionSet_.eval(baseFunct, quad,p, phi);
+  }
 
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  template <class QuadratureType> 
+  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  jacobianScalar(int baseFunct, 
+                 const QuadratureType & quad, int p, 
+                 ContainedJacobianRangeType& phi) const
+  {
+    assert(baseFunct >= 0 && 
+           baseFunct < baseFunctionSet_.numBaseFunctions());
+    baseFunctionSet_.jacobian(baseFunct, quad,p, phi);
+  }
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   jacobianScalar(int baseFunct, 
@@ -180,6 +228,34 @@ namespace Dune {
     assert( util_.component(baseFunct) < JacobianRangeType :: rows );
     
     return gradScaled_ * factor[util_.component(baseFunct)];
+  }
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  template <class Entity, class QuadratureType>
+  typename
+  CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::DofType
+  CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  evaluateGradientTransformed(int baseFunct,
+                              Entity& en,
+                              const QuadratureType & quad, int qp, 
+                              const JacobianRangeType& factor) const
+  {
+    assert(baseFunct >= 0 && 
+           baseFunct < numBaseFunctions() );
+
+    //baseFunctionSet_.jacobian(baseFunct, x, phi);a
+    baseFunctionSet_.jacobian(util_.containedDof(baseFunct), quad, qp, grad_ );
+    /*
+    gradScaled_ = 0.0;
+    
+    en.geometry().jacobianInverseTransposed( quad.point(qp) ).
+      umv(grad_[0], gradScaled_ );
+    //! is this right?
+    //return factor[util_.component(baseFunct)]*jTmp[0];
+    assert( util_.component(baseFunct) >= 0 );
+    assert( util_.component(baseFunct) < JacobianRangeType :: rows );
+    return gradScaled_ * factor[util_.component(baseFunct)];
+    */
+    return grad_ [0]* factor[util_.component(baseFunct)];
   }
 
 

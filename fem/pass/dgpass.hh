@@ -176,7 +176,8 @@ namespace Dune {
       communicationManager_.exchange( dest );
       
       if (time_) {
-        time_->provideTimeStepEstimate(dtMin_);
+        // time_->provideTimeStepEstimate(dtMin_);
+        time_->provideTimeStepEstimate(0.001);
       }
       caller_.finalize();
     }
@@ -200,12 +201,13 @@ namespace Dune {
 
       double massVolElinv;
       const double vol = volumeElement(geo, massVolElinv);
-
+if (spc_.order() > 0) {
       ///////////////////////////////
       // Volumetric integral part
       ///////////////////////////////
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
+      // std::cerr << "Element Quad: " << volQuad_nop << std::endl;
       for (int l = 0; l < volQuad_nop; ++l) 
       {
         // evaluate analytical flux and source 
@@ -214,14 +216,21 @@ namespace Dune {
         const double intel = geo.integrationElement(volQuad.point(l))
                              * massVolElinv*volQuad.weight(l);
         
+	source_ *= intel;
+	fMat_ *= intel;
+  fMat_.rightmultiply(en.geometry().jacobianInverseTransposed( volQuad.point(l) ) );
+
         for (int i = 0; i < updEn_numDofs; ++i) 
         {
+/*
           updEn[i] += 
             (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
-             bsetEn.evaluateSingle(i, volQuad, l, source_))*intel;
+             bsetEn.evaluateSingle(i, volQuad, l, source_));
+*/
+          updEn[i] += bsetEn.evaluateGradientTransformed(i,en,volQuad,l,fMat_);
         }
       }
-
+}
       /////////////////////////////
       // Surface integral part
       /////////////////////////////
@@ -251,7 +260,6 @@ namespace Dune {
         
               FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
                                                FaceQuadratureType::OUTSIDE);
-
               // apply neighbor part, return is volume of neighbor which is
               // needed below 
               nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
@@ -260,7 +268,7 @@ namespace Dune {
                         dtLocal,wspeedS);
             }
             else
-            {
+            { abort();
               // for non-conforming situations apply the non-conforming 
               // type of the qaudrature 
                
@@ -348,6 +356,7 @@ namespace Dune {
       double nbvol = volumeElement(nbGeo, massVolNbinv);
       
       const int faceQuadInner_nop = faceQuadInner.nop();
+      // std::cerr << "Face Quad: " << faceQuadInner_nop << std::endl;
       for (int l = 0; l < faceQuadInner_nop; ++l) 
       {
         double dtLocalS = 
@@ -357,14 +366,14 @@ namespace Dune {
         dtLocal += dtLocalS*faceQuadInner.weight(l);
         wspeedS += dtLocalS*faceQuadInner.weight(l);
 
+	valEn_ *= faceQuadInner.weight(l)*massVolElinv;
+	valNeigh_ *= faceQuadOuter.weight(l)*massVolNbinv;
         for (int i = 0; i < updEn_numDofs; ++i) 
         {
           updEn[i] -= 
-            bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_)*
-            faceQuadInner.weight(l)*massVolElinv;
+            bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_);
           updNeigh[i] += 
-            bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_)*
-            faceQuadOuter.weight(l)*massVolNbinv;
+            bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_);
         }
       }
       return nbvol;
@@ -405,7 +414,7 @@ namespace Dune {
     mutable double dtMin_;
   
     //! Some helper variables
-    mutable JacobianRangeType fMat_;
+    mutable JacobianRangeType fMat_,fMatTmp;
     mutable RangeType valEn_;
     mutable RangeType valNeigh_;
     mutable RangeType baseEn_;
