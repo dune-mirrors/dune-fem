@@ -61,7 +61,18 @@ public:
     }
   };
 
-    //! Assignement operator
+  //! returns true if adaptation manager does something during adapt call
+  virtual bool adaptive () const  
+  { 
+    return (am_) ? (am_->adaptive()) : false; 
+  } 
+
+  virtual const char * methodName() const 
+  {
+    return (am_) ? (am_->methodName()) : "unknown method";
+  }
+    
+  //! Assignement operator
   AdaptationManagerInterface & operator = (const AdaptationManagerInterface & am)
   {
       /** \todo This const-casting seems strange to me! */
@@ -83,19 +94,105 @@ template <class GridType, class RestProlOperatorImp >
 class AdaptationManager :
   public AdaptationManagerInterface , public ObjPointerStorage 
 {  
-  typedef AdaptationManager<GridType,RestProlOperatorImp> MyType;
+  enum AdaptationMethodType { none = 0, generic = 1, callback = 2 };
+  
+  template <class AdaptManager, class GridImp, bool isGoodGrid> 
+  struct AdaptationMethod
+  {
+    template <class DofManagerImp, class RPOpImp>
+    static void adapt(const AdaptManager& am, GridImp & grid, 
+                      DofManagerImp& dm , RPOpImp& rpop,
+                      AdaptationMethodType adaptMethod) 
+    {
+      // use generic adapt method 
+      if( adaptMethod == generic ) 
+      {
+        am.genericAdapt();
+        return ;
+      }
+      
+      // use grid call back adapt method 
+      if( adaptMethod == callback ) 
+      {
+        grid.adapt(dm,rpop); 
+        return ;
+      }
+    }
+  };
+  
+  template <class AdaptManager, class GridImp> 
+  struct AdaptationMethod<AdaptManager,GridImp,false>
+  {
+    template <class DofManagerImp, class RPOpImp>
+    static void adapt(const AdaptManager& am, GridImp & grid, 
+                      DofManagerImp& dm , RPOpImp& rpop,
+                      AdaptationMethodType adaptMethod) 
+    {
+      // use generic adapt method 
+      if(adaptMethod != none ) 
+      {
+        am.genericAdapt();
+        return ;
+      }
+    }
+  };
+  
+  typedef AdaptationManager<GridType,RestProlOperatorImp> ThisType;
   typedef DofManager< GridType > DofManagerType; 
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-public:
+
+public:  
+  const char * methodName() const 
+  {
+    switch (adaptationMethod_) {
+      case generic: return "generic";
+      case callback: return "callback";              
+      case none: return "no adaptation";
+      default:  return "unknown method";
+    }
+  }
+
   typedef typename GridType :: Traits :: LocalIdSet LocalIdSet;
-  //! create DiscreteOperator with a LocalOperator 
-  AdaptationManager (GridType & grid, RestProlOperatorImp & rpOp) 
+public:
+  /** \brief constructor of AdaptationManager 
+     \param grid Grid that adaptation is done for 
+     \param rpOp restriction and prlongation operator that describes how the 
+      user data is projected to other grid levels
+     \param paramFile optional parameter file which contains 
+        the following two lines:
+        # 0 == none, 1 == generic, 2 == call back 
+        AdaptationMethod: 1 
+  */   
+  AdaptationManager (GridType & grid, RestProlOperatorImp & rpOp,
+      std::string paramFile = "") 
     : grid_(grid) 
     , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
     , rpOp_ (rpOp) 
-  {}
+    , adaptationMethod_(generic)
+  {
+    if( paramFile != "")
+    {
+      int am = 1;
+      readParameter(paramFile,"AdaptationMethod",am);
+      if(am == 2) adaptationMethod_ = callback;
+      else if(am == 1) adaptationMethod_ = generic;
+      else adaptationMethod_ = none;
+    }
+
+    // for structred grid adaptation is disabled 
+    if(! Capabilities::IsUnstructured<GridType>::v ) 
+    {
+      std::cerr << "WARNING: AdaptationManager: adaptation disabled for structured grid! \n";
+      adaptationMethod_ = none;
+    }
+      
+    std::cout << "Created AdaptationManager: adaptation method = " << methodName() << std::endl;
+  }
 
   virtual ~AdaptationManager () {}
+
+  //! returns true if adaptation is enabled 
+  bool adaptive () const { return adaptationMethod_ != none; }
 
   /*! 
    Add to AdaptationManagers means that the RestProlOperators will be combined.
@@ -132,11 +229,27 @@ public:
     return rpOp_;
   }
   
+  //! according to adaption method parameter 
+  //! the adaption procedure is done, 
+  //! 0 == no adaptation
+  //! 1 == generic adaption 
+  //! 2 == grid call back adaptation (only in AlbertaGrid and ALUGrid)
+  void adapt () const 
+  {
+    AdaptationMethod<ThisType,GridType,
+      Conversion<GridType,HasHierarchicIndexSet>::exists>::
+        adapt(*this,grid_,dm_,rpOp_,adaptationMethod_);
+  }
+ 
+private:  
+  //! generic adaptation procedure
   //! adapt defines the grid walkthrough before and after grid adaptation.
   //! Note that the LocalOperator can be an combined Operator 
   //! Domain and Range are defined through class Operator
-  void adapt () const 
+  void genericAdapt () const 
   {
+    // call pre-adapt, returns true if at least 
+    // one element is marked for coarsening 
     bool restr = grid_.preAdapt();  
 
     if(restr)
@@ -162,6 +275,7 @@ public:
     }
     
     // adapt grid due to preset markers
+    // returns true if at least one element was refined 
     bool ref = grid_.adapt();
 
     if(ref)
@@ -184,7 +298,9 @@ public:
 
     // if grid was coarsend or refined, do dof compress 
     if(restr || ref)
+    {
       dm_.dofCompress();
+    }
 
     // do cleanup 
     grid_.postAdapt();
@@ -260,6 +376,8 @@ private:
   
   //! Restriction and Prolongation Operator 
   mutable RestProlOperatorImp & rpOp_;
+
+  AdaptationMethodType adaptationMethod_;
 };
 /** @} end documentation group */
 }
