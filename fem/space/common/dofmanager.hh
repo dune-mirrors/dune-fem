@@ -669,12 +669,11 @@ public:
   {
     if( mapper_.needsCompress() )
     {
-      const int nSize = newSize();
       // run over all holes and copy array vules to new place 
       const int holes = mapper_.numberOfHoles(); 
       for(int i=0; i<holes; ++i)
       {
-        assert( mapper_.newIndex(i) < nSize );
+        assert( mapper_.newIndex(i) < newSize() );
         // copy value 
         array_[ mapper_.newIndex(i) ] 
           = array_[ mapper_.oldIndex(i) ];
