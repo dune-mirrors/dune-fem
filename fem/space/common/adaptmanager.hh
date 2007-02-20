@@ -160,8 +160,8 @@ public:
       user data is projected to other grid levels
      \param paramFile optional parameter file which contains 
         the following two lines:
-        # 0 == none, 1 == generic, 2 == call back 
-        AdaptationMethod: 1 
+        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
+        AdaptationMethod: 1 # default value 
   */   
   AdaptationManager (GridType & grid, RestProlOperatorImp & rpOp,
       std::string paramFile = "") 
