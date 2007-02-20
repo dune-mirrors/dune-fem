@@ -160,7 +160,14 @@ class DWNumFlux<EulerModel<GridType,ProblemType> > {
     model_(mod),
     eos(SolverType::Eosmode::me_ideal),
     numFlux_(eos,mod.gamma_),
-    rot_(1) {
+    rot_(1) 
+  {
+    for(int i=0; i<9; ++i) 
+    {
+      ulmhd[i] = 0.0;
+      urmhd[i] = 0.0;
+      retmhd[i] = 0.0;
+    }
   }
   double numericalFlux(typename Traits::IntersectionIterator& it,
 		       double time,
@@ -175,6 +182,8 @@ class DWNumFlux<EulerModel<GridType,ProblemType> > {
   const Model& model_;
   const typename SolverType::Eosmode::meos_t eos;
   mutable SolverType numFlux_;
+  SolverType::Vec9 ulmhd,urmhd,retmhd;
+  double dummy_[3];
 };
 template <class GridType,class ProblemType>
 double
@@ -196,18 +205,20 @@ numericalFlux(typename DWNumFlux<EulerModel<GridType,ProblemType> >::Traits::
   const {
     typename Traits::DomainType normal = it.integrationOuterNormal(x);
     double len = normal.two_norm();
-    normal /= len;
+    normal *= 1.0/len;
 
-    RangeType ul,ur;
-    ul = uLeft;
-    ur = uRight;
+    RangeType& ul = uLeft; 
+    RangeType& ur = uRight;
+    //ul = uLeft;
+    //ur = uRight;
     rot_.rotateForth(ul, normal);
     rot_.rotateForth(ur, normal);
-    SolverType::Vec9 ulmhd,urmhd,retmhd;
-    ulmhd[0] = ulmhd[1] = ulmhd[2] = ulmhd[3] = ulmhd[4] =
-      ulmhd[5] = ulmhd[6] = ulmhd[7] = ulmhd[8] = 0.;
-    urmhd[0] = urmhd[1] = urmhd[2] = urmhd[3] = urmhd[4] =
-      urmhd[5] = urmhd[6] = urmhd[7] = urmhd[8] = 0.;
+
+    //SolverType::Vec9 ulmhd,urmhd,retmhd;
+    //ulmhd[0] = ulmhd[1] = ulmhd[2] = ulmhd[3] = ulmhd[4] =
+    //  ulmhd[5] = ulmhd[6] = ulmhd[7] = ulmhd[8] = 0.;
+    //urmhd[0] = urmhd[1] = urmhd[2] = urmhd[3] = urmhd[4] =
+    //  urmhd[5] = urmhd[6] = urmhd[7] = urmhd[8] = 0.;
     ulmhd[0] = ul[0];
     urmhd[0] = ur[0];
     for (int i=0;i<dimDomain;++i) {
@@ -216,14 +227,18 @@ numericalFlux(typename DWNumFlux<EulerModel<GridType,ProblemType> >::Traits::
     }
     ulmhd[7] = ul[1+dimDomain];
     urmhd[7] = ur[1+dimDomain];
-    double p[3];
-    double ldt=numFlux_(ulmhd,urmhd,p,retmhd);
+    
+    double ldt=numFlux_(ulmhd,urmhd,dummy_,retmhd);
+    
     gLeft[0] = retmhd[0];
     for (int i=0;i<dimDomain;++i)
       gLeft[i+1] = retmhd[i+1];
+    
     gLeft[1+dimDomain] = retmhd[7];
+    
     rot_.rotateBack(gLeft,normal);
     gLeft *= len;
+    
     gRight = gLeft;
     return ldt*len;
 }
