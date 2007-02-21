@@ -167,6 +167,12 @@ namespace Dune {
       return *this;
     }
 
+    //! daxpy operation  
+    void addScaled(const ThisType& org, const RangeFieldType& scalar)
+    {
+      Imp::addScaled(org,scalar);
+    }
+
     using Imp::clear;
     using Imp::addScaled;
     using Imp::name;
@@ -466,8 +472,13 @@ namespace Dune {
       return *this;
     }
 
+    //! daxpy operation  
+    void addScaled(const ThisType& org, const RangeFieldType& scalar)
+    {
+      Imp::addScaled(org,scalar);
+    }
+
     using Imp::clear;
-    using Imp::addScaled;
     using Imp::name;
     using Imp::size;
     using Imp::dbegin;
