@@ -23,6 +23,9 @@
 #include "dofmapperinterface.hh"
 #include "datacollector.hh"
 
+// to be revised 
+#include "../../solver/oemsolver.hh"
+
 namespace Dune {
 
 
@@ -257,14 +260,33 @@ public:
   DofArray<T>& operator= (const DofArray<T> &copy)
   {
     assert(copy.size_ >= size_);
-    std::memcpy(vec_,copy.vec_, size_ * sizeof(T));
+    std::memcpy(vec_, copy.vec_, size_ * sizeof(T));
     return *this;
+  }
+ 
+  //! assign arrays 
+  void axpy (const DofArray<T> &org, const T scalar)
+  {
+#if HAVE_BLAS 
+    OEMSolver :: daxpy( size_, org.vec_, 1 , vec_, 1);
+#else 
+    const int s = size();
+    const T * ov = copy.vec_;
+    for(int i=0; i<s; ++i) vec_[i] += scalar*ov[i];
+#endif
+  }
+ 
+  //! set all entries to zero 
+  void clear () 
+  {
+    std::memset(vec_, 0 , size_ * sizeof(T));
   }
  
   //! operator = assign all entrys with value t 
   DofArray<T>& operator= (const T t)
   {
-    for(int i=0; i<size(); i++) this->operator [] (i) = t;
+    const int s = size();
+    for(int i=0; i<s; ++i) vec_[i] = t;
     return *this;
   }
 
