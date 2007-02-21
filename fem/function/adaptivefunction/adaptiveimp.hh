@@ -75,6 +75,12 @@ namespace Dune {
     //! Assignment
     void assignFunction(const ThisType& org);
   
+    //! operator += 
+    void addFunction(const ThisType& org);
+  
+    //! operator -= 
+    void substractFunction(const ThisType& org);
+  
     //! write data of discrete function to file filename|timestep 
     //! with xdr methods 
     bool write_xdr(std::string filename) const;

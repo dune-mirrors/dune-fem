@@ -242,7 +242,7 @@ namespace Dune{
     virtual DiscreteFunctionDefaultType& assign(const MappingType& g);
 
     //! Addition of g to discrete function 
-    virtual DiscreteFunctionDefaultType& operator+=(const MappingType& g);
+    virtual DiscreteFunctionDefaultType& operator += (const MappingType& g);
 
     //! subtract g from discrete function 
     virtual DiscreteFunctionDefaultType& operator -= (const MappingType &g);

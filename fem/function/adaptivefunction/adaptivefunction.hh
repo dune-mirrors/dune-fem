@@ -167,6 +167,22 @@ namespace Dune {
       return *this;
     }
 
+    //! operator +=  
+    virtual BaseType& operator += (const MappingType& g)
+    {
+      const ThisType& org = dynamic_cast<const ThisType&> (g);
+      Imp::addFunction(org);
+      return *this;
+    }
+
+    //! operator -=  
+    virtual BaseType& operator -= (const MappingType& g)
+    {
+      const ThisType& org = dynamic_cast<const ThisType&> (g);
+      Imp::substractFunction(org);
+      return *this;
+    }
+
     //! daxpy operation  
     void addScaled(const ThisType& org, const RangeFieldType& scalar)
     {
@@ -469,6 +485,22 @@ namespace Dune {
     {
       const ThisType& org = dynamic_cast<const ThisType&> (g);
       Imp::assignFunction(org);
+      return *this;
+    }
+
+    //! operator +=  
+    virtual BaseType& operator += (const MappingType& g)
+    {
+      const ThisType& org = dynamic_cast<const ThisType&> (g);
+      Imp::addFunction(org);
+      return *this;
+    }
+
+    //! operator -=  
+    virtual BaseType& operator -= (const MappingType& g)
+    {
+      const ThisType& org = dynamic_cast<const ThisType&> (g);
+      Imp::substractFunction(org);
       return *this;
     }
 

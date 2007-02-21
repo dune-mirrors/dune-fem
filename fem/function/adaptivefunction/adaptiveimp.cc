@@ -99,6 +99,26 @@ namespace Dune {
     dofVec_ = org.dofVec_;
   }
 
+  // operator +=
+  template <class DiscreteFunctionSpaceImp>
+  inline void 
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
+  addFunction(const ThisType& org)
+  {
+    assert(this->size() == org.size());
+    dofVec_ += org.dofVec_;
+  }
+
+  // operator +=
+  template <class DiscreteFunctionSpaceImp>
+  inline void 
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
+  substractFunction(const ThisType& org)
+  {
+    assert(this->size() == org.size());
+    dofVec_ -= org.dofVec_;
+  }
+
   template <class DiscreteFunctionSpaceImp>
   int AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   size() const 
