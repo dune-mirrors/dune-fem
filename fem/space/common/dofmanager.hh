@@ -257,21 +257,41 @@ public:
   }
 
   //! assign arrays 
-  DofArray<T>& operator= (const DofArray<T> &copy)
+  DofArray<T>& operator= (const DofArray<T> & org)
   {
-    assert(copy.size_ >= size_);
-    std::memcpy(vec_, copy.vec_, size_ * sizeof(T));
+    assert(org.size_ >= size() );
+    std::memcpy(vec_, org.vec_, size_ * sizeof(T));
+    return *this;
+  }
+ 
+  //! operator +=  
+  DofArray<T>& operator += (const DofArray<T> & org)
+  {
+    assert(org.size_ >= size() );
+    const int s = size();
+    const T * ov = org.vec_;
+    for(int i=0; i<s; ++i) vec_[i] += ov[i];
+    return *this;
+  }
+ 
+  //! operator -=  
+  DofArray<T>& operator -= (const DofArray<T> & org)
+  {
+    assert(org.size() >= size() );
+    const int s = size();
+    const T * ov = org.vec_;
+    for(int i=0; i<s; ++i) vec_[i] -= ov[i];
     return *this;
   }
  
   //! assign arrays 
   void axpy (const DofArray<T> &org, const T scalar)
   {
-#if HAVE_BLAS 
-    OEMSolver :: daxpy( size_, scalar, org.vec_, 1 , vec_, 1);
+#if HAVE_BLAS
+    OEMSolver :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
 #else 
     const int s = size();
-    const T * ov = copy.vec_;
+    const T * ov = org.vec_;
     for(int i=0; i<s; ++i) vec_[i] += scalar*ov[i];
 #endif
   }
@@ -279,7 +299,7 @@ public:
   //! set all entries to zero 
   void clear () 
   {
-    std::memset(vec_, 0 , size_ * sizeof(T));
+    std::memset(vec_, 0 , size() * sizeof(T));
   }
  
   //! operator = assign all entrys with value t 
