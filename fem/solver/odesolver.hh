@@ -16,7 +16,14 @@
 //- Dune includes 
 #include <dune/fem/misc/timeutility.hh>
 
+//#if HAVE_BLAS 
+//#define USE_EXTERNAL_BLAS
+//#endif
+
+#include "ode/blas.hpp"
+
 namespace DuneODE {
+
 // include first, because of typedef 
 #if HAVE_MPI 
 #include "ode/communicator.cpp"    
@@ -742,4 +749,6 @@ public:
 };
 /** @} **/
 }
+
+#undef USE_EXTERNAL_BLAS
 #endif
