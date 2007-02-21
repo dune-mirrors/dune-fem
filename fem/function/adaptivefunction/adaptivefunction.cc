@@ -65,7 +65,6 @@ namespace Dune {
     assert(init_);
     assert(num >= 0 && num < numDofs());
     // check that storage (dofVec_) and mapper are in sync:
-    if( dofVec_.size() != spc_.size() ) 
     assert(dofVec_.size() >= spc_.size());
     return (* (values_[num]));
   }
