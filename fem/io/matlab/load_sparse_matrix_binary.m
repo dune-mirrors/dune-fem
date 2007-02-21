@@ -7,13 +7,15 @@ function A = load_sparse_matrix_binary(filename)
 % binary file. If binary format does not match, the reading must be 
 % modified in this file.
 %
-% format: 
+% format:
+% magic number "DSM" for Dune Sparse Matrix
 % magic numbers: int 111, double 111
 % number of rows, cols and maxnoonzero_per_row
 % number of total_nonzeros
 % for 0.. total_nonzeros-1 : triples (int r,int c,double v)   
 % where r,c start from 0
-
+% "EOF" as marker of EOF
+  
 % Bernard Haasdonk 15.12.2006
 
   fid = fopen(filename,'r');
@@ -21,6 +23,11 @@ function A = load_sparse_matrix_binary(filename)
   % file, activate the following:
   %fid = fopen(filename,'r','ieee-be');
   
+  magicstr = fread(fid,3,'char');
+  if ~isequal(magicstr,'DSM')
+    error('read magicstr doe not indicate Dune Sparse Matrix!');
+  end;
+
   magicint = fread(fid,1,'int');
   magicdouble = fread(fid,1,'double');
   
@@ -45,3 +52,7 @@ function A = load_sparse_matrix_binary(filename)
     A(row+1,col+1) = val;
   end;  
   
+  eofstr = fread(fid,3,'char');
+  if ~isequal(eofstr,'EOF')
+    error('read eofstr does not indicate end of binary file!');
+  end;

@@ -51,57 +51,15 @@ namespace Dune
  *   The MATLAB-code for the reading method is the function
  *   load_sparse_matrix.m 
  * 
- *   param filename the filename to write
+ *   \param filename the filename to write
  *
- *   param matrix the matrix to write
+ *   \param matrix the matrix to write
  *
- *   \return success 0 ( error return 1 is to be implemented)
+ *   \return 1 success or 0 fail
+ *
+ *   The code for the matlab-reading is realized in load_sparse_matrix_binary.m
+ *   within this directory.
  */
-/*======================================================================*/
-
-/*======================================================================*/
-/* MATLAB-Code for reading: save the following as load_sparse_matrix.m
-function A = load_sparse_matrix(filename)
-%function A = load_sparse_matrix(filename)
-%
-% load binary file, which represents a sparse matrix, e.g. generated
-% by saveSparseMatrix
-%
-% format: 
-% magic numbers: int 111, double 111
-% number of rows, cols and maxnoonzero_per_row
-% number of total_nonzeros
-% for 0.. total_nonzeros-1 : triples (int r,int c,double v)   
-% where r,c start from 0
-
-% Bernard Haasdonk 15.12.2006
-
-  fid = fopen(filename,'r');
-  %fid = fopen(filename,'r','ieee-be');
-  
-  magicint = fread(fid,1,'int');
-  magicdouble = fread(fid,1,'double');
-  
-  if (magicint~=111) | (magicdouble~=111.0)
-    error('magic numbers not read correctly!');
-  end;
-  
-  nrows = fread(fid,1,'int');
-  ncols = fread(fid,1,'int');
-  nnonzeros = fread(fid,1,'int');
-  ntotalnonzeros = fread(fid,1,'int');
-  
-  disp(['generating ',num2str(nrows),'x',num2str(ncols),...
-	' sparse matrix with ',num2str(ntotalnonzeros),' totalnonzeros.']);
-  A = sparse(nrows,ncols,nnonzeros);
-  
-  for i=1:ntotalnonzeros
-    row = fread(fid,1,'int');
-    col = fread(fid,1,'int');
-    val = fread(fid,1,'double');
-    A(row+1,col+1) = val;
-  end;  
-*/ /* END OF MATLAB CODE*/
 /*======================================================================*/
 
 // select between implementation for new spmatrix class in 
@@ -115,6 +73,9 @@ function A = load_sparse_matrix(filename)
           {
             // open file for writing  
             ofstream fid(filename, ios::binary | ios::out);    
+
+            // DSM (Dune Sparse Matrix)            
+            fid.write("DSM",3);
             
             // for debugging purposes: write an int and a double
             int magicint =    111;
@@ -166,8 +127,16 @@ function A = load_sparse_matrix(filename)
                 }    
               }
             }
+
+            // write end-of-file marker            
+            fid.write("EOF",3);
+
+            int status = fid.good();
+            
             fid.close();  
-            return 0; 
+
+            return status; 
+
           }
     
 #else
@@ -179,6 +148,10 @@ function A = load_sparse_matrix(filename)
             // open file for writing  
             ofstream fid(filename, ios::binary | ios::out);    
             
+            // write magic number: type of binary file: 
+            // DSM (Dune Sparse Matrix)            
+            fid.write("DSM",3);
+
             // for debugging purposes and platform check: write an int and a double
             int magicint =    111;
             double magicdouble = 111.0;
@@ -230,8 +203,15 @@ function A = load_sparse_matrix(filename)
                 }    
               }
             }
+            // write end-of-file marker            
+            fid.write("EOF",3);
+
+            int status = fid.good();
+            
             fid.close();  
-            return 0;  // error return is to be implemented!!
+
+            return status; 
+
           }
     
 #endif
@@ -244,9 +224,10 @@ function A = load_sparse_matrix(filename)
  *
  *   \param func function to be written
  *
- *   \return 0 success ( error return 1 is to be implemented!)
+ *   \return 1 success or 0 fail
  *
- * The code for the Matlab-reading method can be extracted from this file.
+ *   The code for the matlab-reading is realized in load_dof_vector_binary.m
+ *   within this directory.
  */
 /*======================================================================*/
     
@@ -259,6 +240,10 @@ function A = load_sparse_matrix(filename)
             
             // open file for writing  
             ofstream fid(filename, ios::binary | ios::out);    
+
+            // write magic number: type of binary file: 
+            // DDV (Dune Dof Vector)            
+            fid.write("DDV",3);
             
             // for debugging purposes: write an int and a double
             int magicint =    111;
@@ -279,10 +264,80 @@ function A = load_sparse_matrix(filename)
               double entry = *it;
               fid.write((char*)&entry,sizeof(double));
             } // end element iteration 
-            fid.close();
 
-            return(0); // error return is to be implemented!!
+            // write end-of-file marker            
+            fid.write("EOF",3);
+
+            int status = fid.good();
             
+            fid.close();  
+
+            return status; 
+            
+          }
+
+/*======================================================================*/
+/*! 
+ *   saveDenseMatrixBinary: save dense matrix in binary file
+ *
+ *   The matrix class is assumed to give access to the values by 
+ *   matrix[nr][nc], values are written as doubles
+ *
+ *   \param filename file name to be generated
+ *
+ *   \param matrix matrix to be written
+ *
+ *   \param nrows number of rows to be written
+ *
+ *   \param ncols number of columns to be written
+ *
+ *   \return 1 success or 0 fail
+ *
+ *   The code for the matlab-reading is realized in load_dune_binary.m
+ *   within this directory.
+ */
+/*======================================================================*/
+
+    template <class DenseRowMatrix>
+    int saveDenseMatrixBinary(const char* filename, 
+                              DenseRowMatrix& matrix, int nrows, int ncols)
+          {
+            // open file for writing  
+            ofstream fid(filename, ios::binary | ios::out);    
+            
+            // write magic number: type of binary file: 
+            // DDM (Dune Dense Matrix)            
+            fid.write("DDM",3);
+           
+            // for debugging purposes: write an int and a double
+
+            int magicint =    111;
+            double magicdouble = 111.0;
+            fid.write((char*)&magicint,sizeof(int));
+            fid.write((char*)&magicdouble,sizeof(double));
+                        
+            // write number of rows and cols and maxnonzeros per row
+            fid.write((char*)&nrows,sizeof(int));
+            fid.write((char*)&ncols,sizeof(int));
+            
+            // write all entries
+            for (int r=0; r<nrows; r++)
+            {
+              for (int c = 0; c < ncols ; c ++)
+              {  
+                double entry = matrix[r][c];             
+                fid.write((char*)&entry,sizeof(double));        
+              }
+            }
+            
+            // write end-of-file marker            
+            fid.write("EOF",3);
+
+            int status = fid.good();
+            
+            fid.close();  
+
+            return status; 
           }
     
   }; // end class MatlabHelper

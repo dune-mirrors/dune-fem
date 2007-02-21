@@ -8,9 +8,11 @@ function v = load_dof_vector_binary(filename)
 % modified in this file.
 %
 % format: 
-% magic numbers: int 111, double 111
+% magic number "DDV" for Dune Dof Vector  
+% magic numbers: int 111, double 111 for platform check
 % number of entries
 % for 0.. numer_of_entries-1 double v   
+% "EOF" as marker of EOF
 
 % Bernard Haasdonk 15.12.2006
 
@@ -18,6 +20,11 @@ function v = load_dof_vector_binary(filename)
   % if standard reading is not the correct format for a given binary
   % file, activate the following:
   %fid = fopen(filename,'r','ieee-be');
+  
+  magicstr = fread(fid,3,'char');
+  if ~isequal(magicstr,'DDV')
+    error('read magicstr doe not indicate Dune Dof Vector!');
+  end;
   
   magicint = fread(fid,1,'int');
   magicdouble = fread(fid,1,'double');
@@ -33,3 +40,9 @@ function v = load_dof_vector_binary(filename)
 
   v = fread(fid,nentries,'double');
 
+  eofstr = fread(fid,3,'char');
+  if ~isequal(eofstr,'EOF')
+    error('read eofstr does not indicate end of binary file!');
+  end;
+
+  
