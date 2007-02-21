@@ -3,6 +3,9 @@
 #include "modeldefault.hh"
 #include "mhd_eqns.hh"
 #include "rotator.hh"
+namespace EULERNUMFLUX {
+#include "euler_flux.hpp"
+}
 
 template <int dimDomain>
 class EulerFlux {
@@ -30,6 +33,8 @@ class EulerFlux {
 // ************************************************
 template <class Model>
 class DWNumFlux;
+template <class Model>
+class HLLNumFlux;
 // ************************************************
 template <int dimDomain>
 class ConsVec : public FieldVector<double,dimDomain+2> {
@@ -145,6 +150,7 @@ class EulerModel {
   double tstep_eps;
   ProblemType problem_;
   friend class DWNumFlux<EulerModel<GridPartType,ProblemType> >;
+  friend class HLLNumFlux<EulerModel<GridPartType,ProblemType> >;
 };
 // ***********************
 template <class GridPartType,class ProblemType>
@@ -243,6 +249,61 @@ numericalFlux(typename DWNumFlux<EulerModel<GridPartType,ProblemType> >::Traits:
     gRight = gLeft;
     return ldt*len;
 }
+template <class GridPartType,class ProblemType>
+class HLLNumFlux<EulerModel<GridPartType,ProblemType> > {
+ public:
+  typedef typename GridPartType::GridType GridType;
+  enum { dimDomain = GridType::dimensionworld };
+  typedef EulerModel<GridPartType,ProblemType> Model;
+  typedef typename Model::Traits Traits;
+  enum { dimRange = Model::dimRange };
+  typedef typename Model::RangeType RangeType;
+  typedef typename Model::FluxRangeType FluxRangeType;
+  HLLNumFlux(const Model& mod) : 
+    model_(mod),
+    numFlux_(mod.gamma_)
+  {}
+  double numericalFlux(typename Traits::IntersectionIterator& it,
+		       double time,
+		       const typename Traits::FaceDomainType& x,
+		       const RangeType& uLeft,
+		       const RangeType& uRight,
+		       RangeType& gLeft,
+		       RangeType& gRight) const;
+  const Model& model() const {return model_;}
+ private:
+  const Model& model_;
+  EULERNUMFLUX::EulerFlux<dimDomain,EULERNUMFLUX::HLL> numFlux_;
+};
+template <class GridPartType,class ProblemType>
+double
+HLLNumFlux<EulerModel<GridPartType,ProblemType> > :: 
+numericalFlux(typename HLLNumFlux<EulerModel<GridPartType,ProblemType> >::Traits::
+	      IntersectionIterator& it,
+	      double time,
+	      const typename 
+	      HLLNumFlux<EulerModel<GridPartType,ProblemType> >::Traits::
+	      FaceDomainType& x,
+	      const typename 
+	      HLLNumFlux<EulerModel<GridPartType,ProblemType> >:: RangeType& uLeft,
+	      const typename
+	      HLLNumFlux<EulerModel<GridPartType,ProblemType> > :: RangeType& uRight,
+	      typename
+	      HLLNumFlux<EulerModel<GridPartType,ProblemType> > :: RangeType& gLeft,
+	      typename
+	      HLLNumFlux<EulerModel<GridPartType,ProblemType> > :: RangeType& gRight)
+  const {
+  typename Traits::DomainType normal = it.integrationOuterNormal(x);
+  double len = it.intersectionGlobal().integrationElement(x);
+  normal *= 1./len;
+  double ldt = numFlux_.num_flux((&(uLeft[0])),
+				 (&(uRight[0])),
+				 (&(normal[0])),
+				 (&(gLeft[0])));
+  gLeft *= len;
+  gRight = gLeft;
+  return ldt*len;
+}
 // ***********************
 template <>
 inline
@@ -285,11 +346,12 @@ void EulerFlux<2>::analyticalFlux(const double gamma,
 	 << u << endl;
   */
   assert(rhoeps>1e-10);
+  double v[2] = {u[1]/u[0],u[2]/u[0]};
   double p = (gamma-1)*rhoeps;
-  f[0][0] = u[1];                 f[0][1] = u[2];
-  f[1][0] = u[1]/u[0]*u[1]+p;     f[1][1] = u[2]/u[0]*u[1];
-  f[2][0] = u[1]/u[0]*u[2];       f[2][1] = u[2]/u[0]*u[2]+p;
-  f[e][0] = u[1]/u[0]*(u[e]+p);   f[e][1] = u[2]/u[0]*(u[e]+p);
+  f[0][0] = u[1];            f[0][1] = u[2];
+  f[1][0] = v[0]*u[1]+p;     f[1][1] = v[1]*u[1];
+  f[2][0] = v[0]*u[2];       f[2][1] = v[1]*u[2]+p;
+  f[e][0] = v[0]*(u[e]+p);   f[e][1] = v[1]*(u[e]+p);
 }
 template <>
 inline
