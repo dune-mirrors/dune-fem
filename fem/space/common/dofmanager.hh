@@ -268,7 +268,7 @@ public:
   void axpy (const DofArray<T> &org, const T scalar)
   {
 #if HAVE_BLAS 
-    OEMSolver :: daxpy( size_, org.vec_, 1 , vec_, 1);
+    OEMSolver :: daxpy( size_, scalar, org.vec_, 1 , vec_, 1);
 #else 
     const int s = size();
     const T * ov = copy.vec_;
