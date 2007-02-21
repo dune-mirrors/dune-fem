@@ -1,18 +1,17 @@
 #ifndef BLAS_HPP
 #define BLAS_HPP
 
-
-//#define USE_EXTERNAL_BLAS
-
 #include <cstring>
 
 #ifdef USE_EXTERNAL_BLAS
-#include <cblas.h>
+// use atlas cblas 
+extern "C" {
+#include <atlas/cblas.h>
+}
 #else
+// use own blas implementation
 #include "subblas.hpp"
 #endif
-
-
 
 // non standard functions (?)
 
