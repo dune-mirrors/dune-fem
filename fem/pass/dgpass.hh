@@ -20,7 +20,6 @@
 #include "modelcaller.hh"
 
 // * needs to move
-// #include "../misc/timenew.hh"
 #include "../misc/timeutility.hh"
 
 #include <dune/common/fvector.hh>
@@ -176,8 +175,7 @@ namespace Dune {
       communicationManager_.exchange( dest );
       
       if (time_) {
-        // time_->provideTimeStepEstimate(dtMin_);
-        time_->provideTimeStepEstimate(0.001);
+        time_->provideTimeStepEstimate(dtMin_);
       }
       caller_.finalize();
     }
@@ -201,36 +199,41 @@ namespace Dune {
 
       double massVolElinv;
       const double vol = volumeElement(geo, massVolElinv);
-if (spc_.order() > 0) {
-      ///////////////////////////////
-      // Volumetric integral part
-      ///////////////////////////////
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
-      const int volQuad_nop = volQuad.nop();
-      // std::cerr << "Element Quad: " << volQuad_nop << std::endl;
-      for (int l = 0; l < volQuad_nop; ++l) 
-      {
-        // evaluate analytical flux and source 
-        caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
-        
-        const double intel = geo.integrationElement(volQuad.point(l))
-                             * massVolElinv*volQuad.weight(l);
-        
-	source_ *= intel;
-	fMat_ *= intel;
-  fMat_.rightmultiply(en.geometry().jacobianInverseTransposed( volQuad.point(l) ) );
 
-        for (int i = 0; i < updEn_numDofs; ++i) 
+      // only apply volumetric integral if order > 0 
+      // otherwise this contribution is zero 
+      if (spc_.order() > 0) 
+      {
+          
+        ///////////////////////////////
+        // Volumetric integral part
+        ///////////////////////////////
+        VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+        const int volQuad_nop = volQuad.nop();
+        for (int l = 0; l < volQuad_nop; ++l) 
         {
-/*
-          updEn[i] += 
-            (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
-             bsetEn.evaluateSingle(i, volQuad, l, source_));
-*/
-          updEn[i] += bsetEn.evaluateGradientTransformed(i,en,volQuad,l,fMat_);
+          // evaluate analytical flux and source 
+          caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
+          
+          const double intel = geo.integrationElement(volQuad.point(l))
+                               * massVolElinv*volQuad.weight(l);
+          
+          source_ *= intel;
+          fMat_ *= intel;
+          fMat_.rightmultiply(en.geometry().jacobianInverseTransposed( volQuad.point(l) ) );
+
+          for (int i = 0; i < updEn_numDofs; ++i) 
+          {
+  /*
+            updEn[i] += 
+              (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
+               bsetEn.evaluateSingle(i, volQuad, l, source_));
+  */
+            updEn[i] += bsetEn.evaluateGradientTransformed(i,en,volQuad,l,fMat_);
+          }
         }
       }
-}
+
       /////////////////////////////
       // Surface integral part
       /////////////////////////////
@@ -268,7 +271,7 @@ if (spc_.order() > 0) {
                         dtLocal,wspeedS);
             }
             else
-            { abort();
+            { 
               // for non-conforming situations apply the non-conforming 
               // type of the qaudrature 
                
@@ -309,16 +312,19 @@ if (spc_.order() > 0) {
           const int faceQuadInner_nop = faceQuadInner.nop();
           for (int l = 0; l < faceQuadInner_nop; ++l) 
           {
+            // eval boundary Flux  
             double dtLocalS = 
               caller_.boundaryFlux(nit, faceQuadInner, l, source_);
             
             dtLocal += dtLocalS*faceQuadInner.weight(l);
             wspeedS += dtLocalS*faceQuadInner.weight(l);
-                    
+            
+            // apply weights 
+            source_ *= faceQuadInner.weight(l)*massVolElinv;
+            
             for (int i = 0; i < updEn_numDofs; ++i) 
             {
-              updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_)
-                *faceQuadInner.weight(l)*massVolElinv;
+              updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_);
             }
           }
         } // end if boundary
@@ -356,7 +362,6 @@ if (spc_.order() > 0) {
       double nbvol = volumeElement(nbGeo, massVolNbinv);
       
       const int faceQuadInner_nop = faceQuadInner.nop();
-      // std::cerr << "Face Quad: " << faceQuadInner_nop << std::endl;
       for (int l = 0; l < faceQuadInner_nop; ++l) 
       {
         double dtLocalS = 
@@ -366,12 +371,16 @@ if (spc_.order() > 0) {
         dtLocal += dtLocalS*faceQuadInner.weight(l);
         wspeedS += dtLocalS*faceQuadInner.weight(l);
 
-	valEn_ *= faceQuadInner.weight(l)*massVolElinv;
-	valNeigh_ *= faceQuadOuter.weight(l)*massVolNbinv;
+        // apply weights 
+        valEn_ *= faceQuadInner.weight(l)*massVolElinv;
+        valNeigh_ *= faceQuadOuter.weight(l)*massVolNbinv;
+
         for (int i = 0; i < updEn_numDofs; ++i) 
-        {
+        { 
+          // update entity 
           updEn[i] -= 
             bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_);
+          // update neighbor 
           updNeigh[i] += 
             bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_);
         }
