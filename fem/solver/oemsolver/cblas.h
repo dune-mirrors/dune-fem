@@ -249,11 +249,6 @@ int idamax_( const int *n, const double *x, const int *incx );
 #define CBLAS1_H
 // ============================================================================
 
-
-#ifdef __linux__ // muss dnorm2 f"ur linux neu implementieren
-#  include <math.h>
-#endif
-
 inline
 void drotg( double *a, double *b, double *c, double *s ) {
   drotg_(a,b,c,s);
@@ -307,14 +302,7 @@ double ddot( int n, const double *x, int incx, const double *y, int incy ) {
 
 inline
 double dnrm2( int n, const double *x, int incx ) {
-#ifdef __linux__ //  fehlerhafte Berechnung
-  double d=0.;
-  while ( n-- )
-    d+=(*x)*(*x), x+=incx;
-  return sqrt(d);
-#else            // unter nicht-Linux korrekt
   return dnrm2_(&n,x,&incx);
-#endif
 }
 
 inline
