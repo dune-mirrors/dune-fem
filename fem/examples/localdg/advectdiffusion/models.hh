@@ -52,8 +52,8 @@ typedef LeafGridPart<GridType> GridPartType;
 #include "euler_mhd/eulermodel.hh"
    typedef U0Smooth1D InitialDataType;
    typedef EulerModel<GridPartType,InitialDataType> ModelType;
-   typedef DWNumFlux<ModelType> FluxType;
-   typedef DGAdvectionOperator<ModelType,DWNumFlux,order> DgType;
+   typedef HLLNumFlux<ModelType> FluxType;
+   typedef DGAdvectionOperator<ModelType,HLLNumFlux,order> DgType;
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
    // typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #endif
