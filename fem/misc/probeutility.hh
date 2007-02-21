@@ -80,6 +80,10 @@ namespace Dune
  *
  *   the routine assumed a reasonable low number of points to be handled,
  *   as for all points, the local coordinates in all elements are computed
+ *   the output array is assumed to be allocated sufficiently and must provide 
+ *   a random access [] operator!!!
+ *   So C-arrays and std::vectors, fielvectors, etc. can be used as 
+ *   output types
  *
  *   \param func the discretefunction
  *
@@ -90,16 +94,16 @@ namespace Dune
  *   \param npoints the number of points to be equally distributed 
  *          along the line 
  *
- *   \param values a pointer to an (allocated!) array for the return values
+ *   \param values a pointer to an (allocated!) vector for the return values
  */
 /*======================================================================*/
     
-    template <class DiscreteFunctionType>
+    template <class DiscreteFunctionType, class VectorType>
     void lineprobe(const DiscreteFunctionType& func, 
-                    const typename DiscreteFunctionType::DomainType& start,
+                   const typename DiscreteFunctionType::DomainType& start,
                    const typename DiscreteFunctionType::DomainType& end,
                    const int npoints,
-                   typename DiscreteFunctionType::RangeType* values)
+                   VectorType& values)
           {
             // typedefs
             typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType 
@@ -111,7 +115,7 @@ namespace Dune
             assert(npoints>=2);
             
             // check, that values are allocated and initialize with nan
-            assert(values);
+//            assert(values);
             for (int i=0;i<npoints;i++) values[i] = NAN;
             
             // field for marking, which points are finished
@@ -147,14 +151,17 @@ namespace Dune
                   {
                     typename DiscreteFunctionType::LocalFunctionType 
                         lf = func.localFunction(*it);
-                    lf.evaluate(it->geometry().local(points[i]),values[i]);
+                    // lf.evaluate(it->geometry().local(points[i]),values[i]);
+                    typename DiscreteFunctionType::RangeType val; 
+                    lf.evaluate(it->geometry().local(points[i]),val);
+                    values[i] = val;
                   }
               
             } // end of loop over grid
           } // end of lineprobe
     
   }; // end class ProbeUtility
-
+  
 } // end namespace Dune
 
 #endif
