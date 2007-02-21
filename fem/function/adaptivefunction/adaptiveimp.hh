@@ -46,6 +46,7 @@ namespace Dune {
     typedef typename Traits::DiscreteFunctionType LeafType;
 
     typedef typename Traits::DofType DofType;
+    
   public:
     std::string name() const;
     int size() const;
@@ -63,6 +64,16 @@ namespace Dune {
 
     template <class EntityType>
     LocalFunctionType localFunction(const EntityType& en) const;
+
+    //! Set all elements to zero
+    void clear();
+
+    //! daxpy operation
+    void addScaled(const ThisType& g,
+                   const RangeFieldType& c);
+
+    //! Assignment
+    void assignFunction(const ThisType& org);
   
     //! write data of discrete function to file filename|timestep 
     //! with xdr methods 

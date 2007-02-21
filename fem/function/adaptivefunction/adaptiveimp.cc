@@ -64,13 +64,39 @@ namespace Dune {
       assert(removed);
     }
   }
-  
+ 
   template <class DiscreteFunctionSpaceImp>
   std::string
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   name() const 
   {
     return name_;
+  }
+
+  template <class DiscreteFunctionSpaceImp>
+  inline void 
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
+  clear () 
+  {
+    dofVec_.clear();
+  }
+
+  template <class DiscreteFunctionSpaceImp>
+  inline void 
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
+  addScaled(const ThisType& org, const RangeFieldType& c) 
+  {
+    dofVec_.axpy(org.dofVec_ , c);
+  }
+
+  // operator=
+  template <class DiscreteFunctionSpaceImp>
+  inline void 
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
+  assignFunction(const ThisType& org)
+  {
+    assert(this->size() == org.size());
+    dofVec_ = org.dofVec_;
   }
 
   template <class DiscreteFunctionSpaceImp>

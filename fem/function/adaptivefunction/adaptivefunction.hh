@@ -42,6 +42,7 @@ namespace Dune {
 
     typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType DofType;
     typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
+    typedef typename DiscreteFunctionSpaceType::Traits::DomainFieldType DomainFieldType;
     typedef typename DiscreteFunctionSpaceType::Traits::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::Traits::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::Traits::JacobianRangeType JacobianRangeType;
@@ -79,6 +80,7 @@ namespace Dune {
     typedef AdaptiveDiscreteFunctionTraits<
       DiscreteFunctionSpaceImp > MyTraits;
     typedef DiscreteFunctionDefault<MyTraits> BaseType;
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> ThisType;
 
   public:
     //- Typedefs and enums
@@ -104,6 +106,8 @@ namespace Dune {
     typedef typename Traits::DofType DofType;
     //! Intrinsic type used for the range field (identical to DofType)
     typedef typename Traits::RangeFieldType RangeFieldType;
+    //! Intrinsic type used for the domain field
+    typedef typename Traits::DomainFieldType DomainFieldType;
     //! Vector type used for the range field
     typedef typename Traits::RangeType RangeType;
     //! Vector type used for the domain field
@@ -118,6 +122,9 @@ namespace Dune {
     typedef typename Traits::DofIteratorType DofIteratorType;
     //! Read-only iterator over dof container
     typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
+
+    typedef Mapping<DomainFieldType, RangeFieldType,
+                    DomainType, RangeType> MappingType;
   public:
     //- Public methods
     //! Constructor
@@ -152,6 +159,16 @@ namespace Dune {
       Imp(other)
     {}
 
+    //! assignment of functions 
+    virtual BaseType& assign(const MappingType& g)
+    {
+      const ThisType& org = dynamic_cast<const ThisType&> (g);
+      Imp::assignFunction(org);
+      return *this;
+    }
+
+    using Imp::clear;
+    using Imp::addScaled;
     using Imp::name;
     using Imp::size;
     using Imp::dbegin;
@@ -374,6 +391,7 @@ namespace Dune {
     typedef AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp> Imp;
     typedef AdaptiveDiscreteFunctionTraits<DiscreteFunctionSpaceImp> MyTraits;
     typedef DiscreteFunctionDefault<MyTraits> BaseType;
+    typedef AdaptiveDiscreteFunction<CombinedSpace<ContainedFunctionSpaceImp,N,p> > ThisType;
 
   public:
     //- Typedefs and enums
@@ -387,6 +405,7 @@ namespace Dune {
     
     typedef typename Traits::DofType DofType;
     typedef typename Traits::RangeFieldType RangeFieldType;
+    typedef typename Traits::DomainFieldType DomainFieldType;
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::MapperType MapperType;
@@ -400,6 +419,8 @@ namespace Dune {
     typedef SubSpace<DiscreteFunctionSpaceType> SubSpaceType;
     typedef AdaptiveDiscreteFunction<SubSpaceType> SubDiscreteFunctionType;
    
+    typedef Mapping<DomainFieldType, RangeFieldType,
+                    DomainType, RangeType> MappingType;
   public:
     //- Public methods
     //! Constructor
@@ -437,6 +458,16 @@ namespace Dune {
     
     ~AdaptiveDiscreteFunction();
 
+    //! assignment of functions 
+    virtual BaseType& assign(const MappingType& g)
+    {
+      const ThisType& org = dynamic_cast<const ThisType&> (g);
+      Imp::assignFunction(org);
+      return *this;
+    }
+
+    using Imp::clear;
+    using Imp::addScaled;
     using Imp::name;
     using Imp::size;
     using Imp::dbegin;
