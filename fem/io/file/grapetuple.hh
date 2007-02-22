@@ -22,8 +22,6 @@ struct GrapeTupleCaller
 			     GridType& grid) 
   {
     std::stringstream dataname;
-    dataname << name << "_" << N; 
-    std::cout << "    Dataset from " << dataname.str() << std::endl;
     typedef typename DiscFuncType::DiscreteFunctionSpaceType SpaceType;
     typedef typename SpaceType::GridPartType GridPartType;
     GridPartType* gridPart = new GridPartType(grid);
@@ -228,7 +226,7 @@ struct GrapeTuple
       new ReturnType(GrapeTupleHelper<T1,T2,0>::createData(dataio,dname,n,*grid));
     
     // read all data 
-    GrapeTupleHelper<T1,T2,0>::restore(*ret,dname,n,*grid);
+    GrapeTupleHelper<T1,T2,0>::restore(*ret,dataio,dname,n);
    
     // read dofmanager and index sets 
     GrapeTuple<TupType>::restoreDofManager(*grid,n,path,name);
