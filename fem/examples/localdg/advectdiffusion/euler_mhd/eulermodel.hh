@@ -77,6 +77,13 @@ class EulerModel {
     gamma_(problem.gamma),
     problem_(problem)
   {}
+
+  // has flux 
+  bool hasFlux() const { return true; }
+  
+  // has flux 
+  bool hasSource() const { return false; }
+  
   inline  void analyticalFlux(typename Traits::EntityType& en,
 			      double time,  
 			      const typename Traits::DomainType& x,
