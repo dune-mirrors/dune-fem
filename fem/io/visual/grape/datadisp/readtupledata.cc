@@ -1,8 +1,8 @@
 //**************************************************************
 //  (C) written and directecd by Robert Kloefkorn 
 //**************************************************************
-#ifndef __DATADISP_READDATA_CC__
-#define __DATADISP_READDATA_CC__
+#ifndef DATADISP_READDATA_CC
+#define DATADISP_READDATA_CC
 
 #include <stack> 
 
@@ -10,7 +10,7 @@
 
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/grapedataio.hh>
-#include "../grapetuple.hh"
+#include <dune/fem/io/file/grapetuple.hh>
 
 void dataDispErrorExit(std::string msg);
 
@@ -25,9 +25,9 @@ void deleteObjects(std::stack<T *> & stack);
 
 
 GrapeDispType * readTupleData(const char * path, const char * filename, 
-			      double & time , int n, 
-			      int ntime, int myRank,
-			      INFO* info)
+            double & time , int n, 
+            int ntime, int myRank,
+            INFO* info)
 {
 
   GR_GridType * grid;
@@ -42,8 +42,6 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
   std::cout << "Finished reading grid" << std::endl;
   
   GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
-  //GrapeDispType * disp = 
-  //  new GrapeDispType ( tup->first()->getFunctionSpace().gridPart(), myRank );  
   dispStack.push(disp);
   GrapeTuple<GR_DiscFuncType>::addToDisplay(*disp,dinf,time,*tup);
 
@@ -81,24 +79,20 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
           newpath += "_"; 
           newpath += procstr; 
         }
-        else
-        {
-          //newpath += "_-1";
-        }
 
-      	std::cout << "NewPath = "<<newpath << std::endl;
+        std::cout << "NewPath = "<<newpath << std::endl;
 
         GrapeDispType *newdisp = 0;
         int anz = n; // (n > 0) ? n : 1;
         for(int i=0; i<anz; i++)
         {
-      	  newdisp = readTupleData(newpath.c_str(), info[i].name, 
+          newdisp = readTupleData(newpath.c_str(), info[i].name, 
                                 t_act , i , ntime, proc,   info);
           assert(newdisp != 0);
           assert( comdisp );
           comdisp->addDisplay( *newdisp );
         }
-	      assert(newdisp);
+        assert(newdisp);
         newdisp->addMyMeshToTimeScene(info[0].tsc,t_act,proc);
         assert( comdisp );
       }
