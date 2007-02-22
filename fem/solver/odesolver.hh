@@ -9,6 +9,7 @@
 #include <vector>
 #include <pthread.h>
 #include <cassert>
+#include <sys/times.h>
 #if HAVE_MPI
 #include <mpi.h>
 #endif
