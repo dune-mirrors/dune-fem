@@ -1,6 +1,9 @@
 // Dune includes
 #include <config.h>
 
+// inlcude template meta fvector 
+#include "fvector.hh"
+
 #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 
@@ -15,6 +18,8 @@
 
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #include <dune/common/timer.hh>
+
+
 
 using namespace Dune;
 using namespace std;
@@ -89,9 +94,9 @@ int main(int argc, char ** argv, char ** envp) {
 
   // printSGrid(0,0,dg.space(),U);
 	
-  int n=0;
-  double nextsave=0.;
-  double savestep=0.05;
+  //int n=0;
+  //double nextsave=0.;
+  //double savestep=0.05;
   double maxtime = problem.endtime();
   int level=0;
 	
