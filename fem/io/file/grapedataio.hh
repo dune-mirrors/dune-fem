@@ -20,8 +20,8 @@ namespace Dune {
 template <int dim, int dimworld, class GridImp, bool hasBackupRestore> 
 class GrapeDataIOImp 
 {
-  typedef GridImp GridType;
 public:  
+  typedef GridImp GridType;
    /** Write Grid with GridType file filename and time 
    *
    * This method uses the Grid Interface Method writeGrid 
@@ -50,8 +50,8 @@ public:
 template <int dim, int dimworld, class GridImp> 
 class GrapeDataIOImp<dim,dimworld,GridImp,false>
 {
-  typedef GridImp GridType;
 public:  
+  typedef GridImp GridType;
    /** Write Grid with GridType file filename and time 
    *
    * This method uses the Grid Interface Method writeGrid 
@@ -270,10 +270,12 @@ public:
 };
 #endif
 
-template <class GridType>
+template <class GridImp>
 class GrapeDataIO 
 {
 public:
+   typedef GridImp GridType;
+
    GrapeDataIO () {};
 
    /** Write Grid with GridType file filename and time 
@@ -381,12 +383,19 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
   int helpType;
 
   char gridname [1024];
-  readParameter(fnprefix,"Grid",gridname);
+
+  bool readGridName = readParameter(fnprefix,"Grid",gridname);
+  if(! readGridName ) 
+  {
+    std::cerr << "ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+    abort();
+  }
+
   std::string gname (gridname);
 
   if(grid.name() != gname)
   {
-    std::cerr << "\nERROR: " << grid.name() << " tries to read " << gname << " file. \n";
+    std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gname << "' file. \n";
     abort();
   }
 
