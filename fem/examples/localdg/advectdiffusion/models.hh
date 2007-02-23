@@ -8,7 +8,8 @@
 enum {order=POLORDER,rksteps=POLORDER+1}; 
 // Gitterauswahl
 
-typedef LeafGridPart<GridType> GridPartType;
+//typedef LeafGridPart<GridType> GridPartType;
+typedef HierarchicGridPart<GridType> GridPartType;
 //typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 // Modell- und Flussauswahl
 // Skalar
