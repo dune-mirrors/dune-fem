@@ -47,6 +47,7 @@ namespace Dune {
     public LocalPass<DiscreteModelImp, PreviousPassImp> 
   {
   public:
+    
     //- Typedefs and enums
     //! Base class
     typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
@@ -93,6 +94,7 @@ namespace Dune {
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+
   public:
     //- Public methods
     //! Constructor
@@ -107,6 +109,7 @@ namespace Dune {
     int volumeQuadOrd =-1,int faceQuadOrd=-1) :
       BaseType(pass, spc),
       caller_(problem),
+      problem_(problem),
       arg_(0),
       dest_(0),
       spc_(spc),
@@ -160,10 +163,12 @@ namespace Dune {
 
       // time initialisation
       dtMin_ = std::numeric_limits<double>::max();
-      if (time_) {
+      if (time_) 
+      {
         caller_.setTime(time_->time());
       }
-      else {
+      else 
+      {
         caller_.setTime(0.0);
       }
     }
@@ -176,6 +181,7 @@ namespace Dune {
       
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
+        //time_->provideTimeStepEstimate(0.001);
       }
       caller_.finalize();
     }
@@ -202,35 +208,18 @@ namespace Dune {
 
       // only apply volumetric integral if order > 0 
       // otherwise this contribution is zero 
-      if (spc_.order() > 0) 
+      
+      if(spc_.order() > 0) 
       {
-          
-        ///////////////////////////////
-        // Volumetric integral part
-        ///////////////////////////////
-        VolumeQuadratureType volQuad(en, volumeQuadOrd_);
-        const int volQuad_nop = volQuad.nop();
-        for (int l = 0; l < volQuad_nop; ++l) 
+        // if only flux, evaluate only flux 
+        if ( problem_.hasFlux() && !problem_.hasSource() ) 
         {
-          // evaluate analytical flux and source 
-          caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
-          
-          const double intel = geo.integrationElement(volQuad.point(l))
-                               * massVolElinv*volQuad.weight(l);
-          
-          source_ *= intel;
-          fMat_ *= intel;
-          fMat_.rightmultiply(en.geometry().jacobianInverseTransposed( volQuad.point(l) ) );
-
-          for (int i = 0; i < updEn_numDofs; ++i) 
-          {
-  /*
-            updEn[i] += 
-              (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
-               bsetEn.evaluateSingle(i, volQuad, l, source_));
-  */
-            updEn[i] += bsetEn.evaluateGradientTransformed(i,en,volQuad,l,fMat_);
-          }
+          evalVolumetricPartFlux(en, geo, updEn , bsetEn , massVolElinv);
+        }
+        else 
+        {
+          // evaluate flux and source 
+          evalVolumetricPartBoth(en, geo, updEn , bsetEn , massVolElinv);
         }
       }
 
@@ -314,7 +303,7 @@ namespace Dune {
           {
             // eval boundary Flux  
             double dtLocalS = 
-              caller_.boundaryFlux(nit, faceQuadInner, l, source_);
+              caller_.boundaryFlux(nit, faceQuadInner, l, source_ );
             
             dtLocal += dtLocalS*faceQuadInner.weight(l);
             wspeedS += dtLocalS*faceQuadInner.weight(l);
@@ -324,7 +313,7 @@ namespace Dune {
             
             for (int i = 0; i < updEn_numDofs; ++i) 
             {
-              updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_);
+              updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_ );
             }
           }
         } // end if boundary
@@ -337,6 +326,62 @@ namespace Dune {
       }
     }
 
+    //////////////////////////////////////////
+    // Volumetric integral part only flux 
+    //////////////////////////////////////////
+    void evalVolumetricPartFlux(EntityType& en , const GeometryType& geo , 
+        LocalFunctionType& updEn , const BaseFunctionSetType& bsetEn, const double massVolElinv ) const
+    {
+      const int updEn_numDofs = updEn.numDofs();
+      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+      const int volQuad_nop = volQuad.nop();
+      for (int l = 0; l < volQuad_nop; ++l) 
+      {
+        // evaluate analytical flux and source 
+        caller_.analyticalFlux(en, volQuad, l, fMat_ );
+        
+        const double intel = geo.integrationElement(volQuad.point(l))
+                             * massVolElinv*volQuad.weight(l);
+        
+        fMat_ *= intel;
+        fMat_.rightmultiply( geo.jacobianInverseTransposed( volQuad.point(l) ) );
+
+        for (int i = 0; i < updEn_numDofs; ++i) 
+        {
+          updEn[i] += bsetEn.evaluateGradientTransformed(i,en,volQuad,l, fMat_ );
+        }
+      }
+    }
+    
+    //////////////////////////////////////////
+    // Volumetric integral part only flux 
+    //////////////////////////////////////////
+    void evalVolumetricPartBoth(EntityType& en , const GeometryType& geo , 
+        LocalFunctionType& updEn , const BaseFunctionSetType& bsetEn, const double massVolElinv ) const
+    {
+      const int updEn_numDofs = updEn.numDofs();
+      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+      const int volQuad_nop = volQuad.nop();
+      for (int l = 0; l < volQuad_nop; ++l) 
+      {
+        // evaluate analytical flux and source 
+        caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
+        
+        const double intel = geo.integrationElement(volQuad.point(l))
+                             * massVolElinv*volQuad.weight(l);
+        
+        source_ *= intel;
+        fMat_ *= intel;
+
+        for (int i = 0; i < updEn_numDofs; ++i) 
+        {
+          updEn[i] += 
+            (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
+             bsetEn.evaluateSingle(i, volQuad, l, source_));
+        }
+      }
+    }
+    
     template <class QuadratureImp>  
     double applyLocalNeighbor(IntersectionIteratorType & nit, 
             EntityType & en, EntityType & nb, 
@@ -372,9 +417,9 @@ namespace Dune {
         wspeedS += dtLocalS*faceQuadInner.weight(l);
 
         // apply weights 
-        valEn_ *= faceQuadInner.weight(l)*massVolElinv;
+        valEn_    *= faceQuadInner.weight(l)*massVolElinv;
         valNeigh_ *= faceQuadOuter.weight(l)*massVolNbinv;
-
+        
         for (int i = 0; i < updEn_numDofs; ++i) 
         { 
           // update entity 
@@ -412,6 +457,7 @@ namespace Dune {
     
   protected:
     mutable DiscreteModelCallerType caller_;
+    const DiscreteModelType& problem_; 
     
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
