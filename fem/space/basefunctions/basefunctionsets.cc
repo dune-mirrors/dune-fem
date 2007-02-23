@@ -31,6 +31,25 @@ namespace Dune {
     storage_.evaluate(baseFunct, diffVar, quad, quadPoint, phi);
   }
 
+  template <class T, int i> 
+  struct SKPMeta
+  {
+    static double skp(const T& a, const T& b)
+    {
+      return SKPMeta<T,i-1>::skp(a,b) + a[i]*b[i];
+    }
+  };
+  
+  template <class T> 
+  struct SKPMeta<T,0>
+  {
+    static double skp(const T& a, const T& b)
+    {
+      return a[0]*b[0];
+    }
+  };
+  
+
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class QuadratureType>
   typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
@@ -40,7 +59,8 @@ namespace Dune {
                  const RangeType& factor) const 
   {
     storage_.evaluate(baseFunct, diffVar0_, quad, quadPoint, tmp_);
-    return tmp_*factor;
+    return SKPMeta<RangeType,RangeType::dimension-1>::skp(tmp_,factor);
+    //return tmp_*factor;
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
@@ -63,7 +83,8 @@ namespace Dune {
     for (int i = 0; i < FunctionSpaceImp::DimRange; ++i) {
       DomainType gradScaled(0.);
       jti.umv(jTmp_[i], gradScaled);
-      result += gradScaled*factor[i];
+      result += SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[i]);
+      //result += gradScaled*factor[i];
     }
     return result;
   }
@@ -81,14 +102,12 @@ namespace Dune {
     DofType result = 0.0;
     
     typedef FieldMatrix<DofType, FunctionSpaceImp::DimDomain,FunctionSpaceImp::DimDomain> JacobianInverseType;
-    //const JacobianInverseType& jti =
-    //  en.geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
-    for (int i = 0; i < FunctionSpaceImp::DimRange; ++i) {
-      DomainType gradScaled(0.);
-      //jti.umv(jTmp_[i], gradScaled);
-      //result += gradScaled*factor[i];
-      result += jTmp_[i]*factor[i];
+    for (int i = 0; i < FunctionSpaceImp::DimRange; ++i) 
+    {
+      result += SKPMeta<DomainType,DomainType::dimension-1>::
+                  skp(jTmp_[i],factor[i]);
+      //result += jTmp_[i]*factor[i];
     }
     return result;
   }
@@ -211,7 +230,8 @@ namespace Dune {
     DomainType gradScaled(0.);
     en.geometry().jacobianInverseTransposed(quad.point(quadPoint)).
       umv(jTmp_[0], gradScaled);
-    return gradScaled*factor[util_.component(baseFunct)];
+    return SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[util_.component(baseFunct)]);
+    //return gradScaled*factor[util_.component(baseFunct)];
   }
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class Entity, class QuadratureType>
@@ -223,7 +243,8 @@ namespace Dune {
                               const JacobianRangeType& factor) const 
   {
     storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_);
-    return jTmp_[0]*factor[util_.component(baseFunct)];
+    //return jTmp_[0]*factor[util_.component(baseFunct)];
+    return SKPMeta<DomainType,DomainType::dimension-1>::skp(jTmp_[0],factor[util_.component(baseFunct)]);
     /*
     DomainType gradScaled(0.);
     en.geometry().jacobianInverseTransposed(quad.point(quadPoint)).
