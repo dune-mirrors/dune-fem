@@ -288,7 +288,6 @@ namespace Dune {
     //! \param en Entity on which the local function is evaluated.
     //! \param x The local coordinate on en.
     LocalFunctionEvaluateLocal(EntityImp& en, const DomainImp& x) :
-      en_(en),
       x_(x)
     {}
 
@@ -304,7 +303,6 @@ namespace Dune {
     LocalFunctionEvaluateLocal& operator=(const LocalFunctionEvaluateLocal&);
     
   private:
-    EntityImp& en_;
     const DomainImp& x_;
   };
 
@@ -326,7 +324,6 @@ namespace Dune {
     LocalFunctionEvaluateQuad(EntityImp& en, 
                               QuadratureImp& quad,
                               int quadPoint) :
-      en_(en),
       quad_(quad),
       quadPoint_(quadPoint)
     {}
@@ -343,7 +340,6 @@ namespace Dune {
     LocalFunctionEvaluateQuad& operator=(const LocalFunctionEvaluateQuad&);
 
   private:
-    EntityImp& en_;
     QuadratureImp& quad_;
     int quadPoint_;
   };
