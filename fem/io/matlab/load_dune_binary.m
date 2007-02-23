@@ -23,8 +23,7 @@ function A = load_dune_binary(filename)
   % file, activate the following:
   %fid = fopen(filename,'r','ieee-be');
   
-  magicstr = char(fread(fid,3,'char'))';
-  
+  magicstr = char(fread(fid,3,'char'))';  
   if ~ismember({magicstr},{'DDV','DSM','DDM'})
     error('read magicstr does not indicate known Dune Binary Filetype!');
   end;
@@ -40,9 +39,9 @@ function A = load_dune_binary(filename)
   switch magicstr
    case 'DDV' %%%%%%%%%%%%%%%% Read Vector %%%%%%%%%%%%%%%%%%%%%%%%
     nentries = fread(fid,1,'int');
-    disp(['generating and reading vector with ',
+    disp(['generating and reading vector with ', ...
 	  num2str(nentries),' entries.']);
-    v = fread(fid,nentries,'double');
+    A = fread(fid,nentries,'double');
    case 'DSM' %%%%%%%%%%%%%%%% Read Sparse Matrix %%%%%%%%%%%%%%%%%
     
     nrows = fread(fid,1,'int');

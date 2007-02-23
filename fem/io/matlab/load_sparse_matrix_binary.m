@@ -23,7 +23,7 @@ function A = load_sparse_matrix_binary(filename)
   % file, activate the following:
   %fid = fopen(filename,'r','ieee-be');
   
-  magicstr = fread(fid,3,'char');
+  magicstr = char(fread(fid,3,'char'))';
   if ~isequal(magicstr,'DSM')
     error('read magicstr doe not indicate Dune Sparse Matrix!');
   end;
@@ -52,7 +52,7 @@ function A = load_sparse_matrix_binary(filename)
     A(row+1,col+1) = val;
   end;  
   
-  eofstr = fread(fid,3,'char');
+  eofstr = char(fread(fid,3,'char'))';
   if ~isequal(eofstr,'EOF')
     error('read eofstr does not indicate end of binary file!');
   end;

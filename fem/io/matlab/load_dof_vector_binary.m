@@ -21,7 +21,7 @@ function v = load_dof_vector_binary(filename)
   % file, activate the following:
   %fid = fopen(filename,'r','ieee-be');
   
-  magicstr = fread(fid,3,'char');
+  magicstr = char(fread(fid,3,'char'))';
   if ~isequal(magicstr,'DDV')
     error('read magicstr doe not indicate Dune Dof Vector!');
   end;
@@ -40,7 +40,7 @@ function v = load_dof_vector_binary(filename)
 
   v = fread(fid,nentries,'double');
 
-  eofstr = fread(fid,3,'char');
+  eofstr = char(fread(fid,3,'char'))';
   if ~isequal(eofstr,'EOF')
     error('read eofstr does not indicate end of binary file!');
   end;
