@@ -309,12 +309,10 @@ namespace Dune {
             wspeedS += dtLocalS*faceQuadInner.weight(l);
             
             // apply weights 
-            source_ *= faceQuadInner.weight(l)*massVolElinv;
-            
-            for (int i = 0; i < updEn_numDofs; ++i) 
-            {
-              updEn[i] -= bsetEn.evaluateSingle(i, faceQuadInner, l, source_ );
-            }
+            source_ *= -faceQuadInner.weight(l)*massVolElinv;
+
+            // add factor 
+            updEn.axpy( faceQuadInner, l, source_  );
           }
         } // end if boundary
         
@@ -344,11 +342,16 @@ namespace Dune {
                              * massVolElinv*volQuad.weight(l);
         
         fMat_ *= intel;
-        fMat_.rightmultiply( geo.jacobianInverseTransposed( volQuad.point(l) ) );
 
+        //updEn.axpy( volQuad, l, fMat_);
+        
+        //fMat_.rightmultiply( geo.jacobianInverseTransposed( volQuad.point(l) ) );
+
+
+        //bsetEn.evaluateGradientTransformed(en, volQuad,l, fMat_ ,updEn );
         for (int i = 0; i < updEn_numDofs; ++i) 
         {
-          updEn[i] += bsetEn.evaluateGradientTransformed(i,en,volQuad,l, fMat_ );
+          updEn[i] += bsetEn.evaluateGradientSingle(i,en, volQuad,l, fMat_ );
         }
       }
     }
@@ -417,18 +420,11 @@ namespace Dune {
         wspeedS += dtLocalS*faceQuadInner.weight(l);
 
         // apply weights 
-        valEn_    *= faceQuadInner.weight(l)*massVolElinv;
-        valNeigh_ *= faceQuadOuter.weight(l)*massVolNbinv;
+        valEn_    *= -faceQuadInner.weight(l)*massVolElinv;
+        valNeigh_ *=  faceQuadOuter.weight(l)*massVolNbinv;
         
-        for (int i = 0; i < updEn_numDofs; ++i) 
-        { 
-          // update entity 
-          updEn[i] -= 
-            bsetEn.evaluateSingle(i, faceQuadInner, l, valEn_);
-          // update neighbor 
-          updNeigh[i] += 
-            bsetNeigh.evaluateSingle(i, faceQuadOuter, l, valNeigh_);
-        }
+        updEn.axpy( faceQuadInner, l, valEn_ );
+        updNeigh.axpy( faceQuadOuter, l, valNeigh_ );
       }
       return nbvol;
     }
