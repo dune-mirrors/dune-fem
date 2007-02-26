@@ -16,8 +16,6 @@ namespace Dune {
     numDofs_(0),
     tmp_(0),
     tmpGrad_(0),
-//    tmp_(0.0),  
-//    tmpGrad_(0.0),
     init_(false),
     multipleGeometryTypes_(spc_.multipleGeometryTypes()),
     baseSet_(0),
@@ -89,8 +87,7 @@ namespace Dune {
     for (int i = 0; i < numDof; ++i) 
     {
       bSet.eval(i, x, tmp_);
-      tmp_ *= (*values_[i]);
-      ret += tmp_;
+      ret.axpy( (*values_[i]) , tmp_ );
     }
   }
 
@@ -109,8 +106,7 @@ namespace Dune {
     for (int i = 0; i < numDof; ++i) 
     {
       bSet.eval(i, quad,quadPoint, tmp_);
-      tmp_ *= (*values_[i]);
-      ret  += tmp_;
+      ret.axpy( (*values_[i]) , tmp_ );
     }
   }
 
@@ -193,8 +189,6 @@ namespace Dune {
     const JacobianInverseType& jti = 
       en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
-    //JacobianRangeType tmp(0.0);
-
     const int numDof = this->numDofs();
     for (int i = 0; i < numDof; ++i) 
     {
@@ -208,17 +202,6 @@ namespace Dune {
         jti.umv(tmpGrad_[l], ret[l]);
       }
     }
-
-    /*
-    for (int i = 0; i < this->numDofs(); ++i) 
-    {
-      bSet.jacobian(i, quad,quadPoint, tmpGrad_);
-      tmpGrad_ *= *values_[i];
-      tmp += tmpGrad_;
-    }    
-    for (int l = 0; l < dimRange; ++l) 
-      jti.umv(tmp[l],ret[l]);
-    */
   }
 
   template <class DiscreteFunctionSpaceImp>
@@ -409,8 +392,9 @@ namespace Dune {
     {
       // Assumption: scalar contained base functions
       // bSet.evaluateScalar(i, x, cTmp_);
-      bSet.evaluateScalar(i, quad,quadPoint, cTmp_);
-      for (SizeType j = 0; j < N; ++j) {
+      bSet.evaluateScalar(i, quad, quadPoint, cTmp_);
+      for (SizeType j = 0; j < N; ++j) 
+      {
         ret[j] += cTmp_[0]*(*values_[i][j]);
       }
     }
@@ -448,15 +432,15 @@ namespace Dune {
     const int numDiffBaseFct = bSet.numDifferentBaseFunctions();
     for (int i = 0; i < numDiffBaseFct; ++i) 
     {
-      //cTmpGradRef_ = 0.0;
       cTmpGradReal_ = 0.0;
       bSet.jacobianScalar(i, x, cTmpGradRef_);
       jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
 
-      for (SizeType j = 0; j < N; ++j) {
+      for (SizeType j = 0; j < N; ++j) 
+      {
         // Assumption: ContainedDimRange == 1
-        //cTmpGrad_[0] *= *values_[i][j];
-        result[j].axpy(*values_[i][j], cTmpGradReal_[0]);
+        result[j] += *values_[i][j]*cTmpGradReal_[0];
+        //result[j].axpy(*values_[i][j], cTmpGradReal_[0]);
       }
     }
 
@@ -539,9 +523,10 @@ namespace Dune {
     assert( values_.size()*N == numDofs_);
     for (int i = 0; i < numDDof; ++i) 
     {
+      const int idx = i*N;
       for (SizeType j = 0; j < N; ++j) 
       {
-        values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, i*N+j)]);
+        values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, idx+j)]);
       } // end for j
     } // end for i
   }
