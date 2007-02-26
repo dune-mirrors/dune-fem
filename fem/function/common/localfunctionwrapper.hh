@@ -268,6 +268,22 @@ public:
     localFunc().init(en);
   } 
 
+  //! sum over all local base functions evaluated on given quadrature point
+  template <class QuadratureType> 
+  inline void axpy(const QuadratureType &quad, 
+                   const int quadPoint , const RangeType & factor)
+  {
+    localFunc().axpy( quad, quadPoint , factor );
+  }
+  
+  //! sum over all local base functions evaluated on given quadrature point
+  template <class QuadratureType> 
+  inline void axpy(const QuadratureType &quad, 
+                   const int quadPoint , const JacobianRangeType & factor)
+  {
+    localFunc().axpy( quad, quadPoint , factor );
+  }
+  
   const BaseFunctionSetType& baseFunctionSet() const 
   {
     return localFunc().baseFunctionSet();
