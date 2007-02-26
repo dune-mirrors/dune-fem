@@ -9,6 +9,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/genericiterator.hh>
 
+#undef DUNE_EXPRESSIONTEMPLATES
+
 #ifdef DUNE_EXPRESSIONTEMPLATES
 #include "exprtmpl.hh"
 #endif
@@ -1036,31 +1038,31 @@ representing a field and a compile-time given size.
 	//===== norms
 
 	//! one norm (sum over absolute values of entries)
-    double one_norm () const
+  double one_norm () const
 	{
             return std::abs(p);
 	}
 
 	//! simplified one norm (uses Manhattan norm for complex values)
-    double one_norm_real () const
+  double one_norm_real () const
 	{
 	  return fvmeta_abs_real(p);
 	}
 
 	//! two norm sqrt(sum over squared values of entries)
-    double two_norm () const
+  double two_norm () const
 	{
 	  return sqrt(fvmeta_abs2(p));
 	}
 
 	//! square of two norm (sum over squared values of entries), need for block recursion
-    double two_norm2 () const
+  double two_norm2 () const
 	{
 	  return fvmeta_abs2(p);
 	}
 
 	//! infinity norm (maximum of absolute values of entries)
-    double infinity_norm () const
+  double infinity_norm () const
 	{
             return std::abs(p);
 	}
