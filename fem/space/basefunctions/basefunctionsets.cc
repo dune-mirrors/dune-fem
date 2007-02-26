@@ -67,9 +67,10 @@ namespace Dune {
   template <class Entity, class QuadratureType>
   typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluateGradientSingle(int baseFunct,
-                         Entity& en,
-                         const QuadratureType& quad, int quadPoint,
+  evaluateGradientSingle(const int baseFunct,
+                         const Entity& en,
+                         const QuadratureType& quad, 
+                         const int quadPoint,
                          const JacobianRangeType& factor) const 
   {
     storage_.jacobian(baseFunct, quad, quadPoint, jTmp_);
@@ -85,29 +86,6 @@ namespace Dune {
       jti.umv(jTmp_[i], gradScaled);
       result += SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[i]);
       //result += gradScaled*factor[i];
-    }
-    return result;
-  }
-  template <class FunctionSpaceImp, template <class> class StorageImp>
-  template <class Entity, class QuadratureType>
-  typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
-  StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluateGradientTransformed(int baseFunct,
-                              Entity& en,
-                              const QuadratureType& quad, int quadPoint,
-                              const JacobianRangeType& factor) const 
-  {
-    storage_.jacobian(baseFunct, quad, quadPoint, jTmp_);
-
-    DofType result = 0.0;
-    
-    typedef FieldMatrix<DofType, FunctionSpaceImp::DimDomain,FunctionSpaceImp::DimDomain> JacobianInverseType;
-
-    for (int i = 0; i < FunctionSpaceImp::DimRange; ++i) 
-    {
-      result += SKPMeta<DomainType,DomainType::dimension-1>::
-                  skp(jTmp_[i],factor[i]);
-      //result += jTmp_[i]*factor[i];
     }
     return result;
   }
@@ -176,7 +154,7 @@ namespace Dune {
   template <class FunctionSpaceImp, template <class> class StorageImp>
   typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluateSingle(int baseFunct, 
+  evaluateSingle(const int baseFunct, 
                  const DomainType& xLocal,
                  const RangeType& factor) const 
   {
@@ -189,8 +167,8 @@ namespace Dune {
   template <class QuadratureType>
   typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluateSingle(int baseFunct,
-                 const QuadratureType& quad, int quadPoint,
+  evaluateSingle(const int baseFunct,
+                 const QuadratureType& quad, const int quadPoint,
                  const RangeType& factor) const 
   {
     //std::cout << "VectorialBaseFunctionSet::evaluateSingle" << std::endl;
@@ -203,15 +181,14 @@ namespace Dune {
   template <class Entity>
   typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluateGradientSingle(int baseFunct,
-                         Entity& en,
+  evaluateGradientSingle(const int baseFunct,
+                         const Entity& en,
                          const DomainType& xLocal,
                          const JacobianRangeType& factor) const 
   {
     DomainType gradScaled(0.);
 
     storage_.jacobian(util_.containedDof(baseFunct), xLocal, jTmp_);
-
     en.geometry().jacobianInverseTransposed(xLocal).umv(jTmp_[0], gradScaled);
     return gradScaled*factor[util_.component(baseFunct)];
   }
@@ -220,8 +197,8 @@ namespace Dune {
   template <class Entity, class QuadratureType>
   typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluateGradientSingle(int baseFunct,
-                         Entity& en,
+  evaluateGradientSingle(const int baseFunct,
+                         const Entity& en,
                          const QuadratureType& quad, int quadPoint,
                          const JacobianRangeType& factor) const 
   {
@@ -232,25 +209,6 @@ namespace Dune {
       umv(jTmp_[0], gradScaled);
     return SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[util_.component(baseFunct)]);
     //return gradScaled*factor[util_.component(baseFunct)];
-  }
-  template <class FunctionSpaceImp, template <class> class StorageImp>
-  template <class Entity, class QuadratureType>
-  typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
-  VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluateGradientTransformed(int baseFunct,
-                              Entity& en,
-                              const QuadratureType& quad, int quadPoint,
-                              const JacobianRangeType& factor) const 
-  {
-    storage_.jacobian(util_.containedDof(baseFunct), quad, quadPoint, jTmp_);
-    //return jTmp_[0]*factor[util_.component(baseFunct)];
-    return SKPMeta<DomainType,DomainType::dimension-1>::skp(jTmp_[0],factor[util_.component(baseFunct)]);
-    /*
-    DomainType gradScaled(0.);
-    en.geometry().jacobianInverseTransposed(quad.point(quadPoint)).
-      umv(jTmp_[0], gradScaled);
-    return gradScaled*factor[util_.component(baseFunct)];
-    */
   }
 } // end namespace Dune
 

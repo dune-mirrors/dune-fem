@@ -80,22 +80,17 @@ namespace Dune {
 
     template <class QuadratureType>
     inline
-    DofType evaluateSingle(int baseFunct,
-                           const QuadratureType& quad, int quadPoint,
+    DofType evaluateSingle(const int baseFunct,
+                           const QuadratureType& quad, const int quadPoint,
                            const RangeType& factor) const;
       
     template <class Entity, class QuadratureType>
     inline
-    DofType evaluateGradientSingle(int baseFunct,
-                                   Entity& en,
-                                   const QuadratureType& quad, int quadPoint,
+    DofType evaluateGradientSingle(const int baseFunct,
+                                   const Entity& en,
+                                   const QuadratureType& quad, 
+                                   const int quadPoint,
                                    const JacobianRangeType& factor) const;
-    template <class Entity, class QuadratureType>
-    inline
-    DofType evaluateGradientTransformed(int baseFunct,
-                                        Entity& en,
-                                        const QuadratureType& quad, int quadPoint,
-                                        const JacobianRangeType& factor) const;
   private:
     typename Traits::StorageType storage_;
     
@@ -183,36 +178,30 @@ namespace Dune {
                   JacobianRangeType& gradPhi) const;
 
     inline
-    DofType evaluateSingle(int baseFunct, 
+    DofType evaluateSingle(const int baseFunct, 
                            const DomainType& xLocal,
                            const RangeType& factor) const;
     
     template <class QuadratureType>
     inline
-    DofType evaluateSingle(int baseFunct,
+    DofType evaluateSingle(const int baseFunct,
                            const QuadratureType& quad, int quadPoint,
                            const RangeType& factor) const;
       
     template <class Entity>
     inline
-    DofType evaluateGradientSingle(int baseFunct,
-                                   Entity& en,
+    DofType evaluateGradientSingle(const int baseFunct,
+                                   const Entity& en,
                                    const DomainType& xLocal,
                                    const JacobianRangeType& factor) const;
     
     template <class Entity, class QuadratureType>
     inline
-    DofType evaluateGradientSingle(int baseFunct,
-                                   Entity& en,
+    DofType evaluateGradientSingle(const int baseFunct,
+                                   const Entity& en,
                                    const QuadratureType& quad, int quadPoint,
                                    const JacobianRangeType& factor) const;
-    template <class Entity, class QuadratureType>
-    inline
-    DofType evaluateGradientTransformed(int baseFunct,
-                                        Entity& en,
-                                        const QuadratureType& quad, int quadPoint,
-                                        const JacobianRangeType& factor) const;
-  
+
   private:
     StorageType storage_;
     DofConversionUtility<PointBased> util_;
