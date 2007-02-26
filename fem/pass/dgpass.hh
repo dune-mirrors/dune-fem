@@ -196,7 +196,6 @@ namespace Dune {
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
-      const int updEn_numDofs = updEn.numDofs();
       const BaseFunctionSetType& bsetEn = updEn.baseFunctionSet(); 
       
 
@@ -256,7 +255,7 @@ namespace Dune {
               // needed below 
               nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
                         faceQuadInner,faceQuadOuter,
-                        bsetEn,updEn_numDofs,updEn,
+                        bsetEn,updEn,
                         dtLocal,wspeedS);
             }
             else
@@ -284,7 +283,7 @@ namespace Dune {
               nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
                         nonConformingFaceQuadInner,
                         nonConformingFaceQuadOuter,
-                        bsetEn,updEn_numDofs,updEn,
+                        bsetEn,updEn,
                         dtLocal,wspeedS);
             }
 
@@ -384,7 +383,6 @@ namespace Dune {
             const QuadratureImp & faceQuadInner, 
             const QuadratureImp & faceQuadOuter,
             const BaseFunctionSetType & bsetEn, 
-            const int updEn_numDofs, 
             LocalFunctionType & updEn,
             double & dtLocal, 
             double & wspeedS) const 
