@@ -343,16 +343,8 @@ namespace Dune {
         
         fMat_ *= intel;
 
-        //updEn.axpy( volQuad, l, fMat_);
-        
-        //fMat_.rightmultiply( geo.jacobianInverseTransposed( volQuad.point(l) ) );
-
-
-        //bsetEn.evaluateGradientTransformed(en, volQuad,l, fMat_ ,updEn );
-        for (int i = 0; i < updEn_numDofs; ++i) 
-        {
-          updEn[i] += bsetEn.evaluateGradientSingle(i,en, volQuad,l, fMat_ );
-        }
+        // add fMat 
+        updEn.axpy( volQuad, l, fMat_);
       }
     }
     
