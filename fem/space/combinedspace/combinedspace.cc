@@ -69,7 +69,7 @@ namespace Dune {
   //- CombinedBaseFunctionSet
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <int diffOrd>
-  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  inline void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluate(int baseFunct, 
            const FieldVector<deriType, diffOrd> &diffVariable,
            const DomainType & x, RangeType & phi) const 
@@ -81,7 +81,7 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <int diffOrd, class QuadratureType>
-  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  inline void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluate(int baseFunct, 
            const FieldVector<deriType, diffOrd> &diffVariable, 
            QuadratureType & quad, 
@@ -93,7 +93,7 @@ namespace Dune {
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  inline void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   expand(int baseFunct, const ContainedRangeType& arg, RangeType& dest) const 
   {
     dest = 0.0;
@@ -102,7 +102,7 @@ namespace Dune {
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  inline void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluateScalar(int baseFunct, 
                  const DomainType& x, 
                  ContainedRangeType& phi) const
@@ -113,19 +113,19 @@ namespace Dune {
   }
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <class QuadratureType> 
-  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  inline void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluateScalar(int baseFunct, 
                  const QuadratureType & quad, int p, 
                  ContainedRangeType& phi) const
   {
     assert(baseFunct >= 0 && 
            baseFunct < baseFunctionSet_.numBaseFunctions());
-    baseFunctionSet_.eval(baseFunct, quad,p, phi);
+    baseFunctionSet_.eval(baseFunct, quad, p, phi);
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <class QuadratureType> 
-  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  inline void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   jacobianScalar(int baseFunct, 
                  const QuadratureType & quad, int p, 
                  ContainedJacobianRangeType& phi) const
@@ -135,7 +135,7 @@ namespace Dune {
     baseFunctionSet_.jacobian(baseFunct, quad,p, phi);
   }
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
+  inline void CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   jacobianScalar(int baseFunct, 
                  const DomainType& x, 
                  ContainedJacobianRangeType& phi) const
@@ -146,7 +146,7 @@ namespace Dune {
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  typename CombinedBaseFunctionSet<DiscreteFunctionSpaceImp,N,policy>::DofType
+  inline typename CombinedBaseFunctionSet<DiscreteFunctionSpaceImp,N,policy>::DofType
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluateSingle(int baseFunct, 
                  const DomainType& xLocal,
@@ -162,7 +162,7 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <class QuadratureType> 
-  typename CombinedBaseFunctionSet<DiscreteFunctionSpaceImp,N,policy>::DofType
+  inline typename CombinedBaseFunctionSet<DiscreteFunctionSpaceImp,N,policy>::DofType
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluateSingle(int baseFunct, 
                  const QuadratureType & quad, int qp, 
@@ -178,7 +178,7 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <class Entity>
-  typename
+  inline typename
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::DofType
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluateGradientSingle(int baseFunct,
@@ -205,7 +205,7 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <class Entity, class QuadratureType>
-  typename
+  inline typename
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::DofType
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluateGradientSingle(int baseFunct,
@@ -231,7 +231,7 @@ namespace Dune {
   }
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <class Entity, class QuadratureType>
-  typename
+  inline typename
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::DofType
   CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>::
   evaluateGradientTransformed(int baseFunct,
@@ -261,14 +261,14 @@ namespace Dune {
 
   //- CombinedMapper
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::size() const 
+  inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::size() const 
   {
     return spc_.size()*N;
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <class EntityType>
-  int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   mapToGlobal(EntityType& en, int localNum) const 
   {
     const int component = utilLocal_.component(localNum);
@@ -280,7 +280,7 @@ namespace Dune {
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   newIndex(int num) const 
   {
     assert( false );
@@ -296,7 +296,7 @@ namespace Dune {
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   oldIndex(int num) const 
   {
     assert(false);

@@ -310,11 +310,11 @@ namespace Dune {
       return baseFunctionSet_.numBaseFunctions();
     }
 
-   //! evaluate base function
+    //! evaluate base function
     void evaluateScalar(int baseFunct, 
                         const DomainType& x, 
                         ContainedRangeType& phi) const;
-   //! evaluate base function
+    //! evaluate base function
     template <class QuadratureType> 
     void evaluateScalar(int baseFunct, 
                         const QuadratureType & quad, int qp, 
