@@ -268,6 +268,10 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType :: GridType :: template
       Codim<0> :: Entity EntityType;
 
+  private:  
+    typedef typename GridType :: ctype ctype;
+    enum { dim = GridType :: dimension };
+    typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
   public:
     //- Public methods
     //- Constructors and destructors
@@ -312,7 +316,7 @@ namespace Dune {
     //! Jacobian of the discrete function
     inline
     void jacobian(const DomainType& x, 
-            		  JacobianRangeType& ret) const; 
+                  JacobianRangeType& ret) const; 
 
     //! Jacobian of the discrete function
     template <class QuadratureType>
@@ -350,8 +354,8 @@ namespace Dune {
     //! Jacobian of the discrete function
     inline
     void jacobian(EntityType& en, 
-		  const DomainType& x, 
-		  JacobianRangeType& ret) const; 
+      const DomainType& x, 
+      JacobianRangeType& ret) const; 
     //! Jacobian of the discrete function
     template <class QuadratureType>
     inline
@@ -363,6 +367,15 @@ namespace Dune {
     //! get the base function set
     const BaseFunctionSetType& baseFunctionSet() const;
     const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED {return baseFunctionSet();}
+
+    //! axpy operation for factor 
+    template <class QuadratureType>
+    inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
+
+    //! axpy operation for factor 
+    template <class QuadratureType>
+    inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
+
   private:
     //- Forbidden methods
     //! assignment operator
@@ -382,7 +395,8 @@ namespace Dune {
     
     // vector holding pointer to local dofs 
     mutable Array<RangeFieldType*> values_;
-    //! number of local dofs 
+    
+      //! number of local dofs 
     int numDofs_;
  
     mutable RangeType tmp_;
@@ -586,6 +600,10 @@ namespace Dune {
 
     typedef typename DiscreteFunctionSpaceType::GridType::
       template Codim<0>:: Entity EntityType;
+  private:  
+    typedef typename GridType :: ctype ctype;
+    enum { dim = GridType :: dimension };
+    typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
   public:
     //- Public methods
     //- Constructors and destructors
@@ -653,8 +671,8 @@ namespace Dune {
     //! Evaluation
     inline
     void jacobian(EntityType& en, 
-		  const DomainType& x, 
-		  JacobianRangeType& ret) const;
+      const DomainType& x, 
+      JacobianRangeType& ret) const;
     
     //! Evaluation
     template <class QuadratureType>
@@ -667,7 +685,7 @@ namespace Dune {
     //! Evaluation
     inline
     void jacobian(const DomainType& x, 
-            		  JacobianRangeType& ret) const;
+                  JacobianRangeType& ret) const;
     
     //! Evaluation
     template <class QuadratureType>
@@ -689,6 +707,14 @@ namespace Dune {
     inline 
     const BaseFunctionSetType& baseFunctionSet() const;
 
+    //! axpy operation for factor 
+    template <class QuadratureType>
+    inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
+
+    //! axpy operation for factor 
+    template <class QuadratureType>
+    inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
+
   private:
     //- Private methods
     inline
@@ -705,7 +731,7 @@ namespace Dune {
     const DiscreteFunctionSpaceType& spc_;
     DofStorageType& dofVec_;
     
-    mutable Array<FieldVector<DofType*, N> > values_;
+    mutable Array< FieldVector<DofType*, N> > values_;
 
     int numDofs_;
  

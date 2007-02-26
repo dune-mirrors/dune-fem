@@ -259,7 +259,57 @@ namespace Dune {
 
     return ;
   }
+
+  template <class DiscreteFunctionSpaceImp>
+  template <class QuadratureType>
+  inline void 
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
+  axpy(const QuadratureType& quad, 
+       const int quadPoint, 
+       const RangeType& factor)
+  {
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    const int numDDof = this->numDofs();
+    for(int i=0; i<numDDof; ++i) 
+    {
+      bSet.eval( i , quad, quadPoint, tmp_ );
+      (*values_[i]) += tmp_ * factor;
+    }
+  }
+
+  template <class DiscreteFunctionSpaceImp>
+  template <class QuadratureType>
+  inline void 
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
+  axpy(const QuadratureType& quad, 
+       const int quadPoint, 
+       const JacobianRangeType& factor)
+  {
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    const int numDDof = this->numDofs();
+
+    const JacobianInverseType& jti = 
+      en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+
+    for(int i=0; i<numDDof; ++i)
+    {
+      // evaluate gradient on reference element
+      bSet.jacobian(i, quad, quadPoint , tmpGrad_);
+
+      // apply element specific values 
+      for (int l = 0; l < dimRange; ++l) 
+      {
+        DomainType gradScaled(0.);
+        jti.umv(tmpGrad_[i], gradScaled);
+        (*values_[i]) += gradScaled * factor[l];
+      }
+    }
+  }
+
+
+  ////////////////////////////////////////////////////////
   //- AdaptiveDiscreteFunction (specialisation)
+  ////////////////////////////////////////////////////////
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   AdaptiveDiscreteFunction<
      CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
@@ -549,5 +599,56 @@ namespace Dune {
     assert( en_ );
     return *en_;
   }
+  
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  template <class QuadratureType>
+  inline void 
+  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  axpy(const QuadratureType& quad, 
+       const int quadPoint, 
+       const RangeType& factor)
+  {
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    const int numDDof = values_.size();
+    for(int i=0; i<numDDof; ++i) 
+    {
+      bSet.evaluateScalar(i , quad, quadPoint, cTmp_ );
+      for(int j=0; j<N; ++j)
+      {
+        (*values_[i][j]) += cTmp_[0] * factor[j];
+      }
+    }
+  }
+
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  template <class QuadratureType>
+  inline void 
+  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  axpy(const QuadratureType& quad, 
+       const int quadPoint, 
+       const JacobianRangeType& factor)
+  {
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    const int numDDof = values_.size();
+
+    const JacobianInverseType& jInv = 
+      en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+  
+    int baseFunc = 0;
+    for(int i=0; i<numDDof; ++i) 
+    {
+      // evaluate gradient on reference element
+      bSet.jacobianScalar( i, quad, quadPoint , cTmpGradRef_ );
+      jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
+
+      for (SizeType j = 0; j < N; ++j) 
+      {
+        // Assumption: ContainedDimRange == 1
+        (*values_[i][j]) += cTmpGradReal_ * factor[j]; 
+      }
+    }
+  }
+
+
   
 } // end namespace Dune
