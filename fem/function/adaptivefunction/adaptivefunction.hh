@@ -723,8 +723,9 @@ namespace Dune {
     //! return reference to entity 
     const EntityType& en() const;
 
-    void rightMultiply(const JacobianRangeType&, const JacobianInverseType&, 
-                       JacobianRangeType&) const;
+    // apply factor.rightmultiply(jInv) and strore in result 
+    void rightMultiply(const JacobianRangeType& factor, const JacobianInverseType& jInv, 
+                       JacobianRangeType& result) const;
   private:
     //- Typedefs
     typedef typename FieldVector<DofType*, N>::size_type SizeType;
