@@ -722,6 +722,9 @@ namespace Dune {
 
     //! return reference to entity 
     const EntityType& en() const;
+
+    void rightMultiply(const JacobianRangeType&, const JacobianInverseType&, 
+                       JacobianRangeType&) const;
   private:
     //- Typedefs
     typedef typename FieldVector<DofType*, N>::size_type SizeType;
@@ -738,6 +741,7 @@ namespace Dune {
     mutable ContainedRangeType cTmp_;
     mutable ContainedJacobianRangeType cTmpGradRef_;
     mutable ContainedJacobianRangeType cTmpGradReal_;
+    mutable JacobianRangeType factorInv_;
     mutable RangeType tmp_;
 
     mutable bool init_;

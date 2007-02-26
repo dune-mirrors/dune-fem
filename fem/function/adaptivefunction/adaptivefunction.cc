@@ -300,7 +300,7 @@ namespace Dune {
       for (int l = 0; l < dimRange; ++l) 
       {
         DomainType gradScaled(0.);
-        jti.umv(tmpGrad_[i], gradScaled);
+        jti.umv(tmpGrad_[l], gradScaled);
         (*values_[i]) += gradScaled * factor[l];
       }
     }
@@ -441,7 +441,6 @@ namespace Dune {
     for (int i = 0; i < valSize; ++i) 
     {
       // Assumption: scalar contained base functions
-      // bSet.evaluateScalar(i, x, cTmp_);
       bSet.evaluateScalar(i, quad, quadPoint, cTmp_);
       for (SizeType j = 0; j < N; ++j) 
       {
@@ -471,8 +470,6 @@ namespace Dune {
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   jacobian(const DomainType& x, JacobianRangeType& result) const
   {
-    enum { dim = EntityType::dimension };
-    typedef FieldMatrix<DofType, dim, dim> JacobianInverseType;
     result = 0.0;
 
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
@@ -489,8 +486,7 @@ namespace Dune {
       for (SizeType j = 0; j < N; ++j) 
       {
         // Assumption: ContainedDimRange == 1
-        result[j] += *values_[i][j]*cTmpGradReal_[0];
-        //result[j].axpy(*values_[i][j], cTmpGradReal_[0]);
+        result[j].axpy(*values_[i][j], cTmpGradReal_[0]);
       }
     }
 
@@ -502,9 +498,27 @@ namespace Dune {
   jacobian(EntityType& en, 
            QuadratureType& quad, 
            int quadPoint, 
-           JacobianRangeType& ret) const 
+           JacobianRangeType& result) const 
   {
-    jacobian(quad.point(quadPoint), ret);
+    result = 0.0;
+
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    const JacobianInverseType& jInv = 
+      en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+
+    const int numDiffBaseFct = bSet.numDifferentBaseFunctions();
+    for (int i = 0; i < numDiffBaseFct; ++i) 
+    {
+      bSet.jacobianScalar(i, quad, quadPoint , cTmpGradRef_);
+      cTmpGradReal_ = 0.0;
+      jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
+
+      for (SizeType j = 0; j < N; ++j) 
+      {
+        // Assumption: ContainedDimRange == 1
+        result[j].axpy(*values_[i][j], cTmpGradReal_[0]);
+      }
+    }
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -538,7 +552,6 @@ namespace Dune {
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   init(const EntityType& en) 
   {
-
     // NOTE: if init is false, then LocalFunction has been create before. 
     // if fSpace_.multipleGeometryTypes() is true, then grid has elements 
     // of different geometry type (hybrid grid) and we have to check geometry
@@ -552,12 +565,10 @@ namespace Dune {
         baseSet_ = &spc_.baseFunctionSet(en);
 
         numDofs_ = baseSet_->numDifferentBaseFunctions();
-        // numDofs_ = baseSet_->numBaseFunctions();
-        // std::cerr << "adaptiveDF::init " << numDofs_ << std::endl;
         values_.resize(numDofs_);
-        numDofs_ *= N;
 
         // real dof number is larger 
+        numDofs_ *= N;
 
         init_ = true;
         geoType_ = en.geometry().type();
@@ -573,10 +584,9 @@ namespace Dune {
     assert( values_.size()*N == numDofs_);
     for (int i = 0; i < numDDof; ++i) 
     {
-      const int idx = i*N;
       for (SizeType j = 0; j < N; ++j) 
       {
-        values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, idx+j)]);
+        values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, i*N+j)]);
       } // end for j
     } // end for i
   }
@@ -630,25 +640,46 @@ namespace Dune {
   {
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const int numDDof = values_.size();
-
+  
     const JacobianInverseType& jInv = 
       en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+
+    // apply jacobian inverse 
+    rightMultiply( factor, jInv, factorInv_ );
   
-    int baseFunc = 0;
     for(int i=0; i<numDDof; ++i) 
     {
       // evaluate gradient on reference element
       bSet.jacobianScalar( i, quad, quadPoint , cTmpGradRef_ );
-      jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
-
       for (SizeType j = 0; j < N; ++j) 
       {
-        // Assumption: ContainedDimRange == 1
-        (*values_[i][j]) += cTmpGradReal_ * factor[j]; 
+        (*(values_[i][j])) += cTmpGradRef_[0] * factorInv_[j]; 
       }
     }
   }
-
-
+  
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  inline void 
+  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  rightMultiply(const JacobianRangeType& factor,
+                const JacobianInverseType& jInv,
+                JacobianRangeType& result) const 
+  {
+    //result = factor;
+    //result.rightmultiply( jInv );
+    enum { rows = JacobianRangeType :: rows };
+    enum { cols = JacobianInverseType :: rows };
+    for (int i=0; i<rows; ++i)
+    {
+      for (int j=0; j<cols; ++j)  
+      {
+        result[i][j] = 0;
+        for (int k=0; k<cols; ++k)
+        {
+          result[i][j] += factor[i][k] * jInv[k][j];
+        }
+      }
+    }
+  }
   
 } // end namespace Dune
