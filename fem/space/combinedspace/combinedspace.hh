@@ -12,6 +12,8 @@
 #include <dune/fem/space/common/dofmapperinterface.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionsets.hh>
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include "subspace.hh"
 
 #include "combineddofstorage.hh"
@@ -23,9 +25,10 @@ namespace Dune {
   class CombinedSpace;
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   class CombinedMapper;
+  /*
   template <class BaseFunctionSetImp, int N, DofStoragePolicy policy>
   class CombinedBaseFunctionSet;
-
+  */
   //! Traits class for CombinedSpace
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased>
   struct CombinedSpaceTraits {
@@ -58,8 +61,13 @@ namespace Dune {
     typedef FunctionSpace<
       DomainFieldType, RangeFieldType, 
       ContainedDimDomain, ContainedDimRange*N > FunctionSpaceType;
+    /*
     typedef CombinedBaseFunctionSet<
       DiscreteFunctionSpaceImp, N, policy> BaseFunctionSetType;
+    */
+    // type of singleton factory 
+    typedef VectorialBaseFunctionSet<FunctionSpace<double, double, ContainedDimDomain, N>,CachingStorage> BaseFunctionSetType;
+
     typedef CombinedMapper<DiscreteFunctionSpaceImp, N, policy> MapperType;
    
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -78,7 +86,7 @@ namespace Dune {
   public:
     //- Friends
     friend class CombinedSpace<DiscreteFunctionSpaceImp, N, policy>;
-    friend class CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>;
+    // friend class CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>;
     friend class CombinedMapper<DiscreteFunctionSpaceImp, N, policy>;
   };
 
@@ -105,6 +113,8 @@ namespace Dune {
     typedef CombinedSpace<DiscreteFunctionSpaceImp, N, policy> ThisType;
     typedef CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> Traits;
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
+    typedef typename ContainedDiscreteFunctionSpaceType::FunctionSpaceType
+    ContainedSpaceType;
     
     typedef DofManager<typename Traits::GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
@@ -120,6 +130,11 @@ namespace Dune {
     typedef typename Traits::ContainedJacobianRangeType ContainedJacobianRangeType;
 
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
+    typedef typename ContainedDiscreteFunctionSpaceType::ScalarFactoryType ScalarFactoryType;
+    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+                ScalarFactoryType> SingletonFactoryType; 
+    typedef SingletonList< GeometryType, BaseFunctionSetType,
+            SingletonFactoryType > SingletonProviderType;
     typedef typename Traits::MapperType MapperType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::GridPartType GridPartType;
@@ -131,8 +146,12 @@ namespace Dune {
   public:
     //- Public methods
     //! constructor
+    /*
+    inline
     CombinedSpace(ContainedDiscreteFunctionSpaceType& spc);
+    */
     //! constructor
+    inline
     CombinedSpace(GridPartType& gridpart);
 
     //! destructor
@@ -230,6 +249,7 @@ namespace Dune {
 
     MapperType mapper_;
     std::vector<BaseFunctionSetType*> baseSetVec_;
+    std::vector<const BaseFunctionSetType*> baseSecVec_;
 
     static const int spaceId_;
 
@@ -239,6 +259,7 @@ namespace Dune {
 
   //! Wrapper class for base function sets. This class is used within 
   //! CombinedSpace
+#if 0
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   class CombinedBaseFunctionSet : 
     public BaseFunctionSetDefault<
@@ -255,7 +276,8 @@ namespace Dune {
 
     typedef typename Traits::DiscreteFunctionSpaceType 
     DiscreteFunctionSpaceType;
-    typedef typename Traits::ContainedBaseFunctionSetType ContainedBaseFunctionSetType;
+    typedef typename Traits::ContainedBaseFunctionSetType 
+    ContainedBaseFunctionSetType;
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::DomainType DomainType;
@@ -293,12 +315,14 @@ namespace Dune {
 
     //! evaluate base function
     template <int diffOrd>
+    inline
     void evaluate (int baseFunct, 
                    const FieldVector<deriType, diffOrd> &diffVariable, 
                    const DomainType & x, RangeType & phi ) const;
 
     //! evaluate base function at quadrature point
     template <int diffOrd, class QuadratureType >
+    inline
     void evaluate (int baseFunct, 
                    const FieldVector<deriType, diffOrd> &diffVariable, 
                    QuadratureType & quad, 
@@ -311,46 +335,54 @@ namespace Dune {
     }
 
     //! evaluate base function
-    void evaluateScalar(int baseFunct, 
+   inline
+   void evaluateScalar(int baseFunct, 
                         const DomainType& x, 
                         ContainedRangeType& phi) const;
     //! evaluate base function
     template <class QuadratureType> 
+    inline
     void evaluateScalar(int baseFunct, 
                         const QuadratureType & quad, int qp, 
                         ContainedRangeType& phi) const;
     
     //! evaluate base function at quadrature point
+    inline
     void jacobianScalar(int baseFunct, 
                         const DomainType& x,
                         ContainedJacobianRangeType& phi) const;
     //! evaluate base function at quadrature point
     template <class QuadratureType> 
+    inline
     void jacobianScalar(int baseFunct, 
                         const QuadratureType & quad, int qp, 
                         ContainedJacobianRangeType& phi) const;
-   
+    inline
     DofType evaluateSingle(int baseFunct, 
                            const DomainType& xLocal,
                            const RangeType& factor) const;
     
     template <class QuadratureType> 
+    inline
     DofType evaluateSingle(int baseFunct, 
                            const QuadratureType & quad, int qp, 
                            const RangeType& factor) const;
     
     template <class Entity, class QuadratureType>
+    inline
     DofType evaluateGradientTransformed(int baseFunct,
                                         Entity& en,
                                         const QuadratureType & quad, int qp, 
                                         const JacobianRangeType& factor) const;
     template <class Entity, class QuadratureType>
+    inline
     DofType evaluateGradientSingle(int baseFunct,
                                    Entity& en,
                                    const QuadratureType & quad, int qp, 
                                    const JacobianRangeType& factor) const;
 
     template <class Entity>
+    inline
     DofType evaluateGradientSingle(int baseFunct,
                                    Entity& en,
                                    const DomainType& xLocal,
@@ -358,10 +390,12 @@ namespace Dune {
 
   private:
     //- Private methods
+    inline
     CombinedBaseFunctionSet(const ThisType& other);
 
     //int containedDof(int combinedDofNum) const;
     //int component(int combinedDofNum) const;
+    inline
     void expand(int baseFunct, 
                 const ContainedRangeType& arg, 
                 RangeType& dest) const;
@@ -375,6 +409,7 @@ namespace Dune {
     const ContainedBaseFunctionSetType& baseFunctionSet_;
     const DofConversionUtilityType util_;
   }; // end class CombinedBaseFunctionSet
+#endif
 
   //! Wrapper class for mappers. This class is to be used in conjunction with
   //! the CombinedSpace
@@ -412,10 +447,12 @@ namespace Dune {
     {}
 
     //! Total number of degrees of freedom
+    inline
     int size() const;
 
     //! Map a local degree of freedom on an entity to a global one
     template <class EntityType>
+    inline
     int mapToGlobal(EntityType& en, int localNum) const;
 
     //- Method inherited from mapper interface
@@ -439,9 +476,11 @@ namespace Dune {
     }
     
     //! return old index in dof array of given index ( for dof compress ) 
+    inline
     int oldIndex (int num) const; 
     
     //! return new index in dof array 
+    inline
     int newIndex (int num) const;
 
     //! return estimate for size that is addtional needed for restriction 
@@ -476,7 +515,6 @@ namespace Dune {
     const LocalDofConversionUtilityType utilLocal_;
     GlobalDofConversionUtilityType utilGlobal_;
   }; // end class CombinedMapper
-
 } // end namespace Dune
 
   // include implementation

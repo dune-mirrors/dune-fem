@@ -2,11 +2,11 @@
 namespace Dune {
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   const int CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::spaceId_ = 13;
-
+/*
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
+  inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   CombinedSpace(ContainedDiscreteFunctionSpaceType& spc) :
-    BaseType(spc.gridPart(),spaceId_),
+    BaseType(spc.gridPart()),
     spc_(spc),
     mapper_(spc_, spc_.mapper()),
     baseSetVec_(GeometryIdentifier::numTypes, 0),
@@ -29,8 +29,9 @@ namespace Dune {
       }
     }
   }
+  */
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
+  inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   CombinedSpace(GridPartType& gridpart) :
     BaseType(gridpart), // ,spaceId_),
     spc_(gridpart),
@@ -39,9 +40,13 @@ namespace Dune {
     dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
   {
     // get types for codim 0  
+    AllGeomTypes<IndexSetType,typename Traits::GridType>
+      allGeomTypes(gridpart.indexSet());
+    /*
     const std::vector<GeometryType>& geomTypes =
                 spc_.indexSet().geomTypes(0) ;
-
+    */
+    const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(0);
     int maxNumDofs = -1;
     // create mappers and base sets for all existing geom types
     for(size_t i=0; i<geomTypes.size(); ++i)
@@ -50,22 +55,25 @@ namespace Dune {
                   GeometryIdentifier::fromGeo(geomTypes[i]);
       if(baseSetVec_[id] == 0 )
       {
-        baseSetVec_[id] = new BaseFunctionSetType(spc_.getBaseFunctionSet(id));
+        // baseSetVec_[id] = new BaseFunctionSetType(spc_.getBaseFunctionSet(id));
+	
+        baseSetVec_[id] = & SingletonProviderType::getObject(geomTypes[i]);
         maxNumDofs = std::max(maxNumDofs,baseSetVec_[id]->numBaseFunctions());
       }
     }
   }
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
+  inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   ~CombinedSpace() 
   {
     for (unsigned int i = 0; i < baseSetVec_.size(); ++i) {
-      delete baseSetVec_[i];
+      // delete baseSetVec_[i];
+      // if (baseSetVec_[i]) SingletonProviderType::removeObject(*baseSetVec_[i]);
       baseSetVec_[i] = 0;
     }
   }
-
+#if 0
   //- CombinedBaseFunctionSet
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   template <int diffOrd>
@@ -257,7 +265,7 @@ namespace Dune {
     */
     return grad_ [0]* factor[util_.component(baseFunct)];
   }
-
+#endif
 
   //- CombinedMapper
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
@@ -313,5 +321,4 @@ namespace Dune {
     return tmpUtilGlobal.combinedDof(containedNew, component);
     */
   }
- 
 } // end namespace Dune
