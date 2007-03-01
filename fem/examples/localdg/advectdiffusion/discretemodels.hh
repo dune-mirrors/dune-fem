@@ -37,19 +37,22 @@ namespace Dune {
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
-    typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
+    // typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
+    typedef HierarchicGridPart<GridType> GridPartType;
 
     typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
-
+    #if 0
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
                polOrd,CachingStorage> DiscreteFunctionSpaceType;
-    //typedef FunctionSpace<double, double, dimDomain, 1> FunctionSpaceType; 
-    //typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
-    //           polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-    //typedef CombinedSpace<SingleDiscreteFunctionSpaceType, dimRange> 
-    //        DiscreteFunctionSpaceType; 
+    #else
+    typedef FunctionSpace<double, double, dimDomain, 1> FunctionSpaceType; 
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
+               polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
+    typedef CombinedSpace<SingleDiscreteFunctionSpaceType, dimRange> 
+            DiscreteFunctionSpaceType; 
+    #endif
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
   };
   // DiscreteModelTraits
@@ -92,7 +95,8 @@ namespace Dune {
 
     typedef PassTraits<Model,dimRange,polOrd> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
-
+    // typedef typename Traits::SingleDiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
+    
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::GridPartType GridPartType;

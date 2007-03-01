@@ -1,7 +1,7 @@
 #ifndef LOCALDG_STUFF_CC 
 #define LOCALDG_STUFF_CC 
 
-#include <../../../quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachequad.hh>
 
 namespace Dune {
 

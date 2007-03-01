@@ -131,7 +131,7 @@ namespace Dune {
     typedef StartPass<DiscreteFunction2Type> Pass0Type;
     typedef LocalDGPass<DiscreteModel2Type, Pass0Type> Pass2Type;
 
-    //typedef typename Traits2::DiscreteFunctionSpaceType Space2Type;
+    // typedef typename Traits2::SingleDiscreteFunctionSpaceType SDFSType;
     typedef typename Traits2::DiscreteFunctionSpaceType Space2Type;
     typedef typename Traits2::DestinationType Destination2Type;
     typedef Destination2Type DestinationType;
@@ -148,6 +148,8 @@ namespace Dune {
       model_(numf.model()),
       numflux_(numf),
       gridPart_(grid_),
+      // sspace2_(gridPart_),
+      // space2_(sspace2_),
       space2_(gridPart_),
       problem2_(model_,numflux_),
       pass2_(problem2_, pass0_, space2_) 
@@ -179,6 +181,7 @@ namespace Dune {
     const Model& model_;
     const NumFluxType& numflux_;
     GridPartType gridPart_;
+    // SDFSType sspace2_;
     Space2Type space2_;
     DiscreteModel2Type problem2_;
     Pass0Type pass0_;

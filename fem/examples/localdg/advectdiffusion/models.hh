@@ -10,7 +10,7 @@ enum {order=POLORDER,rksteps=POLORDER+1};
 
 //typedef LeafGridPart<GridType> GridPartType;
 typedef HierarchicGridPart<GridType> GridPartType;
-//typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
+// typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 // Modell- und Flussauswahl
 // Skalar
 #if PROBLEM == 1
@@ -47,13 +47,14 @@ typedef HierarchicGridPart<GridType> GridPartType;
    typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
    // typedef LLFFlux<ModelType> FluxType;
    typedef UpwindFlux<ModelType> FluxType;
-   typedef DGLimitedAdvectionOperator<ModelType,UpwindFlux,order> DgType;
+   typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
 #elif PROBLEM == 5
 #include "euler_mhd/eulermodel.hh"
    typedef U0Smooth1D InitialDataType;
    typedef EulerModel<GridPartType,InitialDataType> ModelType;
    typedef HLLNumFlux<ModelType> FluxType;
+   // typedef DWNumFlux<ModelType> FluxType;
    typedef DGAdvectionOperator<ModelType,HLLNumFlux,order> DgType;
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
    // typedef DuneODE::ExplRungeKutta<DgType> ODEType;
