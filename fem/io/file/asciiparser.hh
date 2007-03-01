@@ -8,14 +8,23 @@ namespace Dune {
 
 static const int MAXTAB = 30;
 
+/*
+//! Send vector to output stream
+std::fstream& operator >>(std::fstream& file, std::istringstream& data)
+{
+  file >> data.str();
+}
+*/
+
 //! reads data folowing the given keyword 
 //! if verbose is true then an output of what was read is given
 //! the token '%' or '#' stands for comment 
 template <class T> 
-bool readParameter (const std::basic_string<char> filename, 
-    const std::string keyword, T & data, bool verbose = true) 
+bool readParameter (const std::string filename, 
+                    const std::string keyword, 
+                    T & data, bool verbose = true) 
 {
-  std::fstream file (filename.c_str(),std::ios::in);
+  std::ifstream file (filename.c_str());
   if( !file.is_open() ) 
   {
     std::cerr << "WARNING: couldn't open file '" << filename << "' in " <<  __FILE__<< " line: " << __LINE__ << std::endl;
@@ -59,7 +68,10 @@ bool readParameter (const std::basic_string<char> filename,
       }
     }
   }
+  // close file 
   file.close();
+
+  // if data was read sucessfully 
   if(readData)
   {
     if(verbose)
@@ -67,12 +79,12 @@ bool readParameter (const std::basic_string<char> filename,
       int length = MAXTAB - keyword.size();
       std::cout << "Reading " << keyword;
       for(int i=0; i<length; i++) std::cout << ".";
-      std::cout << " " << data << "\n";;
+      std::cout << " " << data << std::endl;
     }
   }
   else 
   {
-    std::cerr << "WARNING: couldn't read " << keyword << "\n";
+    std::cerr << "WARNING: couldn't read " << keyword << std::endl;
   }
 
   return readData;
