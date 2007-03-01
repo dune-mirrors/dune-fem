@@ -277,10 +277,12 @@ namespace Dune {
     //- Constructors and destructors
     
     //! Constructor
+    inline
     AdaptiveLocalFunction(const DiscreteFunctionSpaceType& spc,
                           DofStorageType& dofVec);
     
     //! Copy constructor
+    inline
     AdaptiveLocalFunction(const ThisType& other);
 
     //! Destructor
@@ -376,6 +378,10 @@ namespace Dune {
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
+    //! axpy operation for factor 
+    template <class QuadratureType>
+    inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
+
   private:
     //- Forbidden methods
     //! assignment operator
@@ -386,6 +392,10 @@ namespace Dune {
     void init(const EntityType& en);
 
   private:
+    inline
+    void rightMultiply(const JacobianRangeType& factor, 
+		       const JacobianInverseType& jInv, 
+                       JacobianRangeType& result) const;
     // return reference to actual entity
     const EntityType& en() const;
 
@@ -401,6 +411,7 @@ namespace Dune {
  
     mutable RangeType tmp_;
     mutable JacobianRangeType tmpGrad_;
+    mutable JacobianRangeType factorInv_;
 
     mutable bool init_;
     const bool multipleGeometryTypes_;
@@ -414,6 +425,7 @@ namespace Dune {
 
   //- Specialisations
   //! Specialised version of AdaptiveDiscreteFunction for CombinedSpace
+
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   class AdaptiveDiscreteFunction<
     CombinedSpace<ContainedFunctionSpaceImp, N, p> > : 
@@ -535,7 +547,7 @@ namespace Dune {
     //! return local function for given entity
     template <class EntityType> 
     LocalFunctionType localFunction (const EntityType &en) { return LocalFunctionType(en,*this); }
-    using Imp::localFunction;
+    // using Imp::localFunction;
     using Imp::write_xdr;
     using Imp::read_xdr;
     using Imp::write_ascii;
@@ -609,10 +621,12 @@ namespace Dune {
     //- Constructors and destructors
     
     //! Constructor
+    inline
     AdaptiveLocalFunction(const DiscreteFunctionSpaceType& spc,
                           DofStorageType& dofVec);
 
     //! Copy constructor
+    inline
     AdaptiveLocalFunction(const ThisType& other);
     
     //! Destructor
@@ -708,22 +722,30 @@ namespace Dune {
     const BaseFunctionSetType& baseFunctionSet() const;
 
     //! axpy operation for factor 
+    //! \[ u_i += {\rm factor} \cdot phi_i \]
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
     //! axpy operation for factor 
+    //! \[ u_i += {\rm factor} \cdot \nabla phi_i \]
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
+    //! axpy operation for factor 
+    //! \[ u_i += {\rm factor1} \cdot phi_i + {\rm factor2} \cdot \nabla phi_i \]
+    template <class QuadratureType>
+    inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
   private:
     //- Private methods
     inline
     void init(const EntityType& en);
 
     //! return reference to entity 
+    inline
     const EntityType& en() const;
 
     // apply factor.rightmultiply(jInv) and strore in result 
+    inline
     void rightMultiply(const JacobianRangeType& factor, const JacobianInverseType& jInv, 
                        JacobianRangeType& result) const;
   private:
@@ -736,6 +758,7 @@ namespace Dune {
     DofStorageType& dofVec_;
     
     mutable Array< FieldVector<DofType*, N> > values_;
+    mutable Array<RangeFieldType*> values2_;
 
     int numDofs_;
  

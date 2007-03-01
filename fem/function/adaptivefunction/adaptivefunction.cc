@@ -269,8 +269,8 @@ namespace Dune {
        const RangeType& factor)
   {
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
-    const int numDDof = this->numDofs();
-    for(int i=0; i<numDDof; ++i) 
+    const int numDof = this->numDofs();
+    for(int i=0; i<numDof; ++i) 
     {
       bSet.eval( i , quad, quadPoint, tmp_ );
       (*values_[i]) += tmp_ * factor;
@@ -283,25 +283,73 @@ namespace Dune {
   AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
   axpy(const QuadratureType& quad, 
        const int quadPoint, 
-       const JacobianRangeType& factor)
+       const RangeType& factor1,
+       const JacobianRangeType& factor2)
   {
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
-    const int numDDof = this->numDofs();
+    const int numDof = this->numDofs();
 
     const JacobianInverseType& jti = 
       en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+    rightMultiply( factor2, jti, factorInv_ );
 
-    for(int i=0; i<numDDof; ++i)
+    for(int i=0; i<numDof; ++i)
+    {
+      // evaluate gradient on reference element
+      bSet.eval( i , quad, quadPoint, tmp_ );
+      (*values_[i]) += tmp_ * factor1;
+      bSet.jacobian(i, quad, quadPoint , tmpGrad_);
+      for (int l = 0; l < dimRange; ++l) 
+      {
+	(*values_[i]) += tmpGrad_[l] * factorInv_[l];
+      }
+    }
+  }
+  template <class DiscreteFunctionSpaceImp>
+  template <class QuadratureType>
+  inline void 
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
+  axpy(const QuadratureType& quad, 
+       const int quadPoint, 
+       const JacobianRangeType& factor)
+  {
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    const int numDof = this->numDofs();
+
+    const JacobianInverseType& jti = 
+      en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+    rightMultiply( factor, jti, factorInv_ );
+
+    for(int i=0; i<numDof; ++i)
     {
       // evaluate gradient on reference element
       bSet.jacobian(i, quad, quadPoint , tmpGrad_);
-
-      // apply element specific values 
       for (int l = 0; l < dimRange; ++l) 
       {
-        DomainType gradScaled(0.);
-        jti.umv(tmpGrad_[l], gradScaled);
-        (*values_[i]) += gradScaled * factor[l];
+	(*values_[i]) += tmpGrad_[l] * factorInv_[l];
+      }
+    }
+  }
+  template <class DiscreteFunctionSpaceImp>
+  inline void 
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp>::
+  rightMultiply(const JacobianRangeType& factor,
+                const JacobianInverseType& jInv,
+                JacobianRangeType& result) const 
+  {
+    //result = factor;
+    //result.rightmultiply( jInv );
+    enum { rows = JacobianRangeType :: rows };
+    enum { cols = JacobianInverseType :: rows };
+    for (int i=0; i<rows; ++i)
+    {
+      for (int j=0; j<cols; ++j)  
+      {
+        result[i][j] = 0;
+        for (int k=0; k<cols; ++k)
+        {
+          result[i][j] += factor[i][k] * jInv[k][j];
+        }
       }
     }
   }
@@ -385,7 +433,8 @@ namespace Dune {
   operator[] (const int num) 
   {
     assert(num >= 0 && num < numDofs());
-    return *values_[num/N][static_cast<SizeType>(num%N)];
+    // return *values_[num/N][static_cast<SizeType>(num%N)];
+    return (* (values2_[num]));
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -395,7 +444,8 @@ namespace Dune {
   operator[] (const int num) const 
   {
     assert(num >= 0 && num < numDofs());
-    return *values_[num/N][static_cast<SizeType>(num%N)];
+    // return *values_[num/N][static_cast<SizeType>(num%N)];
+    return (* (values2_[num]));
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -434,8 +484,7 @@ namespace Dune {
            RangeType& ret) const
   {
     const BaseFunctionSetType& bSet = this->baseFunctionSet();
-    ret = 0.0;
-
+    ret = 0;
     assert((values_.size()) == bSet.numDifferentBaseFunctions());
     const int valSize = values_.size();
     for (int i = 0; i < valSize; ++i) 
@@ -532,15 +581,6 @@ namespace Dune {
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  assign(int dofNum, const RangeType& dofs) {
-    for (SizeType i = 0; i < N; ++i) {
-      // Assumption: the local ordering is point based
-      *values_[dofNum][i] = dofs[i];
-    }
-  }
-
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   int AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   numDifferentBaseFunctions() const 
   {
@@ -566,9 +606,10 @@ namespace Dune {
 
         numDofs_ = baseSet_->numDifferentBaseFunctions();
         values_.resize(numDofs_);
+        numDofs_ *= N;
+        values2_.resize(numDofs_);
 
         // real dof number is larger 
-        numDofs_ *= N;
 
         init_ = true;
         geoType_ = en.geometry().type();
@@ -587,6 +628,7 @@ namespace Dune {
       for (SizeType j = 0; j < N; ++j) 
       {
         values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, i*N+j)]);
+	values2_[i*N+j] = values_[i][j];
       } // end for j
     } // end for i
   }
@@ -609,7 +651,7 @@ namespace Dune {
     assert( en_ );
     return *en_;
   }
-  
+
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   template <class QuadratureType>
   inline void 
@@ -623,6 +665,7 @@ namespace Dune {
     for(int i=0; i<numDDof; ++i) 
     {
       bSet.evaluateScalar(i , quad, quadPoint, cTmp_ );
+
       for(int j=0; j<N; ++j)
       {
         (*values_[i][j]) += cTmp_[0] * factor[j];
@@ -654,6 +697,36 @@ namespace Dune {
       for (SizeType j = 0; j < N; ++j) 
       {
         (*(values_[i][j])) += cTmpGradRef_[0] * factorInv_[j]; 
+      }
+    }
+  }
+  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
+  template <class QuadratureType>
+  inline void 
+  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
+  axpy(const QuadratureType& quad, 
+       const int quadPoint, 
+       const RangeType& factor1,
+       const JacobianRangeType& factor2)
+  {
+    const BaseFunctionSetType& bSet = this->baseFunctionSet();
+    const int numDDof = values_.size();
+  
+    const JacobianInverseType& jInv = 
+      en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+
+    // apply jacobian inverse 
+    rightMultiply( factor2, jInv, factorInv_ );
+  
+    for(int i=0; i<numDDof; ++i) 
+    {
+      // evaluate gradient on reference element
+      bSet.evaluateScalar(i , quad, quadPoint, cTmp_ );
+      bSet.jacobianScalar( i, quad, quadPoint , cTmpGradRef_ );
+      for (SizeType j = 0; j < N; ++j) 
+      {
+        (*(values_[i][j])) += cTmp_[0] * factor1[j] +
+          cTmpGradRef_[0] * factorInv_[j]; 
       }
     }
   }
