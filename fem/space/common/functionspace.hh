@@ -108,7 +108,13 @@ class RangeMatrix : public FieldMatrix<K,n,m> {
       ret += static_cast<BaseType&>(*this)[i] * y[i];
     return ret;
   }
-
+  //! vector space axpy operation
+  RangeMatrix& axpy (const K& a, const BaseType& y)
+  {
+     for (int i=0; i<n; i++)
+        static_cast<BaseType&>(*this)[i].axpy(a,y[i]);
+     return *this;
+  }
 };
 /*! \brief JacobianRangeType class for matrix valued functions -
     derived from FieldMatrix 
