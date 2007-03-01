@@ -1,8 +1,8 @@
 % initial refine level 
-StartLevel: 0
+StartLevel: 1
 
 % do EOCSteps eoc steps
-EOCSteps: 1
+EOCSteps: 2
 
 % epsilon for iterative solver 
 InvSolverEps: 1e-14
@@ -19,7 +19,7 @@ verbose: 1
 % 4 == ILU-n 
 % 5 == Gauss-Seidel
 % 6 == Jacobi
-Preconditioning: 0
+Preconditioning: 3
 % number of iterations 
 ILU-iteration: 2 
 % relaxation factor 
@@ -29,11 +29,11 @@ ILU-relaxation: 1.1
 display: 0
 
 % MacroTriang for 2d simul 
-%Grid: ./grid2d.dgf
+Grid: ./grid2d.dgf
 %Grid: ./one.dgf
 %Grid: ./one3d.dgf
 %Grid: ./corner2d.dgf
-Grid: ./fuel.dgf
+%Grid: ./fuel.dgf
 
 % parameter for LDG flux 
 
