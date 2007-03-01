@@ -1,52 +1,53 @@
-% initial refine level 
+# initial refine level 
 StartLevel: 1
 
-% do EOCSteps eoc steps
+# do EOCSteps eoc steps
 EOCSteps: 2
 
-% epsilon for iterative solver 
+# epsilon for iterative solver 
 InvSolverEps: 1e-14
 
-% cg output, 0 == no output, 1 == print output   
+# cg output, 0 == no output, 1 == print output   
 verbose: 1
 
-% use Preconditioning 0 == no, 1 == yes  
-% when using istl matrices the following preconditioners are available:
-% 0 == no pre
-% 1 == SSOR 
-% 2 == SOR 
-% 3 == ILU-0
-% 4 == ILU-n 
-% 5 == Gauss-Seidel
-% 6 == Jacobi
+# use Preconditioning 0 == no, 1 == yes  
+# when using istl matrices the following preconditioners are available:
+# 0 == no pre
+# 1 == SSOR 
+# 2 == SOR 
+# 3 == ILU-0
+# 4 == ILU-n 
+# 5 == Gauss-Seidel
+# 6 == Jacobi
 Preconditioning: 3
-% number of iterations 
+# number of iterations 
 ILU-iteration: 2 
-% relaxation factor 
+# relaxation factor 
 ILU-relaxation: 1.1
 
-% display using Grape, 0 == no, 1 == yes  
+# display using Grape, 0 == no, 1 == yes  
 display: 0
 
-% MacroTriang for 2d simul 
+# MacroTriang for 2d simul 
 Grid: ./grid2d.dgf
-%Grid: ./one.dgf
-%Grid: ./one3d.dgf
-%Grid: ./corner2d.dgf
-%Grid: ./fuel.dgf
+#Grid: ./one.dgf
+#Grid: ./one3d.dgf
+#Grid: ./corner2d.dgf
+#Grid: ./fuel.dgf
 
-% parameter for LDG flux 
+# only used by Primal Operator 
+#######################################
+# available methods 
+# Baumann-Oden:      B_{+,-} = 1, beta = 0,        Babuska-Zlamal = 0,  
+# Interior-Penalty:  B_{+,-} = 0, beta > 0.0(big), Babuska-Zlamal = 0,  
+# NIPG:              B_{+,-} = 1, beta > 0.0,      Babuska-Zlamal = 0,  
+# Babuska-Zlamal:    B_{+,-} = 1, beta > 0.0,      Babuska-Zlamal = 1,  
 
-% beta = 0 : Baumann-Oden | beta > 0 all other 
-beta: 0.0
-
-% B_{+,-} 0 == - | 1 == + 
 B_{+,-}: 1
-
-% 0 == false | 1 == true 
 Babuska-Zlamal: 0
+beta: 0.0             # also used by LDG Flux 
 
-
-eta: 1.0
+# only used by LDGFlux 
 power: 1.0
-
+eta: 1.0
+#######################################
