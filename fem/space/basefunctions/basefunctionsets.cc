@@ -3,7 +3,7 @@ namespace Dune {
 
   //- class StandardBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  int StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline int StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   numBaseFunctions() const 
   {
     return storage_.numBaseFunctions();
@@ -11,7 +11,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <int diffOrd>
-  void StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline void StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluate(int baseFunct,
            const FieldVector<int, diffOrd>& diffVar,
            const DomainType& xLocal,
@@ -22,7 +22,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <int diffOrd, class QuadratureType>
-  void StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline void StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluate(int baseFunct,
            const FieldVector<int, diffOrd>& diffVar,
            QuadratureType& quad, int quadPoint,
@@ -52,7 +52,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class QuadratureType>
-  typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  inline typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluateSingle(int baseFunct,
                  const QuadratureType& quad, int quadPoint,
@@ -65,7 +65,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class Entity, class QuadratureType>
-  typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  inline typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluateGradientSingle(const int baseFunct,
                          const Entity& en,
@@ -92,15 +92,45 @@ namespace Dune {
   
   //- class VectorialBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  int VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline int VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   numBaseFunctions() const 
   {
     return storage_.numBaseFunctions()*FunctionSpaceImp::DimRange;
   }
+  template <class FunctionSpaceImp, template <class> class StorageImp>
+  inline int VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  numDifferentBaseFunctions() const 
+  {
+    return storage_.numBaseFunctions();
+  }
+
+  template <class FunctionSpaceImp, template <class> class StorageImp>
+  template <class QuadratureType>
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  evaluateScalar(int baseFunct, 
+                 const QuadratureType & quad, int quadPoint, 
+                 ScalarRangeType& phi) const
+  {
+    assert(baseFunct >= 0 && 
+           baseFunct < numDifferentBaseFunctions());
+    storage_.evaluate(baseFunct, diffVar0_, quad, quadPoint,
+                      phi);
+  }
+  template <class FunctionSpaceImp, template <class> class StorageImp>
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  evaluateScalar(int baseFunct, 
+                 const DomainType& xLocal, 
+                 ScalarRangeType& phi) const
+  {
+    assert(baseFunct >= 0 && 
+           baseFunct < numDifferentBaseFunctions());
+    storage_.evaluate(baseFunct, diffVar0_, xLocal,
+                      phi);
+  }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <int diffOrd>
-  void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluate(int baseFunct,
            const FieldVector<int, diffOrd>& diffVar,
            const DomainType& xLocal,
@@ -115,7 +145,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <int diffOrd, class QuadratureType>
-  void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluate(int baseFunct,
            const FieldVector<int, diffOrd>& diffVar,
            QuadratureType& quad, int quadPoint,
@@ -130,7 +160,27 @@ namespace Dune {
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  jacobianScalar(int baseFunct, const DomainType& xLocal, 
+           ScalarJacobianRangeType& gradPhi) const 
+  {
+    assert(baseFunct >= 0 && 
+           baseFunct < numDifferentBaseFunctions());
+     storage_.jacobian(baseFunct, xLocal, gradPhi); 
+  }
+
+  template <class FunctionSpaceImp, template <class> class StorageImp>
+  template <class QuadratureImp>
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  jacobianScalar(int baseFunct, QuadratureImp& quad, int quadPoint, 
+                 ScalarJacobianRangeType& gradPhi) const 
+  {
+    assert(baseFunct >= 0 && 
+           baseFunct < numDifferentBaseFunctions());
+     storage_.jacobian(baseFunct, quad, quadPoint, gradPhi); 
+  }
+  template <class FunctionSpaceImp, template <class> class StorageImp>
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   jacobian(int baseFunct, const DomainType& xLocal, 
            JacobianRangeType& gradPhi) const 
   {
@@ -142,7 +192,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class QuadratureImp>
-  void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
+  inline void VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   jacobian(int baseFunct, QuadratureImp& quad, int quadPoint, 
            JacobianRangeType& gradPhi) const 
   {
@@ -152,7 +202,7 @@ namespace Dune {
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
-  typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  inline typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluateSingle(const int baseFunct, 
                  const DomainType& xLocal,
@@ -165,7 +215,7 @@ namespace Dune {
   
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class QuadratureType>
-  typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  inline typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluateSingle(const int baseFunct,
                  const QuadratureType& quad, const int quadPoint,
@@ -179,7 +229,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class Entity>
-  typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  inline typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluateGradientSingle(const int baseFunct,
                          const Entity& en,
@@ -195,7 +245,7 @@ namespace Dune {
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class Entity, class QuadratureType>
-  typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
+  inline typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
   evaluateGradientSingle(const int baseFunct,
                          const Entity& en,

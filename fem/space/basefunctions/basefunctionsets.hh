@@ -154,6 +154,19 @@ namespace Dune {
     inline
     int numBaseFunctions() const;
 
+    inline 
+    int numDifferentBaseFunctions() const;
+
+    template <class QuadratureType>
+    inline
+    void evaluateScalar(int baseFunct, 
+			const QuadratureType & quad, int p, 
+			ScalarRangeType& phi) const;
+    inline
+    void evaluateScalar(int baseFunct, 
+			const DomainType& xLocal, 
+			ScalarRangeType& phi) const;
+
     template <int diffOrd>
     inline
     void evaluate(int baseFunct,
@@ -168,6 +181,14 @@ namespace Dune {
                   QuadratureType & quad, 
                   int quadPoint, RangeType & phi ) const;
 
+    inline
+    void jacobianScalar(int baseFunct, const DomainType& xLocal, 
+                  ScalarJacobianRangeType& gradPhi) const;
+
+    template <class QuadratureImp>
+    inline
+    void jacobianScalar(int baseFunct, QuadratureImp& quad, int quadPoint,
+                  ScalarJacobianRangeType& gradPhi) const;
     inline
     void jacobian(int baseFunct, const DomainType& xLocal, 
                   JacobianRangeType& gradPhi) const;
