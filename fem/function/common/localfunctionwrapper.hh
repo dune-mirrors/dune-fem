@@ -283,6 +283,14 @@ public:
   {
     localFunc().axpy( quad, quadPoint , factor );
   }
+  template <class QuadratureType> 
+  inline void axpy(const QuadratureType &quad, 
+                   const int quadPoint ,
+                   const RangeType& factor1,
+                   const JacobianRangeType & factor2)
+  {
+    localFunc().axpy( quad, quadPoint , factor1,factor2 );
+  }
   
   const BaseFunctionSetType& baseFunctionSet() const 
   {
