@@ -74,8 +74,6 @@ class MySpaceOperator :
     double,
     typename VelocityModelType::Traits::DestinationType,
     typename VelocityModelType::Traits::DestinationType>
-    //typename LaplaceModelType::Traits::DestinationType,
-    //typename LaplaceModelType::Traits::DestinationType>
 {
   typedef typename VelocityModelType :: Traits Traits;
 public:
@@ -119,7 +117,7 @@ public:
   public:
     ExactSolution (FuncSpaceType &f) : Function < FuncSpaceType , ExactSolution > ( f ) {}
 
-    //! u(x,y,z) = (x-x^2)*(y-y^2)*(z-z^2)
+    //! see problem.cc 
     void evaluate (const DomainType & x , RangeType & ret) const
     {
       ret = exactSolution( &x[0] );
@@ -181,12 +179,8 @@ public:
     const_cast<ThisType&> (*this).apply(arg,dest);
   }
 
-  /*
   void adaptGrid (DestinationType& dest) 
   {
-    //typedef RestrictProlongDefault<DestinationType> RPOpType; 
-    //RPOpType rp(dest);
-    //rp.setFatherChildWeight(DGFGridInfo<GridType>::refineWeight());
     typedef typename LastPassType :: RestrictProlongOperatorType
       RPOpType;
 
@@ -215,7 +209,6 @@ public:
     adop.adapt();
     std::cout << "New size of space is " << lastSpace_.size() << "\n";
   }
-  */
   
   // apply space discretisation 
   void apply(const DestinationType& arg, DestinationType& velo)
@@ -236,6 +229,7 @@ public:
         dm_.resize();
       }
 
+      //DestinationType & Arg = const_cast<DestinationType&> (arg);
       //if( i > 0 ) adaptGrid(Arg);
 
       FuncSpaceType sp; 
