@@ -427,7 +427,8 @@ public:
   
   double solve(DestinationType& U0) 
   {
-    typedef typename DestinationType :: GridType :: Traits ::
+    typedef typename Operator:: DestinationType ::
+      DiscreteFunctionSpaceType :: GridType :: Traits ::
       CollectiveCommunication DuneCommunicatorType; 
     const DuneCommunicatorType & duneComm = this->op_.space().grid().comm();
 
