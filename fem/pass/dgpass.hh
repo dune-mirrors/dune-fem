@@ -181,7 +181,7 @@ namespace Dune {
       
       if (time_) {
         time_->provideTimeStepEstimate(dtMin_);
-        //time_->provideTimeStepEstimate(0.001);
+        //time_->provideTimeStepEstimate(1);
       }
       caller_.finalize();
     }
@@ -196,7 +196,8 @@ namespace Dune {
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
-      const BaseFunctionSetType& bsetEn = updEn.baseFunctionSet(); 
+      // const int updEn_numDofs = updEn.numDofs();
+      // const BaseFunctionSetType& bsetEn = updEn.baseFunctionSet(); 
       
 
       // only call geometry once, who know what is done in this function 
@@ -208,17 +209,17 @@ namespace Dune {
       // only apply volumetric integral if order > 0 
       // otherwise this contribution is zero 
       
-      if(spc_.order() > 0) 
+      if(spc_.order() > 0 || problem_.hasSource()) 
       {
         // if only flux, evaluate only flux 
         if ( problem_.hasFlux() && !problem_.hasSource() ) 
         {
-          evalVolumetricPartFlux(en, geo, updEn , bsetEn , massVolElinv);
+          evalVolumetricPartFlux(en, geo, updEn , massVolElinv);
         }
         else 
         {
           // evaluate flux and source 
-          evalVolumetricPartBoth(en, geo, updEn , bsetEn , massVolElinv);
+          evalVolumetricPartBoth(en, geo, updEn , massVolElinv);
         }
       }
 
@@ -255,7 +256,7 @@ namespace Dune {
               // needed below 
               nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
                         faceQuadInner,faceQuadOuter,
-                        bsetEn,updEn,
+                        updEn,
                         dtLocal,wspeedS);
             }
             else
@@ -283,7 +284,7 @@ namespace Dune {
               nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
                         nonConformingFaceQuadInner,
                         nonConformingFaceQuadOuter,
-                        bsetEn,updEn,
+                        updEn,
                         dtLocal,wspeedS);
             }
 
@@ -301,8 +302,7 @@ namespace Dune {
           for (int l = 0; l < faceQuadInner_nop; ++l) 
           {
             // eval boundary Flux  
-            double dtLocalS = 
-              caller_.boundaryFlux(nit, faceQuadInner, l, source_ );
+            double dtLocalS = caller_.boundaryFlux(nit, faceQuadInner, l, source_ );
             
             dtLocal += dtLocalS*faceQuadInner.weight(l);
             wspeedS += dtLocalS*faceQuadInner.weight(l);
@@ -327,9 +327,8 @@ namespace Dune {
     // Volumetric integral part only flux 
     //////////////////////////////////////////
     void evalVolumetricPartFlux(EntityType& en , const GeometryType& geo , 
-        LocalFunctionType& updEn , const BaseFunctionSetType& bsetEn, const double massVolElinv ) const
+        LocalFunctionType& updEn , const double massVolElinv ) const
     {
-      const int updEn_numDofs = updEn.numDofs();
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
       for (int l = 0; l < volQuad_nop; ++l) 
@@ -351,9 +350,8 @@ namespace Dune {
     // Volumetric integral part only flux 
     //////////////////////////////////////////
     void evalVolumetricPartBoth(EntityType& en , const GeometryType& geo , 
-        LocalFunctionType& updEn , const BaseFunctionSetType& bsetEn, const double massVolElinv ) const
+        LocalFunctionType& updEn , const double massVolElinv ) const
     {
-      const int updEn_numDofs = updEn.numDofs();
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
       for (int l = 0; l < volQuad_nop; ++l) 
@@ -366,13 +364,8 @@ namespace Dune {
         
         source_ *= intel;
         fMat_ *= intel;
-
-        for (int i = 0; i < updEn_numDofs; ++i) 
-        {
-          updEn[i] += 
-            (bsetEn.evaluateGradientSingle(i, en, volQuad, l, fMat_) +
-             bsetEn.evaluateSingle(i, volQuad, l, source_));
-        }
+        
+        updEn.axpy(volQuad,l,source_,fMat_);
       }
     }
     
@@ -382,7 +375,6 @@ namespace Dune {
             const double massVolElinv, 
             const QuadratureImp & faceQuadInner, 
             const QuadratureImp & faceQuadOuter,
-            const BaseFunctionSetType & bsetEn, 
             LocalFunctionType & updEn,
             double & dtLocal, 
             double & wspeedS) const 
@@ -392,7 +384,7 @@ namespace Dune {
       
       // get local function  
       LocalFunctionType updNeigh = dest_->localFunction(nb);
-      const BaseFunctionSetType& bsetNeigh = updNeigh.baseFunctionSet();
+      // const BaseFunctionSetType& bsetNeigh = updNeigh.baseFunctionSet();
 
       // get goemetry of neighbor 
       const GeometryType & nbGeo = nb.geometry();
@@ -402,8 +394,7 @@ namespace Dune {
       const int faceQuadInner_nop = faceQuadInner.nop();
       for (int l = 0; l < faceQuadInner_nop; ++l) 
       {
-        double dtLocalS = 
-          caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
+        double dtLocalS = caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
                                 l, valEn_, valNeigh_);
         
         dtLocal += dtLocalS*faceQuadInner.weight(l);
