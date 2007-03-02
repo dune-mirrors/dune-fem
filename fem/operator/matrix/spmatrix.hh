@@ -481,7 +481,7 @@ public:
     {
       int precon = 0;
       readParameter(paramfile,"Preconditioning",precon);
-      preconditioning_ = (precon == 1) ? true : false;
+      preconditioning_ = (precon > 0) ? true : false;
     }
   }
 

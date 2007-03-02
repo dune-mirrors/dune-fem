@@ -933,7 +933,7 @@ public:
     {
       int precon = 0;
       readParameter(paramfile,"Preconditioning",precon);
-      preconditioning_ = (precon == 1) ? true : false;
+      preconditioning_ = (precon > 0) ? true : false;
     } 
     assert( rowSpace_.indexSet().size(0) == 
             colSpace_.indexSet().size(0) ); 
@@ -982,6 +982,7 @@ public:
         enum { dim = RowSpaceType :: GridType :: dimension };
 
         // number of neighbors + 1 
+        //const int factor = 5 * (dim * 2) + 1; 
         const int factor = (dim * 2) + 1; 
 
         // upper estimate for number of neighbors 
