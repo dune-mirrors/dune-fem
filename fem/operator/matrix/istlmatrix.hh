@@ -184,13 +184,12 @@ namespace Dune {
             typedef typename RowSpaceType :: BaseFunctionSetType RowBaseSetType;
             typedef typename ColSpaceType :: BaseFunctionSetType ColBaseSetType;
 
-            IntersectionIteratorType endnit = rowSpace.gridPart().iend(en);
-            for(IntersectionIteratorType nit =
-                rowSpace.gridPart().ibegin(en); nit != endnit; ++nit)
+            IntersectionIteratorType endnit = allPart.iend(en);
+            for(IntersectionIteratorType nit = allPart.ibegin(en); nit != endnit; ++nit)
             {
               if(nit.neighbor())
               {
-                const int nbIndex = rowSpace.indexSet().index( *nit.outside() );
+                const int nbIndex = colSpace.indexSet().index( *nit.outside() );
                 create.insert( nbIndex );
               }
             }
@@ -563,7 +562,8 @@ namespace Dune {
         size_ = rowSpace_.indexSet().size(0);
 
         matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0));
-        matrix().setup(rowSpace_,colSpace_,rowSpace_.gridPart());
+        matrix().setup(rowSpace_,colSpace_,rowSpace_.gridPart(),verbose);
+
         sequence_ = rowSpace_.sequence();
       }
     }
