@@ -35,12 +35,14 @@ for OPT in "$@"; do
 			;;
 	-h|--help) usage ; exit 0 ;;
 	*)
-            if test -d "$OPT/m4"; then
-              ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/m4"
-            fi
-            if test -d "$OPT/am"; then
-              am_dir="$OPT/am"
-            fi
+      
+      ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I ./m4"
+      if test -d "$OPT/m4"; then
+        ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/m4"
+      fi
+      if test -d "$OPT/am"; then
+        am_dir="$OPT/am"
+      fi
 	    if test -d "$OPT/share/aclocal"; then
 	      ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/share/aclocal"
 	    fi
