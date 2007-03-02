@@ -164,7 +164,6 @@ namespace Dune {
       : BaseType(pass, spc),
       caller_(problem),
       problem_(problem),
-      gradPass_(gradPass),
       arg_(0),
       dest_(0),
       spc_(spc),
@@ -1066,7 +1065,6 @@ namespace Dune {
   private:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
-    GradientPassType & gradPass_; 
     
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
