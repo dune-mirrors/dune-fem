@@ -179,8 +179,10 @@ namespace Dune {
       // communicate calculated function 
       communicationManager_.exchange( dest );
       
-      if (time_) {
+      if (time_) 
+      {
         time_->provideTimeStepEstimate(dtMin_);
+        //time_->provideTimeStepEstimate(0.001);
         //time_->provideTimeStepEstimate(1);
       }
       caller_.finalize();
@@ -196,9 +198,6 @@ namespace Dune {
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
-      // const int updEn_numDofs = updEn.numDofs();
-      // const BaseFunctionSetType& bsetEn = updEn.baseFunctionSet(); 
-      
 
       // only call geometry once, who know what is done in this function 
       const GeometryType & geo = en.geometry();
@@ -384,7 +383,6 @@ namespace Dune {
       
       // get local function  
       LocalFunctionType updNeigh = dest_->localFunction(nb);
-      // const BaseFunctionSetType& bsetNeigh = updNeigh.baseFunctionSet();
 
       // get goemetry of neighbor 
       const GeometryType & nbGeo = nb.geometry();
