@@ -107,7 +107,7 @@ class AdaptationManager :
       // use generic adapt method 
       if( adaptMethod == generic ) 
       {
-        am.genericAdapt();
+        am.template genericAdapt<All_Partition> ();
         return ;
       }
       
@@ -131,7 +131,7 @@ class AdaptationManager :
       // use generic adapt method 
       if(adaptMethod != none ) 
       {
-        am.genericAdapt();
+        am.template genericAdapt<All_Partition> ();
         return ;
       }
     }
@@ -246,6 +246,7 @@ private:
   //! adapt defines the grid walkthrough before and after grid adaptation.
   //! Note that the LocalOperator can be an combined Operator 
   //! Domain and Range are defined through class Operator
+  template <PartitionIteratorType pitype>
   void genericAdapt () const 
   {
     // call pre-adapt, returns true if at least 
@@ -260,13 +261,14 @@ private:
       typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
       COType tmpop ( dm_.indexSetRPop() , rpOp_ );
 
-      typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
+      typedef typename GridType::template Codim<0>::
+        template Partition<pitype> :: LevelIterator LevelIterator;
 
       // make a hierarchical run through grid 
       {
         // get macro iterator 
-        LevelIterator endit  = grid_.template lend<0>   ( 0 );
-        for(LevelIterator it = grid_.template lbegin<0> ( 0 );
+        LevelIterator endit  = grid_.template lend<0,pitype>   ( 0 );
+        for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
             it != endit; ++it )
         {
           hierarchicRestrict( *it , tmpop );
@@ -285,11 +287,12 @@ private:
       typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
       COType tmpop ( dm_.indexSetRPop() , rpOp_ );
       
-      typedef typename GridType::template Codim<0>::LevelIterator LevelIterator;
+      typedef typename GridType::template Codim<0>::
+        template Partition<pitype> :: LevelIterator LevelIterator;
 
       // make run through grid 
-      LevelIterator endit = grid_.template lend<0> ( 0 );
-      for(LevelIterator it = grid_.template lbegin<0> ( 0 );
+      LevelIterator endit = grid_.template lend<0,pitype> ( 0 );
+      for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
           it != endit; ++it )
       {
         hierarchicProlong( *it , tmpop );
@@ -351,18 +354,29 @@ private:
   void hierarchicProlong ( EntityType &en, ProlongOperatorType & prolop ) const 
   {
     typedef typename EntityType::HierarchicIterator HierarchicIterator; 
+    typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType; 
     
+    // NOTE: initialize not working here
+    // because we call hierarchically  
+    
+    // first call on this element 
     bool initialize = true;
     
     HierarchicIterator endit  = en.hend  ( grid_.maxLevel() );
     for(HierarchicIterator it = en.hbegin( grid_.maxLevel() ); 
         it != endit; ++it)
     {
+      // should only get here on non-leaf entities 
       assert( !en.isLeaf() );
+
+      // don't call this method on ghosts 
+      assert( en.partitionType() != GhostEntity );
+      
       EntityType & son = *it; 
       if( son.wasRefined() )
       {
-        prolop.prolongLocal( *(son.father()), son , initialize );     
+        EntityPointerType vati = son.father();
+        prolop.prolongLocal( *vati , son , initialize ); 
         initialize = false;
       }
     }
