@@ -191,7 +191,7 @@ public:
 
   //! insert index for father, mark childs index for removal  
   template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) const
+  void restrictLocal ( EntityType& father, EntityType& son, bool initialize ) const
   {
     // important, first remove old, because 
     // on father indices might be used aswell 
@@ -201,7 +201,7 @@ public:
 
   //! insert indices for children , mark fathers index for removal  
   template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
+  void prolongLocal ( EntityType& father, EntityType& son, bool initialize ) const
   {
     // important, first remove old, because 
     // on children indices might be used aswell 
@@ -221,6 +221,8 @@ public:
   //! Unregister entity which will be removed from the grid
   void removeOldIndex (const typename GridType::template Codim<0>::Entity & en )
   {
+    // only indices that are contained should be removed 
+    assert( codimLeafSet_.index( hIndexSet_.index( en )) >= 0 );
     this->remove( en ); 
   }
 
@@ -235,11 +237,11 @@ public:
   //! lie below the old entities 
   void resize () 
   {
-    //std::cout << "Resizing the index set " << this << " \n"; 
+    // adjust size of vectors 
     resizeVectors();
 
-    // give all entities that lie below the old entities new numbers 
-    markAllBelowOld ();
+    // mark all children 
+    markAllBelowOld<All_Partition> ();
   }
 
   //! this index set can be used for adaptive calculations 
@@ -250,11 +252,8 @@ public:
   //- --compress 
   bool compress ()
   {
-    // in parallel runs skip this check 
-    if(compressed_ && this->grid_.comm().size() <= 1) 
-    {
-      return false;
-    }
+    // if set already compress, do noting 
+    if(compressed_) return false;
 
     // mark all leaf elements  
     // needs a leaf traversal 
@@ -262,7 +261,6 @@ public:
 
     // true if a least one dof must be copied 
     bool haveToCopy = codimLeafSet_.compress(); 
-
 
     compressed_ = true;
     return haveToCopy;
@@ -272,7 +270,7 @@ public:
   bool needsCompress () const { return true; }
 
   //! memorise index 
-  // --insert
+  //- --insert
   void insert (const EntityCodim0Type & en)
   {
     const int idx = hIndexSet_.index(en);
@@ -297,7 +295,7 @@ public:
   }
 
   //! set indices to unsed so that they are cleaned on compress  
-  // --remove
+  //- --remove
   void remove (const EntityCodim0Type & en)
   {
     const int idx = hIndexSet_.index(en);
@@ -317,7 +315,7 @@ public:
 
   //! return global index 
   //! for dof mapper 
-  // --index 
+  //- --index 
   template <int codim, class EntityType>
   int index (const EntityType & en, int num) const
   {
@@ -411,18 +409,20 @@ private:
   //! grid more the one level of new elements can be created during adaption 
   //! there for we start to give new number for all elements below the old
   //! element 
+  template <PartitionIteratorType pitype>
   void markAllBelowOld () 
   {
-    typedef typename GridType::template Codim<0>::LevelIterator LevelIteratorType; 
+    typedef typename GridType::template Codim<0>::
+          template Partition<pitype> :: LevelIterator LevelIteratorType; 
 
     int maxlevel = this->grid_.maxLevel();
    
     codimLeafSet_.set2Unused(); 
     
-    for(int level = 0; level<=maxlevel; level++)
+    for(int level = 0; level<=maxlevel; ++level)
     {
-      LevelIteratorType levelend    = this->grid_.template lend  <0> (level);
-      for(LevelIteratorType levelit = this->grid_.template lbegin<0> (level);
+      LevelIteratorType levelend    = this->grid_.template lend  <0,pitype> (level);
+      for(LevelIteratorType levelit = this->grid_.template lbegin<0,pitype> (level);
           levelit != levelend; ++levelit )
       {
         typedef typename GridType::template Codim<0>::
@@ -444,10 +444,6 @@ private:
       } // end grid walk trough
     } // end for all levels 
   }
-
-  // print interal data, for debugging only 
-  // print if only done, if DEBUG_LEAFINDEXSET is defined 
-  //void print (const char * msg, bool oldtoo = false ) const;
 
 public:
 
@@ -485,13 +481,13 @@ public:
   }
 
   //! read index set from given xdr file 
-  bool read_xdr(const std::basic_string<char> filename , int timestep)
+  bool read_xdr(const std::string filename , int timestep)
   {
     FILE   *file;
     XDR     xdrs;
     const char *path = "";
 
-    std::basic_string<char> fnstr = genFilename(path,filename, timestep);
+    std::string fnstr = genFilename(path,filename, timestep);
     const char * fn = fnstr.c_str();
     std::cout << "Reading <" << fn << "> \n";
     file = fopen(fn, "rb");
@@ -518,7 +514,13 @@ public:
     xdr_destroy(&xdrs);
     fclose(file);
 
-    //print("read Index set ");
+    // in parallel runs we have to compress here
+    if(this->grid_.comm().size() > 1) 
+    {
+      compressed_ = false;
+      compress();
+    }
+
     return true;
   }
 
