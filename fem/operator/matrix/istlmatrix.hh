@@ -382,8 +382,8 @@ namespace Dune {
     typedef typename RowSpaceType::GridType GridType; 
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
-    enum { littleRows = RowSpaceType :: numBaseFunctions };
-    enum { littleCols = ColumnSpaceType :: numBaseFunctions };
+    enum { littleRows = RowSpaceType :: localBlockSize };
+    enum { littleCols = ColumnSpaceType :: localBlockSize };
     
     typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
     
