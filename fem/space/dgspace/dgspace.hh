@@ -349,7 +349,7 @@ namespace Dune {
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
     
     //! number of base functions 
-    enum { numBaseFunctions = DimRange * 
+    enum { localBlockSize = DimRange * 
         DGNumberOfBaseFunctions<polOrd,DimDomain>::numBaseFunctions }; 
 
   };
@@ -404,8 +404,8 @@ namespace Dune {
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
 
-    //! number of base functions 
-    enum { numBaseFunctions = Traits::numBaseFunctions };
+    //! size of local blocks 
+    enum { localBlockSize = Traits::localBlockSize };
 
     //! scalar space type 
     typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
