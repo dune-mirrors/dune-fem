@@ -195,7 +195,7 @@ class ExplicitOdeSolver :
     }
     
     // get dt 
-    double dt = timeProvider_.timeStep();
+    double dt = timeProvider_.deltaT();
     
     // get time 
     double time = timeProvider_.time();
@@ -383,7 +383,7 @@ public:
       return ;
     }
 
-    double dt   = timeProvider_.timeStep();
+    double dt   = timeProvider_.deltaT();
     double time = timeProvider_.time();
     double* u = U0.leakPointer();
     const bool convergence = this->ode_->step(time , dt , u);
