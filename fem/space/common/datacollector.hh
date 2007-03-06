@@ -286,7 +286,7 @@ public:
   {
     if(dc_)
     {
-      std::cout << "Operator += with OpType \n";
+      //std::cout << "Operator += with OpType \n";
       dc_ = dcConv_;
       MyType * tmp = const_cast<OpType &> (dc).convert();
       dc_ = &(*dc_).operator += (*tmp);
@@ -304,7 +304,7 @@ public:
   {
     if(dc_)
     {
-      std::cout << "Operator += with MyType \n";
+      //std::cout << "Operator += with MyType \n";
       dc_ = dcConv_;
       dc_ = &(*dc_).operator += (dc);
     }
@@ -320,7 +320,7 @@ public:
   template <class OpType>
   MyType & operator = (const OpType & dc)
   {
-    std::cout << "Store operator \n";
+    //std::cout << "Store operator \n";
     dc_     = const_cast<OpType *> (&dc);
     dcConv_ = const_cast<OpType &> (dc).convert();
     return (*this);
@@ -329,7 +329,7 @@ public:
   //! Assignement operator
   MyType & operator = (const MyType & dc)
   {
-    std::cout << "No need to do this, use += \n";
+    //std::cout << "No need to do this, use += \n";
     dc_     = const_cast<MyType *> (dc.dc_);
     dcConv_ = const_cast<MyType *> (dc.dcConv_);
     return (*this);
@@ -456,7 +456,7 @@ public:
   DataCollectorInterfaceType & 
   operator += (const DataCollectorInterfaceType &op)
   {
-    std::cout << "operator += with Interface Type \n";
+    //std::cout << "operator += with Interface Type \n";
     typedef LocalInterface<ParamType> COType;
     typedef DataCollector<GridType,COType> CopyType;
      
@@ -486,13 +486,13 @@ public:
 
   const LocalInterfaceType & getLocalInterfaceOp () const 
   {
-    std::cout << "getLocalInter \n";
+    //std::cout << "getLocalInter \n";
     return ldc_;
   }
   
   LocalInterfaceType & getLocalInterfaceOp ()  
   {
-    std::cout << "getLocalInter \n";
+    //std::cout << "getLocalInter \n";
     return ldc_;
   }
 
