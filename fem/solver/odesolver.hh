@@ -117,9 +117,6 @@ public:
   
   //! solve system 
   virtual void solve(DestinationType&) = 0;
-
-  //! set dt for next step
-  virtual void setDeltaT(const double ) = 0;
 };
 
 template<class Operator>
@@ -173,10 +170,13 @@ class ExplicitOdeSolver :
   typedef typename Operator::DestinationType DestinationType; 
  public:
   //! constructor 
-  ExplicitOdeSolver(Operator& op, const TimeProvider& tp, int pord, double cfl, bool verbose = false) :
-    BaseType(op,pord,cfl,verbose),
-    timeProvider_(tp)
+  ExplicitOdeSolver(Operator& op, TimeProvider& tp, int pord, bool verbose = false) :
+    BaseType(op,pord,(double (pord+1)/(pord+2)),verbose),
+    timeProvider_(tp),
+    firstCall_(true)
   {
+    // maximal allowed cfl number 
+    tp.provideCflEstimate(this->cfl_); 
   }
 
   //! destructor 
@@ -185,19 +185,26 @@ class ExplicitOdeSolver :
   //! solve system 
   void solve(DestinationType& U0) 
   {
-    if (this->dt_<0) 
+    // if dt has not been set yet 
+    if (firstCall_) 
     {
       DestinationType tmp("TMP",this->op_.space());
       this->op_(U0,tmp);
-      this->dt_= this->cfl_ * timeProvider_.timeStepEstimate();
-
+      firstCall_ = false;
       return ;
     }
     
-    double t  = timeProvider_.time();
+    // get dt 
+    double dt = timeProvider_.timeStep();
+    
+    // get time 
+    double time = timeProvider_.time();
+
+    // get leakPointer 
     double* u = U0.leakPointer();
     
-    const bool convergence = this->ode_->step(t, this->dt_, u);
+    // call ode solver 
+    const bool convergence = this->ode_->step(time, dt , u);
 
     assert(convergence);
     if(!convergence) 
@@ -207,13 +214,9 @@ class ExplicitOdeSolver :
     }
   }
 
-  //! set delta t 
-  void setDeltaT(const double dt) 
-  {
-    this->dt_ = dt;
-  }
  private:
   const TimeProvider& timeProvider_;
+  bool firstCall_;
 };
 
 template<class Operator>
@@ -359,10 +362,11 @@ class ImplicitOdeSolver :
   typedef ImplTimeStepperBase<Operator> BaseType;
   typedef typename Operator::DestinationType DestinationType;
 public:
-  ImplicitOdeSolver(Operator& op, const TimeProvider& tp,
-                    int pord, double cfl, bool verbose = false) :
-    BaseType(op,pord,cfl,verbose),
-    timeProvider_(tp)
+  ImplicitOdeSolver(Operator& op, TimeProvider& tp,
+                    int pord, bool verbose = false) :
+    BaseType(op,pord,1.0,verbose),
+    timeProvider_(tp),
+    firstCall_(true)
   {
   }
 
@@ -370,20 +374,19 @@ public:
   
   void solve(DestinationType& U0) 
   {
-    if(this->dt_ < 0.0) 
+    // for first call only calculate time step estimate 
+    if(firstCall_) 
     {
       DestinationType tmp("tmp",this->op_.space());
-
       this->op_(U0,tmp);
-
-      this->dt_ = this->cfl_ * timeProvider_.timeStepEstimate();
-
+      firstCall_ = false;
       return ;
     }
 
-    double t  = timeProvider_.time();
+    double dt   = timeProvider_.timeStep();
+    double time = timeProvider_.time();
     double* u = U0.leakPointer();
-    const bool convergence =  this->ode_->step(t, this->dt_, u);
+    const bool convergence = this->ode_->step(time , dt , u);
 
     assert(convergence);
     if(!convergence) 
@@ -393,14 +396,9 @@ public:
     }
   }
 
-  void setDeltaT(const double dt) 
-  {
-    assert( dt < 1.0 );
-    this->dt_ = dt;
-  }
-
- private:
+private:
   const TimeProvider& timeProvider_;
+  bool firstCall_;
 };
 
 
