@@ -30,9 +30,9 @@ template <class DofStorageImp,class DofImp> class DofIteratorStaticDiscreteFunct
 template <class DiscreteFunctionSpaceImp>
 struct StaticDiscreteFunctionTraits 
 {
-  enum { numBaseFunctions = DiscreteFunctionSpaceImp :: numBaseFunctions };
+  enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
-  typedef BlockVector< FieldVector<RangeFieldType, numBaseFunctions> > DofStorageType;
+  typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
   
   typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
