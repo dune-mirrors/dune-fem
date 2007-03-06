@@ -9,6 +9,19 @@ namespace Dune {
   class TimeProvider 
   {
   public:
+    //! constructor taking initial time, default is zero
+    TimeProvider(double startTime = 0.0) : 
+      time_(startTime),
+      timeStep_(0.0),
+      dtEstimate_(0.0),
+      cfl_(1.0)
+    {
+      resetTimeStepEstimate();
+    }
+    
+    //! destructor 
+    virtual ~TimeProvider() {}
+
     //! return internal time 
     double time() const { return time_; }
     
@@ -17,26 +30,20 @@ namespace Dune {
     void provideTimeStepEstimate(double dtEstimate) {
       dtEstimate_ = std::min(dtEstimate_, dtEstimate);
     }
-  public:
-    //! constructor taking initial time, default is zero
-    TimeProvider(double startTime = 0.0) : 
-      time_(startTime),
-      dtEstimate_()
-    {
-      resetTimeStepEstimate();
-    }
     
-    //! destructor 
-    virtual ~TimeProvider() {}
-
     //! set internal time to given time 
     void setTime(double time) { time_ = time; }
 
-    //! increase internal time by dt 
-    void augmentTime(double dt) { time_ += dt; }
+    //! increase internal time by internal timeStep 
+    void augmentTime() 
+    { 
+      time_ += timeStep(); 
+    }
     
     //! set time step estimate to big value 
-    void resetTimeStepEstimate() {
+    void resetTimeStepEstimate() 
+    {
+      // reset estimate 
       dtEstimate_ = std::numeric_limits<double>::max();
     }
     
@@ -44,15 +51,147 @@ namespace Dune {
     double timeStepEstimate() const {
       return dtEstimate_;
     }
+
+    //! return cfl number 
+    double cfl () const { return cfl_; } 
     
+    //! set internal cfl to minimum of given value and
+    //! internal clf value  
+    void provideCflEstimate(double cfl) 
+    {
+      cfl_ = std::min(cfl_, cfl );
+    }
+    
+    //! return time step estimate times cfl number 
+    double timeStep() const 
+    {
+      return timeStep_ * cfl_;
+    }
+    
+    //! syncronize time step, i.e. set timeStep to values of current
+    //! estimate and reset
+    void syncTimeStep() 
+    {
+      // save current time step 
+      timeStep_ = dtEstimate_;
+      // reset estimate 
+      resetTimeStepEstimate();
+    }
   private:
     //! do not copy this class 
     TimeProvider(const TimeProvider&);
     TimeProvider& operator=(const TimeProvider&);
     
-  private:
+  protected:
     double time_;
+    double timeStep_;
     double dtEstimate_;
+    double cfl_;
+  };
+  
+  //! improved class for 
+  //! for time and time step estimate handling
+  //! alos reads parameter from parameter file 
+  class ImprovedTimeProvider : public TimeProvider 
+  {
+  public:
+    //! constructor taking initial time, default is zero
+    ImprovedTimeProvider(const std::string paramFile = "") 
+      : TimeProvider() 
+    {
+      this->time_ = readStartTime(paramFile);
+      this->cfl_  = readCFL(paramFile);
+    }
+
+  private:
+    //! do not copy this class 
+    ImprovedTimeProvider(const ImprovedTimeProvider&);
+    ImprovedTimeProvider& operator=(const ImprovedTimeProvider&);
+
+    // read parameter start time from given file
+    double readStartTime(const std::string& file) const 
+    {
+      double startTime = 0.0;
+      readParameter(file,"StartTime",startTime);
+      return startTime;
+    }
+    
+    // read parameter CFL from given file
+    double readCFL(const std::string& file) const 
+    {
+      double cfl = 1.0;
+      readParameter(file,"CFL",cfl);
+      return cfl;
+    }
+  };
+
+  template <class CommunicatorType>
+  class ParallelTimeProvider
+  {
+  public:
+    ParallelTimeProvider(const CommunicatorType& comm,
+                         TimeProvider& tp)
+      : comm_(comm), tp_(tp)
+    {}
+    
+    //! return internal time 
+    double time() const { return tp_.time(); }
+    
+    //! set time step estimate to minimum of given value and
+    //! internal time step estiamte 
+    void provideTimeStepEstimate(double dtEstimate) 
+    {
+      tp_.provideTimeStepEstimate(dtEstimate);
+    }
+    
+    //! set internal time to given time 
+    void setTime(double time) { tp_.setTime(time); }
+
+    //! set time step estimate to big value 
+    void resetTimeStepEstimate() {
+      tp_.resetTimeStepEstimate(); 
+    }
+    
+    //! return time step estimate 
+    double timeStepEstimate() const 
+    {
+      return tp_.timeStepEstimate();
+    }
+
+    //! return cfl number 
+    double cfl () const { return tp_.cfl(); } 
+    
+    //! return time step estimate times cfl number 
+    double timeStep() const 
+    {
+      return tp_.timeStep();
+    }
+
+    //! syncronize time step between processors 
+    void syncTimeStep() 
+    {
+      // get time step estimate 
+      double dt = timeStepEstimate(); 
+      // do min over all processors 
+      dt = comm_.min( dt );
+      // set time step estimate 
+      tp_.provideTimeStepEstimate(dt);
+      // set timeStep and reset estimate 
+      tp_.syncTimeStep();
+    }
+
+    //! augment time and return new value 
+    double augmentTime() 
+    {
+      // increase time 
+      tp_.augmentTime();
+      // return new time 
+      return time();
+    }
+
+  private:
+    const CommunicatorType& comm_;
+    TimeProvider& tp_;
   };
   
 } // end namespace Dune
