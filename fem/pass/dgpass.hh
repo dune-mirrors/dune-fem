@@ -95,6 +95,9 @@ namespace Dune {
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
 
+    // type of local id set 
+    typedef typename GridType::Traits::LocalIdSet LocalIdSetType; 
+
   public:
     //- Public methods
     //! Constructor
@@ -114,6 +117,7 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
+      localIdSet_(spc_.grid().localIdSet()),
       communicationManager_(spc_),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
@@ -179,12 +183,13 @@ namespace Dune {
       // communicate calculated function 
       communicationManager_.exchange( dest );
       
+      // if time provider exists, check dtMin_
       if (time_) 
       {
         time_->provideTimeStepEstimate(dtMin_);
-        //time_->provideTimeStepEstimate(0.001);
-        //time_->provideTimeStepEstimate(1);
       }
+      
+      // call finalize 
       caller_.finalize();
     }
 
@@ -193,8 +198,6 @@ namespace Dune {
       //- typedefs
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
 
-      const IndexSetType& iset = spc_.indexSet();
-      
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
@@ -208,7 +211,7 @@ namespace Dune {
       // only apply volumetric integral if order > 0 
       // otherwise this contribution is zero 
       
-      if(spc_.order() > 0 || problem_.hasSource()) 
+      if( (spc_.order() > 0) || problem_.hasSource()) 
       {
         // if only flux, evaluate only flux 
         if ( problem_.hasFlux() && !problem_.hasSource() ) 
@@ -238,7 +241,7 @@ namespace Dune {
           EntityPointerType ep = nit.outside();
           EntityType & nb = *ep;
     
-          if ((iset.index(nb) > iset.index(en) && en.level()==nb.level())
+          if ((localIdSet_.id(nb) > localIdSet_.id(en) && en.level()==nb.level())
               || en.level() > nb.level()
               || nb.partitionType() != InteriorEntity) 
           {
@@ -439,6 +442,7 @@ namespace Dune {
 
     DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
+    const LocalIdSetType& localIdSet_;
     mutable CommunicationManagerType communicationManager_;
 
     mutable double dtMin_;
