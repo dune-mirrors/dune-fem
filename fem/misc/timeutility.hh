@@ -12,9 +12,10 @@ namespace Dune {
     //! constructor taking initial time, default is zero
     TimeProvider(double startTime = 0.0) : 
       time_(startTime),
-      timeStep_(0.0),
+      dt_(0.0),
       dtEstimate_(0.0),
-      cfl_(1.0)
+      cfl_(1.0),
+      timeStep_(0)
     {
       resetTimeStepEstimate();
     }
@@ -34,10 +35,19 @@ namespace Dune {
     //! set internal time to given time 
     void setTime(double time) { time_ = time; }
 
+    //! set internal time to given time 
+    //! and time step counter to given counter 
+    void setTime(double time, int timeStep )  
+    { 
+      time_ = time; 
+      timeStep_ = timeStep;
+    }
+
     //! increase internal time by internal timeStep 
     void augmentTime() 
     { 
-      time_ += timeStep(); 
+      time_ += deltaT(); 
+      ++timeStep_;
     }
     
     //! set time step estimate to big value 
@@ -63,9 +73,9 @@ namespace Dune {
     }
     
     //! return time step estimate times cfl number 
-    double timeStep() const 
+    double deltaT () const 
     {
-      return timeStep_ * cfl_;
+      return dt_ * cfl_;
     }
     
     //! syncronize time step, i.e. set timeStep to values of current
@@ -73,9 +83,14 @@ namespace Dune {
     void syncTimeStep() 
     {
       // save current time step 
-      timeStep_ = dtEstimate_;
+      dt_ = dtEstimate_;
       // reset estimate 
       resetTimeStepEstimate();
+    }
+
+    int timeStep () const 
+    {
+      return timeStep_;
     }
   private:
     //! do not copy this class 
@@ -84,9 +99,10 @@ namespace Dune {
     
   protected:
     double time_;
-    double timeStep_;
+    double dt_;
     double dtEstimate_;
     double cfl_;
+    int timeStep_;
   };
   
   //! improved class for 
@@ -161,8 +177,11 @@ namespace Dune {
     //! return cfl number 
     double cfl () const { return tp_.cfl(); } 
     
-    //! return time step estimate times cfl number 
-    double timeStep() const 
+    //! return time step estimate times cfl 
+    double deltaT () const { return tp_.deltaT(); }
+    
+    //! return number of current time step
+    int timeStep() const 
     {
       return tp_.timeStep();
     }
