@@ -51,6 +51,9 @@ namespace Dune {
     
     typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef LagrangeMapper<IndexSetType,polOrd,DimRange> MapperType;
+
+    // always 1 for Lagrange Base 
+    enum { localBlockSize = 1 };
   };
   //
   //  --LagrangeDiscreteFunctionSpace
@@ -124,6 +127,9 @@ namespace Dune {
     // Lagrange 1 , to be revised in this matter 
     /** \todo Please doc me! */
     enum { DimRange = FunctionSpaceType::DimRange };
+
+    //! size of local blocks, here always 1 
+    enum { localBlockSize = Traits :: localBlockSize };
   
     //! mapper used to implement mapToGlobal */
     typedef typename Traits :: MapperType MapperType; 
