@@ -239,9 +239,7 @@ struct GrapeTuple
   template <class DataIO,class GridType>
   static void restoreData(ReturnType& data, 
          DataIO& dataio,const GridType& grid,
-         double& t,int n,
-			   std::string path,
-			   std::string name) 
+         int n, std::string path, std::string name) 
   {
     std::string dname( dataName(path,name) );
     std::cout << "Reading data from " << dname << std::endl;
