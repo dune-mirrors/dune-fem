@@ -4,10 +4,12 @@ class L2Projection
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   
  public:
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) 
+  {
     typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
     typedef typename FunctionSpaceType::Traits::GridType GridType;
+    typedef typename GridType :: template Codim<0> :: Geometry Geometry;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
     
     const FunctionSpaceType& space =  discFunc.space();
@@ -21,20 +23,25 @@ class L2Projection
     
     Iterator it = space.begin();
     Iterator endit = space.end();
+
+    // if empty grid, do nothing 
+    if( it == endit ) return ;
     
     // Get quadrature rule
     CachingQuadrature<GridPartType,0> quad(*it, 2*polOrd+1);
     
-    for( ; it != endit ; ++it) {
+    const int quadNop = quad.nop();
+    for( ; it != endit ; ++it) 
+    {
       LocalFuncType lf = discFunc.localFunction(*it);
-      const typename FunctionSpaceType::BaseFunctionSetType & set =
-	lf.baseFunctionSet();
-      for(int i=0; i<lf.numDofs(); i++) {
-        for(int qP = 0; qP < quad.nop(); qP++) {
-	  f.evaluate((*it).geometry().global(quad.point(qP)), ret);
-	  set.eval(i,quad,qP,phi);
-	  lf[i] += quad.weight(qP) * (ret * phi) ;
-        }
+
+      const Geometry& geo = (*it).geometry();
+      for(int qP = 0; qP < quadNop; ++qP) 
+      {
+	      f.evaluate(geo.global(quad.point(qP)), ret);
+        ret *=  quad.weight(qP);
+
+        lf.axpy( quad, qP , ret );
       }
     }
   }
@@ -123,7 +130,7 @@ void midPoint(const Geometry& geo, FieldVector<double, n>& result)
   result /= static_cast<double>(geo.corners());
 }
 template <class Sol, class SpaceType>
-void printSGrid(double time, int timestep, const SpaceType& space, const Sol& sol)
+void printSGrid(double time, int timestep, const SpaceType& space, Sol& sol)
 {
   typedef typename SpaceType::IteratorType Iterator;
   typedef typename Sol::DiscreteFunctionType DiscreteFunctionType;
