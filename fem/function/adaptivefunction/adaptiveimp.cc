@@ -195,7 +195,7 @@ namespace Dune {
   write_xdr(std::string fn) const
   {
     XDR xdrs;
-    FILE  *file = fopen(fn.c_str(), "wb");
+    FILE *file = fopen(fn.c_str(), "wb");
     if (!file)
     { 
       fprintf(stderr,"\aERROR in AdaptiveDiscreteFunction::write_xdr(..): could not open <%s>!\n", fn.c_str());
@@ -223,7 +223,7 @@ namespace Dune {
     { 
       fprintf(stderr,"\aERROR in AdaptiveDiscreteFunction::read_xdr(..): could not open <%s>!\n", fn.c_str());
       fflush(stderr);
-      return(false);
+      return false;
     }
 
     // read xdr 
