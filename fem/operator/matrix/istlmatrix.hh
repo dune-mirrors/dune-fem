@@ -31,11 +31,6 @@ namespace Dune {
 
       typedef typename BaseType :: size_type size_type;
 
-      size_type nz_;
-
-      int localRows_; 
-      int localCols_;
-
       //===== type definitions and constants
 
       //! export the type representing the field
@@ -77,13 +72,20 @@ namespace Dune {
       //! type of used communication manager  
       typedef CommunicationManager<SpaceType> CommunicationManagerType; 
 
-      //! our function space  
+    private:  
+      size_type nz_;
+
+      int localRows_; 
+      int localCols_;
+
+      //! our function space, needed for communication  
       const SpaceType* space_; 
 
       //! communication manager 
       mutable CommunicationManagerType* comm_;
 
       std::vector<int> overlapRows_;
+
     public:
       //! constructor used by ISTLMatrixObject
       ImprovedBCRSMatrix(const SpaceType & space, 
@@ -106,6 +108,17 @@ namespace Dune {
       {
         std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
+      
+      //! copy constructor, needed by ISTL preconditioners 
+      ImprovedBCRSMatrix(const ImprovedBCRSMatrix& org) 
+        : BaseType(org) 
+        , nz_(org.nz_)
+        , localRows_(org.localRows_)
+        , localCols_(org.localCols_)
+        , space_(org.space_)
+        , comm_(org.comm_)
+        , overlapRows_(org.overlapRows_) 
+      {}
 
       //! matrix multiplication for OEM solvers 
       void multOEM (const double * arg, double * dest)
@@ -140,60 +153,98 @@ namespace Dune {
       template <class RowSpaceType, class ColSpaceType,
                 class GridType,
                 PartitionIteratorType pitype,
-                template <class,PartitionIteratorType> class GridPartType> 
+                template <class,PartitionIteratorType> class GridPartImp> 
       void setup(const RowSpaceType & rowSpace, 
                  const ColSpaceType & colSpace,
-                 const GridPartType<GridType,pitype> & gridPart,
+                 const GridPartImp<GridType,pitype> & gridPart,
                  bool verbose = false) 
       { 
         int size = rowSpace.indexSet().size(0);
         size = (int) size / 10;
         overlapRows_.reserve( size );
         overlapRows_.resize(0);
+
+        assert( &rowSpace == &colSpace );
         {
           
           typedef typename BaseType :: CreateIterator CreateIteratorType; 
 
-          CreateIteratorType create = this->createbegin();
-          CreateIteratorType endcreate = this->createend();
-
           //! we need all partition iterator here  
-          typedef GridPartType<GridType,All_Partition> AllPartType; 
+          typedef GridPartImp<GridType,All_Partition> AllPartType; 
           typedef typename AllPartType :: template Codim<0> :: IteratorType  IteratorType;
           AllPartType allPart(const_cast<GridType&> (rowSpace.grid()));
           
-          typedef typename GridType :: template Codim<0> :: Entity EntityType;
           typedef typename AllPartType:: IntersectionIteratorType IntersectionIteratorType; 
+          typedef typename GridType :: template Codim<0> :: Entity EntityType;
+         
+          typedef typename RowSpaceType :: IndexSetType RowIndexSetType;
+          const RowIndexSetType& rowSet = rowSpace.indexSet();
+          
+          typedef typename ColSpaceType :: IndexSetType ColIndexSetType;
+          const ColIndexSetType& colSet = colSpace.indexSet();
+
+          // only works for non-hybrid grids so far 
+          assert( ! rowSpace.multipleGeometryTypes() );
           
           IteratorType endit = allPart.template end<0> ();
+          IteratorType it    = allPart.template begin<0> ();
+
+          // if empty grid, do nothing
+          if( it == endit ) return ;
+
+          // initialize some values 
+          localRows_ = rowSpace.getBaseFunctionSet(*it).numBaseFunctions();
+          localCols_ = colSpace.getBaseFunctionSet(*it).numBaseFunctions();
+
+          // map of indices 
+          // necessary because element traversal not necessaryly is in
+          // ascending order 
+          std::map< int , std::set<int> > indices;
+          
           for(IteratorType it = allPart.template begin<0> (); it != endit; ++it)
           {
-            assert( create != endcreate );
-
             EntityType & en = *it;
+            const int elIndex = rowSet.index(en);
 
-            localRows_ = rowSpace.getBaseFunctionSet(en).numBaseFunctions();
-            localCols_ = colSpace.getBaseFunctionSet(en).numBaseFunctions();
-
-            const int elIndex = rowSpace.indexSet().index(en);
-            create.insert( elIndex );
-            
+            // if entity is not interior, insert into overlap entries 
             if(en.partitionType() != InteriorEntity) 
               overlapRows_.push_back( elIndex );
 
-            typedef typename RowSpaceType :: BaseFunctionSetType RowBaseSetType;
-            typedef typename ColSpaceType :: BaseFunctionSetType ColBaseSetType;
+            // set of column indices 
+            std::set<int>& localIndices = indices[elIndex];
+            // clear set 
+            localIndices.clear();
+            
+            // insert diagonal 
+            localIndices.insert( elIndex );
 
-            IntersectionIteratorType endnit = allPart.iend(en);
-            for(IntersectionIteratorType nit = allPart.ibegin(en); nit != endnit; ++nit)
+            // insert neighbors 
+            IntersectionIteratorType endnit = gridPart.iend(en);
+            for(IntersectionIteratorType nit = gridPart.ibegin(en); 
+                nit != endnit; ++nit)
             {
               if(nit.neighbor())
               {
-                const int nbIndex = colSpace.indexSet().index( *nit.outside() );
-                create.insert( nbIndex );
+                const int nbIndex = colSet.index( * nit.outside() );
+                localIndices.insert( nbIndex );
               }
             }
-            ++create;
+          }
+
+          // not insert map of indices into matrix 
+          CreateIteratorType create = this->createbegin();
+          for(CreateIteratorType endcreate = this->createend();
+              create != endcreate; ++create) 
+          {
+            // set of column indices 
+            std::set<int>& localIndices = indices[create.index()];
+            typedef typename std::set<int>::iterator iterator;
+            iterator end = localIndices.end();
+            // insert all indices for this row 
+            for (iterator it = localIndices.begin(); it != end; ++it)
+            {
+              create.insert( *it );
+            }
           }
         }
         std::sort(overlapRows_.begin(), overlapRows_.end());
@@ -312,6 +363,9 @@ namespace Dune {
   {
     typedef Preconditioner<X,Y> PreconditionerInterfaceType;
     PreconditionerInterfaceType* preconder_; 
+    
+    //! set preconder to zero 
+    PreconditionerWrapper (const PreconditionerWrapper&);
   public:
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
@@ -340,6 +394,7 @@ namespace Dune {
     //! \copydoc Preconditioner 
     virtual void pre (X& x, Y& b) 
     {
+      // apply preconditioner
       if( preconder_ ) preconder_->pre(x,b);
     }
 
@@ -348,16 +403,19 @@ namespace Dune {
     {
       if( preconder_ ) 
       {
+        // apply preconditioner
         preconder_->apply(v,d);
       }
       else 
       {
+        // just copy values 
         v = d;
       }
     }
 
     //! \copydoc Preconditioner 
     virtual void post (X& x) {
+      // apply preconditioner
       if( preconder_ ) preconder_->post(x);
     }
 
@@ -365,6 +423,7 @@ namespace Dune {
     virtual ~PreconditionerWrapper () 
     {
       delete preconder_;
+      preconder_ = 0;
     }
   };
 
@@ -426,25 +485,36 @@ namespace Dune {
     private: 
       LocalMatrix(const LocalMatrix&);
 
+      // check whether given (row,col) pair is valid
+      void check(int localRow, int localCol) const 
+      {
+        assert( localRow >= 0 );
+        assert( localRow < LittleBlockType :: rows );
+        assert( localCol >= 0 );
+        assert( localCol < LittleBlockType :: cols );
+      }
     public:
       void add(int localRow, int localCol , const double value)
       {
-        assert( localRow >= 0 );
-        assert( localCol >= 0 );
+#ifndef NDEBUG
+        check(localRow,localCol);
+#endif
         matrix_[localRow][localCol] += value;
       }
 
       void set(int localRow, int localCol , const double value)
       {
-        assert( localRow >= 0 );
-        assert( localCol >= 0 );
+#ifndef NDEBUG
+        check(localRow,localCol);
+#endif
         matrix_[localRow][localCol] = value;
       }
 
       double get(int localRow, int localCol ) const
       {
-        assert( localRow >= 0 );
-        assert( localCol >= 0 );
+#ifndef NDEBUG
+        check(localRow,localCol);
+#endif
         return matrix_[localRow][localCol];
       }
 
@@ -484,6 +554,8 @@ namespace Dune {
       
     int preconditioning_;
 
+    // prohibit copy constructor 
+    ISTLMatrixObject(const ISTLMatrixObject&); 
   public:  
     //! constructor 
     //! \param rowSpace space defining row structure 
@@ -557,7 +629,7 @@ namespace Dune {
       // if grid sequence number changed, rebuild matrix 
       if(sequence_ != rowSpace_.sequence())
       {
-        delete matrix_;
+        delete matrix_; matrix_ = 0;
         delete preconder_; preconder_ = 0;
         size_ = rowSpace_.indexSet().size(0);
 
