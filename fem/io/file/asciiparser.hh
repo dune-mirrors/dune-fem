@@ -6,16 +6,6 @@
 
 namespace Dune {
 
-static const int MAXTAB = 30;
-
-/*
-//! Send vector to output stream
-std::fstream& operator >>(std::fstream& file, std::istringstream& data)
-{
-  file >> data.str();
-}
-*/
-
 //! reads data folowing the given keyword 
 //! if verbose is true then an output of what was read is given
 //! the token '%' or '#' stands for comment 
@@ -68,6 +58,7 @@ bool readParameter (const std::string filename,
       }
     }
   }
+  
   // close file 
   file.close();
 
@@ -76,6 +67,7 @@ bool readParameter (const std::string filename,
   {
     if(verbose)
     {
+      static const int MAXTAB = 30;
       int length = MAXTAB - keyword.size();
       std::cout << "Reading " << keyword;
       for(int i=0; i<length; i++) std::cout << ".";
