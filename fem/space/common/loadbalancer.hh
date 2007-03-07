@@ -3,10 +3,12 @@
 
 //- system includes 
 #include <vector>
+#include <set>
 
 //- local includes 
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 
 namespace Dune{
@@ -16,52 +18,25 @@ namespace Dune{
  * @{
  **/
 
-
-  
 /** @defgroup LoadBalancer 
     @{
 **/
 
 class LoadBalancerInterface 
 {
-public:
+protected:  
   //! default constructor 
-  LoadBalancerInterface () : lb_ (0) {}
+  LoadBalancerInterface () {}
   
-  //! copy constructor 
-  LoadBalancerInterface(const LoadBalancerInterface & org) 
-    : lb_(org.lb_) 
-  {}
-
+public:
   //! destructor 
   virtual ~LoadBalancerInterface () {}
   
-  virtual bool loadBalance () const  
-  {
-    if(lb_) return lb_->loadBalance();  
-    else 
-    {
-      std::cerr << "WARNING: loadBalance with empty lb_ object! \n";
-      return false; 
-    }
-  }
+  //! call load balance, returns true if grid was changed 
+  virtual bool loadBalance () = 0; 
 
   //! return current balance counter 
-  virtual int balanceCounter () const 
-  {
-    return (lb_) ? lb_->balanceCounter() : 0;
-  }
-
-  //! Assignement operator
-  LoadBalancerInterface & operator = (const LoadBalancerInterface & lb)
-  {
-    /** \todo This const-casting seems strange to me! */
-    lb_ = &lb;
-    return (*this);
-  }
-
-private: 
-  const LoadBalancerInterface *lb_;
+  virtual int balanceCounter () const = 0;
 };
 
 /*! \brief This class manages the adaptation process. 
@@ -73,32 +48,11 @@ template <class GridType>
 class LoadBalancer 
 : public LoadBalancerInterface 
 {  
-  template <class LBManager, class GridImp, bool isGoodGrid> 
-  struct CallLoadBalance
-  {
-    template <class DofManagerImp>
-    static bool balance(const LBManager& lb, 
-                        GridImp & grid, 
-                        DofManagerImp& dm)
-    {
-      return grid.loadBalance( dm );
-    }
-  };
-  
-  template <class LBManager, class GridImp> 
-  struct CallLoadBalance<LBManager,GridImp,false>
-  {
-    template <class DofManagerImp>
-    static bool balance(const LBManager& lb, 
-                        GridImp & grid, 
-                        DofManagerImp& dm)
-    {
-      return false;
-    }
-  };
-  
+  // type of this 
   typedef LoadBalancer<GridType> ThisType;
+  // dof manager 
   typedef DofManager<GridType> DofManagerType; 
+  // factory 
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
   // type of data collector during load balance 
@@ -154,16 +108,14 @@ public:
   int balanceCounter () const { return balanceCounter_; }
   
   //! do load balance every balanceStep_ step 
-  bool loadBalance () const 
+  bool loadBalance () 
   {
     bool changed = false;
     // if balance counter has readed balanceStep do load balance
     if( (balanceCounter_ >= balanceStep_) && (balanceStep_ > 0) )
     {
-      // call load balance 
-      changed = CallLoadBalance<ThisType,GridType,
-                  Conversion<GridType,HasHierarchicIndexSet>::exists>::
-                    balance(*this,grid_,dm_);
+      // call grids load balance, only implemented in ALUGrid right now
+      changed = grid_.loadBalance( dm_ ); 
 
       // reset balance counter 
       balanceCounter_ = 0;
@@ -179,72 +131,86 @@ public:
   template <class DiscreteFunctionType> 
   void addDiscreteFunction(DiscreteFunctionType& df) 
   {
-    // to bew revised
-    const bool leaf = true; 
-    
-    ////////////////////////////
-    // data inliners 
-    ////////////////////////////
+    CompileTimeChecker< Conversion<DiscreteFunctionType,IsDiscreteFunction>::exists > 
+      only_valid_for_discretefunctions();
+
+    const IsDiscreteFunction * fct = &df;
+
+    // if discrete functions is not in list already 
+    if( listOfFcts_.find(fct) == listOfFcts_.end() )
     {
-      const bool readData = false; // readData is described by false 
-      typedef DataInliner<DiscreteFunctionType> LocalInlinerType; 
+      // insert into set 
+      listOfFcts_.insert( fct );
 
-      LocalInlinerType * di = new LocalInlinerType(df);
-
-      // for later removal 
-      localList_.push_back( di );
-    
-      typedef DataCollector<GridType,LocalInlinerType> DataCollectorImp;
-
-      DataCollectorImp* gdi = 
-        new DataCollectorImp( grid_, dm_ , *di , readData , leaf );
+      // to be revised
+      const bool leaf = true; 
       
-      // for later removal 
-      collList_.push_back(gdi);
+      ////////////////////////////
+      // data inliners 
+      ////////////////////////////
+      {
+        const bool readData = false; // readData is described by false 
+        typedef DataInliner<DiscreteFunctionType> LocalInlinerType; 
 
-      dm_.addDataInliner( *gdi );
+        LocalInlinerType * di = new LocalInlinerType(df);
+
+        // for later removal 
+        localList_.push_back( di );
+      
+        typedef DataCollector<GridType,LocalInlinerType> DataCollectorImp;
+
+        DataCollectorImp* gdi = 
+          new DataCollectorImp( grid_, dm_ , *di , readData , leaf );
+        
+        // for later removal 
+        collList_.push_back(gdi);
+
+        dm_.addDataInliner( *gdi );
+      }
+     
+      ////////////////////////////
+      // data xtractors 
+      ////////////////////////////
+      {
+        typedef DataXtractor<DiscreteFunctionType> LocalXtractorType; 
+        LocalXtractorType * dx = new LocalXtractorType(df);
+
+        // for later removal 
+        localList_.push_back( dx );
+
+        const bool writeData = true; // writedata is described by true 
+        
+        typedef DataCollector<GridType,LocalXtractorType> DataCollectorImp;
+        
+        DataCollectorImp* gdx = 
+          new DataCollectorImp( grid_, dm_ , *dx , writeData , leaf );
+        
+        // for later removal 
+        collList_.push_back(gdx);
+
+        dm_.addDataXtractor( *gdx );
+      }
     }
-   
-    ////////////////////////////
-    // data xtractors 
-    ////////////////////////////
-    {
-      typedef DataXtractor<DiscreteFunctionType> LocalXtractorType; 
-      LocalXtractorType * dx = new LocalXtractorType(df);
-
-      // for later removal 
-      localList_.push_back( dx );
-
-      const bool writeData = true; // writedata is described by true 
-      
-      typedef DataCollector<GridType,LocalXtractorType> DataCollectorImp;
-      
-      DataCollectorImp* gdx = 
-        new DataCollectorImp( grid_, dm_ , *dx , writeData , leaf );
-      
-      // for later removal 
-      collList_.push_back(gdx);
-
-      dm_.addDataXtractor( *gdx );
-    }
-    
   }
  
 protected: 
   //! corresponding grid 
-  mutable GridType & grid_;
+  GridType & grid_;
 
   //! DofManager corresponding to grid
-  mutable DofManagerType & dm_;
+  DofManagerType & dm_;
 
   // call loadBalance ervery balanceStep_ step
   int balanceStep_ ;
   // count actual balance call
-  mutable int balanceCounter_;
+  int balanceCounter_;
 
   // list of created local data collectors 
   std::vector<LocalDataCollectorInterfaceType*> localList_;
   std::vector<DataCollectorType*> collList_;
+
+  // list of already added discrete functions 
+  std::set< const IsDiscreteFunction * > listOfFcts_;
 };
 
 /** @} end documentation group */
