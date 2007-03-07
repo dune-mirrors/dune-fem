@@ -194,22 +194,20 @@ namespace Dune {
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   write_xdr(std::string fn) const
   {
-    FILE  *file;
-    XDR   xdrs;
-    file = fopen(fn.c_str(), "wb");
+    XDR xdrs;
+    FILE  *file = fopen(fn.c_str(), "wb");
     if (!file)
-      { 
-        printf( "\aERROR in AdaptiveDiscreteFunction::write_xdr(..): could not open <%s>!\n", fn.c_str());
-        fflush(stderr);
-        return false;
-      }
+    { 
+      fprintf(stderr,"\aERROR in AdaptiveDiscreteFunction::write_xdr(..): could not open <%s>!\n", fn.c_str());
+      fflush(stderr);
+      return false;
+    }
 
     xdrstdio_create(&xdrs, file, XDR_ENCODE);   
     dofVec_.processXdr(&xdrs);
 
     xdr_destroy(&xdrs);
     fclose(file);
-  
     return true;
   }
 
@@ -217,16 +215,16 @@ namespace Dune {
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   read_xdr(std::string fn)
   {
-    FILE   *file;
-    XDR     xdrs;
-    std::cout << "Reading <" << fn << "> \n";
-    file = fopen(fn.c_str() , "rb");
+    std::cout << "Reading <" << fn << "> " << std::endl;
+
+    XDR xdrs;
+    FILE *file = fopen(fn.c_str() , "rb");
     if(!file)
-      { 
-        printf( "\aERROR in AdaptiveDiscreteFunction::read_xdr(..): could not open <%s>!\n", fn.c_str());
-        fflush(stderr);
-        return(false);
-      }
+    { 
+      fprintf(stderr,"\aERROR in AdaptiveDiscreteFunction::read_xdr(..): could not open <%s>!\n", fn.c_str());
+      fflush(stderr);
+      return(false);
+    }
 
     // read xdr 
     xdrstdio_create(&xdrs, file, XDR_DECODE);     
