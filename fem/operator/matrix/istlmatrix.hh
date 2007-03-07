@@ -166,9 +166,6 @@ namespace Dune {
 
         assert( &rowSpace == &colSpace );
         {
-          
-          typedef typename BaseType :: CreateIterator CreateIteratorType; 
-
           //! we need all partition iterator here  
           typedef GridPartImp<GridType,All_Partition> AllPartType; 
           typedef typename AllPartType :: template Codim<0> :: IteratorType  IteratorType;
@@ -201,7 +198,7 @@ namespace Dune {
           // ascending order 
           std::map< int , std::set<int> > indices;
           
-          for(IteratorType it = allPart.template begin<0> (); it != endit; ++it)
+          for( ; it != endit; ++it)
           {
             EntityType & en = *it;
             const int elIndex = rowSet.index(en);
@@ -231,9 +228,10 @@ namespace Dune {
             }
           }
 
+          typedef typename BaseType :: CreateIterator CreateIteratorType; 
           // not insert map of indices into matrix 
-          CreateIteratorType create = this->createbegin();
-          for(CreateIteratorType endcreate = this->createend();
+          CreateIteratorType endcreate = this->createend();
+          for(CreateIteratorType create = this->createbegin();
               create != endcreate; ++create) 
           {
             // set of column indices 
