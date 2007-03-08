@@ -242,6 +242,9 @@ public:
   //! return number of enties of array 
   int size () const { return size_; }  
 
+  //! return number of total enties of array 
+  int capacity () const { return memSize_; }  
+
   //! return reference to entry i
   T& operator [] ( int i )       
   { 
