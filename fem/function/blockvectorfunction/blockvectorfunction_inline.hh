@@ -201,10 +201,14 @@ readXdrs(XDR * xdrs)
 {
   int len = 0 ;
   xdr_int( xdrs, &len );
-  assert( len == (int) dofVec_.size() );
+
+  // for parallel runs len might be bigger than 
+  // size we read we use Grape 
+  assert( len >= dofVec_.size() );
  
   enum { blockSize = DofBlockType :: dimension };
-  for(int i=0; i<len; ++i) 
+  const int vecSize = dofVec_.size();
+  for(int i=0; i<vecSize; ++i) 
   {
     DofBlockType &dof = dofVec_[i];
     xdr_vector(xdrs,(char *) &dof[0], blockSize , sizeof(RangeFieldType) ,(xdrproc_t)xdr_double);
