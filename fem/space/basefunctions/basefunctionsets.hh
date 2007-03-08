@@ -92,6 +92,9 @@ namespace Dune {
                                    const int quadPoint,
                                    const JacobianRangeType& factor) const;
   private:
+    // do not copy this class 
+    StandardBaseFunctionSet(const StandardBaseFunctionSet&);
+
     typename Traits::StorageType storage_;
     
     mutable FieldVector<int, 0> diffVar0_;
@@ -145,8 +148,6 @@ namespace Dune {
       util_(FunctionSpaceType::DimRange),
       tmp_(0),
       jTmp_(0) // changed to integer in case of integer func-space
-//      tmp_(0.),
-//      jTmp_(0.)
     {}
 
     ~VectorialBaseFunctionSet() {}
@@ -224,6 +225,9 @@ namespace Dune {
                                    const JacobianRangeType& factor) const;
 
   private:
+    //! copy constructor prohibited 
+    VectorialBaseFunctionSet(const VectorialBaseFunctionSet& factory);
+      
     StorageType storage_;
     DofConversionUtility<PointBased> util_;
 
