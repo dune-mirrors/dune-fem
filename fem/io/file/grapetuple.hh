@@ -21,12 +21,12 @@ struct GrapeTupleCaller
   static DiscFuncType* createData(DataIO& dataio,std::string name,int n,
 			     GridType& grid) 
   {
-    std::stringstream dataname;
     typedef typename DiscFuncType::DiscreteFunctionSpaceType SpaceType;
     typedef typename SpaceType::GridPartType GridPartType;
+    
     GridPartType* gridPart = new GridPartType(grid);
     SpaceType* space = new SpaceType(*gridPart);
-    DiscFuncType* df = new DiscFuncType (dataname.str().c_str(), *space);
+    DiscFuncType* df = new DiscFuncType ("",*space);
     return df;
   }
   
@@ -58,7 +58,6 @@ struct GrapeTupleCaller
   template <class Disp>
   static void addToDisplay(Disp& disp, DiscFuncType& df) 
   {
-    //std::cout << "adding to display " << df.name() << std::endl;
     disp.addData(df);
   }
 };
