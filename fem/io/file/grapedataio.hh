@@ -51,40 +51,6 @@ public:
 template <int dim, int dimworld, class GridImp> 
 class GrapeDataIOImp<dim,dimworld,GridImp,false>
 {
-protected:  
-  struct HackIt : public MacroGrid
-  {
-    typedef GridImp GridType;
-    typedef FieldVector<typename
-      GridType::ctype,GridType::dimensionworld> DomainType;
-    public: 
-    // grid auto pointer
-    mutable std::auto_ptr<GridType> gridptr_;
-    std::vector<double> emptyParam;
-    // element and vertex parameters
-    std::vector<std::pair<DomainType, std::vector<double> > > elParam,vtxParam;
-    int nofElParam_,nofVtxParam_;
-  };
-
-  //! derive from GridPtr to implement release method 
-  //! which is needed below
-  class ImprovedGridPtr : public GridPtr<GridImp> 
-  { 
-    // type of base class 
-    typedef GridPtr<GridImp> BaseType;
-    // cast this class to HackIt to have access to internal data
-    HackIt& asHack() { return *((HackIt *) this); }
-  public:
-    //! constructor creating macro grid 
-    ImprovedGridPtr(const std::string filename) 
-      : BaseType(filename)
-    {
-    }
-    
-    //! release pointer from auto pointer 
-    GridImp* release () { return asHack().gridptr_.release(); } 
-  };
-  
   typedef GridImp GridType;
 public:  
    /** Write structurd grid to file filename 
@@ -159,10 +125,17 @@ public:
       abort();
     }
 
-    if(grid.name() != gridname)
+    if( grid.name() != gridname )
     {
-      std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
-      abort();
+      if( (grid.name() == "SGrid") && (gridname == "YaspGrid") ) 
+      {
+        std::cerr << "WARNING: YaspGrid is read as SGrid! \n";
+      }
+      else 
+      {
+        std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
+        abort();
+      }
     }
 
     int precision = 6;
@@ -196,7 +169,7 @@ public:
     GridType * grid = 0 ;
     {
       // create macro grid 
-      ImprovedGridPtr gridptr(macroName);
+      GridPtr<GridType> gridptr(macroName);
       // release pointer 
       grid = gridptr.release();
     }
