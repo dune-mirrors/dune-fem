@@ -15,6 +15,9 @@
 // input and output of tuples 
 #include <dune/fem/io/file/grapetuple.hh>
 
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/io/file/dgfparser.hh>
+
 // if grape was configured then include headers 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
@@ -43,6 +46,10 @@ public:
 
   //! display data if HAVE_GRAPE is 1  
   virtual void display() const = 0; 
+
+  //! \brief save structured macro grid 
+  //! \param macroFileName is the macro which should be saved in DGF format  
+  virtual void saveMacroGrid(const std::string macroFileName) const = 0;
   
   //! standard path reading and creation method 
   //! rank is added to output path 
@@ -95,6 +102,139 @@ public:
     return path;
   }
 
+  static void writeMacroGrid(const std::string& macroname,
+                             const std::string& path, 
+                             const std::string& prefix) 
+  {
+    // create file descriptor 
+    std::ifstream gridin(macroname.c_str());
+    if( !gridin) 
+    {
+      std::cerr << "Couldn't open file `" << macroname << "' ! \n";
+      return ;
+    } 
+        
+    // read interval information of structured grid 
+    IntervalBlock interval(gridin);
+    if(!interval.isactive()) 
+    {
+      std::cerr<<"Did not find IntervalBlock! \n";
+      return;
+    }
+    
+    std::string filename(path);
+    filename += "/g";
+    filename += prefix;
+    filename += ".macro";
+
+    int dimworld = interval.dimw();
+
+    switch( dimworld ) 
+    {
+      case 3: saveMacroGridImp<3> (interval,filename); 
+              return; 
+      case 2: saveMacroGridImp<2> (interval,filename); 
+              return; 
+      default: std::cerr << "Dimension not supported by saveMacroGrid! \n";        
+               assert(false);
+               abort();
+    }
+
+    return;
+  }
+
+protected:
+  template <int dimworld> 
+  static void saveMacroGridImp(IntervalBlock& interval, std::string filename) 
+  {
+    FieldVector<double,dimworld> lang;
+    FieldVector<int,dimworld>    anz;
+    FieldVector<double,dimworld>  h;
+    
+    // set values 
+    for (int i=0;i<dimworld;i++) 
+    {
+      lang[i] = interval.length(i);
+      anz[i]  = interval.segments(i);
+      h[i] = lang[i]/anz[i];
+    }
+
+#if HAVE_MPI 
+    // write sub grid 
+    {
+      typedef FieldVector<int,dimworld> iTupel;
+
+      // origin is zero 
+      iTupel o(0);
+
+      iTupel o_interior;
+      iTupel s_interior;
+
+      enum { tag = MultiYGrid<dimworld,double> ::tag };
+      Torus<dimworld> torus(MPI_COMM_WORLD,tag,anz);
+      torus.partition( torus.rank() , o,anz,
+                       o_interior,s_interior);
+
+      FieldVector<double,dimworld> origin(0.0);
+      FieldVector<double,dimworld> sublang(0.0);
+      for(int i=0; i<dimworld; ++i)
+      {
+        origin[i] = o_interior[i] * h[i];
+        sublang[i] = origin[i] + (s_interior[i] * h[i]);
+      }
+
+      writeStructuredGrid(filename,origin,sublang,s_interior);
+    }
+#endif
+    {
+      // write global file for recovery 
+      filename += ".global";
+      FieldVector<double,dimworld> zero(0.0);
+      writeStructuredGrid(filename,zero,lang,anz);
+    }
+  }
+
+  //! write structured grid as DGF file 
+  template <int dimworld>
+  static void writeStructuredGrid(const std::string& filename,
+                           const FieldVector<double,dimworld>& origin,
+                           const FieldVector<double,dimworld>& lang,
+                           const FieldVector<int,dimworld>& anz)
+  {
+    std::ofstream file (filename.c_str());
+    if( file.is_open())
+    {
+      file << "DGF" << std::endl;
+      file << "Interval" << std::endl;
+      // write first point 
+      for(int i=0;i<dimworld; ++i)
+      {
+        file << origin[i] << " ";
+      }
+      file << std::endl;
+      // write second point 
+      for(int i=0;i<dimworld; ++i)
+      {
+        file << lang[i] << " ";
+      }
+      file << std::endl;
+      // write number of intervals in each direction 
+      for(int i=0;i<dimworld; ++i)
+      {
+        file << anz[i] << " ";
+      }
+      file << std::endl;
+      file << "#" << std::endl;
+
+      file << "BoundaryDomain" << std::endl;
+      file << "default 1" << std::endl;
+      file << "#" << std::endl;
+    }
+    else
+    {
+      std::cerr << "Couldn't open file `" << filename << "' !\n";
+    }
+  }
 }; // end class IOInterface 
 
 } // end namespace Dune  
