@@ -11,6 +11,7 @@
 
 #include <dune/fem/space/common/dofmanager.hh>
 
+#include <dune/grid/io/file/dgfparser/dgfparser.hh> 
 
 //- Local includes 
 #include "asciiparser.hh"
@@ -50,49 +51,46 @@ public:
 template <int dim, int dimworld, class GridImp> 
 class GrapeDataIOImp<dim,dimworld,GridImp,false>
 {
-public:  
-  typedef GridImp GridType;
-   /** Write Grid with GridType file filename and time 
-   *
-   * This method uses the Grid Interface Method writeGrid 
-   * to actually write the grid, within this method the real file name is
-   * generated out of filename and timestep 
-   */
-  inline static bool writeGrid (const GridType & grid, 
-    const GrapeIOFileFormatType ftype, const GrapeIOStringType & fnprefix 
-      , double time=0.0, int timestep=0, int precision = 6)
+protected:  
+  struct HackIt : public MacroGrid
   {
-    return false; 
-  }
+    typedef GridImp GridType;
+    typedef FieldVector<typename
+      GridType::ctype,GridType::dimensionworld> DomainType;
+    public: 
+    // grid auto pointer
+    mutable std::auto_ptr<GridType> gridptr_;
+    std::vector<double> emptyParam;
+    // element and vertex parameters
+    std::vector<std::pair<DomainType, std::vector<double> > > elParam,vtxParam;
+    int nofElParam_,nofVtxParam_;
+  };
 
-  //! get Grid from file with time and timestep , return true if ok 
-  inline static bool readGrid (GridType & grid, 
-      const GrapeIOStringType & fnprefix , double & time , int timestep)
-  {
-    return false; 
-  }
+  //! derive from GridPtr to implement release method 
+  //! which is needed below
+  class ImprovedGridPtr : public GridPtr<GridImp> 
+  { 
+    // type of base class 
+    typedef GridPtr<GridImp> BaseType;
+    // cast this class to HackIt to have access to internal data
+    HackIt& asHack() { return *((HackIt *) this); }
+  public:
+    //! constructor creating macro grid 
+    ImprovedGridPtr(const std::string filename) 
+      : BaseType(filename)
+    {
+    }
+    
+    //! release pointer from auto pointer 
+    GridImp* release () { return asHack().gridptr_.release(); } 
+  };
   
-  //! get Grid from file with time and timestep , return true if ok 
-  inline static GridType * restoreGrid (
-      const GrapeIOStringType & fnprefix , double & time , int timestep)
-  {
-    assert(false);
-    return 0;
-  }
-};
-
-#if 0
-template <int dim, int dimworld> 
-class GrapeDataIOImp<dim,dimworld,YaspGrid<dim,dimworld> >
-{
-  typedef YaspGrid<dim,dimworld> GridType;
-  typedef GridType GridImp;
+  typedef GridImp GridType;
 public:  
-   /** Write Grid with GridType file filename and time 
-   *
-   * This method uses the Grid Interface Method writeGrid 
-   * to actually write the grid, within this method the real file name is
-   * generated out of filename and timestep 
+   /** Write structurd grid to file filename 
+    NOTE: the macro grid file of this structured grid 
+          has to stored in a file named "filename.macro" and
+          the format must be Dune DGF. 
    */
   inline static bool writeGrid (const GridType & grid, 
     const GrapeIOFileFormatType ftype, const GrapeIOStringType & fnprefix 
@@ -111,41 +109,61 @@ public:
    
     // write Grid itself 
     {
-      const char *path = "";
-      std::fstream file (fnprefix.c_str(),std::ios::out);
-      file << "Grid: "   << transformToGridName(grid.type()) << std::endl;
-      file << "Format: " << ftype <<  std::endl;
-      file << "Precision: " << precision << std::endl;
-      int writeDm = (hasDm)? 1 : 0;
-      file << "DofManager: " << writeDm << std::endl; 
-
-      GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
-      
-      file.close();
-      return grid.backup(fnstr,time);
+      std::ofstream file (fnprefix.c_str());
+      if( file.is_open() )
+      {
+        file << "Grid: "   << grid.name() << std::endl;
+        file << "Format: " << ftype <<  std::endl;
+        file << "Precision: " << precision << std::endl;
+        int writeDm = (hasDm)? 1 : 0;
+        file << "DofManager: " << writeDm << std::endl; 
+        file.close();
+      }
+      else {
+        std::cerr << "Couldn't open file `" << fnprefix << "' ! \n";
+        return false;
+      }
     }
-    return false;
+      
+    // write max level and current time to grid specific file 
+    { 
+      const char * path = "";
+      GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
+      std::ofstream gridfile (fnstr.c_str());
+      
+      if( gridfile.is_open() )
+      {
+        gridfile << "MaxLevel: " << grid.maxLevel() << std::endl;
+        gridfile << "Time: " << std::scientific << time << std::endl;
+        gridfile.close();
+      }
+      else 
+      {
+        std::cerr << "Couldn't open file `" << fnstr << "' ! \n";
+        return false;
+      }
+    }
+    return true;
   }
 
   //! get Grid from file with time and timestep , return true if ok 
   inline static bool readGrid (GridType & grid, 
       const GrapeIOStringType & fnprefix , double & time , int timestep)
   {
-    return false;
-  }
+    std::string gridname;
 
-  //! get Grid from file with time and timestep , return true if ok 
-  inline static GridType * restoreGrid (
-      const GrapeIOStringType & fnprefix , double & time , int timestep)
-  {
-    int helpType;
+    bool readGridName = readParameter(fnprefix,"Grid",gridname);
+    if(! readGridName ) 
+    {
+      std::cerr << "ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+      abort();
+    }
 
-    char gridname [1024];
-    readParameter(fnprefix,"Grid",gridname);
-    std::string gname (gridname);
-
-    readParameter(fnprefix,"Format",helpType);
-    GrapeIOFileFormatType ftype = (GrapeIOFileFormatType) helpType;
+    if(grid.name() != gridname)
+    {
+      std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
+      abort();
+    }
 
     int precision = 6;
     readParameter(fnprefix,"Precision",precision);
@@ -153,122 +171,40 @@ public:
     int hasDm = 0;
     readParameter(fnprefix,"DofManager",hasDm);
 
-    const char *path = "";
-    GrapeIOStringType fn = genFilename(path,fnprefix,timestep,precision);
-    std::cout << "Read file: fnprefix = `" << fn << "' \n";
-
-    GridType * grd = createGrid(fn,time);
-    GridType & grid = *grd;
-   
-    bool succeded = false;
-    // write dof manager, that corresponds to grid 
-    if(hasDm)
     {
-      typedef DofManager<GridImp> DofManagerType; 
-      typedef DofManagerFactory<DofManagerType> DMFactoryType; 
+      const char * path = "";
+      GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
       
-      std::string dmname(fn);
-      dmname += "_dm";
-      //std::cout << "Read DofManager from file " << dmname << "\n";
-      // this call creates DofManager if not already existing 
-      DMFactoryType::getDofManager(grid);
-      succeded = DMFactoryType::writeDofManager(grid,dmname,timestep);
+      {
+        int maxLevel = 0;
+        readParameter(fnstr,"MaxLevel",maxLevel);
+        // refine grid 
+        grid.globalRefine(maxLevel);
+      }
+      readParameter(fnstr,"Time",time);
     }
-    return grd;
+    return true;
   }
 
-
-  inline static GridType * createGrid(
-      const GrapeIOStringType & fnprefix , double & time)
+  //! get Grid from file with time and timestep , return true if ok 
+  inline static GridType * restoreGrid (
+      const GrapeIOStringType & fnprefix , double & time , int timestep)
   {
-    enum { d = GridType :: dimension };
-    typedef typename GridType :: ctype ct;
-    //! define types used for arguments
- 
-    std::ifstream in (fnprefix.c_str());
-    //FILE * file = fopen(fnprefix.c_str(),"r");
-    //assert( file );
-    
-    //fscanf(file,"%le",&time);
-    double t; 
-    in >> t; 
-    time = t;
+    std::string macroName (fnprefix);
+    macroName += ".macro";
 
-    typedef FieldVector<int, d> iTupel;
-    typedef FieldVector<ct, d> fTupel;
-    fTupel s; 
-    for(int k=0 ;k<d; ++k) 
+    GridType * grid = 0 ;
     {
-      ct val; 
-      //fscanf(file,"%f",&val);
-      in >> val;
-      s[k] = val;
+      // create macro grid 
+      ImprovedGridPtr gridptr(macroName);
+      // release pointer 
+      grid = gridptr.release();
     }
-
-    iTupel L;
-    for(int k=0 ;k<d; ++k) 
-    {
-      int val; 
-      //fscanf(file,"%d",&val);
-      in >> val;
-      L[k] = val;
-    }
-    
-    iTupel so;
-    for(int k=0 ;k<d; ++k) 
-    {
-      int val; 
-      //fscanf(file,"%d",&val);
-      in >> val;
-      so[k] = val;
-    }
-    
-    iTupel sn;
-    for(int k=0 ;k<d; ++k) 
-    {
-      int val; 
-      //fscanf(file,"%d",&val);
-      in >> val;
-      sn[k] = val;
-    }
-    
-    typedef FieldVector<bool, d> bTupel;
-    bTupel p; 
-    for(int k=0 ;k<d; ++k) 
-    {
-      int val; 
-      //fscanf(file,"%d",&val);
-      in >> val;
-      p[k] = (val == 0) ? false : true;
-    }
- 
-    int overlap;
-    //fscanf(file,"%d",&overlap);
-    in >> overlap;
-    int mxl; 
-    in >> mxl;
-    //fscanf(file,"%d",&mxl);
-
-    std::cout << time << " time \n";
-    std::cout << s << " intervals \n";
-    std::cout << L << " intervals \n";
-    std::cout << p << " intervals \n";
-    std::cout << overlap << " intervals \n";
-
-    GridType * grid = new GridType (
-#if HAVE_MPI
-        MPI_COMM_WORLD,
-#endif
-        s,L,so,sn,p,overlap);
     assert( grid );
-    grid->globalRefine(mxl);
-
-    //fclose(file);
-   
+    readGrid(*grid,fnprefix,time,timestep);
     return grid;
   }
 };
-#endif
 
 template <class GridImp>
 class GrapeDataIO 
@@ -348,32 +284,36 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
   {
     const char *path = "";
     std::fstream file (fnprefix.c_str(),std::ios::out);
-    file << "Grid: "   << grid.name() << std::endl;
-    file << "Format: " << ftype <<  std::endl;
-    file << "Precision: " << precision << std::endl;
-    int writeDm = (hasDm)? 1 : 0;
-    file << "DofManager: " << writeDm << std::endl; 
-
-    GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
-    
-    file.close();
-    switch (ftype)
+    if( file.is_open() )
     {
-      case xdr  :   return grid.template writeGrid<xdr>  (fnstr,time);
-      case ascii:   return grid.template writeGrid<ascii>(fnstr,time);
-      //case xdr  :   return grid.writeGrid(xdr,fnstr,time);
-      default:
-          {
-            std::cerr << ftype << " GrapeIOFileFormatType not supported at the moment! " << __FILE__ << __LINE__ << "\n";
-            assert(false);
-            abort();
-            return false;
-          }
+      file << "Grid: "   << grid.name() << std::endl;
+      file << "Format: " << ftype <<  std::endl;
+      file << "Precision: " << precision << std::endl;
+      int writeDm = (hasDm)? 1 : 0;
+      file << "DofManager: " << writeDm << std::endl; 
+
+      GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
+      
+      file.close();
+      switch (ftype)
+      {
+        case xdr  :   return grid.template writeGrid<xdr>  (fnstr,time);
+        case ascii:   return grid.template writeGrid<ascii>(fnstr,time);
+        default:
+            {
+              std::cerr << ftype << " GrapeIOFileFormatType not supported at the moment! " << __FILE__ << __LINE__ << "\n";
+              assert(false);
+              abort();
+              return false;
+            }
+      }
     }
-    return false;
+    else 
+    {
+      std::cerr << "Couldn't open file `" << fnprefix << "' ! \n";
+      return false;
+    }
   }
-  return false;
-  
 }
 
 template <int dim, int dimworld, class GridImp, bool hasBackupRestore>
@@ -382,7 +322,7 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
 {
   int helpType;
 
-  char gridname [1024];
+  std::string gridname;
 
   bool readGridName = readParameter(fnprefix,"Grid",gridname);
   if(! readGridName ) 
@@ -391,11 +331,9 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
     abort();
   }
 
-  std::string gname (gridname);
-
-  if(grid.name() != gname)
+  if(grid.name() != gridname)
   {
-    std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gname << "' file. \n";
+    std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
     abort();
   }
 
@@ -455,20 +393,29 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     enum { n = DiscreteFunctionSpaceType::DimDomain };
     enum { m = DiscreteFunctionSpaceType::DimRange };
 
-    std::fstream file( filename.c_str() , std::ios::out );
-    GrapeIOStringType d = typeIdentifier<DomainFieldType>();
-    GrapeIOStringType r = typeIdentifier<RangeFieldType>();
+    std::ofstream file( filename.c_str() );
 
-    file << "DomainField: " << d << std::endl;
-    file << "RangeField: " << r << std::endl;
-    file << "Dim_Domain: " << n << std::endl;
-    file << "Dim_Range: " << m << std::endl;
-    file << "Space: " << df.space().type() << std::endl;
-    file << "Format: " << ftype << std::endl;
-    file << "Precision: " << precision << std::endl;
-    file << "Polynom_order: " << df.space().order() << std::endl;
-    file << "DataBase: " << df.name() << std::endl;
-    file.close();
+    if( file.is_open())
+    {
+      GrapeIOStringType d = typeIdentifier<DomainFieldType>();
+      GrapeIOStringType r = typeIdentifier<RangeFieldType>();
+
+      file << "DomainField: " << d << std::endl;
+      file << "RangeField: " << r << std::endl;
+      file << "Dim_Domain: " << n << std::endl;
+      file << "Dim_Range: " << m << std::endl;
+      file << "Space: " << df.space().type() << std::endl;
+      file << "Format: " << ftype << std::endl;
+      file << "Precision: " << precision << std::endl;
+      file << "Polynom_order: " << df.space().order() << std::endl;
+      file << "DataBase: " << df.name() << std::endl;
+      file.close();
+    }
+    else 
+    {
+      std::cerr << "Couldn't open file `" << filename << "' ! \n";
+      return false;
+    }
   }
 
   const char * path = "";
