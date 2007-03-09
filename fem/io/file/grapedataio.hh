@@ -164,12 +164,19 @@ public:
       const GrapeIOStringType & fnprefix , double & time , int timestep)
   {
     std::string macroName (fnprefix);
+#if HAVE_MPI 
+    // read global file, only differs for YaspGrid
+    macroName += ".macro.global";
+#else 
+    // read sub grid file 
     macroName += ".macro";
-
-    GridType * grid = 0 ;
+#endif
+    
+    GridType * grid = 0;
     {
       // create macro grid 
       GridPtr<GridType> gridptr(macroName);
+      std::cout << "Created Structured Macro Grid `" << macroName << "' !\n";
       // release pointer 
       grid = gridptr.release();
     }
