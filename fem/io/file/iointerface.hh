@@ -102,10 +102,16 @@ public:
     return path;
   }
 
-  static void writeMacroGrid(const std::string& macroname,
+  //! if grid is structured grid, write macro file 
+  template <class GridImp>
+  static void writeMacroGrid(const GridImp& grid, 
+                             const std::string& macroname,
                              const std::string& path, 
                              const std::string& prefix) 
   {
+    // do nothing for unstructured grids 
+    if( Capabilities::IsUnstructured<GridType>::v ) return;
+    
     // create file descriptor 
     std::ifstream gridin(macroname.c_str());
     if( !gridin) 
@@ -118,7 +124,7 @@ public:
     IntervalBlock interval(gridin);
     if(!interval.isactive()) 
     {
-      std::cerr<<"Did not find IntervalBlock! \n";
+      std::cerr<<"Did not find IntervalBlock in macro grid file `" << macroname << "' ! \n";
       return;
     }
     
@@ -127,19 +133,9 @@ public:
     filename += prefix;
     filename += ".macro";
 
-    int dimworld = interval.dimw();
+    enum { dimworld = GridImp :: dimensionworld };
 
-    switch( dimworld ) 
-    {
-      case 3: saveMacroGridImp<3> (interval,filename); 
-              return; 
-      case 2: saveMacroGridImp<2> (interval,filename); 
-              return; 
-      default: std::cerr << "Dimension not supported by saveMacroGrid! \n";        
-               assert(false);
-               abort();
-    }
-
+    saveMacroGridImp<dimworld> (interval,filename); 
     return;
   }
 
