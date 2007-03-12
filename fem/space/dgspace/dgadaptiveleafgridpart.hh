@@ -36,8 +36,13 @@ struct GoodGridChooser<GridImp,true,false>
 template <class GridImp> 
 struct GoodGridChooser<GridImp,false,false>
 {
+#if HAVE_MPI
+  // choose the adative index based on leaf index set
+  typedef DGAdaptiveLeafIndexSet<GridImp> IndexSetType;
+#else 
   // the grids leaf index set wrapper for good 
   typedef WrappedLeafIndexSet<GridImp> IndexSetType;
+#endif
 };
 
 template <class GridType>
