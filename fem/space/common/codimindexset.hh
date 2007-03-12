@@ -158,6 +158,20 @@ public:
     }
   }
 
+  //! clear set 
+  void clear() 
+  {
+    {
+      const int size = state_.size();
+      for(int i=0; i<size; ++i) state_[i] = UNUSED;
+    }
+
+    {
+      const int size = leafIndex_.size();
+      for(int i=0; i<size; ++i) leafIndex_[i] = -1;
+    }
+  }
+
   //! set all entries to unused 
   void set2Unused() 
   {
