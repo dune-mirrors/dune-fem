@@ -54,8 +54,11 @@ private:
   //! type of this class 
   typedef DGAdaptiveLeafIndexSet < GridType > ThisType;
   
+  //! is true if grid is structured grid 
+  enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };; 
+  
   // my type, to be revised 
-  enum { myType = 665 };
+  enum { myType = (StructuredGrid) ? -1 : 665 };
 
   typedef CodimIndexSet CodimIndexSetType;
   mutable CodimIndexSetType codimLeafSet_;
@@ -78,12 +81,6 @@ private:
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
   
 public:
-  static ThisType & instance (const GridType & grid) 
-  {
-    static ThisType set(grid);
-    return set;
-  }
-  
   //! type traits of this class (see defaultindexsets.hh)
   typedef DefaultLeafIteratorTypes<GridType> Traits; 
 
@@ -97,8 +94,20 @@ public:
     // set the codim of this codim set, here always 0
     codimLeafSet_.setCodim( 0 );
 
-    // give all entities that lie below the old entities new numbers 
-    markAllUsed<All_Partition> ();
+#if HAVE_MPI
+    if( StructuredGrid  && 
+        this->grid_.comm().size() > 1 )
+    {
+      // this should only be the case of YaspGrid
+      markAllUsed<Interior_Partition> ();
+      markAllUsed<All_Partition>();
+    }
+    else 
+#endif
+    {
+      // give all entities that lie below the old entities new numbers 
+      markAllUsed<All_Partition> ();
+    }
   }
 
   //! Destructor
@@ -240,8 +249,22 @@ public:
     // adjust size of vectors 
     resizeVectors();
 
-    // mark all children 
-    markAllBelowOld<All_Partition> ();
+#if HAVE_MPI
+    if( StructuredGrid  && 
+        this->grid_.comm().size() > 1 )
+    {
+      codimLeafSet_.clear();
+      // this should only be the case of YaspGrid
+      markAllBelowOld<Interior_Partition> ();
+      markAllBelowOld<All_Partition>();
+      compressed_ = true;
+    }
+    else 
+#endif
+    {
+      // mark all children 
+      markAllBelowOld<All_Partition> ();
+    }
   }
 
   //! this index set can be used for adaptive calculations 
@@ -255,9 +278,21 @@ public:
     // if set already compress, do noting 
     if(compressed_) return false;
 
-    // mark all leaf elements  
-    // needs a leaf traversal 
-    markAllUsed<All_Partition> (); 
+#if HAVE_MPI
+    if( StructuredGrid && 
+        this->grid_.comm().size() > 1 )
+    {
+      // this should only be the case of YaspGrid
+      markAllUsed<Interior_Partition> ();
+      markAllUsed<All_Partition>();
+    }
+    else 
+#endif
+    {
+      // mark all leaf elements  
+      // needs a leaf traversal 
+      markAllUsed<All_Partition> (); 
+    }
 
     // true if a least one dof must be copied 
     bool haveToCopy = codimLeafSet_.compress(); 
