@@ -61,6 +61,9 @@ namespace Dune {
         maxNumDofs = std::max(maxNumDofs,baseSetVec_[id]->numBaseFunctions());
       }
     }
+
+    for (int i=0;i<N;i++) 
+      subSpaces_[i] = new SubSpaceType(*this,i);
   }
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
@@ -291,7 +294,7 @@ namespace Dune {
   inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   newIndex(int num) const 
   {
-    assert( false );
+    //assert( false );
     DofConversionUtility<policy> 
       tmpUtilGlobal(chooseSize(N, mapper_.newSize(), Int2Type<policy>()));
 
@@ -307,11 +310,9 @@ namespace Dune {
   inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   oldIndex(int num) const 
   {
-    assert(false);
-    return newIndex(num);
-    /*
+    //assert(false);
     DofConversionUtility<policy> 
-      tmpUtilGlobal(chooseSize(N, mapper_.oldSize(), Int2Type<policy>()));
+      tmpUtilGlobal(chooseSize(N, mapper_.size(), Int2Type<policy>()));
 
     const int component = tmpUtilGlobal.component(num);
     const int contained = tmpUtilGlobal.containedDof(num);
@@ -319,6 +320,5 @@ namespace Dune {
     const int containedNew = mapper_.oldIndex(contained);
 
     return tmpUtilGlobal.combinedDof(containedNew, component);
-    */
   }
 } // end namespace Dune

@@ -101,12 +101,15 @@ namespace Dune {
   > 
   {
   private:
+    // CompileTimeChecker<policy==PointBased> OnlyWorksWithPointBasedPolicy;
     //- Private typedefs
     typedef DiscreteFunctionSpaceDefault<
     CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> 
     > BaseType;
   public:
     // polynomial Order is the same as for the single space 
+    enum { CombinedFSpaceId = CombinedSpace_id };
+
     enum { polynomialOrder = DiscreteFunctionSpaceImp :: polynomialOrder };
     
     //- Public typedefs and enums
@@ -141,6 +144,7 @@ namespace Dune {
     typedef typename Traits::IndexSetType IndexSetType;
 
     typedef typename Traits::DofConversionType DofConversionType;
+    typedef SubSpace<ThisType> SubSpaceType;
 
     CompileTimeChecker<(Traits::ContainedDimRange == 1)> use_CombinedSpace_only_with_scalar_spaces;
   public:
@@ -157,9 +161,6 @@ namespace Dune {
     //! destructor
     ~CombinedSpace();
 
-    //! type
-    int type() const { return spaceId_; }
-
     //! continuous?
     bool continuous() const { return spc_.continuous(); }
 
@@ -174,6 +175,12 @@ namespace Dune {
 
     //! end iterator
     IteratorType end() const { return spc_.end(); }
+
+    //! Return the identifier
+    DFSpaceIdentifier type () const
+    {
+      return CombinedSpace_id;
+    }
 
     //! total number of dofs
     int size() const { return mapper_.size(); }
@@ -228,6 +235,13 @@ namespace Dune {
 
     //! policy of this space
     DofStoragePolicy myPolicy() const{ return DofConversionType::policy(); }
+ 
+    //! return subspace for ith component
+    SubSpaceType& subSpace(int i) {
+      return *(subSpaces_[i]);
+    }
+  const ContainedDiscreteFunctionSpaceType& containedSpace() const
+    {return spc_;}
   private:
     //- Private typedefs
     typedef typename Traits::ContainedMapperType ContainedMapperType;
@@ -243,14 +257,14 @@ namespace Dune {
       return mapper_.containedMapper(); 
     }
 
-  private:
+  protected:
     //- Member data  
     ContainedDiscreteFunctionSpaceType spc_;
 
     MapperType mapper_;
     std::vector<BaseFunctionSetType*> baseSetVec_;
     std::vector<const BaseFunctionSetType*> baseSecVec_;
-
+    FieldVector<SubSpaceType*,N> subSpaces_;
     static const int spaceId_;
 
     const DofManagerType & dm_;
@@ -469,12 +483,6 @@ namespace Dune {
     //! return max number of local dofs per entity 
     int numDofs () const { return mapper_.numDofs()*N; }
 
-    //! returns true if index is new ( for dof compress )
-    bool indexNew (int num) const { 
-      assert(false); // * check correctness first: do I correctly map between combinedMapper and containedMapper indices with utilGlobal
-      return mapper_.indexNew(utilGlobal_.containedDof(num));
-    }
-    
     //! return old index in dof array of given index ( for dof compress ) 
     inline
     int oldIndex (int num) const; 
@@ -488,7 +496,17 @@ namespace Dune {
     int additionalSizeEstimate() const {
       return mapper_.additionalSizeEstimate()*N;
     }
-
+    //! return true if compress will affect data  
+    bool needsCompress () const 
+    {
+      return mapper_.needsCompress ();
+    }
+    //! return number of holes in the data 
+    int numberOfHoles() const 
+    {
+      return mapper_.numberOfHoles()*N; 
+    }
+  
   private:
     //- Private methods
     CombinedMapper(const ThisType& other);

@@ -2,12 +2,10 @@
 namespace Dune {
   //- class SubSpace
   template <class CombinedSpaceImp>
-  const int SubSpace<CombinedSpaceImp>::spaceId_ = 1984;
-
-  template <class CombinedSpaceImp>
+  inline
   SubSpace<CombinedSpaceImp>::SubSpace(const CombinedSpaceType& spc,
                                        int component) :
-    BaseType(type()),
+    BaseType(spc.gridPart()),
     spc_(spc),
     mapper_(spc, spc.mapper().containedMapper(), component),
     component_(component),
@@ -33,6 +31,7 @@ namespace Dune {
   //- class SubBaseFunctionSet
   template <class CombinedSpaceImp>
   template <int diffOrd>
+  inline
   void SubBaseFunctionSet<CombinedSpaceImp>::
   evaluate (int baseFunct, 
             const FieldVector<deriType, diffOrd>& diffVariable, 
@@ -46,6 +45,7 @@ namespace Dune {
   //! evaluate base function at quadrature point
   template <class CombinedSpaceImp>
   template <int diffOrd, class QuadratureType >
+  inline
   void SubBaseFunctionSet<CombinedSpaceImp>::
   evaluate (int baseFunct, 
             const FieldVector<deriType, diffOrd> &diffVariable, 
@@ -59,6 +59,7 @@ namespace Dune {
   
   //- class SubMapper
   template <class CombinedSpaceImp>
+  inline
   int SubMapper<CombinedSpaceImp>::size() const 
   {
     return mapper_.size();
@@ -66,6 +67,7 @@ namespace Dune {
 
   template <class CombinedSpaceImp>
   template <class EntityType>
+  inline
   int SubMapper<CombinedSpaceImp>::
   mapToGlobal(EntityType& en, int localNum) const
   {
