@@ -93,9 +93,6 @@ namespace Dune {
     //! constructor
     SubSpace(const CombinedSpaceType& spc, int component);
 
-    //! the type of the space
-    int type() const { return spaceId_; }
-
     //! is data continuous?
     bool continuous() const { return spc_.continuous(); }
 
@@ -146,7 +143,6 @@ namespace Dune {
     int component_;
 
     std::vector<BaseFunctionSetType*> baseSetVec_;
-    static const int spaceId_;
   };
 
   // Idea: wrap contained base function set, since this is exactly what you 
@@ -237,7 +233,8 @@ namespace Dune {
       spc_(spc),
       mapper_(mapper),
       component_(component),
-      utilGlobal_(spc.myPolicy() == PointBased ? 
+      utilGlobal_(spc.containedSpace(),
+                  spc.myPolicy() == PointBased ? 
                   spc.numComponents() :
                   spc.size()/spc.numComponents())
     {}
