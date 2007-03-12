@@ -16,7 +16,7 @@
 #include <dune/fem/io/file/grapetuple.hh>
 
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/io/file/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 // if grape was configured then include headers 
 #if HAVE_GRAPE
