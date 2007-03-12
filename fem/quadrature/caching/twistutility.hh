@@ -53,6 +53,10 @@ namespace Dune {
   template <class GridImp> 
   class TwistUtility
   {
+    // this default implementation only is for SGrid, YaspGrid, UGGrid
+    // and OneDGrid. 
+    CompileTimeChecker<Conversion<GridImp,HasHierarchicIndexSet>::exists == false>
+      implement_specialized_twist_utility;
   public:
     typedef GridImp GridType;
   public:
@@ -308,6 +312,71 @@ namespace Dune {
   {
   public:
     typedef ALUSimplexGrid<2, 2> GridType;
+    typedef GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
+    typedef GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
+  public:
+    //! \brief constructor taking grid reference 
+    TwistUtility(const GridType& grid) : grid_(grid) {}
+
+    //! \brief return twist for inner face 
+    static int twistInSelf(const GridType &, const LeafIntersectionIterator&)
+    {
+      return 0;
+    }
+    
+    //! \brief return twist for inner face 
+    int twistInSelf(const LeafIntersectionIterator& it) const {
+      return 0;
+    }
+    
+    //! \brief return twist for inner face 
+    int twistInSelf(const LevelIntersectionIterator& it) const {
+      return 0;
+    }
+
+    //! \brief return twist for outer face 
+    static int twistInNeighbor(const GridType &, const LeafIntersectionIterator&)
+    {
+      return 1;
+    }
+    
+    //! \brief return twist for outer face 
+    int twistInNeighbor(const LeafIntersectionIterator& it) const {
+      return 1;
+    }
+    
+    //! \brief return twist for outer face 
+    int twistInNeighbor(const LevelIntersectionIterator& it) const {
+      return 1;
+    }
+
+    //! \brief return true if intersection is conform, default is true  
+    template <class IntersectionIterator> 
+    bool conforming (const IntersectionIterator& it) const 
+    { 
+      return grid_.getRealIntersectionIterator(it).conforming(); 
+    }
+    
+    //! \brief return true if intersection is conform, default is true  
+    template <class IntersectionIterator> 
+    static bool conforming (const GridType & grid, 
+                     const IntersectionIterator& it)
+    { 
+      return grid.getRealIntersectionIterator(it).conforming(); 
+    }
+  private:
+    TwistUtility(const TwistUtility&);
+    TwistUtility& operator=(const TwistUtility&);
+
+  private:
+    const GridType& grid_; 
+  };
+  
+  template <>
+  class TwistUtility<ALUConformGrid<2,2>  >
+  {
+  public:
+    typedef ALUConformGrid<2, 2> GridType;
     typedef GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
     typedef GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
   public:
