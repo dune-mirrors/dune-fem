@@ -363,7 +363,9 @@ public:
     // nsize is the minimum needed size of the vector 
     // we double this size to reserve some memory and minimize
     // reallocations 
-    int nMemSize = (int) memoryFactor_ * nsize; 
+    assert( memoryFactor_ >= 1.0 );
+    const double overEstimate = memoryFactor_ * nsize;
+    const int nMemSize = (int) overEstimate;
 
     vec_ = AllocatorType :: realloc (vec_,size_,nMemSize);
 
@@ -709,6 +711,14 @@ public:
     array_.resize( nSize );
   }
 
+  //! reserve memory for what is comming 
+  void reserve( const int needed ) 
+  {
+    const int nSize = size() + (needed * elementMemory());
+    // newSize might be bigger than nSize, so choose this value 
+    array_.resize( std::max(newSize() , nSize ) );
+  }
+
   //! copy the dof from the rear section of the vector to the holes 
   void dofCompress () 
   {
@@ -996,10 +1006,10 @@ public:
   // Constructor of MemObject, only to call from DofManager 
   ResizeMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {} 
 
-  // resize with own size plus chunksize 
-  void apply ( int & nsize )
+  // reserve for at least chunkSize new values 
+  void apply ( int & chunkSize )
   {
-    memobj_.resize ( memobj_.size() + memobj_.elementMemory() * nsize );  
+    memobj_.reserve( chunkSize );  
   }
 };
 
@@ -1115,11 +1125,11 @@ private:
   mutable MemObjectCheckType checkResize_;
   mutable MemObjectCheckType resizeMemObjs_;
 
-  // variable which stores chunk size for actual problem 
-  int chunkSize_; 
-
   //! if chunk size if small then defaultChunkSize is used 
   const int defaultChunkSize_; 
+
+  // variable which stores chunk size for actual problem 
+  int chunkSize_; 
 
   //! number of sequence, incremented every resize is called
   int sequence_; 
@@ -1137,15 +1147,21 @@ private:
   //! Constructor 
   DofManager (const GridType & grid) 
     : grid_(grid) 
-    , chunkSize_ (100)
-    , defaultChunkSize_(100) 
+    , defaultChunkSize_(128) 
+    , chunkSize_ (defaultChunkSize_)
     , sequence_(0)
     , indexRPop_( *this, insertIndices_ , removeIndices_ ) 
     , memoryFactor_(1.1)
   {
     std::string file("dofmanager.param");
     readParameter(file,"MemoryFactor",memoryFactor_);
-    assert( memoryFactor_ >= 1.0 );
+
+    if( memoryFactor_ < 1.0 ) 
+    {
+      std::cerr<<"ERROR: choose MemoryFactor (over-estimation) value >= 1.0 !!!" << std::endl;
+      assert( memoryFactor_ >= 1.0 );
+      exit(1);
+    }
 
     std::cout << "Created DofManager: memoryFactor = "<<memoryFactor_<<"!\n";
   }
@@ -1250,12 +1266,16 @@ public:
  
   //! resize the memory and set chunk size to nsize 
   //! this will increase the sequence counter by 1 
+  //! if useNsize is true, then nsize will be used as chunk size 
+  //! otherwise max( nsize, defaultChunkSize_ )
   void reserveMemory (int nsize, bool useNsize = false ) 
   {
     ++sequence_;
     // remember the chunksize 
     chunkSize_ = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
     assert( chunkSize_ > 0 );
+
+    // reserves (size + chunkSize * elementMemory), see above 
     resizeMemObjs_.apply ( chunkSize_ );
   }
 
