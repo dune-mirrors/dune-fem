@@ -714,9 +714,19 @@ public:
   //! reserve memory for what is comming 
   void reserve( const int needed ) 
   {
-    const int nSize = size() + (needed * elementMemory());
-    // newSize might be bigger than nSize, so choose this value 
-    array_.resize( std::max(newSize() , nSize ) );
+    // if index set is compressible, then add requested size 
+    if( mapper_.needsCompress() )
+    {
+      const int nSize = size() + (needed * elementMemory());
+      array_.resize( nSize );
+    }
+    else 
+    {
+      // additionalSizeEstimate == 0 means indexSet is alwyas up2date
+      // therefore use newSize to enleage array 
+      assert( additionalSizeEstimate() == 0 );
+      array_.resize( newSize() );
+    }
   }
 
   //! copy the dof from the rear section of the vector to the holes 
@@ -1128,9 +1138,6 @@ private:
   //! if chunk size if small then defaultChunkSize is used 
   const int defaultChunkSize_; 
 
-  // variable which stores chunk size for actual problem 
-  int chunkSize_; 
-
   //! number of sequence, incremented every resize is called
   int sequence_; 
   
@@ -1148,7 +1155,6 @@ private:
   DofManager (const GridType & grid) 
     : grid_(grid) 
     , defaultChunkSize_(128) 
-    , chunkSize_ (defaultChunkSize_)
     , sequence_(0)
     , indexRPop_( *this, insertIndices_ , removeIndices_ ) 
     , memoryFactor_(1.1)
@@ -1248,7 +1254,6 @@ public:
     for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
     {
       int addSize = (*it)->additionalSizeEstimate();
-      chunkSize_ = std::max( addSize , chunkSize_ );
       (*it)->resize ( (*it)->size() + addSize );
     }
   }
@@ -1258,25 +1263,27 @@ public:
   {
     // here it is necessary that this is fast, therefore we use 
     // the combined objects technique 
-    assert(chunkSize_ > 0);
     int check = 0;
     checkResize_.apply( check );
-    if( check ) resizeMemObjs_.apply ( chunkSize_ );
+    if( check ) 
+    {
+      int chunkSize = defaultChunkSize_; 
+      resizeMemObjs_.apply ( chunkSize );
+    }
   }
  
-  //! resize the memory and set chunk size to nsize 
+  //! reserve memory for at least nsize elements 
   //! this will increase the sequence counter by 1 
   //! if useNsize is true, then nsize will be used as chunk size 
   //! otherwise max( nsize, defaultChunkSize_ )
   void reserveMemory (int nsize, bool useNsize = false ) 
   {
     ++sequence_;
-    // remember the chunksize 
-    chunkSize_ = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
-    assert( chunkSize_ > 0 );
+    int localChunkSize = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
+    assert( localChunkSize > 0 );
 
     // reserves (size + chunkSize * elementMemory), see above 
-    resizeMemObjs_.apply ( chunkSize_ );
+    resizeMemObjs_.apply ( localChunkSize );
   }
 
   //! return number of sequence, if dofmanagers memory was changed by
@@ -1320,10 +1327,7 @@ private:
     ListIteratorType endit  = memList_.end();
     for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
     {
-      int size  = (*it)->size();
-      int nSize = (*it)->newSize();
-      chunkSize_ = std::max( std::abs(nSize - size) , chunkSize_ );
-      (*it)->resize ( nSize );
+      (*it)->resize ();
     }
   }
   
