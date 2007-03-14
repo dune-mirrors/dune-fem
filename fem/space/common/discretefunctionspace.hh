@@ -23,7 +23,8 @@ namespace Dune{
       @{
   */
 
-  enum DFSpaceIdentifier {  LagrangeSpace_id , DGSpace_id , RaviartThomasSpace_id, PerLagrangeSpace_id };
+  enum DFSpaceIdentifier {  LagrangeSpace_id , DGSpace_id , 
+    RaviartThomasSpace_id, PerLagrangeSpace_id , CombinedSpace_id };
     
  
   //**************************************************************************
