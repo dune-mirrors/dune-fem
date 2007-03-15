@@ -55,14 +55,6 @@ namespace Dune {
       QuadImp& getQuadrature(size_t order) 
       {
         assert( order <= vec_.size() );
-        /*
-        if(vec_.size() <= order) 
-        {
-          std::cerr << "WARNING: couldn't create quadrature of order=" << order << " in: " __FILE__ << " line: "<< __LINE__ <<"\n";
-          order = vec_.size()-1;
-        }
-        */
-        
         // if not exists, create quadrature  
         if(!vec_[order]) 
         {
@@ -88,7 +80,7 @@ namespace Dune {
   //! point of access (and storage) for the actual implementation of
   //! quadratures so that the number of costly creations can be reduced to
   //! a minimum.
-  template <typename ct, int dim>
+  template <typename ct, int dim, template <class,int> class QuadratureTraits >
   class QuadratureProvider {
   public:
     //! Access to the quadrature implementations.
@@ -100,16 +92,17 @@ namespace Dune {
   };
 
   //! Specialisation for dimension 0
-  template <typename ct>
-  class QuadratureProvider<ct, 0> 
+  template <typename ct, template <class,int> class QuadratureTraits >
+  class QuadratureProvider<ct, 0, QuadratureTraits> 
   {
+    typedef QuadratureTraits<ct,0> QuadratureTraitsType;
+    typedef typename QuadratureTraitsType :: PointQuadratureType PointQuadratureType;
   public:
     //! Access to the quadrature implementations.
     static const QuadratureImp<ct, 0>& getQuadrature(GeometryType geo, 
                                                      int order) 
     {
-      return QuadCreator::template 
-        provideQuad<CubeQuadrature<ct, 0> >(order);
+      return QuadCreator::template provideQuad<PointQuadratureType>(order);
     }
   private:
     QuadratureProvider();
@@ -119,9 +112,11 @@ namespace Dune {
 
   
   //! Specialisation for dimension 1.
-  template <typename ct>
-  class QuadratureProvider<ct, 1> 
+  template <class ct, template <class,int> class QuadratureTraits >
+  class QuadratureProvider<ct, 1, QuadratureTraits> 
   {
+    typedef QuadratureTraits<ct,1> QuadratureTraitsType;
+    typedef typename QuadratureTraitsType :: LineQuadratureType LineQuadratureType;
   public:
     //! Access to the quadrature implementations.
     static const QuadratureImp<ct, 1>& getQuadrature(GeometryType geo, 
@@ -129,7 +124,7 @@ namespace Dune {
       assert(geo.isCube() || geo.isSimplex() );
       assert(order >= 0);
 
-      return QuadCreator::template provideQuad<CubeQuadrature<ct, 1> > (order);
+      return QuadCreator::template provideQuad<LineQuadratureType> (order);
     }
   private:
     QuadratureProvider();
@@ -138,9 +133,12 @@ namespace Dune {
   }; 
 
   //! Specialisation for dimension = 2
-  template <typename ct>
-  class QuadratureProvider<ct, 2> 
+  template <class ct, template <class,int> class QuadratureTraits >
+  class QuadratureProvider<ct, 2, QuadratureTraits> 
   {
+    typedef QuadratureTraits<ct,2> QuadratureTraitsType;
+    typedef typename QuadratureTraitsType :: SimplexQuadratureType SimplexQuadratureType;
+    typedef typename QuadratureTraitsType :: CubeQuadratureType CubeQuadratureType;
   public:
     //! Access to the quadrature implemenations.
     static const QuadratureImp<ct, 2>& getQuadrature(GeometryType geo,
@@ -149,13 +147,13 @@ namespace Dune {
       assert(order >= 0);
 
       if(geo.isTriangle()) 
-        return QuadCreator::template provideQuad<SimplexQuadrature<ct, 2> >(order);
+        return QuadCreator::template provideQuad<SimplexQuadratureType>(order);
       if(geo.isQuadrilateral())
-        return QuadCreator::template provideQuad<CubeQuadrature<ct, 2> >(order);
+        return QuadCreator::template provideQuad<CubeQuadratureType>(order);
 
       DUNE_THROW(RangeError, "Element type not available for dim == 2");
       // dummy return
-      return QuadCreator::template provideQuad<SimplexQuadrature<ct, 2> >(0);
+      return QuadCreator::template provideQuad<SimplexQuadratureType>(0);
     }
 
   private:
@@ -165,9 +163,14 @@ namespace Dune {
   };
 
   //! Specialisation for dimension = 3.
-  template <class ct>
-  class QuadratureProvider<ct, 3> 
+  template <class ct, template <class,int> class QuadratureTraits >
+  class QuadratureProvider<ct, 3, QuadratureTraits> 
   {
+    typedef QuadratureTraits<ct,3> QuadratureTraitsType;
+    typedef typename QuadratureTraitsType :: SimplexQuadratureType SimplexQuadratureType;
+    typedef typename QuadratureTraitsType :: CubeQuadratureType    CubeQuadratureType;
+    typedef typename QuadratureTraitsType :: PrismQuadratureType   PrismQuadratureType;
+    typedef typename QuadratureTraitsType :: PyramidQuadratureType PyramidQuadratureType;
   public:
     //! Access to the quadrature implementation.
     static const QuadratureImp<ct, 3>& getQuadrature(GeometryType geo,
@@ -177,13 +180,13 @@ namespace Dune {
       assert(order >= 0);
 
       if(geo.isTetrahedron()) 
-        return QuadCreator::template provideQuad<SimplexQuadrature<ct, 3> > (order);
+        return QuadCreator::template provideQuad<SimplexQuadratureType> (order);
       if(geo.isHexahedron())
-        return QuadCreator::template provideQuad<CubeQuadrature<ct, 3> > (order);
+        return QuadCreator::template provideQuad<CubeQuadratureType> (order);
       if(geo.isPrism())
-        return QuadCreator::template provideQuad<PrismQuadrature<ct> > (order);
+        return QuadCreator::template provideQuad<PrismQuadratureType> (order);
       if(geo.isPyramid())
-        return QuadCreator::template provideQuad<PyramidQuadrature<ct> > (order);
+        return QuadCreator::template provideQuad<PyramidQuadratureType> (order);
 
       DUNE_THROW(RangeError, "Element type not available for dim == 3");
       // dummy return

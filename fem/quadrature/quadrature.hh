@@ -36,8 +36,8 @@
 namespace Dune {
 
   // Forward declaration
-  template <typename ct, int dim>
-  class QuadratureProvider;
+  template <typename ct, int dim, template <class,int> class
+    QuadratureTraits>  class QuadratureProvider;
 
   //! Generic implementation of a quadrature.
   //! A quadrature in the Dune sense is nothing but a set of points and
@@ -417,7 +417,42 @@ namespace Dune {
     int order_;
   };
 
+  //! default defines for used quadratures 
+  template <typename ct, int dim> struct DefaultQuadratureTraits; 
 
+  //! quadratures for points 
+  template <typename ct> 
+  struct DefaultQuadratureTraits<ct,0>  
+  {
+    typedef CubeQuadrature<ct, 0> PointQuadratureType;     
+  };
+  
+  //! quadratures for lines 
+  template <typename ct>
+  struct DefaultQuadratureTraits<ct,1>  
+  {
+    typedef CubeQuadrature<ct, 1> LineQuadratureType;     
+  };
+  
+  //! quadratures for simplex and cubes 
+  template <typename ct>
+  struct DefaultQuadratureTraits<ct,2>  
+  {
+    typedef CubeQuadrature<ct, 2>    CubeQuadratureType;     
+    typedef SimplexQuadrature<ct, 2> SimplexQuadratureType;     
+  };
+  
+  //! quadratures for simplex, cubes, prisms, and pyramids
+  template <typename ct>
+  struct DefaultQuadratureTraits<ct,3>  
+  {
+    typedef CubeQuadrature<ct, 3>    CubeQuadratureType;     
+    typedef SimplexQuadrature<ct, 3> SimplexQuadratureType;     
+
+    typedef PrismQuadrature<ct>      PrismQuadratureType;
+    typedef PyramidQuadrature<ct>    PyramidQuadratureType;
+  };
+  
   //! The actual interface class for quadratures.
   //! Quadrature is a proxy for the actual implementations of the quadratures.
   //! During construction, the actual Quadrature object is configured with
@@ -426,7 +461,8 @@ namespace Dune {
   //! time (the actual implementations can be created once and reused as often
   //! as you like) and to insulate the user from all this initialisation and
   //! storage stuff.
-  template <typename ct, int dim>
+  template <typename ct, int dim, 
+            template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
   class Quadrature 
   {
   public:
@@ -443,7 +479,7 @@ namespace Dune {
     //! \param order The order of the quadrature (i.e. polynoms up to order
     //! are integrated exactly).
     Quadrature(GeometryType geo, int order) :
-      quad_(QuadratureProvider<ct, dim>::getQuadrature(geo, order))
+      quad_(QuadratureProvider<ct, dim, QuadratureTraits >::getQuadrature(geo, order))
     {}
 
     //! Constructor for testing purposes
