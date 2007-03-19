@@ -110,7 +110,7 @@ public:
                              const std::string& prefix) 
   {
     // do nothing for unstructured grids 
-    if( Capabilities::IsUnstructured<GridType>::v ) return;
+    if( Capabilities::IsUnstructured<GridImp>::v ) return;
     
     // create file descriptor 
     std::ifstream gridin(macroname.c_str());
