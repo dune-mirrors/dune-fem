@@ -395,8 +395,6 @@ namespace Dune {
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
 
       const GeometryType & geo = en.geometry();
-      //const double volume = geo.volume();
-      const double massVolElInv = massVolumeInv(geo);
 
       // get base function set of single space 
       const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(en);
@@ -422,7 +420,7 @@ namespace Dune {
       {
         // calc integration element 
         const double intel = volQuad.weight(l)
-            *geo.integrationElement(volQuad.point(l)) * massVolElInv;
+            *geo.integrationElement(volQuad.point(l));
 
         const JacobianInverseType& inv =
           geo.jacobianInverseTransposed(volQuad.point(l));
@@ -435,8 +433,8 @@ namespace Dune {
           // if empty, rhs stays 0.0
           caller_.rightHandSide(en, volQuad, l, rhsval );
 
-          // scale with quadrature weight  
-          rhsval *= volQuad.weight(l); 
+          // scale with intel 
+          rhsval *= intel;
 
           for (int j = 0; j < numDofs; ++j) 
           {
@@ -552,7 +550,7 @@ namespace Dune {
                                                FaceQuadratureType::OUTSIDE);
 
               // apply neighbor part 
-              applyLocalNeighbor(nit,en,nb,massVolElInv,volQuad,
+              applyLocalNeighbor(nit,en,nb,volQuad,
                     faceQuadInner,faceQuadOuter, 
                     bsetEn,matrixEn);
             }
@@ -574,7 +572,7 @@ namespace Dune {
                                            NonConformingFaceQuadratureType::OUTSIDE);
 
               // apply neighbor part 
-              applyLocalNeighbor(nit,en,nb,massVolElInv,volQuad,
+              applyLocalNeighbor(nit,en,nb,volQuad,
                     nonConformingFaceQuadInner,
                     nonConformingFaceQuadOuter, 
                     bsetEn,matrixEn);
@@ -598,7 +596,7 @@ namespace Dune {
             const double faceVol = unitNormal.two_norm();
             unitNormal *= 1.0/faceVol;
 
-            const double intelFactor = faceQuadInner.weight(l) * massVolElInv;
+            const double intelFactor = faceQuadInner.weight(l);
             
             // integration element factor 
             const double intel = intelFactor * faceVol;
@@ -764,7 +762,6 @@ namespace Dune {
     void applyLocalNeighbor(IntersectionIteratorType & nit, 
                             EntityType & en, 
                             EntityType & nb,
-                            const double massVolElInv,
                             VolumeQuadratureType & volQuad,
                             const QuadratureImp & faceQuadInner, 
                             const QuadratureImp & faceQuadOuter, 
@@ -818,11 +815,11 @@ namespace Dune {
         // make sure we have the same factors 
         assert( std::abs(faceQuadInner.weight(l) - faceQuadOuter.weight(l)) < 1e-10);
         // integration element factor 
-        const double intelFactor = faceQuadInner.weight(l) * massVolElInv; 
+        const double intelFactor = faceQuadInner.weight(l); 
         const double intel = faceVol * intelFactor; 
 #ifdef DOUBLE_FEATURE
         // use opposite signs here
-        const double outerIntel = -faceVol * faceQuadOuter.weight(l) * massVolElInv; 
+        const double outerIntel = -faceVol * faceQuadOuter.weight(l); 
         // intel switching between bilinear from B_+ and B_-  
         const double outerBilinIntel = (bilinearPlus_) ? outerIntel : -outerIntel;
 #endif
@@ -1045,22 +1042,6 @@ namespace Dune {
     DGPrimalOperator();
     //! copy constructor not defined 
     DGPrimalOperator(const DGPrimalOperator&);
-
-  private:
-    double massVolumeInv(const GeometryType& geo) const
-    {
-      double volume = geo.volume();
-      
-      typedef typename GeometryType :: ctype coordType;
-      enum { dim = GridType :: dimension };
-      const ReferenceElement< coordType, dim > & refElem =
-             ReferenceElements< coordType, dim >::general(geo.type());
-             
-      double volRef = refElem.volume();
-
-      double massVolinv = volRef/volume;
-      return massVolinv;
-    }
 
   private:
     mutable DiscreteModelCallerType caller_;
