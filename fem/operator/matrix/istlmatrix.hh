@@ -96,7 +96,7 @@ namespace Dune {
         , space_(&space)
         , comm_(&comm)         
       {
-        std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
+        //std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
 
       //! constuctor used by ILU preconditioner 
@@ -106,7 +106,7 @@ namespace Dune {
         , space_(0)
         , comm_(0)         
       {
-        std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
+        //std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
       
       //! copy constructor, needed by ISTL preconditioners 
