@@ -171,7 +171,7 @@ namespace Dune{
 
   public:
     //! Constructor
-    DiscreteFunctionSpaceDefault(GridPartType & gridPart) 
+    DiscreteFunctionSpaceDefault(const GridPartType & gridPart) 
       : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>() 
       , multipleGeometryTypes_( 
           AllGeomTypes< typename GridPartType::IndexSetType ,
@@ -199,11 +199,13 @@ namespace Dune{
     }
   };
 
+  //! BaseFunctionSetSingletonFactory provides method createObject and
+  //! deleteObject for the SingletonList  
   template <class KeyImp, class ObjectImp, class ObjectFactoryImp>
   class BaseFunctionSetSingletonFactory
   { 
   public:
-    // create new BaseFunctionSet 
+    //! create new BaseFunctionSet 
     static ObjectImp * createObject( const KeyImp & key )
     {
       ObjectFactoryImp fac(key); 
