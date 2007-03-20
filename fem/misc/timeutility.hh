@@ -12,7 +12,17 @@ namespace Dune {
     //! constructor taking initial time, default is zero
     TimeProvider(double startTime = 0.0) : 
       time_(startTime),
-      dt_(0.0),
+      dt_(-1.0),
+      dtEstimate_(0.0),
+      cfl_(1.0),
+      timeStep_(0)
+    {
+      resetTimeStepEstimate();
+    }
+    
+    TimeProvider(double startTime , double cfl ) : 
+      time_(startTime),
+      dt_(-1.0),
       dtEstimate_(0.0),
       cfl_(1.0),
       timeStep_(0)
@@ -22,6 +32,8 @@ namespace Dune {
     
     //! destructor 
     virtual ~TimeProvider() {}
+
+    bool notInitialized() const { return (dt_ < 0.0); }
 
     //! return internal time 
     double time() const { return time_; }
@@ -75,6 +87,7 @@ namespace Dune {
     //! return time step estimate times cfl number 
     double deltaT () const 
     {
+      assert( (dt_ * cfl_) > 0.0 );
       return dt_ * cfl_;
     }
     
@@ -149,6 +162,8 @@ namespace Dune {
                          TimeProvider& tp)
       : comm_(comm), tp_(tp)
     {}
+    
+    bool notInitialized() const { return tp_.notInitialized(); }
     
     //! return internal time 
     double time() const { return tp_.time(); }
