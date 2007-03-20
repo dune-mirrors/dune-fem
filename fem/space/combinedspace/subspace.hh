@@ -80,6 +80,7 @@ namespace Dune {
     typedef SubSpaceTraits<CombinedSpaceType> Traits;
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
 
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::IteratorType IteratorType;
     typedef typename Traits::MapperType MapperType;
