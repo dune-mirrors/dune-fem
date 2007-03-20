@@ -25,10 +25,7 @@ namespace Dune {
   class CombinedSpace;
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   class CombinedMapper;
-  /*
-  template <class BaseFunctionSetImp, int N, DofStoragePolicy policy>
-  class CombinedBaseFunctionSet;
-  */
+
   //! Traits class for CombinedSpace
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased>
   struct CombinedSpaceTraits {
@@ -45,6 +42,8 @@ namespace Dune {
     enum { ContainedDimRange = ContainedFunctionSpaceType::DimRange,
            ContainedDimDomain = ContainedFunctionSpaceType::DimDomain };
   public:
+    enum { localBlockSize = N * ContainedSpaceTraits :: localBlockSize };
+    
     typedef typename ContainedSpaceTraits::MapperType ContainedMapperType;
 
     typedef typename ContainedFunctionSpaceType::DomainFieldType 
@@ -61,12 +60,9 @@ namespace Dune {
     typedef FunctionSpace<
       DomainFieldType, RangeFieldType, 
       ContainedDimDomain, ContainedDimRange*N > FunctionSpaceType;
-    /*
-    typedef CombinedBaseFunctionSet<
-      DiscreteFunctionSpaceImp, N, policy> BaseFunctionSetType;
-    */
+
     // type of singleton factory 
-    typedef VectorialBaseFunctionSet<FunctionSpace<double, double, ContainedDimDomain, N>,CachingStorage> BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<FunctionSpace<double, double, ContainedDimDomain, N>, CachingStorage> BaseFunctionSetType;
 
     typedef CombinedMapper<DiscreteFunctionSpaceImp, N, policy> MapperType;
    
@@ -86,7 +82,6 @@ namespace Dune {
   public:
     //- Friends
     friend class CombinedSpace<DiscreteFunctionSpaceImp, N, policy>;
-    // friend class CombinedBaseFunctionSet<DiscreteFunctionSpaceImp, N, policy>;
     friend class CombinedMapper<DiscreteFunctionSpaceImp, N, policy>;
   };
 
@@ -119,6 +114,8 @@ namespace Dune {
     typedef typename ContainedDiscreteFunctionSpaceType::FunctionSpaceType
     ContainedSpaceType;
     
+    enum { localBlockSize = Traits :: localBlockSize };
+    
     typedef DofManager<typename Traits::GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
@@ -146,6 +143,8 @@ namespace Dune {
     typedef typename Traits::DofConversionType DofConversionType;
     typedef SubSpace<ThisType> SubSpaceType;
 
+    enum { spaceId_ = 13 };
+    
     CompileTimeChecker<(Traits::ContainedDimRange == 1)> use_CombinedSpace_only_with_scalar_spaces;
   public:
     //- Public methods
@@ -197,7 +196,13 @@ namespace Dune {
     {
       GeometryIdentifier::IdentifierType id =
                 GeometryIdentifier::fromGeometry(en.geometry()); 
+      return this->baseFunctionSet( id );
+    }
 
+    //! access to base function set for given id 
+    const BaseFunctionSetType& 
+    baseFunctionSet(const GeometryIdentifier::IdentifierType id) const 
+    {
       assert(id < (int) baseSetVec_.size());
       assert(id >= 0);
 
@@ -238,6 +243,8 @@ namespace Dune {
  
     //! return subspace for ith component
     SubSpaceType& subSpace(int i) {
+      assert( i >= 0 && i< N );
+      assert( subSpaces_[i] );
       return *(subSpaces_[i]);
     }
   const ContainedDiscreteFunctionSpaceType& containedSpace() const
@@ -265,165 +272,9 @@ namespace Dune {
     std::vector<BaseFunctionSetType*> baseSetVec_;
     std::vector<const BaseFunctionSetType*> baseSecVec_;
     FieldVector<SubSpaceType*,N> subSpaces_;
-    static const int spaceId_;
-
     const DofManagerType & dm_;
 
   }; // end class CombinedSpace  
-
-  //! Wrapper class for base function sets. This class is used within 
-  //! CombinedSpace
-#if 0
-  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  class CombinedBaseFunctionSet : 
-    public BaseFunctionSetDefault<
-    CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy>
-  >
-  {
-  public:
-    //- Typedefs and enums
-    enum { numComponents = N };
-    typedef CombinedBaseFunctionSet<
-      DiscreteFunctionSpaceImp, N, policy> ThisType;
-    typedef CombinedSpaceTraits<
-      DiscreteFunctionSpaceImp, N, policy> Traits;
-
-    typedef typename Traits::DiscreteFunctionSpaceType 
-    DiscreteFunctionSpaceType;
-    typedef typename Traits::ContainedBaseFunctionSetType 
-    ContainedBaseFunctionSetType;
-    typedef typename Traits::RangeType RangeType;
-    typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename Traits::DomainType DomainType;
-    typedef typename Traits::ContainedRangeType ContainedRangeType;
-    typedef typename Traits::ContainedJacobianRangeType ContainedJacobianRangeType;
-
-    typedef typename Traits::RangeFieldType DofType;
-
-    typedef DofConversionUtility<PointBased>
-      DofConversionUtilityType;
-  public:
-    //- Public methods
-    //! Constructor
-    CombinedBaseFunctionSet(const ContainedBaseFunctionSetType& bfSet) :
-      containedResult_(0.0), 
-      baseFunctionSet_(bfSet),
-      util_(N)
-    {}
-
-    //! Number of base functions
-    //! The number of base functions equals the total number of degrees of
-    //! freedom (dof), since the dofs are considered to be scalar and the 
-    //! combined base functions to be vector valued
-    int getNumberOfBaseFunctions() const DUNE_DEPRECATED {
-      return baseFunctionSet_.getNumberOfBaseFunctions()*N;
-    }
-
-    //! Number of base functions
-    //! The number of base functions equals the total number of degrees of
-    //! freedom (dof), since the dofs are considered to be scalar and the 
-    //! combined base functions to be vector valued
-    int numBaseFunctions() const {
-      return baseFunctionSet_.numBaseFunctions()*N;
-    }
-
-    //! evaluate base function
-    template <int diffOrd>
-    inline
-    void evaluate (int baseFunct, 
-                   const FieldVector<deriType, diffOrd> &diffVariable, 
-                   const DomainType & x, RangeType & phi ) const;
-
-    //! evaluate base function at quadrature point
-    template <int diffOrd, class QuadratureType >
-    inline
-    void evaluate (int baseFunct, 
-                   const FieldVector<deriType, diffOrd> &diffVariable, 
-                   QuadratureType & quad, 
-                   int quadPoint, RangeType & phi ) const;
-
-    //- Additional methods
-    //! Number of distinct (scalar) base functions
-    int numDifferentBaseFunctions() const {
-      return baseFunctionSet_.numBaseFunctions();
-    }
-
-    //! evaluate base function
-   inline
-   void evaluateScalar(int baseFunct, 
-                        const DomainType& x, 
-                        ContainedRangeType& phi) const;
-    //! evaluate base function
-    template <class QuadratureType> 
-    inline
-    void evaluateScalar(int baseFunct, 
-                        const QuadratureType & quad, int qp, 
-                        ContainedRangeType& phi) const;
-    
-    //! evaluate base function at quadrature point
-    inline
-    void jacobianScalar(int baseFunct, 
-                        const DomainType& x,
-                        ContainedJacobianRangeType& phi) const;
-    //! evaluate base function at quadrature point
-    template <class QuadratureType> 
-    inline
-    void jacobianScalar(int baseFunct, 
-                        const QuadratureType & quad, int qp, 
-                        ContainedJacobianRangeType& phi) const;
-    inline
-    DofType evaluateSingle(int baseFunct, 
-                           const DomainType& xLocal,
-                           const RangeType& factor) const;
-    
-    template <class QuadratureType> 
-    inline
-    DofType evaluateSingle(int baseFunct, 
-                           const QuadratureType & quad, int qp, 
-                           const RangeType& factor) const;
-    
-    template <class Entity, class QuadratureType>
-    inline
-    DofType evaluateGradientTransformed(int baseFunct,
-                                        Entity& en,
-                                        const QuadratureType & quad, int qp, 
-                                        const JacobianRangeType& factor) const;
-    template <class Entity, class QuadratureType>
-    inline
-    DofType evaluateGradientSingle(int baseFunct,
-                                   Entity& en,
-                                   const QuadratureType & quad, int qp, 
-                                   const JacobianRangeType& factor) const;
-
-    template <class Entity>
-    inline
-    DofType evaluateGradientSingle(int baseFunct,
-                                   Entity& en,
-                                   const DomainType& xLocal,
-                                   const JacobianRangeType& factor) const;
-
-  private:
-    //- Private methods
-    inline
-    CombinedBaseFunctionSet(const ThisType& other);
-
-    //int containedDof(int combinedDofNum) const;
-    //int component(int combinedDofNum) const;
-    inline
-    void expand(int baseFunct, 
-                const ContainedRangeType& arg, 
-                RangeType& dest) const;
-
-  private:
-    //- Data members
-    mutable ContainedRangeType containedResult_;
-    mutable ContainedRangeType phi_;
-    mutable ContainedJacobianRangeType grad_;
-    mutable DomainType gradScaled_;
-    const ContainedBaseFunctionSetType& baseFunctionSet_;
-    const DofConversionUtilityType util_;
-  }; // end class CombinedBaseFunctionSet
-#endif
 
   //! Wrapper class for mappers. This class is to be used in conjunction with
   //! the CombinedSpace
