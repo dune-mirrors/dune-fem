@@ -56,7 +56,8 @@ namespace LDGExample {
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
     
-    typedef LeafGridPart<GridType> GridPartType;
+    //typedef LeafGridPart<GridType> GridPartType;
+    typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 
     typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
@@ -218,19 +219,6 @@ namespace LDGExample {
       for(int i=0;i<dimRange; ++i) f[i][i] = tmp;
       
       //std::cout << f << " f \n";
-    }
-
-    template <class ArgumentTuple> 
-    double boundaryFlux(const IntersectionIterator& it,
-                        const double time, 
-                        const FaceDomainType& local,
-                        const ArgumentTuple& uLeft,
-                        RangeType & sigmaLeft, 
-                        RangeType & gLeft) const 
-    {
-      assert(false);
-      abort();
-      return 0.0;
     }
 
     template <class ArgumentTuple, class ReturnType >

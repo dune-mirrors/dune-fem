@@ -174,6 +174,29 @@ public:
     std::cout.flush();
   }
 
+  void testConsecutive() 
+  {
+    typedef typename LastSpaceType :: IndexSetType IndexSetType; 
+    const IndexSetType& iset = lastSpace_.indexSet();
+    
+    typedef typename LastSpaceType :: IteratorType IteratorType;
+    std::vector<bool> visited(iset.size(0),false);
+    IteratorType endit = lastSpace_.end();
+    size_t count = 0;
+    for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
+    {
+      ++count;
+      int idx = iset.index(*it);
+      visited[idx] = true;
+    }
+
+    assert( count == visited.size() );
+    for(size_t i=0; i<visited.size(); ++i) 
+    {
+      assert( visited[i] == true );
+    }
+  }
+
   void operator()(const DestinationType& arg, DestinationType& dest) const 
   {
     const_cast<ThisType&> (*this).apply(arg,dest);
@@ -190,24 +213,24 @@ public:
     typedef typename LastSpaceType :: IteratorType IteratorType;
     std::cout << "Old size of space is " << lastSpace_.size() << "\n";
     int count = 0;
-
+  
+    int halfSize = lastSpace_.indexSet().size(0)/2;
     IteratorType endit = lastSpace_.end();
     for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
     {
-      if(count < 20) 
+      if(count < halfSize) 
+      //if(count % 2 == 0) 
       {
         //std::cout << "Mark entity \n";
         grid_.mark(1,it);
-      }
-      else if( count < 40 ) 
-      {
-        grid_.mark(-1,it);
       }
       ++count;
     }
 
     adop.adapt();
     std::cout << "New size of space is " << lastSpace_.size() << "\n";
+
+    testConsecutive();
   }
   
   // apply space discretisation 
@@ -220,6 +243,9 @@ public:
     std::vector<RangeType> error(steps_);
     std::vector<GradRangeType> gradError(steps_);
     
+    //DestinationType & Arg = const_cast<DestinationType&> (arg);
+    //adaptGrid(Arg);
+
     for(int i=0; i<steps_; ++i)
     {
       if(i > 0)
@@ -227,6 +253,7 @@ public:
         // refineGlobal is defined in description.hh
         grid_.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
         dm_.resize();
+        dm_.dofCompress();
       }
 
       //DestinationType & Arg = const_cast<DestinationType&> (arg);
