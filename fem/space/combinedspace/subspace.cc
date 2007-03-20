@@ -1,5 +1,5 @@
-
-namespace Dune {
+namespace Dune 
+{
   //- class SubSpace
   template <class CombinedSpaceImp>
   inline
@@ -11,19 +11,25 @@ namespace Dune {
     component_(component),
     baseSetVec_(GeometryIdentifier::numTypes, 0)
   {
-    // initialise your basefunction set with all Geometry types found in mesh
-    IteratorType endit = spc.end();
-    for (IteratorType it = spc.begin(); it != endit; ++it) {
-      GeometryType geo = it->geometry().type();
-      const int dimension =
-        static_cast<int>(IteratorType::Entity::mydimension);
+    // create info for all geom types 
+    AllGeomTypes<typename GridPartType :: IndexSetType, GridType>
+      allGeomTypes(spc.gridPart().indexSet());
+
+    // get types for codim 0 
+    const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(0);
+
+    // create base sets for all existing geom types
+    for(size_t i=0; i<geomTypes.size(); ++i)
+    {
       GeometryIdentifier::IdentifierType id =
-        GeometryIdentifier::fromGeo(dimension, geo);
-      
+                      GeometryIdentifier::fromGeo(geomTypes[i]);
+
       assert(id >= 0 && id < static_cast<int>(GeometryIdentifier::numTypes));
-      if (baseSetVec_[id] == 0) {
+
+      if (baseSetVec_[id] == 0) 
+      {
         baseSetVec_[id] =
-          new BaseFunctionSetType(spc.getBaseFunctionSet(*it), component);
+          new BaseFunctionSetType( spc.baseFunctionSet( id ) , component);
       }
     } // end for
   }
@@ -76,6 +82,5 @@ namespace Dune {
     utilGlobal_.newSize(mapper_.size()); // ok, since pointbased specialisation does nothing for newSize
     return utilGlobal_.combinedDof(containedGlobal, component_);
   }
-
 
 } // end namespace Dune
