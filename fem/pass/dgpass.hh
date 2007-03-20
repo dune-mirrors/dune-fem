@@ -76,7 +76,6 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
 
     // Types extracted from the underlying grids
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
