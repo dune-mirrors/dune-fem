@@ -213,16 +213,20 @@ public:
     typedef typename LastSpaceType :: IteratorType IteratorType;
     std::cout << "Old size of space is " << lastSpace_.size() << "\n";
     int count = 0;
+    
+    typedef typename DestinationType :: DomainType DomainType; 
+    DomainType point(0.5);
   
-    int halfSize = lastSpace_.indexSet().size(0)/2;
+    //int halfSize = lastSpace_.indexSet().size(0)/2;
     IteratorType endit = lastSpace_.end();
     for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
     {
-      if(count < halfSize) 
+      if( (it->geometry()[0] - point).two_norm() < 0.3) 
+      //if(count < halfSize) 
       //if(count % 2 == 0) 
       {
         //std::cout << "Mark entity \n";
-        grid_.mark(1,it);
+        grid_.mark(3,it);
       }
       ++count;
     }
@@ -246,6 +250,9 @@ public:
     //DestinationType & Arg = const_cast<DestinationType&> (arg);
     //adaptGrid(Arg);
 
+    DestinationType & Arg = const_cast<DestinationType&> (arg);
+    adaptGrid(Arg);
+
     for(int i=0; i<steps_; ++i)
     {
       if(i > 0)
@@ -255,9 +262,6 @@ public:
         dm_.resize();
         dm_.dofCompress();
       }
-
-      //DestinationType & Arg = const_cast<DestinationType&> (arg);
-      //if( i > 0 ) adaptGrid(Arg);
 
       FuncSpaceType sp; 
       ExactSolution exact(sp); 
@@ -278,9 +282,9 @@ public:
       }
       
 #if HAVE_GRAPE
-      //GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-      //grape.addData( velo );
-      //grape.dataDisplay( dest );
+      GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
+      grape.addData( velo );
+      grape.dataDisplay( dest );
 #endif
 
       L2Error < SolutionType > l2err;

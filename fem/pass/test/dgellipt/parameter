@@ -1,11 +1,11 @@
 # initial refine level 
-StartLevel: 2
+StartLevel: 1
 
 # do EOCSteps eoc steps
 EOCSteps: 2
 
 # epsilon for iterative solver 
-InvSolverEps: 1e-14
+InvSolverEps: 1e-18
 
 # cg output, 0 == no output, 1 == print output   
 verbose: 1
