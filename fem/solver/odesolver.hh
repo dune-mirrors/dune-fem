@@ -123,23 +123,20 @@ template<class Operator>
 class ExplTimeStepperBase 
 {
 public:
-  ExplTimeStepperBase(Operator& op,int pord, double cfl, bool verbose) :
+  ExplTimeStepperBase(Operator& op,int pord, bool verbose) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
     expl_(op),
-    ode_(0),
-    cfl_(cfl),
-    dt_(-1.0)
+    ode_(0)
   {
-    assert( cfl_ <= 1.0 );
     switch (pord) {
     case 1: ode_=new ExplicitEuler(comm_,expl_); break;
     case 2: ode_=new ExplicitTVD2(comm_,expl_); break;
     case 3: ode_=new ExplicitTVD3(comm_,expl_); break;
     case 4: ode_=new ExplicitRK4(comm_,expl_); break;
     default : std::cerr << "Runge-Kutta method of this order not implemented" 
-			<< std::endl;
+      << std::endl;
       abort();
     }
     if(verbose)
@@ -156,8 +153,6 @@ protected:
   const Operator& op_;
   OperatorWrapper<Operator> expl_;
   DuneODE::ODESolver* ode_;
-  double cfl_;
-  double dt_;
 };
 
 //! ExplicitOdeSolver 
@@ -171,12 +166,13 @@ class ExplicitOdeSolver :
  public:
   //! constructor 
   ExplicitOdeSolver(Operator& op, TimeProvider& tp, int pord, bool verbose = false) :
-    BaseType(op,pord,(double (pord+1)/(pord+2)),verbose),
-    timeProvider_(tp),
-    firstCall_(true)
+    BaseType(op,pord,verbose),
+    timeProvider_(tp)
   {
+    double cflLocal = (double (pord+1)/(pord+2));
     // maximal allowed cfl number 
-    tp.provideCflEstimate(this->cfl_); 
+    tp.provideCflEstimate(cflLocal); 
+    assert( tp.cfl() <= 1.0 );
   }
 
   //! destructor 
@@ -186,16 +182,17 @@ class ExplicitOdeSolver :
   void solve(DestinationType& U0) 
   {
     // if dt has not been set yet 
-    if (firstCall_) 
+    if ( timeProvider_.notInitialized() ) 
     {
       DestinationType tmp("TMP",this->op_.space());
       this->op_(U0,tmp);
-      firstCall_ = false;
       return ;
     }
     
     // get dt 
     double dt = timeProvider_.deltaT();
+    // should be larger then zero 
+    assert( dt > 0.0 );
     
     // get time 
     double time = timeProvider_.time();
@@ -216,7 +213,6 @@ class ExplicitOdeSolver :
 
  private:
   const TimeProvider& timeProvider_;
-  bool firstCall_;
 };
 
 template<class Operator>
@@ -224,37 +220,40 @@ class ExplTimeStepper : public TimeProvider,
                         public ExplTimeStepperBase<Operator>  
 {
   typedef ExplTimeStepperBase<Operator> BaseType;
+  typedef typename Operator:: DestinationType ::
+    DiscreteFunctionSpaceType :: GridType :: Traits ::
+    CollectiveCommunication DuneCommunicatorType; 
  public:
   ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
-    BaseType(op,pord,cfl,verbose),
+    TimeProvider(0.0,cfl),
+    BaseType(op,pord,verbose),
+    tp_(this->op_.space().grid().comm(), *this ),
     savestep_(1),
     savetime_(0.0)
   {
     op.timeProvider(this);
+    assert( this->cfl() <= 1.0 );
   }
   
   double solve(typename Operator::DestinationType& U0) 
   {
-    typedef typename Operator:: DestinationType ::
-      DiscreteFunctionSpaceType :: GridType :: Traits ::
-      CollectiveCommunication DuneCommunicatorType; 
-    const DuneCommunicatorType & duneComm = this->op_.space().grid().comm();
-
-    if (this->dt_<0) 
+    if( tp_.notInitialized() ) 
     {
       typename Operator::DestinationType tmp("TMP",this->op_.space());
       this->op_(U0,tmp);
-      this->dt_= this->cfl_ * timeStepEstimate();
-
+        
       // global min of dt 
-      this->dt_ = duneComm.min( this->dt_ );
+      tp_.syncTimeStep(); 
     }
     
-    resetTimeStepEstimate();
-    double t=time();
-    double* u=U0.leakPointer();
+    tp_.resetTimeStepEstimate();
     
-    const bool convergence = this->ode_->step(t, this->dt_, u);
+    // get dof array 
+    double* u=U0.leakPointer();
+
+    assert( tp_.deltaT() > 0.0 );
+    
+    const bool convergence = this->ode_->step(tp_.time(), tp_.deltaT() , u);
 
     assert(convergence);
     if(!convergence) 
@@ -263,13 +262,16 @@ class ExplTimeStepper : public TimeProvider,
       abort();
     }
 
-    setTime(t+ this->dt_);
-    this->dt_ = this->cfl_ * timeStepEstimate();
-
     // global min of dt 
-    this->dt_ = duneComm.min( this->dt_ );
-    return time();
+    tp_.syncTimeStep();
+    
+    // set new time to t + deltaT 
+    tp_.augmentTime();
+
+    // return time 
+    return tp_.time();
   }
+
   void printGrid(int nr, const typename Operator::DestinationType& U) 
   {
     if (time()>=savetime_) 
@@ -285,11 +287,12 @@ class ExplTimeStepper : public TimeProvider,
     filestream << filename;
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
     ofs << "ExplTimeStepper, steps: " << this->ord_ << "\n\n";
-    ofs << "                 cfl: " << this->cfl_ << "\\\\\n\n";
+    ofs << "                 cfl: " << tp_.cfl() << "\\\\\n\n";
     ofs.close();
     this->op_.printmyInfo(filename);
   }
  private:
+  ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
 };
@@ -303,15 +306,13 @@ template<class Operator>
 class ImplTimeStepperBase
 {
  public:
-  ImplTimeStepperBase(Operator& op,int pord,double cfl, bool verbose) :
+  ImplTimeStepperBase(Operator& op,int pord, bool verbose) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
     impl_(op),
     ode_(0),
-    linsolver_(comm_,cycle),
-    cfl_(cfl),
-    dt_(-1.0)
+    linsolver_(comm_,cycle)
   {
     linsolver_.set_tolerance(1.0e-8);
     linsolver_.set_max_number_of_iterations(1000);
@@ -321,7 +322,7 @@ class ImplTimeStepperBase
     case 3: ode_=new DIRK3(comm_,impl_); break;
       //case 4: ode_=new ExplicitRK4(comm,expl_); break;
     default : std::cerr << "Runge-Kutta method of this order not implemented" 
-			<< std::endl;
+      << std::endl;
       abort();
     }
     ode_->set_linear_solver(linsolver_);
@@ -338,14 +339,12 @@ class ImplTimeStepperBase
   
 protected:
   int ord_;
-  Communicator & comm_;	  
+  Communicator & comm_;   
   const Operator& op_;
   OperatorWrapper<Operator> impl_;
   DuneODE::DIRK* ode_;
   DuneODE::GMRES linsolver_;
   enum { cycle = 20 };
-  double cfl_;
-  double dt_;
 };
 
 
@@ -364,9 +363,8 @@ class ImplicitOdeSolver :
 public:
   ImplicitOdeSolver(Operator& op, TimeProvider& tp,
                     int pord, bool verbose = false) :
-    BaseType(op,pord,1.0,verbose),
-    timeProvider_(tp),
-    firstCall_(true)
+    BaseType(op,pord,verbose),
+    timeProvider_(tp)
   {
   }
 
@@ -375,15 +373,15 @@ public:
   void solve(DestinationType& U0) 
   {
     // for first call only calculate time step estimate 
-    if(firstCall_) 
+    if( timeProvider_.notInitialized() ) 
     {
       DestinationType tmp("tmp",this->op_.space());
       this->op_(U0,tmp);
-      firstCall_ = false;
       return ;
     }
 
     double dt   = timeProvider_.deltaT();
+    assert( dt > 0.0 );
     double time = timeProvider_.time();
     double* u = U0.leakPointer();
     const bool convergence = this->ode_->step(time , dt , u);
@@ -398,7 +396,6 @@ public:
 
 private:
   const TimeProvider& timeProvider_;
-  bool firstCall_;
 };
 
 
@@ -413,10 +410,14 @@ class ImplTimeStepper : public TimeProvider ,
 {
   typedef ImplTimeStepperBase<Operator> BaseType;
   typedef typename Operator::DestinationType DestinationType;
+  typedef typename  DestinationType ::
+      DiscreteFunctionSpaceType :: GridType :: Traits ::
+      CollectiveCommunication DuneCommunicatorType; 
 public:
   ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = false) :
-    TimeProvider(),
-    BaseType(op,pord,cfl,verbose),
+    TimeProvider(0.0,cfl),
+    BaseType(op,pord,verbose),
+    tp_(this->op_.space().grid().comm(),*this),
     savestep_(1),
     savetime_(0.0)
   {
@@ -425,26 +426,23 @@ public:
   
   double solve(DestinationType& U0) 
   {
-    typedef typename Operator:: DestinationType ::
-      DiscreteFunctionSpaceType :: GridType :: Traits ::
-      CollectiveCommunication DuneCommunicatorType; 
-    const DuneCommunicatorType & duneComm = this->op_.space().grid().comm();
-
-    if (this->dt_<0) 
+    if ( tp_.notInitialized() )     
     {
       DestinationType tmp("tmp",this->op_.space());
 
       this->op_(U0,tmp);
 
-      this->dt_ = this->cfl_ * timeStepEstimate();
-      
       // calculate global min of dt 
-      this->dt_ = duneComm.min( this->dt_ );
+      tp_.syncTimeStep();
     }
-    resetTimeStepEstimate();
-    double t=time();
+
+    // reset dt estimate
+    tp_.resetTimeStepEstimate();
     double* u=U0.leakPointer();
-    const bool convergence =  this->ode_->step(t, this->dt_, u);
+    
+    assert( tp_.deltaT() > 0.0 );
+    
+    const bool convergence =  this->ode_->step(tp_.time() , tp_.deltaT() , u);
 
     assert(convergence);
     if(!convergence) 
@@ -452,32 +450,36 @@ public:
       std::cerr << "No Convergence of ImplTimeStepper! \n";
       abort();
     }
-    setTime(t+ this->dt_);
-    this->dt_ = this->cfl_ * timeStepEstimate();
-    
+
     // calculate global min of dt 
-    this->dt_ = duneComm.min( this->dt_ );
+    tp_.syncTimeStep();
+
+    // calls setTime(t+ this->dt_);
+    tp_.augmentTime(); 
     
-    return time();
+    return tp_.time();
   }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
+
+  void printGrid(int nr, const typename Operator::DestinationType& U) 
+  {
     if (time()>=savetime_) {
       printSGrid(time(),savestep_*10+nr,this->op_.space(), U);
       ++savestep_;
       savetime_+=0.001;
     }
   }
+  
   void printmyInfo(string filename) const {
     std::ostringstream filestream;
     filestream << filename;
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
     ofs << "ImplTimeStepper, steps: " << this->ord_ << "\n\n";
-    ofs << "                 cfl: " << this->cfl_ << "\\\\\n\n";
+    ofs << "                 cfl: " << tp_.cfl() << "\\\\\n\n";
     ofs.close();
     this->op_.printmyInfo(filename);
   }
- private:
+private:
+  ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
 };
@@ -489,11 +491,16 @@ public:
 //
 //////////////////////////////////////////////////////////////
 template<class OperatorExpl,class OperatorImpl>
-class SemiImplTimeStepper : public TimeProvider {
+class SemiImplTimeStepper : public TimeProvider 
+{
   typedef OperatorExpl Operator;
+  typedef typename  Operator :: DestinationType ::
+      DiscreteFunctionSpaceType :: GridType :: Traits ::
+      CollectiveCommunication DuneCommunicatorType; 
  public:
   SemiImplTimeStepper(OperatorExpl& op_expl,OperatorImpl& op_impl,
-		      int pord,double cfl, bool verbose = false ) :
+          int pord,double cfl, bool verbose = false ) :
+    TimeProvider(0.0,cfl),
     ord_(pord),
     comm_(Communicator::instance()),
     opexpl_(op_expl),
@@ -502,8 +509,7 @@ class SemiImplTimeStepper : public TimeProvider {
     impl_(op_impl),
     ode_(0),
     linsolver_(comm_,cycle),
-    cfl_(cfl),
-    dt_(-1.0),
+    tp_(this->op_.space().grid().comm(),*this),
     savetime_(0.0), savestep_(1)
   {
     op_expl.timeProvider(this);
@@ -514,7 +520,7 @@ class SemiImplTimeStepper : public TimeProvider {
     case 2: ode_=new IMEX_SSP222(comm_,impl_,expl_); break;
     case 3: ode_=new SIRK33(comm_,impl_,expl_); break;
     default : std::cerr << "Runge-Kutta method of this order not implemented" 
-			<< std::endl;
+      << std::endl;
       abort();
     }
     ode_->set_linear_solver(linsolver_);
@@ -525,49 +531,56 @@ class SemiImplTimeStepper : public TimeProvider {
       ode_->DynamicalObject::set_output(cout);
     }
   }
+  
   ~SemiImplTimeStepper() {delete ode_;}
+
   double solve(typename Operator::DestinationType& U0) 
   {
     typedef typename Operator:: DestinationType :: DiscreteFunctionSpaceType :: 
           GridType :: Traits ::  CollectiveCommunication DuneCommunicatorType; 
     const DuneCommunicatorType & duneComm = opexpl_.space().grid().comm();
 
-    if (dt_<0) {
+    if ( tp_.notInitialized() ) 
+    {
       typename OperatorExpl::DestinationType tmp("tmp",opexpl_.space());
       opexpl_(U0,tmp);
-      dt_ = cfl_*timeStepEstimate();
       
       // calculate global min of dt 
-      dt_ = duneComm.min( dt_ );
+      tp_.syncTimeStep();
     }
-    resetTimeStepEstimate();
-    double t=time();
+    
+    tp_.resetTimeStepEstimate();
+
     double* u=U0.leakPointer();
-    const bool convergence = ode_->step(t, dt_, u);
+    
+    const bool convergence = ode_->step( tp_.time(), tp_.deltaT() , u);
     assert(convergence);
 
-    setTime(t+dt_);
-    dt_ = cfl_*timeStepEstimate();
-
     // calculate global min of dt 
-    dt_ = duneComm.min( dt_ );
-    return time();
+    tp_.syncTimeStep();
+
+    // calls setTime(t+dt_);
+    tp_.augmentTime();
+
+    return tp_.time();
   }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
+
+  void printGrid(int nr, const typename Operator::DestinationType& U) 
+  {
     if (time()>=savetime_) {
       printSGrid(time(),savestep_*10+nr,opexpl_.space(),U);
       ++savestep_;
       savetime_+=0.001;
     }
   }
+  
   void printmyInfo(string filename) const {
     std::ostringstream filestream;
     filestream << filename;
     {
       std::ofstream ofs(filestream.str().c_str(), std::ios::app);
       ofs << "SemiImplTimeStepper, steps: " << ord_ << "\n\n";
-      ofs << "                     cfl: " << cfl_ << "\\\\\n\n";
+      ofs << "                     cfl: " << tp_.cfl() << "\\\\\n\n";
       ofs << "Explicite Operator:\\\\\n\n";
       ofs.close();
       opexpl_.printmyInfo(filename);
@@ -581,7 +594,7 @@ class SemiImplTimeStepper : public TimeProvider {
   }
  private:
   int ord_;
-  Communicator & comm_;	  
+  Communicator & comm_;   
   const OperatorExpl& opexpl_;
   const OperatorImpl& opimpl_;
   OperatorWrapper<OperatorImpl> impl_;
@@ -589,11 +602,12 @@ class SemiImplTimeStepper : public TimeProvider {
   DuneODE::SIRK* ode_;
   DuneODE::GMRES linsolver_;
   enum { cycle = 20 };
-  double cfl_;
-  double dt_;
+  // TimeProvider with communicator 
+  ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
 };
+
 template<class Operator>
 class ExplRungeKutta : public TimeProvider 
 {
@@ -603,25 +617,30 @@ class ExplRungeKutta : public TimeProvider
   typedef typename Operator::DestinationType DestinationType;
   typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
  private:
-  double cfl_;
-  double **a;
-  double *b;
-  double *c;
+  std::vector< std::vector<double> > a;
+  std::vector<double> b;
+  std::vector<double> c;
+  
   int ord_;
   std::vector<DestinationType*> Upd;
 public:
   ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) :
+    TimeProvider(0.0,cfl),
     op_(op),
-    cfl_(cfl), ord_(pord), Upd(0),
+    tp_(this->op_.space().grid().comm(),*this),
+    ord_(pord), Upd(0),
     savetime_(0.0), savestep_(1)
   {
     op.timeProvider(this);
     assert(ord_>0);
-    a=new double*[ord_];
+    a.resize(ord_);
     for (int i=0;i<ord_;i++)
-      a[i]=new double[ord_];
-    b=new double [ord_];
-    c=new double [ord_];
+    {
+      a[i].resize(ord_);
+    }
+    b.resize(ord_); 
+    c.resize(ord_); 
+    
     switch (ord_) {
     case 4 :
       a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;    a[0][3]=0.;
@@ -650,7 +669,7 @@ public:
       c[0]=0.;
       break;
     default : std::cerr << "Runge-Kutta method of this order not implemented" 
-			<< std::endl;
+      << std::endl;
               abort();
     }
     for (int i=0;i<ord_;i++)
@@ -660,56 +679,75 @@ public:
     
     Upd.push_back(new DestinationType("Ustep",op_.space()) );
   }
+
+  ~ExplRungeKutta()
+  {
+    for(size_t i=0; i<Upd.size(); ++i) 
+      delete Upd[i];
+  }
+  
   double solve(typename Operator::DestinationType& U0) 
   {
-    const DuneCommunicatorType & duneComm = op_.space().grid().comm();
-    resetTimeStepEstimate();
-    double t=time();
-    // Compute Steps
-    op_(U0,*(Upd[0]));
-    double dt=cfl_*timeStepEstimate();
-
-    // calculate global min of dt 
-    dt = duneComm.min( dt );
+    tp_.resetTimeStepEstimate();
     
+    double t = tp_.time();
+    // Compute Steps
+    op_(U0, *(Upd[0]));
+    
+    // global min of dt 
+    tp_.syncTimeStep();
+    
+    // get cfl * timeStepEstimate 
+    double dt = tp_.deltaT();
+
     for (int i=1;i<ord_;i++) 
     {
       (Upd[ord_])->assign(U0);
-      for (int j=0;j<i;j++) 
+      for (int j=0; j<i ; j++) 
       {
-      	(Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
+        (Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
       }
 
-      setTime(t+c[i]*dt);
+      setTime( t + c[i]*dt );
+
       op_(*(Upd[ord_]),*(Upd[i]));
-      double ldt=cfl_*timeStepEstimate();
     }
+
     // Perform Update
-    for (int j=0;j<ord_;j++) {
+    for (int j=0;j<ord_;j++) 
+    {
       U0.addScaled(*(Upd[j]),(b[j]*dt));
     }
-    setTime(t+dt);
-    return time();
+    
+    // calls setTime ( t + dt ); 
+    tp_.setTime( t + dt );
+    
+    return tp_.time();
   }
-  void printGrid(int nr, 
-		 const typename Operator::DestinationType& U) {
+  
+  void printGrid(int nr, const typename Operator::DestinationType& U) 
+  {
     if (time()>=savetime_) {
       printSGrid(time(),savestep_*10+nr,op_.space(),U);
       ++savestep_;
       savetime_+=0.001;
     }
   }
+  
   void printmyInfo(string filename) const {
     std::ostringstream filestream;
     filestream << filename;
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
     ofs << "ExplRungeKutta, steps: " << ord_ << "\n\n";
-    ofs << "                cfl: " << cfl_ << "\\\\\n\n";
+    ofs << "                cfl: " << tp_.cfl() << "\\\\\n\n";
     ofs.close();
     op_.printmyInfo(filename);
   }
+
  private:
   const Operator& op_;
+  // TimeProvider with communicator 
+  ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
 };
