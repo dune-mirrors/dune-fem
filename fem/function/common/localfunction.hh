@@ -33,6 +33,9 @@ public:
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
   typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+  
+  //! type of base function set  
+  typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType; 
 
   //! access to dof number num, all dofs of the local function
   RangeFieldType& operator [] (int num) 
@@ -94,6 +97,14 @@ public:
   {
     asImp().jacobian(en,x,ret);
   }
+
+  //! return reference to corresponding base function set of local
+  //! function
+  const BaseFunctionSetType& baseFunctionSet() const 
+  {
+    return asImp().baseFunctionSet();
+  }
+   
   void assign(int dofNum, const RangeType& dofs) DUNE_DEPRECATED {
     asImp().assign(dofNum, dofs);
   }
