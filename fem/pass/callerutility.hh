@@ -281,13 +281,13 @@ namespace Dune {
    * Use this Functor in conjunction with a ForEachValuePair built from a tuple
    * of local functions and a tuple with the corresponding range vectors.
    */
-  template <class EntityImp, class DomainImp>
+  template <class DomainImp>
   class LocalFunctionEvaluateLocal {
   public:
     //! Constructor
     //! \param en Entity on which the local function is evaluated.
     //! \param x The local coordinate on en.
-    LocalFunctionEvaluateLocal(EntityImp& en, const DomainImp& x) :
+    LocalFunctionEvaluateLocal(const DomainImp& x) :
       x_(x)
     {}
 
@@ -314,16 +314,15 @@ namespace Dune {
    * of local functions and a tuple with the corresponding range vectors.
    *
    */
-  template <class EntityImp, class QuadratureImp>
+  template <class QuadratureImp>
   class LocalFunctionEvaluateQuad {
   public:
     //! Constructor
     //! \param en The entity the local functions are evaluated on.
     //! \param quad The quadrature in question.
     //! \param quadPoint The index of the quadrature point of quadrature quad
-    LocalFunctionEvaluateQuad(EntityImp& en, 
-                              QuadratureImp& quad,
-                              int quadPoint) :
+    LocalFunctionEvaluateQuad(const QuadratureImp& quad,
+                              const int quadPoint) :
       quad_(quad),
       quadPoint_(quadPoint)
     {}
@@ -340,8 +339,8 @@ namespace Dune {
     LocalFunctionEvaluateQuad& operator=(const LocalFunctionEvaluateQuad&);
 
   private:
-    QuadratureImp& quad_;
-    int quadPoint_;
+    const QuadratureImp& quad_;
+    const int quadPoint_;
   };
 
   template <class DomainImp>
@@ -369,8 +368,8 @@ namespace Dune {
   template <class QuadratureImp>
   class LocalFunctionEvaluateJacobianQuad {
   public:
-    LocalFunctionEvaluateJacobianQuad(QuadratureImp& quad,
-                                      int quadPoint) :
+    LocalFunctionEvaluateJacobianQuad(const QuadratureImp& quad,
+                                      const int quadPoint) :
       quad_(quad),
       quadPoint_(quadPoint)
     {}
@@ -387,8 +386,8 @@ namespace Dune {
     operator=(const LocalFunctionEvaluateJacobianQuad&);
 
   private:
-    QuadratureImp& quad_;
-    int quadPoint_;
+    const QuadratureImp& quad_;
+    const int quadPoint_;
   };
 
   /**

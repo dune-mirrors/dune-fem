@@ -68,9 +68,9 @@ namespace Dune {
                          CoefficientType& coeffRight) 
     {
       // evaluate data functions 
-      this->evaluateQuad(this->data_->self(), quadInner, quadPoint,
+      this->evaluateQuad( quadInner, quadPoint,
                          this->data_->localFunctionsSelf(), this->valuesEn_);
-      this->evaluateQuad(this->data_->neighbor(), quadOuter, quadPoint,
+      this->evaluateQuad( quadOuter, quadPoint,
                          this->data_->localFunctionsNeigh(), this->valuesNeigh_);
 
       problem_.coefficientFace(nit, this->time_, 
@@ -87,7 +87,7 @@ namespace Dune {
                          const int quadPoint,
                          CoefficientType& coeff) 
     {
-      this->evaluateQuad(this->data_->self(), quadInner, quadPoint,
+      this->evaluateQuad( quadInner, quadPoint,
                          this->data_->localFunctionsSelf(), this->valuesEn_);
       problem_.coefficient(this->data_->self(), 
                            this->time_, quadInner.point(quadPoint), 
@@ -98,7 +98,7 @@ namespace Dune {
     void evaluateCoefficient(Entity& en, VolumeQuadratureType& quad, int quadPoint,
                         CoefficientType& coeff) 
     {
-      evaluateQuad(en, quad, quadPoint, 
+      evaluateQuad(quad, quadPoint, 
                    this->data_->localFunctionsSelf(), this->valuesEn_);
       problem_.coefficient(en, this->time_, quad.point(quadPoint), 
                            this->valuesEn_, coeff);
@@ -113,7 +113,7 @@ namespace Dune {
     {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
 
-      this->evaluateQuad(this->data_->self(), quad, quadPoint,
+      this->evaluateQuad( quad, quadPoint,
                          this->data_->localFunctionsSelf(), this->valuesEn_);
       return problem_.boundaryValue(nit, this->time_, quad.localPoint(quadPoint),
                                     this->valuesEn_, boundaryValue);
@@ -122,6 +122,8 @@ namespace Dune {
     void rightHandSide(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
                        RangeType& res) 
     {
+      this->evaluateQuad( quad, quadPoint,
+                         this->data_->localFunctionsSelf(), this->valuesEn_);
       this->evaluateJacobianQuad(en, quad, quadPoint);
       problem_.rightHandSide(en, this->time_, quad.point(quadPoint), 
                              this->valuesEn_,
