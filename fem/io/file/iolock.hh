@@ -20,7 +20,37 @@ public :
   FileIOLock(const std::string& fn);
   //! removes lock file 
  ~FileIOLock() ;
+
+  //! suffix that is appended to lock files 
+  static const char * suffix() { return "lock"; } 
 };
+
+//! check if lock file exists and aborts if true 
+class FileIOCheckError  
+{
+  FileIOCheckError( const FileIOCheckError & );
+public :
+  //! creates lock file 
+  FileIOCheckError(const std::string& fn) 
+  { 
+    std::string lockfile(fn);
+    lockfile += ".";
+    lockfile += FileIOLock::suffix();
+
+    std::ifstream file ( lockfile.c_str () );
+    if( file.is_open() ) 
+    {
+      std::cerr << "ERROR: data set `"<<fn<<"' not complete, lock file exists! " << std::endl;
+      abort();
+    }
+  }
+};
+
+////////////////////////////////////////////////////////////////
+//
+//  INLINE 
+//
+////////////////////////////////////////////////////////////////
 
 // create lock file 
 inline FileIOLock :: FileIOLock (const std::string& fn) 
@@ -28,10 +58,11 @@ inline FileIOLock :: FileIOLock (const std::string& fn)
 {
   if( filename_ == "" )  
   {  
-    filename_ = "lock";  
+    filename_ = suffix();  
   }
   else   {
-    filename_ += ".lock";
+    filename_ += ".";
+    filename_ += suffix();
   }
   
   std::ofstream file ( filename_.c_str() );
