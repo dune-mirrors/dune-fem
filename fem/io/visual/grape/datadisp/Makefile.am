@@ -4,8 +4,10 @@ LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 
 datadispdir =  $(includedir)/dune/fem/io/visual/grape/datadisp
-datadisp_HEADERS = leng.hh       readdata.cc  readparams.cc\
-readtupparams.cc datadisp.cc  printhelp.cc  readfile.cc  readtupledata.cc
+datadisp_HEADERS = leng.hh readdata.cc readparams.cc\
+readtupparams.cc datadisp.cc  printhelp.cc  readfile.cc  readtupledata.cc\
+readiotupledata.cc readioparams.cc 
+
 
 #noinst_PROGRAMS = datadisp
 #datadisp_SOURCES = datadisp.cc 
