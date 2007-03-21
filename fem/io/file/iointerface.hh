@@ -12,8 +12,9 @@
 
 // grape data io 
 #include <dune/fem/io/file/grapedataio.hh>
+
 // input and output of tuples 
-#include <dune/fem/io/file/grapetuple.hh>
+#include <dune/fem/io/file/iotuple.hh>
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -51,55 +52,128 @@ public:
   //! \param macroFileName is the macro which should be saved in DGF format  
   virtual void saveMacroGrid(const std::string macroFileName) const = 0;
   
+  // create given path in combination with rank 
+  static void createPath(const std::string& path)
+  {
+    // try to open directory 
+    DIR * dir = opendir(path.c_str());
+    // if path does not exists, null pointer is returned
+    if( !dir )
+    {
+      // see <sys/stat.h> for definition 
+      // this stands for mode 755
+      mode_t mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+      // try to create dicretory
+      // mkdir returns int < 0 if creation failed 
+      if( mkdir( path.c_str(), mode ) < 0) 
+      {
+        std::cerr << "Failed to create path `" << path << "' !" << std::endl;
+      }
+    }
+    else 
+    {
+      // close dir, if fails number < 0 is returned 
+      if( closedir(dir) < 0 )
+      {
+        std::cerr << "Couldn't close output path! " << std::endl;
+      }
+    }
+  }
+  
+  // create given path in combination with rank 
+  static std::string createPathName(const std::string& pathPref, int rank )
+  {
+    std::string path(pathPref);
+    
+    // add proc number to path 
+    {
+      path += "_";
+      std::stringstream rankDummy;
+      rankDummy << rank; 
+      path += rankDummy.str();
+    }
+    return path;
+  }
+  
   //! standard path reading and creation method 
   //! rank is added to output path 
-  static std::string readPath(const std::string& paramfile, int rank)
+  static std::string readPath(const std::string& paramfile)
   {
     std::string path;
+
     // read output path from parameter file 
     if( readParameter(paramfile,"OutputPath",path) ) 
     {
-      // add proc number to path 
-      {
-        path += "_";
-        std::stringstream rankDummy;
-        rankDummy << rank; 
-        path += rankDummy.str();
-      }
-      
-      {
-        // try to open directory 
-        DIR * dir = opendir(path.c_str());
-        // if path does not exists, null pointer is returned
-        if( !dir )
-        {
-          // see <sys/stat.h> for definition 
-          // this stands for mode 755
-          mode_t mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-          // try to create dicretory
-          // mkdir returns int < 0 if creation failed 
-          if( mkdir( path.c_str(), mode ) < 0) 
-          {
-            std::cerr << "Failed to create path `" << path << "' !" << std::endl;
-          }
-        }
-        else 
-        {
-          // close dir, if fails number < 0 is returned 
-          if( closedir(dir) < 0 )
-          {
-            std::cerr << "Couldn't close output path! " << std::endl;
-          }
-        }
-      }
       return path;
     }
     else 
     {
       std::cerr << "Couldn't read output path, exiting... " << std::endl;
     }
-    // returning empty path 
+    // default path is current directory 
+    path = ".";
     return path;
+  }
+  template <class CommunicatorType>
+  static void createGlobalPath(const CommunicatorType& comm,
+          const std::string& path) 
+  {
+    // only rank 0 creates global dir 
+    if( comm.rank() <= 0 )
+    {
+      // create directory 
+      createPath( path );
+    }
+
+    // wait for all procs to arrive here 
+    comm.barrier ();
+  }
+
+  // creates path and processor sub pathes 
+  template <class CommunicatorType>
+  static std::string createPath(const CommunicatorType& comm,
+          const std::string& pathPrefix, 
+          const std::string& dataPrefix,
+          const int step)
+  {
+    // first proc creates directory 
+    std::string filename(pathPrefix);
+    filename += "/";
+    filename += dataPrefix;
+    std::string path = genFilename("",filename,step);
+
+    // create global path 
+    createGlobalPath( comm, path );
+    
+    // append path with p for proc 
+    path += "/p";
+
+    // create path if not exists 
+    path = createPathName( path, comm.rank() );
+    
+    // create path if not exits 
+    createPath ( path );
+    return path;
+  }
+  
+  // creates path and processor sub pathes 
+  static std::string createRecoverPath(
+          const std::string& pathPrefix, 
+          const int rank,
+          const std::string& dataPrefix,
+          const int step)
+  {
+    // first proc creates directory 
+    std::string filename(pathPrefix);
+    filename += "/";
+    filename += dataPrefix;
+    std::string path = genFilename("",filename,step);
+
+    // append path with p for proc 
+    path += "/p";
+
+    // create proc dir 
+    return createPathName( path , rank );
   }
 
   //! if grid is structured grid, write macro file 
