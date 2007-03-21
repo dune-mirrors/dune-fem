@@ -164,4 +164,93 @@ namespace Dune
     }
   }
 
+
+
+  template< class ct >
+  LagrangeTetrahedronQuadrature< ct >
+    :: LagrangeTetrahedronQuadrature( int order, size_t id )
+    : QuadratureImp< ct, 3 >( id ),
+      order_( (order < 0) ? 0 : order )
+  {
+    const ctype volume = 1.0 / 6.0;
+      
+    CoordinateType refpoints[ 10 ];
+    
+    switch( order_ ) {
+    case 0:
+      refpoints[ 0 ][ 0 ] = 0.25;
+      refpoints[ 0 ][ 1 ] = 0.25;
+      refpoints[ 0 ][ 2 ] = 0.25;
+      
+      this->addQuadraturePoint( refpoints[ 0 ], volume );
+      break;
+
+    case 1:
+      refpoints[ 0 ][ 0 ] = 0;
+      refpoints[ 0 ][ 1 ] = 0;
+      refpoints[ 0 ][ 2 ] = 0;
+
+      refpoints[ 1 ][ 0 ] = 1;
+      refpoints[ 1 ][ 1 ] = 0;
+      refpoints[ 1 ][ 2 ] = 0;
+
+      refpoints[ 2 ][ 0 ] = 0;
+      refpoints[ 2 ][ 1 ] = 1;
+      refpoints[ 2 ][ 2 ] = 0;
+      
+      refpoints[ 3 ][ 0 ] = 0;
+      refpoints[ 3 ][ 1 ] = 0;
+      refpoints[ 3 ][ 2 ] = 1;
+      
+      for( int i = 0; i < 4; ++i )
+        this->addQuadraturePoint( refpoints[ i ], volume / 4 );
+      break;
+        
+    case 2:
+      refpoints[ 0 ][ 0 ] = 0;
+      refpoints[ 0 ][ 1 ] = 0;
+      refpoints[ 0 ][ 2 ] = 0;
+
+      refpoints[ 1 ][ 0 ] = 1;
+      refpoints[ 1 ][ 1 ] = 0;
+      refpoints[ 1 ][ 2 ] = 0;
+
+      refpoints[ 2 ][ 0 ] = 0;
+      refpoints[ 2 ][ 1 ] = 1;
+      refpoints[ 2 ][ 2 ] = 0;
+        
+      refpoints[ 3 ][ 0 ] = 0;
+      refpoints[ 3 ][ 1 ] = 0;
+      refpoints[ 3 ][ 2 ] = 1;
+      
+      refpoints[ 4 ][ 0 ] = 0.5;
+      refpoints[ 4 ][ 1 ] = 0;
+      refpoints[ 4 ][ 2 ] = 0;
+
+      refpoints[ 5 ][ 0 ] = 0.5;
+      refpoints[ 5 ][ 1 ] = 0.5;
+      refpoints[ 5 ][ 2 ] = 0;
+        
+      refpoints[ 6 ][ 0 ] = 0;
+      refpoints[ 6 ][ 1 ] = 0.5;
+      refpoints[ 6 ][ 2 ] = 0;
+      
+      refpoints[ 7 ][ 0 ] = 0;
+      refpoints[ 7 ][ 1 ] = 0;
+      refpoints[ 7 ][ 2 ] = 0.5;
+
+      refpoints[ 8 ][ 0 ] = 0.5;
+      refpoints[ 8 ][ 1 ] = 0;
+      refpoints[ 8 ][ 2 ] = 0.5;
+        
+      refpoints[ 9 ][ 0 ] = 0;
+      refpoints[ 9 ][ 1 ] = 0.5;
+      refpoints[ 9 ][ 2 ] = 0.5;
+    
+      for( int i = 0; i < 10; ++i )
+        this->addQuadraturePoint( refpoints[ i ], volume / 10 );
+      break;
+    }
+  }
+  
 }

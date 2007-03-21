@@ -394,42 +394,221 @@ public:
 
 
 
-//*****************************************************************
-//
-//! Lagrange base for tetrahedra and polynom order = 2
-//
-//*****************************************************************
-template<class FunctionSpaceType>
-class LagrangeBaseFunction < FunctionSpaceType , GeometryIdentifier::Tetrahedron, 2 >  
-: public BaseFunctionInterface<FunctionSpaceType> 
+//! Lagrange base functions for tretrahedra and polynom order = 2
+template< class FunctionSpaceType >
+class LagrangeBaseFunction < FunctionSpaceType , GeometryIdentifier :: Tetrahedron, 2 >
+: public BaseFunctionInterface< FunctionSpaceType >
 {
-  typedef typename FunctionSpaceType::DomainType DomainType;
-  typedef typename FunctionSpaceType::RangeType RangeType;
-  typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;  
-  RangeFieldType factor[3];
+public:
+  typedef typename FunctionSpaceType :: DomainType DomainType;
+  typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+  typedef typename FunctionSpaceType :: RangeType RangeType;
+  typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+  
+private:
+  RangeFieldType factor[ 10 ];
   
 public:
-  LagrangeBaseFunction ( int baseNum ) 
-    : BaseFunctionInterface< FunctionSpaceType >() 
+  LagrangeBaseFunction ( int dof )
+    : BaseFunctionInterface< FunctionSpaceType >()
   {
-      DUNE_THROW(NotImplemented, "Second order Lagrange elements for tetrahedra are not implemented yet!");
+    switch( dof ) {
+      case 0: // 2 (x + y + z)^2 - 3 (x + y + z) + 1
+        factor[ 0 ] = 1;  // 1
+        factor[ 1 ] = -3; // x
+        factor[ 2 ] = -3; // y
+        factor[ 3 ] = -3; // z
+        factor[ 4 ] = 2;  // x^2
+        factor[ 5 ] = 2;  // y^2
+        factor[ 6 ] = 2;  // z^2
+        factor[ 7 ] = 4;  // x y
+        factor[ 8 ] = 4;  // x z
+        factor[ 9 ] = 4;  // y z
+        break;
+
+      case 1: // 2 x^2 - x
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = -1; // x
+        factor[ 2 ] = 0;  // y
+        factor[ 3 ] = 0;  // z
+        factor[ 4 ] = 2;  // x^2
+        factor[ 5 ] = 0;  // y^2
+        factor[ 6 ] = 0;  // z^2
+        factor[ 7 ] = 0;  // x y
+        factor[ 8 ] = 0;  // x z
+        factor[ 9 ] = 0;  // y z
+        break;
+
+      case 2: // 2 y^2 - y
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 0;  // x
+        factor[ 2 ] = -1; // y
+        factor[ 3 ] = 0;  // z
+        factor[ 4 ] = 0;  // x^2
+        factor[ 5 ] = 2;  // y^2
+        factor[ 6 ] = 0;  // z^2
+        factor[ 7 ] = 0;  // x y
+        factor[ 8 ] = 0;  // x z
+        factor[ 9 ] = 0;  // y z
+        break;
+        
+      case 3: // 2 z^2 - z
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 0;  // x
+        factor[ 2 ] = 0;  // y
+        factor[ 3 ] = -1; // z
+        factor[ 4 ] = 0;  // x^2
+        factor[ 5 ] = 0;  // y^2
+        factor[ 6 ] = 2;  // z^2
+        factor[ 7 ] = 0;  // x y
+        factor[ 8 ] = 0;  // x z
+        factor[ 9 ] = 0;  // y z
+        break;
+
+      case 4: // 4 x (1 - x - y - z)
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 4;  // x
+        factor[ 2 ] = 0;  // y
+        factor[ 3 ] = 0;  // z
+        factor[ 4 ] = -4; // x^2
+        factor[ 5 ] = 0;  // y^2
+        factor[ 6 ] = 0;  // z^2
+        factor[ 7 ] = -4; // x y
+        factor[ 8 ] = -4; // x z
+        factor[ 9 ] = 0;  // y z
+        break;
+        
+      case 5: // 4 x y
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 0;  // x
+        factor[ 2 ] = 0;  // y
+        factor[ 3 ] = 0;  // z
+        factor[ 4 ] = 0;  // x^2
+        factor[ 5 ] = 0;  // y^2
+        factor[ 6 ] = 0;  // z^2
+        factor[ 7 ] = 4;  // x y
+        factor[ 8 ] = 0;  // x z
+        factor[ 9 ] = 0;  // y z
+        break;
+       
+      case 6: // 4 y (1 - x - y - z)
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 0;  // x
+        factor[ 2 ] = 4;  // y
+        factor[ 3 ] = 0;  // z
+        factor[ 4 ] = 0;  // x^2
+        factor[ 5 ] = -4; // y^2
+        factor[ 6 ] = 0;  // z^2
+        factor[ 7 ] = -4; // x y
+        factor[ 8 ] = 0;  // x z
+        factor[ 9 ] = -4; // y z
+        break;
+
+      case 7: // 4 z (1 - x - y - z)
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 0;  // x
+        factor[ 2 ] = 0;  // y
+        factor[ 3 ] = 4;  // z
+        factor[ 4 ] = 0;  // x^2
+        factor[ 5 ] = 0;  // y^2
+        factor[ 6 ] = -4; // z^2
+        factor[ 7 ] = 0;  // x y
+        factor[ 8 ] = -4; // x z
+        factor[ 9 ] = -4; // y z
+        break;
+
+      case 8: // 4 x z
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 0;  // x
+        factor[ 2 ] = 0;  // y
+        factor[ 3 ] = 0;  // z
+        factor[ 4 ] = 0;  // x^2
+        factor[ 5 ] = 0;  // y^2
+        factor[ 6 ] = 0;  // z^2
+        factor[ 7 ] = 0;  // x y
+        factor[ 8 ] = 4;  // x z
+        factor[ 9 ] = 0;  // y z
+        break;
+ 
+      case 9: // 4 y z
+        factor[ 0 ] = 0;  // 1
+        factor[ 1 ] = 0;  // x
+        factor[ 2 ] = 0;  // y
+        factor[ 3 ] = 0;  // z
+        factor[ 4 ] = 0;  // x^2
+        factor[ 5 ] = 0;  // y^2
+        factor[ 6 ] = 0;  // z^2
+        factor[ 7 ] = 0;  // x y
+        factor[ 8 ] = 0;  // x z
+        factor[ 9 ] = 4;  // y z
+        break;
+
+      default:
+        DUNE_THROW( RangeError, "Invalid local DoF number." );
+    }
   }  
 
   //! evaluate the function
-    virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
-                          const DomainType & x, RangeType & phi) const 
-    {}
+  virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable, 
+                          const DomainType &x,
+                          RangeType &phi
+                        ) const 
+  {
+    phi = factor[ 0 ];
+    for( int i = 0; i < 3; ++i ) {
+        const DomainFieldType &xi = x[ i ];
+        phi += (factor[ i + 4 ] * xi + factor[ i + 1 ]) * xi;
+    }
+    phi += factor[ 7 ] * x[ 0 ] * x[ 1 ];
+    phi += factor[ 8 ] * x[ 0 ] * x[ 2 ];
+    phi += factor[ 9 ] * x[ 1 ] * x[ 2 ];
+  }
 
   //! evaluate first derivative 
-    virtual void evaluate ( const FieldVector<deriType, 1> &diffVariable, 
-                          const DomainType & x, RangeType & phi) const 
-    {}
+  virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable, 
+                          const DomainType &x,
+                          RangeType &phi
+                        ) const 
+  {
+    const DomainFieldType &x1 = x[ 0 ];
+    const DomainFieldType &x2 = x[ 1 ];
+    const DomainFieldType &x3 = x[ 2 ];
+ 
+    switch( diffVariable[ 0 ] ) {
+      case 0:
+        phi = factor[ 1 ];
+        phi += 2 * factor[ 4 ] * x1 + factor[ 7 ] * x2 + factor[ 8 ] * x3;
+        break;
 
-    //! evaluate second derivative 
-    virtual void evaluate ( const FieldVector<deriType, 2> &diffVariable, 
-                            const DomainType & x, RangeType & phi) const 
-    {}
+      case 1:
+        phi = factor[ 2 ];
+        phi += 2 * factor[ 5 ] * x2 + factor[ 7 ] * x1 + factor[ 9 ] * x3;
+        break;
 
+      case 2:
+        phi = factor[ 3 ];
+        phi += 2 * factor[ 6 ] * x3 + factor[ 8 ] * x1 + factor[ 9 ] * x2;
+        break;
+
+      default:
+        DUNE_THROW( RangeError, "Invalid derivative requested." );
+    }
+  }
+
+  //! evaluate second derivative 
+  virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable, 
+                          const DomainType &x,
+                          RangeType &phi
+                        ) const 
+  {
+    assert( (diffVariable[ 0 ] >= 0) && (diffVariable[ 0 ] < 3) );
+    assert( (diffVariable[ 1 ] >= 0) && (diffVariable[ 1 ] < 3) );
+
+    if( diffVariable[ 0 ] == diffVariable[ 1 ] )
+        phi = 2 * factor[ 4 + diffVariable[ 0 ] ];
+    else
+        phi = factor[ 6 + diffVariable[ 0 ] + diffVariable[ 1 ] ];
+  }
 };
 
 

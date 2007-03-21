@@ -152,7 +152,56 @@ namespace Dune {
   };
 
 
+  
+  /** \brief Actual implementation of LagrangeQuadrature for Geometry type
+   *  Tetrahedron
+   */
+  template< class ct >
+  class LagrangeTetrahedronQuadrature : public QuadratureImp< ct, 3 >
+  {
+  public:
+    //! Remember the field type
+    typedef ct ctype;
+    
+    //! Type for coordinates
+    typedef FieldVector< ctype, 3 > CoordinateType;
 
+  private:
+    typedef LagrangeTetrahedronQuadrature< ctype > ThisType;
+
+    const int order_;
+    
+  public:
+    LagrangeTetrahedronQuadrature( int order, size_t id );
+
+    virtual GeometryType geometry() const
+    {
+      return GeometryType( GeometryType :: simplex, 3 );
+    }
+    
+    /** \brief Order of the quadrature
+     * 
+     *  Returns the order of the associated Lagrange polynom (as requested in
+     *  the constructor).
+     */
+    virtual int order() const
+    {
+      return order_;
+    }
+
+    /** \brief Maximal order for this quadrature
+     * 
+     * Returns the maximal order, this quadrature can be constructed with. For
+     * now, this is 2 (i.e. quadratic polynoms).
+     */
+    static size_t maxOrder()
+    {
+      return 2;
+    }
+  };
+
+
+  
   //! Traits for Lagrange quadratures
   template< class ct, int dim >
   struct LagrangeQuadratureTraits
@@ -183,17 +232,15 @@ namespace Dune {
     typedef LagrangeTriangleQuadrature< ct >      SimplexQuadratureType;
   };
 
-  /*
   template< class ct >
   struct LagrangeQuadratureTraits< ct, 3 >
   {
-    typedef CubeQuadrature< ct, 3 >    CubeQuadratureType;
-    typedef SimplexQuadrature< ct, 3 > SimplexQuadratureType;
+    typedef CubeQuadrature< ct, 3 >             CubeQuadratureType;
+    typedef LagrangeTetrahedronQuadrature< ct > SimplexQuadratureType;
 
-    typedef PrismQuadrature< ct >      PrismQuadratureType;
-    typedef PyramidQuadrature< ct >    PyramidQuadratureType;
+    typedef PrismQuadrature< ct >               PrismQuadratureType;
+    typedef PyramidQuadrature< ct >             PyramidQuadratureType;
   };
-  */
 
 
 

@@ -8,7 +8,8 @@ using namespace Dune;
 
 int main() 
 {
-  std::string gridFile("../../test/2dgrid.dgf");
+  std :: string gridFile( "../../test/2dgrid.dgf" );
+//  std :: string gridFile( "../../../examples/poisson/3dgrid.al" );
   
   Suite suite("Basefunction tests");
   suite.addTest(new LagrangeBase_Test(gridFile));

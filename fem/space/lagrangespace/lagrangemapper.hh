@@ -222,10 +222,10 @@ public:
 
 
 
-//! LagrangeMapper for quadratic Lagrange elements 
+//! LagrangeMapper for quadratic Lagrange elements with dimrange = 1
 template < class IndexSetImp, int dimrange >
 class LagrangeMapper< IndexSetImp, 2, dimrange >
-: public DofMapperDefault < LagrangeMapper < IndexSetImp, 2, dimrange > > 
+: public DofMapperDefault < LagrangeMapper < IndexSetImp, 2, 1 > > 
 {
 public:
   typedef IndexSetImp IndexSetType;
@@ -237,7 +237,7 @@ public:
   int numVertices_, numEdges_;
 
 private:
-  typedef LagrangeMapper< IndexSetImp, 2, dimrange > ThisType;
+  typedef LagrangeMapper< IndexSetImp, 2, 1 > ThisType;
   
 public:
   //! Constructor 
