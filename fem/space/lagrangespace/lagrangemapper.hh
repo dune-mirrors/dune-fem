@@ -220,6 +220,109 @@ public:
   bool needsCompress () const { return indexSet_.needsCompress(); }
 };
 
+
+
+//! LagrangeMapper for quadratic Lagrange elements 
+template < class IndexSetImp, int dimrange >
+class LagrangeMapper< IndexSetImp, 2, dimrange >
+: public DofMapperDefault < LagrangeMapper < IndexSetImp, 2, dimrange > > 
+{
+public:
+  typedef IndexSetImp IndexSetType;
+  
+  enum { nCodims = IndexSetType :: ncodim };
+  
+  int numLocalDofs_;
+  const IndexSetType &indexSet_;
+  int numVertices_, numEdges_;
+
+private:
+  typedef LagrangeMapper< IndexSetImp, 2, dimrange > ThisType;
+  
+public:
+  //! Constructor 
+  LagrangeMapper ( const IndexSetType &indexSet, int numLocalDofs ) 
+    : numLocalDofs_( numLocalDofs ), indexSet_( indexSet ), 
+      numVertices_( indexSet_.size( nCodims - 1 ) ), numEdges_( indexSet_.size( nCodims - 2 ) )
+  {
+  }
+
+  virtual ~LagrangeMapper ()
+  {
+  }
+
+  //! return size of space = number of vertices + number of edges
+  int size () const
+  {
+    return numVertices_ + numEdges_;
+  }
+
+  //! Map Entity (of codimension 0) and local Dof number to global Dof number
+  //! for Lagrange with polOrd = 2
+  template < class EntityType >
+  int mapToGlobal ( EntityType &entity, int localDof ) const
+  {
+    assert( (int)EntityType :: codimension == 0 );
+
+    // Get number of vertices for the given entity
+    const int nVertices = entity.template count< nCodims - 1 >();
+    if( localDof < nVertices )
+      return indexSet_.template index< nCodims - 1 >( entity, localDof );
+    else
+      return indexSet_.template index< nCodims - 2 >( entity, localDof - nVertices ) + numVertices_;
+  }
+
+  //! return old index, for dof manager only 
+  int oldIndex ( int hole ) const
+  {
+    assert( false );
+    return indexSet_.numberOfHoles( nCodims - 1 );
+  }
+
+  //! return new index, for dof manager only 
+  int newIndex ( int hole ) const
+  {
+    assert( false );
+    return indexSet_.newIndex( hole, nCodims - 1);
+  }
+
+  //! return number of holes  
+  int numberOfHoles () const
+  {
+    assert( false );
+    return indexSet_.numberOfHoles( nCodims - 1 );
+  }
+
+  // is called once and calcs the insertion points too
+  int additionalSizeEstimate () const 
+  {
+    assert( false );
+    return indexSet_.additionalSizeEstimate();
+  }
+
+  //! not used at the moment 
+  void calcInsertPoints () {}; 
+
+  //! return number of dofs per entity, i.e. number of base funcitons per entity
+  int numDofs () const
+  {
+    return numLocalDofs_;
+  }
+
+  //! return newSize of functions space 
+  int newSize() const 
+  {
+    return this->size();
+  }
+
+  //! return the sets needsCompress 
+  bool needsCompress () const {
+    return indexSet_.needsCompress();
+  }
+};
+
+
+
 //*****************************************************************
 //
 // specialisation for polynom order 0 and arbitray dimrange 

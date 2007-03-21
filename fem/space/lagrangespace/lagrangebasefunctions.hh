@@ -705,6 +705,12 @@ struct LagrangeDefinition< GeometryIdentifier::Quadrilateral , polOrd, dimrange 
     enum { numOfBaseFct = dimrange * (polOrd+1) * (polOrd+1) };
 };
 
+template< int dimrange >
+struct LagrangeDefinition< GeometryIdentifier :: Quadrilateral, 2, dimrange >
+{
+  enum { numOfBaseFct = dimrange * 8 };
+};
+
 //! Lagrange Definition for Tetrahedrons  
 template <int polOrd , int dimrange > 
 struct LagrangeDefinition< GeometryIdentifier::Tetrahedron , polOrd, dimrange > 
