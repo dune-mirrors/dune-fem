@@ -147,28 +147,31 @@ void deleteAllObjects()
   return ;
 }
 
-void readDataInfo(std::string path, DATAINFO * dinf, int k, bool parallel = false) 
+void readDataInfo(std::string path, DATAINFO * dinf, 
+    const int dataSet, const int timestamp, const int k) 
 {
   char dummy[2048];
   std::cout << "Reading data base for " << dinf->name << "! \n";
-  std::stringstream dataname; 
-  dataname << path;
-  if(parallel) 
-  { 
-    dataname << "_0";
-  }
-  dataname << "/d"; 
-  dataname << dinf->name;
-  dataname << "_" << k;
+  std::string dataname = 
+    IOTupleBase::dataName( 
+      IOInterface::createRecoverPath(path,0, dinf->name, timestamp),
+      dinf->name);
 
-  std::cerr << "reading dofs from: " << dataname.str() << std::endl;
+  {
+    std::stringstream dummy; 
+    dummy << dataSet; 
+    dataname += "_";
+    dataname += dummy.str();
+  }
+  
+  std::cerr << "reading dofs from: " << dataname << std::endl;
 
   int fakedata = 1;
-  bool fake = readParameter(dataname.str(),"Fake_data",fakedata);
+  bool fake = readParameter(dataname,"Fake_data",fakedata);
   std::cerr << "FAKE: " << fake << " " << fakedata << std::endl;
   if( (!fake) || (!fakedata) )
   {
-    readParameter(dataname.str(),"DataBase",dummy);
+    readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
     dinf->base_name = basename->c_str();
@@ -180,17 +183,17 @@ void readDataInfo(std::string path, DATAINFO * dinf, int k, bool parallel = fals
   }
   else
   {
-    readParameter(dataname.str(),"DataBase",dummy);
+    readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
     dinf->base_name = basename->c_str();
 
     int dimrange;
-    readParameter(dataname.str(),"Dim_Range",dimrange);
+    readParameter(dataname,"Dim_Range",dimrange);
     if(dimrange <= 0) dataDispErrorExit("wrong dimrange");
 
     int dimVal = 1;
-    readParameter(dataname.str(),"Dim_Domain",dimVal);
+    readParameter(dataname,"Dim_Domain",dimVal);
     if((dimVal <= 0) || (dimVal > dimrange)) dataDispErrorExit("wrong DimVal");
     dinf->dimVal = dimVal;
 
@@ -200,7 +203,7 @@ void readDataInfo(std::string path, DATAINFO * dinf, int k, bool parallel = fals
       sprintf(dummy,"%d",k);
       std::string compkey ("comp_");
       compkey += dummy;
-      bool couldread = readParameter(dataname.str(),compkey.c_str(),comp[k]);
+      bool couldread = readParameter(dataname,compkey.c_str(),comp[k]);
       if(!couldread) dataDispErrorExit("wrong " + compkey);
     }
     dinf->comp = comp;

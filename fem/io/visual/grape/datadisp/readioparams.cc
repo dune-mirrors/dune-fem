@@ -189,8 +189,7 @@ int readParameterList (int argc, char **argv)
     while ( dinf ) 
     {
       if( path == "") path = "./";
-      // true means only have parallel data 
-      readDataInfo(path,dinf,df, true);
+      readDataInfo(path,dinf, k, i_start, df);
       assert(dinf->comp);
       dinf = dinf->next;
       ++df;
