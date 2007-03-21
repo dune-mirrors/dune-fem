@@ -65,7 +65,6 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
     printf("timestep = %d | last timestep = %d | stepsize = %d\n", ntime, i_end, i_delta);
     {
       int anzProcs = numProcs;
-      if(numProcs > 1) anzProcs--;
       
       for(int proc=0; proc<anzProcs; proc++)
       {

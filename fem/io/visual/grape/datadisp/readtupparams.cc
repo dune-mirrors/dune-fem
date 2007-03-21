@@ -15,7 +15,6 @@ int readParameterList (int argc, char **argv)
   int    i_delta = 1;
   const  char *path = 0;
   const  char *replay = 0;
-  bool   time_bar = false;
   int    parallel = 1;
   bool   paravis = false;
   
@@ -100,11 +99,6 @@ int readParameterList (int argc, char **argv)
       n++;
       i += 2;
     }
-    else if (!strcmp(argv[i], "-b"))
-    {
-      time_bar = true;
-      i += 1;
-    }
     else if (!strcmp(argv[i], "-f"))
     {
       info[n].fix_mesh = 1;
@@ -114,7 +108,7 @@ int readParameterList (int argc, char **argv)
     {
       if (i+1 == argc)
         dataDispErrorExit("usage: -pg `number of procs'\n");
-      parallel += atoi(argv[i+1]);
+      parallel = atoi(argv[i+1]);
       i += 2;
       paravis = true;
     }
@@ -171,7 +165,7 @@ int readParameterList (int argc, char **argv)
     }
   }
   
-  timeSceneInit(info, n , parallel , time_bar);
+  timeSceneInit(info, n , parallel );
   readData(info, path,i_start,i_end,i_delta,n,timestep,parallel);
   
 

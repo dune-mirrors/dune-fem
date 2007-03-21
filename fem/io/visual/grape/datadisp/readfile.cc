@@ -62,7 +62,6 @@ int readParameterFile (int argc, char **argv)
   INFO * info = 0;
   int    n = 0, n_info = 10;
 
-  bool   time_bar = false;
   REAL   timestep = 1.0e-3;
 
   info = (INFO *) malloc(n_info*sizeof(INFO));
@@ -96,7 +95,7 @@ int readParameterFile (int argc, char **argv)
     info[n].datinf = dinf;
   }
 
-  timeSceneInit(info, n , parallel , time_bar);
+  timeSceneInit(info, n , parallel);
   readData(info, path.c_str(),i_start,i_end,i_delta,n,timestep,parallel);
   
   // run grape 

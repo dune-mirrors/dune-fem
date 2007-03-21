@@ -183,7 +183,6 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
     if (!info[n].fix_mesh)
     {
       int anzProcs = numProcs;
-      if(numProcs > 1) anzProcs--;
       
       for(int proc=0; proc<anzProcs; proc++)
       {
@@ -196,10 +195,6 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
           sprintf(procstr,"%d",proc);
           newpath += "_"; 
           newpath += procstr; 
-        }
-        else
-        {
-          //newpath += "_-1";
         }
 
       	std::cout << "NewPath = "<<newpath << std::endl;
