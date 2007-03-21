@@ -197,7 +197,10 @@ public:
     assert( (diffVariable[ 0 ] >= 0) && (diffVariable[ 0 ] < 2) );
     assert( (diffVariable[ 1 ] >= 0) && (diffVariable[ 1 ] < 2) );
 
-    phi = factor[ 3 + diffVariable[ 0 ] + diffVariable[ 1 ] ];
+    const deriType d = diffVariable[ 0 ] + diffVariable[ 1 ];
+    phi = factor[ 3 + d ];
+    if( d != 1 )
+        phi *= 2;
   }
 };
 
