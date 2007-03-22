@@ -428,6 +428,13 @@ readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timest
     GrapeIOStringType tr (typeIdentifier<RangeFieldType>());
     GrapeIOStringType td (typeIdentifier<DomainFieldType>());
 
+    std::ifstream check ( filename.c_str() );
+    if( !check )
+    {
+      std::cerr << "WARNING: Couldn't open file `"<< filename << "'! \n";
+      return false;
+    }
+
     readParameter(filename,"DomainField",d,false);
     readParameter(filename,"RangeField",r,false);
     readParameter(filename,"Dim_Domain",n,false);
