@@ -31,6 +31,18 @@ struct IOTupleCaller
     return df;
   }
   
+  static void removeData(DiscFuncType * df)
+  {
+    typedef typename DiscFuncType::DiscreteFunctionSpaceType SpaceType;
+    typedef typename SpaceType::GridPartType GridPartType;
+    
+    const GridPartType* gridPart = &(df->space().gridPart());
+    const SpaceType* space = &(df->space());
+    delete df;
+    delete space;
+    delete gridPart;
+  }
+  
   template <class DataIO>
   static void restore(DiscFuncType* df, 
                       DataIO& dataio,std::string name,int n) 
@@ -58,16 +70,14 @@ struct IOTupleCaller
       
     dataio.writeData(df, xdr, dataname.str().c_str(), n);
   }
+  
   template <class Disp,class DINFO>
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
 			   DiscFuncType& df) 
   {
-    // if comp wasn't set, data set is not valid 
-    if(dinf->comp) 
-    {
-      std::cout << "adding to display " << dinf->name << std::endl;
-      disp.addData(df,dinf,time);
-    }
+    assert( dinf->comp );
+    std::cout << "adding to display " << dinf->name << std::endl;
+    disp.addData(df,dinf,time);
   }
   
   template <class Disp>
@@ -118,6 +128,23 @@ struct IOTupleHelper
     NextType::addToDisplay(disp,dinf->next,time,tup.second());
     IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
   }
+  template <class Disp,class DINFO>
+  static void addToDisplayOrRemove(Disp& disp,const DINFO* dinf,double time,
+			   ThisType& tup) 
+  {
+    NextType::addToDisplayOrRemove(disp,dinf->next,time,tup.second());
+
+    // if comp is zero data set is not valid 
+    if( dinf->comp )
+    {
+      IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
+    }
+    else 
+    {
+      IOTupleCaller<N,T1>::removeData(tup.first());
+      tup = ThisType(0,tup.second());
+    }
+  }
   template <class Disp>
   static void addToDisplay(Disp& disp, ThisType& tup) 
   {
@@ -157,6 +184,23 @@ struct IOTupleHelper<T1,Nil,N>
 			   ThisType& tup) {
     IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
   }
+
+  template <class Disp,class DINFO>
+  static void addToDisplayOrRemove(
+      Disp& disp,const DINFO* dinf,double time, ThisType& tup) 
+  {
+    // if comp is zero data set is not valid 
+    if( dinf->comp )
+    {
+      IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
+    }
+    else 
+    {
+      IOTupleCaller<N,T1>::removeData(tup.first());
+      tup = ThisType(0,Nil());
+    }
+  }
+  
   template <class Disp>
   static void addToDisplay(Disp& disp,ThisType& tup) 
   {
@@ -315,6 +359,13 @@ struct IOTuple : public IOTupleBase
 			   Pair<T1*,T2>& tup) 
   {
     IOTupleHelper<T1,T2,0>::addToDisplay(disp,dinf,time,tup);
+  }
+
+  template <class Disp,class DINFO>
+  static void addToDisplayOrRemove(Disp& disp,const DINFO* dinf,double time,
+			   Pair<T1*,T2>& tup) 
+  {
+    IOTupleHelper<T1,T2,0>::addToDisplayOrRemove(disp,dinf,time,tup);
   }
 
   template <class Disp>
