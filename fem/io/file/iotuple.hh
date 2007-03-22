@@ -11,6 +11,7 @@
 //- Dune fem includes 
 #include <dune/fem/pass/utility.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/io/file/iolock.hh>
 
 namespace Dune {
 
@@ -38,14 +39,23 @@ struct IOTupleCaller
     dataname << name << "_" << N; 
     std::cout << "    Dataset from " << dataname.str() << std::endl;
     assert( df );
+    
+    // check if lock file exists, and if exit 
+    FileIOCheckError check( dataname.str() );
+      
     dataio.readData(*df, dataname.str().c_str(), n);
   }
   
   template <class DataIO>
   static void output(DataIO& dataio,std::string name,int n,
-		     const DiscFuncType& df) {
+		     const DiscFuncType& df) 
+  {
     std::stringstream dataname;
     dataname << name << "_" << N;
+    
+    // create lock file which is removed after sucessful backup 
+    FileIOLock lock( dataname.str() );
+      
     dataio.writeData(df, xdr, dataname.str().c_str(), n);
   }
   template <class Disp,class DINFO>
@@ -193,8 +203,12 @@ struct IOTuple : public IOTupleBase
 			        std::string path,
 			        std::string name) 
   {
+    std::string gname ( gridName(path,name) );
+    // check if lock file exists, and if exit 
+    FileIOCheckError check( gname );
+      
     // grid is created inside of restore grid method
-    return dataio.restoreGrid( gridName(path,name) , t, n); 
+    return dataio.restoreGrid( gname, t, n); 
   }
   
   template <class GridType>
@@ -271,8 +285,14 @@ struct IOTuple : public IOTupleBase
       std::cout << "Writing grid to " << gname << std::endl;
     }
 
-    // write grid 
-    dataio.writeGrid(grid, xdr, gname.c_str(), t, n);
+    // extra braces to destroy lock before data is written 
+    {
+      // create lock file which is removed after sucessful backup 
+      FileIOLock lock( gname );
+      
+      // write grid 
+      dataio.writeGrid(grid, xdr, gname.c_str(), t, n);
+    }
 
     std::string dname( dataName(path, name ) );
 
