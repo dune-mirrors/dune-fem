@@ -24,7 +24,7 @@ namespace Dune {
       time_(startTime),
       dt_(-1.0),
       dtEstimate_(0.0),
-      cfl_(1.0),
+      cfl_(cfl),
       timeStep_(0)
     {
       resetTimeStepEstimate();
