@@ -148,7 +148,7 @@ void deleteAllObjects()
 }
 
 void readDataInfo(std::string path, DATAINFO * dinf, 
-    const int dataSet, const int timestamp, const int k) 
+    const int timestamp, const int k) 
 {
   char dummy[2048];
   std::cout << "Reading data base for " << dinf->name << "! \n";
@@ -159,7 +159,7 @@ void readDataInfo(std::string path, DATAINFO * dinf,
 
   {
     std::stringstream dummy; 
-    dummy << dataSet; 
+    dummy << k; 
     dataname += "_";
     dataname += dummy.str();
   }
