@@ -44,7 +44,9 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
   
   GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
   dispStack.push(disp);
-  IOTuple<GR_DiscFuncType>::addToDisplay(*disp,dinf,time,*tup);
+  
+  // discrete functions of non-valid data are removed 
+  IOTuple<GR_DiscFuncType>::addToDisplayOrRemove(*disp,dinf,time,*tup);
 
   addError(*disp,*grid,time,*(tup->first()));
   return disp;
