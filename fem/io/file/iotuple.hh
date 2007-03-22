@@ -42,7 +42,7 @@ struct IOTupleCaller
     
     // check if lock file exists, and if exit 
     FileIOCheckError check( dataname.str() );
-      
+
     dataio.readData(*df, dataname.str().c_str(), n);
   }
   
@@ -60,9 +60,14 @@ struct IOTupleCaller
   }
   template <class Disp,class DINFO>
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
-			   DiscFuncType& df) {
-    std::cout << "adding to display " << df.name() << std::endl;
-    disp.addData(df,dinf,time);
+			   DiscFuncType& df) 
+  {
+    // if comp wasn't set, data set is not valid 
+    if(dinf->comp) 
+    {
+      std::cout << "adding to display " << dinf->name << std::endl;
+      disp.addData(df,dinf,time);
+    }
   }
   
   template <class Disp>
