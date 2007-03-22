@@ -147,10 +147,9 @@ void deleteAllObjects()
   return ;
 }
 
-void readDataInfo(std::string path, DATAINFO * dinf, 
-    const int timestamp, const int k) 
+bool readDataInfo(std::string path, DATAINFO * dinf, 
+    const int timestamp, const int dataSet) 
 {
-  char dummy[2048];
   std::cout << "Reading data base for " << dinf->name << "! \n";
   std::string dataname = 
     IOTupleBase::dataName( 
@@ -159,18 +158,29 @@ void readDataInfo(std::string path, DATAINFO * dinf,
 
   {
     std::stringstream dummy; 
-    dummy << k; 
+    dummy << dataSet; 
     dataname += "_";
     dataname += dummy.str();
   }
   
   std::cerr << "reading dofs from: " << dataname << std::endl;
 
+  std::ifstream check ( dataname.c_str() );
+  if( ! check ) 
+  {
+    std::cerr << "Removing non-valid data set `" << dataname << "'\n";
+    // comp = 0 marks non-valid data set 
+    dinf->comp = 0;
+    return false;
+  }
+  
   int fakedata = 1;
   bool fake = readParameter(dataname,"Fake_data",fakedata);
+  
   std::cerr << "FAKE: " << fake << " " << fakedata << std::endl;
   if( (!fake) || (!fakedata) )
   {
+    std::string dummy; 
     readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
@@ -178,11 +188,14 @@ void readDataInfo(std::string path, DATAINFO * dinf,
     dinf->name = basename->c_str();
     dinf->dimVal = 1;
     if (!dinf->comp)
-        dinf->comp = new int [1];
+    {
+       dinf->comp = new int [1];
+    }
     dinf->comp[0] = 0;
   }
   else
   {
+    std::string dummy; 
     readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
@@ -200,15 +213,18 @@ void readDataInfo(std::string path, DATAINFO * dinf,
     int * comp = new int [dimVal];
     for(int k=0; k<dimVal; k++)
     {
-      sprintf(dummy,"%d",k);
+      std::stringstream tmpDummy; 
+      tmpDummy << k; 
+      
       std::string compkey ("comp_");
-      compkey += dummy;
+      compkey += tmpDummy.str();
+      
       bool couldread = readParameter(dataname,compkey.c_str(),comp[k]);
       if(!couldread) dataDispErrorExit("wrong " + compkey);
     }
     dinf->comp = comp;
   }
-  return ;
+  return true;
 }
 
 #endif

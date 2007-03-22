@@ -189,8 +189,7 @@ int readParameterList (int argc, char **argv)
     while ( dinf ) 
     {
       if( path == "") path = "./";
-      readDataInfo(path,dinf, i_start, df);
-      assert(dinf->comp);
+      readDataInfo(path, dinf, i_start, df);
       dinf = dinf->next;
       ++df;
     }
