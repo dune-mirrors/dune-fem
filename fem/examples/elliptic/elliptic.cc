@@ -81,8 +81,14 @@
 **************************************************************************/
 
 // select problem Type by uncommenting one of the two following
-//#define POISSON
-#define ELLIPTIC
+#define POISSON
+//#define ELLIPTIC
+
+// define SKIP_GRAPE, if you don't want visualization.
+//#define SKIP_GRAPE
+
+// Select the polynomial order of the calculation.
+enum { polynomialOrder = 1 };
 
 // select, whether Kronecker-Treatment of Matrix should be performed,
 // i.e. kronecker rows are extended to kronecker columns. For symmetric 
@@ -126,9 +132,6 @@ using namespace Dune;
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/referenceelements.hh>
 
-// if no visualization is wanted, uncomment this line:
-//#define SKIP_GRAPE
-
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
@@ -150,18 +153,21 @@ using namespace Dune;
 #include <dune/fem/operator/elementintegrators.hh>
 #include <dune/fem/operator/elementintegratortraits.hh>
 #include "ellipticmodel.hh"
+#include "elementintegratortraits.hh"
 
 //! definition of model class, see ellipticmodel.hh
 
+typedef EllipticElementIntegratorTraits< polynomialOrder > IntegratorTraits;
+
 #ifdef POISSON
-typedef PoissonModel EllipticModelType;
+  typedef PoissonModel< IntegratorTraits > EllipticModelType;
 #endif
 
 #ifdef ELLIPTIC
 #if PDIM==2
-typedef Elliptic2dModel EllipticModelType;
+  typedef Elliptic2dModel< IntegratorTraits > EllipticModelType;
 #elif PDIM==3
-typedef Elliptic3dModel EllipticModelType;
+  typedef Elliptic3dModel< IntegratorTraits > EllipticModelType;
 #endif
 
 #endif // if ELLIPTIC
@@ -169,22 +175,21 @@ typedef Elliptic3dModel EllipticModelType;
 
 //! definition of exact solution, see ellipticmodel.hh
 #ifdef POISSON
-typedef PoissonExactSolution ExactSolutionType;
+  typedef PoissonExactSolution< IntegratorTraits > ExactSolutionType;
 #endif
 
 #ifdef ELLIPTIC
 #if PDIM == 2
-  typedef Elliptic2dExactSolution ExactSolutionType;
+  typedef Elliptic2dExactSolution< IntegratorTraits > ExactSolutionType;
 #elif PDIM == 3
-typedef Elliptic3dExactSolution ExactSolutionType;
+  typedef Elliptic3dExactSolution< IntegratorTraits > ExactSolutionType;
 #endif
 #endif // elliptic
 
 //! definition of traits class, which already defines various 
 //! basic settings such as gridparts, etc.
 //! if you want another settings, simply generate your own Traits class
-typedef EllipticModelType::TraitsType 
-        ElementIntegratorTraitsType;
+typedef EllipticModelType :: TraitsType ElementIntegratorTraitsType;
 
 //! the grid part we are using 
 //typedef LevelGridPart < GridType > GridPartType;
@@ -368,7 +373,8 @@ double algorithm (const char * filename , int maxlevel, int turn )
    std::cout << "initialized rhs assembler\n";
    
    // initialize Operator  
-   const int numNonZero = 27;   
+//   const int numNonZero = 27;   
+   const int numNonZero = 100;
    EllipticOperatorType elliptOp 
         ( elMatInt , 
           EllipticOperatorType::ASSEMBLED,
@@ -377,7 +383,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
 
 // checkConsistency only required for new SparseMatrix
    assert(elliptOp.systemMatrix().checkConsistency());
-   std::cout << "\n";
+   std::cout << "System matrix passed consistency check.\n";
 
    // assemble matrix and perform dirichlet-row killing
    elliptOp.assemble();

@@ -36,19 +36,22 @@ namespace Dune
  */
 /*======================================================================*/
 
+template< class TraitsImp = DefaultElementIntegratorTraits >
 class PoissonModel
 {
 public:  
-  typedef DefaultElementIntegratorTraits TraitsType;
-  typedef TraitsType::EntityType EntityType;
-  typedef TraitsType::ElementQuadratureType ElementQuadratureType;
-  typedef TraitsType::IntersectionQuadratureType 
-                   IntersectionQuadratureType;
-  typedef TraitsType::RangeType RangeType;
-  typedef TraitsType::DomainType DomainType;
-  typedef TraitsType::JacobianRangeType JacobianRangeType;
-  typedef TraitsType::DiscreteFunctionSpaceType 
-                   DiscreteFunctionSpaceType;
+  typedef TraitsImp TraitsType;
+  
+  typedef typename TraitsType :: EntityType EntityType;
+  typedef typename TraitsType :: ElementQuadratureType ElementQuadratureType;
+  typedef typename TraitsType :: IntersectionQuadratureType 
+    IntersectionQuadratureType;
+  typedef typename TraitsType :: RangeType RangeType;
+  typedef typename TraitsType :: DomainType DomainType;
+  typedef typename TraitsType :: JacobianRangeType JacobianRangeType;
+  typedef typename TraitsType :: DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
+  typedef typename TraitsType :: BoundaryType BoundaryType;
   
 //! constructor with functionspace argument such that the space and the 
 //! grid is available
@@ -66,9 +69,10 @@ public:
         }   
 
 //! return boundary type of a boundary point p used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline TraitsType::BoundaryType boundaryType(EntityType& en, 
-                                               QuadratureType& quad, int p)
+  template< class EntityType, class QuadratureType >  
+  inline BoundaryType boundaryType( EntityType& en,
+                                    QuadratureType& quad,
+                                    int p )
         {
 #ifdef FORCENEUMANN
 #warning "POISSONMODEL HAS ONLY NEUMANN-BOUNDARY!"
@@ -123,6 +127,7 @@ public:
           ret[0] = 0.0;
         }
 
+  /*
 //! determine source (i.e. value of the function f) in a domain point used in 
 //! a quadrature. Here simply f(x,y) = 2 (x(1-x) + y(y-x))
   template <class EntityType, class QuadratureType>  
@@ -132,6 +137,23 @@ public:
           const DomainType& glob = en.geometry().global(quad.point(p));          
           ret[0] = 2*(glob[0]*(1-glob[0]) + glob[1]*(1-glob[1]));
         }
+   */
+
+  //! Determine source (i.e. value of the function f) in a quadrature point.
+  template< class EntityType, class QuadratureType >
+  inline void source( const EntityType &entity,
+                      const QuadratureType &quadrature,
+                      int i,
+                      RangeType &ret ) const
+  {
+    const int dimension = DomainType :: dimension;
+    
+    const DomainType &x = entity.geometry().global( quadrature.point( i ) );
+    
+    ret[ 0 ] = (dimension * M_PI * M_PI);
+    for( int i = 0; i < dimension; ++i )
+      ret[ 0 ] *= sin( M_PI * x[ i ] );
+  }
 
 //! no direct access to stiffness and velocity, but whole flux, i.e.
 //! diffflux = stiffness * grad(phi) 
@@ -179,18 +201,23 @@ private:
  */
 /*======================================================================*/
 
-  
+template< class TraitsImp = DefaultElementIntegratorTraits >
 class PoissonExactSolution : 
-    public Function < DefaultElementIntegratorTraits::FunctionSpaceType , PoissonExactSolution > 
+  public Function< typename TraitsImp :: FunctionSpaceType,
+                   PoissonExactSolution< TraitsImp > > 
 {
-  typedef DefaultElementIntegratorTraits::FunctionSpaceType FunctionSpaceType;
-  typedef FunctionSpaceType::RangeType RangeType;
-  typedef FunctionSpaceType::RangeFieldType RangeFieldType;
-  typedef FunctionSpaceType::DomainType DomainType;
+  typedef TraitsImp TraitsType;
+  
+  typedef typename TraitsImp :: FunctionSpaceType FunctionSpaceType;
+
+  typedef typename FunctionSpaceType :: RangeType RangeType;
+  typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef typename FunctionSpaceType :: DomainType DomainType;
 public:
   PoissonExactSolution (FunctionSpaceType &f) : 
           Function < FunctionSpaceType , PoissonExactSolution > ( f ) {}
- 
+
+  /*
   //! u(x,y,z) = (x-x^2)*(y-y^2)*(z-z^2)
   void evaluate (const DomainType & x , RangeType & ret) const
   {
@@ -200,10 +227,21 @@ public:
     //    ret[0] += x[0]+x[1]; 
     // ret += 1.0;   // add dirichlet-values!!
   }
+  */
 
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
+  //! u( x ) = sin( pi x_1 ) * ... * sin( pi x_n )
+  void evaluate( const DomainType &x, RangeType &ret ) const
   {
-    evaluate ( x , ret );
+    const int dimension = DomainType :: dimension;
+    
+    ret[ 0 ] = 1.0;
+    for( int i = 0; i < dimension; ++i )
+      ret[ 0 ] *= sin( M_PI * x[ i ] );
+  }
+
+  void evaluate( const DomainType &x, RangeFieldType t, RangeType &ret ) const
+  {
+    evaluate( x , ret );
   }
 };
 
@@ -238,19 +276,22 @@ public:
  */
 /*======================================================================*/
 
+template< class TraitsImp = DefaultElementIntegratorTraits >
 class Elliptic2dModel
 {
 public:  
-  typedef DefaultElementIntegratorTraits TraitsType;
-  typedef TraitsType::EntityType EntityType;
-  typedef TraitsType::ElementQuadratureType ElementQuadratureType;
-  typedef TraitsType::IntersectionQuadratureType 
-                   IntersectionQuadratureType;
-  typedef TraitsType::RangeType RangeType;
-  typedef TraitsType::DomainType DomainType;
-  typedef TraitsType::JacobianRangeType JacobianRangeType;
-  typedef TraitsType::DiscreteFunctionSpaceType 
-                   DiscreteFunctionSpaceType;
+  typedef TraitsImp TraitsType;
+  
+  typedef typename TraitsType :: EntityType EntityType;
+  typedef typename TraitsType :: ElementQuadratureType ElementQuadratureType;
+  typedef typename TraitsType :: IntersectionQuadratureType
+    IntersectionQuadratureType;
+  typedef typename TraitsType :: RangeType RangeType;
+  typedef typename TraitsType :: DomainType DomainType;
+  typedef typename TraitsType :: JacobianRangeType JacobianRangeType;
+  typedef typename TraitsType :: DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
+  typedef typename TraitsType :: BoundaryType BoundaryType;
 
   static const double eps = 1e-10;
   static const double q = 1.0; // q>0 => non-unit diffusivity
@@ -284,8 +325,9 @@ public:
 
 //! return boundary type of a boundary point p used in a quadrature
   template <class EntityType, class QuadratureType>  
-  inline TraitsType::BoundaryType boundaryType(EntityType& en, 
-					       QuadratureType& quad, int p)
+  inline BoundaryType boundaryType( EntityType& en, 
+					                QuadratureType& quad,
+                                    int p )
         {
 #ifdef FORCENEUMANN
 #warning "ELLIPTIC2DMODEL HAS ONLY NEUMANN-BOUNDARY!"
@@ -406,13 +448,18 @@ private:
  */
 /*======================================================================*/
 
+template< class TraitsImp = DefaultElementIntegratorTraits >
 class Elliptic2dExactSolution : 
-    public Function < DefaultElementIntegratorTraits::FunctionSpaceType , Elliptic2dExactSolution > 
+  public Function< typename TraitsImp :: FunctionSpaceType,
+                   Elliptic2dExactSolution< TraitsImp > >
 {
-  typedef DefaultElementIntegratorTraits::FunctionSpaceType FunctionSpaceType;
-  typedef FunctionSpaceType::RangeType RangeType;
-  typedef FunctionSpaceType::RangeFieldType RangeFieldType;
-  typedef FunctionSpaceType::DomainType DomainType;
+  typedef TraitsImp TraitsType;
+  
+  typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
+  
+  typedef typename FunctionSpaceType :: RangeType RangeType;
+  typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef typename FunctionSpaceType :: DomainType DomainType;
 public:
   Elliptic2dExactSolution (FunctionSpaceType &f) : 
           Function < FunctionSpaceType , Elliptic2dExactSolution > ( f ) {}
@@ -456,19 +503,22 @@ public:
  */
 /*======================================================================*/
 
+template< class TraitsImp = DefaultElementIntegratorTraits >
 class Elliptic3dModel
 {
 public:  
-  typedef DefaultElementIntegratorTraits TraitsType;
-  typedef TraitsType::EntityType EntityType;
-  typedef TraitsType::ElementQuadratureType ElementQuadratureType;
-  typedef TraitsType::IntersectionQuadratureType 
-                   IntersectionQuadratureType;
-  typedef TraitsType::RangeType RangeType;
-  typedef TraitsType::DomainType DomainType;
-  typedef TraitsType::JacobianRangeType JacobianRangeType;
-  typedef TraitsType::DiscreteFunctionSpaceType 
-                   DiscreteFunctionSpaceType;
+  typedef TraitsImp TraitsType;
+  
+  typedef typename TraitsType :: EntityType EntityType;
+  typedef typename TraitsType :: ElementQuadratureType ElementQuadratureType;
+  typedef typename TraitsType :: IntersectionQuadratureType
+    IntersectionQuadratureType;
+  typedef typename TraitsType :: RangeType RangeType;
+  typedef typename TraitsType :: DomainType DomainType;
+  typedef typename TraitsType :: JacobianRangeType JacobianRangeType;
+  typedef typename TraitsType :: DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
+  typedef typename TraitsType :: BoundaryType BoundaryType;
 
   static const  double eps = 1e-10;
 
@@ -499,8 +549,9 @@ public:
 
 //! return boundary type of a boundary point p used in a quadrature
   template <class EntityType, class QuadratureType>  
-  inline TraitsType::BoundaryType boundaryType(EntityType& en, 
-					       QuadratureType& quad, int p)
+  inline BoundaryType boundaryType( EntityType& en,
+                                   QuadratureType& quad,
+                                   int p )
         {
 #ifdef FORCENEUMANN
 #warning "ELLIPTIC3DMODEL HAS ONLY NEUMANN-BOUNDARY!"
@@ -616,13 +667,18 @@ private:
  */
 /*======================================================================*/
 
+template< class TraitsImp = DefaultElementIntegratorTraits >
 class Elliptic3dExactSolution : 
-    public Function < DefaultElementIntegratorTraits::FunctionSpaceType , Elliptic3dExactSolution > 
+  public Function< typename TraitsImp :: FunctionSpaceType,
+                   Elliptic3dExactSolution< TraitsImp > > 
 {
-  typedef DefaultElementIntegratorTraits::FunctionSpaceType FunctionSpaceType;
-  typedef FunctionSpaceType::RangeType RangeType;
-  typedef FunctionSpaceType::RangeFieldType RangeFieldType;
-  typedef FunctionSpaceType::DomainType DomainType;
+  typedef TraitsImp TraitsType;
+
+  typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
+  
+  typedef typename FunctionSpaceType :: RangeType RangeType;
+  typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef typename FunctionSpaceType :: DomainType DomainType;
 public:
   Elliptic3dExactSolution (FunctionSpaceType &f) : 
           Function < FunctionSpaceType , Elliptic3dExactSolution > ( f ) {}
