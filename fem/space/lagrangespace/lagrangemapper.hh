@@ -223,8 +223,8 @@ public:
 
 
 //! LagrangeMapper for quadratic Lagrange elements with dimrange = 1
-template < class IndexSetImp, int dimrange >
-class LagrangeMapper< IndexSetImp, 2, dimrange >
+template < class IndexSetImp >
+class LagrangeMapper< IndexSetImp, 2, 1 >
 : public DofMapperDefault < LagrangeMapper < IndexSetImp, 2, 1 > > 
 {
 public:
@@ -263,13 +263,14 @@ public:
   int mapToGlobal ( EntityType &entity, int localDof ) const
   {
     assert( (int)EntityType :: codimension == 0 );
-
+    assert( (localDof >= 0) && (localDof < size()) );
+    
     // Get number of vertices for the given entity
-    const int nVertices = entity.template count< nCodims - 1 >();
-    if( localDof < nVertices )
+    const int nLocalVertices = entity.template count< nCodims - 1 >();
+    if( localDof < nLocalVertices )
       return indexSet_.template index< nCodims - 1 >( entity, localDof );
     else
-      return indexSet_.template index< nCodims - 2 >( entity, localDof - nVertices ) + numVertices_;
+      return indexSet_.template index< nCodims - 2 >( entity, localDof - nLocalVertices ) + numVertices_;
   }
 
   //! return old index, for dof manager only 

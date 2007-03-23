@@ -71,7 +71,18 @@ public:
 
 
 
-//! Lagrange base functions for triangles and polynom order = 2
+/** \brief Lagrange base functions for triangles and polynom order = 2
+ *
+ *  \internal The base functions are given as follows:
+ *  \f{eqnarray*}
+ *  \varphi_0( x, y ) &=& 2 (x + y)^2 - 3 (x + y) + 1 \\
+ *  \varphi_1( x, y ) &=& 2 x^2 - x \\
+ *  \varphi_2( x, y ) &=& 2 y^2 - y \\
+ *  \varphi_3( x, y ) &=& 4 x y \\
+ *  \varphi_4( x, y ) &=& 4 y (1 - x - y) \\
+ *  \varphi_5( x, y ) &=& 4 x (1 - x - y)
+ *  \f}
+ */
 template< class FunctionSpaceType >
 class LagrangeBaseFunction < FunctionSpaceType , GeometryIdentifier :: Triangle, 2 >
 : public BaseFunctionInterface< FunctionSpaceType >
@@ -206,7 +217,20 @@ public:
 
 
 
-//! Lagrange base for quadrilaterals and polynom order = 2
+/** \brief Lagrange base functions for quadrilaterals and polynom order = 2
+ *
+ *  \internal The base functions are given as follows:
+ *  \f{eqnarray*}
+ *  \varphi_0( x, y ) &=& (1 - 2 (x +y)) x y + 2 (x + y)^2 - 3 (x + y) + 1 \\
+ *  \varphi_1( x, y ) &=& 2 (1 - y) x^2 + x y (2 y - 1) - x \\
+ *  \varphi_2( x, y ) &=& 2 (1 - x) y^2 + x y (2 x - 1) - y \\
+ *  \varphi_3( x, y ) &=& x y (2 x + 2 y - 3) \\
+ *  \varphi_4( x, y ) &=& 4 y (1 - x) (1 - y) \\
+ *  \varphi_5( x, y ) &=& 4 x y (1 - y) \\
+ *  \varphi_6( x, y ) &=& 4 x (1 - x) (1 - y) \\
+ *  \varphi_7( x, y ) &=& 4 x y (1 - x)
+ *  \f}
+ */
 template< class FunctionSpaceType >
 class LagrangeBaseFunction < FunctionSpaceType , GeometryIdentifier :: Quadrilateral, 2 >
 : public BaseFunctionInterface< FunctionSpaceType >
@@ -394,7 +418,22 @@ public:
 
 
 
-//! Lagrange base functions for tretrahedra and polynom order = 2
+/** \brief Lagrange base functions for tetrahedra and polynom order = 2
+ *
+ *  \internal The base functions are given as follows:
+ *  \f{eqnarray*}
+ *  \varphi_0( x, y ) &=& 2 (x + y + z)^2 - 3 (x + y + z) + 1 \\
+ *  \varphi_1( x, y ) &=& 2 x^2 - x \\
+ *  \varphi_2( x, y ) &=& 2 y^2 - y \\
+ *  \varphi_3( x, y ) &=& 2 z^2 - z \\
+ *  \varphi_4( x, y ) &=& 4 x (1 - x - y - z) \\
+ *  \varphi_5( x, y ) &=& 4 x y \\
+ *  \varphi_6( x, y ) &=& 4 y (1 - x - y - z) \\
+ *  \varphi_7( x, y ) &=& 4 z (1 - x - y - z) \\
+ *  \varphi_8( x, y ) &=& 4 x z \\
+ *  \varphi_9( x, y ) &=& 4 y z
+ *  \f}
+ */
 template< class FunctionSpaceType >
 class LagrangeBaseFunction < FunctionSpaceType , GeometryIdentifier :: Tetrahedron, 2 >
 : public BaseFunctionInterface< FunctionSpaceType >
