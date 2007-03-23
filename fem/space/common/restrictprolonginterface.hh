@@ -70,7 +70,7 @@ public:
   typedef typename BaseType::T2Type::RangeFieldType RangeFieldType2;
 
   RestrictProlongPair(I1 i1, I2 i2) : PairOfInterfaces<I1,I2>(i1,i2) {
-    IsTrue<SameType<RangeFieldType,RangeFieldType2>::value>::yes();
+    //IsTrue<SameType<RangeFieldType,RangeFieldType2>::value>::yes();
   }
   
   //! if weight is set, then ists assumend that we have always the same

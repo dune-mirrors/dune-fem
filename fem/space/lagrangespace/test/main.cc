@@ -10,9 +10,10 @@ using namespace Dune;
 int main() 
 {
   //std :: string gridFile( "../../../examples/elliptic/square.dgf" );
-  //std :: string gridFile( "../../../examples/elliptic/cube.dgf" );
+  //std :: string gridFile( "onesimplex.dgf" );
+  std :: string gridFile( "cube.dgf" );
   //std :: string gridFile( "../../test/2dgrid.dgf" );
-  std :: string gridFile( "../../../examples/poisson/3dgrid.al" );
+  //std :: string gridFile( "../../../examples/poisson/3dgrid.al" );
   
   Suite suite("Basefunction tests");
   suite.addTest(new LagrangeBase_Test(gridFile));

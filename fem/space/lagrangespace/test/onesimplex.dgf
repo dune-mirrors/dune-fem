@@ -1,0 +1,14 @@
+DGF
+Vertex        % the verticies of the grid
+0.0 0.0 0.0      % vertex 0
+1.0 0.0 0.0      % vertex 1
+0.0 1.0 0.0      % vertex 2
+0.0 0.0 1.0      % vertex 4
+#
+SIMPLEX       % a simplex grid
+0 1 2 3        % triangle 1, verticies 0,1,2
+#
+BOUNDARYDOMAIN
+default 1     % all other boundary segments have id 1
+#
+# square.dgf

@@ -705,6 +705,7 @@ struct LagrangeDefinition< GeometryIdentifier::Quadrilateral , polOrd, dimrange 
     enum { numOfBaseFct = dimrange * (polOrd+1) * (polOrd+1) };
 };
 
+//! Lagrange Definition for Quadrilaterals and polynomial order = 2 (needed 'cause we use Serendipity elements) 
 template< int dimrange >
 struct LagrangeDefinition< GeometryIdentifier :: Quadrilateral, 2, dimrange >
 {
@@ -717,6 +718,13 @@ struct LagrangeDefinition< GeometryIdentifier::Tetrahedron , polOrd, dimrange >
 {
     /** \bug This formula is wrong! */
   enum { numOfBaseFct = (polOrd == 0) ? (dimrange) : (dimrange * 4 * polOrd) }; 
+};
+
+//! Lagrange Definition for Tetrahedrons and polynomial order = 2 (needed 'cause the general formula is wrong!)
+template< int dimrange >
+struct LagrangeDefinition< GeometryIdentifier :: Tetrahedron, 2, dimrange >
+{
+  enum { numOfBaseFct = dimrange * 10 };
 };
 
 //! Lagrange Definition for Pyramids
