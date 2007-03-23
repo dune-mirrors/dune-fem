@@ -374,7 +374,7 @@ double algorithm (const char * filename , int maxlevel, int turn )
    
    // initialize Operator  
 //   const int numNonZero = 27;   
-   const int numNonZero = 100;
+   const int numNonZero = 200;
    EllipticOperatorType elliptOp 
         ( elMatInt , 
           EllipticOperatorType::ASSEMBLED,

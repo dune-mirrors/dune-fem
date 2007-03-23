@@ -21,20 +21,18 @@
 namespace Dune
 {
   
-/*======================================================================*/
-/*!
- *  \class PoissonModel
- *  \brief The PoissonModel class provides a default model
- *         for an elliptic problem to be handled by FEOp
+/** \class PoissonModel
+ *  \brief The PoissonModel class provides a default model for an elliptic
+ *  problem to be handled by FEOp
  *
- *  The model problem simply is  - div grad u = 2(x(1-x)+ y(1-y))
- *  Homogeneous Dirichlet boundary values. If the problem is solved on
- *  the unit square, the solution should be u = x(1-x)y(1-y)
+ *  The model problem simply is
+ *  \f[ - \mathrm{div} \nabla u = n \pi^2 \prod_{i=1}^n \sin( \pi x_i ). \f]
+ *  Using homogeneous Dirichlet boundary values, the exact solution on the unit
+ *  square is \f$u( x ) = \prod_{i=1}^n \sin( \pi x_i ) \f$
  *
- *  All types are extracted from the DefaultElementMatrixTraits class
- *  additionally, the model contains member variables and methods.
+ *  All types are extracted from the TraisImp, which defaults to
+ *  DefaultElementMatrixTraits.
  */
-/*======================================================================*/
 
 template< class TraitsImp = DefaultElementIntegratorTraits >
 class PoissonModel
@@ -53,138 +51,141 @@ public:
     DiscreteFunctionSpaceType;
   typedef typename TraitsType :: BoundaryType BoundaryType;
   
-//! constructor with functionspace argument such that the space and the 
-//! grid is available
-  PoissonModel(DiscreteFunctionSpaceType& fuspace)
-            : fuspace_(fuspace) 
-        {
-          // currently implementation is fitted to 2 dimensions
-          assert(dimworld==2);
-        }    
+  //! constructor with functionspace argument such that the space and the 
+  //! grid is available
+  PoissonModel( DiscreteFunctionSpaceType &fuspace ) :
+    fuspace_( fuspace ) 
+  {
+  }    
   
-//! give access to the functionspace
-  DiscreteFunctionSpaceType& discreteFunctionSpace() 
-        {
-          return fuspace_;
-        }   
+  //! Access the functionspace
+  DiscreteFunctionSpaceType& discreteFunctionSpace()
+  {
+    return fuspace_;
+  }   
 
-//! return boundary type of a boundary point p used in a quadrature
+  //! return boundary type of a boundary point p used in a quadrature
   template< class EntityType, class QuadratureType >  
   inline BoundaryType boundaryType( EntityType& en,
                                     QuadratureType& quad,
                                     int p )
-        {
-#ifdef FORCENEUMANN
-#warning "POISSONMODEL HAS ONLY NEUMANN-BOUNDARY!"
-          return TraitsType::Neumann;
-#else          
-          return TraitsType::Dirichlet;
-#endif // FORCENEUMANN         
-        }
+  {
+    #ifdef FORCENEUMANN
+    #warning "POISSONMODEL HAS ONLY NEUMANN-BOUNDARY!"
+      return TraitsType :: Neumann;
+    #else          
+      return TraitsType :: Dirichlet;
+    #endif
+  }
 
-//! determine dirichlet value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void dirichletValues(EntityType& en, QuadratureType& quad, int p, 
-                              RangeType& ret)
-        {
-	  const DomainType& glob = en.geometry().global(quad.point(p)); 
-          //ret[0] = glob[0]+glob[1]; // 1.0;
-          //ret[0] = 0.0;
-          ret[0] = 1.0;
-          for(int i=0; i<DomainType::dimension; i++)
-              ret[0] *= ( glob[i] - SQR(glob[i]) );
-    //    ret[0] += x[0]+x[1]; 
-    // ret += 1.0;   // add dirichlet-values!!
+  //! determine dirichlet value in a boundary point used in a quadrature
+  template< class EntityType, class QuadratureType >
+  inline void dirichletValues( const EntityType &entity,
+                               const QuadratureType &quadrature,
+                               int p,
+                               RangeType &ret ) const
+  {
+    const int dimension = DomainType :: dimension;
 
-        }
+    const DomainType &x = entity.geometry().global( quadrature.point( p ) );
+    
+    ret[ 0 ] = 1.0;
+    for( int i = 0; i < dimension; ++i )
+      ret[ 0 ] *= sin( M_PI * x[ i ] );
+  }
 
-//! determine neumann value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void neumannValues(EntityType& en, QuadratureType& quad, int p, 
-                            RangeType& ret)
-        {
-	  const DomainType& glob = en.geometry().global(quad.point(p)); 
-          //ret[0] = glob[0]+glob[1]; // 1.0;
-          //ret[0] = 0.0;
-          ret[0] = 0.0;
-          for(int i=0; i<DomainType::dimension; i++)
-              ret[0] += - ( glob[i] - SQR(glob[i]) );
-        }
+  //! determine neumann value in a boundary point used in a quadrature
+  template< class EntityType, class QuadratureType >
+  inline void neumannValues( const EntityType &entity,
+                             const QuadratureType &quadrature,
+                             int p, 
+                             RangeType &ret )
+  {
+    std :: cout << "Neumann boundary values are not implemented." << std :: endl;
+    assert( false );
 
-//! determine robin value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void robinValues(EntityType& en, QuadratureType& quad, int p, 
-                          RangeType& ret)
-        {
-          ret[0] = 0.0;
-        }
+    //const DomainType &x = entity.geometry().global( quadrature.point( p ) ); 
+          
+    ret[ 0 ] = 0.0;
+  }
 
-//! determine mass (i.e. value of the function c) in a domain point used in a 
-//! quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void mass(EntityType& en, QuadratureType& quad, int p, RangeType& ret)
-        {
-          ret[0] = 0.0;
-        }
+  //! determine robin value in a boundary point used in a quadrature
+  template< class EntityType, class QuadratureType >
+  inline void robinValues( const EntityType &entity,
+                           const QuadratureType &quadrature,
+                           int p, 
+                           RangeType &ret )
+  {
+    std :: cout << "Robin boundary values are not implemented." << std :: endl;
+    assert( false );
 
-  /*
-//! determine source (i.e. value of the function f) in a domain point used in 
-//! a quadrature. Here simply f(x,y) = 2 (x(1-x) + y(y-x))
-  template <class EntityType, class QuadratureType>  
-  inline void source(EntityType& en, QuadratureType& quad, int p, 
-                     RangeType& ret)
-        {
-          const DomainType& glob = en.geometry().global(quad.point(p));          
-          ret[0] = 2*(glob[0]*(1-glob[0]) + glob[1]*(1-glob[1]));
-        }
-   */
+    //const DomainType &x = entity.geometry().global( quadrature.point( p ) ); 
+          
+    ret[ 0 ] = 0.0;
+  }
 
-  //! Determine source (i.e. value of the function f) in a quadrature point.
+  //! determine mass (i.e. value of the function c) in a quadrature point
+  template< class EntityType, class QuadratureType >
+  inline void mass( const EntityType &entity,
+                    const QuadratureType &quadrature,
+                    int p,
+                    RangeType &ret )
+  {
+    //const DomainType &x = entity.geometry().global( quadrature.point( p ) ); 
+
+    ret[ 0 ] = 0.0;
+  }
+
+  //! Determine source (i.e. value of the function f) in a quadrature point
   template< class EntityType, class QuadratureType >
   inline void source( const EntityType &entity,
                       const QuadratureType &quadrature,
-                      int i,
+                      int p,
                       RangeType &ret ) const
   {
     const int dimension = DomainType :: dimension;
     
-    const DomainType &x = entity.geometry().global( quadrature.point( i ) );
+    const DomainType &x = entity.geometry().global( quadrature.point( p ) );
     
     ret[ 0 ] = (dimension * M_PI * M_PI);
     for( int i = 0; i < dimension; ++i )
       ret[ 0 ] *= sin( M_PI * x[ i ] );
   }
 
-//! no direct access to stiffness and velocity, but whole flux, i.e.
-//! diffflux = stiffness * grad(phi) 
-  template <class EntityType, class QuadratureType>  
-  inline void diffusiveFlux(EntityType& en, QuadratureType& quad, int p, 
-                   JacobianRangeType& gradphi, 
-                   JacobianRangeType& ret)
-        {
-          // - laplace phi = -div (1 * grad phi - 0 * phi)
-          ret = gradphi;          
-        }
+  //! no direct access to stiffness and velocity, but whole flux, i.e.
+  //! diffflux = stiffness * grad( phi )
+  template< class EntityType, class QuadratureType >
+  inline void diffusiveFlux( const EntityType &entity,
+                             const QuadratureType &quadrature,
+                             int p,
+                             const JacobianRangeType &gradphi, 
+                             JacobianRangeType &ret )
+  {
+    // - laplace phi = -div (1 * grad phi - 0 * phi)
+    ret = gradphi;          
+  }
 
-//! no direct access to stiffness and velocity, but whole flux, i.e.
-//! convectiveFlux =  - velocity * phi 
+  //! no direct access to stiffness and velocity, but whole flux, i.e.
+  //! convectiveFlux =  - velocity * phi 
   template <class EntityType, class QuadratureType>  
-  inline void convectiveFlux(EntityType& en, QuadratureType& quad, int p, 
-                   RangeType& phi, 
-                   DomainType& ret)
-        {
-          // - laplace phi = -div (1 * grad phi - 0 * phi)
-          ret = 0.0; // should fill whole vector!!          
-        }
+  inline void convectiveFlux( const EntityType &entity,
+                              const QuadratureType &quadrature,
+                              int p,
+                              const RangeType &phi, 
+                              DomainType &ret )
+  {
+    // - laplace phi = -div (1 * grad phi - 0 * phi)
+    ret = 0.0;
+  }
 
   //! the coefficient for robin boundary condition
   inline double alpha()
-        { 
-          return 1.0;
-        }
+  { 
+    return 1.0;
+  }
 
 private:
-  DiscreteFunctionSpaceType& fuspace_;  
+  DiscreteFunctionSpaceType &fuspace_;  
 };  // end of PoissonModel class
 
 
