@@ -169,9 +169,19 @@ class ExplicitOdeSolver :
     BaseType(op,pord,verbose),
     timeProvider_(tp)
   {
-    double cflLocal = (double (pord+1)/(pord+2));
+    // CFL upper estimate 
+    double cfl = 1.0;
+    switch (pord) 
+    {
+      case 0: cfl=0.9;  break;
+      case 1: cfl=0.2;  break;
+      case 2: cfl=0.15; break;
+      case 3: cfl=0.05; break;
+      case 4: cfl=0.09; break;
+    }
+
     // maximal allowed cfl number 
-    tp.provideCflEstimate(cflLocal); 
+    tp.provideCflEstimate(cfl); 
     assert( tp.cfl() <= 1.0 );
   }
 
