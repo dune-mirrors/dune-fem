@@ -16,6 +16,7 @@
 #include <config.h>
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
 #include <dune/fem/misc/entityfunction.hh>
+#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 
 namespace Dune 
 {
@@ -46,18 +47,23 @@ namespace Dune
  */
 /*======================================================================*/
 
-template <class DiscreteFunctionSpaceType>
+template< class DiscreteFunctionSpaceImp >
 class LagrangeDofHandler
 { 
 public:
-  typedef typename 
-      DiscreteFunctionSpaceType::GridType::template Codim<0>::Entity 
-      EntityType;
-  typedef typename EntityType::Geometry GeometryImp;
-  typedef typename EntityType::ctype coordType;
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+  
+  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+  typedef typename DiscreteFunctionSpaceType :: GridType
+    :: template Codim<0> :: Entity EntityType;
+  
+  typedef typename EntityType :: Geometry GeometryImp;
+  typedef typename EntityType :: ctype coordType;
   
   enum { dim = EntityType :: dimension };
-  
+ 
+  enum { order = DiscreteFunctionSpaceType :: polynomialOrder }; 
+      
 /*======================================================================*/
 /*! 
  *   constructor: initialization with fspace and entity
@@ -67,23 +73,18 @@ public:
  *   \param entity the entity for which the handler operates
  */
 /*======================================================================*/
-
-  LagrangeDofHandler(const DiscreteFunctionSpaceType& fspace, 
-                     const EntityType& entity):
-          fspace_(fspace),
-          entity_(entity), 
-          geo_(entity_.geometry()), 
-          geotype_(geo_.type()),
-          refElem_(refElemCont_(geotype_))
-        {
-          // currently only implementation for order-1 base functions is
-          // realized with correspondence of grid-points to lagrange-points
-//          assert(fspace.polynomOrder() == 1);
-          assert(fspace.order() == 1);
-//          geo_= entity_.geometry();
-//          geotype_ = geo_.type();
-//          refElem_ = refElemCont_(geotype_);
-        };
+  inline LagrangeDofHandler( const DiscreteFunctionSpaceType& fspace,
+                             const EntityType& entity ) :
+    fspace_( fspace ),
+    entity_( entity ),
+    geo_( entity_.geometry() ),
+    geotype_( geo_.type() ),
+    refElem_( refElemCont_( geotype_ ) ),
+    numEntityVertices_( entity_.count< dim >() ),
+    quad_( entity_, order )
+  {
+    assert( order <= 2 );
+  };
   
 /*======================================================================*/
 /*! 
@@ -101,15 +102,10 @@ public:
 //  const FieldVector<typename EntityType::ctype, EntityType::dimension > 
   const FieldVector<typename EntityType::ctype, 
                     EntityType::Geometry::mydimension > 
-  point(int p) const
-        {
-          //const  FieldVector<typename EntityType::ctype, 
-          //    EntityType::Geometry::mydimension > 
-          //    ret =  geo_.local(geo_[p]);
-          //std::cout << "original point: " <<  geo_.local(geo_[p]);
-          //std::cout << "new point     : " <<  ret;
-          return geo_.local(geo_[p]);
-        };
+  inline point( int p ) const
+  {
+    return quad_.point( p );
+  };
 
 /*======================================================================*/
 /*! 
@@ -126,10 +122,19 @@ public:
  */
 /*======================================================================*/
 
-  int numDofsOnFace(int faceNum, int faceCodim) const
-        {
-          return refElem_.size( faceNum, faceCodim , dim );
-        };
+  inline int numDofsOnFace( int faceNum, int faceCodim ) const
+  {
+    switch( order ) {
+    case 0:
+      return 0;
+
+    case 1:
+      return refElem_.size( faceNum, faceCodim, dim );
+           
+    case 2:
+      return refElem_.size( faceNum, faceCodim, dim ) + refElem_.size( faceNum, faceCodim, dim - 1 );
+    }
+  };
   
 /*======================================================================*/
 /*! 
@@ -147,11 +152,19 @@ public:
  */
 /*======================================================================*/
 
-  int entityDofNum(int faceNum, int faceCodim , int faceDofNum ) const
-        {
-          return refElem_.subEntity(faceNum, faceCodim , 
-                                    faceDofNum , dim);
-        };
+  inline int entityDofNum(int faceNum, int faceCodim , int faceDofNum ) const
+  {
+    assert( faceDofNum < numDofsOnFace( faceNum, faceCodim ) );
+
+    const int nLocalVertices = refElem_.size( faceNum, faceCodim, dim );
+
+    if( faceDofNum < nLocalVertices )
+      return refElem_.subEntity( faceNum, faceCodim, faceDofNum, dim );
+    else
+      return refElem_.subEntity( faceNum, faceCodim,
+                                 faceDofNum - nLocalVertices, dim - 1 )
+        + numEntityVertices_;
+  };
   
 private:
 
@@ -168,6 +181,8 @@ private:
   //! the referenceelement for the entity
   const ReferenceElement<coordType,dim>& refElem_;  
 
+  const int numEntityVertices_;
+  const LagrangeQuadrature< GridPartType, 0 > quad_;
 }; // end class LagrangeDofHandler
 
 /*======================================================================*/
