@@ -80,11 +80,11 @@ public:
     geo_( entity_.geometry() ),
     geotype_( geo_.type() ),
     refElem_( refElemCont_( geotype_ ) ),
-    numEntityVertices_( entity_.count< dim >() ),
+    numEntityVertices_( entity_.template count< dim >() ),
     quad_( entity_, order )
   {
     assert( order <= 2 );
-  };
+  }
   
 /*======================================================================*/
 /*! 
