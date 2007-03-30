@@ -33,7 +33,7 @@
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
-#include "stuff.cc"
+#include "projection.cc"
 
 // definition of L2Error 
 #include <dune/fem/misc/l2error.hh>
