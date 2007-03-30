@@ -8,6 +8,7 @@
 using namespace Dune;
 
 #include <math.h>
+#include <dune/fem/io/file/asciiparser.hh>
 
 #include "problem.cc"
 
@@ -32,7 +33,7 @@ struct ModelParam
 };
 
 template <class Grid>
-  class ModelTraits {
+class ModelTraits {
   public:
     enum { dimRange2 = 1 };
     enum { dimRange1= dimRange2*Grid::dimensionworld };
@@ -103,31 +104,74 @@ public:
     typedef FieldMatrix<double,dimDomain+1,dimDomain> FluxRangeType;
   };
 
+  typedef DataFunctionIF<dim> DataFunctionType; 
+  DataFunctionType * createData(const std::string & paramFile) const 
+  {
+    int problem = 1;
+    readParameter(paramFile,"Problem",problem);
+
+    double shift = 2.0;
+    readParameter(paramFile,"GlobalShift",shift);
+
+    double factor = 1.0;
+    readParameter(paramFile,"Factor",factor);
+
+    if( problem == 1 ) 
+    {
+      return new SinSin<dim> (shift,factor);
+    }
+    if( problem == 2 ) 
+    {
+      return new CosCos<dim> (shift,factor);
+    }
+    if( problem == 3 ) 
+    {
+      return new CastilloProblem<dim> (shift,factor);
+    }
+    if( problem == 4 ) 
+    {
+      return new InSpringingCorner<dim> (shift,factor);
+    }
+    if( problem == 5 ) 
+    {
+      return new RiviereProblem<dim> (shift,factor);
+    }
+
+    return 0;
+  }
 public:
   //! constructor 
-  Model() 
+  Model(std::string paramFile) 
     : funcSpace_() // fake id = 1
-    , initial_ ( funcSpace_ )
-    , rhsData_ ( funcSpace_ )
+    , gradFuncSpace_() // fake id = 1
+    , problem_( createData ( paramFile ) )
+    , solution_( funcSpace_, problem() )
+    , gradient_( gradFuncSpace_, problem() )
+    , rhsData_ ( funcSpace_ , problem() )
   {
   }
-
-  template <class IntersectionIterator, class FaceDomainType> 
-  bool hasBoundaryValue(const IntersectionIterator& it,
-             const double time,
-             const FaceDomainType& x) const 
+  
+  ~Model() 
   {
-    return true;
+    delete problem_;
   }
 
-  template <class IntersectionIterator, class FaceDomainType> 
-  void boundaryValue(const IntersectionIterator& it,
-           const double time,
-           const FaceDomainType& x,
-           const RangeType& uLeft,
-           RangeType& uRight) const 
+  const DataFunctionType& problem() const 
+  { 
+    assert( problem_ );
+    return *problem_;
+  }
+  
+  bool boundaryValue(const DomainType & p, 
+                     RangeType& val) const 
   {
-    uRight= 0.0;
+    return problem().boundaryDataFunction(&p[0],val[0]);
+  }
+  
+  void neumann(const DomainType & p, 
+               DomainType & grad) const 
+  {
+    return problem().neumann(&p[0],&grad[0]);
   }
   
   template <class EntityType , class FaceDomainType> 
@@ -135,7 +179,7 @@ public:
                  const FaceDomainType &x ,
                  GradRangeType & ret) const
   {
-    ret = exactFactor();
+    ret = problem().factor();
     return ;
   }
 
@@ -147,7 +191,7 @@ public:
     ret = 0.0; 
     for(int i=0; i<dimGradRange; ++i) 
     {
-      ret[i][i] = exactFactor();
+      ret[i][i] = problem().factor();
     }
     return ;
   }
@@ -157,7 +201,7 @@ public:
                  const FaceDomainType &x, 
                  JacobianRangeType & ret) const
   {
-    ret = exactFactor(); 
+    ret = problem().factor(); 
     return ;
   }
 
@@ -194,56 +238,105 @@ public:
   }
   
   //! interface methods for the initial data
-  class InitialData : public Function < FuncSpaceType , InitialData > {
+  class RHSData : public Function < FuncSpaceType , RHSData > 
+  {
+    enum { dimDom = FuncSpaceType :: DimDomain };
+    typedef DataFunctionIF<dimDom> DataFunctionType;
+
+    const DataFunctionType& func_;
   public:  
-    InitialData ( FuncSpaceType &f)
-      : Function < FuncSpaceType , InitialData > ( f ) { } ; 
-
-    void evaluate (const DomainType & x , RangeType & ret) const 
-    { 
-      ret = 1.0;
-      for(int i=0; i<DomainType::dimension; i++)
-        ret *= ( x[i] - SQR(x[i]) );
-      return;
-    }
-
-    void evaluate (const DomainType & x , double time, RangeType & ret) const 
-    { evaluate (x,ret); return;};  
-
-  };
-  typedef InitialData InitialDataType;
-  
-  const InitialData & initialData () const {
-    return initial_;
-  } 
-    
-  //! interface methods for the initial data
-  class RHSData : public Function < FuncSpaceType , RHSData > {
-  public:  
-    RHSData ( FuncSpaceType &f)
-      : Function < FuncSpaceType , RHSData > ( f ) { } ; 
+    RHSData ( FuncSpaceType &f, const DataFunctionType & data)
+      : Function < FuncSpaceType , RHSData > ( f ) 
+      , func_(data)
+    {}  
 
     void evaluate (const DomainType & x , RangeType & ret) const 
     { 
       enum { dimR = RangeType :: dimension };
       ret = 0.0;
-      ret[dimR - 1] = rhsFunction( &x[0] );
+      ret[dimR - 1] = func_.rhs( &x[0] );
       return;
     }
 
     void evaluate (const DomainType & x , double time, RangeType & ret) const 
-    { evaluate (x,ret); return;};  
-
+    { 
+      evaluate (x,ret); return;
+    } 
   };
   typedef RHSData RHSDataType;
-  
   const RHSData & rhsData () const {
     return rhsData_;
   } 
-    
+
+  //! the exact solution to the problem for EOC calculation 
+  class ExactSolution : public Function < FuncSpaceType , ExactSolution >
+  {
+    typedef typename FuncSpaceType::RangeType RangeType;
+    typedef typename FuncSpaceType::RangeFieldType RangeFieldType;
+    typedef typename FuncSpaceType::DomainType DomainType;
+
+    enum { dimDom = FuncSpaceType :: DimDomain };
+    typedef DataFunctionIF<dimDom> DataFunctionType;
+
+    const DataFunctionType& data_;
+  public:
+    ExactSolution (FuncSpaceType &f, const DataFunctionType& d) 
+    : Function < FuncSpaceType , ExactSolution > ( f ) 
+    , data_(d)   
+    {}
+
+    //! see problem.cc 
+    void evaluate (const DomainType & x , RangeType & ret) const
+    {
+      ret = data_.exact( &x[0] );
+    }
+    void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
+    {
+      evaluate ( x , ret );
+    }
+  };
+
+  typedef ExactSolution ExactSolutionType;
+  const ExactSolutionType& solution() const { return solution_; }
+
+  //! the exact solution to the problem for EOC calculation 
+  template <class FuncSPCType>
+  class ExactGradient : public Function < FuncSPCType , ExactGradient<
+                        FuncSPCType > >
+  {
+    typedef typename FuncSPCType::RangeType RangeType;
+    typedef typename FuncSPCType::RangeFieldType RangeFieldType;
+    typedef typename FuncSPCType::DomainType DomainType;
+    enum { dimDom = FuncSpaceType :: DimDomain };
+    typedef DataFunctionIF<dimDom> DataFunctionType;
+
+    const DataFunctionType& data_;
+  public:
+    ExactGradient (const FuncSPCType &f,
+        const DataFunctionType& d)
+      : Function < FuncSPCType , ExactGradient< FuncSPCType > > ( f ) 
+      , data_(d)
+      {}
+
+    void evaluate (const DomainType & x , RangeType & ret) const
+    {
+      data_.gradExact( &x[0], &ret[0] );
+    }
+
+    void evaluate (const DomainType & x , double time , RangeType & ret) const
+    {
+      evaluate ( x , ret );
+    }
+  };
+  typedef ExactGradient<GradFuncSpaceType> ExactGradientType;
+  const ExactGradientType& gradient() const { return  gradient_; }
+
 private:
   FuncSpaceType funcSpace_; 
-  InitialDataType initial_;
+  GradFuncSpaceType gradFuncSpace_; 
+  DataFunctionType * problem_;
+  ExactSolutionType solution_;
+  ExactGradientType gradient_;
   RHSDataType rhsData_;
 };
 

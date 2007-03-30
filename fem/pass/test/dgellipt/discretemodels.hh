@@ -503,12 +503,12 @@ namespace LDGExample {
                   RangeType& bndVal) const
     {
       DomainType p = it.intersectionGlobal().global(x);
-      bool dirich = boundaryDataFunction(&p[0],bndVal[0]);
+      bool dirich = model_.boundaryValue(p,bndVal);
 
       if(!dirich)
       {
         DomainType grad;
-        rhsNeumann(&p[0],&grad[0]);
+        model_.neumann(p,grad);
         bndVal = grad * it.integrationOuterNormal(x);
       }
       return (dirich) ? BoundaryIdentifierType::DirichletNonZero : BoundaryIdentifierType::NeumannNonZero;

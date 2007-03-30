@@ -33,6 +33,8 @@
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
+#include "stuff.cc"
+
 // definition of L2Error 
 #include <dune/fem/misc/l2error.hh>
 
@@ -108,49 +110,6 @@ public:
   typedef typename LastSpaceType :: FunctionSpaceType FuncSpaceType;
   typedef typename FuncSpaceType::RangeType RangeType;
 
-  //! the exact solution to the problem for EOC calculation 
-  class ExactSolution : public Function < FuncSpaceType , ExactSolution >
-  {
-    typedef typename FuncSpaceType::RangeType RangeType;
-    typedef typename FuncSpaceType::RangeFieldType RangeFieldType;
-    typedef typename FuncSpaceType::DomainType DomainType;
-  public:
-    ExactSolution (FuncSpaceType &f) : Function < FuncSpaceType , ExactSolution > ( f ) {}
-
-    //! see problem.cc 
-    void evaluate (const DomainType & x , RangeType & ret) const
-    {
-      ret = exactSolution( &x[0] );
-    }
-    void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
-    {
-      evaluate ( x , ret );
-    }
-  };
-
-  //! the exact solution to the problem for EOC calculation 
-  template <class FuncSPCType>
-  class ExactGradient : public Function < FuncSPCType , ExactGradient<
-                        FuncSPCType > >
-  {
-    typedef typename FuncSPCType::RangeType RangeType;
-    typedef typename FuncSPCType::RangeFieldType RangeFieldType;
-    typedef typename FuncSPCType::DomainType DomainType;
-  public:
-    ExactGradient (const FuncSPCType &f) 
-      : Function < FuncSPCType , ExactGradient< FuncSPCType > > ( f ) {}
-
-    void evaluate (const DomainType & x , RangeType & ret) const
-    {
-      exactGradient( &x[0], &ret[0] );
-    }
-
-    void evaluate (const DomainType & x , double time , RangeType & ret) const
-    {
-      evaluate ( x , ret );
-    }
-  };
-
   MySpaceOperator ( GridType & grid , 
                     GradientModelType & gm, 
                     LaplaceModelType & lpm , 
@@ -158,6 +117,7 @@ public:
                     std::string paramfile)
     : grid_(grid)
     , dm_(DofManagerFactoryType::getDofManager(grid_))
+    , model_(lpm)
     , gridPart_(grid_)
     , gradSpace_(gridPart_)
     , lastSpace_(gridPart_)
@@ -167,8 +127,10 @@ public:
     , lastPass_( lpm, pass1_, lastSpace_ , paramfile )
     , veloPass_( vm, lastPass_, veloSpace_ )
     , steps_(2)
+    , disp_(0)
   {
     readParameter(paramfile,"EOCSteps",steps_);
+    readParameter(paramfile,"DisplayAll",disp_);
 
     std::cout << "Created SpaceOperator \n";
     std::cout.flush();
@@ -246,12 +208,13 @@ public:
 
     std::vector<RangeType> error(steps_);
     std::vector<GradRangeType> gradError(steps_);
+    std::vector<GradRangeType> errVelo(steps_);
     
     //DestinationType & Arg = const_cast<DestinationType&> (arg);
     //adaptGrid(Arg);
 
-    DestinationType & Arg = const_cast<DestinationType&> (arg);
-    adaptGrid(Arg);
+    //DestinationType & Arg = const_cast<DestinationType&> (arg);
+    //adaptGrid(Arg);
 
     for(int i=0; i<steps_; ++i)
     {
@@ -263,40 +226,48 @@ public:
         dm_.dofCompress();
       }
 
-      FuncSpaceType sp; 
-      ExactSolution exact(sp); 
-
       SolutionType& dest = const_cast<SolutionType&> (lastPass_.destination());
       dest.clear();
 
       veloPass_(arg,velo);
+
       {
+        L2Error < DestinationType > l2errGrad;
+        gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
+
+        HdivTest< DestinationType > hdiv;
+        DestinationType tmp ( velo );
+
+        hdiv.project( tmp, velo );
         // only for LDG method
         //velo.clear();
         //lastPass_.evalGradient(dest,velo);
+        errVelo[i] = l2errGrad.norm( model_.data().gradient() , velo);
         
-        L2Error < DestinationType > l2errGrad;
-        ExactGradient< VeloSpaceType > exactGrad(gradSpace_);
-
-        gradError[i] = l2errGrad.norm(exactGrad , velo);
+#if HAVE_GRAPE
+        if( disp_ )
+        {
+          GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
+          grape.addData( tmp );
+          grape.addData( velo );
+          grape.dataDisplay( dest );
+        }
+#endif
       }
       
-#if HAVE_GRAPE
-      GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-      grape.addData( velo );
-      grape.dataDisplay( dest );
-#endif
-
       L2Error < SolutionType > l2err;
       // pol ord for calculation the error chould by higher than 
       // pol for evaluation the basefunctions 
-      error[i] = l2err.norm(exact , dest);
+      error[i] = l2err.norm( model_.data().solution() , dest);
 
       for(int k=0; k<RangeType::dimension; k++)
         std::cout << "\nError["<<k<<"] : " << error[i][k] << "\n";
       
       for(int k=0; k<GradRangeType::dimension; k++)
         std::cout << "GradError["<<k<<"] : " << gradError[i][k] << "\n";
+    
+      for(int k=0; k<GradRangeType::dimension; k++)
+        std::cout << "VeloError["<<k<<"] : " << errVelo[i][k] << "\n";
     
       if( i > 0 )
       {
@@ -310,6 +281,12 @@ public:
         {
           double eoc = log( gradError[i-1][k]/gradError[i][k]) / M_LN2;
           std::cout << "Grad EOC["<<i <<"] = " << eoc << " \n";
+        }
+        
+        for(int k=0; k<GradRangeType::dimension; k++)
+        {
+          double eoc = log( errVelo[i-1][k]/errVelo[i][k]) / M_LN2;
+          std::cout << "Velo EOC["<<i <<"] = " << eoc << " \n";
         }
       }
     }
@@ -338,7 +315,7 @@ public:
 private:
   GridType & grid_;
   DofManagerType & dm_;
-
+  const LaplaceModelType & model_;
   // we use the same index set and grid part for all spaces
   GridPartType gridPart_;
 
@@ -352,6 +329,7 @@ private:
   mutable VeloPassType veloPass_;
 
   int steps_; 
+  int disp_;
 };
 
 template <class DiscrType> 
