@@ -56,11 +56,11 @@ int main (int argc, char **argv)
 
   std::string paramfile ( paramname );
 
-  typedef DescriptionTraits <double,GridType,ncomp,2> DescrType;
+  typedef DescriptionTraits <double,GridType,ncomp,3> DescrType;
   typedef DescrType :: ModelType ModelType;
   typedef DescrType :: DiscrParamType DiscrParamType;
 
-  ModelType model;
+  ModelType model(paramfile);
 
   Timer timer;
   simul<DiscrParamType>(model,paramfile);
