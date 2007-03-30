@@ -1,5 +1,5 @@
 # initial refine level 
-StartLevel: 1
+StartLevel: 0
 
 # do EOCSteps eoc steps
 EOCSteps: 2
@@ -27,6 +27,7 @@ Pre-relaxation: 1.1
 
 # display using Grape, 0 == no, 1 == yes  
 display: 1
+DisplayAll: 1
 
 # MacroTriang for 2d simul 
 Grid: ./grid2d.dgf
@@ -51,3 +52,8 @@ beta: 0.0            # also used by LDG Flux
 power: 1.2
 eta: 1.1
 #######################################
+# Problem setting
+#######################################
+Problem: 5
+Globalshift: 2.0 
+Factor: 1.23e-4
