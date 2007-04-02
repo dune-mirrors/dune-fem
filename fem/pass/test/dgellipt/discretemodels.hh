@@ -41,7 +41,13 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #endif
 
+#define USE_LDG 0 
+
+#if USE_LDG
+#define USE_DUNE_ISTL 0
+#else 
 #define USE_DUNE_ISTL HAVE_DUNE_ISTL
+#endif
 
 //*************************************************************
 namespace LDGExample {  
@@ -334,13 +340,17 @@ namespace LDGExample {
       typedef ISTLMatrixObject<DiscreteFunctionSpaceType,
                                DiscreteFunctionSpaceType> MatrixObjectType; 
 #else 
-      //typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
-      //                              DiscreteFunctionSpaceType> MatrixObjectType; 
-      typedef BlockMatrixObject<DiscreteFunctionSpaceType,
-                                DiscreteFunctionSpaceType> MatrixObjectType; 
+      typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
+                                    DiscreteFunctionSpaceType> MatrixObjectType; 
+      //typedef BlockMatrixObject<DiscreteFunctionSpaceType,
+      //                          DiscreteFunctionSpaceType> MatrixObjectType; 
 #endif
+
+#if USE_LDG 
+      typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
+#else 
       typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
-      //typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
+#endif
 
 #if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
@@ -573,11 +583,11 @@ namespace LDGExample {
     const NumFlux& numflux_;
   };
 
-  template <class ModelImp,int polOrd>
+  template <class ModelImp, class NumFluxImp, int polOrd>
   class VelocityDiscreteModel;
 
   // DiscreteModelTraits
-  template <class ModelImp,int polOrd >
+  template <class ModelImp,class NumFluxImp, int polOrd >
   struct VelocityTraits
   {
     enum { myPolOrd = polOrd };
@@ -604,16 +614,16 @@ namespace LDGExample {
     typedef DiscreteFunctionType DestinationType;
 
 
-    typedef VelocityDiscreteModel<ModelImp,polOrd> DiscreteModelType;
+    typedef VelocityDiscreteModel<ModelImp,NumFluxImp,polOrd> DiscreteModelType;
   };
-  template <class ModelImp,int polOrd>
+  template <class ModelImp,class NumFluxImp,int polOrd>
   class VelocityDiscreteModel :
-    public DiscreteModelDefaultWithInsideOutSide<VelocityTraits<ModelImp,polOrd> >
+    public DiscreteModelDefaultWithInsideOutSide<VelocityTraits<ModelImp,NumFluxImp,polOrd> >
   {
     // do not copy this class 
     VelocityDiscreteModel(const VelocityDiscreteModel&);
   public:
-    typedef VelocityTraits<ModelImp,polOrd> Traits;
+    typedef VelocityTraits<ModelImp,NumFluxImp,polOrd> Traits;
 
     // select Pressure, which comes from pass before 
     typedef Dune::Selector<1> SelectorType;
@@ -624,12 +634,15 @@ namespace LDGExample {
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIteratorType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef NumFluxImp NumFluxType;
 
     enum { polynomialOrder = polOrd };
 
   public:
-    VelocityDiscreteModel(const ModelImp& mod)
-      : model_(mod) {}
+    VelocityDiscreteModel(const ModelImp& mod, const NumFluxType& flux) 
+      : model_(mod)
+      , numFlux_(flux) 
+    {}
 
     bool hasSource() const { return false; }
     bool hasFlux() const   { return true; }
@@ -643,31 +656,45 @@ namespace LDGExample {
                          RangeType& gRight)
     {
       const DomainType normal = it.integrationOuterNormal(x);
+      const double faceVol = normal.two_norm();
 
       // get saturation 
-      typedef typename ElementType<0, ArgumentTuple>::Type SType;
-      const SType& argSLeft  = Element<0>::get(uLeft);
-      const SType& argSRight = Element<0>::get(uRight);
+      typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      const UType& argULeft  = Element<0>::get(uLeft);
+      const UType& argURight = Element<0>::get(uRight);
 
       JacobianRangeType diffmatrix;
 
       RangeType diffflux(0.);
+      gLeft  = 0.0;
+      gRight = 0.0;
 
-      model_.gradient( this->inside(),time,
-            it.intersectionSelfLocal().global(x),
-            argSLeft,diffmatrix);
-            //pressure,tmp,diffmatrix);
+      UType result;
+        
+      // left value 
+      {
+        // eval num flux 
+        numFlux_.uFlux(faceVol,argULeft,argURight,result);
 
-      diffmatrix.umv(normal,diffflux);
-      model_.gradient( this->outside(),time,
-            it.intersectionNeighborLocal().global(x),
-            argSRight,diffmatrix);
-            //pressure,tmp,diffmatrix);
-      diffmatrix.umv(normal,diffflux);
-      diffflux*=0.5;
+        // set diffmatrix 
+        model_.gradient( this->inside(),time,
+              it.intersectionSelfLocal().global(x),
+              result,diffmatrix);
 
-      gLeft = diffflux;
-      gRight = diffflux;
+        diffmatrix.umv(normal,gLeft);
+      }
+      
+      {
+        // eval num flux 
+        numFlux_.uFlux(faceVol,argURight,argULeft,result);
+        
+        // set diffmatrix 
+        model_.gradient( this->inside(),time,
+              it.intersectionSelfLocal().global(x),
+              result,diffmatrix);
+
+        diffmatrix.umv(normal,gRight);
+      }
       return 0.;
     }
 
@@ -707,6 +734,7 @@ namespace LDGExample {
     }
   private:
     const ModelImp & model_;
+    const NumFluxType& numFlux_;
   };
 
 
