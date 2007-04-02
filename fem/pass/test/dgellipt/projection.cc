@@ -40,6 +40,154 @@ class HdivTest
   typedef DiscontinuousGalerkinSpace<ElSpaceType,GridPartType, bubblePolOrd , CachingStorage > ElementDiscreteSpaceType; 
 
  public:
+  static double normalJump(const DiscreteFunctionType &discFunc, int polyOrder = -1 ) 
+  {
+    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
+    typedef typename FunctionSpaceType::Traits::GridType GridType;
+    typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
+    typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType; 
+   
+    enum { dim = GridType::dimension };
+    
+    const FunctionSpaceType& space =  discFunc.space();
+    const GridPartType & gridPart = space.gridPart();
+    int polOrd = (polyOrder <0) ? (2 * space.order() + 2) : polyOrder;
+    
+    //int polOrd = 0;
+    
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    
+    RangeType ret (0.0);
+    RangeType neighRet (0.0);
+    
+    // Get quadraturae rule
+    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+     
+    typedef CachingQuadrature <GridPartType , 1> FaceQuadratureType; 
+
+    double sum = 0.0;
+
+    const LocalIdSetType & idSet = space.grid().localIdSet();
+    
+    Iterator endit = space.end();
+    for(Iterator it = space.begin(); it != endit ; ++it) 
+    {
+      EntityType & en = *it;
+      const LocalFuncType lf = discFunc.localFunction(en);
+     
+      double localValue = 0.0;
+      
+      IntersectionIteratorType endnit = gridPart.iend(en);
+      for(IntersectionIteratorType nit = gridPart.ibegin(en);
+          nit != endnit; ++nit)
+      {
+        // only interior faces are considered 
+        if(nit.neighbor() )
+        {
+          EntityPointerType neighEp = nit.outside();
+          EntityType&            nb = *neighEp;
+          
+          if(idSet.id( en ) < idSet.id( nb ))
+          {
+            FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
+            FaceQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+
+            const LocalFuncType neighLf = discFunc.localFunction(nb);
+            
+            const int quadNop = faceQuadInner.nop();
+            for (int l = 0; l < quadNop ; ++l)
+            {
+              DomainType normal = 
+                nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+
+              lf.evaluate(faceQuadInner,l,ret);
+              neighLf.evaluate(faceQuadOuter,l,neighRet);
+              
+              ret -= neighRet;
+              
+              double val = ret * normal; 
+              val *= faceQuadInner.weight(l);
+
+              localValue += std::abs(val);
+            }
+          }
+        }
+      } // end of intersection iterator 
+      sum += std::abs(localValue);
+    }
+
+    return sum;
+  }
+  
+  static double div(const DiscreteFunctionType &discFunc, int polyOrder = -1 ) 
+  {
+    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
+    typedef typename FunctionSpaceType::Traits::GridType GridType;
+    typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
+    typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType; 
+   
+    enum { dim = GridType::dimension };
+    
+    const FunctionSpaceType& space =  discFunc.space();
+    const GridPartType & gridPart = space.gridPart();
+    int polOrd = (polyOrder <0) ? (2 * space.order() + 2) : polyOrder;
+    
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    
+    RangeType ret (0.0);
+    
+    // Get quadraturae rule
+    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+     
+    typedef CachingQuadrature <GridPartType , 1> FaceQuadratureType; 
+
+    double sum = 0.0;
+
+    //const LocalIdSetType & idSet = space.grid().localIdSet();
+    
+    Iterator endit = space.end();
+    for(Iterator it = space.begin(); it != endit ; ++it) 
+    {
+      EntityType & en = *it;
+      const LocalFuncType lf = discFunc.localFunction(en);
+     
+      double localValue = 0.0;
+      
+      IntersectionIteratorType endnit = gridPart.iend(en);
+      for(IntersectionIteratorType nit = gridPart.ibegin(en);
+          nit != endnit; ++nit)
+      {
+        FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
+        const int quadNop = faceQuadInner.nop();
+        for (int l = 0; l < quadNop ; ++l)
+        {
+          DomainType normal = 
+            nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+
+          lf.evaluate(faceQuadInner,l,ret);
+          
+          double val = ret * normal; 
+          val *= faceQuadInner.weight(l);
+
+          localValue += val;
+        }
+      } // end of intersection iterator 
+      sum += std::abs(localValue);
+    }
+
+    return sum;
+  }
+  
   static double localMassConserve(const DiscreteFunctionType &discFunc, int polyOrder = -1 ) 
   {
     typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
