@@ -232,25 +232,37 @@ public:
       veloPass_(arg,velo);
 
       {
+#if USE_LDG
+        // only for LDG method
+        velo.clear();
+        lastPass_.evalGradient(dest,velo);
+#endif
+        
         L2Error < DestinationType > l2errGrad;
         gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
 
         HdivTest< DestinationType > hdiv;
+
+        //std::cout << "Divergence = " << hdiv.div( velo ) << "\n";
+        //std::cout << "Local Mass = " << hdiv.localMassConserve( velo ) << "\n";
+
         DestinationType tmp ( velo );
 
-        hdiv.project( tmp, velo );
-        // only for LDG method
-        //velo.clear();
-        //lastPass_.evalGradient(dest,velo);
+        //hdiv.project( tmp, velo );
+        
+        //std::cout << "After Divergence = " << hdiv.div( velo ) << "\n";
+        //std::cout << "After Local Mass = " << hdiv.localMassConserve( velo ) << "\n";
+
         errVelo[i] = l2errGrad.norm( model_.data().gradient() , velo);
         
 #if HAVE_GRAPE
         if( disp_ )
         {
           GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
+          grape.addData( dest );
           grape.addData( tmp );
           grape.addData( velo );
-          grape.dataDisplay( dest );
+          grape.display();
         }
 #endif
       }
@@ -341,10 +353,11 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
 
   // choice of fluxes 
   typedef LDGFlux<ModelType> NumericalFluxType;
+  typedef GradientFlux GradientFluxType;
 
   typedef LaplaceDiscreteModel < ModelType, NumericalFluxType, polOrd > LaplaceModelType;
   typedef GradientDiscreteModel < ModelType, NumericalFluxType, polOrd-1 > GradientModelType;
-  typedef VelocityDiscreteModel < ModelType, polOrd-1 > VelocityModelType;
+  typedef VelocityDiscreteModel < ModelType, GradientFluxType, polOrd-1 > VelocityModelType;
   
   typedef MySpaceOperator <  GradientModelType, 
                              LaplaceModelType,
@@ -376,10 +389,10 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   readParameter(paramfile,"display",display);
 
   // read parameter for LDGFlux 
-  double beta = 0.0;
-  if(!readParameter(paramfile,"beta",beta))
+  double ldgbeta = 0.0;
+  if(!readParameter(paramfile,"LDGbeta",ldgbeta))
   {
-    std::cout << "Using beta = "<< beta << "\n";
+    std::cout << "Using beta = "<< ldgbeta << "\n";
   }
   double power = 1.0;
   if(!readParameter(paramfile,"power",power))
@@ -391,14 +404,15 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   {
     std::cout << "Using eta = "<< eta << "\n";
   }
-  NumericalFluxType numericalFlux(model,beta,power,eta);
+  
+  NumericalFluxType numericalFlux(model,ldgbeta,power,eta);
+  GradientFluxType gradFlux(ldgbeta,power);
   
   LaplaceModelType lpm(model, numericalFlux);
   GradientModelType gm(model, numericalFlux);
-  VelocityModelType vm(model);
+  VelocityModelType vm(model, gradFlux );
 
   SpaceOperatorType spaceOp(grid , gm, lpm , vm, paramfile );
-  //fscanf(stdin,"%d",&bla);
   
   //! storage for the discrete solution and its update
   DestinationType *solution = spaceOp.createDestinationFct("solution");
