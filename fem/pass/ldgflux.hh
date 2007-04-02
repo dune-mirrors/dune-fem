@@ -161,4 +161,50 @@ private:
   const bool betaNotZero_;
 };
 
+
+//! Flux for Gradient calculation 
+class GradientFlux
+{
+public:
+  //! constructor taking beta and power 
+  GradientFlux(const double beta, 
+               const double power)
+    : beta_(beta)
+    , power_(power)
+  {
+    assert( std::abs( beta_ ) > 0.0 );
+  }
+  
+  //! copy constructor 
+  GradientFlux(const GradientFlux& org) 
+    : beta_(org.beta_), power_(org.power_) {} 
+
+  //! evaluates: result = { u } + n * [ u ] 
+  //! ( see Brezzi et al )
+  template <class URangeType>
+  double uFlux(const double faceVol, 
+               const URangeType & uLeft,
+               const URangeType & uRight, 
+               URangeType & result) const 
+  {
+    const double scaling = beta_ * std::pow(faceVol,power_);
+   
+    // the following is done:
+    // flux = uLeft + 0.5 * (uLeft - uRight) * scaling
+    
+    result  = uLeft; 
+    result -= uRight;
+  
+    result *= 0.5 * scaling;
+    
+    result += uLeft;
+    
+    return 0.0;
+  }
+  
+private:
+  const double beta_;
+  const double power_;
+};
+
 #endif
