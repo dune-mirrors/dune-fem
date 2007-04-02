@@ -5,7 +5,7 @@ StartLevel: 0
 EOCSteps: 2
 
 # epsilon for iterative solver 
-InvSolverEps: 1e-18
+InvSolverEps: 1e-25
 
 # cg output, 0 == no output, 1 == print output   
 verbose: 1
@@ -27,7 +27,7 @@ Pre-relaxation: 1.1
 
 # display using Grape, 0 == no, 1 == yes  
 display: 1
-DisplayAll: 1
+DisplayAll: 0
 
 # MacroTriang for 2d simul 
 Grid: ./grid2d.dgf
@@ -46,14 +46,15 @@ Grid: ./grid2d.dgf
 
 B_{+,-}: 1
 Babuska-Zlamal: 0
-beta: 0.0            # also used by LDG Flux 
+beta: 0.0        
 
 # only used by LDGFlux 
-power: 1.2
-eta: 1.1
+LDGbeta: 1.0
+power: 3.0
+eta: 1.5
 #######################################
 # Problem setting
 #######################################
-Problem: 5
-Globalshift: 2.0 
-Factor: 1.23e-4
+Problem: 1
+GlobalShift: 2.0 
+Factor: 1.0
