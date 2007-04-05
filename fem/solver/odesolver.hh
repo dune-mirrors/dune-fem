@@ -183,6 +183,11 @@ class ExplicitOdeSolver :
     // maximal allowed cfl number 
     tp.provideCflEstimate(cfl); 
     assert( tp.cfl() <= 1.0 );
+
+    if(verbose) 
+    {
+      std::cout << "ExplicitOdeSolver: cfl = " << tp.cfl() << "!\n";
+    } 
   }
 
   //! destructor 
