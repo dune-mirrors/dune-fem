@@ -218,6 +218,20 @@ public:
     } 
   }
 
+  //! set all values of the matrix to given value 
+  DenseMatrix<T> & operator = (const T & val)
+  {
+    for(int row=0; row<rows(); ++row)
+    {
+      for(int col=0; col<cols(); ++col)
+      {
+        matrix_[row][col] = val;
+      }
+    }
+    return *this;
+  } 
+  
+  //! set all values of the matrix to values of given matrix 
   DenseMatrix<T> & operator = (const DenseMatrix & org)
   {
     rows_ = org.rows_; 
@@ -227,6 +241,7 @@ public:
     return *this;
   } 
   
+  //! add matrix 
   DenseMatrix<T> & operator += (const DenseMatrix & org)
   {
     const int nRows = rows();
@@ -243,6 +258,7 @@ public:
     return *this;
   } 
 
+  //! substract matrix 
   DenseMatrix<T> & operator -= (const DenseMatrix & org)
   {
     assert( rows() == rows() );
@@ -255,6 +271,7 @@ public:
     return *this;
   } 
 
+  //! print matrix 
   void print(std::ostream & s) const
   {
     for(int i=0; i<rows(); ++i) 
