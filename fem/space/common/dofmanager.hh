@@ -1336,6 +1336,13 @@ public:
   //! this will increase the sequence counter by 1 
   void dofCompress() 
   {
+    compress();
+  }
+  
+  //! compress all data that is hold by this dofmanager 
+  //! this will increase the sequence counter by 1 
+  void compress() 
+  {
     // compress indexsets first 
     {
       IndexListIteratorType endit  = indexList_.end();
@@ -1385,8 +1392,10 @@ public:
 
   //! unpacks all data of this entity from message buffer 
   template <class ObjectStreamType, class EntityType>
-  void xtractData ( ObjectStreamType & str, EntityType & en )
+  void xtractData ( ObjectStreamType & str, EntityType & en , size_t newElements )
   {
+    // reserve memory for new elements 
+    reserveMemory(newElements , true );
     // here the elements already have been created 
     // that means we can xtract data
     dataXtractor_.apply(str,en);
