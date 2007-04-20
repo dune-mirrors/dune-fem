@@ -3,73 +3,71 @@
 
 // Dune includes
 #include <dune/grid/common/grid.hh>
-
+#include <dune/common/misc.hh>
 // Local includes
 #include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/space/common/basefunctionfactory.hh>
-
+#include "legendrepoly.hh"
 namespace Dune {
   
   typedef int deriType;
 
-  //! Wrapper interface for DG base functions
-  template <class FunctionSpaceType>
-  class LegendreDGBaseFunctionWrapper {
-  protected:
-    LegendreDGBaseFunctionWrapper() {}
-    virtual ~LegendreDGBaseFunctionWrapper() {}
-    
-    enum { dimDomain = FunctionSpaceType::DimDomain };
-
-    //- Local typedefs
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    static int numBaseFunctions(int polOrder) 
-    {
-      switch (dimDomain) {
-      case 2:
-        return (polOrder+1)*(polOrder+1);
-      case 3:
-        return (polOrder+1)*(polOrder+1)*(polOrder+1);
-      default:
-
-        DUNE_THROW(NotImplemented, "DGBaseFunctionWrapper only supports 2D and 3D Domain");
-      }
-      assert(false); // can't get here!
-      return -1;
+  //Template Meta Programm for evaluating tensorproduct polynomial in arbitrary dimensions
+  template<int dim,int i,int PolOrd>
+  class Eval{
+  public:
+    static double apply(FieldVector<double,dim> x,int idx){
+      int num=idx%(PolOrd+1);
+      LegendrePoly  lp=LegendrePoly(num);
+      return lp.eval(x[i-1])*Eval<dim,i-1,PolOrd>::apply(x,(idx-num)/(PolOrd+1));
     }
-   
-    double eval_quadrilateral_2d_l (int j,int i, const DomainType & xi ) const;
-    double eval_hexahedron_3d_l (int j,int i, const DomainType & xi ) const;
-    void grad_quadrilateral_2d_l (int j,int i, const DomainType & xi,
-                                 JacobianRangeType & grad ) const;
-    void grad_hexahedron_3d_l (int j,int i, const DomainType & xi,
-             JacobianRangeType & grad ) const;
+  };
 
-  }; // end class DGBaseFunctionWrapper
+  template<int dim,int PolOrd>
+  class Eval<dim,0,PolOrd>{
+  public:
+   static double apply(FieldVector<double,dim> x,int idx){
+     return 1.0;
+   }
+  };
+//Template Meta Programm for evaluating the partial derivative of tensorproduct polynomials in arbitrary dimensions
+template<int dim,int i,int PolOrd>
+  class EvalD{
+  public:
+    static double apply(FieldVector<double,dim> x,int j,int idx){
+      int num=idx%(PolOrd+1);
+      LegendrePoly  lp=LegendrePoly(num);
+      if((i-1)!=j)
+	return lp.eval(x[i-1])*EvalD<dim,i-1,PolOrd>::apply(x,j,(idx-num)/(PolOrd+1));
+      else
+	return lp.eval1(x[i-1])*EvalD<dim,i-1,PolOrd>::apply(x,j,(idx-num)/(PolOrd+1));
+    }
+  };
 
-  //! Base class for DG base functions
-  template <class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType, int polOrd>
-  class LegendreDGBaseFunction;
+  template<int dim,int PolOrd>
+  class EvalD<dim,0,PolOrd>{
+  public:
+    static double apply(FieldVector<double,dim> x,int j,int idx){
+      return 1.0;
+    }
+  };
+ 
 
-  //! Specialisation for quadrilaterals 
-  template <class FunctionSpaceType, int polOrd>
-  class LegendreDGBaseFunction<FunctionSpaceType,
-        GeometryIdentifier::Quadrilateral , polOrd> :
-    public BaseFunctionInterface<FunctionSpaceType>,
-    private LegendreDGBaseFunctionWrapper<FunctionSpaceType>
+  template <class FunctionSpaceType,int polOrd>
+  class LegendreDGBaseFunction :
+    public BaseFunctionInterface<FunctionSpaceType>
   {
   private:
     //- Local data
     int baseNum_;
-    
+   
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-  
+    
+    enum{dim=DomainType::dimension};
+
   public:
     LegendreDGBaseFunction(int baseNum) :
       baseNum_(baseNum) {
@@ -78,110 +76,31 @@ namespace Dune {
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
-
+    
     ~LegendreDGBaseFunction() {}
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      phi = this->eval_quadrilateral_2d_l(polOrd,baseNum_,x);
+      phi = Eval<dim,dim,polOrd>::apply(x,baseNum_);
+   
     }
-    
+
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_quadrilateral_2d_l(polOrd,baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = EvalD<dim,dim,polOrd>::apply(x,diffVariable[0],baseNum_);
+    
     }
+
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
       assert(false); // Not implemented
       abort();
     }
-
-    static int numBaseFunctions() {
-      return LegendreDGBaseFunctionWrapper<FunctionSpaceType>::numBaseFunctions(static_cast<int>(polOrd));
-    }
-  }; // end class DGBaseFunction<FunctionSpaceType, quadrilateral, polOrd>
-
-
-  //! Specialisation for hexahedrons 
-  template <class FunctionSpaceType, int polOrd>
-  class LegendreDGBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd> :
-    public BaseFunctionInterface<FunctionSpaceType>,
-    private LegendreDGBaseFunctionWrapper<FunctionSpaceType>
-  {
-  private:
-    //- Local data
-    int baseNum_;
-    //static const bool leg_=false;
-    //- Local typedefs
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-  
-  public:
-    LegendreDGBaseFunction(int baseNum) :
-      //DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
-      // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
-    }
-
-    ~LegendreDGBaseFunction() {}
-
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      
-      phi = this->eval_hexahedron_3d_l(polOrd,baseNum_,x);
-    }
-    
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_hexahedron_3d_l(polOrd,baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
-    }
-    
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      assert(false); // Not implemented
-      abort();
-    }
-
     static int numBaseFunctions() 
     {
-      return LegendreDGBaseFunctionWrapper<FunctionSpaceType>:: numBaseFunctions(static_cast<int>(polOrd));
+      return Power_m_p<polOrd+1,dim>::power;
     }
-
-  }; // end class LegendreDGBaseFunction<FunctionSpaceType, hexahedron, polOrd>
-
-  /*
-  template <class FunctionSpaceImp, GeometryIdentifier::IdentifierType elType, int polOrd>
-  class LegendreDGFastBaseFunctionSet :
-    public FastBaseFunctionSet<FunctionSpaceImp>
-  {
-    enum { dimRange = FunctionSpaceImp::DimRange };
-   
-    typedef LegendreDGBaseFunction<
-      FunctionSpaceImp, elType, polOrd> MyBaseFunctionType;
-
-  public:
-    LegendreDGFastBaseFunctionSet(FunctionSpaceImp& spc) :
-      FastBaseFunctionSet<FunctionSpaceImp>(spc, MyBaseFunctionType::numBaseFunctions()) 
-    {
-      assert(dimRange == 1); // works only for scalar spaces
-      int numBaseFct = MyBaseFunctionType::numBaseFunctions();
-      this->setNumOfDiffFct(numBaseFct);
-
-      for (int i = 0; i < numBaseFct; ++i) {
-        this->setBaseFunctionPointer(i, new MyBaseFunctionType(i));
-      }
-    }
-
-    virtual ~LegendreDGFastBaseFunctionSet() {}
-  };
-  */
 
   template <class ScalarFunctionSpaceImp, int polOrd>
   class LegendreDGBaseFunctionFactory : 
@@ -199,35 +118,22 @@ namespace Dune {
     virtual BaseFunctionType* baseFunction(int i) const 
     {
       GeometryType type = this->geometry();
-      if(type.isCube())
-      {
-        if(type.isQuadrilateral())
-          return new LegendreDGBaseFunction<FunctionSpaceType, GeometryIdentifier::Quadrilateral,polOrd>(i);
-        if(type.isHexahedron())
-          return new LegendreDGBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd>(i);
-      } 
+      assert(type.isCube());
+	
+      return new LegendreDGBaseFunction<FunctionSpaceType ,polOrd>(i);
+      
       DUNE_THROW(NotImplemented, 
                  "The chosen geometry type is not implemented");
       return 0;
     }
-
-    virtual int numBaseFunctions() const {
-      switch (FunctionSpaceType::DimDomain) {
-      case 2:
-        return  (polOrd+1)*(polOrd+1);
-      case 3:
-        return ((polOrd+1)*(polOrd+1)*(polOrd+1));
-      default:
-        DUNE_THROW(NotImplemented, 
-                   "LegendreDGBaseFunctionWrapper only supports 2D and 3D Domain");
-      }
-      assert(false); // can't get here!
-      abort();
-      return -1;
+    
+    virtual int numBaseFunctions() const 
+    {
+      return Power_m_p<polOrd+1,FunctionSpaceType::DimDomain>::power;
     }
   };
 
 } // end namespace Dune
 
-#include "legendre_imp.cc"
+//#include "legendre_imp.cc"
 #endif
