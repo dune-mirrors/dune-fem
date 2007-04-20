@@ -101,6 +101,7 @@ template<int dim,int i,int PolOrd>
     {
       return Power_m_p<polOrd+1,dim>::power;
     }
+  };
 
   template <class ScalarFunctionSpaceImp, int polOrd>
   class LegendreDGBaseFunctionFactory : 
