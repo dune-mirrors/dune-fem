@@ -51,7 +51,13 @@ template<int dim,int i,int PolOrd>
       return 1.0;
     }
   };
- 
+
+  //! number of legendre base functions for given polord and dim 
+  template <int p, int dim>
+  struct NumLegendreBaseFunctions
+  {
+    enum { numBaseFct = Power_m_p<p+1,dim>::power };
+  };
 
   template <class FunctionSpaceType,int polOrd>
   class LegendreDGBaseFunction :
@@ -97,9 +103,10 @@ template<int dim,int i,int PolOrd>
       assert(false); // Not implemented
       abort();
     }
+
     static int numBaseFunctions() 
     {
-      return Power_m_p<polOrd+1,dim>::power;
+      return NumLegendreBaseFunctions<polOrd,dim>::numBaseFct;
     }
   };
 
@@ -130,7 +137,7 @@ template<int dim,int i,int PolOrd>
     
     virtual int numBaseFunctions() const 
     {
-      return Power_m_p<polOrd+1,FunctionSpaceType::DimDomain>::power;
+      return NumLegendreBaseFunctions<polOrd,FunctionSpaceType::DimDomain>::numBaseFct;
     }
   };
 

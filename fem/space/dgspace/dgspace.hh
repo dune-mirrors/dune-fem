@@ -31,8 +31,8 @@ namespace Dune {
    DiscreteFunctionSpace for discontinuous functions 
    NOTE: To use this space for adaptive calcuations one has to
    use an index set that is capable for adaptive calculations, e.g
-  DGAdaptiveLeafIndexSet and DGAdaptiveLeafGridPart.
-  **/
+   DGAdaptiveLeafIndexSet and DGAdaptiveLeafGridPart.
+  */
   //! A discontinuous Galerkin space base for DGSpaces 
   template <class SpaceImpTraits>
   class DiscontinuousGalerkinSpaceBase : 
@@ -112,8 +112,7 @@ namespace Dune {
       BaseType (gridPart),
       gridPart_(gridPart),
       mapper_(0),
-      // baseFuncSet_(MaxNumElType, 0),
-       baseFuncSet_(),
+      baseFuncSet_(),
       dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
     {
       // add index set to list of indexset of dofmanager 
@@ -137,15 +136,11 @@ namespace Dune {
         // create mappers and base sets for all existing geom types
         for(size_t i=0; i<geomTypes.size(); ++i)
         {
-          // GeometryIdentifier::IdentifierType id =
-//                       GeometryIdentifier::fromGeo(geomTypes[i]);
-        
-          //if(baseFuncSet_[id] == 0 )
-	  if(baseFuncSet_.find( geomTypes[i] ) == baseFuncSet_.end() )
+	        if(baseFuncSet_.find( geomTypes[i] ) == baseFuncSet_.end() )
           {
-	    const BaseFunctionSetType* set = & setBaseFuncSetPointer(geomTypes[i]);
+      	    const BaseFunctionSetType* set = & setBaseFuncSetPointer(geomTypes[i]);
+            assert( set );
             baseFuncSet_[ geomTypes[i] ] = set;
-            //baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
             maxNumDofs = std::max(maxNumDofs,set->numBaseFunctions());
           }
         }
@@ -165,26 +160,34 @@ namespace Dune {
     /** Destructor */
     virtual ~DiscontinuousGalerkinSpaceBase () 
     {
-      for (unsigned int i = 0; i < baseFuncSet_.size(); ++i) 
+      typedef typename BaseFunctionMapType :: iterator iterator;
+      iterator end = baseFuncSet_.end();
+      for (iterator it = baseFuncSet_.begin(); it != end; ++it)
       {
-	/*
-        BaseFunctionSetType * set = (BaseFunctionSetType *) baseFuncSet_[i]; 
+        BaseFunctionSetType * set = (BaseFunctionSetType *) (*it).second; 
         if( set ) removeBaseFuncSetPointer( *set );
-        baseFuncSet_[i] = 0;
-	*/
       }
 
       MapperProviderType::removeObject( *mapper_ );
     }
   
     //- Methods
+    //! iterator pointing to first entity of space 
     IteratorType begin() const { return gridPart_.template begin<0>(); }
 
+    //! iterator pointing to behind last entity of space 
     IteratorType end() const { return gridPart_.template end<0>(); }
 
+    //! return refernence to grid  
     const GridType& grid() const { return gridPart_.grid(); }
 
+    //! return refernence to index set  
     const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
+
+    //! return reference to the spaces grid part
+    GridPartType & gridPart () { return gridPart_; }
+    //! return reference to the spaces grid part
+    const GridPartType & gridPart () const { return gridPart_; }
 
     //! Return the identifier
     DFSpaceIdentifier type () const 
@@ -192,93 +195,37 @@ namespace Dune {
       return DGSpace_id;
     }
   
-    //! Get base function set for a given entity
-    // template<class Geometry>
-//     const BaseFunctionSetType&
-//     subBaseFunctionSet (const Geometry & geo) const 
-//     {
-//       GeometryIdentifier::IdentifierType id = 
-//         GeometryIdentifier::fromGeometry(geo);
-//       return this->baseFunctionSet(id);
-//     }
-  
+    //! return reference to base functions set according to the geometry's geometry type 
     template<class Geometry>
     const BaseFunctionSetType&
     subBaseFunctionSet (const Geometry & geo) const 
     {
-      
       return this->baseFunctionSet(geo);
     }
-
-
-
-
-
-
-    //! Get base function set for a given entity
-    // const BaseFunctionSetType&
-//     subBaseFunctionSet (const GeometryType & type, bool ) const 
-//     {
-//       GeometryIdentifier::IdentifierType id = 
-//         GeometryIdentifier::fromGeo(type.dim(),type);
-//       return this->baseFunctionSet(id);
-//     }
-  const BaseFunctionSetType&
+    
+    //! return reference to base functions set according to geometry type 
+    const BaseFunctionSetType&
     subBaseFunctionSet (const GeometryType & type, bool ) const 
     {
-      // GeometryIdentifier::IdentifierType id = 
-//         GeometryIdentifier::fromGeo(type.dim(),type);
       return this->baseFunctionSet(type);
     }
-    //! Get base function set for a given entity
-    // template <class Entity>
-//     const BaseFunctionSetType&
-//     baseFunctionSet (const Entity& en) const 
-//     {
-//       GeometryIdentifier::IdentifierType id = 
-//         GeometryIdentifier::fromGeometry(en.geometry());
-//       return this->baseFunctionSet(id);
-//     }
+
+    //! return reference to base functions set according to the entity's geometry type 
     template <class Entity>
     const BaseFunctionSetType&
     baseFunctionSet (const Entity& en) const 
     {
-      // GeometryIdentifier::IdentifierType id = 
-//         GeometryIdentifier::fromGeometry(en.geometry());
       return this->baseFunctionSet(en.geometry().type());
     }
-    //! Get base function set for a given entity
-    template <class Entity>
+
+    //! return reference to base functions set according to geometry type 
     const BaseFunctionSetType&
-    getBaseFunctionSet (const Entity& en) const
+    baseFunctionSet (const GeometryType geomType) const 
     {
-      return this->baseFunctionSet( en );
+      assert(baseFuncSet_.find( geomType ) != baseFuncSet_.end());
+      return *baseFuncSet_[geomType];
     }
-  
-    //! Get base function set for a given id of geom type (mainly used by
-    //! CombinedSpace) 
-   //  const BaseFunctionSetType&
-//     baseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
-//     {
-//       assert(id < (int) baseFuncSet_.size());
-//       assert(id >= 0);
-//       assert(baseFuncSet_[id]);
-//       return *baseFuncSet_[id];
-//     }
-   const BaseFunctionSetType&
-    baseFunctionSet (const GeometryType geo) const 
-    {
-      //assert(id < (int) baseFuncSet_.size());
-      //assert(id >= 0);
-      assert(baseFuncSet_.find( geo ) != baseFuncSet_.end());
-      return *baseFuncSet_[geo];
-    }
-    // const BaseFunctionSetType&
-//     getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const
-//     {
-//       return this->baseFunctionSet(id);
-//     }
-  
+
     //! return true if we have continuous discrete functions 
     bool continuous () const
     {
@@ -291,12 +238,6 @@ namespace Dune {
       return polOrd;
     }
     
-    //! get global order of space  
-    int polynomOrder () const DUNE_DEPRECATED
-    {
-      return order();
-    }
-  
     //! length of the dof vector  
     //! size knows the correct way to calculate the size of the functionspace
     int size () const 
@@ -317,11 +258,6 @@ namespace Dune {
       assert( mapper_ );
       return *mapper_;
     }
-
-    //! return reference to the spaces grid part
-    GridPartType & gridPart () { return gridPart_; }
-    //! return reference to the spaces grid part
-    const GridPartType & gridPart () const { return gridPart_; }
 
   protected:
     DiscontinuousGalerkinSpaceBase();
@@ -348,10 +284,9 @@ namespace Dune {
     // mapper for function space 
     mutable MapperType* mapper_; 
 
-    // vector of base function sets
-    typedef std::map < const GeometryType ,const BaseFunctionSetType* > BaseFunctionMapType;
+    // map holding base function sets
+    typedef std::map < const GeometryType, const BaseFunctionSetType* > BaseFunctionMapType;
     mutable BaseFunctionMapType baseFuncSet_;
-    //std::vector<const BaseFunctionSetType*> baseFuncSet_;
 
     const DofManagerType & dm_;
   };
@@ -389,7 +324,7 @@ namespace Dune {
     typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
     
-    //! number of base functions 
+    //! number of base functions * dimRange 
     enum { localBlockSize = DimRange * 
         DGNumberOfBaseFunctions<polOrd,DimDomain>::numBaseFunctions }; 
 
@@ -496,7 +431,8 @@ namespace Dune {
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
 
-    enum { DimRange = FunctionSpaceType::DimRange };
+    enum { DimRange  = FunctionSpaceType::DimRange };
+    enum { DimDomain = FunctionSpaceType::DimDomain };
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -509,6 +445,11 @@ namespace Dune {
  
     typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+
+    //! number of base functions * dimRange 
+    enum { localBlockSize = DimRange * 
+        NumLegendreBaseFunctions<polOrd,DimDomain>::numBaseFct }; 
+
   };
 
   //! A discontinuous Galerkin space
@@ -555,7 +496,9 @@ namespace Dune {
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
-    enum { dimRange = Traits::FunctionSpaceType::DimRange };
+    enum { dimRange  = Traits::FunctionSpaceType::DimRange };
+    enum { DimRange  = Traits::FunctionSpaceType::DimRange };
+    enum { DimDomain = Traits::FunctionSpaceType::DimDomain };
 
     //! The polynom order of the base functions
     enum { PolOrd = polOrd };
@@ -577,6 +520,9 @@ namespace Dune {
     // type of singleton list  
     typedef SingletonList< GeometryType, BaseFunctionSetType,
             SingletonFactoryType > SingletonProviderType;
+
+    //! size of local blocks 
+    enum { localBlockSize = Traits::localBlockSize };
 
   public:
     //- Constructors and destructors
