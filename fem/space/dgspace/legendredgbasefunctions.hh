@@ -135,5 +135,4 @@ template<int dim,int i,int PolOrd>
 
 } // end namespace Dune
 
-//#include "legendre_imp.cc"
 #endif
