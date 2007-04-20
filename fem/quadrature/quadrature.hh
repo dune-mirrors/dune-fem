@@ -418,7 +418,10 @@ namespace Dune {
   };
 
   //! default defines for used quadratures 
-  template <typename ct, int dim> struct DefaultQuadratureTraits; 
+  template <typename ct, int dim> struct DefaultQuadratureTraits
+  {
+  typedef CubeQuadrature<ct, dim> CubeQuadratureType; 
+  }; 
 
   //! quadratures for points 
   template <typename ct> 
@@ -453,6 +456,12 @@ namespace Dune {
     typedef PyramidQuadrature<ct>    PyramidQuadratureType;
   };
   
+
+
+
+
+
+
   //! The actual interface class for quadratures.
   //! Quadrature is a proxy for the actual implementations of the quadratures.
   //! During construction, the actual Quadrature object is configured with

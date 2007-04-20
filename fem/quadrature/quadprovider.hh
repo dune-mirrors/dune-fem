@@ -87,8 +87,21 @@ namespace Dune {
     //! Implementation: if the desired hasn't been constructed, this is
     //! done during the call. In all subsequent calls, the stored object is
     //! returned.
+    typedef QuadratureTraits<ct,dim> QuadratureTraitsType;
+    typedef typename QuadratureTraitsType :: CubeQuadratureType CubeQuadratureType;
     static const QuadratureImp<ct, dim>& getQuadrature(GeometryType geo, 
-                                                       int order);
+                                                       int order)
+    {
+      assert(geo.isCube());
+      return QuadCreator::template provideQuad<CubeQuadratureType>(order);
+      
+      
+    } 
+  private:
+    QuadratureProvider();
+    QuadratureProvider(const QuadratureProvider&);
+    QuadratureProvider& operator=(const QuadratureProvider&);
+    
   };
 
   //! Specialisation for dimension 0
