@@ -112,7 +112,8 @@ namespace Dune {
       BaseType (gridPart),
       gridPart_(gridPart),
       mapper_(0),
-      baseFuncSet_(MaxNumElType, 0),
+      // baseFuncSet_(MaxNumElType, 0),
+       baseFuncSet_(),
       dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
     {
       // add index set to list of indexset of dofmanager 
@@ -136,13 +137,16 @@ namespace Dune {
         // create mappers and base sets for all existing geom types
         for(size_t i=0; i<geomTypes.size(); ++i)
         {
-          GeometryIdentifier::IdentifierType id =
-                      GeometryIdentifier::fromGeo(geomTypes[i]);
+          // GeometryIdentifier::IdentifierType id =
+//                       GeometryIdentifier::fromGeo(geomTypes[i]);
         
-          if(baseFuncSet_[id] == 0 ) 
+          //if(baseFuncSet_[id] == 0 )
+	  if(baseFuncSet_.find( geomTypes[i] ) == baseFuncSet_.end() )
           {
-            baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
-            maxNumDofs = std::max(maxNumDofs,baseFuncSet_[id]->numBaseFunctions());
+	    const BaseFunctionSetType* set = & setBaseFuncSetPointer(geomTypes[i]);
+            baseFuncSet_[ geomTypes[i] ] = set;
+            //baseFuncSet_[id] = & setBaseFuncSetPointer(geomTypes[i]);
+            maxNumDofs = std::max(maxNumDofs,set->numBaseFunctions());
           }
         }
       }
@@ -163,9 +167,11 @@ namespace Dune {
     {
       for (unsigned int i = 0; i < baseFuncSet_.size(); ++i) 
       {
+	/*
         BaseFunctionSetType * set = (BaseFunctionSetType *) baseFuncSet_[i]; 
         if( set ) removeBaseFuncSetPointer( *set );
         baseFuncSet_[i] = 0;
+	*/
       }
 
       MapperProviderType::removeObject( *mapper_ );
@@ -187,34 +193,60 @@ namespace Dune {
     }
   
     //! Get base function set for a given entity
+    // template<class Geometry>
+//     const BaseFunctionSetType&
+//     subBaseFunctionSet (const Geometry & geo) const 
+//     {
+//       GeometryIdentifier::IdentifierType id = 
+//         GeometryIdentifier::fromGeometry(geo);
+//       return this->baseFunctionSet(id);
+//     }
+  
     template<class Geometry>
     const BaseFunctionSetType&
     subBaseFunctionSet (const Geometry & geo) const 
     {
-      GeometryIdentifier::IdentifierType id = 
-        GeometryIdentifier::fromGeometry(geo);
-      return this->baseFunctionSet(id);
+      
+      return this->baseFunctionSet(geo);
     }
-  
+
+
+
+
+
+
     //! Get base function set for a given entity
-    const BaseFunctionSetType&
+    // const BaseFunctionSetType&
+//     subBaseFunctionSet (const GeometryType & type, bool ) const 
+//     {
+//       GeometryIdentifier::IdentifierType id = 
+//         GeometryIdentifier::fromGeo(type.dim(),type);
+//       return this->baseFunctionSet(id);
+//     }
+  const BaseFunctionSetType&
     subBaseFunctionSet (const GeometryType & type, bool ) const 
     {
-      GeometryIdentifier::IdentifierType id = 
-        GeometryIdentifier::fromGeo(type.dim(),type);
-      return this->baseFunctionSet(id);
+      // GeometryIdentifier::IdentifierType id = 
+//         GeometryIdentifier::fromGeo(type.dim(),type);
+      return this->baseFunctionSet(type);
     }
-  
     //! Get base function set for a given entity
+    // template <class Entity>
+//     const BaseFunctionSetType&
+//     baseFunctionSet (const Entity& en) const 
+//     {
+//       GeometryIdentifier::IdentifierType id = 
+//         GeometryIdentifier::fromGeometry(en.geometry());
+//       return this->baseFunctionSet(id);
+//     }
     template <class Entity>
     const BaseFunctionSetType&
     baseFunctionSet (const Entity& en) const 
     {
-      GeometryIdentifier::IdentifierType id = 
-        GeometryIdentifier::fromGeometry(en.geometry());
-      return this->baseFunctionSet(id);
+      // GeometryIdentifier::IdentifierType id = 
+//         GeometryIdentifier::fromGeometry(en.geometry());
+      return this->baseFunctionSet(en.geometry().type());
     }
-  
     //! Get base function set for a given entity
     template <class Entity>
     const BaseFunctionSetType&
@@ -225,20 +257,27 @@ namespace Dune {
   
     //! Get base function set for a given id of geom type (mainly used by
     //! CombinedSpace) 
-    const BaseFunctionSetType&
-    baseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
+   //  const BaseFunctionSetType&
+//     baseFunctionSet (const GeometryIdentifier::IdentifierType id) const 
+//     {
+//       assert(id < (int) baseFuncSet_.size());
+//       assert(id >= 0);
+//       assert(baseFuncSet_[id]);
+//       return *baseFuncSet_[id];
+//     }
+   const BaseFunctionSetType&
+    baseFunctionSet (const GeometryType geo) const 
     {
-      assert(id < (int) baseFuncSet_.size());
-      assert(id >= 0);
-      assert(baseFuncSet_[id]);
-      return *baseFuncSet_[id];
+      //assert(id < (int) baseFuncSet_.size());
+      //assert(id >= 0);
+      assert(baseFuncSet_.find( geo ) != baseFuncSet_.end());
+      return *baseFuncSet_[geo];
     }
-  
-    const BaseFunctionSetType&
-    getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const
-    {
-      return this->baseFunctionSet(id);
-    }
+    // const BaseFunctionSetType&
+//     getBaseFunctionSet (const GeometryIdentifier::IdentifierType id) const
+//     {
+//       return this->baseFunctionSet(id);
+//     }
   
     //! return true if we have continuous discrete functions 
     bool continuous () const
@@ -310,7 +349,9 @@ namespace Dune {
     mutable MapperType* mapper_; 
 
     // vector of base function sets
-    std::vector<const BaseFunctionSetType*> baseFuncSet_;
+    typedef std::map < const GeometryType ,const BaseFunctionSetType* > BaseFunctionMapType;
+    mutable BaseFunctionMapType baseFuncSet_;
+    //std::vector<const BaseFunctionSetType*> baseFuncSet_;
 
     const DofManagerType & dm_;
   };
