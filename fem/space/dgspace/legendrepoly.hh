@@ -38,6 +38,9 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+
+      weight = 1.0;
+
       break;
     case 1://p=2x-1 
       factor_[0]= -1.0;
@@ -51,6 +54,9 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+      
+      weight=1.73205080756887729352744634151;
+
       break;
     case 2://p=6x^2-6x+1 
       factor_[0]= 1.0;
@@ -64,6 +70,9 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+
+      weight=2.23606797749978969640917366873;
+
       break;		 
     case 3://p=20*x^3-30*x^2+12*x-1  
       factor_[0]= -1.0;
@@ -77,6 +86,9 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+
+      weight=2.64575131106459059050161575364;
+
       break;		 
     case 4://p=70*x^4-140*x^3+90*x^2-20*x+1
       factor_[0]= 1.0;
@@ -90,6 +102,9 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+      
+      weight=3.0;
+
       break;
     case 5://p=252*x^5-630*x^4+560*x^3-210*x^2+30*x-1 
       factor_[0]= -1.0;
@@ -103,6 +118,8 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+
+      weight=3.31662479035539984911493273667;
        
       break;
     case 6://p=924*x^6-2772*x^5+3150*x^4-1680*x^3+420*x^2-42*x+1
@@ -117,6 +134,9 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+
+      weight=3.60555127546398929311922126747;
+      
       break;
     case 7://p=3432*x^7-12012*x^6+16632*x^5-11550*x^4+4200*x^3-756*x^2+56*x-1
       factor_[0]= -1.0;
@@ -130,6 +150,9 @@ class LegendrePoly
       factor_[8]= 0;
       factor_[9]= 0;
       factor_[10]= 0;
+
+      weight=3.87298334620741688517926539978;
+      
       break;
     case 8://p=1-72*x+1260*x^2-9240*x^3-72072*x^5+34650*x^4+84084*x^6-51480*x^7+12870*x^8
       factor_[0]= 1.0;
@@ -143,6 +166,9 @@ class LegendrePoly
       factor_[8]= 12870.0;
       factor_[9]= 0;
       factor_[10]= 0;
+      
+      weight=4.12310562561766054982140985597;
+      
       break;
     case 9://p=-1+90*x-1980*x^2+18480*x^3+252252*x^5-90090*x^4-420420*x^6+411840*x^7-218790*x^8+48620*x^9
       factor_[0]= -1.0;
@@ -156,6 +182,9 @@ class LegendrePoly
       factor_[8]= -218790.0;
       factor_[9]=48620.0;
       factor_[10]= 0;
+      
+      weight=4.35889894354067355223698198386;
+
       break;
     case 10://p= 1-110*x+2970*x^2-34320*x^3-756756*x^5+210210*x^4+1681680*x^6-2333760*x^7+1969110*x^8-923780*x^9+184756*x^10
       factor_[0]= 1.0;
@@ -169,6 +198,9 @@ class LegendrePoly
       factor_[8]= 1969110.0;
       factor_[9]= -923780.0;
       factor_[10]= 184756.0;
+
+     weight= 4.58257569495584000658804719373;
+
       break;
     }
   }
@@ -178,7 +210,7 @@ class LegendrePoly
     double phi=factor_[num_];
     for(int i=num_-1;i>=0;i--)
       {phi=phi*x+factor_[i];}
-    return phi;
+    return weight*phi;
   }
   
   double eval1(double  x) const
@@ -190,7 +222,7 @@ class LegendrePoly
 	{phi=phi*x+factor_[i]*i;}
     }
       
-    return phi;
+    return weight*phi;
   }
      
   double eval2(double x) const
@@ -202,11 +234,12 @@ class LegendrePoly
 	phi=phi*x+factor_[i]*i*(i-1);
       }
     }
-    return phi;
+    return weight*phi;
   }
   
  private:
   double factor_[11];
+  double weight;
   int num_;
 };
 
