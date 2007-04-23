@@ -190,8 +190,8 @@ namespace Dune {
           if( it == endit ) return ;
 
           // initialize some values 
-          localRows_ = rowSpace.getBaseFunctionSet(*it).numBaseFunctions();
-          localCols_ = colSpace.getBaseFunctionSet(*it).numBaseFunctions();
+          localRows_ = rowSpace.baseFunctionSet(*it).numBaseFunctions();
+          localCols_ = colSpace.baseFunctionSet(*it).numBaseFunctions();
 
           // map of indices 
           // necessary because element traversal not necessaryly is in
