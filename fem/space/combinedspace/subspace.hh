@@ -115,9 +115,9 @@ namespace Dune {
       return mapper_.mapToGlobal(en, local);
     }
 
-    // access to baseFunctionSet
+    //! access to baseFunctionSet for given Entity
     template <class EntityType>
-    const BaseFunctionSetType& getBaseFunctionSet(EntityType& en) const 
+    const BaseFunctionSetType& baseFunctionSet(EntityType& en) const 
     {
       GeometryType geo = en.geometry().type();
       int dimension = static_cast<int>(EntityType::mydimension);
@@ -178,11 +178,6 @@ namespace Dune {
       component_(component),
       tmp_(0.0)
     {}
-
-    int getNumberOfBaseFunctions() const DUNE_DEPRECATED {
-      assert(bSet_.getNumberOfBaseFunctions()%CombinedDimRange == 0);
-      return bSet_.getNumberOfBaseFunctions()/CombinedDimRange;
-    }
 
     //! Number of base functions
     int numBaseFunctions() const {

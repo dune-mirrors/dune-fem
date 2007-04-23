@@ -210,13 +210,6 @@ namespace Dune {
       return *baseSetVec_[id];
     }
 
-    //! access to base function set
-    template <class EntityType>
-    const BaseFunctionSetType& getBaseFunctionSet(const EntityType& en) const 
-    {
-      return this->baseFunctionSet(en); 
-    }
-
     //! access to grid
     const GridType& grid() const { return spc_.grid(); }
     

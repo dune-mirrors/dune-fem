@@ -80,12 +80,6 @@ namespace Dune{
       return asImp().baseFunctionSet( en );
     }
   
-    //! deprecated 
-    template <class EntityType>
-    const BaseFunctionSetType&  getBaseFunctionSet ( EntityType &en ) const {
-      return asImp().getBaseFunctionSet( en );
-    }
-  
     //! return true if space is continuous 
     bool continuous() const { return asImp().continuous(); }
 

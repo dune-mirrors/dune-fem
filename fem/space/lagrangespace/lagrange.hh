@@ -213,13 +213,6 @@ namespace Dune {
     const BaseFunctionSetType& 
     baseFunctionSet ( const EntityType &en ) const;
 
-    template <class EntityType>
-    const BaseFunctionSetType& 
-    getBaseFunctionSet ( const EntityType &en ) const
-    { 
-      return this->baseFunctionSet(en); 
-    }
-    
     //! Get base function set for a given id of geom type (mainly used by
     //! CombinedSpace) 
     const BaseFunctionSetType&
