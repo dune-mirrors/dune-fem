@@ -327,32 +327,6 @@ namespace Dune {
                   const int quadPoint,
                   JacobianRangeType& ret) const;
 
-    #if OLDFEM
-    //! Evaluation of the discrete function
-    inline
-    void evaluate(EntityType& en, 
-                  const DomainType& x, 
-                  RangeType & ret) const {evaluate(en.gemoetry().local(x),ret);}
-    //! Evaluation of the discrete function
-    template <class EntityType>
-    inline
-    void evaluateLocal(EntityType& en, 
-                       const DomainType& x, 
-                       RangeType & ret) const {evaluate(x,ret);}
-    //! Evaluation of the discrete function
-    template <class QuadratureType>
-    inline
-    void evaluate(EntityType& en, 
-                  QuadratureType& quad,
-                  int quadPoint,
-                  RangeType& ret) const {evaluate(quad,quadPoint,ret);}
-    //! Jacobian of the discrete function
-    inline
-    void jacobianLocal(EntityType& en, 
-                       const DomainType& x, 
-                       JacobianRangeType& ret) const; 
-
-    #endif
     //! Jacobian of the discrete function
     inline
     void jacobian(EntityType& en, 
@@ -368,7 +342,6 @@ namespace Dune {
 
     //! get the base function set
     const BaseFunctionSetType& baseFunctionSet() const;
-    const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED {return baseFunctionSet();}
 
     //! axpy operation for factor 
     template <class QuadratureType>
@@ -649,25 +622,6 @@ namespace Dune {
     inline
     void evaluate(const DomainType& x, 
                   RangeType & ret) const;
-    #if OLDFEM
-    //! Evaluation
-    inline
-    void evaluate(EntityType& en, 
-                  const DomainType& x, 
-                  RangeType & ret) const {evaluate(en.geometry().local(x),ret);}
-    //! Evaluation
-    inline
-    void evaluateLocal(EntityType& en, 
-                       const DomainType& x, 
-                       RangeType & ret) const {evaluate(en,x,ret);}
-    //! Evaluation
-    template <class QuadratureType>
-    inline
-    void evaluate(EntityType& en,
-                  QuadratureType& quad,
-                  int quadPoint, 
-                  RangeType & ret) const {evaluate(quad,quadPoint,ret);}
-    #endif
 
     //! Evaluation
     template <class QuadratureType>
@@ -675,13 +629,7 @@ namespace Dune {
     void evaluate(const QuadratureType& quad,
                   const int quadPoint, 
                   RangeType & ret) const;
-    #if OLDFEM
-    //! Evaluation
-    inline
-    void jacobianLocal(EntityType& en, 
-                       const DomainType& x, 
-                       JacobianRangeType& ret) const;
-    #endif
+
     //! Evaluation
     inline
     void jacobian(EntityType& en, 

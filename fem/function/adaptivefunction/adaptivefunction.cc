@@ -81,12 +81,11 @@ namespace Dune {
   {
     assert(init_);
     ret = 0.0;
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
     const int numDof = this->numDofs();
     for (int i = 0; i < numDof; ++i) 
     {
-      bSet.eval(i, x, tmp_);
+      this->baseFunctionSet().evaluate(i, x, tmp_);
       ret.axpy( (*values_[i]) , tmp_ );
     }
   }
@@ -100,31 +99,20 @@ namespace Dune {
   {
     assert(init_);
     ret = 0.0;
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
 
     const int numDof = this->numDofs();
     for (int i = 0; i < numDof; ++i) 
     {
-      bSet.eval(i, quad,quadPoint, tmp_);
+      this->baseFunctionSet().evaluate(i, quad,quadPoint, tmp_);
       ret.axpy( (*values_[i]) , tmp_ );
     }
   }
 
-  #if OLDFEM
-  template <class DiscreteFunctionSpaceImp>
-  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  jacobianLocal(EntityType& en, 
-		const DomainType& x, 
-		JacobianRangeType& ret) const {
-    jacobian(x,ret);
-  }
-
-  #endif
   template <class DiscreteFunctionSpaceImp>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   jacobian(EntityType& en, 
-	   const DomainType& x, 
-	   JacobianRangeType& ret) const
+     const DomainType& x, 
+     JacobianRangeType& ret) const
   {
     jacobian(x,ret);
   }
@@ -268,11 +256,10 @@ namespace Dune {
        const int quadPoint, 
        const RangeType& factor)
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const int numDof = this->numDofs();
     for(int i=0; i<numDof; ++i) 
     {
-      bSet.eval( i , quad, quadPoint, tmp_ );
+      this->baseFunctionSet().evaluate( i , quad, quadPoint, tmp_ );
       (*values_[i]) += tmp_ * factor;
     }
   }
@@ -286,7 +273,6 @@ namespace Dune {
        const RangeType& factor1,
        const JacobianRangeType& factor2)
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const int numDof = this->numDofs();
 
     const JacobianInverseType& jti = 
@@ -296,12 +282,12 @@ namespace Dune {
     for(int i=0; i<numDof; ++i)
     {
       // evaluate gradient on reference element
-      bSet.eval( i , quad, quadPoint, tmp_ );
+      this->baseFunctionSet().evaluate(i, quad, quadPoint, tmp_ );
       (*values_[i]) += tmp_ * factor1;
-      bSet.jacobian(i, quad, quadPoint , tmpGrad_);
+      this->baseFunctionSet().jacobian(i, quad, quadPoint, tmpGrad_);
       for (int l = 0; l < dimRange; ++l) 
       {
-	(*values_[i]) += tmpGrad_[l] * factorInv_[l];
+        (*values_[i]) += tmpGrad_[l] * factorInv_[l];
       }
     }
   }
@@ -313,7 +299,6 @@ namespace Dune {
        const int quadPoint, 
        const JacobianRangeType& factor)
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const int numDof = this->numDofs();
 
     const JacobianInverseType& jti = 
@@ -323,10 +308,10 @@ namespace Dune {
     for(int i=0; i<numDof; ++i)
     {
       // evaluate gradient on reference element
-      bSet.jacobian(i, quad, quadPoint , tmpGrad_);
+      this->baseFunctionSet().jacobian(i, quad, quadPoint , tmpGrad_);
       for (int l = 0; l < dimRange; ++l) 
       {
-	(*values_[i]) += tmpGrad_[l] * factorInv_[l];
+        (*values_[i]) += tmpGrad_[l] * factorInv_[l];
       }
     }
   }
@@ -337,8 +322,6 @@ namespace Dune {
                 const JacobianInverseType& jInv,
                 JacobianRangeType& result) const 
   {
-    //result = factor;
-    //result.rightmultiply( jInv );
     enum { rows = JacobianRangeType :: rows };
     enum { cols = JacobianInverseType :: rows };
     for (int i=0; i<rows; ++i)
@@ -461,14 +444,13 @@ namespace Dune {
   evaluate(const DomainType& x, 
            RangeType& result) const
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     result = 0.0;
-    assert((values_.size()) == bSet.numDifferentBaseFunctions());
+    assert((values_.size()) == this->baseFunctionSet().numDifferentBaseFunctions());
     const int valSize = values_.size();
     for (int i = 0; i < valSize; ++i) 
     {
       // Assumption: scalar contained base functions
-      bSet.evaluateScalar(i, x, cTmp_);
+      this->baseFunctionSet().evaluateScalar(i, x, cTmp_);
       for (SizeType j = 0; j < N; ++j) 
       {
         result[j] += cTmp_[0]*(*values_[i][j]);
@@ -483,34 +465,25 @@ namespace Dune {
            const int quadPoint, 
            RangeType& ret) const
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     ret = 0;
-    assert((values_.size()) == bSet.numDifferentBaseFunctions());
+    assert((values_.size()) == this->baseFunctionSet().numDifferentBaseFunctions());
     const int valSize = values_.size();
     for (int i = 0; i < valSize; ++i) 
     {
       // Assumption: scalar contained base functions
-      bSet.evaluateScalar(i, quad, quadPoint, cTmp_);
+      this->baseFunctionSet().evaluateScalar(i, quad, quadPoint, cTmp_);
       for (SizeType j = 0; j < N; ++j) 
       {
         ret[j] += cTmp_[0]*(*values_[i][j]);
       }
     }
   }
-  #if OLDFEM
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  jacobianLocal(EntityType& en, 
-                const DomainType& x, 
-                JacobianRangeType& result) const {
-    jacobian(en,x,result);
-  }
-  #endif
+  
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   jacobian(EntityType& en, 
-	   const DomainType& x, 
-	   JacobianRangeType& result) const
+           const DomainType& x, 
+           JacobianRangeType& result) const
   {
     jacobian(x,result);
   }
@@ -521,15 +494,14 @@ namespace Dune {
   {
     result = 0.0;
 
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const JacobianInverseType& jInv = 
       en().geometry().jacobianInverseTransposed(x);
 
-    const int numDiffBaseFct = bSet.numDifferentBaseFunctions();
+    const int numDiffBaseFct = this->baseFunctionSet().numDifferentBaseFunctions();
     for (int i = 0; i < numDiffBaseFct; ++i) 
     {
+      this->baseFunctionSet().jacobianScalar(i, x, cTmpGradRef_);
       cTmpGradReal_ = 0.0;
-      bSet.jacobianScalar(i, x, cTmpGradRef_);
       jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
 
       for (SizeType j = 0; j < N; ++j) 
@@ -551,14 +523,14 @@ namespace Dune {
   {
     result = 0.0;
 
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const JacobianInverseType& jInv = 
       en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
-    const int numDiffBaseFct = bSet.numDifferentBaseFunctions();
+    const int numDiffBaseFct = 
+      this->baseFunctionSet().numDifferentBaseFunctions();
     for (int i = 0; i < numDiffBaseFct; ++i) 
     {
-      bSet.jacobianScalar(i, quad, quadPoint , cTmpGradRef_);
+      this->baseFunctionSet().jacobianScalar(i, quad, quadPoint , cTmpGradRef_);
       cTmpGradReal_ = 0.0;
       jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
 
@@ -628,7 +600,7 @@ namespace Dune {
       for (SizeType j = 0; j < N; ++j) 
       {
         values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, i*N+j)]);
-	values2_[i*N+j] = values_[i][j];
+        values2_[i*N+j] = values_[i][j];
       } // end for j
     } // end for i
   }
@@ -660,12 +632,10 @@ namespace Dune {
        const int quadPoint, 
        const RangeType& factor)
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
     const int numDDof = values_.size();
     for(int i=0; i<numDDof; ++i) 
     {
-      bSet.evaluateScalar(i , quad, quadPoint, cTmp_ );
-
+      this->baseFunctionSet().evaluateScalar(i , quad, quadPoint, cTmp_ );
       for(int j=0; j<N; ++j)
       {
         (*values_[i][j]) += cTmp_[0] * factor[j];
@@ -681,19 +651,18 @@ namespace Dune {
        const int quadPoint, 
        const JacobianRangeType& factor)
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
-    const int numDDof = values_.size();
-  
+    // get jacobian inverse for given point 
     const JacobianInverseType& jInv = 
       en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
     // apply jacobian inverse 
     rightMultiply( factor, jInv, factorInv_ );
   
+    const int numDDof = values_.size();
     for(int i=0; i<numDDof; ++i) 
     {
       // evaluate gradient on reference element
-      bSet.jacobianScalar( i, quad, quadPoint , cTmpGradRef_ );
+      this->baseFunctionSet().jacobianScalar( i, quad, quadPoint , cTmpGradRef_ );
       for (SizeType j = 0; j < N; ++j) 
       {
         (*(values_[i][j])) += cTmpGradRef_[0] * factorInv_[j]; 
@@ -709,20 +678,19 @@ namespace Dune {
        const RangeType& factor1,
        const JacobianRangeType& factor2)
   {
-    const BaseFunctionSetType& bSet = this->baseFunctionSet();
-    const int numDDof = values_.size();
-  
+    // get jacobian inverse for given point 
     const JacobianInverseType& jInv = 
       en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
     // apply jacobian inverse 
     rightMultiply( factor2, jInv, factorInv_ );
   
+    const int numDDof = values_.size();
     for(int i=0; i<numDDof; ++i) 
     {
       // evaluate gradient on reference element
-      bSet.evaluateScalar(i , quad, quadPoint, cTmp_ );
-      bSet.jacobianScalar( i, quad, quadPoint , cTmpGradRef_ );
+      this->baseFunctionSet().evaluateScalar(i , quad, quadPoint, cTmp_ );
+      this->baseFunctionSet().jacobianScalar(i , quad, quadPoint, cTmpGradRef_ );
       for (SizeType j = 0; j < N; ++j) 
       {
         (*(values_[i][j])) += cTmp_[0] * factor1[j] +
@@ -738,8 +706,6 @@ namespace Dune {
                 const JacobianInverseType& jInv,
                 JacobianRangeType& result) const 
   {
-    //result = factor;
-    //result.rightmultiply( jInv );
     enum { rows = JacobianRangeType :: rows };
     enum { cols = JacobianInverseType :: rows };
     for (int i=0; i<rows; ++i)
