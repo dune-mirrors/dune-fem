@@ -92,8 +92,8 @@ namespace Dune {
         , rowIndex_(rowSpace.indexSet().index(rowEntity))
         , colIndex_(colSpace.indexSet().index(colEntity))
       {
-        row_.resize(rowSpace.getBaseFunctionSet(rowEntity).numBaseFunctions());
-        col_.resize(colSpace.getBaseFunctionSet(colEntity).numBaseFunctions());
+        row_.resize(rowSpace.baseFunctionSet(rowEntity).numBaseFunctions());
+        col_.resize(colSpace.baseFunctionSet(colEntity).numBaseFunctions());
 
         {
           const size_t rows = row_.size();
@@ -302,8 +302,8 @@ namespace Dune {
           (gradientSpace_.begin() != gradientSpace_.end()) )
       {
         
-        singleMaxNumbers_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
-        gradMaxNumbers_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
+        singleMaxNumbers_ = singleSpace_.baseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
+        gradMaxNumbers_   = gradientSpace_.baseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
 
         if(verbose) 
         {
@@ -527,7 +527,7 @@ namespace Dune {
       : singleSpace_(singleSpace)
       , gradientSpace_(gradientSpace) 
       , size_(singleSpace_.indexSet().size(0))
-      , maxNumberUnknowns_(10* (singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
+      , maxNumberUnknowns_(10* (singleSpace_.baseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
       , stabMatrix_(0)
       , divMatrix_ (0) 
       , hasMassMatrix_(hasMassMatrix)
@@ -545,8 +545,8 @@ namespace Dune {
         // get number of elements 
         size_ = singleSpace_.indexSet().size(0); 
 
-        numSingleBaseFct_ = singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
-        numGradBaseFct_   = gradientSpace_.getBaseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
+        numSingleBaseFct_ = singleSpace_.baseFunctionSet(*(singleSpace_.begin())).numBaseFunctions();
+        numGradBaseFct_   = gradientSpace_.baseFunctionSet(*(gradientSpace_.begin())).numBaseFunctions();
 
         if(verbose) 
         {
@@ -756,8 +756,8 @@ namespace Dune {
         , matrix_(m[rowIndex_][colIndex_])
       {
         /*
-        row_.resize(rowSpace.getBaseFunctionSet(rowEntity).numBaseFunctions());
-        col_.resize(colSpace.getBaseFunctionSet(colEntity).numBaseFunctions());
+        row_.resize(rowSpace.baseFunctionSet(rowEntity).numBaseFunctions());
+        col_.resize(colSpace.baseFunctionSet(colEntity).numBaseFunctions());
 
         {
           const size_t rows = row_.size();
@@ -815,8 +815,8 @@ namespace Dune {
                       const GradientSpaceType & gradientSpace)
       : singleSpace_(singleSpace)
       , gradientSpace_(gradientSpace) 
-      , singleMax_(5 * (singleSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
-      , gradMax_(5 * (gradientSpace_.getBaseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
+      , singleMax_(5 * (singleSpace_.baseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
+      , gradMax_(5 * (gradientSpace_.baseFunctionSet(*(singleSpace_.begin())).numBaseFunctions()))
       //, stabMatrix_(singleSpace_.size(),singleSpace_.size(), singleMax_)
       //, gradMatrix_(gradientSpace_.size(),singleSpace_.size(),singleMax_)
       //, divMatrix_(singleSpace_.size(),gradientSpace_.size(), gradMax_)
