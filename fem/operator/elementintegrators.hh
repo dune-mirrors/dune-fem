@@ -425,7 +425,7 @@ protected:
 		for (int j=0; j<numBaseFunctions; j++ )
                 {
                   // evaluate base function
-                  baseSet.eval(j,quad,pt,phi);  
+                  baseSet.evaluate(j,quad,pt,phi);  
                   // evaluate convectiveFlux
                   phi *= fact;
                   this->model().convectiveFlux(entity, quad, pt,  
@@ -510,7 +510,7 @@ protected:
 	      double fact = quad.weight( pt ) * vol * coef;
 	      for(int i=0; i<numBaseFunctions; i++) 
               {	    
-                baseSet.eval(i,quad,pt,phi_i);  
+                baseSet.evaluate(i,quad,pt,phi_i);  
                 // evaluate gradient of base function
                 //baseSet.jacobian(i,quad,pt,gradPhi);  
                 // multiply with transpose of jacobian inverse 
@@ -519,7 +519,7 @@ protected:
                 for (int j=0; j<numBaseFunctions; j++ )
                 {
                   // evaluate basis function
-                  baseSet.eval(j,quad,pt,phi_j); 
+                  baseSet.evaluate(j,quad,pt,phi_j); 
                   phi_j *= fact;
                   // evaluate mass function
                   this->model().mass(entity, quad, pt,  
@@ -610,11 +610,11 @@ protected:
                       for(int i=0; i<numBaseFunctions; i++) 
                       {
                         RangeType phi_i;
-                        baseSet.eval(i,iquad,pt,phi_i);  
+                        baseSet.evaluate(i,iquad,pt,phi_i);  
                         for(int j=0; j<numBaseFunctions; j++) 
 			{
 			  RangeType phi_j;
-			  baseSet.eval(j,iquad,pt,phi_j);  	    
+			  baseSet.evaluate(j,iquad,pt,phi_j);  	    
 			  double incr =  fact * phi_i[0] * phi_j[0];
 			  mat.add(i,j,incr);
 			} // end inner loop over basefunctions           
@@ -863,7 +863,7 @@ public:
             RangeType phi;
             for(int i=0; i<numBaseFunctions; i++) 
             {
-              baseSet.eval(i,quad,pt,phi);
+              baseSet.evaluate(i,quad,pt,phi);
               this->model().source(entity, quad, pt, ret);
               double incr =  ret[0] * phi[0] * fact;
               elRhs[i]+= incr;
@@ -960,7 +960,7 @@ public:
 		  for(int i=0; i<numBaseFunctions; i++) 
                     {
 		      RangeType phi;
-		      baseSet.eval(i,iquad,pt,phi);  
+		      baseSet.evaluate(i,iquad,pt,phi);  
 		      
    		      RangeType ret;
 		      this->model().neumannValues(entity, iquad, pt, ret);
@@ -1061,7 +1061,7 @@ public:
 		  for(int i=0; i<numBaseFunctions; i++) 
                     {
 		      RangeType phi;
-		      baseSet.eval(i,iquad,pt,phi);  
+		      baseSet.evaluate(i,iquad,pt,phi);  
 		      
    		      RangeType ret;
 		      this->model().robinValues(entity, iquad, pt, ret);
