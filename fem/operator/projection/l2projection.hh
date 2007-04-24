@@ -64,7 +64,7 @@ template <typename DFieldType, typename RFieldType,
       {
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<numDofs; ++i) {
-          baseset.eval(i,quad,qP,phi);
+          baseset.evaluate(i,quad,qP,phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
