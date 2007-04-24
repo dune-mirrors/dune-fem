@@ -340,7 +340,8 @@ template <class QuadratureImp>
 inline void BaseFunctionSetDefault<BaseFunctionSetTraits>::
 eval(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const
 {
-  asImp().evaluate( baseFunct, diffVariable_ , quad, quadPoint, phi );
+  // call other eval because deprecated does not work for template methods 
+  asImp().eval( baseFunct, quad.point(quadPoint) , phi );
   return;
 }
 
