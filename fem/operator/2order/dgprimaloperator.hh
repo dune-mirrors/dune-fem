@@ -646,7 +646,7 @@ namespace Dune {
               // evaluate normal * grad phi 
               tau_[k] = bsetEn.evaluateGradientSingle(k,en,faceQuadInner,l, norm);  
               // evaluate phi 
-              bsetEn.eval(k,faceQuadInner,l, phi_[k]);
+              bsetEn.evaluate(k,faceQuadInner,l, phi_[k]);
             }
                
             // if not Babuska-Zlamal method, add boundary terms 
@@ -859,12 +859,12 @@ namespace Dune {
         for(int k=0; k<numDofs; ++k)
         { 
           // eval base functions 
-          bsetEn.eval(k,faceQuadInner,l, phi_[k]);
+          bsetEn.evaluate(k,faceQuadInner,l, phi_[k]);
           // eval gradient for en 
           tau_[k] = bsetEn.evaluateGradientSingle(k, en, faceQuadInner, l, normEn);  
 
           // neighbor stuff 
-          bsetNeigh.eval(k,faceQuadOuter,l, phiNeigh_[k] );      
+          bsetNeigh.evaluate(k,faceQuadOuter,l, phiNeigh_[k] );      
           // eval gradient for nb 
           tauNeigh_[k] = bsetNeigh.evaluateGradientSingle(k, nb, faceQuadOuter, l, normNb);      
         }

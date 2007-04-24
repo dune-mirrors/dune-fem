@@ -731,7 +731,7 @@ namespace Dune {
         for(int k = 0; k < gradientNumDofs; ++k)
         {
           // eval tau_k 
-          grdbsetEn.eval(k, volQuad, l, tau_[0] );
+          grdbsetEn.evaluate(k, volQuad, l, tau_[0] );
           
           if(gradProblem_.hasSource())
           {
@@ -748,7 +748,7 @@ namespace Dune {
           for (int j = 0; j < numDofs; ++j) 
           {
             // eval phi_j 
-            bsetEn.eval(j, volQuad, l, phi_);
+            bsetEn.evaluate(j, volQuad, l, phi_);
            
             helpmatr = gradFMat_; 
             for(int i = 0; i < dimDomain; ++i) 
@@ -873,7 +873,7 @@ namespace Dune {
                 
               for(int i=0; i<gradientNumDofs; ++i)
               { 
-                grdbsetEn.eval(i,faceQuadInner,l, tau_[0]);
+                grdbsetEn.evaluate(i,faceQuadInner,l, tau_[0]);
 
                 // factor 2, becasue on boundary flux is identity, see
                 // sigmaflux  
@@ -892,7 +892,7 @@ namespace Dune {
                               
                 for (int j = 0; j < numDofs; ++j) 
                 {
-                  bsetEn.eval(j, faceQuadInner, l, phi_);
+                  bsetEn.evaluate(j, faceQuadInner, l, phi_);
                  
                   // u+ in u^
                   double Val = sigmaFlux * phi_[0];
@@ -1078,16 +1078,16 @@ namespace Dune {
 
         for(int i=0;i < gradientNumDofs;++i)
         {
-          grdbsetEn.eval(i,faceQuadInner,l, tau_[0]);      
-          gradbsetNeigh.eval(i,faceQuadOuter,l, tauneigh_[0]);
+          grdbsetEn.evaluate(i,faceQuadInner,l, tau_[0]);      
+          gradbsetNeigh.evaluate(i,faceQuadOuter,l, tauneigh_[0]);
           
           RangeType valEn(0.0),valNeigh(0.0); 
 
           for(int j=0; j<numDofs; ++j)
           {
             //gradMAtrix
-            bsetEn.   eval(j, faceQuadInner, l, phi_); 
-            bsetNeigh.eval(j, faceQuadOuter, l, phiNeigh_ );
+            bsetEn.   evaluate(j, faceQuadInner, l, phi_); 
+            bsetNeigh.evaluate(j, faceQuadOuter, l, phiNeigh_ );
             
             {
               // eval tau * (un)  (scalar procduct) 
@@ -1235,7 +1235,7 @@ namespace Dune {
         for(int k = 0; k < gradientNumDofs; ++k)
         {
           // eval tau_k 
-          grdbsetEn.eval(k, volQuad, l, tau_[0] );
+          grdbsetEn.evaluate(k, volQuad, l, tau_[0] );
           
           if(gradProblem_.hasSource())
           {
