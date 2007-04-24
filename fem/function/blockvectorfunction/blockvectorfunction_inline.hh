@@ -504,7 +504,7 @@ evaluate (const DomainType & local, RangeType & ret) const
 
   for (int i = 0; i < bSet.numBaseFunctions(); ++i)
   {
-    bSet.eval(i, local , tmp_);
+    bSet.evaluate(i, local , tmp_);
     for (int l = 0; l < dimRange; ++l) {
       ret[l] += (*values_[i]) * tmp_[l];
     }
@@ -520,11 +520,10 @@ evaluate (const QuadratureType &quad, const int quadPoint, RangeType & ret) cons
   assert(init_);
 
   ret = 0.0;
-  const BaseFunctionSetType& bSet = baseFunctionSet();
-  const int numBaseFunctions = bSet.numBaseFunctions();
+  const int numBaseFunctions = baseFunctionSet().numBaseFunctions();
   for (int i = 0; i < numBaseFunctions; ++i)
   {
-    bSet.eval(i, quad, quadPoint , tmp_);
+    baseFunctionSet().evaluate(i, quad, quadPoint , tmp_);
     tmp_ *= (*values_[i]);
     ret += tmp_;
   }
@@ -541,14 +540,13 @@ jacobian(const DomainType& x,
   typedef typename DiscreteFunctionSpaceType::GridType::ctype ctype;
 
   ret = 0.0;
-  const BaseFunctionSetType& bSet = baseFunctionSet();
   const FieldMatrix<ctype,dim,dim>& inv =
     en().geometry().jacobianInverseTransposed(x);
 
-  const int numBaseFct = bSet.numBaseFunctions();
+  const int numBaseFct = baseFunctionSet().numBaseFunctions();
   for (int i = 0; i < numBaseFct; ++i) 
   {
-    bSet.jacobian(i, x , tmpGrad_);
+    baseFunctionSet().jacobian(i, x , tmpGrad_);
     for (int l = 0; l < dimRange; ++l) 
     {
       tmpGrad_[l] *= *(values_[i]);
@@ -568,14 +566,13 @@ jacobian (const QuadratureType &quad, const int quadPoint, JacobianRangeType & r
   typedef typename DiscreteFunctionSpaceType::GridType::ctype ctype;
 
   ret = 0.0;
-  const BaseFunctionSetType& bSet = baseFunctionSet();
   const FieldMatrix<ctype,dim,dim>& inv =
     en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
 
-  const int numBaseFct = bSet.numBaseFunctions();
+  const int numBaseFct = baseFunctionSet().numBaseFunctions();
   for (int i = 0; i < numBaseFct; ++i) 
   {
-    bSet.jacobian(i, quad, quadPoint , tmpGrad_);
+    baseFunctionSet().jacobian(i, quad, quadPoint , tmpGrad_);
     for (int l = 0; l < dimRange; ++l) 
     {
       tmpGrad_[l] *= *(values_[i]);
