@@ -215,7 +215,7 @@ public:
   virtual ~BaseFunctionSetDefault() {}
 
   //! default evaluate using the evaluate interface 
-  void eval(int baseFunct, const DomainType & x, RangeType & phi) const 
+  void eval(int baseFunct, const DomainType & x, RangeType & phi) const DUNE_DEPRECATED
   {
     asImp().evaluate(baseFunct, diffVariable_ , x , phi);
     return;
@@ -230,11 +230,7 @@ public:
 
   //! default implementation for evaluation 
   template <class QuadratureImp>
-  void eval(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const 
-  {
-    asImp().evaluate( baseFunct, diffVariable_ , quad, quadPoint, phi );
-    return;
-  }
+  void eval(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const DUNE_DEPRECATED;
 
   //! default implementation for evaluation 
   template <class QuadratureImp>
@@ -338,6 +334,16 @@ private:
   { return static_cast<const BaseFunctionSetType&>(*this); }
 
 };
+
+template<class BaseFunctionSetTraits> 
+template <class QuadratureImp>
+inline void BaseFunctionSetDefault<BaseFunctionSetTraits>::
+eval(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const
+{
+  asImp().evaluate( baseFunct, diffVariable_ , quad, quadPoint, phi );
+  return;
+}
+
 /** @} end documentation group */
 
 } // end namespace Dune 
