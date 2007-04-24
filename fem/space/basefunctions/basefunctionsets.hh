@@ -41,6 +41,7 @@ namespace Dune {
   class StandardBaseFunctionSet : 
     public BaseFunctionSetDefault<StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >
   {
+    typedef BaseFunctionSetDefault<StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> > BaseType;
   public:
     typedef StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> Traits;
     typedef typename FunctionSpaceImp::DomainType DomainType;
@@ -60,6 +61,16 @@ namespace Dune {
     //! Total number of base functions
     inline
     int numBaseFunctions() const;
+
+    // use evaluate of default implementation 
+    using BaseType :: evaluate;
+
+    template <int diffOrd>
+    inline
+    void evaluate(int baseFunct,
+                  const FieldVector<int, diffOrd>& diffVar,
+                  const DomainType& xLocal,
+                  RangeType& phi) const;
 
     template <int diffOrd>
     inline
@@ -152,6 +163,9 @@ namespace Dune {
 
     ~VectorialBaseFunctionSet() {}
 
+    // use evaluate of default implementation 
+    using BaseType :: evaluate;
+    
     inline
     int numBaseFunctions() const;
 
