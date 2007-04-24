@@ -181,7 +181,7 @@ namespace Dune {
         for (int i = 0; i < updEn_numDofs; ++i) 
         {
           // eval tau_k 
-          bsetEn.eval(i, volQuad, l, tau_ );
+          bsetEn.evaluate(i, volQuad, l, tau_ );
 
           // apply mass factor 
           FMatrixHelp::multAssign(massVal_,tau_,tauTmp_);
@@ -439,7 +439,7 @@ namespace Dune {
           for (int i = 0; i < updEn_numDofs; ++i) 
           {
             // eval tau_k 
-            bsetEn.eval(i, volQuad, l, tau );
+            bsetEn.evaluate(i, volQuad, l, tau );
 
             FMatrixHelp::multAssign(massVal, tau, tauTmp);
 
