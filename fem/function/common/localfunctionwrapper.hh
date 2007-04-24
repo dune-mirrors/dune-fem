@@ -182,33 +182,13 @@ public:
 
   //! return number of degrees of freedom 
   int numDofs () const { return localFunc().numDofs(); }
-  #if OLDFEM
-  //! sum over all local base functions 
-  template <class EntityType> 
-  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const
-  {
-    localFunc().evaluate( en , x , ret );
-  }
-  #endif
+  
   //! sum over all local base functions 
   void evaluate (const DomainType & x, RangeType & ret) const
   {
     localFunc().evaluate( x , ret );
   }
-  #if OLDFEM
-  //! sum over all local base functions but local 
-  template <class EntityType>
-  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const
-  {
-    localFunc().evaluateLocal( en , x , ret );
-  }
-  //! sum over all local base functions evaluated on given quadrature point
-  template <class EntityType, class QuadratureType> 
-  void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const
-  {
-    localFunc().evaluate( en , quad, quadPoint , ret );
-  }
-  #endif
+  
   //! sum over all local base functions evaluated on given quadrature point
   template <class QuadratureType> 
   void evaluate (const QuadratureType &quad, int quadPoint , RangeType & ret) const
@@ -216,33 +196,6 @@ public:
     localFunc().evaluate( quad, quadPoint , ret );
   }
   
-  #if OLDFEM
-  //! sum over all local base functions evaluated on given quadrature point
-  template <class EntityType, class QuadratureType> 
-  void jacobian (EntityType &en, QuadratureType &quad, 
-		 int quadPoint , JacobianRangeType & ret) const
-  {
-    localFunc().jacobian( en, quad, quadPoint, ret ); 
-  }
- 
-  //! sum over all local base functions evaluated on given quadrature
-  //point, but local 
-  template <class EntityType>
-  void jacobianLocal(EntityType& en, const DomainType& x, 
-		     JacobianRangeType& ret) const
-  {
-    localFunc().jacobianLocal( en, x , ret ); 
-  }
-  //! sum over all local base functions evaluated on given quadrature
-  //point, but local 
-  template <class EntityType>
-  void jacobian(EntityType& en, const DomainType& x, 
-		JacobianRangeType& ret) const
-  {
-    localFunc().jacobian( en, x , ret ); 
-  }
-  #endif
-
   //! sum over all local base functions evaluated on given quadrature point
   template <class QuadratureType> 
   void jacobian (const QuadratureType &quad, 
@@ -283,20 +236,19 @@ public:
   {
     localFunc().axpy( quad, quadPoint , factor );
   }
+  
+  //! sum over all local base functions evaluated on given quadrature points
   template <class QuadratureType> 
   inline void axpy(const QuadratureType &quad, 
                    const int quadPoint ,
                    const RangeType& factor1,
                    const JacobianRangeType & factor2)
   {
-    localFunc().axpy( quad, quadPoint , factor1,factor2 );
+    localFunc().axpy( quad, quadPoint, factor1, factor2 );
   }
   
+  //! return reference to BaseFunctionSet of this local function 
   const BaseFunctionSetType& baseFunctionSet() const 
-  {
-    return localFunc().baseFunctionSet();
-  }
-  const BaseFunctionSetType& getBaseFunctionSet() const DUNE_DEPRECATED
   {
     return localFunc().baseFunctionSet();
   }

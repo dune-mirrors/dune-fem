@@ -54,41 +54,14 @@ public:
   {
     return asImp().numDofs();
   }
-  #if OLDFEM
-  //! evaluate local function. is replaced by evaluateLocal (evaluateLocal 
-  //! stands for local (reference element) coordinate x, whereas evaluateGlobal
-  //! gets an x in physical (real world) coordinates
-  template <class EntityType>
-  void evaluate (EntityType &en, const DomainType & x, RangeType & ret)
-  {
-    asImp().evaluateLocal(en,en.geometry().local(x),ret);
-  }
-
-  //! evaluate the local function on reference element coordinate x
-  template <class EntityType>
-  void evaluateLocal(EntityType& en, 
-                     const DomainType& x, 
-                     RangeType & ret)
-  {
-    asImp().evaluateLocal(en,x,ret);
-  }
-  #endif
+  
   //! evaluate local function.
   //! gets an x in local coordinates
   void evaluate (const DomainType & x, RangeType & ret)
   {
     asImp().evaluate(x,ret);
   }
-  #if OLDFEM
-  //! evaluate jacobian on reference element coordinate x
-  template <class EntityType>
-  void jacobianLocal(EntityType& en, 
-                     const DomainType& x, 
-                     JacobianRangeType& ret) 
-  {
-    asImp().jacobianLocal(en,x,ret);
-  }
-  #endif 
+
   //! evaluate jacobian on reference element coordinate x
   template <class EntityType>
   void jacobian(EntityType& en, 
@@ -155,17 +128,7 @@ public:
     xLoc_ = en.geometry().local(x);
     evaluateLocal(en,xLoc_,ret);
   }
-  #if OLDFEM
-  //! Evaluation using a quadrature
-  template <class EntityType, class QuadratureType>
-  void evaluate(EntityType& en,
-                QuadratureType& quad,
-                int quadPoint,
-                RangeType& ret)
-  {
-    evaluate(quad.point(quadPoint), ret);
-  }
-  #endif
+
   //! Evaluation using a quadrature
   template <class QuadratureType>
   void evaluate(QuadratureType& quad,
@@ -174,6 +137,7 @@ public:
   {
     evaluate(quad.point(quadPoint), ret);
   }
+  
   //! jacobian of the local function using real world coordinate x
   template <class EntityType>
   void jacobianGlobal(EntityType& en, 
