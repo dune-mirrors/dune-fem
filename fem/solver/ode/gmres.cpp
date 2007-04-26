@@ -1,16 +1,14 @@
 // GMRES inline implementation
 
-#ifndef ODE_GMRES_HPP 
-#define ODE_GMRES_HPP 
+#ifndef ODE_GMRES_CPP 
+#define ODE_GMRES_CPP 
 
 #include <cmath>
 #include <cassert>
 #include "linear_solver.hpp"
 #include "blas.hpp"
 
-
-using namespace pardg;
-
+using namespace pardg; 
 
 GMRES::GMRES(Communicator &comm, int m) : 
   IterativeLinearSolver(comm), DynamicalObject("GMRES", comm.id()), 

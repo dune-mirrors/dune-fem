@@ -9,8 +9,6 @@
 #include "iterative_solver.hpp"
 #include "matrix.hpp"
 
-
-
 namespace pardg
 {
 
