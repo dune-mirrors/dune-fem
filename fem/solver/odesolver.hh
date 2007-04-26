@@ -25,37 +25,15 @@
 
 namespace DuneODE {
 
-// include first, because of typedef 
-#if HAVE_MPI 
-#include "ode/communicator.cpp"    
-#include "ode/buffer.cpp"
-#else 
-#include "ode/emptycommunicator.hpp"
-#endif
-
-  
+#include "ode/communicator.hpp"    
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
 #include "ode/linear_solver.hpp"
-#include "ode/bulirsch_stoer.cpp"  
-#include "ode/iterative_solver.cpp"  
-#include "ode/ode_solver.cpp"     
-#include "ode/sirk.cpp"   
-
-#include "ode/matrix.cpp"            
-#include "ode/qr_solver.cpp"   
-#include "ode/ssp.cpp"
-#include "ode/dirk.cpp"     
-#include "ode/runge_kutta.cpp"
-#include "ode/gmres.cpp"
-#include "ode/fgmres.cpp"
-#include "ode/bicgstab.cpp"
-#include "ode/cg.cpp"
-#include "ode/vector.cpp"
 
 // use Dennis namespace pardg
 using namespace pardg;
-}
+
+} // end namespace DuneODE
 
 namespace DuneODE {
   using namespace Dune;
@@ -170,15 +148,7 @@ class ExplicitOdeSolver :
     timeProvider_(tp)
   {
     // CFL upper estimate 
-    double cfl = 1.0;
-    switch (pord) 
-    {
-      case 0: cfl=0.9;  break;
-      case 1: cfl=0.2;  break;
-      case 2: cfl=0.15; break;
-      case 3: cfl=0.05; break;
-      case 4: cfl=0.09; break;
-    }
+    double cfl = 0.45 / (2.0 * pord+1);
 
     // maximal allowed cfl number 
     tp.provideCflEstimate(cfl); 
