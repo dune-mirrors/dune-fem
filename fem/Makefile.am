@@ -4,6 +4,12 @@ AUTOMAKE_OPTIONS = foreign 1.5
 # do everything in the subdirs
 SUBDIRS = pass space function quadrature operator solver io misc
 
+noinst_LTLIBRARIES = libfem.la
+
+# construct only from sub-libraries
+libfem_la_SOURCES =
+libfem_la_LIBADD = solver/libsolver.la 
+
 # install all files to dune/fem 
 femdir = $(includedir)/dune/fem
 
