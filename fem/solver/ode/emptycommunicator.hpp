@@ -1,5 +1,5 @@
-#ifndef COMMUNICATOR_HPP
-#define COMMUNICATOR_HPP
+#ifndef EMPTYCOMMUNICATOR_HPP
+#define EMPTYCOMMUNICATOR_HPP
 
 #include "thread.hpp"
 #include <iostream>
@@ -10,6 +10,8 @@
 typedef int MPI_Comm;
 typedef int MPI_Op;
 enum { MPI_SUM = 0 };
+
+namespace pardg {
 
 class Communicator 
 {
@@ -64,5 +66,7 @@ public:
   void write(const char filename[]) {}
   void read(const char filename[]) {}
 };
+
+}
 
 #endif
