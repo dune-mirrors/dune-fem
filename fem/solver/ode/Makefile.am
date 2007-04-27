@@ -11,4 +11,10 @@ dynamical_object.hpp   newton.hpp  thread.hpp \
 emptycommunicator.hpp  nonlinear_solver.hpp timer.hpp \
 function.hpp ode_solver.hpp  vector.hpp
 
+EXTRA_DIST = bicgstab.cpp  dirk.cpp  matrix.cpp  quasi_exact_newton.cpp \
+buffer.cpp          fgmres.cpp            newton.cpp      runge_kutta.cpp \
+bulirsch_stoer.cpp  gmres.cpp             ode_solver.cpp  sirk.cpp \
+cg.cpp              iterative_solver.cpp  pc_limiter.cpp  ssp.cpp \
+communicator.cpp    lu_solver.cpp         qr_solver.cpp   vector.cpp 
+
 include $(top_srcdir)/am/global-rules
