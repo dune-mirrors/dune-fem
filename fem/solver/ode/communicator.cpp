@@ -1,9 +1,7 @@
-#include "communicator.hpp"
 #include <fstream>
+#include "mpicommunicator.hpp"
 
 using namespace pardg;
-
-
 
 // class Communicator
 Communicator::Communicator() : 

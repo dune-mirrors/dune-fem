@@ -1,5 +1,6 @@
 //- system includes 
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <vector>
 #include <pthread.h>
