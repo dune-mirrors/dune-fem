@@ -584,7 +584,51 @@ namespace Dune {
     typedef typename Traits::DofStorageType DofStorageType;
 
     typedef typename DiscreteFunctionSpaceType::GridType::
-      template Codim<0>:: Entity EntityType;
+    template Codim<0>:: Entity EntityType;
+
+  private:
+    //- Typedefs
+    typedef typename FieldVector<DofType*, N>::size_type SizeType;
+
+    // store pointer to dofs belonging to local function 
+    template <class Dummy, DofStoragePolicy policy>
+    struct MapLocalDofs
+    {
+      template <class LocalDofVector>
+      static void map(const DiscreteFunctionSpaceType& spc,
+                      const EntityType& en, 
+                      const int i, 
+                      DofStorageType& dofVec,
+                      LocalDofVector& values)
+      {
+        for (SizeType j = 0; j < N; ++j )
+        {
+          values[i][j] = &(dofVec[spc.mapToGlobal(en, i*N+j)]);
+        } // end for j
+      }
+    };
+    
+    // specialisation for point based storage 
+    template <class Dummy>
+    struct MapLocalDofs<Dummy,PointBased>
+    {
+      template <class LocalDofVector>
+      static void map(const DiscreteFunctionSpaceType& spc,
+                      const EntityType& en, 
+                      const int i, 
+                      DofStorageType& dofVec,
+                      LocalDofVector& values)
+      {
+        const int idx = spc.mapToGlobal(en, i*N );
+        for (SizeType j = 0; j < N; ++j )
+        {
+          // only works for point base mappings 
+          assert( (idx+j) == spc.mapToGlobal(en, i*N+j) );
+          values[i][j] = &(dofVec[ idx+j ]);
+        } // end for j
+      }
+    };
+    
   private:  
     typedef typename GridType :: ctype ctype;
     enum { dim = GridType :: dimension };
@@ -697,19 +741,17 @@ namespace Dune {
     void rightMultiply(const JacobianRangeType& factor, const JacobianInverseType& jInv, 
                        JacobianRangeType& result) const;
   private:
-    //- Typedefs
-    typedef typename FieldVector<DofType*, N>::size_type SizeType;
-
-  private:
     //- Member data
     const DiscreteFunctionSpaceType& spc_;
     DofStorageType& dofVec_;
     
+    // local dofs 
     mutable Array< FieldVector<DofType*, N> > values_;
-    mutable Array<RangeFieldType*> values2_;
 
+    // number of local dofs 
     int numDofs_;
  
+    // temporary variables 
     mutable ContainedRangeType cTmp_;
     mutable ContainedJacobianRangeType cTmpGradRef_;
     mutable ContainedJacobianRangeType cTmpGradReal_;

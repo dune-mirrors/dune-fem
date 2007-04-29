@@ -416,8 +416,7 @@ namespace Dune {
   operator[] (const int num) 
   {
     assert(num >= 0 && num < numDofs());
-    // return *values_[num/N][static_cast<SizeType>(num%N)];
-    return (* (values2_[num]));
+    return *values_[num/N][static_cast<SizeType>(num%N)];
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -427,8 +426,7 @@ namespace Dune {
   operator[] (const int num) const 
   {
     assert(num >= 0 && num < numDofs());
-    // return *values_[num/N][static_cast<SizeType>(num%N)];
-    return (* (values2_[num]));
+    return *values_[num/N][static_cast<SizeType>(num%N)];
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -578,10 +576,9 @@ namespace Dune {
 
         numDofs_ = baseSet_->numDifferentBaseFunctions();
         values_.resize(numDofs_);
-        numDofs_ *= N;
-        values2_.resize(numDofs_);
-
+        
         // real dof number is larger 
+        numDofs_ *= N;
 
         init_ = true;
         geoType_ = en.geometry().type();
@@ -597,11 +594,8 @@ namespace Dune {
     assert( values_.size()*N == numDofs_);
     for (int i = 0; i < numDDof; ++i) 
     {
-      for (SizeType j = 0; j < N; ++j) 
-      {
-        values_[i][j] = &(dofVec_[spc_.mapToGlobal(en, i*N+j)]);
-        values2_[i*N+j] = values_[i][j];
-      } // end for j
+      // apply local mapping (see adaptivefunction.hh)
+      MapLocalDofs<GridType,p>::map(spc_,en,i,dofVec_,values_); 
     } // end for i
   }
   
