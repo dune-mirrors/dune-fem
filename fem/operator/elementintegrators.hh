@@ -215,8 +215,8 @@ protected:
             if (verbose_)
                 std::cout << "successful got geometry\n";
             
-            const BaseFunctionSetType & baseSet = 
-                fspace.getBaseFunctionSet(entity);
+            const BaseFunctionSetType& baseSet = 
+              fspace.baseFunctionSet( entity );
 
             if (verbose_)
                 std::cout << "got base function set\n";
@@ -302,8 +302,8 @@ protected:
               this->model().discreteFunctionSpace();
 
           // get local basis
-          const BaseFunctionSetType & baseSet = 
-              fspace.getBaseFunctionSet(entity);
+          const BaseFunctionSetType &baseSet = 
+            fspace.baseFunctionSet( entity );
           
           // assert that allocated space for gradPhiPtr is sufficient!!
           int numBaseFunctions =  baseSet.numBaseFunctions();             
@@ -384,8 +384,8 @@ protected:
                 this->model().discreteFunctionSpace();
             
             // get local basis
-            const BaseFunctionSetType & baseSet = 
-                fspace.getBaseFunctionSet(entity);
+            const BaseFunctionSetType &baseSet = 
+              fspace.baseFunctionSet( entity );
             
             int numBaseFunctions =  baseSet.numBaseFunctions();             
             // assert that allocated space for gradPhiPtr is sufficient!!
@@ -477,8 +477,8 @@ protected:
                 this->model().discreteFunctionSpace();
             
             // get local basis
-            const BaseFunctionSetType & baseSet = 
-                fspace.getBaseFunctionSet(entity);
+            const BaseFunctionSetType &baseSet = 
+              fspace.baseFunctionSet( entity );
             
             int numBaseFunctions =  baseSet.numBaseFunctions();             
             // assert that allocated space for gradPhiPtr is sufficient!!
@@ -591,8 +591,8 @@ protected:
                               IntersectionQuadratureType::INSIDE);
                     
                     // get local basis
-                    const BaseFunctionSetType & baseSet = 
-                        fspace.getBaseFunctionSet(entity);
+                    const BaseFunctionSetType &baseSet = 
+                      fspace.baseFunctionSet( entity );
                     
                     int numBaseFunctions =  baseSet.numBaseFunctions();     
                     // LocalFunctionType lf = rhs.localFunction(entity);
@@ -842,8 +842,8 @@ public:
               model_.discreteFunctionSpace();
           
           // get local basis
-          const BaseFunctionSetType & baseSet = 
-              fspace.getBaseFunctionSet(entity);
+          const BaseFunctionSetType &baseSet = 
+            fspace.baseFunctionSet( entity );
           
           // assert that allocated space for gradPhiPtr is sufficient!!
           int numBaseFunctions =  baseSet.numBaseFunctions();             
@@ -936,8 +936,8 @@ public:
                       IntersectionQuadratureType::INSIDE);
 	      
 	      // get local basis
-	      const BaseFunctionSetType & baseSet = 
-		fspace.getBaseFunctionSet(entity);
+	      const BaseFunctionSetType &baseSet = 
+		    fspace.baseFunctionSet( entity );
 	      
 	      int numBaseFunctions =  baseSet.numBaseFunctions();             
 	      	      
@@ -1036,8 +1036,8 @@ public:
                       IntersectionQuadratureType::INSIDE);
 	      
 	      // get local basis
-	      const BaseFunctionSetType & baseSet = 
-		fspace.getBaseFunctionSet(entity);
+	      const BaseFunctionSetType &baseSet = 
+            fspace.baseFunctionSet( entity );
 	      
 	      int numBaseFunctions =  baseSet.numBaseFunctions();             
 	      	      

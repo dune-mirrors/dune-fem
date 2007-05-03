@@ -1024,8 +1024,8 @@ private:
           // run through grid and add up local contributions
           for( ; it != endit; ++it )
           {
-            const BaseFunctionSetType & baseSet 
-                = this->functionSpace_.getBaseFunctionSet( *it );
+            const BaseFunctionSetType &baseSet 
+              = this->functionSpace_.baseFunctionSet( *it );
             const int numOfBaseFct = baseSet.numBaseFunctions();  
             
             // setup local element matrix 
