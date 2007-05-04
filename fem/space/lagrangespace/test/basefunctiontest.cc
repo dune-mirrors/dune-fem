@@ -73,9 +73,9 @@ namespace Dune {
         RangeType phi( 0.0 );
        
         const DomainType& x = lagrangePoints.point( i );
-        
-        // eval on lagrange point 
-        baseSet.eval( i , x , phi ); 
+       
+        // evaluate on lagrange point 
+        baseSet.evaluate( i , x , phi ); 
         if( std :: abs( phi[ 0 ] - 1.0 ) >= 1e-10 ) {
           std :: cout << "Base function " << i << " failed at " << x << " (" << phi[ 0 ] << " != 1)!" << std :: endl;
           errors++;
@@ -86,8 +86,8 @@ namespace Dune {
           if( i == j )
             continue;
 
-          // eval on lagrange point 
-          baseSet.eval( j , x, phi ); 
+          // evaluate on lagrange point 
+          baseSet.evaluate( j , x, phi ); 
           if( std :: abs( phi[ 0 ] ) >= 1e-10 ) {
             std :: cout << "Base function " << j << " failed at " << x << " (" << phi[ 0 ] << " != 0)!" << std :: endl;
             errors++;
