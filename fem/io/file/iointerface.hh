@@ -203,14 +203,42 @@ public:
     }
     
     std::string filename(path);
-    filename += "/g";
+    filename += "/";
     filename += prefix;
-    filename += ".macro";
+    filename += "_grid";
 
     enum { dimworld = GridImp :: dimensionworld };
 
     saveMacroGridImp<dimworld> (interval,filename); 
     return;
+  }
+
+  //! if grid is structured grid, write macro file 
+  template <class GridImp>
+  static void copyMacroGrid(const GridImp& g,
+                            const std::string& orgPath,
+                            const std::string& destPath, 
+                            const std::string& prefix) 
+  {
+    // do nothing for unstructured grids 
+    if( Capabilities::IsUnstructured<GridImp>::v ) return;
+    
+    std::string filename(orgPath);
+    filename += "/";
+    filename += prefix;
+    filename += "_grid.global";
+
+    std::string destFilename(destPath);
+    destFilename += "/";
+    destFilename += prefix;
+    destFilename += "_grid.macro";
+
+    std::string cmd("cp ");
+    cmd += filename; cmd += " ";
+    cmd += destFilename;
+
+    // copy file to actual path 
+    system(cmd.c_str());
   }
 
 protected:
