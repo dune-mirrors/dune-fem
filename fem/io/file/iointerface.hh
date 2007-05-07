@@ -2,6 +2,7 @@
 #define DUNE_IOINTERFACE_HH
 
 //- system includes 
+#include <iostream>
 #include <sys/stat.h>  
 #include <sys/types.h>
 #include <dirent.h>
