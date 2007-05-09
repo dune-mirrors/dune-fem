@@ -383,6 +383,11 @@ namespace Dune {
     //! size of local blocks 
     enum { localBlockSize = Traits::localBlockSize };
 
+    //! dimensionworld of grid 
+    enum { dimensionworld = GridType :: dimensionworld };
+    //! only use with dimension <= 3 
+    CompileTimeChecker<(dimensionworld<=3)> use_Legendre_Spaces_for_higher_worlddims;
+
     //! scalar space type 
     typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
