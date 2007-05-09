@@ -54,6 +54,13 @@ private:
   //! type of this class 
   typedef DGAdaptiveLeafIndexSet < GridType > ThisType;
   
+  //! type of DofManger and factory 
+  typedef DofManager<GridType> DofManagerType; 
+  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+
+  //! dof manager 
+  DofManagerType& dm_;
+  
   //! is true if grid is structured grid 
   enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };; 
   
@@ -76,10 +83,10 @@ private:
 
   //! true if set is consecutive without any holes 
   mutable bool compressed_;
+  int sequence_;
 
-  typedef DofManager<GridType> DofManagerType; 
-  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-  
+  //! no copy allowed
+  DGAdaptiveLeafIndexSet (const DGAdaptiveLeafIndexSet & ) ;
 public:
   //! type traits of this class (see defaultindexsets.hh)
   typedef DefaultLeafIteratorTypes<GridType> Traits; 
@@ -87,9 +94,11 @@ public:
   //! Constructor
   DGAdaptiveLeafIndexSet (const GridType & grid) 
     : DefaultGridIndexSetBase <GridType> (grid) 
-    , codimLeafSet_( DofManagerFactoryType::getDofManager(grid).memoryFactor() )
+    , dm_( DofManagerFactoryType::getDofManager(grid) )
+    , codimLeafSet_( dm_.memoryFactor() )
     , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
     , compressed_(true) // at start the set is compressed 
+    , sequence_(dm_.sequence())
   {
     // set the codim of this codim set, here always 0
     codimLeafSet_.setCodim( 0 );
@@ -275,8 +284,20 @@ public:
   //- --compress 
   bool compress ()
   {
-    // if set already compress, do noting 
-    if(compressed_) return false;
+    // if set already compress, do noting (only for serial runs) 
+    if(compressed_)
+    {
+      // in parallel runs check sequence number of dof manager 
+      if( this->grid_.comm().size() > 1 )
+      {
+        if( sequence_ == dm_.sequence() ) return false;
+      }
+      else 
+      {
+        // for serial runs just return 
+        return false;
+      }
+    }
 
 #if HAVE_MPI
     if( StructuredGrid && 
@@ -298,6 +319,7 @@ public:
     bool haveToCopy = codimLeafSet_.compress(); 
 
     compressed_ = true;
+    sequence_ = dm_.sequence();
     return haveToCopy;
   }
 
