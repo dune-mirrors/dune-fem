@@ -248,7 +248,7 @@ public:
   //! return reference to entry i
   T& operator [] ( int i )       
   { 
-    assert( ((i<0) || (i>=size()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
+    assert( ((i<0) || (i>=size ()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
     return vec_[i]; 
   }
   
@@ -466,19 +466,22 @@ class IndexSetObjectInterface
 {
 public:
   virtual ~IndexSetObjectInterface () {}
-  // resize of index set 
+  //! resize of index set 
   virtual void resize () = 0; 
-  // compress of index set 
+  //! compress of index set 
   virtual bool compress () = 0;
-  // returns true if set generally needs a compress 
+  //! returns true if set generally needs a compress 
   virtual bool needsCompress () const = 0;
-  // return address of index set 
+
+  //! return address of index set 
   virtual void * address () const = 0;
 
+  //! return type of set 
   virtual int typeOfSet () const = 0;
 
-  // read and write method of index sets 
+  //! read and write method of index sets 
   virtual void read_xdr(const char * filename, int timestep) = 0;
+  //! read and write method of index sets 
   virtual void write_xdr(const char * filename, int timestep) const = 0;
 };
 
@@ -1392,7 +1395,7 @@ public:
 
   //! unpacks all data of this entity from message buffer 
   template <class ObjectStreamType, class EntityType>
-  void xtractData ( ObjectStreamType & str, EntityType & en , size_t newElements )
+  void xtractData ( ObjectStreamType & str, EntityType & en, size_t newElements )
   {
     // reserve memory for new elements 
     reserveMemory(newElements , true );
