@@ -18,6 +18,14 @@
 
 namespace Dune {
 
+inline std::string generateFilename(const std::string& fn,
+                               int ntime,
+                               int precision = 6)
+{
+  const char * fakePath = "";
+  return genFilename(fakePath,fn,ntime,precision);
+}
+
 template <int dim, int dimworld, class GridImp, bool hasBackupRestore> 
 class GrapeDataIOImp 
 {
@@ -93,8 +101,7 @@ public:
       
     // write max level and current time to grid specific file 
     { 
-      const char * path = "";
-      GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
+      GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
       std::ofstream gridfile (fnstr.c_str());
       
       if( gridfile.is_open() )
@@ -145,8 +152,7 @@ public:
     readParameter(fnprefix,"DofManager",hasDm);
 
     {
-      const char * path = "";
-      GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
+      GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
       
       {
         int maxLevel = 0;
@@ -262,7 +268,6 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
  
   // write Grid itself 
   {
-    const char *path = "";
     std::fstream file (fnprefix.c_str(),std::ios::out);
     if( file.is_open() )
     {
@@ -272,7 +277,7 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
       int writeDm = (hasDm)? 1 : 0;
       file << "DofManager: " << writeDm << std::endl; 
 
-      GrapeIOStringType fnstr = genFilename(path,fnprefix,timestep,precision);
+      GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
       
       file.close();
       switch (ftype)
@@ -326,8 +331,7 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
   int hasDm = 0;
   readParameter(fnprefix,"DofManager",hasDm);
 
-  const char *path = "";
-  GrapeIOStringType fn = genFilename(path,fnprefix,timestep,precision);
+  GrapeIOStringType fn = generateFilename(fnprefix,timestep,precision);
   std::cout << "Read file: fnprefix = `" << fn << "' \n";
 
   bool succeded = false;
@@ -398,8 +402,7 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     }
   }
 
-  const char * path = "";
-  GrapeIOStringType fn = genFilename(path,filename,timestep,precision);
+  GrapeIOStringType fn = generateFilename(filename,timestep,precision);
 
   if(ftype == xdr)
     return df.write_xdr(fn);
@@ -457,8 +460,7 @@ readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timest
       abort();
     }
 
-  const char * path = "";
-  GrapeIOStringType fn = genFilename(path,filename,timestep,precision);
+  GrapeIOStringType fn = generateFilename(filename,timestep,precision);
 
   if(ftype == xdr)
     return df.read_xdr(fn);
