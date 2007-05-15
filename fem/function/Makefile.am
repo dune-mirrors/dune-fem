@@ -1,7 +1,7 @@
 # don't follow the full GNU-standard; we definitely need automake >= 1.5
 AUTOMAKE_OPTIONS = foreign 1.5
 
-SUBDIRS = common adaptivefunction blockvectorfunction 
+SUBDIRS = common adaptivefunction blockvectorfunction padaptivefunction
 
 functiondir =  $(includedir)/dune/fem/function
-function_HEADERS = adaptivefunction.hh blockvectorfunction.hh
+function_HEADERS = adaptivefunction.hh blockvectorfunction.hh padaptivefunction.hh
