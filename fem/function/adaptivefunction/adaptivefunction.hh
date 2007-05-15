@@ -623,7 +623,7 @@ namespace Dune {
         for (SizeType j = 0; j < N; ++j )
         {
           // only works for point base mappings 
-          assert( (idx+j) == spc.mapToGlobal(en, i*N+j) );
+          assert( (idx+ (int) j) == spc.mapToGlobal(en, i*N+j) );
           values[i][j] = &(dofVec[ idx+j ]);
         } // end for j
       }
