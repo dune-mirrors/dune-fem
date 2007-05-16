@@ -242,6 +242,8 @@ namespace Dune {
     //! Traits class of DiscreteFunctionSpaceType
     typedef typename DiscreteFunctionSpaceType::Traits SpaceTraits;
 
+    //! GridType
+    typedef typename Traits::GridType GridType;
     //! Function space type
     typedef typename SpaceTraits::FunctionSpaceType FunctionSpaceType;
     //! The base function set of DiscreteFunctionSpaceType
@@ -567,6 +569,8 @@ namespace Dune {
       DiscreteFunctionSpaceType > Traits;
     typedef typename DiscreteFunctionSpaceType::Traits SpaceTraits;
 
+    typedef typename Traits::GridType GridType;
+    
     enum { dimRange = DiscreteFunctionSpaceType::DimRange };
     
     typedef typename SpaceTraits::ContainedRangeType ContainedRangeType;
