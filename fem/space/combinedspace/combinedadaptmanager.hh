@@ -103,7 +103,7 @@ namespace Dune{
       sohn_.evaluate(quad,qP,ret);
       for(int i=0; i<vati_numDofs; ++i) 
       {
-      	baseset.eval(i,geometryInFather.global(quad.point(qP)),phi);
+      	baseset.evaluate(i,geometryInFather.global(quad.point(qP)),phi);
       	vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
       }
     }
@@ -131,7 +131,7 @@ namespace Dune{
       vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
       
       for(int i=0; i<sohn_numDofs; ++i) {
-      	baseset.eval(i,quad,qP,phi);
+      	baseset.evaluate(i,quad,qP,phi);
       	sohn_[i] += quad.weight(qP) * (ret * phi) ;
       }
     }
