@@ -12,7 +12,7 @@ GRIDDIM= 2
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -D$(GRIDTYPE) -DGRIDDIM=$(GRIDDIM)
-noinst_PROGRAMS = $(GRIDVIEW)
+check_PROGRAMS = $(GRIDVIEW)
 gridview_SOURCES = gridview.cc 
 
 gridviewdir =  $(includedir)/dune/fem/io/visual/grape/gridview
