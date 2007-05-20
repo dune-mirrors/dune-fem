@@ -8,6 +8,7 @@ namespace Dune {
     spc_(gridpart),
     mapper_(spc_, spc_.mapper()),
     baseSetVec_(GeometryIdentifier::numTypes, 0),
+    subSpaces_(0),
     dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
   {
     // get types for codim 0  
@@ -29,7 +30,7 @@ namespace Dune {
       }
     }
 
-    for (int i=0;i<N;i++) 
+    for (int i=0; i<N; ++i) 
       subSpaces_[i] = new SubSpaceType(*this,i);
   }
   
@@ -37,6 +38,8 @@ namespace Dune {
   inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   ~CombinedSpace() 
   {
+    for (int i=0;i<N; ++i) delete subSpaces_[i];
+
     for (unsigned int i = 0; i < baseSetVec_.size(); ++i) 
     {
       if (baseSetVec_[i]) 

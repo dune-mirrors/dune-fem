@@ -34,6 +34,16 @@ namespace Dune
     } // end for
   }
   
+  template <class CombinedSpaceImp>
+  inline
+  SubSpace<CombinedSpaceImp>::~SubSpace()
+  {
+    for(size_t i=0; i<baseSetVec_.size(); ++i)
+    {
+      delete baseSetVec_[i];
+    } // end for
+  }
+  
   //- class SubBaseFunctionSet
   template <class CombinedSpaceImp>
   template <int diffOrd>

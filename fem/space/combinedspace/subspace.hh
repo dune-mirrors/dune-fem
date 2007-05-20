@@ -94,6 +94,9 @@ namespace Dune {
     //! constructor
     SubSpace(const CombinedSpaceType& spc, int component);
 
+    //! destructor
+    ~SubSpace();
+
     //! is data continuous?
     bool continuous() const { return spc_.continuous(); }
 

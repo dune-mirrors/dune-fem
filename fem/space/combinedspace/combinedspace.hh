@@ -102,6 +102,7 @@ namespace Dune {
     CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> 
     > BaseType;
   public:
+    enum { CombinedSpace_id = 13 };
     // polynomial Order is the same as for the single space 
     enum { CombinedFSpaceId = CombinedSpace_id };
 
@@ -235,13 +236,16 @@ namespace Dune {
     DofStoragePolicy myPolicy() const{ return DofConversionType::policy(); }
  
     //! return subspace for ith component
-    SubSpaceType& subSpace(int i) {
+    SubSpaceType& subSpace(int i) 
+    {
       assert( i >= 0 && i< N );
       assert( subSpaces_[i] );
       return *(subSpaces_[i]);
     }
-  const ContainedDiscreteFunctionSpaceType& containedSpace() const
-    {return spc_;}
+
+    //! return reference to contained space  
+    const ContainedDiscreteFunctionSpaceType& containedSpace() const  { return spc_; }
+
   private:
     //- Private typedefs
     typedef typename Traits::ContainedMapperType ContainedMapperType;
