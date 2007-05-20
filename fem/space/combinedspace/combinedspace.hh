@@ -102,7 +102,6 @@ namespace Dune {
     CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> 
     > BaseType;
   public:
-    enum { CombinedSpace_id = 13 };
     // polynomial Order is the same as for the single space 
     enum { CombinedFSpaceId = CombinedSpace_id };
 
