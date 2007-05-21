@@ -72,6 +72,39 @@ namespace Dune {
       //! type of used communication manager  
       typedef CommunicationManager<SpaceType> CommunicationManagerType; 
 
+      struct FillRowEntities
+      {
+        template <class GridPartImp, 
+                  class EntityImp, 
+                  class IndexSetImp,
+                  class LocalIndicesImp>
+        static void fill(const GridPartImp& gridPart,
+                         const EntityImp& en,
+                         const IndexSetImp& colSet,
+                         LocalIndicesImp& localIndices)
+        {
+          const int elIndex = colSet.index( en );
+          // clear set 
+          localIndices.clear();
+          
+          // insert diagonal 
+          localIndices.insert( elIndex );
+
+          // insert neighbors 
+          typedef typename GridPartImp:: IntersectionIteratorType IntersectionIteratorType; 
+          IntersectionIteratorType endnit = gridPart.iend(en);
+          for(IntersectionIteratorType nit = gridPart.ibegin(en); 
+              nit != endnit; ++nit)
+          {
+            if(nit.neighbor())
+            {
+              const int nbIndex = colSet.index( * nit.outside() );
+              localIndices.insert( nbIndex );
+            }
+          }
+        }
+      };
+
     private:  
       size_type nz_;
 
@@ -209,23 +242,9 @@ namespace Dune {
 
             // set of column indices 
             std::set<int>& localIndices = indices[elIndex];
-            // clear set 
-            localIndices.clear();
-            
-            // insert diagonal 
-            localIndices.insert( elIndex );
 
-            // insert neighbors 
-            IntersectionIteratorType endnit = gridPart.iend(en);
-            for(IntersectionIteratorType nit = gridPart.ibegin(en); 
-                nit != endnit; ++nit)
-            {
-              if(nit.neighbor())
-              {
-                const int nbIndex = colSet.index( * nit.outside() );
-                localIndices.insert( nbIndex );
-              }
-            }
+            // add all column entities to row  
+            FillRowEntities::fill(allPart,en,colSet,localIndices);
           }
 
           typedef typename BaseType :: CreateIterator CreateIteratorType; 
