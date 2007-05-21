@@ -240,11 +240,13 @@ public:
         lf.evaluate(quad,qP,phi);
 	lf.jacobian(quad,qP,xi);
 	
-	
+	tmp=0.0;
+
 	for(int i=0; i< dimDomain; ++i)
 	  {
 	    for(int j=0;j< dimRange; ++j)
-	      tmp[j]=SQR(xi[j][i]-psi[j][i]);	
+	      
+	      tmp[j]+=SQR(xi[j][i]-psi[j][i]);	
 	  }
 
 	for(int i=0; i< dimRange; ++i)
@@ -360,7 +362,8 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
    }
 #endif
    
-   return sqrt(error*error);
+   //return sqrt(error*error);
+   return sqrt(h1error*h1error);
 }
 
 
