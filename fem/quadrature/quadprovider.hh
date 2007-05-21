@@ -54,7 +54,7 @@ namespace Dune {
       //! object is created 
       QuadImp& getQuadrature(size_t order) 
       {
-        assert( order <= vec_.size() );
+        assert( order < vec_.size() );
         // if not exists, create quadrature  
         if(!vec_[order]) 
         {

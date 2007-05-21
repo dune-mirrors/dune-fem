@@ -119,7 +119,7 @@ namespace Dune {
       mit->second[face] = pMap;
     } // end for all faces
 
-    StorageInterface::registerQuadratureToStorages(quad.id(),1);
+    StorageInterface::registerQuadratureToStorages(quad,1);
     return mit;
   }
 
