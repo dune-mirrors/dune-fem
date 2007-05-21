@@ -9,7 +9,8 @@ namespace Dune {
   StorageBase<FunctionSpaceImp>::StorageBase(const FactoryType& factory) :
     storageSize_(factory.numBaseFunctions()),
     storage_(new BaseFunctionType*[factory.numBaseFunctions()]),
-    diffVar1_(0)
+    diffVar1_(0),
+    elementGeometry_(factory.geometry())
   {
     for (int i = 0; i < factory.numBaseFunctions(); ++i) 
     {
@@ -94,8 +95,7 @@ namespace Dune {
   //- Caching storage
   template <class FunctionSpaceImp>
   inline CachingStorage<FunctionSpaceImp>::CachingStorage(const FactoryType& fac) :
-    StorageBase<FunctionSpaceImp>(fac),
-    elementGeometry_(fac.geometry())
+    StorageBase<FunctionSpaceImp>(fac)
   {
     this->cacheExsistingQuadratures(*this);
   }
@@ -224,7 +224,7 @@ namespace Dune {
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
 
     const PointVectorType& points = 
-      PointProviderType::getPoints(quadId, elementGeometry_);
+      PointProviderType::getPoints(quadId, this->elementGeometry_);
 
     assert(rangestored_.find(quadId) == rangestored_.end());
     RangeIteratorType rit =

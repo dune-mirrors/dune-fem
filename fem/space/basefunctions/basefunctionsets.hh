@@ -102,6 +102,10 @@ namespace Dune {
                                    const QuadratureType& quad, 
                                    const int quadPoint,
                                    const JacobianRangeType& factor) const;
+
+    //! return type of geometry 
+    GeometryType geometryType () const { return storage_.geometryType(); }
+    
   private:
     // do not copy this class 
     StandardBaseFunctionSet(const StandardBaseFunctionSet&);
@@ -165,6 +169,11 @@ namespace Dune {
 
     // use evaluate of default implementation 
     using BaseType :: evaluate;
+
+    GeometryType geometryType () const 
+    { 
+      return storage_.geometryType(); 
+    }
     
     inline
     int numBaseFunctions() const;

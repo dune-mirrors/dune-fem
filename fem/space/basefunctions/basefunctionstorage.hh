@@ -54,6 +54,9 @@ namespace Dune {
                   JacobianRangeType& result) const;
 
     inline void cacheQuadrature(size_t id, int codim) const {}
+    
+    //! return geometry type 
+    GeometryType geometryType () const { return elementGeometry_; }
   private:
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
@@ -61,6 +64,9 @@ namespace Dune {
     const int storageSize_;
     BaseFunctionType** storage_;
     mutable FieldVector<int, 1> diffVar1_;
+
+  protected:
+    const GeometryType elementGeometry_;
   };
 
   //! \brief A simple storage scheme which just forwards the calls to 
@@ -162,7 +168,7 @@ namespace Dune {
     void jacobian(int baseFunct,
                   const CachingQuadrature<GridPartType, cdim>& quad, int quadPoint,
                   JacobianRangeType& result) const;
-    
+
   private:
     typedef typename FunctionSpaceImp::DomainFieldType RealType;
     typedef Array<Array<RangeType> > RangeVectorType;
@@ -188,8 +194,6 @@ namespace Dune {
     inline ReturnPairType addEntry(size_t id) const;
 
   private:
-    GeometryType elementGeometry_;
-
     mutable RangeContainerType ranges_;
     mutable JacobianRangeContainerType jacobians_;
     mutable RangeStoredType rangestored_;
