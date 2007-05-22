@@ -85,7 +85,8 @@ class DGAdaptiveLeafGridPart
 : public GridPartDefault<DGAdaptiveLeafGridPartTraits<GridImp,pitype> > 
 {
   //! singleton list , key type is const pointer to grid 
-  typedef SingletonList< const GridImp* ,typename DGAdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > IndexSetProviderType;  
+  typedef SingletonList< const GridImp* ,
+          typename DGAdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > IndexSetProviderType;  
 public:
   //- Public typedefs and enums
   //! Type definitions
