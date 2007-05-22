@@ -54,6 +54,7 @@ AC_CONFIG_FILES([Makefile
      fem/space/test/Makefile
      fem/space/basefunctions/Makefile
      fem/space/dgspace/Makefile
+     fem/space/fvspace/Makefile
      fem/space/lagrangespace/Makefile
      fem/space/lagrangespace/test/Makefile
      fem/space/combinedspace/Makefile
