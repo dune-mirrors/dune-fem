@@ -380,14 +380,18 @@ double algorithm (GridType& grid, Grid2Type& grid2 ,DiscreteFunctionType& soluti
 //
 //**************************************************
 int main (int argc, char **argv)
-{try {
-	
-  if(argc != 2)
+{
+try 
+{
+  int ml = 4;
+  if(argc < 2)
   {
     fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
-    exit(1);
   }
-  int ml = atoi( argv[1] );           //ml=1
+  else 
+  {
+    ml = atoi( argv[1] );   
+  }
   double* error = new double[ml];
   char tmp[16]; sprintf(tmp,"%d",dimp);
   std::string macroGridName (tmp); 
