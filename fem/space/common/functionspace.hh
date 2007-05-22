@@ -23,24 +23,32 @@ public:
 /*! Dimensions of the domain and range field */
   enum { DimDomain = FunctionSpaceTraits::DimDomain, 
 	 DimRange = FunctionSpaceTraits::DimRange};
-/*! Intrinsic type used for values in the domain field (usually a double) */
+  /*! Intrinsic type used for values in the domain field (usually a double) */
   typedef typename FunctionSpaceTraits::DomainFieldType DomainFieldType;
-/*! Intrinsic type used for values in the range field (usually a double) */
+  
+  /*! Intrinsic type used for values in the range field (usually a double) */
   typedef typename FunctionSpaceTraits::RangeFieldType RangeFieldType;
-/*! Type of domain vector (using type of domain field) */
+  
+  /*! Type of domain vector (using type of domain field) */
   typedef typename FunctionSpaceTraits::DomainType DomainType;
-/*! Type of range vector (using type of range field) */
+  
+  /*! Type of range vector (using type of range field) */
   typedef typename FunctionSpaceTraits::RangeType RangeType;
-/*! Intrinsic type used for the jacobian values */
+  
+  /*! Intrinsic type used for the jacobian values */
   typedef typename FunctionSpaceTraits::LinearMappingType JacobianRangeType;
-/*! Intrinsic type used for the hessian values */
+  
+  /*! Intrinsic type used for the hessian values */
   typedef FieldVector<JacobianRangeType, DimRange> HessianRangeType;
-/*! Type of corresponding scalar space */
+  
+  /*! Type of corresponding scalar space */
   typedef typename FunctionSpaceTraits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 };
+
 //! \brief Base class for vector valued function spaces.
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 class FunctionSpace;
+
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 struct VectorSpaceTraits {
   typedef DomainFieldImp DomainFieldType;
@@ -51,6 +59,7 @@ struct VectorSpaceTraits {
   typedef FunctionSpace<DomainFieldImp,RangeFieldImp,n,1> ScalarFunctionSpaceType;
   enum { DimDomain = n, DimRange = m};
 };
+
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 class FunctionSpace : public
       FunctionSpaceBase<VectorSpaceTraits<DomainFieldImp,RangeFieldImp,n,m> > {};
