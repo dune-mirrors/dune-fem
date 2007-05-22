@@ -18,18 +18,43 @@ namespace Dune {
   //! CachingStorage and SimpleStorage do exactly that. The present class
   //! implements the common functionality and can be seen as a layer of
   //! abstraction in the access to basefunctions.
+  template <int dimworld> 
   class StorageInterface
   {
-      typedef std::list<StorageInterface *> StorageInterfaceListType;
-      typedef std::pair< size_t , int > QuadIdPairType; 
-      typedef std::pair< const GeometryType, QuadIdPairType > QuadratureIdentifierType;
+      typedef StorageInterface<dimworld> ThisType;
+      typedef std::list< ThisType* > StorageInterfaceListType;
+
+      typedef StorageInterfaceListType* StorageInterfaceListPointer;
+      typedef std::pair< size_t , int > QuadratureIdentifierType;
       typedef std::list< QuadratureIdentifierType > QuadratureListType;
+
+      // return reference to list singleton pointer 
+      static StorageInterfaceListPointer& storageListPtr () 
+      {
+        static StorageInterfaceListType* storageListObj = 0;
+        return storageListObj;
+      }
+
+      // check if list is empty and if yes delete list 
+      void checkAndDeleteStorageList() 
+      {
+        if( storageListPtr()->empty () )
+        {
+          delete storageListPtr();
+          storageListPtr() = 0;
+        }
+      }
 
       // singelton implementation 
       static StorageInterfaceListType & storageList ()
       {
-        static StorageInterfaceListType storageListObj;
-        return storageListObj;
+        // if list pointer is 0 then create new object 
+        if( ! storageListPtr() )
+        {
+          storageListPtr() = new StorageInterfaceListType();
+        }
+        assert( storageListPtr() );
+        return *(storageListPtr());
       }
 
       // singelton implementation 
@@ -38,14 +63,8 @@ namespace Dune {
         static QuadratureListType quadratureListObj;
         return quadratureListObj;
       }
-    public:
-      //! initialize singletons 
-      static void initialize() 
-      {
-        storageList();
-        quadratureList();
-      }
       
+    public:
       //! Constructor, add me to the list of storages 
       StorageInterface()
       {
@@ -55,7 +74,7 @@ namespace Dune {
       //! Destructor, remove me from the list of storages 
       virtual ~StorageInterface() 
       {
-        typedef StorageInterfaceListType::iterator IteratorType;
+        typedef typename StorageInterfaceListType::iterator IteratorType;
         IteratorType endit = storageList().end();
         for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
@@ -65,39 +84,23 @@ namespace Dune {
             break;
           }
         }
-      }
 
-      static bool geometryEqual(const GeometryType& storageGeom,
-                                const GeometryType& quadGeom,
-                                const int codim)
-      {
-        // only cache quad that have same geometry type 
-        // if dim of quad > 1 compare also type of element 
-        const bool sameType = (quadGeom.dim() > 1) ? 
-              (storageGeom.basicType() == quadGeom.basicType()) : true;
-        // for codim 1 the type are not necessarily the same
-        return ( storageGeom == quadGeom 
-            || ((quadGeom.dim() + codim) == storageGeom.dim() && sameType));
+        // if list is empty, then delete list 
+        checkAndDeleteStorageList();
       }
 
       //! for a newly created storage cache all existing quadratures 
       template <class StorageImp>
       void cacheExsistingQuadratures(StorageImp & storage)
       {
-        const GeometryType storageGeom = storage.geometryType(); 
-        typedef QuadratureListType::iterator IteratorType;
+        typedef typename QuadratureListType::iterator IteratorType;
         IteratorType endit = quadratureList().end();
         for(IteratorType it = quadratureList().begin(); it != endit; ++it)
         {
-          const GeometryType& quadGeom = (*it).first;
-          // get codim of quad 
-          const int codim = (*it).second.second;
-          // for codim 1 the type are not necessarily the same
-          if( geometryEqual(storageGeom,quadGeom,codim) )
-          {
-            size_t id = (*it).second.first;
-            storage.cacheQuadrature(id,codim);
-          }
+          // get if and codim of quad 
+          const size_t id = (*it).first;
+          const int codim = (*it).second;
+          storage.cacheQuadrature(id,codim);
         }
       }
 
@@ -110,31 +113,25 @@ namespace Dune {
       template <class QuadratureType>
       static void registerQuadratureToStorages(const QuadratureType & quad)
       {
-        int codim = QuadratureType :: codimension;
+        const int codim = QuadratureType :: codimension;
         registerQuadratureToStorages(quad,codim);
       }
 
       //! register quadrature for all existing storages 
       template <class QuadratureType>
-      static void registerQuadratureToStorages(const QuadratureType & quad, int codim)
+      static void registerQuadratureToStorages(const QuadratureType & quad, 
+                                               const int codim)
       {
-        const GeometryType quadGeom = quad.geometry();
         const size_t id = quad.id();
         // store quadrature 
-        QuadratureIdentifierType ident(quadGeom,std::make_pair(id,codim));
+        QuadratureIdentifierType ident(id,codim);
         quadratureList().push_back(ident);
 
-        typedef StorageInterfaceListType::iterator IteratorType;
+        typedef typename StorageInterfaceListType::iterator IteratorType;
         IteratorType endit = storageList().end();
         for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
-          // only cache quad that have same geometry type 
-          const GeometryType storageGeom = (*it)->geometryType(); 
-          // check if type are equal
-          if( geometryEqual(storageGeom,quadGeom,codim) )
-          {
-            (*it)->cacheQuadrature(id,codim);
-          }
+          (*it)->cacheQuadrature(id,codim);
         }
       }
   };
