@@ -21,7 +21,8 @@ namespace Dune {
   class CachingQuadrature;
    
   template <class FunctionSpaceImp>
-  class StorageBase : public StorageInterface 
+  class StorageBase : public StorageInterface<FunctionSpaceImp::DimDomain> 
+
   {
   public:
     typedef BaseFunctionFactory<FunctionSpaceImp> FactoryType;
@@ -57,6 +58,7 @@ namespace Dune {
     
     //! return geometry type 
     GeometryType geometryType () const { return elementGeometry_; }
+
   private:
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
@@ -119,7 +121,7 @@ namespace Dune {
     typedef typename FunctionSpaceImp::RangeType RangeType;
     typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
 
-    friend class StorageInterface ;
+    friend class StorageInterface<FunctionSpaceImp::DimDomain>;
   public:
     //! Constructor
     CachingStorage(const FactoryType& factory);
