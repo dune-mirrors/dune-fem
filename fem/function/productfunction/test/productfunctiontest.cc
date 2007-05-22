@@ -159,8 +159,8 @@ class L2Projection
     for(Iterator2 it2 = space2.begin(); it2 != endit2 ; ++it2) 
     {
       // Get quadrature rule
-      ElementQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
-      //CachingQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
+      //ElementQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
+      CachingQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
       
       const BaseFunctionSet2Type& bSet2 = space2.baseFunctionSet(*it2);
       const int numOfDofs = bSet2.numBaseFunctions();
@@ -174,8 +174,8 @@ class L2Projection
 	for(Iterator it = space.begin(); it != endit ; ++it) 
           {
             // Get quadrature rule
-            ElementQuadrature<GridPartType,0> quad(*it, polOrd);
-      	    //CachingQuadrature<GridPartType,0> quad(*it, polOrd);
+            //ElementQuadrature<GridPartType,0> quad(*it, polOrd);
+      	    CachingQuadrature<GridPartType,0> quad(*it, polOrd);
 	     const int quadNop  = quad.nop();
 	    LocalFuncType lf = ldf.localFunction(*it);  
         
@@ -258,15 +258,15 @@ public:
     for(Iterator2Type it2 = space2.begin(); it2 != endit2 ; ++it2) 
     {
       // Get quadrature rule
-      ElementQuadrature<GridPart2Type,0> quad2(*it2,12);
-      //CachingQuadrature<GridPart2Type,0> quad2(*it2,12);
+      //ElementQuadrature<GridPart2Type,0> quad2(*it2,12);
+      CachingQuadrature<GridPart2Type,0> quad2(*it2,12);
  
       const int quadNop2 = quad2.nop();  
       for(IteratorType it = space.begin(); it != endit ; ++it)
         { 
 	  // Get quadrature rule
-           ElementQuadrature<GridPartType,0> quad(*it, polOrd);
-	  //CachingQuadrature<GridPartType,0> quad(*it,polOrd);
+           //ElementQuadrature<GridPartType,0> quad(*it, polOrd);
+	  CachingQuadrature<GridPartType,0> quad(*it,polOrd);
 	   
   	  const int quadNop = quad.nop();
           LocalFuncType lf = ldf.localFunction(*it);
