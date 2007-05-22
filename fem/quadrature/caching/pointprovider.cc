@@ -13,7 +13,8 @@ namespace Dune {
   void PointProvider<ct, dim, 0>::
   registerQuadrature(const QuadratureType& quad)
   {
-    if (points_.find(quad.id()) == points_.end()) {
+    if (points_.find(quad.id()) == points_.end()) 
+    {
       PointIteratorType it =
         points_.insert(std::make_pair
                        (quad.id(),
@@ -22,7 +23,7 @@ namespace Dune {
       for (int i = 0; i < quad.nop(); ++i) {
         it->second[i] = quad.point(i);
       }
-      StorageInterface::registerQuadratureToStorages(quad);
+      StorageInterface<dim>::registerQuadratureToStorages(quad);
     }
   }
 
@@ -119,7 +120,7 @@ namespace Dune {
       mit->second[face] = pMap;
     } // end for all faces
 
-    StorageInterface::registerQuadratureToStorages(quad,1);
+    StorageInterface<dim>::registerQuadratureToStorages(quad,1);
     return mit;
   }
 
