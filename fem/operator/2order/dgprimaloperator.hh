@@ -532,9 +532,11 @@ namespace Dune {
           EntityPointerType neighEp = nit.outside();
           EntityType& nb = *neighEp;
 
-          // only once per intersection 
 #ifdef DOUBLE_FEATURE
-          if(localIdSet_.id(en) < localIdSet_.id(nb))
+          // only once per intersection or when outside is not interior 
+          if( (localIdSet_.id(en) < localIdSet_.id(nb)) ||
+              ( nb.partitionType() != InteriorEntity )
+            )
 #endif
           {
             // type of TwistUtility 
