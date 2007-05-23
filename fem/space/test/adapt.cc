@@ -130,7 +130,7 @@ class L2Projection
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<lf.numDofs(); i++) 
         {
-          baseset.eval(i,quad,qP,phi);
+          baseset.evaluate( i, quad, qP, phi );
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
