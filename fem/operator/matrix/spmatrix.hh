@@ -365,8 +365,8 @@ public:
       , rowIndex_(rowSpace.indexSet().index(rowEntity))
       , colIndex_(colSpace.indexSet().index(colEntity))
     {
-      row_.resize(rowSpace.getBaseFunctionSet(rowEntity).numBaseFunctions());
-      col_.resize(colSpace.getBaseFunctionSet(colEntity).numBaseFunctions());
+      row_.resize(rowSpace.baseFunctionSet(rowEntity).numBaseFunctions());
+      col_.resize(colSpace.baseFunctionSet(colEntity).numBaseFunctions());
 
       {
         const size_t rows = row_.size();
@@ -498,8 +498,6 @@ public:
   bool hasPcMatrix () const { return preconditioning_; }
 
   PreconditionMatrixType& pcMatrix () { 
-    //assert( pcMatrix_ );
-    //return *pcMatrix_; 
     return matrix_;
   }
 
@@ -513,7 +511,10 @@ public:
           (colSpace_.begin() != colSpace_.end()) )
       {
         
-        rowMaxNumbers_ = rowSpace_.getBaseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
+        rowMaxNumbers_    = rowSpace_.baseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
+        int colMaxNumbers = colSpace_.baseFunctionSet(*(colSpace_.begin())).numBaseFunctions();
+
+        rowMaxNumbers_ = std::max(rowMaxNumbers_, colMaxNumbers);
 
         if(verbose) 
         {
@@ -532,13 +533,6 @@ public:
         rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
 
         matrix_.reserve(rowSpace_.size(),colSpace_.size(),rowMaxNumbers_,0.0);
-
-        /*
-        if(hasPcMatrix())
-        {
-          pcMatrix_ = new PreconditionMatrixType("pcMatrix",rowSpace_);
-        }
-        */
       }
       sequence_ = rowSpace_.sequence();
     }
