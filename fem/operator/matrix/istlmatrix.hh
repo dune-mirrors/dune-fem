@@ -758,7 +758,7 @@ namespace Dune {
 
     void preConErrorMsg(int preCon) const 
     {
-      std::cerr << "Wrong precoditioning number (p = " << preCon;
+      std::cerr << "ERROR: Wrong precoditioning number (p = " << preCon;
       std::cerr <<") in ISTLMatrixObject! \n";
       std::cerr <<"Valid values are: \n";
       std::cerr <<"0 == no \n";
@@ -769,7 +769,7 @@ namespace Dune {
       std::cerr <<"5 == Gauss-Seidel \n";
       std::cerr <<"6 == Jacobi \n";
       assert(false);
-      abort();
+      exit(1);
     }
   };
 
