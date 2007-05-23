@@ -569,7 +569,16 @@ namespace Dune {
     int numIterations_; 
     double relaxFactor_; 
       
-    int preconditioning_;
+    enum PreConder_Id { none  = 0 , // no preconditioner 
+                        ssor  = 1 , // SSOR preconditioner 
+                        sor   = 2 , // SOR preconditioner 
+                        ilu_0 = 3 , // ILU-0 preconditioner 
+                        ilu_n = 4 , // ILU-n preconditioner 
+                        gauss_seidel= 5 , // Gauss-Seidel preconditioner 
+                        jacobi = 6  // Jacobi preconditioner 
+    };
+    
+    PreConder_Id preconditioning_;
 
     // prohibit copy constructor 
     ISTLMatrixObject(const ISTLMatrixObject&); 
@@ -593,13 +602,29 @@ namespace Dune {
       , comm_(rowSpace_)
       , numIterations_(5)
       , relaxFactor_(1.1)
-      , preconditioning_(0)
+      , preconditioning_(none)
     {
       if(paramfile != "")
       {
-        readParameter(paramfile,"Preconditioning",preconditioning_);
+        int preCon = 0;
+        readParameter(paramfile,"Preconditioning",preCon);
+        if( preCon >= 0 && preCon <= 6) 
+          preconditioning_ = (PreConder_Id) preCon;
+        else 
+          preConErrorMsg(preCon);
+        
         readParameter(paramfile,"Pre-iteration",numIterations_);
         readParameter(paramfile,"Pre-relaxation",relaxFactor_);
+      }
+
+      // only ILU-0 works savely in parallel
+      if(rowSpace_.grid().comm().size() > 1)
+      {
+        if( (preconditioning_ != none) && (preconditioning_ != ilu_0) )
+        {
+          std::cerr << "ERROR: Only Preconditioner ILU-0 works in parallel! " << std::endl;
+          abort();
+        }
       }
       
       assert( rowSpace_.indexSet().size(0) ==
@@ -684,62 +709,67 @@ namespace Dune {
     PreconditionMatrixType* createPreconditioner() const
     {
       // no preconditioner 
-      if( preconditioning_ == 0 )
+      if( preconditioning_ == none )
       {
         return new PreconditionMatrixType();
       }
       // SSOR 
-      else if( preconditioning_ == 1 )
+      else if( preconditioning_ == ssor )
       {
         typedef SeqSSOR<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // SOR 
-      else if(preconditioning_ == 2)
+      else if(preconditioning_ == sor )
       {
         typedef SeqSOR<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // ILU-0 
-      else if(preconditioning_ == 3)
+      else if(preconditioning_ == ilu_0)
       {
         typedef SeqILU0<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), relaxFactor_, (PreconditionerType*)0);
       }
       // ILU-n
-      else if(preconditioning_ == 4)
+      else if(preconditioning_ == ilu_n)
       {
         typedef SeqILUn<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // Gauss-Seidel
-      else if(preconditioning_ == 5)
+      else if(preconditioning_ == gauss_seidel)
       {
         typedef SeqGS<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // Jacobi 
-      else if(preconditioning_ == 6)
+      else if(preconditioning_ == jacobi)
       {
         typedef SeqJac<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       else 
       {
-        std::cerr << "Wrong precoditioning number (p = " << preconditioning_;
-        std::cerr <<" in ISTLMatrixObject! \n";
-        std::cerr <<"Valid values are: \n";
-        std::cerr <<"0 == no \n";
-        std::cerr <<"1 == SSOR \n";
-        std::cerr <<"2 == SOR \n";
-        std::cerr <<"3 == ILU-0 \n";
-        std::cerr <<"4 == ILU-n \n";
-        std::cerr <<"5 == Gauss-Seidel \n";
-        std::cerr <<"6 == Jacobi \n";
-        assert(false);
-        abort();
+        preConErrorMsg(preconditioning_);
       }
       return 0;
+    }
+
+    void preConErrorMsg(int preCon) const 
+    {
+      std::cerr << "Wrong precoditioning number (p = " << preCon;
+      std::cerr <<") in ISTLMatrixObject! \n";
+      std::cerr <<"Valid values are: \n";
+      std::cerr <<"0 == no \n";
+      std::cerr <<"1 == SSOR \n";
+      std::cerr <<"2 == SOR \n";
+      std::cerr <<"3 == ILU-0 \n";
+      std::cerr <<"4 == ILU-n \n";
+      std::cerr <<"5 == Gauss-Seidel \n";
+      std::cerr <<"6 == Jacobi \n";
+      assert(false);
+      abort();
     }
   };
 
