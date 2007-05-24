@@ -11,7 +11,7 @@ namespace Dune {
   {
     GridPtr< GridType > gridPtr( gridFile_ );
     GridType& grid = *gridPtr;
-    //grid.globalRefine( 2 );
+    grid.globalRefine( 2 );
     GridPartType gridPart( grid );
 
     typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
@@ -24,6 +24,7 @@ namespace Dune {
       checkDiscreteFunction( space );
     }
 
+    #ifdef TEST_SECOND_ORDER
     typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
       TwoSpaceType;
     {
@@ -31,6 +32,7 @@ namespace Dune {
       TwoSpaceType space( gridPart );
       checkDiscreteFunction( space );
     }
+    #endif
   }
 
 
@@ -55,6 +57,7 @@ namespace Dune {
       LocalFunctionType ulocal = u.localFunction( *it );
       
       const int numDofs = ulocal.numDofs();
+      std :: cout << numDofs << "  ";
       for( int i = 0; i < numDofs; ++i )
         ulocal[ i ] += 1.0;
     }

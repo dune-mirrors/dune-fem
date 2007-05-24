@@ -1,7 +1,9 @@
-#ifndef DUNE_LAGRANGEBASE_TEST_HH
-#define DUNE_LAGRANGEBASE_TEST_HH
+#ifndef DUNE_LAGRANGESPACE_BASEFUNCTIONTEST_HH
+#define DUNE_LAGRANGESPACE_BASEFUNCTIONTEST_HH
 
 #include <string>
+
+#define TEST_SECOND_ORDER
 
 #include <dune/fem/misc/test.hh>
 

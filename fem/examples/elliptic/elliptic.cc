@@ -85,21 +85,18 @@
 //#define ELLIPTIC
 
 // define SKIP_GRAPE, if you don't want visualization.
-//#define SKIP_GRAPE
-
-// Select the polynomial order of the calculation.
-enum { polynomialOrder = 1 };
+#define SKIP_GRAPE
 
 // select, whether Kronecker-Treatment of Matrix should be performed,
 // i.e. kronecker rows are extended to kronecker columns. For symmetric 
 // problems this is beneficial as the matrix gets symmetric
 
-//#define ACTIVATE_KRONECKER_TREATMENT 0
-#define ACTIVATE_KRONECKER_TREATMENT 1
+#define ACTIVATE_KRONECKER_TREATMENT 0
+//#define ACTIVATE_KRONECKER_TREATMENT 1
 
 // select, whether matrix and rhs are to be written to file or not:
 // i.e. comment or uncomment the following
-#define FEOP_SAVE_MATRIX_WANTED
+//#define FEOP_SAVE_MATRIX_WANTED
 
 // for debugging: force Neumann-Boundary-Values in Models
 // #define FORCENEUMANN
@@ -108,6 +105,14 @@ enum { polynomialOrder = 1 };
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 #include <dune/fem/io/matlab/matlabhelper.hh>
+
+// Select the polynomial order of the calculation
+#ifdef POLORDER
+  enum { polynomialOrder = POLORDER };
+#else
+  enum { polynomialOrder = 2 };
+#endif
+
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
@@ -144,7 +149,8 @@ using namespace Dune;
 
 //#include "spmatrix.hh"
 #include <dune/fem/misc/l2error.hh>
-#include <dune/fem/space/lagrangespace.hh>
+// #include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrangespace/lagrangespace.hh>
 #include <dune/fem/space/common/filteredgrid.hh>
 //#include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -152,6 +158,7 @@ using namespace Dune;
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/elementintegrators.hh>
 #include <dune/fem/operator/elementintegratortraits.hh>
+#include <dune/fem/operator/lagrangeinterpolation.hh>
 #include "ellipticmodel.hh"
 #include "elementintegratortraits.hh"
 
@@ -331,181 +338,179 @@ typedef OEMBICGSTABOp<DiscreteFunctionType,EllipticOperatorType> InverseOperator
 //! define the type of mapping which is used by inverseOperator 
 //typedef Mapping<double ,double,DiscreteFunctionType,DiscreteFunctionType > MappingType;
 
-double algorithm (const char * filename , int maxlevel, int turn )
+
+
+double algorithm( const char *filename, int maxlevel, int turn )
 {
+  GridPtr< GridType > gridptr( filename );
+  gridptr->globalRefine( maxlevel );
+  std::cout << "maxlevel = "<< maxlevel << std :: endl;
+  
+  // if a filteredgridpart is used
+  //Dune::FieldVector<GridType::ctype,GridType::dimension> C(0.5);
+  //ElementIntegratorTraitsType::FilterType filter(C, 0.4);
+  //
+  //GridPartType part(*gridptr,filter);
+  GridPartType part( *gridptr );
 
-   GridPtr<GridType> gridptr(filename); 
-   gridptr->globalRefine (maxlevel);
-   std::cout << "maxlevel = "<< maxlevel << "\n";
-   // if a filteredgridpart is used
-   //Dune::FieldVector<GridType::ctype,GridType::dimension> C(0.5);
-   //ElementIntegratorTraitsType::FilterType filter(C, 0.4);
-   //
-   //GridPartType part(*gridptr,filter);
-   GridPartType part(*gridptr);
-
-   DiscreteFunctionSpaceType linFuncSpace ( part );
-   std::cout << "\nSolving for " << linFuncSpace.size() << 
-       " number of unkowns. \n\n";
-   DiscreteFunctionType solution ( "sol", linFuncSpace );
-   solution.clear();
-   DiscreteFunctionType rhs ( "rhs", linFuncSpace );
-   rhs.clear();
+  DiscreteFunctionSpaceType linFuncSpace( part );
+  std :: cout << std :: endl;
+  std :: cout << "Solving for " << linFuncSpace.size() << " unkowns."
+              << std :: endl << std :: endl;
+  DiscreteFunctionType solution( "sol", linFuncSpace );
+  solution.clear();
+  DiscreteFunctionType rhs( "rhs", linFuncSpace );
+  rhs.clear();
    
-   // decide, whether you want to have detailed verbosity output 
-   //   int verbose = 1;
-   int verbose = 0;
+  // decide, whether you want to have detailed verbosity output 
+  // const int verbose = 1;
+  const int verbose = 0;
    
-   // initialize Model and Exact solution
-   EllipticModelType model(linFuncSpace);
-   std::cout << "initialized model\n";
+  // initialize Model and Exact solution
+  EllipticModelType model( linFuncSpace );
+  std :: cout << "Model initialized." << std :: endl;
 
-   // initialize elementmatrix-provider
-   ElementMatrixIntegratorType elMatInt(model, verbose);
-   std::cout << "initialized element-matrix integrator\n";
+  // initialize elementmatrix-provider
+  ElementMatrixIntegratorType elMatInt( model, verbose );
+  std :: cout << "Element-matrix integrator initialized" << std :: endl;
 
-   // initialize ElementRhsIntegrator
-   ElementRhsIntegratorType elRhsInt(model, verbose);
-   std::cout << "initialized element-rhs integrator\n";
+  // initialize ElementRhsIntegrator
+  ElementRhsIntegratorType elRhsInt( model, verbose );
+  std :: cout << "Element-rhs integrator initialized." << std :: endl;
 
-   // initialize RhsAssembler
-   RhsAssemblerType rhsAssembler(elRhsInt, verbose);
-   std::cout << "initialized rhs assembler\n";
+  // initialize RhsAssembler
+  RhsAssemblerType rhsAssembler( elRhsInt, verbose );
+  std :: cout << "Rhs assembler initialized." << std :: endl;
    
-   // initialize Operator  
-//   const int numNonZero = 27;   
-   const int numNonZero = 200;
-   EllipticOperatorType elliptOp 
-        ( elMatInt , 
-          EllipticOperatorType::ASSEMBLED,
-          numNonZero, verbose);
-   std::cout << "initialized operator (= matrix assembler)\n";
+  // initialize Operator  
+  // const int numNonZero = 27;   
+  const int numNonZero = 200;
+  EllipticOperatorType elliptOp( elMatInt,
+                                 EllipticOperatorType::ASSEMBLED,
+                                 numNonZero,
+                                 verbose );
+  std::cout << "operator (i.e. matrix assembler) initialized." << std :: endl;
 
-// checkConsistency only required for new SparseMatrix
-   assert(elliptOp.systemMatrix().checkConsistency());
-   std::cout << "System matrix passed consistency check.\n";
+  // checkConsistency only required for new SparseMatrix
+  assert( elliptOp.systemMatrix().checkConsistency() );
+  std::cout << "System matrix passed consistency check." << std :: endl;
 
-   // assemble matrix and perform dirichlet-row killing
-   elliptOp.assemble();
-   std::cout << "assembled matrix with Dirichlet treatment\n";
+  // assemble matrix and perform dirichlet-row killing
+  elliptOp.assemble();
+  std :: cout << "Assembled matrix with Dirichlet treatment" << std :: endl;
 
-   // build right hand side and dirichlet-Dof setting
-   rhsAssembler.assemble(rhs);
-   std::cout << "assembled Rhs with Dirichlet treatment\n";
+  // build right hand side and dirichlet-Dof setting
+  rhsAssembler.assemble( rhs );
+  std::cout << "Assembled rhs with Dirichlet treatment" << std :: endl;
 
-#ifdef FEOP_SAVE_MATRIX_WANTED
-   {     
-   // save matrix and rhs after kronecker-treatment
-   ostringstream oss;
-   oss << "linearmatrix_before_symm" << turn << ".bin";
-   string matfn(oss.str());
+  #ifdef FEOP_SAVE_MATRIX_WANTED
+  {     
+    // save matrix and rhs after kronecker-treatment
+    ostringstream oss;
+    oss << "linearmatrix_before_symm" << turn << ".bin";
+    string matfn(oss.str());
    
-   ostringstream oss2;
-   oss2 << "rhsdofvector_before_symm" << turn << ".bin";
-   string rhsfn(oss2.str());
+    ostringstream oss2;
+    oss2 << "rhsdofvector_before_symm" << turn << ".bin";
+    string rhsfn(oss2.str());
    
-   MatlabHelper mhelp; 
-   mhelp.saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
-   mhelp.saveDofVectorBinary(rhsfn.c_str(),rhs);
-   }
-#endif
+    MatlabHelper mhelp; 
+    mhelp.saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
+    mhelp.saveDofVectorBinary(rhsfn.c_str(),rhs);
+  }
+  #endif
 
+  // if symmetrization of system is wanted, execute the following
+  #if ACTIVATE_KRONECKER_TREATMENT
+  {
+    elliptOp.matrixKroneckerColumnsTreatment();
+    std::cout << "finished matrix Kronecker column treatment\n";
 
+    if (verbose)
+    {
+      std::cout << "Values of matrix: \n";
+      elliptOp.systemMatrix().printReal(std::cout);
 
-   // if symmetrization of system is wanted, execute the following
-#if ACTIVATE_KRONECKER_TREATMENT
-   elliptOp.matrixKroneckerColumnsTreatment();
-   std::cout << "finished matrix Kronecker column treatment\n";
-
-   if (verbose)
-   {
-     std::cout << "Values of matrix: \n";
-     elliptOp.systemMatrix().printReal(std::cout);
-
-     std::cout << "Columns of matrix: \n";
-     elliptOp.systemMatrix().printColumns(std::cout);
-     std::cout << "Nonzero-Array of matrix: \n";
-     elliptOp.systemMatrix().printNonZeros(std::cout);
-     std::cout << "\n";
-     assert(elliptOp.systemMatrix().checkConsistency());
-     std::cout << "\n";
-   }
+      std::cout << "Columns of matrix: \n";
+      elliptOp.systemMatrix().printColumns(std::cout);
+      std::cout << "Nonzero-Array of matrix: \n";
+      elliptOp.systemMatrix().printNonZeros(std::cout);
+      std::cout << "\n";
+      assert(elliptOp.systemMatrix().checkConsistency());
+      std::cout << "\n";
+    }
    
-   elliptOp.rhsKroneckerColumnsTreatment(rhs);
-   if (verbose)
-   {
-     std::cout << "finished Rhs Kronecker column treatment\n";
-   }
-   
-#endif
+    elliptOp.rhsKroneckerColumnsTreatment(rhs);
+    if (verbose)
+    {
+      std::cout << "finished Rhs Kronecker column treatment\n";
+    }
+  }
+  #endif
 
-#ifdef FEOP_SAVE_MATRIX_WANTED
-   // save matrix and rhs after kronecker-treatment
-   {     
-     ostringstream oss;
-     oss << "linearmatrix_after_symm" << turn << ".bin";
-     string matfn(oss.str());
+  #ifdef FEOP_SAVE_MATRIX_WANTED
+  // save matrix and rhs after kronecker-treatment
+  {     
+    ostringstream oss;
+    oss << "linearmatrix_after_symm" << turn << ".bin";
+    string matfn(oss.str());
+    
+    ostringstream oss2;
+    oss2 << "rhsdofvector_after_symm" << turn << ".bin";
+    string rhsfn(oss2.str());
      
-     ostringstream oss2;
-     oss2 << "rhsdofvector_after_symm" << turn << ".bin";
-     string rhsfn(oss2.str());
+    MatlabHelper mhelp;     
+    mhelp.saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
+    mhelp.saveDofVectorBinary(rhsfn.c_str(),rhs);
+  }
+  #endif
+   
+  double dummy = 12345.67890;
+  InverseOperatorType cg( elliptOp, dummy, 1e-15, 20000, (verbose > 0) );
      
-     MatlabHelper mhelp;     
-     mhelp.saveSparseMatrixBinary(matfn.c_str(), elliptOp.systemMatrix());  
-     mhelp.saveDofVectorBinary(rhsfn.c_str(),rhs);
-   }
+  // solve linear system with cg 
+  cg( rhs, solution);
+
+  // initialize Exactsolution
+  ExactSolutionType u( linFuncSpace );
+
+  // calculation of L2 error 
+  L2Error< DiscreteFunctionType > l2err;
+  DiscreteFunctionType error( "error", linFuncSpace );
+
+  LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( u, error );
+  error -= solution;
    
-#endif
-   
-   // cg-operator needs only boolean verbosity flag
-   bool bverbose = (verbose>0);
+  // pol ord for calculation the error chould by higher than 
+  // pol for evaluation the basefunctions 
+  // double error = l2err.norm<EllipticModelType::TraitsType::quadDegree + 2> 
+  //    (u ,solution, 0.0);
+  double l2error = l2err.norm( u, solution,
+                               EllipticModelType :: TraitsType :: quadDegree,
+                               0.0 );
+  std :: cout << std :: endl;
+  std :: cout << "L2 Error: " << l2error << std :: endl;
+  std :: cout << std :: endl;
 
-   double dummy = 12345.67890;
-   InverseOperatorType cg ( elliptOp, dummy , 1E-15 , 20000 , bverbose);
-     
-   // solve linear system with cg 
-   cg(rhs,solution);
+  #if HAVE_GRAPE
+    // if grape was found then display solution 
+    if( turn > 0 )
+    {
+      #ifndef SKIP_GRAPE
+        GrapeDataDisplay < GridType > grape(*gridptr); 
+        // grape.dataDisplay( solution );
+        double time = 0.0;
+        bool vector = false;
+        grape.addData(solution, solution.name(), time, vector);
+        grape.addData(error, "error", time , vector);
+        grape.display();
+      #endif
+    }
+  #endif
 
-   // initialize Exactsolution
-   ExactSolutionType u ( linFuncSpace ); 
-
-   // calculation of L2 error 
-
-   L2Error < DiscreteFunctionType > l2err;
-   DiscreteFunctionType err ( "error", linFuncSpace );
-
-   LagrangeInterpolator interpol;
-   interpol.interpolFunction(u, err);
-   err -= solution;
-   
-   // pol ord for calculation the error chould by higher than 
-   // pol for evaluation the basefunctions 
-   // double error = l2err.norm<EllipticModelType::TraitsType::quadDegree + 2> 
-   //    (u ,solution, 0.0);
-   double error = l2err.norm
-       (u ,solution, EllipticModelType::TraitsType::quadDegree, 0.0);
-   std::cout << "\nL2 Error : " << error << "\n\n";
-
-#if HAVE_GRAPE
-   // if grape was found then display solution 
-   if(turn > 0)
-   {
-#ifdef SKIP_GRAPE
-#else
-     GrapeDataDisplay < GridType > grape(*gridptr); 
-//     grape.dataDisplay( solution );
-     double time = 0.0;
-     bool vector = false;
-     grape.addData(solution, solution.name(), 
-                          time, vector);
-     grape.addData(err, "error", time , vector);
-     grape.display();
-#endif
-   }
-#endif
-
-   return error;
+  return l2error;
 }
+
 
 
 //**************************************************
@@ -513,39 +518,34 @@ double algorithm (const char * filename , int maxlevel, int turn )
 //  main programm, run algorithm twice to calc EOC 
 //
 //**************************************************
-int main (int argc, char **argv)
+int main ( int argc, char **argv )
 {
-  if(argc != 2)
+  if( argc != 2 )
   {
-    fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
-    exit(1);
+    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
+    exit( 1 );
   }
   
   int ml = atoi( argv[1] );
-  double error[2];
+  double error[ 2 ];
 
-#if PDIM == 2
-  std::string macroGridName ("square.dgf");
-#else
-  std::string macroGridName ("cube.dgf");
-#endif
+  #if PDIM == 2
+    std::string macroGridName( "square.dgf" );
+  #else
+    std::string macroGridName( "cube.dgf" );
+  #endif
+  std::cout << "loading dgf " << macroGridName << std :: endl;
 
-  std::cout << "loading dgf " << macroGridName << "\n";
-  // old:
-  //ml -= refStepsForHalf;
-    // new:
-    ml -= DGFGridInfo<GridType>::refineStepsForHalf();
-  if(ml < 0) ml = 0;
-  for(int i=0; i<2; i++)
+  const int steps = DGFGridInfo< GridType > :: refineStepsForHalf();
+  ml = (ml - steps > 0) ? ml - steps : 0;
+  
+  for( int i = 0; i < 2; ++i )
   {
-    error[i] = algorithm ( macroGridName.c_str() ,  ml , i);
-    // old:
-    //ml += refStepsForHalf;
-    // new:
-     ml += DGFGridInfo<GridType>::refineStepsForHalf() ;
+    error[ i ] = algorithm( macroGridName.c_str(), ml, i );
+    ml += steps;
   }
-  double eoc = log( error[0]/error[1]) / M_LN2; 
-  std::cout << "EOC = " << eoc << " \n";
+
+  double eoc = log( error[ 0 ] / error[ 1 ]) / M_LN2;
+  std :: cout << "EOC = " << eoc << std :: endl;
   return 0;
 }
-

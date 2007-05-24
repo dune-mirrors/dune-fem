@@ -28,7 +28,7 @@
 
 //#include<dune/fem/io/file/ioutils.hh>
 
-#include "lagrangedofhandler.hh"
+// #include "lagrangedofhandler.hh"
 #include "../solver/oemsolver/preconditioning.hh"
 
 
@@ -1057,122 +1057,138 @@ private:
  */
 /*======================================================================*/
   
-  void searchDirichletDOFs() const
-        {
-          if (verbose_)
-              std::cout << "entered searchDirichletDOFs() of FEOp\n";
-          typedef typename 
-              DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
-          typedef typename DiscreteFunctionSpaceType::GridType GridType; 
-          typedef typename GridType::template Codim<0>::Entity EntityType;
-          typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-          typedef typename GridPartType::IntersectionIteratorType 
-              IntersectionIteratorType;
-          typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-          // allocate isDirichlet-Vector if not already done:
-          // to be sure: worst case: all DOFS are Dirichlet... undoubtedly 
-          // memory waste in highly resolved case, but no idea... 
-          // give maximum in Model? Or where?
+    void searchDirichletDOFs () const
+    {
+      if( verbose_ >= 1 )
+        std :: cout << "entered searchDirichletDOFs() of FEOp" << std :: endl;
+      
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      typedef typename DiscreteFunctionSpaceType :: GridType GridType; 
+      typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+      typedef typename GridPartType :: IntersectionIteratorType 
+        IntersectionIteratorType;
+      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
 
-//          if (!this->isDirichletDOF_old_)
-//              isDirichletDOF_old_ = new OldSparseRowMatrix<int>
-//                  (1, 
-//                   functionSpace_.size(),
-//                   functionSpace_.size()
-//                   );
+      // codimension of faces
+      enum { faceCodim = 1 };
+      
+      // type of Lagrange point set
+      // note: DiscreteFunctionSpaceType must be a Lagrange discrete function
+      //       space!
+      typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
+        LagrangePointSetType;
+      // type of iterator over all DoFs of a face
+      typedef typename LagrangePointSetType :: template Codim< faceCodim >
+                                            :: SubEntityIteratorType
+        FaceDofIteratorType;
 
-          if (!this->isDirichletDOF_)
-              isDirichletDOF_ = new SparseRowMatrix<int>
-                  (1, 
-                   functionSpace_.size(),
-                   functionSpace_.size(),
-                   0);
+      // allocate isDirichlet-Vector if not already done:
+      // to be sure: worst case: all DOFS are Dirichlet... undoubtedly 
+      // memory waste in highly resolved case, but no idea... 
+      // give maximum in Model? Or where?
+
+      // if (!this->isDirichletDOF_old_)
+      // isDirichletDOF_old_ = new OldSparseRowMatrix<int>
+      //            (1, 
+      //             functionSpace_.size(),
+      //             functionSpace_.size()
+      //             );
+      //    assert(this->isDirichletDOF_old_);
+
+      if( this->isDirichletDOF_ == NULL ) {
+        const unsigned int size = functionSpace_.size();
+        isDirichletDOF_  = new SparseRowMatrix< int >( 1, size, size, 0 );
+      }
+      assert( this->isDirichletDOF_ != NULL );
+      if( verbose_ >= 1 )
+        std :: cout << "allocated isDirichletDOF." << std :: endl;
           
-//          assert(this->isDirichletDOF_old_);
-          assert(this->isDirichletDOF_);
-
-          if (verbose_)
-              std::cout << " allocating of isDirichletDofs successful\n";
+      // start by filling all DOFs with zero
+      // isDirichletDOF_old_->clear(); 
+      // new one already initialized with 0
           
-          // start by filling all DOFs with zero
-//          isDirichletDOF_old_->clear(); 
-          // new one already initialized with 0
+      GridPartType &gridPart = functionSpace_.gridPart();
+
+      if( verbose_ >= 1 )
+        std :: cout << "starting loop over grid." << std :: endl;
+ 
+      IteratorType it = functionSpace_.begin();
+      const IteratorType endit = functionSpace_.end(); 
+      for( int numit = 0; it != endit; ++it, ++numit ) {
+        if( (verbose_ >= 2) && (numit % 100 == 0) )
+          std :: cout << "processing entity no " << numit << std :: endl;
+
+        const EntityType &entity = *it;
+
+        //const GeometryType t = entity.geometry().type();
           
-          IteratorType it    = functionSpace_.begin(); 
-          IteratorType endit = functionSpace_.end(); 
+        IntersectionIteratorType nit = gridPart.ibegin( entity );
+        const IntersectionIteratorType endnit = gridPart.iend( entity );
+        for( ; nit != endnit; ++nit ) {
+          // make sure we are on the boundary
+          if( !nit.boundary() )
+            continue;
+              
+          // get center of gravity of intersection and check for dirichlet
+          IntersectionQuadratureType
+            iquad( nit, 0, IntersectionQuadratureType :: INSIDE );
+          assert( iquad.nop() == 1 );
+
+          if( elMatInt_.model().boundaryType( entity, iquad, 0 )
+              != TraitsType :: Dirichlet )
+            continue;
+
+          const int faceNumber = nit.numberInSelf();
           
-          GridPartType & gridPart = functionSpace_.gridPart();
-
-          if (verbose_)
-              std::cout << " starting loop over grid: \n";
+          const LagrangePointSetType &lagrangePointSet
+            = functionSpace_.lagrangePointSet( entity );
           
-          int numit = 0;
-          for( ; it != endit; ++it, numit++ ) 
-          {
-            
-            if (numit%100 == 0)
-                if (verbose_>=2)
-                    std::cout << " processing entity no " << numit << " \n";
-
-            const EntityType & en = *it; 
-            
-            const GeometryType t = en.geometry().type();
-            const IntersectionIteratorType endnit = gridPart.iend(en);
-            for(IntersectionIteratorType nit = gridPart.ibegin(en); 
-                nit != endnit ; ++nit)
-            {
-              if(nit.boundary())
-              {
-                // if boundary, get cog of intersection and check for dirichlet
-                IntersectionQuadratureType 
-                    iquad(nit,0,
-                          TraitsType::IntersectionQuadratureType::INSIDE);
-                // check, whether real cog integration is performed
-                assert(iquad.nop()==1);
-                if (elMatInt_.model().boundaryType(en,iquad,0) == 
-                    TraitsType::Dirichlet)
-                {
-                  // determine all local DOF numbers of intersection vertices
-
-//                  typedef typename EntityType :: ctype coordType;
-//                  enum { dim = EntityType :: dimension };
-
-//                  ReferenceElementContainer<coordType,dim> refElemCont;
-//                  const ReferenceElement<coordType,dim>& 
-//                      refElem = refElemCont(t); // t is geometrytype
-                  
-                  LagrangeDofHandler<DiscreteFunctionSpaceType> 
-                      dofHandler(functionSpace_,en);
-                  
-                  const int faceCodim = 1;
-                  int face = nit.numberInSelf();
-//                  int novx = refElem.size( face, faceCodim , dim );
-                  int novx = dofHandler.numDofsOnFace( face, faceCodim );
-                  //  assert( novx == dim );
-
-                  for(int j=0; j<novx ; j++)
-                  {
-                    // get all local numbers located on the face 
-                    // int vx  = refElem.subEntity(face, faceCodim , j , dim );
-                    int vx  = dofHandler.entityDofNum(face, faceCodim , j );
-
-                    // get global dof numbers of this vertices 
-                    int row = functionSpace_.mapToGlobal( en, vx);
-                    // store DOF as DirichletDOF
-//                    isDirichletDOF_old_->set(0,row,1);                    
-                    isDirichletDOF_->set(0,row,1);                    
-                  }
-                }
-              }
-            }
+          FaceDofIteratorType faceIt
+            = lagrangePointSet.template beginSubEntity< faceCodim >( faceNumber );
+          const FaceDofIteratorType faceEndIt
+            = lagrangePointSet.template endSubEntity< faceCodim >( faceNumber );
+          for( ; faceIt != faceEndIt; ++faceIt ) {
+            const int row = functionSpace_.mapToGlobal( entity, *faceIt );
+            isDirichletDOF_->set( 0, row, 1 );
           }
 
-          if (verbose_>=2)
-              std::cout << " finished searchDirichletDOFs \n";
+          #if 0
+          // determine all local DOF numbers of intersection vertices
 
-          isDirichletDOF_assembled_ = true;
-          
-        }; // end of searchDirichletDOFs 
+          // typedef typename EntityType :: ctype coordType;
+          // enum { dim = EntityType :: dimension };
+
+          // ReferenceElementContainer<coordType,dim> refElemCont;
+          // const ReferenceElement<coordType,dim>& 
+          // refElem = refElemCont(t); // t is geometrytype
+                  
+          LagrangeDofHandler< DiscreteFunctionSpaceType >
+            dofHandler( functionSpace_, entity );
+                
+          // int novx = refElem.size( faceNumber, faceCodim , dim );
+          int novx = dofHandler.numDofsOnFace( faceNumber, faceCodim );
+          // assert( novx == dim );
+
+          for( int j = 0; j < novx; ++j ) {
+            // get all local numbers located on the face 
+            // int vx = refElem.subEntity(face, faceCodim , j , dim );
+            int vx = dofHandler.entityDofNum( faceNumber, faceCodim, j );
+
+            // get global dof numbers of this vertices
+            int row = functionSpace_.mapToGlobal( entity, vx );
+            // store DOF as DirichletDOF
+            // isDirichletDOF_old_->set(0,row,1);                    
+            isDirichletDOF_->set( 0, row, 1 );
+          }
+          #endif
+        }
+      }
+      
+      isDirichletDOF_assembled_ = true;
+        
+      if( verbose_>=2 )
+        std :: cout << "finished searchDirichletDOFs" << std :: endl;
+    }
   
 /*======================================================================*/
 /*! 

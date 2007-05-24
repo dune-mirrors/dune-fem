@@ -22,7 +22,7 @@
 #include <config.h>
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
 // class required for lagrange-node-access with point() method:
-#include "lagrangedofhandler.hh"
+// #include "lagrangedofhandler.hh"
 #include <dune/common/bartonnackmanifcheck.hh>
 
 namespace Dune 
@@ -1233,101 +1233,116 @@ private:
  */
 /*======================================================================*/
 
-  void bndCorrect(DiscreteFunctionType& rhs)
-        {
-          if (verbose_)
-              std::cout << "entered bndCorrect() of " 
-                        << "RhsAssembler\n";
+    void bndCorrect( DiscreteFunctionType &rhs )
+    {
+      if( verbose_ >= 1 )
+        std::cout << "entered bndCorrect() of RhsAssembler" << std :: endl;
 
-          // grid walkthrough for setting Dirichlet-DOFs
-          ModelType& model 
-              = elRhsInt_.model();
-          DiscreteFunctionSpaceType& fspace 
-              = model.discreteFunctionSpace();
+      // codimension of faces
+      enum { faceCodim = 1 };
+      
+      // type of Lagrange point set
+      // note: DiscreteFunctionSpaceType must be a Lagrange discrete function
+      //       space
+      typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
+        LagrangePointSetType;
+      // type of iterator over all DoFs on a face
+      typedef typename LagrangePointSetType :: template Codim< 1 >
+                                            :: SubEntityIteratorType
+        FaceDofIteratorType;
+
+      // grid walkthrough for setting Dirichlet-DOFs
+      ModelType &model = elRhsInt_.model();
+      DiscreteFunctionSpaceType &fspace = model.discreteFunctionSpace();
+      
+      GridPartType & gridPart = fspace.gridPart();
                     
-          IteratorType it    = fspace.begin(); 
-          IteratorType endit = fspace.end(); 
+      IteratorType it = fspace.begin();
+      const IteratorType endit = fspace.end();
+      for( ; it != endit; ++it ) {
+        const EntityType &entity = *it;
+
+        // const GeometryType t = entity.geometry().type();
+        IntersectionIteratorType nit = gridPart.ibegin( entity );
+        const IntersectionIteratorType endnit = gridPart.iend( entity );
+        for( ; nit != endnit; ++nit ) {
+          if( !nit.boundary() )
+            continue;
           
-          GridPartType & gridPart = fspace.gridPart();
+          // get center of gravity of intersection and check for dirichlet
+          IntersectionQuadratureType
+            iquad( nit, 0, IntersectionQuadratureType :: INSIDE );
+          assert( iquad.nop() == 1 );
           
-          for( ; it != endit; ++it ) 
-          {
-            const EntityType & en = *it;      
-//            const GeometryType t = en.geometry().type();
-            const IntersectionIteratorType endnit = gridPart.iend(en);
-
-            for(IntersectionIteratorType nit = gridPart.ibegin(en); 
-                nit != endnit ; ++nit)
-            {
-              if(nit.boundary())
-              {
-                // if boundary, get cog of intersection and check for dirichlet
-                typename IntersectionQuadratureType::Side si = 
-                    IntersectionQuadratureType::INSIDE;
-                IntersectionQuadratureType 
-                    iquad(nit,0,si);
-                // check, whether real cog integration is performed
-                assert(iquad.nop()==1);
-                if (model.boundaryType(en,iquad,0) == 
-                    TraitsType::Dirichlet)
-                {
-                  // determine all local DOF numbers of intersection vertices
-//                  enum { dim = EntityType :: dimension };
-                  
-//                  const ReferenceElement<coordType,dim>& refElem; 
-//                  ReferenceElement<coordType,dim> refElem; 
-//                  ReferenceElementContainer<coordType,dim> refElemCont;
-//                  const ReferenceElement<coordType,dim>& 
-//                      refElem = refElemCont(t);
-                  
-                  // t is geometrytype
-
-                  // class, which gives access to local vertex coordinates by a
-                  // point() routine:
-                  // VertexPointProvider<EntityType> fakequad(en);
-                  LagrangeDofHandler<DiscreteFunctionSpaceType> 
-                      dofHandler(fspace,en);
-
-                  const int faceCodim = 1;
-                  int face = nit.numberInSelf();
-//                  int novx = refElem.size( face, faceCodim , dim );
-                  int novx = dofHandler.numDofsOnFace( face, faceCodim );
-                  //  assert( novx == dim );
-                  
-                  LocalFunctionType lf = rhs.localFunction(en);
-                  
-                  // we only can treat lagrange-functions with correspondence 
-                  // between local vertices and basis-functions: 
-//                  assert(lf.numDofs() == refElem.size(dim));
-
-                  for(int j=0; j<novx ; j++)
-                  {
-                    // get all local DOF number located on the face 
-                    
-//                    int vx  = refElem.subEntity(face, faceCodim , j , dim );
-                    int vx  = dofHandler.entityDofNum(face, faceCodim , j );
-                    
-                    // determine Dirichlet-value in this vertex
-                    RangeType dirval;
-//                    std::cout << "j =" << j << ", vx = " << vx << " \n";   
-                    model.dirichletValues(en, dofHandler, vx, dirval);      
-//                    std::cout << "dirval[0] =" << dirval[0] << "\n";
-                    // set local DOF to determined value
-                    // here the assumption of identical local numbering of 
-                    // DOFS and vertex numbering enters!!!!
-                    lf[vx] = dirval;                    
-//                    std::cout << "lf[vx] =" << lf[vx] << "\n";
-                  }
-//                  std::cout << "finished loop of lf-update \n";
-                }
-//                std::cout << "finished isDirichlet \n";
-              }
-//              std::cout << "finished isBoundary \n";
-            }
-//            std::cout << "finished loop over intersections \n";
+          if( model.boundaryType( entity, iquad, 0 ) != TraitsType :: Dirichlet )
+            continue;
+          
+          const int faceNumber = nit.numberInSelf();
+          LocalFunctionType lf = rhs.localFunction( entity );
+          
+          const LagrangePointSetType &lagrangePointSet
+            = fspace.lagrangePointSet( entity );
+          FaceDofIteratorType faceIt
+            = lagrangePointSet.template beginSubEntity< faceCodim >( faceNumber );
+          const FaceDofIteratorType faceEndIt
+            = lagrangePointSet.template endSubEntity< faceCodim >( faceNumber );
+          for( ; faceIt != faceEndIt; ++faceIt ) {
+            const unsigned int entityDofNumber = *faceIt;
+            RangeType phi;
+            model.dirichletValues( entity, lagrangePointSet, entityDofNumber, phi );
+            lf[ entityDofNumber ] = phi[ 0 ];
           }
-//          std::cout << "finished loop over entities \n";
-        }; // end of bndCorrect()
+         
+          #if 0
+          // determine all local DOF numbers of intersection vertices
+          // enum { dim = EntityType :: dimension };
+                  
+          // const ReferenceElement<coordType,dim>& refElem; 
+          // ReferenceElement<coordType,dim> refElem; 
+          // ReferenceElementContainer<coordType,dim> refElemCont;
+          // const ReferenceElement<coordType,dim>& 
+          // refElem = refElemCont(t);
+                  
+          // t is geometrytype
+
+          // class, which gives access to local vertex coordinates by a
+          // point() routine:
+          // VertexPointProvider<EntityType> fakequad(en);
+          LagrangeDofHandler< DiscreteFunctionSpaceType >
+            dofHandler( fspace, entity );
+
+          // int novx = refElem.size( faceNumber, faceCodim, dim );
+          int novx = dofHandler.numDofsOnFace( faceNumber, faceCodim );
+          //  assert( novx == dim );
+                  
+          // we only can treat lagrange-functions with correspondence 
+          // between local vertices and basis-functions: 
+          // assert(lf.numDofs() == refElem.size(dim));
+
+          for( int j = 0; j < novx; ++j ) {
+            // get all local DOF number located on the face 
+                    
+            // int vx  = refElem.subEntity(face, faceCodim , j , dim );
+            int vx = dofHandler.entityDofNum( faceNumber, faceCodim, j );
+                    
+            // determine Dirichlet-value in this vertex
+            RangeType dirval;
+            // std::cout << "j =" << j << ", vx = " << vx << " \n";   
+            model.dirichletValues( entity, dofHandler, vx, dirval ); 
+            // std::cout << "dirval[0] =" << dirval[0] << "\n";
+            // set local DOF to determined value
+            // here the assumption of identical local numbering of 
+            // DOFS and vertex numbering enters!!!!
+            lf[ vx ] = dirval;                    
+            // std::cout << "lf[vx] =" << lf[vx] << "\n";
+          }
+          // std::cout << "finished loop of lf-update \n";
+          #endif
+        }
+        // std::cout << "finished loop over intersections \n";
+      }
+      // std::cout << "finished loop over entities \n";
+    }
   
 // member variables:
 private:

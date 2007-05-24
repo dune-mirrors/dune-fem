@@ -3,9 +3,6 @@
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/quadrature/cachequad.hh>
-
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 
 namespace Dune {
 
@@ -32,7 +29,8 @@ namespace Dune {
       OneSpaceType space( gridPart);
       checkLagrangeBase( space );
     }
-  
+ 
+    #ifdef TEST_SECOND_ORDER
     // check polynomial order 2
     typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
       TwoSpaceType;
@@ -41,19 +39,18 @@ namespace Dune {
       TwoSpaceType space( gridPart );
       checkLagrangeBase( space );
     }
+    #endif
   }
   
   template< class SpaceType > 
   void LagrangeBase_Test :: checkLagrangeBase( const SpaceType &space )
   {
     typedef typename SpaceType :: IteratorType IteratorType; 
-    typedef typename SpaceType :: BaseFunctionSetType
-      BaseFunctionSetType;
+    typedef typename SpaceType :: BaseFunctionSetType  BaseFunctionSetType;
+    typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
     typedef typename SpaceType :: GridPartType GridPartType;
     typedef typename SpaceType :: DomainType DomainType; 
     typedef typename SpaceType :: RangeType RangeType; 
-    //typedef typename SpaceType :: GridType :: template Codim< 0 > :: Geometry
-    //  GeometryType;
 
     int errors = 0;
     
@@ -63,16 +60,19 @@ namespace Dune {
       const BaseFunctionSetType& baseSet = space.baseFunctionSet( *it );
       const int numBaseFct = baseSet.numBaseFunctions();
 
-      //const GeometryType& geo = it->geometry();
+      const LagrangePointSetType& pointSet = space.lagrangePointSet( *it );
      
+      /*
       LagrangeQuadrature< GridPartType, 0 >
         lagrangePoints( *it, space.order() );
+      */
 
       for( int i = 0; i < numBaseFct; ++i ) 
       {
         RangeType phi( 0.0 );
        
-        const DomainType& x = lagrangePoints.point( i );
+        //const DomainType& x = lagrangePoints.point( i );
+        const DomainType& x = pointSet[ i ];
        
         // evaluate on lagrange point 
         baseSet.evaluate( i , x , phi ); 

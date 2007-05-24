@@ -1,399 +1,683 @@
-#ifndef DUNE_LAGRANGEPOINTS_HH
-#define DUNE_LAGRANGEPOINTS_HH
+#ifndef DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
+#define DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 
-#include <dune/grid/common/geometry.hh>
+#include <dune/grid/common/referenceelements.hh>
 
-#include <dune/fem/quadrature/quadrature.hh>
+#include "genericgeometry.hh"
+#include "genericlagrangepoints.hh"
 
-namespace Dune {
-   
-  /** \brief Actual implementation of LagrangeQuadrature for Geometry type Line
-   */
-  template< class ct >
-  class LagrangeLineQuadrature : public QuadratureImp< ct, 1 >
+namespace Dune
+{
+
+  template< GeometryType :: BasicType type,
+            unsigned int dim,
+            unsigned int order >
+  class LagrangePoint
+  : public GenericLagrangePoint
+    < typename GeometryWrapper< type, dim > :: GenericGeometryType, order >
   {
-  public:
-    //! Remember the field type
-    typedef ct ctype;
-    
-    //! Type for coordinates
-    typedef FieldVector< ctype, 1 > CoordinateType;
-
   private:
-    typedef LagrangeLineQuadrature< ctype > ThisType;
+    typedef GeometryWrapper< type, dim > GeometryWrapperType;
+    typedef GenericLagrangePoint
+      < typename GeometryWrapperType :: GenericGeometryType, order >
+      BaseType;
+    typedef LagrangePoint< type, dim, order > ThisType;
 
-    const int order_;
+  public:
+    enum { dimension = BaseType :: dimension };
+    typedef typename BaseType :: DofCoordinateType DofCoordinateType;
+
+    enum { polynomialOrder = BaseType :: polynomialOrder };
+
+    enum { numLagrangePoints = BaseType :: numLagrangePoints };
+
+  public:
+    template< unsigned int codim >
+    class Codim
+    {
+    public:
+      static inline unsigned int maxDofs ()
+      {
+        return BaseType :: template Codim< codim > :: maxDofs();
+      }
+    };
     
   public:
-    LagrangeLineQuadrature( int order, size_t id );
-
-    virtual GeometryType geometry() const
+    inline LagrangePoint ( unsigned int index )
+    : BaseType( index )
     {
-      return GeometryType( GeometryType :: cube, 1 );
-    }
-    
-    /** \brief Order of the quadrature
-     * 
-     *  Returns the order of the associated Lagrange polynom (as requested in
-     *  the constructor).
-     */
-    virtual int order() const
-    {
-      return order_;
     }
 
-    /** \brief Maximal order for this quadrature
-     * 
-     * Returns the maximal order, this quadrature can be constructed with. For
-     * now, this is 2 (i.e. quadratic polynoms).
-     */
-    static size_t maxOrder()
+    inline LagrangePoint ( const BaseType &point )
+    : BaseType( point )
     {
-      return 2;
-    }
-  };
-
-
-
-  /** \brief Actual implementation of LagrangeQuadrature for Geometry type
-   *  Triangle
-   */
-  template< class ct >
-  class LagrangeTriangleQuadrature : public QuadratureImp< ct, 2 >
-  {
-  public:
-    //! Remember the field type
-    typedef ct ctype;
-    
-    //! Type for coordinates
-    typedef FieldVector< ctype, 2 > CoordinateType;
-
-  private:
-    typedef LagrangeTriangleQuadrature< ctype > ThisType;
-
-    const int order_;
-    
-  public:
-    LagrangeTriangleQuadrature( int order, size_t id );
-
-    virtual GeometryType geometry() const
-    {
-      return GeometryType( GeometryType :: simplex, 2 );
-    }
-    
-    /** \brief Order of the quadrature
-     * 
-     *  Returns the order of the associated Lagrange polynom (as requested in
-     *  the constructor).
-     */
-    virtual int order() const
-    {
-      return order_;
     }
 
-    /** \brief Maximal order for this quadrature
-     * 
-     * Returns the maximal order, this quadrature can be constructed with. For
-     * now, this is 2 (i.e. quadratic polynoms).
-     */
-    static size_t maxOrder()
+    inline void dofSubEntity ( unsigned int &codim,
+                               unsigned int &subEntity )
     {
-      return 2;
+      BaseType :: dofSubEntity( codim, subEntity );
+      GeometryWrapperType :: duneSubEntity( codim, subEntity );
     }
-  };
 
-  
-
-  /** \brief Actual implementation of LagrangeQuadrature for Geometry type
-   *  Quadrilateral
-   */
-  template< class ct >
-  class LagrangeQuadrilateralQuadrature : public QuadratureImp< ct, 2 >
-  {
-  public:
-    //! Remember the field type
-    typedef ct ctype;
-    
-    //! Type for coordinates
-    typedef FieldVector< ctype, 2 > CoordinateType;
-
-  private:
-    typedef LagrangeQuadrilateralQuadrature< ctype > ThisType;
-
-    const int order_;
-    
-  public:
-    LagrangeQuadrilateralQuadrature( int order, size_t id );
-
-    virtual GeometryType geometry() const
+    inline void dofSubEntity ( unsigned int &codim,
+                               unsigned int &subEntity,
+                               unsigned int &dofNumber )
     {
-      return GeometryType( GeometryType :: cube, 2 );
+      BaseType :: dofSubEntity( codim, subEntity, dofNumber );
+      GeometryWrapperType :: duneSubEntity( codim, subEntity );
     }
-    
-    /** \brief Order of the quadrature
-     * 
-     *  Returns the order of the associated Lagrange polynom (as requested in
-     *  the constructor).
-     */
-    virtual int order() const
+
+    static inline unsigned int entityDofNumber ( unsigned int codim,
+                                                 unsigned int subEntity,
+                                                 unsigned int dof )
     {
-      return order_;
-    }
-    
-    /** \brief Maximal order for this quadrature
-     * 
-     * Returns the maximal order, this quadrature can be constructed with. For
-     * now, this is 2 (i.e. quadratic polynoms).
-     */
-    static size_t maxOrder()
-    {
-      return 2;
+      GeometryWrapperType :: duneSubEntity( codim, subEntity );
+      return BaseType :: entityDofNumber( codim, subEntity, dof );
     }
   };
 
 
   
-  /** \brief Actual implementation of LagrangeQuadrature for Geometry type
-   *  Tetrahedron
-   */
-  template< class ct >
-  class LagrangeTetrahedronQuadrature : public QuadratureImp< ct, 3 >
-  {
-  public:
-    //! Remember the field type
-    typedef ct ctype;
-    
-    //! Type for coordinates
-    typedef FieldVector< ctype, 3 > CoordinateType;
-
-  private:
-    typedef LagrangeTetrahedronQuadrature< ctype > ThisType;
-
-    const int order_;
-    
-  public:
-    LagrangeTetrahedronQuadrature( int order, size_t id );
-
-    virtual GeometryType geometry() const
-    {
-      return GeometryType( GeometryType :: simplex, 3 );
-    }
-    
-    /** \brief Order of the quadrature
-     * 
-     *  Returns the order of the associated Lagrange polynom (as requested in
-     *  the constructor).
-     */
-    virtual int order() const
-    {
-      return order_;
-    }
-
-    /** \brief Maximal order for this quadrature
-     * 
-     * Returns the maximal order, this quadrature can be constructed with. For
-     * now, this is 2 (i.e. quadratic polynoms).
-     */
-    static size_t maxOrder()
-    {
-      return 2;
-    }
-  };
-
+  template< class FieldImp, unsigned int dim, unsigned int polOrder >
+  class LagrangePointSetInterface;
 
   
-  //! Traits for Lagrange quadratures
-  template< class ct, int dim >
-  struct LagrangeQuadratureTraits
-  {
-    typedef CompileTimeChecker< false > Only_implementations_for_dim_1_2_exist;
-  };
 
-  /*
-  template< class ct >
-  struct LagrangeQuadratureTraits< ct, 0 >
-  {
-    typedef CubeQuadrature< ct, 0 > PointQuadratureType;
-  };
-  */
-
-  //! Lagrange quadratures for lines
-  template< class ct >
-  struct LagrangeQuadratureTraits< ct, 1 >
-  {
-    typedef LagrangeLineQuadrature< ct > LineQuadratureType;
-  };
-
-  //! Lagrange quadratures for simplex and cubes
-  template< class ct >
-  struct LagrangeQuadratureTraits< ct, 2 >
-  {
-    typedef LagrangeQuadrilateralQuadrature< ct > CubeQuadratureType;
-    typedef LagrangeTriangleQuadrature< ct >      SimplexQuadratureType;
-  };
-
-  template< class ct >
-  struct LagrangeQuadratureTraits< ct, 3 >
-  {
-    typedef CubeQuadrature< ct, 3 >             CubeQuadratureType;
-    typedef LagrangeTetrahedronQuadrature< ct > SimplexQuadratureType;
-
-    typedef PrismQuadrature< ct >               PrismQuadratureType;
-    typedef PyramidQuadrature< ct >             PyramidQuadratureType;
-  };
-
-
-
-  /** \brief Lagrange Quadrature
-   *
-   * Sometimes it is necessary to know the coordinate of a Lagrange point.
-   * This quadrature enumerates these points (in the same order as the local
-   * DoFs of a Lagrange polynomial).
-   *
-   * \note The order of this quadrature corresponds to the order of the
-   * Lagrange polynoms, which is less than the order of the quadrature
-   * (when used as a quadrature for integration).
-   *
-   * \note Only LagrangeQuadrature< GridPartImp, 0 > is implemented.
-   */
-  template< typename GridPartImp, int codim >
-  class LagrangeQuadrature
-  {
-    typedef CompileTimeChecker< false > Only_implementation_for_codim_0_exists;
-  };
-
-  /** \brief Lagrange Quadrature (for codimension 0)
-   *
-   * Sometimes it is necessary to know the coordinate of a Lagrange point.
-   * This quadrature enumerates these points (in the same order as the local
-   * DoFs of a Lagrange polynomial).
-   *
-   * \note The order of this quadrature corresponds to the order of the
-   * Lagrange polynoms, which is less than the order of the quadrature
-   * (when used as a quadrature for integration).
-   */
-  template< typename GridPartImp >
-  class LagrangeQuadrature< GridPartImp, 0 >
+  template< class FieldImp,
+            unsigned int dim,
+            unsigned int codim,
+            unsigned int polOrder >
+  class SubEntityLagrangePointIterator
   {
   public:
-    //! Remember the GridPart
-    typedef typename GridPartImp :: GridType GridType;
+    typedef FieldImp FieldType;
+
+    enum { dimension = dim };
+    enum { codimension = codim };
+
+    enum { polynomialOrder = polOrder };
+
+    typedef FieldVector< FieldType, dimension > pointType;
+
+  private:
+    typedef SubEntityLagrangePointIterator< FieldType,
+                                            dimension,
+                                            codimension,
+                                            polynomialOrder >
+      ThisType;
+
+    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+      LagrangePointSetType;
+
+    typedef ReferenceElementContainer< FieldType, dimension >
+      ReferenceElementContainerType;
+    typedef typename ReferenceElementContainerType :: value_type
+      ReferenceElementType;
+
+  private:
+    ReferenceElementContainerType refElementContainer_;
     
-     //! The type for reals (usually double)
-    typedef typename GridType :: ctype ctype;
+    const LagrangePointSetType *lagrangePointSet_;
+    unsigned int subEntity_;
+
+    unsigned int codim_;
+    unsigned int subIndex_, numSubIndices_;
+    unsigned int subSubEntity_;
+    unsigned int dofNumber_, numDofs_;
+
+  private:
+    inline SubEntityLagrangePointIterator
+      ( const LagrangePointSetType &lagrangePointSet,
+        const unsigned int subEntity,
+        const bool beginIterator )
+    : refElementContainer_()
+    {
+      lagrangePointSet_ = &lagrangePointSet;
+      subEntity_ = subEntity;
+
+      subIndex_ = 0;
+      numSubIndices_ = 1;
+      subSubEntity_ = subEntity_;
+        
+      dofNumber_ = 0;
+      numDofs_ = lagrangePointSet_->numDofs( codimension, subSubEntity_ );
+        
+      if( beginIterator ) {
+        codim_ = codimension;
+        assertDof();
+      } else
+        codim_ = dimension+1;
+    }
+  
+  public:
+    inline SubEntityLagrangePointIterator ()
+    : refElementContainer_()
+    {
+      lagrangePointSet_ = NULL;
+      subEntity_ = 0;
+
+      codim_ = dimension + 1;
+      subIndex_ = 0;
+      dofNumber_ = 0;
+    }
     
-    //! Dimension of the world
-    enum { dimension = GridType :: dimension };
+    inline SubEntityLagrangePointIterator ( const ThisType &other )
+    : refElementContainer_()
+    {
+      lagrangePointSet_ = other.lagrangePointSet_;
+      subEntity_ = other.subEntity_;
+
+      codim_ = other.codim_;
+      
+      subIndex_ = other.subIndex_;
+      numSubIndices_ = other.numSubIndices_;
+      subSubEntity_ = other.subSubEntity_;
+      
+      dofNumber_ = other.dofNumber_;
+      numDofs_ = other.numDofs_;
+    }
+
+    inline ThisType& operator= ( const ThisType &other )
+    {
+      lagrangePointSet_ = other.lagrangePointSet_;
+      subEntity_ = other.subEntity_;
+
+      codim_ = other.codim_;
+      
+      subIndex_ = other.subIndex_;
+      numSubIndices_ = other.numSubIndices_;
+      subSubEntity_ = other.subSubEntity_;
+      
+      dofNumber_ = other.dofNumber_;
+      numDofs_ = other.numDofs_;
+    }
+
+    inline unsigned int operator* () const
+    {
+      assert( lagrangePointSet_ != NULL );
+      assert( codim_ <= dimension );
+
+      return lagrangePointSet_->entityDofNumber
+               ( codim_, subSubEntity_, dofNumber_ );
+    }
+
+    inline ThisType& operator++ ()
+    {
+      if( codim_ <= dimension ) {
+        ++dofNumber_;
+        assertDof();
+      }
+      return *this;
+    }
+
+    inline bool operator== ( const ThisType& other ) const
+    {
+      if( (other.codim_ != codim_)
+          || (other.subIndex_ != subIndex_)
+          || (other.dofNumber_ != dofNumber_) )
+        return false;
+
+      return (other.lagrangePointSet_ == lagrangePointSet_)
+             && (other.subEntity_ == subEntity_);
+    }
+
+    inline bool operator!= ( const ThisType& other ) const
+    {
+      return !(this->operator==( other ));
+    }
+ 
     
-    //! Codimension is zero by definition
+    inline static ThisType begin( const LagrangePointSetType &lagrangePointSet,
+                                  unsigned int subEntity )
+    {
+      return ThisType( lagrangePointSet, subEntity, true );
+    }
+
+    inline static ThisType end( const LagrangePointSetType &lagrangePointSet,
+                                unsigned int subEntity )
+    {
+      return ThisType( lagrangePointSet, subEntity, false );
+    }
+
+  private:
+    inline void assertDof ()
+    {
+      assert( lagrangePointSet_ != NULL );
+        
+      while( dofNumber_ >= numDofs_ ) {
+        const ReferenceElementType &refElement
+          = refElementContainer_( lagrangePointSet_->geometryType() );
+          
+        dofNumber_ = 0;
+        ++subIndex_;
+        while( subIndex_ >= numSubIndices_ ) {
+          subIndex_ = 0;
+          if( ++codim_ > dimension )
+            return;
+          numSubIndices_ = refElement.size( subEntity_, codimension, codim_ );
+        }
+        subSubEntity_ = refElement.subEntity( subEntity_, codimension,
+                                              subIndex_, codim_ );
+        numDofs_ = lagrangePointSet_->numDofs( codim_, subSubEntity_ );
+      }
+    }
+  };
+ 
+
+
+  template< class FieldImp,
+            unsigned int dim,
+            unsigned int polOrder >
+  class SubEntityLagrangePointIterator< FieldImp, dim, 0, polOrder >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+    enum { dimension = dim };
     enum { codimension = 0 };
 
-    enum Side { INSIDE, OUTSIDE };
-    
-    //! Type of the codim-0 entity
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    enum { polynomialOrder = polOrder };
+
+    typedef FieldVector< FieldType, dimension > pointType;
 
   private:
-    typedef Quadrature< ctype, dimension, LagrangeQuadratureTraits >
-      QuadratureType;
+    typedef SubEntityLagrangePointIterator< FieldType,
+                                            dimension,
+                                            codimension,
+                                            polynomialOrder >
+      ThisType;
 
-    typedef LagrangeQuadrature< GridType, 0 > ThisType;
+    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+      LagrangePointSetType;
+
+  private:
+    const LagrangePointSetType *lagrangePointSet_;
+    unsigned int index_, numDofs_;
+
+  private:
+    inline SubEntityLagrangePointIterator
+      ( const LagrangePointSetType &lagrangePointSet,
+        const unsigned int subEntity,
+        const bool beginIterator )
+    {
+      lagrangePointSet_ = &lagrangePointSet;
+      assert( subEntity == 0 );
+
+      numDofs_ = lagrangePointSet_->size();
+      index_ = (beginIterator ? 0 : numDofs_);
+    }
   
   public:
-    //! Type for coordinates in the codim-0 reference element
-    typedef typename QuadratureType :: CoordinateType CoordinateType;
+    inline SubEntityLagrangePointIterator ()
+    {
+      lagrangePointSet_ = NULL;
+      index_ = 0;
+      numDofs_ = 0;
+    }
+    
+    inline SubEntityLagrangePointIterator ( const ThisType &other )
+    {
+      lagrangePointSet_ = other.lagrangePointSet_;
+
+      index_ = other.index_;
+      numDofs_ = other.numDofs_;
+    }
+
+    inline ThisType& operator= ( const ThisType &other )
+    {
+      lagrangePointSet_ = other.lagrangePointSet_;
+
+      index_ = other.index_;
+      numDofs_ = other.numDofs_;
+    }
+
+    inline unsigned int operator* () const
+    {
+      assert( lagrangePointSet_ != NULL );
+      assert( index_ < numDofs_ );
+      return index_;
+    }
+
+    inline ThisType& operator++ ()
+    {
+      if( index_ < numDofs_ )
+        ++index_;
+      return *this;
+    }
+
+    inline bool operator== ( const ThisType& other ) const
+    {
+      return (other.index_ == index_)
+             && (other.lagrangePointSet_ == lagrangePointSet_);
+    }
+
+    inline bool operator!= ( const ThisType& other ) const
+    {
+      return !(this->operator==( other ));
+    }
+ 
+    
+    inline static ThisType begin( const LagrangePointSetType &lagrangePointSet,
+                                  unsigned int subEntity )
+    {
+      return ThisType( lagrangePointSet, subEntity, true );
+    }
+
+    inline static ThisType end( const LagrangePointSetType &lagrangePointSet,
+                                unsigned int subEntity )
+    {
+      return ThisType( lagrangePointSet, subEntity, false );
+    }
+  };
+
+
+  
+  template< class FieldImp, unsigned int dim, unsigned int polOrder >
+  class LagrangePointSetInterface
+  {
+  public:
+    typedef FieldImp FieldType;
+
+    enum { dimension = dim };
+
+    enum { polynomialOrder = polOrder };
+
+    typedef FieldVector< FieldType, dimension > PointType;
+
+    template< unsigned int codim >
+    struct Codim
+    {
+      //! type of iterator over DoF numbers in a subentity
+      typedef SubEntityLagrangePointIterator< FieldType, 
+                                              dimension,
+                                              codim,
+                                              polynomialOrder >
+        SubEntityIteratorType;
+    };
+   
+  private:
+    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+      ThisType;
+
+  public:
+    //! constructor
+    LagrangePointSetInterface ()
+    {
+    }
 
   private:
-    QuadratureType quad_;
-    
+    // Disallow the copy constructor
+    LagrangePointSetInterface ( const ThisType &pointSet )
+    {
+    }
+
   public:
-    //! Constructor
-    //! \param entity Entity the quadrature lives on (respectively on its reference element).
-    //! \param order Desired minimal order of the quadrature.
-    LagrangeQuadrature( const EntityType &entity, int order )
-      : quad_( entity.geometry().type(), order )
+    //! destructor
+    virtual ~LagrangePointSetInterface ()
     {
     }
 
-    //! Number of Lagrange points
-    int nop() const
+    //! obtain a Lagrange point
+    virtual const PointType& operator[] ( unsigned int index ) const = 0;
+
+    virtual void dofSubEntity ( unsigned int index,
+                                unsigned int &codim,
+                                unsigned int &subEntity ) const = 0;
+ 
+    virtual void dofSubEntity ( unsigned int index,
+                                unsigned int &codim,
+                                unsigned int &subEntity,
+                                unsigned int &dofNumber ) const = 0;
+ 
+    virtual unsigned int entityDofNumber ( unsigned int codim,
+                                           unsigned int subEntity,
+                                           unsigned int dofNumber ) const = 0;
+
+    virtual const GeometryType geometryType () const = 0;
+
+    virtual unsigned int maxDofs ( unsigned int codim ) const = 0;
+    
+    virtual unsigned int numDofs ( unsigned int codim,
+                                   unsigned int subEntity ) const = 0;
+
+    //! quadrature-like interface to obtain a Lagrange point
+    inline const PointType& point( unsigned int index ) const
     {
-      return quad_.nop();
+      return this->operator[]( index );
+    }
+   
+    //! get number of Lagrange points
+    virtual unsigned int size () const = 0;
+
+  public:
+    template< unsigned int codim >
+    inline typename Codim< codim > :: SubEntityIteratorType
+      beginSubEntity ( unsigned int subEntity ) const
+    {
+      return Codim< codim > :: SubEntityIteratorType :: begin( *this, subEntity );
     }
 
-    //! Access the i-th Lagrange point
-    const CoordinateType& point( size_t i ) const
+    template< unsigned int codim >
+    inline typename Codim< codim > :: SubEntityIteratorType
+      endSubEntity ( unsigned int subEntity ) const
     {
-      return quad_.point( i );
+      return Codim< codim > :: SubEntityIteratorType :: end( *this, subEntity );
+    }
+  };
+
+
+
+  template< class FieldImp,
+            GeometryType :: BasicType type,
+            unsigned int dim,
+            unsigned int polOrder >
+  class LagrangePointSet
+  : public LagrangePointSetInterface< FieldImp, dim, polOrder >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+    enum { dimension = dim };
+
+    enum { polynomialOrder = polOrder };
+    
+    typedef LagrangePoint< type, dimension, polynomialOrder >
+      LagrangePointType;
+
+    enum { numLagrangePoints = LagrangePointType :: numLagrangePoints };
+    
+  private:
+    typedef LagrangePointSet< FieldType, type, dimension, polynomialOrder >
+      ThisType;
+    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+      BaseType;
+
+  public:
+    typedef typename BaseType :: PointType PointType;
+
+  private:
+     PointType points_[ numLagrangePoints ];
+     unsigned int codim_[ numLagrangePoints ];
+     unsigned int subEntity_[ numLagrangePoints ];
+     unsigned int dofNumber_[ numLagrangePoints ];
+
+  public:
+    LagrangePointSet ()
+    : BaseType()
+    {
+      for( unsigned int i = 0; i < numLagrangePoints; ++i ) {
+        LagrangePointType pt( i );
+        pt.local( points_[ i ] );
+        pt.dofSubEntity( codim_[ i ],
+                         subEntity_[ i ],
+                         dofNumber_[ i ] );
+      }
     }
 
-    //! Access the i-th Lagrange point
-    const CoordinateType& localPoint( size_t i ) const
+  private:
+    // Disallow the copy constructor
+    LagrangePointSet ( const ThisType &pointSet )
     {
-      return quad_.point( i );
     }
 
-    /** \brief The weight of the i-th quadrature point
-     *
-     *  The quadrature weights sum up to the volume of the respective reference
-     *  element.
-     *
-     *  \note All Lagrange points have the same weight.
-     */
-    const ctype& weight( size_t i ) const
+  public:
+    virtual ~LagrangePointSet ()
     {
-      return quad_.weight( i ) ;
     }
 
-    //! A unique id per quadrature type.
-    //! Quadratures are considered as distinct when they differ in the
-    //! following points: geometry type, order, dimension and implementation.
-    //! \note At the time of writing this, there is only one implementation
-    //! per geometry type, order and dimension provided, but the concept is
-    //! easily extendible beyond that.
-    size_t id() const
+    virtual const PointType& operator[] ( unsigned int index ) const
     {
-      return quad_.id();
+      assert( index < numLagrangePoints );
+      return points_[ index ];
     }
 
-    /** \brief Order of the quadrature
-     * 
-     *  Returns the order of the associated Lagrange polynom (as requested in
-     *  the constructor).
-     */
-    int order() const
+    virtual void dofSubEntity ( unsigned int index,
+                                unsigned int &codim,
+                                unsigned int &subEntity ) const
     {
-      return quad_.order();
+      assert( index < numLagrangePoints );
+      codim = codim_[ index ];
+      subEntity = subEntity_[ index ];
+    }
+ 
+    virtual void dofSubEntity ( unsigned int index,
+                                unsigned int &codim,
+                                unsigned int &subEntity,
+                                unsigned int &dofNumber ) const
+    {
+      assert( index < numLagrangePoints );
+      codim = codim_[ index ];
+      subEntity = subEntity_[ index ];
+      dofNumber = dofNumber_[ index ];
+    }
+    
+    virtual unsigned int entityDofNumber ( unsigned int codim,
+                                           unsigned int subEntity,
+                                           unsigned int dofNumber ) const
+    {
+      return LagrangePointType :: entityDofNumber
+               ( codim, subEntity, dofNumber );
     }
 
-    //! Type of geometry the quadrature points belong to
-    GeometryType geometry() const
+    virtual const GeometryType geometryType () const
     {
-      return quad_.geometry();
+      return GeometryType( type, dimension );
     }
 
-    //! Geometry type of the associated element of codimension 0
-    GeometryType elementGeometry() const
+    virtual unsigned int maxDofs ( unsigned int codim ) const
     {
-      return quad_.geometry();
+      return LagrangePointType :: maxDofs( codim );
     }
 
-    //! Returns quadraturePoint to behave like a caching qaudrature (but
-    //! without caching)
-    //! \note This only works for codimension 0
-    size_t cachingPoint( size_t quadraturePoint ) const
+    virtual unsigned int numDofs ( unsigned int codim,
+                                   unsigned int subEntity ) const
     {
-      return quadraturePoint;
+      return LagrangePointType :: numDofs( codim, subEntity );
     }
 
-  protected:
-    const QuadratureType& quadImp() const
+    virtual unsigned int size () const
     {
-      return quad_;
+      return numLagrangePoints;
+    }
+  };
+
+
+
+  template< class FieldImp, unsigned int dim, unsigned int polOrder >
+  class LagrangePointSetFactory
+  {
+  public:
+    typedef FieldImp FieldType;
+
+    enum { dimension = dim };
+
+    enum { polynomialOrder = polOrder };
+
+    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+      LagrangePointSetType;
+
+  private:
+    typedef LagrangePointSetFactory< FieldType, dimension, polynomialOrder >
+      ThisType;
+
+  public:
+    inline static LagrangePointSetType*
+       pointSet ( const GeometryType type )
+    {
+      const GeometryType :: BasicType basicType = type.basicType();
+      
+      switch( basicType ) {
+      case GeometryType :: simplex:
+        return new LagrangePointSet< FieldType,
+                                     GeometryType :: simplex, dimension,
+                                     polynomialOrder >();
+
+      case GeometryType :: cube:
+        return new LagrangePointSet< FieldType,
+                                     GeometryType :: cube, dimension,
+                                     polynomialOrder >();
+
+      default:
+        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
+      }
+    }
+  };
+
+
+
+  template< class FieldImp, unsigned int polOrder >
+  class LagrangePointSetFactory< FieldImp, 3, polOrder >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+    enum { dimension = 3 };
+
+    enum { polynomialOrder = polOrder };
+
+    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+      LagrangePointSetType;
+
+  private:
+    typedef LagrangePointSetFactory< FieldType, dimension, polynomialOrder >
+      ThisType;
+
+  public:
+    inline static LagrangePointSetType*
+      pointSet ( const GeometryType type )
+    {
+      const GeometryType :: BasicType basicType = type.basicType();
+      
+      switch( basicType ) {
+      case GeometryType :: simplex:
+        return new LagrangePointSet< FieldType,
+                                     GeometryType :: simplex, dimension,
+                                     polynomialOrder >();
+
+      case GeometryType :: cube:
+        return new LagrangePointSet< FieldType,
+                                     GeometryType :: cube, dimension,
+                                     polynomialOrder >();
+
+       
+      case GeometryType :: pyramid:
+        return new LagrangePointSet< FieldType,
+                                     GeometryType :: pyramid, dimension,
+                                     polynomialOrder >();
+
+      
+      case GeometryType :: prism:
+        return new LagrangePointSet< FieldType,
+                                     GeometryType :: prism, dimension,
+                                     polynomialOrder >();
+
+      default:
+        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
+      }
     }
   };
 
 }
 
-#include "lagrangepoints.cc"
-#endif // DUNE_LEGRANGEPOINTS_HH
+#endif

@@ -4,6 +4,8 @@
 #include <string>
 #include <dune/fem/misc/test.hh>
 
+#define TEST_SECOND_ORDER
+
 namespace Dune {
 
   class LagrangeMapper_Test : public Test {
