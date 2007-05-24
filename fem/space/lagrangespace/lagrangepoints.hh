@@ -277,13 +277,13 @@ namespace Dune {
   {
   public:
     //! Remember the GridPart
-    typedef typename GridPartImp :: GridType GridPartType;
+    typedef typename GridPartImp :: GridType GridType;
     
      //! The type for reals (usually double)
-    typedef typename GridPartType :: ctype ctype;
+    typedef typename GridType :: ctype ctype;
     
     //! Dimension of the world
-    enum { dimension = GridPartType :: dimension };
+    enum { dimension = GridType :: dimension };
     
     //! Codimension is zero by definition
     enum { codimension = 0 };
@@ -291,7 +291,7 @@ namespace Dune {
     enum Side { INSIDE, OUTSIDE };
     
     //! Type of the codim-0 entity
-    typedef typename GridPartType :: template Codim< 0 > :: Entity EntityType;
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
 
   private:
     typedef Quadrature< ctype, dimension, LagrangeQuadratureTraits >
