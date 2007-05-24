@@ -7,4 +7,4 @@ allgeomtypes.hh           dofmanager.hh             idbasedleafgridpart.hh \
 basefunctionfactory.hh    dofmapperinterface.hh     idbasedleafindexset.hh \
 basefunctioninterface.hh  dofstorage.hh restrictprolonginterface.hh \
 boundary.hh               dynamictype.hh            singletonlist.hh \
-loadbalancer.hh
+loadbalancer.hh           gridpartutility.hh
