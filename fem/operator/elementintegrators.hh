@@ -168,8 +168,12 @@ protected:
                      IntersectionIteratorType;
     typedef typename TraitsType::IntersectionQuadratureType 
                      IntersectionQuadratureType;
-    typedef typename TraitsType::GridPartType 
-                     GridPartType;
+    typedef typename TraitsType::GridPartType GridPartType;
+    //! used grid type 
+    typedef typename GridPartType :: GridType GridType; 
+
+    //! dimension of world 
+    enum { dimworld = GridType :: dimensionworld };
 
 /*======================================================================*/
 /*! 

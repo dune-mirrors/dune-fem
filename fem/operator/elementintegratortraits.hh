@@ -79,6 +79,11 @@ public:
   //typedef RadialFilter<GridType> FilterType;   // type of the filter we use
   //typedef FilteredGridPart<GridPartImpType,FilterType> GridPartType;
 
+  //! default definitions, not to be changed: 
+  enum { dimworld = GridType :: dimensionworld };
+  //! default definitions, not to be changed: 
+  enum { dim = GridType::dimension };
+
   typedef FunctionSpace < double , double, dimworld , 1 > FunctionSpaceType;
   typedef LagrangeDiscreteFunctionSpace < FunctionSpaceType, GridPartType, 1 > 
           DiscreteFunctionSpaceType ;
@@ -107,8 +112,6 @@ public:
   typedef DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
   typedef DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
-  //! default definitions, not to be changed: 
-  enum { dim = GridType::dimension };
   // do not remove any of the following bnd-type, as selection according to 
   // this is happening in the operator
   enum BoundaryType {Dirichlet, Neumann, Robin}; 
