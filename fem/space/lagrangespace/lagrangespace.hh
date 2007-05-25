@@ -1,10 +1,14 @@
 #ifndef DUNE_LAGRANGESPACE_LAGRANGESPACE_HH
 #define DUNE_LAGRANGESPACE_LAGRANGESPACE_HH
 
+//- system includes 
 #include <algorithm>
 
+//- Dune includes 
+#include <dune/common/misc.hh>
 #include <dune/grid/common/grid.hh>
 
+//- Dune-Fem includes 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -12,6 +16,7 @@
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 
+//- local includes 
 #include "basefunctions.hh"
 #include "mapper.hh"
 
@@ -32,6 +37,8 @@ namespace Dune
             template< class > class BaseFunctionStorageImp = SimpleStorage >
   struct LagrangeDiscreteFunctionSpaceTraits
   {
+    CompileTimeChecker< (polOrder>0)? true :false > LagrangeSpace_only_defined_for_PolOrd_not_zero;
+    
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType :: DomainType DomainType;
