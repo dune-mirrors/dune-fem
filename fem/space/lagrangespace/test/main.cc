@@ -15,7 +15,7 @@ int main()
   //std :: string gridFile( "../../../examples/poisson/3dgrid.al" );
   
   Suite suite("Basefunction tests");
-  suite.addTest(new LagrangeBase_Test(gridFile));
+  suite.addTest( new LagrangeBase_Test(gridFile));
   suite.addTest( new LagrangeMapper_Test( gridFile ) );
 
   suite.run();

@@ -206,11 +206,9 @@ namespace Dune
 
     //! map for the base function sets
     mutable BaseFunctionMapType baseFunctionSet_;
-    //std :: vector< BaseFunctionSetType* > baseFunctionSet_;
 
     //! map for the langrage point sets
     mutable LagrangePointSetMapType lagrangePointSet_;
-    //std :: vector< LagrangePointSetType* > lagrangePointSet_;
     
     //! corresponding mapper
     MapperType *mapper_;
@@ -239,17 +237,7 @@ namespace Dune
       for( unsigned int i = 0; i < geometryTypes.size(); ++i )
       {
         const GeometryType &geometryType = geometryTypes[ i ];
-        /*
-        GeometryIdentifier :: IdentifierType id
-          = GeometryIdentifier :: fromGeo( geometryType );
-        */
         
-        /*
-        BaseFunctionSetType* &baseFunctionSet = baseFunctionSet_[ id ];
-        if( baseFunctionSet == NULL )
-          baseFunctionSet = &(SingletonProviderType
-                              :: getObject( geometryType ));
-        */
         if( baseFunctionSet_.find( geometryType ) == baseFunctionSet_.end() ) {
           const BaseFunctionSetType *baseFunctionSet
             = &(SingletonProviderType :: getObject( geometryType ));
@@ -257,12 +245,6 @@ namespace Dune
           baseFunctionSet_[ geometryType ] = baseFunctionSet;
         }
 
-        /*
-        LagrangePointSetType* &lagrangePointSet = lagrangePointSet_[ id ];
-        if( lagrangePointSet == NULL )
-          lagrangePointSet = LagrangePointSetFactoryType
-                             :: pointSet( geometryType.basicType() );
-        */
         if( lagrangePointSet_.find( geometryType )
             == lagrangePointSet_.end() ) {
           const LagrangePointSetType *lagrangePointSet
@@ -280,12 +262,12 @@ namespace Dune
     //! Destructor (freeing base functions and mapper)
     inline ~LagrangeDiscreteFunctionSpace ()
     {
-      if( mapper_ != NULL )
-        delete mapper_;
+      delete mapper_;
 
       typedef typename BaseFunctionMapType :: iterator BFIteratorType;
       BFIteratorType bfend = baseFunctionSet_.end();
-      for( BFIteratorType it = baseFunctionSet_.begin(); it != bfend; ++it ) {
+      for( BFIteratorType it = baseFunctionSet_.begin(); it != bfend; ++it ) 
+      {
         const BaseFunctionSetType *baseFunctionSet = (*it).second;
         if( baseFunctionSet != NULL )
           SingletonProviderType :: removeObject( *baseFunctionSet );
@@ -293,19 +275,12 @@ namespace Dune
 
       typedef typename LagrangePointSetMapType :: iterator LPIteratorType;
       LPIteratorType lpend = lagrangePointSet_.end();
-      for( LPIteratorType it = lagrangePointSet_.begin(); it != lpend; ++it ) {
+      for( LPIteratorType it = lagrangePointSet_.begin(); it != lpend; ++it ) 
+      {
         const LagrangePointSetType *lagrangePointSet = (*it).second;
         if( lagrangePointSet != NULL )
           delete lagrangePointSet;
       }
-
-      /*
-      for( unsigned int i = 0; i < baseFunctionSet_.size(); ++i ) {
-        BaseFunctionSetType* &baseFunctionSet = baseFunctionSet_[ i ];
-        if( baseFunctionSet != NULL )
-          SingletonProviderType :: removeObject( *baseFunctionSet );
-      }
-      */
     }
 
     //! are the functions continuous?
@@ -410,6 +385,7 @@ namespace Dune
     //! obtain the DoF mapper of this space
     inline const MapperType& mapper () const
     {
+      assert( mapper_ != 0 );
       return *mapper_;
     }
 
@@ -434,7 +410,5 @@ namespace Dune
   };
   /** @}
    **/
-
-}
-
+} // end Dune namespace  
 #endif
