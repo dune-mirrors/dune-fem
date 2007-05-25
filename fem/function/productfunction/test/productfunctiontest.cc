@@ -6,7 +6,7 @@ static const int dimw = dimworld;
 static const int dimp = dimworld;
   
 //dimension of second space/ grid
-static const int dim2 = 3;
+static const int dim2 = 10;
 
 //polynom order of second space
 static const int polOrd2 = 4;
@@ -412,6 +412,8 @@ try
     H[i]= 1.;
   }  
   Grid2Type grid2(N, H);
+  delete [] H;
+  delete [] N;
   
   // Dune::FieldVector<int,dim2> N(2);
 //   Dune::FieldVector<Grid2Type::ctype,dim2> L(0.0);
@@ -431,8 +433,16 @@ try
     //grid2.globalRefine(step);
     DiscreteFunctionType solution ( linFuncSpace, linFuncSpace2 );
     solution.clear();
-     DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
-     dm.resize();
+    DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
+    dm.resize();
+    std::cout << "Memory for Grid 1: " << dm.usedMemorySize()/1024/1024 << " MB\n";
+    {
+      typedef DofManager<Grid2Type> DofManager_2_Type;
+      typedef DofManagerFactory<DofManager_2_Type> DofManagerFactory_2_Type; 
+      DofManager_2_Type& dm2 = DofManagerFactory_2_Type :: getDofManager( grid2 );
+      std::cout << "Memory for Grid 2: " << dm2.usedMemorySize()/1024/1024 << " MB\n";
+    }
+    
     error[i] = algorithm ( grid ,grid2, solution , i==ml-1);
     
     if (i>0) {
@@ -450,6 +460,7 @@ try
        }
   }
   delete [] error;
+  
   }
   catch (std::exception & e) {
 	      std::cout << "STL ERROR: " << e.what() << std::endl;
