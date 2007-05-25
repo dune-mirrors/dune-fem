@@ -6,28 +6,9 @@
 
 namespace Dune {
 
-  // Forward declarations
   template <class ct, int dim>
   class QuadratureImp;
-  template <class ct, int dim>
-  class SimplexQuadrature;
-  template <class ct, int dim>
-  class CubeQuadrature;
-  template <class ct>
-  class LineQuadrature;
-  template <class ct>
-  class TriangleQuadrature;
-  template <class ct>
-  class TetraQuadrature;
-  template <class ct>
-  class QuadrilateralQuadrature;
-  template <class ct>
-  class HexaQuadrature;
-  template <class ct>
-  class PrismQuadrature;
-  template <class ct>
-  class PyramidQuadrature;
-
+  
   //! Utility class that factors out the repetitive lookup process.
   class QuadCreator 
   {
@@ -94,8 +75,6 @@ namespace Dune {
     {
       assert(geo.isCube());
       return QuadCreator::template provideQuad<CubeQuadratureType>(order);
-      
-      
     } 
   private:
     QuadratureProvider();
@@ -203,7 +182,7 @@ namespace Dune {
 
       DUNE_THROW(RangeError, "Element type not available for dim == 3");
       // dummy return
-      return QuadCreator::template provideQuad<CubeQuadrature<ct, 3> > (0);
+      return QuadCreator::template provideQuad<SimplexQuadratureType> (0);
     }
 
   private:

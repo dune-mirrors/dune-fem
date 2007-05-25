@@ -2,6 +2,7 @@
 #define DUNE_ELEMENTQUADRATURE_HH
 
 #include "quadrature.hh"
+#include "elementpointlist.hh"
 
 namespace Dune {
   //! \brief Quadrature on codim-0 reference element.
@@ -17,7 +18,7 @@ namespace Dune {
   //! which it is used.
   template <typename GridPartImp, int codim>
   class ElementQuadrature {
-    typedef CompileTimeChecker<false> Only_implementation_for_codim_1_exists; 
+    typedef CompileTimeChecker<false> Only_implementation_for_codim_0_and_1_exists; 
   };
 
   //! \brief Element quadrature on codim-0 entities.
@@ -25,20 +26,21 @@ namespace Dune {
   //! from the context needes, in consequence, the quadrature behaves like
   //! a generic quadrature class, independent from the situation in the grid.
   template <typename GridPartImp>
-  class ElementQuadrature<GridPartImp, 0>
+  class ElementQuadrature<GridPartImp, 0> : public
+     ElementIntegrationPointList<GridPartImp,0,Quadrature>
   {
     typedef typename GridPartImp :: GridType GridType;
-    
   public:
     //! Dimension of the world
     enum { dimension = GridType::dimension };
     //! Codimension is zero by definition
     enum { codimension = 0 };
     
-    enum Side { INSIDE, OUTSIDE };
-
     //! The type for reals (mostly double)
     typedef typename GridType::ctype RealType;
+    
+    typedef ElementIntegrationPointList<GridPartImp,0,Quadrature> BaseType;
+  public:
     //! Type for coordinates in the codim-0 reference element 
     typedef typename Quadrature<RealType, dimension>::CoordinateType CoordinateType;
     
@@ -50,71 +52,15 @@ namespace Dune {
     //! \param en Entity the quadrature lives on (respectively on its reference element).
     //! \param order Desired minimal order of the quadrature.
     ElementQuadrature(const Entity& en, int order) :
-      quad_(en.geometry().type(), order)
+      BaseType(en, order)
     {}
     
-    //! The total number of quadrature points.
-    int nop() const {
-      return quad_.nop();
-    }
-
-    //! Access to the ith quadrature point.
-    const CoordinateType& point(size_t i) const {
-      return quad_.point(i);
-    }
-
-    //! Access to the ith quadrature point.
-    const CoordinateType& localPoint(size_t i) const {
-      return quad_.point(i);
-    }
-
     //! Access to the weight of quadrature point i.
     //! The quadrature weights sum up to the volume of the respective reference
     //! element.
     const RealType& weight(size_t i) const {
-      return quad_.weight(i);
+      return this->quadImp().weight(i);
     }
-
-    //! A unique id per quadrature type.
-    //! Quadratures are considered as distinct when they differ in the
-    //! following points: geometry type, order, dimension and implementation.
-    //! \note At the time of writing this, there is only one implementation
-    //! per geometry type, order and dimension provided, but the concept is
-    //! easily extendible beyond that.
-    size_t id() const {
-      return quad_.id();
-    }
-
-    //! The actual order of the quadrature.
-    //! The actual order can be higher as the desired order when no 
-    //! implementation for the desired order is found.
-    int order() const {
-      return quad_.order();
-    }
-
-    //! The geometry type the quadrature points belong to.
-    GeometryType geometry() const {
-      return quad_.geometry();
-    }
-    
-    //! The geometry type of the codim 0 element (which is the same)
-    GeometryType elementGeometry() const {
-      return quad_.geometry();
-    }
-
-    //! returns quadraturePoint, to behave like a cahcing qaud without
-    //! caching, only works for codim 0
-    size_t cachingPoint(size_t quadraturePoint) const {
-      return quadraturePoint; 
-    }
-    
-  protected:
-    const Quadrature<RealType, dimension>& quadImp() const {
-      return quad_;
-    }
-    
-  private:
-    Quadrature<RealType, dimension> quad_;
   };
 
 
@@ -124,19 +70,20 @@ namespace Dune {
   //! on the reference element of the outside or inside element of the 
   //! intersection.
   template <typename GridPartImp>
-  class ElementQuadrature<GridPartImp, 1> 
+  class ElementQuadrature<GridPartImp, 1> : public 
+     ElementIntegrationPointList<GridPartImp,1,Quadrature>
   {
     typedef ElementQuadrature<GridPartImp, 1> ThisType;
     typedef GridPartImp GridPartType;
     typedef typename GridPartType :: GridType GridType;
+
+    typedef ElementIntegrationPointList<GridPartImp,1,Quadrature> BaseType;
   public:
     //! Dimension of the world
     enum { dimension = GridType::dimension };
     //! The codimension is one by definition
     enum { codimension = 1 };
     
-    enum Side { INSIDE, OUTSIDE };
-
     //! Type of the reals (just a fancy name for a double...)
     typedef typename GridType::ctype RealType;
 
@@ -145,6 +92,7 @@ namespace Dune {
     //! Type of coordinate in codim-1 reference element
     typedef typename Quadrature<
       RealType, dimension-codimension>::CoordinateType LocalCoordinateType;
+
     //! Type of the intersection iterator
     typedef typename GridPartImp::IntersectionIteratorType IntersectionIterator;
 
@@ -154,40 +102,15 @@ namespace Dune {
     
   public:
     //! Constructor
-    //! \param it Intersection iterator
-    //! \param order Desired order of the quadrature
-    //! \param twist the twist of the codim 1 entity
-    //! \param side Is either INSIDE or OUTSIDE
-    ElementQuadrature(const IntersectionIterator& it, int order, int twist,  Side side) DUNE_DEPRECATED :
-      quad_(it.intersectionGlobal().type(), order),
-      referenceGeometry_(side == INSIDE ?
-                         it.intersectionSelfLocal() : 
-                         it.intersectionNeighborLocal()),
-      elementGeometry_(referenceGeometry_.type().basicType() ,dimension),
-      faceNumber_(side == INSIDE ?
-                  it.numberInSelf() :
-                  it.numberInNeighbor()),
-      dummy_(0.)
-    {
-    }
-    
-    //! Constructor
     //! \param gridPart s dummy parameter here 
     //! \param it Intersection iterator
     //! \param order Desired order of the quadrature
     //! \param side Is either INSIDE or OUTSIDE
     ElementQuadrature(const GridPartType & gridPart, 
                       const IntersectionIterator& it, 
-                      int order, Side side) :
-      quad_(it.intersectionGlobal().type(), order),
-      referenceGeometry_(side == INSIDE ?
-                         it.intersectionSelfLocal() : 
-                         it.intersectionNeighborLocal()),
-      elementGeometry_(referenceGeometry_.type().basicType() ,dimension),
-      faceNumber_(side == INSIDE ?
-                  it.numberInSelf() :
-                  it.numberInNeighbor()),
-      dummy_(0.)
+                      int order, 
+                      typename BaseType::Side side) :
+      BaseType(gridPart,it,order,side)
     {
     }
 
@@ -195,98 +118,19 @@ namespace Dune {
     //! \param it Intersection iterator
     //! \param order Desired order of the quadrature
     //! \param side Is either INSIDE or OUTSIDE
-    ElementQuadrature(const IntersectionIterator& it, int order, Side side) :
-      quad_(it.intersectionGlobal().type(), order),
-      referenceGeometry_(side == INSIDE ?
-                         it.intersectionSelfLocal() : 
-                         it.intersectionNeighborLocal()),
-      elementGeometry_(referenceGeometry_.type().basicType() ,dimension),
-      faceNumber_(side == INSIDE ?
-                  it.numberInSelf() :
-                  it.numberInNeighbor()),
-      dummy_(0.)
+    ElementQuadrature(const IntersectionIterator& it, 
+                      int order, 
+                      typename BaseType::Side side) :
+      BaseType(it,order,side)
     {
     }
     
-    //! The total number of quadrature points.
-    int nop() const {
-      return quad_.nop();
-    }
-
-    //! Access to the ith quadrature point.
-    const CoordinateType& point(size_t i) const {
-      dummy_ = referenceGeometry_.global(quad_.point(i));
-      return dummy_;
-    }
-
-    //! Access to the ith quadrature point in local (codim-1 reference element)
-    //! coordinates
-    const LocalCoordinateType& localPoint(size_t i) const {
-      return quad_.point(i);
-    }
-
     //! Access to the weight of quadrature point i.
     //! The quadrature weights sum up to the volume of the respective reference
     //! element.
     const RealType& weight(size_t i) const {
-      return quad_.weight(i);
+      return this->quadImp().weight(i);
     }
-
-    //! A unique id per quadrature type.
-    //! Quadratures are considered as distinct when they differ in the
-    //! following points: geometry type, order, dimension and implementation.
-    //! \note At the time of writing this, there is only one implementation
-    //! per geometry type, order and dimension provided, but the concept is
-    //! easily extendible beyond that.
-    size_t id() const {
-      return quad_.id();
-    }
-
-    //! The actual order of the quadrature.
-    //! The actual order can be higher as the desired order when no 
-    //! implementation for the desired order is found.
-    int order() const {
-      return quad_.order();
-    }
-
-    //! The geometry type the quadrature points belong to.
-    GeometryType geometry() const {
-      return quad_.geo();
-    }
-
-    //! The geometry type of the codim 0 reference element.
-    GeometryType elementGeometry() const {
-      return elementGeometry_;
-    }
-
-    //! returns quadraturePoint, to behave like a cahcing qaud without
-    //! caching, only works for codim 0
-    size_t cachingPoint(size_t quadraturePoint) const {
-      return quadraturePoint; 
-    }
-    
-    size_t localCachingPoint(size_t quadraturePoint) const {
-      return quadraturePoint; 
-    }
-    
-  protected:
-    int faceNumber() const { return faceNumber_; }
-
-    const Quadrature<RealType, dimension-codimension>& quadImp() const
-    { 
-      return quad_; 
-    }
-
-  private:
-   typedef typename IntersectionIterator::LocalGeometry ReferenceGeometry;
-
-  private:
-    Quadrature<RealType, dimension-codimension> quad_;
-    const ReferenceGeometry& referenceGeometry_;
-    GeometryType elementGeometry_;
-    int faceNumber_;
-
-    mutable CoordinateType dummy_;
   };
 
 } // end namespace Dune

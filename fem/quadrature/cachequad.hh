@@ -10,6 +10,7 @@
 #include "caching/pointmapper.hh"
 #include "caching/cacheprovider.hh"
 
+#include "cachepointlist.hh"
 
 namespace Dune {
   
@@ -35,9 +36,10 @@ namespace Dune {
   
   //! \brief Specialisation for codimension 0.
   template <typename GridPartImp>
-  class CachingQuadrature<GridPartImp, 0> : public ElementQuadrature<GridPartImp, 0>
+  class CachingQuadrature<GridPartImp, 0> :
+    public CachingPointList<GridPartImp, 0, Quadrature >
   {
-    typedef ElementQuadrature<GridPartImp, 0> BaseType;
+    typedef CachingPointList<GridPartImp, 0, Quadrature > BaseType;
 
     typedef typename GridPartImp :: GridType GridType;
 
@@ -56,16 +58,17 @@ namespace Dune {
     
   public:
     //! Constructor
-    CachingQuadrature(const Entity& en, int order) : BaseType(en, order)
+    CachingQuadrature(const Entity& en, int order) 
+      : BaseType(en, order)
     {
-      CacheProvider<GridType, codimension>::registerQuadrature(this->quadImp());
     }
 
-    //! Additional method to map quadrature points to caching points.
-    //! For codim-0 entities, the quadrature points are the same as the
-    //! caching points.
-    int cachingPoint(int quadraturePoint) const {
-      return quadraturePoint;
+    //! Access to the weight of quadrature point i.
+    //! The quadrature weights sum up to the volume of the respective reference
+    //! element.
+    const RealType& weight(size_t i) const 
+    {
+      return this->quadImp().weight(i);
     }
   };
   
@@ -74,11 +77,15 @@ namespace Dune {
   //! and non-symmetric quadrature rules are employed... But the details
   //! are safely hidden behind the interface and you don't need to bother.
   template <typename GridPartImp>
-  class CachingQuadrature<GridPartImp, 1> : public ElementQuadrature<GridPartImp, 1>
+  class CachingQuadrature<GridPartImp, 1> :
+   public CachingPointList<GridPartImp,1, Quadrature >
   {
-    typedef ElementQuadrature<GridPartImp, 1> BaseType;
+    // type of base class 
+    typedef CachingPointList<GridPartImp,1, Quadrature > BaseType;
 
+    // type of grid part 
     typedef GridPartImp GridPartType; 
+    // type of grid 
     typedef typename GridPartType :: GridType GridType;
 
   public:
@@ -95,28 +102,11 @@ namespace Dune {
     typedef typename BaseType::IntersectionIterator IntersectionIterator;
 
     //! type of quadrature used for non-conforming intersections  
-    typedef BaseType NonConformingQuadratureType; 
+    typedef ElementQuadrature<GridPartImp,codimension> NonConformingQuadratureType; 
 
     //! type of twist utility 
     typedef TwistUtility<GridType> TwistUtilityType;
   public:
-    //! Constructor
-    //! \param it Intersection iterator.
-    //! \param order The desired order of the quadrature.
-    //! \param twist Twist of the face (is 0 in structured grids)
-    //! \param side Is either INSIDE or OUTSIDE
-    CachingQuadrature(const IntersectionIterator& it, 
-                      int order, 
-                      int twist,
-                      typename BaseType::Side side) DUNE_DEPRECATED 
-      : BaseType(it, order, side)
-      , mapper_(CacheProvider<GridType, codimension>::
-                getMapper(this->quadImp(), this->elementGeometry(), 
-                          this->faceNumber(), twist))
-
-    {
-    }
-
     //! Constructor
     //! \param gridPart grid part to get twist from twist utility 
     //! \param it Intersection iterator.
@@ -126,50 +116,17 @@ namespace Dune {
                       const IntersectionIterator& it, 
                       int order, 
                       typename BaseType::Side side) :
-      BaseType(it, order, side),
-      mapper_(CacheProvider<GridType, codimension>::
-              getMapper(this->quadImp(), this->elementGeometry(), 
-                        this->faceNumber(), (side == BaseType :: INSIDE) ? 
-                           TwistUtilityType::twistInSelf(gridPart.grid(),it) : 
-                           TwistUtilityType::twistInNeighbor(gridPart.grid(),it)))
+      BaseType(gridPart,it, order, side)
     {
-      // make sure CachingQuadrature is only created for conforming
-      // intersections 
-      assert( TwistUtilityType::conforming(gridPart.grid(),it) );
     }
 
-    //! Additional method to map quadrature points to caching points.
-    //! For codim-1 entities, the mapping consists of two stages: First,
-    //! consider the twist to get the quadrature point number on the reference
-    //! element face and then map it to the caching point.
-    size_t cachingPoint(size_t quadraturePoint) const 
+    //! Access to the weight of quadrature point i.
+    //! The quadrature weights sum up to the volume of the respective reference
+    //! element.
+    const RealType& weight(size_t i) const 
     {
-      // this makes no sense for usigned ints ;)
-      assert(quadraturePoint >= 0);
-      assert(quadraturePoint < (size_t)this->nop());
-
-      return mapper_[quadraturePoint];
+      return this->quadImp().weight(i);
     }
-
-    size_t localCachingPoint(size_t quadraturePoint) const 
-    {
-      // this makes no sense for usigned ints ;)
-      assert(quadraturePoint >= 0);
-      assert(quadraturePoint < (size_t)this->nop());
-
-      int faceIndex = this->faceNumber();
-      int point = mapper_[quadraturePoint] - faceIndex*mapper_.size();
-      assert( mapper_[quadraturePoint] >= 0 );
-
-      assert( point < this->nop());
-      return point;
-    }
-
-  private:
-    typedef typename CachingTraits<RealType, dimension>::MapperType MapperType;
-
-  private:
-    const MapperType& mapper_;
   };
 }
 

@@ -36,39 +36,54 @@
 namespace Dune {
 
   // Forward declaration
-  template <typename ct, int dim, template <class,int> class
-    QuadratureTraits>  class QuadratureProvider;
+  template <typename ct, int dim, template <class,int> class QuadratureTraits>  
+  class QuadratureProvider;
+  template <class ct, int dim>
+  class QuadratureImp;
+  template <class ct, int dim>
+  class SimplexQuadrature;
+  template <class ct, int dim>
+  class CubeQuadrature;
+  template <class ct>
+  class LineQuadrature;
+  template <class ct>
+  class TriangleQuadrature;
+  template <class ct>
+  class TetraQuadrature;
+  template <class ct>
+  class QuadrilateralQuadrature;
+  template <class ct>
+  class HexaQuadrature;
+  template <class ct>
+  class PrismQuadrature;
+  template <class ct>
+  class PyramidQuadrature;
 
   //! Generic implementation of a quadrature.
   //! A quadrature in the Dune sense is nothing but a set of points and
   //! weights.
   template <typename ct, int dim>
-  class QuadratureImp {
+  class IntegrationPointListImp {
   public:
     //! Local coordinate type for the quadrature.
     typedef FieldVector<ct, dim> CoordinateType;
     
   public:
     //! Virtual destructor
-    virtual ~QuadratureImp() {}
+    virtual ~IntegrationPointListImp() {}
 
-    //! Coordinates of quadrature point i.
+    //! Coordinates of integration point i.
     const CoordinateType& point(size_t i) const {
       return points_[i];
     }
 
-    //! The weight of quadrature point i.
-    const ct& weight(size_t i) const {
-      return weights_[i];
-    }
-
-    //! Number of quadrature points
+    //! Number of integration points
     size_t nop() const {
       return points_.size();
     }
 
-    //! A globally unique identifier amongst all quadratures (even for other
-    //! dimensions).
+    //! A globally unique identifier amongst all integration point lists 
+    //! (even for other dimensions).
     size_t id() const {
       return id_;
     }
@@ -77,8 +92,42 @@ namespace Dune {
     //! quadrature.
     virtual int order() const = 0;
 
-    //! Geometry type the quadrature defines points for.
+    //! Geometry type the integration point list is defined for.
     virtual GeometryType geometry() const = 0;
+
+  protected:
+    //! QuadratureImps are filled by the derived classes
+    IntegrationPointListImp(size_t id);
+
+    //! Adds a quadrature point/weight pair. To be used in the constructor
+    //! of derived class.
+    void addIntegrationPoint(const CoordinateType& point);
+
+  private:
+    //! Copying is forbidden!
+    IntegrationPointListImp(const IntegrationPointListImp&);
+
+  protected:
+    std::vector<CoordinateType> points_;
+    size_t id_;
+  };
+
+  template <typename ct, int dim>
+  class QuadratureImp : public IntegrationPointListImp<ct,dim> {
+    // type of base class 
+    typedef IntegrationPointListImp<ct,dim> BaseType;
+  public:
+    //! Local coordinate type for the quadrature.
+    typedef typename BaseType :: CoordinateType  CoordinateType;
+    
+  public:
+    //! Virtual destructor
+    virtual ~QuadratureImp() {}
+
+    //! The weight of quadrature point i.
+    const ct& weight(size_t i) const {
+      return weights_[i];
+    }
 
   protected:
     //! QuadratureImps are filled by the derived classes
@@ -91,14 +140,10 @@ namespace Dune {
   private:
     //! Copying is forbidden!
     QuadratureImp(const QuadratureImp&);
-    //! Assignment is forbidden!
-    //QuadratureImp operator=(const QuadratureImp&);
 
   private:
-    std::vector<CoordinateType> points_;
+    // vector holding weights of each integration point 
     std::vector<ct> weights_;
-
-    size_t id_;
   };
 
   //! A generic quadrature class for simplices.
@@ -230,7 +275,6 @@ namespace Dune {
       return 5; 
 #endif
     }
-
 
   private:
     int order_;
@@ -457,11 +501,6 @@ namespace Dune {
   };
   
 
-
-
-
-
-
   //! The actual interface class for quadratures.
   //! Quadrature is a proxy for the actual implementations of the quadratures.
   //! During construction, the actual Quadrature object is configured with
@@ -472,12 +511,12 @@ namespace Dune {
   //! storage stuff.
   template <typename ct, int dim, 
             template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
-  class Quadrature 
+  class IntegrationPointList 
   {
   public:
     enum { dimension = dim };
 
-    typedef typename QuadratureImp<ct, dim>::CoordinateType CoordinateType;
+    typedef typename IntegrationPointListImp<ct, dim>::CoordinateType CoordinateType;
 
     //! to be revised, look at caching quad 
     enum { codimension = 0 };
@@ -487,13 +526,13 @@ namespace Dune {
     //! \param geo The geometry type the quadrature points belong to.
     //! \param order The order of the quadrature (i.e. polynoms up to order
     //! are integrated exactly).
-    Quadrature(GeometryType geo, int order) :
+    IntegrationPointList(const GeometryType& geo, int order) :
       quad_(QuadratureProvider<ct, dim, QuadratureTraits >::getQuadrature(geo, order))
     {}
 
     //! Constructor for testing purposes
     //! \param quadImp Quadrature implementation for this test
-    Quadrature(const QuadratureImp<ct, dim>& quadImp) :
+    IntegrationPointList(const IntegrationPointList<ct, dim>& quadImp) :
       quad_(quadImp)
     {}
 
@@ -505,13 +544,6 @@ namespace Dune {
     //! Access to the ith quadrature point.
     const CoordinateType& point(size_t i) const {
       return quad_.point(i);
-    }
-
-    //! Access to the weight of quadrature point i.
-    //! The quadrature weights sum up to the volume of the respective reference
-    //! element.
-    const ct& weight(size_t i) const {
-      return quad_.weight(i);
     }
 
     //! A unique id per quadrature type.
@@ -536,8 +568,52 @@ namespace Dune {
       return quad_.geometry();
     }
 
-  private:
+  protected:
     const QuadratureImp<ct, dim>& quad_;
+  };
+
+  //! The actual interface class for quadratures.
+  //! Quadrature is a proxy for the actual implementations of the quadratures.
+  //! During construction, the actual Quadrature object is configured with
+  //! an appropriate implementation object from the QuadratureProvider object
+  //! (Monostate pattern). The design goal here is to minimize the construction
+  //! time (the actual implementations can be created once and reused as often
+  //! as you like) and to insulate the user from all this initialisation and
+  //! storage stuff.
+  template <typename ct, int dim, 
+            template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
+  class Quadrature : public IntegrationPointList<ct,dim,QuadratureTraits> 
+  {
+    typedef IntegrationPointList<ct,dim,QuadratureTraits> BaseType;
+  public:
+    enum { dimension = dim };
+
+    typedef typename QuadratureImp<ct, dim>::CoordinateType CoordinateType;
+
+    //! to be revised, look at caching quad 
+    enum { codimension = 0 };
+
+  public:
+    //! Constructor
+    //! \param geo The geometry type the quadrature points belong to.
+    //! \param order The order of the quadrature (i.e. polynoms up to order
+    //! are integrated exactly).
+    Quadrature(const GeometryType& geo, int order) :
+      BaseType(geo,order)
+    {}
+
+    //! Constructor for testing purposes
+    //! \param quadImp Quadrature implementation for this test
+    Quadrature(const QuadratureImp<ct, dim>& quadImp) :
+      BaseType(quadImp)
+    {}
+
+    //! Access to the weight of quadrature point i.
+    //! The quadrature weights sum up to the volume of the respective reference
+    //! element.
+    const ct& weight(size_t i) const {
+      return this->quad_.weight(i);
+    }
   };
 
 } // end namespace Dune
