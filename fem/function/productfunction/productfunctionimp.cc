@@ -21,9 +21,8 @@ template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
     functionSpace2_ (f2)
 {
     std::cout << "Size old = " << dofVec_.size() << "  Size  f2 = " << functionSpace2_.size();
+    std::cout << " New size will be " << dofVec_.size() * functionSpace2_.size() << "\n";
     dofVec_.resize ( dofVec_.size() * functionSpace2_.size() );
-    std::cout << "  Size new = " << dofVec_.size() << std::endl;
-   
 }
 // Desctructor 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
