@@ -603,7 +603,7 @@ namespace Dune
 
   public:
     inline static LagrangePointSetType*
-       pointSet ( const GeometryType type )
+       createObject ( const GeometryType type )
     {
       const GeometryType :: BasicType basicType = type.basicType();
       
@@ -621,6 +621,11 @@ namespace Dune
       default:
         DUNE_THROW( NotImplemented, "No such geometry type implemented." );
       }
+    }
+
+    inline static void deleteObject( LagrangePointSetType *pointSet )
+    {
+      delete pointSet;
     }
   };
 
@@ -645,7 +650,7 @@ namespace Dune
 
   public:
     inline static LagrangePointSetType*
-      pointSet ( const GeometryType type )
+      createObject ( const GeometryType &type )
     {
       const GeometryType :: BasicType basicType = type.basicType();
       
@@ -675,6 +680,11 @@ namespace Dune
       default:
         DUNE_THROW( NotImplemented, "No such geometry type implemented." );
       }
+    }
+
+    inline static void deleteObject( LagrangePointSetType *pointSet )
+    {
+      delete pointSet;
     }
   };
 

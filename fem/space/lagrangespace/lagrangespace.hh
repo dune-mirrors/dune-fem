@@ -165,12 +165,12 @@ namespace Dune
     typedef BaseFunctionSetSingletonFactory< GeometryType,
                                              BaseFunctionSetType,
                                              ScalarFactoryType >
-      SingletonFactoryType;
-    //! type of singleton list (singleton provider)
+      BaseFunctionSetSingletonFactoryType;
+    //! type of singleton list (singleton provider) for base functions
     typedef SingletonList< GeometryType,
                            BaseFunctionSetType,
-                           SingletonFactoryType >
-      SingletonProviderType;
+                           BaseFunctionSetSingletonFactoryType >
+      BaseFunctionSetSingletonProviderType;
 
     //! type of the Lagrange point set factory
     typedef LagrangePointSetFactory< DomainFieldType,
@@ -180,8 +180,14 @@ namespace Dune
     //! type of a Lagrange point set
     typedef typename LagrangePointSetFactoryType :: LagrangePointSetType
       LagrangePointSetType;
+    //! type of Lagrange point set map
     typedef std :: map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
+    //! type of singleton list (singleton provider) for Lagrange point sets
+    typedef SingletonList< GeometryType,
+                           LagrangePointSetType,
+                           LagrangePointSetFactoryType >
+      LagrangePointSetSingletonProviderType;
 
     //! mapper used to implement mapToGlobal
     typedef typename Traits :: MapperType MapperType;
@@ -247,7 +253,8 @@ namespace Dune
         
         if( baseFunctionSet_.find( geometryType ) == baseFunctionSet_.end() ) {
           const BaseFunctionSetType *baseFunctionSet
-            = &(SingletonProviderType :: getObject( geometryType ));
+            = &(BaseFunctionSetSingletonProviderType
+                :: getObject( geometryType ));
           assert( baseFunctionSet != NULL );
           baseFunctionSet_[ geometryType ] = baseFunctionSet;
         }
@@ -255,7 +262,8 @@ namespace Dune
         if( lagrangePointSet_.find( geometryType )
             == lagrangePointSet_.end() ) {
           const LagrangePointSetType *lagrangePointSet
-            = LagrangePointSetFactoryType :: pointSet( geometryType );
+            = &(LagrangePointSetSingletonProviderType
+                :: getObject( geometryType ));
           assert( lagrangePointSet != NULL );
           lagrangePointSet_[ geometryType ] = lagrangePointSet;
         }
@@ -277,7 +285,8 @@ namespace Dune
       {
         const BaseFunctionSetType *baseFunctionSet = (*it).second;
         if( baseFunctionSet != NULL )
-          SingletonProviderType :: removeObject( *baseFunctionSet );
+          BaseFunctionSetSingletonProviderType
+          :: removeObject( *baseFunctionSet );
       }
 
       typedef typename LagrangePointSetMapType :: iterator LPIteratorType;
@@ -286,7 +295,8 @@ namespace Dune
       {
         const LagrangePointSetType *lagrangePointSet = (*it).second;
         if( lagrangePointSet != NULL )
-          delete lagrangePointSet;
+          LagrangePointSetSingletonProviderType
+          :: removeObject( *lagrangePointSet );
       }
     }
 
