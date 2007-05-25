@@ -1,12 +1,13 @@
 #ifndef DUNE_LAGRANGESPACE_GENERICBASEFUNCTIONS_HH
 #define DUNE_LAGRANGESPACE_GENERICBASEFUNCTIONS_HH
 
-#include <dune/config.h>
+//- Dune includes 
 #include <dune/common/fvector.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/basefunctionfactory.hh>
 
+//- local includes 
 #include "genericlagrangepoints.hh"
 
 namespace Dune

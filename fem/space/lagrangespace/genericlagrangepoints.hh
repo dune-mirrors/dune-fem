@@ -1,11 +1,13 @@
 #ifndef DUNE_LAGRANGESPACE_GENERICLAGRANGEPOINTS_HH
 #define DUNE_LAGRANGESPACE_GENERICLAGRANGEPOINTS_HH
 
+//- system includes 
 #include <iostream>
 
-#include <dune/config.h>
+//- Dune includes 
 #include <dune/common/fvector.hh>
 
+//- local includes 
 #include "genericgeometry.hh"
 
 namespace Dune
