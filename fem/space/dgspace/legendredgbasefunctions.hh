@@ -16,17 +16,17 @@ namespace Dune {
   template<int dim,int i,int PolOrd>
   class Eval{
   public:
-    static double apply(FieldVector<double,dim> x,int idx){
+    static double apply(const LegendrePoly& lp,FieldVector<double,dim> x,int idx){
       int num=idx%(PolOrd+1);
-      LegendrePoly  lp=LegendrePoly(num);
-      return lp.eval(x[i-1])*Eval<dim,i-1,PolOrd>::apply(x,(idx-num)/(PolOrd+1));
+      // LegendrePoly lp=LegendrePoly(num);
+      return lp.eval(num,x[i-1])*Eval<dim,i-1,PolOrd>::apply(lp,x,(idx-num)/(PolOrd+1));
     }
   };
 
   template<int dim,int PolOrd>
   class Eval<dim,0,PolOrd>{
   public:
-   static double apply(FieldVector<double,dim> x,int idx){
+   static double apply(const LegendrePoly& lp,FieldVector<double,dim> x,int idx){
      return 1.0;
    }
   };
@@ -34,20 +34,19 @@ namespace Dune {
 template<int dim,int i,int PolOrd>
   class EvalD{
   public:
-    static double apply(FieldVector<double,dim> x,int j,int idx){
+    static double apply(const LegendrePoly& lp,FieldVector<double,dim> x,int j,int idx){
       int num=idx%(PolOrd+1);
-      LegendrePoly  lp=LegendrePoly(num);
       if((i-1)!=j)
-	return lp.eval(x[i-1])*EvalD<dim,i-1,PolOrd>::apply(x,j,(idx-num)/(PolOrd+1));
+	return lp.eval(num,x[i-1])*EvalD<dim,i-1,PolOrd>::apply(lp,x,j,(idx-num)/(PolOrd+1));
       else
-	return lp.eval1(x[i-1])*EvalD<dim,i-1,PolOrd>::apply(x,j,(idx-num)/(PolOrd+1));
+	return lp.eval1(num,x[i-1])*EvalD<dim,i-1,PolOrd>::apply(lp,x,j,(idx-num)/(PolOrd+1));
     }
   };
 
   template<int dim,int PolOrd>
   class EvalD<dim,0,PolOrd>{
   public:
-    static double apply(FieldVector<double,dim> x,int j,int idx){
+    static double apply(const LegendrePoly& lp,FieldVector<double,dim> x,int j,int idx){
       return 1.0;
     }
   };
@@ -58,6 +57,10 @@ template<int dim,int i,int PolOrd>
   {
     enum { numBaseFct = Power_m_p<p+1,dim>::power };
   };
+
+  namespace {
+    const LegendrePoly legPoly;
+  }
 
   template <class FunctionSpaceType,int polOrd>
   class LegendreDGBaseFunction :
@@ -76,7 +79,9 @@ template<int dim,int i,int PolOrd>
 
   public:
     LegendreDGBaseFunction(int baseNum) :
-      baseNum_(baseNum) {
+      baseNum_(baseNum),
+      lp(legPoly)
+    {
       // Check if base number is valid
       assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
       // Only for scalar function spaces
@@ -87,14 +92,14 @@ template<int dim,int i,int PolOrd>
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      phi = Eval<dim,dim,polOrd>::apply(x,baseNum_);
+      phi = Eval<dim,dim,polOrd>::apply(lp,x,baseNum_);
    
     }
 
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = EvalD<dim,dim,polOrd>::apply(x,diffVariable[0],baseNum_);
+      phi = EvalD<dim,dim,polOrd>::apply(lp,x,diffVariable[0],baseNum_);
     
     }
 
@@ -108,6 +113,7 @@ template<int dim,int i,int PolOrd>
     {
       return NumLegendreBaseFunctions<polOrd,dim>::numBaseFct;
     }
+    const LegendrePoly& lp;
   };
 
   template <class ScalarFunctionSpaceImp, int polOrd>
