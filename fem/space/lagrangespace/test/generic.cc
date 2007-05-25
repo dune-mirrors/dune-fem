@@ -1,4 +1,4 @@
-#include <dune/config.h>
+#include <config.h>
 //#include <dune/fem/space/lagrangespace.hh>
 //#include "../genericbasefunctions.hh"
 #include "../basefunctions.hh"

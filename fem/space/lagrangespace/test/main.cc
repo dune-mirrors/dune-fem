@@ -1,7 +1,6 @@
+#include <config.h>
+
 #include <dune/fem/misc/suite.hh>
-
-#include <dune/config.h>
-
 using namespace Dune;
 
 #include "basefunctiontest.cc"
