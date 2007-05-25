@@ -110,40 +110,26 @@ namespace Dune {
            const QuadratureType& quad, int quadPoint,
            RangeType& result) const 
   {
-    evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
-  }
-
-  // note only call this method for conforming intersections 
-  template <class FunctionSpaceImp>
-  template <class GridPartType,int cdim>
-  inline void CachingStorage<FunctionSpaceImp>::
-  evaluate(int baseFunct, const FieldVector<int, 0>& diffVar,
-           const CachingQuadrature<GridPartType, cdim>& quad,
-           int quadPoint,
-           RangeType& result) const
-  {
-    assert( (rangestored_.find(quad.id()) != rangestored_.end()) );
-    result = ranges_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+    assert( (Conversion<QuadratureType,CachingInterface>::exists) ?
+             (rangestored_.find(quad.id()) != rangestored_.end()) : true );
+    Evaluate<QuadratureType,
+             Conversion<QuadratureType,CachingInterface>::exists >::
+         evaluate(*this,baseFunct,diffVar,quad,quadPoint,ranges_,result);
   }
 
   template <class FunctionSpaceImp>
   template <class QuadratureType>
   inline void CachingStorage<FunctionSpaceImp>::
-  jacobian(int baseFunct, const QuadratureType& quad, int quadPoint,
+  jacobian(const int baseFunct, 
+           const QuadratureType& quad, 
+           const int quadPoint,
            JacobianRangeType& result) const
   {
-    jacobian(baseFunct,quad.point(quadPoint),result);
-  }
-
-  template <class FunctionSpaceImp>
-  template <class GridPartType,int cdim>
-  inline void CachingStorage<FunctionSpaceImp>::
-  jacobian(int baseFunct, 
-     const CachingQuadrature<GridPartType, cdim>& quad, int quadPoint,
-           JacobianRangeType& result) const
-  {        
-    assert( jacobianstored_.find(quad.id()) != jacobianstored_.end());
-    result = jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+    assert( (Conversion<QuadratureType,CachingInterface>::exists) ?
+        ( jacobianstored_.find(quad.id()) != jacobianstored_.end()) : true);
+    Evaluate<QuadratureType,
+             Conversion<QuadratureType,CachingInterface>::exists >::
+      jacobian(*this,baseFunct,quad,quadPoint,jacobians_,result);
   }
 
   template <class FunctionSpaceImp>
@@ -153,25 +139,11 @@ namespace Dune {
            const QuadratureType& quad, int quadPoint,
            RangeType& result) const
   {
-    evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
-  }
-
-  template <class FunctionSpaceImp>
-  template <class GridPartType,int cdim>
-  inline void CachingStorage<FunctionSpaceImp>::
-  evaluate(int baseFunct, const FieldVector<int, 1>& diffVar,
-           const CachingQuadrature<GridPartType, cdim>& quad, int quadPoint,
-           RangeType& result) const
-  {
-    assert(jacobianstored_.find(quad.id()) != jacobianstored_.end());
-
-    const JacobianRangeType& jResult =
-      jacobians_[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
-
-    for (size_t i = 0; i < RangeType::dimension; ++i)
-    {
-      result[i] = jResult[i][diffVar[0]];
-    }
+    assert( (Conversion<QuadratureType,CachingInterface>::exists) ?
+        ( jacobianstored_.find(quad.id()) != jacobianstored_.end()) : true);
+    Evaluate<QuadratureType,
+             Conversion<QuadratureType,CachingInterface>::exists >::
+      evaluate(baseFunct,diffVar,quad,quadPoint,jacobians_,result);
   }
 
   template <class FunctionSpaceImp>

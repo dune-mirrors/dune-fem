@@ -8,6 +8,7 @@
 
 //- Dune includes 
 #include <dune/common/array.hh>
+#include <dune/common/typetraits.hh>
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
@@ -16,9 +17,8 @@
 
 namespace Dune {
 
-  //! forward deklaration for CachingQuadrature 
-  template <typename GridImp, int codim>
-  class CachingQuadrature;
+  //! forward deklaration for CachingInterface 
+  class CachingInterface;
    
   template <class FunctionSpaceImp>
   class StorageBase : public StorageInterface<FunctionSpaceImp::DimDomain> 
@@ -122,54 +122,6 @@ namespace Dune {
     typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
 
     friend class StorageInterface<FunctionSpaceImp::DimDomain>;
-  public:
-    //! Constructor
-    CachingStorage(const FactoryType& factory);
-    //! Destructor
-    ~CachingStorage();
-
-    using StorageBase<FunctionSpaceImp>::evaluate;
-    using StorageBase<FunctionSpaceImp>::jacobian;
-
-    template <class QuadratureType>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, 0>& diffVar,
-                  const QuadratureType& quad, int quadPoint, 
-                  RangeType& result) const;
-
-    template <class GridPartType,int cdim>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, 0>& diffVar,
-                  const CachingQuadrature<GridPartType, cdim>& quad, int quadPoint,
-                  RangeType& result) const;
-    
-    template <class QuadratureType>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, 1>& diffVar,
-                  const QuadratureType& quad, int quadPoint, 
-                  RangeType& result) const;
-
-    template <class GridPartType,int cdim>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, 1>& diffVar,
-                  const CachingQuadrature<GridPartType, cdim>& quad, int quadPoint,
-                  RangeType& result) const;
-
-    template <class QuadratureType>
-    inline
-    void jacobian(int baseFunct, 
-                  const QuadratureType& quad, int quadPoint, 
-                  JacobianRangeType& result) const;
-
-    template <class GridPartType,int cdim>
-    inline
-    void jacobian(int baseFunct,
-                  const CachingQuadrature<GridPartType, cdim>& quad, int quadPoint,
-                  JacobianRangeType& result) const;
 
   private:
     typedef typename FunctionSpaceImp::DomainFieldType RealType;
@@ -183,6 +135,121 @@ namespace Dune {
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
     typedef Array<RangeVectorType> RangeContainerType;
     typedef Array<JacobianRangeVectorType> JacobianRangeContainerType;
+
+    //! evaluation, calls generic evaluate method
+    //! used quad.point(quadPoint) for evaluation 
+    template <class QuadratureType, bool isCachingQuadrature > 
+    struct Evaluate
+    {
+      static void evaluate(const ThisType& storage,
+                           const int baseFunct, 
+                           const FieldVector<int, 0>& diffVar,
+                           const QuadratureType& quad, 
+                           const int quadPoint,
+                           const RangeContainerType& ranges,
+                           RangeType& result)
+      {
+        storage.evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
+      }
+
+      static void evaluate(const ThisType& storage,
+                           const int baseFunct, 
+                           const FieldVector<int, 1>& diffVar,
+                           const QuadratureType& quad, 
+                           const int quadPoint,
+                           const JacobianRangeContainerType& jacobians,
+                           RangeType& result)
+      {
+        storage.evaluate(baseFunct,diffVar,quad.point(quadPoint),result);
+      }
+
+      static void jacobian(const ThisType& storage,
+                           const int baseFunct, 
+                           const QuadratureType& quad, 
+                           const int quadPoint, 
+                           const JacobianRangeContainerType& jacobians,
+                           JacobianRangeType& result)
+      {
+        storage.jacobian(baseFunct,quad.point(quadPoint),result); 
+      }
+
+    };
+    
+    //! evaluation for CachingQuadratures 
+    template <class QuadratureType> 
+    struct Evaluate<QuadratureType,true> 
+    {
+      static void evaluate(const ThisType& storage,
+                           const int baseFunct, 
+                           const FieldVector<int, 0>& diffVar,
+                           const QuadratureType& quad, 
+                           const int quadPoint,
+                           const RangeContainerType& ranges,
+                           RangeType& result)
+      {
+        result = ranges[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+      }
+
+      static void evaluate(const ThisType& storage,
+                           const int baseFunct, 
+                           const FieldVector<int, 1>& diffVar,
+                           const QuadratureType& quad, 
+                           const int quadPoint,
+                           const JacobianRangeContainerType& jacobians,
+                           RangeType& result)
+      {
+        const JacobianRangeType& jResult =
+          jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+
+        for (size_t i = 0; i < RangeType::dimension; ++i)
+        {
+          result[i] = jResult[i][diffVar[0]];
+        }
+      }
+      
+      static void jacobian(const ThisType& storage,
+                           const int baseFunct, 
+                           const QuadratureType& quad, 
+                           const int quadPoint, 
+                           const JacobianRangeContainerType& jacobians,
+                           JacobianRangeType& result)
+      {
+        result = jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
+      }
+    };
+    
+  public:
+    //! Constructor
+    CachingStorage(const FactoryType& factory);
+    //! Destructor
+    ~CachingStorage();
+
+    using StorageBase<FunctionSpaceImp>::evaluate;
+    using StorageBase<FunctionSpaceImp>::jacobian;
+
+    //! evaulate base function 
+    template <class QuadratureType>
+    inline
+    void evaluate(int baseFunct,
+                  const FieldVector<int, 0>& diffVar,
+                  const QuadratureType& quad, int quadPoint, 
+                  RangeType& result) const;
+
+    //! evaluate derivative of base function 
+    template <class QuadratureType>
+    inline
+    void evaluate(const int baseFunct,
+                  const FieldVector<int, 1>& diffVar,
+                  const QuadratureType& quad, 
+                  const int quadPoint, 
+                  RangeType& result) const;
+
+    //! get derivative of base function 
+    template <class QuadratureType>
+    inline
+    void jacobian(int baseFunct, 
+                  const QuadratureType& quad, int quadPoint, 
+                  JacobianRangeType& result) const;
 
   private:
     // caches the quadrature, see also addEntry.. 
