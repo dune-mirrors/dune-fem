@@ -108,7 +108,7 @@ public:
   //! \brief is true if grid on this view only has conforming intersections 
   enum { conforming = Traits :: conforming };
 
-private:
+public:
   typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
 public:
