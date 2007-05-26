@@ -124,7 +124,7 @@ typedef FunctionSpace < double , double, dimworld , 1 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
-typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 > DiscreteFunctionSpaceType ;
+typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 , CachingStorage > DiscreteFunctionSpaceType ;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh

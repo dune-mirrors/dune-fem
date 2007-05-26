@@ -341,7 +341,7 @@ public:
     DofIteratorType dest_it = dest.dbegin();
     ConstDofIteratorType arg_it = arg.dbegin();
       
-    const BaseFunctionSetType & baseSet = functionSpace_.getBaseFunctionSet( en );
+    const BaseFunctionSetType & baseSet = functionSpace_.baseFunctionSet( en );
     int numOfBaseFct = baseSet.numBaseFunctions();  
 
     assert( numOfBaseFct <= maxnumOfBaseFct );
@@ -568,7 +568,7 @@ protected:
     // run through grid and add up local contributions
     for( ; it != endit; ++it )
     {
-      const BaseFunctionSetType & baseSet = functionSpace_.getBaseFunctionSet( *it );
+      const BaseFunctionSetType & baseSet = functionSpace_.baseFunctionSet( *it );
       const int numOfBaseFct = baseSet.numBaseFunctions();  
       
       // setup matrix 

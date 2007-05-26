@@ -7,6 +7,7 @@
 #include "laplace.hh" 
 
 // where the quadratures are defined 
+#include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune 
@@ -27,6 +28,7 @@ public:
   
     discFunc.clear();
   
+    typedef typename FunctionSpaceType::GridPartType GridPartType;
     typedef typename FunctionSpaceType::GridType GridType;
     typedef typename FunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
@@ -44,15 +46,14 @@ public:
     if( it == endit ) return ;
    
     enum { dim = GridType :: dimension };
-    Quadrature <typename FunctionSpaceType::RangeFieldType, dim> quad(
-        it->geometry().type(), polOrd);
-
     for( ; it != endit ; ++it)
     {
+      LagrangeIntegrationPoints<GridPartType> quad(*it,polOrd);
+
       LocalFuncType lf = discFunc.localFunction( *it ); 
 
       const typename FunctionSpaceType::BaseFunctionSetType & set = 
-            space.getBaseFunctionSet(*it);
+            space.baseFunctionSet(*it);
 
       const int numDofs = lf.numDofs();
       for(int i=0; i<numDofs; i++)

@@ -109,7 +109,7 @@ namespace Dune
             enum { dim = GridType::dimension };
             typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
             
-            const BaseFunctionSetType & baseSet = this->functionSpace_.getBaseFunctionSet( entity );
+            const BaseFunctionSetType & baseSet = this->functionSpace_.baseFunctionSet( entity );
             
             double val = 0.;
             for ( int pt=0; pt < quad.nop(); pt++ ) 
@@ -147,7 +147,7 @@ namespace Dune
 
             typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
             
-            const BaseFunctionSetType & baseSet = this->functionSpace_.getBaseFunctionSet( entity );
+            const BaseFunctionSetType & baseSet = this->functionSpace_.baseFunctionSet( entity );
             
             assert( matSize <= maxnumOfBaseFct );
             
