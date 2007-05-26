@@ -32,7 +32,7 @@ namespace Dune {
   }
 
   template <class ct, int dim>
-  SimplexQuadrature<ct, dim>::SimplexQuadrature(int order, size_t id) :
+  SimplexQuadrature<ct, dim>::SimplexQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, dim>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -50,7 +50,7 @@ namespace Dune {
   }
 
   template <class ct, int dim>
-  CubeQuadrature<ct, dim>::CubeQuadrature(int order, size_t id) :
+  CubeQuadrature<ct, dim>::CubeQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, dim>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -96,7 +96,7 @@ namespace Dune {
   }
 
   template <>
-  inline CubeQuadrature<double, 0>::CubeQuadrature(int order, size_t id) :
+  inline CubeQuadrature<double, 0>::CubeQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<double, 0>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -116,7 +116,7 @@ namespace Dune {
   }
 
   template <class ct>
-  LineQuadrature<ct>::LineQuadrature(int order, size_t id) :
+  LineQuadrature<ct>::LineQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, 1>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -146,7 +146,7 @@ namespace Dune {
   }
 
   template <class ct>
-  TriangleQuadrature<ct>::TriangleQuadrature(int order, size_t id) :
+  TriangleQuadrature<ct>::TriangleQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, 2>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -164,7 +164,7 @@ namespace Dune {
   }
 
   template <class ct>
-  QuadrilateralQuadrature<ct>::QuadrilateralQuadrature(int order, size_t id) :
+  QuadrilateralQuadrature<ct>::QuadrilateralQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, 2>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -210,7 +210,7 @@ namespace Dune {
   }
 
   template <class ct>
-  TetraQuadrature<ct>::TetraQuadrature(int order, size_t id) :
+  TetraQuadrature<ct>::TetraQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -228,7 +228,7 @@ namespace Dune {
   }
 
   template <class ct>
-  HexaQuadrature<ct>::HexaQuadrature(int order, size_t id) :
+  HexaQuadrature<ct>::HexaQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -274,7 +274,7 @@ namespace Dune {
   }
 
   template <class ct>
-  PrismQuadrature<ct>::PrismQuadrature(int order, size_t id) :
+  PrismQuadrature<ct>::PrismQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -298,7 +298,7 @@ namespace Dune {
   }
 
   template <class ct>
-  PyramidQuadrature<ct>::PyramidQuadrature(int order, size_t id) :
+  PyramidQuadrature<ct>::PyramidQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
@@ -322,7 +322,7 @@ namespace Dune {
   }
 
   template <class ct, int dim>
-  TestQuadrature<ct, dim>::TestQuadrature(GeometryType geo, int order) :
+  TestQuadrature<ct, dim>::TestQuadrature(const GeometryType& geo, int order) :
     QuadratureImp<ct, dim>(IdProvider::instance().newId()),
     geo_(geo),
     order_(order)

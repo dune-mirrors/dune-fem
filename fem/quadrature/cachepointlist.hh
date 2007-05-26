@@ -45,19 +45,19 @@ namespace Dune {
   //! cache the evaluation of, say, a base function on those global quadrature
   //! points.)
   template <typename GridPartImp, int codim, 
-            template <class,int> class IntegrationPointListType >
+            class IntegrationTraits> 
   class CachingPointList
   {
     typedef CompileTimeChecker<false> Only_specialisations_for_codim_0_and_1_so_far;
   };
   
   //! \brief Specialisation for codimension 0.
-  template <typename GridPartImp, template <class,int> class PointListImp >
-  class CachingPointList<GridPartImp,0,PointListImp> : 
-    public ElementIntegrationPointList<GridPartImp,0,PointListImp>,
+  template <typename GridPartImp, class IntegrationTraits>  
+  class CachingPointList<GridPartImp,0,IntegrationTraits> : 
+    public ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>,
     public CachingInterface 
   {
-    typedef ElementIntegrationPointList<GridPartImp,0,PointListImp> BaseType;
+    typedef ElementIntegrationPointList<GridPartImp,0,IntegrationTraits> BaseType;
 
     // type of grid 
     typedef typename GridPartImp :: GridType GridType;
@@ -93,12 +93,12 @@ namespace Dune {
   //! Codimension one gets a little tricky, especially when face twists
   //! and non-symmetric quadrature rules are employed... But the details
   //! are safely hidden behind the interface and you don't need to bother.
-  template <typename GridPartImp, template <class,int> class PointListImp > 
-  class CachingPointList<GridPartImp, 1, PointListImp > : 
-    public ElementIntegrationPointList<GridPartImp,1,PointListImp>, 
+  template <typename GridPartImp, class IntegrationTraits>  
+  class CachingPointList<GridPartImp, 1, IntegrationTraits> : 
+    public ElementIntegrationPointList<GridPartImp,1,IntegrationTraits>, 
     public CachingInterface
   {
-    typedef ElementIntegrationPointList<GridPartImp,1,PointListImp> BaseType;
+    typedef ElementIntegrationPointList<GridPartImp,1,IntegrationTraits> BaseType;
 
     typedef GridPartImp GridPartType; 
     typedef typename GridPartType :: GridType GridType;

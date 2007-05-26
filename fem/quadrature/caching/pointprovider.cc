@@ -20,7 +20,7 @@ namespace Dune {
                        (quad.id(),
                         GlobalPointVectorType(quad.nop()))
                        ).first;
-      for (int i = 0; i < quad.nop(); ++i) {
+      for (size_t i = 0; i < quad.nop(); ++i) {
         it->second[i] = quad.point(i);
       }
       StorageInterface<dim>::registerQuadratureToStorages(quad);
@@ -51,7 +51,7 @@ namespace Dune {
     MapperIteratorType it = mappers_.find(quad.id());
     if (it == mappers_.end()) {
       std::vector<LocalPointType> pts(quad.nop());
-      for (int i = 0; i < quad.nop(); ++i) {
+      for (size_t i = 0; i < quad.nop(); ++i) {
         pts[i] = quad.point(i);
       }
       it = addEntry(quad, pts, elementGeo);

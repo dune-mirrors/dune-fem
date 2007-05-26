@@ -68,6 +68,9 @@ namespace Dune {
     //! Local coordinate type for the quadrature.
     typedef FieldVector<ct, dim> CoordinateType;
     
+    //! to be revised, look at caching quad 
+    enum { codimension = 0 };
+
   public:
     //! Virtual destructor
     virtual ~IntegrationPointListImp() {}
@@ -109,7 +112,7 @@ namespace Dune {
 
   protected:
     std::vector<CoordinateType> points_;
-    size_t id_;
+    const size_t id_;
   };
 
   template <typename ct, int dim>
@@ -170,7 +173,7 @@ namespace Dune {
     //! \param order The desired order (provided by the user)
     //! \param id A unique id (provided by QuadratureProvider)
     inline
-    SimplexQuadrature(int order, size_t id);
+    SimplexQuadrature(const GeometryType&, int order, size_t id);
     
     //! The geometry type is... simplex!
     virtual GeometryType geometry() const {
@@ -204,7 +207,7 @@ namespace Dune {
     //! Constructor
     //! \param order The desired order (provided by the user)
     //! \param id A unique id (provided by QuadratureProvider)
-    CubeQuadrature(int order, size_t id);
+    CubeQuadrature(const GeometryType&, int order, size_t id);
     
     //! The geometry type is... cube!
     virtual GeometryType geometry() const {
@@ -233,7 +236,7 @@ namespace Dune {
     typedef FieldVector<ct, 1> CoordinateType;
 
   public:
-    LineQuadrature(int order, size_t id);
+    LineQuadrature(const GeometryType&, int order, size_t id);
 
     virtual GeometryType geometry() const {
       return GeometryType(GeometryType::cube,1);
@@ -258,7 +261,7 @@ namespace Dune {
     typedef FieldVector<ct, 2> CoordinateType;
 
   public:
-    TriangleQuadrature(int order, size_t id);
+    TriangleQuadrature(const GeometryType&, int order, size_t id);
 
     virtual GeometryType geometry() const {
       return GeometryType(GeometryType::simplex,2);
@@ -289,7 +292,7 @@ namespace Dune {
     typedef FieldVector<ct, 2> CoordinateType;
 
   public:
-    QuadrilateralQuadrature(int order, size_t id);
+    QuadrilateralQuadrature(const GeometryType&, int order, size_t id);
 
     virtual GeometryType geometry() const {
       return GeometryType(GeometryType::cube,2);
@@ -314,7 +317,7 @@ namespace Dune {
     typedef FieldVector<ct, 3> CoordinateType;
 
   public:
-    TetraQuadrature(int order, size_t id);
+    TetraQuadrature(const GeometryType&, int order, size_t id);
 
     virtual GeometryType geometry() const {
       return GeometryType(GeometryType::simplex,3);
@@ -347,7 +350,7 @@ namespace Dune {
     typedef FieldVector<ct, 3> CoordinateType;
 
   public:
-    HexaQuadrature(int order, size_t id);
+    HexaQuadrature(const GeometryType&, int order, size_t id);
 
     virtual GeometryType geometry() const {
       return GeometryType(GeometryType::cube,3);
@@ -376,7 +379,7 @@ namespace Dune {
     //! Constructor
     //! \param order The desired order (provided by the user)
     //! \param id A unique id (provided by QuadratureProvider)
-    PrismQuadrature(int order, size_t id);
+    PrismQuadrature(const GeometryType&, int order, size_t id);
 
     //! The geometry type is... prism!
     virtual GeometryType geometry() const {
@@ -408,7 +411,7 @@ namespace Dune {
     //! Constructor
     //! \param order The desired order (provided by the user)
     //! \param id A unique id (provided by QuadratureProvider)
-    PyramidQuadrature(int order, size_t id);
+    PyramidQuadrature(const GeometryType&, int order, size_t id);
 
     //! The geometry type is... pyramid!
     virtual GeometryType geometry() const {
@@ -442,7 +445,7 @@ namespace Dune {
 
   public:
     //! Constructor
-    TestQuadrature(GeometryType geo, int order);
+    TestQuadrature(const GeometryType& geo, int order);
 
     //! Adds new quadrature point/weight pair
     void newQuadraturePoint(const CoordinateType& c, ct weight);
@@ -464,21 +467,24 @@ namespace Dune {
   //! default defines for used quadratures 
   template <typename ct, int dim> struct DefaultQuadratureTraits
   {
-  typedef CubeQuadrature<ct, dim> CubeQuadratureType; 
+    typedef CubeQuadrature<ct, dim> CubeQuadratureType; 
+    typedef QuadratureImp<ct,dim>     IntegrationPointListType;
   }; 
 
   //! quadratures for points 
   template <typename ct> 
   struct DefaultQuadratureTraits<ct,0>  
   {
-    typedef CubeQuadrature<ct, 0> PointQuadratureType;     
+    typedef CubeQuadrature<ct, 0>   PointQuadratureType;     
+    typedef QuadratureImp<ct,0>     IntegrationPointListType;
   };
   
   //! quadratures for lines 
   template <typename ct>
   struct DefaultQuadratureTraits<ct,1>  
   {
-    typedef CubeQuadrature<ct, 1> LineQuadratureType;     
+    typedef CubeQuadrature<ct, 1>   LineQuadratureType;     
+    typedef QuadratureImp<ct,1>     IntegrationPointListType;
   };
   
   //! quadratures for simplex and cubes 
@@ -487,6 +493,7 @@ namespace Dune {
   {
     typedef CubeQuadrature<ct, 2>    CubeQuadratureType;     
     typedef SimplexQuadrature<ct, 2> SimplexQuadratureType;     
+    typedef QuadratureImp<ct,2>      IntegrationPointListType;
   };
   
   //! quadratures for simplex, cubes, prisms, and pyramids
@@ -498,6 +505,8 @@ namespace Dune {
 
     typedef PrismQuadrature<ct>      PrismQuadratureType;
     typedef PyramidQuadrature<ct>    PyramidQuadratureType;
+
+    typedef QuadratureImp<ct,3>      IntegrationPointListType;
   };
   
 
@@ -510,40 +519,48 @@ namespace Dune {
   //! as you like) and to insulate the user from all this initialisation and
   //! storage stuff.
   template <typename ct, int dim, 
-            template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
-  class IntegrationPointList 
+            template <class, int> class IntegrationTraits>
+  class IntegrationPointList  
   {
+    typedef IntegrationPointList<ct,dim,IntegrationTraits> ThisType;
+    typedef IntegrationTraits<ct,dim> Traits;
   public:
     enum { dimension = dim };
 
-    typedef typename IntegrationPointListImp<ct, dim>::CoordinateType CoordinateType;
+    //! type of integration point list 
+    typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
+    //! type of coordinate 
+    typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
 
     //! to be revised, look at caching quad 
     enum { codimension = 0 };
 
   public:
+    //! return reference to implementation of integration point List 
+    const IntegrationPointListType& ipList() const { return ipList_; }
+
     //! Constructor
     //! \param geo The geometry type the quadrature points belong to.
     //! \param order The order of the quadrature (i.e. polynoms up to order
     //! are integrated exactly).
     IntegrationPointList(const GeometryType& geo, int order) :
-      quad_(QuadratureProvider<ct, dim, QuadratureTraits >::getQuadrature(geo, order))
+      ipList_(QuadratureProvider<ct, dim, IntegrationTraits>::getQuadrature(geo, order))
     {}
 
     //! Constructor for testing purposes
     //! \param quadImp Quadrature implementation for this test
-    IntegrationPointList(const IntegrationPointList<ct, dim>& quadImp) :
-      quad_(quadImp)
+    IntegrationPointList(const IntegrationPointListType& ipList) :
+      ipList_(ipList)
     {}
 
     //! The total number of quadrature points.
     int nop() const {
-      return quad_.nop();
+      return ipList_.nop();
     }
 
     //! Access to the ith quadrature point.
     const CoordinateType& point(size_t i) const {
-      return quad_.point(i);
+      return ipList_.point(i);
     }
 
     //! A unique id per quadrature type.
@@ -553,23 +570,23 @@ namespace Dune {
     //! per geometry type, order and dimension provided, but the concept is
     //! easily extendible beyond that.
     size_t id() const {
-      return quad_.id();
+      return ipList_.id();
     }
 
     //! The actual order of the quadrature.
     //! The actual order can be higher as the desired order when no 
     //! implementation for the desired order is found.
     int order() const {
-      return quad_.order();
+      return ipList_.order();
     }
 
     //! The geometry type the quadrature points belong to.
     GeometryType geometry() const {
-      return quad_.geometry();
+      return ipList_.geometry();
     }
 
   protected:
-    const QuadratureImp<ct, dim>& quad_;
+    const IntegrationPointListType& ipList_;
   };
 
   //! The actual interface class for quadratures.
@@ -584,11 +601,16 @@ namespace Dune {
             template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
   class Quadrature : public IntegrationPointList<ct,dim,QuadratureTraits> 
   {
+    typedef DefaultQuadratureTraits<ct,dim> Traits; 
     typedef IntegrationPointList<ct,dim,QuadratureTraits> BaseType;
   public:
     enum { dimension = dim };
 
-    typedef typename QuadratureImp<ct, dim>::CoordinateType CoordinateType;
+    typedef typename Traits :: IntegrationPointListType
+      IntegrationPointListType;
+
+    //! type of global coordinate vectors 
+    typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
 
     //! to be revised, look at caching quad 
     enum { codimension = 0 };
@@ -604,15 +626,15 @@ namespace Dune {
 
     //! Constructor for testing purposes
     //! \param quadImp Quadrature implementation for this test
-    Quadrature(const QuadratureImp<ct, dim>& quadImp) :
-      BaseType(quadImp)
+    Quadrature(const IntegrationPointListType& ipList) :
+      BaseType(ipList)
     {}
 
     //! Access to the weight of quadrature point i.
     //! The quadrature weights sum up to the volume of the respective reference
     //! element.
     const ct& weight(size_t i) const {
-      return this->quad_.weight(i);
+      return this->ipList().weight(i);
     }
   };
 

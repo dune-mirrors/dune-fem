@@ -33,13 +33,15 @@ namespace Dune {
   {
     typedef CompileTimeChecker<false> Only_specialisations_for_codim_0_and_1_so_far;
   };
-  
+
   //! \brief Specialisation for codimension 0.
   template <typename GridPartImp>
   class CachingQuadrature<GridPartImp, 0> :
-    public CachingPointList<GridPartImp, 0, Quadrature >
+    public CachingPointList<GridPartImp, 0, 
+                            ElementQuadratureTraits<GridPartImp,0> >
   {
-    typedef CachingPointList<GridPartImp, 0, Quadrature > BaseType;
+    typedef ElementQuadratureTraits<GridPartImp,0> IntegrationTraits;
+    typedef CachingPointList<GridPartImp, 0, IntegrationTraits> BaseType;
 
     typedef typename GridPartImp :: GridType GridType;
 
@@ -78,10 +80,13 @@ namespace Dune {
   //! are safely hidden behind the interface and you don't need to bother.
   template <typename GridPartImp>
   class CachingQuadrature<GridPartImp, 1> :
-   public CachingPointList<GridPartImp,1, Quadrature >
+   public CachingPointList<GridPartImp,1, 
+                           ElementQuadratureTraits<GridPartImp,1> >
   {
+    typedef ElementQuadratureTraits<GridPartImp,1> IntegrationTraits;
+
     // type of base class 
-    typedef CachingPointList<GridPartImp,1, Quadrature > BaseType;
+    typedef CachingPointList<GridPartImp,1,IntegrationTraits> BaseType;
 
     // type of grid part 
     typedef GridPartImp GridPartType; 

@@ -127,8 +127,10 @@ namespace Dune {
     typedef typename Traits::QuadratureType QuadratureType;
 
   public:
-    static void registerQuadrature(const QuadratureType& quad) {
-      PointProvider<ct, dim, codim>::registerQuadrature(quad);
+    template <class QuadratureImpl>
+    static void registerQuadrature(const QuadratureImpl& quad) {
+      // get quadrature implementation 
+      PointProvider<ct, dim, codim>::registerQuadrature(quad.ipList());
     }
   };
 
@@ -146,11 +148,14 @@ namespace Dune {
     typedef typename Traits::MapperType MapperType;
 
   public:
-    static const MapperType& getMapper(const QuadratureType& quad,
+    template <class QuadratureImpl>
+    static const MapperType& getMapper(const QuadratureImpl& quadImpl,
                                        GeometryType elementGeometry,
                                        int faceIndex,
                                        int faceTwist)
     {
+      // get quadrature implementation 
+      const QuadratureType& quad = quadImpl.ipList();
       MapperIteratorType it = mappers_.find(quad.id());
 
       if (it == mappers_.end()) {

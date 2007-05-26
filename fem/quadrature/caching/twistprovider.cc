@@ -120,7 +120,7 @@ namespace Dune {
       new TwistStorageType(helper_->minTwist(), helper_->maxTwist());
 
     // Add quadrature points
-    for (int i = 0; i < quad_.nop(); ++i) {
+    for (size_t i = 0; i < quad_.nop(); ++i) {
       storage->addPoint(quad_.point(i));
     }
 
@@ -131,7 +131,7 @@ namespace Dune {
       
       const MatrixType& mat = helper_->buildTransformationMatrix(twist);
 
-      for (int i = 0; i < quad_.nop(); ++i) 
+      for (size_t i = 0; i < quad_.nop(); ++i) 
       {
         // get local quad point 
         PointType pFace = quad_.point(i);
@@ -150,7 +150,7 @@ namespace Dune {
 
         bool found = false;
         // find equivalent quadrature point
-        for (int j = 0; j < quad_.nop(); ++j) 
+        for (size_t j = 0; j < quad_.nop(); ++j) 
         {
           // check if | pRef - quad_j | < eps 
           if( (pRef - quad_.point(j)).infinity_norm() < eps_)

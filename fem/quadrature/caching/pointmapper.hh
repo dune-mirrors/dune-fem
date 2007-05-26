@@ -11,11 +11,13 @@ namespace Dune {
 
   template <class ct, int dim>
   struct CachingTraits {
-    typedef Quadrature<ct, dim> QuadratureType;
+    //! type of integration point list implementation, fix type here 
+    typedef IntegrationPointListImp<ct, dim> QuadratureType;
+    //! extracted types from integration point list 
     typedef typename QuadratureType::CoordinateType PointType;
-    typedef std::vector<PointType> PointVectorType;
-    typedef std::vector<size_t> MapperType;
-    typedef std::vector<MapperType> MapperVectorType;
+    typedef std::vector<PointType>    PointVectorType;
+    typedef std::vector<size_t>       MapperType;
+    typedef std::vector<MapperType>   MapperVectorType;
 
     static const int twistOffset_ = 5;
   };

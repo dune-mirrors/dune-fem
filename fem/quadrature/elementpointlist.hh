@@ -15,7 +15,7 @@ namespace Dune {
   //! this identical information. As a consequence, ElementIntegrationPointList is
   //! not a generic quadrature anymore, but depends on the situation in
   //! which it is used.
-  template <typename GridPartImp, int codim , template <class,int> class IntegrationPointListType>
+  template <typename GridPartImp, int codim, class IntegrationTraits>
   class ElementIntegrationPointList {
     typedef CompileTimeChecker<false> Only_implementation_for_codim_0_and_1_exists; 
   };
@@ -24,10 +24,11 @@ namespace Dune {
   //! For codim-0 element quadratures, there is no additional information
   //! from the context needes, in consequence, the quadrature behaves like
   //! a generic quadrature class, independent from the situation in the grid.
-  template <typename GridPartImp, template <class,int> class PointListImp >
-  class ElementIntegrationPointList<GridPartImp,0,
-                                    PointListImp> 
+  template <typename GridPartImp, 
+            class IntegrationTraits>
+  class ElementIntegrationPointList<GridPartImp,0,IntegrationTraits> 
   {
+    //! used grid type 
     typedef typename GridPartImp :: GridType GridType;
   public:
     //! Dimension of the world
@@ -35,13 +36,16 @@ namespace Dune {
     //! Codimension is zero by definition
     enum { codimension = 0 };
     
+    //! side of intersection 
     enum Side { INSIDE, OUTSIDE };
 
+    //! coordinate type 
     typedef typename GridType::ctype RealType;
 
     //! type of the integration point list 
-    typedef PointListImp<RealType,dimension> IntegrationPointListType;
-  //  typedef PointListImp IntegrationPointListType;
+    typedef typename IntegrationTraits :: 
+          IntegrationPointListType   IntegrationPointListType;
+
     //! Type for coordinates in the codim-0 reference element 
     typedef typename IntegrationPointListType::CoordinateType CoordinateType;
     
@@ -99,6 +103,7 @@ namespace Dune {
     }
 
   protected:
+    //! return reference to internal quadrature 
     const IntegrationPointListType& quadImp() const { return quad_; }
     
   protected:
@@ -111,34 +116,36 @@ namespace Dune {
   //! intersection. Plus, the user must decide if the quadrature shall live
   //! on the reference element of the outside or inside element of the 
   //! intersection.
-  template <typename GridPartImp, template <class,int> class PointListImp >
-  class ElementIntegrationPointList<GridPartImp,1,
-                                    PointListImp >
+  template <class GridPartImp, class IntegrationTraits>
+  class ElementIntegrationPointList<GridPartImp,1,IntegrationTraits>
   {
     typedef GridPartImp GridPartType;
     typedef typename GridPartType :: GridType GridType;
 
+    //! type of this class 
+    typedef ElementIntegrationPointList<GridPartImp,1,IntegrationTraits> ThisType;
   public:
     //! Dimension of the world
     enum { dimension = GridType::dimension };
     //! The codimension is one by definition
     enum { codimension = 1 };
     
+    //! side of intersection  
     enum Side { INSIDE, OUTSIDE };
 
+    //! coordinate type 
     typedef typename GridType::ctype RealType;
 
-    //! Type of integration point list 
-    typedef PointListImp<RealType,dimension-codimension> IntegrationPointListType;
-    
-    //! type of this class 
-    typedef ElementIntegrationPointList<GridPartImp,1,PointListImp> ThisType;
-    
+    //! type of the integration point list 
+    typedef typename IntegrationTraits :: 
+          IntegrationPointListType   IntegrationPointListType;
+
     //! Type of coordinates in codim-0 reference element
-    typedef typename PointListImp<RealType,dimension>::CoordinateType CoordinateType;
+    typedef typename IntegrationTraits :: CoordinateType CoordinateType;
     
     //! Type of coordinate in codim-1 reference element
     typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
+
     //! Type of the intersection iterator
     typedef typename GridPartImp::IntersectionIteratorType IntersectionIterator;
 

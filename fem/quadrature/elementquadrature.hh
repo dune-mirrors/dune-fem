@@ -21,15 +21,37 @@ namespace Dune {
     typedef CompileTimeChecker<false> Only_implementation_for_codim_0_and_1_exists; 
   };
 
+
+  template <class GridPartImp, int codim>
+  struct ElementQuadratureTraits
+  {
+    //! type of single coordinate
+    typedef typename GridPartImp :: GridType :: ctype ctype;
+
+    //! dimension of quadrature 
+    enum { dimension = GridPartImp :: GridType :: dimension };
+
+    //! codimension of quadrature
+    enum { codimension = codim };
+
+    //! type of used integration point list 
+    typedef Quadrature<ctype,dimension-codim,DefaultQuadratureTraits> IntegrationPointListType ;
+    //! type of global coordinate 
+    typedef typename Quadrature<ctype,dimension,DefaultQuadratureTraits> :: CoordinateType CoordinateType; 
+  };
+
   //! \brief Element quadrature on codim-0 entities.
   //! For codim-0 element quadratures, there is no additional information
   //! from the context needes, in consequence, the quadrature behaves like
   //! a generic quadrature class, independent from the situation in the grid.
   template <typename GridPartImp>
   class ElementQuadrature<GridPartImp, 0> : public
-     ElementIntegrationPointList<GridPartImp,0,Quadrature>
+     ElementIntegrationPointList<GridPartImp,0, 
+                                 ElementQuadratureTraits<GridPartImp,0> >
   {
     typedef typename GridPartImp :: GridType GridType;
+    typedef ElementQuadratureTraits<GridPartImp,0> IntegrationTraits; 
+    typedef ElementIntegrationPointList<GridPartImp,0,IntegrationTraits> BaseType;
   public:
     //! Dimension of the world
     enum { dimension = GridType::dimension };
@@ -39,7 +61,6 @@ namespace Dune {
     //! The type for reals (mostly double)
     typedef typename GridType::ctype RealType;
     
-    typedef ElementIntegrationPointList<GridPartImp,0,Quadrature> BaseType;
   public:
     //! Type for coordinates in the codim-0 reference element 
     typedef typename Quadrature<RealType, dimension>::CoordinateType CoordinateType;
@@ -69,15 +90,17 @@ namespace Dune {
   //! intersection. Plus, the user must decide if the quadrature shall live
   //! on the reference element of the outside or inside element of the 
   //! intersection.
-  template <typename GridPartImp>
+  template <class GridPartImp>
   class ElementQuadrature<GridPartImp, 1> : public 
-     ElementIntegrationPointList<GridPartImp,1,Quadrature>
+     ElementIntegrationPointList<GridPartImp,1,
+                                 ElementQuadratureTraits<GridPartImp,1> >
   {
     typedef ElementQuadrature<GridPartImp, 1> ThisType;
     typedef GridPartImp GridPartType;
     typedef typename GridPartType :: GridType GridType;
 
-    typedef ElementIntegrationPointList<GridPartImp,1,Quadrature> BaseType;
+    typedef ElementQuadratureTraits<GridPartImp,1> IntegrationTraits;
+    typedef ElementIntegrationPointList<GridPartImp,1,IntegrationTraits> BaseType;
   public:
     //! Dimension of the world
     enum { dimension = GridType::dimension };
