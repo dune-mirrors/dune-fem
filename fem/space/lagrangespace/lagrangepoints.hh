@@ -2,6 +2,7 @@
 #define DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 
 #include <dune/grid/common/referenceelements.hh>
+#include <dune/fem/quadrature/cachepointlist.hh>
 
 #include "genericgeometry.hh"
 #include "genericlagrangepoints.hh"
@@ -688,6 +689,176 @@ namespace Dune
     }
   };
 
-}
+  template< typename ct, int dim >
+  class LagrangeIntegrationPointFactory : 
+    public IntegrationPointListImp<ct,dim> 
+  {
+    typedef IntegrationPointListImp<ct,dim>         BaseType;
+    typedef LagrangeIntegrationPointFactory<ct,dim> ThisType;   
+    template <class PointListType, int polOrd> 
+    struct AddLagrangePoints 
+    {
+      static void add(PointListType& list, 
+                      const GeometryType& geo,
+                      const int order)
+      {
+        if(order == polOrd)
+        {
+          typedef LagrangePointSetFactory< ct, dim, polOrd > LagrangePointSetFactoryType;
+          typedef typename LagrangePointSetFactoryType :: LagrangePointSetType LagrangePointSetType;
 
+          typedef SingletonList< GeometryType,
+                                 LagrangePointSetType,
+                                 LagrangePointSetFactoryType >
+              LagrangePointSetSingletonProviderType;
+
+          // get lagrange point set 
+          const LagrangePointSetType& lagrangePointSet
+            = LagrangePointSetSingletonProviderType :: getObject( geo );
+
+          for(size_t i=0; i<lagrangePointSet.size(); ++i)
+          {   
+            list.addIntegrationPoint(lagrangePointSet[i]);
+          }
+          
+          // delete object 
+          LagrangePointSetSingletonProviderType
+                :: removeObject( lagrangePointSet );
+
+          return ;
+        }
+
+        // call next polOrder 
+        AddLagrangePoints<ThisType,polOrd+1>::add(list,geo,order);
+      }
+    };
+
+    enum { maxOrder_ = 20 };   
+ 
+    template <class PointListType> 
+    struct AddLagrangePoints<PointListType,maxOrder_> 
+    {
+      enum { polOrd = maxOrder_ };
+      static void add(PointListType& list, 
+                      const GeometryType& geo,
+                      const int order)
+      {
+        if(order == polOrd)
+        {
+          typedef LagrangePointSetFactory< ct, dim, polOrd > LagrangePointSetFactoryType;
+          typedef typename LagrangePointSetFactoryType :: LagrangePointSetType LagrangePointSetType;
+
+          typedef SingletonList< GeometryType,
+                                 LagrangePointSetType,
+                                 LagrangePointSetFactoryType >
+              LagrangePointSetSingletonProviderType;
+
+          // get lagrange point set 
+          const LagrangePointSetType& lagrangePointSet
+            = LagrangePointSetSingletonProviderType :: getObject( geo );
+
+          for(size_t i=0; i<lagrangePointSet.size(); ++i)
+          {   
+            list.addIntegrationPoint(lagrangePointSet[i]);
+          }
+          
+          // delete object 
+          LagrangePointSetSingletonProviderType
+                :: removeObject( lagrangePointSet );
+
+          return ;
+        }
+
+        DUNE_THROW(NotImplemented,"LagrangePoints only up to polOrd " << maxOrder_);  
+      }
+    };
+   
+    const GeometryType elementGeometry_;
+    const int order_;
+  public:
+    LagrangeIntegrationPointFactory(
+              const GeometryType& geo, 
+              const int order,
+              const size_t id)
+      : BaseType(id)
+      , elementGeometry_(geo)
+      , order_(order)
+    {
+      assert( order > 0 && order <= maxOrder_ );
+      AddLagrangePoints<ThisType,1>::add(*this,geo,order);
+    }
+
+    //! return order of points set 
+    int order () const { return order_; }
+    //! return geometry type set was created for 
+    GeometryType geometry() const { return elementGeometry_; } 
+
+    static int maxOrder () { return maxOrder_; }
+  };
+  
+  //! default defines for used quadratures 
+  template <typename ct, int dim> struct LagrangePointTraits
+  {
+    typedef LagrangeIntegrationPointFactory<ct, dim> CubeQuadratureType;
+    typedef LagrangeIntegrationPointFactory<ct, dim> PointQuadratureType;
+    typedef LagrangeIntegrationPointFactory<ct, dim> LineQuadratureType;
+    typedef LagrangeIntegrationPointFactory<ct, dim> SimplexQuadratureType;
+    typedef LagrangeIntegrationPointFactory<ct, dim> PrismQuadratureType;
+    typedef LagrangeIntegrationPointFactory<ct, dim> PyramidQuadratureType;
+
+    //! type of integration point list implemementation 
+    typedef IntegrationPointListImp<ct,dim>   IntegrationPointListType; 
+  }; 
+
+  template <class GridPartImp>
+  struct LagrangeIntegrationPointsTraits
+  {
+    //! type of single coordinate
+    typedef typename GridPartImp :: GridType :: ctype ctype;
+
+    //! dimension of quadrature 
+    enum { dimension = GridPartImp :: GridType :: dimension };
+
+    //! codimension of quadrature
+    enum { codimension = 0 };
+
+    //! type of used integration point list 
+    typedef IntegrationPointList<ctype,dimension,LagrangePointTraits> IntegrationPointListType ;
+
+    //! type of global coordinate 
+    typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
+  };
+
+  //! \brief Lagrange Integration Points  
+  template <class GridPartImp>
+  class LagrangeIntegrationPoints :
+    public CachingPointList<GridPartImp,0,
+                            LagrangeIntegrationPointsTraits<GridPartImp> >
+  {
+    typedef LagrangeIntegrationPointsTraits<GridPartImp> IntegrationTraits;
+    typedef CachingPointList<GridPartImp,0,IntegrationTraits> BaseType;
+
+    typedef typename GridPartImp :: GridType GridType;
+
+    public:
+    //! Dimension of the world.
+    enum { dimension = BaseType::dimension };
+    //! The codimension is zero by definition.
+    enum { codimension = 0 };
+
+    //! Just another name for double...
+    typedef typename BaseType::RealType RealType;
+    //! The type of the coordinates in the codim-0 reference element.
+    typedef typename BaseType::CoordinateType CoordinateType;
+    //! The type of the codim-0 entity.
+    typedef typename BaseType::Entity Entity;
+
+    //! Constructor
+    LagrangeIntegrationPoints(const Entity& en, int order)
+      : BaseType(en, order)
+    {
+    }
+  };
+  
+} // end namespace dune 
 #endif
