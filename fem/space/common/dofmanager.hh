@@ -305,6 +305,14 @@ public:
     std::memset(vec_, 0 , size() * sizeof(T));
   }
  
+  //! move memory from old to new destination 
+  void memmove(const int length, const int oldStartIdx, const int newStartIdx) 
+  {
+    void * dest = ((void *) (&vec_[newStartIdx]));
+    const void * src = ((const void *) (&vec_[oldStartIdx]));
+    std::memmove(dest, src, length * sizeof(T));
+  }
+ 
   //! operator = assign all entrys with value t 
   DofArray<T>& operator= (const T t)
   {
@@ -438,6 +446,40 @@ struct SpecialArrayFeatures
   static void setMemoryFactor(ArrayType & array, const double memFactor) 
   {
   }
+
+  static void memMoveBackward(ArrayType& array, const int length,
+            const int oldStartIdx, const int newStartIdx)
+  {
+    // get new end of block which is offSet + (length of block - 1) 
+    int newIdx = newStartIdx + length - 1; 
+    // copy all entries backwards 
+    for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
+    {
+      // move value to new location 
+      array[newIdx] = array[oldIdx];
+#ifndef NDEBUG
+      // for debugging purpose 
+      array[oldIdx ] = 0.0;
+#endif
+    }
+  }
+
+  static void memMoveForward(ArrayType& array, const int length,
+            const int oldStartIdx, const int newStartIdx)
+  {
+    const int upperBound = oldStartIdx + length;
+    // get new off set that should be smaller then old one
+    int newIdx = newStartIdx;
+    for(int oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
+    {
+      // copy to new location 
+      array[newIdx] = array[oldIdx];
+#ifndef NDEBUG 
+      // for debugging issues only 
+      array[oldIdx] = 0.0;
+#endif
+    }
+  }
 };
 
 template<class ValueType>
@@ -451,6 +493,41 @@ struct SpecialArrayFeatures<DofArray<ValueType> >
   static void setMemoryFactor(ArrayType & array, const double memFactor) 
   {
     array.setMemoryFactor(memFactor);
+  }
+
+  static void memMoveBackward(ArrayType& array, const int length,
+            const int oldStartIdx, const int newStartIdx)
+  {
+    //array.memmove(length,oldStartIdx,newStartIdx);
+    // get new end of block which is offSet + (length of block - 1) 
+    int newIdx = newStartIdx + length - 1; 
+    // copy all entries backwards 
+    for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
+    {
+      // move value to new location 
+      array[newIdx] = array[oldIdx];
+#ifndef NDEBUG
+      // for debugging purpose 
+      array[oldIdx ] = 0.0;
+#endif
+    }
+  }
+  static void memMoveForward(ArrayType& array, const int length,
+            const int oldStartIdx, const int newStartIdx)
+  {
+    //array.memmove(length,oldStartIdx,newStartIdx);
+    const int upperBound = oldStartIdx + length;
+    // get new off set that should be smaller then old one
+    int newIdx = newStartIdx;
+    for(int oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
+    {
+      // copy to new location 
+      array[newIdx] = array[oldIdx];
+#ifndef NDEBUG 
+      // for debugging issues only 
+      array[oldIdx] = 0.0;
+#endif
+    }
   }
 };
 
@@ -799,18 +876,11 @@ private:
         // get upperBound 
         const int upperBound = (block == numBlocks-1) ? 
                       oldSize : mapper_.oldOffSet(block+1);
-        // get new end of block which is offSet + (length of block - 1) 
-        int newIdx = mapper_.offSet(block) + (upperBound - oldOffSet - 1);
-        // copy all entries backwards 
-        for(int oldIdx = upperBound-1; oldIdx >= oldOffSet; --oldIdx, --newIdx )
-        {
-          // move value to new location 
-          array_[newIdx] = array_[oldIdx];
-#ifndef NDEBUG
-          // for debugging purpose 
-          array_[oldIdx ] = 0.0;
-#endif
-        }
+
+        // move block backward 
+        SpecialArrayFeatures<DofArrayType>::
+          memMoveBackward(array_, upperBound-oldOffSet,
+                          oldOffSet, mapper_.offSet(block)); 
       }
     }
   }
@@ -828,17 +898,10 @@ private:
       const int upperBound = (block == mapper_.numBlocks()-1) ? 
                    oldSize : mapper_.oldOffSet(block+1);
 
-      // get new off set that should be smaller then old one
-      int newIdx = mapper_.offSet(block);
-      for(int oldIdx = oldOffSet; oldIdx<upperBound; ++oldIdx, ++newIdx )
-      {
-        // copy to new location 
-        array_[newIdx] = array_[oldIdx];
-#ifndef NDEBUG 
-        // for debugging issues only 
-        array_[oldIdx] = 0.0;
-#endif
-      }
+      // move block forward 
+      SpecialArrayFeatures<DofArrayType>::
+        memMoveForward(array_, upperBound-oldOffSet,
+                       oldOffSet, mapper_.offSet(block)); 
     }
   }
 
@@ -1408,9 +1471,10 @@ public:
   
   //! compress all data that is hold by this dofmanager 
   //! this will increase the sequence counter by 1 
+  //- --compress
   void compress() 
   {
-    // makr next sequence 
+    // mark next sequence 
     ++sequence_;
 
     // compress indexsets first 
