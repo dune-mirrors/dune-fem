@@ -1,8 +1,14 @@
 #ifndef DUNE_LAGRANGESPACE_MAPPER_HH
 #define DUNE_LAGRANGESPACE_MAPPER_HH
 
+//- Dune includes 
 #include <dune/common/geometrytype.hh>
+#include <dune/common/exceptions.hh>
 
+//- Dune-Fem includes 
+#include <dune/fem/space/common/dofmanager.hh>
+
+//- local includes 
 #include "lagrangepoints.hh"
 #include "indexsetcodimcall.hh"
 
@@ -66,9 +72,7 @@ namespace Dune
     }
    
     //! destructor
-    virtual ~LagrangeMapper ()
-    {
-    }
+    virtual ~LagrangeMapper () {}
 
     //! get size (i.e. size of DoF vector)
     int size () const
@@ -88,7 +92,7 @@ namespace Dune
     }
 
     //! vector index of the hole
-    int oldIndex ( int hole ) const
+    int oldIndex ( int hole, int ) const
     {
       const int coordinate = hole % DimRange;
       const int setHole = hole / DimRange;
@@ -97,7 +101,7 @@ namespace Dune
     }
 
     //! vector index of data to be copied to the hole
-    int newIndex ( int hole ) const
+    int newIndex ( int hole , int ) const
     {
       const int coordinate = hole % DimRange;
       const int setHole = hole / DimRange;
@@ -106,15 +110,9 @@ namespace Dune
     }
 
     //! number of holes in DoF vector
-    int numberOfHoles () const
+    int numberOfHoles (int) const
     {
       return DimRange * indexSet_.numberOfHoles( dimension );
-    }
-
-    //! additional size needed during restriction
-    int additionalSizeEstimate () const
-    {
-      return DimRange * indexSet_.additionalSizeEstimate();
     }
 
     //! get maximum number of DoFs per entity
@@ -134,8 +132,8 @@ namespace Dune
     {
       return indexSet_.needsCompress();
     }
-  };
 
+  };
 
   template< class GridPartImp, unsigned int dimrange >
   class LagrangeMapper< GridPartImp, 2, dimrange >
@@ -171,21 +169,34 @@ namespace Dune
     typedef typename IndexSetCodimCallFactoryType :: IndexSetCodimCallType
       IndexSetCodimCallType;
 
+    typedef DofManager<GridType> DofManagerType;
+    typedef DofManagerFactory<DofManagerType> DMFactoryType;
+
+
   private:
+    // reference to dof manager needed for debug issues 
+    const DofManagerType& dm_;
+
     const IndexSetType &indexSet_;
     IndexSetCodimCallType *indexSetCodimCall_[ dimension+1 ];
     
     LagrangePointSetMapType &lagrangePointSet_;
 
     unsigned int maxDofs_[ dimension+1 ];
-    unsigned int offset_[ dimension+1 ];
-    unsigned int size_;
+    mutable unsigned int offset_[ dimension+1 ];
+    mutable unsigned int oldOffSet_[ dimension+1 ];
+    mutable unsigned int size_;
+    unsigned int numDofs_;
 
+    // for debugging only 
+    mutable int sequence_;
   public:
     LagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
-    : indexSet_( gridPart.indexSet() ),
-      lagrangePointSet_( lagrangePointSet )
+    : dm_( DMFactoryType :: getDofManager(gridPart.grid()) )
+    , indexSet_( gridPart.indexSet() )
+    , lagrangePointSet_( lagrangePointSet )
+    , sequence_( dm_.sequence() )
     {
       IndexSetCodimCallFactoryType :: getAllCalls( indexSetCodimCall_ );
         
@@ -210,19 +221,30 @@ namespace Dune
       for( int codim = 0; codim <= dimension; ++codim )
       {
         offset_[ codim ] = size_;
+        std::cout << "offset = " << offset_[codim] << "\n";
+        oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
+      }
+
+      numDofs_ = 0;
+      for(int codim = 0; codim <= dimension; ++codim )
+      {
+        numDofs_ += maxDofs_[codim];
       }
     }
     
+    //! destructor 
     virtual ~LagrangeMapper ()
     {
     }
 
+    //! return overall number of degrees of freedom 
     int size () const
     {
-      return dimrange * size_;
+      return DimRange * size_;
     }
 
+    //! map local dof of entity to global dof number 
     template< class EntityType >
     int mapToGlobal ( EntityType &entity, int local ) const
     {
@@ -239,42 +261,103 @@ namespace Dune
       return DimRange * (offset_[ codim ] + subIndex) + coordinate;
     }
 
-    int oldIndex ( int elNum ) const
+    //! return old dof number for given number of hole and codim (=block) 
+    int oldIndex ( const int num, const int codim ) const
     {
-      DUNE_THROW( NotImplemented, "LagrangeMapper not implemented yet." );
+      // corresponding number of set is newn 
+      const int newn  = static_cast<int> (num / DimRange);
+      // local number of dof is local 
+      const int local = (num % DimRange);
+      // codim to be revised 
+      return DimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
     }
 
-    int newIndex ( int elNum ) const
+    //! return old new number for given number of hole and codima (=block)
+    int newIndex ( const int num , const int codim) const
     {
-      DUNE_THROW( NotImplemented, "LagrangeMapper not implemented yet." );
+      // corresponding number of set is newn 
+      const int newn  = static_cast<int> (num / DimRange);
+      // local number of dof is local 
+      const int local = (num % DimRange);
+      // codim to be revised 
+      return DimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
     }
 
-    int numberOfHoles () const
+    //! return number of holes for given codim 
+    int numberOfHoles (const int codim) const
     {
-      DUNE_THROW( NotImplemented, "LagrangeMapper not implemented yet." );
+      return (maxDofs_[codim] > 0) ? 
+        (DimRange * indexSet_.numberOfHoles(codim)) : 0;
     }
 
-    int additionalSizeEstimate () const
+    //! update mapper, i.e. calculate new insertion points 
+    void update()
     {
-      DUNE_THROW( NotImplemented, "LagrangeMapper not implemented yet." );
+      // assure that update is only called once per 
+      // dof manager resize 
+      if( sequence_ != dm_.sequence() )
+      {
+        // calculate new size 
+        size_ = 0;
+        for( int codim = 0; codim <= dimension; ++codim )
+        {
+          oldOffSet_[ codim ] = offset_[codim];
+          offset_[ codim ] = size_;
+          size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
+        }
+        sequence_ = dm_.sequence();
+      }
+      else 
+      {
+        DUNE_THROW(InvalidStateException,"update of mapper should only be called once per sequence");
+      }
     }
 
+    //! return number of supported codims 
+    int numBlocks () const 
+    {
+      return dimension + 1;
+    }
+
+    //! return old offsets for block 
+    int oldOffSet(const int block) const 
+    {
+      assert( block >= 0);
+      assert( block < numBlocks());
+      return oldOffSet_[block];
+    }
+
+    //! return current offsets 
+    int offSet(const int block) const 
+    {
+      assert( block >= 0 );
+      assert( block <= numBlocks() );
+      return offset_[block];
+    }
+
+    //! return number of dofs per element 
     int numDofs () const
     {
-      DUNE_THROW( NotImplemented, "LagrangeMapper not implemented yet." );
+      return numDofs_;
     }
 
+    //! calculate new size without changing object 
     int newSize () const
     {
-      DUNE_THROW( NotImplemented, "LagrangeMapper not implemented yet." );
+      int newSize = 0;
+      for( int codim = 0; codim <= dimension; ++codim )
+      {
+        newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
+      }
+      return DimRange * newSize;
     }
 
+    //! returns true if compression is needed 
     bool needsCompress () const
     {
-      DUNE_THROW( NotImplemented, "LagrangeMapper not implemented yet." );
+      return indexSet_.needsCompress();
     }
   };
  
-}
-
+} // end namespace Dune 
 #endif
