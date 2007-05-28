@@ -50,34 +50,59 @@ public:
     return asImp().numDofs();
   } 
 
-  //! return number of holes in the data 
-  int numberOfHoles() const 
+  //! return number of holes for data block 
+  int numberOfHoles(const int block) const 
   {
-    return asImp().numberOfHoles(); 
+    return asImp().numberOfHoles(block); 
   }
   
-  //! return old index in dof array of given index ( for dof compress ) 
-  int oldIndex (int num) const 
+  //! return old index of hole for data block 
+  int oldIndex (const int hole, const int block) const 
   { 
-    return asImp().oldIndex(); 
+    return asImp().oldIndex(hole,block); 
   }
     
-  //! return new index in dof array of given index ( for dof compress ) 
-  int newIndex (int num) const 
+  //! return new index of hole for data block 
+  int newIndex (const int hole, const int block) const 
   { 
-    return asImp().newIndex(); 
+    return asImp().newIndex(hole,block); 
   }
 
-  //! return estimate for size additional need for restriction of data
-  int additionalSizeEstimate() const 
+  //! method is deprecated and does not work anymore
+  int additionalSizeEstimate() const DUNE_DEPRECATED 
   {  
-    return asImp().additionalSizeEstimate(); 
+    return 0;
   }
 
   //! return true if compress will affect data  
   bool needsCompress () const 
   {
     return asImp().needsCompress ();
+  }
+
+  //! update mapper, 
+  //! i.e. calculate new insertion points of blocks 
+  void update ()
+  {
+    asImp().update();
+  }
+
+  //! return old offsets for given block 
+  int oldOffSet(const int block) const
+  {
+    return asImp().oldOffSet(block);
+  }
+
+  //! return current offsets for given block 
+  int offSet(const int block) const
+  {
+    return asImp().offSet(block);
+  }
+
+  //! return number of supported blocks  
+  int numBlocks() const
+  {
+    return asImp().numBlocks();
   }
   
 private:  
@@ -91,7 +116,19 @@ private:
 template <class DofMapperImp> 
 class DofMapperDefault : public DofMapperInterface<DofMapperImp>
 {
-  //! nothing here at the moment 
+public:
+  //! update mapper, default does nothing 
+  void update () const {}
+
+  //! return old offsets for block number, default returns zero 
+  int oldOffSet(const int block) const { return 0; }
+
+  //! return current offsets for block number, default returns zero 
+  int offSet(const int block) const { return 0; }
+
+  //! return number of supported blocks, default is 1  
+  int numBlocks() const { return 1; }
+  
 private:  
   //! Barton-Nackman trick 
   DofMapperImp &asImp()  { return static_cast<DofMapperImp &>(*this); };
