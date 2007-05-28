@@ -221,7 +221,6 @@ namespace Dune
       for( int codim = 0; codim <= dimension; ++codim )
       {
         offset_[ codim ] = size_;
-        std::cout << "offset = " << offset_[codim] << "\n";
         oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
