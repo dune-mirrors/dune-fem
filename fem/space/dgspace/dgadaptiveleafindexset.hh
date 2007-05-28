@@ -284,6 +284,9 @@ public:
   //- --compress 
   bool compress ()
   {
+    // reset list of holes in any case 
+    codimLeafSet_.clearHoles(); 
+
     // if set already compress, do noting (only for serial runs) 
     if(compressed_)
     {
@@ -347,7 +350,6 @@ public:
       }
       compressed_ = false;
     }
-
     assert( codimLeafSet_.exists( idx ) );
   }
 
