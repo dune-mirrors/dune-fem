@@ -294,7 +294,6 @@ private:
     {
       // resizes the index sets and resizes the memory
       dm_.resize();
-
       typedef typename DofManagerType :: IndexSetRestrictProlongType IndexSetRPType;
       typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
       COType tmpop ( dm_.indexSetRPop() , rpOp_ );
@@ -314,7 +313,8 @@ private:
     // if grid was coarsend or refined, do dof compress 
     if(restr || ref)
     {
-      dm_.dofCompress();
+      // compress index sets and data 
+      dm_.compress();
     }
 
     // do cleanup 
@@ -324,7 +324,7 @@ private:
 private:
   // make hierarchic walk trough 
   template <class EntityType, class RestrictOperatorType  >
-  bool hierarchicRestrict ( EntityType &en, RestrictOperatorType & restop ) const 
+  bool hierarchicRestrict ( EntityType& en, RestrictOperatorType & restop ) const 
   {
     if(!en.isLeaf())
     {
