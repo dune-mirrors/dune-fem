@@ -189,7 +189,7 @@ private:
       // if codim is used then insert all sub entities of this codim 
       if(cdUsed[codim])
       {
-        for(int i=0; i<en.template count<codim> (); i++)
+        for(int i=0; i<en.template count<codim> (); ++i)
         {
           lset.insert( hIndexSet. template subIndex<codim> (en,i) );   
         }
@@ -230,7 +230,7 @@ private:
       // if codim is already used, then also insert entities of this codim
       if(cdUsed[codim])
       {
-        for(int i=0; i<en.template count<codim> (); i++)
+        for(int i=0; i<en.template count<codim> (); ++i)
         {
           lset.insert( hIndexSet. template subIndex<codim> (en,i) );   
         }
@@ -245,7 +245,7 @@ private:
       // if codim is already used, then also remove entities of this codim
       if(cdUsed[codim])
       {
-        for(int i=0; i<en.template count<codim> (); i++)
+        for(int i=0; i<en.template count<codim> (); ++i)
         {
           lset.remove( hIndexSet. template subIndex<codim> (en,i) );   
         }
@@ -285,6 +285,7 @@ private:
   // true if any of the higher codims is used 
   mutable bool higherCodims_;
 
+  //! flag is tru if set is in compressed status
   mutable bool compressed_;
 
 public:
@@ -293,20 +294,19 @@ public:
 
   //! Constructor
   AdaptiveLeafIndexSet (const GridType & grid) 
-    : DefaultGridIndexSetBase <GridType> (grid) ,  
-    hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) , 
-    marked_ (false) , markAllU_ (false) , higherCodims_ (false) 
-    //marked_ (false) , markAllU_ (false) , higherCodims_ (true) 
+    : DefaultGridIndexSetBase <GridType> (grid) 
+    , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
+    , marked_ (false) , markAllU_ (false) 
+    , higherCodims_ (false) // higherCodims are not used by default 
     , compressed_(true) // at start the set is compressed 
   {
     // codim 0 is used by default
     codimUsed_[0] = true;
     // all higher codims are not used by default
-    for(int i=1; i<ncodim; i++) codimUsed_[i] = false;
-    //for(int i=1; i<ncodim; i++) codimUsed_[i] = true;
+    for(int i=1; i<ncodim; ++i) codimUsed_[i] = false;
 
     // set the codim of each Codim Set. 
-    for(int i=0; i<ncodim; i++) codimLeafSet_[i].setCodim( i );
+    for(int i=0; i<ncodim; ++i) codimLeafSet_[i].setCodim( i );
 
     resizeVectors();
     // give all entities that lie below the old entities new numbers 
@@ -453,11 +453,10 @@ public:
     codimLeafSet_[0].resize( hIndexSet_.size(0) );
     if(higherCodims_)
     {
-      for(int i=1; i<ncodim; i++) 
+      for(int i=1; i<ncodim; ++i) 
       {  
         if(codimUsed_[i]) 
         {
-          //std::cout << "resize codim " << i << "\n"; 
           codimLeafSet_[i].resize( hIndexSet_.size(i) );
         }
       }
@@ -467,6 +466,7 @@ public:
   //! if grid has changed, resize index vectors, and create 
   //! indices for new entities, new entities are entities that 
   //! lie below the old entities 
+  //- --resize 
   void resize () 
   {
     //std::cout << "Resizing the index set " << this << " \n"; 
@@ -497,7 +497,7 @@ public:
     bool haveToCopy = codimLeafSet_[0].compress(); 
     if(higherCodims_)
     {
-      for(int i=1; i<ncodim; i++) 
+      for(int i=1; i<ncodim; ++i) 
         haveToCopy = (codimLeafSet_[i].compress()) ? true : haveToCopy;
     }
 
@@ -543,14 +543,6 @@ public:
       }
     }
     compressed_ = false;
-  }
-
-  //! return approximate size that is used during restriction 
-  int additionalSizeEstimate () const 
-  { 
-    int addSize = 0; 
-    for(int i=0; i<ncodim; i++) addSize += codimLeafSet_[i].additionalSizeEstimate(); 
-    return addSize;
   }
 
   //! return global index 
