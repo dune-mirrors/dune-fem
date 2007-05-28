@@ -10,6 +10,10 @@ namespace Dune {
   class QuadratureImp;
   
   //! Utility class that factors out the repetitive lookup process.
+  //! the template parameter is only to distinguish the classes for
+  //! different geometry types if the QuadImp are the same for different
+  //! geometry classes 
+  template <int dummy> 
   class QuadCreator 
   {
     //! class holding vector with pointer to quadrature objects 
@@ -35,6 +39,7 @@ namespace Dune {
       //! object is created 
       QuadImp& getQuadrature(const GeometryType& geo, size_t order) 
       {
+        assert( order >= 0 );
         assert( order < vec_.size() );
         // if not exists, create quadrature  
         if(!vec_[order]) 
@@ -77,7 +82,7 @@ namespace Dune {
                                                          int order)
     {
       assert(geo.isCube());
-      return QuadCreator::template provideQuad<CubeQuadratureType>(geo,order);
+      return QuadCreator<0>::template provideQuad<CubeQuadratureType>(geo,order);
     } 
   private:
     QuadratureProvider();
@@ -98,7 +103,7 @@ namespace Dune {
     static const IntegrationPointListType& getQuadrature(const GeometryType& geo,
                                                          int order) 
     {
-      return QuadCreator::template provideQuad<PointQuadratureType>(geo,order);
+      return QuadCreator<0>::template provideQuad<PointQuadratureType>(geo,order);
     }
   private:
     QuadratureProvider();
@@ -121,7 +126,7 @@ namespace Dune {
       assert(geo.isCube() || geo.isSimplex() );
       assert(order >= 0);
 
-      return QuadCreator::template provideQuad<LineQuadratureType> (geo,order);
+      return QuadCreator<0>::template provideQuad<LineQuadratureType> (geo,order);
     }
   private:
     QuadratureProvider();
@@ -144,14 +149,14 @@ namespace Dune {
       assert( geo.isCube() || geo.isSimplex() );
       assert(order >= 0);
 
-      if(geo.isTriangle()) 
-        return QuadCreator::template provideQuad<SimplexQuadratureType>(geo,order);
       if(geo.isQuadrilateral())
-        return QuadCreator::template provideQuad<CubeQuadratureType>(geo,order);
+        return QuadCreator<0>::template provideQuad<CubeQuadratureType>(geo,order);
+      if(geo.isTriangle()) 
+        return QuadCreator<1>::template provideQuad<SimplexQuadratureType>(geo,order);
 
       DUNE_THROW(RangeError, "Element type not available for dim == 2");
       // dummy return
-      return QuadCreator::template provideQuad<SimplexQuadratureType>(geo,0);
+      return QuadCreator<1>::template provideQuad<SimplexQuadratureType>(geo,0);
     }
 
   private:
@@ -178,18 +183,18 @@ namespace Dune {
               geo.isPrism() || geo.isPyramid() );
       assert(order >= 0);
 
-      if(geo.isTetrahedron()) 
-        return QuadCreator::template provideQuad<SimplexQuadratureType> (geo,order);
       if(geo.isHexahedron())
-        return QuadCreator::template provideQuad<CubeQuadratureType> (geo,order);
+        return QuadCreator<0>::template provideQuad<CubeQuadratureType> (geo,order);
+      if(geo.isTetrahedron()) 
+        return QuadCreator<1>::template provideQuad<SimplexQuadratureType> (geo,order);
       if(geo.isPrism())
-        return QuadCreator::template provideQuad<PrismQuadratureType> (geo,order);
+        return QuadCreator<2>::template provideQuad<PrismQuadratureType> (geo,order);
       if(geo.isPyramid())
-        return QuadCreator::template provideQuad<PyramidQuadratureType> (geo,order);
+        return QuadCreator<3>::template provideQuad<PyramidQuadratureType> (geo,order);
 
       DUNE_THROW(RangeError, "Element type not available for dim == 3");
       // dummy return
-      return QuadCreator::template provideQuad<SimplexQuadratureType> (geo,0);
+      return QuadCreator<1>::template provideQuad<SimplexQuadratureType> (geo,0);
     }
 
   private:
