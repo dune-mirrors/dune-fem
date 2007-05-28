@@ -114,6 +114,9 @@ private:
   
   int myCodim_; 
 
+  // actual number of holes 
+  int numberHoles_;
+
   const double memFactor_;
 
 public:
@@ -122,6 +125,7 @@ public:
     : nextFreeIndex_ (0)
     , actSize_(0)
     , myCodim_(-1) 
+    , numberHoles_(0)
     , memFactor_(memoryFactor) 
   {
   }
@@ -177,6 +181,12 @@ public:
   {
     const int size = state_.size();
     for(int i=0; i<size; ++i) state_[i] = UNUSED;
+  }
+
+  //! clear holes, i.e. set number of holes to zero 
+  void clearHoles() 
+  {
+    numberHoles_ = 0;
   }
 
   //! make to index numbers consecutive 
@@ -273,6 +283,7 @@ public:
     // this call only sets the size of the vectors 
     oldIdx_.resize(holes);
     newIdx_.resize(holes);
+    numberHoles_ = oldIdx_.size();
 
     // the next index that can be given away is equal to size
     nextFreeIndex_ = actSize_;
@@ -319,18 +330,20 @@ public:
   //! return number of holes 
   int numberOfHoles () const
   {
-    return oldIdx_.size();
+    return numberHoles_;
   }
 
   //! return old index, for dof manager only 
   int oldIndex (int elNum ) const
   {
+    assert( numberHoles_ == oldIdx_.size() );
     return oldIdx_[elNum]; 
   }
 
   //! return new index, for dof manager only returns index 
   int newIndex (int elNum) const
   {
+    assert( numberHoles_ == newIdx_.size() );
     return newIdx_[elNum]; 
   }
 
