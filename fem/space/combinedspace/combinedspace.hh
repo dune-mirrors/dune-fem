@@ -325,35 +325,31 @@ namespace Dune {
     int oldSize() const { return mapper_.oldSize()*N; }
 
     //! return max number of local dofs per entity 
-    int numberOfDofs () const DUNE_DEPRECATED { return mapper_.numberOfDofs()*N; }
-
-    //! return max number of local dofs per entity 
     int numDofs () const { return mapper_.numDofs()*N; }
 
     //! return old index in dof array of given index ( for dof compress ) 
     inline
-    int oldIndex (int num) const; 
+    int oldIndex (const int hole, const int block) const; 
     
     //! return new index in dof array 
     inline
-    int newIndex (int num) const;
+    int newIndex (const int hole, const int block) const;
 
-    //! return estimate for size that is addtional needed for restriction 
-    //! of data
-    int additionalSizeEstimate() const {
-      return mapper_.additionalSizeEstimate()*N;
-    }
-    //! return true if compress will affect data  
-    bool needsCompress () const 
-    {
-      return mapper_.needsCompress ();
-    }
     //! return number of holes in the data 
-    int numberOfHoles() const 
-    {
-      return mapper_.numberOfHoles()*N; 
-    }
+    int numberOfHoles(const int block) const;
   
+    //! returnn number of mem blocks 
+    int numBlocks() const; 
+
+    //! return current old offset of block 
+    int oldOffSet(const int block) const;
+
+    //! return current offset of block 
+    int offSet(const int block) const;
+
+    //! return true if compress will affect data  
+    bool needsCompress () const;
+
   private:
     //- Private methods
     CombinedMapper(const ThisType& other);

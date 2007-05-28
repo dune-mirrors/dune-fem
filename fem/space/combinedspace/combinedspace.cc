@@ -72,33 +72,72 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
-  newIndex(int num) const 
+  newIndex(const int hole, const int block) const 
   {
-    //assert( false );
     DofConversionUtility<policy> 
       tmpUtilGlobal(chooseSize(N, mapper_.newSize(), Int2Type<policy>()));
 
-    const int component = tmpUtilGlobal.component(num);
-    const int contained = tmpUtilGlobal.containedDof(num);
+    const int component = tmpUtilGlobal.component(hole);
+    const int contained = tmpUtilGlobal.containedDof(hole);
 
-    const int containedNew = mapper_.newIndex(contained);
+    const int containedNew = mapper_.newIndex(contained,block);
 
     return tmpUtilGlobal.combinedDof(containedNew, component);
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
-  oldIndex(int num) const 
+  oldIndex(const int hole, const int block) const 
   {
-    //assert(false);
     DofConversionUtility<policy> 
       tmpUtilGlobal(chooseSize(N, mapper_.size(), Int2Type<policy>()));
 
-    const int component = tmpUtilGlobal.component(num);
-    const int contained = tmpUtilGlobal.containedDof(num);
+    const int component = tmpUtilGlobal.component(hole);
+    const int contained = tmpUtilGlobal.containedDof(hole);
 
-    const int containedNew = mapper_.oldIndex(contained);
+    const int containedNew = mapper_.oldIndex(contained,block);
 
     return tmpUtilGlobal.combinedDof(containedNew, component);
   }
+
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  inline int  CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  numberOfHoles(const int block) const 
+  {
+    return (policy == PointBased) ?
+     (mapper_.numberOfHoles(0)*N) : // in case of point based we have only on
+     (mapper_.numberOfHoles(block));
+  }
+
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  inline int  CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  numBlocks() const 
+  {
+    assert ( policy == PointBased );
+    return (policy == PointBased) ? 1 : N;
+  }
+
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  inline int  CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  oldOffSet(const int block) const 
+  {
+    assert ( policy == PointBased );
+    return 0;
+  }
+
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  inline int  CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  offSet(const int block) const 
+  {
+    assert ( policy == PointBased );
+    return 0;
+  }
+
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  inline bool CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  needsCompress() const 
+  {
+    return mapper_.needsCompress ();
+  }
+
 } // end namespace Dune
