@@ -224,7 +224,7 @@ namespace Dune
     mutable LagrangePointSetMapType lagrangePointSet_;
     
     //! corresponding mapper
-    MapperType *mapper_;
+    mutable MapperType *mapper_;
 
     //! reference to the DoF manager
     DofManagerType &dofManager_;
@@ -400,7 +400,7 @@ namespace Dune
     }
 
     //! obtain the DoF mapper of this space
-    inline const MapperType& mapper () const
+    inline MapperType& mapper () const
     {
       assert( mapper_ != 0 );
       return *mapper_;
