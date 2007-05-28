@@ -49,9 +49,8 @@ public:
     return (dimrange * indexSet_.template index<0> (en,localNum)) + localNum;
   }
 
-  //! return old index, for dof manager only 
-  //! this is the mapping from gobal to old leaf index 
-  int oldIndex (int hole) const
+  //! return old index for hole 
+  int oldIndex (const int hole, int ) const
   {   
     // corresponding number of set is newn 
     const int newn  = static_cast<int> (hole/dimrange);
@@ -60,9 +59,8 @@ public:
     return (dimrange * indexSet_.oldIndex(newn,0)) + local;
   }
 
-  //! return new index, for dof manager only 
-  //! this is the mapping from global to leaf index 
-  int newIndex (int hole) const
+  //! return new index for hole 
+  int newIndex (const int hole, int ) const
   {
     // corresponding number of set is newn 
     const int newn = static_cast<int> (hole / dimrange);
@@ -71,8 +69,8 @@ public:
     return (dimrange * indexSet_.newIndex(newn,0)) + local;
   }
 
-  //! return old size of functions space 
-  int numberOfHoles () const
+  //! return numbber of exsiting hole 
+  int numberOfHoles ( int ) const
   {   
     // this index set works only for codim = 0 at the moment
     return dimrange * indexSet_.numberOfHoles(0);
@@ -82,12 +80,6 @@ public:
   int newSize() const 
   {
     return this->size();
-  }
-
-  // is called once and calcs the insertion points too
-  int additionalSizeEstimate () const 
-  {
-    return dimrange * indexSet_.additionalSizeEstimate();
   }
 
   //! return number of dof per element 
@@ -129,20 +121,20 @@ public:
     return indexSet_.template index<0> (en,localNum);
   }
 
-  //! return old index, for dof manager only 
-  int oldIndex (int hole) const
+  //! return old index of hole 
+  int oldIndex (const int hole, int ) const
   {   
     return indexSet_.oldIndex(hole,0);
   }
 
-  //! return new index, for dof manager only 
-  int newIndex (int hole) const
+  //! return new index of hole 
+  int newIndex (const int hole, int ) const
   {
     return indexSet_.newIndex(hole,0);
   }
 
-  //! return old size of functions space 
-  int numberOfHoles () const
+  //! return number of holes 
+  int numberOfHoles ( int ) const
   {   
     // this index set works only for codim = 0 at the moment
     return indexSet_.numberOfHoles(0);
@@ -154,17 +146,12 @@ public:
     return this->size();
   }
 
-  // is called once and calcs the insertion points too
-  int additionalSizeEstimate () const 
-  {
-    return indexSet_.additionalSizeEstimate();
-  }
-
   //! return number of dof per entity, here this method returns 1
   int numDofs () const 
   {
     return 1;
   }
+
   //! return the sets needsCompress 
   bool needsCompress () const { return indexSet_.needsCompress(); }
 };
@@ -275,12 +262,6 @@ public:
     return dimrange * s;
   }
 
-  // is called once and calcs the insertion points too
-  int additionalSizeEstimate () const 
-  {
-    return indexSet_.additionalSizeEstimate();
-  }
- 
   //! return number of dofs per entity
   int numDofs () const 
   {
@@ -349,15 +330,6 @@ public:
   {   
     return indexSet_.numberOfHoles( myCodim );
   }
-
-  // is called once and calcs the insertion points too
-  int additionalSizeEstimate () const 
-  {
-    return indexSet_.additionalSizeEstimate();
-  }
-
-  //! not used at the moment 
-  void calcInsertPoints () {}; 
 
   //! return number of dofs per entity, i.e. number of basis funcitons per entity
   int numDofs () const
