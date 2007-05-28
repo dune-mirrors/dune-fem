@@ -378,6 +378,16 @@ public:
   {
     return memSize_ * sizeof(T);
   } 
+
+  void print(std::ostream& s) const 
+  {
+    s << "Print DofArray (size = " << size_ << ")\n";
+    for(int i=0; i<size_; ++i)
+    {
+      s << vec_[i] << "\n";
+    }
+
+  }
 };
 
 //! specialisation for int 
@@ -594,8 +604,6 @@ public:
   virtual void resize (int newSize) = 0;
   //! size of space, i.e. mapper.size()
   virtual int size () const = 0;
-  //! additional size needed for restrict 
-  virtual int additionalSizeEstimate () const = 0;
   //! new size of space, i.e. after grid adaptation
   virtual int newSize () const = 0;
   //! returns name of obj
@@ -634,7 +642,7 @@ private:
   typedef MemObject < MapperType , DofArrayType> ThisType;
   
   // the dof set stores number of dofs on entity for each codim
-  const MapperType & mapper_;
+  mutable MapperType & mapper_;
 
   // Array which the dofs are stored in 
   DofArrayType array_;
@@ -650,7 +658,7 @@ private:
 
 public:  
   // Constructor of MemObject, only to call from DofManager 
-  MemObject ( const MapperType & mapper, std::string name ,
+  MemObject ( MapperType & mapper, std::string name ,
     MemObjectCheckType & resizeList, 
     MemObjectCheckType & memResizeList,
     const double memFactor) 
@@ -696,22 +704,19 @@ public:
     return mapper_.numDofs();
   }
 
-  //! return number of entities  
-  int additionalSizeEstimate () const 
-  { 
-    return mapper_.additionalSizeEstimate(); 
-  }
-
   //! resize the memory with the new size 
   void resize () 
   {
-    array_.resize( newSize() );
+    resize ( newSize() );
   }
 
   //! resize the memory with the new size 
-  void resize ( int nSize ) 
+  void resize ( const int nSize ) 
   {
+    // resize memory 
     array_.resize( nSize );
+    // update mapper and move array 
+    moveToRear();
   }
 
   //! reserve memory for what is comming 
@@ -725,9 +730,9 @@ public:
     }
     else 
     {
-      // additionalSizeEstimate == 0 means indexSet is alwyas up2date
+      // if compress is not needed just resize with given size 
       // therefore use newSize to enleage array 
-      assert( additionalSizeEstimate() == 0 );
+      assert( ! mapper_.needsCompress() );
       array_.resize( newSize() );
     }
   }
@@ -735,21 +740,32 @@ public:
   //! copy the dof from the rear section of the vector to the holes 
   void dofCompress () 
   {
+    const int nSize = newSize();
     if( mapper_.needsCompress() )
     {
-      // run over all holes and copy array vules to new place 
-      const int holes = mapper_.numberOfHoles(); 
-      for(int i=0; i<holes; ++i)
+      const int oldSize = mapper_.size();
+      // update mapper to new sizes 
+      mapper_.update();
+
+      const int numBlocks = mapper_.numBlocks();
+      for(int block = 0; block<numBlocks; ++block)
       {
-        assert( mapper_.newIndex(i) < newSize() );
-        // copy value 
-        array_[ mapper_.newIndex(i) ] 
-          = array_[ mapper_.oldIndex(i) ];
+        moveToFront(oldSize,block);
+
+        // run over all holes and copy array vules to new place 
+        const int holes = mapper_.numberOfHoles(block); 
+        for(int i=0; i<holes; ++i)
+        {
+          assert( mapper_.newIndex(i,block) < nSize );
+          // move from old location to new 
+          array_[ mapper_.newIndex(i,block) ] 
+            = array_[ mapper_.oldIndex(i,block) ];
+        }
       }
     }
 
     // store new size, which should be smaller then actual size 
-    array_.resize( newSize() );
+    array_.resize( nSize );
   }
  
   //! return reference to array for DiscreteFunction 
@@ -760,6 +776,72 @@ public:
   {
     return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
   }
+
+private:  
+  // move array to rear insertion points 
+  void moveToRear() 
+  {
+    // calculate new insertion points 
+    const int oldSize = mapper_.size();
+
+    // update mapper to new sizes 
+    mapper_.update();
+
+    // now check all blocks beginning with the largest 
+    const int numBlocks = mapper_.numBlocks();
+    for(int block = numBlocks-1; block>=0; --block)
+    {
+      // get old off set 
+      const int oldOffSet = mapper_.oldOffSet(block);
+      // if off set is not zero  
+      if(oldOffSet > 0)
+      {
+        // get upperBound 
+        const int upperBound = (block == numBlocks-1) ? 
+                      oldSize : mapper_.oldOffSet(block+1);
+        // get new end of block which is offSet + (length of block - 1) 
+        int newIdx = mapper_.offSet(block) + (upperBound - oldOffSet - 1);
+        // copy all entries backwards 
+        for(int oldIdx = upperBound-1; oldIdx >= oldOffSet; --oldIdx, --newIdx )
+        {
+          // move value to new location 
+          array_[newIdx] = array_[oldIdx];
+#ifndef NDEBUG
+          // for debugging purpose 
+          array_[oldIdx ] = 0.0;
+#endif
+        }
+      }
+    }
+  }
+
+  //! move block to front again 
+  void moveToFront(const int oldSize, const int block) 
+  {
+    // get insertion point from block
+    const int oldOffSet = mapper_.oldOffSet(block);
+
+    // only if block is not starting from zero 
+    if(oldOffSet > 0)
+    {
+      // for last section upperBound is size 
+      const int upperBound = (block == mapper_.numBlocks()-1) ? 
+                   oldSize : mapper_.oldOffSet(block+1);
+
+      // get new off set that should be smaller then old one
+      int newIdx = mapper_.offSet(block);
+      for(int oldIdx = oldOffSet; oldIdx<upperBound; ++oldIdx, ++newIdx )
+      {
+        // copy to new location 
+        array_[newIdx] = array_[oldIdx];
+#ifndef NDEBUG 
+        // for debugging issues only 
+        array_[oldIdx] = 0.0;
+#endif
+      }
+    }
+  }
+
 };
 
 
@@ -818,12 +900,6 @@ public:
   int elementMemory () const 
   {
     return mapper_.numDofs();
-  }
-
-  //! return number of entities  
-  int additionalSizeEstimate () const 
-  { 
-    return mapper_.additionalSizeEstimate(); 
   }
 
   //! resize the memory with the new size 
@@ -910,12 +986,6 @@ public:
   int elementMemory () const 
   {
     return mapper_.numDofs();
-  }
-
-  //! return number of entities  
-  int additionalSizeEstimate () const 
-  { 
-    return mapper_.additionalSizeEstimate(); 
   }
 
   //! resize the memory with the new size 
@@ -1206,7 +1276,7 @@ public:
   //! we know our DofStorage which is the actual DofArray  
   template <class DofStorageType, class MapperType >
   std::pair<MemObjectInterface*, DofStorageType*>
-  addDofSet(const DofStorageType* ds, const MapperType& mapper, std::string name);
+  addDofSet(const DofStorageType* ds, MapperType& mapper, std::string name);
 
   //! add dofset to dof manager 
   //! this method should be called at signIn of DiscreteFucntion, and there
@@ -1252,13 +1322,7 @@ public:
   void resizeForRestrict () 
   {
     ++sequence_;
-    
-    ListIteratorType endit  = memList_.end();
-    for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
-    {
-      int addSize = (*it)->additionalSizeEstimate();
-      (*it)->resize ( (*it)->size() + addSize );
-    }
+    resizeDofMem();
   }
   
   //! check if there is still enough memory 
@@ -1346,6 +1410,9 @@ public:
   //! this will increase the sequence counter by 1 
   void compress() 
   {
+    // makr next sequence 
+    ++sequence_;
+
     // compress indexsets first 
     {
       IndexListIteratorType endit  = indexList_.end();
@@ -1369,7 +1436,6 @@ public:
         (*it)->dofCompress () ;
       }
     }
-    ++sequence_;
   }
 
   //! add data handler for data inlining to dof manager
@@ -1514,7 +1580,7 @@ template <class GridType>
 template <class DofStorageType, class MapperType >
 std::pair<MemObjectInterface*, DofStorageType*>
 DofManager<GridType>::
-addDofSet(const DofStorageType * ds, const MapperType & mapper, std::string name)
+addDofSet(const DofStorageType * ds, MapperType & mapper, std::string name)
 {
   assert( name.c_str() != 0);
   dverb << "Adding '" << name << "' to DofManager! \n";
