@@ -273,9 +273,11 @@ namespace Dune {
 
     static size_t maxOrder() { 
 #ifdef HAVE_ALBERTA_FOUND
-      return 7; 
+      // highest order of Alberta quads 
+      return 17; 
 #else 
-      return 5; 
+      // highest order of UG quads 
+      return 12; 
 #endif
     }
 
@@ -330,10 +332,10 @@ namespace Dune {
     static size_t maxOrder() { 
 #ifdef HAVE_ALBERTA_FOUND
       // highest order of Alberta quads 
-      return 17; 
+      return 7; 
 #else 
       // highest order of UG quads 
-      return 12; 
+      return 5; 
 #endif
     }
 
