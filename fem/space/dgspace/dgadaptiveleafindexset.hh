@@ -120,7 +120,7 @@ public:
   }
 
   //! Destructor
-  virtual ~DGAdaptiveLeafIndexSet () {};
+  virtual ~DGAdaptiveLeafIndexSet () {}
 
   //! return type of index set, for GrapeDataIO
   static int type () { return myType; }
@@ -362,12 +362,6 @@ public:
       codimLeafSet_.remove ( idx );
       compressed_ = false;
     }
-  }
-
-  //! return approximate size that is used during restriction 
-  int additionalSizeEstimate () const 
-  {
-    return codimLeafSet_.additionalSizeEstimate();
   }
 
   //! return global index 
