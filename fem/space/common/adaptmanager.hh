@@ -255,23 +255,33 @@ private:
 
     if(restr)
     {
-      dm_.resizeForRestrict();
-      
-      typedef typename DofManagerType :: IndexSetRestrictProlongType IndexSetRPType;
-      typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
-      COType tmpop ( dm_.indexSetRPop() , rpOp_ );
-
+      // get macro grid iterator 
       typedef typename GridType::template Codim<0>::
         template Partition<pitype> :: LevelIterator LevelIterator;
 
-      // make a hierarchical run through grid 
+      // make a hierarchical to insert all elements 
+      // that are father of elements that might be coarsened 
       {
         // get macro iterator 
         LevelIterator endit  = grid_.template lend<0,pitype>   ( 0 );
         for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
             it != endit; ++it )
         {
-          hierarchicRestrict( *it , tmpop );
+          hierarchicRestrict( *it , dm_.indexSetRPop() );
+        }
+      }
+
+      // now resize memory 
+      dm_.resizeForRestrict();
+
+      // now project all data to fathers 
+      {
+        // get macro iterator 
+        LevelIterator endit  = grid_.template lend<0,pitype>   ( 0 );
+        for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
+            it != endit; ++it )
+        {
+          hierarchicRestrict( *it , rpOp_ );
         }
       }
     }
@@ -282,7 +292,9 @@ private:
 
     if(ref)
     {
+      // resizes the index sets and resizes the memory
       dm_.resize();
+
       typedef typename DofManagerType :: IndexSetRestrictProlongType IndexSetRPType;
       typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
       COType tmpop ( dm_.indexSetRPop() , rpOp_ );
@@ -290,7 +302,7 @@ private:
       typedef typename GridType::template Codim<0>::
         template Partition<pitype> :: LevelIterator LevelIterator;
 
-      // make run through grid 
+      // make run through grid to project data 
       LevelIterator endit = grid_.template lend<0,pitype> ( 0 );
       for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
           it != endit; ++it )
