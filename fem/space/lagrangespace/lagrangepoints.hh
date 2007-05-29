@@ -855,7 +855,7 @@ namespace Dune
 
     //! Constructor
     LagrangeIntegrationPoints(const Entity& en, int order)
-      : BaseType(en, order)
+      : BaseType(en.geometry().type(), order)
     {
     }
   };
