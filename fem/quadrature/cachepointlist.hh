@@ -76,7 +76,7 @@ namespace Dune {
     
   public:
     //! Constructor
-    CachingPointList(const Entity& en, int order) : BaseType(en, order)
+    CachingPointList(const GeometryType& geo, int order) : BaseType(geo, order)
     {
       CacheProvider<GridType, codimension>::registerQuadrature(this->quadImp());
     }

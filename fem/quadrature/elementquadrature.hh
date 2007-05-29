@@ -73,7 +73,7 @@ namespace Dune {
     //! \param en Entity the quadrature lives on (respectively on its reference element).
     //! \param order Desired minimal order of the quadrature.
     ElementQuadrature(const Entity& en, int order) :
-      BaseType(en, order)
+      BaseType(en.geometry().type(), order)
     {}
     
     //! Access to the weight of quadrature point i.

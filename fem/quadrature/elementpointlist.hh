@@ -48,16 +48,16 @@ namespace Dune {
 
     //! Type for coordinates in the codim-0 reference element 
     typedef typename IntegrationPointListType::CoordinateType CoordinateType;
-    
+
     //! Type of the codim-0 entity
     typedef typename GridType::template Codim<0>::Entity Entity;
-
+    
   public:
     //! Constructor
-    //! \param en Entity the quadrature lives on (respectively on its reference element).
+    //! \param geo GeometryType the quadrature lives on 
     //! \param order Desired minimal order of the quadrature.
-    ElementIntegrationPointList(const Entity& en, int order) :
-      quad_(en.geometry().type(), order)
+    ElementIntegrationPointList(const GeometryType& geo, int order) :
+      quad_(geo, order)
     {}
     
     //! The total number of quadrature points.
