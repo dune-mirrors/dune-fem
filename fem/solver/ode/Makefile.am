@@ -1,6 +1,13 @@
 noinst_LTLIBRARIES = libodesolver.la
-libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@ 
-libodesolver_la_LIBADD  =
+
+if MPI
+libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@ $(MPI_CPPFLAGS)
+libodesolver_la_LIBADD  = $(MPI_LDFLAGS) $(MPILIBS)
+else 
+libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@
+libodesolver_la_LIBADD  = 
+endif
+
 libodesolver_la_SOURCES = odeobjectfiles.cc 
 
 odedir = $(includedir)/dune/fem/solver/ode
