@@ -78,20 +78,19 @@ namespace Dune
     enum { dim = GridType :: dimension };
 
     typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
-    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, 
-                                           GridPartType,
-                                           polOrder >
+    typedef LagrangeDiscreteFunctionSpace
+            < FunctionSpaceType, GridPartType, polOrder, CachingStorage >
       DiscreteFunctionSpaceType;
     typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
       DiscreteFunctionType;
 
-    enum { elementMatrixSize = 1000 };  
+    enum { elementMatrixSize = 100 };  
     typedef FieldMatrixAdapter< FieldMatrix< double, 
                                              elementMatrixSize,
                                              elementMatrixSize> >
       ElementMatrixType; 
 
-    typedef ElementQuadrature< GridPartType, 0 > ElementQuadratureType;
+    typedef CachingQuadrature< GridPartType, 0 > ElementQuadratureType;
     typedef ElementQuadrature< GridPartType, 1 > IntersectionQuadratureType;
     enum { quadDegree = 2*polOrder+2 }; //<! degree of quadrature
   

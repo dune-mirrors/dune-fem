@@ -340,7 +340,7 @@ typedef OEMBICGSTABOp<DiscreteFunctionType,EllipticOperatorType> InverseOperator
 
 
 
-double algorithm( const char *filename, int maxlevel, int turn )
+double algorithm( const std :: string filename, int maxlevel, int turn )
 {
   GridPtr< GridType > gridptr( filename );
   gridptr->globalRefine( maxlevel );
@@ -526,7 +526,7 @@ int main ( int argc, char **argv )
     exit( 1 );
   }
   
-  int ml = atoi( argv[1] );
+  int level = atoi( argv[1] );
   double error[ 2 ];
 
   #if PDIM == 2
@@ -537,13 +537,10 @@ int main ( int argc, char **argv )
   std::cout << "loading dgf " << macroGridName << std :: endl;
 
   const int steps = DGFGridInfo< GridType > :: refineStepsForHalf();
-  ml = (ml - steps > 0) ? ml - steps : 0;
-  
+  level = (level > 0 ? level - 1 : 0);
+ 
   for( int i = 0; i < 2; ++i )
-  {
-    error[ i ] = algorithm( macroGridName.c_str(), ml, i );
-    ml += steps;
-  }
+    error[ i ] = algorithm( macroGridName, (level+i) * steps, i );
 
   double eoc = log( error[ 0 ] / error[ 1 ]) / M_LN2;
   std :: cout << "EOC = " << eoc << std :: endl;

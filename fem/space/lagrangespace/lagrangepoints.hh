@@ -12,17 +12,17 @@ namespace Dune
 
   template< GeometryType :: BasicType type,
             unsigned int dim,
-            unsigned int order >
+            unsigned int polOrder >
   class LagrangePoint
   : public GenericLagrangePoint
-    < typename GeometryWrapper< type, dim > :: GenericGeometryType, order >
+    < typename GeometryWrapper< type, dim > :: GenericGeometryType, polOrder >
   {
   private:
     typedef GeometryWrapper< type, dim > GeometryWrapperType;
     typedef GenericLagrangePoint
-      < typename GeometryWrapperType :: GenericGeometryType, order >
+      < typename GeometryWrapperType :: GenericGeometryType, polOrder >
       BaseType;
-    typedef LagrangePoint< type, dim, order > ThisType;
+    typedef LagrangePoint< type, dim, polOrder > ThisType;
 
   public:
     enum { dimension = BaseType :: dimension };
@@ -79,22 +79,282 @@ namespace Dune
   };
 
 
-  
-  template< class FieldImp, unsigned int dim, unsigned int polOrder >
-  class LagrangePointSetInterface;
 
-  
+  template< class FieldImp, unsigned int dim, unsigned int polOrder >
+  class LagrangePointListInterface
+  : public IntegrationPointListImp< FieldImp, dim >
+  {
+  public:
+    //! field type of points
+    typedef FieldImp FieldType;
+
+    //! dimension of points
+    enum { dimension = dim };
+    
+    //! polynomial order of corresponding base functions
+    enum { polynomialOrder = polOrder };
+
+    //! type of points
+    typedef FieldVector< FieldType, dimension > CoordinateType;
+
+    struct DofInfo
+    {
+      unsigned int codim;
+      unsigned int subEntity;
+      unsigned int dofNumber;
+    };
+
+  private:
+    typedef LagrangePointListInterface< FieldType, dimension, polynomialOrder >
+      ThisType;
+    typedef IntegrationPointListImp< FieldType, dimension > BaseType;
+
+  private:
+    std :: vector< DofInfo > dofInfos_;
+
+  public:
+    LagrangePointListInterface( const size_t id )
+    : BaseType( id ),
+      dofInfos_()
+    {
+    }
+
+  private:
+    LagrangePointListInterface ( const ThisType &other )
+    {
+    }
+
+  public:
+    inline const DofInfo& dofInfo( unsigned int index ) const
+    {
+      return dofInfos_[ index ];
+    }
+    
+    inline void dofSubEntity( unsigned int index,
+                              unsigned int &codim, 
+                              unsigned int &subEntity,
+                              unsigned int &dofNumber ) const
+    {
+      const DofInfo &dofInfo = dofInfos_[ index ];
+      codim = dofInfo.codim;
+      subEntity = dofInfo.subEntity;
+      dofNumber = dofInfo.dofNumber;
+    }
+    
+    virtual unsigned int entityDofNumber ( unsigned int codim,
+                                           unsigned int subEntity,
+                                           unsigned int dofNumber ) const = 0;
+    
+    virtual GeometryType geometry () const = 0;
+
+    virtual unsigned int maxDofs ( unsigned int codim ) const = 0;
+
+    inline static int maxOrder ()
+    {
+      return polynomialOrder;
+    }
+
+    virtual unsigned int numDofs ( unsigned int codim,
+                                   unsigned int subEntity ) const = 0;
+
+    virtual int order () const
+    {
+      return polynomialOrder;
+    }
+
+  protected:
+    inline void addDofInfo( const DofInfo &dofInfo )
+    {
+      dofInfos_.push_back( dofInfo );
+    }
+  };
+
+
 
   template< class FieldImp,
+            GeometryType :: BasicType type,
             unsigned int dim,
+            unsigned int polOrder >
+  class LagrangePointListImplementation
+  : public LagrangePointListInterface< FieldImp, dim, polOrder >
+  {
+  public:
+    //! field type of points
+    typedef FieldImp FieldType;
+
+    //! dimension of points
+    enum { dimension = dim };
+
+    //! polynomial order of corresponding base functions
+    enum { polynomialOrder = polOrder };
+
+    //! type of points
+    typedef FieldVector< FieldType, dimension > CoordinateType;
+
+  private:
+    typedef LagrangePointListImplementation
+            < FieldType, type, dimension, polynomialOrder >
+      ThisType;
+    typedef LagrangePointListInterface< FieldType, dimension, polynomialOrder >
+      BaseType;
+
+    typedef LagrangePoint< type, dimension, polynomialOrder >
+      LagrangePointType;
+    
+    enum { numLagrangePoints = LagrangePointType :: numLagrangePoints };
+
+  public:
+    LagrangePointListImplementation ( const size_t id )
+    : BaseType( id )
+    {
+       for( unsigned int i = 0; i < numLagrangePoints; ++i ) {
+        LagrangePointType pt( i );
+        
+        CoordinateType local;
+        pt.local( local );
+        this->addIntegrationPoint( local );
+        
+        typename BaseType :: DofInfo dofInfo;
+        pt.dofSubEntity( dofInfo.codim, dofInfo.subEntity, dofInfo.dofNumber );
+        this->addDofInfo( dofInfo );
+      }
+    }
+    
+    LagrangePointListImplementation ( const GeometryType &geo,
+                                      const int order,
+                                      const size_t id )
+    : BaseType( id )
+    {
+      assert( order <= polynomialOrder );
+      assert( geo == this->geometry() );
+         
+      for( unsigned int i = 0; i < numLagrangePoints; ++i ) {
+        LagrangePointType pt( i );
+        
+        CoordinateType local;
+        pt.local( local );
+        this->addIntegrationPoint( local );
+        
+        typename BaseType :: DofInfo dofInfo;
+        pt.dofSubEntity( dofInfo.codim, dofInfo.subEntity, dofInfo.dofNumber );
+        this->addDofInfo( dofInfo );
+      }
+    }
+
+  private:
+    LagrangePointListImplementation ( const ThisType &other )
+    {
+    }
+
+  public:
+    virtual unsigned int entityDofNumber ( unsigned int codim,
+                                           unsigned int subEntity,
+                                           unsigned int dofNumber ) const
+    {
+      return LagrangePointType :: entityDofNumber
+               ( codim, subEntity, dofNumber );
+    }
+
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( type, dimension );
+    }
+
+    virtual unsigned int maxDofs ( unsigned int codim ) const
+    {
+      return LagrangePointType :: maxDofs( codim );
+    }
+
+    virtual unsigned int numDofs ( unsigned int codim,
+                                   unsigned int subEntity ) const
+    {
+      return LagrangePointType :: numDofs( codim, subEntity );
+    }
+  };
+
+
+  
+  template< class GridPartImp, unsigned int polOrder >
+  struct LagrangePointSetTraits
+  {
+    //! type of grid partition
+    typedef GridPartImp GridPartType;
+
+    //! polynomial order of corresponding base functions
+    enum { polynomialOrder = polOrder };
+
+    //! type of grid
+    typedef typename GridPartType :: GridType GridType;
+    
+    //! field type of coordinates
+    typedef typename GridType :: ctype FieldType;
+
+    //! dimension of points
+    enum { dimension = GridType :: dimension };
+
+    //! codimension of point set
+    enum { codimension = 0 };
+
+    //! default defines for used point lists
+    template< typename ct, int dim >
+    struct PointListTraits
+    {
+      typedef LagrangePointListImplementation
+              < ct, GeometryType :: simplex, dimension, polynomialOrder >
+        PointQuadratureType;
+
+      typedef LagrangePointListImplementation
+              < ct, GeometryType :: simplex, dimension, polynomialOrder >
+        LineQuadratureType;
+      
+      typedef LagrangePointListImplementation
+              < ct, GeometryType :: simplex, dimension, polynomialOrder >
+        SimplexQuadratureType;
+ 
+      typedef LagrangePointListImplementation
+              < ct, GeometryType :: cube, dimension, polynomialOrder >
+        CubeQuadratureType;
+      
+      typedef LagrangePointListImplementation
+              < ct, GeometryType :: prism, dimension, polynomialOrder >
+        PrismQuadratureType;
+      
+      typedef LagrangePointListImplementation
+              < ct, GeometryType :: pyramid, dimension, polynomialOrder >
+        PyramidQuadratureType;
+      
+      //! type of integration point list implemementation 
+      typedef LagrangePointListInterface< ct, dim, polynomialOrder >
+        IntegrationPointListType; 
+    }; 
+
+    //! type of used integration point list 
+    typedef IntegrationPointList< FieldType, dimension, PointListTraits > IntegrationPointListType;
+
+    //! type of global coordinate 
+    typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
+  };
+
+
+
+  template< class GridPartImp, unsigned int polOrder >
+  class LagrangePointSet;
+
+  
+
+  template< class GridPartImp,
             unsigned int codim,
             unsigned int polOrder >
   class SubEntityLagrangePointIterator
   {
   public:
-    typedef FieldImp FieldType;
+    typedef GridPartImp GridPartType;
 
-    enum { dimension = dim };
+    typedef typename GridPartType :: GridType GridType;
+
+    typedef typename GridType :: ctype FieldType;
+
+    enum { dimension = GridType :: dimension };
     enum { codimension = codim };
 
     enum { polynomialOrder = polOrder };
@@ -102,13 +362,12 @@ namespace Dune
     typedef FieldVector< FieldType, dimension > pointType;
 
   private:
-    typedef SubEntityLagrangePointIterator< FieldType,
-                                            dimension,
+    typedef SubEntityLagrangePointIterator< GridPartType,
                                             codimension,
                                             polynomialOrder >
       ThisType;
 
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+    typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
 
     typedef ReferenceElementContainer< FieldType, dimension >
@@ -267,15 +526,18 @@ namespace Dune
  
 
 
-  template< class FieldImp,
-            unsigned int dim,
+  template< class GridPartImp,
             unsigned int polOrder >
-  class SubEntityLagrangePointIterator< FieldImp, dim, 0, polOrder >
+  class SubEntityLagrangePointIterator< GridPartImp, 0, polOrder >
   {
   public:
-    typedef FieldImp FieldType;
+    typedef GridPartImp GridPartType;
 
-    enum { dimension = dim };
+    typedef typename GridPartType :: GridType GridType;
+
+    typedef typename GridType :: ctype FieldType;
+
+    enum { dimension = GridType :: dimension };
     enum { codimension = 0 };
 
     enum { polynomialOrder = polOrder };
@@ -283,13 +545,12 @@ namespace Dune
     typedef FieldVector< FieldType, dimension > pointType;
 
   private:
-    typedef SubEntityLagrangePointIterator< FieldType,
-                                            dimension,
+    typedef SubEntityLagrangePointIterator< GridPartType,
                                             codimension,
                                             polynomialOrder >
       ThisType;
 
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+    typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
 
   private:
@@ -373,83 +634,131 @@ namespace Dune
   };
 
 
-  
-  template< class FieldImp, unsigned int dim, unsigned int polOrder >
-  class LagrangePointSetInterface
+
+  template< class GridPartImp, unsigned int polOrder >
+  class LagrangePointSet
+  : public CachingPointList< GridPartImp, 0, 
+                             LagrangePointSetTraits< GridPartImp, polOrder > >
   {
   public:
-    typedef FieldImp FieldType;
+    typedef LagrangePointSetTraits< GridPartImp, polOrder > Traits;
 
-    enum { dimension = dim };
+    typedef typename Traits :: GridPartType GridPartType;
 
-    enum { polynomialOrder = polOrder };
+    typedef typename Traits :: FieldType FieldType;
 
-    typedef FieldVector< FieldType, dimension > PointType;
+    enum { dimension = Traits :: dimension };
+    
+    enum { polynomialOrder = Traits :: polynomialOrder };
+
+    typedef typename Traits :: CoordinateType CoordinateType;
+    typedef typename Traits :: CoordinateType PointType;
 
     template< unsigned int codim >
     struct Codim
     {
       //! type of iterator over DoF numbers in a subentity
-      typedef SubEntityLagrangePointIterator< FieldType, 
-                                              dimension,
+      typedef SubEntityLagrangePointIterator< GridPartType, 
                                               codim,
                                               polynomialOrder >
         SubEntityIteratorType;
     };
    
   private:
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+    typedef LagrangePointSet< GridPartType, polynomialOrder >
       ThisType;
+    typedef CachingPointList< GridPartType, 0, Traits > BaseType;
+
+    typedef typename BaseType :: IntegrationPointListType
+                              :: IntegrationPointListType
+      LagrangePointListType;
+
+  public:
+    typedef typename LagrangePointListType :: DofInfo DofInfo;
+
+  private:
+    const LagrangePointListType &lagrangePointList_;
 
   public:
     //! constructor
-    LagrangePointSetInterface ()
+    inline LagrangePointSet ( const GeometryType &geometry )
+    : BaseType( geometry, polynomialOrder ),
+      lagrangePointList_( this->quadImp().ipList() )
+    {
+    }
+
+    //! copy constructor
+    inline LagrangePointSet ( const ThisType &other )
+      : BaseType( other ),
+        lagrangePointList_( this->quadImp().ipList() )
     {
     }
 
   private:
-    // Disallow the copy constructor
-    LagrangePointSetInterface ( const ThisType &pointSet )
+    // kill the assignment operator
+    inline ThisType& operator=( const ThisType &other )
     {
+      assert( false );
     }
 
   public:
-    //! destructor
-    virtual ~LagrangePointSetInterface ()
-    {
-    }
-
     //! obtain a Lagrange point
-    virtual const PointType& operator[] ( unsigned int index ) const = 0;
-
-    virtual void dofSubEntity ( unsigned int index,
-                                unsigned int &codim,
-                                unsigned int &subEntity ) const = 0;
- 
-    virtual void dofSubEntity ( unsigned int index,
-                                unsigned int &codim,
-                                unsigned int &subEntity,
-                                unsigned int &dofNumber ) const = 0;
- 
-    virtual unsigned int entityDofNumber ( unsigned int codim,
-                                           unsigned int subEntity,
-                                           unsigned int dofNumber ) const = 0;
-
-    virtual const GeometryType geometryType () const = 0;
-
-    virtual unsigned int maxDofs ( unsigned int codim ) const = 0;
-    
-    virtual unsigned int numDofs ( unsigned int codim,
-                                   unsigned int subEntity ) const = 0;
-
-    //! quadrature-like interface to obtain a Lagrange point
-    inline const PointType& point( unsigned int index ) const
+    inline const PointType& operator[] ( unsigned int index ) const
     {
-      return this->operator[]( index );
+      return this->point( index );
     }
-   
+
+    inline const DofInfo& dofInfo( unsigned int index ) const
+    {
+      return lagrangePointList_.dofInfo( index );
+    }
+
+    inline void dofSubEntity ( unsigned int index,
+                               unsigned int &codim,
+                               unsigned int &subEntity ) const
+    {
+      unsigned int dofNumber;
+      return lagrangePointList_.dofSubEntity
+               ( index, codim, subEntity, dofNumber );
+    }
+ 
+    inline void dofSubEntity ( unsigned int index,
+                               unsigned int &codim,
+                               unsigned int &subEntity,
+                               unsigned int &dofNumber ) const
+    {
+      return lagrangePointList_.dofSubEntity
+               ( index, codim, subEntity, dofNumber );
+    }
+ 
+    inline unsigned int entityDofNumber ( unsigned int codim,
+                                          unsigned int subEntity,
+                                          unsigned int dofNumber ) const
+    {
+      return lagrangePointList_.entityDofNumber( codim, subEntity, dofNumber );
+    }
+
+    inline const GeometryType geometryType () const
+    {
+      return this->geometry();
+    }
+
+    inline unsigned int maxDofs ( unsigned int codim ) const
+    {
+      return lagrangePointList_.maxDofs( codim );
+    }
+    
+    inline unsigned int numDofs ( unsigned int codim,
+                                  unsigned int subEntity ) const
+    {
+      return lagrangePointList_.numDofs( codim, subEntity );
+    }
+
     //! get number of Lagrange points
-    virtual unsigned int size () const = 0;
+    inline unsigned int size () const
+    {
+      return this->nop();
+    }
 
   public:
     template< unsigned int codim >
@@ -467,398 +776,5 @@ namespace Dune
     }
   };
 
-
-
-  template< class FieldImp,
-            GeometryType :: BasicType type,
-            unsigned int dim,
-            unsigned int polOrder >
-  class LagrangePointSet
-  : public LagrangePointSetInterface< FieldImp, dim, polOrder >
-  {
-  public:
-    typedef FieldImp FieldType;
-
-    enum { dimension = dim };
-
-    enum { polynomialOrder = polOrder };
-    
-    typedef LagrangePoint< type, dimension, polynomialOrder >
-      LagrangePointType;
-
-    enum { numLagrangePoints = LagrangePointType :: numLagrangePoints };
-    
-  private:
-    typedef LagrangePointSet< FieldType, type, dimension, polynomialOrder >
-      ThisType;
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
-      BaseType;
-
-  public:
-    typedef typename BaseType :: PointType PointType;
-
-  private:
-     PointType points_[ numLagrangePoints ];
-     unsigned int codim_[ numLagrangePoints ];
-     unsigned int subEntity_[ numLagrangePoints ];
-     unsigned int dofNumber_[ numLagrangePoints ];
-
-  public:
-    LagrangePointSet ()
-    : BaseType()
-    {
-      for( unsigned int i = 0; i < numLagrangePoints; ++i ) {
-        LagrangePointType pt( i );
-        pt.local( points_[ i ] );
-        pt.dofSubEntity( codim_[ i ],
-                         subEntity_[ i ],
-                         dofNumber_[ i ] );
-      }
-    }
-
-  private:
-    // Disallow the copy constructor
-    LagrangePointSet ( const ThisType &pointSet )
-    {
-    }
-
-  public:
-    virtual ~LagrangePointSet ()
-    {
-    }
-
-    virtual const PointType& operator[] ( unsigned int index ) const
-    {
-      assert( index < numLagrangePoints );
-      return points_[ index ];
-    }
-
-    virtual void dofSubEntity ( unsigned int index,
-                                unsigned int &codim,
-                                unsigned int &subEntity ) const
-    {
-      assert( index < numLagrangePoints );
-      codim = codim_[ index ];
-      subEntity = subEntity_[ index ];
-    }
- 
-    virtual void dofSubEntity ( unsigned int index,
-                                unsigned int &codim,
-                                unsigned int &subEntity,
-                                unsigned int &dofNumber ) const
-    {
-      assert( index < numLagrangePoints );
-      codim = codim_[ index ];
-      subEntity = subEntity_[ index ];
-      dofNumber = dofNumber_[ index ];
-    }
-    
-    virtual unsigned int entityDofNumber ( unsigned int codim,
-                                           unsigned int subEntity,
-                                           unsigned int dofNumber ) const
-    {
-      return LagrangePointType :: entityDofNumber
-               ( codim, subEntity, dofNumber );
-    }
-
-    virtual const GeometryType geometryType () const
-    {
-      return GeometryType( type, dimension );
-    }
-
-    virtual unsigned int maxDofs ( unsigned int codim ) const
-    {
-      return LagrangePointType :: maxDofs( codim );
-    }
-
-    virtual unsigned int numDofs ( unsigned int codim,
-                                   unsigned int subEntity ) const
-    {
-      return LagrangePointType :: numDofs( codim, subEntity );
-    }
-
-    virtual unsigned int size () const
-    {
-      return numLagrangePoints;
-    }
-  };
-
-
-
-  template< class FieldImp, unsigned int dim, unsigned int polOrder >
-  class LagrangePointSetFactory
-  {
-  public:
-    typedef FieldImp FieldType;
-
-    enum { dimension = dim };
-
-    enum { polynomialOrder = polOrder };
-
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
-      LagrangePointSetType;
-
-  private:
-    typedef LagrangePointSetFactory< FieldType, dimension, polynomialOrder >
-      ThisType;
-
-  public:
-    inline static LagrangePointSetType*
-       createObject ( const GeometryType type )
-    {
-      const GeometryType :: BasicType basicType = type.basicType();
-      
-      switch( basicType ) {
-      case GeometryType :: simplex:
-        return new LagrangePointSet< FieldType,
-                                     GeometryType :: simplex, dimension,
-                                     polynomialOrder >();
-
-      case GeometryType :: cube:
-        return new LagrangePointSet< FieldType,
-                                     GeometryType :: cube, dimension,
-                                     polynomialOrder >();
-
-      default:
-        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-      }
-    }
-
-    inline static void deleteObject( LagrangePointSetType *pointSet )
-    {
-      delete pointSet;
-    }
-  };
-
-
-
-  template< class FieldImp, unsigned int polOrder >
-  class LagrangePointSetFactory< FieldImp, 3, polOrder >
-  {
-  public:
-    typedef FieldImp FieldType;
-
-    enum { dimension = 3 };
-
-    enum { polynomialOrder = polOrder };
-
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
-      LagrangePointSetType;
-
-  private:
-    typedef LagrangePointSetFactory< FieldType, dimension, polynomialOrder >
-      ThisType;
-
-  public:
-    inline static LagrangePointSetType*
-      createObject ( const GeometryType &type )
-    {
-      const GeometryType :: BasicType basicType = type.basicType();
-      
-      switch( basicType ) {
-      case GeometryType :: simplex:
-        return new LagrangePointSet< FieldType,
-                                     GeometryType :: simplex, dimension,
-                                     polynomialOrder >();
-
-      case GeometryType :: cube:
-        return new LagrangePointSet< FieldType,
-                                     GeometryType :: cube, dimension,
-                                     polynomialOrder >();
-
-       
-      case GeometryType :: pyramid:
-        return new LagrangePointSet< FieldType,
-                                     GeometryType :: pyramid, dimension,
-                                     polynomialOrder >();
-
-      
-      case GeometryType :: prism:
-        return new LagrangePointSet< FieldType,
-                                     GeometryType :: prism, dimension,
-                                     polynomialOrder >();
-
-      default:
-        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-      }
-    }
-
-    inline static void deleteObject( LagrangePointSetType *pointSet )
-    {
-      delete pointSet;
-    }
-  };
-
-  template< typename ct, int dim >
-  class LagrangeIntegrationPointFactory : 
-    public IntegrationPointListImp<ct,dim> 
-  {
-    typedef IntegrationPointListImp<ct,dim>         BaseType;
-    typedef LagrangeIntegrationPointFactory<ct,dim> ThisType;   
-    template <class PointListType, int polOrd> 
-    struct AddLagrangePoints 
-    {
-      static void add(PointListType& list, 
-                      const GeometryType& geo,
-                      const int order)
-      {
-        if(order == polOrd)
-        {
-          typedef LagrangePointSetFactory< ct, dim, polOrd > LagrangePointSetFactoryType;
-          typedef typename LagrangePointSetFactoryType :: LagrangePointSetType LagrangePointSetType;
-
-          typedef SingletonList< GeometryType,
-                                 LagrangePointSetType,
-                                 LagrangePointSetFactoryType >
-              LagrangePointSetSingletonProviderType;
-
-          // get lagrange point set 
-          const LagrangePointSetType& lagrangePointSet
-            = LagrangePointSetSingletonProviderType :: getObject( geo );
-
-          for(size_t i=0; i<lagrangePointSet.size(); ++i)
-          {   
-            list.addIntegrationPoint(lagrangePointSet[i]);
-          }
-          
-          // delete object 
-          LagrangePointSetSingletonProviderType
-                :: removeObject( lagrangePointSet );
-
-          return ;
-        }
-
-        // call next polOrder 
-        AddLagrangePoints<ThisType,polOrd+1>::add(list,geo,order);
-      }
-    };
-
-    enum { maxOrder_ = 20 };   
- 
-    template <class PointListType> 
-    struct AddLagrangePoints<PointListType,maxOrder_> 
-    {
-      enum { polOrd = maxOrder_ };
-      static void add(PointListType& list, 
-                      const GeometryType& geo,
-                      const int order)
-      {
-        if(order == polOrd)
-        {
-          typedef LagrangePointSetFactory< ct, dim, polOrd > LagrangePointSetFactoryType;
-          typedef typename LagrangePointSetFactoryType :: LagrangePointSetType LagrangePointSetType;
-
-          typedef SingletonList< GeometryType,
-                                 LagrangePointSetType,
-                                 LagrangePointSetFactoryType >
-              LagrangePointSetSingletonProviderType;
-
-          // get lagrange point set 
-          const LagrangePointSetType& lagrangePointSet
-            = LagrangePointSetSingletonProviderType :: getObject( geo );
-
-          for(size_t i=0; i<lagrangePointSet.size(); ++i)
-          {   
-            list.addIntegrationPoint(lagrangePointSet[i]);
-          }
-          
-          // delete object 
-          LagrangePointSetSingletonProviderType
-                :: removeObject( lagrangePointSet );
-
-          return ;
-        }
-
-        DUNE_THROW(NotImplemented,"LagrangePoints only up to polOrd " << maxOrder_);  
-      }
-    };
-   
-    const GeometryType elementGeometry_;
-    const int order_;
-  public:
-    LagrangeIntegrationPointFactory(
-              const GeometryType& geo, 
-              const int order,
-              const size_t id)
-      : BaseType(id)
-      , elementGeometry_(geo)
-      , order_(order)
-    {
-      assert( order > 0 && order <= maxOrder_ );
-      AddLagrangePoints<ThisType,1>::add(*this,geo,order);
-    }
-
-    //! return order of points set 
-    int order () const { return order_; }
-    //! return geometry type set was created for 
-    GeometryType geometry() const { return elementGeometry_; } 
-
-    static int maxOrder () { return maxOrder_; }
-  };
-  
-  //! default defines for used quadratures 
-  template <typename ct, int dim> struct LagrangePointTraits
-  {
-    typedef LagrangeIntegrationPointFactory<ct, dim> CubeQuadratureType;
-    typedef LagrangeIntegrationPointFactory<ct, dim> PointQuadratureType;
-    typedef LagrangeIntegrationPointFactory<ct, dim> LineQuadratureType;
-    typedef LagrangeIntegrationPointFactory<ct, dim> SimplexQuadratureType;
-    typedef LagrangeIntegrationPointFactory<ct, dim> PrismQuadratureType;
-    typedef LagrangeIntegrationPointFactory<ct, dim> PyramidQuadratureType;
-
-    //! type of integration point list implemementation 
-    typedef IntegrationPointListImp<ct,dim>   IntegrationPointListType; 
-  }; 
-
-  template <class GridPartImp>
-  struct LagrangeIntegrationPointsTraits
-  {
-    //! type of single coordinate
-    typedef typename GridPartImp :: GridType :: ctype ctype;
-
-    //! dimension of quadrature 
-    enum { dimension = GridPartImp :: GridType :: dimension };
-
-    //! codimension of quadrature
-    enum { codimension = 0 };
-
-    //! type of used integration point list 
-    typedef IntegrationPointList<ctype,dimension,LagrangePointTraits> IntegrationPointListType ;
-
-    //! type of global coordinate 
-    typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
-  };
-
-  //! \brief Lagrange Integration Points  
-  template <class GridPartImp>
-  class LagrangeIntegrationPoints :
-    public CachingPointList<GridPartImp,0,
-                            LagrangeIntegrationPointsTraits<GridPartImp> >
-  {
-    typedef LagrangeIntegrationPointsTraits<GridPartImp> IntegrationTraits;
-    typedef CachingPointList<GridPartImp,0,IntegrationTraits> BaseType;
-
-    typedef typename GridPartImp :: GridType GridType;
-
-    public:
-    //! Dimension of the world.
-    enum { dimension = BaseType::dimension };
-    //! The codimension is zero by definition.
-    enum { codimension = 0 };
-
-    //! Just another name for double...
-    typedef typename BaseType::RealType RealType;
-    //! The type of the coordinates in the codim-0 reference element.
-    typedef typename BaseType::CoordinateType CoordinateType;
-    //! The type of the codim-0 entity.
-    typedef typename BaseType::Entity Entity;
-
-    //! Constructor
-    LagrangeIntegrationPoints(const Entity& en, int order)
-      : BaseType(en.geometry().type(), order)
-    {
-    }
-  };
-  
 } // end namespace dune 
 #endif

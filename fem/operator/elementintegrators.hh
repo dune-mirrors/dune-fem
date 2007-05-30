@@ -225,132 +225,126 @@ protected:
             if (verbose_)
                 std::cout << "got base function set\n";
             
-            numBaseFunctions_ =  baseSet.numBaseFunctions();
-            
-            gradPhiPtr_ = new  
-                JacobianRangeType[numBaseFunctions_];     
+            numBaseFunctions_ = baseSet.numBaseFunctions();
+            gradPhiPtr_ = new JacobianRangeType[ numBaseFunctions_ ];
 
             if (verbose_)
                 std::cout << "allocated temporary storage for gradients\n";
-
           };
+    
+    /*!  access function for model
+     *
+     *   Default implementation is return of the stored reference.
+     *
+     *   \return reference to the locally stored model reference
+     */
+    inline const ModelType& model () const
+    {
+      return model_;
+    }
 
-/*======================================================================*/
-/*! 
- *   model: access function for model
- *
- *   Default implementation is return of the stored reference.
- *
- *   \return reference to the locally stored model reference
- */
-/*======================================================================*/
+    /*!  access function for model
+     *
+     *   Default implementation is return of the stored reference.
+     *
+     *   \return reference to the locally stored model reference
+     */
+    inline ModelType& model () 
+    {
+      return model_;
+    }
 
-  inline ModelType& model() 
-        {
-// this is simply called too often
-//          if (verbose_)
-//              std::cout << "entered model() of " 
-//                        << "DefaultElementMatrixIntegrator";
-          return model_;
+    /*! 
+     *   destructor: free of temporary memory for basis-fct-gradients 
+     *               in mygrad
+     */
+    ~DefaultElementMatrixIntegrator ()
+    {
+      if( verbose_ )
+        std::cout << "entered destructor of DefaultElementMatrixIntegrator"
+                  << std :: endl;
+      delete[] gradPhiPtr_;
+    }
+
+    /*!
+     *  addDiffusiveFluxElementMatrix: accumulate diffusive contributions
+     *
+     *  The method is used for the diffusive flux of general elliptic problems.
+     *  The following matrix is computed, where i,j run over the local dofs
+     *  of base functions, which have support on an entity.
+     *  \f[
+     *     L_ij :=  \int_\entity   [a     grad(phi_j) ]^T  grad(phi_i) 
+     *  \f]
+     *  The model class is assumed to have a diffusiveFlux() method.
+     *
+     *  the method must be a template method, such that the model requirements
+     *  are only mandatory, if the method is instantiated.
+     *
+     *  \param[in]  entity the entity over which the intrgration is performed
+     *
+     *  \param[out} matrix reference ot the local element matrix storage to be
+     *              increased
+     *
+     *  \param[in]  coefficient an optional weighting coefficient, which is
+     *              multiplied to the increase before matrix addition
+     */
+    template< class EntityImp, class ElementMatrixImp >
+    void addDiffusiveFluxElementMatrix( const EntityImp& entity,
+                                        ElementMatrixImp& matrix, 
+                                        double coefficient = 1.0 ) const
+    {
+      typedef typename ElementQuadratureType :: CoordinateType CoordinateType;
+        
+      // get quadrature and function space
+      ElementQuadratureType quadrature( entity, TraitsType :: quadDegree );
+      const DiscreteFunctionSpaceType &discreteFunctionSpace
+        = model_.discreteFunctionSpace();
+
+      // get local basis
+      const BaseFunctionSetType& baseSet
+        =  discreteFunctionSpace.baseFunctionSet( entity );
+          
+      // assert that allocated space for gradPhiPtr is sufficient!!
+      int numBaseFunctions = baseSet.numBaseFunctions();
+      assert( numBaseFunctions <= numBaseFunctions_ );
+          
+      // assert that matrix allocation is sufficient
+      assert( matrix.rows() >= numBaseFunctions );
+      assert( matrix.cols() >= numBaseFunctions );
+          
+      const int numQuadraturePoints = quadrature.nop();
+      for ( int pt = 0; pt < numQuadraturePoints; ++pt ) {
+        // const CoordinateType &x = quadrature.point( pt );
+
+        // get the geometry of the entity
+        // const typename EntityImp :: Geometry &geometry = entity.geometry();
+ 
+        // compute gradients of all base functions in point pt
+        // calc Jacobian inverse before volume is evaluated 
+        const FieldMatrix< double, dimworld, dimworld > &inv
+          = entity.geometry().jacobianInverseTransposed( quadrature.point( pt ) );
+        const double volume
+          = entity.geometry().integrationElement( quadrature.point( pt ) );
+            
+        for( int i = 0; i < numBaseFunctions; ++i ) {
+          JacobianRangeType &gradPhi = gradPhiPtr_[ i ];
+          baseSet.jacobian( i, quadrature, pt, gradPhi );
+          // multiply with transposed of the jacobian inverse 
+          gradPhi[ 0 ] = FMatrixHelp :: mult( inv, gradPhi[ 0 ] );
         }
-
-/*======================================================================*/
-/*! 
- *   destructor: free of temporary memory for basis-fct-gradients 
- *               in mygrad
- */
-/*======================================================================*/
-
-  ~DefaultElementMatrixIntegrator()
-        {
-          if (verbose_)
-              std::cout << "entered destructor of " 
-                        << "DefaultElementMatrixIntegrator\n";
-          delete[] gradPhiPtr_;
-        }
-
-/*======================================================================*/
-/*!
- *  addDiffusiveFluxElementMatrix: accumulate diffusive contributions
- *
- *  The method is used for the diffusive flux of general elliptic problems.
- *  The following matrix is computed, where i,j run over the local dofs
- *  of base functions, which have support on an entity.
- *  \f[
- *     L_ij :=  \int_\entity   [a     grad(phi_j) ]^T  grad(phi_i) 
- *  \f]
- *  The model class is assumed to have a diffusiveFlux() method.
- *
- *  the method must be a template method, such that the model requirements
- *  are only mandatory, if the method is instantiated.
- *
- *  \param entity the entity over which the intrgration is performed
- *
- *  \param mat reference ot the local element matrix storage to be increased
- *
- *  \param coef an optional weighting coefficient, which is multiplied to the
- *         increase before matrix addition
- */
-/*======================================================================*/
-
-    template <class EntityImp, class ElementMatrixImp>
-    void addDiffusiveFluxElementMatrix(EntityImp& entity, 
-                                       ElementMatrixImp& mat, 
-                                       double coef = 1.0) // const
-          {
             
-          // get quadrature and function space
-          ElementQuadratureType 
-              quad(entity,TraitsType::quadDegree);
-          DiscreteFunctionSpaceType& fspace = 
-              this->model().discreteFunctionSpace();
-
-          // get local basis
-          const BaseFunctionSetType &baseSet = 
-            fspace.baseFunctionSet( entity );
-          
-          // assert that allocated space for gradPhiPtr is sufficient!!
-          int numBaseFunctions =  baseSet.numBaseFunctions();             
-          assert( numBaseFunctions <= numBaseFunctions_);
-          
-          // assert that matrix allocation is sufficient
-          assert( mat.rows() >= numBaseFunctions );
-          assert( mat.cols() >= numBaseFunctions );
-          
-          for ( int pt=0; pt < quad.nop(); pt++ ) 
-          {  
-            // compute gradients of all basis functions in point pt
-            // calc Jacobian inverse before volume is evaluated 
-            const FieldMatrix<double,dimworld,dimworld>& inv = 
-                entity.geometry().jacobianInverseTransposed(quad.point(pt));
-            const double vol = 
-                entity.geometry().integrationElement(quad.point(pt));
-            
-            for(int i=0; i<numBaseFunctions; i++) 
-            {
-              baseSet.jacobian(i,quad,pt,gradPhiPtr_[i]);  
-              // multiply with transpose of jacobian inverse 
-              gradPhiPtr_[i][0] = FMatrixHelp :: mult ( inv,gradPhiPtr_[i][0] );
-            }
-            
-            // evaluate diffusiveFlux for all gradients of basis functions
-            JacobianRangeType ret;
-            
-            double fact = quad.weight( pt ) * vol * coef;
-            for(int j=0; j<numBaseFunctions; j++) 
-            {
-              this->model().diffusiveFlux(entity, quad, pt,  
-                                    gradPhiPtr_[j], 
-                                    ret);
-              ret[0] *= fact;
-              for (int i=0; i<numBaseFunctions; i++ )
-              {
-                double incr =  ret[0] * gradPhiPtr_[i][0];
-                mat.add(i,j, incr );
-              }
-            }            
+        // evaluate diffusiveFlux for all gradients of basis functions
+        const double factor = quadrature.weight( pt ) * volume * coefficient;
+        for( int j = 0; j < numBaseFunctions; ++j ) {
+          JacobianRangeType psi;
+          model_.diffusiveFlux( entity, quadrature, pt, gradPhiPtr_[ j ], psi );
+          for( int i = 0; i < numBaseFunctions; ++i ) {
+            const double incr = factor * (psi[ 0 ] * gradPhiPtr_[ i ][ 0 ]);
+            matrix.add( i, j, incr );
           }
-        } // end addDiffusiveFluxElementMatrix
+        }            
+      }
+    } // end addDiffusiveFluxElementMatrix
 
 /*======================================================================*/
 /*!
@@ -636,7 +630,7 @@ protected:
     //! number of basis functions
     int numBaseFunctions_;  
     //! storage for basis-function gradients
-    JacobianRangeType*  gradPhiPtr_;
+    JacobianRangeType *gradPhiPtr_;
   }; // end of DefaultElementMatrixIntegrator class
   
 

@@ -40,8 +40,8 @@ namespace Dune
     typedef typename BaseType :: RangeFieldType RangeFieldType;
 
     typedef LagrangePoint< type, dim, polynomialOrder > LagrangePointType;
-    typedef LagrangePointSet< DomainFieldType, type, dim, polynomialOrder >
-      LagrangePointSetType;
+    typedef LagrangePointListImplementation< DomainFieldType, type, dim, polynomialOrder >
+      LagrangePointListType;
 
   public:
     inline LagrangeBaseFunction( unsigned int baseNum )

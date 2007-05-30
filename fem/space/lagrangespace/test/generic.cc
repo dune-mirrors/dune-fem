@@ -22,7 +22,7 @@ typedef LagrangeBaseFunction< FunctionSpaceType,
   BaseFunctionType;
 
 typedef BaseFunctionType :: LagrangePointType LagrangePointType;
-typedef BaseFunctionType :: LagrangePointSetType LagrangePointSetType;
+typedef BaseFunctionType :: LagrangePointListType LagrangePointListType;
 
 
 
@@ -73,13 +73,13 @@ int main( int argc, char **argv )
   unsigned int errors = 0;
   unsigned int indexErrors = 0;
   unsigned int pointSetErrors = 0;
-  LagrangePointSetType pointSet;
+  LagrangePointListType pointSet( 0 );
   for( unsigned int i = 0; i < numBaseFunctions; ++i ) {
     LagrangePointType point( i );
 
     DomainType x;
     point.local( x );
-    x -= pointSet[ i ];
+    x -= pointSet.point( i );
     if( x.two_norm() >= 1e-14 )
       ++pointSetErrors;
     
@@ -106,7 +106,7 @@ int main( int argc, char **argv )
     if( entityDofNumber != i )
       ++indexErrors;
 
-    std :: cout << i << ": x = " << pointSet[ i ];
+    std :: cout << i << ": x = " << pointSet.point( i );
     std :: cout << ", height = " << point.height();
     std :: cout << ", codim = " << codim << ", subEntity = " << subEntity;
     std :: cout << ", dofNumber = " << dofNumber << " ( " << numDofs << " )";

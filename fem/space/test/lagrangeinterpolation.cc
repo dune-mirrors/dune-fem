@@ -106,8 +106,8 @@ public:
   {
     phi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
-      phi[ 0 ] += x[ i ] * x[ i ]; 
-      // phi[ 0 ] *= sin( M_PI * x[ i ] ); 
+      // phi[ 0 ] += x[ i ] * x[ i ]; 
+      phi[ 0 ] *= sin( M_PI * x[ i ] ); 
   }
 
   void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -120,8 +120,8 @@ public:
     Dphi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
       for( int j = 0; j < DomainType :: dimension; ++j )
-        Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
-        // Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
+        // Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
+        Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
   }
 
   void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
@@ -454,11 +454,13 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
   LagrangeInterpolation< DiscreteFunctionType >
   :: interpolateFunction( f, solution );
 
+  #if 0
   DiscreteGradientFunctionSpaceType discreteGradientFunctionSpace( part );
   DiscreteGradientFunctionType graddf("grad", discreteGradientFunctionSpace );
   
   //! perform l2-projection
   L2Projection< DiscreteGradientFunctionType > :: project( solution, graddf );
+  #endif
 
   // calculation L2 error 
   // pol ord for calculation the error chould by higher than 
@@ -475,7 +477,7 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
    {
      GrapeDataDisplay < GridType > grape(part); 
      grape.addData( solution );
-     grape.addData( graddf );
+     //grape.addData( graddf );
      grape.display( );
    }
   #endif

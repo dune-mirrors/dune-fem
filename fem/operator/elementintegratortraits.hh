@@ -85,8 +85,9 @@ public:
   enum { dim = GridType::dimension };
 
   typedef FunctionSpace < double , double, dimworld , 1 > FunctionSpaceType;
-  typedef LagrangeDiscreteFunctionSpace < FunctionSpaceType, GridPartType, 1 > 
-          DiscreteFunctionSpaceType ;
+  typedef LagrangeDiscreteFunctionSpace
+          < FunctionSpaceType, GridPartType, 1, CachingStorage > 
+    DiscreteFunctionSpaceType ;
   typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > 
           DiscreteFunctionType;
 

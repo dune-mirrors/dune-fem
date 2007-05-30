@@ -42,7 +42,7 @@ namespace Dune
   public:
     typedef typename GridPartType :: IndexSetType IndexSetType;
 
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+    typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
     typedef std :: map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
@@ -159,10 +159,12 @@ namespace Dune
   public:
     typedef typename GridPartType :: IndexSetType IndexSetType;
 
-    typedef LagrangePointSetInterface< FieldType, dimension, polynomialOrder >
+    typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
     typedef std :: map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
+
+    typedef typename LagrangePointSetType :: DofInfo DofInfo;
 
     typedef IndexSetCodimCallFactory< GridPartType >
       IndexSetCodimCallFactoryType;
@@ -249,15 +251,23 @@ namespace Dune
     {
       const int coordinate = local % DimRange;
       const int localDof = local / DimRange;
-        
-      unsigned int codim, subEntity;
+      
+      // unsigned int codim, subEntity;
       const LagrangePointSetType *set
         = lagrangePointSet_[ entity.geometry().type() ];
-      set->dofSubEntity( localDof, codim, subEntity );
+      const DofInfo& dofInfo = set->dofInfo( localDof );
+      // set->dofSubEntity( localDof, codim, subEntity );
+      // 
+      const int subIndex
+        = indexSetCodimCall_[ dofInfo.codim ]
+          ->subIndex( indexSet_, entity, dofInfo.subEntity );
+      return DimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
 
+      /*
       const int subIndex
         = indexSetCodimCall_[ codim ]->subIndex( indexSet_, entity, subEntity );
       return DimRange * (offset_[ codim ] + subIndex) + coordinate;
+      */
     }
 
     //! return old dof number for given number of hole and codim (=block) 
