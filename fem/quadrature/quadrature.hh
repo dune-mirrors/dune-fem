@@ -555,6 +555,11 @@ namespace Dune {
       ipList_(ipList)
     {}
 
+    //! Copy constructor 
+    IntegrationPointList(const IntegrationPointList& org) :
+      ipList_(org.ipList_)
+    {}
+
     //! The total number of quadrature points.
     int nop() const {
       return ipList_.nop();
@@ -630,6 +635,11 @@ namespace Dune {
     //! \param quadImp Quadrature implementation for this test
     Quadrature(const IntegrationPointListType& ipList) :
       BaseType(ipList)
+    {}
+
+    //! Copy constructor
+    Quadrature(const Quadrature& org) :
+      BaseType(org)
     {}
 
     //! Access to the weight of quadrature point i.

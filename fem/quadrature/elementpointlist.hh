@@ -60,6 +60,11 @@ namespace Dune {
       quad_(geo, order)
     {}
     
+    //! copy constructor 
+    ElementIntegrationPointList(const ElementIntegrationPointList& org)
+      : quad_(org.quad_)
+    {}
+    
     //! The total number of quadrature points.
     int nop() const {
       return quad_.nop();
@@ -190,6 +195,15 @@ namespace Dune {
       dummy_(0.)
     {
     }
+   
+    //! copy constructor 
+    ElementIntegrationPointList(const ElementIntegrationPointList& org)
+      : quad_(org.quad_)
+      , referenceGeometry_(org.referenceGeometry_)
+      , elementGeometry_(org.elementGeometry_)
+      , faceNumber_(org.faceNumber_)
+      , dummy_(org.dummy_)
+    {}
     
     //! The total number of integration points.
     int nop() const {
@@ -246,10 +260,10 @@ namespace Dune {
    typedef typename IntersectionIterator::LocalGeometry ReferenceGeometry;
 
   protected:
-    IntegrationPointListType quad_;
+    const IntegrationPointListType quad_;
     const ReferenceGeometry& referenceGeometry_;
-    GeometryType elementGeometry_;
-    int faceNumber_;
+    const GeometryType elementGeometry_;
+    const int faceNumber_;
 
     mutable CoordinateType dummy_;
   };

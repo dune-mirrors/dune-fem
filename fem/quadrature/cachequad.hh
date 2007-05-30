@@ -65,6 +65,12 @@ namespace Dune {
     {
     }
 
+    //! Copy constructor
+    CachingQuadrature(const CachingQuadrature& org ) 
+      : BaseType(org)
+    {
+    } 
+    
     //! Access to the weight of quadrature point i.
     //! The quadrature weights sum up to the volume of the respective reference
     //! element.
@@ -125,6 +131,13 @@ namespace Dune {
     {
     }
 
+    //! Copy constructor
+    CachingQuadrature(const CachingQuadrature& org) 
+      : BaseType(org)
+    {
+    }
+
+  public:  
     //! Access to the weight of quadrature point i.
     //! The quadrature weights sum up to the volume of the respective reference
     //! element.

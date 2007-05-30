@@ -75,6 +75,12 @@ namespace Dune {
     typedef typename BaseType::Entity Entity;
     
   public:
+    //! Copy Constructor
+    CachingPointList(const CachingPointList& org)
+      : BaseType(org)
+    {
+    }
+
     //! Constructor
     CachingPointList(const GeometryType& geo, int order) : BaseType(geo, order)
     {
@@ -141,6 +147,13 @@ namespace Dune {
       // make sure CachingPointList is only created for conforming
       // intersections 
       assert( TwistUtilityType::conforming(gridPart.grid(),it) );
+    }
+
+    //! Copy constructor 
+    CachingPointList(const CachingPointList& org)
+      : BaseType(org) 
+      , mapper_(org.mapper_)
+    {
     }
 
     //! Additional method to map quadrature points to caching points.

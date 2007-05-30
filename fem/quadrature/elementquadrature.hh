@@ -69,11 +69,17 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity Entity;
 
   public:
-    //! Constructor
+    //! Copy constructor
+    ElementQuadrature(const ElementQuadrature& org)
+      : BaseType(org)
+    {
+    }
+    
+    //! copy constructor
     //! \param en Entity the quadrature lives on (respectively on its reference element).
     //! \param order Desired minimal order of the quadrature.
-    ElementQuadrature(const Entity& en, int order) :
-      BaseType(en.geometry().type(), order)
+    ElementQuadrature(const Entity& en, int order)
+      : BaseType(en.geometry().type(), order)
     {}
     
     //! Access to the weight of quadrature point i.
@@ -122,6 +128,7 @@ namespace Dune {
     //! specify quadrature for use on conforming and non-conforming
     //! intersections 
     typedef ThisType NonConformingQuadratureType;
+
     
   public:
     //! Constructor
@@ -148,6 +155,12 @@ namespace Dune {
     {
     }
     
+    //! copy constructor 
+    ElementQuadrature(const ElementQuadrature& org)
+      : BaseType(org)
+    {
+    }
+      
     //! Access to the weight of quadrature point i.
     //! The quadrature weights sum up to the volume of the respective reference
     //! element.
