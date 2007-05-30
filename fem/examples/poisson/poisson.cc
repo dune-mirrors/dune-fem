@@ -313,9 +313,8 @@ double algorithm (const char * filename , int maxlevel, int turn )
    LaplaceOperatorType laplace ( linFuncSpace , LaplaceOperatorType::ASSEMBLED);
    
    //! build right hand side, does not allocate b!
-   L2Projection< DiscreteFunctionType > l2pro;
-   const int polOrd = 2;
-   l2pro.project< 2 * DiscreteFunctionSpaceType :: polynomialOrder >( f , rhs );
+   RightHandSideAssembler< DiscreteFunctionType > rhsAssembler;
+   rhsAssembler.assemble< 2 * DiscreteFunctionSpaceType :: polynomialOrder >( f , rhs );
     
    { 
      typedef DiscreteFunctionSpaceType :: IteratorType IteratorType; 

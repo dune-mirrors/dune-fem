@@ -13,10 +13,11 @@
 namespace Dune 
 {
 
+// Berechnung
 // L2 projection for RHS of laplace's equation
 // note: this is not a real L2-Projection, though
 template< class DiscreteFunctionImp >
-class L2Projection
+class RightHandSideAssembler
 {
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
@@ -36,8 +37,8 @@ public:
   
 public:  
   template< int polOrd, class FunctionType >
-  void project( FunctionType &function,
-                DiscreteFunctionType &discreteFunction )
+  void assemble( const FunctionType &function,
+                DiscreteFunctionType &discreteFunction ) //discreteFunction sozusagen Rueckgabewert
   {
     typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
@@ -46,22 +47,23 @@ public:
     const DiscreteFunctionSpaceType &discreteFunctionSpace
       = discreteFunction.space();
   
-    discreteFunction.clear();
+    discreteFunction.clear(); //discreteFunction auf Null setzen
 
     const IteratorType endit = discreteFunctionSpace.end();
     for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
     {
-      const GeometryType &geometry = (*it).geometry();
+      //it* Pointer auf ein Element der Entity
+      const GeometryType &geometry = (*it).geometry(); //Referenz auf Geometrie
       
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
-      const BaseFunctionSetType &baseFunctionSet
-        = discreteFunctionSpace.baseFunctionSet( *it );
+      LocalFunctionType localFunction = discreteFunction.localFunction( *it ); 
+      const BaseFunctionSetType &baseFunctionSet //BaseFunctions leben immer auf Refernzelement!!!
+        = discreteFunctionSpace.baseFunctionSet( *it ); 
 
-      CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrd );
-      const int numDofs = localFunction.numDofs();
+      CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrd ); //0 --> codim 0
+      const int numDofs = localFunction.numDofs(); //Dofs = Freiheitsgrade (also die Unbekannten)
       for( int i = 0; i < numDofs; ++i )
       {
-        RangeType phi, psi;
+        RangeType phi, psi; //R"uckgabe-Funktionswerte
         
         const int numQuadraturePoints = quadrature.nop();
         for( int qP = 0; qP < numQuadraturePoints; ++qP )
@@ -69,7 +71,7 @@ public:
           const double det
             = geometry.integrationElement( quadrature.point( qP ) );
           function.evaluate( geometry.global( quadrature.point( qP ) ), phi );
-          baseFunctionSet.eval( i, quadrature, qP, psi );
+          baseFunctionSet.evaluate( i, quadrature, qP, psi ); //i = i'te Basisfunktion; qP Quadraturpunkt
           localFunction[ i ] += det * quadrature.weight( qP ) * (phi * psi);
         }
       }
