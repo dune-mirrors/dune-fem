@@ -73,20 +73,20 @@ using namespace Dune;
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/referenceelements.hh>
 
-//- local inlcudes 
-#include "../../operator/discreteoperatorimp.hh"
-#include "../../space/lagrangespace.hh"
-#include "../../discretefunction/dfadapt.hh"
-#include "../../discretefunction/adaptivefunction.hh"
-
-#include "laplace.hh"
-
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-#include "../../operator/inverseoperators.hh"
-#include "../../solver/oemsolver/oemsolver.hh"
+#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/discretefunction/dfadapt.hh>
+#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/solver/oemsolver/oemsolver.hh>
+#include <dune/fem/operator/discreteoperatorimp.hh>
+#include <dune/fem/operator/inverseoperators.hh>
+#include <dune/fem/operator/lagrangeinterpolation.hh>
+
+//- local inlcudes 
+#include "laplace.hh"
 
 // laplace operator and L2 projection and error 
 #include "laplace.cc"
@@ -124,7 +124,8 @@ typedef FunctionSpace < double , double, dimworld , 1 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
-typedef LagrangeDiscreteFunctionSpace < FuncSpace , GridPartType , 1 , CachingStorage > DiscreteFunctionSpaceType ;
+typedef LagrangeDiscreteFunctionSpace< FuncSpace, GridPartType, 1, CachingStorage >
+  DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
@@ -312,9 +313,9 @@ double algorithm (const char * filename , int maxlevel, int turn )
    LaplaceOperatorType laplace ( linFuncSpace , LaplaceOperatorType::ASSEMBLED);
    
    //! build right hand side, does not allocate b!
-   L2Projection < DiscreteFunctionType > l2pro;
+   L2Projection< DiscreteFunctionType > l2pro;
    const int polOrd = 2;
-   l2pro.project<polOrd> ( f , rhs );
+   l2pro.project< 2 * DiscreteFunctionSpaceType :: polynomialOrder >( f , rhs );
     
    { 
      typedef DiscreteFunctionSpaceType :: IteratorType IteratorType; 

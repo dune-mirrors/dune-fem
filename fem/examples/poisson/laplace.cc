@@ -13,64 +13,71 @@
 namespace Dune 
 {
 
-// L2 projection of the rhs 
-template <class DiscreteFunctionType> 
+// L2 projection for RHS of laplace's equation
+// note: this is not a real L2-Projection, though
+template< class DiscreteFunctionImp >
 class L2Projection
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+public:
+  typedef DiscreteFunctionImp DiscreteFunctionType;
+    
+  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionType :: LocalFunctionType
+    LocalFunctionType;
+  
+  typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+    BaseFunctionSetType;
+  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+  typedef typename GridPartType :: GridType GridType;
+
+  enum { dimension = GridType :: dimension };
   
 public:  
-  template <int polOrd, class FunctionType> 
-  void project (FunctionType &f, DiscreteFunctionType &discFunc)
+  template< int polOrd, class FunctionType >
+  void project( FunctionType &function,
+                DiscreteFunctionType &discreteFunction )
   {
-    const typename DiscreteFunctionType::FunctionSpaceType 
-        & space = discFunc.space();  
-  
-    discFunc.clear();
-  
-    typedef typename FunctionSpaceType::GridPartType GridPartType;
-    typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename FunctionSpaceType::IteratorType IteratorType;
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    typedef typename EntityType :: Geometry GeometryType;
       
+    const DiscreteFunctionSpaceType &discreteFunctionSpace
+      = discreteFunction.space();
+  
+    discreteFunction.clear();
 
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    RangeType ret (0.0);
-    RangeType phi (0.0);
-
-    IteratorType it    = space.begin();
-    IteratorType endit = space.end();
-
-
-    // if grid is empty do notin' 
-    if( it == endit ) return ;
-   
-    enum { dim = GridType :: dimension };
-    for( ; it != endit ; ++it)
+    const IteratorType endit = discreteFunctionSpace.end();
+    for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
     {
-      LagrangeIntegrationPoints<GridPartType> quad(*it,polOrd);
+      const GeometryType &geometry = (*it).geometry();
+      
+      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
+      const BaseFunctionSetType &baseFunctionSet
+        = discreteFunctionSpace.baseFunctionSet( *it );
 
-      LocalFuncType lf = discFunc.localFunction( *it ); 
-
-      const typename FunctionSpaceType::BaseFunctionSetType & set = 
-            space.baseFunctionSet(*it);
-
-      const int numDofs = lf.numDofs();
-      for(int i=0; i<numDofs; i++)
+      CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrd );
+      const int numDofs = localFunction.numDofs();
+      for( int i = 0; i < numDofs; ++i )
       {
-        for(int qP = 0; qP < quad.nop(); qP++)
+        RangeType phi, psi;
+        
+        const int numQuadraturePoints = quadrature.nop();
+        for( int qP = 0; qP < numQuadraturePoints; ++qP )
         {
-          double det = (*it).geometry().integrationElement(quad.point(qP));
-          f.evaluate((*it).geometry().global( quad.point(qP) ), ret);
-          set.eval(i,quad,qP,phi);
-          lf[i] += det * quad.weight(qP) * (ret * phi);
+          const double det
+            = geometry.integrationElement( quadrature.point( qP ) );
+          function.evaluate( geometry.global( quadrature.point( qP ) ), phi );
+          baseFunctionSet.eval( i, quadrature, qP, psi );
+          localFunction[ i ] += det * quadrature.weight( qP ) * (phi * psi);
         }
       }
     }
   }
-
 };
 
+#if 0
 // used for calculation of the initial values 
 template <class DiscreteFunctionType> 
 class LagrangeInterpolation
@@ -106,6 +113,7 @@ public:
     }
   }
 };
+#endif
 
 } // end namespace 
 
