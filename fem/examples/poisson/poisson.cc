@@ -28,68 +28,43 @@
 **
 **************************************************************************/
 
+// uncomment the following line tu use grape
+//#define USE_GRAPE HAVE_GRAPE
+
+#define VERBOSE false
+
+
+//- system includes
 #include <iostream>
 #include <config.h>
-#include <dune/common/stdstreams.cc>
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
-#include <dune/fem/misc/l2error.hh>
-
-using namespace Dune;
-
-// #if SGRID
-// #include <dune/grid/sgrid.hh>
-// static const int dimworld = GRIDDIM;
-// static const int dimworld = dimworld;
-// typedef SGrid  < dimworld, dimworld > GridType;
-// static const int refStepsForHalf = 1;
-// #endif
-
-// #if AGRID  
-// #include <dune/grid/albertagrid.hh>
-// static const int dimworld = DUNE_WORLD_DIM;
-// static const int dimworld = DUNE_PROBLEM_DIM;
-
-// typedef AlbertaGrid< dimworld, dimworld > GridType;
-// static const int refStepsForHalf = dimworld;
-// #endif
-
-// #if BGRID  
-
-// //#include <dune/grid/alu3dgrid/includecc.cc>
-// //#include <dune/grid/alu3dgrid.hh>
-// //#include <dune/grid/alugrid/3d/grid.hh>
-// //static const int dimworld = 3;
-// //static const int dimworld = 3;
-// //typedef ALU3dGrid < dimworld, dimworld , tetra > GridType;
-
-// #include <dune/grid/alugrid.hh>
-// static const int dimworld = DUNE_PROBLEM_DIM;
-// static const int dimworld = DUNE_PROBLEM_DIM;
-// typedef ALUSimplexGrid < dimworld, dimworld > GridType;
-// static const int refStepsForHalf = 1;
-// #endif
 
 //- Dune includes 
+#include <dune/common/stdstreams.cc>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/discretefunction/dfadapt.hh>
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/operator/inverseoperators.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+//#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/misc/l2error.hh>
 
 //- local inlcudes 
 #include "laplace.hh"
 
-// laplace operator and L2 projection and error 
-#include "laplace.cc"
+#ifndef POLORDER
+  #define POLORDER 1
+#endif
+
+
+
+using namespace Dune;
 
 //***********************************************************************
 /*! Poisson problem: 
@@ -111,29 +86,29 @@ using namespace Dune;
 */
 //***********************************************************************
 
+
+
 // forward declaration 
 class Tensor; 
 
 //! the index set we are using 
-//typedef LevelGridPart < GridType > GridPartType;
-typedef LeafGridPart<GridType> GridPartType;
+typedef LeafGridPart< GridType > GridPartType;
+//typedef LevelGridPart< GridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef FunctionSpace < double , double, dimworld , 1 > FuncSpace;
+typedef FunctionSpace< double, double, dimworld, 1 > FuncSpace;
 
-//! define the function space our unkown belong to 
-//! see dune/fem/lagrangebase.hh
-typedef LagrangeDiscreteFunctionSpace< FuncSpace, GridPartType, 1, CachingStorage >
+//! define the discrete function space our unkown belongs to
+typedef LagrangeDiscreteFunctionSpace
+        < FuncSpace, GridPartType, POLORDER, CachingStorage >
   DiscreteFunctionSpaceType;
 
-//! define the type of discrete function we are using , see
-//! dune/fem/discfuncarray.hh
-//typedef DFAdapt < DiscreteFunctionSpaceType > DiscreteFunctionType;
-typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
+//! define the type of discrete function we are using
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! define the discrete laplace operator, see ./fem.cc
-typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
+typedef LaplaceFEOp< DiscreteFunctionType, Tensor > LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
 // see dune/fem/inverseoperators.hh 
@@ -145,38 +120,44 @@ typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 
-//! define the type of mapping which is used by inverseOperator 
-typedef Mapping<double ,double,DiscreteFunctionType,DiscreteFunctionType > MappingType;
+
 
 // right hand side of governing problem 
-class RHSFunc : public Function < FuncSpace , RHSFunc > 
+class RHSFunction : public Function< FuncSpace, RHSFunction >
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::DomainType DomainType;
+
+private:
+  typedef RHSFunction ThisType;
+  typedef Function< FuncSpace, ThisType > BaseType;
  
 public:
-  RHSFunc (FuncSpace &f)
-    : Function <  FuncSpace , RHSFunc > (f) {}
+  RHSFunction ( FuncSpace &functionSpace )
+  : BaseType( functionSpace )
+  {
+  }
    
   //  f(x,y,z) = 2 (x-x^2) (y-y^2) +
   //             2 (z-z^2) (y-y^2) +              
   //             2 (x-x^2) (z-z^2)
-  void evaluate (const DomainType & x , RangeType & ret) const
+  void evaluate( const DomainType &x , RangeType &phi ) const
   {
-    enum { dim = DomainType::dimension };
-    ret = 0.0;
-    for(int i=0; i<dim; i++)
-    { 
+    enum { dimension = DomainType :: dimension };
+    
+    phi = 0;
+    for( int i = 0; i < dimension; ++i ) { 
       RangeType tmp = 2.0;
-      for(int j=1; j<dim; j++)
-      {
-        int idx = (i+j) % dim;
-        tmp *= (x[idx] - SQR(x[idx]));
+      for( int j = 1; j < dimension; ++j ) {
+        const int idx = (i + j) % dimension;
+        tmp *= x[ idx ] - SQR( x[ idx ] );
       }
-      ret += tmp;
+      phi += tmp;
     }
   }
 };
+
+
 
 //! the exact solution to the problem for EOC calculation 
 class ExactSolution : public Function < FuncSpace , ExactSolution > 
@@ -199,7 +180,9 @@ public:
     evaluate ( x , ret );
   }
 };
- 
+
+
+
 // diffusion coefficient for this problem the id 
 class Tensor : public Function < FunctionSpace < double , double, dimworld , 1 >, Tensor >
 {
@@ -227,179 +210,136 @@ public:
 };//end class Tensor
 
 
-//! set the dirichlet points to zero 
-template <class EntityType, class DiscreteFunctionType> 
-void boundaryTreatment ( const EntityType & en ,  DiscreteFunctionType &rhs )
+
+//! set the dirichlet points to zero
+template< class EntityType, class DiscreteFunctionType >
+void boundaryTreatment( const EntityType &entity, DiscreteFunctionType &rhs )
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename FunctionSpaceType::GridPartType GridPartType;
+  typedef typename DiscreteFunctionType :: FunctionSpaceType
+    DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+
+  typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
+    LagrangePointSetType;
+  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+  
+  enum { faceCodim = 1 };
   typedef typename GridPartType :: IntersectionIteratorType
     IntersectionIteratorType;
+  typedef typename LagrangePointSetType :: template Codim< faceCodim > 
+                                        :: SubEntityIteratorType
+    FaceDofIteratorType;
 
-  const FunctionSpaceType & space = rhs.getFunctionSpace();
-  const GridPartType & gridPart = space.gridPart();
+  const DiscreteFunctionSpaceType &discreteFunctionSpace = rhs.space();
+  const GridPartType &gridPart = discreteFunctionSpace.gridPart();
     
-  typedef typename DiscreteFunctionType::DofIteratorType DofIterator;
-  DofIterator dit = rhs.dbegin();
-      
-  IntersectionIteratorType endit = gridPart.iend(en);
-  for(IntersectionIteratorType it = gridPart.ibegin(en); 
-      it != endit; ++it)
-  {
-    if(it.boundary())
-    {
-      typedef typename EntityType :: ctype coordType; 
-      enum { dim = EntityType :: dimension };
-      GeometryType t = en.geometry().type();
-      
-      if( t.isSimplex() )
-      {
-        static ReferenceSimplex< coordType, dim > refElem; 
-        int face = it.numberInSelf();
-        int novx = refElem.size( face, 1 , dim );
-        assert( novx == dim );
-        for(int j=0; j< novx ; j++)
-        {
-          int vx = refElem.subEntity(face,1, j , dim );
-          int row = space.mapToGlobal( en , vx );
-          dit[row] = 0.0;
-        }
-      }
-      if( t.isCube() )
-          {
-        static ReferenceCube < coordType, dim > refElem; 
-        int face = it.numberInSelf();
-        int novx = refElem.size( face, 1 , dim );
-        for(int j=0; j< novx ; j++)
-        {
-          int vx = refElem.subEntity(face,1, j , dim );
-          int row = space.mapToGlobal( en , vx);
-          dit[row] = 0.0;
-        }
-      }
-    }
+  IntersectionIteratorType it = gridPart.ibegin( entity );
+  const IntersectionIteratorType endit = gridPart.iend( entity );
+  for( ; it != endit; ++it ) {
+    if( !it.boundary() )
+      continue;
+
+    LocalFunctionType rhsLocal = rhs.localFunction( entity );
+    const LagrangePointSetType &lagrangePointSet
+      = discreteFunctionSpace.lagrangePointSet( entity );
+
+    const int face = it.numberInSelf();
+    FaceDofIteratorType faceIt
+      = lagrangePointSet.template beginSubEntity< faceCodim >( face );
+    const FaceDofIteratorType faceEndIt
+      = lagrangePointSet.template endSubEntity< faceCodim >( face );
+    for( ; faceIt != faceEndIt; ++faceIt )
+      rhsLocal[ *faceIt ] = 0;
   }
 }
 
-double algorithm (const char * filename , int maxlevel, int turn )
+
+
+double algorithm ( std :: string &filename, int maxlevel, int turn )
 {
-//   // we dont not use all levels of grid for calculation, only maxlevel
-// #if SGRID
-//    // this leads to the same number of points for SGrid and AlbertGrid
-//    int n[dimworld];
-//    double h[dimworld];
-//    for(int i=0; i<dimworld; i++)  { n[i] = 2; h[i] = 1.0; }
+  GridPtr< GridType > gridptr( filename ); 
+  
+  gridptr->globalRefine( maxlevel );
 
-//    GridType grid ((int *) &n, (double *) &h );
-// #else
+  GridPartType gridPart( *gridptr );
 
-   GridPtr<GridType> gridptr(filename); 
-//   GridType grid ( filename );
-//#endif
-
-   gridptr->globalRefine (maxlevel);
-
-   GridPartType part ( *gridptr );
-
-   DiscreteFunctionSpaceType linFuncSpace ( part );
-   std::cout << "\nSolving for " << linFuncSpace.size() << " number of unkowns. \n\n";
-   DiscreteFunctionType solution ( "sol", linFuncSpace );
-   solution.clear();
-   DiscreteFunctionType rhs ( "rhs", linFuncSpace );
-   rhs.clear();
+  DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+  std::cout << std :: endl << "Solving for " << discreteFunctionSpace.size()
+            << " unkowns and polynomial order "
+            << DiscreteFunctionSpaceType :: polynomialOrder << "." 
+            << std :: endl << std :: endl;
+  
+  DiscreteFunctionType solution( "solution", discreteFunctionSpace );
+  solution.clear();
+  DiscreteFunctionType rhs( "rhs", discreteFunctionSpace );
+  rhs.clear();
       
-   RHSFunc f ( linFuncSpace ); 
+  RHSFunction f( discreteFunctionSpace ); 
     
-   LaplaceOperatorType laplace ( linFuncSpace , LaplaceOperatorType::ASSEMBLED);
+  LaplaceOperatorType laplace( discreteFunctionSpace, 
+                               LaplaceOperatorType :: ASSEMBLED );
    
    //! build right hand side, does not allocate b!
-   RightHandSideAssembler< DiscreteFunctionType > rhsAssembler;
-   rhsAssembler.assemble< 2 * DiscreteFunctionSpaceType :: polynomialOrder >( f , rhs );
+  RightHandSideAssembler< DiscreteFunctionType >
+    :: assemble< 2 * DiscreteFunctionSpaceType :: polynomialOrder >( f , rhs );
     
-   { 
-     typedef DiscreteFunctionSpaceType :: IteratorType IteratorType; 
-     // set Dirichlet Boundary to zero 
-     IteratorType endit  = linFuncSpace.end();
-     for(IteratorType it = linFuncSpace.begin(); it != endit; ++it ) 
-     {
-       boundaryTreatment ( *it , rhs );
-     }
-   }
+  // set Dirichlet Boundary to zero 
+  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType; 
+  IteratorType endit = discreteFunctionSpace.end();
+  for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
+    boundaryTreatment( *it , rhs );
 
-   //laplace.print();
-   //rhs.print(std::cout);
-    
-   bool verbose = true; 
-   double dummy = 12345.67890;
-   InverseOperatorType cg ( laplace, dummy , 1E-6 , 20000 , verbose );
-     
-   // solve linear system with cg 
-   cg(rhs,solution);
-
-   // calculation L2 error 
-   ExactSolution u ( linFuncSpace ); 
-   L2Error < DiscreteFunctionType > l2err;
-
-   // pol ord for calculation the error chould by higher than 
-   // pol for evaluation the basefunctions 
-   typedef DiscreteFunctionSpaceType :: RangeType RangeType;
-   RangeType error = l2err.norm(u ,solution);
-   std::cout << "\nL2 Error : " << error << "\n\n";
+  //laplace.print();
+  //rhs.print( std::cout );
    
-#if HAVE_GRAPE
-   // if grape was found then display solution 
-   if(turn > 0)
-   {
-     GrapeDataDisplay < GridType > grape(*gridptr); 
-     grape.dataDisplay( solution );
-   }
-#endif
+  // solve the linear system (with CG)
+  double dummy = 12345.67890;
+  InverseOperatorType cg( laplace, dummy, 1e-8, 20000, VERBOSE );
+  cg( rhs, solution );
 
-   return error[0];
+  // calculation of L2 error
+  // polynomial order for this calculation should be higher than the polynomial
+  // order of the base functions
+  ExactSolution u( discreteFunctionSpace ); 
+  L2Error< DiscreteFunctionType > l2error;
+  DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
+  std :: cout << "L2 Error: " << error << std :: endl << std :: endl;
+   
+  #if USE_GRAPE
+  // if grape was found then display solution 
+  if( turn > 0 ) {
+    GrapeDataDisplay < GridType > grape( *gridptr );
+    grape.dataDisplay( solution );
+  }
+  #endif
+
+  return error[ 0 ];
 }
 
 
-//**************************************************
-//
-//  main programm, run algorithm twice to calc EOC 
-//
-//**************************************************
-int main (int argc, char **argv)
+
+// main programm, run algorithm twice to calc EOC 
+int main( int argc, char **argv )
 {
-  if(argc != 2)
-  {
-    fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
-    exit(1);
+  if( argc != 2 ) {
+    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
+    return 1;
   }
   
-  int ml = atoi( argv[1] );
-  double error[2];
+  int level = atoi( argv[ 1 ] );
+  double error[ 2 ];
 
-// #if AGRID
-//   char tmp[16]; sprintf(tmp,"%d",dimworld);
-//   std::string macroGridName (tmp); 
-//   macroGridName += "dgrid.al";
-// #else 
-// #endif
-
-//#if defined ALBERTAGRID || ALUGRID_SIMPLEX   
-//  std::string macroGridName ("square_simplex.dgf");
-//#else 
-//  std::string macroGridName ("square_cube.dgf");
-//#endif
-  std::string macroGridName ("square.dgf");
-
-  std::cout << "loading dgf " << macroGridName << "\n";
+  std :: string macroGridName( "square.dgf" );
+  std :: cout << "loading dgf: " << macroGridName << std :: endl;
   
-  ml -= DGFGridInfo<GridType>::refineStepsForHalf();
-  if(ml < 0) ml = 0;
-  for(int i=0; i<2; i++)
-  {
-    error[i] = algorithm ( macroGridName.c_str() ,  ml , i);
-    ml += DGFGridInfo<GridType>::refineStepsForHalf() ;
-  }
-  double eoc = log( error[0]/error[1]) / M_LN2; 
-  std::cout << "EOC = " << eoc << " \n";
+  const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
+  level = (level > step ? level - step : 0);
+  
+  for( int i = 0; i < 2; ++i )
+    error[ i ] = algorithm( macroGridName, level + i*step, i );
+
+  const double eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
+  std :: cout << "EOC = " << eoc << std :: endl;
+  
   return 0;
 }
-

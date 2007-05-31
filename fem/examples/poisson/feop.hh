@@ -386,91 +386,66 @@ public:
 
 
 
-/*======================================================================*/
-/*! 
- *   finalizeLocal: corrects the mapping in order to take into account 
- *                  dirichlet boundary conditions.
- * 
- *   The dofs are assumed to be correlated to the local vertex numbers of 
- *   the element, so only Lagrange basis are possible by this.
- *   The dirichlet-treatment is then simple copying of the argument DOF 
- *   to the destination DOF in case of Dirichlet boundary points. So the 
- *   assumption is, that the argument already contains correct 
- *   Dirichlet values.
- *
- *   \param the entity on which correction is to be performed
- */
-/*======================================================================*/
-
- 
-  template <class EntityType>
-  void finalizeLocal ( EntityType &en ) const 
-  {
-    // eliminate the Dirichlet rows and columns 
-    typedef typename DiscFunctionType::FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::GridType GridType;
-    typedef typename FunctionSpaceType::GridPartType GridPartType;
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
- 
-    const DiscFunctionType & arg  = (*arg_);
-    DiscFunctionType & dest = (*dest_);
-
-    const GridPartType & gridPart = arg.getFunctionsSpace().gridPart();
-
-    typedef typename DiscFunctionType::DofIteratorType DofIteratorType;
-    typedef typename DiscFunctionType::ConstDofIteratorType ConstDofIteratorType;
-
-    DofIteratorType dest_it = dest.dbegin();
-    ConstDofIteratorType arg_it = arg.dbegin();
-
-    const GeometryType t = en.geometry().type();
-
-    const IntersectionIteratorType endnit = gridPart.iend(en);
-    for(IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit ; ++nit)
+    /*! 
+     *   finalizeLocal: corrects the mapping in order to take into account 
+     *                  dirichlet boundary conditions.
+     * 
+     *   The dofs are assumed to be correlated to the local vertex numbers of 
+     *   the element, so only Lagrange basis are possible by this.
+     *   The dirichlet-treatment is then simple copying of the argument DOF 
+     *   to the destination DOF in case of Dirichlet boundary points. So the 
+     *   assumption is, that the argument already contains correct 
+     *   Dirichlet values.
+     *
+     *   \param the entity on which correction is to be performed
+     */
+    template< class EntityType >
+    void finalizeLocal ( EntityType &entity ) const
     {
-      if(nit.boundary())
-      {
-        int face = nit.numberInSelf();
-        enum { dim = EntityType :: dimension };
-        typedef typename EntityType :: ctype coordType;
-        
-        const int faceCodim = 1;
+      typedef typename DiscFunctionType :: FunctionSpaceType
+        DiscreteFunctionSpaceType;
+      typedef typename DiscFunctionType :: LocalFunctionType LocalFunctionType;
 
-        if(t.isSimplex())
-        {
-          if( nit.boundaryId() != 0 )
-          {
-            static ReferenceSimplex< coordType, dim > refElem;
-            int novx = refElem.size( face, faceCodim , dim );
-            assert( novx == dim );
-            for(int j=0; j<novx ; j++)
-            {
-              // get all local numbers located on the face 
-              int vx  = refElem.subEntity(face, faceCodim , j , dim );
-              // get global dof numbers of this vertices 
-              int col = functionSpace_.mapToGlobal( en, vx);
-              // set solution on dirichlet bnd 
-              dest_it[col] = arg_it[col];
-            }
-          }
-        }
-        if(t.isCube())
-        {
-          static ReferenceCube< coordType, dim > refElem;
-          int novx = refElem.size( face, faceCodim , dim );
-          for(int j=0; j<novx ; j++)
-          {
-            // get all local numbers located on the face 
-            int vx  = refElem.subEntity(face, faceCodim , j , dim );
-            // get global dof numbers of this vertices 
-            int col = functionSpace_.mapToGlobal( en, vx );
-            // set solution on dirichlet bnd 
-            dest_it[col] = arg_it[col];
-          }
+      typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
+        LagrangePointSetType;
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      
+      enum { faceCodim = 1 };
+      typedef typename GridPartType :: IntersectionIteratorType
+        IntersectionIteratorType;
+      typedef typename LagrangePointSetType :: template Codim< faceCodim > 
+                                            :: SubEntityIteratorType
+        FaceDofIteratorType;
+ 
+      const DiscFunctionType &arg = (*arg_);
+      DiscFunctionType &dest = (*dest_);
+
+      const DiscreteFunctionSpaceType &discreteFunctionSpace = arg.space();
+      const GridPartType &gridPart = discreteFunctionSpace.gridPart();
+
+      IntersectionIteratorType it = gridPart.ibegin( entity );
+      const IntersectionIteratorType endit = gridPart.iend( entity );
+      for( ; it != endit ; ++it ) {
+        if( !it.boundary() )
+          continue;
+
+        const LocalFunctionType argLocal = arg.localFunction( entity );
+        LocalFunctionType destLocal = dest.localFunction( entity );
+
+        const LagrangePointSetType &lagrangePointSet
+          = discreteFunctionSpace.lagrangePointSet( entity );
+        
+        const int face = it.numberInSelf();
+        FaceDofIteratorType faceIt
+          = lagrangePointSet.template beginSubEntity< faceCodim >( face );
+        const FaceDofIteratorType faceEndIt
+          = lagrangePointSet.template endSubEntity< faceCodim >( face );
+        for( ; faceIt != faceEndIt; ++faceIt ) {
+          const unsigned int localDof = *faceIt;
+          destLocal[ localDof ] = argLocal[ localDof ];
         }
       }
-    }
-  }// end finalizeLocal
+    } // end finalizeLocal
 
 protected:
   //! the corresponding function_space 
@@ -486,185 +461,153 @@ protected:
   const DiscFunctionType * arg_;
   DiscFunctionType * dest_;
 
-/*======================================================================*/
-/*! 
- *   newEmptyMatrix: allocation of a new global matrix
- *
- *   The Matrixclass is required to have a constructor with the syntax
- *   MatrixType(nrows, ncols, nonzeros_per_row).   
- *
- *   \return a pointer to the newly allocated global matrix.
- */
-/*======================================================================*/
-
-  MatrixType* newEmptyMatrix( ) const 
-  { typedef typename DiscFunctionType::FunctionSpaceType::GridType GridType; 
-    enum { dim = GridType::dimension };
-    return new MatrixType( this->functionSpace_.size ( ) , 
-        this->functionSpace_.size ( ) , 
-        15 * (dim-1));
-  };
-
-/*======================================================================*/
-/*! 
- *   assemble: perform grid-walkthrough and assemble global matrix
- * 
- *   If the matrix storage is 
- *   not allocated, new storage is allocated by newEmptyMatrix.
- *   the begin and end iterators are determined and the assembling
- *   of the global matrix initiated by call of assembleOnGrid and 
- *   bndCorrectOnGrid. The assemled flag is set. 
- */
-/*======================================================================*/
-
-  void assemble ( ) const 
-  {
-    if(!this->matrix_) matrix_ = this->newEmptyMatrix( );
-    
-    typedef typename DiscFunctionType::FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::GridType GridType; 
-    typedef typename FunctionSpaceType::IteratorType IteratorType;
-   
-    {  
-      FieldMatrix<double, maxnumOfBaseFct, maxnumOfBaseFct> mat;
-
-      IteratorType it    = functionSpace_.begin(); 
-      IteratorType endit = functionSpace_.end(); 
-
-      assembleOnGrid(it, endit, mat);
-    }
-
+    /*! 
+     *   newEmptyMatrix: allocation of a new global matrix
+     *
+     *   The Matrixclass is required to have a constructor with the syntax
+     *   MatrixType(nrows, ncols, nonzeros_per_row).   
+     *
+     *   \return a pointer to the newly allocated global matrix.
+     */
+    MatrixType* newEmptyMatrix () const
     {
-      IteratorType it    = functionSpace_.begin(); 
-      IteratorType endit = functionSpace_.end(); 
-      bndCorrectOnGrid(it, endit);
-    }
-
-    matrix_assembled_ = true;
-  };
-  
-/*======================================================================*/
-/*! 
- *   assembleOnGrid: perform grid walkthrough and assemble matrix
- *
- *   For each element, the local element matrix is determined into the 
- *   given local matrix storage and distributed into the global matrix.
- *   Distribution is performed by an add(row,col,val) method on the 
- *   global matrix class.
- *
- *   ??? why shoudl this one not be private? method assemble() is 
- *   sufficient for public call. ???
- *
- *   \param start and end iterator and storage for a local matrix 
- */
-/*======================================================================*/
-
-  template <class GridIteratorType, class LocalMatrixImp>
-  void assembleOnGrid ( GridIteratorType &it, GridIteratorType &endit, 
-                        LocalMatrixImp &mat) const
-        {
-          typedef typename DiscFunctionType::FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-
-    // run through grid and add up local contributions
-    for( ; it != endit; ++it )
-    {
-      const BaseFunctionSetType & baseSet = functionSpace_.baseFunctionSet( *it );
-      const int numOfBaseFct = baseSet.numBaseFunctions();  
+      typedef typename DiscFunctionType :: FunctionSpaceType
+        DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType :: GridType GridType;
       
-      // setup matrix 
-      getLocalMatrix( *it, numOfBaseFct, mat);
+      enum { dimension = GridType :: dimension };
+      enum { polynomialOrder = DiscreteFunctionSpaceType :: polynomialOrder };
+      
+      return new MatrixType( this->functionSpace_.size(), 
+                             this->functionSpace_.size(),
+                             15 * (dimension - 1) * polynomialOrder );
+    };
 
-      for(int i=0; i<numOfBaseFct; i++) 
-      { 
-        int row = functionSpace_.mapToGlobal( *it , i );
-        for (int j=0; j<numOfBaseFct; j++ ) 
-        {
-          int col = functionSpace_.mapToGlobal( *it , j );    
-          matrix_->add( row , col , mat[i][j]);
-        }
-      }
-    }
-  }
-
-/*======================================================================*/
-/*! 
- *   bndCorrectOnGrid: treatment of Dirichlet-DOFS
- *
- *   delete rows and columns for dirichlet DOFS, setting diagonal 
- *   element to 1. Lagrange Basis is implicitly assumed.
- *
- *   \param start and end iterator
- */
-/*======================================================================*/
-
-  
-  //! \todo Please doc me!
-  template <class GridIteratorType>
-  void bndCorrectOnGrid ( GridIteratorType &it, const GridIteratorType &endit) const
-  {
-    // eliminate the Dirichlet rows and columns 
-    typedef typename DiscFunctionType::FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::GridType GridType; 
-    typedef typename GridType::template Codim<0>::Entity EntityType;
-    typedef typename FunctionSpaceType::GridPartType GridPartType;
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
- 
-    const GridPartType & gridPart = functionSpace_.gridPart();
-
-    for( ; it != endit; ++it ) 
+    /*! 
+     *   assemble: perform grid-walkthrough and assemble global matrix
+     * 
+     *   If the matrix storage is 
+     *   not allocated, new storage is allocated by newEmptyMatrix.
+     *   the begin and end iterators are determined and the assembling
+     *   of the global matrix initiated by call of assembleOnGrid and 
+     *   bndCorrectOnGrid. The assemled flag is set. 
+     */
+    void assemble () const 
     {
-      const EntityType & en = *it; 
+      if( this->matrix_ == NULL )
+        matrix_ = this->newEmptyMatrix();
+    
+      typedef typename DiscFunctionType :: FunctionSpaceType
+        DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+  
+      {  
+        FieldMatrix<double, maxnumOfBaseFct, maxnumOfBaseFct> mat;
 
-      const GeometryType t = en.geometry().type();
-      const IntersectionIteratorType endnit = gridPart.iend(en);
-      for(IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit ; ++nit)
+        IteratorType it    = functionSpace_.begin(); 
+        IteratorType endit = functionSpace_.end(); 
+
+        for( ; it != endit; ++it )
+          assembleOnGrid( *it, mat);
+      }
+
       {
-        if(nit.boundary())
-        {
-          const int faceCodim = 1;
-          int face = nit.numberInSelf();
-          enum { dim = EntityType :: dimension };
-          typedef typename EntityType :: ctype coordType;
+        IteratorType it = functionSpace_.begin();
+        const IteratorType endit = functionSpace_.end();
+        for( ; it != endit; ++it )
+          bndCorrectOnGrid( *it );
+      }
 
-          if( t.isSimplex() )
-          {
-            if( nit.boundaryId() != 0 )
-            {
-              static ReferenceSimplex< coordType, dim > refElem;
-              int novx = refElem.size( face, faceCodim , dim );
-              assert( novx == dim );
-              for(int j=0; j<novx ; j++)
-              {
-                // get all local numbers located on the face 
-                int vx  = refElem.subEntity(face, faceCodim , j , dim );
-                // get global dof numbers of this vertices 
-                int col = functionSpace_.mapToGlobal( en, vx);
-                // set solution on dirichlet bnd 
+      matrix_assembled_ = true;
+    };
+  
+    /*! 
+     *   assembleOnGrid: perform grid walkthrough and assemble matrix
+     *
+     *   For each element, the local element matrix is determined into the 
+     *   given local matrix storage and distributed into the global matrix.
+     *   Distribution is performed by an add(row,col,val) method on the 
+     *   global matrix class.
+     *
+     *   ??? why shoudl this one not be private? method assemble() is 
+     *   sufficient for public call. ???
+     *
+     *   \param start and end iterator and storage for a local matrix 
+     */
+    template< class EntityType, class LocalMatrixImp >
+    void assembleOnGrid ( const EntityType &entity, 
+                          LocalMatrixImp &mat) const
+    {
+      typedef typename DiscFunctionType :: FunctionSpaceType
+        DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+        BaseFunctionSetType;
 
-                // unitRow unitCol for boundary
-                matrix_->kroneckerKill(col,col);
-              }
-            }
-          }
-          if( t.isCube() )
-          {
-            static ReferenceCube< coordType, dim > refElem;
-            int novx = refElem.size( face, faceCodim , dim );
-            for(int j=0; j<novx ; j++)
-            {
-              // get all local numbers located on the face 
-              int vx  = refElem.subEntity(face, faceCodim , j , dim );
-              // get global dof numbers of this vertices 
-              int col = functionSpace_.mapToGlobal( en, vx);
+      const BaseFunctionSetType &baseSet = functionSpace_.baseFunctionSet( entity );
+      const int numBaseFunctions = baseSet.numBaseFunctions();
+       
+      // setup matrix 
+      getLocalMatrix( entity, numBaseFunctions, mat );
 
-              // unitRow unitCol for boundary
-              matrix_->kroneckerKill(col,col);
-            }
-          }
+      for( int i = 0; i < numBaseFunctions; ++i ) { 
+        const int row = functionSpace_.mapToGlobal( entity , i );
+        for( int j = 0; j < numBaseFunctions; ++j ) {
+          const int col = functionSpace_.mapToGlobal( entity, j );
+          matrix_->add( row, col, mat[ i ][ j ] );
         }
       }
     }
-  };
+
+    /*! 
+     *   bndCorrectOnGrid: treatment of Dirichlet-DOFS
+     *
+     *   delete rows and columns for dirichlet DOFS, setting diagonal 
+     *   element to 1. Lagrange Basis is implicitly assumed.
+     *
+     *   \param start and end iterator
+     */
+    template< class EntityType >
+    void bndCorrectOnGrid ( const EntityType &entity ) const
+    {
+      typedef typename DiscFunctionType :: FunctionSpaceType
+        DiscreteFunctionSpaceType;
+      
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
+        LagrangePointSetType;
+
+      enum { faceCodim = 1 };
+      typedef typename GridPartType :: IntersectionIteratorType
+        IntersectionIteratorType;
+      typedef typename LagrangePointSetType :: template Codim< faceCodim >
+                                            :: SubEntityIteratorType
+        FaceDofIteratorType;
+
+      const DiscreteFunctionSpaceType &discreteFunctionSpace = functionSpace_;
+      const GridPartType &gridPart = discreteFunctionSpace.gridPart();
+
+      IntersectionIteratorType it = gridPart.ibegin( entity );
+      const IntersectionIteratorType endit = gridPart.iend( entity );
+      for( ; it != endit ; ++it ) {
+        if( !it.boundary() )
+          continue;
+
+        const LagrangePointSetType &lagrangePointSet
+          = discreteFunctionSpace.lagrangePointSet( entity );
+        
+        const int face = it.numberInSelf();
+        FaceDofIteratorType faceIt
+          = lagrangePointSet.template beginSubEntity< faceCodim >( face );
+        const FaceDofIteratorType faceEndIt
+          = lagrangePointSet.template endSubEntity< faceCodim >( face );
+        for( ; faceIt != faceEndIt; ++faceIt ) {
+          const unsigned int dof
+            = discreteFunctionSpace.mapToGlobal( entity, *faceIt );
+          matrix_->kroneckerKill( dof, dof );
+        }
+      }
+    }
 
 private:
   //! operator mode 
