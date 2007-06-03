@@ -32,6 +32,7 @@
 #include "gausspoints.hh"
 #include "prismpoints.hh"
 #include "pyramidpoints.hh"
+#include "dunequadratures.hh"
 
 namespace Dune {
 
@@ -495,6 +496,10 @@ namespace Dune {
   {
     typedef CubeQuadrature<ct, 2>    CubeQuadratureType;     
     typedef SimplexQuadrature<ct, 2> SimplexQuadratureType;     
+    /*
+    typedef QuadratureRulesFactory<ct,2> SimplexQuadratureType;
+    typedef QuadratureRulesFactory<ct,2> CubeQuadratureType;
+    */
     typedef QuadratureImp<ct,2>      IntegrationPointListType;
   };
   
