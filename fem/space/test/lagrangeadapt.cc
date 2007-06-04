@@ -1,7 +1,9 @@
 #include <config.h>
 
 // to use grape, set to WANT_GRAPE to 1
-#define WANT_GRAPE 0
+#define WANT_GRAPE 1
+#define SHOW_INTERPOLATION 0
+#define SHOW_RESTRICT_PROLONG 1
 
 // to write out the data, set WRITE_DATA to 1
 #define WRITE_DATA 0
@@ -11,8 +13,6 @@
 
 // polynomial order of base functions
 const int polOrder = POLORDER;
-
-
 
 #include <iostream>
 #include <dune/common/stdstreams.cc>
@@ -25,23 +25,26 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/lagrangespace/adaptmanager.hh>
-//#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
 #ifndef GRIDDIM 
-#define GRIDDIM dimworld 
+  #define GRIDDIM dimworld 
 #endif
 
-#if HAVE_GRAPE && (GRIDDIM > 1)
-#define USE_GRAPE WANT_GRAPE
-#else 
-#define USE_GRAPE 0
+#if HAVE_GRAPE
+//#if HAVE_GRAPE && (GRIDDIM > 1)
+  #define USE_GRAPE WANT_GRAPE
+#else
+  #define USE_GRAPE 0
+  #if WANT_GRAPE
+    #warning "Grape was not found by configure."
+  #endif
 #endif
 
 #if USE_GRAPE 
-#include <dune/grid/io/visual/grapedatadisplay.hh>
+  #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 #include <dune/fem/io/file/grapedataio.hh>
 
@@ -50,6 +53,7 @@ using namespace Dune;
 
 //! type of the grid partition we are using 
 typedef AdaptiveLeafGridPart< GridType > GridPartType;
+// typedef HierarchicGridPart< GridType > GridPartType;
 
 //! type of the function space
 typedef FunctionSpace< double, double, GRIDDIM, 1 > FunctionSpaceType;
@@ -335,16 +339,6 @@ void adapt ( GridType &grid, DiscreteFunctionType &solution, int step )
       grid.adapt( dofManager, rp );
     #endif
   }
-
-  /*
-  DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
-  grid.preAdapt();
-  dm.resizeForRestrict();
-  grid.globalRefine(step);
-  dm.resize();
-  // dm.dofCompress();
-  grid.postAdapt();
-  */
 }
 
 
@@ -360,32 +354,36 @@ void algorithm ( GridType &grid,
   double preL2error = L2Error< DiscreteFunctionType > :: norm( f, solution, 0 );
   double preH1error = H1Error< DiscreteFunctionType > :: norm( f, solution, 0 );
 
-  std :: cout << "L2 error before refinement: " << preL2error << std :: endl;
-  std :: cout << "H1 error before refinement: " << preH1error << std :: endl; 
+  std :: cout << "L2 error before adaption: " << preL2error << std :: endl;
+  std :: cout << "H1 error before adaption: " << preH1error << std :: endl; 
   
-  adapt(grid,solution,step);
+  adapt( grid, solution, step );
   
-  #if USE_GRAPE
+  double postL2error = L2Error< DiscreteFunctionType > :: norm( f, solution, 0 );
+  double postH1error = H1Error< DiscreteFunctionType > :: norm( f, solution, 0 );
+
+  std :: cout << "L2 error after "
+              << (step < 0 ? "restriction" : "prolongation")
+              << ": " << postL2error << std :: endl;
+  std :: cout << "H1 error after "
+              << (step < 0 ? "restriction" : "prolongation")
+              << ": " << postH1error << std :: endl; 
+  
+  #if USE_GRAPE && SHOW_RESTRICT_PROLONG
     if( turn > 0 ) {
       GrapeDataDisplay< GridType > grape( grid );
       grape.dataDisplay( solution );
     }
   #endif
 
-  double postL2error = L2Error< DiscreteFunctionType > :: norm( f, solution, 0 );
-  double postH1error = H1Error< DiscreteFunctionType > :: norm( f, solution, 0 );
-
-  std :: cout << "L2 error after refinement: " << postL2error << std :: endl;
-  std :: cout << "H1 error after refinement: " << postH1error << std :: endl; 
- 
   LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
   double newL2error = L2Error< DiscreteFunctionType > :: norm( f, solution, 0 );
   double newH1error = H1Error< DiscreteFunctionType > :: norm( f, solution, 0 );
 
-  std :: cout << "L2 error for interpolation on refinement: " << newL2error << std :: endl;
-  std :: cout << "H1 error for interpolation on refinement: " << newH1error << std :: endl; 
+  std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
+  std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl; 
   
-  #if USE_GRAPE
+  #if USE_GRAPE && SHOW_INTERPOLATION
     if( turn > 0 ) {
       GrapeDataDisplay< GridType > grape( grid );
       grape.dataDisplay( solution );
