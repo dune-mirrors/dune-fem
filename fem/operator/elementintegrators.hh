@@ -282,7 +282,7 @@ protected:
      *
      *  \param[in]  entity the entity over which the intrgration is performed
      *
-     *  \param[out} matrix reference ot the local element matrix storage to be
+     *  \param[out] matrix reference ot the local element matrix storage to be
      *              increased
      *
      *  \param[in]  coefficient an optional weighting coefficient, which is
@@ -528,6 +528,104 @@ protected:
               }
 	    }
           }; // end method addMassElementMatrix
+/*======================================================================*/
+/*!
+ *  addGeneralizedNeumannElementMatrix: accumulate generalized Neumann boundary 
+ *  contributions
+ *
+ *  The method is used for the Neumann boundary of general elliptic problems.
+ *  The following matrix is computed, where i,j run over the local dofs
+ *  of base functions, which have support on an entity.
+ *  \f[
+ *     L_ij :=  +  \int_\Gamma_Neu alphaFunction (entity, iquad, pt,it,ret )  phi_i        phi_j     
+ *  \f]
+ *  The model class is assumed to have an alphaFunction(entity, iquad, pt,it,ret) and a
+ *  boundaryType() member method.
+ *
+ *  the method must be a template method, such that the model requirements
+ *  are only mandatory, if the method is instantiated.
+ *
+ *  \param entity the entity over which the intrgration is performed
+ *
+ *  \param mat reference ot the local element matrix storage to be increased
+ *
+ *  \param coef an optional weighting coefficient, which is multiplied to the
+ *         increase before matrix addition
+ */
+/*======================================================================*/
+
+    template <class EntityImp, class ElementMatrixImp>
+    void addGeneralizedNeumannElementMatrix(EntityImp& entity, 
+                               ElementMatrixImp& mat, 
+                               double coef = 1.0) //  const
+          {
+	    // for all intersections check whether boundary
+            DiscreteFunctionSpaceType& fspace = 
+                this->model().discreteFunctionSpace();          
+            GridPartType & gridPart = fspace.gridPart();
+            
+            IntersectionIteratorType 
+                endit = gridPart.iend(entity);
+            for(IntersectionIteratorType it = 
+                    gridPart.ibegin(entity); 
+                it != endit; ++it)
+                
+	
+                if(it.boundary())
+                {
+                  // if boundary, get cog of intersection and check for Robin
+                  IntersectionQuadratureType 
+                      iquad(it,0,
+                            IntersectionQuadratureType::INSIDE);
+
+                  // check, whether real cog integration is performed
+                  assert(iquad.nop()==1);
+                  if (this->model().boundaryType(entity,iquad,0) == 
+                      TraitsType::GeneralizedNeumann)
+                  {
+                    // if Robin-boundary, then integrate over intersect:
+                    // get quadrature and function space
+		 
+                    IntersectionQuadratureType 
+                        iquad(it,TraitsType::quadDegree, 
+                              IntersectionQuadratureType::INSIDE);
+                    
+                    // get local basis
+                    const BaseFunctionSetType & baseSet = 
+                        fspace.baseFunctionSet(entity);
+                    
+                    int numBaseFunctions =  baseSet.numBaseFunctions();     
+                    // LocalFunctionType lf = rhs.localFunction(entity);
+                    
+                    for ( int pt=0; pt < iquad.nop(); pt++ ) 
+                    {  
+		      // the following seems wrong...
+                      const double vol = 
+                          it.intersectionGlobal().
+                          integrationElement(iquad.localPoint(pt));    
+RangeType ret;
+                      double fact = iquad.weight( pt ) * vol * coef ;
+		      this->model().alphaFunction(entity, iquad, pt,  it,
+						  ret );
+			fact *= ret[0];	     
+                                            
+                      for(int i=0; i<numBaseFunctions; i++) 
+                      {
+		                           RangeType phi_i;
+                        baseSet.evaluate(i,iquad,pt,phi_i);  
+                        for(int j=0; j<numBaseFunctions; j++) 
+			{
+			
+			  RangeType phi_j;
+			  baseSet.evaluate(j,iquad,pt,phi_j);  	    
+			  double incr =  fact * phi_i[0] * phi_j[0];
+			  mat.add(i,j,incr);
+			} // end inner loop over basefunctions           
+                      } // end outer loop over basefunctions           
+                    } // end loop over quadraturepoints
+                  } // end of if isrobin-intersection
+                } // end of isboundary 
+          }; // end method addGeneralizedNeumannElementMatrix
 
 /*======================================================================*/
 /*!
@@ -1072,6 +1170,108 @@ public:
 	} // end of isboundary
   };
 
+  /*======================================================================*/
+/*! 
+ *   addGeneralizedNeumannElementRhs: adds a multiple of a Robin term contribution
+ *                     to the rhs 
+ *
+ *   This method can be used as a building block for problem specific 
+ *   ElementRhsIntegrators.
+ * 
+ *   The elRhs vector is increased by the following values:
+ *   \f[
+ *      b_i + = coef * \int_{neumann_boundary of entity} generalizedNeumannValues * phi_i 
+ *   \f]
+ *   By accessing only the local basis functions, only few 
+ *   values b_i are updated.
+ *
+ *   If this function is used, the model must provide a 
+ *   robinValues and a boundaryType method
+ *
+ *   by keeping the method templatized, the model requirements really only 
+ *   are demanding, if these building blocks are used. So also simple 
+ *   models can be realized.
+ *
+ *  \param entity the entity over which the intrgration is performed
+ *
+ *  \param elRhs reference ot the local function to be increased
+ *
+ *  \param coef an optional weighting coefficient, which is multiplied to the
+ *         increase before addition
+ */
+/*======================================================================*/  
+    
+    template <class EntityImp, class ElementRhsImp>
+    void addGeneralizedNeumannElementRhs(EntityImp &entity, 
+                            ElementRhsImp &elRhs, 
+                            double coef = 1.0) // const
+          {
+    // for all intersections check whether boundary
+    DiscreteFunctionSpaceType& fspace = 
+      this->model().discreteFunctionSpace();          
+    GridPartType & gridPart = fspace.gridPart();
+    
+    IntersectionIteratorType 
+      endit = gridPart.iend(entity);
+    for(IntersectionIteratorType it = 
+	  gridPart.ibegin(entity); 
+	it != endit; ++it)
+      
+      if(it.boundary())
+	{
+	  // if boundary, get cog of intersection and check for Neumann
+	  IntersectionQuadratureType 
+	    iquad(it,0,IntersectionQuadratureType::INSIDE);
+	  // check, whether real cog integration is performed
+	  assert(iquad.nop()==1);
+	  if (this->model().boundaryType(entity,iquad,0) == TraitsType::GeneralizedNeumann)
+	    {
+	      // if Neumann-boundary, then integrate over intersect:
+	      // get quadrature and function space
+	      IntersectionQuadratureType 
+		iquad(it,TraitsType::quadDegree, 
+                      IntersectionQuadratureType::INSIDE);
+	      
+	      // get local basis
+	      const BaseFunctionSetType & baseSet = 
+		fspace.baseFunctionSet(entity);
+	      
+	      int numBaseFunctions =  baseSet.numBaseFunctions();             
+	      	      
+	      for ( int pt=0; pt < iquad.nop(); pt++ ) 
+		{  
+		  // the following seems wrong...
+		  const double vol = 
+                      it.intersectionGlobal().
+                      integrationElement(iquad.localPoint(pt));                 
+//		  const double vol = 
+//		    iquad.geometry().integrationElement(
+//		      iquad.localPoint(pt));
+		  // entity.geometry().integrationElement(iquad.point(pt));
+		  
+		  double fact = iquad.weight( pt ) * vol * coef;
+		  
+		  // get normal
+		  // TraitsType::DomainType outerNormal = 
+		  // it.unitOuterNormal(iquad.localPoint(pt));
+		  
+		  for(int i=0; i<numBaseFunctions; i++) 
+                    {
+		      RangeType phi;
+		      baseSet.eval(i,iquad,pt,phi);  
+		      
+   		      RangeType ret;
+		      this->model().generalizedNeumannValues(entity, iquad, pt, it,ret);
+                      ret[0] *= fact;
+		      double incr =  ret[0] * phi[0];
+		      elRhs[i] += incr;
+                    } // end loop over basefunctions           
+		} // end loop over quadraturepoints
+	    } // end of if isdirichlet-intersection
+	} // end of isboundary
+  }; //end of addGeneralizedNeumannElementRhs
+
+  
   private:
     //! reference to the underlying model specified during construction
     ModelType& model_;
@@ -1103,6 +1303,7 @@ public:
  *                                            u &=& g_D \quad\mbox{in}\quad \Gamma_D\\
  *                           (a*grad(u) -b*u) n &=& g_N \quad\mbox{in}\quad \Gamma_N\\
  *                 (a*grad(u) -b*u) n + alpha*u &=& g_R \quad\mbox{in}\quad \Gamma_R
+ *            (a*grad(u) -b*u) n + alphaFunction*u &=& g_GN \quad\mbox{in}\quad \Gamma_neu
  *  \f}
  *
  *  where \f$ a,b,c,g_D,g_N,g_R \f$ are space dependent, alpha a constant and the 
@@ -1114,7 +1315,10 @@ public:
  *              "dirichletValues"  g_D
  *              "neumannValues"    g_N
  *              "robinValues"      g_R
- *              "alpha"            alpha                   
+ *              "alpha"            alpha
+ *              "generalizedNeumannValues"   g_GN
+ *              "alphaFunction"    alphaFunction                   
+                   
  *
  *  the EllipticElementRhsIntegrator in fem/examples/elliptic/elliptic.cc 
  *  results in
