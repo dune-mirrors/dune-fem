@@ -23,8 +23,8 @@
 #include "dofmapperinterface.hh"
 #include "datacollector.hh"
 
-// to be revised 
-#include "../../solver/oemsolver.hh"
+// include BLAS for daxpy operation 
+#include "../../solver/oemsolver/cblas.h"
 
 namespace Dune {
 
@@ -291,7 +291,7 @@ public:
   void axpy (const DofArray<T> &org, const T scalar)
   {
 #if HAVE_BLAS
-    OEMSolver :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
+    DuneCBlas :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
 #else 
     const int s = size();
     const T * ov = org.vec_;
