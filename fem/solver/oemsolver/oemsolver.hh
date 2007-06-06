@@ -13,8 +13,14 @@
 
 #include "../odesolver.hh"
 
+// include BLAS  implementation 
+#include "cblas.h"
+
 namespace OEMSolver 
 {
+
+// use cblas implementations 
+using namespace DuneCBlas;  
 
 //! this method is called from all solvers and is only a wrapper
 //! this method is mainly from SparseRowMatrix 

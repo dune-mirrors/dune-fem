@@ -1,4 +1,8 @@
+#ifndef DUNE_CBLAS_H_INCLUDED
+#define DUNE_CBLAS_H_INCLUDED
 // -*- C++ -*-
+// define extra namespace 
+namespace DuneCBlas { 
 
 // ============================================= //
 //  die double-Versionen der BLAS Level 1 und 2  //
@@ -606,6 +610,7 @@ void dspr2( MatrixTriangle uplo, int n, double alpha, const double *x,
 
 
 // ============================================================================
-
-
 #endif // CBLAS2_H
+
+} // end namespace DuneCBlas 
+#endif // DUNE_CBLAS_H_INCLUDED 
