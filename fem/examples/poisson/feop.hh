@@ -8,7 +8,7 @@
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/localoperator.hh>
-#include <dune/fem/operator/feop/spmatrix.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
 
 namespace Dune {
 

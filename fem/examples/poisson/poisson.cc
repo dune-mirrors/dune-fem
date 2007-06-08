@@ -28,8 +28,8 @@
 **
 **************************************************************************/
 
-// uncomment the following line tu use grape
-//#define USE_GRAPE HAVE_GRAPE
+// uncomment the following line to use grape
+#define USE_GRAPE HAVE_GRAPE
 
 #define VERBOSE false
 
@@ -82,7 +82,7 @@ using namespace Dune;
   An exact solution to this problem is given by 
   \f[ u(x,y,z) = ( x - x^2 ) ( y - y^2 ) ( z - z^2 ) \f]
 
-  with the finite element method using lagrangian elements of polynor order 1.
+  with the finite element method using lagrangian elements of polynom order 1.
 */
 //***********************************************************************
 

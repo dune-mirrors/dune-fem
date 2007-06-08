@@ -124,14 +124,14 @@ gmres_algo (const CommunicatorType & comm,
       { // innere Iteration j=0,...,m-1
         u0j=uij;
         mult_pc(A,C,v[j],v[j+1],tmp);
-        dgemv(Transpose,n,j+1,1.,V,n,v[j+1],1,0.,U+u0j,1);
+        dgemv(DuneCBlas::Transpose,n,j+1,1.,V,n,v[j+1],1,0.,U+u0j,1);
 
         // global sum 
         //double & Uu0j = U[uij];
         //Uu0j = comm.sum( Uu0j );
         comm.sum( U+u0j, j+1 );
         
-        dgemv(NoTranspose,n,j+1,-1.,V,n,U+u0j,1,1.,v[j+1],1);
+        dgemv(DuneCBlas::NoTranspose,n,j+1,-1.,V,n,U+u0j,1,1.,v[j+1],1);
 
         h = dnrm2(n,v[j+1],1);
         // global sum 
@@ -168,10 +168,10 @@ gmres_algo (const CommunicatorType & comm,
       } 
       while ( j<m && fabs(y[j])>=eps*nrm2b );
       { // minimiere bzgl Y
-        dtpsv(UpperTriangle,NoTranspose,NotUnitTriangular,j,U,y,1);
+        dtpsv(UpperTriangle,DuneCBlas::NoTranspose,NotUnitTriangular,j,U,y,1);
 
         // korrigiere X
-        dgemv(NoTranspose,n,j,-1.,V,n,y,1,1.,x,1);
+        dgemv(DuneCBlas::NoTranspose,n,j,-1.,V,n,y,1,1.,x,1);
       }
     } while ( fabs(y[j])>=eps*nrm2b );
 

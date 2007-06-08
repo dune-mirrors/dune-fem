@@ -228,7 +228,7 @@ namespace Dune
 
 
 
-  // Assebmler for right rand side
+  // Assembler for right rand side
   // note: this is not an L2-Projection
   template< class DiscreteFunctionImp >
   class RightHandSideAssembler
