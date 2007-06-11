@@ -367,7 +367,7 @@ namespace Dune {
   private:
     inline
     void rightMultiply(const JacobianRangeType& factor, 
-		       const JacobianInverseType& jInv, 
+           const JacobianInverseType& jInv, 
                        JacobianRangeType& result) const;
     // return reference to actual entity
     const EntityType& en() const;
@@ -741,7 +741,8 @@ namespace Dune {
     DofStorageType& dofVec_;
     
     // local dofs 
-    mutable Array< FieldVector<DofType*, N> > values_;
+    typedef DofType* DofPointerType; 
+    mutable Array< DofPointerType[N] > values_;
 
     // number of local dofs 
     int numDofs_;
