@@ -41,10 +41,8 @@ namespace Dune {
     
     // Types from the traits
     typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
-    typedef typename DiscreteModelType::Traits::VolumeQuadratureType 
-    VolumeQuadratureType;
-    typedef typename DiscreteModelType::Traits::FaceQuadratureType 
-    FaceQuadratureType;
+    typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType 
     DiscreteFunctionSpaceType;
     
@@ -57,7 +55,8 @@ namespace Dune {
     JacobianRangeType;
     
     // Types extracted from the underlying grids
-    typedef typename GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename GridType::template Codim<0>::EntityPointer EntityPointerType;
     typedef typename GridType::template Codim<0>::Geometry Geometry;
     
     // Various other types
@@ -68,7 +67,7 @@ namespace Dune {
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange,
-	   dimDomain = DiscreteFunctionSpaceType::DimDomain};
+     dimDomain = DiscreteFunctionSpaceType::DimDomain};
     typedef FieldVector<double, dimDomain-1> FaceDomainType;
   public:
     //- Public methods
@@ -84,20 +83,11 @@ namespace Dune {
       arg_(0),
       dest_(0),
       spc_(spc),
-      fMat_(0.0),
-      valEn_(0.0),
-      valNeigh_(0.0),
-      baseEn_(0.0),
-      baseNeigh_(0.0),
-      source_(0.0),
-      identity_(1.0),
-      grads_(0.0),
-      diffVar_()
+      gridPart_(spc_.gridPart())
     {}
     
     //! Destructor
     virtual ~LimitDGPass() {
-      //delete caller_;
     }
     
   private:
@@ -111,14 +101,13 @@ namespace Dune {
       dest_->clear();
       
       caller_.setArgument(*arg_);
-      
     }
     
     //! Some management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
       caller_.finalize();
-      DestinationType* U=const_cast<DestinationType*>(Element<0>::get(*arg_));
+      DestinationType* U = const_cast<DestinationType*>(Element<0>::get(*arg_));
       U->assign(dest);
     }
     
@@ -127,152 +116,184 @@ namespace Dune {
     {
       //- typedefs
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType 
-    	BaseFunctionSetType;
+      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
       GeometryType geom = en.geometry().type();
       //- statements
       caller_.setEntity(en);
+      DestinationType& U = const_cast<DestinationType&> (*(Element<0>::get(*arg_)));
+
       // get U on entity
-      LocalFunctionType uEn = Element<0>::get(*arg_)->localFunction(en);
+      LocalFunctionType uEn = U.localFunction(en);
       // get local funnction for limited values
       LocalFunctionType limitEn = dest_->localFunction(en);
+
+      // order of space 
+      const int order = spc_.order();
+
+      const Geometry& geo = en.geometry();
       
       // create quadrature with barycenters for 
       // the element and for the faces 
-      ElementQuadrature<GridPartType,0> center0(en,0);
-      ElementQuadrature<GridPartType,1> center1(en,0);
+      CachingQuadrature<GridPartType,0> center0(en,0);
       
-      const IndexSetType& iset = spc_.indexSet();
-      const BaseFunctionSetType& bsetEn = limitEn.getBaseFunctionSet();
+      //const IndexSetType& iset = spc_.indexSet();
+      //const BaseFunctionSetType& bsetEn = limitEn.baseFunctionSet();
+      
       Dune::DofConversionUtility< PointBased > dofConversion(dimRange);
 
       // number of scalar base functions
       int numBasis=limitEn.numDofs()/dimRange;
       
-      double areae = volumeElement(en);
+      //double areae = geo.volume();
       double circume = 0.0;
-      int numcorners = en.geometry().corners();
+
+      int numcorners = geo.corners();
       double radius = 0.0;
 
-			
-#if 0									
-      for(int n=0;n<numcorners;++n){
-	/*cout << "Point n+1,x = " << en.geometry()[(n+1)][0] << std::endl;
-	  cout << "Point n+1,y = " << en.geometry()[(n+1)][1] << std::endl;
-	  cout << "Point n,x = " << en.geometry()[n][0] << std::endl;
-	  cout << "Point n,y = " << en.geometry()[n][1] << std::endl;*/
-				 
-	circume += sqrt(SQR(en.geometry()[(n+1)%numcorners][0] - en.geometry()[n][0]) \
-			+ SQR(en.geometry()[(n+1)%numcorners][1] - en.geometry()[n][1]));
+      
+#if 0   
+      DomainType diff;
+      for(int n=0; n<numcorners; ++n)
+      {
+        diff = geo[(n+1)%numcorners] - geo[n];
+        double length = diff.two_norm();
+        circume += length;
+        radius = std::max(length,radius);
+
+        //circume += sqrt(SQR(geo[(n+1)%numcorners][0] - geo[n][0])
+        //              + SQR(geo[(n+1)%numcorners][1] - geo[n][1]));
       }
-			 
+       
       // cout << "Using Alberta" << std::endl;
 
 #else
       /*circume = 4.0*sqrt(SQR(en.geometry()[1][0] - en.geometry()[0][0]) \
-	+ SQR(en.geometry()[1][1] - en.geometry()[0][1]));
-				
-	cout << "Euclidean = " << circume << std::endl;
-				
-	circume = (en.geometry()[1] - en.geometry()[0]).two_norm();
-				
-	cout << "Two norm = " << circume << std::endl;*/
-				
+  + SQR(en.geometry()[1][1] - en.geometry()[0][1]));
+        
+  cout << "Euclidean = " << circume << std::endl;
+        
+  circume = (en.geometry()[1] - en.geometry()[0]).two_norm();
+        
+  cout << "Two norm = " << circume << std::endl;*/
+       
+      // adjust for 3d 
       double ax,ay,bx,by;
-				
-      ax = en.geometry()[0][0];
-      ay = en.geometry()[0][1];
-				
-      bx = en.geometry()[1][0];
-      by = en.geometry()[1][1];
-				
+        
+      ax = geo[0][0];
+      ay = geo[0][1];
+        
+      bx = geo[1][0];
+      by = geo[1][1];
+        
       circume = 4.0*(fabs(bx-ax)+fabs(by-ay));
-				
+        
       /*cout << "Using Yaspgrid" << std::endl;
-	cout << "Point 1,x = " << en.geometry()[1][0] << std::endl;
-	cout << "Point 1,y = " << en.geometry()[1][1] << std::endl;
-	cout << "Point 0,x = " << en.geometry()[0][0] << std::endl;
-	cout << "Point 0,y = " << en.geometry()[0][1] << std::endl;*/
-				
+  cout << "Point 1,x = " << en.geometry()[1][0] << std::endl;
+  cout << "Point 1,y = " << en.geometry()[1][1] << std::endl;
+  cout << "Point 0,x = " << en.geometry()[0][0] << std::endl;
+  cout << "Point 0,y = " << en.geometry()[0][1] << std::endl;*/
+        
+      // cout << "Circumference = " << circume << std::endl;    
+      radius = fabs(bx-ax)/sqrt(2.0);   
 #endif
-						
-      // cout << "Circumference = " << circume << std::endl;		
-				
-      radius = fabs(bx-ax)/sqrt(2.0);		
-				
+            
       // get value of U in barycenter
       RangeType centerUe(0);
-      uEn.evaluateLocal(en,center0.point(0),centerUe);
+      uEn.evaluate(center0, 0, centerUe);
 
       FieldVector<bool,dimRange> limit(false);
 
-      IntersectionIterator endnit = en.iend();
-      IntersectionIterator nit = en.ibegin();
       RangeType totaljump(0);
 
       int counter=0;
-      for (; nit != endnit; ++nit) {
-	if (nit.neighbor()) {
-	  FieldVector<double,dimDomain> normal = 
-	    nit.outerNormal(center1.point(0));
-	  FieldVector<double,dimDomain> velocity(0.8);
-	  if (normal*velocity<0) {
-	    // get neighbor entity
-	    EntityType& nb = *nit.outside(); 
-	    // double arean = volumeElement(nb);
-	    // get local function for U on neighbor
-	    LocalFunctionType uNeigh =Element<0>::get(*arg_)->localFunction(nb);
-	    // get U in barycenter of neighbor
-	    RangeType centerUn(0);
-	    uNeigh.evaluateLocal(nb,center0.point(0),centerUn);
-	    // get U on interface
-	    RangeType faceUe(0);
-	    RangeType faceUn(0);
-	    uEn.evaluateLocal(en
-			      ,nit.intersectionSelfLocal().
-			      global(center1.point(0))
-			      ,faceUe);
-	    uNeigh.evaluateLocal(nb
-				 ,nit.intersectionNeighborLocal().
-				 global(center1.point(0))
-				 ,faceUn);
-	    RangeType jump = faceUe;
-	    jump -= faceUn;
-	    for (int r=0;r<dimRange;r++)
-	      totaljump[r] += jump[r];
-	    ++counter;
-	  }
-	}
+      IntersectionIteratorType endnit = gridPart_.iend(en); 
+      for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
+           nit != endnit; ++nit) 
+      {
+        if (nit.neighbor()) 
+        {
+          /*
+          typedef TwistUtility<GridType> TwistUtilityType;
+          if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
+          {
+            typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
+            FaceQuadratureType center1(gridPart_,nit,0,FaceQuadratureType::INSIDE);
+          }
+          */
+          typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
+          FaceQuadratureType center1(gridPart_,nit,0,FaceQuadratureType::INSIDE);
+
+          typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
+          FaceQuadratureType nbCenter1(gridPart_,nit,0,FaceQuadratureType::OUTSIDE);
+
+          const DomainType normal = nit.outerNormal(center1.localPoint(0));
+          //DomainType velocity(0.8);
+          DomainType velocity(0.0);
+          velocity[0] = 1.0;
+
+          if (normal*velocity<0) 
+          {
+            // get neighbor entity
+            EntityPointerType ep = nit.outside();
+            const EntityType& nb = *ep; 
+            // double arean = nb.geometry().volume(); 
+            // get local function for U on neighbor
+            
+            LocalFunctionType uNeigh = U.localFunction(nb);
+            // get U in barycenter of neighbor
+            RangeType centerUn(0);
+            uNeigh.evaluate(center0, 0, centerUn);
+
+            // get U on interface
+            RangeType faceUe(0);
+            RangeType faceUn(0);
+
+            uEn.evaluate(center1, 0, faceUe);
+            uNeigh.evaluate(nbCenter1, 0, faceUn);
+
+            RangeType jump = faceUe;
+            jump -= faceUn;
+            for (int r=0; r<dimRange; ++r)
+              totaljump[r] += jump[r];
+
+            ++counter;
+          }
+        }
       }
-			 
-      double hPowPolOrder = pow(4.0*sqrt(2.)*radius,-((POLORDER+1.0)/2.0));
-			 			 
-      for (int r=0;r<dimRange;r++) {
-	double jumpr = fabs(totaljump[r])/double(counter);
-	if (jumpr*hPowPolOrder>1.) 
-	  limit[r] = true;
-	else
-	  limit[r] = false;
+       
+      double hPowPolOrder = pow(4.0*sqrt(2.)*radius,-((order+1.0)/2.0));
+             
+      for (int r=0;r<dimRange;r++) 
+      {
+        double jumpr = fabs(totaljump[r])/double(counter);
+        if (jumpr*hPowPolOrder>1.) 
+          limit[r] = true;
+        else
+          limit[r] = false;
       }
-					 
-      for (int r=0;r<dimRange;r++) {
-	if (limit[r]) {
-	  int dofIdx = dofConversion.combinedDof(0,r);
-	  limitEn[dofIdx] = uEn[dofIdx];
-	  for (int i=1;i<numBasis;i++) {
-	    int dofIdx = dofConversion.combinedDof(i,r);
-	    limitEn[dofIdx] = 0.;
-	  }
-	}
-	else {
-	  for (int i=0;i<numBasis;i++) {
-	    int dofIdx = dofConversion.combinedDof(i,r);
-	    limitEn[dofIdx] = uEn[dofIdx];
-	  }
-	}
+           
+      for (int r=0;r<dimRange;r++) 
+      {
+        if (limit[r]) 
+        {
+          int dofIdx = dofConversion.combinedDof(0,r);
+          limitEn[dofIdx] = uEn[dofIdx];
+          for (int i=1;i<numBasis;i++) 
+          {
+            int dofIdx = dofConversion.combinedDof(i,r);
+            limitEn[dofIdx] = 0.;
+          }
+        }
+        else 
+        {
+          for (int i=0;i<numBasis;i++) 
+          {
+            int dofIdx = dofConversion.combinedDof(i,r);
+            limitEn[dofIdx] = uEn[dofIdx];
+          }
+        }
       }
     }
-
     
   private:
     LimitDGPass();
@@ -280,33 +301,13 @@ namespace Dune {
     LimitDGPass& operator=(const LimitDGPass&);
     
   private:
-    double volumeElement(const EntityType& en) const {
-      ElementQuadrature<GridPartType,0> center(en,0);
-      double result = 0;
-      for (int qp = 0; qp < center.nop(); ++qp) {
-        result +=
-          center.weight(qp) * en.geometry().integrationElement(center.point(qp));
-      }
-      return result;
-    }
-
     mutable DiscreteModelCallerType caller_;
     
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
 
     DiscreteFunctionSpaceType& spc_;
-  
-    //! Some helper variables
-    mutable JacobianRangeType fMat_;
-    mutable RangeType valEn_;
-    mutable RangeType valNeigh_;
-    mutable RangeType baseEn_;
-    mutable RangeType baseNeigh_;
-    mutable RangeType source_;
-    mutable RangeType identity_;
-    mutable DomainType grads_;
-    FieldVector<int, 0> diffVar_;
+    const GridPartType& gridPart_;
   };
 
 }
