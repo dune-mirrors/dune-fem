@@ -41,8 +41,6 @@ namespace Dune {
     //! destructor 
     virtual ~TimeProvider() {}
 
-    bool notInitialized() const { return (dt_ < 0.0); }
-
     //! return internal time 
     double time() const { return time_; }
 
@@ -193,8 +191,6 @@ namespace Dune {
       : comm_(comm), tp_(tp)
     {}
     
-    bool notInitialized() const { return tp_.notInitialized(); }
-    
     //! return internal time 
     double time() const { return tp_.time(); }
     
@@ -265,5 +261,4 @@ namespace Dune {
   };
   
 } // end namespace Dune
-
 #endif
