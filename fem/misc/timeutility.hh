@@ -16,20 +16,24 @@ namespace Dune {
     //! constructor taking initial time, default is zero
     TimeProvider(double startTime = 0.0) : 
       time_(startTime),
+      savedTime_(time_),
       dt_(-1.0),
       dtEstimate_(0.0),
       cfl_(1.0),
-      timeStep_(0)
+      timeStep_(0),
+      lock_(true)
     {
       resetTimeStepEstimate();
     }
     
     TimeProvider(double startTime , double cfl ) : 
       time_(startTime),
+      savedTime_(time_),
       dt_(-1.0),
       dtEstimate_(0.0),
       cfl_(cfl),
-      timeStep_(0)
+      timeStep_(0),
+      lock_(true)
     {
       resetTimeStepEstimate();
     }
@@ -41,6 +45,20 @@ namespace Dune {
 
     //! return internal time 
     double time() const { return time_; }
+
+    //! restores saved global time 
+    void lock () 
+    {
+      lock_ = true;
+      time_ = savedTime_;
+    }
+
+    //! stores current global time 
+    void unlock() 
+    {
+      lock_ = false;
+      savedTime_ = time_;
+    }
     
     //! set time step estimate to minimum of given value and
     //! internal time step estiamte 
@@ -49,19 +67,25 @@ namespace Dune {
     }
     
     //! set internal time to given time 
-    void setTime(double time) { time_ = time; }
+    void setTime(double time) 
+    { 
+      assert( ! lock_ );
+      time_ = time; 
+    }
 
     //! set internal time to given time 
     //! and time step counter to given counter 
     void setTime(double time, int timeStep )  
     { 
+      assert( ! lock_ );
       time_ = time; 
       timeStep_ = timeStep;
     }
 
     //! increase internal time by internal timeStep 
-    void augmentTime() 
+    void augmentTime()
     { 
+      assert( lock_ );
       time_ += deltaT(); 
       ++timeStep_;
     }
@@ -116,10 +140,12 @@ namespace Dune {
     
   protected:
     double time_;
+    double savedTime_;
     double dt_;
     double dtEstimate_;
     double cfl_;
     int timeStep_;
+    bool lock_;
   };
   
   //! improved class for 
@@ -178,6 +204,12 @@ namespace Dune {
     {
       tp_.provideTimeStepEstimate(dtEstimate);
     }
+
+    //! lock time provider 
+    void lock() { tp_.lock(); }
+    
+    //! unlock time provider 
+    void unlock() { tp_.unlock(); }
     
     //! set internal time to given time 
     void setTime(double time) { tp_.setTime(time); }
