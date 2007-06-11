@@ -196,8 +196,6 @@ namespace Dune {
     using Imp::dbegin;
     using Imp::dend;
     using Imp::newLocalFunctionObject;
-    //! return empty local function 
-    LocalFunctionType newLocalFunction () DUNE_DEPRECATED { return LocalFunctionType(*this); }
     using Imp::localFunction;
     using Imp::write_xdr;
     using Imp::read_xdr;
@@ -450,8 +448,7 @@ namespace Dune {
     AdaptiveDiscreteFunction(std::string name,
                              const DiscreteFunctionSpaceType& spc) :
       BaseType(spc),
-      Imp(name, spc),
-      subSpaces_(0)
+      Imp(name, spc)
     {}
 
     //! Constructor
@@ -468,15 +465,13 @@ namespace Dune {
                              const DiscreteFunctionSpaceType& spc,
                              DofStorageType& dofVec) :
       BaseType(spc),
-      Imp(name, spc, dofVec),
-      subSpaces_(0)
+      Imp(name, spc, dofVec)
     {}
 
     //! Copy constructor
     AdaptiveDiscreteFunction(const MyType& other) :
       BaseType(other.space()),
-      Imp(other),
-      subSpaces_(0) // Don't copy them
+      Imp(other)
     {}
     
     ~AdaptiveDiscreteFunction();
@@ -517,8 +512,6 @@ namespace Dune {
     using Imp::dbegin;
     using Imp::dend;
     using Imp::newLocalFunctionObject;
-    //! return empty local function 
-    LocalFunctionType newLocalFunction () DUNE_DEPRECATED { return LocalFunctionType(*this); }
     //! return local function for given entity
     template <class EntityType> 
     LocalFunctionType localFunction (const EntityType &en) { return LocalFunctionType(en,*this); }
@@ -538,8 +531,6 @@ namespace Dune {
     int numComponents() const { return N; }
 
   private:
-    std::vector<SubSpaceType*> subSpaces_;
-
     const MyType& interface() const { return *this; }
   }; // end class AdaptiveDiscreteFunction (specialised for CombinedSpace)
 

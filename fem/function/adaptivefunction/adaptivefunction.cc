@@ -346,10 +346,6 @@ namespace Dune {
      CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   ~AdaptiveDiscreteFunction() 
   {
-    for (unsigned int i = 0; i < subSpaces_.size(); ++i) {
-      delete subSpaces_[i];
-      subSpaces_[i] = 0;
-    }
   }
   
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
@@ -358,12 +354,9 @@ namespace Dune {
   AdaptiveDiscreteFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   subFunction(int component) 
   {
-    SubSpaceType* subSpace = new SubSpaceType(this->space(), component);
-    subSpaces_.push_back(subSpace);
-    
-
+    SubSpaceType& subSpace = this->spc_.subSpace(component);
     return SubDiscreteFunctionType(std::string("Subfunction of ")+this->name(),
-                                   *subSpace,
+                                   subSpace,
                                    this->dofStorage());
   }
 
