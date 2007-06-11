@@ -112,6 +112,7 @@ public:
 template<class Operator>
 class ExplTimeStepperBase 
 {
+  typedef typename Operator::DestinationType DestinationType; 
 public:
   ExplTimeStepperBase(Operator& op, TimeProvider& tp, 
                       int pord, bool verbose) :
@@ -119,7 +120,8 @@ public:
     comm_(Communicator::instance()),
     op_(op),
     expl_(op,tp),
-    ode_(0)
+    ode_(0),
+    initialized_(false)
   {
     switch (pord) {
     case 1: ode_=new ExplicitEuler(comm_,expl_); break;
@@ -130,12 +132,25 @@ public:
       << std::endl;
       abort();
     }
+
     if(verbose)
     {
       ode_->DynamicalObject::set_output(cout);
     }
   }
-  
+ 
+  // initialize time step size 
+  void initialize (const DestinationType& U0) 
+  {
+    // initialized dt on first call
+    if ( ! initialized_ )     
+    {
+      DestinationType tmp("tmp",this->op_.space());
+      this->op_(U0,tmp);
+      initialized_ = true;
+    }
+  }
+
   ~ExplTimeStepperBase() { delete ode_; }
   
 protected:
@@ -144,6 +159,7 @@ protected:
   const Operator& op_;
   OperatorWrapper<Operator> expl_;
   DuneODE::ODESolver* ode_;
+  bool initialized_;
 };
 
 //! ExplicitOdeSolver 
@@ -179,13 +195,8 @@ class ExplicitOdeSolver :
   //! solve system 
   void solve(DestinationType& U0) 
   {
-    // if dt has not been set yet 
-    if ( timeProvider_.notInitialized() ) 
-    {
-      DestinationType tmp("TMP",this->op_.space());
-      this->op_(U0,tmp);
-      return ;
-    }
+    // initialize 
+    BaseType::initialize(U0);
     
     // get dt 
     const double dt = timeProvider_.deltaT();
@@ -224,9 +235,9 @@ class ExplTimeStepper : public TimeProvider,
                         public ExplTimeStepperBase<Operator>  
 {
   typedef ExplTimeStepperBase<Operator> BaseType;
-  typedef typename Operator:: DestinationType ::
-    DiscreteFunctionSpaceType :: GridType :: Traits ::
-    CollectiveCommunication DuneCommunicatorType; 
+  typedef typename Operator::DestinationType DestinationType; 
+  typedef typename DestinationType :: DiscreteFunctionSpaceType 
+    :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
  public:
   ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
     TimeProvider(0.0,cfl),
@@ -238,18 +249,26 @@ class ExplTimeStepper : public TimeProvider,
     op.timeProvider(this);
     assert( this->cfl() <= 1.0 );
   }
-  
-  double solve(typename Operator::DestinationType& U0) 
+
+  // initialize 
+  void initialize(const DestinationType& U0)
   {
-    if( tp_.notInitialized() ) 
+    if( ! this->initialized_ ) 
     {
-      typename Operator::DestinationType tmp("TMP",this->op_.space());
-      this->op_(U0,tmp);
-        
+      BaseType::initialize(U0);
+
       // global min of dt 
       tp_.syncTimeStep(); 
     }
+  }
+ 
+  // solve ode 
+  double solve(typename Operator::DestinationType& U0) 
+  {
+    // initialize time step size 
+    initialize(U0);
     
+    // reset estimate 
     tp_.resetTimeStepEstimate();
     
     // get dof array 
@@ -257,10 +276,14 @@ class ExplTimeStepper : public TimeProvider,
 
     assert( tp_.deltaT() > 0.0 );
 
+    const double t  = tp_.time();
+    const double dt = tp_.deltaT();
+
     // time can is changeable now 
     tp_.unlock();
     
-    const bool convergence = this->ode_->step(tp_.time(), tp_.deltaT() , u);
+    // solve ode 
+    const bool convergence = this->ode_->step(t, dt, u);
 
     // restore saved time 
     tp_.lock();
@@ -272,12 +295,14 @@ class ExplTimeStepper : public TimeProvider,
       abort();
     }
 
-    // global min of dt 
-    tp_.syncTimeStep();
-    
     // set new time to t + deltaT 
     tp_.augmentTime();
-
+    // check time increment 
+    assert( std::abs( tp_.time() - (t+dt) ) <1e-10);
+    
+    // global min of new dt 
+    tp_.syncTimeStep();
+    
     // return time 
     return tp_.time();
   }
@@ -315,7 +340,8 @@ class ExplTimeStepper : public TimeProvider,
 template<class Operator>
 class ImplTimeStepperBase
 {
- public:
+  typedef typename Operator :: DestinationType DestinationType; 
+public:
   ImplTimeStepperBase(Operator& op, TimeProvider& tp, 
                       int pord, bool verbose) :
     ord_(pord),
@@ -323,7 +349,8 @@ class ImplTimeStepperBase
     op_(op),
     impl_(op,tp),
     ode_(0),
-    linsolver_(comm_,cycle)
+    linsolver_(comm_,cycle),
+    initialized_(false)
   {
     linsolver_.set_tolerance(1.0e-8);
     linsolver_.set_max_number_of_iterations(10000);
@@ -345,6 +372,17 @@ class ImplTimeStepperBase
     }
   }
   
+  // initialize time step size 
+  void initialize (const DestinationType& U0) 
+  {
+    // initialized dt on first call
+    if ( ! initialized_ )     
+    {
+      DestinationType tmp("tmp",this->op_.space());
+      this->op_(U0,tmp);
+      initialized_ = true;
+    }
+  }
   //! destructor 
   ~ImplTimeStepperBase() {delete ode_;}
   
@@ -356,6 +394,7 @@ protected:
   DuneODE::DIRK* ode_;
   DuneODE::GMRES linsolver_;
   enum { cycle = 20 };
+  bool initialized_;
 };
 
 
@@ -384,12 +423,7 @@ public:
   void solve(DestinationType& U0) 
   {
     // for first call only calculate time step estimate 
-    if( timeProvider_.notInitialized() ) 
-    {
-      DestinationType tmp("tmp",this->op_.space());
-      this->op_(U0,tmp);
-      return ;
-    }
+    BaseType :: initialize(U0);
 
     bool convergence = false;
     int cycle = 0;
@@ -456,28 +490,40 @@ public:
     op.timeProvider(this);
   }
   
+  // initialize 
+  void initialize(const DestinationType& U0)
+  {
+    if( ! this->initialized_ ) 
+    {
+      // call initialize 
+      BaseType::initialize(U0);
+
+      // global min of dt 
+      tp_.syncTimeStep(); 
+    }
+  }
+  
+  // solve ode 
   double solve(DestinationType& U0) 
   {
-    if ( tp_.notInitialized() )     
-    {
-      DestinationType tmp("tmp",this->op_.space());
-
-      this->op_(U0,tmp);
-
-      // calculate global min of dt 
-      tp_.syncTimeStep();
-    }
-
+    // initialize 
+    initialize(U0);
+    
     // reset dt estimate
     tp_.resetTimeStepEstimate();
+
+    // get pointer to dof array 
     double* u=U0.leakPointer();
     
     assert( tp_.deltaT() > 0.0 );
     
+    const double t  = tp_.time();
+    const double dt = tp_.deltaT();
     // time can is changeable now 
     tp_.unlock();
-    
-    const bool convergence =  this->ode_->step(tp_.time() , tp_.deltaT() , u);
+
+    // call ode solver  
+    const bool convergence =  this->ode_->step(t, dt, u);
 
     // restore global time 
     tp_.lock();
@@ -489,12 +535,14 @@ public:
       abort();
     }
 
+    // calls setTime(t+ this->dt_);
+    tp_.augmentTime(); 
+    // check time increment 
+    assert( std::abs( tp_.time() - (t+dt) ) <1e-10);
+    
     // calculate global min of dt 
     tp_.syncTimeStep();
 
-    // calls setTime(t+ this->dt_);
-    tp_.augmentTime(); 
-    
     return tp_.time();
   }
 
@@ -548,7 +596,8 @@ class SemiImplTimeStepper : public TimeProvider
     ode_(0),
     linsolver_(comm_,cycle),
     tp_(this->op_.space().grid().comm(),*this),
-    savetime_(0.0), savestep_(1)
+    savetime_(0.0), savestep_(1),
+    initialized_(false)
   {
     op_expl.timeProvider(this);
     linsolver_.set_tolerance(1.0e-8);
@@ -578,33 +627,39 @@ class SemiImplTimeStepper : public TimeProvider
           GridType :: Traits ::  CollectiveCommunication DuneCommunicatorType; 
     const DuneCommunicatorType & duneComm = opexpl_.space().grid().comm();
 
-    if ( tp_.notInitialized() ) 
+    if ( ! initialized_ ) 
     {
       typename OperatorExpl::DestinationType tmp("tmp",opexpl_.space());
       opexpl_(U0,tmp);
       
       // calculate global min of dt 
       tp_.syncTimeStep();
+
+      initialized_ = true;
     }
     
     tp_.resetTimeStepEstimate();
 
     double* u=U0.leakPointer();
     
+    const double t  = tp_.time();
+    const double dt = tp_.deltaT();
     // time can is changeable now 
     tp_.unlock();
     
-    const bool convergence = ode_->step( tp_.time(), tp_.deltaT() , u);
+    const bool convergence = ode_->step( t, dt, u);
     assert(convergence);
 
     // restore global time 
     tp_.lock();
     
-    // calculate global min of dt 
-    tp_.syncTimeStep();
-
     // calls setTime(t+dt_);
     tp_.augmentTime();
+    // check time increment 
+    assert( std::abs( tp_.time() - (t+dt) ) <1e-10);
+    
+    // calculate global min of dt 
+    tp_.syncTimeStep();
 
     return tp_.time();
   }
@@ -650,6 +705,7 @@ class SemiImplTimeStepper : public TimeProvider
   ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
+  bool initialized_;
 };
 
 template<class Operator>
