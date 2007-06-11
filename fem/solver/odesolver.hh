@@ -140,7 +140,7 @@ public:
   }
  
   // initialize time step size 
-  void initialize (const DestinationType& U0) 
+  bool initialize (const DestinationType& U0) 
   {
     // initialized dt on first call
     if ( ! initialized_ )     
@@ -148,10 +148,19 @@ public:
       DestinationType tmp("tmp",this->op_.space());
       this->op_(U0,tmp);
       initialized_ = true;
+      return true;
     }
+    return false;
   }
 
   ~ExplTimeStepperBase() { delete ode_; }
+
+  // return reference to ode solver 
+  DuneODE::ODESolver& odeSolver() 
+  {
+    assert( ode_ );
+    return *ode_;
+  }
   
 protected:
   int ord_;
@@ -196,8 +205,8 @@ class ExplicitOdeSolver :
   void solve(DestinationType& U0) 
   {
     // initialize 
-    BaseType::initialize(U0);
-    
+    if( BaseType::initialize(U0) ) return ;
+
     // get dt 
     const double dt = timeProvider_.deltaT();
     // should be larger then zero 
@@ -213,7 +222,7 @@ class ExplicitOdeSolver :
     timeProvider_.unlock();
     
     // call ode solver 
-    const bool convergence = this->ode_->step(time, dt , u);
+    const bool convergence = this->odeSolver().step(time, dt , u);
 
     // restore saved time 
     timeProvider_.lock();
@@ -226,8 +235,8 @@ class ExplicitOdeSolver :
     }
   }
 
- private:
-  const TimeProvider& timeProvider_;
+private:
+  TimeProvider& timeProvider_;
 };
 
 template<class Operator>
@@ -283,7 +292,7 @@ class ExplTimeStepper : public TimeProvider,
     tp_.unlock();
     
     // solve ode 
-    const bool convergence = this->ode_->step(t, dt, u);
+    const bool convergence = this->odeSolver().step(t, dt, u);
 
     // restore saved time 
     tp_.lock();
@@ -373,7 +382,7 @@ public:
   }
   
   // initialize time step size 
-  void initialize (const DestinationType& U0) 
+  bool initialize (const DestinationType& U0) 
   {
     // initialized dt on first call
     if ( ! initialized_ )     
@@ -381,10 +390,19 @@ public:
       DestinationType tmp("tmp",this->op_.space());
       this->op_(U0,tmp);
       initialized_ = true;
+      return true;
     }
+    return false;
   }
   //! destructor 
   ~ImplTimeStepperBase() {delete ode_;}
+  
+  // return reference to ode solver 
+  DuneODE::DIRK& odeSolver() 
+  {
+    assert( ode_ );
+    return *ode_;
+  }
   
 protected:
   int ord_;
@@ -413,7 +431,7 @@ class ImplicitOdeSolver :
 public:
   ImplicitOdeSolver(Operator& op, TimeProvider& tp,
                     int pord, bool verbose = false) :
-    BaseType(op,pord,verbose),
+    BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
   {
   }
@@ -423,7 +441,7 @@ public:
   void solve(DestinationType& U0) 
   {
     // for first call only calculate time step estimate 
-    BaseType :: initialize(U0);
+    if( BaseType::initialize(U0) ) return ;
 
     bool convergence = false;
     int cycle = 0;
@@ -439,7 +457,7 @@ public:
       // restore saved time 
       timeProvider_.unlock();
     
-      convergence = this->ode_->step(time , dt , u);
+      convergence = this->odeSolver().step(time , dt , u);
 
       // restore saved time 
       timeProvider_.lock();
@@ -523,7 +541,7 @@ public:
     tp_.unlock();
 
     // call ode solver  
-    const bool convergence =  this->ode_->step(t, dt, u);
+    const bool convergence =  this->odeSolver().step(t, dt, u);
 
     // restore global time 
     tp_.lock();
@@ -709,32 +727,32 @@ class SemiImplTimeStepper : public TimeProvider
 };
 
 template<class Operator>
-class ExplRungeKutta : public TimeProvider 
+class ExplRungeKuttaBase 
 {
- public:
-  enum {maxord=10};
-  typedef typename Operator::SpaceType SpaceType;
+public:
   typedef typename Operator::DestinationType DestinationType;
+  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
   typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
- private:
+private:
   std::vector< std::vector<double> > a;
   std::vector<double> b;
   std::vector<double> c;
-  
-  int ord_;
   std::vector<DestinationType*> Upd;
+protected:  
+  const int ord_;
+
 public:
-  ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) :
-    TimeProvider(0.0,cfl),
+  ExplRungeKuttaBase(Operator& op, TimeProvider& tp, 
+                     int pord, bool verbose = true ) :
+    a(0),b(0),c(0), Upd(0),
+    ord_(pord),
     op_(op),
-    tp_(this->op_.space().grid().comm(),*this),
-    ord_(pord), Upd(0),
-    savetime_(0.0), savestep_(1)
+    tp_(tp),
+    initialized_(false)
   {
-    op.timeProvider(this);
     assert(ord_>0);
     a.resize(ord_);
-    for (int i=0;i<ord_;i++)
+    for (int i=0; i<ord_; ++i)
     {
       a[i].resize(ord_);
     }
@@ -772,69 +790,133 @@ public:
       << std::endl;
               abort();
     }
-    for (int i=0;i<ord_;i++)
+
+    // create update memory 
+    for (int i=0; i<ord_; ++i)
     {
       Upd.push_back(new DestinationType("URK",op_.space()) );
     }
-    
     Upd.push_back(new DestinationType("Ustep",op_.space()) );
   }
 
-  ~ExplRungeKutta()
+  ~ExplRungeKuttaBase()
   {
     for(size_t i=0; i<Upd.size(); ++i) 
       delete Upd[i];
   }
-  
-  double solve(typename Operator::DestinationType& U0) 
+
+  // apply operator once to get dt estimate 
+  bool initialize(const DestinationType& U0)
   {
-    // time can is changeable now 
+    if( ! initialized_ ) 
+    {
+      // Compute Steps
+      op_(U0, *(Upd[0]));
+      initialized_ = true;
+      return true;
+    }
+    return false;
+  }
+  
+  void solve(DestinationType& U0) 
+  {
+    // time might change 
     tp_.unlock();
     
-    tp_.resetTimeStepEstimate();
-    
-    double t = tp_.time();
+    // get cfl * timeStepEstimate 
+    const double dt = tp_.deltaT();
+    // get time 
+    const double t = tp_.time();
+
     // Compute Steps
     op_(U0, *(Upd[0]));
     
-    // global min of dt 
-    tp_.syncTimeStep();
-    
-    // get cfl * timeStepEstimate 
-    double dt = tp_.deltaT();
-
-    for (int i=1;i<ord_;i++) 
+    for (int i=1; i<ord_; ++i) 
     {
       (Upd[ord_])->assign(U0);
-      for (int j=0; j<i ; j++) 
+      for (int j=0; j<i ; ++j) 
       {
         (Upd[ord_])->addScaled(*(Upd[j]),(a[i][j]*dt));
       }
 
-      setTime( t + c[i]*dt );
+      // set new time 
+      tp_.setTime( t + c[i]*dt );
 
+      // apply operator 
       op_(*(Upd[ord_]),*(Upd[i]));
     }
 
     // Perform Update
-    for (int j=0;j<ord_;j++) 
+    for (int j=0; j<ord_; ++j) 
     {
       U0.addScaled(*(Upd[j]),(b[j]*dt));
     }
     
     // restore global time 
     tp_.lock();
+  }
+
+protected:
+  // operator to solve for 
+  const Operator& op_;
+  // time provider 
+  TimeProvider& tp_;
+  // init flag 
+  bool initialized_;
+};
+
+template<class Operator>
+class ExplRungeKutta : public TimeProvider , 
+                       public ExplRungeKuttaBase<Operator> 
+{
+  typedef ExplRungeKuttaBase<Operator> BaseType;
+public:
+  typedef typename Operator :: DestinationType DestinationType;
+  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
+  typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
+
+public:
+  ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) :
+    TimeProvider(0.0,cfl),
+    tp_(op.space().grid().comm(),*this), 
+    BaseType(op,*this,pord,verbose),
+    savetime_(0.0), savestep_(1)
+  {
+    op.timeProvider(this);
+  }
+
+  void initialize(const DestinationType& U0)
+  {
+    if(! this->initialized_)
+    {
+      // initialize 
+      BaseType :: initialize(U0);
+    
+      // global min of dt and reset of dtEstimate 
+      this->tp_.syncTimeStep();
+    }
+  }
+    
+  double solve(typename Operator::DestinationType& U0) 
+  {
+    initialize( U0 );
+    
+    // solve ode 
+    BaseType :: solve (U0);
     
     // calls setTime ( t + dt ); 
-    tp_.augmentTime();
+    this->tp_.augmentTime();
     
-    return tp_.time();
+    // global min of dt and reset of dtEstimate 
+    this->tp_.syncTimeStep();
+    
+    return this->tp_.time();
   }
   
   void printGrid(int nr, const typename Operator::DestinationType& U) 
   {
     if (time()>=savetime_) {
-      printSGrid(time(),savestep_*10+nr,op_.space(),U);
+      printSGrid(time(),savestep_*10+nr,this->op_.space(),U);
       ++savestep_;
       savetime_+=0.001;
     }
@@ -844,20 +926,69 @@ public:
     std::ostringstream filestream;
     filestream << filename;
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ExplRungeKutta, steps: " << ord_ << "\n\n";
-    ofs << "                cfl: " << tp_.cfl() << "\\\\\n\n";
+    ofs << "ExplRungeKutta, steps: " << this->ord_ << "\n\n";
+    ofs << "                cfl: " << this->tp_.cfl() << "\\\\\n\n";
     ofs.close();
-    op_.printmyInfo(filename);
+    this->op_.printmyInfo(filename);
   }
 
- private:
-  const Operator& op_;
+private:
   // TimeProvider with communicator 
   ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
 };
 
+//! ExplicitRungeKuttaSolver 
+template<class Operator>
+class ExplicitRungeKuttaSolver : 
+  public OdeSolverInterface<Operator> ,
+  public ExplRungeKuttaBase<Operator>  
+{
+  typedef ExplRungeKuttaBase<Operator> BaseType;
+  typedef typename Operator::DestinationType DestinationType; 
+ public:
+  //! constructor 
+  ExplicitRungeKuttaSolver(Operator& op, TimeProvider& tp, int pord, bool verbose = false) :
+    BaseType(op,tp,pord,verbose),
+    timeProvider_(tp)
+  {
+    // CFL upper estimate 
+    double cfl = 0.45 / (2.0 * pord+1);
+
+    // maximal allowed cfl number 
+    tp.provideCflEstimate(cfl); 
+    assert( tp.cfl() <= 1.0 );
+
+    if(verbose) 
+    {
+      std::cout << "ExplicitOdeSolver: cfl = " << tp.cfl() << "!\n";
+    } 
+  }
+
+  //! destructor 
+  virtual ~ExplicitRungeKuttaSolver() {}
+  
+  //! solve system 
+  void solve(DestinationType& U0) 
+  {
+    // on first call just apply operator once 
+    if( BaseType :: initialize(U0) ) return ;
+
+    // solve ode 
+    BaseType :: solve(U0);
+  }
+
+private:
+  TimeProvider& timeProvider_;
+};
+
+
+//////////////////////////////////////////////////////////
+//
+// Operator Interface to use linear solvers from DuneODE
+//
+//////////////////////////////////////////////////////////
 template <class OperatorImp>
 class SolverInterfaceImpl : public Function 
 {
