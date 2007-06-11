@@ -267,7 +267,7 @@ namespace Dune {
     MapperType mapper_;
     std::vector<BaseFunctionSetType*> baseSetVec_;
     std::vector<const BaseFunctionSetType*> baseSecVec_;
-    FieldVector<SubSpaceType*,N> subSpaces_;
+    std::vector<SubSpaceType*> subSpaces_;
     const DofManagerType & dm_;
 
   }; // end class CombinedSpace  

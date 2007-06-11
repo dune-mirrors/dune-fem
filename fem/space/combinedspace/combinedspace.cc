@@ -8,7 +8,7 @@ namespace Dune {
     spc_(gridpart),
     mapper_(spc_, spc_.mapper()),
     baseSetVec_(GeometryIdentifier::numTypes, 0),
-    subSpaces_(0),
+    subSpaces_(N,(SubSpaceType*) 0),
     dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
   {
     // get types for codim 0  
