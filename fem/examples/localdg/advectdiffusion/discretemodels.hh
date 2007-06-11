@@ -122,12 +122,15 @@ namespace Dune {
     typedef PassTraits<Model,dimRange,polOrd> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
+    //typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
+    //typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    //typedef DestinationType DiscreteFunctionType;
+
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::GridPartType GridPartType;
-
-    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd,CachingStorage> DiscreteFunctionSpaceType;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename Traits::DestinationType DestinationType;
     typedef DestinationType DiscreteFunctionType;
 
     typedef typename DestinationType::DomainType DomainType;
