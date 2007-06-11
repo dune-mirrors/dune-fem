@@ -5,14 +5,10 @@ GRIDDIM = 2
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER)
 
-if ALBERTA
 ADAPTPROG = l2projection adapt
-endif
 check_PROGRAMS = $(ADAPTPROG) lagrangeinterpolation lagrangeadapt
 
-if ALBERTA
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
-endif
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
