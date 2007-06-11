@@ -396,11 +396,11 @@ namespace Dune {
       ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
 
     // type of singleton factory 
-    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+    typedef BaseFunctionSetSingletonFactory<const GeometryType,BaseFunctionSetType,
                 ScalarFactoryType> SingletonFactoryType; 
 
     // type of singleton list  
-    typedef SingletonList< GeometryType, BaseFunctionSetType,
+    typedef SingletonList<const GeometryType, BaseFunctionSetType,
             SingletonFactoryType > SingletonProviderType;
 
   public:
@@ -410,7 +410,7 @@ namespace Dune {
     DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
 
     //! get object from singleton list 
-    static BaseFunctionSetType& setBaseFuncSetPointer(GeometryType type) 
+    static BaseFunctionSetType& setBaseFuncSetPointer(const GeometryType type) 
     {
       return SingletonProviderType::getObject(type);
     }
