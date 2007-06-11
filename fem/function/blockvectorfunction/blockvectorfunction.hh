@@ -272,10 +272,11 @@ class StaticDiscreteLocalFunction
 {
   typedef  DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
   typedef StaticDiscreteLocalFunction < DiscreteFunctionType > ThisType;
 
-  enum { dimrange = DiscreteFunctionSpaceType::DimRange };
+  enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   //CompileTimeChecker<dimrange == 1> check; 
   typedef typename DiscreteFunctionSpaceType::Traits::DomainType DomainType;
   typedef typename DiscreteFunctionSpaceType::Traits::RangeType RangeType;
@@ -284,14 +285,18 @@ class StaticDiscreteLocalFunction
 
   typedef typename DiscreteFunctionType :: MapperType MapperType;
 
-  typedef typename DiscreteFunctionSpaceType::Traits::GridType :: template
-    Codim<0> :: Entity EntityType;
+  typedef typename GridType :: template  Codim<0> :: Entity EntityType;
   typedef typename DiscreteFunctionType :: DofStorageType DofStorageType;
 
   typedef typename DofStorageType :: block_type DofBlockType;
 
   friend class StaticDiscreteFunction <DiscreteFunctionSpaceType>;
   friend class LocalFunctionWrapper < StaticDiscreteFunction <DiscreteFunctionSpaceType> >;
+private:
+  typedef typename GridType :: ctype ctype;
+  enum { dim = GridType :: dimension };
+  typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
+
 public:
   //! Constructor 
   StaticDiscreteLocalFunction ( const DiscreteFunctionSpaceType &f , 
@@ -324,29 +329,26 @@ public:
   template <class QuadratureType>
   void jacobian(const QuadratureType &quad, const int quadPoint , JacobianRangeType & ret) const;
 
-  #ifdef OLDFEM
-  //! sum over all local base functions 
-  void evaluate (EntityType &en, const DomainType & x, RangeType & ret) const ;
-  
-  void evaluateLocal(const DomainType & x, RangeType & ret) const ;
-  void evaluateLocal(EntityType &en, const DomainType & x, RangeType & ret) const ;
-  //! sum over all local base functions evaluated on given quadrature point
-  template <class QuadratureType>
-  void evaluate (EntityType &en, QuadratureType &quad, int quadPoint , RangeType & ret) const;
-
-  //! sum over all local base functions evaluated on given quadrature point
-  template < class QuadratureType>
-  void jacobian (EntityType &en, QuadratureType &quad, int quadPoint , JacobianRangeType & ret) const;
-
-  //! evaluate jacobian of local function 
-  void jacobianLocal(EntityType& en, const DomainType& x, JacobianRangeType& ret) const ;
-
-  //! evaluate jacobian of local function 
-  void jacobian(EntityType& en, const DomainType& x, JacobianRangeType& ret) const;
-  #endif
-  
   //! return reference to base function set
   const BaseFunctionSetType& baseFunctionSet() const;
+
+  //! axpy operation for factor 
+  template <class QuadratureType>
+  inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
+
+  //! axpy operation for factor 
+  template <class QuadratureType>
+  inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
+
+  //! axpy operation for factor 
+  template <class QuadratureType>
+  inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
+
+  inline void
+  rightMultiply(const JacobianRangeType& factor,
+              const JacobianInverseType& jInv,
+              JacobianRangeType& result) const;
+  
 protected:
   //! update local function for given Entity  
   template <class EntityImp> 
@@ -379,6 +381,7 @@ protected:
 
   //! needed once 
   mutable JacobianRangeType tmpGrad_;
+  mutable JacobianRangeType factorInv_;
 
   //! diffVar for evaluate, is empty 
   const DiffVariable<0>::Type diffVar;

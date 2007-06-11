@@ -592,6 +592,97 @@ baseFunctionSet() const
   return *baseSet_;
 }
 
+//! axpy operation for factor 
+template<class DiscreteFunctionType >
+template <class QuadratureType>
+inline void 
+StaticDiscreteLocalFunction < DiscreteFunctionType >::
+axpy(const QuadratureType& quad, const int quadPoint, const RangeType& factor)
+{
+  const int numDof = this->numDofs();
+  for(int i=0; i<numDof; ++i)
+  {
+    this->baseFunctionSet().evaluate( i , quad, quadPoint, tmp_ );
+    (*values_[i]) += tmp_ * factor;
+  }
+}
+  
+//! axpy operation for factor 
+template<class DiscreteFunctionType >
+template <class QuadratureType>
+inline void 
+StaticDiscreteLocalFunction < DiscreteFunctionType >::
+axpy(const QuadratureType& quad, const int quadPoint, const JacobianRangeType& factor)
+{
+  const int numDof = this->numDofs();
+
+  const JacobianInverseType& jti =
+    en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+  rightMultiply( factor, jti, factorInv_ );
+
+  for(int i=0; i<numDof; ++i)
+  {
+    // evaluate gradient on reference element
+    this->baseFunctionSet().jacobian(i, quad, quadPoint , tmpGrad_);
+    for (int l = 0; l < dimRange; ++l)
+    {
+      (*values_[i]) += tmpGrad_[l] * factorInv_[l];
+    }
+  }
+}
+  
+//! axpy operation for factor 
+template<class DiscreteFunctionType >
+template <class QuadratureType>
+inline void 
+StaticDiscreteLocalFunction < DiscreteFunctionType >::
+axpy(const QuadratureType& quad, 
+     const int quadPoint, 
+     const RangeType& factor1, 
+     const JacobianRangeType& factor2)
+{
+  const int numDof = this->numDofs();
+
+  const JacobianInverseType& jti =
+    en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
+  rightMultiply( factor2, jti, factorInv_ );
+
+  for(int i=0; i<numDof; ++i)
+  {
+    // evaluate gradient on reference element
+    this->baseFunctionSet().evaluate(i, quad, quadPoint, tmp_ );
+    (*values_[i]) += tmp_ * factor1;
+    this->baseFunctionSet().jacobian(i, quad, quadPoint, tmpGrad_);
+    for (int l = 0; l < dimRange; ++l)
+    {
+      (*values_[i]) += tmpGrad_[l] * factorInv_[l];
+    }
+  }
+}
+
+template<class DiscreteFunctionType >
+inline void 
+StaticDiscreteLocalFunction < DiscreteFunctionType >::
+rightMultiply(const JacobianRangeType& factor,
+              const JacobianInverseType& jInv,
+              JacobianRangeType& result) const
+{
+  enum { rows = JacobianRangeType :: rows };
+  enum { cols = JacobianInverseType :: rows };
+  for (int i=0; i<rows; ++i)
+  {
+    for (int j=0; j<cols; ++j)
+    {
+      result[i][j] = 0;
+      for (int k=0; k<cols; ++k)
+      {
+        result[i][j] += factor[i][k] * jInv[k][j];
+      }
+    }
+  }
+}
+
+
 template<class DiscreteFunctionType >
 template <class EntityImp>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
