@@ -62,7 +62,8 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
 
   
   CombinedGrapeDisplay < GrapeDispType > * comdisp = 0 ;
-  if( numProcs > 1 ) comdisp = new CombinedDisplayType ();
+  //if( numProcs > 1 ) 
+    comdisp = new CombinedDisplayType ();
   
   int  ntime, n_step = 0;
   
