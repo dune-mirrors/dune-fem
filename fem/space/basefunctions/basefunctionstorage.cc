@@ -150,17 +150,14 @@ namespace Dune {
   inline void CachingStorage<FunctionSpaceImp>::
   cacheQuadrature(size_t id, int codim) const 
   {
+    RangeIteratorType it = rangestored_.find(id);
+    if (it == rangestored_.end()) 
     {
-      RangeIteratorType it = rangestored_.find(id);
-      if (it == rangestored_.end()) {
-      	it = addEntryInterface(id,codim).first;
-      }
+      it = addEntryInterface(id,codim).first;
     }
 
-    {
-      assert(rangestored_.find(id) != rangestored_.end());
-      assert(jacobianstored_.find(id) != jacobianstored_.end());
-    }
+    assert(rangestored_.find(id) != rangestored_.end());
+    assert(jacobianstored_.find(id) != jacobianstored_.end());
   }
 
   template <class FunctionSpaceImp>
