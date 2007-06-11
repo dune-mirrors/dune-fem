@@ -5,6 +5,7 @@
 #include <dune/grid/common/defaultindexsets.hh>
 
 //- local includes 
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/codimindexset.hh>
 
 namespace Dune {
