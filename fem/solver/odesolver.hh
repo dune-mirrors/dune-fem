@@ -935,8 +935,8 @@ public:
 private:
   // TimeProvider with communicator 
   ParallelTimeProvider<DuneCommunicatorType> tp_;
-  int savestep_;
   double savetime_;
+  int savestep_;
 };
 
 //! ExplicitRungeKuttaSolver 
