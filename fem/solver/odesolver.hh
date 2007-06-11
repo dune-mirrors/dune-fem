@@ -40,15 +40,24 @@ namespace DuneODE {
   using namespace std;
 
 template <class Operator>
-class OperatorWrapper : public Function {
+class OperatorWrapper : public Function 
+{
+  typedef typename Operator::DestinationType DestinationType;
  public:
-  OperatorWrapper(const Operator& op) : op_(op) {}
+  OperatorWrapper(const Operator& op, TimeProvider& tp) 
+    : op_(op) , tp_(tp) {}
 
   //! apply operator 
   void operator()(const double *u, double *f, int i = 0) {
-    typename Operator::DestinationType arg("ARG",op_.space(),u);
-    typename Operator::DestinationType dest("DEST",op_.space(),f);
-    op_.setTime(time());
+    // create fake argument 
+    DestinationType arg("ARG",op_.space(),u);
+    // create fake destination 
+    DestinationType dest("DEST",op_.space(),f);
+    
+    // set actual time of iteration step
+    tp_.setTime(time());
+    
+    // call operator apply 
     op_(arg,dest);
   }
 
@@ -75,8 +84,11 @@ class OperatorWrapper : public Function {
       return -1;
     }
   }
- private:
+private:
+  // operator to call 
   const Operator& op_;
+  // time provider 
+  TimeProvider& tp_;
 };
   /** @defgroup ODESolver ODE Solver
    *  @ingroup OperatorCommon
@@ -101,11 +113,12 @@ template<class Operator>
 class ExplTimeStepperBase 
 {
 public:
-  ExplTimeStepperBase(Operator& op,int pord, bool verbose) :
+  ExplTimeStepperBase(Operator& op, TimeProvider& tp, 
+                      int pord, bool verbose) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
-    expl_(op),
+    expl_(op,tp),
     ode_(0)
   {
     switch (pord) {
@@ -144,7 +157,7 @@ class ExplicitOdeSolver :
  public:
   //! constructor 
   ExplicitOdeSolver(Operator& op, TimeProvider& tp, int pord, bool verbose = false) :
-    BaseType(op,pord,verbose),
+    BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
   {
     // CFL upper estimate 
@@ -175,19 +188,25 @@ class ExplicitOdeSolver :
     }
     
     // get dt 
-    double dt = timeProvider_.deltaT();
+    const double dt = timeProvider_.deltaT();
     // should be larger then zero 
     assert( dt > 0.0 );
     
     // get time 
-    double time = timeProvider_.time();
+    const double time = timeProvider_.time();
 
     // get leakPointer 
     double* u = U0.leakPointer();
     
+    // time can is changeable now 
+    timeProvider_.unlock();
+    
     // call ode solver 
     const bool convergence = this->ode_->step(time, dt , u);
 
+    // restore saved time 
+    timeProvider_.lock();
+    
     assert(convergence);
     if(!convergence) 
     {
@@ -211,7 +230,7 @@ class ExplTimeStepper : public TimeProvider,
  public:
   ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
     TimeProvider(0.0,cfl),
-    BaseType(op,pord,verbose),
+    BaseType(op,*this,pord,verbose),
     tp_(this->op_.space().grid().comm(), *this ),
     savestep_(1),
     savetime_(0.0)
@@ -237,9 +256,15 @@ class ExplTimeStepper : public TimeProvider,
     double* u=U0.leakPointer();
 
     assert( tp_.deltaT() > 0.0 );
+
+    // time can is changeable now 
+    tp_.unlock();
     
     const bool convergence = this->ode_->step(tp_.time(), tp_.deltaT() , u);
 
+    // restore saved time 
+    tp_.lock();
+    
     assert(convergence);
     if(!convergence) 
     {
@@ -291,16 +316,17 @@ template<class Operator>
 class ImplTimeStepperBase
 {
  public:
-  ImplTimeStepperBase(Operator& op,int pord, bool verbose) :
+  ImplTimeStepperBase(Operator& op, TimeProvider& tp, 
+                      int pord, bool verbose) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),
-    impl_(op),
+    impl_(op,tp),
     ode_(0),
     linsolver_(comm_,cycle)
   {
     linsolver_.set_tolerance(1.0e-8);
-    linsolver_.set_max_number_of_iterations(1000);
+    linsolver_.set_max_number_of_iterations(10000);
     switch (pord) {
     case 1: ode_=new ImplicitEuler(comm_,impl_); break;
     case 2: ode_=new Gauss2(comm_,impl_); break;
@@ -365,22 +391,43 @@ public:
       return ;
     }
 
-    double dt   = timeProvider_.deltaT();
-    assert( dt > 0.0 );
-    double time = timeProvider_.time();
-    double* u = U0.leakPointer();
-    const bool convergence = this->ode_->step(time , dt , u);
-
-    assert(convergence);
-    if(!convergence) 
+    bool convergence = false;
+    int cycle = 0;
+    while( !convergence )
     {
-      std::cerr << "No Convergence of ImplicitOdeSolver! \n";
-      abort();
+      const double dt   = timeProvider_.deltaT();
+      assert( dt > 0.0 );
+      const double time = timeProvider_.time();
+
+      // get pointer to solution
+      double* u = U0.leakPointer();
+      
+      // restore saved time 
+      timeProvider_.unlock();
+    
+      convergence = this->ode_->step(time , dt , u);
+
+      // restore saved time 
+      timeProvider_.lock();
+    
+      if(!convergence) 
+      {
+        double cfl = 0.5 * timeProvider_.cfl();
+        timeProvider_.provideCflEstimate(cfl); 
+        derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
+      }
+
+      ++cycle;
+      if( cycle > 5 ) 
+      {
+        derr << "No Convergence of implicit ODE solver! \n";
+        abort();
+      }
     }
   }
 
 private:
-  const TimeProvider& timeProvider_;
+  TimeProvider& timeProvider_;
 };
 
 
@@ -401,7 +448,7 @@ class ImplTimeStepper : public TimeProvider ,
 public:
   ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = false) :
     TimeProvider(0.0,cfl),
-    BaseType(op,pord,verbose),
+    BaseType(op,*this,pord,verbose),
     tp_(this->op_.space().grid().comm(),*this),
     savestep_(1),
     savetime_(0.0)
@@ -427,8 +474,14 @@ public:
     
     assert( tp_.deltaT() > 0.0 );
     
+    // time can is changeable now 
+    tp_.unlock();
+    
     const bool convergence =  this->ode_->step(tp_.time() , tp_.deltaT() , u);
 
+    // restore global time 
+    tp_.lock();
+    
     assert(convergence);
     if(!convergence) 
     {
@@ -490,8 +543,8 @@ class SemiImplTimeStepper : public TimeProvider
     comm_(Communicator::instance()),
     opexpl_(op_expl),
     opimpl_(op_impl),
-    expl_(op_expl),
-    impl_(op_impl),
+    expl_(op_expl,*this),
+    impl_(op_impl,*this),
     ode_(0),
     linsolver_(comm_,cycle),
     tp_(this->op_.space().grid().comm(),*this),
@@ -538,9 +591,15 @@ class SemiImplTimeStepper : public TimeProvider
 
     double* u=U0.leakPointer();
     
+    // time can is changeable now 
+    tp_.unlock();
+    
     const bool convergence = ode_->step( tp_.time(), tp_.deltaT() , u);
     assert(convergence);
 
+    // restore global time 
+    tp_.lock();
+    
     // calculate global min of dt 
     tp_.syncTimeStep();
 
@@ -673,6 +732,9 @@ public:
   
   double solve(typename Operator::DestinationType& U0) 
   {
+    // time can is changeable now 
+    tp_.unlock();
+    
     tp_.resetTimeStepEstimate();
     
     double t = tp_.time();
@@ -704,8 +766,11 @@ public:
       U0.addScaled(*(Upd[j]),(b[j]*dt));
     }
     
+    // restore global time 
+    tp_.lock();
+    
     // calls setTime ( t + dt ); 
-    tp_.setTime( t + dt );
+    tp_.augmentTime();
     
     return tp_.time();
   }
