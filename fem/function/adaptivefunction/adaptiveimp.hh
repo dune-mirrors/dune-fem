@@ -56,14 +56,12 @@ namespace Dune {
     ConstDofIteratorType dbegin() const;
     ConstDofIteratorType dend() const;
     
-    LocalFunctionType newLocalFunction() DUNE_DEPRECATED;
-
-    //! update local function to given entity
+    //! return local function object 
     template <class EntityType>
-    void localFunction(const EntityType& en, LocalFunctionType& lf) DUNE_DEPRECATED;
+    LocalFunctionType localFunction(const EntityType& en);
 
     template <class EntityType>
-    LocalFunctionType localFunction(const EntityType& en) const;
+    const LocalFunctionType localFunction(const EntityType& en) const;
 
     //! Set all elements to zero
     void clear();

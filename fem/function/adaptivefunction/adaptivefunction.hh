@@ -515,6 +515,8 @@ namespace Dune {
     //! return local function for given entity
     template <class EntityType> 
     LocalFunctionType localFunction (const EntityType &en) { return LocalFunctionType(en,*this); }
+    template <class EntityType> 
+    const LocalFunctionType localFunction (const EntityType &en) const { return LocalFunctionType(en,*this); }
     // using Imp::localFunction;
     using Imp::write_xdr;
     using Imp::read_xdr;

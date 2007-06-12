@@ -176,18 +176,20 @@ namespace Dune {
   typename 
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::LocalFunctionType
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  localFunction(const EntityType& en) const
+  localFunction(const EntityType& en)
   {
     return LocalFunctionType(en, this->interface());
   } 
 
   template <class DiscreteFunctionSpaceImp>
   template <class EntityType>
-  void AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  localFunction(const EntityType& en, LocalFunctionType& lf) 
+  const typename 
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::LocalFunctionType
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
+  localFunction(const EntityType& en) const
   {
-    lf.init(en);
-  }
+    return LocalFunctionType(en, this->interface());
+  } 
 
   //- Read/write methods
   template<class DiscreteFunctionSpaceImp>
