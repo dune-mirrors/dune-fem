@@ -241,7 +241,7 @@ public:
         L2Error < DestinationType > l2errGrad;
         gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
 
-        HdivTest< DestinationType > hdiv;
+        //HdivTest< DestinationType > hdiv;
 
         //std::cout << "Divergence = " << hdiv.div( velo ) << "\n";
         //std::cout << "Local Mass = " << hdiv.localMassConserve( velo ) << "\n";
