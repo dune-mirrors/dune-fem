@@ -107,7 +107,7 @@ namespace Dune {
     //! \param faceQuadOrd defines the order of the face quadrature which is by default 2* space polynomial order 
     LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
-                DiscreteFunctionSpaceType& spc,
+                const DiscreteFunctionSpaceType& spc,
     int volumeQuadOrd =-1,int faceQuadOrd=-1) :
       BaseType(pass, spc),
       caller_(problem),
@@ -439,7 +439,7 @@ namespace Dune {
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
 
-    DiscreteFunctionSpaceType& spc_;
+    const DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
     const LocalIdSetType& localIdSet_;
     mutable CommunicationManagerType communicationManager_;
