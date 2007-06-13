@@ -1,7 +1,6 @@
 #ifndef DUNE_LIMITERPASS_HH
 #define DUNE_LIMITERPASS_HH
 
-
 //- system includes 
 #include <vector>
 
@@ -34,7 +33,7 @@ namespace Dune {
   class LimiterDefaultDiscreteModel;
   
   template <class GlobalTraitsImp, class Model>
-  struct LimiterTraits 
+  struct LimiterDefaultTraits 
   {
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
@@ -65,10 +64,10 @@ namespace Dune {
   // **********************************************
   template <class GlobalTraitsImp, class Model>
   class LimiterDefaultDiscreteModel :
-    public DiscreteModelDefaultWithInsideOutSide<LimiterTraits<GlobalTraitsImp,Model> > 
+    public DiscreteModelDefaultWithInsideOutSide<LimiterDefaultTraits<GlobalTraitsImp,Model> > 
   {
   public:
-    typedef LimiterTraits<GlobalTraitsImp,Model> Traits;
+    typedef LimiterDefaultTraits<GlobalTraitsImp,Model> Traits;
     
     typedef Selector<0> SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
@@ -80,7 +79,8 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity EntityType;
     
   public:
-    LimiterDefaultDiscreteModel(const Model& mod) : model_(mod) , velocity_(0) {}
+    LimiterDefaultDiscreteModel(const Model& mod) 
+      : model_(mod) , velocity_(0) , normal_(0) {}
 
     bool hasSource() const { return false; }
     bool hasFlux() const   { return true;  }
@@ -91,18 +91,14 @@ namespace Dune {
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          RangeType& gLeft,
-                         RangeType& gRight)
+                         RangeType& gRight) const
     { 
-      const DomainType normal = it.outerNormal(x);
       
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       const UType& argULeft = Element<0>::get(uLeft);
       const UType& argURight = Element<0>::get(uRight);
  
-      model_.velocity(this->inside(),time,it.intersectionSelfLocal().global(x),
-                      argULeft,velocity_);
-
-      if( (normal * velocity_) < 0 )
+      if( checkDirection(it,time,x,uLeft,uRight,gLeft,gRight) )
       {
         gLeft  = argULeft;
         gLeft -= argURight;
@@ -115,9 +111,27 @@ namespace Dune {
       return 0.0;
     }
 
+  protected:
+    template <class ArgumentTuple>
+    bool checkDirection(IntersectionIterator& it,
+                        double time, const FaceDomainType& x,
+                        const ArgumentTuple& uLeft, 
+                        const ArgumentTuple& uRight,
+                        RangeType& gLeft,
+                        RangeType& gRight) const 
+    { 
+      typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      const UType& argULeft = Element<0>::get(uLeft);
+      normal_ = it.outerNormal(x);
+      model_.velocity(this->inside(),time,it.intersectionSelfLocal().global(x),
+                      argULeft,velocity_);
+      return ((normal_ * velocity_) < 0);
+    }
+
   private:
     const Model& model_;
     mutable DomainType velocity_;
+    mutable DomainType normal_;
   };
 
 
@@ -181,7 +195,7 @@ namespace Dune {
     //! \param spc Space belonging to the discrete function local to this pass
     LimitDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
-                DiscreteFunctionSpaceType& spc) :
+                const DiscreteFunctionSpaceType& spc) :
       BaseType(pass, spc),
       caller_(problem),
       arg_(0),
@@ -224,6 +238,9 @@ namespace Dune {
     //! Perform the limitation on all elements.
     virtual void applyLocal(EntityType& en) const
     {
+      // check argument is not zero
+      assert( arg_ );
+      
       //- statements
       // set entity to caller 
       caller_.setEntity(en);
@@ -241,15 +258,15 @@ namespace Dune {
       const Geometry& geo = en.geometry();
       
       // number of scalar base functions
-      const int numBasis=limitEn.numDofs()/dimRange;
+      const int numBasis = limitEn.numDofs()/dimRange;
       
       //double areae = geo.volume();
       double circume = 0.0;
 
-      const int numcorners = geo.corners();
       double radius = 0.0;
       
 #if 0   
+      const int numcorners = geo.corners();
       DomainType diff;
       for(int n=0; n<numcorners; ++n)
       {
@@ -410,19 +427,22 @@ namespace Dune {
       // limitation only necessary if order > 0
       if( spc_.order() > 0 )
       {
+        // prepare, i.e. set argument and destination 
         prepare(arg, dest);
 
+        // dod limitation 
         IteratorType endit = spc_.end();
         for (IteratorType it = spc_.begin(); it != endit; ++it) {
           applyLocal(*it);
         }
+        // finalize
         finalize(arg, dest);
       }
       else 
       {
         // otherwise just copy 
-        DestinationType* U = const_cast<DestinationType*>(Element<0>::get(*arg_));
-        dest.assign(*U);
+        const DestinationType& U = *(Element<0>::get(arg));
+        dest.assign(U);
       }
     }
     
@@ -437,7 +457,7 @@ namespace Dune {
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
 
-    DiscreteFunctionSpaceType& spc_;
+    const DiscreteFunctionSpaceType& spc_;
     const GridPartType& gridPart_;
     const double orderPower_;
     const DofConversionUtilityType dofConversion_; 
