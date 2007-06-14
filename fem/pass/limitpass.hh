@@ -6,25 +6,14 @@
 
 //- Dune includes 
 #include <dune/common/fvector.hh>
+#include <dune/common/utility.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/misc/timeutility.hh>
-
-// Dune includes
-#include <dune/common/utility.hh>
-#include <dune/grid/common/gridpart.hh>
-#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
-
-//- local includes 
-#include <dune/fem/space/dgspace.hh>
-#include <dune/fem/space/combinedspace.hh>
-
-#include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/function/blockvectorfunction.hh>
-#include <dune/fem/quadrature/cachequad.hh>
 
 //*************************************************************
 namespace Dune {  
