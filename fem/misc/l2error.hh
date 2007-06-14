@@ -31,7 +31,7 @@ namespace Dune
  */
 /*======================================================================*/
   
-  template <class DiscreteFunctionType,int n=0> 
+  template <class DiscreteFunctionType, int n=0> 
   class L2Error
   {
     typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -70,6 +70,13 @@ namespace Dune
  */
 /*======================================================================*/
     
+    template <class FunctionType> 
+    RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
+                    const double time)
+    {
+      norm(f,discFunc,2*discFunc.space().order()+2,time); 
+    }
+
     template <class FunctionType> 
     RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
                     int polOrd = (2 * spacePolOrd + 2), 
@@ -115,7 +122,8 @@ namespace Dune
           if (n==0) {
             f.evaluate(geo.global(quad.point(qP)),time,ret);
             lf.evaluate(quad,qP,phi);
-            for(int k=0; k<dimRange; ++k) {
+            for(int k=0; k<dimRange; ++k) 
+            {
               error[k] += det * SQR(ret[k] - phi[k]);
             }
           } 
