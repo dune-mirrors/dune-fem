@@ -116,7 +116,36 @@ namespace Dune {
     static IteratorType createMapper(const QuadratureType& quad);
 
   private:
-    static MapperContainerType mappers_;
+    // singleton class holding map with storages 
+    class MapperContainer
+    {
+      // instance of map 
+      MapperContainerType mappers_;
+      
+      //! cosntructor 
+      MapperContainer() : mappers_() {}
+
+      //! destructor  
+      ~MapperContainer() 
+      {
+        IteratorType endit = mappers_.end();
+        for(IteratorType it = mappers_.begin(); it != endit; ++it)
+        {
+          delete it->second;
+          it->second = 0;
+        }
+        
+      }
+      
+    public:
+      //! return reference to mappers 
+      static MapperContainerType& instance() 
+      {
+        // create singleton instance
+        static MapperContainer mc;
+        return mc.mappers_;
+      }
+    };
   };
 
   //! This class factors out all geometry dependent stuff in a strategy class

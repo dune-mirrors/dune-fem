@@ -1,10 +1,6 @@
 namespace Dune {
 
   template <class ct, int dim>
-  typename TwistProvider<ct, dim>::MapperContainerType
-  TwistProvider<ct, dim>::mappers_;
-
-  template <class ct, int dim>
   TwistStorage<ct, dim>::TwistStorage(int minTwist, int maxTwist) :
     mappers_(Traits::twistOffset_ + maxTwist),
     points_(),
@@ -58,8 +54,9 @@ namespace Dune {
   const typename TwistProvider<ct, dim>::TwistStorageType& 
   TwistProvider<ct, dim>::getTwistStorage(const QuadratureType& quad)
   {
-    IteratorType it = mappers_.find(quad.id());
-    if (it == mappers_.end()) {
+    MapperContainerType& mappers = MapperContainer::instance();
+    IteratorType it = mappers.find(quad.id());
+    if (it == mappers.end()) {
       it = TwistProvider<ct, dim>::createMapper(quad);
     }
     
@@ -71,10 +68,11 @@ namespace Dune {
   typename TwistProvider<ct, dim>::IteratorType
   TwistProvider<ct, dim>::createMapper(const QuadratureType& quad) 
   {
+    MapperContainerType& mappers = MapperContainer::instance();
     TwistMapperCreator<ct, dim> creator(quad);
     const TwistStorageType* storage = creator.createStorage();
 
-    return mappers_.insert(std::make_pair(quad.id(), storage)).first;
+    return mappers.insert(std::make_pair(quad.id(), storage)).first;
   }
   
   template <class ct, int dim>
@@ -107,8 +105,8 @@ namespace Dune {
          AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>(quad.geometry()));
         return ;
       }
-        DUNE_THROW(NotImplemented, 
-                   "No creator for given GeometryType exists");
+      DUNE_THROW(NotImplemented, 
+                 "No creator for given GeometryType exists");
     }
   }
 
