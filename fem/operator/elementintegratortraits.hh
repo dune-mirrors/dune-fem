@@ -106,12 +106,15 @@ public:
   typedef GridType::Codim<0>::Entity EntityType;
   typedef GridType::Codim<0>::EntityPointer EntityPointerType;
   typedef EntityType::ctype CoordType; 
-  typedef DiscreteFunctionSpaceType::DomainType DomainType;
-  typedef DiscreteFunctionSpaceType::RangeType RangeType;
-  typedef DiscreteFunctionSpaceType::BaseFunctionSetType 
-                   BaseFunctionSetType;    
-  typedef DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-  typedef DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+  
+  typedef DiscreteFunctionSpaceType :: DomainType DomainType;
+  typedef DiscreteFunctionSpaceType :: RangeType RangeType;
+  typedef DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+  typedef DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+  typedef DiscreteFunctionSpaceType :: BaseFunctionSetType
+      BaseFunctionSetType;    
 
   // do not remove any of the following bnd-type, as selection according to 
   // this is happening in the operator

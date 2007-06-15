@@ -32,300 +32,284 @@
 #include "../solver/oemsolver/preconditioning.hh"
 
 
-namespace Dune {
-
-/*======================================================================*/
-/*! @ingroup CGFiniteElement  
- *  \class FEOp 
- *  \brief The FEOp class provides an example of a Finite Element Operator 
- *     
- *  The class is an operator used for general elliptic problems, specialized 
- *  to Lagrange-bases, as explicit boundary setting and kronecker-kills
- *  in the matrix are performed.
- *
- *  The derivation from the FEOpInterface seems superfluous, as the local 
- *  element matrix provider is now specified by a template-parameter. 
- *
- *  The class is used for general elliptic problems + boundary treatment: 
- *  \f{eqnarray*}
- *                 - div(a*grad(u) - b*u) + c*u = f     in Omega    \\
- *                                            u = g_D   in \Gamma_D \\
- *                           (a*grad(u) -b*u) n = g_N   in \Gamma_N \\
- *                 (a*grad(u) -b*u) n + alpha*u = g_R   in \Gamma_R 
- *  \f}
- *
- *  where \l$ a,b,c,g_D,g_N,g_R \l$ are space dependent, alpha a constant and the 
- *  quantities denote
- *              "stiffness"        a(x) 
- *              "velocity"         b(x) 
- *              "mass"             c(x) 
- *              "source"           f(x) 
- *              "dirichletValues"  g_D
- *              "neumannValues"    g_N
- *              "robinValues"      g_R
- *              "alpha"            alpha                   
- *
- * the following assumptions on the basis/model are made:
- *    - The discrete function space is a nodal basis, 
- *      there exists a set of x_i such that phi_j(x_i) = kronecker(i,j)  
- *      the access to these points is done by a LagrangeDOFHandler class.
- *    - a basis function phi_i of a neuman boundary point x_i 
- *      vanishes on the Robin-boundary and vice-versa. A basis function of an 
- *      interior point x_i vanishes on the boundary
- *    - The Dirichlet-Boundary is a closed set, in particular 
- *      point-evaluations indicate whether any of the adjacent edges or 
- *      faces are Dirichlet-boundaries
- *    - complete cell boundaries are of one type (except perhaps their 
- *      lower-codim boundaries): cog-evaluation indicates, whether 
- *      all Lagrange nodes on the intersection are Dirichlet-vertices. 
- *      And cog-evaluation indicates, 
- *      whether whole intersection is of one type, e.g. Neuman or Robin, for 
- *      integration over it. 
- *
- *  weak formulation of the above problem and restriction to the discrete 
- *  function with u_h := sum_j u_j phi_j leads to a system for the 
- *  DOF-vector u:
- *  
- *          M u = b
- *
- *  with
- *               
- *             /   kronecker(i,j)         if x_i is Dirichlet-LagrangePoint 
- *            /
- *    M_ij :=<       \int_\Omega   [a     grad(phi_j) ]^T  grad(phi_i) 
- *            \   -  \int_\Omega   [b     phi_j]^T         grad(phi_i)
- *             \  +  \int_\Omega   c          phi_i       phi_j
- *              \ +  \int_\Gamma_R alpha      phi_i       phi_j      otherwise
- *
- *  and
- *
- *           /    g_D(x_i)               if x_i is Dirichlet-LagrangePoint
- *    b_i :=<   
- *           \      \int_\Omega   f   phi_i
- *            \   + \int_\Gamma_N g_N phi_i
- *             \  + \int_\Gamma_R g_R phi_i                        otherwise
- *
- *  The right hand side is assumed to be assembled by another class, e.g.
- *  RhsAssembler, which is based on element-wise contributions
- *  by a RhsIntegrator class, etc.  
- *
- *  The matrix M has kronecker rows for all dirichlet points, but no 
- *  kronecker-columns. 
- *
- *  Optionally, the matrix and the right hand side can
- *  be processed to have also kronecker-columns, which is beneficial in case
- *  of a symmetric problem. This is done by calling the methods (the latter 
- *  possibly being repeated for changing or multiple rhsides.)
- *
- *       matrixKroneckerColumnsTreatment();
- *       rhsKroneckerColumnsTreatment(rhs);
- * 
- *  This results in
- *
- *                M_sym u = b_sym
- *
- *  The new matrix has entries
- *
- *               /   kronecker(i,j)    if x_i OR x_j is Dirichlet-Lagr.Point 
- *   M_ij_sym :=<    M_ij              otherwise
- * 
- *  The new right hand side has entries:
- *
- *               /    b_i                  if x_i is Dirichlet-Lagr..Point
- *    b_i_sym :=<   
- *               \    b_i - sum_{x_j Dirichlet-Point} M_ij g_D(x_j)   otherwise
- *
- *  In this case, the deleted matrix entries are stored, as they are 
- *  required for every subsequent right hand side modification.
- *  This Kronecker-Column Treatment is performed by storing the following
- *  temporary objects:
- *
- *    d_dir := vector with 0 for non-Dirichlet DOFs, 1 for DirichletDOFs
- *    M_dir := Null-matrix with all Dirichlet-Columns of M  - diag(d_dir)
- *             i.e. Dirichlet-Rows are completely zero
- *    g_D := vector with 0 for non-Dirichlet DOFs, 
-             Dirichlet-Value for DirichletDOFs
- *
- *  Then, the symmetrization can compactly be written as
- *
- *    M_sym = M - M_dir 
- *    b_sym = b - M_dir * g_D
- *
- *  The class depends on two template parameters, a SystemMatrixImp and an 
- *  ElementMatrixIntegratorImp class
- *
- *  The SystemMatrixImp class must provide a storage type for the global 
- *  operator matrix and some arithmetics and basic functionality. In 
- *  particular a print() method and an apply() method are assumed to exist.
- *  Currently the SparseRowMatrix satisfies the interface required for a
- *  SystemMatrixImp class.
- * 
- *  The ElementMatrixIntegratorImp class provides functionality for 
- *  computing a
- *  local element matrix on a given entity without dirichlet-treatment, i.e.
- *  by traversing the grid with the ElementMatrixImp class results in 
- *  the above matrix M_ij, with Dirichlet-values also integrated. After this
- *  Assembly, a Dirichlet-BndCorrection is performed.
- *
- *  Different operating modes are possible (currently however only 
- *  ASSEMBLED is implemented). In case of ASSEMBLED, the whole 
- *  global operator matrix is allocated and completely precomputed by 
- *  corresponding methods. In case of ON_THE_FLY, no complete matrix is
- *  allocated, but the matrix-vector multiplication is performed by 
- *  on-the-fly computation of the elementwise local matrices.
- */
-/*======================================================================*/
-
-template <class SystemMatrixImp, class ElementMatrixIntegratorImp>
-class FEOp : 
-        public OEMSolver::PreconditionInterface,
-        public Operator<
-           typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType::DomainFieldType, 
-           typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType::RangeFieldType,
-           typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType,
-    typename ElementMatrixIntegratorImp::TraitsType::DiscreteFunctionType>
+namespace Dune
 {
-  
-public:
-  //! Type of matrix storage class used for global operator matrix
-  typedef SystemMatrixImp SystemMatrixType;  
 
-  //! Type of ElementMatrixContributor
-  typedef ElementMatrixIntegratorImp ElementMatrixIntegratorType;  
-  
-  //! Operation mode: global allocation and multiplication or only 
-  //! on-the-fly
-  enum OpMode { ON_THE_FLY, ASSEMBLED };
-
-  //! Mode of operation on the matrix/rhs concerning Dirichlet rows/cols
-  // enum DirichletTreatmentMode { KRONECKER_ROWS, KRONECKER_ROWS_COLS };
-
-  typedef typename ElementMatrixIntegratorType::TraitsType TraitsType;
-  typedef typename TraitsType::DiscreteFunctionType DiscreteFunctionType;
-  typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename TraitsType::ElementMatrixType ElementMatrixType;
-  typedef typename TraitsType::IntersectionQuadratureType 
-                   IntersectionQuadratureType;
-  typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
-
-/*======================================================================*/
-/*! 
- *   constructor: Initialization of FEOp
- *
- *   Based on an existing instance of an elementmatrixintegrator 
- *   (which knows the model and the function space) the FEOp is initialized. 
- *   Operation mode must be selected as ASSEMBLED or ON_THE_FLY. The number of 
- *   nonzeros in the global matrix must be specified (only relevant in 
- *   ASSEMBLED-Mode). 
- * 
- *   \param elMatInt an instance of an element matrix integrator
- *
- *   \param opMode the operator mode 
- *
- *   \param maxNonZerosPerRow the maximum number of nonzeros per row in the 
- *          global matrix (default 50)
- *
- *   \return the initialized FEOp
- */
-/*======================================================================*/
-  
-  FEOp( ElementMatrixIntegratorType &elMatInt, 
-        OpMode opMode = ASSEMBLED,
-//        DirichletTreatmentMode dirichletMode = KRONECKER_ROWS,
-        int maxNonZerosPerRow = 50,
-        int verbose = 0, bool preconditionSSOR = false) :
-          functionSpace_( elMatInt.model().discreteFunctionSpace()),  
-          matrix_ (0), 
-          matrix_assembled_( false ),
-//          arg_ ( NULL ), 
-//          dest_ (NULL) , 
-          opMode_(opMode),
-//          dirichletMode_(dirichletMode),
-          maxNonZerosPerRow_(maxNonZerosPerRow),
-          elMatInt_(elMatInt),
-//          isDirichletDOF_old_(0),
-          isDirichletDOF_(0),
-          isDirichletDOF_assembled_(false),
-//          matrixDirichletColumns_old_(0),
-          matrixDirichletColumns_(0),
-          verbose_(verbose),
-          preconditionSSOR_(preconditionSSOR)
-        {
-          if (verbose_)
-              std::cout << "entered constructor of FEOp\n";
-
-          // class currently only implemented for non-symmetrized matrix/rhs!
-          assert(opMode == ASSEMBLED);
-        };
-  
-/*======================================================================*/
-/*! 
- *   destructor: In case of allocation of global operator matrix
- *               it is deallocated, also the dirichletDOF lookup table.
- */
-/*======================================================================*/
-
-  ~FEOp( ) 
-        {
-          if (verbose_)
-              std::cout << "entered destructor of FEOp\n";
-
-          if ( matrix_ ) 
-              delete matrix_;
-//          if ( isDirichletDOF_old_ ) 
-//              delete isDirichletDOF_old_;
-          if ( isDirichletDOF_ ) 
-              delete isDirichletDOF_;
-//          if ( matrixDirichletColumns_old_ ) 
-//              delete matrixDirichletColumns_old_;
-          if ( matrixDirichletColumns_ ) 
-              delete matrixDirichletColumns_;
-        };
-
-/*======================================================================*/
-/*! 
- *   print: print matrix to standard out, only makes sense in ASSEMBLED mode 
- */
-/*======================================================================*/
-
-  void print () const 
+  /*! @ingroup CGFiniteElement  
+   *  \class FEOp 
+   *  \brief The FEOp class provides an example of a Finite Element Operator 
+   *     
+   *  The class is an operator used for general elliptic problems, specialized 
+   *  to Lagrange-bases, as explicit boundary setting and kronecker-kills
+   *  in the matrix are performed.
+   *
+   *  The derivation from the FEOpInterface seems superfluous, as the local 
+   *  element matrix provider is now specified by a template-parameter. 
+   *
+   *  The class is used for general elliptic problems + boundary treatment: 
+   *  \f{eqnarray*}
+   *                 - div(a*grad(u) - b*u) + c*u = f     in Omega    \\
+   *                                            u = g_D   in \Gamma_D \\
+   *                           (a*grad(u) -b*u) n = g_N   in \Gamma_N \\
+   *                 (a*grad(u) -b*u) n + alpha*u = g_R   in \Gamma_R 
+   *  \f}
+   *
+   *  where \l$ a,b,c,g_D,g_N,g_R \l$ are space dependent, alpha a constant and the 
+   *  quantities denote
+   *              "stiffness"        a(x) 
+   *              "velocity"         b(x) 
+   *              "mass"             c(x) 
+   *              "source"           f(x) 
+   *              "dirichletValues"  g_D
+   *              "neumannValues"    g_N
+   *              "robinValues"      g_R
+   *              "alpha"            alpha                   
+   *
+   * the following assumptions on the basis/model are made:
+   *    - The discrete function space is a nodal basis, 
+   *      there exists a set of x_i such that phi_j(x_i) = kronecker(i,j)  
+   *      the access to these points is done by a LagrangeDOFHandler class.
+   *    - a basis function phi_i of a neuman boundary point x_i 
+   *      vanishes on the Robin-boundary and vice-versa. A basis function of an 
+   *      interior point x_i vanishes on the boundary
+   *    - The Dirichlet-Boundary is a closed set, in particular 
+   *      point-evaluations indicate whether any of the adjacent edges or 
+   *      faces are Dirichlet-boundaries
+   *    - complete cell boundaries are of one type (except perhaps their 
+   *      lower-codim boundaries): cog-evaluation indicates, whether 
+   *      all Lagrange nodes on the intersection are Dirichlet-vertices. 
+   *      And cog-evaluation indicates, 
+   *      whether whole intersection is of one type, e.g. Neuman or Robin, for 
+   *      integration over it. 
+   *
+   *  weak formulation of the above problem and restriction to the discrete 
+   *  function with u_h := sum_j u_j phi_j leads to a system for the 
+   *  DOF-vector u:
+   *  
+   *          M u = b
+   *
+   *  with
+   *               
+   *             /   kronecker(i,j)         if x_i is Dirichlet-LagrangePoint 
+   *            /
+   *    M_ij :=<       \int_\Omega   [a     grad(phi_j) ]^T  grad(phi_i) 
+   *            \   -  \int_\Omega   [b     phi_j]^T         grad(phi_i)
+   *             \  +  \int_\Omega   c          phi_i       phi_j
+   *              \ +  \int_\Gamma_R alpha      phi_i       phi_j      otherwise
+   *
+   *  and
+   *
+   *           /    g_D(x_i)               if x_i is Dirichlet-LagrangePoint
+   *    b_i :=<   
+   *           \      \int_\Omega   f   phi_i
+   *            \   + \int_\Gamma_N g_N phi_i
+   *             \  + \int_\Gamma_R g_R phi_i                        otherwise
+   *
+   *  The right hand side is assumed to be assembled by another class, e.g.
+   *  RhsAssembler, which is based on element-wise contributions
+   *  by a RhsIntegrator class, etc.  
+   *
+   *  The matrix M has kronecker rows for all dirichlet points, but no 
+   *  kronecker-columns. 
+   *
+   *  Optionally, the matrix and the right hand side can
+   *  be processed to have also kronecker-columns, which is beneficial in case
+   *  of a symmetric problem. This is done by calling the methods (the latter 
+   *  possibly being repeated for changing or multiple rhsides.)
+   *
+   *       matrixKroneckerColumnsTreatment();
+   *       rhsKroneckerColumnsTreatment(rhs);
+   * 
+   *  This results in
+   *
+   *                M_sym u = b_sym
+   *
+   *  The new matrix has entries
+   *
+   *               /   kronecker(i,j)    if x_i OR x_j is Dirichlet-Lagr.Point 
+   *   M_ij_sym :=<    M_ij              otherwise
+   * 
+   *  The new right hand side has entries:
+   *
+   *               /    b_i                  if x_i is Dirichlet-Lagr..Point
+   *    b_i_sym :=<   
+   *               \    b_i - sum_{x_j Dirichlet-Point} M_ij g_D(x_j)   otherwise
+   *
+   *  In this case, the deleted matrix entries are stored, as they are 
+   *  required for every subsequent right hand side modification.
+   *  This Kronecker-Column Treatment is performed by storing the following
+   *  temporary objects:
+   *
+   *    d_dir := vector with 0 for non-Dirichlet DOFs, 1 for DirichletDOFs
+   *    M_dir := Null-matrix with all Dirichlet-Columns of M  - diag(d_dir)
+   *             i.e. Dirichlet-Rows are completely zero
+   *    g_D := vector with 0 for non-Dirichlet DOFs, 
+               Dirichlet-Value for DirichletDOFs
+   *
+   *  Then, the symmetrization can compactly be written as
+   *
+   *    M_sym = M - M_dir 
+   *    b_sym = b - M_dir * g_D
+   *
+   *  The class depends on two template parameters, a SystemMatrixImp and an 
+   *  ElementMatrixIntegratorImp class
+   *
+   *  The SystemMatrixImp class must provide a storage type for the global 
+   *  operator matrix and some arithmetics and basic functionality. In 
+   *  particular a print() method and an apply() method are assumed to exist.
+   *  Currently the SparseRowMatrix satisfies the interface required for a
+   *  SystemMatrixImp class.
+   * 
+   *  The ElementMatrixIntegratorImp class provides functionality for 
+   *  computing a
+   *  local element matrix on a given entity without dirichlet-treatment, i.e.
+   *  by traversing the grid with the ElementMatrixImp class results in 
+   *  the above matrix M_ij, with Dirichlet-values also integrated. After this
+   *  Assembly, a Dirichlet-BndCorrection is performed.
+   *
+   *  Different operating modes are possible (currently however only 
+   *  ASSEMBLED is implemented). In case of ASSEMBLED, the whole 
+   *  global operator matrix is allocated and completely precomputed by 
+   *  corresponding methods. In case of ON_THE_FLY, no complete matrix is
+   *  allocated, but the matrix-vector multiplication is performed by 
+   *  on-the-fly computation of the elementwise local matrices.
+   */
+  template< class SystemMatrixImp, class ElementMatrixIntegratorImp >
+  class FEOp
+  : public OEMSolver :: PreconditionInterface,
+    public Operator< typename ElementMatrixIntegratorImp :: TraitsType :: DomainFieldType,
+                     typename ElementMatrixIntegratorImp :: TraitsType :: RangeFieldType,
+                     typename ElementMatrixIntegratorImp :: TraitsType :: DiscreteFunctionType,
+                     typename ElementMatrixIntegratorImp :: TraitsType :: DiscreteFunctionType >
   {
-    if (verbose_)
-        std::cout << "entered print() of FEOp\n";
-    assert(opMode_==ASSEMBLED);
-    if(!this->matrix_assembled_) 
-        this->assemble();
-    this->matrix_->print(std::cout);
-  }
+  public:
+    //! Type of matrix storage class used for global operator matrix
+    typedef SystemMatrixImp SystemMatrixType;
 
-/*======================================================================*/
-/*! 
- *   systemMatrix: return reference to systemMatrix for oem solvers. 
- *
- *   The assembled matrix is returned. That means, if global matrix is not 
- *   yet allocated, a new empty matrix is generated. If current global 
- *   matrix is not yet assembled, an assembly is initiated.
- *   Method only makes sense in ASSEMBLED mode
- *
- *   \return reference to assembled global matrix
- */
-/*======================================================================*/
+    //! Type of ElementMatrixContributor
+    typedef ElementMatrixIntegratorImp ElementMatrixIntegratorType;
   
-  SystemMatrixType& systemMatrix() 
-        {
-          if (verbose_)
-              std::cout << "entered systemMatrix() of FEOp\n";
-          assert(opMode_==ASSEMBLED);
-          //assert(matrix_assembled_ == true);
-          if ( !this->matrix_assembled_ )
-          {
-            if(!this->matrix_)
-                allocateSystemMatrix( );
-            this->assemble(); 
-          }
-          return (*this->matrix_);
-        }
+    //! Operation mode: global allocation and multiplication or only 
+    //! on-the-fly
+    enum OpMode { ON_THE_FLY, ASSEMBLED };
+
+    //! Mode of operation on the matrix/rhs concerning Dirichlet rows/cols
+    // enum DirichletTreatmentMode { KRONECKER_ROWS, KRONECKER_ROWS_COLS };
+
+    typedef typename ElementMatrixIntegratorType :: TraitsType TraitsType;
+    
+    typedef typename TraitsType :: DiscreteFunctionType DiscreteFunctionType;
+    typedef typename TraitsType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+    typedef typename TraitsType :: ElementMatrixType ElementMatrixType;
+    typedef typename TraitsType :: IntersectionQuadratureType IntersectionQuadratureType;
+   
+    /*!  constructor: Initialization of FEOp
+     *
+     *   Based on an existing instance of an elementmatrixintegrator 
+     *   (which knows the model and the function space) the FEOp is initialized. 
+     *   Operation mode must be selected as ASSEMBLED or ON_THE_FLY. The number of 
+     *   nonzeros in the global matrix must be specified (only relevant in 
+     *   ASSEMBLED-Mode). 
+     * 
+     *   \param elMatInt an instance of an element matrix integrator
+     *
+     *   \param opMode the operator mode 
+     *
+     *   \param maxNonZerosPerRow the maximum number of nonzeros per row in the 
+     *          global matrix (default 50)
+     *
+     *   \return the initialized FEOp
+     */
+    FEOp( ElementMatrixIntegratorType &elMatInt,
+          OpMode opMode = ASSEMBLED,
+          // DirichletTreatmentMode dirichletMode = KRONECKER_ROWS,
+          int maxNonZerosPerRow = 50,
+          int verbose = 0,
+          bool preconditionSSOR = false )
+    : functionSpace_( elMatInt.model().discreteFunctionSpace() ),
+      matrix_( 0 ), 
+      matrix_assembled_( false ),
+      // arg_ ( NULL ), 
+      // dest_ (NULL) , 
+      opMode_( opMode ),
+      // dirichletMode_( dirichletMode ),
+      maxNonZerosPerRow_(maxNonZerosPerRow),
+      elMatInt_(elMatInt),
+      // isDirichletDOF_old_( 0 ),
+      isDirichletDOF_( 0 ),
+      isDirichletDOF_assembled_( false ),
+      // matrixDirichletColumns_old_( 0 ),
+      matrixDirichletColumns_( 0 ),
+      verbose_( verbose ),
+      preconditionSSOR_( preconditionSSOR )
+    {
+      if( verbose_ )
+        std :: cout << "entered constructor of FEOp" << std :: endl;
+
+      // class currently only implemented for non-symmetrized matrix/rhs!
+      assert( opMode == ASSEMBLED );
+    };
+  
+    /*! destructor: In case of allocation of global operator matrix
+     *              it is deallocated, also the dirichletDOF lookup table.
+     */
+    ~FEOp () 
+    {
+      if( verbose_ )
+          std :: cout << "entered destructor of FEOp" << std :: endl;
+
+      if( matrix_ != NULL ) 
+        delete matrix_;
+      // if( isDirichletDOF_old_ != NULL ) 
+      //   delete isDirichletDOF_old_;
+      if( isDirichletDOF_ != NULL )
+        delete isDirichletDOF_;
+      // if( matrixDirichletColumns_old_ != NULL )
+      //   delete matrixDirichletColumns_old_;
+      if( matrixDirichletColumns_ != NULL ) 
+        delete matrixDirichletColumns_;
+    };
+
+    /*! print: print matrix to output stream
+     *
+     *  \note only makes sense in ASSEMBLED mode
+     *
+     *  \param[in] stream to print matrix to
+     */
+    void print ( std :: ostream &out = std :: cout ) const 
+    {
+      if( verbose_ )
+        std :: cout << "entered print() of FEOp" << std :: endl;
+      
+      assert( opMode_ == ASSEMBLED );
+      systemMatrix().print( out );
+    }
+
+    /*! 
+     *   systemMatrix: return reference to systemMatrix for oem solvers. 
+     *
+     *   The assembled matrix is returned. That means, if global matrix is not 
+     *   yet allocated, a new empty matrix is generated. If current global 
+     *   matrix is not yet assembled, an assembly is initiated.
+     *   Method only makes sense in ASSEMBLED mode
+     *
+     *   \return reference to assembled global matrix
+     */
+    SystemMatrixType& systemMatrix () const
+    {
+      if( verbose_ )
+        std :: cout << "entered systemMatrix() of FEOp" << std :: endl;
+      
+      assert( opMode_==ASSEMBLED );
+      if( !matrix_assembled_ )
+      {
+        if( matrix_ == NULL )
+          allocateSystemMatrix();
+        this->assemble();
+      }
+      return *matrix_;
+    }
   
 // /*======================================================================*/
 // /*! 
@@ -365,39 +349,29 @@ public:
 //   };
 
 
-/*======================================================================*/
-/*! 
- *   operator(): application operator
- *
- *   In case of ASSEMBLED-mode a global
- *   apply() on the matrix is called, i.e. a matrix-vector-multiplication 
- *   with the vector arg is performed, the result stored in dest. This is 
- *   an implicit requirement on the MatrixImp class!
- *   
- *   In case of ON_THE_FLY, the method is not yet implemented.
- *
- *   \param arg reference on the argument for the matrix-vector multiplication 
- *
- *   \param dest reference to storage for the destination vector
- */
-/*======================================================================*/
-
-  virtual void operator()(const DiscreteFunctionType &arg, 
-                          DiscreteFunctionType &dest) const
-  {
-    if (opMode_ == ASSEMBLED)
+    /*! 
+     *   operator(): application operator
+     *
+     *   In case of ASSEMBLED-mode a global
+     *   apply() on the matrix is called, i.e. a matrix-vector-multiplication 
+     *   with the vector arg is performed, the result stored in dest. This is 
+     *   an implicit requirement on the MatrixImp class!
+     *   
+     *   In case of ON_THE_FLY, the method is not yet implemented.
+     *
+     *   \param arg reference on the argument for the matrix-vector multiplication 
+     *
+     *   \param dest reference to storage for the destination vector
+     */
+    virtual void operator() ( const DiscreteFunctionType &arg,
+                              DiscreteFunctionType &dest ) const
     {
-      if (!matrix_assembled_) 
-          this->assemble();   
-      matrix_->apply( arg, dest );
+      if( opMode_ == ASSEMBLED )
+        systemMatrix().apply( arg, dest );
+      else
+        DUNE_THROW( NotImplemented,
+                    "operator() in FEOP needs to be implemented for ON_THE_FLY!" );
     }
-    else
-    {
-      std::cout << "operator() in FEOP needs to be implemented for "
-                << " ON_THE_FLY! \n";
-      assert(1==0);  
-    }
-  };
 
 // /*======================================================================*/
 // /*! 
@@ -606,79 +580,60 @@ public:
 //     }
 //   }// end finalizeLocal
 
-/*======================================================================*/
-/*! 
- *   assemble: perform grid-walkthrough and assemble global matrix
- * 
- *   If the matrix storage is not allocated, new storage is allocated by 
- *   allocateSystemMatrix. 
- *   The begin and end iterators are determined, 
- *   the assembling of the global matrix is initiated by call of 
- *   assembleOnGrid 
- *   and the Dirichlet-rows deleted by bndCorrectMatrixOnGrid. 
- *   The assemled flag is set. 
- *
- *   Method only makes sense in ASSEMBLED-mode
- */
-/*======================================================================*/
+    /*! 
+     *   assemble: perform grid-walkthrough and assemble global matrix
+     * 
+     *   If the matrix storage is not allocated, new storage is allocated by 
+     *   allocateSystemMatrix. 
+     *   The begin and end iterators are determined, 
+     *   the assembling of the global matrix is initiated by call of 
+     *   assembleOnGrid 
+     *   and the Dirichlet-rows deleted by bndCorrectMatrixOnGrid. 
+     *   The assemled flag is set. 
+     *
+     *   Method only makes sense in ASSEMBLED-mode
+     */
+    void assemble () const
+    {
+      if( verbose_ )
+        std :: cout << "entered assemble() of FEOp" << std :: endl;
 
-  void assemble ( ) const
-  {
-    if (verbose_)
-        std::cout << "entered assemble() of FEOp\n";
-
-    assert(opMode_==ASSEMBLED);
+      assert( opMode_==ASSEMBLED );
         
-    if(!this->matrix_) 
+      if( matrix_ == NULL )
         allocateSystemMatrix();
+      matrix_->clear();
 
-    assert(this->matrix_);
-    
-    matrix_->clear();
-   
-    {
-      // allocate local matrix storage, assumed default constructor on class
-      ElementMatrixType mat;      
-      
       // generate global matrix without dirichlet-treatment 
-      IteratorType it    = functionSpace_.begin(); 
-      IteratorType endit = functionSpace_.end(); 
-
-      assembleOnGrid(it, endit, mat);
-    }
+      assembleOnGrid();
     
-    // generate kronecker-rows for dirichlet DOFs  
-    this->bndCorrectMatrix();
+      // generate kronecker-rows for dirichlet DOFs  
+      bndCorrectMatrix();
     
-    // in case of dirichletTreatment by Kronecker-kill: eliminate columns
-    //if (dirichletMode_==KRONECKER_ROWS_COLS)
-    //    matrixKroneckerColumnsTreatment();
+      // in case of dirichletTreatment by Kronecker-kill: eliminate columns
+      //if (dirichletMode_==KRONECKER_ROWS_COLS)
+      //    matrixKroneckerColumnsTreatment();
 
-    if (verbose_)
+      if( verbose_ )
         determineRealNonZeros();
-   
 
-    // in case of use of SSOR preconditioning, the matrix must not have
-    // zero diagonal entries. Therefore zero-rows are transformed
-    // to unit-rows and a global matrix diagonal check is performed.
-    
-    if (preconditionSSOR_)
-    {
-      // set unit rows in empty rows
-      for (int i=0; i!=matrix_->rows(); i++)
-          if (matrix_->numNonZeros(i) == 0)
-              matrix_->set(i,i,1.0);
-      
-      // check diagonal     
-      bool has_zero_entry = false;
-      for (int i=0; i!=matrix_->rows(); i++)
-          if ((*matrix_)(i,i) == 0.0) // has zero entry
-              has_zero_entry = true;
-      assert(!has_zero_entry);      
-    }
+      // in case of use of SSOR preconditioning, the matrix must not have
+      // zero diagonal entries. Therefore zero-rows are transformed
+      // to unit-rows and a global matrix diagonal check is performed.
+      if( preconditionSSOR_ )
+      {
+        const int numRows = matrix_->rows();
+        // set unit rows in empty rows and check diagonal for zeros
+        for( int i = 0; i != numRows; ++i )
+        {
+          if( matrix_->numNonZeros( i ) == 0 )
+            matrix_->set( i, i, 1.0 );
+          assert( (*matrix_)( i, i ) != 0 );
+        }
+      }
        
-    matrix_assembled_ = true;
-  };
+      matrix_assembled_ = true;
+    };
 
 // the following can be removed, if the RhsAssembly is performed externally
 
@@ -940,110 +895,97 @@ public:
 
 
 
-  //! method required for preconditioning in bicgstab, to be provided for 
-  //! PreconditioningInterface
-  bool hasPreconditionMatrix() const 
-        { 
-          return preconditionSSOR_; 
-        }
+    //! method required for preconditioning in bicgstab, to be provided for 
+    //! PreconditioningInterface
+    bool hasPreconditionMatrix() const 
+    { 
+      return preconditionSSOR_; 
+    }
 
-  //! method required for preconditioning in bicgstab, to be provided for 
-  //! PreconditioningInterface
-  const SystemMatrixType& preconditionMatrix() const
-        {
-          return *matrix_;
-        }
+    //! method required for preconditioning in bicgstab, to be provided for
+    //! PreconditioningInterface
+    const SystemMatrixType& preconditionMatrix () const
+    {
+      return systemMatrix();
+      // return *matrix_;
+    }
   
-// private methods used by the public ones.
-private:
-    
-/*======================================================================*/
-/*! 
- *   allocateSystemMatrix: allocation of a new global matrix
- *
- *   The SystemMatrixclass is required to have a constructor with the syntax
- *   SystemMatrixType(nrows, ncols, nonzeros_per_row). Deallocation of the 
- *   global matrix is performed in the destructor. 
- *   
- *   Currently the nonzeros per row must be specified in the constructor of FEOp. 
- *   This could be improved, e.g. by a Traitsclass as template-parameter, which 
- *   contains the SystemMatrixType and the maxnumbernonzeros
- */
-/*======================================================================*/
+  private:
+    /*! 
+     *   allocateSystemMatrix: allocation of a new global matrix
+     *
+     *   The SystemMatrixclass is required to have a constructor with the syntax
+     *   SystemMatrixType(nrows, ncols, nonzeros_per_row). Deallocation of the 
+     *   global matrix is performed in the destructor. 
+     *   
+     *   Currently the nonzeros per row must be specified in the constructor of FEOp. 
+     *   This could be improved, e.g. by a Traitsclass as template-parameter, which 
+     *   contains the SystemMatrixType and the maxnumbernonzeros
+     */
+    void allocateSystemMatrix () const  
+    { 
+      // the following choice of numnonzeros seems strange: must be exponential 
+      // with dimension
+      // typedef typename DiscreteFunctionType::FunctionSpaceType::GridType GridType; 
+      // enum { dim = GridType::dimension };
+      // int maxNonZerosPerRow_ = 15 * (dim-1);
+          
+      // SystemMatrixType* 
+      if( verbose_ )
+        std :: cout << "entered allocateSystemMatrix() of FEOp" << std :: endl;
 
-  void allocateSystemMatrix( ) const  
+      const size_t size = functionSpace_.size();
+      if( verbose_ )
+        std :: cout << "allocating matrix of size " << size
+                    << " times " << maxNonZerosPerRow_
+                    << " nonzeros" << std :: endl;
+          
+      matrix_ = new SystemMatrixType( size, size, maxNonZerosPerRow_ );
+      assert( matrix_ != NULL );
+    }
+    
+    /*! 
+     *   assembleOnGrid: perform grid walkthrough and assemble matrix
+     *
+     *   For each element, the local element matrix is determined into the 
+     *   given local matrix storage and distributed into the global matrix.
+     *   Distribution is performed by an add(row,col,val) method on the 
+     *   global matrix class.
+     */
+    void assembleOnGrid () const
+    {
+      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+      typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+        BaseFunctionSetType;
+
+      if( verbose_ )
+        std::cout << "entered assembleOnGrid() of FEOp" << std :: endl;
+      
+      ElementMatrixType elementMatrix;
+      // run through grid and add up local contributions
+      const IteratorType endit = functionSpace_.end();
+      for( IteratorType it = functionSpace_.begin(); it != endit; ++it )
+      {
+        const BaseFunctionSetType &baseFunctionSet
+          = functionSpace_.baseFunctionSet( *it );
+        const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
+            
+        // setup local element matrix 
+        // (size check is performed in elementmatrix construction)
+        elementMatrix.clear();
+        elMatInt_.addElementMatrix( *it, elementMatrix, 1 );
+            
+        for( int i = 0; i < numBaseFunctions; ++i ) 
         { 
-          
-          // the following choice of numnonzeros seems strange: must be exponential 
-          // with dimension
-          // typedef typename DiscreteFunctionType::FunctionSpaceType::GridType GridType; 
-          // enum { dim = GridType::dimension };
-          // int maxNonZerosPerRow_ = 15 * (dim-1);
-          
-          // SystemMatrixType* 
-          if (verbose_)
-              std::cout << "entered allocateSystemMatrix() of FEOp\n";
-
-          if (verbose_)
-              std::cout << "allocating matrix of size " <<
-                  this->functionSpace_.size ( ) << " times " << 
-                  maxNonZerosPerRow_ << " nonzeros \n";
-          
-          matrix_ =
-              new SystemMatrixType( 
-                  this->functionSpace_.size ( ) , 
-                  this->functionSpace_.size ( ) , 
-                  maxNonZerosPerRow_);
-          assert(matrix_);
-        };
-    
-/*======================================================================*/
-/*! 
- *   assembleOnGrid: perform grid walkthrough and assemble matrix
- *
- *   For each element, the local element matrix is determined into the 
- *   given local matrix storage and distributed into the global matrix.
- *   Distribution is performed by an add(row,col,val) method on the 
- *   global matrix class.
- *
- *   \param start and end iterator and storage for a local matrix 
- */
-/*======================================================================*/
-
-  template <class GridIteratorType, class ElementMatrixImp>
-  void assembleOnGrid ( GridIteratorType &it, GridIteratorType &endit, 
-                              ElementMatrixImp &mat) const
-        {
-          if (verbose_)
-              std::cout << "entered assembleOnGrid() of FEOp\n";
-
-          typedef typename 
-              DiscreteFunctionType::FunctionSpaceType::BaseFunctionSetType 
-              BaseFunctionSetType;
-          
-          // run through grid and add up local contributions
-          for( ; it != endit; ++it )
+          const int row = functionSpace_.mapToGlobal( *it , i );
+          for( int j = 0; j < numBaseFunctions; ++j ) 
           {
-            const BaseFunctionSetType &baseSet 
-              = this->functionSpace_.baseFunctionSet( *it );
-            const int numOfBaseFct = baseSet.numBaseFunctions();  
-            
-            // setup local element matrix 
-            // (size check is performed in elementmatrix construction)
-            mat.clear();            
-            elMatInt_.addElementMatrix( *it, mat, 1.0);
-            
-            for(int i=0; i<numOfBaseFct; i++) 
-            { 
-              int row = functionSpace_.mapToGlobal( *it , i );
-              for (int j=0; j<numOfBaseFct; j++ ) 
-              {
-                int col = functionSpace_.mapToGlobal( *it , j );    
-                matrix_->add( row , col , mat(i,j));
-              }
-            }
+            const int col = functionSpace_.mapToGlobal( *it , j );    
+            matrix_->add( row, col, elementMatrix( i, j ) );
           }
         }
+      }
+    }
 
 /*======================================================================*/
 /*! 
