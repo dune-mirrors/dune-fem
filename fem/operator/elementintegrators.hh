@@ -42,85 +42,83 @@ namespace Dune
 ** \f}
 ** @{
 **************************************************************************/
-/*======================================================================*/
-/*!
- *  \class ElementMatrixIntegratorInterface
- *  \brief ElementMatrixIntegratorInterface is the interface for the 
- *         definition of a class providing local element matrices in a FEM 
- *         problem.
- *
- *  This is the interface for a general ElementMatrixIntegrator, i.e. a class
- *  providing a local element matrix. The interface does not contain 
- *  implementations, but indicates the minimum functionality to be defined by
- *  a ElementMatrixIntegrator class. Default implementations are provided in
- *  the DefaultElementMatrixIntegrator class, so the latter should be used 
- *  as base class for deriving own classes, which then can be used in the 
- *  FEOp finite element operator.
- *
- *  The class requires two template arguments: a traits and the derived type 
- *  for barton-nackman.
- *  The Traits class is not instantiated at any time
- *  only provides types. 
- *
- *  An FEOp using this local element matrix integrator therefore must iterate 
- *  over the grid, determine element matrices and accumulate them in a large 
- *  matrix.
- *
- *  An example and minimum requirements on the TraitsImp class can be found
- *  in elementintegratortraits.hh
- *
- *  An example of the use is given in dune/fem/examples/elliptic
- */
-/*======================================================================*/
 
-template <class TraitsImp, class ElementMatrixIntegratorImp>
-class ElementMatrixIntegratorInterface 
-{
-public:
-  typedef TraitsImp                                 TraitsType;
-  typedef typename TraitsType::EntityType           EntityType;
-  typedef typename TraitsType::ElementMatrixType    ElementMatrixType;
 
-/*======================================================================*/
-/*! 
- *   addElementMatrix: Interface method that adds a multiple of a local 
- *                     element matrix on an entity. 
- *
- *   Instead of pure computation and storing in the matrix, a scaled addition 
- *   is performed on the current matrix, such that different 
- *   ElementMatrices can be combined for more complex problems
- *
- *   This method has to be provided by derived classes.
- *
- *   \param entity a reference to an 
- *   \param mat instance of the local matrix implementation 
- *   \param coef the scaling coefficient
- */
-/*======================================================================*/
 
-  void addElementMatrix( EntityType &entity, 
-                         ElementMatrixType& mat, 
-                         double coef = 1.0) // const 
-        {
-          CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addElementMatrix( entity, 
-                                                                 mat, 
-                                                                 coef) );
-          asImp().addElementMatrix( entity, mat, coef);
-        }
+  /*! \class ElementMatrixIntegratorInterface
+   *  \brief ElementMatrixIntegratorInterface is the interface for the 
+   *         definition of a class providing local element matrices in a FEM 
+   *         problem.
+   *
+   *  This is the interface for a general ElementMatrixIntegrator, i.e. a class
+   *  providing a local element matrix. The interface does not contain 
+   *  implementations, but indicates the minimum functionality to be defined by
+   *  a ElementMatrixIntegrator class. Default implementations are provided in
+   *  the DefaultElementMatrixIntegrator class, so the latter should be used 
+   *  as base class for deriving own classes, which then can be used in the 
+   *  FEOp finite element operator.
+   *
+   *  The class requires two template arguments: a traits and the derived type 
+   *  for barton-nackman.
+   *  The Traits class is not instantiated at any time
+   *  only provides types. 
+   *
+   *  An FEOp using this local element matrix integrator therefore must iterate 
+   *  over the grid, determine element matrices and accumulate them in a large 
+   *  matrix.
+   *
+   *  An example and minimum requirements on the TraitsImp class can be found
+   *  in elementintegratortraits.hh
+   *
+   *  An example of the use is given in dune/fem/examples/elliptic
+   */
+  template< class TraitsImp, class ElementMatrixIntegratorImp >
+  class ElementMatrixIntegratorInterface 
+  {
+  public:
+    typedef TraitsImp                                 TraitsType;
+    typedef typename TraitsType::EntityType           EntityType;
+    typedef typename TraitsType::ElementMatrixType    ElementMatrixType;
 
-protected:
-  //! Barton-Nackman method forwarding
-  ElementMatrixIntegratorImp &asImp() 
-        { 
-          return static_cast<ElementMatrixIntegratorImp&>( *this ); 
-        }
 
-  //! Barton-Nackman method forwarding
-  const ElementMatrixIntegratorImp &asImp( ) const 
-        { 
-          return static_cast<const ElementMatrixIntegratorImp&>( *this ); 
-        }
-}; // end of ElementMatrixIntegratorInterface class
+    /*!
+     *  addElementMatrix: Interface method that adds a multiple of a local
+     *                    element matrix on an entity.
+     *
+     *   Instead of pure computation and storing in the matrix, a scaled addition
+     *   is performed on the current matrix, such that different
+     *   ElementMatrices can be combined for more complex problem
+     *
+     *   This method has to be provided by derived classes.
+     *
+     *   \param[in] entity a reference to an 
+     *   \param mat instance of the local matrix implementation 
+     *   \param[in] coef the scaling coefficient
+     */
+    void addElementMatrix ( EntityType &entity,
+                            ElementMatrixType& mat, 
+                            double coef = 1 ) // const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().addElementMatrix( entity, mat, coef ) );
+      // don't call the implementation twice!
+      //asImp().addElementMatrix( entity, mat, coef);
+    }
+
+  protected:
+    //! Barton-Nackman method forwarding
+    ElementMatrixIntegratorImp& asImp ()
+    { 
+      return static_cast< ElementMatrixIntegratorImp& >( *this ); 
+    }
+
+    //! Barton-Nackman method forwarding
+    const ElementMatrixIntegratorImp &asImp( ) const 
+    { 
+      return static_cast< const ElementMatrixIntegratorImp& >( *this );
+    }
+  }; // end of ElementMatrixIntegratorInterface class
+
 
 
 /*======================================================================*/
