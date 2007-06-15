@@ -7,7 +7,6 @@
 ** Description: Implementation of a finite element operator class for 
 **              general elliptic problems. An example of the use is given
 **              in fem/examples/elliptic.
-**
 **************************************************************************/
 
 #ifndef DUNE_FEOP_HH
@@ -15,21 +14,16 @@
 
 //- Dune includes 
 #include <dune/common/fmatrix.hh>
-#include <dune/grid/common/referenceelements.hh>
 
-//- local includes 
-#include "common/operator.hh"
-#include "common/localoperator.hh"
-//#include "matrix/spmatrix.hh"
+#include <dune/fem/operator/common/operator.hh>
+// #include <dune/fem/operator/common/localoperator.hh>
+#include <dune/fem/solver/oemsolver/preconditioning.hh>
+// #include<dune/fem/io/file/ioutils.hh>
 
 // include temporary old and new sparsematrix class
-// #include "feop/spmatrix.hh"
-#include "matrix/spmatrix.hh"
+// #include <dune/fem/operator/feop/spmatrix.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
 
-//#include<dune/fem/io/file/ioutils.hh>
-
-// #include "lagrangedofhandler.hh"
-#include "../solver/oemsolver/preconditioning.hh"
 
 
 namespace Dune
@@ -203,7 +197,51 @@ namespace Dune
 
     typedef typename TraitsType :: ElementMatrixType ElementMatrixType;
     typedef typename TraitsType :: IntersectionQuadratureType IntersectionQuadratureType;
+
+  private: 
+    //! reference to element matrix generator provided during initialization
+    ElementMatrixIntegratorType &elementMatrixIntegrator_;
+
+    //! the corresponding function_space 
+    const DiscreteFunctionSpaceType &functionSpace_;
    
+    //! pointer to the representing global matrix 
+    mutable SystemMatrixType *matrix_; 
+
+    //! flag indicating whether the global matrix is assembled 
+    mutable bool matrix_assembled_;
+
+    //! operator mode 
+    const OpMode opMode_;
+
+    //! maximal number of nonzeros per row in the global matrix. Used for 
+    //! allocation. 
+    const int maxNonZerosPerRow_;
+
+    //! dirichlet-treatment mode 
+    // DirichletTreatmentMode dirichletMode_;
+
+    //! vector (matrix with single row), which indicates the Dirichlet-DOFs 
+    mutable SparseRowMatrix< int > *isDirichletDOF_;
+
+    //! flag indicating whether the DirichletDOF lookup table is assembled 
+    mutable bool isDirichletDOF_assembled_;
+
+    //! matrix for storage of the matrix columns, which are deleted 
+    //! during symmetrization, but required for RHS modification 
+    mutable SparseRowMatrix< double > *matrixDirichletColumns_;
+   
+    //! verbosity flag
+    const int verbose_;
+
+    const bool preconditionSSOR_;
+ 
+    // //! pointers to storage of argument and destination, only required in 
+    // LocalOperator Mode
+    // const DiscreteFunctionType * arg_;
+    // DiscreteFunctionType * dest_;
+
+  public:
     /*!  constructor: Initialization of FEOp
      *
      *   Based on an existing instance of an elementmatrixintegrator 
@@ -212,7 +250,7 @@ namespace Dune
      *   nonzeros in the global matrix must be specified (only relevant in 
      *   ASSEMBLED-Mode). 
      * 
-     *   \param elMatInt an instance of an element matrix integrator
+     *   \param elementMatrixIntegrator an instance of an element matrix integrator
      *
      *   \param opMode the operator mode 
      *
@@ -221,26 +259,24 @@ namespace Dune
      *
      *   \return the initialized FEOp
      */
-    FEOp( ElementMatrixIntegratorType &elMatInt,
+    FEOp( ElementMatrixIntegratorType &elementMatrixIntegrator,
           OpMode opMode = ASSEMBLED,
           // DirichletTreatmentMode dirichletMode = KRONECKER_ROWS,
           int maxNonZerosPerRow = 50,
           int verbose = 0,
           bool preconditionSSOR = false )
-    : functionSpace_( elMatInt.model().discreteFunctionSpace() ),
-      matrix_( 0 ), 
+    : elementMatrixIntegrator_( elementMatrixIntegrator ),
+      functionSpace_( elementMatrixIntegrator_.model().discreteFunctionSpace() ),
+      matrix_( NULL ), 
       matrix_assembled_( false ),
       // arg_ ( NULL ), 
       // dest_ (NULL) , 
       opMode_( opMode ),
       // dirichletMode_( dirichletMode ),
-      maxNonZerosPerRow_(maxNonZerosPerRow),
-      elMatInt_(elMatInt),
-      // isDirichletDOF_old_( 0 ),
-      isDirichletDOF_( 0 ),
+      maxNonZerosPerRow_( maxNonZerosPerRow ),
+      isDirichletDOF_( NULL ),
       isDirichletDOF_assembled_( false ),
-      // matrixDirichletColumns_old_( 0 ),
-      matrixDirichletColumns_( 0 ),
+      matrixDirichletColumns_( NULL ),
       verbose_( verbose ),
       preconditionSSOR_( preconditionSSOR )
     {
@@ -249,7 +285,7 @@ namespace Dune
 
       // class currently only implemented for non-symmetrized matrix/rhs!
       assert( opMode == ASSEMBLED );
-    };
+    }
   
     /*! destructor: In case of allocation of global operator matrix
      *              it is deallocated, also the dirichletDOF lookup table.
@@ -261,15 +297,11 @@ namespace Dune
 
       if( matrix_ != NULL ) 
         delete matrix_;
-      // if( isDirichletDOF_old_ != NULL ) 
-      //   delete isDirichletDOF_old_;
       if( isDirichletDOF_ != NULL )
         delete isDirichletDOF_;
-      // if( matrixDirichletColumns_old_ != NULL )
-      //   delete matrixDirichletColumns_old_;
       if( matrixDirichletColumns_ != NULL ) 
         delete matrixDirichletColumns_;
-    };
+    }
 
     /*! print: print matrix to output stream
      *
@@ -286,15 +318,11 @@ namespace Dune
       systemMatrix().print( out );
     }
 
-    /*! 
-     *   systemMatrix: return reference to systemMatrix for oem solvers. 
+    /*!  systemMatrix: obtain assembled system matrix
      *
-     *   The assembled matrix is returned. That means, if global matrix is not 
-     *   yet allocated, a new empty matrix is generated. If current global 
-     *   matrix is not yet assembled, an assembly is initiated.
-     *   Method only makes sense in ASSEMBLED mode
+     *   \note This method only makes sense in ASSEMBLED mode.
      *
-     *   \return reference to assembled global matrix
+     *   \return reference to assembled system matrix
      */
     SystemMatrixType& systemMatrix () const
     {
@@ -303,11 +331,7 @@ namespace Dune
       
       assert( opMode_==ASSEMBLED );
       if( !matrix_assembled_ )
-      {
-        if( matrix_ == NULL )
-          allocateSystemMatrix();
-        this->assemble();
-      }
+        assemble();
       return *matrix_;
     }
   
@@ -329,25 +353,6 @@ namespace Dune
 // /*======================================================================*/
 //   ... getLocalMatrix(...);
   
-// /*======================================================================*/
-// /*! 
-//  *   initialize: delete and deallocate global matrix
-//  *
-//  *   ??? Why is this method called init, if it does the same as a 
-//  *       destructor should do ??? 
-//  *
-//  */
-// /*======================================================================*/
-  
-//   //! methods for global application of the operator
-//   void initialize(){
-//     //std::cout << "Matrix reinitialized!" << std::endl ;
-    
-//     matrix_assembled_ = false;
-//     if ( matrix_ ) delete(matrix_);
-//     matrix_ = 0;
-//   };
-
 
     /*! 
      *   operator(): application operator
@@ -602,11 +607,10 @@ namespace Dune
         
       if( matrix_ == NULL )
         allocateSystemMatrix();
-      matrix_->clear();
 
+      matrix_->clear();
       // generate global matrix without dirichlet-treatment 
       assembleOnGrid();
-    
       // generate kronecker-rows for dirichlet DOFs  
       bndCorrectMatrix();
     
@@ -676,25 +680,22 @@ namespace Dune
 //               rhsKroneckerColumnsTreatment(rhs);
 //         }
   
-/*======================================================================*/
-/*! 
- *   markForReassembling: mark the local variables to be no longer actual
- *
- *   method marks the global matrix and the Dirichlet-DOF-list for 
- *   reassembly. This must be called, if the underlying model or 
- *   element-matrix has changed after initialization of the FEOp. By this, 
- *   the next assemble() or apply() or operator() call of the FEOp will 
- *   invoke a new computation of these internal quantities
- */
-/*======================================================================*/
-
-  void markForReassembling()
-        {
-          if (verbose_)
-              std::cout << "entered markForReassembling() of FEOp\n";
-          isDirichletDOF_assembled_ = false;
-          matrix_assembled_ = false;
-        };
+    /*! 
+     *   markForReassembling: mark the local variables to be no longer actual
+     *
+     *   method marks the global matrix and the Dirichlet-DOF-list for 
+     *   reassembly. This must be called, if the underlying model or 
+     *   element-matrix has changed after initialization of the FEOp. By this, 
+     *   the next assemble() or apply() or operator() call of the FEOp will 
+     *   invoke a new computation of these internal quantities
+     */
+    void markForReassembling ()
+    {
+      if( verbose_ )
+        std :: cout << "entered markForReassembling() of FEOp" << std :: endl;
+      isDirichletDOF_assembled_ = false;
+      matrix_assembled_ = false;
+    }
   
 /*======================================================================*/
 /*! 
@@ -907,30 +908,20 @@ namespace Dune
     const SystemMatrixType& preconditionMatrix () const
     {
       return systemMatrix();
-      // return *matrix_;
     }
   
   private:
-    /*! 
-     *   allocateSystemMatrix: allocation of a new global matrix
+    /*!  allocateSystemMatrix: allocation of a new system matrix
      *
-     *   The SystemMatrixclass is required to have a constructor with the syntax
-     *   SystemMatrixType(nrows, ncols, nonzeros_per_row). Deallocation of the 
-     *   global matrix is performed in the destructor. 
+     *   \note SystemMatrixType requires a constructor with the following syntax:
+     *   SystemMatrixType( nrows, ncols, nonzeros_per_row ).
      *   
-     *   Currently the nonzeros per row must be specified in the constructor of FEOp. 
-     *   This could be improved, e.g. by a Traitsclass as template-parameter, which 
-     *   contains the SystemMatrixType and the maxnumbernonzeros
+     *   \note Currently the nonzeros per row must be specified in the
+     *   constructor of FEOp. This could be improved, e.g. by a Traitsclass as
+     *   template-parameter, which  contains the SystemMatrixType and maxnumbernonzeros
      */
     void allocateSystemMatrix () const  
     { 
-      // the following choice of numnonzeros seems strange: must be exponential 
-      // with dimension
-      // typedef typename DiscreteFunctionType::FunctionSpaceType::GridType GridType; 
-      // enum { dim = GridType::dimension };
-      // int maxNonZerosPerRow_ = 15 * (dim-1);
-          
-      // SystemMatrixType* 
       if( verbose_ )
         std :: cout << "entered allocateSystemMatrix() of FEOp" << std :: endl;
 
@@ -973,7 +964,7 @@ namespace Dune
         // setup local element matrix 
         // (size check is performed in elementmatrix construction)
         elementMatrix.clear();
-        elMatInt_.addElementMatrix( *it, elementMatrix, 1 );
+        elementMatrixIntegrator_.addElementMatrix( *it, elementMatrix, 1 );
             
         for( int i = 0; i < numBaseFunctions; ++i ) 
         { 
@@ -987,18 +978,14 @@ namespace Dune
       }
     }
 
-/*======================================================================*/
-/*! 
- *   searchDirichletDOFs: determine lookup table for dirichlet-values
- *
- *   method fills the local vector isDirichletDOF_old_ as multiple operations with
- *   Dirichlet-boundaries are necessary, e.g. matrix-boundary treatment, 
- *   NOT rhs-assembly but later symmetrization of the system. By this multiple 
- *   global grid walkthroughs can be prevented and replaced by single run 
- *   over the lookup-table.
- */
-/*======================================================================*/
-  
+    /*! searchDirichletDOFs: determine lookup table for dirichlet-values
+     *
+     *   method fills the local vector isDirichletDOF_old_ as multiple operations with
+     *   Dirichlet-boundaries are necessary, e.g. matrix-boundary treatment, 
+     *   NOT rhs-assembly but later symmetrization of the system. By this multiple 
+     *   global grid walkthroughs can be prevented and replaced by single run 
+     *   over the lookup-table.
+     */
     void searchDirichletDOFs () const
     {
       if( verbose_ >= 1 )
@@ -1024,19 +1011,7 @@ namespace Dune
                                             :: SubEntityIteratorType
         FaceDofIteratorType;
 
-      // allocate isDirichlet-Vector if not already done:
-      // to be sure: worst case: all DOFS are Dirichlet... undoubtedly 
-      // memory waste in highly resolved case, but no idea... 
-      // give maximum in Model? Or where?
-
-      // if (!this->isDirichletDOF_old_)
-      // isDirichletDOF_old_ = new OldSparseRowMatrix<int>
-      //            (1, 
-      //             functionSpace_.size(),
-      //             functionSpace_.size()
-      //             );
-      //    assert(this->isDirichletDOF_old_);
-
+      // allocate isDirichlet-Vector if not already done
       if( this->isDirichletDOF_ == NULL ) {
         const unsigned int size = functionSpace_.size();
         isDirichletDOF_  = new SparseRowMatrix< int >( 1, size, size, 0 );
@@ -1045,11 +1020,7 @@ namespace Dune
       if( verbose_ >= 1 )
         std :: cout << "allocated isDirichletDOF." << std :: endl;
           
-      // start by filling all DOFs with zero
-      // isDirichletDOF_old_->clear(); 
-      // new one already initialized with 0
-          
-      GridPartType &gridPart = functionSpace_.gridPart();
+      const GridPartType &gridPart = functionSpace_.gridPart();
 
       if( verbose_ >= 1 )
         std :: cout << "starting loop over grid." << std :: endl;
@@ -1062,8 +1033,6 @@ namespace Dune
 
         const EntityType &entity = *it;
 
-        //const GeometryType t = entity.geometry().type();
-          
         IntersectionIteratorType nit = gridPart.ibegin( entity );
         const IntersectionIteratorType endnit = gridPart.iend( entity );
         for( ; nit != endnit; ++nit ) {
@@ -1076,7 +1045,7 @@ namespace Dune
             iquad( nit, 0, IntersectionQuadratureType :: INSIDE );
           assert( iquad.nop() == 1 );
 
-          if( elMatInt_.model().boundaryType( entity, iquad, 0 )
+          if( elementMatrixIntegrator_.model().boundaryType( entity, iquad, 0 )
               != TraitsType :: Dirichlet )
             continue;
 
@@ -1093,36 +1062,6 @@ namespace Dune
             const int row = functionSpace_.mapToGlobal( entity, *faceIt );
             isDirichletDOF_->set( 0, row, 1 );
           }
-
-          #if 0
-          // determine all local DOF numbers of intersection vertices
-
-          // typedef typename EntityType :: ctype coordType;
-          // enum { dim = EntityType :: dimension };
-
-          // ReferenceElementContainer<coordType,dim> refElemCont;
-          // const ReferenceElement<coordType,dim>& 
-          // refElem = refElemCont(t); // t is geometrytype
-                  
-          LagrangeDofHandler< DiscreteFunctionSpaceType >
-            dofHandler( functionSpace_, entity );
-                
-          // int novx = refElem.size( faceNumber, faceCodim , dim );
-          int novx = dofHandler.numDofsOnFace( faceNumber, faceCodim );
-          // assert( novx == dim );
-
-          for( int j = 0; j < novx; ++j ) {
-            // get all local numbers located on the face 
-            // int vx = refElem.subEntity(face, faceCodim , j , dim );
-            int vx = dofHandler.entityDofNum( faceNumber, faceCodim, j );
-
-            // get global dof numbers of this vertices
-            int row = functionSpace_.mapToGlobal( entity, vx );
-            // store DOF as DirichletDOF
-            // isDirichletDOF_old_->set(0,row,1);                    
-            isDirichletDOF_->set( 0, row, 1 );
-          }
-          #endif
         }
       }
       
@@ -1132,48 +1071,42 @@ namespace Dune
         std :: cout << "finished searchDirichletDOFs" << std :: endl;
     }
   
-/*======================================================================*/
-/*! 
- *   bndCorrectMatrix: treatment of Dirichlet-DOFS
- *
- *   delete rows for dirichlet DOFS, setting diagonal 
- *   element to 1. This is reasonable, as Lagrange Basis is implicitly 
- *   assumed, 
- *   so the RHS being the exact dirichlet-values, therefore, the matrix 
- *   row must be a unit-row.
- */
-/*======================================================================*/
-  
-//  template <class GridIteratorType>
-  void bndCorrectMatrix() const
+    /*! 
+     *   bndCorrectMatrix: treatment of Dirichlet-DOFS
+     *
+     *   delete rows for dirichlet DOFS, setting diagonal 
+     *   element to 1. This is reasonable, as Lagrange Basis is implicitly 
+     *   assumed, 
+     *   so the RHS being the exact dirichlet-values, therefore, the matrix 
+     *   row must be a unit-row.
+     */
+    void bndCorrectMatrix () const
+    {
+      if( verbose_ )
+        std :: cout << "entered bndCorrectMatrix() of FEOp" << std :: endl;
+
+      if( !isDirichletDOF_assembled_ )
+        searchDirichletDOFs();
+          
+      // eliminate the Dirichlet rows by converting to unit-rows      
+      const int numNonZeros = isDirichletDOF_->numNonZeros( 0 );
+      for( int fakeCol = 0; fakeCol < numNonZeros; ++fakeCol )
+      {
+        const int realCol = isDirichletDOF_->realCol( 0, fakeCol );
+        if( realCol != SparseRowMatrix< int > :: defaultCol )
         {
-          if (verbose_)
-              std::cout << "entered bndCorrectMatrix() of FEOp\n";
-
-          if (!isDirichletDOF_assembled_)
-              searchDirichletDOFs();
-          
-          int numNonZeros = isDirichletDOF_->numNonZeros(0);
-
-          // eliminate the Dirichlet rows by converting to unit-rows      
-          for (int fakeCol = 0; fakeCol!=numNonZeros;++fakeCol)
+          if( (*isDirichletDOF_)( 0, realCol ) )
           {
-            int realCol = isDirichletDOF_->realCol(0,fakeCol);
-            if (realCol!=SparseRowMatrix<int>::defaultCol)
-            {
-              if ((*isDirichletDOF_)(0,realCol))
-              {
-                if (verbose_ >= 2)
-                    std::cout << " setting unit row " << realCol << " \n";  
-                matrix_->unitRow(realCol);          
-              }
-            } 
+            if( verbose_ >= 2 )
+              std :: cout << " setting unit row " << realCol << std :: endl;
+            matrix_->unitRow( realCol );
           }
+        } 
+      }
           
-          if (verbose_>=2)
-              std::cout << " end of bndCorrectMatrix \n";  
-          
-        }; // end of bndCorrectMatrix
+      if( verbose_ >= 2 )
+        std :: cout << " end of bndCorrectMatrix" << std :: endl;
+    }
 
 // /*======================================================================*/
 // /*! 
@@ -1249,61 +1182,6 @@ namespace Dune
     
     return maxnonzeros;
   }
-      
-//! member variables:
-private: 
-  
-  //! the corresponding function_space 
-  DiscreteFunctionSpaceType & functionSpace_;
-   
-  //! The following member variables will be modified by "operator() const" so 
-  //! must be mutable
-
-  //! pointer to the representing global matrix 
-  mutable SystemMatrixType *matrix_ ; 
-
-  //! flag indicating whether the global matrix is assembled 
-  mutable bool matrix_assembled_;
-
-  //! operator mode 
-  OpMode opMode_;
-
-  //! maximal number of nonzeros per row in the global matrix. Used for 
-  //! allocation. 
-  int  maxNonZerosPerRow_;
-
-  //! reference to element matrix generator provided during initialization
-  ElementMatrixIntegratorType& elMatInt_;
-
-  //! dirichlet-treatment mode 
-  // DirichletTreatmentMode dirichletMode_;
-
-  //! vector (matrix with single row), which indicates the Dirichlet-DOFs 
-  //! This type is made explicit, as not much optimization can be performed 
-  //! here, or? 
-//  mutable OldSparseRowMatrix<int> *isDirichletDOF_old_;
-  mutable SparseRowMatrix<int> *isDirichletDOF_;
-
-  //! flag indicating whether the DirichletDOF lookup table is assembled 
-  mutable bool isDirichletDOF_assembled_;
-
-  //! matrix for storage of the matrix columns, which are deleted 
-  //! during symmetrization, but required for RHS modification 
-  //! This type is made explicit, as not much optimization can be performed 
-  //! here, or? 
-//  mutable OldSparseRowMatrix<double> *matrixDirichletColumns_old_;
-  mutable SparseRowMatrix<double> *matrixDirichletColumns_;
-   
-  //! verbosity flag
-  int verbose_;
-
-  bool preconditionSSOR_;
- 
-  // //! pointers to storage of argument and destination, only required in 
-  // LocalOperator Mode
-  // const DiscreteFunctionType * arg_;
-  // DiscreteFunctionType * dest_;
-
 }; // end class FEOp
 
 } // end namespace
