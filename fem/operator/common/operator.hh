@@ -16,9 +16,9 @@ namespace Dune
  */
 
 /** \brief An abstract operator
- *
- * \todo Please doc me!
- */
+ Interface class for Operators. Operators are applied to Functions and
+ the result is a Function again. 
+*/
 template <typename DFieldType, typename RFieldType,
           typename DType , typename RType>
 class Operator : public Mapping <DFieldType,RFieldType,DType,RType>
