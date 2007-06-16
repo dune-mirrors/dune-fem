@@ -39,6 +39,9 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceImp::Traits SpaceTraits;
     typedef typename SpaceTraits::RangeFieldType RangeFieldType;
 
+    // dof array that is resizeable 
+    typedef typename Traits::MutableDofStorageType MutableDofStorageType;
+    // static dof array to be used by discrete function 
     typedef typename Traits::DofStorageType DofStorageType;
     typedef typename Traits::GridType GridType;
     typedef DofManager<GridType> DofManagerType;
@@ -108,8 +111,10 @@ namespace Dune {
     const DofType * leakPointer () const { return dofVec_.leakPointer(); }
   protected:
 
+    //! return reference to dof storage 
     DofStorageType& dofStorage() { return dofVec_; }
 
+    //! normal constructor creating discrete function 
     AdaptiveFunctionImplementation(std::string name,
                                    const DiscreteFunctionSpaceType& spc);
 
@@ -119,10 +124,14 @@ namespace Dune {
                                    const DiscreteFunctionSpaceType& spc,
                                    VectorPointerType * vector);
     
+    //! create adaptive discrete function with name, space and vector
     AdaptiveFunctionImplementation(std::string name,
                                    const DiscreteFunctionSpaceType& spc,
                                    DofStorageType& dofVec);
+    
+    //! copy constructor 
     AdaptiveFunctionImplementation(const ThisType& other);
+    //! destructor 
     virtual ~AdaptiveFunctionImplementation();
 
   private:

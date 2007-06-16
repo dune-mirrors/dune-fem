@@ -49,7 +49,10 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::Traits::MapperType MapperType;
     typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
 
-    typedef DofArray<DofType> DofStorageType;
+    // type of Array seen by functions 
+    typedef StaticArray<DofType> DofStorageType;
+    // tpye of array created 
+    typedef MutableArray<DofType> MutableDofStorageType;
      
     typedef typename DofStorageType::DofIteratorType DofIteratorType;
     typedef typename DofStorageType::ConstDofIteratorType ConstDofIteratorType;
@@ -115,6 +118,8 @@ namespace Dune {
     //! Mapper type (from the space)
     typedef typename Traits::MapperType MapperType;
     
+    //! Container class type for the dofs (managed by the DofManager)
+    typedef typename Traits :: MutableDofStorageType MutableDofStorageType;
     //! Container class type for the dofs (managed by the DofManager)
     typedef typename Traits::DofStorageType DofStorageType;
  
@@ -377,7 +382,7 @@ namespace Dune {
     DofStorageType& dofVec_;
     
     // vector holding pointer to local dofs 
-    mutable Array<RangeFieldType*> values_;
+    mutable MutableArray<RangeFieldType*> values_;
     
       //! number of local dofs 
     int numDofs_;
@@ -744,7 +749,7 @@ namespace Dune {
     
     // local dofs 
     typedef DofType* DofPointerType; 
-    mutable Array< DofPointerType[N] > values_;
+    mutable MutableArray< DofPointerType[N] > values_;
 
     // number of local dofs 
     int numDofs_;

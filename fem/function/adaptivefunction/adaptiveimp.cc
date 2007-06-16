@@ -8,9 +8,10 @@ namespace Dune {
     spc_(spc),
     name_(name),
     dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
-    memPair_(dm_.addDofSet(&dofVec_, spc.mapper(), name_)),
+    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, spc.mapper(), name_)),
     dofVec_(*memPair_.second)
-  {}
+  {
+  }
 
   // create discrete function with vector 
   template <class DiscreteFunctionSpaceImp>
@@ -23,7 +24,7 @@ namespace Dune {
     spc_(spc),
     name_(name),
     dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
-    memPair_(dm_.addDummyDofSet(&dofVec_, spc.mapper(), name_, vector )),
+    memPair_(dm_.addDummyDofSet((DofStorageType *) 0, spc.mapper(), name_, vector )),
     dofVec_(*memPair_.second)
   {}
 
@@ -45,7 +46,7 @@ namespace Dune {
     spc_(other.spc_),
     name_(std::string("copy of")+other.name_),
     dm_(other.dm_),
-    memPair_(dm_.addDofSet(&dofVec_, other.spc_.mapper(), name_)),
+    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, other.spc_.mapper(), name_)),
     dofVec_(*memPair_.second)
   {
     // copy values
