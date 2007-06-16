@@ -7,11 +7,11 @@
 #include <list>
 
 //- Dune includes 
-#include <dune/common/array.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
+#include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/basefunctionfactory.hh>
 #include "storageinterface.hh"
 
@@ -125,16 +125,16 @@ namespace Dune {
 
   private:
     typedef typename FunctionSpaceImp::DomainFieldType RealType;
-    typedef Array<Array<RangeType> > RangeVectorType;
-    typedef Array<Array<JacobianRangeType> > JacobianRangeVectorType;
+    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
+    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
     typedef std::map<size_t, bool> RangeStoredType;
     typedef std::map<size_t, bool> JacobianRangeStoredType;
     typedef typename RangeStoredType::iterator RangeIteratorType;
     typedef typename JacobianRangeStoredType::iterator JacobianRangeIteratorType;
     typedef std::pair<
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
-    typedef Array<RangeVectorType> RangeContainerType;
-    typedef Array<JacobianRangeVectorType> JacobianRangeContainerType;
+    typedef MutableArray< RangeVectorType >         RangeContainerType;
+    typedef MutableArray< JacobianRangeVectorType > JacobianRangeContainerType;
 
     //! evaluation, calls generic evaluate method
     //! used quad.point(quadPoint) for evaluation 
