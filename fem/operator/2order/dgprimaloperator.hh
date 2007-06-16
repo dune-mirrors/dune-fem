@@ -4,7 +4,6 @@
 //- Dune includes 
 #include <dune/common/typetraits.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/array.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
@@ -21,6 +20,7 @@
 
 #include <dune/fem/function/common/dfcommunication.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune {
 /*! @defgroup PassEllipt Local Discontinous Galerkin for second order elliptic equations
@@ -1068,12 +1068,12 @@ namespace Dune {
     mutable FluxRangeType coeffEn_;
     mutable FluxRangeType coeffNb_;
     // caches for base function evaluation 
-    mutable Array<RangeFieldType> tau_;
-    mutable Array<RangeFieldType> tauNeigh_;
-    mutable Array<RangeType> phi_;
-    mutable Array<RangeType> phiNeigh_;
-    mutable Array<JacobianRangeType> psi_;
-    mutable Array<JacobianRangeType> coeffPsi_;
+    mutable MutableArray<RangeFieldType> tau_;
+    mutable MutableArray<RangeFieldType> tauNeigh_;
+    mutable MutableArray<RangeType> phi_;
+    mutable MutableArray<RangeType> phiNeigh_;
+    mutable MutableArray<JacobianRangeType> psi_;
+    mutable MutableArray<JacobianRangeType> coeffPsi_;
     mutable JacobianRangeType psitmp_;
 
     mutable bool matrixAssembled_;
