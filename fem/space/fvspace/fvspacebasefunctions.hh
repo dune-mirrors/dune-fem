@@ -3,7 +3,6 @@
 
 //- Dune includes 
 #include <dune/common/misc.hh>
-#include <dune/common/array.hh>
 #include <dune/grid/common/grid.hh>
 
 //- Dune-Fem includes 
