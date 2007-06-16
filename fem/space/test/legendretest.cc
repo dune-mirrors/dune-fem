@@ -64,13 +64,11 @@ typedef HierarchicGridPart<GridType> GridPartType;
 typedef FunctionSpace < double , double, dimw , 1 > FuncSpace;
 
 //! define the function space our unkown belong to 
-//! see dune/fem/lagrangebase.hh
 typedef  LegendreDiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
 	polOrd,CachingStorage> DiscreteFunctionSpaceType;
 //  typedef  DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
 //  	polOrd,CachingStorage> DiscreteFunctionSpaceType;
 //! define the type of discrete function we are using , see
-//! dune/fem/discfuncarray.hh
 typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! Get the Dofmanager type

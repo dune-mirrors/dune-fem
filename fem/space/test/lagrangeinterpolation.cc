@@ -59,7 +59,6 @@ typedef MatrixFunctionSpace< double, double, dimworld, 1, dimworld >
   GradientFunctionSpaceType;
 
 //! define the function space our unkown belong to 
-//! see dune/fem/lagrangebase.hh
 typedef DiscontinuousGalerkinSpace< GradientFunctionSpaceType, 
                                     GridPartType,
                                     polOrder,
@@ -69,7 +68,6 @@ typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder
   DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
-//! dune/fem/discfuncarray.hh
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 typedef AdaptiveDiscreteFunction< DiscreteGradientFunctionSpaceType >
