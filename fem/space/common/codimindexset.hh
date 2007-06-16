@@ -16,10 +16,10 @@ namespace Dune {
 class CodimIndexSet
 {
 private:
-  enum INDEXSTATE { NEW, USED, UNUSED };
+  enum INDEXSTATE { NEW = 2 , USED = 1 , UNUSED = -1 };
 
   typedef MutableArray<int> IndexArrayType;
-  typedef MutableArray<INDEXSTATE> StateArrayType;
+  typedef MutableArray<int> StateArrayType;
 
   // the mapping of the global to leaf index 
   IndexArrayType leafIndex_;
