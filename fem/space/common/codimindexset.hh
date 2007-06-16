@@ -3,86 +3,10 @@
 
 //- Dune includes 
 #include <dune/common/misc.hh>
-#include <dune/common/array.hh>
+#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune {
   
-/*! 
- This class provides an Array which as an aditional resize and copy the old
- values functionality. 
-*/
-template <class T> 
-class IndexArray : public Array<T> 
-{
-  int capacity_; 
-public:
-  IndexArray() : Array<T> () 
-  {    
-    this->n = 0; this->p = 0;
-    capacity_ = this->n;
-  }
-
-  //! resize and set capacity 
-  void resize(const int m) 
-  {
-    if( m <= capacity_ )
-    {
-      this->n = (m < 0) ? 0 : m;
-      return;
-    }
-    Array<T> :: resize(m);
-    capacity_ = this->n;
-  }
-
-  //! reallocate array with size m
-  void realloc (const int m)
-  {
-    if(m <= this->n) 
-    {
-      // if m is smaller then zero, set size to zero 
-      this->n = (m < 0) ? 0 : m;
-      return;
-    }
-    
-    int newSize = m*2;
-    T * newMem = 0;
-    
-    try 
-    {
-      newMem = new T[newSize];
-    }
-    catch (std::bad_alloc) 
-    {
-      std::cerr << "Not enough memory!" << std::endl;
-      throw;
-    }
-
-    if(this->n > 0)
-      std::memcpy(newMem , this->p , this->n*sizeof(T));
-    
-    this->n = m;
-    capacity_ = newSize;
-    if(this->p) delete [] this->p;   
-    this->p = newMem;
-  }
-
-  //! write Array to xdr stream
-  bool processXdr(XDR *xdrs)
-  {
-    if(xdrs != 0)
-    {
-      int len = this->n;
-      xdr_int( xdrs, &len );
-      if(len != this->n) this->resize(len);
-        xdr_vector(xdrs,(char *) this->p,this->n,sizeof(T),(xdrproc_t)xdr_double);
-      return true;
-    }
-    else
-      return false;
-  }
-
-};
-
 //***********************************************************************
 //
 //  Index Set for one codimension
@@ -94,18 +18,21 @@ class CodimIndexSet
 private:
   enum INDEXSTATE { NEW, USED, UNUSED };
 
+  typedef MutableArray<int> IndexArrayType;
+  typedef MutableArray<INDEXSTATE> StateArrayType;
+
   // the mapping of the global to leaf index 
-  IndexArray<int> leafIndex_;
+  IndexArrayType leafIndex_;
 
   // stack for holes 
-  IndexArray<int> holes_; 
+  IndexArrayType holes_; 
  
   // Array that only remeber the occuring holes (for compress of data)
-  IndexArray<int> oldIdx_; 
-  IndexArray<int> newIdx_; 
+  IndexArrayType oldIdx_; 
+  IndexArrayType newIdx_; 
 
   // the state of each index 
-  IndexArray<INDEXSTATE> state_;
+  StateArrayType state_;
  
   // next index to give away 
   int nextFreeIndex_;
@@ -122,21 +49,37 @@ private:
 public:
   //! Constructor
   CodimIndexSet (double memoryFactor = 1.1) 
-    : nextFreeIndex_ (0)
+    : leafIndex_(0)
+    , holes_(0)
+    , oldIdx_(0)
+    , newIdx_(0)
+    , state_(0)
+    , nextFreeIndex_ (0)
     , actSize_(0)
     , myCodim_(-1) 
     , numberHoles_(0)
     , memFactor_(memoryFactor) 
   {
+    setMemoryFactor(memoryFactor);
   }
 
-  // set codim, because we can't use constructor 
+  //! set memory overestimation factor 
+  void setMemoryFactor(const double memoryFactor)
+  {
+    leafIndex_.setMemoryFactor(memoryFactor);
+    state_.setMemoryFactor(memoryFactor);
+    holes_.setMemoryFactor(memoryFactor);
+    oldIdx_.setMemoryFactor(memoryFactor);
+    newIdx_.setMemoryFactor(memoryFactor);
+  }
+  
+  //! set codim, because we can't use constructor 
   void setCodim (int codim) 
   {
     myCodim_ = codim;
   }
 
-  // set codim, because we can't use constructor 
+  //! return codim 
   int myCodim () const 
   {
     return myCodim_;
@@ -148,10 +91,14 @@ public:
     const int oldSize = leafIndex_.size();
     if(oldSize > newSize) return;
 
+    /*
     const int newMemSize = ((int) memFactor_ * newSize);
-    
-    leafIndex_.realloc( newMemSize );
-    state_.realloc( newMemSize );
+   
+    leafIndex_.resize( newMemSize );
+    state_.resize( newMemSize );
+    */
+    leafIndex_.resize( newSize );
+    state_.resize( newSize );
 
     // reset new created parts of the vector 
     const int leafSize = leafIndex_.size();
