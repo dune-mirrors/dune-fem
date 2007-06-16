@@ -28,12 +28,10 @@ namespace Dune{
     // typedef ParaLocalFunctionAdapt<DiscreteFunctionType> LocalFunctionImp;
     // typedef LocalFunctionWrapper< DiscreteFunctionType > LocalFunctionType;
 
-    typedef typename DofArray<
-      typename DiscreteFunctionSpaceImp::RangeFieldType
-    >::DofIteratorType DofIteratorType;
-    typedef typename DofArray<
-      typename DiscreteFunctionSpaceImp::RangeFieldType
-    >::ConstDofIteratorType ConstDofIteratorType;
+    typedef MutableArray<typename DiscreteFunctionSpaceImp::RangeFieldType> DofArrayType;
+      
+    typedef typename DofArrayType::DofIteratorType DofIteratorType;
+    typedef typename DofArrayType::ConstDofIteratorType ConstDofIteratorType;
   };
 
 //**********************************************************************
@@ -53,7 +51,7 @@ class ProductDiscreteFunction
 {
 public:
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-  typedef DofArray< RangeFieldType > DofStorageType;
+  typedef MutableArray< RangeFieldType > DofStorageType;
 
 private:
 //  typedef DiscreteFunctionDefault<
