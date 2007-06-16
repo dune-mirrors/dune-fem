@@ -1013,22 +1013,6 @@ namespace Dune {
       const int quadNop = faceQuadInner.nop();
       for (int l = 0; l < quadNop ; ++l) 
       {
-        /*
-#ifndef NDEBUG
-        typedef FieldVector<double,DomainType::dimension-1> FaceDomainType;
-        const FaceDomainType pIn = faceQuadInner.localPoint( 
-            faceQuadInner.localCachingPoint( l ));
-        const FaceDomainType pOut = faceQuadOuter.localPoint(
-            faceQuadOuter.localCachingPoint( l ));
-
-        if( (pIn - pOut).two_norm() > 1e-8 )
-        {
-          std::cout << faceQuadInner.cachingPoint( l ) << " , ";
-          std::cout << faceQuadOuter.cachingPoint( l ) << "\n";
-          std::cout << pIn << " | " << pOut << "\n";
-        }
-#endif
-*/
         DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
         const double faceVol = unitNormal.two_norm();
         unitNormal *= 1.0/faceVol; 
