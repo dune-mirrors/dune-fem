@@ -3,15 +3,14 @@
 
 //- System includes 
 #include <cassert>
-#include <vector> 
 #include <string>
 #include <list>
 
 //- Dune includes 
 #include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/genericiterator.hh>
 #include <dune/common/interfaces.hh>
+
 // here are the default grid index set defined 
 #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
@@ -22,9 +21,7 @@
 #include "singletonlist.hh"
 #include "dofmapperinterface.hh"
 #include "datacollector.hh"
-
-// include BLAS for daxpy operation 
-#include "../../solver/oemsolver/cblas.h"
+#include "arrays.hh"
 
 namespace Dune {
 
@@ -33,412 +30,10 @@ namespace Dune {
 template <class GridType> class DofManager;
 template <class DofManagerImp> class DofManagerFactory;
 
-//! oriented to the STL Allocator funtionality 
-template <class T>
-class DefaultDofAllocator {
-public:
-  //! allocate array of nmemb objects of type T
-  static T* malloc (size_t nmemb)
-  {
-    T* p = new T[nmemb];
-    return p;
-  }
-
-  //! release memory previously allocated with malloc member
-  static void free (T* p)
-  {
-    delete [] p;
-  }
-  
-  //! allocate array of nmemb objects of type T
-  static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
-  {
-    T* p = new T[nmemb];
-    std::memcpy(p,oldMem,oldSize * sizeof(T));
-    DefaultDofAllocator :: free (oldMem);
-    return p;
-  }
-};
-
-//! allocator for simple structures like int, double and float
-//! using the C malloc,free, and realloc 
-struct SimpleDofAllocator 
-{
-  //! allocate array of nmemb objects of type T
-  template <typename T>
-  static T* malloc (size_t nmemb)
-  {
-    T* p = (T *) std::malloc(nmemb * sizeof(T));
-    assert(p);
-    return p;
-  }
-
-  //! release memory previously allocated with malloc member
-  template <typename T>
-  static void free (T* p)
-  {
-    assert(p);
-    std::free(p);
-  }
-  
-  //! allocate array of nmemb objects of type T
-  template <typename T>
-  static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
-  {
-    assert(oldMem);
-    T * p = (T *) std::realloc(oldMem , nmemb*sizeof(T));
-    assert(p);
-    return p;
-  }
-};
-
-template <>
-class DefaultDofAllocator<double> 
-{
-  typedef double T;
-public:
-  //! allocate array of nmemb objects of type T
-  static T* malloc (size_t nmemb)
-  {
-    return SimpleDofAllocator::malloc<T> (nmemb);
-  }
-
-  //! release memory previously allocated with malloc member
-  static void free (T* p)
-  {
-    SimpleDofAllocator::free<T> (p);
-    return ;
-  }
-  
-  //! allocate array of nmemb objects of type T
-  static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
-  {
-    return SimpleDofAllocator::realloc<T> (oldMem,oldSize,nmemb);
-  }
-};
-
-template <>
-class DefaultDofAllocator<int> 
-{
-  typedef int T;
-public:
-  //! allocate array of nmemb objects of type T
-  static T* malloc (size_t nmemb)
-  {
-    return SimpleDofAllocator::malloc<T> (nmemb);
-  }
-
-  //! release memory previously allocated with malloc member
-  static void free (T* p)
-  {
-    SimpleDofAllocator::free<T> (p);
-    return ;
-  }
-  
-  //! allocate array of nmemb objects of type T
-  static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
-  {
-    return SimpleDofAllocator::realloc<T> (oldMem,oldSize,nmemb);
-  }
-};
-
-
-template <class A, class B> 
-A * convertToValueType (B * b)
-{
-  return const_cast<A *> (b);
-}
-
-/*! 
- DofArray is the array that a discrete functions sees. If a discrete
- function is created, then it is signed in by the function space and the
- return value is a MemObject. This MemObject contains a DofArrayMemory
- which is then as reference given to the DofArray of the DiscreteFunction. 
- The DofArray is only a wrapper class for DofArrayMemory where we dont know
- the type of the dofs only the size of one dof. 
- Therefore we have this wrapper class for cast to the right type.
-*/
-template <class T, class AllocatorType = DefaultDofAllocator<T> >
-class DofArray 
-{
-private:
-  typedef DofArray<T, AllocatorType> ThisType;
-
-  // size of array 
-  int size_;
-
-  int memSize_;
- 
-  // pointer to mem
-  T * vec_;
-
-  // true if this class allocated the vector 
-  bool myProperty_; 
-  
-  // make new memory memFactor larger 
-  double memoryFactor_;
-public:
-  //! definition conforming to STL  
-  typedef T value_type;
-  
-  //! DofIterator
-  typedef GenericIterator<ThisType, T> DofIteratorType;
-  
-  //! Const DofIterator
-  typedef GenericIterator<const ThisType, const T> ConstDofIteratorType;
-
-  //! create array of length size
-  //! if size is <= 0 then vec of lenght 1 is created (parallel runs)
-  DofArray(int size) 
-    : size_((size<=0) ? 1 : size) 
-    , memSize_(size_) 
-    , vec_(0) , myProperty_ (true)
-    , memoryFactor_(1.0)
-  {
-    vec_ = AllocatorType :: malloc (size_);
-    assert( vec_ );
-  }
-  
-  //! create array with given memory vector aof length size
-  //! vector must be of the type of T
-  //! only const may be casted away 
-  template <class VectorPointerType> 
-  DofArray(int size, VectorPointerType * vector ) 
-    : size_(size) , memSize_(size) 
-    , vec_(const_cast<T *>(vector)) , myProperty_ (false)
-    , memoryFactor_(0.0)
-  {
-    assert( vec_ );
-  }
-  
-  //! set memory factor
-  void setMemoryFactor(const double memFactor)
-  {
-    memoryFactor_ = memFactor;
-  }
-
-  //! Destructor 
-  ~DofArray() 
-  {
-    if( vec_ && myProperty_ ) AllocatorType :: free ( vec_ );
-  }
-
-  DofIteratorType begin() {
-    return DofIteratorType(*this, 0);
-  }
-  
-  ConstDofIteratorType begin() const {    
-    return ConstDofIteratorType(*this, 0);
-  }
-  
-  DofIteratorType end() {
-    return DofIteratorType(*this, size_);
-  }
-  
-  ConstDofIteratorType end() const {    
-    return ConstDofIteratorType(*this, size_);
-  }
-
-  //! return number of enties of array 
-  int size () const { return size_; }  
-
-  //! return number of total enties of array 
-  int capacity () const { return memSize_; }  
-
-  //! return reference to entry i
-  T& operator [] ( int i )       
-  { 
-    assert( ((i<0) || (i>=size ()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
-    return vec_[i]; 
-  }
-  
-  //! return reference to const entry i
-  const T& operator [] ( int i ) const 
-  { 
-    assert( ((i<0) || (i>=size()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
-    return vec_[i]; 
-  }
-
-  //! assign arrays 
-  DofArray<T>& operator= (const DofArray<T> & org)
-  {
-    assert(org.size_ >= size() );
-    std::memcpy(vec_, org.vec_, size_ * sizeof(T));
-    return *this;
-  }
- 
-  //! operator +=  
-  DofArray<T>& operator += (const DofArray<T> & org)
-  {
-    assert(org.size_ >= size() );
-    const int s = size();
-    const T * ov = org.vec_;
-    for(int i=0; i<s; ++i) vec_[i] += ov[i];
-    return *this;
-  }
- 
-  //! operator -=  
-  DofArray<T>& operator -= (const DofArray<T> & org)
-  {
-    assert(org.size() >= size() );
-    const int s = size();
-    const T * ov = org.vec_;
-    for(int i=0; i<s; ++i) vec_[i] -= ov[i];
-    return *this;
-  }
- 
-  //! assign arrays 
-  void axpy (const DofArray<T> &org, const T scalar)
-  {
-#if HAVE_BLAS
-    DuneCBlas :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
-#else 
-    const int s = size();
-    const T * ov = org.vec_;
-    for(int i=0; i<s; ++i) vec_[i] += scalar*ov[i];
-#endif
-  }
- 
-  //! set all entries to zero 
-  void clear () 
-  {
-    std::memset(vec_, 0 , size() * sizeof(T));
-  }
- 
-  //! move memory from old to new destination 
-  void memmove(const int length, const int oldStartIdx, const int newStartIdx) 
-  {
-    void * dest = ((void *) (&vec_[newStartIdx]));
-    const void * src = ((const void *) (&vec_[oldStartIdx]));
-    std::memmove(dest, src, length * sizeof(T));
-  }
- 
-  //! operator = assign all entrys with value t 
-  DofArray<T>& operator= (const T t)
-  {
-    const int s = size();
-    for(int i=0; i<s; ++i) vec_[i] = t;
-    return *this;
-  }
-
-  //! Comparison operator
-  //! The comparison operator checks for object identity, i.e. if this and
-  //! other are the same objects in memory rather than containing the same data
-  bool operator==(const DofArray<T>& other) const 
-  {
-    return vec_ == other.vec_;
-  }
-
-  //! return leak pointer for usage in BLAS routines 
-  T* leakPointer() { return vec_; }
-  //! return leak pointer for usage in BLAS routines 
-  const T* leakPointer() const { return vec_; }
-
-  //! read and write xdr 
-  bool processXdr(XDR *xdrs)
-  {
-    if(xdrs != 0)
-    {
-      int len = size_;
-      xdr_int( xdrs, &len );
-      assert(size_ <= len);
-
-      xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_double);
-      return true;
-    }
-    else
-      return false;
-  } 
-
-  //! resize vector with new size nsize
-  //! if nsize is smaller then actual memSize, size is just set to new value
-  void resize ( int nsize )
-  {
-    assert(myProperty_);
-    assert(nsize >= 0);
-
-    if(!myProperty_) 
-    {
-      DUNE_THROW(OutOfMemoryError,"Not my property to change mem size!");
-    }
-
-    if(nsize <= memSize_) 
-    {
-      size_ = nsize;
-      return ;
-    }
-
-    // nsize is the minimum needed size of the vector 
-    // we double this size to reserve some memory and minimize
-    // reallocations 
-    assert( memoryFactor_ >= 1.0 );
-    const double overEstimate = memoryFactor_ * nsize;
-    const int nMemSize = (int) overEstimate;
-
-    vec_ = AllocatorType :: realloc (vec_,size_,nMemSize);
-
-    size_ = nsize;
-    memSize_ = nMemSize;
-  }
-
-  //! return size of vector in bytes 
-  int usedMemorySize() const 
-  {
-    return memSize_ * sizeof(T);
-  } 
-
-  void print(std::ostream& s) const 
-  {
-    s << "Print DofArray (size = " << size_ << ")\n";
-    for(int i=0; i<size_; ++i)
-    {
-      s << vec_[i] << "\n";
-    }
-
-  }
-};
-
-//! specialisation for int 
-template <>
-inline bool DofArray<int>::processXdr(XDR *xdrs)
-{
-  typedef int T;
-  if(xdrs != 0)
-  {
-    int len = size_;
-    xdr_int( xdrs, &len );
-    assert(size_ <= len);
-    xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_int);
-    return true;
-  }
-  else
-    return false;
-}
-
-//! specialisation for double 
-template <>
-inline bool DofArray<double>::processXdr(XDR *xdrs)
-{
-  typedef double T;
-  
-  if(xdrs != 0)
-  {
-    int len = size_;
-    xdr_int( xdrs, &len );
-    assert( (size_ > len) ? (std::cout << size_ << " s|l " << len << "\n" ,0 ): 1);
-
-    xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_double);
-    return true;
-  }
-  else
-    return false;
-}
-
-
 template<class ArrayType>
 struct SpecialArrayFeatures
 {
-  typedef typename ArrayType :: block_type ValueType;
+  typedef typename ArrayType :: value_type ValueType;
   static size_t used(const ArrayType & array)  
   {
     return array.size() * sizeof(ValueType);
@@ -483,9 +78,9 @@ struct SpecialArrayFeatures
 };
 
 template<class ValueType>
-struct SpecialArrayFeatures<DofArray<ValueType> >
+struct SpecialArrayFeatures<MutableArray<ValueType> >
 {
-  typedef DofArray<ValueType> ArrayType;
+  typedef MutableArray<ValueType> ArrayType;
   static size_t used(const ArrayType & array)  
   {
     return array.usedMemorySize();
@@ -1644,7 +1239,7 @@ template <class GridType>
 template <class DofStorageType, class MapperType >
 std::pair<MemObjectInterface*, DofStorageType*>
 DofManager<GridType>::
-addDofSet(const DofStorageType * ds, MapperType & mapper, std::string name)
+addDofSet(const DofStorageType *, MapperType & mapper, std::string name)
 {
   assert( name.c_str() != 0);
   dverb << "Adding '" << name << "' to DofManager! \n";
@@ -1665,7 +1260,7 @@ template <class GridType>
 template <class DofStorageType, class MapperType , class VectorPointerType >
 std::pair<MemObjectInterface*, DofStorageType*>
 DofManager<GridType>::
-addDummyDofSet(const DofStorageType * ds, const MapperType & mapper, 
+addDummyDofSet(const DofStorageType *, const MapperType & mapper, 
                std::string name, const VectorPointerType * vector )
 {
   assert( name.c_str() != 0);
