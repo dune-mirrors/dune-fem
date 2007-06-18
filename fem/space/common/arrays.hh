@@ -1,5 +1,5 @@
-#ifndef DUNE_DOFARRAY_HH
-#define DUNE_DOFARRAY_HH
+#ifndef DUNE_ARRAYS_HH
+#define DUNE_ARRAYS_HH
 
 //- System includes 
 #include <cassert>
@@ -436,7 +436,6 @@ public:
     , memSize_((size<=0) ? 1 : size) 
     , memoryFactor_(1.0)
   {
-    //assert(this->size_ > 0);
   }
   
   //! set memory factor
