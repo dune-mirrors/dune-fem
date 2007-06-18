@@ -91,12 +91,6 @@ public:
     const int oldSize = leafIndex_.size();
     if(oldSize > newSize) return;
 
-    /*
-    const int newMemSize = ((int) memFactor_ * newSize);
-   
-    leafIndex_.resize( newMemSize );
-    state_.resize( newMemSize );
-    */
     leafIndex_.resize( newSize );
     state_.resize( newSize );
 
@@ -149,7 +143,7 @@ public:
     // mark holes 
     int actHole = 0;
     int newActSize = 0;
-    for(int i=0; i<sizeOfVecs; i++)
+    for(int i=0; i<sizeOfVecs; ++i)
     {
       if(leafIndex_[i] >= 0)
       {
@@ -157,11 +151,11 @@ public:
         if(state_[i] == UNUSED)
         {
           holes_[actHole] = leafIndex_[i];
-          actHole++;
+          ++actHole;
         }
 
         // count the size of the leaf indices 
-        newActSize++;
+        ++newActSize;
       }
     }
 
@@ -179,7 +173,7 @@ public:
     // the opposite way. future work. 
      
     int holes = 0; // number of real holes 
-    for(int i=0; i<leafIndex_.size(); i++)
+    for(int i=0; i<leafIndex_.size(); ++i)
     { 
       // a index that is used but larger then actual size 
       // has to move to a hole 
