@@ -389,6 +389,7 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
       file << "Dim_Domain: " << n << std::endl;
       file << "Dim_Range: " << m << std::endl;
       file << "Space: " << df.space().type() << std::endl;
+      file << "IndexSet: " << indexSetToName(df.space().indexSet()) << std::endl;
       file << "Format: " << ftype << std::endl;
       file << "Precision: " << precision << std::endl;
       file << "Polynom_order: " << df.space().order() << std::endl;
@@ -444,6 +445,25 @@ readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timest
     readParameter(filename,"Dim_Range",m,false);
     int space;
     readParameter(filename,"Space",space,false);
+    if( space != (int) df.space().type() )
+    {
+      derr << "GrapeDataIO::readData: Wrong SpaceType, got " << space << " but want "<< df.space().type() << std::endl; 
+      abort();
+    }
+    
+    std::string indexSetName;
+    if( ! readParameter(filename,"IndexSet",indexSetName,false) ) 
+    {
+      // if parameter not available skip test 
+      indexSetName = indexSetToName(df.space().indexSet());
+    }
+    if( indexSetName != indexSetToName(df.space().indexSet()) )
+    {
+      derr << "GrapeDataIO::readData: Wrong IndexSet, stored data type is `" << indexSetName;
+      derr << "' but type to restore is (change this type) `"<< indexSetToName(df.space().indexSet()) << "'."<< std::endl; 
+      abort();
+    }
+    
     int filetype;
     readParameter(filename,"Format",filetype,false);
     GrapeIOFileFormatType ftype = static_cast<GrapeIOFileFormatType> (filetype);
