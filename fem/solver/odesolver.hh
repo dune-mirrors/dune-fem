@@ -361,7 +361,7 @@ public:
     linsolver_(comm_,cycle),
     initialized_(false)
   {
-    linsolver_.set_tolerance(1.0e-8);
+    linsolver_.set_tolerance(1.0e-8,false);
     linsolver_.set_max_number_of_iterations(10000);
     switch (pord) {
     case 1: ode_=new ImplicitEuler(comm_,impl_); break;
@@ -373,7 +373,7 @@ public:
       abort();
     }
     ode_->set_linear_solver(linsolver_);
-    ode_->set_tolerance(1.0e-8);
+    ode_->set_tolerance(1.0e-6);
     if( verbose ) 
     {
       ode_->IterativeSolver::set_output(cout);
@@ -613,12 +613,14 @@ class SemiImplTimeStepper : public TimeProvider
     impl_(op_impl,*this),
     ode_(0),
     linsolver_(comm_,cycle),
-    tp_(this->op_.space().grid().comm(),*this),
-    savetime_(0.0), savestep_(1),
+    // linsolver_(comm_),
+    tp_(this->opexpl_.space().grid().comm(),*this),
+    savestep_(1),
+    savetime_(0.0), 
     initialized_(false)
   {
     op_expl.timeProvider(this);
-    linsolver_.set_tolerance(1.0e-8);
+    linsolver_.set_tolerance(1.0e-8,false);
     linsolver_.set_max_number_of_iterations(1000);
     switch (pord) {
     case 1: ode_=new SemiImplicitEuler(comm_,impl_,expl_); break;
@@ -629,7 +631,7 @@ class SemiImplTimeStepper : public TimeProvider
       abort();
     }
     ode_->set_linear_solver(linsolver_);
-    ode_->set_tolerance(1.0e-8);
+    ode_->set_tolerance(1.0e-6);
     if( verbose ) 
     { 
       ode_->IterativeSolver::set_output(cout);
@@ -714,9 +716,10 @@ class SemiImplTimeStepper : public TimeProvider
   Communicator & comm_;   
   const OperatorExpl& opexpl_;
   const OperatorImpl& opimpl_;
-  OperatorWrapper<OperatorImpl> impl_;
   OperatorWrapper<OperatorExpl> expl_;
+  OperatorWrapper<OperatorImpl> impl_;
   DuneODE::SIRK* ode_;
+  // DuneODE::CG linsolver_;
   DuneODE::GMRES linsolver_;
   enum { cycle = 20 };
   // TimeProvider with communicator 
