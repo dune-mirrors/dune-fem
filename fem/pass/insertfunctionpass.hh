@@ -39,8 +39,7 @@ namespace Dune {
    */
   template <class DiscreteFunctionImp, class PreviousPassImp>
   class InsertFunctionPass 
-    : public LocalPass<DiscreteModelDefault<EmptyDiscreteModelTraits<DiscreteFunctionImp> > , 
-             PreviousPassImp>
+    : public Pass<DiscreteModelDefault<EmptyDiscreteModelTraits<DiscreteFunctionImp> >, PreviousPassImp>
   {
   public:
     //- Typedefs and enums
@@ -49,7 +48,7 @@ namespace Dune {
     //! type of discrete model for this class 
     typedef DiscreteModelDefault<Traits> DiscreteModelImp;
     //! Base class
-    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
+    typedef Pass<DiscreteModelImp, PreviousPassImp> BaseType;
 
     //! type of this class 
     typedef InsertFunctionPass<DiscreteFunctionImp,PreviousPassImp> ThisType;
@@ -60,21 +59,35 @@ namespace Dune {
     typedef PreviousPassImp PreviousPassType;
 
     // Types from the base class
-    typedef typename BaseType::Entity EntityType; 
-    typedef typename BaseType::ArgumentType ArgumentType;
+    typedef typename BaseType::TotalArgumentType ArgumentType;
     typedef typename BaseType::GlobalArgumentType GlobalArgumentType;
 
-    // Types from the traits
+    //! The discrete function representing the return value of this pass
     typedef typename Traits::DestinationType DestinationType;
+    //! The discrete function space belonging to DestinationType
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
   public:
     //- Public methods
     //! Constructor
     //! \param destination to be stored in this pass 
     //! \param pass Previous pass
     InsertFunctionPass(DestinationType & destination, 
-                       PreviousPassType& pass) 
-      : BaseType(pass,destination.space())
+                       PreviousPassType& pass)
+      : BaseType(pass)
+    {
+      this->destination_ = &destination;
+    }
+
+    //- Public methods
+    //! Constructor
+    //! \param destination to be stored in this pass 
+    //! \param pass Previous pass
+    //! \param space to make constructor look like that from other passes
+    InsertFunctionPass(DestinationType & destination, 
+                       PreviousPassType& pass,
+                       const DiscreteFunctionSpaceType& space) 
+      : BaseType(pass)
     {
       this->destination_ = &destination;
     }
@@ -84,7 +97,7 @@ namespace Dune {
     //! \param space to be stored in this base pass 
     //! \param pass Previous pass
     InsertFunctionPass(const DiscreteFunctionSpaceType& space, PreviousPassType& pass) 
-      : BaseType(pass,space)
+      : BaseType(pass)
     {
       assert( this->destination_ == 0 );
     }
@@ -99,11 +112,6 @@ namespace Dune {
     virtual void allocateLocalMemory() 
     {
       // do not allocate memory here 
-    }
-
-    //! empty method here
-    void applyLocal(EntityType& en) const
-    {
     }
 
     //! empty method here
@@ -125,6 +133,11 @@ namespace Dune {
     void setDestination(DestinationType& dest) 
     {
       this->destination_ = &dest;
+    }
+  protected:
+    void compute(const ArgumentType& arg, DestinationType& dest) const 
+    {
+      // do nothing here 
     }
   }; // end class InsertFunctionPass
 
