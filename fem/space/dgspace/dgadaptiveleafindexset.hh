@@ -126,6 +126,9 @@ public:
   //! return type of index set, for GrapeDataIO
   static int type () { return myType; }
 
+  //! return name of index set 
+  std::string name () const { return "DGAdaptiveLeafIndexSet"; }
+
   //****************************************************************
   //
   //  INTERFACE METHODS for DUNE INDEX SETS 
