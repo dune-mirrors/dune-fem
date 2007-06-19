@@ -17,13 +17,11 @@ void dataDispErrorExit(std::string msg);
 
 static std::stack<GR_GridType *> gridStack;
 static std::stack<GrapeDispType *> dispStack;
-static std::stack<GR_GridPartType *> gridPartStack;
 
-static GrapeDataIO < GR_GridType> dataIO;
+static GrapeDataIO <GR_GridType> dataIO;
 
 template <class T> 
 void deleteObjects(std::stack<T *> & stack);
-
 
 GrapeDispType * readTupleData(const char * path, const char * filename, 
             double & time , int n, 
@@ -140,11 +138,6 @@ void dataDispErrorExit(std::string msg)
 
 void deleteAllObjects() 
 {
-  //deleteObjects(funcStack);
-  //if(globalSpace) delete globalSpace;
-  //deleteObjects(fsStack);
-  //deleteObjects(indexStack);
-  deleteObjects(gridPartStack);
   deleteObjects(dispStack);
   deleteObjects(gridStack);
   return ;
