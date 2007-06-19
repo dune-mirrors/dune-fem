@@ -10,7 +10,8 @@ namespace Dune
 template <class GridPartType>
 struct WeightDefault {
   typedef FieldVector<double,GridPartType::GridType::dimension> DomainType;
-  void setEntity(const typename GridPartType::IteratorType::Entity& en) {
+  template <class EntityType>
+  void setEntity(const EntityType& en) {
     volume_ = en.geometry().volume();
   }
   double operator()(const DomainType& point) {
