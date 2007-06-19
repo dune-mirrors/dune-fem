@@ -647,7 +647,7 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
 
 public:  
-  DataInliner ( DiscreteFunctionType & df ) 
+  DataInliner ( const DiscreteFunctionType & df ) 
     : df_ (df) 
   {}
 
@@ -663,7 +663,7 @@ public:
   {
     assert( df_.space().indexSet().contains( en ) );
     
-    LocalFunctionType lf = df_.localFunction( en );
+    const LocalFunctionType lf = df_.localFunction( en );
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
     {
@@ -672,7 +672,7 @@ public:
   }
 
 private:
-  mutable DiscreteFunctionType & df_;
+  const DiscreteFunctionType & df_;
 };
 
 
@@ -716,7 +716,7 @@ public:
   {
     // make sure entity is contained in set 
     assert( df_.space().indexSet().contains( en ) );
-    
+
     LocalFunctionType lf = df_.localFunction( en );
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
