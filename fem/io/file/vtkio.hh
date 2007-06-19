@@ -41,6 +41,7 @@ public:
   virtual ~VTKFunctionWrapper () {}
 private:
   const DF& discFunc_;
+  const bool vector_;
 };
 template <class GridPartType>
 class VTKIO : 
