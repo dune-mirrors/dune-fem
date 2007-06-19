@@ -1,5 +1,5 @@
-#ifndef DUNE_LEAFINDEXSET_HH
-#define DUNE_LEAFINDEXSET_HH
+#ifndef DUNE_ADAPTIVELEAFINDEXSET_HH
+#define DUNE_ADAPTIVELEAFINDEXSET_HH
 
 //- Dune includes 
 #include <dune/grid/common/defaultindexsets.hh>
@@ -36,7 +36,6 @@ public:
 private:
 
   // busines as usual 
-
 
   // count elements of set by iterating the grid 
   template <class AdLeafSet, int codim >
@@ -257,7 +256,7 @@ private:
   typedef AdaptiveLeafIndexSet < GridType > ThisType;
   
   // my type, to be revised 
-  enum { myType = 5 };
+  enum { myType = 6 };
 
   typedef CodimIndexSet CodimIndexSetType; 
   mutable CodimIndexSetType codimLeafSet_[ncodim];
@@ -318,6 +317,9 @@ public:
 
   //! return type of index set, for GrapeDataIO
   int type () const { return myType; }
+
+  //! return name of index set 
+  std::string name () const { return "AdaptiveLeafIndexSet"; }
 
   //****************************************************************
   //
