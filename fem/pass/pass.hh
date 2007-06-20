@@ -58,8 +58,8 @@ namespace Dune {
    */
   template <class DiscreteModelImp, class PreviousPassImp>
   class Pass :
-    public Operator<typename PreviousPassImp::GlobalArgumentType::DofType, 
-                    typename DiscreteModelImp::Traits::DestinationType::DofType,
+    public Operator<typename PreviousPassImp::GlobalArgumentType::RangeFieldType, 
+                    typename DiscreteModelImp::Traits::DestinationType::RangeFieldType,
                     typename PreviousPassImp::GlobalArgumentType, 
                     typename DiscreteModelImp::Traits::DestinationType>
   {
