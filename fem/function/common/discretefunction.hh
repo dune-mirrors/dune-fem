@@ -32,6 +32,10 @@ namespace Dune{
   {
   };
   
+  //! empty object for Conversion Utility 
+  class HasLocalFunction
+  {
+  };
   
   //************************************************************************
   //
@@ -48,6 +52,7 @@ namespace Dune{
   template<class DiscreteFunctionTraits>
   class DiscreteFunctionInterface : 
     public IsDiscreteFunction , 
+    public HasLocalFunction , 
     public Function<typename DiscreteFunctionTraits::DiscreteFunctionSpaceType,
                     DiscreteFunctionInterface<DiscreteFunctionTraits> > 
   {
@@ -228,9 +233,6 @@ namespace Dune{
     //! Set all elements to zero
     void clear();
 
-    //! Set all elements to value
-    void set(const RangeFieldType & value) DUNE_DEPRECATED; 
-
     //! daxpy operation
     void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c);
 
@@ -248,39 +250,28 @@ namespace Dune{
     virtual DiscreteFunctionDefaultType& operator -= (const MappingType &g);
  
     //! multiply with scalar 
-    virtual DiscreteFunctionDefaultType& 
-    operator *=(const RangeFieldType &scalar);
+    virtual DiscreteFunctionDefaultType& operator *=(const RangeFieldType &scalar);
 
     //! Division by a scalar
-    virtual DiscreteFunctionDefaultType& operator /= 
-    (const RangeFieldType &scalar);
+    virtual DiscreteFunctionDefaultType& operator /= (const RangeFieldType &scalar);
 
-    //! add scalar * g to discrete function 
-    DiscreteFunctionType& 
-    add(const DiscreteFunctionType &g , RangeFieldType scalar ) DUNE_DEPRECATED;
+    //! evaluate Function f  
+    //! \param arg: global coordinate
+    //! \param dest: f(arg)
+    void evaluate (const DomainType & arg, RangeType & dest) const {
+      // Die a horrible death! Never call that one...
+      assert(false); abort();
+    }
 
-  //! evaluate Function (which just dies because there is no meaningful implementation)
-  void eval(const DomainType & arg, RangeType & dest) const DUNE_DEPRECATED {
-    // Die a horrible death! Never call that one...
-    assert(false);
-  }
-  //! evaluate Function f  
-  //! \param arg: global coordinate
-  //! \param dest: f(arg)
-  void evaluate (const DomainType & arg, RangeType & dest) const {
-    // Die a horrible death! Never call that one...
-    assert(false); abort();
-  }
-
-  //! evaluate function and derivatives (just dies)
-  //! \param arg: global coordinate
-  //! \param dest: f(arg)
-  template <int derivation>
-  void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
-                   const DomainType& arg, RangeType & dest) const { 
-    // Die a horrible death! Never call that one...
-    assert(false); abort();
-  }
+    //! evaluate function and derivatives (just dies)
+    //! \param arg: global coordinate
+    //! \param dest: f(arg)
+    template <int derivation>
+    void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
+                     const DomainType& arg, RangeType & dest) const { 
+      // Die a horrible death! Never call that one...
+      assert(false); abort();
+    }
 
 protected: 
   //this methods are used by the LocalFunctionStorage class 
@@ -308,8 +299,220 @@ private:
     { 
       return static_cast<const DiscreteFunctionType&>(*this); 
     }
-
   }; // end class DiscreteFunctionDefault 
+
+  template <class FunctionImp, class GridPartImp>
+  class DiscreteFunctionAdapter;
+
+  template <class FunctionImp, class GridPartImp> 
+  struct DiscreteFunctionAdapterTraits 
+  {
+    typedef typename FunctionImp :: FunctionSpaceType FunctionSpaceType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef DiscreteFunctionSpaceAdapter<FunctionSpaceType,GridPartImp> DiscreteFunctionSpaceType;
+
+    typedef GridPartImp GridPartType;
+    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    //! type of iterator 
+    typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
+    //! type of IndexSet 
+    typedef typename GridPartType :: IndexSetType IndexSetType; 
+
+    typedef DiscreteFunctionAdapter<FunctionImp,GridPartImp> DiscreteFunctionType;
+  };
+
+  //! adapter to provide local function for a function
+  template <class FunctionImp, class GridPartImp>
+  class DiscreteFunctionAdapter 
+  : public HasLocalFunction , 
+    public Function<DiscreteFunctionSpaceAdapter<typename FunctionImp :: FunctionSpaceType,GridPartImp>, 
+                    DiscreteFunctionAdapter<FunctionImp,GridPartImp> >
+  {
+    typedef Function<DiscreteFunctionSpaceAdapter<typename FunctionImp :: FunctionSpaceType,GridPartImp>, 
+                     DiscreteFunctionAdapter<FunctionImp,GridPartImp> > BaseType;
+  public:  
+    typedef GridPartImp GridPartType;
+                       
+    //! type of traits 
+    typedef DiscreteFunctionAdapterTraits<FunctionImp,GridPartImp> Traits;
+    //! type of this pointer 
+    typedef DiscreteFunctionAdapter<FunctionImp,GridPartImp> ThisType;
+
+    // type of function 
+    typedef FunctionImp FunctionType;
+
+    // type of discrete function space
+    typedef typename Traits :: FunctionSpaceType FunctionSpaceType; 
+
+    //! type of discrete function space 
+    typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+    //! type of grid 
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
+    //! jacobian type (from function space)
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    //! type of codim 0 entity
+    typedef typename GridType :: template Codim<0> :: Entity EntityType; 
+
+    private:
+    class LocalFunction
+    {
+      //! type of geometry 
+      typedef typename EntityType :: Geometry GeometryImp;
+    public:  
+      //! domain type (from function space)
+      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
+      //! range type (from function space)
+      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
+      //! domain type (from function space)
+      typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
+      //! range type (from function space)
+      typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
+      //! jacobian type (from function space)
+      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+      //! constructor initializing local function 
+      LocalFunction(const EntityType& en, const ThisType& a)
+        : function_(a.function_) 
+        , geometry_(&(en.geometry())) 
+        , global_(0)
+      {}
+
+      LocalFunction(const ThisType& a)
+        : function_(a.function_) 
+        , geometry_(0) 
+        , global_(0)
+      {}
+
+      //! copy constructor 
+      LocalFunction(const LocalFunction& org) 
+        : function_(org.function_) 
+        , geometry_(org.geometry_)  
+        , global_(0)
+      {}
+
+      //! evaluate local function 
+      void evaluate(const DomainType& local, RangeType& result) const
+      {
+        global_ = geometry_->global(local);
+        function_.evaluate(global_,result);
+      }
+
+      //! evaluate local function 
+      template <class QuadratureType>
+      void evaluate(const QuadratureType& quad,
+                    const int quadPoint, 
+                    RangeType& result) const 
+      {
+        evaluate(quad.point(quadPoint), result);
+      }
+
+      //! jacobian of local function 
+      void jacobian(const DomainType& local, JacobianRangeType& result) const
+      {
+        assert(false);
+        abort();
+      }
+
+      //! jacobian of local function 
+      template <class QuadratureType>
+      void jacobian(const QuadratureType& quad,
+                    const int quadPoint, 
+                    JacobianRangeType& result) const 
+      {
+        assert(false);
+        abort();
+      }
+
+      //! init local function
+      void init(const EntityType& en) 
+      {
+        geometry_ = &(en.geometry());
+      } 
+
+    private:
+      const FunctionType& function_;
+      const GeometryImp* geometry_;
+      mutable DomainType global_;
+    };
+
+    public:
+    //! type of local function to export 
+    typedef LocalFunction LocalFunctionType; 
+
+    // reference to function this local belongs to
+    DiscreteFunctionAdapter(const std::string name, const FunctionType& f, const GridPartType& gridPart) 
+      : BaseType(space_)
+      , space_(gridPart)
+      , function_(f)
+      , name_(name)
+    {}
+
+    // reference to function this local belongs to
+    DiscreteFunctionAdapter(const DiscreteFunctionAdapter& org) 
+      : BaseType(org)
+      , space_(org.space_)
+      , function_(org.function_)
+      , name_(org.name_)
+    {}
+
+    //! evaluate function on local coordinate local 
+    void evaluate(const DomainType& global, RangeType& result) const 
+    {
+      function_.evaluate(global,result);  
+    }
+
+    //! return const local function object 
+    const LocalFunctionType localFunction(const EntityType& en) const 
+    {
+      return LocalFunctionType(en,*this);
+    }
+
+    //! return local function object 
+    LocalFunctionType localFunction(const EntityType& en) 
+    {
+      return LocalFunctionType(en,*this);
+    }
+
+    //! return name of function
+    const std::string& name() const 
+    {
+      return name_;
+    }
+
+    bool write_xdr(std::string filename) const { return true; }
+    bool write_ascii(std::string filename) const { return true; }
+    bool write_pgm(std::string filename) const { return true; }
+
+    bool read_xdr(std::string filename) const { return true; }
+    bool read_ascii(std::string filename) const { return true; }
+    bool read_pgm(std::string filename) const { return true; }
+
+  private:    
+    DiscreteFunctionSpaceType space_;
+    //! reference to function 
+    const FunctionType& function_; 
+    
+    const std::string name_;
+  };
+
+
 
   /** @} end documentation group */
 
