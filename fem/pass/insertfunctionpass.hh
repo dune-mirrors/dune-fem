@@ -96,7 +96,7 @@ namespace Dune {
     //! Constructor
     //! \param space to be stored in this base pass 
     //! \param pass Previous pass
-    InsertFunctionPass(const DiscreteFunctionSpaceType& space, PreviousPassType& pass) 
+    InsertFunctionPass(PreviousPassType& pass) 
       : BaseType(pass)
     {
       assert( this->destination_ == 0 );
