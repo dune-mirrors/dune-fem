@@ -101,7 +101,7 @@ namespace Dune {
     //! \param spc Space belonging to the discrete function local to this pass
     LocalDGElliptGradientPass(DiscreteModelType& problem, 
                     PreviousPassType& pass, 
-                    DiscreteFunctionSpaceType& spc) 
+                    const DiscreteFunctionSpaceType& spc) 
       : BaseType(pass, spc),
       caller_(problem),
       problem_(problem),
@@ -152,7 +152,7 @@ namespace Dune {
   private:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
-    DiscreteFunctionSpaceType& spc_;
+    const DiscreteFunctionSpaceType& spc_;
   };
 
   
@@ -256,7 +256,7 @@ namespace Dune {
     //!         - verbose if true some output is given, default is false
     LocalDGElliptPass(DiscreteModelType& problem, 
                 PreviousPassImp & pass, 
-                DiscreteFunctionSpaceType& spc,
+                const DiscreteFunctionSpaceType& spc,
                 const std::string paramFile = "")
       : BaseType(pass.previousPass(),spc)
       , problem_(problem)
