@@ -41,6 +41,10 @@ namespace Dune {
   class InsertFunctionPass 
     : public Pass<DiscreteModelDefault<EmptyDiscreteModelTraits<DiscreteFunctionImp> >, PreviousPassImp>
   {
+    //! make sure DiscreteFunctionImp provides local functions 
+    enum { hasLocalFunction = Conversion<DiscreteFunctionImp,HasLocalFunction>:: exists };
+    CompileTimeChecker <hasLocalFunction> discrete_function_does_not_provide_local_functions;
+    
   public:
     //- Typedefs and enums
     //! type of traits for this class  
