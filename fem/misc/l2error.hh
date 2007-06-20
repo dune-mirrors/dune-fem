@@ -74,7 +74,7 @@ namespace Dune
     RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
                     const double time)
     {
-      norm(f,discFunc,2*discFunc.space().order()+2,time); 
+      return norm(f,discFunc,2*discFunc.space().order()+2,time); 
     }
 
     template <class FunctionType> 
