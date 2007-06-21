@@ -192,63 +192,69 @@ public:
     oldIdx_.resize(actHole);
     newIdx_.resize(actHole);
 
-    // close holes 
-    //
-    // NOTE: here the holes closing should be done in 
-    // the opposite way. future work. 
-     
-    int holes = 0; // number of real holes 
-    for(int i=0; i<leafIndex_.size(); ++i)
-    { 
-      // a index that is used but larger then actual size 
-      // has to move to a hole 
-      if(state_[i] != UNUSED) 
-      {
-        // if used index lies behind size, then index has to move 
-        // to one of the holes 
-        if(leafIndex_[i] >= actSize_)
+    // only compress if number of holes > 0    
+    if(actHole > 0)
+    {
+      // close holes 
+      //
+      // NOTE: here the holes closing should be done in 
+      // the opposite way. future work. 
+      int holes = 0; // number of real holes 
+      for(int i=0; i<leafIndex_.size(); ++i)
+      { 
+        // a index that is used but larger then actual size 
+        // has to move to a hole 
+        if(state_[i] != UNUSED) 
         {
-          // serach next hole that is smaler than actual size 
-          actHole--;
-          // if actHole < 0 then error, because we have index larger then
-          // actual size 
-          assert(actHole >= 0);
-          while ( holes_[actHole] >= actSize_ )
+          // if used index lies behind size, then index has to move 
+          // to one of the holes 
+          if(leafIndex_[i] >= actSize_)
           {
+            // serach next hole that is smaler than actual size 
             actHole--;
-            if(actHole < 0) break;
-          }
+            // if actHole < 0 then error, because we have index larger then
+            // actual size 
+            assert(actHole >= 0);
+            while ( holes_[actHole] >= actSize_ )
+            {
+              actHole--;
+              if(actHole < 0) break;
+            }
 
-          assert(actHole >= 0);
+            assert(actHole >= 0);
 
 #if HAVE_MPI 
-          // only for none-ghost elements hole storage is applied
-          if( state_[i] == USED ) 
+            // only for none-ghost elements hole storage is applied
+            if( state_[i] == USED ) 
 #endif
-          {
-            // remember old and new index 
-            oldIdx_[holes] = leafIndex_[i]; 
-            newIdx_[holes] = holes_[actHole];
-            ++holes;
-          }
-          
-          leafIndex_[i] = holes_[actHole];
+            {
+              // remember old and new index 
+              oldIdx_[holes] = leafIndex_[i]; 
+              newIdx_[holes] = holes_[actHole];
+              ++holes;
+            }
+            
+            leafIndex_[i] = holes_[actHole];
 
-          // means that dof manager has to copy the mem
-          state_[i] = NEW;
-          haveToCopy = true;
+            // means that dof manager has to copy the mem
+            state_[i] = NEW;
+            haveToCopy = true;
+          }
+        }
+        else 
+        {
+          // all unsed indices are reset to -1 
+          leafIndex_[i] = -1;
         }
       }
-      else 
-      {
-        // all unsed indices are reset to -1 
-        leafIndex_[i] = -1;
-      }
-    }
 
-    // this call only sets the size of the vectors 
-    oldIdx_.resize(holes);
-    newIdx_.resize(holes);
+      // this call only sets the size of the vectors 
+      oldIdx_.resize(holes);
+      newIdx_.resize(holes);
+
+    } // end if actHole > 0  
+   
+    // store number of actual holes 
     numberHoles_ = oldIdx_.size();
 
     // the next index that can be given away is equal to size
@@ -320,7 +326,7 @@ public:
     if(leafIndex_[num] < 0)
     {
       leafIndex_[num] = nextFreeIndex_;
-      nextFreeIndex_++;
+      ++nextFreeIndex_;
     }
     state_[num] = USED;
   }
@@ -332,7 +338,7 @@ public:
     if(leafIndex_[num] < 0)
     {
       leafIndex_[num] = nextFreeIndex_;
-      nextFreeIndex_++;
+      ++nextFreeIndex_;
     }
     state_[num] = NEW;
   }
@@ -353,9 +359,6 @@ public:
     assert(num < leafIndex_.size() );
     state_[num] = UNUSED;
   }
-  
-  void print (const char * msg, bool oldtoo = false ) const;
-
 }; // end of CodimIndexSet  
 
 } // end namespace Dune 
