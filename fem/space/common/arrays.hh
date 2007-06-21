@@ -351,8 +351,8 @@ inline void StaticArray<double>::axpy(const ThisType& org, const double scalar)
   DuneCBlas :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
 #else 
   const int s = size();
-  const T * ov = org.vec_;
-  for(int i=0; i<s; ++i) vec_[i] += scalar*ov[i];
+  const double * ov = org.vec_;
+  for(int i=0; i<s; ++i) vec_[i] += scalar * ov[i];
 #endif
 }
  
