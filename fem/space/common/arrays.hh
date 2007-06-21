@@ -204,7 +204,7 @@ public:
     , vec_(vec) 
   {
     assert( size_ >= 0 );
-    assert( vec_ );
+    //assert( vec_ );
   }
 
   //! iterator pointing to begin of array 
@@ -428,12 +428,20 @@ private:
 
   MutableArray(const MutableArray&);
 public:
+  //! create array of length 0 
+  MutableArray() 
+    : BaseType(0,0)
+    , memSize_(0) 
+    , memoryFactor_(1.0)
+  {
+  }
+  
   //! create array of length size
-  //! if size is <= 0 then vec of with memory 1 and size 0 is created (parallel runs)
-  MutableArray(const int size = 0) 
+  MutableArray(const int size) 
     : BaseType((size < 0) ? 0 : size, 
-               AllocatorType :: malloc ((size<=0) ? 1 : size))
-    , memSize_((size<=0) ? 1 : size) 
+               // only alloc memory if size > 0
+               (size <= 0) ? 0 : AllocatorType :: malloc (size))
+    , memSize_((size<=0) ? 0 : size) 
     , memoryFactor_(1.0)
   {
   }
@@ -447,7 +455,7 @@ public:
   //! Destructor 
   ~MutableArray() 
   {
-    if( this->vec_ ) AllocatorType :: free ( this->vec_ );
+    freeMemory();
   }
 
   //! return number of total enties of array 
@@ -457,25 +465,41 @@ public:
   //! if nsize is smaller then actual memSize, size is just set to new value
   void resize ( int nsize )
   {
-    assert(nsize >= 0);
-
     // just set size and do not change memory in this case 
-    if( (nsize <= memSize_) && (nsize> (memSize_/2)) ) 
+    if( (nsize <= memSize_) && (nsize > (memSize_/2))) 
     {
       this->size_ = nsize;
       return ;
     }
 
-    // nsize is the minimum needed size of the vector 
-    // we double this size to reserve some memory and minimize
-    // reallocations 
+    // if nsize == 0 freeMemory
+    if( nsize <= 0 ) 
+    {
+      freeMemory();
+      return ;
+    }
+
     assert( memoryFactor_ >= 1.0 );
     const double overEstimate = memoryFactor_ * nsize;
     const int nMemSize = (int) overEstimate;
     assert( nMemSize >= nsize );
 
-    // reallocate memory 
-    this->vec_ = AllocatorType :: realloc (this->vec_,memSize_,nMemSize);
+    if( !this->vec_ )
+    {
+      // allocate new memory 
+      this->vec_ = AllocatorType :: malloc(nMemSize);
+    }
+    else 
+    {
+      assert( nMemSize > 0 );
+      // nsize is the minimum needed size of the vector 
+      // we double this size to reserve some memory and minimize
+      // reallocations 
+      assert( this->vec_ );
+
+      // reallocate memory 
+      this->vec_ = AllocatorType :: realloc (this->vec_,memSize_,nMemSize);
+    }
 
     this->size_ = nsize;
     memSize_ = nMemSize;
@@ -486,6 +510,19 @@ public:
   {
     return memSize_ * sizeof(T);
   } 
+  
+private: 
+  // free memory and reset sizes 
+  void freeMemory() 
+  {
+    if( this->vec_ ) 
+    {
+      AllocatorType :: free ( this->vec_ );
+      this->vec_ = 0;
+    }
+    this->size_ = 0;
+    memSize_ = 0;
+  }
 };
 
 } // end namespace Dune 
