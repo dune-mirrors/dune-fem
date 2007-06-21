@@ -204,7 +204,6 @@ public:
     , vec_(vec) 
   {
     assert( size_ >= 0 );
-    //assert( vec_ );
   }
 
   //! iterator pointing to begin of array 
@@ -351,7 +350,7 @@ inline void StaticArray<double>::axpy(const ThisType& org, const double scalar)
   DuneCBlas :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
 #else 
   const int s = size();
-  const double * ov = org.vec_;
+  const double* ov = org.vec_;
   for(int i=0; i<s; ++i) vec_[i] += scalar * ov[i];
 #endif
 }
@@ -465,7 +464,8 @@ public:
   //! if nsize is smaller then actual memSize, size is just set to new value
   void resize ( int nsize )
   {
-    // just set size and do not change memory in this case 
+    // just set size if nsize is smaller than memSize but larger the
+    // half of memSize 
     if( (nsize <= memSize_) && (nsize > (memSize_/2))) 
     {
       this->size_ = nsize;
