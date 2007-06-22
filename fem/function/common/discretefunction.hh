@@ -392,19 +392,28 @@ private:
         : function_(a.function_) 
         , geometry_(&(en.geometry())) 
         , global_(0)
+        , result_(0)
+        , quadId_(-1)
+        , qp_(-1)
       {}
 
       LocalFunction(const ThisType& a)
         : function_(a.function_) 
         , geometry_(0) 
         , global_(0)
+        , result_(0)
+        , quadId_(-1)
+        , qp_(-1)
       {}
 
       //! copy constructor 
       LocalFunction(const LocalFunction& org) 
         : function_(org.function_) 
         , geometry_(org.geometry_)  
-        , global_(0)
+        , global_(org.global_)
+        , result_(org.result_)
+        , quadId_(org.quadId_)
+        , qp_(org.qp_)
       {}
 
       //! evaluate local function 
@@ -420,7 +429,16 @@ private:
                     const int quadPoint, 
                     RangeType& result) const 
       {
-        evaluate(quad.point(quadPoint), result);
+        if(quadId_ != (int) quad.id() && qp_ != quadPoint) 
+        {
+          // evaluate function and cache value 
+          global_ = geometry_->global(quad.point(quadPoint));
+          function_.evaluate(global_,result_);
+          // remember cached point 
+          quadId_ = quad.id();
+          qp_ = quadPoint;
+        }
+        result = result_;
       }
 
       //! jacobian of local function 
@@ -444,12 +462,17 @@ private:
       void init(const EntityType& en) 
       {
         geometry_ = &(en.geometry());
+        quadId_ = -1;
+        qp_ = -1;
       } 
 
     private:
       const FunctionType& function_;
       const GeometryImp* geometry_;
       mutable DomainType global_;
+      mutable RangeType result_;
+      mutable int quadId_; 
+      mutable int qp_;
     };
 
     public:
