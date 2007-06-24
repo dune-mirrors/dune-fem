@@ -569,7 +569,7 @@ private:
   typedef IdBasedLeafIndexSet < GridType > ThisType;
   
   // my type, to be revised 
-  enum { myType = 6 };
+  enum { myType = 8 };
 
   typedef typename GridType :: Traits :: LeafIndexSet LeafIndexSetType;
   typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
@@ -611,7 +611,6 @@ public:
 
     // all higher codims are not used by default
     for(int i=1; i<ncodim; i++) codimUsed_[i] = false;
-    //for(int i=1; i<ncodim; i++) codimUsed_[i] = true;
   }
 
   //! Destructor
@@ -622,6 +621,9 @@ public:
 
   //! this index set can be used for adaptive computations 
   bool adaptive () const { return true; }
+
+  //! return name of index set, for GrapeDataIO
+  std::string name () const { return "IdBasedLeafIndexSet"; }
 
   //****************************************************************
   //
@@ -637,7 +639,6 @@ public:
   {
     // this IndexWrapper provides specialisations for each codim 
     // see this class above 
-    //return leafSet_.index(en); 
     return this->template index<0> (en,0);
   }
   
@@ -647,14 +648,12 @@ public:
   int subIndex (const EntityCodim0Type & en, int num) const
   {
     return this->template index<cd> (en,num);
-    //return leafSet_.template subIndex<cd> (en,num);
   }
 
   //! return size of grid entities per level and codim 
   int size ( int codim , GeometryType type ) const
   {
     return persistentLeafSet().size();
-    //return leafSet_.size(codim,type); 
   }
   
   //! return size of grid entities per level and codim 
@@ -950,9 +949,9 @@ public:
   // write indexset to xdr file 
   bool write_xdr(const std::basic_string<char> filename, int timestep) 
   {
+    /*
     assert( false );
     abort();
-    /*
     FILE  *file;
     XDR   xdrs;
     const char *path = "";
