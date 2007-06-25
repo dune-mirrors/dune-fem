@@ -6,6 +6,8 @@
 
 //- local includes 
 #include <dune/common/tuples.hh>
+#include <dune/fem/function/common/discretefunction.hh>
+
 #include "discretemodel.hh"
 #include "pass.hh"
 
