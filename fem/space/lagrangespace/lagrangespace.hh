@@ -37,7 +37,7 @@ namespace Dune
             template< class > class BaseFunctionStorageImp = SimpleStorage >
   struct LagrangeDiscreteFunctionSpaceTraits
   {
-    CompileTimeChecker< (polOrder>0)? true :false > LagrangeSpace_only_defined_for_PolOrd_not_zero;
+    CompileTimeChecker< (polOrder > 0) > __LagrangeSpace_only_defined_for_polOrder_greater_zero__;
     
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
