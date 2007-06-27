@@ -881,8 +881,8 @@ public:
 public:
   ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) :
     TimeProvider(0.0,cfl),
-    tp_(op.space().grid().comm(),*this), 
     BaseType(op,*this,pord,verbose),
+    tp_(op.space().grid().comm(),*this), 
     savetime_(0.0), savestep_(1)
   {
     op.timeProvider(this);
