@@ -3,4 +3,4 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 SUBDIRS = test common test dgspace fvspace lagrangespace combinedspace basefunctions
 spacedir =  $(includedir)/dune/fem/space
-space_HEADERS = dgspace.hh lagrangespace.hh combinedspace.hh
+space_HEADERS = dgspace.hh lagrangespace.hh combinedspace.hh fvspace.hh
