@@ -87,7 +87,7 @@ namespace Dune
       entity_( NULL ),
       baseFunctionSet_( NULL ),
       numBaseFunctions_( 0 ),
-      dofs_( NULL );
+      dofs_( NULL )
     {
     }
     
