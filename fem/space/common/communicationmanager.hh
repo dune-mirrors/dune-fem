@@ -213,8 +213,9 @@ namespace Dune {
     // ALUGrid communicatior Class 
     MPAccessInterfaceType * mpAccess_;
 
+    typedef std::vector< ObjectStreamType > ObjectStreamVectorType;
     //! communication buffers 
-    std::vector< ObjectStreamType > buffer_;
+    ObjectStreamVectorType buffer_;
 
     //! number of links 
     int nLinks_;
@@ -295,13 +296,9 @@ namespace Dune {
     //! return number of links 
     int nlinks () const { return nLinks_; }
 
-    //! exchange data of discrete function 
-    template<class DiscreteFunctionType, class OperationImp>
-    void exchange(DiscreteFunctionType& df, const OperationImp *)
+    //! check if grid has changed and rebuild cache if necessary 
+    void rebuild() 
     {
-      // if serial run, just return   
-      if(mySize_ <= 1) return;
-       
       if(sequence_ != space_.sequence()) 
       {
         buildMaps();
@@ -309,6 +306,17 @@ namespace Dune {
         // store actual sequence number 
         sequence_ = space_.sequence();
       }
+    }
+      
+    //! exchange data of discrete function 
+    template<class DiscreteFunctionType, class OperationImp>
+    void exchange(DiscreteFunctionType& df, const OperationImp *)
+    {
+      // if serial run, just return   
+      if(mySize_ <= 1) return;
+       
+      // check if rebuild is needed and update cache 
+      rebuild();
       
       const int links = nlinks();
       // write buffers 
@@ -330,7 +338,32 @@ namespace Dune {
       }
     }
 
-  private:  
+    //! write data of discrete function to buffer 
+    template<class DiscreteFunctionType>
+    void writeBuffer(ObjectStreamVectorType & osv,
+                     DiscreteFunctionType& df) const 
+    {
+      const int links = nlinks();
+      // write buffers 
+      for(int l=0; l<links; ++l) 
+      {
+        writeBuffer( l , osv[l] , df.leakPointer());
+      }
+    }
+    
+    //! read data of discrete function from buffer  
+    template<class DiscreteFunctionType, class OperationImp>
+    void readBuffer(ObjectStreamVectorType & osv,
+                    DiscreteFunctionType& df, const OperationImp *o) const 
+    {
+      const int links = nlinks();
+      // write buffers 
+      for(int l=0; l<links; ++l) 
+      {
+        readBuffer( l, osv[l] , df.leakPointer(), o ); 
+      }
+    }
+    
     //! return reference to mpAccess object
     MPAccessInterfaceType& mpAccess() 
     {   
@@ -338,9 +371,10 @@ namespace Dune {
       return *mpAccess_;
     }
     
+  private:  
     // write data to object stream 
     template <class DataImp> 
-    void writeBuffer(const int link,
+    void writeBuffer(const int link, 
                      ObjectStreamType & os, 
                      const DataImp* data) const 
     {
@@ -360,7 +394,7 @@ namespace Dune {
   
     // read data from object stream to data vector 
     template <class DataImp, class OperationImp> 
-    void readBuffer(const int link ,
+    void readBuffer(const int link, 
                     ObjectStreamType & os, 
                     DataImp* data,
                     const OperationImp *) const 
@@ -437,6 +471,7 @@ namespace Dune {
 
     const int mySize_;
 
+    typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
     
     // is singleton per space 
     DependencyCacheType & cache_;
@@ -457,12 +492,197 @@ namespace Dune {
       CommunicationProviderType::removeObject(cache_);
     }
 
+    MPAccessInterfaceType& mpAccess() { return cache_.mpAccess(); }
+
     //! exchange discrete function to all procs we share data with 
     //! by using given OperationImp when receiving data from other procs 
     template <class DiscreteFunctionType> 
     void exchange(DiscreteFunctionType & df) 
     {
       cache_.exchange( df, (OperationImp*) 0 );
+    }
+    
+    //! write given df to given buffer 
+    template <class ObjectStreamVectorType, class DiscreteFunctionType> 
+    void writeBuffer(ObjectStreamVectorType& osv, 
+                     const DiscreteFunctionType & df) const 
+    {
+      cache_.writeBuffer(osv, df );
+    }
+    
+    // read given df from given buffer 
+    template <class ObjectStreamVectorType, class DiscreteFunctionType> 
+    void readBuffer(ObjectStreamVectorType& osv, 
+                    DiscreteFunctionType & df) const 
+    {
+      cache_.readBuffer(osv, df , (OperationImp *) 0 );
+    }
+
+    //! rebuild underlying cache if necessary 
+    void rebuildCache () 
+    {
+      cache_.rebuild();
+    }
+  };
+
+  //! Proxy class to DependencyCache which is singleton per space 
+  class CommunicationManagerList  
+  {
+    //! communicated object interface 
+    template <class MPAccessType, class ObjectStreamVectorType> 
+    class DiscreteFunctionCommunicatorInterface  
+    {
+    protected:
+      DiscreteFunctionCommunicatorInterface () {}
+    public:
+      virtual ~DiscreteFunctionCommunicatorInterface () {}
+
+      virtual MPAccessType& mpAccess() = 0;
+      virtual void writeBuffer(ObjectStreamVectorType&) const = 0;
+      virtual void readBuffer(ObjectStreamVectorType&) = 0;
+      virtual void rebuildCache () = 0;
+    };
+    
+    //! communicated object implementation  
+    template <class DiscreteFunctionImp,
+              class MPAccessType,
+              class ObjectStreamVectorType,
+              class OperationImp>
+    class DiscreteFunctionCommunicator 
+    : public DiscreteFunctionCommunicatorInterface<MPAccessType,ObjectStreamVectorType> 
+    {
+      typedef DiscreteFunctionImp DiscreteFunctionType;
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+      typedef CommunicationManager<DiscreteFunctionSpaceType,OperationImp> CommunicationManagerType; 
+    
+      // object to communicate 
+      DiscreteFunctionType& df_;
+      //! communicator manager 
+      CommunicationManagerType comm_;
+    public:  
+      //! constructor taking disctete function 
+      DiscreteFunctionCommunicator(DiscreteFunctionType& df) 
+        : df_(df), comm_(df_.space())
+      {}
+
+      //! return ALUGrid communicator
+      virtual MPAccessType& mpAccess() { return comm_.mpAccess(); }
+
+      //! write discrete function to all buffers 
+      virtual void writeBuffer(ObjectStreamVectorType& osv) const 
+      {
+        comm_.writeBuffer(osv,df_);
+      }
+      
+      //! read discrete function from all buffers 
+      virtual void readBuffer(ObjectStreamVectorType& osv)
+      {
+        comm_.readBuffer(osv,df_);
+      }
+
+      //! rebuild cache if grid changed 
+      virtual void rebuildCache () 
+      {
+        comm_.rebuildCache ();
+      }
+    };
+
+    // ALUGrid send/recv buffers 
+    typedef ALU3DSPACE ObjectStream ObjectStreamType; 
+    
+    // type of buffer vector 
+    typedef std::vector< ObjectStreamType > ObjectStreamVectorType;
+
+    // type of ALUGrid Communicator 
+    typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
+
+    // interface for communicated objects 
+    typedef DiscreteFunctionCommunicatorInterface<MPAccessInterfaceType,ObjectStreamVectorType>
+      CommObjInterfaceType;   
+    
+    // list of communicated objects 
+    typedef std::list < CommObjInterfaceType * > CommObjListType; 
+    CommObjListType objList_;
+
+    // copy constructor 
+    CommunicationManagerList(const CommunicationManagerList&); 
+  public:  
+    //! constructor creating list of communicated objects 
+    template <class CombinedObjectType>
+    CommunicationManagerList(CombinedObjectType& cObj) 
+    {
+      // add all discrete functions containd in cObj to list 
+      cObj.addToCommunicator(*this);
+    }
+
+    //! remove object comm
+    ~CommunicationManagerList() 
+    {
+      // delete all entries 
+      while( ! objList_.size() == 0 )
+      {
+        CommObjInterfaceType * obj = objList_.back();
+        objList_.pop_back();
+        delete obj;
+      }
+    }
+
+    //! add one discrete function to the list 
+    template <class DiscreteFunctionImp>
+    void addToList(DiscreteFunctionImp &df)
+    {
+      // type of communication object 
+      typedef DiscreteFunctionCommunicator<DiscreteFunctionImp,
+                                           MPAccessInterfaceType,
+                                           ObjectStreamVectorType,
+                                           DFCommunicationOperation::Copy> CommObj;
+      CommObj * obj = new CommObj(df);
+      objList_.push_back(obj);
+    }
+
+    //! exchange the list of discrete functions between processes 
+    //! only one communication is done here 
+    void exchange() 
+    {
+      typedef CommObjListType :: iterator iterator; 
+      // rebuild cahce if grid has changed
+      {
+        iterator end = objList_.end();
+        for(iterator it = objList_.begin(); it != end; ++it) 
+        {
+          (*it)->rebuildCache();
+        }
+      }
+      
+      // exchange data 
+      if(objList_.size() > 0)
+      {
+        // get ALUGrid communicator 
+        MPAccessInterfaceType& mpAccess = objList_.front()->mpAccess();
+
+        // if only one process, do nothing 
+        if( mpAccess.psize() <= 1 ) return ;
+        
+        // create buffer 
+        ObjectStreamVectorType osv( mpAccess.nlinks() );
+        
+        // fill buffers 
+        iterator end  = objList_.end();
+        for(iterator it = objList_.begin(); it != end; ++it) 
+        {
+          (*it)->writeBuffer(osv); 
+        }
+      
+        // exchange data 
+        osv = mpAccess.exchange (osv);
+
+        // read buffers 
+        for(iterator it = objList_.begin(); it != end; ++it) 
+        {
+          (*it)->readBuffer(osv); 
+        }
+      }
     }
   };
 
@@ -475,7 +695,7 @@ namespace Dune {
   #warning "No Parallel ALUGrid found, using default CommunicationManager!"
 #endif 
 #endif
-   
+  
   //! \brief Default CommunicationManager class just using the grids communicate
   //! method 
   template <class SpaceImp, 
@@ -511,6 +731,99 @@ namespace Dune {
       gridPart_.communicate( dataHandle, InteriorBorder_All_Interface , ForwardCommunication);
     }
   };
+  
+  //! Proxy class to DependencyCache which is singleton per space 
+  class CommunicationManagerList  
+  {
+    //! communicated object interface 
+    class DiscreteFunctionCommunicatorInterface  
+    {
+    protected:
+      DiscreteFunctionCommunicatorInterface () {}
+    public:
+      virtual ~DiscreteFunctionCommunicatorInterface () {}
+      virtual void exchange () = 0;
+    };
+    
+    //! communicated object implementation  
+    template <class DiscreteFunctionImp>
+    class DiscreteFunctionCommunicator 
+    : public DiscreteFunctionCommunicatorInterface 
+    {
+      typedef DiscreteFunctionImp DiscreteFunctionType;
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      
+      // operation to perform 
+      typedef typename DFCommunicationOperation :: Copy OperationType;
+      
+      typedef CommunicationManager<DiscreteFunctionSpaceType,OperationType> CommunicationManagerType; 
+    
+      typedef DiscreteFunctionCommunicationHandler<DiscreteFunctionType,OperationType> DataHandleType;
+     
+      DiscreteFunctionType& df_;
+      CommunicationManagerType comm_;
+    public:  
+      //! constructor taking disctete function 
+      DiscreteFunctionCommunicator(DiscreteFunctionType& df) 
+        : df_(df), comm_(df_.space())
+      {
+      }
+
+      // exchange discrete function 
+      void exchange () 
+      {
+        comm_.exchange(df_);
+      }
+    };
+
+    typedef DiscreteFunctionCommunicatorInterface CommObjIFType;
+    typedef std::list < DiscreteFunctionCommunicatorInterface * > CommObjListType;
+    CommObjListType objList_;
+
+    CommunicationManagerList(const CommunicationManagerList&); 
+  public:  
+    template <class CombinedObjectType>
+    CommunicationManagerList(CombinedObjectType& cObj) 
+    {
+      cObj.addToCommunicator(*this);
+    }
+
+    //! remove object comm
+    ~CommunicationManagerList() 
+    {
+      // delete all entries 
+      while( ! objList_.size() == 0 )
+      {
+        CommObjIFType * obj = objList_.back();
+        objList_.pop_back();
+        delete obj;
+      }
+    }
+
+    //! add discrete function to communication list 
+    template <class DiscreteFunctionImp> 
+    void addToList(DiscreteFunctionImp &df)
+    {
+      typedef DiscreteFunctionCommunicator<DiscreteFunctionImp> CommObjType;
+      CommObjType* obj = new CommObjType(df);
+      objList_.push_back(obj);
+    }
+
+    //! exchange discrete function to all procs we share data with 
+    //! by using given OperationImp when receiving data from other procs 
+    void exchange() 
+    {
+      typedef CommObjListType :: iterator iterator; 
+      {
+        iterator end = objList_.end();
+        for(iterator it = objList_.begin(); it != end; ++it) 
+        {
+          (*it)->exchange();
+        }
+      }
+    }
+  };
+
   // end toggle AULGrid yes/no
 #endif 
 } // end namespace Dune 
