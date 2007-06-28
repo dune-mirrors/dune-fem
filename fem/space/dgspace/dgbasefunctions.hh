@@ -7,6 +7,7 @@
 //- Local includes
 #include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/space/common/basefunctionfactory.hh>
+#include "orthonormalbase_mod.hh"
 
 namespace Dune {
   
@@ -70,28 +71,92 @@ namespace Dune {
       assert(false); // can't get here!
       return -1;
     }
-    double eval_line(int i,const DomainType & xi ) const;
-    double eval_triangle_2d (int i, const DomainType & xi ) const;
-    double eval_quadrilateral_2d (int i, const DomainType & xi ) const;
-    double eval_tetrahedron_3d (int i, const DomainType & xi ) const;
-    double eval_pyramid_3d (int i, const DomainType & xi ) const;
-    double eval_prism_3d (int i, const DomainType & xi ) const;
-    double eval_hexahedron_3d (int i, const DomainType & xi ) const;
-   
+
+    ////////////////////////////
+    /// 1d functions 
+    ////////////////////////////
+    // eval function
+    double eval_line(int i,const DomainType & xi ) const
+    {
+      return OrthonormalBase_1D::eval_line(i,&xi[0]); 
+    }
+    // eval gradient 
     void grad_line(int i, const DomainType & xi,
-                             JacobianRangeType & grad ) const;
+                   JacobianRangeType & grad ) const
+    {
+      OrthonormalBase_1D::grad_line(i,&xi[0],
+                                    &grad[0][0]);
+    }
+
+    ///////////////////////////////////
+    //  2d functions 
+    //////////////////////////////////
+    double eval_triangle_2d (int i, const DomainType & xi ) const
+    {
+      return OrthonormalBase_2D::eval_triangle_2d(i,&xi[0]);
+    }
+    
+    double eval_quadrilateral_2d (int i, const DomainType & xi ) const
+    {
+      return OrthonormalBase_2D::eval_quadrilateral_2d(i,&xi[0]);  
+    }
+    
     void grad_triangle_2d (int i, const DomainType & xi,
-                            JacobianRangeType & grad ) const;
+                            JacobianRangeType & grad ) const
+    {
+      OrthonormalBase_2D::grad_triangle_2d(i,&xi[0],&grad[0][0]);
+    }
+    
     void grad_quadrilateral_2d (int i, const DomainType & xi,
-                                 JacobianRangeType & grad ) const;
+                                 JacobianRangeType & grad ) const
+    {
+       OrthonormalBase_2D::grad_quadrilateral_2d(i,&xi[0],&grad[0][0]); 
+    }
+
+    //////////////////////////////////////
+    //  3d functions 
+    //////////////////////////////////////
+    double eval_tetrahedron_3d (int i, const DomainType & xi ) const
+    {
+      return OrthonormalBase_3D::eval_tetrahedron_3d(i,&xi[0]); 
+    }
+    
+    double eval_pyramid_3d (int i, const DomainType & xi ) const
+    {
+      return OrthonormalBase_3D::eval_pyramid_3d(i,&xi[0]); 
+    }
+    
+    double eval_prism_3d (int i, const DomainType & xi ) const
+    {
+      return OrthonormalBase_3D::eval_prism_3d(i,&xi[0]); 
+    }
+    
+    double eval_hexahedron_3d (int i, const DomainType & xi ) const
+    {
+      return OrthonormalBase_3D::eval_hexahedron_3d(i,&xi[0]); 
+    }
+   
     void grad_tetrahedron_3d (int i, const DomainType & xi,
-                               JacobianRangeType & grad ) const;
+                               JacobianRangeType & grad ) const
+    {
+      OrthonormalBase_3D::grad_tetrahedron_3d(i,&xi[0],&grad[0][0]); 
+    }
+    
     void grad_pyramid_3d (int i, const DomainType & xi,
-                           JacobianRangeType & grad ) const;
+                           JacobianRangeType & grad ) const
+    {
+      OrthonormalBase_3D::grad_pyramid_3d(i,&xi[0],&grad[0][0]); 
+    }
     void grad_prism_3d (int i, const DomainType & xi,
-                         JacobianRangeType & grad ) const;
+                         JacobianRangeType & grad ) const
+    {
+      OrthonormalBase_3D::grad_prism_3d(i,&xi[0],&grad[0][0]); 
+    }
     void grad_hexahedron_3d (int i, const DomainType & xi,
-                              JacobianRangeType & grad ) const;
+                              JacobianRangeType & grad ) const
+    {
+      OrthonormalBase_3D::grad_hexahedron_3d(i,&xi[0],&grad[0][0]); 
+    }
   }; // end class DGBaseFunctionWrapper
 
   //! Base class for DG base functions
@@ -538,7 +603,4 @@ namespace Dune {
   };
 
 } // end namespace Dune
-
-#include "orthonormalbase_mod.cc"
-
 #endif
