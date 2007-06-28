@@ -432,8 +432,12 @@ public:
     // adapt grid 
     BaseType :: adapt ();
 
-    // exchange all modified data 
-    commList_.exchange();
+    // if adaptation is enabled 
+    if( this->adaptive() )
+    {
+      // exchange all modified data 
+      commList_.exchange();
+    }
   }
 };
 
