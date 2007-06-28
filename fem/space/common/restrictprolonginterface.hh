@@ -36,6 +36,13 @@ public:
     asImp().prolongLocal(father,son,initialize);
   }
 
+  //! add discrete function to communicator 
+  template <class CommunicationManagerImp>
+  void addToCommunicator(CommunicationManagerImp& communicator)
+  {
+    asImp().addToCommunicator(communicator);  
+  }
+  
 protected:  
   //! calculates the weight, i.e. (volume son)/(volume father)
   template <class EntityType>
@@ -92,6 +99,14 @@ public:
 		      bool initialize ) const {
     this->first().prolongLocal(father,son,initialize);
     this->second().prolongLocal(father,son,initialize);    
+  }
+  
+  //! prolong data to children 
+  template <class CommunicatorImp>
+  void addToCommunicator(CommunicatorImp& comm) 
+  {
+    this->first().addToCommunicator(comm); 
+    this->second().addToCommunicator(comm);    
   }
 };
 /** \brief This is a general restriction/prolongation operator
@@ -174,6 +189,12 @@ public:
     {
       sohn[i] = vati[i];
     }
+  }
+
+  template <class CommunicatorImp> 
+  void addToCommunicator(CommunicatorImp& comm) 
+  {
+    comm.addToList(df_);
   }
 
 private:
