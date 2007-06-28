@@ -7,6 +7,9 @@
 //- local includes 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/operator/common/objpointer.hh>
+
+#include <dune/fem/space/common/communicationmanager.hh>
+
 namespace Dune{
 
 /** @defgroup Adaptation Adaptation
@@ -31,6 +34,7 @@ namespace Dune{
 #define PARAM_FUNC_1 restrictLocal 
 #define PARAM_FUNC_2 prolongLocal 
 #define PARAM_FUNC_3 calcFatherChildWeight 
+#define PARAM_FUNC_4 addToCommunicator 
 #include <dune/fem/operator/common/combine.hh>
 
 /*! Combination of different AdaptationManagers
@@ -234,7 +238,7 @@ public:
   //! 0 == no adaptation
   //! 1 == generic adaption 
   //! 2 == grid call back adaptation (only in AlbertaGrid and ALUGrid)
-  void adapt () const 
+  virtual void adapt () const 
   {
     AdaptationMethod<ThisType,GridType,
       Conversion<GridType,HasHierarchicIndexSet>::exists>::
@@ -394,6 +398,7 @@ private:
     }
   }
  
+protected:  
   //! corresponding grid 
   mutable GridType & grid_;
 
@@ -405,6 +410,33 @@ private:
 
   AdaptationMethodType adaptationMethod_;
 };
+
+template <class GridType, class RestProlOperatorImp >
+class AdaptationCommunicationManager :
+  public AdaptationManager<GridType,RestProlOperatorImp> 
+{  
+  typedef AdaptationManager<GridType,RestProlOperatorImp> BaseType; 
+
+  mutable CommunicationManagerList commList_;
+public:  
+  AdaptationCommunicationManager(
+      GridType & grid, RestProlOperatorImp & rpOp,
+      std::string paramFile = "") 
+    : BaseType(grid,rpOp,paramFile) 
+    , commList_(rpOp)
+  {
+  }
+  
+  virtual void adapt () const 
+  {
+    // adapt grid 
+    BaseType :: adapt ();
+
+    // exchange all modified data 
+    commList_.exchange();
+  }
+};
+
 /** @} end documentation group */
 }
 
