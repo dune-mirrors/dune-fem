@@ -6,7 +6,9 @@
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
-#if HAVE_UG 
+
+#define USE_UG HAVE_UG 
+#if USE_UG 
 #include <dune/grid/uggrid.hh>
 #endif
 
@@ -36,7 +38,7 @@ namespace Dune {
     static bool multipleGeomTypes () { return false; }
   };
 
-#if HAVE_UG 
+#if USE_UG 
   /** \brief specialisation fir UGGrid, because geomTypes method of index
       sets not usable in this case. 
   */
@@ -99,6 +101,7 @@ namespace Dune {
     static bool multipleGeomTypes () { return true; }
   };
 #endif
+#undef USE_UG
 
 } // end namespace Dune 
 #endif
