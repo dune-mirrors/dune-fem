@@ -23,10 +23,10 @@ namespace Dune{
 /** \brief This is a restriction/prolongation operator for DG data. 
  */
  template <template <class> class DiscFunc,
-  	  class FunctionSpaceImp, 
-   	  class GridPartImp, 
-   	  int polOrd, 
-   	  template <class> class StorageImp> 
+      class FunctionSpaceImp, 
+      class GridPartImp, 
+      int polOrd, 
+      template <class> class StorageImp> 
  class RestrictProlongDefault<DiscFunc<
    DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> 
  > > : 
@@ -36,9 +36,9 @@ namespace Dune{
  {
  public:
    typedef DiscFunc<DiscontinuousGalerkinSpace<FunctionSpaceImp, 
-					       GridPartImp, 
-					      polOrd,
-					      StorageImp> > DiscreteFunctionType;
+                 GridPartImp, 
+                polOrd,
+                StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType :: GridPartType GridPartType;
   typedef typename FunctionSpaceType :: GridType GridType;
@@ -68,7 +68,7 @@ namespace Dune{
   //! restrict data to father 
   template <class EntityType>
   void restrictLocal ( EntityType &father, EntityType &son, 
-		       bool initialize ) const
+           bool initialize ) const
   {
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
@@ -90,7 +90,7 @@ namespace Dune{
     {
       for(int i=0; i<vati_numDofs; ++i) 
       {
-      	vati_[i] = 0.0;
+        vati_[i] = 0.0;
       }
     }
     
@@ -99,8 +99,8 @@ namespace Dune{
       sohn_.evaluate(quad,qP,ret);
       for(int i=0; i<vati_numDofs; ++i) 
       {
-      	baseset.evaluate(i,geometryInFather.global(quad.point(qP)),phi);
-      	vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
+        baseset.evaluate(i,geometryInFather.global(quad.point(qP)),phi);
+        vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
       }
     }
   }
@@ -127,10 +127,17 @@ namespace Dune{
       vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
       
       for(int i=0; i<sohn_numDofs; ++i) {
-      	baseset.evaluate(i,quad,qP,phi);
-      	sohn_[i] += quad.weight(qP) * (ret * phi) ;
+        baseset.evaluate(i,quad,qP,phi);
+        sohn_[i] += quad.weight(qP) * (ret * phi) ;
       }
     }
+  }
+
+  //! add discrete function to communicator 
+  template <class CommunicatorImp>
+  void addToCommunicator(CommunicatorImp& comm)
+  {
+    comm.addToList(df_);
   }
 
 private:
@@ -143,9 +150,9 @@ private:
 /** \brief This is a restriction/prolongation operator for DG data of order zero. 
  */
  template <template <class> class DiscFunc,
-  	  class FunctionSpaceImp, 
-   	  class GridPartImp, 
-   	  template <class> class StorageImp> 
+      class FunctionSpaceImp, 
+      class GridPartImp, 
+      template <class> class StorageImp> 
  class RestrictProlongDefault<DiscFunc<
    DiscontinuousGalerkinSpace<FunctionSpaceImp,GridPartImp,0,StorageImp> 
  > > : 
@@ -156,9 +163,9 @@ private:
  {
    public:
    typedef DiscFunc<DiscontinuousGalerkinSpace<FunctionSpaceImp, 
-					       GridPartImp, 
-					       0,
-					       StorageImp> > DiscreteFunctionType;
+                 GridPartImp, 
+                 0,
+                 StorageImp> > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType ::GridPartType GridPartType;
   typedef typename FunctionSpaceType ::GridType GridType;
@@ -187,7 +194,7 @@ private:
   //! restrict data to father 
   template <class EntityType>
   void restrictLocal ( EntityType &father, EntityType &son, 
-		       bool initialize ) const
+           bool initialize ) const
   {
     assert( !father.isLeaf() );
 
@@ -224,6 +231,13 @@ private:
     for(int i=0; i<numDofs; i++) {
       sohn[i] = vati[i];
     }
+  }
+
+  //! add discrete function to communicator 
+  template <class CommunicatorImp>
+  void addToCommunicator(CommunicatorImp& comm)
+  {
+    comm.addToList(df_);
   }
 
 private:
