@@ -31,6 +31,7 @@ namespace Dune
     {
       DUNE_THROW( NotImplemented, "IndexSetCodimCallInterface :: "
                                   "subIndex is an abstract function." );
+      return -1;
     }
   };
    
