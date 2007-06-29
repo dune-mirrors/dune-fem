@@ -7,31 +7,6 @@
 
 namespace Dune {
 
-// not very satisfying 
-template <class IndexSetImp>
-std::string indexSetToName(const IndexSetImp& set) 
-{
-  return set.name();
-}
-
-template <class GridImp>  
-std::string indexSetToName(const WrappedLevelIndexSet<GridImp>& set) 
-{
-  return "LevelIndexSet";        
-}
-  
-template <class GridImp>  
-std::string indexSetToName(const WrappedLeafIndexSet<GridImp>& set) 
-{
-  return "LeafIndexSet";        
-}
-  
-template <class GridImp>  
-std::string indexSetToName(const WrappedHierarchicIndexSet<GridImp>& set) 
-{
-  return "HierarchicIndexSet";        
-}
-  
 //***********************************************************************
 //
 //  Index Set for one codimension
