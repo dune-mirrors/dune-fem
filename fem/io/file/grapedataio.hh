@@ -7,6 +7,7 @@
 #include <dune/common/misc.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/grid/common/grid.hh>
+#include <dune/grid/common/defaultindexsets.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
 #include <dune/fem/space/common/dofmanager.hh>
@@ -25,6 +26,36 @@ inline std::string generateFilename(const std::string& fn,
   const char * fakePath = "";
   return genFilename(fakePath,fn,ntime,precision);
 }
+
+///////////////////////////////////////////////////
+//
+//  IndexSet Names
+//
+///////////////////////////////////////////////////
+template <class IndexSetImp>
+std::string indexSetToName(const IndexSetImp& set)
+{
+  return set.name();
+}
+
+template <class GridImp>
+std::string indexSetToName(const WrappedLevelIndexSet<GridImp>& set)
+{
+  return "LevelIndexSet";
+}
+
+template <class GridImp>
+std::string indexSetToName(const WrappedLeafIndexSet<GridImp>& set)
+{
+  return "LeafIndexSet";
+}
+
+template <class GridImp>
+std::string indexSetToName(const WrappedHierarchicIndexSet<GridImp>& set)
+{
+  return "HierarchicIndexSet";
+}
+
 
 template <int dim, int dimworld, class GridImp, bool hasBackupRestore> 
 class GrapeDataIOImp 
