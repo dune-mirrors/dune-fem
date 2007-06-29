@@ -7,7 +7,10 @@
 #include <dune/grid/common/grid.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
+// double feature only works in serial runs 
+#if HAVE_MPI == 0
 #define DOUBLE_FEATURE 
+#endif
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
@@ -534,8 +537,9 @@ namespace Dune {
 
 #ifdef DOUBLE_FEATURE
           // only once per intersection or when outside is not interior 
-          if( (localIdSet_.id(en) < localIdSet_.id(nb)) ||
-              ( nb.partitionType() != InteriorEntity )
+          if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
+              // only working for serial runs 
+         //     || ( nb.partitionType() != InteriorEntity )
             )
 #endif
           {
