@@ -12,6 +12,63 @@ struct L2ProjectionImpl
   template <class FunctionImp, class DiscreteFunctionImp>
   static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc, int polOrd_ = -1) 
   {
+    projectFunction(f,discFunc);
+  }
+
+  template <class FunctionImp, class DiscreteFunctionImp>
+  static void projectDiscreteFunction(const FunctionImp& func, 
+          DiscreteFunctionImp& discFunc, int polOrd_ = -1) 
+  {
+    typedef typename DiscreteFunctionImp::FunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
+    typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
+    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
+    typedef typename GridPartType::GridType GridType;
+
+    typedef typename FunctionImp::LocalFunctionType LocalFType;
+    
+    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
+    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
+    const DiscreteFunctionSpaceType& space =  discFunc.space();
+
+    int polOrd = polOrd_;
+    if (polOrd == -1) 
+      polOrd = 2 * space.order();
+
+    discFunc.clear();
+
+    Iterator endit = space.end();
+    for(Iterator it = space.begin(); it != endit ; ++it) 
+    {
+      typename GridType::template Codim<0>::Entity& en = *it; 
+      
+      // Get quadrature rule
+      CachingQuadrature<GridPartType,0> quad(en, polOrd);
+      LocalFuncType lf = discFunc.localFunction(en);
+      LocalFType f = func.localFunction(en);
+
+      //! Note: BaseFunctions must be ortho-normal!!!!
+      const BaseFunctionSetType & baseset = lf.baseFunctionSet();
+
+      const int quadNop = quad.nop();
+      const int numDofs = lf.numDofs();
+
+      for(int qP = 0; qP < quadNop ; ++qP) 
+      {
+        f.evaluate(quad,qP, ret);
+        for(int i=0; i<numDofs; ++i) 
+        {
+          baseset.evaluate(i,quad,qP,phi);
+          lf[i] += quad.weight(qP) * (ret * phi) ;
+        }
+      }
+    }
+  }
+  
+  template <class FunctionImp, class DiscreteFunctionImp>
+  static void projectFunction(const FunctionImp& f, DiscreteFunctionImp& discFunc, int polOrd_ = -1) 
+  {
     typedef typename DiscreteFunctionImp::FunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
