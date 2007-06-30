@@ -211,6 +211,97 @@ public:
   }
 };
 
+template <class Model, template <class,class> class PassType, 
+          class SpaceType = typename Model :: Traits :: DiscreteFunctionSpaceType >
+class CreateFeaturedPass
+{
+public:  
+  // could also be discrete function 
+  typedef SpaceType DiscreteFunctionSpaceType;
+  typedef typename Model :: Traits :: DiscreteFunctionType DestinationType;
+
+protected:
+  Model& model_;
+  DiscreteFunctionSpaceType& space_;
+  const std::string paramFile_;
+
+public:
+  //! constructor 
+  //! \param model DiscreteModel 
+  //! \param space DiscreteFunctionSpace
+  //! \param paramfile parameter file passes through 
+  CreateFeaturedPass(Model& model, DiscreteFunctionSpaceType& space, std::string paramfile = "")
+    : model_(model) , space_(space) , paramFile_(paramfile)
+  {
+  }
+
+  //! copy constructor
+  CreateFeaturedPass(const CreateFeaturedPass& org)
+    : model_(org.model_) , space_(org.space_) , paramFile_(org.paramFile_)
+  {
+  }
+
+  //! creation method
+  template <class PreviousPass>
+  SpaceOperatorPtr<PassType<Model,PreviousPass> >*
+  create(SpaceOperatorPtr<PreviousPass>* prevObj)
+  {
+    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
+    // create pass 
+    RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
+    // create pass storage 
+    ObjPtrType* obj = new ObjPtrType(pass);
+    // remember previous object for delete 
+    obj->saveObjPointer(prevObj);
+    return obj;
+  }
+  
+  //! creation method
+  template <class PreviousPass>
+  SpaceOperatorPtr<PassType<Model,PreviousPass> >*
+  createFirst(PreviousPass& prevPass)
+  {
+    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
+    // create pass 
+    RealPassType* pass = new RealPassType(model_,prevPass,space_,paramFile_);
+    // create pass storage 
+    ObjPtrType* obj = new ObjPtrType(pass);
+    return obj;
+  }
+  
+  //! creation method
+  template <class PreviousPass>
+  SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
+  createLast(PreviousPass& prevPass)
+  {
+    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
+    // create pass 
+    RealPassType* pass = new RealPassType(model_,prevPass,space_,paramFile_);
+    // create pass storage 
+    ObjPtrType* obj = new ObjPtrType(pass);
+    return obj;
+  }
+  
+  //! last creation method 
+  template <class PreviousPass>
+  SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
+  createLast(SpaceOperatorPtr<PreviousPass>* prevObj)
+  {
+    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
+    // create pass 
+    RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
+    // create pass storage 
+    ObjPtrType* obj = new ObjPtrType(pass);
+    // remember previous object for delete 
+    obj->saveObjPointer(prevObj);
+    return obj;
+  }
+};
+
 struct CreatePassTree
 {
   //! create 2 passes 
