@@ -242,7 +242,10 @@ namespace Dune {
     
           if ((localIdSet_.id(nb) > localIdSet_.id(en) && en.level()==nb.level())
               || en.level() > nb.level()
-              || nb.partitionType() != InteriorEntity) 
+#if HAVE_MPI 
+              || nb.partitionType() != InteriorEntity
+#endif
+              ) 
           {
             typedef TwistUtility<GridType> TwistUtilityType;
             // for conforming situations apply Quadrature given
@@ -303,16 +306,17 @@ namespace Dune {
           for (int l = 0; l < faceQuadInner_nop; ++l) 
           {
             // eval boundary Flux  
-            double dtLocalS = caller_.boundaryFlux(nit, faceQuadInner, l, source_ );
+            double dtLocalS =   caller_.boundaryFlux(nit, faceQuadInner, l, valEn_ )
+                              * faceQuadInner.weight(l);
             
-            dtLocal += dtLocalS*faceQuadInner.weight(l);
-            wspeedS += dtLocalS*faceQuadInner.weight(l);
+            dtLocal += dtLocalS;
+            wspeedS += dtLocalS;
             
             // apply weights 
-            source_ *= -faceQuadInner.weight(l)*massVolElinv;
+            valEn_ *= -faceQuadInner.weight(l)*massVolElinv;
 
             // add factor 
-            updEn.axpy( faceQuadInner, l, source_  );
+            updEn.axpy( faceQuadInner, l, valEn_  );
           }
         } // end if boundary
         
@@ -364,7 +368,7 @@ namespace Dune {
                              * massVolElinv*volQuad.weight(l);
         
         source_ *= intel;
-        fMat_ *= intel;
+        fMat_   *= intel;
         
         updEn.axpy(volQuad,l,source_,fMat_);
       }
