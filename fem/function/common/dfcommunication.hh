@@ -278,7 +278,7 @@ namespace Dune {
     struct Copy 
     {
       template <class DataType> 
-      static void apply(const DataType & arg, DataType & dest) 
+      static inline void apply(const DataType & arg, DataType & dest) 
       {
         dest = arg;
       }
@@ -288,7 +288,7 @@ namespace Dune {
     struct Add 
     {
       template <class DataType> 
-      static void apply(const DataType & arg, DataType & dest) 
+      static inline void apply(const DataType & arg, DataType & dest) 
       {
         dest += arg;
       }
@@ -298,7 +298,7 @@ namespace Dune {
     struct Min 
     {
       template <class DataType> 
-      static void apply(const DataType & arg, DataType & dest) 
+      static inline void apply(const DataType & arg, DataType & dest) 
       {
         dest = std::min(dest,arg);
       }
@@ -308,7 +308,7 @@ namespace Dune {
     struct Max 
     {
       template <class DataType> 
-      static void apply(const DataType & arg, DataType & dest) 
+      static inline void apply(const DataType & arg, DataType & dest) 
       {
         dest = std::max(dest,arg);
       }
