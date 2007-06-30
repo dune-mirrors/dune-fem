@@ -33,21 +33,23 @@ public:
   typedef DFieldType DomainFieldType;
   typedef RFieldType RangeFieldType;
 
-  //! Application operator  
+  /** \brief Application operator 
+     \note This method has to be implemented by all derived classes. 
+  */
   virtual void operator() (const DomainType& arg, RangeType& dest) const = 0;
  
-private:
-  //! Helper function for Mapping
-  //! With this function, a combined mapping can choose the right application
-  //! operator (i.e. the one from Mapping itself, or from Function/Operator)
-  //! \note: Do not override this definition
-  virtual void apply (const DomainType& arg, RangeType& dest) const {
-    operator()(arg, dest);
+protected:
+  /** \brief The method apply is the virtual version of the 
+      application operator. This method must be implemented by all 
+      derived classes. 
+  */
+  virtual void apply (const DomainType& arg, RangeType& dest) const 
+  {
+    this->operator() (arg, dest); 
   }
 }; // end class Operator 
 
 /** @} end documentation group */
 
 } // end namespace Dune 
-
 #endif
