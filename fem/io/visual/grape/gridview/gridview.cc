@@ -44,7 +44,10 @@
 #include <config.h>
 #include <dune/common/stdstreams.cc>
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
+
+#if HAVE_GRAPE
 #include <dune/grid/io/visual/grapegriddisplay.hh>
+#endif
 
 using namespace Dune;
 using namespace std;
@@ -52,7 +55,7 @@ using namespace std;
 int main (int argc, char **argv)
 {
 // check whether dgf-file
-
+#if HAVE_GRAPE
   if(argc < 2)
   {
     fprintf(stderr,"usage: %s <MacroFile> \n",argv[0]);
@@ -126,6 +129,9 @@ int main (int argc, char **argv)
     grape.display();
 #endif
   }    
+#else 
+    std::cerr << "Grape was not found! Reconfigure! \n";
+#endif // HAVE_GRAPE
   return 0;
 }
 
