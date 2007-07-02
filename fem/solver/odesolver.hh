@@ -29,6 +29,7 @@ namespace DuneODE {
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
 #include "ode/linear_solver.hpp"
+#include "ode/bicgstab.hpp"
 
 // use Dennis namespace pardg
 using namespace pardg;
