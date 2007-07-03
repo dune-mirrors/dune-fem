@@ -118,7 +118,7 @@ public:
 
   // do not remove any of the following bnd-type, as selection according to 
   // this is happening in the operator
-  enum BoundaryType {Dirichlet, Neumann, Robin, GeneralizedNeumann}; 
+//  enum BoundaryType {Dirichlet, Neumann, Robin, GeneralizedNeumann}; 
 };
  
 }; // end namespace Dune

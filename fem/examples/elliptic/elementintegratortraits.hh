@@ -115,7 +115,7 @@ namespace Dune
 
     // do not remove any of the following bnd-type, as selection according to 
     // this is happening in the operator
-    enum BoundaryType { Dirichlet, Neumann, Robin };
+//    enum BoundaryType { Dirichlet, Neumann, Robin };
   };
  
 }

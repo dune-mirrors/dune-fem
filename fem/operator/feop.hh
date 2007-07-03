@@ -191,6 +191,7 @@ namespace Dune
     // enum DirichletTreatmentMode { KRONECKER_ROWS, KRONECKER_ROWS_COLS };
 
     typedef typename ElementMatrixIntegratorType :: TraitsType TraitsType;
+    typedef typename ElementMatrixIntegratorType :: ModelType ModelType;
     
     typedef typename TraitsType :: DiscreteFunctionType DiscreteFunctionType;
     typedef typename TraitsType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -266,7 +267,7 @@ namespace Dune
           int verbose = 0,
           bool preconditionSSOR = false )
     : elementMatrixIntegrator_( elementMatrixIntegrator ),
-      functionSpace_( elementMatrixIntegrator_.model().discreteFunctionSpace() ),
+      functionSpace_( elementMatrixIntegrator_.discreteFunctionSpace() ),
       matrix_( NULL ), 
       matrix_assembled_( false ),
       // arg_ ( NULL ), 
@@ -1040,13 +1041,7 @@ namespace Dune
           if( !nit.boundary() )
             continue;
               
-          // get center of gravity of intersection and check for dirichlet
-          IntersectionQuadratureType
-            iquad( nit, 0, IntersectionQuadratureType :: INSIDE );
-          assert( iquad.nop() == 1 );
-
-          if( elementMatrixIntegrator_.model().boundaryType( entity, iquad, 0 )
-              != TraitsType :: Dirichlet )
+          if( elementMatrixIntegrator_.model().boundaryType( nit ) != ModelType :: Dirichlet )
             continue;
 
           const int faceNumber = nit.numberInSelf();

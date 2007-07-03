@@ -36,9 +36,15 @@ namespace Dune
 
 template< class TraitsImp = DefaultElementIntegratorTraits >
 class PoissonModel
+: public LinearEllipticModelDefault
+  < typename TraitsImp :: FunctionSpaceType,
+    PoissonModel< TraitsImp >
+  >
 {
 public:  
   typedef TraitsImp TraitsType;
+  
+  typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
   
   typedef typename TraitsType :: EntityType EntityType;
   typedef typename TraitsType :: ElementQuadratureType ElementQuadratureType;
@@ -47,47 +53,39 @@ public:
   typedef typename TraitsType :: RangeType RangeType;
   typedef typename TraitsType :: DomainType DomainType;
   typedef typename TraitsType :: JacobianRangeType JacobianRangeType;
-  typedef typename TraitsType :: DiscreteFunctionSpaceType
-    DiscreteFunctionSpaceType;
-  typedef typename TraitsType :: BoundaryType BoundaryType;
-  
-  //! constructor with functionspace argument such that the space and the 
-  //! grid is available
-  PoissonModel( DiscreteFunctionSpaceType &fuspace ) :
-    fuspace_( fuspace ) 
-  {
-  }    
-  
-  //! Access the functionspace
-  DiscreteFunctionSpaceType& discreteFunctionSpace()
-  {
-    return fuspace_;
-  }   
 
+private:
+  typedef PoissonModel< TraitsImp > ThisType;
+  typedef LinearEllipticModelDefault< FunctionSpaceType, ThisType > BaseType;
+
+public:
+  typedef typename BaseType :: BoundaryType BoundaryType;
+
+public:
   //! return boundary type of a boundary point p used in a quadrature
-  template< class EntityType, class QuadratureType >  
-  inline BoundaryType boundaryType( EntityType& en,
-                                    QuadratureType& quad,
-                                    int p )
+  template< class IntersectionIteratorType >
+  inline BoundaryType boundaryType( const IntersectionIteratorType &intersection ) const
   {
     #ifdef FORCENEUMANN
     #warning "POISSONMODEL HAS ONLY NEUMANN-BOUNDARY!"
-      return TraitsType :: Neumann;
+      return BaseType :: Neumann;
     #else          
-      return TraitsType :: Dirichlet;
+      return BaseType :: Dirichlet;
     #endif
   }
 
   //! determine dirichlet value in a boundary point used in a quadrature
-  template< class EntityType, class QuadratureType >
-  inline void dirichletValues( const EntityType &entity,
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline void dirichletValues( const IntersectionIteratorType &intersection,
                                const QuadratureType &quadrature,
                                int p,
                                RangeType &ret ) const
   {
+    typedef typename IntersectionIteratorType :: Entity EntityType;
+    
     const int dimension = DomainType :: dimension;
-
-    const DomainType &x = entity.geometry().global( quadrature.point( p ) );
+    
+    const DomainType &x = intersection.inside()->geometry().global( quadrature.point( p ) );
     
     ret[ 0 ] = 1.0;
     for( int i = 0; i < dimension; ++i )
@@ -95,11 +93,11 @@ public:
   }
 
   //! determine neumann value in a boundary point used in a quadrature
-  template< class EntityType, class QuadratureType >
-  inline void neumannValues( const EntityType &entity,
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline void neumannValues( const IntersectionIteratorType &intersection,
                              const QuadratureType &quadrature,
-                             int p, 
-                             RangeType &ret )
+                             int p,
+                             RangeType &ret ) const
   {
     std :: cout << "Neumann boundary values are not implemented." << std :: endl;
     assert( false );
@@ -110,11 +108,11 @@ public:
   }
 
   //! determine robin value in a boundary point used in a quadrature
-  template< class EntityType, class QuadratureType >
-  inline void robinValues( const EntityType &entity,
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline void robinValues( const IntersectionIteratorType &intersection,
                            const QuadratureType &quadrature,
                            int p, 
-                           RangeType &ret )
+                           RangeType &ret ) const
   {
     std :: cout << "Robin boundary values are not implemented." << std :: endl;
     assert( false );
@@ -129,7 +127,7 @@ public:
   inline void mass( const EntityType &entity,
                     const QuadratureType &quadrature,
                     int p,
-                    RangeType &ret )
+                    RangeType &ret ) const
   {
     //const DomainType &x = entity.geometry().global( quadrature.point( p ) ); 
 
@@ -159,7 +157,7 @@ public:
                              const QuadratureType &quadrature,
                              int p,
                              const JacobianRangeType &gradphi, 
-                             JacobianRangeType &ret )
+                             JacobianRangeType &ret ) const
   {
     // - laplace phi = -div (1 * grad phi - 0 * phi)
     ret = gradphi;          
@@ -172,20 +170,20 @@ public:
                               const QuadratureType &quadrature,
                               int p,
                               const RangeType &phi, 
-                              DomainType &ret )
+                              DomainType &ret ) const
   {
     // - laplace phi = -div (1 * grad phi - 0 * phi)
     ret = 0.0;
   }
 
   //! the coefficient for robin boundary condition
-  inline double alpha()
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline double robinalpha( const IntersectionIteratorType &intersection,
+                            const QuadratureType &quadrature,
+                            int p ) const
   { 
     return 1.0;
   }
-
-private:
-  DiscreteFunctionSpaceType &fuspace_;  
 };  // end of PoissonModel class
 
 
@@ -279,9 +277,15 @@ public:
 
 template< class TraitsImp = DefaultElementIntegratorTraits >
 class Elliptic2dModel
+: public LinearEllipticModelDefault
+  < typename TraitsImp :: FunctionSpaceType,
+    PoissonModel< TraitsImp >
+  >
 {
 public:  
   typedef TraitsImp TraitsType;
+
+  typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
   
   typedef typename TraitsType :: EntityType EntityType;
   typedef typename TraitsType :: ElementQuadratureType ElementQuadratureType;
@@ -290,9 +294,6 @@ public:
   typedef typename TraitsType :: RangeType RangeType;
   typedef typename TraitsType :: DomainType DomainType;
   typedef typename TraitsType :: JacobianRangeType JacobianRangeType;
-  typedef typename TraitsType :: DiscreteFunctionSpaceType
-    DiscreteFunctionSpaceType;
-  typedef typename TraitsType :: BoundaryType BoundaryType;
 
   static const double eps = 1e-10;
   static const double q = 1.0; // q>0 => non-unit diffusivity
@@ -306,72 +307,70 @@ public:
 //  typedef typename TraitsType::RangeType RangeType;
 //  typedef typename TraitsType::DomainType DomainType;
 //  typedef typename TraitsType::JacobianRangeType JacobianRangeType;
-//  typedef typename TraitsType::DiscreteFunctionSpaceType 
-//                   DiscreteFunctionSpaceType;
   
+private:
+  typedef Elliptic2dModel< TraitsImp > ThisType;
+  typedef LinearEllipticModelDefault< FunctionSpaceType, ThisType > BaseType;
+
+public:
+  typedef typename BaseType :: BoundaryType BoundaryType;
+
+public:
 //! constructor with functionspace argument such that the space and the 
 //! grid is available
-  Elliptic2dModel(DiscreteFunctionSpaceType& fuspace)
-            : fuspace_(fuspace) 
+  Elliptic2dModel()
         {
           // currently implementation is fitted to 2 dimensions
           assert(dimworld==2);
         }    
   
-//! give access to the functionspace
-  DiscreteFunctionSpaceType& discreteFunctionSpace() 
-        {
-          return fuspace_;
-        }   
-
 //! return boundary type of a boundary point p used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline BoundaryType boundaryType( EntityType& en, 
-					                QuadratureType& quad,
-                                    int p )
-        {
-#ifdef FORCENEUMANN
-#warning "ELLIPTIC2DMODEL HAS ONLY NEUMANN-BOUNDARY!"
-          return TraitsType::Neumann;	    
-#else
-#if 1 // Full problem: Dirichlet, Neuman and Dirichlet-boundary
-//#if 0 // temporary check: only Dirichlet Bnd
-	  const DomainType& glob = en.geometry().global(quad.point(p)); 
-	  if (glob[0]<eps)
-	    return TraitsType::Neumann;
-	  else if (glob[0]>1-eps)
-	    return TraitsType::Robin;
-	  else 
-#endif 
-	    return TraitsType::Dirichlet;	    
-#endif // FORCENEUMANN
-        }
+  template< class IntersectionIteratorType > 
+  inline BoundaryType boundaryType( IntersectionIteratorType &intersection ) const 
+  {
+    IntersectionQuadratureType
+      quadrature( intersection, 0, IntersectionQuadratureType :: INSIDE );
+    assert( quadrature.nop() == 1 );
+    
+    #ifdef FORCENEUMANN
+      #warning "ELLIPTIC2DMODEL HAS ONLY NEUMANN-BOUNDARY!"
+      return BaseType :: Neumann; 
+    #else
+    	const DomainType &glob = intersection.intersectionGlobal().global( quadrature.point( 0 ) );
+    	if (glob[0]<eps)
+    	  return BaseType :: Neumann;
+    	else if (glob[0]>1-eps)
+    	  return BaseType :: Robin;
+    	else 
+	      return BaseType :: Dirichlet;	    
+    #endif // FORCENEUMANN
+  }
 
 //! determine dirichlet value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void dirichletValues(EntityType& en, QuadratureType& quad, int p, 
-                              RangeType& ret)
+  template <class IntersectionIteratorType, class QuadratureType>  
+  inline void dirichletValues(IntersectionIteratorType& intersection, QuadratureType& quad, int p, 
+                              RangeType& ret) const
   {
-    const DomainType& glob = en.geometry().global(quad.point(p)); 
+    const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     ret[0] = glob[0] * ( 1.0 + glob[1]);
   }
   
 //! determine neumann value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void neumannValues(EntityType& en, QuadratureType& quad, int p, 
-                            RangeType& ret)
+  template <class IntersectionIteratorType, class QuadratureType>  
+  inline void neumannValues( IntersectionIteratorType& intersection, QuadratureType& quad, int p, 
+                            RangeType& ret) const
   {
-    const DomainType& glob = en.geometry().global(quad.point(p)); 
+    const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
 //    assert(glob[0]<eps);
     ret[0] = - (1+q) * (glob[1] +1);
   }
 
 //! determine robin value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void robinValues(EntityType& en, QuadratureType& quad, int p, 
-                          RangeType& ret)
+  template <class IntersectionIteratorType, class QuadratureType>  
+  inline void robinValues(IntersectionIteratorType& intersection, QuadratureType& quad, int p, 
+                          RangeType& ret) const
   {
-    const DomainType& glob = en.geometry().global(quad.point(p)); 
+    const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     assert(glob[0]>1.0-eps);
     ret[0] = 2.0 - s * SQR(glob[1]) + (2+q-s) * glob[1];
   }
@@ -379,19 +378,19 @@ public:
 //! determine mass (i.e. value of the function c) in a domain point used in a 
 //! quadrature
   template <class EntityType, class QuadratureType>  
-  inline void mass(EntityType& en, QuadratureType& quad, int p, RangeType& ret)
+  inline void mass(EntityType& entity, QuadratureType& quad, int p, RangeType& ret) const
         {
-	  const DomainType& glob = en.geometry().global(quad.point(p)); 
+	  const DomainType& glob = entity.geometry().global(quad.point(p)); 
 	  ret[0] = glob[0]*glob[1] * r;
         }
 
 //! determine source (i.e. value of the function f) in a domain point used in 
 //! a quadrature. 
   template <class EntityType, class QuadratureType>  
-  inline void source(EntityType& en, QuadratureType& quad, int p, 
-                     RangeType& ret)
+  inline void source(EntityType& entity, QuadratureType& quad, int p, 
+                     RangeType& ret) const
         {
-          const DomainType& glob = en.geometry().global(quad.point(p));     
+          const DomainType& glob = entity.geometry().global(quad.point(p));     
           ret[0] = 2.0 * q
               + r * SQR(glob[0])* SQR(glob[1])  
               + r * SQR(glob[0]) * glob[1]
@@ -402,9 +401,9 @@ public:
 //! no direct access to stiffness and velocity, but whole flux, i.e.
 //! diffflux = stiffness * grad(phi) 
   template <class EntityType, class QuadratureType>  
-  inline void diffusiveFlux(EntityType& en, QuadratureType& quad, int p, 
+  inline void diffusiveFlux(EntityType& entity, QuadratureType& quad, int p, 
                    JacobianRangeType& gradphi, 
-                   JacobianRangeType& ret)
+                   JacobianRangeType& ret) const
         {
 //          ret = gradphi;
           ret[0][0] = (1+q) * gradphi[0][0] - q    * gradphi[0][1];
@@ -417,23 +416,23 @@ public:
 //! no direct access to stiffness and velocity, but whole flux, i.e.
 //! convectiveFlux =  - velocity * phi 
   template <class EntityType, class QuadratureType>  
-  inline void convectiveFlux(EntityType& en, QuadratureType& quad, int p, 
+  inline void convectiveFlux(EntityType& entity, QuadratureType& quad, int p, 
                    RangeType& phi, 
-                   DomainType& ret)
+                   DomainType& ret) const
         {
-          const DomainType& glob = en.geometry().global(quad.point(p));     
+          const DomainType& glob = entity.geometry().global(quad.point(p));     
 	  ret[0] = - glob[1] * s * phi[0];
 	  ret[1] = - glob[1] * s * phi[0];
         }
 
   //! the coefficient for robin boundary condition
-  inline double alpha()
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline double alpha( IntersectionIteratorType &intersection,
+                       QuadratureType &quadrature,
+                       int pt ) const
         { 
           return 1.0;
         }
-
-private:
-  DiscreteFunctionSpaceType& fuspace_;  
 };  // end of Elliptic2dModel class
 
 /*======================================================================*/
@@ -506,9 +505,15 @@ public:
 
 template< class TraitsImp = DefaultElementIntegratorTraits >
 class Elliptic3dModel
+: public LinearEllipticModelDefault
+  < typename TraitsImp :: FunctionSpaceType,
+    PoissonModel< TraitsImp >
+  >
 {
 public:  
   typedef TraitsImp TraitsType;
+
+  typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
   
   typedef typename TraitsType :: EntityType EntityType;
   typedef typename TraitsType :: ElementQuadratureType ElementQuadratureType;
@@ -517,9 +522,6 @@ public:
   typedef typename TraitsType :: RangeType RangeType;
   typedef typename TraitsType :: DomainType DomainType;
   typedef typename TraitsType :: JacobianRangeType JacobianRangeType;
-  typedef typename TraitsType :: DiscreteFunctionSpaceType
-    DiscreteFunctionSpaceType;
-  typedef typename TraitsType :: BoundaryType BoundaryType;
 
   static const  double eps = 1e-10;
 
@@ -530,69 +532,73 @@ public:
 //  typedef typename TraitsType::RangeType RangeType;
 //  typedef typename TraitsType::DomainType DomainType;
 //  typedef typename TraitsType::JacobianRangeType JacobianRangeType;
-//  typedef typename TraitsType::DiscreteFunctionSpaceType 
-//                   DiscreteFunctionSpaceType;
   
+private:
+  typedef Elliptic3dModel< TraitsImp > ThisType;
+  typedef LinearEllipticModelDefault< FunctionSpaceType, ThisType > BaseType;
+
+public:
+  typedef typename BaseType :: BoundaryType BoundaryType;
+
+public:
 //! constructor with functionspace argument such that the space and the 
 //! grid is available
-  Elliptic3dModel(DiscreteFunctionSpaceType& fuspace)
-            : fuspace_(fuspace) 
+  Elliptic3dModel()
         {
           // currently implementation is fitted to 3 dimensions
           assert(dimworld==3);
         }    
   
-//! give access to the functionspace
-  DiscreteFunctionSpaceType& discreteFunctionSpace() 
-        {
-          return fuspace_;
-        }   
-
 //! return boundary type of a boundary point p used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline BoundaryType boundaryType( EntityType& en,
-                                   QuadratureType& quad,
-                                   int p )
-        {
-#ifdef FORCENEUMANN
-#warning "ELLIPTIC3DMODEL HAS ONLY NEUMANN-BOUNDARY!"
-          return TraitsType::Neumann;
-#else
-	  const DomainType& glob = en.geometry().global(quad.point(p)); 
-	  if (glob[0]<eps)
-	    return TraitsType::Neumann;
-	  else if (glob[0]>1-eps)
-	    return TraitsType::Robin;
-	  else 
-	    return TraitsType::Dirichlet;	    
-#endif // FORCENEUMANN
-        }
+  template< class IntersectionIteratorType >
+  inline BoundaryType boundaryType( IntersectionIteratorType &intersection ) const
+  {
+    IntersectionQuadratureType
+      quadrature( intersection, 0, IntersectionQuadratureType :: INSIDE );
+    assert( quadrature.nop() == 1 );
+    
+    typedef typename IntersectionIteratorType :: Entity EntityType;
+    const EntityType &entity = *(intersection.inside());
+
+    #ifdef FORCENEUMANN
+      #warning "ELLIPTIC3DMODEL HAS ONLY NEUMANN-BOUNDARY!"
+      return BaseType :: Neumann;
+    #else
+      const DomainType& glob = intersection.intersectionGlobal().global( quadrature.point( 0 ) );
+      if (glob[0]<eps)
+	      return BaseType::Neumann;
+  	  else if (glob[0]>1-eps)
+  	    return BaseType::Robin;
+  	  else 
+	      return BaseType::Dirichlet;	    
+    #endif // FORCENEUMANN
+ }
 
 //! determine dirichlet value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void dirichletValues(EntityType& en, QuadratureType& quad, int p, 
-                              RangeType& ret)
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline void dirichletValues( IntersectionIteratorType &intersection, QuadratureType& quad, int p, 
+                              RangeType& ret) const
   {
-    const DomainType& glob = en.geometry().global(quad.point(p)); 
+    const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     ret[0] = glob[0] * ( 1.0 + glob[1]*glob[2]);
   }
   
 //! determine neumann value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void neumannValues(EntityType& en, QuadratureType& quad, int p, 
-                            RangeType& ret)
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline void neumannValues( IntersectionIteratorType &intersection, QuadratureType& quad, int p, 
+                            RangeType& ret) const
   {
-    const DomainType& glob = en.geometry().global(quad.point(p)); 
+    const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     assert(glob[0]<eps);
     ret[0] = -3.0 * glob[1]*glob[2] - 3.0;
   }
 
 //! determine robin value in a boundary point used in a quadrature
-  template <class EntityType, class QuadratureType>  
-  inline void robinValues(EntityType& en, QuadratureType& quad, int p, 
-                          RangeType& ret)
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline void robinValues( IntersectionIteratorType &intersection, QuadratureType& quad, int p, 
+                          RangeType& ret) const
   {
-    const DomainType& glob = en.geometry().global(quad.point(p)); 
+    const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     assert(glob[0]>1.0-eps);
     ret[0] = 4 * glob[1] * glob[2] - 2* glob[1] - glob[2] + 
         4.0 - SQR(glob[1])*glob[2];
@@ -601,7 +607,7 @@ public:
 //! determine mass (i.e. value of the function c) in a domain point used in a 
 //! quadrature
   template <class EntityType, class QuadratureType>  
-  inline void mass(EntityType& en, QuadratureType& quad, int p, RangeType& ret)
+  inline void mass(EntityType& en, QuadratureType& quad, int p, RangeType& ret) const
         {
 	  const DomainType& glob = en.geometry().global(quad.point(p)); 
 	  ret[0] = glob[0]*glob[1];
@@ -611,7 +617,7 @@ public:
 //! a quadrature. 
   template <class EntityType, class QuadratureType>  
   inline void source(EntityType& en, QuadratureType& quad, int p, 
-                     RangeType& ret)
+                     RangeType& ret) const
         {
           const DomainType& glob = en.geometry().global(quad.point(p));     
           ret[0] = 2 * glob[2] + 3* glob[1] + 3 * glob[0] + 
@@ -625,7 +631,7 @@ public:
   template <class EntityType, class QuadratureType>  
   inline void diffusiveFlux(EntityType& en, QuadratureType& quad, int p, 
                    JacobianRangeType& gradphi, 
-                   JacobianRangeType& ret)
+                   JacobianRangeType& ret ) const
         {
           ret[0][0] =   3* gradphi[0][0] - gradphi[0][1]   - gradphi[0][2];
           ret[0][1] =   - gradphi[0][0]  +3* gradphi[0][1] - gradphi[0][2];
@@ -637,7 +643,7 @@ public:
   template <class EntityType, class QuadratureType>  
   inline void convectiveFlux(EntityType& en, QuadratureType& quad, int p, 
                    RangeType& phi, 
-                   DomainType& ret)
+                   DomainType& ret) const
         {
           const DomainType& glob = en.geometry().global(quad.point(p));     
 	  ret[0] = - glob[1]*phi[0];
@@ -646,13 +652,13 @@ public:
         }
 
   //! the coefficient for robin boundary condition
-  inline double alpha()
+  template< class IntersectionIteratorType, class QuadratureType >
+  inline double alpha( IntersectionIteratorType &intersection,
+                       QuadratureType &quadrature,
+                       int pt ) const
         { 
           return 1.0;
         }
-
-private:
-  DiscreteFunctionSpaceType& fuspace_;  
 };  // end of Elliptic3dModel class
 
 /*======================================================================*/

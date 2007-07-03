@@ -228,18 +228,25 @@ typedef ElementIntegratorTraitsType::DiscreteFunctionType DiscreteFunctionType;
 // typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;
 
 //! definition of the problem specific ElementRhsIntegrator
-class MyElementRhsIntegrator: 
-    public DefaultElementRhsIntegrator<ElementIntegratorTraitsType, 
-                                       EllipticModelType, 
-                                       MyElementRhsIntegrator>
+class MyElementRhsIntegrator
+: public DefaultElementRhsIntegrator< ElementIntegratorTraitsType, 
+                                      EllipticModelType, 
+                                      MyElementRhsIntegrator >
 {
+private:
+  typedef MyElementRhsIntegrator ThisType;
+  typedef DefaultElementRhsIntegrator< ElementIntegratorTraitsType, 
+                                       EllipticModelType, 
+                                       ThisType > 
+    BaseType;
+  
 public:
   //! constructor with model must be implemented as a forward to Base class
-  MyElementRhsIntegrator(EllipticModelType& model, int verbose=0)
-          : DefaultElementRhsIntegrator<ElementIntegratorTraitsType, 
-                                        EllipticModelType, 
-                                        MyElementRhsIntegrator>(model,verbose)
-        {};
+  MyElementRhsIntegrator(EllipticModelType& model, const DiscreteFunctionSpaceType &dfSpace, int verbose=0)
+  : BaseType( model, dfSpace, verbose )
+  {
+  }
+
   //! access function, which is the essence and can be used to implement 
   //! arbitrary operators
   template <class EntityType, class ElementRhsType>
@@ -278,16 +285,17 @@ typedef RhsAssembler<ElementRhsIntegratorType> RhsAssemblerType;
  */
 /*======================================================================*/
 
-class MyElementMatrixIntegrator: 
-    public DefaultElementMatrixIntegrator<
-                               ElementIntegratorTraitsType, 
-                               EllipticModelType,
-                               MyElementMatrixIntegrator>
+class MyElementMatrixIntegrator
+: public DefaultElementMatrixIntegrator
+  < ElementIntegratorTraitsType, 
+    EllipticModelType,
+    MyElementMatrixIntegrator
+  >
 {
 public:
     typedef ElementIntegratorTraitsType               TraitsType;
     typedef EllipticModelType                         ModelType;
-
+    
     typedef TraitsType::ElementMatrixType    ElementMatrixType;
     typedef TraitsType::EntityType           EntityType;
     
@@ -295,11 +303,11 @@ public:
   //! constructor with model instance is implemented in default-class, so a
   //! similar constructor is required in derived classes, which simply
   //! calls the base-class constructor
-  MyElementMatrixIntegrator(ModelType& model, int verbose=0)
+  MyElementMatrixIntegrator(ModelType& model, const DiscreteFunctionSpaceType &dfSpace, int verbose=0)
           :   DefaultElementMatrixIntegrator<
                                ElementIntegratorTraitsType, 
                                EllipticModelType,
-                               MyElementMatrixIntegrator> (model, verbose) 
+                               MyElementMatrixIntegrator> (model, dfSpace, verbose) 
         {};  
 
   //! The crucial method for matrix computation: collecting of contributions
@@ -340,7 +348,7 @@ typedef OEMBICGSTABOp<DiscreteFunctionType,EllipticOperatorType> InverseOperator
 
 
 
-double algorithm( const std :: string filename, int maxlevel, int turn )
+double algorithm( const std :: string &filename, int maxlevel, int turn )
 {
   GridPtr< GridType > gridptr( filename );
   gridptr->globalRefine( maxlevel );
@@ -367,15 +375,15 @@ double algorithm( const std :: string filename, int maxlevel, int turn )
   const int verbose = 0;
    
   // initialize Model and Exact solution
-  EllipticModelType model( linFuncSpace );
+  EllipticModelType model;
   std :: cout << "Model initialized." << std :: endl;
 
   // initialize elementmatrix-provider
-  ElementMatrixIntegratorType elMatInt( model, verbose );
+  ElementMatrixIntegratorType elMatInt( model, linFuncSpace, verbose );
   std :: cout << "Element-matrix integrator initialized" << std :: endl;
 
   // initialize ElementRhsIntegrator
-  ElementRhsIntegratorType elRhsInt( model, verbose );
+  ElementRhsIntegratorType elRhsInt( model, linFuncSpace, verbose );
   std :: cout << "Element-rhs integrator initialized." << std :: endl;
 
   // initialize RhsAssembler
@@ -526,8 +534,8 @@ int main ( int argc, char **argv )
     exit( 1 );
   }
   
-  int level = atoi( argv[1] );
-  double error[ 2 ];
+  int level = atoi( argv[ 1 ] );
+  level = (level > 0 ? level - 1 : 0);
 
   #if PDIM == 2
     std::string macroGridName( "square.dgf" );
@@ -536,13 +544,12 @@ int main ( int argc, char **argv )
   #endif
   std::cout << "loading dgf " << macroGridName << std :: endl;
 
+  double error[ 2 ];
   const int steps = DGFGridInfo< GridType > :: refineStepsForHalf();
-  level = (level > 0 ? level - 1 : 0);
- 
   for( int i = 0; i < 2; ++i )
     error[ i ] = algorithm( macroGridName, (level+i) * steps, i );
 
-  double eoc = log( error[ 0 ] / error[ 1 ]) / M_LN2;
+  const double eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
   std :: cout << "EOC = " << eoc << std :: endl;
   return 0;
 }
