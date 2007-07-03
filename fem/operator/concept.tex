@@ -1,0 +1,140 @@
+\documentclass[10pt,a4paper]{article}
+\newenvironment{interface}[5]%
+{\begin{itemize}
+ \item[Interface] {\bf #1}
+ \item[is-a] #2 
+ \item[argument] #3
+ \item[models] #4
+ \item[concept] #5
+ \item[Methods and typedefs] 
+\begin{itemize}}%
+{\end{itemize}\end{itemize}\rule{\textwidth}{.4pt}}
+
+\begin{document}
+\begin{interface}{Operator}{Mapping}{-}{$L:V\to W_h$}{}
+\item {\rm void operator()}($V$\& $v$, $W_h$\& $w_h$)
+\end{interface}
+\begin{interface}{DiscreteOperator}{Operator}{-}{$L_h:V_h\to W_h$}{}
+\item {\rm typedef DomainProjection}: operator $L_D : V\to V_h$ 
+\item {\rm typedef RangeProjection}: operator $L_R : W\to W_h$ 
+\end{interface}
+\begin{interface}{DiscreteOperatorWrapper}{Operator}{DiscreteOperator $L_h$}%
+                 {$L:V\to W_h, v\mapsto L_h(L_D(v))$}{}
+\item 
+\end{interface}
+\begin{interface}{InverseDiscreteOperator}{DiscreteOperator}%
+                 {DiscreteOperator $L_h$,SolverType}%
+                 {$(L_h)^{-1}:W_h\to V_h$}{}
+\item {\rm typedef DomainProjection}: operator $L_D=L_h::L_R : W\to W_h$ 
+\item {\rm typedef RangeProjection}: operator  $L_R=L_h::L_D : V\to V_h$ 
+\item {\rm DomainProjection\& domainProjection}()
+\item {\rm RangeProjection\& rangeProjection}()
+\end{interface}
+\rule{\textwidth}{.4pt}
+
+\begin{interface}{DifferentiableOperator}{DiscreteOperator}{-}%
+                 {$L_h:V_h\to W_h$ and %
+                  $DL_h(u_h):V_h\to W_h, v_h\mapsto DL_h(u_h)v_h$ for %
+                  $u_h\in V_h$ fixed}%
+                 {}
+\item {\rm LinearOperator differential}($V_h$\& $u_h$)
+\end{interface}
+\begin{interface}{LinearOperator}{DifferentiableOperator}%
+                 {}%
+                 {$L_h:V_h\to W_h$, linear}%
+                 {can be used on the fly with operator() but can also be
+                  used to fill a matrix}
+\item {\rm template class MatrixIFType void assemble}(MatrixIFType\& A): fills the matrix A
+\end{interface}
+\begin{interface}{CachingOperator}{LinearOperator}%
+                 {LinearOperator $L_h$, MatrixIFType AType}%
+                 {$L_h:V_h\to W_h, v\mapsto Av$}%
+                 {assembles and stores the matrix for a linear operator
+                  in the constructor}
+\item 
+\end{interface}
+
+\newpage
+Example: Inverse Operator with Newton
+\begin{interface}{NewtonInverseOperator}{InverseDiscreteOperator}%
+                 {DifferentiableOperator $L_h$, SolverType}%
+                 {$(L_h)^{-1}:W_h\to V_h$}%
+                 {in operator()($W_h$\& $w_h$,$V_h$\& $v_h$):
+MatrixType A;
+pro Newton Schritt
+\begin{enumerate}
+\item InverseOperator invDiff($L_h$.differential($v_h$),solver)
+\item $L_h(v_h,f_h)$
+\item $f_h-=w_h$
+\item invDiff($f_h$,$d_h$)
+\item $v_h-=d_h$
+\end{enumerate}
+}\item
+\end{interface}
+Example: Inverse Operator with Newton
+\begin{interface}{CachingNewtonInverseOperator}{InverseDiscreteOperator}%
+                 {DifferentiableOperator $L_h$, SolverType}%
+                 {$(L_h)^{-1}:W_h\to V_h$}%
+                 {in operator()($W_h$\& $w_h$,$V_h$\& $v_h$):
+MatrixType A;
+pro Newton Schritt
+\begin{enumerate}
+\item CachingOperator diff($L_h$.differential($v_h$),A)
+\item InverseOperator invDiff(diff,solver)
+\item $L_h(v_h,f_h)$
+\item $f_h-=w_h$
+\item invDiff($f_h$,$d_h$)
+\item $v_h-=d_h$
+\end{enumerate}
+}\item
+\end{interface}
+Example: Inverse Operator with Newton
+\begin{interface}{QuasiNewtonInverseOperator}{InverseDiscreteOperator}%
+                 {DiscreteOperator $L_h$, SolverType}%
+                 {$(L_h)^{-1}:W_h\to V_h$}%
+                 {in constructor:
+\begin{enumerate}
+\item QuasiDifferentiableOperator qdo($L_h$)
+\item NewtonInverseOperator nio(qdo,solver)
+\end{enumerate}
+QuasiDifferentiableOperator: implements a DifferentiableOperator where
+differential return the approximation.
+}\item
+\end{interface}
+Example: Laplace Operator
+\begin{interface}{DiscreteLaplaceOperator}{DiscreteOperator}%
+                 {}%
+                 {$L_h:V_h\to V_h, v_h\mapsto \triangle_h v_h$}%
+                 {%
+$V=C^0$ \\
+$L_D$: LagrangeInterpolation \\
+$W=L^2$ \\
+$L_R$: $f\mapsto (f,\varphi_h)_{L^2}$ \\
+The wrapped inverse operator would now map $f$ to
+$(\triangle_h)^{-1}(L_R(f))$
+}
+\item
+\end{interface}
+xample: Laplace Operator with Boundary treatment
+\begin{interface}{DiscreteBndOperator}{DiscreteOperator}%
+                 {Linear Discrete Operator $\hat{L}_h$}%
+                 {$L_h:V_h\to V_h$ with $V_h$ is Lagrangespace, 
+                  $v_h\mapsto \hat{L}_hv_h$ plus boundary treatment}
+                 {%
+For Dirichlet boundaries and
+in the matrix version this operator sets columns and rows to $\delta_{ij}$ 
+for DOFs $i$ on the boundary.
+
+The range projection is defined on $W=L^2$ as
+$L_R f= f_h$ with $f_h=\hat{L}_Rf$ for interior DOFs and 
+$f_h=g$ for boundary DOFs. 
+
+Using the concept from above we would
+have an wrapped inverse operator mapping $L^2\to V_h$ with
+$f\to L_h^{-1}(L_R f)$ which solved the Dirichlet boundary problem.
+
+In the on the fly approach...
+}
+\item
+\end{interface}
+\end{document}
