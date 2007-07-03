@@ -31,10 +31,10 @@ namespace Dune
  
     enum { polynomialOrder = order };
     
-    template< class GenericGeometryType, unsigned int porder >
+    template< class, unsigned int >
     friend class GenericLagrangePoint;
    
-    template< class FunctionSpaceType, class GeometryType, unsigned int porder >
+    template< class, class, unsigned int >
     friend class GenericLagrangeBaseFunction;
 
   private:
@@ -165,10 +165,10 @@ namespace Dune
  
     enum { polynomialOrder = 0 };
 
-    template< class GenericGeometryType, unsigned int porder >
+    template< class, unsigned int >
     friend class GenericLagrangePoint;
  
-    template< class FunctionSpaceType, class GeometryType, unsigned int porder >
+    template< class, class, unsigned int >
     friend class GenericLagrangeBaseFunction;
   
   private:
@@ -343,13 +343,13 @@ namespace Dune
  
     enum { polynomialOrder = order };
     
-    template< class GenericGeometryType, unsigned int porder >
+    template< class, unsigned int >
     friend class GenericLagrangePoint;
     
-    template< class FunctionSpaceType, class GeometryType, unsigned int porder >
+    template< class, class, unsigned int >
     friend class GenericLagrangeBaseFunction;
     
-    template< class GeometryType, unsigned int porder, unsigned int codim >
+    template< class, unsigned int, unsigned int >
     friend class GenericLagrangePointCodim;
 
   private:
@@ -685,10 +685,10 @@ namespace Dune
 
     enum { polynomialOrder = order };
 
-    template< class GenericGeometryType, unsigned int porder >
+    template< class, unsigned int >
     friend class GenericLagrangePoint;
  
-    template< class FunctionSpaceType, class GeometryType, unsigned int porder >
+    template< class, class, unsigned int >
     friend class GenericLagrangeBaseFunction;
 
   private:
