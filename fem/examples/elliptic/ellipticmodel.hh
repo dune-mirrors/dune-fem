@@ -326,7 +326,7 @@ public:
   
 //! return boundary type of a boundary point p used in a quadrature
   template< class IntersectionIteratorType > 
-  inline BoundaryType boundaryType( IntersectionIteratorType &intersection ) const 
+  inline BoundaryType boundaryType ( const IntersectionIteratorType &intersection ) const 
   {
     IntersectionQuadratureType
       quadrature( intersection, 0, IntersectionQuadratureType :: INSIDE );
@@ -348,8 +348,9 @@ public:
 
 //! determine dirichlet value in a boundary point used in a quadrature
   template <class IntersectionIteratorType, class QuadratureType>  
-  inline void dirichletValues(IntersectionIteratorType& intersection, QuadratureType& quad, int p, 
-                              RangeType& ret) const
+  inline void dirichletValues ( const IntersectionIteratorType &intersection,
+                                const QuadratureType& quad, int p, 
+                                RangeType& ret ) const
   {
     const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     ret[0] = glob[0] * ( 1.0 + glob[1]);
@@ -357,8 +358,9 @@ public:
   
 //! determine neumann value in a boundary point used in a quadrature
   template <class IntersectionIteratorType, class QuadratureType>  
-  inline void neumannValues( IntersectionIteratorType& intersection, QuadratureType& quad, int p, 
-                            RangeType& ret) const
+  inline void neumannValues ( const IntersectionIteratorType &intersection,
+                              const QuadratureType& quad, int p, 
+                              RangeType& ret) const
   {
     const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
 //    assert(glob[0]<eps);
@@ -367,8 +369,9 @@ public:
 
 //! determine robin value in a boundary point used in a quadrature
   template <class IntersectionIteratorType, class QuadratureType>  
-  inline void robinValues(IntersectionIteratorType& intersection, QuadratureType& quad, int p, 
-                          RangeType& ret) const
+  inline void robinValues ( const IntersectionIteratorType &intersection,
+                            const QuadratureType& quad, int p, 
+                            RangeType& ret) const
   {
     const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     assert(glob[0]>1.0-eps);
@@ -378,7 +381,9 @@ public:
 //! determine mass (i.e. value of the function c) in a domain point used in a 
 //! quadrature
   template <class EntityType, class QuadratureType>  
-  inline void mass(EntityType& entity, QuadratureType& quad, int p, RangeType& ret) const
+  inline void mass ( const EntityType& entity,
+                     const QuadratureType& quad, int p,
+                     RangeType& ret ) const
         {
 	  const DomainType& glob = entity.geometry().global(quad.point(p)); 
 	  ret[0] = glob[0]*glob[1] * r;
@@ -387,8 +392,9 @@ public:
 //! determine source (i.e. value of the function f) in a domain point used in 
 //! a quadrature. 
   template <class EntityType, class QuadratureType>  
-  inline void source(EntityType& entity, QuadratureType& quad, int p, 
-                     RangeType& ret) const
+  inline void source( const EntityType& entity,
+                      const QuadratureType& quad, int p, 
+                      RangeType& ret) const
         {
           const DomainType& glob = entity.geometry().global(quad.point(p));     
           ret[0] = 2.0 * q
@@ -401,9 +407,10 @@ public:
 //! no direct access to stiffness and velocity, but whole flux, i.e.
 //! diffflux = stiffness * grad(phi) 
   template <class EntityType, class QuadratureType>  
-  inline void diffusiveFlux(EntityType& entity, QuadratureType& quad, int p, 
-                   JacobianRangeType& gradphi, 
-                   JacobianRangeType& ret) const
+  inline void diffusiveFlux ( const EntityType &entity,
+                              const QuadratureType& quad, int p, 
+                              const JacobianRangeType &gradphi,
+                              JacobianRangeType& ret) const
         {
 //          ret = gradphi;
           ret[0][0] = (1+q) * gradphi[0][0] - q    * gradphi[0][1];
@@ -416,9 +423,10 @@ public:
 //! no direct access to stiffness and velocity, but whole flux, i.e.
 //! convectiveFlux =  - velocity * phi 
   template <class EntityType, class QuadratureType>  
-  inline void convectiveFlux(EntityType& entity, QuadratureType& quad, int p, 
-                   RangeType& phi, 
-                   DomainType& ret) const
+  inline void convectiveFlux( const EntityType &entity,
+                              const QuadratureType& quad, int p, 
+                              const RangeType& phi, 
+                              DomainType& ret) const
         {
           const DomainType& glob = entity.geometry().global(quad.point(p));     
 	  ret[0] = - glob[1] * s * phi[0];
@@ -427,12 +435,12 @@ public:
 
   //! the coefficient for robin boundary condition
   template< class IntersectionIteratorType, class QuadratureType >
-  inline double alpha( IntersectionIteratorType &intersection,
-                       QuadratureType &quadrature,
-                       int pt ) const
-        { 
-          return 1.0;
-        }
+  inline double alpha ( const IntersectionIteratorType &intersection,
+                        const QuadratureType &quadrature,
+                        int pt ) const
+  { 
+    return 1.0;
+  }
 };  // end of Elliptic2dModel class
 
 /*======================================================================*/
@@ -551,7 +559,7 @@ public:
   
 //! return boundary type of a boundary point p used in a quadrature
   template< class IntersectionIteratorType >
-  inline BoundaryType boundaryType( IntersectionIteratorType &intersection ) const
+  inline BoundaryType boundaryType( const IntersectionIteratorType &intersection ) const
   {
     IntersectionQuadratureType
       quadrature( intersection, 0, IntersectionQuadratureType :: INSIDE );
@@ -576,8 +584,9 @@ public:
 
 //! determine dirichlet value in a boundary point used in a quadrature
   template< class IntersectionIteratorType, class QuadratureType >
-  inline void dirichletValues( IntersectionIteratorType &intersection, QuadratureType& quad, int p, 
-                              RangeType& ret) const
+  inline void dirichletValues( const IntersectionIteratorType &intersection,
+                               const QuadratureType& quad, int p, 
+                               RangeType& ret) const
   {
     const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     ret[0] = glob[0] * ( 1.0 + glob[1]*glob[2]);
@@ -585,8 +594,9 @@ public:
   
 //! determine neumann value in a boundary point used in a quadrature
   template< class IntersectionIteratorType, class QuadratureType >
-  inline void neumannValues( IntersectionIteratorType &intersection, QuadratureType& quad, int p, 
-                            RangeType& ret) const
+  inline void neumannValues( const IntersectionIteratorType &intersection,
+                             const QuadratureType& quad, int p, 
+                             RangeType& ret) const
   {
     const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     assert(glob[0]<eps);
@@ -595,8 +605,9 @@ public:
 
 //! determine robin value in a boundary point used in a quadrature
   template< class IntersectionIteratorType, class QuadratureType >
-  inline void robinValues( IntersectionIteratorType &intersection, QuadratureType& quad, int p, 
-                          RangeType& ret) const
+  inline void robinValues( const IntersectionIteratorType &intersection,
+                           const QuadratureType& quad, int p, 
+                           RangeType& ret) const
   {
     const DomainType& glob = intersection.inside()->geometry().global(quad.point(p)); 
     assert(glob[0]>1.0-eps);
@@ -607,7 +618,7 @@ public:
 //! determine mass (i.e. value of the function c) in a domain point used in a 
 //! quadrature
   template <class EntityType, class QuadratureType>  
-  inline void mass(EntityType& en, QuadratureType& quad, int p, RangeType& ret) const
+  inline void mass( const EntityType& en, const QuadratureType& quad, int p, RangeType& ret) const
         {
 	  const DomainType& glob = en.geometry().global(quad.point(p)); 
 	  ret[0] = glob[0]*glob[1];
@@ -616,7 +627,7 @@ public:
 //! determine source (i.e. value of the function f) in a domain point used in 
 //! a quadrature. 
   template <class EntityType, class QuadratureType>  
-  inline void source(EntityType& en, QuadratureType& quad, int p, 
+  inline void source(const EntityType& en, const QuadratureType& quad, int p, 
                      RangeType& ret) const
         {
           const DomainType& glob = en.geometry().global(quad.point(p));     
@@ -629,8 +640,8 @@ public:
 //! no direct access to stiffness and velocity, but whole flux, i.e.
 //! diffflux = stiffness * grad(phi) 
   template <class EntityType, class QuadratureType>  
-  inline void diffusiveFlux(EntityType& en, QuadratureType& quad, int p, 
-                   JacobianRangeType& gradphi, 
+  inline void diffusiveFlux( const EntityType& en, const QuadratureType& quad, int p, 
+                   const JacobianRangeType& gradphi, 
                    JacobianRangeType& ret ) const
         {
           ret[0][0] =   3* gradphi[0][0] - gradphi[0][1]   - gradphi[0][2];
@@ -641,8 +652,8 @@ public:
 //! no direct access to stiffness and velocity, but whole flux, i.e.
 //! convectiveFlux =  - velocity * phi 
   template <class EntityType, class QuadratureType>  
-  inline void convectiveFlux(EntityType& en, QuadratureType& quad, int p, 
-                   RangeType& phi, 
+  inline void convectiveFlux( const EntityType& en, const QuadratureType& quad, int p, 
+                   const RangeType& phi, 
                    DomainType& ret) const
         {
           const DomainType& glob = en.geometry().global(quad.point(p));     
@@ -653,12 +664,12 @@ public:
 
   //! the coefficient for robin boundary condition
   template< class IntersectionIteratorType, class QuadratureType >
-  inline double alpha( IntersectionIteratorType &intersection,
-                       QuadratureType &quadrature,
+  inline double alpha( const IntersectionIteratorType &intersection,
+                       const QuadratureType &quadrature,
                        int pt ) const
-        { 
-          return 1.0;
-        }
+  { 
+    return 1.0;
+  }
 };  // end of Elliptic3dModel class
 
 /*======================================================================*/

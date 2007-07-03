@@ -54,7 +54,7 @@ namespace Dune
      *  \returns boundary type of the intersection
      */
     template< class IntersectionIteratorType >
-    inline BoundaryType boundaryType ( IntersectionIteratorType &intersection ) const
+    inline BoundaryType boundaryType ( const IntersectionIteratorType &intersection ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION
         ( asImp().boundaryType( intersection ) );
@@ -81,8 +81,8 @@ namespace Dune
      *  \param[out] phi          Dirichlet value in the quadrature point
      */
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void dirichletValues ( IntersectionIteratorType &intersection,
-                                  QuadratureType &quadrature,
+    inline void dirichletValues ( const IntersectionIteratorType &intersection,
+                                  const QuadratureType &quadrature,
                                   int point,
                                   RangeType &phi ) const
     {
@@ -92,8 +92,8 @@ namespace Dune
     }
 
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void neumannValues ( IntersectionIteratorType &intersection,
-                                QuadratureType &quadrature,
+    inline void neumannValues ( const IntersectionIteratorType &intersection,
+                                const QuadratureType &quadrature,
                                 int point,
                                 RangeType &phi ) const
     {
@@ -103,10 +103,12 @@ namespace Dune
     }
     
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void generalizedNeumannValues ( IntersectionIteratorType &intersection,
-                                           QuadratureType &quadrature,
-                                           int point,
-                                           RangeType &phi ) const
+    inline void generalizedNeumannValues
+      ( const IntersectionIteratorType &intersection,
+        const QuadratureType &quadrature,
+        int point,
+        RangeType &phi
+      ) const
     {
       assert( Properties :: hasGeneralizedNeumannValues );
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
@@ -116,8 +118,8 @@ namespace Dune
 
     template< class IntersectionIteratorType, class QuadratureType >
     inline RangeFieldType generalizedNeumannAlpha
-      ( IntersectionIteratorType &intersection,
-        QuadratureType &quadrature,
+      ( const IntersectionIteratorType &intersection,
+        const QuadratureType &quadrature,
         int point
       ) const
     {
@@ -128,8 +130,8 @@ namespace Dune
     }
 
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void robinValues ( IntersectionIteratorType &intersection,
-                              QuadratureType &quadrature,
+    inline void robinValues ( const IntersectionIteratorType &intersection,
+                              const QuadratureType &quadrature,
                               int point,
                               RangeType &phi ) const
     {
@@ -139,8 +141,8 @@ namespace Dune
     }
 
     template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType robinAlpha ( IntersectionIteratorType &intersection,
-                                       QuadratureType &quadrature,
+    inline RangeFieldType robinAlpha ( const IntersectionIteratorType &intersection,
+                                       const QuadratureType &quadrature,
                                        int point ) const
     {
       assert( Properties :: hasRobinValues );
@@ -150,8 +152,8 @@ namespace Dune
     }
 
     template< class EntityType, class QuadratureType >
-    inline void diffusiveFlux ( EntityType &entity,
-                                QuadratureType &quadrature,
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const QuadratureType &quadrature,
                                 int point,
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
@@ -161,8 +163,8 @@ namespace Dune
     }
     
     template< class EntityType, class QuadratureType >
-    inline void convectiveFlux ( EntityType &entity,
-                                 QuadratureType &quadrature,
+    inline void convectiveFlux ( const EntityType &entity,
+                                 const QuadratureType &quadrature,
                                  int point,
                                  const RangeType &phi,
                                  DomainType &flux ) const
@@ -173,8 +175,8 @@ namespace Dune
     }
 
     template< class EntityType, class QuadratureType >
-    inline void mass ( EntityType &entity,
-                       QuadratureType &quadrature,
+    inline void mass ( const EntityType &entity,
+                       const QuadratureType &quadrature,
                        int point,
                        RangeType &ret ) const
     {
@@ -184,8 +186,8 @@ namespace Dune
     }
 
     template< class EntityType, class QuadratureType >
-    inline void source ( EntityType &entity,
-                         QuadratureType &quadrature,
+    inline void source ( const EntityType &entity,
+                         const QuadratureType &quadrature,
                          int point,
                          RangeType &ret ) const
     {
@@ -238,8 +240,8 @@ namespace Dune
     
   public:
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void dirichletValues ( IntersectionIteratorType &intersection,
-                                  QuadratureType &quadrature,
+    inline void dirichletValues ( const IntersectionIteratorType &intersection,
+                                  const QuadratureType &quadrature,
                                   int point,
                                   RangeType &phi ) const
     {
@@ -248,8 +250,8 @@ namespace Dune
     }
 
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void neumannValues ( IntersectionIteratorType &intersection,
-                                QuadratureType &quadrature,
+    inline void neumannValues ( const IntersectionIteratorType &intersection,
+                                const QuadratureType &quadrature,
                                 int point,
                                 RangeType &phi ) const
     {
@@ -258,10 +260,12 @@ namespace Dune
     }
     
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void generalizedNeumannValues ( IntersectionIteratorType &intersection,
-                                           QuadratureType &quadrature,
-                                           int point,
-                                           RangeType &phi ) const
+    inline void generalizedNeumannValues
+      ( const IntersectionIteratorType &intersection,
+        const QuadratureType &quadrature,
+        int point,
+        RangeType &phi
+      ) const
     {
       assert( Properties :: hasGeneralizedNeumannValues );
       phi = 0;
@@ -269,8 +273,8 @@ namespace Dune
 
     template< class IntersectionIteratorType, class QuadratureType >
     inline RangeFieldType generalizedNeumannAlpha
-      ( IntersectionIteratorType &intersection,
-        QuadratureType &quadrature,
+      ( const IntersectionIteratorType &intersection,
+        const QuadratureType &quadrature,
         int point
       ) const
     {
@@ -279,8 +283,8 @@ namespace Dune
     }
 
     template< class IntersectionIteratorType, class QuadratureType >
-    inline void robinValues ( IntersectionIteratorType &intersection,
-                              QuadratureType &quadrature,
+    inline void robinValues ( const IntersectionIteratorType &intersection,
+                              const QuadratureType &quadrature,
                               int point,
                               RangeType &phi ) const
     {
@@ -298,8 +302,8 @@ namespace Dune
     }
 
     template< class EntityType, class QuadratureType >
-    inline void convectiveFlux ( EntityType &entity,
-                                 QuadratureType &quadrature,
+    inline void convectiveFlux ( const EntityType &entity,
+                                 const QuadratureType &quadrature,
                                  int point,
                                  const RangeType &phi,
                                  DomainType &flux ) const
@@ -319,8 +323,8 @@ namespace Dune
     }
 
     template< class EntityType, class QuadratureType >
-    inline void source ( EntityType &entity,
-                         QuadratureType &quadrature,
+    inline void source ( const EntityType &entity,
+                         const QuadratureType &quadrature,
                          int point,
                          RangeType &ret ) const
     {
