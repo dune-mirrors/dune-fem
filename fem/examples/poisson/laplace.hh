@@ -3,6 +3,7 @@
 
 //- Dune includes
 #include <dune/fem/quadrature/quadrature.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
 
 //- local includes
 #include "feop.hh"
@@ -113,15 +114,8 @@ namespace Dune
       assert( this->matrix_ );
       return this->matrix_;
     }
-        
-    //! Creates a new empty matrix
-    MatrixType* newEmptyMatrix () const 
-    {
-      return new MatrixType( this->functionSpace_.size(),
-                             this->functionSpace_.size(), 
-                             15 * dimension );
-    }
-        
+    
+       
     //! Prepares the local operator before calling apply()
     void prepareGlobal ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest )
     {

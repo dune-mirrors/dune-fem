@@ -8,7 +8,6 @@
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/localoperator.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
 
 namespace Dune {
 
@@ -477,11 +476,11 @@ protected:
       
       enum { dimension = GridType :: dimension };
       enum { polynomialOrder = DiscreteFunctionSpaceType :: polynomialOrder };
+
+      const int size = this->functionSpace_.size();
       
-      return new MatrixType( this->functionSpace_.size(), 
-                             this->functionSpace_.size(),
-                             15 * (dimension - 1) * polynomialOrder );
-    };
+      return new MatrixType( size, size, 8 * (1 << dimension) * polynomialOrder );
+    }
 
     /*! 
      *   assemble: perform grid-walkthrough and assemble global matrix
@@ -505,11 +504,10 @@ protected:
       {  
         FieldMatrix<double, maxnumOfBaseFct, maxnumOfBaseFct> mat;
 
-        IteratorType it    = functionSpace_.begin(); 
-        IteratorType endit = functionSpace_.end(); 
-
-        for( ; it != endit; ++it )
-          assembleOnGrid( *it, mat);
+        IteratorType it = functionSpace_.begin(); 
+        const IteratorType end = functionSpace_.end(); 
+        for( ; it != end; ++it )
+          assembleOnGrid( *it, mat );
       }
 
       {
@@ -533,11 +531,13 @@ protected:
      *   ??? why shoudl this one not be private? method assemble() is 
      *   sufficient for public call. ???
      *
-     *   \param start and end iterator and storage for a local matrix 
+     *   \param[in] entity entity for current local update
+     *
+     *   \param{in] localMatrix local matrix storate
      */
     template< class EntityType, class LocalMatrixImp >
     void assembleOnGrid ( const EntityType &entity, 
-                          LocalMatrixImp &mat) const
+                          LocalMatrixImp &localMatrix ) const
     {
       typedef typename DiscFunctionType :: FunctionSpaceType
         DiscreteFunctionSpaceType;
@@ -548,13 +548,13 @@ protected:
       const int numBaseFunctions = baseSet.numBaseFunctions();
        
       // setup matrix 
-      getLocalMatrix( entity, numBaseFunctions, mat );
+      getLocalMatrix( entity, numBaseFunctions, localMatrix );
 
       for( int i = 0; i < numBaseFunctions; ++i ) { 
         const int row = functionSpace_.mapToGlobal( entity , i );
         for( int j = 0; j < numBaseFunctions; ++j ) {
           const int col = functionSpace_.mapToGlobal( entity, j );
-          matrix_->add( row, col, mat[ i ][ j ] );
+          matrix_->add( row, col, localMatrix[ i ][ j ] );
         }
       }
     }

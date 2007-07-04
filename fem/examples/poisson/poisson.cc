@@ -26,6 +26,11 @@
 **              make GRIDTYPE=ALUGRID_SIMPLEX
 **                    -> compiles and works correctly
 **
+**
+**              Similarly, the polynomial order can be specified by
+**
+**              make POLORDER=2
+**
 **************************************************************************/
 
 // uncomment the following line to use grape
@@ -33,10 +38,11 @@
 
 #define VERBOSE false
 
+#include <config.h>
 
 //- system includes
 #include <iostream>
-#include <config.h>
+#include <sstream>
 
 //- Dune includes 
 #include <dune/common/stdstreams.cc>
@@ -57,39 +63,40 @@
 
 //- local inlcudes 
 #include "laplace.hh"
+#include "problem.hh"
 
 #ifndef POLORDER
   #define POLORDER 1
 #endif
 
-
-
-using namespace Dune;
-
 //***********************************************************************
 /*! Poisson problem: 
 
-  This is an example how to solve the equation on 
-  \f[\Omega = (0,1)^dimworld \f]
-
-  \f[ -\triangle u  = f \ \ \ in \Omega \f]
-  \f[  \qquad u = 0  \ \ \ on  \partial\Omega \f]
-  \f[ f(x,y,z) = 2 (x-x^2) (y-y^2) +
-                 2 (z-z^2) (y-y^2) +    
-                 2 (x-x^2) (z-z^2)
+  This is an example solving the poisson problem
+  \f{displaymath}
+  \begin{array}{rcll}
+  -\triangle u &=& f & \quad \mbox{in}\ \Omega\\
+             u &=& 0 & \quad \mbox{on}\ \partial\Omega
+  \end{array}
+  \f}
+  with the finite element method using Lagrangian elements. The polynomial
+  order is given by POLORDER.
+  
+  In this example, $\Omega = ]0,1[^{dimworld}$ and
+  \f[
+  f( x, y, z ) = 2 \sum_{i=1}^{dimworld} \prod_{j \neq i} (x_j-x_j^2)
   \f]
 
-  An exact solution to this problem is given by 
-  \f[ u(x,y,z) = ( x - x^2 ) ( y - y^2 ) ( z - z^2 ) \f]
-
-  with the finite element method using lagrangian elements of polynom order 1.
+  The exact solution to the poisson problem is then given by
+  \f[
+  u( x, y, z ) = \prod_{i=1}^{dimworld} (x_i - x_i^2).
+  \f]
 */
 //***********************************************************************
 
+using namespace Dune;
 
 
-// forward declaration 
-class Tensor; 
 
 //! the index set we are using 
 typedef LeafGridPart< GridType > GridPartType;
@@ -97,18 +104,23 @@ typedef LeafGridPart< GridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef FunctionSpace< double, double, dimworld, 1 > FuncSpace;
+typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+
+// The data functions (as defined in problem.hh)
+typedef RHSFunction< FunctionSpaceType > RHSFunctionType;
+typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
+typedef Tensor< FunctionSpaceType > TensorType;
 
 //! define the discrete function space our unkown belongs to
 typedef LagrangeDiscreteFunctionSpace
-        < FuncSpace, GridPartType, POLORDER, CachingStorage >
+  < FunctionSpaceType, GridPartType, POLORDER, CachingStorage >
   DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! define the discrete laplace operator, see ./fem.cc
-typedef LaplaceFEOp< DiscreteFunctionType, Tensor > LaplaceOperatorType;
+typedef LaplaceFEOp< DiscreteFunctionType, TensorType > LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
 // see dune/fem/inverseoperators.hh 
@@ -119,95 +131,6 @@ typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
-
-
-
-// right hand side of governing problem 
-class RHSFunction : public Function< FuncSpace, RHSFunction >
-{
-  typedef FuncSpace::RangeType RangeType;
-  typedef FuncSpace::DomainType DomainType;
-
-private:
-  typedef RHSFunction ThisType;
-  typedef Function< FuncSpace, ThisType > BaseType;
- 
-public:
-  RHSFunction ( FuncSpace &functionSpace )
-  : BaseType( functionSpace )
-  {
-  }
-   
-  //  f(x,y,z) = 2 (x-x^2) (y-y^2) +
-  //             2 (z-z^2) (y-y^2) +              
-  //             2 (x-x^2) (z-z^2)
-  void evaluate( const DomainType &x , RangeType &phi ) const
-  {
-    enum { dimension = DomainType :: dimension };
-    
-    phi = 0;
-    for( int i = 0; i < dimension; ++i ) { 
-      RangeType tmp = 2.0;
-      for( int j = 1; j < dimension; ++j ) {
-        const int idx = (i + j) % dimension;
-        tmp *= x[ idx ] - SQR( x[ idx ] );
-      }
-      phi += tmp;
-    }
-  }
-};
-
-
-
-//! the exact solution to the problem for EOC calculation 
-class ExactSolution : public Function < FuncSpace , ExactSolution > 
-{
-  typedef FuncSpace::RangeType RangeType;
-  typedef FuncSpace::RangeFieldType RangeFieldType;
-  typedef FuncSpace::DomainType DomainType;
-public:
-  ExactSolution (FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
- 
-  //! u(x,y,z) = (x-x^2)*(y-y^2)*(z-z^2)
-  void evaluate (const DomainType & x , RangeType & ret) const
-  {
-    ret = 1.0;
-    for(int i=0; i<DomainType::dimension; i++)
-      ret *= ( x[i] - SQR(x[i]) );
-  }
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
-  {
-    evaluate ( x , ret );
-  }
-};
-
-
-
-// diffusion coefficient for this problem the id 
-class Tensor : public Function < FunctionSpace < double , double, dimworld , 1 >, Tensor >
-{
-  typedef FunctionSpace< double , double, dimworld , 1 >  FuncSpace;
-  typedef FuncSpace::RangeType RangeType;
-  typedef FuncSpace::DomainType DomainType;
-
-public:
-  // Constructor 
-  Tensor (FuncSpace &f)
-    : Function < FuncSpace , Tensor > ( f )  { } ;
-  // eval Tensor 
-  void evaluate (int i, int j, const DomainType & x1 , RangeType & ret) const
-  {
-    evaluate(x1,0.0,ret);
-  }
-  void evaluate (const DomainType & x1 , RangeType & ret) const
-  {
-    evaluate(x1,0.0,ret);
-  }
-  void evaluate (const DomainType & x1 ,double time, RangeType & ret) const
-  {
-    ret[0] = 1.0;
-  }
-};//end class Tensor
 
 
 
@@ -274,7 +197,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   DiscreteFunctionType rhs( "rhs", discreteFunctionSpace );
   rhs.clear();
       
-  RHSFunction f( discreteFunctionSpace ); 
+  RHSFunctionType f( discreteFunctionSpace ); 
     
   LaplaceOperatorType laplace( discreteFunctionSpace, 
                                LaplaceOperatorType :: ASSEMBLED );
@@ -300,7 +223,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   // calculation of L2 error
   // polynomial order for this calculation should be higher than the polynomial
   // order of the base functions
-  ExactSolution u( discreteFunctionSpace ); 
+  ExactSolutionType u( discreteFunctionSpace ); 
   L2Error< DiscreteFunctionType > l2error;
   DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
   std :: cout << "L2 Error: " << error << std :: endl << std :: endl;
@@ -318,28 +241,41 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
 
 
 
+std :: string getMacroGridName( unsigned int dimension )
+{
+  std :: ostringstream s;
+  s << dimension << "dgrid.dgf";
+  return s.str();
+}
+
+
+
 // main programm, run algorithm twice to calc EOC 
 int main( int argc, char **argv )
 {
-  if( argc != 2 ) {
-    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
-    return 1;
+  try {
+    if( argc != 2 ) {
+      std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
+      return 1;
+    }
+    
+    int level = atoi( argv[ 1 ] );
+    double error[ 2 ];
+
+    std :: string macroGridName = getMacroGridName( GridType :: dimension );
+    std :: cout << "loading dgf: " << macroGridName << std :: endl;
+    
+    const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
+    level = (level > step ? level - step : 0);
+    
+    for( int i = 0; i < 2; ++i )
+      error[ i ] = algorithm( macroGridName, level + i*step, i );
+
+    const double eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
+    std :: cout << "EOC = " << eoc << std :: endl;
+    
+    return 0;
+  } catch( Exception exception ) {
+    std :: cerr << exception << std :: endl;
   }
-  
-  int level = atoi( argv[ 1 ] );
-  double error[ 2 ];
-
-  std :: string macroGridName( "square.dgf" );
-  std :: cout << "loading dgf: " << macroGridName << std :: endl;
-  
-  const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
-  level = (level > step ? level - step : 0);
-  
-  for( int i = 0; i < 2; ++i )
-    error[ i ] = algorithm( macroGridName, level + i*step, i );
-
-  const double eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
-  std :: cout << "EOC = " << eoc << std :: endl;
-  
-  return 0;
 }
