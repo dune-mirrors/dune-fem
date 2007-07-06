@@ -80,10 +80,6 @@
 **
 **************************************************************************/
 
-// select problem Type by uncommenting one of the two following
-#define POISSON
-//#define ELLIPTIC
-
 // define SKIP_GRAPE, if you don't want visualization.
 #define SKIP_GRAPE
 
@@ -98,21 +94,12 @@
 // i.e. comment or uncomment the following
 //#define FEOP_SAVE_MATRIX_WANTED
 
-// for debugging: force Neumann-Boundary-Values in Models
-// #define FORCENEUMANN
+#include <config.h>
 
 #include <iostream>
-#include <config.h>
+
 #include <dune/common/stdstreams.cc>
-#include <dune/fem/io/matlab/matlabhelper.hh>
-
-// Select the polynomial order of the calculation
-#ifdef POLORDER
-  enum { polynomialOrder = POLORDER };
-#else
-  enum { polynomialOrder = 2 };
-#endif
-
+#include <dune/common/exceptions.hh>
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
@@ -131,7 +118,6 @@
 // GRIDDIM is deleted in GRIDTYPE !!
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
 
-using namespace Dune;
 
 // Dune includes 
 #include <dune/grid/common/gridpart.hh>
@@ -146,6 +132,8 @@ using namespace Dune;
 
 #include <dune/fem/operator/feop.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
+
+#include <dune/fem/io/matlab/matlabhelper.hh>
 
 //#include "spmatrix.hh"
 #include <dune/fem/misc/l2error.hh>
@@ -162,41 +150,42 @@ using namespace Dune;
 #include "ellipticmodel.hh"
 #include "elementintegratortraits.hh"
 
-//! definition of model class, see ellipticmodel.hh
-
-typedef EllipticElementIntegratorTraits< polynomialOrder > IntegratorTraits;
-
-#ifdef POISSON
-  typedef PoissonModel< IntegratorTraits > EllipticModelType;
+// Select the polynomial order of the calculation
+#ifdef POLORDER
+  enum { polynomialOrder = POLORDER };
+#else
+  enum { polynomialOrder = 1 };
 #endif
 
-#ifdef ELLIPTIC
-#if PDIM==2
-  typedef Elliptic2dModel< IntegratorTraits > EllipticModelType;
-#elif PDIM==3
-  typedef Elliptic3dModel< IntegratorTraits > EllipticModelType;
+#ifndef ELLIPTIC
+  #ifndef POISSON
+    #define POISSON
+  #endif
 #endif
 
-#endif // if ELLIPTIC
-
-
-//! definition of exact solution, see ellipticmodel.hh
-#ifdef POISSON
-  typedef PoissonExactSolution< IntegratorTraits > ExactSolutionType;
-#endif
-
-#ifdef ELLIPTIC
-#if PDIM == 2
-  typedef Elliptic2dExactSolution< IntegratorTraits > ExactSolutionType;
-#elif PDIM == 3
-  typedef Elliptic3dExactSolution< IntegratorTraits > ExactSolutionType;
-#endif
-#endif // elliptic
+using namespace Dune;
 
 //! definition of traits class, which already defines various 
 //! basic settings such as gridparts, etc.
 //! if you want another settings, simply generate your own Traits class
-typedef EllipticModelType :: TraitsType ElementIntegratorTraitsType;
+typedef EllipticElementIntegratorTraits< polynomialOrder > ElementIntegratorTraitsType;
+
+typedef ElementIntegratorTraitsType :: FunctionSpaceType FunctionSpaceType;
+
+#ifdef POISSON
+  typedef PoissonModel< FunctionSpaceType > EllipticModelType;
+  typedef PoissonExactSolution< FunctionSpaceType > ExactSolutionType;
+#endif
+
+#ifdef ELLIPTIC
+  #if PDIM==2
+    typedef Elliptic2dModel< FunctionSpaceType > EllipticModelType;
+    typedef Elliptic2dExactSolution< FunctionSpaceType > ExactSolutionType;
+  #elif PDIM==3
+    typedef Elliptic3dModel< FunctionSpaceType > EllipticModelType;
+    typedef Elliptic3dExactSolution< FunctionSpaceType > ExactSolutionType;
+  #endif
+#endif // if ELLIPTIC
 
 //! the grid part we are using 
 //typedef LevelGridPart < GridType > GridPartType;
@@ -493,9 +482,8 @@ double algorithm( const std :: string &filename, int maxlevel, int turn )
   // pol for evaluation the basefunctions 
   // double error = l2err.norm<EllipticModelType::TraitsType::quadDegree + 2> 
   //    (u ,solution, 0.0);
-  double l2error = l2err.norm( u, solution,
-                               EllipticModelType :: TraitsType :: quadDegree,
-                               0.0 );
+  double l2error
+    = l2err.norm( u, solution, ElementIntegratorTraitsType :: quadDegree, 0 );
   std :: cout << std :: endl;
   std :: cout << "L2 Error: " << l2error << std :: endl;
   std :: cout << std :: endl;
@@ -528,28 +516,32 @@ double algorithm( const std :: string &filename, int maxlevel, int turn )
 //**************************************************
 int main ( int argc, char **argv )
 {
-  if( argc != 2 )
-  {
-    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
-    exit( 1 );
+  try {
+    if( argc != 2 )
+    {
+      std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
+      exit( 1 );
+    }
+    
+    int level = atoi( argv[ 1 ] );
+    level = (level > 0 ? level - 1 : 0);
+
+    #if PDIM == 2
+      std::string macroGridName( "square.dgf" );
+    #else
+      std::string macroGridName( "cube.dgf" );
+    #endif
+    std::cout << "loading dgf " << macroGridName << std :: endl;
+
+    double error[ 2 ];
+    const int steps = DGFGridInfo< GridType > :: refineStepsForHalf();
+    for( int i = 0; i < 2; ++i )
+      error[ i ] = algorithm( macroGridName, (level+i) * steps, i );
+
+    const double eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
+    std :: cout << "EOC = " << eoc << std :: endl;
+    return 0;
+  } catch( Exception e ) {
+    std :: cerr << e << std :: endl;
   }
-  
-  int level = atoi( argv[ 1 ] );
-  level = (level > 0 ? level - 1 : 0);
-
-  #if PDIM == 2
-    std::string macroGridName( "square.dgf" );
-  #else
-    std::string macroGridName( "cube.dgf" );
-  #endif
-  std::cout << "loading dgf " << macroGridName << std :: endl;
-
-  double error[ 2 ];
-  const int steps = DGFGridInfo< GridType > :: refineStepsForHalf();
-  for( int i = 0; i < 2; ++i )
-    error[ i ] = algorithm( macroGridName, (level+i) * steps, i );
-
-  const double eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
-  std :: cout << "EOC = " << eoc << std :: endl;
-  return 0;
 }
