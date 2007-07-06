@@ -273,7 +273,6 @@ typedef RhsAssembler<ElementRhsIntegratorType> RhsAssemblerType;
  *   FEOp after assembling
  */
 /*======================================================================*/
-
 class MyElementMatrixIntegrator
 : public DefaultElementMatrixIntegrator
   < ElementIntegratorTraitsType, 
@@ -282,11 +281,11 @@ class MyElementMatrixIntegrator
   >
 {
 public:
-    typedef ElementIntegratorTraitsType               TraitsType;
-    typedef EllipticModelType                         ModelType;
+    typedef ElementIntegratorTraitsType TraitsType;
+    typedef EllipticModelType ModelType;
     
-    typedef TraitsType::ElementMatrixType    ElementMatrixType;
-    typedef TraitsType::EntityType           EntityType;
+    typedef TraitsType :: ElementMatrixType ElementMatrixType;
+    typedef TraitsType :: EntityType EntityType;
     
 public:
   //! constructor with model instance is implemented in default-class, so a

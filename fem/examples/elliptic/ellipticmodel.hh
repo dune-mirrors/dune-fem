@@ -357,6 +357,7 @@ namespace Dune
     {
       const DomainType &x = intersection.inside()->geometry().global( quad.point( p ) ); 
       ret = 2 - s * SQR( x[ 1 ] ) + (2 + q - s) * x[ 1 ];
+      //ret = (2 + q - s * x[ 1 ]) * (1 + x[ 1 ]) - q;
     }
     
     //! determine mass (i.e. value of the function c) in a domain point used in a 
@@ -381,47 +382,44 @@ namespace Dune
     {
       const DomainType &x
         = entity.geometry().global( quadrature.point( p ) );     
-      ret = 2 * q + r * SQR( x[ 0 ] ) * SQR( x[ 1 ] )
-                  + r * SQR( x[ 0 ] ) * x[ 1 ]
-                  + s * (x[ 1 ] + x[ 0 ] + SQR( x[ 1 ]) + 2 * x[ 0 ] * x[ 1 ]); 
+      ret = 2 * q + s * ((x[ 0 ] + x[ 1 ]) * (1 + x[ 1 ]) + x[ 0 ] * x[ 1 ])
+            + r * SQR( x[ 0 ] ) * x[ 1 ] * (1 + x[ 1 ]);
     }
 
     //! no direct access to stiffness and velocity, but whole flux, i.e.
     //! diffflux = stiffness * grad(phi) 
-    template <class EntityType, class QuadratureType>  
+    template< class EntityType, class QuadratureType >  
     inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType& quad, int p, 
+                                const QuadratureType &quadrature,
+                                int pt,
                                 const JacobianRangeType &gradphi,
-                                JacobianRangeType& ret) const
-          {
-  //          ret = gradphi;
-            ret[0][0] = (1+q) * gradphi[0][0] - q    * gradphi[0][1];
-            // the following cumbersome multiplication with 1.0 is required, 
-            // otherwise compile error: missing reference to 
-            //Dune::Elliptic2dModel::q
-            ret[0][1] = - 1.0 * q * gradphi[0][0]  + (1+q) * gradphi[0][1];
-          }
+                                JacobianRangeType &ret ) const
+    {
+      ret[ 0 ][ 0 ] = (1 + q) * gradphi[ 0 ][ 0 ] - q * gradphi[ 0 ][ 1 ];
+      ret[ 0 ][ 1 ] = (1 + q) * gradphi[ 0 ][ 1 ] - q * gradphi[ 0 ][ 0 ]; 
+    }
 
     //! no direct access to stiffness and velocity, but whole flux, i.e.
     //! convectiveFlux =  - velocity * phi 
-    template <class EntityType, class QuadratureType>  
+    template< class EntityType, class QuadratureType >
     inline void convectiveFlux( const EntityType &entity,
-                                const QuadratureType& quad, int p, 
-                                const RangeType& phi, 
-                                DomainType& ret) const
+                                const QuadratureType &quadrature,
+                                int pt,
+                                const RangeType &phi,
+                                DomainType &ret) const
     {
-      const DomainType& glob = entity.geometry().global(quad.point(p));     
-      ret[0] = - glob[1] * s * phi[0];
-      ret[1] = - glob[1] * s * phi[0];
+      const DomainType &x = entity.geometry().global( quadrature.point( pt ) ); 
+      ret[ 0 ] = -x[ 1 ] * s * phi[ 0 ];
+      ret[ 1 ] = -x[ 1 ] * s * phi[ 0 ];
     }
 
     //! the coefficient for robin boundary condition
     template< class IntersectionIteratorType, class QuadratureType >
-    inline double alpha ( const IntersectionIteratorType &intersection,
-                          const QuadratureType &quadrature,
-                          int pt ) const
+    inline RangeFieldType robinAlpha ( const IntersectionIteratorType &intersection,
+                                       const QuadratureType &quadrature,
+                                       int pt ) const
     { 
-      return 1.0;
+      return 1;
     }
   };  // end of Elliptic2dModel class
 
@@ -637,11 +635,11 @@ namespace Dune
 
     //! the coefficient for robin boundary condition
     template< class IntersectionIteratorType, class QuadratureType >
-    inline double alpha( const IntersectionIteratorType &intersection,
-                         const QuadratureType &quadrature,
-                         int pt ) const
+    inline RangeFieldType robinAlpha ( const IntersectionIteratorType &intersection,
+                                       const QuadratureType &quadrature,
+                                       int pt ) const
     { 
-      return 1.0;
+      return 1;
     }
   };  // end of Elliptic3dModel class
 

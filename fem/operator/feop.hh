@@ -41,23 +41,24 @@ namespace Dune
    *  element matrix provider is now specified by a template-parameter. 
    *
    *  The class is used for general elliptic problems + boundary treatment: 
-   *  \f{eqnarray*}
-   *                 - div(a*grad(u) - b*u) + c*u = f     in Omega    \\
-   *                                            u = g_D   in \Gamma_D \\
-   *                           (a*grad(u) -b*u) n = g_N   in \Gamma_N \\
-   *                 (a*grad(u) -b*u) n + alpha*u = g_R   in \Gamma_R 
+   *  \f{displaymath}
+   *  \begin{array}{rcll}
+   *  -\nabla \cdot (a \nabla u + b u) + c u &=& f   & \quad \mbox{in} \enspace \Omega\\
+   *                                       u &=& g_D & \quad \mbox{in} \enspace \Gamma_D\\
+   *                    (a \nabla u + b u) n &=& g_N & \quad \mbox{in} \enspace \Gamma_N\\
+   *         (a \nabla u + b u) n + \alpha u &=& g_R & \quad \mbox{in} \enspace \Gamma_R 
+   *  \end{array}
    *  \f}
-   *
-   *  where \l$ a,b,c,g_D,g_N,g_R \l$ are space dependent, alpha a constant and the 
-   *  quantities denote
-   *              "stiffness"        a(x) 
-   *              "velocity"         b(x) 
-   *              "mass"             c(x) 
-   *              "source"           f(x) 
-   *              "dirichletValues"  g_D
-   *              "neumannValues"    g_N
-   *              "robinValues"      g_R
-   *              "alpha"            alpha                   
+   *  where \l$ a,b,c,g_D,g_N,g_R \l$ are space dependent, \f$\alpha\f$ a constant
+   *  and the quantities denote
+   *  \f$a( x )\f$:      stiffness
+   *  \f$b( x )\f$:      velocity
+   *  \f$c( x )\f$:      mass
+   *  \f$f( x )\f$:      source
+   *  \f$g_D\f$:         Dirichlet values
+   *  \f$g_N\f$:         Neumann values
+   *  \f$g_R\f$:         Robin values
+   *  \f$\alpha( x )\f$: Robin alpha
    *
    * the following assumptions on the basis/model are made:
    *    - The discrete function space is a nodal basis, 

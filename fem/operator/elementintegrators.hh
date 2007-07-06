@@ -263,17 +263,6 @@ namespace Dune
       return model_;
     }
 
-    /*!  access function for model
-     *
-     *   Default implementation is return of the stored reference.
-     *
-     *   \return reference to the locally stored model reference
-     */
-    inline ModelType& model () 
-    {
-      return model_;
-    }
-
     inline const DiscreteFunctionSpaceType &discreteFunctionSpace () const
     {
       return discreteFunctionSpace_;
@@ -439,7 +428,6 @@ namespace Dune
       for( int pt=0; pt < numQuadraturePoints; ++pt )
       {
         const CoordinateType &x = quadrature.point( pt );
-        // calc Jacobian inverse before volume is evaluated 
         const GeometryJacobianType &inv = geometry.jacobianInverseTransposed( x );
         const double volume = geometry.integrationElement( x );
               
@@ -456,11 +444,12 @@ namespace Dune
             // evaluate base function
             RangeType phi;
             baseFunctionSet.evaluate( j, quadrature, pt, phi );
-            phi *= factor;
             
             // evaluate convectiveFlux
             DomainType flux;
             model.convectiveFlux( entity, quadrature, pt, phi, flux );
+
+            matrix.add( i, j, factor * (flux * gradPhi[ 0 ]) );
           }
         }
       } // end loop over quadrature points            
@@ -560,7 +549,7 @@ namespace Dune
     template< class EntityType, class ElementMatrixType >
     void addGeneralizedNeumannElementMatrix ( EntityType& entity,
                                               ElementMatrixType &matrix,
-                                              double coef = 1 ) //  const
+                                              double coefficient = 1 ) //  const
     {
       assert( ModelType :: Properties :: hasNeumannValues );
       const ModelType &model = this->model(); 
@@ -590,10 +579,10 @@ namespace Dune
         const int numQuadraturePoints = quadrature.nop();
         for ( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {  
-		      // the following seems wrong...
-          const double volume = it.intersectionGlobal().integrationElement(quadrature.localPoint(pt));
+          const double volume
+            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
           const double alpha = model.generalizedNeumannAlpha( it, quadrature, pt );
-          const double factor = coef * alpha * quadrature.weight( pt ) * volume;
+          const double factor = coefficient * alpha * quadrature.weight( pt ) * volume;
                                             
           for(int i = 0; i < numBaseFunctions; ++i )
           {
@@ -638,7 +627,7 @@ namespace Dune
     {
       assert( ModelType :: Properties :: hasRobinValues );
       const ModelType &model = this->model();
-      
+
       // for all intersections check whether boundary
       const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace();
       
@@ -655,19 +644,17 @@ namespace Dune
         if( model.boundaryType( it ) != ModelType :: Robin )
           continue;
 
+        const BaseFunctionSetType &baseFunctionSet
+          = dfSpace.baseFunctionSet( entity );
+        const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
+
         // integrate over intersection
         IntersectionQuadratureType
           quadrature( it, TraitsType :: quadDegree,
                       IntersectionQuadratureType :: INSIDE );
         const int numQuadraturePoints = quadrature.nop();
-                    
-        const BaseFunctionSetType &baseFunctionSet
-          = dfSpace.baseFunctionSet( entity );
-        const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
-                    
-        for ( int pt = 0; pt < numQuadraturePoints; ++pt ) 
+        for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {
-          // the following seems wrong...
           const double volume
             = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
           const double alpha = model.robinAlpha( it, quadrature, pt );
@@ -690,7 +677,7 @@ namespace Dune
     
   protected:
     //! Reference to the data model
-    ModelType& model_;
+    const ModelType& model_;
     //! the discrete function space
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;
     //! verbosity flag
@@ -843,33 +830,36 @@ namespace Dune
     typedef typename TraitsType::IntersectionIteratorType 
                      IntersectionIteratorType;
 
-  // the following does not seem to work properly...
-  //  enum {quadDegree = TraitsType::quadDegree};
-    
-  /*======================================================================*/
-  /*! 
-   *   constructor: store local reference to the underlying model
-   *
-   *   The local reference model_ is initialized
-   *
-   *   \param model the model which provides the data functions
-   *
-   *   \param verbose an optional verbosity flag
-   */
-  /*======================================================================*/  
-    DefaultElementRhsIntegrator( ModelType &model, const DiscreteFunctionSpaceType &dfSpace, int verbose = 0):
-            model_(model), discreteFunctionSpace_( dfSpace ), verbose_(verbose)
+    // the following does not seem to work properly...
+    //  enum {quadDegree = TraitsType::quadDegree};
+      
+    /*======================================================================*/
+    /*! 
+     *   constructor: store local reference to the underlying model
+     *
+     *   The local reference model_ is initialized
+     *
+     *   \param model the model which provides the data functions
+     *
+     *   \param verbose an optional verbosity flag
+     */
+    /*======================================================================*/  
+    DefaultElementRhsIntegrator( const ModelType &model,
+                                 const DiscreteFunctionSpaceType &dfSpace,
+                                 int verbose = 0 )
+    : model_( model ),
+      discreteFunctionSpace_( dfSpace ),
+      verbose_( verbose )
     {
-      if (verbose_)
-          std::cout << "entered constructor of " 
-                    << "DefaultElementRhsIntegrator\n";
-    };
+      if( verbose_ )
+        std::cout << "entered constructor of DefaultElementRhsIntegrator" << std :: endl;
+    }
 
     /** \breif give access to the model
      *
      *   the reference to the locally stored model is returned
      */
-    inline ModelType &model() 
+    inline const ModelType &model () 
     {
       return model_;
     }
@@ -1021,7 +1011,8 @@ namespace Dune
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {
           // the following seems wrong...
-          const double volume = it.intersectionGlobal().integrationElement(quadrature.localPoint(pt));
+          const double volume
+            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
           const double factor = coefficient * quadrature.weight( pt ) * volume;
         
           for( int i = 0; i < numBaseFunctions; ++i )
@@ -1092,7 +1083,8 @@ namespace Dune
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {  
           // the following seems wrong...
-          const double volume = it.intersectionGlobal().integrationElement(quadrature.localPoint(pt));                 
+          const double volume
+            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
           const double factor = coefficient * quadrature.weight( pt ) * volume;
         
           for( int i = 0; i < numBaseFunctions; ++i ) 
@@ -1103,7 +1095,7 @@ namespace Dune
             RangeType value;
             model.robinValues( it, quadrature, pt, value );
             
-            elRhs[ i ] += factor * (value[ i ] * phi[ i ]);
+            elRhs[ i ] += factor * (value[ 0 ] * phi[ 0 ]);
           }
         } // end loop over quadrature points
       } // end loop over intersections
@@ -1164,7 +1156,8 @@ namespace Dune
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {  
           // the following seems wrong...
-          const double volume = it.intersectionGlobal().integrationElement(quadrature.localPoint(pt));
+          const double volume
+            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
           const double factor = coefficient * quadrature.weight( pt ) * volume;
         
           for( int i=0; i < numBaseFunctions; ++i ) 
@@ -1182,7 +1175,7 @@ namespace Dune
   
   private:
     //! reference to the underlying model specified during construction
-    ModelType& model_;
+    const ModelType &model_;
     //! the discrete function space
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;
     //! verbosity flag;
@@ -1357,7 +1350,7 @@ private:
         FaceDofIteratorType;
 
       // grid walkthrough for setting Dirichlet-DOFs
-      ModelType &model = elRhsInt_.model();
+      const ModelType &model = elRhsInt_.model();
       const DiscreteFunctionSpaceType &fspace = elRhsInt_.discreteFunctionSpace();
       
       const GridPartType & gridPart = fspace.gridPart();
