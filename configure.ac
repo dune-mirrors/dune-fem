@@ -42,7 +42,6 @@ AC_CONFIG_FILES([Makefile
      fem/examples/Makefile
      fem/examples/poisson/Makefile
      fem/examples/elliptic/Makefile
-     fem/examples/laplace/Makefile
      fem/examples/transport/Makefile
      fem/examples/vectorial/Makefile
      fem/examples/l2projection/Makefile
