@@ -668,7 +668,8 @@ namespace Dune
         for ( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {
           // the following seems wrong...
-          const double volume = it.intersectionGlobal().integrationElement(quadrature.localPoint(pt));
+          const double volume
+            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
           const double alpha = model.robinAlpha( it, quadrature, pt );
           const double factor = coefficient * alpha * quadrature.weight( pt ) * volume;
                                             
@@ -1100,7 +1101,7 @@ namespace Dune
             baseFunctionSet.evaluate( i, quadrature, pt, phi );  
             
             RangeType value;
-            model.robinValues( entity, quadrature, pt, value );
+            model.robinValues( it, quadrature, pt, value );
             
             elRhs[ i ] += factor * (value[ i ] * phi[ i ]);
           }
