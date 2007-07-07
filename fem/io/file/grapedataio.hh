@@ -476,9 +476,13 @@ readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timest
     readParameter(filename,"Dim_Range",m,false);
     int space;
     readParameter(filename,"Space",space,false);
-    if( space != (int) df.space().type() )
+    int order; 
+    readParameter(filename,"Polynom_order",order,false);
+    if( space != (int) df.space().type() || (order != df.space().order()) )
     {
-      derr << "GrapeDataIO::readData: Wrong SpaceType, got " << space << " but want "<< df.space().type() << std::endl; 
+      derr << "GrapeDataIO::readData: Wrong SpaceType, read (space = " << space << ", order = " << order << ")";
+      derr << " but program has (space = "<< df.space().type() << ", order = ";
+      derr << df.space().order() << ") "<< std::endl; 
       abort();
     }
     
