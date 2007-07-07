@@ -1331,7 +1331,7 @@ read_xdr(const std::string filename , int timestep)
     {
       fclose( testfile );
       (*it)->read_xdr(newFilename.c_str(),timestep); 
-      count ++;
+      ++count;
     }
     else 
     {
