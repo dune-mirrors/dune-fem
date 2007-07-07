@@ -322,14 +322,21 @@ public:
     {
       int len = size_;
       xdr_int( xdrs, &len );
-      assert(size_ <= len);
-
-      xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_double);
-      return true;
+      // when read check size 
+      if( size_ != len )
+      {
+        // this vector can only read the same size as stored 
+        assert( (size_ != len) ? (std::cout << size_ << " s|l " << len << "\n" ,0 ): 1);
+        std::cerr << "ERROR: StaticArray::processXdr: sizes does not match read value! \n";
+        abort();
+      }
+      return processXdrVector(xdrs);
     }
-    else
+    else 
+    {
       return false;
-  } 
+    }
+  }
 
   //! print array 
   void print(std::ostream& s) const 
@@ -340,6 +347,15 @@ public:
       s << vec_[i] << "\n";
     }
   }
+  
+protected:  
+  //! read and write xdr vector 
+  bool processXdrVector(XDR *xdrs)
+  {
+    assert( xdrs );
+    xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_double);
+    return true;
+  } 
 };
 
 // specialisations of axpy 
@@ -369,38 +385,18 @@ inline void StaticArray<double>::clear()
  
 //! specialisation for int 
 template <>
-inline bool StaticArray<int>::processXdr(XDR *xdrs)
+inline bool StaticArray<int>::processXdrVector(XDR *xdrs)
 {
-  typedef int T;
-  if(xdrs != 0)
-  {
-    int len = size_;
-    xdr_int( xdrs, &len );
-    assert(size_ <= len);
-    xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_int);
-    return true;
-  }
-  else
-    return false;
+  xdr_vector(xdrs,(char *) vec_,size_, sizeof(int) ,(xdrproc_t)xdr_int);
+  return true;
 }
 
 //! specialisation for double 
 template <>
 inline bool StaticArray<double>::processXdr(XDR *xdrs)
 {
-  typedef double T;
-  
-  if(xdrs != 0)
-  {
-    int len = size_;
-    xdr_int( xdrs, &len );
-    assert( (size_ > len) ? (std::cout << size_ << " s|l " << len << "\n" ,0 ): 1);
-
-    xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_double);
-    return true;
-  }
-  else
-    return false;
+  xdr_vector(xdrs,(char *) vec_,size_, sizeof(double) ,(xdrproc_t)xdr_double);
+  return true;
 }
 
 /*! 
@@ -508,7 +504,7 @@ public:
   //! return size of vector in bytes 
   int usedMemorySize() const 
   {
-    return memSize_ * sizeof(T);
+    return memSize_ * sizeof(T) + sizeof(ThisType);
   } 
   
 private: 
