@@ -271,9 +271,13 @@ struct IOTuple : public IOTupleBase
     typedef DofManagerFactory<DofManagerType> DMFactoryType;
     std::string dmname;
     dmname = gridName(path,name) + "_dm";
-    DMFactoryType::getDofManager(grid);
+    DofManagerType& dm = DMFactoryType::getDofManager(grid);
     std::cout << "    from file " << dmname << std::endl;
+    // read dofmanager, i.e. read all index sets 
     DMFactoryType::readDofManager(grid,dmname,n);
+    
+    // resize all data because size of index set might have changed  
+    dm.resize();
   }
   
   template <class DataIO,class GridType>
@@ -291,12 +295,12 @@ struct IOTuple : public IOTupleBase
     ReturnType* ret =
       new ReturnType(IOTupleHelper<T1,T2,0>::createData(dataio,dname,n,*grid));
     
-    // read all data 
+    // now read dofmanager and index sets 
+    IOTuple<TupType>::restoreDofManager(*grid,n,path,name);
+
+    // now read all data 
     IOTupleHelper<T1,T2,0>::restore(*ret,dataio,dname,n);
    
-    // read dofmanager and index sets 
-    IOTuple<TupType>::restoreDofManager(*grid,n,path,name);
-    
     std::cout << "    FINISHED!" << std::endl;
     return ret;
   }
