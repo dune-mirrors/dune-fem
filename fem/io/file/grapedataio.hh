@@ -80,6 +80,7 @@ public:
   inline static GridType * restoreGrid (
       const GrapeIOStringType & fnprefix , double & time , int timestep)
   {
+    // todo MPI_Comm pass to grid type 
     GridType * grid = new GridType (); 
     assert( grid );  
     readGrid(*grid,fnprefix,time,timestep);
@@ -159,8 +160,8 @@ public:
     bool readGridName = readParameter(fnprefix,"Grid",gridname);
     if(! readGridName ) 
     {
-      std::cerr << "ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
-      abort();
+      std::cerr << "P["<< grid.comm().rank() << "] ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+      return false;
     }
 
     if( grid.name() != gridname )
@@ -336,31 +337,39 @@ template <int dim, int dimworld, class GridImp, bool hasBackupRestore>
 inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid 
 (GridImp & grid, const GrapeIOStringType & fnprefix , double & time , int timestep)
 {
-  int helpType;
-
+  int helpType = (int) xdr;
   std::string gridname;
 
   bool readGridName = readParameter(fnprefix,"Grid",gridname);
   if(! readGridName ) 
   {
-    std::cerr << "ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
-    abort();
+    if(grid.comm().rank() == 0)
+    {
+      std::cerr << "P["<< grid.comm().rank() << "] ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+      abort();
+    }
+    else 
+    {
+      // on all other procs on print warning
+      std::cerr << "P["<< grid.comm().rank() << "] WARNING: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+    }
   }
-
-  if(grid.name() != gridname)
+  else 
   {
-    std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
-    abort();
+    if(grid.name() != gridname)
+    {
+      std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
+      abort();
+    }
   }
-
-  readParameter(fnprefix,"Format",helpType);
-  GrapeIOFileFormatType ftype = (GrapeIOFileFormatType) helpType;
 
   int precision = 6;
-  readParameter(fnprefix,"Precision",precision);
-
   int hasDm = 0;
+  readParameter(fnprefix,"Format",helpType);
+  readParameter(fnprefix,"Precision",precision);
   readParameter(fnprefix,"DofManager",hasDm);
+
+  GrapeIOFileFormatType ftype = (GrapeIOFileFormatType) helpType;
 
   GrapeIOStringType fn = generateFilename(fnprefix,timestep,precision);
   std::cout << "Read file: fnprefix = `" << fn << "' \n";
