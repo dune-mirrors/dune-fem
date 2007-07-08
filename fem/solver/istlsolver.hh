@@ -106,7 +106,7 @@ class ISTLBICGSTABOp : public Operator<
 private:
   // no const reference, we make const later 
   mutable OperatorType &op_;
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
+  double reduction_;
   int maxIter_;
   bool verbose_ ;
 
@@ -117,13 +117,13 @@ private:
     static void call(OperatorImp & op,
                      const DiscreteFunctionImp & arg,
                      DiscreteFunctionImp & dest,
-                     double eps, int maxIter, bool verbose)
+                     double reduction, int maxIter, bool verbose)
     {
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
       typedef typename OperatorImp :: PreconditionMatrixType PreconditionerType; 
       const PreconditionerType& pre = op.preconditionMatrix();
       solve(op.systemMatrix().matrix(),pre,
-            arg,dest,arg.space().grid().comm(),eps,maxIter,verbose);
+            arg,dest,arg.space().grid().comm(),reduction,maxIter,verbose);
     }
 
     template <class MatrixType, 
@@ -135,7 +135,7 @@ private:
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
                  const CommunicatorType& comm,
-                 double eps, int maxIter, bool verbose)
+                 double reduction, int maxIter, bool verbose)
     {
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
       typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
@@ -146,7 +146,7 @@ private:
       ParaScalarProduct<BlockVectorType,CommunicatorType> scp(comm); 
       BiCGSTABSolver<BlockVectorType> solver(mat,scp,
           const_cast<PreconditionerType&> (preconditioner),
-          eps,maxIter,verb);    
+          reduction,maxIter,verb);    
 
       InverseOperatorResult returnInfo;
   
@@ -155,9 +155,10 @@ private:
   };
 
 public:
-  ISTLBICGSTABOp(OperatorType & op , double  redEps , double absLimit , 
+  //! ISTL BiCGStab
+  ISTLBICGSTABOp(OperatorType & op , double  reduction , double absLimit , 
                 int maxIter , bool verbose ) 
-    : op_(op), epsilon_ ( sqrt(absLimit) ) 
+    : op_(op), reduction_ ( reduction ) 
     , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
   }
@@ -172,7 +173,7 @@ public:
 
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
-    SolverCaller<OperatorType,true>::call(op_,arg,dest,epsilon_,maxIter_,verbose_);
+    SolverCaller<OperatorType,true>::call(op_,arg,dest,reduction_,maxIter_,verbose_);
   }
 
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
