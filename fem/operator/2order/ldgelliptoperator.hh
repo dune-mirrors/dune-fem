@@ -381,7 +381,7 @@ namespace Dune {
         {
           // get base function set of single space 
           typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-          const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(*it);
+          const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(*it);
           const int numDofs = bsetEn.numBaseFunctions();
           newDofs.reserve( numDofs * entityMarker_.size() );
         }
@@ -659,11 +659,11 @@ namespace Dune {
       const double massVolElInv = massVolumeInv(geo);
       
       // get base function set of single space 
-      const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(en);
+      const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
       const int numDofs = bsetEn.numBaseFunctions();
       
       // get base function set of gradient space 
-      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.baseFunctionSet(en);
+      const GradientBaseFunctionSetType grdbsetEn = gradientSpace_.baseFunctionSet(en);
       const int gradientNumDofs = grdbsetEn.numBaseFunctions();
       
       /////////////////////////////////
@@ -1006,8 +1006,8 @@ namespace Dune {
                                      en , spc_, nb , gradientSpace_ ); 
       
       // get base function set 
-      const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
-      const GradientBaseFunctionSetType& gradbsetNeigh 
+      const BaseFunctionSetType bsetNeigh = spc_.baseFunctionSet(nb);
+      const GradientBaseFunctionSetType gradbsetNeigh 
                               = gradientSpace_.baseFunctionSet(nb);
      
       const int quadNop = faceQuadInner.nop();
@@ -1191,7 +1191,7 @@ namespace Dune {
       const GeometryType & geo = en.geometry();
       const double massVolElInv = massVolumeInv(geo);
       
-      const GradientBaseFunctionSetType& grdbsetEn = gradientSpace_.baseFunctionSet(en);
+      const GradientBaseFunctionSetType grdbsetEn = gradientSpace_.baseFunctionSet(en);
       const int gradientNumDofs = grdbsetEn.numBaseFunctions();
       
       /////////////////////////////////
