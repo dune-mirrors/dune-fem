@@ -312,7 +312,7 @@ namespace LDGExample {
 
 #if USE_DUNE_ISTL
     //! only working for DGSpace     
-    typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
+    typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
 #else 
     typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
 #endif
