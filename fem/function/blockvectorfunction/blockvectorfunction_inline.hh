@@ -103,10 +103,10 @@ template<class DiscreteFunctionSpaceType>
 inline typename StaticDiscreteFunction<
 DiscreteFunctionSpaceType>:: LocalFunctionImp *
 StaticDiscreteFunction<DiscreteFunctionSpaceType>::
-newLocalFunctionObject () const
+newObject () const
 
 {
-    return new LocalFunctionImp ( this->functionSpace_ , mapper_, dofVec_ );
+  return new LocalFunctionImp ( this->functionSpace_ , mapper_, dofVec_ );
 }
 
 template<class DiscreteFunctionSpaceType> template <class EntityType>
@@ -403,7 +403,7 @@ StaticDiscreteLocalFunction(
  , mapper_(mapper)
  , en_(0)
  , dofVec_ ( dofVec ) 
- , uniform_(! (fSpace_.multipleGeometryTypes()))
+ , multipleBaseFunctionSets_((fSpace_.multipleBaseFunctionSets()))
  , init_(false)
  , baseSet_(0)
 {
@@ -437,61 +437,6 @@ numDofs () const
   return numOfDof_;
 }
 
-#ifdef OLDFEM
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluate (EntityType &en, const DomainType & x, RangeType & ret) const 
-{
-  evaluate(x,ret);
-}
-
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluateLocal (EntityType &en, const DomainType & local, RangeType & ret) const
-{
-  evaluate(local,ret);
-}
-
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluateLocal(const DomainType & x, RangeType & ret) const
-{
-  evaluate(x,ret);
-}
-
-template<class DiscreteFunctionType > 
-template <class QuadratureType> 
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-evaluate (EntityType &en, QuadratureType &quad, int quadPoint, RangeType & ret) const 
-{
-  evaluate(quad,quadPoint,ret);
-}
-template<class DiscreteFunctionType >
-template <class QuadratureType>
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-jacobian (EntityType &en, QuadratureType &quad, int quadPoint, JacobianRangeType & ret) const
-{
-  jacobian(quad,quadPoint,ret);
-}
-
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-jacobian(EntityType& en, const DomainType& x,
-         JacobianRangeType& ret) const
-{
-  jacobian(x,ret);
-}
-
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-jacobianLocal(EntityType& en, const DomainType& x,
-              JacobianRangeType& ret) const
-{
-  jacobian(x,ret);
-}
-
-#endif
-
 template<class DiscreteFunctionType >
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
 evaluate (const DomainType & local, RangeType & ret) const 
@@ -500,11 +445,11 @@ evaluate (const DomainType & local, RangeType & ret) const
   assert(init_);
   assert(en().geometry().checkInside(local));
   ret = 0.0;
-  const BaseFunctionSetType& bSet = baseFunctionSet();
 
-  for (int i = 0; i < bSet.numBaseFunctions(); ++i)
+  const int numBase = baseFunctionSet().numBaseFunctions();
+  for (int i = 0; i < numBase; ++i)
   {
-    bSet.evaluate(i, local , tmp_);
+    baseFunctionSet().evaluate(i, local , tmp_);
     for (int l = 0; l < dimRange; ++l) {
       ret[l] += (*values_[i]) * tmp_[l];
     }
@@ -588,8 +533,8 @@ StaticDiscreteLocalFunction < DiscreteFunctionType >:: BaseFunctionSetType&
 StaticDiscreteLocalFunction < DiscreteFunctionType >::
 baseFunctionSet() const 
 {
-  assert(init_ && baseSet_);
-  return *baseSet_;
+  assert(init_);
+  return baseSet_;
 }
 
 //! axpy operation for factor 
@@ -688,15 +633,15 @@ template <class EntityImp>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
 init (const EntityImp &en ) const
 {
-  if(!uniform_ || !init_)
+  // in not initilized or we have more then one base function set
+  if(multipleBaseFunctionSets_ || !init_)
   {
-    baseSet_  = &fSpace_.baseFunctionSet(en);
-    numOfDof_ = baseSet_->numBaseFunctions();
+    baseSet_  = fSpace_.baseFunctionSet(en);
+    init_ = true;
+    numOfDof_ = baseFunctionSet().numBaseFunctions();
 
     if(numOfDof_ > values_.size())
       values_.resize( numOfDof_ );
-
-    init_ = true;
   }
 
   // cache entity 

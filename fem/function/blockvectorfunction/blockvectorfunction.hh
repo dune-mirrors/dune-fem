@@ -10,7 +10,7 @@
 #endif
 
 //- Dune inlcudes 
-#include <dune/common/array.hh>
+#include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/dgspace/dgmapper.hh>
 #include <dune/istl/bvector.hh>
 
@@ -114,9 +114,6 @@ public:
   //! LocalFunctionType is the exported lf type 
   typedef typename Traits :: LocalFunctionType LocalFunctionType;
 
-  // the storage of the local functions 
-  typedef LocalFunctionStorage< DiscreteFunctionType > LocalFunctionStorageType;
-  
   //! the dof iterator type of this function
   typedef typename Traits :: DofIteratorType DofIteratorType;
   typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
@@ -234,7 +231,7 @@ private:
   bool readXdrs(XDR * xdrs);
   
   //! return object pointer of type LocalFunctionImp 
-  LocalFunctionImp * newLocalFunctionObject () const;
+  LocalFunctionImp * newObject () const;
 
   //! the name of the function
   std::string name_;
@@ -374,7 +371,7 @@ protected:
   DofStorageType & dofVec_;
 
   //! Array holding pointers to the local dofs 
-  mutable Array < RangeFieldType * > values_ ;
+  mutable MutableArray < RangeFieldType * > values_ ;
 
   //! needed once 
   mutable RangeType tmp_;
@@ -390,13 +387,15 @@ protected:
   mutable int numOfDof_;
 
   //! do we have the same base function set for all elements
-  bool uniform_;
+  const bool multipleBaseFunctionSets_;
 
   //! is it initialised?
   mutable bool init_;
 
   //! corresponding base function set 
-  mutable const BaseFunctionSetType* baseSet_; 
+  mutable BaseFunctionSetType baseSet_; 
+
+  mutable GeometryType geoType_;
   
 }; // end StaticDiscreteLocalFunction 
 
