@@ -195,9 +195,9 @@ namespace Dune {
   template <class DiscreteFunctionSpaceImp>
   const typename
   AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::BaseFunctionSetType& 
-  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::baseFunctionSet() const {
-    assert(baseSet_);
-    return *baseSet_;
+  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::baseFunctionSet() const 
+  {
+    return baseSet_;
   }
   
   template <class DiscreteFunctionSpaceImp>
@@ -223,11 +223,11 @@ namespace Dune {
     
     if( !init_ || multipleGeometryTypes_ )
     {
-      if( geoType_ != en.geometry().type() )
+      if( (geoType_ != en.geometry().type()) || spc_.multipleBaseFunctionSets() )
       {
-        baseSet_ = &spc_.baseFunctionSet(en);
+        baseSet_ = spc_.baseFunctionSet(en);
 
-        numDofs_ = baseSet_->numBaseFunctions();
+        numDofs_ = baseFunctionSet().numBaseFunctions();
         values_.resize(numDofs_);
 
         init_ = true;
@@ -563,11 +563,11 @@ namespace Dune {
     
     if( !init_ || multipleGeometryTypes_ )
     {
-      if( geoType_ != en.geometry().type() )
+      if( (geoType_ != en.geometry().type()) || spc_.multipleBaseFunctionSets() )
       {
-        baseSet_ = &spc_.baseFunctionSet(en);
+        baseSet_ = spc_.baseFunctionSet(en);
 
-        numDofs_ = baseSet_->numDifferentBaseFunctions();
+        numDofs_ = baseFunctionSet().numDifferentBaseFunctions();
         values_.resize(numDofs_);
         
         // real dof number is larger 
@@ -598,8 +598,7 @@ namespace Dune {
   AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   baseFunctionSet() const 
   {
-    assert( baseSet_ );
-    return *baseSet_;
+    return baseSet_;
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>

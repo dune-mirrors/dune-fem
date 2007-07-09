@@ -32,6 +32,7 @@ namespace Dune {
  
     typedef AdaptiveDiscreteFunction<
       DiscreteFunctionSpaceImp> DiscreteFunctionType;
+
     // the local functions implementation 
     typedef AdaptiveLocalFunction<
       DiscreteFunctionSpaceImp> LocalFunctionImp;
@@ -95,10 +96,10 @@ namespace Dune {
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
     //! Local function implementation 
-    typedef typename Traits::LocalFunctionImp LocalFunctionImp;
     typedef typename Traits::GridType GridType;
     
     //! Local function type
+    typedef typename Traits::LocalFunctionImp  LocalFunctionImp;
     typedef typename Traits::LocalFunctionType LocalFunctionType;
     
     //! Discrete function type (identical to this type, needed as 
@@ -200,7 +201,6 @@ namespace Dune {
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
-    using Imp::newLocalFunctionObject;
     using Imp::localFunction;
     using Imp::write_xdr;
     using Imp::read_xdr;
@@ -211,6 +211,7 @@ namespace Dune {
 
     using Imp::leakPointer;
   private:
+    using Imp::newObject;
     //- Forbidden members
 
     const MyType& interface() const { return *this; }
@@ -394,10 +395,13 @@ namespace Dune {
     mutable bool init_;
     const bool multipleGeometryTypes_;
 
-    mutable const BaseFunctionSetType* baseSet_;
+    // base function set 
+    mutable BaseFunctionSetType baseSet_;
 
+    // actual entity
     mutable const EntityType* en_;
 
+    // geometry type of base function set 
     mutable GeometryType geoType_;
   }; // end class AdaptiveLocalFunction
 
@@ -516,7 +520,6 @@ namespace Dune {
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
-    using Imp::newLocalFunctionObject;
     //! return local function for given entity
     template <class EntityType> 
     LocalFunctionType localFunction (const EntityType &en) { return LocalFunctionType(en,*this); }
@@ -538,6 +541,8 @@ namespace Dune {
     int numComponents() const { return N; }
 
   private:
+    using Imp::newObject;
+    
     const MyType& interface() const { return *this; }
   }; // end class AdaptiveDiscreteFunction (specialised for CombinedSpace)
 
@@ -763,7 +768,7 @@ namespace Dune {
 
     mutable bool init_;
     const bool multipleGeometryTypes_;
-    mutable const BaseFunctionSetType* baseSet_;
+    mutable BaseFunctionSetType baseSet_;
 
     mutable const EntityType* en_;
 

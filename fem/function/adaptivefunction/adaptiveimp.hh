@@ -30,6 +30,7 @@ namespace Dune {
     
     typedef typename Traits::DofIteratorType DofIteratorType;
     typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
+    
   public:   
     typedef typename Traits::LocalFunctionImp LocalFunctionImp;
     typedef typename Traits::LocalFunctionType LocalFunctionType;
@@ -102,14 +103,13 @@ namespace Dune {
     //! read function data from pgm fromat file
     bool read_pgm(std::string filename); 
     
-    //! return pointer to local function implementation 
-    LocalFunctionImp * newLocalFunctionObject () const;
-
     //! return pointer to underlying array 
     DofType       * leakPointer ()       { return dofVec_.leakPointer(); }
     //! return pointer to underlying array 
     const DofType * leakPointer () const { return dofVec_.leakPointer(); }
   protected:
+    //! return pointer to local function implementation 
+    LocalFunctionImp* newObject () const;
 
     //! return reference to dof storage 
     DofStorageType& dofStorage() { return dofVec_; }
