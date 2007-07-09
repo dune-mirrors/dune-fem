@@ -45,7 +45,7 @@ makeFunctionSpace (GridPartType& gridPart)
     if(baseFuncSet_.find( geoType ) == baseFuncSet_.end() ) 
     {
       // get pointer to base function set 
-      const BaseFunctionSetType* baseSet = 
+      const BaseFunctionSetImp* baseSet = 
         & SingletonProviderType::getObject(geoType);
       
       baseFuncSet_[ geoType ] = baseSet; 
@@ -68,7 +68,7 @@ inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStor
   iterator end = baseFuncSet_.end();
   for(iterator it = baseFuncSet_.begin(); it != end; ++it)
   {
-    const BaseFunctionSetType * set = (*it).second; 
+    const BaseFunctionSetImp * set = (*it).second; 
     SingletonProviderType::removeObject(*set);
   }
 
@@ -86,7 +86,7 @@ type () const
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 template <class EntityType> 
 inline const 
-typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BaseFunctionSetType &  
+typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BaseFunctionSetType  
 FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 baseFunctionSet (const EntityType &en) const 
 {
@@ -95,12 +95,12 @@ baseFunctionSet (const EntityType &en) const
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 inline const 
-typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BaseFunctionSetType &  
+typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BaseFunctionSetType  
 FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 baseFunctionSet (const GeometryType& geomType) const 
 {
   assert( baseFuncSet_.find(geomType) != baseFuncSet_.end());
-  return *baseFuncSet_[geomType];
+  return BaseFunctionSetType(baseFuncSet_[geomType]);
 }
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >

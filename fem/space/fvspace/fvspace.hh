@@ -13,6 +13,7 @@
 #include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
+#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
 //- local includes 
 #include "fvspacebasefunctions.hh"
@@ -52,7 +53,8 @@ namespace Dune {
     typedef FiniteVolumeSpace<
       FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
     
-    typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetImp;
+    typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     typedef FiniteVolumeMapper<IndexSetType,polOrd,DimRange> MapperType;
 
     // always 1 for FVSpace Base , to be revised 
@@ -110,7 +112,9 @@ namespace Dune {
     /** \todo Please doc me! */
     typedef DiscreteFunctionSpaceDefault<Traits> DefaultType;
   
-    /** \todo Please doc me! */
+    /** type of base function set implementation  */
+    typedef typename Traits::BaseFunctionSetImp BaseFunctionSetImp;
+    /** exported type of base function set */
     typedef typename Traits::BaseFunctionSetType  BaseFunctionSetType;
     /** \todo Please doc me! */
     typedef typename Traits::IndexSetType IndexSetType;
@@ -168,11 +172,11 @@ namespace Dune {
       ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
 
     // type of singleton factory 
-    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
                 ScalarFactoryType> SingletonFactoryType;
 
     // type of singleton list  
-    typedef SingletonList< GeometryType, BaseFunctionSetType,
+    typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
 
     typedef DofManager<GridType> DofManagerType;
@@ -207,12 +211,12 @@ namespace Dune {
 
     //! provide the access to the base function set for a given entity
     template <class EntityType>
-    const BaseFunctionSetType& 
+    const BaseFunctionSetType 
     baseFunctionSet ( const EntityType &en ) const;
 
     //! Get base function set for a given id of geom type (mainly used by
     //! CombinedSpace) 
-    const BaseFunctionSetType&
+    const BaseFunctionSetType
     baseFunctionSet (const GeometryType& geoType) const;
 
     //! get dimension of value 
@@ -249,7 +253,7 @@ namespace Dune {
   
   protected:
     //! the corresponding map of base function sets
-    typedef std::map< const GeometryType, const BaseFunctionSetType *> BaseFunctionMapType;
+    typedef std::map< const GeometryType, const BaseFunctionSetImp *> BaseFunctionMapType;
     mutable BaseFunctionMapType baseFuncSet_;
 
     //! the index set, used by the mapper for mapping between grid and space 
