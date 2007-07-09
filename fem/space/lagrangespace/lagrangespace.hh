@@ -15,6 +15,7 @@
 #include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
+#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
 //- local includes 
 #include "basefunctions.hh"
@@ -65,9 +66,13 @@ namespace Dune
     typedef LagrangeMapper< GridPartType, polynomialOrder, DimRange >
       MapperType;
     
+    // implementation of basefunction set 
     typedef VectorialBaseFunctionSet< FunctionSpaceType,
                                       BaseFunctionStorageImp >
-      BaseFunctionSetType;
+        BaseFunctionSetImp;
+
+    // exported type 
+    typedef SimpleBaseFunctionProxy<BaseFunctionSetImp>  BaseFunctionSetType;
 
     enum { localBlockSize = 1 };
   };
@@ -152,9 +157,11 @@ namespace Dune
     enum { polynomialOrder = Traits :: polynomialOrder };
     
     //! type of the base function set(s)
+    typedef typename Traits :: BaseFunctionSetImp BaseFunctionSetImp;
+    //! type of the base function set(s)
     typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
     //! type of the base function set map
-    typedef std :: map< const GeometryType, const BaseFunctionSetType* >
+    typedef std :: map< const GeometryType, const BaseFunctionSetImp* >
       BaseFunctionMapType;
     //! type of base function factory
     typedef LagrangeBaseFunctionFactory< ScalarFunctionSpaceType,
@@ -163,12 +170,12 @@ namespace Dune
       ScalarFactoryType;
     //! type of singleton base function factory
     typedef BaseFunctionSetSingletonFactory< GeometryType,
-                                             BaseFunctionSetType,
+                                             BaseFunctionSetImp,
                                              ScalarFactoryType >
       BaseFunctionSetSingletonFactoryType;
     //! type of singleton list (singleton provider) for base functions
     typedef SingletonList< GeometryType,
-                           BaseFunctionSetType,
+                           BaseFunctionSetImp,
                            BaseFunctionSetSingletonFactoryType >
       BaseFunctionSetSingletonProviderType;
 
@@ -242,7 +249,7 @@ namespace Dune
         const GeometryType &geometryType = geometryTypes[ i ];
         
         if( baseFunctionSet_.find( geometryType ) == baseFunctionSet_.end() ) {
-          const BaseFunctionSetType *baseFunctionSet
+          const BaseFunctionSetImp *baseFunctionSet
             = &(BaseFunctionSetSingletonProviderType
                 :: getObject( geometryType ));
           assert( baseFunctionSet != NULL );
@@ -272,7 +279,7 @@ namespace Dune
       BFIteratorType bfend = baseFunctionSet_.end();
       for( BFIteratorType it = baseFunctionSet_.begin(); it != bfend; ++it ) 
       {
-        const BaseFunctionSetType *baseFunctionSet = (*it).second;
+        const BaseFunctionSetImp *baseFunctionSet = (*it).second;
         if( baseFunctionSet != NULL )
           BaseFunctionSetSingletonProviderType
           :: removeObject( *baseFunctionSet );
@@ -325,19 +332,19 @@ namespace Dune
 
     //! provide access to the base function set for an entity
     template< class EntityType >
-    inline const BaseFunctionSetType& 
+    inline const BaseFunctionSetType 
       baseFunctionSet ( const EntityType &entity ) const
     {
       return this->baseFunctionSet( entity.geometry().type() );
     }
 
     //! provide access to the base function set for a geometry type
-    inline const BaseFunctionSetType&
+    inline const BaseFunctionSetType
       baseFunctionSet ( const GeometryType type ) const
     {
       assert( baseFunctionSet_.find( type ) != baseFunctionSet_.end() );
       assert( baseFunctionSet_[ type ] != NULL );
-      return *baseFunctionSet_[ type ];
+      return BaseFunctionSetType(baseFunctionSet_[ type ]);
     }
     
     //! provide access to the Lagrange point set for an entity
