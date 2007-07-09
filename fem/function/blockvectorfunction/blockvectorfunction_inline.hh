@@ -6,8 +6,8 @@ namespace Dune
 
 // Constructor making discrete function  
 template<class DiscreteFunctionSpaceType>
-inline StaticDiscreteFunction<DiscreteFunctionSpaceType>::
-StaticDiscreteFunction(const DiscreteFunctionSpaceType & f) 
+inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f) 
 : DiscreteFunctionDefaultType ( f )  
   , name_ ( "no name" )
   , mapper_(f.indexSet())
@@ -20,8 +20,8 @@ StaticDiscreteFunction(const DiscreteFunctionSpaceType & f)
 
 // Constructor making discrete function  
 template<class DiscreteFunctionSpaceType>
-inline StaticDiscreteFunction<DiscreteFunctionSpaceType>::
-StaticDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType & f ) 
+inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+BlockVectorDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType & f ) 
 : DiscreteFunctionDefaultType ( f )  
   , name_ ( name )
   , mapper_(f.indexSet(),1)
@@ -34,8 +34,8 @@ StaticDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType &
 
 // Constructor making discrete function  
 template<class DiscreteFunctionSpaceType>
-inline StaticDiscreteFunction<DiscreteFunctionSpaceType>::
-StaticDiscreteFunction(const std::string name, 
+inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+BlockVectorDiscreteFunction(const std::string name, 
     const DiscreteFunctionSpaceType & f, const DofStorageType & data ) 
 : DiscreteFunctionDefaultType ( f )  
   , name_ ( name )
@@ -48,8 +48,8 @@ StaticDiscreteFunction(const std::string name,
 }
 
 template<class DiscreteFunctionSpaceType>
-inline StaticDiscreteFunction<DiscreteFunctionSpaceType>::
-StaticDiscreteFunction(const StaticDiscreteFunction<DiscreteFunctionSpaceType> & df ) :
+inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+BlockVectorDiscreteFunction(const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> & df ) :
   DiscreteFunctionDefaultType ( df.functionSpace_ ) 
   , mapper_(df.functionSpace_.indexSet(),1)
   , dm_(df.dm_)
@@ -65,23 +65,23 @@ StaticDiscreteFunction(const StaticDiscreteFunction<DiscreteFunctionSpaceType> &
 
 // Desctructor 
 template<class DiscreteFunctionSpaceType>
-inline StaticDiscreteFunction<DiscreteFunctionSpaceType>::
-~StaticDiscreteFunction() 
+inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+~BlockVectorDiscreteFunction() 
 {
   dm_.removeDofSet(*memPair_.first);
 }
 
 template<class DiscreteFunctionSpaceType>
-inline void StaticDiscreteFunction<DiscreteFunctionSpaceType>::clear ()
+inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::clear ()
 {
   const int size = dofVec_.size();
   for(int i=0; i<size; ++i) dofVec_[i] = 0.0; 
 }
 
 template<class DiscreteFunctionSpaceType>
-inline void StaticDiscreteFunction<DiscreteFunctionSpaceType>::print(std::ostream &s ) const
+inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::print(std::ostream &s ) const
 {
-  s << "StaticDiscreteFunction '" << name_ << "'\n";
+  s << "BlockVectorDiscreteFunction '" << name_ << "'\n";
   ConstDofIteratorType enddof = this->dend ();
   for(ConstDofIteratorType itdof = this->dbegin (); itdof != enddof; ++itdof) 
   {
@@ -93,16 +93,16 @@ inline void StaticDiscreteFunction<DiscreteFunctionSpaceType>::print(std::ostrea
 //*************************************************************************
 template<class DiscreteFunctionSpaceType> template <class EntityType>
 inline void
-StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 localFunction ( const EntityType &en , LocalFunctionType &lf )
 {
   lf.init ( en );
 }
 
 template<class DiscreteFunctionSpaceType>
-inline typename StaticDiscreteFunction<
+inline typename BlockVectorDiscreteFunction<
 DiscreteFunctionSpaceType>:: LocalFunctionImp *
-StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 newObject () const
 
 {
@@ -110,61 +110,56 @@ newObject () const
 }
 
 template<class DiscreteFunctionSpaceType> template <class EntityType>
-inline typename StaticDiscreteFunction<DiscreteFunctionSpaceType>:: LocalFunctionType 
-StaticDiscreteFunction<DiscreteFunctionSpaceType>:: localFunction ( const EntityType &en ) const
+inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>:: LocalFunctionType 
+BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>:: localFunction ( const EntityType &en ) const
 {
   return LocalFunctionType (en,*this);
 }
 
 template<class DiscreteFunctionSpaceType> 
-inline typename StaticDiscreteFunction<DiscreteFunctionSpaceType>::DofIteratorType 
-StaticDiscreteFunction<DiscreteFunctionSpaceType>::dbegin ()
+inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::DofIteratorType 
+BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::dbegin ()
+{
+  return DofIteratorType( dofVec_ , 0 );     
+}
+
+
+template<class DiscreteFunctionSpaceType> 
+inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::DofIteratorType 
+BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::dend ( )
+{
+  return DofIteratorType( dofVec_  , dofVec_.size() );     
+}
+
+template<class DiscreteFunctionSpaceType> 
+inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::ConstDofIteratorType 
+BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::dbegin ( ) const
 {
   DofIteratorType tmp ( dofVec_ , 0 );     
-  return tmp;
-}
-
-
-template<class DiscreteFunctionSpaceType> 
-inline typename StaticDiscreteFunction<DiscreteFunctionSpaceType>::DofIteratorType 
-StaticDiscreteFunction<DiscreteFunctionSpaceType>::dend ( )
-{
-  DofIteratorType tmp ( dofVec_  , dofVec_.size() );     
-  return tmp;
+  return ConstDofIteratorType(tmp);
 }
 
 template<class DiscreteFunctionSpaceType> 
-inline typename StaticDiscreteFunction<DiscreteFunctionSpaceType>::ConstDofIteratorType 
-StaticDiscreteFunction<DiscreteFunctionSpaceType>::dbegin ( ) const
-{
-  DofIteratorType tmp ( dofVec_ , 0 );     
-  ConstDofIteratorType tmp2(tmp);
-  return tmp2;
-}
-
-template<class DiscreteFunctionSpaceType> 
-inline typename StaticDiscreteFunction<DiscreteFunctionSpaceType>::ConstDofIteratorType 
-StaticDiscreteFunction<DiscreteFunctionSpaceType>::dend ( ) const 
+inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::ConstDofIteratorType 
+BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::dend ( ) const 
 {
   DofIteratorType tmp ( dofVec_ , dofVec_.size() );     
-  ConstDofIteratorType tmp2(tmp);
-  return tmp2;
+  return ConstDofIteratorType(tmp);
 }
 //**************************************************************************
 //  Read and Write Methods 
 //**************************************************************************
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 write_xdr( std::string filename ) const
 {
   const char * fn = filename.c_str();
-  FILE  *file;
   XDR   xdrs;
+  FILE* file = fopen(fn, "wb");
 
-  file = fopen(fn, "wb");
   if (!file)
   { 
-    printf( "\aERROR in StaticDiscreteFunction::write_xdr(..): couldnot open <%s>!\n", fn);
+    printf( "\aERROR in BlockVectorDiscreteFunction::write_xdr(..): couldnot open <%s>!\n", fn);
     fflush(stderr);
     return false;
   }
@@ -180,7 +175,7 @@ write_xdr( std::string filename ) const
 }
 
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 writeXdrs(XDR * xdrs) const  
 {
   int len = dofVec_.size();
@@ -196,7 +191,7 @@ writeXdrs(XDR * xdrs) const
 }
 
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 readXdrs(XDR * xdrs)   
 {
   int len = 0 ;
@@ -217,18 +212,17 @@ readXdrs(XDR * xdrs)
 }
 
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 read_xdr( std::string filename)
 {
   const char * fn = filename.c_str();
-  FILE   *file;
-  XDR     xdrs;
+  XDR xdrs;
 
   std::cout << "Reading <" << fn << "> \n";
-  file = fopen(fn, "rb");
+  FILE* file = fopen(fn, "rb");
   if(!file)
   { 
-    printf( "\aERROR in StaticDiscreteFunction::read_xdr(..): couldnot open <%s>!\n", fn);
+    printf( "\aERROR in BlockVectorDiscreteFunction::read_xdr(..): couldnot open <%s>!\n", fn);
     fflush(stderr);
     return(false);
   }
@@ -244,7 +238,7 @@ read_xdr( std::string filename)
 }
 
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 write_ascii( std::string filename ) const
 {
   const char * fn = filename.c_str();
@@ -262,7 +256,7 @@ write_ascii( std::string filename ) const
   }
   else 
   { 
-    fprintf(stderr,"\aERROR in StaticDiscreteFunction::read_xdr(..): couldnot open <%s>!\n", fn);
+    fprintf(stderr,"\aERROR in BlockVectorDiscreteFunction::read_xdr(..): couldnot open <%s>!\n", fn);
     fflush(stderr);
     return(false);
   }
@@ -271,7 +265,7 @@ write_ascii( std::string filename ) const
 
 
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 read_ascii( std::string filename )
 {
   const char * fn = filename.c_str();
@@ -301,7 +295,7 @@ read_ascii( std::string filename )
 }
 
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 write_pgm( std::string filename ) const
 {
   const char * fn = filename.c_str();
@@ -326,7 +320,7 @@ write_pgm( std::string filename ) const
 }
 
 template<class DiscreteFunctionSpaceType>
-inline bool StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 read_pgm( std::string filename )
 {
   const char * fn = filename.c_str();
@@ -347,32 +341,27 @@ read_pgm( std::string filename )
 
 
 template<class DiscreteFunctionSpaceType>
-inline void StaticDiscreteFunction<DiscreteFunctionSpaceType>::
-addScaled( const StaticDiscreteFunction<DiscreteFunctionSpaceType> &g, 
+inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+addScaled( const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &g, 
            const RangeFieldType &scalar )
 {
   int length = dofVec_.size();
   const DofStorageType &gvec = g.dofVec_;
   assert(length == gvec.size());
   dofVec_.axpy(scalar,gvec);
-  /*
-  for(int i=0; i<length; i++)
-    for(int i
-    dofVec_[i] += gvec[i]*scalar;
-    */
 }
 
 
 template<class DiscreteFunctionSpaceType>
 template<class GridIteratorType>
-inline void StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 substractLocal( GridIteratorType &it , 
- const StaticDiscreteFunction<DiscreteFunctionSpaceType> &g)
+ const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &g)
 {
   localFunction( *it , localFunc_ );
   
-  StaticDiscreteFunction<DiscreteFunctionSpaceType> &G = 
-      const_cast<StaticDiscreteFunction<DiscreteFunctionSpaceType> &> (g);
+  BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &G = 
+      const_cast<BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &> (g);
   G.localFunction(*it,G.localFunc_);
 
   int length = localFunc_.numberOfDofs();
@@ -382,7 +371,7 @@ substractLocal( GridIteratorType &it ,
 
 template<class DiscreteFunctionSpaceType>
 template<class GridIteratorType>
-inline void StaticDiscreteFunction<DiscreteFunctionSpaceType>::
+inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 setLocal( GridIteratorType &it , const RangeFieldType & scalar )
 {
   localFunction( *it , localFunc_ );

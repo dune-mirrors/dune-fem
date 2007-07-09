@@ -22,24 +22,24 @@
 
 namespace Dune{
 
-template <class DiscreteFunctionSpaceType> class StaticDiscreteFunction;
+template <class DiscreteFunctionSpaceType> class BlockVectorDiscreteFunction;
 template <class DiscreteFunctionType> class StaticDiscreteLocalFunction;
-template <class DofStorageImp,class DofImp> class DofIteratorStaticDiscreteFunction;
+template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
 
 
 template <class DiscreteFunctionSpaceImp>
-struct StaticDiscreteFunctionTraits 
+struct BlockVectorDiscreteFunctionTraits 
 {
   enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
   typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
   
-  typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
+  typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
   
   typedef LocalFunctionWrapper<DiscreteFunctionType> LocalFunctionType;
-  typedef DofIteratorStaticDiscreteFunction<DofStorageType,
+  typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,
             typename DofStorageType::field_type> DofIteratorType;
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
 };
@@ -63,36 +63,36 @@ struct DofTypeWrapper<double>
 
 //**********************************************************************
 //
-//  --StaticDiscreteFunction 
+//  --BlockVectorDiscreteFunction 
 //
 //! this is one special implementation of a discrete function using an
 //! array for storing the dofs.  
 //!
 //**********************************************************************
 template<class DiscreteFunctionSpaceImp> 
-class StaticDiscreteFunction 
-: public DiscreteFunctionDefault <StaticDiscreteFunctionTraits<DiscreteFunctionSpaceImp> > 
+class BlockVectorDiscreteFunction 
+: public DiscreteFunctionDefault <BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> > 
 {
-  typedef DiscreteFunctionDefault<StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp> >
+  typedef DiscreteFunctionDefault<BlockVectorDiscreteFunctionTraits <DiscreteFunctionSpaceImp> >
   DiscreteFunctionDefaultType;
 
   friend class DiscreteFunctionDefault< 
-    StaticDiscreteFunctionTraits <DiscreteFunctionSpaceImp> > ;
+    BlockVectorDiscreteFunctionTraits <DiscreteFunctionSpaceImp> > ;
 
-  typedef StaticDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
+  typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
   enum { myId_ = 0};
 public:
   //! type of discrete functions space 
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
   //! traits of this type 
-  typedef StaticDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
+  typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
   
   //! type of underlying array
   typedef typename Traits :: DofStorageType DofStorageType;
 
   //! my type 
-  typedef StaticDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
+  typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
   
 
   //! Type of the range field
@@ -130,20 +130,20 @@ public:
   typedef DGMapper<IndexSetType,0,1> MapperType;
 
   //! Constructor makes Discrete Function  
-  StaticDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
+  BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
   
   //! Constructor makes Discrete Function with name 
-  StaticDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) ;
+  BlockVectorDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) ;
   
   //! Constructor makes Discrete Function  
-  StaticDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const DofStorageType & data ) ;
+  BlockVectorDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const DofStorageType & data ) ;
   
   //! Constructor makes Discrete Function from copy 
-  StaticDiscreteFunction (const ThisType & df); 
+  BlockVectorDiscreteFunction (const ThisType & df); 
 
   //! delete stack of free local functions belonging to this discrete
   //! function 
-  ~StaticDiscreteFunction ();
+  ~BlockVectorDiscreteFunction ();
 
   //! return local function for given entity
   template <class EntityType>
@@ -252,7 +252,7 @@ private:
   //! hold one object for addLocal and setLocal and so on 
   LocalFunctionImp localFunc_;
 
-}; // end class StaticDiscreteFunction 
+}; // end class BlockVectorDiscreteFunction 
 
 
 //**************************************************************************
@@ -287,8 +287,8 @@ class StaticDiscreteLocalFunction
 
   typedef typename DofStorageType :: block_type DofBlockType;
 
-  friend class StaticDiscreteFunction <DiscreteFunctionSpaceType>;
-  friend class LocalFunctionWrapper < StaticDiscreteFunction <DiscreteFunctionSpaceType> >;
+  friend class BlockVectorDiscreteFunction <DiscreteFunctionSpaceType>;
+  friend class LocalFunctionWrapper < BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> >;
 private:
   typedef typename GridType :: ctype ctype;
   enum { dim = GridType :: dimension };
@@ -402,46 +402,46 @@ protected:
 
 //***********************************************************************
 //
-//  --DofIteratorStaticDiscreteFunction
+//  --DofIteratorBlockVectorDiscreteFunction
 //
 //***********************************************************************
   /** \brief Iterator over an array of dofs 
       \todo Please doc me!
   */
 template < class DofStorageImp, class DofImp >
-class DofIteratorStaticDiscreteFunction : public
-DofIteratorDefault < DofImp , DofIteratorStaticDiscreteFunction < DofStorageImp, DofImp > >
+class DofIteratorBlockVectorDiscreteFunction : public
+DofIteratorDefault < DofImp , DofIteratorBlockVectorDiscreteFunction < DofStorageImp, DofImp > >
 {
 public:
   typedef DofImp DofType;
   typedef DofStorageImp DofStorageType;
-  typedef DofIteratorStaticDiscreteFunction<DofStorageType,DofType> ThisType;
+  typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,DofType> ThisType;
 
   typedef typename DofStorageType :: block_type DofBlockType;
   typedef DofTypeWrapper<DofBlockType> DofWrapperType;
   enum { blockSize = DofWrapperType :: blockSize };
   
   //! Default constructor
-  DofIteratorStaticDiscreteFunction() :
+  DofIteratorBlockVectorDiscreteFunction() :
     dofArray_ (0) ,
     count_(0),
     idx_(0)
   {}
 
   //! Constructor (const)
-  DofIteratorStaticDiscreteFunction ( const DofStorageType & dofArray , int count )
+  DofIteratorBlockVectorDiscreteFunction ( const DofStorageType & dofArray , int count )
     :  dofArray_ (const_cast<DofStorageType*>(&dofArray)) ,
        count_(count),
        idx_(0) {}
   
   //! Constructor
-  DofIteratorStaticDiscreteFunction(DofStorageType& dofArray, int count)
+  DofIteratorBlockVectorDiscreteFunction(DofStorageType& dofArray, int count)
     : dofArray_(&dofArray),
       count_(count),
       idx_(0) {}
 
   //! Copy Constructor
-  DofIteratorStaticDiscreteFunction (const ThisType& other)
+  DofIteratorBlockVectorDiscreteFunction (const ThisType& other)
     : dofArray_(other.dofArray_)
     , count_(other.count_) 
     , idx_(other.idx_)
@@ -513,7 +513,7 @@ private:
   mutable int count_;
   mutable int idx_;
 
-}; // end DofIteratorStaticDiscreteFunction 
+}; // end DofIteratorBlockVectorDiscreteFunction 
 
 } // end namespace Dune
 
