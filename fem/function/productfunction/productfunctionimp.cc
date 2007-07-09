@@ -79,12 +79,13 @@ ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
 //local function for given entity2 and local coordinate of second space and discrete function of first space
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 template < class Entity2Type, class LocalCoord2Type>
-inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::localFunction(const Entity2Type &en2, const LocalCoord2Type &loc2,  DiscreteFunction1Type &discFunc) const
+inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
+localFunction(const Entity2Type &en2, const LocalCoord2Type &loc2,  DiscreteFunction1Type &discFunc) const
 {
  typedef typename DiscreteFunctionSpace2Type::BaseFunctionSetType BaseFunctionSetType;
  typename DiscreteFunctionSpace2Type::RangeType tmp_;
  discFunc.clear();
- const BaseFunctionSetType& bSet2 = space2().baseFunctionSet(en2);
+ const BaseFunctionSetType bSet2 = space2().baseFunctionSet(en2);
  const int numOfDofs = bSet2.numBaseFunctions();
  
  for(int i = 0; i< numOfDofs; i++) 
@@ -105,7 +106,7 @@ inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionS
  typedef typename DiscreteFunctionSpace2Type::BaseFunctionSetType BaseFunctionSetType;
  typename DiscreteFunctionSpace2Type::RangeType tmp_;
  discFunc.clear();
- const BaseFunctionSetType& bSet2 = space2().baseFunctionSet(en2);
+ const BaseFunctionSetType bSet2 = space2().baseFunctionSet(en2);
  const int numOfDofs = bSet2.numBaseFunctions();
  
  for(int i = 0; i< numOfDofs; i++) 

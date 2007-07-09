@@ -170,7 +170,7 @@ struct TestProdDF {
 	      ElementQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
 	      // CachingQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
       
-	      const BaseFunctionSet2Type& bSet2 = space2.baseFunctionSet(*it2);
+	      const BaseFunctionSet2Type bSet2 = space2.baseFunctionSet(*it2);
 	      const int numOfDofs = bSet2.numBaseFunctions();
 	      const int quadNop2 = quad2.nop();
 	      const typename Grid2Type::template Codim<0>::Entity::Geometry& itGeom2 = 
@@ -184,7 +184,7 @@ struct TestProdDF {
 		  // const int quadNop  = quad.nop();
 		  LocalFuncType lf = ldf.localFunction(*it);  
         
-		  const BaseFunctionSetType & baseset = lf.baseFunctionSet();
+		  const BaseFunctionSetType& baseset = lf.baseFunctionSet();
 	
 		  const typename GridType::template Codim<0>::Entity::Geometry& 
 		    itGeom = (*it).geometry();
