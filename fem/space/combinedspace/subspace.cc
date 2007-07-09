@@ -9,7 +9,7 @@ namespace Dune
     spc_(spc),
     mapper_(spc, spc.mapper().containedMapper(), component),
     component_(component),
-    baseSetVec_(GeometryIdentifier::numTypes, 0)
+    baseSetMap_()
   {
     // create info for all geom types 
     AllGeomTypes<typename GridPartType :: IndexSetType, GridType>
@@ -18,18 +18,16 @@ namespace Dune
     // get types for codim 0 
     const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(0);
 
+    //! this will not work for multiple base function sets 
+    assert( spc.multipleBaseFunctionSets() == false );
+
     // create base sets for all existing geom types
     for(size_t i=0; i<geomTypes.size(); ++i)
     {
-      GeometryIdentifier::IdentifierType id =
-                      GeometryIdentifier::fromGeo(geomTypes[i]);
-
-      assert(id >= 0 && id < static_cast<int>(GeometryIdentifier::numTypes));
-
-      if (baseSetVec_[id] == 0) 
+      if (baseSetMap_.find( geomTypes[i] ) == baseSetMap_.end()) 
       {
-        baseSetVec_[id] =
-          new BaseFunctionSetType( spc.baseFunctionSet( id ) , component);
+        baseSetMap_[ geomTypes[i] ]
+          = new BaseFunctionSetImp( spc.baseFunctionSet( geomTypes[i] ) , component);
       }
     } // end for
   }
@@ -38,10 +36,13 @@ namespace Dune
   inline
   SubSpace<CombinedSpaceImp>::~SubSpace()
   {
-    for(size_t i=0; i<baseSetVec_.size(); ++i)
+    typedef typename BaseFunctionMapType :: iterator iterator;
+    iterator end = baseSetMap_.end();
+    for (iterator it = baseSetMap_.begin(); it != end; ++it)
     {
-      delete baseSetVec_[i];
-    } // end for
+      BaseFunctionSetImp * set = (BaseFunctionSetImp *) (*it).second;
+      delete set; 
+    }
   }
   
   //- class SubBaseFunctionSet

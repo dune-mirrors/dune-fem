@@ -47,7 +47,8 @@ namespace Dune {
     typedef FunctionSpace<
       DofType, DofType, DimDomain, DimRange> FunctionSpaceType;
     typedef SubSpace<CombinedSpaceImp> DiscreteFunctionSpaceType;
-    typedef SubBaseFunctionSet<CombinedSpaceImp> BaseFunctionSetType;
+    typedef SubBaseFunctionSet<CombinedSpaceImp> BaseFunctionSetImp; 
+    typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     typedef SubMapper<CombinedSpaceImp> MapperType;
 
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
@@ -84,6 +85,7 @@ namespace Dune {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::IteratorType IteratorType;
     typedef typename Traits::MapperType MapperType;
+    typedef typename Traits::BaseFunctionSetImp  BaseFunctionSetImp;
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
 
     typedef typename Traits::RangeType RangeType;
@@ -120,13 +122,16 @@ namespace Dune {
 
     //! access to baseFunctionSet for given Entity
     template <class EntityType>
-    const BaseFunctionSetType& baseFunctionSet(EntityType& en) const 
+    const BaseFunctionSetType baseFunctionSet(EntityType& en) const 
     {
-      GeometryType geo = en.geometry().type();
-      int dimension = static_cast<int>(EntityType::mydimension);
+      return baseFunctionSet(en.geometry().type()); 
+    }
 
-      assert(baseSetVec_[GeometryIdentifier::fromGeo(dimension, geo)]);
-      return *baseSetVec_[GeometryIdentifier::fromGeo(dimension, geo)];
+    //! access to baseFunctionSet for given Entity
+    const BaseFunctionSetType baseFunctionSet(const GeometryType geomType) const 
+    {
+      assert(baseSetMap_.find( geomType ) != baseSetMap_.end());
+      return BaseFunctionSetType(baseSetMap_[geomType]);
     }
 
     //! access to grid (const version)
@@ -146,7 +151,8 @@ namespace Dune {
     MapperType mapper_;
     int component_;
 
-    std::vector<BaseFunctionSetType*> baseSetVec_;
+    typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
+    mutable BaseFunctionMapType baseSetMap_; 
   };
 
   // Idea: wrap contained base function set, since this is exactly what you 
@@ -175,7 +181,7 @@ namespace Dune {
     typedef int deriType;
   public:
     //- Public methods
-    SubBaseFunctionSet(const CombinedBaseFunctionSetType& bSet, 
+    SubBaseFunctionSet(const CombinedBaseFunctionSetType bSet, 
                        int component) :
       bSet_(bSet),
       component_(component),
@@ -203,7 +209,7 @@ namespace Dune {
 
   private:
     //- Data members
-    const CombinedBaseFunctionSetType& bSet_;
+    const CombinedBaseFunctionSetType bSet_;
     const int component_;
     
     mutable CombinedRangeType tmp_;

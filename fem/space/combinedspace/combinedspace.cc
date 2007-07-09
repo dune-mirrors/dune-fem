@@ -7,7 +7,7 @@ namespace Dune {
     BaseType(gridpart), 
     spc_(gridpart),
     mapper_(spc_, spc_.mapper()),
-    baseSetVec_(GeometryIdentifier::numTypes, 0),
+    baseSetMap_(),
     subSpaces_(N,(SubSpaceType*) 0),
     dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
   {
@@ -20,13 +20,14 @@ namespace Dune {
     // create mappers and base sets for all existing geom types
     for(size_t i=0; i<geomTypes.size(); ++i)
     {
-      GeometryIdentifier::IdentifierType id =
-                  GeometryIdentifier::fromGeo(geomTypes[i]);
-
-      if(baseSetVec_[id] == 0 )
+      if(baseSetMap_.find(geomTypes[i]) == baseSetMap_.end())
       {
-        baseSetVec_[id] = & SingletonProviderType::getObject(geomTypes[i]);
-        maxNumDofs = std::max(maxNumDofs,baseSetVec_[id]->numBaseFunctions());
+        BaseFunctionSetImp* baseSet = 
+          & SingletonProviderType::getObject(geomTypes[i]);
+        // store in map 
+        baseSetMap_[ geomTypes[i] ] = baseSet; 
+        // calc max dofs 
+        maxNumDofs = std::max(maxNumDofs,baseSet->numBaseFunctions());
       }
     }
 
@@ -40,13 +41,12 @@ namespace Dune {
   {
     for (int i=0;i<N; ++i) delete subSpaces_[i];
 
-    for (unsigned int i = 0; i < baseSetVec_.size(); ++i) 
+    typedef typename BaseFunctionMapType :: iterator iterator;
+    iterator end = baseSetMap_.end();
+    for (iterator it = baseSetMap_.begin(); it != end; ++it)
     {
-      if (baseSetVec_[i]) 
-      {
-        SingletonProviderType::removeObject(*baseSetVec_[i]);
-        baseSetVec_[i] = 0;
-      }
+      BaseFunctionSetImp * set = (BaseFunctionSetImp *) (*it).second;
+      SingletonProviderType::removeObject(*set);
     }
   }
 

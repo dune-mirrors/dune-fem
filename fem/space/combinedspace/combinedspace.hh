@@ -3,6 +3,7 @@
 
 //- System includes
 #include <vector>
+#include <map>
 
 //- Dune includes
 #include <dune/common/misc.hh>
@@ -14,6 +15,7 @@
 #include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
+#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include "subspace.hh"
 
 #include "combineddofstorage.hh"
@@ -62,7 +64,8 @@ namespace Dune {
       ContainedDimDomain, ContainedDimRange*N > FunctionSpaceType;
 
     // type of singleton factory 
-    typedef VectorialBaseFunctionSet<FunctionSpace<double, double, ContainedDimDomain, N>, CachingStorage> BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<FunctionSpace<double, double, ContainedDimDomain, N>, CachingStorage> BaseFunctionSetImp;
+    typedef VectorialBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
 
     typedef CombinedMapper<DiscreteFunctionSpaceImp, N, policy> MapperType;
    
@@ -129,11 +132,13 @@ namespace Dune {
     typedef typename Traits::ContainedRangeType ContainedRangeType;
     typedef typename Traits::ContainedJacobianRangeType ContainedJacobianRangeType;
 
+    typedef typename Traits::BaseFunctionSetImp  BaseFunctionSetImp;
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
     typedef typename ContainedDiscreteFunctionSpaceType::ScalarFactoryType ScalarFactoryType;
-    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+    
+    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
                 ScalarFactoryType> SingletonFactoryType; 
-    typedef SingletonList< GeometryType, BaseFunctionSetType,
+    typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
     typedef typename Traits::MapperType MapperType;
     typedef typename Traits::GridType GridType;
@@ -192,22 +197,17 @@ namespace Dune {
 
     //! access to base function set
     template <class EntityType>
-    const BaseFunctionSetType& baseFunctionSet(const EntityType& en) const 
+    const BaseFunctionSetType baseFunctionSet(const EntityType& en) const 
     {
-      GeometryIdentifier::IdentifierType id =
-                GeometryIdentifier::fromGeometry(en.geometry()); 
-      return this->baseFunctionSet( id );
+      return this->baseFunctionSet( en.geometry().type() );
     }
 
     //! access to base function set for given id 
-    const BaseFunctionSetType& 
-    baseFunctionSet(const GeometryIdentifier::IdentifierType id) const 
+    const BaseFunctionSetType 
+    baseFunctionSet(const GeometryType geomType) const 
     {
-      assert(id < (int) baseSetVec_.size());
-      assert(id >= 0);
-
-      assert( baseSetVec_[id] );
-      return *baseSetVec_[id];
+      assert(baseSetMap_.find( geomType ) != baseSetMap_.end());
+      return BaseFunctionSetType(baseSetMap_[geomType]);
     }
 
     //! access to grid
@@ -265,8 +265,8 @@ namespace Dune {
     ContainedDiscreteFunctionSpaceType spc_;
 
     MapperType mapper_;
-    std::vector<BaseFunctionSetType*> baseSetVec_;
-    std::vector<const BaseFunctionSetType*> baseSecVec_;
+    typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
+    mutable BaseFunctionMapType baseSetMap_; 
     std::vector<SubSpaceType*> subSpaces_;
     const DofManagerType & dm_;
 
@@ -378,7 +378,6 @@ namespace Dune {
   }; // end class CombinedMapper
 } // end namespace Dune
 
-  // include implementation
+// include implementation
 #include "combinedspace.cc"
-
 #endif
