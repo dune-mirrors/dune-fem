@@ -169,6 +169,9 @@ namespace Dune{
     //! returns true if grid has more than one geometry type (hybrid grid)
     bool multipleGeometryTypes() const { return multipleGeometryTypes_; }
 
+    //! default returns false  
+    bool multipleBaseFunctionSets() const { return false; }
+
   protected: 
     //! true if grid has more than one geometry type (hybrid grids)
     const bool multipleGeometryTypes_;
