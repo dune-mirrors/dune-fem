@@ -187,7 +187,7 @@ namespace Dune {
     {
       if( ! (spc_.order() > 0))
       {
-        std::cerr << "DG Primal operator only working for spaces with polynomial order > 0! \n";
+        std::cerr << "ERROR: DG Primal operator only working for spaces with polynomial order > 0! \n";
         assert(false);
         abort();
       }
@@ -400,7 +400,7 @@ namespace Dune {
       const GeometryType & geo = en.geometry();
 
       // get base function set of single space 
-      const BaseFunctionSetType& bsetEn = spc_.baseFunctionSet(en);
+      const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
       const int numDofs = bsetEn.numBaseFunctions();
       assert( numDofs > 0 );
 
@@ -807,7 +807,7 @@ namespace Dune {
                                nb, spc_, nb, spc_ ); 
 #endif
       // get base function set 
-      const BaseFunctionSetType& bsetNeigh = spc_.baseFunctionSet(nb);
+      const BaseFunctionSetType bsetNeigh = spc_.baseFunctionSet(nb);
      
       // loop over all quadrature points 
       const int quadNop = faceQuadInner.nop();
