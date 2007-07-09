@@ -1,84 +1,13 @@
 #ifndef DUNE_LOCALFUNCTIONWRAPPER_HH
 #define DUNE_LOCALFUNCTIONWRAPPER_HH
 
-#include <vector>
-#include <stack>
+//-s system includes 
+#include <cassert>
+
+//- Dune includes 
+#include <dune/fem/space/common/objectstack.hh>
 
 namespace Dune{
-
-//! Stores pointers of local functions in a stack 
-template <class DiscreteFunctionImp> 
-class LocalFunctionStorage 
-{
-private:
-  typedef LocalFunctionStorage<DiscreteFunctionImp> MyType;
-  typedef DiscreteFunctionImp DiscreteFunctionType;
-  typedef typename DiscreteFunctionImp::LocalFunctionImp LocalFunctionImp;
-
-public:  
-  typedef typename std::pair<LocalFunctionImp * , int* > StackStorageType;
-private:
-  std::stack < StackStorageType , std::vector<StackStorageType> > lfStack_;
-  const DiscreteFunctionType & df_;
-
-  int numIssuedFunctions_;
-
-  public:
-  //! constructor 
-  LocalFunctionStorage (const DiscreteFunctionType & df) 
-    : df_(df) , numIssuedFunctions_(0) {}
-
-  //! delete all objects on stack 
-  ~LocalFunctionStorage ()
-  {
-    assert(numIssuedFunctions_ == 0);
-
-    while ( !lfStack_.empty() )
-    {
-      StackStorageType obj = lfStack_.top();
-      lfStack_.pop();
-      delete obj.first; 
-      obj.first = 0;
-      delete obj.second; 
-      obj.second = 0;
-    }
-  }
- 
-  //! get local function object
-  StackStorageType getObject () 
-  {
-#ifndef NDEBUG
-    ++numIssuedFunctions_;
-#endif
-   
-    if( lfStack_.empty() )
-    {
-      // first pointer is the local function pointer 
-      // ans second pointer is the reference counter initialized with 1  
-      return StackStorageType ( df_.newLocalFunctionObject() , new int (1) );
-    }
-    else 
-    {
-      StackStorageType obj = lfStack_.top();
-      lfStack_.pop();
-      return obj;
-    }
-  }
-
-  //! push local function to stack 
-  void freeObject (StackStorageType & obj)
-  {
-#ifndef NDEBUG
-    --numIssuedFunctions_;
-#endif
-    lfStack_.push(obj);
-  }
-  
-private:
-  //! prohibited methods 
-  LocalFunctionStorage ( const MyType & c);
-  MyType & operator = ( const MyType & c );
-};
 
 template < class DFTraits > class DiscreteFunctionDefault;
 template < class DiscreteFunctionSpaceType, class LocalFunctionImp > class LocalFunctionDefault;
