@@ -140,15 +140,17 @@ namespace Dune {
       VectorialBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> > BaseType;
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+  public:  
     typedef typename ScalarFunctionSpaceType::RangeType ScalarRangeType;
     typedef typename ScalarFunctionSpaceType::JacobianRangeType 
       ScalarJacobianRangeType;
+  private:  
     typedef BaseFunctionFactory<ScalarFunctionSpaceType> FactoryType;
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
     typedef StorageImp<ScalarFunctionSpaceType> StorageType;
-    typedef VectorialBaseFunctionSetTraits<FunctionSpaceImp,StorageImp> Traits;
  
   public:
+    typedef VectorialBaseFunctionSetTraits<FunctionSpaceImp,StorageImp> Traits;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
