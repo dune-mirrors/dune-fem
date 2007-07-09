@@ -10,6 +10,7 @@
 //- local includes 
 #include "function.hh"
 #include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/common/objectstack.hh>
 #include "dofiterator.hh"
 #include "localfunctionwrapper.hh"
 
@@ -207,14 +208,16 @@ namespace Dune{
 
     //! Type of the local function implementation 
     typedef typename DiscreteFunctionTraits::LocalFunctionImp LocalFunctionImp;
+    //! Type of object to create from stack 
+    typedef LocalFunctionImp ObjectType;
     //! Type of the dof iterator
     typedef typename DiscreteFunctionTraits::DofIteratorType DofIteratorType;
   
     //! Type of the const dof iterator
     typedef typename DiscreteFunctionTraits::ConstDofIteratorType ConstDofIteratorType;
 
-    typedef LocalFunctionStorage < DiscreteFunctionDefaultType > LocalFunctionStorageType;
-    friend class LocalFunctionStorage < DiscreteFunctionDefaultType >;
+    typedef ObjectStack < DiscreteFunctionDefaultType > LocalFunctionStorageType;
+    friend class ObjectStack < DiscreteFunctionDefaultType >;
     friend class LocalFunctionWrapper < DiscreteFunctionType >;
   public:
     //- Methods
@@ -277,8 +280,8 @@ protected:
   //this methods are used by the LocalFunctionStorage class 
 
   //! return pointer to local function implementation 
-  LocalFunctionImp* newLocalFunctionObject() const {
-    return asImp().newLocalFunctionObject();
+  LocalFunctionImp* newObject() const {
+    return asImp().newObject();
   }
 
   //! return reference for local function storage  
