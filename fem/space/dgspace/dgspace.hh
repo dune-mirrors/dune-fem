@@ -18,6 +18,7 @@
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
+#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
@@ -63,6 +64,8 @@ namespace Dune {
 
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
+    //! Base function set type
+    typedef typename Traits::BaseFunctionSetImp  BaseFunctionSetImp;
     //! Base function set type
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
     //! Domain vector type
@@ -138,7 +141,7 @@ namespace Dune {
         {
 	        if(baseFuncSet_.find( geomTypes[i] ) == baseFuncSet_.end() )
           {
-      	    const BaseFunctionSetType* set = & setBaseFuncSetPointer(geomTypes[i]);
+      	    const BaseFunctionSetImp* set = & setBaseFuncSetPointer(geomTypes[i]);
             assert( set );
             baseFuncSet_[ geomTypes[i] ] = set;
             maxNumDofs = std::max(maxNumDofs,set->numBaseFunctions());
@@ -164,7 +167,7 @@ namespace Dune {
       iterator end = baseFuncSet_.end();
       for (iterator it = baseFuncSet_.begin(); it != end; ++it)
       {
-        BaseFunctionSetType * set = (BaseFunctionSetType *) (*it).second; 
+        BaseFunctionSetImp * set = (BaseFunctionSetImp *) (*it).second; 
         if( set ) removeBaseFuncSetPointer( *set );
       }
 
@@ -197,14 +200,14 @@ namespace Dune {
   
     //! return reference to base functions set according to the geometry's geometry type 
     template<class Geometry>
-    const BaseFunctionSetType&
+    const BaseFunctionSetType
     subBaseFunctionSet (const Geometry & geo) const 
     {
       return this->baseFunctionSet(geo);
     }
     
     //! return reference to base functions set according to geometry type 
-    const BaseFunctionSetType&
+    const BaseFunctionSetType
     subBaseFunctionSet (const GeometryType & type, bool ) const 
     {
       return this->baseFunctionSet(type);
@@ -212,18 +215,20 @@ namespace Dune {
 
     //! return reference to base functions set according to the entity's geometry type 
     template <class Entity>
-    const BaseFunctionSetType&
+    const BaseFunctionSetType
     baseFunctionSet (const Entity& en) const 
     {
       return this->baseFunctionSet(en.geometry().type());
     }
 
     //! return reference to base functions set according to geometry type 
-    const BaseFunctionSetType&
+    const BaseFunctionSetType
     baseFunctionSet (const GeometryType geomType) const 
     {
+      //assert(baseFuncSet_.find( geomType ) != baseFuncSet_.end());
+      //return *baseFuncSet_[geomType];
       assert(baseFuncSet_.find( geomType ) != baseFuncSet_.end());
-      return *baseFuncSet_[geomType];
+      return BaseFunctionSetType(baseFuncSet_[geomType]);
     }
 
     //! return true if we have continuous discrete functions 
@@ -265,13 +270,13 @@ namespace Dune {
     DiscontinuousGalerkinSpaceBase& operator=(const DiscontinuousGalerkinSpaceBase&);
 
     template <class EntityType>
-    BaseFunctionSetType& setBaseFuncSetPointer(EntityType& en) 
+    BaseFunctionSetImp& setBaseFuncSetPointer(EntityType& en) 
     {
       // calls static method of actual implementation to create set
       return DiscreteFunctionSpaceImp::setBaseFuncSetPointer(en);
     }
 
-    void removeBaseFuncSetPointer(BaseFunctionSetType& set) 
+    void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
     {
       // calls static method of actual implementation to remove set
       DiscreteFunctionSpaceImp::removeBaseFuncSetPointer(set);
@@ -285,7 +290,7 @@ namespace Dune {
     mutable MapperType* mapper_; 
 
     // map holding base function sets
-    typedef std::map < const GeometryType, const BaseFunctionSetType* > BaseFunctionMapType;
+    typedef std::map < const GeometryType, const BaseFunctionSetImp* > BaseFunctionMapType;
     mutable BaseFunctionMapType baseFuncSet_;
 
     const DofManagerType & dm_;
@@ -321,7 +326,10 @@ namespace Dune {
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
  
-    typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
+    //typedef BaseFunctionSetImp BaseFunctionSetType;
+    typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
+    //
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
     
     //! number of base functions * dimRange 
@@ -355,6 +363,7 @@ namespace Dune {
 
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
+    typedef typename Traits::BaseFunctionSetImp BaseFunctionSetImp;
     //! Base function set type
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
     //! Domain vector type
@@ -396,11 +405,11 @@ namespace Dune {
       ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
 
     // type of singleton factory 
-    typedef BaseFunctionSetSingletonFactory<const GeometryType,BaseFunctionSetType,
+    typedef BaseFunctionSetSingletonFactory<const GeometryType,BaseFunctionSetImp,
                 ScalarFactoryType> SingletonFactoryType; 
 
     // type of singleton list  
-    typedef SingletonList<const GeometryType, BaseFunctionSetType,
+    typedef SingletonList<const GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
 
   public:
@@ -410,12 +419,12 @@ namespace Dune {
     DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
 
     //! get object from singleton list 
-    static BaseFunctionSetType& setBaseFuncSetPointer(const GeometryType type) 
+    static BaseFunctionSetImp& setBaseFuncSetPointer(const GeometryType type) 
     {
       return SingletonProviderType::getObject(type);
     }
     //! remove object from singleton list 
-    static void removeBaseFuncSetPointer(BaseFunctionSetType& set) 
+    static void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
     {
       SingletonProviderType::removeObject(set);
     }
@@ -484,6 +493,8 @@ namespace Dune {
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
     //! Base function set type
+    typedef typename Traits::BaseFunctionSetImp BaseFunctionSetImp;
+    //! Base function set type
     typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
     //! Domain vector type
     typedef typename Traits::DomainType DomainType;
@@ -519,11 +530,11 @@ namespace Dune {
       ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
 
     // type of singleton factory  
-    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetType,
+    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
                 ScalarFactoryType> SingletonFactoryType; 
 
     // type of singleton list  
-    typedef SingletonList< GeometryType, BaseFunctionSetType,
+    typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
 
     //! size of local blocks 
@@ -536,12 +547,12 @@ namespace Dune {
       DiscontinuousGalerkinSpaceBase<Traits> (gridPart) {}
 
     //! get base set from singleton list 
-    static BaseFunctionSetType& setBaseFuncSetPointer(GeometryType type) 
+    static BaseFunctionSetImp& setBaseFuncSetPointer(GeometryType type) 
     {
       return SingletonProviderType::getObject(type);
     }
     //! remove base set 
-    static void removeBaseFuncSetPointer(BaseFunctionSetType& set) 
+    static void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
     {
       SingletonProviderType::removeObject(set);
     }
