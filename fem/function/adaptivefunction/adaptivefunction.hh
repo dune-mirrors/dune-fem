@@ -73,9 +73,9 @@ namespace Dune {
     AdaptiveDiscreteFunctionTraits<DiscreteFunctionSpaceImp > >,
     private AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp > 
   {
-  public:
-    //- friends
+        
     
+
   private:
     typedef AdaptiveDiscreteFunction<
       DiscreteFunctionSpaceImp > MyType;
@@ -85,7 +85,8 @@ namespace Dune {
       DiscreteFunctionSpaceImp > MyTraits;
     typedef DiscreteFunctionDefault<MyTraits> BaseType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> ThisType;
-
+  public:
+    friend class DiscreteFunctionInterface<MyTraits>;
   public:
     //- Typedefs and enums
     //! Traits class with all necessary type definitions

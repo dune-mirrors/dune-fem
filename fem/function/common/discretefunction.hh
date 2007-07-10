@@ -87,6 +87,8 @@ namespace Dune{
     //! Type of the local function implementation
     typedef typename DiscreteFunctionTraits::LocalFunctionType LocalFunctionType;
 
+    typedef typename DiscreteFunctionTraits::LocalFunctionImp LocalFunctionImp;
+
     //! Type of the dof iterator used in the discrete function implementation.
     typedef typename DiscreteFunctionTraits::DofIteratorType DofIteratorType;
 
@@ -144,7 +146,16 @@ namespace Dune{
       return asImp().localFunction(en);
     }
 
-  private:
+  protected:
+    
+    //! return pointer to local function implementation 
+    LocalFunctionImp* newObject() const {
+      return asImp().newObject();
+    }
+
+
+
+ protected:
     // Barton-Nackman trick 
     DiscreteFunctionType& asImp() 
     { 
@@ -182,6 +193,8 @@ namespace Dune{
     typedef DiscreteFunctionDefault<
       DiscreteFunctionTraits
     > DiscreteFunctionDefaultType;
+
+    using DiscreteFunctionInterfaceType :: asImp;
 
     enum { myId_ = 0 };  
   
@@ -279,10 +292,7 @@ namespace Dune{
 protected: 
   //this methods are used by the LocalFunctionStorage class 
 
-  //! return pointer to local function implementation 
-  LocalFunctionImp* newObject() const {
-    return asImp().newObject();
-  }
+  
 
   //! return reference for local function storage  
   LocalFunctionStorageType& localFunctionStorage() const { 
@@ -292,16 +302,7 @@ protected:
   // the local function storage stack 
   mutable LocalFunctionStorageType lfStorage_;
 
-private:
-    // Barton-Nackman trick 
-    DiscreteFunctionType &asImp() 
-    { 
-      return static_cast<DiscreteFunctionType&>(*this); 
-    }
-    const DiscreteFunctionType &asImp() const 
-    { 
-      return static_cast<const DiscreteFunctionType&>(*this); 
-    }
+
   }; // end class DiscreteFunctionDefault 
 
   template <class FunctionImp, class GridPartImp>
