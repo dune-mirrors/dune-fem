@@ -457,7 +457,8 @@ namespace Dune {
     typedef LegendreDiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp> DiscreteFunctionSpaceType;
  
-    typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
+    typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
 
     //! number of base functions * dimRange 
