@@ -552,7 +552,7 @@ namespace Dune
 	    // for all intersections check whether boundary
       const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace(); 
       
-      GridPartType &gridPart = dfSpace.gridPart();
+      const GridPartType &gridPart = dfSpace.gridPart();
            
       const IntersectionIteratorType end = gridPart.iend( entity );
       for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
