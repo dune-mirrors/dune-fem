@@ -1138,7 +1138,7 @@ namespace Dune
       {
         if( !it.boundary() )
           continue;
-        if( model.boundaryValues( it ) != ModelType :: GeneralizedNeumann )
+        if( model.boundaryType( it ) != ModelType :: GeneralizedNeumann )
           continue;
         
         const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
