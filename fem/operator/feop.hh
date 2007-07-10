@@ -959,7 +959,7 @@ namespace Dune
       const IteratorType endit = functionSpace_.end();
       for( IteratorType it = functionSpace_.begin(); it != endit; ++it )
       {
-        const BaseFunctionSetType &baseFunctionSet
+        const BaseFunctionSetType baseFunctionSet
           = functionSpace_.baseFunctionSet( *it );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
             

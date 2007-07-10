@@ -222,30 +222,25 @@ namespace Dune
     {
       // determine number of basis functions on first entity 
       if (verbose_)
-          std::cout << "entered constructor of " 
-                    << " DefaultElementMatrixIntegrator\n";
+          std::cout << "entered constructor of DefaultElementMatrixIntegrator" << std :: endl;
       
       if (verbose_)
-          std::cout << "got discrete functionspace\n";
+          std::cout << "got discrete functionspace" << std :: endl;
 
       EntityPointerType ep = dfSpace.begin();
       EntityType& entity = *ep;     
 
       if (verbose_)
-          std::cout << "got first entity\n";
+          std::cout << "got first entity" << std :: endl;
       
 //            const typename EntityType::Geometry& geo = entity.geometry();
 
       if (verbose_)
-          std::cout << "successful got geometry\n";
+          std::cout << "successful got geometry" << std :: endl;
       
-      const BaseFunctionSetType& baseSet = 
-        dfSpace.baseFunctionSet( entity );
-
-      if (verbose_)
-          std::cout << "got base function set\n";
-      
-      numBaseFunctions_ = baseSet.numBaseFunctions();
+      const BaseFunctionSetType baseFunctionSet
+        = dfSpace.baseFunctionSet( entity );
+      numBaseFunctions_ = baseFunctionSet.numBaseFunctions();
       gradPhiPtr_ = new JacobianRangeType[ numBaseFunctions_ ];
 
       if (verbose_)
@@ -339,7 +334,7 @@ namespace Dune
       const GeometryType &geometry = entity.geometry();
       
       // get local basis
-      const BaseFunctionSetType& baseSet
+      const BaseFunctionSetType baseSet
         =  discreteFunctionSpace.baseFunctionSet( entity );
       int numBaseFunctions = baseSet.numBaseFunctions();
 
@@ -417,7 +412,7 @@ namespace Dune
 
       const GeometryType &geometry = entity.geometry();
       
-      const BaseFunctionSetType &baseFunctionSet = dfSpace.baseFunctionSet( entity );
+      const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
       const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
             
       assert( matrix.rows() >= numBaseFunctions );
@@ -489,7 +484,7 @@ namespace Dune
 
       const GeometryType &geometry = entity.geometry();
 
-      const BaseFunctionSetType &baseFunctionSet = dfSpace.baseFunctionSet( entity );
+      const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
       const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
 
       //assert( numBaseFunctions <= numBaseFunctions_);
@@ -569,7 +564,7 @@ namespace Dune
         if( model.boundaryType( it ) != ModelType :: GeneralizedNeumann )
           continue;
                    
-        const BaseFunctionSetType &baseFunctionSet
+        const BaseFunctionSetType baseFunctionSet
           = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();     
 
@@ -644,7 +639,7 @@ namespace Dune
         if( model.boundaryType( it ) != ModelType :: Robin )
           continue;
 
-        const BaseFunctionSetType &baseFunctionSet
+        const BaseFunctionSetType baseFunctionSet
           = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
 
@@ -928,7 +923,7 @@ namespace Dune
 
       const GeometryType &geometry = entity.geometry();
 
-      const BaseFunctionSetType &baseFunctionSet = dfSpace.baseFunctionSet( entity );
+      const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
       const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
       
       ElementQuadratureType quadrature( entity, TraitsType :: quadDegree);
@@ -1001,7 +996,7 @@ namespace Dune
         if( model.boundaryType( it ) != ModelType :: Neumann )
           continue;
 
-        const BaseFunctionSetType &baseFunctionSet = dfSpace.baseFunctionSet( entity );
+        const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
  
         // integrate over intersection
@@ -1073,7 +1068,7 @@ namespace Dune
         if( model.boundaryType( it ) != ModelType :: Robin )
           continue;
 
-        const BaseFunctionSetType &baseFunctionSet = dfSpace.baseFunctionSet( entity );
+        const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
  
         // integrate over intersection
@@ -1146,7 +1141,7 @@ namespace Dune
         if( model.boundaryValues( it ) != ModelType :: GeneralizedNeumann )
           continue;
         
-        const BaseFunctionSetType &baseFunctionSet = dfSpace.baseFunctionSet( entity );
+        const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions =  baseFunctionSet.numBaseFunctions();
  
         // integrate over intersection
