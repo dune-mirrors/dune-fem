@@ -138,7 +138,7 @@ namespace Dune
         = this->functionSpace_;
       const GeometryType &geometry = entity.geometry();
 
-      const BaseFunctionSetType &baseSet
+      const BaseFunctionSetType baseSet
         = discreteFunctionSpace.baseFunctionSet( entity );
 
       double val = 0;
@@ -179,7 +179,7 @@ namespace Dune
         = this->functionSpace_;
       const GeometryType &geometry = entity.geometry();
 
-      const BaseFunctionSetType &baseSet
+      const BaseFunctionSetType baseSet
         = discreteFunctionSpace.baseFunctionSet( entity );
             
       assert( matrixSize <= maxnumOfBaseFct );
@@ -265,7 +265,7 @@ namespace Dune
         const GeometryType &geometry = (*it).geometry(); //Referenz auf Geometrie
       
         LocalFunctionType localFunction = discreteFunction.localFunction( *it ); 
-        const BaseFunctionSetType &baseFunctionSet //BaseFunctions leben immer auf Refernzelement!!!
+        const BaseFunctionSetType baseFunctionSet //BaseFunctions leben immer auf Refernzelement!!!
           = discreteFunctionSpace.baseFunctionSet( *it ); 
 
         CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrd ); //0 --> codim 0

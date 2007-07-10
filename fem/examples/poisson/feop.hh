@@ -340,7 +340,7 @@ public:
     DofIteratorType dest_it = dest.dbegin();
     ConstDofIteratorType arg_it = arg.dbegin();
       
-    const BaseFunctionSetType & baseSet = functionSpace_.baseFunctionSet( en );
+    const BaseFunctionSetType baseSet = functionSpace_.baseFunctionSet( en );
     int numOfBaseFct = baseSet.numBaseFunctions();  
 
     assert( numOfBaseFct <= maxnumOfBaseFct );
@@ -544,7 +544,7 @@ protected:
       typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
         BaseFunctionSetType;
 
-      const BaseFunctionSetType &baseSet = functionSpace_.baseFunctionSet( entity );
+      const BaseFunctionSetType baseSet = functionSpace_.baseFunctionSet( entity );
       const int numBaseFunctions = baseSet.numBaseFunctions();
        
       // setup matrix 
