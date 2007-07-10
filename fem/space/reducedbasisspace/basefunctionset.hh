@@ -153,7 +153,7 @@ namespace Dune
       for( int i = 0; i < numLocalBaseFunctions; ++i )
       {
         RangeType psi;
-        localBaseFunctionSet.evaluate( i, diffVariable, quadratre, point, psi );
+        localBaseFunctionSet.evaluate( i, diffVariable, quadrature, point, psi );
         phi.axpy( localBaseFunction[ i ], psi );
       }
     }

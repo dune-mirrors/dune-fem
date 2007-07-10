@@ -8,19 +8,22 @@ namespace Dune
 {
 
   template< class BaseFunctionImp >
-  class ReducedBasisSpace
+  class ReducedBasisSpaceTraits
   {
   public:
     typedef BaseFunctionImp BaseFunctionType;
 
   private:
-    typedef ReducedBasisSpace< BaseFunctionType > ThisType;
+    typedef ReducedBasisSpaceTraits< BaseFunctionType > ThisType;
 
   public:
-    typedef typename BaseFunctionType :: FunctionSpaceType
-      BaseFunctionSpaceType;
+    typedef ThisType DiscreteFunctionSpaceType;
 
+    typedef typename BaseFunctionImp :: FunctionSpaceType BaseFunctionSpaceType;
+
+    typedef typename BaseFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
     typedef typename BaseFunctionSpaceType :: GridPartType GridPartType;
+    typedef typename BaseFunctionSpaceType :: GridType GridType;
     typedef typename BaseFunctionSpaceType :: IndexSetType IndexSetType;
     typedef typename BaseFunctionSpaceType :: IteratorType IteratorType;
 
@@ -31,15 +34,44 @@ namespace Dune
 
     typedef ReducedBasisMapper< BaseFunctionListType >
       MapperType;
+  };
 
-  protected:
-    const BaseFunctionSpaceType &baseFunctionSpace_;
-    const BaseFunctionListType baseFunctionList_;
-    const MapperType &mapper_;
+
+  
+
+  template< class BaseFunctionImp >
+  class ReducedBasisSpace
+  : public DiscreteFunctionSpaceDefault< ReducedBasisSpaceTraits< BaseFunctionImp > >
+  {
+  public:
+    typedef BaseFunctionImp BaseFunctionType;
+
+    typedef ReducedBasisSpaceTraits< BaseFunctionType > TraitsType;
+
+  private:
+    typedef ReducedBasisSpace< BaseFunctionType > ThisType;
+    typedef DiscreteFunctionSpaceDefault< TraitsType > BaseType;
 
   public:
-    inline ReducedBasisSpace ( const BaseFunctionSpaceType &baseFunctionSpace )
-    : baseFunctionSpace_( baseFunctionSpace ),
+    typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
+    typedef typename TraitsType :: GridPartType GridPartType;
+    typedef typename TraitsType :: GridType GridType;
+    typedef typename TraitsType :: IndexSetType IndexSetType;
+    typedef typename TraitsType :: IteratorType IteratorType;
+
+    typedef typename TraitsType :: BaseFunctionSetType BaseFunctionSetType;
+    typedef typename TraitsType :: BaseFunctionListType BaseFunctionListType;
+    typedef typename TraitsType :: MapperType MapperType;
+
+  protected:
+    BaseFunctionSpaceType &baseFunctionSpace_;
+    const BaseFunctionListType baseFunctionList_;
+    MapperType &mapper_;
+
+  public:
+    inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
+    : BaseType( baseFunctionSpace.gridPart() ),
+      baseFunctionSpace_( baseFunctionSpace ),
       baseFunctionList_( NULL ),
       mapper( baseFunctionList_ )
     {
@@ -89,8 +121,7 @@ namespace Dune
 
     //! provide access to the base function set for an entity
     template< class EntityType >
-    inline const BaseFunctionSetType
-      baseFunctionSet( const EntityType &entity ) const
+    inline const BaseFunctionSetType baseFunctionSet( const EntityType &entity ) const
     {
       return BaseFunctionSetType( baseFunctionList_, entity );
     }
@@ -103,6 +134,12 @@ namespace Dune
 
     //! obtain the associated grid
     inline const GridType &grid () const
+    {
+      return BaseFunctionSpace_.grid();
+    }
+    
+     //! obtain the associated grid
+    inline GridType &grid ()
     {
       return BaseFunctionSpace_.grid();
     }
@@ -128,21 +165,20 @@ namespace Dune
     //! obtain the DoF mapper of this space
     inline MapperType &mapper () const
     {
-      assert( mapper_ != NULL );
-      return *mapper_;
+      return mapper_;
     }
 
     //! map local DoF number to global DoF number
     template< class EntityType >
     inline int mapToGlobal( EntityType &entity, int localDof ) const
     {
-      return mapper_->mapToGlobal( entity, localDof );
+      return mapper_.mapToGlobal( entity, localDof );
     }
 
     //! number of DoFs in the function space
     inline int size () const
     {
-      return mapper_->size();
+      return mapper_.size();
     }
   };
   
