@@ -90,7 +90,8 @@ public:
   
   //! type of underlying array
   typedef typename Traits :: DofStorageType DofStorageType;
-
+  
+  friend class DiscreteFunctionInterface<Traits>;
   //! my type 
   typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
   
