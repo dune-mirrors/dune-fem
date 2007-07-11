@@ -19,7 +19,7 @@ namespace Dune
   public:
     typedef ThisType DiscreteFunctionSpaceType;
 
-    typedef typename BaseFunctionImp :: FunctionSpaceType BaseFunctionSpaceType;
+    typedef typename BaseFunctionType :: FunctionSpaceType BaseFunctionSpaceType;
 
     typedef typename BaseFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
     typedef typename BaseFunctionSpaceType :: GridPartType GridPartType;
@@ -53,6 +53,7 @@ namespace Dune
     typedef DiscreteFunctionSpaceDefault< TraitsType > BaseType;
 
   public:
+    typedef typename TraitsType :: BaseFunctionSpaceType BaseFunctionSpaceType;
     typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
     typedef typename TraitsType :: GridPartType GridPartType;
     typedef typename TraitsType :: GridType GridType;
@@ -73,7 +74,7 @@ namespace Dune
     : BaseType( baseFunctionSpace.gridPart() ),
       baseFunctionSpace_( baseFunctionSpace ),
       baseFunctionList_( NULL ),
-      mapper( baseFunctionList_ )
+      mapper_( baseFunctionList_ )
     {
     }
 
@@ -84,7 +85,7 @@ namespace Dune
         delete baseFunctionList_[ i ];
     }
 
-    inline addBaseFunction ( const BaseFunctionType &baseFunction )
+    inline void addBaseFunction ( const BaseFunctionType &baseFunction )
     {
       BaseFunctionType *f = new BaseFunctionType( baseFunction );
       baseFunctionList_.push_back( f );
@@ -135,13 +136,13 @@ namespace Dune
     //! obtain the associated grid
     inline const GridType &grid () const
     {
-      return BaseFunctionSpace_.grid();
+      return baseFunctionSpace_.grid();
     }
     
      //! obtain the associated grid
     inline GridType &grid ()
     {
-      return BaseFunctionSpace_.grid();
+      return baseFunctionSpace_.grid();
     }
     
     //! obtain the associated grid partition

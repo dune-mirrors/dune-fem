@@ -80,26 +80,26 @@ namespace Dune
     const EntityCodim0Type *entity_;
 
   public:
-    inline ReducedBasisBaseFunctionSetType ()
+    inline ReducedBasisBaseFunctionSet ()
     : baseFunctionList_( NULL ),
       entity_( NULL )
     {
     }
 
-    inline ReducedBasisBaseFunctionSetType ( const BaseFunctionListType &baseFunctionList )
+    inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( &baseFunctionList ),
       entity_( NULL )
     {
     }
 
-    inline ReducedBasisBaseFunctionSetType ( const BaseFunctionListType &baseFunctionList,
+    inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList,
                                              const EntityCodim0Type &entity )
     : baseFunctionList_( &baseFunctionList ),
       entity_( &entity )
     {
     }
 
-    inline ReducedBasisBaseFunctionSetType ( const ThisType &other )
+    inline ReducedBasisBaseFunctionSet ( const ThisType &other )
     : baseFunctionList_( other.baseFunctionList_ ),
       entity_( other.entity_ )
     {
@@ -119,9 +119,9 @@ namespace Dune
     {
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
-      typedef LocalBaseFunctionType :: LocalBaseFunctionSetType LocalBaseFunctionSetType;
+      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
-      LocalBaseFunctionType localBaseFunction = baseFunctionList_[ i ]->localFunction( entity );
+      LocalBaseFunctionType localBaseFunction = baseFunctionList_[ baseFunction ]->localFunction( entity_ );
       LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
@@ -143,9 +143,9 @@ namespace Dune
     {
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
-      typedef LocalBaseFunctionType :: LocalBaseFunctionSetType LocalBaseFunctionSetType;
+      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
-      LocalBaseFunctionType localBaseFunction = baseFunctionList_[ i ].localFunction( entity );
+      LocalBaseFunctionType localBaseFunction = baseFunctionList_[ baseFunction ].localFunction( entity_ );
       LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
