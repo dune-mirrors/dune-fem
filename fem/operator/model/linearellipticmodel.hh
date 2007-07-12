@@ -3,6 +3,9 @@
 
 #include <dune/common/bartonnackmanifcheck.hh>
 
+#include <dune/fem/operator/model/diffusionmodel.hh>
+#include <dune/fem/operator/model/boundarymodel.hh>
+
 namespace Dune
 {
 
@@ -24,6 +27,8 @@ namespace Dune
             class LinearEllipticModelImp,
             class PropertiesImp >
   class LinearEllipticModelInterface
+  : public DiffusionModelInterface< FunctionSpaceImp, LinearEllipticModelImp >,
+    public BoundaryModelInterface< FunctionSpaceImp, LinearEllipticModelImp, PropertiesImp >
   {
   public:
     typedef FunctionSpaceImp FunctionSpaceType;
@@ -37,8 +42,6 @@ namespace Dune
   public:
     typedef ThisType LinearEllipticModelInterfaceType;
 
-    enum BoundaryType { Dirichlet, Neumann, Robin, GeneralizedNeumann };
-
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
@@ -47,61 +50,6 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   public:
-    /** \brief obtain type of boundary intersection
-     *
-     *  \param[in] intersection intersection whose boundary type shall be returned
-     *
-     *  \returns boundary type of the intersection
-     */
-    template< class IntersectionIteratorType >
-    inline BoundaryType boundaryType ( const IntersectionIteratorType &intersection ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION
-        ( asImp().boundaryType( intersection ) );
-      return asImp().boundaryType( intersection );
-    }
-
-    /** \brief evaluate Dirichlet boundary value
-     *
-     *  Given an intersection and a quadrature-point pair, evaluate the
-     *  Dirichlet boundary data in the specified point.
-     *
-     *  \note The entity the boundary belongs to can be obtained from the
-     *        intersection by the intersecion.inside method.
-     *
-     *  \note The quadrature is not guaranteed to be a codim-1-quadrature
-     *
-     *  \param[in]  intersection intersection on which the quadrature point lies
-     *
-     *  \param{in]  quadrature   quadrature to use
-     *
-     *  \param[in]  point        index of the evaluation point within the
-     *                           quadrature
-     *
-     *  \param[out] phi          Dirichlet value in the quadrature point
-     */
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void dirichletValues ( const IntersectionIteratorType &intersection,
-                                  const QuadratureType &quadrature,
-                                  int point,
-                                  RangeType &phi ) const
-    {
-      assert( Properties :: hasDirichletValues );
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().dirichletValues( intersection, quadrature, point, phi ) );
-    }
-
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void neumannValues ( const IntersectionIteratorType &intersection,
-                                const QuadratureType &quadrature,
-                                int point,
-                                RangeType &phi ) const
-    {
-      assert( Properties :: hasNeumannValues );
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().neumannValues( intersection, quadrature, point, phi ) );
-    }
-    
     template< class IntersectionIteratorType, class QuadratureType >
     inline void generalizedNeumannValues
       ( const IntersectionIteratorType &intersection,
@@ -129,39 +77,6 @@ namespace Dune
       return asImp().generalizedNeumannAlpha( intersection, quadrature, point );
     }
 
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void robinValues ( const IntersectionIteratorType &intersection,
-                              const QuadratureType &quadrature,
-                              int point,
-                              RangeType &phi ) const
-    {
-      assert( Properties :: hasRobinValues );
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().robinValues( intersection, quadrature, point, phi ) );
-    }
-
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType robinAlpha ( const IntersectionIteratorType &intersection,
-                                       const QuadratureType &quadrature,
-                                       int point ) const
-    {
-      assert( Properties :: hasRobinValues );
-      CHECK_INTERFACE_IMPLEMENTATION
-        ( asImp().robinAlpha( intersection, quadrature, point ) );
-      return asImp().robinAlpha( intersection, quadrature, point );
-    }
-
-    template< class EntityType, class QuadratureType >
-    inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                int point,
-                                const JacobianRangeType &gradient,
-                                JacobianRangeType &flux ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().diffusiveFlux( entity, quadrature, point, gradient, flux ) );
-    }
-    
     template< class EntityType, class QuadratureType >
     inline void convectiveFlux ( const EntityType &entity,
                                  const QuadratureType &quadrature,
@@ -215,8 +130,7 @@ namespace Dune
             class PropertiesImp
               = DefaultLinearEllipticModelProperties >
   class LinearEllipticModelDefault
-  : public LinearEllipticModelInterface
-    < FunctionSpaceImp, LinearEllipticModelImp, PropertiesImp >
+  : public LinearEllipticModelInterface< FunctionSpaceImp, LinearEllipticModelImp, PropertiesImp >
   {
   public:
     typedef FunctionSpaceImp FunctionSpaceType;
@@ -229,6 +143,12 @@ namespace Dune
     typedef LinearEllipticModelInterface
       < FunctionSpaceType, LinearEllipticModelImp, Properties >
       BaseType;
+
+    typedef BoundaryModelDefault< FunctionSpaceType, LinearEllipticModelImp, Properties >
+      BoundaryModelDefaultType;
+
+  private:
+    const BoundaryModelDefaultType boundaryModelDefault_;
 
   public:
     typedef typename FunctionSpaceType :: DomainType DomainType;
@@ -245,8 +165,7 @@ namespace Dune
                                   int point,
                                   RangeType &phi ) const
     {
-      assert( Properties :: hasDirichletValues );
-      phi = 0;
+      boundaryModelDefault_.dirichletValues( intersection, quadrature, point, phi );
     }
 
     template< class IntersectionIteratorType, class QuadratureType >
@@ -255,10 +174,27 @@ namespace Dune
                                 int point,
                                 RangeType &phi ) const
     {
-      assert( Properties :: hasNeumannValues );
-      phi = 0;
+      boundaryModelDefault_.neumannValues( intersection, quadrature, point, phi );
     }
     
+    template< class IntersectionIteratorType, class QuadratureType >
+    inline void robinValues ( const IntersectionIteratorType &intersection,
+                              const QuadratureType &quadrature,
+                              int point,
+                              RangeType &phi ) const
+    {
+      boundaryModelDefault_.robinValues( intersection, quadrature, point, phi );
+    }
+
+    template< class IntersectionIteratorType, class QuadratureType >
+    inline RangeFieldType robinAlpha ( IntersectionIteratorType &intersection,
+                                       QuadratureType &quadrature,
+                                       int point ) const
+    {
+      return boundaryModelDefault_.robinAlpha( intersection, quadrature, point );
+    }
+
+
     template< class IntersectionIteratorType, class QuadratureType >
     inline void generalizedNeumannValues
       ( const IntersectionIteratorType &intersection,
@@ -279,25 +215,6 @@ namespace Dune
       ) const
     {
       assert( Properties :: hasGeneralizedNeumannValues );
-      return 0;
-    }
-
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void robinValues ( const IntersectionIteratorType &intersection,
-                              const QuadratureType &quadrature,
-                              int point,
-                              RangeType &phi ) const
-    {
-      assert( Properties :: hasRobinValues );
-      phi = 0;
-    }
-
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType robinAlpha ( IntersectionIteratorType &intersection,
-                                       QuadratureType &quadrature,
-                                       int point ) const
-    {
-      assert( Properties :: hasRobinValues );
       return 0;
     }
 

@@ -56,7 +56,7 @@ namespace Dune
                                 const QuadratureType &quadrature,
                                 unsigned int pt,
                                 const JacobianRangeType &gradient,
-                                JacobianRangeType &flux )
+                                JacobianRangeType &flux ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().diffusiveFlux( entity, quadrature, pt, gradient, flux ) );
