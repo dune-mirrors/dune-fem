@@ -17,6 +17,8 @@
 //- Dune includes 
 #include <dune/fem/misc/timeutility.hh>
 
+#include <dune/fem/solver/rungekutta.hh>
+
 //#if HAVE_BLAS 
 //#define USE_EXTERNAL_BLAS
 //#endif
@@ -91,24 +93,12 @@ private:
   // time provider 
   TimeProvider& tp_;
 };
-  /** @defgroup ODESolver ODE Solver
-   *  @ingroup OperatorCommon
-   @{
-   **/
 
-template <class Operator>
-class OdeSolverInterface {
-protected:
-  OdeSolverInterface () {}    
 
-  typedef typename Operator :: DestinationType DestinationType;
-public:
-  //! destructor 
-  virtual ~OdeSolverInterface () {}
-  
-  //! solve system 
-  virtual void solve(DestinationType&) = 0;
-};
+/** @defgroup ODESolver ODE Solver
+ *  @ingroup OperatorCommon
+ @{
+ **/
 
 template<class Operator>
 class ExplTimeStepperBase 
@@ -730,6 +720,8 @@ class SemiImplTimeStepper : public TimeProvider
   bool initialized_;
 };
 
+#if 0
+
 template<class Operator>
 class ExplRungeKuttaBase 
 {
@@ -986,6 +978,7 @@ class ExplicitRungeKuttaSolver :
 private:
   TimeProvider& timeProvider_;
 };
+#endif
 
 
 //////////////////////////////////////////////////////////
@@ -1026,6 +1019,8 @@ public:
     return size_;
   }
 };
+
+
 /** @} **/
 }
 
