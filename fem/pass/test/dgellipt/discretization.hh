@@ -179,24 +179,27 @@ public:
     typedef typename DestinationType :: DomainType DomainType; 
     DomainType point(0.5);
   
-    //int halfSize = lastSpace_.indexSet().size(0)/2;
-    IteratorType endit = lastSpace_.end();
-    for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
+    if( grid_.comm().rank() == 0)
     {
-      if( (it->geometry()[0] - point).two_norm() < 0.3) 
-      //if(count < halfSize) 
-      //if(count % 2 == 0) 
+      //int halfSize = lastSpace_.indexSet().size(0)/2;
+      IteratorType endit = lastSpace_.end();
+      for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
       {
-        //std::cout << "Mark entity \n";
-        grid_.mark(3,it);
+        if( (it->geometry()[0] - point).two_norm() < 0.3) 
+        //if(count < halfSize) 
+        //if(count % 2 == 0) 
+        {
+          //std::cout << "Mark entity \n";
+          grid_.mark(3,it);
+        }
+        ++count;
       }
-      ++count;
     }
 
     adop.adapt();
     std::cout << "New size of space is " << lastSpace_.size() << "\n";
 
-    testConsecutive();
+    //testConsecutive();
   }
   
   // apply space discretisation 
@@ -209,9 +212,6 @@ public:
     std::vector<RangeType> error(steps_);
     std::vector<GradRangeType> gradError(steps_);
     std::vector<GradRangeType> errVelo(steps_);
-    
-    //DestinationType & Arg = const_cast<DestinationType&> (arg);
-    //adaptGrid(Arg);
 
     //DestinationType & Arg = const_cast<DestinationType&> (arg);
     //adaptGrid(Arg);
@@ -376,9 +376,8 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
 
   GridPtr<GridType> gridptr(macroGridName,MPIHelper::getCommunicator()); 
   GridType & grid = *gridptr;
-
-  grid.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf() * level);
   grid.loadBalance();
+  grid.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf() * level);
 
   //int bla;
   //fscanf(stdin,"%d",&bla);
