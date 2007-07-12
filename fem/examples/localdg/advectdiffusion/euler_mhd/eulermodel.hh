@@ -46,6 +46,7 @@ template <class GridPart,int dimRange2,
 	  int dimRange1=dimRange2*GridPart::GridType::dimensionworld>
 class EulerModelTraits {
  public:
+  typedef GridPart GridPartType;
   typedef typename GridPart::GridType GridType;
   enum { dimDomain = GridType::dimensionworld };
   enum { dimRange = dimRange2, dimGradRange = dimRange1 };
@@ -88,7 +89,8 @@ class EulerModel {
 			      double time,  
 			      const typename Traits::DomainType& x,
 			      const RangeType& u, 
-			      FluxRangeType& f) const {
+			      FluxRangeType& f) const 
+  {
     EulerFlux<dimDomain>().analyticalFlux(gamma_,u,f);
   }
   inline  void jacobian(const typename Traits::EntityType& en,
@@ -113,7 +115,7 @@ class EulerModel {
     const typename Traits::DomainType normal = it.integrationOuterNormal(x); 
     double p = EulerFlux<dimDomain>().pressure(gamma_,uLeft);
     gLeft = 0;
-    for (int i=0;i<dimDomain;i++) {
+    for (int i=0;i<dimDomain; ++i) {
       gLeft[i+1] = normal[i]*p;
     }
     return 0.;
