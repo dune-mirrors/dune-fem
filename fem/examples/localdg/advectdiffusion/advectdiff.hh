@@ -15,7 +15,9 @@
 #include <dune/fem/misc/timeutility.hh>
 #include <dune/fem/space/dgspace.hh>
 #include "discretemodels.hh"
-#include "limitpass.hh"
+
+//#include "limitpass.hh"
+#include <dune/fem/pass/limitpass.hh>
 
 //*************************************************************
 namespace Dune {  
@@ -290,7 +292,9 @@ namespace Dune {
     typedef NumFlux<Model> NumFluxType;
     typedef typename Model::Traits::GridType GridType;
 
-    typedef LimiterDiscreteModel1<Model,polOrd> DiscreteModel1Type;
+    // define limiter discrete model 
+    typedef LimiterDefaultDiscreteModel<PassTraits<Model,dimRange,polOrd>, Model> DiscreteModel1Type;
+
     typedef TransportDiffusionDiscreteModel2<Model,NumFluxType,polOrd,false,true> DiscreteModel2Type;
     typedef typename DiscreteModel1Type::Traits Traits1;
     typedef typename DiscreteModel2Type::Traits Traits2;
