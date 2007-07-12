@@ -17,9 +17,46 @@
 //- Dune-fem includes 
 #include <dune/fem/function/common/dfcommunication.hh>
 #include <dune/fem/space/common/singletonlist.hh>
+#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune { 
 
+  //! \brief Default CommunicationManager class just using the grids communicate
+  //! method 
+  template <class SpaceImp, 
+            class OperationImp = DFCommunicationOperation::Copy >
+  class DefaultCommunicationManager 
+  {
+    typedef SpaceImp SpaceType; 
+    typedef typename SpaceType :: GridPartType GridPartType; 
+
+    // gridPart for communication 
+    const GridPartType & gridPart_; 
+
+    DefaultCommunicationManager(const DefaultCommunicationManager &);
+  public:
+    //! constructor taking space, but here only storing gridPart for
+    //! communication
+    DefaultCommunicationManager(const SpaceType & space)
+      : gridPart_(space.gridPart()) 
+    {}
+
+    template <class DiscreteFunctionType> 
+    void exchange(DiscreteFunctionType & df) 
+    {
+      // if serial run, just return   
+      if(gridPart_.grid().comm().size() <= 1) return;
+     
+      // get data handler 
+      typedef DiscreteFunctionCommunicationHandler<DiscreteFunctionType,OperationImp>
+           DataHandleType;
+      DataHandleType dataHandle(df);
+
+      // communicate data 
+      gridPart_.communicate( dataHandle, InteriorBorder_All_Interface , ForwardCommunication);
+    }
+  };
+  
   // only if ALUGrid found and was build for parallel runs 
 #if HAVE_ALUGRID && ALU3DGRID_PARALLEL 
   //! class to build up a map of all dofs of entities to be exchanged
@@ -33,48 +70,59 @@ namespace Dune {
     // index map for send and receive data 
     class CommunicationIndexMap
     {
-      std::vector<int> index_;  
+      //MutableArray<int> index_;  
+      std::vector<int> index_;
+      CommunicationIndexMap(const CommunicationIndexMap&);
     public:
-      CommunicationIndexMap() {}
+      //! constructor creating empty map
+      CommunicationIndexMap() : index_(0) {}
 
+      //! reserve memory 
       void reserve( int size ) 
       {
         index_.reserve( size );
       }
 
+      //! clear index map 
       void clear() 
       {
+        index_.clear();
         index_.resize( 0 );
       }
 
+      //! append index vector with idx 
       void insert( const std::vector<int> & idx )
       {
         const int size = idx.size();
-        const int newSize = index_.size() + size;
+        const int newSize = index_.size() + idx.size();
         reserve( newSize );
         for(int i=0; i<size; ++i) 
         { 
+          assert( idx[i] >= 0 );
           index_.push_back( idx[i] ); 
         }
         assert( (int) index_. size () == newSize );
       }
 
-      const int & operator [] (int i) const 
+      //! return index map for entry i
+      const int operator [] (int i) const 
       {
         assert( i >= 0 );
         assert( i < (int) index_.size());
         return index_[i];
       }
 
+      //! return size of map
       int size () const { return index_.size(); }
 
+      //! print  map for debugging only 
       void print(std::ostream & s, int rank) const 
       {
         const int size = index_.size();
         s << "Start print: size = " << size << std::endl;
         for(int i=0; i<size; ++i) 
         {
-          s<< rank << " idx = " << index_[i] << std::endl;
+          s<< rank << " idx["<<i<<"] = " << index_[i] << std::endl;
         }
         s << "End of Array\n";
       }
@@ -91,6 +139,7 @@ namespace Dune {
       typedef int DataType;
 
       const int myRank_;
+      const int mySize_; 
       
       typedef LinkStorageImp LinkStorageType;
       // discrete function to communicate 
@@ -107,6 +156,7 @@ namespace Dune {
             IndexMapVectorType & recvIdxMap,
             const SpaceType & space)
         : myRank_(space.grid().comm().rank()) 
+        , mySize_(space.grid().comm().size())
         , linkStorage_(linkStorage)
         , sendIndexMap_(sendIdxMap)
         , recvIndexMap_(recvIdxMap)
@@ -142,11 +192,12 @@ namespace Dune {
         // build local mapping 
         const int numDofs = space_.baseFunctionSet(en).numBaseFunctions(); 
         std::vector<int> indices(numDofs);
+        // copy numDofs 
         for(int i=0; i<numDofs; ++i) 
         {
           indices[i] = space_.mapToGlobal( en , i ); 
         }
-      
+
         // Interior entities belong to send area and other entities, i.e.
         // Overlap and Ghost, belong to receive area 
         const bool interiorEn = (en.partitionType() == InteriorEntity); 
@@ -154,9 +205,11 @@ namespace Dune {
         // read links and insert mapping 
         DataType val;
         
+        // read rank of other side 
         buff.read( val );  
-        // size of sendIndexMap_ is equal to number of procs 
-        assert( val <= (int) sendIndexMap_.size() );
+        
+        // check that value of rank is within valid range 
+        assert( val < mySize_ );
         assert( val >= 0 );
       
         // insert rank of link into set of links
@@ -193,26 +246,31 @@ namespace Dune {
     const int mySize_; 
     
     typedef std::set<int>  LinkStorageType;
+    // type of set of links 
     LinkStorageType linkStorage_; 
 
+    // type of communication indices 
     typedef CommunicationIndexMap IndexMapType;
-    typedef std::vector<IndexMapType> IndexMapVectorType;
-    // index maps for receiving data 
-    IndexMapVectorType recvIndexMap_;
-    // index maps for sending data 
-    IndexMapVectorType sendIndexMap_;
+    // type of IndexMapVector 
+    typedef IndexMapType* IndexMapVectorType;
+    IndexMapType* recvIndexMap_;
+    IndexMapType* sendIndexMap_;
 
+    // vector containing the links of this process 
     std::vector < int > linkRank_;
 
     // ALUGrid send/recv buffers 
     typedef ALU3DSPACE ObjectStream ObjectStreamType; 
     
+    // type of communicator 
     typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
+    // type of communication implementation 
     typedef ALU3DSPACE MpAccessMPI   MPAccessImplType; 
 
     // ALUGrid communicatior Class 
     MPAccessInterfaceType * mpAccess_;
 
+    //! type of communication buffer vector 
     typedef std::vector< ObjectStreamType > ObjectStreamVectorType;
     //! communication buffers 
     ObjectStreamVectorType buffer_;
@@ -232,8 +290,8 @@ namespace Dune {
       , myRank_(gridPart_.grid().comm().rank())
       , mySize_(gridPart_.grid().comm().size())
       , linkStorage_()
-      , recvIndexMap_(mySize_)
-      , sendIndexMap_(mySize_)
+      , recvIndexMap_(new IndexMapType[mySize_])
+      , sendIndexMap_(new IndexMapType[mySize_])
       , linkRank_()
       // create mpAccess with world communicator  
       // only when size > 1 
@@ -247,7 +305,9 @@ namespace Dune {
     //! destrcutor removeing mpAccess 
     ~DependencyCache()
     {
-      delete mpAccess_;
+      delete mpAccess_; mpAccess_ = 0;
+      delete [] sendIndexMap_; sendIndexMap_ = 0;
+      delete [] recvIndexMap_; recvIndexMap_ = 0;
     }
 
   public:
@@ -289,8 +349,8 @@ namespace Dune {
       // remember number of links 
       nLinks_ = mpAccess().nlinks();
 
+      // resize buffer to number of links 
       buffer_.resize( nLinks_ );
-      //std::cout << "Build dependency cache. Size = " << sendIndexMap_[linkRank_[0 ]].size() <<"\n";
     }
 
     //! return number of links 
@@ -312,6 +372,7 @@ namespace Dune {
     template<class DiscreteFunctionType, class OperationImp>
     void exchange(DiscreteFunctionType& df, const OperationImp *)
     {
+      typedef typename DiscreteFunctionType :: DofType DofType;
       // if serial run, just return   
       if(mySize_ <= 1) return;
        
@@ -325,16 +386,17 @@ namespace Dune {
         // reset buffers, keeps memory  
         buffer_[l].clear();
 
-        writeBuffer( l , buffer_[l] , df.leakPointer());
+        writeBuffer( l , buffer_[l] , df.leakPointer(), (DofType *) 0 );
       }
 
       // exchange data to other procs 
       buffer_ = mpAccess().exchange( buffer_ );
-      
+     
       // read buffers 
       for(int l=0; l<links; ++l) 
       {
-        readBuffer( l , buffer_[l] , df.leakPointer() , (OperationImp *) 0 );
+        readBuffer( l , buffer_[l] , df.leakPointer() ,
+                    (DofType *) 0, (OperationImp *) 0 );
       }
     }
 
@@ -343,11 +405,12 @@ namespace Dune {
     void writeBuffer(ObjectStreamVectorType & osv,
                      DiscreteFunctionType& df) const 
     {
+      typedef typename DiscreteFunctionType :: DofType DofType;
       const int links = nlinks();
       // write buffers 
       for(int l=0; l<links; ++l) 
       {
-        writeBuffer( l , osv[l] , df.leakPointer());
+        writeBuffer( l , osv[l] , df.leakPointer(), (DofType *) 0);
       }
     }
     
@@ -356,11 +419,13 @@ namespace Dune {
     void readBuffer(ObjectStreamVectorType & osv,
                     DiscreteFunctionType& df, const OperationImp *o) const 
     {
+      typedef typename DiscreteFunctionType :: DofType DofType;
       const int links = nlinks();
       // write buffers 
       for(int l=0; l<links; ++l) 
       {
-        readBuffer( l, osv[l] , df.leakPointer(), o ); 
+        readBuffer( l, osv[l] , df.leakPointer(), 
+                    (DofType*) 0, (OperationImp *) 0); 
       }
     }
     
@@ -372,35 +437,36 @@ namespace Dune {
     }
     
   private:  
-    // write data to object stream 
-    template <class DataImp> 
+    // write data of DataImp* vector to object stream 
+    template <class DataImp, class DofType> 
     void writeBuffer(const int link, 
                      ObjectStreamType & os, 
-                     const DataImp* data) const 
+                     const DataImp* data,
+                     const DofType* ) const 
     {
-      const IndexMapType & indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
+      const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
 
       // reserve buffer memory at once 
-      os.reserve( size * sizeof(DataImp) );
+      os.reserve( size * sizeof(DofType) );
 
-      double val= 0.0;
+      DofType val = 0.0;
       for(int i=0; i<size; ++i)
       {
         val = data[ indexMap[i] ];
         os.write( val );
       }
     }
-  
-    // read data from object stream to data vector 
-    template <class DataImp, class OperationImp> 
+
+    // read data from object stream to DataImp* data vector 
+    template <class DataImp, class DofType, class OperationImp> 
     void readBuffer(const int link, 
                     ObjectStreamType & os, 
-                    DataImp* data,
+                    DataImp* data, const DofType*,
                     const OperationImp *) const 
     {
-      const IndexMapType & indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
-      double val;
+      const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
+      DofType val;
       const int size = indexMap.size();
       for(int i=0; i<size; ++i)
       {
@@ -456,6 +522,8 @@ namespace Dune {
             class OperationImp = DFCommunicationOperation::Copy >
   class CommunicationManager 
   {
+    typedef CommunicationManager<SpaceImp,OperationImp> ThisType;
+    
     // type of communication manager object which does communication 
     typedef DependencyCache<SpaceImp> DependencyCacheType;
 
@@ -475,7 +543,7 @@ namespace Dune {
     
     // is singleton per space 
     DependencyCacheType & cache_;
-    CommunicationManager(const CommunicationManager & org);
+    CommunicationManager(const ThisType& org);
   public:  
     //! constructor taking space 
     CommunicationManager(const SpaceType & space) 
@@ -695,43 +763,22 @@ namespace Dune {
   #warning "No Parallel ALUGrid found, using default CommunicationManager!"
 #endif 
 #endif
-  
-  //! \brief Default CommunicationManager class just using the grids communicate
-  //! method 
+  //! \brief use Default CommunicationManager as Communication Manager 
   template <class SpaceImp, 
             class OperationImp = DFCommunicationOperation::Copy >
   class CommunicationManager 
+  : public DefaultCommunicationManager<SpaceImp,OperationImp> 
   {
-    typedef SpaceImp SpaceType; 
-    typedef typename SpaceType :: GridPartType GridPartType; 
-
-    // gridPart for communication 
-    const GridPartType & gridPart_; 
-
+    typedef DefaultCommunicationManager<SpaceImp,OperationImp> BaseType;
     CommunicationManager(const CommunicationManager &);
   public:
     //! constructor taking space, but here only storing gridPart for
     //! communication
-    CommunicationManager(const SpaceType & space)
-      : gridPart_(space.gridPart()) 
+    CommunicationManager(const SpaceImp & space) 
+      : BaseType(space) 
     {}
-
-    template <class DiscreteFunctionType> 
-    void exchange(DiscreteFunctionType & df) 
-    {
-      // if serial run, just return   
-      if(gridPart_.grid().comm().size() <= 1) return;
-     
-      // get data handler 
-      typedef DiscreteFunctionCommunicationHandler<DiscreteFunctionType,OperationImp>
-           DataHandleType;
-      DataHandleType dataHandle(df);
-
-      // communicate data 
-      gridPart_.communicate( dataHandle, InteriorBorder_All_Interface , ForwardCommunication);
-    }
   };
-  
+
   //! Proxy class to DependencyCache which is singleton per space 
   class CommunicationManagerList  
   {
