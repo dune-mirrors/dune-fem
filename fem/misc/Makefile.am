@@ -12,4 +12,5 @@ example.cc         rotator.cc         timeutility.hh\
 fem.cc           rotator.hh         transport.hh\
 finitevolume.hh        rpop.hh          vecdiscfnc.cc\
 fvfem.cc         suite.cc         vecdiscfnc.hh\
-fvfemalt.cc        suite.hh
+fvfemalt.cc        suite.hh\
+array.hh rectarray.hh

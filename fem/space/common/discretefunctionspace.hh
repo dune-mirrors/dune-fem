@@ -70,10 +70,10 @@ namespace Dune{
 
     //! Get base function set for given entity. 
     //! For a type of element the base function set is unique.
-    template <class EntityType>
-    const BaseFunctionSetType&  baseFunctionSet ( EntityType &en ) const 
+    template< class EntityType >
+    const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const 
     {
-      return asImp().baseFunctionSet( en );
+      return asImp().baseFunctionSet( entity );
     }
   
     //! return true if space is continuous 

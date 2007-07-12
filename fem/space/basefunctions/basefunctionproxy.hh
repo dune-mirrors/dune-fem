@@ -18,12 +18,17 @@ struct SimpleBaseFunctionProxyTraits
 
 //! BaseFunctionSetProxy Object 
 template < class BaseFunctionSetImp > 
-class SimpleBaseFunctionProxy : public 
-  BaseFunctionSetDefault< SimpleBaseFunctionProxyTraits<BaseFunctionSetImp> > 
+class SimpleBaseFunctionProxy
+: public BaseFunctionSetDefault< SimpleBaseFunctionProxyTraits< BaseFunctionSetImp > >
 {
-  typedef BaseFunctionSetDefault< SimpleBaseFunctionProxyTraits<BaseFunctionSetImp> > BaseType;
 public:
-  typedef SimpleBaseFunctionProxyTraits<BaseFunctionSetImp> Traits ;
+  typedef SimpleBaseFunctionProxyTraits< BaseFunctionSetImp > Traits;
+  
+private:
+  typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > ThisType;
+  typedef BaseFunctionSetDefault< Traits > BaseType;
+
+public:
   typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
 
   enum { dimrange = FunctionSpaceType::DimRange };
@@ -40,19 +45,26 @@ public:
 protected:
   // base function set 
   const BaseFunctionSetImp* baseSet_; 
+
 public:
-  SimpleBaseFunctionProxy(const BaseFunctionSetImp* b) 
-    : baseSet_(b) 
+  inline SimpleBaseFunctionProxy ()
+  : baseSet_( NULL )
+  {
+  }
+    
+  inline SimpleBaseFunctionProxy ( const BaseFunctionSetImp* baseSet )
+  : baseSet_( baseSet ) 
   {
   }
 
   //! Constructor creating empty local function 
-  SimpleBaseFunctionProxy(const SimpleBaseFunctionProxy& org) 
-    : baseSet_(org.baseSet_) 
-  {}
+  inline SimpleBaseFunctionProxy( const ThisType& org )
+  : baseSet_( org.baseSet_ )
+  {
+  }
 
   //! asignment operator 
-  SimpleBaseFunctionProxy& operator = (const SimpleBaseFunctionProxy& org) 
+  SimpleBaseFunctionProxy &operator= ( const ThisType& org )
   {
     baseSet_ = org.baseSet_; 
     return *this;
