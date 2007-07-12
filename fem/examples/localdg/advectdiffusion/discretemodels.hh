@@ -5,6 +5,7 @@
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/pass/limitpass.hh>
 
 // Dune includes
 #include <dune/common/utility.hh>
@@ -15,9 +16,8 @@
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
-// #include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-// #include <dune/fem/function/blockvectorfunction.hh>
+#include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
 //*************************************************************
@@ -35,13 +35,14 @@ namespace Dune {
   class PassTraits {
   public:
     typedef typename Model::Traits ModelTraits;
-    typedef typename ModelTraits::GridType GridType;
+    typedef typename ModelTraits::GridPartType GridPartType;
+    typedef typename GridPartType :: GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
-    // typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
-    typedef HierarchicGridPart<GridType> GridPartType;
 
     typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
+    //typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
+    //typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
     #if 0
     typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
@@ -54,6 +55,7 @@ namespace Dune {
             DiscreteFunctionSpaceType; 
     #endif
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
+    //typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
   };
   // DiscreteModelTraits
   template <class Model,class NumFlux,int polOrd >
