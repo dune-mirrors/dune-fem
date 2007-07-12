@@ -2,6 +2,7 @@
 template <class GridType>
 class U0 {
 public:
+  enum { ConstantVelocity = true };
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
@@ -10,7 +11,7 @@ public:
 		myName = "Burgers-Diffusion";
 	}
   double endtime() {
-    return 0.02;
+    return 0.4;
   }
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
@@ -42,5 +43,3 @@ public:
   bool diff_tstep;
 	string myName;
 };
-
-
