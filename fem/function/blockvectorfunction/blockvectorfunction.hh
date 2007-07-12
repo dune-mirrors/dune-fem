@@ -258,6 +258,7 @@ private:
   //! hold one object for addLocal and setLocal and so on 
   LocalFunctionImp localFunc_;
 
+  friend class DiscreteFunctionInterface<Traits>;
 }; // end class BlockVectorDiscreteFunction 
 
 
