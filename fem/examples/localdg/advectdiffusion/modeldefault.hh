@@ -163,9 +163,9 @@ namespace Dune {
 
       double maxspeedl,maxspeedr,maxspeed;
       double viscparal,viscparar,viscpara;
-      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+      model_.maxSpeed(normal,time,it.intersectionGlobal().global(x),
 		      uLeft,viscparal,maxspeedl);
-      model_.maxSpeed(normal,time,it.intersectionSelfLocal().global(x),
+      model_.maxSpeed(normal,time,it.intersectionGlobal().global(x),
 		      uRight,viscparar,maxspeedr);
       maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       viscpara=(viscparal>viscparar)?viscparal:viscparar;
