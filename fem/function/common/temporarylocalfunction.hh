@@ -50,19 +50,24 @@ namespace Dune
     //! field type of range vectors
     typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
 
+    enum { DimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
+
     //! type of the base function set
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
 
   private:
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-    typedef typename GridPartType :: EntityCodim0Type EntityCodim0Type;
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
+    // typedef typename GridPartType :: EntityCodim0Type EntityCodim0Type;
 
   protected:
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;
     const EntityCodim0Type *entity_;
 
-    const BaseFunctionSetType *baseFunctionSet_;
+    BaseFunctionSetType baseFunctionSet_;
     int numBaseFunctions_;
 
     RangeFieldType *dofs_;
@@ -85,7 +90,7 @@ namespace Dune
     inline TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace ),
       entity_( NULL ),
-      baseFunctionSet_( NULL ),
+      baseFunctionSet_(),
       numBaseFunctions_( 0 ),
       dofs_( NULL )
     {
@@ -105,8 +110,8 @@ namespace Dune
                                     const EntityCodim0Type &entity )
     : discreteFunctionSpace_( dfSpace ),
       entity_( &entity ),
-      baseFunctionSet_( &(discreteFunctionSpace_( entity )) ),
-      numBaseFunctions_( baseFunctionSet_->numBaseFunctions() ),
+      baseFunctionSet_( discreteFunctionSpace_( entity ) ),
+      numBaseFunctions_( baseFunctionSet_.numBaseFunctions() ),
       dofs_( new RangeFieldType[ numBaseFunctions_ ] )
     {
       assert( dofs_ != NULL );
@@ -129,7 +134,7 @@ namespace Dune
     inline const RangeFieldType &operator[] ( int index ) const
     {
       assert( (index >= 0) && (index < numBaseFunctions_) );
-      return fields_[ index ];
+      return dofs_[ index ];
     }
 
     /** \brief access a local DoF
@@ -143,7 +148,7 @@ namespace Dune
     inline RangeFieldType &operator[] ( int index )
     {
       assert( (index >= 0) && (index < numBaseFunctions_) );
-      return fields_[ index ];
+      return dofs_[ index ];
     }
 
     /** obtain the base function set
@@ -156,8 +161,8 @@ namespace Dune
      */
     inline const BaseFunctionSetType &baseFunctionSet () const
     {
-      assert( entity != NULL );
-      return *baseFunctionSet_;
+      assert( entity_ != NULL );
+      return baseFunctionSet_;
     }
 
     /** evaluate the function in local coordinate x
@@ -170,14 +175,14 @@ namespace Dune
      */
     inline void evaluate ( const DomainType &x, RangeType &phi )
     {
-      assert( entity != NULL );
+      assert( entity_ != NULL );
       
       phi = 0;
       for( int i = 0; i < numBaseFunctions_; ++i )
       {
         RangeType psi;
         baseFunctionSet_.evaluate( i, x, psi );
-        phi.axpy( fields_[ i ], psi );
+        phi.axpy( dofs_[ i ], psi );
       }
     }
 
@@ -197,14 +202,14 @@ namespace Dune
     template< class QuadratureType >
     inline void evaluate ( QuadratureType &quadrature, int point, RangeType &phi )
     {
-      assert( entity != NULL );
+      assert( entity_ != NULL );
       
       phi = 0;
       for( int i = 0; i < numBaseFunctions_; ++i )
       {
         RangeType psi;
         baseFunctionSet_.evaluate( i, quadrature, point, psi );
-        phi.axpy( fields_[ i ], psi );
+        phi.axpy( dofs_[ i ], psi );
       }
     }
 
@@ -225,8 +230,8 @@ namespace Dune
       const int oldNumDofs = numBaseFunctions_;
 
       entity_ = &entity;
-      baseFunctionSet_ = &(discreteFunctionSpace_( entity ));
-      numBaseFunctions_( baseFunctionSet_->numBaseFunctions() );
+      baseFunctionSet_ = discreteFunctionSpace_.baseFunctionSet( entity );
+      numBaseFunctions_ = baseFunctionSet_.numBaseFunctions();
       if( numBaseFunctions_ != oldNumDofs ) {
         if( dofs_ != NULL )
           delete[] dofs_;
@@ -245,14 +250,14 @@ namespace Dune
      */
     inline void jacobian ( const DomainType &x, JacobianRangeType &grad )
     {
-      assert( entity != NULL );
+      assert( entity_ != NULL );
       
       typedef typename EntityCodim0Type :: Geometry GeometryType;
       typedef FieldMatrix< typename GeometryType :: ctype,
                            GeometryType :: mydimension,
                            GeometryType :: mydimension > GeometryJacobianType;
       
-      const GeometryType &geometry = entity->geometry();
+      const GeometryType &geometry = entity_->geometry();
       const GeometryJacobianType &inv = geometry.jacobianInverseTransposed( x );
       
       grad = 0;
@@ -260,7 +265,7 @@ namespace Dune
       {
         JacobianRangeType tmp;
         baseFunctionSet_.jacobian( i, x, tmp );
-        grad.axpy( fields_[ i ], psi );
+        grad.axpy( dofs_[ i ], tmp );
       }
 
       for( int i = 0; i < DimRange; ++i )
@@ -284,22 +289,23 @@ namespace Dune
     template< class QuadratureType >
     inline void jacobian ( QuadratureType &quadrature, int point, JacobianRangeType &grad )
     {
-      assert( entity != NULL );
+      assert( entity_ != NULL );
       
       typedef typename EntityCodim0Type :: Geometry GeometryType;
       typedef FieldMatrix< typename GeometryType :: ctype,
                            GeometryType :: mydimension,
                            GeometryType :: mydimension > GeometryJacobianType;
       
-      const GeometryType &geometry = entity->geometry();
-      const GeometryJacobianType &inv = geometry.jacobianInverseTransposed( x );
+      const GeometryType &geometry = entity_->geometry();
+      const GeometryJacobianType &inv
+        = geometry.jacobianInverseTransposed( quadrature.point( point ) );
       
       grad = 0;
       for( int i = 0; i < numBaseFunctions_; ++i )
       {
         JacobianRangeType tmp;
         baseFunctionSet_.jacobian( i, quadrature, point, tmp );
-        grad.axpy( fields_[ i ], psi );
+        grad.axpy( dofs_[ i ], tmp );
       }
 
       for( int i = 0; i < DimRange; ++i )
