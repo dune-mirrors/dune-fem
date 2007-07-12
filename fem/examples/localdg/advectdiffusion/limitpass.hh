@@ -64,6 +64,8 @@ namespace Dune {
     typedef typename DiscreteModelType::SelectorType SelectorType;
     typedef DiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+
+    typedef DofConversionUtility< PointBased > DofConversionUtilityType;
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange,
@@ -83,7 +85,9 @@ namespace Dune {
       arg_(0),
       dest_(0),
       spc_(spc),
-      gridPart_(spc_.gridPart())
+      gridPart_(spc_.gridPart()),
+      orderPower_( -((spc_.order()+1.0)/2.0)),
+      dofConversion_(dimRange)
     {}
     
     //! Destructor
@@ -117,7 +121,6 @@ namespace Dune {
       //- typedefs
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-      GeometryType geom = en.geometry().type();
       //- statements
       caller_.setEntity(en);
       DestinationType& U = const_cast<DestinationType&> (*(Element<0>::get(*arg_)));
@@ -127,29 +130,23 @@ namespace Dune {
       // get local funnction for limited values
       LocalFunctionType limitEn = dest_->localFunction(en);
 
-      // order of space 
-      const int order = spc_.order();
-
+      // get geometry 
       const Geometry& geo = en.geometry();
       
       // create quadrature with barycenters for 
-      // the element and for the faces 
       CachingQuadrature<GridPartType,0> center0(en,0);
       
       //const IndexSetType& iset = spc_.indexSet();
       //const BaseFunctionSetType& bsetEn = limitEn.baseFunctionSet();
-      
-      Dune::DofConversionUtility< PointBased > dofConversion(dimRange);
 
       // number of scalar base functions
-      int numBasis=limitEn.numDofs()/dimRange;
+      const int numBasis=limitEn.numDofs()/dimRange;
       
       //double areae = geo.volume();
       double circume = 0.0;
 
-      int numcorners = geo.corners();
+      const int numcorners = geo.corners();
       double radius = 0.0;
-
       
 #if 0   
       DomainType diff;
@@ -194,9 +191,10 @@ namespace Dune {
   cout << "Point 0,y = " << en.geometry()[0][1] << std::endl;*/
         
       // cout << "Circumference = " << circume << std::endl;    
-      radius = fabs(bx-ax)/sqrt(2.0);   
+      radius = fabs(bx-ax)/M_SQRT2;   
 #endif
             
+      const double hPowPolOrder = pow(4.0*M_SQRT2*radius, orderPower_);// -((order+1.0)/2.0) );
       // get value of U in barycenter
       RangeType centerUe(0);
       uEn.evaluate(center0, 0, centerUe);
@@ -222,8 +220,6 @@ namespace Dune {
           */
           typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
           FaceQuadratureType center1(gridPart_,nit,0,FaceQuadratureType::INSIDE);
-
-          typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
           FaceQuadratureType nbCenter1(gridPart_,nit,0,FaceQuadratureType::OUTSIDE);
 
           const DomainType normal = nit.outerNormal(center1.localPoint(0));
@@ -241,18 +237,17 @@ namespace Dune {
             
             LocalFunctionType uNeigh = U.localFunction(nb);
             // get U in barycenter of neighbor
-            RangeType centerUn(0);
-            uNeigh.evaluate(center0, 0, centerUn);
+            //RangeType centerUn(0);
+            //uNeigh.evaluate(center0, 0, centerUn);
 
             // get U on interface
-            RangeType faceUe(0);
+            RangeType jump(0);
             RangeType faceUn(0);
 
-            uEn.evaluate(center1, 0, faceUe);
+            uEn.evaluate(center1, 0, jump);
             uNeigh.evaluate(nbCenter1, 0, faceUn);
-
-            RangeType jump = faceUe;
             jump -= faceUn;
+
             for (int r=0; r<dimRange; ++r)
               totaljump[r] += jump[r];
 
@@ -261,34 +256,32 @@ namespace Dune {
         }
       }
        
-      double hPowPolOrder = pow(4.0*sqrt(2.)*radius,-((order+1.0)/2.0));
-             
-      for (int r=0;r<dimRange;r++) 
+      for (int r=0;r<dimRange; ++r) 
       {
         double jumpr = fabs(totaljump[r])/double(counter);
-        if (jumpr*hPowPolOrder>1.) 
+        if (jumpr*hPowPolOrder > 1.) 
           limit[r] = true;
         else
           limit[r] = false;
       }
            
-      for (int r=0;r<dimRange;r++) 
+      for (int r=0;r<dimRange; ++r) 
       {
         if (limit[r]) 
         {
-          int dofIdx = dofConversion.combinedDof(0,r);
+          int dofIdx = dofConversion_.combinedDof(0,r);
           limitEn[dofIdx] = uEn[dofIdx];
           for (int i=1;i<numBasis;i++) 
           {
-            int dofIdx = dofConversion.combinedDof(i,r);
+            int dofIdx = dofConversion_.combinedDof(i,r);
             limitEn[dofIdx] = 0.;
           }
         }
         else 
         {
-          for (int i=0;i<numBasis;i++) 
+          for (int i=0;i<numBasis; ++i) 
           {
-            int dofIdx = dofConversion.combinedDof(i,r);
+            int dofIdx = dofConversion_.combinedDof(i,r);
             limitEn[dofIdx] = uEn[dofIdx];
           }
         }
@@ -308,6 +301,8 @@ namespace Dune {
 
     DiscreteFunctionSpaceType& spc_;
     const GridPartType& gridPart_;
+    const double orderPower_;
+    const DofConversionUtilityType dofConversion_; 
   };
 
 }
