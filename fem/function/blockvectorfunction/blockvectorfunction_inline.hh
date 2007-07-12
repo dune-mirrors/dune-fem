@@ -365,7 +365,7 @@ substractLocal( GridIteratorType &it ,
   G.localFunction(*it,G.localFunc_);
 
   int length = localFunc_.numberOfDofs();
-  for(int i=0; i<length; i++)
+  for(int i=0; i<length; ++i)
     localFunc_[i] -= G.localFunc_[i];
 }
 
@@ -376,7 +376,7 @@ setLocal( GridIteratorType &it , const RangeFieldType & scalar )
 {
   localFunction( *it , localFunc_ );
   int length = localFunc_.numberOfDofs();
-  for(int i=0; i<length; i++)
+  for(int i=0; i<length; ++i)
     localFunc_[i] = scalar;
 }
 //**********************************************************************
@@ -617,6 +617,7 @@ rightMultiply(const JacobianRangeType& factor,
 }
 
 
+// --init
 template<class DiscreteFunctionType >
 template <class EntityImp>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
@@ -639,7 +640,13 @@ init (const EntityImp &en ) const
   // cache local dofs 
   DofBlockType& dofs = dofVec_[mapper_.mapToGlobal(en,0)] ;
   assert( numOfDof_ == DofBlockType :: dimension );
-  for(int i=0; i<numOfDof_; i++) values_ [i] = &dofs[i]; 
+  for(int i=0; i<numOfDof_; ++i) 
+  {
+    // assert that mapper matches with space mapping 
+    assert( (mapper_.mapToGlobal(en,0) * DofBlockType::dimension + i) ==
+             fSpace_.mapToGlobal(en,i) );
+    values_ [i] = &dofs[i]; 
+  }
   return ;
 } 
 

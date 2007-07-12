@@ -90,8 +90,7 @@ public:
   
   //! type of underlying array
   typedef typename Traits :: DofStorageType DofStorageType;
-  
-  friend class DiscreteFunctionInterface<Traits>;
+
   //! my type 
   typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
   
@@ -124,9 +123,13 @@ public:
 
   //! the type of the unknowns 
   typedef RangeFieldType DofType;
+
+  //! type of block stored in block vector 
   typedef block_type DofBlockType;
   
+  //! type of index set 
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
+  
   //! needs additional mapper 
   typedef DGMapper<IndexSetType,0,1> MapperType;
 
@@ -217,13 +220,13 @@ public:
   //! read function data from pgm fromat file
   bool read_pgm(std::string filename); 
 
-  //! return pointer to internal array for use of BLAS routines 
+  //! return reference to internal block vector 
+  DofStorageType& blockVector () const { return dofVec_; }
+
+  //! return pointer to internal array for use of BLAS routines  
   DofType* leakPointer () { return (DofType *) &dofVec_[0][0];  }
   //! return pointer to internal array for use of BLAS routines 
   const DofType* leakPointer () const { return (DofType *) &dofVec_[0][0];  }
-
-  //! return reference to internal block vector 
-  DofStorageType& blockVector () const { return dofVec_; }
 
 private:  
   //! write data to xdr stream 
@@ -237,10 +240,12 @@ private:
   //! the name of the function
   std::string name_;
 
+  // single mapper for blocks 
   MapperType mapper_;
 
+  // dof manager 
   DofManagerType & dm_;
-
+  
   // MemObject that manages the memory for the dofs of this function
   std::pair<MemObjectInterface*, DofStorageType*> memPair_;
 
@@ -459,9 +464,8 @@ public:
     }
     return *this;
   }
-
   //! return dof
-  DofType & operator *()
+  DofType& operator *()
   {
     assert((count_ >=0) && (count_ < dofArray_->size()));
     //return DofWrapperType::convert((*dofArray_)[count_],idx_);
@@ -469,15 +473,15 @@ public:
   }
 
   //! return dof read only 
-  const DofType & operator * () const
+  const DofType& operator * () const
   {
     assert((count_ >=0) && (count_ < dofArray_->size()));
     //return DofWrapperType::convert((*dofArray_)[count_],idx_);
     return ((*dofArray_)[count_][idx_]);
   }
 
-  //! go next dof
-  ThisType & operator++ ()
+  //! go to next dof
+  ThisType& operator++ ()
   {
     ++idx_;
     if(idx_ >= blockSize) 
