@@ -407,7 +407,7 @@ class HdivTest
     
     enum { dim = GridType::dimension };
     
-    const BaseFunctionSetType & bSet = space.baseFunctionSet(en); 
+    const BaseFunctionSetType bSet = space.baseFunctionSet(en); 
     int polOrd = 2 * space.order() + 1;
     
     typedef CachingQuadrature <GridPartType , 0> QuadratureType; 
@@ -460,7 +460,7 @@ class HdivTest
                     MatrixType& matrix, VectorType& rhs ) const 
   {
     typedef typename ElementGradientSpaceType::BaseFunctionSetType BaseFunctionSetType;
-    const BaseFunctionSetType & bSet = space.baseFunctionSet(en); 
+    const BaseFunctionSetType bSet = space.baseFunctionSet(en); 
     int polOrd = 2 * space.order() + 1;
     
     typedef CachingQuadrature <GridPartType , 0> QuadratureType; 
@@ -558,18 +558,18 @@ class HdivTest
     LocalFuncType lf = uDG.localFunction(*start); 
     const int numDofs = lf.numDofs();
 
-    //const ElementBaseSetType & elSet = elSpace.baseFunctionSet(*start);
+    //const ElementBaseSetType elSet = elSpace.baseFunctionSet(*start);
     //const int numBubbleDofs = elSet.numBaseFunctions();
   
-    const GradientBaseSetType & gradSet = gradSpace.baseFunctionSet(*start);
+    const GradientBaseSetType gradSet = gradSpace.baseFunctionSet(*start);
     const int numGradDofs = gradSet.numBaseFunctions();
   
 #if SPASTGRID 
     GeometryType geoType (GeometryType::cube,dim-1);
-    const FaceBSetType & faceSet =
+    const FaceBSetType faceSet =
       faceSpace.subBaseFunctionSet( geoType, true ); 
 #else 
-    const FaceBSetType & faceSet =
+    const FaceBSetType faceSet =
       faceSpace.baseFunctionSet( *((*start).template entity<1> (0)) );
 #endif
     
