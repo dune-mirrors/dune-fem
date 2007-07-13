@@ -244,7 +244,20 @@ namespace Dune{
     }
 
     //! print all dof values of this function to stream 
-    void print(std::ostream & ) const ;
+    void print(std::ostream & ) const;
+
+    //! check for NaNs
+    inline bool dofsValid () const
+    {
+      const ConstDofIteratorType end = this->dend();
+      for( ConstDofIteratorType it = this->dbegin(); it != end; ++it )
+      {
+        if( *it != *it )
+          return false;
+      }
+
+      return true;
+    }
     
     //! Set all elements to zero
     void clear();
