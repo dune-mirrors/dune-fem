@@ -9,6 +9,7 @@
 #include <dune/fem/operator/common/objpointer.hh>
 
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/common/loadbalancer.hh>
 
 namespace Dune{
 
@@ -43,7 +44,7 @@ namespace Dune{
  AdaptationOperators. It is the same principle as with Mapping and
  DiscreteOperatorImp. 
 */ 
-class AdaptationManagerInterface 
+class AdaptationManagerInterface : public LoadBalancerInterface 
 {
 public:
   //! default constructor 
@@ -55,7 +56,7 @@ public:
   //! all adaptation operators have this method which adapts the
   //! corresponding grid and organizes the restriction prolongation process
   //! of the underlying function spaces
-  virtual void adapt () const 
+  virtual void adapt ()  
   {
     //std::cout << "called AdaptationManagerInterface::adapt()" << std::endl;
     if(am_) am_->adapt();  
@@ -83,6 +84,19 @@ public:
     am_ = const_cast<AdaptationManagerInterface *> (&am);
     return (*this);
   }
+
+  //! default load balancing method does nothing
+  virtual bool loadBalance () 
+  { 
+    return (am_) ? (am_->loadBalance()) : false; 
+  }
+
+  //! default load balancing counter is zero 
+  virtual int balanceCounter () const 
+  { 
+    return (am_) ? (am_->balanceCounter()) : 0; 
+  }
+ 
 private: 
   AdaptationManagerInterface *am_;
 };
@@ -238,11 +252,23 @@ public:
   //! 0 == no adaptation
   //! 1 == generic adaption 
   //! 2 == grid call back adaptation (only in AlbertaGrid and ALUGrid)
-  virtual void adapt () const 
+  virtual void adapt ()
   {
     AdaptationMethod<ThisType,GridType,
       Conversion<GridType,HasHierarchicIndexSet>::exists>::
         adapt(*this,grid_,dm_,rpOp_,adaptationMethod_);
+  }
+
+  //! default load balancing method does nothing
+  virtual bool loadBalance () 
+  { 
+    return false; 
+  }
+
+  //! default load balancing counter is zero 
+  virtual int balanceCounter () const 
+  { 
+    return 0; 
   }
  
 private:  
@@ -412,22 +438,41 @@ protected:
 };
 
 template <class GridType, class RestProlOperatorImp >
-class AdaptationCommunicationManager :
-  public AdaptationManager<GridType,RestProlOperatorImp> 
+class AdaptationLoadBalanceManager :
+  public AdaptationManager<GridType,RestProlOperatorImp> ,
+  public LoadBalancer<GridType> 
 {  
   typedef AdaptationManager<GridType,RestProlOperatorImp> BaseType; 
+  typedef LoadBalancer<GridType> Base2Type;
 
   mutable CommunicationManagerList commList_;
+
+  // do not copy 
+  AdaptationLoadBalanceManager(const AdaptationLoadBalanceManager&);
 public:  
-  AdaptationCommunicationManager(
-      GridType & grid, RestProlOperatorImp & rpOp,
-      std::string paramFile = "") 
+  AdaptationLoadBalanceManager(
+      GridType & grid, RestProlOperatorImp & rpOp, std::string paramFile = "", 
+      int balanceCounter = 0 ) 
     : BaseType(grid,rpOp,paramFile) 
+    , Base2Type( grid , rpOp , paramFile , balanceCounter )
     , commList_(rpOp)
   {
   }
+
+  //! call load balance 
+  virtual bool loadBalance () 
+  {
+    // call load balance 
+    return Base2Type :: loadBalance();
+  }
+
+  //! return balance counter 
+  virtual int balanceCounter () const 
+  { 
+    return Base2Type :: balanceCounter ();
+  }
   
-  virtual void adapt () const 
+  virtual void adapt () 
   {
     // adapt grid 
     BaseType :: adapt ();
@@ -435,6 +480,9 @@ public:
     // if adaptation is enabled 
     if( this->adaptive() )
     {
+      // do load balancing 
+      loadBalance ();
+
       // exchange all modified data 
       commList_.exchange();
     }

@@ -88,6 +88,35 @@ public:
     std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
   }
 
+  /** \brief constructor of LoadBalancer  
+     \param grid Grid that load balancing is done for 
+     \param paramFile optional parameter file which contains 
+        the following two lines:
+     # BalanceStep, balancing is done every x-th step, 0 means no balancing    
+     BalanceStep: 1 # (do balancing every step)
+     \param balanceCounter actual counter, default is zero 
+  */   
+  template <class RestrictProlongTpye> 
+  LoadBalancer(GridType & grid,
+               RestrictProlongTpye& rpOp,
+               std::string paramFile = "",
+               int balanceCounter = 0) 
+    : grid_(grid) 
+    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
+    , balanceStep_(0)
+    , balanceCounter_(balanceCounter)
+    , localList_()
+    , collList_()
+  {
+    if( paramFile != "")
+    {
+      readParameter(paramFile,"BalanceStep",balanceStep_);
+    }
+
+    rpOp.addToList(*this);
+    std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+  }
+
   //! destructor 
   virtual ~LoadBalancer () 
   {
@@ -125,6 +154,13 @@ public:
     if( balanceStep_ > 0 ) ++balanceCounter_;
 
     return changed;
+  }
+
+  //! add discrete function to data inliner/xtractor list 
+  template <class DiscreteFunctionType>
+  void addToList(DiscreteFunctionType& df)
+  {
+    addDiscreteFunction(df);    
   }
 
   //! add discrete function to data inliner/xtractor list 

@@ -681,7 +681,7 @@ namespace Dune {
     CommunicationManagerList(CombinedObjectType& cObj) 
     {
       // add all discrete functions containd in cObj to list 
-      cObj.addToCommunicator(*this);
+      cObj.addToList(*this);
     }
 
     //! remove object comm
@@ -833,7 +833,7 @@ namespace Dune {
     template <class CombinedObjectType>
     CommunicationManagerList(CombinedObjectType& cObj) 
     {
-      cObj.addToCommunicator(*this);
+      cObj.addToList(*this);
     }
 
     //! remove object comm

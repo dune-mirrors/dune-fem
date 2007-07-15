@@ -38,9 +38,9 @@ public:
 
   //! add discrete function to communicator 
   template <class CommunicationManagerImp>
-  void addToCommunicator(CommunicationManagerImp& communicator)
+  void addToList(CommunicationManagerImp& communicator)
   {
-    asImp().addToCommunicator(communicator);  
+    asImp().addToList(communicator);  
   }
   
 protected:  
@@ -103,10 +103,10 @@ public:
   
   //! prolong data to children 
   template <class CommunicatorImp>
-  void addToCommunicator(CommunicatorImp& comm) 
+  void addToList(CommunicatorImp& comm) 
   {
-    this->first().addToCommunicator(comm); 
-    this->second().addToCommunicator(comm);    
+    this->first().addToList(comm); 
+    this->second().addToList(comm);    
   }
 };
 /** \brief This is a general restriction/prolongation operator
@@ -192,7 +192,7 @@ public:
   }
 
   template <class CommunicatorImp> 
-  void addToCommunicator(CommunicatorImp& comm) 
+  void addToList(CommunicatorImp& comm) 
   {
     comm.addToList(df_);
   }
