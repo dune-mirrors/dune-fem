@@ -35,6 +35,9 @@ public:
   //! destructor 
   virtual ~OdeSolverInterface () {}
   
+  //! initialze solver 
+  virtual void initialize(const DestinationType&) = 0;
+  
   //! solve system 
   virtual void solve(DestinationType&) = 0;
 };
@@ -119,16 +122,14 @@ public:
   }
 
   // apply operator once to get dt estimate 
-  bool initialize(const DestinationType& U0)
+  virtual void initialize(const DestinationType& U0)
   {
     if( ! initialized_ ) 
     {
       // Compute Steps
       op_(U0, *(Upd[0]));
       initialized_ = true;
-      return true;
     }
-    return false;
   }
   
   void solve(DestinationType& U0) 
@@ -275,18 +276,27 @@ class ExplicitRungeKuttaSolver :
 
     if(verbose) 
     {
-      std::cout << "ExplicitOdeSolver: cfl = " << tp.cfl() << "!\n";
+      std::cout << "ExplicitRungeKuttaSolver: cfl = " << tp.cfl() << "!\n";
     } 
   }
 
   //! destructor 
   virtual ~ExplicitRungeKuttaSolver() {}
   
+  // apply operator once to get dt estimate 
+  void initialize(const DestinationType& U0)
+  {
+    BaseType :: initialize(U0);
+  }
+  
   //! solve system 
   void solve(DestinationType& U0) 
   {
-    // on first call just apply operator once 
-    if( BaseType :: initialize(U0) ) return ;
+    // initialize 
+    if( ! this->initialized_ ) 
+    {
+      DUNE_THROW(InvalidStateException,"ExplicitRungeKuttaSolver wasn't initialized before first call!");
+    }
 
     // solve ode 
     BaseType :: solve(U0);
