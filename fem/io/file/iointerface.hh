@@ -43,8 +43,7 @@ public:
   //! write data to disc
   //! \param time actual time of computation 
   //! \param timestep current number of time step 
-  //! \param balancecounter current number in load balance cycle 
-  virtual void write(double time, int timestep, int balancecounter) const = 0; 
+  virtual void write(double time, int timestep) const = 0; 
 
   //! display data if HAVE_GRAPE is 1  
   virtual void display() const = 0; 
