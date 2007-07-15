@@ -135,7 +135,7 @@ namespace Dune{
 
   //! add discrete function to communicator 
   template <class CommunicatorImp>
-  void addToCommunicator(CommunicatorImp& comm)
+  void addToList(CommunicatorImp& comm)
   {
     comm.addToList(df_);
   }
@@ -235,7 +235,7 @@ private:
 
   //! add discrete function to communicator 
   template <class CommunicatorImp>
-  void addToCommunicator(CommunicatorImp& comm)
+  void addToList(CommunicatorImp& comm)
   {
     comm.addToList(df_);
   }
