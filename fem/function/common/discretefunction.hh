@@ -132,13 +132,13 @@ namespace Dune{
     ConstDofIteratorType dbegin () const  
     {
       return asImp().dbegin ();
-    };
+    }
 
     //! const version of dend 
     ConstDofIteratorType dend () const  
     {
       return asImp().dend ();
-    };
+    }
 
     //! return local function for given entity
     template <class EntityType>
@@ -147,13 +147,10 @@ namespace Dune{
     }
 
   protected:
-    
     //! return pointer to local function implementation 
     LocalFunctionImp* newObject() const {
       return asImp().newObject();
     }
-
-
 
  protected:
     // Barton-Nackman trick 
@@ -302,20 +299,18 @@ namespace Dune{
       assert(false); abort();
     }
 
-protected: 
-  //this methods are used by the LocalFunctionStorage class 
+  protected: 
+    //this methods are used by the LocalFunctionStorage class 
 
-  
+    //! return reference for local function storage  
+    LocalFunctionStorageType& localFunctionStorage() const 
+    { 
+      return lfStorage_; 
+    }
 
-  //! return reference for local function storage  
-  LocalFunctionStorageType& localFunctionStorage() const { 
-    return lfStorage_; 
-  }
-
-  // the local function storage stack 
-  mutable LocalFunctionStorageType lfStorage_;
-
-
+  private:    
+    // the local function storage stack 
+    mutable LocalFunctionStorageType lfStorage_;
   }; // end class DiscreteFunctionDefault 
 
   template <class FunctionImp, class GridPartImp>
