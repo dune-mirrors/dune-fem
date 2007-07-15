@@ -103,6 +103,12 @@ namespace Dune {
     //! return cfl number 
     double cfl () const { return cfl_; } 
     
+    //! set internal cfl to given value
+    void setCfl(double cfl) 
+    {
+      cfl_ = cfl;
+    }
+    
     //! set internal cfl to minimum of given value and
     //! internal clf value  
     void provideCflEstimate(double cfl) 
