@@ -73,9 +73,6 @@ namespace Dune {
     AdaptiveDiscreteFunctionTraits<DiscreteFunctionSpaceImp > >,
     private AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp > 
   {
-        
-    
-
   private:
     typedef AdaptiveDiscreteFunction<
       DiscreteFunctionSpaceImp > MyType;
@@ -211,10 +208,10 @@ namespace Dune {
     using Imp::read_pgm;
 
     using Imp::leakPointer;
-  private:
+  protected:  
     using Imp::newObject;
     //- Forbidden members
-
+  private:
     const MyType& interface() const { return *this; }
   }; // end class AdaptiveDiscreteFunction
 
@@ -541,9 +538,12 @@ namespace Dune {
 
     int numComponents() const { return N; }
 
-  private:
+  public:
+    friend class DiscreteFunctionInterface<MyTraits>;
+  protected:
     using Imp::newObject;
     
+  private:
     const MyType& interface() const { return *this; }
   }; // end class AdaptiveDiscreteFunction (specialised for CombinedSpace)
 
