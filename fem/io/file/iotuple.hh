@@ -277,7 +277,8 @@ struct IOTuple : public IOTupleBase
     DMFactoryType::readDofManager(grid,dmname,n);
     
     // resize all data because size of index set might have changed  
-    dm.resize();
+    // NOTE: avoid resize of index sets by using resizeForRestict 
+    dm.resizeForRestrict();
   }
   
   template <class DataIO,class GridType>
@@ -314,12 +315,21 @@ struct IOTuple : public IOTupleBase
     std::string dname( dataName(path,name) );
     std::cout << "Reading data from " << dname << std::endl;
    
-    // read all data 
-    IOTupleHelper<T1,T2,0>::restore(data,dataio,dname,n);
-    
     // read dofmanager and index sets 
     IOTuple<TupType>::restoreDofManager(grid,n,path,name);
 
+    // read all data now 
+    IOTupleHelper<T1,T2,0>::restore(data,dataio,dname,n);
+
+    typedef DofManager<GridType> DofManagerType;
+    typedef DofManagerFactory<DofManagerType> DMFactoryType;
+
+    // get dof manager 
+    DofManagerType& dm = DMFactoryType::getDofManager(grid);
+    
+    // compress all data 
+    dm.compress();
+    
     std::cout << "    FINISHED!" << std::endl;
   }
 
