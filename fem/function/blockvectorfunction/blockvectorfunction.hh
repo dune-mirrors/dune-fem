@@ -61,6 +61,47 @@ struct DofTypeWrapper<double>
   static double & convert(double  & val, int idx) { return val; }
 };
 
+template <class BlockVectorImp, class DofImp>
+class StraightenBlockVector
+{
+  typedef BlockVectorImp BlockVectorType;
+  typedef DofImp DofType;
+  typedef typename BlockVectorType :: block_type BlockType;
+  enum { blockSize = BlockType :: dimension };
+public:
+  StraightenBlockVector(BlockVectorImp& vec) : vec_(vec) {}
+
+  //! return dof
+  DofType& operator [] (int i)
+  {
+    assert((i >=0) && (i < blockSize * vec_.size()));
+    const int count = (int) i/blockSize;
+    assert( count < vec_.size() );
+    const int local = i%blockSize;
+    assert( local < blockSize );
+    return vec_[count][local];
+  }
+
+  //! return dof
+  const DofType& operator [] (int i) const
+  {
+    assert((i >=0) && (i < blockSize * vec_.size()));
+    const int count = (int) i/blockSize;
+    assert( count < vec_.size() );
+    const int local = i%blockSize;
+    assert( local < blockSize );
+    return vec_[count][local];
+  }
+
+  int size () const
+  {
+    return vec_.size() * blockSize;
+  }
+
+private:
+  BlockVectorType& vec_;
+};
+
 //**********************************************************************
 //
 //  --BlockVectorDiscreteFunction 
@@ -132,6 +173,9 @@ public:
   
   //! needs additional mapper 
   typedef DGMapper<IndexSetType,0,1> MapperType;
+
+  //! type of LeakPointer 
+  typedef StraightenBlockVector<DofStorageType,DofType> LeakPointerType;
 
   //! Constructor makes Discrete Function  
   BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
@@ -223,10 +267,11 @@ public:
   //! return reference to internal block vector 
   DofStorageType& blockVector () const { return dofVec_; }
 
-  //! return pointer to internal array for use of BLAS routines  
-  DofType* leakPointer () { return (DofType *) &dofVec_[0][0];  }
-  //! return pointer to internal array for use of BLAS routines 
-  const DofType* leakPointer () const { return (DofType *) &dofVec_[0][0];  }
+  //! return reference to leak pointer 
+  LeakPointerType& leakPointer() { return leakPtr_; }
+
+  //! return const reference to leak pointer 
+  const LeakPointerType& leakPointer() const { return leakPtr_; }
 
 private:  
   //! write data to xdr stream 
@@ -235,7 +280,7 @@ private:
   bool readXdrs(XDR * xdrs);
   
   //! return object pointer of type LocalFunctionImp 
-  LocalFunctionImp * newObject () const;
+  LocalFunctionImp* newObject () const;
 
   //! the name of the function
   std::string name_;
@@ -244,7 +289,7 @@ private:
   MapperType mapper_;
 
   // dof manager 
-  DofManagerType & dm_;
+  DofManagerType&  dm_;
   
   // MemObject that manages the memory for the dofs of this function
   std::pair<MemObjectInterface*, DofStorageType*> memPair_;
@@ -257,6 +302,9 @@ private:
 
   //! hold one object for addLocal and setLocal and so on 
   LocalFunctionImp localFunc_;
+
+  //! leak pointer converting block vector to straight vector 
+  LeakPointerType leakPtr_; 
 
   friend class DiscreteFunctionInterface<Traits>;
 }; // end class BlockVectorDiscreteFunction 
