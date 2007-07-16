@@ -37,8 +37,7 @@ private:
   // next index to give away 
   int nextFreeIndex_;
 
-  int actSize_;
-  
+  // codim for which index is provided 
   int myCodim_; 
 
   // actual number of holes 
@@ -55,7 +54,6 @@ public:
     , newIdx_(0)
     , state_(0)
     , nextFreeIndex_ (0)
-    , actSize_(0)
     , myCodim_(-1) 
     , numberHoles_(0)
     , memFactor_(memoryFactor) 
@@ -161,7 +159,7 @@ public:
 
     assert( newActSize >= actHole );
     // the new size is the actual size minus the holes 
-    actSize_ = newActSize - actHole;
+    int actSize = newActSize - actHole;
 
     // resize hole storing vectors 
     oldIdx_.resize(actHole);
@@ -183,14 +181,14 @@ public:
         {
           // if used index lies behind size, then index has to move 
           // to one of the holes 
-          if(leafIndex_[i] >= actSize_)
+          if(leafIndex_[i] >= actSize)
           {
             // serach next hole that is smaler than actual size 
             actHole--;
             // if actHole < 0 then error, because we have index larger then
             // actual size 
             assert(actHole >= 0);
-            while ( holes_[actHole] >= actSize_ )
+            while ( holes_[actHole] >= actSize )
             {
               actHole--;
               if(actHole < 0) break;
@@ -233,7 +231,7 @@ public:
     numberHoles_ = oldIdx_.size();
 
     // the next index that can be given away is equal to size
-    nextFreeIndex_ = actSize_;
+    nextFreeIndex_ = actSize;
     return haveToCopy;
   }
 
@@ -321,11 +319,24 @@ public:
   // read/write from/to xdr stream 
   bool processXdr(XDR *xdrs)
   {
-    xdr_int ( xdrs, &nextFreeIndex_ );
-    xdr_int ( xdrs, &actSize_ );
-    leafIndex_.processXdr(xdrs);
-    state_.processXdr(xdrs);
-    return true;
+    assert( xdrs );
+    
+    // restore size of index set 
+    int ret = xdr_int ( xdrs, &nextFreeIndex_ );
+    bool ok = (ret == 1) ? true : false;
+    
+    // should always have the same length 
+    assert( leafIndex_.size() == state_.size() );
+
+    // backup/restore leafIndex 
+    ok |= leafIndex_.processXdr(xdrs);
+    // backup/restore state 
+    ok |= state_.processXdr(xdrs);
+
+    // should always have the same length 
+    assert( leafIndex_.size() == state_.size() );
+
+    return ok;
   }
   
   // insert element and create index for element number  
