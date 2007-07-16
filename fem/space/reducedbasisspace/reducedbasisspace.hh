@@ -30,6 +30,13 @@ namespace Dune
 
     typedef typename BaseFunctionType :: FunctionSpaceType BaseFunctionSpaceType;
 
+    typedef typename BaseFunctionSpaceType :: DomainType DomainType;
+    typedef typename BaseFunctionSpaceType :: RangeType RangeType;
+    typedef typename BaseFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+    
+    typedef typename BaseFunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename BaseFunctionSpaceType :: RangeFieldType RangeFieldType;
+
     typedef typename BaseFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
     typedef typename BaseFunctionSpaceType :: GridPartType GridPartType;
     typedef typename BaseFunctionSpaceType :: GridType GridType;
@@ -69,35 +76,37 @@ namespace Dune
   public:
     typedef BaseFunctionImp BaseFunctionType;
 
-    typedef ReducedBasisSpaceTraits< BaseFunctionType > TraitsType;
+    typedef ReducedBasisSpaceTraits< BaseFunctionType > Traits;
 
   private:
     typedef ReducedBasisSpace< BaseFunctionType > ThisType;
-    typedef DiscreteFunctionSpaceDefault< TraitsType > BaseType;
+    typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
   public:
-    typedef typename TraitsType :: BaseFunctionSpaceType BaseFunctionSpaceType;
-    typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
-    typedef typename TraitsType :: GridPartType GridPartType;
-    typedef typename TraitsType :: GridType GridType;
-    typedef typename TraitsType :: IndexSetType IndexSetType;
-    typedef typename TraitsType :: IteratorType IteratorType;
+    typedef typename Traits :: BaseFunctionSpaceType BaseFunctionSpaceType;
+    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
+    typedef typename Traits :: GridPartType GridPartType;
+    typedef typename Traits :: GridType GridType;
+    typedef typename Traits :: IndexSetType IndexSetType;
+    typedef typename Traits :: IteratorType IteratorType;
 
-    typedef typename TraitsType :: BaseFunctionSetType BaseFunctionSetType;
-    typedef typename TraitsType :: BaseFunctionListType BaseFunctionListType;
-    typedef typename TraitsType :: MapperType MapperType;
+    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+    typedef typename Traits :: BaseFunctionListType BaseFunctionListType;
+    typedef typename Traits :: MapperType MapperType;
+
+    enum { polynomialOrder = BaseFunctionSpaceType :: polynomialOrder };
 
   protected:
     BaseFunctionSpaceType &baseFunctionSpace_;
-    const BaseFunctionListType baseFunctionList_;
-    MapperType &mapper_;
+    BaseFunctionListType baseFunctionList_;
+    mutable MapperType mapper_;
 
   public:
   //! constructor the underlying lagrange basis is the argument
     inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
     : BaseType( baseFunctionSpace.gridPart() ),
       baseFunctionSpace_( baseFunctionSpace ),
-      baseFunctionList_( NULL ),
+      baseFunctionList_(),
       mapper_( baseFunctionList_ )
     {
     }

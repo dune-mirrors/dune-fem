@@ -11,15 +11,11 @@ namespace Dune
 
 
   
-/*======================================================================*/
-/*!
- *  \class  ReducedBasisBaseFunctionSetTraits 
- *  \brief The  ReducedBasisBaseFunctionSetTraits class provides  typedefs
- *
- *  many typedefs
- * 
- */
-/*======================================================================*/
+  /*! \class  ReducedBasisBaseFunctionSetTraits 
+   *  \brief The  ReducedBasisBaseFunctionSetTraits class provides  typedefs
+   *
+   *  many typedefs
+   */
   template< class BaseFunctionImp >
   class ReducedBasisBaseFunctionSetTraits
   {
@@ -41,19 +37,15 @@ namespace Dune
 
 
 
-/*======================================================================*/
-/*!
- *  \class ReducedBasisBaseFunctionSet 
- *  \brief The ReducedBasisBaseFunctionSet class provides  
- *
- *  this class is needed to build the space and provides the functionality of the space
- *  for example the jacobian method is implemented here 
- *
- */
-/*======================================================================*/
+  /*! \class ReducedBasisBaseFunctionSet 
+   *  \brief The ReducedBasisBaseFunctionSet class provides  
+   *
+   *  this class is needed to build the space and provides the functionality of the space
+   *  for example the jacobian method is implemented here 
+   */
   template< class BaseFunctionImp >
   class ReducedBasisBaseFunctionSet
-  : BaseFunctionSetDefault< ReducedBasisBaseFunctionSetTraits< BaseFunctionImp > >
+  : public BaseFunctionSetDefault< ReducedBasisBaseFunctionSetTraits< BaseFunctionImp > >
   {
   public:
     typedef BaseFunctionImp BaseFunctionType;
@@ -63,6 +55,8 @@ namespace Dune
   private:
     typedef ReducedBasisBaseFunctionSet< BaseFunctionType > ThisType;
     typedef BaseFunctionSetDefault< TraitsType > BaseType;
+
+    using BaseType :: evaluate;
 
   public:
     typedef ThisType BaseFunctionSetType;
@@ -88,9 +82,10 @@ namespace Dune
     enum { DimDomain = FunctionSpaceType :: DimDomain };
     enum { DimRange = FunctionSpaceType :: DimRange };
 
-    typedef typename GridPartType :: EntityCodim0Type EntityCodim0Type;
-
     typedef std :: vector< BaseFunctionType* > BaseFunctionListType;
+
+  private:
+    typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
 
   protected:
     const BaseFunctionListType *baseFunctionList_;
@@ -99,14 +94,14 @@ namespace Dune
     const EntityCodim0Type *entity_;
 
   public:
-  //! constructor
+    //! constructor
     inline ReducedBasisBaseFunctionSet ()
     : baseFunctionList_( NULL ),
       entity_( NULL )
     {
     }
    
-   //! constructor with an argument as TODO
+    //! constructor with an argument as TODO
     inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( &baseFunctionList ),
       entity_( NULL )
@@ -114,13 +109,13 @@ namespace Dune
     }
 
     inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList,
-                                             const EntityCodim0Type &entity )
+                                         const EntityCodim0Type &entity )
     : baseFunctionList_( &baseFunctionList ),
       entity_( &entity )
     {
     }
     
-//! copy constructor
+    //! copy constructor
     inline ReducedBasisBaseFunctionSet ( const ThisType &other )
     : baseFunctionList_( other.baseFunctionList_ ),
       entity_( other.entity_ )
@@ -131,9 +126,10 @@ namespace Dune
     {
       baseFunctionList_ = other.baseFunctionList_;
       entity_ = other.entity_;
+      return *this;
     }
 
-   //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
+    //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
     template< int diffOrd >
     inline void evaluate ( int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
@@ -144,7 +140,8 @@ namespace Dune
 
       typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
-      LocalBaseFunctionType localBaseFunction = baseFunctionList_[ baseFunction ]->localFunction( entity_ );
+      LocalBaseFunctionType localBaseFunction
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
       LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
@@ -157,8 +154,8 @@ namespace Dune
       }
     }
 
-     //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
-//TODO wo ist der unterschied zu obigem???  
+    //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
+    //TODO wo ist der unterschied zu obigem???  
     template< int diffOrd, class QuadratureType >
     inline void evaluate ( int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
@@ -170,8 +167,9 @@ namespace Dune
 
       typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
-      LocalBaseFunctionType localBaseFunction = baseFunctionList_[ baseFunction ].localFunction( entity_ );
-      LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
+      LocalBaseFunctionType localBaseFunction 
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
+      LocalBaseFunctionSetType localBaseFunctionSet = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
       phi = 0;
@@ -183,7 +181,7 @@ namespace Dune
       }
     }
 
-  //! returns the number of Discretefunctions that bulid the reduced basis space
+    //! returns the number of Discretefunctions that bulid the reduced basis space
     inline int numBaseFunctions () const
     {
       assert( baseFunctionList_ != NULL );
