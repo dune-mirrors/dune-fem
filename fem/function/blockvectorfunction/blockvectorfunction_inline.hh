@@ -398,7 +398,7 @@ StaticDiscreteLocalFunction(
  , dofVec_ ( dofVec ) 
  , multipleBaseFunctionSets_((fSpace_.multipleBaseFunctionSets()))
  , init_(false)
- , baseSet_(0)
+ , baseSet_()
 {
   // only works for discontinuous spaces at the moment 
   assert( ! f.continuous() );

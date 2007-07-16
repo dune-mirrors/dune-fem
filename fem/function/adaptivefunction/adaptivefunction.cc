@@ -18,7 +18,7 @@ namespace Dune {
     tmpGrad_(0),
     init_(false),
     multipleGeometryTypes_(spc_.multipleGeometryTypes()),
-    baseSet_(0),
+    baseSet_(),
     en_(0),
     geoType_(0) // init as Vertex 
   {}
@@ -34,7 +34,7 @@ namespace Dune {
     tmpGrad_(0.0),
     init_(false),
     multipleGeometryTypes_(spc_.multipleGeometryTypes()),
-    baseSet_(0),
+    baseSet_(),
     en_(0),
     geoType_(0) // init as Vertex 
   {}
@@ -375,7 +375,7 @@ namespace Dune {
     tmp_(0.0),
     init_(false),
     multipleGeometryTypes_(spc_.multipleGeometryTypes()),
-    baseSet_(0),
+    baseSet_(),
     en_(0),
     geoType_(0) // init as Vertex 
   {}
@@ -393,7 +393,7 @@ namespace Dune {
     tmp_(0.0),
     init_(false),
     multipleGeometryTypes_(spc_.multipleGeometryTypes()),
-    baseSet_(0),
+    baseSet_(),
     en_(0),
     geoType_(0) // init as Vertex 
   {}
