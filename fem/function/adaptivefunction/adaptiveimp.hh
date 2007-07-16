@@ -5,6 +5,8 @@
 #include <string>
 
 //- Dune includes
+#include <dune/common/exceptions.hh>
+
 
 namespace Dune {
 

@@ -207,6 +207,14 @@ namespace Dune {
     }
 
     xdrstdio_create(&xdrs, file, XDR_ENCODE);   
+
+    // make sure data is only written in compressed state. 
+    if( dofVec_.size() != spc_.size() )
+    {
+      DUNE_THROW(InvalidStateException,"DofVector not in compressed state while writing!"); 
+    }
+
+    // write data 
     dofVec_.processXdr(&xdrs);
 
     xdr_destroy(&xdrs);
@@ -229,8 +237,16 @@ namespace Dune {
       return false;
     }
 
-    // read xdr 
+    // create xdr stream 
     xdrstdio_create(&xdrs, file, XDR_DECODE);     
+    
+    // make sure data is only written in compressed state. 
+    if( dofVec_.size() != spc_.size() )
+    {
+      DUNE_THROW(InvalidStateException,"DofVector size does not match while reading!"); 
+    }
+
+    // read data 
     dofVec_.processXdr(&xdrs);
   
     xdr_destroy(&xdrs);
