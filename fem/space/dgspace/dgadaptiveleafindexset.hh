@@ -566,6 +566,7 @@ public:
       assert(type == myType);
     }
 
+    std::cout << "Read index set \n";
     codimLeafSet_.processXdr(&xdrs);
 
     xdr_destroy(&xdrs);
@@ -574,10 +575,9 @@ public:
     // in parallel runs we have to compress here
     if(this->grid_.comm().size() > 1) 
     {
+      // mark for compress 
       compressed_ = false;
-      compress();
     }
-
     return true;
   }
 
