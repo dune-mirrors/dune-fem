@@ -274,10 +274,8 @@ public:
   const LeakPointerType& leakPointer() const { return leakPtr_; }
 
 private:  
-  //! write data to xdr stream 
-  bool writeXdrs(XDR * xdrs) const;
-  //! read data from xdr stream 
-  bool readXdrs(XDR * xdrs);
+  //! write/read data to/from xdr stream 
+  bool processXdrs(XDR * xdrs) const;
   
   //! return object pointer of type LocalFunctionImp 
   LocalFunctionImp* newObject () const;

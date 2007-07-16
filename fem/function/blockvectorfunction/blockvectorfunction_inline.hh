@@ -155,6 +155,30 @@ BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::dend ( ) const
 //**************************************************************************
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+processXdrs(XDR * xdrs) const  
+{
+  int len = dofVec_.size();
+  xdr_int( xdrs, &len );
+ 
+  // make sure data is only read in compressed state. 
+  if( (dofVec_.size() != mapper_.size()) || (len != dofVec_.size()) )
+  {
+    DUNE_THROW(InvalidStateException,"BlockVectorDiscreteFunction::processXdrs: sizes do not match!");
+  }
+  
+  enum { blockSize = DofBlockType :: dimension };
+  u_int s = blockSize * sizeof(RangeFieldType);
+  const int vecSize = dofVec_.size();
+  for(int i=0; i<vecSize; ++i) 
+  {
+    RangeFieldType* dof = &(dofVec_[i][0]);
+    xdr_bytes(xdrs, ((char **) &dof), &s , s );
+  }
+  return true;
+}
+
+template<class DiscreteFunctionSpaceType>
+inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 write_xdr( std::string filename ) const
 {
   const char * fn = filename.c_str();
@@ -170,48 +194,11 @@ write_xdr( std::string filename ) const
 
   xdrstdio_create(&xdrs, file, XDR_ENCODE);   
   
-  writeXdrs(&xdrs);
+  processXdrs(&xdrs);
 
   xdr_destroy(&xdrs);
   fclose(file);
   
-  return true;
-}
-
-template<class DiscreteFunctionSpaceType>
-inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-writeXdrs(XDR * xdrs) const  
-{
-  int len = dofVec_.size();
-  xdr_int( xdrs, &len );
- 
-  enum { blockSize = DofBlockType :: dimension };
-  for(int i=0; i<len; ++i) 
-  {
-    DofBlockType &dof = dofVec_[i];
-    xdr_vector(xdrs,(char *) &dof[0], blockSize , sizeof(RangeFieldType) ,(xdrproc_t)xdr_double);
-  }
-  return true;
-}
-
-template<class DiscreteFunctionSpaceType>
-inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-readXdrs(XDR * xdrs)   
-{
-  int len = 0 ;
-  xdr_int( xdrs, &len );
-
-  // for parallel runs len might be bigger than 
-  // size we read we use Grape 
-  assert( len >= dofVec_.size() );
- 
-  enum { blockSize = DofBlockType :: dimension };
-  const int vecSize = dofVec_.size();
-  for(int i=0; i<vecSize; ++i) 
-  {
-    DofBlockType &dof = dofVec_[i];
-    xdr_vector(xdrs,(char *) &dof[0], blockSize , sizeof(RangeFieldType) ,(xdrproc_t)xdr_double);
-  }
   return true;
 }
 
@@ -234,7 +221,7 @@ read_xdr( std::string filename)
   // read xdr 
   xdrstdio_create(&xdrs, file, XDR_DECODE);     
 
-  readXdrs(&xdrs);
+  processXdrs(&xdrs);
   
   xdr_destroy(&xdrs);
   fclose(file);
