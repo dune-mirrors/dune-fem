@@ -11,6 +11,15 @@ namespace Dune
 
 
   
+/*======================================================================*/
+/*!
+ *  \class  ReducedBasisBaseFunctionSetTraits 
+ *  \brief The  ReducedBasisBaseFunctionSetTraits class provides  typedefs
+ *
+ *  many typedefs
+ * 
+ */
+/*======================================================================*/
   template< class BaseFunctionImp >
   class ReducedBasisBaseFunctionSetTraits
   {
@@ -32,6 +41,16 @@ namespace Dune
 
 
 
+/*======================================================================*/
+/*!
+ *  \class ReducedBasisBaseFunctionSet 
+ *  \brief The ReducedBasisBaseFunctionSet class provides  
+ *
+ *  this class is needed to build the space and provides the functionality of the space
+ *  for example the jacobian method is implemented here 
+ *
+ */
+/*======================================================================*/
   template< class BaseFunctionImp >
   class ReducedBasisBaseFunctionSet
   : BaseFunctionSetDefault< ReducedBasisBaseFunctionSetTraits< BaseFunctionImp > >
@@ -80,12 +99,14 @@ namespace Dune
     const EntityCodim0Type *entity_;
 
   public:
+  //! constructor
     inline ReducedBasisBaseFunctionSet ()
     : baseFunctionList_( NULL ),
       entity_( NULL )
     {
     }
-
+   
+   //! constructor with an argument as TODO
     inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( &baseFunctionList ),
       entity_( NULL )
@@ -98,7 +119,8 @@ namespace Dune
       entity_( &entity )
     {
     }
-
+    
+//! copy constructor
     inline ReducedBasisBaseFunctionSet ( const ThisType &other )
     : baseFunctionList_( other.baseFunctionList_ ),
       entity_( other.entity_ )
@@ -111,6 +133,7 @@ namespace Dune
       entity_ = other.entity_;
     }
 
+   //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
     template< int diffOrd >
     inline void evaluate ( int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
@@ -134,6 +157,8 @@ namespace Dune
       }
     }
 
+     //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
+//TODO wo ist der unterschied zu obigem???  
     template< int diffOrd, class QuadratureType >
     inline void evaluate ( int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
@@ -158,6 +183,7 @@ namespace Dune
       }
     }
 
+  //! returns the number of Discretefunctions that bulid the reduced basis space
     inline int numBaseFunctions () const
     {
       assert( baseFunctionList_ != NULL );

@@ -4,6 +4,15 @@
 namespace Dune
 {
 
+/*======================================================================*/
+/*!
+ *  \class ReducedBasisMapper
+ *  \brief provides the mapper for the reduced basis space 
+ *
+ *  This class just performs the identity mapping.
+ *
+ */
+/*======================================================================*/
   template< class BaseFunctionListImp >
   class ReducedBasisMapper
   : public DofMapperDefault< ReducedBasisMapper< BaseFunctionListImp > >

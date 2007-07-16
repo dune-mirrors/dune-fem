@@ -7,6 +7,15 @@
 namespace Dune
 {
 
+/*======================================================================*/
+/*!
+ *  \class ReducedBasisSpaceTraits 
+ *  \brief The ReducedBasisSpaceTraits class provides  the traits for the RBspace
+ *
+ *  many typedefs
+ *
+ */
+/*======================================================================*/
   template< class BaseFunctionImp >
   class ReducedBasisSpaceTraits
   {
@@ -39,6 +48,20 @@ namespace Dune
 
   
 
+/*======================================================================*/
+/*!
+ *  \class ReducedBasisSpace 
+ *  \brief The ReducedBasisSpace class provides the space for RB simulations 
+ *
+ *  The basis consists of discrete functions as basis functions. These discrete functions 
+ *  have an underlying space, the Lagrange space. Consequently they inhert most of the 
+ *  structure from the Lagrange space.
+ *  Initially the space is empty and be using the add function you can bulid this space 
+ *  and discrete functions. 
+ *  
+ *
+ */
+/*======================================================================*/
   template< class BaseFunctionImp >
   class ReducedBasisSpace
   : public DiscreteFunctionSpaceDefault< ReducedBasisSpaceTraits< BaseFunctionImp > >
@@ -70,6 +93,7 @@ namespace Dune
     MapperType &mapper_;
 
   public:
+  //! constructor the underlying lagrange basis is the argument
     inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
     : BaseType( baseFunctionSpace.gridPart() ),
       baseFunctionSpace_( baseFunctionSpace ),
@@ -78,6 +102,7 @@ namespace Dune
     {
     }
 
+  //! destructor to release the pointer of each entry
     inline ~ReducedBasisSpace ()
     {
       unsigned int size = baseFunctionList_.size();
@@ -85,6 +110,7 @@ namespace Dune
         delete baseFunctionList_[ i ];
     }
 
+   //! this method is used to create the reduced basis space by adding discrete functions
     inline void addBaseFunction ( const BaseFunctionType &baseFunction )
     {
       BaseFunctionType *f = new BaseFunctionType( baseFunction );
