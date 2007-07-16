@@ -8,6 +8,7 @@
 //- Dune includes 
 #include <dune/common/genericiterator.hh>
 #include <dune/common/interfaces.hh>
+#include <dune/common/exceptions.hh>
 
 #if HAVE_BLAS 
 // include BLAS for daxpy operation 
@@ -322,13 +323,11 @@ public:
     {
       int len = size_;
       xdr_int( xdrs, &len );
+
       // when read check size 
       if( size_ != len )
       {
-        // this vector can only read the same size as stored 
-        assert( (size_ != len) ? (std::cout << size_ << " s|l " << len << "\n" ,0 ): 1);
-        std::cerr << "ERROR: StaticArray::processXdr: sizes does not match read value! \n";
-        abort();
+        DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size and size to read not equal!");
       }
       return processXdrVector(xdrs);
     }
@@ -349,12 +348,16 @@ public:
   }
   
 protected:  
-  //! read and write xdr vector 
+  //! read and write vector as bytes using xdr method xdr_bytes  
   bool processXdrVector(XDR *xdrs)
   {
     assert( xdrs );
-    xdr_vector(xdrs,(char *) vec_,size_, sizeof(T) ,(xdrproc_t)xdr_double);
-    return true;
+    // get size in bytes 
+    u_int s = size() * sizeof(T);
+
+    // write data as byte vector 
+    int ret = xdr_bytes( xdrs, (char **) &vec_, &s , s );
+    return (ret == 1) ? true : false;
   } 
 };
 
@@ -383,22 +386,6 @@ inline void StaticArray<double>::clear()
   std::memset(vec_, 0 , size() * sizeof(double));
 }
  
-//! specialisation for int 
-template <>
-inline bool StaticArray<int>::processXdrVector(XDR *xdrs)
-{
-  xdr_vector(xdrs,(char *) vec_,size_, sizeof(int) ,(xdrproc_t)xdr_int);
-  return true;
-}
-
-//! specialisation for double 
-template <>
-inline bool StaticArray<double>::processXdr(XDR *xdrs)
-{
-  xdr_vector(xdrs,(char *) vec_,size_, sizeof(double) ,(xdrproc_t)xdr_double);
-  return true;
-}
-
 /*! 
  MutableArray is the array that a discrete functions sees. If a discrete
  function is created, then it is signed in by the function space and the
@@ -507,6 +494,27 @@ public:
     return memSize_ * sizeof(T) + sizeof(ThisType);
   } 
   
+  //! read and write xdr, during read resize is done 
+  //! if sizes do not match  
+  bool processXdr(XDR *xdrs)
+  {
+    if(xdrs != 0)
+    {
+      int len = this->size();
+      xdr_int( xdrs, &len );
+
+      // if actual size is smaller then resize vector  
+      if( len > this->size() ) resize ( len );
+
+      // write array 
+      return this->processXdrVector(xdrs);
+    }
+    else 
+    {
+      return false;
+    }
+  }
+
 private: 
   // free memory and reset sizes 
   void freeMemory() 
