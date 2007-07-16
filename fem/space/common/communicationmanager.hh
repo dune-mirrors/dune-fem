@@ -437,11 +437,11 @@ namespace Dune {
     }
     
   private:  
-    // write data of DataImp* vector to object stream 
+    // write data of DataImp& vector to object stream 
     template <class DataImp, class DofType> 
     void writeBuffer(const int link, 
                      ObjectStreamType & os, 
-                     const DataImp* data,
+                     const DataImp& data,
                      const DofType* ) const 
     {
       const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
@@ -458,11 +458,11 @@ namespace Dune {
       }
     }
 
-    // read data from object stream to DataImp* data vector 
+    // read data from object stream to DataImp& data vector 
     template <class DataImp, class DofType, class OperationImp> 
     void readBuffer(const int link, 
                     ObjectStreamType & os, 
-                    DataImp* data, const DofType*,
+                    DataImp& data, const DofType*,
                     const OperationImp *) const 
     {
       const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
@@ -475,6 +475,45 @@ namespace Dune {
         OperationImp::apply(val , data[ indexMap[i] ] );
       }
     }
+    
+    // write data of double* vector to object stream 
+    void writeBuffer(const int link, 
+                     ObjectStreamType & os, 
+                     const double* data,
+                     const double* ) const 
+    {
+      const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
+      const int size = indexMap.size();
+
+      // reserve buffer memory at once 
+      os.reserve( size * sizeof(double) );
+
+      double val = 0.0;
+      for(int i=0; i<size; ++i)
+      {
+        val = data[ indexMap[i] ];
+        os.write( val );
+      }
+    }
+
+    // read data from object stream to double* data vector 
+    template <class OperationImp> 
+    void readBuffer(const int link, 
+                    ObjectStreamType & os, 
+                    double* data, const double*,
+                    const OperationImp *) const 
+    {
+      const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
+      double val;
+      const int size = indexMap.size();
+      for(int i=0; i<size; ++i)
+      {
+        os.read( val );
+        // apply operation 
+        OperationImp::apply(val , data[ indexMap[i] ] );
+      }
+    }
+    
   };
 
   //! Key for CommManager singleton list 
