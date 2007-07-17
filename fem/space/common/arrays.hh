@@ -327,7 +327,7 @@ public:
       // when read check size 
       if( size_ != len )
       {
-        DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size and size to read not equal!");
+        DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size " << size_ << " and size to read " << len << " not equal!");
       }
       return processXdrVector(xdrs);
     }
