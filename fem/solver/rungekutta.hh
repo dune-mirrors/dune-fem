@@ -122,7 +122,7 @@ public:
   }
 
   // apply operator once to get dt estimate 
-  virtual void initialize(const DestinationType& U0)
+  void initialize(const DestinationType& U0)
   {
     if( ! initialized_ ) 
     {
