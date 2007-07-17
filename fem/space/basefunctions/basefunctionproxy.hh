@@ -234,19 +234,23 @@ public:
   typedef typename FunctionSpaceType::RangeType RangeType;
   typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
+  inline VectorialBaseFunctionProxy() : BaseType () 
+  {
+  }
+    
   //! constructor storing base function set pointer 
-  VectorialBaseFunctionProxy(const BaseFunctionSetImp* b) 
+  inline VectorialBaseFunctionProxy(const BaseFunctionSetImp* b) 
     : BaseType(b) 
   {
   }
 
   //! Constructor creating empty local function 
-  VectorialBaseFunctionProxy(const VectorialBaseFunctionProxy& org) 
+  inline VectorialBaseFunctionProxy(const VectorialBaseFunctionProxy& org) 
     : BaseType(org) 
   {}
 
   //! asignment operator 
-  VectorialBaseFunctionProxy& operator = (const VectorialBaseFunctionProxy& org) 
+  inline VectorialBaseFunctionProxy& operator = (const VectorialBaseFunctionProxy& org) 
   {
     BaseType :: operator = (org);
     return *this;
