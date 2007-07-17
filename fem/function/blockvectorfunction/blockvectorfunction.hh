@@ -401,8 +401,7 @@ public:
   
 protected:
   //! update local function for given Entity  
-  template <class EntityImp> 
-  void init ( const EntityImp &en ) const;
+  void init ( const EntityType &en ) const;
 
   //! return reference to entity
   const EntityType& en() const 

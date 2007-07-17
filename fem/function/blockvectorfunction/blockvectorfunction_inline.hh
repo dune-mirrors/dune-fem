@@ -609,7 +609,6 @@ rightMultiply(const JacobianRangeType& factor,
 
 // --init
 template< class DiscreteFunctionType >
-template< class EntityType >
 inline void StaticDiscreteLocalFunction< DiscreteFunctionType >
   :: init ( const EntityType &entity ) const
 {
