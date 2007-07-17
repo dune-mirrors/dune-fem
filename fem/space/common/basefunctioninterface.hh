@@ -165,6 +165,13 @@ public:
     asImp().evaluate( baseFunct, diffVariable, quad, quadPoint, phi );
   }
 
+  //! return type of geometry
+  inline GeometryType geometryType () const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().geometryType() );
+    return asImp().geometryType();
+  }
+
 private:
   //! Barton-Nackman trick 
   BaseFunctionSetType &asImp() { 

@@ -217,6 +217,12 @@ namespace Dune
       return mapper_.mapToGlobal( entity, localDof );
     }
 
+    //! are there multiple base function sets per geometry type?
+    inline bool multipleBaseFunctionSets() const
+    {
+      return true;
+    }
+
     //! number of DoFs in the function space
     inline int size () const
     {

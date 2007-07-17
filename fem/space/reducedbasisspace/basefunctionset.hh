@@ -207,6 +207,12 @@ namespace Dune
       }
     }
 
+    inline GeometryType geometryType () const
+    {
+      assert( entity_ != NULL );
+      return entity_->geometry().type();
+    }
+
     //! returns the number of Discretefunctions that bulid the reduced basis space
     inline int numBaseFunctions () const
     {
