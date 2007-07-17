@@ -355,8 +355,10 @@ protected:
     // get size in bytes 
     u_int s = size() * sizeof(T);
 
+    // get pointer as char pointer 
+    char * ptr = (char *) vec_;
     // write data as byte vector 
-    int ret = xdr_bytes( xdrs, (char **) &vec_, &s , s );
+    int ret = xdr_bytes( xdrs, &ptr, &s , s );
     return (ret == 1) ? true : false;
   } 
 };
