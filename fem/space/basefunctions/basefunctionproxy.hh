@@ -176,6 +176,13 @@ public:
                                      factor);
   }
 
+  //! \çppydoc BaseFunctionSetInterface :: geometryType
+  inline GeometryType geometryType () const
+  {
+    assert( this->baseSet_ );
+    return baseSet_->geometryType();
+  }
+
 
   //! @copydoc BaseFunctionSetDefault::jacobian
   inline

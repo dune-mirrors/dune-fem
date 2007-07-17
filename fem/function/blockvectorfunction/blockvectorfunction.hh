@@ -440,16 +440,10 @@ protected:
   mutable int numOfDof_;
 
   //! do we have the same base function set for all elements
-  const bool multipleBaseFunctionSets_;
-
-  //! is it initialised?
-  mutable bool init_;
+  mutable bool needCheckGeometry_;
 
   //! corresponding base function set 
   mutable BaseFunctionSetType baseSet_; 
-
-  mutable GeometryType geoType_;
-  
 }; // end StaticDiscreteLocalFunction 
 
 

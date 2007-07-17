@@ -379,13 +379,12 @@ StaticDiscreteLocalFunction(
     const DiscreteFunctionSpaceType &f , 
     const MapperType& mapper,
     DofStorageType & dofVec )
- : fSpace_ ( f )
- , mapper_(mapper)
- , en_(0)
- , dofVec_ ( dofVec ) 
- , multipleBaseFunctionSets_((fSpace_.multipleBaseFunctionSets()))
- , init_(false)
- , baseSet_()
+ : fSpace_ ( f ),
+   mapper_(mapper),
+   en_(0),
+   dofVec_ ( dofVec ),
+   needCheckGeometry_( true ),
+   baseSet_()
 {
   // only works for discontinuous spaces at the moment 
   assert( ! f.continuous() );
@@ -422,7 +421,7 @@ inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
 evaluate (const DomainType & local, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
-  assert(init_);
+  assert( en_ != 0 );
   assert(en().geometry().checkInside(local));
   ret = 0.0;
 
@@ -442,7 +441,7 @@ inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
 evaluate (const QuadratureType &quad, const int quadPoint, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
-  assert(init_);
+  assert( en_ != 0 );
 
   ret = 0.0;
   const int numBaseFunctions = baseFunctionSet().numBaseFunctions();
@@ -459,7 +458,7 @@ inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
 jacobian(const DomainType& x,
          JacobianRangeType& ret) const
 {
-  assert(init_);
+  assert( en_ != 0 );
   enum { dim = EntityType::dimension };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   typedef typename DiscreteFunctionSpaceType::GridType::ctype ctype;
@@ -485,7 +484,7 @@ template <class QuadratureType>
 inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
 jacobian (const QuadratureType &quad, const int quadPoint, JacobianRangeType & ret) const
 {
-  assert(init_);
+  assert( en_ != 0 );
   enum { dim = EntityType::dimension };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   typedef typename DiscreteFunctionSpaceType::GridType::ctype ctype;
@@ -513,7 +512,7 @@ StaticDiscreteLocalFunction < DiscreteFunctionType >:: BaseFunctionSetType&
 StaticDiscreteLocalFunction < DiscreteFunctionType >::
 baseFunctionSet() const 
 {
-  assert(init_);
+  assert( en_ != 0 );
   return baseSet_;
 }
 
@@ -609,36 +608,43 @@ rightMultiply(const JacobianRangeType& factor,
 
 
 // --init
-template<class DiscreteFunctionType >
-template <class EntityImp>
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
-init (const EntityImp &en ) const
+template< class DiscreteFunctionType >
+template< class EntityType >
+inline void StaticDiscreteLocalFunction< DiscreteFunctionType >
+  :: init ( const EntityType &entity ) const
 {
-  // in not initilized or we have more then one base function set
-  if(multipleBaseFunctionSets_ || !init_)
+  const bool multipleBaseSets = fSpace_.multipleBaseFunctionSets();
+
+  if( multipleBaseSets || needCheckGeometry_ )
   {
-    baseSet_  = fSpace_.baseFunctionSet(en);
-    init_ = true;
-    numOfDof_ = baseFunctionSet().numBaseFunctions();
+    // if multiple base sets skip geometry call
+    bool updateBaseSet = true;
+    if( !multipleBaseSets && (en_ != 0) )
+      updateBaseSet = (baseSet_.geometryType() != entity.geometry().type());
 
-    if(numOfDof_ > values_.size())
-      values_.resize( numOfDof_ );
+    if( multipleBaseSets || updateBaseSet )
+    {
+      baseSet_  = fSpace_.baseFunctionSet( entity );
+      numOfDof_ = baseFunctionSet().numBaseFunctions();
+
+      if( numOfDof_ > values_.size() )
+        values_.resize( numOfDof_ );
+    }
   }
-
+  
   // cache entity 
-  en_ = &en;
+  en_ = &entity;
 
   // cache local dofs 
-  DofBlockType& dofs = dofVec_[mapper_.mapToGlobal(en,0)] ;
+  DofBlockType& dofs = dofVec_[mapper_.mapToGlobal(entity,0)] ;
   assert( numOfDof_ == DofBlockType :: dimension );
   for(int i=0; i<numOfDof_; ++i) 
   {
     // assert that mapper matches with space mapping 
-    assert( (mapper_.mapToGlobal(en,0) * DofBlockType::dimension + i) ==
-             fSpace_.mapToGlobal(en,i) );
+    assert( (mapper_.mapToGlobal(entity,0) * DofBlockType::dimension + i) ==
+             fSpace_.mapToGlobal(entity,i) );
     values_ [i] = &dofs[i]; 
   }
-  return ;
 } 
 
 } // end namespace Dune 

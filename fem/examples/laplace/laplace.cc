@@ -103,7 +103,7 @@ FieldType algorithm ( const std :: string &gridFileName, int refinementLevel )
   DiscreteFunctionType rhs( "right hand side", discreteFunctionSpace );
   cachedGlobalOperator.rangeProjection()( gridRightHandSide, rhs );
 
-  #if 0
+  #if 1
     if( !rhs.dofsValid() )
       std :: cout << "right hand side invalid." << std :: endl;
   #endif

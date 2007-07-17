@@ -390,17 +390,13 @@ namespace Dune {
     mutable JacobianRangeType tmpGrad_;
     mutable JacobianRangeType factorInv_;
 
-    mutable bool init_;
-    const bool multipleGeometryTypes_;
+    mutable bool needCheckGeometry_;
 
     // base function set 
     mutable BaseFunctionSetType baseSet_;
 
     // actual entity
     mutable const EntityType* en_;
-
-    // geometry type of base function set 
-    mutable GeometryType geoType_;
   }; // end class AdaptiveLocalFunction
 
   //- Specialisations
@@ -767,13 +763,10 @@ namespace Dune {
     mutable JacobianRangeType factorInv_;
     mutable RangeType tmp_;
 
-    mutable bool init_;
-    const bool multipleGeometryTypes_;
+    mutable bool needCheckGeometry_;
     mutable BaseFunctionSetType baseSet_;
 
     mutable const EntityType* en_;
-
-    mutable GeometryType geoType_;
   }; // end class AdaptiveLocalFunction (specialised for CombinedSpace)
   
 } // end namespace Dune
