@@ -95,13 +95,18 @@ FieldType algorithm ( const std :: string &gridFileName, int refinementLevel )
   CachedGlobalOperatorType cachedGlobalOperator( globalOperator );
 
   double dummy = 0;
-  InverseOperatorType inverseOperator( cachedGlobalOperator, dummy, 1e-8, 20000, false );
+  InverseOperatorType inverseOperator( cachedGlobalOperator, dummy, 1e-10, 20000, false );
 
   // project right hand side
   RightHandSideType rightHandSide( discreteFunctionSpace );
   GridRightHandSideType gridRightHandSide( "continuous right hand side", rightHandSide, gridPart );
   DiscreteFunctionType rhs( "right hand side", discreteFunctionSpace );
   cachedGlobalOperator.rangeProjection()( gridRightHandSide, rhs );
+
+  #if 0
+    if( !rhs.dofsValid() )
+      std :: cout << "right hand side invalid." << std :: endl;
+  #endif
 
   // solve
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
