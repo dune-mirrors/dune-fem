@@ -1,5 +1,7 @@
 #include <config.h>
 
+//#define USE_GRAPE HAVE_GRAPE
+
 #ifndef POLORDER
   #define POLORDER 1
 #endif
@@ -17,13 +19,18 @@
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
-#if HAVE_GRAPE
+#if USE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 
 
 using namespace Dune;
+
+template< class FunctionSpaceImp >
+class SineBaseFunction;
+
+
 
 const int polOrder = POLORDER;
 
@@ -37,6 +44,8 @@ typedef AdaptiveDiscreteFunction< DiscreteBaseFunctionSpaceType > DiscreteBaseFu
 
 typedef ReducedBasisSpace< DiscreteBaseFunctionType > DiscreteFunctionSpaceType;
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+
+typedef SineBaseFunction< FunctionSpaceType > SineBaseFunctionType;
 
 
 
@@ -61,7 +70,7 @@ public:
   enum { DimDomain = FunctionSpaceType :: DimDomain };
   enum { DimRange = FunctionSpaceType :: DimRange };
 
-  typedef FieldVector< unsigned int, DimDomain > CoefficientType;
+  typedef FieldVector< int, DimDomain > CoefficientType;
   
 protected:
   const CoefficientType coefficient_;
@@ -78,7 +87,12 @@ public:
   {
     y = 1;
     for( unsigned int i = 0; i < DimDomain; ++i )
-      y *= sin( 2 * M_PI * coefficient_[ i ] * x[ i ] );
+    {
+      if( coefficient_[ i ] < 0 )
+        y *= sqrt( 2 ) * cos( 2 * M_PI * coefficient_[ i ] * x[ i ] );
+      else if( coefficient_[ i ] > 0 )
+        y *= sqrt( 2 ) * sin( 2 * M_PI * coefficient_[ i ] * x[ i ] );
+    }
   }
 
   inline void evaluate ( const DomainType &x, const RangeFieldType t, RangeType &y ) const
@@ -284,40 +298,65 @@ public:
 
 
 
+void addBaseFunction( const SineBaseFunctionType :: CoefficientType &sineCoefficient,
+                      const DiscreteBaseFunctionSpaceType &baseFunctionSpace,
+                      DiscreteFunctionSpaceType &discreteFunctionSpace )
+{
+  // std :: cout << "Creating base function with coefficient " << sineCoefficient << std :: endl;
+  DiscreteBaseFunctionType discreteBaseFunction( "base function", baseFunctionSpace );
+  SineBaseFunction< FunctionSpaceType > baseFunction( baseFunctionSpace, sineCoefficient );
+  LagrangeInterpolation< DiscreteBaseFunctionType >
+    :: interpolateFunction( baseFunction, discreteBaseFunction );
+  discreteFunctionSpace.addBaseFunction( discreteBaseFunction );
+}
+
+
+
+inline int abs( SineBaseFunctionType :: CoefficientType coefficient )
+{
+  typedef SineBaseFunctionType :: CoefficientType CoefficientType;
+
+  int ret = 0;
+  for( unsigned int i = 0; i < CoefficientType :: dimension; ++i )
+    ret += (coefficient[ i ] < 0 ? -coefficient[ i ] : coefficient[ i ]);
+  return ret;
+}
+
+
+
+void addBaseFunctions( const DiscreteBaseFunctionSpaceType &baseFunctionSpace,
+                       DiscreteFunctionSpaceType &discreteFunctionSpace )
+{
+  typedef SineBaseFunctionType :: CoefficientType SineCoefficientType;
+  
+  const int maxCoefficient = 8;
+  
+  SineCoefficientType sineCoefficient( -maxCoefficient );
+  while( true )
+  {
+    if( abs( sineCoefficient ) <= maxCoefficient )
+      addBaseFunction( sineCoefficient, baseFunctionSpace, discreteFunctionSpace );
+
+    ++sineCoefficient[ 0 ];
+    for( unsigned int d = 0; sineCoefficient[ d ] > maxCoefficient; ++d )
+    {
+      sineCoefficient[ d ] = -maxCoefficient;
+      if( d+1 < SineCoefficientType :: dimension )
+        ++sineCoefficient[ d+1 ];
+      else
+        return;
+    }
+  }
+}
+
+
+
 double algorithm ( GridPartType &gridPart )
 {
-  typedef SineBaseFunction< FunctionSpaceType > SineBaseFunctionType;
-  typedef SineBaseFunctionType :: CoefficientType SineCoefficientType;
-
   DiscreteBaseFunctionSpaceType baseFunctionSpace( gridPart );
   DiscreteFunctionSpaceType discreteFunctionSpace( baseFunctionSpace );
 
-  SineCoefficientType sineCoefficient( 0 );
-  unsigned int abs = 0;
-  for( bool done = false; !done; )
-  {
-    std :: cout << "Creating base function with coefficient " << sineCoefficient << std :: endl;
-    DiscreteBaseFunctionType discreteBaseFunction( "base function", baseFunctionSpace );
-    SineBaseFunction< FunctionSpaceType > baseFunction( baseFunctionSpace, sineCoefficient );
-    LagrangeInterpolation< DiscreteBaseFunctionType >
-      :: interpolateFunction( baseFunction, discreteBaseFunction );
-    discreteFunctionSpace.addBaseFunction( discreteBaseFunction );
-
-    ++sineCoefficient[ 0 ];
-    ++abs;
-    for( unsigned int d = 0; abs >= 8; ++d )
-    {
-      abs -= sineCoefficient[ d ];
-      sineCoefficient[ d ] = 0;
-      if( d < SineCoefficientType :: dimension )
-      {
-        ++sineCoefficient[ d+1 ];
-        ++abs;
-      }
-      else
-        done = true;
-    }
-  }
+  addBaseFunctions( baseFunctionSpace, discreteFunctionSpace );
 
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   ExactSolution< FunctionSpaceType > exactSolution( discreteFunctionSpace );
@@ -327,7 +366,7 @@ double algorithm ( GridPartType &gridPart )
   L2Error< DiscreteFunctionType > :: norm( exactSolution, solution, error );
   std :: cout << "L2 Error: " << error << std :: endl;
 
-  #if HAVE_GRAPE
+  #if USE_GRAPE
     GrapeDataDisplay< GridType > grape( gridPart ); 
     grape.dataDisplay( solution );
   #endif
@@ -358,7 +397,7 @@ int main ( int argc, char **argv )
   GridType &grid = *gridptr;
   GridPartType gridPart( grid );
   
-  for( unsigned int i = 0; i < maxlevel; ++i )
+  for( unsigned int i = 0; i <= maxlevel; ++i )
   {
     grid.globalRefine( step );
 

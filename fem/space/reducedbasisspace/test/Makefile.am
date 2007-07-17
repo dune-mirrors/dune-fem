@@ -1,5 +1,5 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) 
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -g -Wall -O0
 
 check_PROGRAMS = l2projection
 l2projection_SOURCES = l2projection.cc

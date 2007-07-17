@@ -7,6 +7,11 @@
 namespace Dune
 {
 
+  template< class BaseFunctionImp >
+  class ReducedBasisSpace;
+
+
+
 /*======================================================================*/
 /*!
  *  \class ReducedBasisSpaceTraits 
@@ -26,7 +31,7 @@ namespace Dune
     typedef ReducedBasisSpaceTraits< BaseFunctionType > ThisType;
 
   public:
-    typedef ThisType DiscreteFunctionSpaceType;
+    typedef ReducedBasisSpace< BaseFunctionType > DiscreteFunctionSpaceType;
 
     typedef typename BaseFunctionType :: FunctionSpaceType BaseFunctionSpaceType;
 
@@ -123,6 +128,7 @@ namespace Dune
     inline void addBaseFunction ( const BaseFunctionType &baseFunction )
     {
       BaseFunctionType *f = new BaseFunctionType( baseFunction );
+      assert( f != NULL );
       baseFunctionList_.push_back( f );
     }
     

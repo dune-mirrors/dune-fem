@@ -129,20 +129,29 @@ namespace Dune
       return *this;
     }
 
-    //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
+    /*! \brief evaluate a derivative of a base function
+     *
+     *  evaluates the base function or a derivative in some point x (given in local coordinates).
+     *
+     *  \param[in]  baseFunction  number of the base function to be evaluated
+     *  \param[in]  diffVariable  vector of indices specifying the derivative
+     *  \oaram[in]  x             local coordinates of point to evaluate the function in
+     *  \oaram[out] phi           receives the value of the function in x
+     */
     template< int diffOrd >
     inline void evaluate ( int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
                            const DomainType &x,
                            RangeType &phi ) const
     {
+      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
       typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
-      LocalBaseFunctionType localBaseFunction
+      const LocalBaseFunctionType localBaseFunction
         = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
-      LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
+      const LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
       phi = 0;
@@ -153,9 +162,25 @@ namespace Dune
         phi.axpy( localBaseFunction[ i ], psi );
       }
     }
-
-    //! essential method to calculate the basisfunction or their derivative of order diffOrd on a given point, &x and stores the value as RangeType in &phi 
-    //TODO wo ist der unterschied zu obigem???  
+    
+    /*! \brief evaluate a derivative of a base function
+     *
+     *  evaluates the base function or a derivative in a quadrature point. In
+     *  effect it is the same as calling
+     *  \code
+     *  evaluate( baseFunction, diffVariable, quadrature.point( point ), phi ).
+     *  \endcode
+     *
+     *  \note This method may be faster due to caching of base function
+     *        evaluations in quadrature points (see also CachingStorage).
+     *
+     *  \param[in]  baseFunction  number of the base function to be evaluated
+     *  \param[in]  diffVariable  vector of indices specifying the derivative
+     *  \oaram[in]  quadrature    quadrature to use
+     *  \param[in]  point         index of the point within the quadrature
+     *  \oaram[out] phi           receives the value of the function in the
+     *                            quadrature point
+     */
     template< int diffOrd, class QuadratureType >
     inline void evaluate ( int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
@@ -163,13 +188,14 @@ namespace Dune
                            int point,
                            RangeType &phi ) const
     {
+      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
       typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
-      LocalBaseFunctionType localBaseFunction 
+      const LocalBaseFunctionType localBaseFunction 
         = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
-      LocalBaseFunctionSetType localBaseFunctionSet = localBaseFunction.baseFunctionSet();
+      const LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
       phi = 0;
