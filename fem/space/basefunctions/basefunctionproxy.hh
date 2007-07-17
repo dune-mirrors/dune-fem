@@ -234,6 +234,7 @@ public:
   typedef typename FunctionSpaceType::RangeType RangeType;
   typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
+  //! default constructor 
   inline VectorialBaseFunctionProxy() : BaseType () 
   {
   }
