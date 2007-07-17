@@ -82,7 +82,7 @@ namespace Dune
 
     //! map a local DoF number to a global one
     template< class EntityType >
-    int mapToGlobal ( EntityType &entity, int local ) const
+    int mapToGlobal ( const EntityType &entity, int local ) const
     {
       const int coordinate = local % DimRange;
       const int localDof = local / DimRange;

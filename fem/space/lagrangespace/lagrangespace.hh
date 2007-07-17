@@ -346,7 +346,7 @@ namespace Dune
       assert( baseFunctionSet_[ type ] != NULL );
       return BaseFunctionSetType(baseFunctionSet_[ type ]);
     }
-    
+
     //! provide access to the Lagrange point set for an entity
     template< class EntityType >
     inline const LagrangePointSetType&
@@ -403,7 +403,7 @@ namespace Dune
 
     //! map local DoF number to global DoF number
     template< class EntityType >
-    inline int mapToGlobal( EntityType &entity, int localDof ) const
+    inline int mapToGlobal( const EntityType &entity, int localDof ) const
     {
       return mapper_->mapToGlobal( entity, localDof );
     }
