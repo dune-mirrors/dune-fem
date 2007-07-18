@@ -1,6 +1,6 @@
 #include <config.h>
 
-//#define USE_GRAPE HAVE_GRAPE
+#define USE_GRAPE HAVE_GRAPE
 
 #ifndef POLORDER
   #define POLORDER 1
@@ -329,7 +329,7 @@ void addBaseFunctions( const DiscreteBaseFunctionSpaceType &baseFunctionSpace,
 {
   typedef SineBaseFunctionType :: CoefficientType SineCoefficientType;
   
-  const int maxCoefficient = 8;
+  const int maxCoefficient = 4;
   
   SineCoefficientType sineCoefficient( -maxCoefficient );
   while( true )
