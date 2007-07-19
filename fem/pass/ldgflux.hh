@@ -25,7 +25,7 @@ public:
 
   //! evaluates { sigma } = 0.5 ( sigmaLeft + sigmaRight )
   template <class URangeType>
-  double sigmaFluxBetaZero(
+  inline double sigmaFluxBetaZero(
                        const DomainType & unitNormal,
                        const double faceVol, 
                        const URangeType & uLeft,
@@ -44,7 +44,7 @@ public:
   
   //! evaluates sigmaBetaZero + stabilization 
   template <class URangeType>
-  double sigmaFluxStability(const DomainType & unitNormal,
+  inline double sigmaFluxStability(const DomainType & unitNormal,
                             const double faceVol, 
                             const URangeType & uLeft,
                             const URangeType & uRight, 
@@ -64,7 +64,7 @@ public:
 
   //! evaluates sigmaBetaZero + stabilization 
   template <class URangeType>
-  double sigmaFlux(const DomainType & unitNormal,
+  inline double sigmaFlux(const DomainType & unitNormal,
                    const double faceVol, 
                    const URangeType & uLeft,
                    const URangeType & uRight, 
@@ -97,7 +97,7 @@ public:
 
   //! evaluates { u } = 0.5 * ( uLeft + uRight )
   template <class SigmaRangeType>
-  double uFluxBetaZero(const DomainType & unitNormal,
+  inline double uFluxBetaZero(const DomainType & unitNormal,
                const double faceVol, 
                const SigmaRangeType & uLeft,
                const SigmaRangeType & uRight, 
@@ -122,7 +122,7 @@ public:
 
   //! evaluates uFLuxBetaZero + stabilization 
   template <class SigmaRangeType>
-  double uFlux(const DomainType & unitNormal,
+  inline double uFlux(const DomainType & unitNormal,
                const double faceVol, 
                const SigmaRangeType & uLeft,
                const SigmaRangeType & uRight, 
@@ -182,7 +182,7 @@ public:
   //! evaluates: result = { u } + n * [ u ] 
   //! ( see Brezzi et al )
   template <class URangeType>
-  double uFlux(const double faceVol, 
+  inline double uFlux(const double faceVol, 
                const URangeType & uLeft,
                const URangeType & uRight, 
                URangeType & result) const 
