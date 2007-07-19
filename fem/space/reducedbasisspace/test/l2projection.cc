@@ -23,14 +23,12 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+//- local includes
+#include "sinespace.hh"
+
 
 
 using namespace Dune;
-
-template< class FunctionSpaceImp >
-class SineBaseFunction;
-
-
 
 const int polOrder = POLORDER;
 
@@ -40,66 +38,9 @@ typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
 
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder, CachingStorage >
   DiscreteBaseFunctionSpaceType;
-typedef AdaptiveDiscreteFunction< DiscreteBaseFunctionSpaceType > DiscreteBaseFunctionType;
 
-typedef ReducedBasisSpace< DiscreteBaseFunctionType > DiscreteFunctionSpaceType;
+typedef SineReducedBasisSpace< DiscreteBaseFunctionSpaceType, 4 > DiscreteFunctionSpaceType;
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
-
-typedef SineBaseFunction< FunctionSpaceType > SineBaseFunctionType;
-
-
-
-template< class FunctionSpaceImp >
-class SineBaseFunction
-: public Function< FunctionSpaceImp, SineBaseFunction< FunctionSpaceImp > >
-{
-public:
-  typedef FunctionSpaceImp FunctionSpaceType;
-
-private:
-  typedef SineBaseFunction< FunctionSpaceType > ThisType;
-  typedef Function< FunctionSpaceType, ThisType > BaseType;
-
-public:
-  typedef typename FunctionSpaceType :: DomainType DomainType;
-  typedef typename FunctionSpaceType :: RangeType RangeType;
-
-  typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-  typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-
-  enum { DimDomain = FunctionSpaceType :: DimDomain };
-  enum { DimRange = FunctionSpaceType :: DimRange };
-
-  typedef FieldVector< int, DimDomain > CoefficientType;
-  
-protected:
-  const CoefficientType coefficient_;
-  
-public:
-  inline SineBaseFunction ( const FunctionSpaceType &functionSpace,
-                            const CoefficientType coefficient )
-  : BaseType( functionSpace ),
-    coefficient_( coefficient )
-  {
-  }
-
-  inline void evaluate ( const DomainType &x, RangeType &y ) const
-  {
-    y = 1;
-    for( unsigned int i = 0; i < DimDomain; ++i )
-    {
-      if( coefficient_[ i ] < 0 )
-        y *= sqrt( 2 ) * cos( 2 * M_PI * coefficient_[ i ] * x[ i ] );
-      else if( coefficient_[ i ] > 0 )
-        y *= sqrt( 2 ) * sin( 2 * M_PI * coefficient_[ i ] * x[ i ] );
-    }
-  }
-
-  inline void evaluate ( const DomainType &x, const RangeFieldType t, RangeType &y ) const
-  {
-    evaluate( x, y );
-  }
-};
 
 
 
@@ -298,65 +239,10 @@ public:
 
 
 
-void addBaseFunction( const SineBaseFunctionType :: CoefficientType &sineCoefficient,
-                      const DiscreteBaseFunctionSpaceType &baseFunctionSpace,
-                      DiscreteFunctionSpaceType &discreteFunctionSpace )
-{
-  // std :: cout << "Creating base function with coefficient " << sineCoefficient << std :: endl;
-  DiscreteBaseFunctionType discreteBaseFunction( "base function", baseFunctionSpace );
-  SineBaseFunction< FunctionSpaceType > baseFunction( baseFunctionSpace, sineCoefficient );
-  LagrangeInterpolation< DiscreteBaseFunctionType >
-    :: interpolateFunction( baseFunction, discreteBaseFunction );
-  discreteFunctionSpace.addBaseFunction( discreteBaseFunction );
-}
-
-
-
-inline int abs( SineBaseFunctionType :: CoefficientType coefficient )
-{
-  typedef SineBaseFunctionType :: CoefficientType CoefficientType;
-
-  int ret = 0;
-  for( unsigned int i = 0; i < CoefficientType :: dimension; ++i )
-    ret += (coefficient[ i ] < 0 ? -coefficient[ i ] : coefficient[ i ]);
-  return ret;
-}
-
-
-
-void addBaseFunctions( const DiscreteBaseFunctionSpaceType &baseFunctionSpace,
-                       DiscreteFunctionSpaceType &discreteFunctionSpace )
-{
-  typedef SineBaseFunctionType :: CoefficientType SineCoefficientType;
-  
-  const int maxCoefficient = 4;
-  
-  SineCoefficientType sineCoefficient( -maxCoefficient );
-  while( true )
-  {
-    if( abs( sineCoefficient ) <= maxCoefficient )
-      addBaseFunction( sineCoefficient, baseFunctionSpace, discreteFunctionSpace );
-
-    ++sineCoefficient[ 0 ];
-    for( unsigned int d = 0; sineCoefficient[ d ] > maxCoefficient; ++d )
-    {
-      sineCoefficient[ d ] = -maxCoefficient;
-      if( d+1 < SineCoefficientType :: dimension )
-        ++sineCoefficient[ d+1 ];
-      else
-        return;
-    }
-  }
-}
-
-
-
 double algorithm ( GridPartType &gridPart )
 {
   DiscreteBaseFunctionSpaceType baseFunctionSpace( gridPart );
   DiscreteFunctionSpaceType discreteFunctionSpace( baseFunctionSpace );
-
-  addBaseFunctions( baseFunctionSpace, discreteFunctionSpace );
 
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   ExactSolution< FunctionSpaceType > exactSolution( discreteFunctionSpace );

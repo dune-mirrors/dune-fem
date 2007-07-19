@@ -8,5 +8,5 @@ l2projection_SOURCES = l2projection.cc
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -g -Wall -O0 -DPOLORDER=$(POLORDER)
 
 testdir=$(includedir)/fem/space/reducedbasisspace/test
-test_HEADERS = l2projection.cc
+test_HEADERS = l2projection.cc sinespace.hh
 EXTRA_DIST = 2dgrid.dgf 3dgrid.dgf
