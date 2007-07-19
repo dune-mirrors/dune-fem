@@ -8,6 +8,8 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/codimindexset.hh>
 
+#include <dune/fem/io/file/xdrio.hh>
+
 namespace Dune {
 
 //******************************************************************
@@ -497,7 +499,6 @@ private:
           // areNew == true, then index is inserted 
           areNew = insertNewIndex  ( *it , it->isLeaf() , areNew ); 
         }
-
       } // end grid walk trough
     } // end for all levels 
   }
@@ -507,70 +508,44 @@ public:
   // write indexset to xdr file 
   bool write_xdr(const std::basic_string<char> filename, int timestep) 
   {
-    FILE  *file;
-    XDR   xdrs;
     const char *path = "";
+    std::string fnstr = genFilename(path,filename, timestep);
 
-    std::basic_string<char> fnstr = genFilename(path,filename, timestep);
-    const char * fn = fnstr.c_str();
-    file = fopen(fn, "wb");
-    if (!file)
-    {
-      std::cerr << "\aERROR in AdaptiveLeafIndexSet::write_xdr(..): couldnot open " << filename << std::endl;
-      std::cerr.flush();
-      return false;
-    }
+    // create xdr write stream 
+    XDRWriteStream xdr(fnstr);
 
-    xdrstdio_create(&xdrs, file, XDR_ENCODE);
+    // check type of set 
     int type = myType;
-    xdr_int ( &xdrs, &type );
+    xdr.inout( type );
     if(type != myType)
     {
       std::cerr << "\nERROR: AdaptiveLeafIndexSet: wrong type choosen! \n\n";
       assert(type == myType);
     }
 
-    codimLeafSet_.processXdr(&xdrs);
-
-    xdr_destroy(&xdrs);
-    fclose(file);
-    return true;
+    return codimLeafSet_.processXdr(xdr);
   }
 
   //! read index set from given xdr file 
   bool read_xdr(const std::string filename , int timestep)
   {
-    FILE   *file;
-    XDR     xdrs;
     const char *path = "";
-
     std::string fnstr = genFilename(path,filename, timestep);
-    const char * fn = fnstr.c_str();
-    std::cout << "Reading <" << fn << "> \n";
-    file = fopen(fn, "rb");
-    if(!file)
-    {
-      std::cerr <<"\aERROR in AdaptiveLeafIndexSet::read_xdr(..): couldnot open <%s>!\n" << filename << std::endl;
-      std::cerr.flush();
-      return(false);
-    }
 
-    // read xdr 
-    xdrstdio_create(&xdrs, file, XDR_DECODE);
-    
+    // create xdr read stream 
+    XDRReadStream xdr(fnstr);
+
+    // check type 
     int type = myType;
-    xdr_int ( &xdrs, &type );
+    xdr.inout( type );
+
     if( (type != 2) && (type != myType) )
     {
       std::cerr << "\nERROR: AdaptiveLeafIndexSet: wrong type choosen! \n\n";
       assert(type == myType);
     }
 
-    std::cout << "Read index set \n";
-    codimLeafSet_.processXdr(&xdrs);
-
-    xdr_destroy(&xdrs);
-    fclose(file);
+    bool success = codimLeafSet_.processXdr(xdr);
 
     // in parallel runs we have to compress here
     if(this->grid_.comm().size() > 1) 
@@ -578,7 +553,7 @@ public:
       // mark for compress 
       compressed_ = false;
     }
-    return true;
+    return success;
   }
 
 }; // end of class AdaptiveLeafIndexSet 
