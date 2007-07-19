@@ -4,6 +4,7 @@
 //- Dune includes 
 #include <dune/common/misc.hh>
 #include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/io/file/xdrio.hh>
 
 namespace Dune {
 
@@ -322,7 +323,7 @@ public:
     assert( xdrs );
     
     // restore size of index set 
-    int ret = xdr_int ( xdrs, &nextFreeIndex_ );
+    int ret = XdrIO<int>::io(xdrs, nextFreeIndex_ );
     bool ok = (ret == 1) ? true : false;
     
     // should always have the same length 
