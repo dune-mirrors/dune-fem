@@ -7,7 +7,7 @@
 
 namespace Dune { 
 
-//
+//! wrapper class for xdr calls specified by data type
 template <class T> struct XdrIO;
   
 // xdr method for double  
@@ -15,7 +15,7 @@ template <>
 struct XdrIO<double>
 {
   // read/write data to xdr stream 
-  static int io(XDR * xdrs,double& value)
+  static inline int io(XDR * xdrs,double& value)
   {
     assert( xdrs );
     return xdr_double(xdrs, &value);
@@ -27,7 +27,7 @@ template <>
 struct XdrIO<float>
 {
   // read/write data to xdr stream 
-  static int io(XDR * xdrs,float& value)
+  static inline int io(XDR * xdrs,float& value)
   {
     assert( xdrs );
     return xdr_float(xdrs, &value);
@@ -39,7 +39,7 @@ template <>
 struct XdrIO<int>
 {
   // read/write data to xdr stream 
-  static int io(XDR * xdrs,int& value)
+  static inline int io(XDR * xdrs,int& value)
   {
     assert( xdrs );
     return xdr_int(xdrs, &value);
