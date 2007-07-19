@@ -197,17 +197,8 @@ namespace Dune {
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   write_xdr(std::string fn) const
   {
-    XDR xdrs;
-    FILE *file = fopen(fn.c_str(), "wb");
-    if (!file)
-    { 
-      fprintf(stderr,"\aERROR in AdaptiveDiscreteFunction::write_xdr(..): could not open <%s>!\n", fn.c_str());
-      fflush(stderr);
-      return false;
-    }
-
-    xdrstdio_create(&xdrs, file, XDR_ENCODE);   
-
+    // create write stream 
+    XDRWriteStream xdr(fn);
     // make sure data is only written in compressed state. 
     if( dofVec_.size() != spc_.size() )
     {
@@ -215,31 +206,14 @@ namespace Dune {
     }
 
     // write data 
-    dofVec_.processXdr(&xdrs);
-
-    xdr_destroy(&xdrs);
-    fclose(file);
-    return true;
+    return dofVec_.processXdr(xdr);
   }
 
   template <class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   read_xdr(std::string fn)
   {
-    std::cout << "Reading <" << fn << "> " << std::endl;
-
-    XDR xdrs;
-    FILE *file = fopen(fn.c_str() , "rb");
-    if(!file)
-    { 
-      fprintf(stderr,"\aERROR in AdaptiveDiscreteFunction::read_xdr(..): could not open <%s>!\n", fn.c_str());
-      fflush(stderr);
-      return false;
-    }
-
-    // create xdr stream 
-    xdrstdio_create(&xdrs, file, XDR_DECODE);     
-    
+    XDRReadStream xdr(fn);
     // make sure data is only written in compressed state. 
     if( dofVec_.size() != spc_.size() )
     {
@@ -247,11 +221,7 @@ namespace Dune {
     }
 
     // read data 
-    dofVec_.processXdr(&xdrs);
-  
-    xdr_destroy(&xdrs);
-    fclose(file);
-    return true;
+    return dofVec_.processXdr(xdr);
   }
 
   template <class DiscreteFunctionSpaceImp>
@@ -260,20 +230,20 @@ namespace Dune {
   {
     std::fstream outfile( fn.c_str() , std::ios::out );
     if (!outfile)
-      { 
-        printf( "\aERROR in AdaptiveDiscreteFunction::write_ascii(..): could not open <%s>!\n", fn.c_str());
-        fflush(stderr);
-        return false;
-      }
+    { 
+      printf( "\aERROR in AdaptiveDiscreteFunction::write_ascii(..): could not open <%s>!\n", fn.c_str());
+      fflush(stderr);
+      return false;
+    }
 
     {
       int length = spc_.size();
       outfile << length << "\n";
       ConstDofIteratorType enddof = dend ( );
       for(ConstDofIteratorType itdof = dbegin ( );itdof != enddof; ++itdof) 
-        {
-          outfile << (*itdof) << " ";
-        }
+      {
+        outfile << (*itdof) << " ";
+      }
       outfile << "\n";
     }
 
@@ -296,9 +266,9 @@ namespace Dune {
 
       DofIteratorType enddof = dend ( );
       for(DofIteratorType itdof = dbegin ( );itdof != enddof; ++itdof) 
-        {
-          fscanf(infile,"%le \n",& (*itdof)); 
-        }
+      {
+        fscanf(infile,"%le \n",& (*itdof)); 
+      }
     }
     fclose(infile);
     return true;

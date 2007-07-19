@@ -6,7 +6,7 @@
 
 //- Dune includes
 #include <dune/common/exceptions.hh>
-
+#include <dune/fem/io/file/xdrio.hh>
 
 namespace Dune {
 

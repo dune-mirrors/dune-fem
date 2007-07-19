@@ -274,7 +274,7 @@ public:
 
 private:  
   //! write/read data to/from xdr stream 
-  bool processXdrs(XDR * xdrs) const;
+  bool processXdrs(XDRStream& xdr) const;
   
   //! return object pointer of type LocalFunctionImp 
   LocalFunctionImp* newObject () const;

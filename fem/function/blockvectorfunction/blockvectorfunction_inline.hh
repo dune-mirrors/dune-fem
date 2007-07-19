@@ -155,10 +155,10 @@ BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::dend ( ) const
 //**************************************************************************
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-processXdrs(XDR * xdrs) const  
+processXdrs(XDRStream& xdr) const  
 {
   int len = dofVec_.size();
-  XdrIO<int>::io(xdrs, len);
+  xdr.inout( len );
  
   // make sure data is only read in compressed state. 
   if( (dofVec_.size() != mapper_.size()) || (len != dofVec_.size()) )
@@ -173,7 +173,7 @@ processXdrs(XDR * xdrs) const
   {
     for(int l=0; l<localBlockSize; ++l) 
     {
-      XdrIO<RangeFieldType>::io(xdrs, dofVec_[i][l]);
+      xdr.inout( dofVec_[i][l] );
     }
   }
   return true;
@@ -183,51 +183,18 @@ template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 write_xdr( std::string filename ) const
 {
-  const char * fn = filename.c_str();
-  XDR   xdrs;
-  FILE* file = fopen(fn, "wb");
-
-  if (!file)
-  { 
-    printf( "\aERROR in BlockVectorDiscreteFunction::write_xdr(..): couldnot open <%s>!\n", fn);
-    fflush(stderr);
-    return false;
-  }
-
-  xdrstdio_create(&xdrs, file, XDR_ENCODE);   
-  
-  processXdrs(&xdrs);
-
-  xdr_destroy(&xdrs);
-  fclose(file);
-  
-  return true;
+  // create write stream 
+  XDRWriteStream xdr(filename);
+  return processXdrs(xdr);
 }
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 read_xdr( std::string filename)
 {
-  const char * fn = filename.c_str();
-  XDR xdrs;
-
-  std::cout << "Reading <" << fn << "> \n";
-  FILE* file = fopen(fn, "rb");
-  if(!file)
-  { 
-    printf( "\aERROR in BlockVectorDiscreteFunction::read_xdr(..): couldnot open <%s>!\n", fn);
-    fflush(stderr);
-    return(false);
-  }
-
-  // read xdr 
-  xdrstdio_create(&xdrs, file, XDR_DECODE);     
-
-  processXdrs(&xdrs);
-  
-  xdr_destroy(&xdrs);
-  fclose(file);
-  return true;
+  // create read stream 
+  XDRReadStream xdr(filename);
+  return processXdrs(xdr);
 }
 
 template<class DiscreteFunctionSpaceType>
