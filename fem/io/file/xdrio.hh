@@ -6,6 +6,9 @@
 #include <rpc/xdr.h>
 #include <cassert>
 
+//- Dune includes 
+#include <dune/common/fvector.hh>
+
 namespace Dune { 
 
 //! wrapper class for xdr calls specified by data type
@@ -68,6 +71,24 @@ struct XdrIO<char>
   {
     assert( xdrs );
     return xdr_char(xdrs, &value);
+  }
+};
+
+// xdr method for FieldVector   
+template <class T, int n> 
+struct XdrIO<FieldVector<T,n> >
+{
+  typedef FieldVector<T,n> VectorType;
+  // read/write data to xdr stream 
+  static inline int io(XDR * xdrs,VectorType& vec)
+  {
+    assert( xdrs );
+    int result = 1;
+    for(int i=0; i<n; ++i)
+    {
+      result |= XdrIO<T>::io(xdrs,vec[i]);
+    }
+    return result;
   }
 };
 
