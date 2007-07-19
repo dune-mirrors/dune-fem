@@ -320,24 +320,17 @@ public:
   const T* leakPointer() const { return vec_; }
 
   //! read and write xdr 
-  bool processXdr(XDR *xdrs)
+  bool processXdr(XDRStream& xdr)
   {
-    if(xdrs != 0)
-    {
-      int len = size_;
-      XdrIO<int>::io(xdrs, len );
+    int len = size_;
+    xdr.inout( len );
 
-      // when read check size 
-      if( size_ != len )
-      {
-        DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size " << size_ << " and size to read " << len << " not equal!");
-      }
-      return processXdrVector(xdrs);
-    }
-    else 
+    // when read check size 
+    if( size_ != len )
     {
-      return false;
+      DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size " << size_ << " and size to read " << len << " not equal!");
     }
+    return processXdrVector(xdr);
   }
 
   //! print array 
@@ -352,13 +345,13 @@ public:
   
 protected:  
   //! read and write vector as bytes using xdr method xdr_bytes  
-  bool processXdrVector(XDR *xdrs)
+  bool processXdrVector(XDRStream& xdr)
   {
     // write/read all entries 
     int ret = 1;
     for(int i=0; i<size_; ++i)
     {
-      ret |= XdrIO<T>::io(xdrs,vec_[i]);
+      ret |= xdr.inout( vec_[i] );
     }
     return (ret == 1) ? true : false;
   }
@@ -499,23 +492,16 @@ public:
   
   //! read and write xdr, during read resize is done 
   //! if sizes do not match  
-  bool processXdr(XDR *xdrs)
+  bool processXdr(XDRStream& xdr)
   {
-    if(xdrs != 0)
-    {
-      int len = this->size();
-      XdrIO<int>::io( xdrs, len );
+    int len = this->size();
+    xdr.inout( len );
 
-      // if actual size is smaller then resize vector  
-      if( len > this->size() ) resize ( len );
+    // if actual size is smaller then resize vector  
+    if( len > this->size() ) resize ( len );
 
-      // write array 
-      return this->processXdrVector(xdrs);
-    }
-    else 
-    {
-      return false;
-    }
+    // write array 
+    return this->processXdrVector(xdr);
   }
 
 private: 

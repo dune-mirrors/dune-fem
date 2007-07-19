@@ -318,21 +318,19 @@ public:
   }
   
   // read/write from/to xdr stream 
-  bool processXdr(XDR *xdrs)
+  bool processXdr(XDRStream& xdr)
   {
-    assert( xdrs );
-    
     // restore size of index set 
-    int ret = XdrIO<int>::io(xdrs, nextFreeIndex_ );
+    int ret = xdr.inout( nextFreeIndex_ );
     bool ok = (ret == 1) ? true : false;
     
     // should always have the same length 
     assert( leafIndex_.size() == state_.size() );
 
     // backup/restore leafIndex 
-    ok |= leafIndex_.processXdr(xdrs);
+    ok |= leafIndex_.processXdr(xdr);
     // backup/restore state 
-    ok |= state_.processXdr(xdrs);
+    ok |= state_.processXdr(xdr);
 
     // should always have the same length 
     assert( leafIndex_.size() == state_.size() );
