@@ -46,5 +46,106 @@ struct XdrIO<int>
   }
 };
 
+//! xdr stream class 
+class XDRStream 
+{
+protected:  
+  // file handler 
+  FILE*   file_;
+  // xdr struct 
+  XDR     xdrs_; 
+
+  const bool in_;
+private:
+  // do not copy
+  XDRStream(const  XDRStream&);
+public:
+  //! constructor 
+  XDRStream(bool in) : file_(0) , in_(in) {}
+    
+  //! destructor 
+  ~XDRStream() 
+  {
+    xdr_destroy(xdrs());
+    fclose(file_);
+  }
+
+  //! return true if stream is valid
+  bool operator ! () const 
+  {
+    return file_ != 0;
+  }
+  
+  //! write value to stream 
+  template <class T> 
+  bool operator << (const T& value)
+  {
+    assert( !in_ );
+    return XdrIO<T>::io(xdrs(),value);
+  }
+  
+  //! read value from stream 
+  template <class T> 
+  bool operator >> (T& value)  
+  {
+    assert( in_ );
+    return XdrIO<T>::io(xdrs(),value);
+  }
+
+  //! read/write value for stream 
+  template <class T> 
+  int inout(T& value)
+  {
+    return XdrIO<T>::io(xdrs(),value);
+  }
+
+protected:  
+  //! return pointer to xdr 
+  XDR* xdrs() { return &xdrs_; }
+};
+
+//! xdr stream for writing  
+class XDRWriteStream : public XDRStream  
+{
+  typedef XDRStream BaseType;
+  // do not copy
+  XDRWriteStream(const  XDRWriteStream&);
+public:  
+  XDRWriteStream(const std::string& filename) :
+    BaseType(false)
+  {
+    this->file_ = fopen(filename.c_str(),"wb");
+    if(! this->file_)
+    { 
+      std::cerr <<"\aXDRWriteStream:: couldn't open file `"<<filename<<"' !\n";
+      std::cerr.flush();
+      return ;
+    } 
+    xdrstdio_create(this->xdrs(), this->file_, XDR_ENCODE);
+  }
+};
+
+//! xdr stream for reading 
+class XDRReadStream :  public XDRStream 
+{
+  typedef XDRStream BaseType;
+  
+  // do not copy
+  XDRReadStream(const  XDRReadStream&);
+public:  
+  XDRReadStream(const std::string& filename) 
+    : BaseType(true)
+  {
+    this->file_ = fopen(filename.c_str(),"rb");
+    if(! this->file_)
+    { 
+      std::cerr <<"\aXDRReadStream:: couldn't open file `"<<filename<<"' !\n";
+      std::cerr.flush();
+      return ;
+    } 
+    xdrstdio_create(this->xdrs(), this->file_, XDR_DECODE);
+  }
+};
+
 } // end namespace Dune 
 #endif
