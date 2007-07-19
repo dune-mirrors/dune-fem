@@ -103,18 +103,20 @@ public:
   
   //! write value to stream 
   template <class T> 
-  bool operator << (const T& value)
+  XDRStream& operator << (const T& value)
   {
     assert( !in_ );
-    return XdrIO<T>::io(xdrs(),value);
+    XdrIO<T>::io(xdrs(),value);
+    return *this;
   }
   
   //! read value from stream 
   template <class T> 
-  bool operator >> (T& value)  
+  XDRStream& operator >> (T& value)  
   {
     assert( in_ );
-    return XdrIO<T>::io(xdrs(),value);
+    XdrIO<T>::io(xdrs(),value);
+    return *this;
   }
 
   //! read/write value for stream 
