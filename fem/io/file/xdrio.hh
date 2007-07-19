@@ -2,6 +2,7 @@
 #define DUNE_XDRIO_HH
 
 //- system headers  
+#include <iostream>
 #include <rpc/xdr.h>
 #include <cassert>
 
@@ -43,6 +44,30 @@ struct XdrIO<int>
   {
     assert( xdrs );
     return xdr_int(xdrs, &value);
+  }
+};
+
+// xdr method for int   
+template <> 
+struct XdrIO<long>
+{
+  // read/write data to xdr stream 
+  static inline int io(XDR * xdrs,long& value)
+  {
+    assert( xdrs );
+    return xdr_long(xdrs, &value);
+  }
+};
+
+// xdr method for char   
+template <> 
+struct XdrIO<char>
+{
+  // read/write data to xdr stream 
+  static inline int io(XDR * xdrs,char& value)
+  {
+    assert( xdrs );
+    return xdr_char(xdrs, &value);
   }
 };
 
