@@ -166,15 +166,11 @@ processXdrs(XDRStream& xdr) const
     DUNE_THROW(InvalidStateException,"BlockVectorDiscreteFunction::processXdrs: sizes do not match!");
   }
   
-  enum { localBlockSize = DofBlockType :: dimension };
   // write/read vector 
   const int vecSize = dofVec_.size();
   for(int i=0; i<vecSize; ++i) 
   {
-    for(int l=0; l<localBlockSize; ++l) 
-    {
-      xdr.inout( dofVec_[i][l] );
-    }
+    xdr.inout( dofVec_[i] );
   }
   return true;
 }
