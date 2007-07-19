@@ -164,7 +164,7 @@ namespace Dune
 
     //! the coefficient for robin boundary condition
     template< class IntersectionIteratorType, class QuadratureType >
-    inline double robinalpha( const IntersectionIteratorType &intersection,
+    inline double robinAlpha( const IntersectionIteratorType &intersection,
                               const QuadratureType &quadrature,
                               int p ) const
     { 

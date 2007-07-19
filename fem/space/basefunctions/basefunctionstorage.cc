@@ -143,7 +143,7 @@ namespace Dune {
         ( jacobianstored_.find(quad.id()) != jacobianstored_.end()) : true);
     Evaluate<QuadratureType,
              Conversion<QuadratureType,CachingInterface>::exists >::
-      evaluate(baseFunct,diffVar,quad,quadPoint,jacobians_,result);
+      evaluate(*this,baseFunct,diffVar,quad,quadPoint,jacobians_,result);
   }
 
   template <class FunctionSpaceImp>
