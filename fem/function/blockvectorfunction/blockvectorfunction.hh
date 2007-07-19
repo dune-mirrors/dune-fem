@@ -3,7 +3,6 @@
 
 //- system includes
 #include <fstream>
-#include <rpc/xdr.h>
 
 #if ! HAVE_DUNE_ISTL 
 #error "Dune-ISTL is needed for this type of discrete function! Re-configure with --with-dune-istl! "
@@ -13,12 +12,12 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/dgspace/dgmapper.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/fem/io/file/xdrio.hh>
 
 //- local includes 
 #include "../common/discretefunction.hh"
 #include "../common/localfunction.hh"
 #include "../common/dofiterator.hh"
-
 
 namespace Dune{
 
@@ -122,6 +121,7 @@ class BlockVectorDiscreteFunction
 
   typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
   enum { myId_ = 0};
+  
 public:
   //! type of discrete functions space 
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
@@ -135,7 +135,6 @@ public:
   //! my type 
   typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
   
-
   //! Type of the range field
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 

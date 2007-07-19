@@ -158,7 +158,7 @@ inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 processXdrs(XDR * xdrs) const  
 {
   int len = dofVec_.size();
-  xdr_int( xdrs, &len );
+  XdrIO<int>::io(xdrs, len);
  
   // make sure data is only read in compressed state. 
   if( (dofVec_.size() != mapper_.size()) || (len != dofVec_.size()) )
@@ -166,13 +166,15 @@ processXdrs(XDR * xdrs) const
     DUNE_THROW(InvalidStateException,"BlockVectorDiscreteFunction::processXdrs: sizes do not match!");
   }
   
-  enum { blockSize = DofBlockType :: dimension };
-  u_int s = blockSize * sizeof(RangeFieldType);
+  enum { localBlockSize = DofBlockType :: dimension };
+  // write/read vector 
   const int vecSize = dofVec_.size();
   for(int i=0; i<vecSize; ++i) 
   {
-    RangeFieldType* dof = &(dofVec_[i][0]);
-    xdr_bytes(xdrs, ((char **) &dof), &s , s );
+    for(int l=0; l<localBlockSize; ++l) 
+    {
+      XdrIO<RangeFieldType>::io(xdrs, dofVec_[i][l]);
+    }
   }
   return true;
 }
