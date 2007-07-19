@@ -15,6 +15,9 @@
 #include <dune/fem/solver/oemsolver/cblas.h>
 #endif
 
+// include xdr wrapper 
+#include <dune/fem/io/file/xdrio.hh>
+
 namespace Dune {
 
 // forward declarations 
@@ -322,7 +325,7 @@ public:
     if(xdrs != 0)
     {
       int len = size_;
-      xdr_int( xdrs, &len );
+      XdrIO<int>::io(xdrs, len );
 
       // when read check size 
       if( size_ != len )
@@ -351,16 +354,14 @@ protected:
   //! read and write vector as bytes using xdr method xdr_bytes  
   bool processXdrVector(XDR *xdrs)
   {
-    assert( xdrs );
-    // get size in bytes 
-    u_int s = size() * sizeof(T);
-
-    // get pointer as char pointer 
-    char * ptr = (char *) vec_;
-    // write data as byte vector 
-    int ret = xdr_bytes( xdrs, &ptr, &s , s );
+    // write/read all entries 
+    int ret = 1;
+    for(int i=0; i<size_; ++i)
+    {
+      ret |= XdrIO<T>::io(xdrs,vec_[i]);
+    }
     return (ret == 1) ? true : false;
-  } 
+  }
 };
 
 // specialisations of axpy 
@@ -503,7 +504,7 @@ public:
     if(xdrs != 0)
     {
       int len = this->size();
-      xdr_int( xdrs, &len );
+      XdrIO<int>::io( xdrs, len );
 
       // if actual size is smaller then resize vector  
       if( len > this->size() ) resize ( len );
