@@ -117,9 +117,7 @@ namespace Dune
 
         // update the destination function
         RangeLocalFunctionType w_local = w.localFunction( *it );
-        const int numDofs = w_local.numDofs();
-        for( int i = 0; i < numDofs; ++i )
-          w_local[ i ] += w_temp[ i ];
+        w_local += w_temp;
       }
     }
 

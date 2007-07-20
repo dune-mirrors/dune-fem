@@ -78,7 +78,8 @@ public:
   void assign(int dofNum, const RangeType& dofs) DUNE_DEPRECATED {
     asImp().assign(dofNum, dofs);
   }
-private:
+  
+protected:
   //! Barton-Nackman trick 
   LocalFunctionImp& asImp() 
   { 
@@ -91,74 +92,118 @@ private:
   }
 }; // end LocalFunctionInterface
 
-//************************************************************************
-//
-//  --LocalFunctionDefault 
-//
-//! The Interface to the dune programmer, use this class to derive 
-//! the own implementation. But only the methods declared in the interface
-//! class must be implemented. 
-//!
-//************************************************************************
-template < class DiscreteFunctionSpaceType, class LocalFunctionImp > 
-class LocalFunctionDefault : public LocalFunctionInterface <
-DiscreteFunctionSpaceType , LocalFunctionImp > 
-{
-public: 
-  //! these are the types for the derived classes 
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-  typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-  typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
- 
-public:
-  //! Constructor
-  LocalFunctionDefault ()
-  : xLoc_(0.0)
-  {
-  }
 
-  //! evaluate the local function on real world coordinate x and return ret 
-  template< class EntityType >
-  void evaluateGlobal ( EntityType &entity, 
-                        const DomainType &x, 
-                        RangeType &ret )
-  {
-    xLoc_ = entity.geometry().local( x );
-    evaluate( xLoc_, ret );
-  }
 
-  //! Evaluation using a quadrature
-  template< class QuadratureType >
-  void evaluate ( QuadratureType &quad,
-                  int quadPoint,
-                  RangeType &ret )
+  //************************************************************************
+  //
+  //  --LocalFunctionDefault 
+  //
+  //! The Interface to the dune programmer, use this class to derive 
+  //! the own implementation. But only the methods declared in the interface
+  //! class must be implemented. 
+  //!
+  //************************************************************************
+  template< class DiscreteFunctionSpaceImp, class LocalFunctionImp > 
+  class LocalFunctionDefault
+  : public LocalFunctionInterface< DiscreteFunctionSpaceImp, LocalFunctionImp >
   {
-    evaluate( quad.point( quadPoint ), ret );
-  }
-  
-  //! jacobian of the local function using real world coordinate x
-  template< class EntityType >
-  void jacobianGlobal ( EntityType &entity,
-                        const DomainType &x, 
-                        JacobianRangeType &ret ) 
-  {
-    xLoc_ = entity.geometry().local( x );
-    jacobian( xLoc_, ret );
-  }
+  public:
+    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
-  //! Evaluation of jacobian using a quadrature
-  template< class QuadratureType >
-  void jacobian ( QuadratureType &quad,
-                  int quadPoint,
-                  JacobianRangeType &grad )
-  {
-    jacobian( quad.point( quadPoint ), grad );
-  }
+  private:
+    typedef LocalFunctionDefault< DiscreteFunctionSpaceType, LocalFunctionImp > ThisType;
+    typedef LocalFunctionInterface< DiscreteFunctionSpaceType, LocalFunctionImp > BaseType;
 
-private:
-  mutable DomainType xLoc_;
-}; // end LocalFunctionDefault
+    using BaseType :: asImp;
+    using BaseType :: numDofs;
+    
+  public:
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+   
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+    
+  private:
+    mutable DomainType xLoc_;
+
+  public:
+    //! Constructor
+    LocalFunctionDefault ()
+    : xLoc_( 0 )
+    {
+    }
+
+    template< class VectorType >
+    LocalFunctionImp &operator+= ( const VectorType &v )
+    {
+      unsigned int numDofs = this->numDofs(); 
+      
+      assert( numDofs == v.size() );
+      for( unsigned int i = 0; i < numDofs; ++i )
+        (*this)[ i ] += v[ i ];
+
+      return asImp();
+    }
+    
+    template< class VectorType >
+    LocalFunctionImp &operator-= ( const VectorType &v )
+    {
+      unsigned int numDofs = this->numDofs(); 
+      
+      assert( numDofs == v.size() );
+      for( unsigned int i = 0; i < numDofs; ++i )
+        (*this)[ i ] -= v[ i ];
+      
+      return asImp();
+    }
+
+    //! evaluate the local function on real world coordinate x and return ret 
+    template< class EntityType >
+    void evaluateGlobal ( EntityType &entity, 
+                          const DomainType &x, 
+                          RangeType &ret )
+    {
+      xLoc_ = entity.geometry().local( x );
+      evaluate( xLoc_, ret );
+    }
+
+    //! Evaluation using a quadrature
+    template< class QuadratureType >
+    void evaluate ( QuadratureType &quad,
+                    int quadPoint,
+                    RangeType &ret )
+    {
+      evaluate( quad.point( quadPoint ), ret );
+    }
+    
+    //! jacobian of the local function using real world coordinate x
+    template< class EntityType >
+    void jacobianGlobal ( EntityType &entity,
+                          const DomainType &x, 
+                          JacobianRangeType &ret ) 
+    {
+      xLoc_ = entity.geometry().local( x );
+      jacobian( xLoc_, ret );
+    }
+
+    //! Evaluation of jacobian using a quadrature
+    template< class QuadratureType >
+    void jacobian ( QuadratureType &quad,
+                    int quadPoint,
+                    JacobianRangeType &grad )
+    {
+      jacobian( quad.point( quadPoint ), grad );
+    }
+
+    //! Make local function conform to a vector-like interface
+    inline unsigned int size () const
+    {
+      return numDofs();
+    }
+  }; // end LocalFunctionDefault
 
 } // end namespace Dune 
 

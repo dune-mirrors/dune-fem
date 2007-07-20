@@ -1,8 +1,4 @@
 to do list for fem/space
 ------------------------
 
--test and correct reduced basis space
 -document reduced basis space
--update Makefile.am to include reduced basis space
--insert reducedbasisspace/Makefile.am into configure.ac
-
