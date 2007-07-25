@@ -48,10 +48,10 @@ namespace Dune
   
   protected:
     const OperatorType &operator_;
-    const WrappedProjectionType &wrappedProjection_;
+    const WrappedProjectionType wrappedProjection_;
 
   public:
-    inline DirichletBoundaryRangeProjection ( OperatorType &op )
+    inline DirichletBoundaryRangeProjection ( const OperatorType &op )
     : operator_( op ),
       wrappedProjection_( operator_.wrappedOperator_.rangeProjection() )
     {
@@ -128,8 +128,6 @@ namespace Dune
     DynamicArray< bool > isDirichletDof_;
     DynamicArray< RangeFieldType > dirichletValues_;
 
-    RangeProjectionType rangeProjection_;
-    
   public:
     inline DirichletBoundaryOperator ( const WrappedOperatorType &wrappedOperator,
                                        const BoundaryModelType &boundaryModel )
@@ -137,8 +135,7 @@ namespace Dune
       boundaryModel_( boundaryModel ),
       numDofs_( wrappedOperator_.rangeFunctionSpace().size() ),
       isDirichletDof_( numDofs_ ),
-      dirichletValues_( numDofs_ ),
-      rangeProjection_( *this )
+      dirichletValues_( numDofs_ )
     {
       rebuild();
     }
@@ -178,11 +175,6 @@ namespace Dune
       return wrappedOperator_.domainFunctionSpace();
     }
 
-    inline const DomainProjectionType& domainProjection ()
-    {
-      return wrappedOperator_.domainProjection();
-    }
-
     void rebuild ()
     {
       typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
@@ -202,9 +194,14 @@ namespace Dune
       return wrappedOperator_.rangeFunctionSpace();
     }
 
-    inline const RangeProjectionType &rangeProjection () const
+    inline const DomainProjectionType domainProjection ()
     {
-      return rangeProjection_;
+      return wrappedOperator_.domainProjection();
+    }
+
+    inline const RangeProjectionType rangeProjection () const
+    {
+      return RangeProjectionType( *this );
     }
 
   protected:

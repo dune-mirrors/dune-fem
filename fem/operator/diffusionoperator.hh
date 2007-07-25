@@ -281,6 +281,8 @@ namespace Dune
     typedef DiffusionOperator< TraitsType, ModelType > ThisType;
     typedef IntegrationOperator< IntegrationOperatorTraitsType, true > BaseType;
 
+    using BaseType :: localOperator_;
+
   public:
     typedef typename TraitsType :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
@@ -297,18 +299,10 @@ namespace Dune
       < DefaultEllipticSourceProjectionTraits< SourceFunctionType, DiscreteFunctionType > >
       RangeProjectionType;
 
-  protected:
-    const DomainProjectionType domainProjection_;
-    const RangeProjectionType rangeProjection_;
-
-    using BaseType :: localOperator_;
-
   public:
     inline DiffusionOperator ( const DiscreteFunctionSpaceType &dfSpace,
                                const ModelType &model )
-    : BaseType( *(new LocalOperatorType( model )), dfSpace, dfSpace ),
-      domainProjection_(),
-      rangeProjection_()
+    : BaseType( *(new LocalOperatorType( model )), dfSpace, dfSpace )
     {
     }
 
@@ -317,14 +311,14 @@ namespace Dune
       delete &localOperator_;
     }
 
-    inline const DomainProjectionType &domainProjection () const
+    inline const DomainProjectionType domainProjection () const
     {
-      return domainProjection_;
+      return DomainProjectionType();
     }
 
-    inline const RangeProjectionType &rangeProjection () const
+    inline const RangeProjectionType rangeProjection () const
     {
-      return rangeProjection_;
+      return RangeProjectionType();
     }
   };
   

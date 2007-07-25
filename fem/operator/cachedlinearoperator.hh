@@ -74,16 +74,6 @@ namespace Dune
                   "CachedLinearOperator :: assembleMatrix is not implemented, yet." );
     }
 
-    inline const DomainFunctionSpaceType &domainFunctionSpace () const
-    {
-      return wrappedOperator_->domainFunctionSpace();
-    }
-
-    inline const DomainProjectionType &domainProjection () const
-    {
-      return wrappedOperator_->domainProjection();
-    }
-
     inline void rebuild ()
     {
       if( matrix_ != NULL )
@@ -93,12 +83,22 @@ namespace Dune
       }
     }
 
+    inline const DomainFunctionSpaceType &domainFunctionSpace () const
+    {
+      return wrappedOperator_->domainFunctionSpace();
+    }
+
     inline const RangeFunctionSpaceType &rangeFunctionSpace () const
     {
       return wrappedOperator_->rangeFunctionSpace();
     }
+    
+    inline const DomainProjectionType domainProjection () const
+    {
+      return wrappedOperator_->domainProjection();
+    }
 
-    inline const RangeProjectionType &rangeProjection ()
+    inline const RangeProjectionType rangeProjection () const
     {
       return wrappedOperator_->rangeProjection();
     }
