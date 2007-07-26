@@ -110,7 +110,7 @@ namespace Dune
                                     const EntityCodim0Type &entity )
     : discreteFunctionSpace_( dfSpace ),
       entity_( &entity ),
-      baseFunctionSet_( discreteFunctionSpace_( entity ) ),
+      baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
       numBaseFunctions_( baseFunctionSet_.numBaseFunctions() ),
       dofs_( new RangeFieldType[ numBaseFunctions_ ] )
     {
