@@ -13,4 +13,4 @@ fem.cc           rotator.hh         transport.hh\
 finitevolume.hh        rpop.hh          vecdiscfnc.cc\
 fvfem.cc         suite.cc         vecdiscfnc.hh\
 fvfemalt.cc        suite.hh\
-array.hh rectarray.hh
+array.hh  subarray.hh  rectarray.hh

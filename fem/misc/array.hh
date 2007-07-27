@@ -293,6 +293,56 @@ namespace Dune
 
 
 
+  template< class ElementImp, unsigned int arraysize >
+  class StandardArray
+  : public ArrayDefault< ElementImp, StandardArray< ElementImp, arraysize > >
+  {
+  public:
+    typedef ElementImp ElementType;
+
+  private:
+    typedef StandardArray< ElementType, arraysize > ThisType;
+    typedef ArrayDefault< ElementType, ThisType > BaseType;
+
+  protected:
+    ElementType elements_[ arraysize ];
+
+  public:
+    inline StandardArray ()
+    {
+    }
+
+    inline StandardArray ( const ElementType &element )
+    {
+      for( unsigned int i = 0; i < arraysize; ++i )
+        elements_[ i ] = element;
+    }
+
+    inline ThisType &operator= ( const ElementType &element )
+    {
+      return BaseType :: operator=( element );
+    }
+   
+    inline const ElementType &operator[] ( unsigned int index ) const
+    {
+      assert( index < arraysize );
+      return elements_[ index ];
+    }
+
+    inline ElementType &operator[] ( unsigned int index )
+    {
+      assert( index < arraysize );
+      return elements_[ index ];
+    }
+
+    inline unsigned int size () const
+    {
+      return arraysize;
+    }
+  };
+
+
+
   template< class ElementImp, class ArrayAllocatorImp >
   class ArrayAllocatorInterface
   {
