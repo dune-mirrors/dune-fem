@@ -129,7 +129,8 @@ namespace Dune
     {
       BaseFunctionType *f = new BaseFunctionType( baseFunction );
       assert( f != NULL );
-      baseFunctionList_.push_back( f );
+      //baseFunctionList_.push_back( f );
+      baseFunctionList_.append( f );
     }
     
     //! are the function continuous?

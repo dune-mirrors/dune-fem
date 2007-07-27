@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_HH
 #define DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_HH
 
+#include <dune/fem/misc/array.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
 
 namespace Dune
@@ -82,7 +83,8 @@ namespace Dune
     enum { DimDomain = FunctionSpaceType :: DimDomain };
     enum { DimRange = FunctionSpaceType :: DimRange };
 
-    typedef std :: vector< BaseFunctionType* > BaseFunctionListType;
+    typedef DynamicArray< BaseFunctionType* > BaseFunctionListType;
+    //typedef std :: vector< BaseFunctionType* > BaseFunctionListType;
 
   private:
     typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity EntityCodim0Type;

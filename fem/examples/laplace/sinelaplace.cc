@@ -182,5 +182,6 @@ int main ( int argc, char **argv )
 
   const FieldType eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
   std :: cout << "EOC: " << eoc << std :: endl;
+  std :: cout << "Warning: The EOC does not say much here; it should be nearly zero." << std :: endl;
   return 0;
 }

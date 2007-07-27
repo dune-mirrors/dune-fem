@@ -51,7 +51,7 @@ namespace Dune
           
 
 
-  /*! \class PeriodicGridPart
+  /*! \class PeriodicLeafGridPart
    *  \brief A grid partition identifying opposite faces of the unit cube
    *
    *  Using any grid of the unit cube, this grid partition makes the grid
