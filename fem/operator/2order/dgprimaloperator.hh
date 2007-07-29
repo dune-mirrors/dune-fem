@@ -17,7 +17,7 @@
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/ellipticmodelcaller.hh>
 
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
