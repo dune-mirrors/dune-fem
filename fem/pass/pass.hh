@@ -11,7 +11,7 @@
 #include <dune/fem/operator/common/operator.hh>
 
 // * must go away
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 
 namespace Dune {
 

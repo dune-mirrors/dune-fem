@@ -20,7 +20,7 @@
 #include "modelcaller.hh"
 
 // * needs to move
-#include "../misc/timeutility.hh"
+#include <dune/fem/misc/timeprovider.hh>
 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
@@ -194,9 +194,6 @@ namespace Dune {
 
     void applyLocal(EntityType& en) const
     {
-      //- typedefs
-      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-
       //- statements
       caller_.setEntity(en);
       LocalFunctionType updEn = dest_->localFunction(en);
@@ -240,7 +237,7 @@ namespace Dune {
           EntityPointerType ep = nit.outside();
           EntityType & nb = *ep;
     
-          if ((localIdSet_.id(nb) > localIdSet_.id(en) && en.level()==nb.level())
+          if (localIdSet_.id(en) < localIdSet_.id(nb) && en.level()==nb.level() 
               || en.level() > nb.level()
 #if HAVE_MPI 
               || nb.partitionType() != InteriorEntity
