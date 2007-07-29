@@ -15,7 +15,7 @@
 #endif
 
 //- Dune includes 
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 
 #include <dune/fem/solver/rungekutta.hh>
 

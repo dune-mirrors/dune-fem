@@ -10,7 +10,7 @@
 #include <cassert>
 
 //- Dune includes 
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 
 namespace DuneODE 
 {
