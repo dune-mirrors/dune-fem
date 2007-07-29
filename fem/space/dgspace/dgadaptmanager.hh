@@ -142,88 +142,17 @@ private:
  */
 template <class DiscreteFunctionImp> 
 class RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,0> :
-public RestrictProlongInterface<
-  RestrictProlongTraits<RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,0> > > 
+public RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> 
 {
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename FunctionSpaceType ::GridPartType GridPartType;
-  typedef typename FunctionSpaceType ::GridType GridType;
-  typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-  typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-  typedef typename DiscreteFunctionType::DomainType DomainType;
-  typedef CachingQuadrature<GridPartType,0> QuadratureType;
+  typedef RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> BaseType; 
 public:  
   //! Constructor
   RestrictProlongDiscontinuousSpace( DiscreteFunctionType & df ) : 
-    df_ (df),
-    weight_(-1.0)
+    BaseType ( df ) 
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
   }
-  //! if weight is set, then ists assumend that we have always the same
-  //! proportion between fahter and son volume 
-  void setFatherChildWeight (const RangeFieldType& val) const
-  {
-    // volume of son / volume of father  
-    weight_ = val; 
-  }
-  
-  //! restrict data to father 
-  template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, 
-           bool initialize ) const
-  {
-    assert( !father.isLeaf() );
-
-    // if weight < 0.0 , weight has not been calculated
-    const RangeFieldType weight = 
-      (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
-    
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
-
-    const int numDofs = vati.numDofs();
-    assert( sohn.numDofs() == numDofs );
-    if(initialize) {
-      for(int i=0; i<numDofs; i++) {
-        vati[i] = weight * sohn[i];
-      }
-    }
-    else 
-    {
-      for(int i=0; i<numDofs; i++) {
-        vati[i] += weight * sohn[i];
-      }
-    }
-  }
-
-  //! prolong data to children 
-  template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
-  {
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
-    const int numDofs = vati.numDofs();
-    assert( sohn.numDofs() == numDofs );
-    for(int i=0; i<numDofs; i++) {
-      sohn[i] = vati[i];
-    }
-  }
-
-  //! add discrete function to communicator 
-  template <class CommunicatorImp>
-  void addToList(CommunicatorImp& comm)
-  {
-    comm.addToList(df_);
-  }
-
-private:
-  mutable DiscreteFunctionType & df_;
-  mutable RangeFieldType weight_;
 };
 
 /** \brief specialization of RestrictProlongDefault for

@@ -1,5 +1,5 @@
-#ifndef DUNE_COMBADAPTMANAGERIMP_HH
-#define DUNE_COMBADAPTMANAGERIMP_HH
+#ifndef DUNE_COMBINEDADAPTMANAGERIMP_HH
+#define DUNE_COMBINEDADAPTMANAGERIMP_HH
 
 //- local includes  
 #include <dune/fem/space/common/adaptmanager.hh>
@@ -20,29 +20,16 @@ namespace Dune{
 **/
 
 //***********************************************************************
-/** \brief This is a restriction/prolongation operator for DG data. 
+/** \brief This is a restriction/prolongation operator for combined DG data. 
  */
- template <template <class> class DiscFunc,
-  	  class FunctionSpaceImp, 
-   	  class GridPartImp, 
-   	  int polOrd, 
-   	  template <class> class StorageImp,
-      int N,DofStoragePolicy policy> 
- class RestrictProlongDefault<DiscFunc<
-   CombinedSpace<
-   DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> 
-   ,N,policy > > > : 
-  public RestrictProlongInterface<RestrictProlongTraits<RestrictProlongDefault<DiscFunc<
-    CombinedSpace<
-    DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp>
-    ,N,policy > > > > >
- {
- public:
-   typedef DiscFunc<CombinedSpace<
-               DiscontinuousGalerkinSpace<FunctionSpaceImp, 
-					        GridPartImp, 
-					        polOrd,
-					        StorageImp>,N,policy> > DiscreteFunctionType;
+template <class DiscreteFunctionImp, int polOrd> 
+class RestrictProlongCombinedSpace
+: public RestrictProlongInterface< 
+  RestrictProlongTraits< RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
+                                                     > >
+{
+public:
+  typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType :: GridPartType GridPartType;
   typedef typename FunctionSpaceType :: GridType GridType;
@@ -52,9 +39,11 @@ namespace Dune{
   typedef typename DiscreteFunctionType::DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
   typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
- public:  
+
+  enum { dimRange = FunctionSpaceType :: DimRange };
+public:  
   //! Constructor
-  RestrictProlongDefault ( DiscreteFunctionType & df ) : 
+  RestrictProlongCombinedSpace( DiscreteFunctionType & df ) : 
     df_ (df) , quadord_(2*df.space().order()),
     weight_(-1.0)
   {
@@ -72,10 +61,10 @@ namespace Dune{
   //! restrict data to father 
   template <class EntityType>
   void restrictLocal ( EntityType &father, EntityType &son, 
-		       bool initialize ) const
+           bool initialize ) const
   {
     typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
+    typename FunctionSpaceType::ContainedRangeType phi (0.0);
     assert( !father.isLeaf() );
     const RangeFieldType weight = 
       (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
@@ -89,22 +78,26 @@ namespace Dune{
     const int nop=quad.nop();
     const Geometry& geometryInFather = son.geometryInFather();
 
-    const int vati_numDofs = vati_.numDofs();
+    const int diff_numDofs = vati_.baseFunctionSet().numDifferentBaseFunctions();
+    const int vati_numDofs = vati_.numDofs(); 
     if(initialize) 
     {
-      for(int i=0; i<vati_numDofs; ++i) 
+      for(int i=0; i<vati_numDofs ; ++i) 
       {
-      	vati_[i] = 0.0;
+        vati_[i] = 0.0;
       }
     }
     
     for(int qP = 0; qP < nop; ++qP) 
     {
       sohn_.evaluate(quad,qP,ret);
-      for(int i=0; i<vati_numDofs; ++i) 
+      for(int i=0; i<diff_numDofs; ++i) 
       {
-      	baseset.evaluate(i,geometryInFather.global(quad.point(qP)),phi);
-      	vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
+        baseset.evaluateScalar(i,geometryInFather.global(quad.point(qP)),phi);
+        for(int k=0; k<dimRange; ++k)
+        {
+          vati_[i] += quad.weight(qP) * weight * (ret[k] * phi[0]) ;
+        }
       }
     }
   }
@@ -115,10 +108,11 @@ namespace Dune{
   {
     //assert( son.state() == REFINED );
     typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
+    typename FunctionSpaceType::ContainedRangeType phi (0.0);
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
     const int sohn_numDofs = sohn_.numDofs();
+    const int diff_numDofs = sohn_.baseFunctionSet().numDifferentBaseFunctions();
     for(int i=0; i<sohn_numDofs; ++i) sohn_[i] = 0.;
 
     QuadratureType quad(son,quadord_);
@@ -130,11 +124,22 @@ namespace Dune{
     {
       vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
       
-      for(int i=0; i<sohn_numDofs; ++i) {
-      	baseset.evaluate(i,quad,qP,phi);
-      	sohn_[i] += quad.weight(qP) * (ret * phi) ;
+      for(int i=0; i<diff_numDofs; ++i) 
+      {
+        baseset.evaluateScalar(i,quad,qP,phi);
+        for(int k=0; k<dimRange; ++k)
+        {
+          sohn_[i] += quad.weight(qP) * (ret[k] * phi[0]) ;
+        }
       }
     }
+  }
+
+  //! add discrete function to communicator 
+  template <class CommunicatorImp>
+  void addToList(CommunicatorImp& comm)
+  {
+    comm.addToList(df_);
   }
 
 private:
@@ -143,6 +148,52 @@ private:
   mutable RangeFieldType weight_;
 };
 
-}
+/** \brief This is a restriction/prolongation operator for 
+    combined DG data with polynomial order 0. 
+ */
+template <class DiscreteFunctionImp> 
+class RestrictProlongCombinedSpace<DiscreteFunctionImp,0>
+: public RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> 
+{
+public:
+  typedef DiscreteFunctionImp DiscreteFunctionType;
+  typedef RestrictProlongPieceWiseConstantData<DiscreteFunctionImp>  BaseType; 
+public:  
+  //! Constructor
+  RestrictProlongCombinedSpace( DiscreteFunctionType & df ) :
+    BaseType(df)
+  {}
+};
 
+/** \brief specialization of RestrictProlongDefault for
+    CombinedSpace.
+*/
+template <template <class> class DiscFunc,
+          class DiscreteFunctionSpaceImp, 
+          int N, 
+          DofStoragePolicy policy> 
+class RestrictProlongDefault< 
+        DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
+                            > 
+: public RestrictProlongCombinedSpace<
+        DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >,
+        DiscreteFunctionSpaceImp :: polynomialOrder
+                                     >
+{
+public:
+  //! type of discrete function 
+  typedef DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > DiscreteFunctionType;
+  //! type of base class  
+  typedef RestrictProlongCombinedSpace<
+      DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >, 
+        DiscreteFunctionSpaceImp :: polynomialOrder > BaseType;
+public:  
+  //! Constructor
+  RestrictProlongDefault ( DiscreteFunctionType & df ) : 
+    BaseType(df) 
+  {
+  }
+};
+
+} // end namespace Dune 
 #endif

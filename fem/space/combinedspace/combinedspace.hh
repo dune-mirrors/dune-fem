@@ -380,4 +380,5 @@ namespace Dune {
 
 // include implementation
 #include "combinedspace.cc"
+#include "combinedadaptmanager.hh"
 #endif

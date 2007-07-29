@@ -120,8 +120,11 @@ template <class DiscreteFunctionType> class RestrictProlongDefault :
  piecewise constant data stored on elements. 
 */
 template <class DiscreteFunctionType>
- class RestProlOperatorFV : public RestrictProlongInterface<RestrictProlongTraits<RestProlOperatorFV<DiscreteFunctionType> > >
+class RestrictProlongPieceWiseConstantData : 
+public RestrictProlongInterface<
+  RestrictProlongTraits<RestrictProlongPieceWiseConstantData< DiscreteFunctionType > > >
 {
+public:  
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType SpaceType; 
@@ -131,7 +134,7 @@ template <class DiscreteFunctionType>
   typedef typename DiscreteFunctionType::DomainType DomainType;
 public:  
   //! Constructor
-  RestProlOperatorFV ( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
+  RestrictProlongPieceWiseConstantData( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
   {
     // make sure index set can be used for adaptive computations 
   }
@@ -191,6 +194,7 @@ public:
     }
   }
 
+  //! add discrete function to communicator 
   template <class CommunicatorImp> 
   void addToList(CommunicatorImp& comm) 
   {
