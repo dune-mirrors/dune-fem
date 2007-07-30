@@ -14,24 +14,34 @@ namespace Dune {
 /** \brief SpaceOperatorInterface for Operators of the type 
   L: X --> X where X is a discrete function space
 */
-template <class DestinationType>
+template <class DestinationImp>
 class SpaceOperatorInterface 
-: public Operator< typename DestinationType :: RangeFieldType,
-                   typename DestinationType :: RangeFieldType,
-                   DestinationType,
-                   DestinationType>
+: public Operator< typename DestinationImp :: RangeFieldType,
+                   typename DestinationImp :: RangeFieldType,
+                   DestinationImp,
+                   DestinationImp>
 {
 protected:
   SpaceOperatorInterface() {}
 
 public:
+  //! type of argument and destination 
+  typedef DestinationImp DestinationType;
+  
+  //! type of discrete function space 
+  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
+  
   // destructor 
   virtual ~SpaceOperatorInterface() {}
 
-  // apply operator 
+  //! apply operator 
   virtual void operator () (const DestinationType& arg, DestinationType& dest) const = 0;
 
-  // pass time provider to underlying operator 
+  //! return reference to space (needed by ode solvers)
+  virtual const SpaceType& space() const = 0;
+
+  //!pass time provider to underlying operator, default implementation
+  //! does nothing 
   virtual void timeProvider(TimeProvider* tp) {}
 };
 
@@ -43,6 +53,9 @@ class SpaceOperatorPtr
 {
   typedef typename OperatorType::DestinationType DestinationType;
   OperatorType* op_;
+  
+  //! type of discrete function space 
+  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
   
   //! copying not allowed 
   SpaceOperatorPtr(const SpaceOperatorPtr& org);
@@ -69,6 +82,12 @@ public:
     abort();
   }
 
+  //! return reference to space 
+  const SpaceType& space() const 
+  {
+    return (*op_).space(); 
+  }
+    
   //! return reference to pass 
   OperatorType& pass() 
   { 
@@ -92,6 +111,9 @@ class SpaceOperatorWrapper
 public:
   //! type of Argument and Destination 
   typedef typename OperatorType::DestinationType DestinationType;
+  //! type of discrete function space 
+  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
+  
   
   //! constructor storing pointer 
   SpaceOperatorWrapper(OperatorType * op)
@@ -110,6 +132,12 @@ public:
   {
     assert( op_ );
     (*op_)(arg,dest);
+  }
+  
+  //! return reference to space 
+  const SpaceType& space() const 
+  {
+    return (*op_).space(); 
   }
   
   //! pass timeprovider to internal operator 
