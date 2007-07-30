@@ -24,14 +24,15 @@ using namespace std;
  **/
 
 //! interface class for ode solver contains a solve method 
-template <class Operator>
+template <class DestinationImp>
 class OdeSolverInterface 
 {
 protected:
   OdeSolverInterface () {}    
-
-  typedef typename Operator :: DestinationType DestinationType;
 public:
+  //! type of destination 
+  typedef DestinationImp DestinationType;
+
   //! destructor 
   virtual ~OdeSolverInterface () {}
   
@@ -58,6 +59,7 @@ protected:
   const int ord_;
 
 public:
+  //! constructor 
   ExplRungeKuttaBase(Operator& op, TimeProvider& tp, 
                      int pord, bool verbose = true ) :
     a(0),b(0),c(0), Upd(0),
@@ -103,7 +105,7 @@ public:
       c[0]=0.;
       break;
     default : std::cerr << "Runge-Kutta method of this order not implemented" 
-      << std::endl;
+                        << std::endl;
               abort();
     }
 
@@ -115,13 +117,14 @@ public:
     Upd.push_back(new DestinationType("Ustep",op_.space()) );
   }
 
+  //! destructor 
   ~ExplRungeKuttaBase()
   {
     for(size_t i=0; i<Upd.size(); ++i) 
       delete Upd[i];
   }
 
-  // apply operator once to get dt estimate 
+  //! apply operator once to get dt estimate 
   void initialize(const DestinationType& U0)
   {
     if( ! initialized_ ) 
@@ -132,6 +135,7 @@ public:
     }
   }
   
+  //! solve the system 
   void solve(DestinationType& U0) 
   {
     // time might change 
@@ -254,16 +258,17 @@ private:
 };
 
 //! ExplicitRungeKuttaSolver 
-template<class Operator>
+template<class DestinationImp>
 class ExplicitRungeKuttaSolver : 
-  public OdeSolverInterface<Operator> ,
-  public ExplRungeKuttaBase<Operator>  
+  public OdeSolverInterface<DestinationImp> ,
+  public ExplRungeKuttaBase<SpaceOperatorInterface<DestinationImp> >  
 {
-  typedef ExplRungeKuttaBase<Operator> BaseType;
-  typedef typename Operator::DestinationType DestinationType; 
+  typedef DestinationImp DestinationType; 
+  typedef SpaceOperatorInterface<DestinationImp> OperatorType;
+  typedef ExplRungeKuttaBase<OperatorType> BaseType;
  public:
   //! constructor 
-  ExplicitRungeKuttaSolver(Operator& op, TimeProvider& tp, int pord, bool verbose = false) :
+  ExplicitRungeKuttaSolver(OperatorType& op, TimeProvider& tp, int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
   {
@@ -283,7 +288,7 @@ class ExplicitRungeKuttaSolver :
   //! destructor 
   virtual ~ExplicitRungeKuttaSolver() {}
   
-  // apply operator once to get dt estimate 
+  //! apply operator once to get dt estimate 
   void initialize(const DestinationType& U0)
   {
     BaseType :: initialize(U0);

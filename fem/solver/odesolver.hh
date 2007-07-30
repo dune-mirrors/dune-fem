@@ -16,6 +16,7 @@
 
 //- Dune includes 
 #include <dune/fem/misc/timeprovider.hh>
+#include <dune/fem/operator/common/spaceoperatorif.hh>
 
 #include <dune/fem/solver/rungekutta.hh>
 
@@ -45,17 +46,24 @@ namespace DuneODE {
 template <class Operator>
 class OperatorWrapper : public Function 
 {
+  // type of discrete function 
   typedef typename Operator::DestinationType DestinationType;
+  // type of discrete function space 
+  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
  public:
+  //! constructor 
   OperatorWrapper(const Operator& op, TimeProvider& tp) 
-    : op_(op) , tp_(tp) {}
+    : op_(op) , space_(op_.space()) , tp_(tp) 
+  {}
 
-  //! apply operator 
-  void operator()(const double *u, double *f, int i = 0) {
+  //! apply operator applies space operator and creates temporary
+  //! discrete function using the memory from outside 
+  void operator()(const double *u, double *f, int i = 0) 
+  {
     // create fake argument 
-    DestinationType arg("ARG",op_.space(),u);
+    DestinationType arg("ARG",space_,u);
     // create fake destination 
-    DestinationType dest("DEST",op_.space(),f);
+    DestinationType dest("DEST",space_,f);
     
     // set actual time of iteration step
     tp_.setTime(time());
@@ -90,6 +98,8 @@ class OperatorWrapper : public Function
 private:
   // operator to call 
   const Operator& op_;
+  // discrete function space 
+  const SpaceType& space_;
   // time provider 
   TimeProvider& tp_;
 };
@@ -99,7 +109,6 @@ private:
  *  @ingroup OperatorCommon
  @{
  **/
-
 template<class Operator>
 class ExplTimeStepperBase 
 {
@@ -144,9 +153,10 @@ public:
     return false;
   }
 
+  //! destructor  
   ~ExplTimeStepperBase() { delete ode_; }
 
-  // return reference to ode solver 
+  //! return reference to ode solver 
   DuneODE::ODESolver& odeSolver() 
   {
     assert( ode_ );
@@ -163,16 +173,17 @@ protected:
 };
 
 //! ExplicitOdeSolver 
-template<class Operator>
+template<class DestinationImp>
 class ExplicitOdeSolver : 
-  public OdeSolverInterface<Operator> ,
-  public ExplTimeStepperBase<Operator>  
+  public OdeSolverInterface<DestinationImp> ,
+  public ExplTimeStepperBase<SpaceOperatorInterface<DestinationImp> >  
 {
-  typedef ExplTimeStepperBase<Operator> BaseType;
-  typedef typename Operator::DestinationType DestinationType; 
- public:
+  typedef DestinationImp DestinationType; 
+  typedef SpaceOperatorInterface<DestinationType> OperatorType;
+  typedef ExplTimeStepperBase<OperatorType> BaseType; 
+public:
   //! constructor 
-  ExplicitOdeSolver(Operator& op, TimeProvider& tp, int pord, bool verbose = false) :
+  ExplicitOdeSolver(OperatorType& op, TimeProvider& tp, int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
   {
@@ -247,7 +258,7 @@ class ExplTimeStepper : public TimeProvider,
   typedef typename Operator::DestinationType DestinationType; 
   typedef typename DestinationType :: DiscreteFunctionSpaceType 
     :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
- public:
+public:
   ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
     TimeProvider(0.0,cfl),
     BaseType(op,*this,pord,verbose),
@@ -421,15 +432,16 @@ protected:
 //  --ImplicitOdeSolver 
 //
 ///////////////////////////////////////////////////////
-template<class Operator>
+template<class DestinationImp>
 class ImplicitOdeSolver : 
-  public OdeSolverInterface<Operator> ,
-  public ImplTimeStepperBase<Operator> 
+  public OdeSolverInterface<DestinationImp> ,
+  public ImplTimeStepperBase<SpaceOperatorInterface<DestinationImp> > 
 {
-  typedef ImplTimeStepperBase<Operator> BaseType;
-  typedef typename Operator::DestinationType DestinationType;
+  typedef DestinationImp DestinationType;
+  typedef SpaceOperatorInterface<DestinationImp> OperatorType;
+  typedef ImplTimeStepperBase<OperatorType> BaseType;
 public:
-  ImplicitOdeSolver(Operator& op, TimeProvider& tp,
+  ImplicitOdeSolver(OperatorType& op, TimeProvider& tp,
                     int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp),
