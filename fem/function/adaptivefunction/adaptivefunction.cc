@@ -677,8 +677,8 @@ namespace Dune {
       this->baseFunctionSet().jacobianScalar(i , quad, quadPoint, cTmpGradRef_ );
       for (SizeType j = 0; j < N; ++j) 
       {
-        (*(values_[i][j])) += cTmp_[0] * factor1[j] +
-          cTmpGradRef_[0] * factorInv_[j]; 
+        (*(values_[i][j])) += cTmp_[0] * factor1[j];
+        (*(values_[i][j])) += cTmpGradRef_[0] * factorInv_[j]; 
       }
     }
   }
