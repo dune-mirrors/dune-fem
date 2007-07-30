@@ -259,6 +259,15 @@ namespace Dune{
     //! Set all elements to zero
     void clear();
 
+    //! Set all DoFs to a scalar value
+    inline DiscreteFunctionType &operator= ( const RangeFieldType s )
+    {
+      const DofIteratorType end = this->dend();
+      for( DofIteratorType it = this->dbegin(); it != end; ++it )
+        *it = s;
+      return asImp();
+    }
+
     //! daxpy operation
     void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c);
 

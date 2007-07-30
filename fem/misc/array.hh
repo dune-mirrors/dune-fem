@@ -158,6 +158,13 @@ namespace Dune
       return array_[ index_ ];
     }
 
+    inline ThisType &operator++ ()
+    {
+      assert( index_ < array.size() );
+      ++index_;
+      return *this;
+    }
+
     inline bool operator== ( const ThisType &other )
     {
       assert( &(other.array_) == &array_ );
@@ -207,6 +214,7 @@ namespace Dune
     typedef ArrayInterface< TraitsType > BaseType;
 
     using BaseType :: size;
+    using BaseType :: asImp;
 
   public:
     typedef typename TraitsType :: IteratorType IteratorType;
@@ -215,7 +223,7 @@ namespace Dune
   public:
     inline ArrayImp& operator= ( const ElementType &element )
     {
-      ArrayImp &imp = this->asImp();
+      ArrayImp &imp = asImp();
       const unsigned int size = imp.size();
       for( unsigned int i = 0; i < size; ++i )
         imp[ i ] = element;
@@ -224,22 +232,22 @@ namespace Dune
 
     inline ConstIteratorType begin () const
     {
-      return ConstIteratorType( *this, 0 );
+      return ConstIteratorType( asImp(), 0 );
     }
 
     inline IteratorType begin ()
     {
-      return IteratorType( *this, 0 );
+      return IteratorType( asImp(), 0 );
     }
 
     inline ConstIteratorType end () const
     {
-      return ConstIteratorType( *this, size() );
+      return ConstIteratorType( asImp(), size() );
     }
 
     inline IteratorType end ()
     {
-      return IteratorType( *this, size() );
+      return IteratorType( asImp(), size() );
     }
   };
 

@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_INTEGRATIONOPERATOR_HH
 #define DUNE_FEM_INTEGRATIONOPERATOR_HH
 
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/temporarylocalfunction.hh>
 #include <dune/fem/operator/matrix/localmatrix.hh>
 
@@ -21,13 +22,15 @@ namespace Dune
       ThisType;
 
   public:
-    typedef typename LocalOperatorType :: DomainFunctionSpaceType DomainFunctionSpaceType;
+    typedef typename LocalOperatorType :: DomainFunctionSpaceType
+      DomainFunctionSpaceType;
     typedef typename LocalOperatorType :: DomainFunctionType DomainFunctionType;
     
-    typedef typename RangeFunctionType :: FunctionSpaceType RangeFunctionSpaceType;
+    typedef typename RangeFunctionType :: DiscreteFunctionSpaceType
+      RangeFunctionSpaceType;
     
-    typedef typename DomainFunctionSpaceType :: RangeFieldType DomainFieldType;
-    typedef typename RangeFunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename LocalOperatorType :: DomainFieldType DomainFieldType;
+    typedef typename LocalOperatorType :: RangeFieldType RangeFieldType;
   };
 
 
@@ -52,18 +55,25 @@ namespace Dune
 
   public:
     typedef typename TraitsType :: LocalOperatorType LocalOperatorType;
+
+    typedef typename TraitsType :: DomainFunctionType DomainFunctionType;
     typedef typename TraitsType :: RangeFunctionType RangeFunctionType;
 
-    typedef typename LocalOperatorType :: DomainFunctionType
-      DomainFunctionType;
-    typedef typename LocalOperatorType :: DomainFunctionSpaceType
+    typedef typename TraitsType :: DomainFunctionSpaceType
       DomainFunctionSpaceType;
-
-    typedef typename RangeFunctionType :: FunctionSpaceType
+    typedef typename TraitsType :: RangeFunctionSpaceType
       RangeFunctionSpaceType;
+
+    typedef typename TraitsType :: DomainFieldType DomainFieldType;
+    typedef typename TraitsType :: RangeFieldType RangeFieldType;
+
+  protected:
+    typedef typename RangeFunctionType :: LocalFunctionType
+      RangeLocalFunctionType;
 
     typedef TemporaryLocalFunction< RangeFunctionSpaceType >
       RangeTemporaryLocalFunctionType;
+
     typedef TemporaryLocalMatrix< DomainFunctionSpaceType, RangeFunctionSpaceType >
       TemporaryLocalMatrixType;
 
@@ -93,10 +103,6 @@ namespace Dune
       // type of base function set for range function space
       typedef typename RangeFunctionSpaceType :: BaseFunctionSetType
         BaseFunctionSetType;
-
-      // type of local function for range functions
-      typedef typename RangeFunctionType :: LocalFunctionType
-        RangeLocalFunctionType;
 
       // obtain range function space (discrete function space)
       const RangeFunctionSpaceType &rangeFunctionSpace = w.space();
@@ -196,23 +202,25 @@ namespace Dune
 
   public:
     typedef typename TraitsType :: LocalOperatorType LocalOperatorType;
+
+    typedef typename TraitsType :: DomainFunctionType DomainFunctionType;
     typedef typename TraitsType :: RangeFunctionType RangeFunctionType;
 
-    typedef typename LocalOperatorType :: DomainFunctionType
-      DomainFunctionType;
-    typedef typename LocalOperatorType :: DomainFunctionSpaceType
-      DomainFunctionSpaceType;
+    typedef typename TraitsType :: DomainFunctionSpaceType DomainFunctionSpaceType;
+    typedef typename TraitsType :: RangeFunctionSpaceType RangeFunctionSpaceType;
 
-    typedef typename RangeFunctionType :: FunctionSpaceType
-      RangeFunctionSpaceType;
-
-    typedef TemporaryLocalFunction< RangeFunctionSpaceType >
-      RangeTemporaryLocalFunctionType;
-    typedef TemporaryLocalMatrix< DomainFunctionSpaceType, RangeFunctionSpaceType >
-      TemporaryLocalMatrixType;
+    typedef typename TraitsType :: DomainFieldType DomainFieldType;
+    typedef typename TraitsType :: RangeFieldType RangeFieldType;
 
   protected:
-    const LocalOperatorType &localOperator_;
+    typedef typename RangeFunctionType :: LocalFunctionType
+      RangeLocalFunctionType;
+    
+    typedef TemporaryLocalFunction< RangeFunctionSpaceType >
+      RangeTemporaryLocalFunctionType;
+
+  protected:
+    const LocalOperatorType localOperator_;
     
   public:
     inline IntegrationOperator ( const LocalOperatorType &localOperator )
@@ -220,10 +228,8 @@ namespace Dune
     {
     }
 
-    inline void operator()
-      ( const DomainFunctionType &u,
-        RangeFunctionType &w
-      ) const
+    inline void operator () ( const DomainFunctionType &u,
+                              RangeFunctionType &w ) const
     {
       // type of iterator over grid partition for range function space
       typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
@@ -231,10 +237,6 @@ namespace Dune
       // type of base function set for range function space
       typedef typename RangeFunctionSpaceType :: BaseFunctionSetType
         BaseFunctionSetType;
-
-      // type of local function for range functions
-      typedef typename RangeFunctionType :: LocalFunctionType
-        RangeLocalFunctionType;
 
       // obtain range function space (discrete function space)
       const RangeFunctionSpaceType &rangeFunctionSpace = w.space();
@@ -255,13 +257,10 @@ namespace Dune
 
         // update the destination function
         RangeLocalFunctionType w_local = w.localFunction( *it );
-        const int numDofs = w_local.numDofs();
-        for( int i = 0; i < numDofs; ++i )
-          w_local[ i ] += w_temp[ i ];
+        w_local += w_temp;
       }
     }
   };
-
   
 }
 

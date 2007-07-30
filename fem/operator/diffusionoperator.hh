@@ -74,6 +74,7 @@ namespace Dune
     typedef typename QuadratureType :: CoordinateType QuadraturePointType;
  
     typedef typename DomainFunctionType :: RangeFieldType DomainFieldType;
+    typedef DomainFieldType RangeFieldType;
 
     enum { polynomialOrder = TraitsType :: polynomialOrder };
 
@@ -83,6 +84,11 @@ namespace Dune
   public:
     inline LocalDiffusionOperator ( const ModelType &model )
     : model_( model )
+    {
+    }
+
+    inline LocalDiffusionOperator ( const ThisType &other )
+    : model_( other.model_ )
     {
     }
  
@@ -281,8 +287,6 @@ namespace Dune
     typedef DiffusionOperator< TraitsType, ModelType > ThisType;
     typedef IntegrationOperator< IntegrationOperatorTraitsType, true > BaseType;
 
-    using BaseType :: localOperator_;
-
   public:
     typedef typename TraitsType :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
@@ -299,16 +303,15 @@ namespace Dune
       < DefaultEllipticSourceProjectionTraits< SourceFunctionType, DiscreteFunctionType > >
       RangeProjectionType;
 
+  protected:
+    LocalOperatorType localOperator_;
+
   public:
     inline DiffusionOperator ( const DiscreteFunctionSpaceType &dfSpace,
                                const ModelType &model )
-    : BaseType( *(new LocalOperatorType( model )), dfSpace, dfSpace )
+    : BaseType( localOperator_, dfSpace, dfSpace ),
+      localOperator_( model )
     {
-    }
-
-    inline ~DiffusionOperator ()
-    {
-      delete &localOperator_;
     }
 
     inline const DomainProjectionType domainProjection () const

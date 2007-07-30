@@ -163,6 +163,11 @@ namespace Dune {
       Imp(other)
     {}
 
+    inline DiscreteFunctionType &operator= ( const RangeFieldType s )
+    {
+      return BaseType :: operator= ( s );
+    }
+
     //! assignment of functions 
     virtual BaseType& assign(const MappingType& g)
     {

@@ -54,6 +54,10 @@ namespace Dune
     inline LocalEllipticSourceProjection ()
     {
     }
+
+    inline LocalEllipticSourceProjection ( const ThisType &other )
+    {
+    }
     
     template< class EntityType, class RangeLocalFunctionType >
     inline void operator()
@@ -147,17 +151,13 @@ namespace Dune
     typedef IntegrationOperator< IntegrationOperatorTraitsType, false > BaseType;
 
   protected:
-    using BaseType :: localOperator_;
+    LocalOperatorType localOperator_;
 
   public:
     inline EllipticSourceProjection ()
-    : BaseType( *(new LocalOperatorType()) )
+    : BaseType( localOperator_ ),
+      localOperator_()
     {
-    }
-
-    inline ~EllipticSourceProjection ()
-    {
-      delete &localOperator_;
     }
   };
 
