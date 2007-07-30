@@ -9,6 +9,15 @@
 
 namespace Dune{
 
+//! type of derivative component chooser 
+typedef int deriType;
+
+//! type of derivative specializer 
+template <int dim>
+struct DiffVariable
+{
+  typedef FieldVector<deriType, dim> Type;
+};
 
 /** @defgroup Mapping Mapping
   \ingroup OperatorCommon
