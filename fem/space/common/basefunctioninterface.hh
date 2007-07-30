@@ -19,16 +19,6 @@ namespace Dune{
   @{
  */
 
-// just to make it easy to change 
-typedef int deriType;
-
-// just for make changes easy 
-template <int dim>
-struct DiffVariable
-{
-    typedef FieldVector<deriType, dim> Type;
-};
-
 //*************************************************************************
 //! BaseFunctionInterface is the interface to a base function. 
 //! A base function can be evaluated on a point from the Domain and the
