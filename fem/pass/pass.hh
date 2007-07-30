@@ -263,6 +263,12 @@ namespace Dune {
       }
     }
 
+    //! return reference to space 
+    const DiscreteFunctionSpaceType& space() const 
+    { 
+      return spc_; 
+    }
+
   protected:
     //! Actions to be carried out before a global grid walkthrough.
     //! To be overridden in a derived class.

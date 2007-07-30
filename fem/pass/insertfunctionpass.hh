@@ -120,6 +120,13 @@ namespace Dune {
       // do not allocate memory here 
     }
 
+    //! return reference to space 
+    const DiscreteFunctionSpaceType& space () const 
+    {
+      assert( this->destination_ );
+      return this->destination_->space();
+    }
+
     //! empty method here
     void operator () (const GlobalArgumentType& arg, DestinationType& dest) const
     {
@@ -140,6 +147,7 @@ namespace Dune {
     {
       this->destination_ = &dest;
     }
+    
   protected:
     void compute(const ArgumentType& arg, DestinationType& dest) const 
     {
