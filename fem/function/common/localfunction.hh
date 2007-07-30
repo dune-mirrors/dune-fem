@@ -21,10 +21,11 @@ namespace Dune
 //
 //  --LocalFunctionInterface 
 //
-//! The LocalFunctionInterface is the Interface to local function which
-//! form the discrete Function 
-//
 //****************************************************************************
+/** \brief 
+   The LocalFunctionInterface is the Interface to local function which
+   form the discrete Function 
+   */
 template < class DiscreteFunctionSpaceType, class LocalFunctionImp > 
 class LocalFunctionInterface 
 {
@@ -285,7 +286,8 @@ protected:
     }
     
     /** \brief evaluate jacobian of the local function on 
-               real world coordinate x and return ret (calls local method of entitys geometry)
+               real world coordinate x and return ret 
+               (calls local method of entitys geometry if not overloaded)
          \param entity Entity x is belonging to 
          \param x global evaluation coordinate 
          \param grad  return value 
@@ -301,7 +303,8 @@ protected:
 
     /** \brief default implementation of evaluation 
                of jacobian using a quadrature 
-              (calls jacobian method with local coordiante)
+              (calls jacobian method with local coordiante if not
+              overloaded)
         \param quad Quadrature
         \param quadPoint number of quadrature point      
         \param grad return value 
