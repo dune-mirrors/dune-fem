@@ -19,11 +19,12 @@ namespace Dune {
 
     typedef QuadratureRule<ct,dim> DuneQuadratureRuleType;
 
-    enum { highest_order_cube    = CubeQuadratureRule<ct,dim>::highest_order };
-    enum { highest_order_simplex = SimplexQuadratureRule<ct,dim>::highest_order };
+    //enum { highest_order_cube    = CubeQuadratureRule<ct,dim>::highest_order };
+    //enum { highest_order_simplex = SimplexQuadratureRule<ct,dim>::highest_order };
 
-    enum { highest_order = 44 };//(highest_order_cube < highest_order_simplex) ? 
-//                highest_order_cube : highest_order_simplex };
+    enum { highest_order = 44 };
+    //(highest_order_cube < highest_order_simplex) ? 
+    //            highest_order_cube : highest_order_simplex };
 
     const GeometryType elementGeometry_;
     int order_;

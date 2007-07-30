@@ -31,6 +31,8 @@ namespace Dune {
     weights_.push_back(weight);
   }
 
+// only if we use dune-fem quadratures  
+#ifndef USE_DUNE_QUADRATURES
   template <class ct, int dim>
   SimplexQuadrature<ct, dim>::SimplexQuadrature(const GeometryType&, int order, size_t id) :
     QuadratureImp<ct, dim>(id),
@@ -320,7 +322,8 @@ namespace Dune {
       this->addQuadraturePoint(points.point(m, i), points.weight(m, i));
     }
   }
-
+#endif // end #infdef USE_DUNE_QUADRATURES
+  
   template <class ct, int dim>
   TestQuadrature<ct, dim>::TestQuadrature(const GeometryType& geo, int order) :
     QuadratureImp<ct, dim>(IdProvider::instance().newId()),

@@ -1,5 +1,5 @@
-#ifndef DUNE_ADIQUADRATURE_HH
-#define DUNE_ADIQUADRATURE_HH
+#ifndef DUNE_FEMQUADRATURE_HH
+#define DUNE_FEMQUADRATURE_HH
 
 #include <vector>
 #include <cassert>
@@ -19,20 +19,28 @@
 #endif
 */
 
-// undef HAVE_ALBERTA_FOUND, because quaratures boogie  
-#undef HAVE_ALBERTA_FOUND
+// use quadratures from dune-grid 
+#define USE_DUNE_QUADRATURES
 
+// do not use ALBERTA Quadratures at the moment 
+#undef HAVE_ALBERTA_FOUND
 #ifdef HAVE_ALBERTA_FOUND
 // inlcude albertagrid.hh includes the needed alberta.h 
 #include <dune/grid/albertagrid.hh>
 #endif
 
+// quadrature storage classes 
 #include "quadprovider.hh"
-#include "simplexpoints.hh"
 #include "gausspoints.hh"
 #include "prismpoints.hh"
 #include "pyramidpoints.hh"
+
+// include quadrature points 
+#ifdef USE_DUNE_QUADRATURES
 #include "dunequadratures.hh"
+#else
+#include "simplexpoints.hh"
+#endif
 
 namespace Dune {
 
@@ -41,6 +49,8 @@ namespace Dune {
   class QuadratureProvider;
   template <class ct, int dim>
   class QuadratureImp;
+  
+#ifndef USE_DUNE_QUADRATURES
   template <class ct, int dim>
   class SimplexQuadrature;
   template <class ct, int dim>
@@ -59,6 +69,7 @@ namespace Dune {
   class PrismQuadrature;
   template <class ct>
   class PyramidQuadrature;
+#endif
 
   //! Generic implementation of a quadrature.
   //! A quadrature in the Dune sense is nothing but a set of points and
@@ -150,6 +161,7 @@ namespace Dune {
     std::vector<ct> weights_;
   };
 
+#ifndef USE_DUNE_QUADRATURES
   //! A generic quadrature class for simplices.
   //! The UG quadrature rules are used here. SimplexQuadrature implements
   //! the geometry-specific part of the quadrature and initialises the vector
@@ -432,6 +444,7 @@ namespace Dune {
   private:
     int order_;
   };
+#endif // end USE_DUNE_QUADRATURES not defined
 
   //! \brief Allows injection of arbitrary points as quadrature points.
   //! Useful to test some features of the quadrature framework in isolation
@@ -470,7 +483,11 @@ namespace Dune {
   //! default defines for used quadratures 
   template <typename ct, int dim> struct DefaultQuadratureTraits
   {
-    typedef CubeQuadrature<ct, dim> CubeQuadratureType; 
+#ifdef USE_DUNE_QUADRATURES
+    typedef QuadratureRulesFactory<ct,dim> CubeQuadratureType;
+#else 
+    typedef CubeQuadrature<ct, dim>   CubeQuadratureType; 
+#endif
     typedef QuadratureImp<ct,dim>     IntegrationPointListType;
   }; 
 
@@ -478,7 +495,11 @@ namespace Dune {
   template <typename ct> 
   struct DefaultQuadratureTraits<ct,0>  
   {
+#ifdef USE_DUNE_QUADRATURES
+    typedef QuadratureRulesFactory<ct,0> PointQuadratureType;
+#else 
     typedef CubeQuadrature<ct, 0>   PointQuadratureType;     
+#endif
     typedef QuadratureImp<ct,0>     IntegrationPointListType;
   };
   
@@ -486,7 +507,11 @@ namespace Dune {
   template <typename ct>
   struct DefaultQuadratureTraits<ct,1>  
   {
+#ifdef USE_DUNE_QUADRATURES
+    typedef QuadratureRulesFactory<ct,1> LineQuadratureType;
+#else 
     typedef CubeQuadrature<ct, 1>   LineQuadratureType;     
+#endif
     typedef QuadratureImp<ct,1>     IntegrationPointListType;
   };
   
@@ -494,12 +519,13 @@ namespace Dune {
   template <typename ct>
   struct DefaultQuadratureTraits<ct,2>  
   {
-    typedef CubeQuadrature<ct, 2>    CubeQuadratureType;     
-    typedef SimplexQuadrature<ct, 2> SimplexQuadratureType;     
-    /*
+#ifdef USE_DUNE_QUADRATURES
     typedef QuadratureRulesFactory<ct,2> SimplexQuadratureType;
     typedef QuadratureRulesFactory<ct,2> CubeQuadratureType;
-    */
+#else
+    typedef CubeQuadrature<ct, 2>    CubeQuadratureType;     
+    typedef SimplexQuadrature<ct, 2> SimplexQuadratureType;     
+#endif
     typedef QuadratureImp<ct,2>      IntegrationPointListType;
   };
   
@@ -507,11 +533,19 @@ namespace Dune {
   template <typename ct>
   struct DefaultQuadratureTraits<ct,3>  
   {
+#ifdef USE_DUNE_QUADRATURES
+    typedef QuadratureRulesFactory<ct,3> SimplexQuadratureType;
+    typedef QuadratureRulesFactory<ct,3> CubeQuadratureType;
+
+    typedef QuadratureRulesFactory<ct,3> PrismQuadratureType;
+    typedef QuadratureRulesFactory<ct,3> PyramidQuadratureType;
+#else 
     typedef CubeQuadrature<ct, 3>    CubeQuadratureType;     
     typedef SimplexQuadrature<ct, 3> SimplexQuadratureType;     
 
     typedef PrismQuadrature<ct>      PrismQuadratureType;
     typedef PyramidQuadrature<ct>    PyramidQuadratureType;
+#endif
 
     typedef QuadratureImp<ct,3>      IntegrationPointListType;
   };
@@ -658,6 +692,8 @@ namespace Dune {
 } // end namespace Dune
 
 #include "quadrature.cc"
+
+#undef USE_DUNE_QUADRATURES
 #undef HAVE_ALBERTA_FOUND
 
 #endif
