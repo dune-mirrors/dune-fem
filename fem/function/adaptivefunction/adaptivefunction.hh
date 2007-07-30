@@ -6,9 +6,7 @@
 #include <vector>
 
 //- Dune includes
-#include <dune/common/array.hh>
-#include <dune/fem/space/combinedspace/combinedspace.hh>
-#include <dune/fem/space/combinedspace/subspace.hh>
+#include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 //- Local includes
@@ -23,6 +21,13 @@ namespace Dune {
   class AdaptiveDiscreteFunction;
   template <class DiscreteFunctionSpaceImp>
   class AdaptiveLocalFunction;
+
+  //- Forward declarations of Combined Space 
+  template <class, int , DofStoragePolicy > 
+  class CombinedSpace;
+  template <class CombinedSpaceImp>
+  class SubSpace;
+    
   
   //- Class definitions
   //! Traits class for AdaptiveDiscreteFunction and AdaptiveLocalFunction
