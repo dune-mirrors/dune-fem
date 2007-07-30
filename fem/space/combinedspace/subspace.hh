@@ -178,7 +178,6 @@ namespace Dune {
  
     enum { CombinedDimRange = Traits::CombinedDimRange };
 
-    typedef int deriType;
   public:
     //- Public methods
     SubBaseFunctionSet(const CombinedBaseFunctionSetType bSet, 

@@ -11,8 +11,6 @@
 
 namespace Dune {
   
-  typedef int deriType;
-
   template <int polOrder, int dimDomain> 
   struct DGNumberOfBaseFunctions
   {

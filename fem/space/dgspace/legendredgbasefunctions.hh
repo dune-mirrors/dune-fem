@@ -10,8 +10,6 @@
 #include "legendrepoly.hh"
 namespace Dune {
   
-  typedef int deriType;
-
   //Template Meta Programm for evaluating tensorproduct polynomial in arbitrary dimensions
   template<int dim,int i,int PolOrd>
   class Eval{
