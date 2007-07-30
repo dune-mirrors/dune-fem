@@ -25,7 +25,9 @@ class LocalFunctionWrapper :
   LocalFunctionWrapper < DiscreteFunctionImp > > 
 {
 public:
+  //! type of local function implementation 
   typedef typename DiscreteFunctionImp::LocalFunctionImp  LocalFunctionImp; 
+  //! type of discrete functions space 
   typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
   //! Iterator over the space
@@ -33,9 +35,10 @@ public:
   //! The codim 0 entity
   typedef typename IteratorType::Entity Entity;
 
+  //! type of discrete function 
   typedef DiscreteFunctionImp  DiscreteFunctionType;  
+  //! type of base function set 
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-  typedef LocalFunctionWrapper < LocalFunctionImp > MyType;
 
   enum { dimrange = DiscreteFunctionSpaceType::DimRange };
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
@@ -43,6 +46,7 @@ public:
   enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
   enum { DimDomain = DiscreteFunctionSpaceType::DimDomain };
 
+  // no docu here, then docu is copied from base class 
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
   typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
@@ -103,54 +107,52 @@ public:
     removeObj();
   }
 
-  //! access to dof number num, all dofs of the dof entity
+  /** \brief @copydoc LocalFunctionInterface::operator [] */
   RangeFieldType & operator [] (const int num) { return localFunc()[num]; }
   
-  //! access to dof number num, all dofs of the dof entity
+  /** \brief @copydoc LocalFunctionInterface::operator [] const */
   const RangeFieldType & operator [] (const int num) const { return localFunc()[num]; }
 
-  //! return number of degrees of freedom 
+  /** \brief @copydoc LocalFunctionInterface::numDofs */
   int numDofs () const { return localFunc().numDofs(); }
   
-  //! sum over all local base functions 
+  /** \brief @copydoc LocalFunctionInterface::evaluate */
   void evaluate (const DomainType & x, RangeType & ret) const
   {
     localFunc().evaluate( x , ret );
   }
   
-  //! sum over all local base functions evaluated on given quadrature point
+  /** \brief @copydoc LocalFunctionInterface::evaluate */
   template <class QuadratureType> 
   void evaluate (const QuadratureType &quad, int quadPoint , RangeType & ret) const
   {
     localFunc().evaluate( quad, quadPoint , ret );
   }
   
-  //! sum over all local base functions evaluated on given quadrature point
+  /** \brief @copydoc LocalFunctionInterface::jacobian */
   template <class QuadratureType> 
   void jacobian (const QuadratureType &quad, 
 		             const int quadPoint , 
-                 JacobianRangeType & ret) const
+                 JacobianRangeType & grad) const
   {
-    localFunc().jacobian(quad, quadPoint, ret ); 
+    localFunc().jacobian(quad, quadPoint, grad ); 
   }
  
-  //! sum over all local base functions evaluated on given quadrature
-  //point, but local 
+  /** \brief @copydoc LocalFunctionInterface::jacobian */
   void jacobian(const DomainType& x, 
-            		JacobianRangeType& ret) const
+            		JacobianRangeType& grad) const
   {
-    localFunc().jacobian( x , ret ); 
+    localFunc().jacobian( x , grad ); 
   }
 
-  //! update local function for given Entity  
-  //! deprecated method
+  /** \brief update local function for given Entity */
   template <class EntityType > 
   void init ( const EntityType &en )
   { 
     localFunc().init(en);
   } 
 
-  //! sum over all local base functions evaluated on given quadrature point
+  /** \brief @copydoc LocalFunctionInterface::axpy */
   template <class QuadratureType> 
   inline void axpy(const QuadratureType &quad, 
                    const int quadPoint , const RangeType & factor)
@@ -158,7 +160,7 @@ public:
     localFunc().axpy( quad, quadPoint , factor );
   }
   
-  //! sum over all local base functions evaluated on given quadrature point
+  /** \brief @copydoc LocalFunctionInterface::axpy */
   template <class QuadratureType> 
   inline void axpy(const QuadratureType &quad, 
                    const int quadPoint , const JacobianRangeType & factor)
@@ -166,7 +168,7 @@ public:
     localFunc().axpy( quad, quadPoint , factor );
   }
   
-  //! sum over all local base functions evaluated on given quadrature points
+  /** \brief @copydoc LocalFunctionInterface::axpy */
   template <class QuadratureType> 
   inline void axpy(const QuadratureType &quad, 
                    const int quadPoint ,
@@ -176,22 +178,25 @@ public:
     localFunc().axpy( quad, quadPoint, factor1, factor2 );
   }
   
-  //! return reference to BaseFunctionSet of this local function 
+  /** \brief @copydoc LocalFunctionInterface::baseFunctionSet */ 
   const BaseFunctionSetType& baseFunctionSet() const 
   {
     return localFunc().baseFunctionSet();
   }
 
 private:
+  // prohibit assignment 
   LocalFunctionWrapper& operator=(const LocalFunctionWrapper);
 
 private:
+  //! return reference to local function 
   LocalFunctionImp & localFunc() 
   { 
     assert( obj_.first );
     assert( &lf_ == obj_.first );
     return lf_;
   } 
+  //! return reference to local function 
   const LocalFunctionImp & localFunc() const 
   { 
     assert( obj_.first );
@@ -215,7 +220,4 @@ private:
 }; // end LocalFunctionWrapper  
 
 } // end namespace Dune
-
 #endif
-
-
