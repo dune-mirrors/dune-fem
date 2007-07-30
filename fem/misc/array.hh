@@ -27,8 +27,6 @@ namespace Dune
     //! type of the implementation (Barton-Nackman) 
     typedef typename TraitsType :: ArrayType ArrayType;
 
-  private:
-     
   public:
     //! type of the array elements
     typedef typename TraitsType :: ElementType ElementType;
@@ -160,7 +158,7 @@ namespace Dune
 
     inline ThisType &operator++ ()
     {
-      assert( index_ < array.size() );
+      assert( index_ < array_.size() );
       ++index_;
       return *this;
     }
