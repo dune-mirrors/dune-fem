@@ -10,10 +10,13 @@
 #include <dune/fem/space/common/dofstorage.hh>
 
 namespace Dune {
-/** @defgroup VectorialBaseFunction Vectorial Base Function Set
-    @ingroup BaseFunction
+  
+/** 
+@defgroup BaseFunctionSetImpl Base Function Set Implementations  
+@ingroup BaseFunctionSet
 @{
 **/
+  
   // Forward declarations
   template <class FunctionSpaceImp, template <class> class StorageImp>
   class StandardBaseFunctionSet;
@@ -58,13 +61,14 @@ namespace Dune {
       jTmp_(0.)
     {}
 
-    //! Total number of base functions
+    /** \brief @copydoc BaseFunctionSetInterface::numBaseFunctions */
     inline
     int numBaseFunctions() const;
 
     // use evaluate of default implementation 
     using BaseType :: evaluate;
 
+    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
     template <int diffOrd>
     inline
     void evaluate(int baseFunct,
@@ -72,6 +76,7 @@ namespace Dune {
                   const DomainType& xLocal,
                   RangeType& phi) const;
 
+    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
     template <int diffOrd>
     inline
     void evaluate(int baseFunct,
@@ -80,8 +85,7 @@ namespace Dune {
                   RangeType& phi) const;
 
 
-    //! This method should not be used directly. It is called by methods
-    //! eval, jacobian, hessian, which appropriately set diffVariable.
+    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
     template <int diffOrd, class QuadratureType>
     inline
     void evaluate (int baseFunct, 
@@ -89,12 +93,14 @@ namespace Dune {
                    QuadratureType & quad, 
                    int quadPoint, RangeType & phi) const;
 
+    /** \brief @copydoc BaseFunctionSetDefault::evaluate */ 
     template <class QuadratureType>
     inline
     DofType evaluateSingle(const int baseFunct,
                            const QuadratureType& quad, const int quadPoint,
                            const RangeType& factor) const;
       
+    /** \brief @copydoc BaseFunctionSetDefault::evaluate */ 
     template <class Entity, class QuadratureType>
     inline
     DofType evaluateGradientSingle(const int baseFunct,
@@ -103,7 +109,7 @@ namespace Dune {
                                    const int quadPoint,
                                    const JacobianRangeType& factor) const;
 
-    //! return type of geometry 
+    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
     GeometryType geometryType () const { return storage_.geometryType(); }
     
   private:

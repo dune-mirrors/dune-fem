@@ -3,6 +3,11 @@
 
 namespace Dune{
 
+/** 
+ @addtogroup BaseFunctionSetImpl 
+ @{
+**/
+  
 template < class BaseFunctionSetImp > 
 class SimpleBaseFunctionProxy; 
 
@@ -304,5 +309,6 @@ public:
   } 
 };
 
+//@} 
 } // end namespace Dune
 #endif
