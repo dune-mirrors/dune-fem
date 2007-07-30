@@ -1,3 +1,4 @@
+// original implementation done by Christian Engwer
 #ifndef DUNE_ORTHONORMALBASE_CC
 #define DUNE_ORTHONORMALBASE_CC
 
