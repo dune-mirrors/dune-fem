@@ -137,9 +137,9 @@ public:
   //
   //****************************************************************
 
-  //! return global index 
-  //! for dof mapper 
   // --index 
+  /** \brief return global index for dof mapper (Dune interface)
+  */
   template <class EntityType>
   int index (const EntityType & en) const
   {
@@ -150,8 +150,8 @@ public:
     return codimLeafSet_.index( hIndexSet_.index( en ) ) ;
   }
   
-  //! return subIndex of given entity
   // see specialisation for codim 0 below 
+  //! \brief  return subIndex of given entity
   template <int cd>
   int subIndex (const EntityCodim0Type & en, int) const
   {
@@ -160,20 +160,20 @@ public:
     return SubIndex<CodimIndexSetType,HIndexSetType,cd>::subIndex(codimLeafSet_,hIndexSet_,en);
   }
 
-  //! return size of grid entities per level and codim 
+  //! \brief return size of grid entities per level and codim 
   int size (GeometryType type) const
   {
     return codimLeafSet_.size();
   }
   
-  //! return size of grid entities per level and codim 
+  //! \brief return size of grid entities per level and codim 
   int size ( int codim ) const
   {
     assert( hIndexSet_.geomTypes(0).size() == 1 ); 
     return size(hIndexSet_.geomTypes(0)[0]);
   }
   
-  //! returns vector with geometry tpyes this index set has indices for
+  //! \brief returns vector with geometry tpyes this index set has indices for
   const std::vector <GeometryType> & geomTypes (int codim) const 
   {
     return hIndexSet_.geomTypes(codim);
@@ -213,7 +213,7 @@ public:
   //
   //****************************************************************
 
-  //! insert index for father, mark childs index for removal  
+  //! \brief insert index for father, mark childs index for removal  
   template <class EntityType>
   void restrictLocal ( EntityType& father, EntityType& son, bool initialize ) const
   {
@@ -223,7 +223,7 @@ public:
     insertNewIndex( father );
   }
 
-  //! insert indices for children , mark fathers index for removal  
+  //! \brief insert indices for children , mark fathers index for removal  
   template <class EntityType>
   void prolongLocal ( EntityType& father, EntityType& son, bool initialize ) const
   {
@@ -233,7 +233,7 @@ public:
     insertNewIndex( son );
   }
  
-  //! insert new index to set 
+  //! \brief insert new index to set 
   void insertNewIndex (const typename GridType::template Codim<0>::Entity & en )  
   {
     resizeVectors();
@@ -242,7 +242,7 @@ public:
     this->insert( en );
   }
 
-  //! Unregister entity which will be removed from the grid
+  //! \brief un-register entity which will be removed from the grid
   void removeOldIndex (const typename GridType::template Codim<0>::Entity & en )
   {
     // only indices that are contained should be removed 
@@ -250,15 +250,17 @@ public:
     this->remove( en ); 
   }
 
-  //! reallocate the vector for new size
+  //! \brief reallocate the vector for new size
   void resizeVectors()
   {
     codimLeafSet_.resize( hIndexSet_.size(0) );
   }
 
-  //! if grid has changed, resize index vectors, and create 
-  //! indices for new entities, new entities are entities that 
-  //! lie below the old entities 
+  /** \brief 
+     if grid has changed, resize index vectors, and create 
+     indices for new entities, new entities are entities that 
+     lie below the old entities.
+  */
   void resize () 
   {
     // adjust size of vectors 
@@ -282,12 +284,14 @@ public:
     }
   }
 
-  //! this index set can be used for adaptive calculations 
+  //! \brief this index set can be used for adaptive calculations 
   bool adaptive () const { return true; }
 
-  //! make to index numbers consecutive 
-  //! return true, if at least one hole existed  
   //- --compress 
+  /** \brief 
+     make to index numbers consecutive 
+     return true, if at least one hole existed  
+  */
   bool compress ()
   {
     // reset list of holes in any case 
@@ -332,10 +336,10 @@ public:
     return haveToCopy;
   }
 
-  //! this index set needs compress after adaptation, here true is returned  
+  //! \brief this index set needs compress after adaptation, here true is returned  
   bool needsCompress () const { return true; }
 
-  //! memorise index 
+  //! \brief memorise index 
   //- --insert
   void insert (const EntityCodim0Type & en)
   {
@@ -359,7 +363,7 @@ public:
     assert( codimLeafSet_.exists( idx ) );
   }
 
-  //! set indices to unsed so that they are cleaned on compress  
+  //! \brief set indices to unsed so that they are cleaned on compress  
   //- --remove
   void remove (const EntityCodim0Type & en)
   {
@@ -372,8 +376,8 @@ public:
     }
   }
 
-  //! return global index 
-  //! for dof mapper 
+  /** \brief return global index for dof mapper 
+    */
   //- --index 
   template <int codim, class EntityType>
   int index (const EntityType & en, int num) const
@@ -384,21 +388,21 @@ public:
     return codimLeafSet_.index( hIndexSet_.index( en )); 
   }
  
-  //! return number of holes of the sets indices 
+  //! \brief return number of holes of the sets indices 
   int numberOfHoles ( int codim ) const
   {
     assert( codim == 0 );
     return codimLeafSet_.numberOfHoles(); 
   }
 
-  //! return old index, for dof manager only 
+  //! \brief return old index, for dof manager only 
   int oldIndex (int num, int codim ) const
   {
     assert( codim == 0 );
     return codimLeafSet_.oldIndex(num); 
   }
 
-  //! return new index, for dof manager only returns index 
+  //! \brief return new index, for dof manager only returns index 
   int newIndex (int num , int codim ) const
   {
     assert( codim == 0 );
@@ -504,8 +508,7 @@ private:
   }
 
 public:
-
-  // write indexset to xdr file 
+  //! \brief write indexset to xdr file 
   bool write_xdr(const std::basic_string<char> filename, int timestep) 
   {
     const char *path = "";
@@ -526,7 +529,7 @@ public:
     return codimLeafSet_.processXdr(xdr);
   }
 
-  //! read index set from given xdr file 
+  //! \brief read index set from given xdr file 
   bool read_xdr(const std::string filename , int timestep)
   {
     const char *path = "";
@@ -555,7 +558,6 @@ public:
     }
     return success;
   }
-
 }; // end of class AdaptiveLeafIndexSet 
 
 } // end namespace Dune 
