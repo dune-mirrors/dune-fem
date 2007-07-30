@@ -5,7 +5,7 @@
 #include <dune/common/fvector.hh>
 
 //- local includes 
-#include "../../operator/common/mapping.hh"
+#include <dune/fem/operator/common/mapping.hh>
 
 namespace Dune{
 /** @defgroup FunctionCommon Functions
@@ -15,9 +15,6 @@ namespace Dune{
     @{
  */
 
-//! type of derivative identifier 
-typedef int deriType;
-  
 /*!  Abstract class representing a function
 
     Template parameters are:
@@ -37,7 +34,7 @@ class Function :
   typedef Function<FunctionSpaceImp,FunctionImp> FunctionType;
 
 public:
-  //! type of function space this function belongs to 	
+  //! type of function space this function belongs to   
   typedef FunctionSpaceImp FunctionSpaceType;
   //! domain type (from function space)
   typedef typename FunctionSpaceType::DomainType DomainType ;
@@ -70,11 +67,10 @@ public:
     asImp().evaluate(arg, dest);
   }
 
-  /** \brief evaluate function and derivatives 
-     specialization via derivation: 
-	derivation 0 == evaluate function 
-	derivation 1 == evaluate partial derivative diffVariable[0] (0 == x0, 1 == x1,..., n == xn)
-	*/		
+  /** \brief evaluate function and derivatives specialization via derivation: 
+    derivation 0 == evaluate function 
+    derivation 1 == evaluate partial derivative diffVariable[0] (0 == x0, 1 == x1,..., n == xn)
+  */    
   template <int derivation>
   void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
                    const DomainType& arg, RangeType & dest) const { 
