@@ -20,7 +20,11 @@
 #include <dune/fem/space/common/arrays.hh>
 
 namespace Dune { 
-
+  
+/** @defgroup Adaptation Adaptation 
+    @{
+**/
+  
   //! \brief Default CommunicationManager class just using the grids communicate
   //! method 
   template <class SpaceImp, 
@@ -913,5 +917,7 @@ namespace Dune {
 
   // end toggle AULGrid yes/no
 #endif 
+  //@}
+  
 } // end namespace Dune 
 #endif

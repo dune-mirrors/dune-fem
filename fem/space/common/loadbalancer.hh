@@ -13,15 +13,14 @@
 
 namespace Dune{
 
-/** @defgroup Adaptation LoadBalancer 
- * Concept for calling the grids load balance method 
- * @{
+/** @defgroup LoadBalancer LoadBalancer 
+    @ingroup Adaptation  
+    Concept for calling the grids load balance method 
+    @{
  **/
 
-/** @defgroup LoadBalancer 
-    @{
-**/
-
+/** \brief Interface class for load balancing. 
+*/
 class LoadBalancerInterface 
 {
 protected:  
@@ -32,10 +31,14 @@ public:
   //! destructor 
   virtual ~LoadBalancerInterface () {}
   
-  //! call load balance, returns true if grid was changed 
+  /** \brief call load balance, returns true if grid was changed 
+    \return <b>true</b> if grid was changed, <b>false</b> otherwise 
+  */
   virtual bool loadBalance () = 0; 
 
-  //! return current balance counter 
+  /** \brief return number of cycles since last application of load balance 
+    \return number of cycles since last application of load balance 
+  */
   virtual int balanceCounter () const = 0;
 };
 
