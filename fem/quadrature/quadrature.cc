@@ -1,35 +1,5 @@
-namespace Dune {
-
-  //- class QuadratureImp
-  template <typename ct, int dim>
-  IntegrationPointListImp<ct, dim>::IntegrationPointListImp(size_t id) :
-    points_(),
-    id_(id)
-  {}
-    
-  template <typename ct, int dim>
-  void IntegrationPointListImp<ct, dim>::
-  addIntegrationPoint(const CoordinateType& point)
-  {
-    points_.push_back(point);
-  }
-
-  //- class QuadratureImp
-  template <typename ct, int dim>
-  QuadratureImp<ct, dim>::QuadratureImp(size_t id) :
-    BaseType(id),
-    weights_()
-  {}
-    
-  template <typename ct, int dim>
-  void QuadratureImp<ct, dim>::
-  addQuadraturePoint(const CoordinateType& point, ct weight)
-  {
-    // add integration point to list 
-    this->addIntegrationPoint(point);
-    // store weight 
-    weights_.push_back(weight);
-  }
+namespace Dune
+{
 
 // only if we use dune-fem quadratures  
 #ifndef USE_DUNE_QUADRATURES

@@ -42,7 +42,8 @@
 #include "simplexpoints.hh"
 #endif
 
-namespace Dune {
+namespace Dune
+{
 
   // Forward declaration
   template <typename ct, int dim, template <class,int> class QuadratureTraits>  
@@ -71,95 +72,239 @@ namespace Dune {
   class PyramidQuadrature;
 #endif
 
-  //! Generic implementation of a quadrature.
-  //! A quadrature in the Dune sense is nothing but a set of points and
-  //! weights.
-  template <typename ct, int dim>
-  class IntegrationPointListImp {
+  /*! \class IntegrationPointListImp
+   *  \brief Generic implementation of an IntegrationPointList
+   *
+   *  An integration point list is simply a list of points, given in local
+   *  coordinates, i.e., coordinates within the reference element.
+   *
+   *  \note Integration point lists do not change over time. It can safely
+   *        be assume that they always return the same points in the same
+   *        order.
+   */
+  template< typename FieldImp, int dim >
+  class IntegrationPointListImp
+  {
   public:
-    //! Local coordinate type for the quadrature.
-    typedef FieldVector<ct, dim> CoordinateType;
+    //! field type
+    typedef FieldImp FieldType;
+
+  private:
+    typedef IntegrationPointListImp< FieldType, dim > ThisType;
+
+  public:
+    //! Local coordinate type
+    typedef FieldVector< FieldType, dim > CoordinateType;
     
     //! to be revised, look at caching quad 
     enum { codimension = 0 };
+    
+  private:
+    // vector holding the coordinates for each point
+    std :: vector< CoordinateType > points_;
+
+    // identifier of the integration point list
+    const size_t id_;
+    
+  protected:
+    /*! \brief Constructor
+     *
+     *  The constructor simply creates an empty point list and stores the
+     *  specified identifier.
+     * 
+     *  \note The constructors of derived classes should fill the integration
+     *        point list via addIntegrationPoint.
+     *
+     *  \note The identifier of an integration point list must be globally
+     *        unique. Even integration point lists for different dimensions
+     *        must have different identifiers.
+     *
+     *  \param[in]  id  unique identifier of the integration point list
+     */
+    inline IntegrationPointListImp( size_t id )
+    : points_(),
+      id_( id )
+    {
+    }
+   
+  private:
+    // Copying is forbidden
+    IntegrationPointListImp( const IntegrationPointListImp& );
 
   public:
-    //! Virtual destructor
-    virtual ~IntegrationPointListImp() {}
-
-    //! Coordinates of integration point i.
-    const CoordinateType& point(size_t i) const {
-      return points_[i];
+    // Virtual destructor
+    virtual ~IntegrationPointListImp ()
+    {
     }
 
-    //! Number of integration points
-    size_t nop() const {
+    /*! \brief obtain coordinates of i-th integration point
+     *
+     *  This method returns a reference to the coordinates of the i-th
+     *  integration point for 0 <= i < nop(). The integration point is given
+     *  in local coordinates, i.e., coordinates with respect to the reference
+     *  element.
+     * 
+     *  \param[in]  i  number of the integration point, 0 <= i < nop()
+     *
+     *  \returns reference to i-th integration point
+     */
+    inline const CoordinateType &point ( size_t i ) const
+    {
+      assert( i < nop() );
+      return points_[ i ];
+    }
+
+    /*! \brief obtain the number of integration points
+     *
+     *  \returns number of integration points within this list
+     */
+    size_t nop () const
+    {
       return points_.size();
     }
 
-    //! A globally unique identifier amongst all integration point lists 
-    //! (even for other dimensions).
-    size_t id() const {
+    /*! \brief obtain the identifier of the integration point list
+     * 
+     *  \note The identifier of an integration point list must be globally
+     *        unique. Even integration point lists for different dimensions
+     *        must have different identifiers.
+     * 
+     *  \returns globally unique identifier of the integration point list
+     */
+    size_t id () const
+    {
       return id_;
     }
 
+    // This method belongs into quadrature!
     //! Maximal degree of polynomial that gets integrated exactly by the
     //! quadrature.
     virtual int order() const = 0;
 
-    //! Geometry type the integration point list is defined for.
-    virtual GeometryType geometry() const = 0;
+    /*! \brief obtain GeometryType for this integration point list
+     *
+     *  Integration point lists are specified in local coordinates, i.e.,
+     *  coordinates with respect to the reference element. Hence, each 
+     *  integration point list is only valid for one type of geometry, i.e.,
+     *  for one reference element. The type can be retrieved via this method.
+     *
+     *  \returns GeometryType for this integration point list
+     */
+    virtual GeometryType geometry () const = 0;
 
   protected:
-    //! QuadratureImps are filled by the derived classes
-    IntegrationPointListImp(size_t id);
-
-    //! Adds a quadrature point/weight pair. To be used in the constructor
-    //! of derived class.
-    void addIntegrationPoint(const CoordinateType& point);
-
-  private:
-    //! Copying is forbidden!
-    IntegrationPointListImp(const IntegrationPointListImp&);
-
-  protected:
-    std::vector<CoordinateType> points_;
-    const size_t id_;
+    /*! \brief Adds an integration point to the list
+     *
+     *  This method allows derived classes to add integration points to the
+     *  list. This mehtod should only be used within the constructor of the
+     *  derived class.
+     */
+    void addIntegrationPoint( const CoordinateType &point )
+    {
+      points_.push_back( point );
+    }
   };
 
-  template <typename ct, int dim>
-  class QuadratureImp : public IntegrationPointListImp<ct,dim> {
-    // type of base class 
-    typedef IntegrationPointListImp<ct,dim> BaseType;
+
+
+  /*! \class QuadratureImp
+   *  \brief Generic implementation of a Dune quadrature.
+   *
+   *  A Dune Quadrature is nothing but a list of integration points (see also
+   *  IntegrationPointsListImp) and their respective weights.
+   *
+   *  \note Quadratures do not change over time. It can safely be assume that
+   *        they always return the same points in the same order.
+   */
+  template< typename FieldImp, int dim >
+  class QuadratureImp
+  : public IntegrationPointListImp< FieldImp, dim >
+  {
   public:
-    //! Local coordinate type for the quadrature.
-    typedef typename BaseType :: CoordinateType  CoordinateType;
-    
-  public:
-    //! Virtual destructor
-    virtual ~QuadratureImp() {}
-
-    //! The weight of quadrature point i.
-    const ct& weight(size_t i) const {
-      return weights_[i];
-    }
-
-  protected:
-    //! QuadratureImps are filled by the derived classes
-    QuadratureImp(size_t id);
-
-    //! Adds a quadrature point/weight pair. To be used in the constructor
-    //! of derived class.
-    void addQuadraturePoint(const CoordinateType& point, ct weight);
-
+    //! field type
+    typedef FieldImp FieldType;
+  
   private:
-    //! Copying is forbidden!
-    QuadratureImp(const QuadratureImp&);
+    typedef QuadratureImp< FieldType, dim > ThisType;
+    typedef IntegrationPointListImp< FieldType, dim > BaseType;
+
+  public:
+    //! Local coordinate type
+    typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     // vector holding weights of each integration point 
-    std::vector<ct> weights_;
+    std :: vector< FieldType > weights_;
+ 
+  protected:
+    /*! \brief Constructor
+     *
+     *  The constructor simply creates an empty quadrature and stores the
+     *  specified identifier.
+     * 
+     *  \note The constructors of derived classes should fill the quadrature
+     *        via addQuadraturePoint
+     *
+     *  \note The identifier of an integration point list must be globally
+     *        unique. Even integration point lists for different dimensions
+     *        must have different identifiers.
+     *
+     *  \param[in]  id  unique identifier of the quadrature
+     */
+    inline QuadratureImp( size_t id )
+    : BaseType( id ),
+      weights_()
+    {
+    }
+   
+  private:
+    // Copying is forbidden
+    QuadratureImp ( const QuadratureImp& );
+
+  public:
+    virtual ~QuadratureImp ()
+    {
+    }
+    
+    /*! \brief obtain weight of i-th integration point
+     *
+     *  This method returns the weight of the i-th integration point for
+     *  0 <= i < nop() within the quadrature.
+     *
+     *  \note The integration point can be obtained via the point() method.
+     * 
+     *  \param[in]  i  number of the integration point, 0 <= i < nop()
+     *
+     *  \returns weight of the i-th integration point
+     */
+    const FieldType &weight ( size_t i ) const
+    {
+      return weights_[ i ];
+    }
+
+  private:
+    // Disallow use of addIntegrationPoint for quadratures
+    inline void addIntegrationPoint ( const CoordinateType &point )
+    {
+      BaseType :: addIntegrationPoint( point );
+    }
+
+  protected:
+    /*! \brief Adds a point-weight pair to the quadrature
+     *
+     *  This method allows derived classes to add quadrature points (and their
+     *  respective weights) to the list. This mehtod should only be used within
+     *  the constructor of the derived class.
+     */
+    inline void addQuadraturePoint ( const CoordinateType &point,
+                                     const FieldType weight )
+    {
+      addIntegrationPoint( point );
+      weights_.push_back( weight );
+    }
   };
+
+
 
 #ifndef USE_DUNE_QUADRATURES
   //! A generic quadrature class for simplices.
