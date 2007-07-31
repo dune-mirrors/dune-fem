@@ -5,7 +5,9 @@
 #include <string>
 
 //- Dune inlcudes 
+#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/common/grid.hh>
+
 
 //- local includes 
 #include "function.hh"
@@ -28,12 +30,14 @@ namespace Dune{
       @{
   */
 
-  //! empty object for Conversion Utility 
+  /** Base class for determing whether a class is a discrete function or not. 
+  */
   class IsDiscreteFunction
   {
   };
   
-  //! empty object for Conversion Utility 
+  /** Base class for determing whether a function has local functions or not.
+  */
   class HasLocalFunction
   {
   };
@@ -66,27 +70,30 @@ namespace Dune{
       DiscreteFunctionInterface<DiscreteFunctionTraits> 
     > FunctionType;
 
+    //! type of discrete function space for discrete function 
     typedef typename DiscreteFunctionTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-    //! Domain vector
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-    //! Range vector
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-  
-    //! Domain field type (usually a float type)
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-    //! Range field type (usually a float type)
+    //! type of domain field, i.e. type of coordinate component
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! type of range field, i.e. dof type 
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-  
+    //! type of domain, i.e. type of coordinates 
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    //! type of range, i.e. result of evaluation 
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    //! type of jacobian, i.e. type of evaluated gradient 
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+ 
     //! Type of the underlying grid
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
     //! Type of the discrete function implementation
     typedef typename DiscreteFunctionTraits::DiscreteFunctionType DiscreteFunctionType;
 
-    //! Type of the local function implementation
+    //! Type of exported local function
     typedef typename DiscreteFunctionTraits::LocalFunctionType LocalFunctionType;
 
+    //! Type of the local function implementation
     typedef typename DiscreteFunctionTraits::LocalFunctionImp LocalFunctionImp;
 
     //! Type of the dof iterator used in the discrete function implementation.
@@ -98,68 +105,110 @@ namespace Dune{
   public:
     //- Public Methods
 
-    //! Constructor
-    //! Needs to be called in derived classes
+    /** \brief Constructor storing discrete function space 
+        \param[in] f discrete function space 
+    */
     DiscreteFunctionInterface (const DiscreteFunctionSpaceType& f) 
       : FunctionType ( f ) {}
 
-    //! Name of the discrete function
-    std::string name() const {
+    /** \brief returns name of discrete function 
+        \return string holding name of discrete function 
+    */
+    std::string name() const 
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().name()); 
       return asImp().name();
     }
 
-    //! The size of the discrete function
-    int size() const {
+    /** \brief returns total number of degrees of freedom, i.e. size of discrete function space 
+        \return total number of dofs 
+    */
+    int size() const 
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().size()); 
       return asImp().size();
     }
 
-    //! the implementation of an iterator to iterate efficient 
-    //! over all dofs of a discrete function 
+    /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function 
+        \return dof iterator pointing to first dof 
+    */
     DofIteratorType dbegin () 
     {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().dbegin ());
       return asImp().dbegin ();
     }
 
-    //! the implementation of an iterator to iterate efficient 
-    //! over all dofs of a discrete function 
+    /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function 
+        \return dof iterator pointing behind the last dof 
+    */
     DofIteratorType dend () 
     {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().dend ());
       return asImp().dend ();
     }
 
-
-    //! const version of dbegin 
+    /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function 
+        \return dof iterator pointing to first dof 
+    */
     ConstDofIteratorType dbegin () const  
     {
       return asImp().dbegin ();
     }
 
-    //! const version of dend 
+    /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function 
+        \return dof iterator pointing behind the last dof 
+    */
     ConstDofIteratorType dend () const  
     {
       return asImp().dend ();
     }
 
-    //! return local function for given entity
+    /** \brief return object of LocalFunction of the discrete function associated with given entity
+        \param[in] entity Entity to focus view of discrete function 
+        \return LocalFunction associated with entity
+    */
     template <class EntityType>
-    LocalFunctionType localFunction(const EntityType& en) const {
-      return asImp().localFunction(en);
+    LocalFunctionType localFunction(const EntityType& entity) const {
+      return asImp().localFunction(entity);
+    }
+
+    /** \brief evaluate Function f 
+        \param[in] arg global coordinate
+        \param[out] dest f(arg)
+    */ 
+    void evaluate (const DomainType & arg, RangeType & dest) const 
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().evaluate(arg,dest));
+    }
+
+    /** \brief evaluate Function f
+        \param[in] diffVariable derivation determizer 
+        \param[in] arg global coordinate
+        \param[out] dest f(arg)
+    */ 
+    template <int derivation>
+    void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
+                     const DomainType& arg, RangeType & dest) const 
+    { 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().evaluate(diffVariable,arg,dest));
     }
 
   protected:
-    //! return pointer to local function implementation 
+    /** \brief return pointer to new object of local function implementation 
+        \return pointer to new object of local function implementation
+    */
     LocalFunctionImp* newObject() const {
       return asImp().newObject();
     }
 
  protected:
-    // Barton-Nackman trick 
+    //! \brief Barton-Nackman trick 
     DiscreteFunctionType& asImp() 
     { 
       return static_cast<DiscreteFunctionType&>(*this); 
     }
 
-    //! const version of asImp 
+    //! \brief Barton-Nackman trick 
     const DiscreteFunctionType &asImp() const 
     { 
       return static_cast<const DiscreteFunctionType&>(*this); 
@@ -207,6 +256,7 @@ namespace Dune{
     //! Type of range field (usually a float type)
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
+    //! type of mapping base class for this discrete function 
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
 
@@ -226,7 +276,9 @@ namespace Dune{
     //! Type of the const dof iterator
     typedef typename DiscreteFunctionTraits::ConstDofIteratorType ConstDofIteratorType;
 
+    //! type of local function stack 
     typedef ObjectStack < DiscreteFunctionDefaultType > LocalFunctionStorageType;
+
     friend class ObjectStack < DiscreteFunctionDefaultType >;
     friend class LocalFunctionWrapper < DiscreteFunctionType >;
   public:
@@ -235,15 +287,19 @@ namespace Dune{
     DiscreteFunctionDefault (const DiscreteFunctionSpaceType & f ) :
       DiscreteFunctionInterfaceType ( f ) , lfStorage_ (*this) {}
 
-    //! Continuous data
+    //! Continuous data 
     bool continuous() const DUNE_DEPRECATED {
       return this->functionSpace_.continuous();
     }
 
-    //! print all dof values of this function to stream 
-    void print(std::ostream & ) const;
+    /** \brief print all degrees of freedom of this function to stream (for debugging purpose)
+        \param[out] s std::ostream (e.g. std::cout)
+    */
+    void print(std::ostream & s) const;
 
-    //! check for NaNs
+    /** \brief check for NaNs
+        \return if one  of the dofs is NaN <b>false</b> is returned, otherwise <b>true</b> 
+    */
     inline bool dofsValid () const
     {
       const ConstDofIteratorType end = this->dend();
@@ -256,10 +312,13 @@ namespace Dune{
       return true;
     }
     
-    //! Set all elements to zero
+    /** \brief set all degrees of freedom to zero
+    */
     void clear();
 
-    //! Set all DoFs to a scalar value
+    /** \brief Set all DoFs to a scalar value
+        \param[in] s scalar value to assign for 
+    */
     inline DiscreteFunctionType &assign ( const RangeFieldType s )
     {
       const DofIteratorType end = this->dend();
@@ -268,50 +327,88 @@ namespace Dune{
       return asImp();
     }
 
-    //! daxpy operation
+    /** \brief axpy operation
+        \param[in] g discrete function that is added 
+        \param[in] c scalar value to scale 
+    */
     void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c);
 
-    //! Evaluate a scalar product of the dofs of two DiscreteFunctions
-    //! on the top level of the underlying grid
+    /** \brief Evaluate a scalar product of the dofs of two DiscreteFunctions
+        \param[in] g discrete function for evaluating scalar product with  
+        \return returns the scalar product of the dofs 
+    */
     RangeFieldType scalarProductDofs(const DiscreteFunctionType& g) const;
 
-    //! Assignment
+    /** \brief assign all degrees of freedom from given discrete function using the dof iterators 
+        \param[in] g discrete function which is copied 
+        \return reference to this (i.e. *this)
+    */
     virtual DiscreteFunctionDefaultType& assign(const MappingType& g);
 
-    //! Addition of g to discrete function 
+    /** \brief add all degrees of freedom from given discrete function using the dof iterators 
+        \param[in] g discrete function which is added to this discrete function 
+        \return reference to this (i.e. *this)
+    */
     virtual DiscreteFunctionDefaultType& operator += (const MappingType& g);
 
-    //! subtract g from discrete function 
+    /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
+        \param[in] g discrete function which is substracted from this discrete function 
+        \return reference to this (i.e. *this)
+    */
     virtual DiscreteFunctionDefaultType& operator -= (const MappingType &g);
  
-    //! multiply with scalar 
+    /** \brief multiply all degrees of freedom with given scalar factor using the dof iterators 
+        \param[in] scalar factor with which all dofs are scaled 
+        \return reference to this (i.e. *this)
+    */
     virtual DiscreteFunctionDefaultType& operator *=(const RangeFieldType &scalar);
 
-    //! Division by a scalar
+    /** \brief devide all degrees of freedom with given scalar factor using the dof iterators 
+        \param[in] scalar factor with which all dofs are devided  
+        \return reference to this (i.e. *this)
+    */
     virtual DiscreteFunctionDefaultType& operator /= (const RangeFieldType &scalar);
 
-    //! evaluate Function f  
-    //! \param arg: global coordinate
-    //! \param dest: f(arg)
-    void evaluate (const DomainType & arg, RangeType & dest) const {
-      // Die a horrible death! Never call that one...
-      assert(false); abort();
-    }
+    /** \brief write discrete function to file with given filename using xdr encoding
+        \param[in] filename name of file to which discrete function should be written using xdr 
+        \return <b>true</b> if operation was successful 
+    */
+    bool write_xdr(std::string filename) const { return true; }
 
-    //! evaluate function and derivatives (just dies)
-    //! \param arg: global coordinate
-    //! \param dest: f(arg)
-    template <int derivation>
-    void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
-                     const DomainType& arg, RangeType & dest) const { 
-      // Die a horrible death! Never call that one...
-      assert(false); abort();
-    }
+    /** \brief write discrete function to file with given filename using ascii encoding
+        \param[in] filename name of file to which discrete function should be written using ascii 
+        \return <b>true</b> if operation was successful 
+    */
+    bool write_ascii(std::string filename) const { return true; }
+
+    /** \brief write discrete function to file with given filename using pgm encoding
+        \param[in] filename name of file to which discrete function should be written using pgm 
+        \return <b>true</b> if operation was successful 
+    */
+    bool write_pgm(std::string filename) const { return true; }
+
+    /** \brief read discrete function from file with given filename using xdr decoding
+        \param[in] filename name of file from which discrete function should be read using xdr 
+        \return <b>true</b> if operation was successful 
+    */
+    bool read_xdr(std::string filename) const { return true; }
+    /** \brief read discrete function from file with given filename using ascii decoding
+        \param[in] filename name of file from which discrete function should be read using ascii 
+        \return <b>true</b> if operation was successful 
+    */
+    bool read_ascii(std::string filename) const { return true; }
+    /** \brief read discrete function from file with given filename using pgm decoding
+        \param[in] filename name of file from which discrete function should be read using pgm 
+        \return <b>true</b> if operation was successful 
+    */
+    bool read_pgm(std::string filename) const { return true; }
 
   protected: 
     //this methods are used by the LocalFunctionStorage class 
 
-    //! return reference for local function storage  
+    /** \brief return reference for local function storage  
+        \return reference to local function storage 
+    */
     LocalFunctionStorageType& localFunctionStorage() const 
     { 
       return lfStorage_; 
@@ -322,223 +419,8 @@ namespace Dune{
     mutable LocalFunctionStorageType lfStorage_;
   }; // end class DiscreteFunctionDefault 
 
-  template <class FunctionImp, class GridPartImp>
-  class DiscreteFunctionAdapter;
-
-  template <class FunctionImp, class GridPartImp> 
-  struct DiscreteFunctionAdapterTraits 
-  {
-    typedef typename FunctionImp :: FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    typedef DiscreteFunctionSpaceAdapter<FunctionSpaceType,GridPartImp> DiscreteFunctionSpaceType;
-
-    typedef GridPartImp GridPartType;
-    typedef typename GridPartType :: GridType GridType;
-    typedef typename GridType :: template Codim<0> :: Entity EntityType;
-    //! type of iterator 
-    typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
-    //! type of IndexSet 
-    typedef typename GridPartType :: IndexSetType IndexSetType; 
-
-    typedef DiscreteFunctionAdapter<FunctionImp,GridPartImp> DiscreteFunctionType;
-  };
-
-  //! adapter to provide local function for a function
-  template <class FunctionImp, class GridPartImp>
-  class DiscreteFunctionAdapter 
-  : public HasLocalFunction , 
-    public Function<DiscreteFunctionSpaceAdapter<typename FunctionImp :: FunctionSpaceType,GridPartImp>, 
-                    DiscreteFunctionAdapter<FunctionImp,GridPartImp> >
-  {
-    typedef Function<DiscreteFunctionSpaceAdapter<typename FunctionImp :: FunctionSpaceType,GridPartImp>, 
-                     DiscreteFunctionAdapter<FunctionImp,GridPartImp> > BaseType;
-  public:  
-    typedef GridPartImp GridPartType;
-                       
-    //! type of traits 
-    typedef DiscreteFunctionAdapterTraits<FunctionImp,GridPartImp> Traits;
-    //! type of this pointer 
-    typedef DiscreteFunctionAdapter<FunctionImp,GridPartImp> ThisType;
-
-    // type of function 
-    typedef FunctionImp FunctionType;
-
-    // type of discrete function space
-    typedef typename Traits :: FunctionSpaceType FunctionSpaceType; 
-
-    //! type of discrete function space 
-    typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-
-    //! type of grid 
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
-
-    //! domain type (from function space)
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
-    //! range type (from function space)
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-    //! domain type (from function space)
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-    //! range type (from function space)
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
-    //! jacobian type (from function space)
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    //! type of codim 0 entity
-    typedef typename GridType :: template Codim<0> :: Entity EntityType; 
-
-    private:
-    class LocalFunction
-    {
-      //! type of geometry 
-      typedef typename EntityType :: Geometry GeometryImp;
-    public:  
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
-      //! jacobian type (from function space)
-      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-      //! constructor initializing local function 
-      LocalFunction(const EntityType& en, const ThisType& a)
-        : function_(a.function_) 
-        , geometry_(&(en.geometry())) 
-        , global_(0)
-      {}
-
-      LocalFunction(const ThisType& a)
-        : function_(a.function_) 
-        , geometry_(0) 
-        , global_(0)
-      {}
-
-      //! copy constructor 
-      LocalFunction(const LocalFunction& org) 
-        : function_(org.function_) 
-        , geometry_(org.geometry_)  
-        , global_(0)
-      {}
-
-      //! evaluate local function 
-      void evaluate(const DomainType& local, RangeType& result) const
-      {
-        global_ = geometry_->global(local);
-        function_.evaluate(global_,result);
-      }
-
-      //! evaluate local function 
-      template <class QuadratureType>
-      void evaluate(const QuadratureType& quad,
-                    const int quadPoint, 
-                    RangeType& result) const 
-      {
-        evaluate(quad.point(quadPoint), result);
-      }
-
-      //! jacobian of local function 
-      void jacobian(const DomainType& local, JacobianRangeType& result) const
-      {
-        assert(false);
-        abort();
-      }
-
-      //! jacobian of local function 
-      template <class QuadratureType>
-      void jacobian(const QuadratureType& quad,
-                    const int quadPoint, 
-                    JacobianRangeType& result) const 
-      {
-        assert(false);
-        abort();
-      }
-
-      //! init local function
-      void init(const EntityType& en) 
-      {
-        geometry_ = &(en.geometry());
-      } 
-
-    private:
-      const FunctionType& function_;
-      const GeometryImp* geometry_;
-      mutable DomainType global_;
-    };
-
-    public:
-    //! type of local function to export 
-    typedef LocalFunction LocalFunctionType; 
-
-    // reference to function this local belongs to
-    DiscreteFunctionAdapter(const std::string name, const FunctionType& f, const GridPartType& gridPart) 
-      : BaseType(space_)
-      , space_(gridPart)
-      , function_(f)
-      , name_(name)
-    {}
-
-    // reference to function this local belongs to
-    DiscreteFunctionAdapter(const DiscreteFunctionAdapter& org) 
-      : BaseType(org)
-      , space_(org.space_)
-      , function_(org.function_)
-      , name_(org.name_)
-    {}
-
-    //! evaluate function on local coordinate local 
-    void evaluate(const DomainType& global, RangeType& result) const 
-    {
-      function_.evaluate(global,result);  
-    }
-
-    //! return const local function object 
-    const LocalFunctionType localFunction(const EntityType& en) const 
-    {
-      return LocalFunctionType(en,*this);
-    }
-
-    //! return local function object 
-    LocalFunctionType localFunction(const EntityType& en) 
-    {
-      return LocalFunctionType(en,*this);
-    }
-
-    //! return name of function
-    const std::string& name() const 
-    {
-      return name_;
-    }
-
-    bool write_xdr(std::string filename) const { return true; }
-    bool write_ascii(std::string filename) const { return true; }
-    bool write_pgm(std::string filename) const { return true; }
-
-    bool read_xdr(std::string filename) const { return true; }
-    bool read_ascii(std::string filename) const { return true; }
-    bool read_pgm(std::string filename) const { return true; }
-
-  private:    
-    DiscreteFunctionSpaceType space_;
-    //! reference to function 
-    const FunctionType& function_; 
-    
-    const std::string name_;
-  };
-
-
-
-  /** @} end documentation group */
-
 } // end namespace Dune
-
 #include "discretefunction.cc"
+#include "discretefunctionadapter.hh"
 
 #endif

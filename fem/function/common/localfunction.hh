@@ -46,7 +46,8 @@ public:
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType; 
 
   /** \brief access to local dofs (read-write)
-      \param num local dof number 
+      \param[in] num local dof number 
+      \return reference to dof 
   */
   RangeFieldType& operator [] (const int num) 
   {
@@ -55,7 +56,8 @@ public:
   }
 
   /** \brief access to local dofs (read-only)
-      \param num local dof number 
+      \param[in] num local dof number 
+      \return reference to dof 
   */
   const RangeFieldType& operator [] (const int num) const 
   {
@@ -63,7 +65,9 @@ public:
     return asImp().operator [] ( num );
   }
 
-  //! \brief return the number of local dofs for this local function 
+  /** \brief return the number of local dofs for this local function 
+   *  \return number of local dofs 
+   */
   int numDofs() const 
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());
@@ -71,8 +75,8 @@ public:
   }
   
   /** \brief evaluate local function.
-      \param x local coordinate of evaluation point 
-      \param ret return value 
+      \param[in] x local coordinate of evaluation point 
+      \param[out] ret return value 
   */
   void evaluate( const DomainType &x, RangeType &ret )
   {
@@ -81,9 +85,9 @@ public:
   }
 
   /** \brief evaluate local function.
-      \param quad Quadrature 
-      \param quadPoint number of quadrature point for evaluation 
-      \param ret return value 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point for evaluation 
+      \param[out] ret return value 
   */
   template <class QuadratureType> 
   void evaluate( const QuadratureType &quad, int quadPoint, 
@@ -94,8 +98,8 @@ public:
   }
 
   /** \brief evaluate jacobian on reference element
-      \param x local coordinate 
-      \param grad return value 
+      \param[in] x local coordinate 
+      \param[out] grad return value 
   */
   void jacobian ( const DomainType &x, 
                   JacobianRangeType &grad ) 
@@ -105,9 +109,9 @@ public:
   }
 
   /** \brief evaluate jacobian on reference element
-      \param quad Quadrature 
-      \param quadPoint number of quadrature point for evaluation 
-      \param grad return value 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point for evaluation 
+      \param[out] grad return value 
   */
   template <class QuadratureType>
   void jacobian ( const QuadratureType &quad, int quadPoint , 
@@ -118,9 +122,9 @@ public:
   }
 
   /** \brief axpy operation for local function 
-      \param quad Quadrature
-      \param quadPoint number of quadrature point 
-      \param factor axpy factor  
+      \param[in] quad Quadrature
+      \param[in] quadPoint number of quadrature point 
+      \param[in] factor axpy factor  
   */
   template <class QuadratureType>
   inline void axpy(const QuadratureType& quad,
@@ -132,9 +136,9 @@ public:
   }
 
   /** \brief axpy operation for local function 
-      \param quad Quadrature
-      \param quadPoint number of quadrature point 
-      \param factor axpy gradient factor  
+      \param[in] quad Quadrature
+      \param[in] quadPoint number of quadrature point 
+      \param[in] factor axpy gradient factor  
   */
   template <class QuadratureType> 
   inline void axpy(const QuadratureType& quad, 
@@ -146,10 +150,10 @@ public:
   }
 
   /** \brief axpy operation for local function 
-      \param quad Quadrature
-      \param quadPoint number of quadrature point 
-      \param factor1 axpy factor 
-      \param factor2 gradient axpy factor 
+      \param[in] quad Quadrature
+      \param[in] quadPoint number of quadrature point 
+      \param[in] factor1 axpy factor 
+      \param[in] factor2 gradient axpy factor 
   */
   template <class QuadratureType>
   inline void axpy(const QuadratureType &quad,
@@ -226,7 +230,8 @@ protected:
     }
 
     /** \brief += operation 
-        \param v vector that is added to local function (can also be local function)
+        \param[in] v vector that is added to local function (can also be local function)
+        \return reference to local function (i.e. *this)
     */
     template< class VectorType >
     LocalFunctionImp &operator+= ( const VectorType &v )
@@ -241,7 +246,8 @@ protected:
     }
     
     /** \brief -= operation 
-        \param v vector that is substracted from local function (can also be local function)
+        \param[in] v vector that is substracted from local function (can also be local function)
+        \return reference to local function (i.e. *this)
     */
     template< class VectorType >
     LocalFunctionImp &operator-= ( const VectorType &v )
@@ -257,9 +263,9 @@ protected:
 
     /** \brief evaluate the local function on 
                real world coordinate x and return ret (calls local method of entitys geometry)
-         \param entity Entity x is belonging to 
-         \param x global evaluation coordinate 
-         \param ret return value 
+         \param[in] entity Entity x is belonging to 
+         \param[in] x global evaluation coordinate 
+         \param[out] ret return value 
     */
     template< class EntityType >
     void evaluateGlobal ( const EntityType &entity, 
@@ -273,9 +279,9 @@ protected:
     /** \brief default implementation of evaluation 
                of local function using a quadrature 
               (calls evaluate method with local coordiante)
-        \param quad Quadrature
-        \param quadPoint number of quadrature point      
-        \param ret return value 
+        \param[in] quad Quadrature
+        \param[in] quadPoint number of quadrature point      
+        \param[out] ret return value 
     */
     template< class QuadratureType >
     void evaluate ( const QuadratureType &quad,
@@ -288,9 +294,9 @@ protected:
     /** \brief evaluate jacobian of the local function on 
                real world coordinate x and return ret 
                (calls local method of entitys geometry if not overloaded)
-         \param entity Entity x is belonging to 
-         \param x global evaluation coordinate 
-         \param grad  return value 
+         \param[in] entity Entity x is belonging to 
+         \param[in] x global evaluation coordinate 
+         \param[out] grad  return value 
     */
     template< class EntityType >
     void jacobianGlobal ( const EntityType&  entity,
@@ -305,9 +311,9 @@ protected:
                of jacobian using a quadrature 
               (calls jacobian method with local coordiante if not
               overloaded)
-        \param quad Quadrature
-        \param quadPoint number of quadrature point      
-        \param grad return value 
+        \param[in] quad Quadrature
+        \param[in] quadPoint number of quadrature point      
+        \param[out] grad return value 
     */
     template< class QuadratureType >
     void jacobian ( const QuadratureType &quad,
@@ -319,6 +325,7 @@ protected:
 
     /** \brief size method to make local 
         function conform to a vector-like interface
+        \return number of local dofs 
     */
     inline size_t size () const
     {
