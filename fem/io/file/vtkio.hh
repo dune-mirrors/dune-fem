@@ -13,17 +13,17 @@ public:
   typedef typename FunctionSpaceType::DomainType DomainType;
   typedef typename FunctionSpaceType::RangeType RangeType;
   typedef typename FunctionSpaceType::GridPartType GridPartType;
-  typedef typename GridPartType::EntityCodim0Type EntityType;
+  typedef typename FunctionSpaceType::IteratorType::Entity EntityType;
   enum {DimRange=FunctionSpaceType::DimRange,
         DimDomain=FunctionSpaceType::DimDomain};
   //! constructor taking discrete function 
   VTKFunctionWrapper(const DiscreteFunctionType& df,
-                     bool vector)
+                     int component)
     : discFunc_(df),
-      vector_(vector) {}
+      component_(component) {}
   //! return number of components
   virtual int ncomps () const {
-    return DimRange;
+    return (component_>=0) ? 1 : DimRange;
   }
   //! evaluate single component comp in
   //! the entity
@@ -31,17 +31,24 @@ public:
     const LocalFunctionType lf = discFunc_.localFunction(e);
     RangeType val;
     lf.evaluate(xi,val);
-    return val[comp];
+    if (component_<0)
+      return val[comp];
+    else 
+      return val[component_];
   }
   //! get name
   virtual std::string name () const {
-    return discFunc_.name();
+    if (component_<0) 
+      return discFunc_.name();
+    std::stringstream ret;
+    ret << discFunc_.name() << "-" << component_;
+    return ret.str();
   }
   //! virtual destructor
   virtual ~VTKFunctionWrapper () {}
 private:
   const DF& discFunc_;
-  const bool vector_;
+  const int component_;
 };
 template <class GridPartType>
 class VTKIO : 
@@ -55,11 +62,25 @@ class VTKIO :
       }
     template <class DF>
     void addCellData(DF& df,bool vector=false) {
-      BaseType::addCellData(new VTKFunctionWrapper<DF>(df,vector)); 
+      typedef typename DF::FunctionSpaceType FunctionSpaceType;
+      enum {DimRange=FunctionSpaceType::DimRange};
+      if (vector) {
+        BaseType::addCellData(new VTKFunctionWrapper<DF>(df,-1)); 
+      } else {
+        for (int i=0;i<DimRange;++i) 
+          BaseType::addCellData(new VTKFunctionWrapper<DF>(df,i)); 
+      }
     }
     template <class DF>
     void addVertexData(DF& df,bool vector=false) {
-      BaseType::addVertexData(new VTKFunctionWrapper<DF>(df,vector)); 
+      typedef typename DF::FunctionSpaceType FunctionSpaceType;
+      enum {DimRange=FunctionSpaceType::DimRange};
+      if (vector) {
+        BaseType::addVertexData(new VTKFunctionWrapper<DF>(df,-1)); 
+      } else {
+        for (int i=0;i<DimRange;++i) 
+          BaseType::addVertexData(new VTKFunctionWrapper<DF>(df,i)); 
+      }
     }
 };
 }
