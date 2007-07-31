@@ -46,7 +46,7 @@ namespace Dune
 {
 
   // Forward declaration
-  template <typename ct, int dim, template <class,int> class QuadratureTraits>  
+  template <typename ct, int dim, template <class,int> class QuadratureTraits> 
   class QuadratureProvider;
   template <class ct, int dim>
   class QuadratureImp;
@@ -120,6 +120,7 @@ namespace Dune
      *        must have different identifiers.
      *
      *  \param[in]  id  unique identifier of the integration point list
+     *                  (provided by QuadratureProvider)
      */
     inline IntegrationPointListImp( size_t id )
     : points_(),
@@ -165,9 +166,12 @@ namespace Dune
 
     /*! \brief obtain the identifier of the integration point list
      * 
-     *  \note The identifier of an integration point list must be globally
-     *        unique. Even integration point lists for different dimensions
-     *        must have different identifiers.
+     *  The identifier of an integration point list must be globally unique.
+     *  Even integration point lists for different dimensions must have
+     *  different identifiers.
+     *
+     *  \note Quadratures are considered distinct if they differ in one of the
+     *        following points: geometry type, order, dimension or implementation.
      * 
      *  \returns globally unique identifier of the integration point list
      */
@@ -176,9 +180,16 @@ namespace Dune
       return id_;
     }
 
-    // This method belongs into quadrature!
-    //! Maximal degree of polynomial that gets integrated exactly by the
-    //! quadrature.
+    /*! \brief obtain order of the integration point list
+     *
+     *  The order of a quadrature is the maximal polynomial degree that is
+     *  guaranteed to be integrated exactly by the quadrature.
+     *
+     *  In case of an integration point list, the definition of this value is
+     *  left to the implementor.
+     *
+     *  \returns the order of the integration point list
+     */
     virtual int order() const = 0;
 
     /*! \brief obtain GeometryType for this integration point list
@@ -229,7 +240,7 @@ namespace Dune
     typedef IntegrationPointListImp< FieldType, dim > BaseType;
 
   public:
-    //! Local coordinate type
+    //! \copydoc IntegrationPointsListImp :: CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
@@ -249,7 +260,8 @@ namespace Dune
      *        unique. Even integration point lists for different dimensions
      *        must have different identifiers.
      *
-     *  \param[in]  id  unique identifier of the quadrature
+     *  \param[in]  id  unique identifier of the quadrature (provided by
+     *                  QuadratureProvider)
      */
     inline QuadratureImp( size_t id )
     : BaseType( id ),
@@ -273,6 +285,9 @@ namespace Dune
      *
      *  \note The integration point can be obtained via the point() method.
      * 
+     *  \note The quadrature weights sum up to the volume of the reference
+     *        element.
+     *
      *  \param[in]  i  number of the integration point, 0 <= i < nop()
      *
      *  \returns weight of the i-th integration point
@@ -307,129 +322,231 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  //! A generic quadrature class for simplices.
-  //! The UG quadrature rules are used here. SimplexQuadrature implements
-  //! the geometry-specific part of the quadrature and initialises the vector
-  //! of quadrature points and weights.
-  template <class ct, int dim>
-  class SimplexQuadrature : public QuadratureImp<ct, dim>
+  /*! \class SimplexQuadrature
+   *  \brief generic quadrature class for simplices
+   *  
+   *  SimplexQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note The UG quadrature rules are used here. 
+   */
+  template< class FieldImp, int dim >
+  class SimplexQuadrature
+  : public QuadratureImp< FieldImp, dim >
   {
   public:
-    typedef FieldVector<ct, dim> CoordinateType;
+    typedef FieldImp FieldType;
 
-    enum { 
+  private:
+    typedef SimplexQuadrature< FieldType, dim > ThisType;
+    typedef QuadratureImp< FieldType, dim > BaseType;
+
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType
+    typedef typename BaseType :: CoordinateType CoordinateType;
+
 #ifdef HAVE_ALBERTA_FOUND
-      maxOrder2 = 17 , maxOrder3 = 7 
-#else 
-      maxOrder2 = 12 , maxOrder3 = 5 
+    enum { maxOrder1 = 19, maxOrder2 = 17, maxOrder3 = 7 };
+#else
+    enum { maxOrder1 = 19, maxOrder2 = 12 , maxOrder3 = 5 };
 #endif
-    };
           
-    enum { maxOrder_  = (dim == 1) ? 19 : ((dim == 2) ? maxOrder2 : maxOrder3 ) };
+  protected:
+    int order_;
+    
+  public:
+    /*! Constructor
+     *
+     *  Initializes the list of quadrature points.
+     *
+     *  \param[in]  order  desired order (provided by the user)
+     *  \param[in]  id     unique identifier (provided by QuadratureProvider)
+     */
+    inline SimplexQuadrature( const GeometryType&, int order, size_t id );
+    
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: simplex, dim );
+    }
+   
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
+      return order_;
+    }
+
+    //! maximal order of available quadratures.
+    static size_t maxOrder ()
+    {
+      if( dim == 1 )
+        return maxOrder1;
+      if( dim == 2 )
+        return maxOrder2;
+      if( dim == 3 )
+        return maxOrder3;
+      DUNE_THROW( NotImplemented, "SimplexQuadratures from dim > 3 not implemented." );
+    }
+  };
+#endif
+
+
+
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class CubeQuadrature
+   *  \brief generic quadrature class for cubes
+   *  
+   *  CubeQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note The quadrature uses the 1d gauss points (and their tensorial
+   *        product) as quadrature points
+   */
+  template< class FieldImp, int dim >
+  class CubeQuadrature
+  : public QuadratureImp< FieldImp, dim >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+  private:
+    typedef CubeQuadrature< FieldType, dim > ThisType;
+    typedef QuadratureImp< FieldType, dim > BaseType;
+  
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType
+    typedef typename BaseType :: CoordinateType CoordinateType;
+    
+  protected:
+    int order_;
+
   public:
     //! Constructor
     //! \param order The desired order (provided by the user)
     //! \param id A unique id (provided by QuadratureProvider)
-    inline
-    SimplexQuadrature(const GeometryType&, int order, size_t id);
+    CubeQuadrature( const GeometryType&, int order, size_t id );
     
-    //! The geometry type is... simplex!
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::simplex,dim);
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: cube, dim );
     }
-    
-    //! Returns the effective order of the quadrature
-    //! (can be higher than the desired)
-    virtual int order() const {
+
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
       return order_;
     }
 
-    //! The maximal order of simplex quadratures. This is to be understood
-    //! as an upper bound...
-    static size_t maxOrder() { return maxOrder_; }
+    //! maximal order of available quadratures.
+    static size_t maxOrder ()
+    { 
+      return GaussPts :: highestOrder;
+    }
+  };
+#endif
+  
+
+
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class LineQuadrature
+   *  \brief quadrature class for lines
+   *  
+   *  LineQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note This class is redundant as CubeQuadrature can be used instead
+   */
+  template< class FieldImp >
+  class LineQuadrature
+  : public QuadratureImp< FieldImp, 1 > 
+  {
+  public:
+    typedef FieldImp FieldType;
+
+  private:
+    typedef LineQuadrature< FieldType > ThisType;
+    typedef QuadratureImp< FieldType, 1 > BaseType;
+    
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType
+    typedef typename BaseType :: CoordinateType CoordinateType;
+    
+  protected:
+    int order_;
+
+  public:
+    LineQuadrature( const GeometryType&, int order, size_t id );
+
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: cube, 1 );
+    }
+
+    //! copydoc QuadratureImp :: order
+    virtual int order() const
+    {
+      return order_;
+    }
+
+    //! maximal order of available quadratures.
+    static size_t maxOrder ()
+    { 
+      return GaussPts::highestOrder;
+    }
+  };
+#endif
+ 
+
+
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class TriangleQuadrature
+   *  \brief quadrature class for triangles
+   *  
+   *  TriangleQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note The UG quadrature rules are used here. 
+   *  
+   *  \note This class is redundant as SimplexQuadrature can be used instead.
+   */
+  template< class FieldImp >
+  class TriangleQuadrature
+  : public QuadratureImp< FieldImp, 2 >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+  private:
+    typedef TriangleQuadrature< FieldType > ThisType;
+    typedef QuadratureImp< FieldType, 2 > BaseType;
+    
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType
+    typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
-  };
-
-  //! A generic quadrature for cubes
-  //! This quadrature uses the 1d gauss points (and the tensorial product
-  //! thereof) as quadrature points.
-  template <class ct, int dim>
-  class CubeQuadrature : public QuadratureImp<ct, dim>
-  {
-  public:
-    typedef FieldVector<ct, dim> CoordinateType;
 
   public:
-    //! Constructor
-    //! \param order The desired order (provided by the user)
-    //! \param id A unique id (provided by QuadratureProvider)
-    CubeQuadrature(const GeometryType&, int order, size_t id);
-    
-    //! The geometry type is... cube!
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::cube,dim);
+    TriangleQuadrature ( const GeometryType&, int order, size_t id );
+
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: simplex, 2 );
     }
 
-    //! Returns the effective order of the quadrature
-    //! (can be higher than the desired)
-    virtual int order() const {
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
       return order_;
     }
 
-    //! The maximal order of simplex quadratures.
-    static size_t maxOrder() { return GaussPts::highestOrder; }
-
-  private:
-    int order_;
-  };
-
-  //! A quadrature class for lines
-  //! \note This class is redundant as CubeQuadrature can be used instead
-  template <class ct>
-  class LineQuadrature : public QuadratureImp<ct, 1> 
-  {
-  public:
-    typedef FieldVector<ct, 1> CoordinateType;
-
-  public:
-    LineQuadrature(const GeometryType&, int order, size_t id);
-
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::cube,1);
-    }
-
-    virtual int order() const {
-      return order_;
-    }
-
-    static size_t maxOrder() { return GaussPts::highestOrder; }
-
-  private:
-    int order_;
-  };
-
-  //! A quadrature class for triangles
-  //! \note This class is redundant as SimplexQuadrature can be used instead.
-  template <class ct>
-  class TriangleQuadrature : public QuadratureImp<ct, 2>
-  {
-  public:
-    typedef FieldVector<ct, 2> CoordinateType;
-
-  public:
-    TriangleQuadrature(const GeometryType&, int order, size_t id);
-
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::simplex,2);
-    }
-
-    virtual int order() const {
-      return order_;
-    }
-
-    static size_t maxOrder() { 
+    //! maximal order of available quadratures.
+    static size_t maxOrder ()
+    { 
 #ifdef HAVE_ALBERTA_FOUND
       // highest order of Alberta quads 
       return 17; 
@@ -438,56 +555,113 @@ namespace Dune
       return 12; 
 #endif
     }
+  };
+#endif
+
+
+
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class QuadrilateralQuadrature
+   *  \brief quadrature class for quadrilaterals
+   *  
+   *  QuadrilateralQuadrature implements the geometry-specific part of the
+   *  quadrature and initialises the vector quadrature points and weights.
+   *  
+   *  \note The quadrature uses tensorial products of the 1d gauss points
+   *        as quadrature points.
+   *
+   *  \note This class is redundant as CubeQuadrature can be used instead.
+   */
+  template< class FieldImp >
+  class QuadrilateralQuadrature
+  : public QuadratureImp< FieldImp, 2 >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+  private:
+    typedef QuadrilateralQuadrature< FieldType > ThisType;
+    typedef QuadratureImp< FieldType, 2 > BaseType;
+    
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType
+    typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
-  };
-
-  //! A quadrature class for quadrilaterals
-  //! \note This class is redundant as CubeQuadrature can be used instead.
-  template <class ct>
-  class QuadrilateralQuadrature : public QuadratureImp<ct, 2>
-  {
-  public:
-    typedef FieldVector<ct, 2> CoordinateType;
 
   public:
-    QuadrilateralQuadrature(const GeometryType&, int order, size_t id);
+    QuadrilateralQuadrature( const GeometryType&, int order, size_t id );
 
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::cube,2);
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: cube, 2 );
     }
 
-    virtual int order() const {
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
       return order_;
     }
 
-    static size_t maxOrder() { return GaussPts::highestOrder; }
+    //! maximal order of available quadratures.
+    static size_t maxOrder ()
+    { 
+      return GaussPts :: highestOrder;
+    }
+  };
+#endif
+
+
+
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class TetraQuadrature
+   *  \brief quadrature class for tetrahedra
+   *  
+   *  TetraQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note The UG quadrature rules are used here. 
+   *  
+   *  \note This class is redundant as SimplexQuadrature can be used instead.
+   */
+  template< class FieldImp >
+  class TetraQuadrature
+  : public QuadratureImp< FieldImp, 3 >
+  {
+  public:
+    typedef FieldImp FieldType;
 
   private:
+    typedef TetraQuadrature< FieldType > ThisType;
+    typedef QuadratureImp< FieldType, 3 > BaseType;
+
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType
+    typedef typename BaseType :: CoordinateType CoordinateType;
+    
+  private:
     int order_;
-  };
-
-  //! A quadrature class for tetrahedra
-  //! \note This class is redundant as SimplexQuadrature can be used instead.
-  template <class ct>
-  class TetraQuadrature : public QuadratureImp<ct, 3>
-  {
-  public:
-    typedef FieldVector<ct, 3> CoordinateType;
 
   public:
-    TetraQuadrature(const GeometryType&, int order, size_t id);
+    TetraQuadrature( const GeometryType&, int order, size_t id );
 
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::simplex,3);
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: simplex, 3 );
     }
 
-    virtual int order() const {
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
       return order_;
     }
 
-    static size_t maxOrder() { 
+    //! maximal order of available quadratures
+    static size_t maxOrder ()
+    {
 #ifdef HAVE_ALBERTA_FOUND
       // highest order of Alberta quads 
       return 7; 
@@ -496,76 +670,149 @@ namespace Dune
       return 5; 
 #endif
     }
+  };
+#endif
+
+
+
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class HexaQuadrature
+   *  \brief quadrature class for hexahedra
+   *  
+   *  HexaQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note The quadrature uses tensorial products of the 1d gauss points
+   *        as quadrature points.
+   *
+   *  \note This class is redundant as CubeQuadrature can be used instead.
+   */
+  template< class FieldImp >
+  class HexaQuadrature
+  : public QuadratureImp< FieldImp, 3 >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+  private:
+    typedef HexaQuadrature< FieldType > ThisType;
+    typedef QuadratureImp< FieldType, 3 > BaseType;
+
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType
+    typedef BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
-  };
-
-  //! A quadrature class for hexahedra
-  //! \note This class is redundant as CubeQuadrature can be used instead.
-  template <class ct>
-  class HexaQuadrature : public QuadratureImp<ct, 3>
-  {
-  public:
-    typedef FieldVector<ct, 3> CoordinateType;
 
   public:
-    HexaQuadrature(const GeometryType&, int order, size_t id);
+    HexaQuadrature( const GeometryType&, int order, size_t id );
 
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::cube,3);
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: cube, 3 );
     }
 
-    virtual int order() const {
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
       return order_;
     }
 
-    static size_t maxOrder() { return GaussPts::highestOrder; }
+    //! maximal order of available quadratures
+    static size_t maxOrder()
+    { 
+      return GaussPts::highestOrder;
+    }
+  };
+#endif
+
+
+
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class PrismQuadrature
+   *  \brief quadrature class for prisms
+   *  
+   *  PrismQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note The HD stuff is used here, but needs some rework since only one
+   *        rule is provided.
+   */
+  template< class FieldImp >
+  class PrismQuadrature
+  : public QuadratureImp< FieldImp, 3 >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+  private:
+    typedef PrismQuadrature< FieldType > ThisType;
+    typedef QuadratureImp< FieldType, 3 > BaseType;
+    
+  public:
+    //! \copydoc QuadratureImp :: CoordinateType;
+    typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
-  };
-
-  //! A quadrature class for prisms
-  //! The HD stuff is used here, but needs some rework since only one rule
-  //! is provided. But since nobody here uses prisms right now...
-  template <class ct>
-  class PrismQuadrature : public QuadratureImp<ct, 3>
-  {
-  public:
-    typedef FieldVector<ct, 3> CoordinateType;
 
   public:
     //! Constructor
     //! \param order The desired order (provided by the user)
     //! \param id A unique id (provided by QuadratureProvider)
-    PrismQuadrature(const GeometryType&, int order, size_t id);
+    PrismQuadrature( const GeometryType&, int order, size_t id );
 
-    //! The geometry type is... prism!
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::prism,3);
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: prism, 3 );
     }
 
-    //! Returns the actual order.
-    virtual int order() const {
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
       return order_;
     }
 
-    //! The maximal order of prism quadratures.
-    static size_t maxOrder() { return PrismPoints::highest_order; }
+    //! maximal order of available quadratures
+    static size_t maxOrder () 
+    {
+      return PrismPoints :: highest_order;
+    }
+  };
+#endif
+
+
+  
+#ifndef USE_DUNE_QUADRATURES
+  /*! \class PyramidQuadrature
+   *  \brief quadrature class for pyramids
+   *  
+   *  PyramidQuadrature implements the geometry-specific part of the quadrature
+   *  and initialises the vector quadrature points and weights.
+   *  
+   *  \note The HD stuff is used here, but needs some rework since only one
+   *        rule is provided.
+   */
+  template< class FieldImp >
+  class PyramidQuadrature
+  : public QuadratureImp< FieldImp, 3 >
+  {
+  public:
+    typedef FieldImp FieldType;
+
+  private:
+    typedef PyramidQuadrature< FieldType > ThisType;
+    typedef QuadratureImp< FieldType, 3 > BaseType;
+
+  public:
+    //! \copydoc QUadratureImp :: CoordinateType
+    typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
-  };
-
-  //! A quadrature class for pyramids
-  //! The HD stuff is used here, but needs some rework since only one rule
-  //! is provided. But since nobody here uses pyramids right now...
-  template <class ct>
-  class PyramidQuadrature : public QuadratureImp<ct, 3>
-  {
-  public:
-    typedef FieldVector<ct, 3> CoordinateType;
 
   public:
     //! Constructor
@@ -573,23 +820,27 @@ namespace Dune
     //! \param id A unique id (provided by QuadratureProvider)
     PyramidQuadrature(const GeometryType&, int order, size_t id);
 
-    //! The geometry type is... pyramid!
-    virtual GeometryType geometry() const {
-      return GeometryType(GeometryType::pyramid,3);
+    //! \copydoc QuadratureImp :: geometry
+    virtual GeometryType geometry () const
+    {
+      return GeometryType( GeometryType :: pyramid, 3 );
     }
 
-    //! Returns the actual order of the quadrature.
-    virtual int order() const {
+    //! \copydoc QuadratureImp :: order
+    virtual int order () const
+    {
       return order_;
     }
 
-    //! The maximal order of the pyramid quadratures.
-    static size_t maxOrder() { return PyramidPoints::highest_order; }
-
-  private:
-    int order_;
+    //! maximal order of available quadratures
+    static size_t maxOrder ()
+    {
+      return PyramidPoints :: highest_order;
+    }
   };
-#endif // end USE_DUNE_QUADRATURES not defined
+#endif
+
+
 
   //! \brief Allows injection of arbitrary points as quadrature points.
   //! Useful to test some features of the quadrature framework in isolation
@@ -625,212 +876,376 @@ namespace Dune
     int order_;
   };
 
-  //! default defines for used quadratures 
-  template <typename ct, int dim> struct DefaultQuadratureTraits
+  
+
+  // default defines for used quadratures 
+  template< typename FieldType, int dim >
+  struct DefaultQuadratureTraits
   {
 #ifdef USE_DUNE_QUADRATURES
-    typedef QuadratureRulesFactory<ct,dim> CubeQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, dim > CubeQuadratureType;
 #else 
-    typedef CubeQuadrature<ct, dim>   CubeQuadratureType; 
+    typedef CubeQuadrature< FieldType, dim > CubeQuadratureType; 
 #endif
-    typedef QuadratureImp<ct,dim>     IntegrationPointListType;
+    typedef QuadratureImp< FieldType, dim > IntegrationPointListType;
   }; 
 
-  //! quadratures for points 
-  template <typename ct> 
-  struct DefaultQuadratureTraits<ct,0>  
+
+
+  // quadratures for points 
+  template< typename FieldType >
+  struct DefaultQuadratureTraits< FieldType, 0 >  
   {
 #ifdef USE_DUNE_QUADRATURES
-    typedef QuadratureRulesFactory<ct,0> PointQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 0 > PointQuadratureType;
 #else 
-    typedef CubeQuadrature<ct, 0>   PointQuadratureType;     
+    typedef CubeQuadrature< FieldType, 0 > PointQuadratureType;     
 #endif
-    typedef QuadratureImp<ct,0>     IntegrationPointListType;
+    typedef QuadratureImp< FieldType, 0 > IntegrationPointListType;
   };
-  
-  //! quadratures for lines 
-  template <typename ct>
-  struct DefaultQuadratureTraits<ct,1>  
+ 
+
+
+  // quadratures for lines 
+  template< typename FieldType >
+  struct DefaultQuadratureTraits< FieldType, 1 >  
   {
 #ifdef USE_DUNE_QUADRATURES
-    typedef QuadratureRulesFactory<ct,1> LineQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 1 > LineQuadratureType;
 #else 
-    typedef CubeQuadrature<ct, 1>   LineQuadratureType;     
+    typedef CubeQuadrature< FieldType, 1 > LineQuadratureType;     
 #endif
-    typedef QuadratureImp<ct,1>     IntegrationPointListType;
+    typedef QuadratureImp< FieldType, 1 > IntegrationPointListType;
   };
-  
-  //! quadratures for simplex and cubes 
-  template <typename ct>
-  struct DefaultQuadratureTraits<ct,2>  
+ 
+
+
+  // quadratures for simplex and cubes 
+  template< typename FieldType >
+  struct DefaultQuadratureTraits< FieldType, 2 >  
   {
 #ifdef USE_DUNE_QUADRATURES
-    typedef QuadratureRulesFactory<ct,2> SimplexQuadratureType;
-    typedef QuadratureRulesFactory<ct,2> CubeQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 2 > SimplexQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 2 > CubeQuadratureType;
 #else
-    typedef CubeQuadrature<ct, 2>    CubeQuadratureType;     
-    typedef SimplexQuadrature<ct, 2> SimplexQuadratureType;     
+    typedef CubeQuadrature< FieldType, 2 > CubeQuadratureType; 
+    typedef SimplexQuadrature< FieldType, 2 > SimplexQuadratureType;     
 #endif
-    typedef QuadratureImp<ct,2>      IntegrationPointListType;
+    typedef QuadratureImp< FieldType, 2 > IntegrationPointListType;
   };
+
+
   
-  //! quadratures for simplex, cubes, prisms, and pyramids
-  template <typename ct>
-  struct DefaultQuadratureTraits<ct,3>  
+  // quadratures for simplex, cubes, prisms, and pyramids
+  template< typename FieldType >
+  struct DefaultQuadratureTraits< FieldType , 3 >  
   {
 #ifdef USE_DUNE_QUADRATURES
-    typedef QuadratureRulesFactory<ct,3> SimplexQuadratureType;
-    typedef QuadratureRulesFactory<ct,3> CubeQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 3 > SimplexQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 3 > CubeQuadratureType;
 
-    typedef QuadratureRulesFactory<ct,3> PrismQuadratureType;
-    typedef QuadratureRulesFactory<ct,3> PyramidQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 3 > PrismQuadratureType;
+    typedef QuadratureRulesFactory< FieldType, 3 > PyramidQuadratureType;
 #else 
-    typedef CubeQuadrature<ct, 3>    CubeQuadratureType;     
-    typedef SimplexQuadrature<ct, 3> SimplexQuadratureType;     
+    typedef CubeQuadrature< FieldType, 3 > CubeQuadratureType;     
+    typedef SimplexQuadrature< FieldType, 3 > SimplexQuadratureType;     
 
-    typedef PrismQuadrature<ct>      PrismQuadratureType;
-    typedef PyramidQuadrature<ct>    PyramidQuadratureType;
+    typedef PrismQuadrature< FieldType > PrismQuadratureType;
+    typedef PyramidQuadrature< FIeldType > PyramidQuadratureType;
 #endif
 
-    typedef QuadratureImp<ct,3>      IntegrationPointListType;
+    typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
   };
-  
 
-  //! The actual interface class for quadratures.
-  //! Quadrature is a proxy for the actual implementations of the quadratures.
-  //! During construction, the actual Quadrature object is configured with
-  //! an appropriate implementation object from the QuadratureProvider object
-  //! (Monostate pattern). The design goal here is to minimize the construction
-  //! time (the actual implementations can be created once and reused as often
-  //! as you like) and to insulate the user from all this initialisation and
-  //! storage stuff.
-  template <typename ct, int dim, 
-            template <class, int> class IntegrationTraits>
-  class IntegrationPointList  
+
+
+  /*! \class IntegrationPointList
+   *  \brief actual interface class for integration point lists
+   *
+   *  IntegrationPointList is a proxy for the actual implementations of the
+   *  integration point lists. During construction, the IntegrationPointList
+   *  object is configured with an appropriate implementation object from the
+   *  QuadratureProvider (monostate pattern).
+   *
+   *  The design goal is minimization of construction time. The actual
+   *  implementation can be created once and reused whenever it is needed.
+   *  Moreover, this layout insulates the user from all initialization and
+   *  storage stuff.
+   *
+   *  \note The difference between integration point lists and quadratures is
+   *        that quadratures have weights.
+   */
+  template< typename FieldImp, int dim,
+            template< class, int > class IntegrationTraits >
+  class IntegrationPointList 
   {
-    typedef IntegrationPointList<ct,dim,IntegrationTraits> ThisType;
-    typedef IntegrationTraits<ct,dim> Traits;
   public:
+    typedef FieldImp FieldType;
+
     enum { dimension = dim };
 
-    //! type of integration point list 
+  private:
+    typedef IntegrationPointList< FieldType, dimension, IntegrationTraits > ThisType;
+
+    typedef IntegrationTraits< FieldType, dimension > Traits;
+
+    typedef QuadratureProvider< FieldType, dimension, IntegrationTraits >
+      QuadratureProviderType;
+
+  public:
+    //! type of integration point list implementation 
     typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
-    //! type of coordinate 
+    
+    //! type of coordinate
     typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
 
     //! to be revised, look at caching quad 
     enum { codimension = 0 };
-
-  public:
-    //! return reference to implementation of integration point List 
-    const IntegrationPointListType& ipList() const { return ipList_; }
-
-    //! Constructor
-    //! \param geo The geometry type the quadrature points belong to.
-    //! \param order The order of the quadrature (i.e. polynoms up to order
-    //! are integrated exactly).
-    IntegrationPointList(const GeometryType& geo, int order) :
-      ipList_(QuadratureProvider<ct, dim, IntegrationTraits>::getQuadrature(geo, order))
-    {}
-
-    //! Constructor for testing purposes
-    //! \param quadImp Quadrature implementation for this test
-    IntegrationPointList(const IntegrationPointListType& ipList) :
-      ipList_(ipList)
-    {}
-
-    //! Copy constructor 
-    IntegrationPointList(const IntegrationPointList& org) :
-      ipList_(org.ipList_)
-    {}
-
-    //! The total number of quadrature points.
-    int nop() const {
-      return ipList_.nop();
-    }
-
-    //! Access to the ith quadrature point.
-    const CoordinateType& point(size_t i) const {
-      return ipList_.point(i);
-    }
-
-    //! A unique id per quadrature type.
-    //! Quadratures are considered as distinct when they differ in the
-    //! following points: geometry type, order, dimension and implementation.
-    //! \note At the time of writing this, there is only one implementation
-    //! per geometry type, order and dimension provided, but the concept is
-    //! easily extendible beyond that.
-    size_t id() const {
-      return ipList_.id();
-    }
-
-    //! The actual order of the quadrature.
-    //! The actual order can be higher as the desired order when no 
-    //! implementation for the desired order is found.
-    int order() const {
-      return ipList_.order();
-    }
-
-    //! The geometry type the quadrature points belong to.
-    GeometryType geometry() const {
-      return ipList_.geometry();
-    }
 
   protected:
-    const IntegrationPointListType& ipList_;
+    const IntegrationPointListType &ipList_;
+
+  public:
+    /*! \brief create a quadrature for a given geometry and order
+     *
+     *  This constructor creates a quadrature for the specified geometry which
+     *  is capable of integrating polynoms up the given order exactly.
+     * 
+     *  \note The order of the quadrature may be higher than the requested one.
+     *
+     *  \param[in]  geometry  geometry type of the requested quadrature
+     *  \param[in]  order     order of the requested quadrature
+     */
+    IntegrationPointList( const GeometryType &geometry, int order )
+    : ipList_( QuadratureProviderType :: getQuadrature( geometry, order ) )
+    {
+    }
+
+    /*! \brief create an integration point list from an implementation
+     *
+     *  This constructor creates an integration point list from a given
+     *  implementation.
+     *
+     *  \note This constructor is provided mainly for testing purposes.
+     *
+     *  \param[in]  ipList  implementation of the integration point list
+     */
+    IntegrationPointList(const IntegrationPointListType &ipList )
+    : ipList_( ipList )
+    {
+    }
+
+    /*! \brief copy constructor
+     *  
+     *  \param[in]  org  integration point list to be copied
+     */ 
+    IntegrationPointList( const IntegrationPointList &org )
+    : ipList_( org.ipList_ )
+    {
+    }
+
+    /*! \brief obtain a reference the actual implementation
+     * 
+     *  \returns a reference to the implementation of this integration point
+     *           list
+     */
+    const IntegrationPointListType &ipList () const
+    {
+      return ipList_;
+    }
+
+    /*! \brief obtain the number of integration points
+     *
+     *  \note Calling this method yields a virtual function call, so do not
+     *        call it unneccessarily.
+     *
+     *  \returns number of integration points within this list
+     */
+    int nop () const
+    {
+      return ipList_.nop();
+    }
+    
+    /*! \brief obtain coordinates of i-th integration point
+     *
+     *  This method returns a reference to the coordinates of the i-th
+     *  integration point for 0 <= i < nop(). The integration point is given
+     *  in local coordinates, i.e., coordinates with respect to the reference
+     *  element.
+     *
+     *  \note Calling this method yields a virtual function call, so do not
+     *        call it unnecessarily.
+     * 
+     *  \param[in]  i  number of the integration point, 0 <= i < nop()
+     *
+     *  \returns reference to i-th integration point
+     */
+    const CoordinateType &point ( size_t i ) const
+    {
+      return ipList_.point( i );
+    }
+
+    /*! \brief obtain the identifier of the integration point list
+     * 
+     *  The identifier of an integration point list must be globally unique.
+     *  Even integration point lists for different dimensions must have
+     *  different identifiers.
+     *
+     *  \note Quadratures are considered distinct if they differ in one of the
+     *        following points: geometry type, order, dimension or implementation.
+     *
+     *  \note Calling this method yields a virtual function call, so do not
+     *        call it unnecessarily.
+     * 
+     *  \returns globally unique identifier of the integration point list
+     */
+    size_t id () const
+    {
+      return ipList_.id();
+    }
+    
+    /*! \brief obtain order of the integration point list
+     *
+     *  The order of a quadrature is the maximal polynomial degree that is
+     *  guaranteed to be integrated exactly by the quadrature.
+     *
+     *  In case of an integration point list, the definition of this value is
+     *  left to the implementor.
+     *
+     *  \returns the order of the integration point list
+     */
+    int order () const
+    {
+      return ipList_.order();
+    }
+    
+    /*! \brief obtain GeometryType for this integration point list
+     *
+     *  Integration point lists are specified in local coordinates, i.e.,
+     *  coordinates with respect to the reference element. Hence, each 
+     *  integration point list is only valid for one type of geometry, i.e.,
+     *  for one reference element. The type can be retrieved via this method.
+     *
+     *  \note Calling this method yields a virtual function call, so do not
+     *        call this method unnecessarily.
+     *
+     *  \returns GeometryType for this integration point list
+     */
+    GeometryType geometry () const
+    {
+      return ipList_.geometry();
+    }
   };
 
-  //! The actual interface class for quadratures.
-  //! Quadrature is a proxy for the actual implementations of the quadratures.
-  //! During construction, the actual Quadrature object is configured with
-  //! an appropriate implementation object from the QuadratureProvider object
-  //! (Monostate pattern). The design goal here is to minimize the construction
-  //! time (the actual implementations can be created once and reused as often
-  //! as you like) and to insulate the user from all this initialisation and
-  //! storage stuff.
-  template <typename ct, int dim, 
-            template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
-  class Quadrature : public IntegrationPointList<ct,dim,QuadratureTraits> 
+
+
+  /*! \class Quadrature
+   *  \brief actual interface class for quadratures
+   *
+   *  IntegrationPointList is a proxy for the actual implementations of the
+   *  integration point lists. During construction, the IntegrationPointList
+   *  object is configured with an appropriate implementation object from the
+   *  QuadratureProvider (monostate pattern).
+   *
+   *  The design goal is minimization of construction time. The actual
+   *  implementation can be created once and reused whenever it is needed.
+   *  Moreover, this layout insulates the user from all initialization and
+   *  storage stuff.
+   *
+   *  \note The difference between integration point lists and quadratures is
+   *        that quadratures have weights.
+   */
+  template< class FieldImp, int dim,
+            template< class, int > class QuadratureTraits = DefaultQuadratureTraits >
+  class Quadrature
+  : public IntegrationPointList< FieldImp, dim, QuadratureTraits >
   {
-    typedef DefaultQuadratureTraits<ct,dim> Traits; 
-    typedef IntegrationPointList<ct,dim,QuadratureTraits> BaseType;
   public:
+    typedef FieldImp FieldType;
+
     enum { dimension = dim };
 
-    typedef typename Traits :: IntegrationPointListType
-      IntegrationPointListType;
+  private:
+    typedef Quadrature< FieldType, dimension, QuadratureTraits > ThisType;
+    typedef IntegrationPointList< FieldType, dimension, QuadratureTraits > BaseType;
 
-    //! type of global coordinate vectors 
+    using BaseType :: ipList;
+    
+    typedef QuadratureTraits< FieldType, dimension > Traits;
+    
+    typedef QuadratureProvider< FieldType, dimension, QuadratureTraits >
+      QuadratureProviderType;
+
+  public:
+    //! type of the implementation (this must actually be a quadrature implementation)
+    typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
+
+    //! type of local coordinate vectors
     typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
 
     //! to be revised, look at caching quad 
     enum { codimension = 0 };
 
   public:
-    //! Constructor
-    //! \param geo The geometry type the quadrature points belong to.
-    //! \param order The order of the quadrature (i.e. polynoms up to order
-    //! are integrated exactly).
-    Quadrature(const GeometryType& geo, int order) :
-      BaseType(geo,order)
-    {}
+    /*! \brief create a quadrature for a given geometry and order
+     *
+     *  This constructor creates a quadrature for the specified geometry which
+     *  is capable of integrating polynoms up the given order exactly.
+     * 
+     *  \note The order of the quadrature may be higher than the requested one.
+     *
+     *  \param[in]  geometry  geometry type of the requested quadrature
+     *  \param[in]  order     order of the requested quadrature
+     */
+    Quadrature( const GeometryType &geometry, int order )
+    : BaseType( geometry, order )
+    {
+    }
 
-    //! Constructor for testing purposes
-    //! \param quadImp Quadrature implementation for this test
-    Quadrature(const IntegrationPointListType& ipList) :
-      BaseType(ipList)
-    {}
+    /*! \brief create an integration point list from an implementation
+     *
+     *  This constructor creates an integration point list from a given
+     *  implementation.
+     *
+     *  \note This constructor is provided mainly for testing purposes.
+     *
+     *  \param[in]  ipList  implementation of the integration point list
+     */
+    Quadrature( const IntegrationPointListType& ipList )
+    : BaseType( ipList )
+    {
+    }
 
-    //! Copy constructor
-    Quadrature(const Quadrature& org) :
-      BaseType(org)
-    {}
+    /*! \brief copy constructor
+     *  
+     *  \param[in]  org  quadrature to be copied
+     */ 
+   //! Copy constructor
+    Quadrature( const Quadrature &org )
+    : BaseType( org )
+    {
+    }
 
-    //! Access to the weight of quadrature point i.
-    //! The quadrature weights sum up to the volume of the respective reference
-    //! element.
-    const ct& weight(size_t i) const {
-      return this->ipList().weight(i);
+    /*! \brief obtain weight of i-th integration point
+     *
+     *  This method returns the weight of the i-th integration point for
+     *  0 <= i < nop() within the quadrature.
+     *
+     *  \note The integration point can be obtained via the point() method.
+     *
+     *  \note The quadrature weights sum up to the volume of the reference
+     *        element.
+     *
+     *  \note Calling this method yields a virtual function call, so do not
+     *        call this method unnecessarily.
+     * 
+     *  \param[in]  i  number of the integration point, 0 <= i < nop()
+     *
+     *  \returns weight of the i-th integration point
+     */
+    const FieldType &weight( size_t i ) const
+    {
+      return ipList().weight( i );
     }
   };
 
