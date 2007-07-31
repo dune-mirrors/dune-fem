@@ -33,7 +33,11 @@ namespace Dune {
    NOTE: To use this space for adaptive calcuations one has to
    use an index set that is capable for adaptive calculations, e.g
    DGAdaptiveLeafIndexSet and DGAdaptiveLeafGridPart.
+   
+   @{
+
   */
+  
   //! A discontinuous Galerkin space base for DGSpaces 
   template <class SpaceImpTraits>
   class DiscontinuousGalerkinSpaceBase : 
@@ -157,7 +161,7 @@ namespace Dune {
       assert( mapper_->numDofs() == maxNumDofs );
     }
 
-    //! returns index of sequence in grid sequences 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence const */
     int sequence () const { return dm_.sequence(); }
     
     /** Destructor */
@@ -175,21 +179,21 @@ namespace Dune {
     }
   
     //- Methods
-    //! iterator pointing to first entity of space 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin const */
     IteratorType begin() const { return gridPart_.template begin<0>(); }
 
-    //! iterator pointing to behind last entity of space 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::end const */
     IteratorType end() const { return gridPart_.template end<0>(); }
 
-    //! return refernence to grid  
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid const */
     const GridType& grid() const { return gridPart_.grid(); }
 
-    //! return refernence to index set  
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet const */ 
     const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
 
-    //! return reference to the spaces grid part
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
     GridPartType & gridPart () { return gridPart_; }
-    //! return reference to the spaces grid part
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
     const GridPartType & gridPart () const { return gridPart_; }
 
     //! Return the identifier
@@ -199,6 +203,10 @@ namespace Dune {
     }
   
     //! return reference to base functions set according to the geometry's geometry type 
+    /**\brief return reference to base functions set according to the geometry's geometry type 
+       \param[in] geo
+       \return BasefunctipnSetType
+    */
     template<class Geometry>
     const BaseFunctionSetType
     subBaseFunctionSet (const Geometry & geo) const 
@@ -206,14 +214,23 @@ namespace Dune {
       return this->baseFunctionSet(geo);
     }
     
-    //! return reference to base functions set according to geometry type 
+    //! return reference to base functions set according to the geometry's geometry type 
+    /**\brief return reference to base functions set according to the geometry's geometry type 
+       \param[in] geo
+       \param[in] bool  dummy
+       \return BasefunctipnSetType
+    */
     const BaseFunctionSetType
     subBaseFunctionSet (const GeometryType & type, bool ) const 
     {
       return this->baseFunctionSet(type);
     }
+    
+    /**\brief return reference to base functions set according to the entity's geometry type 
+       \param[in] geo
+       \return BasefunctipnSetType
+    */
 
-    //! return reference to base functions set according to the entity's geometry type 
     template <class Entity>
     const BaseFunctionSetType
     baseFunctionSet (const Entity& en) const 
@@ -221,7 +238,11 @@ namespace Dune {
       return this->baseFunctionSet(en.geometry().type());
     }
 
-    //! return reference to base functions set according to geometry type 
+
+    /**\brief return reference to base functions set according to the  geometry type 
+       \param[in] geo
+       \return BasefunctipnSetType
+    */
     const BaseFunctionSetType
     baseFunctionSet (const GeometryType geomType) const 
     {
@@ -231,26 +252,30 @@ namespace Dune {
       return BaseFunctionSetType(baseFuncSet_[geomType]);
     }
 
-    //! return true if we have continuous discrete functions 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return false;
     }
   
-    //! get global order of space  
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
     int order () const
     {
       return polOrd;
     }
     
-    //! length of the dof vector  
-    //! size knows the correct way to calculate the size of the functionspace
+   /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
     int size () const 
     {
       return mapper().size();
     }
 
-    //! for given entity map local dof number to global dof number 
+   
+    /** \brief  for given entity map local dof number to global dof number 
+    \param[in] en 
+    \param[in] localNum
+    \return int 
+    */
     template <class EntityType>
     int mapToGlobal ( const EntityType &entity, 
                       const int localNum ) const
@@ -259,6 +284,9 @@ namespace Dune {
     }
 
     //! Return dof mapper of the space
+    /** \brief Return dof mapper of the space
+        \return MapperType 
+    */
     const MapperType& mapper() const 
     {
       assert( mapper_ );
@@ -296,6 +324,16 @@ namespace Dune {
 
     const DofManagerType & dm_;
   };
+
+
+
+
+
+
+
+
+
+
 
   //********************************************************
   // DG Space with orthonormal basis functions 
@@ -419,7 +457,10 @@ namespace Dune {
     DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
     DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
 
-    //! get object from singleton list 
+    /** \brief ! get object from singleton list 
+      \param[in] type 
+      \return BasefunctionSetImp
+    */
     static BaseFunctionSetImp& setBaseFuncSetPointer(const GeometryType type) 
     {
       return SingletonProviderType::getObject(type);
@@ -559,7 +600,7 @@ namespace Dune {
       SingletonProviderType::removeObject(set);
     }
   };
-  
+  //@}
 } // end namespace Dune 
 
 #endif
