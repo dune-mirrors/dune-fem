@@ -1,8 +1,12 @@
 #ifndef RESTRICTPROLONGINTERFACE
 #define RESTRICTPROLONGINTERFACE
 
-#include <dune/fem/quadrature/elementquadrature.hh>
+//- Dune includes 
+#include <dune/common/bartonnackmanifcheck.hh>
+
+//- local includes 
 #include <dune/fem/misc/combineinterface.hh>
+
 namespace Dune{
 /** @defgroup RestrictProlongInterface Restrict Prolong Interface
     @ingroup Adaptation
@@ -16,35 +20,65 @@ namespace Dune{
 template <class RestProlImpTraits>
 class RestrictProlongInterface {
 public:  
+  //! \brief type of restrict-prolong operator implementation 
   typedef typename RestProlImpTraits::RestProlImp RestProlImp;
+  //! \brief field type of range vector space 
   typedef typename RestProlImpTraits::RangeFieldType RangeFieldType;
-  //! if weight is set, then ists assumend that we have always the same
-  //! proportion between fahter and son volume 
-  void setFatherChildWeight (const RangeFieldType& val) const {
-    asImp().setFatherChildWeight(val);
+  
+  /** \brief if weight is set, then its assumend 
+      that we have always the same proportion between fahter and son volume 
+      \param[in] weight proportion between fahter and son volume 
+  */
+  void setFatherChildWeight (const RangeFieldType& weight) const 
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().setFatherChildWeight(weight));
   }
-  //! restrict data to father 
+  
+  /** \brief restrict data to father 
+      \param[in] father Father Entity 
+      \param[in] son son Entity 
+      \param[in] initialize <b>true</b> if restrictLocal is called for first time for this father
+  */
   template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, 
-		       bool initialize ) const {
-    asImp().restrictLocal(father,son,initialize);
+  void restrictLocal ( EntityType &father, 
+                       EntityType &son, 
+            		       bool initialize ) const 
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().restrictLocal(father,son,initialize));
   }
-  //! prolong data to children 
+  
+  /** \brief prolong data to children 
+      \param[in] father Father Entity 
+      \param[in] son son Entity 
+      \param[in] initialize <b>true</b> if restrictLocal is called for first time for this father
+  */
   template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, 
-		      bool initialize ) const {
-    asImp().prolongLocal(father,son,initialize);
+  void prolongLocal ( EntityType &father, 
+                      EntityType &son, 
+            		      bool initialize ) const 
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().prolongLocal(father,son,initialize));
   }
 
-  //! add discrete function to communicator 
+  /** \brief add discrete function to communicator 
+      \param[in] communicator Communicator to which internal discrete functions are added to 
+  */
   template <class CommunicationManagerImp>
   void addToList(CommunicationManagerImp& communicator)
   {
-    asImp().addToList(communicator);  
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().addToList(communicator));  
   }
   
 protected:  
-  //! calculates the weight, i.e. (volume son)/(volume father)
+  /** \brief calculates the weight, i.e. (volume son)/(volume father)
+      \param[in] father Father Entity 
+      \param[in] son son Entity 
+      \return proportion between fahter and son volume
+  */
   template <class EntityType>
   RangeFieldType calcWeight (EntityType &father, EntityType &son) const
   {
@@ -53,13 +87,20 @@ protected:
   }
   
 private:
+  //! Barton-Nackman Trick
   RestProlImp& asImp() {
     return static_cast<RestProlImp&>(*this);
   }
+  //! Barton-Nackman Trick
   const RestProlImp& asImp() const {
     return static_cast<const RestProlImp&>(*this);
   }
 };
+
+/** @defgroup RestrictProlongInterface Restrict Prolong Interface
+    @ingroup RestrictProlongInterface 
+    @{
+**/    
 template <class Base>
 struct RestrictProlongTraits {
   typedef Base RestProlImp;
@@ -206,8 +247,7 @@ private:
   mutable RangeFieldType weight_;
 };
 
+//@} 
 
-/** @} end documentation group */
-
-}
+} // end namespace Dune 
 #endif

@@ -25,6 +25,11 @@
 
 namespace Dune {
 
+/** @defgroup DofManager DofManager 
+    @ingroup Adaptation 
+
+    @{
+**/
 
 // forward declaration 
 template <class GridType> class DofManager;
@@ -1398,6 +1403,8 @@ private:
     return (DMProviderType::getObjFromList( &grid )).first;
   }
 };
+
+//@} 
 
 } // end namespace Dune 
 #endif
