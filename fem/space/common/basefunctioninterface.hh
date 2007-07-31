@@ -30,13 +30,13 @@ namespace Dune{
   @{
 */  
 
-//*************************************************************************
-//! BaseFunctionInterface is the interface to a base function. 
-//! A base function can be evaluated on a point from the Domain and the
-//! outcome is a point from Range. The Types of Domain and Range are stored
-//! by typedefs in FunctionSpaceType which is the template parameter of
-//! BaseFunctionInterface. 
-//*************************************************************************
+//---------------------------------------------------------------------
+/** \brief  BaseFunctionInterface is the interface to a base function. 
+   A base function can be evaluated on a point from the Domain and the
+   outcome is a point from Range. The Types of Domain and Range are stored
+   by typedefs in FunctionSpaceType which is the template parameter of
+   BaseFunctionInterface. 
+*/
 template<class FunctionSpaceImp>
 class BaseFunctionInterface 
 : public Mapping< typename FunctionSpaceImp::DomainFieldType,

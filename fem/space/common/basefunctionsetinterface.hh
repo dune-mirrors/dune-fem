@@ -17,23 +17,28 @@ namespace Dune{
     @{
 */
 
-//****************************************************************************
-//
-//  --BaseFunctionSetInterface
-//
-//! Why has the BaseFunctionInterface class virtual methods?
-//!
-//! Because the we want to have different base functions in 
-//! at the same time and we havent found a way to do this with 
-//! Barton-Nackman. But there is a solution which dosent cost to much
-//! efficiency, for example in FastBaseFunctionSet all evaluations of the
-//! BaseFunction are cached in a vector, though the virtual method evaluate
-//! of the BaseFunctionImp has only to be called once for the same quadrature
-//! rule. If you change the quadrature rule then on the first call the
-//! evaluations are stored again.
-//! This method brings us flexebility and effeciency. 
-//!
-//****************************************************************************
+//------------------------------------------------------------------------
+//-
+//-  --BaseFunctionSetInterface
+//-
+//------------------------------------------------------------------------
+
+/** \brief 
+   The BaseFunctionSetInterface describes the interface for
+   BaseFunctionSets. 
+  
+   Why has the BaseFunctionInterface class virtual methods?
+  
+   Because the we want to have different base functions in 
+   at the same time and we havent found a way to do this with 
+   Barton-Nackman. But there is a solution which dosent cost to much
+   efficiency, for example in FastBaseFunctionSet all evaluations of the
+   BaseFunction are cached in a vector, though the virtual method evaluate
+   of the BaseFunctionImp has only to be called once for the same quadrature
+   rule. If you change the quadrature rule then on the first call the
+   evaluations are stored again.
+   This method brings us flexebility and effeciency. 
+*/  
 template<class BaseFunctionSetTraits> 
 class BaseFunctionSetInterface  
 {
@@ -135,15 +140,15 @@ private:
 
 };
 
-//*************************************************************************
-//  
-//  --BaseFunctionSetDefault
-//
-//! The BaseFunctionSetDefault class is the internal interface. Here some
-//! default behavoir is implemented which always can be overloaded by the
-//! implementation class, but not has to. 
-//!
-//*************************************************************************
+//------------------------------------------------------------------------
+//-  
+//-  --BaseFunctionSetDefault
+//-
+//------------------------------------------------------------------------
+/** \brief The BaseFunctionSetDefault class is the internal interface. Here some
+   default behavoir is implemented which always can be overloaded by the
+   implementation class, but not has to. 
+*/
 template<class BaseFunctionSetTraits> 
 class BaseFunctionSetDefault  : 
   public BaseFunctionSetInterface <BaseFunctionSetTraits> 
