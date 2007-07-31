@@ -164,7 +164,7 @@ namespace Dune {
     /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence const */
     int sequence () const { return dm_.sequence(); }
     
-    /** Destructor */
+    /** \brief Destructor */
     virtual ~DiscontinuousGalerkinSpaceBase () 
     {
       typedef typename BaseFunctionMapType :: iterator iterator;
@@ -196,7 +196,7 @@ namespace Dune {
     /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
     const GridPartType & gridPart () const { return gridPart_; }
 
-    //! Return the identifier
+    //! \brief @copydoc DiscreteFunctionSpaceInterface::type 
     DFSpaceIdentifier type () const 
     {
       return DGSpace_id;
@@ -216,8 +216,8 @@ namespace Dune {
     
     //! return reference to base functions set according to the geometry's geometry type 
     /**\brief return reference to base functions set according to the geometry's geometry type 
-       \param[in] geo
-       \param[in] bool  dummy
+       \param[in] geo geometry type 
+       \param[in] bool dummy for function overloading 
        \return BasefunctipnSetType
     */
     const BaseFunctionSetType
@@ -227,10 +227,9 @@ namespace Dune {
     }
     
     /**\brief return reference to base functions set according to the entity's geometry type 
-       \param[in] geo
-       \return BasefunctipnSetType
+       \param[in] geo geometry type 
+       \return BaseFunctionSetType
     */
-
     template <class Entity>
     const BaseFunctionSetType
     baseFunctionSet (const Entity& en) const 
@@ -240,7 +239,7 @@ namespace Dune {
 
 
     /**\brief return reference to base functions set according to the  geometry type 
-       \param[in] geo
+       \param[in] geo geometry type 
        \return BasefunctipnSetType
     */
     const BaseFunctionSetType
@@ -290,10 +289,17 @@ namespace Dune {
     }
 
   protected:
+    //! \brief prohibited empty constructor  
     DiscontinuousGalerkinSpaceBase();
+    //! \brief prohibited empty copy constructor  
     DiscontinuousGalerkinSpaceBase(const DiscontinuousGalerkinSpaceBase&);
+    //! \brief prohibited empty assignment operator   
     DiscontinuousGalerkinSpaceBase& operator=(const DiscontinuousGalerkinSpaceBase&);
 
+    /** \brief return BaseFunctionSetPointer 
+        \param en entity for which base function set is collected 
+        \return BaseFunctionSetImp pointer 
+    */
     template <class EntityType>
     BaseFunctionSetImp& setBaseFuncSetPointer(EntityType& en) 
     {
@@ -301,6 +307,10 @@ namespace Dune {
       return DiscreteFunctionSpaceImp::setBaseFuncSetPointer(en);
     }
 
+    /** \brief remove BaseFunctionSetPointer in singleton list (if no
+         other references exist, pointer is deleted  
+        \param set pointer to base function set 
+    */
     void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
     {
       // calls static method of actual implementation to remove set
@@ -308,26 +318,20 @@ namespace Dune {
     }
 
   protected:
-    // grid part
+    //! grid part
     GridPartType& gridPart_;
 
-    // mapper for function space 
+    //! mapper for function space 
     mutable MapperType* mapper_; 
 
-    // map holding base function sets
+    //! map holding base function sets
     typedef std::map < const GeometryType, const BaseFunctionSetImp* > BaseFunctionMapType;
+    //! base function set map 
     mutable BaseFunctionMapType baseFuncSet_;
 
+    //! dof manager 
     const DofManagerType & dm_;
   };
-
-
-
-
-
-
-
-
 
 
 
@@ -373,7 +377,7 @@ namespace Dune {
 
   };
 
-  //! A discontinuous Galerkin space
+  //! \brief A discontinuous Galerkin space
   template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
   class DiscontinuousGalerkinSpace : 
     public DiscontinuousGalerkinSpaceBase 
@@ -505,7 +509,9 @@ namespace Dune {
 
   };
 
-  //! A discontinuous Galerkin space
+  /** \brief A discontinuous Galerkin space using tensor product base
+    functions 
+  */
   template <class FunctionSpaceImp, class GridPartImp, int polOrd,
            template<class> class BaseFunctionStorageImp >
   class LegendreDiscontinuousGalerkinSpace : 
