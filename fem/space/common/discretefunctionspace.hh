@@ -5,6 +5,7 @@
 #include <assert.h>
 
 //- Dune includes 
+#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
@@ -30,7 +31,7 @@ namespace Dune{
   //
   //  --DiscreteFunctionSpaceInterface
   //
-  /*! This is the interface for discrete function spaces. All methods
+  /** \brief This is the interface for discrete function spaces. All methods
     declared here have to be implemented by the implementation class.
     The discrete function space always depends on a given grid. 
     For all diffrent element types of the grid the function space provides 
@@ -47,10 +48,13 @@ namespace Dune{
   {
   public:
     //- Typedefs and enums
+    //! type of traits class 
+    typedef FunctionSpaceTraits Traits; 
+    //! type of function space (define domain and range types)
     typedef typename FunctionSpaceTraits::FunctionSpaceType FunctionSpaceType;
     //! type of DiscretefunctionSapce implementation (Barton-Nackman)
     typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    //! type of BaseFunctionSet implementation (Barton-Nackman)
+    //! type of BaseFunctionSet of this space 
     typedef typename FunctionSpaceTraits::BaseFunctionSetType BaseFunctionSetType;
     //! type of underlying grid part 
     typedef typename FunctionSpaceTraits::GridPartType GridPartType;
@@ -58,68 +62,146 @@ namespace Dune{
     typedef typename GridPartType::GridType GridType;
     //! type of used index set 
     typedef typename GridPartType::IndexSetType IndexSetType;
-    //! iterator type traversing the set of entities defining the discrete 
-    //! function space (only codim 0 at the moment, to be revised)
+    
+    /** \brief iterator type traversing the set of 
+        entities defining the discrete  function space 
+        (only codim 0 at the moment, to be revised)
+    */
     typedef typename GridPartType:: template Codim<0>::IteratorType IteratorType;
     
   public:
     //- Public methods
     //! Constructor 
-    DiscreteFunctionSpaceInterface() :
-      FunctionSpaceType() {};
+    DiscreteFunctionSpaceInterface() : FunctionSpaceType() 
+    {}
 
-    //! Get base function set for given entity. 
-    //! For a type of element the base function set is unique.
+    /** \brief return type identifier of discrete function space 
+        \return return type identifier of discrete function space
+    */
+    DFSpaceIdentifier type () const 
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().type());
+      return asImp().type();
+    }
+
+    /** \brief get base function set for given entity 
+        \param[in] entity Entity for which base function is requested 
+        \return BaseFunctionSet for Entity 
+    */
     template< class EntityType >
     const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const 
     {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().baseFunctionSet( entity ));
       return asImp().baseFunctionSet( entity );
     }
   
-    //! return true if space is continuous 
-    bool continuous() const { return asImp().continuous(); }
-
-    //! Return the corresponding Grid (const version) 
-    const GridType& grid() const { return asImp().grid(); }
-
-    //! Return the corresponding Grid 
-    GridType& grid() { return asImp().grid(); }
-
-    //! Return the corresponding grid part (const version) 
-    const GridPartType& gridPart() const { return asImp().gridPart(); }
-
-    //! Return the corresponding grid part  
-    GridPartType& gridPart() { return asImp().gridPart(); }
-
-    //! Return the index set corresponding to the iterator
-    const IndexSetType& indexSet() const { return asImp().indexSet(); }
-
-    //! Return number of degrees of freedom for specified grid part 
-    int size () const { return asImp().size(); }
-
-    //! For given entity map local dof number to global dof number 
-    //! at the level of the given entity. 
-    template <class EntityType>
-    int mapToGlobal ( EntityType &en, int localNum ) const
-    {
-      return asImp().mapToGlobal ( en , localNum );
+    /** \brief return true if space contains global continuous functions 
+       (i.e. for LagrangeSpace <b>true</b> is returned, for DiscontinuousGalerkinSpace <b>false</b> is returned. 
+       \return <b>true</b> if space contians global continous functions, <b>false</b> otherwise 
+    */
+    bool continuous() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().continuous());
+      return asImp().continuous(); 
     }
 
-    //! returns index of sequence in grid sequences 
-    int sequence () const { return asImp().sequence(); }
+    /** \brief return reference to grid which belongs to discrete function space 
+        \return reference to grid  
+    */
+    const GridType& grid() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
+      return asImp().grid(); 
+    }
 
-    //! get global order of space  
-    int order () const { return asImp().order(); } 
+    /** \brief return reference to grid which belongs to discrete function space 
+        \return reference to grid  
+    */
+    GridType& grid() 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
+      return asImp().grid(); 
+    }
+
+    /** \brief Return the corresponding grid part (const version) 
+        \return reference to grid part 
+    */ 
+    const GridPartType& gridPart() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
+      return asImp().gridPart(); 
+    }
+
+    /** \brief Return the corresponding grid part (const version) 
+        \return reference to grid part 
+    */ 
+    GridPartType& gridPart() 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
+      return asImp().gridPart(); 
+    }
+
+    /** Return refernece to the corresponding index set of the space 
+        \return reference to index set  
+    */ 
+    const IndexSetType& indexSet() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().indexSet());
+      return asImp().indexSet(); 
+    }
+
+    /** \brief Return number of degrees of freedom for this space 
+        \return number of degrees of freedom 
+    */
+    int size () const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
+      return asImp().size(); 
+    }
+
+    /** \brief For given entity map local dof number to global dof number 
+        \param[in] entity Entity for which mapping is done 
+        \param[in] localNum local dof number 
+        \return global dof number, i.e. position in dof array 
+    */    
+    template <class EntityType>
+    int mapToGlobal ( const EntityType &entity, 
+                      const int localNum ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity, localNum ));
+      return asImp().mapToGlobal ( entity , localNum );
+    }
+
+    /** \brief returns index of sequence in grid sequences 
+        \return number of current sequence 
+    */
+    int sequence () const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().sequence());
+      return asImp().sequence(); 
+    }
+
+    /** \brief get global order of space  
+        \return order of space, i.e. polynomial order of base functions 
+    */
+    int order () const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().order());
+      return asImp().order(); 
+    } 
   
-    //! Iterator over the entities of a space 
-    //! The index set specifies the subset of grid entities of all available 
-    //! codimensions; usually, the elements of the space normally belong only
-    //! to one codimension, which is selected by the space
+    /** \brief Iterator pointing to first entity associated 
+               with this discrete function space 
+        \return Iterator pointing to first Entity
+    */
     IteratorType begin() const {
       return asImp().begin();
     }
 
-    //! End iterator
+    /** \brief Iterator pointing behind last entity associated 
+               with this discrete function space 
+        \return Iterator pointing behind last Entity
+    */
     IteratorType end() const {
       return asImp().end();
     }
@@ -139,20 +221,18 @@ namespace Dune{
   
   }; // end class DiscreteFunctionSpaceInterface
 
-  //**************************************************************************
-  //
-  // --DiscreteFunctionSpaceDefault
-  //
-  //! This is the class with default implementations for discrete function
-  //! space. 
-  //!
-  //**************************************************************************
+  //---------------------------------------------------------------------------
+  //-
+  //-  --DiscreteFunctionSpaceDefault
+  //-
+  //-
+  //---------------------------------------------------------------------------
+  /** \brief This is the class with default implementations for discrete function */
   template <class FunctionSpaceTraits>
   class DiscreteFunctionSpaceDefault :
     public DiscreteFunctionSpaceInterface<FunctionSpaceTraits>
   {
   public:
-    //! The implementation type
     typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename FunctionSpaceTraits::GridPartType  GridPartType;
 
@@ -166,10 +246,15 @@ namespace Dune{
     {
     }
 
-    //! returns true if grid has more than one geometry type (hybrid grid)
+    /** \brief returns true if grid has more than one geometry type (hybrid grid)
+        \return <b>true</b> if  grid has more than one geometry type
+        (hybrid grid), <b>false</b> otherwise 
+    */
     bool multipleGeometryTypes() const { return multipleGeometryTypes_; }
 
-    //! default returns false  
+    /** \brief returns true if base function sets depend on entity 
+        \return <b>true</b> if base function set depend on entities, <b>false</b> otherwise 
+    */
     bool multipleBaseFunctionSets() const { return false; }
 
   protected: 
@@ -183,99 +268,13 @@ namespace Dune{
       return static_cast<DiscreteFunctionSpaceType&>(*this); 
     }
 
+    //! Barton-Nackman trick 
     const DiscreteFunctionSpaceType &asImp() const  
     { 
       return static_cast<const DiscreteFunctionSpaceType&>(*this); 
     }
   };
 
-  ////////////////////////////////////////////////////////////
-  //
-  //  DiscreteFunctionSpaceAdapter 
-  //
-  ////////////////////////////////////////////////////////////
-  /** \brief Create Obejct that behaves like a discrete function space 
-      without to provide functions with the iterator facilities. 
-  */
-  template <class FunctionSpaceImp, class GridPartImp>
-  class DiscreteFunctionSpaceAdapter : public FunctionSpaceImp
-  {
-  public:  
-    enum { polynomialOrder = 111 };
-    
-    //! type of function space 
-    typedef FunctionSpaceImp FunctionSpaceType;
-    //! grid part type 
-    typedef GridPartImp GridPartType;
-    //! grid type 
-    typedef typename GridPartType :: GridType GridType;
-    //! type of used entity
-    typedef typename GridType :: template Codim<0> :: Entity EntityType;
-    //! type of iterator 
-    typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
-    //! type of IndexSet 
-    typedef typename GridPartType :: IndexSetType IndexSetType; 
-    
-    //! constructor taking grid Part 
-    DiscreteFunctionSpaceAdapter(const GridPartType& gridPart) 
-      : gridPart_(gridPart) 
-    {
-    }
-
-    //! copy constructor
-    DiscreteFunctionSpaceAdapter(const DiscreteFunctionSpaceAdapter& org) 
-      : gridPart_(org.gridPart_) 
-    {
-    }
-
-    //! return begin iterator 
-    IteratorType begin () const { return gridPart_.template begin<0> (); }
-    //! return end iterator 
-    IteratorType end () const { return gridPart_.template end<0> (); }
-
-    //! return reference to grid part 
-    const GridPartType& gridPart() const { return gridPart_; }
-    //! return reference to index set 
-    const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
-    //! return reference to grid 
-    const GridType& grid () const { return gridPart_.grid(); }
-
-    //! space for continuous functions 
-    bool continuous () const { return true; }
-
-    //! return order which is infinity 
-    int order () const { return polynomialOrder; }
-
-    //! return type of space 
-    DFSpaceIdentifier type () const { return DFAdapter_id; }
-
-  protected:
-    //! grid part to select view of grid 
-    const GridPartType& gridPart_;
-  };
-
-
-  //! BaseFunctionSetSingletonFactory provides method createObject and
-  //! deleteObject for the SingletonList  
-  template <class KeyImp, class ObjectImp, class ObjectFactoryImp>
-  class BaseFunctionSetSingletonFactory
-  { 
-  public:
-    //! create new BaseFunctionSet 
-    static ObjectImp * createObject( const KeyImp & key )
-    {
-      ObjectFactoryImp fac(key); 
-      return new ObjectImp(fac); 
-    }
-    
-    //! delete BaseFunctionSet 
-    static void deleteObject( ObjectImp * obj ) 
-    {
-      delete obj;
-    }
-  };
-
-  /** @} end documentation group */
-
 } // end namespace Dune 
+#include <dune/fem/space/common/discretefunctionspacecommon.hh>
 #endif
