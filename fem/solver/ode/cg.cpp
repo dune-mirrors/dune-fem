@@ -37,6 +37,13 @@ bool CG::solve(Function &op, double *x, const double *b)
   dim = op.dim_of_value();
   new_size(dim);
   int iterations = 0;
+  double _tolerance = tolerance;
+  if (relative_tolerance){
+    double global_dot;
+    double local_dot = cblas_ddot(dim, b, 1, b, 1);
+    comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);      
+    _tolerance *= sqrt(global_dot);
+  }
 
   // preconditioned CG
   if (preconditioner){
@@ -63,7 +70,7 @@ bool CG::solve(Function &op, double *x, const double *b)
       iterations++;
       local_dot = cblas_ddot(dim, r, 1, r, 1);
       comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
-      if (sqrt(global_dot) < tolerance 
+      if (sqrt(global_dot) < _tolerance 
 	  || iterations >= max_num_of_iterations) break;
  
       double beta = 1.0/nu;
@@ -103,8 +110,8 @@ bool CG::solve(Function &op, double *x, const double *b)
       daxpby(dim, -1.0, r, 1, beta, d, 1);
  
       iterations++;
-      //std::cout << iterations << " " << sqrt(nu) << std::endl;
-      if (sqrt(nu) < tolerance || iterations >= max_num_of_iterations) break; 
+      // std::cout << iterations << " " << sqrt(nu) << std::endl;
+      if (sqrt(nu) < _tolerance || iterations >= max_num_of_iterations) break; 
     }
   }
     
