@@ -24,8 +24,13 @@ namespace Dune{
       @{
   */
 
-  enum DFSpaceIdentifier {  LagrangeSpace_id , DGSpace_id , 
-    CombinedSpace_id , FiniteVolumeSpace_id , DFAdapter_id };
+  enum DFSpaceIdentifier {  
+    LagrangeSpace_id , //!< id for Lagrange Space 
+    DGSpace_id ,       //!< id for Discontinuous Galerkin Space 
+    CombinedSpace_id , //!< id for Combined Space 
+    FiniteVolumeSpace_id , //!< id for Finite Volume Space 
+    DFAdapter_id    //!< id for DiscreteFunctionSpace Adapter
+  };
  
   //**************************************************************************
   //
