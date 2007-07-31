@@ -127,18 +127,13 @@ namespace Dune
                                            BaseFunctionStorageImp >
      LagrangeDiscreteFunctionSpaceType;
 
-    //! type of the grid partition
     typedef typename Traits :: GridPartType GridPartType;
-    //! type of the grid
     typedef typename Traits :: GridType GridType;
-    //! type of the index set
     typedef typename Traits :: IndexSetType IndexSetType;
-    //! type of iterator for entites of codim 0
     typedef typename Traits :: IteratorType IteratorType;
     //! dimension of the grid (not the world)
     enum { dimension = GridType :: dimension };
 
-    //! type of function space
     typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
     //! field type for function space's domain
     typedef typename Traits :: DomainFieldType DomainFieldType;
@@ -158,7 +153,7 @@ namespace Dune
     
     //! type of the base function set(s)
     typedef typename Traits :: BaseFunctionSetImp BaseFunctionSetImp;
-    //! type of the base function set(s)
+    
     typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
     //! type of the base function set map
     typedef std :: map< const GeometryType, const BaseFunctionSetImp* >
@@ -201,7 +196,8 @@ namespace Dune
     //! type of DoF manager factory
     typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
-  public: 
+  public:
+    //! type of identifier for this discrete function space
     typedef int IdentifierType;
     //! identifier of this discrete function space
     static const IdentifierType id = 665;
@@ -227,8 +223,10 @@ namespace Dune
     DofManagerType &dofManager_;
 
   public:
-    //! Constructor generating a LagrangeBaseFunctionSet of the requested
-    //! polynomial order for each element type of the grid
+    /** \brief Constructor generating a LagrangeBaseFunctionSet of the requested polynomial order for each element type of the grid 
+        \param[in] gridPart 
+        \return 
+    **/
     inline LagrangeDiscreteFunctionSpace ( GridPartType &gridPart )
     : BaseType( gridPart ),
       gridPart_( gridPart ),
@@ -270,7 +268,9 @@ namespace Dune
       assert( mapper_ != NULL );
     }
 
-    //! Destructor (freeing base functions and mapper)
+    /** \brief Destructor (freeing base functions and mapper)
+        \return 
+    **/
     inline ~LagrangeDiscreteFunctionSpace ()
     {
       delete mapper_;
@@ -295,19 +295,21 @@ namespace Dune
       }
     }
 
-    //! are the functions continuous?
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous const */
     inline bool continuous () const
     {
       return (polynomialOrder > 0);
     }
 
-    //! get the type of this discrete function space
+    /** \brief get the type of this discrete function space 
+        \return DFSpaceIdentifier
+    **/
     inline DFSpaceIdentifier type () const
     {
       return LagrangeSpace_id;
     }
 
-    //! get the polynomial order of this discrete function space
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::order const */
     inline int order () const
     {
       return polynomialOrder;
@@ -318,19 +320,19 @@ namespace Dune
       return order();
     }
 
-    //! begin iterator
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin const */
     inline IteratorType begin () const
     {
       return gridPart_.template begin< 0 >();
     }
 
-    //! end iterator
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::order const */
     inline IteratorType end () const
     {
       return gridPart_.template end< 0 >();
     }
 
-    //! provide access to the base function set for an entity
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::baseFunctionSet const */
     template< class EntityType >
     inline const BaseFunctionSetType 
       baseFunctionSet ( const EntityType &entity ) const
@@ -338,7 +340,10 @@ namespace Dune
       return this->baseFunctionSet( entity.geometry().type() );
     }
 
-    //! provide access to the base function set for a geometry type
+    /** \brief provide access to the base function set for a geometry type
+        \param[in] type
+        \return BaseFunctionSetType
+    **/
     inline const BaseFunctionSetType
       baseFunctionSet ( const GeometryType type ) const
     {
@@ -347,7 +352,10 @@ namespace Dune
       return BaseFunctionSetType(baseFunctionSet_[ type ]);
     }
 
-    //! provide access to the Lagrange point set for an entity
+    /** \brief provide access to the Lagrange point set for an entity 
+        \param[in] entity Entity the Lagrange point set is requested
+        \return LagrangePointSet
+    **/
     template< class EntityType >
     inline const LagrangePointSetType&
       lagrangePointSet ( const EntityType &entity ) const
@@ -355,7 +363,10 @@ namespace Dune
       return this->lagrangePointSet( entity.geometry().type() );
     }
 
-    //! provide access to the Lagrange point set for a geometry type
+    /** \brief provide access to the Lagrange point set for a geometry type
+        \param[in] type
+        \return LagrangePointSetType
+    **/
     inline const LagrangePointSetType&
       lagrangePointSet ( const GeometryType type ) const
     {
@@ -364,57 +375,62 @@ namespace Dune
       return *lagrangePointSet_[ type ];
     }
 
-    //! get dimension of balue
+    /** \brief get dimension of value
+        \return int
+    **/
     inline int dimensionOfValue () const
     {
       return dimVal;
     }
 
-    //! obtain the associated grid
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid const */
     inline const GridType& grid () const
     {
       return gridPart_.grid();
     }
-    
-    //! obtain the associated grid partition
+   
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
     inline const GridPartType& gridPart () const
     {
       return gridPart_;
     }
 
-    //! obtain the associated grid partition
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
     inline GridPartType& gridPart ()
     {
       return gridPart_;
     }
 
-    //! obtain the associated index set
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet const */
     inline const IndexSetType& indexSet () const
     {
       return gridPart_.indexSet();
     }
 
-    //! obtain the DoF mapper of this space
+    
+    /** \brief obtain the DoF mapper of this space
+        \return MapperType
+    **/
     inline MapperType& mapper () const
     {
       assert( mapper_ != 0 );
       return *mapper_;
     }
 
-    //! map local DoF number to global DoF number
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal const */
     template< class EntityType >
     inline int mapToGlobal( const EntityType &entity, int localDof ) const
     {
       return mapper_->mapToGlobal( entity, localDof );
     }
 
-    //! get index in grid sequences
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence const */
     inline int sequence () const
     {
       return dofManager_.sequence();
     }
 
-    //! number of DoFs in the function space
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::size const */
     inline int size () const
     {
       return mapper_->size();
