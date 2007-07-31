@@ -421,7 +421,7 @@ namespace Dune
     template< class EntityType >
     inline int mapToGlobal( const EntityType &entity, const int localDof ) const
     {
-      return mapper_->mapToGlobal( entity, localDof );
+      return mapper().mapToGlobal( entity, localDof );
     }
 
     /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence */
@@ -433,7 +433,7 @@ namespace Dune
     /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
     inline int size () const
     {
-      return mapper_->size();
+      return mapper().size();
     }
   };
   /** @}

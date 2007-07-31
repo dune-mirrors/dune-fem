@@ -166,16 +166,16 @@ namespace Dune{
     }
 
     /** \brief For given entity map local dof number to global dof number 
-        \param[in] entity Entity for which mapping is done 
-        \param[in] localNum local dof number 
+        \param[in] entity   Entity for which mapping is done 
+        \param[in] localDof local dof number 
         \return global dof number, i.e. position in dof array 
     */    
     template <class EntityType>
     int mapToGlobal ( const EntityType &entity, 
-                      const int localNum ) const
+                      const int localDof ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity, localNum ));
-      return asImp().mapToGlobal ( entity , localNum );
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity, localDof ));
+      return asImp().mapToGlobal ( entity , localDof );
     }
 
     /** \brief returns index of sequence in grid sequences 

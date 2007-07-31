@@ -264,23 +264,19 @@ namespace Dune {
       return polOrd;
     }
     
-   /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
     int size () const 
     {
       return mapper().size();
     }
 
    
-    /** \brief  for given entity map local dof number to global dof number 
-    \param[in] en 
-    \param[in] localNum
-    \return int 
-    */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal */
     template <class EntityType>
     int mapToGlobal ( const EntityType &entity, 
-                      const int localNum ) const
+                      const int localDof ) const
     {
-      return mapper().mapToGlobal ( entity , localNum );
+      return mapper().mapToGlobal ( entity , localDof );
     }
 
     //! Return dof mapper of the space
