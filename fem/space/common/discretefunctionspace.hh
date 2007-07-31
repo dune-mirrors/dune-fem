@@ -24,6 +24,7 @@ namespace Dune{
       @{
   */
 
+  //! \brief enumerator for identification of spaces 
   enum DFSpaceIdentifier {  
     LagrangeSpace_id , //!< id for Lagrange Space 
     DGSpace_id ,       //!< id for Discontinuous Galerkin Space 
