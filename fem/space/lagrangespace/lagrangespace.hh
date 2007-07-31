@@ -295,7 +295,7 @@ namespace Dune
       }
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous () const
     {
       return (polynomialOrder > 0);
@@ -309,7 +309,7 @@ namespace Dune
       return LagrangeSpace_id;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::order const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
     inline int order () const
     {
       return polynomialOrder;
@@ -320,19 +320,19 @@ namespace Dune
       return order();
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin */
     inline IteratorType begin () const
     {
       return gridPart_.template begin< 0 >();
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::order const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
     inline IteratorType end () const
     {
       return gridPart_.template end< 0 >();
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::baseFunctionSet const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::baseFunctionSet */
     template< class EntityType >
     inline const BaseFunctionSetType 
       baseFunctionSet ( const EntityType &entity ) const
@@ -383,13 +383,13 @@ namespace Dune
       return dimVal;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid */
     inline const GridType& grid () const
     {
       return gridPart_.grid();
     }
    
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
     inline const GridPartType& gridPart () const
     {
       return gridPart_;
@@ -401,7 +401,7 @@ namespace Dune
       return gridPart_;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet  */
     inline const IndexSetType& indexSet () const
     {
       return gridPart_.indexSet();
@@ -417,20 +417,20 @@ namespace Dune
       return *mapper_;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal */
     template< class EntityType >
-    inline int mapToGlobal( const EntityType &entity, int localDof ) const
+    inline int mapToGlobal( const EntityType &entity, const int localDof ) const
     {
       return mapper_->mapToGlobal( entity, localDof );
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence */
     inline int sequence () const
     {
       return dofManager_.sequence();
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::size const */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
     inline int size () const
     {
       return mapper_->size();
