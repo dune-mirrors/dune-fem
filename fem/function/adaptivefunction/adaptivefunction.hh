@@ -87,6 +87,9 @@ namespace Dune {
       DiscreteFunctionSpaceImp > MyTraits;
     typedef DiscreteFunctionDefault<MyTraits> BaseType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> ThisType;
+
+    using BaseType :: assign;
+
   public:
     friend class DiscreteFunctionInterface<MyTraits>;
   public:
@@ -167,11 +170,6 @@ namespace Dune {
       BaseType(other.space()),
       Imp(other)
     {}
-
-    inline DiscreteFunctionType &operator= ( const RangeFieldType s )
-    {
-      return BaseType :: operator= ( s );
-    }
 
     //! assignment of functions 
     virtual BaseType& assign(const MappingType& g)
@@ -426,6 +424,8 @@ namespace Dune {
     typedef AdaptiveDiscreteFunctionTraits<DiscreteFunctionSpaceImp> MyTraits;
     typedef DiscreteFunctionDefault<MyTraits> BaseType;
     typedef AdaptiveDiscreteFunction<CombinedSpace<ContainedFunctionSpaceImp,N,p> > ThisType;
+
+    using BaseType :: assign;
 
   public:
     //- Typedefs and enums

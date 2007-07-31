@@ -82,7 +82,7 @@ namespace Dune
 
       const RangeFunctionSpaceType &rangeFunctionSpace = w.space();
 
-      w = (RangeFieldType)INFINITY;
+      w.assign( (RangeFieldType)INFINITY );
 
       RangeTemporaryLocalFunctionType w_temp( rangeFunctionSpace );
 

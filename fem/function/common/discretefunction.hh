@@ -260,7 +260,7 @@ namespace Dune{
     void clear();
 
     //! Set all DoFs to a scalar value
-    inline DiscreteFunctionType &operator= ( const RangeFieldType s )
+    inline DiscreteFunctionType &assign ( const RangeFieldType s )
     {
       const DofIteratorType end = this->dend();
       for( DofIteratorType it = this->dbegin(); it != end; ++it )
