@@ -78,12 +78,12 @@ public:
   }
 
   /** \brief evaluate basefunction 
-      \param baseFunct number of base function to evaluate 
-      \param diffVariable length determines the derivative (i.e. 0 is
+      \param[in] baseFunct number of base function to evaluate 
+      \param[in] diffVariable length determines the derivative (i.e. 0 is
              evaluate, 1 is gradient, 2 hessian, ... ) and the value
              determines the component 
-      \param x point in reference element for evaluation
-      \param phi return value 
+      \param[in] x point in reference element for evaluation
+      \param[out] phi return value 
   */
   template <int diffOrd>
   void evaluate (const int baseFunct, 
@@ -96,13 +96,13 @@ public:
   }
 
   /** \brief evaluate basefunction 
-      \param baseFunct number of base function to evaluate 
-      \param diffVariable length determines the derivative (i.e. 0 is
+      \param[in] baseFunct number of base function to evaluate 
+      \param[in] diffVariable length determines the derivative (i.e. 0 is
              evaluate, 1 is gradient, 2 hessian, ... ) and the value
              determines the component 
-      \param quad Quadrature 
-      \param quadPoint number of quadrature point 
-      \param phi return value 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
+      \param[out] phi return value 
   */
   template <int diffOrd, class QuadratureImp>
   void evaluate (const int baseFunct, 
@@ -177,9 +177,9 @@ public:
   virtual ~BaseFunctionSetDefault() {}
 
   /** \brief default evaluate using the evaluate interface 
-      \param baseFunct number of base function to evaluate 
-      \param x coordiante in reference element to evaluate base function on 
-      \param phi return value, i.e. value of base function 
+      \param[in] baseFunct number of base function to evaluate 
+      \param[in] x coordiante in reference element to evaluate base function on 
+      \param[out] phi return value, i.e. value of base function 
   */ 
   void evaluate(const int baseFunct, 
                 const DomainType & x, 
@@ -190,10 +190,10 @@ public:
   }
 
   /** \brief default evaluate using the evaluate interface 
-      \param baseFunct number of base function to evaluate 
-      \param quad Quadrature 
-      \param quadPoint number of quadrature point 
-      \param phi return value, i.e. value of base function 
+      \param[in] baseFunct number of base function to evaluate 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
+      \param[out] phi return value, i.e. value of base function 
   */ 
   template <class QuadratureImp>
   void evaluate(const int baseFunct, 
@@ -206,9 +206,9 @@ public:
   }
 
   /** \brief default jacobian using the evaluate interface 
-      \param baseFunct number of base function to evaluate jacobian 
-      \param x coordiante in reference element to evaluate base function on 
-      \param phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
+      \param[in] baseFunct number of base function to evaluate jacobian 
+      \param[in] x coordiante in reference element to evaluate base function on 
+      \param[out] phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
   */ 
   void jacobian(const int baseFunct, 
                 const DomainType& x, 
@@ -225,10 +225,10 @@ public:
   }
 
   /** \brief default jacobian using the evaluate interface 
-      \param baseFunct number of base function to evaluate jacobian 
-      \param quad Quadrature 
-      \param quadPoint number of quadrature point 
-      \param phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
+      \param[in] baseFunct number of base function to evaluate jacobian 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
+      \param[out] phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
   */ 
   template <class QuadratureImp>
   void jacobian ( const int baseFunct, 
@@ -247,8 +247,8 @@ public:
   }
 
   /** \brief evaluate basefunction and multiply with factor
-      \param baseFunct number of base functions to evaluate 
-      \param xLocal local point in reference element 
+      \param[in] baseFunct number of base functions to evaluate 
+      \param[in] xLocal local point in reference element 
       \return return scalar product between base function and factor 
     */
   RangeFieldType evaluateSingle(const int baseFunct, 
@@ -261,9 +261,9 @@ public:
   }
 
   /** \brief evaluate basefunction and multiply with factor
-      \param baseFunct number of base functions to evaluate 
-      \param quad Quadrature 
-      \param quadPoint number of quadrature point 
+      \param[in] baseFunct number of base functions to evaluate 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
       \return return scalar product between base function and factor 
   */
   template <class QuadratureType>
@@ -277,9 +277,9 @@ public:
 
   /** \brief evaluate gradient of basefunction on given entity (uses
       jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-      \param baseFunct number of base functions to evaluate jacobian  
-      \param entity Entity gradient of base function is evaluated on 
-      \param xLocal local point in reference element 
+      \param[in] baseFunct number of base functions to evaluate jacobian  
+      \param[in] entity Entity gradient of base function is evaluated on 
+      \param[in] xLocal local point in reference element 
       \return return scalar product between gradient of base function and factor 
   */
   template <class Entity>
@@ -304,10 +304,10 @@ public:
 
   /** \brief evaluate gradient of basefunction on given entity (uses
       jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-      \param baseFunct number of base functions to evaluate jacobian  
-      \param entity Entity gradient of base function is evaluated on 
-      \param quad Quadrature 
-      \param quadPoint number of quadrature point 
+      \param[in] baseFunct number of base functions to evaluate jacobian  
+      \param[in] entity Entity gradient of base function is evaluated on 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
       \return return scalar product between gradient of base function and factor 
   */
   template <class Entity, class QuadratureType>
