@@ -6,7 +6,7 @@
 namespace Dune
 {
 
-  /** @ingroup RestrictProlongInterface
+  /** @ingroup RestrictProlongImpl
    *
    *  \brief Restriction / prolongation operator for Lagrange discrete
    *         function spaces

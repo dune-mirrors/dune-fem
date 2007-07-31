@@ -6,8 +6,6 @@
 
 namespace Dune{
 
-//@}
-
 /** @defgroup RestrictProlongImpl Restrict Prolong Implementations 
     @ingroup RestrictProlongInterface 
     @{

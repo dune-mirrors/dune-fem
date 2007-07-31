@@ -77,7 +77,7 @@ public:
 protected:  
   /** \brief calculates the weight, i.e. (volume son)/(volume father)
       \param[in] father Father Entity 
-      \param[in] son son Entity 
+      \param[in] son Son Entity 
       \return proportion between fahter and son volume
   */
   template <class EntityType>

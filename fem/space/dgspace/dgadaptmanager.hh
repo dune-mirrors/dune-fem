@@ -16,7 +16,8 @@
 *************************************************************/
 
 namespace Dune{
-/** @ingroup RestrictProlongInterface
+/** @ingroup RestrictProlongImpl
+    @{
 **/
 
 //***********************************************************************
@@ -217,5 +218,6 @@ public:
   }
 };
 
+///@}
 } // end namespace Dune 
 #endif

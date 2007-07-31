@@ -4,6 +4,7 @@
 //- local includes  
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/space/common/restrictprolongimpl.hh>
 
 //- local includes 
 #include "combinedspace.hh"
@@ -16,7 +17,8 @@
 *************************************************************/
 
 namespace Dune{
-/** @ingroup RestrictProlongInterface
+/** @ingroup RestrictProlongImpl
+    @{
 **/
 
 //***********************************************************************
@@ -195,5 +197,6 @@ public:
   }
 };
 
+///@}
 } // end namespace Dune 
 #endif
