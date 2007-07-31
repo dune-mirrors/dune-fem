@@ -27,17 +27,17 @@ namespace Dune{
   public:  
     enum { polynomialOrder = 111 };
     
-    //! type of function space 
+    //- type of function space 
     typedef FunctionSpaceImp FunctionSpaceType;
-    //! grid part type 
+    //- grid part type 
     typedef GridPartImp GridPartType;
-    //! grid type 
+    //- grid type 
     typedef typename GridPartType :: GridType GridType;
-    //! type of used entity
+    //- type of used entity
     typedef typename GridType :: template Codim<0> :: Entity EntityType;
-    //! type of iterator 
+    //- type of iterator 
     typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
-    //! type of IndexSet 
+    //- type of IndexSet 
     typedef typename GridPartType :: IndexSetType IndexSetType; 
     
     //! constructor taking grid Part 
@@ -52,25 +52,25 @@ namespace Dune{
     {
     }
 
-    //! return begin iterator 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin */
     IteratorType begin () const { return gridPart_.template begin<0> (); }
-    //! return end iterator 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::end */
     IteratorType end () const { return gridPart_.template end<0> (); }
 
-    //! return reference to grid part 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
     const GridPartType& gridPart() const { return gridPart_; }
-    //! return reference to index set 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet */
     const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
-    //! return reference to grid 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid */
     const GridType& grid () const { return gridPart_.grid(); }
 
-    //! space for continuous functions 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const { return true; }
 
-    //! return order which is infinity 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
     int order () const { return polynomialOrder; }
 
-    //! return type of space 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::type */
     DFSpaceIdentifier type () const { return DFAdapter_id; }
 
   protected:

@@ -141,7 +141,7 @@ namespace Dune{
       return asImp().gridPart(); 
     }
 
-    /** Return refernece to the corresponding index set of the space 
+    /** \brief Return reference to the corresponding index set of the space 
         \return reference to index set  
     */ 
     const IndexSetType& indexSet() const 
