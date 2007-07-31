@@ -252,9 +252,10 @@ namespace Dune {
 
     //! for given entity map local dof number to global dof number 
     template <class EntityType>
-    int mapToGlobal ( EntityType &en, int localNum ) const
+    int mapToGlobal ( const EntityType &entity, 
+                      const int localNum ) const
     {
-      return mapper().mapToGlobal ( en , localNum );
+      return mapper().mapToGlobal ( entity , localNum );
     }
 
     //! Return dof mapper of the space
