@@ -9,4 +9,4 @@ basefunctionfactory.hh    dofmapperinterface.hh     idbasedleafindexset.hh \
 basefunctioninterface.hh  basefunctionsetinterface.hh  dofstorage.hh restrictprolonginterface.hh \
 boundary.hh               dynamictype.hh            singletonlist.hh \
 loadbalancer.hh           gridpartutility.hh  arrays.hh  objectstack.hh \
-periodicindexset.hh       periodicgridpart.hh
+periodicindexset.hh       periodicgridpart.hh restrictprolongimpl.hh

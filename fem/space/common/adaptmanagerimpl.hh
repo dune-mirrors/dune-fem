@@ -23,7 +23,7 @@ namespace Dune{
   for combining of local grid operations without using virtual methods.
   The interface of the two defined methods of the class (restrictLocal and
   prolongLocal) is given by the implementation (see below ) and 
-  has to be the same for all local operators you want to combine 
+  has to be the same for all local operators you want to combine.
 */
 #define PARAM_CLASSNAME CombinedRestProl 
 #define PARAM_FUNC_1 restrictLocal 
@@ -136,9 +136,10 @@ public:
     std::cout << "Created AdaptationManager: adaptation method = " << methodName() << std::endl;
   }
 
+  //! destructor 
   virtual ~AdaptationManager () {}
 
-  //! returns true if adaptation is enabled 
+  //! \brief @copydoc AdaptationManagerInterface::adaptive 
   bool adaptive () const { return adaptationMethod_ != none; }
 
   /*! 
@@ -176,11 +177,13 @@ public:
     return rpOp_;
   }
   
-  //! according to adaption method parameter 
-  //! the adaption procedure is done, 
-  //! 0 == no adaptation
-  //! 1 == generic adaption 
-  //! 2 == grid call back adaptation (only in AlbertaGrid and ALUGrid)
+  /** \brief 
+     according to adaption method parameter 
+     the adaption procedure is done, 
+     0 == no adaptation
+     1 == generic adaption 
+     2 == grid call back adaptation (only in AlbertaGrid and ALUGrid)
+  */
   virtual void adapt ()
   {
     AdaptationMethod<ThisType,GridType,
@@ -188,7 +191,7 @@ public:
         adapt(*this,grid_,dm_,rpOp_,adaptationMethod_);
   }
 
-  //! default load balancing method does nothing
+  //! \brief default load balancing method which does nothing
   virtual bool loadBalance () 
   { 
     return false; 
@@ -201,10 +204,11 @@ public:
   }
  
 private:  
-  //! generic adaptation procedure
-  //! adapt defines the grid walkthrough before and after grid adaptation.
-  //! Note that the LocalOperator can be an combined Operator 
-  //! Domain and Range are defined through class Operator
+  /** \brief generic adaptation procedure
+     adapt defines the grid walkthrough before and after grid adaptation.
+     Note that the LocalOperator can be an combined Operator 
+     Domain and Range are defined through class Operator
+  */
   template <PartitionIteratorType pitype>
   void genericAdapt () const 
   {
@@ -281,7 +285,7 @@ private:
   }
   
 private:
-  // make hierarchic walk trough 
+  //! make hierarchic walk trough for restriction 
   template <class EntityType, class RestrictOperatorType  >
   bool hierarchicRestrict ( EntityType& en, RestrictOperatorType & restop ) const 
   {
@@ -366,6 +370,9 @@ protected:
   AdaptationMethodType adaptationMethod_;
 };
 
+/*! \brief This class manages the adaptation process including a load
+  balancing after the adaptation step. 
+*/
 template <class GridType, class RestProlOperatorImp >
 class AdaptationLoadBalanceManager :
   public AdaptationManager<GridType,RestProlOperatorImp> ,
@@ -388,19 +395,20 @@ public:
   {
   }
 
-  //! call load balance 
+  /** \brief @copydoc LoadBalancerInterface::loadBalance */ 
   virtual bool loadBalance () 
   {
     // call load balance 
     return Base2Type :: loadBalance();
   }
 
-  //! return balance counter 
+  /** \brief @copydoc LoadBalancerInterface::balanceCounter */ 
   virtual int balanceCounter () const 
   { 
     return Base2Type :: balanceCounter ();
   }
   
+  /** \brief @copydoc AdaptationManagerInterface::adapt */ 
   virtual void adapt () 
   {
     // adapt grid 
