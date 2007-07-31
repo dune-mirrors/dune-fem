@@ -162,6 +162,6 @@ private:
   mutable RangeFieldType weight_;
 };
 
-//@} 
+///@} 
 } // end namespace Dune 
 #endif

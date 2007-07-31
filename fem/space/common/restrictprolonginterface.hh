@@ -38,7 +38,7 @@ public:
   
   /** \brief restrict data to father 
       \param[in] father Father Entity 
-      \param[in] son son Entity 
+      \param[in] son Son Entity 
       \param[in] initialize <b>true</b> if restrictLocal is called for first time for this father
   */
   template <class EntityType>
@@ -52,7 +52,7 @@ public:
   
   /** \brief prolong data to children 
       \param[in] father Father Entity 
-      \param[in] son son Entity 
+      \param[in] son Son Entity 
       \param[in] initialize <b>true</b> if restrictLocal is called for first time for this father
   */
   template <class EntityType>
