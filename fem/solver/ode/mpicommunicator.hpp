@@ -93,6 +93,7 @@ private:
 
 
 
+class MPIError : public Dune::Exception {};
 
 class Communicator
 {
@@ -101,6 +102,21 @@ public:
   // static method to give one instance needed
   static Communicator & instance () 
   { 
+    int flag;
+    flag = 0;
+    MPI_Initialized(&flag);
+    if (!flag) {
+      std::cerr << "the MPI-Communicator in fem/solver/ode "
+                << "is used before MPI_Init was called!" << std::endl
+                << "Solution 1: configure dune-fem with the " 
+                << "--disable-mpi option, or " << std::endl
+                << "Solution 2: start your main programm with " << std::endl
+                << "   Dune::MPIHelper & mpihelper = "
+                << "Dune::MPIHelper::instance(argc,argv);" << std::endl;
+      assert(0);
+      DUNE_THROW(MPIError,"MPI_Init not called");
+
+    }
     static Communicator comm;
     return comm;
   }
