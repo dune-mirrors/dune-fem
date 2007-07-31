@@ -84,10 +84,13 @@ namespace Dune {
     //! Index set of space
     typedef typename Traits::IndexSetType IndexSetType;
 
+    //! factory type for base functions 
     typedef DiscontinuousGalerkinBaseFunctionFactory<
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
+    //! type of dof manager 
     typedef DofManager<typename Traits::GridType> DofManagerType;
+    //! type of dof manager factory 
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
     //! Dimension of the range vector field
@@ -114,7 +117,7 @@ namespace Dune {
 
   public:
     //- Constructors and destructors
-    /** Constructor */
+    /** \brief Constructor taking grid part */
     DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
       BaseType (gridPart),
       gridPart_(gridPart),
