@@ -195,10 +195,10 @@ protected:
   //
   //  --LocalFunctionDefault 
   //
-  //! The Interface to the dune programmer, use this class to derive 
-  //! the own implementation. But only the methods declared in the interface
-  //! class must be implemented. 
-  //!
+  /** \brief The Interface to the dune programmer, use this class to derive 
+     the own implementation. But only the methods declared in the interface
+     class must be implemented. 
+  */
   //************************************************************************
   template< class DiscreteFunctionSpaceImp, class LocalFunctionImp > 
   class LocalFunctionDefault
@@ -337,7 +337,6 @@ protected:
     }
   }; // end LocalFunctionDefault
 
-} // end namespace Dune 
-
 ///@} 
+} // end namespace Dune 
 #endif
