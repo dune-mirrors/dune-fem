@@ -49,5 +49,6 @@ protected:
   }
 }; // end class Operator 
 
+///@}
 } // end namespace Dune 
 #endif
