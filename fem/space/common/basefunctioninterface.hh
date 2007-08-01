@@ -14,9 +14,15 @@ namespace Dune{
     
   The base functions are essential to describe a numerical solutions.
   Here the interface of base functions and the corresponding base 
-  function set is presented. The user always works with the
+  function set is presented. 
+  The user always works with the
   BaseFunctionSets, where all different base functions for 
   on element type are known.
+
+  \remarks  
+  The user always works with the
+  BaseFunctionSets where the interface is defined by
+  BaseFunctionSetInterface. 
 
   @{
  */
@@ -99,6 +105,7 @@ public:
   virtual int order() const { return -1; }
 };
 
+///@}
 ///@}
 } // end namespace Dune 
 #include "basefunctionsetinterface.hh"
