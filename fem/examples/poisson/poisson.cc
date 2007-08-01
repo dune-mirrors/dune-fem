@@ -199,8 +199,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
       
   RHSFunctionType f( discreteFunctionSpace ); 
     
-  LaplaceOperatorType laplace( discreteFunctionSpace, 
-                               LaplaceOperatorType :: ASSEMBLED );
+  LaplaceOperatorType laplace( discreteFunctionSpace ); 
    
    //! build right hand side, does not allocate b!
   RightHandSideAssembler< DiscreteFunctionType >

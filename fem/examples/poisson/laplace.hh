@@ -2,22 +2,22 @@
 #define DUNE_LAPLACE_HH
 
 //- Dune includes
+#include <dune/common/fmatrix.hh>
+
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
-//- local includes
-#include "feop.hh"
-
-namespace Dune 
+namespace Dune
 {
 
-  /** \brief The Laplace operator
-   */
+  //! \brief The Laplace operator
   template< class DiscreteFunctionImp, class TensorImp >
   class LaplaceFEOp
-  : public FEOp< DiscreteFunctionImp,
-                 SparseRowMatrix< typename DiscreteFunctionImp :: RangeFieldType >,
-                 LaplaceFEOp< DiscreteFunctionImp, TensorImp > >
+  : public Operator< typename DiscreteFunctionImp :: RangeFieldType,
+                     typename DiscreteFunctionImp :: RangeFieldType,
+                     DiscreteFunctionImp,
+                     DiscreteFunctionImp >
   {
   public:
     //! type of discrete functions
@@ -59,143 +59,194 @@ namespace Dune
             
   private:
     typedef LaplaceFEOp< DiscreteFunctionType, TensorType > ThisType;
-    typedef FEOp< DiscreteFunctionType, MatrixType, ThisType > BaseType;
 
-  public:
-    //! Operation mode for Finite Element Operator
-    typedef typename BaseType :: OpMode OpMode;
+  protected:
+    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
+
+    //! pointer to the system matrix 
+    mutable MatrixType *matrix_;
  
+    //! flag indicating whether the system matrix has been assembled
+    mutable bool matrix_assembled_;
+      
+    TensorType *const stiffTensor_;
+
   private:
     mutable JacobianRangeType grad;
     mutable JacobianRangeType othGrad;
 
     enum { maxnumOfBaseFct = 100 };
     mutable JacobianRangeType mygrad[ maxnumOfBaseFct ];
-        
-  private:
-    //DiscreteFunctionType *stiffFunction_;
-    TensorType *stiffTensor_;
-       
+ 
   public:
     //! constructor
-    LaplaceFEOp( const DiscreteFunctionSpaceType &discreteFunctionSpace,
-                 OpMode opMode )
-    : BaseType( discreteFunctionSpace, opMode ),
-      //stiffFunction_( NULL ),
-      stiffTensor_( NULL )
+    LaplaceFEOp( const DiscreteFunctionSpaceType &discreteFunctionSpace )
+    : discreteFunctionSpace_( discreteFunctionSpace ),
+      matrix_( 0 ),
+      matrix_assembled_( false ),
+      stiffTensor_( 0 )
     {
     }
-        
-        #if 0
-        //! constructor
-        LaplaceFEOp( const DiscreteFunctionType &stiff,
-                     const DiscreteFunctionSpaceType &discreteFunctionSpace,
-                     OpMode opMode )
-          : BaseType( discreteFunctionSpace, opMode ),
-            stiffFunction_( &stiff ),
-            stiffTensor_( NULL )
-        {
-        }
-        #endif
         
     //! constructor
-    LaplaceFEOp( TensorType &stiff,
-                 const DiscreteFunctionSpaceType &discreteFunctionSpace,
-                 OpMode opMode )
-    : BaseType( discreteFunctionSpace, opMode ),
-      //stiffFunction_( NULL ),
-      stiffTensor_( &stiff )
+    LaplaceFEOp( TensorType &stiffTensor,
+                 const DiscreteFunctionSpaceType &discreteFunctionSpace )
+    : discreteFunctionSpace_( discreteFunctionSpace ),
+      matrix_( 0 ),
+      matrix_assembled_( false ),
+      stiffTensor_( &stiffTensor )
     { 
     }
-        
-    //! Returns the actual matrix if it is assembled
-    const MatrixType* getMatrix () const
+
+    virtual ~LaplaceFEOp ()
     {
-      assert( this->matrix_ );
-      return this->matrix_;
+      if( matrix_ != 0 )
+        delete matrix_;
     }
-    
-       
-    //! Prepares the local operator before calling apply()
-    void prepareGlobal ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest )
+
+    //! \brief apply the operator
+    virtual void operator() ( const DiscreteFunctionType &u, 
+                              DiscreteFunctionType &w ) const 
     {
-      this->arg_  = &arg;
-      this->dest_ = &dest;
-      // assert( this->arg_ != 0 );
-      // assert(this->dest_ != 0);
-      this->dest_.clear();
+      systemMatrix().apply( u, w );
     }
-        
-    //! return the matrix entr that belong to basis function i and j 
-    template< class EntityType >
-    double getLocalMatrixEntry( const EntityType &entity,
-                                const int i,
-                                const int j ) const
+  
+    /*! \brief obtain a reference to the system matrix 
+     *
+     *  The assembled matrix is returned. If the system matrix has not been
+     *  assembled, yet, the assembly is performed.
+     *
+     *  \returns a reference to the system matrix
+     */
+    MatrixType &systemMatrix () const
     {
-      typedef typename EntityType :: Geometry GeometryType;
+      if( !matrix_assembled_ )
+        assemble();
+      return *matrix_;
+    }
 
-      const DiscreteFunctionSpaceType &discreteFunctionSpace
-        = this->functionSpace_;
-      const GeometryType &geometry = entity.geometry();
+    //! print the system matrix into a stream
+    void print ( std :: ostream out = std :: cout ) const 
+    {
+      systemMatrix().print( out );
+    }
 
-      const BaseFunctionSetType baseSet
-        = discreteFunctionSpace.baseFunctionSet( entity );
+    const DiscreteFunctionSpaceType &discreteFunctionSpace () const
+    {
+      return discreteFunctionSpace_;
+    }
 
-      double val = 0;
-      QuadratureType quad( entity, 2 * (polynomialOrder - 1) );
-      const int numQuadraturePoints = quad.nop();
-      for( int pt = 0; pt < numQuadraturePoints; ++pt ) { 
-        baseSet.jacobian( i, quad, pt, grad );
+    /*! 
+     *   assemble: perform grid-walkthrough and assemble global matrix
+     * 
+     *   If the matrix storage is 
+     *   not allocated, new storage is allocated by newEmptyMatrix.
+     *   the begin and end iterators are determined and the assembling
+     *   of the global matrix initiated by call of assembleOnGrid and 
+     *   bndCorrectOnGrid. The assemled flag is set. 
+     */
+    void assemble () const 
+    {
+      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
 
-        // calc Jacobian inverse before volume is evaluated 
-        const FieldMatrix< double, dimension, dimension > &inv
-          = geometry.jacobianInverseTransposed( quad.point( pt ) );
-        const double vol = geometry.integrationElement( quad.point( pt ) );
-            
-        // multiply with transpose of jacobian inverse 
-        grad[ 0 ] = FMatrixHelp :: mult( inv, grad[ 0 ] );
-                    
-        if( i != j ) {
-          baseSet.jacobian( j, quad, pt, othGrad );
-                            
-          // multiply with transpose of jacobian inverse 
-          othGrad[ 0 ] = FMatrixHelp :: multTransposed( inv, othGrad[ 0 ] );
-          val += (grad[ 0 ] * othGrad[ 0 ] ) * quad.weight( pt ) * vol;
-        } else
-          val += ( grad[ 0 ] * grad[ 0 ] ) * quad.weight( pt ) * vol;
+      // if the matrix has not been allocated, allocate it.
+      if( this->matrix_ == 0 )
+      {
+        const int size = dfSpace.size();
+        const int numNonZero = 8 * (1 << dimension) * polynomialOrder;
+        matrix_ = new MatrixType( size, size, numNonZero );
+        assert( matrix_ != 0 );
       }
-      return val;
+
+      matrix_->clear();
+      assembleOnGrid();
+      boundaryCorrectOnGrid();
+
+      matrix_assembled_ = true;
     }
-        
-    //! ???
+
+  protected:
+    /*! perform grid walkthrough and assemble matrix
+     *
+     *  For each element, the local element matrix is determined into the
+     *  given local matrix storage and distributed into the global matrix.
+     *  Distribution is performed by an add(row,col,val) method on the 
+     *  global matrix class.
+     */
+    void assembleOnGrid () const
+    {
+      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+
+      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
+  
+      FieldMatrix< RangeFieldType, maxnumOfBaseFct, maxnumOfBaseFct > matrix;
+
+      const IteratorType end = dfSpace.end();
+      for( IteratorType it = dfSpace.begin(); it != end; ++it )
+        assembleOnEntity( *it, matrix );
+    }
+
+    /*! perform matrix assemble for one entity
+     *
+     *  \param[in] entity entity for current local update
+     *  \param{in] localMatrix local matrix storate
+     */
+    template< class EntityType, class LocalMatrixImp >
+    void assembleOnEntity ( const EntityType &entity, 
+                            LocalMatrixImp &localMatrix ) const
+    {
+      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
+      //const BaseFunctionSetType baseSet = dfSpace.baseFunctionSet( entity );
+      //const int numBaseFunctions = baseSet.numBaseFunctions();
+      
+      // obtain local matrix
+      const unsigned int size
+        = assembleLocalMatrix( entity, localMatrix );
+
+      for( unsigned int i = 0; i < size; ++i )
+      { 
+        const unsigned int row = dfSpace.mapToGlobal( entity , i );
+        for( unsigned int j = 0; j < size; ++j )
+        {
+          const unsigned int col = dfSpace.mapToGlobal( entity, j );
+          matrix_->add( row, col, localMatrix[ i ][ j ] );
+        }
+      }
+    }
+
+    /*! assemble the local matrix
+     *
+     *  In the Finite Element Method, most base functions are zero on a given
+     *  entity. To build the matrix on one entity, we only need to store a very
+     *  limited amount of matrix entries, the socalled local matrix.
+     */
     template< class  EntityType, class LocalMatrixType >
-    void getLocalMatrix( const EntityType &entity,
-                         const int matrixSize,
-                         LocalMatrixType &matrix ) const
+    unsigned int assembleLocalMatrix ( const EntityType &entity,
+                                       LocalMatrixType &matrix ) const
     {
       typedef typename EntityType :: Geometry GeometryType;
 
-      const DiscreteFunctionSpaceType &discreteFunctionSpace
-        = this->functionSpace_;
+      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
       const GeometryType &geometry = entity.geometry();
 
       const BaseFunctionSetType baseSet
-        = discreteFunctionSpace.baseFunctionSet( entity );
+        = dfSpace.baseFunctionSet( entity );
+      const unsigned int numBaseFunctions = baseSet.numBaseFunctions();
             
-      assert( matrixSize <= maxnumOfBaseFct );
-      for( int i = 0; i < matrixSize; ++i )
-        for( int j = 0; j <= i; ++j ) 
+      assert( numBaseFunctions <= maximumOfBaseFct );
+      for( unsigned int i = 0; i < numBaseFunctions; ++i )
+        for( unsigned int j = 0; j <= i; ++j ) 
           matrix[ j ][ i ] = 0;
 
       QuadratureType quad( entity, 2 * (polynomialOrder - 1) );
-      const int numQuadraturePoints = quad.nop();
-      for( int pt = 0; pt < numQuadraturePoints; ++pt ) {
+      const unsigned int numQuadraturePoints = quad.nop();
+      for( unsigned int pt = 0; pt < numQuadraturePoints; ++pt ) {
         // calc Jacobian inverse before volume is evaluated 
         const FieldMatrix< double, dimension, dimension > &inv
                     = geometry.jacobianInverseTransposed( quad.point( pt ) );
         const double volume = geometry.integrationElement( quad.point( pt ) );
 
-        for( int i = 0; i < matrixSize; ++i ) {
+        for( unsigned int i = 0; i < numBaseFunctions; ++i ) {
           baseSet.jacobian( i, quad, pt, mygrad[ i ] ); 
       
           // multiply with transpose of jacobian inverse 
@@ -208,17 +259,79 @@ namespace Dune
           stiffTensor_->evaluate( geometry.global( quad.point( pt ) ), phi );
           weight *= phi[ 0 ];
         }
-        for( int i = 0; i < matrixSize; ++i ) 
-          for ( int j = 0; j <= i; ++j ) 
+        for( unsigned int i = 0; i < numBaseFunctions; ++i ) 
+          for ( unsigned int j = 0; j <= i; ++j ) 
             matrix[ j ][ i ] += (mygrad[ i ][ 0 ] * mygrad[ j ][ 0 ]) * weight;
       }
       
       // symmetrize matrix
-      for( int i = 0; i < matrixSize; ++i ) 
-        for( int j = matrixSize; j > i; --j ) 
+      for( unsigned int i = 0; i < numBaseFunctions; ++i ) 
+        for( unsigned int j = numBaseFunctions; j > i; --j ) 
           matrix[ j ][ i ] = matrix[ i ][ j ];
+
+      return numBaseFunctions;
     }
-  }; // end class
+
+    void boundaryCorrectOnGrid () const
+    {
+      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+
+      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
+
+      const IteratorType end = dfSpace.end();
+      for( IteratorType it = dfSpace.begin(); it != end; ++it )
+      {
+        if( it->hasBoundaryIntersections() )
+          boundaryCorrectOnEntity( *it );
+      }
+    }
+
+    /*! treatment of Dirichlet-DoFs for one entity
+     *
+     *   delete rows for dirichlet-DoFs, setting diagonal element to 1.
+     *
+     *   \note A LagrangeDiscreteFunctionSpace is implicitly assumed.
+     *
+     *   \param[in]  entity  entity to perform Dirichlet treatment on
+     */
+    template< class EntityType >
+    void boundaryCorrectOnEntity ( const EntityType &entity ) const
+    {
+      typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
+        LagrangePointSetType;
+
+      enum { faceCodim = 1 };
+      typedef typename GridPartType :: IntersectionIteratorType
+        IntersectionIteratorType;
+      typedef typename LagrangePointSetType :: template Codim< faceCodim >
+                                            :: SubEntityIteratorType
+        FaceDofIteratorType;
+
+      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
+      const GridPartType &gridPart = dfSpace.gridPart();
+
+      const LagrangePointSetType &lagrangePointSet
+        = dfSpace.lagrangePointSet( entity );
+ 
+      IntersectionIteratorType it = gridPart.ibegin( entity );
+      const IntersectionIteratorType endit = gridPart.iend( entity );
+      for( ; it != endit ; ++it ) {
+        if( !it.boundary() )
+          continue;
+       
+        const int face = it.numberInSelf();
+        FaceDofIteratorType faceIt
+          = lagrangePointSet.template beginSubEntity< faceCodim >( face );
+        const FaceDofIteratorType faceEndIt
+          = lagrangePointSet.template endSubEntity< faceCodim >( face );
+        for( ; faceIt != faceEndIt; ++faceIt ) {
+          const unsigned int dof
+            = dfSpace.mapToGlobal( entity, *faceIt );
+          matrix_->kroneckerKill( dof, dof );
+        }
+      }
+    }
+  };
 
 
 
@@ -291,4 +404,3 @@ namespace Dune
 } // end namespace 
 
 #endif
-
