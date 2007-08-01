@@ -1,12 +1,14 @@
 #ifndef DUNE_FEM_QUADRATURE_HH
 #define DUNE_FEM_QUADRATURE_HH
 
-#include <vector>
+//#include <vector>
 #include <cassert>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
+
+#include <dune/fem/misc/array.hh>
 
 /*
 #ifndef HAVE_ALBERTA_FOUND
@@ -101,7 +103,8 @@ namespace Dune
     
   private:
     // vector holding the coordinates for each point
-    std :: vector< CoordinateType > points_;
+    DynamicArray< CoordinateType > points_;
+    //std :: vector< CoordinateType > points_;
 
     // identifier of the integration point list
     const size_t id_;
@@ -212,7 +215,8 @@ namespace Dune
      */
     void addIntegrationPoint( const CoordinateType &point )
     {
-      points_.push_back( point );
+      //points_.push_back( point );
+      points_.append( point );
     }
   };
 
@@ -245,7 +249,8 @@ namespace Dune
 
   private:
     // vector holding weights of each integration point 
-    std :: vector< FieldType > weights_;
+    DynamicArray< FieldType > weights_;
+    //std :: vector< FieldType > weights_;
  
   protected:
     /*! \brief Constructor
@@ -315,7 +320,8 @@ namespace Dune
                                      const FieldType weight )
     {
       addIntegrationPoint( point );
-      weights_.push_back( weight );
+      //weights_.push_back( weight );
+      weights_.append( weight );
     }
   };
 
