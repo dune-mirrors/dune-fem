@@ -79,7 +79,7 @@ namespace Dune
    *  coordinates, i.e., coordinates within the reference element.
    *
    *  \note Integration point lists do not change over time. It can safely
-   *        be assume that they always return the same points in the same
+   *        be assumed that they always return the same points in the same
    *        order.
    */
   template< typename FieldImp, int dim >
@@ -224,7 +224,7 @@ namespace Dune
    *  A Dune Quadrature is nothing but a list of integration points (see also
    *  IntegrationPointsListImp) and their respective weights.
    *
-   *  \note Quadratures do not change over time. It can safely be assume that
+   *  \note Quadratures do not change over time. It can safely be assumed that
    *        they always return the same points in the same order.
    */
   template< typename FieldImp, int dim >
@@ -1140,6 +1140,9 @@ namespace Dune
      *
      *  In case of an integration point list, the definition of this value is
      *  left to the implementor.
+     *  
+     *  \note Calling this method yields a virtual function call, so do not
+     *        call this method unnecessarily.
      *
      *  \returns the order of the integration point list
      */
