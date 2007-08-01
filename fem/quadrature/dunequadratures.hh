@@ -33,6 +33,7 @@ namespace Dune
     typedef QuadratureRulesFactory< FieldType, dimension > ThisType;
     typedef QuadratureImp< FieldType, dimension > BaseType;
 
+  protected:
     using BaseType :: addQuadraturePoint;
 
   public:

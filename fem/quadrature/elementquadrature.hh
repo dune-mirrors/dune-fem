@@ -22,8 +22,7 @@ namespace Dune
    *  comes into play.
    *
    *  The ElementQuadrature takes a subentity and transforms the quadrature
-   *  corresponding to the geometry to the codim-0 reference element. Moreover,
-   *  the transformation is done only once (when the quadrature is created).
+   *  corresponding to the geometry to the codim-0 reference element.
    *  
    *  To achieve this goal, an element quadrature depends stronger on the
    *  context in which it is used. For example, for each face within a
@@ -64,10 +63,6 @@ namespace Dune
 
   
 
-  // \brief Element quadrature on codim-0 entities.
-  // For codim-0 element quadratures, there is no additional information
-  // from the context needes, in consequence, the quadrature behaves like
-  // a generic quadrature class, independent from the situation in the grid.
   //! \copydoc Dune::ElementQuadrature
   template< typename GridPartImp >
   class ElementQuadrature< GridPartImp, 0 >
@@ -137,11 +132,7 @@ namespace Dune
 
 
 
-  // \brief Element quadrature on codim-1 entities.
-  // For codimension 1, the quadrature needs information about the 
-  // intersection. Plus, the user must decide if the quadrature shall live
-  // on the reference element of the outside or inside element of the 
-  // intersection.
+  //! \copydoc Dune::ElementQuadrature
   template< class GridPartImp >
   class ElementQuadrature< GridPartImp, 1 >
   : public ElementIntegrationPointList
@@ -161,6 +152,7 @@ namespace Dune
     typedef ElementIntegrationPointList< GridPartType, 1, IntegrationTraits >
       BaseType;
 
+  protected:
     using BaseType :: quadImp;
     
   public:
