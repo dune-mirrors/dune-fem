@@ -51,7 +51,7 @@ public:
   }
 
   /** \brief returns true if adaptation manager as adaptation method different to NONE
-     \return <b>true</b> if adaptation method is not NONE, <b>false</b> otherwise
+     \return \b true if adaptation method is not NONE, \b false otherwise
   */
   virtual bool adaptive () const  
   { 
@@ -98,7 +98,7 @@ typedef AdaptationManagerInterface AdaptMapping;
 
 /** @} end documentation group */
 
-/** @defgroup AdaptationManagerImp Adaptation Manager Implementation 
+/** @defgroup AdaptationManagerImp Adaptation Manager
     @ingroup Adaptation 
     @{
 **/

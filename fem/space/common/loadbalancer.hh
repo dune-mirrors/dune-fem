@@ -15,7 +15,11 @@ namespace Dune{
 
 /** @defgroup LoadBalancer LoadBalancer 
     @ingroup Adaptation  
-    Concept for calling the grids load balance method 
+    In this module a concept for calling the grids load balance method
+    is described and implemented.
+
+    \remarks The interface for a LoadBalancer object is described by the
+    class LoadBalancerInterface.
     @{
  **/
 
@@ -32,7 +36,7 @@ public:
   virtual ~LoadBalancerInterface () {}
   
   /** \brief call load balance, returns true if grid was changed 
-    \return <b>true</b> if grid was changed, <b>false</b> otherwise 
+    \return \b true if grid was changed, \b false otherwise 
   */
   virtual bool loadBalance () = 0; 
 
