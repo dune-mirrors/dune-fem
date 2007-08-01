@@ -1,6 +1,8 @@
 #ifndef DUNE_DOFITERATOR_HH
 #define DUNE_DOFITERATOR_HH
 
+#include <dune/common/bartonnackmanifcheck.hh>
+
 namespace Dune {
 
 /** @defgroup DofIterator The dof iterator interface
@@ -10,62 +12,90 @@ namespace Dune {
   function set is presented. The user always works with the base function
   set, where all diffrent base functions for on element type are known.
 
+  \remarks 
+  The interface for DofIterators is defined by the class
+  DofIteratorInterface.
   @{
  */
 
 
-//************************************************************************
-//
-//  --DofIteratorInterface
-//  
-//! Interface for the DofIterator. All methods declared in this interface
-//! class must be implemented by the implementation class. 
-//! The dof iterator is the interface for efficient walk trough the dofs of
-//! an discrete function.
-//!
-//***********************************************************************
+//---------------------------------------------------------------------
+//-
+//-  --DofIteratorInterface
+//-  
+//---------------------------------------------------------------------
+/** \brief This class described the interface for dof iterators of 
+    discrete functions. 
+    All methods declared in this interface
+    class must be implemented by the implementation class. 
+    The dof iterator is the interface for efficient walk trough the dofs of
+    an discrete function.
+*/
 template <class DofImp, class DofIteratorImp>
 class DofIteratorInterface   
 {
 public:
   typedef DofIteratorImp DofIteratorType;
   
-  //! return reference to dof 
+  /** \brief return reference to current dof 
+      \return return reference to current dof
+  */
   DofImp& operator *()
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator *());
     return asImp().operator *(); 
   }
   
-  //! return reference to dof 
+  /** \brief return reference to current dof 
+      \return return reference to current dof
+  */
   const DofImp& operator *() const 
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator *());
     return asImp().operator *(); 
   }
 
-  //! return global dof number of dof 
-  int index () const {  return asImp().index(); } 
+  /** \brief return current global dof number of dof 
+      \return return current global dof number of dof 
+  */
+  int index () const 
+  {  
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().index());
+    return asImp().index(); 
+  } 
 
-  //! go to next dof 
-  DofIteratorType& operator++ ()
+  /** \brief prefix increment, i.e. go to next dof 
+      \return reference to this (i.e. *this) 
+  */
+  DofIteratorType& operator ++ ()
   {
+    // would change result 
+    //CHECK_INTERFACE_IMPLEMENTATION(asImp().index());
     return asImp().operator ++ ();
   }
 
-  //! compare with other GlobalDofIterators 
+  /** \brief equality operator 
+      \return return \b true if iterator are the same, \b false otherewise
+  */
   bool operator == (const DofIteratorType& I) const
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator == (I));
     return asImp().operator == (I);
   }
   
-  //! compare with other GlobalDofIterators 
+  /** \brief in-equality operator 
+      \return return \b true if iterator are different, \b false otherewise
+  */
   bool operator != (const DofIteratorType& I) const
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator != (I));
     return asImp().operator != (I);
   }
 
-  //! set the iterator to begin status 
+  /** \brief reset operator, i.e. set to first position */
   void reset () 
   { 
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().reset());
     asImp().reset();
   }
 
@@ -74,11 +104,12 @@ private:
   DofIteratorType &asImp() 
   { 
     return static_cast<DofIteratorType&>(*this); 
-  };
+  }
+  //! Barton-Nackman trick 
   const DofIteratorType &asImp() const
   { 
     return static_cast<const DofIteratorType&>(*this); 
-  };
+  }
 }; // end DofIteratorInterface
 
 
