@@ -363,7 +363,8 @@ public:
   //! access to dof number num, all dofs of the dof entity
   const RangeFieldType & operator [] (int num) const;
 
-  //! return number of degrees of freedom 
+  /** \brief return number of degrees of freedom 
+  */
   int numDofs () const;
 
   /** \brief  @copydoc DiscreteFunctionInterface::evaluate  */
@@ -373,25 +374,45 @@ public:
   template <class QuadratureType>
   void evaluate (const QuadratureType &quad, const int quadPoint , RangeType & ret) const;
 
-  //! evaluate jacobian of local function on point x
+  /** \brief evaluate jacobian of local function on point x
+      \param[in] domain type x
+      \param[out] jacobian range type ret
+  */
   void jacobian(const DomainType& x, JacobianRangeType& ret) const ;
 
-  //! evaluate jacobian of local function on quadrature point quadPoint
+  /** \brief evaluate jacobian of local function on quadrature point quadPoint
+      \param[in] quadrature type quad
+      \param[in] constant quadrature point quadPoint 
+      \param[out] jacobian range type
+  */
   template <class QuadratureType>
   void jacobian(const QuadratureType &quad, const int quadPoint , JacobianRangeType & ret) const;
 
-  //! return reference to base function set
+  /** \brief return reference to base function set */
   const BaseFunctionSetType& baseFunctionSet() const;
 
-  //! axpy operation for factor 
+  /**  \brief axpy operation for factor 
+       \param[in] quadrature type 
+       \param[in] integer qp
+       \param[out] factor (range type)
+   */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
-  //! axpy operation for factor 
+  /** \brief axpy operation for factor
+      \param[in] quadrature type 
+      \param[in] integer qp
+      \param[out] factor (jacobian range type)
+   */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
-  //! axpy operation for factor 
+  /** \brief axpy operation for factor
+      \param[in] quadrature type 
+      \param[in] integer qp
+      \param[out] factor1 (range type)
+      \param[out] factor2 (jacobian range type)
+   */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
 
