@@ -252,7 +252,7 @@ namespace Dune
      *        a cube (otherwise elementGeometry() returns a wrong geometry).
      */
     ElementIntegrationPointList ( const GridPartType &gridPart, 
-                                  const IntersectionIterator &ntersection, 
+                                  const IntersectionIterator &intersection, 
                                   int order,
                                   Side side )
     : quad_(intersection.intersectionGlobal().type(), order ),
@@ -294,9 +294,9 @@ namespace Dune
      */
     ElementIntegrationPointList ( const ElementIntegrationPointList &org )
     : quad_( org.quad_ ),
-      referenceGeometry_( org.referenceGeometry_ )
-      elementGeometry_( org.elementGeometry_ )
-      faceNumber_( org.faceNumber_ )
+      referenceGeometry_( org.referenceGeometry_ ),
+      elementGeometry_( org.elementGeometry_ ),
+      faceNumber_( org.faceNumber_ ),
       dummy_( org.dummy_ )
     {
     }
