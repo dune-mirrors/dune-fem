@@ -6,18 +6,15 @@
 #include <rpc/xdr.h>
 
 //- Dune includes 
-#include <dune/fem/function/adaptivefunction.hh>
+
 #include <dune/common/array.hh>
 #include <dune/common/geometrytype.hh>
-
-//#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/localfunction.hh>
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune{
-//  template <class DiscreteFunctionSpaceImp>    class ParaLocalFunctionAdapt;
- // template <class DofType, class DofArrayType>  class ParaDofIteratorAdapt;
   template <class DiscreteFunctionSpaceImp,class DiscreteFunctionSpace2Imp> class ProductDiscreteFunction;
 
   template <class DiscreteFunctionSpaceImp>
@@ -25,9 +22,6 @@ namespace Dune{
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
   
     typedef ProductDiscreteFunction<DiscreteFunctionSpaceImp,DiscreteFunctionSpaceImp> DiscreteFunctionType;
-    // typedef ParaLocalFunctionAdapt<DiscreteFunctionType> LocalFunctionImp;
-    // typedef LocalFunctionWrapper< DiscreteFunctionType > LocalFunctionType;
-
     typedef MutableArray<typename DiscreteFunctionSpaceImp::RangeFieldType> DofArrayType;
       
     typedef typename DofArrayType::DofIteratorType DofIteratorType;
@@ -45,23 +39,17 @@ namespace Dune{
 //**********************************************************************
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 class ProductDiscreteFunction 
-//  : public DiscreteFunctionDefault<
-//  ProductDiscreteFunctionTraits<DiscreteFunctionSpaceType> 
-//>
 {
 public:
+  //!Type of range field, (usually a float type)
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
   typedef MutableArray< RangeFieldType > DofStorageType;
 
 private:
-//  typedef DiscreteFunctionDefault<
-//    ProductDiscreteFunctionTraits<DiscreteFunctionSpaceType> 
-//  > DiscreteFunctionDefaultType;
-//  friend class DiscreteFunctionDefault< ProductDiscreteFunctionTraits<DiscreteFunctionSpaceType> >;
-  
   enum { myId_ = 0};
 
 public:
+ //! Type of the underlying grid
   typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
   typedef DofManager<GridType> DofManagerType;
@@ -69,38 +57,34 @@ public:
 
   typedef typename DiscreteFunctionSpaceType::Traits::MapperType MapperType;
   typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType DofType;
+//! Type of the dof iterator used in the discrete function implementation.
   typedef typename DofStorageType::DofIteratorType DofIteratorType;
+ //! Type of the constant dof iterator used in the discrete function implementation
   typedef typename DofStorageType::ConstDofIteratorType ConstDofIteratorType;
 
   typedef MemObjectInterface MemObjectInterfaceType;
     
-  //! type of this class 
+  //! Type of this class 
   typedef ProductDiscreteFunction <DiscreteFunctionSpaceType,DiscreteFunctionSpace2Type> DiscreteFunctionType;
-  //typedef AdaptiveDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
   typedef DiscreteFunctionType ThisType;
-  //  LocalFunctionImp is the implementation 
-  // typedef ParaLocalFunctionAdapt < DiscreteFunctionType > LocalFunctionImp;
-
-  // LocalFunctionType is the exported lf type 
-  // typedef LocalFunctionWrapper < DiscreteFunctionType> LocalFunctionType;
   
-  //! type of class AdaptiveDiscreteFunction
+  //! Type of class AdaptiveDiscreteFunction
   typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunction1Type;
   typedef typename DiscreteFunction1Type::DofStorageType DofStorage1Type;
-  
 
+  //! Type of the discrete function implementation
   typedef DiscreteFunctionSpaceType FunctionSpaceType;
   typedef ProductDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
 
   /** \brief For ISTL-compatibility */
   typedef FieldVector<DofType,1> block_type;
   
-  // typedef LocalFunctionStorage< DiscreteFunctionType > LocalFunctionStorageType; 
-
-  //friend class ParaLocalFunctionAdapt< ThisType> ;
 public:
 
-  //! Constructor make Discrete Function for pair of spaces
+ /** \brief Constructor storing discrete function spaces 
+        \param[in] f discrete function space  
+	\param[in] f2 discrete function space2
+ */
   ProductDiscreteFunction(const DiscreteFunctionSpaceType& f, const DiscreteFunctionSpace2Type& f2) ;
   
   //! delete stack of free local functions belonging to this discrete
@@ -109,83 +93,135 @@ public:
        
   // ***********  Interface  *************************
   
-  //! return local function \f$  u_{j_0}(x) = \sum _{i=1} ^{n_x}  u\left[j_0 n_x +i\right]\varphi _i(x) \f$ for global dof index \f$j_0\f$ of second space
+  /** \brief returns local function \f$  u_{j_0}(x) = \sum _{i=1} ^{n_x}  u\left[j_0 n_x +i\right]\varphi _i(x) \f$ for global dof index \f$j_0\f$ of second space
+      \param[in] dofIndex2 global dof index of second space
+      \returns \f$  u_{j_0}(x) = \sum _{i=1} ^{n_x}  u\left[j_0 n_x +i\right]\varphi _i(x) \f$
+   */
   inline DiscreteFunction1Type
   localFunction(int dofIndex2) const; 
   
-  //! return local function \f$  u_{j_0,en_2}(x) = \sum _{i=1} ^{n_x}  u\left[global(j_0,en_2) n_x +i\right]\varphi _i(x) \f$ for local dof index \f$j_0\f$ of second space and given entity2
+  /** \brief returns local function \f$  u_{j_0,en_2}(x) = \sum _{i=1} ^{n_x}  u\left[global(j_0,en_2) n_x +i\right]\varphi _i(x) \f$ for local dof index \f$j_0\f$ of second space and given entity2
+      \param[in] en2 entity of second space
+      \param[in] dofIndex2 global dof index of second space
+      \returns \f$  u_{j_0,en_2}(x) = \sum _{i=1} ^{n_x}  u\left[global(j_0,en_2) n_x +i\right]\varphi _i(x) \f$
+   */
   template <class Entity2Type>
   inline DiscreteFunction1Type
   localFunction(const Entity2Type &en2, int dofIndex2) const;
   
-  //! local function \f$  u_{loc_2,en_2}(x) = \sum _{i=1} ^{n_x} \left[ \sum_{k=1} ^{\#dof_2}  u\left[global(k,en_2) n_x +i\right]\psi _k (loc_2) \right]\varphi _i(x) \f$ for given entity2 and local coordinate of second space and discrete function of first space
+  /** \brief local function \f$  u_{loc_2,en_2}(x) = \sum _{i=1} ^{n_x} \left[ \sum_{k=1} ^{\#dof_2}  u\left[global(k,en_2) n_x +i\right]\psi _k (loc_2) \right]\varphi _i(x) \f$ for given entity2 and local coordinate of second space and discrete function of first space
+      \param[in] en2 entity of second space
+      \param[in] loc2 local coordinate of second space
+      \param[out] discFunc \f$  = \sum _{i=1} ^{n_x} \left[ \sum_{k=1} ^{\#dof_2}  u\left[global(k,en_2) n_x +i\right]\psi _k (loc_2) \right]\varphi _i(x) \f$
+   */
   template < class Entity2Type, class LocalCoord2Type>
   inline
   void localFunction(const Entity2Type &en2, const LocalCoord2Type &loc2,  DiscreteFunction1Type &discFunc) const;
 
-  //! local function \f$  u_{qP_2,en_2}(x) = \sum _{i=1} ^{n_x} \left[ \sum_{k=1} ^{\#dof_2}  u\left[global(k,en_2) n_x +i\right]\psi _k (qP_2) \right]\varphi _i(x) \f$for given entity2, quadrature type and quadrature point number of second space and discrete function of first space
+  /** \brief local function \f$  u_{qP_2,en_2}(x) = \sum _{i=1} ^{n_x} \left[ \sum_{k=1} ^{\#dof_2}  u\left[global(k,en_2) n_x +i\right]\psi _k (qP_2) \right]\varphi _i(x) \f$ for given entity2, quadrature type and quadrature point number of second space and discrete function of first space
+      \param[in] en2 entity of second space
+      \param[in] quad2 quadrature of second space
+      \param[in] pointNr number of quadrature point
+      \param[out] discFunc \f$ = \sum _{i=1} ^{n_x} \left[ \sum_{k=1} ^{\#dof_2}  u\left[global(k,en_2) n_x +i\right]\psi _k (qP_2) \right]\varphi _i(x) \f$
+   */
   template < class Entity2Type, class QuadratureType>
   inline
   void localFunction(const Entity2Type &en2, const QuadratureType &quad2, int pointNr, DiscreteFunction1Type &discFunc) const;
 
-  //! points to the first dof of type cc
+ 
+ /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function 
+     \return dof iterator pointing to first dof 
+ */
   inline
   DofIteratorType dbegin ( );
   
-  //! points behind the last dof of type cc
+ /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function 
+     \return dof iterator pointing behind the last dof 
+  */
   inline
   DofIteratorType dend   ( );
 
-  //! const version of dof iterator  
-  inline
+  /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function 
+      \return dof iterator pointing to first dof 
+   */
+   inline
   ConstDofIteratorType dbegin ( ) const;
   
-  //! const version of dof iterator  
+  /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function 
+      \return dof iterator pointing behind the last dof 
+   */  
   inline
   ConstDofIteratorType dend   ( ) const;
 
-  //! set all dofs to zero  
+   /** \brief set all degrees of freedom to zero
+    */  
   inline
   void clear( );
 
-  //! Add c*org to discrete function
+   /** \brief axpy operation
+       \param[in] g discrete function that is added 
+       \param[in] c scalar value to scale 
+    */  
   inline
-  void addScaled (const ThisType & org, const RangeFieldType &c); 
+  void addScaled (const ThisType & g, const RangeFieldType &c); 
       
-  //! print all dofs 
+   /** \brief print all degrees of freedom of this function to stream (for debugging purpose)
+       \param[out] s std::ostream (e.g. std::cout)
+    */
   inline
   void print(std::ostream& s) const; 
 
-  //! write data of discrete function to file filename|timestep 
-  //! with xdr methods 
+  /** \brief write discrete function to file with given filename using xdr encoding
+      \param[in] filename name of file to which discrete function should be written using xdr 
+      \return <b>true</b> if operation was successful 
+    */  
   inline
   bool write_xdr(std::string filename) const;
 
-  //! write data of discrete function to file filename|timestep 
-  //! with xdr methods 
+  /** \brief read discrete function from file with given filename using xdr decoding
+      \param[in] filename name of file from which discrete function should be read using xdr 
+      \return <b>true</b> if operation was successful 
+   */
   inline
   bool read_xdr(std::string filename);
 
-  //! write function data to file filename|timestep in ascii Format
+  
+  /** \brief write discrete function to file with given filename using ascii encoding
+      \param[in] filename name of file to which discrete function should be written using ascii 
+      \return <b>true</b> if operation was successful 
+   */
   inline
   bool write_ascii(std::string filename) const;
 
-  //! read function data from file filename|timestep in ascii Format
+  /** \brief read discrete function from file with given filename using ascii decoding
+      \param[in] filename name of file from which discrete function should be read using ascii 
+      \return <b>true</b> if operation was successful 
+  */
   inline
   bool read_ascii(std::string filename);
 
-  //! write function data in pgm fromat file
+  /** \brief write discrete function to file with given filename using pgm encoding
+      \param[in] filename name of file to which discrete function should be written using pgm 
+      \return <b>true</b> if operation was successful 
+   */
   inline
   bool write_pgm(std::string filename) const;
 
-  //! read function data from pgm fromat file
+  /** \brief read discrete function from file with given filename using pgm decoding
+      \param[in] filename name of file from which discrete function should be read using pgm 
+      \return <b>true</b> if operation was successful 
+  */
   inline
   bool read_pgm(std::string filename); 
 
-  //! return name of this discrete function
+  /** \brief returns name of discrete function 
+      \return string holding name of discrete function 
+  */ 
   std::string name () const { return name_; }
 
-  //! return size fo this discrete function
+  /** \brief returns total number of degrees of freedom, i.e. size of discrete function space 
+      \return total number of dofs 
+  */ 
   int size() const { return dofVec_.size(); }
   
   
@@ -202,9 +238,7 @@ public:
 
 
 private:  
-  // ! return object pointer of type LocalFunctionImp 
-  // LocalFunctionImp * newLocalFunctionObject () const;
-
+ 
   // name of this func
   std::string name_;
 
@@ -217,9 +251,6 @@ private:
   //! array containing the dof of this function, see dofmanager.hh
   //! the array is stored within the mem object 
   DofStorageType & dofVec_;
-
-  // one local function 
-  // LocalFunctionType localFunc_;
 
   //! The related function space
   const DiscreteFunctionSpaceType & functionSpace_;
