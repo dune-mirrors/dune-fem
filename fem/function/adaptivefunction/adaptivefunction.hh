@@ -297,17 +297,17 @@ namespace Dune {
     ~AdaptiveLocalFunction();
 
     //- Operators
-    //! Random access operator
+    /** \brief @copydoc LocalFunctionDefault::operator[] */
     inline
     DofType& operator[] (const int num);
 
-     //! Const random access operator
+    /** \brief @copydoc LocalFunctionDefault::operator[] */
     inline
     const DofType& operator[] (const int num) const;
 
     //- Methods
 
-    //! \brief Number of dofs on this element
+    /** \brief @copydoc LocalFunctionDefault::numDofs */
     inline
     int numDofs() const;
 
@@ -323,33 +323,35 @@ namespace Dune {
                   const int quadPoint,
                   RangeType& ret) const;
 
-    /** \brief evaluate jacobian of the discrete function on point x
-        \param[in] domain type x
-        \param[out] jacobian range type ret
-    */
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     inline
     void jacobian(const DomainType& x, 
                   JacobianRangeType& ret) const; 
 
-    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
-        \param[in] quadrature type quad
-        \param[in] constant quadrature point quadPoint 
-        \param[out] jacobian range type
-    */
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     template <class QuadratureType>
     inline
     void jacobian(const QuadratureType& quad,
                   const int quadPoint,
                   JacobianRangeType& ret) const;
 
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
+    
+    /** \brief evaluate jacobian of the discrete function on point x
+        \param[in] entity en
+        \param[in] domain type x
+        \param[out] jacobian range type ret
+    */
     inline
     void jacobian(EntityType& en, 
       const DomainType& x, 
       JacobianRangeType& ret) const; 
     
-    
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
+    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
+        \param[in] entity en
+        \param[in] quadrature type quad
+        \param[in] constant quadrature point quadPoint 
+        \param[out] jacobian range type
+    */
     template <class QuadratureType>
     inline
     void jacobian(EntityType& en,
@@ -360,28 +362,15 @@ namespace Dune {
     /** \brief @copydoc LocalFunctionDefault::baseFunctionSet */
     const BaseFunctionSetType& baseFunctionSet() const;
 
-    /** \brief axpy operation for factor
-        \param[in] quadrature type 
-        \param[in] integer qp
-        \param[out] factor (range type)
-    */
+    /** \brief @copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
-    /** \brief axpy operation for factor
-        \param[in] quadrature type 
-        \param[in] integer qp
-        \param[out] factor (jacobian range type)
-   */
+    /** \brief @copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
-    /** \brief axpy operation for factor
-        \param[in] quadrature type 
-        \param[in] integer qp
-        \param[out] factor1 (range type)
-        \param[out] factor2 (jacobian range type)
-   */
+    /** \brief @copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
 
@@ -703,14 +692,24 @@ namespace Dune {
                   const int quadPoint, 
                   RangeType & ret) const;
 
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
+    
+    /** \brief evaluate jacobian of the discrete function on point x
+        \param[in] entity en 
+        \param[in] domain type x
+        \param[out] jacobian range type ret
+    */ 
     inline
     void jacobian(EntityType& en, 
       const DomainType& x, 
       JacobianRangeType& ret) const;
     
-  
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
+    
+    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
+        \param[in] entity en
+        \param[in] quadrature type quad
+        \param[in] constant quadrature point quadPoint 
+        \param[out] jacobian range type
+    */
     template <class QuadratureType>
     inline
     void jacobian(EntityType& en,
@@ -719,20 +718,13 @@ namespace Dune {
                   JacobianRangeType& ret) const;
 
     
-    /** \brief evaluate jacobian of the discrete function on point x
-        \param[in] domain type x
-        \param[out] jacobian range type ret
-    */ 
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     inline
     void jacobian(const DomainType& x, 
                   JacobianRangeType& ret) const;
     
         
-    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
-        \param[in] quadrature type quad
-        \param[in] constant quadrature point quadPoint 
-        \param[out] jacobian range type
-    */
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     template <class QuadratureType>
     inline
     void jacobian(const QuadratureType& quad,
@@ -754,30 +746,17 @@ namespace Dune {
 
 
    
-    /**  \brief axpy operation for factor: \[ u_i += {\rm factor} \cdot phi_i \]
-         \param[in] quadrature type 
-         \param[in] integer qp
-         \param[out] factor (range type)
-   */
+     /** \brief @copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
 
-   /** \brief axpy operation for factor: \[ u_i += {\rm factor} \cdot \nabla phi_i \]
-      \param[in] quadrature type 
-      \param[in] integer qp
-      \param[out] factor (jacobian range type)
-   */
+    /** \brief @copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
    
-   /** \brief axpy operation for factor : \[ u_i += {\rm factor1} \cdot phi_i + {\rm factor2} \cdot \nabla phi_i \]
-      \param[in] quadrature type 
-      \param[in] integer qp
-      \param[out] factor1 (range type)
-      \param[out] factor2 (jacobian range type)
-   */
+     /** \brief @copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
   private:
