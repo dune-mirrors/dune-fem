@@ -171,27 +171,27 @@ namespace Dune {
       Imp(other)
     {}
 
-    //! assignment of functions 
+      /** \brief @copydoc DiscreteFunctionDefault::assign */ 
     void assign(const ThisType& g)
     {
       Imp::assignFunction(g);
     }
 
-    //! operator +=  
+      /** \brief @copydoc DiscreteFunctionDefault::operator += */ 
     ThisType& operator += (const ThisType& g)
     {
       Imp::addFunction(g);
       return *this;
     }
 
-    //! operator -=  
+      /** \brief @copydoc DiscreteFunctionDefault::operator -= */  
     virtual BaseType& operator -= (const ThisType& g)
     {
       Imp::substractFunction(g);
       return *this;
     }
 
-    //! daxpy operation  
+      /** \brief @copydoc DiscreteFunctionDefault::addScaled */ 
     void addScaled(const ThisType& org, const RangeFieldType& scalar)
     {
       Imp::addScaled(org,scalar);
@@ -301,46 +301,55 @@ namespace Dune {
     inline
     DofType& operator[] (const int num);
 
-     //! Cosnt random access operator
+     //! Const random access operator
     inline
     const DofType& operator[] (const int num) const;
 
     //- Methods
 
-    //! Number of dofs on this element
+    //! \brief Number of dofs on this element
     inline
     int numDofs() const;
 
-    //! Evaluation of the discrete function
+    /** \brief @copydoc LocalFunctionDefault::evaluate */
     inline
     void evaluate(const DomainType& x, 
                   RangeType & ret) const;
 
-    //! Evaluation of the discrete function
+    /** \brief @copydoc LocalFunctionDefault::evaluate */
     template <class QuadratureType>
     inline
     void evaluate(const QuadratureType& quad,
                   const int quadPoint,
                   RangeType& ret) const;
 
-    //! Jacobian of the discrete function
+    /** \brief evaluate jacobian of the discrete function on point x
+        \param[in] domain type x
+        \param[out] jacobian range type ret
+    */
     inline
     void jacobian(const DomainType& x, 
                   JacobianRangeType& ret) const; 
 
-    //! Jacobian of the discrete function
+    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
+        \param[in] quadrature type quad
+        \param[in] constant quadrature point quadPoint 
+        \param[out] jacobian range type
+    */
     template <class QuadratureType>
     inline
     void jacobian(const QuadratureType& quad,
                   const int quadPoint,
                   JacobianRangeType& ret) const;
 
-    //! Jacobian of the discrete function
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     inline
     void jacobian(EntityType& en, 
       const DomainType& x, 
       JacobianRangeType& ret) const; 
-    //! Jacobian of the discrete function
+    
+    
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     template <class QuadratureType>
     inline
     void jacobian(EntityType& en,
@@ -348,18 +357,31 @@ namespace Dune {
                   int quadPoint,
                   JacobianRangeType& ret) const;
 
-    //! get the base function set
+    /** \brief @copydoc LocalFunctionDefault::baseFunctionSet */
     const BaseFunctionSetType& baseFunctionSet() const;
 
-    //! axpy operation for factor 
+    /** \brief axpy operation for factor
+        \param[in] quadrature type 
+        \param[in] integer qp
+        \param[out] factor (range type)
+    */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
-    //! axpy operation for factor 
+    /** \brief axpy operation for factor
+        \param[in] quadrature type 
+        \param[in] integer qp
+        \param[out] factor (jacobian range type)
+   */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
-    //! axpy operation for factor 
+    /** \brief axpy operation for factor
+        \param[in] quadrature type 
+        \param[in] integer qp
+        \param[out] factor1 (range type)
+        \param[out] factor2 (jacobian range type)
+   */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
 
@@ -485,27 +507,27 @@ namespace Dune {
     
     ~AdaptiveDiscreteFunction();
 
-    //! assignment of functions 
+    /** \brief @copydoc DiscreteFunctionDefault::assign */
     void assign(const ThisType& g)
     {
       Imp::assignFunction(g);
     }
 
-    //! operator +=  
+    /** \brief @copydoc DiscreteFunctionDefault::operator += */
     ThisType& operator += (const ThisType& g)
     {
       Imp::addFunction(g);
       return *this;
     }
 
-    //! operator -=  
+    /** \brief @copydoc DiscreteFunctionDefault::operator -= */
     ThisType& operator -= (const ThisType& g)
     {
       Imp::substractFunction(g);
       return *this;
     }
 
-    //! daxpy operation  
+    /** \brief @copydoc DiscreteFunctionDefault::addScaled */
     void addScaled(const ThisType& org, const RangeFieldType& scalar)
     {
       Imp::addScaled(org,scalar);
@@ -516,9 +538,10 @@ namespace Dune {
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
-    //! return local function for given entity
+    /** \brief  @copydoc DiscreteFunctionDefault::localFunction */
     template <class EntityType> 
     LocalFunctionType localFunction (const EntityType &en) { return LocalFunctionType(en,*this); }
+    /** \brief  @copydoc DiscreteFunctionDefault::localFunction */
     template <class EntityType> 
     const LocalFunctionType localFunction (const EntityType &en) const { return LocalFunctionType(en,*this); }
     // using Imp::localFunction;
@@ -656,37 +679,38 @@ namespace Dune {
     ~AdaptiveLocalFunction();
 
     //- Operators
-    //! Random access operator
+    /** \brief @copydoc LocalFunctionDefault::operator[] */
     inline
     DofType& operator[] (const int num);
 
-    //! Cosnt random access operator
+    /** \brief @copydoc LocalFunctionDefault::operator[] */
     inline
     const DofType& operator[] (const int num) const;
 
-    //! Number of degrees of freedom
+    /** \brief @copydoc LocalFunctionDefault::numDofs */
     inline
     int numDofs() const;
 
-    //! Evaluation
+    /** \brief @copydoc LocalFunctionDefault::evaluate */
     inline
     void evaluate(const DomainType& x, 
                   RangeType & ret) const;
 
-    //! Evaluation
+    /** \brief @copydoc LocalFunctionDefault::evaluate */
     template <class QuadratureType>
     inline
     void evaluate(const QuadratureType& quad,
                   const int quadPoint, 
                   RangeType & ret) const;
 
-    //! Evaluation
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     inline
     void jacobian(EntityType& en, 
       const DomainType& x, 
       JacobianRangeType& ret) const;
     
-    //! Evaluation
+  
+    /** \brief @copydoc LocalFunctionDefault::jacobian */
     template <class QuadratureType>
     inline
     void jacobian(EntityType& en,
@@ -694,12 +718,21 @@ namespace Dune {
                   int quadPoint,
                   JacobianRangeType& ret) const;
 
-    //! Evaluation
+    
+    /** \brief evaluate jacobian of the discrete function on point x
+        \param[in] domain type x
+        \param[out] jacobian range type ret
+    */ 
     inline
     void jacobian(const DomainType& x, 
                   JacobianRangeType& ret) const;
     
-    //! Evaluation
+        
+    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
+        \param[in] quadrature type quad
+        \param[in] constant quadrature point quadPoint 
+        \param[out] jacobian range type
+    */
     template <class QuadratureType>
     inline
     void jacobian(const QuadratureType& quad,
@@ -707,30 +740,44 @@ namespace Dune {
                   JacobianRangeType& ret) const;
 
     //- Additional methods for specialisation
-    //! Assign a vector of dofs
+    /** \brief @copydoc LocalFunctionDefault::assign */
     inline
     void assign(int dofNum, const RangeType& dofs);
     
-    //! Number of contained scalar base functions
+    /** \brief Number of contained scalar base functions */
     inline
     int numDifferentBaseFunctions() const;
 
-    //! return reference to actual base function set
+    /** \brief @copydoc LocalFunctionDefault::baseFunctionSet */
     inline 
     const BaseFunctionSetType& baseFunctionSet() const;
 
-    //! axpy operation for factor 
-    //! \[ u_i += {\rm factor} \cdot phi_i \]
+
+   
+    /**  \brief axpy operation for factor: \[ u_i += {\rm factor} \cdot phi_i \]
+         \param[in] quadrature type 
+         \param[in] integer qp
+         \param[out] factor (range type)
+   */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
-    //! axpy operation for factor 
-    //! \[ u_i += {\rm factor} \cdot \nabla phi_i \]
+
+   /** \brief axpy operation for factor: \[ u_i += {\rm factor} \cdot \nabla phi_i \]
+      \param[in] quadrature type 
+      \param[in] integer qp
+      \param[out] factor (jacobian range type)
+   */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
-    //! axpy operation for factor 
-    //! \[ u_i += {\rm factor1} \cdot phi_i + {\rm factor2} \cdot \nabla phi_i \]
+   
+   /** \brief axpy operation for factor : \[ u_i += {\rm factor1} \cdot phi_i + {\rm factor2} \cdot \nabla phi_i \]
+      \param[in] quadrature type 
+      \param[in] integer qp
+      \param[out] factor1 (range type)
+      \param[out] factor2 (jacobian range type)
+   */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
   private:
