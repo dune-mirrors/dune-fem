@@ -170,14 +170,18 @@ processXdrs(XDRStream& xdr) const
   const int vecSize = dofVec_.size();
   for(int i=0; i<vecSize; ++i) 
   {
+#if OLD_XDR_METHOD
+    xdr.bytes( dofVec_[i] , DofBlockType :: dimension );
+#else 
     xdr.inout( dofVec_[i] );
+#endif
   }
   return true;
 }
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-write_xdr( std::string filename ) const
+write_xdr( const std::string filename ) const
 {
   // create write stream 
   XDRWriteStream xdr(filename);
@@ -186,7 +190,7 @@ write_xdr( std::string filename ) const
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-read_xdr( std::string filename)
+read_xdr( const std::string filename)
 {
   // create read stream 
   XDRReadStream xdr(filename);
@@ -195,7 +199,7 @@ read_xdr( std::string filename)
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-write_ascii( std::string filename ) const
+write_ascii( const std::string filename ) const
 {
   const char * fn = filename.c_str();
   std::fstream outfile( fn , std::ios::out );
@@ -222,7 +226,7 @@ write_ascii( std::string filename ) const
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-read_ascii( std::string filename )
+read_ascii( const std::string filename )
 {
   const char * fn = filename.c_str();
   FILE *infile=NULL;
@@ -252,7 +256,7 @@ read_ascii( std::string filename )
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-write_pgm( std::string filename ) const
+write_pgm( const std::string filename ) const
 {
   const char * fn = filename.c_str();
   std::ofstream out( fn );
@@ -277,7 +281,7 @@ write_pgm( std::string filename ) const
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-read_pgm( std::string filename )
+read_pgm( const std::string filename )
 {
   const char * fn = filename.c_str();
   FILE *in;

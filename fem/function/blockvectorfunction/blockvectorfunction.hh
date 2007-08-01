@@ -245,22 +245,22 @@ public:
   void print(std::ostream& s) const;
 
   /** \brief @copydoc DiscreteFunctionDefault::write_xdr */
-  bool write_xdr( std::string filename ) const;
+  virtual bool write_xdr( const std::string filename ) const;
 
   /** \brief @copydoc DiscreteFunctionDefault::read-xdr  */
-  bool read_xdr( std::string filename );
+  virtual bool read_xdr( const std::string filename );
 
   /** \brief @copydoc DiscreteFunctionDefault::write_ascii  */
-  bool write_ascii(std::string filename) const;
+  virtual bool write_ascii(const std::string filename) const;
 
   /** \brief @copydoc DiscreteFunctionDefault::read_ascii */
-  bool read_ascii(std::string filename);
+  virtual bool read_ascii(const std::string filename);
 
   /** \brief @copydoc DiscreteFunctionDefault::write_pgm  */
-  bool write_pgm(std::string filename) const;
+  virtual bool write_pgm(const std::string filename) const;
 
   /** \brief @copydoc DiscreteFunctionDefault::read_pgm  */
-  bool read_pgm(std::string filename); 
+  virtual bool read_pgm(const std::string filename); 
 
   /** \brief return reference to internal block vector 
       \return reference to blockVector */ 
