@@ -68,6 +68,7 @@ namespace Dune
   // For codim-0 element quadratures, there is no additional information
   // from the context needes, in consequence, the quadrature behaves like
   // a generic quadrature class, independent from the situation in the grid.
+  //! \copydoc Dune::ElementQuadrature
   template< typename GridPartImp >
   class ElementQuadrature< GridPartImp, 0 >
   : public ElementIntegrationPointList
@@ -107,15 +108,6 @@ namespace Dune
     typedef typename GridType :: template Codim< 0 > :: Entity Entity;
 
   public:
-    /*! \brief copy constructor
-     *
-     *  \param[in]  org  element quadrature to copy
-     */
-    ElementQuadrature( const ElementQuadrature& org )
-    : BaseType( org )
-    {
-    }
-   
     /*! \brief constructor
      *
      *  \param[in]  entity  entity, on whose reference element the quadratre
@@ -126,16 +118,17 @@ namespace Dune
     : BaseType( entity.geometry().type(), order )
     {
     }
-   
-    /*! obtain the weight of the i-th quadrature point
+    
+    /*! \brief copy constructor
      *
-     *  \note The quadrature weights sum up to the volume of the corresponding
-     *        reference element.
-     *
-     *  \param[in]  i  index of the quadrature point
-     *
-     *  \returns weight of the i-th quadrature point within the quadrature
+     *  \param[in]  org  element quadrature to copy
      */
+    ElementQuadrature( const ElementQuadrature &org )
+    : BaseType( org )
+    {
+    }
+ 
+    //! \copydoc Dune::Quadrature::weight
     const RealType &weight( size_t i ) const
     {
       return quadImp().weight( i );
