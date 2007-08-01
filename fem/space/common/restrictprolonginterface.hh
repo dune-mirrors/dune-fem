@@ -254,5 +254,4 @@ private:
 
 ///@} 
 } // end namespace Dune 
-#include <dune/fem/space/common/restrictprolongimpl.hh>
 #endif

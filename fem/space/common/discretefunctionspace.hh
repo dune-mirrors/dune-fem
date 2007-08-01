@@ -20,7 +20,9 @@ namespace Dune{
   /** @defgroup DiscreteFunctionSpace DiscreteFunctionSpace
       @ingroup FunctionCommon
       This provides the interfaces for discrete function spaces. 
-  
+ 
+      \remarks The interface for using a DiscreteFunctionSpace is
+      defined by the class DiscreteFunctionSpaceInterface.
       @{
   */
 
@@ -201,6 +203,7 @@ namespace Dune{
         \return Iterator pointing to first Entity
     */
     IteratorType begin() const {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().begin());
       return asImp().begin();
     }
 
@@ -209,7 +212,27 @@ namespace Dune{
         \return Iterator pointing behind last Entity
     */
     IteratorType end() const {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().end());
       return asImp().end();
+    }
+
+    /** \brief returns true if grid has more than one geometry type (hybrid grid)
+        \return \b true  if  grid has more than one geometry type
+        (hybrid grid), \b false otherwise 
+    */
+    bool multipleGeometryTypes() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().multipleGeometryTypes());
+      return asImp().multipleGeometryTypes();
+    }
+
+    /** \brief returns true if base function sets depend on entity 
+        \return \b true if base function set depend on entities, \b false otherwise 
+    */
+    bool multipleBaseFunctionSets() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().multipleBaseFunctionSets());
+      return asImp().multipleBaseFunctionSets(); 
     }
 
   protected:
@@ -252,14 +275,11 @@ namespace Dune{
     {
     }
 
-    /** \brief returns true if grid has more than one geometry type (hybrid grid)
-        \return <b>true</b> if  grid has more than one geometry type
-        (hybrid grid), <b>false</b> otherwise 
-    */
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::multipleGeometryTypes */
     bool multipleGeometryTypes() const { return multipleGeometryTypes_; }
 
-    /** \brief returns true if base function sets depend on entity 
-        \return <b>true</b> if base function set depend on entities, <b>false</b> otherwise 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::multipleBaseFunctionSets 
+        \note The default implementation returns false.
     */
     bool multipleBaseFunctionSets() const { return false; }
 
@@ -281,6 +301,91 @@ namespace Dune{
     }
   };
 
+  ////////////////////////////////////////////////////////////
+  //
+  //  DiscreteFunctionSpaceAdapter 
+  //
+  ////////////////////////////////////////////////////////////
+  /** \brief Create Obejct that behaves like a discrete function space 
+      without to provide functions with the iterator facilities. 
+  */
+  template <class FunctionSpaceImp, class GridPartImp>
+  class DiscreteFunctionSpaceAdapter : public FunctionSpaceImp
+  {
+  public:  
+    enum { polynomialOrder = 111 };
+    
+    //- type of function space 
+    typedef FunctionSpaceImp FunctionSpaceType;
+    //- grid part type 
+    typedef GridPartImp GridPartType;
+    //- grid type 
+    typedef typename GridPartType :: GridType GridType;
+    //- type of used entity
+    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    //- type of iterator 
+    typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
+    //- type of IndexSet 
+    typedef typename GridPartType :: IndexSetType IndexSetType; 
+    
+    //! constructor taking grid Part 
+    DiscreteFunctionSpaceAdapter(const GridPartType& gridPart) 
+      : gridPart_(gridPart) 
+    {
+    }
+
+    //! copy constructor
+    DiscreteFunctionSpaceAdapter(const DiscreteFunctionSpaceAdapter& org) 
+      : gridPart_(org.gridPart_) 
+    {
+    }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin */
+    IteratorType begin () const { return gridPart_.template begin<0> (); }
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::end */
+    IteratorType end () const { return gridPart_.template end<0> (); }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
+    const GridPartType& gridPart() const { return gridPart_; }
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet */
+    const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid */
+    const GridType& grid () const { return gridPart_.grid(); }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
+    bool continuous () const { return true; }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
+    int order () const { return polynomialOrder; }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::type */
+    DFSpaceIdentifier type () const { return DFAdapter_id; }
+
+  protected:
+    //! grid part to select view of grid 
+    const GridPartType& gridPart_;
+  };
+
+  //! BaseFunctionSetSingletonFactory provides method createObject and
+  //! deleteObject for the SingletonList  
+  template <class KeyImp, class ObjectImp, class ObjectFactoryImp>
+  class BaseFunctionSetSingletonFactory
+  { 
+  public:
+    //! create new BaseFunctionSet 
+    static ObjectImp * createObject( const KeyImp & key )
+    {
+      ObjectFactoryImp fac(key); 
+      return new ObjectImp(fac); 
+    }
+    
+    //! delete BaseFunctionSet 
+    static void deleteObject( ObjectImp * obj ) 
+    {
+      delete obj;
+    }
+  };
+  
+//@}  
 } // end namespace Dune 
-#include <dune/fem/space/common/discretefunctionspacecommon.hh>
 #endif
