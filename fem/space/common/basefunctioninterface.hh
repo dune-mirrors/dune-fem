@@ -99,6 +99,7 @@ public:
   virtual int order() const { return -1; }
 };
 
+///@}
 } // end namespace Dune 
 #include "basefunctionsetinterface.hh"
 #endif
