@@ -22,6 +22,14 @@ struct DiffVariable
 /** @defgroup Mapping Mapping
   \ingroup OperatorCommon
   Mappings in Dune always map from one vector space into another vector space.
+  Mapping are the base class for Operators and Functions. 
+  Operators work on vector spaces containing Functions (i.e. Domain and Range are Functions). In
+  contrary Functions work on vector spaces containing real numbers (i.e.
+  \f$R^n\f$). For both Mapping the base interface class. Furthermore,
+  Mapping provided a machinery to combine different mapping linearly. 
+
+  \remarks 
+  The interface for Mappings is defined by the class Mapping.
 
   @{
  */
@@ -42,21 +50,26 @@ template<typename DFieldType,typename RFieldType, class DType, class RType>
 class Mapping //: public Vector < RFieldType > 
 {
 public:
-  //! domain vector space (for usage in derived classes) 
-  //! \todo please insert an example here: is it the vector-type, e.g. 
-  //! FieldVector<5> or the vector space, or something else? 
-  typedef DType DomainType;
-  //! range vector space
-  typedef RType  RangeType;
-  //! integral type used in the construction of the domain vector space, 
-  // ??? e.g. double or float ???
-  typedef DFieldType DomainFieldType;
-  //! integral type used in the construction of the range vector space
-  typedef RFieldType RangeFieldType;
-  //! \todo why that one?
-  typedef RangeFieldType Field;
+  
+  /** \brief domain vector space (for usage in derived classes) 
+      This can either be for example a discrete function (in case of
+      operators) or a FieldVector (in case of discrete functions)
+  */
 
-  //! remember what type this class has 
+  typedef DType DomainType;
+  /** \brief range vector space (for usage in derived classes) 
+      This can either be for example a discrete function (in case of
+      operators) or a FieldVector (in case of discrete functions)
+  */
+  typedef RType  RangeType;
+  
+  /** \brief type of field the domain vector space, i.e. double */
+  typedef DFieldType DomainFieldType;
+  
+  /** \brief type of field the range vector space, i.e. double */
+  typedef RFieldType RangeFieldType;
+  
+  //! type of this class 
   typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
 
   //! create Mappiung with empty linear combination  
@@ -66,20 +79,40 @@ public:
   }
   
   //! delete linear combination if necessary  
-  virtual ~Mapping( ) {
+  virtual ~Mapping () 
+  {
   }
 
-  //! operators for linear combinations  
-  virtual MappingType operator + (const MappingType &) const ;
-  virtual MappingType operator - (const MappingType &) const ;
-  virtual MappingType operator * (const Field &) const  ;
-  virtual MappingType operator / (const Field &) const  ;
-  virtual MappingType& operator  = (const MappingType &) ;
-  virtual MappingType& operator += (const MappingType &) ;
-  virtual MappingType& operator -= (const MappingType &) ;
-  virtual MappingType& operator *= (const Field &)  ;
-  virtual MappingType& operator /= (const Field &)  ;
+  /** \brief add mapping 
+      \param m mapping to add 
+      \returns new object mapping 
+  */
+  virtual MappingType operator + (const MappingType &m) const ;
+  
+  /** \brief substract mapping 
+      \param m mapping to substract  
+      \returns new object mapping 
+  */
+  virtual MappingType operator - (const MappingType &m) const ;
+  
+  /** \brief scale mapping with factor 
+      \param f factor with which mapping is scaled 
+      \returns new object mapping 
+  */
+  virtual MappingType operator * (const RangeFieldType &f) const  ;
+  
+  /** \brief devide  mapping by factor 
+      \param f factor with which mapping is devided 
+      \returns new object mapping 
+  */
+  virtual MappingType operator / (const RangeFieldType &f) const  ;
  
+  /** \brief assignment of mapping mapping 
+      \param m mapping which is copied  
+      \returns reference to mapping  
+  */
+  virtual MappingType& operator  = (const MappingType &m) ;
+
   //! apply the whole linear combination which was created with the
   //! operators above, using the apply method of the combined operators  
   void operator() (const DomainType &Arg, RangeType &Dest ) const 
@@ -117,14 +150,14 @@ private:
   struct term {
     term() : v_(NULL), scalar_(1.0), scaleIt_(false) { }
 
-    term(const MappingType &mapping, Field scalar ) : v_(&mapping), scalar_(scalar), scaleIt_( true ) {
+    term(const MappingType &mapping, RangeFieldType scalar ) : v_(&mapping), scalar_(scalar), scaleIt_( true ) {
       if ( scalar_ == 1. ) {
         scaleIt_ = false;
       }
     }
 
     const MappingType *v_;
-    Field scalar_;
+    RangeFieldType scalar_;
     bool scaleIt_;
   };
 
@@ -134,6 +167,5 @@ private:
 #include "mapping_imp.cc"
 
 /** @} end documentation group */
-}
-
+} // end namespace Dune 
 #endif
