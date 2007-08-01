@@ -171,7 +171,7 @@ class L2Projection
 	{// double det = (*it).geometry().integrationElement( quad.point(qP) );
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<numDofs; ++i) {
-          baseset.eval(i,quad,qP,phi);
+          baseset.evaluate(i,quad,qP,phi);
 	  
 	  //	  tmp[i]+=quad.weight(qP)*SQR(phi)*det ;
           lf[i] += quad.weight(qP) * (ret * phi)/*det*/ ;
