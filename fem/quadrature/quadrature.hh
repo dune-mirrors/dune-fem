@@ -1201,14 +1201,14 @@ namespace Dune
     typedef Quadrature< FieldType, dimension, QuadratureTraits > ThisType;
     typedef IntegrationPointList< FieldType, dimension, QuadratureTraits > BaseType;
 
-    using BaseType :: ipList;
-    
     typedef QuadratureTraits< FieldType, dimension > Traits;
     
     typedef QuadratureProvider< FieldType, dimension, QuadratureTraits >
       QuadratureProviderType;
 
   public:
+    using BaseType :: ipList;
+
     //! type of the implementation (this must actually be a quadrature implementation)
     typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
 
