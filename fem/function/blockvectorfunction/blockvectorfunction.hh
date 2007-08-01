@@ -195,7 +195,7 @@ public:
   template <class EntityType>
   LocalFunctionType localFunction(const EntityType& en) const;
 
-  //! update LocalFunction to given Entity en  
+  /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
   template <class EntityType> 
   void localFunction ( const EntityType &en, LocalFunctionType & lf) DUNE_DEPRECATED; 
 
@@ -357,62 +357,41 @@ public:
   //! \brief Destructor 
   ~StaticDiscreteLocalFunction ();
 
-  //! access to dof number num, all dofs of the dof entity
+   /** \brief  @copydoc LocalFunctionDefault::operator []  */
   RangeFieldType & operator [] (int num);
-  
-  //! access to dof number num, all dofs of the dof entity
+
+   /** \brief  @copydoc LocalFunctionDefault::operator []  */
   const RangeFieldType & operator [] (int num) const;
 
-  /** \brief return number of degrees of freedom 
-  */
+  /** \brief  @copydoc LocalFunctionDefault::numDofs  */
   int numDofs () const;
 
-  /** \brief  @copydoc DiscreteFunctionInterface::evaluate  */
+  /** \brief  @copydoc LocalFunctionDefault::evaluate  */
   void evaluate (const DomainType & x, RangeType & ret) const ;
  
-  /** \brief  @copydoc DiscreteFunctionInterface::evaluate  */
+   /** \brief  @copydoc LocalFunctionDefault::evaluate  */
   template <class QuadratureType>
   void evaluate (const QuadratureType &quad, const int quadPoint , RangeType & ret) const;
 
-  /** \brief evaluate jacobian of local function on point x
-      \param[in] domain type x
-      \param[out] jacobian range type ret
-  */
+   /** \brief  @copydoc LocalFunctionDefault::jacobian  */
   void jacobian(const DomainType& x, JacobianRangeType& ret) const ;
 
-  /** \brief evaluate jacobian of local function on quadrature point quadPoint
-      \param[in] quadrature type quad
-      \param[in] constant quadrature point quadPoint 
-      \param[out] jacobian range type
-  */
+   /** \brief  @copydoc LocalFunctionDefault::jacobian  */
   template <class QuadratureType>
   void jacobian(const QuadratureType &quad, const int quadPoint , JacobianRangeType & ret) const;
 
-  /** \brief return reference to base function set */
+   /** \brief  @copydoc LocalFunctionDefault::baseFunctionSet  */
   const BaseFunctionSetType& baseFunctionSet() const;
 
-  /**  \brief axpy operation for factor 
-       \param[in] quadrature type 
-       \param[in] integer qp
-       \param[out] factor (range type)
-   */
+   /** \brief  @copydoc LocalFunctionDefault::axpy  */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
-  /** \brief axpy operation for factor
-      \param[in] quadrature type 
-      \param[in] integer qp
-      \param[out] factor (jacobian range type)
-   */
+   /** \brief  @copydoc LocalFunctionDefault::axpy  */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
-  /** \brief axpy operation for factor
-      \param[in] quadrature type 
-      \param[in] integer qp
-      \param[out] factor1 (range type)
-      \param[out] factor2 (jacobian range type)
-   */
+   /** \brief  @copydoc LocalFunctionDefault::axpy  */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
 
