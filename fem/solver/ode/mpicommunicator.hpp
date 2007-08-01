@@ -92,9 +92,6 @@ private:
 };
 
 
-
-class MPIError : public Dune::Exception {};
-
 class Communicator
 {
   Communicator();
@@ -114,8 +111,7 @@ public:
                 << "   Dune::MPIHelper & mpihelper = "
                 << "Dune::MPIHelper::instance(argc,argv);" << std::endl;
       assert(0);
-      DUNE_THROW(MPIError,"MPI_Init not called");
-
+      abort(); 
     }
     static Communicator comm;
     return comm;
