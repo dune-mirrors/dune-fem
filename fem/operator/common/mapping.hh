@@ -290,7 +290,7 @@ struct MappingOperators
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
-static Mapping<DFieldType,RFieldType,DType,RType> 
+static inline Mapping<DFieldType,RFieldType,DType,RType> 
 operator +(const Mapping<DFieldType,RFieldType,DType,RType>& a,
            const Mapping<DFieldType,RFieldType,DType,RType>& b)
 {
@@ -304,7 +304,7 @@ operator +(const Mapping<DFieldType,RFieldType,DType,RType>& a,
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
-static Mapping<DFieldType,RFieldType,DType,RType> 
+static inline Mapping<DFieldType,RFieldType,DType,RType> 
 operator -(const Mapping<DFieldType,RFieldType,DType,RType>& a,
            const Mapping<DFieldType,RFieldType,DType,RType>& b)
 {
@@ -318,7 +318,7 @@ operator -(const Mapping<DFieldType,RFieldType,DType,RType>& a,
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
-static Mapping<DFieldType,RFieldType,DType,RType> 
+static inline Mapping<DFieldType,RFieldType,DType,RType> 
 operator *(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
            const RFieldType& factor)
 {
@@ -332,7 +332,7 @@ operator *(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
-static Mapping<DFieldType,RFieldType,DType,RType> 
+static inline Mapping<DFieldType,RFieldType,DType,RType> 
 operator *(const RFieldType& factor,
            const Mapping<DFieldType,RFieldType,DType,RType>& mapping)
 {
@@ -346,7 +346,7 @@ operator *(const RFieldType& factor,
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
-static Mapping<DFieldType,RFieldType,DType,RType> 
+static inline Mapping<DFieldType,RFieldType,DType,RType> 
 operator /(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
            const RFieldType& factor)
 {
@@ -360,7 +360,7 @@ operator /(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
-static Mapping<DFieldType,RFieldType,DType,RType> 
+static inline Mapping<DFieldType,RFieldType,DType,RType> 
 operator /(const RFieldType& factor,
            const Mapping<DFieldType,RFieldType,DType,RType>& mapping)
 {
