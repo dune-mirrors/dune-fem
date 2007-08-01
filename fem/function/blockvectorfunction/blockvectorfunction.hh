@@ -192,7 +192,7 @@ public:
   //! function 
   ~BlockVectorDiscreteFunction ();
 
-  //! return local function for given entity
+  /** \brief @copydoc DiscreteFunctionInterface::localFunction const */ 
   template <class EntityType>
   LocalFunctionType localFunction(const EntityType& en) const;
 
@@ -200,29 +200,28 @@ public:
   template <class EntityType> 
   void localFunction ( const EntityType &en, LocalFunctionType & lf) DUNE_DEPRECATED; 
 
-  //! we use the default implementation 
-  DofIteratorType dbegin ();
+  /** \brief @copydoc DiscreteFunctionInterface::dbegin */ 
+  DofIteratorType dbegin (); 
   
-  //! points behind the last dof of type cc
-  DofIteratorType dend   ();
+  /** \brief @copydoc DiscreteFunctionInterface::dend */ 
+  DofIteratorType dend   (); 
 
-  //! the const versions 
-  //! we use the default implementation 
+  /** \brief @copydoc DiscreteFunctionInterface::dbegin const */ 
   ConstDofIteratorType dbegin () const;
   
-  //! points behind the last dof of type cc
-  ConstDofIteratorType dend   () const;
+  /** \brief @copydoc DiscreteFunctionInterface::dend const */ 
+  ConstDofIteratorType dend   () const; 
 
-  //! Return the name of the discrete function
-  const std::string& name() const {return name_;}
+  /** \brief @copydoc DiscreteFunctionInterface::name const */ 
+  const std::string& name() const {return name_;} 
 
-  //! return size of this discrete function
+  /** \brief @copydoc DiscreteFunctionInterface::size const */ 
   int size() const { return dofVec_.size(); }
 
   //! set all dofs to zero  
   void clear( );
 
-  //! add g * scalar to discrete function 
+  /** \brief @copydoc DiscreteFunctionDefault::addScaled */
   void addScaled ( const DiscreteFunctionType & g,
       const RangeFieldType &scalar); 
   
