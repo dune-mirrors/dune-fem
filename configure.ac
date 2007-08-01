@@ -75,6 +75,7 @@ AC_CONFIG_FILES([Makefile
      fem/function/productfunction/test/Makefile
      fem/operator/Makefile
      fem/operator/common/Makefile
+     fem/operator/common/test/Makefile
      fem/operator/0order/Makefile
      fem/operator/1order/Makefile
      fem/operator/2order/Makefile
