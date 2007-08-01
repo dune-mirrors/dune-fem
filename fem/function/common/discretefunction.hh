@@ -26,6 +26,10 @@ namespace Dune{
       own implementation from the DiscreteFunctionDefault class. If some of
       the implementations in the default class are for ineffecient for the
       dof storage in the derived class these functions can be overloaded.
+
+      \remarks 
+      The interface for using a DiscreteFunction is defined by
+      the class DiscreteFunctionInterface.
   
       @{
   */
@@ -41,19 +45,23 @@ namespace Dune{
   class HasLocalFunction
   {
   };
+
+  template <class Traits>
+  class DiscreteFunctionDefault;
   
-  //************************************************************************
-  //
-  //  --DiscreteFunctionInterface
-  //
-  //! This is the minimal interface of a discrete function which has to be
-  //! implemented. It contains a local function and a dof iterator which can 
-  //! iterate over all dofs of one level. Via the method access the local
-  //! dofs and basis functions can be accessed for a given entity.
-  //! The DOF-Iterators are STL-like Iterators, i.e. they can be dereferenced
-  //! giving the corresponding DOF.
-  //! 
-  //************************************************************************
+  //----------------------------------------------------------------------
+  //-
+  //-  --DiscreteFunctionInterface
+  //-
+  //----------------------------------------------------------------------
+  /** This is the interface of a discrete function which describes the
+      features of a discrete function. 
+      It contains a local function and a dof iterator which can 
+      iterate over all dofs of one level. Via the method access the local
+      dofs and basis functions can be accessed for a given entity.
+      The DOF-Iterators are STL-like Iterators, i.e. they can be dereferenced
+      giving the corresponding DOF.
+  */
   template<class DiscreteFunctionTraits>
   class DiscreteFunctionInterface : 
     public IsDiscreteFunction , 
@@ -64,12 +72,16 @@ namespace Dune{
   public:
     //- Typedefs and enums
 
-    //! types that we sometimes need outside 
+    //! types of function base class 
     typedef Function<
       typename DiscreteFunctionTraits::DiscreteFunctionSpaceType,
       DiscreteFunctionInterface<DiscreteFunctionTraits> 
     > FunctionType;
 
+    //! type of default implementation 
+    typedef DiscreteFunctionDefault<DiscreteFunctionTraits>
+      DiscreteFunctionDefaultType;
+        
     //! type of discrete function space for discrete function 
     typedef typename DiscreteFunctionTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
@@ -102,6 +114,10 @@ namespace Dune{
     //! Type of the constantdof iterator used in the discrete function implementation
     typedef typename DiscreteFunctionTraits::ConstDofIteratorType ConstDofIteratorType;
 
+    //! type of mapping base class for this discrete function 
+    typedef Mapping<DomainFieldType, RangeFieldType,
+                    DomainType, RangeType> MappingType;
+
   public:
     //- Public Methods
 
@@ -118,6 +134,22 @@ namespace Dune{
     {
       CHECK_INTERFACE_IMPLEMENTATION(asImp().name()); 
       return asImp().name();
+    }
+
+    /** \brief return object of LocalFunction of the discrete function associated with given entity
+        \param[in] entity Entity to focus view of discrete function 
+        \return LocalFunction associated with entity
+    */
+    template <class EntityType>
+    LocalFunctionType localFunction(const EntityType& entity) const {
+      return asImp().localFunction(entity);
+    }
+
+    /** \brief set all degrees of freedom to zero
+    */
+    void clear()
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().clear());
     }
 
     /** \brief returns total number of degrees of freedom, i.e. size of discrete function space 
@@ -163,13 +195,49 @@ namespace Dune{
       return asImp().dend ();
     }
 
-    /** \brief return object of LocalFunction of the discrete function associated with given entity
-        \param[in] entity Entity to focus view of discrete function 
-        \return LocalFunction associated with entity
+    /** \brief axpy operation
+        \param[in] g discrete function that is added 
+        \param[in] c scalar value to scale 
     */
-    template <class EntityType>
-    LocalFunctionType localFunction(const EntityType& entity) const {
-      return asImp().localFunction(entity);
+    void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c)
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().addScaled(g,c));
+    }
+
+    /** \brief Evaluate a scalar product of the dofs of two DiscreteFunctions
+        \param[in] g discrete function for evaluating scalar product with  
+        \return returns the scalar product of the dofs 
+    */
+    RangeFieldType scalarProductDofs(const DiscreteFunctionType& g) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().scalarProductDofs(g));
+      return asImp().scalarProductDofs(g);
+    }
+
+    /** \brief print all degrees of freedom of this function to stream (for debugging purpose)
+        \param[out] s std::ostream (e.g. std::cout)
+    */
+    void print(std::ostream & s) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().print(s));
+    }
+
+    /** \brief check for NaNs
+        \return if one  of the dofs is NaN \b false is returned, otherwise \b true 
+    */
+    inline bool dofsValid () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().dofsValid());
+      return asImp().dofsValid();
+    }
+    
+    /** \brief Set all DoFs to a scalar value
+        \param[in] s scalar value to assign for 
+    */
+    inline DiscreteFunctionType &assign ( const RangeFieldType s )
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().assign(s));
+      return asImp().assign(s);
     }
 
     /** \brief evaluate Function f 
@@ -192,6 +260,88 @@ namespace Dune{
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().evaluate(diffVariable,arg,dest));
     }
+
+    /** \brief assign all degrees of freedom from given discrete function using the dof iterators 
+        \param[in] g discrete function which is copied 
+    */
+    void assign(const DiscreteFunctionType& g)
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().assign(g));
+    }
+
+    /** \brief add all degrees of freedom from given discrete function using the dof iterators 
+        \param[in] g discrete function which is added to this discrete function 
+        \return reference to this (i.e. *this)
+    */
+    DiscreteFunctionType& operator += (const DiscreteFunctionType& g) 
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator += (g));
+      return asImp().operator += (g);
+    }
+
+    /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
+        \param[in] g discrete function which is substracted from this discrete function 
+        \return reference to this (i.e. *this)
+    */
+    DiscreteFunctionType& operator -= (const DiscreteFunctionType& g) 
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator -= (g));
+      return asImp().operator -= (g);
+    }
+ 
+    /** \brief multiply all degrees of freedom with given scalar factor using the dof iterators 
+        \param[in] scalar factor with which all dofs are scaled 
+        \return reference to this (i.e. *this)
+    */
+    DiscreteFunctionType& operator *= (const RangeFieldType &scalar)
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator *= (scalar));
+      return asImp().operator *= (scalar);
+    }
+
+    /** \brief devide all degrees of freedom with given scalar factor using the dof iterators 
+        \param[in] scalar factor with which all dofs are devided  
+        \return reference to this (i.e. *this)
+    */
+    DiscreteFunctionType& operator /= (const RangeFieldType &scalar)
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator /= (scalar));
+      return asImp().operator /= (scalar);
+    }
+
+    /** \brief write discrete function to file with given filename using xdr encoding
+        \param[in] filename name of file to which discrete function should be written using xdr 
+        \return \b true if operation was successful 
+    */
+    virtual bool write_xdr(const std::string filename) const = 0; 
+
+    /** \brief write discrete function to file with given filename using ascii encoding
+        \param[in] filename name of file to which discrete function should be written using ascii 
+        \return \b true if operation was successful 
+    */
+    virtual bool write_ascii(const std::string filename) const = 0;
+
+    /** \brief write discrete function to file with given filename using pgm encoding
+        \param[in] filename name of file to which discrete function should be written using pgm 
+        \return \b true if operation was successful 
+    */
+    virtual bool write_pgm(const std::string filename) const = 0;
+
+    /** \brief read discrete function from file with given filename using xdr decoding
+        \param[in] filename name of file from which discrete function should be read using xdr 
+        \return \b true if operation was successful 
+    */
+    virtual bool read_xdr(const std::string filename) const = 0;
+    /** \brief read discrete function from file with given filename using ascii decoding
+        \param[in] filename name of file from which discrete function should be read using ascii 
+        \return \b true if operation was successful 
+    */
+    virtual bool read_ascii(const std::string filename) const = 0;
+    /** \brief read discrete function from file with given filename using pgm decoding
+        \param[in] filename name of file from which discrete function should be read using pgm 
+        \return \b true if operation was successful 
+    */
+    virtual bool read_pgm(const std::string filename) const = 0;
 
   protected:
     /** \brief return pointer to new object of local function implementation 
@@ -287,19 +437,10 @@ namespace Dune{
     DiscreteFunctionDefault (const DiscreteFunctionSpaceType & f ) :
       DiscreteFunctionInterfaceType ( f ) , lfStorage_ (*this) {}
 
-    //! Continuous data 
-    bool continuous() const DUNE_DEPRECATED {
-      return this->functionSpace_.continuous();
-    }
-
-    /** \brief print all degrees of freedom of this function to stream (for debugging purpose)
-        \param[out] s std::ostream (e.g. std::cout)
-    */
+    /** \brief @copydoc DiscreteFunctionInterface::print */
     void print(std::ostream & s) const;
 
-    /** \brief check for NaNs
-        \return if one  of the dofs is NaN <b>false</b> is returned, otherwise <b>true</b> 
-    */
+    /** \brief @copydoc DiscreteFunctionInterface::dofsValid */ 
     inline bool dofsValid () const
     {
       const ConstDofIteratorType end = this->dend();
@@ -312,13 +453,10 @@ namespace Dune{
       return true;
     }
     
-    /** \brief set all degrees of freedom to zero
-    */
+    /** \brief @copydoc DiscreteFunctionInterface::clear */
     void clear();
 
-    /** \brief Set all DoFs to a scalar value
-        \param[in] s scalar value to assign for 
-    */
+    /** \brief @copydoc DiscreteFunctionInterface::assign */
     inline DiscreteFunctionType &assign ( const RangeFieldType s )
     {
       const DofIteratorType end = this->dend();
@@ -327,81 +465,56 @@ namespace Dune{
       return asImp();
     }
 
-    /** \brief axpy operation
-        \param[in] g discrete function that is added 
-        \param[in] c scalar value to scale 
-    */
+    /** \brief @copydoc DiscreteFunctionInterface::addScaled */
     void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c);
 
-    /** \brief Evaluate a scalar product of the dofs of two DiscreteFunctions
-        \param[in] g discrete function for evaluating scalar product with  
-        \return returns the scalar product of the dofs 
-    */
+    /** \brief @copydoc DiscreteFunctionInterface::scalarProductDofs */
     RangeFieldType scalarProductDofs(const DiscreteFunctionType& g) const;
 
-    /** \brief assign all degrees of freedom from given discrete function using the dof iterators 
-        \param[in] g discrete function which is copied 
-        \return reference to this (i.e. *this)
-    */
-    virtual DiscreteFunctionDefaultType& assign(const MappingType& g);
+    /** \brief @copydoc DiscreteFunctionInterface::assign */
+    void assign(const DiscreteFunctionType& g);
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is added to this discrete function 
         \return reference to this (i.e. *this)
     */
-    virtual DiscreteFunctionDefaultType& operator += (const MappingType& g);
+    DiscreteFunctionType& operator += (const DiscreteFunctionType& g);
 
     /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is substracted from this discrete function 
         \return reference to this (i.e. *this)
     */
-    virtual DiscreteFunctionDefaultType& operator -= (const MappingType &g);
+    DiscreteFunctionType& operator -= (const DiscreteFunctionType& g);
  
     /** \brief multiply all degrees of freedom with given scalar factor using the dof iterators 
         \param[in] scalar factor with which all dofs are scaled 
         \return reference to this (i.e. *this)
     */
-    virtual DiscreteFunctionDefaultType& operator *=(const RangeFieldType &scalar);
+    DiscreteFunctionType& operator *= (const RangeFieldType &scalar);
 
     /** \brief devide all degrees of freedom with given scalar factor using the dof iterators 
         \param[in] scalar factor with which all dofs are devided  
         \return reference to this (i.e. *this)
     */
-    virtual DiscreteFunctionDefaultType& operator /= (const RangeFieldType &scalar);
+    DiscreteFunctionType& operator /= (const RangeFieldType &scalar);
 
-    /** \brief write discrete function to file with given filename using xdr encoding
-        \param[in] filename name of file to which discrete function should be written using xdr 
-        \return <b>true</b> if operation was successful 
-    */
-    bool write_xdr(std::string filename) const { return true; }
+    /** \brief @copydoc DiscreteFunctionInterface::write_xdr */
+    virtual bool write_xdr(const std::string filename) const { return true; }
 
-    /** \brief write discrete function to file with given filename using ascii encoding
-        \param[in] filename name of file to which discrete function should be written using ascii 
-        \return <b>true</b> if operation was successful 
-    */
-    bool write_ascii(std::string filename) const { return true; }
+    /** \brief @copydoc DiscreteFunctionInterface::write_ascii */
+    virtual bool write_ascii(const std::string filename) const { return true; }
 
-    /** \brief write discrete function to file with given filename using pgm encoding
-        \param[in] filename name of file to which discrete function should be written using pgm 
-        \return <b>true</b> if operation was successful 
-    */
-    bool write_pgm(std::string filename) const { return true; }
+    /** \brief @copydoc DiscreteFunctionInterface::write_pgm */
+    virtual bool write_pgm(const std::string filename) const { return true; }
 
-    /** \brief read discrete function from file with given filename using xdr decoding
-        \param[in] filename name of file from which discrete function should be read using xdr 
-        \return <b>true</b> if operation was successful 
-    */
-    bool read_xdr(std::string filename) const { return true; }
-    /** \brief read discrete function from file with given filename using ascii decoding
-        \param[in] filename name of file from which discrete function should be read using ascii 
-        \return <b>true</b> if operation was successful 
-    */
-    bool read_ascii(std::string filename) const { return true; }
-    /** \brief read discrete function from file with given filename using pgm decoding
-        \param[in] filename name of file from which discrete function should be read using pgm 
-        \return <b>true</b> if operation was successful 
-    */
-    bool read_pgm(std::string filename) const { return true; }
+    /** \brief @copydoc DiscreteFunctionInterface::read_xdr */
+    virtual bool read_xdr(const std::string filename) const { return true; }
+    
+    /** \brief @copydoc DiscreteFunctionInterface::read_ascii */
+    virtual bool read_ascii(const std::string filename) const { return true; }
+    
+    /** \brief @copydoc DiscreteFunctionInterface::read_pgm */
+    virtual bool read_pgm(const std::string filename) const { return true; }
 
   protected: 
     //this methods are used by the LocalFunctionStorage class 
@@ -418,9 +531,9 @@ namespace Dune{
     // the local function storage stack 
     mutable LocalFunctionStorageType lfStorage_;
   }; // end class DiscreteFunctionDefault 
-
+  
+///@} 
 } // end namespace Dune
 #include "discretefunction.cc"
 #include "discretefunctionadapter.hh"
-
 #endif

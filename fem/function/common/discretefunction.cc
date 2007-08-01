@@ -2,7 +2,7 @@
 #define DUNE_DISCRETEFUNCTION_CC
 
 #include <fstream>
-#include "../../io/file/asciiparser.hh"
+#include <dune/fem/io/file/asciiparser.hh>
 
 namespace Dune 
 {
@@ -11,7 +11,7 @@ namespace Dune
 //  Default Implementations 
 //************************************************************
 template <class DiscreteFunctionTraits>
-void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear() 
+inline void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear() 
 {
   DofIteratorType endit = this->dend();
   for (DofIteratorType it = this->dbegin(); it != endit; ++it) 
@@ -21,7 +21,7 @@ void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear()
 }
 
 template <class DiscreteFunctionTraits>
-void DiscreteFunctionDefault<DiscreteFunctionTraits>::
+inline void DiscreteFunctionDefault<DiscreteFunctionTraits>::
 addScaled(const DiscreteFunctionType& g, const RangeFieldType& c) {
   assert(this->size() == g.size());
   DofIteratorType endit = this->dend();
@@ -57,74 +57,49 @@ scalarProductDofs(const DiscreteFunctionType& g) const
 
 // operator=
 template<class DiscreteFunctionTraits>
-DiscreteFunctionDefault<DiscreteFunctionTraits >&
+inline void 
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
-assign(const MappingType& g) 
+assign(const DiscreteFunctionType& g) 
 {
-  typedef DiscreteFunctionDefault<
-    DiscreteFunctionTraits 
-    > DiscreteFunctionDefaultType;
-  
-  const DiscreteFunctionDefaultType &gc = 
-    static_cast<const DiscreteFunctionDefaultType &> ( g );
-  
   assert(this->size() == gc.size());
 
   DofIteratorType endit = this->dend ();
-  ConstDofIteratorType git = gc.dbegin ();
+  ConstDofIteratorType git = g.dbegin ();
   for (DofIteratorType it = this->dbegin(); it != endit; ++it, ++git) {
     *it = *git;
   }
-  return *this;
 }
-
 
 // operator +=
 /** \todo This operator can add a discretefunction defined on all levels to another
  * one defined only on one level.  We should somehow issue a warning in this case.
  */
 template<class DiscreteFunctionTraits>
-DiscreteFunctionDefault<DiscreteFunctionTraits >&
+inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator += (const MappingType& g) 
+operator += ( const DiscreteFunctionType& g ) 
 {
-  typedef DiscreteFunctionDefault<
-    DiscreteFunctionTraits 
-    > DiscreteFunctionDefaultType;
-
-  const DiscreteFunctionDefaultType &gc = 
-    static_cast<const DiscreteFunctionDefaultType &> ( g );
-
-  assert(this->size() == gc.size());
+  assert(this->size() == g.size());
 
   DofIteratorType endit = this->dend ();
-  ConstDofIteratorType git = gc.dbegin ();
+  ConstDofIteratorType git = g.dbegin ();
   for(DofIteratorType it = this->dbegin(); it != endit; ++it, ++git) 
   {
     *it += *git;
   }
-  return *this;
+  return asImp();
 }
-
 
 // operator -=
 template<class DiscreteFunctionTraits>
-DiscreteFunctionDefault<DiscreteFunctionTraits> &
+inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator -= ( const MappingType& g ) 
+operator -= ( const DiscreteFunctionType& g ) 
 {
-  typedef DiscreteFunctionDefault<
-    DiscreteFunctionTraits 
-    > DiscreteFunctionDefaultType;
-
-  // cast to class discrete functions     
-  const DiscreteFunctionDefaultType &gc = 
-    static_cast<const DiscreteFunctionDefaultType &> ( g );
-
-  assert(this->size() == gc.size());
+  assert(this->size() == g.size());
 
   DofIteratorType endit = this->dend ();
-  ConstDofIteratorType git = gc.dbegin ();
+  ConstDofIteratorType git = g.dbegin ();
   for(DofIteratorType it = this->dbegin(); it != endit; ++it, ++git) 
   {
     *it -= *git;
@@ -134,25 +109,26 @@ operator -= ( const MappingType& g )
 
 // operator *=
 template<class DiscreteFunctionTraits >
-inline DiscreteFunctionDefault<DiscreteFunctionTraits>&
+inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
 operator*=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::RangeFieldType & scalar)
 {
   DofIteratorType endit = this->dend ();
   for(DofIteratorType it = this->dbegin(); it != endit; ++it) 
+  {
     *it *= scalar;
-
-  return *this;
+  }
+  return asImp();
 }
 
 // operator /=
 template<class DiscreteFunctionTraits>
-inline DiscreteFunctionDefault<DiscreteFunctionTraits > &
+inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
 operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::RangeFieldType & scalar)
 {
   (*this) *= (RangeFieldType(1)/scalar);
-  return *this;
+  return asImp();
 }
 
 
