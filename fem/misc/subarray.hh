@@ -5,20 +5,26 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/misc/array.hh>
+#include <dune/fem/misc/vector.hh>
 
 namespace Dune
 {
 
   //! Abstract index mapper interface
-  template< class Imp >
+  template< class IndexMapperImp >
   class IndexMapperInterface
   {
+  public:
+    //! type of the implementation (Barton-Nackman)
+    typedef IndexMapperImp IndexMapperType;
+    
   private:
-    typedef IndexMapperInterface< Imp > ThisType;
+    typedef IndexMapperInterface< IndexMapperType > ThisType;
 
   public:
+    //! type of the interface
     typedef ThisType IndexMapperInterfaceType;
-      
+
   public:
     //! Maps an index onto another one
     inline const unsigned int &operator[]( unsigned int index ) const
@@ -40,16 +46,27 @@ namespace Dune
 
   private:
     //! Barton-Nackman trick
-    inline const Imp &asImp () const
+    inline const IndexMapperType &asImp () const
     {
-      return static_cast< const Imp& >( *this );
+      return static_cast< const IndexMapperType& >( *this );
     }
 
     //! Barton-Nackman trick
-    inline Imp &asImp ()
+    inline IndexMapperType &asImp ()
     {
-      return static_cast< Imp& >( *this );
+      return static_cast< IndexMapperType& >( *this );
     }
+  };
+  
+  
+  
+  template< class IndexMapperType >
+  struct CheckIndexMapperInterface
+  {
+    typedef IndexMapperInterface< IndexMapperType > IndexMapperInterfaceType;
+
+    typedef CompileTimeChecker< Conversion< IndexMapperType, IndexMapperInterfaceType > :: exists >
+      CheckerType;
   };
 
 
@@ -84,18 +101,8 @@ namespace Dune
     : baseArray_( baseArray ),
       indexMapper_( indexMapper )
     {
-      typedef ArrayInterface< typename BaseArrayType :: TraitsType >
-        BaseArrayInterfaceType;
-      typedef CompileTimeChecker
-        < Conversion< BaseArrayType, BaseArrayInterfaceType > :: exists >
-        __BaseArrayType_Must_Be_Derived_From_ArrayInterface__;
-
-      typedef IndexMapperInterface< IndexMapperType >
-        IndexMapperInterfaceType;
-      typedef CompileTimeChecker
-        < Conversion< IndexMapperType, IndexMapperInterfaceType > :: exists >
-        __IndexMapperType_Must_Be_Derived_From_IndexMapperInterface__;        
-
+      typedef CheckArrayInterface< BaseArrayType > __CheckBaseArrayType__;
+      typedef CheckIndexMapperType< IndexMapperType > __CheckIndexMapperType__;
       assert( baseArray_.size() == indexMapper_.range() );
     }
 
@@ -115,6 +122,60 @@ namespace Dune
     }
   };
 
+
+
+  // SubVector
+  template< class BaseVectorImp, class IndexMapperImp >
+  class SubVector
+  : public VectorDefault< typename BaseVectorImp :: ElementType,
+                          SubVector< BaseVectorImp, IndexMapperImp > >
+  {
+  public:
+    //! type of the base array
+    typedef BaseVectorImp BaseVectorType;
+
+    //! type of the index mapper
+    typedef IndexMapperImp IndexMapperType;
+
+    //! type of array elements
+    typedef typename BaseVectorType :: FieldType FieldType;
+      
+  private:
+    typedef SubVector< BaseVectorType, IndexMapperType > ThisType;
+    typedef VectorDefault< FieldType, ThisType > BaseType;
+      
+  private:
+    BaseVectorType &baseVector_;
+    const IndexMapperType &indexMapper_;
+      
+  public:
+    inline SubVector( BaseVectorType &baseVector,
+                      const IndexMapperType &indexMapper )
+    : baseVector_( baseVector ),
+      indexMapper_( indexMapper )
+    {
+      typedef CheckVectorInterface< BaseVectorType > __CheckBaseVectorType__;
+      typedef CheckIndexMapperType< IndexMapperType > __CheckIndexMapperType__;
+
+      assert( baseVector_.size() == indexMapper_.range() );
+    }
+
+    inline const FieldType &operator[] ( unsigned int index ) const
+    {
+      return baseVector_[ indexMapper_[ index ] ];
+    }
+
+    inline FieldType &operator[] ( unsigned int index )
+    {
+      return baseVector_[ indexMapper_[ index ] ];
+    }
+
+    inline unsigned int size() const
+    {
+      return indexMapper_.size();
+    }
+  };
+  
 }
 
 #endif

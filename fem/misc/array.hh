@@ -44,13 +44,7 @@ namespace Dune
         __Array_Implementation_Must_Be_Derived_From_Interface__;
     }
     
-    //! fill the array with copies of an element
-    inline ArrayType &operator= ( const ElementType &element )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( element ) );
-      return asImp();
-    }
-    
+   
     //! access an array element
     inline const ElementType& operator[] ( unsigned int index ) const
     {
@@ -64,7 +58,14 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
       return asImp()[ index ];
     }
-
+    
+    //! fill the array with copies of an element
+    inline ArrayType &assign ( const ElementType &element )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( element ) );
+      return asImp();
+    }
+ 
     //! obtain begin iterator
     inline ConstIteratorType begin () const
     {
@@ -101,15 +102,26 @@ namespace Dune
     }
     
   protected:
-    inline const ArrayType& asImp () const
+    inline const ArrayType &asImp () const
     {
       return static_cast< const ArrayType& >( *this );
     }
 
-    inline ArrayType& asImp ()
+    inline ArrayType &asImp ()
     {
       return static_cast< ArrayType& >( *this );
     }
+  };
+
+
+
+  template< class ArrayType >
+  struct CheckArrayInterface
+  {
+    typedef ArrayInterface< typename ArrayType :: TraitsType > ArrayInterfaceType;
+
+    typedef CompileTimeChecker< Conversion< ArrayType, ArrayInterfaceType > :: exists >
+      CheckerType;
   };
 
 
@@ -178,17 +190,12 @@ namespace Dune
 
 
   template< class ElementImp, class ArrayImp >
-  class ArrayDefaultTraits
+  struct ArrayDefaultTraits
   {
-  public:
     typedef ElementImp ElementType;
 
     typedef ArrayImp ArrayType;
 
-  private:
-    typedef ArrayDefaultTraits< ElementType, ArrayType > ThisType;
-
-  public:
     typedef ArrayDefaultIterator< ElementType, ArrayType > IteratorType;
     
     typedef ArrayDefaultIterator< const ElementType, const ArrayType > ConstIteratorType;
@@ -219,9 +226,9 @@ namespace Dune
     typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
 
   public:
-    inline ArrayImp& operator= ( const ElementType &element )
+    inline ArrayType &assign ( const ElementType &element )
     {
-      ArrayImp &imp = asImp();
+      ArrayType &imp = asImp();
       const unsigned int size = imp.size();
       for( unsigned int i = 0; i < size; ++i )
         imp[ i ] = element;
@@ -274,11 +281,6 @@ namespace Dune
       assert( elements_ != NULL );
     }
     
-    inline ThisType &operator= ( const ElementType &element )
-    {
-      return BaseType :: operator=( element );
-    }
-
     inline const ElementType &operator[] ( unsigned int index ) const
     {
       assert( index < size_ );
@@ -322,11 +324,6 @@ namespace Dune
     {
       for( unsigned int i = 0; i < arraysize; ++i )
         elements_[ i ] = element;
-    }
-
-    inline ThisType &operator= ( const ElementType &element )
-    {
-      return BaseType :: operator=( element );
     }
    
     inline const ElementType &operator[] ( unsigned int index ) const
@@ -494,11 +491,6 @@ namespace Dune
     inline ~DynamicArray ()
     {
       allocator_.free( elements_ );
-    }
-
-    inline ThisType& operator= ( const ElementType &element )
-    {
-      return BaseType :: operator=( element );
     }
 
     inline const ElementType& operator[] ( unsigned int index ) const
