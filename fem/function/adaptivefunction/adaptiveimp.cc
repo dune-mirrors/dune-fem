@@ -195,7 +195,7 @@ namespace Dune {
   //- Read/write methods
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  write_xdr(std::string fn) const
+  write_xdr(const std::string fn) const
   {
     // create write stream 
     XDRWriteStream xdr(fn);
@@ -211,7 +211,7 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  read_xdr(std::string fn)
+  read_xdr(const std::string fn)
   {
     XDRReadStream xdr(fn);
     // make sure data is only written in compressed state. 
@@ -226,7 +226,7 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  write_ascii(std::string fn) const
+  write_ascii(const std::string fn) const
   {
     std::fstream outfile( fn.c_str() , std::ios::out );
     if (!outfile)
@@ -254,7 +254,7 @@ namespace Dune {
 
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  read_ascii(std::string fn)
+  read_ascii(const std::string fn)
   {
     FILE *infile=0;
     infile = fopen( fn.c_str(), "r" );
@@ -276,7 +276,7 @@ namespace Dune {
 
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  write_pgm(std::string fn) const
+  write_pgm(const std::string fn) const
   {
     std::ofstream out( fn.c_str() );
     
@@ -300,7 +300,7 @@ namespace Dune {
   
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  read_pgm(std::string fn)
+  read_pgm(const std::string fn)
   {
     FILE *in;
     int v;

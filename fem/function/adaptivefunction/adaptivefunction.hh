@@ -172,26 +172,22 @@ namespace Dune {
     {}
 
     //! assignment of functions 
-    virtual BaseType& assign(const MappingType& g)
+    void assign(const ThisType& g)
     {
-      const ThisType& org = dynamic_cast<const ThisType&> (g);
-      Imp::assignFunction(org);
-      return *this;
+      Imp::assignFunction(g);
     }
 
     //! operator +=  
-    virtual BaseType& operator += (const MappingType& g)
+    ThisType& operator += (const ThisType& g)
     {
-      const ThisType& org = dynamic_cast<const ThisType&> (g);
-      Imp::addFunction(org);
+      Imp::addFunction(g);
       return *this;
     }
 
     //! operator -=  
-    virtual BaseType& operator -= (const MappingType& g)
+    virtual BaseType& operator -= (const ThisType& g)
     {
-      const ThisType& org = dynamic_cast<const ThisType&> (g);
-      Imp::substractFunction(org);
+      Imp::substractFunction(g);
       return *this;
     }
 
@@ -490,26 +486,22 @@ namespace Dune {
     ~AdaptiveDiscreteFunction();
 
     //! assignment of functions 
-    virtual BaseType& assign(const MappingType& g)
+    void assign(const ThisType& g)
     {
-      const ThisType& org = dynamic_cast<const ThisType&> (g);
-      Imp::assignFunction(org);
-      return *this;
+      Imp::assignFunction(g);
     }
 
     //! operator +=  
-    virtual BaseType& operator += (const MappingType& g)
+    ThisType& operator += (const ThisType& g)
     {
-      const ThisType& org = dynamic_cast<const ThisType&> (g);
-      Imp::addFunction(org);
+      Imp::addFunction(g);
       return *this;
     }
 
     //! operator -=  
-    virtual BaseType& operator -= (const MappingType& g)
+    ThisType& operator -= (const ThisType& g)
     {
-      const ThisType& org = dynamic_cast<const ThisType&> (g);
-      Imp::substractFunction(org);
+      Imp::substractFunction(g);
       return *this;
     }
 
