@@ -8,11 +8,13 @@ namespace Dune{
 
 /** @defgroup BaseFunctionSet BaseFunctionSets
     @ingroup BaseFunction
-    
     The base functions are essential to describe a numerical solutions.
     Here the interface of base functions and the corresponding base 
     function set is presented. The user always works with the base function
     set, where all diffrent base functions for on element type are known.
+
+    \remarks 
+    The interface for using a BaseFunctionSet is described by BaseFunctionSetInterface.
 
     @{
 */
@@ -23,7 +25,9 @@ namespace Dune{
 //-
 //------------------------------------------------------------------------
 
-/** \brief 
+/** 
+   \brief 
+    
    The BaseFunctionSetInterface describes the interface for
    BaseFunctionSets. 
   
@@ -40,7 +44,7 @@ namespace Dune{
    This method brings us flexebility and effeciency. 
 */  
 template<class BaseFunctionSetTraits> 
-class BaseFunctionSetInterface  
+class BaseFunctionSetInterface 
 {
 public:
   //! type of function space 
@@ -75,14 +79,16 @@ public:
   //! \brief empty destructor 
   virtual ~BaseFunctionSetInterface() {}
   
-  //! \brief number of base functions
+  /** \brief number of base functions 
+      \return number of base functions 
+  */
   int numBaseFunctions() const 
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numBaseFunctions());
     return asImp().numBaseFunctions();
   }
 
-  /** \brief evaluate basefunction 
+  /** \brief interface method for evaluation, evaluation of jacobian, and hessian of base functions 
       \param[in] baseFunct number of base function to evaluate 
       \param[in] diffVariable length determines the derivative (i.e. 0 is
              evaluate, 1 is gradient, 2 hessian, ... ) and the value
@@ -100,7 +106,7 @@ public:
         asImp().evaluate( baseFunct, diffVariable, x, phi ));
   }
 
-  /** \brief evaluate basefunction 
+  /** \brief interface method for evaluation, evaluation of jacobian, and hessian of base functions 
       \param[in] baseFunct number of base function to evaluate 
       \param[in] diffVariable length determines the derivative (i.e. 0 is
              evaluate, 1 is gradient, 2 hessian, ... ) and the value
@@ -120,11 +126,144 @@ public:
       asImp().evaluate( baseFunct, diffVariable, quad, quadPoint, phi ));
   }
 
-  //! \brief return type of geometry
+  /** \brief return type of geometry
+      \return GeometryType of base function set
+  */
   inline GeometryType geometryType () const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().geometryType() );
     return asImp().geometryType();
+  }
+
+  /** \brief evaluation of base functions 
+      \param[in] baseFunct number of base function to evaluate 
+      \param[in] x coordiante in reference element to evaluate base function on 
+      \param[out] phi return value, i.e. value of base function 
+  */ 
+  void evaluate(const int baseFunct, 
+                const DomainType & x, 
+                RangeType & phi) const
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+      asImp().evaluate(baseFunct, x , phi));
+  }
+
+  /** \brief evaluation of base functions 
+      \param[in] baseFunct number of base function to evaluate 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
+      \param[out] phi return value, i.e. value of base function 
+  */ 
+  template <class QuadratureImp>
+  void evaluate(const int baseFunct, 
+                const QuadratureImp & quad, 
+                const int quadPoint, 
+                RangeType & phi) const 
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+      asImp().evaluate( baseFunct, quad, quadPoint, phi ));
+  }
+
+  /** \brief evaluation of jacobian of base function
+      \param[in] baseFunct number of base function to evaluate jacobian 
+      \param[in] x coordiante in reference element to evaluate base function on 
+      \param[out] phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
+  */ 
+  void jacobian(const int baseFunct, 
+                const DomainType& x, 
+                JacobianRangeType & phi) const 
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+      asImp().jacobian( baseFunct, x, phi ));
+  }
+
+  /** \brief default jacobian using the evaluate interface 
+      \param[in] baseFunct number of base function to evaluate jacobian 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
+      \param[out] phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
+  */ 
+  template <class QuadratureImp>
+  void jacobian ( const int baseFunct, 
+                  const QuadratureImp & quad, 
+                  const int quadPoint, 
+                  JacobianRangeType & phi ) const 
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+      asImp().jacobian( baseFunct, quad, quadPoint, phi ));
+  }
+
+  /** \brief evaluate basefunction and multiply with factor
+      \param[in] baseFunct number of base functions to evaluate 
+      \param[in] x local point in reference element 
+      \param[in] factor factor to multiply with 
+      \return return scalar product between base function and factor 
+    */
+  RangeFieldType evaluateSingle(const int baseFunct, 
+                         const DomainType& x,
+                         const RangeType& factor) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(
+      asImp().evaluateSingle( baseFunct, x, factor ));
+    return asImp().evaluateSingle( baseFunct, x, factor );
+  }
+
+  /** \brief evaluate basefunction and multiply with factor
+      \param[in] baseFunct number of base functions to evaluate 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
+      \param[in] factor factor to multiply with 
+      \return return scalar product between base function and factor 
+  */
+  template <class QuadratureType>
+  RangeFieldType evaluateSingle(const int baseFunct,
+                         const QuadratureType& quad, 
+                         const int quadPoint,
+                         const RangeType& factor) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(
+      asImp().evaluateSingle( baseFunct, quad, quadPoint, factor ));
+    return asImp().evaluateSingle( baseFunct, quad, quadPoint, factor );
+  }
+
+  /** \brief evaluate gradient of basefunction on given entity (uses
+      jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
+      \param[in] baseFunct number of base functions to evaluate jacobian  
+      \param[in] entity Entity gradient of base function is evaluated on 
+      \param[in] x local point in reference element 
+      \param[in] factor factor to multiply with 
+      \return return scalar product between gradient of base function and factor 
+  */
+  template <class Entity>
+  RangeFieldType evaluateGradientSingle(const int baseFunct,
+                                 const Entity& en,
+                                 const DomainType& x,
+                                 const JacobianRangeType& factor) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(
+      asImp().evaluateGradientSingle( baseFunct, en, x, factor ));
+    return asImp().evaluateGradientSingle( baseFunct, en, x, factor );
+  }
+
+  /** \brief evaluate gradient of basefunction on given entity (uses
+      jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
+      \param[in] baseFunct number of base functions to evaluate jacobian  
+      \param[in] entity Entity gradient of base function is evaluated on 
+      \param[in] quad Quadrature 
+      \param[in] quadPoint number of quadrature point 
+      \param[in] factor factor to multiply with 
+      \return return scalar product between gradient of base function and factor 
+  */
+  template <class Entity, class QuadratureType>
+  RangeFieldType evaluateGradientSingle(const int baseFunct,
+                                 const Entity& en,
+                                 const QuadratureType& quad, 
+                                 const int quadPoint,
+                                 const JacobianRangeType& factor) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(
+      asImp().evaluateGradientSingle( baseFunct, en, quad, quadPoint, factor ));
+    return asImp().evaluateGradientSingle( baseFunct, en, quad, quadPoint, factor );
   }
 
 private:
@@ -145,9 +284,8 @@ private:
 //-  --BaseFunctionSetDefault
 //-
 //------------------------------------------------------------------------
-/** \brief The BaseFunctionSetDefault class is the internal interface. Here some
-   default behavoir is implemented which always can be overloaded by the
-   implementation class, but not has to. 
+/** \brief The BaseFunctionSetDefault implements some methods of the interface BaseFunctionSetInterface
+    using the interface of the BaseFunctionSetSlimInterface.
 */
 template<class BaseFunctionSetTraits> 
 class BaseFunctionSetDefault  : 
@@ -181,11 +319,7 @@ public:
   //! destructor 
   virtual ~BaseFunctionSetDefault() {}
 
-  /** \brief default evaluate using the evaluate interface 
-      \param[in] baseFunct number of base function to evaluate 
-      \param[in] x coordiante in reference element to evaluate base function on 
-      \param[out] phi return value, i.e. value of base function 
-  */ 
+  /** \brief @copydoc BaseFunctionSetInterface::evaluate */
   void evaluate(const int baseFunct, 
                 const DomainType & x, 
                 RangeType & phi) const
@@ -194,12 +328,7 @@ public:
       asImp().evaluate(baseFunct, diffVariable_ , x , phi));
   }
 
-  /** \brief default evaluate using the evaluate interface 
-      \param[in] baseFunct number of base function to evaluate 
-      \param[in] quad Quadrature 
-      \param[in] quadPoint number of quadrature point 
-      \param[out] phi return value, i.e. value of base function 
-  */ 
+  /** \brief @copydoc BaseFunctionSetInterface::evaluate */
   template <class QuadratureImp>
   void evaluate(const int baseFunct, 
                 const QuadratureImp & quad, 
@@ -210,11 +339,7 @@ public:
       asImp().evaluate( baseFunct, diffVariable_ , quad, quadPoint, phi ));
   }
 
-  /** \brief default jacobian using the evaluate interface 
-      \param[in] baseFunct number of base function to evaluate jacobian 
-      \param[in] x coordiante in reference element to evaluate base function on 
-      \param[out] phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
-  */ 
+  /** \brief @copydoc BaseFunctionSetInterface::jacobian */
   void jacobian(const int baseFunct, 
                 const DomainType& x, 
                 JacobianRangeType & phi) const 
@@ -229,12 +354,7 @@ public:
     }
   }
 
-  /** \brief default jacobian using the evaluate interface 
-      \param[in] baseFunct number of base function to evaluate jacobian 
-      \param[in] quad Quadrature 
-      \param[in] quadPoint number of quadrature point 
-      \param[out] phi return value, i.e. gradient on reference elememnt (multiply with jacobianInverseTransposed)
-  */ 
+  /** \brief @copydoc BaseFunctionSetInterface::jacobian */
   template <class QuadratureImp>
   void jacobian ( const int baseFunct, 
                   const QuadratureImp & quad, 
@@ -251,11 +371,7 @@ public:
     }
   }
 
-  /** \brief evaluate basefunction and multiply with factor
-      \param[in] baseFunct number of base functions to evaluate 
-      \param[in] xLocal local point in reference element 
-      \return return scalar product between base function and factor 
-    */
+  /** \brief @copydoc BaseFunctionSetInterface::evaluateSingle */
   RangeFieldType evaluateSingle(const int baseFunct, 
                          const DomainType& xLocal,
                          const RangeType& factor) const
@@ -265,12 +381,7 @@ public:
     return phi*factor;
   }
 
-  /** \brief evaluate basefunction and multiply with factor
-      \param[in] baseFunct number of base functions to evaluate 
-      \param[in] quad Quadrature 
-      \param[in] quadPoint number of quadrature point 
-      \return return scalar product between base function and factor 
-  */
+  /** \brief @copydoc BaseFunctionSetInterface::evaluateSingle */
   template <class QuadratureType>
   RangeFieldType evaluateSingle(const int baseFunct,
                          const QuadratureType& quad, 
@@ -280,13 +391,7 @@ public:
     return evaluateSingle(baseFunct, quad.point(quadPoint), factor);
   }
 
-  /** \brief evaluate gradient of basefunction on given entity (uses
-      jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-      \param[in] baseFunct number of base functions to evaluate jacobian  
-      \param[in] entity Entity gradient of base function is evaluated on 
-      \param[in] xLocal local point in reference element 
-      \return return scalar product between gradient of base function and factor 
-  */
+  /** \brief @copydoc BaseFunctionSetInterface::evaluateGradientSingle */
   template <class Entity>
   RangeFieldType evaluateGradientSingle(const int baseFunct,
                                  const Entity& en,
@@ -307,14 +412,7 @@ public:
     return result;
   }
 
-  /** \brief evaluate gradient of basefunction on given entity (uses
-      jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-      \param[in] baseFunct number of base functions to evaluate jacobian  
-      \param[in] entity Entity gradient of base function is evaluated on 
-      \param[in] quad Quadrature 
-      \param[in] quadPoint number of quadrature point 
-      \return return scalar product between gradient of base function and factor 
-  */
+  /** \brief @copydoc BaseFunctionSetInterface::evaluateGradientSingle */
   template <class Entity, class QuadratureType>
   RangeFieldType evaluateGradientSingle(const int baseFunct,
                                  const Entity& en,
@@ -339,8 +437,7 @@ private:
   { 
     return static_cast<const BaseFunctionSetType&>(*this); 
   }
-
 };
-
+///@}
 } // end namespace Dune 
 #endif
