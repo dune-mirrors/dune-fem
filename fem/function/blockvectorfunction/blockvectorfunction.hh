@@ -176,23 +176,22 @@ public:
   //! type of LeakPointer 
   typedef StraightenBlockVector<DofStorageType,DofType> LeakPointerType;
 
-  //! Constructor makes Discrete Function  
+  //! \brief Constructor makes Discrete Function  
   BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
   
-  //! Constructor makes Discrete Function with name 
+  //! \brief Constructor makes Discrete Function with name 
   BlockVectorDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) ;
   
-  //! Constructor makes Discrete Function  
+  //! \brief Constructor makes Discrete Function  
   BlockVectorDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const DofStorageType & data ) ;
   
-  //! Constructor makes Discrete Function from copy 
+  //! \brief Constructor makes Discrete Function from copy 
   BlockVectorDiscreteFunction (const ThisType & df); 
 
-  //! delete stack of free local functions belonging to this discrete
-  //! function 
+  /**  \brief delete stack of free local functions belonging to this discrete function */
   ~BlockVectorDiscreteFunction ();
 
-  /** \brief @copydoc DiscreteFunctionInterface::localFunction const */ 
+  /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
   template <class EntityType>
   LocalFunctionType localFunction(const EntityType& en) const;
 
@@ -206,31 +205,34 @@ public:
   /** \brief @copydoc DiscreteFunctionInterface::dend */ 
   DofIteratorType dend   (); 
 
-  /** \brief @copydoc DiscreteFunctionInterface::dbegin const */ 
+  /** \brief @copydoc DiscreteFunctionInterface::dbegin */ 
   ConstDofIteratorType dbegin () const;
   
-  /** \brief @copydoc DiscreteFunctionInterface::dend const */ 
+  /** \brief @copydoc DiscreteFunctionInterface::dend  */ 
   ConstDofIteratorType dend   () const; 
 
-  /** \brief @copydoc DiscreteFunctionInterface::name const */ 
+  /** \brief @copydoc DiscreteFunctionInterface::name  */ 
   const std::string& name() const {return name_;} 
 
-  /** \brief @copydoc DiscreteFunctionInterface::size const */ 
+  /** \brief @copydoc DiscreteFunctionInterface::size  */ 
   int size() const { return dofVec_.size(); }
 
-  //! set all dofs to zero  
-  void clear( );
+  /** \brief @copydoc DiscreteFunctionDefault::clear */
+  void clear();
 
   /** \brief @copydoc DiscreteFunctionDefault::addScaled */
   void addScaled ( const DiscreteFunctionType & g,
       const RangeFieldType &scalar); 
   
-  //! add g to this on local entity
+  /** \brief add g to this on local entity
+      \param[in] GridIteratorType it 
+      \param[in] discrete function that is added 
+  */
   template <class GridIteratorType>
   void addLocal (GridIteratorType &it, 
       const DiscreteFunctionType & g); 
   
-  //! add g to this on local entity
+  //! add g to this on local entity 
   template <class GridIteratorType>
   void substractLocal (GridIteratorType &it, 
       const DiscreteFunctionType & g); 
@@ -239,36 +241,37 @@ public:
   template <class GridIteratorType>
   void setLocal (GridIteratorType &it, const RangeFieldType &scalar);
   
-  //! print all dofs 
+  /** \brief @copydoc DiscreteFunctionDefault::print */
   void print(std::ostream& s) const;
 
-  //! write data of discrete function to file filename 
-  //! with xdr methods 
+  /** \brief @copydoc DiscreteFunctionDefault::write_xdr */
   bool write_xdr( std::string filename ) const;
 
-  //! write data of discrete function to file filename 
-  //! with xdr methods 
+  /** \brief @copydoc DiscreteFunctionDefault::read-xdr  */
   bool read_xdr( std::string filename );
 
-  //! write function data to file filename in ascii Format
+  /** \brief @copydoc DiscreteFunctionDefault::write_ascii  */
   bool write_ascii(std::string filename) const;
 
-  //! read function data from file filename in ascii Format
+  /** \brief @copydoc DiscreteFunctionDefault::read_ascii */
   bool read_ascii(std::string filename);
 
-  //! write function data in pgm fromat file
+  /** \brief @copydoc DiscreteFunctionDefault::write_pgm  */
   bool write_pgm(std::string filename) const;
 
-  //! read function data from pgm fromat file
+  /** \brief @copydoc DiscreteFunctionDefault::read_pgm  */
   bool read_pgm(std::string filename); 
 
-  //! return reference to internal block vector 
+  /** \brief return reference to internal block vector 
+      \return reference to blockVector */ 
   DofStorageType& blockVector () const { return dofVec_; }
 
-  //! return reference to leak pointer 
+  /** \brief return reference to leak pointer 
+      \return reference to leakPointer */ 
   LeakPointerType& leakPointer() { return leakPtr_; }
 
-  //! return const reference to leak pointer 
+  /** \brief return const reference to leak pointer 
+      \return constant reference to leakPointer */
   const LeakPointerType& leakPointer() const { return leakPtr_; }
 
 private:  
@@ -351,7 +354,7 @@ public:
                                 const MapperType& mapper, 
                                 DofStorageType & dofVec );
 
-  //! Destructor 
+  //! \brief Destructor 
   ~StaticDiscreteLocalFunction ();
 
   //! access to dof number num, all dofs of the dof entity
@@ -363,10 +366,10 @@ public:
   //! return number of degrees of freedom 
   int numDofs () const;
 
-  //! sum over all local base functions 
+  /** \brief  @copydoc DiscreteFunctionInterface::evaluate  */
   void evaluate (const DomainType & x, RangeType & ret) const ;
  
-  //! sum over all local base functions evaluated on given quadrature point
+  /** \brief  @copydoc DiscreteFunctionInterface::evaluate  */
   template <class QuadratureType>
   void evaluate (const QuadratureType &quad, const int quadPoint , RangeType & ret) const;
 
