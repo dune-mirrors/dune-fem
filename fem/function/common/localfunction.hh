@@ -14,6 +14,10 @@ namespace Dune
   the base function set of this actual element. Therefore this is called a 
   local function. 
 
+  \remarks 
+  The interface for using a LocalFunction is defined by the class
+  LocalFunctionInterface.
+
   @{
  */
   
@@ -334,4 +338,6 @@ protected:
   }; // end LocalFunctionDefault
 
 } // end namespace Dune 
+
+///@} 
 #endif
