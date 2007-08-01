@@ -11,6 +11,11 @@
 
 namespace Dune {
 
+/** @defgroup DFComm Discrete Function Data Handlers 
+    @ingroup Communication 
+    @{
+**/
+
   /** Class to combine data handles. The outcome is a class satifying the
       DataHandleIF itself. 
    */
@@ -456,6 +461,7 @@ namespace Dune {
       return HandleData<EntityType,EntityType,codim>::size(discreteFunction_,en);
     }
   };
-
+  
+//@} 
 } // end namespace Dune
 #endif
