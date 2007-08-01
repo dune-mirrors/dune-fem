@@ -12,6 +12,9 @@ namespace Dune{
     @ingroup Functions
     Functions are Mappings from \f$K^n\f$ into \f$L^m\f$ where 
     \f$K\f$ and \f$L\f$ are fields.
+
+    \remarks
+    The interface for using a Function is defined by the class Function.
     @{
  */
 
@@ -77,7 +80,9 @@ public:
     asImp().evaluate(diffVariable, arg, dest);
   }
 
-  //! Get access to the related function space
+  /** \brief Get access to the related function space
+      \return return reference to function space 
+  */ 
   const FunctionSpaceType& space() const { return functionSpace_; }
 
 protected:
@@ -85,6 +90,7 @@ protected:
   FunctionImp& asImp() { 
     return static_cast<FunctionImp&>(*this); 
   }
+  //! Barton-Nackman trick
   const FunctionImp& asImp() const { 
     return static_cast<const FunctionImp&>(*this); 
   }
