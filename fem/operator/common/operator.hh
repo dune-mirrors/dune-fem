@@ -6,13 +6,8 @@
 namespace Dune
 {
 /** @defgroup OperatorCommon Operators
-  Operators are mappings from function spaces into function spaces.
- */
-
-/** @defgroup Operator Operator Interface
-    @ingroup OperatorCommon
-
-  @{
+    Operators are mappings from function spaces into function spaces.
+    @{
  */
 
 /** \brief An abstract operator
@@ -24,32 +19,35 @@ template <typename DFieldType, typename RFieldType,
 class Operator : public Mapping <DFieldType,RFieldType,DType,RType>
 {
 protected: 
+  //! \brief type of mapping base class 
   typedef Mapping <DFieldType,RFieldType,DType,RType> MappingType;
   
 public:
-  //! remember template parameters for derived classes  
+  //- remember template parameters for derived classes  
   typedef DType DomainType;
   typedef RType  RangeType;
   typedef DFieldType DomainFieldType;
   typedef RFieldType RangeFieldType;
 
   /** \brief Application operator 
-     \note This method has to be implemented by all derived classes. 
+      \param[in] arg argument 
+      \param[out] dest destination 
+      \note This method has to be implemented by all derived classes. 
   */
   virtual void operator() (const DomainType& arg, RangeType& dest) const = 0;
  
 protected:
-  /** \brief The method apply is the virtual version of the 
-      application operator. This method must be implemented by all 
-      derived classes. 
+  /** \brief The method apply calls the application operator. The method 
+      has to be implemented here, because this method called when a mapping list 
+      is evaluated. 
+      \param[in] arg argument 
+      \param[out] dest destination 
   */
   virtual void apply (const DomainType& arg, RangeType& dest) const 
   {
     this->operator() (arg, dest); 
   }
 }; // end class Operator 
-
-/** @} end documentation group */
 
 } // end namespace Dune 
 #endif
