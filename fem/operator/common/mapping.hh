@@ -20,16 +20,17 @@ struct DiffVariable
 };
 
 /** @defgroup Mapping Mapping
-  \ingroup OperatorCommon
-  Mappings in Dune always map from one vector space into another vector space.
-  Mapping are the base class for Operators and Functions. 
-  Operators work on vector spaces containing Functions (i.e. Domain and Range are Functions). In
-  contrary Functions work on vector spaces containing real numbers (i.e.
-  \f$R^n\f$). For both Mapping the base interface class. Furthermore,
-  Mapping provided a machinery to combine different mapping linearly. 
+    \ingroup OperatorCommon
 
-  \remarks 
-  The interface for Mappings is defined by the class Mapping.
+    Mappings in Dune always map from one vector space into another vector space.
+    Mapping are the base class for Operators and Functions. 
+    Operators work on vector spaces containing Functions (i.e. Domain and Range are Functions). In
+    contrary Functions work on vector spaces containing real numbers (i.e.
+    \f$R^n\f$). For both Mapping the base interface class. Furthermore,
+    Mapping provided a machinery to combine different mapping linearly. 
+
+    \remarks 
+    The interface for Mappings is defined by the class Mapping.
 
   @{
  */
@@ -45,6 +46,10 @@ struct DiffVariable
     is evaluated. On the other hand, if you address through a reference of the
     type of any of its descendants (notably Operator and Function), you'll
     get the functionality specific for that type.
+
+    \note The Domain type and Range type must have operator *=, operator +=, 
+    and operator -= (e.g. FieldVector and DiscreteFunction fit that
+    interface).
 */
 template<typename DFieldType,typename RFieldType, class DType, class RType>
 class Mapping //: public Vector < RFieldType > 
@@ -73,7 +78,7 @@ public:
   typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
 
   //! create Mappiung with empty linear combination  
-  Mapping( ) 
+  Mapping() 
   {
     lincomb_.push_back( term( *this, 1 ) );
   }
@@ -83,38 +88,30 @@ public:
   {
   }
 
-  /** \brief add mapping 
-      \param m mapping to add 
-      \returns new object mapping 
-  */
-  virtual MappingType operator + (const MappingType &m) const ;
-  
-  /** \brief substract mapping 
-      \param m mapping to substract  
-      \returns new object mapping 
-  */
-  virtual MappingType operator - (const MappingType &m) const ;
-  
-  /** \brief scale mapping with factor 
-      \param f factor with which mapping is scaled 
-      \returns new object mapping 
-  */
-  virtual MappingType operator * (const RangeFieldType &f) const  ;
-  
-  /** \brief devide  mapping by factor 
-      \param f factor with which mapping is devided 
-      \returns new object mapping 
-  */
-  virtual MappingType operator / (const RangeFieldType &f) const  ;
- 
   /** \brief assignment of mapping mapping 
-      \param m mapping which is copied  
+      \param[in] m mapping which is copied  
       \returns reference to mapping  
   */
-  virtual MappingType& operator  = (const MappingType &m) ;
+  MappingType& operator = (const MappingType &mapping) 
+  {
+    const MappingType &m = dynamic_cast<const MappingType& >( mapping );
 
-  //! apply the whole linear combination which was created with the
-  //! operators above, using the apply method of the combined operators  
+    lincomb_.erase( lincomb_.begin(), lincomb_.end() );
+    typedef typename std::vector<term>::const_iterator iterator;
+
+    iterator end = m.lincomb_.end();
+    for (iterator it = m.lincomb_.begin(); it != end; it++ ) 
+    {
+      lincomb_.push_back( term( *it->v_, -it->scalar_ ) );
+    }
+    return *this;
+  }
+
+  /** \brief Application operator that applies all operators in the
+      linear combination stack. 
+      \param[in] Arg argument 
+      \param[out] Dest destination 
+  */    
   void operator() (const DomainType &Arg, RangeType &Dest ) const 
   {
     //Dest.clear();
@@ -124,17 +121,25 @@ public:
     {
       if ( count == 0 ) {
         it->v_->apply( Arg, Dest );
-        if ( it->scalar_ != 1. ) {
+        if ( it->scalar_ != 1. ) 
+        {
           Dest *= it->scalar_;
         } 
-      } else {
+      } 
+      else 
+      {
         RangeType tmp( Dest );
         it->v_->apply( Arg, tmp );
-        if ( it->scalar_ == 1. ) {
+        if ( it->scalar_ == 1. ) 
+        {
           Dest += tmp;
-        } else if ( it->scalar_ == -1. ) {
+        } 
+        else if ( it->scalar_ == -1. ) 
+        {
           Dest -= tmp;
-        } else {
+        } 
+        else 
+        {
           tmp *= it->scalar_;
           Dest += tmp;
         }
@@ -143,10 +148,12 @@ public:
     }
   }
 private:
+  //! apply operators 
   virtual void apply (const DomainType &Arg, RangeType &Dest) const {
     operator()(Arg, Dest);
   }
 
+  //! linear comnination object 
   struct term {
     term() : v_(NULL), scalar_(1.0), scaleIt_(false) { }
 
@@ -161,11 +168,204 @@ private:
     bool scaleIt_;
   };
 
+
+  //! vector holding linear combination factors 
   std::vector<term> lincomb_;
+
+  // friendship for operations 
+  friend class MappingOperators;
 };
 
-#include "mapping_imp.cc"
+
+/** \brief Implementation of Mapping +, -, *, / operations. */
+struct MappingOperators 
+{
+  //! \brief copy mapping 
+  template<typename DFieldType,typename RFieldType, class DType, class RType>
+  static inline void  
+  copyMapping(const Mapping<DFieldType,RFieldType,DType,RType>& org,
+              Mapping<DFieldType,RFieldType,DType,RType>& copy)
+  {
+    typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
+    typedef typename std::vector< typename MappingType :: term > :: const_iterator iterator; 
+
+    // clear mapping entries
+    copy.lincomb_.clear();
+
+    {
+      iterator end = org.lincomb_.end();
+      for ( iterator it = org.lincomb_.begin(); it != end; ++it ) 
+      {
+        copy.lincomb_.push_back( *it );
+      }
+    }
+  }
+
+  //! \brief add mappings  
+  template<typename DFieldType,typename RFieldType, class DType, class RType>
+  static inline Mapping<DFieldType,RFieldType,DType,RType> 
+  addMappings(const Mapping<DFieldType,RFieldType,DType,RType>& a,
+              const Mapping<DFieldType,RFieldType,DType,RType>& b)
+  {
+    typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
+    // new mapping 
+    MappingType newMapping;
+
+    // copy mapping 
+    copyMapping(a, newMapping);
+
+    typedef typename std::vector< typename MappingType :: term > :: const_iterator iterator; 
+
+    iterator end = b.lincomb_.end();
+    for ( iterator it = b.lincomb_.begin(); it != end; ++it ) 
+    {
+      newMapping.lincomb_.push_back( *it );
+    }
+    return newMapping;
+  }
+
+  //! \brief substract mappings  
+  template<typename DFieldType,typename RFieldType, class DType, class RType>
+  static inline Mapping<DFieldType,RFieldType,DType,RType> 
+  substractMappings(const Mapping<DFieldType,RFieldType,DType,RType>& a,
+                    const Mapping<DFieldType,RFieldType,DType,RType>& b)
+  {
+    typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
+    typedef typename  MappingType :: term term; 
+    typedef typename std::vector< term > :: const_iterator iterator; 
+    // new mapping 
+    MappingType newMapping;
+
+    // copy mapping 
+    copyMapping(a, newMapping);
+
+    iterator end = b.lincomb_.end();
+    for ( iterator it = b.lincomb_.begin(); it != end; ++it ) 
+    {
+      newMapping.lincomb_.push_back( term( *it->v_, -it->scalar_ ) );
+    }
+    return newMapping;
+  }
+
+  //! \brief multiply mapping
+  template<typename DFieldType,typename RFieldType, class DType, class RType>
+  static inline Mapping<DFieldType,RFieldType,DType,RType> 
+  multiplyMapping(const Mapping<DFieldType,RFieldType,DType,RType>& a,
+                  const RFieldType& scalar)
+  {
+    typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
+    typedef typename  MappingType :: term term; 
+    typedef typename std::vector< term > :: iterator iterator; 
+    // new mapping 
+    MappingType newMapping;
+
+    // copy mapping 
+    copyMapping(a, newMapping);
+
+    iterator end = newMapping.lincomb_.end();
+    for ( iterator it = newMapping.lincomb_.begin(); it != end; ++it ) 
+    {
+      it->scalar_ *= scalar;
+    }
+    return newMapping;
+  }
+
+  //! \brief devide mapping
+  template<typename DFieldType,typename RFieldType, class DType, class RType>
+  static inline Mapping<DFieldType,RFieldType,DType,RType> 
+  devideMapping(const Mapping<DFieldType,RFieldType,DType,RType>& a,
+                const RFieldType& scalar)
+  {
+    RFieldType factor = RFieldType(1)/scalar;
+    return multiplyMapping(a,factor);
+  }
+};
 
 /** @} end documentation group */
+
+/** \relates Mapping  
+    \brief add two mappings 
+    \param[in] a mapping 1 
+    \param[in] b mapping 2 
+    \returns new object mapping 
+*/
+template<class DFieldType, class RFieldType, class DType, class RType>
+static Mapping<DFieldType,RFieldType,DType,RType> 
+operator +(const Mapping<DFieldType,RFieldType,DType,RType>& a,
+           const Mapping<DFieldType,RFieldType,DType,RType>& b)
+{
+  return MappingOperators::addMappings(a,b);
+}
+
+/** \relates Mapping  
+    \brief substract two mappings 
+    \param[in] a mapping 1 
+    \param[in] b mapping 2 
+    \returns new object mapping 
+*/
+template<class DFieldType, class RFieldType, class DType, class RType>
+static Mapping<DFieldType,RFieldType,DType,RType> 
+operator -(const Mapping<DFieldType,RFieldType,DType,RType>& a,
+           const Mapping<DFieldType,RFieldType,DType,RType>& b)
+{
+  return MappingOperators::substractMappings(a,b);
+}
+
+/** \relates Mapping  
+    \brief scale mapping with factor 
+    \param[in] mapping Mapping which is scaled 
+    \param[in] factor  factor with which mapping is scaled 
+    \returns new object mapping 
+*/
+template<class DFieldType, class RFieldType, class DType, class RType>
+static Mapping<DFieldType,RFieldType,DType,RType> 
+operator *(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
+           const RFieldType& factor)
+{
+  return MappingOperators::multiplyMapping(mapping,factor);
+}
+
+/** \relates Mapping  
+    \brief scale mapping with factor 
+    \param[in] factor  factor with which mapping is scaled 
+    \param[in] mapping Mapping which is scaled 
+    \returns new object mapping 
+*/
+template<class DFieldType, class RFieldType, class DType, class RType>
+static Mapping<DFieldType,RFieldType,DType,RType> 
+operator *(const RFieldType& factor,
+           const Mapping<DFieldType,RFieldType,DType,RType>& mapping)
+{
+  return MappingOperators::multiplyMapping(mapping,factor);
+}
+
+/** \relates Mapping 
+    \brief operator / for mappings 
+    \param[in] mapping mapping which is devided
+    \param[in] factor f factor by which result of mapping is devided 
+    \returns new object mapping 
+*/
+template<class DFieldType, class RFieldType, class DType, class RType>
+static Mapping<DFieldType,RFieldType,DType,RType> 
+operator /(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
+           const RFieldType& factor)
+{
+  return MappingOperators::devideMapping(mapping,factor);
+}
+
+/** \relates Mapping 
+    \brief operator / for mappings 
+    \param[in] factor f factor by which result of mapping is devided 
+    \param[in] a mapping which is devided
+    \returns new object mapping 
+*/
+template<class DFieldType, class RFieldType, class DType, class RType>
+static Mapping<DFieldType,RFieldType,DType,RType> 
+operator /(const RFieldType& factor,
+           const Mapping<DFieldType,RFieldType,DType,RType>& mapping)
+{
+  return MappingOperators::devideMapping(mapping,factor);
+}
+
 } // end namespace Dune 
 #endif
