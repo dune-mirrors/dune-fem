@@ -1,5 +1,5 @@
-#ifndef DUNE_FEMQUADRATURE_HH
-#define DUNE_FEMQUADRATURE_HH
+#ifndef DUNE_FEM_QUADRATURE_HH
+#define DUNE_FEM_QUADRATURE_HH
 
 #include <vector>
 #include <cassert>
@@ -240,7 +240,7 @@ namespace Dune
     typedef IntegrationPointListImp< FieldType, dim > BaseType;
 
   public:
-    //! \copydoc IntegrationPointsListImp :: CoordinateType
+    //! \copydoc Dune::IntegrationPointsListImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
@@ -342,7 +342,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, dim > BaseType;
 
   public:
-    //! \copydoc QuadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
 
 #ifdef HAVE_ALBERTA_FOUND
@@ -355,22 +355,21 @@ namespace Dune
     int order_;
     
   public:
-    /*! Constructor
+    /*! \brief constructor filling the list of points and weights
      *
-     *  Initializes the list of quadrature points.
-     *
-     *  \param[in]  order  desired order (provided by the user)
-     *  \param[in]  id     unique identifier (provided by QuadratureProvider)
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
      */
-    inline SimplexQuadrature( const GeometryType&, int order, size_t id );
+    SimplexQuadrature( const GeometryType& geometry, int order, size_t id );
     
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: simplex, dim );
     }
    
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -414,25 +413,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, dim > BaseType;
   
   public:
-    //! \copydoc QuadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
     
   protected:
     int order_;
 
   public:
-    //! Constructor
-    //! \param order The desired order (provided by the user)
-    //! \param id A unique id (provided by QuadratureProvider)
-    CubeQuadrature( const GeometryType&, int order, size_t id );
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    CubeQuadrature( const GeometryType &geometry, int order, size_t id );
     
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: cube, dim );
     }
 
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -469,22 +471,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, 1 > BaseType;
     
   public:
-    //! \copydoc QuadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
     
   protected:
     int order_;
 
   public:
-    LineQuadrature( const GeometryType&, int order, size_t id );
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    LineQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: cube, 1 );
     }
 
-    //! copydoc QuadratureImp :: order
+    //! copydoc Dune::QuadratureImp::order
     virtual int order() const
     {
       return order_;
@@ -523,22 +531,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, 2 > BaseType;
     
   public:
-    //! \copydoc QuadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
 
   public:
-    TriangleQuadrature ( const GeometryType&, int order, size_t id );
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    TriangleQuadrature ( const GeometryType &geometry, int order, size_t id );
 
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: simplex, 2 );
     }
 
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -584,22 +598,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, 2 > BaseType;
     
   public:
-    //! \copydoc QuadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
 
   public:
-    QuadrilateralQuadrature( const GeometryType&, int order, size_t id );
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    QuadrilateralQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: cube, 2 );
     }
 
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -638,22 +658,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
 
   public:
-    //! \copydoc QuadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
     
   private:
     int order_;
 
   public:
-    TetraQuadrature( const GeometryType&, int order, size_t id );
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    TetraQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: simplex, 3 );
     }
 
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -699,22 +725,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
 
   public:
-    //! \copydoc QuadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
 
   public:
-    HexaQuadrature( const GeometryType&, int order, size_t id );
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    HexaQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: cube, 3 );
     }
 
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -752,25 +784,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
     
   public:
-    //! \copydoc QuadratureImp :: CoordinateType;
+    //! \copydoc Dune::QuadratureImp::CoordinateType;
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
 
   public:
-    //! Constructor
-    //! \param order The desired order (provided by the user)
-    //! \param id A unique id (provided by QuadratureProvider)
-    PrismQuadrature( const GeometryType&, int order, size_t id );
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    PrismQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: prism, 3 );
     }
 
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -808,25 +843,28 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
 
   public:
-    //! \copydoc QUadratureImp :: CoordinateType
+    //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
 
   public:
-    //! Constructor
-    //! \param order The desired order (provided by the user)
-    //! \param id A unique id (provided by QuadratureProvider)
-    PyramidQuadrature(const GeometryType&, int order, size_t id);
+    /*! \brief constructor filling the list of points and weights
+     *
+     *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+     *  \param[in]  order     desired order (provided by the user)
+     *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+     */
+    PyramidQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    //! \copydoc QuadratureImp :: geometry
+    //! \copydoc Dune::QuadratureImp::geometry
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: pyramid, 3 );
     }
 
-    //! \copydoc QuadratureImp :: order
+    //! \copydoc Dune::QuadratureImp::order
     virtual int order () const
     {
       return order_;
@@ -1056,9 +1094,6 @@ namespace Dune
 
     /*! \brief obtain the number of integration points
      *
-     *  \note Calling this method yields a virtual function call, so do not
-     *        call it unneccessarily.
-     *
      *  \returns number of integration points within this list
      */
     int nop () const
@@ -1073,9 +1108,6 @@ namespace Dune
      *  in local coordinates, i.e., coordinates with respect to the reference
      *  element.
      *
-     *  \note Calling this method yields a virtual function call, so do not
-     *        call it unnecessarily.
-     * 
      *  \param[in]  i  number of the integration point, 0 <= i < nop()
      *
      *  \returns reference to i-th integration point
@@ -1094,9 +1126,6 @@ namespace Dune
      *  \note Quadratures are considered distinct if they differ in one of the
      *        following points: geometry type, order, dimension or implementation.
      *
-     *  \note Calling this method yields a virtual function call, so do not
-     *        call it unnecessarily.
-     * 
      *  \returns globally unique identifier of the integration point list
      */
     size_t id () const
@@ -1236,9 +1265,6 @@ namespace Dune
      *  \note The quadrature weights sum up to the volume of the reference
      *        element.
      *
-     *  \note Calling this method yields a virtual function call, so do not
-     *        call this method unnecessarily.
-     * 
      *  \param[in]  i  number of the integration point, 0 <= i < nop()
      *
      *  \returns weight of the i-th integration point
