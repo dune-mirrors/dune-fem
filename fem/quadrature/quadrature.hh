@@ -726,7 +726,7 @@ namespace Dune
 
   public:
     //! \copydoc Dune::QuadratureImp::CoordinateType
-    typedef BaseType :: CoordinateType CoordinateType;
+    typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
     int order_;
@@ -989,7 +989,7 @@ namespace Dune
     typedef SimplexQuadrature< FieldType, 3 > SimplexQuadratureType;     
 
     typedef PrismQuadrature< FieldType > PrismQuadratureType;
-    typedef PyramidQuadrature< FIeldType > PyramidQuadratureType;
+    typedef PyramidQuadrature< FieldType > PyramidQuadratureType;
 #endif
 
     typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
