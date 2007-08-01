@@ -11,6 +11,9 @@ namespace Dune{
   A function space is characterized by it's domain and range field type and  
   the two vector spaces over these fields. All corresponding types 
   are given in a Traits class. 
+
+  \remarks The interface for continuous functions spaces 
+  is defined by the class FunctionSpace.
   @{
  */
 
@@ -248,5 +251,6 @@ struct ToScalarFunctionSpace<
   typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, 1> Type;
 };
 
+///@}
 } // end namespace Dune 
 #endif
