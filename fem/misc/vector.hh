@@ -355,7 +355,7 @@ namespace Dune
     {
     }
 
-    inline FieldVectorWrapper ( const FieldType s )
+    inline explicit FieldVectorWrapper ( const FieldType s )
     : fieldVector_( s )
     {
     }
@@ -580,15 +580,8 @@ namespace Dune
     FieldType *fields_;
 
   public:
-    //! Constructor setting up a vector of default size
-    inline DynamicVector ()
-    {
-      size_( 0 );
-      allocator_.allocate_( size_, fields_ );
-    }
-
     //! Constructor setting up a vector of a specified size
-    inline DynamicVector ( unsigned int size )
+    inline explicit DynamicVector ( unsigned int size = 0 )
     {
       size_ = size;
       allocator_.allocate( size_, fields_ );
@@ -699,7 +692,7 @@ namespace Dune
     }
 
     //! Constructor setting up a vector initialized to a constant value
-    inline StaticVector ( const FieldType s )
+    inline explicit StaticVector ( const FieldType s )
     {
       assign( s );
     }

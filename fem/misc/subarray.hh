@@ -102,7 +102,7 @@ namespace Dune
       indexMapper_( indexMapper )
     {
       typedef CheckArrayInterface< BaseArrayType > __CheckBaseArrayType__;
-      typedef CheckIndexMapperType< IndexMapperType > __CheckIndexMapperType__;
+      typedef CheckIndexMapperInterface< IndexMapperType > __CheckIndexMapperType__;
       assert( baseArray_.size() == indexMapper_.range() );
     }
 
@@ -155,7 +155,7 @@ namespace Dune
       indexMapper_( indexMapper )
     {
       typedef CheckVectorInterface< BaseVectorType > __CheckBaseVectorType__;
-      typedef CheckIndexMapperType< IndexMapperType > __CheckIndexMapperType__;
+      typedef CheckIndexMapperInterface< IndexMapperType > __CheckIndexMapperType__;
 
       assert( baseVector_.size() == indexMapper_.range() );
     }
