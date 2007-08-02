@@ -229,6 +229,8 @@ namespace Dune {
       {
         baseSet_ = spc_.baseFunctionSet( entity );
 
+        // note, do not use baseFunctionSet() here, entity might no have
+        // been set 
         numDofs_ = baseSet_.numBaseFunctions();
         values_.resize(numDofs_);
 
@@ -569,6 +571,8 @@ namespace Dune {
       {
         baseSet_ = spc_.baseFunctionSet( entity );
 
+        // note, do not use baseFunctionSet() here, entity might no have
+        // been set 
         numDofs_ = baseSet_.numDifferentBaseFunctions();
         values_.resize( numDofs_ );
         
