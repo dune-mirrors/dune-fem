@@ -61,7 +61,7 @@ inline void
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
 assign(const DiscreteFunctionType& g) 
 {
-  assert(this->size() == gc.size());
+  assert(this->size() == g.size());
 
   DofIteratorType endit = this->dend ();
   ConstDofIteratorType git = g.dbegin ();
