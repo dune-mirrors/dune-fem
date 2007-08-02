@@ -179,8 +179,8 @@ namespace Dune
     {
       typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
 
-      isDirichletDof_ = false;
-      dirichletValues_ = 0;
+      isDirichletDof_.assign( false );
+      dirichletValues_.assign( 0 );
       
       const RangeFunctionSpaceType &dfSpace = rangeFunctionSpace();
       
