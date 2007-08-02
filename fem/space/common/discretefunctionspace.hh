@@ -169,18 +169,6 @@ namespace Dune{
       return asImp().size(); 
     }
 
-    /** \brief For given entity map local dof number to global dof number 
-        \param[in] entity   Entity for which mapping is done 
-        \param[in] localDof local dof number 
-        \return global dof number, i.e. position in dof array 
-    */    
-    template <class EntityType>
-    int mapToGlobal ( const EntityType &entity, 
-                      const int localDof ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity, localDof ));
-      return asImp().mapToGlobal ( entity , localDof );
-    }
     /** \brief return the instance of the mapper
         \return refernce to mapper
     */    
@@ -244,6 +232,19 @@ namespace Dune{
       CHECK_INTERFACE_IMPLEMENTATION(asImp().multipleBaseFunctionSets());
       return asImp().multipleBaseFunctionSets(); 
     }
+    
+    /** \brief For given entity map local dof number to global dof number 
+        \param[in] entity   Entity for which mapping is done 
+        \param[in] localDof local dof number 
+        \return global dof number, i.e. position in dof array 
+    */    
+    template <class EntityType>
+    int mapToGlobal ( const EntityType &entity, 
+                      const int localDof ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity, localDof ));
+      return asImp().mapToGlobal ( entity , localDof );
+    }
 
   protected:
     //! Barton-Nackman trick 
@@ -293,6 +294,13 @@ namespace Dune{
     */
     bool multipleBaseFunctionSets() const { return false; }
 
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal */
+    template <class EntityType>
+    int mapToGlobal ( const EntityType &entity, 
+                      const int localDof ) const
+    {
+      return mapper().mapToGlobal ( entity , localDof );
+    }
   protected: 
     //! true if grid has more than one geometry type (hybrid grids)
     const bool multipleGeometryTypes_;
