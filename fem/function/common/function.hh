@@ -11,7 +11,7 @@ namespace Dune
 {
 
 /** @defgroup FunctionCommon Functions
-    @ingroup Functions
+    @ingroup FunctionCommon
     Functions are Mappings from \f$K^n\f$ into \f$L^m\f$ where 
     \f$K\f$ and \f$L\f$ are fields.
 
@@ -59,6 +59,9 @@ public:
   Function (const FunctionType& org) : functionSpace_ (org.functionSpace_) 
   {
   }   
+
+  //! destructor 
+  virtual ~Function () {} 
 
   /** \brief application operator call evaluate 
       \param[in] arg argument 
@@ -112,7 +115,8 @@ private:
   //! With this function, a combined mapping can choose the right application
   //! operator (i.e. the one from Mapping itself, or from Function/Operator)
   //! \note: Do not override this definition
-  virtual void apply (const DomainType& arg, RangeType& dest) const {
+  virtual void apply (const DomainType& arg, RangeType& dest) const 
+  {
     operator()(arg, dest);
   }
 };
