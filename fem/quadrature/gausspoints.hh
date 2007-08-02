@@ -7,6 +7,7 @@ namespace Dune
 {
 
   /*! \class GaussPts
+   *  \ingroup Quadrature
    *  \brief one-dimensional Gauss points and their weights
    *
    *  GaussPtr is an array of one-dimensional Gauss quadratures for the

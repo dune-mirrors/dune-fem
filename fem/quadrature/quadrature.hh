@@ -239,7 +239,7 @@ namespace Dune
 
 
   /*! \class QuadratureImp
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief Generic implementation of a Dune quadrature.
    *
    *  A Dune Quadrature is nothing but a list of integration points (see also
@@ -346,7 +346,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class SimplexQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief generic quadrature class for simplices
    *  
    *  SimplexQuadrature implements the geometry-specific part of the quadrature
@@ -417,7 +417,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class CubeQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief generic quadrature class for cubes
    *  
    *  CubeQuadrature implements the geometry-specific part of the quadrature
@@ -477,7 +477,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class LineQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief quadrature class for lines
    *  
    *  LineQuadrature implements the geometry-specific part of the quadrature
@@ -536,7 +536,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class TriangleQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief quadrature class for triangles
    *  
    *  TriangleQuadrature implements the geometry-specific part of the quadrature
@@ -603,7 +603,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class QuadrilateralQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief quadrature class for quadrilaterals
    *  
    *  QuadrilateralQuadrature implements the geometry-specific part of the
@@ -665,7 +665,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class TetraQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief quadrature class for tetrahedra
    *  
    *  TetraQuadrature implements the geometry-specific part of the quadrature
@@ -732,7 +732,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class HexaQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief quadrature class for hexahedra
    *  
    *  HexaQuadrature implements the geometry-specific part of the quadrature
@@ -794,7 +794,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class PrismQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief quadrature class for prisms
    *  
    *  PrismQuadrature implements the geometry-specific part of the quadrature
@@ -854,7 +854,7 @@ namespace Dune
   
 #ifndef USE_DUNE_QUADRATURES
   /*! \class PyramidQuadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief quadrature class for pyramids
    *  
    *  PyramidQuadrature implements the geometry-specific part of the quadrature
@@ -1030,7 +1030,7 @@ namespace Dune
 
 
   /*! \class IntegrationPointList
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief actual interface class for integration point lists
    *
    *  IntegrationPointList is a proxy for the actual implementations of the
@@ -1205,7 +1205,7 @@ namespace Dune
 
 
   /*! \class Quadrature
-   *  \ingroup Quadratures
+   *  \ingroup Quadrature
    *  \brief actual interface class for quadratures
    *
    *  IntegrationPointList is a proxy for the actual implementations of the
