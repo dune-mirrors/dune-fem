@@ -2,7 +2,6 @@
 #include <config.h>
 
 #include <dune/grid/io/file/dgfparser/gridtype.hh>
-//static const int dimw = dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrangespace.hh>
@@ -23,12 +22,18 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+// unset to use L^2 error
+#define USE_H1ERROR
+
 using namespace Dune;
 
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
-const int polOrder = POLORDER;
-// const int polOrd = 1;
+#ifdef POLORDER
+  const int polOrder = POLORDER;
+#else
+  const int polOrder = 1;
+#endif
 
 //***********************************************************************
 /*! L2 Projection of a function f: 
@@ -462,9 +467,14 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
 
   // calculation L2 error 
   // pol ord for calculation the error chould by higher than 
-  // pol for evaluation the basefunctions 
-  RangeType error = H1Error< DiscreteFunctionType > :: norm( f ,solution, 0 );
-  std :: cout << std :: endl << "L2 Error: [ " << error[ 0 ];
+  // pol for evaluation the basefunctions
+  #ifdef USE_H1ERROR
+    RangeType error = H1Error< DiscreteFunctionType > :: norm( f ,solution, 0 );
+    std :: cout << std :: endl << "H1 Error: [ " << error[ 0 ];
+  #else
+    RangeType error = L2Error< DiscreteFunctionType > :: norm( f ,solution, 0 );
+    std :: cout << std :: endl << "L2 Error: [ " << error[ 0 ];
+  #endif
   for( int i = 1; i < RangeType :: dimension; ++i )
     std :: cout << ", " << error[ i ];
   std :: cout << " ]" << std :: endl;

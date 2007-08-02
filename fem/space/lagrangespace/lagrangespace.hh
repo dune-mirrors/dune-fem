@@ -227,7 +227,7 @@ namespace Dune
         \param[in] gridPart 
         \return 
     **/
-    inline LagrangeDiscreteFunctionSpace ( GridPartType &gridPart )
+    inline explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart )
     : BaseType( gridPart ),
       gridPart_( gridPart ),
       baseFunctionSet_(),
@@ -268,6 +268,11 @@ namespace Dune
       assert( mapper_ != NULL );
     }
 
+  private:
+    // forbid the copy constructor
+    LagrangeDiscreteFunctionSpace ( const ThisType& );
+
+  public:
     /** \brief Destructor (freeing base functions and mapper)
         \return 
     **/
