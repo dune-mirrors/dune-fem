@@ -48,7 +48,7 @@ namespace Dune{
     hand the base functions sets, the discrete function space provides the size
     of the function space and a mapping from entity and local dof number
     to global dof number of the level of the entity.
-    NOTE: A FunctionSpace is defined on a certain grid part.
+    \note A DiscreteFunctionSpace is defined on a certain grid part.
   */
   template<class FunctionSpaceTraits>
   class DiscreteFunctionSpaceInterface : 
@@ -104,8 +104,8 @@ namespace Dune{
     }
   
     /** \brief return true if space contains global continuous functions 
-       (i.e. for LagrangeSpace <b>true</b> is returned, for DiscontinuousGalerkinSpace <b>false</b> is returned. 
-       \return <b>true</b> if space contians global continous functions, <b>false</b> otherwise 
+       (i.e. for LagrangeSpace \b true is returned, for DiscontinuousGalerkinSpace \b false is returned. 
+       \return \b true if space contians global continous functions, \b false> otherwise 
     */
     bool continuous() const 
     { 
