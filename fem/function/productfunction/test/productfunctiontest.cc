@@ -6,11 +6,7 @@ static const int dimw = dimworld;
 static const int dimp = dimworld;
   
 //dimension of second space/ grid
-<<<<<<< .mine
-static const int dim2 = 1;
-=======
-static const int dim2 = 10;
->>>>>>> .r1615
+static const int dim2 = 3;
 
 //polynom order of second space
 // static const int polOrd2 = 4;
