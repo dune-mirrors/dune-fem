@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_ARRAY_HH
 #define DUNE_FEM_ARRAY_HH
 
+#include <cassert>
+
 #include <dune/common/misc.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/bartonnackmanifcheck.hh>

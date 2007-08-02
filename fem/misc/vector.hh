@@ -64,7 +64,6 @@ namespace Dune
       return asImp().assign( v );
     }
 
-
     //! Initialize all fields of this vector with a scalar
     inline VectorType &operator= ( const FieldType s )
     {
@@ -130,7 +129,6 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( s ) );
       return asImp();
     }
-
 
     //! obtain begin iterator
     inline ConstIteratorType begin () const
@@ -435,6 +433,7 @@ namespace Dune
     inline ThisType &operator-= ( const FieldVectorType &v )
     {
       fieldVector_ -= v;
+      return *this;
     }
 
     inline ThisType &operator*= ( const FieldType s )
@@ -761,9 +760,12 @@ namespace Dune
     typedef CombinedVector< Vector1Type, Vector2Type > ThisType;
     typedef VectorDefault< typename Vector1Type :: FieldType, ThisType > BaseType;
 
+    typedef CheckVectorInterface< Vector1Type > __CheckVector1Type__;
+    typedef CheckVectorInterface< Vector2Type > __CheckVector2Type__;
+
     typedef CompileTimeChecker
-      < Conversion< FieldType, typename Vector2Type :: FieldType > :: same >
-      __Both_Subvectors_Must_Be_Of_Same_Field_Type__;
+      < Conversion< FieldType, typename Vector2Type :: FieldType > :: sameType >
+      __CheckFieldType__;
 
   protected:
       Vector1Type &vector1_;
