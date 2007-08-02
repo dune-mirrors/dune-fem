@@ -593,7 +593,7 @@ inline void StaticDiscreteLocalFunction< DiscreteFunctionType >
     if( multipleBaseSets || updateBaseSet )
     {
       baseSet_  = fSpace_.baseFunctionSet( entity );
-      numOfDof_ = baseFunctionSet().numBaseFunctions();
+      numOfDof_ = baseSet_.numBaseFunctions();
 
       if( numOfDof_ > values_.size() )
         values_.resize( numOfDof_ );
