@@ -219,7 +219,7 @@ public:
 
 namespace Dune 
 {
-  /** @defgroup OEMSolver Inverting Operators (OEM Methods)
+  /** @defgroup OEMSolver Inverting Operators - Linear Solvers 
       @ingroup OperatorCommon
       
       In this section implementations of Orthogonal Error Methods (OEM) for solving linear 

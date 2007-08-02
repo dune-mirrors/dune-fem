@@ -98,7 +98,8 @@ namespace Dune {
     @{
 **/
   
-// BICG STAB scheme 
+/** \brief BICG-stab scheme for block matrices (BCRSMatrix) 
+and block vectors (BVector) from dune-istl. */
 template <class DiscreteFunctionType, class OperatorType>
 class ISTLBICGSTABOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
