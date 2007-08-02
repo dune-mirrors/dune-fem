@@ -3,7 +3,7 @@
 
 namespace Dune{
 
- /** @defgroup Vector Elements of Vector Spacesa
+ /** @defgroup Vector Elements of Vector Spaces
   *  @ingroup OperatorCommon
   * An instance of this class is an element of an vector space. 
      Elements of vector spaces can be added and multiplied by a 

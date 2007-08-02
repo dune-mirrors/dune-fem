@@ -7,6 +7,13 @@ namespace Dune
 {
 /** @defgroup OperatorCommon Operators
     Operators are mappings from function spaces into function spaces.
+
+    \remarks 
+    The most general interface for a mapping is defined by Mapping. From
+    Mapping the Function is derived and also Operator is derived. 
+    Operator defines the interface for operations on discrete functions
+    while Function is an interface for functions like sinus.
+    
     @{
  */
 
