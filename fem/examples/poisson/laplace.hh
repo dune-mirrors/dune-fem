@@ -75,8 +75,8 @@ namespace Dune
     mutable JacobianRangeType grad;
     mutable JacobianRangeType othGrad;
 
-    enum { maxnumOfBaseFct = 100 };
-    mutable JacobianRangeType mygrad[ maxnumOfBaseFct ];
+    enum { maxBaseFunctions = 100 };
+    mutable JacobianRangeType mygrad[ maxBaseFunctions ];
  
   public:
     //! constructor
@@ -179,7 +179,7 @@ namespace Dune
 
       const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
   
-      FieldMatrix< RangeFieldType, maxnumOfBaseFct, maxnumOfBaseFct > matrix;
+      FieldMatrix< RangeFieldType, maxBaseFunctions, maxBaseFunctions > matrix;
 
       const IteratorType end = dfSpace.end();
       for( IteratorType it = dfSpace.begin(); it != end; ++it )
@@ -233,7 +233,7 @@ namespace Dune
         = dfSpace.baseFunctionSet( entity );
       const unsigned int numBaseFunctions = baseSet.numBaseFunctions();
             
-      assert( numBaseFunctions <= maximumOfBaseFct );
+      assert( numBaseFunctions <= maxBaseFunctions );
       for( unsigned int i = 0; i < numBaseFunctions; ++i )
         for( unsigned int j = 0; j <= i; ++j ) 
           matrix[ j ][ i ] = 0;
