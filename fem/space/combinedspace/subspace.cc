@@ -58,6 +58,16 @@ namespace Dune
     bSet_.evaluate(baseFunct, diffVariable, x, tmp_);
     phi[0] = tmp_[component_];
   }
+  template <class CombinedSpaceImp>
+  inline
+  void SubBaseFunctionSet<CombinedSpaceImp>::
+  evaluate (int baseFunct, 
+            const DomainType& x, RangeType& phi ) const 
+  {
+    // Assumption: dimRange == 1
+    bSet_.evaluate(baseFunct, x, tmp_);
+    phi[0] = tmp_[component_];
+  }
   
   //! evaluate base function at quadrature point
   template <class CombinedSpaceImp>
@@ -73,13 +83,21 @@ namespace Dune
     bSet_.evaluate(baseFunct, diffVariable, quad, quadPoint, tmp_);
     phi[0] = tmp_[component_];
   }
+  template <class CombinedSpaceImp>
+  template <class QuadratureImp>
+  inline
+  void SubBaseFunctionSet<CombinedSpaceImp>::
+  evaluate(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const {
+    bSet_.evaluate(baseFunct, quad, quadPoint, tmp_);
+    phi[0] = tmp_[component_];
+  }
   
   //- class SubMapper
   template <class CombinedSpaceImp>
   inline
   int SubMapper<CombinedSpaceImp>::size() const 
   {
-    return mapper_.size();
+    return mapper_.size()/spc_.numComponents();
   }
 
   template <class CombinedSpaceImp>
@@ -88,9 +106,12 @@ namespace Dune
   int SubMapper<CombinedSpaceImp>::
   mapToGlobal(EntityType& en, int localNum) const
   {
+    utilGlobal_.newSize(mapper_.size()); // ok, since pointbased specialisation does nothing for newSize
+    int globalNum = utilGlobal_.combinedDof(localNum, component_); 
+    return mapper_.mapToGlobal(en,globalNum);
+    
     const int containedGlobal = mapper_.mapToGlobal(en, localNum);
 
-    utilGlobal_.newSize(mapper_.size()); // ok, since pointbased specialisation does nothing for newSize
     return utilGlobal_.combinedDof(containedGlobal, component_);
   }
 

@@ -74,13 +74,20 @@ namespace Dune {
   inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   newIndex(const int hole, const int block) const 
   {
+    assert(policy != PointBased || block==0);
+    return (policy == PointBased) ?
+     (mapper_.newIndex(hole/N,block)*N+hole%N) :
+     (mapper_.newIndex(hole,block%mapper_.numBlocks())+
+      size_*block/mapper_.numBlocks());
+    
     DofConversionUtility<policy> 
       tmpUtilGlobal(chooseSize(N, mapper_.newSize(), Int2Type<policy>()));
 
     const int component = tmpUtilGlobal.component(hole);
     const int contained = tmpUtilGlobal.containedDof(hole);
 
-    const int containedNew = mapper_.newIndex(contained,block);
+    const int containedNew = mapper_.newIndex(contained,0);
+    // const int containedNew = mapper_.newIndex(contained,block);
 
     return tmpUtilGlobal.combinedDof(containedNew, component);
   }
@@ -89,13 +96,20 @@ namespace Dune {
   inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   oldIndex(const int hole, const int block) const 
   {
+    assert(policy != PointBased || block==0);
+    return (policy == PointBased) ?
+     (mapper_.oldIndex(hole/N,0)*N+hole%N) :
+     (mapper_.oldIndex(hole,block%mapper_.numBlocks())+
+      oldSize_*block/mapper_.numBlocks());
+
     DofConversionUtility<policy> 
       tmpUtilGlobal(chooseSize(N, mapper_.size(), Int2Type<policy>()));
 
     const int component = tmpUtilGlobal.component(hole);
     const int contained = tmpUtilGlobal.containedDof(hole);
 
-    const int containedNew = mapper_.oldIndex(contained,block);
+    // const int containedNew = mapper_.oldIndex(contained,block);
+    const int containedNew = mapper_.oldIndex(contained,0);
 
     return tmpUtilGlobal.combinedDof(containedNew, component);
   }
@@ -106,31 +120,54 @@ namespace Dune {
   {
     return (policy == PointBased) ?
      (mapper_.numberOfHoles(0)*N) : // in case of point based we have only on
-     (mapper_.numberOfHoles(block));
+     (mapper_.numberOfHoles(block%mapper_.numBlocks()));
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   inline int  CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   numBlocks() const 
   {
-    assert ( policy == PointBased );
-    return (policy == PointBased) ? 1 : N;
+    return (policy == PointBased) ? mapper_.numBlocks() : mapper_.numBlocks()*N;
   }
 
+  //! update mapper, i.e. calculate new insertion points 
+  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  inline void CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
+  update()
+  {
+    // assert(0);
+    // assure that update is only called once per 
+    // dof manager resize 
+    if( 1 ) // sequence_ != dm_.sequence() )
+    {
+      // calculate new size 
+      oldSize_ = size_;
+      size_ = spc_.size();
+      // sequence_ = dm_.sequence();
+    }
+    else 
+    {
+      DUNE_THROW(InvalidStateException,"update of mapper should only be called once per sequence");
+    }
+  }
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   inline int  CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   oldOffSet(const int block) const 
   {
-    assert ( policy == PointBased );
-    return 0;
+    return (policy == PointBased) ? 
+      mapper_.oldOffSet(block)*N :
+      mapper_.size()*(block/mapper_.numBlocks()) 
+            + mapper_.oldOffSet(int(block/mapper_.numBlocks())); 
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   inline int  CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
   offSet(const int block) const 
   {
-    assert ( policy == PointBased );
-    return 0;
+    return (policy == PointBased) ? 
+      mapper_.offSet(block)*N :
+      mapper_.newSize()*(block/mapper_.numBlocks()) 
+            + mapper_.offSet(block/mapper_.numBlocks()); 
   }
 
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>

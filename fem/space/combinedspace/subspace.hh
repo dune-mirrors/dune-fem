@@ -102,8 +102,15 @@ namespace Dune {
     //! is data continuous?
     bool continuous() const { return spc_.continuous(); }
 
+    enum { polynomialOrder = CombinedSpaceType::polynomialOrder};
+
     //! polynom order
     int polynomOrder() const { return spc_.polynomOrder(); }
+
+    //! access to gridPart
+    GridPartType& gridPart() { return spc_.gridPart(); }
+    //! access to gridPart
+    const GridPartType& gridPart() const { return spc_.gridPart(); }
 
     //! begin iterator
     IteratorType begin() const { return spc_.begin(); }
@@ -138,7 +145,7 @@ namespace Dune {
     const GridType& grid() const { return spc_.grid(); }
 
     //! access to mapper
-    const MapperType& mapper() const { return mapper_; }
+    MapperType& mapper() const { return mapper_; }
 
   private:
     //- Forbidden methods
@@ -148,7 +155,7 @@ namespace Dune {
   private:
     //- Data members
     const CombinedSpaceType& spc_;
-    MapperType mapper_;
+    mutable MapperType mapper_;
     int component_;
 
     typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
@@ -199,12 +206,19 @@ namespace Dune {
                    const FieldVector<deriType, diffOrd> &diffVariable, 
                    const DomainType & x, RangeType & phi ) const;
 
+    //! evaluate base function
+    void evaluate (int baseFunct, 
+                   const DomainType & x, RangeType & phi ) const;
+
     //! evaluate base function at quadrature point
     template <int diffOrd, class QuadratureType >
     void evaluate (int baseFunct, 
                    const FieldVector<deriType, diffOrd> &diffVariable, 
                    QuadratureType & quad, 
                    int quadPoint, RangeType & phi ) const;
+    //! default implementation for evaluation 
+    template <class QuadratureImp>
+    void evaluate(int baseFunct, QuadratureImp & quad, int quadPoint, RangeType & phi) const ;
 
   private:
     //- Data members
@@ -232,7 +246,7 @@ namespace Dune {
   public:
     //- Public methods
     SubMapper(const CombinedSpaceType& spc,
-              const ContainedMapperType& mapper,
+              ContainedMapperType& mapper,
               int component) :
       spc_(spc),
       mapper_(mapper),
@@ -258,6 +272,7 @@ namespace Dune {
       return -1;
     }
   
+    /*
     //! old size
     int oldSize() const { 
       assert(false); // should never get here
@@ -269,44 +284,68 @@ namespace Dune {
     void calcInsertPoints () { 
       assert(false); // should never get here
     }
-  
-    //! return max number of local dofs per entity 
-    int numberOfDofs () const { 
-      assert(false); // should never get here
-      return -1;
-    }
-
+    */
+    
     //! return max number of local dofs per entity 
     int numDofs () const { 
       assert(false); // should never get here
       return -1;
     }
 
-    //! returns true if index is new ( for dof compress )
-    bool indexNew (int num) const { 
-      assert(false); // should never get here
-      return false;
-    }
-    
     //! return old index in dof array of given index ( for dof compress ) 
-    int oldIndex (int num) const {
+    int oldIndex (const int hole,const int block) const {
       assert(false); // should never get here
       return -1;
     } 
     
     //! return new index in dof array 
-    int newIndex (int num) const {
+    int newIndex (const int hole,const int block) const {
       assert(false); // should never get here
       return -1;
     }
 
+    /*
     //! return estimate for size that is addtional needed for restriction 
     //! of data
     int additionalSizeEstimate() const {
       assert(false); // should never get here
       return -1;
     }
+    */
+    //! return number of holes in the data
+    int numberOfHoles(const int block) const {
+      assert(false); // should never get here
+      return -1;
+    }
+ 
+    //! returnn number of mem blocks
+    int numBlocks() const{
+      assert(false); // should never get here
+      return -1;
+    }
+    
+    //! update offset information
+    void update(){
+      assert(false); // should never get here
+    }
+    
+    //! return current old offset of block
+    int oldOffSet(const int block) const{
+      assert(false); // should never get here
+      return -1;
+    }
+    
+    //! return current offset of block
+    int offSet(const int block) const{
+      assert(false); // should never get here
+      return -1;
+    }
 
+    //! return true if compress will affect data
+    bool needsCompress () const{
+      assert(false); // should never get here
+      return false;
+    }
   private:
     //- Forbidden member
     SubMapper(const ThisType& other);
@@ -315,10 +354,10 @@ namespace Dune {
   private:
     //- Data members
     const CombinedSpaceType& spc_;
-    const ContainedMapperType& mapper_;
+    mutable ContainedMapperType& mapper_;
     const int component_;
 
-    DofConversionType utilGlobal_;
+    mutable DofConversionType utilGlobal_;
   };
 } // end namespace Dune
 
