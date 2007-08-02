@@ -6,8 +6,12 @@
 
 namespace Dune
 {
+
+
+
   
   /*! \class ElementQuadrature
+   *  \ingroup Quadrature
    *  \brief quadrature on the codim-0 reference element
    *
    *  DUNE quadratures are defined per geometry type, using local coordinates
@@ -31,6 +35,13 @@ namespace Dune
    *  with respect to the codim-0 entity differ for each face.
    *
    *  \note Actually, codim-1 element quadratures depend on the intersection.
+   *
+   *  \note This quadrature does not support caching of base functions in
+   *        quadrature points (see also CachingQuadrature).
+   *
+   *  For the actual implementations, see
+   *  - ElementQuadrature<GridPartImp,0>
+   *  - ElementQuadrature<GridPartImp,1>
    */
   template< typename GridPartImp, int codim >
   class ElementQuadrature
@@ -118,7 +129,7 @@ namespace Dune
      *
      *  \param[in]  org  element quadrature to copy
      */
-    ElementQuadrature( const ElementQuadrature &org )
+    ElementQuadrature( const ThisType &org )
     : BaseType( org )
     {
     }

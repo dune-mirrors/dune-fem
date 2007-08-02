@@ -14,6 +14,7 @@ namespace Dune
 
   
   /*! \class QuadratureRulesFactory
+   *  \ingroup Quadrature
    *  \brief quadrature implementation based on the standard DUNE quadratures
    *    
    *  Though a factory by name, this is a quadrature implementation using the

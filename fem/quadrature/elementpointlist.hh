@@ -7,6 +7,7 @@ namespace Dune
 {
   
   /*! \class ElementIntegrationPointList
+   *  \ingrup Quadrature
    *  \brief integration point list on the codim-0 reference element
    *
    *  DUNE quadratures are defined per geometry type, using local coordinates
@@ -32,6 +33,13 @@ namespace Dune
    *
    *  \note Actually, codim-1 element integration point lists depend on the
    *        intersection.
+   *
+   *  \note This integration point list does not support caching of base functions
+   *        in integration points (see also CachingPointList).
+   *
+   *  For the actual implementations see
+   *  - ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>
+   *  - ElementIntegrationPointList<GridPartImp,1,IntegrationTraits>
    */
   template< class GridPartImp, int codim, class IntegrationTraits >
   class ElementIntegrationPointList

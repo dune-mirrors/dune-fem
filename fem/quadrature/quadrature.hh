@@ -74,7 +74,23 @@ namespace Dune
   class PyramidQuadrature;
 #endif
 
+  /*! \defgroup Quadrature Quadratures
+   *
+   *  In DUNE, quadratures are a set of quadrature points and corresponding
+   *  weights.
+   *
+   *  \remark To get an overview of a quadrature, see Quadrature.
+   *
+   *  \remark The quadratures usually used are ElementQuadrature and
+   *  CachingQuadrature.
+   *
+   *  \endgroup
+   */
+
+
+
   /*! \class IntegrationPointListImp
+   *  \ingroup Quadrature
    *  \brief Generic implementation of an IntegrationPointList
    *
    *  An integration point list is simply a list of points, given in local
@@ -125,7 +141,7 @@ namespace Dune
      *  \param[in]  id  unique identifier of the integration point list
      *                  (provided by QuadratureProvider)
      */
-    inline IntegrationPointListImp( size_t id )
+    inline explicit IntegrationPointListImp( size_t id )
     : points_(),
       id_( id )
     {
@@ -223,6 +239,7 @@ namespace Dune
 
 
   /*! \class QuadratureImp
+   *  \ingroup Quadratures
    *  \brief Generic implementation of a Dune quadrature.
    *
    *  A Dune Quadrature is nothing but a list of integration points (see also
@@ -268,7 +285,7 @@ namespace Dune
      *  \param[in]  id  unique identifier of the quadrature (provided by
      *                  QuadratureProvider)
      */
-    inline QuadratureImp( size_t id )
+    inline explicit QuadratureImp( size_t id )
     : BaseType( id ),
       weights_()
     {
@@ -329,6 +346,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class SimplexQuadrature
+   *  \ingroup Quadratures
    *  \brief generic quadrature class for simplices
    *  
    *  SimplexQuadrature implements the geometry-specific part of the quadrature
@@ -399,6 +417,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class CubeQuadrature
+   *  \ingroup Quadratures
    *  \brief generic quadrature class for cubes
    *  
    *  CubeQuadrature implements the geometry-specific part of the quadrature
@@ -458,6 +477,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class LineQuadrature
+   *  \ingroup Quadratures
    *  \brief quadrature class for lines
    *  
    *  LineQuadrature implements the geometry-specific part of the quadrature
@@ -516,6 +536,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class TriangleQuadrature
+   *  \ingroup Quadratures
    *  \brief quadrature class for triangles
    *  
    *  TriangleQuadrature implements the geometry-specific part of the quadrature
@@ -582,6 +603,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class QuadrilateralQuadrature
+   *  \ingroup Quadratures
    *  \brief quadrature class for quadrilaterals
    *  
    *  QuadrilateralQuadrature implements the geometry-specific part of the
@@ -643,6 +665,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class TetraQuadrature
+   *  \ingroup Quadratures
    *  \brief quadrature class for tetrahedra
    *  
    *  TetraQuadrature implements the geometry-specific part of the quadrature
@@ -709,6 +732,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class HexaQuadrature
+   *  \ingroup Quadratures
    *  \brief quadrature class for hexahedra
    *  
    *  HexaQuadrature implements the geometry-specific part of the quadrature
@@ -770,6 +794,7 @@ namespace Dune
 
 #ifndef USE_DUNE_QUADRATURES
   /*! \class PrismQuadrature
+   *  \ingroup Quadratures
    *  \brief quadrature class for prisms
    *  
    *  PrismQuadrature implements the geometry-specific part of the quadrature
@@ -829,6 +854,7 @@ namespace Dune
   
 #ifndef USE_DUNE_QUADRATURES
   /*! \class PyramidQuadrature
+   *  \ingroup Quadratures
    *  \brief quadrature class for pyramids
    *  
    *  PyramidQuadrature implements the geometry-specific part of the quadrature
@@ -886,10 +912,10 @@ namespace Dune
 
 
 
-  //! \brief Allows injection of arbitrary points as quadrature points.
-  //! Useful to test some features of the quadrature framework in isolation
-  //! and with known input data. Each TestQuadrature object gets its own
-  //! unique id.
+  // \brief Allows injection of arbitrary points as quadrature points.
+  // Useful to test some features of the quadrature framework in isolation
+  // and with known input data. Each TestQuadrature object gets its own
+  // unique id.
   template <class ct, int dim>
   class TestQuadrature : public QuadratureImp<ct, dim>
   {
@@ -1004,6 +1030,7 @@ namespace Dune
 
 
   /*! \class IntegrationPointList
+   *  \ingroup Quadratures
    *  \brief actual interface class for integration point lists
    *
    *  IntegrationPointList is a proxy for the actual implementations of the
@@ -1060,7 +1087,7 @@ namespace Dune
      *  \param[in]  geometry  geometry type of the requested quadrature
      *  \param[in]  order     order of the requested quadrature
      */
-    IntegrationPointList( const GeometryType &geometry, int order )
+    inline IntegrationPointList( const GeometryType &geometry, int order )
     : ipList_( QuadratureProviderType :: getQuadrature( geometry, order ) )
     {
     }
@@ -1074,7 +1101,7 @@ namespace Dune
      *
      *  \param[in]  ipList  implementation of the integration point list
      */
-    IntegrationPointList(const IntegrationPointListType &ipList )
+    inline IntegrationPointList(const IntegrationPointListType &ipList )
     : ipList_( ipList )
     {
     }
@@ -1083,7 +1110,7 @@ namespace Dune
      *  
      *  \param[in]  org  integration point list to be copied
      */ 
-    IntegrationPointList( const IntegrationPointList &org )
+    inline IntegrationPointList( const IntegrationPointList &org )
     : ipList_( org.ipList_ )
     {
     }
@@ -1178,6 +1205,7 @@ namespace Dune
 
 
   /*! \class Quadrature
+   *  \ingroup Quadratures
    *  \brief actual interface class for quadratures
    *
    *  IntegrationPointList is a proxy for the actual implementations of the
@@ -1235,7 +1263,7 @@ namespace Dune
      *  \param[in]  geometry  geometry type of the requested quadrature
      *  \param[in]  order     order of the requested quadrature
      */
-    Quadrature( const GeometryType &geometry, int order )
+    inline Quadrature( const GeometryType &geometry, int order )
     : BaseType( geometry, order )
     {
     }
@@ -1249,7 +1277,7 @@ namespace Dune
      *
      *  \param[in]  ipList  implementation of the integration point list
      */
-    Quadrature( const IntegrationPointListType& ipList )
+    inline explicit Quadrature( const IntegrationPointListType& ipList )
     : BaseType( ipList )
     {
     }
@@ -1259,7 +1287,7 @@ namespace Dune
      *  \param[in]  org  quadrature to be copied
      */ 
    //! Copy constructor
-    Quadrature( const Quadrature &org )
+    inline Quadrature( const Quadrature &org )
     : BaseType( org )
     {
     }

@@ -5,120 +5,174 @@
 #include <dune/common/misc.hh>
 
 //- Local includes
-#include "elementquadrature.hh"
-#include "caching/twistutility.hh"
-#include "caching/pointmapper.hh"
-#include "caching/cacheprovider.hh"
+#include <dune/fem/quadrature/elementquadrature.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
+#include <dune/fem/quadrature/caching/pointmapper.hh>
+#include <dune/fem/quadrature/caching/cacheprovider.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   class CachingInterface 
   {
   protected:
-    // do not create instances of this class 
-    CachingInterface () {}
+    // do not create instances of this class
+    CachingInterface ()
+    {
+    }
     
   public:
-    //! Method to map quadrature points to caching points.
-    //! For codim-1 entities, the mapping consists of two stages: First,
-    //! consider the twist to get the quadrature point number on the reference
-    //! element face and then map it to the caching point.
-    size_t cachingPoint(const size_t quadraturePoint) const 
+    /*! \brief map quadrature points to caching points
+     *
+     *  For codim-1 entites, the mapping consists of two stages:
+     *  - Consider the twist to get the quadrature point number on the face of
+     *    the (codim-0) reference element,
+     *  - Map the twisted quadrature point number to the caching point number.
+     *
+     *  \param[in]  quadraturePoint  number of quadrature point to map to a
+     *                               caching point
+     */
+    inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
-      std::cerr << "CachingInterface::cachingPoint method not implemented! \n";
-      DUNE_THROW(NotImplemented,"CachingInterface::cachingPoint must be overloaded!");
+      DUNE_THROW( NotImplemented,
+                  "CachingInterface :: cachingPoint must be overloaded!" );
     }
   };
-  
-  //! \brief Quadrature class which enables use of caching in base function
-  //! sets.
-  //! CachingPointLists are a conceptual extension of an ElementQuadrature:
-  //! they depend on the context (the actual entity, intersection etc.) and
-  //! in addition they provide a mapping from local quadrature point numbers
-  //! on a subentity's reference element to global quadrature point numbers
-  //! on a codim-0 reference element. (Consider for instance a quadrature on
-  //! a triangular face of a tetrahedron: it provides n local quadrature points
-  //! which can lie on one of the four faces of the tetrahedron, resulting in
-  //! 4*n global quadrature point. With the information from the intersection,
-  //! for every face in the mesh, the mapping from those local quadrature
-  //! points to the global quadrature points can be calculated and used to
-  //! cache the evaluation of, say, a base function on those global quadrature
-  //! points.)
-  template <typename GridPartImp, int codim, 
-            class IntegrationTraits> 
+
+
+
+  /*! \class CachingPointList
+   *  \ingroup Quadrature
+   *  \brief integration point list supporting base function caching
+   *
+   *  A CachingPointList is a conceptual extension to the ElementIntegrationPointList.
+   *  It provides an additional mapping from local quadrature point numbers on
+   *  a subentity's reference element to global quadrature point numbers on the
+   *  codim-0 reference element. Consider, for instance, a quadrature for one
+   *  of the faces of a tetrahedron: It provides n local quadrature points, which
+   *  can lie on one of the four faces, resulting in 4*n global quadrature points.
+   *  
+   *  The information from the mapping can be used to cache a base function on
+   *  those global quadrature points.
+   *
+   *  \note If you don't want caching, you can use ElementIntegrationPointList
+   *        instead.
+   *
+   *  For the actual implementation, see
+   *  - CachingPointList<GridPartImp,0,IntegrationTraits>
+   *  - CachingPointList<GridPartImp,1,IntegrationTraits>
+   */
+  template< class GridPartImp, int codim, class IntegrationTraits >
   class CachingPointList
   {
-    typedef CompileTimeChecker<false> Only_specialisations_for_codim_0_and_1_so_far;
+    typedef CompileTimeChecker< false > Only_specialisations_for_codim_0_and_1_so_far;
   };
-  
-  //! \brief Specialisation for codimension 0.
-  template <typename GridPartImp, class IntegrationTraits>  
-  class CachingPointList<GridPartImp,0,IntegrationTraits> : 
-    public ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>,
-    public CachingInterface 
-  {
-    typedef ElementIntegrationPointList<GridPartImp,0,IntegrationTraits> BaseType;
 
+  
+  
+  //! \copydoc Dune::CachingPointList
+  template< class GridPartImp, class IntegrationTraits >
+  class CachingPointList< GridPartImp, 0, IntegrationTraits >
+  : public ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >,
+    public CachingInterface
+  {
+  public:
+    //! type of grid partition
+    typedef GridPartImp GridPartType;
+
+    //! codimension of element quadrature
+    enum { codimension = 0 };
+    
+  private:
+    typedef CachingPointList< GridPartType, codimension, IntegrationTraits > ThisType;
+    typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
+      BaseType;
+
+  protected:
+    using BaseType :: quadImp;
+
+  public:
     // type of grid 
     typedef typename GridPartImp :: GridType GridType;
-  public:
+
     //! Dimension of the world.
     enum { dimension = BaseType::dimension };
-    //! The codimension is zero by definition.
-    enum { codimension = 0 };
 
     //! Just another name for double...
     typedef typename BaseType::RealType RealType;
+    
     //! The type of the coordinates in the codim-0 reference element.
     typedef typename BaseType::CoordinateType CoordinateType;
+
     //! The type of the codim-0 entity.
     typedef typename BaseType::Entity Entity;
     
   public:
-    //! Copy Constructor
-    CachingPointList(const CachingPointList& org)
-      : BaseType(org)
+    //! \copydoc Dune::ElementIntegrationPointList<GridPartImp,0>::ElementIntegrationPointList(const GeometryType&,int)
+    inline CachingPointList( const GeometryType &geo, int order )
+    : BaseType( geo, order )
+    {
+      CacheProvider< GridType, codimension > :: registerQuadrature( quadImp() );
+    }
+
+    /*! \brief copy constructor
+     *
+     *  \param[in]  org  element quadrature to copy
+     */
+    inline CachingPointList( const ThisType& org )
+    : BaseType( org )
     {
     }
 
-    //! Constructor
-    CachingPointList(const GeometryType& geo, int order) : BaseType(geo, order)
+    //! \copydoc Dune::CachingInterface::cachingPoint
+    inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
-      CacheProvider<GridType, codimension>::registerQuadrature(this->quadImp());
-    }
-
-    //! Additional method to map quadrature points to caching points.
-    //! For codim-0 entities, the quadrature points are the same as the
-    //! caching points.
-    size_t cachingPoint(const size_t quadraturePoint) const {
       return quadraturePoint;
     }
   };
-  
-  //! \brief Specialisation for codimension 1.
-  //! Codimension one gets a little tricky, especially when face twists
-  //! and non-symmetric quadrature rules are employed... But the details
-  //! are safely hidden behind the interface and you don't need to bother.
-  template <typename GridPartImp, class IntegrationTraits>  
-  class CachingPointList<GridPartImp, 1, IntegrationTraits> : 
-    public ElementIntegrationPointList<GridPartImp,1,IntegrationTraits>, 
+ 
+
+
+  //! \copydoc Dune::CachingPointList
+  template< typename GridPartImp, class IntegrationTraits >
+  class CachingPointList< GridPartImp, 1, IntegrationTraits >
+  : public ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >, 
     public CachingInterface
   {
-    typedef ElementIntegrationPointList<GridPartImp,1,IntegrationTraits> BaseType;
+  public:
+    //! type of grid partition
+    typedef GridPartImp GridPartType;
 
-    typedef GridPartImp GridPartType; 
-    typedef typename GridPartType :: GridType GridType;
+    //! codimension of the element quadrature
+    enum { codimension = 1 };
+    
+  private:
+    typedef CachingPointList< GridPartType, codimension, IntegrationTraits > ThisType;
+    typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
+      BaseType;
+
+ protected:
+    using BaseType :: faceNumber;
+    using BaseType :: quadImp;
 
   public:
+    using BaseType :: elementGeometry;
+    using BaseType :: nop;
+    
+  public:
+    //! type of the grid
+    typedef typename GridPartType :: GridType GridType;
+
     //! Dimeinsion of the world
     enum { dimension = BaseType::dimension };
-    //! The codimension is one by definition
-    enum { codimension = 1 };
+    
     //! A double... or whatever your grid wants
     typedef typename BaseType::RealType RealType;
+    
     //! The coordinates of the quadrature points in the codim-0 reference
     //! element
     typedef typename BaseType::CoordinateType CoordinateType;
+
     //! Type of the intersection iterator
     typedef typename BaseType::IntersectionIterator IntersectionIterator;
 
@@ -126,51 +180,62 @@ namespace Dune {
     typedef BaseType NonConformingQuadratureType; 
 
     //! type of twist utility 
-    typedef TwistUtility<GridType> TwistUtilityType;
+    typedef TwistUtility< GridType > TwistUtilityType;
+
+  protected:
+    typedef typename CachingTraits< RealType, dimension > :: MapperType MapperType;
+
+  protected:
+    const MapperType &mapper_;
+
   public:
-    //! Constructor
-    //! \param gridPart grid part to get twist from twist utility 
-    //! \param it Intersection iterator.
-    //! \param order The desired order of the quadrature.
-    //! \param side Is either INSIDE or OUTSIDE
-    CachingPointList(const GridPartType & gridPart, 
-                     const IntersectionIterator& it, 
-                     int order, 
-                     typename BaseType::Side side) :
-      BaseType(it, order, side),
-      mapper_(CacheProvider<GridType, codimension>::
-              getMapper(this->quadImp(), this->elementGeometry(), 
-                        this->faceNumber(), (side == BaseType :: INSIDE) ? 
-                           TwistUtilityType::twistInSelf(gridPart.grid(),it) : 
-                           TwistUtilityType::twistInNeighbor(gridPart.grid(),it)))
+    /*! \brief constructor
+     *
+     *  \note The CachingPointList requires the grid part to get twist
+     *        information for TwistUtility (see also
+     *        ElementIntegrationPointList<GridPartImp,1>).
+     * 
+     *  \param[in]  gridPart      grid partition
+     *  \param[in]  intersection  intersection iterator
+     *  \param[in]  order         desired order of the quadrature
+     *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+     *                            which the ElementQuadrature shall be created
+     */
+    CachingPointList ( const GridPartType &gridPart,
+                       const IntersectionIterator &intersection,
+                       int order,
+                       typename BaseType :: Side side)
+      : BaseType( intersection, order, side ),
+        mapper_( CacheProvider< GridType, codimension > :: getMapper
+          ( quadImp(), elementGeometry(), faceNumber(),
+            (side == BaseType :: INSIDE)
+              ? TwistUtilityType :: twistInSelf( gridPart.grid(), intersection )
+              : TwistUtilityType :: twistInNeighbor( gridPart.grid(), intersection )
+          ) )
     {
-      // make sure CachingPointList is only created for conforming
-      // intersections 
-      assert( TwistUtilityType::conforming(gridPart.grid(),it) );
+      // make sure CachingPointList is only created for conforming intersections
+      assert( TwistUtilityType :: conforming( gridPart.grid(), intersection ) );
     }
 
-    //! Copy constructor 
-    CachingPointList(const CachingPointList& org)
-      : BaseType(org) 
-      , mapper_(org.mapper_)
+    /*! \brief copy constructor
+     *
+     *  \param[in]  org  element quadrature to copy
+     */
+    CachingPointList( const ThisType& org )
+    : BaseType( org ),
+      mapper_( org.mapper_ )
     {
     }
 
-    //! Additional method to map quadrature points to caching points.
-    //! For codim-1 entities, the mapping consists of two stages: First,
-    //! consider the twist to get the quadrature point number on the reference
-    //! element face and then map it to the caching point.
-    size_t cachingPoint(const size_t quadraturePoint) const 
+    //! \copydoc CachingInterface::cachingPoint
+    size_t cachingPoint( const size_t quadraturePoint ) const 
     {
-      // this makes no sense for usigned ints ;)
-      assert(quadraturePoint >= 0);
-      assert(quadraturePoint < (size_t)this->nop());
-
-      return mapper_[quadraturePoint];
+      assert( quadraturePoint < (size_t)nop() );
+      return mapper_[ quadraturePoint ];
     }
 
-    //! return local caching point 
-    //! for debugging issues only 
+    // return local caching point 
+    // for debugging issues only 
     size_t localCachingPoint(size_t quadraturePoint) const 
     {
       // this makes no sense for usigned ints ;)
@@ -184,12 +249,6 @@ namespace Dune {
       assert( point < this->nop() );
       return point;
     }
-
-  private:
-    typedef typename CachingTraits<RealType, dimension>::MapperType MapperType;
-
-  private:
-    const MapperType& mapper_;
   };
 }
 
