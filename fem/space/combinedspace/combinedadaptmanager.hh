@@ -125,9 +125,12 @@ public:
 
     // get quadrature 
     QuadratureType quad(son,quadord_);
+    // get base function set 
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       sohn_.baseFunctionSet();
+    // get geometry 
     const Geometry& geometryInFather = son.geometryInFather();
+    // get number of points 
     const int nop=quad.nop();
     for(int qP = 0; qP < nop; ++qP) 
     {
