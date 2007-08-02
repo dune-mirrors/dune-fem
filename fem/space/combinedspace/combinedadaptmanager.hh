@@ -4,17 +4,17 @@
 //- local includes  
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/quadrature/cachequad.hh>
-#include <dune/fem/space/common/restrictprolongimpl.hh>
+#include <dune/fem/space/common/restrictprolonginterface.hh>
 
 //- local includes 
 #include "combinedspace.hh"
 
-/************************************************************
-1) Gewichte zwischen Vater/Sohn default Implementieren auf Gitter
-   (father.weight(son) oder so
-2) Caching der Basisfunktionen fuer Vater-BasisFunktionen fuer
-   Kinderquadraturen
-*************************************************************/
+//----------------------------------------------------------------------
+//-   1) Gewichte zwischen Vater/Sohn default Implementieren auf Gitter
+//-      (father.weight(son) oder so
+//-   2) Caching der Basisfunktionen fuer Vater-BasisFunktionen fuer
+//-      Kinderquadraturen
+//----------------------------------------------------------------------
 
 namespace Dune{
 /** @ingroup RestrictProlongImpl
@@ -93,12 +93,14 @@ public:
     for(int qP = 0; qP < nop; ++qP) 
     {
       sohn_.evaluate(quad,qP,ret);
+      const double intel = quad.weight(qP) * weight;
       for(int i=0; i<diff_numDofs; ++i) 
       {
         baseset.evaluateScalar(i,geometryInFather.global(quad.point(qP)),phi);
-        for(int k=0; k<dimRange; ++k)
+        int idx = i * dimRange;
+        for(int k=0; k<dimRange; ++k, ++idx)
         {
-          vati_[i] += quad.weight(qP) * weight * (ret[k] * phi[0]) ;
+          vati_[idx] += intel * (ret[k] * phi[0]) ;
         }
       }
     }
@@ -111,12 +113,17 @@ public:
     //assert( son.state() == REFINED );
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::ContainedRangeType phi (0.0);
+    // get local functions 
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
+
+    // get number of dofs 
     const int sohn_numDofs = sohn_.numDofs();
     const int diff_numDofs = sohn_.baseFunctionSet().numDifferentBaseFunctions();
+    // set sohn to zero
     for(int i=0; i<sohn_numDofs; ++i) sohn_[i] = 0.;
 
+    // get quadrature 
     QuadratureType quad(son,quadord_);
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       sohn_.baseFunctionSet();
@@ -124,14 +131,16 @@ public:
     const int nop=quad.nop();
     for(int qP = 0; qP < nop; ++qP) 
     {
+      // evaluate father 
       vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
-      
+      // make projection 
       for(int i=0; i<diff_numDofs; ++i) 
       {
         baseset.evaluateScalar(i,quad,qP,phi);
-        for(int k=0; k<dimRange; ++k)
+        int idx = i * dimRange;
+        for(int k=0; k<dimRange; ++k, ++idx)
         {
-          sohn_[i] += quad.weight(qP) * (ret[k] * phi[0]) ;
+          sohn_[idx] += quad.weight(qP) * (ret[k] * phi[0]) ;
         }
       }
     }
