@@ -62,7 +62,15 @@ namespace Dune
     //! fill the array with copies of an element
     inline ArrayType &assign ( const ElementType &element )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( element ) );
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( element ) );
+      return asImp();
+    }
+
+    //! copy another array to this one
+    template< class Traits >
+    inline ArrayType &assign( const ArrayInterface< Traits > &other )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( other ) );
       return asImp();
     }
  
@@ -235,6 +243,17 @@ namespace Dune
       return imp;
     }
 
+    template< class Traits >
+    inline ArrayType &assign( const ArrayInterface< Traits > &other )
+    {
+      ArrayType &imp = asImp();
+      const unsigned int size = imp.size();
+      assert( size == other.size() );
+      for( unsigned int i = 0; i < size; ++i )
+        imp[ i ] = other[ i ];
+      return imp;
+    }
+
     inline ConstIteratorType begin () const
     {
       return ConstIteratorType( asImp(), 0 );
@@ -320,10 +339,14 @@ namespace Dune
     {
     }
 
-    inline StandardArray ( const ElementType &element )
+    inline explicit StandardArray ( const ElementType &element )
     {
-      for( unsigned int i = 0; i < arraysize; ++i )
-        elements_[ i ] = element;
+      assign( element );
+    }
+
+    inline StandardArray ( const ThisType &other )
+    {
+      assign( other );
     }
    
     inline const ElementType &operator[] ( unsigned int index ) const
@@ -466,13 +489,7 @@ namespace Dune
     ElementType *elements_;
 
   public:
-    inline DynamicArray ()
-    {
-      size_ = 0;
-      allocator_.allocate( size_, elements_ );
-    }
-    
-    inline DynamicArray ( unsigned int size )
+    inline explicit DynamicArray ( unsigned int size = 0 )
     {
       size_ = size;
       allocator_.allocate( size_, elements_ );
@@ -482,11 +499,15 @@ namespace Dune
     {
       size_ = size;
       allocator_.allocate( size_, elements_ );
-
-      for( unsigned int i = 0; i < size_; ++i )
-        elements_[ i ] = element;
+      assign( element );
     }
 
+    inline DynamicArray ( const ThisType &other )
+    {
+      size_ = other.size_;
+      allocator_.allocate( size_, elements_ );
+      assign( other );
+    }
 
     inline ~DynamicArray ()
     {
