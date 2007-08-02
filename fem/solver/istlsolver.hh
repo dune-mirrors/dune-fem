@@ -1,7 +1,6 @@
 #ifndef DUNE_ISTLSOLVERS_HH 
 #define DUNE_ISTLSOLVERS_HH 
 
-
 #if HAVE_DUNE_ISTL 
 //- Dune includes 
 #include <dune/fem/operator/common/operator.hh>
@@ -95,6 +94,9 @@ namespace Dune {
     const MatrixType& matrix_;
   };
 
+/** @ingroup OEMSolver
+    @{
+**/
   
 // BICG STAB scheme 
 template <class DiscreteFunctionType, class OperatorType>
@@ -155,7 +157,15 @@ private:
   };
 
 public:
-  //! ISTL BiCGStab
+  /** \brief constructor of ISTLBICGSTABOp 
+    \param[in] op Mapping describing operator to invert 
+    \param[in] redEps reduction epsilon 
+    \param[in] absLimit absolut limit of residual (not used here) 
+    \param[in] maxIter maximal iteration steps 
+    \param[in] verbose verbosity 
+
+    \note ISTL BiCG-stab only uses the relative reduction.
+  */
   ISTLBICGSTABOp(OperatorType & op , double  reduction , double absLimit , 
                 int maxIter , bool verbose ) 
     : op_(op), reduction_ ( reduction ) 
@@ -171,19 +181,29 @@ public:
   {
   }
 
+
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     SolverCaller<OperatorType,true>::call(op_,arg,dest,reduction_,maxIter_,verbose_);
   }
 
+
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     apply(arg,dest);
   }
 }; 
+///@}
 
-
-}
-#endif
+} // end namespace Dune 
+#endif // end HAVE_DUNE_ISTL
 
 #endif

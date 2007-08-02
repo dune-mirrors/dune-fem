@@ -112,11 +112,12 @@ private:
 };
 
 
-/** @ingroup ODESolver
- @{
- **/
+#if 0
+ @ingroup ODESolver
+   @{
+#endif
 
-/** \brief Explicit ODE Solver base class */
+/* \brief Explicit ODE Solver base class */
 template<class Operator>
 class ExplTimeStepperBase 
 {
@@ -819,7 +820,9 @@ public:
 };
 
 
-/** @} **/
+#if 0
+ @} 
+#endif
 }
 #endif
 

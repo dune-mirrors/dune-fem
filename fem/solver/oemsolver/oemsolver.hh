@@ -219,12 +219,18 @@ public:
 
 namespace Dune 
 {
-  /** @defgroup OEMSolver Inverting Operator
-   *  @ingroup OperatorCommon
-   @{
+  /** @defgroup OEMSolver Inverting Operators (OEM Methods)
+      @ingroup OperatorCommon
+      
+      In this section implementations of Orthogonal Error Methods (OEM) for solving linear 
+      systems of the from \f$A x = b\f$, where \f$A\f$ is a Mapping or
+      Operator and \f$x\f$ and \f$b\f$ are discrete functions 
+      (see DiscreteFunctionInterface) can be found. 
+      
+      @{
    **/
 
-// CG scheme after Hestenes and Stiefel
+/** \brief OEM-CG scheme after Hestenes and Stiefel */
 template <class DiscreteFunctionType, class OperatorType>
 class OEMCGOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -291,6 +297,13 @@ private:
 
 public:
 
+  /** \brief constructor of OEM-CG 
+      \param[in] op Operator to invert 
+      \param[in] redEps realative tolerance for residual 
+      \param[in] absLimit absolut solving tolerance for residual 
+      \param[in] maxIter maximal number of iterations performed 
+      \param[in] verbose verbosity 
+  */
   OEMCGOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
         op_(op), epsilon_ ( absLimit ) ,
         maxIter_ (maxIter ) , verbose_ ( verbose ) {
@@ -304,6 +317,10 @@ public:
   {
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     // prepare operator 
@@ -327,14 +344,17 @@ public:
     finalize ();
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     apply(arg,dest);
   }
 };
 
-
-// BICG STAB scheme 
+/** \brief BiCG-stab solver */
 template <class DiscreteFunctionType, class OperatorType>
 class OEMBICGSTABOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -393,7 +413,13 @@ private:
   };
 
 public:
-
+  /** \brief constructor of OEM-BiCG-stab 
+      \param[in] op Operator to invert 
+      \param[in] redEps realative tolerance for residual 
+      \param[in] absLimit absolut solving tolerance for residual 
+      \param[in] maxIter maximal number of iterations performed 
+      \param[in] verbose verbosity 
+  */
   OEMBICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
         op_(op), epsilon_ ( absLimit ) ,
         maxIter_ (maxIter ) , verbose_ ( verbose ) {
@@ -407,6 +433,10 @@ public:
   {
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -432,6 +462,10 @@ public:
     finalize ();
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     apply(arg,dest);
@@ -442,6 +476,7 @@ public:
 ////////////////////////////////
 // BICG SQ scheme 
 ////////////////////////////////
+/** \brief BiCG-SQ method */
 template <class DiscreteFunctionType, class OperatorType>
 class OEMBICGSQOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -456,7 +491,13 @@ private:
   bool verbose_ ;
 
 public:
-
+  /** \brief constructor of OEM-BiCG-SQ 
+      \param[in] op Operator to invert 
+      \param[in] redEps realative tolerance for residual 
+      \param[in] absLimit absolut solving tolerance for residual 
+      \param[in] maxIter maximal number of iterations performed 
+      \param[in] verbose verbosity 
+  */
   OEMBICGSQOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
         op_(op), epsilon_ ( absLimit ) ,
         maxIter_ (maxIter ) , verbose_ ( verbose ) {
@@ -470,6 +511,10 @@ public:
   {
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -487,12 +532,19 @@ public:
     finalize ();
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     apply(arg,dest);
   }
 
 };
+
+
+/** \brief GMRES solver */
 template <class DiscreteFunctionType, class OperatorType>
 class OEMGMRESOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -574,7 +626,13 @@ private:
   };
 
 public:
-
+  /** \brief constructor of OEM-GMRES 
+      \param[in] op Operator to invert 
+      \param[in] redEps realative tolerance for residual 
+      \param[in] absLimit absolut solving tolerance for residual 
+      \param[in] maxIter maximal number of iterations performed 
+      \param[in] verbose verbosity 
+  */
   OEMGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
         op_(op), epsilon_ ( absLimit ) ,
         maxIter_ (maxIter ) , verbose_ ( verbose ) {
@@ -588,6 +646,10 @@ public:
   {
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     // prepare operator 
@@ -614,6 +676,10 @@ public:
     finalize ();
   }
 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     apply(arg,dest);
@@ -621,13 +687,16 @@ public:
 
 };
 
+/**
+   @}
+**/
 #ifdef USE_DENNIS_ODE_SOLVER
 /////////////////////////////////////////////////////////////////
 //
 //  GMRES Version of Dennis code
 //
 /////////////////////////////////////////////////////////////////
-//! \brief GMRES implementation from Dennis D.
+// \brief GMRES implementation from Dennis D.
 template <class DiscreteFunctionType, class OperatorType>
 class GMRESOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -758,7 +827,10 @@ public:
   {
   }
 
-  //! solve the system 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     // prepare operator 
@@ -784,7 +856,10 @@ public:
     finalize ();
   }
 
-  //! solve the system 
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
   void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
     apply(arg,dest);
@@ -936,7 +1011,10 @@ public:
 //  BICGstab Version of Dennis code
 //
 /////////////////////////////////////////////////////////////////
-//! \brief GMRES implementation from Dennis D.
+/* 
+  \interface
+  \brief BICG-stab implementation from Dennis D.
+*/
 template <class DiscreteFunctionType, class OperatorType>
 class BICGSTABOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -1073,9 +1151,6 @@ public:
 };
 #endif
 #undef USE_DENNIS_ODE_SOLVER
-  /**
-   @}
-   **/
  
 } // end namespace Dune 
 #endif
