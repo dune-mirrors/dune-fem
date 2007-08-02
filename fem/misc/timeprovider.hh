@@ -13,7 +13,7 @@ namespace Dune {
     @ingroup ODESolver 
 
     A TimeProvider is a class for managing the global simulation time of
-    time-dependent simulation. 
+    time-dependent simulations. 
 
     \remarks 
     There exsist three implementations of time provider, two for serial
@@ -59,7 +59,7 @@ namespace Dune {
     }
     
     //! destructor 
-    virtual ~TimeProvider() {}
+    ~TimeProvider() {}
 
     /** \brief return current time 
         \return current time 
