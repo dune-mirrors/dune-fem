@@ -64,6 +64,8 @@ namespace Dune{
     typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     //! type of BaseFunctionSet of this space 
     typedef typename FunctionSpaceTraits::BaseFunctionSetType BaseFunctionSetType;
+    //! type of Mapper of this space 
+    typedef typename FunctionSpaceTraits::MapperType MapperType;
     //! type of underlying grid part 
     typedef typename FunctionSpaceTraits::GridPartType GridPartType;
     //! type of underlying grid  
@@ -178,6 +180,14 @@ namespace Dune{
     {
       CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity, localDof ));
       return asImp().mapToGlobal ( entity , localDof );
+    }
+    /** \brief return the instance of the mapper
+        \return refernce to mapper
+    */    
+    MapperType& mapper () const  
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapper());
+      return asImp().mapper();
     }
 
     /** \brief returns index of sequence in grid sequences 
