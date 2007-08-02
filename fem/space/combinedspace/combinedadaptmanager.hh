@@ -93,14 +93,18 @@ public:
     for(int qP = 0; qP < nop; ++qP) 
     {
       sohn_.evaluate(quad,qP,ret);
+      // calculate factor 
       const double intel = quad.weight(qP) * weight;
       for(int i=0; i<diff_numDofs; ++i) 
       {
+        // evaluate base function 
         baseset.evaluateScalar(i,geometryInFather.global(quad.point(qP)),phi);
+        // scale with factor
+        phi *= intel;
         int idx = i * dimRange;
         for(int k=0; k<dimRange; ++k, ++idx)
         {
-          vati_[idx] += intel * (ret[k] * phi[0]) ;
+          vati_[idx] += (ret[k] * phi[0]) ;
         }
       }
     }
@@ -139,11 +143,14 @@ public:
       // make projection 
       for(int i=0; i<diff_numDofs; ++i) 
       {
+        // evaluate base function 
         baseset.evaluateScalar(i,quad,qP,phi);
+        // scale with weight 
+        phi *= quad.weight(qP);
         int idx = i * dimRange;
         for(int k=0; k<dimRange; ++k, ++idx)
         {
-          sohn_[idx] += quad.weight(qP) * (ret[k] * phi[0]) ;
+          sohn_[idx] += (ret[k] * phi[0]) ;
         }
       }
     }
