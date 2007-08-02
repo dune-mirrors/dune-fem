@@ -222,7 +222,7 @@ namespace Dune {
     const IndexSetType& indexSet() const { return spc_.indexSet(); }
 
     //! access to mapper
-    const MapperType& mapper() const { return mapper_; }
+    MapperType& mapper() const { return mapper_; }
 
     //- Additional methods
     //! number of components
@@ -235,7 +235,7 @@ namespace Dune {
     DofStoragePolicy myPolicy() const{ return DofConversionType::policy(); }
  
     //! return subspace for ith component
-    SubSpaceType& subSpace(int i) 
+    const SubSpaceType& subSpace(int i) const
     {
       assert( i >= 0 && i< N );
       assert( subSpaces_[i] );
@@ -256,7 +256,7 @@ namespace Dune {
     //- Private methods
     CombinedSpace(const ThisType& other);
 
-    const ContainedMapperType& containedMapper() const { 
+    ContainedMapperType& containedMapper() const { 
       return mapper_.containedMapper(); 
     }
 
@@ -264,7 +264,7 @@ namespace Dune {
     //- Member data  
     ContainedDiscreteFunctionSpaceType spc_;
 
-    MapperType mapper_;
+    mutable MapperType mapper_;
     typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
     mutable BaseFunctionMapType baseSetMap_; 
     std::vector<SubSpaceType*> subSpaces_;
@@ -275,9 +275,9 @@ namespace Dune {
   //! Wrapper class for mappers. This class is to be used in conjunction with
   //! the CombinedSpace
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  class CombinedMapper : public DofMapperDefault<
-    CombinedMapper<DiscreteFunctionSpaceImp, N, policy> 
-  > 
+  class CombinedMapper 
+  : public DofMapperDefault<
+    CombinedMapper<DiscreteFunctionSpaceImp, N, policy> >
   {
   public:
     //- Friends
@@ -300,11 +300,13 @@ namespace Dune {
     //- Public methods
     //! Constructor
     CombinedMapper(const ContainedDiscreteFunctionSpaceType& spc,
-                   const ContainedMapperType& mapper) :
+                   ContainedMapperType& mapper) :
       spc_(spc),
       mapper_(mapper),
       utilLocal_(spc_,N),
-      utilGlobal_(spc_,N)
+      utilGlobal_(spc_,N),
+      oldSize_(spc_.size()),
+      size_(spc_.size())
     {}
 
     //! Total number of degrees of freedom
@@ -321,8 +323,10 @@ namespace Dune {
     //! (to be called once per timestep, therefore virtual )
     int newSize() const { return mapper_.newSize()*N; }
   
+    /*
     //! old size
     int oldSize() const { return mapper_.oldSize()*N; }
+    */
 
     //! return max number of local dofs per entity 
     int numDofs () const { return mapper_.numDofs()*N; }
@@ -341,6 +345,9 @@ namespace Dune {
     //! returnn number of mem blocks 
     int numBlocks() const; 
 
+    //! update offset information
+    void update(); 
+    
     //! return current old offset of block 
     int oldOffSet(const int block) const;
 
@@ -354,7 +361,7 @@ namespace Dune {
     //- Private methods
     CombinedMapper(const ThisType& other);
 
-    const ContainedMapperType& containedMapper() const {
+    ContainedMapperType& containedMapper() const {
       return mapper_;
     }
 
@@ -371,10 +378,11 @@ namespace Dune {
   private:
     //- Data members
     const ContainedDiscreteFunctionSpaceType& spc_;
-    const ContainedMapperType& mapper_;
+    mutable ContainedMapperType& mapper_;
 
     const LocalDofConversionUtilityType utilLocal_;
     GlobalDofConversionUtilityType utilGlobal_;
+    int oldSize_,size_;
   }; // end class CombinedMapper
 } // end namespace Dune
 
