@@ -7,7 +7,9 @@
 //- local includes 
 #include <dune/fem/operator/common/mapping.hh>
 
-namespace Dune{
+namespace Dune
+{
+
 /** @defgroup FunctionCommon Functions
     @ingroup Functions
     Functions are Mappings from \f$K^n\f$ into \f$L^m\f$ where 
@@ -16,9 +18,10 @@ namespace Dune{
     \remarks
     The interface for using a Function is defined by the class Function.
     @{
- */
-
-/*!  Abstract class representing a function
+**/
+  
+/** \brief 
+    Abstract class representing a function
 
     Template parameters are:
     -  FunctionSpaceImp      type of the function space where the function 
@@ -32,8 +35,7 @@ class Function :
                      typename FunctionSpaceImp::DomainType, 
                      typename FunctionSpaceImp::RangeType > 
 {
-
-  // type of this 
+  //! type of this 
   typedef Function<FunctionSpaceImp,FunctionImp> FunctionType;
 
 public:
@@ -48,31 +50,39 @@ public:
   //! hessian type (from function space)
   typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
 
-  //! Constructor
+  //! constructor
   Function (const FunctionSpaceType & f) : functionSpace_ (f) 
   {
   }   
 
-  //! Constructor
+  //! copy constructor
   Function (const FunctionType& org) : functionSpace_ (org.functionSpace_) 
   {
   }   
 
-  //! application operator
+  /** \brief application operator call evaluate 
+      \param[in] arg argument 
+      \param[out] dest destination, i.e. f(arg) 
+  */
   virtual void operator()(const DomainType & arg, RangeType & dest) const 
   {
     evaluate(arg,dest);
   }
 
   //! evaluate Function
+  /** \brief evaluate function f 
+      \param[in] arg argument 
+      \param[out] dest destination, i.e. f(arg) 
+  */
   void evaluate(const DomainType & arg, RangeType & dest) const 
   {
     asImp().evaluate(arg, dest);
   }
 
   /** \brief evaluate function and derivatives specialization via derivation: 
-    derivation 0 == evaluate function 
-    derivation 1 == evaluate partial derivative diffVariable[0] (0 == x0, 1 == x1,..., n == xn)
+      \param[in] diffVariable derivation 0 == evaluate function, derivation 1 == evaluate partial derivative diffVariable[0] (0 == x0, 1 == x1,..., n == xn)
+      \param[in] arg argument 
+      \param[out] dest destination, i.e. f(arg) 
   */    
   template <int derivation>
   void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
@@ -108,6 +118,5 @@ private:
 };
 
 /** @} end documentation group */
-
 }
 #endif
