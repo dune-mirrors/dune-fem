@@ -242,7 +242,7 @@ namespace Dune {
     int mapToGlobal ( EntityType &en, int localNum ) const;
 
     //! Return the dof mapper of the space
-    const MapperType& mapper() const;
+    MapperType& mapper() const;
 
     //! \brief return index in grid sequences 
     int sequence () const { return dm_.sequence(); }
