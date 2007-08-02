@@ -229,7 +229,7 @@ namespace Dune {
       {
         baseSet_ = spc_.baseFunctionSet( entity );
 
-        numDofs_ = baseFunctionSet().numBaseFunctions();
+        numDofs_ = baseSet_.numBaseFunctions();
         values_.resize(numDofs_);
 
         needCheckGeometry_ = spc_.multipleGeometryTypes();
@@ -569,7 +569,7 @@ namespace Dune {
       {
         baseSet_ = spc_.baseFunctionSet( entity );
 
-        numDofs_ = baseFunctionSet().numDifferentBaseFunctions();
+        numDofs_ = baseSet_.numDifferentBaseFunctions();
         values_.resize( numDofs_ );
         
         // real dof number is larger 
