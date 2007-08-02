@@ -151,54 +151,42 @@ ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>:
 //**************************************************************************
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-write_xdr(std::string fn) const
+write_xdr(const std::string fn) const
 {
-  FILE  *file;
-  XDR   xdrs;
-  file = fopen(fn.c_str(), "wb");
-  if (!file)
-  { 
-    printf( "\aERROR in ProductDiscreteFunction::write_xdr(..): couldnot open <%s>!\n", fn.c_str());
-    fflush(stderr);
-    return false;
+  // create write stream 
+  XDRWriteStream xdr(fn);
+  // make sure data is only written in compressed state. 
+  /*
+  if( dofVec_.size() != spc_.size() )
+  {
+    DUNE_THROW(InvalidStateException,"DofVector not in compressed state while writing!");
   }
+  */
 
-  xdrstdio_create(&xdrs, file, XDR_ENCODE);   
-  dofVec_.processXdr(&xdrs);
-
-  xdr_destroy(&xdrs);
-  fclose(file);
-  
-  return true;
+  // write data 
+  return dofVec_.processXdr(xdr);
 }
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-read_xdr(std::string fn)
+read_xdr(const std::string fn)
 {
-  FILE   *file;
-  XDR     xdrs;
-  std::cout << "Reading <" << fn << "> \n";
-  file = fopen(fn.c_str() , "rb");
-  if(!file)
-  { 
-    printf( "\aERROR in ProductDiscreteFunction::read_xdr(..): couldnot open <%s>!\n", fn.c_str());
-    fflush(stderr);
-    return(false);
+  XDRReadStream xdr(fn);
+  // make sure data is only written in compressed state. 
+  /* 
+  if( dofVec_.size() != spc_.size() )
+  {
+    DUNE_THROW(InvalidStateException,"DofVector size does not match while reading!");
   }
+  */
 
-  // read xdr 
-  xdrstdio_create(&xdrs, file, XDR_DECODE);     
-  dofVec_.processXdr(&xdrs);
-  
-  xdr_destroy(&xdrs);
-  fclose(file);
-  return true;
+  // read data 
+  return dofVec_.processXdr(xdr);
 }
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-write_ascii(std::string fn) const
+write_ascii(const std::string fn) const
 {
   std::fstream outfile( fn.c_str() , std::ios::out );
   if (!outfile)
@@ -226,7 +214,7 @@ write_ascii(std::string fn) const
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-read_ascii(std::string fn)
+read_ascii(const std::string fn)
 {
   FILE *infile=0;
   infile = fopen( fn.c_str(), "r" );
@@ -248,7 +236,7 @@ read_ascii(std::string fn)
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-write_pgm(std::string fn) const
+write_pgm(const std::string fn) const
 {
   std::ofstream out( fn.c_str() );
 
@@ -274,7 +262,7 @@ write_pgm(std::string fn) const
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-read_pgm(std::string fn)
+read_pgm(const std::string fn)
 {
   FILE *in;
   int v;
