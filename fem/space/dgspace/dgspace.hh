@@ -285,7 +285,7 @@ namespace Dune {
     /** \brief Return dof mapper of the space
         \return MapperType 
     */
-    const MapperType& mapper() const 
+    MapperType& mapper() const 
     {
       assert( mapper_ );
       return *mapper_;

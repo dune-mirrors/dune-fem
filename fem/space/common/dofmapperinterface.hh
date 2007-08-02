@@ -118,7 +118,7 @@ class DofMapperDefault : public DofMapperInterface<DofMapperImp>
 {
 public:
   //! update mapper, default does nothing 
-  void update () const {}
+  void update () {}
 
   //! return old offsets for block number, default returns zero 
   int oldOffSet(const int block) const { return 0; }
