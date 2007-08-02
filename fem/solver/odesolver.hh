@@ -20,6 +20,10 @@
 
 #include <dune/fem/solver/rungekutta.hh>
 
+#define USE_DENNIS_ODE_SOLVER
+
+#ifdef USE_DENNIS_ODE_SOLVER
+
 //#if HAVE_BLAS 
 //#define USE_EXTERNAL_BLAS
 //#endif
@@ -811,6 +815,7 @@ public:
 
 /** @} **/
 }
+#endif
 
 #undef USE_EXTERNAL_BLAS
 #endif

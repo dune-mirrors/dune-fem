@@ -621,6 +621,7 @@ public:
 
 };
 
+#ifdef USE_DENNIS_ODE_SOLVER
 /////////////////////////////////////////////////////////////////
 //
 //  GMRES Version of Dennis code
@@ -789,7 +790,7 @@ public:
     apply(arg,dest);
   }
 };
- 
+
 template <class DiscreteFunctionType, class OperatorType>
 class FGMRESOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
@@ -1070,6 +1071,8 @@ public:
   }
 
 };
+#endif
+#undef USE_DENNIS_ODE_SOLVER
   /**
    @}
    **/
