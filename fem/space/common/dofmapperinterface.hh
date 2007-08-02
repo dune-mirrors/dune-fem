@@ -1,25 +1,37 @@
 #ifndef DUNE_DOFMAPPERINTERFACE_HH
 #define DUNE_DOFMAPPERINTERFACE_HH
 
+//- Dune includes
+#include <dune/fem/space/common/basefunctioninterface.hh>
+
 namespace Dune {
 
-/** @defgroup DofMapper  DofMapperInterface 
- *  @ingroup DiscreteFunction
+/** @defgroup DofMapper DofMapperInterface 
+    @ingroup DiscreteFunctionSpace
+
+    Dof Mapper are special implementations to provide the mapToGlobal
+    feature of the spaces. Furthermore, during adaptation the mapper
+    provide information about holes in the data vectors. 
+
+    \remarks 
+    The DofMapper interface is described by the class
+    DofMapperInterface.
 
   @{
  */
 
-//***********************************************************************
-//
-//  --MapperInterface 
-//
-//! Interface for calculating the size of a function space for a grid on a
-//! specified level.
-//! Furthermore the local to global mapping of dof number is done. 
-//! Also during grid adaptation this mapper knows about old and new indices
-//! of entities. 
-//
-//***********************************************************************
+//-------------------------------------------------------------------------
+//-
+//-  --MapperInterface 
+//-
+//-------------------------------------------------------------------------
+/** \brief 
+   Interface for calculating the size of a function space for a grid on a
+   specified level.
+   Furthermore the local to global mapping of dof number is done. 
+   Also during grid adaptation this mapper knows about old and new indices
+   of entities. 
+*/
 template <class DofMapperImp> 
 class DofMapperInterface
 {
@@ -28,55 +40,57 @@ public:
   //! specified level
   int size () const 
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
     return asImp().size();
   }
 
   //! map a local dof num of a given entity to a global dof num
   template <class EntityType>
-  int mapToGlobal ( EntityType &en, int localNum ) const
+  int mapToGlobal ( const EntityType &entity, const int localDof ) const
   {
-    return asImp().mapToGlobal( en , localNum );
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity ,localDof));
+    return asImp().mapToGlobal( entity , localDof );
   }
 
   //! return new size of space, i.e. after adaptation 
   int newSize() const 
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().newSize());
     return asImp().newSize();
   }
   
   //! return number of dofs on element
   int numDofs () const 
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());
     return asImp().numDofs();
   } 
 
   //! return number of holes for data block 
   int numberOfHoles(const int block) const 
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().numberOfHoles(block));
     return asImp().numberOfHoles(block); 
   }
   
   //! return old index of hole for data block 
   int oldIndex (const int hole, const int block) const 
   { 
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().oldIndex(hole,block));
     return asImp().oldIndex(hole,block); 
   }
     
   //! return new index of hole for data block 
   int newIndex (const int hole, const int block) const 
   { 
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().newIndex(hole,block));
     return asImp().newIndex(hole,block); 
-  }
-
-  //! method is deprecated and does not work anymore
-  int additionalSizeEstimate() const DUNE_DEPRECATED 
-  {  
-    return 0;
   }
 
   //! return true if compress will affect data  
   bool needsCompress () const 
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().needsCompress());
     return asImp().needsCompress ();
   }
 
@@ -84,24 +98,28 @@ public:
   //! i.e. calculate new insertion points of blocks 
   void update ()
   {
-    asImp().update();
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().update());
   }
 
   //! return old offsets for given block 
   int oldOffSet(const int block) const
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().oldOffSet(block));
     return asImp().oldOffSet(block);
   }
 
   //! return current offsets for given block 
   int offSet(const int block) const
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().offSet(block));
     return asImp().offSet(block);
   }
 
   //! return number of supported blocks  
   int numBlocks() const
   {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().numBlocks());
     return asImp().numBlocks();
   }
   
@@ -178,7 +196,7 @@ class MapperSingletonFactory
   }
 };
 
-/** @} end documentation group */
+/// @}
 
 } // end namespace Dune
 #endif

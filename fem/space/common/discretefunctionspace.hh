@@ -366,8 +366,10 @@ namespace Dune{
     const GridPartType& gridPart_;
   };
 
-  //! BaseFunctionSetSingletonFactory provides method createObject and
-  //! deleteObject for the SingletonList  
+  /** \brief 
+     BaseFunctionSetSingletonFactory provides method createObject and
+     deleteObject for the SingletonList  
+  */
   template <class KeyImp, class ObjectImp, class ObjectFactoryImp>
   class BaseFunctionSetSingletonFactory
   { 
@@ -386,6 +388,6 @@ namespace Dune{
     }
   };
   
-//@}  
+///@}  
 } // end namespace Dune 
 #endif
