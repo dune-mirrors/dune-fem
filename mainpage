@@ -55,22 +55,32 @@ and a projection
 By inverting the discrete operator using non-linear or linear solvers
 (see \ref OEMSolver) or by plugging
 \f$ L_h \f$ into an \ref ODESolver "ode solver" a wide range of applications can
-be tackled 
+be tackled
 (http://www.mathematik.uni-freiburg.de/IAM/homepages/mario/postscript/paper_bddko.pdf).
 
-Here is a short list of available methods:
+Here is a short list of available simple operators:
 
-- continuous and discontinuous Galerkin methods for Finite-Element
-  methods for second order elliptic problems (up to ??? order).
-- discontinuous Galerkin method for first order hyperbolic operators 
-  (up to order ???).
-- Krylov space methods (CG, BiCGStab, GMRes)
+- continuous and discontinuous Galerkin Finite-Element
+  methods for second order elliptic problems (up to 2. order continuous
+  and up to order 10 discontinuous).
+- discontinuous Galerkin method for first order hyperbolic balance laws 
+  (up to order 10).
+- Lagrange und L2 Type projections
+.
+
+By combining these operators in the fashion describt above
+and using (non)-linear solvers or ode time stepping
+schemes, very complex problem can be solved, e.g.,
+non-linear elliptic and parabolic problems,
+advection diffusion or even dispersion equations.
+Available solvers at this time are
+- Preconditioned Krylov space methods (CG, BiCGStab, GMRes)
+- Newton type solvers
 - explicit, implicit, or IMEX Runge-Kutta schemes. 
 .
 
-The discrete function spaces used as argument and destination of the
-discrete operators are constructed by choosing a continuous 
-\ref FunctionSpace "function space",
+Discrete operators are constructed by choosing a 
+continuous \ref FunctionSpace "function space",
 a set of \ref BaseFunction "base functions",
 and a \ref GridPart "view" of the underlying grid which determines 
 that part of the dune grid on which the functions are to be defined. 
@@ -83,26 +93,48 @@ are so far available.
 \section Local Adaptation and Parallelization
 <!---------------------------------------------->
 
-Handling of the degrees of freedom (dof) on locally adapted and parallel grids - 
-including dynamic load balancing - is automatically performed by the 
-Dune::DofManager so that very little additional coding is required from the
-user. The Dune::AdaptiveLeafIndexSet implements an efficient reorganization 
-of the dofs during adaptation and grid reorganization. To use this
+Handling of the degrees of freedom (dof) on locally 
+adapted and parallel grids - 
+including dynamic load balancing - 
+is automatically performed by the 
+Dune::DofManager so that very little additional coding 
+is required from the user. 
+The Dune::AdaptiveLeafIndexSet implements an efficient 
+reorganization of the dofs during adaptation and grid 
+reorganization. To use this
 feature the Dune::AdaptationManager should be used. 
 
-For handling parallel task the Dune::CommunicationManager is available which
-performs the required communication for a given set of discrete functions. 
-Mostly the operators, the ode, the linear, and the non-linear solvers are
-implemented for use in a parallel environment so that the step from serial to
+For handling parallel task the i
+Dune::CommunicationManager is available which
+performs the required communication for a given set of 
+discrete functions. 
+Mostly the operators, the ode, the linear, and the 
+non-linear solvers are
+implemented for use in a parallel environment so that 
+the step from serial to
 parallel is almost effortless for the user. 
 
 <!---------------------------------------------->
 \section QuadSec Quadrature and Caching
 <!---------------------------------------------->
 
+Quadratures are available from the dune-grid
+module and for efficiency caching is performed
+for the basis functions at the quadrature points.
+
 <!---------------------------------------------->
 \section IOSec Input and Output
 <!---------------------------------------------->
+
+Output routins of simulation results are available
+for Grape and in vtk - as used for example by
+paraview.
+Furthermore checkpointing of the data and the underlying
+grid structure can be used.
+
+*/
+
+/*
 
 <!---------------------------------------------->
 \section ExampleSec Example
