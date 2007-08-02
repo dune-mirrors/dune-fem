@@ -18,10 +18,13 @@
 #include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 
+//- include runge kutta ode solver 
 #include <dune/fem/solver/rungekutta.hh>
 
 #define USE_DENNIS_ODE_SOLVER
 
+// if the preprocessor variable is defined, the ODE Solver from Dennis
+// are used.
 #ifdef USE_DENNIS_ODE_SOLVER
 
 //#if HAVE_BLAS 
@@ -109,17 +112,20 @@ private:
 };
 
 
-/** @defgroup ODESolver ODE Solver
- *  @ingroup OperatorCommon
+/** @ingroup ODESolver
  @{
  **/
+
+/** \brief Explicit ODE Solver base class */
 template<class Operator>
 class ExplTimeStepperBase 
 {
   typedef typename Operator::DestinationType DestinationType; 
 public:
-  ExplTimeStepperBase(Operator& op, TimeProvider& tp, 
-                      int pord, bool verbose) :
+  ExplTimeStepperBase(Operator& op, 
+                      TimeProvider& tp, 
+                      int pord, 
+                      bool verbose) :
     ord_(pord),
     comm_(Communicator::instance()),
     op_(op),

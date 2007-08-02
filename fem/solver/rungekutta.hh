@@ -19,15 +19,20 @@ using namespace Dune;
 using namespace std;
 
 /** @defgroup ODESolver ODE Solver
- *  @ingroup OperatorCommon
+    @ingroup OperatorCommon
+
+    \remarks 
+    The interface for ODE solvers is defined by the class
+    OdeSolverInterface.
  @{
  **/
 
-//! interface class for ode solver contains a solve method 
+/** \brief Interface class for ODE Solver. */ 
 template <class DestinationImp>
 class OdeSolverInterface 
 {
 protected:
+  //! cosntructor 
   OdeSolverInterface () {}    
 public:
   //! type of destination 
@@ -36,13 +41,18 @@ public:
   //! destructor 
   virtual ~OdeSolverInterface () {}
   
-  //! initialze solver 
-  virtual void initialize(const DestinationType&) = 0;
+  /** \brief initialze solver 
+      \param[in] arg argument to apply internal operator once for intiail time step estimate 
+  */
+  virtual void initialize(const DestinationType& arg) = 0;
   
-  //! solve system 
-  virtual void solve(DestinationType&) = 0;
+  /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.   
+      \param[inout] u unknown to solve for 
+  */
+  virtual void solve(DestinationType& u) = 0;
 };
 
+/** \brief Base class for explicit RungeKutta ODE solver. */
 template<class Operator>
 class ExplRungeKuttaBase 
 {
@@ -59,7 +69,12 @@ protected:
   const int ord_;
 
 public:
-  //! constructor 
+  /** \brief constructor 
+    \param[in] op Operator \f$L\f$ 
+    \param[in] tp TimeProvider 
+    \param[in] pord polynomial order 
+    \param[in] verbose verbosity 
+  */
   ExplRungeKuttaBase(Operator& op, TimeProvider& tp, 
                      int pord, bool verbose = true ) :
     a(0),b(0),c(0), Upd(0),
@@ -183,6 +198,8 @@ protected:
   bool initialized_;
 };
 
+/** \brief Exlicit RungeKutta ODE solver that also behaves like a time
+    stepper. */
 template<class Operator>
 class ExplRungeKutta : public TimeProvider , 
                        public ExplRungeKuttaBase<Operator> 
@@ -194,6 +211,12 @@ public:
   typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
 
 public:
+  /** \brief constructor 
+    \param[in] op Operator \f$L\f$ 
+    \param[in] pord polynomial order 
+    \param[in] cfl cfl number 
+    \param[in] verbose verbosity 
+  */
   ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) :
     TimeProvider(0.0,cfl),
     BaseType(op,*this,pord,verbose),
@@ -257,7 +280,7 @@ private:
   int savestep_;
 };
 
-//! ExplicitRungeKuttaSolver 
+/** \brief Exlicit RungeKutta ODE solver. */
 template<class DestinationImp>
 class ExplicitRungeKuttaSolver : 
   public OdeSolverInterface<DestinationImp> ,
@@ -267,7 +290,12 @@ class ExplicitRungeKuttaSolver :
   typedef SpaceOperatorInterface<DestinationImp> OperatorType;
   typedef ExplRungeKuttaBase<OperatorType> BaseType;
  public:
-  //! constructor 
+  /** \brief constructor 
+    \param[in] op Operator \f$L\f$ 
+    \param[in] tp TimeProvider 
+    \param[in] pord polynomial order 
+    \param[in] verbose verbosity 
+  */
   ExplicitRungeKuttaSolver(OperatorType& op, TimeProvider& tp, int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
