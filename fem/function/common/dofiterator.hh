@@ -26,10 +26,12 @@ namespace Dune {
 //---------------------------------------------------------------------
 /** \brief This class described the interface for dof iterators of 
     discrete functions. 
-    All methods declared in this interface
-    class must be implemented by the implementation class. 
     The dof iterator is the interface for efficient walk trough the dofs of
-    an discrete function.
+    a discrete function.
+
+    \note All methods declared in this interface
+          class must be implemented by the implementation class. 
+
 */
 template <class DofImp, class DofIteratorImp>
 class DofIteratorInterface   
