@@ -100,8 +100,8 @@ namespace Dune {
       timeStep_ = timeStep;
     }
 
-    /** \brief augment time , i.e. \f$t = t + \triangle t\f$ adn
-     * increase time step counter  */
+    /** \brief augment time , i.e. \f$t = t + \triangle t\f$ and
+        increase time step counter  */
     void augmentTime()
     { 
       assert( lock_ );
