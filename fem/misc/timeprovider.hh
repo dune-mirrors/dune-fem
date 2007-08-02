@@ -9,11 +9,18 @@
 
 namespace Dune {
 
+/** @defgroup TimeProvider Time Utilities 
+    @ingroup ODESolver 
+ @{
+ **/
+
   //! class for time and time step estimate handling
   class TimeProvider 
   {
   public:
-    //! constructor taking initial time, default is zero
+    /** \brief constructor taking initial time, default is zero
+        \param[in] startTime initial time 
+     */
     TimeProvider(double startTime = 0.0) : 
       time_(startTime),
       savedTime_(time_),
@@ -26,6 +33,10 @@ namespace Dune {
       resetTimeStepEstimate();
     }
     
+    /** \brief constructor taking start time and cfl number 
+        \param[in] startTime initial time 
+        \param[in] cfl initial cfl number 
+    */
     TimeProvider(double startTime , double cfl ) : 
       time_(startTime),
       savedTime_(time_),
@@ -41,46 +52,56 @@ namespace Dune {
     //! destructor 
     virtual ~TimeProvider() {}
 
-    //! return internal time 
+    /** \brief return current time 
+        \return current time 
+    */
     double time() const { return time_; }
 
-    //! restores saved global time 
-    void lock () 
-    {
-      lock_ = true;
-      time_ = savedTime_;
-    }
-
-    //! stores current global time 
+    /** \brief stores current global time */
     void unlock() 
     {
       lock_ = false;
       savedTime_ = time_;
     }
     
-    //! set time step estimate to minimum of given value and
-    //! internal time step estiamte 
-    void provideTimeStepEstimate(double dtEstimate) {
+    /** \brief restores saved global time */
+    void lock () 
+    {
+      lock_ = true;
+      time_ = savedTime_;
+    }
+
+    /** \brief set time step estimate to minimum of given value and
+               internal time step estiamte 
+         \param[in] dtEstimate time step size estimate 
+    */
+    void provideTimeStepEstimate(const double dtEstimate) {
       dtEstimate_ = std::min(dtEstimate_, dtEstimate);
     }
     
-    //! set internal time to given time 
-    void setTime(double time) 
+    /** \brief set internal time to given time 
+         \param[in] time new time 
+    */
+    void setTime(const double time) 
     { 
       assert( ! lock_ );
       time_ = time; 
     }
 
-    //! set internal time to given time 
-    //! and time step counter to given counter 
-    void setTime(double time, int timeStep )  
+    /** \brief set internal time to given time 
+         and time step counter to given counter 
+         \param[in] time new time 
+         \param[in] timeStep new time step counter 
+    */
+    void setTime(const double time, const int timeStep )  
     { 
       assert( ! lock_ );
       time_ = time; 
       timeStep_ = timeStep;
     }
 
-    //! increase internal time by internal timeStep 
+    /** \brief augment time , i.e. \f$t = t + \triangle t\f$ adn
+     * increase time step counter  */
     void augmentTime()
     { 
       assert( lock_ );
@@ -88,43 +109,56 @@ namespace Dune {
       ++timeStep_;
     }
     
-    //! set time step estimate to big value 
+    /** \brief reset set time step estimate 
+        by setting ti to big value 
+    */
     void resetTimeStepEstimate() 
     {
       // reset estimate 
       dtEstimate_ = std::numeric_limits<double>::max();
     }
     
-    //! return time step estimate 
+    /** \brief  return time step size estimate  
+        \return time step size estimate  
+    */
     double timeStepEstimate() const {
       return dtEstimate_;
     }
 
-    //! return cfl number 
+    /** \brief  return cfl number 
+        \return cfl number 
+    */
     double cfl () const { return cfl_; } 
     
-    //! set internal cfl to given value
-    void setCfl(double cfl) 
+    /** \brief set internal cfl to given value
+        \param[in] cfl new cfl number 
+    */
+    void setCfl(const double cfl) 
     {
       cfl_ = cfl;
     }
     
-    //! set internal cfl to minimum of given value and
-    //! internal clf value  
-    void provideCflEstimate(double cfl) 
+    /** \brief set internal cfl to minimum of given value and internal
+        cfl number 
+        \param[in] cfl cfl estimate 
+    */
+    void provideCflEstimate(const double cfl) 
     {
       cfl_ = std::min(cfl_, cfl );
     }
     
-    //! return time step estimate times cfl number 
+    /** \brief  return time step size times cfl number
+        \return \f$\triangle t \cdot CFL\f$ 
+    */
     double deltaT () const 
     {
       assert( (dt_ * cfl_) > 0.0 );
       return dt_ * cfl_;
     }
     
-    //! syncronize time step, i.e. set timeStep to values of current
-    //! estimate and reset
+    /** \brief  syncronize time step, i.e. set timeStep to values of current 
+        estimate and reset estimate 
+    */
     void syncTimeStep() 
     {
       // save current time step 
@@ -133,6 +167,9 @@ namespace Dune {
       resetTimeStepEstimate();
     }
 
+    /** \brief return current time step counter 
+        \return current time step counter 
+    */
     int timeStep () const 
     {
       return timeStep_;
@@ -152,9 +189,10 @@ namespace Dune {
     bool lock_;
   };
   
-  //! improved class for 
-  //! for time and time step estimate handling
-  //! alos reads parameter from parameter file 
+  /** \brief improved class for 
+      for time and time step estimate handling
+      also reads parameter from parameter file 
+  */
   class ImprovedTimeProvider : public TimeProvider 
   {
   public:
@@ -188,10 +226,15 @@ namespace Dune {
     }
   };
 
+  /** \brief TimeProvider that is working in a parallel program */
   template <class CommunicatorType>
   class ParallelTimeProvider
   {
   public:
+    /** \brief constructor communicator and serial time provider
+        \param[in] comm communicator 
+        \param[in] tp serial time provider 
+    */
     ParallelTimeProvider(const CommunicatorType& comm,
                          TimeProvider& tp)
       : comm_(comm), tp_(tp)
@@ -200,46 +243,50 @@ namespace Dune {
     //! return internal time 
     double time() const { return tp_.time(); }
     
-    //! set time step estimate to minimum of given value and
-    //! internal time step estiamte 
-    void provideTimeStepEstimate(double dtEstimate) 
+    /** \brief @copydoc TimeProvider::provideTimeStepEstimate */
+    void provideTimeStepEstimate(const double dtEstimate) 
     {
       tp_.provideTimeStepEstimate(dtEstimate);
     }
 
-    //! lock time provider 
+    /** \brief @copydoc TimeProvider::lock */
     void lock() { tp_.lock(); }
     
-    //! unlock time provider 
+    /** \brief @copydoc TimeProvider::unlock */
     void unlock() { tp_.unlock(); }
     
-    //! set internal time to given time 
-    void setTime(double time) { tp_.setTime(time); }
+    /** \brief @copydoc TimeProvider::setTime */
+    void setTime(const double time) { tp_.setTime(time); }
 
-    //! set time step estimate to big value 
-    void resetTimeStepEstimate() {
+    /** \brief @copydoc TimeProvider::resetTimeStepEstimate */
+    void resetTimeStepEstimate() 
+    {
       tp_.resetTimeStepEstimate(); 
     }
     
-    //! return time step estimate 
+    /** \brief @copydoc TimeProvider::timeStepEstimate */
     double timeStepEstimate() const 
     {
       return tp_.timeStepEstimate();
     }
 
-    //! return cfl number 
+    /** \brief @copydoc TimeProvider::cfl */
     double cfl () const { return tp_.cfl(); } 
     
-    //! return time step estimate times cfl 
+    /** \brief @copydoc TimeProvider::deltaT */
     double deltaT () const { return tp_.deltaT(); }
     
-    //! return number of current time step
+    /** \brief @copydoc TimeProvider::timestep */
     int timeStep() const 
     {
       return tp_.timeStep();
     }
 
-    //! syncronize time step between processors 
+    /** \brief @copydoc TimeProvider::syncTimeStep 
+        
+        \note Here a global communication to minimize the time step size
+        over all time step sizes from all processors is done. 
+    */ 
     void syncTimeStep() 
     {
       // get time step estimate 
@@ -252,7 +299,7 @@ namespace Dune {
       tp_.syncTimeStep();
     }
 
-    //! augment time and return new value 
+    /** \brief @copydoc TimeProvider::augmentTime */
     double augmentTime() 
     {
       // increase time 
@@ -262,9 +309,12 @@ namespace Dune {
     }
 
   private:
+    //! communicator  
     const CommunicatorType& comm_;
+    //! serial time provider 
     TimeProvider& tp_;
   };
+///@} 
   
 } // end namespace Dune
 #endif
