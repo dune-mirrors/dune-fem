@@ -573,49 +573,36 @@ namespace Dune
     using BaseType :: assign;
     
   protected:
-    ArrayAllocatorType allocator_;
-
-    unsigned int size_;
-    FieldType *fields_;
+    DynamicArray< FieldType, ArrayAllocatorType > fields_;
 
   public:
     //! Constructor setting up a vector of a specified size
     inline explicit DynamicVector ( unsigned int size = 0 )
+    : fields_( size )
     {
-      size_ = size;
-      allocator_.allocate( size_, fields_ );
     }
 
     //! Constructor setting up a vector iniitialized with a constant value
     inline DynamicVector ( unsigned int size,
                            const FieldType s )
+    : fields_( size )
     {
-      size_ = size;
-      allocator_.allocate( size_, fields_ );
       assign( s );
     }
 
     //! Copy constructor setting up a vector with the data of another one
     template< class Traits >
     inline DynamicVector ( const VectorInterface< Traits > &v )
+    : fields_( v.size() )
     {
-      size_ = v.size();
-      allocator_.allocate( size_, fields_ );
       assign( v );
     }
 
     //! Copy constructor setting up a vector with the data of another one (of the same type)
     inline DynamicVector ( const ThisType &v )
+    : fields_( v.size() )
     {
-      size_ = v.size();
-      allocator_.allocate( size_, fields_ );
       assign( v );
-    }
-
-    //! Destructor --- necessary to free the dynamic array
-    inline ~DynamicVector ()
-    {
-      allocator_.free( fields_ );
     }
 
     //! Assign another vector to this one
@@ -639,25 +626,22 @@ namespace Dune
 
     inline const FieldType &operator[] ( unsigned int index ) const
     {
-      assert( index < size_ );
       return fields_[ index ];
     }
     
     inline FieldType &operator[] ( unsigned int index )
     {
-      assert( index < size_ );
       return fields_[ index ];
     }
     
     inline void resize ( unsigned int newSize )
     {
-      allocator_.reallocate( size_, newSize, fields_ );
-      size_ = newSize;
+      fields_.resize( newSize );
     }
 
     inline unsigned int size () const
     {
-      return size_;
+      return fields_.size();
     }
   };
 
@@ -804,6 +788,6 @@ namespace Dune
 
 }
 
-#include "vector.cc"
+#include "vector_inline.hh"
 
 #endif
