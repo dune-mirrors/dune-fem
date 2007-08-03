@@ -311,7 +311,7 @@ namespace Dune{
     int mapToGlobal ( const EntityType &entity, 
                       const int localDof ) const
     {
-      return mapper().mapToGlobal ( entity , localDof );
+      return this->mapper().mapToGlobal ( entity , localDof );
     }
   protected: 
     //! true if grid has more than one geometry type (hybrid grids)
