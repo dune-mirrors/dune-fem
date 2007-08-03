@@ -160,6 +160,8 @@ public:
  */
 template <class DiscreteFunctionType> class RestrictProlongDefault :
     public RestrictProlongInterface<RestrictProlongTraits<RestrictProlongDefault<DiscreteFunctionType> > > {
+  private:
+  RestrictProlongDefault();
 };
 
 /** \brief This is a simple restriction/prolongation operator for
