@@ -195,12 +195,6 @@ namespace Dune {
     //! returns polynomial order
     int order() const { return polynomialOrder; }
 
-    //! begin iterator
-    IteratorType begin() const { return gridPart_.template begin<0>(); }
-
-    //! end iterator
-    IteratorType end() const { return gridPart_.template end<0>(); }
-
     //! provide the access to the base function set for a given entity
     template <class EntityType>
     const BaseFunctionSetType 
@@ -213,25 +207,6 @@ namespace Dune {
 
     //! get dimension of value 
     int dimensionOfValue () const;
-  
-    //! Return grid
-    const GridType& grid() const { return gridPart_.grid(); }
-
-    //! Return index set
-    const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
-
-    //! return reference to the spaces grid part
-    GridPartType & gridPart () { return gridPart_; }
-    
-    //! return reference to the spaces grid part
-    const GridPartType & gridPart () const { return gridPart_; }
-
-    //! number of unknows for this function space   
-    int size () const;
-
-    //! for given entity map local dof number to global dof number 
-    template <class EntityType>
-    int mapToGlobal ( EntityType &en, int localNum ) const;
 
     //! Return the dof mapper of the space
     MapperType& mapper() const;
@@ -249,9 +224,6 @@ namespace Dune {
 
     //! the corresponding map of base function sets
     mutable BaseFunctionMapType baseFuncSet_;
-
-    //! the index set, used by the mapper for mapping between grid and space 
-    GridPartType& gridPart_;
 
   private:
     //! the corresponding FiniteVolumeMapper 

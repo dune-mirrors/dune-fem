@@ -10,6 +10,14 @@
 namespace Dune
 {
 
+  /** @ingroup LagrangeDiscreteFunctionSpace 
+   * \brief A single lagrange point
+   *
+   * A single Lagrange point which has methods
+   * to determine on which subentity a given
+   * lagrange point is located. 
+   *
+   **/
   template< GeometryType :: BasicType type,
             unsigned int dim,
             unsigned int polOrder >
@@ -80,6 +88,16 @@ namespace Dune
 
 
 
+  /** @ingroup LagrangeDiscreteFunctionSpace 
+   * \brief Set of lagrange points
+   *
+   * Interface class for a set of lagrange points.
+   * An instance of the lagrange points can be
+   * obtained from the 
+   * \ref Dune::LagrangeDiscreteFunctionSpace "lagrange function space".
+   * The set can be wrapped in a quadrature. 
+   *
+   **/
   template< class FieldImp, unsigned int dim, unsigned int polOrder >
   class LagrangePointListInterface
   : public IntegrationPointListImp< FieldImp, dim >

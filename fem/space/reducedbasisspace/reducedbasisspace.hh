@@ -145,18 +145,6 @@ namespace Dune
       return baseFunctionSpace_.order();
     }
 
-    //! begin iterator
-    inline IteratorType begin () const
-    {
-      return baseFunctionSpace_.begin();
-    }
-
-    //! end iterator
-    inline IteratorType end () const
-    {
-      return baseFunctionSpace_.end();
-    }
-
     //! provide access to the base function set for an entity
     template< class EntityType >
     inline const BaseFunctionSetType baseFunctionSet( const EntityType &entity ) const
@@ -170,47 +158,10 @@ namespace Dune
       return baseFunctionSpace_.dimensionOfValue;
     }
 
-    //! obtain the associated grid
-    inline const GridType &grid () const
-    {
-      return baseFunctionSpace_.grid();
-    }
-    
-     //! obtain the associated grid
-    inline GridType &grid ()
-    {
-      return baseFunctionSpace_.grid();
-    }
-    
-    //! obtain the associated grid partition
-    inline const GridPartType &gridPart () const
-    {
-      return baseFunctionSpace_.gridPart();
-    }
-
-    //! obtain the associated grid partition
-    inline GridPartType &gridPart ()
-    {
-      return baseFunctionSpace_.gridPart();
-    }
-
-    //! obtain the associated index set
-    inline const IndexSetType &indexSet () const
-    {
-      return baseFunctionSpace_.indexSet();
-    }
-
     //! obtain the DoF mapper of this space
     inline MapperType &mapper () const
     {
       return mapper_;
-    }
-
-    //! map local DoF number to global DoF number
-    template< class EntityType >
-    inline int mapToGlobal( EntityType &entity, int localDof ) const
-    {
-      return mapper_.mapToGlobal( entity, localDof );
     }
 
     //! are there multiple base function sets per geometry type?
@@ -219,11 +170,6 @@ namespace Dune
       return true;
     }
 
-    //! number of DoFs in the function space
-    inline int size () const
-    {
-      return mapper_.size();
-    }
   };
   
 }

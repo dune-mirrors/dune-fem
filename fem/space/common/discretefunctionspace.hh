@@ -226,6 +226,7 @@ namespace Dune{
     /** \brief returns true if grid has more than one geometry type (hybrid grid)
         \return \b true  if  grid has more than one geometry type
         (hybrid grid), \b false otherwise 
+        
         \hasdefault
     */
     bool multipleGeometryTypes() const 
@@ -235,8 +236,9 @@ namespace Dune{
     }
 
     /** \brief returns true if base function sets depend on entity 
-        \return \b true if base function set depend on entities, \b false otherwise 
-        \hasdefault
+        \return \b true if base function set depend on entities, \b false
+        otherwise
+        @hasdefault
     */
     bool multipleBaseFunctionSets() const 
     { 
@@ -279,7 +281,15 @@ namespace Dune{
   //-
   //-
   //---------------------------------------------------------------------------
-  /** \brief This is the class with default implementations for discrete function */
+  /** \brief This is the class with default implementations for discrete
+     function.
+     The  methods not marked with having a default
+     in the interface class must be provided by
+     the implementation; all other methods
+     have a default implementation here.
+     
+     \remark An reference to the GridPart is
+             stored in the default implementation. */
   template <class FunctionSpaceTraits>
   class DiscreteFunctionSpaceDefault :
     public DiscreteFunctionSpaceInterface<FunctionSpaceTraits>
@@ -287,11 +297,15 @@ namespace Dune{
   public:
     typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename FunctionSpaceTraits::GridPartType  GridPartType;
+    typedef typename GridPartType:: template Codim<0>::IteratorType IteratorType;
+    typedef typename GridPartType::GridType GridType;
+    typedef typename GridPartType::IndexSetType IndexSetType;
 
   public:
     //! Constructor
-    DiscreteFunctionSpaceDefault(const GridPartType & gridPart) 
-      : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>() 
+    DiscreteFunctionSpaceDefault(GridPartType & gridPart) 
+      : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>()
+      , gridPart_(gridPart)
       , multipleGeometryTypes_( 
           AllGeomTypes< typename GridPartType::IndexSetType ,
                         typename GridPartType::GridType > :: multipleGeomTypes() )
@@ -313,7 +327,33 @@ namespace Dune{
     {
       return this->mapper().mapToGlobal ( entity , localDof );
     }
-  protected: 
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
+    int size () const 
+    {
+      return this->mapper().size();
+    }
+   
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin const */
+    IteratorType begin() const { return gridPart_.template begin<0>(); }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::end const */
+    IteratorType end() const { return gridPart_.template end<0>(); }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid const */
+    const GridType& grid() const { return gridPart_.grid(); }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet const */ 
+    const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
+
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
+    GridPartType & gridPart () { return gridPart_; }
+    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
+    const GridPartType & gridPart () const { return gridPart_; }
+  protected:
+    //! stores reference to grid part
+    GridPartType& gridPart_;
+  
     //! true if grid has more than one geometry type (hybrid grids)
     const bool multipleGeometryTypes_;
  

@@ -4,7 +4,7 @@
 // static const int dimw = dimworld;
 #define S_GRID 0
 #define YGRID 1
-static const int dimw =4;
+static const int dimw =2;
 #if S_GRID 
 #include<dune/grid/sgrid.hh> 
 

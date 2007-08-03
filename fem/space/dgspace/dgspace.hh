@@ -118,7 +118,6 @@ namespace Dune {
     /** \brief Constructor taking grid part */
     DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
       BaseType (gridPart),
-      gridPart_(gridPart),
       mapper_(0),
       baseFuncSet_(),
       dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
@@ -155,7 +154,7 @@ namespace Dune {
       }
 
       assert( maxNumDofs > 0 );
-      MapperSingletonKeyType key(gridPart_.indexSet(),maxNumDofs);
+      MapperSingletonKeyType key(gridPart.indexSet(),maxNumDofs);
       mapper_ = & MapperProviderType::getObject(key);
 
       assert( mapper_ );
@@ -179,24 +178,6 @@ namespace Dune {
       MapperProviderType::removeObject( *mapper_ );
     }
   
-    //- Methods
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin const */
-    IteratorType begin() const { return gridPart_.template begin<0>(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::end const */
-    IteratorType end() const { return gridPart_.template end<0>(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid const */
-    const GridType& grid() const { return gridPart_.grid(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet const */ 
-    const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
-    GridPartType & gridPart () { return gridPart_; }
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
-    const GridPartType & gridPart () const { return gridPart_; }
-
     //! \brief @copydoc DiscreteFunctionSpaceInterface::type 
     DFSpaceIdentifier type () const 
     {
@@ -264,21 +245,6 @@ namespace Dune {
       return polOrd;
     }
     
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
-    int size () const 
-    {
-      return mapper().size();
-    }
-
-   
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal */
-    template <class EntityType>
-    int mapToGlobal ( const EntityType &entity, 
-                      const int localDof ) const
-    {
-      return mapper().mapToGlobal ( entity , localDof );
-    }
-
     //! Return dof mapper of the space
     /** \brief Return dof mapper of the space
         \return MapperType 
@@ -319,9 +285,6 @@ namespace Dune {
     }
 
   protected:
-    //! grid part
-    GridPartType& gridPart_;
-
     //! mapper for function space 
     mutable MapperType* mapper_; 
 

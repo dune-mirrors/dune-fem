@@ -194,14 +194,6 @@ namespace Dune {
       return CombinedSpace_id;
     }
 
-    //! total number of dofs
-    int size() const { return mapper_.size(); }
-
-    //! map a local dof number to a global one
-    template <class EntityType>
-    int mapToGlobal(EntityType& en, int local) const {
-      return mapper_.mapToGlobal(en, local);
-    }
 
     //! access to base function set
     template <class EntityType>
@@ -217,17 +209,6 @@ namespace Dune {
       assert(baseSetMap_.find( geomType ) != baseSetMap_.end());
       return BaseFunctionSetType(baseSetMap_[geomType]);
     }
-
-    //! access to grid
-    const GridType& grid() const { return spc_.grid(); }
-    
-    //! access to gridPart
-    GridPartType& gridPart() { return spc_.gridPart(); }
-    //! access to gridPart
-    const GridPartType& gridPart() const { return spc_.gridPart(); }
-
-    //! \brief return corresponding index set  
-    const IndexSetType& indexSet() const { return spc_.indexSet(); }
 
     //! access to mapper
     MapperType& mapper() const { return mapper_; }
