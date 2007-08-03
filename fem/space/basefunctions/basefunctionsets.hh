@@ -12,8 +12,7 @@
 namespace Dune {
   
 /** 
-@defgroup BaseFunctionSetImpl Base Function Set Implementations  
-@ingroup BaseFunctionSet
+@addtogroup BaseFunction
 @{
 **/
   

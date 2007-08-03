@@ -4,7 +4,9 @@
 /** \file
     \brief Miscellaneous helper stuff
 */
-
+/** @addtogroup HelperClasses
+  @{
+*/  
 #include <iostream>
 #include <sstream>
 
@@ -27,11 +29,6 @@ template <int N>
 struct Int2Type {
   enum { value = N };
 };
-
-/** @addtogroup Common
-
-        @{
- */
 
 //! Return the sign of the value
 template <class T>

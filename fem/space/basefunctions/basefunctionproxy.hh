@@ -4,7 +4,7 @@
 namespace Dune{
 
 /** 
- @addtogroup BaseFunctionSetImpl 
+ @addtogroup BaseFunction 
  @{
 **/
   

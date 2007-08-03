@@ -9,8 +9,7 @@
 
 namespace Dune{
 
-/** @defgroup BaseFunction Base Functions and Base Function Sets 
-    @ingroup DiscreteFunctionSpace
+/** @addtogroup BaseFunction  
     
   The base functions are essential to describe a numerical solutions.
   Here the interface of base functions and the corresponding base 
@@ -20,21 +19,15 @@ namespace Dune{
   on element type are known.
 
   \remarks  
-  The user always works with the
-  BaseFunctionSets where the interface is defined by
+  The interface for the BaseFunctionSet is defined by
   BaseFunctionSetInterface. 
 
+  \remarks 
+  The interface for using a BaseFunction is described by BaseFunctionInterface.
+  Note that the member methods are virtual.
   @{
  */
   
-/** @defgroup BaseFunctionIF Single Base Functions 
-    @ingroup BaseFunction 
-
-    Interface for implementation of base functions. 
-    Note that the member method are virtual. 
-
-  @{
-*/  
 
 //---------------------------------------------------------------------
 /** \brief  BaseFunctionInterface is the interface to a base function. 
@@ -105,7 +98,6 @@ public:
   virtual int order() const { return -1; }
 };
 
-///@}
 ///@}
 } // end namespace Dune 
 #include "basefunctionsetinterface.hh"

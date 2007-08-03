@@ -21,6 +21,14 @@
 #include "combineddofstorage.hh"
 
 namespace Dune {
+  /** @addtogroup CombinedSpace
+      Class to combine N scalar discrete function spaces.  
+      Policies PointBased and VariableBased decide, how dof are stored in
+      vectors. PointBased stores all local dofs consecutive, 
+      VectorBased stores all dofs for one component consecutive. 
+   @{
+  
+  */
   
   // Forward declarations
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
@@ -89,15 +97,6 @@ namespace Dune {
   };
 
   
-    /** @defgroup CSDFSpace Combined Space Function Space
-      @ingroup DiscreteFunctionSpace
-      Class to combine N scalar spaces.  
-      Policies PointBased and VariableBased decide, how dof are stored in
-      vectors. PointBased stores all local dofs consecutive, 
-      VectorBased stores all dofs for one component consecutive. 
-   @{
-  **/
-
   /** @brief 
       Combined Space Function Space
       **/
@@ -280,7 +279,6 @@ namespace Dune {
     const DofManagerType & dm_;
 
   }; // end class CombinedSpace  
-  /** @} **/
 
   //! Wrapper class for mappers. This class is to be used in conjunction with
   //! the CombinedSpace
@@ -394,7 +392,7 @@ namespace Dune {
     GlobalDofConversionUtilityType utilGlobal_;
     int oldSize_,size_;
   }; // end class CombinedMapper
-  
+/** @} **/  
 } // end namespace Dune
 
 // include implementation

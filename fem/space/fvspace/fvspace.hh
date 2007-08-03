@@ -64,8 +64,7 @@ namespace Dune {
   //  --FiniteVolumeSpace
   //
 
-  /** @defgroup FVDFSpace Finite Volume Function Space
-      @ingroup DiscreteFunctionSpace
+  /** @addtogroup FVDFSpace
 
    Provides access to base function set for different element 
    type in one grid and size of functionspace 

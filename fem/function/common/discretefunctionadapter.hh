@@ -10,7 +10,17 @@
 namespace Dune{
 
   /** 
-      @ingroup DiscreteFunction 
+      @addtogroup DiscreteFunctionAdapter
+
+      To plug an \ref Function "analytical function" 
+      into a operator taking 
+      \ref DiscreteFunctionInterface "discrete functions",
+      i.e., expecting \ref LocalFunctionInterface "local functions"
+      a wrapper can be applied to the analytical function
+      instance.
+      The resulting class is still a \ref Function "Function"
+      but with the property \ref HasLocalFunction "\" has local function \"" added.
+      
       @{
   */
 

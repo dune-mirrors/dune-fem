@@ -13,8 +13,7 @@
 
 namespace Dune{
 
-/** @defgroup DataCollectors DataCollectors 
-    @ingroup LoadBalancer 
+/** @addtogroup DataCollectors 
     
   @{
  */

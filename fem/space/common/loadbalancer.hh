@@ -13,8 +13,7 @@
 
 namespace Dune{
 
-/** @defgroup LoadBalancer LoadBalancer 
-    @ingroup Adaptation  
+/** @addtogroup LoadBalancer 
     In this module a concept for calling the grids load balance method
     is described and implemented.
 

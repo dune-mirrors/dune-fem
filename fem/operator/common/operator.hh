@@ -5,7 +5,7 @@
 
 namespace Dune
 {
-/** @defgroup OperatorCommon Operators
+/** @addtogroup OperatorCommon 
     Operators are mappings from function spaces into function spaces.
 
     \remarks 

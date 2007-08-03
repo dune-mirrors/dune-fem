@@ -25,8 +25,7 @@
 
 namespace Dune {
 
-/** @defgroup DofManager DofManager 
-    @ingroup Adaptation 
+/** @addtogroup DofManager  
 
     @{
 **/

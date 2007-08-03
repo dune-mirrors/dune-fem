@@ -6,17 +6,19 @@
 using namespace Dune;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
-#include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
+#include <dune/fem/space/combinedspace/combinedadaptmanager.hh>
 
 // #include "../leafindexset.hh"
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
+#include <dune/fem/space/lagrangespace.hh>
 
 #if HAVE_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1
@@ -52,12 +54,18 @@ typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-typedef MatrixFunctionSpace < double , double, GRIDDIM , 2,5 > FuncSpace;
+// typedef MatrixFunctionSpace < double , double, GRIDDIM , 2,5 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
+typedef FunctionSpace < double , double, GRIDDIM , 5 > FuncSpace;
+typedef FunctionSpace < double , double, GRIDDIM , 1 > SingleFuncSpace;
 typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-  polOrd,CachingStorage> DiscreteFunctionSpaceType;
+   polOrd,CachingStorage> DiscreteFunctionSpaceType;
+typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
+  polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
+// typedef CombinedSpace<SingleDiscreteFunctionSpaceType,5,VariableBased> 
+//   DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -83,7 +91,7 @@ public:
   {
     ret = 2.; // maximum of function is 2
     for(int i=0; i<DomainType::dimension; i++)
-      ret *= x[i]*(1.0 -x[i])*4.;
+      ret *= sin(x[i]*(1.0 -x[i])*4.);
   }
   void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {

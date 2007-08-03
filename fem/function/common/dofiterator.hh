@@ -5,16 +5,7 @@
 
 namespace Dune {
 
-/** @defgroup DofIterator The dof iterator interface
-  \ingroup DiscreteFunction
-  The base functions are essential to describe a numericla solution.
-  Here the interface of base functions and the corresponding base 
-  function set is presented. The user always works with the base function
-  set, where all diffrent base functions for on element type are known.
-
-  \remarks 
-  The interface for DofIterators is defined by the class
-  DofIteratorInterface.
+/** @addtogroup DofManager
   @{
  */
 

@@ -1,8 +1,8 @@
 POLORDER = 2
-GRIDTYPE = ALUGRID_SIMPLEX
+GRIDTYPE = ALBERTAGRID
 GRIDDIM = 2
 
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS)
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) ../../libfem.la
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER)
 
 ADAPTPROG = l2projection adapt
@@ -13,3 +13,4 @@ adapt_SOURCES = adapt.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
 legendretest_SOURCES = legendretest.cc
+CXXFLAGS=-g -Wall

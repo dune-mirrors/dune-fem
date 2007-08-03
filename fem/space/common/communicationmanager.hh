@@ -21,7 +21,7 @@
 
 namespace Dune { 
   
-/** @defgroup Communication Communication 
+/** @addtogroup Communication Communication 
     @{
 **/
   

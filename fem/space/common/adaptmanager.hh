@@ -13,7 +13,7 @@
 
 namespace Dune{
 
-/** @defgroup Adaptation Adaptation 
+/** @addtogroup Adaptation Adaptation 
     Here the interfaces and algorithms for adapatation of a grid are
     described and implemented. 
 
@@ -96,12 +96,6 @@ private:
 //! deprecated typedef 
 typedef AdaptationManagerInterface AdaptMapping;
 
-/** @} end documentation group */
-
-/** @defgroup AdaptationManagerImp Adaptation Manager
-    @ingroup Adaptation 
-    @{
-**/
 
 /*! This could be seen as a hack, but is not
   With this method we define the class CombineRestProl which is only 

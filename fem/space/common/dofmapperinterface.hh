@@ -6,8 +6,7 @@
 
 namespace Dune {
 
-/** @defgroup DofMapper DofMapperInterface 
-    @ingroup DiscreteFunctionSpace
+/** @addtogroup DofMapper  
 
     Dof Mapper are special implementations to provide the mapToGlobal
     feature of the spaces. Furthermore, during adaptation the mapper

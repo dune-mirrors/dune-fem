@@ -8,8 +8,8 @@
 #include <dune/fem/misc/combineinterface.hh>
 
 namespace Dune{
-/** @defgroup RestrictProlongInterface Restriction and Prolongation Interface
-    @ingroup Adaptation
+/** @addtogroup RestrictProlongInterface 
+
     Interface for restriction and prolongation operation of data 
     on single elements.
 

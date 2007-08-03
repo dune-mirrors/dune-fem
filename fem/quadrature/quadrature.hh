@@ -74,7 +74,7 @@ namespace Dune
   class PyramidQuadrature;
 #endif
 
-  /*! \defgroup Quadrature Quadratures
+  /*! \addtogroup Quadrature 
    *
    *  In DUNE, quadratures are a set of quadrature points and corresponding
    *  weights.

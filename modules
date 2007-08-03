@@ -8,12 +8,8 @@
    Only @addtogroup is used in the code documentation.
 */
 
-  /**
-	 @defgroup FEM dune-fem
-  */
-
   
-  /** 
+/** 
    @defgroup GridPart View of grid for defining discrete functions
    @ingroup FEM 
 
@@ -29,7 +25,7 @@
    \remark 
    The interface and some basic implementations are
    provied in the dune-grid package.
-  */
+*/
   /**
    @defgroup FilterGridPart Filtered Grid Part
    @ingroup GridPart */
@@ -37,7 +33,7 @@
    @defgroup AdaptiveLeafGP Adaptive Leaf Grid Part
    @ingroup GridPart */
 
-  /**
+/**
 	 @defgroup FunctionCommon Function and function spaces
    @ingroup FEM
 
@@ -55,17 +51,66 @@
    are special functions defined on a grid and
    belong to corresponding 
    \ref Dune::DiscreteFunctionSpaceInterface "discrete function space".
-  */
+*/
   /** @defgroup FunctionSpace Analytical function spaces 
       @ingroup FunctionCommon */
   /** @defgroup Functions Analytical functions
       @ingroup FunctionCommon */
   /** @defgroup DiscreteFunctionSpace Discrete Function space
       @ingroup FunctionCommon */
+      /** @defgroup DGDSpace Discontinuous Galerkin Space 
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup FVDFSpace Finie Volume Function Space
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup LagrangeDiscreteFunctionSpace Lagrange  Discrete Function Space
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup CombinedSpace Wrapper from scalar to vector valued spaces 
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup BaseFunction Base functions and base functiton sets
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup DofMapper DOF mapper 
+          @ingroup DiscreteFunctionSpace */
+    
   /** @defgroup DiscreteFunction Discrete functions 
       @ingroup FunctionCommon */
-  /** 
+      /** @defgroup LocalFunction Local function on an entity
+          @ingroup DiscreteFunction */
+      /** @defgroup DiscreteFunctionAdapter Wrapping analytical function into discrete functions 
+          @ingroup DiscreteFunction */
+      /** @defgroup DofManager Handling DOFs 
+          @ingroup DiscreteFunction */
+       
+/** 
+   @defgroup OperatorCommon Operators
+   @ingroup FEM 
+*/
+
+/** 
+   @defgroup Quadrature Quadratures
+   @ingroup FEM 
+*/
+
+/** 
+   @defgroup Adaptation Adaptation and Parallelization
+   @ingroup FEM 
+*/
+  /** @defgroup RestrictProlongInterface Restriction and prolongation
+      @ingroup Adaptation */
+  /** @defgroup Communication Communication
+      @ingroup Adaptation */
+    /** @defgroup DFComm Discrete Function data handlers
+        @ingroup Communication */
+  /** @defgroup LoadBalancer Load balancing
+      @ingroup Adaptation */
+    /** @defgroup DataCollectors Data collectors
+        @ingroup LoadBalancer */
+      
+/** 
    @defgroup HelperClasses Utility classes
    @ingroup FEM 
-   */
-      
+*/
+  /** @defgroup InterfaceHelper Interface helper methods
+      @ingroup HelperClasses */
+  /** @defgroup Testing Testing facilities
+      @ingroup HelperClasses */
+

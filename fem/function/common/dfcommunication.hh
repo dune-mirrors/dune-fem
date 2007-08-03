@@ -11,8 +11,7 @@
 
 namespace Dune {
 
-/** @defgroup DFComm Discrete Function Data Handlers 
-    @ingroup Communication 
+/** @addtogroup DFComm  
     @{
 **/
 

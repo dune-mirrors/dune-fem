@@ -26,9 +26,7 @@
 
 namespace Dune {
 
-  /** @defgroup DGDSpace Discontinuous Galerkin Space
-      @ingroup DiscreteFunctionSpace
-  
+  /** @addtogroup DGDSpace 
    DiscreteFunctionSpace for discontinuous functions 
    NOTE: To use this space for adaptive calcuations one has to
    use an index set that is capable for adaptive calculations, e.g

@@ -79,8 +79,7 @@ namespace Dune
 
 
 
-  /** @defgroup LagrangeDiscreteFunctionSpace Lagrange Discrete Function Space
-   *  @ingroup DiscreteFunctionSpace
+  /** @addtogroup LagrangeDiscreteFunctionSpace 
    *
    *  Provides access to bse function sets for different element types in
    *  one grid and size of function space and maps from local to global dof

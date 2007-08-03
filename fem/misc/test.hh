@@ -12,7 +12,7 @@ using std::string;
 using std::ostream;
 
 namespace Dune {
-/** @defgroup Testing Testing facilities
+/** @addtogroup Testing
   @{
   This is a basic testing framework to do black box testing in a systematic
   manner. The test framework consists of the two main classes Test and Suite.
