@@ -54,14 +54,17 @@ struct DiffVariable
 template<typename DFieldType,typename RFieldType, class DType, class RType>
 class Mapping //: public Vector < RFieldType > 
 {
+protected:  
+  //! type of mapping  
+  typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
+
 public:
-  
   /** \brief domain vector space (for usage in derived classes) 
       This can either be for example a discrete function (in case of
       operators) or a FieldVector (in case of discrete functions)
   */
-
   typedef DType DomainType;
+
   /** \brief range vector space (for usage in derived classes) 
       This can either be for example a discrete function (in case of
       operators) or a FieldVector (in case of discrete functions)
@@ -74,9 +77,6 @@ public:
   /** \brief type of field the range vector space, i.e. double */
   typedef RFieldType RangeFieldType;
   
-  //! type of this class 
-  typedef Mapping<DFieldType,RFieldType,DType,RType> MappingType;
-
   //! create Mappiung with empty linear combination  
   Mapping() 
   {
@@ -109,48 +109,55 @@ public:
 
   /** \brief Application operator that applies all operators in the
       linear combination stack. 
-      \param[in] Arg argument 
-      \param[out] Dest destination 
+      \param[in] arg argument 
+      \param[out] dest destination 
   */    
-  void operator() (const DomainType &Arg, RangeType &Dest ) const 
+  void operator() (const DomainType &arg, RangeType &dest ) const 
   {
-    //Dest.clear();
+    //dest.clear();
     
-    int count = 0;   
-    for ( typename std::vector<term>::const_iterator it = lincomb_.begin(); it != lincomb_.end(); it++ ) 
+    int count = 0;
+    typedef typename std::vector<term>::const_iterator const_iterator;
+    const_iterator end = lincomb_.end();
+    for ( const_iterator it = lincomb_.begin(); it != end; ++it ) 
     {
-      if ( count == 0 ) {
-        it->v_->apply( Arg, Dest );
+      if ( count == 0 ) 
+      {
+        it->v_->apply( arg, dest );
         if ( it->scalar_ != 1. ) 
         {
-          Dest *= it->scalar_;
+          dest *= it->scalar_;
         } 
       } 
       else 
       {
-        RangeType tmp( Dest );
-        it->v_->apply( Arg, tmp );
+        // note, copying here might be costly 
+        RangeType tmp( dest );
+
+        it->v_->apply( arg, tmp );
         if ( it->scalar_ == 1. ) 
         {
-          Dest += tmp;
+          dest += tmp;
         } 
         else if ( it->scalar_ == -1. ) 
         {
-          Dest -= tmp;
+          dest -= tmp;
         } 
         else 
         {
           tmp *= it->scalar_;
-          Dest += tmp;
+          dest += tmp;
         }
       }
-      count++;
+      ++count;
     }
   }
+
 private:
   //! apply operators 
-  virtual void apply (const DomainType &Arg, RangeType &Dest) const {
-    operator()(Arg, Dest);
+  virtual void apply (const DomainType &arg, RangeType &dest) const 
+  {
+    operator()(arg, dest);
   }
 
   //! linear comnination object 
