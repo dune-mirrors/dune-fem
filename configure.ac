@@ -38,6 +38,9 @@ LIBS="$DUNE_LIBS $BLAS_LIBS"
 
 # generate Makefiles
 AC_CONFIG_FILES([Makefile
+     doc/Makefile
+     doc/devel/Makefile
+     doc/doxygen/Makefile
      fem/Makefile
      fem/examples/Makefile
      fem/examples/poisson/Makefile
