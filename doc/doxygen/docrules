@@ -10,7 +10,7 @@ Warning concerning faullty documentation are
 recored in dune-fem/doc/doxygen.out this file
 should be empty...
 
-- Mathematical formulars can be inserted into the
+- Mathematical formulas can be inserted into the
   documentation quite easily using a latex style
   notation.
 - References to other classes or groups are
