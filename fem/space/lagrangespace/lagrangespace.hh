@@ -86,12 +86,12 @@ namespace Dune
    *  one grid and size of function space and maps from local to global dof
    *  number.
    *
-   *  NOTE: This space can only be used with special index sets. If you want
+   *  \note This space can only be used with special index sets. If you want
    *  to use the LagrangeDiscreteFunctionSpace with an index set only
    *  supporting the index set interface you will have to use the
    *  IndexSetWrapper class to provide the required functionality.
    *
-   *  NOTE: For adaptive calculations one has to use index sets that are
+   *  \note For adaptive calculations one has to use index sets that are
    *  capable of adaption (i.e. the method adaptive returns true). See also
    *  AdaptiveLeafIndexSet.
    *

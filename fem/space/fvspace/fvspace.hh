@@ -69,12 +69,14 @@ namespace Dune {
 
    Provides access to base function set for different element 
    type in one grid and size of functionspace 
-   and map from local to global dof number 
-   NOTE: This space can only be used with a special set of index sets.
+   and map from local to global dof number
+
+   \note This space can only be used with a special set of index sets.
    If you want to use the FiniteVolumeSpace with an index set only
    supportting the index set interface, then use the IndexSetWrapper
    class which will add the needed functionalty.
-   NOTE: For adaptive calculations one have to use Index Sets that are
+
+   \note For adaptive calculations one have to use Index Sets that are
    capable for adaptation, i.e. the method adaptive returns true, see 
    AdaptiveLeafIndexSet. 
    @{
