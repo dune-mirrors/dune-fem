@@ -4,7 +4,7 @@
 namespace Dune{
 
 /*! @addtogroup FunctionSpace 
-  This provides the interfaces for continuous function spaces. 
+  This provides the interfaces for analytical function spaces. 
   A function space is characterized by it's domain and range field type and  
   the two finite dimensional vector spaces over these fields. 
   
@@ -13,7 +13,7 @@ namespace Dune{
   domain and range types also types for 
   the jacobian and the hessian must be provieded.
 
-  \remarks The interface for continuous functions spaces 
+  \remarks The interface for analytical functions spaces 
   is defined by the class FunctionSpaceInterface.
   @{
  */
