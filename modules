@@ -104,7 +104,17 @@
       @ingroup Adaptation */
     /** @defgroup DataCollectors Data collectors
         @ingroup LoadBalancer */
-      
+
+/** 
+   @defgroup IOGroup Input and output
+   @ingroup FEM 
+*/
+  /** @defgroup Checkpointing I/O for discrete functions and checkpointing
+      @ingroup IOGroup */
+  /** @defgroup Visualization Visualization
+      @ingroup IOGroup */
+
+
 /** 
    @defgroup HelperClasses Utility classes
    @ingroup FEM 
