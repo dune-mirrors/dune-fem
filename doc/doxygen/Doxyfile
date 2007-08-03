@@ -23,7 +23,7 @@ PROJECT_NAME           = dune-fem
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = 
+PROJECT_NUMBER         = 0.1
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
@@ -186,7 +186,9 @@ TAB_SIZE               = 8
 # will result in a user-defined paragraph with heading "Side Effects:". 
 # You can put \n's in the value part of an alias to insert newlines.
 
-ALIASES                = 
+ALIASES  = 
+ALIASES += "hasdefault=\par <b> Has a default implementation </b>\n" 
+
 
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C 
 # sources only. Doxygen will then generate output that is more tailored for C. 
@@ -433,13 +435,13 @@ WARN_NO_PARAMDOC       = NO
 # $version, which will be replaced by the version of the file (if it could 
 # be obtained via FILE_VERSION_FILTER)
 
-WARN_FORMAT            = 
+WARN_FORMAT            = "$file:$line: $text"
 
 # The WARN_LOGFILE tag can be used to specify a file to which warning 
 # and error messages should be written. If left blank the output is written 
 # to stderr.
 
-WARN_LOGFILE           = 
+WARN_LOGFILE           =  doxygen.out
 
 #---------------------------------------------------------------------------
 # configuration options related to the input files
@@ -451,6 +453,7 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = mainpage \
+                         docrules \
                          modules \
                          ../../modules \
                          ../../fem
@@ -475,7 +478,7 @@ RECURSIVE              = YES
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = 
+EXCLUDE                = ../../dune/ ../../fem/examples ../../fem/quadrature/ugquadratures.*  ../../fem/quadrature/simplexpoints.hh
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 
@@ -845,7 +848,7 @@ RTF_EXTENSIONS_FILE    =
 # If the GENERATE_MAN tag is set to YES (the default) Doxygen will 
 # generate man pages
 
-GENERATE_MAN           = NO
+GENERATE_MAN           = YES
 
 # The MAN_OUTPUT tag is used to specify where the man pages will be put. 
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be 
@@ -864,7 +867,7 @@ MAN_EXTENSION          =
 # only source the real man page, but without them the man command 
 # would be unable to find the correct page. The default is NO.
 
-MAN_LINKS              = NO
+MAN_LINKS              = YES
 
 #---------------------------------------------------------------------------
 # configuration options related to the XML output
