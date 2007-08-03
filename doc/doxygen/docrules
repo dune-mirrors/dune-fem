@@ -70,12 +70,15 @@ appear in the class list of the documentation.
 <!---------------------------------------------->
 
 <!---------------------------------------------->
-\section DocInterfaces Documentation of interface classe
+\section DocInterfaces Documentation of interface classes
 <!---------------------------------------------->
-All methods and typedefs should be documented.
+All methods and typedefs should be documented using \\brief.
 For the methods the arguments and the return type
-should be documented using \\param[in] and
-\\return.
+should be documented using
+- \\param[in] for input parameters,
+- \\param[out] for return value parameters,
+- \\return for the return value.
+
 For the typedefs a reference to a corresponding
 interface class for this type should be included -
 if one exists. For example using the \\ref
@@ -89,7 +92,7 @@ work can somebody tell me why the ALIASES in the
 Doxyfile does nothing?
 
 <!---------------------------------------------->
-\section DocImplementation Documentation of implementation classe
+\section DocImplementation Documentation of implementation classes
 <!---------------------------------------------->
 Using \\copydoc....
 */
