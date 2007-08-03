@@ -1,68 +1,26 @@
 #ifndef DUNE_FUNCTIONSPACE_HH
 #define DUNE_FUNCTIONSPACE_HH
 
+#include <dune/fem/space/common/functionspaceinterface.hh>
 #include <dune/common/fmatrix.hh>
 
 namespace Dune{
 
-/*! @defgroup FunctionSpace FunctionSpace
-  @ingroup FunctionCommon
-  This provides the interfaces for continuous function spaces. 
-  A function space is characterized by it's domain and range field type and  
-  the two vector spaces over these fields. All corresponding types 
-  are given in a Traits class. 
-
-  \remarks The interface for continuous functions spaces 
-  is defined by the class FunctionSpace.
-  @{
- */
-
-/*! \brief An arbitrary function space
-    Base class for specific function spaces.
-*/
-template<typename FunctionSpaceTraits> 
-class FunctionSpaceBase {
-public:
-/*! Dimensions of the domain and range field */
-  enum { DimDomain = FunctionSpaceTraits::DimDomain ,//!< dimension of range vector space 
-         DimRange = FunctionSpaceTraits::DimRange    //!< dimension of domain vector space 
-  };
-  /** \brief Intrinsic type used for values in the domain field (usually a double) */
-  typedef typename FunctionSpaceTraits::DomainFieldType DomainFieldType;
-  
-  /** \brief Intrinsic type used for values in the range field (usually a double) */
-  typedef typename FunctionSpaceTraits::RangeFieldType RangeFieldType;
-  
-  /** \brief Type of domain vector (using type of domain field) */
-  typedef typename FunctionSpaceTraits::DomainType DomainType;
-  
-  /** \brief Type of range vector (using type of range field) */
-  typedef typename FunctionSpaceTraits::RangeType RangeType;
-  
-  /** \brief Intrinsic type used for the jacobian values */
-  typedef typename FunctionSpaceTraits::LinearMappingType JacobianRangeType;
-  
-  /** \brief Intrinsic type used for the hessian values */
-  typedef FieldVector<JacobianRangeType, DimRange> HessianRangeType;
-  
-  /** \brief Type of corresponding scalar space */
-  typedef typename FunctionSpaceTraits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-};
-
-//! \brief Base class for vector valued function spaces.
+// Forward declaration of
+// base class for vector valued function spaces.
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 class FunctionSpace;
 
 //! \brief Traits class for vector function spaces 
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 struct VectorSpaceTraits {
-  //! \brief @copydoc FunctionSpaceBase::DomainFieldType 
+  //! \brief @copydoc FunctionSpaceInterface::DomainFieldType 
   typedef DomainFieldImp DomainFieldType;
-  //! \brief @copydoc FunctionSpaceBase::RangeFieldType 
+  //! \brief @copydoc FunctionSpaceInterface::RangeFieldType 
   typedef RangeFieldImp RangeFieldType;
-  //! \brief @copydoc FunctionSpaceBase::DomainType 
+  //! \brief @copydoc FunctionSpaceInterface::DomainType 
   typedef FieldVector<DomainFieldImp, n> DomainType;
-  //! \brief @copydoc FunctionSpaceBase::RangeType 
+  //! \brief @copydoc FunctionSpaceInterface::RangeType 
   typedef FieldVector<RangeFieldImp, m> RangeType;
   //! \brief linear mapping type  
   typedef FieldMatrix<RangeFieldImp, m, n> LinearMappingType;
@@ -74,14 +32,18 @@ struct VectorSpaceTraits {
   enum { DimDomain = n };
 };
 
-/** \brief FunctionSpace defines what the types of the domain vector
+/** @ingroup FunctionSpace
+    \brief A vector valued function space.
+   
+    FunctionSpace defines what the types of the domain vector
     space and the range vector space for a function are. 
 */
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 class FunctionSpace : public
-      FunctionSpaceBase<VectorSpaceTraits<DomainFieldImp,RangeFieldImp,n,m> > {};
+      FunctionSpaceInterface<VectorSpaceTraits<DomainFieldImp,RangeFieldImp,n,m> > {};
 
-/*! \brief Base class for matrix valued function spaces.
+/* Forward declaration of  
+  base class for matrix valued function spaces.
 */
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
 class MatrixFunctionSpace;
@@ -179,11 +141,11 @@ class MatrixMapping :
   // Implement L : VD -> VR where VR is the space of FieldMatrix<RFI,m1,m2>
   // VD is space of FieldVector<DFT,n>
  public:
-  //! \brief @copydoc FunctionSpaceBase::DomainFieldType 
+  //! \brief @copydoc FunctionSpaceInterface::DomainFieldType 
   typedef DomainFieldImp DomainFieldType;
-  //! \brief @copydoc FunctionSpaceBase::RangeFieldType 
+  //! \brief @copydoc FunctionSpaceInterface::RangeFieldType 
   typedef RangeFieldImp RangeFieldType;
-  //! \brief @copydoc FunctionSpaceBase::RangeType 
+  //! \brief @copydoc FunctionSpaceInterface::RangeType 
   typedef RangeMatrix<RangeFieldImp, m1,m2> RangeType;
   //! \brief type of base class 
   typedef FieldMatrix<RangeFieldImp,m1*m2,n> BaseType;
@@ -214,13 +176,13 @@ class MatrixMapping :
 //! \brief Traits class for matrix valued spaces 
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
 struct MatrixSpaceTraits {
-  //! \brief @copydoc FunctionSpaceBase::DomainFieldType 
+  //! \brief @copydoc FunctionSpaceInterface::DomainFieldType 
   typedef DomainFieldImp DomainFieldType;
-  //! \brief @copydoc FunctionSpaceBase::RangeFieldType 
+  //! \brief @copydoc FunctionSpaceInterface::RangeFieldType 
   typedef RangeFieldImp RangeFieldType;
-  //! \brief @copydoc FunctionSpaceBase::DomainType 
+  //! \brief @copydoc FunctionSpaceInterface::DomainType 
   typedef FieldVector<DomainFieldImp, n> DomainType;
-  //! \brief @copydoc FunctionSpaceBase::RangeType 
+  //! \brief @copydoc FunctionSpaceInterface::RangeType 
   typedef RangeMatrix<RangeFieldImp, m1,m2> RangeType;
   //! \brief linear mapping type  
   typedef MatrixMapping<DomainFieldImp,RangeFieldImp, n, m1,m2> LinearMappingType;
@@ -232,10 +194,12 @@ struct MatrixSpaceTraits {
   enum { DimDomain = n };
 };
 
-//! \brief FunctionSpace class defining domain vector space and matrix valued range vector spaces */
+/*! @ingroup FunctionSpace 
+   \brief A matrix valued function space.
+*/
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
 class MatrixFunctionSpace : public
-      FunctionSpaceBase<MatrixSpaceTraits<DomainFieldImp,RangeFieldImp,n,m1,m2> > {};
+      FunctionSpaceInterface<MatrixSpaceTraits<DomainFieldImp,RangeFieldImp,n,m1,m2> > {};
 
 
 //! convert functions space to scalar function space
@@ -251,6 +215,5 @@ struct ToScalarFunctionSpace<
   typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, 1> Type;
 };
 
-///@}
 } // end namespace Dune 
 #endif
