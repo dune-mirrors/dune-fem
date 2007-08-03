@@ -17,12 +17,16 @@
 
 namespace Dune{
 
-  /** @defgroup DiscreteFunctionSpace DiscreteFunctionSpace
-      @ingroup FunctionCommon
+  /** @addtogroup DiscreteFunctionSpace 
       This provides the interfaces for discrete function spaces. 
+      Discrete function spaces contain functions
+      from a \ref FunctionSpaceInterface "function space"
+      but the domain is defined by a grid
+      or more precisly by a \ref GridPart "grid part".
  
       \remarks The interface for using a DiscreteFunctionSpace is
       defined by the class DiscreteFunctionSpaceInterface.
+
       @{
   */
 
@@ -39,8 +43,10 @@ namespace Dune{
   //
   //  --DiscreteFunctionSpaceInterface
   //
-  /** \brief This is the interface for discrete function spaces. All methods
+  /**  
+    \brief This is the interface for discrete function spaces. All methods
     declared here have to be implemented by the implementation class.
+
     The discrete function space always depends on a given grid. 
     For all diffrent element types of the grid the function space provides 
     a set of base functions for the different element types. 
@@ -49,6 +55,7 @@ namespace Dune{
     of the function space and a mapping from entity and local dof number
     to global dof number of the level of the entity.
     \note A DiscreteFunctionSpace is defined on a certain grid part.
+
   */
   template<class FunctionSpaceTraits>
   class DiscreteFunctionSpaceInterface : 
@@ -58,19 +65,19 @@ namespace Dune{
     //- Typedefs and enums
     //! type of traits class 
     typedef FunctionSpaceTraits Traits; 
-    //! type of function space (define domain and range types)
-    typedef typename FunctionSpaceTraits::FunctionSpaceType FunctionSpaceType;
     //! type of DiscretefunctionSapce implementation (Barton-Nackman)
     typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    //! type of BaseFunctionSet of this space 
+    //! type of \ref FunctionSpaceInterface "function space" (define domain and range types)
+    typedef typename FunctionSpaceTraits::FunctionSpaceType FunctionSpaceType;
+    //! type of \ref BaseFunctionSetInterface "base function set" of this space 
     typedef typename FunctionSpaceTraits::BaseFunctionSetType BaseFunctionSetType;
-    //! type of Mapper of this space 
+    //! type of \ref DofMapperInterface "mapper" of this space 
     typedef typename FunctionSpaceTraits::MapperType MapperType;
-    //! type of underlying grid part 
+    //! type of underlying \ref GridPart "grid part" 
     typedef typename FunctionSpaceTraits::GridPartType GridPartType;
-    //! type of underlying grid  
+    //! type of underlying dune grid  
     typedef typename GridPartType::GridType GridType;
-    //! type of used index set 
+    //! type of used dune index set 
     typedef typename GridPartType::IndexSetType IndexSetType;
     
     /** \brief iterator type traversing the set of 
@@ -84,6 +91,8 @@ namespace Dune{
     //! Constructor 
     DiscreteFunctionSpaceInterface() : FunctionSpaceType() 
     {}
+
+    //! Method provided by implementation
 
     /** \brief return type identifier of discrete function space 
         \return return type identifier of discrete function space
@@ -169,15 +178,6 @@ namespace Dune{
       return asImp().size(); 
     }
 
-    /** \brief return the instance of the mapper
-        \return refernce to mapper
-    */    
-    MapperType& mapper () const  
-    {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapper());
-      return asImp().mapper();
-    }
-
     /** \brief returns index of sequence in grid sequences 
         \return number of current sequence 
     */
@@ -196,6 +196,15 @@ namespace Dune{
       return asImp().order(); 
     } 
   
+    /** \brief return the instance of the mapper
+        \return refernce to mapper
+    */    
+    MapperType& mapper () const  
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapper());
+      return asImp().mapper();
+    }
+
     /** \brief Iterator pointing to first entity associated 
                with this discrete function space 
         \return Iterator pointing to first Entity
@@ -217,6 +226,7 @@ namespace Dune{
     /** \brief returns true if grid has more than one geometry type (hybrid grid)
         \return \b true  if  grid has more than one geometry type
         (hybrid grid), \b false otherwise 
+        \hasdefault
     */
     bool multipleGeometryTypes() const 
     { 
@@ -226,6 +236,7 @@ namespace Dune{
 
     /** \brief returns true if base function sets depend on entity 
         \return \b true if base function set depend on entities, \b false otherwise 
+        \hasdefault
     */
     bool multipleBaseFunctionSets() const 
     { 
@@ -237,6 +248,7 @@ namespace Dune{
         \param[in] entity   Entity for which mapping is done 
         \param[in] localDof local dof number 
         \return global dof number, i.e. position in dof array 
+        \hasdefault
     */    
     template <class EntityType>
     int mapToGlobal ( const EntityType &entity, 
@@ -383,8 +395,10 @@ namespace Dune{
     //! grid part to select view of grid 
     const GridPartType& gridPart_;
   };
+///@}  
 
-  /** \brief 
+  /**\ingroup HelperClasses 
+     \brief 
      BaseFunctionSetSingletonFactory provides method createObject and
      deleteObject for the SingletonList  
   */
@@ -406,6 +420,5 @@ namespace Dune{
     }
   };
   
-///@}  
 } // end namespace Dune 
 #endif

@@ -106,7 +106,7 @@ INLINE_INHERITED_MEMB  = YES
 # path before files name in the file list and in the header files. If set 
 # to NO the shortest path that makes the file name unique will be used.
 
-FULL_PATH_NAMES        = no
+FULL_PATH_NAMES        = NO
 
 # If the FULL_PATH_NAMES tag is set to YES then the STRIP_FROM_PATH tag 
 # can be used to strip a user-defined part of the path. Stripping is 
@@ -180,7 +180,8 @@ TAB_SIZE               = 8
 # will result in a user-defined paragraph with heading "Side Effects:". 
 # You can put \n's in the value part of an alias to insert newlines.
 
-ALIASES                = 
+ALIASES  = 
+ALIASES += "hasdefault=\par <b> Has a default implementation </b>\n" 
 
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C 
 # sources only. Doxygen will then generate output that is more tailored for C. 
@@ -445,6 +446,7 @@ WARN_LOGFILE           = doc/doxygen.out
 # with spaces.
 
 INPUT                  = mainpage \
+                         docrules \
                          modules \
                          fem
 

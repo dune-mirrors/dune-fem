@@ -75,10 +75,15 @@ struct DGAdaptiveLeafGridPartTraits {
   enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
 };
 /** @ingroup AdaptiveLeafGP
-    @brief
+   \brief AdaptiveLeafGridPart with
+   indexset only for codimension 0 entities.
+
     Special implementation of the AdaptiveLeafGridPart with
-    an underlying index set only defined for entities with codimension 0.
-    The underlying index set is
+    an underlying index set is only defined for 
+    entities with codimension 0 for use with
+    the Dune::DiscontinuousGalerkinSpace.
+
+    The underlying \ref DGAdaptiveLeafIndexSet "index set" is
     a singleton for each different grid. */
 template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 
 class DGAdaptiveLeafGridPart

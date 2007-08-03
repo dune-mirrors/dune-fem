@@ -19,8 +19,7 @@
 namespace Dune{
 
 
-  /** @defgroup DiscreteFunction DiscreteFunction
-      @ingroup FunctionCommon
+  /** @addtogroup DiscreteFunction 
       The DiscreteFunction is responsible for the dof storage. This can be
       done in various ways an is left to the user. The user has to derive his
       own implementation from the DiscreteFunctionDefault class. If some of

@@ -7,13 +7,7 @@
 #include <dune/grid/common/gridpart.hh>
 
 /** @file
-  @author Robert Kloefkorn
   @brief Provides other partition types of the same grid part 
-*/
-/*! @addtogroup GridPart
-    @ingroup Grid
-
-    Grid Part Utilities.
 */
 
 namespace Dune {
@@ -23,6 +17,7 @@ namespace Dune {
    * @{ 
    */
 
+  //! @ingroup GridPart
   //! \brief Helper class to get GridPart with different partition type
   template <class GridPartImp, PartitionIteratorType piType> 
   struct GridPartNewPartitionType;

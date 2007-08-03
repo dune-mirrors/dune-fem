@@ -9,14 +9,14 @@
 
 namespace Dune
 {
-/** @defgroup FunctionCommon Functions
+/** @addtogroup Functions
+    Functions are mapping from one finite dimensional
+    vector space into another, e.g.,
+    \f$K^n\f$ into \f$L^m\f$.
+    They are element of a 
+    \ref FunctionSpaceInterface "function space".
 
-    Functions are Mappings from \f$K^n\f$ into \f$L^m\f$ where 
-    \f$K\f$ and \f$L\f$ are fields.
-
-    \remarks
-    The interface for using a Function is defined by the class Function.
-
+    \remark The interface is given by Function.
     @{
 **/
   

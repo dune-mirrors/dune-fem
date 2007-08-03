@@ -9,6 +9,13 @@
 #include "singletonlist.hh"
 namespace Dune {
 
+/** @addtogroup AdaptiveLeafGP
+    GridPart for Dune::AdaptiveLeafIndexSet. 
+    The underlying index set is
+    singleton for each grid object.   
+    Uses very efficient index sets specially
+    designed for problems with constantly changing underlying grid.
+*/
 /////////////////////////////////////////////////////////////////////////
 //
 //  --AdaptiveLeafIndexGridPart 
@@ -39,16 +46,14 @@ struct AdaptiveLeafGridPartTraits {
   //! \brief is true if grid on this view only has conforming intersections 
   enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
 };
-/** @defgroup AdaptiveLeafGP Adaptive Leaf Grid Part
-    @ingroup GridPart
-    
-    Uses the very efficient Dune::AdaptiveLeafIndexSet specially
-    designed for problems with constantly changing underlying grid.
- **/
+
 
 /** @ingroup AdaptiveLeafGP
-    \brief GridPart for Dune::AdaptiveLeafIndexSet. Used underlying index set is
-    singleton for each grid object.   
+    \brief A grid part with an index set specially
+    designed for adaptive calculations.
+
+    The underlying \ref AdaptiveLeafIndexSet "index set" is defined for
+    entities of all codimensions. 
 */
 template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 
 class AdaptiveLeafGridPart

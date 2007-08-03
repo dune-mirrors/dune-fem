@@ -15,7 +15,14 @@ documenting C/C++ code.
 The best way to start is from the page \ref modules which gives
 you access to the documentation by category. A summary of the
 main features and concepts can be found \ref Intro "here".
+Some remarks about writting dune-fem documentation is
+found \ref DocRules "here".
 
+**/
+
+/** 
+  @addtogroup FEM
+  @{
 **/
 
 /**
@@ -154,6 +161,10 @@ and the experimental order of convergence is determined. The polynomial
 order and the grid implementation can be chosen during the compilation process.
 
 */
+
+/**
+  @}
+**/
 
 /** \page modules Modules
 */

@@ -17,17 +17,6 @@
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
 namespace Dune {
-/** @defgroup GridPart Grid Parts
- @ingroup FunctionCommon
-
- Grid parts allow to define a view on a given Grid, treating
- the underlying grid as a container for entities. 
- All parts of the dune-fem package rely on GridParts to access
- the entities of the grid, e.g., discrete functions are defined on
- the set of entities accesseable by the given GridPart implementation
- by using the iterator and index set provided by the GridPart.
-**/
-
 
   // forward declarations
   template <class FilterImp, class GridImp>
@@ -189,8 +178,7 @@ namespace Dune {
 // 
 // FilteredGridPart
 //
-/** @defgroup FilterGridPart Filtered Grid Part
-   @ingroup GridPart
+/** @addtogroup FilterGridPart Filtered Grid Part
  
  A FilteredGridPart is a subset of a GridPart and a GridPart itself 
  (without iterators for codim \neq 0). FilteredGridPart will work with
