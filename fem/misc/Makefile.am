@@ -8,5 +8,5 @@ longexample.cc    entityfunction.hh \
 example.cc  timeutility.hh  timeprovider.hh\
 suite.cc   suite.hh \
 array.hh   rectarray.hh \
-vector.hh  vector.cc\
+vector.hh  vector_inline.hh\
 subarray.hh
