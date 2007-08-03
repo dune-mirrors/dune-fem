@@ -320,11 +320,6 @@ namespace Dune
       return polynomialOrder;
     }
 
-    inline int polynomOrder () const DUNE_DEPRECATED
-    {
-      return order();
-    }
-
     /** \brief @copydoc DiscreteFunctionSpaceInterface::begin */
     inline IteratorType begin () const
     {

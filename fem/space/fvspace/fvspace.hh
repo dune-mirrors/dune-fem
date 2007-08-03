@@ -201,8 +201,6 @@ namespace Dune {
     //! returns polynomial order
     int order() const { return polynomialOrder; }
 
-    int polynomOrder () const DUNE_DEPRECATED { return order(); } 
-
     //! begin iterator
     IteratorType begin() const { return gridPart_.template begin<0>(); }
 

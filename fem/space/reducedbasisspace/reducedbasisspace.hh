@@ -145,11 +145,6 @@ namespace Dune
       return baseFunctionSpace_.order();
     }
 
-    inline int polynomOrder () const DUNE_DEPRECATED
-    {
-      return order();
-    }
-
     //! begin iterator
     inline IteratorType begin () const
     {
