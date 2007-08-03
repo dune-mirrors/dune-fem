@@ -26,7 +26,7 @@
 
 namespace Dune {
 
-  // Forfard declarations
+  // Forward declarations
   template <class FunctionSpaceImp, class GridPartImp, int polOrd,
             template<class> class BaseFunctionStorageImp = SimpleStorage >
   class FiniteVolumeSpace;
@@ -64,7 +64,7 @@ namespace Dune {
   //  --FiniteVolumeSpace
   //
 
-  /** @defgroup FVDFSpace Finie Volume Function Space
+  /** @defgroup FVDFSpace Finite Volume Function Space
       @ingroup DiscreteFunctionSpace
 
    Provides access to base function set for different element 
@@ -93,10 +93,8 @@ namespace Dune {
   >
   {
  public:
-    //! my Grid's type 
     typedef typename GridPartImp::GridType GridType;
 
-    /** \todo Please doc me! */
     typedef FiniteVolumeSpace< 
           FunctionSpaceImp, GridPartImp, polOrd , BaseFunctionStorageImp
       > FiniteVolumeSpaceType;
@@ -109,23 +107,19 @@ namespace Dune {
       FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp
       > Traits;
 
-    /** \todo Please doc me! */
     typedef DiscreteFunctionSpaceDefault<Traits> DefaultType;
   
     /** type of base function set implementation  */
     typedef typename Traits::BaseFunctionSetImp BaseFunctionSetImp;
-    /** exported type of base function set */
+
     typedef typename Traits::BaseFunctionSetType  BaseFunctionSetType;
-    /** \todo Please doc me! */
+
     typedef typename Traits::IndexSetType IndexSetType;
 
-    /** \todo Please doc me! */
     typedef typename Traits::GridPartType GridPartType;
     
-    /** \todo Please doc me! */
     typedef typename Traits::IteratorType IteratorType;
 
-    /** \todo Please doc me! */
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
     //! type of id 
@@ -140,7 +134,6 @@ namespace Dune {
     //! size of local blocks, here always 1 
     enum { localBlockSize = Traits :: localBlockSize };
   
-    //! mapper used to implement mapToGlobal */
     typedef typename Traits :: MapperType MapperType; 
 
     //! mapper singleton key  
@@ -153,29 +146,29 @@ namespace Dune {
     typedef SingletonList< MapperSingletonKeyType , MapperType ,
             MapperSingletonFactoryType > MapperProviderType;
 
-    /** \todo Please doc me! */
+    /** \copydoc FunctionSpace::DomainType */
     typedef typename FunctionSpaceType::DomainType DomainType;
-    /** \todo Please doc me! */
+    /** \copydoc FunctionSpace::RangeType */
     typedef typename FunctionSpaceType::RangeType RangeType;
-    /** \todo Please doc me! */
+
     typedef typename FunctionSpaceType::RangeFieldType DofType;
-    /** \todo Please doc me! */
+    /** \copydoc FunctionSpace::RangeFieldType */
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    /** \todo Please doc me! */
+    /** \copydoc FunctionSpace::DomainFieldType */
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
 
     //! scalar space type 
     typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
-    // type of base function factory 
+    //! type of base function factory 
     typedef FVBaseFunctionFactory<
       ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
 
-    // type of singleton factory 
+    //! type of singleton factory 
     typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
                 ScalarFactoryType> SingletonFactoryType;
 
-    // type of singleton list  
+    //! type of singleton list  
     typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
 
@@ -195,7 +188,7 @@ namespace Dune {
     //! continuous
     bool continuous() const { return (polOrd == 0) ? false : true; }
  
-    //! return type of this fucntion space 
+    //! return type of this function space 
     DFSpaceIdentifier type () const;
 
     //! returns polynomial order
@@ -246,12 +239,14 @@ namespace Dune {
     int sequence () const { return dm_.sequence(); }
 
   protected:
-    // create functions space with basefunction set for given level
+    //! create functions space
     void makeFunctionSpace (GridPartType& gridPart); 
   
   protected:
-    //! the corresponding map of base function sets
+    //! type of corresponding map of base function sets
     typedef std::map< const GeometryType, const BaseFunctionSetImp *> BaseFunctionMapType;
+
+    //! the corresponding map of base function sets
     mutable BaseFunctionMapType baseFuncSet_;
 
     //! the index set, used by the mapper for mapping between grid and space 
@@ -261,7 +256,7 @@ namespace Dune {
     //! the corresponding FiniteVolumeMapper 
     MapperType* mapper_; 
 
-    // reference to dof manager 
+    //! reference to dof manager 
     const DofManagerType & dm_;
   }; // end class FiniteVolumeSpace
 
