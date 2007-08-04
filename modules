@@ -84,6 +84,48 @@
    @defgroup OperatorCommon Operators
    @ingroup FEM 
 */
+  /** @defgroup Concept Concept behind the dune-fem operatos 
+      @ingroup OperatorCommon */
+  /** @defgroup Mapping Mapping
+      @ingroup OperatorCommon */
+  /** @defgroup DiscreteOperator Discrete operators 
+      @ingroup OperatorCommon */
+    /** @defgroup LinearDiscOperators Linear discrete operators
+        @ingroup DiscreteOperator */
+    /** @defgroup DifferentiableOperators Operator with defined jacobian
+        @ingroup DiscreteOperator */
+  /** @defgroup OperatorWrappers Wrappers for operators
+      @ingroup OperatorCommon */
+    /** @defgroup DiscOperatorWrapper Wrapps discrete to general operator
+        @ingroup OperatorWrappers */
+    /** @defgroup InversOperatorWrapper Inverting operator
+        @ingroup OperatorWrappers */
+    /** @defgroup CachOperatorWrapper Caching for linear operators 
+        @ingroup OperatorWrappers */
+  /** @defgroup Pass Pass operators
+      @ingroup OperatorCommon */
+    /** @defgroup PassHyp Local Discontinous Galerkin for first order hyperbolic equations
+        @ingroup Pass */
+      /** @defgroup PassLimit Limiting operation
+          @ingroup PassHyp */
+    /** @defgroup PassEllipt Local Discontinous Galerkin for second order elliptic equations 
+        @ingroup Pass */
+  /** @defgroup Operator0 Projection and interpolation operatos
+      @ingroup OperatorCommon */
+  /** @defgroup Operator1 First order spatial operatos
+      @ingroup OperatorCommon */
+  /** @defgroup Operator2 Second order spatial operatos
+      @ingroup OperatorCommon */
+    /** @defgroup CGFiniteElement Continuous Finite Elements elliptic operator
+        @ingroup Operator2 */
+    /** @defgroup DgElliptOperator Local Discontinous Galerkin for second order elliptic equations 
+        @ingroup Operator2 */
+  /** @defgroup ODESolver ODE solver
+      @ingroup OperatorCommon */
+  /** @defgroup OEMSolver Linear solver
+      @ingroup OperatorCommon */
+  /** @defgroup NonLinSolver Non linear solver
+      @ingroup OperatorCommon */
 
 /** 
    @defgroup Quadrature Quadratures

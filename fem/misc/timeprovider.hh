@@ -9,10 +9,9 @@
 
 namespace Dune {
 
-/** @defgroup TimeProvider Time Utilities 
-    @ingroup ODESolver 
+/** @ingroup ODESolver 
 
-    A TimeProvider is a class for managing the global simulation time of
+    \brief A TimeProvider is a class for managing the global simulation time of
     time-dependent simulations. 
 
     \remarks 
@@ -20,10 +19,7 @@ namespace Dune {
     runs (i.e. TimeProvider and ImprovedTimeProvider) 
     and a wrapper using these two for parallel runs
     (i.e. ParallelTimeProvider).
- @{
- **/
-
-  //! class for time and time step estimate handling
+  */
   class TimeProvider 
   {
   public:
@@ -323,7 +319,6 @@ namespace Dune {
     //! serial time provider 
     TimeProvider& tp_;
   };
-///@} 
   
 } // end namespace Dune
 #endif

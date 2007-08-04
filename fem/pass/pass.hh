@@ -15,8 +15,7 @@
 
 namespace Dune {
 
-  /*! @defgroup Pass Pass concept
-   *  @ingroup OperatorCommon
+  /*! @addtogroup Pass 
    *
    */
   /*!

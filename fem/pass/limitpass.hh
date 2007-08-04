@@ -17,7 +17,8 @@
 
 //*************************************************************
 namespace Dune {  
-
+/*! @addtogroup PassLimit
+*/
   template <class GlobalTraitsImp, class Model>
   class LimiterDefaultDiscreteModel;
   

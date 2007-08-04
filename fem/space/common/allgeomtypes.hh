@@ -13,9 +13,10 @@
 #endif
 
 namespace Dune {
+ 
 
-  /** \brief default implementation uses method geomTypes of given index
-       set. 
+  /**  \brief default implementation uses method geomTypes of given index
+       set. Used in DiscreteFunctionSpaces.
    */
   template <class IndexSetImp, class GridImp> 
   class AllGeomTypes 
@@ -89,7 +90,7 @@ namespace Dune {
       }
     }                  
     
-    //! returns vector with geometry tpyes this index set has indices for
+    //! returns vector with geometry types this index set has indices for
     const std::vector <GeometryType> & geomTypes (int codim) const
     {
       assert( codim >= 0 );

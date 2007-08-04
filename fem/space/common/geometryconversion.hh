@@ -5,7 +5,8 @@
 
 namespace Dune { 
 
-  /** \brief Identifier for geometry types apart from dune::GeometryType */
+  /** @ingroup HelperClasses 
+     \brief Identifier for geometry types apart from dune::GeometryType */
   class GeometryIdentifier {
   public:
 

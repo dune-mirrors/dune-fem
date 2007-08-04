@@ -61,12 +61,20 @@ documentation of the class.
 It probably better to have a very short \\brief 
 documentation for these classes since this
 appears on the module page.
+After the \\brief statements a detailed documentation
+follows after a blank line.
 
 Important classes - either from the user
 or the implementers point of view - that just to seem to fit anywhere can
 be added to the group HelperClasses or else 
 not included in any group; they will always
 appear in the class list of the documentation.
+
+Depricated classes or methods should be 
+tagged with a \\depricated command in the documentation
+followed by a short remark on the reason for
+removing this part of the code or alternatives 
+enclosed in quotes.
 <!---------------------------------------------->
 
 <!---------------------------------------------->
@@ -87,9 +95,11 @@ command:
 
 For methods which are implemented in a corresponding
 default class the command \\hasdefault should be
-added at the end of the member documentation - does not
-work can somebody tell me why the ALIASES in the
-Doxyfile does nothing?
+added at the end of the member documentation.
+
+For depricated members the command 
+\depricated should be included in the documentation.
+
 
 <!---------------------------------------------->
 \section DocImplementation Documentation of implementation classes

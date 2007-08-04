@@ -19,8 +19,7 @@ struct DiffVariable
   typedef FieldVector<deriType, dim> Type;
 };
 
-/** @defgroup Mapping Mapping
-    \ingroup OperatorCommon
+/** @addtogroup Mapping
 
     Mappings in Dune always map from one vector space into another vector space.
     Mapping are the base class for Operators and Functions. 

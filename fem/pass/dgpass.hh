@@ -30,8 +30,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
-/*! @defgroup PassHyp Local Discontinous Galerkin for first order hyperbolic equations
- *  @ingroup Pass
+/*! @addtogroup PassHyp
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
 **   v + div(f(x,u)) + A(x,u)\nabla u &=& S(x,u)  \quad\mbox{in}\quad \Omega    \\

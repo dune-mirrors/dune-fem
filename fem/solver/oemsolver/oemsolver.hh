@@ -219,8 +219,7 @@ public:
 
 namespace Dune 
 {
-  /** @defgroup OEMSolver Inverting Operators - Linear Solvers 
-      @ingroup OperatorCommon
+  /** @addtogroup OEMSolver  
       
       In this section implementations of Orthogonal Error Methods (OEM) for solving linear 
       systems of the from \f$A x = b\f$, where \f$A\f$ is a Mapping or

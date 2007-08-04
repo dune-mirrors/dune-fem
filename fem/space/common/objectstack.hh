@@ -6,7 +6,9 @@
 
 namespace Dune{
 
-//! Stores pointers of local functions in a stack 
+//! @ingroup HelperClasses
+//! Stores pointers to a given class in a stack
+//! used for local functions and for basefunctionsets
 template <class ObjectFactoryImp> 
 class ObjectStack 
 {

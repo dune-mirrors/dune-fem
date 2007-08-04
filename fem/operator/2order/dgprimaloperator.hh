@@ -26,8 +26,7 @@
 #include <dune/fem/space/common/arrays.hh>
 
 namespace Dune {
-/*! @defgroup PassEllipt Local Discontinous Galerkin for second order elliptic equations
- *  @ingroup Pass
+/*! @addtogroup PassEllipt 
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
 **   div(A(x)\nabla u) + &=& f(x)  \quad\mbox{in}\quad \Omega    \\

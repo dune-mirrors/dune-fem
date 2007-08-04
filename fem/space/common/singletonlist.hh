@@ -12,6 +12,7 @@
 
 namespace Dune { 
 
+//! @ingroup HelperClasses
 //! DefaultFactory that tells SingletonList how to create objects. 
 //! Default is calling ObjectImp(*key) as constructor.
 template <class KeyImp, class ObjectImp>

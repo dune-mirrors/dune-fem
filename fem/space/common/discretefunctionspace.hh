@@ -55,7 +55,8 @@ namespace Dune{
     of the function space and a mapping from entity and local dof number
     to global dof number of the level of the entity.
     \note A DiscreteFunctionSpace is defined on a certain grid part.
-
+   
+    \interfaceclass 
   */
   template<class FunctionSpaceTraits>
   class DiscreteFunctionSpaceInterface : 
@@ -124,60 +125,6 @@ namespace Dune{
       return asImp().continuous(); 
     }
 
-    /** \brief return reference to grid which belongs to discrete function space 
-        \return reference to grid  
-    */
-    const GridType& grid() const 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
-      return asImp().grid(); 
-    }
-
-    /** \brief return reference to grid which belongs to discrete function space 
-        \return reference to grid  
-    */
-    GridType& grid() 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
-      return asImp().grid(); 
-    }
-
-    /** \brief Return the corresponding grid part (const version) 
-        \return reference to grid part 
-    */ 
-    const GridPartType& gridPart() const 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
-      return asImp().gridPart(); 
-    }
-
-    /** \brief Return the corresponding grid part (const version) 
-        \return reference to grid part 
-    */ 
-    GridPartType& gridPart() 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
-      return asImp().gridPart(); 
-    }
-
-    /** \brief Return reference to the corresponding index set of the space 
-        \return reference to index set  
-    */ 
-    const IndexSetType& indexSet() const 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().indexSet());
-      return asImp().indexSet(); 
-    }
-
-    /** \brief Return number of degrees of freedom for this space 
-        \return number of degrees of freedom 
-    */
-    int size () const 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
-      return asImp().size(); 
-    }
-
     /** \brief returns index of sequence in grid sequences 
         \return number of current sequence 
     */
@@ -204,9 +151,70 @@ namespace Dune{
       CHECK_INTERFACE_IMPLEMENTATION(asImp().mapper());
       return asImp().mapper();
     }
+    
+    /** \brief return reference to grid which belongs to discrete function space 
+        \hasdefault
+        \return reference to grid  
+    */
+    const GridType& grid() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
+      return asImp().grid(); 
+    }
+
+    /** \brief return reference to grid which belongs to discrete function space 
+        \hasdefault
+        \return reference to grid  
+    */
+    GridType& grid() 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
+      return asImp().grid(); 
+    }
+
+    /** \brief Return the corresponding grid part (const version) 
+        \hasdefault
+        \return reference to grid part 
+    */ 
+    const GridPartType& gridPart() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
+      return asImp().gridPart(); 
+    }
+
+    /** \brief Return the corresponding grid part (const version) 
+        \hasdefault
+        \return reference to grid part 
+    */ 
+    GridPartType& gridPart() 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
+      return asImp().gridPart(); 
+    }
+
+    /** \brief Return reference to the corresponding index set of the space 
+        \hasdefault
+        \return reference to index set  
+    */ 
+    const IndexSetType& indexSet() const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().indexSet());
+      return asImp().indexSet(); 
+    }
+
+    /** \brief Return number of degrees of freedom for this space 
+        \hasdefault
+        \return number of degrees of freedom 
+    */
+    int size () const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
+      return asImp().size(); 
+    }
 
     /** \brief Iterator pointing to first entity associated 
                with this discrete function space 
+        \hasdefault
         \return Iterator pointing to first Entity
     */
     IteratorType begin() const {
@@ -216,6 +224,7 @@ namespace Dune{
 
     /** \brief Iterator pointing behind last entity associated 
                with this discrete function space 
+        \hasdefault
         \return Iterator pointing behind last Entity
     */
     IteratorType end() const {
@@ -224,10 +233,10 @@ namespace Dune{
     }
 
     /** \brief returns true if grid has more than one geometry type (hybrid grid)
+        \hasdefault
         \return \b true  if  grid has more than one geometry type
         (hybrid grid), \b false otherwise 
         
-        \hasdefault
     */
     bool multipleGeometryTypes() const 
     { 
@@ -236,9 +245,9 @@ namespace Dune{
     }
 
     /** \brief returns true if base function sets depend on entity 
+        \hasdefault
         \return \b true if base function set depend on entities, \b false
         otherwise
-        @hasdefault
     */
     bool multipleBaseFunctionSets() const 
     { 
@@ -247,10 +256,10 @@ namespace Dune{
     }
     
     /** \brief For given entity map local dof number to global dof number 
+        \hasdefault
         \param[in] entity   Entity for which mapping is done 
         \param[in] localDof local dof number 
         \return global dof number, i.e. position in dof array 
-        \hasdefault
     */    
     template <class EntityType>
     int mapToGlobal ( const EntityType &entity, 

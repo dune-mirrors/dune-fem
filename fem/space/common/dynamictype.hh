@@ -8,6 +8,7 @@ namespace Dune{
 
 typedef int IdentifierType;
 
+  //! @ingroup HelperClasses
   //! Base class used for tagging derived classes with an identifier
 class DynamicType {
 public:

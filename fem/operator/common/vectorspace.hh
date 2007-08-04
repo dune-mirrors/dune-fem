@@ -3,17 +3,14 @@
 
 namespace Dune{
 
- /** @defgroup Vector Elements of Vector Spaces
-  *  @ingroup OperatorCommon
-  * An instance of this class is an element of an vector space. 
-     Elements of vector spaces can be added and multiplied by a 
-     scalar.
-  @{
-  */
+ /** \ingroup Mapping 
+  * \brief Vector class
+  * This is the base class for all methods and operators.
 
-    /** \brief Vector class
-     * This is the base class for all methods and operators.
-     */
+   An instance of this class is an element of an vector space. 
+   Elements of vector spaces can be added and multiplied by a 
+   scalar.
+ */
 template <typename Field> 
 class Vector 
 {
@@ -40,9 +37,6 @@ public:
   //! Division
   virtual Vector<Field>& operator /= (const Field &) = 0;
 };
-
-
-/** @} end documentation group */
 
 }
 
