@@ -29,7 +29,7 @@
 
 namespace Dune 
 {
-/*! @addtogroup CGFiniteElement Continuous Finite Elements
+/*! @addtogroup CGFiniteElement
  * Description: several implementations of element-matrix and 
 **              element-rhs-integrators, 
 **              which can be accumulated for solving a general 

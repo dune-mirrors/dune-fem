@@ -118,7 +118,7 @@ struct L2ProjectionImpl
 };
 
 /*======================================================================*/
-/*!
+/*! @ingroup L2ProjectionOperator
  *  \class L2Projection
  *  \brief The L2Projection class provides methods for projecting a function
  *         unto a given discrete function space. Note that this implementation

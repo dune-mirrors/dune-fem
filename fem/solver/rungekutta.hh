@@ -18,7 +18,7 @@ namespace DuneODE
 using namespace Dune;
 using namespace std;
 
-/** @addtogroup ODESolver ODE Solver
+/** @addtogroup ODESolver
 
     \remarks 
     The interface for ODE solvers is defined by the class

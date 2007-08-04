@@ -93,8 +93,8 @@ struct VtxProjectionImpl
 };
 
 /*======================================================================*/
-/*!
- *  \class L2Projection
+/*! \ingroup VtxProjectionOperator
+ *  \class VtxProjection
  *  \brief The Projection class which average
  *         discontinuous function in the Lagrangepoints
  */

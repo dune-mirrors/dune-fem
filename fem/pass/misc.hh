@@ -4,13 +4,13 @@
 /** \file
     \brief Miscellaneous helper stuff
 */
-/** @addtogroup HelperClasses
-  @{
-*/  
 #include <iostream>
 #include <sstream>
 
 namespace Dune {
+/** @ingroup HelperClasses
+  @{
+*/  
 
 //! Check condition at compilation time 
 template <bool flag> class CompileTimeChecker;
