@@ -80,6 +80,8 @@
           @ingroup DiscreteFunction */
       /** @defgroup BlockVectorDFunction An implementation using dune-istl block vectors
           @ingroup DiscreteFunction */
+      /** @defgroup ProductDFunction A discrete function for product spaces
+          @ingroup DiscreteFunction */
       /** @defgroup LocalFunction Local function on an entity
           @ingroup DiscreteFunction */
       /** @defgroup DiscreteFunctionAdapter Wrapping analytical function into discrete functions 

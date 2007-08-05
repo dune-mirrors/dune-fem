@@ -30,10 +30,10 @@ namespace Dune{
   };
 
 //**********************************************************************
-//
+//! @addtogroup ProductDFunction
 // --ProductDiscreteFunction 
 //
-//! This is one special implementation of a discrete function  \f$  u(x,y) = \sum _{i=1} ^{n_x}\sum _{j=1} ^{n_y} u_{ij}\varphi _i(x) \psi _j(y) \f$ for product spaces \f$ X \times Y \f$ using an
+//! \brief This is one special implementation of a discrete function  \f$  u(x,y) = \sum _{i=1} ^{n_x}\sum _{j=1} ^{n_y} u_{ij}\varphi _i(x) \psi _j(y) \f$ for product spaces \f$ X \times Y \f$ using an
 //! array for storing the dofs with \f$u_{ij}= u\left[j n_x +i\right]\f$.  
 //!
 //!
