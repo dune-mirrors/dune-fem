@@ -61,6 +61,8 @@ namespace Dune
    *  For the actual implementation, see
    *  - CachingPointList<GridPartImp,0,IntegrationTraits>
    *  - CachingPointList<GridPartImp,1,IntegrationTraits>
+   *
+   * \interfaceclass
    */
   template< class GridPartImp, int codim, class IntegrationTraits >
   class CachingPointList

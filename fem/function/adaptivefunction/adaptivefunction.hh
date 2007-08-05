@@ -67,7 +67,7 @@ namespace Dune {
    
   }; // end class AdaptiveDiscreteFunctionTraits
 
-
+  //! @ingroup AdaptiveDFunction
   //! An adaptive discrete function
   //! This class is comparable to DFAdapt, except that it provides a 
   //! specialisation for CombinedSpace objects which provides enriched 

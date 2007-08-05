@@ -11,8 +11,11 @@
 
 namespace Dune {
 
-/** \brief SpaceOperatorInterface for Operators of the type 
+/** @ingroup ODESolver
+  \brief SpaceOperatorInterface for Operators of the type 
   L: X --> X where X is a discrete function space
+
+  \interfaceclass
 */
 template <class DestinationImp>
 class SpaceOperatorInterface 

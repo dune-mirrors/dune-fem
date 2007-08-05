@@ -20,6 +20,8 @@ namespace Dune
 /** \brief An abstract operator
  Interface class for Operators. Operators are applied to Functions and
  the result is a Function again. 
+
+ \interfaceclass
 */
 template <typename DFieldType, typename RFieldType,
           typename DType , typename RType>

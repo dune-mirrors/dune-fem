@@ -19,7 +19,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
-/*! @addtogroup DGElliptOperator
+/*! @addtogroup PassEllipt
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
 **   div(A(x)\nabla u) + &=& f(x)  \quad\mbox{in}\quad \Omega    \\

@@ -178,7 +178,7 @@ namespace Dune {
 // 
 // FilteredGridPart
 //
-/** @addtogroup FilterGridPart Filtered Grid Part
+/** @addtogroup FilterGridPart 
  
  A FilteredGridPart is a subset of a GridPart and a GridPart itself 
  (without iterators for codim \neq 0). FilteredGridPart will work with

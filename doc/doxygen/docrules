@@ -22,9 +22,16 @@ should be empty...
 - The documentation of a class, typedefs, members
   etc. always proceed the actual statement in the
   code. 
-- The documentation of a class, typedefs, members
-  etc. always proceed the actual statement in the
-  code. 
+- For deprecated members the command 
+  \\deprecated should be included in the documentation.
+  For deprecated files the \\depricated command can
+  be inserted into a file documentation.
+  All thus marked block will be linked into a related
+  page.
+- A new implementation can be marked and thus be
+  easier to find by adding \\newimplementation
+  into the documentation. Again a related page
+  is generated linking all new classes.
 .
 
 The following are of course only guidlines - please
@@ -97,12 +104,13 @@ For methods which are implemented in a corresponding
 default class the command \\hasdefault should be
 added at the end of the member documentation.
 
-For depricated members the command 
-\depricated should be included in the documentation.
 
 
 <!---------------------------------------------->
 \section DocImplementation Documentation of implementation classes
 <!---------------------------------------------->
-Using \\copydoc....
+By using the copydoc command the documentation
+from the interface class can be repeated in the
+implementation class:
+//! \\brief \@copydoc KlassenNameOhneTemplates::funktionOhneParameter 
 */

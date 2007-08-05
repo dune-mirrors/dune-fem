@@ -8,13 +8,16 @@ Welcome to the %dune-fem documentation pages. This documentation has been
 generated using Doxygen, a free source code documentation system for
 documenting C/C++ code.
 
-<!---------------------------------------------->
-\section mods Modules
-<!---------------------------------------------->
-
 The best way to start is from the page \ref modules which gives
-you access to the documentation by category. A summary of the
+you access to the documentation by category; a list
+of the central interface classes can be found
+\ref interfaceclass "here". 
+
+A summary of the
 main features and concepts can be found \ref Intro "here".
+Newly added implementations are linked on
+\ref newimplementation "this page".
+
 Some remarks about writting dune-fem documentation is
 found \ref DocRules "here".
 

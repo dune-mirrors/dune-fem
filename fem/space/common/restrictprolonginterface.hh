@@ -23,6 +23,8 @@ namespace Dune{
 /*! @ingroup RestrictProlongInterface
     \brief Interface class defining the local behaviour of the
     restrict/prolong operation (using BN)
+
+    \interfaceclass
  */
 template <class RestProlImpTraits>
 class RestrictProlongInterface {

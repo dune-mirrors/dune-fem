@@ -20,6 +20,8 @@ namespace Dune{
 
 /*! \brief An arbitrary function space
     Base class for specific function spaces.
+
+    \interfaceclass
 */
 template<typename FunctionSpaceTraits> 
 class FunctionSpaceInterface {

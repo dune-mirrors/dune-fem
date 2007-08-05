@@ -27,10 +27,13 @@
    provied in the dune-grid package.
 */
   /**
-   @defgroup FilterGridPart Filtered Grid Part
+   @defgroup AdaptiveLeafGP Adaptive leaf grid part
    @ingroup GridPart */
   /**
-   @defgroup AdaptiveLeafGP Adaptive Leaf Grid Part
+   @defgroup FilterGridPart Filtered grid part
+   @ingroup GridPart */
+  /**
+   @defgroup PeriodicGridPart Periodic grid part
    @ingroup GridPart */
 
 /**
@@ -73,6 +76,10 @@
     
   /** @defgroup DiscreteFunction Discrete functions 
       @ingroup FunctionCommon */
+      /** @defgroup AdaptiveDFunction An efficient implementation for vector valued functions on adaptive grids
+          @ingroup DiscreteFunction */
+      /** @defgroup BlockVectorDFunction An implementation using dune-istl block vectors
+          @ingroup DiscreteFunction */
       /** @defgroup LocalFunction Local function on an entity
           @ingroup DiscreteFunction */
       /** @defgroup DiscreteFunctionAdapter Wrapping analytical function into discrete functions 

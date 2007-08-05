@@ -102,7 +102,7 @@ private:
 };
 
 //**********************************************************************
-//
+//! @ingroup BlockVectorDFunction
 //  --BlockVectorDiscreteFunction 
 //
 //! this is one special implementation of a discrete function using an

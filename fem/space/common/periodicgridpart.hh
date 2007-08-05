@@ -51,7 +51,7 @@ namespace Dune
           
 
 
-  /*! \ingroup GridPart
+  /*! \addtogroup PeriodicGridPart
    *  \class PeriodicLeafGridPart
    *  \brief A grid partition identifying opposite faces of the unit cube
    *
@@ -63,6 +63,8 @@ namespace Dune
    *        though).
    *
    *  \todo Return correct neighbors for entities with boundary intersections.
+   *
+   *  \newimplementation Allows to construct globally refined grids for the unitcube with periodic boundaries
    */
   template< class GridImp, PartitionIteratorType pitype = Interior_Partition >
   class PeriodicLeafGridPart

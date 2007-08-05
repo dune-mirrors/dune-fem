@@ -60,6 +60,8 @@ namespace Dune{
       dofs and basis functions can be accessed for a given entity.
       The DOF-Iterators are STL-like Iterators, i.e. they can be dereferenced
       giving the corresponding DOF.
+
+      \interfaceclass
   */
   template<class DiscreteFunctionTraits>
   class DiscreteFunctionInterface : 
