@@ -15,3 +15,10 @@ pkgconfig_DATA = dune-fem.pc
 DISTCHECK_CONFIGURE_FLAGS = --with-dune-common="$(DUNE_COMMON_ROOT)" --with-dune-grid="$(DUNE_GRID_ROOT)" CXX="$(CXX)" CC="$(CC)" DOXYGEN="true"
 
 include $(top_srcdir)/am/global-rules
+
+# add library name, authors list, and license to progam files
+dist-hook:
+	find $(distdir) -name "*.h" -exec ./addauthors.sh ./AUTHORS {} \;
+	find $(distdir) -name "*.hh" -exec ./addauthors.sh ./AUTHORS {} \;
+	find $(distdir) -name "*.c" -exec ./addauthors.sh ./AUTHORS {} \;
+	find $(distdir) -name "*.cc" -exec ./addauthors.sh ./AUTHORS {} \;
