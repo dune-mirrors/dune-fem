@@ -623,10 +623,17 @@ bool SparseRowMatrix<T>::checkConsistency() const
 template <class T> 
 void SparseRowMatrix<T>::kroneckerKill(int row, int col) 
 {
-  if (checkNonConstMethods) assert(checkConsistency());
+#ifndef NDEBUG 
+  if (checkNonConstMethods) 
+  {
+    assert(checkConsistency());
+  }
+#endif
   unitRow(row);
   unitCol(col);
+#ifndef NDEBUG 
   if (checkNonConstMethods) assert(checkConsistency());
+#endif
 } 
 
 template <class T> 
