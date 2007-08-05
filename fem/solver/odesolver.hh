@@ -45,10 +45,13 @@ namespace DuneODE {
 using namespace pardg;
 
 } // end namespace DuneODE
+#endif
 
 namespace DuneODE {
   using namespace Dune;
   using namespace std;
+
+#ifdef USE_DENNIS_ODE_SOLVER
 
 template <class Operator>
 class OperatorWrapper : public Function 
@@ -112,10 +115,10 @@ private:
 };
 
 
-#if 0
- @ingroup ODESolver
+/**
+   @ingroup ODESolver
    @{
-#endif
+ **/
 
 /* \brief Explicit ODE Solver base class */
 template<class Operator>
@@ -778,7 +781,7 @@ class SemiImplTimeStepper : public TimeProvider
   double savetime_;
   bool initialized_;
 };
-
+#endif
 
 //////////////////////////////////////////////////////////
 //
@@ -786,7 +789,10 @@ class SemiImplTimeStepper : public TimeProvider
 //
 //////////////////////////////////////////////////////////
 template <class OperatorImp>
-class SolverInterfaceImpl : public Function 
+class SolverInterfaceImpl 
+#ifdef USE_DENNIS_ODE_SOLVER
+: public Function 
+#endif
 {
   const OperatorImp & op_;
   int size_; 
@@ -819,12 +825,10 @@ public:
   }
 };
 
-
-#if 0
+/**
  @} 
-#endif
+**/
 }
-#endif
 
 #undef USE_EXTERNAL_BLAS
 #endif
