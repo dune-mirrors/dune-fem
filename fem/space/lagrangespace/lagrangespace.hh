@@ -27,7 +27,7 @@ namespace Dune
   template< class FunctionSpaceImp,
             class GridPartImp,
             int polOrder,
-            template< class > class BaseFunctionStorageImp = SimpleStorage >
+            template< class > class BaseFunctionStorageImp = CachingStorage >
   class LagrangeDiscreteFunctionSpace;
 
 
@@ -35,7 +35,7 @@ namespace Dune
   template< class FunctionSpaceImp,
             class GridPartImp,
             unsigned int polOrder,
-            template< class > class BaseFunctionStorageImp = SimpleStorage >
+            template< class > class BaseFunctionStorageImp = CachingStorage >
   struct LagrangeDiscreteFunctionSpaceTraits
   {
     CompileTimeChecker< (polOrder > 0) > __LagrangeSpace_only_defined_for_polOrder_greater_zero__;
