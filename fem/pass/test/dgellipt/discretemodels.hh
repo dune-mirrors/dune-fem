@@ -5,7 +5,7 @@
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/pass/discretemodel.hh>
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/space/dgspace.hh>
 
 // Dune includes
@@ -26,7 +26,7 @@
 #include <dune/fem/operator/matrix/istlmatrix.hh>
 #include <dune/fem/solver/istlsolver.hh>
 
-#include <dune/fem/operator/inverseoperators.hh>
+#include <dune/fem/solver/inverseoperators.hh>
 
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>

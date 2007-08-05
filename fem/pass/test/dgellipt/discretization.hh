@@ -27,7 +27,7 @@
 
 #include "discretemodels.hh"
 
-#include <dune/fem/operator/inverseoperators.hh>
+#include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
