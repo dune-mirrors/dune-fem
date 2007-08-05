@@ -303,7 +303,7 @@ namespace Dune {
   // DG Space with orthonormal basis functions 
   //********************************************************
   template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-            template<class> class BaseFunctionStorageImp = SimpleStorage >
+            template<class> class BaseFunctionStorageImp = CachingStorage >
   class DiscontinuousGalerkinSpace;
 
   //! Traits class for DiscontinuousGalerkinSpace
@@ -436,7 +436,7 @@ namespace Dune {
     }
   };
 
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp = SimpleStorage >
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp = CachingStorage >
   class LegendreDiscontinuousGalerkinSpace; 
     
   //! Traits class for DiscontinuousGalerkinSpace
