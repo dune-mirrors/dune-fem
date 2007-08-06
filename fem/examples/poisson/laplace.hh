@@ -73,7 +73,6 @@ namespace Dune
 
   private:
     mutable JacobianRangeType grad;
-    mutable JacobianRangeType othGrad;
 
     enum { maxBaseFunctions = 100 };
     mutable JacobianRangeType mygrad[ maxBaseFunctions ];
@@ -363,7 +362,8 @@ namespace Dune
                           DiscreteFunctionType &discreteFunction )
     {
       typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-      typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+      typedef typename IteratorType :: Entity EntityType;
+      //typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
       typedef typename EntityType :: Geometry GeometryType;
       
       const DiscreteFunctionSpaceType &discreteFunctionSpace
@@ -374,27 +374,33 @@ namespace Dune
       const IteratorType endit = discreteFunctionSpace.end();
       for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
       {
-        //it* Pointer auf ein Element der Entity
-        const GeometryType &geometry = (*it).geometry(); //Referenz auf Geometrie
-      
-        LocalFunctionType localFunction = discreteFunction.localFunction( *it ); 
-        const BaseFunctionSetType baseFunctionSet //BaseFunctions leben immer auf Refernzelement!!!
-          = discreteFunctionSpace.baseFunctionSet( *it ); 
+        // *it gives a reference to the current entity
+        const EntityType &entity = *it;
 
-        CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrd ); //0 --> codim 0
-        const int numDofs = localFunction.numDofs(); //Dofs = Freiheitsgrade (also die Unbekannten)
-        for( int i = 0; i < numDofs; ++i )
+        const GeometryType &geometry = entity.geometry(); //Referenz auf Geometrie
+      
+        LocalFunctionType localFunction = discreteFunction.localFunction( entity ); 
+        const BaseFunctionSetType baseFunctionSet //BaseFunctions leben immer auf Refernzelement!!!
+          = discreteFunctionSpace.baseFunctionSet( entity ); 
+
+        CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrd ); //0 --> codim 0
+        const int numQuadraturePoints = quadrature.nop();
+        for( int qP = 0; qP < numQuadraturePoints; ++qP )
         {
-          RangeType phi, psi; //R"uckgabe-Funktionswerte
-        
-          const int numQuadraturePoints = quadrature.nop();
-          for( int qP = 0; qP < numQuadraturePoints; ++qP )
+          const double det
+            = geometry.integrationElement( quadrature.point( qP ) );
+          const double factor = det * quadrature.weight( qP );
+
+          RangeType phi;
+          function.evaluate( geometry.global( quadrature.point( qP ) ), phi );
+            
+          const int numDofs = localFunction.numDofs(); //Dofs = Freiheitsgrade (also die Unbekannten)
+          for( int i = 0; i < numDofs; ++i )
           {
-            const double det
-              = geometry.integrationElement( quadrature.point( qP ) );
-            function.evaluate( geometry.global( quadrature.point( qP ) ), phi );
+            RangeType psi; //R"uckgabe-Funktionswerte
+        
             baseFunctionSet.evaluate( i, quadrature, qP, psi ); //i = i'te Basisfunktion; qP Quadraturpunkt
-            localFunction[ i ] += det * quadrature.weight( qP ) * (phi * psi);
+            localFunction[ i ] += factor * (phi * psi);
           }
         }
       }
