@@ -125,8 +125,10 @@ namespace Dune{
     /** \brief Constructor storing discrete function space 
         \param[in] f discrete function space 
     */
-    DiscreteFunctionInterface (const DiscreteFunctionSpaceType& f) 
-      : FunctionType ( f ) {}
+    inline explicit DiscreteFunctionInterface ( const DiscreteFunctionSpaceType &dfSpace )
+    : FunctionType( dfSpace )
+    {
+    }
 
     /** \brief returns name of discrete function 
         \return string holding name of discrete function 
@@ -435,8 +437,11 @@ namespace Dune{
   public:
     //- Methods
     //! pass the function space to the interface class
-    DiscreteFunctionDefault (const DiscreteFunctionSpaceType & f ) :
-      DiscreteFunctionInterfaceType ( f ) , lfStorage_ (*this) {}
+    inline explicit DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace )
+    : DiscreteFunctionInterfaceType( dfSpace ),
+      lfStorage_( *this )
+    {
+    }
 
     /** \brief @copydoc DiscreteFunctionInterface::print */
     void print(std::ostream & s) const;

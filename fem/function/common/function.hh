@@ -53,7 +53,8 @@ public:
   typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
 
   //! constructor
-  Function (const FunctionSpaceType & f) : functionSpace_ (f) 
+  inline explicit Function ( const FunctionSpaceType &fSpace )
+  : functionSpace_( fSpace )
   {
   }   
 
