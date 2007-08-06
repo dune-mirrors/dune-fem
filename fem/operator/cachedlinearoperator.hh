@@ -3,7 +3,8 @@
 
 namespace Dune
 {
-
+  //! @ingroup LinearDiscOperatos 
+  //! \newimplementation see fem/operator/concept.tex
   template< class WrappedOperatorImp, class SystemMatrixImp >
   class CachedLinearOperator
   : public Operator< typename WrappedOperatorImp :: DomainFieldType,

@@ -20,16 +20,17 @@ namespace Dune
     @{
 **/
   
-/** \brief 
+/*! \brief 
     Abstract class representing a function
+
 
     Template parameters are:
     -  FunctionSpaceImp      type of the function space where the function 
                              belongs to.
     -  FunctionImp           type of the implemented function (Barton-Nackman)
-
-    \interfaceclass
-*/
+    
+    @interfaceclass
+**/
 template< class FunctionSpaceImp, class FunctionImp>
 class Function : 
     public Mapping < typename FunctionSpaceImp::DomainFieldType,

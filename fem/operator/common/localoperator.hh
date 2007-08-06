@@ -6,13 +6,10 @@
 namespace Dune 
 {
 
-/** @ingroup  DiscreteOperator 
-
- */
-
 //***********************************************************************
 //
-/*! Interface LocalOperators 
+/*! @addtogroup LocalOperator 
+ Interface LocalOperators 
  Local operators only define what to do a one entity which is reached
  during a grid walkthrough on one level. The walkthrough is made by a
  discrete operator which organizes the walktrough and calls the local
@@ -21,6 +18,7 @@ namespace Dune
  finalizeGlobal which ic called once after the walktrough. The methods
  prepareLocal and finalizeLocal are called on each entity. If for one
  operator this methods are not needed, the definition of them is left free. 
+ \interfaceclass
 */
 //***********************************************************************
 template <class FstPType, class SecPType, class SType , 

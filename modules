@@ -99,6 +99,8 @@
       @ingroup OperatorCommon */
   /** @defgroup DiscreteOperator Discrete operators 
       @ingroup OperatorCommon */
+    /** @defgroup LocalOperator Operator acting on an entity
+        @ingroup DiscreteOperator */
     /** @defgroup LinearDiscOperators Linear discrete operators
         @ingroup DiscreteOperator */
     /** @defgroup DifferentiableOperators Operator with defined jacobian

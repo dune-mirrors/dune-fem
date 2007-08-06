@@ -22,6 +22,7 @@ namespace Dune{
  NOTE: if operator + and operator * are used the inherited class 
  DiscreteOperatorImp has to implement a Constructor which gets a copy and
  the new LocalOperatorType which is created by the operator + ...
+ \interfaceclass
 */ 
 template <class LocalOperatorImp, class DFDomainType, class DFRangeType ,
           template <class,class,class> class DiscreteOperatorImp >

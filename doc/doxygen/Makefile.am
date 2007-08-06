@@ -2,12 +2,12 @@
 
 if BUILD_DOCS
   DOXYGENTAG = doxygen-tag 
-  WHAT = bestpractice.html
+  WHAT = # bestpractice.html
   DOXYGEN_HTML = html 
   DOXYGEN_DIST = html-dist
 endif
 
-DISTCLEANFILES = doxygen.log doxygen-tag
+DISTCLEANFILES = doxygen.log doxygen-tag doxygen.out
 
 all: $(WHAT) $(DOXYGEN_HTML)
 
