@@ -38,12 +38,17 @@ class Function :
                      typename FunctionSpaceImp::DomainType, 
                      typename FunctionSpaceImp::RangeType > 
 {
-  //! type of this 
+public:
+  //! type of function space this function belongs to 
+  typedef FunctionSpaceImp FunctionSpaceType;
+
+private:
+  typedef Function< FunctionSpaceType, FunctionImp > ThisType;
+    
+  // FunctionImp should be exported as FunctionType
   typedef Function<FunctionSpaceImp,FunctionImp> FunctionType;
 
 public:
-  //! type of function space this function belongs to   
-  typedef FunctionSpaceImp FunctionSpaceType;
   //! domain type (from function space)
   typedef typename FunctionSpaceType::DomainType DomainType ;
   //! range type (from function space)
@@ -60,13 +65,21 @@ public:
   }   
 
   //! copy constructor
-  Function (const FunctionType& org) : functionSpace_ (org.functionSpace_) 
+  Function (const ThisType &org )
+  : functionSpace_( org.functionSpace_ )
   {
   }   
 
   //! destructor 
-  virtual ~Function () {} 
+  virtual ~Function ()
+  {
+  }
 
+private:
+  // Disallow copying
+  ThisType &operator= ( const ThisType &other );
+  
+public:
   /** \brief application operator call evaluate 
       \param[in] arg argument 
       \param[out] dest destination, i.e. f(arg) 

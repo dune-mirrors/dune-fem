@@ -171,6 +171,10 @@ namespace Dune {
       Imp(other)
     {}
 
+  private:
+    ThisType &operator= ( const ThisType &other );
+    
+  public:
       /** \brief @copydoc DiscreteFunctionDefault::assign */ 
     void assign(const ThisType& g)
     {
@@ -495,7 +499,11 @@ namespace Dune {
     {}
     
     ~AdaptiveDiscreteFunction();
-
+    
+  private:
+    ThisType &operator= ( const ThisType &other );
+ 
+  public:
     /** \brief @copydoc DiscreteFunctionDefault::assign */
     void assign(const ThisType& g)
     {

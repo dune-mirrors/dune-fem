@@ -70,6 +70,9 @@ namespace Dune{
     public Function<typename DiscreteFunctionTraits::DiscreteFunctionSpaceType,
                     DiscreteFunctionInterface<DiscreteFunctionTraits> > 
   {
+  private:
+    typedef DiscreteFunctionInterface< DiscreteFunctionTraits > ThisType;
+
   public:
     //- Typedefs and enums
 
@@ -130,6 +133,11 @@ namespace Dune{
     {
     }
 
+  private:
+    // Disallow copying
+    ThisType &operator= ( const ThisType &other );
+    
+  public:
     /** \brief returns name of discrete function 
         \return string holding name of discrete function 
     */
@@ -384,7 +392,14 @@ namespace Dune{
   class DiscreteFunctionDefault : 
     public DiscreteFunctionInterface<DiscreteFunctionTraits> 
   { 
+  private:
+    typedef DiscreteFunctionDefault< DiscreteFunctionTraits > ThisType;
+    typedef DiscreteFunctionInterface< DiscreteFunctionTraits > BaseType;
+    
+  protected:
+    using BaseType :: asImp;
 
+  private:
     typedef DiscreteFunctionInterface< 
       DiscreteFunctionTraits
     > DiscreteFunctionInterfaceType;
@@ -392,8 +407,6 @@ namespace Dune{
     typedef DiscreteFunctionDefault<
       DiscreteFunctionTraits
     > DiscreteFunctionDefaultType;
-
-    using DiscreteFunctionInterfaceType :: asImp;
 
     enum { myId_ = 0 };  
   
@@ -443,6 +456,11 @@ namespace Dune{
     {
     }
 
+  private:
+    // Disallow copying
+    ThisType &operator= ( const ThisType &other );
+    
+  public:
     /** \brief @copydoc DiscreteFunctionInterface::print */
     void print(std::ostream & s) const;
 
