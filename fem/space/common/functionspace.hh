@@ -38,9 +38,16 @@ struct VectorSpaceTraits {
     FunctionSpace defines what the types of the domain vector
     space and the range vector space for a function are. 
 */
-template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
-class FunctionSpace : public
-      FunctionSpaceInterface<VectorSpaceTraits<DomainFieldImp,RangeFieldImp,n,m> > {};
+template< typename DomainFieldImp, typename RangeFieldImp, int n, int m >
+class FunctionSpace
+: public FunctionSpaceInterface< VectorSpaceTraits< DomainFieldImp, RangeFieldImp, n, m > >
+{
+private:
+  typedef FunctionSpace< DomainFieldImp, RangeFieldImp, n, m > ThisType;
+
+public:
+  typedef ThisType FunctionSpaceType;
+};
 
 /* Forward declaration of  
   base class for matrix valued function spaces.

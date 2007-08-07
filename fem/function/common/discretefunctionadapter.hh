@@ -32,7 +32,9 @@ namespace Dune{
   template <class FunctionImp, class GridPartImp> 
   struct DiscreteFunctionAdapterTraits 
   {
-    typedef typename FunctionImp :: FunctionSpaceType FunctionSpaceType;
+    // make sure we obtain only the function space
+    typedef typename FunctionImp :: FunctionSpaceType :: FunctionSpaceType
+      FunctionSpaceType;
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
