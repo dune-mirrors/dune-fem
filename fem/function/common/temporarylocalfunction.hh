@@ -21,19 +21,20 @@ namespace Dune
    *  \param DiscreteFunctionSpaceImp type of the discrete function space, the
    *                                  local function shall belong to
    */
-  template< class DiscreteFunctionSpaceImp >
+  template< class DiscreteFunctionSpaceImp,
+            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
   class TemporaryLocalFunction
   : public LocalFunctionDefault
     < DiscreteFunctionSpaceImp,
-      TemporaryLocalFunction< DiscreteFunctionSpaceImp >
-    >
+      TemporaryLocalFunction< DiscreteFunctionSpaceImp, ArrayAllocatorImp > >
   {
   public:
     //! type of the discrete function space
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
   private:
-    typedef TemporaryLocalFunction< DiscreteFunctionSpaceType > ThisType;
+    typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, ArrayAllocatorImp >
+      ThisType;
     typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
 
   public:
@@ -61,16 +62,17 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
     typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
-    // typedef typename GridPartType :: EntityCodim0Type EntityCodim0Type;
+
+    typedef ArrayAllocatorImp< RangeFieldType > ArrayAllocatorType;
+    typedef DynamicArray< RangeFieldType, ArrayAllocatorType > DofArrayType;
 
   protected:
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;
     const EntityCodim0Type *entity_;
 
     BaseFunctionSetType baseFunctionSet_;
-    int numBaseFunctions_;
 
-    RangeFieldType *dofs_;
+    DofArrayType dofs_;
 
   public:
     /** \brief constructor creating a local function without binding it to an 
@@ -91,8 +93,7 @@ namespace Dune
     : discreteFunctionSpace_( dfSpace ),
       entity_( NULL ),
       baseFunctionSet_(),
-      numBaseFunctions_( 0 ),
-      dofs_( NULL )
+      dofs_()
     {
     }
     
@@ -111,16 +112,8 @@ namespace Dune
     : discreteFunctionSpace_( dfSpace ),
       entity_( &entity ),
       baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
-      numBaseFunctions_( baseFunctionSet_.numBaseFunctions() ),
-      dofs_( new RangeFieldType[ numBaseFunctions_ ] )
+      dofs_( baseFunctionSet_.numBaseFunctions() )
     {
-      assert( dofs_ != NULL );
-    }
-
-    inline ~TemporaryLocalFunction ()
-    {
-      if( dofs_ != NULL )
-        delete[] dofs_;
     }
 
     /** \brief access a local DoF
@@ -133,7 +126,6 @@ namespace Dune
      */
     inline const RangeFieldType &operator[] ( int index ) const
     {
-      assert( (index >= 0) && (index < numBaseFunctions_) );
       return dofs_[ index ];
     }
 
@@ -147,7 +139,6 @@ namespace Dune
      */
     inline RangeFieldType &operator[] ( int index )
     {
-      assert( (index >= 0) && (index < numBaseFunctions_) );
       return dofs_[ index ];
     }
 
@@ -178,7 +169,8 @@ namespace Dune
       assert( entity_ != NULL );
       
       phi = 0;
-      for( int i = 0; i < numBaseFunctions_; ++i )
+      const unsigned int numDofs = dofs_.size();
+      for( int i = 0; i < numDofs; ++i )
       {
         RangeType psi;
         baseFunctionSet_.evaluate( i, x, psi );
@@ -205,7 +197,8 @@ namespace Dune
       assert( entity_ != NULL );
       
       phi = 0;
-      for( int i = 0; i < numBaseFunctions_; ++i )
+      const unsigned int numDofs = dofs_.size();
+      for( int i = 0; i < numDofs; ++i )
       {
         RangeType psi;
         baseFunctionSet_.evaluate( i, quadrature, point, psi );
@@ -227,17 +220,9 @@ namespace Dune
      */
     inline void init ( const EntityCodim0Type &entity )
     {
-      const int oldNumDofs = numBaseFunctions_;
-
       entity_ = &entity;
       baseFunctionSet_ = discreteFunctionSpace_.baseFunctionSet( entity );
-      numBaseFunctions_ = baseFunctionSet_.numBaseFunctions();
-      if( numBaseFunctions_ != oldNumDofs ) {
-        if( dofs_ != NULL )
-          delete[] dofs_;
-        dofs_ = new RangeFieldType[ numBaseFunctions_ ];
-      }
-      assert( dofs_ != NULL );
+      dofs_.resize( baseFunctionSet_.numBaseFunctions() );
     }
 
     /** evaluate Jacobian in local coordinate x
@@ -261,7 +246,8 @@ namespace Dune
       const GeometryJacobianType &inv = geometry.jacobianInverseTransposed( x );
       
       grad = 0;
-      for( int i = 0; i < numBaseFunctions_; ++i )
+      const unsigned int numDofs = dofs_.size();
+      for( int i = 0; i < numDofs; ++i )
       {
         JacobianRangeType tmp;
         baseFunctionSet_.jacobian( i, x, tmp );
@@ -301,7 +287,8 @@ namespace Dune
         = geometry.jacobianInverseTransposed( quadrature.point( point ) );
       
       grad = 0;
-      for( int i = 0; i < numBaseFunctions_; ++i )
+      const unsigned int numDofs = dofs_.size();
+      for( int i = 0; i < numDofs; ++i )
       {
         JacobianRangeType tmp;
         baseFunctionSet_.jacobian( i, quadrature, point, tmp );
@@ -322,7 +309,7 @@ namespace Dune
      */
     inline int numDofs () const
     {
-      return numBaseFunctions_;
+      return dofs_.size();
     }
   };
   

@@ -551,8 +551,11 @@ namespace Dune
 
     inline void resize ( unsigned int newSize )
     {
-      allocator_.reallocate( size_, newSize, elements_ );
-      size_ = newSize;
+      if( newSize != size_ )
+      {
+        allocator_.reallocate( size_, newSize, elements_ );
+        size_ = newSize;
+      }
     }
 
     inline unsigned int size () const
