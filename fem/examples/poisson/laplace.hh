@@ -79,8 +79,8 @@ namespace Dune
  
   public:
     //! constructor
-    LaplaceFEOp( const DiscreteFunctionSpaceType &discreteFunctionSpace )
-    : discreteFunctionSpace_( discreteFunctionSpace ),
+    inline explicit LaplaceFEOp( const DiscreteFunctionSpaceType &dfSpace )
+    : discreteFunctionSpace_( dfSpace ),
       matrix_( 0 ),
       matrix_assembled_( false ),
       stiffTensor_( 0 )
@@ -88,9 +88,9 @@ namespace Dune
     }
         
     //! constructor
-    LaplaceFEOp( TensorType &stiffTensor,
-                 const DiscreteFunctionSpaceType &discreteFunctionSpace )
-    : discreteFunctionSpace_( discreteFunctionSpace ),
+    inline LaplaceFEOp( TensorType &stiffTensor,
+                        const DiscreteFunctionSpaceType &dfSpace )
+    : discreteFunctionSpace_( dfSpace ),
       matrix_( 0 ),
       matrix_assembled_( false ),
       stiffTensor_( &stiffTensor )

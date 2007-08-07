@@ -90,7 +90,7 @@ namespace Dune
      *  \param[in] dfSpace discrete function space the local function shall
      *                     belong to
      */
-    inline TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
+    inline explicit TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace ),
       entity_( NULL ),
       baseFunctionSet_(),

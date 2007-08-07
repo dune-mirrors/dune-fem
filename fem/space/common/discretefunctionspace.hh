@@ -386,7 +386,13 @@ namespace Dune{
   //
   ////////////////////////////////////////////////////////////
   /** \brief Create Obejct that behaves like a discrete function space 
-      without to provide functions with the iterator facilities. 
+      without to provide functions with the iterator facilities.
+
+      \note DiscreteFunctionSpaceAdapter is itself derived from the template
+            argument FunctionSpaceImp. Hence, the constructor will call the
+            default constructor of FunctionSpaceImp when this class is
+            instanciated. So do not use discrete function spaces for the
+            first template argument.
   */
   template <class FunctionSpaceImp, class GridPartImp>
   class DiscreteFunctionSpaceAdapter : public FunctionSpaceImp
@@ -408,8 +414,8 @@ namespace Dune{
     typedef typename GridPartType :: IndexSetType IndexSetType; 
     
     //! constructor taking grid Part 
-    DiscreteFunctionSpaceAdapter(const GridPartType& gridPart) 
-      : gridPart_(gridPart) 
+    explicit DiscreteFunctionSpaceAdapter ( const GridPartType &gridPart )
+    : gridPart_( gridPart ) 
     {
     }
 

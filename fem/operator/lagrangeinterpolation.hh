@@ -63,7 +63,7 @@ namespace Dune
     }
 
   private:
-    template< class FunctionType, bool hasDiscreteFunction >
+    template< class FunctionType, bool hasLocalFunction >
     struct callInterpolateDiscreteFunction;
 
     template< class FunctionType >

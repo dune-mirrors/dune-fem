@@ -79,13 +79,14 @@ namespace Dune
     using BaseType :: baseFunctionSpace_;
 
   public:
-    typedef SineBaseFunction< BaseFunctionSpaceType > ContinuousBaseFunctionType;
+    typedef SineBaseFunction< typename BaseFunctionSpaceType :: FunctionSpaceType >
+      ContinuousBaseFunctionType;
 
   private:
     typedef typename ContinuousBaseFunctionType :: CoefficientType CoefficientType;
 
   public:
-    inline SineReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
+    inline explicit SineReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
     : BaseType( baseFunctionSpace )
     {
       // CoefficientType coefficient( -maxCoefficient );
