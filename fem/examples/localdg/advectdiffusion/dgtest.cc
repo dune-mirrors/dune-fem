@@ -200,7 +200,7 @@ int main(int argc, char ** argv, char ** envp) {
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
       // dg.limit(U,tmp);
-      // dg.switchupwind();
+      dg.switchupwind();
       if(0 && counter%100 == 0) 
       {
         err = L2err.norm(problem,U,t);
