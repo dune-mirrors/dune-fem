@@ -556,7 +556,7 @@ namespace Dune
 
   //! An implementation of VectorInterface using a dynamic C++ array to provide the fields
   template< class FieldImp,
-            class ArrayAllocatorImp = DefaultArrayAllocator< FieldImp > >
+            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
   class DynamicVector
   : public VectorDefault< FieldImp, DynamicVector< FieldImp, ArrayAllocatorImp > >
   {
@@ -564,16 +564,14 @@ namespace Dune
     //! field type of the vector
     typedef FieldImp FieldType;
 
-    typedef ArrayAllocatorImp ArrayAllocatorType;
-
   private:
-    typedef DynamicVector< FieldType, ArrayAllocatorType > ThisType;
+    typedef DynamicVector< FieldType, ArrayAllocatorImp > ThisType;
     typedef VectorDefault< FieldType, ThisType > BaseType;
 
     using BaseType :: assign;
     
   protected:
-    DynamicArray< FieldType, ArrayAllocatorType > fields_;
+    DynamicArray< FieldType, ArrayAllocatorImp > fields_;
 
   public:
     //! Constructor setting up a vector of a specified size

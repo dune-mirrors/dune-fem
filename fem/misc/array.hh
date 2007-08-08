@@ -2,11 +2,12 @@
 #define DUNE_FEM_ARRAY_HH
 
 #include <cassert>
-#include <vector>
 
 #include <dune/common/misc.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
+
+#include <dune/fem/misc/arrayallocator.hh>
 
 namespace Dune
 {
@@ -372,140 +373,66 @@ namespace Dune
 
 
 
-  template< class ElementImp, class ArrayAllocatorImp >
-  class ArrayAllocatorInterface
-  {
-  public:
-    typedef ElementImp ElementType;
-
-    typedef ArrayAllocatorImp ArrayAllocatorType;
-
-  private:
-    typedef ArrayAllocatorInterface< ElementType, ArrayAllocatorType > ThisType;
-
-  public:
-    typedef ThisType ArrayAllocatorInterfaceType;
-
-    typedef ElementType *ElementPtrType;
-
-  public:
-    inline ArrayAllocatorInterface ()
-    {
-      typedef CompileTimeChecker< Conversion< ArrayAllocatorType, ThisType > :: exists >
-        __Array_Allocator_Implementation_Must_Be_Derived_From_Interface__;
-    }
-    
-    inline void allocate ( unsigned int size,
-                           ElementPtrType &array ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().allocate( size, array ) );
-    }
-
-    inline void free ( ElementPtrType &array ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().free( array ) );
-    }
-
-    inline void reallocate ( unsigned int oldSize,
-                             unsigned int newSize,
-                             ElementPtrType &array ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().reallocate( oldSize, newSize, array ) );
-    }
-
-  protected:
-    inline const ArrayAllocatorType &asImp () const
-    {
-      return static_cast< const ArrayAllocatorType& >( *this );
-    }
-
-    inline ArrayAllocatorType &asImp ()
-    {
-      return static_cast< ArrayAllocatorType& >( *this );
-    }
-  };
-
-
-
-  template< class ElementImp >
-  class DefaultArrayAllocator
-  : public ArrayAllocatorInterface< ElementImp, DefaultArrayAllocator< ElementImp > >
-  {
-  public:
-    typedef ElementImp ElementType;
-
-  private:
-    typedef DefaultArrayAllocator< ElementType > ThisType;
-    typedef ArrayAllocatorInterface< ElementType, ThisType > BaseType;
-
-  public:
-    typedef ElementType *ElementPtrType;
-    
-  public:
-    inline void allocate ( unsigned int size,
-                           ElementPtrType &array ) const
-    {
-      array = new ElementType[ size ];
-      assert( array != 0 );
-    }
-  
-    inline void free ( ElementPtrType &array ) const
-    {
-      delete[]( array );
-      array = 0;
-    }
-
-    inline void reallocate ( unsigned int oldSize,
-                             unsigned int newSize,
-                             ElementPtrType &array ) const
-    {
-      ElementPtrType p = new ElementType[ newSize ];
-      const unsigned int copySize = oldSize < newSize ? oldSize : newSize;
-      for( unsigned int i = 0; i < copySize; ++i )
-        p[ i ] = array[ i ];
-      delete[]( array );
-      array = p;
-    }
-  };
-
-
-
   template< class ElementImp,
-            class ArrayAllocatorImp = DefaultArrayAllocator< ElementImp > >
+            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
   class DynamicArray
   : public ArrayDefault< ElementImp, DynamicArray< ElementImp, ArrayAllocatorImp > >
   {
   public:
     typedef ElementImp ElementType;
 
-    typedef ArrayAllocatorImp ArrayAllocatorType;
-
   private:
-    typedef DynamicArray< ElementType > ThisType;
+    typedef DynamicArray< ElementType, ArrayAllocatorImp > ThisType;
     typedef ArrayDefault< ElementType, ThisType > BaseType;
+
+  protected:
+    typedef ArrayAllocatorImp< ElementType > ArrayAllocatorType;
+    
+    typedef typename ArrayAllocatorType :: ElementPtrType ElementPtrType;
 
   protected:
     ArrayAllocatorType allocator_;
     
     unsigned int size_;
-    ElementType *elements_;
+    ElementPtrType elements_;
 
   public:
     inline explicit DynamicArray ( unsigned int size = 0 )
+    : allocator_()
+    {
+      size_ = size;
+      allocator_.allocate( size_, elements_ );
+    }
+
+    inline explicit DynamicArray ( const ArrayAllocatorType &arrayAllocator,
+                                   unsigned int size = 0 )
+    : allocator_( arrayAllocator )
     {
       size_ = size;
       allocator_.allocate( size_, elements_ );
     }
     
-    inline DynamicArray ( unsigned int size, const ElementType &element )
+    inline DynamicArray ( unsigned int size,
+                          const ElementType &element )
+    : allocator_()
     {
       size_ = size;
       allocator_.allocate( size_, elements_ );
       assign( element );
     }
 
+    inline DynamicArray ( const ArrayAllocatorType &arrayAllocator,
+                          unsigned int size,
+                          const ElementType &element )
+    : allocator_( arrayAllocator )
+    {
+      size_ = size;
+      allocator_.allocate( size_, elements_ );
+      assign( element );
+    }
+    
     inline DynamicArray ( const ThisType &other )
+    : allocator_( other.allocator_ )
     {
       size_ = other.size_;
       allocator_.allocate( size_, elements_ );
@@ -561,197 +488,6 @@ namespace Dune
     inline unsigned int size () const
     {
       return size_;
-    }
-  };
-
-
-
-  template< class ElementImp, class RealImp >
-  class STLArrayIterator
-  {
-  public:
-    typedef ElementImp ElementType;
-
-  private:
-    typedef STLArrayIterator< ElementType, RealImp > ThisType;
-
-  protected:
-    RealImp realIterator_;
-
-  public:
-    inline explicit STLArrayIterator ( RealImp realIterator )
-    : realIterator_( realIterator )
-    {
-    }
-
-    inline STLArrayIterator(  const ThisType &other )
-    : realIterator_( other.realIterator )
-    {
-    }
-
-    inline ThisType &operator= ( const ThisType &other )
-    {
-      realIterator_ = other.realIterator_;
-    }
-
-    inline ElementType &operator* ()
-    {
-      return *realIterator_;
-    }
-
-    inline ThisType &operator++ ()
-    {
-      ++realIterator_;
-      return *this;
-    }
-
-    inline bool operator== ( const ThisType &other ) const
-    {
-      return realIterator_ == other.realIterator_;
-    }
-
-    inline bool operator!= ( const ThisType &other ) const
-    {
-      return realIterator_ != other.realIterator_;
-    }
-  };
-
-
-
-  template< class ElementImp >
-  class STLArray;
-
-
-
-  template< class ElementImp >
-  struct STLArrayTraits
-  {
-    typedef ElementImp ElementType;
-
-    typedef STLArray< ElementType > ArrayType;
-
-    typedef std :: vector< ElementType > stdVectorType;
-
-    typedef STLArrayIterator< ElementType, typename stdVectorType :: iterator >
-      IteratorType;
-    typedef STLArrayIterator< const ElementType, typename stdVectorType :: const_iterator >
-      ConstIteratorType;
-  };
-
-
-
-  template< class ElementImp >
-  class STLArray
-  : public ArrayInterface< STLArrayTraits< ElementImp > >
-  {
-  public:
-    typedef ElementImp ElementType;
-
-    typedef STLArrayTraits< ElementType > TraitsType;
-
-  private:
-    typedef STLArray< ElementType > ThisType;
-    typedef ArrayInterface< TraitsType > BaseType;
-
-    typedef typename TraitsType :: stdVectorType stdVectorType;
-
-  public:
-    typedef typename TraitsType :: IteratorType IteratorType;
-    typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
-
-  protected:
-    stdVectorType vector_;
-
-  public:
-    inline explicit STLArray ( unsigned int size = 0 )
-    : vector_( size )
-    {
-    }
-
-    inline STLArray ( unsigned int size,
-                      const ElementType &element )
-    : vector_( size, element )
-    {
-    }
-
-    inline STLArray ( const ThisType &other )
-    : vector_( other.vector_ )
-    {
-    }
-
-    inline const ElementType &operator[] ( unsigned int index ) const
-    {
-      return vector_[ index ];
-    }
-
-    inline ElementType &operator[] ( unsigned int index )
-    {
-      return vector_[ index ];
-    }
-
-    //! fill the array with copies of an element
-    inline ThisType &assign ( const ElementType &element )
-    {
-      vector_.assign( size(), element );
-      return *this;
-    }
-
-    //! copy another array to this one
-    template< class Traits >
-    inline ThisType &assign( const ArrayInterface< Traits > &other )
-    {
-      const unsigned int size = other.size();
-      resize( size );
-      for( unsigned int i = 0; i < size; ++i )
-        vector_[ i ] = other[ i ];
-      return *this;
-    }
-
-    inline void append ( const ElementType &element )
-    {
-      vector_.push_back( element );
-    }
-
-    template< class Traits >
-    inline void append ( const ArrayInterface< Traits > &array )
-    {
-      const unsigned int arraySize = array.size();
-      for( unsigned int i = 0; i < arraySize; ++i )
-        append( array[ i ] );
-    }
-
-    inline void resize ( unsigned int newSize )
-    {
-      vector_.resize( newSize );
-    }
-
-    //! obtain begin iterator
-    inline ConstIteratorType begin () const
-    {
-      return ConstIteratorType( vector_.begin() );
-    }
-
-    //! obtain begin iterator
-    inline IteratorType begin ()
-    {
-      return IteratorType( vector_.begin() );
-    }
-
-    //! obtain end iterator
-    inline ConstIteratorType end () const
-    {
-      return ConstIteratorType( vector_.end() );
-    }
-
-    //! obtain end iterator
-    inline IteratorType end ()
-    {
-      return IteratorType( vector_.end() );
-    }
-
-    inline unsigned int size () const
-    {
-      return vector_.size();
     }
   };
 

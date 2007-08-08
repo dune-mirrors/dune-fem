@@ -64,8 +64,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
     typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
 
-    typedef ArrayAllocatorImp< RangeFieldType > ArrayAllocatorType;
-    typedef DynamicArray< RangeFieldType, ArrayAllocatorType > DofArrayType;
+    typedef DynamicArray< RangeFieldType, ArrayAllocatorImp > DofArrayType;
 
   protected:
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;

@@ -77,6 +77,7 @@ namespace Dune
                               RangeFunctionType &w ) const
     {
       typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
+      typedef typename IteratorType :: Entity EntityType;
 
       typedef typename RangeFunctionType :: LocalFunctionType RangeLocalFunctionType;
 
@@ -89,16 +90,17 @@ namespace Dune
       const IteratorType end = rangeFunctionSpace.end();
       for( IteratorType it = rangeFunctionSpace.begin(); it != end; ++it )
       {
-        w_temp.init( *it );
-        localOperator_( *it, u, w_temp );
+        const EntityType &entity = *it;
+        
+        w_temp.init( entity );
+        localOperator_( entity, u, w_temp );
 
-        RangeLocalFunctionType w_local = w.localFunction( *it );
+        RangeLocalFunctionType w_local = w.localFunction( entity );
         const unsigned int numDofs = w_local.numDofs();
         for( unsigned int i = 0; i < numDofs; ++i )
         {
           RangeFieldType &dof = w_local[ i ];
-          RangeFieldType &update = w_temp[ i ];
-          dof = (dof < update ? dof : update);
+          dof = fmin( dof, w_temp[ i ] );
         }
       }
     }
