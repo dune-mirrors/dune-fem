@@ -29,7 +29,7 @@
 namespace Dune
 {
 
-  /*! @ingroup CGFiniteElement  
+  /*! @ingroup EllipticOperator
    *  \class FEOp 
    *  \brief The FEOp class provides an example of a Finite Element Operator 
    *     

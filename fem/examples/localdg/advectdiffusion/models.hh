@@ -2,7 +2,8 @@
 #include <dune/grid/common/gridpart.hh>
 #include "advectdiff.hh"
 
-#include <dune/fem/solver/odesolver.hh>
+#include <dune/fem/solver/rungekutta.hh>
+#include <dune/fem/solver/multistep.hh>
 // Approximations Ordnung
 enum {order=POLORDER,rksteps=POLORDER+1}; 
 
@@ -23,34 +24,29 @@ typedef HierarchicGridPart<GridType> GridPartType;
    typedef UpwindFlux<ModelType> FluxType;
    //typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
    //typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DGLimitedAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   //typedef DuneODE::ExplRungeKutta<DgType> ODEType;
-   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
-   //typedef DuneODE::ImplTimeStepper<DgType> ODEType;
+   //typedef DGLimitedAdvectionOperator<ModelType,UpwindFlux,order> DgType;
+   // typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+   // typedef DuneODE::ExplTimeStepper<DgType> ODEType;
 #elif PROBLEM == 1
    #include "scalarmodels.hh"
    #include "initadvectdiff.cc"
    typedef U0<GridType> InitialDataType;
-   //typedef U0Disc<GridType> InitialDataType;
-   //typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
    typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
-   // typedef LLFFlux<ModelType> FluxType;
-   typedef UpwindFlux<ModelType> FluxType;
-   typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
-   //typedef DGAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   //typedef DGLimitedAdvectionOperator<ModelType,UpwindFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
-   //typedef DuneODE::ExplTimeStepper<DgType> ODEType;
-   //typedef DuneODE::ImplTimeStepper<DgType> ODEType;
+   typedef LLFFlux<ModelType> FluxType;
+   typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
+   // typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplMultiStep<DgType> ODEType;
 #elif PROBLEM == 2
    #include "scalarmodels.hh"
    #include "initburgers.cc"
    typedef U0<GridType> InitialDataType;
    typedef BurgersModel<GridPartType,InitialDataType > ModelType;
    typedef LLFFlux<ModelType> FluxType;
-   typedef DGLimitedAdvectionOperator<ModelType,LLFFlux,order> DgType;
+   //typedef DGLimitedAdvectionOperator<ModelType,LLFFlux,order> DgType;
    //typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
+   //typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   typedef DuneODE::ExplMultiStep<DgType> ODEType;
 #elif PROBLEM == 3
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"

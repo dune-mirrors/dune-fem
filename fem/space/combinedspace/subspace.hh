@@ -94,7 +94,7 @@ namespace Dune {
   public:
     //- Public methods
     //! constructor
-    SubSpace(const CombinedSpaceType& spc, int component);
+    SubSpace(CombinedSpaceType& spc, int component);
 
     //! destructor
     ~SubSpace();

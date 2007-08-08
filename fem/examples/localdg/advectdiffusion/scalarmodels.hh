@@ -58,7 +58,9 @@ class BurgersModel {
              const RangeType& u, 
              DomainType& velocity) const 
   {
-    problem_.velocity(en.global(x),velocity);
+    velocity = 0;
+    velocity[0] = u[0];
+    // problem_.velocity(en.geometry().global(x),velocity);
   }
   
   inline double diffusionTimeStep() const {

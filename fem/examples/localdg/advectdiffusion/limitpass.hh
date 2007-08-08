@@ -14,7 +14,7 @@
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/modelcaller.hh>
 
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 
 #include <dune/fem/quadrature/elementquadrature.hh>
 

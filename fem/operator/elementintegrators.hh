@@ -29,7 +29,7 @@
 
 namespace Dune 
 {
-/*! @addtogroup CGFiniteElement
+/*! @addtogroup EllipticOperator
  * Description: several implementations of element-matrix and 
 **              element-rhs-integrators, 
 **              which can be accumulated for solving a general 

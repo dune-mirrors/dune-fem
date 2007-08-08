@@ -11,7 +11,7 @@
 
 namespace Dune {
 
-/** @ingroup ODESolver
+/** @ingroup OperatorCommon
   \brief SpaceOperatorInterface for Operators of the type 
   L: X --> X where X is a discrete function space
 
@@ -151,7 +151,8 @@ public:
   }
 };
 
-/** \brief CreatePass takes a discrete model and a PassType (like LocalDGPass)
+/** @ingroup Pass 
+ \brief CreatePass takes a discrete model and a PassType (like LocalDGPass)
  and creates with the parameter PreviousPass in the method create the
  desired pass. The advantage here is, that no typedefs have to be done.
 */

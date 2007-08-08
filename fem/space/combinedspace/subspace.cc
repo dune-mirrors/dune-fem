@@ -3,7 +3,7 @@ namespace Dune
   //- class SubSpace
   template <class CombinedSpaceImp>
   inline
-  SubSpace<CombinedSpaceImp>::SubSpace(const CombinedSpaceType& spc,
+  SubSpace<CombinedSpaceImp>::SubSpace(CombinedSpaceType& spc,
                                        int component) :
     BaseType(spc.gridPart()),
     spc_(spc),

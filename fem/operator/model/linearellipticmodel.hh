@@ -8,7 +8,7 @@
 
 namespace Dune
 {
-
+  /*! @ingroup EllipticOperator
   class DefaultLinearEllipticModelProperties
   {
   public:

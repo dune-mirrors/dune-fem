@@ -3,7 +3,7 @@
 
 //- system includes 
 #include <vector>
-
+#include <dune/common/fvector.hh>
 //- local includes 
 #include "vectorspace.hh"
 

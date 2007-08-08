@@ -1,4 +1,4 @@
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) -lcblas
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) 
 noinst_PROGRAMS = advectdiff dgtest #euler dgtest dgtest1 #datadisp 
 advectdiff_SOURCES = main.cc
 #euler_SOURCES = euler.cc
@@ -12,3 +12,4 @@ POLORDER = 0
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DGRIDDIM=$(GRIDDIM) -DPROBLEM=$(PROBLEM) -DPOLORDER=$(POLORDER) -D$(GRIDTYPE)
 
 #CXXFLAGS = -O3 -DNDEBUG -funroll-loops -finline-functions --param max-inline-insns-single=4000 --param large-function-growth=4500 --param inline-unit-growth=4000 -ffast-math -fomit-frame-pointer -march=opteron -msse3 -mfpmath=sse # -Wall
+#CXXFLAGS = -g -Wall

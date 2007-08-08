@@ -3,6 +3,7 @@
 
 //- system includes 
 #include <limits>
+#include <cassert>
 
 //- Dune includes 
 #include <dune/fem/io/file/asciiparser.hh>
@@ -159,6 +160,14 @@ namespace Dune {
     {
       assert( (dt_ * cfl_) > 0.0 );
       return dt_ * cfl_;
+    }
+
+    /** \brief  sets time step size 
+    */
+    void setDeltaT (double dt)
+    {
+      assert(dt > 0.0 );
+      dt_ = dt/cfl_;
     }
     
     /** \brief  syncronize time step, i.e. set timeStep to values of current 

@@ -26,7 +26,7 @@
 #include <dune/fem/space/common/arrays.hh>
 
 namespace Dune {
-/*! @addtogroup PassEllipt 
+/*! @ingroup EllipticOperator
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
 **   div(A(x)\nabla u) + &=& f(x)  \quad\mbox{in}\quad \Omega    \\

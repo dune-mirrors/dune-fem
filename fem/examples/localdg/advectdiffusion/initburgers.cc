@@ -17,6 +17,11 @@ public:
     evaluate(0,arg,res);
   }
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    if (std::abs(arg[0])<0.5) 
+      res = 0.5*(cos(2.*arg[0]*M_PI)+1.);
+    else
+      res = 0.;
+    return;
     if(epsilon < 1e-9)
       res = ((2.0*arg[0]-1.0)<0.0)? 1.0:-1.0;
     else

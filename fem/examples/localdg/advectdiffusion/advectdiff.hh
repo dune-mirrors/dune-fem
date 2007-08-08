@@ -12,7 +12,7 @@
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/selection.hh>
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/space/dgspace.hh>
 #include "discretemodels.hh"
 
@@ -321,8 +321,8 @@ namespace Dune {
 			       const NumFluxType& numf,
 			       DomainType& upwind) :
       grid_(grid),
-      numflux_(numf),
       model_(numf.model()),
+      numflux_(numf),
       gridPart_(grid_),
       space1_(gridPart_),
       space2_(gridPart_),

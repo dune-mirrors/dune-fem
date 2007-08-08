@@ -1,10 +1,10 @@
-problem=5
-polorder=0
-gridtype=ALUGRID_SIMPLEX
+problem=2
+polorder=1
+gridtype=ALBERTAGRID
 epsilonne=0.0
-grape=0
-level=0
-repeats=2
+grape=10000
+level=4
+repeats=1
 dimw=2
 
 
@@ -13,7 +13,7 @@ then
 echo "Something went wrong"
 exit 1
 fi
-./dgtest box${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${grape} 
+./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${grape} 0.1
 # mv eoc.tex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 # pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 rm -f *.{aux,log}

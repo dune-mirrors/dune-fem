@@ -4,7 +4,7 @@
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/selection.hh>
-#include <dune/fem/misc/timeutility.hh>
+#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/pass/limitpass.hh>
 
 // Dune includes
@@ -17,7 +17,9 @@
 #include <dune/fem/space/combinedspace.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
+#if HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
+#endif
 #include <dune/fem/quadrature/cachequad.hh>
 
 //*************************************************************
