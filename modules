@@ -131,9 +131,7 @@
       @ingroup OperatorCommon */
   /** @defgroup Operator2 Second order spatial operatos
       @ingroup OperatorCommon */
-    /** @defgroup CGFiniteElement Continuous Finite Elements elliptic operator
-        @ingroup Operator2 */
-    /** @defgroup DgElliptOperator Local Discontinous Galerkin for second order elliptic equations 
+    /** @defgroup EllipticOperator Elliptic operator
         @ingroup Operator2 */
   /** @defgroup ODESolver ODE solver
       @ingroup OperatorCommon */

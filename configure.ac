@@ -83,6 +83,7 @@ AC_CONFIG_FILES([Makefile
      fem/io/visual/grape/gridview/Makefile
      fem/io/visual/grape/functionview/Makefile
      fem/solver/Makefile 
+     fem/solver/test/Makefile 
      fem/solver/ode/Makefile 
      fem/solver/oemsolver/Makefile 
      fem/misc/Makefile
