@@ -160,14 +160,22 @@ namespace Dune
     inline void allocate ( unsigned int size,
                            ElementPtrType &array ) const
     {
-      array = new ElementType[ size ];
-      assert( array != 0 );
+      if( size > 0 )
+      {
+        array = new ElementType[ size ];
+        assert( array != 0 );
+      }
+      else
+        array = 0;
     }
   
     inline void free ( ElementPtrType &array ) const
     {
-      delete[]( array );
-      array = 0;
+      if( array != 0 )
+      {
+        delete[]( array );
+        array = 0;
+      }
     }
   };
 
@@ -205,21 +213,34 @@ namespace Dune
     inline void allocate ( unsigned int size,
                            ElementPtrType &array ) const
     {
-      array = (ElementPtrType)malloc( size * sizeof( ElementType ) );
-      assert( array != 0 );
+      if( size > 0 )
+      {
+        array = (ElementPtrType)malloc( size * sizeof( ElementType ) );
+        assert( array != 0 );
+      } else
+        array = 0;
     }
   
     inline void free ( ElementPtrType &array ) const
     {
-      std :: free( array );
-      array = 0;
+      if( array != 0 )
+      {
+        std :: free( array );
+        array = 0;
+      }
     }
 
     inline void reallocate ( unsigned int oldSize,
                              unsigned int newSize,
                              ElementPtrType &array ) const
     {
-      array = (ElementPtrType)realloc( array, newSize * sizeof( ElementType ) );
+      if( newSize == 0 )
+      {
+        std :: free( array );
+        array = 0;
+      }
+      else
+        array = (ElementPtrType)realloc( array, newSize * sizeof( ElementType ) );
     }
   };
 

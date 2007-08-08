@@ -100,7 +100,8 @@ namespace Dune
         for( unsigned int i = 0; i < numDofs; ++i )
         {
           RangeFieldType &dof = w_local[ i ];
-          dof = fmin( dof, w_temp[ i ] );
+          RangeFieldType &update = w_temp[ i ];
+          dof = dof < update ? dof : update;
         }
       }
     }

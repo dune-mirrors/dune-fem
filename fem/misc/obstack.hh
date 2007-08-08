@@ -103,14 +103,22 @@ namespace Dune
     inline void allocate ( unsigned int size,
                            ElementPtrType &array ) const
     {
-      array = (ElementPtrType)obStack().allocate( size * sizeof( ElementType ) );
-      assert( array != 0 );
+      if( size > 0 )
+      {
+        array = (ElementPtrType)obStack().allocate( size * sizeof( ElementType ) );
+        assert( array != 0 );
+      }
+      else
+        array = 0;
     }
   
     inline void free ( ElementPtrType &array ) const
     {
-      obStack().free( array );
-      array = 0;
+      if( array != 0 )
+      {
+        obStack().free( array );
+        array = 0;
+      }
     }
 
     inline void reallocate ( unsigned int oldSize,

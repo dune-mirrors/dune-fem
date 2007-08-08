@@ -447,11 +447,31 @@ namespace Dune{
 
     friend class ObjectStack < DiscreteFunctionDefaultType >;
     friend class LocalFunctionWrapper < DiscreteFunctionType >;
+
   public:
-    //- Methods
-    //! pass the function space to the interface class
+    /** \brief Constructor storing discrete function space
+     *
+     *  The discrete function space is passed to the interface class and the
+     *  local function storage is initialized.
+     * 
+     *  \param[in]  dfSpace  discrete function space 
+     */
     inline explicit DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace )
     : DiscreteFunctionInterfaceType( dfSpace ),
+      lfStorage_( *this )
+    {
+    }
+
+    /** \brief Copy constructor
+     *  
+     *  \note The local function storage cannot simple be copied; we must
+     *        create a new object (otherwise the other discrete function
+     *        will be used as local function factory by the storage).
+     *
+     *  \param[in]  other  discrete function to copy
+     */
+    inline DiscreteFunctionDefault ( const ThisType &other )
+    : DiscreteFunctionInterfaceType ( other ),
       lfStorage_( *this )
     {
     }
