@@ -11,7 +11,7 @@
 
 //- Dune includes 
 #include <dune/fem/misc/timeprovider.hh>
-
+#include <dune/fem/operator/common/spaceoperatorif.hh>
 namespace DuneODE 
 {
 
@@ -58,7 +58,7 @@ class ExplRungeKuttaBase
 public:
   typedef typename Operator::DestinationType DestinationType;
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-  typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
+  // typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
 private:
   std::vector< std::vector<double> > a;
   std::vector<double> b;
