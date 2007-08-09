@@ -276,10 +276,10 @@ struct MappingOperators
     return newMapping;
   }
 
-  //! \brief devide mapping
+  //! \brief divide mapping
   template<typename DFieldType,typename RFieldType, class DType, class RType>
   static inline Mapping<DFieldType,RFieldType,DType,RType> 
-  devideMapping(const Mapping<DFieldType,RFieldType,DType,RType>& a,
+  divideMapping(const Mapping<DFieldType,RFieldType,DType,RType>& a,
                 const RFieldType& scalar)
   {
     RFieldType factor = RFieldType(1)/scalar;
@@ -347,8 +347,8 @@ operator *(const RFieldType& factor,
 
 /** \relates Mapping 
     \brief operator / for mappings 
-    \param[in] mapping mapping which is devided
-    \param[in] factor f factor by which result of mapping is devided 
+    \param[in] mapping mapping which is divided
+    \param[in] factor f factor by which result of mapping is divided 
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
@@ -356,13 +356,13 @@ static inline Mapping<DFieldType,RFieldType,DType,RType>
 operator /(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
            const RFieldType& factor)
 {
-  return MappingOperators::devideMapping(mapping,factor);
+  return MappingOperators::divideMapping(mapping,factor);
 }
 
 /** \relates Mapping 
     \brief operator / for mappings 
-    \param[in] factor f factor by which result of mapping is devided 
-    \param[in] a mapping which is devided
+    \param[in] factor f factor by which result of mapping is divided 
+    \param[in] a mapping which is divided
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>
@@ -370,7 +370,7 @@ static inline Mapping<DFieldType,RFieldType,DType,RType>
 operator /(const RFieldType& factor,
            const Mapping<DFieldType,RFieldType,DType,RType>& mapping)
 {
-  return MappingOperators::devideMapping(mapping,factor);
+  return MappingOperators::divideMapping(mapping,factor);
 }
 
 } // end namespace Dune 
