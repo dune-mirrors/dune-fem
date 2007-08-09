@@ -5,9 +5,10 @@
 #include <vector>
 
 //- dune inclues
-#include <dune/common/array.hh>
+//#include <dune/common/array.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/defaultindexsets.hh>
+#include <dune/fem/misc/array.hh>
 
 namespace Dune
 {
@@ -59,14 +60,14 @@ namespace Dune
     const BaseIndexSetType &baseIndexSet_;
     
     int size_;
-    Array< int > index_;
+    DynamicArray< int > index_;
     
     int edgeSize_;
-    Array< int > edgeIndex_;
+    DynamicArray< int > edgeIndex_;
 
   public:
     //! Create PeriodicIndexSet for a grid
-    PeriodicLeafIndexSet ( const GridType &grid )
+    inline explicit PeriodicLeafIndexSet ( const GridType &grid )
     : grid_( grid ),
       baseIndexSet_( grid.leafIndexSet() )
     {
@@ -247,10 +248,10 @@ namespace Dune
       
       const int n = baseIndexSet_.size( codim );
       index_.resize( n );
-      index_ = -1;
+      index_.assign( -1 );
       size_ = 0;
       
-      Array< VertexType > vertices( n );
+      DynamicArray< VertexType > vertices( n );
       
       const IteratorType eit = end< codim, All_Partition >();
       for( IteratorType it = begin< codim, All_Partition >(); it != eit; ++it )
@@ -294,11 +295,11 @@ namespace Dune
       
       const int n = baseIndexSet_.size( codim );
       edgeIndex_.resize( n );
-      edgeIndex_ = -1;
+      edgeIndex_.assign( -1 );
       edgeSize_ = 0;
 
-      Array< VertexType > vertices0( n );
-      Array< VertexType > vertices1( n );
+      DynamicArray< VertexType > vertices0( n );
+      DynamicArray< VertexType > vertices1( n );
       
       IteratorType eit = end< codim, All_Partition >();
       for( IteratorType it = begin< codim, All_Partition >(); it != eit; ++it )
