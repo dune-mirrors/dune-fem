@@ -34,6 +34,9 @@ namespace Dune
     typedef VectorInterface< TraitsType > ThisType;
     typedef ArrayInterface< VectorInterfaceArrayTraits< TraitsType > > BaseType;
 
+    template< class >
+    friend class VectorInterface;
+
   public:
     //! type of this interface
     typedef ThisType VectorInterfaceType;
@@ -119,14 +122,14 @@ namespace Dune
     template< class Traits >
     inline VectorType &assign ( const VectorInterface< Traits > &v )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( v.asImp() ) );
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v.asImp() ) );
       return asImp();
     }
 
     //! Initialize all fields of this vector with a scalar
     inline VectorType &assign ( const FieldType s )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( s ) );
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
       return asImp();
     }
 

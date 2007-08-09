@@ -40,4 +40,39 @@ namespace Dune
     return out;
   }
 
+
+
+  void match ( std :: istream &in, char excepted )
+  {
+    char c = 0;
+    in >> c;
+    if( c != excepted )
+      in.clear( std :: ios_base :: badbit );
+  }
+
+
+
+  //! read any vector from a stream
+  template< class TraitsType >
+  inline std :: istream &operator>> ( std :: istream &in,
+                                      VectorInterface< TraitsType > &v )
+  {
+    const unsigned int size = v.size();
+    
+    DynamicVector< typename TraitsType :: FieldType > w( size );
+
+    char expected = '[';
+    for( unsigned int i = 0; i < size; ++i )
+    {
+      match( in, expected );
+      in >> w[ i ];
+      expected = ',';
+    }
+    match( in, ']' );
+
+    if( in )
+      v.assign( w );
+    return in;
+  }
+
 }
