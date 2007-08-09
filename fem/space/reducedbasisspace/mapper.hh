@@ -27,7 +27,7 @@ namespace Dune
     const BaseFunctionListType &baseFunctionList_;
 
   public:
-    inline ReducedBasisMapper ( const BaseFunctionListType &baseFunctionList )
+    inline explicit ReducedBasisMapper ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( baseFunctionList )
     {
     }

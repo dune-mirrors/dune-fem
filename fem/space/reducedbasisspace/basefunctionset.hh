@@ -104,7 +104,7 @@ namespace Dune
     }
    
     //! constructor with an argument as TODO
-    inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList )
+    inline explicit ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( &baseFunctionList ),
       entity_( NULL )
     {

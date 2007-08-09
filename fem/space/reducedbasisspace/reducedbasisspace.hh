@@ -108,7 +108,7 @@ namespace Dune
 
   public:
   //! constructor the underlying lagrange basis is the argument
-    inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
+    inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
     : BaseType( baseFunctionSpace.gridPart() ),
       baseFunctionSpace_( baseFunctionSpace ),
       baseFunctionList_(),
