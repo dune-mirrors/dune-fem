@@ -8,5 +8,6 @@ operator_HEADERS = discretefeopimp.hh      elementintegratortraits.hh\
 inverseoperators.hh discreteoperatorimp.hh  feop.hh\
 lagrangedofhandler.hh elementintegrators.hh   feoperator.hh\
 matrixadapter.hh\
+lagrangeinterpolation.hh \
 diffusionoperator.hh integrationoperator.hh cachedlinearoperator.hh\
 dirichletboundaryoperator.hh sourceprojection.hh identityoperator.hh

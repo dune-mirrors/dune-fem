@@ -1,3 +1,2 @@
 todo list for dune/fem/operator
 -------------------------------
--LagrangeInterpolation should use DiscreteFunctionAdapter instead of EntityFunction
