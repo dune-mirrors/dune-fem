@@ -216,7 +216,7 @@ namespace Dune
     mutable LagrangePointSetMapType lagrangePointSet_;
     
     //! corresponding mapper
-    mutable MapperType *mapper_;
+    MapperType *mapper_;
 
     //! reference to the DoF manager
     DofManagerType &dofManager_;

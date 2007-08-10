@@ -116,7 +116,7 @@ namespace Dune {
   public:
     //- Constructors and destructors
     /** \brief Constructor taking grid part */
-    DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
+    explicit DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
       BaseType (gridPart),
       mapper_(0),
       baseFuncSet_(),
@@ -286,7 +286,7 @@ namespace Dune {
 
   protected:
     //! mapper for function space 
-    mutable MapperType* mapper_; 
+    MapperType* mapper_; 
 
     //! map holding base function sets
     typedef std::map < const GeometryType, const BaseFunctionSetImp* > BaseFunctionMapType;

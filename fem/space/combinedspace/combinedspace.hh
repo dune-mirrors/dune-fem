@@ -158,7 +158,8 @@ namespace Dune {
 
     enum { spaceId_ = 13 };
     
-    CompileTimeChecker<(Traits::ContainedDimRange == 1)> use_CombinedSpace_only_with_scalar_spaces;
+    CompileTimeChecker<(Traits::ContainedDimRange == 1)>
+      use_CombinedSpace_only_with_scalar_spaces;
   public:
     //- Public methods
     //! constructor
@@ -167,8 +168,7 @@ namespace Dune {
     CombinedSpace(ContainedDiscreteFunctionSpaceType& spc);
     */
     //! constructor
-    inline
-    CombinedSpace(GridPartType& gridpart);
+    inline explicit CombinedSpace( GridPartType &gridpart );
 
     //! destructor
     ~CombinedSpace();
