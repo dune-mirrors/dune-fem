@@ -23,6 +23,7 @@ namespace Dune
 
     typedef typename DomainSpaceType :: RangeFieldType DomainFieldType;
     typedef typename RangeSpaceType :: RangeFieldType RangeFieldType;
+    typedef RangeFieldType LittleBlockType;
   };
 
 

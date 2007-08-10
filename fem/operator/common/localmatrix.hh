@@ -49,11 +49,8 @@ namespace Dune
     typedef typename RangeSpaceType :: BaseFunctionSetType
       RangeBaseFunctionSetType;
 
-    /* Is such a declaration valid?
-    //! 
-    typedef typename LocalMatrixType:: block_type LittleBlockType;
-    */
-
+    /*! type of block (i.e. FieldMatrix for BlockMatrices */
+    typedef typename Traits :: LittleBlockType  LittleBlockType;
   protected:  
     //! constructor 
     inline LocalMatrixInterface ()

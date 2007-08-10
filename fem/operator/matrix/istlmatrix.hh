@@ -478,6 +478,8 @@ namespace Dune {
 
     struct LocalMatrixTraits
     {
+      typedef RowSpaceImp DomainSpaceType ;
+      typedef ColumnSpaceImp RangeSpaceType;
       typedef double RangeFieldType;
       typedef MatrixType LocalMatrixType;
       typedef typename MatrixType:: block_type LittleBlockType;
@@ -487,6 +489,8 @@ namespace Dune {
     template <class MatrixImp> 
     class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
     {
+      typedef LocalMatrixDefault<LocalMatrixTraits> BaseType;
+        
       typedef MatrixImp MatrixType;
       typedef typename MatrixType:: block_type LittleBlockType;
       
@@ -501,7 +505,8 @@ namespace Dune {
                   const RowSpaceType & rowSpace,
                   const EntityType & colEntity,
                   const ColumnSpaceType & colSpace)
-        : rowIndex_(rowSpace.indexSet().index(rowEntity))
+        : BaseType( rowSpace, colSpace, rowEntity, colEntity )
+        , rowIndex_(rowSpace.indexSet().index(rowEntity))
         , colIndex_(colSpace.indexSet().index(colEntity))
         , matrix_(m[rowIndex_][colIndex_])
       {
