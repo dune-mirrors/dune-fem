@@ -1,3 +1,7 @@
+#undef HAVE_TR1_ARRAY 
+#undef HAVE_TR1_TRAITS 
+#undef HAVE_TR1_TUPLE
+
 #include <dune/common/tuples.hh>
 namespace Dune {
 /*! @addtogroup InterfaceHelper
