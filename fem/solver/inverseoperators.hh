@@ -102,13 +102,15 @@ namespace Dune {
     typename DiscreteFunctionType::RangeFieldType,
     DiscreteFunctionType,DiscreteFunctionType> 
   {
-
+    typedef Operator<
+            typename DiscreteFunctionType::DomainFieldType,
+            typename DiscreteFunctionType::RangeFieldType,
+            DiscreteFunctionType,DiscreteFunctionType> BaseType;
+    
     typedef Mapping<typename DiscreteFunctionType::DomainFieldType ,
                     typename DiscreteFunctionType::RangeFieldType ,
                     DiscreteFunctionType,DiscreteFunctionType> MappingType;
-    typedef DiscreteFunctionType RangeType;
-    typedef DiscreteFunctionType DomainType;
-    
+
   public:
     /** \brief constructor of CGInverseOperator
       \param[in] op Mapping describing operator to invert 
@@ -130,10 +132,10 @@ namespace Dune {
         \param[in] arg right hand side 
         \param[out] dest solution 
     */
-    virtual void operator()(const DiscreteFunctionType& arg, 
-                            DiscreteFunctionType& dest ) const 
+    virtual void operator()(const DomainType& arg, 
+                            RangeType& dest ) const 
     {
-      CGAlgorithm<MappingType,DiscreteFunctionType>::cg(op_,arg,dest,epsilon_,maxIter_,(_verbose >0));
+      CGAlgorithm<MappingType,DomainType>::cg(op_,arg,dest,epsilon_,maxIter_,(_verbose >0));
     }
 
   private:
