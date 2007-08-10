@@ -181,13 +181,13 @@ namespace Dune {
     enum { polynomialOrder =  polOrd };
 
     //! Constructor generating Finite Volume Space 
-    FiniteVolumeSpace(GridPartType & g);
+    inline explicit FiniteVolumeSpace(GridPartType & g);
 
     //! Desctructor 
     virtual ~FiniteVolumeSpace (); 
 
     //! continuous
-    bool continuous() const { return (polOrd == 0) ? false : true; }
+    bool continuous() const { return (polynomialOrder == 0) ? false : true; }
  
     //! return type of this function space 
     DFSpaceIdentifier type () const;

@@ -14,7 +14,6 @@ inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStor
 FiniteVolumeSpace (GridPartType & gridPart) :
     DefaultType(gridPart),
     baseFuncSet_(),
-    gridPart_(gridPart), 
     mapper_(0),
     dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
 {
@@ -101,23 +100,6 @@ baseFunctionSet (const GeometryType& geomType) const
 {
   assert( baseFuncSet_.find(geomType) != baseFuncSet_.end());
   return BaseFunctionSetType(baseFuncSet_[geomType]);
-}
-
-template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
-inline int FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
-size () const
-{
-  assert( mapper_ );
-  return mapper_->size ();
-}
-
-template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
-template< class EntityType> 
-inline int FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
-mapToGlobal ( EntityType &en, int localNum ) const
-{
-  assert( mapper_ );
-  return mapper_->mapToGlobal ( en , localNum );
 }
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
