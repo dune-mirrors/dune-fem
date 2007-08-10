@@ -104,5 +104,4 @@ namespace Dune
 } // end namespace Dune
 
 #include "gausspoints_implementation.hh"
-
 #endif
