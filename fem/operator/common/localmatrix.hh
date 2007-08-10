@@ -233,6 +233,7 @@ namespace Dune
     }
 
   public:
+    /** \copydoc Dune::LocalMatrixInterface::init */
     template< class DomainEntityType, class RangeEntityType >
     inline void init ( const DomainEntityType &domainEntity,
                        const RangeEntityType &rangeEntity )
@@ -241,35 +242,42 @@ namespace Dune
       rangeBaseSet_ = rangeSpace_.baseFunctionSet( rangeEntity );
     }
 
+    /** \copydoc Dune::LocalMatrixInterface::resort */
     inline void resort ()
     {
     }
     
+    /** \copydoc Dune::LocalMatrixInterface::rows */
     inline int rows () const
     {
       return rangeBaseSet_.numBaseFunctions();
     }
     
+    /** \copydoc Dune::LocalMatrixInterface::columns */
     inline int columns () const
     {
       return domainBaseSet_.numBaseFunctions();
     }
 
+    /** \copydoc Dune::LocalMatrixInterface::domainSpace */
     inline const DomainSpaceType &domainSpace () const
     {
       return domainSpace_;
     }
     
+    /** \copydoc Dune::LocalMatrixInterface::rangeSpace */
     inline const RangeSpaceType &rangeSpace () const
     {
       return rangeSpace_;
     }
 
+    /** \copydoc Dune::LocalMatrixInterface::domainBaseFunctionSet */
     inline const DomainBaseFunctionSetType &domainBaseFunctionSet () const
     {
       return domainBaseSet_;
     }
     
+    /** \copydoc Dune::LocalMatrixInterface::rangeBaseFunctionSet */
     inline const DomainBaseFunctionSetType &rangeBaseFunctionSet () const
     {
       return rangeBaseSet_;
