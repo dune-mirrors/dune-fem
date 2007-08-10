@@ -15,6 +15,7 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/operator/common/localmatrix.hh>
 
 namespace Dune { 
 
@@ -475,9 +476,16 @@ namespace Dune {
     //! type of preconditioner 
     typedef PreconditionerWrapper<BlockVectorType,BlockVectorType> PreconditionMatrixType;
 
+    struct LocalMatrixTraits
+    {
+      typedef double RangeFieldType;
+      typedef MatrixType LocalMatrixType;
+      typedef typename MatrixType:: block_type LittleBlockType;
+    };
+
     //! LocalMatrix 
     template <class MatrixImp> 
-    class LocalMatrix
+    class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
     {
       typedef MatrixImp MatrixType;
       typedef typename MatrixType:: block_type LittleBlockType;
