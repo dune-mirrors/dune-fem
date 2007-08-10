@@ -223,7 +223,7 @@ namespace Dune
     const LocalOperatorType localOperator_;
     
   public:
-    inline IntegrationOperator ( const LocalOperatorType &localOperator )
+    inline explicit IntegrationOperator ( const LocalOperatorType &localOperator )
     : localOperator_( localOperator )
     {
     }

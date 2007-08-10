@@ -82,7 +82,7 @@ namespace Dune
     const ModelType &model_;
 
   public:
-    inline LocalDiffusionOperator ( const ModelType &model )
+    inline explicit LocalDiffusionOperator ( const ModelType &model )
     : model_( model )
     {
     }

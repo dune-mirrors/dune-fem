@@ -42,6 +42,8 @@ namespace Dune
     typedef Operator< DomainFieldType, RangeFieldType, DomainFunctionType, RangeFunctionType >
       BaseType;
 
+    friend class DirichletBoundaryOperator< WrappedOperatorType, BoundaryModelType >;
+
   public:
     typedef typename WrappedProjectionType :: RangeFunctionSpaceType
       RangeFunctionSpaceType;
@@ -50,13 +52,14 @@ namespace Dune
     const OperatorType &operator_;
     const WrappedProjectionType wrappedProjection_;
 
-  public:
-    inline DirichletBoundaryRangeProjection ( const OperatorType &op )
+  protected:
+    inline explicit DirichletBoundaryRangeProjection ( const OperatorType &op )
     : operator_( op ),
       wrappedProjection_( operator_.wrappedOperator_.rangeProjection() )
     {
     }
 
+  public:
     inline void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
       typedef typename RangeFunctionType :: DofIteratorType DofIteratorType;

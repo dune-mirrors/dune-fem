@@ -2,6 +2,7 @@
 #define DUNE_FEM_MINIMIZATIONOPERATOR_HH
 
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/function/common/temporarylocalfunction.hh>
 
 namespace Dune
 {
@@ -68,7 +69,7 @@ namespace Dune
     const LocalOperatorType &localOperator_;
 
   public:
-    inline MinimizationOperator ( const LocalOperatorType &localOperator )
+    inline explicit MinimizationOperator ( const LocalOperatorType &localOperator )
     : localOperator_( localOperator )
     {
     }
