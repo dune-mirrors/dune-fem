@@ -7,6 +7,19 @@
 namespace Dune
 {
 
+  /** \ingroup Matrix
+   *  \class TemporaryLocalMatrix
+   *  \brief A local matrix with a small array as storage
+   *
+   *  A TemporaryLocalMatrix is an implementation of the LocalMatrixInterface
+   *  storing the matrix values in an array. It is useful when generating
+   *  multiple local matrices that shall then be added together.
+   *
+   *  \note Due to the backing array, accesses to the matrix should be very fast.
+   *
+   *  \param DomainSpaceImp  DiscreteFunctionSpace modelling the domain
+   *  \param RangeSpaceImp   DiscreteFunctionSpace modelling the range
+   */
   template< class DomainSpaceImp, class RangeSpaceImp >
   class TemporaryLocalMatrix;
 
