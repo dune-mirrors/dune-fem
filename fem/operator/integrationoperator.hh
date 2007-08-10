@@ -3,7 +3,7 @@
 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/temporarylocalfunction.hh>
-#include <dune/fem/operator/matrix/localmatrix.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
 
 namespace Dune
 {
@@ -132,15 +132,14 @@ namespace Dune
     {
       // type of iterator over grid partition
       typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
+
+      typedef typename IteratorType :: Entity EntityType;
      
       // type of base function sets
       typedef typename DomainFunctionSpaceType :: BaseFunctionSetType
         DomainBaseFunctionSetType;
       typedef typename RangeFunctionSpaceType :: BaseFunctionSetType
         RangeBaseFunctionSetType;
-
-      // row type for local matrix
-      typedef typename TemporaryLocalMatrixType :: RowType LocalRowType;
 
       const DomainFunctionSpaceType &domainFunctionSpace = this->domainFunctionSpace();
       const RangeFunctionSpaceType &rangeFunctionSpace = this->rangeFunctionSpace();
@@ -155,20 +154,19 @@ namespace Dune
       const IteratorType &end = rangeFunctionSpace.end();
       for( IteratorType it = rangeFunctionSpace.begin(); it != end; ++it )
       {
+        const EntityType &entity = *it;
         // obtain local matrix from local operator
-        localMatrix.init( *it );
-        localOperator_.assembleMatrix( *it, localMatrix );
+        localMatrix.init( entity, entity );
+        localOperator_.assembleMatrix( entity, localMatrix );
 
         // update global matrix
         const unsigned int numLocalRows = localMatrix.rows();
         const unsigned int numLocalColumns = localMatrix.columns();
         for( unsigned int i = 0; i < numLocalRows; ++i ) {
-          const LocalRowType localRow = localMatrix[ i ];
-
-          const int globalRowIndex = rangeFunctionSpace.mapToGlobal( *it, i );
+          const int globalRowIndex = rangeFunctionSpace.mapToGlobal( entity, i );
           for( unsigned int j = 0; j < numLocalColumns; ++j ) {
-            const int globalColIndex = domainFunctionSpace.mapToGlobal( *it, j );
-            matrix.add( globalRowIndex, globalColIndex, localRow[ j ] );
+            const int globalColIndex = domainFunctionSpace.mapToGlobal( entity, j );
+            matrix.add( globalRowIndex, globalColIndex, localMatrix.get( i, j ) );
           }
         }
       }

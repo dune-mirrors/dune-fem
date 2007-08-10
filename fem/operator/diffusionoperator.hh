@@ -9,7 +9,8 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 
-#include <dune/fem/operator/matrix/localmatrix.hh>
+//#include <dune/fem/operator/matrix/localmatrix.hh>
+#include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/identityoperator.hh>
 #include <dune/fem/operator/integrationoperator.hh>
 #include <dune/fem/operator/sourceprojection.hh>
@@ -176,8 +177,8 @@ namespace Dune
     template< class EntityType, class LocalMatrixType >
     inline void assembleMatrix
       ( const EntityType &entity,
-        LocalMatrixInterface< typename LocalMatrixType :: TraitsType, LocalMatrixType >
-          &localMatrix
+        LocalMatrixType &localMatrix
+//        LocalMatrixInterface< typename LocalMatrixType :: Traits > &localMatrix
       ) const
     {
       // geometry type for the entity
@@ -193,7 +194,7 @@ namespace Dune
         DomainBaseFunctionSetType;
       typedef typename LocalMatrixType :: RangeBaseFunctionSetType
         RangeBaseFunctionSetType;
-      typedef typename LocalMatrixType :: FieldType FieldType;
+      typedef typename LocalMatrixType :: RangeFieldType FieldType;
 
       // type of jacobians
       typedef typename DomainBaseFunctionSetType :: JacobianRangeType DomainJacobianType;
@@ -212,7 +213,7 @@ namespace Dune
       const unsigned int columns = localMatrix.columns();
 
       // clear the locl matrix
-      localMatrix = 0;
+      localMatrix.clear();
 
       // Loop filling the local matrix
       QuadratureType quadrature( entity, 2 * polynomialOrder );
@@ -233,8 +234,6 @@ namespace Dune
         // Loop over all base functions for matrix rows
         for( unsigned int i = 0; i < rows; ++i )
         {
-          typename LocalMatrixType :: RowType row = localMatrix[ i ];
-
           // evaluate gradient of i-th base function
           RangeJacobianType phi_x;
           rangeBaseFunctionSet.jacobian( i, quadrature, pt, phi_x );
@@ -253,7 +252,7 @@ namespace Dune
             diffusiveFlux[ 0 ] = FMatrixHelp :: mult( inv, diffusiveFlux[ 0 ] );
  
             // update the local matrix
-            row[ j ] += weight * (diffusiveFlux[ 0 ] * phi_x[ 0 ]);
+            localMatrix.add( i, j, weight * (diffusiveFlux[ 0 ] * phi_x[ 0 ]) );
           }
         }
       }

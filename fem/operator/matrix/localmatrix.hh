@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_LOCALMATRIX_HH
 #define DUNE_FEM_LOCALMATRIX_HH
 
+#warning "dune/fem/operator/matrix/localmatrix.hh is deprecated."
+
 #include <dune/common/bartonnackmanifcheck.hh>
 
 namespace Dune
