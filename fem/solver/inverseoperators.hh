@@ -112,6 +112,10 @@ namespace Dune {
                     DiscreteFunctionType,DiscreteFunctionType> MappingType;
 
   public:
+    typedef typename BaseType :: DomainType DomainType;
+    typedef typename BaseType :: RangeType RangeType;
+
+  public:
     /** \brief constructor of CGInverseOperator
       \param[in] op Mapping describing operator to invert 
       \param[in] redEps reduction epsilon 
