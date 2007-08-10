@@ -6,7 +6,7 @@ SUBDIRS = common 0order 1order 2order matrix model projection
 operatordir =  $(includedir)/dune/fem/operator
 operator_HEADERS = discretefeopimp.hh      elementintegratortraits.hh\
 inverseoperators.hh discreteoperatorimp.hh  feop.hh\
-lagrangedofhandler.hh elementintegrators.hh   feoperator.hh\
+elementintegrators.hh   feoperator.hh\
 matrixadapter.hh\
 lagrangeinterpolation.hh \
 diffusionoperator.hh integrationoperator.hh cachedlinearoperator.hh\
