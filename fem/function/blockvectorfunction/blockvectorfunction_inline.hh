@@ -95,14 +95,6 @@ inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::print(std::o
 //*************************************************************************
 //  Interface Methods 
 //*************************************************************************
-template<class DiscreteFunctionSpaceType> template <class EntityType>
-inline void
-BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-localFunction ( const EntityType &en , LocalFunctionType &lf )
-{
-  lf.init ( en );
-}
-
 template<class DiscreteFunctionSpaceType>
 inline typename BlockVectorDiscreteFunction<
 DiscreteFunctionSpaceType>:: LocalFunctionImp *

@@ -197,10 +197,6 @@ public:
   LocalFunctionType localFunction(const EntityType& en) const;
 #endif
 
-  /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
-  template <class EntityType> 
-  void localFunction ( const EntityType &en, LocalFunctionType & lf) DUNE_DEPRECATED; 
-
   /** \brief @copydoc DiscreteFunctionInterface::dbegin */ 
   DofIteratorType dbegin (); 
   
