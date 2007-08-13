@@ -445,8 +445,8 @@ namespace Dune{
     //! type of local function stack 
     typedef ObjectStack < DiscreteFunctionDefaultType > LocalFunctionStorageType;
 
-    friend class ObjectStack < DiscreteFunctionDefaultType >;
-    friend class LocalFunctionWrapper < DiscreteFunctionType >;
+    friend class ObjectStack< DiscreteFunctionDefaultType >;
+    friend class LocalFunctionWrapper< DiscreteFunctionType >;
 
   public:
     /** \brief Constructor storing discrete function space

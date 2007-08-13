@@ -19,24 +19,33 @@ template < class DiscreteFunctionSpaceType, class LocalFunctionImp > class Local
 //! Manages the getting and deleting of local function pointers and 
 //! acts like a local functions 
 template < class DiscreteFunctionImp > 
-class LocalFunctionWrapper : 
-    public LocalFunctionDefault < 
-  typename DiscreteFunctionImp::DiscreteFunctionSpaceType,
-  LocalFunctionWrapper < DiscreteFunctionImp > > 
+class LocalFunctionWrapper
+: public LocalFunctionDefault
+  < typename DiscreteFunctionImp :: DiscreteFunctionSpaceType,
+    LocalFunctionWrapper< DiscreteFunctionImp >
+  >
 {
 public:
-  //! type of local function implementation 
-  typedef typename DiscreteFunctionImp::LocalFunctionImp  LocalFunctionImp; 
-  //! type of discrete functions space 
-  typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType
+  //! type of discrete function
+  typedef DiscreteFunctionImp DiscreteFunctionType;
+
+  //! type of discrete function space 
+  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
+  
+private:
+  typedef LocalFunctionWrapper< DiscreteFunctionType > ThisType;
+  typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
+
+public:
+  //! type of local function implementation 
+  typedef typename DiscreteFunctionImp :: LocalFunctionImp  LocalFunctionImp;
+  
   //! Iterator over the space
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   //! The codim 0 entity
-  typedef typename IteratorType::Entity Entity;
+  typedef typename IteratorType::Entity EntityType;
 
-  //! type of discrete function 
-  typedef DiscreteFunctionImp  DiscreteFunctionType;  
   //! type of base function set 
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
 
@@ -57,76 +66,73 @@ public:
       
   typedef typename DiscreteFunctionDefaultType::LocalFunctionStorageType LFStorage;
 
-private:
-  // local function storage stack 
-  LFStorage & storage_;
-
+protected:
   // type of stack entry 
-  typedef typename LFStorage :: StackStorageType StackStorageType;
-  
+  typedef typename LFStorage :: ObjectPointerType LocalFunctionPtrType;
+ 
+private:
   // pair storing pointer to local function and poiner to ref-counter 
-  StackStorageType obj_;
+  LocalFunctionPtrType lfptr_;
 
   // reference to local function 
-  LocalFunctionImp & lf_;
+  LocalFunctionImp &lf_;
 
 public:
-
   //! Constructor initializing the underlying local function 
-  template < class EntityType > 
-  LocalFunctionWrapper(const EntityType & en, const DiscreteFunctionImp & df) 
-    : storage_( df.localFunctionStorage() )
-    , obj_ ( storage_.getObject() )
-    , lf_ ( *obj_.first )
+  template< class EntityType > 
+  LocalFunctionWrapper( const EntityType &entity,
+                        const DiscreteFunctionImp &discreteFunction )
+  : lfptr_( discreteFunction.localFunctionStorage().getObject() ),
+    lf_( *lfptr_ )
   {
     // init real local function with entity
-    localFunc().init( en );
+    localFunction().init( entity );
   }
 
   //! Constructor creating empty local function 
-  LocalFunctionWrapper (const DiscreteFunctionImp & df) 
-    : storage_( df.localFunctionStorage() ) 
-    , obj_( storage_.getObject() )
-    , lf_ ( *obj_.first )
-  {}
+  LocalFunctionWrapper( const DiscreteFunctionImp &discreteFunction ) 
+  : lfptr_( discreteFunction.localFunctionStorage().getObject() ),
+    lf_( *lfptr_ )
+  {
+  }
 
   //! Copy constructor
-  LocalFunctionWrapper(const LocalFunctionWrapper& org) 
-    : storage_(org.storage_)
-    , obj_( org.obj_ )
-    , lf_ ( *obj_.first )
+  LocalFunctionWrapper( const LocalFunctionWrapper &org )
+  : lfptr_( org.lfptr_ ),
+    lf_( *lfptr_ )
   {
-    assert(*obj_.second == 1);
-    ++(*(obj_.second));
   }
 
-  //! Destructor , push local function to stack if there are no other 
-  //! to it references
+  //! destructor pushing local funciton back to the stack (just forget the pointer)
   ~LocalFunctionWrapper () 
   { 
-    removeObj();
   }
+  
+private:
+  // prohibit assignment 
+  inline ThisType &operator= ( const ThisType& );
 
+public:
   /** \brief @copydoc LocalFunctionInterface::operator [] */
-  RangeFieldType & operator [] (const int num) { return localFunc()[num]; }
+  RangeFieldType & operator [] (const int num) { return localFunction()[num]; }
   
   /** \brief @copydoc LocalFunctionInterface::operator [] const */
-  const RangeFieldType & operator [] (const int num) const { return localFunc()[num]; }
+  const RangeFieldType & operator [] (const int num) const { return localFunction()[num]; }
 
   /** \brief @copydoc LocalFunctionInterface::numDofs */
-  int numDofs () const { return localFunc().numDofs(); }
+  int numDofs () const { return localFunction().numDofs(); }
   
   /** \brief @copydoc LocalFunctionInterface::evaluate */
   void evaluate (const DomainType & x, RangeType & ret) const
   {
-    localFunc().evaluate( x , ret );
+    localFunction().evaluate( x , ret );
   }
   
   /** \brief @copydoc LocalFunctionInterface::evaluate */
   template <class QuadratureType> 
   void evaluate (const QuadratureType &quad, int quadPoint , RangeType & ret) const
   {
-    localFunc().evaluate( quad, quadPoint , ret );
+    localFunction().evaluate( quad, quadPoint , ret );
   }
   
   /** \brief @copydoc LocalFunctionInterface::jacobian */
@@ -135,21 +141,21 @@ public:
 		             const int quadPoint , 
                  JacobianRangeType & grad) const
   {
-    localFunc().jacobian(quad, quadPoint, grad ); 
+    localFunction().jacobian(quad, quadPoint, grad ); 
   }
  
   /** \brief @copydoc LocalFunctionInterface::jacobian */
   void jacobian(const DomainType& x, 
             		JacobianRangeType& grad) const
   {
-    localFunc().jacobian( x , grad ); 
+    localFunction().jacobian( x , grad ); 
   }
 
   /** \brief update local function for given Entity */
   template <class EntityType > 
   void init ( const EntityType &en )
   { 
-    localFunc().init(en);
+    localFunction().init(en);
   } 
 
   /** \brief @copydoc LocalFunctionInterface::axpy */
@@ -157,7 +163,7 @@ public:
   inline void axpy(const QuadratureType &quad, 
                    const int quadPoint , const RangeType & factor)
   {
-    localFunc().axpy( quad, quadPoint , factor );
+    localFunction().axpy( quad, quadPoint , factor );
   }
   
   /** \brief @copydoc LocalFunctionInterface::axpy */
@@ -165,7 +171,7 @@ public:
   inline void axpy(const QuadratureType &quad, 
                    const int quadPoint , const JacobianRangeType & factor)
   {
-    localFunc().axpy( quad, quadPoint , factor );
+    localFunction().axpy( quad, quadPoint , factor );
   }
   
   /** \brief @copydoc LocalFunctionInterface::axpy */
@@ -175,48 +181,26 @@ public:
                    const RangeType& factor1,
                    const JacobianRangeType & factor2)
   {
-    localFunc().axpy( quad, quadPoint, factor1, factor2 );
+    localFunction().axpy( quad, quadPoint, factor1, factor2 );
   }
   
   /** \brief @copydoc LocalFunctionInterface::baseFunctionSet */ 
   const BaseFunctionSetType& baseFunctionSet() const 
   {
-    return localFunc().baseFunctionSet();
+    return localFunction().baseFunctionSet();
   }
 
 private:
-  // prohibit assignment 
-  LocalFunctionWrapper& operator=(const LocalFunctionWrapper);
-
-private:
   //! return reference to local function 
-  LocalFunctionImp & localFunc() 
-  { 
-    assert( obj_.first );
-    assert( &lf_ == obj_.first );
-    return lf_;
-  } 
-  //! return reference to local function 
-  const LocalFunctionImp & localFunc() const 
-  { 
-    assert( obj_.first );
-    assert( &lf_ == obj_.first );
-    return lf_;
-  } 
-  
-  //! method remove the obj by using the storage 
-  void removeObj () 
+  LocalFunctionImp &localFunction () 
   {
-    assert( obj_.first );
-    assert( *(obj_.second) > 0);
-    // the second counter is left at a value of 1, so we dont have to
-    // initialize when getting the object again 
-    if( (*(obj_.second)) == 1) {
-      storage_.freeObject ( obj_ );
-    } 
-    else 
-      --(*(obj_.second));
-  }
+    return lf_;
+  } 
+  //! return reference to local function 
+  const LocalFunctionImp &localFunction () const 
+  { 
+    return lf_;
+  } 
 }; // end LocalFunctionWrapper  
 
 } // end namespace Dune
