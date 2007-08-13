@@ -113,7 +113,7 @@ namespace Dune
   public:
     inline ~ObjectStackStorage ()
     {
-      assert( refCount_ == 0 );
+      assert( refcount_ == 0 );
       delete object_;
     }
     

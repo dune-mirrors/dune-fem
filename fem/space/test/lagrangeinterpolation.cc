@@ -510,35 +510,43 @@ int main (int argc, char **argv)
     exit( 1 );
   }
 
-  int ml = atoi( argv[1] );
-  double error[ ml ];
-
-  char tmp[16];
-  sprintf( tmp, "%d", dimworld );
-  std :: string macroGridName( tmp );
-  macroGridName += "dgrid.dgf";
-
-  GridPtr<GridType> gridptr(macroGridName);
-  GridType& grid=*gridptr;
-  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
-  GridPartType gridPart( grid );
-
-  for( int i = 0; i < ml; ++i )
+  try
   {
-    grid.globalRefine( step );
-    DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
-    dm.resize();
+    int ml = atoi( argv[1] );
+    double error[ ml ];
 
-    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
-    DiscreteFunctionType solution( "sol", discreteFunctionSpace );
-    solution.clear();
-    
-    error[ i ] = algorithm( grid, solution, i == ml-1 );
-    if( i > 0 ) {
-      double eoc = log( error[ i-1 ] / error[ i ] ) / M_LN2;
-      std :: cout << "EOC = " << eoc << std :: endl;
+    char tmp[16];
+    sprintf( tmp, "%d", dimworld );
+    std :: string macroGridName( tmp );
+    macroGridName += "dgrid.dgf";
+
+    GridPtr<GridType> gridptr(macroGridName);
+    GridType& grid=*gridptr;
+    const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+    GridPartType gridPart( grid );
+
+    for( int i = 0; i < ml; ++i )
+    {
+      grid.globalRefine( step );
+      DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
+      dm.resize();
+
+      DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+      DiscreteFunctionType solution( "sol", discreteFunctionSpace );
+      solution.clear();
+      
+      error[ i ] = algorithm( grid, solution, i == ml-1 );
+      if( i > 0 ) {
+        double eoc = log( error[ i-1 ] / error[ i ] ) / M_LN2;
+        std :: cout << "EOC = " << eoc << std :: endl;
+      }
     }
+    return 0;
   }
-  return 0;
+  catch( Exception e )
+  {
+    std :: cerr << e.what() << std :: endl;
+    return 1;
+  }
 }
 
