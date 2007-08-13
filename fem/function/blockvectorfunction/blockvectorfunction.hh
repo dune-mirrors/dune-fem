@@ -191,9 +191,11 @@ public:
   /**  \brief delete stack of free local functions belonging to this discrete function */
   ~BlockVectorDiscreteFunction ();
 
+#if 0
   /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
   template <class EntityType>
   LocalFunctionType localFunction(const EntityType& en) const;
+#endif
 
   /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
   template <class EntityType> 

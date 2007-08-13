@@ -113,12 +113,14 @@ newObject () const
   return new LocalFunctionImp ( this->functionSpace_ , mapper_, dofVec_ );
 }
 
+#if 0
 template<class DiscreteFunctionSpaceType> template <class EntityType>
 inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>:: LocalFunctionType 
 BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>:: localFunction ( const EntityType &en ) const
 {
   return LocalFunctionType (en,*this);
 }
+#endif
 
 template<class DiscreteFunctionSpaceType> 
 inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::DofIteratorType 
