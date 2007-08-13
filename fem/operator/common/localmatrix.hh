@@ -76,9 +76,9 @@ namespace Dune
         \param[in] localCol local column 
         \param[in] value value to add 
     */
-    inline void add( const int localRow, 
-                     const int localCol, 
-                     const RangeFieldType &value )
+    inline void add ( const int localRow, 
+                      const int localCol, 
+                      const RangeFieldType &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
         asImp().add(localRow,localCol,value));

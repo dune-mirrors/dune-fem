@@ -44,7 +44,7 @@ namespace Dune
     
   private:
     // Disallow assigning
-    inline ThisType &operator= ( const ThisType &other );
+    inline ThisType &operator= ( const ThisType & );
 
   public:
     //! derefenence pointer
@@ -108,7 +108,7 @@ namespace Dune
 
   private:
     // Disallow copying
-    inline ObjectStackStorage ( const ThisType &other );
+    inline ObjectStackStorage ( const ThisType & );
 
   public:
     inline ~ObjectStackStorage ()
@@ -119,7 +119,7 @@ namespace Dune
     
   private:
     // Disallow copying
-    inline ThisType &operator= ( const ThisType &other );
+    inline ThisType &operator= ( const ThisType & );
 
   public:
     inline ObjectType &object ()
@@ -180,7 +180,7 @@ namespace Dune
 
   private:
     // Disallow copying
-    ObjectStack ( const ThisType &other );
+    ObjectStack ( const ThisType & );
 
   public:
     //! delete all objects on stack 
@@ -198,7 +198,7 @@ namespace Dune
     
   private:
     // Disallow copying
-    ThisType &operator= ( const ThisType &other );
+    ThisType &operator= ( const ThisType & );
 
   public:
     //! get an object pointer to a storage object
