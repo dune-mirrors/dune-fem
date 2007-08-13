@@ -7,6 +7,7 @@ boundaryidentifier.hh combineinterface.hh  l2error.hh \
 longexample.cc    entityfunction.hh \
 example.cc  timeutility.hh  timeprovider.hh\
 suite.cc   suite.hh \
+debug.hh \
 arrayallocator.hh  obstack.hh \
 array.hh   stlarray.hh \
 rectarray.hh \

@@ -4,83 +4,94 @@
 #include <vector>
 #include <stack>
 
-namespace Dune{
+#include <dune/fem/misc/debug.hh>
 
-//! @ingroup HelperClasses
-//! Stores pointers to a given class in a stack
-//! used for local functions and for basefunctionsets
-template <class ObjectFactoryImp> 
-class ObjectStack 
+namespace Dune
 {
-  typedef ObjectFactoryImp ObjectFactoryType;
-private:
-  typedef ObjectStack<ObjectFactoryType> MyType;
-  typedef typename ObjectFactoryType :: ObjectType ObjectType;
 
-public:  
-  typedef typename std::pair<ObjectType* , int* > StackStorageType;
-private:
-  std::stack < StackStorageType , std::vector<StackStorageType> > objStack_;
-  const ObjectFactoryType & factory_;
+  //! \ingroup HelperClasses
+  //! Stores pointers to a given class in a stack
+  //! used for local functions and for basefunctionsets
+  template< class ObjectFactoryImp >
+  class ObjectStack 
+  {
+    typedef ObjectFactoryImp ObjectFactoryType;
 
-  int numIssuedObjects_;
+  private:
+    typedef ObjectStack< ObjectFactoryType > ThisType;
 
   public:
-  //! constructor 
-  ObjectStack (const ObjectFactoryType & factory) 
-    : factory_(factory) , numIssuedObjects_(0) {}
+    //! type of the stored objects
+    typedef typename ObjectFactoryType :: ObjectType ObjectType;
 
-  //! delete all objects on stack 
-  ~ObjectStack ()
-  {
-    assert(numIssuedObjects_ == 0);
+    //! type of the storage objects (includes an additional reference counter)
+    typedef typename std :: pair< ObjectType* , int* > StackStorageType;
+    
+  protected:
+    std :: stack < StackStorageType, std::vector< StackStorageType > > objStack_;
+    const ObjectFactoryType &factory_;
 
-    while ( !objStack_.empty() )
-    {
-      StackStorageType obj = objStack_.top();
-      objStack_.pop();
-      delete obj.first; 
-      obj.first = 0;
-      delete obj.second; 
-      obj.second = 0;
-    }
-  }
- 
-  //! get local function object
-  StackStorageType getObject () 
-  {
-#ifndef NDEBUG
-    ++numIssuedObjects_;
-#endif
-   
-    if( objStack_.empty() )
-    {
-      // first pointer is the local function pointer 
-      // ans second pointer is the reference counter initialized with 1  
-      return StackStorageType ( factory_.newObject() , new int (1) );
-    }
-    else 
-    {
-      StackStorageType obj = objStack_.top();
-      objStack_.pop();
-      return obj;
-    }
-  }
+    DebugCounter<> numIssuedObjects_;
 
-  //! push local function to stack 
-  void freeObject (StackStorageType & obj)
-  {
-#ifndef NDEBUG
-    --numIssuedObjects_;
-#endif
-    objStack_.push(obj);
-  }
-  
-private:
-  //! prohibited methods 
-  ObjectStack ( const MyType & c);
-  MyType & operator = ( const MyType & c );
-};
+  public:
+    //! constructor 
+    ObjectStack ( const ObjectFactoryType &factory )
+    : factory_( factory )
+    {
+    }
+
+  private:
+    // Disallow copying
+    ObjectStack ( const ThisType &other );
+
+  public:
+    //! delete all objects on stack 
+    ~ObjectStack ()
+    {
+      assert( numIssuedObjects_ == 0 );
+
+      while ( !objStack_.empty() )
+      {
+        StackStorageType obj = objStack_.top();
+        objStack_.pop();
+        delete obj.first; 
+        obj.first = 0;
+        delete obj.second; 
+        obj.second = 0;
+      }
+    }
+    
+  private:
+    // Disallow copying
+    ThisType &operator= ( const ThisType &other );
+
+  public:
+    //! get local function object
+    StackStorageType getObject ()
+    {
+      ++numIssuedObjects_;
+      if( objStack_.empty() )
+      {
+        // first pointer is the local function pointer 
+        // ans second pointer is the reference counter initialized with 1  
+        return StackStorageType( factory_.newObject() , new int( 1 ) );
+      }
+      else 
+      {
+        StackStorageType obj = objStack_.top();
+        objStack_.pop();
+        return obj;
+      }
+    }
+
+    //! push local function to stack 
+    void freeObject (StackStorageType & obj)
+    {
+      --numIssuedObjects_;
+      objStack_.push(obj);
+    }
+  };
 
 } // end namespace Dune
+
 #endif
