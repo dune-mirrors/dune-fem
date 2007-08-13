@@ -172,6 +172,7 @@ namespace Dune {
     return new LocalFunctionImp(spc_, dofVec_);
   }
 
+#if 0
   template <class DiscreteFunctionSpaceImp>
   template <class EntityType>
   typename 
@@ -191,6 +192,7 @@ namespace Dune {
   {
     return LocalFunctionType(en, this->interface());
   } 
+#endif
 
   //- Read/write methods
   template<class DiscreteFunctionSpaceImp>

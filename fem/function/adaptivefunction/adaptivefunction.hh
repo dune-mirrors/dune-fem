@@ -31,41 +31,42 @@ namespace Dune {
   
   //- Class definitions
   //! Traits class for AdaptiveDiscreteFunction and AdaptiveLocalFunction
-  template <class DiscreteFunctionSpaceImp>
-  struct AdaptiveDiscreteFunctionTraits {
+  template< class DiscreteFunctionSpaceImp >
+  struct AdaptiveDiscreteFunctionTraits
+  {
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
  
-    typedef AdaptiveDiscreteFunction<
-      DiscreteFunctionSpaceImp> DiscreteFunctionType;
+    typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
     // the local functions implementation 
-    typedef AdaptiveLocalFunction<
-      DiscreteFunctionSpaceImp> LocalFunctionImp;
+    typedef AdaptiveLocalFunction< DiscreteFunctionSpaceType > LocalFunctionImp;
     
-    // local function type 
-    typedef LocalFunctionWrapper<
-      DiscreteFunctionType> LocalFunctionType;
+    // local function type
+    typedef LocalFunctionWrapper< DiscreteFunctionType > LocalFunctionType;
+    
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 
-    typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType DofType;
-    typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
-    typedef typename DiscreteFunctionSpaceType::Traits::DomainFieldType DomainFieldType;
-    typedef typename DiscreteFunctionSpaceType::Traits::RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType::Traits::DomainType DomainType;
-    typedef typename DiscreteFunctionSpaceType::Traits::JacobianRangeType JacobianRangeType;
-    typedef typename DiscreteFunctionSpaceType::Traits::MapperType MapperType;
-    typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef RangeFieldType DofType;
+
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+    typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
     // type of Array seen by functions 
     typedef StaticArray<DofType> DofStorageType;
     // tpye of array created 
     typedef MutableArray<DofType> MutableDofStorageType;
      
-    typedef typename DofStorageType::DofIteratorType DofIteratorType;
-    typedef typename DofStorageType::ConstDofIteratorType ConstDofIteratorType;
+    typedef typename DofStorageType :: DofIteratorType DofIteratorType;
+    typedef typename DofStorageType :: ConstDofIteratorType ConstDofIteratorType;
  
-    typedef DofManager<GridType> DofManagerType;
-   
+    typedef DofManager< GridType > DofManagerType;
   }; // end class AdaptiveDiscreteFunctionTraits
+
+
 
   //! @ingroup AdaptiveDFunction
   //! An adaptive discrete function
@@ -207,7 +208,6 @@ namespace Dune {
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
-    using Imp::localFunction;
     using Imp::write_xdr;
     using Imp::read_xdr;
     using Imp::write_ascii;
@@ -535,6 +535,7 @@ namespace Dune {
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
+#if 0
     /** \brief  @copydoc DiscreteFunctionDefault::localFunction */
     template <class EntityType> 
     LocalFunctionType localFunction (const EntityType &en) { return LocalFunctionType(en,*this); }
@@ -542,6 +543,7 @@ namespace Dune {
     template <class EntityType> 
     const LocalFunctionType localFunction (const EntityType &en) const { return LocalFunctionType(en,*this); }
     // using Imp::localFunction;
+#endif
     using Imp::write_xdr;
     using Imp::read_xdr;
     using Imp::write_ascii;

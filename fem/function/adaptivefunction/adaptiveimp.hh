@@ -62,13 +62,15 @@ namespace Dune {
     ConstDofIteratorType dbegin() const;
     ConstDofIteratorType dend() const;
     
+#if 0
     //! return local function object 
     template <class EntityType>
     LocalFunctionType localFunction(const EntityType& en);
 
     template <class EntityType>
     const LocalFunctionType localFunction(const EntityType& en) const;
-
+#endif
+   
     //! Set all elements to zero
     void clear();
 

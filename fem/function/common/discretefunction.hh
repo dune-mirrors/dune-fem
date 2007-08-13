@@ -151,9 +151,20 @@ namespace Dune{
         \param[in] entity Entity to focus view of discrete function 
         \return LocalFunction associated with entity
     */
-    template <class EntityType>
-    LocalFunctionType localFunction(const EntityType& entity) const {
-      return asImp().localFunction(entity);
+    template< class EntityType >
+    const LocalFunctionType localFunction ( const EntityType &entity ) const
+    {
+      return asImp().localFunction( entity );
+    }
+    
+    /** \brief return object of LocalFunction of the discrete function associated with given entity
+        \param[in] entity Entity to focus view of discrete function 
+        \return LocalFunction associated with entity
+    */
+    template< class EntityType >
+    LocalFunctionType localFunction ( const EntityType &entity )
+    {
+      return asImp().localFunction( entity );
     }
 
     /** \brief set all degrees of freedom to zero
@@ -319,7 +330,7 @@ namespace Dune{
       CHECK_INTERFACE_IMPLEMENTATION(asImp().operator /= (scalar));
       return asImp().operator /= (scalar);
     }
-
+    
     /** \brief write discrete function to file with given filename using xdr encoding
         \param[in] filename name of file to which discrete function should be written using xdr 
         \return \b true if operation was successful 
@@ -375,6 +386,9 @@ namespace Dune{
       return static_cast<const DiscreteFunctionType&>(*this); 
     }
   };
+
+
+
   //*************************************************************************
   //
   //  --DiscreteFunctionDefault
@@ -388,9 +402,9 @@ namespace Dune{
   //! the discrete function by multiplying the dofs and the basefunctions. 
   //! 
   //*************************************************************************
-  template <class DiscreteFunctionTraits>
-  class DiscreteFunctionDefault : 
-    public DiscreteFunctionInterface<DiscreteFunctionTraits> 
+  template< class DiscreteFunctionTraits >
+  class DiscreteFunctionDefault
+  : public DiscreteFunctionInterface< DiscreteFunctionTraits > 
   { 
   private:
     typedef DiscreteFunctionDefault< DiscreteFunctionTraits > ThisType;
@@ -400,48 +414,51 @@ namespace Dune{
     using BaseType :: asImp;
 
   private:
-    typedef DiscreteFunctionInterface< 
-      DiscreteFunctionTraits
-    > DiscreteFunctionInterfaceType;
+    typedef DiscreteFunctionInterface< DiscreteFunctionTraits >
+      DiscreteFunctionInterfaceType;
 
-    typedef DiscreteFunctionDefault<
-      DiscreteFunctionTraits
-    > DiscreteFunctionDefaultType;
+    typedef DiscreteFunctionDefault< DiscreteFunctionTraits >
+      DiscreteFunctionDefaultType;
 
-    enum { myId_ = 0 };  
+    enum { myId_ = 0 };
   
   public:
-    typedef typename DiscreteFunctionTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    //! Type of domain vector
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-    //! Type of range vector
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    //! type of discrete function space
+    typedef typename DiscreteFunctionTraits :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
+    
+    //! type of domain vector
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    //! type of range vector
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   
-    //! Type of domain field (usually a float type)
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-    //! Type of range field (usually a float type)
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+    //! type of domain field (usually a float type)
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! type of range field (usually a float type)
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
 
     //! type of mapping base class for this discrete function 
-    typedef Mapping<DomainFieldType, RangeFieldType,
-                    DomainType, RangeType> MappingType;
+    typedef Mapping< DomainFieldType, RangeFieldType, DomainType, RangeType>
+      MappingType;
 
-    //! Type of the discrete function (Barton-Nackman parameter)
-    typedef typename DiscreteFunctionTraits::DiscreteFunctionType DiscreteFunctionType;
-  
-    //! Type of the local function
-    typedef typename DiscreteFunctionTraits::LocalFunctionType LocalFunctionType;
+    //! type of the discrete function (Barton-Nackman parameter)
+    typedef typename DiscreteFunctionTraits :: DiscreteFunctionType
+      DiscreteFunctionType;
 
-    //! Type of the local function implementation 
-    typedef typename DiscreteFunctionTraits::LocalFunctionImp LocalFunctionImp;
-    //! Type of object to create from stack 
+     //! type of the dof iterator
+    typedef typename DiscreteFunctionTraits :: DofIteratorType DofIteratorType;
+    //! type of the const dof iterator
+    typedef typename DiscreteFunctionTraits :: ConstDofIteratorType
+      ConstDofIteratorType;
+ 
+    //! type of the local function implementation 
+    typedef typename DiscreteFunctionTraits :: LocalFunctionImp LocalFunctionImp;
+   
+     //! type of the local function
+    typedef typename DiscreteFunctionTraits :: LocalFunctionType LocalFunctionType;
+
+   //! type of object to create from stack 
     typedef LocalFunctionImp ObjectType;
-    //! Type of the dof iterator
-    typedef typename DiscreteFunctionTraits::DofIteratorType DofIteratorType;
-  
-    //! Type of the const dof iterator
-    typedef typename DiscreteFunctionTraits::ConstDofIteratorType ConstDofIteratorType;
-
     //! type of local function stack 
     typedef ObjectStack < DiscreteFunctionDefaultType > LocalFunctionStorageType;
 
@@ -541,6 +558,20 @@ namespace Dune{
         \return reference to this (i.e. *this)
     */
     DiscreteFunctionType& operator /= (const RangeFieldType &scalar);
+    
+    /** \copydoc LocalFunctionInterface::localFunction */
+    template< class EntityType >
+    const LocalFunctionType localFunction ( const EntityType &entity ) const
+    {
+      return LocalFunctionType( entity, asImp() );
+    }
+    
+    /** \copydoc LocalFunctionInterface::localFunction */
+    template< class EntityType >
+    LocalFunctionType localFunction ( const EntityType &entity )
+    {
+      return LocalFunctionType( entity, asImp() );
+    }
 
     /** \brief @copydoc DiscreteFunctionInterface::write_xdr */
     virtual bool write_xdr(const std::string filename) const { return true; }

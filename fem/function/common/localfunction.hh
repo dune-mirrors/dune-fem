@@ -25,28 +25,39 @@ namespace Dune
 //  --LocalFunctionInterface 
 //
 //****************************************************************************
-/** \brief 
-   The LocalFunctionInterface is the Interface to local function which
-   form the discrete Function 
-   */
-template < class DiscreteFunctionSpaceType, class LocalFunctionImp > 
+/** \class LocalFunctionInterface
+ *  \brief interface for local functions
+ *  
+ *  Local functions are used to represend a discrete function on one entity.
+ *  The LocalFunctionInterface defines the functionality that can be expected
+ *  from such a local function.
+ */
+template< class DiscreteFunctionSpaceImp, class LocalFunctionImp > 
 class LocalFunctionInterface 
 {
+public:
+  //! type of the discrete function space, this local function belongs to
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+
+private:
+  typedef LocalFunctionInterface< DiscreteFunctionSpaceType, LocalFunctionImp >
+    ThisType;
+
 public:
   //- this are the types for the derived classes 
   //! type of domain field, i.e. type of coordinate component
   typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
   //! type of range field, i.e. dof type 
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
   //! type of domain, i.e. type of coordinates 
-  typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
   //! type of range, i.e. result of evaluation 
-  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   //! type of jacobian, i.e. type of evaluated gradient 
-  typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+  typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
   
   //! type of base function set  
-  typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType; 
+  typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType BaseFunctionSetType; 
 
   /** \brief access to local dofs (read-write)
       \param[in] num local dof number 
