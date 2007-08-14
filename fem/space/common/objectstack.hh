@@ -224,9 +224,15 @@ namespace Dune
       if( ptr != 0 )
         top_ = top_->next_;
       else {
-        ptr = new StorageType( factory_.newObject(), *this );
+        ptr = new StorageType( factory().newObject(), *this );
       }
       return *ptr;
+    }
+
+  protected:
+    inline const ObjectFactoryType &factory() const
+    {
+      return factory_;
     }
   };
 
