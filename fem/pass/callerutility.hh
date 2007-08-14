@@ -157,7 +157,7 @@ namespace Dune {
 
   public:
     static inline ResultType apply(const Pair<Head, Tail>& pairs) {
-      LocalFunctionType tmp(*pairs.first());
+      LocalFunctionType tmp(pairs.first()->localFunctionStorage());
       typename LocalFunctionCreator<Tail>::ResultType localFunc = LocalFunctionCreator<Tail>::apply(pairs.second());
       return ResultType(tmp,localFunc);
     }
@@ -178,7 +178,7 @@ namespace Dune {
  
   public:
     static inline ResultType apply(const Pair<Head, Nil>& pairs) {
-      LocalFunctionType tmp(*pairs.first());
+      LocalFunctionType tmp(pairs.first()->localFunctionStorage());
       return ResultType(tmp, nullType());
     }
   };
