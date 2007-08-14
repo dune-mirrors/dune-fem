@@ -162,7 +162,8 @@ namespace Dune {
   {
     return dofVec_.end();
   }
-  
+ 
+#if 0
   template <class DiscreteFunctionSpaceImp>
   typename AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   LocalFunctionImp* 
@@ -171,6 +172,7 @@ namespace Dune {
   {
     return new LocalFunctionImp(spc_, dofVec_);
   }
+#endif
 
 #if 0
   template <class DiscreteFunctionSpaceImp>

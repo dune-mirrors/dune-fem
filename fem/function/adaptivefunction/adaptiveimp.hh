@@ -33,9 +33,11 @@ namespace Dune {
     typedef typename Traits::DofIteratorType DofIteratorType;
     typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
     
+  /*
   public:   
     typedef typename Traits::LocalFunctionImp LocalFunctionImp;
     typedef typename Traits::LocalFunctionType LocalFunctionType;
+  */
   private:
     typedef typename Traits::MapperType MapperType;
 
@@ -112,8 +114,10 @@ namespace Dune {
     //! return pointer to underlying array 
     const DofType * leakPointer () const { return dofVec_.leakPointer(); }
   protected:
+#if 0
     //! return pointer to local function implementation 
     LocalFunctionImp* newObject () const;
+#endif
 
     //! return reference to dof storage 
     DofStorageType& dofStorage() { return dofVec_; }
@@ -144,6 +148,8 @@ namespace Dune {
     std::string name_;
     DofManagerType& dm_;
     std::pair<MemObjectInterface*, DofStorageType*> memPair_; 
+
+  protected:
     DofStorageType& dofVec_;
   }; // end class AdaptiveFunctionImplementation
 
