@@ -18,12 +18,14 @@
 #include "../common/discretefunction.hh"
 #include "../common/localfunction.hh"
 #include "../common/dofiterator.hh"
+#include "../common/localfunctionwrapper.hh"
 
 namespace Dune{
 
 template <class DiscreteFunctionSpaceType> class BlockVectorDiscreteFunction;
 template <class DiscreteFunctionType> class StaticDiscreteLocalFunction;
 template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
+template< class DiscreteFunctionSpaceImp > class BlockVectorLocalFunctionFactory;
 
 
 template <class DiscreteFunctionSpaceImp>
@@ -36,6 +38,9 @@ struct BlockVectorDiscreteFunctionTraits
   
   typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
+
+  typedef BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceType > LocalFunctionFactoryType; 
+  typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
   
   typedef LocalFunctionWrapper<DiscreteFunctionType> LocalFunctionType;
   typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,
@@ -101,6 +106,42 @@ private:
   BlockVectorType& vec_;
 };
 
+template< class DiscreteFunctionSpaceImp >
+class BlockVectorLocalFunctionFactory
+{
+public:
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+
+private:
+  typedef BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceType > ThisType;
+
+  friend class BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >;
+
+public:
+  typedef StaticDiscreteLocalFunction< DiscreteFunctionSpaceType > ObjectType;
+
+  typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
+    DiscreteFunctionType;
+
+protected:
+  DiscreteFunctionType &discreteFunction_;
+
+protected:
+  inline explicit BlockVectorLocalFunctionFactory ( DiscreteFunctionType &df )
+  : discreteFunction_( df )
+  {
+  }
+
+public:
+  ObjectType *newObject () const
+  {
+    return new ObjectType( discreteFunction_.space(),
+                           discreteFunction_.mapper_ ,
+                           discreteFunction_.dofVec_ );
+  }
+};
+
+
 //**********************************************************************
 //! @ingroup BlockVectorDFunction
 //  --BlockVectorDiscreteFunction 
@@ -116,8 +157,7 @@ class BlockVectorDiscreteFunction
   typedef DiscreteFunctionDefault<BlockVectorDiscreteFunctionTraits <DiscreteFunctionSpaceImp> >
   DiscreteFunctionDefaultType;
 
-  friend class DiscreteFunctionDefault< 
-    BlockVectorDiscreteFunctionTraits <DiscreteFunctionSpaceImp> > ;
+  friend class BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceImp > ;
 
   typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
   enum { myId_ = 0};
@@ -153,6 +193,9 @@ public:
 
   //! LocalFunctionType is the exported lf type 
   typedef typename Traits :: LocalFunctionType LocalFunctionType;
+
+  //! type of local function factory 
+  typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
 
   //! the dof iterator type of this function
   typedef typename Traits :: DofIteratorType DofIteratorType;
@@ -273,12 +316,11 @@ public:
   const LeakPointerType& leakPointer() const { return leakPtr_; }
 
 private:  
+  LocalFunctionFactoryType lfFactory_;
+
   //! write/read data to/from xdr stream 
   bool processXdrs(XDRStream& xdr) const;
   
-  //! return object pointer of type LocalFunctionImp 
-  LocalFunctionImp* newObject () const;
-
   //! the name of the function
   std::string name_;
 

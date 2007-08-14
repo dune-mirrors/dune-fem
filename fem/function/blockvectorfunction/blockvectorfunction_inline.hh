@@ -8,7 +8,8 @@ namespace Dune
 template<class DiscreteFunctionSpaceType>
 inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f) 
-: DiscreteFunctionDefaultType ( f )  
+  : DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+  , lfFactory_( *this )
   , name_ ( "no name" )
   , mapper_(f.indexSet())
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
@@ -23,7 +24,8 @@ BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f)
 template<class DiscreteFunctionSpaceType>
 inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType & f ) 
-: DiscreteFunctionDefaultType ( f )  
+  : DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+  , lfFactory_( *this )
   , name_ ( name )
   , mapper_(f.indexSet(),1)
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
@@ -39,7 +41,8 @@ template<class DiscreteFunctionSpaceType>
 inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const std::string name, 
     const DiscreteFunctionSpaceType & f, const DofStorageType & data ) 
-: DiscreteFunctionDefaultType ( f )  
+  : DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+  , lfFactory_( *this )
   , name_ ( name )
   , mapper_(f.indexSet(),1)
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
@@ -53,7 +56,8 @@ BlockVectorDiscreteFunction(const std::string name,
 template<class DiscreteFunctionSpaceType>
 inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> & df ) :
-  DiscreteFunctionDefaultType ( df.functionSpace_ ) 
+  DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+  , lfFactory_( *this )
   , mapper_(df.functionSpace_.indexSet(),1)
   , dm_(df.dm_)
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
@@ -95,15 +99,6 @@ inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::print(std::o
 //*************************************************************************
 //  Interface Methods 
 //*************************************************************************
-template<class DiscreteFunctionSpaceType>
-inline typename BlockVectorDiscreteFunction<
-DiscreteFunctionSpaceType>:: LocalFunctionImp *
-BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-newObject () const
-
-{
-  return new LocalFunctionImp ( this->functionSpace_ , mapper_, dofVec_ );
-}
 
 #if 0
 template<class DiscreteFunctionSpaceType> template <class EntityType>
