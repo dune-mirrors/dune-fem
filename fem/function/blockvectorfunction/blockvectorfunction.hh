@@ -35,14 +35,20 @@ struct BlockVectorDiscreteFunctionTraits
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
   typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+
+
+  typedef ... MapperType;
+  
+
+  typedef BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceType, MapperType, DofStorageType >
+    LocalFunctionFactoryType; 
+  typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
+
+  typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
   
   typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
-  typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
-
-  typedef BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceType > LocalFunctionFactoryType; 
-  typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
-  
-  typedef LocalFunctionWrapper<DiscreteFunctionType> LocalFunctionType;
+  //typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
+ 
   typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,
             typename DofStorageType::field_type> DofIteratorType;
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
@@ -106,19 +112,27 @@ private:
   BlockVectorType& vec_;
 };
 
-template< class DiscreteFunctionSpaceImp >
+
+
+template< class DiscreteFunctionSpaceImp, MapperImp, DofStorageImp >
 class BlockVectorLocalFunctionFactory
 {
 public:
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+  typedef MapperImp MapperType;
+  typedef DofStorageImp DofStorageType;
 
 private:
-  typedef BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceType > ThisType;
+  typedef BlockVectorLocalFunctionFactory
+    < DiscreteFunctionSpaceType, MapperType, DofStorageType >
+    ThisType;
 
   friend class BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >;
 
 public:
-  typedef StaticDiscreteLocalFunction< DiscreteFunctionSpaceType > ObjectType;
+  typedef StaticDiscreteLocalFunction
+    < DiscreteFunctionSpaceType, MapperType, DofStorageType >
+    ObjectType;
 
   typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
     DiscreteFunctionType;
@@ -356,16 +370,24 @@ private:
 //! Implementation of the local functions 
 //
 //**************************************************************************
-template < class DiscreteFunctionImp > 
-class StaticDiscreteLocalFunction 
-: public LocalFunctionDefault < typename DiscreteFunctionImp :: DiscreteFunctionSpaceType ,
-                                StaticDiscreteLocalFunction < DiscreteFunctionImp > > 
+template< class DiscreteFunctionSpaceImp, class MapperImp, class DofStorageImp >
+class StaticDiscreteLocalFunction
+: public LocalFunctionDefault
+  < DiscreteFunctionSpaceImp,
+    StaticDiscreteLocalFunction< DiscreteFunctionSpaceImp, MapperImp, DofStorageImp >
+  > 
 {
-  typedef  DiscreteFunctionImp DiscreteFunctionType;
-  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+public:
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+  typedef MapperImp MapperType;
+  typedef DofStorageImp DofStorageType;
+
+private:
+  typedef StaticDiscreteLocalFunction< DiscreteFunctionSpaceType, MapperType, DofStorageType > ThisType;
+  
+public:
   typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
   typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-  typedef StaticDiscreteLocalFunction < DiscreteFunctionType > ThisType;
 
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
   //CompileTimeChecker<dimrange == 1> check; 
@@ -374,15 +396,12 @@ class StaticDiscreteLocalFunction
   typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType::Traits::JacobianRangeType JacobianRangeType;
 
-  typedef typename DiscreteFunctionType :: MapperType MapperType;
-
   typedef typename GridType :: template  Codim<0> :: Entity EntityType;
-  typedef typename DiscreteFunctionType :: DofStorageType DofStorageType;
 
   typedef typename DofStorageType :: block_type DofBlockType;
 
   friend class BlockVectorDiscreteFunction <DiscreteFunctionSpaceType>;
-  friend class LocalFunctionWrapper < BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> >;
+  //friend class LocalFunctionWrapper < BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> >;
 private:
   typedef typename GridType :: ctype ctype;
   enum { dim = GridType :: dimension };

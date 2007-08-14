@@ -81,6 +81,8 @@ namespace Dune
 
     typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
 
+    typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
+
     typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 

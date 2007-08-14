@@ -576,18 +576,16 @@ namespace Dune{
     /** \brief @copydoc DiscreteFunctionInterface::read_pgm */
     virtual bool read_pgm(const std::string filename) const { return true; }
 
-#if 0
-  protected: 
+  public:
     //this methods are used by the LocalFunctionStorage class 
 
     /** \brief return reference for local function storage  
         \return reference to local function storage 
     */
-    LocalFunctionStorageType& localFunctionStorage() const 
+    inline LocalFunctionStorageType& localFunctionStorage() const 
     { 
       return lfStorage_; 
     }
-#endif
   }; // end class DiscreteFunctionDefault 
   
 ///@} 
