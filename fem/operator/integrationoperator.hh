@@ -71,9 +71,6 @@ namespace Dune
     typedef typename RangeFunctionType :: LocalFunctionType
       RangeLocalFunctionType;
 
-    typedef TemporaryLocalFunction< RangeFunctionSpaceType >
-      RangeTemporaryLocalFunctionType;
-
     typedef TemporaryLocalMatrix< DomainFunctionSpaceType, RangeFunctionSpaceType >
       TemporaryLocalMatrixType;
 
@@ -99,17 +96,19 @@ namespace Dune
     {
       // type of iterator over grid partition for range function space
       typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
+      typedef typename IteratorType :: Entity EntityType;
      
       // type of base function set for range function space
       typedef typename RangeFunctionSpaceType :: BaseFunctionSetType
         BaseFunctionSetType;
 
+      // type of temporary local function (within range space)
+      typedef typename RangeFunctionSpaceType :: LocalFunctionType
+        TemporaryLocalFunctionType;
+
       // obtain range function space (discrete function space)
       const RangeFunctionSpaceType &rangeFunctionSpace = w.space();
-
-      // create a temporary local function
-      RangeTemporaryLocalFunctionType w_temp( rangeFunctionSpace );
-      
+     
       // clear destination function
       w.clear();
      
@@ -117,12 +116,16 @@ namespace Dune
       const IteratorType &end = rangeFunctionSpace.end();
       for( IteratorType it = rangeFunctionSpace.begin(); it != end; ++it )
       {
+        const EntityType &entity = *it;
+        
+         // obtain a temporary local function
+        TemporaryLocalFunctionType w_temp = rangeFunctionSpace.localFunction( entity );
+          
         // apply the local operator
-        w_temp.init( *it );
-        localOperator_( *it, u, w_temp );
+        localOperator_( entity, u, w_temp );
 
         // update the destination function
-        RangeLocalFunctionType w_local = w.localFunction( *it );
+        RangeLocalFunctionType w_local = w.localFunction( entity );
         w_local += w_temp;
       }
     }

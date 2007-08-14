@@ -62,9 +62,6 @@ namespace Dune
   protected:
     typedef typename RangeFunctionType :: LocalFunctionType RangeLocalFunctionType;
     
-    typedef TemporaryLocalFunction< RangeFunctionSpaceType >
-      RangeTemporaryLocalFunctionType;
-
   protected:
     const LocalOperatorType &localOperator_;
 
@@ -80,20 +77,21 @@ namespace Dune
       typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
       typedef typename IteratorType :: Entity EntityType;
 
+      typedef typename RangeFunctionSpaceType :: LocalFunctionType
+        TemporaryLocalFunctionType;
+
       typedef typename RangeFunctionType :: LocalFunctionType RangeLocalFunctionType;
 
       const RangeFunctionSpaceType &rangeFunctionSpace = w.space();
 
       w.assign( (RangeFieldType)INFINITY );
 
-      RangeTemporaryLocalFunctionType w_temp( rangeFunctionSpace );
-
       const IteratorType end = rangeFunctionSpace.end();
       for( IteratorType it = rangeFunctionSpace.begin(); it != end; ++it )
       {
         const EntityType &entity = *it;
-        
-        w_temp.init( entity );
+
+        TemporaryLocalFunctionType w_temp = rangeFunctionSpace.localFunction( entity );
         localOperator_( entity, u, w_temp );
 
         RangeLocalFunctionType w_local = w.localFunction( entity );

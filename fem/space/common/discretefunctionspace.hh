@@ -9,13 +9,16 @@
 #include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
+#include <dune/fem/function/common/temporarylocalfunction.hh>
+#include <dune/fem/function/common/localfunctionwrapper.hh>
 
 
 //- local includes 
 #include "allgeomtypes.hh"
 #include "singletonlist.hh"
 
-namespace Dune{
+namespace Dune
+{
 
   /** @addtogroup DiscreteFunctionSpace 
       This provides the interfaces for discrete function spaces. 
@@ -299,28 +302,65 @@ namespace Dune{
      
      \remark An reference to the GridPart is
              stored in the default implementation. */
-  template <class FunctionSpaceTraits>
-  class DiscreteFunctionSpaceDefault :
-    public DiscreteFunctionSpaceInterface<FunctionSpaceTraits>
+  template< class FunctionSpaceTraits >
+  class DiscreteFunctionSpaceDefault
+  : public DiscreteFunctionSpaceInterface< FunctionSpaceTraits >
   {
   public:
-    typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef FunctionSpaceTraits Traits;
+    
+  private:
+    typedef DiscreteFunctionSpaceDefault< Traits > ThisType;
+    typedef DiscreteFunctionSpaceInterface< Traits > BaseType;
+    
+  public:
+    typedef typename FunctionSpaceTraits :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
     typedef typename FunctionSpaceTraits::GridPartType  GridPartType;
     typedef typename GridPartType:: template Codim<0>::IteratorType IteratorType;
-    typedef typename GridPartType::GridType GridType;
-    typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridPartType :: IndexSetType IndexSetType;
 
+    typedef TemporaryLocalFunctionFactory< DiscreteFunctionSpaceType >
+      LocalFunctionFactoryType;
+    typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
+
+    typedef typename LocalFunctionStorageType :: LocalFunctionType
+      LocalFunctionType;
+
+  protected:
+    GridPartType &gridPart_;
+
+    const LocalFunctionFactoryType lfFactory_;
+    mutable LocalFunctionStorageType lfStorage_;
+ 
+    // true if grid has more than one geometry type (hybrid grids)
+    const bool multipleGeometryTypes_;
+ 
   public:
-    //! Constructor
-    DiscreteFunctionSpaceDefault(GridPartType & gridPart) 
-      : DiscreteFunctionSpaceInterface<FunctionSpaceTraits>()
-      , gridPart_(gridPart)
-      , multipleGeometryTypes_( 
-          AllGeomTypes< typename GridPartType::IndexSetType ,
-                        typename GridPartType::GridType > :: multipleGeomTypes() )
+    //! constructor
+    inline explicit DiscreteFunctionSpaceDefault( GridPartType &gridPart )
+    : BaseType(),
+      gridPart_( gridPart ),
+      lfFactory_( asImp() ),
+      lfStorage_( lfFactory_ ),
+      multipleGeometryTypes_( AllGeomTypes< IndexSetType, GridType > 
+                                :: multipleGeomTypes() )
     {
     }
 
+    /** obtain a local function for an entity (to store intermediate values)
+     *  
+     *  \param[in]  entity  entity for which a local function is desired
+     *
+     *  \returns a local function backed by a small, fast array
+     */
+    template< class EntityType >
+    LocalFunctionType localFunction ( const EntityType &entity ) const
+    {
+      return lfStorage_.localFunction( entity );
+    }
+    
     /** \brief @copydoc DiscreteFunctionSpaceInterface::multipleGeometryTypes */
     bool multipleGeometryTypes() const { return multipleGeometryTypes_; }
 
@@ -359,13 +399,7 @@ namespace Dune{
     GridPartType & gridPart () { return gridPart_; }
     /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
     const GridPartType & gridPart () const { return gridPart_; }
-  protected:
-    //! stores reference to grid part
-    GridPartType& gridPart_;
-  
-    //! true if grid has more than one geometry type (hybrid grids)
-    const bool multipleGeometryTypes_;
- 
+
   private:
     //! Barton-Nackman trick 
     DiscreteFunctionSpaceType& asImp() 

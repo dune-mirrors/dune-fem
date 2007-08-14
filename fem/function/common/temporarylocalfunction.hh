@@ -273,7 +273,9 @@ namespace Dune
      *  \param[out] phi        variable to hold the Jacobian
      */
     template< class QuadratureType >
-    inline void jacobian ( QuadratureType &quadrature, int point, JacobianRangeType &grad )
+    inline void jacobian ( QuadratureType &quadrature,
+                           int point,
+                           JacobianRangeType &grad )
     {
       assert( entity_ != NULL );
       
@@ -312,7 +314,41 @@ namespace Dune
       return dofs_.size();
     }
   };
+
+
   
+  template< class DiscreteFunctionSpaceImp,
+            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
+  class TemporaryLocalFunctionFactory
+  {
+  public:
+    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+
+  private:
+    typedef TemporaryLocalFunctionFactory
+      < DiscreteFunctionSpaceType, ArrayAllocatorImp >
+      ThisType;
+
+  public:
+    typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, ArrayAllocatorImp >
+      ObjectType;
+
+  protected:
+    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
+
+  public:
+    inline explicit
+    TemporaryLocalFunctionFactory ( const DiscreteFunctionSpaceType &dfSpace )
+    : discreteFunctionSpace_( dfSpace )
+    {
+    }
+
+    inline ObjectType *newObject () const
+    {
+      return new ObjectType( discreteFunctionSpace_ );
+    }
+  };
+
 }
 
 #endif
