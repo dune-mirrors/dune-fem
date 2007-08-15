@@ -26,7 +26,7 @@ namespace Dune{
 // forward declarations 
 template <class DiscreteFunctionSpaceType> class BlockVectorDiscreteFunction;
 template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
-template< class Traits > class StaticDiscreteLocalFunction;
+template< class Traits > class BlockVectorLocalFunction;
 template< class Traits > class BlockVectorLocalFunctionFactory;
 
 
@@ -46,7 +46,7 @@ struct BlockVectorDiscreteFunctionTraits
 
   
   typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
-  //typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
+  //typedef BlockVectorLocalFunction<DiscreteFunctionType> LocalFunctionImp;
  
   typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,
             typename DofStorageType::field_type> DofIteratorType;
@@ -134,7 +134,7 @@ private:
   friend class BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >;
 
 public:
-  typedef StaticDiscreteLocalFunction<Traits> ObjectType;
+  typedef BlockVectorLocalFunction<Traits> ObjectType;
 
   typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
     DiscreteFunctionType;
@@ -366,16 +366,16 @@ private:
 
 //**************************************************************************
 //
-//  --StaticDiscreteLocalFunction
+//  --BlockVectorLocalFunction
 //
 //! Implementation of the local functions 
 //
 //**************************************************************************
 template< class TraitsImp >
-class StaticDiscreteLocalFunction
+class BlockVectorLocalFunction
 : public LocalFunctionDefault
   < typename TraitsImp :: DiscreteFunctionSpaceType,
-    StaticDiscreteLocalFunction< TraitsImp >   > 
+    BlockVectorLocalFunction< TraitsImp >   > 
 {
 public:
   typedef TraitsImp Traits; 
@@ -384,7 +384,7 @@ public:
   typedef typename Traits :: DofStorageType DofStorageType;
 
 private:
-  typedef StaticDiscreteLocalFunction< Traits > ThisType;
+  typedef BlockVectorLocalFunction< Traits > ThisType;
   
 public:
   typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
@@ -410,12 +410,12 @@ private:
 
 public:
   //! Constructor 
-  StaticDiscreteLocalFunction ( const DiscreteFunctionSpaceType &f , 
+  BlockVectorLocalFunction ( const DiscreteFunctionSpaceType &f , 
                                 const MapperType& mapper, 
                                 DofStorageType & dofVec );
 
   //! \brief Destructor 
-  ~StaticDiscreteLocalFunction ();
+  ~BlockVectorLocalFunction ();
 
    /** \brief  @copydoc LocalFunctionDefault::operator []  */
   RangeFieldType & operator [] (int num);
@@ -504,7 +504,7 @@ protected:
 
   //! corresponding base function set 
   mutable BaseFunctionSetType baseSet_; 
-}; // end StaticDiscreteLocalFunction 
+}; // end BlockVectorLocalFunction 
 
 
 //***********************************************************************
