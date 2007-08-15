@@ -94,12 +94,9 @@ namespace Dune
     }
  
     template< class EntityType, class RangeLocalFunctionType >
-    inline void operator() 
-      ( const EntityType &entity,
-        const DomainFunctionType &u,
-        LocalFunctionDefault< RangeFunctionSpaceType, RangeLocalFunctionType >
-          &w
-      ) const
+    inline void operator() ( const EntityType &entity,
+                             const DomainFunctionType &u,
+                             RangeLocalFunctionType &w ) const
     {
       // geometry type for the entity
       typedef typename EntityType :: Geometry GeometryType;
