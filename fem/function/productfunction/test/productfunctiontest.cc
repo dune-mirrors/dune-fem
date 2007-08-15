@@ -408,14 +408,15 @@ struct TestProdDF {
     return 1;
   }
 };
-int main (int argc, char **argv) {
-  int ml = 4;
-  if(argc < 2) {
-    fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
+int main (int argc, char **argv)
+{
+  if(argc < 2)
+  {
+    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
+    return 1;
   }
-  else {
-    ml = atoi( argv[1] );   
-  }
+  const int ml = atoi( argv[1] );
+
   double* error = new double[8*ml];
   char tmp[16]; sprintf(tmp,"%d",dimp);
   std::string macroGridName (tmp); 

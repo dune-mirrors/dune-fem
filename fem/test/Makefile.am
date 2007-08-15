@@ -1,0 +1,26 @@
+GRIDTYPE = YASPGRID
+GRIDDIM = 2
+
+# linker flags
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) ../libfem.la
+# preprocessor flags
+AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
+
+TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
+            dgl2projection_adaptive      dgl2projection_blockvector
+
+
+TESTS = $(TESTPROGS)
+check_PROGRAMS = $(TESTPROGS)
+
+lagrangeinterpolation_linear_SOURCES = lagrangeinterpolation.cc
+lagrangeinterpolation_linear_CPPFLAGS = -DPOLORDER=1 $(AM_CPPFLAGS)
+
+lagrangeinterpolation_quadratic_SOURCES = lagrangeinterpolation.cc
+lagrangeinterpolation_quadratic_CPPFLAGS = -DPOLORDER=2 $(AM_CPPFLAGS)
+
+dgl2projection_adaptive_SOURCES = dgl2projection.cc
+dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 $(AM_CPPFLAGS)
+
+dgl2projection_blockvector_SOURCES = dgl2projection.cc
+dgl2projection_blockvector_CPPFLAGS = -DPOLORDER=1 -DUSE_BLOCKVECTORFUNCTION $(AM_CPPFLAGS)

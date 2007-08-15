@@ -97,6 +97,7 @@ AC_CONFIG_FILES([Makefile
      fem/examples/localdg/advectdiffusion/Makefile
      fem/examples/pass/Makefile
      fem/examples/laplace/Makefile
+     fem/test/Makefile
      lib/Makefile
      dune-fem.pc])
 AC_OUTPUT

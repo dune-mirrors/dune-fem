@@ -1,0 +1,75 @@
+#include <config.h>
+#include <iostream>
+
+#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/common/gridpart.hh>
+
+#include <dune/fem/space/dgspace.hh>
+#ifdef USE_BLOCKVECTORFUNCTION
+#include <dune/fem/function/blockvectorfunction.hh>
+#else
+#include <dune/fem/function/adaptivefunction.hh>
+#endif
+
+#include "dgl2projection.hh"
+#include "exactsolution.hh"
+
+using namespace Dune;
+
+// polynom approximation order of quadratures, 
+// at least poolynom order of basis functions 
+#ifdef POLORDER
+  const int polOrder = POLORDER;
+#else
+  const int polOrder = 1;
+#endif
+
+typedef HierarchicGridPart< GridType > GridPartType;
+
+typedef FunctionSpace< double, double, dimworld, 2 > FunctionSpaceType;
+
+typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
+  DiscreteFunctionSpaceType;
+
+#ifdef USE_BLOCKVECTORFUNCTION
+typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+#else
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+#endif
+
+typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
+
+
+
+int main ()
+{
+  try
+  {
+    char tmp[ 16 ];
+    sprintf( tmp, "%d", dimworld );
+    std :: string macroGridName( tmp );
+    macroGridName += "dgrid.dgf";
+
+    GridPtr< GridType > gridptr( macroGridName );
+    GridType& grid=*gridptr;
+    const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+
+    grid.globalRefine( 2*step );
+
+    GridPartType gridPart( grid );
+    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+    ExactSolutionType exactSolution( discreteFunctionSpace );
+    DiscreteFunctionType solution( "solution", discreteFunctionSpace );
+    solution.clear();
+  
+    // perform the L2Projection
+    DGL2Projection< DiscreteFunctionType > :: project( exactSolution, solution );
+
+    return 0;
+  }
+  catch( Exception e )
+  {
+    std :: cerr << e.what() << std :: endl;
+    return 1;
+  }
+}
