@@ -136,8 +136,6 @@ namespace Dune
   public:
     using BaseType :: assign;
 
-    //friend class DiscreteFunctionInterface< Traits >;
-
   public:
     //- Typedefs and enums
     //! Class containing the actual implementation
@@ -287,8 +285,6 @@ namespace Dune
   {
   public:
     friend class AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>;
-    friend class LocalFunctionWrapper<
-      AdaptiveDiscreteFunction< DiscreteFunctionSpaceImp > > ;
 
   private:
     typedef AdaptiveLocalFunction<DiscreteFunctionSpaceImp> ThisType;
@@ -613,10 +609,10 @@ namespace Dune
 
     int numComponents() const { return N; }
 
+#if 0
   public:
     friend class DiscreteFunctionInterface<MyTraits>;
 
-#if 0
   protected:
     using Imp::newObject;
 #endif
@@ -638,9 +634,7 @@ namespace Dune
     //- Friends
     friend class AdaptiveFunctionImplementation<
       CombinedSpace<ContainedFunctionSpaceImp, N, p> >;
-    friend class LocalFunctionWrapper<
-      AdaptiveDiscreteFunction<
-      CombinedSpace<ContainedFunctionSpaceImp, N, p> > >;
+
   public:
     //- Public typedefs and enums
     typedef CombinedSpace<

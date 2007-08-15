@@ -77,8 +77,8 @@ namespace Dune
   public:
     //! Constructor initializing the underlying local function 
     template< class EntityType > 
-    LocalFunctionWrapper( const EntityType &entity,
-                          LocalFunctionStorageType &storage )
+    inline LocalFunctionWrapper ( const EntityType &entity,
+                                  LocalFunctionStorageType &storage )
     : lfptr_( storage.getObject() ),
       lf_( *lfptr_ )
     {
@@ -87,14 +87,14 @@ namespace Dune
     }
 
     //! Constructor creating empty local function 
-    LocalFunctionWrapper( LocalFunctionStorageType &storage ) 
+    inline explicit LocalFunctionWrapper ( LocalFunctionStorageType &storage ) 
     : lfptr_( storage.getObject() ),
       lf_( *lfptr_ )
     {
     }
 
     //! Copy constructor
-    LocalFunctionWrapper( const LocalFunctionWrapper &org )
+    inline LocalFunctionWrapper ( const LocalFunctionWrapper &org )
     : lfptr_( org.lfptr_ ),
       lf_( *lfptr_ )
     {
@@ -231,6 +231,11 @@ namespace Dune
     inline ThisType &operator= ( const ThisType & );
 
   public:
+    LocalFunctionType localFunction ()
+    {
+      return LocalFunctionType( *this );
+    }
+    
     template< class EntityType >
     const LocalFunctionType localFunction ( const EntityType &entity ) const
     {

@@ -358,8 +358,6 @@ private:
 
   //! leak pointer converting block vector to straight vector 
   LeakPointerType leakPtr_; 
-
-  friend class DiscreteFunctionInterface<Traits>;
 }; // end class BlockVectorDiscreteFunction 
 
 
@@ -401,7 +399,7 @@ public:
   typedef typename DofStorageType :: block_type DofBlockType;
 
   friend class BlockVectorDiscreteFunction <DiscreteFunctionSpaceType>;
-  //friend class LocalFunctionWrapper < BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> >;
+
 private:
   typedef typename GridType :: ctype ctype;
   enum { dim = GridType :: dimension };
