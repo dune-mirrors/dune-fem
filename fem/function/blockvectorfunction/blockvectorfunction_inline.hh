@@ -8,7 +8,7 @@ namespace Dune
 template<class DiscreteFunctionSpaceType>
 inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f) 
-  : DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+  : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( "no name" )
   , mapper_(f.indexSet())
@@ -24,7 +24,7 @@ BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f)
 template<class DiscreteFunctionSpaceType>
 inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType & f ) 
-  : DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+  : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( name )
   , mapper_(f.indexSet(),1)
@@ -41,7 +41,7 @@ template<class DiscreteFunctionSpaceType>
 inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const std::string name, 
     const DiscreteFunctionSpaceType & f, const DofStorageType & data ) 
-  : DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+  : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( name )
   , mapper_(f.indexSet(),1)
@@ -331,8 +331,8 @@ setLocal( GridIteratorType &it , const RangeFieldType & scalar )
 //**********************************************************************
 //  --StaticDiscreteLocalFunction 
 //**********************************************************************
-template<class DiscreteFunctionType >
-inline StaticDiscreteLocalFunction < DiscreteFunctionType >::
+template< class TraitsImp >
+inline StaticDiscreteLocalFunction < TraitsImp >::
 StaticDiscreteLocalFunction( 
     const DiscreteFunctionSpaceType &f , 
     const MapperType& mapper,
@@ -348,34 +348,34 @@ StaticDiscreteLocalFunction(
   assert( ! f.continuous() );
 }
       
-template<class DiscreteFunctionType >
-inline StaticDiscreteLocalFunction < DiscreteFunctionType >::~StaticDiscreteLocalFunction() 
+template< class TraitsImp >
+inline StaticDiscreteLocalFunction < TraitsImp >::~StaticDiscreteLocalFunction() 
 {
 }
 
-template<class DiscreteFunctionType >
-inline typename StaticDiscreteLocalFunction < DiscreteFunctionType >::RangeFieldType & 
-StaticDiscreteLocalFunction < DiscreteFunctionType >::operator [] (int num) 
-{
-  return (* (values_[num]));
-}
-
-template<class DiscreteFunctionType >
-inline const typename StaticDiscreteLocalFunction < DiscreteFunctionType >::RangeFieldType & 
-StaticDiscreteLocalFunction < DiscreteFunctionType >::operator [] (int num) const
+template< class TraitsImp >
+inline typename StaticDiscreteLocalFunction < TraitsImp >::RangeFieldType & 
+StaticDiscreteLocalFunction < TraitsImp >::operator [] (int num) 
 {
   return (* (values_[num]));
 }
 
-template<class DiscreteFunctionType >
-inline int StaticDiscreteLocalFunction < DiscreteFunctionType >::
+template< class TraitsImp >
+inline const typename StaticDiscreteLocalFunction < TraitsImp >::RangeFieldType & 
+StaticDiscreteLocalFunction < TraitsImp >::operator [] (int num) const
+{
+  return (* (values_[num]));
+}
+
+template< class TraitsImp >
+inline int StaticDiscreteLocalFunction < TraitsImp >::
 numDofs () const 
 {
   return numOfDof_;
 }
 
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+template< class TraitsImp >
+inline void StaticDiscreteLocalFunction < TraitsImp >::
 evaluate (const DomainType & local, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
@@ -393,9 +393,9 @@ evaluate (const DomainType & local, RangeType & ret) const
   }
 }
 
-template<class DiscreteFunctionType > 
+template< class TraitsImp > 
 template <class QuadratureType> 
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+inline void StaticDiscreteLocalFunction < TraitsImp >::
 evaluate (const QuadratureType &quad, const int quadPoint, RangeType & ret) const 
 {
   enum { dimRange = DiscreteFunctionSpaceType::DimRange };
@@ -411,8 +411,8 @@ evaluate (const QuadratureType &quad, const int quadPoint, RangeType & ret) cons
   }
 }
 
-template<class DiscreteFunctionType >
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+template< class TraitsImp >
+inline void StaticDiscreteLocalFunction < TraitsImp >::
 jacobian(const DomainType& x,
          JacobianRangeType& ret) const
 {
@@ -437,9 +437,9 @@ jacobian(const DomainType& x,
   }
 }
 
-template<class DiscreteFunctionType >
+template< class TraitsImp >
 template <class QuadratureType>
-inline void StaticDiscreteLocalFunction < DiscreteFunctionType >::
+inline void StaticDiscreteLocalFunction < TraitsImp >::
 jacobian (const QuadratureType &quad, const int quadPoint, JacobianRangeType & ret) const
 {
   assert( en_ != 0 );
@@ -463,11 +463,11 @@ jacobian (const QuadratureType &quad, const int quadPoint, JacobianRangeType & r
   }
 }
 
-template<class DiscreteFunctionType >
+template< class TraitsImp >
 inline
 const typename
-StaticDiscreteLocalFunction < DiscreteFunctionType >:: BaseFunctionSetType&
-StaticDiscreteLocalFunction < DiscreteFunctionType >::
+StaticDiscreteLocalFunction < TraitsImp >:: BaseFunctionSetType&
+StaticDiscreteLocalFunction < TraitsImp >::
 baseFunctionSet() const 
 {
   assert( en_ != 0 );
@@ -475,10 +475,10 @@ baseFunctionSet() const
 }
 
 //! axpy operation for factor 
-template<class DiscreteFunctionType >
+template< class TraitsImp >
 template <class QuadratureType>
 inline void 
-StaticDiscreteLocalFunction < DiscreteFunctionType >::
+StaticDiscreteLocalFunction < TraitsImp >::
 axpy(const QuadratureType& quad, const int quadPoint, const RangeType& factor)
 {
   const int numDof = this->numDofs();
@@ -490,10 +490,10 @@ axpy(const QuadratureType& quad, const int quadPoint, const RangeType& factor)
 }
   
 //! axpy operation for factor 
-template<class DiscreteFunctionType >
+template< class TraitsImp >
 template <class QuadratureType>
 inline void 
-StaticDiscreteLocalFunction < DiscreteFunctionType >::
+StaticDiscreteLocalFunction < TraitsImp >::
 axpy(const QuadratureType& quad, const int quadPoint, const JacobianRangeType& factor)
 {
   const int numDof = this->numDofs();
@@ -514,10 +514,10 @@ axpy(const QuadratureType& quad, const int quadPoint, const JacobianRangeType& f
 }
   
 //! axpy operation for factor 
-template<class DiscreteFunctionType >
+template< class TraitsImp >
 template <class QuadratureType>
 inline void 
-StaticDiscreteLocalFunction < DiscreteFunctionType >::
+StaticDiscreteLocalFunction < TraitsImp >::
 axpy(const QuadratureType& quad, 
      const int quadPoint, 
      const RangeType& factor1, 
@@ -542,9 +542,9 @@ axpy(const QuadratureType& quad,
   }
 }
 
-template<class DiscreteFunctionType >
+template< class TraitsImp >
 inline void 
-StaticDiscreteLocalFunction < DiscreteFunctionType >::
+StaticDiscreteLocalFunction < TraitsImp >::
 rightMultiply(const JacobianRangeType& factor,
               const JacobianInverseType& jInv,
               JacobianRangeType& result) const

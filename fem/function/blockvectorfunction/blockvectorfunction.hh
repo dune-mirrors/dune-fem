@@ -22,10 +22,12 @@
 
 namespace Dune{
 
+
+// forward declarations 
 template <class DiscreteFunctionSpaceType> class BlockVectorDiscreteFunction;
-template <class DiscreteFunctionType> class StaticDiscreteLocalFunction;
 template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
-template< class DiscreteFunctionSpaceImp > class BlockVectorLocalFunctionFactory;
+template< class Traits > class StaticDiscreteLocalFunction;
+template< class Traits > class BlockVectorLocalFunctionFactory;
 
 
 template <class DiscreteFunctionSpaceImp>
@@ -36,15 +38,12 @@ struct BlockVectorDiscreteFunctionTraits
   typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
+  typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType;
 
-  typedef ... MapperType;
-  
+  //! needs additional mapper 
+  typedef DGMapper<IndexSetType,0,1> MapperType;
 
-  typedef BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceType, MapperType, DofStorageType >
-    LocalFunctionFactoryType; 
-  typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
 
-  typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
   
   typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   //typedef StaticDiscreteLocalFunction<DiscreteFunctionType> LocalFunctionImp;
@@ -52,6 +51,12 @@ struct BlockVectorDiscreteFunctionTraits
   typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,
             typename DofStorageType::field_type> DofIteratorType;
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
+
+
+  typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
+  typedef BlockVectorLocalFunctionFactory< ThisType >  LocalFunctionFactoryType; 
+  typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
+  typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 };
 
 template <class DofType>
@@ -114,25 +119,22 @@ private:
 
 
 
-template< class DiscreteFunctionSpaceImp, MapperImp, DofStorageImp >
+template< class TraitsImp > 
 class BlockVectorLocalFunctionFactory
 {
 public:
-  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-  typedef MapperImp MapperType;
-  typedef DofStorageImp DofStorageType;
+  typedef TraitsImp Traits;
+  typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename Traits :: MapperType MapperType;
+  typedef typename Traits :: DofStorageType DofStorageType;
 
 private:
-  typedef BlockVectorLocalFunctionFactory
-    < DiscreteFunctionSpaceType, MapperType, DofStorageType >
-    ThisType;
+  typedef BlockVectorLocalFunctionFactory<TraitsImp>  ThisType;
 
   friend class BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >;
 
 public:
-  typedef StaticDiscreteLocalFunction
-    < DiscreteFunctionSpaceType, MapperType, DofStorageType >
-    ObjectType;
+  typedef StaticDiscreteLocalFunction<Traits> ObjectType;
 
   typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
     DiscreteFunctionType;
@@ -171,18 +173,23 @@ class BlockVectorDiscreteFunction
   typedef DiscreteFunctionDefault<BlockVectorDiscreteFunctionTraits <DiscreteFunctionSpaceImp> >
   DiscreteFunctionDefaultType;
 
-  friend class BlockVectorLocalFunctionFactory< DiscreteFunctionSpaceImp > ;
-
-  typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
-  enum { myId_ = 0};
-  
-public:
+public:  
   //! type of discrete functions space 
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
   //! traits of this type 
   typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
   
+  //! needs additional mapper 
+  typedef typename Traits :: MapperType MapperType; 
+
+  friend class BlockVectorLocalFunctionFactory< Traits > ;
+private:
+
+  typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
+  enum { myId_ = 0};
+  
+public:
   //! type of underlying array
   typedef typename Traits :: DofStorageType DofStorageType;
 
@@ -202,14 +209,13 @@ public:
   typedef DofManager<GridType> DofManagerType;
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
-  //! the local function implementation e 
-  typedef typename Traits :: LocalFunctionImp LocalFunctionImp;
-
-  //! LocalFunctionType is the exported lf type 
-  typedef typename Traits :: LocalFunctionType LocalFunctionType;
 
   //! type of local function factory 
   typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
+
+  //! LocalFunctionType is the exported lf type 
+  typedef typename LocalFunctionFactoryType :: ObjectType
+    LocalFunctionImp;
 
   //! the dof iterator type of this function
   typedef typename Traits :: DofIteratorType DofIteratorType;
@@ -227,9 +233,6 @@ public:
   //! type of index set 
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
   
-  //! needs additional mapper 
-  typedef DGMapper<IndexSetType,0,1> MapperType;
-
   //! type of LeakPointer 
   typedef StraightenBlockVector<DofStorageType,DofType> LeakPointerType;
 
@@ -368,20 +371,20 @@ private:
 //! Implementation of the local functions 
 //
 //**************************************************************************
-template< class DiscreteFunctionSpaceImp, class MapperImp, class DofStorageImp >
+template< class TraitsImp >
 class StaticDiscreteLocalFunction
 : public LocalFunctionDefault
-  < DiscreteFunctionSpaceImp,
-    StaticDiscreteLocalFunction< DiscreteFunctionSpaceImp, MapperImp, DofStorageImp >
-  > 
+  < typename TraitsImp :: DiscreteFunctionSpaceType,
+    StaticDiscreteLocalFunction< TraitsImp >   > 
 {
 public:
-  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-  typedef MapperImp MapperType;
-  typedef DofStorageImp DofStorageType;
+  typedef TraitsImp Traits; 
+  typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename Traits :: MapperType  MapperType;
+  typedef typename Traits :: DofStorageType DofStorageType;
 
 private:
-  typedef StaticDiscreteLocalFunction< DiscreteFunctionSpaceType, MapperType, DofStorageType > ThisType;
+  typedef StaticDiscreteLocalFunction< Traits > ThisType;
   
 public:
   typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
@@ -457,10 +460,10 @@ public:
               const JacobianInverseType& jInv,
               JacobianRangeType& result) const;
   
-protected:
   //! update local function for given Entity  
   void init ( const EntityType &en ) const;
 
+protected:
   //! return reference to entity
   const EntityType& en() const 
   {
