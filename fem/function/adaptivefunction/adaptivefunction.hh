@@ -495,7 +495,7 @@ namespace Dune
     typedef Imp ImplementationType;
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
-    typedef typename Traits::LocalFunctionImp LocalFunctionImp;
+
     typedef typename Traits::LocalFunctionType LocalFunctionType;
     typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
     
@@ -511,6 +511,8 @@ namespace Dune
     typedef typename Traits::DofIteratorType DofIteratorType;
     typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
 
+    //! type of local functions factory 
+    typedef typename Traits :: LocalFunctionFactoryType  LocalFunctionFactoryType;
     //- Additional typedefs
     typedef SubSpace<DiscreteFunctionSpaceType> SubSpaceType;
     typedef AdaptiveDiscreteFunction<SubSpaceType> SubDiscreteFunctionType;
@@ -521,37 +523,47 @@ namespace Dune
     //- Public methods
     //! Constructor
     AdaptiveDiscreteFunction(std::string name,
-                             const DiscreteFunctionSpaceType& spc) :
-      BaseType(spc),
-      Imp(name, spc)
+                             const DiscreteFunctionSpaceType& spc)
+    : BaseType( spc, lfFactory_ ),
+      Imp( name, spc ),
+      lfFactory_( *this )
     {}
 
     //! Constructor
     template <class VectorPointerType>
     AdaptiveDiscreteFunction(std::string name,
                              const DiscreteFunctionSpaceType& spc,
-                             VectorPointerType * vector) :
-      BaseType(spc),
-      Imp(name, spc, vector)
+                             VectorPointerType * vector)
+    : BaseType( spc, lfFactory_ ),
+      Imp( name, spc , vector ),
+      lfFactory_( *this )
     {}
     
     //! Constructor
     AdaptiveDiscreteFunction(std::string name,
                              const DiscreteFunctionSpaceType& spc,
-                             DofStorageType& dofVec) :
-      BaseType(spc),
-      Imp(name, spc, dofVec)
+                             DofStorageType& dofVec) 
+    : BaseType( spc, lfFactory_ ),
+      Imp( name, spc , dofVec ),
+      lfFactory_( *this )
     {}
 
     //! Copy constructor
-    AdaptiveDiscreteFunction(const MyType& other) :
-      BaseType(other.space()),
-      Imp(other)
+    AdaptiveDiscreteFunction(const MyType& other)
+    : BaseType( other.space(), lfFactory_ ),
+      Imp(other),
+      lfFactory_( *this )
     {}
     
     ~AdaptiveDiscreteFunction();
     
+
   private:
+    friend class AdaptiveLocalFunctionFactory< DiscreteFunctionSpaceType >;
+
+    // local function factory 
+    const LocalFunctionFactoryType lfFactory_;
+
     ThisType &operator= ( const ThisType &other );
  
   public:
