@@ -12,8 +12,6 @@
 #ifndef __ENTITYFUNCTION_HH__
 #define __ENTITYFUNCTION_HH__
 
-#include <config.h>
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
 
 namespace Dune
