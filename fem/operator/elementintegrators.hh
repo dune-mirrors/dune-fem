@@ -19,16 +19,108 @@
 #ifndef DUNE_ELEMENTINTEGRATOR_HH
 #define DUNE_ELEMENTINTEGRATOR_HH
 
-#include <config.h>
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
-// class required for lagrange-node-access with point() method:
-// #include "lagrangedofhandler.hh"
 #include <dune/common/bartonnackmanifcheck.hh>
+
+#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/operator/matrixadapter.hh>
 
 #include <dune/fem/operator/model/linearellipticmodel.hh>
 
 namespace Dune 
 {
+
+  /** \class DefaultElementIntegratorTraits
+   *  \brief The DefaultElementIntegratorTraits provides Type-Information 
+   *         for the ElementMatrices and FEOp operator.
+   *
+   *  default implementation of a ElementIntegratorTraits class to be used 
+   *  with an appropriate Model in an FEOp for solving a general elliptic 
+   *  problem.
+   *
+   *  It is only 
+   *  considered to yield information by its types, no member variables or 
+   *  methods are provided, neither is it instantiated at any time.
+   * 
+   *  Currently scalar functions and Lagrange-Basis of degree 1 are used, 
+   *  elementquadratures are chosen for any quadrature in the FEOp and 
+   *  ElementIntegrators.
+   *
+   *  All types are derived from GridType and dimworld obtained by 
+   *  inclusion of gridtype.hh
+   *
+   *  Essential Datatypes without explicit interface:
+   *
+   *  required for ElementQuadratureTypes:
+   *     constructor with arguments (entity, order)
+   *     nop, weight, point methods
+   *
+   *  required for IntersectionQuadratureTypes:
+   *     enum INSIDE
+   *     constructor with arguments (entity, order, INSIDE)
+   *     nop, weight, point methods
+   *     localpoint, geometry methods
+   *
+   *  required for LocalMatrixType (e.g. satisfied by 
+   *  FieldMatrixAdapter<Fieldmatrix<...>>):
+   *     constructor without arguments
+   *     rows(), cols() methods
+   *     add(rown, coln, value) allows writable additive access 
+   *     to ij-th component.
+   *
+   *  The class can be taken as an example for own implementations.
+   */
+  template< class GridImp >
+  struct DefaultElementIntegratorTraits
+  {
+    typedef GridImp GridType;
+
+    typedef LeafGridPart< GridType > GridPartType;
+
+    // if filteredgridpart is wanted:
+    //typedef LeafGridPart<GridType> GridPartImpType;
+    //typedef RadialFilter<GridType> FilterType;   // type of the filter we use
+    //typedef FilteredGridPart<GridPartImpType,FilterType> GridPartType;
+
+    enum { dimworld = GridType :: dimensionworld };
+    enum { dim = GridType :: dimension };
+
+    typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 > 
+      DiscreteFunctionSpaceType;
+    typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+      DiscreteFunctionType;
+
+    enum { elementMatrixSize = 100 };
+    typedef FieldMatrixAdapter
+      < FieldMatrix< double, elementMatrixSize, elementMatrixSize > >
+      ElementMatrixType; 
+
+    typedef CachingQuadrature< GridPartType, 0 > ElementQuadratureType; 
+    typedef CachingQuadrature< GridPartType, 1 > IntersectionQuadratureType; 
+    enum { quadDegree = 5 }; //<! degree of quadrature
+    
+    //- derived types
+    typedef typename GridPartType :: IntersectionIteratorType
+      IntersectionIteratorType;
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    typedef typename GridType :: template Codim< 0 > :: EntityPointer
+      EntityPointerType;
+    typedef typename EntityType :: ctype CoordType; 
+    
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+      BaseFunctionSetType;    
+  };
+ 
+
+  
 /*! @addtogroup EllipticOperator
  * Description: several implementations of element-matrix and 
 **              element-rhs-integrators, 
@@ -546,6 +638,9 @@ namespace Dune
                                               double coefficient = 1 ) //  const
     {
       assert( ModelType :: Properties :: hasNeumannValues );
+
+      enum { quadratureDegree = TraitsType :: quadDegree };
+
       const ModelType &model = this->model(); 
 
 	    // for all intersections check whether boundary
@@ -568,8 +663,8 @@ namespace Dune
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();     
 
         // integrate over intersection
-        IntersectionQuadratureType 
-          quadrature( it, TraitsType :: quadDegree, IntersectionQuadratureType :: INSIDE );
+        IntersectionQuadratureType quadrature
+          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
         const int numQuadraturePoints = quadrature.nop();
         for ( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {  
@@ -622,6 +717,8 @@ namespace Dune
       assert( ModelType :: Properties :: hasRobinValues );
       const ModelType &model = this->model();
 
+      enum { quadratureDegree = TraitsType :: quadDegree };
+
       // for all intersections check whether boundary
       const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace();
       
@@ -643,9 +740,8 @@ namespace Dune
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
 
         // integrate over intersection
-        IntersectionQuadratureType
-          quadrature( it, TraitsType :: quadDegree,
-                      IntersectionQuadratureType :: INSIDE );
+        IntersectionQuadratureType quadrature
+          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
         const int numQuadraturePoints = quadrature.nop();
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {
@@ -981,6 +1077,9 @@ namespace Dune
                                 double coefficient = 1 ) // const
     {
       assert( ModelType :: Properties :: hasNeumannValues );
+
+      enum { quadratureDegree = TraitsType :: quadDegree };
+      
       const ModelType &model = this->model();
       const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace();
       const GridPartType &gridPart = dfSpace.gridPart();
@@ -999,8 +1098,8 @@ namespace Dune
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
  
         // integrate over intersection
-        IntersectionQuadratureType
-          quadrature( it, TraitsType :: quadDegree, IntersectionQuadratureType :: INSIDE );
+        IntersectionQuadratureType quadrature
+          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
         const int numQuadraturePoints = quadrature.nop();
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {
@@ -1055,6 +1154,9 @@ namespace Dune
                               double coefficient = 1 ) // const
     {
       assert( ModelType :: Properties :: hasRobinValues );
+
+      enum { quadratureDegree = TraitsType :: quadDegree };
+
       const ModelType &model = this->model();
       const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace();
       const GridPartType &gridPart = dfSpace.gridPart();
@@ -1071,8 +1173,8 @@ namespace Dune
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
  
         // integrate over intersection
-        IntersectionQuadratureType
-          quadrature( it, TraitsType :: quadDegree, IntersectionQuadratureType :: INSIDE );
+        IntersectionQuadratureType quadrature
+          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
         const int numQuadraturePoints = quadrature.nop();
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {  
@@ -1127,6 +1229,9 @@ namespace Dune
                                           double coefficient = 1 ) // const
     {
       assert( ModelType :: Properties :: hasGeneralizedNeumannValues );
+
+      enum { quadratureDegree = TraitsType :: quadDegree };
+      
       const ModelType &model = this->model();
 
       const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace();
@@ -1144,8 +1249,8 @@ namespace Dune
         const int numBaseFunctions =  baseFunctionSet.numBaseFunctions();
  
         // integrate over intersection
-        IntersectionQuadratureType
-          quadrature( it, TraitsType :: quadDegree, IntersectionQuadratureType :: INSIDE );
+        IntersectionQuadratureType quadrature
+          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
         const int numQuadraturePoints = quadrature.nop(); 
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {  
@@ -1378,56 +1483,8 @@ private:
             model.dirichletValues( nit, lagrangePointSet, entityDofNumber, phi );
             lf[ entityDofNumber ] = phi[ 0 ];
           }
-         
-          #if 0
-          // determine all local DOF numbers of intersection vertices
-          // enum { dim = EntityType :: dimension };
-                  
-          // const ReferenceElement<coordType,dim>& refElem; 
-          // ReferenceElement<coordType,dim> refElem; 
-          // ReferenceElementContainer<coordType,dim> refElemCont;
-          // const ReferenceElement<coordType,dim>& 
-          // refElem = refElemCont(t);
-                  
-          // t is geometrytype
-
-          // class, which gives access to local vertex coordinates by a
-          // point() routine:
-          // VertexPointProvider<EntityType> fakequad(en);
-          LagrangeDofHandler< DiscreteFunctionSpaceType >
-            dofHandler( fspace, entity );
-
-          // int novx = refElem.size( faceNumber, faceCodim, dim );
-          int novx = dofHandler.numDofsOnFace( faceNumber, faceCodim );
-          //  assert( novx == dim );
-                  
-          // we only can treat lagrange-functions with correspondence 
-          // between local vertices and basis-functions: 
-          // assert(lf.numDofs() == refElem.size(dim));
-
-          for( int j = 0; j < novx; ++j ) {
-            // get all local DOF number located on the face 
-                    
-            // int vx  = refElem.subEntity(face, faceCodim , j , dim );
-            int vx = dofHandler.entityDofNum( faceNumber, faceCodim, j );
-                    
-            // determine Dirichlet-value in this vertex
-            RangeType dirval;
-            // std::cout << "j =" << j << ", vx = " << vx << " \n";   
-            model.dirichletValues( entity, dofHandler, vx, dirval ); 
-            // std::cout << "dirval[0] =" << dirval[0] << "\n";
-            // set local DOF to determined value
-            // here the assumption of identical local numbering of 
-            // DOFS and vertex numbering enters!!!!
-            lf[ vx ] = dirval;                    
-            // std::cout << "lf[vx] =" << lf[vx] << "\n";
-          }
-          // std::cout << "finished loop of lf-update \n";
-          #endif
         }
-        // std::cout << "finished loop over intersections \n";
       }
-      // std::cout << "finished loop over entities \n";
     }
   
 // member variables:

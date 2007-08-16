@@ -13,10 +13,6 @@
 #ifndef DUNE_MATRIXADAPTER_HH
 #define DUNE_MATRIXADAPTER_HH
 
-#include <config.h>
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
-#include <dune/fem/quadrature/elementquadrature.hh>
-
 namespace Dune
 {
   
