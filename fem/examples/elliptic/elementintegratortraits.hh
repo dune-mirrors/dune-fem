@@ -14,10 +14,9 @@
 #ifndef DUNE_ELEMENTINTEGRATORTRAITS_HH
 #define DUNE_ELEMENTINTEGRATORTRAITS_HH
 
-#include <config.h>
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
-#include <dune/fem/quadrature/elementquadrature.hh>
-#include <dune/fem/space/common/filteredgrid.hh>
+#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/operator/matrixadapter.hh>
 
 namespace Dune
@@ -66,40 +65,38 @@ namespace Dune
    *  The class can be taken as an example for own implementations.
    */
   /*======================================================================*/
-  template< int polOrder >
-  class EllipticElementIntegratorTraits
+  template< class GridImp, int polOrder >
+  struct EllipticElementIntegratorTraits
   {
-  public:
-    //! specific choices for types, based on GridType from inclusion of 
-    //! gridtype.hh
+    typedef GridImp GridType;
+
     typedef LeafGridPart< GridType > GridPartType;
 
-   //! default definitions, not to be changed: 
+    enum { dimworld = GridType :: dimensionworld };
     enum { dim = GridType :: dimension };
 
     typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
-    typedef LagrangeDiscreteFunctionSpace
-            < FunctionSpaceType, GridPartType, polOrder, CachingStorage >
+    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
     typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
       DiscreteFunctionType;
 
-    enum { elementMatrixSize = 100 };  
-    typedef FieldMatrixAdapter< FieldMatrix< double, 
-                                             elementMatrixSize,
-                                             elementMatrixSize> >
+    enum { elementMatrixSize = 100 };
+    typedef FieldMatrixAdapter
+      < FieldMatrix< double, elementMatrixSize,elementMatrixSize > >
       ElementMatrixType; 
 
     typedef CachingQuadrature< GridPartType, 0 > ElementQuadratureType;
-    typedef ElementQuadrature< GridPartType, 1 > IntersectionQuadratureType;
-    enum { quadDegree = 2*polOrder+2 }; //<! degree of quadrature
+    typedef CachingQuadrature< GridPartType, 1 > IntersectionQuadratureType;
+    enum { quadDegree = 2*polOrder+1 }; //<! degree of quadrature
   
     //! derived types
     typedef typename GridPartType :: IntersectionIteratorType
       IntersectionIteratorType;
-    typedef typename GridType :: Codim< 0 > :: Entity EntityType;
-    typedef typename GridType :: Codim< 0 > :: EntityPointer EntityPointerType;
-    typedef EntityType :: ctype CoordType;
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    typedef typename GridType :: template Codim< 0 > :: EntityPointer
+      EntityPointerType;
+    typedef typename EntityType :: ctype CoordType;
    
     typedef typename DiscreteFunctionSpaceType :: DomainFieldType
       DomainFieldType;
@@ -112,10 +109,6 @@ namespace Dune
 
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
-
-    // do not remove any of the following bnd-type, as selection according to 
-    // this is happening in the operator
-//    enum BoundaryType { Dirichlet, Neumann, Robin };
   };
  
 }

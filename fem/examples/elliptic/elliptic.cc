@@ -94,12 +94,10 @@
 // i.e. comment or uncomment the following
 //#define FEOP_SAVE_MATRIX_WANTED
 
+
+//- system includes
 #include <config.h>
-
 #include <iostream>
-
-#include <dune/common/stdstreams.cc>
-#include <dune/common/exceptions.hh>
 
 // save GRIDDIM for later selection of problem depending on dimension
 #ifdef GRIDDIM
@@ -115,40 +113,32 @@
   #define PDIM 2
 #endif
 
-// GRIDDIM is deleted in GRIDTYPE !!
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+//- dune includes 
+#include <dune/common/exceptions.hh>
+#include <dune/common/stdstreams.cc>
 
-
-// Dune includes 
+#include <dune/grid/utility/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/common/referenceelements.hh>
+
+#include <dune/fem/operator/feop.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
+#include <dune/fem/io/matlab/matlabhelper.hh>
+#include <dune/fem/misc/l2error.hh>
+#include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/oemsolver/oemsolver.hh>
+#include <dune/fem/operator/elementintegrators.hh>
+#include <dune/fem/operator/lagrangeinterpolation.hh>
 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-// local includes 
-#include <dune/fem/operator/discreteoperatorimp.hh>
-
-#include <dune/fem/operator/feop.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
-
-#include <dune/fem/io/matlab/matlabhelper.hh>
-
-//#include "spmatrix.hh"
-#include <dune/fem/misc/l2error.hh>
-// #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/space/lagrangespace/lagrangespace.hh>
-#include <dune/fem/space/common/filteredgrid.hh>
-//#include <dune/fem/discretefunction/dfadapt.hh>
-#include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/operator/inverseoperators.hh>
-#include <dune/fem/solver/oemsolver/oemsolver.hh>
-#include <dune/fem/operator/elementintegrators.hh>
-#include <dune/fem/operator/elementintegratortraits.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+//- local includes
 #include "ellipticmodel.hh"
 #include "elementintegratortraits.hh"
+
+
 
 // Select the polynomial order of the calculation
 #ifdef POLORDER
@@ -165,10 +155,11 @@
 
 using namespace Dune;
 
-//! definition of traits class, which already defines various 
-//! basic settings such as gridparts, etc.
-//! if you want another settings, simply generate your own Traits class
-typedef EllipticElementIntegratorTraits< polynomialOrder > ElementIntegratorTraitsType;
+// definition of traits class, which already defines various 
+// basic settings such as gridparts, etc.
+// if you want another settings, simply generate your own Traits class
+typedef EllipticElementIntegratorTraits< GridType, polynomialOrder >
+  ElementIntegratorTraitsType;
 
 typedef ElementIntegratorTraitsType :: FunctionSpaceType FunctionSpaceType;
 
