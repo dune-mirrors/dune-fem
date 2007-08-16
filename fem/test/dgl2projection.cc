@@ -1,7 +1,8 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/utility/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/fem/space/dgspace.hh>
