@@ -22,6 +22,8 @@ namespace Dune {
   template <class FunctionSpaceImp, template <class> class StorageImp>
   class VectorialBaseFunctionSet;
 
+
+
   //! Traits class for standard base function set
   template <class FunctionSpaceImp, template <class> class StorageImp>
   struct StandardBaseFunctionSetTraits
@@ -38,27 +40,40 @@ namespace Dune {
 
   };
 
+
+
   //! \brief Standard base function set
-  template <class FunctionSpaceImp, template <class> class StorageImp>
-  class StandardBaseFunctionSet : 
-    public BaseFunctionSetDefault<StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >
+  template< class FunctionSpaceImp, template< class > class StorageImp >
+  class StandardBaseFunctionSet
+  :  public BaseFunctionSetDefault
+    < StandardBaseFunctionSetTraits< FunctionSpaceImp, StorageImp > >
   {
-    typedef BaseFunctionSetDefault<StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> > BaseType;
   public:
-    typedef StandardBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> Traits;
+    typedef FunctionSpaceImp FunctionSpaceType;
+
+    typedef StandardBaseFunctionSetTraits< FunctionSpaceType, StorageImp > Traits;
+
+  private:
+    typedef StandardBaseFunctionSet< FunctionSpaceType, StorageImp > ThisType;
+    typedef BaseFunctionSetDefault< Traits > BaseType;
+    
+  public:
     typedef typename FunctionSpaceImp::DomainType DomainType;
     typedef typename FunctionSpaceImp::RangeType RangeType;
     typedef typename FunctionSpaceImp::RangeFieldType DofType;
     typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
 
+    typedef typename Traits :: FactoryType FactoryType;
+
   public:
     //! Constructor
-    StandardBaseFunctionSet(const typename Traits::FactoryType& factory) :
-      storage_(factory),
-      diffVar0_(0),
-      tmp_(0.),
-      jTmp_(0.)
-    {}
+    inline explicit StandardBaseFunctionSet ( const FactoryType &factory )
+    : storage_( factory ),
+      diffVar0_( 0 ),
+      tmp_( 0 ),
+      jTmp_( 0 )
+    {
+    }
 
     /** \brief @copydoc BaseFunctionSetInterface::numBaseFunctions */
     inline
@@ -112,7 +127,6 @@ namespace Dune {
     GeometryType geometryType () const { return storage_.geometryType(); }
     
   private:
-    // do not copy this class 
     StandardBaseFunctionSet(const StandardBaseFunctionSet&);
 
     typename Traits::StorageType storage_;
@@ -122,6 +136,8 @@ namespace Dune {
     mutable JacobianRangeType jTmp_;
   };
 
+
+
   //- VectorialBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>
   struct VectorialBaseFunctionSetTraits 
@@ -130,6 +146,8 @@ namespace Dune {
     typedef VectorialBaseFunctionSet<
       FunctionSpaceType, StorageImp> BaseFunctionSetType;
   };
+
+
 
   //! \brief Special base function implementation that takes advantage
   //! of the vectorial structure of the base functions.
@@ -165,14 +183,17 @@ namespace Dune {
         
   public:
     //! Constructor
-    VectorialBaseFunctionSet(const FactoryType& factory) :
-      storage_(factory),
-      util_(FunctionSpaceType::DimRange),
-      tmp_(0),
-      jTmp_(0) // changed to integer in case of integer func-space
-    {}
+    inline explicit VectorialBaseFunctionSet ( const FactoryType &factory )
+    : storage_( factory ),
+      util_( FunctionSpaceType::DimRange ),
+      tmp_( 0 ),
+      jTmp_( 0 ) // changed to integer in case of integer func-space
+    {
+    }
 
-    ~VectorialBaseFunctionSet() {}
+    inline ~VectorialBaseFunctionSet ()
+    {
+    }
 
     // use evaluate of default implementation 
     using BaseType :: evaluate;
@@ -255,8 +276,7 @@ namespace Dune {
                                    const JacobianRangeType& factor) const;
 
   private:
-    //! copy constructor prohibited 
-    VectorialBaseFunctionSet(const VectorialBaseFunctionSet& factory);
+    inline VectorialBaseFunctionSet ( const VectorialBaseFunctionSet & );
       
     StorageType storage_;
     DofConversionUtility<PointBased> util_;
