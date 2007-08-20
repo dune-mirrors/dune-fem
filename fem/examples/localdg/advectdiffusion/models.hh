@@ -1,4 +1,4 @@
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridpart.hh>
 #include "advectdiff.hh"
 
