@@ -244,6 +244,198 @@ namespace Dune
     }
   };
 
+
+
+  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  class ArrayOverAllocator;
+
+
+
+  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  class ArrayOverAllocatorElementPointer
+  {
+  public:
+    typedef ElementImp ElementType;
+
+    typedef WrappedArrayAllocatorImp< ElementType > WrappedArrayAllocatorType;
+
+    typedef typename WrappedArrayAllocatorType :: ElementPtrType ElementPtrType;
+
+  private:
+    typedef ArrayOverAllocatorElementPointer
+      < ElementType, WrappedArrayAllocatorImp >
+      ThisType;
+
+    friend class ArrayOverAllocator< ElementType, WrappedArrayAllocatorImp >;
+
+  protected:
+    ElementPtrType ptr_;
+    unsigned int size_;
+
+  public:
+    inline ArrayOverAllocatorElementPointer ()
+    : ptr_( 0 ),
+      size_( 0 )
+    {
+    }
+
+    inline ArrayOverAllocatorElementPointer ( const ElementPtrType ptr,
+                                              const unsigned int size )
+    : ptr_( ptr ),
+      size_( size )
+    {
+    }
+
+    inline ArrayOverAllocatorElementPointer ( const ThisType &other )
+    : ptr_( other.ptr_ ),
+      size_( other.size_ )
+    {
+    }
+
+    inline ThisType &operator= ( const ThisType &other )
+    {
+      ptr_ = other.ptr_;
+      size_ = other.size_;
+    }
+
+    inline operator const ElementPtrType () const
+    {
+      return ptr_;
+    }
+
+#if 0
+    inline ElementType &operator* () const
+    {
+      return *ptr_;
+    }
+
+    inline ElementType &operator[] ( const unsigned int index ) const
+    {
+      assert( index < size_ );
+      return ptr_[ index ];
+    }
+#endif
+  };
+
+
+
+  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  struct ArrayOverAllocatorTraits
+  {
+    typedef ElementImp ElementType;
+
+    typedef WrappedArrayAllocatorImp< ElementType > WrappedArrayAllocatorType;
+
+    typedef ArrayOverAllocatorElementPointer
+      < ElementType, WrappedArrayAllocatorImp >
+      ElementPtrType;
+
+    typedef ArrayOverAllocator< ElementType, WrappedArrayAllocatorImp >
+      ArrayAllocatorType;
+  };
+
+
+
+  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  class ArrayOverAllocator
+  : public ArrayAllocatorDefault
+    < ArrayOverAllocatorTraits< ElementImp, WrappedArrayAllocatorImp > >
+  {
+  public:
+    typedef ElementImp ElementType;
+
+    typedef ArrayOverAllocatorTraits< ElementType, WrappedArrayAllocatorImp >
+      TraitsType;
+
+  private:
+    typedef ArrayOverAllocator< ElementType, WrappedArrayAllocatorImp > ThisType;
+    typedef ArrayAllocatorDefault< TraitsType > BaseType;
+
+  public:
+    typedef typename TraitsType :: ElementPtrType ElementPtrType;
+
+    typedef typename TraitsType :: WrappedArrayAllocatorType
+      WrappedArrayAllocatorType;
+
+  protected:
+    WrappedArrayAllocatorType allocator_;
+    unsigned int memFactor_;
+
+  public:
+    inline explicit ArrayOverAllocator ( const unsigned int memFactor = 1152 )
+    : allocator_(),
+      memFactor_( memFactor )
+    {
+    }
+
+    inline explicit ArrayOverAllocator ( const double memFactor )
+    : allocator_(),
+      memFactor_( (int)(memFactor * 1024) )
+    {
+    }
+
+
+    inline explicit
+    ArrayOverAllocator ( const WrappedArrayAllocatorType &allocator,
+                         const unsigned int memFactor = 1152 )
+    : allocator_( allocator ),
+      memFactor_( memFactor )
+    {
+    }
+
+    inline ArrayOverAllocator ( const WrappedArrayAllocatorType &allocator,
+                                const double memFactor )
+    : allocator_( allocator ),
+      memFactor_( (int)(memFactor * 1024) )
+    {
+    }
+
+    inline ArrayOverAllocator ( const ThisType &other )
+    : allocator_( other.allocator_ ),
+      memFactor_( other.memFactor_ )
+    {
+    }
+
+    inline ThisType &operator= ( const ThisType &other )
+    {
+      allocator_ = other.allocator_;
+      memFactor_ = other.memFactor_;
+    }
+
+    inline void allocate ( unsigned int size,
+                           ElementPtrType &array ) const
+    {
+      array.size_ = (size * memFactor_) / 1024;
+      allocator_.allocate( array.size_, array.ptr_ );
+    }
+  
+    inline void free ( ElementPtrType &array ) const
+    {
+      allocator_.free( array.ptr_ );
+      array.size_ = 0;
+    }
+
+    inline void reallocate ( unsigned int oldSize,
+                             unsigned int newSize,
+                             ElementPtrType &array ) const
+    {
+      const unsigned int newAllocSize = (newSize * memFactor_) / 1024;
+      if( (newSize > array.size_) || (newAllocSize < array.size_) )
+      {
+        allocator_.reallocate( array.size_, newAllocSize, array.ptr_ );
+        array.size_ = newAllocSize;
+      }
+    }
+  };
+
+
+
+  template< class ElementType >
+  class DefaultArrayOverAllocator
+  : public ArrayOverAllocator< ElementType, DefaultArrayAllocator >
+  {
+  };
+
 }
 
 #endif

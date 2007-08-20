@@ -27,7 +27,7 @@ namespace Dune
 
   public:
     //! Maps an index onto another one
-    inline const unsigned int &operator[]( unsigned int index ) const
+    inline const unsigned int &operator[] ( unsigned int index ) const
     {
       return asImp().operator[]( index );
     }
@@ -35,7 +35,7 @@ namespace Dune
     //! Returns the map's range
     inline unsigned int range () const
     {
-      return asImp().size();
+      return asImp().range();
     }
 
     //! Returns the map's size
