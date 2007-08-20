@@ -824,11 +824,13 @@ public:
   //! type of Grid this DofManager belongs to 
   typedef GridImp GridType;
 
-private:  
-  typedef DofManager<GridType> MyType;
-  friend class DefaultSingletonFactory<const GridType* , MyType>; 
-  friend class DofManagerFactory<MyType>;
-  
+private:
+  typedef DofManager< GridType > ThisType;
+
+  friend class DefaultSingletonFactory< const GridType*, ThisType >; 
+  friend class DofManagerFactory< ThisType >;
+  friend class Conversion< ThisType, IsDofManager >;
+ 
 public:
   typedef typename GridObjectStreamOrDefault<
     GridType, DummyObjectStream>::ObjectStreamType ObjectStreamType;
@@ -877,7 +879,9 @@ private:
   int sequence_; 
   
 public: 
-  typedef IndexSetRestrictProlong< MyType , LocalIndexSetObjectsType > IndexSetRestrictProlongType;
+  typedef IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType >
+    IndexSetRestrictProlongType;
+
 private:
   // combine object holding all index set for restrict and prolong 
   IndexSetRestrictProlongType indexRPop_; 
@@ -887,7 +891,7 @@ private:
   //**********************************************************
   //**********************************************************
   //! Constructor 
-  DofManager (const GridType & grid) 
+  inline explicit DofManager ( const GridType &grid ) 
     : grid_(grid) 
     , defaultChunkSize_(128) 
     , sequence_(0)
@@ -908,15 +912,14 @@ private:
   }
 
   // copy of dofmanagers is forbidden 
-  DofManager(const DofManager &) {
-    std::cerr << "DofManager(const DofManager &) not allowed! \n";
+  DofManager( const ThisType & )
+  {
+    std::cerr << "DofManager(const DofManager &) not allowed!" << std :: endl;
     abort();
   }
   
   //! Desctructor, removes all MemObjects and IndexSetObjects 
   ~DofManager (); 
-  // for destructor 
-  friend class Conversion<DofManager<GridType>,IsDofManager>;
 
 public:
   template <class MapperType , class DofStorageType >
