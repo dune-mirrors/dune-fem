@@ -1,9 +1,9 @@
 #include <iostream>
 #include <config.h>
 
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/utility/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
-#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/dgspace.hh>
@@ -11,7 +11,6 @@
 #include <dune/fem/quadrature/cachequad.hh>
 
 #include <dune/fem/operator/lagrangeinterpolation.hh>
-#include <dune/fem/space/lagrangespace/dofhandler.hh>
 
 #include <dune/fem/space/common/adaptiveleafgridpart.hh> 
 #include <dune/grid/common/gridpart.hh>
@@ -195,78 +194,6 @@ class L2Projection
   }
 };
 
-
-template< class DiscreteFunctionImp >
-class DumbLagrangeInterpolation
-{
-public:
-  typedef DiscreteFunctionImp DiscreteFunctionType;
-  
-  typedef typename DiscreteFunctionType :: FunctionSpaceType
-    DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
-  typedef typename DiscreteFunctionType :: DomainType DomainType;
-  typedef typename DiscreteFunctionType :: RangeType RangeType;
-
-  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-  typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-  typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
-    LagrangePointSetType;
-  
-  typedef typename GridPartType :: GridType GridType;
- 
-  typedef typename GridType :: template Codim< 0 > :: Entity Entity0Type;
-
-  typedef typename Entity0Type :: Geometry GeometryType;
-  typedef typename Entity0Type :: LeafIntersectionIterator
-    IntersectionIteratorType;
-  
-public:
-  template< class FunctionType >
-  static void interpolateFunction(  const FunctionType &function,
-                                    DiscreteFunctionType &discreteFunction )
-  {
-    const DiscreteFunctionSpaceType& discreteFunctionSpace
-      = discreteFunction.space();
-    discreteFunction.clear();
-
-    const IteratorType endit = discreteFunctionSpace.end();
-    for( IteratorType it = discreteFunctionSpace.begin(); it != endit ; ++it ) {
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
-
-      const GeometryType &geometry = (*it).geometry();
-
-      /*
-      const LagrangePointSetType &lagrangePointSet
-        = discreteFunctionSpace.lagrangePointSet( *it );
-      */
-
-      LagrangeDofHandler< DiscreteFunctionSpaceType >
-        dofHandler( discreteFunctionSpace, *it );
-      
-      const IntersectionIteratorType endiit = (*it).ileafend();
-      for( IntersectionIteratorType iit = (*it).ileafbegin(); iit != endiit; ++iit ) {
-        const int me = iit.numberInSelf();
-        const int numDofs = dofHandler.numDofsOnFace( me, 1 );
-        for( int i = 0; i < numDofs; ++i ) {
-          RangeType phi;
-          const int j = dofHandler.entityDofNum( me, 1, i );
-          function.evaluate( geometry.global( dofHandler.point( j ) ), phi );
-          localFunction[ j ] = phi[ 0 ];
-        }
-      }
-
-      /*
-      const int numDofs = localFunction.numDofs();
-      for( int i = 0; i < numDofs; ++i ) {
-        RangeType phi;
-        function.evaluate( geometry.global( lagrangePointSet[ i ] ), phi );
-        localFunction[ i ] = phi[ 0 ];
-      }
-      */
-    }
-  }
-};
 
 
 // calculates \Vert u - u_h \Vert_{L^2}
