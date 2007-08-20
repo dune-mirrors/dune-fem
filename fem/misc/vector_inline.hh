@@ -3,8 +3,9 @@ namespace Dune
 
   //! Scalar product of two vectors
   template< class TraitsType, class TraitsOther >
-  inline typename TraitsType :: FieldType operator* ( const VectorInterface< TraitsType > &u,
-                                                      const VectorInterface< TraitsOther > &v )
+  inline typename TraitsType :: FieldType
+  operator* ( const VectorInterface< TraitsType > &u,
+              const VectorInterface< TraitsOther > &v )
   {
     typedef typename TraitsType :: FieldType FieldType;
     typedef CompileTimeChecker<

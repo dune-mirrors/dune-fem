@@ -493,4 +493,6 @@ namespace Dune
 
 }
 
+#include "array_inline.hh"
+
 #endif
