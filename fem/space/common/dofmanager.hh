@@ -892,23 +892,24 @@ private:
   //**********************************************************
   //! Constructor 
   inline explicit DofManager ( const GridType &grid ) 
-    : grid_(grid) 
-    , defaultChunkSize_(128) 
-    , sequence_(0)
-    , indexRPop_( *this, insertIndices_ , removeIndices_ ) 
-    , memoryFactor_(1.1)
+  : grid_( grid ),
+    defaultChunkSize_( 128 ),
+    sequence_( 0 ),
+    indexRPop_( *this, insertIndices_ , removeIndices_ ),
+    memoryFactor_( 1.1 )
   {
-    std::string file("dofmanager.param");
-    readParameter(file,"MemoryFactor",memoryFactor_);
+    std :: string parameterFileName( "dofmanager.param" );
+    readParameter( parameterFileName, "MemoryFactor", memoryFactor_, true, false );
 
     if( memoryFactor_ < 1.0 ) 
     {
-      std::cerr<<"ERROR: choose MemoryFactor (over-estimation) value >= 1.0 !!!" << std::endl;
-      assert( memoryFactor_ >= 1.0 );
-      exit(1);
+      std :: cerr << "Warning: Chosen MemoryFactor < 1.0, using 1.0 instead."
+                  << std :: endl;
+      memoryFactor_ = 1.0;
     }
 
-    std::cout << "Created DofManager: memoryFactor = "<<memoryFactor_<<"!\n";
+    std :: cout << "Created DofManager: memoryFactor = " << memoryFactor_ << "."
+                << std :: endl;
   }
 
   // copy of dofmanagers is forbidden 
