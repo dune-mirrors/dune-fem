@@ -423,12 +423,12 @@ namespace Dune
 
     inline DynamicArray ( const ArrayAllocatorType &arrayAllocator,
                           unsigned int size,
-                          const ElementType &element )
+                          const ElementType defaultElement )
     : allocator_( arrayAllocator )
     {
       size_ = size;
       allocator_.allocate( size_, elements_ );
-      assign( element );
+      assign( defaultElement );
     }
     
     inline DynamicArray ( const ThisType &other )
@@ -456,7 +456,7 @@ namespace Dune
       return elements_[ index ];
     }
 
-    inline void append ( const ElementType &element )
+    inline void append ( const ElementType element )
     {
       const unsigned int oldSize = size_;
       resize( oldSize + 1 );
@@ -478,11 +478,25 @@ namespace Dune
 
     inline void resize ( unsigned int newSize )
     {
-      if( newSize != size_ )
-      {
-        allocator_.reallocate( size_, newSize, elements_ );
-        size_ = newSize;
-      }
+      const unsigned int oldSize = size_;
+      if( newSize == oldSize )
+        return;
+
+      allocator_.reallocate( oldSize, newSize, elements_ );
+      size_ = newSize;
+    }
+
+    inline void resize ( unsigned int newSize,
+                         const ElementType defaultElement )
+    {
+      const unsigned int oldSize = size_;
+      if( newSize == oldSize )
+        return;
+
+      allocator_.reallocate( oldSize, newSize, elements_ );
+      size_ = newSize;
+      for( unsigned int i = oldSize; i < newSize; ++i )
+        elements_[ i ] = defaultElement;
     }
 
     inline unsigned int size () const

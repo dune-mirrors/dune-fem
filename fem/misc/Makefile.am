@@ -7,9 +7,10 @@ boundaryidentifier.hh combineinterface.hh  l2error.hh \
 longexample.cc    entityfunction.hh \
 example.cc  timeutility.hh  timeprovider.hh\
 suite.cc   suite.hh \
-debug.hh \
+debug.hh  codimmap.hh \
 arrayallocator.hh  obstack.hh \
 array.hh  array_inline.hh  stlarray.hh \
 rectarray.hh \
 vector.hh  vector_inline.hh \
-subarray.hh
+subarray.hh \
+adaptiveindexmapper.hh  adaptiveindexmapper_inline.hh
