@@ -6,6 +6,7 @@
 #include <dune/common/exceptions.hh>
 
 //- Dune-Fem includes 
+#include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 //- local includes 
@@ -166,21 +167,25 @@ namespace Dune
 
     typedef typename LagrangePointSetType :: DofInfo DofInfo;
 
-    typedef IndexSetCodimCallFactory< GridPartType >
-      IndexSetCodimCallFactoryType;
-    typedef typename IndexSetCodimCallFactoryType :: IndexSetCodimCallType
-      IndexSetCodimCallType;
-
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DMFactoryType;
 
+  private:
+    template< unsigned int codim >
+    class IndexSetCodimCallImp
+    : public IndexSetCodimCall< GridPartType, codim >
+    {
+    };
+    
+    typedef CodimMap< dimension+1, IndexSetCodimCallImp >
+      IndexSetCodimCallMapType;
 
   private:
     // reference to dof manager needed for debug issues 
     const DofManagerType& dm_;
 
     const IndexSetType &indexSet_;
-    IndexSetCodimCallType *indexSetCodimCall_[ dimension+1 ];
+    const IndexSetCodimCallMapType indexSetCodimCall_;
     
     LagrangePointSetMapType &lagrangePointSet_;
 
@@ -200,8 +205,6 @@ namespace Dune
     , lagrangePointSet_( lagrangePointSet )
     , sequence_( dm_.sequence() )
     {
-      IndexSetCodimCallFactoryType :: getAllCalls( indexSetCodimCall_ );
-        
       for( int codim = 0; codim <= dimension; ++codim )
         maxDofs_[ codim ] = 0;
       
@@ -256,18 +259,11 @@ namespace Dune
       const LagrangePointSetType *set
         = lagrangePointSet_[ entity.geometry().type() ];
       const DofInfo& dofInfo = set->dofInfo( localDof );
-      // set->dofSubEntity( localDof, codim, subEntity );
-      // 
+      
       const int subIndex
         = indexSetCodimCall_[ dofInfo.codim ]
-          ->subIndex( indexSet_, entity, dofInfo.subEntity );
+            .subIndex( indexSet_, entity, dofInfo.subEntity );
       return DimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
-
-      /*
-      const int subIndex
-        = indexSetCodimCall_[ codim ]->subIndex( indexSet_, entity, subEntity );
-      return DimRange * (offset_[ codim ] + subIndex) + coordinate;
-      */
     }
 
     //! return old dof number for given number of hole and codim (=block) 
