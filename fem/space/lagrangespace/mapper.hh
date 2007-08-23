@@ -88,7 +88,7 @@ namespace Dune
       const int coordinate = local % DimRange;
       const int localDof = local / DimRange;
       const int globalDof
-        = indexSet_.template index< dimension >( entity, localDof );
+        = indexSet_.template subIndex< dimension >( entity, localDof );
       return DimRange * globalDof + coordinate;
     }
 
@@ -289,10 +289,10 @@ namespace Dune
     }
 
     //! return number of holes for given codim 
-    int numberOfHoles (const int codim) const
+    int numberOfHoles ( const int codim ) const
     {
-      return (maxDofs_[codim] > 0) ? 
-        (DimRange * indexSet_.numberOfHoles(codim)) : 0;
+      return (maxDofs_[ codim ] > 0) ? 
+        (DimRange * indexSet_.numberOfHoles( codim )) : 0;
     }
 
     //! update mapper, i.e. calculate new insertion points 
