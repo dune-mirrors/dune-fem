@@ -16,6 +16,23 @@ namespace Dune
     unsigned int newIndex_;
 
   public:
+    inline IndexMapperHole ()
+    {
+    }
+    
+    inline IndexMapperHole ( const ThisType &other )
+    : oldIndex_( other.oldIndex_ ),
+      newIndex_( other.newIndex_ )
+    {
+    }
+    
+    inline ThisType &operator= ( const ThisType &other )
+    {
+      oldIndex_ = other.oldIndex_;
+      newIndex_ = other.newIndex_;
+      return *this;
+    }
+    
     inline unsigned int newIndex () const
     {
       return newIndex_;
@@ -47,8 +64,8 @@ namespace Dune
   protected:
     enum IndexState { Unused = -1, Used = 1, New = 2, Deleted = -2 };
 
-    typedef DynamicArray< unsigned int, DefaultOverAllocator > IndexArrayType;
-    typedef DynamicArray< char, DefaultOverAllocator > StateArrayType;
+    typedef DynamicArray< unsigned int, DefaultArrayOverAllocator > IndexArrayType;
+    typedef DynamicArray< char, DefaultArrayOverAllocator > StateArrayType;
 
   public:
     typedef IndexMapperHole HoleType;
@@ -76,10 +93,17 @@ namespace Dune
 
   public:
     /** \brief find out, whether an index is actually mapped
+     *  
+     *  \note This method returns true for indices that are
+     *        marked deleted. This is needed during adaption.
+     *
+     *  \param[in]  i  index which shall be mapped
+     *
+     *  \return true, if the index can still be mapped
      */
     inline bool contains ( unsigned int i ) const
     {
-      return (state_[ i ] > 0 );
+      return (state_[ i ] != Unused );
     }
 
     /** \brief return the size of the domain
