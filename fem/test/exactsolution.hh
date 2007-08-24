@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_TEST_EXACTSOLUTION_HH
 #define DUNE_FEM_TEST_EXACTSOLUTION_HH
 
+#include <dune/fem/function/common/function.hh>
+
 namespace Dune
 {
 

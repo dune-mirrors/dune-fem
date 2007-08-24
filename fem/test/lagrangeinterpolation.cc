@@ -1,14 +1,13 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/grid/utility/gridtype.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
+#include "testgrid.hh"
 #include "exactsolution.hh"
 
 using namespace Dune;
@@ -38,14 +37,8 @@ int main ()
 {
   try
   {
-    char tmp[16];
-    sprintf( tmp, "%d", dimworld );
-    std :: string macroGridName( tmp );
-    macroGridName += "dgrid.dgf";
-
-    GridPtr<GridType> gridptr(macroGridName);
-    GridType& grid=*gridptr;
-    const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+    GridType &grid = TestGrid :: grid();
+    const int step = TestGrid :: refineStepsForHalf();
     GridPartType gridPart( grid );
 
     grid.globalRefine( 2*step );

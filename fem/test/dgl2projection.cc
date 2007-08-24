@@ -1,8 +1,6 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/grid/utility/gridtype.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/fem/space/dgspace.hh>
@@ -12,6 +10,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #endif
 
+#include "testgrid.hh"
 #include "dgl2projection.hh"
 #include "exactsolution.hh"
 
@@ -46,14 +45,8 @@ int main ()
 {
   try
   {
-    char tmp[ 16 ];
-    sprintf( tmp, "%d", dimworld );
-    std :: string macroGridName( tmp );
-    macroGridName += "dgrid.dgf";
-
-    GridPtr< GridType > gridptr( macroGridName );
-    GridType& grid=*gridptr;
-    const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+    GridType &grid = TestGrid :: grid();
+    const int step = TestGrid :: refineStepsForHalf();
 
     grid.globalRefine( 2*step );
 
