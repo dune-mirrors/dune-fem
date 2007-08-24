@@ -363,8 +363,10 @@ namespace Dune
     {
       typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
       typedef typename IteratorType :: Entity EntityType;
-      //typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
       typedef typename EntityType :: Geometry GeometryType;
+
+      // We use a caching quadrature for codimension 0 entities
+      typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
       
       const DiscreteFunctionSpaceType &discreteFunctionSpace
         = discreteFunction.space();
@@ -377,13 +379,19 @@ namespace Dune
         // *it gives a reference to the current entity
         const EntityType &entity = *it;
 
-        const GeometryType &geometry = entity.geometry(); //Referenz auf Geometrie
+        // obtain a reference to the entity's geometry
+        const GeometryType &geometry = entity.geometry();
       
+        // obtain BaseFunctionSet for the entity
+        // note that base functions are always defined on the reference geometry
         LocalFunctionType localFunction = discreteFunction.localFunction( entity ); 
-        const BaseFunctionSetType baseFunctionSet //BaseFunctions leben immer auf Refernzelement!!!
+        const BaseFunctionSetType baseFunctionSet
           = discreteFunctionSpace.baseFunctionSet( entity ); 
 
-        CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrd ); //0 --> codim 0
+        // obtain number of DoFs (degrees of freedom, the unknowns)
+        const int numDofs = localFunction.numDofs();
+
+        QuadratureType quadrature( entity, polOrd );
         const int numQuadraturePoints = quadrature.nop();
         for( int qP = 0; qP < numQuadraturePoints; ++qP )
         {
@@ -394,12 +402,13 @@ namespace Dune
           RangeType phi;
           function.evaluate( geometry.global( quadrature.point( qP ) ), phi );
             
-          const int numDofs = localFunction.numDofs(); //Dofs = Freiheitsgrade (also die Unbekannten)
           for( int i = 0; i < numDofs; ++i )
           {
-            RangeType psi; //R"uckgabe-Funktionswerte
+            RangeType psi;
         
-            baseFunctionSet.evaluate( i, quadrature, qP, psi ); //i = i'te Basisfunktion; qP Quadraturpunkt
+            // evaluate the i-th base function in the quadrature point qp
+            // the result is stored in psi
+            baseFunctionSet.evaluate( i, quadrature, qP, psi );
             localFunction[ i ] += factor * (phi * psi);
           }
         }

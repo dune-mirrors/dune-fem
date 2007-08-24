@@ -54,6 +54,7 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+#include <dune/fem/space/common/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
@@ -99,11 +100,17 @@ using namespace Dune;
 
 
 
-//! the index set we are using 
-typedef LeafGridPart< GridType > GridPartType;
+/** choose the grid partition (and hence the index set) to use
+ *
+ *  \note Not all index sets a continuous. The LeafIndexSet for AlbertaGrid,
+ *        for example, is not. If you want to use OEM solvers, the index set
+ *        must be continuous. In such a case use AdaptiveLeafGridPart.
+ */
+//typedef LeafGridPart< GridType > GridPartType;
 //typedef LevelGridPart< GridType > GridPartType;
+typedef AdaptiveLeafGridPart< GridType > GridPartType;
 
-//! define the function space, \f[ \R^2 \rightarrow \R \f]
+//! define the function space, \f[ \R^n \rightarrow \R \f]
 // see dune/common/functionspace.hh
 typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
 
@@ -205,16 +212,19 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
    //! build right hand side, does not allocate b!
   RightHandSideAssembler< DiscreteFunctionType >
     :: assemble< 2 * DiscreteFunctionSpaceType :: polynomialOrder >( f , rhs );
+  // we're having some trouble with NaNs lately, so check the right hand side for NaNs
+  if( !rhs.dofsValid() )
+    std :: cout << "right hand side invalid before boundary treatment." << std :: endl;
     
   // set Dirichlet Boundary to zero 
   typedef DiscreteFunctionSpaceType :: IteratorType IteratorType; 
   IteratorType endit = discreteFunctionSpace.end();
   for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
     boundaryTreatment( *it , rhs );
+  // check the right hand side for NaNs again
+  if( !rhs.dofsValid() )
+    std :: cout << "right hand side invalid after boundary treatment." << std :: endl;
 
-  //laplace.print();
-  //rhs.print( std::cout );
-   
   // solve the linear system (with CG)
   double dummy = 12345.67890;
   InverseOperatorType cg( laplace, dummy, 1e-8, 20000, VERBOSE );
@@ -230,7 +240,8 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
    
   #if USE_GRAPE
   // if grape was found then display solution 
-  if( turn > 0 ) {
+  if( turn > 0 )
+  {
     GrapeDataDisplay < GridType > grape( *gridptr );
     grape.dataDisplay( solution );
   }
@@ -254,7 +265,8 @@ std :: string getMacroGridName( unsigned int dimension )
 int main( int argc, char **argv )
 {
   try {
-    if( argc != 2 ) {
+    if( argc != 2 )
+    {
       std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
       return 1;
     }
@@ -275,7 +287,10 @@ int main( int argc, char **argv )
     std :: cout << "EOC = " << eoc << std :: endl;
     
     return 0;
-  } catch( Exception exception ) {
+  }
+  catch( Exception exception )
+  {
     std :: cerr << exception << std :: endl;
+    return 1;
   }
 }
