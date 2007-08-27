@@ -10,7 +10,7 @@
 
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/grapedataio.hh>
-#include <dune/fem/io/file/grapetuple.hh>
+#include <dune/fem/io/file/iotuple.hh>
 
 void dataDispErrorExit(std::string msg);
 
@@ -35,15 +35,15 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
   std::string fn (filename);
   DATAINFO * dinf = info[n].datinf;
 
-  GrapeTuple<GR_DiscFuncType>::ReturnType* tup = 
-    GrapeTuple<GR_DiscFuncType>::input(dataIO,grid,time,ntime,path,fn);
+  IOTuple<GR_DiscFuncType>::ReturnType* tup = 
+    IOTuple<GR_DiscFuncType>::input(dataIO,grid,time,ntime,path,fn);
   std::cout << "Finished reading grid" << std::endl;
 
   gridStack.push(grid);
   
   GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
   dispStack.push(disp);
-  GrapeTuple<GR_DiscFuncType>::addToDisplay(*disp,dinf,time,*tup);
+  IOTuple<GR_DiscFuncType>::addToDisplay(*disp,dinf,time,*tup);
 
   addError(*disp,*grid,time,*(tup->first()));
   return disp;
@@ -153,9 +153,9 @@ void readDataInfo(std::string path, DATAINFO * dinf, int k, bool parallel = fals
   { 
     dataname << "_0";
   }
-  dataname << "/d"; 
+  dataname << "/"; 
   dataname << dinf->name;
-  dataname << "_" << k;
+  dataname << "_" << "data_" << k;
 
   std::cerr << "reading dofs from: " << dataname.str() << std::endl;
 

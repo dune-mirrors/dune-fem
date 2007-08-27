@@ -5,7 +5,6 @@
 #define __READ_FILE_CC__
 
 #include <dune/fem/io/file/asciiparser.hh>
-
 int readParameterFile (int argc, char **argv)
 {
   if(argc != 2) 
