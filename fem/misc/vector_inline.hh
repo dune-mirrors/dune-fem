@@ -7,7 +7,7 @@ namespace Dune
   operator* ( const VectorInterface< Traits1 > &u,
               const VectorInterface< Traits2 > &v )
   {
-    typedef typename ExtractVectorFieldType< Traits1, Traits2 > :: FieldType FieldType;
+    typedef typename ExtractCommonFieldType< Traits1, Traits2 > :: FieldType FieldType;
 
     const unsigned int size = u.size();
     assert( size == v.size() );

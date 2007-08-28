@@ -194,7 +194,7 @@ namespace Dune
 
 
   template< class Type1, class Type2 >
-  struct ExcractCommonFieldType
+  struct ExtractCommonFieldType
   {
     typedef typename Type1 :: FieldType FieldType;
 
