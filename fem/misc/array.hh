@@ -19,27 +19,26 @@ namespace Dune
   class ArrayInterface
   {
   public:
-    typedef TraitsImp TraitsType;
+    typedef TraitsImp Traits;
 
   private:
-    typedef ArrayInterface< TraitsType > ThisType;
+    typedef ArrayInterface< Traits > ThisType;
 
   public:
     //! type of this interface
     typedef ThisType ArrayInterfaceType;
     
     //! type of the implementation (Barton-Nackman) 
-    typedef typename TraitsType :: ArrayType ArrayType;
+    typedef typename Traits :: ArrayType ArrayType;
 
-  public:
     //! type of the array elements
-    typedef typename TraitsType :: ElementType ElementType;
+    typedef typename Traits :: ElementType ElementType;
 
     //! type of constant iterator
-    typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
+    typedef typename Traits :: ConstIteratorType ConstIteratorType;
 
     //! type of iterator
-    typedef typename TraitsType :: IteratorType IteratorType;
+    typedef typename Traits :: IteratorType IteratorType;
 
   public:
     inline ArrayInterface ()
@@ -47,7 +46,6 @@ namespace Dune
       typedef CompileTimeChecker< Conversion< ArrayType, ThisType > :: exists >
         __Array_Implementation_Must_Be_Derived_From_Interface__;
     }
-    
    
     //! access an array element
     inline const ElementType& operator[] ( unsigned int index ) const
@@ -71,8 +69,8 @@ namespace Dune
     }
 
     //! copy another array to this one
-    template< class Traits >
-    inline ArrayType &assign( const ArrayInterface< Traits > &other )
+    template< class T >
+    inline ArrayType &assign( const ArrayInterface< T > &other )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( other ) );
       return asImp();
@@ -130,7 +128,7 @@ namespace Dune
   template< class ArrayType >
   struct CheckArrayInterface
   {
-    typedef ArrayInterface< typename ArrayType :: TraitsType > ArrayInterfaceType;
+    typedef ArrayInterface< typename ArrayType :: Traits > ArrayInterfaceType;
 
     typedef CompileTimeChecker< Conversion< ArrayType, ArrayInterfaceType > :: exists >
       CheckerType;
@@ -224,18 +222,18 @@ namespace Dune
 
     typedef ArrayImp ArrayType;
     
-    typedef ArrayDefaultTraits< ElementType, ArrayType > TraitsType;
+    typedef ArrayDefaultTraits< ElementType, ArrayType > Traits;
 
   private:
     typedef ArrayDefault< ElementType, ArrayType > ThisType;
-    typedef ArrayInterface< TraitsType > BaseType;
+    typedef ArrayInterface< Traits > BaseType;
 
     using BaseType :: size;
     using BaseType :: asImp;
 
   public:
-    typedef typename TraitsType :: IteratorType IteratorType;
-    typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
+    typedef typename Traits :: IteratorType IteratorType;
+    typedef typename Traits :: ConstIteratorType ConstIteratorType;
 
   public:
     inline ArrayType &assign ( const ElementType &element )
@@ -247,8 +245,8 @@ namespace Dune
       return imp;
     }
 
-    template< class Traits >
-    inline ArrayType &assign( const ArrayInterface< Traits > &other )
+    template< class T >
+    inline ArrayType &assign( const ArrayInterface< T > &other )
     {
       ArrayType &imp = asImp();
       const unsigned int size = imp.size();
@@ -463,9 +461,8 @@ namespace Dune
       elements_[ oldSize ] = element;
     }
 
-    template< class ArrayType >
-    inline void append
-      ( const ArrayInterface< typename ArrayType :: TraitsType > &array )
+    template< class T >
+    inline void append ( const ArrayInterface< T > &array )
     {
       const unsigned int arraySize = array.size();
       

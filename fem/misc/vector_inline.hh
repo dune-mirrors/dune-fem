@@ -2,15 +2,12 @@ namespace Dune
 {
 
   //! Scalar product of two vectors
-  template< class TraitsType, class TraitsOther >
-  inline typename TraitsType :: FieldType
-  operator* ( const VectorInterface< TraitsType > &u,
-              const VectorInterface< TraitsOther > &v )
+  template< class Traits1, class Traits2 >
+  inline typename ExtractCommonFieldType< Traits1, Traits2 > :: FieldType
+  operator* ( const VectorInterface< Traits1 > &u,
+              const VectorInterface< Traits2 > &v )
   {
-    typedef typename TraitsType :: FieldType FieldType;
-    typedef CompileTimeChecker<
-      Conversion< FieldType, typename TraitsOther :: FieldType > :: sameType >
-      __FieldType_Of_Both_Vectors_Must_Be_Identical__;
+    typedef typename ExtractVectorFieldType< Traits1, Traits2 > :: FieldType FieldType;
 
     const unsigned int size = u.size();
     assert( size == v.size() );
@@ -24,9 +21,9 @@ namespace Dune
 
 
   //! Print any Vector into a stream
-  template< class TraitsType >
+  template< class Traits >
   inline std :: ostream &operator<< ( std :: ostream &out,
-                                      const VectorInterface< TraitsType > &v )
+                                      const VectorInterface< Traits > &v )
   {
     const unsigned int size = v.size();
       
@@ -54,13 +51,13 @@ namespace Dune
 
 
   //! read any vector from a stream
-  template< class TraitsType >
+  template< class Traits >
   inline std :: istream &operator>> ( std :: istream &in,
-                                      VectorInterface< TraitsType > &v )
+                                      VectorInterface< Traits > &v )
   {
     const unsigned int size = v.size();
     
-    DynamicVector< typename TraitsType :: FieldType > w( size );
+    DynamicVector< typename Traits :: FieldType > w( size );
 
     char expected = '[';
     for( unsigned int i = 0; i < size; ++i )

@@ -88,17 +88,17 @@ namespace Dune
   public:
     typedef ElementImp ElementType;
 
-    typedef STLArrayTraits< ElementType > TraitsType;
+    typedef STLArrayTraits< ElementType > Traits;
 
   private:
     typedef STLArray< ElementType > ThisType;
-    typedef ArrayInterface< TraitsType > BaseType;
+    typedef ArrayInterface< Traits > BaseType;
 
-    typedef typename TraitsType :: stdVectorType stdVectorType;
+    typedef typename Traits :: stdVectorType stdVectorType;
 
   public:
-    typedef typename TraitsType :: IteratorType IteratorType;
-    typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
+    typedef typename Traits :: IteratorType IteratorType;
+    typedef typename Traits :: ConstIteratorType ConstIteratorType;
 
   protected:
     stdVectorType vector_;
@@ -138,8 +138,8 @@ namespace Dune
     }
 
     //! copy another array to this one
-    template< class Traits >
-    inline ThisType &assign( const ArrayInterface< Traits > &other )
+    template< class T >
+    inline ThisType &assign( const ArrayInterface< T > &other )
     {
       const unsigned int size = other.size();
       resize( size );
@@ -153,8 +153,8 @@ namespace Dune
       vector_.push_back( element );
     }
 
-    template< class Traits >
-    inline void append ( const ArrayInterface< Traits > &array )
+    template< class T >
+    inline void append ( const ArrayInterface< T > &array )
     {
       const unsigned int arraySize = array.size();
       for( unsigned int i = 0; i < arraySize; ++i )

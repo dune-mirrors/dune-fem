@@ -8,16 +8,16 @@
 namespace Dune
 {
 
-  template< class TraitsType >
+  template< class VectorTraits >
   struct VectorInterfaceArrayTraits
   {
-    typedef typename TraitsType :: VectorType ArrayType;
+    typedef typename VectorTraits :: VectorType ArrayType;
 
-    typedef typename TraitsType :: FieldType ElementType;
+    typedef typename VectorTraits :: FieldType ElementType;
 
-    typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
+    typedef typename VectorTraits :: ConstIteratorType ConstIteratorType;
     
-    typedef typename TraitsType :: IteratorType IteratorType;
+    typedef typename VectorTraits :: IteratorType IteratorType;
   };
 
 
@@ -28,11 +28,11 @@ namespace Dune
   : public ArrayInterface< VectorInterfaceArrayTraits< TraitsImp > >
   {
   public:
-    typedef TraitsImp TraitsType;
+    typedef TraitsImp Traits;
 
   private:
-    typedef VectorInterface< TraitsType > ThisType;
-    typedef ArrayInterface< VectorInterfaceArrayTraits< TraitsType > > BaseType;
+    typedef VectorInterface< Traits > ThisType;
+    typedef ArrayInterface< VectorInterfaceArrayTraits< Traits > > BaseType;
 
     template< class >
     friend class VectorInterface;
@@ -42,21 +42,21 @@ namespace Dune
     typedef ThisType VectorInterfaceType;
 
     //! type of the implementation (Barton-Nackman)
-    typedef typename TraitsType :: VectorType VectorType;
+    typedef typename Traits :: VectorType VectorType;
 
     //! field type for the vector
-    typedef typename TraitsType :: FieldType FieldType;
+    typedef typename Traits :: FieldType FieldType;
 
     //! type of constant iterator
-    typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
+    typedef typename Traits :: ConstIteratorType ConstIteratorType;
     
     //! type of iterator
-    typedef typename TraitsType :: IteratorType IteratorType;
+    typedef typename Traits :: IteratorType IteratorType;
 
   public:
     //! Assign another vector to this one
-    template< class Traits >
-    inline VectorType& operator= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType& operator= ( const VectorInterface< T > &v )
     {
       return asImp().assign( v );
     }
@@ -88,16 +88,16 @@ namespace Dune
     }
 
     //! Add another vector to this one
-    template< class Traits >
-    inline VectorType &operator+= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType &operator+= ( const VectorInterface< T > &v )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator+=( v.asImp() ) );
       return asImp();
     }
 
     //! Subtract another vector from this one
-    template< class Traits >
-    inline VectorType &operator-= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType &operator-= ( const VectorInterface< T > &v )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator-=( v.asImp() ) );
       return asImp();
@@ -111,16 +111,16 @@ namespace Dune
     }
             
     //! Add a multiple of another vector to this one
-    template< class Traits >
-    inline VectorType &addScaled ( const FieldType s, const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType &addScaled ( const FieldType s, const VectorInterface< T > &v )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().add( s, v.asImp() ) );
       return asImp();
     }
     
     //! Assign another vector to this one
-    template< class Traits >
-    inline VectorType &assign ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType &assign ( const VectorInterface< T > &v )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v.asImp() ) );
       return asImp();
@@ -185,10 +185,22 @@ namespace Dune
   template< class VectorType >
   struct CheckVectorInterface
   {
-    typedef VectorInterface< typename VectorType :: TraitsType > VectorInterfaceType;
+    typedef VectorInterface< typename VectorType :: Traits > VectorInterfaceType;
     
     typedef CompileTimeChecker< Conversion< VectorType, VectorInterfaceType > :: exists >
       CheckerType;
+  };
+
+
+
+  template< class Type1, class Type2 >
+  struct ExcractCommonFieldType
+  {
+    typedef typename Type1 :: FieldType FieldType;
+
+    typedef CompileTimeChecker
+      < Conversion< FieldType, typename Type2 :: FieldType > :: sameType >
+      __FieldType_Must_Be_Identical__;
   };
 
 
@@ -217,11 +229,11 @@ namespace Dune
 
     typedef VectorImp VectorType;
 
-    typedef VectorDefaultTraits< FieldType, VectorType > TraitsType;
+    typedef VectorDefaultTraits< FieldType, VectorType > Traits;
 
   private:
     typedef VectorDefault< FieldType, VectorType > ThisType;
-    typedef VectorInterface< TraitsType > BaseType;
+    typedef VectorInterface< Traits > BaseType;
 
     using BaseType :: asImp;
     using BaseType :: size;
@@ -229,13 +241,13 @@ namespace Dune
   public:
     typedef typename BaseType :: VectorInterfaceType VectorInterfaceType;
 
-    typedef typename TraitsType :: ConstIteratorType ConstIteratorType;
-    typedef typename TraitsType :: IteratorType IteratorType;
+    typedef typename Traits :: ConstIteratorType ConstIteratorType;
+    typedef typename Traits :: IteratorType IteratorType;
 
   public:
     //! Add another vector to this one
-    template< class Traits >
-    inline VectorType &operator+= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType &operator+= ( const VectorInterface< T > &v )
     {
       const unsigned int size = this->size();
       assert( size == v.size() );
@@ -245,8 +257,8 @@ namespace Dune
     }
    
     //! Subtract another vector from this one
-    template< class Traits >
-    inline VectorType &operator-= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType &operator-= ( const VectorInterface< T > &v )
     {
       const unsigned int size = this->size();
       assert( size == v.size() );
@@ -265,9 +277,9 @@ namespace Dune
     }
     
     //! Add a multiple of another vector to this one
-    template< class Traits >
+    template< class T >
     inline VectorType &addScaled ( const FieldType s,
-                                   const VectorInterface< Traits > &v )
+                                   const VectorInterface< T > &v )
     {
       const unsigned int size = this->size();
       assert( size == v.size() );
@@ -277,8 +289,8 @@ namespace Dune
     }
 
     //! Assign another vector to this one
-    template< class Traits >
-    inline VectorType &assign ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline VectorType &assign ( const VectorInterface< T > &v )
     {
       const unsigned int size = this->size();
       assert( size == v.size() );
@@ -366,8 +378,8 @@ namespace Dune
     {
     }
 
-    template< class Traits >
-    inline FieldVectorWrapper ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline FieldVectorWrapper ( const VectorInterface< T > &v )
     : fieldVector_()
     {
       assign( v );
@@ -389,8 +401,8 @@ namespace Dune
       return fieldVector_;
     }
 
-    template< class Traits >
-    inline ThisType &operator= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline ThisType &operator= ( const VectorInterface< T > &v )
     {
       return assign( v );
     }
@@ -508,10 +520,10 @@ namespace Dune
     }
 
     //! Copy constructor setting up a vector with the data of another one
-    template< class Traits >
+    template< class T >
     inline ArrayWrapperVector ( const unsigned int size,
                                 FieldType *const fields,
-                                const VectorInterface< Traits > &v )
+                                const VectorInterface< T > &v )
     : size_( size ),
       fields_( fields )
     {
@@ -519,8 +531,8 @@ namespace Dune
     }
 
     //! Assign another vector to this one
-    template< class Traits >
-    inline ThisType &operator= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline ThisType &operator= ( const VectorInterface< T > &v )
     {
       return assign( v );
     }
@@ -592,8 +604,8 @@ namespace Dune
     }
 
     //! Copy constructor setting up a vector with the data of another one
-    template< class Traits >
-    inline DynamicVector ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline DynamicVector ( const VectorInterface< T > &v )
     : fields_( v.size() )
     {
       assign( v );
@@ -607,8 +619,8 @@ namespace Dune
     }
 
     //! Assign another vector to this one
-    template< class Traits >
-    inline ThisType &operator= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline ThisType &operator= ( const VectorInterface< T > &v )
     {
       return assign( v );
     }
@@ -682,8 +694,8 @@ namespace Dune
     }
 
     //! Copy constructor setting up a vector with the data of another one
-    template< class Traits >
-    inline StaticVector ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline StaticVector ( const VectorInterface< T > &v )
     {
       assign( v );
     }
@@ -695,8 +707,8 @@ namespace Dune
     }
 
     //! Assign another vector to this one
-    template< class Traits >
-    inline ThisType &operator= ( const VectorInterface< Traits > &v )
+    template< class T >
+    inline ThisType &operator= ( const VectorInterface< T > &v )
     {
       return assign( v );
     }

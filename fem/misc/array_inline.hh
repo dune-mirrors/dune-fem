@@ -1,8 +1,8 @@
 namespace Dune
 {
 
-  template< class TraitsType >
-  inline void moveBackward ( ArrayInterface< TraitsType > &array,
+  template< class T >
+  inline void moveBackward ( ArrayInterface< T > &array,
                              const unsigned int oldOffset,
                              const unsigned int newOffset,
                              const unsigned int length )
@@ -14,8 +14,8 @@ namespace Dune
       array[ newOffset + i ] = array[ oldOffset + i ];
   }
   
-  template< class TraitsType >
-  inline void moveForward ( ArrayInterface< TraitsType > &array,
+  template< class T >
+  inline void moveForward ( ArrayInterface< T > &array,
                             const unsigned int oldOffset,
                             const unsigned int newOffset,
                             const unsigned int length )
@@ -26,8 +26,8 @@ namespace Dune
       array[ newOffset + i ] = array[ oldOffset + i ];
   }
  
-  template< class TraitsType >
-  inline void move ( ArrayInterface< TraitsType > &array,
+  template< class T >
+  inline void move ( ArrayInterface< T > &array,
                      const unsigned int oldOffset,
                      const unsigned int newOffset,
                      const unsigned int length )
