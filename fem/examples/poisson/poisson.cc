@@ -237,13 +237,18 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   L2Error< DiscreteFunctionType > l2error;
   DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
   std :: cout << "L2 Error: " << error << std :: endl << std :: endl;
+
+  DiscreteFunctionAdapter< ExactSolutionType, GridPartType >
+    uAdapted( "exact solution", u, gridPart );
    
   #if USE_GRAPE
-  // if grape was found then display solution 
+  // if grape was found then display solution
   if( turn > 0 )
   {
     GrapeDataDisplay < GridType > grape( *gridptr );
-    grape.dataDisplay( solution );
+    grape.addData( solution );
+    grape.addData( uAdapted );
+    grape.display();
   }
   #endif
 
