@@ -325,19 +325,17 @@ namespace Dune
     }
 
     //! return old offsets for block 
-    int oldOffSet(const int block) const 
+    int oldOffSet ( const int block ) const
     {
-      assert( block >= 0);
-      assert( block < numBlocks());
-      return oldOffSet_[block];
+      assert( (block >= 0) && (block < numBlocks()) );
+      return DimRange * oldOffSet_[ block ];
     }
 
     //! return current offsets 
-    int offSet(const int block) const 
+    int offSet ( const int block ) const
     {
-      assert( block >= 0 );
-      assert( block <= numBlocks() );
-      return offset_[block];
+      assert( (block >= 0) && (block < numBlocks()) );
+      return DimRange * offset_[ block ];
     }
 
     //! return number of dofs per element 
