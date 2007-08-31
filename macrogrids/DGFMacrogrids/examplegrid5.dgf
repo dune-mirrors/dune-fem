@@ -1,0 +1,12 @@
+DGF
+Interval
+ 0  0         % first corner 
+ 1  1         % second corner
+ 4  8         % 4 cells in x and 8 in y direction
+#
+% Simplex
+#
+BOUNDARYDOMAIN
+default 1     % default boundary id
+#BOUNDARYDOMAIN
+# examplegrid5.dgf
