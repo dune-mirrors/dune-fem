@@ -1,66 +1,11 @@
 #ifndef DUNE_OBJECTSTACK_HH
 #define DUNE_OBJECTSTACK_HH
 
-#include <vector>
-#include <stack>
-
 #include <dune/fem/misc/debug.hh>
+#include <dune/fem/misc/referencecounter.hh>
 
 namespace Dune
 {
-
-  template< class StorageImp >
-  class ObjectPointer
-  {
-  public:
-    typedef StorageImp StorageType;
-
-  private:
-    typedef ObjectPointer< StorageType > ThisType;
-
-  public:
-    typedef typename StorageType :: ObjectType ObjectType;
-
-  protected:
-    StorageType &storage_;
-
-  public:
-    inline explicit ObjectPointer ( StorageType &storage )
-    : storage_( storage )
-    {
-      storage_.addReference();
-    }
-
-    inline ObjectPointer ( const ThisType &other )
-    : storage_( other.storage_ )
-    {
-      storage_.addReference();
-    }
-
-    inline ~ObjectPointer ()
-    {
-      storage_.removeReference();
-    }
-    
-  private:
-    // Disallow assigning
-    inline ThisType &operator= ( const ThisType & );
-
-  public:
-    //! derefenence pointer
-    ObjectType &operator* ()
-    {
-      return storage_.object();
-    }
-
-    //! dereference pointer
-    const ObjectType &operator* () const
-    {
-      return storage_.object();
-    }
-  };
-
-
 
   template< class ObjectFactoryImp >
   class ObjectStack;
@@ -69,12 +14,17 @@ namespace Dune
 
   template< class ObjectFactoryImp >
   class ObjectStackStorage
+  : public ReferenceCounterDefault< ObjectStackStorage< ObjectFactoryImp > >
   {
   public:
     typedef ObjectFactoryImp ObjectFactoryType;
 
   private:
     typedef ObjectStackStorage< ObjectFactoryType > ThisType;
+    typedef ReferenceCounterDefault< ThisType > BaseType;
+
+    template< class, class >
+    friend class Conversion;
 
     friend class ObjectStack< ObjectFactoryType >;
 
@@ -91,53 +41,46 @@ namespace Dune
     // reference to the stack
     ObjectStackType &stack_;
 
-    // reference counter to this object
-    unsigned int refcount_;
-    
     // next object on the stack
     ThisType *next_;
 
   protected:
     inline explicit ObjectStackStorage ( ObjectType *const obj,
                                          ObjectStackType &stack )
-    : object_( obj ),
-      stack_( stack ),
-      refcount_( 0 )
+    : BaseType( 0 ),
+      object_( obj ),
+      stack_( stack )
     {
     }
 
   private:
-    // Disallow copying
-    inline ObjectStackStorage ( const ThisType & );
+    // prohibit copying
+    ObjectStackStorage ( const ThisType & );
 
   public:
     inline ~ObjectStackStorage ()
     {
-      assert( refcount_ == 0 );
       delete object_;
     }
     
   private:
-    // Disallow copying
-    inline ThisType &operator= ( const ThisType & );
+    // prohivit assignment
+    ThisType &operator= ( const ThisType & );
 
   public:
-    inline ObjectType &object ()
+    inline operator const ObjectType& () const
     {
       return *object_;
     }
 
-    inline void addReference ()
+    inline operator ObjectType& ()
     {
-      ++refcount_;
+      return *object_;
     }
 
-    inline void removeReference ()
+    inline void deleteObject ()
     {
-      assert( refcount_ > 0 );
-      --refcount_;
-      if( refcount_ == 0 )
-        stack_.push( *this );
+      stack_.push( *this );
     }
   };
 
@@ -162,7 +105,7 @@ namespace Dune
     typedef ObjectStackStorage< ObjectFactoryType > StorageType;
 
     //! type of object pointers
-    typedef ObjectPointer< StorageType > ObjectPointerType;
+    typedef ObjectReference< StorageType > ObjectReferenceType;
     
   protected:
     const ObjectFactoryType &factory_;
@@ -202,9 +145,9 @@ namespace Dune
 
   public:
     //! get an object pointer to a storage object
-    inline ObjectPointerType getObject ()
+    inline ObjectReferenceType getObject ()
     {
-      return ObjectPointerType( pop() );
+      return ObjectReferenceType( pop() );
     }
 
     //! push storage object to the stack

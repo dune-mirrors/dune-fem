@@ -23,7 +23,7 @@ namespace Dune
    *                                  local function shall belong to
    */
   template< class DiscreteFunctionSpaceImp,
-            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
+            template< class > class ArrayAllocatorImp = DefaultArrayOverAllocator >
   class TemporaryLocalFunction
   : public LocalFunctionDefault
     < DiscreteFunctionSpaceImp,

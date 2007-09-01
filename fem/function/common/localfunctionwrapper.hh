@@ -64,7 +64,7 @@ namespace Dune
 
   protected:
     // type of stack entry 
-    typedef typename LocalFunctionStorageType :: ObjectPointerType
+    typedef typename LocalFunctionStorageType :: ObjectReferenceType
       WrappedLocalFunctionPtrType;
    
   private:
