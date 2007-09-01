@@ -87,6 +87,7 @@ AC_CONFIG_FILES([Makefile
      fem/solver/ode/Makefile 
      fem/solver/oemsolver/Makefile 
      fem/misc/Makefile
+     fem/storage/Makefile
      fem/examples/Makefile
      fem/examples/poisson/Makefile
      fem/examples/elliptic/Makefile

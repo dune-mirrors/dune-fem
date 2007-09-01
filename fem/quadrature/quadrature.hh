@@ -8,7 +8,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 
 /*
 #ifndef HAVE_ALBERTA_FOUND

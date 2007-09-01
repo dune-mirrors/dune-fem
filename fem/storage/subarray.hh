@@ -4,8 +4,8 @@
 #include <dune/common/misc.hh>
 #include <dune/common/typetraits.hh>
 
-#include <dune/fem/misc/array.hh>
-#include <dune/fem/misc/vector.hh>
+#include <dune/fem/storage/array.hh>
+#include <dune/fem/storage/vector.hh>
 
 namespace Dune
 {

@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_RECTARRAY_HH
 #define DUNE_FEM_RECTARRAY_HH
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 
 namespace Dune
 {

@@ -7,7 +7,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
 
-#include <dune/fem/misc/arrayallocator.hh>
+#include <dune/fem/storage/arrayallocator.hh>
 
 namespace Dune
 {

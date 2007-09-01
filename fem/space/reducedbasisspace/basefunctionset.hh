@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_HH
 #define DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_HH
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
 
 namespace Dune

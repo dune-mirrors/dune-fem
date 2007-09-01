@@ -4,7 +4,7 @@
 #include <obstack.h>
 #include <iostream>
 
-#include <dune/fem/misc/arrayallocator.hh>
+#include <dune/fem/storage/arrayallocator.hh>
 
 
 namespace Dune

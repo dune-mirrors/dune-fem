@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_TEMPORARYLOCALFUNCTION_HH
 #define DUNE_FEM_TEMPORARYLOCALFUNCTION_HH
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 #include <dune/fem/function/common/localfunction.hh>
 
 namespace Dune

@@ -2,7 +2,7 @@
 #define DUNE_OBJECTSTACK_HH
 
 #include <dune/fem/misc/debug.hh>
-#include <dune/fem/misc/referencecounter.hh>
+#include <dune/fem/storage/referencecounter.hh>
 
 namespace Dune
 {

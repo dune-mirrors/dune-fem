@@ -1,7 +1,7 @@
 #ifndef DUNE_QUADPROVIDER_HH
 #define DUNE_QUADPROVIDER_HH
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 

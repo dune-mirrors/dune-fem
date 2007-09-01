@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_TEMPORARYLOCALMATRIX_HH
 #define DUNE_FEM_TEMPORARYLOCALMATRIX_HH
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 
 namespace Dune

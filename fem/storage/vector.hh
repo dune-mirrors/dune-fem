@@ -3,7 +3,7 @@
 
 #include <dune/common/fvector.hh>
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 
 namespace Dune
 {

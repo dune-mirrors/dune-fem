@@ -11,10 +11,10 @@
 
 //- local includes 
 #include "function.hh"
+#include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/common/objectstack.hh>
+#include <dune/fem/function/common/localfunctionwrapper.hh>
 #include "dofiterator.hh"
-#include "localfunctionwrapper.hh"
 
 namespace Dune{
 

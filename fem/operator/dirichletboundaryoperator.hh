@@ -3,7 +3,7 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dune/fem/misc/array.hh>
+#include <dune/fem/storage/array.hh>
 
 #include <dune/fem/operator/model/boundarymodel.hh>
 

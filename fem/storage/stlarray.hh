@@ -2,7 +2,8 @@
 #define DUNE_FEM_STLARRAY_HH
 
 #include <vector>
-#include <dune/fem/misc/array.hh>
+
+#include <dune/fem/storage/array.hh>
 
 namespace Dune
 {

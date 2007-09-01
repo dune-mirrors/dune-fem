@@ -5,7 +5,7 @@
 #include <cassert>
 
 //- Dune includes 
-#include <dune/fem/space/common/objectstack.hh>
+#include <dune/fem/storage/objectstack.hh>
 
 namespace Dune
 {
