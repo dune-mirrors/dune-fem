@@ -1,8 +1,12 @@
 #ifndef DUNE_FEM_VECTOR_HH
 #define DUNE_FEM_VECTOR_HH
 
+#include <dune/common/misc.hh>
+#include <dune/common/typetraits.hh>
+#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/storage/arrayallocator.hh>
 #include <dune/fem/storage/array.hh>
 
 namespace Dune
@@ -235,7 +239,10 @@ namespace Dune
     typedef VectorDefault< FieldType, VectorType > ThisType;
     typedef VectorInterface< Traits > BaseType;
 
+  protected:
     using BaseType :: asImp;
+
+  public:
     using BaseType :: size;
 
   public:
@@ -496,6 +503,9 @@ namespace Dune
     typedef ArrayWrapperVector< FieldType > ThisType;
     typedef VectorDefault< FieldType, ThisType > BaseType;
 
+  public:
+    using BaseType :: assign;
+
   protected:
     const unsigned int size_;
     FieldType *const fields_;
@@ -569,7 +579,12 @@ namespace Dune
 
 
 
-  //! An implementation of VectorInterface using a dynamic C++ array to provide the fields
+  /** \class DynamicVector
+   *  \brief A vector using a DynamicArray as storage
+   * 
+   *  An implementation of VectorInterface using a DynamicArray to provide the
+   *  fields.
+   */
   template< class FieldImp,
             template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
   class DynamicVector
@@ -583,6 +598,7 @@ namespace Dune
     typedef DynamicVector< FieldType, ArrayAllocatorImp > ThisType;
     typedef VectorDefault< FieldType, ThisType > BaseType;
 
+  public:
     using BaseType :: assign;
     
   protected:
@@ -652,6 +668,12 @@ namespace Dune
       fields_.resize( newSize );
     }
 
+    inline void resize ( unsigned int newSize,
+                         const FieldType defaultValue )
+    {
+      fields_.resize( newSize, defaultValue );
+    }
+
     inline unsigned int size () const
     {
       return fields_.size();
@@ -661,8 +683,8 @@ namespace Dune
 
 
   /*! \class StaticVector
-   *  \brief An implementation of VectorInterface using a C++ array embedded
-   *         into the class to provide the fields
+   *  \brief implementation of VectorInterface using a C++ array embedded info
+   *         the class to provide the fields
    */
   template< class FieldImp, int sz >
   class StaticVector
@@ -676,6 +698,7 @@ namespace Dune
     typedef StaticVector< FieldImp, sz > ThisType;
     typedef VectorDefault< FieldImp, ThisType > BaseType;
 
+  public:
     using BaseType :: assign;
 
   protected:
