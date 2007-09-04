@@ -65,6 +65,7 @@ AC_CONFIG_FILES([Makefile
      fem/function/blockvectorfunction/Makefile
      fem/function/productfunction/Makefile
      fem/function/productfunction/test/Makefile
+     fem/function/vectorfunction/Makefile
      fem/operator/Makefile
      fem/operator/common/Makefile
      fem/operator/common/test/Makefile
