@@ -12,6 +12,175 @@ namespace Dune
   template< class GridImp, PartitionIteratorType pitype >
   class PeriodicLeafGridPart;
 
+
+
+  template< class GridImp >
+  class PeriodicLeafIntersectionIterator
+  {
+  public:
+    typedef GridImp GridType;
+
+  private:
+    typedef PeriodicLeafIntersectionIterator< GridType > ThisType;
+
+    template< class, PartitionIteratorType >
+    friend class PeriodicLeafGridPart;
+
+  protected:
+    typedef typename GridType :: template Codim< 0 > :: Entity Codim0EntityType;
+   
+    typedef typename Codim0EntityType :: LeafIntersectionIterator
+      WrappedIteratorType;
+
+  public:
+    typedef typename WrappedIteratorType :: ctype ctype;
+
+    enum
+    {
+      dimension = WrappedIteratorType :: dimension,
+      dimensionworld = WrappedIteratorType :: dimensionworld
+    };
+
+    typedef FieldVector< ctype, dimensionworld > DomainType;
+
+    typedef FieldVector< ctype, dimensionworld - 1 > LocalDomainType;
+    
+    typedef typename WrappedIteratorType :: Entity Entity;
+
+    typedef typename WrappedIteratorType :: EntityPointer EntityPointer;
+
+    typedef typename WrappedIteratorType :: Geometry Geometry;
+
+    typedef typename WrappedIteratorType :: LocalGeometry LocalGeometry;
+
+    typedef typename WrappedIteratorType :: ImplementationType
+      ImplementationType;
+
+  protected:
+    WrappedIteratorType wrappedIterator_;
+
+  protected:
+    inline explicit
+    PeriodicLeafIntersectionIterator ( WrappedIteratorType wrappedIterator )
+    : wrappedIterator_( wrappedIterator )
+    {
+    };
+
+  public:
+    inline PeriodicLeafIntersectionIterator ( const ThisType &other )
+    : wrappedIterator_( other.wrappedIterator_ )
+    {
+    }
+
+    inline ThisType &operator= ( const ThisType &other )
+    {
+      wrappedIterator_ = other.wrappedIterator_;
+      return *this;
+    }
+
+    inline ThisType &operator++ ()
+    {
+      ++wrappedIterator_;
+      return *this;
+    }
+
+    inline bool operator== ( const ThisType &other ) const
+    {
+      return (wrappedIterator_ == other.wrappedIterator_);
+    }
+
+    inline bool operator!= ( const ThisType &other ) const
+    {
+      return (wrappedIterator_ != other.wrappedIterator_);
+    }
+
+    inline bool boundary () const
+    {
+      // IntersectionIterator specifies that this should return true at the boundary
+      return false;
+    }
+
+    inline int boundaryId () const
+    {
+      return 0;
+    }
+
+    inline int neighbor () const
+    {
+      // IntersectionIterator specifies that we should return true!
+      return wrappedIterator_.neighbor();
+    }
+
+    inline EntityPointer inside () const
+    {
+      return wrappedIterator_.inside();
+    }
+
+    inline EntityPointer outside () const
+    {
+      if( wrappedIterator_.neighbor() )
+        return wrappedIterator_.outside();
+      else
+        DUNE_THROW( NotImplemented, "PeriodicLeafIntersectionIteratorWrapper: "
+                                    "outside on boundary not implemented yet." );
+    }
+
+    inline const LocalGeometry &intersectionSelfLocal () const
+    {
+      return wrappedIterator_.intersectionSelfLocal();
+    }
+
+    inline const LocalGeometry &intersectionNeighborLocal () const
+    {
+      if( wrappedIterator_.neighbor() )
+        return wrappedIterator_.intersectionNeighborLocal();
+      else
+        DUNE_THROW( NotImplemented, "PeriodicLeafIntersectionIteratorWrapper: "
+                                    "outside on boundary not implemented yet." );
+    }
+
+    inline const Geometry &intersectionGlobal () const
+    {
+      return wrappedIterator_.intersectionGlobal();
+    }
+
+    inline int numberInSelf () const
+    {
+      return wrappedIterator_.numberInSelf();
+    }
+
+    inline int numInNeighbor () const
+    {
+      return wrappedIterator_.numberInNeighbor();
+    }
+
+    inline DomainType outerNormal ( const LocalDomainType &x ) const
+    {
+      return wrappedIterator_.outerNormal( x );
+    }
+
+    inline DomainType integrationOuterNormal ( const LocalDomainType &x ) const
+    {
+      return wrappedIterator_.integrationOuterNormal( x );
+    }
+
+    inline DomainType unitOuterNormal ( const LocalDomainType &x ) const
+    {
+      return wrappedIterator_.unitOuterNormal( x );
+    }
+
+  protected:
+    const ImplementationType &getRealImp () const
+    {
+      return wrappedIterator_.getRealImp();
+    }
+
+    ImplementationType &getRealImp ()
+    {
+      return wrappedIterator_.getRealImp();
+    }
+  };
+
   
           
   template< class GridImp, PartitionIteratorType pitype >
@@ -35,7 +204,10 @@ namespace Dune
     typedef typename GridType :: template Codim< 0 > :: Entity Codim0EntityType;
 
     //! type of intersection iterators
-    typedef typename Codim0EntityType :: LeafIntersectionIterator IntersectionIteratorType;
+    //typedef typename Codim0EntityType :: LeafIntersectionIterator
+    //  IntersectionIteratorType;
+    typedef PeriodicLeafIntersectionIterator< GridType >
+      IntersectionIteratorType;
 
     template< int codim >
     struct Codim
@@ -62,9 +234,18 @@ namespace Dune
    *        refinement may break conformity (global refinement should work,
    *        though).
    *
+   *  \note This grid partition says that there is no boundary. In DUNE, however,
+   *        periodic boundaries shall be implemented as boundaries with ghost
+   *        entities (however the FEM codes usually only check if an intersection
+   *        is a boundary.
+   *
+   *  \todo The entity needs also to be wrapped, so that hasBoundaryIntersections
+   *        always returns false
+   *
    *  \todo Return correct neighbors for entities with boundary intersections.
    *
-   *  \newimplementation Allows to construct globally refined grids for the unitcube with periodic boundaries
+   *  \newimplementation Allows to construct globally refined grids for the
+   *                     unitcube with periodic boundaries.
    */
   template< class GridImp, PartitionIteratorType pitype = Interior_Partition >
   class PeriodicLeafGridPart
@@ -85,7 +266,7 @@ namespace Dune
     //! type of the index set
     typedef typename TraitsType :: IndexSetType IndexSetType;
 
-    //! type of codim 0 entities
+    //! type of codim 0 entities (these must be wrapped, too)
     typedef typename TraitsType :: Codim0EntityType Codim0EntityType;
 
     //! type of intersection iterators
@@ -94,7 +275,8 @@ namespace Dune
     template< int codim >
     struct Codim
     {
-      typedef typename TraitsType :: template Codim< codim > :: IteratorType IteratorType;
+      typedef typename TraitsType :: template Codim< codim > :: IteratorType
+        IteratorType;
     };
 
   protected:
@@ -122,16 +304,32 @@ namespace Dune
       return this->grid().template leafend< codim, pitype >();
     }
 
-    //! Begin intersection iterator for an entity
+    /** \brief begin intersection iterator for an entity
+     *
+     *  \note The intersection iterators always return boundary = false
+     *        and neighbor = true.
+     * 
+     *  \param[in]  entity  entity the intersection iterator is requested for
+     *
+     *  \returns a begin intersection iterator
+     */
     IntersectionIteratorType ibegin ( const Codim0EntityType &entity ) const
     {
-      return entity.ileafbegin();
+      return IntersectionIteratorType( entity.ileafbegin() );
     }
-
-    //! End intersection iterator for an entity
+    
+    /** \brief end intersection iterator for an entity
+     *
+     *  \note The intersection iterators always return boundary = false
+     *        and neighbor = true.
+     * 
+     *  \param[in]  entity  entity the intersection iterator is requested for
+     *
+     *  \returns an end intersection iterator
+     */
     IntersectionIteratorType iend ( const Codim0EntityType &entity ) const
     {
-      return entity.ileafend();
+      return IntersectionIteratorType( entity.ileafend() );
     }
 
     //! Deliver maximum level of grid
