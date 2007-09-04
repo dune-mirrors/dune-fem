@@ -9,9 +9,8 @@
 #include <dune/grid/common/grid.hh>
 
 //- Dune-Fem includes 
-#include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
