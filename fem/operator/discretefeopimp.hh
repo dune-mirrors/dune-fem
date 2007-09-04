@@ -1,5 +1,5 @@
-#ifndef DUNE_DISCRETEOPERATORIMP_HH
-#define DUNE_DISCRETEOPERATORIMP_HH
+#ifndef DUNE_DISCRETEFEOPIMP_HH
+#define DUNE_DISCRETEFEOPIMP_HH
 
 #include <dune/fem/common/discreteoperator.hh>
 #include <dune/fem/common/localoperator.hh>
