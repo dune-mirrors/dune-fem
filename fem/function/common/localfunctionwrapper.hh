@@ -93,6 +93,15 @@ namespace Dune
     {
     }
 
+    //! Constructor creating empty local function from given discrete
+    //! function 
+    template <class DiscreteFunctionImp> 
+    inline explicit LocalFunctionWrapper ( DiscreteFunctionImp& discreteFunction ) 
+    : lfptr_( discreteFunction.localFunctionStorage().getObject() ),
+      lf_( *lfptr_ )
+    {
+    }
+
     //! Copy constructor
     inline LocalFunctionWrapper ( const LocalFunctionWrapper &org )
     : lfptr_( org.lfptr_ ),
