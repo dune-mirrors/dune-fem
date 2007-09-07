@@ -2,10 +2,22 @@
 AUTOMAKE_OPTIONS = foreign 1.5
 
 miscdir =  $(includedir)/dune/fem/misc
-misc_HEADERS = test.cc  identity.hh test.hh\
-boundaryidentifier.hh combineinterface.hh  l2error.hh \
-longexample.cc    entityfunction.hh \
-example.cc  timeutility.hh  timeprovider.hh\
-suite.cc   suite.hh \
-debug.hh  codimmap.hh \
-adaptiveindexmapper.hh  adaptiveindexmapper_inline.hh
+misc_HEADERS = test.cc \
+							 test.hh \
+               identity.hh \
+               boundaryidentifier.hh \
+ 	 						 combineinterface.hh \
+							 l2error.hh \
+               longexample.cc \
+							 entityfunction.hh \
+							 example.cc \
+							 timeutility.hh \
+							 timeprovider.hh \
+							 suite.cc \
+							 suite.hh \
+							 debug.hh \
+							 codimmap.hh \
+							 double.hh \
+							 double_inline.hh \
+						   adaptiveindexmapper.hh \
+							 adaptiveindexmapper_inline.hh
