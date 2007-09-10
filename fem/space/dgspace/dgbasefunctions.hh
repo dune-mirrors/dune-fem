@@ -2,6 +2,7 @@
 #define DUNE_DGBASEFUNCTIONS_HH
 
 //- Dune includes 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
 //- Local includes
@@ -42,13 +43,16 @@ namespace Dune {
 
   //! Wrapper interface for DG base functions
   template <class FunctionSpaceType>
-  class DGBaseFunctionWrapper {
-
+  class DGBaseFunctionWrapper 
+  {
   protected:
     DGBaseFunctionWrapper() {}
     virtual ~DGBaseFunctionWrapper() {}
     
     enum { dimDomain = FunctionSpaceType::DimDomain };
+
+    // temporary variable for grad evaluation 
+    mutable double grad_[dimDomain];
 
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
@@ -78,87 +82,92 @@ namespace Dune {
     /// 1d functions 
     ////////////////////////////
     // eval function
-    double eval_line(int i,const DomainType & xi ) const
+    RangeFieldType eval_line(const int i,const DomainType & xi ) const
     {
       return OrthonormalBase_1D::eval_line(i,&xi[0]); 
     }
+
     // eval gradient 
-    void grad_line(int i, const DomainType & xi,
-                   JacobianRangeType & grad ) const
+    RangeFieldType grad_line(const int i, const int comp, const DomainType & xi) const
     {
       OrthonormalBase_1D::grad_line(i,&xi[0],
-                                    &grad[0][0]);
+                                     grad_);
+      return grad_[comp];
     }
 
     ///////////////////////////////////
     //  2d functions 
     //////////////////////////////////
-    double eval_triangle_2d (int i, const DomainType & xi ) const
+    RangeFieldType eval_triangle_2d (const int i, const DomainType & xi ) const
     {
       return OrthonormalBase_2D::eval_triangle_2d(i,&xi[0]);
     }
     
-    double eval_quadrilateral_2d (int i, const DomainType & xi ) const
+    RangeFieldType eval_quadrilateral_2d (const int i, const DomainType & xi ) const
     {
-      return OrthonormalBase_2D::eval_quadrilateral_2d(i,&xi[0]);  
+      return OrthonormalBase_2D::eval_quadrilateral_2d(i,
+                                                       &xi[0]);  
     }
     
-    void grad_triangle_2d (int i, const DomainType & xi,
-                            JacobianRangeType & grad ) const
+    RangeFieldType grad_triangle_2d (const int i, const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_2D::grad_triangle_2d(i,&xi[0],&grad[0][0]);
+      OrthonormalBase_2D::grad_triangle_2d(i,&xi[0],grad_);
+      return grad_[comp];
     }
     
-    void grad_quadrilateral_2d (int i, const DomainType & xi,
-                                 JacobianRangeType & grad ) const
+    RangeFieldType grad_quadrilateral_2d (const int i, const int comp, const DomainType & xi) const 
     {
-       OrthonormalBase_2D::grad_quadrilateral_2d(i,&xi[0],&grad[0][0]); 
+      OrthonormalBase_2D::grad_quadrilateral_2d(i, &xi[0], grad_); 
+      return grad_[comp];
     }
 
     //////////////////////////////////////
     //  3d functions 
     //////////////////////////////////////
-    double eval_tetrahedron_3d (int i, const DomainType & xi ) const
+    RangeFieldType eval_tetrahedron_3d (const int i, const DomainType & xi ) const
     {
       return OrthonormalBase_3D::eval_tetrahedron_3d(i,&xi[0]); 
     }
     
-    double eval_pyramid_3d (int i, const DomainType & xi ) const
+    RangeFieldType eval_pyramid_3d (const int i, const DomainType & xi ) const
     {
       return OrthonormalBase_3D::eval_pyramid_3d(i,&xi[0]); 
     }
     
-    double eval_prism_3d (int i, const DomainType & xi ) const
+    RangeFieldType eval_prism_3d (const int i, const DomainType & xi ) const
     {
       return OrthonormalBase_3D::eval_prism_3d(i,&xi[0]); 
     }
     
-    double eval_hexahedron_3d (int i, const DomainType & xi ) const
+    RangeFieldType eval_hexahedron_3d (const int i, const DomainType & xi ) const
     {
       return OrthonormalBase_3D::eval_hexahedron_3d(i,&xi[0]); 
     }
    
-    void grad_tetrahedron_3d (int i, const DomainType & xi,
-                               JacobianRangeType & grad ) const
+    RangeFieldType grad_tetrahedron_3d (const int i, const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_3D::grad_tetrahedron_3d(i,&xi[0],&grad[0][0]); 
+      OrthonormalBase_3D::grad_tetrahedron_3d(i,&xi[0],grad_);
+      return grad_[comp];
     }
     
-    void grad_pyramid_3d (int i, const DomainType & xi,
-                           JacobianRangeType & grad ) const
+    RangeFieldType grad_pyramid_3d (const int i, const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_3D::grad_pyramid_3d(i,&xi[0],&grad[0][0]); 
+      OrthonormalBase_3D::grad_pyramid_3d(i,&xi[0], grad_); 
+      return grad_[comp];
     }
-    void grad_prism_3d (int i, const DomainType & xi,
-                         JacobianRangeType & grad ) const
+
+    RangeFieldType grad_prism_3d (const int i, const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_3D::grad_prism_3d(i,&xi[0],&grad[0][0]); 
+      OrthonormalBase_3D::grad_prism_3d(i,&xi[0], grad_ ); 
+      return grad_[comp];
     }
-    void grad_hexahedron_3d (int i, const DomainType & xi,
-                              JacobianRangeType & grad ) const
+
+    RangeFieldType grad_hexahedron_3d (const int i, const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_3D::grad_hexahedron_3d(i,&xi[0],&grad[0][0]); 
+      OrthonormalBase_3D::grad_hexahedron_3d(i,&xi[0], grad_ ); 
+      return grad_[comp];
     }
+
   }; // end class DGBaseFunctionWrapper
 
   //! Base class for DG base functions
@@ -179,7 +188,6 @@ namespace Dune {
   
   private:
     //- Local data
-    mutable JacobianRangeType tmp_;
     const int baseNum_;
 
   public:
@@ -195,19 +203,21 @@ namespace Dune {
     ~DGBaseFunction() {}
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
+                          const DomainType& x, RangeType& phi) const 
+    {
       phi = this->eval_line(baseNum_, x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      this->grad_line(baseNum_, x, tmp_);
-      phi = tmp_[0][diffVariable[0]];
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = this->grad_line(baseNum_, diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      assert(false); // Not implemented
+                          const DomainType& x, RangeType& phi) const 
+    {
+      DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
 
     static int numBaseFunctions() {
@@ -231,7 +241,6 @@ namespace Dune {
   
   private:
     //- Local data
-    mutable JacobianRangeType tmp_;
     const int baseNum_;
 
   public:
@@ -252,14 +261,15 @@ namespace Dune {
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      this->grad_triangle_2d(baseNum_, x, tmp_);
-      phi = tmp_[0][diffVariable[0]];
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = this->grad_triangle_2d(baseNum_, diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      assert(false); // Not implemented
+                          const DomainType& x, RangeType& phi) const 
+    {
+      DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
 
     static int numBaseFunctions() {
@@ -282,13 +292,13 @@ namespace Dune {
   
   private:
     //- Local data
-    mutable JacobianRangeType tmp_;
-    const int baseNum_;
+    int baseNum_;
 
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
+      baseNum_(baseNum) 
+    {
       // Check if base number is valid
       assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
       // Only for scalar function spaces
@@ -298,19 +308,23 @@ namespace Dune {
     ~DGBaseFunction() {}
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
+                          const DomainType& x, RangeType& phi) const 
+    {
+      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
       phi = this->eval_quadrilateral_2d(baseNum_, x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      this->grad_quadrilateral_2d(baseNum_, x, tmp_);
-      phi = tmp_[0][diffVariable[0]];
+                          const DomainType& x, RangeType& phi) const 
+    {
+      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+      phi = this->grad_quadrilateral_2d(baseNum_, diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      assert(false); // Not implemented
+                          const DomainType& x, RangeType& phi) const 
+    {
+      DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
 
     static int numBaseFunctions() {
@@ -332,8 +346,7 @@ namespace Dune {
   
   private:
     //- Local data
-    mutable JacobianRangeType tmp_;
-    int baseNum_;
+    const int baseNum_;
 
   public:
     DGBaseFunction(int baseNum) :
@@ -352,14 +365,15 @@ namespace Dune {
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      this->grad_tetrahedron_3d(baseNum_, x, tmp_);
-      phi = tmp_[0][diffVariable[0]];
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = this->grad_tetrahedron_3d(baseNum_, diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      assert(false); // Not implemented
+                          const DomainType& x, RangeType& phi) const 
+    {
+      DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
 
     static int numBaseFunctions() {
@@ -382,7 +396,6 @@ namespace Dune {
   
   private:
     //- Local data
-    mutable JacobianRangeType tmp_;
     const int baseNum_;
 
   public:
@@ -402,14 +415,14 @@ namespace Dune {
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      this->grad_pyramid_3d(baseNum_, x, tmp_);
-      phi = tmp_[0][diffVariable[0]];
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = this->grad_pyramid_3d(baseNum_, diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      assert(false); // Not implemented
+      DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
 
     static int numBaseFunctions() {
@@ -432,7 +445,6 @@ namespace Dune {
   
   private:
     //- Local data
-    mutable JacobianRangeType tmp_;
     const int baseNum_;
 
   public:
@@ -452,14 +464,14 @@ namespace Dune {
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      this->grad_prism_3d(baseNum_, x, tmp_);
-      phi = tmp_[0][diffVariable[0]];
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = this->grad_prism_3d(baseNum_, diffVariable[0], x );
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      assert(false); // Not implemented
+      DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
 
     static int numBaseFunctions() {
@@ -482,7 +494,6 @@ namespace Dune {
   
   private:
     //- Local data
-    mutable JacobianRangeType tmp_;
     const int baseNum_;
 
   public:
@@ -504,8 +515,7 @@ namespace Dune {
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      this->grad_hexahedron_3d(baseNum_, x, tmp_);
-      phi = tmp_[0][diffVariable[0]]; 
+      phi = this->grad_hexahedron_3d(baseNum_,diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -534,10 +544,11 @@ namespace Dune {
       BaseFunctionFactory<ScalarFunctionSpaceImp>(geo)
     {}
 
-    virtual BaseFunctionType* baseFunction(int i) const {
+    virtual BaseFunctionType* baseFunction(int i) const 
+    {
       switch (GeometryIdentifier::fromGeo(this->geometry())) 
       {
-  case GeometryIdentifier::Line:
+        case GeometryIdentifier::Line:
           return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd>(i);
         case GeometryIdentifier::Triangle:
           return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd>(i);
