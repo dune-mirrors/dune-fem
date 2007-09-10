@@ -43,6 +43,7 @@ namespace Dune {
   //! Wrapper interface for DG base functions
   template <class FunctionSpaceType>
   class DGBaseFunctionWrapper {
+
   protected:
     DGBaseFunctionWrapper() {}
     virtual ~DGBaseFunctionWrapper() {}
@@ -53,6 +54,9 @@ namespace Dune {
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
 
     static int numBaseFunctions(int polOrder) {
       switch (dimDomain) {
@@ -168,15 +172,16 @@ namespace Dune {
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
   private:
-    //- Local data
-    int baseNum_;
-
-  private:
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
+  private:
+    //- Local data
+    mutable JacobianRangeType tmp_;
+    const int baseNum_;
+
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
@@ -196,9 +201,8 @@ namespace Dune {
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_line(baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
+      this->grad_line(baseNum_, x, tmp_);
+      phi = tmp_[0][diffVariable[0]];
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -220,15 +224,16 @@ namespace Dune {
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
   private:
-    //- Local data
-    int baseNum_;
-
-  private:
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
+  private:
+    //- Local data
+    mutable JacobianRangeType tmp_;
+    const int baseNum_;
+
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
@@ -248,9 +253,8 @@ namespace Dune {
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_triangle_2d(baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
+      this->grad_triangle_2d(baseNum_, x, tmp_);
+      phi = tmp_[0][diffVariable[0]];
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -271,15 +275,16 @@ namespace Dune {
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
-  private:
-    //- Local data
-    int baseNum_;
-
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
+  private:
+    //- Local data
+    mutable JacobianRangeType tmp_;
+    const int baseNum_;
+
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
@@ -299,9 +304,8 @@ namespace Dune {
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_quadrilateral_2d(baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
+      this->grad_quadrilateral_2d(baseNum_, x, tmp_);
+      phi = tmp_[0][diffVariable[0]];
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -321,15 +325,16 @@ namespace Dune {
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
-  private:
-    //- Local data
-    int baseNum_;
-
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
+  private:
+    //- Local data
+    mutable JacobianRangeType tmp_;
+    int baseNum_;
+
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
@@ -348,9 +353,8 @@ namespace Dune {
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_tetrahedron_3d(baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
+      this->grad_tetrahedron_3d(baseNum_, x, tmp_);
+      phi = tmp_[0][diffVariable[0]];
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -371,15 +375,16 @@ namespace Dune {
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
-  private:
-    //- Local data
-    int baseNum_;
-
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
+  private:
+    //- Local data
+    mutable JacobianRangeType tmp_;
+    const int baseNum_;
+
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
@@ -398,9 +403,8 @@ namespace Dune {
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_pyramid_3d(baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
+      this->grad_pyramid_3d(baseNum_, x, tmp_);
+      phi = tmp_[0][diffVariable[0]];
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -421,15 +425,16 @@ namespace Dune {
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
-  private:
-    //- Local data
-    int baseNum_;
-
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
+  private:
+    //- Local data
+    mutable JacobianRangeType tmp_;
+    const int baseNum_;
+
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
@@ -448,9 +453,8 @@ namespace Dune {
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_prism_3d(baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]];
+      this->grad_prism_3d(baseNum_, x, tmp_);
+      phi = tmp_[0][diffVariable[0]];
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -471,15 +475,16 @@ namespace Dune {
     public BaseFunctionInterface<FunctionSpaceType>,
     private DGBaseFunctionWrapper<FunctionSpaceType>
   {
-  private:
-    //- Local data
-    int baseNum_;
-
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
+  private:
+    //- Local data
+    mutable JacobianRangeType tmp_;
+    const int baseNum_;
+
   public:
     DGBaseFunction(int baseNum) :
       DGBaseFunctionWrapper<FunctionSpaceType>(),
@@ -497,10 +502,10 @@ namespace Dune {
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      JacobianRangeType tmp;
-      this->grad_hexahedron_3d(baseNum_, x, tmp);
-      phi = tmp[0][diffVariable[0]]; 
+                          const DomainType& x, RangeType& phi) const 
+    {
+      this->grad_hexahedron_3d(baseNum_, x, tmp_);
+      phi = tmp_[0][diffVariable[0]]; 
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -515,34 +520,6 @@ namespace Dune {
 
   }; // end class DGBaseFunction<FunctionSpaceType, hexahedron, polOrd>
   
-  /*
-  template <class FunctionSpaceImp, GeometryIdentifier::IdentifierType elType, int polOrd>
-  class DGFastBaseFunctionSet :
-    public FastBaseFunctionSet<FunctionSpaceImp>
-  {
-    enum { dimRange = FunctionSpaceImp::DimRange };
-   
-    typedef DGBaseFunction<
-      FunctionSpaceImp, elType, polOrd> DGBaseFunctionType;
-
-  public:
-    DGFastBaseFunctionSet(FunctionSpaceImp& spc) :
-      FastBaseFunctionSet<FunctionSpaceImp>(spc, DGBaseFunctionType::numBaseFunctions()) 
-    {
-      assert(dimRange == 1); // works only for scalar spaces
-      int numBaseFct = DGBaseFunctionType::numBaseFunctions();
-      this->setNumOfDiffFct(numBaseFct);
-
-      for (int i = 0; i < numBaseFct; ++i) {
-        this->setBaseFunctionPointer(i, new DGBaseFunctionType(i));
-      }
-    }
-
-    virtual ~DGFastBaseFunctionSet() {}
-      
-  };
-  */
-
   template <class ScalarFunctionSpaceImp, int polOrd>
   class DiscontinuousGalerkinBaseFunctionFactory : 
     public BaseFunctionFactory<ScalarFunctionSpaceImp> 
