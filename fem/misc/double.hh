@@ -124,7 +124,14 @@ namespace Dune
 
 #endif
 
-
+  //- forward declaration 
+  class Double; 
+  // wrap of std power 
+  static double pow (const Double& v, const double p);
+  // wrap of std log 
+  static double log (const Double& v);
+  // wrap of std sqrt 
+  static double sqrt(const Double& v);
 
   class Double
   {
@@ -214,6 +221,11 @@ namespace Dune
     friend std :: ostream &operator<< ( std :: ostream&, const Double& );
     friend std :: istream &operator>> ( std :: istream&, Double& );
 
+    friend double pow (const Double& v, const double p);
+    friend double log (const Double& v);
+    friend double sqrt(const Double& v);
+
+
     friend struct XdrIO< Double >;
 
   protected:
@@ -280,7 +292,7 @@ namespace Dune
     {
       return "Double";
     }
-    
+
   protected:
     static inline void flOp ()
     {
@@ -288,7 +300,20 @@ namespace Dune
     }
   };
 
+  static inline double pow (const Double& v, const double p)
+  {
+    return std::pow(v.value_,p);
+  }
 
+  static inline double log (const Double& v)
+  {
+    return std::log(v.value_);
+  }
+
+  static inline double sqrt(const Double& v)
+  {
+    return std::sqrt(v.value_);
+  }
 
   template<>
   struct XdrIO< Double >
