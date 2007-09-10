@@ -3,6 +3,7 @@
 
 //- System includes
 #include <string>
+#include <iostream>
 
 //- Dune includes
 #include <dune/common/exceptions.hh>

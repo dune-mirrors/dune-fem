@@ -260,21 +260,23 @@ namespace Dune {
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   read_ascii(const std::string fn)
   {
-    FILE *infile=0;
-    infile = fopen( fn.c_str(), "r" );
-    assert(infile != 0); 
+    std::ifstream infile( fn.c_str() ); 
+    if ( infile )
     {
       int length;
-      fscanf(infile,"%d \n",&length); 
-      assert(length == spc_.size( )); 
+      infile >> length; 
+
+      if ( length != spc_.size( ))
+      {
+        DUNE_THROW(InvalidStateException,"Length to read has wrong value!");
+      } 
 
       DofIteratorType enddof = dend ( );
       for(DofIteratorType itdof = dbegin ( );itdof != enddof; ++itdof) 
       {
-        fscanf(infile,"%le \n",& (*itdof)); 
+        infile >> (*itdof); 
       }
     }
-    fclose(infile);
     return true;
   }
 
