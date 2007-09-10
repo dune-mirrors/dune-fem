@@ -15,6 +15,7 @@ static const int dimw = dimworld;
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
+#include <dune/fem/misc/double.hh>
 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
@@ -47,7 +48,7 @@ typedef HierarchicGridPart<GridType> GridPartType;
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
 //typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
-typedef FunctionSpace < double , double, dimw , 2 > FuncSpace;
+typedef FunctionSpace < GridType :: ctype, Double , dimw , 2 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -190,7 +191,9 @@ public:
     }
     
     for(int i=0; i< dimRange; ++i) 
+    {
       error[i] = sqrt(error[i]);
+    }
     
     return error;
   }
@@ -270,7 +273,8 @@ int main (int argc, char **argv)
     DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
     dm.resize();
     error[i] = algorithm ( grid , solution , i==ml-1);
-    if (i>0) {
+    if (i>0) 
+    {
       double eoc = log( error[i-step]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
     }
