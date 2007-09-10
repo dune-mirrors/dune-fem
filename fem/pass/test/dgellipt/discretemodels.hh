@@ -36,6 +36,8 @@
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
+#include <dune/fem/misc/double.hh>
+
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bvector.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -69,7 +71,8 @@ namespace LDGExample {
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
     
     // typical tpye of space 
-    typedef FunctionSpace<double, double, dimDomain, dimRange > SingleFunctionSpaceType; 
+    typedef FunctionSpace< typename Model::DomainFieldType, typename Model::RangeFieldType , 
+                           dimDomain, dimRange > SingleFunctionSpaceType; 
     typedef SingleFunctionSpaceType FunctionSpaceType;
     typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
@@ -388,6 +391,7 @@ namespace LDGExample {
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
     typedef BoundaryIdentifier BoundaryIdentifierType ;
+    enum { dimDomain = Traits::dimDomain }; 
 
   public:
     LaplaceDiscreteModel(const Model& mod,const NumFlux& numf) :
@@ -517,9 +521,14 @@ namespace LDGExample {
 
       if(!dirich)
       {
-        DomainType grad;
+        JacobianRangeType grad;
         model_.neumann(p,grad);
-        bndVal = grad * it.integrationOuterNormal(x);
+        bndVal = 0.0;
+        DomainType normal (it.integrationOuterNormal(x));
+        for(int i=0; i<dimDomain; ++i)
+        {
+          bndVal += grad[0][i] * normal[i];
+        }
       }
       return (dirich) ? BoundaryIdentifierType::DirichletNonZero : BoundaryIdentifierType::NeumannNonZero;
     }

@@ -11,6 +11,8 @@
 #include <dune/common/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dune/fem/misc/double.hh>
+
 using namespace Dune;
 
 const int dim = dimworld;
@@ -58,7 +60,7 @@ int main (int argc, char **argv)
 
     std::string paramfile ( paramname );
 
-    typedef DescriptionTraits <double,GridType,ncomp,2> DescrType;
+    typedef DescriptionTraits <float,GridType,ncomp,2> DescrType;
     typedef DescrType :: ModelType ModelType;
     typedef DescrType :: DiscrParamType DiscrParamType;
 

@@ -237,7 +237,8 @@ public:
         velo.clear();
         lastPass_.evalGradient(dest,velo);
 #endif
-        
+       
+
         L2Error < DestinationType > l2errGrad;
         gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
 
@@ -266,7 +267,7 @@ public:
         }
 #endif
       }
-      
+     
       L2Error < SolutionType > l2err;
       // pol ord for calculation the error chould by higher than 
       // pol for evaluation the basefunctions 
@@ -301,8 +302,8 @@ public:
           std::cout << "Velo EOC["<<i <<"] = " << eoc << " \n";
         }
       }
-    }
 
+    }
   }
 
   SolutionType& solution () 

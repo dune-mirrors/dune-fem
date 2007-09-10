@@ -72,10 +72,11 @@ public:
   typedef typename ModelParamType :: GridType          GridType; 
   typedef typename ModelParamType :: FieldType         FieldType; 
 
-  typedef FunctionSpace < FieldType , FieldType, dim , dimRange > FuncSpaceType;
-  typedef FunctionSpace < FieldType , FieldType, dim , dimGradRange > GradFuncSpaceType;
+  typedef FunctionSpace < typename GridType :: ctype , FieldType, dim , dimRange > FuncSpaceType;
+  typedef FunctionSpace < typename GridType :: ctype , FieldType, dim , dimGradRange > GradFuncSpaceType;
 
   typedef typename FuncSpaceType :: RangeFieldType RangeFieldType;
+  typedef typename FuncSpaceType :: DomainFieldType DomainFieldType;
   
   typedef typename FuncSpaceType::RangeType                RangeType;
   typedef typename FuncSpaceType::DomainType               DomainType;
@@ -104,7 +105,7 @@ public:
     typedef FieldMatrix<double,dimDomain+1,dimDomain> FluxRangeType;
   };
 
-  typedef DataFunctionIF<dim> DataFunctionType; 
+  typedef DataFunctionIF<dim,DomainFieldType,RangeFieldType> DataFunctionType; 
   DataFunctionType * createData(const std::string & paramFile) const 
   {
     int problem = 1;
@@ -118,23 +119,23 @@ public:
 
     if( problem == 1 ) 
     {
-      return new SinSin<dim> (shift,factor);
+      return new SinSin<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
     if( problem == 2 ) 
     {
-      return new CosCos<dim> (shift,factor);
+      return new CosCos<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
     if( problem == 3 ) 
     {
-      return new CastilloProblem<dim> (shift,factor);
+      return new CastilloProblem<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
     if( problem == 4 ) 
     {
-      return new InSpringingCorner<dim> (shift,factor);
+      return new InSpringingCorner<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
     if( problem == 5 ) 
     {
-      return new RiviereProblem<dim> (shift,factor);
+      return new RiviereProblem<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
 
     return 0;
@@ -169,9 +170,9 @@ public:
   }
   
   void neumann(const DomainType & p, 
-               DomainType & grad) const 
+               JacobianRangeType & grad) const 
   {
-    return problem().neumann(&p[0],&grad[0]);
+    return problem().neumann(&p[0],&grad[0][0]);
   }
   
   template <class EntityType , class FaceDomainType> 
@@ -241,7 +242,7 @@ public:
   class RHSData : public Function < FuncSpaceType , RHSData > 
   {
     enum { dimDom = FuncSpaceType :: DimDomain };
-    typedef DataFunctionIF<dimDom> DataFunctionType;
+    typedef DataFunctionIF<dimDom,DomainFieldType,RangeFieldType> DataFunctionType;
 
     const DataFunctionType& func_;
   public:  
@@ -276,7 +277,7 @@ public:
     typedef typename FuncSpaceType::DomainType DomainType;
 
     enum { dimDom = FuncSpaceType :: DimDomain };
-    typedef DataFunctionIF<dimDom> DataFunctionType;
+    typedef DataFunctionIF<dimDom,DomainFieldType,RangeFieldType> DataFunctionType;
 
     const DataFunctionType& data_;
   public:
@@ -308,7 +309,7 @@ public:
     typedef typename FuncSPCType::RangeFieldType RangeFieldType;
     typedef typename FuncSPCType::DomainType DomainType;
     enum { dimDom = FuncSpaceType :: DimDomain };
-    typedef DataFunctionIF<dimDom> DataFunctionType;
+    typedef DataFunctionIF<dimDom,DomainFieldType,RangeFieldType> DataFunctionType;
 
     const DataFunctionType& data_;
   public:
