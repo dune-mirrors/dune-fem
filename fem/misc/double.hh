@@ -1,8 +1,11 @@
 #ifndef DUNE_FEM_DOUBLE_HH
 #define DUNE_FEM_DOUBLE_HH
 
+//- system includes 
 #include <iostream>
+#include <cmath> 
 
+//- Dune includes 
 #include <dune/fem/io/file/xdrio.hh>
 
 namespace Dune
@@ -132,6 +135,10 @@ namespace Dune
   static double log (const Double& v);
   // wrap of std sqrt 
   static double sqrt(const Double& v);
+  // wrap of std sin 
+  static double cos (const Double& v);
+  // wrap of std cos 
+  static double sin(const Double& v);
 
   class Double
   {
@@ -224,6 +231,8 @@ namespace Dune
     friend double pow (const Double& v, const double p);
     friend double log (const Double& v);
     friend double sqrt(const Double& v);
+    friend double sin(const Double& v);
+    friend double cos(const Double& v);
 
 
     friend struct XdrIO< Double >;
@@ -313,6 +322,16 @@ namespace Dune
   static inline double sqrt(const Double& v)
   {
     return std::sqrt(v.value_);
+  }
+
+  static inline double sin (const Double& v)
+  {
+    return std::sin(v.value_);
+  }
+
+  static inline double cos(const Double& v)
+  {
+    return std::cos(v.value_);
   }
 
   template<>
