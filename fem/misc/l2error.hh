@@ -36,6 +36,7 @@ namespace Dune
   {
     typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionType::RangeType         RangeType;
+    typedef typename DiscreteFunctionType::RangeFieldType    RangeFieldType;
     typedef typename DiscreteFunctionSpaceType::IteratorType         IteratorType;
     typedef typename DiscreteFunctionSpaceType::GridType             GridType;
     typedef typename DiscreteFunctionSpaceType::GridPartType         GridPartType;
@@ -167,7 +168,7 @@ namespace Dune
 /*======================================================================*/
   
   template <int polOrd> 
-  double norm2(const DiscreteFunctionType& f1,
+  RangeFieldType norm2(const DiscreteFunctionType& f1,
                const DiscreteFunctionType& f2, double dummy = 0)
   {
     const DiscreteFunctionSpaceType & space = f1.space();  
@@ -179,7 +180,7 @@ namespace Dune
     
     const CommunicatorType & comm = gridPart.grid().comm();
     
-    double ret=0;  
+    RangeFieldType ret=0;  
 
     if( dimRange > 1 ) 
     {
