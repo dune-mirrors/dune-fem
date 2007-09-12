@@ -34,6 +34,9 @@ makeNonConformity(GridPartType& gridPart,
   // grid reference 
   GridType& grid = gridPart.grid();
 
+  // get number of elements 
+  const int gridsize = gridPart.indexSet().size(0);
+
   // allowed level difference 
   const int levelAllowed = levelDifference - 1;
   
@@ -119,9 +122,9 @@ makeNonConformity(GridPartType& gridPart,
     } // end element loop 
 
     ++count; 
-    if(count > 100) 
+    if(count > gridsize) 
     {
-      std::cerr << "Break Adaptation loop! \n";
+      std::cerr << "makeNonConformity: Break Adaptation loop because not terminating! \n";
       break;
     }
   } // end while 
