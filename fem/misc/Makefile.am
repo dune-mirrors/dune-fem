@@ -20,4 +20,5 @@ misc_HEADERS = test.cc \
 							 double.hh \
 							 double_inline.hh \
 						   adaptiveindexmapper.hh \
-							 adaptiveindexmapper_inline.hh
+							 adaptiveindexmapper_inline.hh \
+               nonconformitylevel.hh
