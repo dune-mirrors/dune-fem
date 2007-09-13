@@ -27,9 +27,18 @@
 // are used.
 #ifdef USE_DENNIS_ODE_SOLVER
 
-//#if HAVE_BLAS 
-//#define USE_EXTERNAL_BLAS
-//#endif
+// if pardg library was found 
+#ifdef ENABLE_PARDG 
+
+#include <vector.hpp>  
+#include "ode/communicator.hpp"    
+#include <function.hpp>
+#include <ode_solver.hpp>
+#include <linear_solver.hpp>
+//#include "ode/bicgstab.hpp"
+
+// else use build in ode solver (may be outdated)
+#else 
 
 #include "ode/blas.hpp"
 
@@ -41,20 +50,17 @@ namespace DuneODE {
 #include "ode/linear_solver.hpp"
 #include "ode/bicgstab.hpp"
 
-// use Dennis namespace pardg
-using namespace pardg;
-
 } // end namespace DuneODE
 #endif
 
+#endif
+
 namespace DuneODE {
-  using namespace Dune;
-  using namespace std;
 
 #ifdef USE_DENNIS_ODE_SOLVER
 
 template <class Operator>
-class OperatorWrapper : public Function 
+class OperatorWrapper : public pardg::Function 
 {
   // type of discrete function 
   typedef typename Operator::DestinationType DestinationType;
@@ -62,7 +68,7 @@ class OperatorWrapper : public Function
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
  public:
   //! constructor 
-  OperatorWrapper(const Operator& op, TimeProvider& tp) 
+  OperatorWrapper(const Operator& op, Dune::TimeProvider& tp) 
     : op_(op) , space_(op_.space()) , tp_(tp) 
   {}
 
@@ -111,7 +117,7 @@ private:
   // discrete function space 
   const SpaceType& space_;
   // time provider 
-  TimeProvider& tp_;
+  Dune::TimeProvider& tp_;
 };
 
 
@@ -127,24 +133,24 @@ class ExplTimeStepperBase
   typedef typename Operator::DestinationType DestinationType; 
 public:
   ExplTimeStepperBase(Operator& op, 
-                      TimeProvider& tp, 
+                      Dune::TimeProvider& tp, 
                       int pord, 
                       bool verbose) :
     ord_(pord),
-    comm_(Communicator::instance()),
+    comm_(pardg::Communicator::instance()),
     op_(op),
     expl_(op,tp),
     ode_(0),
     initialized_(false)
   {
     switch (pord) {
-    case 1: ode_=new ExplicitEuler(comm_,expl_); break;
-    case 2: ode_=new ExplicitTVD2(comm_,expl_); break;
-    case 3: ode_=new ExplicitTVD3(comm_,expl_); break;
-    case 4: ode_=new ExplicitRK4(comm_,expl_); break;
-    default : std::cerr << "Runge-Kutta method of this order not implemented" 
-      << std::endl;
-      abort();
+      case 1: ode_ = new pardg::ExplicitEuler(comm_,expl_); break;
+      case 2: ode_ = new pardg::ExplicitTVD2(comm_,expl_); break;
+      case 3: ode_ = new pardg::ExplicitTVD3(comm_,expl_); break;
+      case 4: ode_ = new pardg::ExplicitRK4(comm_,expl_); break;
+      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+                          << std::endl;
+                abort();
     }
 
     if(verbose)
@@ -171,7 +177,7 @@ public:
   ~ExplTimeStepperBase() { delete ode_; }
 
   //! return reference to ode solver 
-  DuneODE::ODESolver& odeSolver() 
+  pardg::ODESolver& odeSolver() 
   {
     assert( ode_ );
     return *ode_;
@@ -179,10 +185,10 @@ public:
   
 protected:
   int ord_;
-  Communicator & comm_;
+  pardg::Communicator & comm_;
   const Operator& op_;
   OperatorWrapper<Operator> expl_;
-  DuneODE::ODESolver* ode_;
+  pardg::ODESolver* ode_;
   bool initialized_;
 };
 
@@ -197,7 +203,7 @@ class ExplicitOdeSolver :
   typedef ExplTimeStepperBase<OperatorType> BaseType; 
 public:
   //! constructor 
-  ExplicitOdeSolver(OperatorType& op, TimeProvider& tp, int pord, bool verbose = false) :
+  ExplicitOdeSolver(OperatorType& op, Dune::TimeProvider& tp, int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
   {
@@ -261,11 +267,11 @@ public:
   }
 
 private:
-  TimeProvider& timeProvider_;
+  Dune::TimeProvider& timeProvider_;
 };
 
 template<class Operator>
-class ExplTimeStepper : public TimeProvider, 
+class ExplTimeStepper : public Dune::TimeProvider, 
                         public ExplTimeStepperBase<Operator>  
 {
   typedef ExplTimeStepperBase<Operator> BaseType;
@@ -274,7 +280,7 @@ class ExplTimeStepper : public TimeProvider,
     :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
 public:
   ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
-    TimeProvider(0.0,cfl),
+    Dune::TimeProvider(0.0,cfl),
     BaseType(op,*this,pord,verbose),
     tp_(this->op_.space().grid().comm(), *this ),
     savestep_(1),
@@ -361,7 +367,7 @@ public:
     this->op_.printmyInfo(filename);
   }
  private:
-  ParallelTimeProvider<DuneCommunicatorType> tp_;
+  Dune::ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
 };
@@ -376,10 +382,10 @@ class ImplTimeStepperBase
 {
   typedef typename Operator :: DestinationType DestinationType; 
 public:
-  ImplTimeStepperBase(Operator& op, TimeProvider& tp, 
+  ImplTimeStepperBase(Operator& op, Dune::TimeProvider& tp, 
                       int pord, bool verbose) :
     ord_(pord),
-    comm_(Communicator::instance()),
+    comm_(pardg::Communicator::instance()),
     op_(op),
     impl_(op,tp),
     ode_(0),
@@ -388,14 +394,15 @@ public:
   {
     linsolver_.set_tolerance(1.0e-8,false);
     linsolver_.set_max_number_of_iterations(10000);
-    switch (pord) {
-    case 1: ode_=new ImplicitEuler(comm_,impl_); break;
-    case 2: ode_=new Gauss2(comm_,impl_); break;
-    case 3: ode_=new DIRK3(comm_,impl_); break;
-      //case 4: ode_=new ExplicitRK4(comm,expl_); break;
-    default : std::cerr << "Runge-Kutta method of this order not implemented" 
-      << std::endl;
-      abort();
+    switch (pord) 
+    {
+      case 1: ode_ = new pardg::ImplicitEuler(comm_,impl_); break;
+      case 2: ode_ = new pardg::Gauss2(comm_,impl_); break;
+      case 3: ode_ = new pardg::DIRK3(comm_,impl_); break;
+      //case 4: ode_ = new pardg::ExplicitRK4(comm,expl_); break;
+      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+                          << std::endl;
+                abort();
     }
     ode_->set_linear_solver(linsolver_);
     ode_->set_tolerance(1.0e-6);
@@ -423,7 +430,7 @@ public:
   ~ImplTimeStepperBase() {delete ode_;}
   
   // return reference to ode solver 
-  DuneODE::DIRK& odeSolver() 
+  pardg::DIRK& odeSolver() 
   {
     assert( ode_ );
     return *ode_;
@@ -431,11 +438,11 @@ public:
   
 protected:
   int ord_;
-  Communicator & comm_;   
+  pardg::Communicator & comm_;   
   const Operator& op_;
   OperatorWrapper<Operator> impl_;
-  DuneODE::DIRK* ode_;
-  DuneODE::GMRES linsolver_;
+  pardg::DIRK* ode_;
+  pardg::GMRES linsolver_;
   enum { cycle = 20 };
   bool initialized_;
 };
@@ -455,7 +462,7 @@ class ImplicitOdeSolver :
   typedef SpaceOperatorInterface<DestinationImp> OperatorType;
   typedef ImplTimeStepperBase<OperatorType> BaseType;
 public:
-  ImplicitOdeSolver(OperatorType& op, TimeProvider& tp,
+  ImplicitOdeSolver(OperatorType& op, Dune::TimeProvider& tp,
                     int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp),
@@ -531,7 +538,7 @@ public:
   }
 
 private:
-  TimeProvider& timeProvider_;
+  Dune::TimeProvider& timeProvider_;
   double cfl_;
 };
 
@@ -542,7 +549,7 @@ private:
 //
 ///////////////////////////////////////////////////////
 template<class Operator>
-class ImplTimeStepper : public TimeProvider ,
+class ImplTimeStepper : public Dune::TimeProvider ,
                         public ImplTimeStepperBase<Operator> 
 {
   typedef ImplTimeStepperBase<Operator> BaseType;
@@ -552,7 +559,7 @@ class ImplTimeStepper : public TimeProvider ,
       CollectiveCommunication DuneCommunicatorType; 
 public:
   ImplTimeStepper(Operator& op,int pord,double cfl, bool verbose = false) :
-    TimeProvider(0.0,cfl),
+    Dune::TimeProvider(0.0,cfl),
     BaseType(op,*this,pord,verbose),
     tp_(this->op_.space().grid().comm(),*this),
     savestep_(1),
@@ -636,7 +643,7 @@ public:
     this->op_.printmyInfo(filename);
   }
 private:
-  ParallelTimeProvider<DuneCommunicatorType> tp_;
+  Dune::ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
 };
@@ -648,7 +655,7 @@ private:
 //
 //////////////////////////////////////////////////////////////
 template<class OperatorExpl,class OperatorImpl>
-class SemiImplTimeStepper : public TimeProvider 
+class SemiImplTimeStepper : public Dune::TimeProvider 
 {
   typedef OperatorExpl Operator;
   typedef typename  Operator :: DestinationType ::
@@ -657,9 +664,9 @@ class SemiImplTimeStepper : public TimeProvider
  public:
   SemiImplTimeStepper(OperatorExpl& op_expl,OperatorImpl& op_impl,
           int pord,double cfl, bool verbose = false ) :
-    TimeProvider(0.0,cfl),
+    Dune::TimeProvider(0.0,cfl),
     ord_(pord),
-    comm_(Communicator::instance()),
+    comm_(pardg::Communicator::instance()),
     opexpl_(op_expl),
     opimpl_(op_impl),
     expl_(op_expl,*this),
@@ -676,12 +683,12 @@ class SemiImplTimeStepper : public TimeProvider
     linsolver_.set_tolerance(1.0e-8,false);
     linsolver_.set_max_number_of_iterations(1000);
     switch (pord) {
-    case 1: ode_=new SemiImplicitEuler(comm_,impl_,expl_); break;
-    case 2: ode_=new IMEX_SSP222(comm_,impl_,expl_); break;
-    case 3: ode_=new SIRK33(comm_,impl_,expl_); break;
-    default : std::cerr << "Runge-Kutta method of this order not implemented" 
-      << std::endl;
-      abort();
+      case 1: ode_=new pardg::SemiImplicitEuler(comm_,impl_,expl_); break;
+      case 2: ode_=new pardg::IMEX_SSP222(comm_,impl_,expl_); break;
+      case 3: ode_=new pardg::SIRK33(comm_,impl_,expl_); break;
+      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+                          << std::endl;
+                abort();
     }
     ode_->set_linear_solver(linsolver_);
     ode_->set_tolerance(1.0e-6);
@@ -766,17 +773,17 @@ class SemiImplTimeStepper : public TimeProvider
   }
  private:
   int ord_;
-  Communicator & comm_;   
+  pardg::Communicator & comm_;   
   const OperatorExpl& opexpl_;
   const OperatorImpl& opimpl_;
   OperatorWrapper<OperatorExpl> expl_;
   OperatorWrapper<OperatorImpl> impl_;
-  DuneODE::SIRK* ode_;
+  pardg::SIRK* ode_;
   // DuneODE::CG linsolver_;
-  DuneODE::GMRES linsolver_;
+  pardg::GMRES linsolver_;
   enum { cycle = 20 };
-  // TimeProvider with communicator 
-  ParallelTimeProvider<DuneCommunicatorType> tp_;
+  // Dune::TimeProvider with communicator 
+  Dune::ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
   double savetime_;
   bool initialized_;
@@ -791,7 +798,7 @@ class SemiImplTimeStepper : public TimeProvider
 template <class OperatorImp>
 class SolverInterfaceImpl 
 #ifdef USE_DENNIS_ODE_SOLVER
-: public Function 
+: public pardg::Function 
 #endif
 {
   const OperatorImp & op_;
