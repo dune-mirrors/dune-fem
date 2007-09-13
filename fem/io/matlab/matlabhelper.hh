@@ -25,7 +25,7 @@ using namespace Dune;
 namespace Dune
 {
 /*======================================================================*/
-/*!
+/*! @ingroup Checkpointing
  *  \class MatlabHelper
  *  \brief The MatlabHelper class provides functionality for exporting
  *         Dune Structures to Matlab.

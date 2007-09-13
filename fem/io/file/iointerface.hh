@@ -26,9 +26,34 @@
 #endif
 
 namespace Dune {
-  
-/** 
+/** @addtogroup Checkpointing
+   The package dune-fem provides a number 
+   of possibilities to write data to disk either
+   for visualization and debugging purposes or
+   for checkpointing. 
+   Visualization output of discrete functions
+   is provided at the moment for
+   - \ref GrapeIO GraPE   
+   - \ref VTKIO VTK, e.g., for paraview
+   - \ref MatlabIO Matlab output
+   .
+   The \ref CheckPointIO "checkpointing facility" 
+   writes both the grid state, a number of
+   discrete function and other parameters
+   provided by the user. This information can
+   then be read from disc to continue the simulation
+   from the save state. Using the \ref GrapeIO
+   "datadisp" programm the checkpoint files can also
+   be used for visualization purposes.
+   
+   \remark The interface class for general output
+           of DiscreteFunctions to disc is given
+           by IOInterface.
+*/
+
+/** @ingroup Checkpointing
  \brief IOInterface to write data to hard disk 
+ \interfaceclass
 */ 
 class IOInterface {
 
