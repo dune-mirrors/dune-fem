@@ -4,6 +4,7 @@
 //- System includes
 #include <string>
 #include <iostream>
+#include <fstream>
 
 //- Dune includes
 #include <dune/common/exceptions.hh>

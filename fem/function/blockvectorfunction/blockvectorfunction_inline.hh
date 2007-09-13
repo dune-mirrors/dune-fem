@@ -217,30 +217,24 @@ template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 read_ascii( const std::string filename )
 {
-  const char * fn = filename.c_str();
-  FILE *infile=NULL;
-  infile = fopen( fn, "r" );
-  if(!infile)
-  {
-    std::cerr << "Couldnt open file! "<< fn << "\n";
-    abort();
-  }
+  std::ifstream infile ( filename.c_str() );
+  if( infile )
   {
     int length;
-    fscanf(infile,"%d \n",&length); 
+    infile >> length; 
     if(length != this->functionSpace_.size()) 
     {
-      std::cerr << "ERROR: wrong number of dofs stored in file!\n"; 
-      abort();
+      DUNE_THROW(InvalidStateException,"ERROR: wrong number of dofs stored in file!"); 
     }
+
     DofIteratorType enddof = this->dend ();
     for(DofIteratorType itdof = this->dbegin ();itdof != enddof; ++itdof) 
     {
-      fscanf(infile,"%le \n",& (*itdof)); 
+      infile >> (*itdof); 
     }
+    return true;
   }
-  fclose(infile);
-  return true;
+  return false;
 }
 
 template<class DiscreteFunctionSpaceType>

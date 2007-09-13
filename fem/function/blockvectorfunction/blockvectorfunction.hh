@@ -2,6 +2,7 @@
 #define DUNE_STATICFUNCTION_HH
 
 //- system includes
+#include <iostream>
 #include <fstream>
 
 #if ! HAVE_DUNE_ISTL 
@@ -9,6 +10,7 @@
 #endif
 
 //- Dune inlcudes 
+#include <dune/common/exceptions.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/dgspace/dgmapper.hh>
 #include <dune/istl/bvector.hh>

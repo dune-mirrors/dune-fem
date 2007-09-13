@@ -276,8 +276,9 @@ namespace Dune {
       {
         infile >> (*itdof); 
       }
+      return true;
     }
-    return true;
+    return false;
   }
 
   template<class DiscreteFunctionSpaceImp>
