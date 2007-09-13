@@ -492,7 +492,7 @@ namespace Dune {
         {
           // add diagonal entry
           {
-            double val = 0.0;
+            RangeFieldType val = 0.0;
             for (int i = 0; i <dimRange; ++i) 
             {
               val += coeffPsi_[k][i] * psi_[k][i];
@@ -506,7 +506,7 @@ namespace Dune {
           // entry (k,j) == entry (j,k)
           for (int j = k+1; j < numDofs; ++j) 
           {
-            double val = 0.0;
+            RangeFieldType val = 0.0;
             for (int i = 0; i <dimRange; ++i) 
             {
               val += coeffPsi_[k][i] * psi_[j][i];
@@ -641,7 +641,10 @@ namespace Dune {
             {
               for(int i=0; i<dimRange; ++i)
               {
-                norm[i] = unitNormal;
+                for(int j=0; j<dimDomain; ++j)
+                {
+                  norm[i][j] = unitNormal[j];
+                }
               }
             }
 
@@ -663,7 +666,7 @@ namespace Dune {
                 for(int k=0; k<numDofs; ++k)
                 {  
                   // only valid for dim range = 1
-                  double rhsVal1 = boundaryValue[0] * tau_[k];
+                  RangeFieldType rhsVal1 = boundaryValue[0] * tau_[k];
 
                   rhsVal1 *= bilinIntel;
                   singleRhs[k] += rhsVal1;
@@ -680,14 +683,14 @@ namespace Dune {
                   {
                     {
                       // grad w * v 
-                      double val = tau_[j] * phi_[k][0];
+                      RangeFieldType val = tau_[j] * phi_[k][0];
                       val *= -intel;
                       matrixEn.add( k , j , val );
                     }
                     
                     {
                       // w * grad v
-                      double val = tau_[k] * phi_[j][0];
+                      RangeFieldType val = tau_[k] * phi_[j][0];
                       val *= bilinIntel;
                       matrixEn.add( k , j , val );
                     }
@@ -703,7 +706,7 @@ namespace Dune {
               for(int k=0; k<numDofs; ++k)
               {  
                 // only valid for dim range = 1
-                double rhsVal = boundaryValue * phi_[k];
+                RangeFieldType rhsVal = boundaryValue * phi_[k];
 
                 rhsVal *= intelFactor;
                 //rhsVal *= intel;
@@ -722,7 +725,7 @@ namespace Dune {
                   for (int j = 0; j < numDofs; ++j) 
                   {
                     // phi_j * phi_k 
-                    double phiVal = phi_[j] * phi_[k]; 
+                    RangeFieldType phiVal = phi_[j] * phi_[k]; 
                     phiVal *= facBeta;
                     matrixEn.add( k , j , phiVal );
                   }
@@ -736,7 +739,7 @@ namespace Dune {
                 for(int k=0; k<numDofs; ++k)
                 {  
                   // only valid for dim range = 1
-                  double rhsVal1 = boundaryValue[0] * phi_[k];
+                  RangeFieldType rhsVal1 = boundaryValue[0] * phi_[k];
                   rhsVal1 *= facBeta;
                   singleRhs[k] += rhsVal1;
                 }
@@ -854,8 +857,11 @@ namespace Dune {
         {
           for(int i=0; i<dimRange; ++i)
           {
-            normEn[i] = unitNormal;
-            normNb[i] = unitNormal;
+            for(int j=0; j<dimDomain; ++j)
+            {
+              normEn[i][j] = unitNormal[j];
+              normNb[i][j] = unitNormal[j];
+            }
           }
         }
                
@@ -886,12 +892,12 @@ namespace Dune {
               {
                 numericalFlux2(phi_[k] , tau_[j] , tauNeigh_[j] , resultLeft, resultRight);
 
-                double valLeft = resultLeft[0];
+                RangeFieldType valLeft = resultLeft[0];
                 valLeft *= -intel;
 
                 matrixEn.add( k , j , valLeft );
 
-                double valRight = resultRight[0];
+                RangeFieldType valRight = resultRight[0];
                 valRight *= -intel;
 
                 matrixNb.add( k , j , valRight );
@@ -902,12 +908,12 @@ namespace Dune {
               {
                 numericalFlux(tau_[k] , phi_[j] , phiNeigh_[j] , resultLeft, resultRight);
 
-                double valLeft = resultLeft;
+                RangeFieldType valLeft = resultLeft[0];
                 valLeft *= bilinIntel;
 
                 matrixEn.add( k , j , valLeft );
 
-                double valRight = resultRight;
+                RangeFieldType valRight = resultRight;
                 valRight *= bilinIntel;
 
                 matrixNb.add( k , j , valRight );
@@ -918,12 +924,12 @@ namespace Dune {
               {
                 numericalFlux2(phiNeigh_[k] , tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
 
-                double valLeft = resultLeft[0];
+                RangeFieldType valLeft = resultLeft[0];
                 valLeft *= -outerIntel;
 
                 nbMatrix.add( k , j , valLeft );
 
-                double valRight = resultRight[0];
+                RangeFieldType valRight = resultRight[0];
                 valRight *= -outerIntel;
 
                 enMatrix.add( k , j , valRight );
@@ -934,12 +940,12 @@ namespace Dune {
               {
                 numericalFlux(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
 
-                double valLeft = resultLeft;
+                RangeFieldType valLeft = resultLeft;
                 valLeft *= outerBilinIntel;
 
                 nbMatrix.add( k , j , valLeft );
 
-                double valRight = resultRight;
+                RangeFieldType valRight = resultRight;
                 valRight *= outerBilinIntel;
 
                 enMatrix.add( k , j , valRight );
@@ -969,12 +975,12 @@ namespace Dune {
               {
                 numericalFluxStab(phi_j, phiNeigh , resultLeft, resultRight);
 
-                double valLeft = facBeta;
+                RangeFieldType valLeft = facBeta;
                 valLeft  *= resultLeft;
 
                 matrixEn.add( k , j , valLeft );
 
-                double valRight = facBeta;
+                RangeFieldType valRight = facBeta;
                 valRight *= resultRight;
 
                 matrixNb.add( k , j , valRight );
@@ -985,12 +991,12 @@ namespace Dune {
               {
                 numericalFluxStab(phiNeigh_j, phiEn , resultLeft, resultRight);
 
-                double valLeft = facBeta;
+                RangeFieldType valLeft = facBeta;
                 valLeft  *= resultLeft;
 
                 nbMatrix.add( k , j , valLeft );
 
-                double valRight = facBeta;
+                RangeFieldType valRight = facBeta;
                 valRight *= resultRight;
 
                 enMatrix.add( k , j , valRight );
@@ -1003,7 +1009,7 @@ namespace Dune {
     }
 
   private:  
-    void numericalFlux(const double & grad, 
+    void numericalFlux(const RangeFieldType & grad, 
                        const RangeType & phiLeft,
                        const RangeType & phiRight, 
                        RangeType & resultLeft,
@@ -1013,15 +1019,16 @@ namespace Dune {
       resultLeft *= 0.5;
       
       resultRight  = grad;
-      resultRight *= 0.5; 
+      // need negative value of phiRight 
+      resultRight *= -0.5; 
 
       resultLeft  *= phiLeft;
-      resultRight *= -phiRight;
+      resultRight *= phiRight;
     }
                        
     void numericalFlux2(const RangeType & phi,
-                        const double & gradLeft, 
-                        const double & gradRight,
+                        const RangeFieldType & gradLeft, 
+                        const RangeFieldType & gradRight,
                         RangeType & resultLeft,
                         RangeType & resultRight) const
     {
@@ -1037,8 +1044,9 @@ namespace Dune {
                            RangeType & resultLeft,
                            RangeType & resultRight) const
     {
-      resultLeft  =  phiLeft; 
-      resultRight = -phiRight; 
+      resultLeft  = phiLeft; 
+      resultRight = phiRight; 
+      resultRight *= -1.0;
     }
     
     // needs to be friend for conversion check 
