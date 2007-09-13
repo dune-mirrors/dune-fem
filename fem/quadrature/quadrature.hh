@@ -22,13 +22,14 @@
 */
 
 // use quadratures from dune-grid 
-#define USE_DUNE_QUADRATURES
+//#define USE_DUNE_QUADRATURES
 
 // do not use ALBERTA Quadratures at the moment 
 #undef HAVE_ALBERTA_FOUND
 #ifdef HAVE_ALBERTA_FOUND
 // inlcude albertagrid.hh includes the needed alberta.h 
 #include <dune/grid/albertagrid.hh>
+
 #endif
 
 // quadrature storage classes 
@@ -342,9 +343,18 @@ namespace Dune
     }
   };
 
-
-
 #ifndef USE_DUNE_QUADRATURES
+  struct SimplexMaxOrder 
+  {
+#ifdef ENABLE_PARDG 
+    enum { maxOrder1 = 39, maxOrder2 = 13, maxOrder3 = 12 };
+#elif defined HAVE_ALBERTA_FOUND
+    enum { maxOrder1 = 19, maxOrder2 = 17, maxOrder3 = 7 };
+#else
+    enum { maxOrder1 = 19, maxOrder2 = 12 , maxOrder3 = 5 };
+#endif
+  };
+          
   /*! \class SimplexQuadrature
    *  \ingroup Quadrature
    *  \brief generic quadrature class for simplices
@@ -369,12 +379,6 @@ namespace Dune
     //! \copydoc Dune::QuadratureImp::CoordinateType
     typedef typename BaseType :: CoordinateType CoordinateType;
 
-#ifdef HAVE_ALBERTA_FOUND
-    enum { maxOrder1 = 19, maxOrder2 = 17, maxOrder3 = 7 };
-#else
-    enum { maxOrder1 = 19, maxOrder2 = 12 , maxOrder3 = 5 };
-#endif
-          
   protected:
     int order_;
     
@@ -403,11 +407,11 @@ namespace Dune
     static size_t maxOrder ()
     {
       if( dim == 1 )
-        return maxOrder1;
+        return SimplexMaxOrder::maxOrder1;
       if( dim == 2 )
-        return maxOrder2;
+        return SimplexMaxOrder::maxOrder2;
       if( dim == 3 )
-        return maxOrder3;
+        return SimplexMaxOrder::maxOrder3;
       DUNE_THROW( NotImplemented, "SimplexQuadratures from dim > 3 not implemented." );
     }
   };
@@ -588,13 +592,7 @@ namespace Dune
     //! maximal order of available quadratures.
     static size_t maxOrder ()
     { 
-#ifdef HAVE_ALBERTA_FOUND
-      // highest order of Alberta quads 
-      return 17; 
-#else 
-      // highest order of UG quads 
-      return 12; 
-#endif
+      return SimplexMaxOrder::maxOrder2;
     }
   };
 #endif
@@ -717,13 +715,7 @@ namespace Dune
     //! maximal order of available quadratures
     static size_t maxOrder ()
     {
-#ifdef HAVE_ALBERTA_FOUND
-      // highest order of Alberta quads 
-      return 7; 
-#else 
-      // highest order of UG quads 
-      return 5; 
-#endif
+      return SimplexMaxOrder::maxOrder3;
     }
   };
 #endif

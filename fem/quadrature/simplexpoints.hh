@@ -9,6 +9,11 @@
 //- local includes 
 #include "ugquadratures.hh"
 
+// include pardg quadratures 
+#ifdef ENABLE_PARDG 
+#include <quadrature.hpp>
+#endif
+
 namespace Dune {
 
   //! Adapter to the quadratures defined by UG.
@@ -148,6 +153,71 @@ namespace Dune {
   private:
     const AlbertaQuadratureType* quad_;
   };
+
+#ifdef ENABLE_PARDG 
+  //! Adapter to the quadratures defined by UG.
+  //! There is a 1-1 relationship between UGSimplexPointsAdapter object and
+  //! UG quadrature implementation. 
+  template <int dim>
+  class ParDGSimplexPointsAdapter {
+  public:
+    enum { numCorners = dim+1 };
+    typedef typename pardg::Quadrature<dim> ParDGQuadratureType;
+    typedef FieldVector<double, dim> CoordinateType;
+
+  public:
+    //! Constructor.
+    ParDGSimplexPointsAdapter(int order) :
+      quad_(ParDGQuadratureType::quadrature(order)),
+      order_(order)
+    {
+      /*
+      double sum = 0.0;
+      for(int i=0; i<quad_.number_of_points(); ++i)
+      {
+        sum += quad_.w(i);
+      }
+      std::cout << "sum of weights " << sum << "\n"; 
+      */
+    }
+
+    //! Number of quadrature points.
+    int numPoints() const 
+    {
+      return quad_.number_of_points();
+    }
+
+    //! The actual order of the quadrature.
+    int order() const 
+    {
+      return order_;
+    }
+
+    //! Access to the ith quadrature point.
+    CoordinateType point(int i) const 
+    {
+      assert(i >= 0 && i < numPoints());
+      CoordinateType result;
+      for (size_t j = 0; j < dim; ++j) 
+      {
+        result[j] = quad_.x(i)[j];
+      }
+      return result;
+    }
+
+    //! Access to the ith quadrature weight.
+    double weight(int i) const 
+    {
+      assert(i >= 0 && i < numPoints());
+      // scale with volume of reference element!
+      return quad_.w(i);
+    }
+    
+  private:
+    const ParDGQuadratureType& quad_;
+    const int order_;
+  };
+#endif
 
 } // end namespace Dune
 

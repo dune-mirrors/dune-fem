@@ -1,6 +1,16 @@
 namespace Dune
 {
 
+// use pardg quadratures, otherwise ALBERTAs or UGs 
+#ifdef ENABLE_PARDG 
+#warning "Use pardg quadratures!"
+#define SimplexPointsAdapter ParDGSimplexPointsAdapter
+#elif defined HAVE_ALBERTA_FOUND
+#define SimplexPointsAdapter AlbertaSimplexPointsAdapter
+#else 
+#define SimplexPointsAdapter UGSimplexPointsAdapter
+#endif
+
 // only if we use dune-fem quadratures  
 #ifndef USE_DUNE_QUADRATURES
   template <class ct, int dim>
@@ -8,11 +18,7 @@ namespace Dune
     QuadratureImp<ct, dim>(id),
     order_((order <= 0) ? 1 : order)
   {
-#ifdef HAVE_ALBERTA_FOUND
-    AlbertaSimplexPointsAdapter<dim> points(order);
-#else
-    UGSimplexPointsAdapter<dim> points(order);
-#endif
+    SimplexPointsAdapter<dim> points(order);
 
     order_ = points.order();
 
@@ -122,11 +128,7 @@ namespace Dune
     QuadratureImp<ct, 2>(id),
     order_((order <= 0) ? 1 : order)
   {
-#ifdef HAVE_ALBERTA_FOUND
-    AlbertaSimplexPointsAdapter<2> points(order);
-#else
-    UGSimplexPointsAdapter<2> points(order);
-#endif
+    SimplexPointsAdapter<2> points(order);
 
     order_ = points.order();
 
@@ -186,11 +188,7 @@ namespace Dune
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
-#ifdef HAVE_ALBERTA_FOUND
-    AlbertaSimplexPointsAdapter<3> points(order);
-#else 
-    UGSimplexPointsAdapter<3> points(order);
-#endif
+    SimplexPointsAdapter<3> points(order);
 
     order_ = points.order();
 
