@@ -340,8 +340,9 @@ namespace Dune {
         // exchange data 
         communicate( x );
 
-        // multiply 
+        // clear vector  
         y = 0;
+        // multiply 
         this->umv(x,y);
 
         // delete non interior entries 
