@@ -3,7 +3,6 @@ namespace Dune
 
 // use pardg quadratures, otherwise ALBERTAs or UGs 
 #ifdef ENABLE_PARDG 
-#warning "Use pardg quadratures!"
 #define SimplexPointsAdapter ParDGSimplexPointsAdapter
 #elif defined HAVE_ALBERTA_FOUND
 #define SimplexPointsAdapter AlbertaSimplexPointsAdapter
