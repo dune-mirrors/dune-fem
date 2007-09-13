@@ -5,11 +5,11 @@
 //using namespace pardg;
 
 
-double pardg::Matrix::output_epsilon = 1.0e-7;
+double  Matrix::output_epsilon = 1.0e-7;
 
+namespace pardg {
 
-
-pardg::Matrix& pardg::Matrix::inverse()
+ Matrix&  Matrix::inverse()
 {
   assert(n == m);
   transpose();
@@ -32,7 +32,7 @@ pardg::Matrix& pardg::Matrix::inverse()
 
 
 
-pardg::Matrix& pardg::Matrix::transpose()
+ Matrix&  Matrix::transpose()
 {
   assert(n == m);
   for(int i=0; i<n; i++){
@@ -47,7 +47,7 @@ pardg::Matrix& pardg::Matrix::transpose()
 
 
 
-pardg::Matrix& pardg::Matrix::identity()
+ Matrix&  Matrix::identity()
 {
   assert(n == m);
   for(int i=0; i<n; i++){
@@ -60,7 +60,7 @@ pardg::Matrix& pardg::Matrix::identity()
 
 
 
-pardg::Matrix pardg::operator+(const pardg::Matrix &A, const pardg::Matrix &B)
+ Matrix  operator+(const pardg::Matrix &A, const pardg::Matrix &B)
 {
   assert(A.n == B.n && A.m == B.m);
   Matrix C(A.n, A.m);
@@ -70,7 +70,7 @@ pardg::Matrix pardg::operator+(const pardg::Matrix &A, const pardg::Matrix &B)
 
 
 
-pardg::Matrix pardg::operator*(const pardg::Matrix &A, const pardg::Matrix &B)
+ Matrix  operator*(const pardg::Matrix &A, const pardg::Matrix &B)
 {
   assert(A.m == B.n);
   const int n = A.n;
@@ -90,7 +90,7 @@ pardg::Matrix pardg::operator*(const pardg::Matrix &A, const pardg::Matrix &B)
 
 
 
-pardg::Matrix pardg::operator*(double lambda, const pardg::Matrix &A)
+Matrix  operator*(double lambda, const pardg::Matrix &A)
 {
   Matrix B(A.n, A.m);
   cblas_daxpy(A.n*A.m, lambda, A, 1, B, 1);
@@ -100,7 +100,7 @@ pardg::Matrix pardg::operator*(double lambda, const pardg::Matrix &A)
 
 
 
-std::ostream& pardg::operator<<(std::ostream& os, const pardg::Matrix& A)
+std::ostream&  operator<<(std::ostream& os, const  Matrix& A)
 {
   for(int i=0; i<A.n; i++){
     for(int j=0; j<A.m; j++){
@@ -111,5 +111,7 @@ std::ostream& pardg::operator<<(std::ostream& os, const pardg::Matrix& A)
     os << std::endl;
   }
   return os;
+}
+
 }
 
