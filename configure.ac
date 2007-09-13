@@ -16,6 +16,9 @@ DUNE_CHECK_ALL_M([dune-grid])
 # if istl not foud, its disabled 
 DUNE_CHECK_OPTIONAL([dune-istl],[istl/allocator.hh])
 
+# check dennis package 
+DUNE_PATH_PARDG
+
 DUNE_SUMMARY_ALL
 
 if test x$HAVE_DUNE_COMMON != x1 ; then
