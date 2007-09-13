@@ -28,7 +28,7 @@ namespace Dune
   public:
 
 /*======================================================================*/
-/*! 
+/*!  @ingroup HelperClasses
  *   pointprobe: extract value at global point
  *
  *   \param func the discretefunction
