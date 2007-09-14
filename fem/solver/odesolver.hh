@@ -21,41 +21,12 @@
 //- include runge kutta ode solver 
 #include <dune/fem/solver/rungekutta.hh>
 
-#define USE_DENNIS_ODE_SOLVER
-
-// if the preprocessor variable is defined, the ODE Solver from Dennis
-// are used.
-#ifdef USE_DENNIS_ODE_SOLVER
-
-// timer has no namespace therefore we put here 
-namespace pardg {
-#include "ode/timer.hpp"
-}
-
-// include pardg communicator 
-#include "ode/communicator.hpp"    
-
-// if pardg library was found 
-#ifdef ENABLE_PARDG 
-
-#include <ode_solver.hpp>
-#include <linear_solver.hpp>
-
-// else use build in ode solver (may be outdated)
-#else 
-
-#include "ode/blas.hpp"
-#include "ode/function.hpp"
-#include "ode/ode_solver.hpp"
-#include "ode/linear_solver.hpp"
-
-#endif
-
-#endif
+// include headers of pardg 
+#include "pardg.hh"
 
 namespace DuneODE {
 
-#ifdef USE_DENNIS_ODE_SOLVER
+#ifdef USE_PARDG_ODE_SOLVER
 
 template <class Operator>
 class OperatorWrapper : public pardg::Function 
@@ -787,49 +758,6 @@ class SemiImplTimeStepper : public Dune::TimeProvider
   bool initialized_;
 };
 #endif
-
-//////////////////////////////////////////////////////////
-//
-// Operator Interface to use linear solvers from DuneODE
-//
-//////////////////////////////////////////////////////////
-template <class OperatorImp>
-class SolverInterfaceImpl 
-#ifdef USE_DENNIS_ODE_SOLVER
-: public pardg::Function 
-#endif
-{
-  const OperatorImp & op_;
-  int size_; 
-public:
-  SolverInterfaceImpl(const OperatorImp & op, int size = 0) 
-    : op_(op), size_(size) 
-  {}
-
-  void setSize( int size ) { size_ = size; }
-
-  void operator () (const double *arg, double * dest, int i = 0 ) 
-  {
-    op_.multOEM(arg,dest);
-  }
-  
-  void mult(const double *arg, double * dest) const
-  {
-    op_.multOEM(arg,dest);
-  }
-  
-  int dim_of_argument(int i = 0) const 
-  { 
-    assert( i == 0 );
-    return size_;
-  }
-  int dim_of_value(int i = 0) const 
-  { 
-    assert( i == 0 );
-    return size_;
-  }
-};
-
 /**
  @} 
 **/
