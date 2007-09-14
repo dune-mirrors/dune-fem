@@ -11,13 +11,55 @@
 //- local includes 
 #include "preconditioning.hh"
 
-#include "../odesolver.hh"
+#include "../pardg.hh"
 
 // include BLAS  implementation 
 #include "cblas.h"
 
 namespace OEMSolver 
 {
+
+//////////////////////////////////////////////////////////
+//
+// Operator Interface to use linear solvers from pardg
+//
+//////////////////////////////////////////////////////////
+template <class OperatorImp>
+class SolverInterfaceImpl 
+#ifdef USE_PARDG_ODE_SOLVER
+: public pardg::Function 
+#endif
+{
+  const OperatorImp & op_;
+  int size_; 
+public:
+  SolverInterfaceImpl(const OperatorImp & op, int size = 0) 
+    : op_(op), size_(size) 
+  {}
+
+  void setSize( int size ) { size_ = size; }
+
+  void operator () (const double *arg, double * dest, int i = 0 ) 
+  {
+    op_.multOEM(arg,dest);
+  }
+  
+  void mult(const double *arg, double * dest) const
+  {
+    op_.multOEM(arg,dest);
+  }
+  
+  int dim_of_argument(int i = 0) const 
+  { 
+    assert( i == 0 );
+    return size_;
+  }
+  int dim_of_value(int i = 0) const 
+  { 
+    assert( i == 0 );
+    return size_;
+  }
+};
 
 // use cblas implementations 
 using namespace DuneCBlas;  
@@ -581,7 +623,7 @@ private:
       // in parallel case we need special treatment, if no preconditoner exist
       else if( arg.space().grid().comm().size() > 1 )
       {
-        DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
         FakeConditionerType preConditioner(size,opSolve);
         return OEMSolver::gmres(arg.space().grid().comm(),
                  inner,size,op.systemMatrix(),preConditioner,
@@ -609,7 +651,7 @@ private:
       int size = arg.space().size();
       if( arg.space().grid().comm().size() > 1 )
       {
-        DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
         FakeConditionerType preConditioner(size,opSolve);
         return OEMSolver::gmres(arg.space().grid().comm(),
                  inner,size,op.systemMatrix(),preConditioner,
@@ -689,7 +731,7 @@ public:
 /**
    @}
 **/
-#ifdef USE_DENNIS_ODE_SOLVER
+#ifdef USE_PARDG_ODE_SOLVER
 /////////////////////////////////////////////////////////////////
 //
 //  GMRES Version of Dennis code
@@ -718,13 +760,13 @@ private:
       int size = arg.space().size();
       solver.set_max_number_of_iterations(size);
 
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
 
       // in parallel runs we need fake pre conditioner to 
       // project vectors onto interior  
       if(op.hasPreconditionMatrix())
       {
-        DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
+        OEMSolver::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
         solver.set_preconditioner(pre);
         
         // note argument and destination are toggled 
@@ -738,7 +780,7 @@ private:
       if( arg.space().grid().comm().size() > 1 )
       {
         OEMSolver :: FakeConditioner fake(size,opSolve);
-        DuneODE::SolverInterfaceImpl<FakeConditioner> pre(fake,size);
+        OEMSolver::SolverInterfaceImpl<FakeConditioner> pre(fake,size);
         solver.set_preconditioner(pre);
 
         // note argument and destination are toggled 
@@ -773,7 +815,7 @@ private:
                      DiscreteFunctionImp & dest)
     {
       int size = arg.space().size();
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       
       solver.set_max_number_of_iterations(size);
 
@@ -782,7 +824,7 @@ private:
       if(arg.space().grid().comm().size() > 1)
       {
         FakeConditioner fake(size,opSolve);
-        DuneODE::SolverInterfaceImpl<FakeConditioner> pre(fake);
+        OEMSolver::SolverInterfaceImpl<FakeConditioner> pre(fake);
         solver.set_preconditioner(pre);
 
         // note argument and destination are toggled 
@@ -798,7 +840,7 @@ private:
   };
 
   // solver 
-  typedef DuneODE::GMRES SolverType;
+  typedef pardg::GMRES SolverType;
   mutable SolverType solver_;
   
   // wrapper to fit interface of FGMRES operator 
@@ -812,7 +854,7 @@ private:
   
 public:
   GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(DuneODE::Communicator::instance(),20)
+      : solver_(pardg::Communicator::instance(),20)
       , op_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
@@ -886,8 +928,8 @@ private:
                DiscreteFunctionImp & dest) 
     {
       int size = arg.space().size();
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
+      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      OEMSolver::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
       solver.set_preconditioner(pre);
       
       solver.set_max_number_of_iterations(size);
@@ -925,7 +967,7 @@ private:
                DiscreteFunctionImp & dest) 
     {
       int size = arg.space().size();
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       FakeConditionerType fake(size,opSolve);
       SolverCaller<SolverType,true>::solve(solver,op,fake,arg,dest);
     }
@@ -943,7 +985,7 @@ private:
   };
 
   // solver 
-  typedef DuneODE::FGMRES SolverType;
+  typedef pardg::FGMRES SolverType;
   mutable SolverType solver_;
   
   // wrapper to fit interface of FGMRES operator 
@@ -957,7 +999,7 @@ private:
   
 public:
   FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(DuneODE::Communicator::instance(),20)
+      : solver_(pardg::Communicator::instance(),20)
       , op_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
@@ -1032,10 +1074,10 @@ private:
                DiscreteFunctionImp & dest) 
     {
       int size = arg.space().size();
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       solver.set_max_number_of_iterations(size);
 
-      DuneODE::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
+      OEMSolver::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
       solver.set_preconditioner(pre);
 
       // note argument and destination are toggled 
@@ -1071,7 +1113,7 @@ private:
                DiscreteFunctionImp & dest) 
     {
       int size = arg.space().size();
-      DuneODE::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       solver.set_max_number_of_iterations(size);
 
       // note argument and destination are toggled 
@@ -1088,7 +1130,7 @@ private:
   };
 
   // solver 
-  typedef DuneODE::BICGSTAB SolverType;
+  typedef pardg::BICGSTAB SolverType;
   mutable SolverType solver_;
   // wrapper to fit interface of GMRES operator 
   mutable OperatorType & op_; 
@@ -1101,7 +1143,7 @@ private:
   
 public:
   BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(DuneODE::Communicator::instance())
+      : solver_(pardg::Communicator::instance())
       , op_(op), epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
@@ -1149,7 +1191,5 @@ public:
 
 };
 #endif
-#undef USE_DENNIS_ODE_SOLVER
- 
 } // end namespace Dune 
 #endif
