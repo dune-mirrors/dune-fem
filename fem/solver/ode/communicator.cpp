@@ -1,3 +1,4 @@
+// (c) Dennis Diehl 2007
 #include <fstream>
 #include "mpicommunicator.hpp"
 

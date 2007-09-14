@@ -1,3 +1,4 @@
+// (c) Dennis Diehl 2007 
 #ifndef MPICOMMUNICATOR_HPP
 #define MPICOMMUNICATOR_HPP
 
