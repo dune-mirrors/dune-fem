@@ -1,15 +1,18 @@
-#include <dune/grid/utility/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/grid/common/gridpart.hh>
 #include "advectdiff.hh"
 
 #include <dune/fem/solver/rungekutta.hh>
+#include <dune/fem/solver/odesolver.hh>
 #include <dune/fem/solver/multistep.hh>
+
+using namespace Dune;
 // Approximations Ordnung
 enum {order=POLORDER,rksteps=POLORDER+1}; 
 
 // Gitter view Auswahl
 //typedef LeafGridPart<GridType> GridPartType;
-typedef HierarchicGridPart<GridType> GridPartType;
+typedef Dune::HierarchicGridPart<GridType> GridPartType;
 //typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 
 // Modell- und Flussauswahl
