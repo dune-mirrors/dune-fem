@@ -1,7 +1,7 @@
 #include <fstream>
 #include "mpicommunicator.hpp"
 
-using namespace pardg;
+namespace pardg {
 
 // class Communicator
 Communicator::Communicator() : 
@@ -619,5 +619,5 @@ bool Communicator::finish_communication()
   return true;
 }
 
-
+}
 
