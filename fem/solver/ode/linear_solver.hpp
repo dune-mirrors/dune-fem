@@ -179,9 +179,6 @@ public:
   virtual bool solve(Function &linear_operator, double *u, const double *b);
   virtual bool solve_old(Function &linear_operator,double *u,const double *b);
 
-  template<class OperatorType>
-  bool solveOEM(const OperatorType& linear_operator, double *u, const double *b);
-
 protected:
   // from DynamicalObject
   virtual void resize(int new_size, int component);
