@@ -20,7 +20,7 @@ quasi_exact_newton.hpp linear_solver.hpp random.hpp \
 communicator.hpp mpicommunicator.hpp  matrix.hpp subblas.hpp \
 dynamical_object.hpp   newton.hpp  thread.hpp \
 emptycommunicator.hpp  nonlinear_solver.hpp timer.hpp \
-function.hpp ode_solver.hpp  vector.hpp bicgstab.hpp 
+function.hpp ode_solver.hpp  vector.hpp
 
 EXTRA_DIST = bicgstab.cpp  dirk.cpp  matrix.cpp  quasi_exact_newton.cpp \
 buffer.cpp          fgmres.cpp            newton.cpp      runge_kutta.cpp \
