@@ -15,12 +15,12 @@ libodesolver_la_SOURCES = odeobjectfiles.cc
 #inline-unit-growth=4000 -ffast-math -march=opteron -msse3 -mfpmath=sse
 
 odedir = $(includedir)/dune/fem/solver/ode
-ode_HEADERS = blas.hpp  iterative_solver.hpp limiter.hpp \
+ode_HEADERS = \
+communicator.hpp mpicommunicator.hpp emptycommunicator.hpp \
+blas.hpp  iterative_solver.hpp limiter.hpp \
 quasi_exact_newton.hpp linear_solver.hpp random.hpp \
-communicator.hpp mpicommunicator.hpp  matrix.hpp subblas.hpp \
-dynamical_object.hpp   newton.hpp  thread.hpp \
-emptycommunicator.hpp  nonlinear_solver.hpp timer.hpp \
-function.hpp ode_solver.hpp  vector.hpp
+matrix.hpp subblas.hpp dynamical_object.hpp   newton.hpp  thread.hpp \
+nonlinear_solver.hpp timer.hpp function.hpp ode_solver.hpp  vector.hpp
 
 EXTRA_DIST = bicgstab.cpp  dirk.cpp  matrix.cpp  quasi_exact_newton.cpp \
 buffer.cpp          fgmres.cpp            newton.cpp      runge_kutta.cpp \

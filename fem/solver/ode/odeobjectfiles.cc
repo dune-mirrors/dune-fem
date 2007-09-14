@@ -13,8 +13,6 @@
 #include <mpi.h>
 #endif
 
-namespace DuneODE {
-
 // include first, because of typedef 
 #if HAVE_MPI 
 #include "communicator.cpp"
@@ -39,4 +37,3 @@ namespace DuneODE {
 #include "bicgstab.cpp"
 #include "cg.cpp"
 #include "vector.cpp"
-}

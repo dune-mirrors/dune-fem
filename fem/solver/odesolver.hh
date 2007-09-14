@@ -27,30 +27,28 @@
 // are used.
 #ifdef USE_DENNIS_ODE_SOLVER
 
+// timer has no namespace therefore we put here 
+namespace pardg {
+#include "ode/timer.hpp"
+}
+
+// include pardg communicator 
+#include "ode/communicator.hpp"    
+
 // if pardg library was found 
 #ifdef ENABLE_PARDG 
 
-#include <vector.hpp>  
-#include "ode/communicator.hpp"    
-#include <function.hpp>
 #include <ode_solver.hpp>
 #include <linear_solver.hpp>
-//#include "ode/bicgstab.hpp"
 
 // else use build in ode solver (may be outdated)
 #else 
 
 #include "ode/blas.hpp"
-
-namespace DuneODE {
-
-#include "ode/communicator.hpp"    
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
 #include "ode/linear_solver.hpp"
-#include "ode/bicgstab.hpp"
 
-} // end namespace DuneODE
 #endif
 
 #endif

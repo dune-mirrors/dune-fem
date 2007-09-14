@@ -3,57 +3,6 @@
 
 namespace pardg {
 
-// class Communicator
-Communicator::Communicator() : 
-  comm(MPI_COMM_WORLD), num_send(0), num_recv(0), counter(0), os(NULL)
-{
-  MPI_Comm_size(comm, &num_of_processes);
-  MPI_Comm_rank(comm, &_id);
-
-  // buffers
-  send_buffer = new SendBuffer[num_of_processes];
-  receive_buffer = new ReceiveBuffer[num_of_processes];
-  sreq = new bool[num_of_processes];
-  rreq = new bool[num_of_processes];
-  mpi_send_request = new MPI_Request[num_of_processes];
-  mpi_receive_request = new MPI_Request[num_of_processes];
-  assert(send_buffer && receive_buffer && sreq && rreq
-	 && mpi_send_request && mpi_receive_request);
-
-  for(int i=0; i<num_of_processes; i++){
-    send_buffer[i].source = _id;
-    send_buffer[i].dest = i;
-    receive_buffer[i].source = i;
-    receive_buffer[i].dest = _id;    
-    sreq[i] = false;
-    rreq[i] = false;
-  }
-				     
-
-  // timers
-  timer.start(); 
-  comm_time = 0.0;
-  start_time = MPI_Wtime();
-
-  // I/O version
-  _io_version = 1;
-
-  // random
-  rng.seed(_id+17);
-  perm = new int[num_of_processes];
-  assert(perm);
-  for(int i=0; i<num_of_processes; i++) perm[i] = i;
-  rng.permute<int>(perm, num_of_processes);
-
-  // safe communication
-  safe_communication = true;
-
-  // tag
-  tag = min_tag;
-}
-
-
-
 Communicator::~Communicator()
 {
 }
