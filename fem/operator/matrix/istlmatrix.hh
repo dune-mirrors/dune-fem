@@ -73,39 +73,6 @@ namespace Dune {
       //! type of used communication manager  
       typedef CommunicationManager<SpaceType> CommunicationManagerType; 
 
-      struct FillRowEntities
-      {
-        template <class GridPartImp, 
-                  class EntityImp, 
-                  class IndexSetImp,
-                  class LocalIndicesImp>
-        static void fill(const GridPartImp& gridPart,
-                         const EntityImp& en,
-                         const IndexSetImp& colSet,
-                         LocalIndicesImp& localIndices)
-        {
-          const int elIndex = colSet.index( en );
-          // clear set 
-          localIndices.clear();
-          
-          // insert diagonal 
-          localIndices.insert( elIndex );
-
-          // insert neighbors 
-          typedef typename GridPartImp:: IntersectionIteratorType IntersectionIteratorType; 
-          IntersectionIteratorType endnit = gridPart.iend(en);
-          for(IntersectionIteratorType nit = gridPart.ibegin(en); 
-              nit != endnit; ++nit)
-          {
-            if(nit.neighbor())
-            {
-              const int nbIndex = colSet.index( * nit.outside() );
-              localIndices.insert( nbIndex );
-            }
-          }
-        }
-      };
-
     private:  
       size_type nz_;
 
@@ -185,14 +152,19 @@ namespace Dune {
 
       //! setup matrix entires 
       template <class RowSpaceType, class ColSpaceType,
-                class GridType,
-                PartitionIteratorType pitype,
-                template <class,PartitionIteratorType> class GridPartImp> 
+                class StencilCreatorImp> 
       void setup(const RowSpaceType & rowSpace, 
                  const ColSpaceType & colSpace,
-                 const GridPartImp<GridType,pitype> & gridPart,
+                 const StencilCreatorImp& stencil, 
                  bool verbose = false) 
       { 
+        // only works for non-hybrid grids so far 
+        if( rowSpace.multipleGeometryTypes() )
+        {
+          DUNE_THROW(NotImplemented,"ISTLMatrix::setup: use of matrix for hybrid grids not implemented yet!");
+        }
+
+        // get size estimate   
         int size = rowSpace.indexSet().size(0);
         size = (int) size / 10;
         overlapRows_.reserve( size );
@@ -201,53 +173,29 @@ namespace Dune {
         assert( &rowSpace == &colSpace );
         {
           //! we need all partition iterator here  
-          typedef GridPartImp<GridType,All_Partition> AllPartType; 
-          typedef typename AllPartType :: template Codim<0> :: IteratorType  IteratorType;
-          AllPartType allPart(const_cast<GridType&> (rowSpace.grid()));
-          
-          typedef typename AllPartType:: IntersectionIteratorType IntersectionIteratorType; 
-          typedef typename GridType :: template Codim<0> :: Entity EntityType;
+          typedef typename RowSpaceType :: IteratorType  IteratorType;
          
-          typedef typename RowSpaceType :: IndexSetType RowIndexSetType;
-          const RowIndexSetType& rowSet = rowSpace.indexSet();
-          
-          typedef typename ColSpaceType :: IndexSetType ColIndexSetType;
-          const ColIndexSetType& colSet = colSpace.indexSet();
+          {
+            IteratorType endit = rowSpace.end(); 
+            IteratorType it    = rowSpace.begin(); 
 
-          // only works for non-hybrid grids so far 
-          assert( ! rowSpace.multipleGeometryTypes() );
-          
-          IteratorType endit = allPart.template end<0> ();
-          IteratorType it    = allPart.template begin<0> ();
+            // if empty grid, do nothing
+            if( it == endit ) return ;
 
-          // if empty grid, do nothing
-          if( it == endit ) return ;
-
-          // initialize some values 
-          localRows_ = rowSpace.baseFunctionSet(*it).numBaseFunctions();
-          localCols_ = colSpace.baseFunctionSet(*it).numBaseFunctions();
+            // initialize some values 
+            localRows_ = rowSpace.baseFunctionSet(*it).numBaseFunctions();
+            localCols_ = colSpace.baseFunctionSet(*it).numBaseFunctions();
+          }
 
           // map of indices 
           // necessary because element traversal not necessaryly is in
           // ascending order 
           std::map< int , std::set<int> > indices;
-          
-          for( ; it != endit; ++it)
-          {
-            EntityType & en = *it;
-            const int elIndex = rowSet.index(en);
 
-            // if entity is not interior, insert into overlap entries 
-            if(en.partitionType() != InteriorEntity) 
-              overlapRows_.push_back( elIndex );
+          // call stencil creator 
+          stencil.setup(rowSpace,colSpace,indices,overlapRows_);
 
-            // set of column indices 
-            std::set<int>& localIndices = indices[elIndex];
-
-            // add all column entities to row  
-            FillRowEntities::fill(allPart,en,colSet,localIndices);
-          }
-
+          // type of create interator 
           typedef typename BaseType :: CreateIterator CreateIteratorType; 
           // not insert map of indices into matrix 
           CreateIteratorType endcreate = this->createend();
@@ -265,7 +213,11 @@ namespace Dune {
             }
           }
         }
+
+        // sort overlap rows because of cache efficiency 
         std::sort(overlapRows_.begin(), overlapRows_.end());
+
+        // in verbose mode some output 
         if(verbose)  
         {
           std::cout << "ISTLMatrix::setup: finished assembly of matrix structure! \n";
@@ -680,7 +632,9 @@ namespace Dune {
     }
 
     //! reserve matrix with right size 
-    void reserve(bool verbose = false) 
+    template <class StencilCreatorImp>
+    void reserve(const StencilCreatorImp& stencil, 
+                 bool verbose = false) 
     {
       // if grid sequence number changed, rebuild matrix 
       if(sequence_ != rowSpace_.sequence())
@@ -690,7 +644,7 @@ namespace Dune {
         size_ = rowSpace_.indexSet().size(0);
 
         matrix_ = new MatrixType(rowSpace_, comm_, size_, colSpace_.indexSet().size(0));
-        matrix().setup(rowSpace_,colSpace_,rowSpace_.gridPart(),verbose);
+        matrix().setup(rowSpace_,colSpace_,stencil,verbose);
 
         sequence_ = rowSpace_.sequence();
       }
