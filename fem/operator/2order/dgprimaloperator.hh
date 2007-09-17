@@ -8,9 +8,9 @@
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 // double feature only works in serial runs 
-#if HAVE_MPI == 0
-#define DOUBLE_FEATURE 
-#endif
+//#if HAVE_MPI == 0
+//#define DOUBLE_FEATURE 
+//#endif
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
@@ -24,6 +24,8 @@
 #include <dune/fem/function/common/dfcommunication.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/arrays.hh>
+
+#include "dgmatrixsetup.hh"
 
 namespace Dune {
 /*! @ingroup EllipticOperator
@@ -277,7 +279,11 @@ namespace Dune {
       prepare( arg, rhs );
 
       // if grid has changed, then matrix structure is re-build
-      matrixObj_.reserve();
+      {
+        // object for creating the stencil 
+        ElementAndNeighbors stencil;
+        matrixObj_.reserve(stencil);
+      }
 
       // clear matrix 
       matrixObj_.clear();
@@ -538,7 +544,7 @@ namespace Dune {
           // only once per intersection or when outside is not interior 
           if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
               // only working for serial runs 
-         //     || ( nb.partitionType() != InteriorEntity )
+              || ( nb.partitionType() != InteriorEntity )
             )
 #endif
           {

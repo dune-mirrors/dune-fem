@@ -1,2 +1,3 @@
 2orderdir =  $(includedir)/dune/fem/operator/2order
-2order_HEADERS = dgprimaloperator.hh  ldgelliptoperator.hh
+2order_HEADERS = dgprimaloperator.hh  ldgelliptoperator.hh \
+dgmatrixsetup.hh
