@@ -446,18 +446,19 @@ namespace Dune {
     }
     
     // write data of double* vector to object stream 
+    template <class T>
     void writeBuffer(const int link, 
                      ObjectStreamType & os, 
-                     const double* data,
-                     const double* ) const 
+                     const T* data,
+                     const T* ) const 
     {
       const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
 
       // reserve buffer memory at once 
-      os.reserve( size * sizeof(double) );
+      os.reserve( size * sizeof(T) );
 
-      double val = 0.0;
+      T val = 0.0;
       for(int i=0; i<size; ++i)
       {
         val = data[ indexMap[i] ];
@@ -466,14 +467,14 @@ namespace Dune {
     }
 
     // read data from object stream to double* data vector 
-    template <class OperationImp> 
+    template <class OperationImp, class T> 
     void readBuffer(const int link, 
                     ObjectStreamType & os, 
-                    double* data, const double*,
+                    T* data, const T*,
                     const OperationImp *) const 
     {
       const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
-      double val;
+      T val;
       const int size = indexMap.size();
       for(int i=0; i<size; ++i)
       {
