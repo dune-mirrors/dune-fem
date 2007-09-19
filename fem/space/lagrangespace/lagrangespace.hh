@@ -73,7 +73,7 @@ namespace Dune
     // exported type 
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp>  BaseFunctionSetType;
 
-    enum { localBlockSize = 1 };
+    enum { localBlockSize = DimRange };
   };
 
 
