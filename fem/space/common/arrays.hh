@@ -195,6 +195,9 @@ public:
   //! definition conforming to STL  
   typedef T value_type;
   
+  //! definition conforming to ISTL  
+  typedef T block_type;
+  
   //! DofIterator
   typedef GenericIterator<ThisType, T> DofIteratorType;
   
