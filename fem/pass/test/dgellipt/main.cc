@@ -7,7 +7,7 @@
 #include <dune/common/misc.hh>
 #include <dune/common/timer.hh>
 
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
@@ -60,7 +60,7 @@ int main (int argc, char **argv)
 
     std::string paramfile ( paramname );
 
-    typedef DescriptionTraits <float,GridType,ncomp,2> DescrType;
+    typedef DescriptionTraits <double,GridType,ncomp,2> DescrType;
     typedef DescrType :: ModelType ModelType;
     typedef DescrType :: DiscrParamType DiscrParamType;
 
