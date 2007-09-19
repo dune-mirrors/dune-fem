@@ -16,6 +16,14 @@ namespace Dune {
 class LagrangeMatrixSetup
 {
 public:
+  //! get number of entries per row for a block matrix, 
+  //! i.e. here number of neighboring nodes + 1 
+  template <class GridPartImp>
+  static inline int stencilSizeEstimate(const GridPartImp& gridPart)        
+  {
+    return 15;//(GridPartImp :: GridType :: dimension * 2) + 1;
+  }
+
   //! create entries for element and neighbors 
   template <class GridPartImp, 
             class RowMapperType,
