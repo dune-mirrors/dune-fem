@@ -451,8 +451,7 @@ void SparseRowMatrix<T>::multOEM_t(const VECtype *x, VECtype *ret) const
 template <class T> template <class DiscFType , class DiscFuncType>
 void SparseRowMatrix<T>::apply(const DiscFType &f, DiscFuncType &ret) const 
 {
-  multOEM(f.leakPointer(),ret.leakPointer());
-  /*
+  //multOEM(f.leakPointer(),ret.leakPointer());
   
   typedef typename DiscFuncType::DofIteratorType DofIteratorType;  
   typedef typename DiscFuncType::ConstDofIteratorType ConstDofIteratorType;  
@@ -466,12 +465,11 @@ void SparseRowMatrix<T>::apply(const DiscFType &f, DiscFuncType &ret) const
   {
     (*ret_it) = 0.0;
     
-    T sum = 0;
-    int thisCol = row*nz_ + firstCol ;
+    //int thisCol = row*nz_ + firstCol ;
 
     //! DofIteratorType schould be the same 
-    const T * localValues = &values_[thisCol];
-    const int nonZero = nonZeros_[row];
+    //const T * localValues = &values_[thisCol];
+    //const int nonZero = nonZeros_[row];
     for(int col=firstCol; col<nz_; col++)
     {
       int thisCol = row*nz_ + col;
@@ -483,8 +481,6 @@ void SparseRowMatrix<T>::apply(const DiscFType &f, DiscFuncType &ret) const
 
     ++ret_it;
   } 
-  */
-
   return; 
 }
 
