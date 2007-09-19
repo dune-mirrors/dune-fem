@@ -5,15 +5,16 @@
 #include <iostream>
 #include <fstream>
 
-#if ! HAVE_DUNE_ISTL 
-#error "Dune-ISTL is needed for this type of discrete function! Re-configure with --with-dune-istl! "
-#endif
-
 //- Dune inlcudes 
 #include <dune/common/exceptions.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/dgspace/dgmapper.hh>
+
+#if HAVE_DUNE_ISTL 
 #include <dune/istl/bvector.hh>
+#else 
+#include <dune/fem/space/common/arrays.hh>
+#endif
 #include <dune/fem/io/file/xdrio.hh>
 
 //- local includes 
@@ -30,35 +31,61 @@ template <class DiscreteFunctionSpaceType> class BlockVectorDiscreteFunction;
 template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
 template< class Traits > class BlockVectorLocalFunction;
 template< class Traits > class BlockVectorLocalFunctionFactory;
-
+template <class BlockVectorImp, class DofImp> class StraightenBlockVector;
 
 template <class DiscreteFunctionSpaceImp>
 struct BlockVectorDiscreteFunctionTraits 
 {
+private:  
+  template<class MapperImp> class DimRange1Mapper;
+  template<class GridPartOrIndexSetImp, int polO, int dimR , 
+           template <class,int,int> class MapperImp> 
+  struct DimRange1Mapper<MapperImp<GridPartOrIndexSetImp,polO,dimR> >
+  {
+    // here we need mapper with dimRange 1 
+    typedef MapperImp<GridPartOrIndexSetImp,polO,1> MapperType;
+  };
+
+public:  
   enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
-  typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
+
+#if HAVE_DUNE_ISTL
+  //typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
+  typedef MutableArray < FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
+#else 
+  typedef MutableArray < FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
+#endif
+
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType;
 
-  //! needs additional mapper 
-  typedef DGMapper<IndexSetType,0,1> MapperType;
+  //! needs additional mapper because of block structure 
+  typedef typename DiscreteFunctionSpaceType :: MapperType OldMapperType;
+  typedef typename DimRange1Mapper<OldMapperType> :: MapperType MapperType;
 
+  //! mapper singleton key 
+  typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
+  //! mapper factory 
+  typedef MapperSingletonFactory< MapperSingletonKeyType ,
+            MapperType > MapperSingletonFactoryType;
 
-  
+  //! singleton list of mappers 
+  typedef SingletonList< MapperSingletonKeyType , MapperType ,
+          MapperSingletonFactoryType > MapperProviderType;
+
   typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
-  //typedef BlockVectorLocalFunction<DiscreteFunctionType> LocalFunctionImp;
  
-  typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,
-            typename DofStorageType::field_type> DofIteratorType;
+  typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,RangeFieldType> DofIteratorType;
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
-
 
   typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
   typedef BlockVectorLocalFunctionFactory< ThisType >  LocalFunctionFactoryType; 
   typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
   typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
+
+  typedef StraightenBlockVector<DofStorageType,RangeFieldType> LeakPointerType;
 };
 
 template <class DofType>
@@ -155,7 +182,8 @@ public:
   {
     return new ObjectType( discreteFunction_.space(),
                            discreteFunction_.mapper_ ,
-                           discreteFunction_.dofVec_ );
+                           discreteFunction_.dofVec_, 
+                           discreteFunction_.leakPtr_ );
   }
 };
 
@@ -182,8 +210,13 @@ public:
   //! traits of this type 
   typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
   
+  //! size of local blocks  
+  enum { localBlockSize = Traits :: localBlockSize };
+
   //! needs additional mapper 
   typedef typename Traits :: MapperType MapperType; 
+  typedef typename Traits :: MapperSingletonKeyType MapperSingletonKeyType; 
+  typedef typename Traits :: MapperProviderType MapperProviderType;
 
   friend class BlockVectorLocalFunctionFactory< Traits > ;
 private:
@@ -236,7 +269,7 @@ public:
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
   
   //! type of LeakPointer 
-  typedef StraightenBlockVector<DofStorageType,DofType> LeakPointerType;
+  typedef typename Traits :: LeakPointerType LeakPointerType;
 
   //! \brief Constructor makes Discrete Function  
   BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
@@ -344,7 +377,7 @@ private:
   std::string name_;
 
   // single mapper for blocks 
-  MapperType mapper_;
+  MapperType& mapper_;
 
   // dof manager 
   DofManagerType&  dm_;
@@ -358,11 +391,11 @@ private:
   //! the dofs stored in an array
   mutable DofStorageType& dofVec_;
 
-  //! hold one object for addLocal and setLocal and so on 
-  LocalFunctionImp localFunc_;
-
   //! leak pointer converting block vector to straight vector 
   LeakPointerType leakPtr_; 
+
+  //! hold one object for addLocal and setLocal and so on 
+  LocalFunctionImp localFunc_;
 }; // end class BlockVectorDiscreteFunction 
 
 
@@ -384,6 +417,7 @@ public:
   typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename Traits :: MapperType  MapperType;
   typedef typename Traits :: DofStorageType DofStorageType;
+  typedef typename Traits :: LeakPointerType LeakPointerType;
 
 private:
   typedef BlockVectorLocalFunction< Traits > ThisType;
@@ -402,6 +436,7 @@ public:
   typedef typename GridType :: template  Codim<0> :: Entity EntityType;
 
   typedef typename DofStorageType :: block_type DofBlockType;
+  enum { localBlockSize = DofBlockType :: dimension };
 
   friend class BlockVectorDiscreteFunction <DiscreteFunctionSpaceType>;
 
@@ -413,8 +448,9 @@ private:
 public:
   //! Constructor 
   BlockVectorLocalFunction ( const DiscreteFunctionSpaceType &f , 
-                                const MapperType& mapper, 
-                                DofStorageType & dofVec );
+                             const MapperType& mapper, 
+                             DofStorageType & dofVec, 
+                             LeakPointerType& leakPtr );
 
   //! \brief Destructor 
   ~BlockVectorLocalFunction ();
@@ -484,6 +520,7 @@ protected:
 
   //! dofVec from all levels of the discrete function 
   DofStorageType & dofVec_;
+  LeakPointerType& leakPtr_;
 
   //! Array holding pointers to the local dofs 
   mutable MutableArray < RangeFieldType * > values_ ;

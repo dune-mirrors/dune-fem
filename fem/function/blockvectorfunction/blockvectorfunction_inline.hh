@@ -11,12 +11,13 @@ BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f)
   : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( "no name" )
-  , mapper_(f.indexSet())
+  , mapper_( MapperProviderType :: getObject( 
+        MapperSingletonKeyType(f.indexSet(),f.mapper().numDofs()/localBlockSize) ) )
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
-  , localFunc_ ( f , mapper_ , dofVec_ ) 
   , leakPtr_(dofVec_)
+  , localFunc_ ( f , mapper_ , dofVec_ , leakPtr_ ) 
 {
 }
 
@@ -27,12 +28,13 @@ BlockVectorDiscreteFunction(const std::string name, const DiscreteFunctionSpaceT
   : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( name )
-  , mapper_(f.indexSet(),1)
+  , mapper_( MapperProviderType :: getObject( 
+        MapperSingletonKeyType(f.indexSet(),f.mapper().numDofs()/localBlockSize) ) )
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
-  , localFunc_ ( f , mapper_, dofVec_ ) 
   , leakPtr_(dofVec_)
+  , localFunc_ ( f , mapper_, dofVec_ , leakPtr_ ) 
 {
 }
 
@@ -44,12 +46,13 @@ BlockVectorDiscreteFunction(const std::string name,
   : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( name )
-  , mapper_(f.indexSet(),1)
+  , mapper_( MapperProviderType :: getObject( 
+        MapperSingletonKeyType(f.indexSet(),f.mapper().numDofs()/localBlockSize) ) )
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
   , memPair_(dm_.addDummyDofSet(&dofVec_, mapper_, name_, &data)) 
   , dofVec_( *memPair_.second ) 
-  , localFunc_ ( f , mapper_ , dofVec_ ) 
   , leakPtr_(dofVec_)
+  , localFunc_ ( f , mapper_ , dofVec_, leakPtr_ ) 
 {
 }
 
@@ -58,12 +61,14 @@ inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> & df ) :
   DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
   , lfFactory_( *this )
-  , mapper_(df.functionSpace_.indexSet(),1)
+  , mapper_( MapperProviderType :: getObject( 
+        MapperSingletonKeyType(df.functionSpace_.indexSet(),
+                               df.functionSpace_.mapper().numDofs()/localBlockSize) ) )
   , dm_(df.dm_)
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
-  , localFunc_ ( this->functionSpace_ , mapper_, dofVec_ )
   , leakPtr_(dofVec_)
+  , localFunc_ ( this->functionSpace_ , mapper_, dofVec_, leakPtr_ )
 {
   name_ = df.name_;
   built_ = df.built_; 
@@ -77,6 +82,7 @@ inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 ~BlockVectorDiscreteFunction() 
 {
   dm_.removeDofSet(*memPair_.first);
+  MapperProviderType::removeObject( mapper_ );
 }
 
 template<class DiscreteFunctionSpaceType>
@@ -330,16 +336,16 @@ inline BlockVectorLocalFunction < TraitsImp >::
 BlockVectorLocalFunction( 
     const DiscreteFunctionSpaceType &f , 
     const MapperType& mapper,
-    DofStorageType & dofVec )
+    DofStorageType & dofVec , 
+    LeakPointerType& leakPtr )
  : fSpace_ ( f ),
    mapper_(mapper),
    en_(0),
    dofVec_ ( dofVec ),
+   leakPtr_ ( leakPtr ),
    needCheckGeometry_( true ),
    baseSet_()
 {
-  // only works for discontinuous spaces at the moment 
-  assert( ! f.continuous() );
 }
       
 template< class TraitsImp >
@@ -588,14 +594,17 @@ inline void BlockVectorLocalFunction< DiscreteFunctionType >
   en_ = &entity;
 
   // cache local dofs 
-  DofBlockType& dofs = dofVec_[mapper_.mapToGlobal(entity,0)] ;
-  assert( numOfDof_ == DofBlockType :: dimension );
+  //DofBlockType& dofs = dofVec_[mapper_.mapToGlobal(entity,0)] ;
+  //assert( numOfDof_ == DofBlockType :: dimension );
   for(int i=0; i<numOfDof_; ++i) 
   {
     // assert that mapper matches with space mapping 
+    /*
     assert( (mapper_.mapToGlobal(entity,0) * DofBlockType::dimension + i) ==
              fSpace_.mapToGlobal(entity,i) );
     values_ [i] = &dofs[i]; 
+    */
+    values_ [i] = &leakPtr_[ fSpace_.mapToGlobal(entity,i) ]; 
   }
 } 
 
