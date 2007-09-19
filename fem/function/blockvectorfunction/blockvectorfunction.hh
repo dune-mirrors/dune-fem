@@ -51,8 +51,7 @@ public:
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
 
 #if HAVE_DUNE_ISTL
-  //typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
-  typedef MutableArray < FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
+  typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
 #else 
   typedef MutableArray < FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
 #endif
