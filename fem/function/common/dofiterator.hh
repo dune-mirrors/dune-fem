@@ -132,8 +132,9 @@ public:
 
   const DofImp& operator [] (int n) const
   {
-    asImp().reset();
-    for (int i=0; i<n; i++) ++asImp();
+    DofIteratorType &it = const_cast<DofIteratorType &> (asImp());
+    it.reset();
+    for (int i=0; i<n; ++i) ++it; 
     return asImp().operator *();
   };
 
@@ -142,11 +143,11 @@ private:
   DofIteratorType &asImp() 
   { 
     return static_cast<DofIteratorType&>(*this); 
-  };
+  }
   const DofIteratorType &asImp() const
   { 
     return static_cast<const DofIteratorType&>(*this); 
-  };
+  }
 }; // end class DofIteratorDefault
 
 
@@ -204,7 +205,7 @@ public:
   }
 
   //! set the iterator to begin status 
-  void reset () 
+  void reset ()
   { 
     it_.reset();
   }
