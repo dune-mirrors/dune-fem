@@ -98,6 +98,15 @@ namespace Dune
         asImp().set(localRow,localCol,value));
     }
 
+    /*! \brief set row to unit rwo (all entries zero only diagonal entry is one)
+        \param[in] localRow local row that is set to unit row 
+    */
+    inline void unitRow ( const int localRow )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().unitRow( localRow ));
+    }
+
     /*! \brief get value of matrix entry (row,col) where row and col are
         local row and local column 
         \param[in] localRow local row 
@@ -229,6 +238,14 @@ namespace Dune
       rangeSpace_( rangeSpace ),
       domainBaseSet_( domainSpace.baseFunctionSet( domainEntity ) ),
       rangeBaseSet_( rangeSpace.baseFunctionSet( rangeEntity ) )
+    {
+    }
+
+    inline LocalMatrixDefault ( const LocalMatrixDefault& org )
+    : domainSpace_( org.domainSpace_ ),
+      rangeSpace_( org.rangeSpace_ ),
+      domainBaseSet_( org.domainBaseSet_ ),
+      rangeBaseSet_( org.rangeBaseSet_ )
     {
     }
 

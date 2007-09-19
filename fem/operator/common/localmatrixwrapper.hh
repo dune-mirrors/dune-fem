@@ -60,7 +60,7 @@ namespace Dune
       RangeBaseFunctionSetType;
 
   private:
-    typedef typename LocalMatrixStackType :: ObjectPointerType
+    typedef typename LocalMatrixStackType :: ObjectReferenceType
       WrappedLocalMatrixPtrType;
 
   private:
@@ -128,6 +128,12 @@ namespace Dune
                       const RangeFieldType &value )
     {
       localMatrix().set( localRow, localCol, value );
+    }
+    
+    /** \copydoc Dune::LocalMatrixInterface::unitRow */
+    inline void unitRow ( const int localRow )
+    {
+      localMatrix().unitRow( localRow ); 
     }
     
     /** \copydoc Dune::LocalMatrixInterface::get */
