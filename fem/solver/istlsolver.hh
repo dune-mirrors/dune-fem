@@ -20,7 +20,7 @@ namespace Dune {
 
     //! export types
     typedef X domain_type;
-    typedef typename X::field_type field_type;
+    typedef typename X:: block_type :: field_type field_type;
     
     //! define the category
     enum {category=SolverCategory::sequential};
