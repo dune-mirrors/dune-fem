@@ -202,6 +202,117 @@ public:
     apply(arg,dest);
   }
 }; 
+
+
+//////////////////////////////////////////////////////////////////
+//
+//  ISTL CG Solver 
+//
+//////////////////////////////////////////////////////////////////
+/** \brief BICG-stab scheme for block matrices (BCRSMatrix) 
+and block vectors (BVector) from dune-istl. */
+template <class DiscreteFunctionType, class OperatorType>
+class ISTLCGOp : public Operator<
+      typename DiscreteFunctionType::DomainFieldType,
+      typename DiscreteFunctionType::RangeFieldType,
+            DiscreteFunctionType,DiscreteFunctionType> 
+{
+private:
+  // no const reference, we make const later 
+  mutable OperatorType &op_;
+  double reduction_;
+  int maxIter_;
+  bool verbose_ ;
+
+  template <class OperatorImp, bool hasPreconditioning>
+  struct SolverCaller
+  {
+    template <class DiscreteFunctionImp>
+    static void call(OperatorImp & op,
+                     const DiscreteFunctionImp & arg,
+                     DiscreteFunctionImp & dest,
+                     double reduction, int maxIter, bool verbose)
+    {
+      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
+      typedef typename OperatorImp :: PreconditionMatrixType PreconditionerType; 
+      const PreconditionerType& pre = op.preconditionMatrix();
+      solve(op.systemMatrix().matrix(),pre,
+            arg,dest,arg.space().grid().comm(),reduction,maxIter,verbose);
+    }
+
+    template <class MatrixType, 
+              class PreconditionerType,
+              class DiscreteFunctionImp,
+              class CommunicatorType>
+    static void solve(const MatrixType & m,
+                 const PreconditionerType & preconditioner,
+                 const DiscreteFunctionImp & arg,
+                 DiscreteFunctionImp & dest,
+                 const CommunicatorType& comm,
+                 double reduction, int maxIter, bool verbose)
+    {
+      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
+      typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
+      MatrixOperatorType mat(const_cast<MatrixType&> (m));
+
+      int verb = (verbose) ? 2 : 0;
+        
+      ParaScalarProduct<BlockVectorType,CommunicatorType> scp(comm); 
+      CGSolver<BlockVectorType> solver(mat,scp,
+          const_cast<PreconditionerType&> (preconditioner),
+          reduction,maxIter,verb);    
+
+      InverseOperatorResult returnInfo;
+  
+      solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
+    }
+  };
+
+public:
+  /** \brief constructor of ISTLBICGSTABOp 
+    \param[in] op Mapping describing operator to invert 
+    \param[in] redEps reduction epsilon 
+    \param[in] absLimit absolut limit of residual (not used here) 
+    \param[in] maxIter maximal iteration steps 
+    \param[in] verbose verbosity 
+
+    \note ISTL BiCG-stab only uses the relative reduction.
+  */
+  ISTLCGOp(OperatorType & op , double  reduction , double absLimit , 
+           int maxIter , bool verbose ) 
+    : op_(op), reduction_ ( reduction ) 
+    , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+  {
+  }
+
+  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+  {
+  }
+
+  void finalize () const
+  {
+  }
+
+
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
+  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    SolverCaller<OperatorType,true>::call(op_,arg,dest,reduction_,maxIter_,verbose_);
+  }
+
+
+  /** \brief solve the system 
+      \param[in] arg right hand side 
+      \param[out] dest solution 
+  */
+  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+  {
+    apply(arg,dest);
+  }
+}; 
 ///@}
 
 } // end namespace Dune 
