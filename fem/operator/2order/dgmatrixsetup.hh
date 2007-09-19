@@ -17,31 +17,26 @@ class ElementAndNeighbors
 {
 public:
   //! create entries for element and neighbors 
-  template <class RowSpaceType,
-            class ColSpaceType,
+  template <class GridPartImp,    
+            class RowMapperType,
+            class ColMapperType,
             class MatrixStructureMapImp,
             class OverlapVectorImp>
-  static inline void setup(const RowSpaceType& rowSpace,
-                           const ColSpaceType& colSpace,
+  static inline void setup(const GridPartImp& gP,    
+                           const RowMapperType& rowMapper,
+                           const ColMapperType& colMapper,
                            MatrixStructureMapImp& indices,
                            OverlapVectorImp& overlapRows)
   {
-    typedef typename GridPartNewPartitionType<typename RowSpaceType ::
-      GridPartType,All_Partition> :: NewGridPartType GridPartType; 
+    typedef typename GridPartNewPartitionType<
+      GridPartImp,All_Partition> :: NewGridPartType GridPartType;    
 
-    GridPartType gridPart ( const_cast<RowSpaceType&>
-        (rowSpace).gridPart().grid());
+    GridPartType gridPart ( const_cast<GridPartImp&> (gP).grid());
 
     // define used types 
-    typedef typename RowSpaceType :: GridType GridType;
+    typedef typename GridPartType :: GridType GridType;
     typedef typename GridType :: template Codim<0> :: Entity EntityType;
     typedef typename GridPartType :: template Codim<0> :: IteratorType  IteratorType;
-
-    typedef typename RowSpaceType :: IndexSetType RowIndexSetType;
-    const RowIndexSetType& rowSet = rowSpace.indexSet();
-
-    typedef typename ColSpaceType :: IndexSetType ColIndexSetType;
-    const ColIndexSetType& colSet = colSpace.indexSet();
 
     // clear map 
     indices.clear();
@@ -53,7 +48,7 @@ public:
     {
       const EntityType & en = *it;
       // add all column entities to row  
-      fill(gridPart,en,rowSet,colSet,indices,overlapRows);
+      fill(gridPart,en,rowMapper,colMapper,indices,overlapRows);
     }
   }
 
@@ -61,18 +56,19 @@ protected:
   //! create entries for element and neighbors 
   template <class GridPartImp,
             class EntityImp,
-            class RowSetImp,
-            class ColSetImp,
+            class RowMapperImp,
+            class ColMapperImp,
             class OverlapVectorImp>
   static inline void fill(const GridPartImp& gridPart,
                    const EntityImp& en,
-                   const RowSetImp& rowSet,
-                   const ColSetImp& colSet,
+                   const RowMapperImp& rowMapper,
+                   const ColMapperImp& colMapper,
                    std::map< int , std::set<int> >& indices,
                    OverlapVectorImp& overlapRows)
   {
+    assert( rowMapper.numDofs () == 1 );
     // get index for entity 
-    const int elRowIndex = rowSet.index(en);
+    const int elRowIndex = rowMapper.mapToGlobal( en, 0 ); 
 
     // type of local indices storage 
     typedef std::set< int >  LocalIndicesType; 
@@ -102,8 +98,8 @@ protected:
         const EntityImp& nb = *ep;
 
         // get index of neighbor 
-        const int nbColIndex = colSet.index( nb );
-        const int nbRowIndex = rowSet.index( nb );
+        const int nbColIndex = colMapper.mapToGlobal( nb , 0 );
+        const int nbRowIndex = rowMapper.mapToGlobal( nb , 0 );
 
         // check whether to insert now 
         bool insertHere = (elRowIndex < nbRowIndex);
@@ -123,7 +119,7 @@ protected:
 
           // insert symetric part with swaped row-col
           LocalIndicesType& nbIndices = indices[nbRowIndex];
-          const int elColIndex = colSet.index( en );
+          const int elColIndex = colMapper.mapToGlobal( en , 0 );
           nbIndices.insert( nbColIndex );
           nbIndices.insert( elColIndex );  
         }

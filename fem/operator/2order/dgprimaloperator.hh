@@ -394,9 +394,8 @@ namespace Dune {
       typedef typename DestinationType :: LocalFunctionType SingleLFType; 
       SingleLFType singleRhs = dest_->localFunction(en); //rhs
       
-      LocalMatrixType matrixEn(matrixObj_.matrix(),
-                               en, spc_, en, spc_ ); 
-      
+      LocalMatrixType matrixEn = matrixObj_.localMatrix(en,en); 
+
       // make entities known in callers
       caller_.setEntity(en);
 
@@ -802,17 +801,14 @@ namespace Dune {
       JacobianRangeType& normNb = coeffPsi_[0];
 
       // create matrix handles for neighbor 
-      LocalMatrixType matrixNb(matrixObj_.matrix(),
-                               en, spc_, nb, spc_ ); 
+      LocalMatrixType matrixNb = matrixObj_.localMatrix( en, nb );
      
 #ifdef DOUBLE_FEATURE
       // create matrix handles for neighbor 
-      LocalMatrixType enMatrix(matrixObj_.matrix(),
-                               nb, spc_, en, spc_ ); 
+      LocalMatrixType enMatrix = matrixObj_.localMatrix( nb, en ); 
       
       // create matrix handles for neighbor 
-      LocalMatrixType nbMatrix(matrixObj_.matrix(),
-                               nb, spc_, nb, spc_ ); 
+      LocalMatrixType nbMatrix = matrixObj_.localMatrix( nb, nb ); 
 #endif
       // get base function set 
       const BaseFunctionSetType bsetNeigh = spc_.baseFunctionSet(nb);
