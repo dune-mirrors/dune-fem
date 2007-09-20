@@ -73,8 +73,8 @@ namespace Dune
     typedef VTKWriter< GridType, IndexSetType > BaseType;
     
   public:
-    VTKIO( const GridPartType &gridPart )
-    : BaseType( gridPart.grid(), gridPart.indexSet() )
+    VTKIO( const GridPartType &gridPart, VTKOptions::DataMode dm = VTKOptions::conforming )
+    : BaseType( gridPart.grid(), gridPart.indexSet() , dm )
     {
     }
 
