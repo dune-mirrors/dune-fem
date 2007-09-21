@@ -29,10 +29,11 @@ const double globalTimeStep = 1e-3;
 
 #include <dune/common/mpihelper.hh>
 
-using namespace Dune;
 using namespace std;
 
 #include "models.hh"
+using namespace Dune;
+
 #include "stuff.cc"
 #include "robstuff.cc"
 
