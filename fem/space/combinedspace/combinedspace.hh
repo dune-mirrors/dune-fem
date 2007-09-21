@@ -156,6 +156,7 @@ namespace Dune {
     typedef typename Traits::DofConversionType DofConversionType;
     typedef SubSpace<ThisType> SubSpaceType;
 
+    typedef typename ContainedDiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
     enum { spaceId_ = 13 };
     
     CompileTimeChecker<(Traits::ContainedDimRange == 1)>
@@ -194,7 +195,6 @@ namespace Dune {
       return CombinedSpace_id;
     }
 
-
     //! access to base function set
     template <class EntityType>
     const BaseFunctionSetType baseFunctionSet(const EntityType& en) const 
@@ -212,6 +212,9 @@ namespace Dune {
 
     //! access to mapper
     MapperType& mapper() const { return mapper_; }
+
+    //! access to mapper
+    BlockMapperType& blockMapper() const { return spc_.blockMapper(); }
 
     //- Additional methods
     //! number of components
