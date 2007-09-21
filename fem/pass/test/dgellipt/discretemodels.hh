@@ -73,10 +73,16 @@ namespace LDGExample {
     
     // typical tpye of space 
     typedef FunctionSpace< typename Model::DomainFieldType, typename Model::RangeFieldType , 
-                           dimDomain, dimRange > SingleFunctionSpaceType; 
-    typedef SingleFunctionSpaceType FunctionSpaceType;
+                           dimDomain, dimRange > FunctionSpaceType; 
+#if 0
+    typedef FunctionSpace< typename Model::DomainFieldType, typename Model::RangeFieldType , 
+                           dimDomain, 1 > SingleFunctionSpaceType; 
     typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
+    typedef CombinedSpace< ContainedSpaceType, dimRange, PointBased > DiscreteFunctionSpaceType;
+#else 
+    typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
+#endif
     
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   };
