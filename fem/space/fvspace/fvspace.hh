@@ -28,7 +28,7 @@ namespace Dune {
 
   // Forward declarations
   template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-            template<class> class BaseFunctionStorageImp = SimpleStorage >
+            template<class> class BaseFunctionStorageImp = CachingStorage >
   class FiniteVolumeSpace;
 
   template <class FunctionSpaceImp,class GridPartImp, int polOrd,
@@ -56,6 +56,9 @@ namespace Dune {
     typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     typedef FiniteVolumeMapper<IndexSetType,polOrd,DimRange> MapperType;
+
+    // type of mapper for block vector functions 
+    typedef FiniteVolumeMapper<IndexSetType,polOrd,1> BlockMapperType;
 
     // always 1 for FVSpace Base , to be revised 
     enum { localBlockSize = 1 };
@@ -137,8 +140,12 @@ namespace Dune {
   
     typedef typename Traits :: MapperType MapperType; 
 
+    //! block mapper 
+    typedef typename Traits :: BlockMapperType BlockMapperType; 
+
     //! mapper singleton key  
     typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
+
     //! mapper factory 
     typedef MapperSingletonFactory< MapperSingletonKeyType ,    
               MapperType > MapperSingletonFactoryType;
@@ -146,6 +153,14 @@ namespace Dune {
     //! mapper singleton list 
     typedef SingletonList< MapperSingletonKeyType , MapperType ,
             MapperSingletonFactoryType > MapperProviderType;
+
+    //! mapper factory 
+    typedef MapperSingletonFactory< MapperSingletonKeyType ,    
+              BlockMapperType > BlockMapperSingletonFactoryType;
+
+    //! mapper singleton list 
+    typedef SingletonList< MapperSingletonKeyType , BlockMapperType ,
+            BlockMapperSingletonFactoryType > BlockMapperProviderType;
 
     /** \copydoc FunctionSpace::DomainType */
     typedef typename FunctionSpaceType::DomainType DomainType;
@@ -211,6 +226,9 @@ namespace Dune {
     //! Return the dof mapper of the space
     MapperType& mapper() const;
 
+    //! Return the dof mapper of the space
+    BlockMapperType& blockMapper() const;
+
     //! \brief return index in grid sequences 
     int sequence () const { return dm_.sequence(); }
 
@@ -228,6 +246,9 @@ namespace Dune {
   private:
     //! the corresponding FiniteVolumeMapper 
     MapperType* mapper_; 
+
+    //! mapper for block vector functions 
+    BlockMapperType* blockMapper_;
 
     //! reference to dof manager 
     const DofManagerType & dm_;

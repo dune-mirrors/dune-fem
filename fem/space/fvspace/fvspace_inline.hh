@@ -15,6 +15,7 @@ FiniteVolumeSpace (GridPartType & gridPart) :
     DefaultType(gridPart),
     baseFuncSet_(),
     mapper_(0),
+    blockMapper_(0),
     dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
 {
   makeFunctionSpace(gridPart);
@@ -37,6 +38,7 @@ makeFunctionSpace (GridPartType& gridPart)
             allGeomTypes(gridPart.indexSet());
   
   const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(0);
+  int maxDofs = 0;
 
   for(size_t i=0; i<geomTypes.size(); ++i)
   {
@@ -48,15 +50,12 @@ makeFunctionSpace (GridPartType& gridPart)
         & SingletonProviderType::getObject(geoType);
       
       baseFuncSet_[ geoType ] = baseSet; 
-      const int numDofs = baseSet->numBaseFunctions();
-      
-      MapperSingletonKeyType key(gridPart.indexSet(),numDofs);
-      mapper_ = & MapperProviderType::getObject(key);
-
-      // make sure we got the right mapper 
-      assert( mapper_->numDofs() == numDofs );
+      maxDofs = std::max( maxDofs , baseSet->numBaseFunctions() );
     }
   }
+
+  MapperSingletonKeyType key(gridPart.indexSet(),maxDofs);
+  mapper_ = & MapperProviderType::getObject(key);
 }
   
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
@@ -73,6 +72,10 @@ inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStor
 
   baseFuncSet_.clear();
   MapperProviderType::removeObject(*mapper_);
+  if( blockMapper_ )
+  {
+    BlockMapperProviderType::removeObject(*blockMapper_);
+  }
 }  
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
@@ -103,10 +106,21 @@ baseFunctionSet (const GeometryType& geomType) const
 }
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
-typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::MapperType&
+inline typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::MapperType&
 FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::mapper() const {
   assert(mapper_);
   return *mapper_;
+}
+template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+inline typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BlockMapperType&
+FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::blockMapper() const 
+{
+  if( !blockMapper_ )
+  {
+    MapperSingletonKeyType key(this->gridPart().indexSet(),1);
+    blockMapper_ = & BlockMapperProviderType::getObject(key);
+  }
+  return *blockMapper_;
 }
    
 } // end namespace Dune 
