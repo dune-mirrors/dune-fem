@@ -36,17 +36,6 @@ template <class BlockVectorImp, class DofImp> class StraightenBlockVector;
 template <class DiscreteFunctionSpaceImp>
 struct BlockVectorDiscreteFunctionTraits 
 {
-private:  
-  template<class MapperImp> class DimRange1Mapper;
-  template<class GridPartOrIndexSetImp, int polO, int dimR , 
-           template <class,int,int> class MapperImp> 
-  struct DimRange1Mapper<MapperImp<GridPartOrIndexSetImp,polO,dimR> >
-  {
-    // here we need mapper with dimRange 1 
-    typedef MapperImp<GridPartOrIndexSetImp,polO,1> MapperType;
-  };
-
-public:  
   enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
 
@@ -58,21 +47,11 @@ public:
 
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
+  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType;
 
   //! needs additional mapper because of block structure 
-  typedef typename DiscreteFunctionSpaceType :: MapperType OldMapperType;
-  typedef typename DimRange1Mapper<OldMapperType> :: MapperType MapperType;
-
-  //! mapper singleton key 
-  typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
-  //! mapper factory 
-  typedef MapperSingletonFactory< MapperSingletonKeyType ,
-            MapperType > MapperSingletonFactoryType;
-
-  //! singleton list of mappers 
-  typedef SingletonList< MapperSingletonKeyType , MapperType ,
-          MapperSingletonFactoryType > MapperProviderType;
+  typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
 
   typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
  
@@ -214,8 +193,6 @@ public:
 
   //! needs additional mapper 
   typedef typename Traits :: MapperType MapperType; 
-  typedef typename Traits :: MapperSingletonKeyType MapperSingletonKeyType; 
-  typedef typename Traits :: MapperProviderType MapperProviderType;
 
   friend class BlockVectorLocalFunctionFactory< Traits > ;
 private:

@@ -11,8 +11,7 @@ BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f)
   : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( "no name" )
-  , mapper_( MapperProviderType :: getObject( 
-        MapperSingletonKeyType(f.indexSet(),f.mapper().numDofs()/localBlockSize) ) )
+  , mapper_( f.blockMapper() ) 
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
@@ -28,8 +27,7 @@ BlockVectorDiscreteFunction(const std::string name, const DiscreteFunctionSpaceT
   : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( name )
-  , mapper_( MapperProviderType :: getObject( 
-        MapperSingletonKeyType(f.indexSet(),f.mapper().numDofs()/localBlockSize) ) )
+  , mapper_( f.blockMapper() ) 
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
@@ -46,8 +44,7 @@ BlockVectorDiscreteFunction(const std::string name,
   : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
   , lfFactory_( *this )
   , name_ ( name )
-  , mapper_( MapperProviderType :: getObject( 
-        MapperSingletonKeyType(f.indexSet(),f.mapper().numDofs()/localBlockSize) ) )
+  , mapper_( f.blockMapper() ) 
   , dm_(DofManagerFactoryType::getDofManager(f.grid()))
   , memPair_(dm_.addDummyDofSet(&dofVec_, mapper_, name_, &data)) 
   , dofVec_( *memPair_.second ) 
@@ -61,9 +58,7 @@ inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 BlockVectorDiscreteFunction(const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> & df ) :
   DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
   , lfFactory_( *this )
-  , mapper_( MapperProviderType :: getObject( 
-        MapperSingletonKeyType(df.functionSpace_.indexSet(),
-                               df.functionSpace_.mapper().numDofs()/localBlockSize) ) )
+  , mapper_( df.functionSpace_.blockMapper() ) 
   , dm_(df.dm_)
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
@@ -82,7 +77,6 @@ inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 ~BlockVectorDiscreteFunction() 
 {
   dm_.removeDofSet(*memPair_.first);
-  MapperProviderType::removeObject( mapper_ );
 }
 
 template<class DiscreteFunctionSpaceType>
