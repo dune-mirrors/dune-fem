@@ -65,6 +65,10 @@ namespace Dune
     typedef LagrangeMapper< GridPartType, polynomialOrder, DimRange >
       MapperType;
     
+    // mapper for block 
+    typedef LagrangeMapper< GridPartType, polynomialOrder, 1 >
+      BlockMapperType;
+    
     // implementation of basefunction set 
     typedef VectorialBaseFunctionSet< FunctionSpaceType,
                                       BaseFunctionStorageImp >
@@ -182,6 +186,9 @@ namespace Dune
     //! mapper used to implement mapToGlobal
     typedef typename Traits :: MapperType MapperType;
 
+    //! mapper used to for block vector function 
+    typedef typename Traits :: BlockMapperType BlockMapperType;
+
     //! size of local blocks
     enum { localBlockSize = Traits :: localBlockSize };
 
@@ -205,9 +212,6 @@ namespace Dune
     typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
   private:
-    //! corresponding grid partition
-    GridPartType &gridPart_;
-
     //! map for the base function sets
     mutable BaseFunctionMapType baseFunctionSet_;
 
@@ -216,6 +220,9 @@ namespace Dune
     
     //! corresponding mapper
     MapperType *mapper_;
+
+    //! corresponding mapper
+    mutable BlockMapperType* blockMapper_;
 
     //! reference to the DoF manager
     DofManagerType &dofManager_;
@@ -226,14 +233,15 @@ namespace Dune
         \return 
     **/
     inline explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart )
-    : BaseType( gridPart ),
-      gridPart_( gridPart ),
-      baseFunctionSet_(),
-      lagrangePointSet_(),
-      dofManager_( DofManagerFactoryType :: getDofManager( gridPart_.grid() ) )
+    : BaseType( gridPart )
+    , baseFunctionSet_()
+    , lagrangePointSet_()
+    , mapper_(0)
+    , blockMapper_(0)
+    , dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) )
     {
-      const IndexSetType &indexSet = gridPart_.indexSet();
-      GridType &grid = gridPart_.grid();
+      const IndexSetType &indexSet = gridPart.indexSet();
+      GridType &grid = gridPart.grid();
       
       dofManager_.addIndexSet( grid, const_cast< IndexSetType& >( indexSet ) );
 
@@ -262,7 +270,7 @@ namespace Dune
       }
 
       mapper_ = new LagrangeMapper< GridPartType, polynomialOrder, DimRange >
-                  ( gridPart_, lagrangePointSet_ );
+                  ( this->gridPart_, lagrangePointSet_ );
       assert( mapper_ != NULL );
     }
 
@@ -276,6 +284,7 @@ namespace Dune
     **/
     inline ~LagrangeDiscreteFunctionSpace ()
     {
+      delete blockMapper_;
       delete mapper_;
 
       typedef typename BaseFunctionMapType :: iterator BFIteratorType;
@@ -296,6 +305,7 @@ namespace Dune
         if( lagrangePointSet != NULL )
           delete lagrangePointSet;
       }
+      
     }
 
     /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
@@ -316,18 +326,6 @@ namespace Dune
     inline int order () const
     {
       return polynomialOrder;
-    }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin */
-    inline IteratorType begin () const
-    {
-      return gridPart_.template begin< 0 >();
-    }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
-    inline IteratorType end () const
-    {
-      return gridPart_.template end< 0 >();
     }
 
     /** \brief @copydoc DiscreteFunctionSpaceInterface::baseFunctionSet */
@@ -381,31 +379,6 @@ namespace Dune
       return dimVal;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid */
-    inline const GridType& grid () const
-    {
-      return gridPart_.grid();
-    }
-   
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
-    inline const GridPartType& gridPart () const
-    {
-      return gridPart_;
-    }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
-    inline GridPartType& gridPart ()
-    {
-      return gridPart_;
-    }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet  */
-    inline const IndexSetType& indexSet () const
-    {
-      return gridPart_.indexSet();
-    }
-
-    
     /** \brief obtain the DoF mapper of this space
         \return MapperType
     **/
@@ -413,6 +386,18 @@ namespace Dune
     {
       assert( mapper_ != 0 );
       return *mapper_;
+    }
+
+    /** \brief obtain the DoF mapper of this space
+        \return MapperType
+    **/
+    inline BlockMapperType& blockMapper () const
+    {
+      if( ! blockMapper_ )
+      {
+        blockMapper_ = new BlockMapperType( this->gridPart_, lagrangePointSet_ ); 
+      }
+      return *blockMapper_;
     }
 
     /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal */
