@@ -103,6 +103,10 @@ namespace Dune {
 
     //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 
+
+    //! mapper used to implement mapToGlobal 
+    typedef typename Traits::BlockMapperType BlockMapperType; 
+
     //! mapper singleton key 
     typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
     //! mapper factory 
@@ -113,12 +117,21 @@ namespace Dune {
     typedef SingletonList< MapperSingletonKeyType , MapperType ,
             MapperSingletonFactoryType > MapperProviderType;
 
+    //! mapper factory 
+    typedef MapperSingletonFactory< MapperSingletonKeyType , 
+              BlockMapperType > BlockMapperSingletonFactoryType;
+
+    //! singleton list of mappers 
+    typedef SingletonList< MapperSingletonKeyType , BlockMapperType ,
+            BlockMapperSingletonFactoryType > BlockMapperProviderType;
+
   public:
     //- Constructors and destructors
     /** \brief Constructor taking grid part */
     explicit DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
       BaseType (gridPart),
       mapper_(0),
+      blockMapper_(0),
       baseFuncSet_(),
       dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
     {
@@ -176,6 +189,10 @@ namespace Dune {
       }
 
       MapperProviderType::removeObject( *mapper_ );
+      if( blockMapper_ ) 
+      {
+        BlockMapperProviderType::removeObject( *blockMapper_ );
+      }
     }
   
     //! \brief @copydoc DiscreteFunctionSpaceInterface::type 
@@ -255,6 +272,20 @@ namespace Dune {
       return *mapper_;
     }
 
+    /** \brief Return dof mapper for block located one elements 
+    */
+    BlockMapperType& blockMapper() const 
+    {
+      // only access mapper if really needed 
+      if( !blockMapper_ )
+      {
+        // create mapper with 1 dof for locating the block per element 
+        MapperSingletonKeyType key(this->gridPart().indexSet(),1);
+        blockMapper_ = & BlockMapperProviderType::getObject(key);
+      }
+      return *blockMapper_;
+    }
+
   protected:
     //! \brief prohibited empty constructor  
     DiscontinuousGalerkinSpaceBase();
@@ -287,6 +318,8 @@ namespace Dune {
   protected:
     //! mapper for function space 
     MapperType* mapper_; 
+    // mapper for blocks 
+    mutable BlockMapperType* blockMapper_;
 
     //! map holding base function sets
     typedef std::map < const GeometryType, const BaseFunctionSetImp* > BaseFunctionMapType;
@@ -334,11 +367,13 @@ namespace Dune {
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     //
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+
+    //! mapper for block vector function 
+    typedef DGMapper<IndexSetType, polOrd, 1> BlockMapperType;
     
     //! number of base functions * dimRange 
     enum { localBlockSize = DimRange * 
         DGNumberOfBaseFunctions<polOrd,DimDomain>::numBaseFunctions }; 
-
   };
 
   //! \brief A discontinuous Galerkin space
@@ -465,7 +500,11 @@ namespace Dune {
  
     typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
+
     typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+
+    //! mapper with only one dof 
+    typedef DGMapper<IndexSetType, polOrd, 1> BlockMapperType;
 
     //! number of base functions * dimRange 
     enum { localBlockSize = DimRange * 
