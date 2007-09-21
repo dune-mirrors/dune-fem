@@ -57,9 +57,8 @@ namespace Dune
     LagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
     : indexSet_( gridPart.indexSet() )
+    , maxDofs_ (0)
     {
-      maxDofs_ = 0;
-        
       typedef typename LagrangePointSetMapType :: iterator IteratorType;
       IteratorType end = lagrangePointSet.end();
       for( IteratorType it = lagrangePointSet.begin(); it != end; ++it ) {
