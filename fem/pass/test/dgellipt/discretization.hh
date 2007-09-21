@@ -367,9 +367,12 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   typedef typename SpaceOperatorType :: DestinationType DestinationType;
    
   // initialize grid
-  char dummyfile [4096];
   const char * paramfile = paramFile.c_str();
-  readParameter(paramfile,"Grid",dummyfile);
+  std::stringstream gridName;
+  gridName << "Grid" << GridType::dimension;
+  
+  std::string dummyfile;
+  readParameter(paramfile,gridName.str(),dummyfile);
   std::string macroGridName(dummyfile);
 
   int level;

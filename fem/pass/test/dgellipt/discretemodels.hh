@@ -49,6 +49,7 @@
 #define USE_DUNE_ISTL 0
 #else 
 #define USE_DUNE_ISTL HAVE_DUNE_ISTL
+//#define USE_DUNE_ISTL 0
 #endif
 
 //*************************************************************
@@ -343,10 +344,10 @@ namespace LDGExample {
       typedef ISTLMatrixObject<DiscreteFunctionSpaceType,
                                DiscreteFunctionSpaceType> MatrixObjectType; 
 #else 
-      typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
-                                    DiscreteFunctionSpaceType> MatrixObjectType; 
-      //typedef BlockMatrixObject<DiscreteFunctionSpaceType,
-      //                          DiscreteFunctionSpaceType> MatrixObjectType; 
+      //typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
+      //                              DiscreteFunctionSpaceType> MatrixObjectType; 
+      typedef BlockMatrixObject<DiscreteFunctionSpaceType,
+                                DiscreteFunctionSpaceType> MatrixObjectType; 
 #endif
 
 #if USE_LDG 

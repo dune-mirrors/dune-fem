@@ -5,7 +5,7 @@ StartLevel: 1
 EOCSteps: 2
 
 # epsilon for iterative solver 
-InvSolverEps: 1e-25
+InvSolverEps: 1e-8
 InvSolverReduction: 1e-15
 
 # cg output, 0 == no output, 1 == print output   
@@ -27,13 +27,13 @@ Pre-iteration: 2
 Pre-relaxation: 1.1
 
 # display using Grape, 0 == no, 1 == yes  
-display: 1
+display: 0
 DisplayAll: 0
 
 # MacroTriang for 2d simul 
-#Grid: ./grid2d.dgf
-#Grid: ./one.dgf
-Grid: ./one3d.dgf
+Grid2: ./grid2d.dgf
+Grid3: ./one.dgf
+#Grid: ./one3d.dgf
 #Grid: ./corner2d.dgf
 #Grid: ./fuel.dgf
 
