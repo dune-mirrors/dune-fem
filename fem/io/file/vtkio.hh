@@ -72,11 +72,17 @@ namespace Dune
     typedef VTKIO< GridPartType > ThisType;
     typedef VTKWriter< GridType, IndexSetType > BaseType;
     
+    const GridPartType& gridPart_;
   public:
+    //! constructor  
     VTKIO( const GridPartType &gridPart, VTKOptions::DataMode dm = VTKOptions::conforming )
     : BaseType( gridPart.grid(), gridPart.indexSet() , dm )
+    , gridPart_( gridPart )
     {
     }
+
+    //! return grid part 
+    const GridPartType& gridPart() const { return gridPart_; }
 
     template< class DF >
     void addCellData( DF &df,
