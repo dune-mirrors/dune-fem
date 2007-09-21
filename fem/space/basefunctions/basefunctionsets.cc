@@ -31,23 +31,27 @@ namespace Dune {
     storage_.evaluate(baseFunct, diffVar, quad, quadPoint, phi);
   }
 
-  template <class T, int i> 
+  /*
+  template <class A, int i> 
   struct SKPMeta
   {
-    static double skp(const T& a, const T& b)
+    template <class B>
+    static double skp(const A& a, const B& b)
     {
-      return SKPMeta<T,i-1>::skp(a,b) + a[i]*b[i];
+      return SKPMeta<A,i-1>::skp(a,b) + a[i]*b[i];
     }
   };
   
   template <class T> 
   struct SKPMeta<T,0>
   {
-    static double skp(const T& a, const T& b)
+    template <class B>
+    static double skp(const T& a, const B& b)
     {
       return a[0]*b[0];
     }
   };
+  */
   
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
@@ -59,8 +63,8 @@ namespace Dune {
                  const RangeType& factor) const 
   {
     storage_.evaluate(baseFunct, diffVar0_, quad, quadPoint, tmp_);
-    return SKPMeta<RangeType,RangeType::dimension-1>::skp(tmp_,factor);
-    //return tmp_*factor;
+    //return SKPMeta<RangeType,RangeType::dimension-1>::skp(tmp_,factor);
+    return tmp_*factor;
   }
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
@@ -84,8 +88,8 @@ namespace Dune {
     for (int i = 0; i < FunctionSpaceImp::DimRange; ++i) {
       DomainType gradScaled(0.);
       jti.umv(jTmp_[i], gradScaled);
-      result += SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[i]);
-      //result += gradScaled*factor[i];
+      //result += SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[i]);
+      result += gradScaled*factor[i];
     }
     return result;
   }
@@ -257,8 +261,8 @@ namespace Dune {
     DomainType gradScaled(0.);
     en.geometry().jacobianInverseTransposed(quad.point(quadPoint)).
       umv(jTmp_[0], gradScaled);
-    return SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[util_.component(baseFunct)]);
-    //return gradScaled*factor[util_.component(baseFunct)];
+    //return SKPMeta<DomainType,DomainType::dimension-1>::skp(gradScaled,factor[util_.component(baseFunct)]);
+    return gradScaled*factor[util_.component(baseFunct)];
   }
 } // end namespace Dune
 
