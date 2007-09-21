@@ -426,14 +426,8 @@ namespace Dune {
     typedef BlockVectorDiscreteFunction< RowSpaceType >  DiscreteFunctionType; 
     typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType; 
 
-    typedef typename DiscreteFunctionType :: MapperType RowMapperType; 
-    typedef typename DiscreteFunctionType :: MapperSingletonKeyType RowMapperSingletonKeyType; 
-    typedef typename DiscreteFunctionType :: MapperProviderType RowMapperProviderType; 
-
-    typedef BlockVectorDiscreteFunction< ColumnSpaceType >  ColDiscreteFunctionType;
-    typedef typename ColDiscreteFunctionType :: MapperType ColMapperType; 
-    typedef typename ColDiscreteFunctionType :: MapperSingletonKeyType ColMapperSingletonKeyType; 
-    typedef typename ColDiscreteFunctionType :: MapperProviderType ColMapperProviderType; 
+    typedef typename RowSpaceType :: BlockMapperType RowMapperType; 
+    typedef typename ColumnSpaceType :: BlockMapperType ColMapperType; 
 
   public:
     //! type of used matrix 
@@ -511,8 +505,8 @@ namespace Dune {
         if( geomType_ != rowEntity.geometry().type() ) 
         {
           geomType_ = rowEntity.geometry().type();
-          numRows_ = rowMapper_.numDofs();
-          numCols_ = colMapper_.numDofs();
+          numRows_  = rowMapper_.numDofs();
+          numCols_  = colMapper_.numDofs();
           matrices_.resize( numRows_ );
 
           MatrixType& matrix = matrixObj_.matrix();
@@ -701,12 +695,8 @@ namespace Dune {
       : rowSpace_(rowSpace)
       , colSpace_(colSpace)
       // get new mappers with number of dofs without considerung block size 
-      , rowMapper_(
-          RowMapperProviderType::getObject(
-          RowMapperSingletonKeyType(rowSpace.indexSet(),rowSpace.mapper().numDofs()/littleRows)))
-      , colMapper_(
-          ColMapperProviderType::getObject(
-          ColMapperSingletonKeyType(colSpace.indexSet(),colSpace.mapper().numDofs()/littleCols)))
+      , rowMapper_( rowSpace.blockMapper() )
+      , colMapper_( colSpace.blockMapper())
       , size_(-1)
       , sequence_(-1)
       , matrix_(0)

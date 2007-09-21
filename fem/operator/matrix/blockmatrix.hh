@@ -1036,16 +1036,8 @@ public:
   //! type of local matrix 
   typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
-  typedef BlockVectorDiscreteFunctionTraits< RowSpaceType >  RowBlockTraits;
-
-  typedef typename RowBlockTraits :: MapperType RowMapperType;
-  typedef typename RowBlockTraits :: MapperSingletonKeyType RowMapperSingletonKeyType;
-  typedef typename RowBlockTraits :: MapperProviderType RowMapperProviderType;
-
-  typedef BlockVectorDiscreteFunctionTraits< ColumnSpaceType >  ColBlockTraits;
-  typedef typename ColBlockTraits :: MapperType ColMapperType;
-  typedef typename ColBlockTraits :: MapperSingletonKeyType ColMapperSingletonKeyType;
-  typedef typename ColBlockTraits :: MapperProviderType ColMapperProviderType;
+  typedef typename RowSpaceType :: BlockMapperType RowMapperType; 
+  typedef typename ColumnSpaceType :: BlockMapperType ColMapperType; 
 
   typedef AdaptiveDiscreteFunction<RowSpaceType> DestinationType;
 
@@ -1085,12 +1077,8 @@ public:
                     const std::string& paramfile) 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
-    , rowMapper_(
-        RowMapperProviderType::getObject(
-        RowMapperSingletonKeyType(rowSpace.indexSet(),rowSpace.mapper().numDofs()/littleRows)))
-    , colMapper_(
-        ColMapperProviderType::getObject(
-        ColMapperSingletonKeyType(colSpace.indexSet(),colSpace.mapper().numDofs()/littleCols)))
+    , rowMapper_( rowSpace.blockMapper() )
+    , colMapper_( colSpace.blockMapper() )
     , sequence_(-1)
     , matrix_(0)
     , preconditioning_(false)
@@ -1111,8 +1099,6 @@ public:
   ~BlockMatrixObject() 
   {
     delete matrix_;
-    RowMapperProviderType::removeObject( rowMapper_ );
-    ColMapperProviderType::removeObject( colMapper_ );
   }
 
   //! return reference to stability matrix 
