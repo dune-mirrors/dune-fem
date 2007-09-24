@@ -3,6 +3,7 @@
 
 #include <dune/grid/common/gridpart.hh>
 
+#include <dune/fem/misc/double.hh>
 #include <dune/fem/space/dgspace.hh>
 #ifdef USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -26,7 +27,7 @@ using namespace Dune;
 
 typedef HierarchicGridPart< GridType > GridPartType;
 
-typedef FunctionSpace< double, double, dimworld, 2 > FunctionSpaceType;
+typedef FunctionSpace< double, Double, dimworld, 2 > FunctionSpaceType;
 
 typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;

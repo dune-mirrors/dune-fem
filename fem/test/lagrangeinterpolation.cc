@@ -3,6 +3,7 @@
 
 #include <dune/grid/common/gridpart.hh>
 
+#include <dune/fem/misc/double.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
@@ -22,7 +23,7 @@ using namespace Dune;
 
 typedef LeafGridPart< GridType > GridPartType;
 
-typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+typedef FunctionSpace< double, Double, dimworld, 1 > FunctionSpaceType;
 
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
@@ -47,6 +48,8 @@ int main ()
     ExactSolutionType f( discreteFunctionSpace );
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
+
+    std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().numDofs() << std :: endl;
 
     //! perform Lagrange interpolation
     LagrangeInterpolation< DiscreteFunctionType >
