@@ -66,7 +66,7 @@ namespace Dune
         if( set == NULL )
           continue;
         
-        const unsigned int setDofs = set->maxDofs( dimension );
+        const unsigned int setDofs = set->numDofs( dimension );
         maxDofs_ = (maxDofs_ >= setDofs) ? maxDofs_ : setDofs;
       }
     }
@@ -215,7 +215,7 @@ namespace Dune
           continue;
         
         for( int codim = 0; codim <= dimension; ++codim ) {
-          const unsigned int setDofs = set->maxDofs( codim );
+          const unsigned int setDofs = set->numDofs( codim );
           unsigned int &maxDofs = maxDofs_[ codim ];
           maxDofs = (maxDofs >= setDofs) ? maxDofs : setDofs;
         }

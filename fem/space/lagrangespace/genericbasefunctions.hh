@@ -332,16 +332,18 @@ namespace Dune
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      const RangeFieldType divisor = polynomialOrder;
-      const RangeFieldType myfactor = porder / divisor;
-      const RangeFieldType myshift = (porder - polynomialOrder) / divisor;
+      const RangeFieldType divisor = 1 / ((RangeFieldType)polynomialOrder);
+      const RangeFieldType myfactor = porder * divisor;
+      const RangeFieldType myshift = (porder - polynomialOrder) * divisor;
 
-      if( LagrangePointType :: useDimReduction( dofCoordinate ) ) {
+      if( LagrangePointType :: useDimReduction( dofCoordinate ) )
+      {
         DimensionReductionType :: evaluate
           ( dofCoordinate.base(), diffVariable, myfactor * factor, x.base(), phi );
         const unsigned int height
           = LagrangePointType :: height( dofCoordinate );
-        for( unsigned int i = 0; i < height; ++i ) {
+        for( unsigned int i = 0; i < height; ++i )
+        {
           ++(*dofCoordinate);
           RangeType psi;
           evaluate< LocalDofCoordinateType, LocalCoordinateType, porder >

@@ -130,15 +130,38 @@ namespace Dune
       for( int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
-    
+
+    /** \brief obtain the maximal number of DoFs in one entity of a codimension
+     * 
+     *  \param[in]  codim  codimension, the information is desired for
+     *
+     *  \retunns maximal number of DoFs for one entity in the codimension
+     */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
       return ((codim == 0) ? 1 : 0);
     }
 
-
+    /** \brief obtain the number of DoFs on one entity
+     * 
+     *  \param[in]  codim      codimension of the entity
+     *  \param[in]  subEntity  number of the subentity (of the given codimension)
+     *
+     *  \returns the number of DoFs associated with the specified entity
+     */
     static inline unsigned int numDofs ( unsigned int codim,
                                          unsigned int subEntity )
+    {
+      return ((codim == 0) ? 1 : 0);
+    }
+
+    /** \brief obtain the total number of DoFs in a codimension
+     * 
+     *  \param[in]  codim      codimension the information is desired for
+     *
+     *  \returns the number of DoFs associated with the codimension
+     */
+    static inline unsigned int numDofs ( unsigned int codim )
     {
       return ((codim == 0) ? 1 : 0);
     }
@@ -299,6 +322,12 @@ namespace Dune
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
     
+    /** \brief obtain the maximal number of DoFs in one entity of a codimension
+     * 
+     *  \param[in]  codim  codimension, the information is desired for
+     *
+     *  \retunns maximal number of DoFs for one entity in the codimension
+     */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
       return ((codim == 0) ? 1 : 0);
@@ -309,6 +338,13 @@ namespace Dune
       return ((codim == dimension) ? 1 : 0);
     }
 
+    /** \brief obtain the number of DoFs on one entity
+     * 
+     *  \param[in]  codim      codimension of the entity
+     *  \param[in]  subEntity  number of the subentity (of the given codimension)
+     *
+     *  \returns the number of DoFs associated with the specified entity
+     */
     static inline unsigned int numDofs ( unsigned int codim,
                                          unsigned int subEntity )
     {
@@ -317,6 +353,22 @@ namespace Dune
 
     static inline unsigned int numDofsReduction ( unsigned int codim,
                                                   unsigned int subEntity )
+    {
+      return ((codim == dimension) ? 1 : 0);
+    }
+
+    /** \brief obtain the total number of DoFs in a codimension
+     * 
+     *  \param[in]  codim      codimension the information is desired for
+     *
+     *  \returns the number of DoFs associated with the codimension
+     */
+    static inline unsigned int numDofs ( unsigned int codim )
+    {
+      return ((codim == 0) ? 1 : 0);
+    }
+    
+    static inline unsigned int numDofsReduction ( unsigned int codim )
     {
       return ((codim == dimension) ? 1 : 0);
     }
@@ -530,6 +582,12 @@ namespace Dune
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
     
+    /** \brief obtain the maximal number of DoFs in one entity of a codimension
+     * 
+     *  \param[in]  codim  codimension, the information is desired for
+     *
+     *  \retunns maximal number of DoFs for one entity in the codimension
+     */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
       const unsigned int maxOrderDofs
@@ -550,6 +608,13 @@ namespace Dune
              + OrderReductionType :: maxDofsReduction( codim );
     }
    
+    /** \brief obtain the number of DoFs on one entity
+     * 
+     *  \param[in]  codim      codimension of the entity
+     *  \param[in]  subEntity  number of the subentity (of the given codimension)
+     *
+     *  \returns the number of DoFs associated with the specified entity
+     */
     static inline unsigned int numDofs ( unsigned int codim,
                                          unsigned int subEntity )
     {
@@ -570,6 +635,28 @@ namespace Dune
     {
       return DimensionReductionType :: numDofs( codim, subEntity )
              + OrderReductionType :: numDofsReduction( codim, subEntity );
+    }
+
+    /** \brief obtain the total number of DoFs in a codimension
+     * 
+     *  \param[in]  codim      codimension the information is desired for
+     *
+     *  \returns the number of DoFs associated with the codimension
+     */
+    static inline unsigned int numDofs ( unsigned int codim )
+    {
+      const unsigned int orderDofs
+        = OrderReductionType :: numDofsReduction( codim );
+      if( codim > 0 )
+        return orderDofs + DimensionReductionType :: numDofs( codim - 1 );
+      else
+        return orderDofs;
+    }
+
+    static inline unsigned int numDofsReduction ( unsigned int codim )
+    {
+      return DimensionReductionType :: numDofs( codim )
+             + OrderReductionType :: numDofsReduction( codim );
     }
 
     template< class LocalCoordinateType >
@@ -893,6 +980,12 @@ namespace Dune
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
     
+    /** \brief obtain the maximal number of DoFs in one entity of a codimension
+     * 
+     *  \param[in]  codim  codimension, the information is desired for
+     *
+     *  \retunns maximal number of DoFs for one entity in the codimension
+     */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
       unsigned int max = 0;
@@ -905,19 +998,27 @@ namespace Dune
       return max;
     }
 
+    /** \brief obtain the number of DoFs on one entity
+     * 
+     *  \param[in]  codim      codimension of the entity
+     *  \param[in]  subEntity  number of the subentity (of the given codimension)
+     *
+     *  \returns the number of DoFs associated with the specified entity
+     */
     static inline unsigned int numDofs ( unsigned int codim,
                                          unsigned int subEntity )
     {
       unsigned int firstCodim = codim;
       unsigned int secondCodim = 0;
-      for( ; secondCodim < codim; --firstCodim, ++secondCodim ) {
-        const unsigned int num
+      for( ; secondCodim <= codim; --firstCodim, ++secondCodim ) 
+      {
+        const unsigned int numSubEntities
           = FirstGeometryType :: numSubEntities( firstCodim )
           * SecondGeometryType :: numSubEntities( secondCodim );
 
-        if( subEntity < num )
+        if( subEntity < numSubEntities )
           break;
-        subEntity -= num;
+        subEntity -= numSubEntities;
       }
       
       const unsigned int n = FirstGeometryType :: numSubEntities( firstCodim );
@@ -926,6 +1027,25 @@ namespace Dune
      
       return FirstReductionType :: numDofs( firstCodim, firstSubEntity )
              * SecondReductionType :: numDofs( secondCodim, secondSubEntity );
+    }
+
+    /** \brief obtain the total number of DoFs in a codimension
+     * 
+     *  \param[in]  codim      codimension the information is desired for
+     *
+     *  \returns the number of DoFs associated with the codimension
+     */
+    static inline unsigned int numDofs ( unsigned int codim )
+    {
+      unsigned int count = 0;
+
+      unsigned int firstCodim = codim;
+      unsigned int secondCodim = 0;
+      for( ; secondCodim <= codim; --firstCodim, ++secondCodim )
+        count += FirstReductionType :: numDofs( firstCodim )
+               * SecondReductionType :: numDofs( secondCodim );
+
+      return count;
     }
 
   protected:

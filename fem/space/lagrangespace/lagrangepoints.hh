@@ -165,6 +165,12 @@ namespace Dune
     
     virtual GeometryType geometry () const = 0;
 
+    /** \brief obtain the maximal number of DoFs in one entity of a codimension
+     *
+     *  \param[in]  codim  codimension, the information is desired for
+     *
+     *  \retunns maximal number of DoFs for one entity in the codimension
+     */
     virtual unsigned int maxDofs ( unsigned int codim ) const = 0;
 
     inline static int maxOrder ()
@@ -172,8 +178,23 @@ namespace Dune
       return polynomialOrder;
     }
 
+    /** \brief obtain the number of DoFs on one entity
+     *
+     *  \param[in]  codim      codimension of the entity
+     *  \param[in]  subEntity  number of the subentity (of the given codimension)
+     *
+     *  \returns the number of DoFs associated with the specified entity
+     */
     virtual unsigned int numDofs ( unsigned int codim,
                                    unsigned int subEntity ) const = 0;
+
+    /** \brief obtain the total number of DoFs in a codimension
+     *
+     *  \param[in]  codim      codimension the information is desired for
+     *
+     *  \returns the number of DoFs associated with the codimension
+     */
+    virtual unsigned int numDofs ( unsigned int codim ) const = 0;
 
     virtual int order () const
     {
@@ -278,15 +299,26 @@ namespace Dune
       return GeometryType( type, dimension );
     }
 
+    /** \copydoc Dune::LagrangePointListInterface::maxDofs
+     */
     virtual unsigned int maxDofs ( unsigned int codim ) const
     {
       return LagrangePointType :: maxDofs( codim );
     }
 
+    /** \copydoc Dune::LagrangePointListInterface::numDofs(unsigned int,unsigned int)
+     */
     virtual unsigned int numDofs ( unsigned int codim,
                                    unsigned int subEntity ) const
     {
       return LagrangePointType :: numDofs( codim, subEntity );
+    }
+
+    /** \copydoc Dune::LagrangePointListInterface::numDofs(unsigned int)
+     */
+    virtual unsigned int numDofs ( unsigned int codim ) const
+    {
+      return LagrangePointType :: numDofs( codim );
     }
   };
 
@@ -770,6 +802,11 @@ namespace Dune
                                   unsigned int subEntity ) const
     {
       return lagrangePointList_.numDofs( codim, subEntity );
+    }
+
+    inline unsigned int numDofs ( unsigned int codim ) const
+    {
+      return lagrangePointList_.numDofs( codim );
     }
 
     //! get number of Lagrange points
