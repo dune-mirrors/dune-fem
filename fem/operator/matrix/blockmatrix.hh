@@ -25,7 +25,7 @@ public:
 
 private:
   typedef std::vector < std::vector < T > > MatrixType; 
-  typedef  std::vector < T > RowType;
+  typedef std::vector < T > RowType;
 
   MatrixType matrix_;
 
@@ -845,12 +845,15 @@ public:
   typedef BlockMatrix<double> MatrixType;
   typedef MatrixType PreconditionMatrixType;
 
+  template <class MatrixObjectImp> 
+  class LocalMatrix;
+
   struct LocalMatrixTraits
   {
     typedef RowSpaceImp DomainSpaceType ;
     typedef ColumnSpaceImp RangeSpaceType;
     typedef typename RowSpaceImp :: RangeFieldType RangeFieldType;
-    typedef MatrixType LocalMatrixType;
+    typedef LocalMatrix<ThisType> LocalMatrixType;
     typedef DenseMatrix<RangeFieldType> LittleBlockType;
   };
 
@@ -903,6 +906,9 @@ public:
     void init(const EntityType& rowEntity,
               const EntityType& colEntity)
     {
+      // initialize base functions sets 
+      BaseType :: init ( rowEntity , colEntity );
+
       MatrixType& matrix = matrixObj_.matrix();
       // get global block numbers 
       const size_t rows = rowMapper_.numDofs();
@@ -954,7 +960,21 @@ public:
     }
     
     // return reference to entry 
-    DofType& getValue(const int localRow, const int localCol)
+    DofType& getValue(const int localRow, const int localCol) 
+    {
+#ifndef NDEBUG
+      check(localRow,localCol);
+#endif
+      const int row = (int) localRow / littleRows;
+      const int col = (int) localCol / littleCols;
+      const int lRow = localRow%littleRows;
+      const int lCol = localCol%littleCols;
+      assert( matrices_[row][col] );
+      return (*matrices_[row][col])[lRow][lCol];
+    }
+
+    // return reference to entry 
+    const DofType& getValue(const int localRow, const int localCol) const 
     {
 #ifndef NDEBUG
       check(localRow,localCol);
@@ -967,11 +987,6 @@ public:
       return (*matrices_[row][col])[lRow][lCol];
     }
   public:
-    //! number of rows 
-    int rows () const { return rows_.size() * littleRows; }
-    //! number of cols 
-    int cols () const { return cols_.size() * littleCols; }
-
     //! add value to matrix 
     void add(int localRow, int localCol , const DofType value)
     {
@@ -979,7 +994,7 @@ public:
     }
 
     //! return matrix entry 
-    DofType get(int localRow, int localCol ) const 
+    const DofType get(int localRow, int localCol ) const 
     {
       return getValue(localRow,localCol); 
     }
@@ -993,7 +1008,7 @@ public:
     //! set matrix enrty to value 
     void unitRow(const int localRow) 
     {
-      const int col = cols();
+      const int col = this->columns();
       for(int localCol=0; localCol<col; ++localCol)
       {
         getValue(localRow,localCol) = 0;

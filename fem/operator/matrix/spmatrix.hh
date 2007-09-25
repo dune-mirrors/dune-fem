@@ -344,12 +344,15 @@ public:
   typedef SparseRowMatrix<double> MatrixType;
   typedef MatrixType PreconditionMatrixType;
 
+  template <class MatrixObjectImp> 
+  class LocalMatrix;
+
   struct LocalMatrixTraits
   {
     typedef RowSpaceImp DomainSpaceType ;
     typedef ColumnSpaceImp RangeSpaceType;
     typedef typename RowSpaceImp :: RangeFieldType RangeFieldType;
-    typedef MatrixType LocalMatrixType;
+    typedef LocalMatrix<ThisType> LocalMatrixType;
     typedef RangeFieldType LittleBlockType;
   };
   
@@ -392,6 +395,9 @@ public:
 
     void init(const EntityType& rowEntity, const EntityType& colEntity)
     {
+      // initialize base functions sets 
+      BaseType :: init ( rowEntity , colEntity );
+        
       row_.resize(this->domainSpace_.baseFunctionSet(rowEntity).numBaseFunctions());
       col_.resize(this->rangeSpace_.baseFunctionSet(colEntity).numBaseFunctions());
 
@@ -414,8 +420,9 @@ public:
   public:
     //! return number of rows 
     int rows () const { return row_.size(); }
-    //! return number of cols 
-    int cols () const { return col_.size(); }
+
+    //! return number of columns 
+    int columns () const { return col_.size(); }
 
     //! add value to matrix entry
     void add(int localRow, int localCol , const DofType value)

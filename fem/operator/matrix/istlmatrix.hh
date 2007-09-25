@@ -498,6 +498,9 @@ namespace Dune {
       {
         if( geomType_ != rowEntity.geometry().type() ) 
         {
+          // initialize base functions sets 
+          BaseType :: init ( rowEntity , colEntity );
+
           geomType_ = rowEntity.geometry().type();
           numRows_  = rowMapper_.numDofs();
           numCols_  = colMapper_.numDofs();
