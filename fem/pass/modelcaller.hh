@@ -213,8 +213,8 @@ namespace Dune {
 
     template <class IntersectionIterator>
     double boundaryFlux(IntersectionIterator& nit,
-                        FaceQuadratureType& quad,
-                        int quadPoint,
+                        const FaceQuadratureType& quad,
+                        const int quadPoint,
                         RangeType& boundaryFlux) 
     {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
