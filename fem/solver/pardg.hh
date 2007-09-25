@@ -21,8 +21,8 @@ namespace pardg {
 #ifdef ENABLE_PARDG 
 
 #include <blas.hpp>
-// we also need vector to be in namespace parDG 
 namespace pardg {
+// we also need vector to be in namespace parDG 
 #include <vector.hpp>
 }
 
@@ -31,6 +31,12 @@ namespace pardg {
 
 // else use build in ode solver (may be outdated)
 #else
+
+namespace pardg {
+// we also need vector to be in namespace parDG 
+#include "ode/vector.hpp"
+}
+
 #include "ode/blas.hpp"
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
