@@ -107,6 +107,20 @@ namespace Dune
         asImp().unitRow( localRow ));
     }
 
+    /*! \brief multiply left hand side with local matrix and add to right hand side 
+               rhs += Matrix * lhs  
+        \param[in] lhsf left hand side 
+        \param[out] rhs right hand side 
+    */
+    template <class DomainLocalFunctionType,
+              class RangeLocalFunctionType> 
+    inline void multiplyAdd(const DomainLocalFunctionType& lhs,
+                            RangeLocalFunctionType& rhs) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().multiplyAdd( lhs, rhs ) );
+    }
+
     /*! \brief get value of matrix entry (row,col) where row and col are
         local row and local column 
         \param[in] localRow local row 
@@ -183,7 +197,7 @@ namespace Dune
     }
     
     //! Barton-Nackman Trick
-    inline const LocalMatrixType &asImp () const
+    inline const LocalMatrixType& asImp () const
     {
       return static_cast<const LocalMatrixType&> (*this);
     }
@@ -298,6 +312,23 @@ namespace Dune
     inline const DomainBaseFunctionSetType &rangeBaseFunctionSet () const
     {
       return rangeBaseSet_;
+    }
+
+    /** \copydoc Dune::LocalMatrixInterface::multiplyAdd */
+    template <class DomainLocalFunctionType,
+              class RangeLocalFunctionType> 
+    inline void multiplyAdd(const DomainLocalFunctionType& lhs,
+                            RangeLocalFunctionType& rhs) const
+    {
+      const int row = this->rows();
+      const int col = this->columns();
+      for(int i=0; i<row; ++i)
+      {
+        for(int j=0; j<col; ++j)
+        {
+          rhs[i] += this->get(i,j) * lhs[j];
+        }
+      }
     }
   };
 

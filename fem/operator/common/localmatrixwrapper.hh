@@ -167,6 +167,15 @@ namespace Dune
       return localMatrix().columns();
     }
 
+    /** \copydoc Dune::LocalMatrixInterface::multiplyAdd */
+    template <class DomainLocalFunctionImp, 
+              class RangeLocalFunctionImp>
+    inline void multiplyAdd(const DomainLocalFunctionImp& dLf,
+                            RangeLocalFunctionImp& rLf)
+    {
+      localMatrix().multiplyAdd( dLf, rLf); 
+    }
+    
     /** \copydoc Dune::LocalMatrixInterface::domainSpace */
     inline const DomainSpaceType &domainSpace () const
     {
