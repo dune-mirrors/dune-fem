@@ -167,14 +167,6 @@ namespace Dune {
                  const StencilCreatorImp& stencil, 
                  bool verbose = false) 
       { 
-        /*
-        // only works for non-hybrid grids so far 
-        if( rowSpace.multipleGeometryTypes() )
-        {
-          DUNE_THROW(NotImplemented,"ISTLMatrix::setup: use of matrix for hybrid grids not implemented yet!");
-        }
-        */
-
         // get size estimate   
         int size = rowMapper.size();
         size = (int) size / 10;
@@ -235,21 +227,23 @@ namespace Dune {
             ColIteratorType endj = (*i).end();
             for (ColIteratorType j=(*i).begin(); j!=endj; ++j)
             {
-              (*j) = 0.0;
+              (*j) = 0;
             }
           }
         }
 
-        // for non-interior entities set diag to 1 for ILU Preconditioner 
-        const int overlap = overlapRows_.size();
-        for(int i=0; i<overlap; ++i)
+        if( LittleBlockType :: rows == LittleBlockType :: cols )
         {
-          const int idx = overlapRows_[i]; 
-          LittleBlockType& diag = this->operator[](idx)[idx];
-          CompileTimeChecker<LittleBlockType :: rows == LittleBlockType :: cols > ();
-          for(int k=0; k<LittleBlockType :: rows; ++k)  
+          // for non-interior entities set diag to 1 for ILU Preconditioner 
+          const int overlap = overlapRows_.size();
+          for(int i=0; i<overlap; ++i)
           {
-            diag[k][k] = 1.0;
+            const int idx = overlapRows_[i]; 
+            LittleBlockType& diag = this->operator[](idx)[idx];
+            for(int k=0; k<LittleBlockType :: rows; ++k)  
+            {
+              diag[k][k] = 1;
+            }
           }
         }
       }
