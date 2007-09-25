@@ -54,7 +54,7 @@ namespace Dune {
   // **********************************************
   template <class GlobalTraitsImp, class Model>
   class LimiterDefaultDiscreteModel :
-    public DiscreteModelDefaultWithInsideOutSide<LimiterDefaultTraits<GlobalTraitsImp,Model> > 
+    public DiscreteModelDefaultWithInsideOutSide< LimiterDefaultTraits<GlobalTraitsImp,Model> > 
   {
   public:
     typedef LimiterDefaultTraits<GlobalTraitsImp,Model> Traits;
@@ -118,7 +118,7 @@ namespace Dune {
       return ((normal_ * velocity_) < 0);
     }
 
-  private:
+  protected:
     const Model& model_;
     mutable DomainType velocity_;
     mutable DomainType normal_;
@@ -196,7 +196,8 @@ namespace Dune {
       dofConversion_(dimRange),
       faceQuadOrd_(spc_.order()),
       jump_(0),
-      jump2_(0)
+      jump2_(0),
+      sqrt2_1_(1/M_SQRT2)
     {
       // we need the flux here 
       assert(problem.hasFlux());
@@ -228,6 +229,7 @@ namespace Dune {
     //! Perform the limitation on all elements.
     virtual void applyLocal(EntityType& en) const
     {
+      enum { dim = EntityType :: dimension };
       // check argument is not zero
       assert( arg_ );
       
@@ -250,59 +252,45 @@ namespace Dune {
       // number of scalar base functions
       const int numBasis = limitEn.numDofs()/dimRange;
       
-      //double areae = geo.volume();
       double circume = 0.0;
-
       double radius = 0.0;
       
-#if 0   
-      const int numcorners = geo.corners();
-      DomainType diff;
-      for(int n=0; n<numcorners; ++n)
+      const GeometryType geomType = geo.type();
+      if ( geomType.isSimplex() )
       {
-        diff = geo[(n+1)%numcorners] - geo[n];
-        double length = diff.two_norm();
-        circume += length;
-        radius = std::max(length,radius);
-
-        //circume += sqrt(SQR(geo[(n+1)%numcorners][0] - geo[n][0])
-        //              + SQR(geo[(n+1)%numcorners][1] - geo[n][1]));
+        const int numcorners = geo.corners();
+        DomainType diff;
+        for(int n=0; n<numcorners; ++n)
+        {
+          diff = geo[(n+1)%numcorners] - geo[n];
+          const double length = diff.two_norm();
+          circume += length;
+          radius = std::max(length,radius);
+        }
       }
-       
-      // cout << "Using Alberta" << std::endl;
-
-#else
-      /*circume = 4.0*sqrt(SQR(en.geometry()[1][0] - en.geometry()[0][0]) \
-  + SQR(en.geometry()[1][1] - en.geometry()[0][1]));
-        
-  cout << "Euclidean = " << circume << std::endl;
-        
-  circume = (en.geometry()[1] - en.geometry()[0]).two_norm();
-        
-  cout << "Two norm = " << circume << std::endl;*/
-       
-      // adjust for 3d 
-      double ax,ay,bx,by;
-        
-      ax = geo[0][0];
-      ay = geo[0][1];
-        
-      bx = geo[1][0];
-      by = geo[1][1];
-        
-      circume = 4.0*(fabs(bx-ax)+fabs(by-ay));
-        
-      /*cout << "Using Yaspgrid" << std::endl;
-  cout << "Point 1,x = " << en.geometry()[1][0] << std::endl;
-  cout << "Point 1,y = " << en.geometry()[1][1] << std::endl;
-  cout << "Point 0,x = " << en.geometry()[0][0] << std::endl;
-  cout << "Point 0,y = " << en.geometry()[0][1] << std::endl;*/
-        
-      // cout << "Circumference = " << circume << std::endl;    
-      radius = fabs(bx-ax)/M_SQRT2;   
-#endif
+      else if ( geomType.isCube() )
+      {
+        // map of used geometry points to determ side length (see
+        // reference elements)
+        const int map[3] = {1,2,4}; 
+        radius = std::abs(geo[1][0] - geo[0][0]);
+        circume = radius;
+        for(int i=1; i<dim; ++i) 
+        {
+          circume += std::abs(geo[map[i]][i] - geo[0][i]);
+        }
+          
+        radius  *= sqrt2_1_;
+        circume *= dim * 2; 
+        //circume *= Power_m_p<2, dim> :: power;
+      }
+      else 
+      {
+        DUNE_THROW(NotImplemented,"Unsupported geometry type!");
+      }
             
-      const double hPowPolOrder = pow(4.0*M_SQRT2*radius, orderPower_);// -((order+1.0)/2.0) );
+      const double hPowPolOrder = pow(2 * dim * M_SQRT2 * radius, orderPower_);// -((order+1.0)/2.0) );
+      //const double hPowPolOrder = pow(4.0*M_SQRT2*radius, orderPower_);// -((order+1.0)/2.0) );
       // get value of U in barycenter
 
       FieldVector<bool,dimRange> limit(false);
@@ -341,6 +329,13 @@ namespace Dune {
 
             counter += applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,totaljump);
           }
+        }
+
+        // check all neighbors 
+        if (nit.boundary()) 
+        {
+          FaceQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
+          counter += applyBoundary(nit,faceQuadInner,totaljump);
         }
       } // end intersection iterator 
        
@@ -409,6 +404,29 @@ namespace Dune {
       return counterInc; 
     }
 
+    template <class QuadratureImp>
+    int applyBoundary(IntersectionIteratorType & nit,
+                      const QuadratureImp & faceQuadInner,
+                      RangeType& totaljump) const
+    {
+      const int faceQuadNop = faceQuadInner.nop();
+      int counterInc = 0;
+      for(int l=0; l<faceQuadNop; ++l) 
+      {
+        // calculate jump 
+        caller_.boundaryFlux(nit, faceQuadInner,l,jump_);
+
+        // if jump is not zero 
+        if( jump_.one_norm() > 0.0 )
+        {
+          jump_ *= faceQuadInner.weight(l);
+          totaljump += jump_;
+          counterInc = 1;
+        }
+      }
+      return counterInc; 
+    }
+
     //! The actual computations are performed as follows. First, prepare
     //! the grid walkthrough, then call applyLocal on each entity and then
     //! call finalize.
@@ -454,6 +472,7 @@ namespace Dune {
     const int faceQuadOrd_;
     mutable RangeType jump_; 
     mutable RangeType jump2_;
+    const double sqrt2_1_;
   }; // end DGLimitPass 
 
 } // end namespace Dune 
