@@ -24,16 +24,22 @@ namespace Dune
   : public DofMapperDefault< LagrangeMapper< GridPartImp, 1, dimrange > >
   {
   public:
+    //! type of the grid part
     typedef GridPartImp GridPartType;
     
+    //! type of the underlying grid
     typedef typename GridPartType :: GridType GridType;
 
+    //! type of coordinates within the grid
     typedef typename GridType :: ctype FieldType;
 
+    //! dimension of the grid
     enum { dimension = GridType :: dimension };
 
+    //! order of the Lagrange polynoms
     enum { polynomialOrder = 1 };
 
+    //! dimension of the discrete function space's range
     enum { DimRange = dimrange };
 
   private:
@@ -41,10 +47,13 @@ namespace Dune
     typedef DofMapperDefault< ThisType > BaseType;
 
   public:
+    //! type of the index set
     typedef typename GridPartType :: IndexSetType IndexSetType;
 
+    //! type of the Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
+    //! type of the map for the Lagrange point sets
     typedef std :: map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
 
@@ -72,15 +81,19 @@ namespace Dune
     }
    
     //! destructor
-    virtual ~LagrangeMapper () {}
+    virtual ~LagrangeMapper ()
+    {
+    }
 
-    //! get size (i.e. size of DoF vector)
+    /** \copydoc Dune::DofMapperInterface::size
+     */
     int size () const
     {
       return DimRange * indexSet_.size( dimension );
     }
 
-    //! map a local DoF number to a global one
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal
+     */
     template< class EntityType >
     int mapToGlobal ( const EntityType &entity, const int local ) const
     {
@@ -91,7 +104,8 @@ namespace Dune
       return DimRange * globalDof + coordinate;
     }
 
-    //! vector index of the hole
+    /** \copydoc Dune::DofMapperInterface::oldIndex
+     */
     int oldIndex ( int hole, int ) const
     {
       const int coordinate = hole % DimRange;
@@ -100,7 +114,8 @@ namespace Dune
       return setIndex * DimRange + coordinate;
     }
 
-    //! vector index of data to be copied to the hole
+    /** \copydoc Dune::DofMapperInterface::newIndex
+     */
     int newIndex ( int hole , int ) const
     {
       const int coordinate = hole % DimRange;
@@ -109,47 +124,58 @@ namespace Dune
       return setIndex * DimRange + coordinate;
     }
 
-    //! number of holes in DoF vector
-    int numberOfHoles (int) const
+    /** \copydoc Dune::DofMapperInterface::numberOfHoles
+     */
+    int numberOfHoles ( int ) const
     {
       return DimRange * indexSet_.numberOfHoles( dimension );
     }
 
-    //! get maximum number of DoFs per entity
+    /** \copydoc Dune::DofMapperInterface::numDofs
+     */
     int numDofs () const
     {
       return DimRange * maxDofs_;
     }
 
-    //! get size of DoF vector after adaption
+    /** \copydoc Dune::DofMapperInterface::newSize
+     */
     int newSize () const
     {
       return this->size();
     }
 
-    //! should the DoF vector be compressed?
+    /** \copydoc Dune::DofMapperInterface::needsCompress
+     */
     bool needsCompress () const
     {
       return indexSet_.needsCompress();
     }
-
   };
+
+
 
   template< class GridPartImp, unsigned int dimrange >
   class LagrangeMapper< GridPartImp, 2, dimrange >
   : public DofMapperDefault< LagrangeMapper< GridPartImp, 2, dimrange > >
   {
   public:
+    //! type of the grid part
     typedef GridPartImp GridPartType;
     
+    //! type of the underlying grid
     typedef typename GridPartType :: GridType GridType;
 
+    //! type of coordinates within the grid
     typedef typename GridType :: ctype FieldType;
 
+    //! dimension of the grid
     enum { dimension = GridType :: dimension };
 
+    //! order of the Lagrange polynoms
     enum { polynomialOrder = 2 };
 
+    //! dimension of the discrete function space's range
     enum { DimRange = dimrange };
 
   private:
@@ -157,17 +183,23 @@ namespace Dune
     typedef DofMapperDefault< ThisType > BaseType;
 
   public:
+    //! type of the index set
     typedef typename GridPartType :: IndexSetType IndexSetType;
 
+    //! type of the Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
+    //! type of the map for the Lagrange point sets
     typedef std :: map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
 
-    typedef typename LagrangePointSetType :: DofInfo DofInfo;
+    //! type of the DoF manager
+    typedef DofManager< GridType > DofManagerType;
+    //! type of the DoF manager factory
+    typedef DofManagerFactory< DofManagerType > DMFactoryType;
 
-    typedef DofManager<GridType> DofManagerType;
-    typedef DofManagerFactory<DofManagerType> DMFactoryType;
+  protected:
+    typedef typename LagrangePointSetType :: DofInfo DofInfo;
 
   private:
     template< unsigned int codim >
@@ -196,7 +228,9 @@ namespace Dune
 
     // for debugging only 
     mutable int sequence_;
+
   public:
+    //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
     : dm_( DMFactoryType :: getDofManager(gridPart.grid()) )
@@ -209,12 +243,14 @@ namespace Dune
       
       typedef typename LagrangePointSetMapType :: iterator IteratorType;
       IteratorType end = lagrangePointSet_.end();
-      for( IteratorType it = lagrangePointSet_.begin(); it != end; ++it ) {
+      for( IteratorType it = lagrangePointSet_.begin(); it != end; ++it )
+      {
         const LagrangePointSetType *set = (*it).second;
         if( set == NULL )
           continue;
         
-        for( int codim = 0; codim <= dimension; ++codim ) {
+        for( int codim = 0; codim <= dimension; ++codim )
+        {
           const unsigned int setDofs = set->numDofs( codim );
           unsigned int &maxDofs = maxDofs_[ codim ];
           maxDofs = (maxDofs >= setDofs) ? maxDofs : setDofs;
@@ -230,10 +266,8 @@ namespace Dune
       }
 
       numDofs_ = 0;
-      for(int codim = 0; codim <= dimension; ++codim )
-      {
-        numDofs_ += maxDofs_[codim];
-      }
+      for( int codim = 0; codim <= dimension; ++codim )
+        numDofs_ += maxDofs_[ codim ];
     }
     
     //! destructor 
@@ -247,7 +281,8 @@ namespace Dune
       return DimRange * size_;
     }
 
-    //! map local dof of entity to global dof number 
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal
+     */
     template< class EntityType >
     int mapToGlobal ( const EntityType &entity, const int local ) const
     {
@@ -265,7 +300,8 @@ namespace Dune
       return DimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
     }
 
-    //! return old dof number for given number of hole and codim (=block) 
+    /** \copydoc Dune::DofMapperInterface::oldIndex
+     */
     int oldIndex ( const int num, const int codim ) const
     {
       // corresponding number of set is newn 
@@ -276,7 +312,8 @@ namespace Dune
       return DimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
     }
 
-    //! return old new number for given number of hole and codima (=block)
+    /** \copydoc Dune::DofMapperInterface::newIndex
+     */
     int newIndex ( const int num , const int codim) const
     {
       // corresponding number of set is newn 
@@ -287,14 +324,16 @@ namespace Dune
       return DimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
     }
 
-    //! return number of holes for given codim 
+    /** \copydoc Dune::DofMapperInterface::numberOfHoles
+     */
     int numberOfHoles ( const int codim ) const
     {
       return (maxDofs_[ codim ] > 0) ? 
         (DimRange * indexSet_.numberOfHoles( codim )) : 0;
     }
 
-    //! update mapper, i.e. calculate new insertion points 
+    /** \copydoc Dune::DofMapperInterface::update
+     */
     void update()
     {
       // assure that update is only called once per 
@@ -305,45 +344,49 @@ namespace Dune
         size_ = 0;
         for( int codim = 0; codim <= dimension; ++codim )
         {
-          oldOffSet_[ codim ] = offset_[codim];
+          oldOffSet_[ codim ] = offset_[ codim ];
           offset_[ codim ] = size_;
           size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
         }
         sequence_ = dm_.sequence();
       }
       else 
-      {
-        DUNE_THROW(InvalidStateException,"update of mapper should only be called once per sequence");
-      }
+        DUNE_THROW( InvalidStateException,
+                    "Update of mapper should only be called once per sequence" );
     }
 
-    //! return number of supported codims 
+    /** \copydoc Dune::DofMapperInterface::numBlocks
+     */
     int numBlocks () const 
     {
       return dimension + 1;
     }
 
-    //! return old offsets for block 
+    /** \copydoc Dune::DofMapperInterface::oldOffset
+     */
     int oldOffSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
       return DimRange * oldOffSet_[ block ];
     }
 
-    //! return current offsets 
+    /** \copydoc Dune::DofMapperInterface::newOffset
+     */
     int offSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
       return DimRange * offset_[ block ];
     }
 
-    //! return number of dofs per element 
+    /** \copydoc Dune::DofMapperInterface::numDofs
+     */
     int numDofs () const
     {
       return numDofs_;
     }
 
-    //! calculate new size without changing object 
+    /** \copydoc Dune::DofMapperInterface::newSize
+     */ 
     int newSize () const
     {
       int newSize = 0;
@@ -354,7 +397,8 @@ namespace Dune
       return DimRange * newSize;
     }
 
-    //! returns true if compression is needed 
+    /** \copydoc Dune::DofMapperInterface::needsCompress
+     */
     bool needsCompress () const
     {
       return indexSet_.needsCompress();
@@ -362,4 +406,5 @@ namespace Dune
   };
  
 } // end namespace Dune 
+
 #endif
