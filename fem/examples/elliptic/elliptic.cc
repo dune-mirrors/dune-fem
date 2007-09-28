@@ -117,8 +117,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/stdstreams.cc>
 
-#include <dune/grid/utility/gridtype.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/fem/operator/feop.hh>

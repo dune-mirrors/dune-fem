@@ -83,7 +83,7 @@ namespace Dune
                                  const QuadratureType &quadrature,
                                  int point,
                                  const RangeType &phi,
-                                 DomainType &flux ) const
+                                 JacobianRangeType &flux ) const
     {
       assert( Properties :: hasConvectiveFlux );
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
@@ -224,7 +224,7 @@ namespace Dune
                                  const QuadratureType &quadrature,
                                  int point,
                                  const RangeType &phi,
-                                 DomainType &flux ) const
+                                 JacobianRangeType &flux ) const
     {
       assert( Properties :: hasConvectiveFlux );
       flux = 0;

@@ -532,10 +532,10 @@ namespace Dune
             baseFunctionSet.evaluate( j, quadrature, pt, phi );
             
             // evaluate convectiveFlux
-            DomainType flux;
+            JacobianRangeType flux;
             model.convectiveFlux( entity, quadrature, pt, phi, flux );
 
-            matrix.add( i, j, factor * (flux * gradPhi[ 0 ]) );
+            matrix.add( i, j, factor * (flux[ 0 ] * gradPhi[ 0 ]) );
           }
         }
       } // end loop over quadrature points            

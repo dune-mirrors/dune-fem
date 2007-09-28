@@ -156,7 +156,7 @@ namespace Dune
                                 const QuadratureType &quadrature,
                                 int p,
                                 const RangeType &phi, 
-                                DomainType &ret ) const
+                                JacobianRangeType &ret ) const
     {
       // - laplace phi = -div (1 * grad phi - 0 * phi)
       ret = 0.0;
@@ -406,11 +406,11 @@ namespace Dune
                                 const QuadratureType &quadrature,
                                 int pt,
                                 const RangeType &phi,
-                                DomainType &ret) const
+                                JacobianRangeType &ret) const
     {
       const DomainType &x = entity.geometry().global( quadrature.point( pt ) ); 
-      ret[ 0 ] = -x[ 1 ] * s * phi[ 0 ];
-      ret[ 1 ] = -x[ 1 ] * s * phi[ 0 ];
+      ret[ 0 ][ 0 ] = -x[ 1 ] * s * phi[ 0 ];
+      ret[ 0 ][ 1 ] = -x[ 1 ] * s * phi[ 0 ];
     }
 
     //! the coefficient for robin boundary condition
@@ -622,16 +622,19 @@ namespace Dune
 
   //! no direct access to stiffness and velocity, but whole flux, i.e.
   //! convectiveFlux =  - velocity * phi 
-    template <class EntityType, class QuadratureType>  
-    inline void convectiveFlux( const EntityType& en, const QuadratureType& quad, int p, 
-                     const RangeType& phi, 
-                     DomainType& ret) const
-          {
-            const DomainType& glob = en.geometry().global(quad.point(p));     
-      ret[0] = - glob[1]*phi[0];
-      ret[1] = - glob[1]*phi[0];
-      ret[2] = - glob[1]*phi[0];
-          }
+    template< class EntityType, class QuadratureType >
+    inline void convectiveFlux( const EntityType &entity,
+                                const QuadratureType &quadrature,
+                                const int point, 
+                                const RangeType &phi,
+                                JacobianRangeType &ret ) const
+    {
+      const DomainType x
+        = entity.geometry().global( quadrature.point( point ) );
+      ret[ 0 ][ 0 ] = -x[ 1 ] * phi[ 0 ];
+      ret[ 0 ][ 1 ] = -x[ 1 ] * phi[ 0 ];
+      ret[ 0 ][ 2 ] = -x[ 1 ] * phi[ 0 ];
+    }
 
     //! the coefficient for robin boundary condition
     template< class IntersectionIteratorType, class QuadratureType >
