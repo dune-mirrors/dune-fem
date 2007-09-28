@@ -544,14 +544,16 @@ namespace Dune{
     */
     DiscreteFunctionType& operator /= (const RangeFieldType &scalar);
     
-    /** \copydoc LocalFunctionInterface::localFunction */
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction
+     */
     template< class EntityType >
     const LocalFunctionType localFunction ( const EntityType &entity ) const
     {
       return lfStorage_.localFunction( entity );
     }
     
-    /** \copydoc LocalFunctionInterface::localFunction */
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction
+     */
     template< class EntityType >
     LocalFunctionType localFunction ( const EntityType &entity )
     {

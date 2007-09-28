@@ -79,8 +79,12 @@ public:
     return asImp().operator [] ( num );
   }
 
-  /** \brief return the number of local dofs for this local function 
-   *  \return number of local dofs 
+  /** \brief obtain the number of local DoFs
+   *
+   *  Obtain the number of local DoFs of this local function. The value is
+   *  identical to the number of base functons on the entity.
+   *  
+   *  \returns number of local DoFs
    */
   int numDofs() const 
   {
@@ -88,51 +92,66 @@ public:
     return asImp().numDofs();
   }
   
-  /** \brief evaluate local function.
-      \param[in] x local coordinate of evaluation point 
-      \param[out] ret return value 
+  /** \brief evaluate the local function
+   *
+   *  \param[in]   x    evaluation point in local coordinates 
+   *  \param[out]  ret  value of the function in the given point
   */
-  void evaluate( const DomainType &x, RangeType &ret )
+  inline void evaluate ( const DomainType &x,
+                         RangeType &ret ) const
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-       asImp().evaluate( x, ret ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().evaluate( x, ret ) );
   }
 
-  /** \brief evaluate local function.
-      \param[in] quad Quadrature 
-      \param[in] quadPoint number of quadrature point for evaluation 
-      \param[out] ret return value 
-  */
-  template <class QuadratureType> 
-  void evaluate( const QuadratureType &quad, int quadPoint, 
-                 RangeType &ret )
+  /** \brief evaluate the local function in a quadrature point
+   *
+   *  \param[in]   quadrature  quadrature to use
+   *  \param[in]   quadPoint   number of the quadrature point within the
+   *                           quadrature
+   *  \param[out]  ret         value of the function in the quadrature point
+   */
+  template< class QuadratureType >
+  inline void evaluate( const QuadratureType &quadrature,
+                        const int quadPoint, 
+                        RangeType &ret ) const
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-        asImp().evaluate( quad, quadPoint, ret ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().evaluate( quadrature, quadPoint, ret ) );
   }
 
-  /** \brief evaluate jacobian on reference element
-      \param[in] x local coordinate 
-      \param[out] grad return value 
-  */
-  void jacobian ( const DomainType &x, 
-                  JacobianRangeType &grad ) 
+  /** \brief evaluate Jacobian of the local function
+   *
+   *  \note Though the Jacobian is evaluated on the reference element, the
+   *        return value is the Jacobian with respect to the actual entity.
+   *
+   *  \param[in]   x    evaluation point in local coordinates
+   *  \param[out]  ret  Jacobian of the function in the evaluation point
+   */
+  inline void jacobian ( const DomainType &x, 
+                         JacobianRangeType &ret ) const
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-      asImp().jacobian( x, grad ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().jacobian( x, ret ) );
   }
 
-  /** \brief evaluate jacobian on reference element
-      \param[in] quad Quadrature 
-      \param[in] quadPoint number of quadrature point for evaluation 
-      \param[out] grad return value 
-  */
-  template <class QuadratureType>
-  void jacobian ( const QuadratureType &quad, int quadPoint , 
-                  JacobianRangeType &grad ) 
+  /** \brief evaluate Jacobian of the local function in a quadrature point
+   *
+   *  \note Though the Jacobian is evaluated on the reference element, the
+   *        return value is the Jacobian with respect to the actual entity.
+   *
+   *  \param[in]   quadrature  quadrature to use
+   *  \param[in]   quadPoint   number of the quadrature point within the
+   *                           quadrature
+   *  \param[out]  ret         Jacobian of the function in the quadrature point
+   */
+  template< class QuadratureType >
+  void jacobian ( const QuadratureType &quadrature,
+                  const int quadPoint,
+                  JacobianRangeType &ret ) const
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-      asImp().jacobian( quad, quadPoint, grad ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().jacobian( quadrature, quadPoint, ret ) );
   }
 
   /** \brief axpy operation for local function 
@@ -284,25 +303,25 @@ protected:
     template< class EntityType >
     void evaluateGlobal ( const EntityType &entity, 
                           const DomainType &x, 
-                          RangeType &ret )
+                          RangeType &ret ) const
     {
       xLoc_ = entity.geometry().local( x );
       evaluate( xLoc_, ret );
     }
 
-    /** \brief default implementation of evaluation 
-               of local function using a quadrature 
-              (calls evaluate method with local coordiante)
-        \param[in] quad Quadrature
-        \param[in] quadPoint number of quadrature point      
-        \param[out] ret return value 
-    */
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
+     *
+     *  \note The default implementation just calls
+     *  \code
+     *  evaluate( quadrature.point( quadPoint ), ret );
+     *  \endcode
+     */
     template< class QuadratureType >
-    void evaluate ( const QuadratureType &quad,
+    void evaluate ( const QuadratureType &quadrature,
                     const int quadPoint,
-                    RangeType &ret )
+                    RangeType &ret ) const
     {
-      evaluate( quad.point( quadPoint ), ret );
+      evaluate( quadrature.point( quadPoint ), ret );
     }
     
     /** \brief evaluate jacobian of the local function on 
@@ -321,20 +340,19 @@ protected:
       jacobian( xLoc_, grad );
     }
 
-    /** \brief default implementation of evaluation 
-               of jacobian using a quadrature 
-              (calls jacobian method with local coordiante if not
-              overloaded)
-        \param[in] quad Quadrature
-        \param[in] quadPoint number of quadrature point      
-        \param[out] grad return value 
-    */
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const
+     *
+     *  \note The default implementation just calls
+     *  \code
+     *  jacobian( quadrature.point( quadPoint ), ret );
+     *  \endcode
+     */
     template< class QuadratureType >
-    void jacobian ( const QuadratureType &quad,
+    void jacobian ( const QuadratureType &quadrature,
                     const int quadPoint,
-                    JacobianRangeType &grad )
+                    JacobianRangeType &ret ) const
     {
-      jacobian( quad.point( quadPoint ), grad );
+      jacobian( quadrature.point( quadPoint ), ret );
     }
 
     /** \brief size method to make local 

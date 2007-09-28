@@ -437,22 +437,33 @@ public:
    /** \brief  @copydoc LocalFunctionDefault::operator []  */
   const RangeFieldType & operator [] (int num) const;
 
-  /** \brief  @copydoc LocalFunctionDefault::numDofs  */
+  /** \copydoc Dune::LocalFunctionInterface::numDofs
+   */
   int numDofs () const;
 
-  /** \brief  @copydoc LocalFunctionDefault::evaluate  */
-  void evaluate (const DomainType & x, RangeType & ret) const ;
+  /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const
+   */
+  void evaluate ( const DomainType &x,
+                  RangeType &ret ) const;
  
-   /** \brief  @copydoc LocalFunctionDefault::evaluate  */
-  template <class QuadratureType>
-  void evaluate (const QuadratureType &quad, const int quadPoint , RangeType & ret) const;
+   /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
+    */
+  template< class QuadratureType >
+  void evaluate ( const QuadratureType &quadrature,
+                  const int quadPoint,
+                  RangeType &ret ) const;
 
-   /** \brief  @copydoc LocalFunctionDefault::jacobian  */
-  void jacobian(const DomainType& x, JacobianRangeType& ret) const ;
+   /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const
+    */
+  void jacobian ( const DomainType &x,
+                  JacobianRangeType &ret ) const;
 
-   /** \brief  @copydoc LocalFunctionDefault::jacobian  */
-  template <class QuadratureType>
-  void jacobian(const QuadratureType &quad, const int quadPoint , JacobianRangeType & ret) const;
+   /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const
+    */
+  template< class QuadratureType >
+  void jacobian ( const QuadratureType &quadrature,
+                  const int quadPoint,
+                  JacobianRangeType &ret ) const;
 
    /** \brief  @copydoc LocalFunctionDefault::baseFunctionSet  */
   const BaseFunctionSetType& baseFunctionSet() const;

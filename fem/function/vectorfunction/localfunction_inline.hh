@@ -4,18 +4,18 @@ namespace Dune
   template< class DiscreteFunctionSpaceImp, class DofVectorImp >
   void VectorLocalFunction< DiscreteFunctionSpaceImp, DofVectorImp >
     :: evaluate ( const DomainType &x,
-                  RangeType &y ) const
+                  RangeType &ret ) const
   {
     const BaseFunctionSetType &baseFunctionSet = this->baseFunctionSet();
 
-    y = 0;
+    ret = 0;
 
     const unsigned int numDofs = this->numDofs();
     for( unsigned int i = 0; i < numDofs; ++i )
     {
       RangeType phi;
       baseFunctionSet.evaluate( i, x, phi );
-      y.axpy( (*this)[ i ], phi );
+      ret.axpy( (*this)[ i ], phi );
     }
   }
 
@@ -25,19 +25,19 @@ namespace Dune
   template< class QuadratureType >
   void VectorLocalFunction< DiscreteFunctionSpaceImp, DofVectorImp >
     :: evaluate ( const QuadratureType &quadrature,
-                  const int quadraturePoint,
-                  RangeType &y ) const
+                  const int quadPoint,
+                  RangeType &ret ) const
   {
     const BaseFunctionSetType &baseFunctionSet = this->baseFunctionSet();
 
-    y = 0;
+    ret = 0;
 
     const unsigned int numDofs = this->numDofs();
     for( unsigned int i = 0; i < numDofs; ++i )
     {
       RangeType phi;
-      baseFunctionSet.evaluate( i, quadrature, quadraturePoint, phi );
-      y.axpy( (*this)[ i ], phi );
+      baseFunctionSet.evaluate( i, quadrature, quadPoint, phi );
+      ret.axpy( (*this)[ i ], phi );
     }
   }
 
@@ -88,25 +88,25 @@ namespace Dune
   template< class DiscreteFunctionSpaceImp, class DofVectorImp >
   void VectorLocalFunction< DiscreteFunctionSpaceImp, DofVectorImp >
     :: jacobian ( const DomainType &x,
-                  JacobianRangeType &jacobian ) const
+                  JacobianRangeType &ret ) const
   {
     const BaseFunctionSetType &baseFunctionSet = this->baseFunctionSet();
 
     const GeometryJacobianInverseType &geoJacobianInverse
       = geometry_->jacobianInverseTransposed( x );
 
-    jacobian = 0;
+    ret = 0;
   
     const unsigned int numDofs = this->numDofs();
     for( unsigned int i = 0; i < numDofs; ++i )
     {
       JacobianRangeType DPhi;
       baseFunctionSet.jacobian( i, x, DPhi );
-      jacobian.axpy( (*this)[ i ], DPhi );
+      ret.axpy( (*this)[ i ], DPhi );
     }
 
     for( unsigned int i = 0; i < DimRange; ++i )
-      jacobian[ i ] = FMatrixHelp :: mult( geoJacobianInverse, jacobian[ i ] );
+      ret[ i ] = FMatrixHelp :: mult( geoJacobianInverse, ret[ i ] );
   }
 
 
@@ -115,28 +115,28 @@ namespace Dune
   template< class QuadratureType >
   void VectorLocalFunction< DiscreteFunctionSpaceImp, DofVectorImp >
     :: jacobian ( const QuadratureType &quadrature,
-                  const int quadraturePoint,
-                  JacobianRangeType &jacobian ) const
+                  const int quadPoint,
+                  JacobianRangeType &ret ) const
   {
     const BaseFunctionSetType &baseFunctionSet = this->baseFunctionSet();
 
-    const DomainType x = geometry_.global( quadrature.point[ quadraturePoint ] );
+    const DomainType x = geometry_.global( quadrature.point[ quadPoint ] );
 
     const GeometryJacobianInverseType &geoJacobianInverse
       = geometry_->jacobianInverseTransposed( x );
 
-    jacobian = 0;
+    ret = 0;
   
     const unsigned int numDofs = this->numDofs();
     for( unsigned int i = 0; i < numDofs; ++i )
     {
       JacobianRangeType DPhi;
-      baseFunctionSet.jacobian( i, quadrature, quadraturePoint, DPhi );
-      jacobian.axpy( (*this)[ i ], DPhi );
+      baseFunctionSet.jacobian( i, quadrature, quadPoint, DPhi );
+      ret.axpy( (*this)[ i ], DPhi );
     }
 
     for( unsigned int i = 0; i < DimRange; ++i )
-      jacobian[ i ] = FMatrixHelp :: mult( geoJacobianInverse, jacobian[ i ] );
+      ret[ i ] = FMatrixHelp :: mult( geoJacobianInverse, ret[ i ] );
   }
 
 }

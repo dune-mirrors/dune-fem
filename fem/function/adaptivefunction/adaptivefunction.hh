@@ -9,9 +9,10 @@
 #include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
+#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/common/localfunction.hh>
+
 //- Local includes
-#include "../common/discretefunction.hh"
-#include "../common/localfunction.hh"
 #include "adaptiveimp.hh"
 
 namespace Dune
@@ -361,34 +362,33 @@ namespace Dune
 
     //- Methods
 
-    /** \brief @copydoc LocalFunctionDefault::numDofs */
-    inline
-    int numDofs() const;
+    /** \copydoc LocalFunctionInterface::numDofs
+     */
+    inline int numDofs() const;
 
-    /** \brief @copydoc LocalFunctionDefault::evaluate */
-    inline
-    void evaluate(const DomainType& x, 
-                  RangeType & ret) const;
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const
+     */
+    inline void evaluate( const DomainType &x,
+                          RangeType &ret ) const;
 
-    /** \brief @copydoc LocalFunctionDefault::evaluate */
-    template <class QuadratureType>
-    inline
-    void evaluate(const QuadratureType& quad,
-                  const int quadPoint,
-                  RangeType& ret) const;
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
+     */
+    template< class QuadratureType >
+    inline void evaluate ( const QuadratureType &quadrature,
+                           const int quadPoint,
+                           RangeType &ret ) const;
 
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
-    inline
-    void jacobian(const DomainType& x, 
-                  JacobianRangeType& ret) const; 
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const
+     */
+    inline void jacobian( const DomainType &x,
+                          JacobianRangeType &ret ) const; 
 
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
-    template <class QuadratureType>
-    inline
-    void jacobian(const QuadratureType& quad,
-                  const int quadPoint,
-                  JacobianRangeType& ret) const;
-
+    /** \copydoc Dune::LocalFunctionInterface::jacobian( const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const
+     */
+    template< class QuadratureType >
+    inline void jacobian( const QuadratureType &quadrature,
+                          const int quadPoint,
+                          JacobianRangeType &ret ) const;
     
     /** \brief evaluate jacobian of the discrete function on point x
         \param[in] entity en

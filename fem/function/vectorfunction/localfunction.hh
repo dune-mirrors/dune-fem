@@ -130,24 +130,34 @@ namespace Dune
       return baseFunctionSet_;
     }
 
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const
+     */
     inline void evaluate ( const DomainType &x,
-                           RangeType &y ) const;
+                           RangeType &ret ) const;
 
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
+     */
     template< class QuadratureType >
     inline void evaluate ( const QuadratureType &quadrature,
-                           const int quadraturePoint,
-                           RangeType &y ) const;
+                           const int quadPoint,
+                           RangeType &ret ) const;
 
     inline void init ( const Codim0EntityType &entity );
 
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const
+     */
     inline void jacobian ( const DomainType &x,
-                           JacobianRangeType &jacobian ) const;
+                           JacobianRangeType &ret ) const;
 
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const
+     */
     template< class QuadratureType >
     inline void jacobian ( const QuadratureType &quadrature,
-                           const int quadraturePoint,
-                           JacobianRangeType &y ) const;
+                           const int quadPoint,
+                           JacobianRangeType &ret ) const;
 
+    /** \copydoc Dune::LocalFunctionInterface::numDofs
+     */
     inline int numDofs () const
     {
       return values_.size();

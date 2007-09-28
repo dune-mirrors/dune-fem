@@ -82,9 +82,9 @@ namespace Dune
      *  the current entity.
      *
      *  \note Before using the local function it must be initilized by
-     *        \code
-     *          localFunction.init( entity );
-     *        \endcode
+     *  \code
+     *  localFunction.init( entity );
+     *  \endcode
      *
      *  \param[in] dfSpace discrete function space the local function shall
      *                     belong to
@@ -124,7 +124,7 @@ namespace Dune
      *
      *  \returns constant reference to the DoF
      */
-    inline const RangeFieldType &operator[] ( int index ) const
+    inline const RangeFieldType &operator[] ( const int index ) const
     {
       return dofs_[ index ];
     }
@@ -137,7 +137,7 @@ namespace Dune
      *
      *  \returns reference to the DoF
      */
-    inline RangeFieldType &operator[] ( int index )
+    inline RangeFieldType &operator[] ( const int index )
     {
       return dofs_[ index ];
     }
@@ -156,53 +156,39 @@ namespace Dune
       return baseFunctionSet_;
     }
 
-    /** evaluate the function in local coordinate x
-     *
-     *  Evaluate the local function in a point x, given in local coordinates
-     *  (i.e. coordinates within the reference element).
-     *
-     *  \param[in]  x   local coordinate to evaluate the function in
-     *  \param[out] phi variable to hold the function value
+    /** \copydoc Dune::LocalFunctionInterface::evaluate
      */
-    inline void evaluate ( const DomainType &x, RangeType &phi )
+    inline void evaluate ( const DomainType &x,
+                           RangeType &ret ) const
     {
       assert( entity_ != NULL );
       
-      phi = 0;
+      ret = 0;
       const unsigned int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
-        RangeType psi;
-        baseFunctionSet_.evaluate( i, x, psi );
-        phi.axpy( dofs_[ i ], psi );
+        RangeType phi;
+        baseFunctionSet_.evaluate( i, x, phi );
+        ret.axpy( dofs_[ i ], phi );
       }
     }
 
-    /** evaluate the function in a quadrature point
-     *
-     *  Evaluate the local function in a quadrature point. If the discrete
-     *  function space uses a caching storage, this is more efficient than
-     *  \code
-     *    localFunction.evaluate( quadrature.point( point ), phi );
-     *  \endcode
-     *
-     *  \param[in]  quadrature quadrature to use
-     *  \param[in]  point      index of the quadrature point to evaluate the
-     *                         function in
-     *  \param[out] phi        variable to hold the function value
+    /** \copydoc Dune::LocalFunctionInterface::evaluate
      */
     template< class QuadratureType >
-    inline void evaluate ( QuadratureType &quadrature, int point, RangeType &phi )
+    inline void evaluate ( const QuadratureType &quadrature,
+                           const int quadPoint,
+                           RangeType &ret ) const
     {
       assert( entity_ != NULL );
       
-      phi = 0;
+      ret = 0;
       const unsigned int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
-        RangeType psi;
-        baseFunctionSet_.evaluate( i, quadrature, point, psi );
-        phi.axpy( dofs_[ i ], psi );
+        RangeType phi;
+        baseFunctionSet_.evaluate( i, quadrature, quadPoint, phi );
+        ret.axpy( dofs_[ i ], phi );
       }
     }
 
@@ -225,15 +211,9 @@ namespace Dune
       dofs_.resize( baseFunctionSet_.numBaseFunctions() );
     }
 
-    /** evaluate Jacobian in local coordinate x
-     *
-     *  Evaluate the Jacobian of the local function in a point x, given in
-     *  local coordinates (i.e. coordinates within the reference element).
-     *
-     *  \param[in]  x    local coordinate to evaluate the Jacobian in
-     *  \param[out] grad variable to hold the Jacobian
+    /** \copydoc Dune::LocalFunctionInterface::jacobian
      */
-    inline void jacobian ( const DomainType &x, JacobianRangeType &grad )
+    inline void jacobian ( const DomainType &x, JacobianRangeType &ret ) const
     {
       assert( entity_ != NULL );
       
@@ -245,37 +225,25 @@ namespace Dune
       const GeometryType &geometry = entity_->geometry();
       const GeometryJacobianType &inv = geometry.jacobianInverseTransposed( x );
       
-      grad = 0;
+      ret = 0;
       const unsigned int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
         JacobianRangeType tmp;
         baseFunctionSet_.jacobian( i, x, tmp );
-        grad.axpy( dofs_[ i ], tmp );
+        ret.axpy( dofs_[ i ], tmp );
       }
 
       for( int i = 0; i < DimRange; ++i )
-        grad[ i ] = FMatrixHelp :: mult( inv, grad[ i ] );
+        ret[ i ] = FMatrixHelp :: mult( inv, ret[ i ] );
     }
 
-    /** evaluate Jacobian in a quadrature point
-     *
-     *  Evaluate the Jacobian of the local function in a quadrature point. If
-     *  the discrete function space uses a caching storage, this is more
-     *  efficient than
-     *  \code
-     *    localFunction.jacobian( quadrature.point( point ), phi );
-     *  \endcode
-     *
-     *  \param[in]  quadrature quadrature to use
-     *  \param[in]  point      index of the quadrature point to evaluate the
-     *                         Jacobian in
-     *  \param[out] phi        variable to hold the Jacobian
+    /** \copydoc Dune::LocalFunctionInterface::jacobian
      */
     template< class QuadratureType >
-    inline void jacobian ( QuadratureType &quadrature,
-                           int point,
-                           JacobianRangeType &grad )
+    inline void jacobian ( const QuadratureType &quadrature,
+                           const int quadPoint,
+                           JacobianRangeType &ret ) const
     {
       assert( entity_ != NULL );
       
@@ -286,28 +254,23 @@ namespace Dune
       
       const GeometryType &geometry = entity_->geometry();
       const GeometryJacobianType &inv
-        = geometry.jacobianInverseTransposed( quadrature.point( point ) );
+        = geometry.jacobianInverseTransposed( quadrature.point( quadPoint ) );
       
-      grad = 0;
+      ret = 0;
       const unsigned int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
         JacobianRangeType tmp;
-        baseFunctionSet_.jacobian( i, quadrature, point, tmp );
-        grad.axpy( dofs_[ i ], tmp );
+        baseFunctionSet_.jacobian( i, quadrature, quadPoint, tmp );
+        ret.axpy( dofs_[ i ], tmp );
       }
 
       for( int i = 0; i < DimRange; ++i )
-        grad[ i ] = FMatrixHelp :: mult( inv, grad[ i ] );
+        ret[ i ] = FMatrixHelp :: mult( inv, ret[ i ] );
     }
 
 
-    /** obtain the number of local DoFs
-     *
-     *  Obtain the number of local DoFs of this local function. The value is
-     *  identical to the number of base functions on the entity.
-     *
-     *  \returns number of local DoFs
+    /** \copydoc Dune::LocalFunctionInterface::numDofs
      */
     inline int numDofs () const
     {
