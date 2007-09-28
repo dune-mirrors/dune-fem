@@ -13,7 +13,7 @@ namespace Dune
 
 
   
-  /*! \class QuadratureRulesFactory
+  /** \class QuadratureRulesFactory
    *  \ingroup Quadrature
    *  \brief quadrature implementation based on the standard DUNE quadratures
    *    
@@ -56,7 +56,7 @@ namespace Dune
     int order_;
     
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  geometry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -82,20 +82,23 @@ namespace Dune
         addQuadraturePoint( (*it).position(), (*it).weight() );
     }
 
-    //! \copydoc Dune::QuadratureImp::order
+    /** \copydoc Dune::QuadratureImp::order
+     */
     int order () const
     { 
       return order_;
     }
     
-    //! \copydoc Dune::QuadratureImp::geometry
+    /** \copydoc Dune::QuadratureImp::geometry
+     */
     GeometryType geometry () const
     { 
       return elementGeometry_;
     }
 
-    //! maximal order of available quadratures
-    static int maxOrder ()
+    /** \broef maximal order of available quadratures
+     */
+    static unsigned int maxOrder ()
     { 
       return highest_order;
     }

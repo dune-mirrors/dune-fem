@@ -75,7 +75,7 @@ namespace Dune
   class PyramidQuadrature;
 #endif
 
-  /*! \addtogroup Quadrature 
+  /** \addtogroup Quadrature 
    *
    *  In DUNE, quadratures are a set of quadrature points and corresponding
    *  weights.
@@ -90,7 +90,7 @@ namespace Dune
 
 
 
-  /*! \class IntegrationPointListImp
+  /** \class IntegrationPointListImp
    *  \ingroup Quadrature
    *  \brief Generic implementation of an IntegrationPointList
    *
@@ -127,7 +127,7 @@ namespace Dune
     const size_t id_;
     
   protected:
-    /*! \brief Constructor
+    /** \brief Constructor
      *
      *  The constructor simply creates an empty point list and stores the
      *  specified identifier.
@@ -158,7 +158,7 @@ namespace Dune
     {
     }
 
-    /*! \brief obtain coordinates of i-th integration point
+    /** \brief obtain coordinates of i-th integration point
      *
      *  This method returns a reference to the coordinates of the i-th
      *  integration point for 0 <= i < nop(). The integration point is given
@@ -175,7 +175,7 @@ namespace Dune
       return points_[ i ];
     }
 
-    /*! \brief obtain the number of integration points
+    /** \brief obtain the number of integration points
      *
      *  \returns number of integration points within this list
      */
@@ -184,7 +184,7 @@ namespace Dune
       return points_.size();
     }
 
-    /*! \brief obtain the identifier of the integration point list
+    /** \brief obtain the identifier of the integration point list
      * 
      *  The identifier of an integration point list must be globally unique.
      *  Even integration point lists for different dimensions must have
@@ -200,7 +200,7 @@ namespace Dune
       return id_;
     }
 
-    /*! \brief obtain order of the integration point list
+    /** \brief obtain order of the integration point list
      *
      *  The order of a quadrature is the maximal polynomial degree that is
      *  guaranteed to be integrated exactly by the quadrature.
@@ -212,7 +212,7 @@ namespace Dune
      */
     virtual int order() const = 0;
 
-    /*! \brief obtain GeometryType for this integration point list
+    /** \brief obtain GeometryType for this integration point list
      *
      *  Integration point lists are specified in local coordinates, i.e.,
      *  coordinates with respect to the reference element. Hence, each 
@@ -224,7 +224,7 @@ namespace Dune
     virtual GeometryType geometry () const = 0;
 
   protected:
-    /*! \brief Adds an integration point to the list
+    /** \brief Adds an integration point to the list
      *
      *  This method allows derived classes to add integration points to the
      *  list. This mehtod should only be used within the constructor of the
@@ -239,7 +239,7 @@ namespace Dune
 
 
 
-  /*! \class QuadratureImp
+  /** \class QuadratureImp
    *  \ingroup Quadrature
    *  \brief Generic implementation of a Dune quadrature.
    *
@@ -271,7 +271,7 @@ namespace Dune
     //std :: vector< FieldType > weights_;
  
   protected:
-    /*! \brief Constructor
+    /** \brief Constructor
      *
      *  The constructor simply creates an empty quadrature and stores the
      *  specified identifier.
@@ -301,7 +301,7 @@ namespace Dune
     {
     }
     
-    /*! \brief obtain weight of i-th integration point
+    /** \brief obtain weight of i-th integration point
      *
      *  This method returns the weight of the i-th integration point for
      *  0 <= i < nop() within the quadrature.
@@ -328,7 +328,7 @@ namespace Dune
     }
 
   protected:
-    /*! \brief Adds a point-weight pair to the quadrature
+    /** \brief Adds a point-weight pair to the quadrature
      *
      *  This method allows derived classes to add quadrature points (and their
      *  respective weights) to the list. This mehtod should only be used within
@@ -355,7 +355,7 @@ namespace Dune
 #endif
   };
           
-  /*! \class SimplexQuadrature
+  /** \class SimplexQuadrature
    *  \ingroup Quadrature
    *  \brief generic quadrature class for simplices
    *  
@@ -376,14 +376,15 @@ namespace Dune
     typedef QuadratureImp< FieldType, dim > BaseType;
 
   public:
-    //! \copydoc Dune::QuadratureImp::CoordinateType
+    /** \copydoc Dune::QuadratureImp::CoordinateType
+     */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   protected:
     int order_;
     
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -391,19 +392,21 @@ namespace Dune
      */
     SimplexQuadrature( const GeometryType& geometry, int order, size_t id );
     
-    //! \copydoc Dune::QuadratureImp::geometry
+    /** \copydoc Dune::QuadratureImp::geometry
+     */
     virtual GeometryType geometry () const
     {
       return GeometryType( GeometryType :: simplex, dim );
     }
    
-    //! \copydoc Dune::QuadratureImp::order
+    /** \copydoc Dune::QuadratureImp::order
+     */
     virtual int order () const
     {
       return order_;
     }
 
-    //! maximal order of available quadratures.
+    //! maximal order of available quadratures
     static size_t maxOrder ()
     {
       if( dim == 1 )
@@ -420,7 +423,7 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class CubeQuadrature
+  /** \class CubeQuadrature
    *  \ingroup Quadrature
    *  \brief generic quadrature class for cubes
    *  
@@ -449,7 +452,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -469,7 +472,8 @@ namespace Dune
       return order_;
     }
 
-    //! maximal order of available quadratures.
+    /** \brief maximal order of available quadratures
+     */
     static size_t maxOrder ()
     { 
       return GaussPts :: highestOrder;
@@ -480,7 +484,7 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class LineQuadrature
+  /** \class LineQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class for lines
    *  
@@ -508,7 +512,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -539,7 +543,7 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class TriangleQuadrature
+  /** \class TriangleQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class for triangles
    *  
@@ -569,7 +573,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -600,7 +604,7 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class QuadrilateralQuadrature
+  /** \class QuadrilateralQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class for quadrilaterals
    *  
@@ -631,7 +635,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -662,7 +666,7 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class TetraQuadrature
+  /** \class TetraQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class for tetrahedra
    *  
@@ -692,7 +696,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -723,7 +727,7 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class HexaQuadrature
+  /** \class HexaQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class for hexahedra
    *  
@@ -754,7 +758,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -785,7 +789,7 @@ namespace Dune
 
 
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class PrismQuadrature
+  /** \class PrismQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class for prisms
    *  
@@ -814,7 +818,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -845,7 +849,7 @@ namespace Dune
 
   
 #ifndef USE_DUNE_QUADRATURES
-  /*! \class PyramidQuadrature
+  /** \class PyramidQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class for pyramids
    *  
@@ -874,7 +878,7 @@ namespace Dune
     int order_;
 
   public:
-    /*! \brief constructor filling the list of points and weights
+    /** \brief constructor filling the list of points and weights
      *
      *  \param[in]  gemoetry  geometry type for which a quadrature is desired
      *  \param[in]  order     desired order (provided by the user)
@@ -1021,7 +1025,7 @@ namespace Dune
 
 
 
-  /*! \class IntegrationPointList
+  /** \class IntegrationPointList
    *  \ingroup Quadrature
    *  \brief actual interface class for integration point lists
    *
@@ -1069,7 +1073,7 @@ namespace Dune
     const IntegrationPointListType &ipList_;
 
   public:
-    /*! \brief create a quadrature for a given geometry and order
+    /** \brief create a quadrature for a given geometry and order
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
@@ -1084,7 +1088,7 @@ namespace Dune
     {
     }
 
-    /*! \brief create an integration point list from an implementation
+    /** \brief create an integration point list from an implementation
      *
      *  This constructor creates an integration point list from a given
      *  implementation.
@@ -1098,7 +1102,7 @@ namespace Dune
     {
     }
 
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *  
      *  \param[in]  org  integration point list to be copied
      */ 
@@ -1107,7 +1111,7 @@ namespace Dune
     {
     }
 
-    /*! \brief obtain a reference the actual implementation
+    /** \brief obtain a reference the actual implementation
      * 
      *  \returns a reference to the implementation of this integration point
      *           list
@@ -1117,7 +1121,7 @@ namespace Dune
       return ipList_;
     }
 
-    /*! \brief obtain the number of integration points
+    /** \brief obtain the number of integration points
      *
      *  \returns number of integration points within this list
      */
@@ -1126,7 +1130,7 @@ namespace Dune
       return ipList_.nop();
     }
     
-    /*! \brief obtain coordinates of i-th integration point
+    /** \brief obtain coordinates of i-th integration point
      *
      *  This method returns a reference to the coordinates of the i-th
      *  integration point for 0 <= i < nop(). The integration point is given
@@ -1142,7 +1146,7 @@ namespace Dune
       return ipList_.point( i );
     }
 
-    /*! \brief obtain the identifier of the integration point list
+    /** \brief obtain the identifier of the integration point list
      * 
      *  The identifier of an integration point list must be globally unique.
      *  Even integration point lists for different dimensions must have
@@ -1158,7 +1162,7 @@ namespace Dune
       return ipList_.id();
     }
     
-    /*! \brief obtain order of the integration point list
+    /** \brief obtain order of the integration point list
      *
      *  The order of a quadrature is the maximal polynomial degree that is
      *  guaranteed to be integrated exactly by the quadrature.
@@ -1176,7 +1180,7 @@ namespace Dune
       return ipList_.order();
     }
     
-    /*! \brief obtain GeometryType for this integration point list
+    /** \brief obtain GeometryType for this integration point list
      *
      *  Integration point lists are specified in local coordinates, i.e.,
      *  coordinates with respect to the reference element. Hence, each 
@@ -1196,7 +1200,7 @@ namespace Dune
 
 
 
-  /*! \class Quadrature
+  /** \class Quadrature
    *  \ingroup Quadrature
    *  \brief actual interface class for quadratures
    *
@@ -1245,7 +1249,7 @@ namespace Dune
     enum { codimension = 0 };
 
   public:
-    /*! \brief create a quadrature for a given geometry and order
+    /** \brief create a quadrature for a given geometry and order
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
@@ -1260,7 +1264,7 @@ namespace Dune
     {
     }
 
-    /*! \brief create an integration point list from an implementation
+    /** \brief create an integration point list from an implementation
      *
      *  This constructor creates an integration point list from a given
      *  implementation.
@@ -1274,7 +1278,7 @@ namespace Dune
     {
     }
 
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *  
      *  \param[in]  org  quadrature to be copied
      */ 
@@ -1284,7 +1288,7 @@ namespace Dune
     {
     }
 
-    /*! \brief obtain weight of i-th integration point
+    /** \brief obtain weight of i-th integration point
      *
      *  This method returns the weight of the i-th integration point for
      *  0 <= i < nop() within the quadrature.

@@ -22,7 +22,7 @@ namespace Dune
     }
     
   public:
-    /*! \brief map quadrature points to caching points
+    /** \brief map quadrature points to caching points
      *
      *  For codim-1 entites, the mapping consists of two stages:
      *  - Consider the twist to get the quadrature point number on the face of
@@ -41,7 +41,7 @@ namespace Dune
 
 
 
-  /*! \class CachingPointList
+  /** \class CachingPointList
    *  \ingroup Quadrature
    *  \brief integration point list supporting base function caching
    *
@@ -110,14 +110,15 @@ namespace Dune
     typedef typename BaseType::Entity Entity;
     
   public:
-    //! \copydoc Dune::ElementIntegrationPointList<GridPartImp,0>::ElementIntegrationPointList(const GeometryType&,int)
-    inline CachingPointList( const GeometryType &geo, int order )
-    : BaseType( geo, order )
+    /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
+     */
+    inline CachingPointList( const GeometryType &geometry, int order )
+    : BaseType( geometry, order )
     {
       CacheProvider< GridType, codimension > :: registerQuadrature( quadImp() );
     }
 
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
      */
@@ -126,7 +127,8 @@ namespace Dune
     {
     }
 
-    //! \copydoc Dune::CachingInterface::cachingPoint
+    /** \copydoc Dune::CachingInterface::cachingPoint
+     */
     inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
       return quadraturePoint;
@@ -191,7 +193,7 @@ namespace Dune
     const MapperType &mapper_;
 
   public:
-    /*! \brief constructor
+    /** \brief constructor
      *
      *  \note The CachingPointList requires the grid part to get twist
      *        information for TwistUtility (see also
@@ -219,7 +221,7 @@ namespace Dune
       assert( TwistUtilityType :: conforming( gridPart.grid(), intersection ) );
     }
 
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
      */

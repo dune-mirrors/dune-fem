@@ -50,7 +50,8 @@ namespace Dune
 
 
 
-  //! \copydoc Dune::ElementIntegrationPointList
+  /** \copydoc Dune::ElementIntegrationPointList
+   */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >
   {
@@ -92,7 +93,7 @@ namespace Dune
     IntegrationPointListType quad_;
    
   public:
-    /*! \brief constructor
+    /** \brief constructor
      *  
      *  \param[in]  geometry  geometry type, the quadrature lives on
      *  \param[in]  otder     desired minimal order of the quadrature
@@ -102,7 +103,7 @@ namespace Dune
     {
     }
     
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *
      *  \param[in]  org  element integration point list to copy
      */
@@ -111,19 +112,21 @@ namespace Dune
     {
     }
    
-    //! \copydoc Dune::IntegrationPointList::nop
+    /** \copydoc Dune::IntegrationPointList::nop
+     */
     int nop () const
     {
       return quad_.nop();
     }
 
-    //! \copydoc Dune::IntegrationPointList::point
+    /** \copydoc Dune::IntegrationPointList::point
+     */
     const CoordinateType &point ( size_t i ) const
     {
       return quad_.point(i);
     }
     
-    /*! \brief obtain local coordinates of i-th integration point
+    /** \brief obtain local coordinates of i-th integration point
      *
      *  This method returns a reference to the local coordinates of the i-th
      *  integration point for 0 <= i < nop(). Here, local coordinates means
@@ -138,25 +141,28 @@ namespace Dune
       return quad_.point(i);
     }
 
-    //! \copydoc Dune::IntegrationPointList::id
+    /** \copydoc Dune::IntegrationPointList::id
+     */
     size_t id () const
     {
       return quad_.id();
     }
 
-    //! \copydoc Dune::IntegrationPointList::order
+    /** \copydoc Dune::IntegrationPointList::order
+     */
     int order () const
     {
       return quad_.order();
     }
 
-    //! \copydoc Dune::IntegrationPointList::geometry
+    /** \copydoc Dune::IntegrationPointList::geometry
+     */
     GeometryType geometry () const
     {
       return quad_.geometry();
     }
     
-    /*! \brief obtain GeometryType of the corresponding codim-0 the integration
+    /** \brief obtain GeometryType of the corresponding codim-0 the integration
      *         point list belongs to
      *
      *  An element integration point list can return the coordinates of integration
@@ -175,7 +181,7 @@ namespace Dune
     }
 
   protected:
-    /*! \brief obtain the actual implementation of the quadrature
+    /** \brief obtain the actual implementation of the quadrature
      *
      *  \note This method may only be used in derived classes.
      *
@@ -189,7 +195,8 @@ namespace Dune
 
 
 
-  //! \copydoc Dune::ElementIntegraitonPointList
+  /** \copydoc Dune::ElementIntegrationPointList
+   */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
   {
@@ -248,7 +255,7 @@ namespace Dune
     mutable CoordinateType dummy_;
     
   public:
-    /*! \brief constructor
+    /** \brief constructor
      *
      *  \param[in]  gridPart      grid partition (a dummy here)
      *  \param[in]  intersection  intersection iterator
@@ -273,7 +280,7 @@ namespace Dune
     {
     }
     
-    /*! \brief constructor
+    /** \brief constructor
      *
      *  \param[in]  intersection  intersection iterator
      *  \param[in]  order         desired order of the quadrature
@@ -296,7 +303,7 @@ namespace Dune
     {
     }
    
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
      */
@@ -309,44 +316,51 @@ namespace Dune
     {
     }
     
-    //! \copydoc Dune::IntegrationPointList::nop
+    /** \copydoc Dune::IntegrationPointList::nop
+     */
     int nop () const
     {
       return quad_.nop();
     }
 
-    //! \copydoc Dune::IntegrationPointList::point
+    /** \copydoc Dune::IntegrationPointList::point
+     */
     const CoordinateType &point ( size_t i ) const
     {
       dummy_ = referenceGeometry_.global( quad_.point( i ) );
       return dummy_;
     }
 
-    //! \copydoc Dune::ElementIntegrationPointList::localPoint
+    /** \copydoc Dune::ElementIntegrationPointList::localPoint
+     */
     const LocalCoordinateType &localPoint ( size_t i ) const
     {
       return quad_.point( i );
     }
 
-    //! \copydoc Dune::IntegrationPointList::id
+    /** \copydoc Dune::IntegrationPointList::id
+     */
     size_t id () const
     {
       return quad_.id();
     }
 
-    //! \copydoc Dune::IntegrationPointList::order
+    /** \copydoc Dune::IntegrationPointList::order
+     */
     int order () const
     {
       return quad_.order();
     }
 
-    //! \copydoc Dune::IntegrationPointList::geometry
+    /** \copydoc Dune::IntegrationPointList::geometry
+     */
     GeometryType geometry () const
     {
       return quad_.geo();
     }
 
-    //! \copydoc Dune::ElementIntegrationPointList::elementGeometry
+    /** \copydoc Dune::ElementIntegrationPointList::elementGeometry
+     */
     GeometryType elementGeometry () const
     {
       return elementGeometry_;
@@ -359,7 +373,7 @@ namespace Dune
       return faceNumber_;
     }
 
-    /*! \brief obtain the actual implementation of the quadrature
+    /** \brief obtain the actual implementation of the quadrature
      *
      *  \note This method may only be used in derived classes.
      *
