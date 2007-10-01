@@ -3,14 +3,10 @@
 
 //- Dune includes 
 #include <dune/common/typetraits.hh>
+#include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
-
-// double feature only works in serial runs 
-//#if HAVE_MPI == 0
-//#define DOUBLE_FEATURE 
-//#endif
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
@@ -26,6 +22,11 @@
 #include <dune/fem/space/common/arrays.hh>
 
 #include "dgmatrixsetup.hh"
+
+// double feature only works in serial runs 
+//#if HAVE_MPI == 0
+#define DG_DOUBLE_FEATURE 
+//#endif
 
 namespace Dune {
 /*! @ingroup EllipticOperator
@@ -292,8 +293,10 @@ namespace Dune {
       rhs.clear();
 
       // build matrix and rhs 
+      Timer timer; 
       this->compute( arg, rhs );
       matrixAssembled_ = true;
+      std::cout << "Setup of Matrix took " << timer.elapsed() << " sec.\n";
 
       // create pre-condition matrix if activated 
       matrixObj_.createPreconditionMatrix();
@@ -539,11 +542,13 @@ namespace Dune {
           EntityPointerType neighEp = nit.outside();
           EntityType& nb = *neighEp;
 
-#ifdef DOUBLE_FEATURE
+#ifdef DG_DOUBLE_FEATURE
+          // get partition type 
+          const bool nonInterior = 
+            ( nb.partitionType() != InteriorEntity );
           // only once per intersection or when outside is not interior 
           if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
-              // only working for serial runs 
-              || ( nb.partitionType() != InteriorEntity )
+              || nonInterior
             )
 #endif
           {
@@ -562,7 +567,11 @@ namespace Dune {
               // apply neighbor part 
               applyLocalNeighbor(nit,en,nb,volQuad,
                     faceQuadInner,faceQuadOuter, 
-                    bsetEn,matrixEn);
+                    bsetEn,matrixEn
+#ifdef DG_DOUBLE_FEATURE
+                    , ! nonInterior 
+#endif
+                    );
             }
             else 
             {
@@ -585,7 +594,11 @@ namespace Dune {
               applyLocalNeighbor(nit,en,nb,volQuad,
                     nonConformingFaceQuadInner,
                     nonConformingFaceQuadOuter, 
-                    bsetEn,matrixEn);
+                    bsetEn,matrixEn
+#ifdef DG_DOUBLE_FEATURE
+                    , ! nonInterior 
+#endif
+                    );
             }
           }
         } // end if neighbor 
@@ -779,7 +792,11 @@ namespace Dune {
                             const QuadratureImp & faceQuadInner, 
                             const QuadratureImp & faceQuadOuter, 
                             const BaseFunctionSetType & bsetEn, 
-                            LocalMatrixType & matrixEn) const
+                            LocalMatrixType & matrixEn
+#ifdef DG_DOUBLE_FEATURE
+                            , const bool interior 
+#endif
+                            ) const
     {
       const int numDofs = bsetEn.numBaseFunctions();
 
@@ -803,7 +820,7 @@ namespace Dune {
       // create matrix handles for neighbor 
       LocalMatrixType matrixNb = matrixObj_.localMatrix( en, nb );
      
-#ifdef DOUBLE_FEATURE
+#ifdef DG_DOUBLE_FEATURE
       // create matrix handles for neighbor 
       LocalMatrixType enMatrix = matrixObj_.localMatrix( nb, en ); 
       
@@ -827,7 +844,7 @@ namespace Dune {
         // integration element factor 
         const double intelFactor = faceQuadInner.weight(l); 
         const double intel = faceVol * intelFactor; 
-#ifdef DOUBLE_FEATURE
+#ifdef DG_DOUBLE_FEATURE
         // use opposite signs here
         const double outerIntel = -faceVol * faceQuadOuter.weight(l); 
         // intel switching between bilinear from B_+ and B_-  
@@ -920,37 +937,42 @@ namespace Dune {
 
                 matrixNb.add( k , j , valRight );
               }
-#ifdef DOUBLE_FEATURE 
-              // view from outer entity nb 
-              // v^+ * (grad w^+  + grad w^-)
+#ifdef DG_DOUBLE_FEATURE 
+              // this part should only be calculated if neighboring
+              // entity has partition type interior 
+              if( interior ) 
               {
-                numericalFlux2(phiNeigh_[k] , tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
+                // view from outer entity nb 
+                // v^+ * (grad w^+  + grad w^-)
+                {
+                  numericalFlux2(phiNeigh_[k] , tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
 
-                RangeFieldType valLeft = resultLeft[0];
-                valLeft *= -outerIntel;
+                  RangeFieldType valLeft = resultLeft[0];
+                  valLeft *= -outerIntel;
 
-                nbMatrix.add( k , j , valLeft );
+                  nbMatrix.add( k , j , valLeft );
 
-                RangeFieldType valRight = resultRight[0];
-                valRight *= -outerIntel;
+                  RangeFieldType valRight = resultRight[0];
+                  valRight *= -outerIntel;
 
-                enMatrix.add( k , j , valRight );
-              }
+                  enMatrix.add( k , j , valRight );
+                }
 
-              // view from outer entity nb 
-              // v^+ * (grad w^+  + grad w^-)
-              {
-                numericalFlux(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
+                // view from outer entity nb 
+                // v^+ * (grad w^+  + grad w^-)
+                {
+                  numericalFlux(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
 
-                RangeFieldType valLeft = resultLeft;
-                valLeft *= outerBilinIntel;
+                  RangeFieldType valLeft = resultLeft;
+                  valLeft *= outerBilinIntel;
 
-                nbMatrix.add( k , j , valLeft );
+                  nbMatrix.add( k , j , valLeft );
 
-                RangeFieldType valRight = resultRight;
-                valRight *= outerBilinIntel;
+                  RangeFieldType valRight = resultRight;
+                  valRight *= outerBilinIntel;
 
-                enMatrix.add( k , j , valRight );
+                  enMatrix.add( k , j , valRight );
+                }
               }
 #endif
             }
@@ -988,7 +1010,7 @@ namespace Dune {
                 matrixNb.add( k , j , valRight );
               }
               
-#ifdef DOUBLE_FEATURE
+#ifdef DG_DOUBLE_FEATURE
               // view from outer entity nb
               {
                 numericalFluxStab(phiNeigh_j, phiEn , resultLeft, resultRight);
@@ -1098,6 +1120,6 @@ namespace Dune {
     bool notBabuskaZlamal_;
     bool betaNotZero_;
   };
-#undef DOUBLE_FEATURE  
+#undef DG_DOUBLE_FEATURE  
 } // end namespace Dune
 #endif
