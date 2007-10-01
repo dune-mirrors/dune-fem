@@ -21,4 +21,6 @@ misc_HEADERS = test.cc \
 							 double_inline.hh \
 						   adaptiveindexmapper.hh \
 							 adaptiveindexmapper_inline.hh \
-               nonconformitylevel.hh
+               nonconformitylevel.hh \
+               femtuples.hh \
+               utility.hh
