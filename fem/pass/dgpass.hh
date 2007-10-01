@@ -14,6 +14,8 @@
 #ifndef DUNE_DGPASS_HH
 #define DUNE_DGPASS_HH
 
+#include <dune/fem/misc/utility.hh>
+
 #include "pass.hh"
 #include "selection.hh"
 #include "discretemodel.hh"
