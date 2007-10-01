@@ -2,6 +2,7 @@
 #define DUNE_DGADAPTIVELEAFINDEXSET_HH
 
 //- Dune includes 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/defaultindexsets.hh>
 
 //- local includes 
@@ -34,20 +35,25 @@ public:
   enum { ncodim = GridType::dimension + 1 };
 
   template <class CodimLeafSet,class HIndexSet, int codim>
-  struct SubIndex
+  struct Index
   {
     template <class EntityType> 
-    static int subIndex(CodimLeafSet & lset, const HIndexSet & hset, const EntityType & en) 
+    inline static int index(const CodimLeafSet & lset, 
+                               const HIndexSet & hset, 
+                               const EntityType & en) 
     {
+      DUNE_THROW(NotImplemented,"DGAdaptiveLeafIndexSet does not support indices for higher codimension!");
       return 0;
     }
   };
-  
+
   template <class CodimLeafSet,class HIndexSet>
-  struct SubIndex<CodimLeafSet,HIndexSet,0>
+  struct Index<CodimLeafSet,HIndexSet,0>
   {
     template <class EntityType> 
-    static int subIndex(CodimLeafSet & lset, const HIndexSet & hset, const EntityType & en) 
+    inline static int index(const CodimLeafSet & lset, 
+                               const HIndexSet & hset, 
+                               const EntityType & en) 
     {
       return lset.index( hset.index( en ) );
     }
@@ -146,8 +152,7 @@ public:
     enum { codim = EntityType::codimension };
     // this IndexWrapper provides specialisations for each codim 
     // see this class above 
-    assert( codim == 0 ); // only set for codim 0 
-    return codimLeafSet_.index( hIndexSet_.index( en ) ) ;
+    return Index<CodimIndexSetType,HIndexSetType,codim>::index(codimLeafSet_,hIndexSet_,en);
   }
   
   // see specialisation for codim 0 below 
@@ -157,7 +162,7 @@ public:
   {
     // this IndexWrapper provides specialisations for each codim 
     // see this class above 
-    return SubIndex<CodimIndexSetType,HIndexSetType,cd>::subIndex(codimLeafSet_,hIndexSet_,en);
+    return Index<CodimIndexSetType,HIndexSetType,cd>::index(codimLeafSet_,hIndexSet_,en);
   }
 
   //! \brief return size of grid entities per level and codim 
@@ -382,10 +387,7 @@ public:
   template <int codim, class EntityType>
   int index (const EntityType & en, int num) const
   {
-    assert( codim == 0 );
-    // make sure that requested index was generated before 
-    assert( codimLeafSet_.index( hIndexSet_.index( en )) >= 0 );
-    return codimLeafSet_.index( hIndexSet_.index( en )); 
+    return Index<CodimIndexSetType,HIndexSetType,codim>::index(codimLeafSet_,hIndexSet_,en);
   }
  
   //! \brief return number of holes of the sets indices 
