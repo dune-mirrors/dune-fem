@@ -4,15 +4,40 @@
 #include <dune/fem/quadrature/cachequad.hh>
 // #include <dune/grid/utility/twistutility.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/function/common/discretefunction.hh>
 namespace Dune 
 {
 
 struct L2ProjectionImpl
 {
+  template <int dummy, bool isDiscreteFunction> 
+  struct ProjectChooser
+  {
+    template <class FunctionImp, class DiscreteFunctionImp>
+    static void project(const FunctionImp& f, 
+                        DiscreteFunctionImp& discFunc,
+                        int polOrd) 
+    {
+      L2ProjectionImpl::projectFunction(f, discFunc, polOrd);
+    }
+  };
+
+  template <int dummy> 
+  struct ProjectChooser<dummy,true>
+  {
+    template <class FunctionImp, class DiscreteFunctionImp>
+    static void project(const FunctionImp& f, 
+                        DiscreteFunctionImp& discFunc,
+                        int polOrd) 
+    {
+      L2ProjectionImpl::projectDiscreteFunction(f, discFunc, polOrd);
+    }
+  };
+
   template <class FunctionImp, class DiscreteFunctionImp>
   static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc, int polOrd_ = -1) 
   {
-    projectFunction(f,discFunc);
+    ProjectChooser<0, Conversion<FunctionImp, IsDiscreteFunction> ::exists > :: project(f,discFunc,polOrd_);
   }
 
   template <class FunctionImp, class DiscreteFunctionImp>
