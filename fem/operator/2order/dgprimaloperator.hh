@@ -293,10 +293,10 @@ namespace Dune {
       rhs.clear();
 
       // build matrix and rhs 
-      Timer timer; 
+      //Timer timer; 
       this->compute( arg, rhs );
       matrixAssembled_ = true;
-      std::cout << "Setup of Matrix took " << timer.elapsed() << " sec.\n";
+      //std::cout << "Setup of Matrix took " << timer.elapsed() << " sec.\n";
 
       // create pre-condition matrix if activated 
       matrixObj_.createPreconditionMatrix();
