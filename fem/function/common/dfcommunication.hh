@@ -1,13 +1,10 @@
 #ifndef DUNE_DFCOMMUNICATION_HH
 #define DUNE_DFCOMMUNICATION_HH
 
-#include <dune/common/tuples.hh>
-#include <dune/common/utility.hh>
-#include <dune/common/typetraits.hh>
+#include <dune/fem/misc/utility.hh>
 //- Dune includes 
 
 #include <dune/grid/common/datahandleif.hh>
-
 
 namespace Dune {
 
