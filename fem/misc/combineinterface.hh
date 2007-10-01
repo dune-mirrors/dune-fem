@@ -1,8 +1,8 @@
-#undef HAVE_TR1_ARRAY 
-#undef HAVE_TR1_TRAITS 
-#undef HAVE_TR1_TUPLE
+#ifndef DUNE_COMBINEINTERFACE_HH
+#define DUNE_COMBINEINTERFACE_HH
 
-#include <dune/common/tuples.hh>
+#include <dune/fem/misc/femtuples.hh>
+
 namespace Dune {
 /*! @addtogroup InterfaceHelper
     A general strategy for combining up to nine instances of an 
@@ -249,4 +249,6 @@ struct CombineInterface<CI,T1,T2,Nil,Nil,Nil,Nil,Nil,Nil,Nil>
 };
 // *******************************************************
 // *******************************************************
-}
+
+} // end namespace Dune 
+#endif
