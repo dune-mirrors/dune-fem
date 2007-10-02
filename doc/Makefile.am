@@ -1,5 +1,3 @@
-# $Id: Makefile.am 4908 2007-04-18 09:12:01Z christi $
-
 # also build these sub directories
 SUBDIRS = doxygen
 
