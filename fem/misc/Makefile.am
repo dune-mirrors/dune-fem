@@ -23,4 +23,5 @@ misc_HEADERS = test.cc \
 							 adaptiveindexmapper_inline.hh \
                nonconformitylevel.hh \
                femtuples.hh \
-               utility.hh
+               utility.hh \
+               gridwidth.hh 
