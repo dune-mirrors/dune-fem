@@ -1,11 +1,9 @@
-# $Id: Makefile.am 4864 2007-03-17 20:43:51Z christi $
-
+# if documentation was enabled 
 if BUILD_DOCS
   DOXYGENTAG = doxygen-tag 
   WHAT = # bestpractice.html
   DOXYGEN_HTML = html 
   DOXYGEN_DIST = html-dist
-endif
 
 DISTCLEANFILES = doxygen.log doxygen-tag doxygen.out
 
@@ -15,6 +13,7 @@ all: $(WHAT) $(DOXYGEN_HTML)
 BASEDIR=../..
 CURDIR=doc/doxygen
 EXTRAINSTALL = doxygen.log
+
 # EXTRAINSTALL in the html subdirectory
 DOXYGENINSTALL = *.html *.css *.png *.gif
 
@@ -38,7 +37,8 @@ EXTRA_DIST = $(WHAT) $(DOXYGEN_DIST) $(DOXYGENHEADER) doxy-footer.html $(PAGES)
 doxygendir = $(datadir)/doc/dune-fem/doxygen
 doxygen_DATA = $(WHAT)
 
-install-data-local: html-dist
+
+install-data-local: $(DOXYGEN_DIST)
 	$(mkinstalldirs) $(DESTDIR)/$(doxygendir); \
 	list="$(srcdir)/html-dist/*.html $(srcdir)/html-dist/*.css $(srcdir)/html-dist/*.png $(srcdir)/html-dist/*.gif"; \
 	for p in $$list; do \
@@ -105,5 +105,8 @@ clean-local:
 	rm -rf latex *~
 
 CLEANFILES = $(WHAT) $(DOXYGENTAG) $(DOXYGENHEADER)
+
+# end BUILD_DOCS
+endif
 
 include $(top_srcdir)/am/global-rules
