@@ -11,7 +11,7 @@ protected:
 public:  
   virtual ~DataFunctionIF() {}
   // factor 
-  virtual Field factor() const = 0;
+  virtual Field factor(int i, int j) const = 0;
   // right hand side 
   virtual Field rhs  (const DomainField x[dim]) const = 0;
   // exact solution 
@@ -26,7 +26,10 @@ public:
   virtual void neumann(const DomainField x[dim], Field grad[dim]) const 
   {
     gradExact(x,grad);
-    for(int i=0; i<dim; ++i) grad[i] *= factor();
+    for(int i=0; i<dim; ++i) 
+    {
+      grad[i] *= factor(0,0);
+    }
   }
 };
 
@@ -45,7 +48,7 @@ public:
     //assert(dim == 2);
   }
 
-  virtual Field factor () const { return factor_; }
+  virtual Field factor (int i, int j) const { return factor_; }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -92,7 +95,7 @@ public:
     //assert(dim == 2);
   }
 
-  virtual Field factor () const { return factor_; }
+  virtual Field factor (int i, int j) const { return factor_; }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -140,7 +143,7 @@ public:
     assert(dim == 2);
   }
 
-  virtual Field factor () const { return factor_; }
+  virtual Field factor (int i, int j) const { return factor_; }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -189,7 +192,7 @@ public:
     assert(dim == 2);
   }
 
-  virtual Field factor () const { return factor_; }
+  virtual Field factor (int i, int j) const { return factor_; }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -260,7 +263,7 @@ public:
     assert(dim == 2);
   }
 
-  virtual Field factor () const { return factor_; }
+  virtual Field factor (int i, int j) const { return factor_; }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -289,4 +292,5 @@ public:
     return true; 
   }
 };
+
 #endif

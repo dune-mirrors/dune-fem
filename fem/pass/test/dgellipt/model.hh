@@ -11,6 +11,7 @@ using namespace Dune;
 #include <dune/fem/io/file/asciiparser.hh>
 
 #include "problem.cc"
+#include "benchmark.cc"
 
 // include function space
 #include <dune/fem/space/common/functionspace.hh>
@@ -137,6 +138,14 @@ public:
     {
       return new RiviereProblem<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
+    if( problem == 6 ) 
+    {
+      return new BenchMark_1<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 7 ) 
+    {
+      return new BenchMark_1_2<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
 
     return 0;
   }
@@ -180,7 +189,13 @@ public:
                  const FaceDomainType &x ,
                  GradRangeType & ret) const
   {
-    ret = problem().factor();
+    for(int i=0; i<dimDomain; ++i)
+    {
+      for(int j=0; j<dimRange; ++j)
+      {
+        ret[i][j] = problem().factor(i,j);
+      }
+    }
     return ;
   }
 
@@ -189,10 +204,12 @@ public:
                  const FaceDomainType &x, 
                  GradJacobianRangeType & ret) const
   {
-    ret = 0.0; 
     for(int i=0; i<dimGradRange; ++i) 
     {
-      ret[i][i] = problem().factor();
+      for(int j=0; j<dimGradRange; ++j) 
+      {
+        ret[i][j] = problem().factor(i,j);
+      }
     }
     return ;
   }
@@ -202,7 +219,13 @@ public:
                  const FaceDomainType &x, 
                  JacobianRangeType & ret) const
   {
-    ret = problem().factor(); 
+    for(int i=0; i<dimDomain; ++i)
+    {
+      for(int j=0; j<dimRange; ++j)
+      {
+        ret[i][j] = problem().factor(i,j);
+      }
+    }
     return ;
   }
 
