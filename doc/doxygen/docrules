@@ -1,116 +1,114 @@
 /**
 <!---------------------------------------------->
-\page DocRules Some basic remark concerning documentation
+\page DocRules Some Basic Remarks Concerning Documentation
 <!---------------------------------------------->
-In the following some remarks on how to add to the
-doxygen documentation of dune-fem. 
-Details on doxygen can be found on the doxygen
-homepage (see link at bottom of each page).
-Warning concerning faullty documentation are
-recored in dune-fem/doc/doxygen.out this file
-should be empty...
+In the following some remarks on how to add to the Doxygen documentation of
+dune-fem. Details on doxygen can be found on the Doxygen homepage (see link at
+bottom of each page). Warnings concerning faullty documentation are recorded in
+dune-fem/doc/doxygen.out. So this file should be empty...
 
-- Mathematical formulas can be inserted into the
-  documentation quite easily using a latex style
-  notation.
-- References to other classes or groups are
-  automatically inserted if the name of the
-  class or group is used in the text. \n
-  Specific references can be added using
-  the \\ref command followed by the text
-  which should be highlighted using quotes ("..."). 
-- The documentation of a class, typedefs, members
-  etc. always proceed the actual statement in the
-  code. 
-- For deprecated members the command 
-  \\deprecated should be included in the documentation.
-  For deprecated files the \\depricated command can
-  be inserted into a file documentation.
-  All thus marked block will be linked into a related
-  page.
-- A new implementation can be marked and thus be
-  easier to find by adding \\newimplementation
-  into the documentation. Again a related page
-  is generated linking all new classes.
+- Mathematical formulas can be inserted into the documentation quite easily
+  using a latex style notation.
+- References to other classes or groups are automatically inserted if the name
+  of the class or group is used in the text.\n
+  Specific references can be added using the \\ref command followed by the text
+  which should be highlighted using quotes ("...").
+- The documentation of classes, typedefs, members, etc. always preceed the
+  actual statement in the code.
+- For deprecated members the command \\deprecated should be included in the
+  documentation. For deprecated files the \\deprecated command can be inserted
+  into a file documentation. All thus marked blocks will be linked into a
+  related page.
+- A new implementation can be marked as such by adding \\newimplementation to
+  the documentation. This helps others to get an overview over new additions.
+  Again, a related page linking all new classes is generated.
 .
 
-The following are of course only guidlines - please
-add to them.
-<!---------------------------------------------->
-\section DocGroups Grouping documentation
-All groups are defined in the fem/modules 
-file using \\defgroup; subgrouping is done
-by adding \\ingroup.
-The order of these group definitions determins
-the order in which the groups appear in the modules
-page of the documentation.
-Only the major groups which have no obvious class
-attached to them are documented in the modules file.
-All others are just declared.
-Their documentation should be in some obvious header
-file for example before the namespace Dune is oppened
-or directly following.  
-Proceed the documentation by
-\\addtogroup Groupname 
+The following are of course only guidlines - please add to them.
 
-If a group combines all implementations for
-a spesific interface then the documentation for
-the group should be in the header containing the
-interface class and the documentation should 
-refere to this interface class, e.g.,
-\\remark The interface is defined through the class InterfacClass
-
-Class that should appear direcly on the page with
-the group documentation, e.g., all implementation
-classes (if they do not belong to a subgroup)
-should have a \\ingroup GroupName in the
-documentation of the class.
-It probably better to have a very short \\brief 
-documentation for these classes since this
-appears on the module page.
-After the \\brief statements a detailed documentation
-follows after a blank line.
-
-Important classes - either from the user
-or the implementers point of view - that just to seem to fit anywhere can
-be added to the group HelperClasses or else 
-not included in any group; they will always
-appear in the class list of the documentation.
-
-Depricated classes or methods should be 
-tagged with a \\depricated command in the documentation
-followed by a short remark on the reason for
-removing this part of the code or alternatives 
-enclosed in quotes.
-<!---------------------------------------------->
 
 <!---------------------------------------------->
-\section DocInterfaces Documentation of interface classes
+\section DocGroups Grouping Documentation
 <!---------------------------------------------->
-All methods and typedefs should be documented using \\brief.
-For the methods the arguments and the return type
-should be documented using
+All groups are defined in the fem/modules file using \\defgroup; subgrouping is
+done by adding \\ingroup.
+
+The order of these group definitions determines the order in which the groups
+appear in the "Modules" page of the documentation. Only the major groups which
+have no obvious class attached to them are documented in the modules file. All
+others are just declared. Their documentation should be in some obvious header
+file for example before the namespace Dune is oppened or directly following.
+Preceed the documentation by
+\verbatim
+\addtogroup Groupname 
+\endverbatim
+
+If a group combines all implementations for a spesific interface then the
+documentation for the group should be in the header file containing the
+interface class and the documentation should refer to this interface class,
+e.g.,
+\verbatim
+\remark The interface is defined through the class InterfaceClass
+\endverbatim
+
+Classes that should appear direcly on the page with the group documentation,
+e.g., all implementation classes (if they do not belong to a subgroup) should
+have a \\ingroup GroupName in the documentation of the class. It's probably
+better to have a very short \\brief documentation for these classes since this
+appears on the module page. After the \\brief statements, a detailed
+documentation should follow (after a blank line).
+
+Important classes - either from the user or the implementers point of view
+- that just don't seem to fit anywhere can be added to the group HelperClasses
+or not included in any group (they will always appear in the "Classes" list of
+the documentation).
+
+Depricated classes or methods should be tagged with a \\deprecated command in
+the documentation followed by a short remark on the reason for removing this
+part of the code or alternatives enclosed in quotes.
+
+
+<!---------------------------------------------->
+\section DocInterfaces Documentation of Interface Classes
+<!---------------------------------------------->
+All methods and typedefs should be documented using \\brief. For methods, the
+arguments and the return type should be documented using
 - \\param[in] for input parameters,
 - \\param[out] for return value parameters,
-- \\return for the return value.
+- \\return (or \\returns) for the return value.
 
-For the typedefs a reference to a corresponding
-interface class for this type should be included -
-if one exists. For example using the \\ref
-command:
-\\ref MappingInterface "mapping type".
+For the typedefs a reference to a corresponding interface class for this type
+should be included - if one exists. This could be done by, for example, using
+the \\ref command:
+\verbatim
+\ref MappingInterface "mapping type".
+\endverbatim
 
-For methods which are implemented in a corresponding
-default class the command \\hasdefault should be
-added at the end of the member documentation.
-
+For methods which are implemented in a corresponding default class the command
+\\hasdefault should be added at the end of the member documentation.
 
 
 <!---------------------------------------------->
-\section DocImplementation Documentation of implementation classes
+\section DocImplementation Documentation of Implementation Classes
 <!---------------------------------------------->
-By using the copydoc command the documentation
+By using the \\copydoc command the documentation
 from the interface class can be repeated in the
 implementation class:
-//! \\brief \@copydoc KlassenNameOhneTemplates::funktionOhneParameter 
+\verbatim
+/** \copydoc KlassenNameOhneTemplates::funktionOhneParameter
+ */
+\endverbatim
+
+If the function has been overloaded, the complete function declaration must be
+given, like this:
+\verbatim
+/** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
+ */
+\endverbatim
+Please note that the trailing "const" is important (otherwise Doxygen will look
+for a non-nonst version of the member).
+
+\note Doxygen is quite picky about spaces within references. They should be
+      left out whenever possible (see the above example). Moreover, line breaks
+      within references are disallowed.
 */
