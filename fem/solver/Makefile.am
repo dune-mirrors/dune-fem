@@ -7,7 +7,8 @@ noinst_LTLIBRARIES = libsolver.la
 
 # construct only from sub-libraries
 libsolver_la_SOURCES =
-libsolver_la_LIBADD = ode/libodesolver.la
+libsolver_la_LIBADD  = 
+#libsolver_la_LIBADD = ode/libodesolver.la
 
 solverdir =  $(includedir)/dune/fem/solver
 solver_HEADERS =  istlsolver.hh rungekutta.hh odesolver.hh \

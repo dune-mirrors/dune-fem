@@ -1,18 +1,26 @@
 #ifndef PARDG_INCLUDE_HH
 #define PARDG_INCLUDE_HH
 
-//#ifdef ENABLE_PARDG 
+#ifdef ENABLE_PARDG 
 #define USE_PARDG_ODE_SOLVER 
-//#endif
+#endif
 
 // if the preprocessor variable is defined, the ODE Solver from Dennis
 // are used.
 #ifdef USE_PARDG_ODE_SOLVER
 
+// if pardg library was found 
+#ifdef ENABLE_PARDG 
+// timer has no namespace therefore we put here 
+namespace pardg {
+#include <timer.hpp>
+}
+#else 
 // timer has no namespace therefore we put here 
 namespace pardg {
 #include "ode/timer.hpp"
 }
+#endif
 
 // include pardg communicator 
 #include "ode/communicator.hpp"
