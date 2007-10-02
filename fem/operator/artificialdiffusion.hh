@@ -88,7 +88,7 @@ public:
     DUNE_THROW(InvalidStateException,"Aborted in ArtificialDiffusion kappa");
   }
    
-  static double  calculate(DiscreteFunctionType &discFunc, 
+  static double  calculate(const DiscreteFunctionType &discFunc, 
                            DiffusionFunctionType &diffusion) 
   {
     return Calc<0,DiscreteFunctionSpaceType::polynomialOrder>::doCalc(discFunc,diffusion);
