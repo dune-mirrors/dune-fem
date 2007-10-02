@@ -15,7 +15,7 @@
 #include <string>
 using namespace std;
 
-
+using namespace Dune;
 #include "models.hh"
 #include "advectdiff.hh"
 
