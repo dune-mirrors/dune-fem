@@ -6,8 +6,11 @@
 //- Dune includes
 #include <dune/common/fvector.hh>
 
+#define USE_UG_QUADRATURES 
 //- local includes 
+#ifdef USE_UG_QUADRATURES
 #include "ugquadratures.hh"
+#endif
 
 // include pardg quadratures 
 #ifdef ENABLE_PARDG 
@@ -19,6 +22,7 @@ namespace Dune {
   //! Adapter to the quadratures defined by UG.
   //! There is a 1-1 relationship between UGSimplexPointsAdapter object and
   //! UG quadrature implementation. 
+#ifdef USE_UG_QUADRATURES
   template <int dim>
   class UGSimplexPointsAdapter {
   public:
@@ -85,7 +89,7 @@ namespace Dune {
     const UGQuadratureType* quad_;
     double refVol_;
   };
-
+#endif
 
   //! check this implementation, does not work with 
   //! cached quadrature 

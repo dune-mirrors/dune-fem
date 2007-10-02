@@ -22,7 +22,9 @@
 */
 
 // use quadratures from dune-grid 
-//#define USE_DUNE_QUADRATURES
+#ifndef ENABLE_PARDG 
+#define USE_DUNE_QUADRATURES
+#endif
 
 // do not use ALBERTA Quadratures at the moment 
 #undef HAVE_ALBERTA_FOUND
