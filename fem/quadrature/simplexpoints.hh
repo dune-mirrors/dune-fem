@@ -6,7 +6,7 @@
 //- Dune includes
 #include <dune/common/fvector.hh>
 
-#define USE_UG_QUADRATURES 
+//#define USE_UG_QUADRATURES 
 //- local includes 
 #ifdef USE_UG_QUADRATURES
 #include "ugquadratures.hh"
