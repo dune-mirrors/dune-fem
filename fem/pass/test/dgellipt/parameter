@@ -32,7 +32,7 @@ DisplayAll: 0
 
 # MacroTriang for 2d simul 
 Grid2: ./grid2d.dgf
-Grid3: ./one.dgf
+Grid3: ./one3d.dgf
 #Grid: ./one3d.dgf
 #Grid: ./corner2d.dgf
 #Grid: ./fuel.dgf
