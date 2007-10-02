@@ -38,7 +38,7 @@ namespace Dune
     using BaseType :: addQuadraturePoint;
 
   public:
-    //! \copydoc Dune::QuadratureImp::CoordinateType
+    /** \copydoc Dune::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   protected:

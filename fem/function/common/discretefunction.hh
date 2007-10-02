@@ -172,18 +172,23 @@ namespace Dune{
     }
 
     /** \brief set all degrees of freedom to zero
-    */
-    void clear()
+     */
+    inline void clear()
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().clear());
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
     }
 
-    /** \brief returns total number of degrees of freedom, i.e. size of discrete function space 
-        \return total number of dofs 
-    */
-    int size() const 
+    /** \brief obtain total number of DoFs
+     *
+     *  The number of DoFs (degrees of freedom) can also be seen as the size
+     *  of the discrete function, i.e., the size of the vector that forms this
+     *  discrete funciton.
+     *
+     *  \returns total number of DoFs for this discrete function
+     */
+    inline int size() const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().size()); 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
       return asImp().size();
     }
 
@@ -222,12 +227,16 @@ namespace Dune{
     }
 
     /** \brief axpy operation
-        \param[in] g discrete function that is added 
-        \param[in] c scalar value to scale 
-    */
-    void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c)
+     *
+     *  Adds s * g to this discrete function.
+     * 
+     *  \param[in]  g  discrete function to add
+     *  \param[in]  s  scalar value to scale g with
+     */
+    inline void addScaled( const DiscreteFunctionType &g,
+                           const RangeFieldType &s )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().addScaled(g,c));
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addScaled( g, s) );
     }
 
     /** \brief Evaluate a scalar product of the dofs of two DiscreteFunctions
@@ -499,10 +508,12 @@ namespace Dune{
       return true;
     }
     
-    /** \brief @copydoc DiscreteFunctionInterface::clear */
+    /** \copydoc Dune::DiscreteFunctionInterface::clear
+     */
     void clear();
 
-    /** \brief @copydoc DiscreteFunctionInterface::assign */
+    /** \copydoc Dune::DiscreteFunctionInterface::assign
+     */
     inline DiscreteFunctionType &assign ( const RangeFieldType s )
     {
       const DofIteratorType end = this->dend();
@@ -511,8 +522,9 @@ namespace Dune{
       return asImp();
     }
 
-    /** \brief @copydoc DiscreteFunctionInterface::addScaled */
-    void addScaled(const DiscreteFunctionType& g, const RangeFieldType& c);
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled
+     */
+    void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
 
     /** \brief @copydoc DiscreteFunctionInterface::scalarProductDofs */
     RangeFieldType scalarProductDofs(const DiscreteFunctionType& g) const;

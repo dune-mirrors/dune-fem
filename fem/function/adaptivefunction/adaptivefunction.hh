@@ -226,34 +226,38 @@ namespace Dune
     ThisType &operator= ( const ThisType &other );
     
   public:
-      /** \brief @copydoc DiscreteFunctionDefault::assign */ 
-    void assign(const ThisType& g)
+    /** \copydoc Dune::DiscreteFunctionDefault::assign
+     */
+    inline void assign( const ThisType &g )
     {
-      Imp::assignFunction(g);
+      Imp :: assignFunction( g );
     }
 
-      /** \brief @copydoc DiscreteFunctionDefault::operator += */ 
-    ThisType& operator += (const ThisType& g)
+    /** \copydoc Dune::DiscreteFunctionDefault::operator+=
+     */ 
+    inline ThisType &operator += ( const ThisType &g )
     {
-      Imp::addFunction(g);
+      Imp :: addFunction( g );
       return *this;
     }
 
-      /** \brief @copydoc DiscreteFunctionDefault::operator -= */  
-    virtual BaseType& operator -= (const ThisType& g)
+    /** \copydoc Dune::DiscreteFunctionDefault::operator-=
+     */ 
+    virtual BaseType &operator-= ( const ThisType &g )
     {
       Imp::substractFunction(g);
       return *this;
     }
 
-      /** \brief @copydoc DiscreteFunctionDefault::addScaled */ 
-    void addScaled(const ThisType& org, const RangeFieldType& scalar)
+    /** \copydoc Dune::DiscreteFunctionDefault::addScaled
+     */
+    inline void addScaled( const ThisType &g,
+                           const RangeFieldType &s )
     {
-      Imp::addScaled(org,scalar);
+      Imp :: addScaled( g, s );
     }
 
     using Imp::clear;
-    using Imp::addScaled;
     using Imp::name;
     using Imp::size;
     using Imp::dbegin;
@@ -352,13 +356,13 @@ namespace Dune
     ~AdaptiveLocalFunction();
 
     //- Operators
-    /** \brief @copydoc LocalFunctionDefault::operator[] */
-    inline
-    DofType& operator[] (const int num);
+    /** \copydoc Dune::LocalFunctionDefault::operator[](const int num)
+     */
+    inline DofType &operator[] ( const int num );
 
-    /** \brief @copydoc LocalFunctionDefault::operator[] */
-    inline
-    const DofType& operator[] (const int num) const;
+    /** \copydoc Dune::LocalFunctionDefault::operator[](const int num) const
+     */
+    inline const DofType &operator[] ( const int num ) const;
 
     //- Methods
 
@@ -413,7 +417,8 @@ namespace Dune
                   int quadPoint,
                   JacobianRangeType& ret) const;
 
-    /** \brief @copydoc LocalFunctionDefault::baseFunctionSet */
+    /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet
+     */
     const BaseFunctionSetType& baseFunctionSet() const;
 
     /** \brief @copydoc LocalFunctionDefault::axpy */
@@ -587,10 +592,12 @@ namespace Dune
       return *this;
     }
 
-    /** \brief @copydoc DiscreteFunctionDefault::addScaled */
-    void addScaled(const ThisType& org, const RangeFieldType& scalar)
+    /** \copydoc Dune::DiscreteFunctionDefault::addScaled
+     */
+    inline void addScaled( const ThisType &g,
+                           const RangeFieldType &s )
     {
-      Imp::addScaled(org,scalar);
+      Imp :: addScaled( g, s );
     }
 
     using Imp::clear;

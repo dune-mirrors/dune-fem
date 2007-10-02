@@ -71,11 +71,11 @@ namespace Dune
     typedef FunctionSpaceTraits Traits; 
     //! type of DiscretefunctionSapce implementation (Barton-Nackman)
     typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    //! type of \ref FunctionSpaceInterface "function space" (define domain and range types)
+    //! type of \ref Dune::FunctionSpaceInterface "function space" (define domain and range types)
     typedef typename FunctionSpaceTraits::FunctionSpaceType FunctionSpaceType;
-    //! type of \ref BaseFunctionSetInterface "base function set" of this space 
+    //! type of \ref Dune::BaseFunctionSetInterface "base function set" of this space 
     typedef typename FunctionSpaceTraits::BaseFunctionSetType BaseFunctionSetType;
-    //! type of \ref DofMapperInterface "mapper" of this space 
+    //! type of \ref Dune::DofMapperInterface "DoF mapper" of this space 
     typedef typename FunctionSpaceTraits::MapperType MapperType;
     //! type of underlying \ref GridPart "grid part" 
     typedef typename FunctionSpaceTraits::GridPartType GridPartType;

@@ -75,37 +75,39 @@ namespace Dune {
     {
     }
 
-    /** \brief @copydoc BaseFunctionSetInterface::numBaseFunctions */
-    inline
-    int numBaseFunctions() const;
+    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions
+     */
+    inline int numBaseFunctions () const;
 
     // use evaluate of default implementation 
     using BaseType :: evaluate;
 
-    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
-    template <int diffOrd>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, diffOrd>& diffVar,
-                  const DomainType& xLocal,
-                  RangeType& phi) const;
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const
+     */ 
+    template< int diffOrd >
+    inline void evaluate( const int baseFunction,
+                          const FieldVector< deriType, diffOrd > &diffVariable,
+                          const DomainType &x,
+                          RangeType &phi ) const;
+#if 0
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(int baseFunct,const FieldVector<int,diffOrd> &diffVar,const DomaiNType &xLocal,RangeType &phi) const
+     */ 
+    template< int diffOrd >
+    inline void evaluate( int baseFunct,
+                          const FieldVector< int, diffOrd > &diffVar,
+                          const DomainType &xLocal,
+                          RangeType &phi ) const;
+#endif
 
-    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
-    template <int diffOrd>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, diffOrd>& diffVar,
-                  const DomainType& xLocal,
-                  RangeType& phi) const;
 
-
-    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
-    template <int diffOrd, class QuadratureType>
-    inline
-    void evaluate (int baseFunct, 
-                   const FieldVector<int, diffOrd> &diffVariable, 
-                   QuadratureType & quad, 
-                   int quadPoint, RangeType & phi) const;
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const
+     */
+    template< int diffOrd, class QuadratureType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< deriType, diffOrd > &diffVariable,
+                           const QuadratureType &quadrature,
+                           const int quadPoint,
+                           RangeType &phi ) const;
 
     /** \brief @copydoc BaseFunctionSetDefault::evaluate */ 
     template <class QuadratureType>

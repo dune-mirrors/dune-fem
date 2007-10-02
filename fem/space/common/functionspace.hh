@@ -14,21 +14,21 @@ class FunctionSpace;
 //! \brief Traits class for vector function spaces 
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
 struct VectorSpaceTraits {
-  //! \brief @copydoc FunctionSpaceInterface::DomainFieldType 
+  /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
   typedef DomainFieldImp DomainFieldType;
-  //! \brief @copydoc FunctionSpaceInterface::RangeFieldType 
+  /** \copydoc Dune::FunctionSpaceInterface::RangeFieldType */
   typedef RangeFieldImp RangeFieldType;
-  //! \brief @copydoc FunctionSpaceInterface::DomainType 
+  /** \copydoc Dune::FunctionSpaceInterface::DomainType */
   typedef FieldVector<DomainFieldImp, n> DomainType;
-  //! \brief @copydoc FunctionSpaceInterface::RangeType 
+  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
   typedef FieldVector<RangeFieldImp, m> RangeType;
-  //! \brief linear mapping type  
+  /** \brief linear mapping type */
   typedef FieldMatrix<RangeFieldImp, m, n> LinearMappingType;
-  //! \brief scalar function space type 
+  /** \brief scalar function space type */
   typedef FunctionSpace<DomainFieldImp,RangeFieldImp,n,1> ScalarFunctionSpaceType;
-  //! \brief dimension of domain vector space 
+  /** \brief dimension of domain vector space */
   enum { DimRange = m};
-  //! \brief dimension of range vector space 
+  /** \brief dimension of range vector space */
   enum { DimDomain = n };
 };
 
@@ -148,13 +148,13 @@ class MatrixMapping :
   // Implement L : VD -> VR where VR is the space of FieldMatrix<RFI,m1,m2>
   // VD is space of FieldVector<DFT,n>
  public:
-  //! \brief @copydoc FunctionSpaceInterface::DomainFieldType 
+  /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
   typedef DomainFieldImp DomainFieldType;
-  //! \brief @copydoc FunctionSpaceInterface::RangeFieldType 
+  /** \copydoc Dune::FunctionSpaceInterface::RangeFieldType */
   typedef RangeFieldImp RangeFieldType;
-  //! \brief @copydoc FunctionSpaceInterface::RangeType 
+  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
   typedef RangeMatrix<RangeFieldImp, m1,m2> RangeType;
-  //! \brief type of base class 
+  /** \brief type of base class */
   typedef FieldMatrix<RangeFieldImp,m1*m2,n> BaseType;
   //===== constructors
   /*! \brief Default constructor
@@ -183,21 +183,21 @@ class MatrixMapping :
 //! \brief Traits class for matrix valued spaces 
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
 struct MatrixSpaceTraits {
-  //! \brief @copydoc FunctionSpaceInterface::DomainFieldType 
+  /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
   typedef DomainFieldImp DomainFieldType;
-  //! \brief @copydoc FunctionSpaceInterface::RangeFieldType 
+  /** \copydoc Dune::FunctionSpaceInterface::RangeFieldType */
   typedef RangeFieldImp RangeFieldType;
-  //! \brief @copydoc FunctionSpaceInterface::DomainType 
+  /** \copydoc Dune::FunctionSpaceInterface::DomainType */
   typedef FieldVector<DomainFieldImp, n> DomainType;
-  //! \brief @copydoc FunctionSpaceInterface::RangeType 
+  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
   typedef RangeMatrix<RangeFieldImp, m1,m2> RangeType;
-  //! \brief linear mapping type  
+  /** \brief linear mapping type */
   typedef MatrixMapping<DomainFieldImp,RangeFieldImp, n, m1,m2> LinearMappingType;
-  //! \brief scalar function space type 
+  /** \brief scalar function space type */
   typedef MatrixFunctionSpace<DomainFieldImp,RangeFieldImp,n,1,1> ScalarFunctionSpaceType;
-  //! \brief dimension of domain vector space 
+  /** \brief dimension of domain vector space */
   enum { DimRange = m1 * m2};
-  //! \brief dimension of range vector space 
+  /** \brief dimension of range vector space */
   enum { DimDomain = n };
 };
 

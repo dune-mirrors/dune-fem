@@ -20,17 +20,17 @@ inline void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear()
   }
 }
 
-template <class DiscreteFunctionTraits>
-inline void DiscreteFunctionDefault<DiscreteFunctionTraits>::
-addScaled(const DiscreteFunctionType& g, const RangeFieldType& c) {
-  assert(this->size() == g.size());
-  DofIteratorType endit = this->dend();
-  ConstDofIteratorType oit = g.dbegin();
-  for (DofIteratorType it = this->dbegin(); it != endit; ++it, ++oit) 
+  template< class Traits >
+  inline void DiscreteFunctionDefault< Traits >
+    :: addScaled ( const DiscreteFunctionType &g,
+                   const RangeFieldType &s )
   {
-    (*it) += (*oit) * c;
+    assert( this->size() == g.size() );
+    const DofIteratorType end = this->dend();
+    ConstDofIteratorType git = g.dbegin();
+    for( DofIteratorType it = this->dbegin(); it != end; ++it, ++git )
+      (*it) += s * (*git);
   }
-}
 
 // scalarProductDofs
 template <class DiscreteFunctionTraits>

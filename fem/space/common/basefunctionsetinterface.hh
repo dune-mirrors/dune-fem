@@ -79,42 +79,51 @@ public:
     return asImp().numBaseFunctions();
   }
 
-  /** \brief interface method for evaluation, evaluation of jacobian, and hessian of base functions 
-      \param[in] baseFunct number of base function to evaluate 
-      \param[in] diffVariable length determines the derivative (i.e. 0 is
-             evaluate, 1 is gradient, 2 hessian, ... ) and the value
-             determines the component 
-      \param[in] x point in reference element for evaluation
-      \param[out] phi return value 
+  /** \brief evaluate a derivative of the base function
+   *
+   *  Evaluates a partial derivative of the base function. If the derivative is
+   *  of order 0, the base function itself is evaluated.
+   *  
+   *  \param[in]   baseFunction  number of base function to evaluate
+   *  \param[in]   diffVariable  vector describing the partial derivative to
+   *                             evaluate
+   *  \param[in]   x             point within reference element to evaluate the
+   *                             base function in
+   *  \param[out]  phi           return value
   */
-  template <int diffOrd>
-  void evaluate (const int baseFunct, 
-                 const FieldVector<deriType, diffOrd> &diffVariable, 
-                 const DomainType & x, 
-                 RangeType & phi ) const 
+  template< int diffOrd >
+  inline void evaluate ( const int baseFunction,
+                         const FieldVector< deriType, diffOrd > &diffVariable,
+                         const DomainType &x,
+                         RangeType &phi ) const
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-        asImp().evaluate( baseFunct, diffVariable, x, phi ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().evaluate( baseFunction, diffVariable, x, phi ) );
   }
 
-  /** \brief interface method for evaluation, evaluation of jacobian, and hessian of base functions 
-      \param[in] baseFunct number of base function to evaluate 
-      \param[in] diffVariable length determines the derivative (i.e. 0 is
-             evaluate, 1 is gradient, 2 hessian, ... ) and the value
-             determines the component 
-      \param[in] quad Quadrature 
-      \param[in] quadPoint number of quadrature point 
-      \param[out] phi return value 
+  /** \brief evaluate a derivative of the base function in a quadrature point
+   *
+   *  Evaluates a partial derivative of the base function in a quadrature
+   *  point. If the derivative is of order 0, the base function itself is
+   *  evaluated.
+   *  
+   *  \param[in]   baseFunction  number of base function to evaluate
+   *  \param[in]   diffVariable  vector describing the partial derivative to
+   *                             evaluate
+   *  \param[in]   quadrature    Quadrature to use
+   *  \param[in]   quadPoint     number of the evaluation point within the
+   *                             quadrature
+   *  \param[out]  phi           return value
   */
-  template <int diffOrd, class QuadratureImp>
-  void evaluate (const int baseFunct, 
-                 const FieldVector<deriType, diffOrd> &diffVariable, 
-                 const QuadratureImp& quad, 
-                 const int quadPoint, 
-                 RangeType & phi ) const 
+  template< int diffOrd, class QuadratureType >
+  inline void evaluate ( const int baseFunction,
+                         const FieldVector< deriType, diffOrd > &diffVariable,
+                         const QuadratureType &quadrature,
+                         const int quadPoint,
+                         RangeType &phi ) const
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-      asImp().evaluate( baseFunct, diffVariable, quad, quadPoint, phi ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi ) );
   }
 
   /** \brief return type of geometry

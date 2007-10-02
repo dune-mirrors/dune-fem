@@ -57,8 +57,13 @@ public:
     CHECK_INTERFACE_IMPLEMENTATION(asImp().newSize());
     return asImp().newSize();
   }
-  
-  //! return number of dofs on element
+ 
+  /** \brief obtain maximal number of DoFs on one entity
+   * 
+   *  \note The naming of this method is misleading since the number of DoFs on
+   *        one entity need not be constant (e.g. Lagrange base functions on a
+   *        hybrid grid).
+   */
   int numDofs () const 
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());

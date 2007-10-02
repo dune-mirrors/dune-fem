@@ -9,26 +9,27 @@ namespace Dune {
     return storage_.numBaseFunctions();
   }
 
-  template <class FunctionSpaceImp, template <class> class StorageImp>
-  template <int diffOrd>
-  inline void StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluate(int baseFunct,
-           const FieldVector<int, diffOrd>& diffVar,
-           const DomainType& xLocal,
-           RangeType& phi) const 
+  template< class FunctionSpaceImp, template< class > class StorageImp >
+  template< int diffOrd >
+  inline void StandardBaseFunctionSet< FunctionSpaceImp, StorageImp >
+    :: evaluate( const int baseFunction,
+                 const FieldVector< int, diffOrd > &diffVariable,
+                 const DomainType &x,
+                 RangeType& phi ) const
   {
-    storage_.evaluate(baseFunct, diffVar, xLocal, phi);
+    storage_.evaluate( baseFunction, diffVariable, x, phi );
   }
 
-  template <class FunctionSpaceImp, template <class> class StorageImp>
-  template <int diffOrd, class QuadratureType>
-  inline void StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  evaluate(int baseFunct,
-           const FieldVector<int, diffOrd>& diffVar,
-           QuadratureType& quad, int quadPoint,
-           RangeType& phi) const 
+  template< class FunctionSpaceImp, template< class > class StorageImp >
+  template< int diffOrd, class QuadratureType >
+  inline void StandardBaseFunctionSet< FunctionSpaceImp, StorageImp >
+    :: evaluate( const int baseFunction,
+                 const FieldVector< deriType, diffOrd > &diffVariable,
+                 const QuadratureType &quadrature,
+                 const int quadPoint,
+                 RangeType &phi ) const
   {
-    storage_.evaluate(baseFunct, diffVar, quad, quadPoint, phi);
+    storage_.evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi );
   }
 
   /*

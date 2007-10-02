@@ -264,7 +264,7 @@ namespace Dune
     typedef IntegrationPointListImp< FieldType, dim > BaseType;
 
   public:
-    //! \copydoc Dune::IntegrationPointsListImp::CoordinateType
+    /** \copydoc Dune::IntegrationPointsListImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
