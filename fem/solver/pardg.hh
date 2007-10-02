@@ -1,9 +1,9 @@
 #ifndef PARDG_INCLUDE_HH
 #define PARDG_INCLUDE_HH
 
-#ifdef ENABLE_PARDG 
+//#ifdef ENABLE_PARDG 
 #define USE_PARDG_ODE_SOLVER 
-#endif
+//#endif
 
 // if the preprocessor variable is defined, the ODE Solver from Dennis
 // are used.
