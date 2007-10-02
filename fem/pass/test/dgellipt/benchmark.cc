@@ -18,7 +18,7 @@ public:
     {
       for(int j=0; j<dim; ++j) 
       {
-        if( i == j ) factor_[i][j] = 11.5;
+        if( i == j ) factor_[i][j] = 1.5;
         else factor_[i][j] = 0.5;
       }
     }
@@ -82,7 +82,7 @@ public:
     {
       for(int j=0; j<dim; ++j) 
       {
-        if( i == j ) factor_[i][j] = 11.5;
+        if( i == j ) factor_[i][j] = 1.5;
         else factor_[i][j] = 0.5;
       }
     }
