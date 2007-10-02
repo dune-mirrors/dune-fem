@@ -15,6 +15,13 @@
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/misc/timeprovider.hh>
 
+#include <dune/fem/pass/ldgflux.hh>
+
+#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/operator/projection/l2projection.hh>
+#include <dune/fem/operator/projection/vtxprojection.hh>
+
 //*************************************************************
 namespace Dune {  
 /*! @addtogroup PassLimit
@@ -70,7 +77,7 @@ namespace Dune {
     
   public:
     LimiterDefaultDiscreteModel(const Model& mod) 
-      : model_(mod) , velocity_(0) , normal_(0) {}
+      : model_(mod) , velocity_(0) {}
 
     bool hasSource() const { return false; }
     bool hasFlux() const   { return true;  }
@@ -93,12 +100,13 @@ namespace Dune {
         gLeft  = argULeft;
         gLeft -= argURight;
         gRight = gLeft;
+        return it.integrationOuterNormal( x ).two_norm();
       }
       else 
       {
         gLeft = gRight = 0.0;
+        return 0.0;
       }
-      return 0.0;
     }
 
   protected:
@@ -112,16 +120,14 @@ namespace Dune {
     { 
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       const UType& argULeft = Element<0>::get(uLeft);
-      normal_ = it.outerNormal(x);
       model_.velocity(this->inside(),time,it.intersectionSelfLocal().global(x),
                       argULeft,velocity_);
-      return ((normal_ * velocity_) < 0);
+      return ((it.outerNormal(x) * velocity_) < 0);
     }
 
   protected:
     const Model& model_;
     mutable DomainType velocity_;
-    mutable DomainType normal_;
   };
 
 
@@ -172,6 +178,17 @@ namespace Dune {
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
     typedef DofConversionUtility< PointBased > DofConversionUtilityType;
+
+    typedef LeafGridPart< GridType > ContGridPartType; 
+
+    typedef LagrangeDiscreteFunctionSpace < typename DiscreteFunctionSpaceType
+      :: FunctionSpaceType , ContGridPartType, 1 > LagrangeSpaceType;
+
+    typedef DiscontinuousGalerkinSpace < typename DiscreteFunctionSpaceType
+      :: FunctionSpaceType , GridPartType, 0 > DG0SpaceType;
+
+    typedef AdaptiveDiscreteFunction< LagrangeSpaceType > P1FunctionType; 
+    typedef AdaptiveDiscreteFunction< DG0SpaceType > DG0FunctionType; 
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange,
@@ -192,13 +209,19 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
+      //contGridPart_( const_cast<GridType&> (gridPart_.grid()) ),
+      //lagrangeSpace_( contGridPart_ ),
+      //dg0Space_( const_cast<GridPartType&> (gridPart_)),
+      //p1Function_( "p1-func" , lagrangeSpace_ ),
+      //dg0Function_( "dg-0-func", dg0Space_ ),
       orderPower_( -((spc_.order()+1.0)/2.0)),
       dofConversion_(dimRange),
       faceQuadOrd_(spc_.order()),
       jump_(0),
       jump2_(0),
-      sqrt2_1_(1/M_SQRT2)
+      gradientFlux_(1.0,10.0)
     {
+      //dg0Function_.clear();
       // we need the flux here 
       assert(problem.hasFlux());
     }
@@ -216,6 +239,26 @@ namespace Dune {
       dest_ = &dest;
       dest_->clear();
       caller_.setArgument(*arg_);
+
+      /*
+      // get function to limit 
+      const DestinationType& U = *(Element<0>::get(*arg_));
+
+      WeightDefault<GridPartType> weight; 
+      //VtxProjectionImpl::project( U , p1Function_ , weight );
+      VtxProjectionImpl::project( dg0Function_ , p1Function_ , weight );
+      //p1Function_.print(std::cout);
+
+      dg0Function_.clear();
+      L2ProjectionImpl::project( U , dg0Function_ );
+
+      {
+        GrapeDataDisplay< GridType > grape(U.space().gridPart());
+        grape.addData(dg0Function_);
+        grape.addData(p1Function_);
+        grape.dataDisplay(U);
+      }
+      */
     }
     
     //! Some management.
@@ -252,9 +295,7 @@ namespace Dune {
       // number of scalar base functions
       const int numBasis = limitEn.numDofs()/dimRange;
       
-      double circume = 0.0;
       double radius = 0.0;
-      
       const GeometryType geomType = geo.type();
       if ( geomType.isSimplex() )
       {
@@ -263,40 +304,47 @@ namespace Dune {
         for(int n=0; n<numcorners; ++n)
         {
           diff = geo[(n+1)%numcorners] - geo[n];
-          const double length = diff.two_norm();
-          circume += length;
-          radius = std::max(length,radius);
+          radius = std::max(diff.two_norm(),radius);
         }
       }
       else if ( geomType.isCube() )
       {
         // map of used geometry points to determ side length (see
         // reference elements)
-        const int map[3] = {1,2,4}; 
-        radius = std::abs(geo[1][0] - geo[0][0]);
-        circume = radius;
-        for(int i=1; i<dim; ++i) 
+        const double hypo = SQR((geo[1][0] - geo[0][0])*0.5) + SQR((geo[2][1] - geo[0][1])*0.5);
+
+        if( dim == 3 )
         {
-          circume += std::abs(geo[map[i]][i] - geo[0][i]);
+          radius = sqrt(hypo + SQR((geo[4][2] - geo[0][2])* 0.5));
+        } 
+        else if ( dim == 2 )
+        {
+          // radium of circum 
+          radius = sqrt(hypo);
         }
-          
-        radius  *= sqrt2_1_;
-        circume *= dim * 2; 
-        //circume *= Power_m_p<2, dim> :: power;
+        else 
+        {
+          radius = std::abs((geo[1][0] - geo[0][0])*0.5);
+        }
       }
       else 
       {
         DUNE_THROW(NotImplemented,"Unsupported geometry type!");
       }
             
-      const double hPowPolOrder = pow(2 * dim * M_SQRT2 * radius, orderPower_);// -((order+1.0)/2.0) );
+      const double hPowPolOrder = (1.0/(geo.volume())) * pow(radius, orderPower_);// -((order+1.0)/2.0) );
       //const double hPowPolOrder = pow(4.0*M_SQRT2*radius, orderPower_);// -((order+1.0)/2.0) );
       // get value of U in barycenter
 
       FieldVector<bool,dimRange> limit(false);
 
       RangeType totaljump(0);
-      int counter = 0;
+
+      // calculate circume during neighbor check 
+      double circume = 0.0;
+
+      JacobianRangeType enGrad;
+      JacobianRangeType nbGrad;
       
       IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
@@ -319,7 +367,7 @@ namespace Dune {
             FaceQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
             FaceQuadratureType faceQuadOuter(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::OUTSIDE);
 
-            counter += applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,totaljump);
+            applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,totaljump,circume);
           }
           else  
           { // non-conforming case 
@@ -327,7 +375,7 @@ namespace Dune {
             NonConformingQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
             NonConformingQuadratureType faceQuadOuter(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::OUTSIDE);
 
-            counter += applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,totaljump);
+            applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,totaljump,circume);
           }
         }
 
@@ -335,20 +383,67 @@ namespace Dune {
         if (nit.boundary()) 
         {
           FaceQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
-          counter += applyBoundary(nit,faceQuadInner,totaljump);
+          applyBoundary(nit,faceQuadInner,totaljump,circume);
         }
       } // end intersection iterator 
        
+      circume = (circume > 0.0) ? 1.0/circume : 0.0;
+
       // determ whether limitation is necessary  
-      for (int r=0;r<dimRange; ++r) 
+      bool limiter = false;
+      for (int r=0; r<dimRange; ++r) 
       {
-        double jumpr = fabs(totaljump[r])/double(counter);
-        if (jumpr*hPowPolOrder > 1.) 
+        double jumpr = std::abs(totaljump[r]);
+        if (jumpr*hPowPolOrder*circume > 1) 
+        {
           limit[r] = true;
+          limiter = true;
+        }
         else
           limit[r] = false;
       }
-           
+       
+      /*
+      if( limiter )
+      {
+        typedef typename P1FunctionType :: LocalFunctionType P1LocalFunctionType;
+
+        // get quadrature 
+        VolumeQuadratureType quad(en, 2 * U.space().order() );
+        const int quadNop = quad.nop();
+
+        P1LocalFunctionType lf = p1Function_.localFunction( en ); 
+
+        RangeType ret, tmp;
+        // L2 Projection 
+        {
+          typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType  BaseFunctionSetType;
+          //! Note: BaseFunctions must be ortho-normal!!!!
+          const BaseFunctionSetType& baseset = limitEn.baseFunctionSet();
+
+          const int numDofs = limitEn.numDofs();
+          for(int qP = 0; qP < quadNop ; ++qP)
+          {
+            lf.evaluate(quad,qP, ret);
+            for(int i=0; i<numDofs; ++i)
+            {
+              baseset.evaluate(i,quad,qP, tmp);
+              limitEn[i] += quad.weight(qP) * (ret * tmp) ;
+            }
+          }
+        }
+      }
+      else 
+      {
+        // copy function 
+        const int numDofs = limitEn.numDofs();
+        for (int i=0; i<numDofs; ++i) 
+        {
+          limitEn[i] = uEn[i];
+        }
+      }
+      */
+
       // apply limitation 
       for (int r=0; r<dimRange; ++r) 
       {
@@ -360,7 +455,7 @@ namespace Dune {
             limitEn[dofIdx] = uEn[dofIdx];
           }
           // all other dofs are set to zero
-          for (int i=1; i<numBasis;i++) 
+          for (int i=1; i<numBasis; ++i) 
           {
             const int dofIdx = dofConversion_.combinedDof(i,r);
             limitEn[dofIdx] = 0.;
@@ -376,55 +471,190 @@ namespace Dune {
           }
         }
       }
+
+      /*
+      if( limiter )
+      {
+        bool zeroIt = false;
+        IntersectionIteratorType endnit = gridPart_.iend(en); 
+        for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
+             nit != endnit; ++nit) 
+        {
+          // check all neighbors 
+          if (nit.neighbor()) 
+          {
+            typedef TwistUtility<GridType> TwistUtilityType;
+            // conforming case 
+            if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
+            {
+              FaceQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
+              FaceQuadratureType faceQuadOuter(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::OUTSIDE);
+
+              zeroIt = limitFunc(nit,faceQuadInner,faceQuadOuter,uEn);
+            }
+            else  
+            { // non-conforming case 
+              typedef typename FaceQuadratureType :: NonConformingQuadratureType NonConformingQuadratureType;
+              NonConformingQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
+              NonConformingQuadratureType faceQuadOuter(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::OUTSIDE);
+
+              zeroIt = limitFunc(nit,faceQuadInner,faceQuadOuter,uEn);
+            }
+          }
+          if ( zeroIt ) break;
+        } // end intersection iterator 
+
+        if( zeroIt )
+        {
+          // apply limitation 
+          for (int r=0; r<dimRange; ++r) 
+          {
+            // dof 0 
+            {
+              const int dofIdx = dofConversion_.combinedDof(0,r);
+              limitEn[dofIdx] = uEn[dofIdx];
+            }
+            // all other dofs are set to zero
+            for (int i=1; i<numBasis; ++i) 
+            {
+              const int dofIdx = dofConversion_.combinedDof(i,r);
+              limitEn[dofIdx] = 0.;
+            }
+          }
+        }
+        else 
+        {
+          typedef typename P1FunctionType :: LocalFunctionType P1LocalFunctionType;
+            const int numDofs = limitEn.numDofs();
+              for(int i=0; i<numDofs; ++i)
+              {
+                limitEn[i] = 0.0;
+              }
+
+          // get quadrature 
+          VolumeQuadratureType quad(en, 2 * U.space().order() );
+          const int quadNop = quad.nop();
+
+          P1LocalFunctionType lf = p1Function_.localFunction( en ); 
+
+          RangeType ret, tmp;
+          // L2 Projection 
+          {
+            typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType  BaseFunctionSetType;
+            //! Note: BaseFunctions must be ortho-normal!!!!
+            const BaseFunctionSetType& baseset = limitEn.baseFunctionSet();
+
+            const int numDofs = limitEn.numDofs();
+            for(int qP = 0; qP < quadNop ; ++qP)
+            {
+              lf.evaluate(quad,qP, ret);
+              for(int i=0; i<numDofs; ++i)
+              {
+                baseset.evaluate(i,quad,qP, tmp);
+                limitEn[i] += quad.weight(qP) * (ret * tmp) ;
+              }
+            }
+          }
+        }
+      }
+      else 
+      {
+        // copy function 
+        const int numDofs = limitEn.numDofs();
+        for (int i=0; i<numDofs; ++i) 
+        {
+          limitEn[i] = uEn[i];
+        }
+      }
+      */
     }
     
   private:
     template <class QuadratureImp>
-    int applyLocalNeighbor(IntersectionIteratorType & nit,
+    void applyLocalNeighbor(IntersectionIteratorType & nit,
             const QuadratureImp & faceQuadInner,
             const QuadratureImp & faceQuadOuter,
-            RangeType& totaljump) const
+            RangeType& totaljump,
+            double& umfang) const
     {
       const int faceQuadNop = faceQuadInner.nop();
-      int counterInc = 0;
       for(int l=0; l<faceQuadNop; ++l) 
       {
         // calculate jump 
-        caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,l,
+        double umf = caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,l,
                               jump_, jump2_);
 
         // if jump is not zero 
-        if( jump_.one_norm() > 0.0 )
+        if( umf > 0.0 )
         {
-          jump_ *= faceQuadInner.weight(l);
+          umf *= faceQuadInner.weight(l);
+          jump_ *= umf;
+          umfang += umf;
           totaljump += jump_;
-          counterInc = 1;
         }
       }
-      return counterInc; 
     }
 
     template <class QuadratureImp>
-    int applyBoundary(IntersectionIteratorType & nit,
+    bool limitFunc(IntersectionIteratorType & nit,
+            const QuadratureImp & faceQuadInner,
+            const QuadratureImp & faceQuadOuter,
+            const LocalFunctionType& uEn) const 
+    {
+      // get function to limit 
+      const DestinationType& U = *(Element<0>::get(*arg_));
+
+      // get neighbor entity
+      EntityPointerType ep = nit.outside();
+      EntityType& nb = *ep; 
+
+      // get U on entity
+      const LocalFunctionType uNb = U.localFunction(nb);
+
+      JacobianRangeType uLeft;
+
+      //VolumeQuadratureType quad(nb,0);
+      JacobianRangeType uRight;
+      //uNb.jacobian( quad, 0 , uRight ); 
+
+      const int faceQuadNop = faceQuadInner.nop();
+      for(int l=0; l<faceQuadNop; ++l) 
+      {
+        const DomainType normal = nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+
+        uEn.jacobian( faceQuadInner, l , uLeft );
+        uNb.jacobian( faceQuadOuter, l , uRight );
+
+        double enSign = ( normal * uLeft[0] );
+        double nbSign = ( normal * uRight[0] );
+
+        if( enSign < 0.0 && nbSign > 0.0 ) return true;
+        if( enSign > 0.0 && nbSign < 0.0 ) return true;
+      }
+      return false;
+    }
+
+    template <class QuadratureImp>
+    void applyBoundary(IntersectionIteratorType & nit,
                       const QuadratureImp & faceQuadInner,
-                      RangeType& totaljump) const
+                      RangeType& totaljump,
+                      double& umfang) const
     {
       const int faceQuadNop = faceQuadInner.nop();
-      int counterInc = 0;
       for(int l=0; l<faceQuadNop; ++l) 
       {
         // calculate jump 
-        caller_.boundaryFlux(nit, faceQuadInner,l,jump_);
+        double umf = caller_.boundaryFlux(nit, faceQuadInner,l,jump_);
 
         // if jump is not zero 
-        if( jump_.one_norm() > 0.0 )
+        if( umf > 0.0 )
         {
-          jump_ *= faceQuadInner.weight(l);
+          umf *= faceQuadInner.weight(l);
+          jump_ *= umf;
           totaljump += jump_;
-          counterInc = 1;
+          umfang += umf; 
         }
       }
-      return counterInc; 
     }
 
     //! The actual computations are performed as follows. First, prepare
@@ -467,12 +697,17 @@ namespace Dune {
 
     const DiscreteFunctionSpaceType& spc_;
     const GridPartType& gridPart_;
+    //ContGridPartType contGridPart_;
+    //LagrangeSpaceType lagrangeSpace_;
+    //DG0SpaceType dg0Space_;
+    //mutable P1FunctionType p1Function_;
+    //mutable DG0FunctionType dg0Function_;
     const double orderPower_;
     const DofConversionUtilityType dofConversion_; 
     const int faceQuadOrd_;
     mutable RangeType jump_; 
     mutable RangeType jump2_;
-    const double sqrt2_1_;
+    GradientFlux gradientFlux_;
   }; // end DGLimitPass 
 
 } // end namespace Dune 
