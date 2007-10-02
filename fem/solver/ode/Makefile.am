@@ -1,28 +1,28 @@
-#noinst_LTLIBRARIES = libodesolver.la
+noinst_LTLIBRARIES = libodesolver.la
 
-#if MPI
-#libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@ $(MPI_CPPFLAGS)
-#libodesolver_la_LIBADD  = $(MPI_LDFLAGS) $(MPILIBS)
-#else 
-#libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@
-#libodesolver_la_LIBADD  = 
-#endif
+if MPI
+libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@ $(MPI_CPPFLAGS)
+libodesolver_la_LIBADD  = $(MPI_LDFLAGS) $(MPILIBS)
+else 
+libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@
+libodesolver_la_LIBADD  = 
+endif
 
-#libodesolver_la_SOURCES = odeobjectfiles.cc 
+libodesolver_la_SOURCES = odeobjectfiles.cc 
 
 odedir = $(includedir)/dune/fem/solver/ode
 ode_HEADERS = \
-communicator.hpp mpicommunicator.hpp emptycommunicator.hpp 
-#blas.hpp  iterative_solver.hpp limiter.hpp \
-#quasi_exact_newton.hpp linear_solver.hpp random.hpp \
-#matrix.hpp subblas.hpp dynamical_object.hpp   newton.hpp  thread.hpp \
-#nonlinear_solver.hpp timer.hpp function.hpp ode_solver.hpp  vector.hpp
+communicator.hpp mpicommunicator.hpp emptycommunicator.hpp \
+blas.hpp  iterative_solver.hpp limiter.hpp \
+quasi_exact_newton.hpp linear_solver.hpp random.hpp \
+matrix.hpp subblas.hpp dynamical_object.hpp   newton.hpp  thread.hpp \
+nonlinear_solver.hpp timer.hpp function.hpp ode_solver.hpp  vector.hpp
 
-EXTRA_DIST = communicator.cpp 
-#bicgstab.cpp  dirk.cpp  matrix.cpp  quasi_exact_newton.cpp \
-#buffer.cpp          fgmres.cpp            newton.cpp      runge_kutta.cpp \
-#bulirsch_stoer.cpp  gmres.cpp             ode_solver.cpp  sirk.cpp \
-#cg.cpp              iterative_solver.cpp  pc_limiter.cpp  ssp.cpp \
-#lu_solver.cpp         qr_solver.cpp   vector.cpp 
+EXTRA_DIST = communicator.cpp \
+bicgstab.cpp  dirk.cpp  matrix.cpp  quasi_exact_newton.cpp \
+buffer.cpp          fgmres.cpp            newton.cpp      runge_kutta.cpp \
+bulirsch_stoer.cpp  gmres.cpp             ode_solver.cpp  sirk.cpp \
+cg.cpp              iterative_solver.cpp  pc_limiter.cpp  ssp.cpp \
+lu_solver.cpp         qr_solver.cpp   vector.cpp 
 
 include $(top_srcdir)/am/global-rules
