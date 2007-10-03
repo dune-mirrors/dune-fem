@@ -279,33 +279,40 @@ template <int dim, class DomainField, class Field>
 class BenchMark_4 : public DataFunctionIF<dim,DomainField,Field>
 {
   const Field globalShift_;
-  Field factor_[dim][dim];
-  const Field delta_;
-  const Field pi_;
-  const Field cost_;
-  const Field sint_;
 public:  
   virtual ~BenchMark_4() {}
   BenchMark_4(Field globalShift, Field factor)
     : globalShift_(0.0)
-    , delta_(1)
-    , pi_ ( 4. * atan(1.) )
-    , cost_ ( cos( 40. * pi_ / 180. ) )
-    , sint_ ( sqrt(1. - cost_*cost_) ) 
   {
-    DUNE_THROW(NotImplemented,"Not yet implemented");
-    factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
-    factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
-    factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
   }
 
   virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
   {
-    for(int i=0; i<dim; ++i)
+    k[0][1] = k[1][0] = 0;
+
+    if( omega1(x) ) 
     {
-      k[i][i] = factor_[i][i];
-      for(int j=0; j<i; ++j)     k[i][j] = factor_[i][j];
-      for(int j=i+1; j<dim; ++j) k[i][j] = factor_[i][j];
+      k[0][0] = 1e2;
+      k[1][1] = 1e1;
+    }
+    else 
+    {
+      k[0][0] = 1e-2;
+      k[1][1] = 1e-3;
+    }
+  }
+
+  bool omega1(const DomainField x[dim]) const 
+  {
+    if (x[0] < 0.5) 
+    {
+       int inty = int(10. * (x[1] - .05));
+       return (inty - 2*(inty/2) == 0) ? true : false;
+    }
+    else
+    {
+      int inty = int(10. * x[1]);
+      return (inty - 2*(inty/2) ==0 ) ? true : false;
     }
   }
 
@@ -316,20 +323,7 @@ public:
 
   virtual Field exact(const DomainField x[dim]) const
   {
-    // u in general is unknown here
-    // we only know u at the boundary 
-    if( x[0] <  0.2 && x[1] <= 0.0 ) return 1;
-    if( x[0] <= 0.0 && x[1] <  0.2 ) return 1;
-
-    if( x[0] >  0.8 && x[1] >= 1.0 ) return 0;
-    if( x[0] >= 1.0 && x[1] >  0.8 ) return 0;
-
-    //if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    //if( x[0] <= 0.0 && x[1] >  0.3 ) return 0.5;
-
-    //if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    //if( x[0] <  0.7 && x[1] >= 1.0 ) return 0.5;
-    return 0.5;
+    return 1.0 - x[0];
   }
   
   virtual void gradExact(const DomainField x[dim], Field grad[dim] ) const 
@@ -341,15 +335,6 @@ public:
   virtual bool boundaryDataFunction(const DomainField x[dim], Field & val) const
   {
     val = exact( x ); 
-
-    /*
-    if( x[0] > 0.2 && x[0] < 0.3 && x[1] <= 0.0) return false;
-    if( x[0] > 0.7 && x[0] < 0.8 && x[1] >= 1.0) return false;
-
-    if( x[0] >= 1.0 && x[1] > 0.7 && x[1] < 0.8) return false;
-    if( x[0] <= 0.0 && x[1] > 0.2 && x[1] < 0.3) return false;
-*/
-    // we have neumann boundary here 
     return true; 
   }
 };
@@ -424,36 +409,41 @@ template <int dim, class DomainField, class Field>
 class BenchMark_6 : public DataFunctionIF<dim,DomainField,Field>
 {
   const Field globalShift_;
-  Field factor_[dim][dim];
   const Field delta_;
-  const Field pi_;
   const Field cost_;
   const Field sint_;
 public:  
   virtual ~BenchMark_6() {}
   BenchMark_6(Field globalShift, Field factor)
     : globalShift_(0.0)
-    , delta_(1)
-    , pi_ ( 4. * atan(1.) )
-    , cost_ ( cos( 40. * pi_ / 180. ) )
-    , sint_ ( sqrt(1. - cost_*cost_) ) 
+    , delta_(0.2)
+    , cost_ ( 1./sqrt(1.+delta_*delta_) )
+    , sint_ ( delta_*cost_ ) 
   {
-    DUNE_THROW(NotImplemented,"Not yet implemented");
-    factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
-    factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
-    factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
   }
 
   virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
   {
-    for(int i=0; i<dim; ++i)
-    {
-      k[i][i] = factor_[i][i];
-      for(int j=0; j<i; ++j)     k[i][j] = factor_[i][j];
-      for(int j=i+1; j<dim; ++j) k[i][j] = factor_[i][j];
-    }
-  }
+    double phi1 = x[1] - delta_ * (x[0] - .5) - .475;
+    double phi2 = phi1 - .05;
 
+    double alpha = 0.0;
+    double beta  = 0.0;
+    if (phi1<0 || phi2>0) 
+    {
+       alpha = 1.0;
+       beta  = 0.1;
+    }
+    else
+    {
+       alpha = 100.0;
+       beta  = 10.0;
+    }
+
+    k[0][0] = alpha*cost_*cost_+beta*sint_*sint_;
+    k[0][1] = k[1][0] = cost_*sint_*(alpha-beta);
+    k[1][1] = alpha*sint_*sint_+beta*cost_*cost_;
+  }
 
   virtual Field rhs  (const DomainField arg[dim]) const 
   {
@@ -462,39 +452,18 @@ public:
 
   virtual Field exact(const DomainField x[dim]) const
   {
-    // u in general is unknown here
-    // we only know u at the boundary 
-    if( x[0] <  0.2 && x[1] <= 0.0 ) return 1;
-    if( x[0] <= 0.0 && x[1] <  0.2 ) return 1;
-
-    if( x[0] >  0.8 && x[1] >= 1.0 ) return 0;
-    if( x[0] >= 1.0 && x[1] >  0.8 ) return 0;
-
-    //if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    //if( x[0] <= 0.0 && x[1] >  0.3 ) return 0.5;
-
-    //if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    //if( x[0] <  0.7 && x[1] >= 1.0 ) return 0.5;
-    return 0.5;
+    return - x[0] - x[1] * delta_;
   }
   
   virtual void gradExact(const DomainField x[dim], Field grad[dim] ) const 
   {
-    grad[0] = 0.0;
-    grad[1] = 0.0;
+    grad[0] = -1.0;
+    grad[1] = -delta_;
   }
   
   virtual bool boundaryDataFunction(const DomainField x[dim], Field & val) const
   {
     val = exact( x ); 
-
-    /*
-    if( x[0] > 0.2 && x[0] < 0.3 && x[1] <= 0.0) return false;
-    if( x[0] > 0.7 && x[0] < 0.8 && x[1] >= 1.0) return false;
-
-    if( x[0] >= 1.0 && x[1] > 0.7 && x[1] < 0.8) return false;
-    if( x[0] <= 0.0 && x[1] > 0.2 && x[1] < 0.3) return false;
-*/
     // we have neumann boundary here 
     return true; 
   }
@@ -505,36 +474,47 @@ template <int dim, class DomainField, class Field>
 class BenchMark_7 : public DataFunctionIF<dim,DomainField,Field>
 {
   const Field globalShift_;
-  Field factor_[dim][dim];
   const Field delta_;
-  const Field pi_;
-  const Field cost_;
-  const Field sint_;
 public:  
   virtual ~BenchMark_7() {}
   BenchMark_7(Field globalShift, Field factor)
     : globalShift_(0.0)
-    , delta_(1)
-    , pi_ ( 4. * atan(1.) )
-    , cost_ ( cos( 40. * pi_ / 180. ) )
-    , sint_ ( sqrt(1. - cost_*cost_) ) 
+    , delta_(0.2)
   {
-    DUNE_THROW(NotImplemented,"Not yet implemented");
-    factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
-    factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
-    factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
   }
 
   virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
   {
-    for(int i=0; i<dim; ++i)
+    double phi1 = phi(x);
+    double phi2 = phi1 - .05;
+
+    int dom = domain( phi1, phi2 );
+    if( dom == 1 || dom == 3 ) 
     {
-      k[i][i] = factor_[i][i];
-      for(int j=0; j<i; ++j)     k[i][j] = factor_[i][j];
-      for(int j=i+1; j<dim; ++j) k[i][j] = factor_[i][j];
+      k[0][0] = k[1][1] = 1;
+      k[1][0] = k[0][1] = 0;
+    }
+    else 
+    {
+      k[0][0] = k[1][1] = 0.01;
+      k[1][0] = k[0][1] = 0;
     }
   }
 
+  double phi(const DomainField x[dim]) const 
+  {
+    return x[1] - delta_ * (x[0] - .5) - .475;
+  }
+
+  int domain(const double phi1, const double phi2) const 
+  {
+    if (phi1<0) 
+      return 1;
+    else if (phi2<0) 
+      return 2; 
+    else
+      return 3;
+  }
 
   virtual Field rhs  (const DomainField arg[dim]) const 
   {
@@ -543,40 +523,44 @@ public:
 
   virtual Field exact(const DomainField x[dim]) const
   {
-    // u in general is unknown here
-    // we only know u at the boundary 
-    if( x[0] <  0.2 && x[1] <= 0.0 ) return 1;
-    if( x[0] <= 0.0 && x[1] <  0.2 ) return 1;
+    double phi1 = phi(x);
+    double phi2 = phi1 - .05;
 
-    if( x[0] >  0.8 && x[1] >= 1.0 ) return 0;
-    if( x[0] >= 1.0 && x[1] >  0.8 ) return 0;
-
-    //if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    //if( x[0] <= 0.0 && x[1] >  0.3 ) return 0.5;
-
-    //if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    //if( x[0] <  0.7 && x[1] >= 1.0 ) return 0.5;
-    return 0.5;
+    int dom = domain( phi1, phi2 );
+    if( dom == 1 ) 
+    {
+      return -phi1;
+    }
+    else if( dom == 2 )
+    {
+      return -phi1/.01;
+    }
+    else 
+    {
+      return -phi2 - 5.;
+    }
   }
   
   virtual void gradExact(const DomainField x[dim], Field grad[dim] ) const 
   {
-    grad[0] = 0.0;
-    grad[1] = 0.0;
+    double phi1 = phi(x);
+    double phi2 = phi1 - .05; 
+    int dom = domain( phi1, phi2 );
+    if( dom == 1 || dom == 3 )
+    {
+      grad[0] = delta_;
+      grad[1] = -1.0;
+    }
+    else // if (dom == 2) 
+    {
+      grad[0] = delta_/.01;
+      grad[1] = - 1./.01;
+    }
   }
   
   virtual bool boundaryDataFunction(const DomainField x[dim], Field & val) const
   {
     val = exact( x ); 
-
-    /*
-    if( x[0] > 0.2 && x[0] < 0.3 && x[1] <= 0.0) return false;
-    if( x[0] > 0.7 && x[0] < 0.8 && x[1] >= 1.0) return false;
-
-    if( x[0] >= 1.0 && x[1] > 0.7 && x[1] < 0.8) return false;
-    if( x[0] <= 0.0 && x[1] > 0.2 && x[1] < 0.3) return false;
-*/
-    // we have neumann boundary here 
     return true; 
   }
 };
