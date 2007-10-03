@@ -47,7 +47,7 @@ Grid3: ./one3d.dgf
 
 B_{+,-}: 1
 Babuska-Zlamal: 0
-beta: 0.0        
+beta: 0.0
 
 # only used by LDGFlux 
 LDGbeta: 1.0
@@ -56,6 +56,6 @@ eta: 1.5
 #######################################
 # Problem setting
 #######################################
-Problem: 5
+Problem: 7
 GlobalShift: 2.0 
 Factor: 1.0

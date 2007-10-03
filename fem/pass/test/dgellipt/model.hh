@@ -215,7 +215,7 @@ public:
   {
     DomainType point = en.geometry().global(x);
     double k[dim][dim];
-    problem().factor(&point[0],k);
+    problem().K(&point[0],k);
     for(int i=0; i<dim; ++i)
       for(int j=0; j<dim; ++j)
         ret[i][j] = k[i][j];

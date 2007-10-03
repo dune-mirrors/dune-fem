@@ -24,7 +24,7 @@ public:
     }
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const
   {
     for(int i=0; i<dim; ++i)
     {
@@ -91,7 +91,7 @@ public:
     }
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const
   {
     for(int i=0; i<dim; ++i)
     {
@@ -160,7 +160,7 @@ public:
     factor_[1][1] = delta_;
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const
   {
     for(int i=0; i<dim; ++i)
     {
@@ -221,7 +221,7 @@ public:
     factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const
   {
     for(int i=0; i<dim; ++i)
     {
@@ -286,7 +286,7 @@ public:
   {
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const
   {
     k[0][1] = k[1][0] = 0;
 
@@ -355,7 +355,7 @@ public:
   {
   }
 
-  virtual void factor(const DomainField arg[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField arg[dim], Field k[dim][dim] ) const
   {
     double x = arg[0];
     double y = arg[1];
@@ -368,7 +368,7 @@ public:
   virtual Field rhs  (const DomainField arg[dim]) const 
   {
     Field k[dim][dim];
-    factor(arg,k);
+    K(arg,k);
     double x = arg[0];
     double y = arg[1];
     double rt = x*x+y*y;
@@ -422,7 +422,7 @@ public:
   {
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const
   {
     double phi1 = x[1] - delta_ * (x[0] - .5) - .475;
     double phi2 = phi1 - .05;
@@ -483,7 +483,7 @@ public:
   {
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const
   {
     double phi1 = phi(x);
     double phi2 = phi1 - .05;

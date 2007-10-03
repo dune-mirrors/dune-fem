@@ -10,8 +10,8 @@ protected:
   DataFunctionIF() {}
 public:  
   virtual ~DataFunctionIF() {}
-  // factor 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const = 0;
+  // diffusion tensor 
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const = 0;
   // right hand side 
   virtual Field rhs  (const DomainField x[dim]) const = 0;
   // exact solution 
@@ -28,7 +28,7 @@ public:
     Field tmp[dim];
     gradExact(x,tmp);
     Field k[dim][dim];
-    factor(x,k);
+    K(x,k);
     for(int i=0; i<dim; ++i) 
     {
       grad[i] = 0;
@@ -53,7 +53,7 @@ public:
     //assert(dim == 2);
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const 
   {
     for(int i=0; i<dim; ++i) 
     {
@@ -108,7 +108,7 @@ public:
     //assert(dim == 2);
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const 
   {
     for(int i=0; i<dim; ++i) 
     {
@@ -165,7 +165,7 @@ public:
     assert(dim == 2);
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const 
   {
     for(int i=0; i<dim; ++i) 
     {
@@ -223,7 +223,7 @@ public:
     assert(dim == 2);
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const 
   {
     for(int i=0; i<dim; ++i) 
     {
@@ -302,7 +302,7 @@ public:
     assert(dim == 2);
   }
 
-  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const 
   {
     for(int i=0; i<dim; ++i) 
     {
