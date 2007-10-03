@@ -20,7 +20,7 @@ verbose: 1
 # 4 == ILU-n 
 # 5 == Gauss-Seidel
 # 6 == Jacobi
-Preconditioning: 3
+Preconditioning: 4
 # number of iterations 
 Pre-iteration: 2 
 # relaxation factor 
@@ -56,6 +56,6 @@ eta: 1.5
 #######################################
 # Problem setting
 #######################################
-Problem: 7
+Problem: 5
 GlobalShift: 2.0 
 Factor: 1.0

@@ -118,33 +118,57 @@ public:
     double factor = 1.0;
     readParameter(paramFile,"Factor",factor);
 
-    if( problem == 1 ) 
-    {
-      return new SinSin<dim,DomainFieldType,RangeFieldType> (shift,factor);
-    }
-    if( problem == 2 ) 
-    {
-      return new CosCos<dim,DomainFieldType,RangeFieldType> (shift,factor);
-    }
-    if( problem == 3 ) 
-    {
-      return new CastilloProblem<dim,DomainFieldType,RangeFieldType> (shift,factor);
-    }
-    if( problem == 4 ) 
-    {
-      return new InSpringingCorner<dim,DomainFieldType,RangeFieldType> (shift,factor);
-    }
-    if( problem == 5 ) 
-    {
-      return new RiviereProblem<dim,DomainFieldType,RangeFieldType> (shift,factor);
-    }
-    if( problem == 6 ) 
+    if( problem == 0 ) 
     {
       return new BenchMark_1<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
-    if( problem == 7 ) 
+    if( problem == 1 ) 
     {
       return new BenchMark_1_2<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 2 ) 
+    {
+      return new BenchMark_2<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 3 ) 
+    {
+      return new BenchMark_3<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 4 ) 
+    {
+      return new BenchMark_4<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 5 ) 
+    {
+      return new BenchMark_5<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 6 ) 
+    {
+      return new BenchMark_6<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 7 ) 
+    {
+      return new BenchMark_7<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 8 ) 
+    {
+      return new SinSin<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 9 ) 
+    {
+      return new CosCos<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 10 ) 
+    {
+      return new CastilloProblem<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 11 ) 
+    {
+      return new InSpringingCorner<dim,DomainFieldType,RangeFieldType> (shift,factor);
+    }
+    if( problem == 12 ) 
+    {
+      return new RiviereProblem<dim,DomainFieldType,RangeFieldType> (shift,factor);
     }
 
     return 0;
@@ -184,51 +208,19 @@ public:
     return problem().neumann(&p[0],&grad[0][0]);
   }
   
-  template <class EntityType , class FaceDomainType> 
-  void diffusion(const EntityType & en, const double time ,
-                 const FaceDomainType &x ,
-                 GradRangeType & ret) const
-  {
-    for(int i=0; i<dimDomain; ++i)
-    {
-      for(int j=0; j<dimRange; ++j)
-      {
-        ret[i][j] = problem().factor(i,j);
-      }
-    }
-    return ;
-  }
-
-  template <class EntityType , class FaceDomainType> 
+  template <class EntityType , class FaceDomainType, class ReturnType> 
   void diffusion(const EntityType & en, const double time ,
                  const FaceDomainType &x, 
-                 GradJacobianRangeType & ret) const
+                 ReturnType & ret) const
   {
-    for(int i=0; i<dimGradRange; ++i) 
-    {
-      for(int j=0; j<dimGradRange; ++j) 
-      {
-        ret[i][j] = problem().factor(i,j);
-      }
-    }
+    DomainType point = en.geometry().global(x);
+    double k[dim][dim];
+    problem().factor(&point[0],k);
+    for(int i=0; i<dim; ++i)
+      for(int j=0; j<dim; ++j)
+        ret[i][j] = k[i][j];
     return ;
   }
-
-  template <class EntityType , class FaceDomainType> 
-  void diffusion(const EntityType & en, const double time ,
-                 const FaceDomainType &x, 
-                 JacobianRangeType & ret) const
-  {
-    for(int i=0; i<dimDomain; ++i)
-    {
-      for(int j=0; j<dimRange; ++j)
-      {
-        ret[i][j] = problem().factor(i,j);
-      }
-    }
-    return ;
-  }
-
 
   template <class EntityType, class ArgumentTuple,
            class RanType>

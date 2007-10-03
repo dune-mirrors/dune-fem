@@ -566,8 +566,8 @@ namespace LDGExample {
                          CoefficientType & coeffRight) const 
     {
       assert( it.neighbor() );
-      model_.diffusion(this->inside(),time,local,coeffLeft);
-      model_.diffusion(this->outside(),time,local,coeffRight);
+      model_.diffusion(this->inside(),time,it.intersectionSelfLocal().global(local),coeffLeft);
+      model_.diffusion(this->outside(),time,it.intersectionNeighborLocal().global(local),coeffRight);
     }
     
     template <class EntityType , class DomainType,

@@ -11,7 +11,7 @@ protected:
 public:  
   virtual ~DataFunctionIF() {}
   // factor 
-  virtual Field factor(int i, int j) const = 0;
+  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const = 0;
   // right hand side 
   virtual Field rhs  (const DomainField x[dim]) const = 0;
   // exact solution 
@@ -25,10 +25,15 @@ public:
   // neumann boundary 
   virtual void neumann(const DomainField x[dim], Field grad[dim]) const 
   {
-    gradExact(x,grad);
+    Field tmp[dim];
+    gradExact(x,tmp);
+    Field k[dim][dim];
+    factor(x,k);
     for(int i=0; i<dim; ++i) 
     {
-      grad[i] *= factor(0,0);
+      grad[i] = 0;
+      for(int j=0; j<dim; ++j) 
+        grad[i] += tmp[j] * k[i][j];
     }
   }
 };
@@ -48,7 +53,15 @@ public:
     //assert(dim == 2);
   }
 
-  virtual Field factor (int i, int j) const { return factor_; }
+  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  {
+    for(int i=0; i<dim; ++i) 
+    {
+      k[i][i] = factor_;
+      for(int j=0; j<i; ++j)     k[i][j] = 0;
+      for(int j=i+1; j<dim; ++j) k[i][j] = 0;
+    }
+  }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -95,7 +108,16 @@ public:
     //assert(dim == 2);
   }
 
-  virtual Field factor (int i, int j) const { return factor_; }
+  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  {
+    for(int i=0; i<dim; ++i) 
+    {
+      k[i][i] = factor_;
+      for(int j=0; j<i; ++j)     k[i][j] = 0;
+      for(int j=i+1; j<dim; ++j) k[i][j] = 0;
+    }
+  }
+
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -143,7 +165,16 @@ public:
     assert(dim == 2);
   }
 
-  virtual Field factor (int i, int j) const { return factor_; }
+  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  {
+    for(int i=0; i<dim; ++i) 
+    {
+      k[i][i] = factor_;
+      for(int j=0; j<i; ++j)     k[i][j] = 0;
+      for(int j=i+1; j<dim; ++j) k[i][j] = 0;
+    }
+  }
+
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -192,7 +223,15 @@ public:
     assert(dim == 2);
   }
 
-  virtual Field factor (int i, int j) const { return factor_; }
+  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  {
+    for(int i=0; i<dim; ++i) 
+    {
+      k[i][i] = factor_;
+      for(int j=0; j<i; ++j)     k[i][j] = 0;
+      for(int j=i+1; j<dim; ++j) k[i][j] = 0;
+    }
+  }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
@@ -263,7 +302,15 @@ public:
     assert(dim == 2);
   }
 
-  virtual Field factor (int i, int j) const { return factor_; }
+  virtual void factor(const DomainField x[dim], Field k[dim][dim] ) const 
+  {
+    for(int i=0; i<dim; ++i) 
+    {
+      k[i][i] = factor_;
+      for(int j=0; j<i; ++j)     k[i][j] = 0;
+      for(int j=i+1; j<dim; ++j) k[i][j] = 0;
+    }
+  }
 
   virtual Field rhs  (const DomainField x[dim]) const 
   {
