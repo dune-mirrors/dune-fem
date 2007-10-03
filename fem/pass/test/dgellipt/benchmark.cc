@@ -39,11 +39,6 @@ public:
     double x = arg[0];
     double y = arg[1];
 
-    //u  = x*(1-x)*y*(1-y)*16.
-
-    //double ux = (-2.*x+1)*y*(1-y)*16.
-    //double uy = (-2.*y+1)*x*(1-x)*16.
-
     double uxx = -2.*y*(1-y)*16.;
     double uxy = (-2.*x+1)*(-2.*y+1)*16.;
     double uyy = -2.*x*(1-x)*16.;
@@ -220,6 +215,7 @@ public:
     , cost_ ( cos( 40. * pi_ / 180. ) )
     , sint_ ( sqrt(1. - cost_*cost_) ) 
   {
+    DUNE_THROW(NotImplemented,"Not yet implemented");
     factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
     factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
     factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
@@ -297,6 +293,7 @@ public:
     , cost_ ( cos( 40. * pi_ / 180. ) )
     , sint_ ( sqrt(1. - cost_*cost_) ) 
   {
+    DUNE_THROW(NotImplemented,"Not yet implemented");
     factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
     factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
     factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
@@ -441,6 +438,7 @@ public:
     , cost_ ( cos( 40. * pi_ / 180. ) )
     , sint_ ( sqrt(1. - cost_*cost_) ) 
   {
+    DUNE_THROW(NotImplemented,"Not yet implemented");
     factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
     factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
     factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
@@ -521,6 +519,7 @@ public:
     , cost_ ( cos( 40. * pi_ / 180. ) )
     , sint_ ( sqrt(1. - cost_*cost_) ) 
   {
+    DUNE_THROW(NotImplemented,"Not yet implemented");
     factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
     factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
     factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
