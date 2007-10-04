@@ -12,9 +12,10 @@
 
 #include "cachepointlist.hh"
 
-namespace Dune {
+namespace Dune
+{
   
-  /*! \class CachingQuadrature
+  /** \class CachingQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature class supporting base function caching
    *
@@ -42,7 +43,7 @@ namespace Dune {
 
 
 
-  //! \copydoc Dune::CachingQuadrature
+  /** \copydoc Dune::CachingQuadrature */
   template< typename GridPartImp >
   class CachingQuadrature< GridPartImp, 0 >
   : public CachingPointList
@@ -80,7 +81,7 @@ namespace Dune {
     typedef typename BaseType::Entity Entity;
     
   public:
-    /*! \brief constructor
+    /** \brief constructor
      *
      *  \param[in]  entity  entity, on whose reference element the quadratre
      *                      lives
@@ -92,7 +93,7 @@ namespace Dune {
     {
     }
 
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
      */
@@ -101,7 +102,7 @@ namespace Dune {
     {
     } 
    
-    //! \copydoc Dune::ElementQuadrature<GridPartImp,0>::weight
+    /** \copydoc Dune::ElementQuadrature<GridPartImp,0>::weight */
     const RealType &weight ( size_t i ) const 
     {
       return quadImp().weight( i );
@@ -110,7 +111,7 @@ namespace Dune {
 
 
  
-  //! \copydoc Dune::CachingQuadrature
+  /** \copydoc Dune::CachingQuadrature */
   template< typename GridPartImp >
   class CachingQuadrature< GridPartImp, 1 >
   : public CachingPointList
@@ -157,7 +158,7 @@ namespace Dune {
     typedef TwistUtility< GridType > TwistUtilityType;
     
   public:
-    /*! \brief constructor
+    /** \brief constructor
      *
      *  \note The CachingQuadrature requires the grid part to get twist
      *        information for TwistUtility (see also
@@ -177,7 +178,7 @@ namespace Dune {
     {
     }
 
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
      */
@@ -186,7 +187,7 @@ namespace Dune {
     {
     }
 
-    //! \copydoc Dune::ElementQuadrature<GridPartImp,1>::weight
+    /** \copydoc Dune::ElementQuadrature<GridPartImp,1>::weight */
     const RealType &weight( size_t i ) const 
     {
       return quadImp().weight(i);

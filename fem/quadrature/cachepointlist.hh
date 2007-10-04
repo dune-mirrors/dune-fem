@@ -13,6 +13,9 @@
 namespace Dune
 {
 
+  /** \class CachingInterface
+   *  \brief interface a cachable quadrature has to implement
+   */
   class CachingInterface 
   {
   protected:
@@ -127,8 +130,7 @@ namespace Dune
     {
     }
 
-    /** \copydoc Dune::CachingInterface::cachingPoint
-     */
+    /** \copydoc Dune::CachingInterface::cachingPoint */
     inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
       return quadraturePoint;
@@ -231,7 +233,7 @@ namespace Dune
     {
     }
 
-    //! \copydoc CachingInterface::cachingPoint
+    /** \copydoc Dune::CachingInterface::cachingPoint */
     size_t cachingPoint( const size_t quadraturePoint ) const 
     {
       assert( quadraturePoint < (size_t)nop() );

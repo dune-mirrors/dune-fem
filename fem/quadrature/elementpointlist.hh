@@ -96,7 +96,7 @@ namespace Dune
     /** \brief constructor
      *  
      *  \param[in]  geometry  geometry type, the quadrature lives on
-     *  \param[in]  otder     desired minimal order of the quadrature
+     *  \param[in]  order     desired minimal order of the quadrature
      */
     ElementIntegrationPointList( const GeometryType &geometry, int order )
     : quad_( geometry, order )
