@@ -239,24 +239,21 @@ public:
   {
     // u in general is unknown here
     // we only know u at the boundary 
-    if( x[0] <  0.2 && x[1] <= 0.0 ) return 1;
-    if( x[0] <= 0.0 && x[1] <  0.2 ) return 1;
+    const double lower = 0.3 ;
+    const double upper = 0.7 ;
 
-    if( x[0] >  0.8 && x[1] >= 1.0 ) return 0;
-    if( x[0] >= 1.0 && x[1] >  0.8 ) return 0;
+    if( x[0] <  lower && x[1] <= 0.0 ) return 1;
+    if( x[0] <= 0.0 && x[1] <  lower ) return 1;
 
-    if( x[0] >= 0.2 && x[1] <= 0.0 ) return 0.5;
-    if( x[0] <= 0.0 && x[1] >= 0.2 ) return 0.5;
+    if( x[0] >  upper && x[1] >= 1.0 ) return 0;
+    if( x[0] >= 1.0 && x[1] >  upper ) return 0;
 
-    if( x[0] >= 0.2 && x[1] <= 0.0 ) return 0.5;
-    if( x[0] <= 0.8 && x[1] >= 1.0 ) return 0.5;
-    /*
-    if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    if( x[0] <= 0.0 && x[1] >  0.3 ) return 0.5;
+    if( x[0] >= lower && x[1] <= 0.0 ) return 0.5;
+    if( x[0] <= 0.0 && x[1] >= upper ) return 0.5;
 
-    if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
-    if( x[0] <  0.7 && x[1] >= 1.0 ) return 0.5;
-    */
+    if( x[0] >= lower && x[1] <= 0.0 ) return 0.5;
+    if( x[0] <= upper && x[1] >= 1.0 ) return 0.5;
+
     return 0.5;
   }
   
