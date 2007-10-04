@@ -264,8 +264,9 @@ namespace Dune {
       , linkRank_()
       // create mpAccess with world communicator  
       // only when size > 1 
-      , mpAccess_( (mySize_ > 1) ? 
-          (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0)
+      //, mpAccess_( (mySize_ > 1) ? 
+      //    (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0)
+      , mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) )
       , nLinks_(0)
       , sequence_(-1)
     {
