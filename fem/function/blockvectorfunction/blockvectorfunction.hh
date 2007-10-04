@@ -268,30 +268,36 @@ public:
   LocalFunctionType localFunction(const EntityType& en) const;
 #endif
 
-  /** \brief @copydoc DiscreteFunctionInterface::dbegin */ 
-  DofIteratorType dbegin (); 
+  /** \copydoc Dune::DiscreteFunctionInterface::dbegin() */ 
+  DofIteratorType dbegin ();
   
-  /** \brief @copydoc DiscreteFunctionInterface::dend */ 
-  DofIteratorType dend   (); 
+  /** \copydoc Dune::DiscreteFunctionInterface::dend() */
+  DofIteratorType dend (); 
 
-  /** \brief @copydoc DiscreteFunctionInterface::dbegin */ 
+  /** \copydoc Dune::DiscreteFunctionInterface::dbegin() const */
   ConstDofIteratorType dbegin () const;
   
-  /** \brief @copydoc DiscreteFunctionInterface::dend  */ 
-  ConstDofIteratorType dend   () const; 
+  /** \copydoc Dune::DiscreteFunctionInterface::dend() const */ 
+  ConstDofIteratorType dend () const; 
 
-  /** \brief @copydoc DiscreteFunctionInterface::name  */ 
-  const std::string& name() const {return name_;} 
+  /** \copydoc Dune::DiscreteFunctionInterface::name */
+  inline const std::string &name () const
+  {
+    return name_;
+  }
 
-  /** \brief @copydoc DiscreteFunctionInterface::size  */ 
-  int size() const { return dofVec_.size(); }
+  /** \copydoc Dune::DiscreteFunctionInterface::size */
+  inline int size() const
+  {
+    return dofVec_.size();
+  }
 
-  /** \brief @copydoc DiscreteFunctionDefault::clear */
+  /** \copydoc Dune::DiscreteFunctionDefault::clear */
   void clear();
 
-  /** \brief @copydoc DiscreteFunctionDefault::addScaled */
+  /** \copydoc Dune::DiscreteFunctionDefault::addScaled */
   void addScaled ( const DiscreteFunctionType & g,
-      const RangeFieldType &scalar); 
+                   const RangeFieldType &s ); 
   
   /** \brief add g to this on local entity
       \param[in] GridIteratorType it 
@@ -310,8 +316,8 @@ public:
   template <class GridIteratorType>
   void setLocal (GridIteratorType &it, const RangeFieldType &scalar);
   
-  /** \brief @copydoc DiscreteFunctionDefault::print */
-  void print(std::ostream& s) const;
+  /** \copydoc Dune::DiscreteFunctionInterface::print */
+  void print( std :: ostream &out ) const;
 
   /** \brief @copydoc DiscreteFunctionDefault::write_xdr */
   virtual bool write_xdr( const std::string filename ) const;
@@ -431,15 +437,23 @@ public:
   //! \brief Destructor 
   ~BlockVectorLocalFunction ();
 
-   /** \brief  @copydoc LocalFunctionDefault::operator []  */
-  RangeFieldType & operator [] (int num);
+   /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) */
+  inline const RangeFieldType &operator[] ( const int num ) const
+  {
+    return *(values_[ num ]);
+  }
 
-   /** \brief  @copydoc LocalFunctionDefault::operator []  */
-  const RangeFieldType & operator [] (int num) const;
+   /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) */
+  inline RangeFieldType &operator[] ( const int num )
+  {
+    return *(values_[ num ]);
+  }
 
-  /** \copydoc Dune::LocalFunctionInterface::numDofs
-   */
-  int numDofs () const;
+  /** \copydoc Dune::LocalFunctionInterface::numDofs */
+  int numDofs () const
+  {
+    return numDofs_;
+  }
 
   /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const
    */
@@ -465,7 +479,7 @@ public:
                   const int quadPoint,
                   JacobianRangeType &ret ) const;
 
-   /** \brief  @copydoc LocalFunctionDefault::baseFunctionSet  */
+   /** \copydoc Dune::LocalFunctionInterface::baseFunctionSet */
   const BaseFunctionSetType& baseFunctionSet() const;
 
    /** \brief  @copydoc LocalFunctionDefault::axpy  */
@@ -523,7 +537,7 @@ protected:
   const DiffVariable<0>::Type diffVar;
 
   //! number of all dofs 
-  mutable int numOfDof_;
+  mutable int numDofs_;
 
   //! do we have the same base function set for all elements
   mutable bool needCheckGeometry_;

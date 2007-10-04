@@ -39,10 +39,10 @@ namespace Dune {
   AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   ~AdaptiveLocalFunction() {}  
 
-  template <class DiscreteFunctionSpaceImp>
-  typename AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::DofType&
-  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  operator[] (const int num) 
+  template< class DiscreteFunctionSpaceImp >
+  typename AdaptiveLocalFunction< DiscreteFunctionSpaceImp > :: RangeFieldType &
+  AdaptiveLocalFunction< DiscreteFunctionSpaceImp >
+    :: operator[] ( const int num )
   {
     assert( en_ != 0 );
     assert(num >= 0 && num < numDofs());
@@ -51,10 +51,10 @@ namespace Dune {
     return (* (values_[num]));
   }
   
-  template <class DiscreteFunctionSpaceImp>
-  const typename AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::DofType&
-  AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  operator[] (const int num) const 
+  template< class DiscreteFunctionSpaceImp >
+  const typename AdaptiveLocalFunction< DiscreteFunctionSpaceImp > :: RangeFieldType &
+  AdaptiveLocalFunction< DiscreteFunctionSpaceImp >
+    :: operator[] ( const int num ) const
   {
     assert( en_ != 0 );
     assert(num >= 0 && num < numDofs());
@@ -399,21 +399,23 @@ namespace Dune {
   AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   ~AdaptiveLocalFunction() {}
 
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  typename AdaptiveLocalFunction<
-    CombinedSpace<ContainedFunctionSpaceImp, N, p> >::DofType&
-  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  operator[] (const int num) 
+  template< class ContainedFunctionSpaceImp, int N, DofStoragePolicy p >
+  typename AdaptiveLocalFunction
+    < CombinedSpace< ContainedFunctionSpaceImp, N, p> >
+    :: RangeFieldType &
+  AdaptiveLocalFunction< CombinedSpace< ContainedFunctionSpaceImp, N, p > >
+    :: operator[] ( const int num )
   {
     assert(num >= 0 && num < numDofs());
     return *values_[num/N][static_cast<SizeType>(num%N)];
   }
 
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  const typename AdaptiveLocalFunction<
-    CombinedSpace<ContainedFunctionSpaceImp, N, p> >::DofType&
-  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  operator[] (const int num) const 
+  template< class ContainedFunctionSpaceImp, int N, DofStoragePolicy p >
+  const typename AdaptiveLocalFunction
+    < CombinedSpace< ContainedFunctionSpaceImp, N, p > >
+    :: RangeFieldType &
+  AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >
+    :: operator[] ( const int num ) const
   {
     assert(num >= 0 && num < numDofs());
     return *values_[num/N][static_cast<SizeType>(num%N)];

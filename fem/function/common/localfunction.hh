@@ -55,28 +55,30 @@ public:
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   //! type of jacobian, i.e. type of evaluated gradient 
   typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
-  
+
   //! type of base function set  
   typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType BaseFunctionSetType; 
-
-  /** \brief access to local dofs (read-write)
-      \param[in] num local dof number 
-      \return reference to dof 
+  
+  /** \brief access to local dofs (read-only)
+   *
+   *  \param[in]  num  local dof number 
+   *  \return reference to dof 
   */
-  RangeFieldType& operator [] (const int num) 
+  const RangeFieldType &operator[] ( const int num ) const
   {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator [] ( num ));
-    return asImp().operator [] ( num );
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().operator[]( num ) );
+    return asImp().operator[]( num );
   }
 
-  /** \brief access to local dofs (read-only)
-      \param[in] num local dof number 
-      \return reference to dof 
-  */
-  const RangeFieldType& operator [] (const int num) const 
+  /** \brief access to local dofs (read-write)
+   *
+   *  \param[in]  num  local DoF number
+   *  \return reference to DoF
+   */
+  inline RangeFieldType &operator[] ( const int num )
   {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator [] ( num ));
-    return asImp().operator [] ( num );
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().operator[]( num ) );
+    return asImp().operator[]( num );
   }
 
   /** \brief obtain the number of local DoFs
@@ -198,23 +200,27 @@ public:
       asImp().axpy( quad, quadPoint, factor1, factor2 ));
   }
 
-  //! \brief return reference to corresponding base function set of local function
-  const BaseFunctionSetType& baseFunctionSet() const 
+  /** \brief obtain the base function set for this local function
+   *
+   *  \returns reference to the base function set
+   */
+  const BaseFunctionSetType &baseFunctionSet () const 
   {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().baseFunctionSet());
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().baseFunctionSet() );
     return asImp().baseFunctionSet();
   }
   
 protected:
-  //! Barton-Nackman trick 
-  LocalFunctionImp& asImp() 
-  { 
-    return static_cast<LocalFunctionImp&>(*this);
-  }
-  //! Barton-Nackman trick 
-  const LocalFunctionImp& asImp() const  
+  // Barton-Nackman trick 
+  inline const LocalFunctionImp &asImp() const
   {
-    return static_cast<const LocalFunctionImp&>(*this);
+    return static_cast< const LocalFunctionImp & >( *this );
+  }
+
+  // Barton-Nackman trick 
+  inline LocalFunctionImp &asImp()
+  { 
+    return static_cast< LocalFunctionImp & >( *this );
   }
 }; // end LocalFunctionInterface
 

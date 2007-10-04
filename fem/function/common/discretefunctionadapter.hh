@@ -202,26 +202,25 @@ namespace Dune{
     {}
 
     //! evaluate function on local coordinate local 
-    /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
     void evaluate(const DomainType& global, RangeType& result) const 
     {
       function_.evaluate(global,result);  
     }
 
-    /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
-    const LocalFunctionType localFunction(const EntityType& en) const 
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
+    const LocalFunctionType localFunction( const EntityType &entity ) const 
     {
-      return LocalFunctionType(en,*this);
+      return LocalFunctionType( entity, *this );
     }
 
-    /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
-    LocalFunctionType localFunction(const EntityType& en) 
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
+    LocalFunctionType localFunction( const EntityType &entity )
     {
-      return LocalFunctionType(en,*this);
+      return LocalFunctionType( entity, *this );
     }
 
-    /** \brief @copydoc DiscreteFunctionInterface::name */ 
-    const std::string& name() const 
+    /** \copydoc Dune::DiscreteFunctionInterface::name */
+    inline const std :: string &name() const
     {
       return name_;
     }

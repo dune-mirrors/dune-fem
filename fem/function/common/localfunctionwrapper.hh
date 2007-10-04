@@ -119,29 +119,32 @@ namespace Dune
     inline ThisType &operator= ( const ThisType& );
 
   public:
-    /** \brief @copydoc LocalFunctionInterface::operator [] */
-    RangeFieldType & operator [] (const int num) { return localFunction()[num]; }
+    /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) const */
+    const RangeFieldType &operator[] ( const int num ) const
+    {
+      return localFunction()[ num ];
+    }
     
-    /** \brief @copydoc LocalFunctionInterface::operator [] const */
-    const RangeFieldType & operator [] (const int num) const { return localFunction()[num]; }
-
-    /** \copydoc LocalFunctionInterface::numDofs
-     */
+    /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) */
+    RangeFieldType &operator[] ( const int num )
+    {
+      return localFunction()[ num ];
+    }
+ 
+    /** \copydoc LocalFunctionInterface::numDofs */
     int numDofs () const
     {
       return localFunction().numDofs();
     }
     
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const
-     */
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const */
     void evaluate ( const DomainType &x,
                     RangeType &ret ) const
     {
       localFunction().evaluate( x , ret );
     }
     
-    /** \copydoc Dune::LocalFunctionInterface::evaluate( const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
-     */
+    /** \copydoc Dune::LocalFunctionInterface::evaluate( const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
     template< class QuadratureType >
     void evaluate ( const QuadratureType &quadrature,
                     const int quadPoint,
@@ -150,16 +153,14 @@ namespace Dune
       localFunction().evaluate( quadrature, quadPoint, ret );
     }
     
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const
-     */
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const */
     void jacobian ( const DomainType& x,
                     JacobianRangeType &ret ) const
     {
       localFunction().jacobian( x, ret ); 
     }
    
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const
-     */
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
     template< class QuadratureType > 
     void jacobian ( const QuadratureType &quadrature,
                     const int quadPoint,
@@ -205,8 +206,7 @@ namespace Dune
       localFunction().axpy( quad, quadPoint, factor1, factor2 );
     }
     
-    /** \copydoc LocalFunctionInterface::baseFunctionSet
-     */
+    /** \copydoc LocalFunctionInterface::baseFunctionSet */
     const BaseFunctionSetType& baseFunctionSet() const 
     {
       return localFunction().baseFunctionSet();

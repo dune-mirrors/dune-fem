@@ -86,16 +86,17 @@ inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::clear ()
   for(int i=0; i<size; ++i) dofVec_[i] = 0.0; 
 }
 
-template<class DiscreteFunctionSpaceType>
-inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::print(std::ostream &s ) const
+template< class DiscreteFunctionSpaceType >
+inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
+  :: print ( std::ostream &out ) const
 {
-  s << "BlockVectorDiscreteFunction '" << name_ << "'\n";
-  ConstDofIteratorType enddof = this->dend ();
-  for(ConstDofIteratorType itdof = this->dbegin (); itdof != enddof; ++itdof) 
-  {
-    s << (*itdof) << " \n";
-  } 
+  out << "BlockVectorDiscreteFunction '" << name_ << "'" << std :: endl;
+  
+  const ConstDofIteratorType end = dend();
+  for( ConstDofIteratorType dit = dbegin(); dit != end; ++dit )
+    out << (*dit) << std :: endl;
 }
+
 //*************************************************************************
 //  Interface Methods 
 //*************************************************************************
@@ -347,8 +348,9 @@ inline BlockVectorLocalFunction < TraitsImp >::~BlockVectorLocalFunction()
 {
 }
 
+#if 0
 template< class TraitsImp >
-inline typename BlockVectorLocalFunction < TraitsImp >::RangeFieldType & 
+inline typename BlockVectorLocalFunction< TraitsImp > :: RangeFieldType &
 BlockVectorLocalFunction < TraitsImp >::operator [] (int num) 
 {
   return (* (values_[num]));
@@ -365,8 +367,9 @@ template< class TraitsImp >
 inline int BlockVectorLocalFunction < TraitsImp >::
 numDofs () const 
 {
-  return numOfDof_;
+  return numDofs_;
 }
+#endif
 
 template< class TraitsImp >
 inline void BlockVectorLocalFunction < TraitsImp >::
@@ -577,10 +580,10 @@ inline void BlockVectorLocalFunction< DiscreteFunctionType >
     {
       baseSet_  = fSpace_.baseFunctionSet( entity );
       // do not use baseFunctionSet() here, entity might not have been set 
-      numOfDof_ = baseSet_.numBaseFunctions();
+      numDofs_ = baseSet_.numBaseFunctions();
 
-      if( numOfDof_ > values_.size() )
-        values_.resize( numOfDof_ );
+      if( numDofs_ > values_.size() )
+        values_.resize( numDofs_ );
     }
   }
   
@@ -589,8 +592,8 @@ inline void BlockVectorLocalFunction< DiscreteFunctionType >
 
   // cache local dofs 
   //DofBlockType& dofs = dofVec_[mapper_.mapToGlobal(entity,0)] ;
-  //assert( numOfDof_ == DofBlockType :: dimension );
-  for(int i=0; i<numOfDof_; ++i) 
+  //assert( numDofs_ == DofBlockType :: dimension );
+  for(int i=0; i<numDofs_; ++i) 
   {
     // assert that mapper matches with space mapping 
     /*

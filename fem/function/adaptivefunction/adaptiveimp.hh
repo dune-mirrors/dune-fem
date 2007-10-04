@@ -58,7 +58,7 @@ namespace Dune {
     typedef typename Traits::DofType DofType;
     
   public:
-    std::string name() const;
+    const std :: string &name () const;
     int size() const;
 
     DofIteratorType dbegin();

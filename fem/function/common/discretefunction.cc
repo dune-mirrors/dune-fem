@@ -132,23 +132,17 @@ operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::Range
 }
 
 
-// print 
-template<class DiscreteFunctionTraits >
-inline void 
-DiscreteFunctionDefault<DiscreteFunctionTraits >::
-print(std::ostream & s) const 
-{
-  typedef DiscreteFunctionDefault<
-    DiscreteFunctionTraits 
-    > DiscreteFunctionDefaultType;
-    
-  s << this->name() << std::endl;
-  ConstDofIteratorType endit = this->dend ();
-  for(ConstDofIteratorType it = this->dbegin(); it != endit; ++it) 
+  // print 
+  template< class DiscreteFunctionTraits >
+  inline void DiscreteFunctionDefault<DiscreteFunctionTraits >
+    :: print ( std::ostream &out ) const
   {
-    s << (*it) << std::endl;
+    out << name() << std::endl;
+    
+    const ConstDofIteratorType end = dend();
+    for( ConstDofIteratorType dit = dbegin(); dit != end; ++dit )
+      out << (*dit) << std::endl;
   }
-}
 
 } // end namespace Dune
 #endif

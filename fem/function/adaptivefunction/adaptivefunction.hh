@@ -417,8 +417,7 @@ namespace Dune
                   int quadPoint,
                   JacobianRangeType& ret) const;
 
-    /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet
-     */
+    /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet */
     const BaseFunctionSetType& baseFunctionSet() const;
 
     /** \brief @copydoc LocalFunctionDefault::axpy */
@@ -578,15 +577,15 @@ namespace Dune
       Imp::assignFunction(g);
     }
 
-    /** \brief @copydoc DiscreteFunctionDefault::operator += */
-    ThisType& operator += (const ThisType& g)
+    /** \copydoc Dune::DiscreteFunctionDefault::operator+= */
+    inline ThisType &operator += ( const ThisType &g )
     {
       Imp::addFunction(g);
       return *this;
     }
 
-    /** \brief @copydoc DiscreteFunctionDefault::operator -= */
-    ThisType& operator -= (const ThisType& g)
+    /** \copydoc Dune::DiscreteFunctionDefault::operator-= */
+    inline ThisType &operator-= ( const ThisType &g )
     {
       Imp::substractFunction(g);
       return *this;
@@ -749,30 +748,24 @@ namespace Dune
     ~AdaptiveLocalFunction();
 
     //- Operators
-    /** \brief @copydoc LocalFunctionDefault::operator[] */
-    inline
-    DofType& operator[] (const int num);
+    /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) const */
+    inline const RangeFieldType &operator[]( const int num ) const;
 
-    /** \brief @copydoc LocalFunctionDefault::operator[] */
-    inline
-    const DofType& operator[] (const int num) const;
+    /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) */
+    inline RangeFieldType &operator[]( const int num );
 
-    /** \brief @copydoc LocalFunctionDefault::numDofs */
-    inline
-    int numDofs() const;
+    /** \copydoc Dune::LocalFunctionInterface::numDofs */
+    inline int numDofs() const;
 
-    /** \brief @copydoc LocalFunctionDefault::evaluate */
-    inline
-    void evaluate(const DomainType& x, 
-                  RangeType & ret) const;
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const */
+    inline void evaluate ( const DomainType &x,
+                           RangeType &ret ) const;
 
-    /** \brief @copydoc LocalFunctionDefault::evaluate */
-    template <class QuadratureType>
-    inline
-    void evaluate(const QuadratureType& quad,
-                  const int quadPoint, 
-                  RangeType & ret) const;
-
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
+    template< class QuadratureType >
+    inline void evaluate ( const QuadratureType &quadrature,
+                           const int quadPoint, 
+                           RangeType &ret ) const;
     
     /** \brief evaluate jacobian of the discrete function on point x
         \param[in] entity en 
@@ -799,21 +792,22 @@ namespace Dune
                   JacobianRangeType& ret) const;
 
     
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
-    inline
-    void jacobian(const DomainType& x, 
-                  JacobianRangeType& ret) const;
-    
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const */
+    inline void jacobian ( const DomainType &x,
+                           JacobianRangeType &ret ) const;
         
-    /** \brief @copydoc LocalFunctionDefault::jacobian */
-    template <class QuadratureType>
-    inline
-    void jacobian(const QuadratureType& quad,
-                  const int quadPoint,
-                  JacobianRangeType& ret) const;
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
+    template< class QuadratureType >
+    inline void jacobian ( const QuadratureType &quadrature,
+                           const int quadPoint,
+                           JacobianRangeType &ret ) const;
 
     //- Additional methods for specialisation
-    /** \brief @copydoc LocalFunctionDefault::assign */
+    /** \todo Please doc me!
+     *
+     *  \note Neither LocalFunctionInterface nor LocalFunctionDefault have this
+     *        method.
+     */
     inline
     void assign(int dofNum, const RangeType& dofs);
     
@@ -821,11 +815,8 @@ namespace Dune
     inline
     int numDifferentBaseFunctions() const;
 
-    /** \brief @copydoc LocalFunctionDefault::baseFunctionSet */
-    inline 
-    const BaseFunctionSetType& baseFunctionSet() const;
-
-
+    /** \copydoc Dune::LocalFunctionInterface::baseFunctionSet */
+    inline const BaseFunctionSetType &baseFunctionSet() const;
    
      /** \brief @copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
@@ -846,7 +837,7 @@ namespace Dune
 
   private:
     //- Private methods
-    //! return reference to entity 
+    // return reference to entity 
     inline
     const EntityType& en() const;
 

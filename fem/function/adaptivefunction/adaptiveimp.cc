@@ -66,10 +66,10 @@ namespace Dune {
     }
   }
  
-  template <class DiscreteFunctionSpaceImp>
-  std::string
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  name() const 
+  template< class DiscreteFunctionSpaceImp >
+  const std :: string &
+  AdaptiveFunctionImplementation< DiscreteFunctionSpaceImp >
+    :: name () const 
   {
     return name_;
   }

@@ -212,7 +212,7 @@ namespace Dune
       return dofVector().end();
     }
 
-    inline std :: string name () const
+    inline const std :: string &name () const
     {
       return name_;
     }
