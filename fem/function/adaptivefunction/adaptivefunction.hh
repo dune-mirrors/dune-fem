@@ -243,7 +243,7 @@ namespace Dune
 
     /** \copydoc Dune::DiscreteFunctionDefault::operator-=
      */ 
-    virtual BaseType &operator-= ( const ThisType &g )
+    inline BaseType &operator-= ( const ThisType &g )
     {
       Imp::substractFunction(g);
       return *this;
