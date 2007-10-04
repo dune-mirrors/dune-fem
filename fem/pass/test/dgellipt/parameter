@@ -56,6 +56,16 @@ eta: 1.5
 #######################################
 # Problem setting
 #######################################
-Problem: 7
+# choos problem number here 
+# Benchmarks: 0 == Test 1.1 
+# Benchmarks: 1 == Test 1.2 
+# Benchmarks: 2 == Test 2 
+# Benchmarks: 3 == Test 3
+# Benchmarks: 4 == Test 4 
+# Benchmarks: 5 == Test 5 
+# Benchmarks: 6 == Test 6 
+# Benchmarks: 7 == Test 7 
+# Problem 8 - 12 older problems 
+Problem: 4
 GlobalShift: 2.0 
 Factor: 1.0
