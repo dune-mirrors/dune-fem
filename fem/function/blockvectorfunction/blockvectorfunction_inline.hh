@@ -53,10 +53,10 @@ BlockVectorDiscreteFunction(const std::string name,
 {
 }
 
-template<class DiscreteFunctionSpaceType>
-inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-BlockVectorDiscreteFunction(const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> & df ) :
-  DiscreteFunctionDefaultType ( df.functionSpace_ , lfFactory_ ) 
+template< class DiscreteFunctionSpaceType >
+inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
+  :: BlockVectorDiscreteFunction ( const ThisType &df ) 
+: DiscreteFunctionDefaultType( df.functionSpace_, lfFactory_ )
   , lfFactory_( *this )
   , mapper_( df.functionSpace_.blockMapper() ) 
   , dm_(df.dm_)
@@ -284,15 +284,15 @@ read_pgm( const std::string filename )
 }
 
 
-template<class DiscreteFunctionSpaceType>
-inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-addScaled( const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &g, 
-           const RangeFieldType &scalar )
+template< class DiscreteFunctionSpaceType >
+inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
+  :: addScaled ( const DiscreteFunctionType &g,
+                 const RangeFieldType &s )
 {
   int length = dofVec_.size();
   const DofStorageType &gvec = g.dofVec_;
   assert(length == gvec.size());
-  dofVec_.axpy(scalar,gvec);
+  dofVec_.axpy( s, gvec );
 }
 
 

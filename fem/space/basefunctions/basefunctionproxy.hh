@@ -152,19 +152,25 @@ namespace Dune
     {
       baseFunctionSet().jacobian( baseFunction, quadrature, quadPoint, phi );
     }
-   
-    //! @copydoc BaseFunctionSetDefault::evaluateSingle 
-    template <class QuadratureType>
-    inline
-    RangeFieldType evaluateSingle(const int baseFunct,
-                                  const QuadratureType& quad, const int quadPoint,
-                                  const RangeType& factor) const
+
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    template< class QuadratureType >
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const DomainType &x,
+                                           const RangeType &psi ) const
     {
-      assert( this->baseSet_ );
-      return baseSet_->evaluateSingle(baseFunct,
-                                              quad,
-                                              quadPoint,
-                                              factor);
+      return baseFunctionSet().evaluateSingle( baseFunction, x, psi );
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */
+    template< class QuadratureType >
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const QuadratureType &quadrature,
+                                           const int quadPoint,
+                                           const RangeType &psi ) const
+    {
+      return baseFunctionSet().evaluateSingle
+        ( baseFunction, quadrature, quadPoint, psi );
     }
       
     //! @copydoc BaseFunctionSetDefault::evaluateGradientSingle 

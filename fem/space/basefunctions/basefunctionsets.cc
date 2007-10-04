@@ -22,7 +22,8 @@ namespace Dune {
     }
   };
   */
-  
+ 
+#if 0
   //- class StandardBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class QuadratureType>
@@ -36,6 +37,7 @@ namespace Dune {
     //return SKPMeta<RangeType,RangeType::dimension-1>::skp(tmp_,factor);
     return tmp_*factor;
   }
+#endif
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class Entity, class QuadratureType>
@@ -175,6 +177,7 @@ namespace Dune {
     gradPhi[util_.component(baseFunct)] = jTmp_[0];
   }
 
+#if 0
   template <class FunctionSpaceImp, template <class> class StorageImp>
   inline typename VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType
   VectorialBaseFunctionSet<FunctionSpaceImp, StorageImp>::
@@ -200,6 +203,7 @@ namespace Dune {
                       quadPoint, tmp_);
     return factor[util_.component(baseFunct)]*tmp_[0];
   }
+#endif
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class Entity>

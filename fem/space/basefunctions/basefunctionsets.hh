@@ -115,12 +115,14 @@ namespace Dune
       storage_.evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi );
     }
 
-    /** \brief @copydoc BaseFunctionSetDefault::evaluate */ 
-    template <class QuadratureType>
-    inline
-    DofType evaluateSingle(const int baseFunct,
-                           const QuadratureType& quad, const int quadPoint,
-                           const RangeType& factor) const;
+#if 0
+    /** \copydoc Dune::BaseFunctionSetDefault::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */ 
+    template< class QuadratureType >
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const QuadratureType &quadrature,
+                                           const int quadPoint,
+                                           const RangeType &psi ) const;
+#endif
       
     /** \brief @copydoc BaseFunctionSetDefault::evaluate */ 
     template <class Entity, class QuadratureType>
@@ -252,17 +254,35 @@ namespace Dune
     void jacobian(int baseFunct, QuadratureImp& quad, int quadPoint,
                   JacobianRangeType& gradPhi) const;
 
-    inline
-    DofType evaluateSingle(const int baseFunct, 
-                           const DomainType& xLocal,
-                           const RangeType& factor) const;
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const DomainType &x,
+                                           const RangeType &psi ) const
+    {
+      ScalarRangeType phi;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+
+      FieldVector< deriType, 0 > diffVar;
+      storage_.evaluate( scalarBaseFunction, diffVar, x, phi );
+      return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
+    }
     
-    template <class QuadratureType>
-    inline
-    DofType evaluateSingle(const int baseFunct,
-                           const QuadratureType& quad, int quadPoint,
-                           const RangeType& factor) const;
-      
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */
+    template< class QuadratureType >
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const QuadratureType &quadrature,
+                                           const int quadPoint,
+                                           const RangeType &psi ) const
+    {
+      ScalarRangeType phi;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+
+      FieldVector< deriType, 0 > diffVar;
+      storage_.evaluate
+        ( scalarBaseFunction, diffVar, quadrature, quadPoint, phi );
+      return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
+    }
+     
     template <class Entity>
     inline
     DofType evaluateGradientSingle(const int baseFunct,

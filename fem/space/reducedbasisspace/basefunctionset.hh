@@ -131,17 +131,9 @@ namespace Dune
       return *this;
     }
 
-    /*! \brief evaluate a derivative of a base function
-     *
-     *  evaluates the base function or a derivative in some point x (given in local coordinates).
-     *
-     *  \param[in]  baseFunction  number of the base function to be evaluated
-     *  \param[in]  diffVariable  vector of indices specifying the derivative
-     *  \oaram[in]  x             local coordinates of point to evaluate the function in
-     *  \oaram[out] phi           receives the value of the function in x
-     */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const */
     template< int diffOrd >
-    inline void evaluate ( int baseFunction,
+    inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
                            const DomainType &x,
                            RangeType &phi ) const
@@ -153,7 +145,8 @@ namespace Dune
 
       const LocalBaseFunctionType localBaseFunction
         = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
-      const LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
+      const LocalBaseFunctionSetType &localBaseFunctionSet
+        = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
       phi = 0;
@@ -164,30 +157,13 @@ namespace Dune
         phi.axpy( localBaseFunction[ i ], psi );
       }
     }
-    
-    /*! \brief evaluate a derivative of a base function
-     *
-     *  evaluates the base function or a derivative in a quadrature point. In
-     *  effect it is the same as calling
-     *  \code
-     *  evaluate( baseFunction, diffVariable, quadrature.point( point ), phi ).
-     *  \endcode
-     *
-     *  \note This method may be faster due to caching of base function
-     *        evaluations in quadrature points (see also CachingStorage).
-     *
-     *  \param[in]  baseFunction  number of the base function to be evaluated
-     *  \param[in]  diffVariable  vector of indices specifying the derivative
-     *  \oaram[in]  quadrature    quadrature to use
-     *  \param[in]  point         index of the point within the quadrature
-     *  \oaram[out] phi           receives the value of the function in the
-     *                            quadrature point
-     */
+   
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
     template< int diffOrd, class QuadratureType >
-    inline void evaluate ( int baseFunction,
+    inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
                            const QuadratureType &quadrature,
-                           int point,
+                           const int quadPoint,
                            RangeType &phi ) const
     {
       assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
@@ -197,16 +173,71 @@ namespace Dune
 
       const LocalBaseFunctionType localBaseFunction 
         = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
-      const LocalBaseFunctionSetType &localBaseFunctionSet = localBaseFunction.baseFunctionSet();
+      const LocalBaseFunctionSetType &localBaseFunctionSet
+        = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
       
       phi = 0;
       for( int i = 0; i < numLocalBaseFunctions; ++i )
       {
         RangeType psi;
-        localBaseFunctionSet.evaluate( i, diffVariable, quadrature, point, psi );
+        localBaseFunctionSet.evaluate( i, diffVariable, quadrature, quadPoint, psi );
         phi.axpy( localBaseFunction[ i ], psi );
       }
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const DomainType &x,
+                                           RangeType &psi ) const
+    {
+      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
+      assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
+
+      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
+
+      const LocalBaseFunctionType localBaseFunction
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
+      const LocalBaseFunctionSetType &localBaseFunctionSet
+        = localBaseFunction.baseFunctionSet();
+      const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
+
+      RangeFieldType ret = 0;
+      for( int i = 0; i < numLocalBaseFunctions; ++i )
+      {
+        const RangeFieldType y
+          = localBaseFunctionSet.evaluateSingle( i, x, psi );
+        ret += localBaseFunction[ i ] * y;
+      }
+      return ret;
+    }
+   
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,RangeType &psi) const */
+    template< class QuadratureType >
+    inline void evaluateSingle ( const int baseFunction,
+                                  const QuadratureType &quadrature,
+                                  const int quadPoint,
+                                  RangeType &psi ) const
+    {
+      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
+      assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
+
+      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
+
+      const LocalBaseFunctionType localBaseFunction 
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
+      const LocalBaseFunctionSetType &localBaseFunctionSet
+        = localBaseFunction.baseFunctionSet();
+      const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
+
+      RangeFieldType ret = 0;
+      for( int i = 0; i < numLocalBaseFunctions; ++i )
+      {
+        const RangeFieldType y
+          = localBaseFunctionSet.evaluateSingle( i, quadrature, quadPoint, psi );
+        ret += localBaseFunction[ i ] * y;
+      }
+      return ret;
     }
 
     inline GeometryType geometryType () const
@@ -215,7 +246,7 @@ namespace Dune
       return entity_->geometry().type();
     }
 
-    //! returns the number of Discretefunctions that bulid the reduced basis space
+    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
     inline int numBaseFunctions () const
     {
       assert( baseFunctionList_ != NULL );

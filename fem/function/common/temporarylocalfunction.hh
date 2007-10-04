@@ -156,8 +156,7 @@ namespace Dune
       return baseFunctionSet_;
     }
 
-    /** \copydoc Dune::LocalFunctionInterface::evaluate
-     */
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const */
     inline void evaluate ( const DomainType &x,
                            RangeType &ret ) const
     {
@@ -173,8 +172,7 @@ namespace Dune
       }
     }
 
-    /** \copydoc Dune::LocalFunctionInterface::evaluate
-     */
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
     template< class QuadratureType >
     inline void evaluate ( const QuadratureType &quadrature,
                            const int quadPoint,
@@ -211,8 +209,7 @@ namespace Dune
       dofs_.resize( baseFunctionSet_.numBaseFunctions() );
     }
 
-    /** \copydoc Dune::LocalFunctionInterface::jacobian
-     */
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const */
     inline void jacobian ( const DomainType &x, JacobianRangeType &ret ) const
     {
       assert( entity_ != NULL );
@@ -238,8 +235,7 @@ namespace Dune
         ret[ i ] = FMatrixHelp :: mult( inv, ret[ i ] );
     }
 
-    /** \copydoc Dune::LocalFunctionInterface::jacobian
-     */
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
     template< class QuadratureType >
     inline void jacobian ( const QuadratureType &quadrature,
                            const int quadPoint,
@@ -270,8 +266,7 @@ namespace Dune
     }
 
 
-    /** \copydoc Dune::LocalFunctionInterface::numDofs
-     */
+    /** \copydoc Dune::LocalFunctionInterface::numDofs */
     inline int numDofs () const
     {
       return dofs_.size();

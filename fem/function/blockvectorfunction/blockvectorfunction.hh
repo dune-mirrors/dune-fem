@@ -296,7 +296,7 @@ public:
   void clear();
 
   /** \copydoc Dune::DiscreteFunctionDefault::addScaled */
-  void addScaled ( const DiscreteFunctionType & g,
+  void addScaled ( const DiscreteFunctionType &g,
                    const RangeFieldType &s ); 
   
   /** \brief add g to this on local entity

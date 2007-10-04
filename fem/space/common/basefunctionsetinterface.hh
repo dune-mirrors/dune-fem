@@ -221,37 +221,71 @@ namespace Dune
         ( asImp().jacobian( baseFunction, quadrature, quadPoint, phi ) );
     }
 
-    /** \brief evaluate basefunction and multiply with factor
-        \param[in] baseFunct number of base functions to evaluate 
-        \param[in] x local point in reference element 
-        \param[in] factor factor to multiply with 
-        \return return scalar product between base function and factor 
-      */
-    RangeFieldType evaluateSingle(const int baseFunct, 
-                           const DomainType& x,
-                           const RangeType& factor) const
+    /** \brief evaluate the base function and multiply the result by a vector
+     *
+     *  It is quite common, that the base functions have the special structure
+     *  \f{displaymath}
+     *  \varphi( x ) = \sum_{k=1}^n \omega_k( x ) e_k,
+     *  \f}
+     *  where \f$e_k\f$ denotes the k-th unit vector. In this case, scalar
+     *  products by \f$\psi\f$ can be evaluated very efficiently, since
+     *  \f{displaymath}
+     *  \varphi( x ) \cdot \psi = \sum_{k=1}^n \omega_k( x ) e_k \cdot \psi
+     *                          = \sum_{k=1}^n \omega_k( x ) \psi_k.
+     *  \f}
+     *  This function provides the possibility to numerically use this
+     *  information.
+     *  
+     *  \param[in]  baseFunction  number of the base function to evaluate
+     *  \param[in]  x             point within reference element to evaluate
+     *                            the base function in
+     *  \param[in]  psi           vector to multiply the function value with
+     *
+     *  \returns the scalar product between the value of the base function and
+     *           the specified vector
+     */
+    RangeFieldType evaluateSingle ( const int baseFunction,
+                                    const DomainType &x,
+                                    const RangeType &psi ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(
-        asImp().evaluateSingle( baseFunct, x, factor ));
-      return asImp().evaluateSingle( baseFunct, x, factor );
+      CHECK_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateSingle( baseFunction, x, psi ) );
+      return asImp().evaluateSingle( baseFunction, x, psi );
     }
 
-    /** \brief evaluate basefunction and multiply with factor
-        \param[in] baseFunct number of base functions to evaluate 
-        \param[in] quad Quadrature 
-        \param[in] quadPoint number of quadrature point 
-        \param[in] factor factor to multiply with 
-        \return return scalar product between base function and factor 
-    */
-    template <class QuadratureType>
-    RangeFieldType evaluateSingle(const int baseFunct,
-                           const QuadratureType& quad, 
-                           const int quadPoint,
-                           const RangeType& factor) const
+    /** \brief evaluate the base function and multiply the result by a vector
+     *
+     *  It is quite common, that the base functions have the special structure
+     *  \f{displaymath}
+     *  \varphi( x ) = \sum_{k=1}^n \omega_k( x ) e_k,
+     *  \f}
+     *  where \f$e_k\f$ denotes the k-th unit vector. In this case, scalar
+     *  products by \f$\psi\f$ can be evaluated very efficiently, since
+     *  \f{displaymath}
+     *  \varphi( x ) \cdot \psi = \sum_{k=1}^n \omega_k( x ) e_k \cdot \psi
+     *                          = \sum_{k=1}^n \omega_k( x ) \psi_k.
+     *  \f}
+     *  This function provides the possibility to numerically use this
+     *  information.
+     *  
+     *  \param[in]  baseFunction  number of the base function to evaluate
+     *  \param[in]  quadrature    Quadrature to use
+     *  \param[in]  quadPoint     number of the evaluation point within the
+     *                            quadrature
+     *  \param[in]  psi           vector to multiply the function value with
+     *
+     *  \returns the scalar product between the value of the base function and
+     *           the specified vector
+     */
+    template< class QuadratureType >
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const QuadratureType &quadrature,
+                                           const int quadPoint,
+                                           const RangeType &psi ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(
-        asImp().evaluateSingle( baseFunct, quad, quadPoint, factor ));
-      return asImp().evaluateSingle( baseFunct, quad, quadPoint, factor );
+      CHECK_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateSingle( baseFunction, quadrature, quadPoint, psi ) );
+      return asImp().evaluateSingle( baseFunction, quadrature, quadPoint, psi );
     }
 
     /** \brief evaluate gradient of basefunction on given entity (uses
@@ -381,7 +415,7 @@ namespace Dune
     inline void evaluate ( const int baseFunction,
                            const QuadratureType &quadrature,
                            const int quadPoint,
-                           RangeType &phi) const
+                           RangeType &phi ) const
     {
       FieldVector< deriType, 0 > diffVar;
       asImp().evaluate( baseFunction, diffVar, quadrature, quadPoint, phi );
@@ -421,24 +455,26 @@ namespace Dune
       }
     }
 
-    /** \brief @copydoc BaseFunctionSetInterface::evaluateSingle */
-    RangeFieldType evaluateSingle(const int baseFunct, 
-                           const DomainType& xLocal,
-                           const RangeType& factor) const
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const DomainType &x,
+                                           const RangeType &psi ) const
     {
-      RangeType phi(0.);
-      evaluate(baseFunct, xLocal, phi);
-      return phi*factor;
+      RangeType phi;
+      evaluate( baseFunction, x, phi );
+      return phi * psi;
     }
 
-    /** \brief @copydoc BaseFunctionSetInterface::evaluateSingle */
-    template <class QuadratureType>
-    RangeFieldType evaluateSingle(const int baseFunct,
-                           const QuadratureType& quad, 
-                           const int quadPoint,
-                           const RangeType& factor) const
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */
+    template< class QuadratureType >
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const QuadratureType &quadrature,
+                                           const int quadPoint,
+                                           const RangeType &psi ) const
     {
-      return evaluateSingle(baseFunct, quad.point(quadPoint), factor);
+      RangeType phi;
+      evaluate( baseFunction, quadrature, quadPoint, phi );
+      return phi * psi;
     }
 
     /** \brief @copydoc BaseFunctionSetInterface::evaluateGradientSingle */

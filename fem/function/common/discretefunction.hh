@@ -535,7 +535,7 @@ namespace Dune
       return asImp();
     }
     
-    /** \copydoc une::DiscreteFunctionInterface::assign */
+    /** \copydoc Dune::DiscreteFunctionInterface::assign */
     void assign( const DiscreteFunctionType &g );
 
     /** \copydoc Dune::DiscreteFunctionInterface::addScaled
