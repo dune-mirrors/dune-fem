@@ -16,8 +16,7 @@
 #include <dune/common/stdstreams.cc>
 
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/utility/gridtype.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 #if USE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
