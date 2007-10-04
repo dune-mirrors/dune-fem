@@ -197,10 +197,6 @@ namespace Dune
     {
     }
 
-    inline ~VectorialBaseFunctionSet ()
-    {
-    }
-
     // use evaluate of default implementation 
     using BaseType :: evaluate;
 

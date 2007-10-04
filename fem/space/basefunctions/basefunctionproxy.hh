@@ -224,6 +224,10 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
+  protected:
+    using BaseType :: baseFunctionSet;
+
+  public:
     //! default constructor 
     inline VectorialBaseFunctionProxy()
     : BaseType () 

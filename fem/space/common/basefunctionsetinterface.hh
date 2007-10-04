@@ -17,24 +17,9 @@ namespace Dune
   //-
   //------------------------------------------------------------------------
 
-  /** 
-     \brief 
-      
-     The BaseFunctionSetInterface describes the interface for
-     BaseFunctionSets. 
-    
-     Why has the BaseFunctionInterface class virtual methods?
-    
-     Because the we want to have different base functions in 
-     at the same time and we havent found a way to do this with 
-     Barton-Nackman. But there is a solution which dosent cost to much
-     efficiency, for example in FastBaseFunctionSet all evaluations of the
-     BaseFunction are cached in a vector, though the virtual method evaluate
-     of the BaseFunctionImp has only to be called once for the same quadrature
-     rule. If you change the quadrature rule then on the first call the
-     evaluations are stored again.
-     This method brings us flexebility and effeciency. 
-  */  
+  /** \class BaseFunctionSetInterface
+   *  \brief interface class for base function sets
+   */  
   template< class BaseFunctionSetTraits > 
   class BaseFunctionSetInterface 
   {
@@ -72,11 +57,6 @@ namespace Dune
     {
     }
 
-    //! \brief empty destructor 
-    virtual ~BaseFunctionSetInterface()
-    {
-    }
-    
     /** \brief number of base functions 
         \return number of base functions 
     */
@@ -376,11 +356,6 @@ namespace Dune
 #endif
     }
    
-    //! destructor 
-    virtual ~BaseFunctionSetDefault ()
-    {
-    }
-
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
     template< int diffOrd, class QuadratureType >
     inline void evaluate ( const int baseFunction,

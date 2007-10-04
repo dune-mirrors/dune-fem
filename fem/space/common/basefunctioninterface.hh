@@ -29,19 +29,30 @@ namespace Dune{
  */
   
 
-//---------------------------------------------------------------------
-/** \brief  BaseFunctionInterface is the interface to a base function. 
-   A base function can be evaluated on a point from the Domain and the
-   outcome is a point from Range. The Types of Domain and Range are stored
-   by typedefs in FunctionSpaceType which is the template parameter of
-   BaseFunctionInterface. 
-*/
-template<class FunctionSpaceImp>
-class BaseFunctionInterface 
-: public Mapping< typename FunctionSpaceImp::DomainFieldType,
-                  typename FunctionSpaceImp::RangeFieldType, 
-                  typename FunctionSpaceImp::DomainType, 
-                  typename FunctionSpaceImp::RangeType > 
+
+/** \brief interface for base functions
+ *
+ *  A base function can be evaluated on a point from the Domain and the
+ *  outcome is a point from Range. The Types of Domain and Range are stored
+ *  by typedefs in FunctionSpaceType which is the template parameter of
+ *  BaseFunctionInterface. 
+ *  
+ *  \remark The BaseFunctionInterface is (unlike most other interfaces in
+ *          dune-fem) a virtual interface, i.e., all methods are declared
+ *          virtual. The Barton-Nackman trick is not used. Therefore, all base
+ *          base functions of a discrete function space are derived from the
+ *          same type (all template parameters are the same).
+ *
+ *  \remark The virtual calls are usually not a problem, because the value of
+ *          base functions in quadrature points is cached when using the
+ *          CachingStorage.
+ */
+template< class FunctionSpaceImp >
+class BaseFunctionInterface
+: public Mapping< typename FunctionSpaceImp :: DomainFieldType,
+                  typename FunctionSpaceImp :: RangeFieldType, 
+                  typename FunctionSpaceImp :: DomainType, 
+                  typename FunctionSpaceImp :: RangeType > 
 {
     
 public:
