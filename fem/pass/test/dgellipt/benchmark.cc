@@ -215,7 +215,6 @@ public:
     , cost_ ( cos( 40. * pi_ / 180. ) )
     , sint_ ( sqrt(1. - cost_*cost_) ) 
   {
-    //DUNE_THROW(NotImplemented,"Not yet implemented");
     factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
     factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
     factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
