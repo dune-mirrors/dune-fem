@@ -74,7 +74,7 @@ namespace Dune
 
   
 
-  //! \copydoc Dune::ElementQuadrature
+  /** \copydoc Dune::ElementQuadrature */
   template< typename GridPartImp >
   class ElementQuadrature< GridPartImp, 0 >
   : public ElementIntegrationPointList
@@ -125,7 +125,7 @@ namespace Dune
     {
     }
     
-    /*! \brief copy constructor
+    /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
      */
@@ -134,7 +134,7 @@ namespace Dune
     {
     }
  
-    //! \copydoc Dune::Quadrature::weight
+    /** \copydoc Dune::Quadrature::weight */
     const RealType &weight( size_t i ) const
     {
       return quadImp().weight( i );
@@ -143,7 +143,7 @@ namespace Dune
 
 
 
-  //! \copydoc Dune::ElementQuadrature
+  /** \copydoc Dune::ElementQuadrature */
   template< class GridPartImp >
   class ElementQuadrature< GridPartImp, 1 >
   : public ElementIntegrationPointList
