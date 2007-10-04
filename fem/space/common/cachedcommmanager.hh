@@ -329,6 +329,10 @@ namespace Dune {
     //! check if grid has changed and rebuild cache if necessary 
     void rebuild() 
     {
+      // only in parallel we have to do something 
+      if( mySize_ <= 1 ) return ;
+
+      // check whether grid has changed. 
       if(sequence_ != space_.sequence()) 
       {
         buildMaps();
@@ -683,12 +687,16 @@ namespace Dune {
     typedef std::list < CommObjInterfaceType * > CommObjListType; 
     CommObjListType objList_;
 
+    // number of processors 
+    int mySize_; 
+
     // copy constructor 
     CommunicationManagerList(const CommunicationManagerList&); 
   public:  
     //! constructor creating list of communicated objects 
     template <class CombinedObjectType>
-    CommunicationManagerList(CombinedObjectType& cObj) 
+    CommunicationManagerList(CombinedObjectType& cObj) : 
+      mySize_( -1 )
     {
       // add all discrete functions containd in cObj to list 
       cObj.addToList(*this);
@@ -717,31 +725,41 @@ namespace Dune {
                                            DFCommunicationOperation::Copy> CommObj;
       CommObj * obj = new CommObj(df);
       objList_.push_back(obj);
+
+      // if mySize wasn't set, set to number of processors
+      if( mySize_ < 0 )
+      {
+        // get ALUGrid communicator 
+        MPAccessInterfaceType& mpAccess = objList_.front()->mpAccess();
+
+        // set number of processors 
+        mySize_ = mpAccess.psize();
+      } 
     }
 
     //! exchange the list of discrete functions between processes 
     //! only one communication is done here 
     void exchange() 
     {
-      typedef CommObjListType :: iterator iterator; 
-      // rebuild cahce if grid has changed
-      {
-        iterator end = objList_.end();
-        for(iterator it = objList_.begin(); it != end; ++it) 
-        {
-          (*it)->rebuildCache();
-        }
-      }
-      
+      // if only one process, do nothing 
+      if( mySize_ <= 1 ) return ;
+        
       // exchange data 
       if(objList_.size() > 0)
       {
+        typedef CommObjListType :: iterator iterator; 
+        // rebuild cahce if grid has changed
+        {
+          iterator end = objList_.end();
+          for(iterator it = objList_.begin(); it != end; ++it) 
+          {
+            (*it)->rebuildCache();
+          }
+        }
+      
         // get ALUGrid communicator 
         MPAccessInterfaceType& mpAccess = objList_.front()->mpAccess();
 
-        // if only one process, do nothing 
-        if( mpAccess.psize() <= 1 ) return ;
-        
         // create buffer 
         ObjectStreamVectorType osv( mpAccess.nlinks() );
         
