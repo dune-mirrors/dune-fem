@@ -215,7 +215,7 @@ public:
     , cost_ ( cos( 40. * pi_ / 180. ) )
     , sint_ ( sqrt(1. - cost_*cost_) ) 
   {
-    DUNE_THROW(NotImplemented,"Not yet implemented");
+    //DUNE_THROW(NotImplemented,"Not yet implemented");
     factor_[0][0] = cost_*cost_+delta_*sint_*sint_;
     factor_[1][0] = factor_[0][1] = cost_*sint_*(1.-delta_);
     factor_[1][1] = sint_*sint_+delta_*cost_*cost_;
@@ -246,11 +246,18 @@ public:
     if( x[0] >  0.8 && x[1] >= 1.0 ) return 0;
     if( x[0] >= 1.0 && x[1] >  0.8 ) return 0;
 
+    if( x[0] >= 0.2 && x[1] <= 0.0 ) return 0.5;
+    if( x[0] <= 0.0 && x[1] >= 0.2 ) return 0.5;
+
+    if( x[0] >= 0.2 && x[1] <= 0.0 ) return 0.5;
+    if( x[0] <= 0.8 && x[1] >= 1.0 ) return 0.5;
+    /*
     if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
     if( x[0] <= 0.0 && x[1] >  0.3 ) return 0.5;
 
     if( x[0] >  0.3 && x[1] <= 0.0 ) return 0.5;
     if( x[0] <  0.7 && x[1] >= 1.0 ) return 0.5;
+    */
     return 0.5;
   }
   
