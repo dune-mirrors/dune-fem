@@ -1,37 +1,6 @@
 
 namespace Dune {
 
-  //- class StandardBaseFunctionSet
-  template <class FunctionSpaceImp, template <class> class StorageImp>
-  inline int StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::
-  numBaseFunctions() const 
-  {
-    return storage_.numBaseFunctions();
-  }
-
-  template< class FunctionSpaceImp, template< class > class StorageImp >
-  template< int diffOrd >
-  inline void StandardBaseFunctionSet< FunctionSpaceImp, StorageImp >
-    :: evaluate( const int baseFunction,
-                 const FieldVector< int, diffOrd > &diffVariable,
-                 const DomainType &x,
-                 RangeType& phi ) const
-  {
-    storage_.evaluate( baseFunction, diffVariable, x, phi );
-  }
-
-  template< class FunctionSpaceImp, template< class > class StorageImp >
-  template< int diffOrd, class QuadratureType >
-  inline void StandardBaseFunctionSet< FunctionSpaceImp, StorageImp >
-    :: evaluate( const int baseFunction,
-                 const FieldVector< deriType, diffOrd > &diffVariable,
-                 const QuadratureType &quadrature,
-                 const int quadPoint,
-                 RangeType &phi ) const
-  {
-    storage_.evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi );
-  }
-
   /*
   template <class A, int i> 
   struct SKPMeta
@@ -54,7 +23,7 @@ namespace Dune {
   };
   */
   
-
+  //- class StandardBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class QuadratureType>
   inline typename StandardBaseFunctionSet<FunctionSpaceImp, StorageImp>::DofType

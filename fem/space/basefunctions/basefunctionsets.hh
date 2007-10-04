@@ -9,12 +9,12 @@
 #include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/common/dofstorage.hh>
 
-namespace Dune {
+namespace Dune
+{
   
-/** 
-@addtogroup BaseFunction
-@{
-**/
+  /** \addtogroup BaseFunction
+   *  \{
+   */
   
   // Forward declarations
   template <class FunctionSpaceImp, template <class> class StorageImp>
@@ -37,15 +37,16 @@ namespace Dune {
                                     StorageImp> BaseFunctionSetType;
     //! Factory type for the corresponding base functions (polymorphic)
     typedef BaseFunctionFactory<FunctionSpaceType> FactoryType;
-
   };
 
 
 
-  //! \brief Standard base function set
+  /** \class StandardBaseFunctionSet
+   *  \brief standard base function set
+   */
   template< class FunctionSpaceImp, template< class > class StorageImp >
   class StandardBaseFunctionSet
-  :  public BaseFunctionSetDefault
+  : public BaseFunctionSetDefault
     < StandardBaseFunctionSetTraits< FunctionSpaceImp, StorageImp > >
   {
   public:
@@ -58,12 +59,16 @@ namespace Dune {
     typedef BaseFunctionSetDefault< Traits > BaseType;
     
   public:
-    typedef typename FunctionSpaceImp::DomainType DomainType;
-    typedef typename FunctionSpaceImp::RangeType RangeType;
-    typedef typename FunctionSpaceImp::RangeFieldType DofType;
-    typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType :: RangeFieldType DofType;
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
     typedef typename Traits :: FactoryType FactoryType;
+
+  public:
+    // use evaluate of default implementation 
+    using BaseType :: evaluate;
 
   public:
     //! Constructor
@@ -75,30 +80,28 @@ namespace Dune {
     {
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions
-     */
-    inline int numBaseFunctions () const;
-
-    // use evaluate of default implementation 
-    using BaseType :: evaluate;
-
+    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
+    inline int numBaseFunctions () const
+    {
+      return storage_.numBaseFunctions();
+    }
+    
+    /** \copydoc Dune::BaseFunctionSetInterface::geometryType */
+    inline GeometryType geometryType () const
+    {
+      return storage_.geometryType();
+    }
+ 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const
      */ 
     template< int diffOrd >
-    inline void evaluate( const int baseFunction,
-                          const FieldVector< deriType, diffOrd > &diffVariable,
-                          const DomainType &x,
-                          RangeType &phi ) const;
-#if 0
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(int baseFunct,const FieldVector<int,diffOrd> &diffVar,const DomaiNType &xLocal,RangeType &phi) const
-     */ 
-    template< int diffOrd >
-    inline void evaluate( int baseFunct,
-                          const FieldVector< int, diffOrd > &diffVar,
-                          const DomainType &xLocal,
-                          RangeType &phi ) const;
-#endif
-
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< deriType, diffOrd > &diffVariable,
+                           const DomainType &x,
+                           RangeType &phi ) const
+    {
+      storage_.evaluate( baseFunction, diffVariable, x, phi );
+    }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const
      */
@@ -107,7 +110,10 @@ namespace Dune {
                            const FieldVector< deriType, diffOrd > &diffVariable,
                            const QuadratureType &quadrature,
                            const int quadPoint,
-                           RangeType &phi ) const;
+                           RangeType &phi ) const
+    {
+      storage_.evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi );
+    }
 
     /** \brief @copydoc BaseFunctionSetDefault::evaluate */ 
     template <class QuadratureType>
@@ -125,11 +131,9 @@ namespace Dune {
                                    const int quadPoint,
                                    const JacobianRangeType& factor) const;
 
-    /** \brief @copydoc BaseFunctionSetInterface::evaluate */ 
-    GeometryType geometryType () const { return storage_.geometryType(); }
-    
+   
   private:
-    StandardBaseFunctionSet(const StandardBaseFunctionSet&);
+    StandardBaseFunctionSet( const StandardBaseFunctionSet& );
 
     typename Traits::StorageType storage_;
     
@@ -289,7 +293,8 @@ namespace Dune {
     mutable ScalarJacobianRangeType jTmp_;
   };
 
-/** @} **/
+  /** \} */
+
 } // end namespace Dune
 
 #include "basefunctionsets.cc"
