@@ -308,7 +308,7 @@ namespace Dune
       
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous () const
     {
       return (polynomialOrder > 0);
@@ -322,13 +322,13 @@ namespace Dune
       return LagrangeSpace_id;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
     inline int order () const
     {
       return polynomialOrder;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::baseFunctionSet */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet */
     template< class EntityType >
     inline const BaseFunctionSetType 
       baseFunctionSet ( const EntityType &entity ) const
@@ -400,20 +400,20 @@ namespace Dune
       return *blockMapper_;
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapToGlobal */
     template< class EntityType >
     inline int mapToGlobal( const EntityType &entity, const int localDof ) const
     {
       return mapper().mapToGlobal( entity, localDof );
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::sequence */
     inline int sequence () const
     {
       return dofManager_.sequence();
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::size */
     inline int size () const
     {
       return mapper().size();

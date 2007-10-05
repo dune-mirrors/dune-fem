@@ -73,10 +73,10 @@ namespace Dune
   public:
     //! Constructor
     inline explicit StandardBaseFunctionSet ( const FactoryType &factory )
-    : storage_( factory ),
-      diffVar0_( 0 ),
-      tmp_( 0 ),
-      jTmp_( 0 )
+    : storage_( factory )
+      //diffVar0_( 0 ),
+      //tmp_( 0 ),
+      //jTmp_( 0 )
     {
     }
 
@@ -122,26 +122,25 @@ namespace Dune
                                            const QuadratureType &quadrature,
                                            const int quadPoint,
                                            const RangeType &psi ) const;
-#endif
       
-    /** \brief @copydoc BaseFunctionSetDefault::evaluate */ 
-    template <class Entity, class QuadratureType>
-    inline
-    DofType evaluateGradientSingle(const int baseFunct,
-                                   const Entity& en,
-                                   const QuadratureType& quad, 
-                                   const int quadPoint,
-                                   const JacobianRangeType& factor) const;
-
+    /** \copydoc Dune::BaseFunctionSetDefault::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &psi) const */ 
+    template <class EntityType, class QuadratureType>
+    inline RangleFieldType evaluateGradientSingle ( const int baseFunction,
+                                                    const EntityType &entity,
+                                                    const QuadratureType &quadrature,
+                                                    const int quadPoint,
+                                                    const JacobianRangeType &psi ) const;
+#endif
    
   private:
     StandardBaseFunctionSet( const StandardBaseFunctionSet& );
 
+  protected:
     typename Traits::StorageType storage_;
     
-    mutable FieldVector<int, 0> diffVar0_;
-    mutable RangeType tmp_;
-    mutable JacobianRangeType jTmp_;
+    //mutable FieldVector<int, 0> diffVar0_;
+    //mutable RangeType tmp_;
+    //mutable JacobianRangeType jTmp_;
   };
 
 

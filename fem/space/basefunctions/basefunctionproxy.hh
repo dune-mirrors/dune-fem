@@ -172,23 +172,27 @@ namespace Dune
       return baseFunctionSet().evaluateSingle
         ( baseFunction, quadrature, quadPoint, psi );
     }
-      
-    //! @copydoc BaseFunctionSetDefault::evaluateGradientSingle 
-    template <class Entity, class QuadratureType>
-    inline
-    RangeFieldType evaluateGradientSingle(const int baseFunct,
-                                          const Entity& en,
-                                          const QuadratureType& quad, 
-                                          const int quadPoint,
-                                   const JacobianRangeType& factor) const
+    
+     /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const DomainType &x,const JacobianRangeType &psi) const */
+    template< class EntityType >
+    inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
+                                                   const EntityType &entity,
+                                                   const DomainType &x,
+                                                   const JacobianRangeType &psi ) const
     {
-      assert( this->baseSet_ );
-      return baseSet_->
-                evaluateGradientSingle(baseFunct,
-                                       en,
-                                       quad,
-                                       quadPoint,
-                                       factor);
+      return baseFunctionSet().evaluateGradientSingle( baseFunction, entity, x, psi );
+    }
+     
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &psi) const */
+    template< class EntityType, class QuadratureType >
+    inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
+                                                   const EntityType &entity,
+                                                   const QuadratureType &quadrature,
+                                                   const int quadPoint,
+                                                   const JacobianRangeType &psi ) const
+    {
+      return baseFunctionSet().evaluateGradientSingle
+        ( baseFunction, entity, quadrature, quadPoint, psi );
     }
    
   protected:

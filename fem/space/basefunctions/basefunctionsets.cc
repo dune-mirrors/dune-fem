@@ -37,7 +37,6 @@ namespace Dune {
     //return SKPMeta<RangeType,RangeType::dimension-1>::skp(tmp_,factor);
     return tmp_*factor;
   }
-#endif
 
   template <class FunctionSpaceImp, template <class> class StorageImp>
   template <class Entity, class QuadratureType>
@@ -65,6 +64,7 @@ namespace Dune {
     }
     return result;
   }
+#endif
   
   //- class VectorialBaseFunctionSet
   template <class FunctionSpaceImp, template <class> class StorageImp>

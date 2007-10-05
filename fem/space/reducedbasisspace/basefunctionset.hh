@@ -212,7 +212,7 @@ namespace Dune
       return ret;
     }
    
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,RangeType &psi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */
     template< class QuadratureType >
     inline void evaluateSingle ( const int baseFunction,
                                   const QuadratureType &quadrature,

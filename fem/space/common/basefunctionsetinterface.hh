@@ -290,42 +290,43 @@ namespace Dune
 
     /** \brief evaluate gradient of basefunction on given entity (uses
         jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-        \param[in] baseFunct number of base functions to evaluate jacobian  
-        \param[in] entity Entity gradient of base function is evaluated on 
-        \param[in] x local point in reference element 
-        \param[in] factor factor to multiply with 
+        \param[in]  baseFunction  number of base functions to evaluate jacobian  
+        \param[in]  entity        entity gradient of base function is evaluated on 
+        \param[in]  x             local point in reference element 
+        \param[in]  psi           factor to multiply with 
         \return return scalar product between gradient of base function and factor 
     */
-    template <class Entity>
-    RangeFieldType evaluateGradientSingle(const int baseFunct,
-                                   const Entity& en,
-                                   const DomainType& x,
-                                   const JacobianRangeType& factor) const
+    template< class EntityType >
+    inline RangeFieldType evaluateGradientSingle( const int baseFunction,
+                                                  const EntityType &entity,
+                                                  const DomainType &x,
+                                                  const JacobianRangeType &psi ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(
-        asImp().evaluateGradientSingle( baseFunct, en, x, factor ));
-      return asImp().evaluateGradientSingle( baseFunct, en, x, factor );
+      CHECK_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateGradientSingle( baseFunction, entity, x, psi ) );
+      return asImp().evaluateGradientSingle( baseFunction, entity, x, psi );
     }
 
     /** \brief evaluate gradient of basefunction on given entity (uses
         jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-        \param[in] baseFunct number of base functions to evaluate jacobian  
-        \param[in] entity Entity gradient of base function is evaluated on 
-        \param[in] quad Quadrature 
-        \param[in] quadPoint number of quadrature point 
-        \param[in] factor factor to multiply with 
+        \param[in]  baseFunction  number of base functions to evaluate jacobian  
+        \param[in]  entity        entity gradient of base function is evaluated on 
+        \param[in]  quadrature    quadrature 
+        \param[in]  quadPoint     number of quadrature point 
+        \param[in]  psi           factor to multiply with 
         \return return scalar product between gradient of base function and factor 
     */
-    template <class Entity, class QuadratureType>
-    RangeFieldType evaluateGradientSingle(const int baseFunct,
-                                   const Entity& en,
-                                   const QuadratureType& quad, 
-                                   const int quadPoint,
-                                   const JacobianRangeType& factor) const
+    template< class EntityType, class QuadratureType >
+    inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
+                                                   const EntityType &entity,
+                                                   const QuadratureType &quadrature,
+                                                   const int quadPoint,
+                                                   const JacobianRangeType &psi ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(
-        asImp().evaluateGradientSingle( baseFunct, en, quad, quadPoint, factor ));
-      return asImp().evaluateGradientSingle( baseFunct, en, quad, quadPoint, factor );
+      CHECK_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateGradientSingle( baseFunction, entity, quadrature, quadPoint, psi ) );
+      return asImp().evaluateGradientSingle
+        ( baseFunction, entity, quadrature, quadPoint, psi );
     }
 
   protected:
@@ -477,46 +478,67 @@ namespace Dune
       return phi * psi;
     }
 
-    /** \brief @copydoc BaseFunctionSetInterface::evaluateGradientSingle */
-    template <class Entity>
-    RangeFieldType evaluateGradientSingle(const int baseFunct,
-                                   const Entity& en,
-                                   const DomainType& xLocal,
-                                   const JacobianRangeType& factor) const
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const DomainType &x,const JacobianRangeType &psi) const */
+    template< class EntityType >
+    inline RangeFieldType evaluateGradientSingle( const int baseFunction,
+                                                  const EntityType &entity,
+                                                  const DomainType &x,
+                                                  const JacobianRangeType &psi ) const
     {
-      JacobianRangeType gradPhi(0.);
-      jacobian(baseFunct, xLocal, gradPhi);
+      typedef typename EntityType :: Geometry GeometryType;
+      typedef FieldMatrix< typename GeometryType :: ctype,
+                           GeometryType :: mydimension,
+                           GeometryType :: mydimension >
+        GeometryJacobianType;
+
+      const GeometryType &geometry = entity.geometry();
+      const GeometryJacobianType &jacobianInverseTransposed
+        = geometry.jacobianInverseTransposed( x );
+ 
+      JacobianRangeType gradPhi;
+      jacobian( baseFunction, x, gradPhi );
 
       RangeFieldType result = 0;
-      for (int i = 0; i < FunctionSpaceType::DimRange; ++i) 
+      for( int i = 0; i < FunctionSpaceType :: DimRange; ++i )
       {
-        DomainType gradScaled(0.);
-        en.geometry().jacobianInverseTransposed(xLocal).
-          umv(gradPhi[i], gradScaled);
-        result += gradScaled*factor[i];
+        DomainType gradScaled( 0 );
+        jacobianInverseTransposed.umv( gradPhi[ i ], gradScaled );
+        result += gradScaled * psi[ i ];
       }
       return result;
     }
 
-    /** \brief @copydoc BaseFunctionSetInterface::evaluateGradientSingle */
-    template <class Entity, class QuadratureType>
-    RangeFieldType evaluateGradientSingle(const int baseFunct,
-                                   const Entity& en,
-                                   const QuadratureType& quad, 
-                                   const int quadPoint,
-                                   const JacobianRangeType& factor) const
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &psi) const */
+    template< class EntityType, class QuadratureType >
+    inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
+                                                   const EntityType &entity,
+                                                   const QuadratureType &quadrature,
+                                                   const int quadPoint,
+                                                   const JacobianRangeType &psi ) const
     {
-      return evaluateGradientSingle(baseFunct, en, quad.point(quadPoint),factor);
+      typedef typename EntityType :: Geometry GeometryType;
+      typedef FieldMatrix< typename GeometryType :: ctype,
+                           GeometryType :: mydimension,
+                           GeometryType :: mydimension >
+        GeometryJacobianType;
+
+      const GeometryType &geometry = entity.geometry();
+      const GeometryJacobianType &jacobianInverseTransposed
+        = geometry.jacobianInverseTransposed( quadrature.point( quadPoint ) );
+      
+      JacobianRangeType gradPhi;
+      jacobian( baseFunction, quadrature, quadPoint, gradPhi );
+
+      RangeFieldType ret = 0;
+      for( int i = 0; i < FunctionSpaceType :: DimRange; ++i )
+      {
+        DomainType gradScaled( 0 );
+        jacobianInverseTransposed.umv( gradPhi[ i ], gradScaled );
+        ret += gradScaled * psi[ i ];
+      }
+      return ret;
     }
 
-#if 0
-  private: 
-    // just diffVariable for evaluation of the functions 
-    const FieldVector<deriType, 0> diffVariable_;
-
-    // diff variable for jacobian evaluation 
-    FieldVector<deriType, 1> jacobianDiffVar_[dimCol];
-#endif
   };
 
   /** \} */

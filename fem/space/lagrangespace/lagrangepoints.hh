@@ -169,7 +169,7 @@ namespace Dune
      *
      *  \param[in]  codim  codimension, the information is desired for
      *
-     *  \retunns maximal number of DoFs for one entity in the codimension
+     *  \returns maximal number of DoFs for one entity in the codimension
      */
     virtual unsigned int maxDofs ( unsigned int codim ) const = 0;
 
