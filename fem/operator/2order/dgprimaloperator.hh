@@ -146,6 +146,151 @@ namespace Dune {
     typedef typename LocalIdSetType :: IdType LocalIdType;
 
     typedef GradJacobianRangeType FluxRangeType; 
+    typedef typename DestinationType :: LocalFunctionType SingleLFType; 
+
+    ////////////////////////////////////////////////////
+    //
+    //  Coefficient and RHS caller 
+    //
+    ////////////////////////////////////////////////////
+    template <class CallerType> 
+    class CoefficientCallerTrue
+    {
+    public:  
+      template <class QuadratureType, class CoeffType> 
+      void evaluateCoefficient(CallerType& caller, 
+                               EntityType& en, 
+                               QuadratureType& quad, 
+                               const int l,
+                               CoeffType& coeff) const 
+      {
+        caller.evaluateCoefficient(en, quad, l, coeff );
+      }         
+
+      template <class CoeffType, class PsiType> 
+      void applyCoefficient(const CoeffType& coeffEn, 
+                            const PsiType& psi,
+                            PsiType& coeffPsi) const 
+      {
+        for(int i=0; i<dimRange; ++i)
+        {
+          coeffPsi[i] = 0.0;
+          coeffEn.umv(psi[i],coeffPsi[i]);
+        }
+      }
+    };
+
+    template <class CallerType> 
+    struct CoefficientCallerFalse
+    {
+      template <class QuadratureType, class CoeffType> 
+      void evaluateCoefficient(const CallerType& caller, 
+                               const EntityType& en, 
+                               const QuadratureType& quad, 
+                               const int l,
+                               CoeffType& coeff) const 
+      {
+      }         
+
+      // just copy in default case 
+      template <class CoeffType, class PsiType> 
+      void applyCoefficient(const CoeffType& coeffEn, 
+                            const PsiType& psi,
+                            PsiType& coeffPsi) const 
+      {
+        coeffPsi = psi;
+      }
+    };
+
+
+    //! if right hand side available 
+    template <class CallerType> 
+    class CoefficientCallerRHS 
+    {
+      mutable SingleLFType& singleRhs_;
+      const BaseFunctionSetType& bsetEn_;
+      mutable RangeType rhsval_;
+      const int numDofs_ ;
+
+    public:
+      CoefficientCallerRHS(SingleLFType& singleRhs)
+        : singleRhs_ ( singleRhs )
+        , bsetEn_( singleRhs_.baseFunctionSet()) 
+        , rhsval_ (0.0)  
+        , numDofs_ ( singleRhs_.numDofs () )
+      {}
+
+      template <class QuadratureType> 
+      void rightHandSide(CallerType& caller, 
+                         EntityType& en, 
+                         QuadratureType& volQuad, 
+                         const int l, 
+                         const double intel) const 
+      {
+        // eval rightHandSide function 
+        // if empty, rhs stays 0.0
+        caller.rightHandSide(en, volQuad, l, rhsval_ );
+
+        // scale with intel 
+        rhsval_ *= intel;
+
+        for (int j = 0; j < numDofs_; ++j) 
+        {
+          singleRhs_[j] += bsetEn_.evaluateSingle(j, volQuad, l, rhsval_ );
+        }
+      }
+    };
+
+    //! no rhs 
+    template <class CallerType> 
+    class CoefficientCallerNoRHS 
+    {
+    public:  
+      template <class QuadratureType> 
+      void rightHandSide(const CallerType& caller, 
+                         const EntityType& en, 
+                         const QuadratureType& volQuad, 
+                         const int l,
+                         const double intel) const 
+      {
+      }
+    };
+
+    template <class CallerType, bool hasCoeff, bool hasRHS> 
+    class CoefficientCaller : public CoefficientCallerTrue<CallerType> ,
+                              public CoefficientCallerRHS<CallerType> 
+    {
+      typedef CoefficientCallerRHS<CallerType> BaseType;
+    public:
+      CoefficientCaller(SingleLFType& singleRhs) : BaseType( singleRhs ) {}
+    };
+
+    template <class CallerType> 
+    class CoefficientCaller<CallerType,false,true>
+      : public CoefficientCallerFalse<CallerType> ,
+        public CoefficientCallerRHS<CallerType> 
+    {
+      typedef CoefficientCallerRHS<CallerType> BaseType;
+    public:
+      CoefficientCaller(SingleLFType& singleRhs) : BaseType( singleRhs ) {}
+    };
+
+    template <class CallerType> 
+    class CoefficientCaller<CallerType,true,false> 
+      : public CoefficientCallerTrue<CallerType>
+      , public CoefficientCallerNoRHS<CallerType>
+    {
+      public:
+    };
+
+    template <class CallerType> 
+    class CoefficientCaller<CallerType,false,false> 
+      : public CoefficientCallerFalse<CallerType>
+      , public CoefficientCallerNoRHS<CallerType>
+    {
+      public:
+    };
+
   public:
     //- Public methods
     //! Constructor
@@ -386,40 +531,19 @@ namespace Dune {
         coeffPsi_.resize(numDofs);
       }
     }
-      
-    //! apply operator on entity 
-    void applyLocal(EntityType& en) const
+
+    template<class QuadratureType, class CoeffCallerType> 
+    void volumetricPart(EntityType& en, 
+                        const GeometryType& geo,
+                        QuadratureType& volQuad,
+                        const CoeffCallerType& coeffCaller,
+                        const BaseFunctionSetType bsetEn,
+                        const int numDofs, 
+                        LocalMatrixType& matrixEn) const
     {
-      // only build Matrix in interior 
-      assert( en.partitionType() == InteriorEntity );
-      
-      // local function for right hand side 
-      typedef typename DestinationType :: LocalFunctionType SingleLFType; 
-      SingleLFType singleRhs = dest_->localFunction(en); //rhs
-      
-      LocalMatrixType matrixEn = matrixObj_.localMatrix(en,en); 
-
-      // make entities known in callers
-      caller_.setEntity(en);
-
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
-
-      const GeometryType & geo = en.geometry();
-
-      // get base function set of single space 
-      const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
-      const int numDofs = bsetEn.numBaseFunctions();
-      assert( numDofs > 0 );
-
-      // resize caches 
-      resizeCaches(numDofs);
-      
-      /////////////////////////////////
-      // Volumetric integral part
-      /////////////////////////////////
       const int quadNop = volQuad.nop();
 
-      RangeType rhsval(0.0);
+      //RangeType rhsval(0.0);
 
       // set default value to fMat 
       coeffEn_ = 1.0;
@@ -438,28 +562,14 @@ namespace Dune {
         ////////////////////////////////////
         // create rightHandSide
         ////////////////////////////////////
-        {
-          // eval rightHandSide function 
-          // if empty, rhs stays 0.0
-          caller_.rightHandSide(en, volQuad, l, rhsval );
-
-          // scale with intel 
-          rhsval *= intel;
-
-          for (int j = 0; j < numDofs; ++j) 
-          {
-            singleRhs[j] += bsetEn.evaluateSingle(j, volQuad, l, rhsval );
-          }
-        }
+        coeffCaller.rightHandSide(caller_, en, volQuad, l, intel);
         
         ///////////////////////////////
         //  evaluate coefficients 
         ///////////////////////////////
-        if(problem_.hasCoefficient())
-        {
-          // call anayltical flux of discrete model 
-          caller_.evaluateCoefficient(en, volQuad, l, coeffEn_ );
-        }
+        
+        // call anayltical flux of discrete model 
+        coeffCaller.evaluateCoefficient(caller_, en, volQuad, l, coeffEn_ );
 
         /////////////////////////////////
         // fill element matrix 
@@ -480,19 +590,7 @@ namespace Dune {
           }
 
           // apply coefficient 
-          if(problem_.hasCoefficient())
-          {
-            for(int i=0; i<dimRange; ++i)
-            {
-              coeffPsi[i] = 0.0;
-              coeffEn_.umv(psi[i],coeffPsi[i]);
-            }
-          }
-          else 
-          {
-            // if no coeffictient, base function equal each other
-            coeffPsi = psi;
-          }
+          coeffCaller.applyCoefficient(coeffEn_, psi, coeffPsi); 
         }
 
         // fill element matrix 
@@ -530,6 +628,60 @@ namespace Dune {
         }
       } // end element integral 
   
+
+    }
+      
+    //! apply operator on entity 
+    void applyLocal(EntityType& en) const
+    {
+      // only build Matrix in interior 
+      assert( en.partitionType() == InteriorEntity );
+      
+      // get local element matrix 
+      LocalMatrixType matrixEn = matrixObj_.localMatrix(en,en); 
+
+      // make entities known in callers
+      caller_.setEntity(en);
+
+      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+
+      const GeometryType & geo = en.geometry();
+
+      // get base function set of single space 
+      const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
+      const int numDofs = bsetEn.numBaseFunctions();
+      assert( numDofs > 0 );
+
+      // local function for right hand side 
+      SingleLFType singleRhs = dest_->localFunction(en); //rhs
+      
+      // resize caches 
+      resizeCaches(numDofs);
+      
+      /////////////////////////////////
+      // Volumetric integral part
+      /////////////////////////////////
+      if(problem_.hasCoefficient() && problem_.hasRHS() )
+      {
+        CoefficientCaller<DiscreteModelCallerType,true,true> coeffCaller( singleRhs ); 
+        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+      }
+      else if( problem_.hasCoefficient() )
+      {
+        CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
+        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+      }
+      else if ( problem_.hasRHS() )
+      {
+        CoefficientCaller<DiscreteModelCallerType,false,true> coeffCaller( singleRhs ); 
+        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+      }
+      else 
+      {
+        CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
+        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+      }
+
       /////////////////////////////////
       // Surface integral part
       /////////////////////////////////
