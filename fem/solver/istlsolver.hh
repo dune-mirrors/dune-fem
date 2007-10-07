@@ -138,7 +138,7 @@ private:
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
                  const CommunicatorType& comm,
-                 double reduction, int maxIter, bool verbose)
+                 double absLimit, int maxIter, bool verbose)
     {
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
       typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
@@ -147,6 +147,28 @@ private:
       int verb = (verbose) ? 2 : 0;
         
       ParaScalarProduct<BlockVectorType,CommunicatorType> scp(comm); 
+
+      /*
+      double residuum = 0.0;
+      // calculate residuum to get estimate for reduction 
+      {
+        DiscreteFunctionType tmp( dest );
+        m.mult( dest.blockVector(), tmp.blockVector() );
+        tmp -= arg;
+        residuum = scp.dot( tmp.blockVector(), tmp.blockVector() );
+        residuum = sqrt( residuum );
+      }
+      double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
+      */
+
+      double residuum = sqrt( m.residuum( arg.blockVector(), dest.blockVector()) );
+      double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
+
+      if( verbose ) 
+      {
+        std::cout << "ISTLSolver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
+      }
+
       BiCGSTABSolver<BlockVectorType> solver(mat,scp,
           const_cast<PreconditionerType&> (preconditioner),
           reduction,maxIter,verb);    
@@ -169,7 +191,7 @@ public:
   */
   ISTLBICGSTABOp(OperatorType & op , double  reduction , double absLimit , 
                 int maxIter , bool verbose ) 
-    : op_(op), reduction_ ( reduction ) 
+    : op_(op), reduction_ ( absLimit ) 
     , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
   }
