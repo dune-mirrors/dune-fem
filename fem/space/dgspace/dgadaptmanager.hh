@@ -135,7 +135,7 @@ public:
 
 private:
   mutable DiscreteFunctionType & df_;
-  int quadord_;
+  const int quadord_;
   mutable RangeFieldType weight_;
 };
 
