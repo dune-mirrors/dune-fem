@@ -65,6 +65,13 @@ namespace Dune {
       return asImp().hasCoefficientFlux(); 
     }
 
+    //! Returns true if problem has right hand side not qual to zero 
+    bool hasRHS () const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().hasRHS());
+      return asImp().hasRHS(); 
+    }
+
     //! \brief Computes the flux at the boundary
     //! Special kind of numerical flux. The intersection iterator provides
     //! the necessary information to identify the type of boundary.
