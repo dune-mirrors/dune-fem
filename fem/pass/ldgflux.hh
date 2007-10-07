@@ -207,4 +207,36 @@ private:
   const double power_;
 };
 
+//! Flux for Gradient calculation 
+class AverageFlux
+{
+public:
+  //! constructor taking beta and power 
+  AverageFlux(const double beta, 
+               const double power)
+  {
+  }
+  
+  //! evaluates: result = { u } + n * [ u ] 
+  //! ( see Brezzi et al )
+  template <class URangeType>
+  inline double uFlux(const double faceVol, 
+               const URangeType & uLeft,
+               const URangeType & uRight, 
+               URangeType & result) const 
+  {
+    // the following is done:
+    // flux = uLeft + 0.5 * (uLeft - uRight)
+    
+    result  = uLeft; 
+    result -= uRight;
+  
+    result *= 0.5;
+    
+    result += uLeft;
+    
+    return 0.0;
+  }
+};
+
 #endif
