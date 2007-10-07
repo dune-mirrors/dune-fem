@@ -282,6 +282,53 @@ namespace Dune {
       }
 
       //! apply matrix: \f$ y = A(x) \f$
+      double residuum(const BlockVectorType& rhs, BlockVectorType& x) const 
+      {
+        // exchange data 
+        communicate( x );
+
+        typedef typename BlockVectorType :: block_type LittleBlockVectorType; 
+        LittleBlockVectorType tmp; 
+        double res = 0.0;
+
+        std::set<int> overlapRow;
+
+        const size_t overL = overlapRows_.size();
+        for(size_t k=0; k<overL; ++k) 
+        {
+          overlapRow.insert( overlapRows_[k] ); 
+        }
+
+        ConstRowIterator endi= this->end();
+        for (ConstRowIterator i= this->begin(); i!=endi; ++i)
+        {
+          if( overlapRow.find(i.index()) == overlapRow.end() ) 
+          {
+            tmp = 0; 
+            ConstColIterator endj = (*i).end();
+            for (ConstColIterator j = (*i).begin(); j!=endj; ++j)
+            {
+              (*j).umv(x[j.index()],tmp);
+            }
+            // substract right hand side 
+            tmp -= rhs[i.index()];
+
+            // add scalar product 
+            res += tmp.two_norm2();
+          }
+        }
+
+        if( space_ ) 
+        {
+          return space_->grid().comm().sum( res );
+        }
+        else 
+        {
+          return res;
+        }
+      }
+
+      //! apply matrix: \f$ y = A(x) \f$
       void mult(const BlockVectorType& x, BlockVectorType& y) const 
       {
         // exchange data 
