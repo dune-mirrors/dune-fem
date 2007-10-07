@@ -7,6 +7,7 @@
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/combinedspace.hh>
 
 // Dune includes
 #include <dune/common/utility.hh>
@@ -411,6 +412,7 @@ namespace LDGExample {
     bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
     bool hasCoefficient() const { return true; }
+    bool hasRHS() const { return true; }
 
     template <class ArgumentTuple> 
     double numericalFlux(const IntersectionIterator& it,
@@ -616,17 +618,26 @@ namespace LDGExample {
 
     typedef ElliptPassTraits<ModelImp,myPolOrd,dimRange> Traits;
     typedef typename Traits::FunctionSpaceType FunctionSpaceType;
-
-    typedef typename ModelTraits::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
+    typedef typename  FunctionSpaceType:: RangeFieldType RangeFieldType; 
+    typedef typename  FunctionSpaceType:: DomainFieldType DomainFieldType; 
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::GridPartType GridPartType;
 
-    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+    typedef FunctionSpace<DomainFieldType, RangeFieldType, 
+             dimDomain, 1 > SingleFunctionSpaceType;
+    typedef DiscontinuousGalerkinSpace< SingleFunctionSpaceType,
+            GridPartType, polOrd > ContainedFunctionSpaceType;
+    typedef CombinedSpace< ContainedFunctionSpaceType, dimRange >
+      DiscreteFunctionSpaceType;
+
+    typedef typename ModelTraits::DomainType DomainType;
+
+    //typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    //typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+    typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
     typedef DiscreteFunctionType DestinationType;
 
 
