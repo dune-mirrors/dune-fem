@@ -82,7 +82,7 @@ namespace Dune
 
 
 
-  /** @addtogroup LagrangeDiscreteFunctionSpace 
+  /** \addtogroup LagrangeDiscreteFunctionSpace
    *
    *  Provides access to bse function sets for different element types in
    *  one grid and size of function space and maps from local to global dof
@@ -97,12 +97,12 @@ namespace Dune
    *  capable of adaption (i.e. the method adaptive returns true). See also
    *  AdaptiveLeafIndexSet.
    *
-   *  @{
-   **/
+   *  \{
+   */
 
-  /** @brief
-   *  Lagrange Discrete Function Space
-   **/
+  /** \class LagrangeDiscreteFunctionSpace
+   *  \brief Lagrange discrete function space
+   */
   template< class FunctionSpaceImp,
             class GridPartImp,
             int polOrder,
@@ -305,7 +305,6 @@ namespace Dune
         if( lagrangePointSet != NULL )
           delete lagrangePointSet;
       }
-      
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
@@ -328,43 +327,51 @@ namespace Dune
       return polynomialOrder;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
-    inline const BaseFunctionSetType 
-      baseFunctionSet ( const EntityType &entity ) const
+    inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
-      return this->baseFunctionSet( entity.geometry().type() );
+      return baseFunctionSet( entity.geometry().type() );
     }
 
     /** \brief provide access to the base function set for a geometry type
-        \param[in] type
-        \return BaseFunctionSetType
-    **/
-    inline const BaseFunctionSetType
-      baseFunctionSet ( const GeometryType type ) const
+     *
+     *  \param[in]  type  type of geometry the base function set is requested for
+     *
+     *  \returns base function set for the specified geometry
+     */
+    inline const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
     {
       assert( baseFunctionSet_.find( type ) != baseFunctionSet_.end() );
       assert( baseFunctionSet_[ type ] != NULL );
-      return BaseFunctionSetType(baseFunctionSet_[ type ]);
+      return BaseFunctionSetType( baseFunctionSet_[ type ] );
     }
 
-    /** \brief provide access to the Lagrange point set for an entity 
-        \param[in] entity Entity the Lagrange point set is requested
-        \return LagrangePointSet
-    **/
+    /** \brief provide access to the Lagrange point set for an entity
+     *
+     *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+     *        is unique to the LagrangeDiscreteFunctionSpace.
+     *
+     *  \param[in]  entity  entity the Lagrange point set is requested for
+     *  
+     *  \returns LagrangePointSet
+     */
     template< class EntityType >
-    inline const LagrangePointSetType&
-      lagrangePointSet ( const EntityType &entity ) const
+    inline const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
     {
       return this->lagrangePointSet( entity.geometry().type() );
     }
 
     /** \brief provide access to the Lagrange point set for a geometry type
-        \param[in] type
-        \return LagrangePointSetType
-    **/
-    inline const LagrangePointSetType&
-      lagrangePointSet ( const GeometryType type ) const
+     *
+     *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+     *        is unique to the LagrangeDiscreteFunctionSpace.
+     *
+     *  \param[in]  type  type of geometry the Lagrange point set is requested for
+     *
+     *  \returns LagrangePointSetType
+     */
+    inline const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
     {
       assert( lagrangePointSet_.find( type ) != lagrangePointSet_.end() );
       assert( lagrangePointSet_[ type ] != NULL );
@@ -379,10 +386,8 @@ namespace Dune
       return dimVal;
     }
 
-    /** \brief obtain the DoF mapper of this space
-        \return MapperType
-    **/
-    inline MapperType& mapper () const
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
+    inline MapperType &mapper () const
     {
       assert( mapper_ != 0 );
       return *mapper_;
@@ -400,26 +405,15 @@ namespace Dune
       return *blockMapper_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapToGlobal */
-    template< class EntityType >
-    inline int mapToGlobal( const EntityType &entity, const int localDof ) const
-    {
-      return mapper().mapToGlobal( entity, localDof );
-    }
-
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::sequence */
     inline int sequence () const
     {
       return dofManager_.sequence();
     }
-
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::size */
-    inline int size () const
-    {
-      return mapper().size();
-    }
   };
-  /** @}
-   **/
+  
+  /** \} */
+  
 } // end Dune namespace  
+
 #endif

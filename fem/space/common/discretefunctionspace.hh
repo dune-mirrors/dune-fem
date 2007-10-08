@@ -41,7 +41,9 @@ namespace Dune
     FiniteVolumeSpace_id , //!< id for Finite Volume Space 
     DFAdapter_id    //!< id for DiscreteFunctionSpace Adapter
   };
- 
+
+
+
   //**************************************************************************
   //
   //  --DiscreteFunctionSpaceInterface
@@ -61,9 +63,9 @@ namespace Dune
    
     \interfaceclass 
   */
-  template<class FunctionSpaceTraits>
-  class DiscreteFunctionSpaceInterface : 
-    public FunctionSpaceTraits::FunctionSpaceType  
+  template< class FunctionSpaceTraits >
+  class DiscreteFunctionSpaceInterface
+  : public FunctionSpaceTraits :: FunctionSpaceType
   {
   public:
     //- Typedefs and enums
@@ -93,8 +95,10 @@ namespace Dune
   public:
     //- Public methods
     //! Constructor 
-    DiscreteFunctionSpaceInterface() : FunctionSpaceType() 
-    {}
+    DiscreteFunctionSpaceInterface ()
+    : FunctionSpaceType() 
+    {
+    }
 
     //! Method provided by implementation
 
@@ -107,185 +111,223 @@ namespace Dune
       return asImp().type();
     }
 
-    /** \brief get base function set for given entity 
-        \param[in] entity Entity for which base function is requested 
-        \return BaseFunctionSet for Entity 
-    */
+    /** \brief get base function set for given entity
+     *
+     *  \param[in]  entity  entity for which base function is requested 
+     *
+     *  \returns BaseFunctionSet for the entity
+     */
     template< class EntityType >
-    const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const 
+    inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().baseFunctionSet( entity ));
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().baseFunctionSet( entity ) );
       return asImp().baseFunctionSet( entity );
     }
   
-    /** \brief return true if space contains global continuous functions 
-       (i.e. for LagrangeSpace \b true is returned, for DiscontinuousGalerkinSpace \b false is returned. 
-       \return \b true if space contians global continous functions, \b false> otherwise 
-    */
-    bool continuous() const 
+    /** \brief return true if the space contains globally continuous functions
+     *
+     *  For example, a LagrangeSpace returns \b true and a
+     *  DiscontinuousGalerkinSpace return \b false.
+     *
+     *  \return \b true if the space contians globally continous functions,
+     *          \b false> otherwise
+     */
+    inline bool continuous () const
     { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().continuous());
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().continuous() );
       return asImp().continuous(); 
     }
 
-    /** \brief returns index of sequence in grid sequences 
-        \return number of current sequence 
-    */
-    int sequence () const 
+    /** \brief get index of the sequence in grid sequences
+     *
+     *  \return number of current sequence
+     */
+    inline int sequence () const
     { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().sequence());
-      return asImp().sequence(); 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().sequence() );
+      return asImp().sequence();
     }
 
-    /** \brief get global order of space  
-        \return order of space, i.e. polynomial order of base functions 
-    */
-    int order () const 
+    /** \brief get global order of space
+     *
+     *  \return order of space, i.e., the maximal polynomial order of base
+     *          functions 
+     */
+    inline int order () const 
     { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().order());
-      return asImp().order(); 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().order() );
+      return asImp().order();
     } 
   
-    /** \brief return the instance of the mapper
-        \return refernce to mapper
-    */    
-    MapperType& mapper () const  
+    /** \brief get a reference to the DoF mapper
+     *
+     *  \returns refernce to mapper
+     */    
+    inline MapperType &mapper () const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapper());
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().mapper() );
       return asImp().mapper();
     }
     
-    /** \brief return reference to grid which belongs to discrete function space 
-        \hasdefault
-        \return reference to grid  
-    */
-    const GridType& grid() const 
+    /** \brief get reference to grid this discrete function space belongs to
+     * 
+     *  \hasdefault
+     *
+     *  \returns constant reference to grid  
+     */
+    inline const GridType &grid () const
     { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().grid() );
       return asImp().grid(); 
     }
 
-    /** \brief return reference to grid which belongs to discrete function space 
-        \hasdefault
-        \return reference to grid  
-    */
-    GridType& grid() 
+    /** \brief get reference to grid this discrete function space belongs to
+     * 
+     *  \hasdefault
+     *
+     *  \returns reference to grid  
+     */
+    inline GridType &grid ()
     { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().grid());
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().grid() );
       return asImp().grid(); 
     }
 
-    /** \brief Return the corresponding grid part (const version) 
-        \hasdefault
-        \return reference to grid part 
-    */ 
-    const GridPartType& gridPart() const 
+    /** \brief get a reference to the associated grid partition
+     *
+     *  \hasdefault
+     *
+     *  \returns constant reference to the grid partition
+     */
+    inline const GridPartType &gridPart () const
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().gridPart() );
+      return asImp().gridPart(); 
+    }
+    
+    /** \brief get a reference to the associated grid partition
+     *
+     *  \hasdefault
+     *
+     *  \returns reference to the grid partition
+     */
+    inline GridPartType &gridPart ()
     { 
       CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
       return asImp().gridPart(); 
     }
 
-    /** \brief Return the corresponding grid part (const version) 
-        \hasdefault
-        \return reference to grid part 
-    */ 
-    GridPartType& gridPart() 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().gridPart());
-      return asImp().gridPart(); 
+    /** \brief Get a reference to the associated index set
+     *
+     *  \hasdefault
+     *
+     *  \returns const reference to index set
+     */ 
+    inline const IndexSetType &indexSet () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().indexSet() );
+      return asImp().indexSet();
     }
 
-    /** \brief Return reference to the corresponding index set of the space 
-        \hasdefault
-        \return reference to index set  
-    */ 
-    const IndexSetType& indexSet() const 
+    /** \brief get number of DoFs for this space
+     *
+     *  \hasdefault
+     *
+     *  \returns number of DoFs (degrees of freedom)
+     */
+    inline int size () const
     { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().indexSet());
-      return asImp().indexSet(); 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
+      return asImp().size();
     }
 
-    /** \brief Return number of degrees of freedom for this space 
-        \hasdefault
-        \return number of degrees of freedom 
-    */
-    int size () const 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
-      return asImp().size(); 
-    }
-
-    /** \brief Iterator pointing to first entity associated 
-               with this discrete function space 
-        \hasdefault
-        \return Iterator pointing to first Entity
-    */
-    IteratorType begin() const {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().begin());
+    /** \brief get iterator pointing to the first entity of the associated grid
+     *         partition
+     *
+     *  \hasdefault
+     *
+     *  \returns iterator pointing to first entity
+     */
+    inline IteratorType begin () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
       return asImp().begin();
     }
 
-    /** \brief Iterator pointing behind last entity associated 
-               with this discrete function space 
-        \hasdefault
-        \return Iterator pointing behind last Entity
-    */
-    IteratorType end() const {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().end());
+    /** \brief get iterator pointing behind the last entity of the associated
+     *         grid partition
+     *
+     *  \hasdefault
+     *
+     *  \returns iterator pointing behind last entity
+     */
+    inline IteratorType end () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
       return asImp().end();
     }
 
-    /** \brief returns true if grid has more than one geometry type (hybrid grid)
-        \hasdefault
-        \return \b true  if  grid has more than one geometry type
-        (hybrid grid), \b false otherwise 
-        
-    */
-    bool multipleGeometryTypes() const 
+    /** \brief returns true if the grid has more than one geometry type
+     *
+     *  \hasdefault
+     *
+     *  \return \b true if the underlying grid has more than one geometry type
+     *          (hybrid grid), \b false otherwise 
+     */
+    inline bool multipleGeometryTypes () const
     { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().multipleGeometryTypes());
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().multipleGeometryTypes() );
       return asImp().multipleGeometryTypes();
     }
 
-    /** \brief returns true if base function sets depend on entity 
-        \hasdefault
-        \return \b true if base function set depend on entities, \b false
-        otherwise
-    */
-    bool multipleBaseFunctionSets() const 
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().multipleBaseFunctionSets());
-      return asImp().multipleBaseFunctionSets(); 
+    /** \brief returns true if base function sets depend on the entity
+     *
+     *  \hasdefault
+     *
+     *  \returns \b true if base function set depend on entities, \b false
+     *           otherwise
+     */
+    inline bool multipleBaseFunctionSets () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().multipleBaseFunctionSets() );
+      return asImp().multipleBaseFunctionSets();
     }
     
-    /** \brief For given entity map local dof number to global dof number 
-        \hasdefault
-        \param[in] entity   Entity for which mapping is done 
-        \param[in] localDof local dof number 
-        \return global dof number, i.e. position in dof array 
-    */    
-    template <class EntityType>
-    int mapToGlobal ( const EntityType &entity, 
-                      const int localDof ) const
+    /** \brief Map local DoF number to global DoF number
+     *
+     *  Maps an entity and a local DoF number to a global DoF number, i.e.,
+     *  the index of the DoF within the DoF vector.
+     *
+     *  \hasdefault
+     *
+     *  \param[in]  entity    Entity for which mapping is done
+     *  \param[in]  localDof  local dof number
+     *
+     *  \returns global DoF number
+     */    
+    template< class EntityType >
+    inline int mapToGlobal ( const EntityType &entity,
+                             const int localDof ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity, localDof ));
-      return asImp().mapToGlobal ( entity , localDof );
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().mapToGlobal( entity, localDof ) );
+      return asImp().mapToGlobal( entity, localDof );
     }
 
   protected:
-    //! Barton-Nackman trick 
-    DiscreteFunctionSpaceType& asImp() 
+    // Barton-Nackman trick 
+    inline const DiscreteFunctionSpaceType &asImp () const
     { 
-      return static_cast<DiscreteFunctionSpaceType&>(*this); 
+      return static_cast< const DiscreteFunctionSpaceType & >( *this );
     }
 
-    //! Barton-Nackman trick 
-    const DiscreteFunctionSpaceType& asImp() const  
+    // Barton-Nackman trick 
+    inline DiscreteFunctionSpaceType &asImp()
     { 
-      return static_cast<const DiscreteFunctionSpaceType&>(*this); 
+      return static_cast< DiscreteFunctionSpaceType & >( *this ); 
     }
-  
   }; // end class DiscreteFunctionSpaceInterface
+
+
 
   //---------------------------------------------------------------------------
   //-
@@ -328,6 +370,12 @@ namespace Dune
     typedef typename LocalFunctionStorageType :: LocalFunctionType
       LocalFunctionType;
 
+  public:
+    using BaseType :: mapper;
+    
+  protected:
+    using BaseType :: asImp;
+
   protected:
     GridPartType &gridPart_;
 
@@ -361,58 +409,79 @@ namespace Dune
       return lfStorage_.localFunction( entity );
     }
     
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::multipleGeometryTypes */
-    bool multipleGeometryTypes() const { return multipleGeometryTypes_; }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::multipleBaseFunctionSets 
-        \note The default implementation returns false.
-    */
-    bool multipleBaseFunctionSets() const { return false; }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::mapToGlobal */
-    template <class EntityType>
-    int mapToGlobal ( const EntityType &entity, 
-                      const int localDof ) const
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::grid() const */
+    inline const GridType &grid () const
     {
-      return this->mapper().mapToGlobal ( entity , localDof );
+      return asImp().gridPart().grid();
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::size */
-    int size () const 
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::grid() */
+    inline GridType &grid ()
     {
-      return this->mapper().size();
+      return asImp().gridPart().grid();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart() const */
+    inline const GridPartType &gridPart () const
+    {
+      return gridPart_;
     }
    
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin const */
-    IteratorType begin() const { return gridPart_.template begin<0>(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::end const */
-    IteratorType end() const { return gridPart_.template end<0>(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid const */
-    const GridType& grid() const { return gridPart_.grid(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet const */ 
-    const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
-
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
-    GridPartType & gridPart () { return gridPart_; }
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart const */
-    const GridPartType & gridPart () const { return gridPart_; }
-
-  private:
-    //! Barton-Nackman trick 
-    DiscreteFunctionSpaceType& asImp() 
-    { 
-      return static_cast<DiscreteFunctionSpaceType&>(*this); 
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart() */
+    inline GridPartType &gridPart ()
+    {
+      return gridPart_;
     }
 
-    //! Barton-Nackman trick 
-    const DiscreteFunctionSpaceType &asImp() const  
-    { 
-      return static_cast<const DiscreteFunctionSpaceType&>(*this); 
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::indexSet() const */
+    inline const IndexSetType &indexSet () const
+    {
+      return asImp().gridPart().indexSet();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::size */
+    inline int size () const
+    {
+      return mapper().size();
+    }
+  
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin */
+    inline IteratorType begin () const
+    {
+      return asImp().gridPart().template begin< 0 >();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end */
+    inline IteratorType end () const
+    {
+      return asImp().gridPart().template end< 0 >();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleGeometryTypes */
+    inline bool multipleGeometryTypes () const
+    {
+      return multipleGeometryTypes_;
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets
+     *
+     *  \note The default implementation returns \b false.
+     */
+    inline bool multipleBaseFunctionSets () const
+    {
+      return false;
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapToGlobal */
+    template< class EntityType >
+    inline int mapToGlobal ( const EntityType &entity,
+                             const int localDof ) const
+    {
+      return mapper().mapToGlobal( entity, localDof );
     }
   };
+
+
 
   ////////////////////////////////////////////////////////////
   //
@@ -448,7 +517,7 @@ namespace Dune
     typedef typename GridPartType :: IndexSetType IndexSetType; 
     
     //! constructor taking grid Part 
-    explicit DiscreteFunctionSpaceAdapter ( const GridPartType &gridPart )
+    inline explicit DiscreteFunctionSpaceAdapter ( const GridPartType &gridPart )
     : gridPart_( gridPart ) 
     {
     }

@@ -187,7 +187,7 @@ TAB_SIZE               = 8
 # You can put \n's in the value part of an alias to insert newlines.
 
 # ALIASES  = 
-ALIASES += hasdefault="\n <b> Has a default implementation\n </b> \n"
+ALIASES += "hasdefault=<br><b>Has a default implementation</b><br><br>"
 ALIASES += notcleardoc="\xrefitem notcleardoc \"documentation will be extended\" \"Needs extended documentation\"" 
 ALIASES += interfaceclass="\xrefitem interfaceclass \"An interface class\" \"Main interface classes\""
 ALIASES += newimplementation="\xrefitem newimplementation \"Newly added\" \"New interface implementation and other gadgets\""
