@@ -14,6 +14,9 @@
 #ifndef DUNE_DGPASS_HH
 #define DUNE_DGPASS_HH
 
+//- system includes 
+#include <map>
+
 #include <dune/fem/misc/utility.hh>
 
 #include "pass.hh"
@@ -30,6 +33,7 @@
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/common/allgeomtypes.hh> 
 
 namespace Dune {
 /*! @addtogroup PassHyp
@@ -63,6 +67,9 @@ namespace Dune {
     typedef typename EntityType :: EntityPointer EntityPointerType;
     typedef typename BaseType::ArgumentType ArgumentType;
 
+    //! map that stores the volume of the reference element  
+    typedef std::map<const Dune::GeometryType, double> RefVolumeMapType;
+
     // Types from the traits
     typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
     typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
@@ -80,7 +87,7 @@ namespace Dune {
 
     // Types extracted from the underlying grids
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    typedef typename GridType::template Codim<0>::Geometry GeometryType;
+    typedef typename GridType::template Codim<0>::Geometry Geometry;
 
 
     // Various other types
@@ -119,6 +126,7 @@ namespace Dune {
       gridPart_(spc_.gridPart()),
       localIdSet_(spc_.grid().localIdSet()),
       communicationManager_(spc_),
+      refVolMap_ (),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       valEn_(0.0),
@@ -128,12 +136,32 @@ namespace Dune {
       source_(0.0),
       grads_(0.0),
       time_(0),
+      minLimit_(2.0*std::numeric_limits<double>::min()),
       diffVar_(),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
           (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
         (2*spc_.order()+1) : faceQuadOrd )
     {
+      {
+        typedef AllGeomTypes< typename GridPartType :: IndexSetType,
+                              GridType> AllGeomTypesType;
+        AllGeomTypesType allGeomTypes( gridPart_.indexSet() );
+        const std::vector<Dune::GeometryType>& geomTypes =
+          allGeomTypes.geomTypes(0);
+
+        for(size_t i=0; i<geomTypes.size(); ++i)
+        {
+          typedef typename Geometry :: ctype coordType; 
+          enum { dim = GridType :: dimension };
+          const ReferenceElement< coordType, dim > & refElem =
+                 ReferenceElements< coordType, dim >::general( geomTypes[i] );
+      
+          // store volume of reference element
+          refVolMap_[ geomTypes[i] ] = refElem.volume();
+        }
+      }
+
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
     }
@@ -193,6 +221,7 @@ namespace Dune {
       caller_.finalize();
     }
 
+    //! local integration 
     void applyLocal(EntityType& en) const
     {
       //- statements
@@ -200,10 +229,10 @@ namespace Dune {
       LocalFunctionType updEn = dest_->localFunction(en);
 
       // only call geometry once, who know what is done in this function 
-      const GeometryType & geo = en.geometry();
+      const Geometry & geo = en.geometry();
 
-      double massVolElinv;
-      const double vol = volumeElement(geo, massVolElinv);
+      const double vol = geo.volume(); 
+      const double massVolElinv = refVolMap_[ geo.type() ] / vol;
 
       // only apply volumetric integral if order > 0 
       // otherwise this contribution is zero 
@@ -225,7 +254,6 @@ namespace Dune {
       /////////////////////////////
       // Surface integral part
       /////////////////////////////
-      double dtLocal = 0.0;
       double nbvol;
 
       IntersectionIteratorType endnit = gridPart_.iend(en);
@@ -259,7 +287,7 @@ namespace Dune {
               nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
                         faceQuadInner,faceQuadOuter,
                         updEn,
-                        dtLocal,wspeedS);
+                        wspeedS);
             }
             else
             { 
@@ -287,7 +315,7 @@ namespace Dune {
                         nonConformingFaceQuadInner,
                         nonConformingFaceQuadOuter,
                         updEn,
-                        dtLocal,wspeedS);
+                        wspeedS);
             }
 
           }
@@ -304,21 +332,18 @@ namespace Dune {
           for (int l = 0; l < faceQuadInner_nop; ++l) 
           {
             // eval boundary Flux  
-            double dtLocalS =   caller_.boundaryFlux(nit, faceQuadInner, l, valEn_ )
-                              * faceQuadInner.weight(l);
-            
-            dtLocal += dtLocalS;
-            wspeedS += dtLocalS;
+            wspeedS += caller_.boundaryFlux(nit, faceQuadInner, l, valEn_ )
+                     * faceQuadInner.weight(l);
             
             // apply weights 
-            valEn_ *= -faceQuadInner.weight(l)*massVolElinv;
+            valEn_ *= -faceQuadInner.weight(l) * massVolElinv;
 
             // add factor 
             updEn.axpy( faceQuadInner, l, valEn_  );
           }
         } // end if boundary
         
-        if (wspeedS>2.*std::numeric_limits<double>::min()) 
+        if (wspeedS > minLimit_ ) 
         {
           double minvolS = std::min(vol,nbvol);
           dtMin_ = std::min(dtMin_,minvolS/wspeedS);
@@ -329,7 +354,7 @@ namespace Dune {
     //////////////////////////////////////////
     // Volumetric integral part only flux 
     //////////////////////////////////////////
-    void evalVolumetricPartFlux(EntityType& en , const GeometryType& geo , 
+    void evalVolumetricPartFlux(EntityType& en , const Geometry& geo , 
         LocalFunctionType& updEn , const double massVolElinv ) const
     {
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
@@ -340,7 +365,7 @@ namespace Dune {
         caller_.analyticalFlux(en, volQuad, l, fMat_ );
         
         const double intel = geo.integrationElement(volQuad.point(l))
-                             * massVolElinv*volQuad.weight(l);
+                             * massVolElinv * volQuad.weight(l);
         
         fMat_ *= intel;
 
@@ -352,7 +377,7 @@ namespace Dune {
     //////////////////////////////////////////
     // Volumetric integral part only flux 
     //////////////////////////////////////////
-    void evalVolumetricPartBoth(EntityType& en , const GeometryType& geo , 
+    void evalVolumetricPartBoth(EntityType& en , const Geometry& geo , 
         LocalFunctionType& updEn , const double massVolElinv ) const
     {
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
@@ -379,7 +404,6 @@ namespace Dune {
             const QuadratureImp & faceQuadInner, 
             const QuadratureImp & faceQuadOuter,
             LocalFunctionType & updEn,
-            double & dtLocal, 
             double & wspeedS) const 
     {
       // make Entity known in caller  
@@ -389,19 +413,17 @@ namespace Dune {
       LocalFunctionType updNeigh = dest_->localFunction(nb);
 
       // get goemetry of neighbor 
-      const GeometryType & nbGeo = nb.geometry();
-      double massVolNbinv;
-      double nbvol = volumeElement(nbGeo, massVolNbinv);
+      const Geometry & nbGeo = nb.geometry();
+
+      const double nbvol = nbGeo.volume(); 
+      const double massVolNbinv = refVolMap_[ nbGeo.type() ] / nbvol;
       
       const int faceQuadInner_nop = faceQuadInner.nop();
       for (int l = 0; l < faceQuadInner_nop; ++l) 
       {
-        double dtLocalS = caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,
-                                l, valEn_, valNeigh_);
+        wspeedS += caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,l, valEn_, valNeigh_)
+                 * faceQuadInner.weight(l);
         
-        dtLocal += dtLocalS*faceQuadInner.weight(l);
-        wspeedS += dtLocalS*faceQuadInner.weight(l);
-
         // apply weights 
         valEn_    *= -faceQuadInner.weight(l)*massVolElinv;
         valNeigh_ *=  faceQuadOuter.weight(l)*massVolNbinv;
@@ -417,23 +439,6 @@ namespace Dune {
     LocalDGPass(const LocalDGPass&);
     LocalDGPass& operator=(const LocalDGPass&);
 
-  private:
-    double volumeElement(const GeometryType& geo,
-                         double& massVolinv) const 
-    {
-      double volume = geo.volume(); 
-
-      typedef typename GeometryType :: ctype coordType; 
-      enum { dim = GridType :: dimension };
-      const ReferenceElement< coordType, dim > & refElem =
-             ReferenceElements< coordType, dim >::general(geo.type());
-      
-      double volRef = refElem.volume();
-
-      massVolinv = volRef/volume;
-      return volume;
-    }
-    
   protected:
     mutable DiscreteModelCallerType caller_;
     const DiscreteModelType& problem_; 
@@ -445,6 +450,7 @@ namespace Dune {
     const GridPartType & gridPart_;
     const LocalIdSetType& localIdSet_;
     mutable CommunicationManagerType communicationManager_;
+    mutable RefVolumeMapType refVolMap_;
 
     mutable double dtMin_;
   
@@ -457,6 +463,7 @@ namespace Dune {
     mutable RangeType source_;
     mutable DomainType grads_;
     TimeProvider* time_;
+    const double minLimit_;
     FieldVector<int, 0> diffVar_;
 
     const int volumeQuadOrd_, faceQuadOrd_;
