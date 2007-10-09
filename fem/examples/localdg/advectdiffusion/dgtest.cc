@@ -9,7 +9,7 @@ const double globalTimeStep = 1e-3;
 // inlcude template meta fvector 
 #include "fvector.hh"
 
-#include <dune/common/utility.hh>
+#include <dune/fem/misc/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/common/misc.hh>
@@ -128,6 +128,8 @@ int main(int argc, char ** argv, char ** envp) {
 
     // set timestep size as it is fixed 
 #ifdef EULER_PERFORMANCE
+    // only for Euler Performance Test
+    ode.resetTimeStepEstimate();
     ode.provideTimeStepEstimate(globalTimeStep);
     ode.syncTimeStep();
 #endif
@@ -184,6 +186,7 @@ int main(int argc, char ** argv, char ** envp) {
       ode.provideTimeStepEstimate(globalTimeStep);
       ode.syncTimeStep();
 #endif
+      //std::cout << "Current time = " << t << ", dt = " << ode.deltaT() << "\n";
       
 #if HAVE_GRAPE 
       if(graped > 0)
@@ -196,7 +199,6 @@ int main(int argc, char ** argv, char ** envp) {
       }
 #endif 
       ldt += t;
-      //std::cout << "Current time = " << t << "\n";
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
