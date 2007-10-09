@@ -1,5 +1,5 @@
 template <class DiscreteFunctionType, class FunctionType, int polOrd>
-class L2Projection
+class L2ProjectionLocal
 {
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
   
@@ -179,7 +179,7 @@ void initialize(const StupidFunction& f,DFType& df)
   typedef FieldVector<double, dim> Coordinate;
 
   //- Actual method
-  L2Projection<DFType, StupidFunction, 2>::project(f, df);
+  L2ProjectionLocal<DFType, StupidFunction, 2>::project(f, df);
 
   typedef typename DFType::DofIteratorType DofIterator;
   /*for (DofIterator it = df.dbegin(); it != df.dend(); ++it) {
