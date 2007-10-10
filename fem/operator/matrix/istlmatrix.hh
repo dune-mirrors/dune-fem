@@ -98,13 +98,6 @@ namespace Dune {
         , space_(&space)
         , comm_(&comm)         
       {
-        // only works for non-hybrid grids so far 
-        if( space_->multipleGeometryTypes() )
-        {
-          DUNE_THROW(NotImplemented,"ISTLMatrix::setup: use of matrix for hybrid grids not implemented yet!");
-        }
-
-        //std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
 
       //! constuctor used by ILU preconditioner 
@@ -114,7 +107,6 @@ namespace Dune {
         , space_(0)
         , comm_(0)         
       {
-        //std::cout << "Create Matrix with " << rows << " x " << cols << "\n";
       }
       
       //! copy constructor, needed by ISTL preconditioners 
@@ -134,22 +126,24 @@ namespace Dune {
         RowIteratorType endi=this->end();
         for (RowIteratorType i=this->begin(); i!=endi; ++i)
         {
-          int r = i.index();
-          for(int k=0; k<localRows_; ++k)
+          const int r = i.index();
           {
-            int row = r * localRows_ + k; 
-            dest[row] = 0.0;
+            int row = i.index() * localRows_;
+            for(int k=0; k<localRows_; ++k, ++row)
+            {
+              dest[row] = 0.0;
+            }
           }
 
           ColIteratorType endj = (*i).end();
           for (ColIteratorType j=(*i).begin(); j!=endj; ++j)
           {
-            for(int k=0; k<localRows_; ++k) 
+            int row = r * localRows_;
+            for(int k=0; k<localRows_; ++k, ++row) 
             {
-              int row = r * localRows_ + k; 
-              for(int c=0; c<localCols_; ++c)
+              int col = j.index() * localCols_;
+              for(int c=0; c<localCols_; ++c, ++col)
               {
-                int col = j.index() * localCols_ + c;  
                 dest[row] += (*j)[k][c] * arg[col]; 
               }
             }
@@ -167,6 +161,12 @@ namespace Dune {
                  const StencilCreatorImp& stencil, 
                  bool verbose = false) 
       { 
+        // only works for non-hybrid grids so far 
+        if( gridPart.indexSet().geomTypes(0).size() > 1 )
+        {
+          DUNE_THROW(NotImplemented,"ISTLMatrix::setup: use of matrix for hybrid grids not implemented yet!");
+        }
+
         // get size estimate   
         int size = rowMapper.size();
         size = (int) size / 10;
