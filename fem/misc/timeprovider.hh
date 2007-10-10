@@ -210,12 +210,17 @@ namespace Dune {
   class ImprovedTimeProvider : public TimeProvider 
   {
   public:
-    //! constructor taking initial time, default is zero
-    ImprovedTimeProvider(const std::string paramFile = "") 
+    /** \brief constructor 
+        \param[in] paramFile parameter file to read start time and cfl number
+                   keywords are "StartTime" and "CFL" 
+        \param[in] rank rank of process, output is only shown for process 0 (default value is 0) 
+    */
+    ImprovedTimeProvider(const std::string paramFile = "",
+                         const int rank = 0) 
       : TimeProvider() 
     {
-      this->time_ = readStartTime(paramFile);
-      this->cfl_  = readCFL(paramFile);
+      this->time_ = readStartTime(paramFile, rank);
+      this->cfl_  = readCFL(paramFile, rank);
     }
 
   private:
@@ -224,18 +229,18 @@ namespace Dune {
     ImprovedTimeProvider& operator=(const ImprovedTimeProvider&);
 
     // read parameter start time from given file
-    double readStartTime(const std::string& file) const 
+    double readStartTime(const std::string& file, const int rank) const 
     {
       double startTime = 0.0;
-      readParameter(file,"StartTime",startTime);
+      readParameter(file,"StartTime",startTime, (rank == 0) );
       return startTime;
     }
     
     // read parameter CFL from given file
-    double readCFL(const std::string& file) const 
+    double readCFL(const std::string& file, const int rank) const 
     {
       double cfl = 1.0;
-      readParameter(file,"CFL",cfl);
+      readParameter(file,"CFL",cfl, (rank == 0) );
       return cfl;
     }
   };
