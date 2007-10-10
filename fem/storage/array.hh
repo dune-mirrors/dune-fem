@@ -12,13 +12,14 @@
 namespace Dune
 {
 
-  /*! \class ArrayInterface
+  /** \class ArrayInterface
    *  \brief abstract array interface
    */
   template< class TraitsImp >
   class ArrayInterface
   {
   public:
+    //! type of the traits
     typedef TraitsImp Traits;
 
   private:
@@ -37,38 +38,63 @@ namespace Dune
     //! type of constant iterator
     typedef typename Traits :: ConstIteratorType ConstIteratorType;
 
-    //! type of iterator
+    //! type of (non-constant) iterator
     typedef typename Traits :: IteratorType IteratorType;
 
   public:
     inline ArrayInterface ()
     {
+      // make sure the implementation is derived from this interface
       typedef CompileTimeChecker< Conversion< ArrayType, ThisType > :: exists >
         __Array_Implementation_Must_Be_Derived_From_Interface__;
     }
-   
-    //! access an array element
-    inline const ElementType& operator[] ( unsigned int index ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
-      return asImp()[ index ];
-    }
 
-    //! access an array element
-    inline ElementType& operator[] ( unsigned int index )
+    /** \brief access an array element
+     *
+     *  \param[in]  index  index of the array element to access
+     *  
+     *  \returns a const reference to the array element
+     */
+    inline const ElementType &operator[] ( unsigned int index ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
       return asImp()[ index ];
     }
     
-    //! fill the array with copies of an element
+    /** \brief access an array element
+     *
+     *  \param[in]  index  index of the array element to access
+     *  
+     *  \returns a reference to the array element
+     */
+    inline ElementType &operator[] ( unsigned int index )
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
+      return asImp()[ index ];
+    }
+   
+    /** \brief fill the array with copies of an element
+     *
+     *  \param[in]  element  element wich shall be copied into every array
+     *                       entry
+     *
+     *  \returns a reference to this array
+     */
     inline ArrayType &assign ( const ElementType &element )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( element ) );
       return asImp();
     }
 
-    //! copy another array to this one
+    /** \brief copy another array to this one
+     *
+     *  Copies the data from another array to this one. Both arrays must be of
+     *  the same size.
+     *
+     *  \param[in]  other  array to copy
+     *
+     *  \returns a reference this this array
+     */
     template< class T >
     inline ArrayType &assign( const ArrayInterface< T > &other )
     {
@@ -76,35 +102,50 @@ namespace Dune
       return asImp();
     }
  
-    //! obtain begin iterator
+    /** \brief obtain begin iterator
+     *
+     *  \returns an iterator pointing to the first array element
+     */
     inline ConstIteratorType begin () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
       return asImp().begin();
     }
 
-    //! obtain begin iterator
+    /** \brief obtain begin iterator
+     *
+     *  \returns an iterator pointing to the first array element
+     */
     inline IteratorType begin ()
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
       return asImp().begin();
     }
 
-    //! obtain end iterator
+    /** \brief obtain end iterator
+     *
+     *  \returns an iterator pointing behind the last array element
+     */
     inline ConstIteratorType end () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
       return asImp().end();
     }
 
-    //! obtain end iterator
+    /** \brief obtain end iterator
+     *
+     *  \returns an iterator pointing behind the last array element
+     */
     inline IteratorType end ()
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
       return asImp().end();
     }
 
-    //! return the size of the array
+    /** obtain the size of the array
+     *
+     *  \returns the size of the array
+     */
     inline unsigned int size () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
@@ -112,11 +153,13 @@ namespace Dune
     }
     
   protected:
+    // Barton-Nackman trick
     inline const ArrayType &asImp () const
     {
       return static_cast< const ArrayType& >( *this );
     }
 
+    // Barton-Nackman trick
     inline ArrayType &asImp ()
     {
       return static_cast< ArrayType& >( *this );
@@ -125,6 +168,7 @@ namespace Dune
 
 
 
+  // helper structure to make sure an array is derived from the interface
   template< class ArrayType >
   struct CheckArrayInterface
   {
@@ -213,29 +257,42 @@ namespace Dune
 
 
   
+  /** \class ArrayDefault
+   *  \brief default implementation of the ArrayInterface
+   */
   template< class ElementImp, class ArrayImp >
   class ArrayDefault
   : public ArrayInterface< ArrayDefaultTraits< ElementImp, ArrayImp > >
   {
   public:
+    //! type of the array elements
     typedef ElementImp ElementType;
 
+    //! type of the implementation (Barton-Nackman) 
     typedef ArrayImp ArrayType;
     
+    //! type of the traits
     typedef ArrayDefaultTraits< ElementType, ArrayType > Traits;
 
   private:
     typedef ArrayDefault< ElementType, ArrayType > ThisType;
     typedef ArrayInterface< Traits > BaseType;
 
+  public:
     using BaseType :: size;
+
+  protected:
     using BaseType :: asImp;
 
   public:
-    typedef typename Traits :: IteratorType IteratorType;
+    //! type of constant iterator
     typedef typename Traits :: ConstIteratorType ConstIteratorType;
 
+    //! type of (non-constant) iterator
+    typedef typename Traits :: IteratorType IteratorType;
+
   public:
+    /** \copydoc Dune::ArrayInterface::assign(const ElementType &element) */
     inline ArrayType &assign ( const ElementType &element )
     {
       ArrayType &imp = asImp();
@@ -244,7 +301,8 @@ namespace Dune
         imp[ i ] = element;
       return imp;
     }
-
+    
+    /** \copydoc Dune::ArrayInterfae::assign(const ArrayInterface<T> &other) */
     template< class T >
     inline ArrayType &assign( const ArrayInterface< T > &other )
     {
@@ -256,21 +314,25 @@ namespace Dune
       return imp;
     }
 
+    /** \copydoc Dune::ArrayInterface::begin() const */
     inline ConstIteratorType begin () const
     {
       return ConstIteratorType( asImp(), 0 );
     }
 
+    /** \copydoc Dune::ArrayInterface::begin() */
     inline IteratorType begin ()
     {
       return IteratorType( asImp(), 0 );
     }
 
+    /** \copydoc Dune::ArrayInterface::end() const */
     inline ConstIteratorType end () const
     {
       return ConstIteratorType( asImp(), size() );
     }
 
+    /** \copydoc Dune::ArrayInterface::end() */
     inline IteratorType end ()
     {
       return IteratorType( asImp(), size() );
@@ -279,11 +341,16 @@ namespace Dune
 
 
 
+  /** \class ArrayWrapper
+   *  \brief implementation of the ArrayInterface wrapping a pointer to an
+   *         array of elements
+   */
   template< class ElementImp >
   class ArrayWrapper
   : public ArrayDefault< ElementImp, ArrayWrapper< ElementImp > >
   {
   public:
+    //! type of the array elements
     typedef ElementImp ElementType;
 
   private:
@@ -295,25 +362,29 @@ namespace Dune
     ElementType *elements_;
 
   public:
+    /** \brief create an ArrayWrapper from a size and a pointer */
     inline ArrayWrapper ( unsigned int size, ElementType *elements )
     : size_( size ),
       elements_( elements )
     {
       assert( elements_ != NULL );
     }
-    
+   
+    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) const */
     inline const ElementType &operator[] ( unsigned int index ) const
     {
       assert( index < size_ );
       return elements_[ index ];
     }
 
+    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) */
     inline ElementType &operator[] ( unsigned int index )
     {
       assert( index < size_ );
       return elements_[ index ];
     }
 
+    /** \copydoc Dune::ArrayInterface::size */
     inline unsigned int size () const
     {
       return size_;
