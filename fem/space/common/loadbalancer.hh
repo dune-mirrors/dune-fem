@@ -91,7 +91,10 @@ public:
       readParameter(paramFile,"BalanceStep",balanceStep_);
     }
 
-    std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+    if( grid_.comm().rank() == 0 )
+    {
+      std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+    }
   }
 
   /** \brief constructor of LoadBalancer  

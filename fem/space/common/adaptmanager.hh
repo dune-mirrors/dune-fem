@@ -212,7 +212,10 @@ public:
       adaptationMethod_ = none;
     }
       
-    std::cout << "Created AdaptationManager: adaptation method = " << methodName() << std::endl;
+    if( grid_.comm().rank() == 0 )
+    {
+      std::cout << "Created AdaptationManager: adaptation method = " << methodName() << std::endl;
+    }
   }
 
   //! destructor 
