@@ -118,13 +118,17 @@ public:
     , localList_()
     , collList_()
   {
+    const bool output = (grid_.comm().rank() == 0);
     if( paramFile != "")
     {
-      readParameter(paramFile,"BalanceStep",balanceStep_);
+      readParameter(paramFile,"BalanceStep",balanceStep_, output);
     }
 
     rpOp.addToList(*this);
-    std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+    if( output ) 
+    {
+      std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+    }
   }
 
   //! destructor 
