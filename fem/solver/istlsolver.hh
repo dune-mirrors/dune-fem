@@ -144,7 +144,8 @@ private:
       typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
       MatrixOperatorType mat(const_cast<MatrixType&> (m));
 
-      int verb = (verbose) ? 2 : 0;
+      // verbose only in verbose mode and for rank 0 
+      int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
         
       ParaScalarProduct<BlockVectorType,CommunicatorType> scp(comm); 
 
