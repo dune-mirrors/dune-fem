@@ -196,10 +196,11 @@ public:
     , rpOp_ (rpOp) 
     , adaptationMethod_(generic)
   {
+    const bool output = (grid_.comm().rank() == 0);
     if( paramFile != "")
     {
       int am = 1;
-      readParameter(paramFile,"AdaptationMethod",am);
+      readParameter(paramFile,"AdaptationMethod",am, output);
       if(am == 2) adaptationMethod_ = callback;
       else if(am == 1) adaptationMethod_ = generic;
       else adaptationMethod_ = none;
@@ -212,7 +213,7 @@ public:
       adaptationMethod_ = none;
     }
       
-    if( grid_.comm().rank() == 0 )
+    if( output )
     {
       std::cout << "Created AdaptationManager: adaptation method = " << methodName() << std::endl;
     }

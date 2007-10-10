@@ -86,12 +86,13 @@ public:
     , localList_()
     , collList_()
   {
+    const bool output = (grid_.comm().rank() == 0);
     if( paramFile != "")
     {
-      readParameter(paramFile,"BalanceStep",balanceStep_);
+      readParameter(paramFile,"BalanceStep",balanceStep_, output);
     }
 
-    if( grid_.comm().rank() == 0 )
+    if( output )
     {
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
     }
