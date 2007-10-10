@@ -262,7 +262,7 @@ public:
   // initialize 
   void initialize(const DestinationType& U0)
   {
-    if( ! this->initialized_ ) 
+    if( tp_.deltaT() < 0 ) 
     {
       BaseType::initialize(U0);
 
@@ -540,7 +540,7 @@ public:
   // initialize 
   void initialize(const DestinationType& U0)
   {
-    if( ! this->initialized_ ) 
+    if( tp_.deltaT() < 0 ) 
     {
       // call initialize 
       BaseType::initialize(U0);
