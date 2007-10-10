@@ -232,6 +232,7 @@ namespace Dune {
       const Geometry & geo = en.geometry();
 
       const double vol = geo.volume(); 
+      assert( refVolMap_.find (  geo.type() ) != refVolMap_.end() );
       const double massVolElinv = refVolMap_[ geo.type() ] / vol;
 
       // only apply volumetric integral if order > 0 
@@ -416,6 +417,7 @@ namespace Dune {
       const Geometry & nbGeo = nb.geometry();
 
       const double nbvol = nbGeo.volume(); 
+      assert( refVolMap_.find (  nbGeo.type() ) != refVolMap_.end() );
       const double massVolNbinv = refVolMap_[ nbGeo.type() ] / nbvol;
       
       const int faceQuadInner_nop = faceQuadInner.nop();
