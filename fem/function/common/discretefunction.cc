@@ -2,7 +2,9 @@
 #define DUNE_DISCRETEFUNCTION_CC
 
 #include <fstream>
+
 #include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/io/streams/streams.hh>
 
 namespace Dune 
 {
@@ -131,6 +133,24 @@ operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::Range
   return asImp();
 }
 
+  template< class DiscreteFunctionTraits >
+  inline bool DiscreteFunctionDefault< DiscreteFunctionTraits >
+    :: operator== ( const DiscreteFunctionType &g ) const
+  {
+    if( size() != g.size() )
+      return false;
+    
+    const ConstDofIteratorType end = dend();
+
+    ConstDofIteratorType fit = dbegin();
+    ConstDofIteratorType git = g.dbegin();
+    for( ; fit != end; ++fit, ++git )
+      if( *fit != *git )
+        return false;
+    
+    return true;
+  }
+
 
   // print 
   template< class DiscreteFunctionTraits >
@@ -142,6 +162,47 @@ operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::Range
     const ConstDofIteratorType end = dend();
     for( ConstDofIteratorType dit = dbegin(); dit != end; ++dit )
       out << (*dit) << std::endl;
+  }
+
+
+
+  template< class StreamTraits, class DiscreteFunctionTraits >
+  inline OutStreamInterface< StreamTraits > &
+    operator<< ( OutStreamInterface< StreamTraits > &out,
+                 const DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
+  {
+    typedef DiscreteFunctionInterface< DiscreteFunctionTraits > DiscreteFunctionType;
+    typedef typename DiscreteFunctionType :: ConstDofIteratorType IteratorType;
+   
+    out << df.size();
+
+    const IteratorType end = df.dend();
+    for( IteratorType it = df.dbegin(); it != end; ++it )
+      out << *it;
+
+    return out;
+  }
+
+
+
+  template< class StreamTraits, class DiscreteFunctionTraits >
+  inline InStreamInterface< StreamTraits > &
+    operator>> ( InStreamInterface< StreamTraits > &in,
+                 DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
+  {
+    typedef DiscreteFunctionInterface< DiscreteFunctionTraits > DiscreteFunctionType;
+    typedef typename DiscreteFunctionType :: DofIteratorType IteratorType;
+
+    int size;
+    in >> size;
+    if( size != df.size() )
+      DUNE_THROW( IOError, "Trying to read discrete function of different size." );
+
+    const IteratorType end = df.dend();
+    for( IteratorType it = df.dbegin(); it != end; ++it )
+      in >> *it;
+
+    return in;
   }
 
 } // end namespace Dune

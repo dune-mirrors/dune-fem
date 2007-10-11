@@ -7,6 +7,7 @@
 
 //- Dune includes 
 #include <dune/fem/io/file/xdrio.hh>
+#include <dune/fem/io/streams/streams.hh>
 
 namespace Dune
 {
@@ -227,6 +228,13 @@ namespace Dune
 
     friend std :: ostream &operator<< ( std :: ostream&, const Double& );
     friend std :: istream &operator>> ( std :: istream&, Double& );
+    
+    template< class Traits >
+    friend OutStreamInterface< Traits > &
+      operator<< ( OutStreamInterface< Traits > &, const Double );
+    template< class Traits >
+    friend InStreamInterface< Traits > &
+      operator>> ( InStreamInterface< Traits > &, Double & );
 
     friend double pow (const Double& v, const double p);
     friend double log (const Double& v);

@@ -486,6 +486,7 @@ namespace Dune
     using BaseType :: dbegin;
     using BaseType :: dend;
     using BaseType :: name;
+    using BaseType :: size;
     
   protected:
     /** \brief Constructor storing discrete function space
@@ -568,6 +569,13 @@ namespace Dune
         \return reference to this (i.e. *this)
     */
     DiscreteFunctionType& operator /= (const RangeFieldType &scalar);
+
+    inline bool operator== ( const DiscreteFunctionType &g ) const;
+    
+    inline bool operator!= ( const DiscreteFunctionType &g ) const
+    {
+      return !(operator==( g ));
+    }
     
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
     template< class EntityType >

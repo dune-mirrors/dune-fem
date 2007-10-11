@@ -408,5 +408,23 @@ namespace Dune
   {
     return in >> a.value_;
   }
+
+
+  
+  template< class Traits >
+  inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out,
+                 const Double a )
+  {
+    return out << a.value_;
+  }
+
+  template< class Traits >
+  inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in,
+                 Double &a )
+  {
+    return in >> a.value_;
+  }
  
 }

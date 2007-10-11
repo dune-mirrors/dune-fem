@@ -7,6 +7,7 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/io/streams/xdrstreams.hh>
 
 #include "testgrid.hh"
 #include "exactsolution.hh"
@@ -54,6 +55,18 @@ int main ()
     //! perform Lagrange interpolation
     LagrangeInterpolation< DiscreteFunctionType >
       :: interpolateFunction( f, solution );
+
+    // test writing discrete functions
+    XDRFileOutStream out( "solution.tmp" );
+    out << solution;
+    out.flush();
+
+    // read it back again
+    DiscreteFunctionType readback( "readback", discreteFunctionSpace );
+    XDRFileInStream in( "solution.tmp" );
+    in >> readback;
+    if( readback != solution )
+      return 1;
 
     return 0;
   }
