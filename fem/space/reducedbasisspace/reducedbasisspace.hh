@@ -119,12 +119,17 @@ namespace Dune
   //! destructor to release the pointer of each entry
     inline ~ReducedBasisSpace ()
     {
-      unsigned int size = baseFunctionList_.size();
-      for( unsigned int i = 0; i < size; ++i )
-        delete baseFunctionList_[ i ];
+      clear();
     }
 
-   //! this method is used to create the reduced basis space by adding discrete functions
+    /** \brief add a base function to the reduced basis space
+     *
+     *  \note After adding the base function, you can safely remove or
+     *        overwrite it. The ReducedBasisSpace make itself a copy.
+     * 
+     *  \param[in]  baseFunction  base function to add to the reduced basis
+     *                            space
+     */
     inline void addBaseFunction ( const BaseFunctionType &baseFunction )
     {
       BaseFunctionType *f = new BaseFunctionType( baseFunction );
@@ -132,7 +137,40 @@ namespace Dune
       //baseFunctionList_.push_back( f );
       baseFunctionList_.append( f );
     }
+
+    /** \brief access a base function within the reduced basis space
+     *
+     *  \param[in]  i  number of the base function to access
+     * 
+     *  \returns a constant reference to the i-th base function
+     */
+    inline const BaseFunctionType &baseFunction ( unsigned int i ) const
+    {
+      return baseFunctionList_[ i ];
+    }
+
+    inline const BaseFunctionSpaceType &baseFunctionSpace () const
+    {
+      return baseFunctionSpace_;
+    }
+
+    /** \brief remove all base functions from the reduced basis space
+     */
+    inline void clear ()
+    {
+      unsigned int size = baseFunctionList_.size();
+      for( unsigned int i = 0; i < size; ++i )
+        delete baseFunctionList_[ i ];
+      baseFunctionList_.resize( 0 );
+    }
     
+    /** \brief obtain number of base functions within the reduced basis space
+     */
+    inline unsigned int numBaseFunctions () const
+    {
+      return baseFunctionList_.size();
+    }
+
     //! are the functions continuous?
     inline bool continuous () const
     {
@@ -165,13 +203,14 @@ namespace Dune
     }
 
     //! are there multiple base function sets per geometry type?
-    inline bool multipleBaseFunctionSets() const
+    inline bool multipleBaseFunctionSets () const
     {
       return true;
     }
-
   };
   
 }
+
+#include "reducedbasisspace_inline.hh"
 
 #endif

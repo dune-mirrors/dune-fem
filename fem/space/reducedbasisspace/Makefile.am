@@ -3,4 +3,7 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 SUBDIRS = test
 reducedbasisspacedir = $(includedir)/dune/fem/space/reducedbasisspace
-reducedbasisspace_HEADERS = reducedbasisspace.hh basefunctionset.hh mapper.hh
+reducedbasisspace_HEADERS = basefunctionset.hh \
+														mapper.hh \
+                            reducedbasisspace.hh \
+														reducedbasisspace_inline.hh
