@@ -66,9 +66,9 @@ namespace Dune
  *  \brief The ReducedBasisSpace class provides the space for RB simulations 
  *
  *  The basis consists of discrete functions as basis functions. These discrete functions 
- *  have an underlying space, the Lagrange space. Consequently they inhert most of the 
- *  structure from the Lagrange space.
- *  Initially the space is empty and be using the add function you can bulid this space 
+ *  have an underlying arbitrary space. Consequently they inhert most of the 
+ *  structure from this space.
+ *  Initially the space is empty and by using the add function you can bulid this space 
  *  and discrete functions. 
  *  
  *
@@ -107,7 +107,7 @@ namespace Dune
     mutable MapperType mapper_;
 
   public:
-  //! constructor the underlying lagrange basis is the argument
+  //! constructor the underlying basis is the argument
     inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
     : BaseType( baseFunctionSpace.gridPart() ),
       baseFunctionSpace_( baseFunctionSpace ),
@@ -133,7 +133,7 @@ namespace Dune
       baseFunctionList_.append( f );
     }
     
-    //! are the function continuous?
+    //! are the functions continuous?
     inline bool continuous () const
     {
       return baseFunctionSpace_.continuous();
