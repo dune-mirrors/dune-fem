@@ -23,6 +23,10 @@
 #include <dune/grid/albertagrid.hh>
 #endif
 
+#ifdef ENABLE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/yaspgrid.hh>
 
@@ -438,6 +442,55 @@ namespace Dune {
   };
 #endif
 
+#ifdef ENABLE_UG
+  template <int dim> 
+  class TwistUtility<UGGrid<dim> > 
+  {
+    typedef UGGrid<dim> GridImp;
+    // this default implementation only is for SGrid, YaspGrid, UGGrid
+    // and OneDGrid. 
+  public:
+    typedef GridImp GridType;
+  public:
+    //! \brief constructor taking grid reference 
+    TwistUtility(const GridType& grid) {}
+
+    //! \brief return 0 for inner face 
+    template <class IntersectionIterator> 
+    static int twistInSelf(const GridType &, const IntersectionIterator&)
+    {
+      return 0;
+    }
+    
+    //! \brief return 0 for inner face 
+    template <class IntersectionIterator> 
+    int twistInSelf(const IntersectionIterator& it) const {
+      return 0;
+    }
+    
+    //! \brief return 0 for outer face 
+    template <class IntersectionIterator> 
+    int twistInNeighbor(const IntersectionIterator& it) const {
+      return -1;
+    }
+
+    //! \brief return 0 for outer face 
+    template <class IntersectionIterator> 
+    static int twistInNeighbor(const GridType &, const IntersectionIterator&) 
+    {
+      return -1;
+    }
+
+    //! \brief return true if intersection is conform, default is true  
+    template <class IntersectionIterator> 
+    bool conforming (const IntersectionIterator& it) const { return (it.boundary()) ? true : false; }
+    
+    //! \brief return true if intersection is conform, default is true  
+    template <class IntersectionIterator> 
+    static bool conforming (const GridType &, const IntersectionIterator& it) { return (it.boundary()) ? true : false; }
+  };
+#endif
+  
 #undef HAVE_ALBERTA_FOUND
 #undef HAVE_ALUGRID_FOUND
 } // end namespace Dune 
