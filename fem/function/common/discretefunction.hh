@@ -12,6 +12,7 @@
 //- local includes 
 #include "function.hh"
 #include <dune/fem/storage/objectstack.hh>
+#include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/function/common/localfunctionwrapper.hh>
 #include "dofiterator.hh"
@@ -354,6 +355,26 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION(asImp().operator /= (scalar));
       return asImp().operator /= (scalar);
     }
+
+    /** \brief read the discrete function from a stream
+     *
+     *  \param[in]  in  stream to read the discrete function from
+     */
+    template< class StreamTraits >
+    inline void read ( InStreamInterface< StreamTraits > &in )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().read( in ) );
+    }
+
+    /** \brief write the discrete function into a stream
+     *
+     *  \param[in]  out  stream to write the discrete function to
+     */
+    template< class StreamTraits >
+    inline void write ( OutStreamInterface< StreamTraits > &out ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().write( out ) );
+    }
     
     /** \brief write discrete function to file with given filename using xdr encoding
         \param[in] filename name of file to which discrete function should be written using xdr 
@@ -591,6 +612,14 @@ namespace Dune
       return lfStorage_.localFunction( entity );
     }
 
+    /** \copydoc Dune::DiscreteFunctionInterface::read */
+    template< class StreamTraits >
+    inline void read ( InStreamInterface< StreamTraits > &in );
+
+    /** \copydoc Dune::DiscreteFunctionInterface::write */
+    template< class StreamTraits >
+    inline void write ( OutStreamInterface< StreamTraits > &out ) const;
+ 
     /** \brief @copydoc DiscreteFunctionInterface::write_xdr */
     virtual bool write_xdr(const std::string filename) const { return true; }
 

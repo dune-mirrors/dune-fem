@@ -166,20 +166,43 @@ operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::Range
 
 
 
+  template< class DiscreteFunctionTraits >
+  template< class StreamTraits >
+  inline void DiscreteFunctionDefault< DiscreteFunctionTraits >
+    :: read ( InStreamInterface< StreamTraits > &in )
+  {
+    int sz;
+    in >> sz;
+    if( sz != size() )
+      DUNE_THROW( IOError, "Trying to read discrete function of different size." );
+
+    const DofIteratorType end = dend();
+    for( DofIteratorType it = dbegin(); it != end; ++it )
+      in >> *it;
+  }
+
+
+
+  template< class DiscreteFunctionTraits >
+  template< class StreamTraits >
+  inline void DiscreteFunctionDefault< DiscreteFunctionTraits >
+    :: write ( OutStreamInterface< StreamTraits > &out ) const
+  {
+    out << size();
+
+    const ConstDofIteratorType end = dend();
+    for( ConstDofIteratorType it = dbegin(); it != end; ++it )
+      out << *it;
+  }
+
+
+
   template< class StreamTraits, class DiscreteFunctionTraits >
   inline OutStreamInterface< StreamTraits > &
     operator<< ( OutStreamInterface< StreamTraits > &out,
                  const DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
   {
-    typedef DiscreteFunctionInterface< DiscreteFunctionTraits > DiscreteFunctionType;
-    typedef typename DiscreteFunctionType :: ConstDofIteratorType IteratorType;
-   
-    out << df.size();
-
-    const IteratorType end = df.dend();
-    for( IteratorType it = df.dbegin(); it != end; ++it )
-      out << *it;
-
+    df.write( out );
     return out;
   }
 
@@ -190,18 +213,7 @@ operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::Range
     operator>> ( InStreamInterface< StreamTraits > &in,
                  DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
   {
-    typedef DiscreteFunctionInterface< DiscreteFunctionTraits > DiscreteFunctionType;
-    typedef typename DiscreteFunctionType :: DofIteratorType IteratorType;
-
-    int size;
-    in >> size;
-    if( size != df.size() )
-      DUNE_THROW( IOError, "Trying to read discrete function of different size." );
-
-    const IteratorType end = df.dend();
-    for( IteratorType it = df.dbegin(); it != end; ++it )
-      in >> *it;
-
+    df.read( in );
     return in;
   }
 
