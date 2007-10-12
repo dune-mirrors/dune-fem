@@ -149,7 +149,7 @@ namespace Dune
       return wrappedIterator_.numberInSelf();
     }
 
-    inline int numInNeighbor () const
+    inline int numberInNeighbor () const
     {
       return wrappedIterator_.numberInNeighbor();
     }
