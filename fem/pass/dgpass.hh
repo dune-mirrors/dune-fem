@@ -170,6 +170,11 @@ namespace Dune {
     virtual ~LocalDGPass() {
     }
 
+    void printTexInfo(std::ostream& out) const {
+      BaseType::printTexInfo(out);
+      out << "LocalDGPass: "
+          << "\\\\ \n";
+    }
     //! Stores the time provider passed by the base class in order to have
     //! access to the global time
     virtual void processTimeProvider(TimeProvider* time) {
@@ -215,6 +220,7 @@ namespace Dune {
       if (time_) 
       {
         time_->provideTimeStepEstimate(dtMin_);
+        time_->provideTimeStepEstimate(1.);
       }
       
       // call finalize 

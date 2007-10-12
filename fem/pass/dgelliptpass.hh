@@ -107,6 +107,11 @@ namespace Dune {
       spc_(spc)
     {
     }
+    void printTexInfo(std::ostream& out) const {
+      BaseType::printTexInfo(out);
+      out << "LocalDGElliptGradientPass: ";
+      out << "\\\\ \n";
+    }
 
     //! don't allocate memory here 
     virtual void allocateLocalMemory() {}
@@ -302,6 +307,15 @@ namespace Dune {
       assert( this->destination_ == 0 );
       this->destination_ = &dest;
     }
+    void printTexInfo(std::ostream& out) const {
+      BaseType::printTexInfo(out);
+      out << "LocalDGElliptPass: ";
+      out << " eps = " << eps_
+          << " reduction = " << reduction_
+          << " inverse Operator: "
+          << "\\\\ \n";
+      // invOp_.printTexInfo(out);
+    }
 
     //! do nothing here 
     void applyLocal(EntityType& en) const
@@ -458,6 +472,13 @@ namespace Dune {
       factor_(factor),
       applyMassMatrix_(applyMassMatrix)
     {
+    }
+    void printTexInfo(std::ostream& out) const {
+      BaseType::printTexInfo(out);
+      out << "LocalDGElliptGradPass: ";
+      out << " factor = " << factor_
+          << " apply Mass = " << applyMassMatrix_
+          << "\\\\ \n";
     }
 
     //! don't allocate memory here 

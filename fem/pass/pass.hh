@@ -38,6 +38,8 @@ namespace Dune {
     //! The pass method does nothing.
     void pass(const GlobalArgumentType& arg) const {
     }
+    void printTexInfo(std::ostream& out) const {
+    }
     //! Returns the closure of the destination tuple.
     NextArgumentType localArgument() const { return nullType(); }
     //! No memory needs to be allocated.
@@ -140,6 +142,9 @@ namespace Dune {
       // then use to delete destination_ 
       if( deleteHandler_ ) deleteHandler_->freeLocalMemory(destination_);
       destination_ = 0;
+    }
+    void printTexInfo(std::ostream& out) const {
+      previousPass_.printTexInfo(out);
     }
 
     //! \brief Application operator.

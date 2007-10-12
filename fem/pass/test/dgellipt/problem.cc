@@ -2,6 +2,7 @@
 #define ELLIPTPROBLEM_CC
 
 #include <cmath>
+#include <cassert>
 
 template<int dim, class DomainField, class Field> 
 class DataFunctionIF
