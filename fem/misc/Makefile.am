@@ -24,4 +24,5 @@ misc_HEADERS = test.cc \
                nonconformitylevel.hh \
                femtuples.hh \
                utility.hh \
-               gridwidth.hh 
+               gridwidth.hh \
+							 eoc.hh
