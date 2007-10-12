@@ -13,6 +13,8 @@
 #include "function.hh"
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/io/streams/asciistreams.hh>
+#include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/function/common/localfunctionwrapper.hh>
 #include "dofiterator.hh"
@@ -376,17 +378,37 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().write( out ) );
     }
     
-    /** \brief write discrete function to file with given filename using xdr encoding
-        \param[in] filename name of file to which discrete function should be written using xdr 
-        \return \b true if operation was successful 
-    */
-    virtual bool write_xdr(const std::string filename) const = 0; 
+    /** \brief read discrete function from file using XDR decoding
+     * 
+     *  \param[in]  filename  name of file to read from
+     *
+     *  \return \b true if operation was successful
+     */
+    virtual bool read_xdr ( const std :: string filename ) = 0;
+   
+    /** \brief write discrete function to file using XDR encoding
+     *
+     *  \param[in]  filename  name of file to write to
+     *
+     *  \return \b true if operation was successful
+     */
+    virtual bool write_xdr ( const std :: string filename ) const = 0;
+    
+    /** \brief read discrete function from file using ASCII decoding
+     *
+     *  \param[in]  filename  name of file to read from 
+     *
+     *  \returns \b true if operation was successful
+     */
+    virtual bool read_ascii ( const std :: string filename ) = 0;
 
-    /** \brief write discrete function to file with given filename using ascii encoding
-        \param[in] filename name of file to which discrete function should be written using ascii 
-        \return \b true if operation was successful 
-    */
-    virtual bool write_ascii(const std::string filename) const = 0;
+    /** \brief write discrete function to file using ASCII encoding
+     *
+     *  \param[in]  filename  name of the file to write to 
+     *  
+     *  \returns \b true if operation was successful
+     */
+    virtual bool write_ascii ( const std :: string filename ) const = 0;
 
     /** \brief write discrete function to file with given filename using pgm encoding
         \param[in] filename name of file to which discrete function should be written using pgm 
@@ -394,16 +416,6 @@ namespace Dune
     */
     virtual bool write_pgm(const std::string filename) const = 0;
 
-    /** \brief read discrete function from file with given filename using xdr decoding
-        \param[in] filename name of file from which discrete function should be read using xdr 
-        \return \b true if operation was successful 
-    */
-    virtual bool read_xdr(const std::string filename) const = 0;
-    /** \brief read discrete function from file with given filename using ascii decoding
-        \param[in] filename name of file from which discrete function should be read using ascii 
-        \return \b true if operation was successful 
-    */
-    virtual bool read_ascii(const std::string filename) const = 0;
     /** \brief read discrete function from file with given filename using pgm decoding
         \param[in] filename name of file from which discrete function should be read using pgm 
         \return \b true if operation was successful 
@@ -450,9 +462,6 @@ namespace Dune
     typedef DiscreteFunctionDefault< Traits > ThisType;
     typedef DiscreteFunctionInterface< Traits > BaseType;
     
-  protected:
-    using BaseType :: asImp;
-
   private:
     typedef DiscreteFunctionInterface< DiscreteFunctionTraits >
       DiscreteFunctionInterfaceType;
@@ -503,6 +512,9 @@ namespace Dune
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
 
+  protected:
+    using BaseType :: asImp;
+
   public:
     using BaseType :: dbegin;
     using BaseType :: dend;
@@ -531,7 +543,7 @@ namespace Dune
     
   public:
     /** \copydoc Dune::DiscreteFunctionInterface::print */
-    void print ( std::ostream &out ) const;
+    void print ( std :: ostream &out ) const;
 
     /** \copydoc Dune::DiscreteFunctionInterface::dofsValid */
     inline bool dofsValid () const
@@ -619,25 +631,61 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionInterface::write */
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits > &out ) const;
+    
+     /** \copydoc Dune::DiscreteFunctionInterface::read_xdr
+     * 
+     *  \note The default implementation uses the read method to read the
+     *        discrete function from an XDRFileInStream.
+     */
+    virtual bool read_xdr( const std::string filename )
+    {
+      XDRFileInStream in( filename );
+      asImp().read( in );
+      return in.valid();
+    }
  
-    /** \brief @copydoc DiscreteFunctionInterface::write_xdr */
-    virtual bool write_xdr(const std::string filename) const { return true; }
-
-    /** \brief @copydoc DiscreteFunctionInterface::write_ascii */
-    virtual bool write_ascii(const std::string filename) const { return true; }
-
-    /** \brief @copydoc DiscreteFunctionInterface::write_pgm */
-    virtual bool write_pgm(const std::string filename) const { return true; }
-
-    /** \brief @copydoc DiscreteFunctionInterface::read_xdr */
-    virtual bool read_xdr(const std::string filename) const { return true; }
+    /** \copydoc Dune::DiscreteFunctionInterface::write_xdr
+     *
+     *  \note The default implementation uses the write method to write the
+     *        discrete function to an XDRFileOutStream.
+     */
+    virtual bool write_xdr ( const std :: string filename ) const
+    {
+      XDRFileOutStream out( filename );
+      asImp().write( out );
+      return out.valid();
+    }
     
-    /** \brief @copydoc DiscreteFunctionInterface::read_ascii */
-    virtual bool read_ascii(const std::string filename) const { return true; }
-    
+    /** \copydoc Dune::DiscreteFunctionInterface::read_ascii
+     * 
+     *  \note The default implementation uses the read method to read the
+     *        discrete function from an ASCIIInStream.
+     */
+    virtual bool read_ascii ( const std :: string filename )
+    {
+      ASCIIInStream in( filename );
+      asImp().read( in );
+      return in.valid();
+    }
+ 
+    /** \copydoc Dune::DiscreteFunctionInterface::write_ascii
+     *
+     *  \note The default implementation uses the write method to write the
+     *        discrete function to an ASSCIIOutStream.
+     */
+    virtual bool write_ascii ( const std :: string filename ) const
+    {
+      ASCIIOutStream out( filename );
+      asImp().write( out );
+      return out.valid();
+    }
+
     /** \brief @copydoc DiscreteFunctionInterface::read_pgm */
     virtual bool read_pgm(const std::string filename) const { return true; }
 
+    /** \brief @copydoc DiscreteFunctionInterface::write_pgm */
+    virtual bool write_pgm(const std::string filename) const { return true; }
+  
   public:
     //this methods are used by the LocalFunctionStorage class 
 
