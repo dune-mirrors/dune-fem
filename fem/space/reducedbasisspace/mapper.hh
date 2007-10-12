@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_REDUCEDBASISSPACE_MAPPER_HH
 #define DUNE_FEM_REDUCEDBASISSPACE_MAPPER_HH
 
+#include <dune/fem/space/common/dofmapperinterface.hh>
+
 namespace Dune
 {
 

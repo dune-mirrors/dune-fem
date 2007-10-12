@@ -4,6 +4,9 @@
 #include "basefunctionset.hh"
 #include "mapper.hh"
 
+#include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/space/common/discretefunctionspace.hh>
+
 namespace Dune
 {
 
@@ -146,7 +149,7 @@ namespace Dune
      */
     inline const BaseFunctionType &baseFunction ( unsigned int i ) const
     {
-      return baseFunctionList_[ i ];
+      return *(baseFunctionList_[ i ]);
     }
 
     inline const BaseFunctionSpaceType &baseFunctionSpace () const
