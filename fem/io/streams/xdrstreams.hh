@@ -173,7 +173,7 @@ namespace Dune
     FILE *file_;
 
   public:
-    inline XDRFileOutStream ( const std :: string filename )
+    inline explicit XDRFileOutStream ( const std :: string filename )
     {
       file_ = fopen( filename.c_str(), "wb" );
       if( file_ == 0 )
@@ -209,7 +209,7 @@ namespace Dune
     FILE *file_;
 
   public:
-    inline XDRFileInStream ( const std :: string filename )
+    inline explicit XDRFileInStream ( const std :: string filename )
     {
       file_ = fopen( filename.c_str(), "rb" );
       if( file_ == 0 )

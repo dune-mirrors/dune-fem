@@ -8,6 +8,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
+#include <dune/fem/io/streams/asciistreams.hh>
 
 #include "testgrid.hh"
 #include "exactsolution.hh"
@@ -56,15 +57,24 @@ int main ()
     LagrangeInterpolation< DiscreteFunctionType >
       :: interpolateFunction( f, solution );
 
-    // test writing discrete functions
-    XDRFileOutStream out( "solution.tmp" );
+    // Let's check on IO
+    DiscreteFunctionType readback( "readback", discreteFunctionSpace );
+    
+    XDRFileOutStream out( "solution-xdr.tmp" );
     out << solution;
     out.flush();
-
-    // read it back again
-    DiscreteFunctionType readback( "readback", discreteFunctionSpace );
-    XDRFileInStream in( "solution.tmp" );
+    readback.clear();
+    XDRFileInStream in( "solution-xdr.tmp" );
     in >> readback;
+    if( readback != solution )
+      return 1;
+
+    ASCIIOutStream aout( "solution-ascii.tmp" );
+    aout << solution;
+    aout.flush();
+    readback.clear();
+    ASCIIInStream ain( "solution-ascii.tmp" );
+    ain >> readback;
     if( readback != solution )
       return 1;
 

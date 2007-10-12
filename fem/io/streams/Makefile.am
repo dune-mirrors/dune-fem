@@ -2,6 +2,7 @@
 AUTOMAKE_OPTIONS = foreign 1.5
 
 streamsdir =  $(includedir)/dune/fem/io/streams
-streams_HEADERS = streams.hh \
+streams_HEADERS = asciistreams.hh \
+                  streams.hh \
                   streams_inline.hh \
 									xdrstreams.hh
