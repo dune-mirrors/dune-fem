@@ -302,7 +302,7 @@ namespace Dune
       return imp;
     }
     
-    /** \copydoc Dune::ArrayInterfae::assign(const ArrayInterface<T> &other) */
+    /** \copydoc Dune::ArrayInterface::assign(const ArrayInterface<T> &other) */
     template< class T >
     inline ArrayType &assign( const ArrayInterface< T > &other )
     {
