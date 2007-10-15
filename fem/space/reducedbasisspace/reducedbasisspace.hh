@@ -167,14 +167,24 @@ namespace Dune
       return baseFunctionSpace_;
     }
 
-    /** \brief remove all base functions from the reduced basis space
-     */
+    /** \brief remove all base functions from the reduced basis space */
     inline void clear ()
     {
-      unsigned int size = baseFunctionList_.size();
-      for( unsigned int i = 0; i < size; ++i )
+      crop( 0 );
+    }
+
+    /** \brief crop base function set to the first n base functions
+     *
+     *  \param[in]  n  number of base functions to keep (must be less or equal
+     *                 to the current number of base functions)
+     */
+    inline void crop ( unsigned int n )
+    {
+      const unsigned int size = baseFunctionList_.size();
+      assert( n < size );
+      for( unsigned int i = n; i < size; ++i )
         delete baseFunctionList_[ i ];
-      baseFunctionList_.resize( 0 );
+      baseFunctionList_.resize( n );
     }
     
     /** \brief obtain number of base functions within the reduced basis space
