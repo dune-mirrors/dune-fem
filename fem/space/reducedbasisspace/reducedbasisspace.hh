@@ -110,7 +110,7 @@ namespace Dune
     mutable MapperType mapper_;
 
   public:
-  //! constructor the underlying basis is the argument
+    //! constructor the underlying basis is the argument
     inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
     : BaseType( baseFunctionSpace.gridPart() ),
       baseFunctionSpace_( baseFunctionSpace ),
@@ -119,7 +119,18 @@ namespace Dune
     {
     }
 
-  //! destructor to release the pointer of each entry
+    template< class StreamTraits >
+    inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
+                               InStreamInterface< StreamTraits > &in )
+    : BaseType( baseFunctionSpace.gridPart() ),
+      baseFunctionSpace_( baseFunctionSpace ),
+      baseFunctionList_(),
+      mapper_( baseFunctionList_ )
+    {
+      read( in );
+    }
+
+    //! destructor to release the pointer of each entry
     inline ~ReducedBasisSpace ()
     {
       clear();
@@ -137,7 +148,6 @@ namespace Dune
     {
       BaseFunctionType *f = new BaseFunctionType( baseFunction );
       assert( f != NULL );
-      //baseFunctionList_.push_back( f );
       baseFunctionList_.append( f );
     }
 
@@ -173,6 +183,12 @@ namespace Dune
     {
       return baseFunctionList_.size();
     }
+
+    template< class StreamTraits >
+    inline void read ( InStreamInterface< StreamTraits > &in );
+   
+    template< class StreamTraits >
+    inline void write ( OutStreamInterface< StreamTraits > &out );
 
     //! are the functions continuous?
     inline bool continuous () const

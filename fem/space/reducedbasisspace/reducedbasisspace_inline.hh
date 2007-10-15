@@ -1,17 +1,47 @@
 namespace Dune
 {
+  
+  template< class BaseFunctionImp >
+  template< class StreamTraits >
+  inline void ReducedBasisSpace< BaseFunctionImp >
+    :: read ( InStreamInterface< StreamTraits > &in )
+  {
+    clear();
+    
+    unsigned int size;
+    in >> size;
+    baseFunctionList_.resize( size );
+   
+    for( unsigned int i = 0; i < size; ++i )
+    {
+      BaseFunctionType *baseFunction
+        = new BaseFunctionType( "BaseFunction", baseFunctionSpace() );
+      in >> *baseFunction;
+      baseFunctionList_[ i ] = baseFunction;
+    }
+  }
 
+  
+
+  template< class BaseFunctionImp >
+  template< class StreamTraits >
+  inline void ReducedBasisSpace< BaseFunctionImp >
+    :: write ( OutStreamInterface< StreamTraits > &out )
+  {
+    const unsigned int size = numBaseFunctions();
+
+    out << size;
+    for( unsigned int i = 0; i < size; ++i )
+      out << baseFunction( i );
+  }
+
+  
   template< class StreamTraits, class BaseFunctionType >
   inline OutStreamInterface< StreamTraits > &
     operator<< ( OutStreamInterface< StreamTraits > &out,
                  const ReducedBasisSpace< BaseFunctionType > &space )
   {
-    const unsigned int size = space.numBaseFunctions();
-
-    out << size;
-    for( unsigned int i = 0; i < size; ++i )
-      out << space.baseFunction( i );
-
+    space.write( out );
     return out;
   }
 
@@ -20,18 +50,7 @@ namespace Dune
     operator>> ( InStreamInterface< StreamTraits > &in,
                  ReducedBasisSpace< BaseFunctionType > &space )
   {
-    space.clear();
-    
-    unsigned int size;
-    in >> size;
-    
-    BaseFunctionType baseFunction( "Base Function", space.baseFunctionSpace() );
-    for( unsigned int i = 0; i < size; ++i )
-    {
-      in >> baseFunction;
-      space.addBaseFunction( baseFunction );
-    }
-    
+    space.read( in ); 
     return in;
   }
   
