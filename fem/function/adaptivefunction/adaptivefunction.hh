@@ -188,9 +188,8 @@ namespace Dune
     ThisType &operator= ( const ThisType &other );
     
   public:
-    /** \copydoc Dune::DiscreteFunctionDefault::assign
-     */
-    inline void assign( const ThisType &g )
+    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
+    inline void assign( const DiscreteFunctionType &g )
     {
       Imp :: assignFunction( g );
     }
@@ -342,10 +341,10 @@ namespace Dune
     ThisType &operator= ( const ThisType &other );
  
   public:
-    /** \brief @copydoc DiscreteFunctionDefault::assign */
-    void assign(const ThisType& g)
+    /** \copydoc Dune::DiscreteFunctionDefault::assign(const DiscreteFunctionType &g) */
+    inline void assign( const DiscreteFunctionType &g )
     {
-      Imp::assignFunction(g);
+      Imp :: assignFunction( g );
     }
 
     /** \copydoc Dune::DiscreteFunctionDefault::operator+= */

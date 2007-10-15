@@ -96,8 +96,8 @@ and a \ref GridPart "view" of the underlying grid which determines
 that part of the dune grid on which the functions are to be defined. 
 Implementations for 
 \ref DGDSpace "discontinuous" and 
-\ref LagrangeDFSpace "Lagrange" finite element spaces
-are so far available. 
+\ref LagrangeDiscreteFunctionSpace "Lagrange" finite element spaces
+are available so far.
 
 <!---------------------------------------------->
 \section Local Adaptation and Parallelization
@@ -114,7 +114,7 @@ reorganization of the dofs during adaptation and grid
 reorganization. To use this
 feature the Dune::AdaptationManager should be used. 
 
-For handling parallel task the i
+For handling parallel task the
 Dune::CommunicationManager is available which
 performs the required communication for a given set of 
 discrete functions. 

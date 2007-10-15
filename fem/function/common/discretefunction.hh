@@ -132,9 +132,10 @@ namespace Dune
   public:
     //- Public Methods
 
-    /** \brief Constructor storing discrete function space 
-        \param[in] f discrete function space 
-    */
+    /** \brief Constructor storing discrete function space
+     *
+     *  \param[in]  dfSpace  discrete function space 
+     */
     inline explicit DiscreteFunctionInterface ( const DiscreteFunctionSpaceType &dfSpace )
     : FunctionType( dfSpace )
     {
@@ -280,13 +281,22 @@ namespace Dune
       return asImp().dofsValid();
     }
     
-    /** \brief Set all DoFs to a scalar value
-     *  \param[in] s scalar value to assign for
-    */
-    inline DiscreteFunctionType &assign ( const RangeFieldType s )
+    /** \brief set all DoFs to a scalar value
+     * 
+     *  \param[in]  s  scalar value to assign to all DoFs
+     */
+    inline void assign ( const RangeFieldType s )
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
-      return asImp().assign( s );
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
+    }
+
+    /** \brief assign the DoFs of another discrete function to this one
+     * 
+     *  \param[in]  g  discrete function which is copied
+     */
+    inline void assign( const DiscreteFunctionType &g )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( g ) );
     }
 
     /** \brief evaluate Function f 
@@ -308,14 +318,6 @@ namespace Dune
                      const DomainType& arg, RangeType & dest) const 
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().evaluate(diffVariable,arg,dest));
-    }
-
-    /** \brief assign the DoFs of another discrete function to this one
-     *  \param[in]  g  discrete function which is copied
-     */
-    void assign( const DiscreteFunctionType &g )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( g ) );
     }
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
@@ -522,12 +524,14 @@ namespace Dune
     using BaseType :: size;
     
   protected:
-    /** \brief Constructor storing discrete function space
+    /** \brief Constructor storing discrete function space and local function
+     *         factory
      *
      *  The discrete function space is passed to the interface class and the
      *  local function storage is initialized.
      * 
      *  \param[in]  dfSpace  discrete function space 
+     *  \param[in]  lfFactory  local function factory
      */
     inline DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace,
                                      const LocalFunctionFactoryType &lfFactory )
@@ -561,7 +565,7 @@ namespace Dune
     void clear();
 
     /** \copydoc Dune::DiscreteFunctionInterface::assign(const RangeFieldType s) */
-    inline DiscreteFunctionType &assign ( const RangeFieldType s )
+    inline void assign ( const RangeFieldType s )
     {
       const DofIteratorType end = this->dend();
       for( DofIteratorType it = this->dbegin(); it != end; ++it )
@@ -569,11 +573,10 @@ namespace Dune
       return asImp();
     }
     
-    /** \copydoc Dune::DiscreteFunctionInterface::assign */
+    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
     void assign( const DiscreteFunctionType &g );
 
-    /** \copydoc Dune::DiscreteFunctionInterface::addScaled
-     */
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled */
     void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
 
     /** \brief @copydoc DiscreteFunctionInterface::scalarProductDofs */

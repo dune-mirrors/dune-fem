@@ -23,8 +23,8 @@
 #include "../common/dofiterator.hh"
 #include "../common/localfunctionwrapper.hh"
 
-namespace Dune{
-
+namespace Dune
+{
 
 // forward declarations 
 template <class DiscreteFunctionSpaceType> class BlockVectorDiscreteFunction;
@@ -319,17 +319,17 @@ public:
   /** \copydoc Dune::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;
 
-  /** \brief @copydoc DiscreteFunctionDefault::write_xdr */
+  /** \copydoc Dune::DiscreteFunctionDefault::write_xdr */
   virtual bool write_xdr( const std::string filename ) const;
 
-  /** \brief @copydoc DiscreteFunctionDefault::read-xdr  */
+  /** \copydoc Dune::DiscreteFunctionDefault::read_xdr */
   virtual bool read_xdr( const std::string filename );
 
-  /** \brief @copydoc DiscreteFunctionDefault::write_ascii  */
-  virtual bool write_ascii(const std::string filename) const;
+  /** \copydoc Dune::DiscreteFunctionDefault::write_ascii */
+  virtual bool write_ascii( const std::string filename ) const;
 
-  /** \brief @copydoc DiscreteFunctionDefault::read_ascii */
-  virtual bool read_ascii(const std::string filename);
+  /** \copydoc Dune::DiscreteFunctionDefault::read_ascii */
+  virtual bool read_ascii( const std::string filename );
 
   /** \brief @copydoc DiscreteFunctionDefault::write_pgm  */
   virtual bool write_pgm(const std::string filename) const;

@@ -298,11 +298,9 @@ namespace Dune
      *   if a local-matrix interface is used, which directly accesses the 
      *   global matrix?
      *
-     *   \param[in] model model providing the (continuous) data
-     *
-     *   \param{in] dfSpace discrete function space
-     *
-     *   \param[in] verbose optional verbosity flag
+     *   \param[in]  model    model providing the (continuous) data
+     *   \param[in]  dfSpace  discrete function space
+     *   \param[in]  verbose  optional verbosity flag
      */
     DefaultElementMatrixIntegrator ( ModelType& model,
                                      const DiscreteFunctionSpaceType &dfSpace,
@@ -366,7 +364,7 @@ namespace Dune
       delete[] gradPhiPtr_;
     }
     
-    inline void addElementMatrix ( EntityType &entity,
+    inline void addElementMatrix ( const EntityType &entity,
                                    ElementMatrixType& matrix,
                                    double coefficient = 1 ) // const
     {
@@ -385,8 +383,7 @@ namespace Dune
       }
     }
 
-    /*!
-     *  addDiffusiveFluxElementMatrix: accumulate diffusive contributions
+    /** \brief accumulate diffusive contributions
      *
      *  The method is used for the diffusive flux of general elliptic problems.
      *  The following matrix is computed, where i,j run over the local dofs
@@ -399,17 +396,13 @@ namespace Dune
      *  the method must be a template method, such that the model requirements
      *  are only mandatory, if the method is instantiated.
      *
-     *  \param[in]  entity the entity over which the intrgration is performed
-     *
-     *  \param[out] matrix reference ot the local element matrix storage to be
-     *              increased
-     *
-     *  \param[in]  coefficient an optional weighting coefficient, which is
-     *              multiplied to the increase before matrix addition
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      matrix       local matrix to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityImp, class ElementMatrixImp >
-    void addDiffusiveFluxElementMatrix( const EntityImp& entity,
-                                        ElementMatrixImp& matrix, 
+    void addDiffusiveFluxElementMatrix( const EntityImp &entity,
+                                        ElementMatrixImp &matrix, 
                                         double coefficient = 1 ) const
     {
       typedef typename EntityType :: Geometry GeometryType;
@@ -478,15 +471,12 @@ namespace Dune
      *  the method must be a template method, such that the model requirements
      *  are only mandatory, if the method is instantiated.
      *
-     *  \param[in]  entity      entity over which the intrgration is performed
-     *
-     *  \param[out] matrix      matrix to be updated
-     *
-     *  \param[in]  coefficient optional weighting coefficient by which the
-     *                          update is multiplied
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      matrix       local matrix to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementMatrixType >
-    void addConvectiveFluxElementMatrix ( EntityType &entity,
+    void addConvectiveFluxElementMatrix ( const EntityType &entity,
                                           ElementMatrixType &matrix,
                                           double coefficient = 1 ) // const
     {
@@ -554,15 +544,12 @@ namespace Dune
      *  the method must be a template method, such that the model requirements
      *  are only mandatory, if the method is instantiated.
      *
-     *  \param entity the entity over which the intrgration is performed
-     *
-     *  \param mat reference ot the local element matrix storage to be increased
-     *
-     *  \param coef an optional weighting coefficient, which is multiplied to the
-     *         increase before matrix addition
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      matrix       local matrix to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementMatrixType >
-    void addMassElementMatrix ( EntityType &entity,
+    void addMassElementMatrix ( const EntityType &entity,
                                 ElementMatrixType &matrix, 
                                 double coefficient = 1 ) // const
     {
@@ -625,15 +612,12 @@ namespace Dune
      *  boundaryType()
      *  \endcode
      *
-     *  \param[in] entity entity over which the intrgration is performed
-     *
-     *  \param     matrix local element matrix storage to be updated
-     *
-     *  \param[in] coef   optional weighting coefficient by which the update
-     *                    is multiplied
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      matrix       local matrix to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementMatrixType >
-    void addGeneralizedNeumannElementMatrix ( EntityType& entity,
+    void addGeneralizedNeumannElementMatrix ( const EntityType &entity,
                                               ElementMatrixType &matrix,
                                               double coefficient = 1 ) //  const
     {
@@ -702,15 +686,12 @@ namespace Dune
      *  the method must be a template method, such that the model requirements
      *  are only mandatory, if the method is instantiated.
      *
-     *  \param entity the entity over which the intrgration is performed
-     *
-     *  \param mat reference ot the local element matrix storage to be increased
-     *
-     *  \param coef an optional weighting coefficient, which is multiplied to the
-     *         increase before matrix addition
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      matrix       local matrix to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementMatrixType >
-    void addRobinElementMatrix( EntityType &entity, 
+    void addRobinElementMatrix( const EntityType &entity, 
                                 ElementMatrixType &matrix,
                                 double coefficient = 1 ) //  const
     {
@@ -945,22 +926,26 @@ namespace Dune
         std::cout << "entered constructor of DefaultElementRhsIntegrator" << std :: endl;
     }
 
-    /** \breif give access to the model
+    /** \brief access the associated model
      *
-     *   the reference to the locally stored model is returned
+     *  \returns a constant reference to the associated model
      */
-    inline const ModelType &model () 
+    inline const ModelType &model () const 
     {
       return model_;
     }
 
+    /** \brief access the associated discrete function space
+     *
+     *  \returns a constant reference to the associated discrete function space
+     */
     inline const DiscreteFunctionSpaceType &discreteFunctionSpace () const
     {
       return discreteFunctionSpace_;
     }
 
     template< class EntityType, class ElementRhsType >
-    inline void addElementRhs ( EntityType &entity, 
+    inline void addElementRhs ( const EntityType &entity, 
                                 ElementRhsType &elRhs, 
                                 double coefficient = 1 ) // const
     {
@@ -997,17 +982,14 @@ namespace Dune
      *   are demanding, if these building blocks are used. So also simple 
      *   models can be realized.
      *
-     *  \param entity the entity over which the intrgration is performed
-     *
-     *  \param elRhs reference ot the local function to be increased
-     *
-     *  \param coef an optional weighting coefficient, which is multiplied to the
-     *         increase before addition
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      elRhs        local function to updated
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementRhsType >
-    void addSourceElementRhs( EntityType &entity, 
-                              ElementRhsType &elRhs,
-                              double coefficient = 1 ) // const
+    void addSourceElementRhs ( const EntityType &entity, 
+                               ElementRhsType &elRhs,
+                               double coefficient = 1 ) // const
     {
       typedef typename EntityType :: Geometry GeometryType;
       typedef typename ElementQuadratureType :: CoordinateType CoordinateType;
@@ -1064,15 +1046,12 @@ namespace Dune
      *   are demanding, if these building blocks are used. So also simple 
      *   models can be realized.
      *
-     *  \param entity the entity over which the intrgration is performed
-     *
-     *  \param elRhs reference ot the local function to be increased
-     *
-     *  \param coef an optional weighting coefficient, which is multiplied to the
-     *         increase before addition
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      elRhs        local function to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementRhsType >
-    void addNeumannElementRhs ( EntityType &entity, 
+    void addNeumannElementRhs ( const EntityType &entity, 
                                 ElementRhsType &elRhs, 
                                 double coefficient = 1 ) // const
     {
@@ -1141,15 +1120,12 @@ namespace Dune
      *   are demanding, if these building blocks are used. So also simple 
      *   models can be realized.
      *
-     *  \param entity the entity over which the intrgration is performed
-     *
-     *  \param elRhs reference ot the local function to be increased
-     *
-     *  \param coef an optional weighting coefficient, which is multiplied to the
-     *         increase before addition
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      elRhs        local function to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementRhsType >
-    void addRobinElementRhs ( EntityType &entity, 
+    void addRobinElementRhs ( const EntityType &entity, 
                               ElementRhsType &elRhs, 
                               double coefficient = 1 ) // const
     {
@@ -1216,17 +1192,14 @@ namespace Dune
      *   are demanding, if these building blocks are used. So also simple 
      *   models can be realized.
      *
-     *  \param entity the entity over which the intrgration is performed
-     *
-     *  \param elRhs reference ot the local function to be increased
-     *
-     *  \param coef an optional weighting coefficient, which is multiplied to the
-     *         increase before addition
+     *  \param[in]  entity       entity over which the intrgration is performed
+     *  \param      elRhs        local function to update
+     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
      */
     template< class EntityType, class ElementRhsType >
-    void addGeneralizedNeumannElementRhs( EntityType &entity,
-                                          ElementRhsType &elRhs,
-                                          double coefficient = 1 ) // const
+    void addGeneralizedNeumannElementRhs ( const EntityType &entity,
+                                           ElementRhsType &elRhs,
+                                           double coefficient = 1 ) // const
     {
       assert( ModelType :: Properties :: hasGeneralizedNeumannValues );
 
