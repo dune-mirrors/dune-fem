@@ -18,6 +18,17 @@
 
 namespace Dune
 {
+
+  struct PoissonModelProperties
+  {
+    enum { hasDirichletValues = true };
+    enum { hasNeumannValues = true };
+    enum { hasRobinValues = true };
+    enum { hasGeneralizedNeumannValues = true };
+    enum { hasConvectiveFlux = false };
+    enum { hasMass = false };
+    enum { hasSource = true };
+  };
   
   /** \class PoissonModel
    *  \brief The PoissonModel class provides a default model for an elliptic
@@ -33,14 +44,19 @@ namespace Dune
    */
   template< class FunctionSpaceImp >
   class PoissonModel
-  : public LinearEllipticModelDefault< FunctionSpaceImp, PoissonModel< FunctionSpaceImp > >
+  : public LinearEllipticModelDefault
+    < FunctionSpaceImp, PoissonModel< FunctionSpaceImp >, PoissonModelProperties >
   {
   public:  
     typedef FunctionSpaceImp FunctionSpaceType;
 
+    typedef PoissonModelProperties Properties;
+
   private:
     typedef PoissonModel< FunctionSpaceType > ThisType;
-    typedef LinearEllipticModelDefault< FunctionSpaceType, ThisType > BaseType;
+    typedef LinearEllipticModelDefault
+      < FunctionSpaceType, ThisType, Properties >
+      BaseType;
 
   public:
     typedef typename BaseType :: BoundaryType BoundaryType;
@@ -53,14 +69,15 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   public:
-    //! return boundary type of a boundary point p used in a quadrature
+    using BaseType :: source;
+
+  public:
     template< class IntersectionIteratorType >
     inline BoundaryType boundaryType( const IntersectionIteratorType &intersection ) const
     {
         return BaseType :: Dirichlet;
     }
 
-    //! determine dirichlet value in a boundary point used in a quadrature
     template< class IntersectionIteratorType, class QuadratureType >
     inline void dirichletValues( const IntersectionIteratorType &intersection,
                                  const QuadratureType &quadrature,
@@ -78,7 +95,6 @@ namespace Dune
         ret[ 0 ] *= sin( M_PI * x[ i ] );
     }
 
-    //! determine neumann value in a boundary point used in a quadrature
     template< class IntersectionIteratorType, class QuadratureType >
     inline void neumannValues( const IntersectionIteratorType &intersection,
                                const QuadratureType &quadrature,
@@ -88,8 +104,6 @@ namespace Dune
       std :: cout << "Neumann boundary values are not implemented." << std :: endl;
       assert( false );
 
-      //const DomainType &x = entity.geometry().global( quadrature.point( p ) ); 
-            
       ret[ 0 ] = 0.0;
     }
 
@@ -108,36 +122,20 @@ namespace Dune
       ret[ 0 ] = 0.0;
     }
 
-    //! determine mass (i.e. value of the function c) in a quadrature point
-    template< class EntityType, class QuadratureType >
-    inline void mass( const EntityType &entity,
-                      const QuadratureType &quadrature,
-                      int p,
-                      RangeType &ret ) const
-    {
-      //const DomainType &x = entity.geometry().global( quadrature.point( p ) ); 
-
-      ret[ 0 ] = 0.0;
-    }
-
-    //! Determine source (i.e. value of the function f) in a quadrature point
-    template< class EntityType, class QuadratureType >
-    inline void source( const EntityType &entity,
-                        const QuadratureType &quadrature,
-                        int p,
-                        RangeType &ret ) const
+    template< class EntityType >
+    inline void source ( const EntityType &entity,
+                         const DomainType &x,
+                         RangeType &ret ) const
     {
       const int dimension = DomainType :: dimension;
       
-      const DomainType &x = entity.geometry().global( quadrature.point( p ) );
+      const DomainType &global = entity.geometry().global( x );
       
       ret[ 0 ] = (dimension * M_PI * M_PI);
       for( int i = 0; i < dimension; ++i )
-        ret[ 0 ] *= sin( M_PI * x[ i ] );
+        ret[ 0 ] *= sin( M_PI * global[ i ] );
     }
 
-    //! no direct access to stiffness and velocity, but whole flux, i.e.
-    //! diffflux = stiffness * grad( phi )
     template< class EntityType, class QuadratureType >
     inline void diffusiveFlux( const EntityType &entity,
                                const QuadratureType &quadrature,
@@ -145,24 +143,9 @@ namespace Dune
                                const JacobianRangeType &gradphi, 
                                JacobianRangeType &ret ) const
     {
-      // - laplace phi = -div (1 * grad phi - 0 * phi)
       ret = gradphi;          
     }
 
-    //! no direct access to stiffness and velocity, but whole flux, i.e.
-    //! convectiveFlux =  - velocity * phi 
-    template <class EntityType, class QuadratureType>  
-    inline void convectiveFlux( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                int p,
-                                const RangeType &phi, 
-                                JacobianRangeType &ret ) const
-    {
-      // - laplace phi = -div (1 * grad phi - 0 * phi)
-      ret = 0.0;
-    }
-
-    //! the coefficient for robin boundary condition
     template< class IntersectionIteratorType, class QuadratureType >
     inline double robinAlpha( const IntersectionIteratorType &intersection,
                               const QuadratureType &quadrature,
@@ -173,6 +156,7 @@ namespace Dune
   };  // end of PoissonModel class
 
 
+  
   /*======================================================================*/
   /*!
    *  \class PoissonExactSolution
@@ -185,7 +169,6 @@ namespace Dune
    *  The function can be used for EOC calculation
    */
   /*======================================================================*/
-
   template< class FunctionSpaceImp >
   class PoissonExactSolution
   : public Function< FunctionSpaceImp, PoissonExactSolution< FunctionSpaceImp > >
@@ -297,6 +280,11 @@ namespace Dune
     typedef typename BaseType :: BoundaryType BoundaryType;
 
   public:
+    using BaseType :: convectiveFlux;
+    using BaseType :: mass;
+    using BaseType :: source;
+
+  public:
     //! constructor with functionspace argument such that the space and the 
     //! grid is available
     Elliptic2dModel()
@@ -360,34 +348,27 @@ namespace Dune
       //ret = (2 + q - s * x[ 1 ]) * (1 + x[ 1 ]) - q;
     }
     
-    //! determine mass (i.e. value of the function c) in a domain point used in a 
-    //! quadrature
-    template< class EntityType, class QuadratureType >
+    template< class EntityType >
     inline void mass ( const EntityType &entity,
-                       const QuadratureType &quadrature,
-                       int p,
+                       const DomainType &x,
                        RangeType &ret ) const
     {
-      const DomainType &x = entity.geometry().global( quadrature.point( p ) ); 
-      ret = x[ 0 ] * x[1] * r;
+      const DomainType &global = entity.geometry().global( x ); 
+      ret = r * global[ 0 ] * global[ 1 ];
     }
 
-    //! determine source (i.e. value of the function f) in a domain point used in 
-    //! a quadrature. 
-    template< class EntityType, class QuadratureType >
+    template< class EntityType >
     inline void source( const EntityType &entity,
-                        const QuadratureType &quadrature,
-                        int p, 
-                        RangeType &ret) const
+                        const DomainType &x,
+                        RangeType &ret ) const
     {
-      const DomainType &x
-        = entity.geometry().global( quadrature.point( p ) );     
-      ret = 2 * q + s * ((x[ 0 ] + x[ 1 ]) * (1 + x[ 1 ]) + x[ 0 ] * x[ 1 ])
-            + r * SQR( x[ 0 ] ) * x[ 1 ] * (1 + x[ 1 ]);
+      const DomainType &global = entity.geometry().global( x );     
+      ret = 2 * q
+            + s * (global[ 0 ] + global[ 1 ]) * (1 + global[ 1 ])
+            + s * global[ 0 ] * global[ 1 ]
+            + r * SQR( global[ 0 ] ) * global[ 1 ] * (1 + global[ 1 ]);
     }
 
-    //! no direct access to stiffness and velocity, but whole flux, i.e.
-    //! diffflux = stiffness * grad(phi) 
     template< class EntityType, class QuadratureType >  
     inline void diffusiveFlux ( const EntityType &entity,
                                 const QuadratureType &quadrature,
@@ -399,18 +380,15 @@ namespace Dune
       ret[ 0 ][ 1 ] = (1 + q) * gradphi[ 0 ][ 1 ] - q * gradphi[ 0 ][ 0 ]; 
     }
 
-    //! no direct access to stiffness and velocity, but whole flux, i.e.
-    //! convectiveFlux =  - velocity * phi 
-    template< class EntityType, class QuadratureType >
+    template< class EntityType >
     inline void convectiveFlux( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                int pt,
+                                const DomainType &x,
                                 const RangeType &phi,
-                                JacobianRangeType &ret) const
+                                JacobianRangeType &ret ) const
     {
-      const DomainType &x = entity.geometry().global( quadrature.point( pt ) ); 
-      ret[ 0 ][ 0 ] = -x[ 1 ] * s * phi[ 0 ];
-      ret[ 0 ][ 1 ] = -x[ 1 ] * s * phi[ 0 ];
+      const DomainType &global = entity.geometry().global( x );
+      ret[ 0 ][ 0 ] = -global[ 1 ] * s * phi[ 0 ];
+      ret[ 0 ][ 1 ] = -global[ 1 ] * s * phi[ 0 ];
     }
 
     //! the coefficient for robin boundary condition
@@ -525,6 +503,11 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
     
   public:
+    using BaseType :: convectiveFlux;
+    using BaseType :: mass;
+    using BaseType :: source;
+
+  public:
     //! constructor with functionspace argument such that the space and the 
     //! grid is available
     inline Elliptic3dModel ()
@@ -586,27 +569,26 @@ namespace Dune
           4.0 - SQR(glob[1])*glob[2];
     }
     
-  //! determine mass (i.e. value of the function c) in a domain point used in a 
-  //! quadrature
-    template <class EntityType, class QuadratureType>  
-    inline void mass( const EntityType& en, const QuadratureType& quad, int p, RangeType& ret) const
-          {
-      const DomainType& glob = en.geometry().global(quad.point(p)); 
-      ret[0] = glob[0]*glob[1];
-          }
+    template< class EntityType > 
+    inline void mass ( const EntityType &entity,
+                       const DomainType &x,
+                       RangeType &ret ) const
+    {
+      const DomainType &global = entity.geometry().global( x ); 
+      ret = global[ 0 ] * global[ 1 ];
+    }
 
-  //! determine source (i.e. value of the function f) in a domain point used in 
-  //! a quadrature. 
-    template <class EntityType, class QuadratureType>  
-    inline void source(const EntityType& en, const QuadratureType& quad, int p, 
-                       RangeType& ret) const
-          {
-            const DomainType& glob = en.geometry().global(quad.point(p));     
-            ret[0] = 2 * glob[2] + 3* glob[1] + 3 * glob[0] + 
-                SQR(glob[1])*glob[2] + 2* glob[0] * glob[1]* glob[2] + 
-                glob[0] * SQR(glob[1]) + SQR(glob[0]*glob[1]) * glob[2] + 
-                SQR(glob[0]) * glob[1];
-          }
+    template< class EntityType >
+    inline void source ( const EntityType &entity,
+                         const DomainType &x,
+                         RangeType &ret ) const
+    {
+      const DomainType &global = entity.geometry().global( x );     
+      ret = 2 * global[2] + 3* global[1] + 3 * global[0] + 
+           SQR(global[1])*global[2] + 2* global[0] * global[1]* global[2] + 
+                global[0] * SQR(global[1]) + SQR(global[0]*global[1]) * global[2] + 
+                SQR(global[0]) * global[1];
+    }
 
   //! no direct access to stiffness and velocity, but whole flux, i.e.
   //! diffflux = stiffness * grad(phi) 
@@ -620,20 +602,16 @@ namespace Dune
             ret[0][2] =   - gradphi[0][0] - gradphi[0][1] + 3* gradphi[0][2];
           }
 
-  //! no direct access to stiffness and velocity, but whole flux, i.e.
-  //! convectiveFlux =  - velocity * phi 
-    template< class EntityType, class QuadratureType >
+    template< class EntityType >
     inline void convectiveFlux( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                const int point, 
+                                const DomainType &x,
                                 const RangeType &phi,
                                 JacobianRangeType &ret ) const
     {
-      const DomainType x
-        = entity.geometry().global( quadrature.point( point ) );
-      ret[ 0 ][ 0 ] = -x[ 1 ] * phi[ 0 ];
-      ret[ 0 ][ 1 ] = -x[ 1 ] * phi[ 0 ];
-      ret[ 0 ][ 2 ] = -x[ 1 ] * phi[ 0 ];
+      const DomainType global = entity.geometry().global( x );
+      ret[ 0 ][ 0 ] = -global[ 1 ] * phi[ 0 ];
+      ret[ 0 ][ 1 ] = -global[ 1 ] * phi[ 0 ];
+      ret[ 0 ][ 2 ] = -global[ 1 ] * phi[ 0 ];
     }
 
     //! the coefficient for robin boundary condition

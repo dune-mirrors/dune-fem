@@ -134,7 +134,7 @@
 #endif
 
 //- local includes
-#include "ellipticmodel.hh"
+#include "model.hh"
 #include "elementintegratortraits.hh"
 
 
