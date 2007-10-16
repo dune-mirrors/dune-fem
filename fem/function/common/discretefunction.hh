@@ -570,7 +570,6 @@ namespace Dune
       const DofIteratorType end = this->dend();
       for( DofIteratorType it = this->dbegin(); it != end; ++it )
         *it = s;
-      return asImp();
     }
     
     /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
