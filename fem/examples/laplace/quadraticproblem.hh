@@ -100,7 +100,7 @@ namespace Dune
 
   template< class FunctionSpaceImp >
   class LaplaceModel
-  : public DiffusionModelInterface< FunctionSpaceImp, LaplaceModel< FunctionSpaceImp > >,
+  : public DiffusionModelDefault< FunctionSpaceImp, LaplaceModel< FunctionSpaceImp > >,
     public BoundaryModelDefault< FunctionSpaceImp, LaplaceModel< FunctionSpaceImp > >
   {
   public:
@@ -108,7 +108,7 @@ namespace Dune
 
   private:
     typedef LaplaceModel< FunctionSpaceType > ThisType;
-    typedef DiffusionModelInterface< FunctionSpaceType, ThisType > DiffusionModelBaseType;
+    typedef DiffusionModelDefault< FunctionSpaceType, ThisType > DiffusionModelBaseType;
     typedef BoundaryModelDefault< FunctionSpaceType, ThisType > BoundaryModelBaseType;
 
   public:
@@ -123,14 +123,16 @@ namespace Dune
     typedef typename BoundaryModelBaseType :: BoundaryType BoundaryType;
 
   public:
-    // since we want to model the Laplace equation, just the identical flux.
-    template< class EntityType, class QuadratureType >
+    using DiffusionModelBaseType :: diffusiveFlux;
+
+  public:
+    template< class EntityType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                unsigned int pt,
+                                const DomainType &x,
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
+      // since we want to model the Laplace equation, just the identical flux.
       flux = gradient;
     }
 

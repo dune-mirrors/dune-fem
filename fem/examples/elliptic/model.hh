@@ -69,6 +69,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   public:
+    using BaseType :: diffusiveFlux;
     using BaseType :: source;
 
   public:
@@ -136,14 +137,13 @@ namespace Dune
         ret[ 0 ] *= sin( M_PI * global[ i ] );
     }
 
-    template< class EntityType, class QuadratureType >
-    inline void diffusiveFlux( const EntityType &entity,
-                               const QuadratureType &quadrature,
-                               int p,
-                               const JacobianRangeType &gradphi, 
-                               JacobianRangeType &ret ) const
+    template< class EntityType >
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const DomainType &x,
+                                const JacobianRangeType &gradient, 
+                                JacobianRangeType &flux ) const
     {
-      ret = gradphi;          
+      flux = gradient;
     }
 
     template< class IntersectionIteratorType, class QuadratureType >
@@ -280,6 +280,7 @@ namespace Dune
     typedef typename BaseType :: BoundaryType BoundaryType;
 
   public:
+    using BaseType :: diffusiveFlux;
     using BaseType :: convectiveFlux;
     using BaseType :: mass;
     using BaseType :: source;
@@ -369,10 +370,9 @@ namespace Dune
             + r * SQR( global[ 0 ] ) * global[ 1 ] * (1 + global[ 1 ]);
     }
 
-    template< class EntityType, class QuadratureType >  
+    template< class EntityType >  
     inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                int pt,
+                                const DomainType &x,
                                 const JacobianRangeType &gradphi,
                                 JacobianRangeType &ret ) const
     {
@@ -503,6 +503,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
     
   public:
+    using BaseType :: diffusiveFlux;
     using BaseType :: convectiveFlux;
     using BaseType :: mass;
     using BaseType :: source;
@@ -590,17 +591,17 @@ namespace Dune
                 SQR(global[0]) * global[1];
     }
 
-  //! no direct access to stiffness and velocity, but whole flux, i.e.
-  //! diffflux = stiffness * grad(phi) 
-    template <class EntityType, class QuadratureType>  
-    inline void diffusiveFlux( const EntityType& en, const QuadratureType& quad, int p, 
-                     const JacobianRangeType& gradphi, 
-                     JacobianRangeType& ret ) const
-          {
-            ret[0][0] =   3* gradphi[0][0] - gradphi[0][1]   - gradphi[0][2];
-            ret[0][1] =   - gradphi[0][0]  +3* gradphi[0][1] - gradphi[0][2];
-            ret[0][2] =   - gradphi[0][0] - gradphi[0][1] + 3* gradphi[0][2];
-          }
+    template< class EntityType >
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const DomainType &x,
+                                const JacobianRangeType &gradient,
+                                JacobianRangeType &flux ) const
+    {
+      const DomainType &grad = gradient[ 0 ];
+      flux[ 0 ][ 0 ] = 3 * grad[ 0 ] - grad[ 1 ]- grad[ 2 ];
+      flux[ 0 ][ 1 ] = -grad[ 0 ] + 3 * grad[ 1 ] - grad[ 2 ];
+      flux[ 0 ] [2 ] = -grad[ 0 ] - grad[ 1 ] + 3 * grad[ 2 ];
+    }
 
     template< class EntityType >
     inline void convectiveFlux( const EntityType &entity,

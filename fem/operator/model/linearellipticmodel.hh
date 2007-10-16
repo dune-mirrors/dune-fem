@@ -80,7 +80,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: DomainType DomainType;
     //! type of points within the range
     typedef typename FunctionSpaceType :: RangeType RangeType;
-    //! type of the Jacobian (evaluated at some point)
+    //! type of the Jacobian (evaluated in some point)
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
     //! field type of the domain
@@ -257,6 +257,9 @@ namespace Dune
     typedef BoundaryModelDefault< FunctionSpaceType, LinearEllipticModelImp, Properties >
       BoundaryModelDefaultType;
 
+  public:
+    using BaseType :: diffusiveFlux;
+
   protected:
     using BaseType :: asImp;
 
@@ -331,6 +334,23 @@ namespace Dune
       return 0;
     }
     
+    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
+     *
+     *  The default implementation calls
+     *  \code
+     *  diffusiveFlux( entity, quadrature.point( quadpoint ), gradient, flux );
+     *  \endcode
+     */
+    template< class EntityType, class QuadratureType >
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const QuadratureType &quadrature,
+                                const int quadPoint,
+                                const JacobianRangeType &gradient,
+                                JacobianRangeType &flux ) const
+    {
+      asImp().diffusiveFlux( entity, quadrature.point( quadPoint ), gradient, flux );
+    }
+
     /** \copydoc Dune::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const DomainType &x,const RangeType &phi,JacobianRangeType &flux) const
      *
      *  The default implementation returns 0.

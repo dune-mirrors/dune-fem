@@ -14,13 +14,13 @@ namespace Dune
    *  be incorporated into a DiffusionOperator, i.e. a linear operator
    *  performing
    *  \f[
-   *  -\nabla \cdot \bigl( D( x ) \nabla u \bigr).
+   *  -\nabla \cdot \bigl( a( x ) \nabla u \bigr).
    *  \f]
-   *  Here the matematical data is exactly the function \f$D\f$, which we call
+   *  Here the matematical data is exactly the function \f$a\f$, which we call
    *  diffusive flux.
    *
-   *  \param FunctionSpaceImp type of the function space we are using
-   *  \param DiffusionModelImp implementation of the interface (Barton-Nackman)
+   *  \param  FunctionSpaceImp   function space to work in
+   *  \param  DiffusionModelImp  actual implementation (Barton-Nackman)
    */
   template< class FunctionSpaceImp, class DiffusionModelImp >
   class DiffusionModelInterface
@@ -33,44 +33,123 @@ namespace Dune
     typedef DiffusionModelInterface< FunctionSpaceType, DiffusionModelImp > ThisType;
 
   public:
+    //! type of the interface
     typedef ThisType DiffusionModelInterfaceType;
 
+    //! type of points within the domain
     typedef typename FunctionSpaceType :: DomainType DomainType;
+    //! type of points within the range
     typedef typename FunctionSpaceType :: RangeType RangeType;
+    //! type of the Jacobian (evaluated in some point)
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
+    //! field type of the domain
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! field type of the range
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   public:
-    /*! \brief calculate the diffusive flux in a quadrature point
+    /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
      *
-     *  \param[in] entity entity on which the flux shall be calculated
-     *  \param[in] quadrature quadrature to be used
-     *  \param[in] pt index of the current point within the quadrature
-     *  \param[in] gradient \f$\nabla u\f$ evaluated in the quadrature point
-     *  \param[out] flux calculated diffusive flux \f$D( x ) \nabla u\f$.
+     *  \param[in]  entity      entity to evaluate the flux on
+     *  \param[in]  x           evaluation point (in local coordinates)
+     *  \param[in]  gradient    \f$\nabla u\f$ in the evaluation point
+     *  \param[out] flux        variable to receive the evaluated flux
      */
-    template< class EntityType, class QuadratureType >
+    template< class EntityType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                unsigned int pt,
+                                const DomainType &x,
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().diffusiveFlux( entity, quadrature, pt, gradient, flux ) );
+        ( asImp().diffusiveFlux( entity, x, gradient, flux ) );
+    }
+
+    /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a quadrature
+     *         point
+     *
+     *  \param[in]  entity      entity to evaluate the flux on
+     *  \param[in]  quadrature  quadrature to use
+     *  \param[in]  quadPoint   number of the point within the quadrature
+     *  \param[in]  gradient    \f$\nabla u\f$ in the evaluation point
+     *  \param[out] flux        variable to receive the evaluated flux
+     */
+    template< class EntityType, class QuadratureType >
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const QuadratureType &quadrature,
+                                const int quadPoint,
+                                const JacobianRangeType &gradient,
+                                JacobianRangeType &flux ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().diffusiveFlux( entity, quadrature, quadPoint, gradient, flux ) );
     }
 
   protected:
-    inline const DiffusionModelImp& asImp () const
+    inline const DiffusionModelImp &asImp () const
     {
-      return static_cast< const DiffusionModelImp& >( *this );
+      return static_cast< const DiffusionModelImp & >( *this );
     }
 
-    inline DiffusionModelImp& asImp ()
+    inline DiffusionModelImp &asImp ()
     {
-      return static_cast< DiffusionModelImp& >( *this );
+      return static_cast< DiffusionModelImp & >( *this );
+    }
+  };
+
+
+  
+  template< class FunctionSpaceImp, class DiffusionModelImp >
+  class DiffusionModelDefault
+  : public DiffusionModelInterface< FunctionSpaceImp, DiffusionModelImp >
+  {
+  public:
+    //! type of the function space we are using
+    typedef FunctionSpaceImp FunctionSpaceType;
+
+  private:
+    typedef DiffusionModelDefault< FunctionSpaceType, DiffusionModelImp > ThisType;
+    typedef DiffusionModelInterface< FunctionSpaceType, DiffusionModelImp > BaseType;
+
+  public:
+    //! type of the interface
+    typedef ThisType DiffusionModelInterfaceType;
+
+    //! type of points within the domain
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+    //! type of points within the range
+    typedef typename FunctionSpaceType :: RangeType RangeType;
+    //! type of the Jacobian (evaluated in some point)
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+    //! field type of the domain
+    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! field type of the range
+    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+
+  public:
+    using BaseType :: diffusiveFlux;
+
+  protected:
+    using BaseType :: asImp;
+
+  public:
+    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
+     *
+     *  The default implementation calls
+     *  \code
+     *  diffusiveFlux( entity, quadrature.point( quadpoint ), gradient, flux );
+     *  \endcode
+     */
+    template< class EntityType, class QuadratureType >
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const QuadratureType &quadrature,
+                                const int quadPoint,
+                                const JacobianRangeType &gradient,
+                                JacobianRangeType &flux ) const
+    {
+      asImp().diffusiveFlux( entity, quadrature.point( quadPoint ), gradient, flux );
     }
   };
 
