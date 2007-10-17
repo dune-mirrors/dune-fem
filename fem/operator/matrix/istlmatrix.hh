@@ -161,11 +161,13 @@ namespace Dune {
                  const StencilCreatorImp& stencil, 
                  bool verbose = false) 
       { 
+        /*
         // only works for non-hybrid grids so far 
         if( gridPart.indexSet().geomTypes(0).size() > 1 )
         {
           DUNE_THROW(NotImplemented,"ISTLMatrix::setup: use of matrix for hybrid grids not implemented yet!");
         }
+        */
 
         // get size estimate   
         int size = rowMapper.size();
@@ -753,15 +755,16 @@ namespace Dune {
     {
       if(paramfile != "")
       {
+        const bool output = (rowSpace_.grid().comm().rank() == 0);
         int preCon = 0;
-        readParameter(paramfile,"Preconditioning",preCon);
+        readParameter(paramfile,"Preconditioning",preCon, output);
         if( preCon >= 0 && preCon <= 6) 
           preconditioning_ = (PreConder_Id) preCon;
         else 
           preConErrorMsg(preCon);
         
-        readParameter(paramfile,"Pre-iteration",numIterations_);
-        readParameter(paramfile,"Pre-relaxation",relaxFactor_);
+        readParameter(paramfile,"Pre-iteration",numIterations_, output);
+        readParameter(paramfile,"Pre-relaxation",relaxFactor_, output);
       }
 
       // only ILU-0 works savely in parallel
