@@ -233,7 +233,6 @@ namespace Dune {
   private:  
     DiscreteModelType& problem_; 
     const DiscreteFunctionSpaceType& spc_;
-    
     const bool verbose_;
     mutable LocalOperatorType op_;
 
@@ -266,10 +265,10 @@ namespace Dune {
       : BaseType(pass.previousPass(),spc)
       , problem_(problem)
       , spc_(spc) 
-      , verbose_(readVerbose(paramFile))
+      , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
       , op_(problem,pass,pass.previousPass(),spc,paramFile)
-      , reduction_(readReduction(paramFile))
-      , eps_(readEps(paramFile))
+      , reduction_(readReduction(paramFile, verbose_ ))
+      , eps_(readEps(paramFile, verbose_ ))
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,reduction_,eps_,maxIter_,verbose_)
@@ -294,10 +293,10 @@ namespace Dune {
       : BaseType(pass.previousPass(),dest.space())
       , problem_(problem)
       , spc_(dest.space()) 
-      , verbose_(readVerbose(paramFile))
+      , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
       , op_(problem,pass,pass.previousPass(),spc_,paramFile)
-      , reduction_(readReduction(paramFile))
-      , eps_(readEps(paramFile))
+      , reduction_(readReduction(paramFile, verbose_ ))
+      , eps_(readEps(paramFile, verbose_ ))
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,reduction_,eps_,maxIter_,verbose_)
@@ -359,30 +358,29 @@ namespace Dune {
       op_.evalGradient(u,grad,applyMass);
     }
   private:
-    bool readVerbose(const std::string& paramFile) const 
+    bool readVerbose(const std::string& paramFile, const bool verboseOutput) const 
     {
       if( paramFile == "" ) return false;
       int val = 0;
-      readParameter(paramFile,"verbose",val);
-      return (val == 1) ? true : false;
+      readParameter(paramFile,"verbose",val, verboseOutput);
+      return ( (val == 1) && verboseOutput) ? true : false;
     }
     
-    double readReduction(const std::string& paramFile) const 
+    double readReduction(const std::string& paramFile, const bool output) const 
     {
       double eps = 1e-6; 
       if( paramFile == "" ) return eps;
-      readParameter(paramFile,"InvSolverReduction",eps);
+      readParameter(paramFile,"InvSolverReduction",eps, output);
       return eps;
     }
     
-    double readEps(const std::string& paramFile) const 
+    double readEps(const std::string& paramFile, const bool output) const 
     {
       double eps = 1e-10; 
       if( paramFile == "" ) return eps;
-      readParameter(paramFile,"InvSolverEps",eps);
+      readParameter(paramFile,"InvSolverEps",eps, output);
       return eps;
     }
-    
   };
 
   //! Concrete implementation of Pass for LDG.
