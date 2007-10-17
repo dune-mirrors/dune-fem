@@ -342,14 +342,15 @@ namespace Dune {
       // if parameter file is not empty read parameter 
       if(paramFile != "")
       {
-        readParameter(paramFile,"beta",beta_);
+        const bool output = (gridPart_.grid().comm().rank() == 0);
+        readParameter(paramFile,"beta",beta_, output);
         int bplus = 1;
-        readParameter(paramFile,"B_{+,-}",bplus);
+        readParameter(paramFile,"B_{+,-}",bplus, output);
         assert( (bplus == 0) || (bplus == 1) ); 
         bilinearPlus_ = (bplus == 0) ? false : true; 
 
         int zlamal = 0;
-        readParameter(paramFile,"Babuska-Zlamal",zlamal);
+        readParameter(paramFile,"Babuska-Zlamal",zlamal, output);
         notBabuskaZlamal_ = (zlamal == 1) ? false : true;
       }
 

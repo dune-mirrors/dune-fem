@@ -202,7 +202,7 @@ namespace Dune {
       entityMarker_(),
       matrixAssembled_(false),
       sequence_(-1),
-      verbose_(readVerbose(paramFile))
+      verbose_(readVerbose(paramFile, (gridPart_.grid().rank() == 0)))
     {
       assert( matrixHandler_.hasMassMatrix() == gradProblem_.hasSource() );
       assert( volumeQuadOrd_ >= 0 );
@@ -1263,12 +1263,12 @@ namespace Dune {
     }
 
     //! read verbose value from parameter file 
-    bool readVerbose(const std::string& paramFile) const 
+    bool readVerbose(const std::string& paramFile, const bool output) const 
     {
       if( paramFile == "" ) return false;
       int val = 0;
-      readParameter(paramFile,"verbose",val);
-      return (val == 1) ? true : false;
+      readParameter(paramFile,"verbose",val, output);
+      return (val == 1 && output ) ? true : false;
     }
     
   private:
