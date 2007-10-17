@@ -48,7 +48,6 @@
 #include <dune/common/stdstreams.cc>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>

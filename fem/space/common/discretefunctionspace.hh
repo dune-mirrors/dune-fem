@@ -126,11 +126,11 @@ namespace Dune
   
     /** \brief return true if the space contains globally continuous functions
      *
-     *  For example, a LagrangeSpace returns \b true and a
+     *  For example, a LagrangeDiscreteFunctionSpace returns \b true and a
      *  DiscontinuousGalerkinSpace return \b false.
      *
      *  \return \b true if the space contians globally continous functions,
-     *          \b false> otherwise
+     *          \b false otherwise
      */
     inline bool continuous () const
     { 
@@ -497,25 +497,38 @@ namespace Dune
             instanciated. So do not use discrete function spaces for the
             first template argument.
   */
-  template <class FunctionSpaceImp, class GridPartImp>
-  class DiscreteFunctionSpaceAdapter : public FunctionSpaceImp
+  template< class FunctionSpaceImp, class GridPartImp >
+  class DiscreteFunctionSpaceAdapter
+  : public FunctionSpaceImp
   {
+  public:
+    // type of the underlying function space
+    typedef FunctionSpaceImp FunctionSpaceType;
+    //! type of the grid partition
+    typedef GridPartImp GridPartType;
+
+  private:
+    typedef DiscreteFunctionSpaceAdapter< FunctionSpaceType, GridPartType >
+      ThisType;
+    typedef FunctionSpaceType BaseType;
+
   public:  
     enum { polynomialOrder = 111 };
-    
-    //- type of function space 
-    typedef FunctionSpaceImp FunctionSpaceType;
-    //- grid part type 
-    typedef GridPartImp GridPartType;
-    //- grid type 
+   
+    //! type of the grid
     typedef typename GridPartType :: GridType GridType;
-    //- type of used entity
-    typedef typename GridType :: template Codim<0> :: Entity EntityType;
-    //- type of iterator 
-    typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
-    //- type of IndexSet 
+    //! type of the index set 
     typedef typename GridPartType :: IndexSetType IndexSetType; 
+    //! type of the grid iterator 
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType
+      IteratorType;
+    //- type of used entity
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
     
+  protected:
+    const GridPartType &gridPart_;
+
+  public:
     //! constructor taking grid Part 
     inline explicit DiscreteFunctionSpaceAdapter ( const GridPartType &gridPart )
     : gridPart_( gridPart ) 
@@ -523,36 +536,60 @@ namespace Dune
     }
 
     //! copy constructor
-    DiscreteFunctionSpaceAdapter(const DiscreteFunctionSpaceAdapter& org) 
-      : gridPart_(org.gridPart_) 
+    inline DiscreteFunctionSpaceAdapter( const ThisType &org )
+    : gridPart_( org.gridPart_ ) 
     {
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::begin */
-    IteratorType begin () const { return gridPart_.template begin<0> (); }
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::end */
-    IteratorType end () const { return gridPart_.template end<0> (); }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin */
+    inline IteratorType begin () const
+    {
+      return gridPart_.template begin< 0 >();
+    }
+    
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end */
+    inline IteratorType end () const
+    {
+      return gridPart_.template end< 0 >();
+    }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::gridPart */
-    const GridPartType& gridPart() const { return gridPart_; }
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::indexSet */
-    const IndexSetType& indexSet() const { return gridPart_.indexSet(); }
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::grid */
-    const GridType& grid () const { return gridPart_.grid(); }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart */
+    inline const GridPartType &gridPart () const
+    {
+      return gridPart_;
+    }
+    
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::indexSet */
+    inline const IndexSetType &indexSet () const
+    {
+      return gridPart_.indexSet();
+    }
+    
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::grid */
+    inline const GridType& grid () const
+    {
+      return gridPart_.grid();
+    }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
-    bool continuous () const { return true; }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    inline bool continuous () const
+    {
+      return true;
+    }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
-    int order () const { return polynomialOrder; }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    inline int order () const
+    {
+      return polynomialOrder;
+    }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::type */
-    DFSpaceIdentifier type () const { return DFAdapter_id; }
-
-  protected:
-    //! grid part to select view of grid 
-    const GridPartType& gridPart_;
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::type */
+    inline DFSpaceIdentifier type () const
+    {
+      return DFAdapter_id;
+    }
   };
+
 ///@}  
 
   /**\ingroup HelperClasses 
