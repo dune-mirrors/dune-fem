@@ -64,7 +64,7 @@ namespace Dune
 
   protected:
     // type of stack entry 
-    typedef typename LocalFunctionStorageType :: ObjectReferenceType
+    typedef typename LocalFunctionStorageType :: PointerType
       WrappedLocalFunctionPtrType;
    
   private:
@@ -239,9 +239,6 @@ namespace Dune
 
   public:
     typedef LocalFunctionWrapper< ThisType > LocalFunctionType;
-
-  protected:
-    using BaseType :: factory;
 
   public:
     inline explicit LocalFunctionStack ( const LocalFunctionFactoryType &factory )

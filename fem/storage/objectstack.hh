@@ -10,18 +10,33 @@ namespace Dune
   template< class ObjectFactoryImp >
   class ObjectStack;
 
+  template< class ObjectFactoryImp >
+  class ObjectStackEntry;
 
+
+  
+  template< class ObjectFactoryImp >
+  struct ObjectStackEntryTraits
+  {
+    typedef ObjectStackEntry< ObjectFactoryImp > ReferenceCounterType;
+
+    typedef typename ObjectFactoryImp :: ObjectType ObjectType;
+  };
+
+  
 
   template< class ObjectFactoryImp >
-  class ObjectStackStorage
-  : public ReferenceCounterDefault< ObjectStackStorage< ObjectFactoryImp > >
+  class ObjectStackEntry
+  : public ReferenceCounterDefault< ObjectStackEntryTraits< ObjectFactoryImp > >
   {
   public:
     typedef ObjectFactoryImp ObjectFactoryType;
 
+    typedef ObjectStackEntryTraits< ObjectFactoryType > Traits;
+
   private:
-    typedef ObjectStackStorage< ObjectFactoryType > ThisType;
-    typedef ReferenceCounterDefault< ThisType > BaseType;
+    typedef ObjectStackEntry< ObjectFactoryType > ThisType;
+    typedef ReferenceCounterDefault< Traits > BaseType;
 
     template< class, class >
     friend class Conversion;
@@ -35,30 +50,29 @@ namespace Dune
     typedef typename ObjectFactoryType :: ObjectType ObjectType;
 
   protected:
-    // pointer to the actual object
-    ObjectType *const object_;
-
     // reference to the stack
     ObjectStackType &stack_;
+
+    // pointer to the actual object
+    ObjectType *const object_;
 
     // next object on the stack
     ThisType *next_;
 
   protected:
-    inline explicit ObjectStackStorage ( ObjectType *const obj,
-                                         ObjectStackType &stack )
+    inline explicit ObjectStackEntry ( ObjectStackType &stack )
     : BaseType( 0 ),
-      object_( obj ),
-      stack_( stack )
+      stack_( stack ),
+      object_( stack_.factory().newObject() )
     {
     }
 
   private:
     // prohibit copying
-    ObjectStackStorage ( const ThisType & );
+    ObjectStackEntry ( const ThisType & );
 
   public:
-    inline ~ObjectStackStorage ()
+    inline ~ObjectStackEntry ()
     {
       delete object_;
     }
@@ -80,7 +94,17 @@ namespace Dune
 
     inline void deleteObject ()
     {
-      stack_.push( *this );
+      stack_.push( this );
+    }
+
+    inline const ObjectType &getObject () const
+    {
+      return *object_;
+    }
+    
+    inline ObjectType &getObject ()
+    {
+      return *object_;
     }
   };
 
@@ -97,19 +121,21 @@ namespace Dune
   private:
     typedef ObjectStack< ObjectFactoryType > ThisType;
 
+    friend class ObjectStackEntry< ObjectFactoryType >;
+
   public:
     //! type of the stored objects
     typedef typename ObjectFactoryType :: ObjectType ObjectType;
 
     //! type of the storage objects
-    typedef ObjectStackStorage< ObjectFactoryType > StorageType;
+    typedef ObjectStackEntry< ObjectFactoryType > StackEntryType;
 
     //! type of object pointers
-    typedef ObjectReference< StorageType > ObjectReferenceType;
+    typedef ObjectPointer< StackEntryType > PointerType;
     
   protected:
     const ObjectFactoryType &factory_;
-    StorageType *top_;
+    StackEntryType *top_;
 
     DebugCounter<> numIssuedObjects_;
 
@@ -133,7 +159,7 @@ namespace Dune
 
       while ( top_ != 0 )
       {
-        StorageType *obj = top_;
+        StackEntryType *obj = top_;
         top_ = top_->next_;
         delete obj;
       }
@@ -145,37 +171,36 @@ namespace Dune
 
   public:
     //! get an object pointer to a storage object
-    inline ObjectReferenceType getObject ()
+    inline PointerType getObject ()
     {
-      return ObjectReferenceType( pop() );
-    }
-
-    //! push storage object to the stack
-    inline void push ( StorageType &obj )
-    {
-      --numIssuedObjects_;
-      obj.next_ = top_;
-      top_ = &obj;
-    }
-
-    //! pop a storage object from the stack
-    inline StorageType &pop ()
-    {
-      ++numIssuedObjects_;
-
-      StorageType *ptr = top_;
-      if( ptr != 0 )
-        top_ = top_->next_;
-      else {
-        ptr = new StorageType( factory().newObject(), *this );
-      }
-      return *ptr;
+      return PointerType( pop() );
     }
 
   protected:
     inline const ObjectFactoryType &factory() const
     {
       return factory_;
+    }
+
+    // push storage object to the stack
+    inline void push ( StackEntryType *obj )
+    {
+      --numIssuedObjects_;
+      obj->next_ = top_;
+      top_ = obj;
+    }
+
+    // pop a storage object from the stack
+    inline StackEntryType *pop ()
+    {
+      ++numIssuedObjects_;
+
+      StackEntryType *ptr = top_;
+      if( ptr != 0 )
+        top_ = top_->next_;
+      else
+        ptr = new StackEntryType( *this );
+      return ptr;
     }
   };
 

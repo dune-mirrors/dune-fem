@@ -24,15 +24,15 @@ namespace Dune
    *        since it does not detect cycles. So be careful when using reference
    *        counters!
    */
-  template< class ReferenceCounterImp >
+  template< class TraitsImp >
   class ReferenceCounterInterface
   {
   public:
-    //! type of the implementation (Barton-Nackman)
-    typedef ReferenceCounterImp ReferenceCounterType;
+    //! type of the traits
+    typedef TraitsImp Traits;
 
   private:
-    typedef ReferenceCounterInterface< ReferenceCounterType > ThisType;
+    typedef ReferenceCounterInterface< Traits > ThisType;
 
     template< class, class >
     friend class Conversion;
@@ -40,6 +40,12 @@ namespace Dune
   public:
     //! type of the reference counter interface
     typedef ThisType ReferenceCounterInterfaceType;
+
+    //! type of the implementation (Barton-Nackman)
+    typedef typename Traits :: ReferenceCounterType ReferenceCounterType;
+
+    //! type of the object, this is a reference counter for
+    typedef typename Traits :: ObjectType ObjectType;
 
   public:
     inline ReferenceCounterInterface ()
@@ -78,6 +84,34 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().deleteObject() );
     }
 
+    /** \brief access the real object (const version)
+     *
+     *  Sometimes the reference counter just wraps the object for which it
+     *  counts references. In such cases, this method returns the wrapped
+     *  object. Otherwise, the object itself may be returned.
+     *
+     *  \returns a constant reference to the real object
+     */
+    inline const ObjectType &getObject () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().getObject() );
+      return asImp().getObject();
+    }
+
+    /** \brief access the real object (non-const version)
+     *
+     *  Sometimes the reference counter just wraps the object for which it
+     *  counts references. In such cases, this method returns the wrapped
+     *  object. Otherwise, the object itself may be returned.
+     *
+     *  \returns a reference to the real object
+     */
+    inline ObjectType &getObject ()
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().getObject() );
+      return asImp().getObject();
+    }
+
     /** \brief remove a reference to this object
      *
      *  This method should be called whenever a previously added reference
@@ -109,7 +143,7 @@ namespace Dune
   template< class ReferenceCounterType >
   struct CheckReferenceCounterInterface
   {
-    typedef ReferenceCounterInterface< ReferenceCounterType >
+    typedef ReferenceCounterInterface< typename ReferenceCounterType :: Traits >
       ReferenceCounterInterfaceType;
     typedef CompileTimeChecker< Conversion< ReferenceCounterType,
                                             ReferenceCounterInterfaceType
@@ -130,20 +164,24 @@ namespace Dune
    *        reference counter reaches zero. To perform any action other than
    *        deleting the object, simply overwrite this method.
    */
-  template< class ReferenceCounterImp >
+  template< class TraitsImp >
   class ReferenceCounterDefault
-  : public ReferenceCounterInterface< ReferenceCounterImp >
+  : public ReferenceCounterInterface< TraitsImp >
   {
   public:
-    //! type of the implementation (Barton-Nackman)
-    typedef ReferenceCounterImp ReferenceCounterType;
+    //! type of the traits
+    typedef TraitsImp Traits;
 
   private:
-    typedef ReferenceCounterDefault< ReferenceCounterType > ThisType;
-    typedef ReferenceCounterInterface< ReferenceCounterType > BaseType;
+    typedef ReferenceCounterDefault< Traits > ThisType;
+    typedef ReferenceCounterInterface< Traits > BaseType;
 
     template< class, class >
     friend class Conversion;
+
+  public:
+    //! type of the implementation (Barton-Nackman)
+    typedef typename Traits :: ReferenceCounterType ReferenceCounterType;
 
   protected:
     using BaseType :: asImp;
@@ -206,20 +244,24 @@ namespace Dune
    *  calls the object's addReference and removeReference methods whenever the
    *  pointer is created, assign or deleted.
    */
-  template< class ObjectImp >
+  template< class ReferenceCounterImp >
   class ObjectPointer
   {
   public:
     //! type of the object, this pointer points to
-    typedef ObjectImp ObjectType;
+    typedef ReferenceCounterImp ReferenceCounterType;
 
   private:
-    typedef ObjectPointer< ObjectType > ThisType;
+    typedef ObjectPointer< ReferenceCounterType > ThisType;
 
-    typedef CheckReferenceCounterInterface< ObjectType > CheckObjectType;
+    typedef CheckReferenceCounterInterface< ReferenceCounterType >
+      CheckReferenceCounterType;
+
+  public:
+    typedef typename ReferenceCounterType :: ObjectType ObjectType;
 
   protected:
-    ObjectType *object_;
+    ReferenceCounterType *object_;
 
   public:
     /** \brief initialize a pointer (with a standard C++ pointer)
@@ -227,7 +269,7 @@ namespace Dune
      *  \param[in]  object  C++ pointer to initialize this pointer with; the
      *                      default value is 0
      */
-    inline explicit ObjectPointer ( ObjectType *const object = 0 )
+    inline explicit ObjectPointer ( ReferenceCounterType *const object = 0 )
     : object_( object )
     {
       if( object_ != 0 )
@@ -282,12 +324,13 @@ namespace Dune
     ObjectType &operator* () const
     {
       assert( object_ != 0 );
-      return *object_;
+      return object_->getObject();
     }
   };
 
 
 
+#if 0
   /** \class ObjectReference
    *  \brief models a reference to a reference countable object
    *
@@ -355,6 +398,7 @@ namespace Dune
       return object_;
     }
   };
+#endif
 
 }
 

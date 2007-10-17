@@ -60,7 +60,7 @@ namespace Dune
       RangeBaseFunctionSetType;
 
   private:
-    typedef typename LocalMatrixStackType :: ObjectReferenceType
+    typedef typename LocalMatrixStackType :: PointerType
       WrappedLocalMatrixPtrType;
 
   private:
