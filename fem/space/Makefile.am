@@ -10,6 +10,6 @@ libspace_la_LIBADD = dgspace/libdgspace.la
 SUBDIRS = test common test dgspace fvspace lagrangespace combinedspace \
 basefunctions reducedbasisspace 
 
-spacedir =  $(includedir)/dune/fem/space
+spacedir = $(includedir)/dune/fem/space
 space_HEADERS = dgspace.hh lagrangespace.hh combinedspace.hh fvspace.hh \
 reducedbasisspace.hh

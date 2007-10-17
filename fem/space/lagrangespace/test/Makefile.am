@@ -5,7 +5,7 @@ check_PROGRAMS = tester generic
 tester_SOURCES = main.cc ../../../misc/test.cc ../../../misc/suite.cc 
 generic_SOURCES = generic.cc
 
-testdir=$(includedir)/fem/space/lagrangespace/test
+testdir=$(includedir)/dune/fem/space/lagrangespace/test
 test_HEADERS = basefunctiontest.hh  mappertest.hh basefunctiontest.cc \
 mappertest.cc
 EXTRA_DIST = cube.dgf  onesimplex.dgf
