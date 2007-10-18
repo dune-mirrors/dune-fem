@@ -702,6 +702,8 @@ namespace Dune
   
 ///@} 
 } // end namespace Dune
-#include "discretefunction.cc"
+
+#include "discretefunction_inline.hh"
+
 #include "discretefunctionadapter.hh"
 #endif

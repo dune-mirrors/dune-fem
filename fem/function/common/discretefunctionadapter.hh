@@ -236,5 +236,5 @@ namespace Dune{
 } // end namespace Dune
 
 //@}
-#include "discretefunction.cc"
+
 #endif

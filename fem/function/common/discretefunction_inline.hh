@@ -9,18 +9,16 @@
 namespace Dune 
 {
  
-//************************************************************
-//  Default Implementations 
-//************************************************************
-template <class DiscreteFunctionTraits>
-inline void DiscreteFunctionDefault<DiscreteFunctionTraits>::clear() 
-{
-  DofIteratorType endit = this->dend();
-  for (DofIteratorType it = this->dbegin(); it != endit; ++it) 
+  // Default Implementations 
+  // -----------------------
+
+  template< class DiscreteFunctionTraits >
+  inline void DiscreteFunctionDefault< DiscreteFunctionTraits > :: clear ()
   {
-    (*it) = 0;
+    const DofIteratorType end = dend();
+    for( DofIteratorType it = dbegin(); it != end; ++it )
+      *it = 0;
   }
-}
 
   template< class Traits >
   inline void DiscreteFunctionDefault< Traits >
@@ -193,6 +191,20 @@ operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::Range
     const ConstDofIteratorType end = dend();
     for( ConstDofIteratorType it = dbegin(); it != end; ++it )
       out << *it;
+  }
+
+
+
+  // Stream operators
+  // ----------------
+
+  template< class DiscreteFunctionTraits >
+  inline std :: ostream &
+    operator<< ( std :: ostream &out,
+                 const DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
+  {
+    df.print( out );
+    return out;
   }
 
 
