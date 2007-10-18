@@ -1,5 +1,7 @@
 # $Id$
 
+# IGNORE_HEADERS
+
 SUBDIRS = dgellipt
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) 

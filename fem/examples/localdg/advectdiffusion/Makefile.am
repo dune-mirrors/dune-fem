@@ -1,3 +1,5 @@
+# IGNORE_HEADERS
+
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) 
 noinst_PROGRAMS = advectdiff dgtest #euler dgtest dgtest1 #datadisp 
 advectdiff_SOURCES = main.cc

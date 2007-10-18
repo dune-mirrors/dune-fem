@@ -40,6 +40,8 @@
 
 #include <config.h>
 
+#include <time.h>
+
 //- system includes
 #include <iostream>
 #include <sstream>
@@ -64,7 +66,11 @@
 
 //- local inlcudes 
 #include "laplace.hh"
+#if (PROBLEM==1)
+#include "albertaproblem.hh"
+#else
 #include "problem.hh"
+#endif
 
 #ifndef POLORDER
   #define POLORDER 1
@@ -118,6 +124,9 @@ typedef RHSFunction< FunctionSpaceType > RHSFunctionType;
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 typedef Tensor< FunctionSpaceType > TensorType;
 
+typedef DiscreteFunctionAdapter< ExactSolutionType, GridPartType >
+  GridExactSolutionType;
+
 //! define the discrete function space our unkown belongs to
 typedef LagrangeDiscreteFunctionSpace
   < FunctionSpaceType, GridPartType, POLORDER, CachingStorage >
@@ -142,12 +151,16 @@ typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 
 
 //! set the dirichlet points to zero
-template< class EntityType, class DiscreteFunctionType >
-void boundaryTreatment( const EntityType &entity, DiscreteFunctionType &rhs )
+template< class EntityType, class GridFunctionType, class DiscreteFunctionType >
+void boundaryTreatment( const EntityType &entity,
+                        const GridFunctionType &exactSolution,
+                        DiscreteFunctionType &rhs )
 {
   typedef typename DiscreteFunctionType :: FunctionSpaceType
     DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+
+  typedef typename GridFunctionType :: LocalFunctionType LocalExactSolutionType;
 
   typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
     LagrangePointSetType;
@@ -165,10 +178,12 @@ void boundaryTreatment( const EntityType &entity, DiscreteFunctionType &rhs )
     
   IntersectionIteratorType it = gridPart.ibegin( entity );
   const IntersectionIteratorType endit = gridPart.iend( entity );
-  for( ; it != endit; ++it ) {
+  for( ; it != endit; ++it )
+  {
     if( !it.boundary() )
       continue;
 
+    LocalExactSolutionType exactLocal = exactSolution.localFunction( entity );
     LocalFunctionType rhsLocal = rhs.localFunction( entity );
     const LagrangePointSetType &lagrangePointSet
       = discreteFunctionSpace.lagrangePointSet( entity );
@@ -179,8 +194,29 @@ void boundaryTreatment( const EntityType &entity, DiscreteFunctionType &rhs )
     const FaceDofIteratorType faceEndIt
       = lagrangePointSet.template endSubEntity< faceCodim >( face );
     for( ; faceIt != faceEndIt; ++faceIt )
-      rhsLocal[ *faceIt ] = 0;
+    {
+      typename LocalExactSolutionType :: RangeType phi;
+      exactLocal.evaluate( lagrangePointSet.point( *faceIt ), phi );
+      rhsLocal[ *faceIt ] = phi[ 0 ];
+    }
   }
+}
+
+
+
+void solve ( LaplaceOperatorType &laplace,
+             const DiscreteFunctionType &rhs,
+             DiscreteFunctionType &solution )
+{
+  time_t starttime = time( NULL );
+  
+  // solve the linear system (with CG)
+  double dummy = 12345.67890;
+  InverseOperatorType cg( laplace, dummy, 1e-8, 20000, VERBOSE );
+  cg( rhs, solution );
+
+  time_t endtime = time( NULL );
+  std :: cout << "Time needed by solver: " << (endtime - starttime) << std :: endl;
 }
 
 
@@ -198,6 +234,10 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
             << " unkowns and polynomial order "
             << DiscreteFunctionSpaceType :: polynomialOrder << "." 
             << std :: endl << std :: endl;
+
+  ExactSolutionType u( discreteFunctionSpace ); 
+
+  GridExactSolutionType ugrid( "exact solution", u, gridPart );
   
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
@@ -214,39 +254,35 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   // we're having some trouble with NaNs lately, so check the right hand side for NaNs
   if( !rhs.dofsValid() )
     std :: cout << "right hand side invalid before boundary treatment." << std :: endl;
-    
+   
   // set Dirichlet Boundary to zero 
   typedef DiscreteFunctionSpaceType :: IteratorType IteratorType; 
   IteratorType endit = discreteFunctionSpace.end();
   for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
-    boundaryTreatment( *it , rhs );
+  {
+    boundaryTreatment( *it, ugrid, rhs );
+    boundaryTreatment( *it, ugrid, solution );
+  }
   // check the right hand side for NaNs again
   if( !rhs.dofsValid() )
     std :: cout << "right hand side invalid after boundary treatment." << std :: endl;
-
-  // solve the linear system (with CG)
-  double dummy = 12345.67890;
-  InverseOperatorType cg( laplace, dummy, 1e-8, 20000, VERBOSE );
-  cg( rhs, solution );
+  
+  solve( laplace, rhs, solution );
 
   // calculation of L2 error
   // polynomial order for this calculation should be higher than the polynomial
   // order of the base functions
-  ExactSolutionType u( discreteFunctionSpace ); 
   L2Error< DiscreteFunctionType > l2error;
   DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
   std :: cout << "L2 Error: " << error << std :: endl << std :: endl;
 
-  DiscreteFunctionAdapter< ExactSolutionType, GridPartType >
-    uAdapted( "exact solution", u, gridPart );
-   
   #if USE_GRAPE
   // if grape was found then display solution
   if( turn > 0 )
   {
     GrapeDataDisplay < GridType > grape( *gridptr );
     grape.addData( solution );
-    grape.addData( uAdapted );
+    grape.addData( ugrid );
     grape.display();
   }
   #endif
@@ -269,17 +305,18 @@ std :: string getMacroGridName( unsigned int dimension )
 int main( int argc, char **argv )
 {
   try {
-    if( argc != 2 )
+    if( argc < 2 )
     {
-      std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
+      std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel> [macrogrid]" << std :: endl;
       return 1;
     }
     
     int level = atoi( argv[ 1 ] );
     double error[ 2 ];
 
-    std :: string macroGridName = getMacroGridName( GridType :: dimension );
-    std :: cout << "loading dgf: " << macroGridName << std :: endl;
+    std :: string macroGridName
+      = (argc > 2 ? argv[ 2 ] : getMacroGridName( GridType :: dimension ));
+    std :: cout << "loading macro grid: " << macroGridName << std :: endl;
     
     const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
     level = (level > step ? level - step : 0);

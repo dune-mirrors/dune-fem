@@ -1,6 +1,9 @@
 # do not change these values, but use 
 # make GRIDTYPE=ALUGRID_SIMPLEX GRIDDIM=3
 # etc. for overriding these settings  
+
+# IGNORE_HEADERS
+
 #Default values:
 GRIDTYPE = YASPGRID
 GRIDDIM = 2

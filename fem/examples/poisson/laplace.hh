@@ -1,6 +1,8 @@
 #ifndef DUNE_LAPLACE_HH
 #define DUNE_LAPLACE_HH
 
+#include <time.h>
+
 //- Dune includes
 #include <dune/common/fmatrix.hh>
 
@@ -157,9 +159,14 @@ namespace Dune
         assert( matrix_ != 0 );
       }
 
+      time_t starttime = time( NULL );
+      
       matrix_->clear();
       assembleOnGrid();
       boundaryCorrectOnGrid();
+
+      time_t endtime = time( NULL );
+      std :: cout << "Time to assemble matrix: " << (endtime - starttime) << std :: endl; 
 
       matrix_assembled_ = true;
     }
@@ -324,9 +331,9 @@ namespace Dune
         const FaceDofIteratorType faceEndIt
           = lagrangePointSet.template endSubEntity< faceCodim >( face );
         for( ; faceIt != faceEndIt; ++faceIt ) {
-          const unsigned int dof
-            = dfSpace.mapToGlobal( entity, *faceIt );
-          matrix_->kroneckerKill( dof, dof );
+          const unsigned int dof = dfSpace.mapToGlobal( entity, *faceIt );
+          //matrix_->kroneckerKill( dof, dof );
+          matrix_->unitRow( dof );
         }
       }
     }

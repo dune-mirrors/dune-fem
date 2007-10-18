@@ -1,3 +1,5 @@
+# IGNORE_HEADERS
+
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) -lblas
 
 noinst_PROGRAMS = laplace sinelaplace

@@ -4,11 +4,19 @@ AUTOMAKE_OPTIONS = foreign 1.5
 SUBDIRS = common 0order 1order 2order matrix model projection 
 
 operatordir =  $(includedir)/dune/fem/operator
-operator_HEADERS = discretefeopimp.hh \
-inverseoperators.hh discreteoperatorimp.hh  feop.hh\
-elementintegrators.hh   feoperator.hh\
-matrixadapter.hh\
-lagrangeinterpolation.hh \
-diffusionoperator.hh integrationoperator.hh cachedlinearoperator.hh\
-dirichletboundaryoperator.hh sourceprojection.hh identityoperator.hh \
-artificialdiffusion.hh 
+operator_HEADERS = artificialdiffusion.hh \
+									 cachedlinearoperator.hh \
+                   discretefeopimp.hh \
+									 discreteoperatorimp.hh \
+									 diffusionoperator.hh \
+                   dirichletboundaryoperator.hh \
+									 elementintegrators.hh \
+									 feop.hh \
+									 feoperator.hh \
+									 identityoperator.hh \
+									 integrationoperator.hh \
+									 inverseoperators.hh \
+									 lagrangeinterpolation.hh \
+									 matrixadapter.hh \
+									 minimizationoperator.hh \
+									 sourceprojection.hh

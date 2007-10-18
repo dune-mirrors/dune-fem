@@ -10,5 +10,10 @@ libsolver_la_SOURCES =
 libsolver_la_LIBADD = ode/libodesolver.la
 
 solverdir =  $(includedir)/dune/fem/solver
-solver_HEADERS =  istlsolver.hh rungekutta.hh odesolver.hh \
-oemsolver.hh inverseoperators.hh pardg.hh 
+solver_HEADERS = inverseoperators.hh \
+                 istlsolver.hh \
+								 odesolver.hh \
+								 oemsolver.hh \
+								 multistep.hh \
+								 pardg.hh \
+                 rungekutta.hh
