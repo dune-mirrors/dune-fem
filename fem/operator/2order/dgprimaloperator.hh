@@ -21,6 +21,8 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/arrays.hh>
 
+#include <dune/fem/misc/gridwidth.hh>
+
 #include "dgmatrixsetup.hh"
 
 // double feature only works in serial runs 
@@ -148,6 +150,10 @@ namespace Dune {
     typedef GradJacobianRangeType FluxRangeType; 
     typedef typename DestinationType :: LocalFunctionType SingleLFType; 
 
+    //! singleton list , key type is const pointer to grid 
+    typedef GridWidthProvider< GridType > GridWidthType;
+    typedef typename GridWidthType :: ProviderType GridWidthProviderType;
+
     ////////////////////////////////////////////////////
     //
     //  Coefficient and RHS caller 
@@ -158,13 +164,14 @@ namespace Dune {
     {
     public:  
       template <class QuadratureType, class CoeffType> 
-      void evaluateCoefficient(CallerType& caller, 
+      double evaluateCoefficient(CallerType& caller, 
                                EntityType& en, 
                                QuadratureType& quad, 
                                const int l,
                                CoeffType& coeff) const 
       {
         caller.evaluateCoefficient(en, quad, l, coeff );
+        return coeff.infinity_norm();
       }         
 
       template <class CoeffType, class PsiType> 
@@ -184,12 +191,13 @@ namespace Dune {
     struct CoefficientCallerFalse
     {
       template <class QuadratureType, class CoeffType> 
-      void evaluateCoefficient(const CallerType& caller, 
+      double evaluateCoefficient(const CallerType& caller, 
                                const EntityType& en, 
                                const QuadratureType& quad, 
                                const int l,
                                CoeffType& coeff) const 
       {
+        return 1.0;
       }         
 
       // just copy in default case 
@@ -319,19 +327,27 @@ namespace Dune {
       spc_(spc),
       gridPart_(spc_.gridPart()),
       localIdSet_(gridPart_.grid().localIdSet()),
+      gridWidth_ ( GridWidthProviderType :: getObject( &spc_.grid())),
       time_(0),
       volumeQuadOrd_(2* spc_.order() ),
       faceQuadOrd_(2*spc_.order() + 1),
       matrixObj_(spc_,spc_, paramFile ),
+      upwind_(M_PI),
       coeffEn_(1.0),
       coeffNb_(1.0),
       matrixAssembled_(false),
+      betaFactor_(0.0),
+      globalBeta_(1.0),
       beta_(0.0),
       bilinearPlus_(true),
       power_( 2*spc_.order() ),
       notBabuskaZlamal_(true),
+      compactLDG_(false),
       betaNotZero_(false)
     {
+      if( dim > 1 ) upwind_[1] = M_LN2;
+      if( dim > 2 ) upwind_[2] = M_E;
+
       if( ! (spc_.order() > 0))
       {
         std::cerr << "ERROR: DG Primal operator only working for spaces with polynomial order > 0! \n";
@@ -343,7 +359,7 @@ namespace Dune {
       if(paramFile != "")
       {
         const bool output = (gridPart_.grid().comm().rank() == 0);
-        readParameter(paramFile,"beta",beta_, output);
+        readParameter(paramFile,"beta",betaFactor_, output);
         int bplus = 1;
         readParameter(paramFile,"B_{+,-}",bplus, output);
         assert( (bplus == 0) || (bplus == 1) ); 
@@ -354,8 +370,9 @@ namespace Dune {
         notBabuskaZlamal_ = (zlamal == 1) ? false : true;
       }
 
-      betaNotZero_ = (std::abs(beta_) > 0.0);
+      betaNotZero_ = (std::abs(betaFactor_) > 0.0);
 
+      /*
       if( !betaNotZero_ && !notBabuskaZlamal_)
       {
         std::cerr << "ERROR: beta == 0.0 and Babuska-Zlamal == 1 !";
@@ -363,8 +380,9 @@ namespace Dune {
         assert(false);
         exit(1);
       }
+      */
 
-      if( !betaNotZero_ )
+      if( ! betaNotZero_ && notBabuskaZlamal_ )
       {
         std::cout << "DGPrimalOperator: using Baumann-Oden method!\n"; 
         if(spc_.order() < 2)
@@ -380,16 +398,29 @@ namespace Dune {
         {
           if(bilinearPlus_ )
           {
-            std::cout << "DGPrimalOperator: using NIPG method, beta = " << beta_ << " !\n"; 
+            std::cout << "DGPrimalOperator: using NIPG method, beta = " << betaFactor_ << " !\n"; 
           }
           else 
           {
-            std::cout << "DGPrimalOperator: using Interior Penalty method, beta = " << beta_ << " !\n"; 
+            std::cout << "DGPrimalOperator: using Interior Penalty method, beta = " << betaFactor_ << " !\n"; 
           }
         }
         else 
         {
-          std::cout << "DGPrimalOperator: using Babuska-Zlamal method, beta = " << beta_ << " !\n"; 
+          if(bilinearPlus_ )
+          {
+            std::cout << "DGPrimalOperator: using Babuska-Zlamal method, beta = " << betaFactor_ << " !\n"; 
+          }
+          else 
+          {
+            notBabuskaZlamal_ = true;
+            compactLDG_ = true; 
+            if( ! betaNotZero_ )
+            {
+              DUNE_THROW(InvalidStateException,"Beta > 0 for Compact LDG not provided!");
+            }
+            std::cout << "DGPrimalOperator: using Compact LDG method, beta = " << betaFactor_ << " !\n"; 
+          }
         }
       }
       
@@ -487,6 +518,9 @@ namespace Dune {
       dest_ = &dest;
       caller_.setArgument(*arg_);
 
+      // calculate beta = O(1/h)
+      globalBeta_ = betaFactor_/gridWidth_.gridWidth();
+
       if (time_) {
         caller_.setTime(time_->time());
       }
@@ -534,7 +568,7 @@ namespace Dune {
     }
 
     template<class QuadratureType, class CoeffCallerType> 
-    void volumetricPart(EntityType& en, 
+    double volumetricPart(EntityType& en, 
                         const GeometryType& geo,
                         QuadratureType& volQuad,
                         const CoeffCallerType& coeffCaller,
@@ -544,7 +578,7 @@ namespace Dune {
     {
       const int quadNop = volQuad.nop();
 
-      //RangeType rhsval(0.0);
+      double betaEst = 0.0;
 
       // set default value to fMat 
       coeffEn_ = 1.0;
@@ -570,7 +604,8 @@ namespace Dune {
         ///////////////////////////////
         
         // call anayltical flux of discrete model 
-        coeffCaller.evaluateCoefficient(caller_, en, volQuad, l, coeffEn_ );
+        betaEst = std::max(coeffCaller.evaluateCoefficient(caller_, en, volQuad, l, coeffEn_ ),
+                           betaEst);
 
         /////////////////////////////////
         // fill element matrix 
@@ -629,7 +664,7 @@ namespace Dune {
         }
       } // end element integral 
   
-
+      return betaEst;
     }
       
     //! apply operator on entity 
@@ -658,6 +693,8 @@ namespace Dune {
       
       // resize caches 
       resizeCaches(numDofs);
+
+      double betaEst = 0.0;
       
       /////////////////////////////////
       // Volumetric integral part
@@ -665,23 +702,25 @@ namespace Dune {
       if(problem_.hasCoefficient() && problem_.hasRHS() )
       {
         CoefficientCaller<DiscreteModelCallerType,true,true> coeffCaller( singleRhs ); 
-        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
       }
       else if( problem_.hasCoefficient() )
       {
         CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
-        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
       }
       else if ( problem_.hasRHS() )
       {
         CoefficientCaller<DiscreteModelCallerType,false,true> coeffCaller( singleRhs ); 
-        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
       }
       else 
       {
         CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
-        volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
       }
+
+      beta_ = betaEst * globalBeta_;
 
       /////////////////////////////////
       // Surface integral part
@@ -992,6 +1031,9 @@ namespace Dune {
         const double faceVol = unitNormal.two_norm();
         unitNormal *= 1.0/faceVol; 
 
+        // C_12 stabilization factor 
+        const RangeFieldType C_12 = (unitNormal * upwind_ < 0) ? -0.5 : 0.5;
+
         // make sure we have the same factors 
         assert( std::abs(faceQuadInner.weight(l) - faceQuadOuter.weight(l)) < 1e-10);
         // integration element factor 
@@ -1128,9 +1170,83 @@ namespace Dune {
                 }
               }
 #endif
-            }
-          }
-        }
+
+              ////////////////////////////////////
+              //  C12 stabilization 
+              ///////////////////////////////////
+
+              if(compactLDG_)
+              {
+                // view from inner entity en 
+                {
+                  numericalFlux_C12(phi_[k], tau_[j] , tauNeigh_[j] , resultLeft, resultRight);
+
+                  RangeFieldType valLeft = (C_12 * resultLeft[0]);
+                  valLeft *= bilinIntel;
+
+                  matrixEn.add( k , j , valLeft );
+
+                  RangeFieldType valRight = (C_12 * resultRight[0]);
+                  valRight *= bilinIntel;
+
+                  matrixNb.add( k , j , valRight );
+                }
+
+                // view from inner entity en 
+                {
+                  numericalFlux2_C12(tau_[k] , phi_[j] , phiNeigh_[j] , resultLeft, resultRight);
+
+                  RangeFieldType valLeft = (resultLeft[0] * C_12);
+                  valLeft *= bilinIntel;
+
+                  matrixEn.add( k , j , valLeft );
+
+                  RangeFieldType valRight = (resultRight[0] * C_12);
+                  valRight *= bilinIntel;
+
+                  matrixNb.add( k , j , valRight );
+                }
+
+#ifdef DG_DOUBLE_FEATURE 
+                // this part should only be calculated if neighboring
+                // entity has partition type interior 
+                if( interior ) 
+                {
+                  // view from inner entity en 
+                  {
+                    numericalFlux_C12(phiNeigh_[k], tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
+
+                    RangeFieldType valLeft = (C_12 * resultLeft[0]);
+                    valLeft *= bilinIntel;
+
+                    nbMatrix.add( k , j , valLeft );
+
+                    RangeFieldType valRight = (C_12 * resultRight[0]);
+                    valRight *= bilinIntel;
+
+                    enMatrix.add( k , j , valRight );
+                  }
+
+                  // view from inner entity en 
+                  {
+                    numericalFlux2_C12(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
+
+                    RangeFieldType valLeft = (resultLeft[0] * C_12);
+                    valLeft *= bilinIntel;
+
+                    nbMatrix.add( k , j , valLeft );
+
+                    RangeFieldType valRight = (resultRight[0] * C_12);
+                    valRight *= bilinIntel;
+
+                    enMatrix.add( k , j , valRight );
+                  }
+                }
+#endif
+              } // compact LDG 
+            } // end for 
+          } // end for 
+        } // end notBabuskaZlamal
 
         if( betaNotZero_ )
         {
@@ -1225,6 +1341,32 @@ namespace Dune {
       resultRight = phiRight; 
       resultRight *= -1.0;
     }
+
+    void numericalFlux_C12(const RangeType & phi,
+                        const RangeFieldType & gradLeft,
+                        const RangeFieldType & gradRight,
+                        RangeType & resultLeft,
+                        RangeType & resultRight) const
+    {
+      resultLeft  =  gradLeft;
+      resultRight = -gradRight;
+
+      resultLeft  *= phi;
+      resultRight *= phi;
+    }
+
+    void numericalFlux2_C12(const RangeFieldType & grad,
+                            const RangeType & phiLeft,
+                            const RangeType & phiRight,
+                            RangeType & resultLeft,
+                            RangeType & resultRight) const
+    {
+      resultLeft  =  phiLeft;
+      resultRight = -phiRight;
+
+      resultLeft  *= grad;
+      resultRight *= grad;
+    }
     
     // needs to be friend for conversion check 
     friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
@@ -1243,6 +1385,7 @@ namespace Dune {
     const DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
     const LocalIdSetType & localIdSet_;
+    const GridWidthType& gridWidth_;
     
     // time provider 
     TimeProvider* time_;
@@ -1251,6 +1394,7 @@ namespace Dune {
     const int faceQuadOrd_;
 
     mutable MatrixObjectType matrixObj_;
+    DomainType upwind_;
 
     // return type of analyticalFlux 
     mutable FluxRangeType coeffEn_;
@@ -1265,12 +1409,15 @@ namespace Dune {
     mutable JacobianRangeType psitmp_;
 
     mutable bool matrixAssembled_;
-    double beta_;
+    double betaFactor_;
+    mutable double globalBeta_;
+    mutable double beta_;
 
     // if true B_+ is used otherwise B_-
     bool bilinearPlus_;
     double power_;
     bool notBabuskaZlamal_;
+    bool compactLDG_;
     bool betaNotZero_;
   };
 #undef DG_DOUBLE_FEATURE  
