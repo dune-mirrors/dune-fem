@@ -355,19 +355,40 @@ namespace Dune {
         abort();
       }
       
+      bool success = true;  
+      const bool output = (gridPart_.grid().comm().rank() == 0);
       // if parameter file is not empty read parameter 
       if(paramFile != "")
       {
-        const bool output = (gridPart_.grid().comm().rank() == 0);
-        readParameter(paramFile,"beta",betaFactor_, output);
+        if( ! readParameter(paramFile,"beta",betaFactor_, output) )
+          success = false;
         int bplus = 1;
-        readParameter(paramFile,"B_{+,-}",bplus, output);
+        if( ! readParameter(paramFile,"B_{+,-}",bplus, output) )
+          success = false;
+
         assert( (bplus == 0) || (bplus == 1) ); 
         bilinearPlus_ = (bplus == 0) ? false : true; 
 
         int zlamal = 0;
-        readParameter(paramFile,"Babuska-Zlamal",zlamal, output);
+        if( ! readParameter(paramFile,"Babuska-Zlamal",zlamal, output) )
+          success = false; 
+
         notBabuskaZlamal_ = (zlamal == 1) ? false : true;
+      }
+
+      if( ! success || verbose )
+      {
+        if( output ) 
+        {
+          std::cerr << "\nERROR: Couldn't read parameter! \n";
+          std::cerr << "DGPrimalOperator -- Available Methods:\n";
+          std::cerr << "Interior Penalty: B_{+,-}: 0 , beta: > 0 (big) , Babuska-Zlamal: 0 \n";
+          std::cerr << "Baumann-Oden    : B_{+,-}: 1 , beta: = 0       , Babuska-Zlamal: 0 \n";
+          std::cerr << "NIPG            : B_{+,-}: 1 , beta: > 0       , Babuska-Zlamal: 0 \n";
+          std::cerr << "Babuska-Zlamal  : B_{+,-}: 1 , beta: > 0       , Babuska-Zlamal: 1 \n";
+          std::cerr << "Compact LDG     : B_{+,-}: 0 , beta: > 0       , Babuska-Zlamal: 1 \n\n";
+        }
+        exit(1);
       }
 
       betaNotZero_ = (std::abs(betaFactor_) > 0.0);
