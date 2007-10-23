@@ -14,6 +14,7 @@
 
 #include <dune/fem/misc/gridwidth.hh>
 
+
 namespace Dune {
 
 /////////////////////////////////////////////////////////////////////////////
@@ -39,20 +40,30 @@ public:
   typedef FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0> DiffusionSpaceType; 
   typedef AdaptiveDiscreteFunction< DiffusionSpaceType > DiffusionFunctionType;
 
+  typedef GridWidthProvider< GridType > GridWidthType;
+  typedef typename GridWidthType :: ProviderType GridWidthProviderType;
+
   const DiscreteFunctionType& df_;
   DiffusionSpaceType diffusionSpace_;
   DiffusionFunctionType diffusion_;
+  const GridWidthType& gridWidth_;
 public:
   //! constructor 
   ArtificialDiffusion(const DiscreteFunctionType& df) 
     : df_(df), diffusionSpace_( const_cast<GridPartType&> (df.space().gridPart()))
     , diffusion_(df_.name() + "-art-diff", diffusionSpace_ )
+    , gridWidth_( GridWidthProviderType :: getObject( &(df_.space().grid())))                                                        
   {}
+
+  ~ArtificialDiffusion() 
+  {
+    GridWidthProviderType :: removeObject( gridWidth_ );
+  }
 
   //! update artificial diffusion 
   void update()
   {
-    calculate(df_, diffusion_ );
+    calculate(df_, diffusion_ , gridWidth_.gridWidth() );
   }
 
   //! return const reference to artificial diffusion 
@@ -89,9 +100,10 @@ public:
   }
    
   static double  calculate(const DiscreteFunctionType &discFunc, 
-                           DiffusionFunctionType &diffusion) 
+                           DiffusionFunctionType &diffusion,
+                           const double gridWidth = -1.0) 
   {
-    return Calc<0,DiscreteFunctionSpaceType::polynomialOrder>::doCalc(discFunc,diffusion);
+    return Calc<0,DiscreteFunctionSpaceType::polynomialOrder>::doCalc(discFunc,diffusion,gridWidth);
   }
   
   // calculation of artificial diffusion 
@@ -100,7 +112,8 @@ public:
   {
     template <class DiscreteFunctionType, class DiffusionFunctionType> 
     static double doCalc(DiscreteFunctionType &discFunc, 
-                         DiffusionFunctionType &diffusion) 
+                         DiffusionFunctionType &diffusion,
+                         const double gridWidth) 
     {
       typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
@@ -158,7 +171,7 @@ public:
       const double kappa = 1e2 * s_0;
         
       // grid width / polOrd 
-      const double h = GridWidth ::calcGridWidth( gridPart ); 
+      const double h = (gridWidth < 0) ? GridWidth ::calcGridWidth( gridPart ) : gridWidth; 
       const double epsilon_0 = h/polOrd;  
 
       const int quadOrd = (2 * space.order());
@@ -261,7 +274,8 @@ public:
   {
     template <class DiscreteFunctionType, class DiffusionFunctionType> 
     static double doCalc(DiscreteFunctionType &discFunc, 
-                         DiffusionFunctionType &diffusion) 
+                         DiffusionFunctionType &diffusion,
+                         const double gridWidth) 
     {
       diffusion.clear();
       std::cerr << "PolOrd = 0, doing nothing! \n";
