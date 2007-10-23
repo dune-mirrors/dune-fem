@@ -376,7 +376,7 @@ namespace Dune {
         notBabuskaZlamal_ = (zlamal == 1) ? false : true;
       }
 
-      if( ! success || verbose )
+      if( ! success )
       {
         if( output ) 
         {
