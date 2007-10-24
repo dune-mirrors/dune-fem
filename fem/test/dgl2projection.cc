@@ -27,11 +27,32 @@ using namespace Dune;
 
 typedef HierarchicGridPart< GridType > GridPartType;
 
-typedef FunctionSpace< double, Double, dimworld, 2 > FunctionSpaceType;
+#ifdef DIMRANGE
+  const int dimRange = DIMRANGE;
+#else
+  const int dimRange = 2;
+#endif
 
+#ifdef USE_COMBINEDSPACE
+#ifdef USE_VARIABLEBASE
+typedef FunctionSpace < double , double, dimw , 1 > SingleFuncSpace;
+typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
+	polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
+typedef CombinedSpace<SingleDiscreteFunctionSpaceType,dimRange,VariableBased> 
+   DiscreteFunctionSpaceType;
+#else
+typedef FunctionSpace < double , double, dimw , 1 > SingleFuncSpace;
+typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
+	polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
+typedef CombinedSpace<SingleDiscreteFunctionSpaceType,dimRange,PointBased> 
+   DiscreteFunctionSpaceType;
+#endif
+#else
+typedef FunctionSpace< double, Double, dimworld, dimRange > FunctionSpaceType;
 typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
-
+#endif
+  
 #ifdef USE_BLOCKVECTORFUNCTION
 typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 #else
@@ -39,8 +60,6 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionTy
 #endif
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
-
-
 
 int main ()
 {

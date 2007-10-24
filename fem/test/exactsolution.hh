@@ -34,9 +34,9 @@ namespace Dune
     void evaluate( const DomainType &x, RangeType &phi ) const
     {
       phi = 1;
-      for( int i = 0; i < DomainType :: dimension; ++i )
-        // phi[ 0 ] += x[ i ] * x[ i ]; 
-        phi[ 0 ] *= sin( M_PI * x[ i ] ); 
+      for(int r = 0; r < RangeType :: dimension; ++r )
+        for( int i = 0; i < DomainType :: dimension; ++i )
+          phi[ r ] *= pow(sin( M_PI * x[ i ] ),double(r+1)); 
     }
 
     void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -47,10 +47,11 @@ namespace Dune
     void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const
     {
       Dphi = 1;
-      for( int i = 0; i < DomainType :: dimension; ++i )
-        for( int j = 0; j < DomainType :: dimension; ++j )
-          // Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
-          Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
+      for (int r = 0; r < RangeType :: dimension; ++r) 
+        for( int i = 0; i < DomainType :: dimension; ++i )
+          for( int j = 0; j < DomainType :: dimension; ++j )
+            Dphi[ r ][ j ] *= double(r+1)*pow(sin( M_PI * x[ i ] ),double(r))*
+              ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
     }
 
     void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
