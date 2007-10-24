@@ -72,7 +72,8 @@ namespace Dune {
       ContainedDimDomain, ContainedDimRange*N > FunctionSpaceType;
 
     // type of singleton factory 
-    typedef VectorialBaseFunctionSet<FunctionSpace<double, double, ContainedDimDomain, N>, CachingStorage> BaseFunctionSetImp;
+    typedef VectorialBaseFunctionSet< FunctionSpaceType, CachingStorage >
+      BaseFunctionSetImp;
     typedef VectorialBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
 
     typedef CombinedMapper<DiscreteFunctionSpaceImp, N, policy> MapperType;

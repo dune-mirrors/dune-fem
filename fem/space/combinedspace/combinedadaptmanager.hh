@@ -65,10 +65,12 @@ public:
   void restrictLocal ( EntityType &father, EntityType &son, 
            bool initialize ) const
   {
+    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::ContainedRangeType phi (0.0);
     assert( !father.isLeaf() );
-    const RangeFieldType weight = 
+    const DomainFieldType weight = 
       (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
 
     LocalFunctionType vati_ = df_.localFunction( father);
@@ -94,7 +96,7 @@ public:
     {
       sohn_.evaluate(quad,qP,ret);
       // calculate factor 
-      const double intel = quad.weight(qP) * weight;
+      const DomainFieldType intel = quad.weight(qP) * weight;
       for(int i=0; i<diff_numDofs; ++i) 
       {
         // evaluate base function 
