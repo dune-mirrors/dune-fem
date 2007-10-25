@@ -23,13 +23,14 @@ namespace Dune
   template< class StreamTraits, class VectorTraits >
   inline OutStreamInterface< StreamTraits > &
     operator<< ( OutStreamInterface< StreamTraits > &out,
-                 const VectorInterface< VectorTrats > &v )
+                 const VectorInterface< VectorTraits > &v )
   {
-    constunsigned int size = v.size();
+    typedef typename VectorInterface< VectorTraits > :: ConstIteratorType
+      ConstIteratorType;
 
-    out << size;
-    for( unsigned int i = 0; i < size; ++i )
-      out << v[ i ];
+    const ConstIteratorType end = v.end();
+    for( ConstIteratorType it = v.begin(); it != end; ++it )
+      out << *it;
     return out;
   }
 
@@ -40,13 +41,12 @@ namespace Dune
     operator>> ( InStreamInterface< StreamTraits > &in,
                  VectorInterface< VectorTraits > &v )
   {
-    unsigned int size;
-    in >> size;
-    if( size != v.size() )
-      DUNE_THROW( IOError, "Trying to read vector of different size." );
+    typedef typename VectorInterface< VectorTraits > :: IteratorType
+      IteratorType;
 
-    for( unsigned int i = 0; i < size; ++i )
-      in >> v[ i ];
+    const IteratorType end = v.end();
+    for( IteratorType it = v.begin(); it != end; ++it )
+      in >> *it;
     return in;
   }
 
