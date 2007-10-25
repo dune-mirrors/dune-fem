@@ -5,6 +5,9 @@
 
 #include <dune/fem/misc/double.hh>
 #include <dune/fem/space/dgspace.hh>
+#ifdef USE_COMBINEDSPACE
+#include <dune/fem/space/combinedspace.hh>
+#endif
 #ifdef USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #else
@@ -33,22 +36,20 @@ typedef HierarchicGridPart< GridType > GridPartType;
   const int dimRange = 2;
 #endif
 
+typedef FunctionSpace< double, Double, dimworld, dimRange > FunctionSpaceType;
 #ifdef USE_COMBINEDSPACE
+//typedef FunctionSpace < double , Double, dimworld, 1 > SingleFunctionSpace;
+typedef DiscontinuousGalerkinSpace
+  < FunctionSpaceType :: ScalarFunctionSpaceType, GridPartType, polOrder >
+  SingleDiscreteFunctionSpaceType;
 #ifdef USE_VARIABLEBASE
-typedef FunctionSpace < double , double, dimw , 1 > SingleFuncSpace;
-typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
-	polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-typedef CombinedSpace<SingleDiscreteFunctionSpaceType,dimRange,VariableBased> 
+typedef CombinedSpace< SingleDiscreteFunctionSpaceType, dimRange, VariableBased >
    DiscreteFunctionSpaceType;
 #else
-typedef FunctionSpace < double , double, dimw , 1 > SingleFuncSpace;
-typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
-	polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-typedef CombinedSpace<SingleDiscreteFunctionSpaceType,dimRange,PointBased> 
+typedef CombinedSpace< SingleDiscreteFunctionSpaceType, dimRange, PointBased >
    DiscreteFunctionSpaceType;
 #endif
 #else
-typedef FunctionSpace< double, Double, dimworld, dimRange > FunctionSpaceType;
 typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
 #endif
