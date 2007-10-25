@@ -11,7 +11,7 @@
 
 //- dune includes
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -269,32 +269,40 @@ int main ( int argc, char **argv )
     return 1;
   }
 
-  unsigned int maxlevel = atoi( argv[ 1 ] );
-  double* error = new double[ maxlevel ];
-
-  const unsigned int step = DGFGridInfo< GridType > :: refineStepsForHalf();
-
-  std :: ostringstream macroGridNameStream;
-  macroGridNameStream << GridType :: dimension << "dgrid.dgf";
-  std :: string macroGridName = macroGridNameStream.str();
-
-  GridPtr< GridType > gridptr( macroGridName );
-  GridType &grid = *gridptr;
-  GridPartType gridPart( grid );
-  
-  for( unsigned int i = 0; i <= maxlevel; ++i )
+  try
   {
-    grid.globalRefine( step );
+    unsigned int maxlevel = atoi( argv[ 1 ] );
+    double* error = new double[ maxlevel ];
 
-    error[ i ] = algorithm( gridPart);
-    if(i > 0)
+    const unsigned int step = DGFGridInfo< GridType > :: refineStepsForHalf();
+
+    std :: ostringstream macroGridNameStream;
+    macroGridNameStream << GridType :: dimension << "dgrid.dgf";
+    std :: string macroGridName = macroGridNameStream.str();
+
+    GridPtr< GridType > gridptr( macroGridName );
+    GridType &grid = *gridptr;
+    GridPartType gridPart( grid );
+    
+    for( unsigned int i = 0; i <= maxlevel; ++i )
     {
-      double eoc = log( error[ i-1 ] / error[ i ] ) / M_LN2;
-      std :: cout << "EOC = " << eoc << std :: endl;
-    }
-  }
+      grid.globalRefine( step );
 
-  delete[] error;
-  return 0;
+      error[ i ] = algorithm( gridPart);
+      if(i > 0)
+      {
+        double eoc = log( error[ i-1 ] / error[ i ] ) / M_LN2;
+        std :: cout << "EOC = " << eoc << std :: endl;
+      }
+    }
+
+    delete[] error;
+    return 0;
+  }
+  catch( Exception e )
+  {
+    std :: cerr << e.what() << std :: endl;
+    return 1;
+  }
 }
 
