@@ -20,6 +20,38 @@ namespace Dune
 
 
 
+  template< class StreamTraits, class VectorTraits >
+  inline OutStreamInterface< StreamTraits > &
+    operator<< ( OutStreamInterface< StreamTraits > &out,
+                 const VectorInterface< VectorTrats > &v )
+  {
+    constunsigned int size = v.size();
+
+    out << size;
+    for( unsigned int i = 0; i < size; ++i )
+      out << v[ i ];
+    return out;
+  }
+
+
+
+  template< class StreamTraits, class VectorTraits >
+  inline InStreamInterface< StreamTraits > &
+    operator>> ( InStreamInterface< StreamTraits > &in,
+                 VectorInterface< VectorTraits > &v )
+  {
+    unsigned int size;
+    in >> size;
+    if( size != v.size() )
+      DUNE_THROW( IOError, "Trying to read vector of different size." );
+
+    for( unsigned int i = 0; i < size; ++i )
+      in >> v[ i ];
+    return in;
+  }
+
+
+
   //! Print any Vector into a stream
   template< class Traits >
   inline std :: ostream &operator<< ( std :: ostream &out,
