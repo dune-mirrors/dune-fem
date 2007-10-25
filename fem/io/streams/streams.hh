@@ -7,9 +7,13 @@
 
 namespace Dune
 {
-
+/** @addtogroup InOutStreams
+    @{
+ **/
   /** \class OutStreamInterface
    *  \brief abstract interface for an output stream
+   
+   \interfaceclass
    */
   template< class TraitsImp >
   class OutStreamInterface
@@ -116,10 +120,11 @@ namespace Dune
     }
   };
 
-
   
   /** \class InStreamInterface
    *  \brief abstract interface for an input stream
+
+   \interfaceclass
    */
   template< class TraitsImp >
   class InStreamInterface
@@ -215,7 +220,8 @@ namespace Dune
       return static_cast< InStreamType & >( *this );
     }
   };
- 
+/** @}
+ **/
 }
 
 #include "streams_inline.hh"
