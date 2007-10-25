@@ -11,7 +11,8 @@ quadrature_HEADERS = cachepointlist.hh \
 										 gausspoints_implementation.hh \
 										 idprovider.hh \
                      quadrature.hh \
-                     quadrature.cc \
+										 quadratureimp.hh \
+                     quadratureimp_inline.hh \
 										 prismpoints.hh \
 										 pyramidpoints.hh \
 										 quadprovider.hh \

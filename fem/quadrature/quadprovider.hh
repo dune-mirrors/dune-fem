@@ -2,15 +2,11 @@
 #define DUNE_QUADPROVIDER_HH
 
 #include <dune/fem/storage/array.hh>
-#include <dune/fem/quadrature/quadrature.hh>
+#include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 
-namespace Dune {
-
-  template <class ct, int dim>
-  class QuadratureImp;
- 
-
+namespace Dune
+{
 
   /*! \class QuadCreator
    *  \ingroup Quadrature
