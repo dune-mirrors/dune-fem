@@ -51,7 +51,7 @@ uninstall-local:
 
 # what files does the doxygen-generated stuff depend on (find-syntax)
 DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
-ADDITIONALDOCS = -name Doxyfile -o -name docrules -o -name mainpage -o -name modules -o -name svnpage
+ADDITIONALDOCS = -name Doxyfile -o -name docrules -o -name mainpage -o -name modules -o -name svnpage 
 
 # as all doxygen files fill be installed in the html subdirectory
 # the BASEDIR has to be adjusted
@@ -62,7 +62,7 @@ ADDITIONALDOCS = -name Doxyfile -o -name docrules -o -name mainpage -o -name mod
 doxygen-tag: FORCE $(DOXYGENHEADERBUILD)
 	set -e; \
 	if test -e Doxyfile; then \
-	  if test ! -e doxygen-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-tag -print`" != x || test x"`find . \( $(ADDITIONALDOCS) \) -a -newer doxygen-tag -print`" != x ; then \
+	  if test ! -e doxygen-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-tag -print`" != x || test x"`find $(BASEDIR) \( $(ADDITIONALDOCS) \) -a -newer doxygen-tag -print`" != x ; then \
 	    echo Running doxygen. This may take a while... ; \
 	    ( cat Doxyfile; $(DOYXFILE_OVERWRITE) ) > Doxyfile.tmp; \
 	    $(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \

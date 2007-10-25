@@ -168,7 +168,8 @@
       @ingroup IOGroup */
   /** @defgroup Visualization Visualization
       @ingroup IOGroup */
-
+  /** @defgroup InOutStreams Input and output streams
+      @ingroup IOGroup */
 
 /** 
    @defgroup HelperClasses Utility classes
