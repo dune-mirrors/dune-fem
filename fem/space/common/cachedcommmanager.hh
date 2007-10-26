@@ -203,6 +203,41 @@ namespace Dune {
       }
     };
 
+    //! object stream with unsave writing and reading 
+    class UnsaveObjectStream : public ALU3DSPACE ObjectStream 
+    {
+      typedef ALU3DSPACE ObjectStream BaseType;
+    public:
+      // create empty object stream 
+      inline UnsaveObjectStream () : BaseType() {}
+      // copy constructor taking object stream 
+      inline UnsaveObjectStream (const ObjectStream & os) : BaseType(os) {}
+      // copy constructor 
+      inline UnsaveObjectStream (const UnsaveObjectStream & os) : BaseType(os) {}
+
+      // write value to stream without testing size 
+      template <class T> 
+      inline void writeUnsave (const T & a)
+      {
+        T & val = *((T *) this->getBuff( this->_wb) );
+        val = a;
+        this->_wb += sizeof(T) ;
+        assert( this->_wb <= this->_len );
+        return ;
+      } 
+      
+      // read value from stream without checking 
+      template <class T>
+      inline void readUnsave (T & a)
+      {
+        const T & val = *((const T *) this->getBuff(this->_wb) );
+        a = val;
+        this->_rb += sizeof(T);
+        assert( this->_rb <= this->_wb ); 
+        return ;
+      }
+    };
+
     //! type of discrete function space 
     typedef SpaceImp SpaceType; 
     //! type of grid part 
@@ -229,7 +264,7 @@ namespace Dune {
     std::vector < int > linkRank_;
 
     // ALUGrid send/recv buffers 
-    typedef ALU3DSPACE ObjectStream ObjectStreamType; 
+    typedef ALU3DSPACE ObjectStream   ObjectStreamType; 
     
     // type of communicator 
     typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
@@ -414,10 +449,11 @@ namespace Dune {
     // write data of DataImp& vector to object stream 
     template <class DataImp, class DofType> 
     void writeBuffer(const int link, 
-                     ObjectStreamType & os, 
+                     ObjectStreamType & str, 
                      const DataImp& data,
                      const DofType* ) const 
     {
+      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
 
@@ -428,23 +464,24 @@ namespace Dune {
       for(int i=0; i<size; ++i)
       {
         val = data[ indexMap[i] ];
-        os.write( val );
+        os.writeUnsave( val );
       }
     }
 
     // read data from object stream to DataImp& data vector 
     template <class DataImp, class DofType, class OperationImp> 
     void readBuffer(const int link, 
-                    ObjectStreamType & os, 
+                    ObjectStreamType & str, 
                     DataImp& data, const DofType*,
                     const OperationImp *) const 
     {
+      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
       DofType val;
       const int size = indexMap.size();
       for(int i=0; i<size; ++i)
       {
-        os.read( val );
+        os.readUnsave( val );
         // apply operation 
         OperationImp::apply(val , data[ indexMap[i] ] );
       }
@@ -453,10 +490,11 @@ namespace Dune {
     // write data of double* vector to object stream 
     template <class T>
     void writeBuffer(const int link, 
-                     ObjectStreamType & os, 
+                     ObjectStreamType & str, 
                      const T* data,
                      const T* ) const 
     {
+      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
 
@@ -467,23 +505,24 @@ namespace Dune {
       for(int i=0; i<size; ++i)
       {
         val = data[ indexMap[i] ];
-        os.write( val );
+        os.writeUnsave( val );
       }
     }
 
     // read data from object stream to double* data vector 
     template <class OperationImp, class T> 
     void readBuffer(const int link, 
-                    ObjectStreamType & os, 
+                    ObjectStreamType & str, 
                     T* data, const T*,
                     const OperationImp *) const 
     {
+      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
       T val;
       const int size = indexMap.size();
       for(int i=0; i<size; ++i)
       {
-        os.read( val );
+        os.readUnsave( val );
         // apply operation 
         OperationImp::apply(val , data[ indexMap[i] ] );
       }
