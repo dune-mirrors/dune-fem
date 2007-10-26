@@ -539,8 +539,12 @@ namespace Dune {
       dest_ = &dest;
       caller_.setArgument(*arg_);
 
-      // calculate beta = O(1/h)
-      globalBeta_ = betaFactor_/gridWidth_.gridWidth();
+      // only calculate in case of beta not zero 
+      if( betaNotZero_ )
+      {
+        // calculate beta = O(1/h)
+        globalBeta_ = betaFactor_/gridWidth_.gridWidth();
+      }
 
       if (time_) {
         caller_.setTime(time_->time());
