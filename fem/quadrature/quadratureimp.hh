@@ -102,7 +102,6 @@ namespace Dune
   private:
     // vector holding the coordinates for each point
     DynamicArray< CoordinateType > points_;
-    //std :: vector< CoordinateType > points_;
 
     // identifier of the integration point list
     const size_t id_;
