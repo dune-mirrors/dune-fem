@@ -163,7 +163,7 @@ namespace Dune
       assert( entity_ != NULL );
       
       ret = 0;
-      const unsigned int numDofs = dofs_.size();
+      const int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
         RangeType phi;
@@ -181,7 +181,7 @@ namespace Dune
       assert( entity_ != NULL );
       
       ret = 0;
-      const unsigned int numDofs = dofs_.size();
+      const int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
         RangeType phi;
@@ -223,7 +223,7 @@ namespace Dune
       const GeometryJacobianType &inv = geometry.jacobianInverseTransposed( x );
       
       ret = 0;
-      const unsigned int numDofs = dofs_.size();
+      const int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
         JacobianRangeType tmp;
@@ -253,7 +253,7 @@ namespace Dune
         = geometry.jacobianInverseTransposed( quadrature.point( quadPoint ) );
       
       ret = 0;
-      const unsigned int numDofs = dofs_.size();
+      const int numDofs = dofs_.size();
       for( int i = 0; i < numDofs; ++i )
       {
         JacobianRangeType tmp;
