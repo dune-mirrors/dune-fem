@@ -40,22 +40,26 @@ namespace Dune {
     class CommunicationIndexMap
     {
       //MutableArray<int> index_;  
-      std::vector<int> index_;
+      MutableArray<int> index_;
       CommunicationIndexMap(const CommunicationIndexMap&);
     public:
       //! constructor creating empty map
-      CommunicationIndexMap() : index_(0) {}
+      CommunicationIndexMap() : index_(0) 
+      {
+        index_.setMemoryFactor(1.1);
+      }
 
       //! reserve memory 
       void reserve( int size ) 
       {
-        index_.reserve( size );
+        // resize array, memory factor will be used 
+        index_.resize( size );
       }
 
       //! clear index map 
       void clear() 
       {
-        index_.clear();
+        // resize 0 will free memory 
         index_.resize( 0 );
       }
 
@@ -63,14 +67,16 @@ namespace Dune {
       void insert( const std::vector<int> & idx )
       {
         const int size = idx.size();
-        const int newSize = index_.size() + idx.size();
-        reserve( newSize );
-        for(int i=0; i<size; ++i) 
+        int count = index_.size();
+        // reserve memory 
+        reserve( count + size );
+        assert( index_.size() == (count+size));
+        // copy indices to index vector 
+        for(int i=0; i<size; ++i, ++count) 
         { 
           assert( idx[i] >= 0 );
-          index_.push_back( idx[i] ); 
+          index_[count] = idx[i]; 
         }
-        assert( (int) index_. size () == newSize );
       }
 
       //! return index map for entry i
@@ -230,7 +236,7 @@ namespace Dune {
       template <class T>
       inline void readUnsave (T & a)
       {
-        const T & val = *((const T *) this->getBuff(this->_wb) );
+        const T & val = *((const T *) this->getBuff(this->_rb) );
         a = val;
         this->_rb += sizeof(T);
         assert( this->_rb <= this->_wb ); 
@@ -453,14 +459,15 @@ namespace Dune {
                      const DataImp& data,
                      const DofType* ) const 
     {
-      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
 
       // reserve buffer memory at once 
-      os.reserve( size * sizeof(DofType) );
+      str.reserve( str.size() + (size * sizeof(DofType)) );
 
-      DofType val = 0.0;
+      // dirty hack to have faster access to stream 
+      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
+      DofType val = 0;
       for(int i=0; i<size; ++i)
       {
         val = data[ indexMap[i] ];
@@ -494,14 +501,15 @@ namespace Dune {
                      const T* data,
                      const T* ) const 
     {
-      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
 
       // reserve buffer memory at once 
-      os.reserve( size * sizeof(T) );
+      str.reserve( str.size() + (size * sizeof(T)) );
 
-      T val = 0.0;
+      // dirty hack to have faster access to stream 
+      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
+      T val = 0;
       for(int i=0; i<size; ++i)
       {
         val = data[ indexMap[i] ];
@@ -516,8 +524,11 @@ namespace Dune {
                     T* data, const T*,
                     const OperationImp *) const 
     {
-      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
+
+      // dirty hack to have faster access to stream 
+      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
+
       T val;
       const int size = indexMap.size();
       for(int i=0; i<size; ++i)
