@@ -897,9 +897,11 @@ private:
     sequence_( 0 ),
     indexRPop_( *this, insertIndices_ , removeIndices_ ),
     memoryFactor_( 1.1 )
-  {
+  { 
+    const bool output = (grid_.comm().rank() == 0);
+
     std :: string parameterFileName( "dofmanager.param" );
-    readParameter( parameterFileName, "MemoryFactor", memoryFactor_, true, false );
+    readParameter( parameterFileName, "MemoryFactor", memoryFactor_, output, false );
 
     if( memoryFactor_ < 1.0 ) 
     {
@@ -908,8 +910,11 @@ private:
       memoryFactor_ = 1.0;
     }
 
-    std :: cout << "Created DofManager: memoryFactor = " << memoryFactor_ << "."
-                << std :: endl;
+    if( output )
+    {
+      std :: cout << "Created DofManager: memoryFactor = " << memoryFactor_ << "."
+                  << std :: endl;
+    }
   }
 
   // copy of dofmanagers is forbidden 
