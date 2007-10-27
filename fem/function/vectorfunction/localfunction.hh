@@ -91,6 +91,10 @@ namespace Dune
     DynamicArray< DofType* > values_;
 
   public:
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+
+  public:
     //! constructor
     inline VectorLocalFunction ( DiscreteFunctionType &df )
     : discreteFunction_( df ),

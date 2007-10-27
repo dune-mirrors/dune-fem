@@ -422,6 +422,11 @@ public:
 
 private:
   typedef BlockVectorLocalFunction< Traits > ThisType;
+  typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
+
+public:
+  using BaseType :: evaluate;
+  using BaseType :: jacobian;
   
 public:
   typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;

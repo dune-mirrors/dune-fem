@@ -88,6 +88,10 @@ namespace Dune
     typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
 
   public:
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+
+  public:
     //- Public methods
     //- Constructors and destructors
     
@@ -234,8 +238,13 @@ namespace Dune
     //- Public typedefs and enums
     typedef CombinedSpace<
       ContainedFunctionSpaceImp, N, p> DiscreteFunctionSpaceType;
-    typedef AdaptiveLocalFunction<
-      DiscreteFunctionSpaceType > ThisType;
+
+  private:
+    typedef AdaptiveLocalFunction< DiscreteFunctionSpaceType > ThisType;
+    typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType >
+      BaseType;
+
+  public:
     typedef AdaptiveDiscreteFunctionTraits<
       DiscreteFunctionSpaceType > Traits;
     typedef typename DiscreteFunctionSpaceType::Traits SpaceTraits;
@@ -308,6 +317,11 @@ namespace Dune
     typedef typename GridType :: ctype ctype;
     enum { dim = GridType :: dimension };
     typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
+
+  public:
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+
   public:
     //- Public methods
     //- Constructors and destructors
