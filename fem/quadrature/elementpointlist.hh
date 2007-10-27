@@ -89,6 +89,8 @@ namespace Dune
     //! type of the codim-0 entity
     typedef typename GridType :: template Codim< 0 > :: Entity Entity;
     
+    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+    
   protected:
     IntegrationPointListType quad_;
    
@@ -111,17 +113,20 @@ namespace Dune
     : quad_( org.quad_ )
     {
     }
+
+    inline const QuadraturePointWrapperType operator[] ( unsigned int i ) const
+    {
+      return QuadraturePointWrapperType( *this, i );
+    }
    
-    /** \copydoc Dune::IntegrationPointList::nop
-     */
-    int nop () const
+    /** \copydoc Dune::IntegrationPointList::nop */
+    inline int nop () const
     {
       return quad_.nop();
     }
 
-    /** \copydoc Dune::IntegrationPointList::point
-     */
-    const CoordinateType &point ( size_t i ) const
+    /** \copydoc Dune::IntegrationPointList::point */
+    inline const CoordinateType &point ( size_t i ) const
     {
       return quad_.point(i);
     }
@@ -242,7 +247,9 @@ namespace Dune
 
     //! type quadrature for use on non-conforming intersections 
     typedef ThisType NonConformingQuadratureType;
-    
+   
+    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+
   private:
     typedef typename IntersectionIteratorType :: LocalGeometry ReferenceGeometry;
 
@@ -316,6 +323,11 @@ namespace Dune
     {
     }
     
+    inline const QuadraturePointWrapperType operator[] ( unsigned int i ) const
+    {
+      return QuadraturePointWrapperType( *this, i );
+    }
+   
     /** \copydoc Dune::IntegrationPointList::nop
      */
     int nop () const

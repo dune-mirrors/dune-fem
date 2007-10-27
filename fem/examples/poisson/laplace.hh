@@ -253,7 +253,7 @@ namespace Dune
         const double volume = geometry.integrationElement( quad.point( pt ) );
 
         for( unsigned int i = 0; i < numBaseFunctions; ++i ) {
-          baseSet.jacobian( i, quad, pt, mygrad[ i ] ); 
+          baseSet.jacobian( i, quad[ pt ], mygrad[ i ] ); 
       
           // multiply with transpose of jacobian inverse 
           mygrad[ i ][ 0 ] = FMatrixHelp :: mult( inv, mygrad[ i ][ 0 ] );
@@ -415,7 +415,7 @@ namespace Dune
         
             // evaluate the i-th base function in the quadrature point qp
             // the result is stored in psi
-            baseFunctionSet.evaluate( i, quadrature, qP, psi );
+            baseFunctionSet.evaluate( i, quadrature[ qP ], psi );
             localFunction[ i ] += factor * (phi * psi);
           }
         }

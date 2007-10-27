@@ -752,11 +752,13 @@ namespace Dune
     }
 
   public:
+#if 0
     //! obtain a Lagrange point
     inline const PointType& operator[] ( unsigned int index ) const
     {
       return this->point( index );
     }
+#endif
 
     inline const DofInfo& dofInfo( unsigned int index ) const
     {

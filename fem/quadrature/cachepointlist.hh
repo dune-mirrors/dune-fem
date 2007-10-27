@@ -111,6 +111,8 @@ namespace Dune
 
     //! The type of the codim-0 entity.
     typedef typename BaseType::Entity Entity;
+
+    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
     
   public:
     /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
@@ -128,6 +130,11 @@ namespace Dune
     inline CachingPointList( const ThisType& org )
     : BaseType( org )
     {
+    }
+
+    inline const QuadraturePointWrapperType operator[] ( const unsigned int i ) const
+    {
+      return QuadraturePointWrapperType( *this, i );
     }
 
     /** \copydoc Dune::CachingInterface::cachingPoint */
@@ -188,6 +195,8 @@ namespace Dune
     //! type of twist utility 
     typedef TwistUtility< GridType > TwistUtilityType;
 
+    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+    
   protected:
     typedef typename CachingTraits< RealType, dimension > :: MapperType MapperType;
 
@@ -231,6 +240,11 @@ namespace Dune
     : BaseType( org ),
       mapper_( org.mapper_ )
     {
+    }
+
+    inline const QuadraturePointWrapperType operator[] ( const unsigned int i ) const
+    {
+      return QuadraturePointWrapperType( *this, i );
     }
 
     /** \copydoc Dune::CachingInterface::cachingPoint */

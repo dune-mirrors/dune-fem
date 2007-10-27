@@ -17,11 +17,14 @@
 #endif
 #include <dune/fem/io/file/xdrio.hh>
 
-//- local includes 
-#include "../common/discretefunction.hh"
-#include "../common/localfunction.hh"
-#include "../common/dofiterator.hh"
-#include "../common/localfunctionwrapper.hh"
+#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/common/localfunction.hh>
+#include <dune/fem/function/common/dofiterator.hh>
+#include <dune/fem/function/common/localfunctionwrapper.hh>
+
+#ifdef NEW_LOCALFUNCTION
+#include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#endif
 
 namespace Dune
 {
@@ -59,7 +62,13 @@ struct BlockVectorDiscreteFunctionTraits
   typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
 
   typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
-  typedef BlockVectorLocalFunctionFactory< ThisType >  LocalFunctionFactoryType; 
+  
+#ifdef NEW_LOCALFUNCTION
+  typedef StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
+#else
+  typedef BlockVectorLocalFunctionFactory< ThisType > LocalFunctionFactoryType; 
+#endif
+
   typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
   typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 
@@ -278,7 +287,17 @@ public:
   ConstDofIteratorType dbegin () const;
   
   /** \copydoc Dune::DiscreteFunctionInterface::dend() const */ 
-  ConstDofIteratorType dend () const; 
+  ConstDofIteratorType dend () const;
+
+  inline const RangeFieldType &dof ( const unsigned int index ) const
+  {
+    return leakPtr_[ index ];
+  }
+
+  inline RangeFieldType &dof ( const unsigned int index )
+  {
+    return leakPtr_[ index ];
+  }
 
   /** \copydoc Dune::DiscreteFunctionInterface::name */
   inline const std::string &name () const

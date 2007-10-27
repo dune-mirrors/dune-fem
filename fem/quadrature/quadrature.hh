@@ -30,6 +30,81 @@ namespace Dune
    */
 
 
+  template< class QuadratureImp >
+  class QuadraturePointWrapper
+  {
+  public:
+    typedef QuadratureImp QuadratureType;
+
+  private:
+    typedef QuadraturePointWrapper< QuadratureType > ThisType;
+
+  protected:
+    const QuadratureType &quadrature_;
+    const unsigned int quadPoint_;
+
+  public:
+    inline QuadraturePointWrapper ( const QuadratureType &quadrature,
+                                    const unsigned int quadPoint )
+    : quadrature_( quadrature ),
+      quadPoint_( quadPoint )
+    {
+    }
+
+  private:
+    // forbid assignment
+    ThisType &operator= ( const ThisType & );
+
+  public:
+    inline const QuadratureType &quadrature () const
+    {
+      return quadrature_;
+    }
+
+    inline unsigned int point () const
+    {
+      return quadPoint_;
+    }
+  };
+
+
+
+  template< class PointImp >
+  struct QuadraturePointWrapperHelper
+  {
+    typedef PointImp PointType;
+    typedef PointImp DomainType;
+
+    inline static const DomainType &point ( const PointType &x )
+    {
+      return x;
+    }
+  };
+
+
+
+  template< class QuadratureType >
+  struct QuadraturePointWrapperHelper< QuadraturePointWrapper< QuadratureType > >
+  {
+    typedef QuadraturePointWrapper< QuadratureType > PointType;
+    typedef typename QuadratureType :: CoordinateType DomainType;
+
+    inline static const DomainType &point ( const PointType &x )
+    {
+      return x.quadrature().point( x.point() );
+    }
+  };
+
+
+
+  template< class PointType >
+  inline const typename QuadraturePointWrapperHelper< PointType > :: DomainType &
+    coordinate ( const PointType &x )
+  {
+    return QuadraturePointWrapperHelper< PointType > :: point( x );
+  }
+
+
 
   /** \class IntegrationPointList
    *  \ingroup Quadrature
@@ -71,6 +146,8 @@ namespace Dune
     
     //! type of coordinate
     typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
+    
+    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
     //! to be revised, look at caching quad 
     enum { codimension = 0 };
@@ -89,7 +166,8 @@ namespace Dune
      *  \param[in]  geometry  geometry type of the requested quadrature
      *  \param[in]  order     order of the requested quadrature
      */
-    inline IntegrationPointList( const GeometryType &geometry, int order )
+    inline IntegrationPointList ( const GeometryType &geometry,
+                                  int order )
     : ipList_( QuadratureProviderType :: getQuadrature( geometry, order ) )
     {
     }
@@ -103,7 +181,7 @@ namespace Dune
      *
      *  \param[in]  ipList  implementation of the integration point list
      */
-    inline IntegrationPointList(const IntegrationPointListType &ipList )
+    inline IntegrationPointList ( const IntegrationPointListType &ipList )
     : ipList_( ipList )
     {
     }
@@ -112,9 +190,14 @@ namespace Dune
      *  
      *  \param[in]  org  integration point list to be copied
      */ 
-    inline IntegrationPointList( const IntegrationPointList &org )
+    inline IntegrationPointList ( const IntegrationPointList &org )
     : ipList_( org.ipList_ )
     {
+    }
+
+    const QuadraturePointWrapperType operator[] ( unsigned int i ) const
+    {
+      return QuadraturePointWrapperType( *this, i );
     }
 
     /** \brief obtain a reference the actual implementation

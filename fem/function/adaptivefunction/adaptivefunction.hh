@@ -13,7 +13,11 @@
 
 //- Local includes
 #include "adaptiveimp.hh"
+#ifdef NEW_LOCALFUNCTION
+#include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#else
 #include "localfunction.hh"
+#endif
 
 namespace Dune
 {
@@ -39,8 +43,14 @@ namespace Dune
  
     typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
+#ifdef NEW_LOCALFUNCTION
+    typedef StandardLocalFunctionFactory
+      < AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > >
+      LocalFunctionFactoryType;
+#else
     typedef AdaptiveLocalFunctionFactory< DiscreteFunctionSpaceType >
       LocalFunctionFactoryType;
+#endif
 
     typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
 
@@ -94,7 +104,9 @@ namespace Dune
     typedef DiscreteFunctionDefault< Traits > BaseType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> ThisType;
 
+#ifndef NEW_LOCALFUNCTION
     friend class AdaptiveLocalFunctionFactory< DiscreteFunctionSpaceType >;
+#endif
   
   public:
     using BaseType :: assign;
@@ -218,6 +230,20 @@ namespace Dune
       Imp :: addScaled( g, s );
     }
 
+  protected:
+    using Imp :: dofVec_;
+
+  public:
+    inline const RangeFieldType &dof ( unsigned int index ) const
+    {
+      return dofVec_[ index ];
+    }
+
+    inline RangeFieldType &dof ( unsigned int index )
+    {
+      return dofVec_[ index ];
+    }
+
     using Imp::clear;
     using Imp::name;
     using Imp::size;
@@ -333,7 +359,9 @@ namespace Dune
     
 
   private:
+#ifndef NEW_LOCALFUNCTION
     friend class AdaptiveLocalFunctionFactory< DiscreteFunctionSpaceType >;
+#endif
 
     // local function factory 
     const LocalFunctionFactoryType lfFactory_;
@@ -367,6 +395,20 @@ namespace Dune
                            const RangeFieldType &s )
     {
       Imp :: addScaled( g, s );
+    }
+
+  protected:
+    using Imp :: dofVec_;
+
+  public:
+    inline const RangeFieldType &dof ( unsigned int index ) const
+    {
+      return dofVec_[ index ];
+    }
+
+    inline RangeFieldType &dof ( unsigned int index )
+    {
+      return dofVec_[ index ];
     }
 
     using Imp::clear;

@@ -10,7 +10,11 @@
 #include <dune/fem/function/common/localfunctionwrapper.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 
+#ifdef NEW_LOCALFUNCTION
+#include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#else
 #include "localfunction.hh"
+#endif
 
 namespace Dune
 {
@@ -30,9 +34,15 @@ namespace Dune
     typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >
       DiscreteFunctionType;
 
+#ifdef NEW_LOCALFUNCTION
+    typedef StandardLocalFunctionFactory
+      < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceType, DofVectorType >
+      LocalFunctionFactoryType;
+#else
     typedef VectorLocalFunctionFactory
       < DiscreteFunctionSpaceType, DofVectorType >
       LocalFunctionFactoryType;
+#endif
 
     typedef LocalFunctionStack< LocalFunctionFactoryType >
       LocalFunctionStorageType;
@@ -210,6 +220,16 @@ namespace Dune
     inline DofIteratorType dend ()
     {
       return dofVector().end();
+    }
+
+    inline const RangeFieldType &dof ( unsigned int index ) const
+    {
+      return dofVector()[ index ];
+    }
+
+    inline RangeFieldType &dof ( unsigned int index )
+    {
+      return dofVector()[ index ];
     }
 
     inline const std :: string &name () const

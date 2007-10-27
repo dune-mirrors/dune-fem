@@ -69,6 +69,7 @@ namespace Dune
   public:
     // use evaluate of default implementation 
     using BaseType :: evaluate;
+    using BaseType :: jacobian;
 
   public:
     //! Constructor
@@ -200,6 +201,7 @@ namespace Dune
 
     // use evaluate of default implementation 
     using BaseType :: evaluate;
+    using BaseType :: jacobian;
 
     GeometryType geometryType () const 
     { 

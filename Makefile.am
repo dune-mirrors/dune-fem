@@ -4,7 +4,7 @@
 EXTRA_DIST=dune.module
 
 # don't follow the full GNU-standard; we definitely need automake >= 1.5
-AUTOMAKE_OPTIONS = foreign 1.5
+#AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
 SUBDIRS = doc fem lib

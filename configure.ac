@@ -2,7 +2,8 @@
 
 AC_PREREQ(2.50)
 AC_INIT(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
-AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
+#AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
+AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 
 # check if we're in the right directory
 AC_CONFIG_SRCDIR([fem/space/dgspace/dgspace.hh])
@@ -64,6 +65,7 @@ AC_CONFIG_FILES([Makefile
      fem/quadrature/caching/test/Makefile
      fem/function/Makefile
      fem/function/common/Makefile
+     fem/function/localfunction/Makefile
      fem/function/adaptivefunction/Makefile
      fem/function/blockvectorfunction/Makefile
      fem/function/productfunction/Makefile
@@ -107,3 +109,6 @@ AC_CONFIG_FILES([Makefile
      lib/Makefile
      dune-fem.pc])
 AC_OUTPUT
+
+
+

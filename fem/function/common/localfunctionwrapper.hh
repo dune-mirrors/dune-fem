@@ -75,6 +75,10 @@ namespace Dune
     WrappedLocalFunctionType &lf_;
 
   public:
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+
+  public:
     //! Constructor initializing the underlying local function 
     template< class EntityType > 
     inline LocalFunctionWrapper ( const EntityType &entity,

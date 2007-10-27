@@ -97,10 +97,10 @@ namespace Dune
     }
    
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const */
-    template< int diffOrd >
+    template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
-                           const DomainType &x,
+                           const PointType &x,
                            RangeType &phi ) const
     {
       baseFunctionSet().evaluate( baseFunction, diffVariable, x, phi );
@@ -118,8 +118,9 @@ namespace Dune
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const DomainType &x,RangeType &phi) const */
+    template< class PointType >
     inline void evaluate ( const int baseFunction,
-                           const DomainType &x,
+                           const PointType &x,
                            RangeType &phi ) const
     {
       baseFunctionSet().evaluate( baseFunction, x, phi );
@@ -136,8 +137,9 @@ namespace Dune
     }
     
     /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const DomainType &x,JacobianRangeType &phi) const */
+    template< class PointType >
     inline void jacobian( const int baseFunction,
-                          const DomainType &x,
+                          const PointType &x,
                           JacobianRangeType &phi ) const
     {
       baseFunctionSet().jacobian( baseFunction, x, phi );
@@ -154,9 +156,9 @@ namespace Dune
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
-    template< class QuadratureType >
+    template< class PointType >
     inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const DomainType &x,
+                                           const PointType &x,
                                            const RangeType &psi ) const
     {
       return baseFunctionSet().evaluateSingle( baseFunction, x, psi );
@@ -174,10 +176,10 @@ namespace Dune
     }
     
      /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const DomainType &x,const JacobianRangeType &psi) const */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
                                                    const EntityType &entity,
-                                                   const DomainType &x,
+                                                   const PointType &x,
                                                    const JacobianRangeType &psi ) const
     {
       return baseFunctionSet().evaluateGradientSingle( baseFunction, entity, x, psi );
@@ -280,22 +282,21 @@ namespace Dune
       assert( this->baseSet_ );
       this->baseSet_->evaluateScalar(baseFunct,quad,p,phi);
     }
-    
-    inline
-    void evaluateScalar(const int baseFunct,
-      const DomainType& xLocal,
-      ScalarRangeType& phi) const
+
+    template< class PointType >
+    inline void evaluateScalar ( const int baseFunction,
+                                 const PointType &x,
+                                 ScalarRangeType &phi ) const
     {
-      assert( this->baseSet_ );
-      this->baseSet_->evaluateScalar(baseFunct,xLocal,phi);
+      baseFunctionSet().evaluateScalar( baseFunction, x, phi );
     }
 
-    inline
-    void jacobianScalar(const int baseFunct, const DomainType& xLocal,
-                        ScalarJacobianRangeType& gradPhi) const
+    template< class PointType >
+    inline void jacobianScalar ( const int baseFunction,
+                                 const PointType &x,
+                                 ScalarJacobianRangeType &gradPhi ) const
     {
-      assert( this->baseSet_ );
-      this->baseSet_->jacobianScalar(baseFunct,xLocal,gradPhi);
+      baseFunctionSet().jacobianScalar( baseFunction, x, gradPhi );
     }
 
     template <class QuadratureImp>

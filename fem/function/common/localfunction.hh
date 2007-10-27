@@ -3,6 +3,8 @@
 
 #include <dune/common/bartonnackmanifcheck.hh>
 
+#include <dune/fem/quadrature/quadrature.hh>
+
 namespace Dune
 {
 
@@ -122,6 +124,19 @@ public:
       ( asImp().evaluate( quadrature, quadPoint, ret ) );
   }
 
+  /** \brief evaluate the local function in a quadrature point
+   *
+   *  \param[in]   quadPoint  quadrature point
+   *  \param[out]  ret        value of the function in the quadrature point
+   */
+  template< class QuadratureType >
+  inline void evaluate( const QuadraturePointWrapper< QuadratureType > &quadPoint,
+                        RangeType &ret ) const
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().evaluate( quadPoint, ret ) );
+  }
+
   /** \brief evaluate Jacobian of the local function
    *
    *  \note Though the Jacobian is evaluated on the reference element, the
@@ -154,6 +169,22 @@ public:
   {
     CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
       ( asImp().jacobian( quadrature, quadPoint, ret ) );
+  }
+  
+  /** \brief evaluate Jacobian of the local function in a quadrature point
+   *
+   *  \note Though the Jacobian is evaluated on the reference element, the
+   *        return value is the Jacobian with respect to the actual entity.
+   *
+   *  \param[in]   quadPoint  quadrature point
+   *  \param[out]  ret        Jacobian of the function in the quadrature point
+   */
+  template< class QuadratureType >
+  inline void jacobian ( const QuadraturePointWrapper< QuadratureType > &quadPoint,
+                         JacobianRangeType &ret ) const
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().jacobian( quadPoint, ret ) );
   }
 
   /** \brief axpy operation for local function 
@@ -323,13 +354,27 @@ protected:
      *  \endcode
      */
     template< class QuadratureType >
-    void evaluate ( const QuadratureType &quadrature,
-                    const int quadPoint,
-                    RangeType &ret ) const
+    inline void evaluate ( const QuadratureType &quadrature,
+                           const int quadPoint,
+                           RangeType &ret ) const
     {
-      evaluate( quadrature.point( quadPoint ), ret );
+      asImp().evaluate( quadrature.point( quadPoint ), ret );
     }
     
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadraturePointWrapper<QuadratureType> &quadPoint,RangeType &ret) const
+     *
+     *  \note The default implementation just calls
+     *  \code
+     *  evaluate( quadPoint.quadrature(), quadPoint.point(), ret );
+     *  \endcode
+     */
+    template< class QuadratureType >
+    inline void evaluate( const QuadraturePointWrapper< QuadratureType > &quadPoint,
+                          RangeType &ret ) const
+    {
+      asImp().evaluate( quadPoint.quadrature(), quadPoint.point(), ret );
+    }
+
     /** \brief evaluate jacobian of the local function on 
                real world coordinate x and return ret 
                (calls local method of entitys geometry if not overloaded)
@@ -354,11 +399,25 @@ protected:
      *  \endcode
      */
     template< class QuadratureType >
-    void jacobian ( const QuadratureType &quadrature,
-                    const int quadPoint,
-                    JacobianRangeType &ret ) const
+    inline void jacobian ( const QuadratureType &quadrature,
+                           const int quadPoint,
+                           JacobianRangeType &ret ) const
     {
-      jacobian( quadrature.point( quadPoint ), ret );
+      asImp().jacobian( quadrature.point( quadPoint ), ret );
+    }
+    
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadraturePointWrapper<QuadratureType> &quadPoint,JacobianRangeType &ret) const
+     *
+     *  \note The default implementation just calls
+     *  \code
+     *  jacobian( quadPoint.quadrature(), quadPoint.point(), ret );
+     *  \endcode
+     */
+    template< class QuadratureType >
+    inline void jacobian ( const QuadraturePointWrapper< QuadratureType > &quadPoint,
+                           JacobianRangeType &ret ) const
+    {
+      asImp().jacobian( quadPoint.quadrature(), quadPoint.point(), ret );
     }
 
     /** \brief size method to make local 
