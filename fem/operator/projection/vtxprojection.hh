@@ -64,7 +64,7 @@ struct VtxProjectionImpl
             = lagrangePointSet.template endSubEntity< 0 >( 0 );
       for( ; itPoint != enditPoint; ++itPoint ) {
         const unsigned int dof = *itPoint;
-        const typename ArgFunctionSpaceType::DomainType &point = lagrangePointSet[ dof ];
+        const typename ArgFunctionSpaceType::DomainType &point = lagrangePointSet.point( dof );
         larg.evaluate(point, val);
         double w = weight(point);
         val *= w;
