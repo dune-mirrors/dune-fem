@@ -9,9 +9,9 @@
 #include "quad_test.hh"
 
 int main() {
-  std::string albertaGridFile("../../macrogrids/AlbertaGrid/2dmacro.al");
-  std::string aluGridHexaFile("../../macrogrids/ALU3dGrid/cube.hexa");
-  std::string aluGridTetraFile("../../macrogrids/ALU3dGrid/macro.small");
+  std::string albertaGridFile("../../../macrogrids/AlbertaGrid/2dmacro.al");
+  std::string aluGridHexaFile("../../../macrogrids/ALU3dGrid/cube.hexa");
+  std::string aluGridTetraFile("../../../macrogrids/ALU3dGrid/macro.small");
 
   Dune::Suite quadSuite("Tests for new quadratures");
   
