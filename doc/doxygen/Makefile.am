@@ -51,7 +51,7 @@ uninstall-local:
 
 # what files does the doxygen-generated stuff depend on (find-syntax)
 DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
-ADDITIONALDOCS = -name Doxyfile -o -name docrules -o -name mainpage -o -name modules -o -name svnpage 
+ADDITIONALDOCS = -name Doxyfile -o -name docrules -o -name mainpage -o -name modules -o -name svnpage -o -name suggestions 
 
 # as all doxygen files fill be installed in the html subdirectory
 # the BASEDIR has to be adjusted

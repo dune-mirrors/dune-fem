@@ -1,0 +1,35 @@
+/** \page suggestions Suggestions
+ *
+ *  On this page, suggestions to improve dune-fem are collected. So feel free
+ *  to add any suggestions or comment on them...
+ *
+ *  \section before1 ... that Should Be Implemented Before 1.0
+ *
+ *  - DisceteFunctionSpace :: FunctionSpaceType should be the underlying
+ *    function space (and not the discrete function space itself)
+ *
+ *  - Implement a quadrature interface (using Barton-Nackman trick). This would
+ *    allow the operator[] to be default implemented.
+ *
+ *  - Either remove the \\hasdefault mark for documentation, or use it
+ *    consequently.
+ *
+ *  \section after1 ... that Should Be Implemented After 1.0
+ *
+ *  \section brainstorm ... that Might Be of Interest
+ *
+ *  - Make LocalFunctionStorages singleton
+ *
+ *  - Add a LocalFunctionSpace to discrete function spaces. This way, some
+ *    specializations need not be done in the local function. The local
+ *    function space should at least provide the following features:
+ *    - the base function set
+ *    - the entity
+ *    - a method mapToGlobal
+ *    .
+ *    Then, the localFunction method on the discrete function can be called
+ *    with the local function space. Therefore, the base function set and the
+ *    Dof mappings need only be fetched once (the caching part could even be
+ *    done in a wrapper).
+ *
+ */
