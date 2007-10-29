@@ -1,6 +1,6 @@
 #include <iostream>
 
-//#include <config.h>
+#include <config.h>
 
 #include "../../misc/test.hh"
 #include "../../misc/suite.hh"

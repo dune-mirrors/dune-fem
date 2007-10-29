@@ -1,45 +1,66 @@
-#include <config.h>
+#include <set>
 
 #include "quad_test.hh"
-#include <set>
 
 namespace Dune {
 
   void Quad_Test::run() {
+    
+    // 1d types 
+    GeometryType line ( GeometryType::cube, 1);
+    GeometryType cube1 = line;
+    GeometryType simplex1 = line;
+
+
+    // 2d types 
+    GeometryType quadrilateral ( GeometryType::cube, 2);
+    GeometryType cube2 = quadrilateral;
+    GeometryType triangle ( GeometryType::simplex, 2);
+    GeometryType simplex2 = triangle; 
+
+    // 3d types 
+    GeometryType hexahedron ( GeometryType::cube, 3);
+    GeometryType cube3 = hexahedron;
+    GeometryType tetrahedron ( GeometryType::simplex, 3);
+    GeometryType simplex3 = tetrahedron; 
+    GeometryType prism ( GeometryType::prism, 3);
+    GeometryType pyramid ( GeometryType::pyramid, 3);
+
     // 1D Quadratures
-    Quadrature<double, 1> quadCube1d1(cube, 1);
+    Quadrature<double, 1> quadCube1d1(cube1, 1);
     Quadrature<double, 1> quadLine1d1(line, 1);
-    Quadrature<double, 1> quadSimplex1d1(simplex, 1);
+    Quadrature<double, 1> quadSimplex1d1(simplex1, 1);
     Quadrature<double, 1> quadLine1d3(line, 3);
     Quadrature<double, 1> quadLine1d10(line, 10);
 
     // 2D Quadratures
     // - Cubes
-    Quadrature<double, 2> quadCube2d1(cube, 1);
+    Quadrature<double, 2> quadCube2d1(cube2, 1);
     Quadrature<double, 2> quadQuad2d1(quadrilateral, 1);
-    Quadrature<double, 2> quadCube2d3(cube, 3);
-    Quadrature<double, 2> quadCube2d9(cube, 9);
+    Quadrature<double, 2> quadCube2d3(cube2, 3);
+    Quadrature<double, 2> quadCube2d9(cube2, 9);
     // - Simplices
-    Quadrature<double, 2> quadSimplex2d1(simplex, 1);
+    Quadrature<double, 2> quadSimplex2d1(simplex2, 1);
     Quadrature<double, 2> quadTriangle2d1(triangle, 1);
-    Quadrature<double, 2> quadSimplex2d4(simplex, 4);
-    Quadrature<double, 2> quadSimplex2d11(simplex, 11);
+    Quadrature<double, 2> quadSimplex2d4(simplex2, 4);
+    Quadrature<double, 2> quadSimplex2d11(simplex2, 11);
 
     // 3D Quadratures
     // - Cubes
-    Quadrature<double, 3> quadCube3d1(cube, 1);
+    Quadrature<double, 3> quadCube3d1(cube3, 1);
     Quadrature<double, 3> quadHexa3d1(hexahedron, 1);
-    Quadrature<double, 3> quadCube3d2(cube, 2);
-    Quadrature<double, 3> quadCube3d11(cube, 11);
+    Quadrature<double, 3> quadCube3d2(cube3, 2);
+    Quadrature<double, 3> quadCube3d11(cube3, 11);
     // - Simplices
-    Quadrature<double, 3> quadSimplex3d1(simplex, 1);
+    Quadrature<double, 3> quadSimplex3d1(simplex3, 1);
     Quadrature<double, 3> quadTetra3d1(tetrahedron, 1);
-    Quadrature<double, 3> quadSimplex3d4(simplex, 4);
-    Quadrature<double, 3> quadSimplex3d7(simplex, 7);
+    Quadrature<double, 3> quadSimplex3d4(simplex3, 4);
+    Quadrature<double, 3> quadSimplex3d7(simplex3, 7);
     // - Prism and pyramids
     Quadrature<double, 3> quadPrism3d1(prism, 1);
     Quadrature<double, 3> quadPyramid3d1(pyramid, 1);
 
+    /*
     // FixedOrder quads
     typedef FieldVector<double, 2> Coord2;
     typedef FieldVector<double, 3> Coord3;
@@ -62,6 +83,7 @@ namespace Dune {
     fixedOrderComparisonExec(quadSimplex3d4, fixedSimplex3d4);
     fixedOrderComparisonExec(quadSimplex3d7, fixedSimplex3d7);
     #endif
+    */
 
     //- Test weight summation for all
     weightSummationExec(quadCube1d1);
@@ -165,14 +187,13 @@ namespace Dune {
       sum += quad.weight(i);
     }
 
-    switch(quad.geometry()) {
-    case line:
+    const GeometryType geom = quad.geometry();
+    if ( geom.isCube())
+    {
       _floatTest(sum, 1.0);
-      break;
-    case cube:
-      _floatTest(sum, 1.0);
-      break;
-    case simplex:
+    }
+    else if ( geom.isSimplex())
+    {
       switch(Quad::dimension) {
       case 1:
         _floatTest(sum, 1.0);
@@ -184,26 +205,17 @@ namespace Dune {
         _floatTestTol(sum, 0.16666666666666666667, 1e-04);
         break;
       }
-      break;
-    case triangle:
+    }
+    else if( geom.isPrism() )
+    {
       _floatTest(sum, 0.5);
-      break;
-    case quadrilateral:
-      _floatTest(sum, 1.0);
-      break;
-    case tetrahedron:
-      _floatTest(sum, 0.16666666666666667);
-      break;
-    case hexahedron:
-      _floatTest(sum, 1.0);
-      break;
-    case prism:
-      _floatTest(sum, 0.5);
-      break;
-    case pyramid:
+    }
+    else if ( geom.isPyramid() ) 
+    {
       _floatTestTol(sum, 0.3333333333333333, 1e-04);
-      break;
-    default:
+    }
+    else
+    {
       DUNE_THROW(NotImplemented, "What geometry type ey?");
     }
   }
@@ -222,7 +234,7 @@ namespace Dune {
       _floatTest(result, -0.25);
       break;
     case 2:
-      if (quad.geometry() == cube) {
+      if (quad.geometry().isCube() ) {
         _floatTest(result, -0.2708333333);
       } 
       else {
@@ -230,7 +242,7 @@ namespace Dune {
       } 
       break;
     case 3:
-      if (quad.geometry() == cube) {
+      if (quad.geometry().isCube()) {
         _floatTest(result, -0.03854166666);
       } 
       else {
@@ -256,6 +268,7 @@ namespace Dune {
 
   void Quad_Test::indicesTest() 
   {
+    const GeometryType line ( GeometryType::cube, 1 );
     size_t id;
     {
       Quadrature<double, 1> quadTemp(line, 5);

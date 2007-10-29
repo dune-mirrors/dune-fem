@@ -1,7 +1,8 @@
 #include <config.h>
 
-#include <dune/grid/alu3dgrid.hh>
-#include <dune/grid/utility/twistutility.hh>
+#include <dune/grid/alugrid.hh>
+#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
 
 #include "cachequad_test.hh"
 #include "albertagrid_fixture.hh"
@@ -23,15 +24,18 @@ namespace Dune {
   {
     const int dim = 2;
     const int codim = 0;
+    GeometryType triangle ( GeometryType::simplex, 2);
 
     typedef AlbertaGridFixture<dim, dim> GridFixtureType;
     typedef GridFixtureType::GridType GridType;
-    typedef CachingQuadrature<GridType, codim> QuadratureType;
+    typedef LeafGridPart< GridType > GridPartType;
+    typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
     GridFixtureType fix(albertaGridFile_);
     GridType& grid = fix.grid();
+    GridPartType gridPart( grid );
     
     QuadratureType quad(*grid.leafbegin<0>(), 3);
     const PointVectorType& points = 
@@ -50,23 +54,26 @@ namespace Dune {
   {
     const int dim = 2;
     const int codim = 1;
+    GeometryType triangle ( GeometryType::simplex, 2);
 
     typedef AlbertaGridFixture<dim, dim> GridFixtureType;
     typedef GridFixtureType::GridType GridType;
-    typedef GridType::Traits::IntersectionIterator IntersectionIterator;
-    typedef CachingQuadrature<GridType, codim> QuadratureType;
+    typedef LeafGridPart< GridType > GridPartType;
+    typedef GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
     typedef IntersectionIterator::LocalGeometry LocalGeometryType;
 
     GridFixtureType fix(albertaGridFile_);
     GridType& grid = fix.grid();
+    GridPartType gridPart( grid );
 
-    IntersectionIterator endit = grid.leafbegin<0>()->iend();
-    IntersectionIterator it = grid.leafbegin<0>()->ibegin();
-    for (; it != endit; ++it) {
+    IntersectionIterator endit = gridPart.iend( *grid.leafbegin<0> ());
+    for (IntersectionIterator it = gridPart.ibegin(*grid.leafbegin<0>());
+        it != endit; ++it) {
       const LocalGeometryType& geo = it.intersectionSelfLocal();
-      QuadratureType quad(it, 4, 0, ElementQuadrature<GridType, 1>::INSIDE);
+      QuadratureType quad(gridPart, it, 4, QuadratureType::INSIDE);
       const PointVectorType& points = 
         PointProviderType::getPoints(quad.id(), triangle);
 
@@ -86,28 +93,29 @@ namespace Dune {
   {
     const int dim = 3;
     const int codim = 1;
+    GeometryType hexahedron( GeometryType::cube, dim);
 
-    typedef ALUGridFixture<hexa> GridFixtureType;
+    typedef ALUCubeGridFixture GridFixtureType;
     typedef GridFixtureType::GridType GridType;
-    typedef GridType::Traits::IntersectionIterator IntersectionIterator;
-    typedef CachingQuadrature<GridType, codim> QuadratureType;
+    typedef LeafGridPart< GridType > GridPartType;
+    typedef GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
     typedef IntersectionIterator::LocalGeometry LocalGeometryType;
 
     GridFixtureType fix(aluGridHexaFile_);
     GridType& grid = fix.grid();
+    GridPartType gridPart( grid );
 
-    IntersectionIterator endit = grid.leafbegin<0>()->iend();
-    IntersectionIterator it = grid.leafbegin<0>()->ibegin();
-    for (; it != endit; ++it) {
+    IntersectionIterator endit = gridPart.iend( *grid.leafbegin<0> ());
+    for (IntersectionIterator it = gridPart.ibegin(*grid.leafbegin<0>());
+        it != endit; ++it) {
       const LocalGeometryType& geo = it.intersectionSelfLocal();
-      TwistUtility<GridType> twistUtil(grid);
-      int twist = twistUtil.twistInSelf(it);
       //std::cout << "Twist == " << twist << std::endl;
-      QuadratureType quad(it, 4, twist, ElementQuadrature<GridType, 1>::INSIDE);
+      QuadratureType quad(gridPart, it, 4,  QuadratureType::INSIDE);
       const PointVectorType& points = 
-        PointProviderType::getPoints(quad.id(), cube);
+        PointProviderType::getPoints(quad.id(), hexahedron);
 
       _test(points.size() == (size_t)6*quad.nop());
       
@@ -128,28 +136,29 @@ namespace Dune {
   {
     const int dim = 3;
     const int codim = 1;
+    GeometryType tetrahedron( GeometryType::simplex, dim);
 
-    typedef ALUGridFixture<tetra> GridFixtureType;
+    typedef ALUSimplexGridFixture GridFixtureType;
     typedef GridFixtureType::GridType GridType;
-    typedef GridType::Traits::IntersectionIterator IntersectionIterator;
-    typedef CachingQuadrature<GridType, codim> QuadratureType;
+    typedef LeafGridPart< GridType > GridPartType;
+    typedef GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
     typedef IntersectionIterator::LocalGeometry LocalGeometryType;
 
     GridFixtureType fix(aluGridTetraFile_);
     GridType& grid = fix.grid();
+    GridPartType gridPart( grid );
 
-    IntersectionIterator endit = grid.leafbegin<0>()->iend();
-    IntersectionIterator it = grid.leafbegin<0>()->ibegin();
-    for (; it != endit; ++it) {
+    IntersectionIterator endit = gridPart.iend( *grid.leafbegin<0> ());
+    for (IntersectionIterator it = gridPart.ibegin(*grid.leafbegin<0>());
+        it != endit; ++it) {
       const LocalGeometryType& geo = it.intersectionSelfLocal();
-      TwistUtility<GridType> twistUtil(grid);
-      int twist = twistUtil.twistInSelf(it);
       //std::cout << "Twist == " << twist << std::endl;
-      QuadratureType quad(it, 4, twist, ElementQuadrature<GridType, 1>::INSIDE);
+      QuadratureType quad(gridPart, it, 4, QuadratureType::INSIDE);
       const PointVectorType& points = 
-        PointProviderType::getPoints(quad.id(), simplex);
+        PointProviderType::getPoints(quad.id(), tetrahedron);
 
       _test(points.size() == (size_t)4*quad.nop());
       
@@ -169,11 +178,13 @@ namespace Dune {
   {
     const int dim = 2;
     const int codim = 1;
+    GeometryType cube ( GeometryType::cube, dim);
 
     typedef SGridFixture<dim, dim> GridFixtureType;
     typedef GridFixtureType::GridType GridType;
-    typedef GridType::Traits::IntersectionIterator IntersectionIterator;
-    typedef CachingQuadrature<GridType, codim> QuadratureType;
+    typedef LeafGridPart< GridType > GridPartType;
+    typedef GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
     typedef IntersectionIterator::LocalGeometry LocalGeometryType;
@@ -182,20 +193,17 @@ namespace Dune {
 
     GridFixtureType fix(N);
     GridType& grid = fix.grid();
+    GridPartType gridPart( grid );
 
-  _fail("if you set the order to 4 here, the cache provider will find the wrong quadrature, since there is no distinction between line quadrature for triangles and quadrilaterals right now");
+    _fail("if you set the order to 4 here, the cache provider will find the wrong quadrature, since there is no distinction between line quadrature for triangles and quadrilaterals right now");
 
 
-    IntersectionIterator endit = grid.leafbegin<0>()->iend();
-    IntersectionIterator it = grid.leafbegin<0>()->ibegin();
-    for (; it != endit; ++it) {
+    IntersectionIterator endit = gridPart.iend( *grid.leafbegin<0> ());
+    for (IntersectionIterator it = gridPart.ibegin(*grid.leafbegin<0>());
+        it != endit; ++it) {
       const LocalGeometryType& geo = it.intersectionSelfLocal();
-      TwistUtility<GridType> twistUtil(grid);
-      int twist = twistUtil.twistInSelf(it);
     
-      _test(twist == 0);
-
-      QuadratureType quad(it, 5, twist, ElementQuadrature<GridType, 1>::INSIDE);
+      QuadratureType quad(gridPart, it, 5, QuadratureType::INSIDE);
       const PointVectorType& points = 
         PointProviderType::getPoints(quad.id(), cube);
 

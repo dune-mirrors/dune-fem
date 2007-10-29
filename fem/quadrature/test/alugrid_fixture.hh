@@ -1,17 +1,31 @@
 #ifndef DUNE_ALUGRID_FIXTURE_HH
 #define DUNE_ALUGRID_FIXTURE_HH
 
-#include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/alugrid.hh>
 
 namespace Dune {
 
-  template <ALU3dGridElementType type>
-  class ALUGridFixture {
+  class ALUSimplexGridFixture {
   public:
-    typedef ALU3dGrid<3, 3, type> GridType;
+    typedef ALUSimplexGrid<3, 3> GridType;
 
   public:
-    ALUGridFixture(std::string gridFile) :
+    ALUSimplexGridFixture(std::string gridFile) :
+      grid_(gridFile)
+    {}
+
+    GridType& grid() { return grid_; }
+
+  private:
+    GridType grid_;
+  };
+
+  class ALUCubeGridFixture {
+  public:
+    typedef ALUCubeGrid<3, 3> GridType;
+
+  public:
+    ALUCubeGridFixture(std::string gridFile) :
       grid_(gridFile)
     {}
 
