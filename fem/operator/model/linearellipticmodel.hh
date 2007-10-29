@@ -89,6 +89,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   public:
+#if 0
     template< class IntersectionIteratorType, class QuadratureType >
     inline void generalizedNeumannValues
       ( const IntersectionIteratorType &intersection,
@@ -114,6 +115,7 @@ namespace Dune
         ( asImp().generalizedNeumannAlpha( intersection, quadrature, point ) );
       return asImp().generalizedNeumannAlpha( intersection, quadrature, point );
     }
+#endif
 
     /** \brief evaluate the convective flux in a point
      *
@@ -311,6 +313,7 @@ namespace Dune
     }
 
 
+#if 0
     template< class IntersectionIteratorType, class QuadratureType >
     inline void generalizedNeumannValues
       ( const IntersectionIteratorType &intersection,
@@ -333,6 +336,7 @@ namespace Dune
       assert( Properties :: hasGeneralizedNeumannValues );
       return 0;
     }
+#endif
     
     /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
      *

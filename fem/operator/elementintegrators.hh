@@ -376,8 +376,10 @@ namespace Dune
       
       if( entity.hasBoundaryIntersections() )
       {
+#if 0
         if( ModelType :: Properties :: hasGeneralizedNeumannValues )
           addGeneralizedNeumannElementMatrix( entity, matrix, coefficient );
+#endif
         if( ModelType :: Properties :: hasRobinValues )
           addRobinElementMatrix( entity, matrix, coefficient );
       }
@@ -597,6 +599,7 @@ namespace Dune
       } // end loop over quadrature points
     } // end method addMassElementMatrix
     
+#if 0
     /*! \brief accumulate generalized Neumann boundary contributions
      *
      *  The method is used for the Neumann boundary of general elliptic problems.
@@ -671,6 +674,7 @@ namespace Dune
         } // end loop over quadraturepoints
       } // end loop over intersections
     } // end method addGeneralizedNeumannElementMatrix
+#endif
 
     /*! addRobinElementMatrix: accumulate Robin boundary contributions
      *
@@ -1173,6 +1177,7 @@ namespace Dune
       } // end loop over intersections
     }
 
+#if 0
     /**  adds a multiple of a Robin term contribution to the rhs 
      *
      *   This method can be used as a building block for problem specific 
@@ -1244,6 +1249,7 @@ namespace Dune
         } // end loop over quadrature points
       } // end loop over intersections
     } //end of addGeneralizedNeumannElementRhs
+#endif
   
   private:
     //! reference to the underlying model specified during construction
