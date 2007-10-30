@@ -14,7 +14,10 @@
 
 namespace Dune {
 
-/** \brief H-div Projection for discontinuous discrete functions.
+/** 
+    \ingroup HdivProjectionOperator 
+    \class HdivProjection 
+    \brief H-div Projection for discontinuous discrete functions.
     The projection is described in detail in: 
 
     P. Bastian and B. Riviere. Superconvergence and H(div)-projection
