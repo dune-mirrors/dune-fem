@@ -93,12 +93,13 @@ namespace Dune {
   {
     const int dim = 3;
     const int codim = 1;
-    GeometryType hexahedron( GeometryType::cube, dim);
+    const GeometryType hexahedron( GeometryType::cube, dim);
 
     typedef ALUCubeGridFixture GridFixtureType;
     typedef GridFixtureType::GridType GridType;
     typedef LeafGridPart< GridType > GridPartType;
     typedef GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef GridPartType:: Codim<0> :: IteratorType IteratorType;
     typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
@@ -108,40 +109,52 @@ namespace Dune {
     GridType& grid = fix.grid();
     GridPartType gridPart( grid );
 
-    IntersectionIterator endit = gridPart.iend( *grid.leafbegin<0> ());
-    for (IntersectionIterator it = gridPart.ibegin(*grid.leafbegin<0>());
-        it != endit; ++it) {
-      const LocalGeometryType& geo = it.intersectionSelfLocal();
-      //std::cout << "Twist == " << twist << std::endl;
-      QuadratureType quad(gridPart, it, 4,  QuadratureType::INSIDE);
-      const PointVectorType& points = 
-        PointProviderType::getPoints(quad.id(), hexahedron);
+    const int quadOrd = 4;
 
-      _test(points.size() == (size_t)6*quad.nop());
-      
-      for (int i = 0; i < quad.nop(); ++i) {
-        for (int d = 0; d < dim; ++d) {
-          // geo has twist
-          _floatTest(points[quad.cachingPoint(i)][d],
-                     geo.global(quad.localPoint(i))[d]);
+    for(int l=0; l<3; ++l) 
+    {
+      IteratorType enditer = gridPart.end<0> ();
+      for(IteratorType eiter = gridPart.begin<0> (); 
+          eiter != enditer; ++eiter)
+      {
+        IntersectionIterator endit = gridPart.iend( *eiter );
+        for (IntersectionIterator it = gridPart.ibegin(*eiter);
+            it != endit; ++it) 
+        {
+          const LocalGeometryType& geo = it.intersectionSelfLocal();
+          //std::cout << "Twist == " << twist << std::endl;
+          QuadratureType quad(gridPart, it, quadOrd,  QuadratureType::INSIDE);
+          const PointVectorType& points = 
+            PointProviderType::getPoints(quad.id(), hexahedron);
+
+          _test(points.size() == (size_t)(dim*2*quad.nop()));
+          
+          for (int i = 0; i < quad.nop(); ++i) {
+            for (int d = 0; d < dim; ++d) {
+              // geo has twist
+              _floatTest(points[quad.cachingPoint(i)][d],
+                         geo.global(quad.localPoint(i))[d]);
+            }
+            //std::cout << "pt " << i << ": " << points[quad.cachingPoint(i)]
+            //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
+          }
         }
-        //std::cout << "pt " << i << ": " << points[quad.cachingPoint(i)]
-        //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
-      }
-      
-    } // end iterator loop
+      } // end iterator loop
+      grid.globalRefine(1);
+    }
   }
 
   void CachingQuadrature_Test::codim1ALUTetraTest() 
   {
     const int dim = 3;
     const int codim = 1;
-    GeometryType tetrahedron( GeometryType::simplex, dim);
+    const GeometryType tetrahedron( GeometryType::simplex, dim);
 
     typedef ALUSimplexGridFixture GridFixtureType;
     typedef GridFixtureType::GridType GridType;
     typedef LeafGridPart< GridType > GridPartType;
     typedef GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef GridPartType :: Codim<0> :: IteratorType IteratorType;
     typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
@@ -151,27 +164,46 @@ namespace Dune {
     GridType& grid = fix.grid();
     GridPartType gridPart( grid );
 
-    IntersectionIterator endit = gridPart.iend( *grid.leafbegin<0> ());
-    for (IntersectionIterator it = gridPart.ibegin(*grid.leafbegin<0>());
-        it != endit; ++it) {
-      const LocalGeometryType& geo = it.intersectionSelfLocal();
-      //std::cout << "Twist == " << twist << std::endl;
-      QuadratureType quad(gridPart, it, 4, QuadratureType::INSIDE);
-      const PointVectorType& points = 
-        PointProviderType::getPoints(quad.id(), tetrahedron);
+    const int quadOrd = 4;
 
-      _test(points.size() == (size_t)4*quad.nop());
-      
-      for (int i = 0; i < quad.nop(); ++i) {
-        for (int d = 0; d < dim; ++d) {
-          _floatTest(points[quad.cachingPoint(i)][d],
-                     geo.global(quad.localPoint(i))[d]);
-        }
-        //std::cout << "pt " << i << ": " << points[quad.cachingPoint(i)]
-        //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
+    for(int l=0; l<3; ++l) 
+    {
+      IteratorType enditer = gridPart.end<0> ();
+      for(IteratorType eiter = gridPart.begin<0> (); 
+          eiter != enditer; ++eiter)
+      {
+        IntersectionIterator endit = gridPart.iend( *eiter );
+        for (IntersectionIterator it = gridPart.ibegin(*eiter );
+             it != endit; ++it) 
+        {
+          const LocalGeometryType& geo = it.intersectionSelfLocal();
+          QuadratureType quad(gridPart, it, quadOrd , QuadratureType::INSIDE);
+
+          const PointVectorType& points = 
+            PointProviderType::getPoints(quad.id(), tetrahedron);
+
+          _test(points.size() == (size_t)((dim +1) * quad.nop()));
+
+          //typedef TwistUtility<GridType> TwistUtilityType; 
+          //std::cout << "New Intersection: Twists: ";
+          //std::cout << TwistUtilityType :: twistInSelf( grid, it ) << " ";
+          //std::cout << TwistUtilityType :: twistInNeighbor( grid, it ) << "\n";
+
+          for (int i = 0; i < quad.nop(); ++i) 
+          {
+            for (int d = 0; d < dim; ++d) 
+            {
+              _floatTest(points[quad.cachingPoint(i)][d],
+                         geo.global(quad.localPoint(i))[d]);
+            }
+            //std::cout << "nis: " << it.numberInSelf() << " nin: " << it.numberInNeighbor();
+            //std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
+            //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
+          }
+        } // end iterator loop
       }
-      
-    } // end iterator loop
+      grid.globalRefine(1);
+    }
   }
 
   void CachingQuadrature_Test::codim1SGridTest() 
@@ -195,7 +227,7 @@ namespace Dune {
     GridType& grid = fix.grid();
     GridPartType gridPart( grid );
 
-    _fail("if you set the order to 4 here, the cache provider will find the wrong quadrature, since there is no distinction between line quadrature for triangles and quadrilaterals right now");
+    //_fail("if you set the order to 4 here, the cache provider will find the wrong quadrature, since there is no distinction between line quadrature for triangles and quadrilaterals right now");
 
 
     IntersectionIterator endit = gridPart.iend( *grid.leafbegin<0> ());
