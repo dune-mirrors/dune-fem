@@ -56,9 +56,9 @@ namespace Dune
      *  \param[in]  gradient    \f$\nabla u\f$ in the evaluation point
      *  \param[out] flux        variable to receive the evaluated flux
      */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const DomainType &x,
+                                const PointType &x,
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
@@ -135,6 +135,16 @@ namespace Dune
     using BaseType :: asImp;
 
   public:
+    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const */
+    template< class EntityType, class QuadratureType >
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const QuadraturePointWrapper< QuadratureType > &x,
+                                const JacobianRangeType &gradient,
+                                JacobianRangeType &flux ) const
+    {
+      asImp().diffusiveFlux( entity, x.quadrature(), x.point(), gradient, flux );
+    }
+
     /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
      *
      *  The default implementation calls

@@ -151,18 +151,18 @@ namespace Dune
      
         // evaluate gradient of argument function
         DomainJacobianType u_x;
-        u_local.jacobian( quadrature, pt, u_x );
+        u_local.jacobian( quadrature[ pt ], u_x );
 
         // calculate diffusive flux
         RangeJacobianType diffusiveFlux;
-        model_.diffusiveFlux( entity, quadrature, pt, u_x, diffusiveFlux );
+        model_.diffusiveFlux( entity, quadrature[ pt ], u_x, diffusiveFlux );
         
         // Multiply by all base function gradients
         for( unsigned int i = 0; i < numDofs; ++i )
         {
           // evaluate gradient of base function
           RangeJacobianType phi_x;
-          baseFunctionSet.jacobian( i, quadrature, pt, phi_x );
+          baseFunctionSet.jacobian( i, quadrature[ pt ], phi_x );
           phi_x[ 0 ] = FMatrixHelp :: mult( inv, phi_x[ 0 ] );
          
           // update destination function
@@ -233,7 +233,7 @@ namespace Dune
         {
           // evaluate gradient of i-th base function
           RangeJacobianType phi_x;
-          rangeBaseFunctionSet.jacobian( i, quadrature, pt, phi_x );
+          rangeBaseFunctionSet.jacobian( i, quadrature[ pt ], phi_x );
           phi_x[ 0 ] = FMatrixHelp :: mult( inv, phi_x[ 0 ] );
          
           // Loop over all base functions for matrix columns
@@ -241,11 +241,11 @@ namespace Dune
           {
             // evaluate gradient of j-th base function
             DomainJacobianType psi_x;
-            domainBaseFunctionSet.jacobian( j, quadrature, pt, psi_x );
+            domainBaseFunctionSet.jacobian( j, quadrature[ pt ], psi_x );
             
             // calculate diffusive flux
             RangeJacobianType diffusiveFlux;
-            model_.diffusiveFlux( entity, quadrature, pt, psi_x, diffusiveFlux );
+            model_.diffusiveFlux( entity, quadrature[ pt ], psi_x, diffusiveFlux );
             diffusiveFlux[ 0 ] = FMatrixHelp :: mult( inv, diffusiveFlux[ 0 ] );
  
             // update the local matrix
