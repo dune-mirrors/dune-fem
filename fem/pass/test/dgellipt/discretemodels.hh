@@ -34,6 +34,7 @@
 
 #include <dune/fem/operator/2order/ldgelliptoperator.hh>
 #include <dune/fem/operator/2order/dgprimaloperator.hh>
+#include <dune/fem/operator/2order/dgcompactoperator.hh>
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
@@ -71,6 +72,9 @@ namespace LDGExample {
 
     typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
     typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
+    
+    //typedef CachingQuadrature<GridPartType,0> VolumeQuadratureType;
+    //typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
     
     // typical tpye of space 
     typedef FunctionSpace< typename Model::DomainFieldType, typename Model::RangeFieldType , 
@@ -360,6 +364,7 @@ namespace LDGExample {
 #if USE_LDG 
       typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
 #else 
+      //typedef DGCompactOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
       typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
 #endif
 
@@ -608,7 +613,7 @@ namespace LDGExample {
   template <class ModelImp,class NumFluxImp, int polOrd >
   struct VelocityTraits
   {
-    enum { myPolOrd = polOrd };
+    enum { myPolOrd = polOrd-1 };
 
     typedef typename ModelImp::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
@@ -628,8 +633,13 @@ namespace LDGExample {
 
     typedef FunctionSpace<DomainFieldType, RangeFieldType, 
              dimDomain, 1 > SingleFunctionSpaceType;
+#if defined YASPGRID || defined ALUGRID_CUBE || defined SGRID
+    typedef LegendreDiscontinuousGalerkinSpace< SingleFunctionSpaceType,
+            GridPartType, polOrd > ContainedFunctionSpaceType;
+#else 
     typedef DiscontinuousGalerkinSpace< SingleFunctionSpaceType,
             GridPartType, polOrd > ContainedFunctionSpaceType;
+#endif
     typedef CombinedSpace< ContainedFunctionSpaceType, dimRange >
       DiscreteFunctionSpaceType;
 
