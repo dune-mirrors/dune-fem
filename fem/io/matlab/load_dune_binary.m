@@ -24,7 +24,7 @@ function A = load_dune_binary(filename)
   %fid = fopen(filename,'r','ieee-be');
   
   magicstr = char(fread(fid,3,'char'))';  
-  if ~ismember({magicstr},{'DDV','DSM','DDM'})
+  if ~ismember({magicstr},{'DDV','DSM','DDM','DDT','DVV','DG2'})
     error('read magicstr does not indicate known Dune Binary Filetype!');
   end;
   
@@ -75,7 +75,72 @@ function A = load_dune_binary(filename)
 	A(row,col) = val;
       end;  
     end;
+   case 'DDT' %%%%%%%%%%%%%%%% Read Dense Tensor %%%%%%%%%%%%%%%%%
     
+    nrows = fread(fid,1,'int');
+    ncols = fread(fid,1,'int');
+    ntensors = fread(fid,1,'int');
+    
+    disp(['generating and reading ',num2str(nrows),'x',num2str(ncols), 'x', num2str(ntensors),...
+	  ' dense tensor.']);
+    A = zeros(nrows,ncols,ntensors);
+    
+    %% the following can largely be optimized by block-reading!!!!!!
+    for tensor = 1:ntensors;
+     for row = 1:nrows;
+      for col= 1:ncols;
+	val = fread(fid,1,'double');
+	A(row,col,tensor) = val;
+      end;  
+    end;
+    end;
+   case 'DVV' %%%%%%%%%%%%%%%% Read Dense Vector %%%%%%%%%%%%%%%%%
+      nentries = fread(fid,1,'int');
+    disp(['generating and reading vector with ', ...
+	  num2str(nentries),' entries.']);
+    A = fread(fid,nentries,'double');
+   case 'DG2' %%%%%%%%%%%%%%%% Read Dense Matrix %%%%%%%%%%%%%%%%%
+    
+    dim = fread(fid,1,'int');
+    pointNumber = fread(fid,1,'int');
+    simplexNumber = fread(fid,1,'int');
+    
+    pnrows = pointNumber;
+    pncols = dim;
+    %pnrows = fread(fid,1,'int');
+    %pncols = fread(fid,1,'int');
+    
+    disp(['generating and reading ',num2str(pnrows),'x',num2str(pncols),...
+	  'p dense matrix.']);
+    p = zeros(pnrows,pncols);
+    
+    %% the following can largely be optimized by block-reading!!!!!!
+    for row = 1:pnrows;
+      for col= 1:pncols;
+	val = fread(fid,1,'double');
+	p(row,col) = val;
+      end;  
+    end;
+
+    tncols = simplexNumber;
+    tnrows = 3;
+    %% in general not 3, but for simplicity we initially take triangles instead of simplices, is that ok?
+    %tnrows = fread(fid,1,'int');
+    %tncols = fread(fid,1,'int');
+    
+    disp(['generating and reading ',num2str(tnrows),'x',num2str(tncols),...
+	  't dense matrix.']);
+    t = zeros(tnrows,tncols);
+    
+    %% the following can largely be optimized by block-reading!!!!!!
+    for row = 1:tnrows;
+      for col= 1:tncols;
+	val = fread(fid,1,'double');
+	t(row,col) = val;
+      end;  
+    end;
+
+
    otherwise
     error('Do not know how to handle Dune Binary Filetype!');
   end;
@@ -86,4 +151,4 @@ function A = load_dune_binary(filename)
     error('read eofstr does not indicate end of binary file!');
   end;
 
-  
+    
