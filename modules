@@ -127,6 +127,8 @@
         @ingroup Operator0 */
     /** @defgroup VtxProjectionOperator Projection from DG to lagrange space 
         @ingroup Operator0 */
+    /** @defgroup HdivProjectionOperator Projection from DG to H-div space 
+        @ingroup Operator0 */
   /** @defgroup Operator1 First order spatial operatos
       @ingroup OperatorCommon */
   /** @defgroup Operator2 Second order spatial operatos
