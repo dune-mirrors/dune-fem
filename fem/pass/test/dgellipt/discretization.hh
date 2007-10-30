@@ -33,7 +33,8 @@
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
-#include "projection.cc"
+// H-div projection 
+#include <dune/fem/operator/projection/hdivprojection.hh>
 
 // definition of L2Error 
 #include <dune/fem/misc/l2error.hh>
@@ -185,12 +186,47 @@ public:
       IteratorType endit = lastSpace_.end();
       for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
       {
-        if( (it->geometry()[0] - point).two_norm() < 0.3) 
-        //if(count < halfSize) 
+        {
+          //std::cout << "Mark entity \n";
+          grid_.mark( DGFGridInfo<GridType>::refineStepsForHalf() ,it);
+        }
+        ++count;
+      }
+    }
+
+    adop.adapt();
+    std::cout << "New size of space is " << lastSpace_.size() << "\n";
+
+    //testConsecutive();
+  }
+
+  void makeNonConform(DestinationType& dest) 
+  {
+    typedef typename LastPassType :: RestrictProlongOperatorType
+      RPOpType;
+
+    typedef AdaptationManager <GridType, RPOpType> AdaptManagerType;
+    AdaptManagerType adop(grid_,lastPass_.restrictProlongOperator() );
+
+    typedef typename LastSpaceType :: IteratorType IteratorType;
+    std::cout << "Old size of space is " << lastSpace_.size() << "\n";
+    int count = 0;
+    
+    typedef typename DestinationType :: DomainType DomainType; 
+    DomainType point(0.5);
+  
+    if( grid_.comm().rank() == 0)
+    {
+      //int halfSize = lastSpace_.indexSet().size(0)/2;
+      IteratorType endit = lastSpace_.end();
+      for(IteratorType it = lastSpace_.begin(); it != endit ; ++it) 
+      {
+        //if( (it->geometry()[0] - point).two_norm() < 0.3) 
+        if(count < 4 ) 
         //if(count % 2 == 0) 
         {
           //std::cout << "Mark entity \n";
-          grid_.mark(3,it);
+          grid_.mark( DGFGridInfo<GridType>::refineStepsForHalf() ,it);
         }
         ++count;
       }
@@ -214,16 +250,21 @@ public:
     std::vector<GradRangeType> errVelo(steps_);
 
     //DestinationType & Arg = const_cast<DestinationType&> (arg);
-    //adaptGrid(Arg);
+    //makeNonConform(Arg);
 
     for(int i=0; i<steps_; ++i)
     {
       if(i > 0)
       {
         // refineGlobal is defined in description.hh
-        grid_.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
-        dm_.resize();
-        dm_.dofCompress();
+        //if( Capabilities::IsUnstructured<GridType>::v )
+        //  adaptGrid(Arg);
+        //else 
+        {
+          grid_.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
+          dm_.resize();
+          dm_.dofCompress();
+        }
       }
 
       SolutionType& dest = const_cast<SolutionType&> (lastPass_.destination());
@@ -237,22 +278,18 @@ public:
         velo.clear();
         lastPass_.evalGradient(dest,velo);
 #endif
-       
 
         L2Error < DestinationType > l2errGrad;
         gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
 
-        //HdivTest< DestinationType > hdiv;
-
-        //std::cout << "Divergence = " << hdiv.div( velo ) << "\n";
-        //std::cout << "Local Mass = " << hdiv.localMassConserve( velo ) << "\n";
-
+        HdivProjection< DestinationType > hdiv(velo.space());
         DestinationType tmp ( velo );
 
-        //hdiv.project( tmp, velo );
+        std::cout << "Normal Jump = " << hdiv.normalJump( velo ) << "\n";
+
+        hdiv( tmp, velo );
         
-        //std::cout << "After Divergence = " << hdiv.div( velo ) << "\n";
-        //std::cout << "After Local Mass = " << hdiv.localMassConserve( velo ) << "\n";
+        std::cout << "After Normal Jump = " << hdiv.normalJump( velo ) << "\n";
 
         errVelo[i] = l2errGrad.norm( model_.data().gradient() , velo);
         
@@ -260,9 +297,9 @@ public:
         if( disp_ )
         {
           GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-          grape.addData( dest );
           grape.addData( tmp );
           grape.addData( velo );
+          grape.addData( dest );
           grape.display();
         }
 #endif
@@ -355,6 +392,7 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   // choice of fluxes 
   typedef LDGFlux<ModelType> NumericalFluxType;
   typedef GradientFlux GradientFluxType;
+  //typedef AverageFlux GradientFluxType;
 
   typedef LaplaceDiscreteModel < ModelType, NumericalFluxType, polOrd > LaplaceModelType;
   typedef GradientDiscreteModel < ModelType, NumericalFluxType, polOrd-1 > GradientModelType;
@@ -428,7 +466,7 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
 #if HAVE_GRAPE
   if( display == 1 )
   {
-    GrapeDataDisplay < GridType > grape( spaceOp.gridPart() ); 
+    GrapeDataDisplay < GridType > grape( spaceOp.gridPart().grid() ); 
     grape.dataDisplay( spaceOp.solution() );
   }
 #endif
