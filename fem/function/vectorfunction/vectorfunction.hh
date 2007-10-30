@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_VECTORFUNCTION_VECTORFUNCTION_HH
 #define DUNE_FEM_VECTORFUNCTION_VECTORFUNCTION_HH
 
-#warning "VectorDiscreteFunction's destructor is not yet correctly implemented -- this can cause memory leaks"
-
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/storage/vector.hh>
@@ -136,6 +134,7 @@ namespace Dune
 
     const std :: string name_;
     DofVectorType *const dofVector_;
+    const bool freeDofVector_;
 
   public:
     //! Constructor
@@ -145,7 +144,8 @@ namespace Dune
     : BaseType( dfSpace, lfFactory_ ),
       lfFactory_( *this ),
       name_( name ),
-      dofVector_( &dofVector )
+      dofVector_( &dofVector ),
+      freeDofVector_( false )
     {
       assert( dofVector_.size() == dfSpace.size() );
     }
@@ -154,13 +154,15 @@ namespace Dune
     : BaseType( other.space(), lfFactory_ ),
       lfFactory_( *this ),
       name_( other.name() ),
-      dofVector_( new DofVectorType( other.dofVector() ) )
+      dofVector_( new DofVectorType( other.dofVector() ) ),
+      freeDofVector_( true )
     {
     }
 
     inline ~VectorDiscreteFunction ()
     {
-      // we will have to remove dofVectors we created in the future.
+      if( freeDofVector_ )
+        delete dofVector_;
     }
 
   private:
@@ -247,7 +249,6 @@ namespace Dune
       return dofVector().size();
     }
 
-  protected:
     const DofVectorType &dofVector () const
     {
       return *dofVector_;

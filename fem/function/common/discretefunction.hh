@@ -299,26 +299,24 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( g ) );
     }
 
-    /** \brief evaluate Function f 
-        \param[in] arg global coordinate
-        \param[out] dest f(arg)
-    */ 
-    void evaluate (const DomainType & arg, RangeType & dest) const 
+#if 0
+    /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const */
+    inline void evaluate ( const DomainType &x,
+                           RangeType &ret ) const
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().evaluate(arg,dest));
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( x, ret ) );
     }
 
-    /** \brief evaluate Function f
-        \param[in] diffVariable derivation determizer 
-        \param[in] arg global coordinate
-        \param[out] dest f(arg)
-    */ 
-    template <int derivation>
-    void evaluate  ( const FieldVector<deriType, derivation> &diffVariable, 
-                     const DomainType& arg, RangeType & dest) const 
+    /** \copydoc Dune::Functon::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */ 
+    template< int diffOrder >
+    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                           const DomainType &x,
+                           RangeType &ret ) const
     { 
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().evaluate(diffVariable,arg,dest));
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluate( diffVariable, x, ret) );
     }
+#endif
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is added to this discrete function 
@@ -520,6 +518,7 @@ namespace Dune
   public:
     using BaseType :: dbegin;
     using BaseType :: dend;
+    using BaseType :: evaluate;
     using BaseType :: name;
     using BaseType :: size;
     
@@ -577,6 +576,21 @@ namespace Dune
 
     /** \copydoc Dune::DiscreteFunctionInterface::addScaled */
     void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
+    
+    /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const
+     *
+     *  The default implementation just does
+     *  \code
+     *  FieldVector< deriType, 0 > diffVariable;
+     *  asImp().evaluate( diffVariable, x, ret );
+     *  \endcode
+     */
+    inline void evaluate ( const DomainType &x,
+                           RangeType &ret ) const
+    {
+      FieldVector< deriType, 0 > diffVariable;
+      asImp().evaluate( diffVariable, x, ret );
+    }
 
     /** \brief @copydoc DiscreteFunctionInterface::scalarProductDofs */
     RangeFieldType scalarProductDofs(const DiscreteFunctionType& g) const;
