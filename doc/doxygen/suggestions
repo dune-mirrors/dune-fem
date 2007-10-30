@@ -5,8 +5,8 @@
  *
  *  \section before1 ... that Should Be Implemented Before 1.0
  *
- *  - DisceteFunctionSpace :: FunctionSpaceType should be the underlying
- *    function space (and not the discrete function space itself)
+ *  - DisceteFunction :: FunctionSpaceType should be the underlying
+ *    function space (and not the discrete function space)
  *
  *  - Implement a quadrature interface (using Barton-Nackman trick). This would
  *    allow the operator[] to be default implemented.
