@@ -65,6 +65,8 @@ namespace Dune {
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
     typedef IntersectionIterator::LocalGeometry LocalGeometryType;
+    typedef IntersectionIterator::Geometry GlobalGeometryType;
+    typedef FieldVector<double,dim> DomainType;
 
     GridFixtureType fix(albertaGridFile_);
     GridType& grid = fix.grid();
@@ -90,7 +92,7 @@ namespace Dune {
 
           _test(points.size() == (size_t)((dim +1) * quad.nop()));
 
-          //typedef TwistUtility<GridType> TwistUtilityType; 
+          typedef TwistUtility<GridType> TwistUtilityType; 
           //std::cout << "New Intersection: Twists: ";
           //std::cout << TwistUtilityType :: twistInSelf( grid, it ) << " ";
           //std::cout << TwistUtilityType :: twistInNeighbor( grid, it ) << "\n";
@@ -106,6 +108,27 @@ namespace Dune {
             //std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
             //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
           }
+
+          if( it.neighbor ())
+          {
+            if( TwistUtilityType::conforming( grid, it ))
+            {
+              const GlobalGeometryType& gGeo = it.intersectionGlobal();
+              QuadratureType outerQuad(gridPart, it, quadOrd , QuadratureType::OUTSIDE);
+              
+              for (int i = 0; i < quad.nop(); ++i) 
+              {
+                DomainType p = gGeo.global( quad.localPoint(i) );
+                DomainType q = gGeo.global( outerQuad.localPoint(i) );
+
+                for (int d = 0; d < dim; ++d) 
+                {
+                  _floatTest(p[d],q[d]);
+                }
+              }
+            }
+          }
+
         } // end iterator loop
       }
       grid.globalRefine(1);
@@ -128,6 +151,8 @@ namespace Dune {
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
     typedef IntersectionIterator::LocalGeometry LocalGeometryType;
+    typedef IntersectionIterator::Geometry GlobalGeometryType;
+    typedef FieldVector<double,dim> DomainType;
 
     GridFixtureType fix(aluGridHexaFile_);
     GridType& grid = fix.grid();
@@ -162,6 +187,27 @@ namespace Dune {
             //std::cout << "pt " << i << ": " << points[quad.cachingPoint(i)]
             //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
           }
+
+          if( it.neighbor())
+          {
+            typedef TwistUtility<GridType> TwistUtilityType; 
+            if( TwistUtilityType::conforming( grid, it ))
+            {
+              const GlobalGeometryType& gGeo = it.intersectionGlobal();
+              QuadratureType outerQuad(gridPart, it, quadOrd , QuadratureType::OUTSIDE);
+              
+              for (int i = 0; i < quad.nop(); ++i) 
+              {
+                DomainType p = gGeo.global( quad.localPoint(i) );
+                DomainType q = gGeo.global( outerQuad.localPoint(i) );
+
+                for (int d = 0; d < dim; ++d) 
+                {
+                  _floatTest(p[d],q[d]);
+                }
+              }
+            }
+          }
         }
       } // end iterator loop
       grid.globalRefine(1);
@@ -183,6 +229,8 @@ namespace Dune {
     typedef PointProvider<GridType::ctype, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
     typedef IntersectionIterator::LocalGeometry LocalGeometryType;
+    typedef IntersectionIterator::Geometry GlobalGeometryType;
+    typedef FieldVector<double,dim> DomainType;
 
     GridFixtureType fix(aluGridTetraFile_);
     GridType& grid = fix.grid();
@@ -208,7 +256,7 @@ namespace Dune {
 
           _test(points.size() == (size_t)((dim +1) * quad.nop()));
 
-          //typedef TwistUtility<GridType> TwistUtilityType; 
+          typedef TwistUtility<GridType> TwistUtilityType; 
           //std::cout << "New Intersection: Twists: ";
           //std::cout << TwistUtilityType :: twistInSelf( grid, it ) << " ";
           //std::cout << TwistUtilityType :: twistInNeighbor( grid, it ) << "\n";
@@ -224,6 +272,27 @@ namespace Dune {
             //std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
             //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
           }
+
+          if( it.neighbor())
+          {
+            if( TwistUtilityType::conforming( grid, it ))
+            {
+              const GlobalGeometryType& gGeo = it.intersectionGlobal();
+              QuadratureType outerQuad(gridPart, it, quadOrd , QuadratureType::OUTSIDE);
+              
+              for (int i = 0; i < quad.nop(); ++i) 
+              {
+                DomainType p = gGeo.global( quad.localPoint(i) );
+                DomainType q = gGeo.global( outerQuad.localPoint(i) );
+
+                for (int d = 0; d < dim; ++d) 
+                {
+                  _floatTest(p[d],q[d]);
+                }
+              }
+            }
+          }
+
         } // end iterator loop
       }
       grid.globalRefine(1);
