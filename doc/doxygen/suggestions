@@ -13,8 +13,13 @@
  *
  *  - Either remove the \\hasdefault mark for documentation, or use it
  *    consequently.
+ *  .
  *
  *  \section after1 ... that Should Be Implemented After 1.0
+ *
+ *  - Have a stack of discrete functions (which might be cleared on adaption
+ *    and limited to hold only a small number of discrete functions)
+ *  .
  *
  *  \section brainstorm ... that Might Be of Interest
  *
@@ -31,5 +36,5 @@
  *    with the local function space. Therefore, the base function set and the
  *    Dof mappings need only be fetched once (the caching part could even be
  *    done in a wrapper).
- *
+ *  .
  */
