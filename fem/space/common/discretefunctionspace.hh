@@ -9,8 +9,8 @@
 #include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
-#include <dune/fem/function/common/temporarylocalfunction.hh>
 #include <dune/fem/function/common/localfunctionwrapper.hh>
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 
 
 //- local includes 

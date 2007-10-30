@@ -6,6 +6,4 @@ common_HEADERS = dfcommunication.hh \
 								 dofiterator.hh \
 								 function.hh \
 								 localfunction.hh \
-								 localfunctionwrapper.hh \
-								 temporarylocalfunction.hh
-
+								 localfunctionwrapper.hh

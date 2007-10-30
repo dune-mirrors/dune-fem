@@ -2,7 +2,7 @@
 #define DUNE_FEM_MINIMIZATIONOPERATOR_HH
 
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/function/common/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 
 namespace Dune
 {

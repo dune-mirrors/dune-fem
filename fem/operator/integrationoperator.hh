@@ -2,8 +2,8 @@
 #define DUNE_FEM_INTEGRATIONOPERATOR_HH
 
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/function/common/temporarylocalfunction.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 
 namespace Dune
 {
