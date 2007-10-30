@@ -1,9 +1,9 @@
 # if documentation was enabled 
-if BUILD_DOCS
-  DOXYGENTAG = doxygen-tag 
-  WHAT = # bestpractice.html
-  DOXYGEN_HTML = html 
-  DOXYGEN_DIST = html-dist
+#if BUILD_DOCS
+DOXYGENTAG = doxygen-tag 
+WHAT = # bestpractice.html
+DOXYGEN_HTML = html 
+DOXYGEN_DIST = html-dist
 
 DISTCLEANFILES = doxygen.log doxygen-tag doxygen.out
 
@@ -107,6 +107,6 @@ clean-local:
 CLEANFILES = $(WHAT) $(DOXYGENTAG) $(DOXYGENHEADER)
 
 # end BUILD_DOCS
-endif
+#endif
 
 include $(top_srcdir)/am/global-rules
