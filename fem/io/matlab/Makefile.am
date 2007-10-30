@@ -1,2 +1,3 @@
 matlabdir =  $(includedir)/dune/fem/io/matlab
-matlab_HEADERS = matlabhelper.hh
+matlab_HEADERS = matlabhelper.hh \
+                 matlabstream.hh

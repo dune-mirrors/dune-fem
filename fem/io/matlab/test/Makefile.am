@@ -1,0 +1,14 @@
+# IGNORE_HEADERS
+GRIDTYPE=ALBERTAGRID
+GRIDDIM=2
+
+AM_CXXFLAGS=-g -Wall
+
+# linker flags
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) ../../../libfem.la
+# preprocessor flags
+AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
+
+check_PROGRAMS = test
+
+test_SOURCES = test.cc

@@ -84,6 +84,7 @@ AC_CONFIG_FILES([Makefile
      fem/io/file/Makefile
      fem/io/streams/Makefile
      fem/io/matlab/Makefile
+     fem/io/matlab/test/Makefile
      fem/io/visual/Makefile
      fem/io/visual/grape/Makefile
      fem/io/visual/grape/datadisp/Makefile
