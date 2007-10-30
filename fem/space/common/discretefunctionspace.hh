@@ -531,7 +531,8 @@ namespace Dune
   public:
     //! constructor taking grid Part 
     inline explicit DiscreteFunctionSpaceAdapter ( const GridPartType &gridPart )
-    : gridPart_( gridPart ) 
+    : BaseType()
+    , gridPart_( gridPart ) 
     {
     }
 
