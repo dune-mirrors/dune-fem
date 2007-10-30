@@ -105,11 +105,11 @@ namespace Dune
         // run over all vertices of the simplex 
         for( unsigned int i = 0; i <= dim; ++i )
         {
-#if 1
+#if 0
           const PointType &point = geometry[ i ];
           const unsigned int ptindex = indexSet.template subIndex< dim >( entity, i );
 #else
-          const VertexPtrType &vertexptr = entity.template entity< dim >( i );
+          const VertexPtrType vertexptr = entity.template entity< dim >( i );
           const PointType &point = vertexptr->geometry()[ 0 ];
           const unsigned int ptindex = indexSet.index( *vertexptr );
 #endif
