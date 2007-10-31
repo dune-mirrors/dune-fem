@@ -218,6 +218,7 @@ protected:
   Variable(const vec_t& pvar) {val.init(pvar.vec);}
   Variable(const dvec_t &pval) {val.init(pval);}
 public:
+  virtual ~Variable() {}
   void clear() {val.clear();}
   void init(const vec_t &pvar) {val.init(pvar.vec);}
   void init(const dvec_t &pval) {val.init(pval);}
@@ -416,6 +417,7 @@ protected:
   const int add_values;
 public:
   Init_eos(int padd_values = 0) : add_values(padd_values) {}
+  virtual ~Init_eos() {}
   int additional_values() const { return add_values; }
   virtual void operator()(double,double,
                           double&,double&,double&,double&,double&) const = 0;
@@ -446,6 +448,7 @@ protected:
   inline double min(double, double) const;
   inline double max(double, double) const;
 public:
+  virtual ~Equations() {}
   virtual int ewave() const = 0;
   virtual int nonlinear(int) const = 0;
   virtual void f(const cons_t&, cons_t&) const = 0;
@@ -692,6 +695,7 @@ protected:
   const double MhdEPS;
 public:
   Mhd() : MhdEPS(1e-12) {}
+  virtual ~Mhd() {}
   virtual int ewave() const {return 3;}
   virtual int nonlinear(int) const;
   virtual void f(const cons_t&, cons_t&) const;

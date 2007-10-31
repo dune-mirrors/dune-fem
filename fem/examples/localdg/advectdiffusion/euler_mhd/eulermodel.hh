@@ -384,8 +384,8 @@ void EulerFlux<2>::jacobian(const double gamma,
 			const EulerFlux<2>::FluxRangeType& du,
 			EulerFlux<2>::RangeType& A) const {
   assert(u[0]>1e-10);
-  double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
   /*
+  double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
   if (rhoeps<1e-10) 
     cerr << "negative internal energy density " << rhoeps 
 	 << " in analyticalFlux: "
@@ -479,6 +479,7 @@ public:
   double endtime() {
     return 0.2;
   }
+  double gamma;
   string myName;
 
   template <class DomainType, class RangeType>
@@ -519,7 +520,6 @@ public:
     res[2] *= res[0];
     res[3] += 0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
   }
-  double gamma;
 };
 class U0RotatingCone {
 public:
