@@ -7,7 +7,7 @@ namespace Dune
 {
   
   /*! \class ElementIntegrationPointList
-   *  \ingrup Quadrature
+   *  \ingroup Quadrature
    *  \brief integration point list on the codim-0 reference element
    *
    *  DUNE quadratures are defined per geometry type, using local coordinates
@@ -50,8 +50,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::ElementIntegrationPointList
-   */
+  /** \copydoc Dune::ElementIntegrationPointList */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >
   {
@@ -200,8 +199,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::ElementIntegrationPointList
-   */
+  /** \copydoc Dune::ElementIntegrationPointList */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
   {
@@ -343,8 +341,7 @@ namespace Dune
       return dummy_;
     }
 
-    /** \copydoc Dune::ElementIntegrationPointList::localPoint
-     */
+    /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::localPoint(size_t i) const */
     const LocalCoordinateType &localPoint ( size_t i ) const
     {
       return quad_.point( i );

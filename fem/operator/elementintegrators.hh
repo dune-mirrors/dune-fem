@@ -908,17 +908,12 @@ namespace Dune
     // the following does not seem to work properly...
     //  enum {quadDegree = TraitsType::quadDegree};
       
-    /*======================================================================*/
-    /*! 
-     *   constructor: store local reference to the underlying model
+    /** \brief constructor storinge model and discrete function space
      *
-     *   The local reference model_ is initialized
-     *
-     *   \param model the model which provides the data functions
-     *
-     *   \param verbose an optional verbosity flag
+     *  \param[in]  model    model providing the data functions
+     *  \param[in]  dfSpace  discrete function space to use
+     *  \param[in]  verbose  optional verbosity flag
      */
-    /*======================================================================*/  
     DefaultElementRhsIntegrator( const ModelType &model,
                                  const DiscreteFunctionSpaceType &dfSpace,
                                  int verbose = 0 )

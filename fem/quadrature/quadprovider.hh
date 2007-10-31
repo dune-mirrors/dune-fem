@@ -61,7 +61,7 @@ namespace Dune
   public:
     /*! \brief provide quadrature
      *
-     *  \param[in]  gemoetry  type of geometry, the quadrature is requested for
+     *  \param[in]  geometry  type of geometry, the quadrature is requested for
      *  \param[in]  order     minimal order of the requested quadrature
      */
     template< class QuadImp >

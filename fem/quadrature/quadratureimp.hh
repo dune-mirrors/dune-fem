@@ -93,7 +93,7 @@ namespace Dune
     typedef IntegrationPointListImp< FieldType, dim > ThisType;
 
   public:
-    //! Local coordinate type
+    //! type of local coordinates
     typedef FieldVector< FieldType, dim > CoordinateType;
     
     //! to be revised, look at caching quad 
@@ -242,7 +242,7 @@ namespace Dune
     typedef IntegrationPointListImp< FieldType, dim > BaseType;
 
   public:
-    /** \copydoc Dune::IntegrationPointsListImp::CoordinateType */
+    //! type of local coordinates
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:

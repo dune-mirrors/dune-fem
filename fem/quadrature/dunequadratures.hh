@@ -38,7 +38,6 @@ namespace Dune
     using BaseType :: addQuadraturePoint;
 
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   protected:
@@ -96,7 +95,7 @@ namespace Dune
       return elementGeometry_;
     }
 
-    /** \broef maximal order of available quadratures
+    /** \brief maximal order of available quadratures
      */
     static unsigned int maxOrder ()
     { 
