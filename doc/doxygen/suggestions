@@ -7,14 +7,15 @@
  *
  *  - compile time check that DiscreteFunctionAdapter are not generated
  *    from DiscreteFunctions.
- *  - Implement a quadrature interface (using Barton-Nackman trick). This would
- *    allow the operator[] to be default implemented.
  *  - Either remove the \\hasdefault mark for documentation, or use it
  *    consequently.
  *  .
  *
  *  \section after1 ... that Should Be Implemented After 0.9
  *
+ *  - Revisit quadratures (either implement a quadrature interface using
+ *    the Barton-Nackman trick or implement an engine concept). Both would
+ *    allow the operator[] to be default implemented.
  *  - Have a stack of discrete functions (which might be cleared on adaption
  *    and limited to hold only a small number of discrete functions)
  *  - Write a ConstLocalFunction class
@@ -24,6 +25,11 @@
  *    (GridFunction has a ConstLocalFunction method but no localfunction)
  *  - base everything in dune-fem on GridParts (e.g. EntityType from
  *    GridPart...)
+ *  - Allow the use of different floating point types (especially of higher
+ *    precision than double). Maybe implement a Float< precision > class that
+ *    gives a default implementation for the desired precision.
+ *    Also, the concept should be checked to allow for complex numbers (at
+ *    least as RangeFieldType).
  *  - more documentation for I/O
  *  .
  *
@@ -51,5 +57,7 @@
  *  - A GridPart with all classes wrapped (i.e. Entities, Geometry...)
  *  - Clarify which jacobian method operates on the reference element and which one
  *    on real elements.
+ *  - Implement a quadrature that reads its points from an ASCII file. This way,
+ *    we do not need a quadrature for every floating point type.
  *  .
  */
