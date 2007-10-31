@@ -9,6 +9,7 @@
  *    from DiscreteFunctions.
  *  - Either remove the \\hasdefault mark for documentation, or use it
  *    consequently.
+ *  - Check documentation and remove all warnings from doxygen.out
  *  .
  *
  *  \section after1 ... that Should Be Implemented After 0.9

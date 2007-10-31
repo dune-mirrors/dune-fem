@@ -80,9 +80,9 @@ namespace Dune
       enum { dimworld = GridType :: dimensionworld };
 
       typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
-      typedef typename EntityType :: Geometry GeometryType;
       typedef typename GridType :: template Codim< dim > :: EntityPointer
         VertexPtrType;
+      typedef typename GridType :: template Codim< dim > :: Entity VertexType;
       typedef FieldVector< typename GridType :: ctype, dimworld > PointType;
 
       const IndexSetType &indexSet = gridPart.indexSet();
@@ -96,7 +96,6 @@ namespace Dune
       for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
       {
         const EntityType &entity = *it;
-        const GeometryType &geometry = entity.geometry();
 
         if( entity.template count< dim >() != dim+1 )
           DUNE_THROW( IOError, "MatlabOutStream: Cannot write non-simplex grid." );
@@ -105,17 +104,15 @@ namespace Dune
         // run over all vertices of the simplex 
         for( unsigned int i = 0; i <= dim; ++i )
         {
-#if 0
-          const PointType &point = geometry[ i ];
-          const unsigned int ptindex = indexSet.template subIndex< dim >( entity, i );
-#else
           const VertexPtrType vertexptr = entity.template entity< dim >( i );
-          const PointType &point = vertexptr->geometry()[ 0 ];
-          const unsigned int ptindex = indexSet.index( *vertexptr );
-#endif
+          const VertexType &vertex = *vertexptr;
+
+          const PointType &point = vertex.geometry()[ 0 ];
+          const unsigned int ptindex = indexSet.index( vertex );
+
           for( unsigned int j = 0; j < dimworld; ++j )
             points[ j ][ ptindex ] = point[ j ];
-
+          
           triangles[ i ][ enindex ] = ptindex + 1;
         }
       }
