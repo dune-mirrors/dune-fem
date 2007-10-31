@@ -12,14 +12,14 @@
 namespace Dune
 {
 
-//*****************************************************************
-//! Compressed row sparse matrix, where only the nonzeros of a row are
-//! kept.
-//!
-//! This class should be removed and ../matrix/spmatrix.cc should be 
-//! used. Temporarily this SparseRowMatrix class is kept for keeping the
-//! fem/examples running.
-//*****************************************************************
+// *********************************************************************
+// Compressed row sparse matrix, where only the nonzeros of a row are
+// kept.
+//
+// This class should be removed and ../matrix/spmatrix.cc should be 
+// used. Temporarily this SparseRowMatrix class is kept for keeping the
+// fem/examples running.
+// *********************************************************************
 template <class T>
 class SparseRowMatrix 
 {

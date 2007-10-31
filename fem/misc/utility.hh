@@ -3,7 +3,8 @@
 
 #include "femtuples.hh"
 
-namespace Dune {
+namespace Dune
+{
 
   /** @ addtogroup Common
    *
@@ -14,6 +15,8 @@ namespace Dune {
    * @file
    * @brief Contain utility classes which can be used with tuples.
    */
+
+  
 
   /**
    * @brief A helper template that initializes a tuple consisting of pointers
@@ -316,10 +319,8 @@ namespace Dune {
 
   };
 
-  /**
-   * @file
-   * @brief Contain utility classes which can be used with tuples.
-   */
+
+
 
   template <class T1,class T2>
   struct CombinePairs {
