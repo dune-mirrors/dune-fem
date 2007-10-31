@@ -901,6 +901,8 @@ public:
 #if HAVE_MPI 
           // get partition type 
           const bool interiorEntity = (nb.partitionType() == InteriorEntity);
+#else 
+          const bool interiorEntity = true;
 #endif
           if( (localIdSet.id( en ) < localIdSet.id( nb )) 
 #if HAVE_MPI 
