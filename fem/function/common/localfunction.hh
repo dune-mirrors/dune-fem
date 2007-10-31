@@ -187,48 +187,75 @@ public:
       ( asImp().jacobian( quadPoint, ret ) );
   }
 
-  /** \brief axpy operation for local function 
-      \param[in] quad Quadrature
-      \param[in] quadPoint number of quadrature point 
-      \param[in] factor axpy factor  
-  */
-  template <class QuadratureType>
-  inline void axpy(const QuadratureType& quad,
-                   const int quadPoint, 
-                   const RangeType& factor)
+  /** \brief axpy operation for local function
+   *
+   *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+   *  functions by \f$\varphi_i\f$, this function performs the following
+   *  operation:
+   *  \f[
+   *  u_i = u_i + factor \cdot \varphi_i( x )
+   *  \f]
+   *
+   *  \param[in]  quadrature  quadrature to use
+   *  \param[in]  quadPoint   number of the quadrature point wihin the
+   *                          quadrature
+   *  \param[in]  factor      axpy factor
+   */
+  template< class QuadratureType >
+  inline void axpy ( const QuadratureType &quadrature,
+                     const int quadPoint, 
+                     const RangeType &factor )
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( 
-      asImp().axpy( quad, quadPoint , factor ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().axpy( quadrature, quadPoint , factor ) );
   }
-
-  /** \brief axpy operation for local function 
-      \param[in] quad Quadrature
-      \param[in] quadPoint number of quadrature point 
-      \param[in] factor axpy gradient factor  
-  */
-  template <class QuadratureType> 
-  inline void axpy(const QuadratureType& quad, 
-                   const int quadPoint, 
-                   const JacobianRangeType& factor)
+  
+  /** \brief axpy operation for local function
+   *
+   *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+   *  functions by \f$\varphi_i\f$, this function performs the following
+   *  operation:
+   *  \f[
+   *  u_i = u_i + factor \cdot \nabla\varphi_i( x )
+   *  \f]
+   *
+   *  \param[in]  quadrature  quadrature to use
+   *  \param[in]  quadPoint   number of the quadrature point wihin the
+   *                          quadrature
+   *  \param[in]  factor      axpy factor
+   */
+  template< class QuadratureType >
+  inline void axpy ( const QuadratureType &quadrature,
+                     const int quadPoint, 
+                     const JacobianRangeType &factor)
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( 
-      asImp().axpy( quad, quadPoint , factor ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().axpy( quadrature, quadPoint, factor ) );
   }
-
-  /** \brief axpy operation for local function 
-      \param[in] quad Quadrature
-      \param[in] quadPoint number of quadrature point 
-      \param[in] factor1 axpy factor 
-      \param[in] factor2 gradient axpy factor 
-  */
-  template <class QuadratureType>
-  inline void axpy(const QuadratureType &quad,
-                   const int quadPoint ,
-                   const RangeType& factor1,
-                   const JacobianRangeType & factor2)
+  
+  /** \brief axpy operation for local function
+   *
+   *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+   *  functions by \f$\varphi_i\f$, this function performs the following
+   *  operation:
+   *  \f[
+   *  u_i = u_i + factor1 \cdot \varphi_i( x ) + factor2 \cdot \nabla\varphi_i( x )
+   *  \f]
+   *
+   *  \param[in]  quadrature  quadrature to use
+   *  \param[in]  quadPoint   number of the quadrature point wihin the
+   *                          quadrature
+   *  \param[in]  factor1     axpy factor for \f$\varphi( x )\f$
+   *  \param[in]  factor2     axpy factor for \f$\nabla\varphi( x )\f$
+   */
+  template< class QuadratureType >
+  inline void axpy ( const QuadratureType &quadrature,
+                     const int quadPoint,
+                     const RangeType &factor1,
+                     const JacobianRangeType &factor2 )
   {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( 
-      asImp().axpy( quad, quadPoint, factor1, factor2 ));
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().axpy( quadrature, quadPoint, factor1, factor2 ) );
   }
 
   /** \brief obtain the base function set for this local function

@@ -181,37 +181,36 @@ namespace Dune
       localFunction().init(en);
     } 
 
-    /** \copydoc LocalFunctionInterface::axpy
-     */
-    template <class QuadratureType> 
-    inline void axpy(const QuadratureType &quad, 
-                     const int quadPoint , const RangeType & factor)
+    /** \copydoc LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
+    template< class QuadratureType >
+    inline void axpy ( const QuadratureType &quadrature,
+                       const int quadPoint,
+                       const RangeType &factor )
     {
-      localFunction().axpy( quad, quadPoint , factor );
+      localFunction().axpy( quadrature, quadPoint, factor );
     }
     
-    /** \copydoc LocalFunctionInterface::axpy
-     */
-    template <class QuadratureType> 
-    inline void axpy(const QuadratureType &quad, 
-                     const int quadPoint , const JacobianRangeType & factor)
+    /** \copydoc LocalFunctionInterface::axpy(const QuadraturePoint &quadrature,const int quadPoint,const JacobianRangeType &factor) */
+    template< class QuadratureType >
+    inline void axpy ( const QuadratureType &quadrature,
+                       const int quadPoint,
+                       const JacobianRangeType &factor )
     {
-      localFunction().axpy( quad, quadPoint , factor );
+      localFunction().axpy( quadrature, quadPoint, factor );
     }
     
-    /** \copydoc LocalFunctionInterface::axpy
-     */
-    template <class QuadratureType> 
-    inline void axpy(const QuadratureType &quad, 
-                     const int quadPoint ,
-                     const RangeType& factor1,
-                     const JacobianRangeType & factor2)
+    /** \copydoc LocalFunctionInterface::axpy(const QuadraturePoint &quadrture,const int quadPaint,const RangeType &factor1,const JacobianRangeType &factor2) const */
+    template< class QuadratureType >
+    inline void axpy ( const QuadratureType &quadrature,
+                       const int quadPoint,
+                       const RangeType &factor1,
+                       const JacobianRangeType &factor2 )
     {
-      localFunction().axpy( quad, quadPoint, factor1, factor2 );
+      localFunction().axpy( quadrature, quadPoint, factor1, factor2 );
     }
     
-    /** \copydoc LocalFunctionInterface::baseFunctionSet */
-    const BaseFunctionSetType& baseFunctionSet() const 
+    /** \copydoc LocalFunctionInterface::baseFunctionSet() const */
+    const BaseFunctionSetType &baseFunctionSet() const 
     {
       return localFunction().baseFunctionSet();
     }
