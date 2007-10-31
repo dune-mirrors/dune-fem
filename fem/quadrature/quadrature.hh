@@ -25,8 +25,6 @@ namespace Dune
    *
    *  \remark The quadratures usually used are ElementQuadrature and
    *  CachingQuadrature.
-   *
-   *  \endgroup
    */
 
 

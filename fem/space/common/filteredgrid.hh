@@ -181,7 +181,7 @@ namespace Dune {
 /** @addtogroup FilterGridPart 
  
  A FilteredGridPart is a subset of a GridPart and a GridPart itself 
- (without iterators for codim \neq 0). FilteredGridPart will work with
+ (without iterators for codim \f$\neq\f$ 0). FilteredGridPart will work with
  LeafGridPart and HierarchicGridPart but not with a LevelGridPart. If 
  you wish to use FilteredGridPart together with a LevelGridPart you are
  asked to write a specialization of FilteredGridPart, which should be 
