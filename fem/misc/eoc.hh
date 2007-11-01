@@ -1,8 +1,11 @@
 #ifndef DUNE_EOCOUTPUT_HH
 #define DUNE_EOCOUTPUT_HH
 
-namespace Dune{
+#include<sstream>
+#include<fstream>
+#include<cassert>
 
+namespace Dune{
 /**  
     @ingroup HelperClasses
     \brief Write a self contained tex table and a gnuplot
@@ -17,7 +20,7 @@ namespace Dune{
     parameters.
  */
 class EocOutput {
- std::string outputFile;
+  std::string outputFile;
   int level;
   std::vector<double> prevError;
   double prevSize;
@@ -57,7 +60,7 @@ class EocOutput {
           << "\\begin{center}\\large\n"
           << descript 
           << "\n\\end{center}\n\n"
-          << "\\include{"
+          << "\\input{"
           << filestreamBody.str() 
           << "}\n";
       ofs.close();	
