@@ -36,6 +36,7 @@
  *    Also, the concept should be checked to allow for complex numbers (at
  *    least as RangeFieldType).
  *  - more documentation for I/O
+ *  - Extend <fem/misc/eoc> and make errors stored in FieldVector possible.
  *  .
  *
  *  \section brainstorm ... that Might Be of Interest
@@ -64,5 +65,6 @@
  *    on real elements.
  *  - Implement a quadrature that reads its points from an ASCII file. This way,
  *    we do not need a quadrature for every floating point type.
+ *  - Description of norms/metrics and default implementation of error functionals induced by norms/metrics.
  *  .
  */
