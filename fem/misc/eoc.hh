@@ -163,13 +163,13 @@ class EocOutput {
     if (initial) {
       assert(errDescr.size()==error.size());
 	    ofsBody << "\\begin{tabular}{|c|c|c|c|";
-      for (int i=0;i<error.size();i++) {
+      for (unsigned int i=0;i<error.size();i++) {
         ofsBody << "|cc|";
       }
       ofsBody << "}\n"
 	        << "\\hline \n"
           << "level & size & CPU-time & counter";
-      for (int i=0;i<error.size();i++) {
+      for (unsigned int i=0;i<error.size();i++) {
         ofsBody << " & " << errDescr[i]
                 << " & eoc ";
       }
@@ -188,7 +188,7 @@ class EocOutput {
            << size << "  " 
            << time << "  " 
            << counter;
-    for (int i=0;i<error.size();++i) {
+    for (unsigned int i=0;i<error.size();++i) {
       ofsBody << " & " << error[i] << " & ";
       ofsGnu << "    " << error[i] << " ";
       if (initial) {
