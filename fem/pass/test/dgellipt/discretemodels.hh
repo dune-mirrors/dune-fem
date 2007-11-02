@@ -34,7 +34,6 @@
 
 #include <dune/fem/operator/2order/ldgelliptoperator.hh>
 #include <dune/fem/operator/2order/dgprimaloperator.hh>
-#include <dune/fem/operator/2order/dgcompactoperator.hh>
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
