@@ -1,5 +1,5 @@
 # initial refine level 
-StartLevel: 1
+StartLevel: 0
 
 # do EOCSteps eoc steps
 EOCSteps: 2
@@ -20,14 +20,14 @@ verbose: 1
 # 4 == ILU-n 
 # 5 == Gauss-Seidel
 # 6 == Jacobi
-Preconditioning: 4
+Preconditioning: 3
 # number of iterations 
 Pre-iteration: 2 
 # relaxation factor 
 Pre-relaxation: 1.1
 
 # display using Grape, 0 == no, 1 == yes  
-display: 1
+display: 0
 DisplayAll: 0
 
 # MacroTriang for 2d simul 
@@ -66,6 +66,6 @@ eta: 1.5
 # Benchmarks: 6 == Test 6 
 # Benchmarks: 7 == Test 7 
 # Problem 8 - 12 older problems 
-Problem: 4
+Problem: 8
 GlobalShift: 2.0 
 Factor: 1.0
