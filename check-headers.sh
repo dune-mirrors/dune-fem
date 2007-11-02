@@ -12,8 +12,7 @@ for directory in `find fem -type d | sed "/fem.*\/\..*/ d"` ; do
       continue
     fi
     
-    preheaders=`cat $makefile | sed 'H ; s/.*//g ; x ; s/\n/ /g ; s/[ \t][ \t]*/ /g ; /\\\\$/! { p ; d } ; s/\\\\$// ; x ; d' | grep '_HEADERS'`
-    headers=${preheaders#*_HEADERS*=}
+    headers=`cat $makefile | sed 'H ; s/.*//g ; x ; s/\n/ /g ; s/[ \t][ \t]*/ /g ; /\\\\$/! { p ; d } ; s/\\\\$// ; x ; d' | grep '_HEADERS' | sed 's/^.*_HEADERS.*=//'`
 
     for header in $headers ; do
       if test ! -e $directory/$header ; then
