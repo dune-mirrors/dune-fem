@@ -1,8 +1,8 @@
 #ifndef DUNE_CALLERUTILITY_HH
 #define DUNE_CALLERUTILITY_HH
 
-#include <dune/common/tuples.hh>
-#include <dune/common/utility.hh>
+#include <dune/fem/misc/femtuples.hh>
+#include <dune/fem/misc/utility.hh>
 #include <dune/common/typetraits.hh>
 
 #include "selection.hh"

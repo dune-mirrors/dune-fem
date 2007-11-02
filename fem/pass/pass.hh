@@ -5,7 +5,8 @@
 #include <string>
 
 //- Dune includes
-#include <dune/common/tuples.hh>
+#include <dune/fem/misc/femtuples.hh>
+#include <dune/fem/misc/utility.hh>
 
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>

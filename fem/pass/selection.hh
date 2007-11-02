@@ -1,8 +1,8 @@
 #ifndef DUNE_SELECTION_HH
 #define DUNE_SELECTION_HH
 
-#include <dune/common/tuples.hh>
-#include <dune/common/utility.hh> 
+#include <dune/fem/misc/femtuples.hh>
+#include <dune/fem/misc/utility.hh> 
 #include <dune/common/misc.hh>
 
 namespace Dune {

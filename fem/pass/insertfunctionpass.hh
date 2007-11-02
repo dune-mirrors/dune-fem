@@ -5,7 +5,7 @@
 #include <string>
 
 //- local includes 
-#include <dune/common/tuples.hh>
+#include <dune/fem/misc/femtuples.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 
 #include "discretemodel.hh"
