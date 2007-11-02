@@ -3,34 +3,36 @@
 
 #include <cstdlib>
 
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+
 namespace Dune
 {
  
   template< class TraitsImp >
   class ArrayAllocatorInterface
+  : public BartonNackmanInterface< ArrayAllocatorInterface< TraitsImp >,
+                                   typename TraitsImp :: ArrayAllocatorType >
   {
   public:
     typedef TraitsImp TraitsType;
 
+    typedef typename TraitsType :: ArrayAllocatorType ArrayAllocatorType;
+
   private:
     typedef ArrayAllocatorInterface< TraitsType > ThisType;
+    typedef BartonNackmanInterface< ThisType, ArrayAllocatorType > BaseType;
 
   public:
     typedef ThisType ArrayAllocatorInterfaceType;
-    
-    typedef typename TraitsType :: ArrayAllocatorType ArrayAllocatorType;
     
     typedef typename TraitsType :: ElementType ElementType;
 
     typedef typename TraitsType :: ElementPtrType ElementPtrType;
 
-  public:
-    inline ArrayAllocatorInterface ()
-    {
-      typedef CompileTimeChecker< Conversion< ArrayAllocatorType, ThisType > :: exists >
-        __Array_Allocator_Implementation_Must_Be_Derived_From_Interface__;
-    }
+  protected:
+    using BaseType :: asImp;
     
+  public:
     inline void allocate ( unsigned int size,
                            ElementPtrType &array ) const
     {
@@ -48,17 +50,6 @@ namespace Dune
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().reallocate( oldSize, newSize, array ) );
-    }
-
-  protected:
-    inline const ArrayAllocatorType &asImp () const
-    {
-      return static_cast< const ArrayAllocatorType& >( *this );
-    }
-
-    inline ArrayAllocatorType &asImp ()
-    {
-      return static_cast< ArrayAllocatorType& >( *this );
     }
   };
 

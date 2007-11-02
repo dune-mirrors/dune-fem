@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_REFERENCECOUNTER_HH
 #define DUNE_FEM_REFERENCECOUNTER_HH
 
-#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 
 namespace Dune
 {
@@ -26,13 +26,19 @@ namespace Dune
    */
   template< class TraitsImp >
   class ReferenceCounterInterface
+  : public BartonNackmanInterface< ReferenceCounterInterface< TraitsImp >,
+                                   typename TraitsImp :: ReferenceCounterType >
   {
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
+    //! type of the implementation (Barton-Nackman)
+    typedef typename Traits :: ReferenceCounterType ReferenceCounterType;
+
   private:
     typedef ReferenceCounterInterface< Traits > ThisType;
+    typedef BartonNackmanInterface< ThisType, ReferenceCounterType > BaseType;
 
     template< class, class >
     friend class Conversion;
@@ -41,20 +47,13 @@ namespace Dune
     //! type of the reference counter interface
     typedef ThisType ReferenceCounterInterfaceType;
 
-    //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: ReferenceCounterType ReferenceCounterType;
-
     //! type of the object, this is a reference counter for
     typedef typename Traits :: ObjectType ObjectType;
 
-  public:
-    inline ReferenceCounterInterface ()
-    {
-      typedef CompileTimeChecker
-        < Conversion< ReferenceCounterType, ThisType > :: exists >
-        __ReferenceCounter_Implementation_Must_Be_Derived_From_Interface__;
-    }
+  protected:
+    using BaseType :: asImp;
 
+  public:
     /** \brief add a reference to this object
      *
      *  This method should be called whenever a permanent reference to this
@@ -124,17 +123,6 @@ namespace Dune
     inline void removeReference () const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().removeReference() );
-    }
-
-  protected:
-    inline const ReferenceCounterType &asImp () const
-    {
-      return static_cast< const ReferenceCounterType & >( *this );
-    }
-
-    inline ReferenceCounterType &asImp ()
-    {
-      return static_cast< ReferenceCounterType & >( *this );
     }
   };
 

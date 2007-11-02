@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = foreign 1.5
 miscdir =  $(includedir)/dune/fem/misc
 misc_HEADERS = adaptiveindexmapper.hh \
 							 adaptiveindexmapper_inline.hh \
+							 bartonnackmaninterface.hh \
                boundaryidentifier.hh \
 							 codimmap.hh \
  	 						 combineinterface.hh \

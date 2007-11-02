@@ -3,9 +3,7 @@
 
 #include <cassert>
 
-#include <dune/common/misc.hh>
-#include <dune/common/typetraits.hh>
-#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 
 #include <dune/fem/storage/arrayallocator.hh>
 
@@ -17,21 +15,24 @@ namespace Dune
    */
   template< class TraitsImp >
   class ArrayInterface
+  : public BartonNackmanInterface< ArrayInterface< TraitsImp >,
+                                   typename TraitsImp :: ArrayType >
   {
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
+    //! type of the implementation (Barton-Nackman) 
+    typedef typename Traits :: ArrayType ArrayType;
+
   private:
     typedef ArrayInterface< Traits > ThisType;
+    typedef BartonNackmanInterface< ThisType, ArrayType > BaseType;
 
   public:
     //! type of this interface
     typedef ThisType ArrayInterfaceType;
     
-    //! type of the implementation (Barton-Nackman) 
-    typedef typename Traits :: ArrayType ArrayType;
-
     //! type of the array elements
     typedef typename Traits :: ElementType ElementType;
 
@@ -41,14 +42,10 @@ namespace Dune
     //! type of (non-constant) iterator
     typedef typename Traits :: IteratorType IteratorType;
 
-  public:
-    inline ArrayInterface ()
-    {
-      // make sure the implementation is derived from this interface
-      typedef CompileTimeChecker< Conversion< ArrayType, ThisType > :: exists >
-        __Array_Implementation_Must_Be_Derived_From_Interface__;
-    }
+  protected:
+    using BaseType :: asImp;
 
+  public:
     /** \brief access an array element
      *
      *  \param[in]  index  index of the array element to access
@@ -150,19 +147,6 @@ namespace Dune
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
       return asImp().size();
-    }
-    
-  protected:
-    // Barton-Nackman trick
-    inline const ArrayType &asImp () const
-    {
-      return static_cast< const ArrayType& >( *this );
-    }
-
-    // Barton-Nackman trick
-    inline ArrayType &asImp ()
-    {
-      return static_cast< ArrayType& >( *this );
     }
   };
 

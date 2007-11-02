@@ -57,6 +57,9 @@ namespace Dune
     //! type of iterator
     typedef typename Traits :: IteratorType IteratorType;
 
+  protected:
+    using BaseType :: asImp;
+
   public:
     //! Assign another vector to this one
     template< class T >
@@ -170,17 +173,6 @@ namespace Dune
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
       return asImp().size();
-    }
-
-  protected:
-    inline const VectorType &asImp () const
-    {
-      return static_cast< const VectorType& >( *this );
-    }
-
-    inline VectorType &asImp ()
-    {
-        return static_cast< VectorType& >( *this );
     }
   };
 
