@@ -1,5 +1,5 @@
-#ifndef DUNE_LAGRANGEINTERPOLATION_HH
-#define DUNE_LAGRANGEINTERPOLATION_HH
+#ifndef DUNE_FEM_LAGRANGEINTERPOLATION_HH
+#define DUNE_FEM_LAGRANGEINTERPOLATION_HH
 
 #include <dune/common/typetraits.hh>
 #include <dune/fem/function/common/discretefunctionadapter.hh>
@@ -183,7 +183,7 @@ namespace Dune
       for( int i = 0; i < numDofs; ++i )
       {
         RangeType phi;
-        function.evaluate( lagrangePointSet[ i ], phi );
+        function.evaluate( lagrangePointSet.point( i ), phi );
         localFunction[ i ] = phi[ 0 ];
       }
     }

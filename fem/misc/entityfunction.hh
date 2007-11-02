@@ -12,6 +12,8 @@
 #ifndef __ENTITYFUNCTION_HH__
 #define __ENTITYFUNCTION_HH__
 
+#warning "EntityFunction is deprecated. Use DiscreteFunctionAdapter instead"
+
 #include <dune/common/bartonnackmanifcheck.hh>
 
 namespace Dune
