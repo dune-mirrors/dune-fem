@@ -7,8 +7,6 @@
  *
  *  - Let NEW_LOCALFUNCTION be the default (i.e. check, if OLD_LOCALFUNCTION
  *    is defined and use new implementation otherwise)
- *  - Compile time check that DiscreteFunctionAdapter are not generated
- *    from DiscreteFunctions.
  *  - Mark all methods on local functions that have a parameter entity as
  *    deprecated.
  *  - Either remove the \\hasdefault mark for documentation, or use it

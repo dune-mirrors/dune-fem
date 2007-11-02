@@ -62,25 +62,30 @@ namespace Dune{
     public Function<DiscreteFunctionSpaceAdapter<typename FunctionImp :: FunctionSpaceType,GridPartImp>, 
                     DiscreteFunctionAdapter<FunctionImp,GridPartImp> >
   {
-    typedef Function<DiscreteFunctionSpaceAdapter<typename FunctionImp :: FunctionSpaceType,GridPartImp>, 
-                     DiscreteFunctionAdapter<FunctionImp,GridPartImp> > BaseType;
   public:  
+    //! type of function 
+    typedef FunctionImp FunctionType;
+
     //! type of grid part 
     typedef GridPartImp GridPartType;
                        
     //! type of traits 
-    typedef DiscreteFunctionAdapterTraits<FunctionImp,GridPartImp> Traits;
-    //! type of this pointer 
-    typedef DiscreteFunctionAdapter<FunctionImp,GridPartImp> ThisType;
-
-    // type of function 
-    typedef FunctionImp FunctionType;
-
-    // type of discrete function space
-    typedef typename Traits :: FunctionSpaceType FunctionSpaceType; 
+    typedef DiscreteFunctionAdapterTraits< FunctionType, GridPartType > Traits;
 
     //! type of discrete function space 
     typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+  private:
+    typedef DiscreteFunctionAdapter< FunctionType, GridPartType > ThisType;
+    typedef Function< DiscreteFunctionSpaceType, ThisType > BaseType;
+
+    // Make sure the function is not a discrete functon
+    CompileTimeChecker < !(Conversion< FunctionType, HasLocalFunction > :: exists) >
+      __FunctionType_May_Not_Be_a_DiscreteFunctionType__;
+
+  public:
+    // type of discrete function space
+    typedef typename Traits :: FunctionSpaceType FunctionSpaceType; 
 
     //! type of grid 
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
