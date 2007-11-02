@@ -337,7 +337,7 @@ namespace Dune {
       coeffNb_(1.0),
       matrixAssembled_(false),
       betaFactor_(0.0),
-      globalBeta_(1.0),
+      globalBeta_(0.0),
       beta_(0.0),
       bilinearPlus_(true),
       power_( 2*spc_.order() ),
