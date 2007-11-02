@@ -6,10 +6,10 @@
 
 //- Dune includes 
 #include <dune/common/typetraits.hh>
-#include <dune/common/tuples.hh>
 
 //- Dune fem includes 
-#include <dune/fem/pass/utility.hh>
+#include <dune/fem/misc/femtuples.hh>
+#include <dune/fem/misc/utility.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/io/file/iolock.hh>
 
