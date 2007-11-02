@@ -3,12 +3,12 @@
 
 #include <dune/common/tuples.hh>
 
+#if HAVE_TUPLE || HAVE_TR1_TUPLE
+
 // undef defines from tuples.hh 
 #undef Tuple
 #undef ElementType
 #undef Size 
-
-// use this implementations in any case 
 
 // overload Element Implementation 
 #define Element ElementAccess 
@@ -751,4 +751,5 @@ namespace Dune{
   }
  
 } // end namespace Dune 
+#endif
 #endif
