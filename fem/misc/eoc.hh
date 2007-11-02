@@ -196,7 +196,7 @@ class EocOutput {
         ofsGnu << " 1/0 ";
       }
       else {
-        double factor = prevSize/size;
+        double factor = size/prevSize;
         ofsBody << log(prevError[i]/error[i])/log(factor);
         ofsGnu << log(prevError[i]/error[i])/log(factor);
       }
