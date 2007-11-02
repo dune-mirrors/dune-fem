@@ -1,6 +1,6 @@
 #include <cmath>
 #include <config.h>
-#include <dune/common/tuples.hh>
+#include <dune/fem/misc/femtuples.hh>
 #include <iostream>
 #include "combineinterface.hh"
 
