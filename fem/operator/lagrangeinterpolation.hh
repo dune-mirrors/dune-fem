@@ -3,7 +3,6 @@
 
 #include <dune/common/typetraits.hh>
 #include <dune/fem/function/common/discretefunctionadapter.hh>
-#include <dune/fem/misc/entityfunction.hh>
 
 namespace Dune 
 {
