@@ -7,7 +7,7 @@
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-
+#include <dune/fem/function/common/discretefunction.hh>
 
 namespace Dune
 {
@@ -66,6 +66,19 @@ namespace Dune
         for( unsigned int j = 0; j < cols; ++j )
           write( matrix[ i ][j] );
       }
+    }
+
+    template< class Traits >
+    inline void write ( const DiscreteFunctionInterface< Traits > &df)
+    {
+    typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
+    typedef typename DiscreteFunctionType::ConstDofIteratorType ConstDofIteratorType;
+
+    write(df.size());
+
+    const ConstDofIteratorType end = df.dend();
+    for( ConstDofIteratorType it = df.dbegin(); it != end; ++it )
+      write(*it);
     }
 
     template< class Traits >
@@ -129,6 +142,90 @@ namespace Dune
   {
     out.write( value );
     return out;
+  }
+
+
+  class MatlabInStream
+  {
+  protected:
+    XDRFileInStream stream_;
+
+  public:
+    inline MatlabInStream ( const std :: string &filename )
+    : stream_( filename )
+    {
+    }
+
+    inline void read ( double &value )
+    {
+      stream_ >> value;
+    }
+
+    inline void read ( float &value )
+    {
+      stream_ >> value;
+    }
+
+    inline void read ( int &value )
+    {
+      stream_ >> value;
+    }
+
+    inline void read ( unsigned int &value )
+    {
+      stream_ >> value;
+    }
+
+    template< class Traits >
+    inline void read (  VectorInterface< Traits > &v )
+    {
+      unsigned int size;
+      read( size );
+      if( size != v.size() )
+        DUNE_THROW( IOError, "MatlabInStream: Reading vector of different size." );
+      for( unsigned int i = 0; i < size; ++i )
+        read( v[ i ] );
+    }
+
+    template< class T >
+    inline void read ( DenseMatrix< T > &matrix )
+    {
+      unsigned int rows ;
+      unsigned int cols ;
+
+      read( rows );
+      read( cols );
+      matrix.resize(rows,cols);
+      for( unsigned int i = 0; i < rows; ++i )
+      {
+        for( unsigned int j = 0; j < cols; ++j )
+          read( matrix[ i ][j] );
+      }
+    }
+
+    template< class Traits >
+    inline void read ( DiscreteFunctionInterface< Traits > &df)
+    {
+
+    read(df.size());
+
+    typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
+    typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
+
+    const DofIteratorType end = df.dend();
+    for( DofIteratorType it = df.dbegin(); it != end; ++it )
+      read(*it);
+    }
+
+
+  };
+
+  template< class T >
+  inline MatlabInStream &operator>> ( MatlabInStream &in,
+                                        T &value )
+  {
+    in.read( value );
+    return in;
   }
 
 }

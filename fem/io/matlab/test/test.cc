@@ -37,4 +37,9 @@ int main()
   GridPartType gridPart( grid );
   MatlabOutStream sg( "test.grid" );
   sg << gridPart;
+
+
+  MatlabInStream in( "test.vector" );
+  in >> v;
+
 }
