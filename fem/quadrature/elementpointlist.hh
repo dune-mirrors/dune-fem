@@ -3,6 +3,10 @@
 
 #include "quadrature.hh"
 
+#if ENABLE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+
 namespace Dune
 {
   
@@ -251,6 +255,34 @@ namespace Dune
   private:
     typedef typename IntersectionIteratorType :: LocalGeometry ReferenceGeometry;
 
+    // initializer for element geometry type 
+    template <class GridType> 
+    struct ElementGeometryInitializer
+    {
+      static inline const GeometryType init(
+          const IntersectionIterator &intersection,
+          const GeometryType& referenceGeom)
+      {
+        return GeometryType( referenceGeom.basicType(),
+                             dimension );
+      }
+    };
+
+#if ENABLE_UG 
+    // specialisation for UGGrid, here we have to other method because 
+    // the grid is hybrid. 
+    template <int dim> 
+    struct ElementGeometryInitializer< UGGrid< dim > > 
+    {
+      static inline const GeometryType init(
+          const IntersectionIterator &intersection,
+          const GeometryType& referenceGeom)
+      {
+        return intersection.inside()->geometry().type();
+      }
+    };
+#endif
+
   protected:
     const IntegrationPointListType quad_;
     const ReferenceGeometry &referenceGeometry_;
@@ -278,7 +310,8 @@ namespace Dune
     : quad_(intersection.intersectionGlobal().type(), order ),
       referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
                                          : intersection.intersectionNeighborLocal() ),
-      elementGeometry_( referenceGeometry_.type().basicType(), dimension ),
+      elementGeometry_( ElementGeometryInitializer<GridType> :: 
+            init( intersection, referenceGeometry_.type() )),
       faceNumber_( side == INSIDE ? intersection.numberInSelf()
                                   : intersection.numberInNeighbor() ),
       dummy_( 0. )
@@ -301,7 +334,8 @@ namespace Dune
     : quad_(intersection.intersectionGlobal().type(), order ),
       referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
                                          : intersection.intersectionNeighborLocal() ),
-      elementGeometry_( referenceGeometry_.type().basicType(), dimension ),
+      elementGeometry_( ElementGeometryInitializer<GridType> :: 
+            init( intersection, referenceGeometry_.type() )),
       faceNumber_( side == INSIDE ? intersection.numberInSelf()
                                   : intersection.numberInNeighbor() ),
       dummy_( 0. )
