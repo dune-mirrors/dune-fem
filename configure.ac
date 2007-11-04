@@ -41,6 +41,19 @@ LDFLAGS="$DUNE_LDFLAGS"
 LIBS="$DUNE_LIBS $BLAS_LIBS"
 
 # generate Makefiles
+AC_CHECK_FILE([fem/examples/Makefile.am],
+              [AC_CONFIG_FILES([fem/examples/Makefile
+                                fem/examples/poisson/Makefile
+                                fem/examples/elliptic/Makefile
+                                fem/examples/transport/Makefile
+                                fem/examples/vectorial/Makefile
+                                fem/examples/l2projection/Makefile
+                                fem/examples/localdg/Makefile
+                                fem/examples/localdg/advectdiffusion/Makefile
+                                fem/examples/pass/Makefile
+                                fem/examples/laplace/Makefile])],
+              [])
+
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile
@@ -97,16 +110,6 @@ AC_CONFIG_FILES([Makefile
      fem/solver/oemsolver/Makefile 
      fem/misc/Makefile
      fem/storage/Makefile
-     fem/examples/Makefile
-     fem/examples/poisson/Makefile
-     fem/examples/elliptic/Makefile
-     fem/examples/transport/Makefile
-     fem/examples/vectorial/Makefile
-     fem/examples/l2projection/Makefile
-     fem/examples/localdg/Makefile
-     fem/examples/localdg/advectdiffusion/Makefile
-     fem/examples/pass/Makefile
-     fem/examples/laplace/Makefile
      fem/test/Makefile
      lib/Makefile
      dune-fem.pc])

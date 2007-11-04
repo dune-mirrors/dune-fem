@@ -1,4 +1,7 @@
-# IGNORE_HEADERS
+testdir = $(includedir)/dune/fem/test
+test_HEADERS = dgl2projection.hh \
+               exactsolution.hh \
+               testgrid.hh
 
 GRIDTYPE = YASPGRID
 GRIDDIM = 2
