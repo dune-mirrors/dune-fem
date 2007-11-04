@@ -19,7 +19,9 @@ namespace Dune {
     typedef std::vector<size_t>       MapperType;
     typedef std::vector<MapperType>   MapperVectorType;
 
-    static const int twistOffset_ = 5;
+    // minimal twist is -4 for hexahedrons 
+    // so we add 4 to start from zero 
+    enum { twistOffset_ = 4 };
   };
 
 } // end namespace Dune
