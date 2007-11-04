@@ -12,6 +12,10 @@
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
+#ifdef ENABLE_UG 
+#include <dune/grid/uggrid.hh>
+#endif
+
 namespace Dune {
 
 /** 
@@ -31,8 +35,8 @@ namespace Dune {
 
     This projection only works for polynomial order 1 and the following
     spaces: 
-      SimplexGrids + DiscontinuousGalerkinSpace
-      CubeGrids    + LegendreDiscontinuousGalerkinSpace 
+      - SimplexGrids + DiscontinuousGalerkinSpace
+      - CubeGrids    + LegendreDiscontinuousGalerkinSpace 
     
 */
 template <class DiscreteFunctionType>
@@ -446,6 +450,19 @@ private:
     }
   };
 
+#ifdef ENABLE_UG 
+  template <class FaceBSetType, int dim> 
+  struct GetSubBaseFunctionSet<FaceBSetType, UGGrid<dim> >
+  {
+    template <class EntityType, class SpaceType> 
+    static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 
+    {
+      const GeometryType geoType (en.geometry().type().basicType(),dim-1);
+      return space.subBaseFunctionSet( geoType, true ); 
+    }
+  };
+#endif
+
   //! do projection of discrete functions  
   void project(const DiscreteFunctionType &uDG,
                DiscreteFunctionType & velo ) const 
@@ -501,7 +518,10 @@ private:
     // only working for spaces with one element type 
     if( space.multipleGeometryTypes() )
     {
-      DUNE_THROW(NotImplemented,"H-div projection not implemented for hybrid grids"); 
+      if( space.indexSet().geomTypes(0).size() > 1)
+      {
+        DUNE_THROW(NotImplemented,"H-div projection not implemented for hybrid grids"); 
+      }
     }
 
     // only implemented for order 1 right now 
@@ -849,7 +869,7 @@ private:
 public:
   //! application operator projection arg to H-div space 
   virtual void operator () (const DiscreteFunctionType &arg,
-                       DiscreteFunctionType& dest) const 
+                            DiscreteFunctionType& dest) const 
   {
     // apply H-div projection 
     project(arg,dest);
