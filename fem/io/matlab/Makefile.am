@@ -1,5 +1,3 @@
-SUBDIRS = test 
-
 matlabdir =  $(includedir)/dune/fem/io/matlab
 
 SUBDIRS = test
