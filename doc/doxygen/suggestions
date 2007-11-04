@@ -13,6 +13,7 @@
  *    consequently.
  *  - Check documentation and remove all warnings from doxygen.out
  *  - disable-documentation should not include documentation in dist 
+ *  - remove examples Makefile from Makefile List in configure.ac 
  *
  *  \section after1 ... that Should Be Implemented After 0.9
  *
