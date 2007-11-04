@@ -1,25 +1,11 @@
 #ifndef DUNE_TWISTUTILITY_HH
 #define DUNE_TWISTUTILITY_HH
 
-// is Alberta was found then also include headers 
-#ifndef HAVE_ALBERTA
-#define HAVE_ALBERTA_FOUND 0 
-#else 
-#define HAVE_ALBERTA_FOUND HAVE_ALBERTA 
-#endif
-
-// is ALU3dGrid was found then also include headers 
-#ifndef HAVE_ALUGRID
-#define HAVE_ALUGRID_FOUND 0 
-#else 
-#define HAVE_ALUGRID_FOUND HAVE_ALUGRID 
-#endif
-
-#if HAVE_ALUGRID_FOUND
+#ifdef ENABLE_ALUGRID
 #include <dune/grid/alugrid.hh>
 #endif
 
-#if HAVE_ALBERTA_FOUND
+#ifdef ENABLE_ALBERTA
 #include <dune/grid/albertagrid.hh>
 #endif
 
@@ -102,7 +88,7 @@ namespace Dune {
     static bool conforming (const GridType &, const IntersectionIterator&) { return true; }
   };
   
-#if HAVE_ALBERTA_FOUND
+#ifdef ENABLE_ALBERTA
   /** \brief Specialization of TwistUtility for AlbertaGrid. 
   */
   template <int dim, int dimW>
@@ -162,7 +148,7 @@ namespace Dune {
   };
 #endif
 
-#if HAVE_ALUGRID_FOUND
+#ifdef ENABLE_ALUGRID
   /** \brief Specialization of TwistUtility for ALUGridSimplex. 
   */
   template <>
@@ -491,8 +477,5 @@ namespace Dune {
   };
 #endif
   
-#undef HAVE_ALBERTA_FOUND
-#undef HAVE_ALUGRID_FOUND
 } // end namespace Dune 
-
 #endif
