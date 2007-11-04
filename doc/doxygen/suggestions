@@ -12,7 +12,7 @@
  *  - Either remove the \\hasdefault mark for documentation, or use it
  *    consequently.
  *  - Check documentation and remove all warnings from doxygen.out
- *  .
+ *  - disable-documentation should not include documentation in dist 
  *
  *  \section after1 ... that Should Be Implemented After 0.9
  *
@@ -59,6 +59,8 @@
  *  - DGspace with gemeralized Lagrangebasefunctionsets (Gauss-Labatto)
  *  - Revisit operator concept
  *  - A GridPart with all classes wrapped (i.e. Entities, Geometry...)
+ *  - Improved DG Limiter Pass
+ *  - Compact LDG Operator 
  *  - Clarify which jacobian method operates on the reference element and which one
  *    on real elements.
  *  - Implement a quadrature that reads its points from an ASCII file. This way,
