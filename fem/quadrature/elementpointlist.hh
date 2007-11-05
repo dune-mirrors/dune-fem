@@ -374,6 +374,7 @@ namespace Dune
     }
   };
 
+#ifdef ENABLE_UG
   /** \copydoc Dune::ElementIntegrationPointList */
   template <template <class, PartitionIteratorType> class GridPartImp,
             int dim, PartitionIteratorType pitype, class IntegrationTraits >
@@ -545,6 +546,7 @@ namespace Dune
       return quad_;
     }
   };
+#endif
 
 } // end namespace Dune
 #endif
