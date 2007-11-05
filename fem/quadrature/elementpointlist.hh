@@ -297,9 +297,8 @@ namespace Dune
 #endif
 
   protected:
-    const IntegrationPointListType quad_;
     const ReferenceGeometry &referenceGeometry_;
-    const GeometryType elementGeometry_;
+    const IntegrationPointListType quad_;
     const int faceNumber_;
 
     mutable CoordinateType dummy_;
@@ -320,12 +319,11 @@ namespace Dune
                                   const IntersectionIterator &intersection, 
                                   int order,
                                   Side side )
-    : quad_( ElementGeometryInitializer<GridType> ::
-                    intersectionGlobalType(intersection) , order ),
-      referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
+    : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
                                          : intersection.intersectionNeighborLocal() ),
-      elementGeometry_( ElementGeometryInitializer<GridType> :: 
-            init( intersection, referenceGeometry_.type() )),
+      quad_( ElementGeometryInitializer<GridType> :: intersectionGlobalType(intersection),
+             ElementGeometryInitializer<GridType> :: init( intersection, referenceGeometry_.type()),
+             order ),
       faceNumber_( side == INSIDE ? intersection.numberInSelf()
                                   : intersection.numberInNeighbor() ),
       dummy_( 0. )
@@ -345,12 +343,11 @@ namespace Dune
     ElementIntegrationPointList ( const IntersectionIterator &intersection,
                                  int order,
                                  Side side )
-    : quad_( ElementGeometryInitializer<GridType> ::
-                    intersectionGlobalType(intersection) , order ),
-      referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
+    : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
                                          : intersection.intersectionNeighborLocal() ),
-      elementGeometry_( ElementGeometryInitializer<GridType> :: 
-            init( intersection, referenceGeometry_.type() )),
+      quad_( ElementGeometryInitializer<GridType> :: intersectionGlobalType(intersection),
+             ElementGeometryInitializer<GridType> :: init( intersection, referenceGeometry_.type()),
+             order ),
       faceNumber_( side == INSIDE ? intersection.numberInSelf()
                                   : intersection.numberInNeighbor() ),
       dummy_( 0. )
@@ -362,15 +359,14 @@ namespace Dune
      *  \param[in]  org  element quadrature to copy
      */
     ElementIntegrationPointList ( const ElementIntegrationPointList &org )
-    : quad_( org.quad_ ),
-      referenceGeometry_( org.referenceGeometry_ ),
-      elementGeometry_( org.elementGeometry_ ),
+    : referenceGeometry_( org.referenceGeometry_ ),
+      quad_( org.quad_ ),
       faceNumber_( org.faceNumber_ ),
       dummy_( org.dummy_ )
     {
     }
     
-    inline const QuadraturePointWrapperType operator[] ( unsigned int i ) const
+    inline const QuadraturePointWrapperType operator[] ( size_t i ) const
     {
       return QuadraturePointWrapperType( *this, i );
     }
@@ -417,11 +413,11 @@ namespace Dune
       return quad_.geo();
     }
 
-    /** \copydoc Dune::ElementIntegrationPointList::elementGeometry
+    /** \copydoc Dune::IntegrationPointList::elementGeometry
      */
     const GeometryType& elementGeometry () const
     {
-      return elementGeometry_;
+      return quad_.elementGeometry();
     }
 
   protected:

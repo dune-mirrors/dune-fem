@@ -152,6 +152,7 @@ namespace Dune
 
   protected:
     const IntegrationPointListType &ipList_;
+    const GeometryType elementGeometry_;
 
   public:
     /** \brief create a quadrature for a given geometry and order
@@ -167,6 +168,27 @@ namespace Dune
     inline IntegrationPointList ( const GeometryType &geometry,
                                   int order )
     : ipList_( QuadratureProviderType :: getQuadrature( geometry, order ) )
+    , elementGeometry_( geometry )
+    {
+    }
+
+    /** \brief create a quadrature for a given geometry and order
+     *
+     *  This constructor creates a quadrature for the specified geometry which
+     *  is capable of integrating polynoms up the given order exactly.
+     * 
+     *  \note The order of the quadrature may be higher than the requested one.
+     *
+     *  \param[in]  geometry  geometry type of the requested quadrature
+     *  \param[in]  elementGeometry  geometry type of element that resulting 
+     *              quadrature is used for (in case of face quadratures)
+     *  \param[in]  order     order of the requested quadrature
+     */
+    inline IntegrationPointList ( const GeometryType &geometry,
+                                  const GeometryType &elementGeometry,
+                                  int order )
+    : ipList_( QuadratureProviderType :: getQuadrature( geometry, elementGeometry, order ) )
+    , elementGeometry_( elementGeometry )
     {
     }
 
@@ -181,6 +203,7 @@ namespace Dune
      */
     inline IntegrationPointList ( const IntegrationPointListType &ipList )
     : ipList_( ipList )
+    , elementGeometry_( ipList.geometry() )  
     {
     }
 
@@ -190,6 +213,7 @@ namespace Dune
      */ 
     inline IntegrationPointList ( const IntegrationPointList &org )
     : ipList_( org.ipList_ )
+    , elementGeometry_( org.elementGeometry_ )
     {
     }
 
@@ -283,6 +307,22 @@ namespace Dune
     {
       return ipList_.geometry();
     }
+
+    /** \brief obtain GeometryType for this integration point list
+     *
+     *  Integration point lists are specified in local coordinates, i.e.,
+     *  coordinates with respect to the reference element. When
+     *  quadratures for face integration are use to build quadratures
+     *  for elements then we also need to know the element geometry type. 
+     *
+     *  \returns GeometryType for integration object element type which
+     *  might differ from the quadrature geometry in case of face
+     *  quadratures.
+     */
+    const GeometryType& elementGeometry () const
+    {
+      return elementGeometry_;
+    }
   };
 
 
@@ -348,6 +388,25 @@ namespace Dune
      */
     inline Quadrature( const GeometryType &geometry, int order )
     : BaseType( geometry, order )
+    {
+    }
+
+    /** \brief create a quadrature for a given geometry and order
+     *
+     *  This constructor creates a quadrature for the specified geometry which
+     *  is capable of integrating polynoms up the given order exactly.
+     * 
+     *  \note The order of the quadrature may be higher than the requested one.
+     *
+     *  \param[in]  geometry  geometry type of the requested quadrature
+     *  \param[in]  elementGeometry  geometry type of element that resulting 
+     *              quadrature is used for (in case of face quadratures)
+     *  \param[in]  order     order of the requested quadrature
+     */
+    inline Quadrature ( const GeometryType &geometry,
+                        const GeometryType &elementGeometry,
+                        int order )
+    : BaseType( geometry, elementGeometry, order )
     {
     }
 
