@@ -6,7 +6,7 @@ namespace Dune
 
   /** \class DebugCounter
    *  \brief A counter only present if NDEBUG is not defined
-   *
+   
    *  There are several cases, where we need a counter for debugging purposes
    *  that shall only be present, if NDEBUG is not defined. Since it is quite
    *  tedious to write the #ifndefs repeatedly, it is provided here.

@@ -55,8 +55,7 @@ namespace Dune
     const int component_;
   };
 
-
-
+  //! /brief Output using VTK
   template< class GridPartImp >
   class VTKIO
   : public VTKWriter< typename GridPartImp :: GridType,

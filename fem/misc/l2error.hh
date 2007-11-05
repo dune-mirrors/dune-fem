@@ -63,7 +63,6 @@ namespace Dune
  *
  *   \param discFunc the discrete function
  *
- *   \param polOrd for Quadrature to use, default is 2 * spaceOrd + 2 
  *   \param time the time, at which the functions should 
  *          be evaluated
  *

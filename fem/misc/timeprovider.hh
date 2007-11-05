@@ -262,46 +262,46 @@ namespace Dune {
     //! return internal time 
     double time() const { return tp_.time(); }
     
-    /** \brief @copydoc TimeProvider::provideTimeStepEstimate */
+    /** @copydoc TimeProvider::provideTimeStepEstimate */
     void provideTimeStepEstimate(const double dtEstimate) 
     {
       tp_.provideTimeStepEstimate(dtEstimate);
     }
 
-    /** \brief @copydoc TimeProvider::lock */
+    /** @copydoc TimeProvider::lock */
     void lock() { tp_.lock(); }
     
-    /** \brief @copydoc TimeProvider::unlock */
+    /** @copydoc TimeProvider::unlock */
     void unlock() { tp_.unlock(); }
     
-    /** \brief @copydoc TimeProvider::setTime */
+    /** @copydoc TimeProvider::setTime */
     void setTime(const double time) { tp_.setTime(time); }
 
-    /** \brief @copydoc TimeProvider::resetTimeStepEstimate */
+    /** @copydoc TimeProvider::resetTimeStepEstimate */
     void resetTimeStepEstimate() 
     {
       tp_.resetTimeStepEstimate(); 
     }
     
-    /** \brief @copydoc TimeProvider::timeStepEstimate */
+    /** @copydoc TimeProvider::timeStepEstimate */
     double timeStepEstimate() const 
     {
       return tp_.timeStepEstimate();
     }
 
-    /** \brief @copydoc TimeProvider::cfl */
+    /** @copydoc TimeProvider::cfl */
     double cfl () const { return tp_.cfl(); } 
     
-    /** \brief @copydoc TimeProvider::deltaT */
+    /** @copydoc TimeProvider::deltaT */
     double deltaT () const { return tp_.deltaT(); }
     
-    /** \brief @copydoc TimeProvider::timestep */
+    /** @copydoc TimeProvider::timeStep */
     int timeStep() const 
     {
       return tp_.timeStep();
     }
 
-    /** \brief @copydoc TimeProvider::syncTimeStep 
+    /** @copydoc TimeProvider::syncTimeStep 
         
         \note Here a global communication to minimize the time step size
         over all time step sizes from all processors is done. 
@@ -318,7 +318,7 @@ namespace Dune {
       tp_.syncTimeStep();
     }
 
-    /** \brief @copydoc TimeProvider::augmentTime */
+    /** @copydoc TimeProvider::augmentTime */
     double augmentTime() 
     {
       // increase time 

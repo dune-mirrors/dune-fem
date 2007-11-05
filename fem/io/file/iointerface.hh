@@ -33,10 +33,12 @@ namespace Dune {
    for checkpointing. 
    Visualization output of discrete functions
    is provided at the moment for
-   - \ref GrapeIO GraPE   
-   - \ref VTKIO VTK, e.g., for paraview
-   - \ref MatlabIO Matlab output
+   - GraPE   
+   - VTK, e.g., for paraview
+   - Matlab 
    .
+**/
+/*  
    The \ref CheckPointIO "checkpointing facility" 
    writes both the grid state, a number of
    discrete function and other parameters
@@ -45,7 +47,8 @@ namespace Dune {
    from the save state. Using the \ref GrapeIO
    "datadisp" programm the checkpoint files can also
    be used for visualization purposes.
-   
+*/
+/**
    \remark The interface class for general output
            of DiscreteFunctions to disc is given
            by IOInterface.
