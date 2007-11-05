@@ -81,10 +81,13 @@ namespace Dune
         TemporaryLocalFunctionType;
 
       typedef typename RangeFunctionType :: LocalFunctionType RangeLocalFunctionType;
+      typedef typename RangeFunctionType :: DofIteratorType DofIteratorType;
 
       const RangeFunctionSpaceType &rangeFunctionSpace = w.space();
 
-      w.assign( (RangeFieldType)INFINITY );
+      const DofIteratorType dend = w.dend();
+      for( DofIteratorType dit = w.dbegin(); dit != dend; ++dit )
+        (*dit) = (RangeFieldType)INFINITY;
 
       const IteratorType end = rangeFunctionSpace.end();
       for( IteratorType it = rangeFunctionSpace.begin(); it != end; ++it )
