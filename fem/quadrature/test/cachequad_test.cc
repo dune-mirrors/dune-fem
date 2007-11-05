@@ -184,33 +184,29 @@ namespace Dune {
 
       for(int l=0; l<3; ++l) 
       {
-        checkLeafsCodim1(gridPart,
-                         quadOrd);
+        checkLeafsCodim1(gridPart,quadOrd);
         grid.globalRefine(1);
       }
     }
-    /*
     // 3d test 
     {
       const int dim = 3;
-      const GeometryType hexahedron( GeometryType::cube, dim);
 
       typedef UGGrid<dim> GridType;
       typedef LeafGridPart< GridType > GridPartType;
 
-      GridPtr<GridType> gridPtr(dgf2DGridFile_);
+      GridPtr<GridType> gridPtr(dgf3DGridFile_);
       GridType& grid = *gridPtr;
       GridPartType gridPart( grid );
 
       const int quadOrd = 4;
 
-      for(int l=0; l<3; ++l) 
+      for(int l=0; l<2; ++l) 
       {
-        checkLeafsCodim1(gridPart, hexahedron, quadOrd);
+        checkLeafsCodim1(gridPart, quadOrd);
         grid.globalRefine(1);
       }
     }
-    */
 #endif
   }
 
