@@ -1,6 +1,7 @@
 #ifndef DUNE_ALUGRID_FIXTURE_HH
 #define DUNE_ALUGRID_FIXTURE_HH
 
+#ifdef ENABLE_ALUGRID
 #include <dune/grid/alugrid.hh>
 
 namespace Dune {
@@ -37,5 +38,5 @@ namespace Dune {
 
 
 } // end namespace Dune
-
+#endif
 #endif

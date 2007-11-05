@@ -1,6 +1,7 @@
 #ifndef DUNE_ALBERTAGRID_FIXTURE_HH
 #define DUNE_ALBERTAGRID_FIXTURE_HH
 
+#ifdef ENABLE_ALBERTA
 #include <dune/grid/albertagrid.hh>
 
 namespace Dune {
@@ -23,5 +24,5 @@ namespace Dune {
 
 
 }
-
+#endif
 #endif
