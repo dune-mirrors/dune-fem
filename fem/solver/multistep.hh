@@ -50,7 +50,6 @@ public:
     \param[in] op Operator \f$L\f$ 
     \param[in] tp TimeProvider 
     \param[in] pord polynomial order
-    \param[in] parameter gamma
     \param[in] verbose verbosity 
   */
   ExplMultiStepBase(Operator& op, TimeProvider& tp, 

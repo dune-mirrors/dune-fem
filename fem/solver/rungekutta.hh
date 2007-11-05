@@ -46,7 +46,7 @@ public:
   virtual void initialize(const DestinationType& arg) = 0;
   
   /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.   
-      \param[inout] u unknown to solve for 
+      \param[in] u unknown to solve for 
   */
   virtual void solve(DestinationType& u) = 0;
 };
