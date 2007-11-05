@@ -450,6 +450,9 @@ namespace Dune
     ElementPtrType elements_;
 
   public:
+    using BaseType :: assign;
+
+  public:
     inline explicit DynamicArray ( unsigned int size = 0 )
     : allocator_()
     {
@@ -526,6 +529,16 @@ namespace Dune
 
       for( unsigned int i = 0; i < arraySize; ++i )
         elements_[ oldSize + i ] = array[ i ];
+    }
+    
+    /** \copydoc Dune::ArrayInterface::assign(const ArrayInterface<T> &other) */
+    template< class T >
+    inline ThisType &assign( const ArrayInterface< T > &other )
+    {
+      resize( other.size() );
+      for( unsigned int i = 0; i < size_; ++i )
+        elements_[ i ] = other[ i ];
+      return *this;
     }
 
     inline void resize ( unsigned int newSize )

@@ -614,14 +614,14 @@ namespace Dune
     //! Copy constructor setting up a vector with the data of another one
     template< class T >
     inline DynamicVector ( const VectorInterface< T > &v )
-    : fields_( v.size() )
+    : fields_()
     {
       assign( v );
     }
 
     //! Copy constructor setting up a vector with the data of another one (of the same type)
     inline DynamicVector ( const ThisType &v )
-    : fields_( v.size() )
+    : fields_()
     {
       assign( v );
     }
@@ -655,6 +655,14 @@ namespace Dune
       return fields_[ index ];
     }
     
+    /** \copydoc Dune::VectorInterface::assign(const VectorInterrace<T> &v) */
+    template< class T >
+    inline ThisType &assign ( const VectorInterface< T > &v )
+    {
+      fields_.assign( v );
+      return *this;
+    }
+
     inline void resize ( unsigned int newSize )
     {
       fields_.resize( newSize );
