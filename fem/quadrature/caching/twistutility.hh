@@ -429,8 +429,9 @@ namespace Dune {
 #endif
 
 #ifdef ENABLE_UG
+  //! 2d twist utility for UGGrid.
   template <> 
-  class TwistUtility<UGGrid<2> > 
+  class TwistUtility< UGGrid<2> > 
   {
     enum { dim = 2 };
     typedef UGGrid<dim> GridImp;
@@ -461,6 +462,75 @@ namespace Dune {
       // for 1 and 2 is 0 
       return (it.inside()->geometry().type().isSimplex()) ? 0 : 
         (it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
+    }
+    
+    //! \brief return 0 for outer face 
+    template <class IntersectionIterator> 
+    int twistInNeighbor(const IntersectionIterator& it) const {
+      assert( it.neighbor() );
+      return (it.outside()->geometry().type().isSimplex()) ? 1 : 
+        (it.numberInNeighbor() == 1 || it.numberInNeighbor() == 2) ? 1 : 0;
+    }
+
+    //! \brief return 0 for outer face 
+    template <class IntersectionIterator> 
+    static inline int twistInNeighbor(const GridType &, const IntersectionIterator& it) 
+    {
+      assert( it.neighbor() );
+      return (it.outside()->geometry().type().isSimplex()) ? 1 : 
+        (it.numberInNeighbor() == 1 || it.numberInNeighbor() == 2) ? 1 : 0;
+    }
+
+    //! \brief return true if intersection is conform, default is true  
+    template <class IntersectionIterator> 
+    bool conforming (const IntersectionIterator& it) const 
+    { 
+      return (it.neighbor()) ? 
+        (it.inside()->level() == it.outside()->level()) : true; 
+    }
+    
+    //! \brief return true if intersection is conform, default is true  
+    template <class IntersectionIterator> 
+    static inline bool conforming (const GridType &, const IntersectionIterator& it)
+    { 
+      return (it.neighbor()) ? 
+        (it.inside()->level() == it.outside()->level()) : true; 
+    }
+  };
+
+  //! 3d twist utility for UGGrid.
+  template <> 
+  class TwistUtility< UGGrid<3> > 
+  {
+    enum { dim = 3 };
+    typedef UGGrid<dim> GridImp;
+    // this default implementation only is for SGrid, YaspGrid, UGGrid
+    // and OneDGrid. 
+  public:
+    typedef GridImp GridType;
+  public:
+    //! \brief constructor taking grid reference 
+    TwistUtility(const GridType& grid) {}
+
+    //! \brief return 0 for inner face 
+    template <class IntersectionIterator> 
+    static inline int twistInSelf(const GridType &, const IntersectionIterator& it)
+    {
+      // for simplex twist is 0 
+      // for cube twist is 1 for side 0 and 3 
+      // for 1 and 2 is 0 
+      return (it.inside()->geometry().type().isSimplex()) ? 0 : 0;
+        //(it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
+    }    
+    //! \brief return 0 for inner face 
+    template <class IntersectionIterator> 
+    int twistInSelf(const IntersectionIterator& it) const 
+    {
+      // for simplex twist is 0 
+      // for cube twist is 1 for side 0 and 3 
+      // for 1 and 2 is 0 
+      return (it.inside()->geometry().type().isSimplex()) ? 0 : 0;
+       // (it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
     }
     
     //! \brief return 0 for outer face 
