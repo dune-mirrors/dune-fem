@@ -4,6 +4,7 @@
 #include<sstream>
 #include<fstream>
 #include<cassert>
+#include<dune/common/fvector.hh>
 
 namespace Dune{
 /**  
@@ -148,8 +149,9 @@ class EocOutput {
   //! \param time: run time for this step of the simulation
   //! \param counter: could be time step counter or number of refinment
   //!                 steps for example
+  template <class VecType>
   void printTexAddError(double size,
-                        std::vector<double> error, 
+                        VecType& error, 
                         std::vector<std::string> errDescr,
                         double time, 
                         int counter) {
@@ -176,6 +178,7 @@ class EocOutput {
 	    ofsBody << "\n \\tabularnewline\n"
 	            << "\\hline\n"
 	            << "\\hline\n";
+      prevError.resize(error.size());
     } else {
       assert(error.size()==prevError.size());
     }
@@ -196,23 +199,33 @@ class EocOutput {
         ofsGnu << " 1/0 ";
       }
       else {
-        double factor = size/prevSize;
+        double factor = prevSize/size;
         ofsBody << log(prevError[i]/error[i])/log(factor);
         ofsGnu << log(prevError[i]/error[i])/log(factor);
       }
+      prevError[i]=error[i];
     }
 	  ofsBody << "\n"
             << "\\tabularnewline\n"
 	          << "\\hline \n";
     ofsGnu << "\n";
-    prevError = error;
     prevSize = size;
     level++;
     initial = false;
     ofsBody.close();
     ofsGnu.close();
   }
-
+  template <int N>
+  void printTexAddError(double size,
+                        FieldVector<double,N>& error, 
+                        std::vector<std::string> errDescr,
+                        double time, 
+                        int counter) {
+    std::vector<double> tmp(error.dim());
+    for (unsigned int i=0;i<error.dim();++i)
+	    tmp[i] = error[i];
+    printTexAddError(size,tmp,errDescr,time,counter);
+  }
 };
 
 }
