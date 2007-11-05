@@ -473,8 +473,8 @@ private:
     typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
     typedef typename FunctionSpaceType::Traits::GridType GridType;
     typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
     typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
     typedef typename GridType :: template Codim<0> :: Entity EntityType;
     typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
     typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType; 
@@ -493,7 +493,7 @@ private:
     if(space.order() < 1 ) return ;
 
     GridPartType & gridPart = const_cast<GridPartType &> (space.gridPart());
-    int polOrd = 2 * space.order() + 2;
+    const int polOrd = 2 * space.order() + 2;
 
     // only working for polOrd = 1 at the moment 
     //assert( space.order() == 1 );
@@ -504,7 +504,6 @@ private:
 
     typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ; 
     typedef typename FaceDiscreteSpaceType :: RangeType FaceRangeType; 
-    FaceRangeType faceVal;
     
     typedef typename ElementDiscreteSpaceType :: BaseFunctionSetType ElementBaseSetType  ; 
     typedef typename ElementGradientSpaceType :: BaseFunctionSetType GradientBaseSetType  ; 
@@ -570,13 +569,9 @@ private:
     // check rows == cols 
     if( space.order() == 1 )
     {
-      if( cols != rows ) 
-        DUNE_THROW(InvalidStateException,"H-div for order 1 only works with symetric matrices"); 
+      if( (cols != rows) && dim > 2 ) 
+        DUNE_THROW(InvalidStateException,"H-div for order 1 only works with symetric matrices in 3d"); 
     }
-
-    RangeType ret (0.0);
-    RangeType neighRet (0.0);
-    RangeType uPhi (0.0);
 
     MutableArray< RangeFieldType > rets(numDofs);
 
@@ -592,8 +587,9 @@ private:
       DUNE_THROW(InvalidStateException,"wrong sizes ");
     }
 
-#define USE_NON_SYMETRIC 0
-#if USE_NON_SYMETRIC
+    // flag to say whether we have non-symetric or symetric situation 
+    const bool nonSymetric = (cols != rows);
+
     // matrix type 
     typedef DenseMatrix<double> MatrixType; 
     MatrixType matrix(rows,cols);
@@ -602,157 +598,33 @@ private:
     MatrixType fakeMatrix(cols,cols);
     RowType rhs(rows,0.0);
     RowType fakeRhs(numDofs,0.0);
-#else 
-    FieldMatrixType& matrix = inv;
-    VectorType& rhs = fRhs;
-#endif
-
-    // face quadrature type 
-    typedef CachingQuadrature<GridPartType, 1> FaceQuadratureType;
 
     // iterate over grid 
     Iterator endit = space.end();
     for(Iterator it = space.begin(); it != endit ; ++it) 
     {
-      // reset values 
-      matrix = 0.0;
-      // reset rhs 
-      for(int i=0; i<numDofs; ++i) 
+      // get entity 
+      const EntityType& en = *it;
+
+      if( nonSymetric ) 
       {
-        rhs[i] = 0.0;
-      }
-
-      // cache entity
-      const EntityType & en = *it;
-
-      // get uDg local on entity 
-      const LocalFuncType uLF = uDG.localFunction(en);
-
-      // get base functions set 
-      const BaseFunctionSetType & bSet = uLF.baseFunctionSet(); 
-      
-      // iterate over intersections 
-      IntersectionIteratorType endnit = gridPart.iend(en);
-      for(IntersectionIteratorType nit = gridPart.ibegin(en);
-          nit != endnit; ++nit)
-      {
-        // get base function set of face 
-        const FaceBSetType & faceSet =
-          faceSpace.subBaseFunctionSet(nit.intersectionGlobal().type());
-       
-        const int firstRow = nit.numberInSelf() * numFaceDofs;
-        
-        // only interior faces are considered 
-        if(nit.neighbor())
+        // reset values 
+        matrix = 0.0;
+        // reset rhs 
+        for(int i=0; i<numDofs; ++i) 
         {
-          EntityPointerType neighEp = nit.outside();
-          // get neighbor entity 
-          const EntityType&   nb = *neighEp;
-    
-          // get local function of neighbor 
-          const LocalFuncType uNeighLf = uDG.localFunction(nb);
-
-          typedef TwistUtility<GridType> TwistUtilityType;
-          // for conforming situations apply Quadrature given
-          if( TwistUtilityType::conforming(gridPart.grid(),nit) )
-          {
-            // create quadratures 
-            FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-            FaceQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
-
-            applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,
-                               bSet,faceSet, uLF, uNeighLf,
-                               firstRow, numFaceDofs,
-                               rets,
-                               ret,neighRet,faceVal,
-                               matrix, rhs);
-          }
-          else 
-          {
-            // type of quadrature for non-conforming intersections 
-            typedef typename FaceQuadratureType ::
-              NonConformingQuadratureType NonConformingQuadratureType;
-            // create quadratures 
-            NonConformingQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-            NonConformingQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
-
-            applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,
-                               bSet,faceSet, uLF, uNeighLf, 
-                               firstRow, numFaceDofs,
-                               rets,
-                               ret,neighRet,faceVal,
-                               matrix, rhs);
-
-          }
+          rhs[i] = 0.0;
         }
-       
-        // only interior faces are considered 
-        if(nit.boundary())
-        {
-          // create quadrature 
-          FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-          const int quadNop = faceQuadInner.nop();
-          for (int l = 0; l < quadNop ; ++l)
-          {
-            DomainType unitNormal = 
-              nit.integrationOuterNormal(faceQuadInner.localPoint(l));
 
-            const double faceVol = unitNormal.two_norm();
-            unitNormal *= 1.0/faceVol;
+        // fill non-symetric matrix 
+        fillMatrix(gridPart,en,uDG,faceSpace,polOrd,numDofs,numFaceDofs,
+                   rets,matrix,rhs);
 
-            // get integration weight 
-            const double intel = faceVol * faceQuadInner.weight(l);
-
-            // evaluate function 
-            uLF.evaluate(faceQuadInner,l,ret);
-
-            double val = ret * unitNormal; 
-            val *= intel;
-           
-            // evaluate base functions 
-            for(int i=0; i<numDofs; ++i) 
-            {
-              bSet.evaluate(i,faceQuadInner,l,uPhi); 
-              rets[i]  = uPhi * unitNormal; 
-              rets[i] *= intel;
-            }
-
-            int row = firstRow; 
-            for(int j=0; j<numFaceDofs; ++j, ++row)
-            {
-              faceSet.evaluate(j,faceQuadInner.localPoint(l), faceVal);
-              rhs[row] += val*faceVal[0];
-
-              for(int i=0; i<numDofs; ++i) 
-              {
-                matrix[row][i] += (faceVal[0] * rets[i]);      
-              }
-            }
-          }
-        }
-      }
-
-      /*
-      // if we have element parts 
-      if( space.order() > 1 ) 
-      {
-        // not working yet
-        // add part of gradient 
-        int gradStartRow = overallFaceDofs;
-        gradientPart(gradSpace, en, uLF, gradStartRow, matrix,rhs);
-        
-        // add part of bubble space 
-        int bubbleStartRow = overallFaceDofs;//numFaceDofs + numGradDofs; 
-        bubblePart(elSpace,en,uLF,bubbleStartRow, matrix,rhs);
-      }
-      */
-      
-#if USE_NON_SYMETRIC
-      if( rows != cols )
-      {
+        // apply least square 
         matrix.multTransposed(rhs,fakeRhs);
         fakeMatrix.multiply_AT_A(matrix);
 
+        // copy values 
         for(int i=0; i<numDofs; ++i)
         {
           fRhs[i] = fakeRhs[i];
@@ -764,17 +636,17 @@ private:
       }
       else 
       {
-        for(int i=0; i<numDofs; ++i)
-        {
-          fRhs[i] = rhs[i];
-          for(int j=0; j<numDofs; ++j) 
-          {
-            inv[i][j] = matrix[i][j];
-          }
-        }
+        // reset values 
+        inv = 0.0;
+        // reset rhs 
+        fRhs = 0.0;
+
+        assert( cols == rows );
+        // fill inv and fRhs directly 
+        fillMatrix(gridPart,en,uDG,faceSpace,polOrd,numDofs,numFaceDofs,
+                   rets,inv,fRhs);
       }
-#endif
-      
+
       // invert resulting matrix 
       inv.invert();
 
@@ -793,6 +665,147 @@ private:
     }
   }
 
+  template <class GridPartType,
+            class EntityType,
+            class ArrayType, 
+            class MatrixType,
+            class VectorType>
+  void fillMatrix(const GridPartType& gridPart,
+                  const EntityType& en,
+                  const DiscreteFunctionType& uDG,
+                  const FaceDiscreteSpaceType& faceSpace,
+                  const int polOrd, const int numDofs, const int numFaceDofs,
+                  ArrayType& rets, MatrixType& matrix, VectorType& rhs) const
+  {
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
+
+    typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ; 
+    typedef typename FaceDiscreteSpaceType :: RangeType FaceRangeType; 
+    FaceRangeType faceVal;
+
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType; 
+    RangeType ret (0.0);
+    RangeType neighRet (0.0);
+    RangeType uPhi (0.0);
+
+    // face quadrature type 
+    //typedef CachingQuadrature<GridPartType, 1> FaceQuadratureType;
+    typedef ElementQuadrature<GridPartType, 1> FaceQuadratureType;
+
+    typedef typename DiscreteFunctionType :: LocalFunctionType LocalFuncType ;
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+      :: BaseFunctionSetType BaseFunctionSetType;
+
+    // get uDg local on entity 
+    const LocalFuncType uLF = uDG.localFunction(en);
+
+    // get base functions set 
+    const BaseFunctionSetType & bSet = uLF.baseFunctionSet(); 
+
+    // iterate over intersections 
+    IntersectionIteratorType endnit = gridPart.iend(en);
+    for(IntersectionIteratorType nit = gridPart.ibegin(en);
+        nit != endnit; ++nit)
+    {
+      // get base function set of face 
+      const FaceBSetType & faceSet =
+        faceSpace.subBaseFunctionSet(nit.intersectionGlobal().type());
+     
+      const int firstRow = nit.numberInSelf() * numFaceDofs;
+      
+      // only interior faces are considered 
+      if(nit.neighbor())
+      {
+        EntityPointerType neighEp = nit.outside();
+        // get neighbor entity 
+        const EntityType&   nb = *neighEp;
+  
+        // get local function of neighbor 
+        const LocalFuncType uNeighLf = uDG.localFunction(nb);
+
+        typedef TwistUtility<GridType> TwistUtilityType;
+        // for conforming situations apply Quadrature given
+        if( TwistUtilityType::conforming(gridPart.grid(),nit) )
+        {
+          // create quadratures 
+          FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
+          FaceQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+
+          applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,
+                             bSet,faceSet, uLF, uNeighLf,
+                             firstRow, numFaceDofs,
+                             rets,
+                             ret,neighRet,faceVal,
+                             matrix, rhs);
+        }
+        else 
+        {
+          // type of quadrature for non-conforming intersections 
+          typedef typename FaceQuadratureType ::
+            NonConformingQuadratureType NonConformingQuadratureType;
+          // create quadratures 
+          NonConformingQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
+          NonConformingQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+
+          applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,
+                             bSet,faceSet, uLF, uNeighLf, 
+                             firstRow, numFaceDofs,
+                             rets,
+                             ret,neighRet,faceVal,
+                             matrix, rhs);
+
+        }
+      }
+     
+      // only interior faces are considered 
+      if(nit.boundary())
+      {
+        // create quadrature 
+        FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
+        const int quadNop = faceQuadInner.nop();
+        for (int l = 0; l < quadNop ; ++l)
+        {
+          DomainType unitNormal = 
+            nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+
+          const double faceVol = unitNormal.two_norm();
+          unitNormal *= 1.0/faceVol;
+
+          // get integration weight 
+          const double intel = faceVol * faceQuadInner.weight(l);
+
+          // evaluate function 
+          uLF.evaluate(faceQuadInner,l,ret);
+
+          double val = ret * unitNormal; 
+          val *= intel;
+         
+          // evaluate base functions 
+          for(int i=0; i<numDofs; ++i) 
+          {
+            bSet.evaluate(i,faceQuadInner,l,uPhi); 
+            rets[i]  = uPhi * unitNormal; 
+            rets[i] *= intel;
+          }
+
+          int row = firstRow; 
+          for(int j=0; j<numFaceDofs; ++j, ++row)
+          {
+            faceSet.evaluate(j,faceQuadInner.localPoint(l), faceVal);
+            rhs[row] += val*faceVal[0];
+
+            for(int i=0; i<numDofs; ++i) 
+            {
+              matrix[row][i] += (faceVal[0] * rets[i]);      
+            }
+          }
+        }
+      }
+    }
+  }
+      
   template <class IntersectionIteratorType, 
             class QuadratureType, 
             class BaseFunctionSetType,
