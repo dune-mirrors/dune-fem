@@ -76,13 +76,13 @@ public:
     return (*this);
   }
 
-  /** \brief @copydoc LoadBalancerInterface::loadBalance */
+  /** @copydoc LoadBalancerInterface::loadBalance */
   virtual bool loadBalance () 
   { 
     return (am_) ? (am_->loadBalance()) : false; 
   }
 
-  /** \brief @copydoc LoadBalancerInterface::balanceCounter */
+  /** @copydoc LoadBalancerInterface::balanceCounter */
   virtual int balanceCounter () const 
   { 
     return (am_) ? (am_->balanceCounter()) : 0; 
@@ -222,7 +222,7 @@ public:
   //! destructor 
   virtual ~AdaptationManager () {}
 
-  //! \brief @copydoc AdaptationManagerInterface::adaptive 
+  /** @copydoc AdaptationManagerInterface::adaptive */
   bool adaptive () const { return adaptationMethod_ != none; }
 
   /*! 
@@ -478,20 +478,20 @@ public:
   {
   }
 
-  /** \brief @copydoc LoadBalancerInterface::loadBalance */ 
+  /** @copydoc LoadBalancerInterface::loadBalance */
   virtual bool loadBalance () 
   {
     // call load balance 
     return Base2Type :: loadBalance();
   }
 
-  /** \brief @copydoc LoadBalancerInterface::balanceCounter */ 
+  /** @copydoc LoadBalancerInterface::balanceCounter */ 
   virtual int balanceCounter () const 
   { 
     return Base2Type :: balanceCounter ();
   }
   
-  /** \brief @copydoc AdaptationManagerInterface::adapt */ 
+  /** @copydoc AdaptationManagerInterface::adapt */ 
   virtual void adapt () 
   {
     // adapt grid 

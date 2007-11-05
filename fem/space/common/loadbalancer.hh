@@ -100,6 +100,7 @@ public:
 
   /** \brief constructor of LoadBalancer  
      \param grid Grid that load balancing is done for 
+     \param rpOp restrict prolong tpye 
      \param paramFile optional parameter file which contains 
         the following two lines:
      # BalanceStep, balancing is done every x-th step, 0 means no balancing    

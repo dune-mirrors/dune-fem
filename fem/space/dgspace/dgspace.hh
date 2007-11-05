@@ -174,7 +174,7 @@ namespace Dune {
       assert( mapper_->numDofs() == maxNumDofs );
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::sequence const */
+    /** @copydoc DiscreteFunctionSpaceInterface::sequence const */
     int sequence () const { return dm_.sequence(); }
     
     /** \brief Destructor */
@@ -195,7 +195,7 @@ namespace Dune {
       }
     }
   
-    //! \brief @copydoc DiscreteFunctionSpaceInterface::type 
+    /** @copydoc DiscreteFunctionSpaceInterface::type */
     DFSpaceIdentifier type () const 
     {
       return DGSpace_id;
@@ -215,18 +215,18 @@ namespace Dune {
     
     //! return reference to base functions set according to the geometry's geometry type 
     /**\brief return reference to base functions set according to the geometry's geometry type 
-       \param[in] geo geometry type 
-       \param[in] bool dummy for function overloading 
+       \param[in] type geometry type 
+       \param[in] dummy for function overloading 
        \return BasefunctipnSetType
     */
     const BaseFunctionSetType
-    subBaseFunctionSet (const GeometryType & type, bool ) const 
+    subBaseFunctionSet (const GeometryType & type, bool dummy ) const 
     {
       return this->baseFunctionSet(type);
     }
     
     /**\brief return reference to base functions set according to the entity's geometry type 
-       \param[in] geo geometry type 
+       \param[in] en entity type 
        \return BaseFunctionSetType
     */
     template <class Entity>
@@ -238,7 +238,7 @@ namespace Dune {
 
 
     /**\brief return reference to base functions set according to the  geometry type 
-       \param[in] geo geometry type 
+       \param[in] geomType geometry type 
        \return BasefunctipnSetType
     */
     const BaseFunctionSetType
@@ -250,13 +250,13 @@ namespace Dune {
       return BaseFunctionSetType(baseFuncSet_[geomType]);
     }
 
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::continuous */
+    /** @copydoc DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return false;
     }
   
-    /** \brief @copydoc DiscreteFunctionSpaceInterface::order */
+    /** @copydoc DiscreteFunctionSpaceInterface::order */
     int order () const
     {
       return polOrd;
