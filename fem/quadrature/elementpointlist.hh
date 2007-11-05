@@ -259,6 +259,12 @@ namespace Dune
     template <class GridType> 
     struct ElementGeometryInitializer
     {
+      static inline const GeometryType intersectionGlobalType(
+          const IntersectionIterator &intersection)
+      {
+        return intersection.intersectionGlobal().type();
+      }
+
       static inline const GeometryType init(
           const IntersectionIterator &intersection,
           const GeometryType& referenceGeom)
@@ -274,6 +280,13 @@ namespace Dune
     template <int dim> 
     struct ElementGeometryInitializer< UGGrid< dim > > 
     {
+      static inline const GeometryType intersectionGlobalType(
+          const IntersectionIterator &intersection)
+      {
+        return GeometryType ( 
+            intersection.inside()->geometry().type().basicType(), dim-1 );
+      }
+
       static inline const GeometryType init(
           const IntersectionIterator &intersection,
           const GeometryType& referenceGeom)
@@ -307,7 +320,8 @@ namespace Dune
                                   const IntersectionIterator &intersection, 
                                   int order,
                                   Side side )
-    : quad_(intersection.intersectionGlobal().type(), order ),
+    : quad_( ElementGeometryInitializer<GridType> ::
+                    intersectionGlobalType(intersection) , order ),
       referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
                                          : intersection.intersectionNeighborLocal() ),
       elementGeometry_( ElementGeometryInitializer<GridType> :: 
@@ -331,7 +345,8 @@ namespace Dune
     ElementIntegrationPointList ( const IntersectionIterator &intersection,
                                  int order,
                                  Side side )
-    : quad_(intersection.intersectionGlobal().type(), order ),
+    : quad_( ElementGeometryInitializer<GridType> ::
+                    intersectionGlobalType(intersection) , order ),
       referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
                                          : intersection.intersectionNeighborLocal() ),
       elementGeometry_( ElementGeometryInitializer<GridType> :: 
@@ -404,7 +419,7 @@ namespace Dune
 
     /** \copydoc Dune::ElementIntegrationPointList::elementGeometry
      */
-    GeometryType elementGeometry () const
+    const GeometryType& elementGeometry () const
     {
       return elementGeometry_;
     }
