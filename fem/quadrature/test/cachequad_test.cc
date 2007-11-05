@@ -123,18 +123,21 @@ namespace Dune {
         {
           if( TwistUtilityType::conforming( gridPart.grid(), it ))
           {
-            const GlobalGeometryType& gGeo = it.intersectionGlobal();
+            const LocalGeometryType& nGeo = it.intersectionNeighborLocal();
             QuadratureType outerQuad(gridPart, it, quadOrd , QuadratureType::OUTSIDE);
             
-            for (int i = 0; i < quad.nop(); ++i) 
+            for (int i = 0; i < outerQuad.nop(); ++i) 
             {
-              DomainType p = gGeo.global( quad.localPoint(i) );
-              DomainType q = gGeo.global( outerQuad.localPoint(i) );
-
               for (int d = 0; d < dim; ++d) 
               {
-                _floatTest(p[d],q[d]);
+                assert( outerQuad.cachingPoint(i) < points.size() );
+                _floatTest(points[outerQuad.cachingPoint(i)][d],
+                           nGeo.global(outerQuad.localPoint(i))[d]);
               }
+              //std::cout << "nin: " << it.numberInNeighbor();
+              //std::cout << " nis: " << it.numberInSelf();
+              //std::cout << " pt " << i << ": " << points[outerQuad.cachingPoint(i)]
+              //          << " == " << nGeo.global(outerQuad.localPoint(i)) << std::endl;
             }
           }
         }
@@ -201,7 +204,7 @@ namespace Dune {
 
       const int quadOrd = 4;
 
-      for(int l=0; l<2; ++l) 
+      for(int l=0; l<3; ++l) 
       {
         checkLeafsCodim1(gridPart, quadOrd);
         grid.globalRefine(1);
