@@ -220,7 +220,7 @@ namespace Dune
                        const IntersectionIterator &intersection,
                        int order,
                        typename BaseType :: Side side)
-      : BaseType( intersection, order, side ),
+      : BaseType( gridPart, intersection, order, side ),
         mapper_( CacheProvider< GridType, codimension > :: getMapper
           ( quadImp(), elementGeometry(), faceNumber(),
             (side == BaseType :: INSIDE)

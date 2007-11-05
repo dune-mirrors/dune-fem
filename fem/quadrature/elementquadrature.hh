@@ -209,20 +209,6 @@ namespace Dune
     {
     }
 
-    /*! \brief constructor
-     *
-     *  \param[in]  intersection  intersection iterator
-     *  \param[in]  order         desired order of the quadrature
-     *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
-     *                            which the ElementQuadrature shall be created
-     */
-    ElementQuadrature( const IntersectionIterator &intersection,
-                       int order,
-                       typename BaseType :: Side side )
-    : BaseType( intersection, order, side )
-    {
-    }
-    
     /*! \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
