@@ -16,10 +16,10 @@ BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f)
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
   , leakPtr_(dofVec_)
-#ifdef NEW_LOCALFUNCTION
-  , localFunc_( *this )
-#else
+#ifdef OLD_LOCALFUNCTION
   , localFunc_( f, mapper_, dofVec_, leakPtr_ ) 
+#else
+  , localFunc_( *this )
 #endif
 {
 }
@@ -36,10 +36,10 @@ BlockVectorDiscreteFunction(const std::string name, const DiscreteFunctionSpaceT
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
   , leakPtr_(dofVec_)
-#ifdef NEW_LOCALFUNCTION
-  , localFunc_( *this )
-#else
+#ifdef OLD_LOCALFUNCTION
   , localFunc_( f, mapper_, dofVec_, leakPtr_ ) 
+#else
+  , localFunc_( *this )
 #endif
 {
 }
@@ -57,10 +57,10 @@ BlockVectorDiscreteFunction(const std::string name,
   , memPair_(dm_.addDummyDofSet(&dofVec_, mapper_, name_, &data)) 
   , dofVec_( *memPair_.second ) 
   , leakPtr_(dofVec_)
-#ifdef NEW_LOCALFUNCTION
-  , localFunc_( *this )
-#else
+#ifdef OLD_LOCALFUNCTION
   , localFunc_( f, mapper_, dofVec_, leakPtr_ ) 
+#else
+  , localFunc_( *this )
 #endif
 {
 }
@@ -75,10 +75,10 @@ inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
   , dofVec_( *memPair_.second ) 
   , leakPtr_(dofVec_)
-#ifdef NEW_LOCALFUNCTION
-  , localFunc_( *this )
-#else
+#ifdef OLD_LOCALFUNCTION
   , localFunc_( this->functionSpace_, mapper_, dofVec_, leakPtr_ ) 
+#else
+  , localFunc_( *this )
 #endif
 {
   name_ = df.name_;

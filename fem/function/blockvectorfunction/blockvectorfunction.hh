@@ -22,7 +22,7 @@
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/localfunctionwrapper.hh>
 
-#ifdef NEW_LOCALFUNCTION
+#ifndef OLD_LOCALFUNCTION
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
 #endif
 
@@ -63,10 +63,10 @@ struct BlockVectorDiscreteFunctionTraits
 
   typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
   
-#ifdef NEW_LOCALFUNCTION
-  typedef StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
-#else
+#ifdef OLD_LOCALFUNCTION
   typedef BlockVectorLocalFunctionFactory< ThisType > LocalFunctionFactoryType; 
+#else
+  typedef StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
 #endif
 
   typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
@@ -400,13 +400,13 @@ private:
 }; // end class BlockVectorDiscreteFunction 
 
 
-//**************************************************************************
+// *************************************************************************
 //
 //  --BlockVectorLocalFunction
 //
-//! Implementation of the local functions 
+//  Implementation of the local functions 
 //
-//**************************************************************************
+// *************************************************************************
 template< class TraitsImp >
 class BlockVectorLocalFunction
 : public LocalFunctionDefault

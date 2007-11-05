@@ -1,8 +1,6 @@
 #ifndef DUNE_STANDARDLOCALFUNCTION_HH
 #define DUNE_STANDARDLOCALFUNCTION_HH
 
-#warning "StandardLocalFunction was included; 'guess it will also be used..."
-
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/function/common/localfunction.hh>

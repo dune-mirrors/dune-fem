@@ -22,7 +22,7 @@ namespace Dune
 
 
 
-  /** \class AdaptiveLocalFunction
+  /*  \class AdaptiveLocalFunction
    *  \brief Local function belonging to AdaptiveDiscreteFunction
    */
   template< class DiscreteFunctionSpaceImp >
@@ -142,10 +142,10 @@ namespace Dune
         \param[in] domain type x
         \param[out] jacobian range type ret
     */
-    inline
+    inline DUNE_DEPRECATED
     void jacobian(EntityType& en, 
       const DomainType& x, 
-      JacobianRangeType& ret) const; 
+      JacobianRangeType& ret) const;
     
     /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
         \param[in] entity en
@@ -154,7 +154,7 @@ namespace Dune
         \param[out] jacobian range type
     */
     template <class QuadratureType>
-    inline
+    inline DUNE_DEPRECATED
     void jacobian(EntityType& en,
                   QuadratureType& quad,
                   int quadPoint,
@@ -218,7 +218,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::AdaptiveLocalFunction
+  /*  \copydoc Dune::AdaptiveLocalFunction
    *
    *  Specialised version of AdaptiveLocalFunction for CombinedSpace
    */
@@ -363,8 +363,8 @@ namespace Dune
         \param[in] domain type x
         \param[out] jacobian range type ret
     */ 
-    inline
-    void jacobian(EntityType& en, 
+    inline DUNE_DEPRECATED
+    void jacobian(EntityType& en,
       const DomainType& x, 
       JacobianRangeType& ret) const;
     
@@ -376,7 +376,7 @@ namespace Dune
         \param[out] jacobian range type
     */
     template <class QuadratureType>
-    inline
+    inline DUNE_DEPRECATED
     void jacobian(EntityType& en,
                   QuadratureType& quad,
                   int quadPoint,

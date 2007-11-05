@@ -8,10 +8,10 @@
 #include <dune/fem/function/common/localfunctionwrapper.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 
-#ifdef NEW_LOCALFUNCTION
-#include <dune/fem/function/localfunction/standardlocalfunction.hh>
-#else
+#ifdef OLD_LOCALFUNCTION
 #include "localfunction.hh"
+#else
+#include <dune/fem/function/localfunction/standardlocalfunction.hh>
 #endif
 
 namespace Dune
@@ -32,13 +32,13 @@ namespace Dune
     typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >
       DiscreteFunctionType;
 
-#ifdef NEW_LOCALFUNCTION
-    typedef StandardLocalFunctionFactory
-      < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceType, DofVectorType >
-      LocalFunctionFactoryType;
-#else
+#ifdef OLD_LOCALFUNCTION
     typedef VectorLocalFunctionFactory
       < DiscreteFunctionSpaceType, DofVectorType >
+      LocalFunctionFactoryType;
+#else
+    typedef StandardLocalFunctionFactory
+      < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceType, DofVectorType >
       LocalFunctionFactoryType;
 #endif
 

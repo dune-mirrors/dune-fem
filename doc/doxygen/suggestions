@@ -5,14 +5,9 @@
  *
  *  \section before1 ... that Should Be Implemented Before 0.9
  *
- *  - Let NEW_LOCALFUNCTION be the default (i.e. check, if OLD_LOCALFUNCTION
- *    is defined and use new implementation otherwise)
- *  - Mark all methods on local functions that have a parameter entity as
- *    deprecated.
  *  - Either remove the \\hasdefault mark for documentation, or use it
  *    consequently.
  *  - Check documentation and remove all warnings from doxygen.out
- *  - remove examples Makefile from Makefile List in configure.ac 
  *
  *  \section after1 ... that Should Be Implemented After 0.9
  *

@@ -1,6 +1,10 @@
 #ifndef DUNE_LOCALFUNCTION_HH
 #define DUNE_LOCALFUNCTION_HH
 
+#ifdef OLD_LOCALFUNCTION
+#warning "OLD_LOCALFUNCTION defined: Using old implementations of the local functions."
+#endif
+
 #include <dune/common/bartonnackmanifcheck.hh>
 
 #include <dune/fem/quadrature/quadrature.hh>
@@ -365,9 +369,9 @@ protected:
          \param[out] ret return value 
     */
     template< class EntityType >
-    void evaluateGlobal ( const EntityType &entity, 
-                          const DomainType &x, 
-                          RangeType &ret ) const
+    void DUNE_DEPRECATED evaluateGlobal ( const EntityType &entity, 
+                                          const DomainType &x, 
+                                          RangeType &ret ) const
     {
       xLoc_ = entity.geometry().local( x );
       evaluate( xLoc_, ret );
@@ -410,9 +414,9 @@ protected:
          \param[out] grad  return value 
     */
     template< class EntityType >
-    void jacobianGlobal ( const EntityType&  entity,
-                          const DomainType&  x, 
-                          JacobianRangeType& grad ) 
+    void DUNE_DEPRECATED jacobianGlobal ( const EntityType&  entity,
+                                          const DomainType&  x, 
+                                          JacobianRangeType& grad ) const
     {
       xLoc_ = entity.geometry().local( x );
       jacobian( xLoc_, grad );
