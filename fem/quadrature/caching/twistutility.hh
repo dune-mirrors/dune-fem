@@ -508,6 +508,112 @@ namespace Dune {
     // and OneDGrid. 
   public:
     typedef GridImp GridType;
+
+    template <class EntityType>
+    static inline bool conformanceCheck(const EntityType& en,
+                                        const EntityType& nb)
+    {
+      if(en.geometry().type().isSimplex() &&
+          nb.geometry().type().isSimplex())
+      {
+        return (en.level() == nb.level());
+      }
+      else 
+      {
+        // disable CachingQuadrature for all other elements 
+        // because it won't work 
+        return false;
+      }
+    }
+
+    template <class IndexSetType,
+              class EntityType>
+    static inline int calculateTwistInNeighbor
+                                    (const IndexSetType& set, 
+                                     const EntityType& en,
+                                     const int inSelf,
+                                     const EntityType& nb,
+                                     const int inNeigh) 
+    {
+      typedef typename EntityType :: ctype ctype;
+      const ReferenceElement< ctype, dim > & enRef = 
+        ReferenceElements< ctype, dim >::general(en.geometry().type());
+
+      const ReferenceElement< ctype, dim > & nbRef = 
+        ReferenceElements< ctype, dim >::general(nb.geometry().type());
+        
+      // number of vertices of face 
+      const int numVert = enRef.size (inSelf,1, dim);
+      int enVx [4];
+      int nbVx [4];
+      
+      int faceMap[4] = { 0, 1, 2, 3};
+
+      bool allRight = true;
+      for(int i=0; i<numVert; ++i ) 
+      {
+        enVx[i] = set.template subIndex<dim>(en, enRef.subEntity(inSelf,1,i,dim)); 
+        nbVx[i] = set.template subIndex<dim>(nb, nbRef.subEntity(inNeigh,1,i,dim)); 
+        if( enVx[i] != nbVx[i] ) allRight = false;
+      }
+
+      if( !allRight )
+      {
+        for(int i=0; i<numVert; ++i)
+        {
+          if(enVx[i] != nbVx[i])
+          {
+            for(int k=1; k<numVert; ++k)
+            {
+              int newvx = (i+k) % numVert;
+              if( enVx[i] == nbVx[newvx] ) faceMap[i] = newvx;
+            }
+          }
+        }
+      }
+
+      // return twist 
+
+      if (faceMap[1] == (faceMap[0]+1) % numVert) 
+      {
+        return faceMap[0];
+      }
+      else 
+      {
+        int twst = faceMap[1] - numVert;
+        if( numVert == 3 ) 
+        {
+          // same bug as in Alberta (check reference elements)
+          if( twst == -3 ) return -2;
+          else if ( twst == -2 ) return -3; 
+          else return twst; 
+        }
+        else 
+          return twst; 
+      }
+    }
+
+    template <class EntityType>
+    static inline int calculateTwistInSelf(
+                                     const EntityType& en,
+                                     const int inSelf)
+    {
+      return 0;
+      /*
+      const GeometryType type = en.geometry().type();
+      // tetras have inner twist 0 
+      if( type.isSimplex() ) return 0;
+
+      // not working for hexa because badly messed up
+      assert(false);
+      abort();
+
+      if( inSelf == 0 || inSelf == 3 || inSelf == 4 ) return 0;
+
+      // 1, 2, 5 have inner twist 0
+      return 0;
+      */
+    }
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) {}
@@ -516,38 +622,35 @@ namespace Dune {
     template <class IntersectionIterator> 
     static inline int twistInSelf(const GridType &, const IntersectionIterator& it)
     {
-      // for simplex twist is 0 
-      // for cube twist is 1 for side 0 and 3 
-      // for 1 and 2 is 0 
-      return (it.inside()->geometry().type().isSimplex()) ? 0 : 0;
-        //(it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
+      return calculateTwistInSelf(*it.inside(), it.numberInSelf());
     }    
+
     //! \brief return 0 for inner face 
     template <class IntersectionIterator> 
     int twistInSelf(const IntersectionIterator& it) const 
     {
-      // for simplex twist is 0 
-      // for cube twist is 1 for side 0 and 3 
-      // for 1 and 2 is 0 
-      return (it.inside()->geometry().type().isSimplex()) ? 0 : 0;
-       // (it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
+      return (it.inside()->geometry().type().isSimplex()) ? 0 : 0; 
     }
     
     //! \brief return 0 for outer face 
     template <class IntersectionIterator> 
-    int twistInNeighbor(const IntersectionIterator& it) const {
-      assert( it.neighbor() );
-      return (it.outside()->geometry().type().isSimplex()) ? 1 : 
-        (it.numberInNeighbor() == 1 || it.numberInNeighbor() == 2) ? 1 : 0;
+    int twistInNeighbor(const IntersectionIterator& it) const 
+    {
+      DUNE_THROW(NotImplemented,"not implemented because grid is missing!");
+      abort();
+      return 0;
     }
 
     //! \brief return 0 for outer face 
     template <class IntersectionIterator> 
-    static inline int twistInNeighbor(const GridType &, const IntersectionIterator& it) 
+    static inline int twistInNeighbor(const GridType & grid, const IntersectionIterator& it) 
     {
-      assert( it.neighbor() );
-      return (it.outside()->geometry().type().isSimplex()) ? 1 : 
-        (it.numberInNeighbor() == 1 || it.numberInNeighbor() == 2) ? 1 : 0;
+      assert( it.neighbor ());
+      return calculateTwistInNeighbor(grid.leafIndexSet(),
+                                      *it.inside(),
+                                      it. numberInSelf(),
+                                      *it.outside(),
+                                      it.numberInNeighbor());
     }
 
     //! \brief return true if intersection is conform, default is true  
@@ -563,7 +666,7 @@ namespace Dune {
     static inline bool conforming (const GridType &, const IntersectionIterator& it)
     { 
       return (it.neighbor()) ? 
-        (it.inside()->level() == it.outside()->level()) : true; 
+        (conformanceCheck(*it.inside(), *it.outside())) : true; 
     }
   };
 #endif
