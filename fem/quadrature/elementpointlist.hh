@@ -202,7 +202,6 @@ namespace Dune
   };
 
 
-
   /** \copydoc Dune::ElementIntegrationPointList */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
@@ -242,7 +241,7 @@ namespace Dune
     typedef typename IntegrationPointListType :: CoordinateType LocalCoordinateType;
 
     //! Type of the intersection iterator
-    typedef typename GridPartImp::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
 
     // For compatibility
     typedef IntersectionIteratorType IntersectionIterator;
@@ -255,54 +254,14 @@ namespace Dune
   private:
     typedef typename IntersectionIteratorType :: LocalGeometry ReferenceGeometry;
 
-    // initializer for element geometry type 
-    template <class GridType> 
-    struct ElementGeometryInitializer
-    {
-      static inline const GeometryType intersectionGlobalType(
-          const IntersectionIterator &intersection)
-      {
-        return intersection.intersectionGlobal().type();
-      }
-
-      static inline const GeometryType init(
-          const IntersectionIterator &intersection,
-          const GeometryType& referenceGeom)
-      {
-        return GeometryType( referenceGeom.basicType(),
-                             dimension );
-      }
-    };
-
-#if ENABLE_UG 
-    // specialisation for UGGrid, here we have to other method because 
-    // the grid is hybrid. 
-    template <int dim> 
-    struct ElementGeometryInitializer< UGGrid< dim > > 
-    {
-      static inline const GeometryType intersectionGlobalType(
-          const IntersectionIterator &intersection)
-      {
-        return GeometryType ( 
-            intersection.inside()->geometry().type().basicType(), dim-1 );
-      }
-
-      static inline const GeometryType init(
-          const IntersectionIterator &intersection,
-          const GeometryType& referenceGeom)
-      {
-        return intersection.inside()->geometry().type();
-      }
-    };
-#endif
-
   protected:
     const ReferenceGeometry &referenceGeometry_;
+    const GeometryType elementGeometry_;
     const IntegrationPointListType quad_;
     const int faceNumber_;
 
     mutable CoordinateType dummy_;
-    
+
   public:
     /** \brief constructor
      *
@@ -321,45 +280,21 @@ namespace Dune
                                   Side side )
     : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
                                          : intersection.intersectionNeighborLocal() ),
-      quad_( ElementGeometryInitializer<GridType> :: intersectionGlobalType(intersection),
-             ElementGeometryInitializer<GridType> :: init( intersection, referenceGeometry_.type()),
-             order ),
+      elementGeometry_( referenceGeometry_.type().basicType(), dimension ),
+      quad_( referenceGeometry_.type() , order ),
       faceNumber_( side == INSIDE ? intersection.numberInSelf()
                                   : intersection.numberInNeighbor() ),
       dummy_( 0. )
     {
     }
     
-    /** \brief constructor
-     *
-     *  \param[in]  intersection  intersection iterator
-     *  \param[in]  order         desired order of the quadrature
-     *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
-     *                            which the ElementQuadrature shall be created
-     *
-     *  \note This code assumes that the codim-0 entity is either a simplex or
-     *        a cube (otherwise elementGeometry() returns a wrong geometry).
-     */
-    ElementIntegrationPointList ( const IntersectionIterator &intersection,
-                                 int order,
-                                 Side side )
-    : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
-                                         : intersection.intersectionNeighborLocal() ),
-      quad_( ElementGeometryInitializer<GridType> :: intersectionGlobalType(intersection),
-             ElementGeometryInitializer<GridType> :: init( intersection, referenceGeometry_.type()),
-             order ),
-      faceNumber_( side == INSIDE ? intersection.numberInSelf()
-                                  : intersection.numberInNeighbor() ),
-      dummy_( 0. )
-    {
-    }
-   
     /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy
      */
     ElementIntegrationPointList ( const ElementIntegrationPointList &org )
     : referenceGeometry_( org.referenceGeometry_ ),
+      elementGeometry_( org.elementGeometry_ ),
       quad_( org.quad_ ),
       faceNumber_( org.faceNumber_ ),
       dummy_( org.dummy_ )
@@ -417,7 +352,179 @@ namespace Dune
      */
     const GeometryType& elementGeometry () const
     {
-      return quad_.elementGeometry();
+      return elementGeometry_;
+    }
+
+  protected:
+    // return local face number 
+    int faceNumber() const
+    {
+      return faceNumber_;
+    }
+
+    /** \brief obtain the actual implementation of the quadrature
+     *
+     *  \note This method may only be used in derived classes.
+     *
+     *  \returns a reference to the actual implementation of the quadrature
+     */
+    const IntegrationPointListType &quadImp() const
+    {
+      return quad_;
+    }
+  };
+
+  /** \copydoc Dune::ElementIntegrationPointList */
+  template <template <class, PartitionIteratorType> class GridPartImp,
+            int dim, PartitionIteratorType pitype, class IntegrationTraits >
+  class ElementIntegrationPointList< GridPartImp<UGGrid<dim> , pitype> , 1, IntegrationTraits >
+  {
+  public:
+    //! type of the grid partition
+    typedef GridPartImp<UGGrid<dim> , pitype> GridPartType;
+
+    //! codimension of the element integration point list
+    enum { codimension = 1 };
+
+  private:
+    typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
+      ThisType;
+
+  public:
+    //! type of the grid 
+    typedef typename GridPartType :: GridType GridType;
+
+    //! dimension of the world
+    enum { dimension = GridType::dimension };
+    
+    //! side of intersection  
+    enum Side { INSIDE, OUTSIDE };
+
+    //! coordinate type 
+    typedef typename GridType :: ctype RealType;
+
+    //! type of the integration point list 
+    typedef typename IntegrationTraits :: IntegrationPointListType
+      IntegrationPointListType;
+
+    //! Type of coordinates in codim-0 reference element
+    typedef typename IntegrationTraits :: CoordinateType CoordinateType;
+    
+    //! Type of coordinate in codim-1 reference element
+    typedef typename IntegrationPointListType :: CoordinateType LocalCoordinateType;
+
+    //! Type of the intersection iterator
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+
+    // For compatibility
+    typedef IntersectionIteratorType IntersectionIterator;
+
+    //! type quadrature for use on non-conforming intersections 
+    typedef ThisType NonConformingQuadratureType;
+   
+    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+
+  private:
+    typedef typename IntersectionIteratorType :: LocalGeometry ReferenceGeometry;
+
+  protected:
+    const ReferenceGeometry &referenceGeometry_;
+    const GeometryType elementGeometry_;
+    const IntegrationPointListType quad_;
+    const int faceNumber_;
+
+    mutable CoordinateType dummy_;
+
+  public:
+    /** \brief constructor
+     *
+     *  \param[in]  gridPart      grid partition (a dummy here)
+     *  \param[in]  intersection  intersection iterator
+     *  \param[in]  order         desired order of the quadrature
+     *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+     *                            which the ElementQuadrature shall be created
+     *
+     *  \note This a a specialized version of the constructor for UGGrid. 
+     */
+    ElementIntegrationPointList ( const GridPartType& gridPart, 
+                                  const IntersectionIterator &intersection, 
+                                  int order,
+                                  Side side )
+    : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
+                                         : intersection.intersectionNeighborLocal() ),
+      elementGeometry_( intersection.inside()->geometry().type() ),
+      quad_( intersection.intersectionGlobal().type(), elementGeometry_ , order ),
+      faceNumber_( side == INSIDE ? intersection.numberInSelf()
+                                  : intersection.numberInNeighbor() ),
+      dummy_( 0. )
+    {
+    }
+    
+    /** \brief copy constructor
+     *
+     *  \param[in]  org  element quadrature to copy
+     */
+    ElementIntegrationPointList ( const ElementIntegrationPointList &org )
+    : referenceGeometry_( org.referenceGeometry_ ),
+      elementGeometry_( org.elementGeometry_ ),
+      quad_( org.quad_ ),
+      faceNumber_( org.faceNumber_ ),
+      dummy_( org.dummy_ )
+    {
+    }
+    
+    inline const QuadraturePointWrapperType operator[] ( size_t i ) const
+    {
+      return QuadraturePointWrapperType( *this, i );
+    }
+   
+    /** \copydoc Dune::IntegrationPointList::nop
+     */
+    int nop () const
+    {
+      return quad_.nop();
+    }
+
+    /** \copydoc Dune::IntegrationPointList::point
+     */
+    const CoordinateType &point ( size_t i ) const
+    {
+      dummy_ = referenceGeometry_.global( quad_.point( i ) );
+      return dummy_;
+    }
+
+    /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::localPoint(size_t i) const */
+    const LocalCoordinateType &localPoint ( size_t i ) const
+    {
+      return quad_.point( i );
+    }
+
+    /** \copydoc Dune::IntegrationPointList::id
+     */
+    size_t id () const
+    {
+      return quad_.id();
+    }
+
+    /** \copydoc Dune::IntegrationPointList::order
+     */
+    int order () const
+    {
+      return quad_.order();
+    }
+
+    /** \copydoc Dune::IntegrationPointList::geometry
+     */
+    GeometryType geometry () const
+    {
+      return quad_.geo();
+    }
+
+    /** \copydoc Dune::IntegrationPointList::elementGeometry
+     */
+    const GeometryType& elementGeometry () const
+    {
+      return elementGeometry_;
     }
 
   protected:
