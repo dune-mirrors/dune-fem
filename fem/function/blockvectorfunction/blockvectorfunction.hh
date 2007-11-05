@@ -317,23 +317,18 @@ public:
   /** \copydoc Dune::DiscreteFunctionDefault::addScaled */
   void addScaled ( const DiscreteFunctionType &g,
                    const RangeFieldType &s ); 
+ 
+  template< class GridIteratorType >
+  void DUNE_DEPRECATED addLocal ( GridIteratorType &it,
+                                  const DiscreteFunctionType &g );
   
-  /** \brief add g to this on local entity
-      \param[in] GridIteratorType it 
-      \param[in] discrete function that is added 
-  */
-  template <class GridIteratorType>
-  void addLocal (GridIteratorType &it, 
-      const DiscreteFunctionType & g); 
+  template< class GridIteratorType >
+  void DUNE_DEPRECATED substractLocal ( GridIteratorType &it,
+                                        const DiscreteFunctionType &g ); 
   
-  //! add g to this on local entity 
-  template <class GridIteratorType>
-  void substractLocal (GridIteratorType &it, 
-      const DiscreteFunctionType & g); 
-  
-    /** \todo Please to me! */
-  template <class GridIteratorType>
-  void setLocal (GridIteratorType &it, const RangeFieldType &scalar);
+  template< class GridIteratorType >
+  void DUNE_DEPRECATED setLocal ( GridIteratorType &it,
+                                  const RangeFieldType &scalar );
   
   /** \copydoc Dune::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;
@@ -350,10 +345,10 @@ public:
   /** \copydoc Dune::DiscreteFunctionDefault::read_ascii */
   virtual bool read_ascii( const std::string filename );
 
-  /** \brief @copydoc DiscreteFunctionDefault::write_pgm  */
+  /** \copydoc DiscreteFunctionDefault::write_pgm  */
   virtual bool write_pgm(const std::string filename) const;
 
-  /** \brief @copydoc DiscreteFunctionDefault::read_pgm  */
+  /** \copydoc DiscreteFunctionDefault::read_pgm  */
   virtual bool read_pgm(const std::string filename); 
 
   /** \brief return reference to internal block vector 
@@ -506,15 +501,15 @@ public:
    /** \copydoc Dune::LocalFunctionInterface::baseFunctionSet */
   const BaseFunctionSetType& baseFunctionSet() const;
 
-   /** \brief  @copydoc LocalFunctionDefault::axpy  */
+   /** \copydoc LocalFunctionDefault::axpy  */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
-   /** \brief  @copydoc LocalFunctionDefault::axpy  */
+   /** \copydoc LocalFunctionDefault::axpy  */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
-   /** \brief  @copydoc LocalFunctionDefault::axpy  */
+   /** \copydoc LocalFunctionDefault::axpy  */
   template <class QuadratureType>
   inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
 

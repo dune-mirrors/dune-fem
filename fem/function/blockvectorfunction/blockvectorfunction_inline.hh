@@ -311,7 +311,6 @@ inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   dofVec_.axpy( s, gvec );
 }
 
-
 template<class DiscreteFunctionSpaceType>
 template<class GridIteratorType>
 inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
@@ -339,6 +338,7 @@ setLocal( GridIteratorType &it , const RangeFieldType & scalar )
   for(int i=0; i<length; ++i)
     localFunc_[i] = scalar;
 }
+
 //**********************************************************************
 //  --BlockVectorLocalFunction 
 //**********************************************************************

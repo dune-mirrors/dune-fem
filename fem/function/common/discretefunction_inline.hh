@@ -55,20 +55,22 @@ scalarProductDofs(const DiscreteFunctionType& g) const
   return skp;
 }
 
-// operator=
-template<class DiscreteFunctionTraits>
-inline void 
-DiscreteFunctionDefault<DiscreteFunctionTraits >::
-assign(const DiscreteFunctionType& g) 
-{
-  assert(this->size() == g.size());
 
-  DofIteratorType endit = this->dend ();
-  ConstDofIteratorType git = g.dbegin ();
-  for (DofIteratorType it = this->dbegin(); it != endit; ++it, ++git) {
-    *it = *git;
+
+  template< class DiscreteFunctionTraits >
+  inline void
+  DiscreteFunctionDefault<DiscreteFunctionTraits >
+    :: assign( const DiscreteFunctionType &g )
+  {
+    assert( size() == g.size() );
+
+    const DofIteratorType end = dend();
+    ConstDofIteratorType git = g.dbegin();
+    for( DofIteratorType it = dbegin(); it != end; ++it, ++git )
+      *it = *git;
   }
-}
+
+
 
 // operator +=
 /** \todo This operator can add a discretefunction defined on all levels to another
@@ -107,29 +109,23 @@ operator -= ( const DiscreteFunctionType& g )
   return asImp();
 }
 
-// operator *=
-template<class DiscreteFunctionTraits >
-inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
-DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator*=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::RangeFieldType & scalar)
-{
-  DofIteratorType endit = this->dend ();
-  for(DofIteratorType it = this->dbegin(); it != endit; ++it) 
-  {
-    *it *= scalar;
-  }
-  return asImp();
-}
 
-// operator /=
-template<class DiscreteFunctionTraits>
-inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
-DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator/=(const typename DiscreteFunctionDefault<DiscreteFunctionTraits>::RangeFieldType & scalar)
-{
-  (*this) *= (RangeFieldType(1)/scalar);
-  return asImp();
-}
+
+  // operator *=
+  template< class DiscreteFunctionTraits >
+  inline
+  typename DiscreteFunctionDefault< DiscreteFunctionTraits >
+    :: DiscreteFunctionType &
+  DiscreteFunctionDefault< DiscreteFunctionTraits >
+    :: operator*= ( const RangeFieldType &scalar )
+  {
+    const DofIteratorType end = dend();
+    for( DofIteratorType it = dbegin(); it != end; ++it )
+      *it *= scalar;
+    return asImp();
+  }
+
+
 
   template< class DiscreteFunctionTraits >
   inline bool DiscreteFunctionDefault< DiscreteFunctionTraits >

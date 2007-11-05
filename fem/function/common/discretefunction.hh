@@ -253,14 +253,16 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addScaled( g, s) );
     }
 
-    /** \brief Evaluate a scalar product of the dofs of two DiscreteFunctions
-        \param[in] g discrete function for evaluating scalar product with  
-        \return returns the scalar product of the dofs 
-    */
-    RangeFieldType scalarProductDofs(const DiscreteFunctionType& g) const
+    /** \brief Scalar product between the DoFs of two discrete functions
+     *
+     *  \param[in]  g  discrete function to evaluate the scalar product with
+     *
+     *  \returns the scalar product of the DoF-vectors
+     */
+    RangeFieldType scalarProductDofs ( const DiscreteFunctionType &g ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().scalarProductDofs(g));
-      return asImp().scalarProductDofs(g);
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().scalarProductDofs( g ) );
+      return asImp().scalarProductDofs( g );
     }
 
     /** \brief print all DoFs to a stream (for debugging purposes)
@@ -281,15 +283,6 @@ namespace Dune
       return asImp().dofsValid();
     }
     
-    /** \brief set all DoFs to a scalar value
-     * 
-     *  \param[in]  s  scalar value to assign to all DoFs
-     */
-    inline void assign ( const RangeFieldType s )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
-    }
-
     /** \brief assign the DoFs of another discrete function to this one
      * 
      *  \param[in]  g  discrete function which is copied
@@ -563,16 +556,8 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionInterface::clear */
     void clear();
 
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const RangeFieldType s) */
-    inline void assign ( const RangeFieldType s )
-    {
-      const DofIteratorType end = this->dend();
-      for( DofIteratorType it = this->dbegin(); it != end; ++it )
-        *it = s;
-    }
-    
     /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
-    void assign( const DiscreteFunctionType &g );
+    inline void assign( const DiscreteFunctionType &g );
 
     /** \copydoc Dune::DiscreteFunctionInterface::addScaled */
     void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
@@ -592,8 +577,8 @@ namespace Dune
       asImp().evaluate( diffVariable, x, ret );
     }
 
-    /** \brief @copydoc DiscreteFunctionInterface::scalarProductDofs */
-    RangeFieldType scalarProductDofs(const DiscreteFunctionType& g) const;
+    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
+    RangeFieldType scalarProductDofs( const DiscreteFunctionType &g ) const;
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is added to this discrete function 
@@ -607,17 +592,25 @@ namespace Dune
     */
     DiscreteFunctionType& operator -= (const DiscreteFunctionType& g);
  
-    /** \brief multiply all degrees of freedom with given scalar factor using the dof iterators 
-        \param[in] scalar factor with which all dofs are scaled 
-        \return reference to this (i.e. *this)
-    */
-    DiscreteFunctionType& operator *= (const RangeFieldType &scalar);
+    /** \brief multiply all DoFs with a scalar factor
+     *
+     *  \param[in]  scalar  factor to multiply DoFs with
+     *  
+     *  \returns reference to this discrete function (i.e. *this)
+     */
+    inline DiscreteFunctionType &operator*= ( const RangeFieldType &scalar );
 
-    /** \brief devide all degrees of freedom with given scalar factor using the dof iterators 
-        \param[in] scalar factor with which all dofs are devided  
-        \return reference to this (i.e. *this)
-    */
-    DiscreteFunctionType& operator /= (const RangeFieldType &scalar);
+    /** \brief devide all DoFs by a scalar factor
+     *
+     *  \param[in]  scalar  factor with which all dofs are devided
+     *  
+     *  \returns reference to this discrete function (i.e. *this)
+     */
+    inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
+    {
+      asImp() *= (RangeFieldType( 1 ) / scalar);
+      return asImp();
+    }
 
     inline bool operator== ( const DiscreteFunctionType &g ) const;
     
@@ -696,10 +689,10 @@ namespace Dune
       return out.valid();
     }
 
-    /** \brief @copydoc DiscreteFunctionInterface::read_pgm */
+    /** \copydoc DiscreteFunctionInterface::read_pgm */
     virtual bool read_pgm(const std::string filename) const { return true; }
 
-    /** \brief @copydoc DiscreteFunctionInterface::write_pgm */
+    /** \copydoc DiscreteFunctionInterface::write_pgm */
     virtual bool write_pgm(const std::string filename) const { return true; }
   
   public:

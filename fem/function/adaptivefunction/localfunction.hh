@@ -163,15 +163,15 @@ namespace Dune
     /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet */
     const BaseFunctionSetType& baseFunctionSet() const;
 
-    /** \brief @copydoc LocalFunctionDefault::axpy */
+    /** \copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
-    /** \brief @copydoc LocalFunctionDefault::axpy */
+    /** \copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
-    /** \brief @copydoc LocalFunctionDefault::axpy */
+    /** \copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
 
@@ -409,17 +409,17 @@ namespace Dune
     /** \copydoc Dune::LocalFunctionInterface::baseFunctionSet */
     inline const BaseFunctionSetType &baseFunctionSet() const;
    
-     /** \brief @copydoc LocalFunctionDefault::axpy */
+     /** \copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
 
 
-    /** \brief @copydoc LocalFunctionDefault::axpy */
+    /** \copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
 
    
-     /** \brief @copydoc LocalFunctionDefault::axpy */
+     /** \copydoc LocalFunctionDefault::axpy */
     template <class QuadratureType>
     inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
 
