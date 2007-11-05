@@ -55,7 +55,7 @@ namespace Dune {
 
     //! \brief return 0 for inner face 
     template <class IntersectionIterator> 
-    static int twistInSelf(const GridType &, const IntersectionIterator&)
+    static inline int twistInSelf(const GridType &, const IntersectionIterator&)
     {
       return 0;
     }
@@ -74,7 +74,7 @@ namespace Dune {
 
     //! \brief return 0 for outer face 
     template <class IntersectionIterator> 
-    static int twistInNeighbor(const GridType &, const IntersectionIterator&) 
+    static inline int twistInNeighbor(const GridType &, const IntersectionIterator&) 
     {
       return 0;
     }
@@ -85,7 +85,7 @@ namespace Dune {
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static bool conforming (const GridType &, const IntersectionIterator&) { return true; }
+    static inline bool conforming (const GridType &, const IntersectionIterator&) { return true; }
   };
   
 #ifdef ENABLE_ALBERTA
@@ -105,7 +105,7 @@ namespace Dune {
     {}
 
     //! \brief return twist for inner face 
-    static int twistInSelf(const GridType & grid, 
+    static inline int twistInSelf(const GridType & grid, 
                            const LeafIntersectionIterator& it) {
       return grid.getRealIntersectionIterator(it).twistInSelf();
     }
@@ -125,7 +125,7 @@ namespace Dune {
     }
     
     //! \brief return twist for outer face 
-    static int twistInNeighbor(const GridType & grid, 
+    static inline int twistInNeighbor(const GridType & grid, 
                                const LeafIntersectionIterator& it)
     {
       return grid.getRealIntersectionIterator(it).twistInNeighbor();
@@ -141,7 +141,7 @@ namespace Dune {
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static bool conforming (const GridType & grid, 
+    static inline bool conforming (const GridType & grid, 
                             const IntersectionIterator& it) { return true; }
   private:
     const GridType& grid_;
@@ -166,7 +166,7 @@ namespace Dune {
 
     //! \brief return twist for inner face 
     template <class IntersectionIterator> 
-    static int twistInSelf(const GridType & grid, 
+    static inline int twistInSelf(const GridType & grid, 
                            const IntersectionIterator& it)
     {
       return grid.getRealIntersectionIterator(it).twistInSelf();
@@ -194,7 +194,7 @@ namespace Dune {
 
     //! \brief return twist for outer face 
     template <class IntersectionIterator>
-    static int twistInNeighbor(const GridType & grid, 
+    static inline int twistInNeighbor(const GridType & grid, 
                                const IntersectionIterator& it) 
     {
       return grid.getRealIntersectionIterator(it).twistInNeighbor();
@@ -209,7 +209,7 @@ namespace Dune {
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static bool conforming (const GridType & grid, 
+    static inline bool conforming (const GridType & grid, 
                      const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
@@ -239,7 +239,7 @@ namespace Dune {
 
     //! \brief return twist for inner face 
     template <class IntersectionIterator> 
-    static int twistInSelf(const GridType & grid, 
+    static inline int twistInSelf(const GridType & grid, 
                            const IntersectionIterator& it)
     {
       return grid.getRealIntersectionIterator(it).twistInSelf();
@@ -262,7 +262,7 @@ namespace Dune {
     
     //! \brief return twist for outer face 
     template <class IntersectionIterator>
-    static int twistInNeighbor(const GridType & grid, 
+    static inline int twistInNeighbor(const GridType & grid, 
                                const IntersectionIterator& it) 
     {
       return grid.getRealIntersectionIterator(it).twistInNeighbor();
@@ -282,7 +282,7 @@ namespace Dune {
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static bool conforming (const GridType & grid, 
+    static inline bool conforming (const GridType & grid, 
                             const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
@@ -309,7 +309,7 @@ namespace Dune {
     TwistUtility(const GridType& grid) : grid_(grid) {}
 
     //! \brief return twist for inner face 
-    static int twistInSelf(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInSelf(const GridType &, const LeafIntersectionIterator&)
     {
       return 0;
     }
@@ -325,7 +325,7 @@ namespace Dune {
     }
 
     //! \brief return twist for outer face 
-    static int twistInNeighbor(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInNeighbor(const GridType &, const LeafIntersectionIterator&)
     {
       return 1;
     }
@@ -349,7 +349,7 @@ namespace Dune {
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static bool conforming (const GridType & grid, 
+    static inline bool conforming (const GridType & grid, 
                      const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
@@ -374,7 +374,7 @@ namespace Dune {
     TwistUtility(const GridType& grid) : grid_(grid) {}
 
     //! \brief return twist for inner face 
-    static int twistInSelf(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInSelf(const GridType &, const LeafIntersectionIterator&)
     {
       return 0;
     }
@@ -390,7 +390,7 @@ namespace Dune {
     }
 
     //! \brief return twist for outer face 
-    static int twistInNeighbor(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInNeighbor(const GridType &, const LeafIntersectionIterator&)
     {
       return 1;
     }
@@ -414,7 +414,7 @@ namespace Dune {
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static bool conforming (const GridType & grid, 
+    static inline bool conforming (const GridType & grid, 
                      const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
@@ -429,9 +429,10 @@ namespace Dune {
 #endif
 
 #ifdef ENABLE_UG
-  template <int dim> 
-  class TwistUtility<UGGrid<dim> > 
+  template <> 
+  class TwistUtility<UGGrid<2> > 
   {
+    enum { dim = 2 };
     typedef UGGrid<dim> GridImp;
     // this default implementation only is for SGrid, YaspGrid, UGGrid
     // and OneDGrid. 
@@ -443,37 +444,57 @@ namespace Dune {
 
     //! \brief return 0 for inner face 
     template <class IntersectionIterator> 
-    static int twistInSelf(const GridType &, const IntersectionIterator&)
+    static inline int twistInSelf(const GridType &, const IntersectionIterator& it)
     {
-      return 0;
-    }
-    
+      // for simplex twist is 0 
+      // for cube twist is 1 for side 0 and 3 
+      // for 1 and 2 is 0 
+      return (it.inside()->geometry().type().isSimplex()) ? 0 : 
+        (it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
+    }    
     //! \brief return 0 for inner face 
     template <class IntersectionIterator> 
-    int twistInSelf(const IntersectionIterator& it) const {
-      return 0;
+    int twistInSelf(const IntersectionIterator& it) const 
+    {
+      // for simplex twist is 0 
+      // for cube twist is 1 for side 0 and 3 
+      // for 1 and 2 is 0 
+      return (it.inside()->geometry().type().isSimplex()) ? 0 : 
+        (it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
     }
     
     //! \brief return 0 for outer face 
     template <class IntersectionIterator> 
     int twistInNeighbor(const IntersectionIterator& it) const {
-      return -1;
+      assert( it.neighbor() );
+      return (it.outside()->geometry().type().isSimplex()) ? 1 : 
+        (it.numberInNeighbor() == 1 || it.numberInNeighbor() == 2) ? 1 : 0;
     }
 
     //! \brief return 0 for outer face 
     template <class IntersectionIterator> 
-    static int twistInNeighbor(const GridType &, const IntersectionIterator&) 
+    static inline int twistInNeighbor(const GridType &, const IntersectionIterator& it) 
     {
-      return -1;
+      assert( it.neighbor() );
+      return (it.outside()->geometry().type().isSimplex()) ? 1 : 
+        (it.numberInNeighbor() == 1 || it.numberInNeighbor() == 2) ? 1 : 0;
     }
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const { return (it.boundary()) ? true : false; }
+    bool conforming (const IntersectionIterator& it) const 
+    { 
+      return (it.neighbor()) ? 
+        (it.inside()->level() == it.outside()->level()) : true; 
+    }
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static bool conforming (const GridType &, const IntersectionIterator& it) { return (it.boundary()) ? true : false; }
+    static inline bool conforming (const GridType &, const IntersectionIterator& it)
+    { 
+      return (it.neighbor()) ? 
+        (it.inside()->level() == it.outside()->level()) : true; 
+    }
   };
 #endif
   
