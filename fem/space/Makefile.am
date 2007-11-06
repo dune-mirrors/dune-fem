@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = libspace.la
 libspace_la_SOURCES =
 libspace_la_LIBADD = dgspace/libdgspace.la
 
-SUBDIRS = test common test dgspace fvspace lagrangespace combinedspace \
+SUBDIRS = common test dgspace fvspace lagrangespace combinedspace \
 basefunctions reducedbasisspace 
 
 spacedir = $(includedir)/dune/fem/space
