@@ -190,7 +190,26 @@ public:
     CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
       ( asImp().jacobian( quadPoint, ret ) );
   }
-
+  
+  /** \brief axpy operation for local function
+   *
+   *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+   *  functions by \f$\varphi_i\f$, this function performs the following
+   *  operation:
+   *  \f[
+   *  u_i = u_i + factor \cdot \varphi_i( x )
+   *  \f]
+   *
+   *  \param[in]  x       point to evaluate base functions in
+   *  \param[in]  factor  axpy factor
+   */
+  inline void axpy ( const DomainType &x,
+                     const RangeType &factor )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().axpy( x, factor ) );
+  }
+ 
   /** \brief axpy operation for local function
    *
    *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
@@ -211,7 +230,26 @@ public:
                      const RangeType &factor )
   {
     CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-      ( asImp().axpy( quadrature, quadPoint , factor ) );
+      ( asImp().axpy( quadrature, quadPoint, factor ) );
+  }
+  
+  /** \brief axpy operation for local function
+   *
+   *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+   *  functions by \f$\varphi_i\f$, this function performs the following
+   *  operation:
+   *  \f[
+   *  u_i = u_i + factor \cdot \nabla\varphi_i( x )
+   *  \f]
+   *
+   *  \param[in]  x       point to evaluate jacobian of base functions in
+   *  \param[in]  factor  axpy factor
+   */
+  inline void axpy ( const DomainType &x,
+                     const JacobianRangeType &factor)
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().axpy( x, factor ) );
   }
   
   /** \brief axpy operation for local function
@@ -237,6 +275,27 @@ public:
       ( asImp().axpy( quadrature, quadPoint, factor ) );
   }
   
+  /** \brief axpy operation for local function
+   *
+   *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+   *  functions by \f$\varphi_i\f$, this function performs the following
+   *  operation:
+   *  \f[
+   *  u_i = u_i + factor1 \cdot \varphi_i( x ) + factor2 \cdot \nabla\varphi_i( x )
+   *  \f]
+   *
+   *  \param[in]  x        point to evaluate base functions in
+   *  \param[in]  factor1  axpy factor for \f$\varphi( x )\f$
+   *  \param[in]  factor2  axpy factor for \f$\nabla\varphi( x )\f$
+   */
+  inline void axpy ( const DomainType &x,
+                     const RangeType &factor1,
+                     const JacobianRangeType &factor2 )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+      ( asImp().axpy( x, factor1, factor2 ) );
+  }
+ 
   /** \brief axpy operation for local function
    *
    *  Denoting the DoFs of the local function by \f$u_i\f$ and the base

@@ -181,7 +181,7 @@ namespace Dune
       localFunction().init(en);
     } 
 
-    /** \copydoc LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
                        const int quadPoint,
@@ -190,7 +190,7 @@ namespace Dune
       localFunction().axpy( quadrature, quadPoint, factor );
     }
     
-    /** \copydoc LocalFunctionInterface::axpy(const QuadraturePoint &quadrature,const int quadPoint,const JacobianRangeType &factor) */
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
                        const int quadPoint,
@@ -199,7 +199,7 @@ namespace Dune
       localFunction().axpy( quadrature, quadPoint, factor );
     }
     
-    /** \copydoc LocalFunctionInterface::axpy(const QuadraturePoint &quadrture,const int quadPaint,const RangeType &factor1,const JacobianRangeType &factor2) const */
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrture,const int quadPaint,const RangeType &factor1,const JacobianRangeType &factor2) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
                        const int quadPoint,

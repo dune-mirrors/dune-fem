@@ -5,7 +5,6 @@
 
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/function/common/localfunctionwrapper.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 
 #ifdef OLD_LOCALFUNCTION

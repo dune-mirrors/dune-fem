@@ -5,5 +5,4 @@ common_HEADERS = dfcommunication.hh \
                  discretefunction_inline.hh \
 								 dofiterator.hh \
 								 function.hh \
-								 localfunction.hh \
-								 localfunctionwrapper.hh
+								 localfunction.hh

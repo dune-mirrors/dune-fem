@@ -16,7 +16,7 @@
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/function/common/localfunctionwrapper.hh>
+#include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 #include "dofiterator.hh"
 
 namespace Dune

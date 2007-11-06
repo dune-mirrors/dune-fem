@@ -20,7 +20,6 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/localfunction.hh>
 #include <dune/fem/function/common/dofiterator.hh>
-#include <dune/fem/function/common/localfunctionwrapper.hh>
 
 #ifndef OLD_LOCALFUNCTION
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
