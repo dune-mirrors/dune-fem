@@ -278,14 +278,16 @@ namespace Dune {
       //assert( this->destination_ );
     }
 
-    //- Public methods
+     //- Public methods
     //! Constructor
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
-    //! \param spc Space belonging to the discrete function local to this pass
-    //! \param eps epsilon for interative solver 
-    //! \param maxIterFactor factor for number of max iterations 
-    //! \param verbose if true some output is given 
+    //! \param dest ???
+    //! \param paramFile file name of parameter file to read various variables 
+    //! 
+    //!  NOTE: parameter read by this class 
+    //!         - InvSolverEps epsilon for interative solver, default is 1e-10 
+    //!         - verbose if true some output is given, default is false  
     LocalDGElliptPass(DiscreteModelType& problem, 
                 PreviousPassImp & pass, 
                 DestinationType & dest,
@@ -454,7 +456,8 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
-    //! \param applyMassMatrix, if true also mass matrix (if exsists) 
+    //! \param factor Sign of the gradient
+    //! \param applyMassMatrix if true also mass matrix (if exsists) 
     //! is applied when evaluating the gradient, default is true 
     LocalDGElliptGradPass(DiscreteModelType& problem, 
                     PreviousPassType& pass, 
