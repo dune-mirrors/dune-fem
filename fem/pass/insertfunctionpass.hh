@@ -100,7 +100,6 @@ namespace Dune {
 
     //- Public methods
     //! Constructor
-    //! \param space to be stored in this base pass 
     //! \param pass Previous pass
     InsertFunctionPass(PreviousPassType& pass) 
       : BaseType(pass)
