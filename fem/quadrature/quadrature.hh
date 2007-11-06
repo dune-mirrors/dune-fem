@@ -12,13 +12,14 @@
 
 // quadrature storage classes 
 #include <dune/fem/quadrature/quadprovider.hh>
+#include <dune/fem/quadrature/defaultquadratures.hh>
 
 namespace Dune
 {
 
   /** \addtogroup Quadrature 
    *
-   *  In DUNE, quadratures are a set of quadrature points and corresponding
+   *  In dune-fem, quadratures are a set of quadrature points and corresponding
    *  weights.
    *
    *  \remark To get an overview of a quadrature, see Quadrature.

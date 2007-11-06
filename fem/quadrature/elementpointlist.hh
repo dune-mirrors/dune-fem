@@ -348,8 +348,7 @@ namespace Dune
       return quad_.geo();
     }
 
-    /** \copydoc Dune::IntegrationPointList::elementGeometry
-     */
+    /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::elementGeometry() const */
     const GeometryType& elementGeometry () const
     {
       return elementGeometry_;

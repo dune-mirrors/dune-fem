@@ -5,14 +5,11 @@
 #include <dune/common/geometrytype.hh>
 #include <dune/grid/common/quadraturerules.hh>
 
+#include <dune/fem/quadrature/quadratureimp.hh>
+
 namespace Dune
 {
 
-  template< class FieldImp, int dim >
-  class QuadratureImp;
-
-
-  
   /** \class QuadratureRulesFactory
    *  \ingroup Quadrature
    *  \brief quadrature implementation based on the standard DUNE quadratures
