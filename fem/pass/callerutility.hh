@@ -285,7 +285,6 @@ namespace Dune {
   class LocalFunctionEvaluateLocal {
   public:
     //! Constructor
-    //! \param en Entity on which the local function is evaluated.
     //! \param x The local coordinate on en.
     LocalFunctionEvaluateLocal(const DomainImp& x) :
       x_(x)
@@ -318,7 +317,6 @@ namespace Dune {
   class LocalFunctionEvaluateQuad {
   public:
     //! Constructor
-    //! \param en The entity the local functions are evaluated on.
     //! \param quad The quadrature in question.
     //! \param quadPoint The index of the quadrature point of quadrature quad
     LocalFunctionEvaluateQuad(const QuadratureImp& quad,
