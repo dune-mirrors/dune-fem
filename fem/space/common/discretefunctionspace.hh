@@ -171,8 +171,6 @@ namespace Dune
     
     /** \brief get reference to grid this discrete function space belongs to
      * 
-     *  \hasdefault
-     *
      *  \returns constant reference to grid  
      */
     inline const GridType &grid () const
@@ -183,8 +181,6 @@ namespace Dune
 
     /** \brief get reference to grid this discrete function space belongs to
      * 
-     *  \hasdefault
-     *
      *  \returns reference to grid  
      */
     inline GridType &grid ()
@@ -194,8 +190,6 @@ namespace Dune
     }
 
     /** \brief get a reference to the associated grid partition
-     *
-     *  \hasdefault
      *
      *  \returns constant reference to the grid partition
      */
@@ -207,8 +201,6 @@ namespace Dune
     
     /** \brief get a reference to the associated grid partition
      *
-     *  \hasdefault
-     *
      *  \returns reference to the grid partition
      */
     inline GridPartType &gridPart ()
@@ -219,8 +211,6 @@ namespace Dune
 
     /** \brief Get a reference to the associated index set
      *
-     *  \hasdefault
-     *
      *  \returns const reference to index set
      */ 
     inline const IndexSetType &indexSet () const
@@ -230,8 +220,6 @@ namespace Dune
     }
 
     /** \brief get number of DoFs for this space
-     *
-     *  \hasdefault
      *
      *  \returns number of DoFs (degrees of freedom)
      */
@@ -244,8 +232,6 @@ namespace Dune
     /** \brief get iterator pointing to the first entity of the associated grid
      *         partition
      *
-     *  \hasdefault
-     *
      *  \returns iterator pointing to first entity
      */
     inline IteratorType begin () const
@@ -257,8 +243,6 @@ namespace Dune
     /** \brief get iterator pointing behind the last entity of the associated
      *         grid partition
      *
-     *  \hasdefault
-     *
      *  \returns iterator pointing behind last entity
      */
     inline IteratorType end () const
@@ -268,8 +252,6 @@ namespace Dune
     }
 
     /** \brief returns true if the grid has more than one geometry type
-     *
-     *  \hasdefault
      *
      *  \return \b true if the underlying grid has more than one geometry type
      *          (hybrid grid), \b false otherwise 
@@ -281,8 +263,6 @@ namespace Dune
     }
 
     /** \brief returns true if base function sets depend on the entity
-     *
-     *  \hasdefault
      *
      *  \returns \b true if base function set depend on entities, \b false
      *           otherwise
@@ -297,8 +277,6 @@ namespace Dune
      *
      *  Maps an entity and a local DoF number to a global DoF number, i.e.,
      *  the index of the DoF within the DoF vector.
-     *
-     *  \hasdefault
      *
      *  \param[in]  entity    Entity for which mapping is done
      *  \param[in]  localDof  local dof number
