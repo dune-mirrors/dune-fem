@@ -6,15 +6,15 @@ namespace Dune
 
   /** \class DebugCounter
    *  \brief A counter only present if NDEBUG is not defined
-   
-   *  There are several cases, where we need a counter for debugging purposes
-   *  that shall only be present, if NDEBUG is not defined. Since it is quite
-   *  tedious to write the #ifndefs repeatedly, it is provided here.
    *
-   *  In debug mode, this counter wraps a standard integer type, otherwise its
-   *  size is zero.
+   *  There are several cases, where we need a counter for debugging
+   *  purposes that should only be present, if NDEBUG is not defined. 
    *
-   *  \Note The comparison operators always return true, if NDEBUG is defined!
+   *  In debug mode, this counter wraps a standard integer type, 
+   *  otherwise its size is zero.
+   *
+   *  \Note The comparison operators always return true, 
+   *  if NDEBUG is defined!
    */
   template< class CounterImp = unsigned int >
   class DebugCounter
