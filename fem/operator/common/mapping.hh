@@ -88,7 +88,7 @@ public:
   }
 
   /** \brief assignment of mapping mapping 
-      \param[in] m mapping which is copied  
+      \param[in] mapping which is copied  
       \returns reference to mapping  
   */
   MappingType& operator = (const MappingType &mapping) 
@@ -361,8 +361,8 @@ operator /(const Mapping<DFieldType,RFieldType,DType,RType>& mapping,
 
 /** \relates Mapping 
     \brief operator / for mappings 
-    \param[in] factor f factor by which result of mapping is divided 
-    \param[in] a mapping which is divided
+    \param[in] factor by which result of mapping is divided 
+    \param[in] mapping which is divided
     \returns new object mapping 
 */
 template<class DFieldType, class RFieldType, class DType, class RType>

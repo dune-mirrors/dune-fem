@@ -109,7 +109,7 @@ namespace Dune
 
     /*! \brief multiply left hand side with local matrix and add to right hand side 
                rhs += Matrix * lhs  
-        \param[in] lhsf left hand side 
+        \param[in] lhs left hand side 
         \param[out] rhs right hand side 
     */
     template <class DomainLocalFunctionType,
