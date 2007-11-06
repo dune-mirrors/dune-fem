@@ -37,7 +37,8 @@ namespace Dune
       LocalFunctionFactoryType;
 #else
     typedef StandardLocalFunctionFactory
-      < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceType, DofVectorType >
+      < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceType,
+	                              DofVectorType > >
       LocalFunctionFactoryType;
 #endif
 
@@ -95,7 +96,10 @@ namespace Dune
       ThisType;
     typedef DiscreteFunctionDefault< Traits > BaseType;
 
-    friend class VectorLocalFunction< DiscreteFunctionSpaceType, DofVectorType >;
+#ifdef OLD_LOCALFUNCTION
+    friend class VectorLocalFunction
+      < DiscreteFunctionSpaceType, DofVectorType >;
+#endif
 
   public:
     typedef typename Traits :: DiscreteFunctionType DiscreteFunctionType;

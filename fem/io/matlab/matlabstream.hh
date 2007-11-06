@@ -7,7 +7,7 @@
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/space/reducedbasisspace.hh>
 
 namespace Dune
 {
@@ -79,6 +79,32 @@ namespace Dune
     const ConstDofIteratorType end = df.dend();
     for( ConstDofIteratorType it = df.dbegin(); it != end; ++it )
       write(*it);
+    }
+
+    template< class BaseFunctionType >
+    inline void write ( const ReducedBasisSpace< BaseFunctionType > &rbspace )
+    {
+      typedef ReducedBasisSpace< BaseFunctionType > ReducedBasisSpaceType;
+      typedef typename ReducedBasisSpaceType :: BaseFunctionSpaceType
+        BaseFunctionSpaceType;
+
+      typedef typename BaseFunctionType :: ConstDofIteratorType
+        ConstDofIteratorType;
+
+      const BaseFunctionSpaceType &baseFunctionSpace
+        = rbspace.baseFunctionSpace();
+
+      write( rbspace.size() );
+      write( baseFunctionSpace.size() );
+
+      for( int i = 0;  i < rbspace.size(); ++i )
+      {
+        const BaseFunctionType &baseFunction = rbspace.baseFunction( i );
+
+        const ConstDofIteratorType end = baseFunction.dend();
+        for( ConstDofIteratorType it = baseFunction.dbegin(); it != end; ++it )
+          write( *it );
+      }
     }
 
     template< class Traits >
