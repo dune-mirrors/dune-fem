@@ -294,7 +294,7 @@ namespace Dune
       return asImp();
     }
 
-    /** \copydoc Dune::VectorInterface::assign(const VectorInterrace<T> &v) */
+    /** \copydoc Dune::VectorInterface::assign(const VectorInterface<T> &v) */
     template< class T >
     inline void assign ( const VectorInterface< T > &v )
     {
@@ -666,7 +666,7 @@ namespace Dune
       return fields_[ index ];
     }
     
-    /** \copydoc Dune::VectorInterface::assign(const VectorInterrace<T> &v) */
+    /** \copydoc Dune::VectorInterface::assign(const VectorInterface<T> &v) */
     template< class T >
     inline void assign ( const VectorInterface< T > &v )
     {
