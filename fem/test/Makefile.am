@@ -3,6 +3,8 @@ test_HEADERS = dgl2projection.hh \
                exactsolution.hh \
                testgrid.hh
 
+EXTRA_DIST = 2dgrid.dgf 3dgrid.dgf
+
 GRIDTYPE = YASPGRID
 GRIDDIM = 2
 
