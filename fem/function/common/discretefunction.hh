@@ -648,9 +648,16 @@ namespace Dune
      */
     virtual bool read_xdr( const std::string filename )
     {
-      XDRFileInStream in( filename );
-      asImp().read( in );
-      return in.valid();
+      try
+      {
+        XDRFileInStream in( filename );
+        asImp().read( in );
+        return true;
+      }
+      catch( Exception e )
+      {
+        return false;
+      }
     }
  
     /** \copydoc Dune::DiscreteFunctionInterface::write_xdr
@@ -660,9 +667,16 @@ namespace Dune
      */
     virtual bool write_xdr ( const std :: string filename ) const
     {
-      XDRFileOutStream out( filename );
-      asImp().write( out );
-      return out.valid();
+      try
+      {
+        XDRFileOutStream out( filename );
+        asImp().write( out );
+        return true;
+      }
+      catch( Exception e )
+      {
+        return false;
+      }
     }
     
     /** \copydoc Dune::DiscreteFunctionInterface::read_ascii
@@ -672,9 +686,16 @@ namespace Dune
      */
     virtual bool read_ascii ( const std :: string filename )
     {
-      ASCIIInStream in( filename );
-      asImp().read( in );
-      return in.valid();
+      try
+      {
+        ASCIIInStream in( filename );
+        asImp().read( in );
+        return true;
+      }
+      catch( Exception e )
+      {
+        return false;
+      }
     }
  
     /** \copydoc Dune::DiscreteFunctionInterface::write_ascii
@@ -684,9 +705,16 @@ namespace Dune
      */
     virtual bool write_ascii ( const std :: string filename ) const
     {
-      ASCIIOutStream out( filename );
-      asImp().write( out );
-      return out.valid();
+      try
+      {
+        ASCIIOutStream out( filename );
+        asImp().write( out );
+        return true;
+      }
+      catch( Exception e )
+      {
+        return false;
+      }
     }
 
     /** \copydoc DiscreteFunctionInterface::read_pgm */

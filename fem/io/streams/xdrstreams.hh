@@ -3,8 +3,6 @@
 
 #include <rpc/xdr.h>
 
-#include <dune/common/exceptions.hh>
-
 #include <dune/fem/io/streams/streams.hh>
 
 namespace Dune
@@ -46,37 +44,35 @@ namespace Dune
     
   protected:
     XDR xdrs_;
-    bool valid_;
+
+  protected:
+    using BaseType :: writeError;
 
   protected:
     inline XDRBasicOutStream ()
-    : valid_( true )
     {
     }
 
   public:
-    /** \copydoc Dune::OutStreamInterface::valid */
-    inline bool valid () const
-    {
-      return valid_;
-    }
- 
     /** \copydoc Dune::OutStreamInterface::writeDouble */
     inline void writeDouble ( double value )
     {
-      valid_ &= (xdr_double( xdrs(), &value ) != 0);
+      if( xdr_double( xdrs(), &value ) == 0 )
+        writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeFloat */
     inline void writeFloat ( float value )
     {
-      valid_ &= (xdr_float( xdrs(), &value ) != 0);
+      if( xdr_float( xdrs(), &value ) == 0 )
+        writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeInt */
     inline void writeInt ( int value )
     {
-      valid_ &= (xdr_int( xdrs(), &value ) != 0);
+      if( xdr_int( xdrs(), &value ) == 0 )
+        writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeString */
@@ -84,13 +80,15 @@ namespace Dune
     {
       assert( s.size() < maxStringSize );
       char *cs = s.c_str();
-      valid_ &= (xdr_string( xdrs(), &cs, maxStringSize ) != 0);
+      if( xdr_string( xdrs(), &cs, maxStringSize ) == 0 )
+        writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeUnsignedInt */
     inline void writeUnsignedInt ( unsigned int value )
     {
-      valid_ &= (xdr_u_int( xdrs(), &value ) != 0);
+      if( xdr_u_int( xdrs(), &value ) == 0 )
+        writeError();
     }
     
   protected:
@@ -137,37 +135,35 @@ namespace Dune
 
   protected:
     XDR xdrs_;
-    bool valid_;
+
+  protected:
+    using BaseType :: readError;
 
   protected:
     inline XDRBasicInStream ()
-    : valid_( true )
     {
     }
 
   public:
-    /** \copydoc Dune::InStreamInterface::valid */
-    inline bool valid () const
-    {
-      return valid_;
-    }
-    
     /** \copydoc Dune::InStreamInterface::readDouble */
     inline void readDouble ( double &value )
     {
-      valid_ &= (xdr_double( xdrs(), &value ) != 0);
+      if( xdr_double( xdrs(), &value ) == 0 )
+        readError();
     }
 
     /** \copydoc Dune::InStreamInterface::readFloat */
     inline void readFloat ( float &value )
     {
-      valid_ &= (xdr_float( xdrs(), &value ) != 0);
+      if( xdr_float( xdrs(), &value ) == 0 )
+        readError();
     }
 
     /** \copydoc Dune::InStreamInterface::readInt */
     inline void readInt ( int &value )
     {
-      valid_ &= (xdr_int( xdrs(), &value ) != 0);
+      if( xdr_int( xdrs(), &value ) == 0 )
+        readError();
     }
 
     /** \copydoc Dune::InStreamInterface::readString */
@@ -175,14 +171,16 @@ namespace Dune
     {
       char data[ maxStringSize ];
       char *cs = &(data[ 0 ]);
-      xdr_string( xdrs(), &cs, maxStringSize );
+      if( xdr_string( xdrs(), &cs, maxStringSize ) == 0 )
+        readError();
       s = data;
     }
 
     /** \copydoc Dune::InStreamInterface::readUnsignedInt */
     inline void readUnsignedInt ( unsigned int &value )
     {
-      valid_ &= (xdr_u_int( xdrs(), &value ) != 0);
+      if( xdr_u_int( xdrs(), &value ) == 0 )
+        readError();
     }
     
   protected:

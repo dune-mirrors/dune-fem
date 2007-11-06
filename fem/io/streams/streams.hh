@@ -3,46 +3,51 @@
 
 #include <string>
 
-#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/common/exceptions.hh>
+
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 
 namespace Dune
 {
-/** @addtogroup InOutStreams
-    @{
- **/
+  /** \addtogroup InOutStreams
+   *  \{
+   */
+
+
+
+  class StreamError : public Exception {};
+
+
+  
   /** \class OutStreamInterface
    *  \brief abstract interface for an output stream
-   
-   \interfaceclass
+   *
+   *  \interfaceclass
    */
   template< class TraitsImp >
   class OutStreamInterface
+  : public BartonNackmanInterface< OutStreamInterface< TraitsImp >,
+                                   typename TraitsImp :: OutStreamType >
   {
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
+    //! type of the implementation (Barton-Nackman)
+    typedef typename Traits :: OutStreamType OutStreamType;
+
   private:
     typedef OutStreamInterface< Traits > ThisType;
+    typedef BartonNackmanInterface< ThisType, OutStreamType > BaseType;
 
   public:
     //! type of the interface
     typedef ThisType OutStreamInterfaceType;
 
-    //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: OutStreamType OutStreamType;
+  protected:
+    using BaseType :: asImp;
 
   public:
-    /** \brief returns \b true, if an error occured
-     *
-     *  This method is implemented to return the negated return value
-     *  of valid.
-     */
-    inline bool operator! () const
-    {
-      return !valid();
-    }
-
     /** \brief flush the stream
      * 
      *  By calling the flush method, the user can ensure that the stream is
@@ -51,14 +56,6 @@ namespace Dune
     inline void flush ()
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().flush() );
-    }
-    
-    /** \brief return \b false, if an error occured
-     */
-    inline bool valid () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATON( asImp().valid() );
-      return asImp().valid();
     }
 
     /** \brief write a double to the stream
@@ -107,61 +104,43 @@ namespace Dune
     }
 
   protected:
-    // Barton-Nackman trick
-    inline const OutStreamType &asImp () const
+    inline void writeError () const
     {
-      return static_cast< const OutStreamType & >( *this );
-    }
-
-    // Barton-Nackman trick
-    inline OutStreamType &asImp ()
-    {
-      return static_cast< OutStreamType & >( *this );
+      DUNE_THROW( StreamError, "Unable to write to stream." );
     }
   };
 
-  
+ 
+
   /** \class InStreamInterface
    *  \brief abstract interface for an input stream
-
-   \interfaceclass
+   *
+   *  \interfaceclass
    */
   template< class TraitsImp >
   class InStreamInterface
+  : public BartonNackmanInterface< InStreamInterface< TraitsImp >,
+                                   typename TraitsImp :: InStreamType >
   {
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
+    //! type of the implementation (Barton-Nackman)
+    typedef typename Traits :: InStreamType InStreamType;
+
   private:
     typedef InStreamInterface< Traits > ThisType;
+    typedef BartonNackmanInterface< ThisType, InStreamType > BaseType;
 
   public:
     //! type of the interface
     typedef ThisType InStreamInterfaceType;
 
-    //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: InStreamType InStreamType;
-
+  protected:
+    using BaseType :: asImp;
+    
   public:
-    /** \brief returns \b true, if an error occured
-     *
-     *  This method is implemented to return the negated return value
-     *  of valid.
-     */
-    inline bool operator! () const
-    {
-      return !valid();
-    }
-
-    /** \brief return \b false, if an error occured
-     */
-    inline bool valid () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATON( asImp().valid() );
-      return asImp().valid();
-    }
-   
     /** \brief read a double from the stream
      *
      *  \param[out]  value  reference to the variable to read from the stream
@@ -208,20 +187,14 @@ namespace Dune
     }
 
   protected:
-    // Barton-Nackman trick
-    inline const InStreamType &asImp () const
+    inline void readError () const
     {
-      return static_cast< const InStreamType & >( *this );
-    }
-
-    // Barton-Nackman trick
-    inline InStreamType &asImp ()
-    {
-      return static_cast< InStreamType & >( *this );
+      DUNE_THROW( StreamError, "Unable to read from stream." );
     }
   };
-/** @}
- **/
+  
+  /** \}
+   */
 }
 
 #include "streams_inline.hh"
