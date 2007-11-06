@@ -5,9 +5,8 @@
  *
  *  \section before09 ... that Should Be Implemented Before 0.9
  *
- *  - Either remove the \\hasdefault mark for documentation, or use it
- *    consequently.
  *  - Check documentation and remove all warnings from doxygen.out
+ *  - Doxygen is build using make dist even if already available
  *  .
  *
  *  \section before10 ... that Should Be Implemented Before 1.0
@@ -57,6 +56,7 @@
  *  - DGspace with gemeralized Lagrangebasefunctionsets (Gauss-Labatto)
  *  - Revisit operator concept
  *  - A GridPart with all classes wrapped (i.e. Entities, Geometry...)
+ *  - IndexSets build using GridPart
  *  - Improved DG Limiter Pass
  *  - Compact LDG Operator 
  *  - Clarify which jacobian method operates on the reference element and which one

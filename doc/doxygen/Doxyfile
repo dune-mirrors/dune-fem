@@ -177,7 +177,7 @@ TAB_SIZE               = 8
 # You can put \n's in the value part of an alias to insert newlines.
 
 # ALIASES  = 
-ALIASES += "hasdefault=<br><b>Has a default implementation</b><br><br>"
+# ALIASES += "hasdefault=<br><b>Has a default implementation</b><br><br>"
 ALIASES += notcleardoc="\xrefitem notcleardoc \"documentation will be extended\" \"Needs extended documentation\"" 
 ALIASES += interfaceclass="\xrefitem interfaceclass \"An interface class\" \"Main interface classes\""
 ALIASES += newimplementation="\xrefitem newimplementation \"Newly added\" \"New interface implementation and other gadgets\""
@@ -472,7 +472,7 @@ RECURSIVE              = YES
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
 EXCLUDE                = ../../dune/ \
-                          ../../fem/examples \
+                          ../../fem/devel-suite \
                          ../../fem/test \
                          ../../fem/quadrature/ugquadratures.* \
                          ../../fem/quadrature/simplexpoints.hh

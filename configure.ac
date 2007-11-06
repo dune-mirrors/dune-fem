@@ -41,17 +41,17 @@ LDFLAGS="$DUNE_LDFLAGS"
 LIBS="$DUNE_LIBS $BLAS_LIBS"
 
 # generate Makefiles
-AC_CHECK_FILE([fem/examples/Makefile.am],
-              [AC_CONFIG_FILES([fem/examples/Makefile
-                                fem/examples/poisson/Makefile
-                                fem/examples/elliptic/Makefile
-                                fem/examples/transport/Makefile
-                                fem/examples/vectorial/Makefile
-                                fem/examples/l2projection/Makefile
-                                fem/examples/localdg/Makefile
-                                fem/examples/localdg/advectdiffusion/Makefile
-                                fem/examples/pass/Makefile
-                                fem/examples/laplace/Makefile])],
+AC_CHECK_FILE([fem/devel-suite/Makefile.am],
+              [AC_CONFIG_FILES([fem/devel-suite/Makefile
+                                fem/devel-suite/poisson/Makefile
+                                fem/devel-suite/elliptic/Makefile
+                                fem/devel-suite/transport/Makefile
+                                fem/devel-suite/vectorial/Makefile
+                                fem/devel-suite/l2projection/Makefile
+                                fem/devel-suite/localdg/Makefile
+                                fem/devel-suite/localdg/advectdiffusion/Makefile
+                                fem/devel-suite/pass/Makefile
+                                fem/devel-suite/laplace/Makefile])],
               [])
 
 AC_CONFIG_FILES([Makefile
