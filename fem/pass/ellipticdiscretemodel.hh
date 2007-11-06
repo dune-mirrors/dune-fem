@@ -77,14 +77,9 @@ namespace Dune {
     //! the necessary information to identify the type of boundary.
     //! \param it Iterator of the face in consideration.
     //! \param time Global time.
-    //! \param x Local coordinate of the point where the numerical flux gets
-    //! evaluated.
-    //! \param uLeft Tuple of the states on the inner side of the intersection.
-    //! \param gLeft The numerical flux contribution to the inner element 
-    //! (return value).
-    //! \return Speed of the fastest wave. This information is used to compute
-    //! the maximum admissible timestep size.
-    // boundaryValue for pressure 
+    //! \param local local point where the boundaryvalue is evaluated
+    //! \param u Tuple of the states of the previous passes and of the global argument.
+    //! \param bndVal boundary Value (return value)
     template <class FaceDomType,
               class ArgumentTuple>
     BoundaryIdentifierType
