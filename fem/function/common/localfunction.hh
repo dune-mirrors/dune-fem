@@ -423,6 +423,8 @@ protected:
 
     /** \brief evaluate the local function on 
                real world coordinate x and return ret (calls local method of entitys geometry)
+         \deprecated
+
          \param[in] entity Entity x is belonging to 
          \param[in] x global evaluation coordinate 
          \param[out] ret return value 
@@ -468,6 +470,8 @@ protected:
     /** \brief evaluate jacobian of the local function on 
                real world coordinate x and return ret 
                (calls local method of entitys geometry if not overloaded)
+         \deprecated
+               
          \param[in] entity Entity x is belonging to 
          \param[in] x global evaluation coordinate 
          \param[out] grad  return value 

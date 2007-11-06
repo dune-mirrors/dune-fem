@@ -138,6 +138,8 @@ namespace Dune
                           JacobianRangeType &ret ) const;
     
     /** \brief evaluate jacobian of the discrete function on point x
+     *  \deprecated
+     *
         \param[in] entity en
         \param[in] domain type x
         \param[out] jacobian range type ret
@@ -148,6 +150,8 @@ namespace Dune
       JacobianRangeType& ret) const;
     
     /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
+     *  \deprecated
+     *
         \param[in] entity en
         \param[in] quadrature type quad
         \param[in] constant quadrature point quadPoint 
@@ -359,6 +363,8 @@ namespace Dune
                            RangeType &ret ) const;
     
     /** \brief evaluate jacobian of the discrete function on point x
+     *  \deprecated
+     *
         \param[in] entity en 
         \param[in] domain type x
         \param[out] jacobian range type ret
@@ -370,6 +376,8 @@ namespace Dune
     
     
     /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
+     *  \deprecated
+     *
         \param[in] entity en
         \param[in] quadrature type quad
         \param[in] constant quadrature point quadPoint 

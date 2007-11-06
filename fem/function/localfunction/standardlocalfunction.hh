@@ -180,11 +180,11 @@ namespace Dune
                       const int quadPoint,
                       const RangeType &factor );
 
-    /** \copydoc Dune:LocalFunctionInterface::axpy(const DomainType &x,const JacobianRangeType &factor) */
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const DomainType &x,const JacobianRangeType &factor) */
     inline void axpy( const DomainType &x,
                       const JacobianRangeType &factor );
 
-    /** \copydoc Dune:LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
     template< class QuadratureType >
     inline void axpy( const QuadratureType &quadrature,
                       const int quadPoint,
