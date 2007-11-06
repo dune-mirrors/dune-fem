@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_FEMQUADRATURES_HH
 #define DUNE_FEM_FEMQUADRATURES_HH
 
-#include <dune/fem/quadratures/quadratureimp.hh>
+#include <dune/fem/quadrature/quadratureimp.hh>
 
 // quadrature storage classes 
 #include "gausspoints.hh"
