@@ -74,13 +74,10 @@ namespace Dune
      *
      *  \param[in]  element  element wich shall be copied into every array
      *                       entry
-     *
-     *  \returns a reference to this array
      */
-    inline ArrayType &assign ( const ElementType &element )
+    inline void assign ( const ElementType &element )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( element ) );
-      return asImp();
     }
 
     /** \brief copy another array to this one
@@ -89,14 +86,11 @@ namespace Dune
      *  the same size.
      *
      *  \param[in]  other  array to copy
-     *
-     *  \returns a reference this this array
      */
     template< class T >
-    inline ArrayType &assign( const ArrayInterface< T > &other )
+    inline void assign( const ArrayInterface< T > &other )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( other ) );
-      return asImp();
     }
  
     /** \brief obtain begin iterator
@@ -277,25 +271,23 @@ namespace Dune
 
   public:
     /** \copydoc Dune::ArrayInterface::assign(const ElementType &element) */
-    inline ArrayType &assign ( const ElementType &element )
+    inline void assign ( const ElementType &element )
     {
       ArrayType &imp = asImp();
       const unsigned int size = imp.size();
       for( unsigned int i = 0; i < size; ++i )
         imp[ i ] = element;
-      return imp;
     }
     
     /** \copydoc Dune::ArrayInterface::assign(const ArrayInterface<T> &other) */
     template< class T >
-    inline ArrayType &assign( const ArrayInterface< T > &other )
+    inline void assign( const ArrayInterface< T > &other )
     {
       ArrayType &imp = asImp();
       const unsigned int size = imp.size();
       assert( size == other.size() );
       for( unsigned int i = 0; i < size; ++i )
         imp[ i ] = other[ i ];
-      return imp;
     }
 
     /** \copydoc Dune::ArrayInterface::begin() const */
@@ -533,12 +525,11 @@ namespace Dune
     
     /** \copydoc Dune::ArrayInterface::assign(const ArrayInterface<T> &other) */
     template< class T >
-    inline ThisType &assign( const ArrayInterface< T > &other )
+    inline void assign( const ArrayInterface< T > &other )
     {
       resize( other.size() );
       for( unsigned int i = 0; i < size_; ++i )
         elements_[ i ] = other[ i ];
-      return *this;
     }
 
     inline void resize ( unsigned int newSize )

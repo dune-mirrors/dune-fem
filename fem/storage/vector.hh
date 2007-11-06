@@ -65,19 +65,22 @@ namespace Dune
     template< class T >
     inline VectorType& operator= ( const VectorInterface< T > &v )
     {
-      return asImp().assign( v );
+      asImp().assign( v );
+      return asImp();
     }
     
     //! Assign another vector to this one
     inline VectorType& operator= ( const ThisType &v )
     {
-      return asImp().assign( v );
+      asImp().assign( v );
+      return asImp();
     }
 
     //! Initialize all fields of this vector with a scalar
     inline VectorType &operator= ( const FieldType s )
     {
-      return asImp().assign( s );
+      asImp().assign( s );
+      return asImp();
     }
 
     //! Returns a const reference to the field indexed by index
@@ -125,19 +128,23 @@ namespace Dune
       return asImp();
     }
     
-    //! Assign another vector to this one
+    /** \brief copy another vector to this one
+     *
+     *  Copies the data from another vector to this one. Both vectors must be of
+     *  the same size.
+     *
+     *  \param[in]  v  vector to copy
+     */
     template< class T >
-    inline VectorType &assign ( const VectorInterface< T > &v )
+    inline void assign ( const VectorInterface< T > &v )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v.asImp() ) );
-      return asImp();
     }
 
     //! Initialize all fields of this vector with a scalar
-    inline VectorType &assign ( const FieldType s )
+    inline void assign ( const FieldType s )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
-      return asImp();
     }
 
     //! obtain begin iterator
@@ -287,24 +294,22 @@ namespace Dune
       return asImp();
     }
 
-    //! Assign another vector to this one
+    /** \copydoc Dune::VectorInterface::assign(const VectorInterrace<T> &v) */
     template< class T >
-    inline VectorType &assign ( const VectorInterface< T > &v )
+    inline void assign ( const VectorInterface< T > &v )
     {
       const unsigned int size = this->size();
       assert( size == v.size() );
       for( unsigned int i = 0; i < size; ++i )
-        (*this)[ i ] = v[ i ];
-      return asImp();
+        asImp()[ i ] = v[ i ];
     }
     
     //! Initialize all fields of this vector with a scalar
-    inline VectorType &assign ( const FieldType s )
+    inline void assign ( const FieldType s )
     {
       const unsigned int size = this->size();
       for( unsigned int i = 0; i < size; ++i )
-        (*this)[ i ] = s;
-      return asImp();
+        asImp()[ i ] = s;
     }
 
     //! obtain begin iterator
@@ -403,12 +408,14 @@ namespace Dune
     template< class T >
     inline ThisType &operator= ( const VectorInterface< T > &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     inline ThisType &operator= ( const ThisType &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     inline ThisType &operator= ( const FieldType s )
@@ -462,16 +469,14 @@ namespace Dune
       return *this;
     }
     
-    inline ThisType &assign ( const ThisType &other )
+    inline void assign ( const ThisType &other )
     {
       fieldVector_ = other.fieldVector_;
-      return *this;
     }
 
-    inline ThisType &assign ( const FieldType s )
+    inline void assign ( const FieldType s )
     {
       fieldVector_ = s;
-      return *this;
     }
 
     inline unsigned int size () const
@@ -536,19 +541,22 @@ namespace Dune
     template< class T >
     inline ThisType &operator= ( const VectorInterface< T > &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     //! Assign another vector to this one
     inline ThisType &operator= ( const ThisType &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     //! Initialize all fields of this vector with a scalar
     inline ThisType &operator= ( const FieldType s )
     {
-      return assign( s );
+      assign( s );
+      return *this;
     }
 
     inline const FieldType &operator[] ( unsigned int index ) const
@@ -630,19 +638,22 @@ namespace Dune
     template< class T >
     inline ThisType &operator= ( const VectorInterface< T > &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     //! Assign another vector (of the same type) to this one
     inline ThisType &operator= ( const ThisType &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     //! Initialize all fields of this vector with a scalar
     inline ThisType &operator= ( const FieldType s )
     {
-      return assign( s );
+      assign( s );
+      return *this;
     }
 
     inline const FieldType &operator[] ( unsigned int index ) const
@@ -657,10 +668,9 @@ namespace Dune
     
     /** \copydoc Dune::VectorInterface::assign(const VectorInterrace<T> &v) */
     template< class T >
-    inline ThisType &assign ( const VectorInterface< T > &v )
+    inline void assign ( const VectorInterface< T > &v )
     {
       fields_.assign( v );
-      return *this;
     }
 
     inline void resize ( unsigned int newSize )
@@ -733,19 +743,22 @@ namespace Dune
     template< class T >
     inline ThisType &operator= ( const VectorInterface< T > &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     //! Assign another vector to this one
     inline ThisType &operator= ( const ThisType &v )
     {
-      return assign( v );
+      assign( v );
+      return *this;
     }
 
     //! Initialize all fields of this vector with a scalar
     inline ThisType &operator= ( const FieldType s )
     {
-      return assign( s );
+      assign( s );
+      return *this;
     }
 
     inline const FieldType &operator[] ( unsigned int index ) const
