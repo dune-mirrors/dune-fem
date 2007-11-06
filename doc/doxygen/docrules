@@ -84,8 +84,10 @@ the \\ref command:
 \ref MappingInterface "mapping type".
 \endverbatim
 
+<!---
 For methods which are implemented in a corresponding default class the command
 \\hasdefault should be added at the end of the member documentation.
+--->
 
 
 <!---------------------------------------------->
@@ -95,20 +97,22 @@ By using the \\copydoc command the documentation
 from the interface class can be repeated in the
 implementation class:
 \verbatim
-/** \copydoc KlassenNameOhneTemplates::funktionOhneParameter
- */
+/** \copydoc KlassenNameOhneTemplates::funktionOhneParameter */
 \endverbatim
 
 If the function has been overloaded, the complete function declaration must be
 given, like this:
 \verbatim
-/** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
- */
+/** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
 \endverbatim
 Please note that the trailing "const" is important (otherwise Doxygen will look
 for a non-nonst version of the member).
 
 \note Doxygen is quite picky about spaces within references. They should be
-      left out whenever possible (see the above example). Moreover, line breaks
+      left out whereever possible (see the above example). Moreover, line breaks
       within references are disallowed.
+\note Type names and Variable names have to be identical to those in the copied
+      documentation.
+\note Template parameters need not be declared as such. But its name has to be
+      identicial to the name declaration whose documentation is copied.
 */

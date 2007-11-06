@@ -3,13 +3,14 @@
  *  On this page, suggestions to improve dune-fem are collected. So feel free
  *  to add any suggestions or comment on them...
  *
- *  \section before1 ... that Should Be Implemented Before 0.9
+ *  \section before09 ... that Should Be Implemented Before 0.9
  *
  *  - Either remove the \\hasdefault mark for documentation, or use it
  *    consequently.
  *  - Check documentation and remove all warnings from doxygen.out
+ *  .
  *
- *  \section after1 ... that Should Be Implemented After 0.9
+ *  \section before10 ... that Should Be Implemented Before 1.0
  *
  *  - Revisit quadratures (either implement a quadrature interface using
  *    the Barton-Nackman trick or implement an engine concept). Both would
@@ -31,6 +32,8 @@
  *  - more documentation for I/O
  *  - Extend <fem/misc/eoc> and make errors stored in FieldVector possible.
  *  .
+ *
+ *  \section after10 ... that Should Be Implemented After 1.0
  *
  *  \section brainstorm ... that Might Be of Interest
  *
@@ -60,6 +63,7 @@
  *    on real elements.
  *  - Implement a quadrature that reads its points from an ASCII file. This way,
  *    we do not need a quadrature for every floating point type.
- *  - Description of norms/metrics and default implementation of error functionals induced by norms/metrics.
+ *  - Description of norms/metrics and default implementation of error functionals
+ *    induced by norms/metrics.
  *  .
  */
