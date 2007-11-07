@@ -29,7 +29,7 @@ endif
 
 DOXYFILE_OVERWRITE_HTML = $(DOXYFILE_OVERWRITE) \
                           echo "HTML_OUTPUT = $(DOXYGEN_HTML)"; \
-													echo "INPUT += docrules svnpage suggestions";
+													echo "FILE_PATTERNS += *.dev";
 DOXYFILE_OVERWRITE_DIST = $(DOXYFILE_OVERWRITE) \
                           echo "HTML_OUTPUT = $(DOXYGEN_DIST)"; \
 													echo "INTERNAL_DOCS = NO";
@@ -54,7 +54,7 @@ uninstall-local:
 
 # what files does the doxygen-generated stuff depend on (find-syntax)
 DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
-ADDITIONALDOCS = -name Doxyfile -o -name docrules -o -name mainpage -o -name modules -o -name svnpage -o -name suggestions 
+ADDITIONALDOCS = -name Doxyfile -o -name modules -o -name \*.dist
 
 # as all doxygen files fill be installed in the html subdirectory
 # the BASEDIR has to be adjusted
@@ -65,9 +65,9 @@ ADDITIONALDOCS = -name Doxyfile -o -name docrules -o -name mainpage -o -name mod
 doxygen-tag: FORCE $(DOXYGENHEADERBUILD)
 	@set -e; \
 	if test -e Doxyfile; then \
-	  if test ! -e doxygen-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-tag -print`" != x || test x"`find $(BASEDIR) \( $(ADDITIONALDOCS) \) -a -newer doxygen-tag -print`" != x ; then \
+	  if test ! -e doxygen-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-tag -print`" != x || test x"`find . \( $(ADDITIONALDOCS) -o -name \*.dev \) -a -newer doxygen-tag -print`" != x ; then \
 			echo "Creating documentation (running doxygen) ..." ; \
-	    ( cat Doxyfile; $(DOYXFILE_OVERWRITE_HTML) ) > Doxyfile.tmp; \
+	    ( cat Doxyfile; $(DOXYFILE_OVERWRITE_HTML) ) > Doxyfile.tmp; \
 	    $(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \
 	    rm -f Doxyfile.tmp; \
 	    touch doxygen-tag ; \
@@ -78,7 +78,7 @@ doxygen-tag: FORCE $(DOXYGENHEADERBUILD)
 doxygen-dist-tag: FORCE $(DOXYGENHEADERBUILD)
 	@set -e; \
 	if test -e Doxyfile; then \
-	  if test ! -e doxygen-dist-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-dist-tag -print`" != x || test x"`find $(BASEDIR) \( $(ADDITIONALDOCS) \) -a -newer doxygen-dist-tag -print`" != x ; then \
+	  if test ! -e doxygen-dist-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-dist-tag -print`" != x || test x"`find . \( $(ADDITIONALDOCS) \) -a -newer doxygen-dist-tag -print`" != x ; then \
 			echo "Creating distribution documentation (running doxygen) ..." ; \
 		  ( cat Doxyfile; $(DOXYFILE_OVERWRITE_DIST) ) > Doxyfile.tmp; \
 	  	$(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \

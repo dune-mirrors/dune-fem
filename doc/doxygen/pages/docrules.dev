@@ -110,4 +110,31 @@ for a non-nonst version of the member).
       documentation.
 \note Template parameters need not be declared as such. But its name has to be
       identicial to the name declaration whose documentation is copied.
+
+
+
+\section DocAddRelPage Adding Related Pages
+
+To add a related page, you write a file containing one big C++ doxygen comment.
+This comment starts with \\page, to declare the related page. Then just add the
+information, the page shall contain. So, the basic structure of the file is as
+follows:
+\verbatim
+/** \page MyPageLabel My Page Title
+ *
+ *  \section My First Section
+ *
+ *  This is what I have to say ...
+ *
+ *  \section My Second Section
+ *
+ *  ... and some more information ...
+ */
+\endverbatim
+
+The file should be placed in "dune-fem/doc/doxygen/pages". Use either ".dev"
+for development documentation or ".dist" for general documentation as a file
+extension. Note that developer documentation is not taken over into the
+distribution.
+
 */
