@@ -147,9 +147,11 @@ namespace Dune {
     //! Constructor
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
-    //! \param spc Space belonging to the discrete function local to this pass
-    //! \param volumeQuadOrd defines the order of the volume quadrature which is by default 2* space polynomial order 
-    //! \param faceQuadOrd defines the order of the face quadrature which is by default 2* space polynomial order 
+    //! \param spc  Space belonging to the discrete function local to this pass
+    //! \param gradPass 
+    //! \param paramFile parameterfile
+    // \param volumeQuadOrd defines the order of the volume quadrature which is by default 2* space polynomial order 
+    // \param faceQuadOrd defines the order of the face quadrature which is by default 2* space polynomial order 
     LocalDGElliptOperator(DiscreteModelType& problem, 
                 GradientPassType & gradPass,
                 PreviousPassType& pass, 

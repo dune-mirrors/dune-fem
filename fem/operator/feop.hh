@@ -49,7 +49,7 @@ namespace Dune
    *         (a \nabla u + b u) n + \alpha u &=& g_R & \quad \mbox{in} \enspace \Gamma_R 
    *  \end{array}
    *  \f}
-   *  where \l$ a,b,c,g_D,g_N,g_R \l$ are space dependent, \f$\alpha\f$ a constant
+   *  where \f$a, b, c, g_D, g_N, g_R\f$ are space dependent, \f$\alpha\f$ a constant
    *  and the quantities denote
    *  \f$a( x )\f$:      stiffness
    *  \f$b( x )\f$:      velocity
@@ -78,12 +78,12 @@ namespace Dune
    *      integration over it. 
    *
    *  weak formulation of the above problem and restriction to the discrete 
-   *  function with u_h := sum_j u_j phi_j leads to a system for the 
+   *  function with \f$ u_h := sum_j u_j phi_j \f$  leads to a system for the 
    *  DOF-vector u:
    *  
-   *          M u = b
+   *       \f$   M u = b \f$
    *
-   *  with
+   *  with \f$
    *               
    *             /   kronecker(i,j)         if x_i is Dirichlet-LagrangePoint 
    *            /
@@ -91,7 +91,7 @@ namespace Dune
    *            \   -  \int_\Omega   [b     phi_j]^T         grad(phi_i)
    *             \  +  \int_\Omega   c          phi_i       phi_j
    *              \ +  \int_\Gamma_R alpha      phi_i       phi_j      otherwise
-   *
+   *  
    *  and
    *
    *           /    g_D(x_i)               if x_i is Dirichlet-LagrangePoint
@@ -100,6 +100,7 @@ namespace Dune
    *            \   + \int_\Gamma_N g_N phi_i
    *             \  + \int_\Gamma_R g_R phi_i                        otherwise
    *
+   *  \f$
    *  The right hand side is assumed to be assembled by another class, e.g.
    *  RhsAssembler, which is based on element-wise contributions
    *  by a RhsIntegrator class, etc.  
@@ -117,7 +118,7 @@ namespace Dune
    * 
    *  This results in
    *
-   *                M_sym u = b_sym
+   *     \f$           M_sym u = b_sym \f$
    *
    *  The new matrix has entries
    *
@@ -135,16 +136,16 @@ namespace Dune
    *  This Kronecker-Column Treatment is performed by storing the following
    *  temporary objects:
    *
-   *    d_dir := vector with 0 for non-Dirichlet DOFs, 1 for DirichletDOFs
-   *    M_dir := Null-matrix with all Dirichlet-Columns of M  - diag(d_dir)
+   *  \f$ d_dir := \f$ vector with 0 for non-Dirichlet DOFs, 1 for DirichletDOFs
+   *  \f$ M_dir := \f$Null-matrix with all Dirichlet-Columns of M  - diag(d_dir)
    *             i.e. Dirichlet-Rows are completely zero
-   *    g_D := vector with 0 for non-Dirichlet DOFs, 
+   *  \f$ g_D := \f$ vector with 0 for non-Dirichlet DOFs, 
                Dirichlet-Value for DirichletDOFs
    *
    *  Then, the symmetrization can compactly be written as
    *
-   *    M_sym = M - M_dir 
-   *    b_sym = b - M_dir * g_D
+   *   \f$ M_sym = M - M_dir \f$
+   *   \f$ b_sym = b - M_dir * g_D \f$
    *
    *  The class depends on two template parameters, a SystemMatrixImp and an 
    *  ElementMatrixIntegratorImp class
@@ -259,6 +260,8 @@ namespace Dune
      *   \param maxNonZerosPerRow the maximum number of nonzeros per row in the 
      *          global matrix (default 50)
      *
+     *   \param verbose set to zero
+     *   \param preconditionSSOR parameter for precondition is set to false
      *   \return the initialized FEOp
      */
     FEOp( ElementMatrixIntegratorType &elementMatrixIntegrator,
@@ -309,7 +312,7 @@ namespace Dune
      *
      *  \note only makes sense in ASSEMBLED mode
      *
-     *  \param[in] stream to print matrix to
+     *  \param[in] out stream to print matrix to
      */
     void print ( std :: ostream &out = std :: cout ) const 
     {

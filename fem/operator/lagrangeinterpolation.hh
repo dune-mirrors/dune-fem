@@ -55,7 +55,7 @@ namespace Dune
     static void interpolateFunction ( const FunctionType &function,
                                       DiscreteFunctionType &discreteFunction )
     {
-      enum { hasLocalFunction = Conversion< FunctionType, HasLocalFunction > :: exists > };
+      enum { hasLocalFunction = Conversion< FunctionType, HasLocalFunction > :: exists  };
       
       callInterpolateDiscreteFunction< FunctionType, hasLocalFunction >
         :: call( function, discreteFunction );
