@@ -5,10 +5,9 @@
  *
  *  \section before09 ... that Should Be Implemented Before 0.9
  *
- *  - Check documentation and remove all warnings from doxygen.out
  *  - Doxygen is build using make dist even if already available
  *  .
- ***
+ *
  *  \section before10 ... that Should Be Implemented Before 1.0
  *
  *  - Revisit quadratures (either implement a quadrature interface using
