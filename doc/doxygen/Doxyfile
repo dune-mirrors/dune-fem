@@ -447,9 +447,6 @@ WARN_LOGFILE           =  doxygen.out
 INPUT                  = modules \
                          ../../modules \
                          mainpage \
-                         svnpage \
-                         suggestions \
-                         docrules \
                          ../../fem
 
 # If the value of the INPUT tag contains directories, you can use the 

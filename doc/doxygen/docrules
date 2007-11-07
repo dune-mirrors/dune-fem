@@ -84,11 +84,6 @@ the \\ref command:
 \ref MappingInterface "mapping type".
 \endverbatim
 
-<!---
-For methods which are implemented in a corresponding default class the command
-\\hasdefault should be added at the end of the member documentation.
---->
-
 
 <!---------------------------------------------->
 \section DocImplementation Documentation of Implementation Classes
