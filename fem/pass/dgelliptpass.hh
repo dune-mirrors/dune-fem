@@ -282,7 +282,7 @@ namespace Dune {
     //! Constructor
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
-    //! \param dest ???
+    //! \param dest Pointer to needed temporary memory (otherwise created by pass)
     //! \param paramFile file name of parameter file to read various variables 
     //! 
     //!  NOTE: parameter read by this class 
