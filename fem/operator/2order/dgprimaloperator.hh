@@ -303,6 +303,7 @@ namespace Dune {
     //- Public methods
     //! Constructor
     //! \param problem Actual problem definition (see problem.hh)
+    //! \param[in]  gradPass  types and discrete model for the gradient pass
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
     //! \param paramFile parameter file to read necessary parameters, if empty 
