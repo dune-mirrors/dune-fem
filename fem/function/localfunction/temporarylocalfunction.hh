@@ -74,6 +74,10 @@ namespace Dune
 
     DofArrayType dofs_;
 
+  protected:
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+
   public:
     /** \brief constructor creating a local function without binding it to an 
      *         entity
