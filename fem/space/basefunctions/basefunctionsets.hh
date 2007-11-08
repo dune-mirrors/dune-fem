@@ -201,6 +201,8 @@ namespace Dune
 
     // use evaluate of default implementation 
     using BaseType :: evaluate;
+    using BaseType :: evaluateSingle;
+    using BaseType :: evaluateGradientSingle;
     using BaseType :: jacobian;
 
     GeometryType geometryType () const 
