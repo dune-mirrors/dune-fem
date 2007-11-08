@@ -33,14 +33,13 @@
 **
 **************************************************************************/
 
-// uncomment the following line to use grape
-#define USE_GRAPE HAVE_GRAPE
-
 #define VERBOSE false
 
 #include <config.h>
 
+#ifdef ENABLE_TIMING
 #include <time.h>
+#endif
 
 //- system includes
 #include <iostream>
@@ -74,6 +73,10 @@
 
 #ifndef POLORDER
   #define POLORDER 1
+#endif
+
+#ifndef USE_GRAPE
+#define USE_GRAPE 0
 #endif
 
 //***********************************************************************
@@ -111,9 +114,9 @@ using namespace Dune;
  *        for example, is not. If you want to use OEM solvers, the index set
  *        must be continuous. In such a case use AdaptiveLeafGridPart.
  */
-//typedef LeafGridPart< GridType > GridPartType;
+typedef LeafGridPart< GridType > GridPartType;
 //typedef LevelGridPart< GridType > GridPartType;
-typedef AdaptiveLeafGridPart< GridType > GridPartType;
+//typedef AdaptiveLeafGridPart< GridType > GridPartType;
 
 //! define the function space, \f[ \R^n \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -208,15 +211,19 @@ void solve ( LaplaceOperatorType &laplace,
              const DiscreteFunctionType &rhs,
              DiscreteFunctionType &solution )
 {
+#ifdef ENABLE_TIMING
   time_t starttime = time( NULL );
+#endif
   
   // solve the linear system (with CG)
   double dummy = 12345.67890;
   InverseOperatorType cg( laplace, dummy, 1e-8, 20000, VERBOSE );
   cg( rhs, solution );
 
+#ifdef ENABLE_TIMING
   time_t endtime = time( NULL );
   std :: cout << "Time needed by solver: " << (endtime - starttime) << std :: endl;
+#endif
 }
 
 
@@ -225,6 +232,8 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
 {
   GridPtr< GridType > gridptr( filename ); 
   
+  gridptr->loadBalance();
+
   gridptr->globalRefine( maxlevel );
 
   GridPartType gridPart( *gridptr );
@@ -276,7 +285,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
   std :: cout << "L2 Error: " << error << std :: endl << std :: endl;
 
-  #if USE_GRAPE
+  #if (USE_GRAPE && HAVE_GRAPE)
   // if grape was found then display solution
   if( turn > 0 )
   {
@@ -304,10 +313,14 @@ std :: string getMacroGridName( unsigned int dimension )
 // main programm, run algorithm twice to calc EOC 
 int main( int argc, char **argv )
 {
+  const MPIHelper &mpi = MPIHelper :: instance( argc, argv );
+  
   try {
     if( argc < 2 )
     {
-      std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel> [macrogrid]" << std :: endl;
+      if( mpi.rank() == 0 )
+        std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel> [macrogrid]"
+                    << std :: endl;
       return 1;
     }
     
@@ -316,7 +329,8 @@ int main( int argc, char **argv )
 
     std :: string macroGridName
       = (argc > 2 ? argv[ 2 ] : getMacroGridName( GridType :: dimension ));
-    std :: cout << "loading macro grid: " << macroGridName << std :: endl;
+    if( mpi.rank() == 0 )
+      std :: cout << "loading macro grid: " << macroGridName << std :: endl;
     
     const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
     level = (level > step ? level - step : 0);
@@ -331,7 +345,8 @@ int main( int argc, char **argv )
   }
   catch( Exception exception )
   {
-    std :: cerr << exception << std :: endl;
+    if( mpi.rank() == 0 )
+      std :: cerr << exception << std :: endl;
     return 1;
   }
 }

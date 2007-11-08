@@ -1,7 +1,9 @@
 #ifndef DUNE_LAPLACE_HH
 #define DUNE_LAPLACE_HH
 
+#ifdef ENABLE_TIMING
 #include <time.h>
+#endif
 
 //- Dune includes
 #include <dune/common/fmatrix.hh>
@@ -159,14 +161,18 @@ namespace Dune
         assert( matrix_ != 0 );
       }
 
+#ifdef ENABLE_TIMING
       time_t starttime = time( NULL );
+#endif
       
       matrix_->clear();
       assembleOnGrid();
       boundaryCorrectOnGrid();
 
+#ifdef ENABLE_TIMING
       time_t endtime = time( NULL );
-      std :: cout << "Time to assemble matrix: " << (endtime - starttime) << std :: endl; 
+      std :: cout << "Time to assemble matrix: " << (endtime - starttime) << std :: endl;
+#endif
 
       matrix_assembled_ = true;
     }
