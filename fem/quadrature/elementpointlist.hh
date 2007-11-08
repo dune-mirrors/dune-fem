@@ -92,6 +92,7 @@ namespace Dune
     //! type of the codim-0 entity
     typedef typename GridType :: template Codim< 0 > :: Entity Entity;
     
+    //! the type of the quadrature point 
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
     
   protected:
@@ -249,6 +250,7 @@ namespace Dune
     //! type quadrature for use on non-conforming intersections 
     typedef ThisType NonConformingQuadratureType;
    
+    //! the type of the quadrature point 
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
   private:
