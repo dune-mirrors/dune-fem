@@ -12,5 +12,6 @@ libfem_la_LIBADD = space/libspace.la solver/libsolver.la
 
 # install all files to dune/fem 
 femdir = $(includedir)/dune/fem
+fem_HEADERS = version.hh
 
 include $(top_srcdir)/am/global-rules
