@@ -112,6 +112,7 @@ namespace Dune
     //! The type of the codim-0 entity.
     typedef typename BaseType::Entity Entity;
 
+    //! the type of the quadrature point 
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
     
   public:
@@ -195,6 +196,7 @@ namespace Dune
     //! type of twist utility 
     typedef TwistUtility< GridType > TwistUtilityType;
 
+    //! the type of the quadrature point 
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
     
   protected:
