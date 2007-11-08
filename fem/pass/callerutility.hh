@@ -315,20 +315,23 @@ namespace Dune {
    */
   template <class QuadratureImp>
   class LocalFunctionEvaluateQuad {
+    typedef typename QuadratureImp :: QuadraturePointWrapperType QuadraturePointWrapperType;
   public:
     //! Constructor
     //! \param quad The quadrature in question.
     //! \param quadPoint The index of the quadrature point of quadrature quad
     LocalFunctionEvaluateQuad(const QuadratureImp& quad,
                               const int quadPoint) :
-      quad_(quad),
-      quadPoint_(quadPoint)
+      quadPoint_( quad[quadPoint] )
+     // quad_(quad),
+     // quadPoint_(quadPoint)
     {}
 
     //! Evaluation of a local function
     template <class LFType, class RangeType>
     void visit(LFType& lf, RangeType& res) {
-      lf.evaluate(quad_, quadPoint_, res);
+      //lf.evaluate(quad_ [quadPoint_] , res);
+      lf.evaluate( quadPoint_ , res);
     }
 
   private:
@@ -337,8 +340,9 @@ namespace Dune {
     LocalFunctionEvaluateQuad& operator=(const LocalFunctionEvaluateQuad&);
 
   private:
-    const QuadratureImp& quad_;
-    const int quadPoint_;
+    const QuadraturePointWrapperType quadPoint_;
+    //const QuadratureImp& quad_;
+    //const int quadPoint_;
   };
 
   template <class DomainImp>
@@ -365,16 +369,19 @@ namespace Dune {
   
   template <class QuadratureImp>
   class LocalFunctionEvaluateJacobianQuad {
+    typedef typename QuadratureImp :: QuadraturePointWrapperType QuadraturePointWrapperType;
   public:
     LocalFunctionEvaluateJacobianQuad(const QuadratureImp& quad,
                                       const int quadPoint) :
-      quad_(quad),
-      quadPoint_(quadPoint)
+      quadPoint_ ( quad[quadPoint] )
+    //  quad_(quad),
+    //  quadPoint_(quadPoint)
     {}
 
     template <class LFType, class JRangeType>
     void visit(LFType& lf, JRangeType& res) {
-      lf.jacobian(quad_, quadPoint_, res);
+      //lf.jacobian(quad_, quadPoint_, res);
+      lf.jacobian(quadPoint_, res);
     }
 
   private:
@@ -384,8 +391,9 @@ namespace Dune {
     operator=(const LocalFunctionEvaluateJacobianQuad&);
 
   private:
-    const QuadratureImp& quad_;
-    const int quadPoint_;
+    const QuadraturePointWrapperType quadPoint_;
+    //const QuadratureImp& quad_;
+    //const int quadPoint_;
   };
 
   /**
@@ -445,545 +453,5 @@ namespace Dune {
     QuadratureImp& quad_;
   };
 
-  /**
-   * @brief Helper class which actually calls the functions of the problem
-   *
-   * This class enables us to call methods by varying argument lengths.
-   */
-  /*
-  template <class RangePairImp>
-  class Caller {};
-  
-  template <class T1>
-  class Caller<Pair<T1, Nil> > {
-  public:
-    typedef Pair<T1, Nil> RangePairType;
-    
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               const DomainType& x,
-                               RangePairType& p, 
-                               ResultType& res) {
-      problem.analyticalFlux(en, x, 
-                             Element<0>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               QuadratureType& quad,
-                               int quadPoint,
-                               RangePairType& p,
-                               ResultType& res) {
-      problem.analyticalFlux(en, quad, quadPoint,
-                             Element<0>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, 
-      class IntersectionIterator, 
-      class DomainType, 
-      class ResultType
-      >
-    static void numericalFluxFlux(DiscreteModelType& problem,
-                                  IntersectionIterator& nit,
-                                  const DomainType& x,
-                                  RangePairType& pEn,
-                                  RangePairType& pNeigh,
-                                  ResultType& resEn, 
-                                  ResultType& resNeigh) {
-      problem.numericalFlux(nit, x, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType,
-      class IntersectionIterator,
-      class QuadratureType,
-      class ResultType
-      >
-    static void numericalFlux(DiscreteModelType& problem,
-                              IntersectionIterator& nit,
-                              QuadratureType& quad,
-                              int quadPoint,
-                              RangePairType& pEn,
-                              RangePairType& pNeigh,
-                              ResultType& resEn,
-                              ResultType& resNeigh) {
-      problem.numericalFlux(nit, quad, quadPoint, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       const DomainType& x,
-                       RangePairType& p,
-                       ResultType& res) {
-      problem.source(en, x, 
-                     Element<0>::get(p), 
-                     res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       QuadratureType& quad,
-                       int quadPoint,
-                       RangePairType& p,
-                       ResultType res) {
-      problem.source(en, quad, quadPoint, 
-                     Element<0>::get(p), 
-                     res);
-    }
-  };
-  
-  // Two arguments
-  template <class T1, class T2>
-  class Caller<Pair<T1, Pair<T2, Nil> > > {
-  public:
-    typedef Pair<T1, Pair<T2, Nil> > RangePairType;
-    
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               const DomainType& x,
-                               RangePairType& p, 
-                               ResultType& res) {
-      problem.analyticalFlux(en, x, 
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               QuadratureType& quad,
-                               int quadPoint,
-                               RangePairType& p,
-                               ResultType& res) {
-      problem.analyticalFlux(en, quad, quadPoint,
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, 
-      class IntersectionIterator, 
-      class DomainType, 
-      class ResultType
-      >
-    static void numericalFluxFlux(DiscreteModelType& problem,
-                                  IntersectionIterator& nit,
-                                  const DomainType& x,
-                                  RangePairType& pEn,
-                                  RangePairType& pNeigh,
-                                  ResultType& resEn, 
-                                  ResultType& resNeigh) {
-      problem.numericalFlux(nit, x, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType,
-      class IntersectionIterator,
-      class QuadratureType,
-      class ResultType
-      >
-    static void numericalFlux(DiscreteModelType& problem,
-                              IntersectionIterator& nit,
-                              QuadratureType& quad,
-                              int quadPoint,
-                              RangePairType& pEn,
-                              RangePairType& pNeigh,
-                              ResultType& resEn,
-                              ResultType& resNeigh) {
-      problem.numericalFlux(nit, quad, quadPoint, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       const DomainType& x,
-                       RangePairType& p,
-                       ResultType& res) {
-      problem.source(en, x, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       QuadratureType& quad,
-                       int quadPoint,
-                       RangePairType& p,
-                       ResultType res) {
-      problem.source(en, quad, quadPoint, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     res);
-    }
-  };
-
-  // Three arguments
-  template <class T1, class T2, class T3>
-  class Caller<Pair<T1, Pair<T2, Pair<T3, Nil> > > > {
-  public:
-    typedef Pair<T1, Pair<T2, Pair<T3, Nil> > > RangePairType;
-    
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               const DomainType& x,
-                               RangePairType& p, 
-                               ResultType& res) {
-      problem.analyticalFlux(en, x, 
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             Element<2>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               QuadratureType& quad,
-                               int quadPoint,
-                               RangePairType& p,
-                               ResultType& res) {
-      problem.analyticalFlux(en, quad, quadPoint,
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             Element<2>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, 
-      class IntersectionIterator, 
-      class DomainType, 
-      class ResultType
-      >
-    static void numericalFluxFlux(DiscreteModelType& problem,
-                                  IntersectionIterator& nit,
-                                  const DomainType& x,
-                                  RangePairType& pEn,
-                                  RangePairType& pNeigh,
-                                  ResultType& resEn, 
-                                  ResultType& resNeigh) {
-      problem.numericalFlux(nit, x, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            Element<2>::get(pEn), Element<2>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType,
-      class IntersectionIterator,
-      class QuadratureType,
-      class ResultType
-      >
-    static void numericalFlux(DiscreteModelType& problem,
-                              IntersectionIterator& nit,
-                              QuadratureType& quad,
-                              int quadPoint,
-                              RangePairType& pEn,
-                              RangePairType& pNeigh,
-                              ResultType& resEn,
-                              ResultType& resNeigh) {
-      problem.numericalFlux(nit, quad, quadPoint, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            Element<2>::get(pEn), Element<2>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       const DomainType& x,
-                       RangePairType& p,
-                       ResultType& res) {
-      problem.source(en, x, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     Element<2>::get(p), 
-                     res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       QuadratureType& quad,
-                       Entity& en,
-                       int quadPoint,
-                       RangePairType& p,
-                       ResultType res) {
-      problem.source(en, quad, quadPoint, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     Element<2>::get(p), 
-                     res);
-    }
-  };
-
-  // Four arguments
-  template <class T1, class T2, class T3, class T4>
-  class Caller<Pair<T1, Pair<T2, Pair<T3, Pair<T4, Nil> > > > > {
-  public:
-    typedef Pair<T1, Pair<T2, Pair<T3, Pair<T4, Nil> > > > RangePairType;
-    
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               const DomainType& x,
-                               RangePairType& p, 
-                               ResultType& res) {
-      problem.analyticalFlux(en, x, 
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             Element<2>::get(p), 
-                             Element<3>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               QuadratureType& quad,
-                               int quadPoint,
-                               RangePairType& p,
-                               ResultType& res) {
-      problem.analyticalFlux(en, quad, quadPoint,
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             Element<2>::get(p), 
-                             Element<3>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, 
-      class IntersectionIterator, 
-      class DomainType, 
-      class ResultType
-      >
-    static void numericalFluxFlux(DiscreteModelType& problem,
-                                  IntersectionIterator& nit,
-                                  const DomainType& x,
-                                  RangePairType& pEn,
-                                  RangePairType& pNeigh,
-                                  ResultType& resEn, 
-                                  ResultType& resNeigh) {
-      problem.numericalFlux(nit, x, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            Element<2>::get(pEn), Element<2>::get(pNeigh),
-                            Element<3>::get(pEn), Element<3>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType,
-      class IntersectionIterator,
-      class QuadratureType,
-      class ResultType
-      >
-    static void numericalFlux(DiscreteModelType& problem,
-                              IntersectionIterator& nit,
-                              QuadratureType& quad,
-                              int quadPoint,
-                              RangePairType& pEn,
-                              RangePairType& pNeigh,
-                              ResultType& resEn,
-                              ResultType& resNeigh) {
-      problem.numericalFlux(nit, quad, quadPoint, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            Element<2>::get(pEn), Element<2>::get(pNeigh),
-                            Element<3>::get(pEn), Element<3>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       const DomainType& x,
-                       RangePairType& p,
-                       ResultType& res) {
-      problem.source(en, x, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     Element<2>::get(p), 
-                     Element<3>::get(p), 
-                     res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       QuadratureType& quad,
-                       int quadPoint,
-                       RangePairType& p,
-                       ResultType res) {
-      problem.source(en, quad, quadPoint, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     Element<2>::get(p), 
-                     Element<3>::get(p), 
-                     res);
-    }
-  };
-
-  // Five argument
-  template <class T1, class T2, class T3, class T4, class T5>
-  class Caller<Pair<T1, Pair<T2, Pair<T3, Pair<T4, Pair<T5, Nil> > > > > > {
-  public:
-    typedef Pair<T1, Pair<T2, Pair<T3, Pair<T4, Pair<T5, Nil> > > > > RangePairType;
-    
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               const DomainType& x,
-                               RangePairType& p, 
-                               ResultType& res) {
-      problem.analyticalFlux(en, x, 
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             Element<2>::get(p), 
-                             Element<3>::get(p), 
-                             Element<4>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void analyticalFlux(DiscreteModelType& problem,
-                               Entity& en,
-                               QuadratureType& quad,
-                               int quadPoint,
-                               RangePairType& p,
-                               ResultType& res) {
-      problem.analyticalFlux(en, quad, quadPoint,
-                             Element<0>::get(p), 
-                             Element<1>::get(p), 
-                             Element<2>::get(p), 
-                             Element<3>::get(p), 
-                             Element<4>::get(p), 
-                             res);
-    }
-
-    template <
-      class DiscreteModelType, 
-      class IntersectionIterator, 
-      class DomainType, 
-      class ResultType
-      >
-    static void numericalFluxFlux(DiscreteModelType& problem,
-                                  IntersectionIterator& nit,
-                                  const DomainType& x,
-                                  RangePairType& pEn,
-                                  RangePairType& pNeigh,
-                                  ResultType& resEn, 
-                                  ResultType& resNeigh) {
-      problem.numericalFlux(nit, x, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            Element<2>::get(pEn), Element<2>::get(pNeigh),
-                            Element<3>::get(pEn), Element<3>::get(pNeigh),
-                            Element<4>::get(pEn), Element<4>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType,
-      class IntersectionIterator,
-      class QuadratureType,
-      class ResultType
-      >
-    static void numericalFlux(DiscreteModelType& problem,
-                              IntersectionIterator& nit,
-                              QuadratureType& quad,
-                              int quadPoint,
-                              RangePairType& pEn,
-                              RangePairType& pNeigh,
-                              ResultType& resEn,
-                              ResultType& resNeigh) {
-      problem.numericalFlux(nit, quad, quadPoint, 
-                            Element<0>::get(pEn), Element<0>::get(pNeigh),
-                            Element<1>::get(pEn), Element<1>::get(pNeigh),
-                            Element<2>::get(pEn), Element<2>::get(pNeigh),
-                            Element<3>::get(pEn), Element<3>::get(pNeigh),
-                            Element<4>::get(pEn), Element<4>::get(pNeigh),
-                            resEn, resNeigh);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class DomainType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       Entity& en,
-                       const DomainType& x,
-                       RangePairType& p,
-                       ResultType& res) {
-      problem.source(en, x, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     Element<2>::get(p), 
-                     Element<3>::get(p), 
-                     Element<4>::get(p), 
-                     res);
-    }
-
-    template <
-      class DiscreteModelType, class Entity, class QuadratureType, class ResultType>
-    static void source(DiscreteModelType& problem,
-                       QuadratureType& quad,
-                       Entity& en,
-                       int quadPoint,
-                       RangePairType& p,
-                       ResultType res) {
-      problem.source(en, quad, quadPoint, 
-                     Element<0>::get(p), 
-                     Element<1>::get(p), 
-                     Element<2>::get(p), 
-                     Element<3>::get(p), 
-                     Element<4>::get(p), 
-                     res);
-    }
-  };
-*/
-  
 } // end namespace Dune
-  
 #endif
