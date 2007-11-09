@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.50)
-AC_INIT(dune-fem, 0.9, dune@mathematik.uni-freiburg.de)
+AC_INIT(dune-fem, 0.10, dune@mathematik.uni-freiburg.de)
 #AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 
