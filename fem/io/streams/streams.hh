@@ -9,18 +9,27 @@
 
 namespace Dune
 {
-  /** \addtogroup InOutStreams
-   *  \{
-   */
-
-
 
   class StreamError : public Exception {};
 
 
   
   /** \class OutStreamInterface
+   *  \ingroup InOutStreams
    *  \brief abstract interface for an output stream
+   *
+   *  An output stream provides methods to write the basic C++ types into the
+   *  stream. Based on this information, more complicated types can be written
+   *  to the stream by using these basic output operations.
+   *
+   *  Normally, the output methods of the stream are not used directly, but the
+   *  operator << ist used to write information into the stream. This operator
+   *  should also be overloaded for all types that should be writeable.
+   *
+   *  Unlike STL streams, dune-fem output streams throw a StreamError exception
+   *  when a writing operation fails. Since the program is automatically
+   *  aborted, if the exception is not caught, careless programming will not
+   *  result in corrupted data files.
    *
    *  \interfaceclass
    */
@@ -113,8 +122,24 @@ namespace Dune
  
 
   /** \class InStreamInterface
+   *  \ingroup InOutStreams
    *  \brief abstract interface for an input stream
    *
+   *  An input stream provides methods to read the basic C++ types from the
+   *  stream. Based on this information, more complicated types can be read
+   *  from the stream by using these basic input operations.
+   *
+   *  Normally, the input methods of the stream are not used directly, but the
+   *  operator >> ist used to read information from the stream. This operator
+   *  should also be overloaded for all types that should be readable.
+   *
+   *  Unlike STL streams, dune-fem input streams throw a StreamError exception
+   *  when a reading operation fails. Since the program is automatically
+   *  aborted, if the exception is not caught, careless programming will not
+   *  result in uninitialized objects. If the user catches the exception, he
+   *  may not assume the object, that should be read, to be in a defined or
+   *  even useful state.
+   * 
    *  \interfaceclass
    */
   template< class TraitsImp >
@@ -192,9 +217,7 @@ namespace Dune
       DUNE_THROW( StreamError, "Unable to read from stream." );
     }
   };
-  
-  /** \}
-   */
+
 }
 
 #include "streams_inline.hh"

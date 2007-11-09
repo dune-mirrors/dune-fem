@@ -17,6 +17,7 @@ namespace Dune
 
  
   /** \class XDRBasicOutStream
+   *  \ingroup InOutStreams
    *  \brief base implementation for XDR output streams
    *  
    *  This class implements the writing functions for an XDR stream. It must
@@ -108,6 +109,7 @@ namespace Dune
 
 
   /** \class XDRBasicInStream
+   *  \ingroup InOutStreams
    *  \brief base implementation for XDR input streams
    *  
    *  This class implements the reading functions for an XDR stream. It must
@@ -193,6 +195,7 @@ namespace Dune
 
 
   /** \class XDRFileOutStream
+   *  \ingroup InOutStreams
    *  \brief XDR output stream writing into a file
    *
    *  \newimplementation
@@ -223,8 +226,7 @@ namespace Dune
       xdrstdio_create( xdrs(), file_, XDR_ENCODE );
     }
 
-    /** \brief destructori
-     */
+    /** \brief destructor */
     inline ~XDRFileOutStream ()
     {
       xdr_destroy( xdrs() );
@@ -241,6 +243,7 @@ namespace Dune
 
   
   /** \class XDRFileInStream
+   *  \ingroup InOutStreams
    *  \brief XDR output stream reading from a file
    *
    *  \newimplementation
