@@ -109,7 +109,7 @@ namespace Dune
         = lagrangePointSet.template endSubEntity< 0 >( 0 );
       for( ; it != endit; ++it ) {
         const unsigned int dof = *it;
-        const DomainType &pointInFather = lagrangePointSet[ dof ];
+        const DomainType &pointInFather = lagrangePointSet.point( dof );
         const DomainType pointInSon = geometryInFather.local( pointInFather );
         if( geometryInFather.checkInside( pointInSon ) ) {
           RangeType phi;
@@ -140,7 +140,7 @@ namespace Dune
         = lagrangePointSet.template endSubEntity< 0 >( 0 );
       for( ; it != endit; ++it ) {
         const unsigned int dof = *it;
-        const DomainType &pointInSon = lagrangePointSet[ dof ];
+        const DomainType &pointInSon = lagrangePointSet.point( dof );
         const DomainType pointInFather = geometryInFather.global( pointInSon );
         
         RangeType phi;
