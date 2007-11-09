@@ -150,7 +150,7 @@ namespace Dune
       dofVector_( &dofVector ),
       freeDofVector_( false )
     {
-      assert( dofVector_.size() == dfSpace.size() );
+      assert( dofVector_->size() == dfSpace.size() );
     }
 
     inline VectorDiscreteFunction ( const ThisType &other )
