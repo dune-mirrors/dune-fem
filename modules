@@ -36,6 +36,10 @@
    @defgroup PeriodicGridPart Periodic grid part
    @ingroup GridPart */
 
+/** \defgroup GenericGeometry Generic Geometries
+ *  \ingroup GridPart
+ */
+
 /**
 	 @defgroup FunctionCommon Function and function spaces
    @ingroup FEM

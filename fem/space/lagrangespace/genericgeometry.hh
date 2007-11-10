@@ -7,11 +7,56 @@
 namespace Dune
 {
 
+  /** \addtogroup GenericGeometry
+   *
+   *  Generic geometries are a way of constructing new geometries out of
+   *  existing ones. This allows for code depending on the geometry to be
+   *  written generically. For example, the LagrangeBaseFunction is written
+   *  in this generic way. Therefore, you could create a LagrangeBaseFunction
+   *  for a 7 dimensional simplex (and no new code is needed).
+   *
+   *  Generic geometries are created out of simpler ones by the following
+   *  rules:
+   *  - A point (denoted by \f$p\f$) is a 0-dimensional generic geometry
+   *    (PointGeometry). Its reference element is the origin of the
+   *    coordinate system.
+   *  - Let \f$g\f$ be a \f$d\f$-dimensional generic geometry. Then the pyramid
+   *    over \f$g\f$ (denoted by \f$g^\cdot\f$) with the reference geometry
+   *    \f[
+   *    g^\cdot = \bigl\lbrace (s x,s) \in \mathbb{R}^{d+1}
+   *              \bigm\vert s \in [0,1], x \in g \bigr\rbrace
+   *    \f]
+   *    is also a generic geometry (PyramidGeometry).
+   *  - Let \f$g_1\f$, \f$g_2\f$ be generic geometries. The their product
+   *    \f$g_1 \times g_2\f$ (with the obvious reference geometry) is also a
+   *    generic geometry (ProductGeometry).
+   *  .
+   *
+   *  Consider the following examples of generic geometries:
+   *  - the line \f$p^\cdot\f$,
+   *  - the tetrahedron \f$p^{\cdot\cdot\cdot}\f$,
+   *  - the cube (3-dimensioal) \f$p^\cdot \times p^\cdot \times p^\cdot\f$,
+   *  - the prism \f$p^{\cdot\cdot} \times p^\cdot\f$,
+   *  - the 4-sided pyramid \f$(p^\cdot \times p^\cdot)^\cdot\f$.
+   *  .
+   *  \note All reference geometries defined in dune-grid can be expressed as
+   *        generic geometries.
+   */
+
+  /** \class PointGeometry
+   *  \ingroup GenericGeometry
+   *  \brief generic geometry modelling a single point
+   */
   class PointGeometry
   {
   public:
-    enum { dimension = 0 };
+    enum
+    {
+      /** \brief dimension of the geometry object */
+      dimension = 0
+    };
 
+    /** \brief number of subentites of a given codimension */
     inline static unsigned int numSubEntities ( unsigned int codim )
     {
       return ((codim == 0) ? 1 : 0);
@@ -20,17 +65,28 @@ namespace Dune
 
 
 
+  /** \class PyramidGeometry
+   *  \ingroup GenericGeometry
+   *  \brief generic geometry modelling a pyramid over a base geometry
+   */
   template< class BaseGeometry >
   class PyramidGeometry
   {
   public:
+    /** \brief type of base geometry */
     typedef BaseGeometry BaseGeometryType;
 
-    enum { dimension = BaseGeometryType :: dimension + 1 };
+    enum
+    {
+      /** \brief dimension of the geometry object */
+      dimension = BaseGeometryType :: dimension + 1
+    };
 
+    /** \brief number of subentites of a given codimension */
     inline static unsigned int numSubEntities ( unsigned int codim )
     {
-      if( codim > 0 ) {
+      if( codim > 0 )
+      {
         const unsigned int sameCodimCount
           = BaseGeometryType :: numSubEntities( codim - 1 );
         if( codim < dimension )
@@ -44,16 +100,27 @@ namespace Dune
 
 
 
+  /** \class ProductGeometry
+   *  \ingroup GenericGeometry
+   *  \brief generic geometry modelling the product of two base geometries
+   */
   template< class FirstGeometry, class SecondGeometry >
   class ProductGeometry
   {
   public:
+    /** \brief type of the first base geometry */
     typedef FirstGeometry FirstGeometryType;
+    /** \brief type of the second base geometry */
     typedef SecondGeometry SecondGeometryType;
 
-    enum { dimension = FirstGeometryType :: dimension
-                     + SecondGeometryType :: dimension };
+    enum
+    {
+      /** \brief dimension of the geometry object */
+      dimension = FirstGeometryType :: dimension
+                  + SecondGeometryType :: dimension
+    };
 
+    /** \brief number of subentites of a given codimension */
     inline static unsigned int numSubEntities ( unsigned int codim )
     {
       enum { firstDimension = FirstGeometryType :: dimension };
