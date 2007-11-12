@@ -62,17 +62,11 @@ namespace Dune {
 
       const LagrangePointSetType& pointSet = space.lagrangePointSet( *it );
      
-      /*
-      LagrangeQuadrature< GridPartType, 0 >
-        lagrangePoints( *it, space.order() );
-      */
-
       for( int i = 0; i < numBaseFct; ++i ) 
       {
         RangeType phi( 0.0 );
        
-        //const DomainType& x = lagrangePoints.point( i );
-        const DomainType& x = pointSet[ i ];
+        const DomainType& x = pointSet.point( i );
        
         // evaluate on lagrange point 
         baseSet.evaluate( i , x , phi ); 
