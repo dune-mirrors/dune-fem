@@ -29,7 +29,7 @@ namespace Dune
    *
    *  This class models the data for equations of the following type:
    *  \f{displaymath}
-   *    -\nabla \cdot (a(x) \nabla u) + \nabla \cdot (b( x ) u) + c( x ) u &=& f( x )
+   *    -\nabla \cdot (a(x) \nabla u) + \nabla \cdot (b( x ) u) + c( x ) u = f( x )
    *  \f}
    *  Here, the data functions are
    *  - \b a : the diffusive flux

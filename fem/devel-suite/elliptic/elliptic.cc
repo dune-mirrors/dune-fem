@@ -251,11 +251,11 @@ typedef RhsAssembler<ElementRhsIntegratorType> RhsAssemblerType;
 /*! 
  *   The class provides method for computing the following matrix, 
  +   where i,j run over the local dofs
- *   of base functions, which have support on an entity.
+ *   of base functions, which have support on an entity $E$:
  *
- *            /      \int_\entity   [a     grad(phi_j) ]^T  grad(phi_i) 
- *    L_ij :=<    +  \int_\entity   [-  b   phi_j]^T         grad(phi_i) 
- *            \   +  \int_\entity   c          phi_i        phi_j
+ *            /      \int_E   [a     grad(phi_j) ]^T  grad(phi_i) 
+ *    L_ij :=<    +  \int_E   [-  b   phi_j]^T         grad(phi_i) 
+ *            \   +  \int_E   c          phi_i        phi_j
  *             \  +  \int_{R boundary of entity} alpha      phi_i  phi_j     
  *
  *   The computation is based on the 4 contributions implemented in the 

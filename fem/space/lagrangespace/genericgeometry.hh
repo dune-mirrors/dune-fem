@@ -23,7 +23,7 @@ namespace Dune
    *  - Let \f$g\f$ be a \f$d\f$-dimensional generic geometry. Then the pyramid
    *    over \f$g\f$ (denoted by \f$g^\cdot\f$) with the reference geometry
    *    \f[
-   *    g^\cdot = \bigl\lbrace (s x,s) \in \mathbb{R}^{d+1}
+   *    g^\cdot = \bigl\lbrace (s x,s) \in {R}^{d+1}
    *              \bigm\vert s \in [0,1], x \in g \bigr\rbrace
    *    \f]
    *    is also a generic geometry (PyramidGeometry).

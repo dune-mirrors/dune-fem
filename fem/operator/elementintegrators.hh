@@ -389,9 +389,9 @@ namespace Dune
      *
      *  The method is used for the diffusive flux of general elliptic problems.
      *  The following matrix is computed, where i,j run over the local dofs
-     *  of base functions, which have support on an entity.
+     *  of base functions, which have support on an entity $E$:
      *  \f[
-     *     L_ij :=  \int_\entity   [a     grad(phi_j) ]^T  grad(phi_i) 
+     *     L_ij :=  \int_E   [a     grad(phi_j) ]^T  grad(phi_i) 
      *  \f]
      *  The model class is assumed to have a diffusiveFlux() method.
      *
@@ -464,9 +464,9 @@ namespace Dune
      *
      *  The method is used for the convective flux of general elliptic problems.
      *  The following matrix is computed, where i,j run over the local dofs
-     *  of base functions, which have support on an entity.
+     *  of base functions, which have support on an entity $E$:
      *  \f[                
-     *     L_ij :=  \int_\entity   [-  b   phi_j]^T         grad(phi_i) 
+     *     L_ij :=  \int_E   [-  b   phi_j]^T         grad(phi_i) 
      *  \f]
      *  The model class is assumed to have a convectiveFlux() method.
      *
@@ -537,9 +537,9 @@ namespace Dune
      *
      *  The method is used for the mass term of general elliptic problems.
      *  The following matrix is computed, where i,j run over the local dofs
-     *  of base functions, which have support on an entity.
+     *  of base functions, which have support on an entity $E$:
      *  \f[
-     *     L_ij :=  \int_\entity   c          phi_i        phi_j
+     *     L_ij :=  \int_E   c          phi_i        phi_j
      *  \f]
      *  The model class is assumed to have a mass() method.
      *
@@ -1277,7 +1277,7 @@ namespace Dune
    *                 - div(a*grad(u) - b*u) + c*u &=& f   \quad\mbox{in}\quad \Omega  \\
    *                                            u &=& g_D \quad\mbox{in}\quad \Gamma_D\\
    *                           (a*grad(u) -b*u) n &=& g_N \quad\mbox{in}\quad \Gamma_N\\
-   *                 (a*grad(u) -b*u) n + alpha*u &=& g_R \quad\mbox{in}\quad \Gamma_R
+   *                 (a*grad(u) -b*u) n + alpha*u &=& g_R \quad\mbox{in}\quad \Gamma_R\\
    *            (a*grad(u) -b*u) n + alphaFunction*u &=& g_GN \quad\mbox{in}\quad \Gamma_neu
    *  \f}
    *
