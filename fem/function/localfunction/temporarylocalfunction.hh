@@ -93,19 +93,23 @@ namespace Dune
      *  \param[in] dfSpace discrete function space the local function shall
      *                     belong to
      */
-    inline explicit TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
+    inline explicit TemporaryLocalFunction
+      ( const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace ),
-      entity_( NULL ),
+      entity_( 0 ),
       baseFunctionSet_(),
       dofs_()
     {
     }
     
-     /** \brief constructor creating a local function without binding it to an 
+    /** \brief constructor creating a local function and binding it to an
      *         entity
      *
-     *  Creates the local function without initializing the fields depending on
-     *  the current entity.
+     *  Creates the local function and initilizes the fields depending on the
+     *  current entity. It is not necessary, though allowed, to call init
+     *  before using the discrete function.
+     *
+     *  \note The degrees of freedom are not initialized by this function.
      *  
      *  \param[in] dfSpace discrete function space the local function shall
      *                     belong to
@@ -117,6 +121,25 @@ namespace Dune
       entity_( &entity ),
       baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
       dofs_( baseFunctionSet_.numBaseFunctions() )
+    {
+    }
+
+    /** \brief copy constructor
+     *
+     *  Creates the local function as a copy of the specified one. It is bound
+     *  to an entity if and only if the copied local function is bound to an
+     *  entity.
+     *
+     *  \note The degrees of freedom are always copied, even if the copied
+     *        local function is not bound to an entity.
+     * 
+     *  \param[in]  other  TemporaryLocalFunction to copy
+     */
+    inline TemporaryLocalFunction ( const ThisType &other )
+    : discreteFunctionSpace_( other.discreteFunctionSpace_ ),
+      entity_( other.entity_ ),
+      baseFunctionSet_( other.baseFunctionSet_ ),
+      dofs_( other.dofs_ )
     {
     }
 
