@@ -1,24 +1,32 @@
 #include <config.h>
-//#include <dune/fem/space/lagrangespace.hh>
-//#include "../genericbasefunctions.hh"
+
 #include "../basefunctions.hh"
 
 using namespace Dune;
 
 #define VERBOSITY_LEVEL 0
 
-#define dimension 3
-#define order 3
+#ifndef DIMENSION
+#define DIMENSION 2
+#endif
 
-typedef FunctionSpace< double, double, dimension, 1 > FunctionSpaceType;
+#ifndef POLORDER
+#define POLORDER 2
+#endif
+
+#ifndef GEOMETRYTYPE
+#define GEOMETRYTYPE simplex
+#endif
+
+typedef FunctionSpace< double, double, DIMENSION, 1 > FunctionSpaceType;
 
 typedef FunctionSpaceType :: DomainType DomainType;
 typedef FunctionSpaceType :: RangeType RangeType;
 
 typedef LagrangeBaseFunction< FunctionSpaceType,
-                              GeometryType :: cube,
-                              dimension,
-                              order >
+                              GeometryType :: GEOMETRYTYPE,
+                              DIMENSION,
+                              POLORDER >
   BaseFunctionType;
 
 typedef BaseFunctionType :: LagrangePointType LagrangePointType;
@@ -67,7 +75,7 @@ int main( int argc, char **argv )
   std :: cout << "Number of base functions: " << numBaseFunctions;
   std :: cout << std :: endl << std :: endl;
 
-  printMaxDofs< dimension > :: print();
+  printMaxDofs< DIMENSION > :: print();
   std :: cout << std :: endl;
 
   unsigned int errors = 0;
@@ -161,10 +169,10 @@ int main( int argc, char **argv )
     point.local( x );
 
     #if (VERBOSITY_LEVEL >= 1)
-      std :: cout << "Lagrange piint " << i << ": " << x << std :: endl;
+      std :: cout << "Lagrange point " << i << ": " << x << std :: endl;
     #endif
 
-    for( deriType k = 0; k < dimension; ++k ) {
+    for( deriType k = 0; k < DIMENSION; ++k ) {
       FieldVector< deriType, 1 > derivative( k );
 
       RangeType sum( 0 );
