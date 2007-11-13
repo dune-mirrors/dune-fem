@@ -194,25 +194,39 @@ namespace Dune
       return baseFunctionList_.size();
     }
 
+    /** \brief project a discrete function over this space to the discrete
+     *         function space of the base functions
+     *
+     *  \note This method expects the source discrete function to implement the
+     *        dof method (which is not part of the DiscreteFunctionInterface).
+     *
+     *  \param[in]   sourceFunction  discrete function to be projected
+     *  \param[out]  destFunction    discrete function to receive the projected
+     *                               function
+     */
+    template< class DiscreteFunctionType >
+    inline void project ( const DiscreteFunctionType &sourceFunction,
+                          BaseFunctionType &destFunction ) const;
+
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits > &in );
    
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits > &out );
 
-    //! are the functions continuous?
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous() const */
     inline bool continuous () const
     {
       return baseFunctionSpace_.continuous();
     }
     
-    //! get the polynomial order of this discrete function space
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order() const */
     inline int order () const
     {
       return baseFunctionSpace_.order();
     }
 
-    //! provide access to the base function set for an entity
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
     inline const BaseFunctionSetType baseFunctionSet( const EntityType &entity ) const
     {

@@ -1,5 +1,27 @@
 namespace Dune
 {
+
+  template< class BaseFunctionImp >
+  template< class DiscreteFunctionType >
+  inline void ReducedBasisSpace< BaseFunctionImp >
+    :: project ( const DiscreteFunctionType &sourceFunction,
+                 BaseFunctionType &destFunction ) const
+  {
+    typedef typename DiscreteFunctionType :: RangeFieldType DofType;
+
+    const unsigned int size = baseFunctionList_.size();
+
+    destFunction.clear();
+    for( unsigned int i = 0; i < size; ++i )
+    {
+      const BaseFunctionType &baseFunction = *(baseFunctionList_[ i ]);
+      const DofType &dof = sourceFunction.dof( i );
+
+      destFunction.addScaled( baseFunction, dof );
+    }
+  }
+
+
   
   template< class BaseFunctionImp >
   template< class StreamTraits >
