@@ -19,6 +19,7 @@ misc_HEADERS = adaptiveindexmapper.hh \
                identity.hh \
 							 l2error.hh \
                longexample.cc \
+               metaprogramming.hh \
                nonconformitylevel.hh \
 							 probeutility.hh \
 							 suite.cc \

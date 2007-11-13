@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_CODIMMAP_HH
 #define DUNE_FEM_CODIMMAP_HH
 
+#include <dune/fem/misc/metaprogramming.hh>
+
 namespace Dune
 {
 
@@ -56,11 +58,26 @@ namespace Dune
   protected:
     CodimObjectBaseType *codimObjects_[ numCodims ];
 
+  private:
+    template< unsigned int codim >
+    struct MapConstructor
+    {
+      typedef ThisType &ArgumentType;
+
+      inline static void apply ( ArgumentType map )
+      {
+        map.codimObjects_[ codim ] = new CodimObjectImp< codim >();
+        assert( map.codimObjects_[ codim ] != 0 );
+        // std :: cout << "Creating object " << codim << std :: endl;
+      }
+    };
+
   public:
     //! constructor building the CodimMap
     inline CodimMap ()
     {
-      Factory< ThisType, numCodims - 1 > :: getObjects( *this );
+      Loop< MetaSequence, MapConstructor, numCodims - 1 > :: apply( *this );
+      //Factory< ThisType, numCodims - 1 > :: getObjects( *this );
     }
     
     //! destructor freeing all the instances of CodimObjectImp
@@ -93,7 +110,8 @@ namespace Dune
       assert( codim < numCodims );
       return *(codimObjects_[ codim ]);
     }
-
+ 
+#if 0
   protected:
     template< class CodimMapType,
               unsigned int codim >
@@ -121,6 +139,7 @@ namespace Dune
 
     template< class, unsigned int >
     friend struct Factory;
+#endif
   };
   
 }
