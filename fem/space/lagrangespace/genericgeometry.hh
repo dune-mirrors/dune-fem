@@ -4,6 +4,8 @@
 #include <dune/common/misc.hh>
 #include <dune/common/geometrytype.hh>
 
+#include <dune/fem/misc/metaprogramming.hh>
+
 namespace Dune
 {
 
@@ -56,6 +58,17 @@ namespace Dune
       dimension = 0
     };
 
+    template< unsigned int codim >
+    class Codim
+    {
+    private:
+      CompileTimeChecker< (codim <= dimension) >
+        __CODIM_MUST_BE_LESS_EQUAL_TO_DIMENSION__;
+
+    public:
+      enum { numSubEntities = ((codim == 0) ? 1 : 0) };
+    };
+
     /** \brief number of subentites of a given codimension */
     inline static unsigned int numSubEntities ( unsigned int codim )
     {
@@ -80,6 +93,28 @@ namespace Dune
     {
       /** \brief dimension of the geometry object */
       dimension = BaseGeometryType :: dimension + 1
+    };
+
+    template< unsigned int codim >
+    class Codim
+    {
+    private:
+      CompileTimeChecker< (codim <= dimension) >
+        __CODIM_MUST_BE_LESS_EQUAL_TO_DIMENSION__;
+
+    public:
+      enum
+      {
+        numSubEntities
+          = If< (codim > 0),
+                MetaPlus< MetaInt< BaseGeometryType :: template Codim< codim - 1 >
+                                                    :: numSubEntities >,
+                          If< (codim < dimension),
+                              MetaInt< BaseGeometryType :: template Codim< codim >
+                                                        :: numSubEntities >,
+                              MetaInt< 1 > > >,
+                MetaInt< 1 > > :: value
+      };
     };
 
     /** \brief number of subentites of a given codimension */
@@ -118,6 +153,27 @@ namespace Dune
       /** \brief dimension of the geometry object */
       dimension = FirstGeometryType :: dimension
                   + SecondGeometryType :: dimension
+    };
+
+    template< unsigned int codim >
+    class Codim
+    {
+    private:
+      CompileTimeChecker< (codim <= dimension) >
+        __CODIM_MUST_BE_LESS_EQUAL_TO_DIMENSION__;
+
+    private:
+      template< unsigned int i >
+      struct NumSubEntities
+      : public MetaInt
+        < FirstGeometryType :: template Codim< codim - i > :: numSubEntities
+          * SecondGeometryType :: template Codim< i > :: numSubEntities
+        >
+      {
+      };
+
+    public:
+      enum { numSubEntities = Loop< MetaPlus, NumSubEntities, codim > :: value };
     };
 
     /** \brief number of subentites of a given codimension */
