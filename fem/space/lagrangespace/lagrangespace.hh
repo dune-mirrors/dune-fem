@@ -97,6 +97,10 @@ namespace Dune
    *  capable of adaption (i.e. the method adaptive returns true). See also
    *  AdaptiveLeafIndexSet.
    *
+   *  \bug For Lagrange spaces of order \f$\ge\f$ 2, the base functions
+   *       sometimes (and unpredictably) return NaN or \f$\pm\infty\f$, when
+   *       the code is compiled with gcc and optimization level is \f$\ge\f$ 2.
+   *
    *  \{
    */
 
