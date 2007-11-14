@@ -21,11 +21,12 @@ if test -s check-headers.out ; then
 fi
 
 # if test -s check-dune-control.out ; then
-if test "x`cat check-dune-control.out &| grep Error`" == "x"
+CONFCHECK=`cat check-dune-control.out 2>&1 | grep Error`
+if test "x$CONFCHECK" != "x" ; then
   errors=$((errors+1))
   echo "**************************" >> check.out
   echo "Problem with dune-control:" >> check.out
-  cat check-configure.out >> check.out
+  cat check-dune-control.out >> check.out
   echo "**************************" >> check.out
   exit 1
 fi
