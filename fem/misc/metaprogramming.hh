@@ -4,19 +4,35 @@
 namespace Dune
 {
   
-   // meta programming for boolean values
+  // meta programming for boolean values
   
-  template< bool b >
-  struct MetaBool
+  struct MetaTrue
   {
-    enum { value = b };
+    typedef MetaTrue Value;
+  };
+
+  struct MetaFalse
+  {
+    typedef MetaFalse Value;
   };
 
 
 
   template< class A >
   struct MetaNot
-  : public MetaBool< !A :: value >
+  : public MetaNot< typename A :: Value >
+  {
+  };
+ 
+  template<>
+  struct MetaNot< MetaTrue >
+  : public MetaFalse
+  {
+  };
+
+  template<>
+  struct MetaNot< MetaFalse >
+  : public MetaTrue
   {
   };
 
@@ -24,39 +40,103 @@ namespace Dune
 
   template< class A, class B >
   struct MetaAnd
-  : public MetaBool< A :: value && B :: value >
+  : public MetaAnd< typename A :: Value, typename B :: Value >
   {
   };
-  
+
+  template<>
+  struct MetaAnd< MetaTrue, MetaTrue >
+  : public MetaTrue
+  {
+  };
+
+  template<>
+  struct MetaAnd< MetaTrue, MetaFalse >
+  : public MetaFalse
+  {
+  };
+
+  template<>
+  struct MetaAnd< MetaFalse, MetaTrue >
+  : public MetaFalse
+  {
+  };
+
+  template<>
+  struct MetaAnd< MetaFalse, MetaFalse >
+  : public MetaFalse
+  {
+  };
+
+
+
   template< class A, class B >
   struct MetaOr
-  : public MetaBool< A :: value || B :: value >
+  : public MetaOr< typename A :: Value, typename B :: Value >
+  {
+  };
+
+  template<>
+  struct MetaOr< MetaTrue, MetaTrue >
+  : public MetaTrue
+  {
+  };
+
+  template<>
+  struct MetaOr< MetaTrue, MetaFalse >
+  : public MetaTrue
+  {
+  };
+
+  template<>
+  struct MetaOr< MetaFalse, MetaTrue >
+  : public MetaTrue
+  {
+  };
+
+  template<>
+  struct MetaOr< MetaFalse, MetaFalse >
+  : public MetaFalse
   {
   };
 
 
- 
-  template< bool Condition, class Then, class Else >
-  struct If;
+
+  template< bool >
+  struct MetaBool;
+
+  template<>
+  struct MetaBool< true >
+  : public MetaTrue
+  {
+  };
+
+  template<>
+  struct MetaBool< false >
+  : public MetaFalse
+  {
+  };
+
+
+
+  template< class Condition, class Then, class Else >
+  struct MetaIf
+  : public MetaIf< typename Condition :: Value, Then, Else >
+  {
+  };
 
   template< class Then, class Else >
-  struct If< true, Then, Else >
+  struct MetaIf< MetaTrue, Then, Else >
   : public Then
   {
   };
 
   template< class Then, class Else >
-  struct If< false, Then, Else >
+  struct MetaIf< MetaFalse, Then, Else >
   : public Else
   {
   };
  
-  template< class Condition, class Then, class Else >
-  struct MetaIf
-  : public If< Condition :: value, Then, Else >
-  {
-  };
-
 
 
   // meta programming for integer values

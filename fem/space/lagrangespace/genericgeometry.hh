@@ -106,16 +106,26 @@ namespace Dune
       enum
       {
         numSubEntities
-          = If< (codim > 0),
-                MetaPlus< MetaInt< Protect< BaseGeometryType :: template Codim,
-                                            codim - 1,
-                                            PointGeometry :: template Codim< 0 >,
-                                            0 > :: numSubEntities >,
-                          MetaInt< Protect< BaseGeometryType :: template Codim,
-                                            codim,
-                                            PointGeometry :: template Codim< 0 >,
-                                            dimension > :: numSubEntities > >,
-                MetaInt< 1 > > :: value
+          = MetaIf
+            <
+              MetaBool< (codim > 0) >,
+              MetaPlus
+              <
+                MetaInt
+                <
+                  Protect< BaseGeometryType :: template Codim, codim - 1,
+                           PointGeometry :: template Codim< 0 >, 0
+                         > :: numSubEntities
+                >,
+                MetaInt
+                <
+                  Protect< BaseGeometryType :: template Codim, codim,
+                           PointGeometry :: template Codim< 0 >, dimension
+                         > :: numSubEntities
+                >
+              >,
+              MetaInt< 1 >
+            > :: value
       };
     };
 
