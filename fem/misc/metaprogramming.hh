@@ -57,7 +57,7 @@ namespace Dune
   {
   };
 
-  
+
 
   // meta programming for integer values
   
@@ -166,7 +166,7 @@ namespace Dune
     }
   };
 
-  
+
 
   // Loop: apply an operation i times (which means there are i+1 arguments)
   
@@ -184,7 +184,24 @@ namespace Dune
   : public f< 0 >
   {
   };
- 
+
+
+
+  // Protect: protect template instanciation
+  
+  template< template< unsigned int > class A, unsigned int i,
+            class B, unsigned int n >
+  struct Protect
+  : public A< i >
+  {
+  };
+
+  template< template< unsigned int > class A, unsigned int i, class B >
+  struct Protect< A, i, B, i >
+  : public B
+  {
+  };
+
 }
 
 #endif
