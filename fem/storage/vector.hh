@@ -6,6 +6,8 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/misc/combineinterface.hh>
+
 #include <dune/fem/storage/arrayallocator.hh>
 #include <dune/fem/storage/array.hh>
 
@@ -340,13 +342,13 @@ namespace Dune
 
 
   template< class FieldVectorImp >
-  class FieldVectorWrapper;
+  class FieldVectorAdapter;
 
 
 
   template< class FieldImp, int sz >
-  class FieldVectorWrapper< FieldVector< FieldImp, sz > >
-  : public VectorDefault< FieldImp, FieldVectorWrapper< FieldVector < FieldImp, sz > > >
+  class FieldVectorAdapter< FieldVector< FieldImp, sz > >
+  : public VectorDefault< FieldImp, FieldVectorAdapter< FieldVector < FieldImp, sz > > >
   {
   public:
     typedef FieldImp FieldType;
@@ -354,7 +356,7 @@ namespace Dune
     typedef FieldVector< FieldType, sz > FieldVectorType;
 
   private:
-    typedef FieldVectorWrapper< FieldVectorType > ThisType;
+    typedef FieldVectorAdapter< FieldVectorType > ThisType;
     typedef VectorDefault< FieldType, ThisType > BaseType;
 
   public:
@@ -367,29 +369,29 @@ namespace Dune
     FieldVectorType fieldVector_;
 
   public:
-    inline FieldVectorWrapper ()
+    inline FieldVectorAdapter ()
     : fieldVector_()
     {
     }
 
-    inline explicit FieldVectorWrapper ( const FieldType s )
+    inline explicit FieldVectorAdapter ( const FieldType s )
     : fieldVector_( s )
     {
     }
 
-    inline explicit FieldVectorWrapper ( const FieldVectorType &v )
+    inline explicit FieldVectorAdapter ( const FieldVectorType &v )
     : fieldVector_( v )
     {
     }
 
     template< class T >
-    inline FieldVectorWrapper ( const VectorInterface< T > &v )
+    inline FieldVectorAdapter ( const VectorInterface< T > &v )
     : fieldVector_()
     {
       assign( v );
     }
     
-    inline FieldVectorWrapper ( ThisType &other )
+    inline FieldVectorAdapter ( ThisType &other )
     : fieldVector_( other.fieldVector_ )
     {
     }
@@ -846,9 +848,9 @@ namespace Dune
    *  \code
       StaticVector<double,10> v1;
       DynamicVector<double> v2(2);
-      FieldVectorWrapper<FieldVector<double,5> > v3;
+      FieldVectorAdapter<FieldVector<double,5> > v3;
       typedef Dune::CombineInterface<PairOfVectors,StaticVector<double,10>&,
-            DynamicVector<double>&, FieldVectorWrapper<FieldVector<double,5> >&
+            DynamicVector<double>&, FieldVectorAdapter<FieldVector<double,5> >&
             VectorOfVectorType;
       VectorOfVectorType v(v1,v2,v3);
    *  \endcode
