@@ -19,7 +19,19 @@ namespace Dune
   }
 
 
+  
+  // Stream Operators
+  // ----------------
 
+  /** \brief write a vector into an output stream
+   *  \relates VectorInterface
+   *  \relatesalso OutStreamInterface
+   *
+   *  \param[in]  out  stream to write to
+   *  \param[in]  v    vector to write
+   *
+   *  \returns the ouput stream (for concatenation)
+   */
   template< class StreamTraits, class VectorTraits >
   inline OutStreamInterface< StreamTraits > &
     operator<< ( OutStreamInterface< StreamTraits > &out,
@@ -35,7 +47,16 @@ namespace Dune
   }
 
 
-
+  
+  /** \brief read a vector from an input stream
+   *  \relates VectorInterface
+   *  \relatesalso InStreamInterface
+   *
+   *  \param[in]   in  stream to read from
+   *  \param[out]  v   vector to read
+   *
+   *  \returns the input stream (for concatenation)
+   */
   template< class StreamTraits, class VectorTraits >
   inline InStreamInterface< StreamTraits > &
     operator>> ( InStreamInterface< StreamTraits > &in,
@@ -51,8 +72,14 @@ namespace Dune
   }
 
 
-
-  //! Print any Vector into a stream
+  /** \brief write a vector into an STL stream
+   *  \relates VectorInterface
+   *
+   *  \param[in]  out  STL stream to write to
+   *  \param[in]  v    vector to write
+   *
+   *  \returns the STL stream (for concatenation)
+   */
   template< class Traits >
   inline std :: ostream &operator<< ( std :: ostream &out,
                                       const VectorInterface< Traits > &v )
@@ -82,7 +109,18 @@ namespace Dune
 
 
 
-  //! read any vector from a stream
+  /** \brief read a vector from an STL stream
+   *  \relates VectorInterface
+   *
+   *  \param[in]   in  STL stream to read from
+   *  \param[out]  v   vector to read
+   *
+   *  \note This method is STL compilant, i.e. the vector is only assigned
+   *        after the read operation is successful. This means that a temporary
+   *        vector is created.
+   *
+   *  \returns the STL stream (for concatenation)
+   */
   template< class Traits >
   inline std :: istream &operator>> ( std :: istream &in,
                                       VectorInterface< Traits > &v )

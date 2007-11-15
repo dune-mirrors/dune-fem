@@ -191,9 +191,17 @@ operator -= ( const DiscreteFunctionType& g )
 
 
 
-  // Stream operators
+  // Stream Operators
   // ----------------
 
+  /** \brief write a discrete function into an STL stream
+   *  \relates DiscreteFunctionInterface
+   *
+   *  \param[in]  out  STL stream to write to
+   *  \param[in]  df   discrete function to write
+   *
+   *  \returns the STL stream (for concatenation)
+   */
   template< class DiscreteFunctionTraits >
   inline std :: ostream &
     operator<< ( std :: ostream &out,
@@ -205,6 +213,15 @@ operator -= ( const DiscreteFunctionType& g )
 
 
 
+  /** \brief write a discrete function into an output stream
+   *  \relates DiscreteFunctionInterface
+   *  \relatesalso OutStreamInterface
+   *
+   *  \param[in]  out  stream to write to
+   *  \param[in]  df   discrete function to write
+   *
+   *  \returns the output stream (for concatenation)
+   */
   template< class StreamTraits, class DiscreteFunctionTraits >
   inline OutStreamInterface< StreamTraits > &
     operator<< ( OutStreamInterface< StreamTraits > &out,
@@ -216,6 +233,15 @@ operator -= ( const DiscreteFunctionType& g )
 
 
 
+  /** \brief read a discrete function from an input stream
+   *  \relates DiscreteFunctionInterface
+   *  \relatesalso InStreamInterface
+   *
+   *  \param[in]   in  stream to read from
+   *  \param[out]  df  discrete function to read
+   *
+   *  \returns the output stream (for concatenation)
+   */
   template< class StreamTraits, class DiscreteFunctionTraits >
   inline InStreamInterface< StreamTraits > &
     operator>> ( InStreamInterface< StreamTraits > &in,
