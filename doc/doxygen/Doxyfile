@@ -472,7 +472,8 @@ EXCLUDE                = ../../dune/ \
                           ../../fem/devel-suite \
                          ../../fem/test \
                          ../../fem/quadrature/ugquadratures.* \
-                         ../../fem/quadrature/simplexpoints.hh
+                         ../../fem/quadrature/simplexpoints.hh \
+                         ../../fem/misc/metaprogramming.hh
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 
