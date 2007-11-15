@@ -126,6 +126,60 @@ namespace Dune
     }
   };
 
+
+
+  class DebugLock
+  {
+  private:
+    typedef DebugLock ThisType;
+    
+  protected:
+#ifndef NDEBUG
+    bool lock_;
+#endif
+
+  public:
+    inline DebugLock ()
+#ifndef NDEBUG
+    : lock_( false )
+#endif
+    {
+    }
+    
+  private:
+    // prohibit copying
+    DebugLock ( const ThisType & );
+
+    // prohibit copying
+    ThisType &operator= ( const ThisType & );
+
+  public:
+    inline bool operator ! () const
+    {
+#ifndef NDEBUG
+      return !lock_;
+#else
+      return true;
+#endif
+    }
+    
+    inline void lock ()
+    {
+#ifndef NDEBUG
+      assert( !lock_ );
+      lock_ = true;
+#endif
+    }
+
+    inline void unlock ()
+    {
+#ifndef NDEBUG
+      assert( lock_ );
+      lock_ = false;
+#endif
+    }
+  };
+
 };
 
 #endif

@@ -11,6 +11,7 @@
 
 //- local includes 
 #include "function.hh"
+#include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
@@ -66,36 +67,34 @@ namespace Dune
 
       \interfaceclass
   */
-  template<class DiscreteFunctionTraits>
-  class DiscreteFunctionInterface : 
-    public IsDiscreteFunction , 
-    public HasLocalFunction , 
-    public Function<typename DiscreteFunctionTraits::DiscreteFunctionSpaceType,
-                    DiscreteFunctionInterface<DiscreteFunctionTraits> > 
+  template< class TraitsImp >
+  class DiscreteFunctionInterface
+  : public Function< typename TraitsImp :: DiscreteFunctionSpaceType,
+                     typename TraitsImp :: DiscreteFunctionType >,
+    public IsDiscreteFunction, 
+    public HasLocalFunction
   {
   public:
-    typedef DiscreteFunctionTraits Traits;
+    //! type of the traits
+    typedef TraitsImp Traits;
 
+    //! type of the implementaton (Barton-Nackman)
+    typedef typename Traits :: DiscreteFunctionType DiscreteFunctionType;
+
+    //! type of associated discrete function space
+    typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+ 
   private:
     typedef DiscreteFunctionInterface< Traits > ThisType;
+    typedef Function< DiscreteFunctionSpaceType, DiscreteFunctionType > BaseType;
 
   public:
-    //- Typedefs and enums
-
-    //! types of function base class 
-    typedef Function<
-      typename DiscreteFunctionTraits::DiscreteFunctionSpaceType,
-      DiscreteFunctionInterface<DiscreteFunctionTraits> 
-    > FunctionType;
-
+#if 0
     //! type of default implementation 
     typedef DiscreteFunctionDefault<DiscreteFunctionTraits>
       DiscreteFunctionDefaultType;
+#endif
         
-    //! type of discrete function space for discrete function 
-    typedef typename DiscreteFunctionTraits :: DiscreteFunctionSpaceType
-      DiscreteFunctionSpaceType;
-
     //! type of domain field, i.e. type of coordinate component
     typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
     //! type of range field, i.e. dof type 
@@ -110,9 +109,6 @@ namespace Dune
     //! Type of the underlying grid
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
-    //! type of the discrete function implementation (Barton-Nackman)
-    typedef typename DiscreteFunctionTraits :: DiscreteFunctionType DiscreteFunctionType;
-
     // type of the local function storage
     typedef typename Traits :: LocalFunctionStorageType LocalFunctionStorageType;
 
@@ -120,24 +116,26 @@ namespace Dune
     typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 
     //! Type of the dof iterator used in the discrete function implementation.
-    typedef typename DiscreteFunctionTraits::DofIteratorType DofIteratorType;
+    typedef typename Traits :: DofIteratorType DofIteratorType;
 
     //! Type of the constantdof iterator used in the discrete function implementation
-    typedef typename DiscreteFunctionTraits::ConstDofIteratorType ConstDofIteratorType;
+    typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
     //! type of mapping base class for this discrete function 
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
 
-  public:
-    //- Public Methods
+  protected:
+    using BaseType :: asImp;
 
+  public:
     /** \brief Constructor storing discrete function space
      *
      *  \param[in]  dfSpace  discrete function space 
      */
-    inline explicit DiscreteFunctionInterface ( const DiscreteFunctionSpaceType &dfSpace )
-    : FunctionType( dfSpace )
+    inline explicit DiscreteFunctionInterface
+      ( const DiscreteFunctionSpaceType &dfSpace )
+    : BaseType( dfSpace )
     {
     }
 
@@ -233,11 +231,49 @@ namespace Dune
     /** \brief obtain an iterator pointing behind the last DoF (read-write)
      *  
      *  \returns a DoF iterator pointing behind the last DoF (degree of freedom)
-    */
+     */
     inline DofIteratorType dend () 
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().dend () );
       return asImp().dend ();
+    }
+
+    /** \brief allocate a pointer to a consecutive array storing the DoFs
+     *
+     *  To support external packages, it is often required to have the DoFs
+     *  in a consecutive array. This function ensures this, making a copy if
+     *  necessary.
+     *
+     *  \note The allocated pointer has to be freed by freeDofPointer.
+     *
+     *  \note Only one DoF pointer may be allocated at a time.
+     *
+     *  \returns a pointer to a consecutive copy of the DoF vector
+     */
+    inline RangeFieldType *allocDofPointer ()
+    {
+      // cannot check this interface method
+      return asImp().allocDofPointer();
+    }
+
+    /** \brief allocate a pointer to a consecutive array storing the DoFs
+     *
+     *  This method serves two purposes:
+     *  - The user cannot know, if the DoF array returned by allocDofPointer
+     *    has to be freed.
+     *  - If the DoF array is just a copy, the DoFs shall be stored back into
+     *    the discrete function.
+     *
+     *  \note The pointer must have been allocated by allocDofPointer.
+     *
+     *  \note Only one DoF pointer may be allocated at a time.
+     *
+     *  \param[in]  dofPointer  pointer to the dof array previously allocated
+     *                          by allocDofPointer
+     */
+    inline void freeDofPointer( RangeFieldType *dofPointer )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().freeDofPointer( dofPointer ) );
     }
 
     /** \brief axpy operation
@@ -414,19 +450,6 @@ namespace Dune
         \return \b true if operation was successful 
     */
     virtual bool read_pgm(const std::string filename) const = 0;
-
- protected:
-    //! \brief Barton-Nackman trick 
-    inline const DiscreteFunctionType &asImp () const 
-    { 
-      return static_cast< const DiscreteFunctionType& >( *this );
-    }
-
-    //! \brief Barton-Nackman trick 
-    inline DiscreteFunctionType &asImp ()
-    { 
-      return static_cast< DiscreteFunctionType& >( *this );
-    }
   };
 
 
@@ -505,6 +528,8 @@ namespace Dune
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
 
+    DebugLock dofPointerLock_;
+
   protected:
     using BaseType :: asImp;
 
@@ -533,9 +558,18 @@ namespace Dune
     }
 
   private:
-    // Disallow copying
+    // prohibit copying
     inline DiscreteFunctionDefault ( const ThisType & );
-    ThisType &operator= ( const ThisType &other );
+
+  public:
+    inline ~DiscreteFunctionDefault ()
+    {
+      assert( !dofPointerLock_ );
+    }
+
+  private:
+    // prohibit assignment
+    ThisType &operator= ( const ThisType & );
     
   public:
     /** \copydoc Dune::DiscreteFunctionInterface::print */
@@ -562,6 +596,20 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionInterface::addScaled */
     void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
     
+    /** \copydoc Dune::DiscreteFunctionInterface::allocDofPointer
+     *  
+     *  \note The default implementation make a copy of the DoF vector using
+     *        the DoF iterators.
+     */
+    inline RangeFieldType *allocDofPointer ();
+
+    /** \copydoc Dune::DiscreteFunctionInterface::freeDofPointer
+     *
+     *  \note The default implementation make a copy of the DoF vector using
+     *        the DoF iterators.
+     */
+    inline void freeDofPointer( RangeFieldType *dofPointer );
+
     /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const
      *
      *  The default implementation just does

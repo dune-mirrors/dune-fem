@@ -2,10 +2,10 @@
 #define DUNE_FUNCTION_HH
 
 //- Dune includes 
-#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/fvector.hh>
 
 //- local includes 
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/operator/common/mapping.hh>
 
 namespace Dune
@@ -29,50 +29,69 @@ namespace Dune
       -  FunctionSpaceImp      type of the function space where the function 
                                belongs to.
       -  FunctionImp           type of the implemented function (Barton-Nackman)
-      
+     
       @interfaceclass
   **/
   template< class FunctionSpaceImp, class FunctionImp >
   class Function
-  :  public Mapping < typename FunctionSpaceImp :: DomainFieldType,
-                      typename FunctionSpaceImp :: RangeFieldType,
-                      typename FunctionSpaceImp :: DomainType, 
-                      typename FunctionSpaceImp :: RangeType > 
+  : public BartonNackmanInterface< Function< FunctionSpaceImp, FunctionImp >,
+                                   FunctionImp >,
+    public Mapping < typename FunctionSpaceImp :: DomainFieldType,
+                     typename FunctionSpaceImp :: RangeFieldType,
+                     typename FunctionSpaceImp :: DomainType, 
+                     typename FunctionSpaceImp :: RangeType > 
   {
   public:
     //! type of function space this function belongs to 
     typedef FunctionSpaceImp FunctionSpaceType;
 
+    //! type of the implementation (Barton-Nackman)
+    typedef FunctionImp FunctionType;
+
   private:
-    typedef Function< FunctionSpaceType, FunctionImp > ThisType;
-      
-    // FunctionImp should be exported as FunctionType
-    typedef Function<FunctionSpaceImp,FunctionImp> FunctionType;
+    typedef Function< FunctionSpaceType, FunctionType > ThisType;
+    typedef BartonNackmanInterface< ThisType, FunctionType > BaseType;
 
   public:
-    //! domain type (from function space)
-    typedef typename FunctionSpaceType::DomainType DomainType ;
-    //! range type (from function space)
-    typedef typename FunctionSpaceType::RangeType RangeType ;
-    //! jacobian type (from function space)
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-    //! hessian type (from function space)
-    typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
+    //! field type of domain
+    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! field type of range
+    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    //! domain type
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+    //! range type
+    typedef typename FunctionSpaceType :: RangeType RangeType;
+    //! jacobian type
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+    //! hessian type
+    typedef typename FunctionSpaceType :: HessianRangeType HessianRangeType;
 
-
+    //! type of mapping base class
+    typedef Mapping< DomainFieldType, RangeFieldType, DomainType, RangeType >
+      MappingType;
+ 
   protected:
     const FunctionSpaceType &functionSpace_;
 
+  protected:
+    using BaseType :: asImp;
+    
   public:
-    //! constructor
+    /** \brief constructor storing the function space
+     *
+     *  \param[in]  fSpace  function space for this function
+     */
     inline explicit Function ( const FunctionSpaceType &fSpace )
     : functionSpace_( fSpace )
     {
     }   
 
-    //! copy constructor
-    inline Function ( const ThisType &org )
-    : functionSpace_( org.functionSpace_ )
+    /** \brief copy constructor
+     *
+     *  \param[in]  other  function to copy
+     */
+    inline Function ( const ThisType &other )
+    : functionSpace_( other.functionSpace_ )
     {
     }   
 
@@ -83,7 +102,7 @@ namespace Dune
 
   private:
     // Disallow copying
-    ThisType &operator= ( const ThisType &other );
+    ThisType &operator= ( const ThisType & );
     
   public:
     /** \brief application operator call evaluate 
@@ -131,17 +150,6 @@ namespace Dune
       return functionSpace_;
     }
 
-  protected:
-    const FunctionImp &asImp () const
-    {
-      return static_cast< const FunctionImp & >( *this );
-    }
-   
-    FunctionImp &asImp ()
-    {
-      return static_cast< FunctionImp & >( *this );
-    }
-   
   private:
     //! Helper function for Mapping
     //! With this function, a combined mapping can choose the right application

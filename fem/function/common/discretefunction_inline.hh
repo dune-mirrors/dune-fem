@@ -32,6 +32,38 @@ namespace Dune
       (*it) += s * (*git);
   }
 
+  template< class Traits >
+  inline typename DiscreteFunctionDefault< Traits > :: RangeFieldType *
+  DiscreteFunctionDefault< Traits > :: allocDofPointer()
+  {
+    dofPointerLock_.lock();
+
+    const unsigned int size = this->size();
+    RangeFieldType *dofPointer = new RangeFieldType[ size ];
+    
+    unsigned int i = 0;
+    const DofIteratorType end = dend();
+    for( DofIteratorType it = dbegin(); it != end; ++it )
+      dofPointer[ i++ ] = *it;
+    assert( i == size );
+
+    return dofPointer;
+  }
+
+  template< class Traits >
+  inline void DiscreteFunctionDefault< Traits >
+    :: freeDofPointer( RangeFieldType *dofPointer )
+  {
+    unsigned int i = 0;
+    const DofIteratorType end = dend();
+    for( DofIteratorType it = dbegin(); it != end; ++it )
+      *it = dofPointer[ i++ ];
+    assert( i == size() );
+
+    delete[] dofPointer;
+    dofPointerLock_.unlock();
+  }
+
 // scalarProductDofs
 template <class DiscreteFunctionTraits>
 inline typename DiscreteFunctionTraits::DiscreteFunctionSpaceType::RangeFieldType 
