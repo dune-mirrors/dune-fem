@@ -3,7 +3,7 @@
 
 namespace Dune
 {
-  
+
   // meta programming for boolean values
   
   struct MetaTrue
@@ -136,6 +136,43 @@ namespace Dune
   : public Else
   {
   };
+
+
+
+  template< class Condition,
+            template< unsigned int > class Then, unsigned int i,
+            template< unsigned int > class Else, unsigned int j >
+  struct MetaIfTemplate
+  : public MetaIfTemplate< typename Condition :: Value, Then, i, Else, j >
+  {
+  };
+  
+  template< template< unsigned int > class Then, unsigned int i,
+            template< unsigned int > class Else, unsigned int j >
+  struct MetaIfTemplate< MetaTrue, Then, i, Else, j >
+  : public Then< i >
+  {
+  };
+  
+  template< template< unsigned int > class Then, unsigned int i,
+            template< unsigned int > class Else, unsigned int j >
+  struct MetaIfTemplate< MetaFalse, Then, i, Else, j >
+  : public Else< j >
+  {
+  };
+
+
+
+  template< class Condition >
+  struct MetaAssert
+  : public MetaAssert< typename Condition :: Value >
+  {
+  };
+
+  template<>
+  struct MetaAssert< MetaTrue >
+  {
+  };
  
 
 
@@ -208,25 +245,25 @@ namespace Dune
 
   template< class A, class B >
   struct MetaLess
-  : public MetaBool< (A :: value < B :: value) >
+  : public MetaBool< ((int)A :: value < (int)B :: value) >
   {
   };
 
   template< class A, class B >
   struct MetaLessEqual
-  : public MetaBool< (A :: value <= B :: value) >
+  : public MetaBool< ((int)A :: value <= (int)B :: value) >
   {
   };
   
   template< class A, class B >
   struct MetaGreaterEqual
-  : public MetaBool< (A :: value >= B :: value) >
+  : public MetaBool< ((int)A :: value >= (int)B :: value) >
   {
   };
   
   template< class A, class B >
   struct MetaGreater
-  : public MetaBool< (A :: value > B :: value) >
+  : public MetaBool< ((int)A :: value > (int)B :: value) >
   {
   };
 
@@ -267,8 +304,40 @@ namespace Dune
 
 
 
-  // Protect: protect template instanciation
+  // MetaProtect: protect template instanciation
+ 
+  template< class Void,
+            class Condition,
+            template< unsigned int > class Value,
+            unsigned int i >
+  struct MetaProtect
+  : MetaProtect< Void, typename Condition :: Value, Value, i >
+  {
+  };
+
+  template< class Void, template< unsigned int > class Value, unsigned int i >
+  struct MetaProtect< Void, MetaTrue, Value, i >
+  : public Value< i >
+  {
+  };
   
+  template< class Void, template< unsigned int > class Value, unsigned int i >
+  struct MetaProtect< Void, MetaFalse, Value, i >
+  : public Void
+  {
+  };
+
+
+  
+  template< class Condition, template< unsigned int > class Value, unsigned int i >
+  struct MetaProtectInt
+  : public MetaProtect< MetaInt< 0 >, typename Condition :: Value, Value, i >
+  {
+  };
+
+
+
+
   template< template< unsigned int > class A, unsigned int i,
             class B, unsigned int n >
   struct Protect
