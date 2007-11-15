@@ -393,7 +393,7 @@ namespace Dune
     : fieldVector_( other.fieldVector_ )
     {
     }
-
+ 
   public:
     inline operator const FieldVectorType& () const
     {
@@ -834,6 +834,80 @@ namespace Dune
       return vector1_.size() + vector2_.size();
     }
   };
+
+  /*! \class PairOfVector
+   *  \brief Combines two classes implementing the vector interface to
+   *         produce a long vector.
+
+   *  This class can be used together with Dune::CombinedInterface
+   *  to generate a large vector by combining smaller ones. i
+   *
+   *  Example of usage:
+   *  \code
+      StaticVector<double,10> v1;
+      DynamicVector<double> v2(2);
+      FieldVectorWrapper<FieldVector<double,5> > v3;
+      typedef Dune::CombineInterface<PairOfVectors,StaticVector<double,10>&,
+            DynamicVector<double>&, FieldVectorWrapper<FieldVector<double,5> >&
+            VectorOfVectorType;
+      VectorOfVectorType v(v1,v2,v3);
+   *  \endcode
+   */
+  template< class RVector1Type, class RVector2Type >
+  class PairOfVectors
+  : public VectorDefault< typename TypeTraits<RVector1Type>::
+                          ReferredType :: FieldType,
+                          PairOfVectors<RVector1Type,RVector2Type> >,
+    public PairOfInterfaces<RVector1Type,RVector2Type>
+  {
+    typedef typename PairOfInterfaces<RVector1Type,RVector2Type>::T1Type Vector1Type;
+    typedef typename PairOfInterfaces<RVector1Type,RVector2Type>::T2Type Vector2Type;
+  public:
+    
+    typedef typename Vector1Type :: FieldType FieldType;
+
+  private:
+    typedef PairOfVectors< Vector1Type, Vector2Type > ThisType;
+    typedef VectorDefault< typename Vector1Type :: FieldType, ThisType > BaseType;
+
+    typedef CheckVectorInterface< Vector1Type > __CheckVector1Type__;
+    typedef CheckVectorInterface< Vector2Type > __CheckVector2Type__;
+
+    typedef CompileTimeChecker
+      < Conversion< FieldType, typename Vector2Type :: FieldType > :: sameType >
+      __CheckFieldType__;
+
+    PairOfVectors();
+    PairOfVectors& operator=(const PairOfVectors&);
+
+  public:
+    PairOfVectors(RVector1Type v1, RVector2Type v2) : 
+      Dune::PairOfInterfaces<RVector1Type,RVector2Type>(v1,v2) {}
+      
+    inline const FieldType &operator[] ( unsigned int index ) const
+    {
+      const int index2 = index - this->first().size();
+      if( index2 < 0 )
+        return this->first()[ index ];
+      else
+        return this->second()[ index2 ];
+    }
+
+    inline FieldType &operator[] ( unsigned int index )
+    {
+      const int index2 = index - this->first().size();
+      if( index2 < 0 )
+        return this->first()[ index ];
+      else
+        return this->second()[ index2 ];
+    }
+
+    inline const unsigned int size() const
+    {
+      return this->first().size() + this->second().size();
+    }
+  };
+
 
 }
 
