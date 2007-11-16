@@ -1,6 +1,8 @@
 #ifndef DUNE_BASEFUNCTIONPROXY_HH
 #define DUNE_BASEFUNCTIONPROXY_HH
 
+#include <dune/fem/space/common/basefunctionsetinterface.hh>
+
 namespace Dune
 {
 
@@ -299,13 +301,13 @@ namespace Dune
 #if DUNE_FEM_COMPATIBILITY
     template< int diffOrd, class QuadratureType >
     inline void evaluateScalar ( const int baseFunction,
-                                 const FieldVector< int, diffOrd > &diffVarible,
+                                 const FieldVector< int, diffOrd > &diffVariable,
                                  const QuadratureType &quadrature,
                                  const int quadPoint,
                                  ScalarRangeType &phi ) const
     {
       baseFunctionSet().evaluateScalar
-        ( baseFunction, diffVariable, quadrture[ quadPoint ], phi );
+        ( baseFunction, diffVariable, quadrature[ quadPoint ], phi );
     }
 #endif
    

@@ -7,6 +7,10 @@
 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
+#ifndef DUNE_FEM_COMBATIBILITY
+#define DUNE_FEM_COMPATIBILITY 1
+#endif
+
 namespace Dune
 {
 

@@ -79,11 +79,10 @@ namespace Dune
                  RangeType &ret ) const
   {
     enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
-    assert( !cachable || (rangestored_.find( quad.id() ) != rangestored_.end()) );
-
     const QuadratureType &quad = x.quadrature();
     const int pt = x.point();
-    
+
+    assert( !cachable || (rangestored_.find( quad.id() ) != rangestored_.end()) );
     Evaluate< QuadratureType, cachable >
       :: evaluate( *this, baseFunction, diffVariable, quad, pt, ranges_, ret );
   }
@@ -99,11 +98,10 @@ namespace Dune
                  RangeType &ret ) const
   {
     enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
-    assert( !cachable || (jacobianstored_.find( quad.id() ) != jacobianstored_.end()) );
-
     const QuadratureType &quad = x.quadrature();
     const int pt = x.point();
- 
+
+    assert( !cachable || (jacobianstored_.find( quad.id() ) != jacobianstored_.end()) );
     Evaluate< QuadratureType, cachable >
       :: evaluate( *this, baseFunction, diffVariable, quad, pt, jacobians_, ret );
   }
@@ -118,11 +116,10 @@ namespace Dune
                  JacobianRangeType &ret ) const
   {
     enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
-    assert( !cachable || (jacobianstored_.find( quad.id() ) != jacobianstored_.end()) );
-
     const QuadratureType &quad = x.quadrature();
     const int pt = x.point();
- 
+
+    assert( !cachable || (jacobianstored_.find( quad.id() ) != jacobianstored_.end()) );
     Evaluate<QuadratureType, cachable >
       :: jacobian( *this, baseFunction, quad, pt, jacobians_, ret );
   }
