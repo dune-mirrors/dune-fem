@@ -6,6 +6,9 @@
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
 #include <dune/fem/storage/arrayallocator.hh>
+/*! @addtogroup VectorClasses
+    @{
+*/
 
 namespace Dune
 {
@@ -564,5 +567,6 @@ namespace Dune
 }
 
 #include "array_inline.hh"
+//! @}
 
 #endif
