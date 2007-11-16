@@ -210,7 +210,6 @@ namespace Dune
     /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const JacobianRangeType &factor) */
     template< class PointType >
     inline void axpy ( const PointType &x,
-                       const int quadPoint,
                        const JacobianRangeType &factor )
     {
       localFunction().axpy( x, factor );

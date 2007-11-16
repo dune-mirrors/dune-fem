@@ -259,16 +259,16 @@ namespace Dune
     }
 #endif
   
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVar,const PointType &x,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
-                           const FieldVector< int, diffOrd > &diffVar,
+                           const FieldVector< int, diffOrd > &diffVariable,
                            const PointType &x,
                            RangeType &phi ) const
     {
       ScalarRangeType tmp;
       const int scalarBaseFunction = util_.containedDof( baseFunction );
-      evaluateScalar( scalarBaseFunction, diffVar, x, tmp );
+      evaluateScalar( scalarBaseFunction, diffVariable, x, tmp );
 
       phi = 0;
       phi[ util_.component( baseFunction ) ] = tmp[ 0 ];
@@ -321,7 +321,7 @@ namespace Dune
       return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
     template< class EntityType, class PointType >
     inline RangeFieldType evaluateGradientSingle( const int baseFunction,
                                                   const EntityType &entity,
