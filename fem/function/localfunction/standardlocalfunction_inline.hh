@@ -42,8 +42,9 @@ namespace Dune
 
   
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
+  template< class PointType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: evaluate ( const DomainType &x,
+    :: evaluate ( const PointType &x,
                   RangeType &ret ) const
   {
     ret = 0;
@@ -57,7 +58,7 @@ namespace Dune
   }
 
 
-
+#if 0
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
   template< class QuadratureType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
@@ -74,12 +75,14 @@ namespace Dune
       ret.axpy( (*values_[ i ]), phi );
     }
   }
+#endif
 
 
       
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
+  template< class PointType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: jacobian( const DomainType &x,
+    :: jacobian( const PointType &x,
                  JacobianRangeType &ret ) const
   {
     JacobianRangeType refJacobian( 0 );
@@ -93,13 +96,14 @@ namespace Dune
     }
 
     const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( x );
+      = entity().geometry().jacobianInverseTransposed( coordinate( x ) );
     for( int i = 0; i < dimRange; ++i )
       ret[ i ] = FMatrixHelp :: mult( gjit, refJacobian[ i ] );
   }
 
 
  
+#if 0
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
   template< class QuadratureType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
@@ -124,12 +128,14 @@ namespace Dune
     for( int i = 0; i < dimRange; ++i )
       ret[ i ] = FMatrixHelp :: mult( gjit, refJacobian[ i ] );
   }
+#endif
 
 
   
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
+  template< class PointType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const DomainType &x,
+    :: axpy ( const PointType &x,
               const RangeType &factor )
   {
     const BaseFunctionSetType &baseSet = baseFunctionSet();
@@ -142,7 +148,8 @@ namespace Dune
   }
 
   
-  
+
+#if 0
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
   template< class QuadratureType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
@@ -158,16 +165,18 @@ namespace Dune
       *(values_[ i ]) += phi * factor;
     }
   }
+#endif
 
   
   
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
+  template< class PointType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const DomainType &x,
+    :: axpy ( const PointType &x,
               const JacobianRangeType &factor )
   {
     JacobianRangeType factorInv;
-    rightMultiply( factor, x, factorInv );
+    rightMultiply( factor, coordinate( x ), factorInv );
     
     const BaseFunctionSetType &baseSet = baseFunctionSet();
     for( int i = 0; i < numDofs_; ++i )
@@ -180,7 +189,8 @@ namespace Dune
   }
 
   
-  
+ 
+#if 0
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
   template< class QuadratureType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
@@ -200,17 +210,19 @@ namespace Dune
         *(values_[ i ]) += grad[ j ] * factorInv[ j ];
     }
   }
+#endif
 
 
   
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
+  template< class PointType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const DomainType &x,
+    :: axpy ( const PointType &x,
               const RangeType &factor1,
               const JacobianRangeType &factor2 )
   {
     JacobianRangeType factor2Inv;
-    rightMultiply( factor2, x, factor2Inv );
+    rightMultiply( factor2, coordinate( x ), factor2Inv );
     
     const BaseFunctionSetType &baseSet = baseFunctionSet();
     for( int i = 0; i < numDofs_; ++i )
@@ -224,9 +236,10 @@ namespace Dune
         *(values_[ i ]) += grad[ j ] * factor2Inv[ j ];
     }
   }
+  
 
   
-  
+#if 0
   template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
   template< class QuadratureType >
   inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
@@ -250,6 +263,7 @@ namespace Dune
         *(values_[ i ]) += grad[ j ] * factor2Inv[ j ];
     }
   }
+#endif
 
 
     
@@ -323,9 +337,10 @@ namespace Dune
 
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
+  template< class PointType >
   inline void StandardLocalFunction
     < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: evaluate ( const DomainType &x,
+    :: evaluate ( const PointType &x,
                   RangeType &ret ) const
   {
     ret = 0;
@@ -340,7 +355,8 @@ namespace Dune
   }
 
 
-  
+
+#if 0
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
   template< class QuadratureType >
@@ -360,20 +376,22 @@ namespace Dune
         ret[ j ] += phi[ 0 ] * (*(values_[ i*N + j ]));
     }
   }
+#endif
 
 
       
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
+  template< class PointType >
   inline void StandardLocalFunction
     < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: jacobian( const DomainType &x,
+    :: jacobian( const PointType &x,
                  JacobianRangeType &ret ) const
   {
     ret = 0;
 
     const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( x );
+      = entity().geometry().jacobianInverseTransposed( coordinate( x ) );
 
     const BaseFunctionSetType &baseSet = baseFunctionSet();
     for( int i = 0; i < numScalarDofs_; ++i )
@@ -388,7 +406,8 @@ namespace Dune
   }
 
 
- 
+
+#if 0
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
   template< class QuadratureType >
@@ -415,14 +434,16 @@ namespace Dune
         ret[ j ].axpy( *(values_[ i*N + j ]), gradPhi[ 0 ] );
     }
   }
+#endif
 
 
   
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
+  template< class PointType >
   inline void StandardLocalFunction
     < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const DomainType &x,
+    :: axpy ( const PointType &x,
               const RangeType &factor )
   {
     const BaseFunctionSetType &baseSet = baseFunctionSet();
@@ -436,7 +457,8 @@ namespace Dune
   }
 
   
-  
+ 
+#if 0
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
   template< class QuadratureType >
@@ -455,18 +477,20 @@ namespace Dune
         *(values_[ i*N + j ]) += phi[ 0 ] * factor[ j ];
     }
   }
+#endif
 
   
   
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
+  template< class PointType >
   inline void StandardLocalFunction
     < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const DomainType &x,
+    :: axpy ( const PointType &x,
               const JacobianRangeType &factor )
   {
     JacobianRangeType factorInv;
-    rightMultiply( factor, x, factorInv );
+    rightMultiply( factor, coordinate( x ), factorInv );
     
     const BaseFunctionSetType &baseSet = baseFunctionSet();
     for( int i = 0; i < numScalarDofs_; ++i )
@@ -479,7 +503,8 @@ namespace Dune
   }
 
   
-  
+ 
+#if 0
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
   template< class QuadratureType >
@@ -501,19 +526,21 @@ namespace Dune
         *(values_[ i*N + j ]) += grad[ 0 ] * factorInv[ j ];
     }
   }
+#endif
 
 
   
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
+  template< class PointType >
   inline void StandardLocalFunction
     < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const DomainType &x,
+    :: axpy ( const PointType &x,
               const RangeType &factor1,
               const JacobianRangeType &factor2 )
   {
     JacobianRangeType factor2Inv;
-    rightMultiply( factor2, x, factor2Inv );
+    rightMultiply( factor2, coordinate( x ), factor2Inv );
     
     const BaseFunctionSetType &baseSet = baseFunctionSet();
     for( int i = 0; i < numScalarDofs_; ++i )
@@ -528,7 +555,8 @@ namespace Dune
   }
 
   
-  
+ 
+#if 0
   template< class DiscreteFunctionImp,
             class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
   template< class QuadratureType >
@@ -553,6 +581,7 @@ namespace Dune
         *(values_[ i*N + j ]) += phi[ 0 ] * factor1[ j ] + grad[ 0 ] * factor2Inv[ j ];
     }
   }
+#endif
 
 
     

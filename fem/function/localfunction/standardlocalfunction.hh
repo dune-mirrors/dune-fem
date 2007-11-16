@@ -73,6 +73,7 @@ namespace Dune
       GeometryJacobianInverseType;
 
   public:
+    using BaseType :: axpy;
     using BaseType :: evaluate;
     using BaseType :: jacobian;
 
@@ -143,26 +144,32 @@ namespace Dune
       return numDofs_; 
     }
 
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const */
-    inline void evaluate( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const PointType &x,RangeType &ret) const */
+    template< class PointType >
+    inline void evaluate( const PointType &x,
                           RangeType &ret ) const;
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
     template< class QuadratureType >
     inline void evaluate ( const QuadratureType &quadrature,
                            const int quadPoint,
                            RangeType &ret ) const;
+#endif
 
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const */
-    inline void jacobian ( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const PointType &x,JacobianRangeType &ret) const */
+    template< class PointType >
+    inline void jacobian ( const PointType &x,
                            JacobianRangeType &ret ) const;
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::jacobian( const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
     template< class QuadratureType >
     inline void jacobian( const QuadratureType &quadrature,
                           const int quadPoint,
                           JacobianRangeType &ret ) const;
-   
+#endif
+
     /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet */
     const BaseFunctionSetType &baseFunctionSet() const
     {
@@ -170,37 +177,46 @@ namespace Dune
       return baseFunctionSet_;
     }
     
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const DomainType &x,const RangeType &factor) */
-    inline void axpy( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor) */
+    template< class PointType >
+    inline void axpy( const PointType &x,
                       const RangeType &factor );
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
     template< class QuadratureType >
     inline void axpy( const QuadratureType &quadrature,
                       const int quadPoint,
                       const RangeType &factor );
+#endif
 
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const DomainType &x,const JacobianRangeType &factor) */
-    inline void axpy( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const JacobianRangeType &factor) */
+    template< class PointType >
+    inline void axpy( const PointType &x,
                       const JacobianRangeType &factor );
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
     template< class QuadratureType >
     inline void axpy( const QuadratureType &quadrature,
                       const int quadPoint,
                       const JacobianRangeType &factor );
+#endif
     
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const DomainType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
-    inline void axpy( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
+    template< class PointType >
+    inline void axpy( const PointType &x,
                       const RangeType &factor1,
                       const JacobianRangeType &factor2 );
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor1,const JacobianRangeType &factor2) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
                        const int quadPoint,
                        const RangeType &factor1,
                        const JacobianRangeType &factor2 );
+#endif
 
     //! initialize local function 
     void init ( const EntityType &entity );
@@ -307,6 +323,7 @@ namespace Dune
     bool needCheckGeometry_;
 
   public:
+    using BaseType :: axpy;
     using BaseType :: evaluate;
     using BaseType :: jacobian;
 
@@ -360,64 +377,79 @@ namespace Dune
       return N * numScalarDofs_; 
     }
 
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const */
-    inline void evaluate( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const PointType &x,RangeType &ret) const */
+    template< class PointType >
+    inline void evaluate( const PointType &x,
                           RangeType &ret ) const;
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
     template< class QuadratureType >
     inline void evaluate ( const QuadratureType &quadrature,
                            const int quadPoint,
                            RangeType &ret ) const;
+#endif
 
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const */
-    inline void jacobian ( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const PointType &x,JacobianRangeType &ret) const */
+    template< class PointType >
+    inline void jacobian ( const PointType &x,
                            JacobianRangeType &ret ) const;
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::jacobian( const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
     template< class QuadratureType >
     inline void jacobian( const QuadratureType &quadrature,
                           const int quadPoint,
                           JacobianRangeType &ret ) const;
+#endif
    
-    /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet */
-    const BaseFunctionSetType &baseFunctionSet() const
+    /** \copydoc Dune::LocalFunctionInterface::baseFunctionSet */
+    const BaseFunctionSetType &baseFunctionSet () const
     {
       assert( entity_ != 0 );
       return baseFunctionSet_;
     }
     
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const DomainType &x,const RangeType &factor) */
-    inline void axpy( const DomainType &x,
-                      const RangeType &factor );
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor );
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
     template< class QuadratureType >
     inline void axpy( const QuadratureType &quadrature,
                       const int quadPoint,
                       const RangeType &factor );
+#endif
 
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const DomainType &x,const JacobianRangeType &factor) */
-    inline void axpy( const DomainType &x,
-                      const JacobianRangeType &factor );
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const JacobianRangeType &factor) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const JacobianRangeType &factor );
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
     template< class QuadratureType >
     inline void axpy( const QuadratureType &quadrature,
                       const int quadPoint,
                       const JacobianRangeType &factor );
+#endif
     
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const DomainType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
-    inline void axpy( const DomainType &x,
-                      const RangeType &factor1,
-                      const JacobianRangeType &factor2 );
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor1,
+                       const JacobianRangeType &factor2 );
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor1,const JacobianRangeType &factor2) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
                        const int quadPoint,
                        const RangeType &factor1,
                        const JacobianRangeType &factor2 );
+#endif
 
     //! initialize local function 
     void init ( const EntityType &entity );

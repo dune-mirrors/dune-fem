@@ -75,6 +75,7 @@ namespace Dune
     WrappedLocalFunctionType &lf_;
 
   public:
+    using BaseType :: axpy;
     using BaseType :: evaluate;
     using BaseType :: jacobian;
 
@@ -141,13 +142,15 @@ namespace Dune
       return localFunction().numDofs();
     }
     
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const */
-    void evaluate ( const DomainType &x,
+    /** \copydoc Dune::LocalFunctionInterface::evaluate(const PointType &x,RangeType &ret) const */
+    template< class PointType >
+    void evaluate ( const PointType &x,
                     RangeType &ret ) const
     {
       localFunction().evaluate( x , ret );
     }
     
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::evaluate( const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
     template< class QuadratureType >
     void evaluate ( const QuadratureType &quadrature,
@@ -156,14 +159,17 @@ namespace Dune
     {
       localFunction().evaluate( quadrature, quadPoint, ret );
     }
+#endif
     
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const */
-    void jacobian ( const DomainType& x,
+    /** \copydoc Dune::LocalFunctionInterface::jacobian(const PointType &x,JacobianRangeType &ret) const */
+    template< class PointType >
+    void jacobian ( const PointType& x,
                     JacobianRangeType &ret ) const
     {
       localFunction().jacobian( x, ret ); 
     }
-   
+  
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
     template< class QuadratureType > 
     void jacobian ( const QuadratureType &quadrature,
@@ -172,6 +178,7 @@ namespace Dune
     {
       localFunction().jacobian( quadrature, quadPoint, ret );
     }
+#endif
    
     /** \brief update local function for given Entity
      */
@@ -180,7 +187,16 @@ namespace Dune
     { 
       localFunction().init(en);
     } 
+    
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor )
+    {
+      localFunction().axpy( x, factor );
+    }
 
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
@@ -189,7 +205,18 @@ namespace Dune
     {
       localFunction().axpy( quadrature, quadPoint, factor );
     }
-    
+#endif
+
+    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const JacobianRangeType &factor) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const int quadPoint,
+                       const JacobianRangeType &factor )
+    {
+      localFunction().axpy( x, factor );
+    }
+   
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
@@ -198,7 +225,18 @@ namespace Dune
     {
       localFunction().axpy( quadrature, quadPoint, factor );
     }
+#endif
     
+     /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor1,
+                       const JacobianRangeType &factor2 )
+    {
+      localFunction().axpy( x, factor1, factor2 );
+    }
+  
+#if 0
     /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrture,const int quadPaint,const RangeType &factor1,const JacobianRangeType &factor2) */
     template< class QuadratureType >
     inline void axpy ( const QuadratureType &quadrature,
@@ -208,6 +246,7 @@ namespace Dune
     {
       localFunction().axpy( quadrature, quadPoint, factor1, factor2 );
     }
+#endif
     
     /** \copydoc LocalFunctionInterface::baseFunctionSet() const */
     const BaseFunctionSetType &baseFunctionSet() const 
