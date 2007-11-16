@@ -190,7 +190,8 @@ struct CombineInterface :
 		   typename TupleAccessTraits<T7>::ParameterType t7,
 		   typename TupleAccessTraits<T8>::ParameterType t8,
 		   typename TupleAccessTraits<T9>::ParameterType t9)
-    : next(t2,t3,t4,t5,t6,t7,t8,t9), BaseType(t1,next) {}
+    : BaseType(t1,next) 
+    , next(t2,t3,t4,t5,t6,t7,t8,t9) {}
   CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
 		   typename TupleAccessTraits<T2>::ParameterType t2,
 		   typename TupleAccessTraits<T3>::ParameterType t3,
@@ -199,7 +200,8 @@ struct CombineInterface :
 		   typename TupleAccessTraits<T6>::ParameterType t6,
 		   typename TupleAccessTraits<T7>::ParameterType t7,
 		   typename TupleAccessTraits<T8>::ParameterType t8)
-    : next(t2,t3,t4,t5,t6,t7,t8), BaseType(t1,next) {}
+    : BaseType(t1,next) 
+    , next(t2,t3,t4,t5,t6,t7,t8) {}
   CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
 		   typename TupleAccessTraits<T2>::ParameterType t2,
 		   typename TupleAccessTraits<T3>::ParameterType t3,
@@ -207,31 +209,37 @@ struct CombineInterface :
 		   typename TupleAccessTraits<T5>::ParameterType t5,
 		   typename TupleAccessTraits<T6>::ParameterType t6,
 		   typename TupleAccessTraits<T7>::ParameterType t7)
-    : next(t2,t3,t4,t5,t6,t7), BaseType(t1,next) {}
+    : BaseType(t1,next) 
+    , next(t2,t3,t4,t5,t6,t7) {}
   CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
 		   typename TupleAccessTraits<T2>::ParameterType t2,
 		   typename TupleAccessTraits<T3>::ParameterType t3,
 		   typename TupleAccessTraits<T4>::ParameterType t4,
 		   typename TupleAccessTraits<T5>::ParameterType t5,
 		   typename TupleAccessTraits<T6>::ParameterType t6)
-    : next(t2,t3,t4,t5,t6), BaseType(t1,next) {}
+    : BaseType(t1,next) 
+    , next(t2,t3,t4,t5,t6) {}
   CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
 		   typename TupleAccessTraits<T2>::ParameterType t2,
 		   typename TupleAccessTraits<T3>::ParameterType t3,
 		   typename TupleAccessTraits<T4>::ParameterType t4,
 		   typename TupleAccessTraits<T5>::ParameterType t5)
-    : next(t2,t3,t4,t5), BaseType(t1,next) {}
+    : BaseType(t1,next) 
+    , next(t2,t3,t4,t5) {}
   CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
 		   typename TupleAccessTraits<T2>::ParameterType t2,
 		   typename TupleAccessTraits<T3>::ParameterType t3,
 		   typename TupleAccessTraits<T4>::ParameterType t4)
-    : next(t2,t3,t4), BaseType(t1,next) {}
+    : BaseType(t1,next) 
+    , next(t2,t3,t4) {}
   CombineInterface(typename TupleAccessTraits<T1>::ParameterType t1,
 		   typename TupleAccessTraits<T2>::ParameterType t2,
 		   typename TupleAccessTraits<T3>::ParameterType t3)
-    : next(t2,t3), BaseType(t1,next) {}
+    : BaseType(t1,next) 
+    , next(t2,t3) {}
   CombineInterface(const ThisType& ci)
-    : next(ci.next), BaseType(ci.first(),next) {}
+    : BaseType(ci.first(),next) 
+    , next(ci.next) {}
   NextType next;
 };
 template <template <class T11,class T21> class CI,class T1,class T2> 
