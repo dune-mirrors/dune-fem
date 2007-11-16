@@ -346,7 +346,7 @@ namespace Dune {
             valEn_ *= -faceQuadInner.weight(l) * massVolElinv;
 
             // add factor 
-            updEn.axpy( faceQuadInner, l, valEn_  );
+            updEn.axpy( faceQuadInner[l], valEn_  );
           }
         } // end if boundary
         
@@ -377,7 +377,7 @@ namespace Dune {
         fMat_ *= intel;
 
         // add fMat 
-        updEn.axpy( volQuad, l, fMat_);
+        updEn.axpy( volQuad[l], fMat_);
       }
     }
     
@@ -400,7 +400,7 @@ namespace Dune {
         source_ *= intel;
         fMat_   *= intel;
         
-        updEn.axpy(volQuad,l,source_,fMat_);
+        updEn.axpy(volQuad[l],source_,fMat_);
       }
     }
     
@@ -436,8 +436,8 @@ namespace Dune {
         valEn_    *= -faceQuadInner.weight(l)*massVolElinv;
         valNeigh_ *=  faceQuadOuter.weight(l)*massVolNbinv;
         
-        updEn.axpy( faceQuadInner, l, valEn_ );
-        updNeigh.axpy( faceQuadOuter, l, valNeigh_ );
+        updEn.axpy( faceQuadInner[l], valEn_ );
+        updNeigh.axpy( faceQuadOuter[l], valNeigh_ );
       }
       return nbvol;
     }

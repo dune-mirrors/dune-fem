@@ -89,7 +89,7 @@ public:
     
     for(int qP = 0; qP < nop; ++qP) 
     {
-      sohn_.evaluate(quad,qP,ret);
+      sohn_.evaluate(quad[qP],ret);
       for(int i=0; i<vati_numDofs; ++i) 
       {
         baseset.evaluate(i,geometryInFather.global(quad.point(qP)),phi);
@@ -120,7 +120,7 @@ public:
       vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
       
       for(int i=0; i<sohn_numDofs; ++i) {
-        baseset.evaluate(i,quad,qP,phi);
+        baseset.evaluate(i,quad[qP],phi);
         sohn_[i] += quad.weight(qP) * (ret * phi) ;
       }
     }

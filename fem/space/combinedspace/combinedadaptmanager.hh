@@ -94,7 +94,7 @@ public:
     
     for(int qP = 0; qP < nop; ++qP) 
     {
-      sohn_.evaluate(quad,qP,ret);
+      sohn_.evaluate(quad[qP],ret);
       // calculate factor 
       const DomainFieldType intel = quad.weight(qP) * weight;
       for(int i=0; i<diff_numDofs; ++i) 
@@ -146,7 +146,7 @@ public:
       for(int i=0; i<diff_numDofs; ++i) 
       {
         // evaluate base function 
-        baseset.evaluateScalar(i,quad,qP,phi);
+        baseset.evaluateScalar(i,quad[qP],phi);
         // scale with weight 
         phi *= quad.weight(qP);
         int idx = i * dimRange;
