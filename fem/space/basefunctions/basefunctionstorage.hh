@@ -32,7 +32,8 @@ namespace Dune {
 
   public:
     //! Constructor
-    StorageBase(const FactoryType& factory);
+    explicit StorageBase( const FactoryType& factory );
+
     //! Destructor (must be virtual)
     virtual ~StorageBase();
 
@@ -71,57 +72,84 @@ namespace Dune {
     const GeometryType elementGeometry_;
   };
 
-  //! \brief A simple storage scheme which just forwards the calls to 
-  //! the underlying base functions.
-  template <class FunctionSpaceImp>
-  class SimpleStorage : public StorageBase<FunctionSpaceImp> 
+
+
+  /** \brief simple base function storage
+   *
+   *  This base function storage just forwards any evaluations
+   *  (quadrature point or not) to the underlying base functions.
+   */
+  template< class FunctionSpaceImp >
+  class SimpleStorage
+  : public StorageBase< FunctionSpaceImp >
   {
   public:
-    typedef BaseFunctionFactory<FunctionSpaceImp> FactoryType;
-    typedef typename FunctionSpaceImp::DomainType DomainType;
-    typedef typename FunctionSpaceImp::RangeType RangeType;
-    typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
+    typedef FunctionSpaceImp FunctionSpaceType;
+    
+  private:
+    typedef SimpleStorage< FunctionSpaceType > ThisType;
+    typedef StorageBase< FunctionSpaceType > BaseType;
+
+  public:
+    typedef BaseFunctionFactory< FunctionSpaceType > FactoryType;
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+  public:
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
 
   public:
     //! Constructor
-    SimpleStorage(const FactoryType& factory);
-    //! Destructor
-    ~SimpleStorage();
+    inline explicit SimpleStorage ( const FactoryType &factory )
+    : BaseType( factory )
+    {
+    }
 
-    using StorageBase<FunctionSpaceImp>::evaluate;
-    using StorageBase<FunctionSpaceImp>::jacobian;
-
-    template <int diffOrd, class QuadratureType>
-    inline
-    void evaluate(int baseFunct, 
-                  const FieldVector<int, diffOrd>& diffVar,
-                  const QuadratureType& quad, int quadPoint, 
-                  RangeType& result) const;
+    template< int diffOrder, class QuadratureType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< int, diffOrder > &diffVariable,
+                           const QuadraturePointWrapper< QuadratureType > &x,
+                           RangeType &ret ) const
+    {
+      evaluate( baseFunction, diffVariable, coordinate( x ), ret );
+    }
     
-    template <class QuadratureType>
-    inline
-    void jacobian(int baseFunct, 
-                  const QuadratureType& quad, int quadPoint, 
-                  JacobianRangeType& result) const;
-
+    template< class QuadratureType >
+    inline void jacobian( const int baseFunction,
+                          const QuadraturePointWrapper< QuadratureType > &x,
+                          JacobianRangeType &ret ) const
+    {
+      jacobian( baseFunction, coordinate( x ), ret );
+    }
   };
+
+
 
   //! \brief Storage scheme which caches evaluations of base function values
   //! and derivatives.
   //! This storage scheme works in conjunction with the CacheQuadrature.
   //! \warning This works only for conforming grids so far!!!!!
   //! \todo Implement switch for non-conforming grids!!!!
-  template <class FunctionSpaceImp>
-  class CachingStorage : public StorageBase<FunctionSpaceImp>
+  template< class FunctionSpaceImp >
+  class CachingStorage
+  : public StorageBase< FunctionSpaceImp >
   {
-    typedef CachingStorage<FunctionSpaceImp> ThisType;
   public:
-    typedef BaseFunctionFactory<FunctionSpaceImp> FactoryType;
-    typedef typename FunctionSpaceImp::DomainType DomainType;
-    typedef typename FunctionSpaceImp::RangeType RangeType;
-    typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
+    typedef FunctionSpaceImp FunctionSpaceType;
 
-    friend class StorageInterface<FunctionSpaceImp::DimDomain>;
+  private:
+    typedef CachingStorage< FunctionSpaceType > ThisType;
+    typedef StorageBase< FunctionSpaceType > BaseType;
+    
+    friend class StorageInterface< FunctionSpaceType :: DimDomain >;
+    
+  public:
+    typedef BaseFunctionFactory< FunctionSpaceType > FactoryType;
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
   private:
     typedef typename FunctionSpaceImp::DomainFieldType RealType;
@@ -217,39 +245,44 @@ namespace Dune {
         result = jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
       }
     };
-    
+
+  public:
+    using BaseType :: cacheExistingQuadratures;
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+   
   public:
     //! Constructor
-    CachingStorage(const FactoryType& factory);
+    inline explicit CachingStorage ( const FactoryType &factory )
+    : BaseType( factory )
+    {
+      cacheExistingQuadratures( *this );
+    }
+    
     //! Destructor
-    ~CachingStorage();
-
-    using StorageBase<FunctionSpaceImp>::evaluate;
-    using StorageBase<FunctionSpaceImp>::jacobian;
+    ~CachingStorage ()
+    {
+    }
 
     //! evaulate base function 
-    template <class QuadratureType>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, 0>& diffVar,
-                  const QuadratureType& quad, int quadPoint, 
-                  RangeType& result) const;
+    template< class QuadratureType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< int, 0 > &diffVariable,
+                           const QuadraturePointWrapper< QuadratureType > &x, 
+                           RangeType &ret ) const;
 
     //! evaluate derivative of base function 
-    template <class QuadratureType>
-    inline
-    void evaluate(const int baseFunct,
-                  const FieldVector<int, 1>& diffVar,
-                  const QuadratureType& quad, 
-                  const int quadPoint, 
-                  RangeType& result) const;
+    template< class QuadratureType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< int, 1 > &diffVariable,
+                           const QuadraturePointWrapper< QuadratureType > &x, 
+                           RangeType &ret ) const;
 
     //! get derivative of base function 
-    template <class QuadratureType>
-    inline
-    void jacobian(int baseFunct, 
-                  const QuadratureType& quad, int quadPoint, 
-                  JacobianRangeType& result) const;
+    template< class QuadratureType >
+    inline void jacobian ( const int baseFunction,
+                           const QuadraturePointWrapper< QuadratureType > &x,
+                           JacobianRangeType &ret ) const;
 
   private:
     // caches the quadrature, see also addEntry.. 

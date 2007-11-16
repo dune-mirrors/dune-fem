@@ -2,7 +2,8 @@
 
 using std::make_pair;
 
-namespace Dune {
+namespace Dune
+{
 
   //- class SimpleStorage
   template <class FunctionSpaceImp>
@@ -64,87 +65,69 @@ namespace Dune {
     }
   }
 
-  //- Simple storage
-  template <class FunctionSpaceImp>
-  inline SimpleStorage<FunctionSpaceImp>::SimpleStorage(const FactoryType& factory) :
-    StorageBase<FunctionSpaceImp>(factory)
-  {}
 
-  template <class FunctionSpaceImp>
-  SimpleStorage<FunctionSpaceImp>::~SimpleStorage() {}
+  
+  // caching storage
+  // ---------------
 
-  template <class FunctionSpaceImp>
-  template <int diffOrd, class QuadratureType>
-  inline void SimpleStorage<FunctionSpaceImp>::
-  evaluate(int baseFunct, const FieldVector<int, diffOrd>& diffVar,
-           const QuadratureType& quad, int quadPoint,
-           RangeType& result) const 
+  template< class FunctionSpaceImp >
+  template< class QuadratureType >
+  inline void CachingStorage< FunctionSpaceImp >
+    :: evaluate( const int baseFunction,
+                 const FieldVector< int, 0 > &diffVariable,
+                 const QuadraturePointWrapper< QuadratureType > &x,
+                 RangeType &ret ) const
   {
-    this->evaluate(baseFunct, diffVar, quad.point(quadPoint), result);
+    enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+    assert( !cachable || (rangestored_.find( quad.id() ) != rangestored_.end()) );
+
+    const QuadratureType &quad = x.quadrature();
+    const int pt = x.point();
+    
+    Evaluate< QuadratureType, cachable >
+      :: evaluate( *this, baseFunction, diffVariable, quad, pt, ranges_, ret );
+  }
+  
+
+  
+  template< class FunctionSpaceImp >
+  template< class QuadratureType >
+  inline void CachingStorage< FunctionSpaceImp >
+    :: evaluate( const int baseFunction,
+                 const FieldVector< int, 1 > &diffVariable,
+                 const QuadraturePointWrapper< QuadratureType > &x,
+                 RangeType &ret ) const
+  {
+    enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+    assert( !cachable || (jacobianstored_.find( quad.id() ) != jacobianstored_.end()) );
+
+    const QuadratureType &quad = x.quadrature();
+    const int pt = x.point();
+ 
+    Evaluate< QuadratureType, cachable >
+      :: evaluate( *this, baseFunction, diffVariable, quad, pt, jacobians_, ret );
   }
 
-  template <class FunctionSpaceImp>
-  template <class QuadratureType>
-  inline void SimpleStorage<FunctionSpaceImp>::
-  jacobian(int baseFunct, const QuadratureType& quad, int quadPoint,
-           JacobianRangeType& result) const
+
+
+  template< class FunctionSpaceImp >
+  template< class QuadratureType >
+  inline void CachingStorage< FunctionSpaceImp >
+    :: jacobian( const int baseFunction,
+                 const QuadraturePointWrapper< QuadratureType > &x,
+                 JacobianRangeType &ret ) const
   {
-    this->jacobian(baseFunct, quad.point(quadPoint), result);
+    enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+    assert( !cachable || (jacobianstored_.find( quad.id() ) != jacobianstored_.end()) );
+
+    const QuadratureType &quad = x.quadrature();
+    const int pt = x.point();
+ 
+    Evaluate<QuadratureType, cachable >
+      :: jacobian( *this, baseFunction, quad, pt, jacobians_, ret );
   }
 
-  //- Caching storage
-  template <class FunctionSpaceImp>
-  inline CachingStorage<FunctionSpaceImp>::CachingStorage(const FactoryType& fac) :
-    StorageBase<FunctionSpaceImp>(fac)
-  {
-    this->cacheExsistingQuadratures(*this);
-  }
-
-  template <class FunctionSpaceImp>
-  CachingStorage<FunctionSpaceImp>::~CachingStorage() {}
-
-  template <class FunctionSpaceImp>
-  template <class QuadratureType>
-  inline void CachingStorage<FunctionSpaceImp>::
-  evaluate(int baseFunct, const FieldVector<int, 0>& diffVar,
-           const QuadratureType& quad, int quadPoint,
-           RangeType& result) const 
-  {
-    assert( (Conversion<QuadratureType,CachingInterface>::exists) ?
-             (rangestored_.find(quad.id()) != rangestored_.end()) : true );
-    Evaluate<QuadratureType,
-             Conversion<QuadratureType,CachingInterface>::exists >::
-         evaluate(*this,baseFunct,diffVar,quad,quadPoint,ranges_,result);
-  }
-
-  template <class FunctionSpaceImp>
-  template <class QuadratureType>
-  inline void CachingStorage<FunctionSpaceImp>::
-  jacobian(const int baseFunct, 
-           const QuadratureType& quad, 
-           const int quadPoint,
-           JacobianRangeType& result) const
-  {
-    assert( (Conversion<QuadratureType,CachingInterface>::exists) ?
-        ( jacobianstored_.find(quad.id()) != jacobianstored_.end()) : true);
-    Evaluate<QuadratureType,
-             Conversion<QuadratureType,CachingInterface>::exists >::
-      jacobian(*this,baseFunct,quad,quadPoint,jacobians_,result);
-  }
-
-  template <class FunctionSpaceImp>
-  template <class QuadratureType>
-  inline void CachingStorage<FunctionSpaceImp>::
-  evaluate(int baseFunct, const FieldVector<int, 1>& diffVar,
-           const QuadratureType& quad, int quadPoint,
-           RangeType& result) const
-  {
-    assert( (Conversion<QuadratureType,CachingInterface>::exists) ?
-        ( jacobianstored_.find(quad.id()) != jacobianstored_.end()) : true);
-    Evaluate<QuadratureType,
-             Conversion<QuadratureType,CachingInterface>::exists >::
-      evaluate(*this,baseFunct,diffVar,quad,quadPoint,jacobians_,result);
-  }
+  
 
   template <class FunctionSpaceImp>
   inline void CachingStorage<FunctionSpaceImp>::

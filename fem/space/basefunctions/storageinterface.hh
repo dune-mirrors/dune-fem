@@ -91,7 +91,7 @@ namespace Dune {
 
       //! for a newly created storage cache all existing quadratures 
       template <class StorageImp>
-      void cacheExsistingQuadratures(StorageImp & storage)
+      void cacheExistingQuadratures(StorageImp & storage)
       {
         typedef typename QuadratureListType::iterator IteratorType;
         IteratorType endit = quadratureList().end();

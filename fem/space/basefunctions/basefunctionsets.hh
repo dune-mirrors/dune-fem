@@ -75,9 +75,6 @@ namespace Dune
     //! Constructor
     inline explicit StandardBaseFunctionSet ( const FactoryType &factory )
     : storage_( factory )
-      //diffVar0_( 0 ),
-      //tmp_( 0 ),
-      //jTmp_( 0 )
     {
     }
 
@@ -94,44 +91,24 @@ namespace Dune
     }
  
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */ 
-    template< int diffOrd >
+    template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
-                           const DomainType &x,
+                           const PointType &x,
                            RangeType &phi ) const
     {
       storage_.evaluate( baseFunction, diffVariable, x, phi );
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const
-     */
-    template< int diffOrd, class QuadratureType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
-                           const QuadratureType &quadrature,
-                           const int quadPoint,
-                           RangeType &phi ) const
+    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */ 
+    template< class PointType >
+    inline void jacobian ( const int baseFunction,
+                           const PointType &x,
+                           JacobianRangeType &phi ) const
     {
-      storage_.evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi );
+      storage_.jacobian( baseFunction, x, phi );
     }
-
-#if 0
-    /** \copydoc Dune::BaseFunctionSetDefault::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */ 
-    template< class QuadratureType >
-    inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const QuadratureType &quadrature,
-                                           const int quadPoint,
-                                           const RangeType &psi ) const;
-      
-    /** \copydoc Dune::BaseFunctionSetDefault::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &psi) const */ 
-    template <class EntityType, class QuadratureType>
-    inline RangleFieldType evaluateGradientSingle ( const int baseFunction,
-                                                    const EntityType &entity,
-                                                    const QuadratureType &quadrature,
-                                                    const int quadPoint,
-                                                    const JacobianRangeType &psi ) const;
-#endif
-   
+    
   private:
     StandardBaseFunctionSet( const StandardBaseFunctionSet& );
 
@@ -161,159 +138,212 @@ namespace Dune
   //! This base function can be used in conjunction with scalar basefunctions
   //! \f$ \phi_i \f$ which are extended to vectorial base functions like 
   //! \f$ \Phi_j = \phi_i e_k \f$, where \f$ e_k = [ \delta_{ik} ]_i \f$.
-  template <class FunctionSpaceImp, template <class> class StorageImp>
-  class VectorialBaseFunctionSet : 
-    public BaseFunctionSetDefault<VectorialBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> >
+  template< class FunctionSpaceImp, template< class > class StorageImp >
+  class VectorialBaseFunctionSet
+  : public BaseFunctionSetDefault
+    < VectorialBaseFunctionSetTraits< FunctionSpaceImp, StorageImp > >
   {
-  private:
-    typedef BaseFunctionSetDefault<
-      VectorialBaseFunctionSetTraits<FunctionSpaceImp, StorageImp> > BaseType;
+  public:
     typedef FunctionSpaceImp FunctionSpaceType;
-    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-  public:  
-    typedef typename ScalarFunctionSpaceType::RangeType ScalarRangeType;
-    typedef typename ScalarFunctionSpaceType::JacobianRangeType 
-      ScalarJacobianRangeType;
-  private:  
-    typedef BaseFunctionFactory<ScalarFunctionSpaceType> FactoryType;
-    typedef typename FactoryType::BaseFunctionType BaseFunctionType;
-    typedef StorageImp<ScalarFunctionSpaceType> StorageType;
- 
-  public:
-    typedef VectorialBaseFunctionSetTraits<FunctionSpaceImp,StorageImp> Traits;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-    
-    typedef typename FunctionSpaceType::RangeFieldType DofType;
-        
-  public:
-    //! Constructor
-    inline explicit VectorialBaseFunctionSet ( const FactoryType &factory )
-    : storage_( factory ),
-      util_( FunctionSpaceType::DimRange ),
-      tmp_( 0 ),
-      jTmp_( 0 ) // changed to integer in case of integer func-space
-    {
-    }
 
-    // use evaluate of default implementation 
+    typedef VectorialBaseFunctionSetTraits< FunctionSpaceType, StorageImp > Traits;
+    
+  private:
+    typedef VectorialBaseFunctionSet< FunctionSpaceType, StorageImp > ThisType;
+    typedef BaseFunctionSetDefault< Traits > BaseType;
+    
+  public:
+    typedef typename FunctionSpaceType :: ScalarFunctionSpaceType
+      ScalarFunctionSpaceType;
+    
+  private:  
+    typedef BaseFunctionFactory< ScalarFunctionSpaceType > FactoryType;
+    typedef typename FactoryType :: BaseFunctionType BaseFunctionType;
+    typedef StorageImp< ScalarFunctionSpaceType > StorageType;
+
+  public:
+    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+    enum
+    {
+      DimDomain = FunctionSpaceType :: DimDomain,
+      DimRange = FunctionSpaceType :: DimRange
+    };
+    
+    typedef RangeFieldType DofType;
+    
+    typedef typename ScalarFunctionSpaceType :: RangeType ScalarRangeType;
+    typedef typename ScalarFunctionSpaceType :: JacobianRangeType
+      ScalarJacobianRangeType;
+    
+  protected:
+    StorageType storage_;
+    DofConversionUtility<PointBased> util_;
+
+  public:
     using BaseType :: evaluate;
     using BaseType :: evaluateSingle;
     using BaseType :: evaluateGradientSingle;
     using BaseType :: jacobian;
+       
+  public:
+    //! Constructor
+    inline explicit VectorialBaseFunctionSet ( const FactoryType &factory )
+    : storage_( factory ),
+      util_( FunctionSpaceType::DimRange )
+    {
+    }
 
-    GeometryType geometryType () const 
+  private:
+    VectorialBaseFunctionSet ( const ThisType & );
+    
+  public:
+    inline GeometryType geometryType () const
     { 
       return storage_.geometryType(); 
     }
     
-    inline
-    int numBaseFunctions() const;
-
-    inline 
-    int numDifferentBaseFunctions() const;
-
-    template <class QuadratureType>
-    inline
-    void evaluateScalar(int baseFunct, 
-			const QuadratureType & quad, int p, 
-			ScalarRangeType& phi) const;
-    inline
-    void evaluateScalar(int baseFunct, 
-			const DomainType& xLocal, 
-			ScalarRangeType& phi) const;
-
-    template <int diffOrd>
-    inline
-    void evaluate(int baseFunct,
-                  const FieldVector<int, diffOrd>& diffVar,
-                  const DomainType& xLocal,
-                  RangeType& phi) const;
-
-    template <int diffOrd, class QuadratureType>
-    inline
-    void evaluate(int baseFunct, 
-                  const FieldVector<deriType, diffOrd> &diffVariable, 
-                  QuadratureType & quad, 
-                  int quadPoint, RangeType & phi ) const;
-
-    inline
-    void jacobianScalar(int baseFunct, const DomainType& xLocal, 
-                  ScalarJacobianRangeType& gradPhi) const;
-
-    template <class QuadratureImp>
-    inline
-    void jacobianScalar(int baseFunct, QuadratureImp& quad, int quadPoint,
-                  ScalarJacobianRangeType& gradPhi) const;
-    inline
-    void jacobian(int baseFunct, const DomainType& xLocal, 
-                  JacobianRangeType& gradPhi) const;
-
-    template <class QuadratureImp>
-    inline
-    void jacobian(int baseFunct, QuadratureImp& quad, int quadPoint,
-                  JacobianRangeType& gradPhi) const;
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
-    inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const DomainType &x,
-                                           const RangeType &psi ) const
+    inline int numBaseFunctions () const
     {
-      ScalarRangeType phi;
-      const int scalarBaseFunction = util_.containedDof( baseFunction );
+      return numDifferentBaseFunctions() * DimRange;
+    }
 
-      FieldVector< deriType, 0 > diffVar;
-      storage_.evaluate( scalarBaseFunction, diffVar, x, phi );
-      return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
+    inline int numDifferentBaseFunctions () const
+    {
+      return storage_.numBaseFunctions();
+    }
+
+    template< int diffOrd, class PointType >
+    inline void evaluateScalar ( const int baseFunction,
+                                 const FieldVector< int, diffOrd > &diffVariable,
+                                 const PointType &x,
+                                 ScalarRangeType &phi ) const
+    {
+      assert( (baseFunction >= 0) && (baseFunction < numDifferentBaseFunctions()) );
+      storage_.evaluate( baseFunction, diffVariable, x, phi );
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */
+    template< int diffOrd, class QuadratureType >
+    inline void evaluateScalar ( const int baseFunction,
+                                 const FieldVector< int, diffOrd > &diffVariable,
+                                 const QuadratureType &quadrature,
+                                 const int quadPoint,
+                                 ScalarRangeType &phi ) const
+    {
+      evaluateScalar( baseFunction, diffVariable, quadrature[ quadPoint ], phi );
+    }
+ 
+    template< class PointType >
+    inline void evaluateScalar ( const int baseFunction,
+                                 const PointType &x,
+                                 ScalarRangeType &phi ) const
+    {
+      FieldVector< int, 0 > diffVar;
+      evaluateScalar( baseFunction, diffVar, x, phi );
+    }
+    
     template< class QuadratureType >
+    inline void evaluateScalar ( const int baseFunction,
+                                 const QuadratureType &quadrature,
+                                 const int quadPoint,
+                                 ScalarRangeType &phi ) const
+    {
+      evaluateScalar( baseFunction, quadrature[ quadPoint ], phi );
+    }
+  
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVar,const PointType &x,RangeType &phi) const */
+    template< int diffOrd, class PointType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< int, diffOrd > &diffVar,
+                           const PointType &x,
+                           RangeType &phi ) const
+    {
+      ScalarRangeType tmp;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+      evaluateScalar( scalarBaseFunction, diffVar, x, tmp );
+
+      phi = 0;
+      phi[ util_.component( baseFunction ) ] = tmp[ 0 ];
+    }
+
+    template< class PointType >
+    inline void jacobianScalar ( const int baseFunction,
+                                 const PointType &x,
+                                 ScalarJacobianRangeType &phi ) const
+    {
+      assert( (baseFunction >= 0) && (baseFunction < numDifferentBaseFunctions()) );
+      storage_.jacobian( baseFunction, x, phi );
+    }
+
+    template< class QuadratureType >
+    inline void jacobianScalar( const int baseFunction,
+                                QuadratureType &quadrature,
+                                const int quadPoint,
+                                ScalarJacobianRangeType &phi ) const
+    {
+      jacobianScalar( baseFunction, quadrature[ quadPoint ], phi );
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
+    template< class PointType >
+    inline void jacobian ( const int baseFunction,
+                           const PointType &x, 
+                           JacobianRangeType &phi ) const
+    {
+      ScalarJacobianRangeType tmp;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+      jacobianScalar( scalarBaseFunction, x, tmp );
+
+      phi = 0;
+      phi[ util_.component( baseFunction )] = tmp[ 0 ];
+    }
+    
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
+    template< class PointType >
     inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const QuadratureType &quadrature,
-                                           const int quadPoint,
+                                           const PointType &x,
                                            const RangeType &psi ) const
     {
       ScalarRangeType phi;
       const int scalarBaseFunction = util_.containedDof( baseFunction );
 
-      FieldVector< deriType, 0 > diffVar;
-      storage_.evaluate
-        ( scalarBaseFunction, diffVar, quadrature, quadPoint, phi );
+      evaluateScalar( scalarBaseFunction, x, phi );
       return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
     }
-     
-    template <class Entity>
-    inline
-    DofType evaluateGradientSingle(const int baseFunct,
-                                   const Entity& en,
-                                   const DomainType& xLocal,
-                                   const JacobianRangeType& factor) const;
     
-    template <class Entity, class QuadratureType>
-    inline
-    DofType evaluateGradientSingle(const int baseFunct,
-                                   const Entity& en,
-                                   const QuadratureType& quad, int quadPoint,
-                                   const JacobianRangeType& factor) const;
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
+    template< class EntityType, class PointType >
+    inline RangeFieldType evaluateGradientSingle( const int baseFunction,
+                                                  const EntityType &entity,
+                                                  const PointType &x,
+                                                  const JacobianRangeType &psi ) const
+    {
+      typedef typename EntityType :: Geometry GeometryType;
+      typedef FieldMatrix< typename GeometryType :: ctype,
+                           GeometryType :: mydimension,
+                           GeometryType :: mydimension >
+        GeometryJacobianType;
 
-  private:
-    inline VectorialBaseFunctionSet ( const VectorialBaseFunctionSet & );
+      const GeometryType &geometry = entity.geometry();
+      const GeometryJacobianType &jacobianInverseTransposed
+        = geometry.jacobianInverseTransposed( coordinate( x ) );
       
-    StorageType storage_;
-    DofConversionUtility<PointBased> util_;
-
-    mutable FieldVector<int, 0> diffVar0_;
-    mutable FieldVector<int, 1> diffVar1_;
-    mutable ScalarRangeType tmp_;
-    mutable ScalarJacobianRangeType jTmp_;
+      ScalarJacobianRangeType gradPhi;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+      jacobianScalar( scalarBaseFunction, x, gradPhi );
+    
+      DomainType gradScaled( 0 );
+      jacobianInverseTransposed.umv( gradPhi[ 0 ], gradScaled );
+      return gradScaled * psi[ util_.component( baseFunction ) ];
+    }
   };
 
   /** \} */
 
 } // end namespace Dune
 
-#include "basefunctionsets.cc"
 #endif

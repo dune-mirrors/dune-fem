@@ -383,6 +383,16 @@ namespace Dune
     using BaseType :: asImp;
 
   public:
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    template< int diffOrd, class PointType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< deriType, diffOrd > &diffVariable,
+                           const PointType &x,
+                           RangeType &phi ) const
+    {
+      asImp().evaluate( baseFunction, diffVariable, coordinate( x ), phi );
+    }
+    
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
     template< int diffOrd, class QuadratureType >
     inline void evaluate ( const int baseFunction,
@@ -391,19 +401,9 @@ namespace Dune
                            const int quadPoint,
                            RangeType &phi ) const
     {
-      asImp().evaluate( baseFunction, diffVariable, quadrature.point( quadPoint ), phi );
+      asImp().evaluate( baseFunction, diffVariable, quadrature[ quadPoint ], phi );
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
-    template< int diffOrd, class QuadratureType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
-                           const QuadraturePointWrapper< QuadratureType > &x,
-                           RangeType &phi ) const
-    {
-      asImp().evaluate( baseFunction, diffVariable, x.quadrature(), x.point(), phi );
-    }
-
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
     inline void evaluate ( const int baseFunction,
