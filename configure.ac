@@ -20,6 +20,17 @@ DUNE_CHECK_OPTIONAL([dune-istl],[istl/allocator.hh])
 # check dennis package 
 DUNE_PATH_PARDG
 
+AC_ARG_ENABLE(
+  compatibility,
+  AC_HELP_STRING([--disable-compatibility],
+                 [don't try to be compatible with older interface versions]))
+if test x$enable_compatibility == xno ; then
+  AC_DEFINE(DUNE_FEM_COMPATIBILITY,0,[Shall dune-fem try to be compatible with older interface versions?])
+else
+  AC_DEFINE(DUNE_FEM_COMPATIBILITY,1,[Shall dune-fem try to be compatible with older interface versions?])
+fi
+
+
 DUNE_SUMMARY_ALL
 
 if test x$HAVE_DUNE_COMMON != x1 ; then
