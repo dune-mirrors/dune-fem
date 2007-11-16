@@ -45,62 +45,6 @@ namespace Dune
     }
   }
   
-  //- class SubBaseFunctionSet
-  template< class CombinedSpaceImp >
-  template< int diffOrd >
-  inline
-  void SubBaseFunctionSet< CombinedSpaceImp >
-    :: evaluate ( const int baseFunction,
-                  const FieldVector< deriType, diffOrd > &diffVariable,
-                  const DomainType &x,
-                  RangeType &phi ) const
-  {
-    // Assumption: dimRange == 1
-    bSet_.evaluate( baseFunction, diffVariable, x, tmp_ );
-    phi[ 0 ] = tmp_[ component_ ];
-  }
-
-  template< class CombinedSpaceImp >
-  inline
-  void SubBaseFunctionSet< CombinedSpaceImp >
-    :: evaluate ( const int baseFunction,
-                  const DomainType &x,
-                  RangeType &phi ) const
-  {
-    // Assumption: dimRange == 1
-    bSet_.evaluate( baseFunction, x, tmp_ );
-    phi[ 0 ] = tmp_[ component_ ];
-  }
-  
-  // evaluate base function at quadrature point
-  template< class CombinedSpaceImp >
-  template< int diffOrd, class QuadratureType >
-  inline
-  void SubBaseFunctionSet< CombinedSpaceImp >
-    :: evaluate ( const int baseFunction,
-                  const FieldVector< deriType, diffOrd > &diffVariable,
-                  const QuadratureType &quadrature,
-                  const int quadPoint,
-                  RangeType &phi ) const
-  {
-    // Assumption: dimRange == 1
-    bSet_.evaluate(baseFunction, diffVariable, quadrature, quadPoint, tmp_ );
-    phi[ 0 ] = tmp_[ component_ ];
-  }
-
-  template< class CombinedSpaceImp >
-  template< class QuadratureType >
-  inline
-  void SubBaseFunctionSet< CombinedSpaceImp >
-    :: evaluate( const int baseFunction,
-                 const QuadratureType &quadrature,
-                 const int quadPoint,
-                 RangeType &phi ) const
-  {
-    bSet_.evaluate( baseFunction, quadrature, quadPoint, tmp_ );
-    phi[ 0 ] = tmp_[ component_ ];
-  }
-  
   //- class SubMapper
   template <class CombinedSpaceImp>
   inline

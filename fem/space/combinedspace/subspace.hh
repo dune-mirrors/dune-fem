@@ -162,80 +162,104 @@ namespace Dune {
     mutable BaseFunctionMapType baseSetMap_; 
   };
 
+
+
   // Idea: wrap contained base function set, since this is exactly what you 
   // need here (except for when you go for ranges of subfunctions...)
   template< class CombinedSpaceImp >
   class SubBaseFunctionSet
-  : public BaseFunctionSetDefault<SubSpaceTraits<CombinedSpaceImp> >
+  : public BaseFunctionSetDefault< SubSpaceTraits< CombinedSpaceImp > >
   {
   public:
-    //- Typedefs and enums
+    //! type of the associated CombinedSpace
     typedef CombinedSpaceImp CombinedSpaceType;
     
-    typedef SubBaseFunctionSet<CombinedSpaceType> ThisType;
-    typedef SubSpaceTraits<CombinedSpaceType> Traits;
-
-    typedef typename Traits::DiscreteFunctionSpaceType 
-    DiscreteFunctionSpaceType;
-    typedef typename Traits::RangeType RangeType;
-    typedef typename Traits::DomainType DomainType;
-    typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename Traits::CombinedBaseFunctionSetType CombinedBaseFunctionSetType;
-    typedef typename Traits::CombinedRangeType CombinedRangeType;
- 
-    enum { CombinedDimRange = Traits::CombinedDimRange };
-
-  public:
-    //- Public methods
-    SubBaseFunctionSet(const CombinedBaseFunctionSetType bSet, 
-                       int component) :
-      bSet_(bSet),
-      component_(component),
-      tmp_(0.0)
-    {}
-
-
-    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
-    inline int numBaseFunctions() const
-    {
-      assert(bSet_.numBaseFunctions()%CombinedDimRange == 0);
-      return bSet_.numBaseFunctions()/CombinedDimRange;
-    }
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const */
-    template< int diffOrd >
-    void evaluate ( const int baseFunction,
-                    const FieldVector< deriType, diffOrd > &diffVariable,
-                    const DomainType &x,
-                    RangeType &phi ) const;
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const DomainType &x,RangeType &phi) const */
-    void evaluate ( const int baseFunction,
-                    const DomainType &x,
-                    RangeType &phi ) const;
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
-    template< int diffOrd, class QuadratureType >
-    void evaluate ( const int baseFunction,
-                    const FieldVector< deriType, diffOrd > &diffVariable,
-                    const QuadratureType &quadrature,
-                    const int quadPoint,
-                    RangeType &phi ) const;
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
-    template< class QuadratureType >
-    void evaluate( const int baseFunction,
-                   const QuadratureType &quadrature,
-                   const int quadPoint,
-                   RangeType &phi ) const;
+    //! type of the traits
+    typedef SubSpaceTraits< CombinedSpaceType > Traits;
 
   private:
-    //- Data members
+    typedef SubBaseFunctionSet< CombinedSpaceType > ThisType;
+    typedef BaseFunctionSetDefault< Traits > BaseType;
+
+  public:
+    typedef typename Traits :: DiscreteFunctionSpaceType 
+      DiscreteFunctionSpaceType;
+
+    typedef typename Traits :: DomainType DomainType;
+    typedef typename Traits :: RangeType RangeType;
+    typedef typename Traits :: JacobianRangeType JacobianRangeType;
+
+  private:
+    typedef typename Traits :: CombinedRangeType CombinedRangeType;
+    typedef typename Traits :: CombinedJacobianRangeType
+      CombinedJacobianRangeType;
+    enum { CombinedDimRange = Traits::CombinedDimRange };
+
+    typedef typename Traits :: CombinedBaseFunctionSetType
+      CombinedBaseFunctionSetType;
+
+  protected:
     const CombinedBaseFunctionSetType bSet_;
     const int component_;
     
-    mutable CombinedRangeType tmp_;
+  public:
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+
+  public:
+    SubBaseFunctionSet( const CombinedBaseFunctionSetType bSet,
+                        int component)
+    : bSet_( bSet ),
+      component_( component )
+    {
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
+    inline int numBaseFunctions () const
+    {
+      assert( bSet_.numBaseFunctions() % CombinedDimRange == 0 );
+      return bSet_.numBaseFunctions() / CombinedDimRange;
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    template< int diffOrd, class PointType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< deriType, diffOrd > &diffVariable,
+                           const PointType &x,
+                           RangeType &phi ) const
+    {
+      // Assumption: dimRange == 1
+      CombinedRangeType tmp;
+      bSet_.evaluate( baseFunction, diffVariable, x, tmp );
+      phi[ 0 ] = tmp[ component_ ];
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
+    template< class PointType >
+    void evaluate ( const int baseFunction,
+                    const PointType &x,
+                    RangeType &phi ) const
+    {
+      // Assumption: dimRange == 1
+      CombinedRangeType tmp;
+      bSet_.evaluate( baseFunction, x, tmp );
+      phi[ 0 ] = tmp[ component_ ];
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
+    template< class PointType >
+    void jacobian ( const int baseFunction,
+                    const PointType &x,
+                    JacobianRangeType &phi ) const
+    {
+      // Assumption: dimRange == 1
+      CombinedJacobianRangeType tmp;
+      bSet_.jacobian( baseFunction, x, tmp );
+      phi[ 0 ] = tmp[ component_ ];
+    }
   };
+
+
 
   template <class CombinedSpaceImp>
   class SubMapper : 
