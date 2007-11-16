@@ -227,6 +227,7 @@ namespace Dune
       storage_.evaluate( baseFunction, diffVariable, x, phi );
     }
     
+#if DUNE_FEM_COMPATIBILITY
     template< int diffOrd, class QuadratureType >
     inline void evaluateScalar ( const int baseFunction,
                                  const FieldVector< int, diffOrd > &diffVariable,
@@ -236,6 +237,7 @@ namespace Dune
     {
       evaluateScalar( baseFunction, diffVariable, quadrature[ quadPoint ], phi );
     }
+#endif
  
     template< class PointType >
     inline void evaluateScalar ( const int baseFunction,
@@ -246,6 +248,7 @@ namespace Dune
       evaluateScalar( baseFunction, diffVar, x, phi );
     }
     
+#if DUNE_FEM_COMPATIBILITY
     template< class QuadratureType >
     inline void evaluateScalar ( const int baseFunction,
                                  const QuadratureType &quadrature,
@@ -254,6 +257,7 @@ namespace Dune
     {
       evaluateScalar( baseFunction, quadrature[ quadPoint ], phi );
     }
+#endif
   
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVar,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
@@ -279,6 +283,7 @@ namespace Dune
       storage_.jacobian( baseFunction, x, phi );
     }
 
+#if DUNE_FEM_COMPATIBILITY
     template< class QuadratureType >
     inline void jacobianScalar( const int baseFunction,
                                 QuadratureType &quadrature,
@@ -287,6 +292,7 @@ namespace Dune
     {
       jacobianScalar( baseFunction, quadrature[ quadPoint ], phi );
     }
+#endif
 
     /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
     template< class PointType >
