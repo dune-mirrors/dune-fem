@@ -11,8 +11,11 @@
 #include <dune/fem/storage/arrayallocator.hh>
 #include <dune/fem/storage/array.hh>
 
-namespace Dune
-{
+/*! @addtogroup VectorClasses
+    @{
+*/
+
+namespace Dune {
 
   template< class VectorTraits >
   struct VectorInterfaceArrayTraits
@@ -842,15 +845,18 @@ namespace Dune
    *         produce a long vector.
 
    *  This class can be used together with Dune::CombinedInterface
-   *  to generate a large vector by combining smaller ones. i
+   *  to generate a large vector by combining smaller ones. 
+   *  The class defines the Dune::VectorInterface
    *
    *  Example of usage:
    *  \code
-      StaticVector<double,10> v1;
-      DynamicVector<double> v2(2);
-      FieldVectorAdapter<FieldVector<double,5> > v3;
-      typedef Dune::CombineInterface<PairOfVectors,StaticVector<double,10>&,
-            DynamicVector<double>&, FieldVectorAdapter<FieldVector<double,5> >&
+      Dune::StaticVector<double,10> v1;
+      Dune::DynamicVector<double> v2(2);
+      Dune::FieldVectorWrapper<Dune::FieldVector<double,5> > v3;
+      typedef Dune::CombineInterface<PairOfVectors,
+            Dune::StaticVector<double,10>&,
+            Dune::DynamicVector<double>&, 
+            Dune::FieldVectorWrapper<Dune::FieldVector<double,5> >&
             VectorOfVectorType;
       VectorOfVectorType v(v1,v2,v3);
    *  \endcode
@@ -909,10 +915,10 @@ namespace Dune
       return this->first().size() + this->second().size();
     }
   };
-
-
 }
 
 #include "vector_inline.hh"
+
+//! @}
 
 #endif
