@@ -121,7 +121,7 @@ namespace Dune
 
           if (n==0) {
             f.evaluate(geo.global(quad.point(qP)),time,ret);
-            lf.evaluate(quad,qP,phi);
+            lf.evaluate(quad[qP],phi);
             for(int k=0; k<dimRange; ++k) 
             {
               error[k] += det * SQR(ret[k] - phi[k]);
@@ -130,7 +130,7 @@ namespace Dune
           else if (n==1) 
           {
             f.evaluate(geo.global(quad.point(qP)),time,ret);
-            lf.evaluate(quad,qP,phi);
+            lf.evaluate(quad[qP],phi);
             for(int k=0; k<dimRange; ++k) {
               error[k] += det * SQR(ret[k] - phi[k]);
             }

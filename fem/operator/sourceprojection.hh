@@ -114,7 +114,7 @@ namespace Dune
         for( unsigned int i = 0; i < numDofs; ++i )
         {
           RangeFunctionRangeType psi;
-          baseFunctionSet.evaluate( i, quadrature, pt, psi );
+          baseFunctionSet.evaluate( i, quadrature[ pt ], psi );
 
           // update destination function
           w[ i ] += weight * (phi * psi);

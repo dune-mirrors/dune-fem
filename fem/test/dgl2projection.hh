@@ -68,7 +68,7 @@ namespace Dune
           for( unsigned int i = 0; i < numDofs; ++i )
           {
             RangeType psi;
-            baseFunctionSet.evaluate( i, quadrature, qp, psi );
+            baseFunctionSet.evaluate( i, quadrature[ qp ], psi );
             localFunction[ i ] += weight * (phi * psi);
           }
         }
