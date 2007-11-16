@@ -17,6 +17,7 @@ operator_HEADERS = artificialdiffusion.hh \
 									 integrationoperator.hh \
 									 inverseoperators.hh \
 									 lagrangeinterpolation.hh \
+									 lagrangeinterpolation_inline.hh \
 									 matrixadapter.hh \
 									 minimizationoperator.hh \
 									 sourceprojection.hh

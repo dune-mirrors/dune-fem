@@ -52,45 +52,12 @@ namespace Dune
      *              interpolation
      */
     template< class FunctionType >
-    static void interpolateFunction ( const FunctionType &function,
-                                      DiscreteFunctionType &discreteFunction )
-    {
-      enum { hasLocalFunction = Conversion< FunctionType, HasLocalFunction > :: exists  };
-      
-      callInterpolateDiscreteFunction< FunctionType, hasLocalFunction >
-        :: call( function, discreteFunction );
-    }
+    inline static void interpolateFunction ( const FunctionType &function,
+                                             DiscreteFunctionType &discreteFunction );
 
   private:
     template< class FunctionType, bool hasLocalFunction >
     struct callInterpolateDiscreteFunction;
-
-    template< class FunctionType >
-    struct callInterpolateDiscreteFunction< FunctionType, true >
-    {
-      static void call( const FunctionType &function, 
-                        DiscreteFunctionType &discreteFunction )
-      {
-        interpolateDiscreteFunction( function, discreteFunction );
-      }
-    };
-
-    template< class FunctionType >
-    struct callInterpolateDiscreteFunction< FunctionType, false >
-    {
-      static void call( const FunctionType &function,
-                        DiscreteFunctionType &discreteFunction )
-      {
-        typedef DiscreteFunctionAdapter< FunctionType, GridPartType >
-          DiscreteFunctionAdapterType;
-
-        const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
-
-        DiscreteFunctionAdapterType dfAdapter( "function", function, dfSpace.gridPart() );
-
-        interpolateDiscreteFunction( dfAdapter, discreteFunction );
-      }
-    };
 
   protected:
     /** interpolate a discrete function into a Lagrange discrete function
@@ -105,38 +72,11 @@ namespace Dune
      *              interpolation
      */
     template< class FunctionType >
-    static void interpolateDiscreteFunction
-                ( const FunctionType &function,
-                  DiscreteFunctionType &discreteFunction )
-    {
-      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+    inline static void interpolateDiscreteFunction
+      ( const FunctionType &function,
+        DiscreteFunctionType &discreteFunction );
 
-      typedef typename FunctionType :: LocalFunctionType FunctionLocalFunctionType;
-
-      const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
-
-      //discreteFunction.clear();
-
-      IteratorType endit = dfSpace.end();
-      for( IteratorType it = dfSpace.begin(); it != endit; ++it )
-      {
-        const LagrangePointSetType &lagrangePointSet
-          = dfSpace.lagrangePointSet( *it );
-
-        FunctionLocalFunctionType f_local = function.localFunction( *it );
-        LocalFunctionType df_local = discreteFunction.localFunction( *it );
-        
-        const int numDofs = df_local.numDofs();
-        for( int i = 0; i < numDofs; ++i )
-        {
-          RangeType phi;
-          f_local.evaluate( lagrangePointSet, i, phi );
-          df_local[ i ] = phi[ 0 ];
-        }
-      }
-    }
-
-
+#if DUNE_FEM_COMPATIBILITY
   public:
     /** interpolate an entity-function into a Lagrange discrete function
      *
@@ -150,44 +90,14 @@ namespace Dune
      *              interpolation
      */
     template< class EntityFunctionType >
-    static void interpolateEntityFunction ( EntityFunctionType &function,
-                                            DiscreteFunctionType &discreteFunction ) DUNE_DEPRECATED;
+    inline static void interpolateEntityFunction
+      ( EntityFunctionType &function,
+        DiscreteFunctionType &discreteFunction ) DUNE_DEPRECATED;
+#endif
   };
 
-
- 
-  template< class DiscreteFunctionImp >
-  template< class EntityFunctionType >
-  void LagrangeInterpolation< DiscreteFunctionImp >
-    :: interpolateEntityFunction ( EntityFunctionType &function,
-                                   DiscreteFunctionType &discreteFunction )
-  {
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
-    const DiscreteFunctionSpaceType &functionSpace
-      = discreteFunction.space();
-
-    //discreteFunction.clear();
-
-    IteratorType endit = functionSpace.end();
-    for( IteratorType it = functionSpace.begin(); it != endit; ++it )
-    {
-      const LagrangePointSetType &lagrangePointSet
-        = functionSpace.lagrangePointSet( *it );
-
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
-      function.init( *it );
-      
-      const int numDofs = localFunction.numDofs();
-      for( int i = 0; i < numDofs; ++i )
-      {
-        RangeType phi;
-        function.evaluate( lagrangePointSet.point( i ), phi );
-        localFunction[ i ] = phi[ 0 ];
-      }
-    }
-  }
-  
 }
+
+#include "lagrangeinterpolation_inline.hh"
 
 #endif
