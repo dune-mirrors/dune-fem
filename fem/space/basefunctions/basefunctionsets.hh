@@ -93,8 +93,7 @@ namespace Dune
       return storage_.geometryType();
     }
  
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const
-     */ 
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */ 
     template< int diffOrd >
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
@@ -257,7 +256,7 @@ namespace Dune
     void jacobian(int baseFunct, QuadratureImp& quad, int quadPoint,
                   JacobianRangeType& gradPhi) const;
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     inline RangeFieldType evaluateSingle ( const int baseFunction,
                                            const DomainType &x,
                                            const RangeType &psi ) const

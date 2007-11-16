@@ -4,6 +4,8 @@
 //- local includes 
 #include <dune/fem/space/common/basefunctioninterface.hh>
 
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+
 #include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
@@ -22,17 +24,25 @@ namespace Dune
   /** \class BaseFunctionSetInterface
    *  \brief interface class for base function sets
    */  
-  template< class BaseFunctionSetTraits > 
-  class BaseFunctionSetInterface 
+  template< class TraitsImp > 
+  class BaseFunctionSetInterface
+  : public BartonNackmanInterface< BaseFunctionSetInterface< TraitsImp >,
+                                   typename TraitsImp :: BaseFunctionSetType >
   {
+  public:
+    //! type of the traits
+    typedef TraitsImp Traits;
+
+    //! type of base function set implementation (Barton-Nackman) 
+    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+
   private:
-    typedef BaseFunctionSetInterface< BaseFunctionSetTraits > ThisType;
+    typedef BaseFunctionSetInterface< Traits > ThisType;
+    typedef BartonNackmanInterface< ThisType, BaseFunctionSetType > BaseType;
     
   public:
     //! type of function space 
-    typedef typename BaseFunctionSetTraits::FunctionSpaceType FunctionSpaceType;
-    //! type of base function set implementation 
-    typedef typename BaseFunctionSetTraits::BaseFunctionSetType BaseFunctionSetType;
+    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
     //! type of domain vector, i.e. element of R^DimDomain 
     typedef typename FunctionSpaceType::DomainType DomainType;
     //! type of range vector, i.e. element of R^DimRange 
@@ -53,12 +63,10 @@ namespace Dune
     //! type of BaseFunctions 
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
 
-  public:
-    //! \brief empty constructor
-    inline BaseFunctionSetInterface ()
-    {
-    }
+  protected:
+    using BaseType :: asImp;
 
+  public:
     /** \brief number of base functions 
         \return number of base functions 
     */
@@ -90,10 +98,10 @@ namespace Dune
      *                             base function in
      *  \param[out]  phi           return value, i.e., value of the base function
      */
-    template< int diffOrd >
+    template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
-                           const DomainType &x,
+                           const PointType &x,
                            RangeType &phi ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
@@ -125,29 +133,6 @@ namespace Dune
         ( asImp().evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi ) );
     }
     
-    /** \brief evaluate a derivative of the base function in a quadrature point
-     *
-     *  Evaluates a partial derivative of the base function in a quadrature
-     *  point. If the derivative is of order 0, the base function itself is
-     *  evaluated.
-     *  
-     *  \param[in]   baseFunction  number of base function to evaluate
-     *  \param[in]   diffVariable  vector describing the partial derivative
-     *                             to evaluate
-     *  \param[in]   quadPoint     quadrature point to evaluate the base
-     *                             function in
-     *  \param[out]  phi           return value, i.e., value of the base function
-     */
-    template< int diffOrd, class QuadratureType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
-                           const QuadraturePointWrapper< QuadratureType > &quadPoint,
-                           RangeType &phi ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluate( baseFunction, diffVariable, quadPoint, phi ) );
-    }
-  
     /** \brief evaluate the base function
      *
      *  Evaluates the base function in a point (specified in local coordinates).
@@ -157,8 +142,9 @@ namespace Dune
      *                             base function in
      *  \param[out]  phi           return value, i.e., value of the base function
      */
+    template< class PointType >
     inline void evaluate ( const int baseFunction,
-                           const DomainType &x,
+                           const PointType &x,
                            RangeType &phi ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
@@ -185,25 +171,6 @@ namespace Dune
         ( asImp().evaluate ( baseFunction, quadrature, quadPoint, phi ) );
     }
     
-    /** \brief evaluate a derivative of the base function in a quadrature point
-     *
-     *  Evaluates the base function in a quadrature point.
-     *  
-     *  \param[in]   baseFunction  number of base function to evaluate
-     *  \param[in]   quadPoint     quadrature point to evaluate the base
-     *                             function in
-     *  \param[out]  phi           return value, i.e., value of the base
-     *                             function
-     */
-    template< class QuadratureType >
-    inline void evaluate ( const int baseFunction,
-                           const QuadraturePointWrapper< QuadratureType > &quadPoint,
-                           RangeType &phi ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluate ( baseFunction, quadPoint, phi ) );
-    }
-   
     /** \brief evaluate the Jacobian of the base function
      *
      *  Evaluates the Jacobian of base function in a point (specified in local
@@ -225,8 +192,9 @@ namespace Dune
      *                             Jacobian in
      *  \param[out]  phi           return value, i.e., value of the Jacobian
      */
+    template< class PointType >
     inline void jacobian ( const int baseFunction,
-                           const DomainType &x,
+                           const PointType &x,
                            JacobianRangeType &phi ) const 
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
@@ -265,34 +233,6 @@ namespace Dune
         ( asImp().jacobian( baseFunction, quadrature, quadPoint, phi ) );
     }
     
-    /** \brief evaluate the Jacobian of the base function
-     *
-     *  Evaluates the Jacobian of base function in a quadrature point.
-     *
-     *  \note The Jacobian is calculated with respect to the reference element.
-     *        To obtain the jacobian with respect to a real entity, it must be
-     *        multiplied (from the left) by
-     *  \code
-     *  entity.geometry().jacobianInverseTransposed()
-     *  \endcode
-     *
-     *  \note While the Jacobian of base functions is returned with respect to
-     *        the reference element, local functions return the Jacobian with
-     *        respect to the real entity.
-     *  
-     *  \param[in]   baseFunction  number of base function to evaluate
-     *  \param[in]   quadPoint     quadrature point to evaluate the Jacobian in
-     *  \param[out]  phi           return value, i.e., value of the Jacobian
-     */
-    template< class QuadratureType >
-    inline void jacobian ( const int baseFunction, 
-                           const QuadraturePointWrapper< QuadratureType > &quadPoint,
-                           JacobianRangeType &phi ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().jacobian( baseFunction, quadPoint, phi ) );
-    }
-
     /** \brief evaluate the base function and multiply the result by a vector
      *
      *  It is quite common, that the base functions have the special structure
@@ -316,8 +256,9 @@ namespace Dune
      *  \returns the scalar product between the value of the base function and
      *           the specified vector
      */
+    template< class PointType >
     RangeFieldType evaluateSingle ( const int baseFunction,
-                                    const DomainType &x,
+                                    const PointType &x,
                                     const RangeType &psi ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION
@@ -360,39 +301,6 @@ namespace Dune
       return asImp().evaluateSingle( baseFunction, quadrature, quadPoint, psi );
     }
 
-    /** \brief evaluate the base function and multiply the result by a vector
-     *
-     *  It is quite common, that the base functions have the special structure
-     *  \f{displaymath}
-     *  \varphi( x ) = \sum_{k=1}^n \omega_k( x ) e_k,
-     *  \f}
-     *  where \f$e_k\f$ denotes the k-th unit vector. In this case, scalar
-     *  products by \f$\psi\f$ can be evaluated very efficiently, since
-     *  \f{displaymath}
-     *  \varphi( x ) \cdot \psi = \sum_{k=1}^n \omega_k( x ) e_k \cdot \psi
-     *                          = \sum_{k=1}^n \omega_k( x ) \psi_k.
-     *  \f}
-     *  This function provides the possibility to numerically use this
-     *  information.
-     *  
-     *  \param[in]  baseFunction  number of the base function to evaluate
-     *  \param[in]  quadPoint     quadrature point to evaluate the function in
-     *  \param[in]  psi           vector to multiply the function value with
-     *
-     *  \returns the scalar product between the value of the base function and
-     *           the specified vector
-     */
-    template< class QuadratureType >
-    inline RangeFieldType evaluateSingle
-      ( const int baseFunction,
-        const QuadraturePointWrapper< QuadratureType > &quadPoint,
-        const RangeType &psi ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluateSingle( baseFunction, quadPoint, psi ) );
-      return asImp().evaluateSingle( baseFunction, quadPoint, psi );
-    }
-
     /** \brief evaluate gradient of basefunction on given entity (uses
         jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
         \param[in]  baseFunction  number of base functions to evaluate jacobian  
@@ -401,10 +309,10 @@ namespace Dune
         \param[in]  psi           factor to multiply with 
         \return return scalar product between gradient of base function and factor 
     */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline RangeFieldType evaluateGradientSingle( const int baseFunction,
                                                   const EntityType &entity,
-                                                  const DomainType &x,
+                                                  const PointType &x,
                                                   const JacobianRangeType &psi ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION
@@ -433,40 +341,6 @@ namespace Dune
       return asImp().evaluateGradientSingle
         ( baseFunction, entity, quadrature, quadPoint, psi );
     }
-
-    /** \brief evaluate gradient of basefunction on given entity (uses
-        jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-        \param[in]  baseFunction  number of base functions to evaluate jacobian  
-        \param[in]  entity        entity gradient of base function is evaluated on 
-        \param[in]  quadPoint     quadrature point to evaluate the gradient in
-        \param[in]  psi           factor to multiply with 
-        \return return scalar product between gradient of base function and factor 
-    */
-    template< class EntityType, class QuadratureType >
-    inline RangeFieldType evaluateGradientSingle
-      ( const int baseFunction,
-        const EntityType &entity,
-        const QuadraturePointWrapper< QuadratureType > &quadPoint,
-        const JacobianRangeType &psi ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluateGradientSingle( baseFunction, entity, quadPoint, psi ) );
-      return asImp().evaluateGradientSingle
-        ( baseFunction, entity, quadPoint, psi );
-    }
-
-  protected:
-    // Barton-Nackman trick 
-    inline const BaseFunctionSetType &asImp() const
-    {
-      return static_cast< const BaseFunctionSetType & >( *this );
-    }
-
-    // Barton-Nackman trick 
-    inline BaseFunctionSetType &asImp()
-    {
-      return static_cast< BaseFunctionSetType & >( *this );
-    }
   };
 
 
@@ -476,20 +350,22 @@ namespace Dune
   //-  --BaseFunctionSetDefault
   //-
   //------------------------------------------------------------------------
-  /** \brief The BaseFunctionSetDefault implements some methods of the interface BaseFunctionSetInterface
-      using the interface of the BaseFunctionSetSlimInterface.
-  */
-  template< class BaseFunctionSetTraits >
+  /** \brief default implementation of the BaseFunctionSetInterface */
+  template< class TraitsImp >
   class BaseFunctionSetDefault
-  : public BaseFunctionSetInterface< BaseFunctionSetTraits >
+  : public BaseFunctionSetInterface< TraitsImp >
   {
+  public:
+    //! type of the traits
+    typedef TraitsImp Traits;
+
   private:
-    typedef BaseFunctionSetDefault< BaseFunctionSetTraits > ThisType;
-    typedef BaseFunctionSetInterface< BaseFunctionSetTraits > BaseType;
+    typedef BaseFunctionSetDefault< Traits > ThisType;
+    typedef BaseFunctionSetInterface< Traits > BaseType;
 
   public:
-    typedef typename BaseFunctionSetTraits::BaseFunctionSetType BaseFunctionSetType;
-    typedef typename BaseFunctionSetTraits::FunctionSpaceType FunctionSpaceType;
+    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     //! number of rows of jacobian range type 
@@ -507,16 +383,6 @@ namespace Dune
     using BaseType :: asImp;
 
   public:
-    //! set the default diffVar Types 
-    inline BaseFunctionSetDefault ()
-    : BaseType()
-    {
-#if 0
-      for( int i = 0; i < dimCol; ++i )
-        jacobianDiffVar_[i] = i;
-#endif
-    }
-   
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
     template< int diffOrd, class QuadratureType >
     inline void evaluate ( const int baseFunction,
@@ -528,18 +394,17 @@ namespace Dune
       asImp().evaluate( baseFunction, diffVariable, quadrature.point( quadPoint ), phi );
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadraturePointWrapper<QuadratureType> &quadPoint,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class QuadratureType >
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
-                           const QuadraturePointWrapper< QuadratureType > &quadPoint,
+                           const QuadraturePointWrapper< QuadratureType > &x,
                            RangeType &phi ) const
     {
-      asImp().evaluate( baseFunction, diffVariable,
-                        quadPoint.quadrature(), quadPoint.point(), phi );
+      asImp().evaluate( baseFunction, diffVariable, x.quadrature(), x.point(), phi );
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const DomainType &x,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
     inline void evaluate ( const int baseFunction,
                            const PointType &x,
@@ -556,11 +421,14 @@ namespace Dune
                            const int quadPoint,
                            RangeType &phi ) const
     {
+      asImp().evaluate( baseFunction, quadrature[ quadPoint ], phi );
+#if 0
       FieldVector< deriType, 0 > diffVar;
       asImp().evaluate( baseFunction, diffVar, quadrature, quadPoint, phi );
+#endif
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const DomainType &x, JacobianRangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x, JacobianRangeType &phi) const */
     template< class PointType >
     inline void jacobian ( const int baseFunction,
                            const PointType &x,
@@ -584,6 +452,8 @@ namespace Dune
                            const int quadPoint,
                            JacobianRangeType &phi ) const
     {
+      asImp().jacobian( baseFunction, quadrature[ quadPoint ], phi );
+#if 0
       FieldVector< deriType, 1 > diffVar;
       deriType &i = diffVar[ 0 ];
       for( i = 0; i < dimCol; ++i )
@@ -593,16 +463,17 @@ namespace Dune
         for( int j = 0; j < dimRow; ++j )
           phi[ j ][ i ] = tmp[ j ];
       }
+#endif
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
     inline RangeFieldType evaluateSingle ( const int baseFunction,
                                            const PointType &x,
                                            const RangeType &psi ) const
     {
       RangeType phi;
-      evaluate( baseFunction, x, phi );
+      asImp().evaluate( baseFunction, x, phi );
       return phi * psi;
     }
 
@@ -613,12 +484,15 @@ namespace Dune
                                            const int quadPoint,
                                            const RangeType &psi ) const
     {
+      return asImp().evaluate( baseFunction, quadrature[ quadPoint ], psi );
+#if 0
       RangeType phi;
-      evaluate( baseFunction, quadrature, quadPoint, phi );
+      asImp().evaluate( baseFunction, quadrature, quadPoint, phi );
       return phi * psi;
+#endif
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const DomainType &x,const JacobianRangeType &psi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
     template< class EntityType, class PointType >
     inline RangeFieldType evaluateGradientSingle( const int baseFunction,
                                                   const EntityType &entity,
@@ -636,7 +510,7 @@ namespace Dune
         = geometry.jacobianInverseTransposed( coordinate( x ) );
  
       JacobianRangeType gradPhi;
-      jacobian( baseFunction, x, gradPhi );
+      asImp().jacobian( baseFunction, x, gradPhi );
 
       RangeFieldType result = 0;
       for( int i = 0; i < FunctionSpaceType :: DimRange; ++i )
@@ -656,6 +530,9 @@ namespace Dune
                                                    const int quadPoint,
                                                    const JacobianRangeType &psi ) const
     {
+      return asImp().evaluateGradientSingle
+        ( baseFunction, entity, quadrature[ quadPoint ], psi );
+#if 0
       typedef typename EntityType :: Geometry GeometryType;
       typedef FieldMatrix< typename GeometryType :: ctype,
                            GeometryType :: mydimension,
@@ -667,7 +544,7 @@ namespace Dune
         = geometry.jacobianInverseTransposed( quadrature.point( quadPoint ) );
       
       JacobianRangeType gradPhi;
-      jacobian( baseFunction, quadrature, quadPoint, gradPhi );
+      asImp().jacobian( baseFunction, quadrature, quadPoint, gradPhi );
 
       RangeFieldType ret = 0;
       for( int i = 0; i < FunctionSpaceType :: DimRange; ++i )
@@ -677,8 +554,8 @@ namespace Dune
         ret += gradScaled * psi[ i ];
       }
       return ret;
+#endif
     }
-
   };
 
   /** \} */

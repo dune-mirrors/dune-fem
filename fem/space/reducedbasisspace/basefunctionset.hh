@@ -12,11 +12,6 @@ namespace Dune
 
 
   
-  /*! \class  ReducedBasisBaseFunctionSetTraits 
-   *  \brief The  ReducedBasisBaseFunctionSetTraits class provides  typedefs
-   *
-   *  many typedefs
-   */
   template< class BaseFunctionImp >
   class ReducedBasisBaseFunctionSetTraits
   {
@@ -38,11 +33,11 @@ namespace Dune
 
 
 
-  /*! \class ReducedBasisBaseFunctionSet 
+  /** \class ReducedBasisBaseFunctionSet 
    *  \brief The ReducedBasisBaseFunctionSet class provides  
    *
-   *  this class is needed to build the space and provides the functionality of the space
-   *  for example the jacobian method is implemented here 
+   *  This class is needed to build the space and provides the functionality of
+   *  the space for example the jacobian method is implemented here 
    */
   template< class BaseFunctionImp >
   class ReducedBasisBaseFunctionSet
@@ -84,10 +79,10 @@ namespace Dune
     enum { DimRange = FunctionSpaceType :: DimRange };
 
     typedef DynamicArray< BaseFunctionType* > BaseFunctionListType;
-    //typedef std :: vector< BaseFunctionType* > BaseFunctionListType;
 
   private:
-    typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
+    typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity
+      EntityCodim0Type;
 
   protected:
     const BaseFunctionListType *baseFunctionList_;
@@ -96,20 +91,38 @@ namespace Dune
     const EntityCodim0Type *entity_;
 
   public:
-    //! constructor
+    /** \brief default constructor */
     inline ReducedBasisBaseFunctionSet ()
     : baseFunctionList_( NULL ),
       entity_( NULL )
     {
     }
    
-    //! constructor with an argument as TODO
-    inline explicit ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList )
+    /** constructor
+     *
+     *  This constructor initializes the base function set, but does not bind
+     *  it to an entity.
+     *
+     *  \param[in]  baseFunctionList  array containing the discrete functions
+     *                                to be used as base functions
+     */
+    inline explicit ReducedBasisBaseFunctionSet
+      ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( &baseFunctionList ),
       entity_( NULL )
     {
     }
 
+    /** constructor
+     *
+     *  This constructor initializes the base function set and binds it to an
+     *  entity.
+     *
+     *  \param[in]  baseFunctionList  array containing the discrete functions
+     *                                to be used as base functions
+     *  \param[in]  entity            entity (of codim 0) to bind the base
+     *                                function set to
+     */
     inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList,
                                          const EntityCodim0Type &entity )
     : baseFunctionList_( &baseFunctionList ),
@@ -131,20 +144,20 @@ namespace Dune
       return *this;
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const */
-    template< int diffOrd >
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
-                           const DomainType &x,
+                           const PointType &x,
                            RangeType &phi ) const
     {
-      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
+      assert( baseFunctionList_ != NULL );
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
       typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
       const LocalBaseFunctionType localBaseFunction
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
       const LocalBaseFunctionSetType &localBaseFunctionSet
         = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
@@ -166,13 +179,13 @@ namespace Dune
                            const int quadPoint,
                            RangeType &phi ) const
     {
-      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
+      assert( baseFunctionList_ != NULL );
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
       typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
       const LocalBaseFunctionType localBaseFunction 
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
       const LocalBaseFunctionSetType &localBaseFunctionSet
         = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
@@ -186,18 +199,19 @@ namespace Dune
       }
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
+    template< class PointType >
     inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const DomainType &x,
+                                           const PointType &x,
                                            RangeType &psi ) const
     {
-      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
+      assert( baseFunctionList_ != NULL );
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
       typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
 
       const LocalBaseFunctionType localBaseFunction
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
       const LocalBaseFunctionSetType &localBaseFunctionSet
         = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
@@ -219,13 +233,14 @@ namespace Dune
                                   const int quadPoint,
                                   RangeType &psi ) const
     {
-      assert( (baseFunctionList_ != NULL) && (entity_ != NULL) );
+      assert( baseFunctionList_ != NULL );
       assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
-      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
+      typedef typename LocalBaseFunctionType :: BaseFunctionSetType
+        LocalBaseFunctionSetType;
 
       const LocalBaseFunctionType localBaseFunction 
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( *entity_ );
+        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
       const LocalBaseFunctionSetType &localBaseFunctionSet
         = localBaseFunction.baseFunctionSet();
       const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
@@ -240,10 +255,16 @@ namespace Dune
       return ret;
     }
 
-    inline GeometryType geometryType () const
+    /** \brief obtain the entity, this base function set belongs to */
+    inline const EntityCodim0Type &entity () const
     {
       assert( entity_ != NULL );
-      return entity_->geometry().type();
+      return *entity_;
+    }
+
+    inline GeometryType geometryType () const
+    {
+      return entity().geometry().type();
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */

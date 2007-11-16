@@ -96,7 +96,7 @@ namespace Dune
       return baseFunctionSet().geometryType();
     }
    
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const DomainType &x,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
@@ -117,7 +117,7 @@ namespace Dune
       baseFunctionSet().evaluate( baseFunction, diffVariable, quadrature, quadPoint, phi );
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const DomainType &x,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
     inline void evaluate ( const int baseFunction,
                            const PointType &x,
@@ -136,7 +136,7 @@ namespace Dune
       baseFunctionSet().evaluate( baseFunction, quadrature, quadPoint, phi );
     }
     
-    /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const DomainType &x,JacobianRangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
     template< class PointType >
     inline void jacobian( const int baseFunction,
                           const PointType &x,
@@ -155,7 +155,7 @@ namespace Dune
       baseFunctionSet().jacobian( baseFunction, quadrature, quadPoint, phi );
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const DomainType &x,const RangeType &psi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
     inline RangeFieldType evaluateSingle ( const int baseFunction,
                                            const PointType &x,
@@ -175,7 +175,7 @@ namespace Dune
         ( baseFunction, quadrature, quadPoint, psi );
     }
     
-     /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const DomainType &x,const JacobianRangeType &psi) const */
+     /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
     template< class EntityType, class PointType >
     inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
                                                    const EntityType &entity,
@@ -207,8 +207,7 @@ namespace Dune
 
 
 
-  /** \class VectorialBaseFunctionSetProxy
-   */
+  /** \class VectorialBaseFunctionSetProxy */
   template< class BaseFunctionSetImp > 
   class VectorialBaseFunctionProxy
   : public SimpleBaseFunctionProxy< BaseFunctionSetImp >
@@ -252,35 +251,37 @@ namespace Dune
     {
     }
 
-    //! Constructor creating empty local function 
-    inline VectorialBaseFunctionProxy( const VectorialBaseFunctionProxy &org )
-    : BaseType( org )
+    /** \brief copy constructor
+     *
+     *  \param[in]  other  VectorialBaseFunctionProxy to copy
+     */
+    inline VectorialBaseFunctionProxy ( const ThisType &other )
+    : BaseType( other )
     {
     }
 
-    //! asignment operator 
-    inline VectorialBaseFunctionProxy& operator = (const VectorialBaseFunctionProxy& org) 
+    /** \brief assign another VectorialBaseFunctionProxy to this one
+     *
+     *  \param[in]  other  VectorialBaseFunctionProxy to copy
+     */
+    inline ThisType &operator= ( const ThisType &other ) 
     {
-      BaseType :: operator = (org);
+      BaseType :: operator= ( other );
       return *this;
     }   
 
     //! number of different base functions
-    inline
-    int numDifferentBaseFunctions() const 
+    inline int numDifferentBaseFunctions () const 
     {
-      assert( this->baseSet_ );
-      return this->baseSet_->numDifferentBaseFunctions(); 
+      return baseFunctionSet().numDifferentBaseFunctions(); 
     }
 
-    template <class QuadratureType>
-    inline
-    void evaluateScalar(const int baseFunct,
+    template< class QuadratureType >
+    inline void evaluateScalar( const int baseFunct,
       const QuadratureType & quad, const int p,
       ScalarRangeType& phi) const
     {
-      assert( this->baseSet_ );
-      this->baseSet_->evaluateScalar(baseFunct,quad,p,phi);
+      baseFunctionSet().evaluateScalar(baseFunct,quad,p,phi);
     }
 
     template< class PointType >
@@ -306,8 +307,7 @@ namespace Dune
                         const int quadPoint,
                         ScalarJacobianRangeType& gradPhi) const
     {
-      assert( this->baseSet_ );
-      this->baseSet_->jacobianScalar(baseFunct,quad,quadPoint,gradPhi);
+      baseFunctionSet().jacobianScalar(baseFunct,quad,quadPoint,gradPhi);
     } 
   };
 
