@@ -641,8 +641,8 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     expl_(op_expl,*this),
     impl_(op_impl,*this),
     ode_(0),
-    linsolver_(comm_,cycle),
-    // linsolver_(comm_),
+    // linsolver_(comm_,cycle),
+    linsolver_(comm_),
     tp_(this->opexpl_.space().grid().comm(),*this),
     savestep_(1),
     savetime_(0.0), 
@@ -674,7 +674,7 @@ class SemiImplTimeStepper : public Dune::TimeProvider
   {
     typedef typename Operator:: DestinationType :: DiscreteFunctionSpaceType :: 
           GridType :: Traits ::  CollectiveCommunication DuneCommunicatorType; 
-    const DuneCommunicatorType & duneComm = opexpl_.space().grid().comm();
+    // const DuneCommunicatorType & duneComm = opexpl_.space().grid().comm();
 
     if ( ! initialized_ ) 
     {
@@ -698,6 +698,11 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     
     const bool convergence = ode_->step( t, dt, u);
     assert(convergence);
+    if(!convergence) 
+    {
+      std::cerr << "No Convergence of ImplTimeStepper! \n";
+      abort();
+    }
 
     // restore global time 
     tp_.lock();
@@ -748,8 +753,8 @@ class SemiImplTimeStepper : public Dune::TimeProvider
   OperatorWrapper<OperatorExpl> expl_;
   OperatorWrapper<OperatorImpl> impl_;
   pardg::SIRK* ode_;
-  // DuneODE::CG linsolver_;
-  pardg::GMRES linsolver_;
+  pardg::CG linsolver_;
+  // pardg::GMRES linsolver_;
   enum { cycle = 20 };
   // Dune::TimeProvider with communicator 
   Dune::ParallelTimeProvider<DuneCommunicatorType> tp_;
