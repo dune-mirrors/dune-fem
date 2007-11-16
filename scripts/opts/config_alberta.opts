@@ -1,0 +1,10 @@
+# use these options for configure if no options a provided on the cmdline
+# #AUTOGEN_FLAGS="--ac=2.59 --am=-1.8"
+CONFIGURE_FLAGS="CXX=g++ --disable-documentation \
+--prefix=/hosts/morgoth/raid5/dune/src/dune \
+--with-alberta=/hosts/morgoth/raid5/dune/modules/alberta \
+--x-includes=/usr/X11R6/include \
+--x-libraries=/usr/X11R6/lib \
+--with-grape=/hosts/morgoth/raid5/dune/modules/grape"
+MAKE_FLAGS=
+
