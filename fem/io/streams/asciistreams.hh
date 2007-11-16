@@ -2,6 +2,7 @@
 #define DUNE_FEM_ASCIISTREAMS_HH
 
 #include <iostream>
+#include <fstream>
 
 #include <dune/fem/io/streams/streams.hh>
 
