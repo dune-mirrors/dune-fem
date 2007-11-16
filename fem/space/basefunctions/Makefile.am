@@ -1,4 +1,6 @@
 basefunctionsdir = $(includedir)/dune/fem/space/basefunctions
-basefunctions_HEADERS = basefunctionsets.hh     basefunctionstorage.hh \
-basefunctionsets.cc  basefunctionstorage.cc  storageinterface.hh \
-basefunctionproxy.hh
+basefunctions_HEADERS = basefunctionproxy.hh \
+                        basefunctionsets.hh \
+                        basefunctionstorage.hh \
+												basefunctionstorage.cc \
+												storageinterface.hh
