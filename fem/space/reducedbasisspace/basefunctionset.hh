@@ -53,6 +53,7 @@ namespace Dune
     typedef BaseFunctionSetDefault< TraitsType > BaseType;
 
     using BaseType :: evaluate;
+    using BaseType :: evaluateSingle;
 
   public:
     typedef ThisType BaseFunctionSetType;
@@ -130,13 +131,20 @@ namespace Dune
     {
     }
     
-    //! copy constructor
+    /** \brief copy constructor
+     *
+     *  \param[in]  other  base function set to copy
+     */
     inline ReducedBasisBaseFunctionSet ( const ThisType &other )
     : baseFunctionList_( other.baseFunctionList_ ),
       entity_( other.entity_ )
     {
     }
 
+    /** \brief copy another ReducedBasisBaseFunctionSet
+     *
+     *  \param[in]  other  base function set to copy
+     */
     inline ThisType &operator= ( const ThisType &other )
     {
       baseFunctionList_ = other.baseFunctionList_;
@@ -149,112 +157,14 @@ namespace Dune
     inline void evaluate ( const int baseFunction,
                            const FieldVector< deriType, diffOrd > &diffVariable,
                            const PointType &x,
-                           RangeType &phi ) const
-    {
-      assert( baseFunctionList_ != NULL );
-      assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
-
-      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
-
-      const LocalBaseFunctionType localBaseFunction
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
-      const LocalBaseFunctionSetType &localBaseFunctionSet
-        = localBaseFunction.baseFunctionSet();
-      const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
-      
-      phi = 0;
-      for( int i = 0; i < numLocalBaseFunctions; ++i )
-      {
-        RangeType psi;
-        localBaseFunctionSet.evaluate( i, diffVariable, x, psi );
-        phi.axpy( localBaseFunction[ i ], psi );
-      }
-    }
-   
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
-    template< int diffOrd, class QuadratureType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
-                           const QuadratureType &quadrature,
-                           const int quadPoint,
-                           RangeType &phi ) const
-    {
-      assert( baseFunctionList_ != NULL );
-      assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
-
-      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
-
-      const LocalBaseFunctionType localBaseFunction 
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
-      const LocalBaseFunctionSetType &localBaseFunctionSet
-        = localBaseFunction.baseFunctionSet();
-      const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
-      
-      phi = 0;
-      for( int i = 0; i < numLocalBaseFunctions; ++i )
-      {
-        RangeType psi;
-        localBaseFunctionSet.evaluate( i, diffVariable, quadrature, quadPoint, psi );
-        phi.axpy( localBaseFunction[ i ], psi );
-      }
-    }
+                           RangeType &phi ) const;
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
     inline RangeFieldType evaluateSingle ( const int baseFunction,
                                            const PointType &x,
-                                           RangeType &psi ) const
-    {
-      assert( baseFunctionList_ != NULL );
-      assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
-
-      typedef typename LocalBaseFunctionType :: BaseFunctionSetType LocalBaseFunctionSetType;
-
-      const LocalBaseFunctionType localBaseFunction
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
-      const LocalBaseFunctionSetType &localBaseFunctionSet
-        = localBaseFunction.baseFunctionSet();
-      const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
-
-      RangeFieldType ret = 0;
-      for( int i = 0; i < numLocalBaseFunctions; ++i )
-      {
-        const RangeFieldType y
-          = localBaseFunctionSet.evaluateSingle( i, x, psi );
-        ret += localBaseFunction[ i ] * y;
-      }
-      return ret;
-    }
+                                           RangeType &psi ) const;
    
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */
-    template< class QuadratureType >
-    inline void evaluateSingle ( const int baseFunction,
-                                  const QuadratureType &quadrature,
-                                  const int quadPoint,
-                                  RangeType &psi ) const
-    {
-      assert( baseFunctionList_ != NULL );
-      assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
-
-      typedef typename LocalBaseFunctionType :: BaseFunctionSetType
-        LocalBaseFunctionSetType;
-
-      const LocalBaseFunctionType localBaseFunction 
-        = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
-      const LocalBaseFunctionSetType &localBaseFunctionSet
-        = localBaseFunction.baseFunctionSet();
-      const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
-
-      RangeFieldType ret = 0;
-      for( int i = 0; i < numLocalBaseFunctions; ++i )
-      {
-        const RangeFieldType y
-          = localBaseFunctionSet.evaluateSingle( i, quadrature, quadPoint, psi );
-        ret += localBaseFunction[ i ] * y;
-      }
-      return ret;
-    }
-
     /** \brief obtain the entity, this base function set belongs to */
     inline const EntityCodim0Type &entity () const
     {
@@ -276,5 +186,7 @@ namespace Dune
   };
 
 }
+
+#include "basefunctionset_inline.hh"
 
 #endif
