@@ -10,17 +10,33 @@ if test \( $# -lt 1 \) -o ! -e $1/$DUNECONTROL ; then
   exit 1
 fi
 
+echo "Full Check of dune-fem"
+echo "----------------------"
+
+# set up some variables
+# ---------------------
+
 WORKINGDIR=`pwd`
 cd $1
 DUNEDIR=`pwd`
+FEMDIR="$DUNEDIR/dune-fem"
+SCRIPTSDIR="$FEMDIR/scripts"
+OPTSDIR="$SCRIPTSDIR/opts"
+
+errors=0
 
 # check headers in Makefile.am
 # ----------------------------
 
+echo
+echo "Checking Makefile.am's *_HEADERS variables..."
+if ! $SCRIPTSDIR/check-headers.sh $FEMDIR ; then
+  errors=$((errors+1))
+fi
+
 # configure with minimal options
 # ------------------------------
 
-OPTSDIR="$DUNEDIR/dune-fem/scripts/opts"
 MINIMALOPTS="$OPTSDIR/minimal.opts"
 
 if test ! -e $MINIMALOPTS ; then
@@ -28,10 +44,21 @@ if test ! -e $MINIMALOPTS ; then
   exit 1
 fi
 
+echo
+echo "Configuring with minimal options..."
 cd $DUNEDIR
 if ! $DUNECONTROL --opts=$MINIMALOPTS all &> $WORKINGDIR/minimal-svn-conf.out ; then
   echo "Error: Cannot configure with minimal options (see $WORKINGDIR/minimal-svn-conf.out)."
   exit 1
+fi
+
+# check documentation
+# -------------------
+
+echo
+echo "Checking documentation..."
+if ! $SCRIPTSDIR/check-doxygen.sh $FEMDIR ; then
+  errors=$((errors+1))
 fi
 
 # build tarballs
@@ -40,18 +67,19 @@ fi
 MODULES="dune-common dune-grid dune-istl dune-fem"
 
 for MODULE in $MODULES ; do
+  echo
   echo "Making tarball in $MODULE..."
 
   cd $DUNEDIR/$MODULE
   find -maxdepth 1 -name "*.tar.gz" -delete
   if ! make dist &> $WORKINGDIR/$MODULE-dist.out ; then
+    errors=$((errors+1))
     echo "Error: Cannot make tarball for $MODULE (see $WORKINGDIR/$MODULE-dist.out)"
     exit 1
   fi
 done
 
-# check documentation
-# -------------------
+exit 0
 
 # perform test builds
 # -------------------
@@ -91,69 +119,7 @@ rm -rf $TESTDIR
 if test $errors -ne 0 ; then
   echo "Done ($errors occurred)."
   exit 1
+else
+  echo "Done."
+  exit 0
 fi
-echo "Done."
-exit 0
-
-#--------------------------------------------------------------------
-
-FILENAME=$1
-DUNEDIR=$2
-FEMDIR="$DUNEDIR/dune-fem"
-SCRITPSDIR="$FEMDIR/scripts"
-MYDIR=$3
-
-cd $SCRITPSDIR
-# file to mail
-if test -e $FILENAME ; then
-  rm -f $FILENAME
-fi
-touch $FILENAME
-
-cd $SCRITPSDIR
-if ! ./test-preconf.sh $FEMDIR ; then 
-  echo "*******************" >> $FILENAME
-  echo "PRECONFIGURE TESTS:" >> $FILENAME
-  echo >> $FILENAME  
-  cat preconf.out >> $FILENAME
-  echo "*******************" >> $FILENAME  
-  echo >> $FILENAME  
-fi
-
-# hier noch einfuegen: for Schleife ueber config files
-cd $SCRITPSDIR
-CONFIGFILE="$SCRIPTSDIR/opts/config_all.opts"
-if ! ./test-conf.sh $CONFIGFILE $FEMDIR ; then 
-  echo "*******************" >> $FILENAME
-  echo "CONFIGURE TESTS:" >> $FILENAME
-  echo >> $FILENAME  
-  cat conf.out >> $FILENAME
-  echo "*******************" >> $FILENAME  
-  echo >> $FILENAME  
-fi
-
-cd $SCRITPSDIR
-if ! ./test-postconf.sh $FEMDIR ; then 
-  echo "*******************" >> $FILENAME
-  echo "POSTCONFIGURE TESTS:" >> $FILENAME
-  echo >> $FILENAME  
-  cat postconf.out >> $FILENAME
-  echo "*******************" >> $FILENAME  
-  echo >> $FILENAME  
-fi
-
-cd $SCRITPSDIR
-if ! ./test-run.sh $FEMDIR ; then 
-  echo "*******************" >> $FILENAME
-  echo "RUN TESTS:" >> $FILENAME
-  echo >> $FILENAME  
-  cat run.out >> $FILENAME
-  echo "*******************" >> $FILENAME  
-  echo >> $FILENAME  
-fi
-
-cd $SCRITPSDIR
-mv $FILENAME $MYDIR/
-exit 0
-
-
