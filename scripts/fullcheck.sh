@@ -32,6 +32,7 @@ errors=0
 
 echo
 echo "Checking Makefile.am's *_HEADERS variables..."
+cd $WORKINGDIR
 if ! $SCRIPTSDIR/check-headers.sh $FEMDIR ; then
   errors=$((errors+1))
 fi
@@ -59,6 +60,7 @@ fi
 
 echo
 echo "Checking documentation..."
+cd $WORKINGDIR
 if ! $SCRIPTSDIR/check-doxygen.sh $FEMDIR ; then
   errors=$((errors+1))
 fi
@@ -78,68 +80,18 @@ for MODULE in $MODULES ; do
   fi
 done
 
-# fetch missing tarballs from website
-# -----------------------------------
-
-for MODULE in $MODULES ; do
-  cd $DUNEDIR/$MODULE
-  if test x`find -maxdepth 1 -name "*.tar.gz"` != x ; then
-    continue
-  fi
-
-  if test "$MODULE" != "dune-fem" ; then
-    echo
-    echo "Downloading tarball for $MODULE from dune-project.org..."
-    wget -q "http://www.dune-project.org/download/1.0beta7/$MODULE-1.0beta7.tar.gz"
-  fi
-
-  if test x`find -maxdepth 1 -name "*.tar.gz"` == x ; then
-    echo "Fatal: No tarball available for $MODULE"
-    exit 1
-  fi
-done
-
-exit 0
-
-# perform test builds
+# check distributions
 # -------------------
 
-TESTDIR=`mktemp -p $WORKINGDIR dune-tmp-XXXXXX`
-mkdir $TESTDIR
+echo
+echo "Checking distributions..."
+cd $WORKINGDIR
+if ! $SCRIPTSDIR/check-dist.sh $FEMDIR ; then
+  errors=$((errors+1))
+fi
 
-errors=0
-for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
-  echo "Checking $OPTS..."
-
-  cd $TESTDIR
-  rm -rf *
- 
-  find $DUNEDIR -maxdepth 2 -name "*.tar.gz" -exec tar -xzf \{\} \;
-
-  CONFIGOUT="$WORKINGDIR/${OPTS%.opts}-conf.out"
-  if ! $DUNECONTROL --opts=$OPTSDIR/$OPTS all &> $CONFIGLOG ; then
-    echo "Error: Cannot configure with $OPTS (see $CONFIGLOG)"
-    errors=$((errors+1))
-    continue
-  fi
-
-  CONFIGOUT="$WORKINGDIR/${OPTS%.opts}-check.out"
-  cd dune-fem/fem/test
-  if ! make check &> $CHECKLOG ; then
-    echo "Error: Check failed with $OPTS (see $CHECKLOG)"
-    errors=$((errors+1))
-  fi
-done
-
-rm -rf $TESTDIR
-
-# show results
-# ------------
-
-if test $errors -ne 0 ; then
-  echo "Done ($errors occurred)."
+if test $errors -gt 0 ; then
   exit 1
 else
-  echo "Done."
   exit 0
 fi
