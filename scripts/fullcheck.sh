@@ -23,6 +23,8 @@ FEMDIR="$DUNEDIR/dune-fem"
 SCRIPTSDIR="$FEMDIR/scripts"
 OPTSDIR="$SCRIPTSDIR/opts"
 
+MODULES="dune-common dune-grid dune-istl dune-fem"
+
 errors=0
 
 # check headers in Makefile.am
@@ -64,8 +66,6 @@ fi
 # build tarballs
 # --------------
 
-MODULES="dune-common dune-grid dune-istl dune-fem"
-
 for MODULE in $MODULES ; do
   echo
   echo "Making tarball in $MODULE..."
@@ -75,6 +75,26 @@ for MODULE in $MODULES ; do
   if ! make dist &> $WORKINGDIR/$MODULE-dist.out ; then
     errors=$((errors+1))
     echo "Error: Cannot make tarball for $MODULE (see $WORKINGDIR/$MODULE-dist.out)"
+  fi
+done
+
+# fetch missing tarballs from website
+# -----------------------------------
+
+for MODULE in $MODULES ; do
+  cd $DUNEDIR/$MODULE
+  if test x`find -maxdepth 1 -name "*.tar.gz"` != x ; then
+    continue
+  fi
+
+  if test "$MODULE" != "dune-fem" ; then
+    echo
+    echo "Downloading tarball for $MODULE from dune-project.org..."
+    wget -q "http://www.dune-project.org/download/1.0beta7/$MODULE-1.0beta7.tar.gz"
+  fi
+
+  if test x`find -maxdepth 1 -name "*.tar.gz"` == x ; then
+    echo "Fatal: No tarball available for $MODULE"
     exit 1
   fi
 done
