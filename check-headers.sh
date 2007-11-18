@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if test $# -lt 1 ; then
+  echo "Usage: $0 <dune-fem-dir>"
+  exit 1
+fi
+
+cd $1
+
 errors=0
 for directory in `find fem -type d | sed "/fem.*\/\..*/ d"` ; do
   makefile=$directory/Makefile.am
