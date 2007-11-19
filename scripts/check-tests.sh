@@ -1,14 +1,19 @@
 #!/bin/bash
 
-FEMDIR=$1
-SCRITPSDIR="$FEMDIR/scripts"
-
-cd $FEMDIR
-make check 2>&1 > $SCRIPTSDIR/check-tests.out
-cd $SCRIPTSDIR
-TEST=`grep "All [[:digit:]] tests passed" check-tests.out`
-if test "x$TEST" == "x" ; then
+if test $# -lt 1 ; then
+  echo "Usage: $0 <dune-fem-dir>"
   exit 1
 fi
 
-exit 0
+WORKINGDIR=`pwd`
+cd $1
+FEMDIR=`pwd`
+
+CHECKLOG=$WORKINGDIR/check-tests.out
+echo "checklog: $CHECKLOG"
+make check &> $CHECKLOG
+if test x`grep "All [[:digit:]]\+ tests passed" $CHECKLOG` == x ; then
+  exit 1
+else
+  exit 0
+fi

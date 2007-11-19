@@ -75,18 +75,18 @@ for MODULE in $MODULES ; do
   cd $DUNEDIR/$MODULE
   find -maxdepth 1 -name "*.tar.gz" -delete
   if ! make dist &> $WORKINGDIR/$MODULE-dist.out ; then
-    errors=$((errors+1))
     echo "Error: Cannot make tarball for $MODULE (see $WORKINGDIR/$MODULE-dist.out)"
+    if test $MODULE == dune-fem ; then
+      errors=$((errors+1))
+    fi
   fi
 done
 
 # check distributions
 # -------------------
 
-echo
-echo "Checking distributions..."
 cd $WORKINGDIR
-if ! $SCRIPTSDIR/check-dist.sh $FEMDIR ; then
+if ! $SCRIPTSDIR/check-dist.sh $DUNEDIR ; then
   errors=$((errors+1))
 fi
 

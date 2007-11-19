@@ -50,6 +50,7 @@ TESTDIR=`mktemp -d -p $WORKINGDIR dune-tmp-XXXXXX`
 
 errors=0
 for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
+  echo
   echo "Checking $OPTS..."
 
   cd $TESTDIR
@@ -68,12 +69,12 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
     continue
   fi
 
-  CONFIGOUT="$WORKINGDIR/${OPTS%.opts}-check.out"
-  cd dune-fem/fem/test
-  if ! make check &> $CHECKLOG ; then
+  CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.out"
+  if ! $SCRIPTSDIR/check-tests.sh $TESTDIR/dune-fem ; then
     echo "Error: Check failed with $OPTS (see $CHECKLOG)"
     errors=$((errors+1))
   fi
+  mv $WORKINGDIR/check-tests.out $CHECKLOG
 done
 
 # clean up
