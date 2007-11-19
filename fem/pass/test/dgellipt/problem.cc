@@ -341,4 +341,66 @@ public:
   }
 };
 
+template <int dim, class DomainField, class Field> 
+class CompactDG : public DataFunctionIF<dim,DomainField,Field>
+{
+  const Field globalShift_;
+  const Field factor_;
+  const Field alpha_;
+  const Field beta_;
+  const Field a_;
+  const Field b_;
+  const Field c_;
+  const Field d_;
+public:  
+  virtual ~CompactDG() {}
+  CompactDG(Field globalShift, Field factor)
+    : globalShift_(globalShift)
+    , factor_(factor) 
+    , alpha_( 0.1 ) 
+    , beta_ ( 0.3 )
+    , a_ ( 5.1 ), b_ (-6.2 ), c_(4.3), d_(3.4)
+  {
+    //assert(dim == 2);
+  }
+
+  virtual void K(const DomainField x[dim], Field k[dim][dim] ) const 
+  {
+    for(int i=0; i<dim; ++i) 
+    {
+      k[i][i] = factor_;
+      for(int j=0; j<i; ++j)     k[i][j] = 0;
+      for(int j=i+1; j<dim; ++j) k[i][j] = 0;
+    }
+  }
+
+
+  virtual Field rhs  (const DomainField x[dim]) const 
+  {
+    Field val = 0.0;
+    val *= factor_;
+    return val;
+  }
+
+  virtual Field exact(const DomainField x[dim]) const
+  {
+    Field val = exp( alpha_ * sin( a_ * x[0] + b_ * x[1] ) + beta_ * cos( c_ * x[0] + d_ * x[1] ));
+    val += globalShift_;
+    return val;
+  }
+  
+  virtual void gradExact(const DomainField x[dim], Field grad[dim] ) const 
+  {
+    grad[0] = 0.0; 
+    grad[1] = 0.0; 
+  }
+  
+  virtual bool boundaryDataFunction(const DomainField x[dim], Field & val) const
+  {
+    val = exact( x ); 
+    return true; 
+  }
+};
+
+
 #endif
