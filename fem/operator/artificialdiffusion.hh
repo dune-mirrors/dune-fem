@@ -207,10 +207,10 @@ public:
           const BaseFunctionSetType& baseset = uHat.baseFunctionSet();
           for(int qP = 0; qP < quadNop ; ++qP)
           {
-            lf.evaluate(quad,qP, ret);
+            lf.evaluate(quad[qP] , ret);
             for(int i=0; i<numDofs; ++i)
             {
-              baseset.evaluate(i,quad,qP, tmp);
+              baseset.evaluate(i, quad[qP] , tmp);
               uHat[i] += quad.weight(qP) * (ret * tmp) ;
             }
           }
@@ -226,7 +226,7 @@ public:
           const double intel = geo.integrationElement(quad.point(qp)) * quad.weight(qp);
 
           // eval function 
-          lf.evaluate(quad,qp,ret);
+          lf.evaluate(quad[qp] ,ret);
           
           for(int i=0; i<dimRange; ++i)
           {
@@ -234,7 +234,7 @@ public:
           }
           
           // eval p-1 function 
-          uHat.evaluate(quad,qp,tmp);
+          uHat.evaluate(quad[qp] ,tmp);
           ret -= tmp;
 
           for(int i=0; i<dimRange; ++i)
