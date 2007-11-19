@@ -7,7 +7,7 @@
 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
-#ifndef DUNE_FEM_COMBATIBILITY
+#ifndef DUNE_FEM_COMPATIBILITY
 #define DUNE_FEM_COMPATIBILITY 1
 #endif
 
