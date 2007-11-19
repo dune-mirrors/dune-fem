@@ -35,6 +35,11 @@ namespace Dune {
     void checkLeafsCodim1(GridPartType& gridPart, 
                     const int quadOrd);
 
+    template <class EntityType, class LocalGeometryType>
+    void checkLocalIntersectionConsistency(
+              const EntityType& en, const LocalGeometryType& localGeom,
+              const int face, const bool output = false) const;
+
   private:
     std::string albertaGridFile_;
     std::string aluGridHexaFile_;

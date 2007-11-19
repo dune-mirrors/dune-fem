@@ -87,11 +87,25 @@ namespace Dune {
       const int numFaces = refElem.size(codim);
       //std::cout << "For type " << geomType << " got " << numFaces << " numFaces\n";
 
-      IntersectionIterator endit = gridPart.iend( *eiter );
+      //int twist = -4;
+      const IntersectionIterator endit = gridPart.iend( *eiter );
       for (IntersectionIterator it = gridPart.ibegin( *eiter );
            it != endit; ++it) 
       {
+        if( dim > 2 )
+        {
+          checkLocalIntersectionConsistency( *it.inside(),
+              it.intersectionSelfLocal(), it.numberInSelf() );
+          if( it.neighbor() ) 
+          {
+            checkLocalIntersectionConsistency( *it.outside(),
+                it.intersectionNeighborLocal(), it.numberInNeighbor() );
+          }
+        }
+
         const LocalGeometryType& geo = it.intersectionSelfLocal();
+        typedef TwistUtility<GridType> TwistUtilityType; 
+
         QuadratureType quad(gridPart, it, quadOrd , QuadratureType :: INSIDE);
 
         const PointVectorType& points = 
@@ -100,7 +114,6 @@ namespace Dune {
         _test((int) points.size() == numFaces * quad.nop());
         //std::cout << points.size() << " ps | qnop " << numFaces * quad.nop() << "\n";
 
-        typedef TwistUtility<GridType> TwistUtilityType; 
         //std::cout << "New Intersection: Twists: ";
         //std::cout << TwistUtilityType :: twistInSelf( grid, it ) << " ";
         //std::cout << TwistUtilityType :: twistInNeighbor( grid, it ) << "\n";
@@ -191,6 +204,7 @@ namespace Dune {
         grid.globalRefine(1);
       }
     }
+    /*
     // 3d test 
     {
       const int dim = 3;
@@ -204,12 +218,13 @@ namespace Dune {
 
       const int quadOrd = 4;
 
-      for(int l=0; l<3; ++l) 
+     // for(int l=0; l<3; ++l) 
       {
         checkLeafsCodim1(gridPart, quadOrd);
         grid.globalRefine(1);
       }
     }
+    */
 #endif
   }
 
@@ -299,6 +314,106 @@ namespace Dune {
       grid.globalRefine( 1 );
     }
   }
+
+  template <class EntityType, class LocalGeometryType>
+  void CachingQuadrature_Test::checkLocalIntersectionConsistency(
+      const EntityType& en, const LocalGeometryType& localGeom, 
+      const int face, const bool output) const
+  {
+    enum { dim = EntityType :: dimension };
+    typedef typename EntityType :: ctype ctype;
+
+    // get reference element 
+    const ReferenceElement< ctype , dim > & refElem = 
+      ReferenceElements< ctype , dim >::general(en.geometry().type());
+
+    const int vxSize = refElem.size( face, 1, dim );
+    std::vector<int> vx( vxSize ,-1);
+    for(int i=0; i<vxSize; ++i) 
+    {
+      // get face vertices of number in self face 
+      vx[i] = refElem.subEntity( face, 1 , i, dim);
+    }
+
+    // debugging output 
+    if( output )
+    {
+      std::cout << "Found face["<< face << "] vx = {";
+      for(size_t i=0; i<vx.size(); ++i) 
+      {
+        std::cout << vx[i] << ",";
+      }
+      std::cout << "} \n";
+    }
+
+    bool allRight = true;
+    std::vector< int > faceMap ( vxSize , -1 );
+
+    typedef  FieldVector<ctype,dim> CoordinateVectorType;
+
+    for(int i=0; i<vxSize; ++i) 
+    {
+      // standard face map is identity 
+      faceMap[i] = i;
+
+      // get position in reference element of vertex i
+      CoordinateVectorType refPos = refElem.position( vx[i], dim );
+
+      // get position as we get it from intersectionSelfLocal 
+      // in the best case this should be the same 
+      // at least the orientatation should be the same 
+      CoordinateVectorType localPos = localGeom[i];
+
+      if( (refPos - localPos).infinity_norm() > 1e-8 )
+      {
+        allRight = false;
+        if( output )
+          std::cout << "RefPos (" << refPos << ") != (" << localPos << ") localPos !\n";
+      }
+    }
+
+    if( !allRight ) 
+    {
+      for(int i=0; i<vxSize; ++i) 
+      {
+        // get position in reference element of vertex i
+        CoordinateVectorType refPos = refElem.position( vx[i], dim );
+
+        for( int j=1; j<vxSize; ++j) 
+        {
+          int newVx = (i+j)% vxSize;
+          CoordinateVectorType localPos = localGeom[newVx];
+          if( (refPos - localPos).infinity_norm() < 1e-8 )
+          {
+            faceMap[i] = newVx;
+          }
+        }
+      }
+
+      // calculate twist 
+      const int twist = (faceMap[1] == (faceMap[0]+1)%vxSize) ? faceMap[0] : faceMap[1] - vxSize;
+      std::cout << "Got twist = "<< twist << "\n";
+      // off set 
+      const int offset = (2 * vxSize) + 1;
+
+      // now check mapping with twist 
+      for(int i=0; i<vxSize; ++i) 
+      {
+        // get position in reference element of vertex i
+        CoordinateVectorType refPos = refElem.position( vx[i], dim );
+
+        int newVx = (twist < 0) ? (offset - i + twist)% vxSize : (twist + i)%vxSize ;
+        CoordinateVectorType localPos = localGeom[newVx];
+        if( (refPos - localPos).infinity_norm() > 1e-8 )
+        {
+          std::cout << "RefPos (" << refPos << ") != (" << localPos << ") localPos !\n";
+          DUNE_THROW(GridError,"LocalGeometry has wrong mapping !");
+        }
+      }
+    }
+  }
+
+
 
 
 } // end namespace Dune
