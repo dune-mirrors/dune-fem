@@ -63,13 +63,6 @@ namespace Dune {
     typedef typename GradientPassType :: DiscreteModelType
       GradientDiscreteModelType;
 
-    //! space of gradients of function 
-    typedef typename GradientPassType :: 
-      DiscreteFunctionSpaceType DiscreteGradientSpaceType;
-
-    typedef typename GradientPassType :: DestinationType GradDestinationType;
-    typedef typename GradientPassType :: DiscreteModelCallerType GradientModelCallerType;
-
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
     //! Repetition of template arguments
@@ -85,7 +78,24 @@ namespace Dune {
     typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
     typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
         
+    // Range of the destination
+    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
+    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { cols = JacobianRangeType :: cols };
+    enum { rows = JacobianRangeType :: rows };
+    enum { dim = GridType :: dimension };
+    
+    //! space of gradients of function 
+    typedef CombinedSpace< DiscreteFunctionSpaceType, dimRange * dimDomain > DiscreteGradientSpaceType; 
+    //typedef typename GradientPassType :: 
+    //   DiscreteFunctionSpaceType DiscreteGradientSpaceType;
+
+    //typedef typename GradientPassType :: DestinationType GradDestinationType;
+    //typedef typename GradientPassType :: DiscreteModelCallerType GradientModelCallerType;
+
     
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
@@ -94,9 +104,6 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef FieldVector<double,DomainType::dimension-1> FaceDomainType;
 
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    
     // Types extracted from the underlying grid
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
     typedef typename GridType::template Codim<0>::Geometry GeometryType;
@@ -107,13 +114,6 @@ namespace Dune {
     typedef EllipticDiscreteModelCaller<
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
-    // Range of the destination
-    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
-    enum { cols = JacobianRangeType :: cols };
-    enum { rows = JacobianRangeType :: rows };
-    enum { dim = GridType :: dimension };
-    
     typedef typename GridType :: ctype ctype;
     typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
     
@@ -336,13 +336,12 @@ namespace Dune {
                 const std::string paramFile = "")
       : BaseType(pass, spc),
       caller_(problem),
-      gradCaller_(gradPass.caller()),
       problem_(problem),
       arg_(0),
       dest_(0),
       spc_(spc),
-      gradientSpace_(gradPass.space()),
-      gridPart_(spc_.gridPart()),
+      gridPart_(const_cast<GridPartType &> (spc_.gridPart())),
+      gradientSpace_(gridPart_),
       localIdSet_(gridPart_.grid().localIdSet()),
       gridWidth_ ( GridWidthProviderType :: getObject( &spc_.grid())),
       time_(0),
@@ -1713,7 +1712,6 @@ namespace Dune {
 
   private:
     mutable DiscreteModelCallerType caller_;
-    mutable GradientModelCallerType & gradCaller_;
 
     DiscreteModelType& problem_; 
          
@@ -1722,9 +1720,9 @@ namespace Dune {
     mutable DestinationType* dest_;
 
     const DiscreteFunctionSpaceType& spc_;
-    const DiscreteGradientSpaceType & gradientSpace_;
+    GridPartType & gridPart_;
+    const DiscreteGradientSpaceType gradientSpace_;
 
-    const GridPartType & gridPart_;
     const LocalIdSetType & localIdSet_;
     const GridWidthType& gridWidth_;
     
