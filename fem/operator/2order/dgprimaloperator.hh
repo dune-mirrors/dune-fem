@@ -17,6 +17,8 @@
 #include <dune/fem/misc/boundaryidentifier.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
+#include <dune/fem/space/combinedspace.hh>
+
 #include <dune/fem/function/common/dfcommunication.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/arrays.hh>
@@ -89,7 +91,9 @@ namespace Dune {
     enum { dim = GridType :: dimension };
     
     //! space of gradients of function 
-    typedef CombinedSpace< DiscreteFunctionSpaceType, dimRange * dimDomain > DiscreteGradientSpaceType; 
+    typedef CombinedSpace< DiscreteFunctionSpaceType, 
+                           dimRange * dimDomain,
+                           PointBased > DiscreteGradientSpaceType; 
     //typedef typename GradientPassType :: 
     //   DiscreteFunctionSpaceType DiscreteGradientSpaceType;
 
@@ -657,7 +661,7 @@ namespace Dune {
           JacobianRangeType& coeffPsi = coeffPsi_[k];
 
           // eval grad psi on reference element
-          bsetEn.jacobian( k, volQuad, l, psitmp_ );
+          bsetEn.jacobian( k, volQuad[l], psitmp_ );
   
           // apply inverse jacobian 
           for(int i=0; i<dimRange; ++i) 
