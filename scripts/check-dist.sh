@@ -69,6 +69,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
     continue
   fi
 
+  cd $WORKINGDIR
   CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.out"
   if ! $SCRIPTSDIR/check-tests.sh $TESTDIR/dune-fem ; then
     echo "Error: Check failed with $OPTS (see $CHECKLOG)"
