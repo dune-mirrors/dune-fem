@@ -1,223 +1,302 @@
 #ifndef DUNE_DOFITERATOR_HH
 #define DUNE_DOFITERATOR_HH
 
-#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 
-namespace Dune {
-
-/** @addtogroup DofManager
-  @{
- */
-
-
-//---------------------------------------------------------------------
-//-
-//-  --DofIteratorInterface
-//-  
-//---------------------------------------------------------------------
-/** \brief This class described the interface for dof iterators of 
-    discrete functions. 
-    The dof iterator is the interface for efficient walk trough the dofs of
-    a discrete function.
-
-    \note All methods declared in this interface
-          class must be implemented by the implementation class. 
-
-*/
-template <class DofImp, class DofIteratorImp>
-class DofIteratorInterface   
+namespace Dune
 {
-public:
-  typedef DofIteratorImp DofIteratorType;
-  
-  /** \brief return reference to current dof 
-      \return return reference to current dof
-  */
-  DofImp& operator *()
+
+  /** \addtogroup DofManager
+   *  \{
+   */
+
+
+  /** \class DoFIteratorInterrace
+   *  \brief interface for DoF iterators of discrete functions
+   *
+   *  The DoF iterator is an efficient way of walking through the DoFs of a
+   *  discrete function.
+   */
+  template< class DofImp, class DofIteratorImp >
+  class DofIteratorInterface
+  : public BartonNackmanInterface< DofIteratorInterface< DofImp, DofIteratorImp >,
+                                   DofIteratorImp >
   {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator *());
-    return asImp().operator *(); 
-  }
-  
-  /** \brief return reference to current dof 
-      \return return reference to current dof
-  */
-  const DofImp& operator *() const 
+  public:
+    //! type of the DoFs
+    typedef DofImp DofType;
+
+    //! type of the implementation (Barton-Nackman)
+    typedef DofIteratorImp DofIteratorType;
+
+  private:
+    typedef DofIteratorInterface< DofType, DofIteratorType > ThisType;
+    typedef BartonNackmanInterface< ThisType, DofIteratorType > BaseType;
+
+  protected:
+    using BaseType :: asImp;
+    
+  public:
+    /** \brief assign another DoF iterator to this one
+     *
+     *  \param[in]  other  DoF iterator to copy
+     */
+    inline DofIteratorType &operator= ( const DofIteratorType &other )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( other ) );
+      return asImp();
+    }
+    
+    /** \brief obtain reference to current DoF
+     *
+     *  \returns a reference to the current DoF
+     */
+    inline DofType &operator* ()
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( *asImp() );
+      return *asImp();
+    }
+    
+    /** \brief obtain reference to current DoF
+     *
+     *  \returns a constant reference to the current DoF
+     */
+    inline const DofType &operator* () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( *asImp() );
+      return *asImp();
+    }
+
+    inline const DofImp &operator[] ( const int n ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ n ] );
+      return asImp()[ n ];
+    }
+    
+    inline DofImp &operator[] ( const int n )
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ n ] );
+      return asImp()[ n ];
+    }
+
+    /** \brief increment the iterator
+     *
+     *  Lets the iterator point to the next DoF.
+     *
+     *  \return reference the the incremented iterator (i.e., *this)
+     */
+    inline DofIteratorType &operator++ ()
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATON( asImp().operator++() );
+      return asImp();
+    }
+
+    /** \brief check for equality
+     *
+     *  \param[in]  other  DoF iterator to compare this one to
+     * 
+     *  \returns \b true if the iterators are the same, \b false otherewise
+     */
+    inline bool operator== ( const DofIteratorType &other ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().operator==( other ) );
+      return asImp().operator==( other );
+    }
+
+    /** \brief check for inequality
+     *
+     *  \param[in]  other  DoF iterator to compare this one to
+     * 
+     *  \returns \b true if the iterators are the different, \b false otherewise
+     */
+    inline bool operator!= ( const DofIteratorType &other ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().operator!=( other ) );
+      return asImp().operator!=( other );
+    }
+
+    /** \brief get the global number of the current DoF
+     *
+     *  \return global number of the current DoF
+     */
+    inline int index () const
+    {  
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().index() );
+      return asImp().index();
+    } 
+
+    /** \brief reset iterator to the first position */
+    inline void reset () 
+    { 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().reset() );
+    }
+  }; // end DofIteratorInterface
+
+
+
+  //************************************************************************
+  //
+  //  --DofIteratorDefault 
+  //
+  //  Default implementation for some extra functionality for
+  //  DofIterator. This class provides an default implementation for
+  //  random access of the dofs. 
+  //
+  //************************************************************************
+  template< class DofImp, class DofIteratorImp >
+  class DofIteratorDefault
+  : public DofIteratorInterface< DofImp, DofIteratorImp >
   {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator *());
-    return asImp().operator *(); 
-  }
+  public:
+    //! type of the DoFs
+    typedef DofImp DofType;
 
-  /** \brief return current global dof number of dof 
-      \return return current global dof number of dof 
-  */
-  int index () const 
-  {  
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().index());
-    return asImp().index(); 
-  } 
+    //! type of the implementation (Barton-Nackman)
+    typedef DofIteratorImp DofIteratorType;
 
-  /** \brief prefix increment, i.e. go to next dof 
-      \return reference to this (i.e. *this) 
-  */
-  DofIteratorType& operator ++ ()
+  private:
+    typedef DofIteratorDefault< DofType, DofIteratorType > ThisType;
+    typedef DofIteratorInterface< DofType, DofIteratorType > BaseType;
+
+  protected:
+    using BaseType :: asImp;
+      
+  public:
+    inline const DofImp &operator[] ( const int n ) const
+    {
+      DofIteratorType &it = const_cast< DofIteratorType & >( asImp() );
+      it.reset();
+      for( int i = 0; i < n; ++i )
+        ++it; 
+      return *asImp();
+    }
+
+    inline DofType &operator[] ( const int n )
+    {
+      asImp().reset();
+      for( int i = 0; i < n; ++i )
+        ++asImp();
+      return *asImp();
+    }
+
+    /** \copydoc Dune::DofIteratorInterface::operator!=
+     *
+     *  \note The default implementation is just
+     *  \code
+     *  return !operator==( other );
+     *  \endcode
+     */
+    inline bool operator!= ( const DofIteratorType &other ) const
+    {
+      return !asImp().operator==( other );
+    }
+
+    /** \copydoc Dune::DofIteratorInterface::index */
+    inline int index () const
+    {
+      DofIteratorType it( asImp() );
+      it.reset();
+      
+      int idx = 0;
+      for( ; it != *this; ++it )
+        ++idx;
+
+      return idx;
+    }
+  }; // end class DofIteratorDefault
+
+
+
+  /* \class ConstDofIteratorDefault
+   * \brief makes a const DoF iterator out of DoF iterator
+   */
+  template< class DofIteratorImp >
+  class ConstDofIteratorDefault
+  : public DofIteratorDefault< typename DofIteratorImp :: DofType,
+                               DofIteratorImp >
   {
-    // would change result 
-    //CHECK_INTERFACE_IMPLEMENTATION(asImp().index());
-    return asImp().operator ++ ();
-  }
+  public:
+    //! type of the wrapped DoF iterator
+    typedef DofIteratorImp WrappedDofIteratorType;
 
-  /** \brief equality operator 
-      \return return \b true if iterator are the same, \b false otherewise
-  */
-  bool operator == (const DofIteratorType& I) const
-  {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator == (I));
-    return asImp().operator == (I);
-  }
-  
-  /** \brief in-equality operator 
-      \return return \b true if iterator are different, \b false otherewise
-  */
-  bool operator != (const DofIteratorType& I) const
-  {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().operator != (I));
-    return asImp().operator != (I);
-  }
+    //! type of the DoFs
+    typedef typename WrappedDofIteratorType :: DofType DofType;
 
-  /** \brief reset operator, i.e. set to first position */
-  void reset () 
-  { 
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().reset());
-    asImp().reset();
-  }
+  public:
+    typedef ConstDofIteratorDefault< WrappedDofIteratorType > ThisType;
+    typedef DofIteratorDefault< DofType, ThisType > BaseType;
 
-private:  
-  //! Barton-Nackman trick 
-  DofIteratorType &asImp() 
-  { 
-    return static_cast<DofIteratorType&>(*this); 
-  }
-  //! Barton-Nackman trick 
-  const DofIteratorType &asImp() const
-  { 
-    return static_cast<const DofIteratorType&>(*this); 
-  }
-}; // end DofIteratorInterface
+  protected:
+    WrappedDofIteratorType it_;
 
+  public:
+    inline ConstDofIteratorDefault( const WrappedDofIteratorType &it )
+    : it_( it )
+    {
+    }
 
-//************************************************************************
-//
-//  --DofIteratorDefault 
-//
-//! Default implementation for some extra functionality for
-//! DofIterator. This class provides an default implementation for
-//! random access of the dofs. 
-//!
-//************************************************************************
-template <class DofImp, class DofIteratorImp>
-class DofIteratorDefault 
-: public DofIteratorInterface < DofImp , DofIteratorImp >
-{
-  typedef DofIteratorImp DofIteratorType;
-public:
-  //! random access operator, for efficient implementation overload in the 
-  //! implementation class DofIteratorImp
-  DofImp& operator [] (int n)
-  {
-    asImp().reset();
-    for (int i=0; i<n; i++) ++asImp();
-    return asImp().operator *();
-  };
+    inline ConstDofIteratorDefault( const ThisType &other )
+    : it_( other.it_ )
+    {
+    }
 
-  const DofImp& operator [] (int n) const
-  {
-    DofIteratorType &it = const_cast<DofIteratorType &> (asImp());
-    it.reset();
-    for (int i=0; i<n; ++i) ++it; 
-    return asImp().operator *();
-  };
+    /** \copydoc Dune::DofIteratorInterface::operator= */
+    inline const ThisType &operator= ( const ThisType &other )
+    {
+      it_ = other.it_;
+      return *this;
+    }
 
-private:  
-  // Barton-Nackman trick 
-  DofIteratorType &asImp() 
-  { 
-    return static_cast<DofIteratorType&>(*this); 
-  }
-  const DofIteratorType &asImp() const
-  { 
-    return static_cast<const DofIteratorType&>(*this); 
-  }
-}; // end class DofIteratorDefault
+    /** \copydoc Dune::DofIteratorInterface::operator*() const */
+    const DofType& operator* () const
+    {
+      return (*it_); 
+    }
 
+    inline const DofType &operator[] ( const int n ) const
+    {
+      return it_[ n ];
+    }
+   
+    /** \copydoc Dune::DofIteratorInterface::index */
+    inline int index () const 
+    {
+      return it_.index();
+    }
 
-//****************************************************************
-//
-/*! \brief 
-   ConstDofIteratorDefault make a const interator out of a 
-   dof iterator. This version works for all dof iterators.
-*/
-//****************************************************************
-template <class DofIteratorImp>
-class ConstDofIteratorDefault 
-: public DofIteratorDefault< typename DofIteratorImp::DofType, DofIteratorImp> 
-{
-  typedef ConstDofIteratorDefault<DofIteratorImp> MyType;
-public:
-  typedef DofIteratorImp DofIteratorType;
-  typedef typename DofIteratorType::DofType DofType;
+    /** \copydoc Dune::DofIteratorInterface::operator++ */
+    inline ThisType &operator++ ()
+    {
+      ++it_;
+      return (*this);
+    }
 
-  //! Constructor 
-  ConstDofIteratorDefault( DofIteratorImp & it ) : it_(it) {}
+    /** \copydoc Dune::DofIteratorInterface::operator== */
+    inline bool operator== ( const ThisType &other ) const
+    {
+      return (it_ == other.it_);
+    }
+    
+    /** \copydoc Dune::DofIteratorInterface::operator!= */
+    inline bool operator!= ( const ThisType &other ) const
+    {
+      return (it_ != other.it_);
+    }
 
-  //! random access operator, for efficient implementation overload in the 
-  //! implementation class DofIteratorImp
-  const DofType& operator [] (int n) const
-  {
-    return it_[n];
-  }
+    /** \copydoc Dune::DofIteratorInterface::reset */
+    inline void reset ()
+    {
+      it_.reset();
+    }
 
-  const DofType& operator *() const
-  {
-    return (*it_); 
-  }
+    // note: this method is not in the interface!
+    const DofType *vector () const
+    {
+      return it_.vector();
+    }
+  }; // end class DofIteratorDefault
 
-  //! return global dof number of dof 
-  int index () const  {  return it_.index();   } 
-
-  //! go to next dof 
-  MyType & operator++ () 
-  {
-    ++it_;
-    return (*this);
-  }
-
-  //! compare with other GlobalDofIterators 
-  bool operator == (const MyType& I) const
-  {
-    return it_  == I.it_;
-  }
-  
-  //! compare with other GlobalDofIterators 
-  bool operator != (const MyType& I) const
-  {
-    return it_ != I.it_;
-  }
-
-  //! set the iterator to begin status 
-  void reset ()
-  { 
-    it_.reset();
-  }
-
-  const DofType * vector () const { return it_.vector(); }
-
-private:  
-  DofIteratorImp it_;
-}; // end class DofIteratorDefault
-
-
-/** @} end documentation group */
+  /** \} */
 
 } // end namespace Dune 
 
