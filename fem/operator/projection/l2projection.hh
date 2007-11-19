@@ -81,10 +81,10 @@ struct L2ProjectionImpl
 
       for(int qP = 0; qP < quadNop ; ++qP) 
       {
-        f.evaluate(quad,qP, ret);
+        f.evaluate(quad[qP], ret);
         for(int i=0; i<numDofs; ++i) 
         {
-          baseset.evaluate(i,quad,qP,phi);
+          baseset.evaluate(i, quad[qP], phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
@@ -134,7 +134,7 @@ struct L2ProjectionImpl
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<numDofs; ++i) 
         {
-          baseset.evaluate(i,quad,qP,phi);
+          baseset.evaluate(i, quad[qP], phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
       }

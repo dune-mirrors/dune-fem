@@ -167,8 +167,8 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
               DomainType normal = 
                 nit.unitOuterNormal(faceQuadInner.localPoint(l));
 
-              lf.evaluate(faceQuadInner,l,ret);
-              neighLf.evaluate(faceQuadOuter,l,neighRet);
+              lf.evaluate(faceQuadInner[l], ret);
+              neighLf.evaluate(faceQuadOuter[l], neighRet);
               
               ret -= neighRet;
               
@@ -280,7 +280,7 @@ private:
     
     typedef typename ElementDiscreteSpaceType :: RangeType ElRangeType; 
     ElRangeType bTmp; 
-    bSet.evaluate(func,quad,quadPoint,bTmp);
+    bSet.evaluate(func,quad[quadPoint], bTmp);
     RangeType tmp; 
     gradientBubbleQuad(point,tmp);
     //gradientBubbleSimplex(point,tmp);
@@ -351,7 +351,7 @@ private:
       const double intel = quad.weight(l) * 
         en.geometry().integrationElement(quad.point(l));
       
-      uLF.evaluate(quad,l,result);
+      uLF.evaluate(quad[l], result);
       for(int i=0; i<localRows; ++i)     
       {
         // we might have other row 
@@ -367,7 +367,7 @@ private:
         // for cols make matrix 
         for(int j=0; j<cols; ++j)     
         {
-          uLF.baseFunctionSet().evaluate(j,quad,l,bVal);
+          uLF.baseFunctionSet().evaluate(j, quad[l], bVal);
           double t = aVal * bVal;
           t *= intel; 
           matrix[row][j] += t;
@@ -408,7 +408,7 @@ private:
       const double intel = quad.weight(l) * 
         en.geometry().integrationElement(quad.point(l));
       
-      uLF.evaluate(quad,l,result);
+      uLF.evaluate(quad[l], result);
       for(int i=0; i<localRows; ++i)     
       {
         // we might have other row 
@@ -421,7 +421,7 @@ private:
         // for cols make matrix 
         for(int j=0; j<cols; ++j)     
         {
-          uLF.baseFunctionSet().evaluate(j,quad,l,uPhi);
+          uLF.baseFunctionSet().evaluate(j, quad[l], uPhi);
           double val = uPhi * gradPhi[0]; 
           matrix[row][j] += val * intel;
         }
@@ -777,7 +777,7 @@ private:
           const double intel = faceVol * faceQuadInner.weight(l);
 
           // evaluate function 
-          uLF.evaluate(faceQuadInner,l,ret);
+          uLF.evaluate(faceQuadInner[l], ret);
 
           double val = ret * unitNormal; 
           val *= intel;
@@ -785,7 +785,7 @@ private:
           // evaluate base functions 
           for(int i=0; i<numDofs; ++i) 
           {
-            bSet.evaluate(i,faceQuadInner,l,uPhi); 
+            bSet.evaluate(i,faceQuadInner[l], uPhi); 
             rets[i]  = uPhi * unitNormal; 
             rets[i] *= intel;
           }
@@ -847,8 +847,8 @@ private:
       const double intel = faceVol * faceQuadInner.weight(l);
 
       // evaluate dg velocity 
-      uLF.evaluate(faceQuadInner,l,ret);
-      uNeighLf.evaluate(faceQuadOuter,l,neighRet);
+      uLF.evaluate(faceQuadInner[l], ret);
+      uNeighLf.evaluate(faceQuadOuter[l], neighRet);
 
       // take mean value 
       ret += neighRet;
@@ -860,7 +860,7 @@ private:
       // evaluate base functions 
       for(int i=0; i<numDofs; ++i) 
       {
-        bSet.evaluate(i,faceQuadInner,l,ret);
+        bSet.evaluate(i,faceQuadInner[l], ret);
         rets[i]  = ret * unitNormal;
         rets[i] *= intel;
       }
@@ -1021,8 +1021,8 @@ private:
       }            
 
       // evaluate | (u_l * n_l) + (u_r * n_r) | = | (u_l - u_r) * n_l |
-      uLF.evaluate(faceQuadInner,l,jump);
-      uNeighLf.evaluate(faceQuadOuter,l,neighRet);
+      uLF.evaluate(faceQuadInner[l], jump);
+      uNeighLf.evaluate(faceQuadOuter[l], neighRet);
       
       // get difference 
       jump -= neighRet; 
