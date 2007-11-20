@@ -87,18 +87,18 @@ namespace Dune
    *               
    *             /   kronecker(i,j)         if x_i is Dirichlet-LagrangePoint 
    *            /
-   *    M_ij :=<       \int_\Omega   [a     grad(phi_j) ]^T  grad(phi_i) 
-   *            \   -  \int_\Omega   [b     phi_j]^T         grad(phi_i)
-   *             \  +  \int_\Omega   c          phi_i       phi_j
-   *              \ +  \int_\Gamma_R alpha      phi_i       phi_j      otherwise
+   *    M_ij :=<       \int_\Omega     [a     grad(phi_j) ]^T  grad(phi_i) 
+   *            \   -  \int_\Omega     [b     phi_j]^T         grad(phi_i)
+   *             \  +  \int_\Omega     c          phi_i       phi_j
+   *              \ +  \int_{\Gamma_R} alpha      phi_i       phi_j      otherwise
    *  
    *  and
    *
    *           /    g_D(x_i)               if x_i is Dirichlet-LagrangePoint
    *    b_i :=<   
-   *           \      \int_\Omega   f   phi_i
-   *            \   + \int_\Gamma_N g_N phi_i
-   *             \  + \int_\Gamma_R g_R phi_i                        otherwise
+   *           \      \int_\Omega     f   phi_i
+   *            \   + \int_{\Gamma_N} g_N phi_i
+   *             \  + \int_{\Gamma_R} g_R phi_i                        otherwise
    *
    *  \f$
    *  The right hand side is assumed to be assembled by another class, e.g.
