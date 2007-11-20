@@ -1,7 +1,11 @@
 #ifndef DUNE_FEM_DIFFUSIONMODEL_HH
 #define DUNE_FEM_DIFFUSIONMODEL_HH
 
-#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+
+#ifndef DUNE_FEM_COMPATIBILITY
+#define DUNE_FEM_COMPATIBILITY 1
+#endif
 
 namespace Dune
 {
@@ -24,13 +28,21 @@ namespace Dune
    */
   template< class FunctionSpaceImp, class DiffusionModelImp >
   class DiffusionModelInterface
+  : public BartonNackmanInterface
+    < DiffusionModelInterface< FunctionSpaceImp, DiffusionModelImp >,
+      DiffusionModelImp >
   {
   public:
     //! type of the function space we are using
     typedef FunctionSpaceImp FunctionSpaceType;
 
+    //! type of the implementation (Barton-Nackman)
+    typedef DiffusionModelImp DiffusionModelType;
+
   private:
-    typedef DiffusionModelInterface< FunctionSpaceType, DiffusionModelImp > ThisType;
+    typedef DiffusionModelInterface< FunctionSpaceType, DiffusionModelType >
+      ThisType;
+    typedef BartonNackmanInterface< ThisType, DiffusionModelType > BaseType;
 
   public:
     //! type of the interface
@@ -47,6 +59,9 @@ namespace Dune
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
     //! field type of the range
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+
+  protected:
+    using BaseType :: asImp;
 
   public:
     /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
@@ -66,6 +81,7 @@ namespace Dune
         ( asImp().diffusiveFlux( entity, x, gradient, flux ) );
     }
 
+#if DUNE_FEM_COMPATIBILITY
     /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a quadrature
      *         point
      *
@@ -85,17 +101,7 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().diffusiveFlux( entity, quadrature, quadPoint, gradient, flux ) );
     }
-
-  protected:
-    inline const DiffusionModelImp &asImp () const
-    {
-      return static_cast< const DiffusionModelImp & >( *this );
-    }
-
-    inline DiffusionModelImp &asImp ()
-    {
-      return static_cast< DiffusionModelImp & >( *this );
-    }
+#endif
   };
 
 
@@ -108,14 +114,16 @@ namespace Dune
     //! type of the function space we are using
     typedef FunctionSpaceImp FunctionSpaceType;
 
+    //! type of the implementation (Barton-Nackman)
+    typedef DiffusionModelImp DiffusionModelType;
+
   private:
-    typedef DiffusionModelDefault< FunctionSpaceType, DiffusionModelImp > ThisType;
-    typedef DiffusionModelInterface< FunctionSpaceType, DiffusionModelImp > BaseType;
+    typedef DiffusionModelDefault< FunctionSpaceType, DiffusionModelType >
+      ThisType;
+    typedef DiffusionModelInterface< FunctionSpaceType, DiffusionModelType >
+      BaseType;
 
   public:
-    //! type of the interface
-    typedef ThisType DiffusionModelInterfaceType;
-
     //! type of points within the domain
     typedef typename FunctionSpaceType :: DomainType DomainType;
     //! type of points within the range
@@ -145,6 +153,7 @@ namespace Dune
       asImp().diffusiveFlux( entity, x.quadrature(), x.point(), gradient, flux );
     }
 
+#if DUNE_FEM_COMPATIBILITY
     /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
      *
      *  The default implementation calls
@@ -161,6 +170,7 @@ namespace Dune
     {
       asImp().diffusiveFlux( entity, quadrature.point( quadPoint ), gradient, flux );
     }
+#endif
   };
 
 }
