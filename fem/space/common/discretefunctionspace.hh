@@ -250,6 +250,22 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
       return asImp().end();
     }
+    
+    /** \brief apply a functor to each entity in the associated grid partition
+     *
+     *  The functor must provide an the following operator
+     *  \code
+     *  template< class EntityType >
+     *  void operator() ( const EntityType & );
+     *  \endcode
+     *
+     *  \param[in]  f  functor to apply
+     */
+    template< class FunctorType >
+    inline void forEach ( FunctorType &f ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().forEach( f ) );
+    }
 
     /** \brief returns true if the grid has more than one geometry type
      *
@@ -423,16 +439,41 @@ namespace Dune
       return mapper().size();
     }
   
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin() const
+     *
+     *  \note The default implementation uses the codim 0 iterators of the
+     *        associated grid partition.
+     */
     inline IteratorType begin () const
     {
       return asImp().gridPart().template begin< 0 >();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end() const
+     *
+     *  \note The default implementation uses the codim 0 iterators of the
+     *        associated grid partition.
+     */
     inline IteratorType end () const
     {
       return asImp().gridPart().template end< 0 >();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::forEach(FunctorType &f) const
+     *
+     *  \note The default implementation simply does the following:
+     *  \code
+     *  const IteratorType end = asImp().end();
+     *  for( IteratorType it = asImp().begin(); it != end; ++it )
+     *    f( *it );
+     *  \endcode
+     */
+    template< class FunctorType >
+    inline void forEach ( FunctorType &f ) const
+    {
+      const IteratorType end = asImp().end();
+      for( IteratorType it = asImp().begin(); it != end; ++it )
+        f( *it );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleGeometryTypes */
