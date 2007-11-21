@@ -152,6 +152,12 @@ namespace Dune {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
     }
 
+    /** \brief initialize the vector to 0 */
+    inline void clear ()
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
+    }
+
     //! obtain begin iterator
     inline ConstIteratorType begin () const
     {
@@ -316,6 +322,13 @@ namespace Dune {
       for( unsigned int i = 0; i < size; ++i )
         asImp()[ i ] = s;
     }
+
+    /** \copydoc Dune::VectorInterface::clear() */
+    inline void clear ()
+    {
+      asImp().assign( 0 );
+    }
+
 
     //! obtain begin iterator
     inline ConstIteratorType begin () const
