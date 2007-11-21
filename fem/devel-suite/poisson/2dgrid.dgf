@@ -1,10 +1,10 @@
 DGF
-Interval
-0   0                % first corner
-1.0 1.0              % second corner
-8   8                %3 cells in both directions
+INTERVAL
+0    0      % first corner
+1    1      % second corner
+8    8      % 8 cells in both directions
+# end INTERVAL
 
 BOUNDARYDOMAIN
-default 1     % all other boundary segments have id 1
-
-# square.dgf
+default 1   % all other boundary segments have id 1
+# end BOUNDARYDOMAIN
