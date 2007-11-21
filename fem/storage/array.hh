@@ -220,6 +220,11 @@ namespace Dune
     {
       return !(*this == other);
     }
+
+    inline unsigned int index () const
+    {
+      return index_;
+    }
   };
 
 
