@@ -1,5 +1,163 @@
 namespace Dune
 {
+  
+  template< class VectorTraits >
+  struct VectorInterfaceArrayTraits
+  {
+    typedef typename VectorTraits :: VectorType ArrayType;
+
+    typedef typename VectorTraits :: FieldType ElementType;
+
+    typedef typename VectorTraits :: ConstIteratorType ConstIteratorType;
+    
+    typedef typename VectorTraits :: IteratorType IteratorType;
+  };
+
+
+
+  // VectorInterface
+  // ---------------
+
+  template< class Traits >
+  template< class T >
+  inline typename Traits :: VectorType &
+  VectorInterface< Traits > :: operator= ( const VectorInterface< T > &v )
+  {
+    asImp().assign( v );
+    return asImp();
+  }
+
+  template< class Traits >
+  inline typename Traits :: VectorType &
+  VectorInterface< Traits > :: operator= ( const ThisType &v )
+  {
+    asImp().assign( v );
+    return asImp();
+  }
+  
+  template< class Traits >
+  inline typename Traits :: VectorType &
+  VectorInterface< Traits > :: operator= ( const FieldType s )
+  {
+    asImp().assign( s );
+    return asImp();
+  }
+
+  template< class Traits >
+  inline const typename Traits :: FieldType &
+  VectorInterface< Traits > :: operator[] ( unsigned int index ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
+    return asImp()[ index ];
+  }
+
+  template< class Traits >
+  inline typename Traits :: FieldType &
+  VectorInterface< Traits > :: operator[] ( unsigned int index )
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
+    return asImp()[ index ];
+  }
+
+  template< class Traits >
+  template< class T >
+  inline typename Traits :: VectorType &
+  VectorInterface< Traits > :: operator+= ( const VectorInterface< T > &v )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator+=( v.asImp() ) );
+    return asImp();
+  }
+
+  template< class Traits >
+  template< class T >
+  inline typename Traits :: VectorType &
+  VectorInterface< Traits > :: operator-= ( const VectorInterface< T > &v )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator-=( v.asImp() ) );
+    return asImp();
+  }
+
+  template< class Traits >
+  inline typename Traits :: VectorType &
+  VectorInterface< Traits > :: operator*= ( const FieldType s )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator*=( s ) );
+    return asImp();
+  }
+  
+  template< class Traits >
+  template< class T >
+  inline typename Traits :: VectorType &
+  VectorInterface< Traits > :: addScaled ( const FieldType s,
+                                           const VectorInterface< T > &v )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().add( s, v.asImp() ) );
+    return asImp();
+  }
+  
+  template< class Traits >
+  template< class T >
+  inline void VectorInterface< Traits > :: assign ( const VectorInterface< T > &v )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v.asImp() ) );
+  }
+
+  template< class Traits >
+  inline void VectorInterface< Traits > :: assign ( const FieldType s )
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
+  }
+
+  template< class Traits >
+  inline void VectorInterface< Traits > :: clear ()
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
+  }
+
+  template< class Traits >
+  inline typename Traits :: ConstIteratorType
+  VectorInterface< Traits > :: begin () const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
+    return asImp().begin();
+  }
+
+  template< class Traits >
+  inline typename Traits :: IteratorType
+  VectorInterface< Traits > :: begin ()
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
+    return asImp().begin();
+  }
+
+  template< class Traits >
+  inline typename Traits :: ConstIteratorType
+  VectorInterface< Traits > :: end () const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
+    return asImp().end();
+  }
+
+  template< class Traits >
+  inline typename Traits :: IteratorType
+  VectorInterface< Traits > :: end ()
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
+    return asImp().end();
+  }
+  
+  template< class Traits >
+  inline unsigned int VectorInterface< Traits > :: size () const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
+    return asImp().size();
+  }
+
+
+  
+
+  // other things...
+  // ---------------
 
   //! Scalar product of two vectors
   template< class Traits1, class Traits2 >

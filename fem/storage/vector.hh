@@ -15,19 +15,11 @@
     @{
 */
 
-namespace Dune {
+namespace Dune
+{
 
   template< class VectorTraits >
-  struct VectorInterfaceArrayTraits
-  {
-    typedef typename VectorTraits :: VectorType ArrayType;
-
-    typedef typename VectorTraits :: FieldType ElementType;
-
-    typedef typename VectorTraits :: ConstIteratorType ConstIteratorType;
-    
-    typedef typename VectorTraits :: IteratorType IteratorType;
-  };
+  struct VectorInterfaceArrayTraits;
 
 
 
@@ -68,70 +60,35 @@ namespace Dune {
   public:
     //! Assign another vector to this one
     template< class T >
-    inline VectorType& operator= ( const VectorInterface< T > &v )
-    {
-      asImp().assign( v );
-      return asImp();
-    }
+    inline VectorType& operator= ( const VectorInterface< T > &v );
     
     //! Assign another vector to this one
-    inline VectorType& operator= ( const ThisType &v )
-    {
-      asImp().assign( v );
-      return asImp();
-    }
+    inline VectorType& operator= ( const ThisType &v );
 
     //! Initialize all fields of this vector with a scalar
-    inline VectorType &operator= ( const FieldType s )
-    {
-      asImp().assign( s );
-      return asImp();
-    }
+    inline VectorType &operator= ( const FieldType s );
 
     //! Returns a const reference to the field indexed by index
-    inline const FieldType &operator[] ( unsigned int index ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
-      return asImp()[ index ];
-    }
+    inline const FieldType &operator[] ( unsigned int index ) const;
 
     //! Returns a reference to the field indexed by index
-    inline FieldType &operator[] ( unsigned int index )
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
-      return asImp()[ index ];
-    }
+    inline FieldType &operator[] ( unsigned int index );
 
     //! Add another vector to this one
     template< class T >
-    inline VectorType &operator+= ( const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator+=( v.asImp() ) );
-      return asImp();
-    }
+    inline VectorType &operator+= ( const VectorInterface< T > &v );
 
     //! Subtract another vector from this one
     template< class T >
-    inline VectorType &operator-= ( const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator-=( v.asImp() ) );
-      return asImp();
-    }
+    inline VectorType &operator-= ( const VectorInterface< T > &v );
 
     //! Multiply this vector by a scalar
-    inline VectorType &operator*= ( const FieldType s )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator*=( s ) );
-      return asImp();
-    }
+    inline VectorType &operator*= ( const FieldType s );
             
     //! Add a multiple of another vector to this one
     template< class T >
-    inline VectorType &addScaled ( const FieldType s, const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().add( s, v.asImp() ) );
-      return asImp();
-    }
+    inline VectorType &addScaled ( const FieldType s,
+                                   const VectorInterface< T > &v );
     
     /** \brief copy another vector to this one
      *
@@ -141,57 +98,28 @@ namespace Dune {
      *  \param[in]  v  vector to copy
      */
     template< class T >
-    inline void assign ( const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v.asImp() ) );
-    }
+    inline void assign ( const VectorInterface< T > &v );
 
     //! Initialize all fields of this vector with a scalar
-    inline void assign ( const FieldType s )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
-    }
+    inline void assign ( const FieldType s );
 
     /** \brief initialize the vector to 0 */
-    inline void clear ()
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
-    }
+    inline void clear ();
 
     //! obtain begin iterator
-    inline ConstIteratorType begin () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
-      return asImp().begin();
-    }
+    inline ConstIteratorType begin () const;
 
     //! obtain begin iterator
-    inline IteratorType begin ()
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
-      return asImp().begin();
-    }
+    inline IteratorType begin ();
 
     //! obtain end iterator
-    inline ConstIteratorType end () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
-      return asImp().end();
-    }
+    inline ConstIteratorType end () const;
 
     //! obtain end iterator
-    inline IteratorType end ()
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
-      return asImp().end();
-    }
+    inline IteratorType end ();
     
     //! Returns the vector's size
-    inline unsigned int size () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
-      return asImp().size();
-    }
+    inline unsigned int size () const;
   };
 
 
