@@ -64,13 +64,18 @@ namespace Dune
     //! type of the function space
     typedef FunctionSpaceImp FunctionSpaceType;
 
+    //! type of the implementation (Barton-Nackman)
+    typedef LinearEllipticModelImp LinearEllipticModelType;
+
     //! type properties the properties structure
     typedef PropertiesImp Properties;
 
   private:
     typedef LinearEllipticModelInterface
-      < FunctionSpaceType, LinearEllipticModelImp, Properties >
+      < FunctionSpaceType, LinearEllipticModelType, Properties >
       ThisType;
+    typedef DiffusionModelInterface< FunctionSpaceType, LinearEllipticModelType >
+      BaseType;
 
   public:
     //! type of the interface
@@ -88,35 +93,10 @@ namespace Dune
     //! field type of the range
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
+  protected:
+    using BaseType :: asImp;
+    
   public:
-#if 0
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void generalizedNeumannValues
-      ( const IntersectionIteratorType &intersection,
-        const QuadratureType &quadrature,
-        int point,
-        RangeType &phi
-      ) const
-    {
-      assert( Properties :: hasGeneralizedNeumannValues );
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().generalizedNeumannValues( intersection, quadrature, point, phi ) );
-    }
-
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType generalizedNeumannAlpha
-      ( const IntersectionIteratorType &intersection,
-        const QuadratureType &quadrature,
-        int point
-      ) const
-    {
-      assert( Properties :: hasGeneralizedNeumannValues );
-      CHECK_INTERFACE_IMPLEMENTATION
-        ( asImp().generalizedNeumannAlpha( intersection, quadrature, point ) );
-      return asImp().generalizedNeumannAlpha( intersection, quadrature, point );
-    }
-#endif
-
     /** \brief evaluate the convective flux in a point
      *
      *  \param[in]   entity      entity to evaluate the flux on
@@ -124,9 +104,9 @@ namespace Dune
      *  \param[in]   phi         value of the solution in the evaluation point
      *  \param[out]  flux        variable to receive the evaluated flux
      */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void convectiveFlux ( const EntityType &entity,
-                                 const DomainType &x,
+                                 const PointType &x,
                                  const RangeType &phi,
                                  JacobianRangeType &flux ) const
     {
@@ -134,7 +114,8 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().convectiveFlux( entity, x, phi, flux ) );
     }
-    
+   
+#if DUNE_FEM_COMPATIBILITY
     /** \brief evaluate the convective flux in a quadrature point
      *
      *  \param[in]   entity      entity to evaluate the flux on
@@ -154,6 +135,7 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().convectiveFlux( entity, quadrature, quadPoint, phi, flux ) );
     }
+#endif
     
     /** \brief evaluate the mass in a point
      *
@@ -161,9 +143,9 @@ namespace Dune
      *  \param[in]   x           evaluaton point (in local coordinates)
      *  \param[out]  ret         variable to receive the evaluated mass
      */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void mass ( const EntityType &entity,
-                       const DomainType &x,
+                       const PointType &x,
                        RangeType &ret ) const
     {
       assert( Properties :: hasMass );
@@ -171,6 +153,7 @@ namespace Dune
         ( asImp().mass( entity, x, ret ) );
     }
 
+#if DUNE_FEM_COMPATIBILITY
     /** \brief evaluate the mass in a quadrature point
      *
      *  \param[in]   entity      entity to evaluate the mass on
@@ -188,6 +171,7 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().mass( entity, quadrature, quadPoint, ret ) );
     }
+#endif
     
     /** \brief evaluate the source in a point
      *
@@ -195,9 +179,9 @@ namespace Dune
      *  \param[in]   x           evaluaton point (in local coordinates)
      *  \param[out]  ret         variable to receive the evaluated source
      */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void source ( const EntityType &entity,
-                         const DomainType &x,
+                         const PointType &x,
                          RangeType &ret ) const
     {
       assert( Properties :: hasSource );
@@ -205,6 +189,7 @@ namespace Dune
         ( asImp().source( entity, x, ret ) );
     }
 
+#if DUNE_FEM_COMPATIBILITY
     /** \brief evaluate the source in a quadrature point
      *
      *  \param[in]   entity      entity to evaluate the source on
@@ -222,7 +207,9 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().source( entity, quadrature, quadPoint, ret ) );
     }
+#endif
 
+#if 0
   protected:
     inline const LinearEllipticModelImp &asImp () const
     {
@@ -233,6 +220,7 @@ namespace Dune
     {
       return static_cast< LinearEllipticModelImp & >( *this );
     }
+#endif
   };
 
 
@@ -261,6 +249,9 @@ namespace Dune
 
   public:
     using BaseType :: diffusiveFlux;
+    using BaseType :: convectiveFlux;
+    using BaseType :: mass;
+    using BaseType :: source;
 
   protected:
     using BaseType :: asImp;
@@ -277,6 +268,11 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
     
   public:
+    inline LinearEllipticModelDefault ()
+    : boundaryModelDefault_()
+    {
+    }
+    
     template< class IntersectionIteratorType, class QuadratureType >
     inline void dirichletValues ( const IntersectionIteratorType &intersection,
                                   const QuadratureType &quadrature,
@@ -311,38 +307,31 @@ namespace Dune
     {
       return boundaryModelDefault_.robinAlpha( intersection, quadrature, point );
     }
-
-
-#if 0
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void generalizedNeumannValues
-      ( const IntersectionIteratorType &intersection,
-        const QuadratureType &quadrature,
-        int point,
-        RangeType &phi
-      ) const
-    {
-      assert( Properties :: hasGeneralizedNeumannValues );
-      phi = 0;
-    }
-
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType generalizedNeumannAlpha
-      ( const IntersectionIteratorType &intersection,
-        const QuadratureType &quadrature,
-        int point
-      ) const
-    {
-      assert( Properties :: hasGeneralizedNeumannValues );
-      return 0;
-    }
-#endif
     
+    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
+     *
+     *  The default implementation calls
+     *  \code
+     *  FieldVector< deriType, 0 > diffVar;
+     *  diffusiveFlux( diffVar, entity, x, gradient, flux );
+     *  \endcode
+     */
+    template< class EntityType, class PointType >
+    inline void diffusiveFlux ( const EntityType &entity,
+                                const PointType &x,
+                                const JacobianRangeType &gradient,
+                                JacobianRangeType &flux ) const
+    {
+      FieldVector< deriType, 0 > diffVar;
+      asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
+    }
+   
+#if DUNE_FEM_COMPATIBILITY
     /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
      *
      *  The default implementation calls
      *  \code
-     *  diffusiveFlux( entity, quadrature.point( quadpoint ), gradient, flux );
+     *  diffusiveFlux( entity, quadrature[ quadpoint ], gradient, flux );
      *  \endcode
      */
     template< class EntityType, class QuadratureType >
@@ -352,16 +341,17 @@ namespace Dune
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
-      asImp().diffusiveFlux( entity, quadrature.point( quadPoint ), gradient, flux );
+      asImp().diffusiveFlux( entity, quadrature[ quadPoint ], gradient, flux );
     }
+#endif
 
-    /** \copydoc Dune::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const DomainType &x,const RangeType &phi,JacobianRangeType &flux) const
+    /** \copydoc Dune::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const PointType &x,const RangeType &phi,JacobianRangeType &flux) const
      *
      *  The default implementation returns 0.
      */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void convectiveFlux ( const EntityType &entity,
-                                 const DomainType &x,
+                                 const PointType &x,
                                  const RangeType &phi,
                                  JacobianRangeType &flux ) const
     {
@@ -369,11 +359,12 @@ namespace Dune
       flux = 0;
     }
 
+#if DUNE_FEM_COMPATIBILITY
     /** \copydoc Dune::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const RangeType &phi,JacobianRangeType &flux) const
      *
      *  The default implementation calls
      *  \code
-     *  convectiveFlux( entity, quadrature.point( quadPoint ), phi, ret );
+     *  convectiveFlux( entity, quadrature[ quadPoint ], phi, ret );
      *  \endcode
      */
     template< class EntityType, class QuadratureType >
@@ -383,27 +374,29 @@ namespace Dune
                                  const RangeType &phi,
                                  JacobianRangeType &flux ) const
     {
-      asImp().convectiveFlux( entity, quadrature.point( quadPoint ), phi, flux );
+      asImp().convectiveFlux( entity, quadrature[ quadPoint ], phi, flux );
     }
+#endif
 
-    /** \copydoc Dune::LinearEllipticModelInterface::mass(const EntityType &entity,const DomainType &x,RangeType &ret) const
+    /** \copydoc Dune::LinearEllipticModelInterface::mass(const EntityType &entity,const PointType &x,RangeType &ret) const
      *
      *  The default implementation returns 0.
      */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void mass ( const EntityType &entity,
-                       const DomainType &x,
+                       const PointType &x,
                        RangeType &ret ) const
     {
       assert( Properties :: hasMass );
       ret = 0;
     }
 
+#if DUNE_FEM_COMPATIBILITY
     /** \copydoc Dune::LinearEllipticModelInterface::mass(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
      *
      *  The default implementation calls
      *  \code
-     *  mass( entity, quadrature.point( quadPoint ), ret );
+     *  mass( entity, quadrature[ quadPoint ], ret );
      *  \endcode
      */
     template< class EntityType, class QuadratureType >
@@ -412,27 +405,29 @@ namespace Dune
                        const int quadPoint,
                        RangeType &ret ) const
     {
-      asImp().mass( entity, quadrature.point( quadPoint ), ret );
+      asImp().mass( entity, quadrature[ quadPoint ], ret );
     }
+#endif
     
-    /** \copydoc Dune::LinearEllipticModelInterface::source(const EntityType &entity,const DomainType &x,RangeType &ret) const
+    /** \copydoc Dune::LinearEllipticModelInterface::source(const EntityType &entity,const PointType &x,RangeType &ret) const
      *
      *  The default implementation returns 0.
      */
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void source ( const EntityType &entity,
-                         const DomainType &x,
+                         const PointType &x,
                          RangeType &ret ) const
     {
       assert( Properties :: hasSource );
       ret = 0;
     }
-    
+   
+#if DUNE_FEM_COMPATIBILITY
     /** \copydoc Dune::LinearEllipticModelInterface::source(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
      *
      *  The default implementation calls
      *  \code
-     *  source( entity, quadrature.point( quadPoint ), ret );
+     *  source( entity, quadrature[ quadPoint ], ret );
      *  \endcode
      */
     template< class EntityType, class QuadratureType >
@@ -441,8 +436,9 @@ namespace Dune
                          const int quadPoint,
                          RangeType &ret ) const
     {
-      asImp().source( entity, quadrature.point( quadPoint ), ret );
+      asImp().source( entity, quadrature[ quadPoint ], ret );
     }
+#endif
   };
 
 }

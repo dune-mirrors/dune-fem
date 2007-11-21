@@ -443,7 +443,7 @@ namespace Dune
         for( int i = 0; i < numBaseFunctions; ++i )
         {
           JacobianRangeType &gradPhi = gradPhiPtr_[ i ];
-          baseSet.jacobian( i, quadrature, pt, gradPhi );
+          baseSet.jacobian( i, quadrature[ pt ], gradPhi );
           // multiply with transposed of the jacobian inverse 
           gradPhi[ 0 ] = FMatrixHelp :: mult( inv, gradPhi[ 0 ] );
         }
@@ -453,7 +453,7 @@ namespace Dune
         for( int j = 0; j < numBaseFunctions; ++j )
         {
           JacobianRangeType psi;
-          model.diffusiveFlux( entity, quadrature, pt, gradPhiPtr_[ j ], psi );
+          model.diffusiveFlux( entity, quadrature[ pt ], gradPhiPtr_[ j ], psi );
           for( int i = 0; i < numBaseFunctions; ++i )
             matrix.add( i, j, factor * (psi[ 0 ] * gradPhiPtr_[ i ][ 0 ]) );
         }            
@@ -514,18 +514,18 @@ namespace Dune
 	      { 
           // evaluate gradient of base function
           JacobianRangeType gradPhi;
-          baseFunctionSet.jacobian( i, quadrature, pt, gradPhi );  
+          baseFunctionSet.jacobian( i, quadrature[ pt ], gradPhi );  
 		      gradPhi[ 0 ] = FMatrixHelp :: mult ( inv, gradPhi[ 0 ] );
 		
           for( int j = 0; j < numBaseFunctions; ++j )
           {
             // evaluate base function
             RangeType phi;
-            baseFunctionSet.evaluate( j, quadrature, pt, phi );
+            baseFunctionSet.evaluate( j, quadrature[ pt ], phi );
             
             // evaluate convectiveFlux
             JacobianRangeType flux;
-            model.convectiveFlux( entity, quadrature, pt, phi, flux );
+            model.convectiveFlux( entity, quadrature[ pt ], phi, flux );
 
             matrix.add( i, j, factor * (flux[ 0 ] * gradPhi[ 0 ]) );
           }
@@ -583,16 +583,16 @@ namespace Dune
 	      for( int i = 0; i < numBaseFunctions; ++i )
         {
 	        RangeType phi_i;
-          baseFunctionSet.evaluate( i, quadrature, pt, phi_i );
+          baseFunctionSet.evaluate( i, quadrature[ pt ], phi_i );
 
           for( int j = 0; j < numBaseFunctions; ++j )
           {
 	          RangeType phi_j;
-            baseFunctionSet.evaluate( j, quadrature, pt, phi_j );
+            baseFunctionSet.evaluate( j, quadrature[ pt ], phi_j );
             phi_j *= factor;
             
     	      RangeType mass;
-            model.mass( entity, quadrature, pt, mass );
+            model.mass( entity, quadrature[ pt ], mass );
             matrix.add( i, j, mass[ 0 ] * (phi_i[ 0 ] * phi_j[ 0 ]) );
           }
         }
@@ -738,11 +738,11 @@ namespace Dune
           for( int i = 0; i < numBaseFunctions; ++i ) 
           {
             RangeType phi_i;
-            baseFunctionSet.evaluate( i, quadrature, pt, phi_i );
+            baseFunctionSet.evaluate( i, quadrature[ pt ], phi_i );
             for( int j = 0; j < numBaseFunctions; ++j ) 
 			      {
               RangeType phi_j;
-              baseFunctionSet.evaluate( j, quadrature, pt, phi_j );
+              baseFunctionSet.evaluate( j, quadrature[ pt ], phi_j );
               matrix.add( i, j, factor * (phi_i[ 0 ] * phi_j[ 0 ]) );
             }
           }
@@ -1015,10 +1015,10 @@ namespace Dune
         for( int i = 0; i < numBaseFunctions; ++i ) 
         {
           RangeType phi;
-          baseFunctionSet.evaluate( i, quadrature, pt, phi );
+          baseFunctionSet.evaluate( i, quadrature[ pt ], phi );
           
           RangeType source;
-          model.source( entity, quadrature, pt, source );
+          model.source( entity, quadrature[ pt ], source );
 
           elRhs[ i ] += factor * (source[ 0 ] * phi[ 0 ]);
         }
@@ -1089,7 +1089,7 @@ namespace Dune
           for( int i = 0; i < numBaseFunctions; ++i )
           {
             RangeType phi;
-            baseFunctionSet.evaluate( i, quadrature, pt, phi );  
+            baseFunctionSet.evaluate( i, quadrature[ pt ], phi );  
             
             RangeType value;
             model.neumannValues( it, quadrature, pt, value );
@@ -1161,7 +1161,7 @@ namespace Dune
           for( int i = 0; i < numBaseFunctions; ++i ) 
           {
             RangeType phi;
-            baseFunctionSet.evaluate( i, quadrature, pt, phi );  
+            baseFunctionSet.evaluate( i, quadrature[ pt ], phi );  
             
             RangeType value;
             model.robinValues( it, quadrature, pt, value );
@@ -1171,80 +1171,6 @@ namespace Dune
         } // end loop over quadrature points
       } // end loop over intersections
     }
-
-#if 0
-    /**  adds a multiple of a Robin term contribution to the rhs 
-     *
-     *   This method can be used as a building block for problem specific 
-     *   ElementRhsIntegrators.
-     * 
-     *   The elRhs vector is increased by the following values:
-     *   \f[
-     *      b_i + = coef * \int_{neumann_boundary of entity} generalizedNeumannValues * phi_i 
-     *   \f]
-     *   By accessing only the local basis functions, only few 
-     *   values b_i are updated.
-     *
-     *   If this function is used, the model must provide a 
-     *   robinValues and a boundaryType method
-     *
-     *   by keeping the method templatized, the model requirements really only 
-     *   are demanding, if these building blocks are used. So also simple 
-     *   models can be realized.
-     *
-     *  \param[in]  entity       entity over which the intrgration is performed
-     *  \param      elRhs        local function to update
-     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
-     */
-    template< class EntityType, class ElementRhsType >
-    void addGeneralizedNeumannElementRhs ( const EntityType &entity,
-                                           ElementRhsType &elRhs,
-                                           double coefficient = 1 ) // const
-    {
-      assert( ModelType :: Properties :: hasGeneralizedNeumannValues );
-
-      enum { quadratureDegree = TraitsType :: quadDegree };
-      
-      const ModelType &model = this->model();
-
-      const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace();
-      const GridPartType &gridPart = dfSpace.gridPart();
-      
-      const IntersectionIteratorType end = gridPart.iend( entity );
-      for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
-      {
-        if( !it.boundary() )
-          continue;
-        if( model.boundaryType( it ) != ModelType :: GeneralizedNeumann )
-          continue;
-        
-        const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
-        const int numBaseFunctions =  baseFunctionSet.numBaseFunctions();
- 
-        // integrate over intersection
-        IntersectionQuadratureType quadrature
-          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
-        const int numQuadraturePoints = quadrature.nop(); 
-        for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
-        {  
-          // the following seems wrong...
-          const double volume
-            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
-          const double factor = coefficient * quadrature.weight( pt ) * volume;
-        
-          for( int i=0; i < numBaseFunctions; ++i ) 
-          {
-            RangeType phi;
-            baseFunctionSet.evaluate( i, quadrature, pt, phi );
-            
-            RangeType value;
-            model.generalizedNeumannValues( it, quadrature, pt, value );
-            elRhs[ i ] += factor * (value[ 0 ] * phi[ 0 ]);
-          }
-        } // end loop over quadrature points
-      } // end loop over intersections
-    } //end of addGeneralizedNeumannElementRhs
-#endif
   
   private:
     //! reference to the underlying model specified during construction

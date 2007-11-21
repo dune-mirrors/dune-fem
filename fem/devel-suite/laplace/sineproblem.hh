@@ -123,9 +123,9 @@ namespace Dune
     using DiffusionModelBaseType :: diffusiveFlux;
 
   public:
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const DomainType &x,
+                                const PointType &x,
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {

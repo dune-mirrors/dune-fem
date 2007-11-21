@@ -123,23 +123,23 @@ namespace Dune
       ret[ 0 ] = 0.0;
     }
 
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void source ( const EntityType &entity,
-                         const DomainType &x,
+                         const PointType &x,
                          RangeType &ret ) const
     {
       const int dimension = DomainType :: dimension;
       
-      const DomainType &global = entity.geometry().global( x );
+      const DomainType &global = entity.geometry().global( coordinate( x ) );
       
       ret[ 0 ] = (dimension * M_PI * M_PI);
       for( int i = 0; i < dimension; ++i )
         ret[ 0 ] *= sin( M_PI * global[ i ] );
     }
 
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const DomainType &x,
+                                const PointType &x,
                                 const JacobianRangeType &gradient, 
                                 JacobianRangeType &flux ) const
     {
@@ -349,30 +349,30 @@ namespace Dune
       //ret = (2 + q - s * x[ 1 ]) * (1 + x[ 1 ]) - q;
     }
     
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void mass ( const EntityType &entity,
-                       const DomainType &x,
+                       const PointType &x,
                        RangeType &ret ) const
     {
-      const DomainType &global = entity.geometry().global( x ); 
+      const DomainType &global = entity.geometry().global( coordinate( x ) ); 
       ret = r * global[ 0 ] * global[ 1 ];
     }
 
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void source( const EntityType &entity,
-                        const DomainType &x,
+                        const PointType &x,
                         RangeType &ret ) const
     {
-      const DomainType &global = entity.geometry().global( x );     
+      const DomainType &global = entity.geometry().global( coordinate( x ) ); 
       ret = 2 * q
             + s * (global[ 0 ] + global[ 1 ]) * (1 + global[ 1 ])
             + s * global[ 0 ] * global[ 1 ]
             + r * SQR( global[ 0 ] ) * global[ 1 ] * (1 + global[ 1 ]);
     }
 
-    template< class EntityType >  
+    template< class EntityType, class PointType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const DomainType &x,
+                                const PointType &x,
                                 const JacobianRangeType &gradphi,
                                 JacobianRangeType &ret ) const
     {
@@ -380,13 +380,13 @@ namespace Dune
       ret[ 0 ][ 1 ] = (1 + q) * gradphi[ 0 ][ 1 ] - q * gradphi[ 0 ][ 0 ]; 
     }
 
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void convectiveFlux( const EntityType &entity,
-                                const DomainType &x,
+                                const PointType &x,
                                 const RangeType &phi,
                                 JacobianRangeType &ret ) const
     {
-      const DomainType &global = entity.geometry().global( x );
+      const DomainType &global = entity.geometry().global( coordinate( x ) );
       ret[ 0 ][ 0 ] = -global[ 1 ] * s * phi[ 0 ];
       ret[ 0 ][ 1 ] = -global[ 1 ] * s * phi[ 0 ];
     }
@@ -570,30 +570,30 @@ namespace Dune
           4.0 - SQR(glob[1])*glob[2];
     }
     
-    template< class EntityType > 
+    template< class EntityType, class PointType > 
     inline void mass ( const EntityType &entity,
-                       const DomainType &x,
+                       const PointType &x,
                        RangeType &ret ) const
     {
-      const DomainType &global = entity.geometry().global( x ); 
+      const DomainType &global = entity.geometry().global( coordinate( x ) );
       ret = global[ 0 ] * global[ 1 ];
     }
 
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void source ( const EntityType &entity,
-                         const DomainType &x,
+                         const PointType &x,
                          RangeType &ret ) const
     {
-      const DomainType &global = entity.geometry().global( x );     
+      const DomainType &global = entity.geometry().global( coordinate( x ) ); 
       ret = 2 * global[2] + 3* global[1] + 3 * global[0] + 
            SQR(global[1])*global[2] + 2* global[0] * global[1]* global[2] + 
                 global[0] * SQR(global[1]) + SQR(global[0]*global[1]) * global[2] + 
                 SQR(global[0]) * global[1];
     }
 
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const DomainType &x,
+                                const PointType &x,
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
@@ -603,13 +603,13 @@ namespace Dune
       flux[ 0 ] [2 ] = -grad[ 0 ] - grad[ 1 ] + 3 * grad[ 2 ];
     }
 
-    template< class EntityType >
+    template< class EntityType, class PointType >
     inline void convectiveFlux( const EntityType &entity,
-                                const DomainType &x,
+                                const PointType &x,
                                 const RangeType &phi,
                                 JacobianRangeType &ret ) const
     {
-      const DomainType global = entity.geometry().global( x );
+      const DomainType global = entity.geometry().global( coordinate( x ) );
       ret[ 0 ][ 0 ] = -global[ 1 ] * phi[ 0 ];
       ret[ 0 ][ 1 ] = -global[ 1 ] * phi[ 0 ];
       ret[ 0 ][ 2 ] = -global[ 1 ] * phi[ 0 ];

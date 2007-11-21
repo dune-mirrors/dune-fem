@@ -2,6 +2,7 @@
 #define DUNE_FEM_DIFFUSIONMODEL_HH
 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/operator/common/mapping.hh>
 
 #ifndef DUNE_FEM_COMPATIBILITY
 #define DUNE_FEM_COMPATIBILITY 1
@@ -64,6 +65,26 @@ namespace Dune
     using BaseType :: asImp;
 
   public:
+    /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
+     *
+     *  \param[in]  diffVariable  vector describin the partial derivative to
+     *                            evaluate
+     *  \param[in]  entity        entity to evaluate the flux on
+     *  \param[in]  x             evaluation point (in local coordinates)
+     *  \param[in]  gradient      \f$\nabla u\f$ in the evaluation point
+     *  \param[out] flux          variable to receive the evaluated flux
+     */
+    template< int diffOrder, class EntityType, class PointType >
+    inline void diffusiveFlux ( const FieldVector< deriType, diffOrder > &diffVariable,
+                                const EntityType &entity,
+                                const PointType &x,
+                                const JacobianRangeType &gradient,
+                                JacobianRangeType &flux ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().diffusiveFlux( diffVariable, entity, x, gradient, flux ) );
+    }
+
     /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
      *
      *  \param[in]  entity      entity to evaluate the flux on
@@ -143,14 +164,22 @@ namespace Dune
     using BaseType :: asImp;
 
   public:
-    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const */
-    template< class EntityType, class QuadratureType >
+    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
+     *
+     *  The default implementation calls
+     *  \code
+     *  FieldVector< deriType, 0 > diffVar;
+     *  diffusiveFlux( diffVar, entity, x, gradient, flux );
+     *  \endcode
+     */
+    template< class EntityType, class PointType >
     inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadraturePointWrapper< QuadratureType > &x,
+                                const PointType &x,
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
-      asImp().diffusiveFlux( entity, x.quadrature(), x.point(), gradient, flux );
+      FieldVector< deriType, 0 > diffVar;
+      asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
     }
 
 #if DUNE_FEM_COMPATIBILITY
@@ -158,7 +187,7 @@ namespace Dune
      *
      *  The default implementation calls
      *  \code
-     *  diffusiveFlux( entity, quadrature.point( quadpoint ), gradient, flux );
+     *  diffusiveFlux( entity, quadrature[ quadpoint ], gradient, flux );
      *  \endcode
      */
     template< class EntityType, class QuadratureType >
@@ -168,7 +197,7 @@ namespace Dune
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
-      asImp().diffusiveFlux( entity, quadrature.point( quadPoint ), gradient, flux );
+      asImp().diffusiveFlux( entity, quadrature[ quadPoint ], gradient, flux );
     }
 #endif
   };
