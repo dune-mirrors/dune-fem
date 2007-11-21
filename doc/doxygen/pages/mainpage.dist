@@ -18,9 +18,6 @@ main features and concepts can be found \ref Intro "here".
 Newly added implementations are linked on
 \ref newimplementation "this page".
 
-Some remarks about writting dune-fem documentation is
-found \ref DocRules "here".
-
 **/
 
 /** 

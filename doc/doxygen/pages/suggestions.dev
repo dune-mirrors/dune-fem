@@ -24,6 +24,12 @@
  *    least as RangeFieldType).
  *  - more documentation for I/O
  *  - Extend <fem/misc/eoc> and make errors stored in FieldVector possible.
+ *  - Unify the naming and parameter ordering of axpy operations. Maybe the
+ *    best choice is to use the following:
+ *    \code
+ *    ThisType &axpy ( const FieldType &a, const ThisType &x );
+ *    \endcode
+ *    This is the way its done in FieldVector.
  *  .
  *
  *  \section after10 ... that Should Be Implemented After 1.0
