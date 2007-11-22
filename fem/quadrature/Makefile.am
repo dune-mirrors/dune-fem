@@ -1,5 +1,4 @@
-SUBDIRS = caching test 
-
+SUBDIRS = caching test
 
 quadraturedir =  $(includedir)/dune/fem/quadrature
 quadrature_HEADERS = cachepointlist.hh \
@@ -20,4 +19,3 @@ quadrature_HEADERS = cachepointlist.hh \
 										 pyramidpoints.hh \
 										 quadprovider.hh \
 										 simplexpoints.hh
-#ugquadratures.hh ugquadratures.cc 

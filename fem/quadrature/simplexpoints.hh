@@ -9,7 +9,7 @@
 //#define USE_UG_QUADRATURES 
 //- local includes 
 #ifdef USE_UG_QUADRATURES
-#include "ugquadratures.hh"
+#include "extra/ugquadratures.hh"
 #endif
 
 // include pardg quadratures 
