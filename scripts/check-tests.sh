@@ -10,7 +10,7 @@ cd $1
 FEMDIR=`pwd`
 
 CHECKLOG=$WORKINGDIR/check-tests.out
-make check &> $CHECKLOG
+make -i check &> $CHECKLOG
 if test x`grep "All [[:digit:]]\+ tests passed" $CHECKLOG` == x ; then
   exit 1
 else

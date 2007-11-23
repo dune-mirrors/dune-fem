@@ -10,8 +10,12 @@ if test \( $# -lt 1 \) -o ! -e $1/$DUNECONTROL ; then
   exit 1
 fi
 
-echo "Full Check of dune-fem (running on $HOSTNAME)"
-echo "----------------------------------------------------------------------"
+echo "Full Check of dune-fem"
+echo "----------------------"
+
+echo
+echo "Host Name: $HOSTNAME"
+echo "Host Type: $HOSTTYPE"
 
 # set up some variables
 # ---------------------
