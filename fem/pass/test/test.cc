@@ -2,7 +2,7 @@
 // "The Simplest Automated Unit Test Framework That Could Possibly Work"
 // Numeric test feature courtesy to P. Frauenfelder (Concepts)
 
-#include "test.hh"
+#include <dune/fem/misc/test.hh>
 #include <cmath>
 #include <iostream>
 #include <typeinfo>     // Visual Studio requires /GR""

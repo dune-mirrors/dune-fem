@@ -14,3 +14,4 @@ tester_SOURCES = main.cc test.cc suite.cc pass_test.cc helper_test.cc \
 #tester_CXXFLAGS = $(ALUGRID_CPPFLAGS) $(AM_CPPFLAGS)
 #tester_LDADD = $(ALUGRID_LDFLAGS) $(ALUGRID_LIBS) $(AM_LDFLAGS)
 
+# CXXFLAGS =

@@ -4,7 +4,7 @@
 #include <dune/config.h>
 #include <string>
 
-#include "test.hh"
+#include <dune/fem/misc/test.hh>
 
 namespace Dune {
   

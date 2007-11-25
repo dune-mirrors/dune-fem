@@ -3,7 +3,7 @@
 #include <dune/config.h>
 
 #include "suite.hh"
-#include "test.hh"
+#include <dune/fem/misc/test.hh>
 #include "pass_test.hh"
 #include "helper_test.hh"
 

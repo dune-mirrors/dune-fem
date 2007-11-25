@@ -4,7 +4,7 @@
 #ifndef SUITE_HH
 #define SUITE_HH
 
-#include "test.hh"   // includes <string>, <iostream>
+#include <dune/fem/misc/test.hh>   // includes <string>, <iostream>
 #include <vector>
 #include <stdexcept>
 using std::string;

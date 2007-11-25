@@ -1,10 +1,10 @@
 #ifndef DUNE_PASSHELPER_TEST_HH
 #define DUNE_PASSHELPER_TEST_HH
 
-#include "test.hh"
+#include <dune/fem/misc/test.hh>
 
 #include "../selection.hh"
-#include "../caller.hh"
+#include "../callerutility.hh"
 
 #include <dune/fem/dfadapt.hh>
 #include <dune/common/utility.hh>
