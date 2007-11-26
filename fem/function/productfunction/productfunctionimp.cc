@@ -75,7 +75,7 @@ ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
  return AdaptiveDiscreteFunction< DiscreteFunctionSpaceType> ( name(), this->functionSpace_, &(dofVec_.leakPointer()[this->functionSpace_.size()*space2().mapToGlobal( en2 ,dofIndex2)]));
  
 }
-
+#if 0
 //local function for given entity2 and local coordinate of second space and discrete function of first space
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 template < class Entity2Type, class LocalCoord2Type>
@@ -97,6 +97,7 @@ localFunction(const Entity2Type &en2, const LocalCoord2Type &loc2,  DiscreteFunc
  }
 	
 }
+#endif
 
 //local function for given entity2, quadrature type and qudrature point number of second space and discrete function of first space
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
@@ -112,11 +113,32 @@ inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionS
  for(int i = 0; i< numOfDofs; i++) 
  {
   const int map = space2().mapToGlobal( en2 , i );  
-  bSet2.evaluate(i,quad2,pointNr,tmp_);
+  bSet2.evaluate(i,quad2[pointNr],tmp_);
   DiscreteFunction1Type df = this->localFunction(map);
 	    discFunc.addScaled(df,tmp_);
  }
 	
+}
+
+//local function for given entity2, quadrature type and qudrature point number of second space and discrete function of first space
+template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
+template < class Entity2Type, class PointType>
+inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
+localFunction(const Entity2Type &en2, const PointType &pt, DiscreteFunction1Type &discFunc) const
+{
+ typedef typename DiscreteFunctionSpace2Type::BaseFunctionSetType BaseFunctionSetType;
+ typename DiscreteFunctionSpace2Type::RangeType tmp_;
+ discFunc.clear();
+ const BaseFunctionSetType bSet2 = space2().baseFunctionSet(en2);
+ const int numOfDofs = bSet2.numBaseFunctions();
+ 
+ for(int i = 0; i< numOfDofs; i++) 
+ {
+  const int map = space2().mapToGlobal( en2 , i );  
+  bSet2.evaluate(pt,tmp_);
+  DiscreteFunction1Type df = this->localFunction(map);
+	    discFunc.addScaled(df,tmp_);
+ }
 }
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type> 

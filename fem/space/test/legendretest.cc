@@ -171,7 +171,7 @@ class L2Projection
 	{// double det = (*it).geometry().integrationElement( quad.point(qP) );
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<numDofs; ++i) {
-          baseset.evaluate(i,quad,qP,phi);
+          baseset.evaluate(i,quad[qP],phi);
 	  
 	  //	  tmp[i]+=quad.weight(qP)*SQR(phi)*det ;
           lf[i] += quad.weight(qP) * (ret * phi)/*det*/ ;
@@ -235,7 +235,7 @@ public:
         double weight = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
 	f.jacobian((*it).geometry().global(quad.point(qP)),psi);
-        lf.evaluate(quad,qP,phi);
+        lf.evaluate(quad[qP],phi);
 	lf.jacobian(quad,qP,xi);
 	
 	tmp=0.0;
@@ -287,7 +287,7 @@ template <class FunctionType>
         double weight = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
        
-	lf.evaluate(quad,qP,phi);
+	lf.evaluate(quad[qP],phi);
 
         for(int i=0; i< dimRange; ++i)
           error[i] += weight * SQR(ret[i] - phi[i]);

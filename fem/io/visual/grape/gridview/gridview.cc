@@ -43,7 +43,7 @@
 #include <string>
 #include <config.h>
 #include <dune/common/stdstreams.cc>
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapegriddisplay.hh>

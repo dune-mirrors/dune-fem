@@ -2,7 +2,7 @@
 #define DUNE_CACHE_TEST_HH
 
 #include "../cacheprovider.hh"
-#include "../../misc/test.hh"
+#include <dune/fem/misc/test.hh>
 
 
 namespace Dune {

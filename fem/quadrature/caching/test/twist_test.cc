@@ -2,7 +2,7 @@
 
 #include "twist_test.hh"
 
-#include "../../quadrature/quadrature.hh"
+#include "../../quadrature.hh"
 
 namespace Dune {
   

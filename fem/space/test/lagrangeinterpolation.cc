@@ -1,8 +1,7 @@
 #include <iostream>
 #include <config.h>
 
-#include <dune/grid/utility/gridtype.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -178,7 +177,7 @@ class L2Projection
         // f.evaluate(itGeom.global(quad.point(qP)), ret);
         f.localFunction(*it).jacobian(quad,qP, ret);
         for(int i=0; i<numDofs; ++i) {
-          baseset.evaluate(i,quad,qP,phi);
+          baseset.evaluate(i,quad[qP],phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
@@ -249,7 +248,7 @@ public:
 
         RangeType phi, psi;
         function.evaluate( geometry.global( x ), time, phi );
-        localFunction.evaluate( quadrature, qp, psi );
+        localFunction.evaluate( quadrature[qp], psi );
 
         for( int i = 0; i < DimRange; ++i )
           error[ i ] += weight * SQR( phi[ i ] - psi[ i ] );
@@ -337,7 +336,7 @@ public:
 
         RangeType phi, psi;
         function.evaluate( y, time, phi );
-        localFunction.evaluate( quadrature, qp, psi );
+        localFunction.evaluate( quadrature[qp], psi );
 
         JacobianRangeType Dphi, Dpsi;
         function.jacobian( y, time, Dphi );

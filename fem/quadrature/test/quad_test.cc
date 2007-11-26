@@ -1,3 +1,4 @@
+#include <config.h>
 #include <set>
 
 #include "quad_test.hh"

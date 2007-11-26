@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include "../../misc/suite.hh"
+#include <dune/fem/misc/suite.hh>
 
 #include "refelem_test.hh"
 #include "cache_test.hh"

@@ -1,7 +1,7 @@
 #ifndef DUNE_TWIST_TEST_HH
 #define DUNE_TWIST_TEST_HH
 
-#include "../../misc/test.hh"
+#include <dune/fem/misc/test.hh>
 #include "../twistprovider.hh"
 
 namespace Dune {

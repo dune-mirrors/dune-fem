@@ -1,13 +1,13 @@
-#ifndef DUNE_BARTONNACKMANINTERFACE_HH
-#define DUNE_BARTONNACKMANINTERFACE_HH
+#include <dune/common/bartonnackmanifcheck.hh>
+
+#ifndef DUNE_FEM_BARTONNACKMANINTERFACE_HH
+#define DUNE_FEM_BARTONNACKMANINTERFACE_HH
 
 #include <dune/common/misc.hh>
 #include <dune/common/typetraits.hh>
-#include <dune/common/bartonnackmanifcheck.hh>
 
 namespace Dune
 {
-
   template< class Interface, class Implementation >
   class BartonNackmanInterface
   {

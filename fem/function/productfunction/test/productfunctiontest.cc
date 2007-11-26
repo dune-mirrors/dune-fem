@@ -1,7 +1,7 @@
 #include <iostream>
 #include <config.h>
 
-#include <dune/grid/io/file/dgfparser/gridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 static const int dimw = dimworld;
 static const int dimp = dimworld;
   
@@ -189,7 +189,7 @@ struct TestProdDF {
 	
 		  for(int qP2 = 0; qP2 < quadNop2 ; ++qP2) 
 		    {
-		      bSet2.evaluate(j,quad2,qP2,psi);
+		      bSet2.evaluate(j,quad2[qP2],psi);
 	    
 		      for(int qP = 0; qP < quadNop ; ++qP) 
 			{
@@ -198,7 +198,7 @@ struct TestProdDF {
 		
 			  for(int i=0; i<numDofs; ++i) 
 			    {
-			      baseset.evaluate(i,quad,qP,phi);
+			      baseset.evaluate(i,quad[qP],phi);
 			      lf[i] +=quad2.weight(qP2) * quad.weight(qP) * (ret * phi) * psi ;
 			      /*std::cerr << "Project: " 
 				<< i << " " << j << " " 
@@ -294,7 +294,7 @@ struct TestProdDF {
 		      double weight = 
 			quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP))*quad2.weight(qP2) * (*it2).geometry().integrationElement(quad2.point(qP2)); 
 
-		      lf.evaluate(quad,qP,phi);
+		      lf.evaluate(quad[qP],phi);
    
 		      f.setPara((*it).geometry().global(quad.point(qP)),(*it2).geometry().global(quad2.point(qP2)), ret);
 		      /*std::cerr << "error : "

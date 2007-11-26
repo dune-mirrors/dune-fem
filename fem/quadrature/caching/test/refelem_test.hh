@@ -4,7 +4,7 @@
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/common/fvector.hh>
 
-#include "../../misc/test.hh"
+#include <dune/fem/misc/test.hh>
 
 
 namespace Dune {
