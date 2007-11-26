@@ -215,10 +215,14 @@ namespace Dune
       {
         const double det = 
             geo.integrationElement(quad.point(qp));
-        
-        lf1.evaluate(quad, qp, lv1);
-        lf2.evaluate(quad, qp, lv2);
-        ret += det * quad.weight(qp) * (lv1 - lv2) * (lv1 - lv2);
+
+        // evaluate local functions 
+        lf1.evaluate(quad[qp], lv1);
+        lf2.evaluate(quad[qp], lv2);
+        // substract 
+        lv1 -= lv2;
+
+        ret += det * quad.weight(qp) * (lv1 * lv1);
       } // end qp iteration
       
     } // end element iteration
