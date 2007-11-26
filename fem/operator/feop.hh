@@ -21,7 +21,6 @@
 // #include<dune/fem/io/file/ioutils.hh>
 
 // include temporary old and new sparsematrix class
-// #include <dune/fem/operator/feop/spmatrix.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
 
