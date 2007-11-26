@@ -384,8 +384,6 @@ namespace Dune {
         }
       }
 
-      std::cout << "GradientSpace poly Ord = " << gradientSpace_.order() << "\n";
-
       if( ! (spc_.order() > 0))
       {
         std::cerr << "ERROR: DG Primal operator only working for spaces with polynomial order > 0! \n";
