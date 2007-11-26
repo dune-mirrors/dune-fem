@@ -401,25 +401,6 @@ namespace Dune
     }
 
 #if DUNE_FEM_COMPATIBILITY
-    /** \brief evaluate the local function on 
-               real world coordinate x and return ret (calls local method of entitys geometry)
-         \deprecated
-
-         \param[in] entity Entity x is belonging to 
-         \param[in] x global evaluation coordinate 
-         \param[out] ret return value 
-    */
-    template< class EntityType >
-    void DUNE_DEPRECATED evaluateGlobal ( const EntityType &entity, 
-                                          const DomainType &x, 
-                                          RangeType &ret ) const
-    {
-      DomainType xLocal = entity.geometry().local( x );
-      evaluate( xLocal, ret );
-    }
-#endif
-
-#if DUNE_FEM_COMPATIBILITY
     /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
      *
      *  \note The default implementation just calls
@@ -433,26 +414,6 @@ namespace Dune
                            RangeType &ret ) const
     {
       asImp().evaluate( quadrature[ quadPoint ], ret );
-    }
-#endif
-  
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief evaluate jacobian of the local function on 
-               real world coordinate x and return ret 
-               (calls local method of entitys geometry if not overloaded)
-         \deprecated
-               
-         \param[in] entity Entity x is belonging to 
-         \param[in] x global evaluation coordinate 
-         \param[out] grad  return value 
-    */
-    template< class EntityType >
-    void DUNE_DEPRECATED jacobianGlobal ( const EntityType&  entity,
-                                          const DomainType&  x, 
-                                          JacobianRangeType& grad ) const
-    {
-      DomainType xLocal = entity.geometry().local( x );
-      jacobian( xLocal, grad );
     }
 #endif
 

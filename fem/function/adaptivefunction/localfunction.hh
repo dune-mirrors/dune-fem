@@ -137,33 +137,6 @@ namespace Dune
                           const int quadPoint,
                           JacobianRangeType &ret ) const;
     
-    /** \brief evaluate jacobian of the discrete function on point x
-     *  \deprecated
-     *
-        \param[in] entity en
-        \param[in] domain type x
-        \param[out] jacobian range type ret
-    */
-    inline DUNE_DEPRECATED
-    void jacobian(EntityType& en, 
-      const DomainType& x, 
-      JacobianRangeType& ret) const;
-    
-    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
-     *  \deprecated
-     *
-        \param[in] entity en
-        \param[in] quadrature type quad
-        \param[in] constant quadrature point quadPoint 
-        \param[out] jacobian range type
-    */
-    template <class QuadratureType>
-    inline DUNE_DEPRECATED
-    void jacobian(EntityType& en,
-                  QuadratureType& quad,
-                  int quadPoint,
-                  JacobianRangeType& ret) const;
-
     /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet */
     const BaseFunctionSetType& baseFunctionSet() const;
 
@@ -361,35 +334,6 @@ namespace Dune
     inline void evaluate ( const QuadratureType &quadrature,
                            const int quadPoint, 
                            RangeType &ret ) const;
-    
-    /** \brief evaluate jacobian of the discrete function on point x
-     *  \deprecated
-     *
-        \param[in] entity en 
-        \param[in] domain type x
-        \param[out] jacobian range type ret
-    */ 
-    inline DUNE_DEPRECATED
-    void jacobian(EntityType& en,
-      const DomainType& x, 
-      JacobianRangeType& ret) const;
-    
-    
-    /** \brief evaluate jacobian of the discrete function on quadrature point quadPoint
-     *  \deprecated
-     *
-        \param[in] entity en
-        \param[in] quadrature type quad
-        \param[in] constant quadrature point quadPoint 
-        \param[out] jacobian range type
-    */
-    template <class QuadratureType>
-    inline DUNE_DEPRECATED
-    void jacobian(EntityType& en,
-                  QuadratureType& quad,
-                  int quadPoint,
-                  JacobianRangeType& ret) const;
-
     
     /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const */
     inline void jacobian ( const DomainType &x,

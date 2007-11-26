@@ -102,26 +102,6 @@ namespace Dune
 
   template <class DiscreteFunctionSpaceImp>
   void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  jacobian(EntityType& en, 
-     const DomainType& x, 
-     JacobianRangeType& ret) const
-  {
-    jacobian(x,ret);
-  }
-
-  template <class DiscreteFunctionSpaceImp>
-  template <class QuadratureType>
-  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
-  jacobian(EntityType& en, 
-           QuadratureType& quad, 
-           int quadPoint, 
-           JacobianRangeType& ret) const
-  {
-    jacobian(quad,quadPoint,ret);
-  }
-
-  template <class DiscreteFunctionSpaceImp>
-  void AdaptiveLocalFunction<DiscreteFunctionSpaceImp >::
   jacobian(const DomainType& x, JacobianRangeType& ret) const
   {
     assert( en_ != 0 );
@@ -446,15 +426,6 @@ namespace Dune
   
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
   void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  jacobian(EntityType& en, 
-           const DomainType& x, 
-           JacobianRangeType& result) const
-  {
-    jacobian(x,result);
-  }
-
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   jacobian(const DomainType& x, JacobianRangeType& result) const
   {
     result = 0.0;
@@ -476,35 +447,6 @@ namespace Dune
       }
     }
 
-  }
-
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  template<class QuadratureType>
-  void AdaptiveLocalFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  jacobian(EntityType& en, 
-           QuadratureType& quad, 
-           int quadPoint, 
-           JacobianRangeType& result) const 
-  {
-    result = 0.0;
-
-    const JacobianInverseType& jInv = 
-      en().geometry().jacobianInverseTransposed(quad.point(quadPoint));
-
-    const int numDiffBaseFct = 
-      this->baseFunctionSet().numDifferentBaseFunctions();
-    for (int i = 0; i < numDiffBaseFct; ++i) 
-    {
-      this->baseFunctionSet().jacobianScalar(i, quad, quadPoint , cTmpGradRef_);
-      cTmpGradReal_ = 0.0;
-      jInv.umv(cTmpGradRef_[0], cTmpGradReal_[0]);
-
-      for (SizeType j = 0; j < N; ++j) 
-      {
-        // Assumption: ContainedDimRange == 1
-        result[j].axpy(*values_[i][j], cTmpGradReal_[0]);
-      }
-    }
   }
 
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
