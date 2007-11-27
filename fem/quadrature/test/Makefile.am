@@ -1,4 +1,8 @@
 # IGNORE_HEADERS
+
+EXTRA_DIST = cachequad_test.hh \
+             quad_test.hh
+
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) 
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
 

@@ -1,9 +1,10 @@
-testdir = $(includedir)/dune/fem/test
-test_HEADERS = dgl2projection.hh \
-               exactsolution.hh \
-               testgrid.hh
+# IGNORE_HEADERS
 
-EXTRA_DIST = 2dgrid.dgf 3dgrid.dgf
+EXTRA_DIST = 2dgrid.dgf \
+	     3dgrid.dgf \
+	     ddgl2projection.hh \
+	     exactsolution.hh \
+	     testgrid.hh
 
 GRIDTYPE = YASPGRID
 GRIDDIM = 2

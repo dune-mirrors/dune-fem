@@ -1,6 +1,8 @@
 #ifndef DUNE_TWISTUTILITY_HH
 #define DUNE_TWISTUTILITY_HH
 
+#include <dune/common/interfaces.hh>
+
 #ifdef ENABLE_ALUGRID
 #include <dune/grid/alugrid.hh>
 #endif
