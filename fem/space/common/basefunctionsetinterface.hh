@@ -449,9 +449,10 @@ namespace Dune
     {
       FieldVector< deriType, 1 > diffVar;
       deriType &i = diffVar[ 0 ];
+      // create temporary variable here 
+      RangeType tmp;
       for( i = 0; i < dimCol; ++i )
       {
-        RangeType tmp;
         asImp().evaluate( baseFunction, diffVar, x, tmp );
         for( int j = 0; j < dimRow; ++j )
           phi[ j ][ i ] = tmp[ j ];
@@ -489,7 +490,7 @@ namespace Dune
                                            const int quadPoint,
                                            const RangeType &psi ) const
     {
-      return asImp().evaluate( baseFunction, quadrature[ quadPoint ], psi );
+      return asImp().evaluateSingle( baseFunction, quadrature[ quadPoint ], psi );
     }
 #endif
     
