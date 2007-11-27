@@ -28,7 +28,7 @@ namespace Dune {
     for discontinuous Galerkin methods. Int. J. Numer. Meth. Fluids.,
     42:1043-1057, 2003.
 
-    (see homepage Peter: 
+    (see homepage of Peter Bastian: 
       http://hal.iwr.uni-heidelberg.de/~peter/Papers/BDMpaper.pdf )
 
     Note:  
@@ -576,6 +576,8 @@ private:
     MutableArray< RangeFieldType > rets(numDofs);
 
     typedef FieldMatrix<RangeFieldType,localBlockSize,localBlockSize> FieldMatrixType;
+
+    // resulting system matrix 
     FieldMatrixType inv;
       
     typedef FieldVector<RangeFieldType,localBlockSize> VectorType; 
@@ -647,12 +649,8 @@ private:
                    rets,inv,fRhs);
       }
 
-      // invert resulting matrix 
-      inv.invert();
-
-      // apply M^-1 * rhs 
-      x = 0.0;
-      inv.umv(fRhs,x);
+      // solve linear system 
+      inv.solve(x,fRhs);
       
       // set new values to new velocity function 
       {
@@ -779,7 +777,7 @@ private:
           // evaluate function 
           uLF.evaluate(faceQuadInner[l], ret);
 
-          double val = ret * unitNormal; 
+          RangeFieldType val = ret * unitNormal; 
           val *= intel;
          
           // evaluate base functions 
@@ -854,7 +852,7 @@ private:
       ret += neighRet;
       ret *= 0.5;
 
-      double val = ret * unitNormal; 
+      RangeFieldType val = ret * unitNormal; 
       val *= intel;
 
       // evaluate base functions 
