@@ -51,6 +51,13 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
+#if DUNE_FEM_COMPATIBILITY
+    using BaseType :: evaluate;
+    using BaseType :: jacobian;
+    using BaseType :: evaluateSingle;
+    using BaseType :: evaluateGradientSingle;
+#endif
+
   protected:
     // base function set 
     const BaseFunctionSetImp *baseSet_; 
@@ -92,7 +99,7 @@ namespace Dune
       return baseFunctionSet().numBaseFunctions(); 
     }
     
-    /** \çopydoc Dune::BaseFunctionSetInterface::geometryType */
+    /** \copydoc Dune::BaseFunctionSetInterface::geometryType */
     inline GeometryType geometryType () const
     {
       return baseFunctionSet().geometryType();
@@ -108,20 +115,6 @@ namespace Dune
       baseFunctionSet().evaluate( baseFunction, diffVariable, x, phi );
     }
 
-#if 0
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
-    template< int diffOrd, class QuadratureType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
-                           const QuadratureType &quadrature,
-                           const int quadPoint,
-                           RangeType &phi ) const
-    {
-      baseFunctionSet().evaluate
-        ( baseFunction, diffVariable, quadrature, quadPoint, phi );
-    }
-#endif
-
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
     inline void evaluate ( const int baseFunction,
@@ -131,18 +124,6 @@ namespace Dune
       baseFunctionSet().evaluate( baseFunction, x, phi );
     }
 
-#if 0
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,RangeType &phi) const */
-    template< class QuadratureType >
-    inline void evaluate ( const int baseFunction,
-                           const QuadratureType &quadrature,
-                           const int quadPoint,
-                           RangeType &phi ) const
-    {
-      baseFunctionSet().evaluate( baseFunction, quadrature, quadPoint, phi );
-    }
-#endif
-    
     /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
     template< class PointType >
     inline void jacobian( const int baseFunction,
@@ -151,18 +132,6 @@ namespace Dune
     {
       baseFunctionSet().jacobian( baseFunction, x, phi );
     }
-
-#if 0
-    /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &phi) const */
-    template< class QuadratureType >
-    inline void jacobian ( const int baseFunction,
-                           const QuadratureType &quadrature,
-                           const int quadPoint,
-                           JacobianRangeType &phi ) const
-    {
-      baseFunctionSet().jacobian( baseFunction, quadrature, quadPoint, phi );
-    }
-#endif
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
@@ -173,19 +142,6 @@ namespace Dune
       return baseFunctionSet().evaluateSingle( baseFunction, x, psi );
     }
 
-#if 0
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const QuadratureType &quadrature,const int quadPoint,const RangeType &psi) const */
-    template< class QuadratureType >
-    inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const QuadratureType &quadrature,
-                                           const int quadPoint,
-                                           const RangeType &psi ) const
-    {
-      return baseFunctionSet().evaluateSingle
-        ( baseFunction, quadrature, quadPoint, psi );
-    }
-#endif
-    
      /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
     template< class EntityType, class PointType >
     inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
@@ -196,20 +152,6 @@ namespace Dune
       return baseFunctionSet().evaluateGradientSingle( baseFunction, entity, x, psi );
     }
     
-#if 0
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &psi) const */
-    template< class EntityType, class QuadratureType >
-    inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
-                                                   const EntityType &entity,
-                                                   const QuadratureType &quadrature,
-                                                   const int quadPoint,
-                                                   const JacobianRangeType &psi ) const
-    {
-      return baseFunctionSet().evaluateGradientSingle
-        ( baseFunction, entity, quadrature, quadPoint, psi );
-    }
-#endif
-   
   protected:
     inline const BaseFunctionSetImp &baseFunctionSet () const
     {
