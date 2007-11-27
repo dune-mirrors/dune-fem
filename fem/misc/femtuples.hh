@@ -5,6 +5,10 @@
 
 #if HAVE_TUPLE || HAVE_TR1_TUPLE
 
+// if Tuple is undefined to the preprocessor, dune/common/tuples.hh already
+// implements this verson of Tuple!
+#ifdef Tuple
+
 // undef defines from tuples.hh 
 #undef Tuple
 #undef ElementType
@@ -751,5 +755,6 @@ namespace Dune{
   }
  
 } // end namespace Dune 
+#endif
 #endif
 #endif
