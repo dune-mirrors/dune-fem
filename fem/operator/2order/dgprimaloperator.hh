@@ -1324,8 +1324,8 @@ namespace Dune {
             // calculate coefficients 
             for(int m=0; m<numGradBase; ++m)
             {
-              const double mean = 0.5  * phiDiff * (eta_[m] + etaNeigh_[m]);
-              const double jump = C_12 * phiDiff * (eta_[m] - etaNeigh_[m]);
+              const RangeFieldType mean = 0.5  * phiDiff * (eta_[m] + etaNeigh_[m]);
+              const RangeFieldType jump = C_12 * phiDiff * (eta_[m] - etaNeigh_[m]);
               r_e[m] -= (mean + jump);
 #ifndef DG_DOUBLE_FEATURE
               r_e_neigh[m] -= (mean + jump);
@@ -1622,13 +1622,13 @@ namespace Dune {
         for(int k=0; k<numDofs; ++k) 
         {
           {
-            double val = rRets_[k] * rRetsCoeff_[k];
+            RangeFieldType val = rRets_[k] * rRetsCoeff_[k];
             val *= intel;
             matrixEn.add(k, k, val);
           }
           for(int j=k+1; j<numDofs; ++j) 
           {
-            double val = rRets_[k] * rRetsCoeff_[j];
+            RangeFieldType val = rRets_[k] * rRetsCoeff_[j];
             val *= intel;
 
             matrixEn.add(k, j, val);
