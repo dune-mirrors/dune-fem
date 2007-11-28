@@ -32,7 +32,6 @@
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>
 
-#include <dune/fem/operator/2order/ldgelliptoperator.hh>
 #include <dune/fem/operator/2order/dgprimaloperator.hh>
 
 #include <dune/fem/pass/dgelliptpass.hh>
@@ -44,14 +43,9 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #endif
 
-#define USE_LDG 0 
 
-#if USE_LDG
-#define USE_DUNE_ISTL 0
-#else 
 #define USE_DUNE_ISTL HAVE_DUNE_ISTL
 //#define USE_DUNE_ISTL 0
-#endif
 
 //*************************************************************
 namespace LDGExample {  
@@ -360,12 +354,7 @@ namespace LDGExample {
                                 DiscreteFunctionSpaceType> MatrixObjectType; 
 #endif
 
-#if USE_LDG 
-      typedef LocalDGElliptOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixHandlerType> LocalOperatorType;
-#else 
-      //typedef DGCompactOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
       typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType,MatrixObjectType> LocalOperatorType;
-#endif
 
 #if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
