@@ -1,16 +1,3 @@
-/**************************************************************
- * Known problems:
- * 1) works only with ortho-normal basefunction set
- *    we should have multiplication with inverse mass matrix on baseset
- * 2) Caching does not work with non-conforming grids
- *    here a switch is required
- * 3) would be good to pass quadrature to discrete model
- *    prehaps also a setEntity method on the discrete model
- * 4) hexaedrons with non-linear mapping will definitly not work
- *    (-> diplom thesis!)
-*****************************************************************/
-
-
 #ifndef DUNE_DGMASSPASS_HH
 #define DUNE_DGMASSPASS_HH
 
@@ -25,17 +12,19 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune {
-/* Description: Solver for equations of the form
+
+/*! @ingroup GradientOperator 
+ * Description: Solver for equations of the form
 ** \f{eqnarray*}
-**   v + div(f(x,u)) + A(x,u)\nabla u &=& S(x,u)  \quad\mbox{in}\quad \Omega    \\
+**   u &=& A(x)\nabla p \quad\mbox{in}\quad \Omega    \\
 ** \f}
-** where \f$ u \f$ is the argument and \f$ v \f$ is computed.
+** where \f$ p \f$ is the argument and \f$ u \f$ is computed.
 ** @{
 **************************************************************************/
 
-  //! Concrete implementation of Pass for first hyperbolic systems using
-  //! LDG including mass term, the mass term is stored locally and no extra
-  //! memory but an extra grid traversal is needed 
+  /** \brief Implementation of operator to calculate gradient of 
+      a given discrete function using the pass concept.
+  */
   template <class DiscreteModelImp, class PreviousPassImp>
   class LocalDGMassPass :
     public LocalDGPass<DiscreteModelImp, PreviousPassImp> 
