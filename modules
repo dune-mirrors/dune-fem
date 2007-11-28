@@ -135,6 +135,8 @@
         @ingroup Operator0 */
   /** @defgroup Operator1 First order spatial operatos
       @ingroup OperatorCommon */
+    /** @defgroup GradientOperator Gradient operator
+        @ingroup Operator1 */
   /** @defgroup Operator2 Second order spatial operatos
       @ingroup OperatorCommon */
     /** @defgroup EllipticOperator Elliptic operator
