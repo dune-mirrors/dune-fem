@@ -236,7 +236,6 @@ namespace Dune {
     const bool verbose_;
     mutable LocalOperatorType op_;
 
-    const double reduction_;
     const double eps_;
     const int maxIterFactor_; 
     mutable int maxIter_;
@@ -267,11 +266,10 @@ namespace Dune {
       , spc_(spc) 
       , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
       , op_(problem,pass,pass.previousPass(),spc,paramFile)
-      , reduction_(readReduction(paramFile, verbose_ ))
       , eps_(readEps(paramFile, verbose_ ))
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
-      , invOp_(op_,reduction_,eps_,maxIter_,verbose_)
+      , invOp_(op_,eps_,eps_,maxIter_,verbose_)
       , rhs_("FEPass::RHS",spc)
       , comm_(spc_)
     {
@@ -297,11 +295,10 @@ namespace Dune {
       , spc_(dest.space()) 
       , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
       , op_(problem,pass,pass.previousPass(),spc_,paramFile)
-      , reduction_(readReduction(paramFile, verbose_ ))
       , eps_(readEps(paramFile, verbose_ ))
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
-      , invOp_(op_,reduction_,eps_,maxIter_,verbose_)
+      , invOp_(op_,eps_,eps_,maxIter_,verbose_)
       , rhs_("FEPass::RHS",spc_)
       , comm_(spc_)
     {
@@ -312,7 +309,6 @@ namespace Dune {
       BaseType::printTexInfo(out);
       out << "LocalDGElliptPass: ";
       out << " eps = " << eps_
-          << " reduction = " << reduction_
           << " inverse Operator: "
           << "\\\\ \n";
       // invOp_.printTexInfo(out);
@@ -366,14 +362,6 @@ namespace Dune {
       int val = 0;
       readParameter(paramFile,"verbose",val, verboseOutput);
       return ( (val == 1) && verboseOutput) ? true : false;
-    }
-    
-    double readReduction(const std::string& paramFile, const bool output) const 
-    {
-      double eps = 1e-6; 
-      if( paramFile == "" ) return eps;
-      readParameter(paramFile,"InvSolverReduction",eps, output);
-      return eps;
     }
     
     double readEps(const std::string& paramFile, const bool output) const 
