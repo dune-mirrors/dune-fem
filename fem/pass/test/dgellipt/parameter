@@ -6,7 +6,6 @@ EOCSteps: 2
 
 # epsilon for iterative solver 
 InvSolverEps: 1e-8
-InvSolverReduction: 1e-15
 
 # cg output, 0 == no output, 1 == print output   
 verbose: 1
@@ -22,7 +21,7 @@ verbose: 1
 # 6 == Jacobi
 Preconditioning: 3
 # number of iterations 
-Pre-iteration: 2 
+Pre-iteration: 2
 # relaxation factor 
 Pre-relaxation: 1.1
 
@@ -40,13 +39,14 @@ Grid3: ./one3d.dgf
 # only used by Primal Operator 
 #######################################
 # available methods 
-# Baumann-Oden:      B_{+,-} = 1, beta = 0,        Babuska-Zlamal = 0,  
-# Interior-Penalty:  B_{+,-} = 0, beta > 0.0(big), Babuska-Zlamal = 0,  
-# NIPG:              B_{+,-} = 1, beta > 0.0,      Babuska-Zlamal = 0,  
-# Babuska-Zlamal:    B_{+,-} = 1, beta > 0.0,      Babuska-Zlamal = 1,  
+# Baumann-Oden:      B_{+,-} = 1, beta =  0,        CDG-BZ = 0,  
+# Interior-Penalty:  B_{+,-} = 0, beta >  0.0(big), CDG-BZ = 0,  
+# NIPG:              B_{+,-} = 1, beta >  0.0,      CDG-BZ = 0,  
+# Babuska-Zlamal:    B_{+,-} = 1, beta >  0.0,      CDG-BZ = 1,  
+# Compact LDG (CDG): B_{+,-} = 0, beta >= 0.0       CDG-BZ = 1
 
 B_{+,-}: 1
-Babuska-Zlamal: 0
+CDG-BZ: 0
 beta: 0.0
 
 # only used by LDGFlux 
