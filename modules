@@ -97,7 +97,7 @@
    @defgroup OperatorCommon Operators
    @ingroup FEM 
 */
-  /** @defgroup Concept Concept behind the dune-fem operatos 
+  /** @defgroup Concept Concept behind the dune-fem operators 
       @ingroup OperatorCommon */
   /** @defgroup Mapping Mapping
       @ingroup OperatorCommon */
