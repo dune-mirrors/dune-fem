@@ -22,7 +22,7 @@ namespace Dune {
 /*! @addtogroup PassEllipt
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
-**   div(A(x)\nabla u) + &=& f(x)  \quad\mbox{in}\quad \Omega    \\
+**   div(A(x)\nabla u) &=& f(x)  \quad\mbox{in}\quad \Omega    \\
 ** \f}
 ** where \f$ v \f$ is to be computed.
 ** @{
