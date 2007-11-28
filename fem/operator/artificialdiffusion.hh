@@ -17,12 +17,22 @@
 
 namespace Dune {
 
-/////////////////////////////////////////////////////////////////////////////
-//
-//  See: P.O. Persson and J. Peraire. Sub-Cell Shock Capturing 
-//       for Discontinuous Galerkin Methods.
-//
-/////////////////////////////////////////////////////////////////////////////
+/** \ingroup DiscreteOperator 
+    \class ArtificialDiffusion
+    \brief Operator generating a discrete function holding the
+    artificial diffusion values for each element.
+
+    The Method is described in detail in: 
+      P.-O. Persson, J. Peraire,
+      Sub-Cell Shock Capturing for Discontinuous Galerkin Methods.
+      Proc. of the 44th AIAA Aerospace Sciences Meeting and Exhibit,
+      January 2006.
+
+    The artical can be found here:
+      http://www.mit.edu/~persson/pub/persson06shock.pdf
+    or here
+      http://raphael.mit.edu/peraire/PerssonPeraire_ShockCapturing.pdf
+*/
 template <class DiscreteFunctionImp>
 class ArtificialDiffusion
 {
@@ -47,29 +57,44 @@ public:
   DiffusionSpaceType diffusionSpace_;
   DiffusionFunctionType diffusion_;
   const GridWidthType& gridWidth_;
+
+  //! prohibit copying or implement correctly 
+  ArtificialDiffusion(const ArtificialDiffusion& ); 
 public:
-  //! constructor 
+  /** \brief constructor 
+      \param [in] df discrete function to calculate 
+                  artificial diffusion values for 
+  */
   ArtificialDiffusion(const DiscreteFunctionType& df) 
     : df_(df), diffusionSpace_( const_cast<GridPartType&> (df.space().gridPart()))
     , diffusion_(df_.name() + "-art-diff", diffusionSpace_ )
     , gridWidth_( GridWidthProviderType :: getObject( &(df_.space().grid())))                                                        
   {}
 
+  /** \brief destrcutor removing grid width object 
+  */
   ~ArtificialDiffusion() 
   {
     GridWidthProviderType :: removeObject( gridWidth_ );
   }
 
-  //! update artificial diffusion 
+  /** \brief update artificial diffusion values 
+   */ 
   void update()
   {
     calculate(df_, diffusion_ , gridWidth_.gridWidth() );
   }
 
-  //! return const reference to artificial diffusion 
+  /** \brief  return const reference to artificial diffusion 
+      \return const reference to discrete function holding 
+              values of artificial diffusion 
+  */
   const DiffusionFunctionType& diffusion() const { return diffusion_; }
 
-  //! return const reference to artificial diffusion 
+  /** \brief evaluate artificial diffusion local and store to diff 
+      \param[in]  en entity to evaluate artificial diffusion 
+      \param[out] diff value of artificial diffusion 
+  */
   void evaluateLocal (const EntityType& en, RangeType& diff) const 
   { 
     typedef typename DiffusionFunctionType :: LocalFunctionType LocalFunctionType;   
@@ -81,6 +106,8 @@ public:
     }
   }
 
+protected:  
+  //! function calculating value of artificial diffusion 
   static double artificialDiffusion(const double s_0,
                                     const double kappa,
                                     const double epsilon_0,
@@ -99,6 +126,7 @@ public:
     DUNE_THROW(InvalidStateException,"Aborted in ArtificialDiffusion kappa");
   }
    
+  //! re-calculate values of artificial diffusion  
   static double  calculate(const DiscreteFunctionType &discFunc, 
                            DiffusionFunctionType &diffusion,
                            const double gridWidth = -1.0) 
