@@ -12,13 +12,21 @@ for directory in `find fem -type d | sed "/fem.*\/\..*/ d"` ; do
   makefile=$directory/Makefile.am
 
   if test -f $makefile ; then
+    extradist=`cat $makefile | sed 'H ; s/.*//g ; x ; s/\n/ /g ; s/[ \t][ \t]*/ /g ; /\\\\$/! { p ; d } ; s/\\\\$// ; x ; d' | grep '^.*EXTRA_DIST' | sed 's/^.*EXTRA_DIST.*=//'`
+    for pattern in $extradist ; do
+      for file in $directory/$pattern ; do
+        if test ! -f $file ; then
+          echo "Error: Distributed file does not exists: $file"
+          errors=$((errors+1))
+        fi
+      done
+    done
+    
     ignore=`grep "IGNORE_HEADERS" $makefile`
-
     if test "x$ignore" != "x" ; then
-      #echo "Continuing: $directory"
       continue
     fi
-    
+
     headers=`cat $makefile | sed 'H ; s/.*//g ; x ; s/\n/ /g ; s/[ \t][ \t]*/ /g ; /\\\\$/! { p ; d } ; s/\\\\$// ; x ; d' | grep '_HEADERS' | sed 's/^.*_HEADERS.*=//'`
 
     for header in $headers ; do
