@@ -2,7 +2,7 @@
 
 EXTRA_DIST = 2dgrid.dgf \
 	     3dgrid.dgf \
-	     ddgl2projection.hh \
+	     dgl2projection.hh \
 	     exactsolution.hh \
 	     testgrid.hh
 
