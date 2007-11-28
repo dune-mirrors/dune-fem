@@ -52,7 +52,20 @@ namespace Dune {
         - Baumann-Oden
         - NIPG 
         - Babuska-Zlamal
-        - Compact LDG 
+        - Compact LDG (CDG) 
+
+        References:
+          The first 4 methods can be found for example in:
+            D.N. Arnold, F. Brezzi, B. Cockburn, L.D. Marini: Unified
+            Analysis of Discontinuous Galerkin Methods for Elliptic
+            Problems SIAM J. Num. Anal, 39  (2002), 1749-1779.
+            http://www.imati.cnr.it/~marini/reports/dgm_siam.ps.gz
+
+          The Compact LDG method is described in detail in:
+            J. Peraire and P.-O. Persson,
+            The Compact Discontinuous Galerkin (CDG) Method for Elliptic Problems.
+            SIAM J. Sci. Comput., to appear.
+            http://www.mit.edu/~persson/pub/peraire07cdg.pdf
   */
   template <class DiscreteModelImp, class GradientPassImp, 
             class PreviousPassImp, class MatrixObjectImp>
@@ -871,7 +884,7 @@ namespace Dune {
           if( compactLDG_ ) 
           {
             // resize and reset temporary functions 
-            resizeTemporaryFunctions( en, en, numDofs, numGradBase );
+            resizeTemporaryFunctions( en, r_e_, numDofs, numGradBase );
           } // end compact LDG 
 
           // loop over quadrature points 
@@ -1111,34 +1124,23 @@ namespace Dune {
 
     // resize memory for r_e and l_e functions 
     void resizeTemporaryFunctions(const EntityType& en,
-        const EntityType& nb, const int numDofs, const int numGradBase) const 
+                                  TemporaryLocalFunctionArrayType& r_e,
+                                  const int numDofs, const int numGradBase) const 
     {
-      if( r_e_.size() < numDofs )
+      if( r_e.size() < numDofs )
       {
-        r_e_.resize(0);
-        r_e_.resize( numDofs );
+        r_e.resize(0);
+        r_e.resize( numDofs );
         rRets_.resize( numDofs );
         rRetsCoeff_.resize( numDofs );
         for(int i=0; i<numDofs; ++i) 
         {  
           std::auto_ptr< TemporaryLocalFunctionType > 
             ptr(  new TemporaryLocalFunctionType ( gradientSpace_ ) );
-          r_e_[i] = ptr; 
+          r_e[i] = ptr; 
         }
       }
-#ifndef DG_DOUBLE_FEATURE
-      if( r_e_neigh_.size() < numDofs )
-      {
-        r_e_neigh_.resize( 0 );
-        r_e_neigh_.resize( numDofs );
-        for(int i=0; i<numDofs; ++i) 
-        {  
-          std::auto_ptr< TemporaryLocalFunctionType > 
-            ptr(  new TemporaryLocalFunctionType ( gradientSpace_ ) );
-          r_e_neigh_[i] = ptr; 
-        }
-      }
-#endif
+
       if( eta_.size() < numGradBase )
       {
         eta_.resize( numGradBase );
@@ -1147,22 +1149,13 @@ namespace Dune {
 
       for(int i=0; i<numDofs; ++i) 
       {
-        TemporaryLocalFunctionType& r_e = (*r_e_[i]);
-        r_e.init ( en );
+        TemporaryLocalFunctionType& re = (*r_e[i]);
+        re.init ( en );
+        assert( re.numDofs() == numGradBase );
         for(int m=0; m<numGradBase; ++m) 
         {
-          r_e[m] = 0;
+          re[m] = 0;
         }
-
-#ifndef DG_DOUBLE_FEATURE
-        TemporaryLocalFunctionType& r_e_neigh = (*r_e_neigh_[i]);
-        r_e_neigh.init ( nb );
-
-        for(int m=0; m<numGradBase; ++m) 
-        {
-          r_e_neigh[m] = 0;
-        }
-#endif
       }
     }
 
@@ -1226,7 +1219,10 @@ namespace Dune {
       if( compactLDG_ ) 
       {
         // resize and reset temporary functions 
-        resizeTemporaryFunctions( en, nb, numDofs, numGradBase );
+        resizeTemporaryFunctions( en, r_e_ , numDofs, numGradBase );
+#ifndef DG_DOUBLE_FEATURE
+        resizeTemporaryFunctions( nb, r_e_neigh_ , numDofs, numGradBase );
+#endif
       }
 
       // loop over all quadrature points 
