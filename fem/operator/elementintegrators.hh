@@ -10,7 +10,7 @@
 **              elliptic problems (or simplifications of it) with the FEOp 
 **              class:
 **
-**   - div(a(x)*grad(u)) + div (b(x)*u) + c(x)*u = f(x)       in Omega
+**       - div( a(x)*grad(u) + b(x)*u ) + c(x)*u = f(x)     in Omega
 **                                             u = g_D(x)   in \Gamma_D
 **                      (a(x)*grad(u) -b(x)*u) n = g_N(x)   in \Gamma_N
 **            (a(x)*grad(u) -b(x)*u) n + alpha*u = g_R(x)   in \Gamma_R
@@ -128,10 +128,10 @@ namespace Dune
 **              elliptic problems (or simplifications of it) with the FEOp 
 **              class:
 ** \f{eqnarray*}
-**   - div(a(x)*grad(u)) + div (b(x)*u) + c(x)*u &=& f(x)     \quad\mbox{in}\quad \Omega    \\
-**                                             u &=& g_D(x)   \quad\mbox{in}\quad \Gamma_D \\
-**                      (a(x)*grad(u) -b(x)*u) n &=& g_N(x)   \quad\mbox{in}\quad \Gamma_N \\
-**            (a(x)*grad(u) -b(x)*u) n + alpha*u &=& g_R(x)   \quad\mbox{in}\quad \Gamma_R 
+** -\nabla \cdot \bigl( a(x) \nabla u + b(x) u \bigr) + c(x) u &=& f(x) \quad\mbox{in} \enspace \Omega\\
+**                                                           u &=& g_D(x) \quad\mbox{in} \enspace \Gamma_D\\
+**                \bigl( a(x) \nabla u + b(x) u \bigr) \cdot n &=& g_N(x) \quad\mbox{in} \enspace \Gamma_N\\
+**    \bigl( a(x) \nabla u  + b(x) u \bigr) \cdot n + \alpha u &=& g_R(x) \quad\mbox{in} \enspace \Gamma_R 
 ** \f}
 ** @{
 **************************************************************************/
