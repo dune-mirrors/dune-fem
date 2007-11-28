@@ -273,12 +273,6 @@ public:
       veloPass_(arg,velo);
 
       {
-#if USE_LDG
-        // only for LDG method
-        velo.clear();
-        lastPass_.evalGradient(dest,velo);
-#endif
-
         L2Error < DestinationType > l2errGrad;
         gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
 
@@ -287,7 +281,11 @@ public:
 
         std::cout << "Normal Jump = " << hdiv.normalJump( velo ) << "\n";
 
-        hdiv( tmp, velo );
+        // only call for order 1 
+        if( tmp.space().order() == 1 )
+        {
+          hdiv( tmp, velo );
+        }
         
         std::cout << "After Normal Jump = " << hdiv.normalJump( velo ) << "\n";
 
