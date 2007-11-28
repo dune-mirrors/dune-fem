@@ -282,10 +282,7 @@ public:
         std::cout << "Normal Jump = " << hdiv.normalJump( velo ) << "\n";
 
         // only call for order 1 
-        if( tmp.space().order() == 1 )
-        {
-          hdiv( tmp, velo );
-        }
+        hdiv( tmp, velo );
         
         std::cout << "After Normal Jump = " << hdiv.normalJump( velo ) << "\n";
 
