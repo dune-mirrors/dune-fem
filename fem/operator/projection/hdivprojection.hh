@@ -526,7 +526,10 @@ private:
     // only implemented for order 1 right now 
     if( space.order() > 1 )
     {
-      DUNE_THROW(NotImplemented,"H-div projection not implemented for polOrd > 1"); 
+      std::cerr << std::endl;
+      std::cerr << "WARNING: H-div projection not implemented for polOrd > 1 ! \n\n";
+      // return doing nothing
+      return ;
     }
 
     // colums are dofs of searched function 
