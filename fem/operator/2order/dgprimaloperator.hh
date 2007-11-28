@@ -46,7 +46,14 @@ namespace Dune {
   //  --DGPrimalOperator 
   //
   ////////////////////////////////////////////////////////////
-  //! Concrete implementation of Pass for LDG.
+  /** \brief Operator assembling matrix for DG methods for elliptic problems. 
+      Currently implemented are:
+        - Interior Penalty
+        - Baumann-Oden
+        - NIPG 
+        - Babuska-Zlamal
+        - Compact LDG 
+  */
   template <class DiscreteModelImp, class GradientPassImp, 
             class PreviousPassImp, class MatrixObjectImp>
   class DGPrimalOperator 
@@ -319,20 +326,21 @@ namespace Dune {
 
   public:
     //- Public methods
-    //! Constructor
-    //! \param problem Actual problem definition (see problem.hh)
-    //! \param[in]  gradPass  types and discrete model for the gradient pass
-    //! \param pass Previous pass
-    //! \param spc Space belonging to the discrete function local to this pass
-    //! \param paramFile parameter file to read necessary parameters, if empty 
-    //!         default parameters will be applied 
-    //!
-    //!  NOTE: possible parameters are
-    //!     - beta if beta = 0 then Baumann-Oden is chosen, otherwise beta > 0, default is 0
-    //!     - B_{+,-} choose between B_+ and B_-, 1 == B_+ | 0 == B_- ,default is B_+
-    //!     - Babuska-Zlamal 1 means we take Babuska-Zlamal method, 0 not, default is 0 
-    //!       if Babuska-Zlamal is chosen, beta > 0 is needed
-    //!         
+    /**  \brief Constructor
+     \param problem Actual problem definition (see problem.hh)
+     \param[in]  gradPass  types and discrete model for the gradient pass
+     \param pass Previous pass
+     \param spc Space belonging to the discrete function local to this pass
+     \param paramFile parameter file to read necessary parameters, if empty 
+             default parameters will be applied 
+    
+     \note Available methods are (chosen by parameters B_{+,-}, beta, and CDG-BZ)
+          - Interior Penalty : B_{+,-}: 0 , beta: > 0 (big) , CDG-BZ: 0 
+          - Baumann-Oden     : B_{+,-}: 1 , beta: = 0       , CDG-BZ: 0 (needs polOrd > 1) 
+          - NIPG             : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 0
+          - Babuska-Zlamal   : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 1
+          - Compact LDG (CDG): B_{+,-}: 0 , beta: > 0       , CDG-BZ: 1
+    */         
     DGPrimalOperator(DiscreteModelType& problem, 
                 GradientPassType & gradPass,
                 PreviousPassType& pass, 
@@ -406,8 +414,19 @@ namespace Dune {
         bilinearPlus_ = (bplus == 0) ? false : true; 
 
         int zlamal = 0;
-        if( ! readParameter(paramFile,"Babuska-Zlamal",zlamal, output) )
-          success = false; 
+        if( ! readParameter(paramFile,"CDG-BZ",zlamal, output) )
+        {
+          if( readParameter(paramFile,"Babuska-Zlamal",zlamal, output) )
+          {
+            std::cerr << std::endl;
+            std::cerr << "WARNING: parameter `Babuska-Zlamal' is deprecated, change it to `CDG-BZ' please in file: ";
+            std::cerr << paramFile << " !" << std::endl << std::endl;  
+          }
+          else 
+          {
+            success = false; 
+          }
+        }
 
         notBabuskaZlamal_ = (zlamal == 1) ? false : true;
       }
@@ -418,11 +437,11 @@ namespace Dune {
         {
           std::cerr << "\nERROR: Couldn't read parameter! \n";
           std::cerr << "DGPrimalOperator -- Available Methods:\n";
-          std::cerr << "Interior Penalty: B_{+,-}: 0 , beta: > 0 (big) , Babuska-Zlamal: 0 \n";
-          std::cerr << "Baumann-Oden    : B_{+,-}: 1 , beta: = 0       , Babuska-Zlamal: 0 \n";
-          std::cerr << "NIPG            : B_{+,-}: 1 , beta: > 0       , Babuska-Zlamal: 0 \n";
-          std::cerr << "Babuska-Zlamal  : B_{+,-}: 1 , beta: > 0       , Babuska-Zlamal: 1 \n";
-          std::cerr << "Compact LDG     : B_{+,-}: 0 , beta: > 0       , Babuska-Zlamal: 1 \n\n";
+          std::cerr << "Interior Penalty: B_{+,-}: 0 , beta: > 0 (big) , CDG-BZ: 0 \n";
+          std::cerr << "Baumann-Oden    : B_{+,-}: 1 , beta: = 0       , CDG-BZ: 0 \n";
+          std::cerr << "NIPG            : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 0 \n";
+          std::cerr << "Babuska-Zlamal  : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 1 \n";
+          std::cerr << "Compact LDG     : B_{+,-}: 0 , beta: > 0       , CDG-BZ: 1 \n\n";
         }
         exit(1);
       }
