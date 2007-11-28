@@ -36,7 +36,7 @@ namespace Dune {
 /*! @ingroup EllipticOperator
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
-**   div(A(x)\nabla u) + &=& f(x)  \quad\mbox{in}\quad \Omega    \\
+**   div(A(x)\nabla u) &=& f(x)  \quad\mbox{in}\quad \Omega    \\
 ** \f}
 ** where \f$ v \f$ is to be computed.
 ** @{
@@ -97,17 +97,14 @@ namespace Dune {
     enum { rows = JacobianRangeType :: rows };
     enum { dim = GridType :: dimension };
     
+    enum { dimGradRange = dimDomain * dimRange };
+    enum { polOrd = DiscreteFunctionSpaceType::polynomialOrder };
+
     //! space of gradients of function 
     typedef CombinedSpace< DiscreteFunctionSpaceType, 
-                           dimRange * dimDomain,
+                           dimGradRange,
                            PointBased > DiscreteGradientSpaceType; 
-    //typedef typename GradientPassType :: 
-    //   DiscreteFunctionSpaceType DiscreteGradientSpaceType;
 
-    //typedef typename GradientPassType :: DestinationType GradDestinationType;
-    //typedef typename GradientPassType :: DiscreteModelCallerType GradientModelCallerType;
-
-    
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
@@ -129,9 +126,6 @@ namespace Dune {
     typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
     
     //my Typedefs
-    enum { dimGradRange = dimDomain * dimRange };
-    enum { polOrd = DiscreteFunctionSpaceType::polynomialOrder };
-
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
     
@@ -437,11 +431,11 @@ namespace Dune {
         {
           std::cerr << "\nERROR: Couldn't read parameter! \n";
           std::cerr << "DGPrimalOperator -- Available Methods:\n";
-          std::cerr << "Interior Penalty: B_{+,-}: 0 , beta: > 0 (big) , CDG-BZ: 0 \n";
-          std::cerr << "Baumann-Oden    : B_{+,-}: 1 , beta: = 0       , CDG-BZ: 0 \n";
-          std::cerr << "NIPG            : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 0 \n";
-          std::cerr << "Babuska-Zlamal  : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 1 \n";
-          std::cerr << "Compact LDG     : B_{+,-}: 0 , beta: > 0       , CDG-BZ: 1 \n\n";
+          std::cerr << "Interior Penalty : B_{+,-}: 0 , beta: > 0 (big) , CDG-BZ: 0 \n";
+          std::cerr << "Baumann-Oden     : B_{+,-}: 1 , beta: = 0       , CDG-BZ: 0 \n";
+          std::cerr << "NIPG             : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 0 \n";
+          std::cerr << "Babuska-Zlamal   : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 1 \n";
+          std::cerr << "Compact LDG (CDG): B_{+,-}: 0 , beta: > 0       , CDG-BZ: 1 \n\n";
         }
         exit(1);
       }
@@ -872,6 +866,8 @@ namespace Dune {
           // get number of base functions for gradient space 
           const int numGradBase = enSet.numBaseFunctions();
 
+          // swtich for adding compact LDG lifting operator 
+          bool addCompactDG = compactLDG_;
           if( compactLDG_ ) 
           {
             // resize and reset temporary functions 
@@ -943,9 +939,10 @@ namespace Dune {
               bsetEn.evaluate(k,faceQuadInner[l] , phi_[k]);
             }
 
-            if(compactLDG_)
+            // only add compact LDG values on dicrichlet boundary 
+            addCompactDG = (compactLDG_ && bndType.isDirichletType() );
+            if( addCompactDG )
             {
-              assert( rRets_.size() > 0 );
               GradRangeType& tmp = rRets_[0];
 
               // get numbre of base functions 
@@ -1074,7 +1071,7 @@ namespace Dune {
           }
 
           // now add lifting operators if we use compact LDG 
-          if( compactLDG_ )
+          if( addCompactDG )
           {
             if( problem_.hasCoefficient() )
             {
@@ -1168,6 +1165,7 @@ namespace Dune {
 #endif
       }
     }
+
     template <class QuadratureImp> 
     void applyLocalNeighbor(IntersectionIteratorType & nit, 
                             EntityType & en, 
@@ -1184,6 +1182,7 @@ namespace Dune {
     {
       const int numDofs = bsetEn.numBaseFunctions();
 
+      // make neighbor known to model caller 
       caller_.setNeighbor(nb);
 
       ////////////////////////////////////////////////////////////
