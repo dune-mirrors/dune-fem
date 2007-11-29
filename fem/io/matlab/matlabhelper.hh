@@ -18,8 +18,6 @@
 #include <sstream>
 #include <config.h>
 
-using namespace std;
-using namespace Dune;
 
 
 namespace Dune
