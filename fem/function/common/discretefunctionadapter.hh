@@ -188,20 +188,26 @@ namespace Dune{
     typedef LocalFunction LocalFunctionType; 
 
     // reference to function this local belongs to
-    DiscreteFunctionAdapter(const std::string name, const FunctionType& f, const GridPartType& gridPart) 
-      : BaseType(space_)
-      , space_(gridPart)
-      , function_(f)
-      , name_(name)
-    {}
+    inline DiscreteFunctionAdapter
+      ( const std :: string &name,
+        const FunctionType &f,
+        const GridPartType &gridPart,
+        unsigned int order = DiscreteFunctionSpaceType :: polynomialOrder )
+    : BaseType(space_),
+      space_( gridPart, order ),
+      function_( f ),
+      name_( name )
+    {
+    }
 
     // reference to function this local belongs to
-    DiscreteFunctionAdapter(const DiscreteFunctionAdapter& org) 
-      : BaseType(org)
-      , space_(org.space_)
-      , function_(org.function_)
-      , name_(org.name_)
-    {}
+    DiscreteFunctionAdapter( const ThisType &other ) 
+    : BaseType( other ),
+      space_( other.space_ ),
+      function_( other.function_ ),
+      name_( other.name_ )
+    {
+    }
 
     //! evaluate function on local coordinate local 
     void evaluate(const DomainType& global, RangeType& result) const 

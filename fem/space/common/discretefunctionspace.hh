@@ -546,18 +546,24 @@ namespace Dune
     
   protected:
     const GridPartType &gridPart_;
+    const unsigned int order_;
 
   public:
     //! constructor taking grid Part 
-    inline explicit DiscreteFunctionSpaceAdapter ( const GridPartType &gridPart )
-    : BaseType()
-    , gridPart_( gridPart ) 
+    inline explicit DiscreteFunctionSpaceAdapter
+      ( const GridPartType &gridPart,
+        unsigned int order = polynomialOrder )
+    : BaseType(),
+      gridPart_( gridPart ),
+      order_( order )
     {
     }
 
     //! copy constructor
-    inline DiscreteFunctionSpaceAdapter( const ThisType &org )
-    : gridPart_( org.gridPart_ ) 
+    inline DiscreteFunctionSpaceAdapter( const ThisType &other )
+    : BaseType( other ),
+      gridPart_( other.gridPart_ ),
+      order_( other.order_ )
     {
     }
 
@@ -600,7 +606,7 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
     inline int order () const
     {
-      return polynomialOrder;
+      return order_;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::type */

@@ -61,7 +61,8 @@
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/solver/inverseoperators.hh>
 //#include <dune/fem/operator/lagrangeinterpolation.hh>
-#include <dune/fem/misc/l2error.hh>
+//#include <dune/fem/misc/l2error.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 //- local inlcudes 
 #include "laplace.hh"
@@ -246,7 +247,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
 
   ExactSolutionType u( discreteFunctionSpace ); 
 
-  GridExactSolutionType ugrid( "exact solution", u, gridPart );
+  GridExactSolutionType ugrid( "exact solution", u, gridPart, DiscreteFunctionSpaceType :: polynomialOrder + 1 );
   
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
@@ -278,11 +279,10 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   
   solve( laplace, rhs, solution );
 
-  // calculation of L2 error
-  // polynomial order for this calculation should be higher than the polynomial
-  // order of the base functions
-  L2Error< DiscreteFunctionType > l2error;
-  DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
+  //L2Error< DiscreteFunctionType > l2error;
+  //DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
+  L2Norm< GridPartType > l2norm( gridPart );
+  double error = l2norm.distance( ugrid, solution );
   std :: cout << "L2 Error: " << error << std :: endl << std :: endl;
 
   #if (USE_GRAPE && HAVE_GRAPE)
@@ -296,7 +296,8 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   }
   #endif
 
-  return error[ 0 ];
+  //return error[ 0 ];
+  return error;
 }
 
 
