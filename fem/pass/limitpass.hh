@@ -131,7 +131,17 @@ namespace Dune {
   };
 
 
-  //! Concrete implementation of Pass for Limiting.
+  /** \brief Concrete implementation of Pass for Limiting.
+      The implemented Shock detection is described in detail in: 
+        L. Krivodonova and J. Xin and J.-F. Remacle and N. Chevaugeon and J. E. Flaherty
+        Shock detection and limiting with discontinuous Galerkin methods for hyperbolic conservation laws.
+        Appl. Numer. Math., 48(3-4), pages 323-338, 2004.
+    
+      Link to paper:
+        http://www.scorec.rpi.edu/REPORTS/2003-3.pdf
+
+      Limiting is done by simply setting the polynomial order to zero.
+  */
   template <class DiscreteModelImp, class PreviousPassImp>
   class LimitDGPass :
     public LocalPass<DiscreteModelImp, PreviousPassImp> 
