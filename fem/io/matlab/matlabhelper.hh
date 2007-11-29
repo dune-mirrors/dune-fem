@@ -70,7 +70,7 @@ namespace Dune
     int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
           {
             // open file for writing  
-            ofstream fid(filename, ios::binary | ios::out);    
+            std::ofstream fid(filename, std::ios::binary | std::ios::out);    
 
             // DSM (Dune Sparse Matrix)            
             fid.write("DSM",3);
@@ -144,7 +144,7 @@ namespace Dune
     int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
           {
             // open file for writing  
-            ofstream fid(filename, ios::binary | ios::out);    
+            std::ofstream fid(filename, std::ios::binary | std::ios::out);    
             
             // write magic number: type of binary file: 
             // DSM (Dune Sparse Matrix)            
@@ -237,7 +237,7 @@ namespace Dune
             //const DiscFuncSpaceType& dfsp = func.getFunctionSpace();  
             
             // open file for writing  
-            ofstream fid(filename, ios::binary | ios::out);    
+            std::ofstream fid(filename, std::ios::binary | std::ios::out);    
 
             // write magic number: type of binary file: 
             // DDV (Dune Dof Vector)            
@@ -301,7 +301,7 @@ namespace Dune
                               DenseRowMatrix& matrix, int nrows, int ncols)
           {
             // open file for writing  
-            ofstream fid(filename, ios::binary | ios::out);    
+            std::ofstream fid(filename, std::ios::binary | std::ios::out);    
             
             // write magic number: type of binary file: 
             // DDM (Dune Dense Matrix)            
