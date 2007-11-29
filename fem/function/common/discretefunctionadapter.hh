@@ -125,36 +125,34 @@ namespace Dune{
       LocalFunction(const EntityType& en, const ThisType& a)
         : function_(a.function_) 
         , geometry_(&(en.geometry())) 
-        , global_(0)
       {}
 
       LocalFunction(const ThisType& a)
         : function_(a.function_) 
         , geometry_(0) 
-        , global_(0)
       {}
 
       //! copy constructor 
       LocalFunction(const LocalFunction& org) 
         : function_(org.function_) 
         , geometry_(org.geometry_)  
-        , global_(0)
       {}
 
       //! evaluate local function 
-      void evaluate(const DomainType& local, RangeType& result) const
+      template< class PointType >
+      void evaluate ( const PointType &x, RangeType &ret ) const
       {
-        global_ = geometry_->global(local);
-        function_.evaluate(global_,result);
+        DomainType global = geometry_->global( coordinate( x ) );
+        function_.evaluate( global, ret );
       }
 
       //! evaluate local function 
-      template <class QuadratureType>
-      void evaluate(const QuadratureType& quad,
-                    const int quadPoint, 
-                    RangeType& result) const 
+      template< class QuadratureType >
+      void evaluate( const QuadratureType &quadrature,
+                     const int quadPoint,
+                     RangeType &ret ) const 
       {
-        evaluate(quad.point(quadPoint), result);
+        evaluate( quadrature[ quadPoint ], ret );
       }
 
       //! jacobian of local function 
@@ -183,7 +181,6 @@ namespace Dune{
     private:
       const FunctionType& function_;
       const GeometryImp* geometry_;
-      mutable DomainType global_;
     };
 
     public:
