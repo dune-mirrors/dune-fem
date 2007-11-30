@@ -164,13 +164,12 @@ namespace Dune{
       }
 
       //! jacobian of local function 
-      template <class QuadratureType>
-      void jacobian(const QuadratureType& quad,
-                    const int quadPoint, 
-                    JacobianRangeType& result) const 
+      template< class QuadratureType >
+      void jacobian ( const QuadratureType &quadrature,
+                      const int quadPoint,
+                      JacobianRangeType &ret ) const 
       {
-        assert(false);
-        abort();
+        jacobian( quadrature[ quadPoint ], ret );
       }
 
       //! init local function
