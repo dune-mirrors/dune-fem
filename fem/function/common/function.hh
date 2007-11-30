@@ -125,6 +125,17 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( x, ret ) );
     }
 
+    /** \brief evaluate the Jacobian of the function
+     *
+     *  \param[in]  x    evaluation point
+     *  \param[out] ret  value of the Jacobian in x
+     */
+    inline void jacobian ( const DomainType &x,
+                           JacobianRangeType &ret ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().jacobian( x, ret ) );
+    }
+
     /** \brief evaluate a derivative of the function
      * 
      *  \param[in]  diffVariable  vector describing the partial derivative to

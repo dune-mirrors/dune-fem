@@ -156,10 +156,11 @@ namespace Dune{
       }
 
       //! jacobian of local function 
-      void jacobian(const DomainType& local, JacobianRangeType& result) const
+      template< class PointType >
+      void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
-        assert(false);
-        abort();
+        DomainType global = geometry_->global( coordinate( x ) );
+        function_.jacobian( global, ret );
       }
 
       //! jacobian of local function 
