@@ -11,8 +11,15 @@ FEMDIR=`pwd`
 
 CHECKLOG=$WORKINGDIR/check-tests.out
 make -i check &> $CHECKLOG
+
+errors=`grep "error" $CHECKLOG | wc -l`
+if test $errors -gt 0 ; then
+  echo "Error: $errors compile time errors occurred."
+  exit 1
+fi
+
 if test x`grep "All [[:digit:]]\+ tests passed" $CHECKLOG` == x ; then
   exit 1
-else
-  exit 0
 fi
+
+exit 0
