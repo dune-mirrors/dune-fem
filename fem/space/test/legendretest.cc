@@ -236,7 +236,7 @@ public:
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
 	f.jacobian((*it).geometry().global(quad.point(qP)),psi);
         lf.evaluate(quad[qP],phi);
-	lf.jacobian(quad,qP,xi);
+	lf.jacobian(quad[qP],xi);
 	
 	tmp=0.0;
 

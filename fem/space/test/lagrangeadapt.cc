@@ -189,7 +189,7 @@ public:
 
         RangeType phi, psi;
         function.evaluate( geometry.global( x ), time, phi );
-        localFunction.evaluate( quadrature, qp, psi );
+        localFunction.evaluate( quadrature[ qp ], psi );
 
         for( int i = 0; i < DimRange; ++i )
           error += weight * SQR( phi[ i ] - psi[ i ] );
@@ -274,11 +274,11 @@ public:
 
         RangeType phi, psi;
         function.evaluate( y, time, phi );
-        localFunction.evaluate( quadrature, qp, psi );
+        localFunction.evaluate( quadrature[ qp ], psi );
 
         JacobianRangeType Dphi, Dpsi;
         function.jacobian( y, time, Dphi );
-        localFunction.jacobian( quadrature, qp, Dpsi );
+        localFunction.jacobian( quadrature[ qp ], Dpsi );
 
         for( int i = 0; i < DimRange; ++i ) {
           RangeFieldType localError = SQR( phi[ i ] - psi[ i ] );

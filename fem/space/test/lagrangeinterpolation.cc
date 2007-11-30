@@ -340,7 +340,7 @@ public:
 
         JacobianRangeType Dphi, Dpsi;
         function.jacobian( y, time, Dphi );
-        localFunction.jacobian( quadrature, qp, Dpsi );
+        localFunction.jacobian( quadrature[ qp ], Dpsi );
 
         for( int i = 0; i < DimRange; ++i ) {
           RangeFieldType localError = SQR( phi[ i ] - psi[ i ] );

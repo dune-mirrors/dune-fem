@@ -152,7 +152,7 @@ public:
         for( unsigned int i = 0; i < numBaseFunctions; ++i )
         {
           RangeType phi;
-          baseFunctionSet.evaluate( i, quadrature, pt, phi );
+          baseFunctionSet.evaluate( i, quadrature[ pt ], phi );
           localFunction[ i ] += weight * (y * phi);
         }
       }
@@ -224,7 +224,7 @@ public:
         function.evaluate( geometry.global( point ), y );
         
         RangeType phi;
-        localFunction.evaluate( quadrature, pt, phi );
+        localFunction.evaluate( quadrature[ pt ], phi );
 
         for( unsigned int i = 0; i < DimRange; ++i )
           error[ i ] += weight * SQR( y[ i ] - phi[ i ] );
