@@ -16,6 +16,8 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       example.cc \
                femtuples.hh \
                gridwidth.hh \
+	       h1norm.hh \
+	       h1norm_inline.hh \
                identity.hh \
 	       l2error.hh \
 	       l2norm.hh \
