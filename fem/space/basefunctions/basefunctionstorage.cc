@@ -1,7 +1,5 @@
 #include <dune/fem/quadrature/caching/pointprovider.hh>
 
-using std::make_pair;
-
 namespace Dune
 {
 
@@ -177,12 +175,12 @@ namespace Dune
 
     assert(rangestored_.find(quadId) == rangestored_.end());
     RangeIteratorType rit =
-      rangestored_.insert(make_pair(quadId,true)).first; 
+      rangestored_.insert(std::make_pair(quadId,true)).first; 
     assert(rangestored_.find(quadId) != rangestored_.end());
 
     assert(jacobianstored_.find(quadId) == jacobianstored_.end());
     JacobianRangeIteratorType jit =
-      jacobianstored_.insert(make_pair(quadId,true)).first;
+      jacobianstored_.insert(std::make_pair(quadId,true)).first;
 
     assert(jacobianstored_.find(quadId) != jacobianstored_.end());
 
