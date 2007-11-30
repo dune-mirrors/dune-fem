@@ -63,6 +63,7 @@
 //#include <dune/fem/operator/lagrangeinterpolation.hh>
 //#include <dune/fem/misc/l2error.hh>
 #include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/misc/h1norm.hh>
 
 //- local inlcudes 
 #include "laplace.hh"
@@ -281,9 +282,9 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
 
   //L2Error< DiscreteFunctionType > l2error;
   //DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
-  L2Norm< GridPartType > l2norm( gridPart );
-  double error = l2norm.distance( ugrid, solution );
-  std :: cout << "L2 Error: " << error << std :: endl << std :: endl;
+  H1Norm< GridPartType > norm( gridPart );
+  double error = norm.distance( ugrid, solution );
+  std :: cout << "Error: " << error << std :: endl << std :: endl;
 
   #if (USE_GRAPE && HAVE_GRAPE)
   // if grape was found then display solution

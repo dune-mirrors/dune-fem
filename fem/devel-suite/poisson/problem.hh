@@ -65,6 +65,9 @@ namespace Dune
   public:
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+    enum { dimDomain = DomainType :: dimension };
 
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
@@ -78,13 +81,27 @@ namespace Dune
     // u( x, y, z ) = \prod_{i=1}^{dimworld} (x_i - x_i^2).
     inline void evaluate ( const DomainType &x , RangeType &phi ) const
     {
-      enum { dimension = DomainType :: dimension };
-      
       phi = 1;
-      for( int i = 0; i < dimension; ++i )
+      for( int i = 0; i < dimDomain; ++i )
       {
         const DomainFieldType &x_i = x[ i ];
         phi *= x_i - SQR( x_i );
+      }
+    }
+
+    inline void jacobian ( const DomainType &x, JacobianRangeType &ret ) const
+    {
+      for( unsigned int i = 0; i < dimDomain; ++i )
+      {
+        const DomainFieldType &x_i = x[ i ];
+        ret[ 0 ][ i ] = 1.0 - 2.0 * x_i;
+
+        for( unsigned int j = 0; j < dimDomain; ++j )
+        {
+          const DomainFieldType &x_j = x[ j ];
+          if( i != j )
+            ret[ 0 ][ i ] *= x_j - SQR( x_j );
+        }
       }
     }
    
