@@ -1,11 +1,12 @@
+MODULEDIR=/hosts/morgoth/raid5/dune/modules_$HOSTTYPE
 CONFIGURE_FLAGS="CXX=g++ \
 --disable-documentation \
 --with-grid-dim=2 \
 --with-grid-type=ALBERTAGRID \
 --prefix=/hosts/morgoth/raid5/dune/src/dune \
---with-alberta=/hosts/morgoth/raid5/dune/modules/alberta \
+--with-alberta=$MODULEDIR/alberta \
 --x-includes=/usr/X11R6/include \
 --x-libraries=/usr/X11R6/lib \
---with-grape=/hosts/morgoth/raid5/dune/modules/grape"
+--with-grape=$MODULEDIR/grape"
 MAKE_FLAGS=
 

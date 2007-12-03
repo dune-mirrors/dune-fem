@@ -3,6 +3,8 @@
 MODDIR=/hosts/morgoth/raid5/dune/modules_$HOSTTYPE/
 CONFIGURE_FLAGS="CXX=g++ \
 --prefix=/hosts/morgoth/raid5/dune/src/dune \
+--with-grid-type=ALUGRID_CUBE \
+--with-grid-dim=3 \
 --with-alugrid=$MODDIR/alugrid \
 --with-alberta=$MODDIR/alberta \
 --x-includes=/usr/X11R6/include \
