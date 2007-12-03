@@ -1,6 +1,9 @@
 # IGNORE_HEADERS
-GRIDTYPE=ALUGRID_CONFORM
-GRIDDIM=2
+
+#GRIDTYPE=ALUGRID_CONFORM
+#GRIDDIM=2
+
+EXTRA_DIST = testgrid.hh
 
 AM_CXXFLAGS=-g -Wall
 
@@ -11,4 +14,4 @@ AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
 
 check_PROGRAMS = test
 
-test_SOURCES = test.cc testgrid.hh
+test_SOURCES = test.cc
