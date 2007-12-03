@@ -31,6 +31,7 @@ namespace Dune {
 
   void CachingQuadrature_Test::codim0Test() 
   {
+#if ENABLE_ALBERTA
     const int dim = GRIDDIM;
     const int codim = 0;
     GeometryType triangle ( GeometryType::simplex, 2);
@@ -57,6 +58,7 @@ namespace Dune {
         _floatTest(points[i][d], quad.point(quad.cachingPoint(i))[d]);
       }
     }
+#endif
   } 
 
   template <class GridPartType> 
