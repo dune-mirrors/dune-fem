@@ -22,6 +22,54 @@ namespace Dune
   }
 
 
+
+  template< class BaseFunctionImp >
+  template< class DiscreteFunctionType >
+  inline void ReducedBasisSpace< BaseFunctionImp >
+    :: restrictVector ( const BaseFunctionType &sourceFunction,
+                 DiscreteFunctionType &destFunction ) const
+  {
+    typedef typename DiscreteFunctionType :: RangeFieldType DofType;
+
+    const unsigned int size = baseFunctionList_.size();
+
+    destFunction.clear();
+    for( unsigned int i = 0; i < size; ++i )
+    {
+      const BaseFunctionType &baseFunction = *(baseFunctionList_[ i ]);
+      destFunction.addScaled( baseFunction, sourceFunction );
+    }
+  }
+
+  
+  template< class BaseFunctionImp > 
+  template< class MatrixOnlineType , class MatrixOfflineType >
+  inline void ReducedBasisSpace< BaseFunctionImp >
+    :: restrictMatrix ( const MatrixOnlineType &matrixOnline,
+                 MatrixOfflineType &matrixOffline ) const
+  {
+
+    const unsigned int size = baseFunctionList_.size();
+    assert( size == matrixOffline.cols() );
+    assert( matrixOnline.cols() == baseFunctionSpace.size());
+    matrixOffline.clear();
+    BaseFunctionType Sphi("Sphi", baseFunctionSpace_);
+
+    for( unsigned int i = 0; i < size; ++i )
+    {
+      const BaseFunctionType &baseFunction = *(baseFunctionList_[ i ]);
+      matrixOnline.mult(baseFunction, Sphi);
+
+      for( unsigned int j = 0; j < size; ++j)
+      {
+      const BaseFunctionType &baseFunctionj = *(baseFunctionList_[ j ]);
+      double val = Sphi * baseFunctionj ;
+      matrixOffline.set(i,j,val);
+      }
+    }
+  }
+
+
   
   template< class BaseFunctionImp >
   template< class StreamTraits >

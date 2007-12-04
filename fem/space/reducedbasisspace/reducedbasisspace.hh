@@ -208,6 +208,32 @@ namespace Dune
     inline void project ( const DiscreteFunctionType &sourceFunction,
                           BaseFunctionType &destFunction ) const;
 
+    /** \brief restrict a discrete function over the base space to the discrete
+     *         function space of this base functions
+     *
+     *  \note This method expects the source discrete function to be a DiscreteFunction in the baseFunctionSpace
+     *
+     *  \param[in]   sourceFunction  discrete function to be restricted
+     *  \param[out]  destFunction    discrete function to receive the restricted
+     *                               function
+     */
+    template< class DiscreteFunctionType >
+    inline void restrictVector ( const BaseFunctionType &sourceFunction,
+                          DiscreteFunctionType &destFunction ) const;
+
+    /** \brief restrict a bilinearform which operates in the high dimensional space to a lower dimensional matrix which 
+     *         operates in the reducedbasisspace
+     *
+     *  \note This method expects the matrix of the FEM simulation
+     *
+     *  \param[in]   onlineMatrix   matrix which corresponds the bilinearform in the lagrange space
+     *  \param[out]  offlineMatrix  projected matrix to the lower dimensional RB space
+     */
+
+    template< class MatrixOnlineType , class MatrixOfflineType >
+    inline void restrictMatrix ( const MatrixOnlineType &matrixOnline,
+                 MatrixOfflineType &matrixOffline ) const;
+
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits > &in );
    
