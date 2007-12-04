@@ -3,15 +3,17 @@
 
 #include <string>
 
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+
 #include "../dgpass.hh"
 #include "../discretemodel.hh"
 #include "../selection.hh"
 
-#include <dune/fem/lagrangebase.hh>
+#include <dune/fem/space/lagrangespace.hh>
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/alugrid.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/quadrature/fixedorder.hh>
+#include <dune/fem/quadrature/elementquadrature.hh>
 
 namespace Dune {
   
@@ -19,15 +21,13 @@ namespace Dune {
 
   struct DGStubTraits {
     typedef FunctionSpace<double, double, 3, 1> FunctionSpaceType;
-    typedef ALU3dGrid<3, 3, tetra> GridType;
     typedef LeafGridPart<GridType> GridPartType;
     typedef LagrangeDiscreteFunctionSpace<
       FunctionSpaceType, GridPartType, 1> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
-    //typedef DFAdapt<DiscreteFunctionSpaceType> DestinationType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
-    typedef FixedOrderQuad<double, FieldVector<double, 3>, 1> VolumeQuadratureType;
-    typedef FixedOrderQuad<double, FieldVector<double, 2>, 1> FaceQuadratureType;
+    typedef ElementQuadrature< GridPartType, 0> VolumeQuadratureType;
+    typedef ElementQuadrature< GridPartType, 1>  FaceQuadratureType;
     typedef FieldVector<double, 3> DomainType;
     typedef FieldVector<double, 2> FaceDomainType;
     typedef DiscreteFunctionSpaceType::RangeType RangeType;
@@ -45,8 +45,8 @@ namespace Dune {
     typedef DGStubTraits Traits;
 
     typedef Traits::FunctionSpaceType FunctionSpaceType;
-    typedef Traits::GridType GridType;
     typedef Traits::GridPartType GridPartType;
+    typedef GridPartType:: GridType GridType;
     typedef Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     // * find common notation
     typedef Traits::SpaceType SpaceType;
@@ -55,8 +55,7 @@ namespace Dune {
     typedef Traits::FaceQuadratureType FaceQuadratureType;
     typedef Traits::DiscreteFunctionSpaceType::RangeType RangeType;
     typedef Traits::DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef Traits::GridType GridType;
-    typedef GridType::Traits::IntersectionIterator IntersectionIterator;
+    typedef GridPartType :: IntersectionIteratorType IntersectionIterator;
     typedef GridType::Codim<0>::Entity EntityType;
  
     typedef FieldVector<double, 3> DomainType;

@@ -2,17 +2,19 @@
 #define DUNE_LAGRANGE_FIXTURE_HH
 
 //- Dune includes
-#include <dune/fem/dofmanager.hh>
-#include <dune/fem/lagrangebase.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/lagrangespace.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/alu3dgrid.hh>
+#include <dune/grid/alugrid.hh>
+
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 namespace Dune {
   
-  template <int polOrd>
+  template <class GridImp, int polOrd>
   class Lagrange_Fixture {
   public:
-    typedef ALU3dGrid<3, 3, tetra> GridType;
+    typedef GridImp GridType;
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
     typedef LeafGridPart<GridType> GridPartType;

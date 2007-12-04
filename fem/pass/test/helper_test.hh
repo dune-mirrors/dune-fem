@@ -6,7 +6,7 @@
 #include "../selection.hh"
 #include "../callerutility.hh"
 
-#include <dune/fem/dfadapt.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/common/utility.hh>
 
 #include "lagrange_fixture.hh"

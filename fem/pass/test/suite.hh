@@ -11,6 +11,8 @@ using std::string;
 using std::ostream;
 using std::vector;
 
+using namespace Dune;
+
 
 /** @addtogroup Testing
     @{
