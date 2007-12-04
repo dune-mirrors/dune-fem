@@ -13,11 +13,7 @@
 
 //- Local includes
 #include "adaptiveimp.hh"
-#ifdef OLD_LOCALFUNCTION
-#include "localfunction.hh"
-#else
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
-#endif
 
 namespace Dune
 {
@@ -43,14 +39,9 @@ namespace Dune
  
     typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
-#ifdef OLD_LOCALFUNCTION
-    typedef AdaptiveLocalFunctionFactory< DiscreteFunctionSpaceType >
-      LocalFunctionFactoryType;
-#else
     typedef StandardLocalFunctionFactory
       < AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > >
       LocalFunctionFactoryType;
-#endif
 
     typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
 
@@ -104,10 +95,6 @@ namespace Dune
     typedef DiscreteFunctionDefault< Traits > BaseType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> ThisType;
 
-#ifdef OLD_LOCALFUNCTION
-    friend class AdaptiveLocalFunctionFactory< DiscreteFunctionSpaceType >;
-#endif
-  
   public:
     using BaseType :: assign;
 
@@ -359,10 +346,6 @@ namespace Dune
     
 
   private:
-#ifdef OLD_LOCALFUNCTION
-    friend class AdaptiveLocalFunctionFactory< DiscreteFunctionSpaceType >;
-#endif
-
     // local function factory 
     const LocalFunctionFactoryType lfFactory_;
 

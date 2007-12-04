@@ -20,10 +20,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/localfunction.hh>
 #include <dune/fem/function/common/dofiterator.hh>
-
-#ifndef OLD_LOCALFUNCTION
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
-#endif
 
 namespace Dune
 {
@@ -62,11 +59,7 @@ struct BlockVectorDiscreteFunctionTraits
 
   typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
   
-#ifdef OLD_LOCALFUNCTION
-  typedef BlockVectorLocalFunctionFactory< ThisType > LocalFunctionFactoryType; 
-#else
   typedef StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
-#endif
 
   typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
   typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
@@ -132,46 +125,6 @@ private:
   BlockVectorType& vec_;
 };
 
-
-
-template< class TraitsImp > 
-class BlockVectorLocalFunctionFactory
-{
-public:
-  typedef TraitsImp Traits;
-  typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-  typedef typename Traits :: MapperType MapperType;
-  typedef typename Traits :: DofStorageType DofStorageType;
-
-private:
-  typedef BlockVectorLocalFunctionFactory<TraitsImp>  ThisType;
-
-  friend class BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >;
-
-public:
-  typedef BlockVectorLocalFunction<Traits> ObjectType;
-
-  typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
-    DiscreteFunctionType;
-
-protected:
-  DiscreteFunctionType &discreteFunction_;
-
-protected:
-  inline explicit BlockVectorLocalFunctionFactory ( DiscreteFunctionType &df )
-  : discreteFunction_( df )
-  {
-  }
-
-public:
-  ObjectType *newObject () const
-  {
-    return new ObjectType( discreteFunction_.space(),
-                           discreteFunction_.mapper_ ,
-                           discreteFunction_.dofVec_, 
-                           discreteFunction_.leakPtr_ );
-  }
-};
 
 
 //**********************************************************************
@@ -393,176 +346,6 @@ private:
   LocalFunctionImp localFunc_;
 }; // end class BlockVectorDiscreteFunction 
 
-
-// *************************************************************************
-//
-//  --BlockVectorLocalFunction
-//
-//  Implementation of the local functions 
-//
-// *************************************************************************
-template< class TraitsImp >
-class BlockVectorLocalFunction
-: public LocalFunctionDefault
-  < typename TraitsImp :: DiscreteFunctionSpaceType,
-    BlockVectorLocalFunction< TraitsImp >   > 
-{
-public:
-  typedef TraitsImp Traits; 
-  typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-  typedef typename Traits :: MapperType  MapperType;
-  typedef typename Traits :: DofStorageType DofStorageType;
-  typedef typename Traits :: LeakPointerType LeakPointerType;
-
-private:
-  typedef BlockVectorLocalFunction< Traits > ThisType;
-  typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
-
-public:
-  using BaseType :: evaluate;
-  using BaseType :: jacobian;
-  
-public:
-  typedef typename DiscreteFunctionSpaceType::Traits::GridType GridType;
-  typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-
-  enum { dimRange = DiscreteFunctionSpaceType::DimRange };
-  //CompileTimeChecker<dimrange == 1> check; 
-  typedef typename DiscreteFunctionSpaceType::Traits::DomainType DomainType;
-  typedef typename DiscreteFunctionSpaceType::Traits::RangeType RangeType;
-  typedef typename DiscreteFunctionSpaceType::Traits::RangeFieldType RangeFieldType;
-  typedef typename DiscreteFunctionSpaceType::Traits::JacobianRangeType JacobianRangeType;
-
-  typedef typename GridType :: template  Codim<0> :: Entity EntityType;
-
-  typedef typename DofStorageType :: block_type DofBlockType;
-  enum { localBlockSize = DofBlockType :: dimension };
-
-  friend class BlockVectorDiscreteFunction <DiscreteFunctionSpaceType>;
-
-private:
-  typedef typename GridType :: ctype ctype;
-  enum { dim = GridType :: dimension };
-  typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
-
-public:
-  //! Constructor 
-  BlockVectorLocalFunction ( const DiscreteFunctionSpaceType &f , 
-                             const MapperType& mapper, 
-                             DofStorageType & dofVec, 
-                             LeakPointerType& leakPtr );
-
-  //! \brief Destructor 
-  ~BlockVectorLocalFunction ();
-
-   /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) */
-  inline const RangeFieldType &operator[] ( const int num ) const
-  {
-    return *(values_[ num ]);
-  }
-
-   /** \copydoc Dune::LocalFunctionInterface::operator[](const int num) */
-  inline RangeFieldType &operator[] ( const int num )
-  {
-    return *(values_[ num ]);
-  }
-
-  /** \copydoc Dune::LocalFunctionInterface::numDofs */
-  int numDofs () const
-  {
-    return numDofs_;
-  }
-
-  /** \copydoc Dune::LocalFunctionInterface::evaluate(const DomainType &x,RangeType &ret) const
-   */
-  void evaluate ( const DomainType &x,
-                  RangeType &ret ) const;
- 
-   /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
-    */
-  template< class QuadratureType >
-  void evaluate ( const QuadratureType &quadrature,
-                  const int quadPoint,
-                  RangeType &ret ) const;
-
-   /** \copydoc Dune::LocalFunctionInterface::jacobian(const DomainType &x,JacobianRangeType &ret) const
-    */
-  void jacobian ( const DomainType &x,
-                  JacobianRangeType &ret ) const;
-
-   /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const
-    */
-  template< class QuadratureType >
-  void jacobian ( const QuadratureType &quadrature,
-                  const int quadPoint,
-                  JacobianRangeType &ret ) const;
-
-   /** \copydoc Dune::LocalFunctionInterface::baseFunctionSet */
-  const BaseFunctionSetType& baseFunctionSet() const;
-
-   /** \copydoc LocalFunctionDefault::axpy  */
-  template <class QuadratureType>
-  inline void axpy(const QuadratureType&, const int qp, const RangeType& factor);
-
-   /** \copydoc LocalFunctionDefault::axpy  */
-  template <class QuadratureType>
-  inline void axpy(const QuadratureType&, const int qp, const JacobianRangeType& factor);
-
-   /** \copydoc LocalFunctionDefault::axpy  */
-  template <class QuadratureType>
-  inline void axpy(const QuadratureType&, const int qp, const RangeType& factor1, const JacobianRangeType& factor2);
-
-  inline void
-  rightMultiply(const JacobianRangeType& factor,
-              const JacobianInverseType& jInv,
-              JacobianRangeType& result) const;
-  
-  //! update local function for given Entity  
-  void init ( const EntityType &en ) const;
-
-protected:
-  //! return reference to entity
-  const EntityType& en() const 
-  {
-    assert( en_ ); 
-    return *en_;
-  }
-
-  //! the corresponding function space which provides the base function set
-  const DiscreteFunctionSpaceType &fSpace_;
-
-  //! special mapper of block vector functions
-  const MapperType& mapper_;
-  
-  //! actual entity 
-  mutable const EntityType* en_;
-
-  //! dofVec from all levels of the discrete function 
-  DofStorageType & dofVec_;
-  LeakPointerType& leakPtr_;
-
-  //! Array holding pointers to the local dofs 
-  mutable MutableArray < RangeFieldType * > values_ ;
-
-  //! needed once 
-  mutable RangeType tmp_;
-
-  //! needed once 
-  mutable JacobianRangeType tmpGrad_;
-  mutable JacobianRangeType factorInv_;
-
-  //! diffVar for evaluate, is empty 
-  const DiffVariable<0>::Type diffVar;
-
-  //! number of all dofs 
-  mutable int numDofs_;
-
-  //! do we have the same base function set for all elements
-  mutable bool needCheckGeometry_;
-
-  //! corresponding base function set 
-  mutable BaseFunctionSetType baseSet_; 
-}; // end BlockVectorLocalFunction 
 
 
 //***********************************************************************

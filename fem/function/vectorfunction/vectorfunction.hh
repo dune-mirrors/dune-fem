@@ -6,12 +6,7 @@
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-
-#ifdef OLD_LOCALFUNCTION
-#include "localfunction.hh"
-#else
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
-#endif
 
 namespace Dune
 {
@@ -31,16 +26,10 @@ namespace Dune
     typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >
       DiscreteFunctionType;
 
-#ifdef OLD_LOCALFUNCTION
-    typedef VectorLocalFunctionFactory
-      < DiscreteFunctionSpaceType, DofVectorType >
-      LocalFunctionFactoryType;
-#else
     typedef StandardLocalFunctionFactory
       < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceType,
 	                              DofVectorType > >
       LocalFunctionFactoryType;
-#endif
 
     typedef LocalFunctionStack< LocalFunctionFactoryType >
       LocalFunctionStorageType;
@@ -95,11 +84,6 @@ namespace Dune
     typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >
       ThisType;
     typedef DiscreteFunctionDefault< Traits > BaseType;
-
-#ifdef OLD_LOCALFUNCTION
-    friend class VectorLocalFunction
-      < DiscreteFunctionSpaceType, DofVectorType >;
-#endif
 
   public:
     typedef typename Traits :: DiscreteFunctionType DiscreteFunctionType;

@@ -1,10 +1,6 @@
 #ifndef DUNE_LOCALFUNCTION_HH
 #define DUNE_LOCALFUNCTION_HH
 
-#ifdef OLD_LOCALFUNCTION
-#warning "OLD_LOCALFUNCTION defined: Using old implementations of the local functions."
-#endif
-
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
 #ifndef DUNE_FEM_COMPATIBILITY
