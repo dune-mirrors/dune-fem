@@ -187,6 +187,14 @@ namespace Dune {
 
     typedef Selector<0> SelectorType;
   public:
+    //! \copydoc DiscreteModelInterface::hasFlux 
+    //! \return false 
+    bool hasFlux() const { return false; }
+    
+    //! \copydoc DiscreteModelInterface::hasSource 
+    //! \return false 
+    bool hasSource() const { return false; }
+    
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
@@ -269,42 +277,52 @@ namespace Dune {
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
 
   public:
+    //! \brief default constructor 
     DiscreteModelDefaultWithInsideOutSide() 
       : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0) 
     {}
 
     //! set entity and get volume  
+    //! \brief method setting pointer of inside entity and getting volume 
+    //! \param[in] reference to inside entity 
     void setEntity(EntityType& en)
     { 
       en_ = &en;
       enVol_ = en.geometry().volume();
     }
 
-    //! set neighbor and get volume  
+    //! \brief method seting pointer of outside entity and getting volume 
+    //! \param[in] reference to outside entity 
     void setNeighbor(EntityType& nb)
     { 
       nb_ = &nb;
       nbVol_ = nb.geometry().volume();
     }
     
+    //! \brief method returning reference to inside entity 
+    //! \return reference to inside entity 
     const EntityType & inside() const  
     {
       assert( en_ );
       return *en_;
     }
     
+    //! \brief method returning reference to outside entity 
+    //! \return reference to outside entity 
     const EntityType & outside() const 
     {
       assert( nb_ );
       return *nb_;
     }
 
+    //! \brief return volume of entity
     double enVolume() const 
     { 
       assert(enVol_ > 0.0);
       return enVol_; 
     }
 
+    //! \brief return volume of neighbor
     double nbVolume() const 
     {
       assert( nbVol_ > 0.0 );
