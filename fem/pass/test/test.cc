@@ -14,6 +14,7 @@
 #endif
 
 using namespace std;
+using namespace Dune;
 
 const double Test::eps = std::numeric_limits<double>::epsilon();
 

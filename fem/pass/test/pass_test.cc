@@ -5,7 +5,10 @@
 #include "dgstub.hh"
 #include "lagrange_fixture.hh"
 
-#include <dune/fem/discretefunction/adaptivefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+
 
 namespace Dune {
 
@@ -16,17 +19,13 @@ namespace Dune {
   }
 
   void Pass_Test::functorTest() {
-    typedef Lagrange_Fixture<0> Fix0;
-    typedef Lagrange_Fixture<1> Fix1;
-    typedef Lagrange_Fixture<1> Fix2;
+    typedef Lagrange_Fixture<GridType,1> Fix0;
+    typedef Lagrange_Fixture<GridType,1> Fix1;
+    typedef Lagrange_Fixture<GridType,1> Fix2;
 
-    typedef DFAdapt<Fix0::DiscreteFunctionSpaceType> DF0;
-    typedef DFAdapt<Fix1::DiscreteFunctionSpaceType> DF1;
-    typedef DFAdapt<Fix2::DiscreteFunctionSpaceType> DF2;
-
-    //typedef AdaptiveDiscreteFunction<Fix0::DiscreteFunctionSpaceType> DF0;
-    //typedef AdaptiveDiscreteFunction<Fix1::DiscreteFunctionSpaceType> DF1;
-    //typedef AdaptiveDiscreteFunction<Fix2::DiscreteFunctionSpaceType> DF2;
+    typedef AdaptiveDiscreteFunction<Fix0::DiscreteFunctionSpaceType> DF0;
+    typedef AdaptiveDiscreteFunction<Fix1::DiscreteFunctionSpaceType> DF1;
+    typedef AdaptiveDiscreteFunction<Fix2::DiscreteFunctionSpaceType> DF2;
 
     typedef DF0::LocalFunctionType LF0;
     typedef DF1::LocalFunctionType LF1;
@@ -48,10 +47,12 @@ namespace Dune {
     typedef Tuple<R0, R1, R2>::FirstPair RPairType;
 
     typedef Fix0::GridType GridType;
-    typedef GridType::Codim<0>::LeafIterator LeafIterator;
+    //typedef GridType::Codim<0>::LeafIterator LeafIterator;
+    typedef Fix0::DiscreteFunctionSpaceType :: IteratorType LeafIterator;
     typedef LeafIterator::Entity Entity;
 
-    GridType grid(gridFile_.c_str());
+    GridPtr<GridType> gridPtr(gridFile_);
+    GridType& grid = *gridPtr;
     Fix0 fix0(grid);
     Fix1 fix1(grid);
     Fix2 fix2(grid);
@@ -60,7 +61,7 @@ namespace Dune {
     DF1 df1("eins", fix1.space());
     DF2 df2("zwei", fix2.space());
 
-    LeafIterator it = grid.leafbegin<0>();
+    LeafIterator it = fix0.space().begin();
     DomainType x(0.2);
 
     DF0::LocalFunctionType lf = df0.localFunction(*it);
@@ -69,23 +70,23 @@ namespace Dune {
    
     LFTupleType lft = LocalFunctionCreator<DFPairType>::apply(dft);
 
-    //LFTupleType lft2 = LocalFunctionCreator2::apply(dft);
-
     RTupleType rt = Creator<RangeTypeEvaluator, LFPairType>::apply(lft);
 
-    ForEachValuePair<DFTupleType, LFTupleType> forEachDFandLf(dft, lft);
-    ForEachValuePair<LFTupleType, RTupleType> forEachLFandR(lft, rt);
+    ForEachValuePair<LFTupleType, RTupleType>  forEachLFandR(lft, rt);
 
+    ForEachValue<LFTupleType> forEach(lft);
     LocalFunctionSetter<Entity> setter(*it);      
-    forEachDFandLf.apply(setter);
+    forEach.apply(setter);
 
-    LocalFunctionEvaluateLocal<Entity, DomainType> evaluator(*it, x);
+    LocalFunctionEvaluateLocal<DomainType> evaluator( x );
     forEachLFandR.apply(evaluator);
   }
 
 
-  void Pass_Test::dummyTest() {
-    typedef PassStubTraits::DestinationType GlobalArgumentType;
+  void Pass_Test::dummyTest() 
+  {
+    typedef PassStubTraits<GridType> PassStubTraitsType;
+    typedef PassStubTraitsType :: DestinationType GlobalArgumentType;
     typedef PassStub<StartPass<GlobalArgumentType> > Pass1Type;
     typedef PassStub<Pass1Type> Pass2Type;
 
@@ -99,15 +100,15 @@ namespace Dune {
   void Pass_Test::dgTest() {
     typedef DGStubTraits::DestinationType GlobalArgumentType;
     typedef DGStubTraits::DestinationType DestinationType;
-    //typedef DGStubTraits::SpaceType SpaceType;
     typedef StartPass<GlobalArgumentType> Pass0Type;
     typedef LocalDGPass<ProblemStub, Pass0Type> Pass1Type;
     typedef LocalDGPass<ProblemStub, Pass1Type> Pass2Type;
-    typedef Lagrange_Fixture<1> Fix;
+    typedef Lagrange_Fixture<GridType, 1> Fix;
     typedef Fix::GridType GridType;
     typedef Fix::DiscreteFunctionSpaceType SpaceType;
   
-    GridType grid(gridFile_.c_str());
+    GridPtr<GridType> gridPtr(gridFile_);
+    GridType& grid = *gridPtr;
     Fix fix(grid);
     SpaceType& spc = fix.space();
     ProblemStub ps;
@@ -121,7 +122,6 @@ namespace Dune {
 
     p2(arg, dest);
 
-    _fail("Not implemented yet");
-
+    //_fail("Not implemented yet");
   }
 } // end namespace Dune

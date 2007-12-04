@@ -1,8 +1,9 @@
 #include <dune/config.h>
 
-#include "helper_test.hh"
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/common/typetraits.hh>
-#include <dune/quadrature/fixedorder.hh>
+#include "helper_test.hh"
+//#include <dune/fem/quadrature/elementquadrature.hh>
 
 namespace Dune {
   void PassHelper_Test::run() {
@@ -44,13 +45,13 @@ namespace Dune {
   }
 
   void PassHelper_Test::tupleConverterTest() {
-    typedef Lagrange_Fixture<0> Fix0;
-    typedef Lagrange_Fixture<1> Fix1;
-    typedef Lagrange_Fixture<0> Fix2;
+    typedef Lagrange_Fixture<GridType, 1> Fix0;
+    typedef Lagrange_Fixture<GridType, 1> Fix1;
+    typedef Lagrange_Fixture<GridType, 2> Fix2;
 
-    typedef DFAdapt<Fix0::DiscreteFunctionSpaceType> DF0;
-    typedef DFAdapt<Fix1::DiscreteFunctionSpaceType> DF1;
-    typedef DFAdapt<Fix2::DiscreteFunctionSpaceType> DF2;
+    typedef AdaptiveDiscreteFunction<Fix0::DiscreteFunctionSpaceType> DF0;
+    typedef AdaptiveDiscreteFunction<Fix1::DiscreteFunctionSpaceType> DF1;
+    typedef AdaptiveDiscreteFunction<Fix2::DiscreteFunctionSpaceType> DF2;
 
     typedef DF0::LocalFunctionType LF0;
     typedef DF1::LocalFunctionType LF1;
@@ -71,7 +72,8 @@ namespace Dune {
 
     typedef Fix0::GridType GridType;
 
-    GridType grid(gridFile_.c_str());
+    GridPtr<GridType> gridPtr(gridFile_);
+    GridType& grid = *gridPtr;
     Fix0 fix0(grid);
     Fix1 fix1(grid);
     Fix2 fix2(grid);
