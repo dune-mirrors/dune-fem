@@ -41,7 +41,7 @@ class L2ProjectionLocal
 	      f.evaluate(geo.global(quad.point(qP)), ret);
         ret *=  quad.weight(qP);
 
-        lf.axpy( quad, qP , ret );
+        lf.axpy( quad[ qP ], ret );
       }
     }
   }
