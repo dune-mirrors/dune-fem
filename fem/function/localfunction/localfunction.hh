@@ -439,7 +439,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::StandardLocalFunction
+  /** \copydoc Dune::LocalFunctionDefault
    *
    *  Specialised version for CombinedSpaces
    */

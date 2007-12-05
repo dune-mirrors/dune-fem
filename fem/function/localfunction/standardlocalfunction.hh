@@ -111,7 +111,7 @@ namespace Dune
     /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
     inline const BaseFunctionSetType &baseFunctionSet() const;
 
-    /** \copydoc Dune::LocalFuncton::entity() const */
+    /** \copydoc Dune::LocalFunction::entity() const */
     inline const EntityType &entity () const;
 
     //! initialize local function 
@@ -233,7 +233,7 @@ namespace Dune
     /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
     inline const BaseFunctionSetType &baseFunctionSet () const;
 
-    /** \copydoc Dune::LocalFuncton::entity() const */
+    /** \copydoc Dune::LocalFunction::entity() const */
     inline const EntityType &entity () const;
       
     //! initialize local function 
