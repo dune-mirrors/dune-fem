@@ -284,7 +284,7 @@ namespace Dune {
 
     //! set entity and get volume  
     //! \brief method setting pointer of inside entity and getting volume 
-    //! \param[in] reference to inside entity 
+    //! \param[in] en reference to inside entity 
     void setEntity(EntityType& en)
     { 
       en_ = &en;
@@ -292,7 +292,7 @@ namespace Dune {
     }
 
     //! \brief method seting pointer of outside entity and getting volume 
-    //! \param[in] reference to outside entity 
+    //! \param[in] nb reference to outside entity 
     void setNeighbor(EntityType& nb)
     { 
       nb_ = &nb;
