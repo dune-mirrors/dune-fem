@@ -1,9 +1,9 @@
-#ifndef DUNE_STANDARDLOCALFUNCTION_HH
-#define DUNE_STANDARDLOCALFUNCTION_HH
+#ifndef DUNE_FEM_STANDARDLOCALFUNCTION_HH
+#define DUNE_FEM_STANDARDLOCALFUNCTION_HH
 
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/space/common/dofstorage.hh>
-#include <dune/fem/function/common/localfunction.hh>
+#include <dune/fem/function/localfunction/localfunction.hh>
 
 namespace Dune
 {
@@ -14,25 +14,24 @@ namespace Dune
 
 
 
-  /** \class StandardLocalFunction
+  /** \class StandardLocalFunctionImpl
    *  \brief standard implementation of a local function
    */
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  class StandardLocalFunction
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  class StandardLocalFunctionImpl
   : public LocalFunctionDefault
-    < DiscreteFunctionSpaceImp,
-      StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    >
+    < DiscreteFunctionSpace,
+      StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace > >
   {
   public:
-    //! type of discrete function this local function belongs to
-    typedef DiscreteFunctionImp DiscreteFunctionType;
+    //! type of discrete function the local function belongs to
+    typedef DiscreteFunction DiscreteFunctionType;
 
-    //! type of  discrete function space this local function belongs to
-    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+    //! type of  discrete function space the local function belongs to
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
   private:
-    typedef StandardLocalFunction< DiscreteFunctionType, DiscreteFunctionSpaceType >
+    typedef StandardLocalFunctionImpl< DiscreteFunctionType, DiscreteFunctionSpaceType >
       ThisType;
     typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
 
@@ -65,17 +64,14 @@ namespace Dune
 
     //! type of codim 0 entities
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+#if 0
     //! type of entity's geometry
     typedef typename EntityType :: Geometry GeometryType;
     //! type of transposed of geometry's Jacobian Inverse
     typedef FieldMatrix
       < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
       GeometryJacobianInverseType;
-
-  public:
-    using BaseType :: axpy;
-    using BaseType :: evaluate;
-    using BaseType :: jacobian;
+#endif
 
   protected:
     DiscreteFunctionType &discreteFunction_;
@@ -96,166 +92,60 @@ namespace Dune
 
   public:
     //! constructor
-    inline StandardLocalFunction ( DiscreteFunctionType &discreteFunction )
-    : discreteFunction_( discreteFunction ),
-      values_(),
-      baseFunctionSet_(),
-      entity_( 0 ),
-      numDofs_( 0 ),
-      needCheckGeometry_( true )
-    {
-    }
+    inline explicit StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction );
     
     //! copy constructor
-    inline StandardLocalFunction ( const ThisType &other )
-    : discreteFunction_( other.discreteFunction_ ),
-      values_( other.values_ ),
-      baseFunctionSet_( other.baseFunctionSet_ ),
-      entity_( other.entity_ ),
-      numDofs_( other.numDofs_ ),
-      needCheckGeometry_( other.needCheckGeometry_ )
-    {
-    }
+    inline StandardLocalFunctionImpl ( const ThisType &other );
 
   private:
     // prohibit assignment
     ThisType &operator= ( const ThisType & );
 
   public:
-    /** \copydoc Dune::LocalFunctionDefault::operator[](const int num) const */
-    inline const RangeFieldType &operator[] ( const int num ) const
-    {
-      assert( entity_ != 0 );
-      assert( (num >= 0) && (num < numDofs()) );
-      return *(values_[ num ]);
-    }
+    /** \copydoc Dune::LocalFunction::operator[](const int num) const */
+    inline const RangeFieldType &operator[] ( const int num ) const;
 
-    /** \copydoc Dune::LocalFunctionDefault::operator[](const int num) */
-    inline RangeFieldType &operator[] ( const int num )
-    {
-      assert( entity_ != 0 );
-      assert( (num >= 0) && (num < numDofs()) );
-      return *(values_[ num ]);
-    }
+    /** \copydoc Dune::LocalFunction::operator[](const int num) */
+    inline RangeFieldType &operator[] ( const int num );
 
-    /** \copydoc LocalFunctionInterface::numDofs */
-    inline int numDofs() const
-    {
-      return numDofs_; 
-    }
+    /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
+    inline const BaseFunctionSetType &baseFunctionSet() const;
 
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const PointType &x,RangeType &ret) const */
-    template< class PointType >
-    inline void evaluate( const PointType &x,
-                          RangeType &ret ) const;
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
-    template< class QuadratureType >
-    inline void evaluate ( const QuadratureType &quadrature,
-                           const int quadPoint,
-                           RangeType &ret ) const;
-#endif
-
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const PointType &x,JacobianRangeType &ret) const */
-    template< class PointType >
-    inline void jacobian ( const PointType &x,
-                           JacobianRangeType &ret ) const;
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::jacobian( const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
-    template< class QuadratureType >
-    inline void jacobian( const QuadratureType &quadrature,
-                          const int quadPoint,
-                          JacobianRangeType &ret ) const;
-#endif
-
-    /** \copydoc Dune::LocalFunctionDefault::baseFunctionSet */
-    const BaseFunctionSetType &baseFunctionSet() const
-    {
-      assert( entity_ != 0 );
-      return baseFunctionSet_;
-    }
-    
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor) */
-    template< class PointType >
-    inline void axpy( const PointType &x,
-                      const RangeType &factor );
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
-    template< class QuadratureType >
-    inline void axpy( const QuadratureType &quadrature,
-                      const int quadPoint,
-                      const RangeType &factor );
-#endif
-
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const JacobianRangeType &factor) */
-    template< class PointType >
-    inline void axpy( const PointType &x,
-                      const JacobianRangeType &factor );
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
-    template< class QuadratureType >
-    inline void axpy( const QuadratureType &quadrature,
-                      const int quadPoint,
-                      const JacobianRangeType &factor );
-#endif
-    
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
-    template< class PointType >
-    inline void axpy( const PointType &x,
-                      const RangeType &factor1,
-                      const JacobianRangeType &factor2 );
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor1,const JacobianRangeType &factor2) */
-    template< class QuadratureType >
-    inline void axpy ( const QuadratureType &quadrature,
-                       const int quadPoint,
-                       const RangeType &factor1,
-                       const JacobianRangeType &factor2 );
-#endif
+    /** \copydoc Dune::LocalFuncton::entity() const */
+    inline const EntityType &entity () const;
 
     //! initialize local function 
-    void init ( const EntityType &entity );
-
-  protected:
-    inline const EntityType &entity () const
-    {
-      assert( entity_ != 0 );
-      return *entity_;
-    }
-
-    inline void rightMultiply ( const JacobianRangeType &factor,
-                                const DomainType &x,
-                                JacobianRangeType &result );
+    inline void init ( const EntityType &entity );
+    
+    /** \copydoc Dune::LocalFunction::numDofs() const */
+    inline int numDofs() const;
   };
 
 
 
-  /** \copydoc Dune::StandardLocalFunction
+  /** \copydoc Dune::StandardLocalFunctionImpl
    *
    *  Specialised version for CombinedSpaces
    */
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  class StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  class StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
   : public LocalFunctionDefault
-    < CombinedSpace< ContainedFunctionSpaceImp, N, policy >,
-      StandardLocalFunction< DiscreteFunctionImp, 
-                             CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    >
+    < CombinedSpace< ContainedFunctionSpace, N, policy >,
+      StandardLocalFunctionImpl< DiscreteFunction,
+                                 CombinedSpace< ContainedFunctionSpace, N, policy > > >
   {
   public:
-    typedef DiscreteFunctionImp DiscreteFunctionType;
-    typedef CombinedSpace< ContainedFunctionSpaceImp, N, policy >
+    //! type of discrete function the local function belongs to
+    typedef DiscreteFunction DiscreteFunctionType;
+
+    //! type of discrete function space the local function belongs to
+    typedef CombinedSpace< ContainedFunctionSpace, N, policy >
       DiscreteFunctionSpaceType;
 
   private:
-    typedef StandardLocalFunction< DiscreteFunctionType, DiscreteFunctionSpaceType >
+    typedef StandardLocalFunctionImpl< DiscreteFunctionType, DiscreteFunctionSpaceType >
       ThisType;
     typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
      
@@ -288,12 +178,14 @@ namespace Dune
 
     //! type of codim 0 entities
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+#if 0
     //! type of entity's geometry
     typedef typename EntityType :: Geometry GeometryType;
     //! type of transposed of geometry's Jacobian Inverse
     typedef FieldMatrix
       < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
       GeometryJacobianInverseType;
+#endif
 
   protected:
     typedef typename DiscreteFunctionSpaceType :: ContainedRangeType ScalarRangeType;
@@ -301,9 +193,7 @@ namespace Dune
       ScalarJacobianRangeType;
       
     template< DofStoragePolicy >
-    struct DofStoragePolicyType
-    {
-    };
+    struct DofStoragePolicyType {};
 
   protected:
     DiscreteFunctionType &discreteFunction_;
@@ -323,184 +213,45 @@ namespace Dune
     bool needCheckGeometry_;
 
   public:
-    using BaseType :: axpy;
-    using BaseType :: evaluate;
-    using BaseType :: jacobian;
-
-  public:
     //! constructor
-    inline StandardLocalFunction ( DiscreteFunctionType &discreteFunction )
-    : discreteFunction_( discreteFunction ),
-      values_(),
-      baseFunctionSet_(),
-      entity_( 0 ),
-      numScalarDofs_( 0 ),
-      needCheckGeometry_( true )
-    {
-    }
-    
-    //! copy constructor
-    inline StandardLocalFunction ( const ThisType &other )
-    : discreteFunction_( other.discreteFunction_ ),
-      values_( other.values_ ),
-      baseFunctionSet_( other.baseFunctionSet_ ),
-      entity_( other.entity_ ),
-      numScalarDofs_( other.numScalarDofs_ ),
-      needCheckGeometry_( other.needCheckGeometry_ )
-    {
-    }
+    inline StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction );
 
   private:
+    // prohibit copying
+    inline StandardLocalFunctionImpl ( const ThisType &other );
+
     // prohibit assignment
     ThisType &operator= ( const ThisType & );
 
   public:
-    /** \copydoc Dune::LocalFunctionDefault::operator[](const int num) const */
-    inline const RangeFieldType &operator[] ( const int num ) const
-    {
-      assert( entity_ != 0 );
-      assert( (num >= 0) && (num < numDofs()) );
-      return *(values_[ num ]);
-    }
+    /** \copydoc Dune::LocalFunction::operator[](const int num) const */
+    inline const RangeFieldType &operator[] ( const int num ) const;
 
-    /** \copydoc Dune::LocalFunctionDefault::operator[](const int num) */
-    inline RangeFieldType &operator[] ( const int num )
-    {
-      assert( entity_ != 0 );
-      assert( (num >= 0) && (num < numDofs()) );
-      return *(values_[ num ]);
-    }
-
-    /** \copydoc LocalFunctionInterface::numDofs */
-    inline int numDofs() const
-    {
-      return N * numScalarDofs_; 
-    }
-
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const PointType &x,RangeType &ret) const */
-    template< class PointType >
-    inline void evaluate( const PointType &x,
-                          RangeType &ret ) const;
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
-    template< class QuadratureType >
-    inline void evaluate ( const QuadratureType &quadrature,
-                           const int quadPoint,
-                           RangeType &ret ) const;
-#endif
-
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const PointType &x,JacobianRangeType &ret) const */
-    template< class PointType >
-    inline void jacobian ( const PointType &x,
-                           JacobianRangeType &ret ) const;
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::jacobian( const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
-    template< class QuadratureType >
-    inline void jacobian( const QuadratureType &quadrature,
-                          const int quadPoint,
-                          JacobianRangeType &ret ) const;
-#endif
+    /** \copydoc Dune::LocalFunction::operator[](const int num) */
+    inline RangeFieldType &operator[] ( const int num );
    
-    /** \copydoc Dune::LocalFunctionInterface::baseFunctionSet */
-    const BaseFunctionSetType &baseFunctionSet () const
-    {
-      assert( entity_ != 0 );
-      return baseFunctionSet_;
-    }
-    
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor) */
-    template< class PointType >
-    inline void axpy ( const PointType &x,
-                       const RangeType &factor );
+    /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
+    inline const BaseFunctionSetType &baseFunctionSet () const;
 
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor) */
-    template< class QuadratureType >
-    inline void axpy( const QuadratureType &quadrature,
-                      const int quadPoint,
-                      const RangeType &factor );
-#endif
-
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const JacobianRangeType &factor) */
-    template< class PointType >
-    inline void axpy ( const PointType &x,
-                       const JacobianRangeType &factor );
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &factor) */
-    template< class QuadratureType >
-    inline void axpy( const QuadratureType &quadrature,
-                      const int quadPoint,
-                      const JacobianRangeType &factor );
-#endif
-    
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
-    template< class PointType >
-    inline void axpy ( const PointType &x,
-                       const RangeType &factor1,
-                       const JacobianRangeType &factor2 );
-
-#if 0
-    /** \copydoc Dune::LocalFunctionInterface::axpy(const QuadratureType &quadrature,const int quadPoint,const RangeType &factor1,const JacobianRangeType &factor2) */
-    template< class QuadratureType >
-    inline void axpy ( const QuadratureType &quadrature,
-                       const int quadPoint,
-                       const RangeType &factor1,
-                       const JacobianRangeType &factor2 );
-#endif
-
+    /** \copydoc Dune::LocalFuncton::entity() const */
+    inline const EntityType &entity () const;
+      
     //! initialize local function 
-    void init ( const EntityType &entity );
+    inline void init ( const EntityType &entity );
+
+    /** \copydoc Dune::LocalFunction::numDofs() const */
+    inline int numDofs () const;
+    
+    inline int numScalarDofs () const;
 
   protected:
-    inline const EntityType &entity () const
-    {
-      assert( entity_ != 0 );
-      return *entity_;
-    }
-
     inline void mapLocalDofs ( const DofStoragePolicyType< PointBased > p,
                                const EntityType &entity,
-                               const DiscreteFunctionSpaceType &space )
-    {
-      const int numDofs = this->numDofs();
-      for( int i = 0; i < numDofs; i += N )
-      {
-        const int baseindex = space.mapToGlobal( entity, i );
-        for( int j = 0; j < N; ++j )
-        {
-          const int dof = i+j;
-          const int index = baseindex + j;
-          assert( index == space.mapToGlobal( entity, dof ) );
-          values_[ dof ] = &(discreteFunction_.dof( index ));
-        }
-      }
-    }
+                               const DiscreteFunctionSpaceType &space );
 
     inline void mapLocalDofs ( const DofStoragePolicyType< VariableBased > p,
                                const EntityType &entity,
-                               const DiscreteFunctionSpaceType &space )
-    {
-      const int numDofs = this->numDofs();
-      const int scalarSize = space.containedSpace().size();
-      for( int i = 0; i < numDofs; i += N )
-      {
-        const int baseindex = space.mapToGlobal( entity, i );
-        for( int j = 0; j < N; ++j )
-        {
-          const int dof = i + j;
-          const int index = baseindex + j * scalarSize;
-          assert( index == space.mapToGlobal( entity, dof ) );
-          values_[ dof ] = &(discreteFunction_.dof( index ));
-        }
-      }
-    }
-
-    inline void rightMultiply ( const JacobianRangeType &factor,
-                                const DomainType &x,
-                                JacobianRangeType &result );
+                               const DiscreteFunctionSpaceType &space );
   };
 
 
@@ -518,7 +269,8 @@ namespace Dune
     typedef typename DiscreteFunctionTraits :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
 
-    typedef StandardLocalFunction< DiscreteFunctionType, DiscreteFunctionSpaceType >
+    typedef StandardLocalFunctionImpl
+      < DiscreteFunctionType, DiscreteFunctionSpaceType >
       ObjectType;
 
   protected:

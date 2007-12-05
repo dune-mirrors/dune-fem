@@ -1,0 +1,548 @@
+#ifndef DUNE_FEM_LOCALFUNCTION_HH
+#define DUNE_FEM_LOCALFUNCTION_HH
+
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/space/common/dofstorage.hh>
+
+#ifndef DUNE_FEM_COMPATIBILITY
+#define DUNE_FEM_COMPATIBILITY 1
+#endif
+
+namespace Dune
+{
+
+  /** \addtogroup LocalFunction
+   *
+   * On every element from a discrete function the local funtion can be
+   * accessed. With the local function one has access to the dof and on the
+   * other hand to the base function set of this actual element. Therefore
+   * this is called a local function.
+   *
+   * \remarks The interface for using a LocalFunction is defined by the class
+   *          LocalFunction.
+   *
+   * \{
+   */
+
+
+
+  /** \class LocalFunction
+   *  \brief interface for local functions
+   *  
+   *  Local functions are used to represend a discrete function on one entity.
+   *  The LocalFunctionInterface defines the functionality that can be expected
+   *  from such a local function.
+   */
+  template< class DiscreteFunctionSpace,
+            class LocalFunctionImp,
+            class LocalFunctionUser >
+  class LocalFunction
+  {
+  public:
+    //! type of the discrete function space, the local function belongs to
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+
+    //! type of the local function implementation (engine concept)
+    typedef LocalFunctionImp LocalFunctionImpType;
+
+    //! type of the user implementation (Barton-Nackman)
+    typedef LocalFunctionUser LocalFunctionUserType;
+
+    //! type of the local function (this type!)
+    typedef LocalFunction
+      < DiscreteFunctionSpaceType, LocalFunctionImpType, LocalFunctionUserType >
+      LocalFunctionType;
+
+  private:
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+  public:
+    //! type of the entity, the local function lives on
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+
+  public:
+    //! field type of the domain
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! field type of the range
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+    //! type of domain vectors, i.e., type of coordinates
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    //! type of range vectors, i.e., type of function values
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+    //! type of Jacobian, i.e., type of evaluated Jacobian matrix
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
+      JacobianRangeType;
+
+    //! type of base function set  
+    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+      BaseFunctionSetType;
+
+  public:
+    /** \brief access to local dofs (read-only)
+     *
+     *  \param[in]  num  local dof number 
+     *  \return reference to dof 
+     */
+    inline const RangeFieldType &operator[] ( const int num ) const
+    {
+      return asImp()[ num ];
+    }
+
+    /** \brief access to local dofs (read-write)
+     *
+     *  \param[in]  num  local DoF number
+     *  \return reference to DoF
+     */
+    inline RangeFieldType &operator[] ( const int num )
+    {
+      return asImp()[ num ];
+    }
+
+    /** \brief axpy operation for local function
+     *
+     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+     *  functions by \f$\varphi_i\f$, this function performs the following
+     *  operation:
+     *  \f[
+     *  u_i = u_i + factor \cdot \varphi_i( x )
+     *  \f]
+     *
+     *  \param[in]  x       point to evaluate base functions in
+     *  \param[in]  factor  axpy factor
+     */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor )
+    {
+      asImp().axpy( x, factor );
+    }
+  
+#if DUNE_FEM_COMPATIBILITY
+    /** \brief axpy operation for local function
+     *
+     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+     *  functions by \f$\varphi_i\f$, this function performs the following
+     *  operation:
+     *  \f[
+     *  u_i = u_i + factor \cdot \varphi_i( x )
+     *  \f]
+     *
+     *  \param[in]  quadrature  quadrature to use
+     *  \param[in]  quadPoint   number of the quadrature point wihin the
+     *                          quadrature
+     *  \param[in]  factor      axpy factor
+     */
+    template< class QuadratureType >
+    inline void axpy ( const QuadratureType &quadrature,
+                       const int quadPoint, 
+                       const RangeType &factor )
+    {
+      asImp().axpy( quadrature[ quadPoint ], factor );
+    }
+#endif
+    
+    /** \brief axpy operation for local function
+     *
+     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+     *  functions by \f$\varphi_i\f$, this function performs the following
+     *  operation:
+     *  \f[
+     *  u_i = u_i + factor \cdot \nabla\varphi_i( x )
+     *  \f]
+     *
+     *  \param[in]  x       point to evaluate jacobian of base functions in
+     *  \param[in]  factor  axpy factor
+     */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const JacobianRangeType &factor)
+    {
+      asImp().axpy( x, factor );
+    }
+
+#if DUNE_FEM_COMPATIBILITY
+    /** \brief axpy operation for local function
+     *
+     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+     *  functions by \f$\varphi_i\f$, this function performs the following
+     *  operation:
+     *  \f[
+     *  u_i = u_i + factor \cdot \nabla\varphi_i( x )
+     *  \f]
+     *
+     *  \param[in]  quadrature  quadrature to use
+     *  \param[in]  quadPoint   number of the quadrature point wihin the
+     *                          quadrature
+     *  \param[in]  factor      axpy factor
+     */
+    template< class QuadratureType >
+    inline void axpy ( const QuadratureType &quadrature,
+                       const int quadPoint, 
+                       const JacobianRangeType &factor)
+    {
+      asImp().axpy( quadrature[ quadPoint ], factor );
+    }
+#endif
+    
+    /** \brief axpy operation for local function
+     *
+     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+     *  functions by \f$\varphi_i\f$, this function performs the following
+     *  operation:
+     *  \f[
+     *  u_i = u_i + factor1 \cdot \varphi_i( x ) + factor2 \cdot \nabla\varphi_i( x )
+     *  \f]
+     *
+     *  \param[in]  x        point to evaluate base functions in
+     *  \param[in]  factor1  axpy factor for \f$\varphi( x )\f$
+     *  \param[in]  factor2  axpy factor for \f$\nabla\varphi( x )\f$
+     */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor1,
+                       const JacobianRangeType &factor2 )
+    {
+      asImp().axpy( x, factor1, factor2 );
+    }
+   
+#if DUNE_FEM_COMPATIBILITY
+    /** \brief axpy operation for local function
+     *
+     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+     *  functions by \f$\varphi_i\f$, this function performs the following
+     *  operation:
+     *  \f[
+     *  u_i = u_i + factor1 \cdot \varphi_i( x ) + factor2 \cdot \nabla\varphi_i( x )
+     *  \f]
+     *
+     *  \param[in]  quadrature  quadrature to use
+     *  \param[in]  quadPoint   number of the quadrature point wihin the
+     *                          quadrature
+     *  \param[in]  factor1     axpy factor for \f$\varphi( x )\f$
+     *  \param[in]  factor2     axpy factor for \f$\nabla\varphi( x )\f$
+     */
+    template< class QuadratureType >
+    inline void axpy ( const QuadratureType &quadrature,
+                       const int quadPoint,
+                       const RangeType &factor1,
+                       const JacobianRangeType &factor2 )
+    {
+      asImp().axpy( quadrature[ quadPoint ], factor1, factor2 );
+    }
+#endif
+
+    /** \brief obtain the base function set for this local function
+     *
+     *  \returns reference to the base function set
+     */
+    inline const BaseFunctionSetType &baseFunctionSet () const 
+    {
+      return asImp().baseFunctionSet();
+    }
+
+    /** \brief obtain the entity, this local function lives on
+     *
+     *  \returns reference to the entity
+     */
+    inline const EntityType &entity () const
+    {
+      return asImp().entity();
+    }
+    
+    /** \brief evaluate the local function
+     *
+     *  \param[in]   x    evaluation point in local coordinates 
+     *  \param[out]  ret  value of the function in the given point
+     */
+    template< class PointType >
+    inline void evaluate ( const PointType &x,
+                           RangeType &ret ) const
+    {
+      asImp().evaluate( x, ret );
+    }
+
+#if DUNE_FEM_COMPATIBILITY
+    /** \brief evaluate the local function in a quadrature point
+     *
+     *  \param[in]   quadrature  quadrature to use
+     *  \param[in]   quadPoint   number of the quadrature point within the
+     *                           quadrature
+     *  \param[out]  ret         value of the function in the quadrature point
+     */
+    template< class QuadratureType >
+    inline void evaluate( const QuadratureType &quadrature,
+                          const int quadPoint, 
+                          RangeType &ret ) const
+    {
+      asImp().evaluate( quadrature[ quadPoint ], ret );
+    }
+#endif
+
+    inline void init ( const EntityType &entity )
+    {
+      asImp().init( entity );
+    }
+
+    /** \brief evaluate Jacobian of the local function
+     *
+     *  \note Though the Jacobian is evaluated on the reference element, the
+     *        return value is the Jacobian with respect to the actual entity.
+     *
+     *  \param[in]   x    evaluation point in local coordinates
+     *  \param[out]  ret  Jacobian of the function in the evaluation point
+     */
+    template< class PointType >
+    inline void jacobian ( const PointType &x, 
+                           JacobianRangeType &ret ) const
+    {
+      asImp().jacobian( x, ret );
+    }
+
+#if DUNE_FEM_COMPATIBILITY
+    /** \brief evaluate Jacobian of the local function in a quadrature point
+     *
+     *  \note Though the Jacobian is evaluated on the reference element, the
+     *        return value is the Jacobian with respect to the actual entity.
+     *
+     *  \param[in]   quadrature  quadrature to use
+     *  \param[in]   quadPoint   number of the quadrature point within the
+     *                           quadrature
+     *  \param[out]  ret         Jacobian of the function in the quadrature point
+     */
+    template< class QuadratureType >
+    void jacobian ( const QuadratureType &quadrature,
+                    const int quadPoint,
+                    JacobianRangeType &ret ) const
+    {
+      asImp().jacobian( quadrature[ quadPoint ], ret );
+    }
+#endif
+   
+    /** \brief obtain the number of local DoFs
+     *
+     *  Obtain the number of local DoFs of this local function. The value is
+     *  identical to the number of base functons on the entity.
+     *  
+     *  \returns number of local DoFs
+     */
+    inline int numDofs () const 
+    {
+      return asImp().numDofs();
+    }
+ 
+  protected:
+    inline const LocalFunctionImpType &asImp () const
+    {
+      const LocalFunctionUser &user
+        = static_cast< const LocalFunctionUser & >( *this );
+      return user.asImp();
+    }
+    
+    inline LocalFunctionImpType &asImp ()
+    {
+      LocalFunctionUser &user
+        = static_cast< LocalFunctionUser & >( *this );
+      return user.asImp();
+    }
+  };
+
+
+
+  //- Forward declarations of Combined Space 
+  template< class, int, DofStoragePolicy >
+  class CombinedSpace;
+
+
+
+  /** \class LocalFunctionDefault
+   *  \brief default implementation of a LocalFunction
+   */
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  class LocalFunctionDefault
+  {
+  public:
+    //! type of  discrete function space the local function belongs to
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+
+  private:
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+  public:
+    //! type of the entity, the local function lives on
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+
+  public:
+    //! field type of the domain
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! field type of the range
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+    //! type of domain vectors, i.e., type of coordinates
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    //! type of range vectors, i.e., type of function values
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+    //! type of Jacobian, i.e., type of evaluated Jacobian matrix
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
+      JacobianRangeType;
+
+    //! type of base function set  
+    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+      BaseFunctionSetType;
+
+    //! dimension of the domain
+    enum { dimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    //! dimension of the range
+    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+
+  protected:
+    //! type of entity's geometry
+    typedef typename EntityType :: Geometry GeometryType;
+    //! type of transposed of geometry's Jacobian Inverse
+    typedef FieldMatrix
+      < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
+      GeometryJacobianInverseType;
+
+  public:
+    /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
+    template< class PointType >
+    inline void evaluate( const PointType &x,
+                          RangeType &ret ) const;
+
+    /** \copydoc Dune::LocalFunction::jacobian(const PointType &x,JacobianRangeType &ret) const */
+    template< class PointType >
+    inline void jacobian ( const PointType &x,
+                           JacobianRangeType &ret ) const;
+
+    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
+    template< class PointType >
+    inline void axpy( const PointType &x,
+                      const RangeType &factor );
+
+    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const JacobianRangeType &factor) */
+    template< class PointType >
+    inline void axpy( const PointType &x,
+                      const JacobianRangeType &factor );
+
+    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
+    template< class PointType >
+    inline void axpy( const PointType &x,
+                      const RangeType &factor1,
+                      const JacobianRangeType &factor2 );
+
+  protected:
+    inline void rightMultiply ( const JacobianRangeType &factor,
+                                const DomainType &x,
+                                JacobianRangeType &result ) const;
+
+    inline const LocalFunctionImp &asImp () const;
+    inline LocalFunctionImp &asImp ();
+  };
+
+
+
+  /** \copydoc Dune::StandardLocalFunction
+   *
+   *  Specialised version for CombinedSpaces
+   */
+  template< class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy,
+            class LocalFunctionImp >
+  class LocalFunctionDefault
+    < CombinedSpace< ContainedFunctionSpaceImp, N, policy >, LocalFunctionImp >
+  {
+  public:
+    //! type of  discrete function space the local function belongs to
+    typedef CombinedSpace< ContainedFunctionSpaceImp, N, policy >
+      DiscreteFunctionSpaceType;
+
+  private:
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+  public:
+    //! type of the entity, the local function lives on
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+
+  public:
+    //! field type of the domain
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! field type of the range
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+    //! type of domain vectors, i.e., type of coordinates
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    //! type of range vectors, i.e., type of function values
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+    //! type of Jacobian, i.e., type of evaluated Jacobian matrix
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
+      JacobianRangeType;
+
+    //! type of base function set  
+    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+      BaseFunctionSetType;
+
+    //! dimension of the domain
+    enum { dimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    //! dimension of the range
+    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+
+  protected:
+    //! type of entity's geometry
+    typedef typename EntityType :: Geometry GeometryType;
+    //! type of transposed of geometry's Jacobian Inverse
+    typedef FieldMatrix
+      < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
+      GeometryJacobianInverseType;
+
+  protected:
+    typedef typename DiscreteFunctionSpaceType :: ContainedRangeType
+      ScalarRangeType;
+    typedef typename DiscreteFunctionSpaceType :: ContainedJacobianRangeType
+      ScalarJacobianRangeType;
+      
+  public:
+    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor );
+
+    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const JacobianRangeType &factor) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const JacobianRangeType &factor );
+
+    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
+    template< class PointType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &factor1,
+                       const JacobianRangeType &factor2 );
+
+    /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
+    template< class PointType >
+    inline void evaluate( const PointType &x,
+                          RangeType &ret ) const;
+
+    /** \copydoc Dune::LocalFunction::jacobian(const PointType &x,JacobianRangeType &ret) const */
+    template< class PointType >
+    inline void jacobian ( const PointType &x,
+                           JacobianRangeType &ret ) const;
+
+    inline int numScalarDofs () const
+    {
+      const int numDofs = asImp().numDofs();
+      assert( numDofs % N == 0 );
+      return numDofs / N;
+    }
+
+  protected:
+    inline void rightMultiply ( const JacobianRangeType &factor,
+                                const DomainType &x,
+                                JacobianRangeType &result ) const;
+
+    inline const LocalFunctionImp &asImp () const;
+    inline LocalFunctionImp &asImp ();
+  };
+
+  /** \} */
+
+} // end namespace Dune 
+
+#include "localfunction_inline.hh"
+
+#endif

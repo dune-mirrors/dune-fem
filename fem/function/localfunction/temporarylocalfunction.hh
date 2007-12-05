@@ -2,11 +2,17 @@
 #define DUNE_FEM_TEMPORARYLOCALFUNCTION_HH
 
 #include <dune/fem/storage/array.hh>
-#include <dune/fem/function/common/localfunction.hh>
+#include <dune/fem/function/localfunction/localfunction.hh>
 
 namespace Dune
 {
+  
+  template< class DiscreteFunctionSpace,
+            template< class > class ArrayAllocator = DefaultArrayOverAllocator >
+  class TemporaryLocalFunctionImpl;
 
+
+  
   /** \ingroup LocalFunction
    *  \class TemporaryLocalFunction
    *  \brief A temporary function carrying values for one entity
@@ -22,61 +28,36 @@ namespace Dune
    *  \param DiscreteFunctionSpaceImp type of the discrete function space, the
    *                                  local function shall belong to
    */
-  template< class DiscreteFunctionSpaceImp,
-            template< class > class ArrayAllocatorImp = DefaultArrayOverAllocator >
+  template< class DiscreteFunctionSpace,
+            template< class > class ArrayAllocator = DefaultArrayOverAllocator >
   class TemporaryLocalFunction
-  : public LocalFunctionDefault
-    < DiscreteFunctionSpaceImp,
-      TemporaryLocalFunction< DiscreteFunctionSpaceImp, ArrayAllocatorImp > >
+  : public LocalFunction
+    < DiscreteFunctionSpace,
+      TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >,
+      TemporaryLocalFunction< DiscreteFunctionSpace, ArrayAllocator > >
   {
   public:
     //! type of the discrete function space
-    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+    
+    //! type of the local function implementation (engine concept)
+    typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, ArrayAllocator >
+      LocalFunctionImpType;
 
   private:
-    typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, ArrayAllocatorImp >
+    typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, ArrayAllocator >
       ThisType;
-    typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
+    typedef LocalFunction< DiscreteFunctionSpaceType, LocalFunctionImpType, ThisType >
+      BaseType;
+
+    friend class LocalFunction
+      < DiscreteFunctionSpaceType, LocalFunctionImpType, ThisType >;
 
   public:
-    //! type of domain vectors
-    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-    //! type of range vectors
-    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
-
-    //! type of the jacobian
-    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
-    
-    //! field type of domain vectors
-    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
-    //! field type of range vectors
-    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
-
-    enum { DimDomain = DiscreteFunctionSpaceType :: DimDomain };
-    enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
-
-    //! type of the base function set
-    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
-      BaseFunctionSetType;
-
-  private:
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
-
-    typedef DynamicArray< RangeFieldType, ArrayAllocatorImp > DofArrayType;
+    typedef typename BaseType :: EntityType EntityType;
 
   protected:
-    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
-    const EntityCodim0Type *entity_;
-
-    BaseFunctionSetType baseFunctionSet_;
-
-    DofArrayType dofs_;
-
-  protected:
-    using BaseType :: evaluate;
-    using BaseType :: jacobian;
+    LocalFunctionImpType impl_;
 
   public:
     /** \brief constructor creating a local function without binding it to an 
@@ -93,12 +74,9 @@ namespace Dune
      *  \param[in] dfSpace discrete function space the local function shall
      *                     belong to
      */
-    inline explicit TemporaryLocalFunction
-      ( const DiscreteFunctionSpaceType &dfSpace )
-    : discreteFunctionSpace_( dfSpace ),
-      entity_( 0 ),
-      baseFunctionSet_(),
-      dofs_()
+    inline explicit
+    TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
+    : impl_( dfSpace )
     {
     }
     
@@ -116,11 +94,8 @@ namespace Dune
      *  \param[in] entity  entity for initialize the local function to
      */
     inline TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace,
-                                    const EntityCodim0Type &entity )
-    : discreteFunctionSpace_( dfSpace ),
-      entity_( &entity ),
-      baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
-      dofs_( baseFunctionSet_.numBaseFunctions() )
+                                    const EntityType &entity )
+    : impl_( dfSpace, entity )
     {
     }
 
@@ -136,89 +111,139 @@ namespace Dune
      *  \param[in]  other  TemporaryLocalFunction to copy
      */
     inline TemporaryLocalFunction ( const ThisType &other )
-    : discreteFunctionSpace_( other.discreteFunctionSpace_ ),
-      entity_( other.entity_ ),
-      baseFunctionSet_( other.baseFunctionSet_ ),
-      dofs_( other.dofs_ )
+    : impl_( other.impl_ )
     {
     }
 
-    /** \brief access a local DoF
+  protected:
+    const LocalFunctionImpType &asImp () const
+    { 
+      return impl_;
+    } 
+
+    LocalFunctionImpType &asImp () 
+    {
+      return impl_;
+    } 
+  };
+
+
+
+  template< class DiscreteFunctionSpace,
+            template< class > class ArrayAllocator >
+  class TemporaryLocalFunctionImpl
+  : public LocalFunctionDefault
+    < DiscreteFunctionSpace,
+      TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator > >
+  {
+  public:
+    //! type of the discrete function space
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+
+  private:
+    typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, ArrayAllocator >
+      ThisType;
+    typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
+    
+  protected:
+    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+  public:
+    //! type of the base function set
+    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+      BaseFunctionSetType;
+
+    //! type of the entity, this local function is associated with
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+
+    //! type of domain vectors
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    //! type of range vectors
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+
+    //! type of the jacobian
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+    
+    //! field type of domain vectors
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    //! field type of range vectors
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+
+    enum { DimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
+
+  protected:
+    typedef DynamicArray< RangeFieldType, ArrayAllocator > DofArrayType;
+
+  protected:
+    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
+    const EntityType *entity_;
+
+    BaseFunctionSetType baseFunctionSet_;
+
+    DofArrayType dofs_;
+
+    bool needCheckGeometry_;
+
+  public:
+    /** \brief constructor creating a local function without binding it to an 
+     *         entity
      *
-     *  Grants read access to a local DoF.
+     *  Creates the local function without initializing the fields depending on
+     *  the current entity.
      *
-     *  \param[in] index local number of the DoF to access
+     *  \note Before using the local function it must be initilized by
+     *  \code
+     *  localFunction.init( entity );
+     *  \endcode
      *
-     *  \returns constant reference to the DoF
+     *  \param[in] dfSpace discrete function space the local function shall
+     *                     belong to
      */
-    inline const RangeFieldType &operator[] ( const int index ) const
-    {
-      return dofs_[ index ];
-    }
-
-    /** \brief access a local DoF
+    inline explicit
+    TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace );
+    
+    /** \brief constructor creating a local function and binding it to an
+     *         entity
      *
-     *  Grants read and write access to a local DoF.
+     *  Creates the local function and initilizes the fields depending on the
+     *  current entity. It is not necessary, though allowed, to call init
+     *  before using the discrete function.
      *
-     *  \param[in] index local number of the DoF to access
-     *
-     *  \returns reference to the DoF
+     *  \note The degrees of freedom are not initialized by this function.
+     *  
+     *  \param[in] dfSpace discrete function space the local function shall
+     *                     belong to
+     *  \param[in] entity  entity for initialize the local function to
      */
-    inline RangeFieldType &operator[] ( const int index )
-    {
-      return dofs_[ index ];
-    }
+    inline TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace,
+                                        const EntityType &entity );
 
-    /** obtain the base function set
+    /** \brief copy constructor
      *
-     *  The local function caches the base function set of the entity. This
-     *  provides faster access than obtaining it from the space (which has to
-     *  look up the base function set for the entity type first).
+     *  Creates the local function as a copy of the specified one. It is bound
+     *  to an entity if and only if the copied local function is bound to an
+     *  entity.
      *
-     *  \returns constant reference to the base function set
+     *  \note The degrees of freedom are always copied, even if the copied
+     *        local function is not bound to an entity.
+     * 
+     *  \param[in]  other  TemporaryLocalFunction to copy
      */
-    inline const BaseFunctionSetType &baseFunctionSet () const
-    {
-      assert( entity_ != NULL );
-      return baseFunctionSet_;
-    }
+    inline TemporaryLocalFunctionImpl ( const ThisType &other );
 
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const PointType &x,RangeType &ret) const */
-    template< class PointType >
-    inline void evaluate ( const PointType &x,
-                           RangeType &ret ) const
-    {
-      assert( entity_ != NULL );
-      
-      ret = 0;
-      const int numDofs = dofs_.size();
-      for( int i = 0; i < numDofs; ++i )
-      {
-        RangeType phi;
-        baseFunctionSet_.evaluate( i, x, phi );
-        ret.axpy( dofs_[ i ], phi );
-      }
-    }
+    /** \copydoc Dune::LocalFunction::operator[]( const int num ) const */
+    inline const RangeFieldType &operator[] ( const int num ) const;
 
-#if DUNE_FEM_COMPATIBILITY
-    /** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
-    template< class QuadratureType >
-    inline void evaluate ( const QuadratureType &quadrature,
-                           const int quadPoint,
-                           RangeType &ret ) const
-    {
-      assert( entity_ != NULL );
-      
-      ret = 0;
-      const int numDofs = dofs_.size();
-      for( int i = 0; i < numDofs; ++i )
-      {
-        RangeType phi;
-        baseFunctionSet_.evaluate( i, quadrature, quadPoint, phi );
-        ret.axpy( dofs_[ i ], phi );
-      }
-    }
-#endif
+    /** \copydoc Dune::LocalFunction::operator[]( const int num ) */
+    inline RangeFieldType &operator[] ( const int num );
+
+    /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
+    inline const BaseFunctionSetType &baseFunctionSet () const;
+
+    /** \copydoc Dune::LocalFunction::entity() const */
+    inline const EntityType &entity () const;
 
     /** \brief initialize the local function for an entity
      *
@@ -232,97 +257,28 @@ namespace Dune
      *
      *  \param[in] entity entity to bind the local function to
      */
-    inline void init ( const EntityCodim0Type &entity )
-    {
-      entity_ = &entity;
-      baseFunctionSet_ = discreteFunctionSpace_.baseFunctionSet( entity );
-      dofs_.resize( baseFunctionSet_.numBaseFunctions() );
-    }
+    inline void init ( const EntityType &entity );
 
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const PointType &x,JacobianRangeType &ret) const */
-    template< class PointType >
-    inline void jacobian ( const PointType &x,
-                           JacobianRangeType &ret ) const
-    {
-      assert( entity_ != NULL );
-      
-      typedef typename EntityCodim0Type :: Geometry GeometryType;
-      typedef FieldMatrix< typename GeometryType :: ctype,
-                           GeometryType :: mydimension,
-                           GeometryType :: mydimension > GeometryJacobianType;
-      
-      const GeometryType &geometry = entity_->geometry();
-      const GeometryJacobianType &inv
-        = geometry.jacobianInverseTransposed( coordinate( x ) );
-      
-      ret = 0;
-      const int numDofs = dofs_.size();
-      for( int i = 0; i < numDofs; ++i )
-      {
-        JacobianRangeType tmp;
-        baseFunctionSet_.jacobian( i, x, tmp );
-        ret.axpy( dofs_[ i ], tmp );
-      }
-
-      for( int i = 0; i < DimRange; ++i )
-        ret[ i ] = FMatrixHelp :: mult( inv, ret[ i ] );
-    }
-
-#if DUNE_FEM_COMPATIBILITY
-    /** \copydoc Dune::LocalFunctionInterface::jacobian(const QuadratureType &quadrature,const int quadPoint,JacobianRangeType &ret) const */
-    template< class QuadratureType >
-    inline void jacobian ( const QuadratureType &quadrature,
-                           const int quadPoint,
-                           JacobianRangeType &ret ) const
-    {
-      assert( entity_ != NULL );
-      
-      typedef typename EntityCodim0Type :: Geometry GeometryType;
-      typedef FieldMatrix< typename GeometryType :: ctype,
-                           GeometryType :: mydimension,
-                           GeometryType :: mydimension > GeometryJacobianType;
-      
-      const GeometryType &geometry = entity_->geometry();
-      const GeometryJacobianType &inv
-        = geometry.jacobianInverseTransposed( quadrature.point( quadPoint ) );
-      
-      ret = 0;
-      const int numDofs = dofs_.size();
-      for( int i = 0; i < numDofs; ++i )
-      {
-        JacobianRangeType tmp;
-        baseFunctionSet_.jacobian( i, quadrature, quadPoint, tmp );
-        ret.axpy( dofs_[ i ], tmp );
-      }
-
-      for( int i = 0; i < DimRange; ++i )
-        ret[ i ] = FMatrixHelp :: mult( inv, ret[ i ] );
-    }
-#endif
-
-    /** \copydoc Dune::LocalFunctionInterface::numDofs */
-    inline int numDofs () const
-    {
-      return dofs_.size();
-    }
+    /** \copydoc Dune::LocalFunction::numDofs() const */
+    inline int numDofs () const;
   };
 
 
   
-  template< class DiscreteFunctionSpaceImp,
-            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
+  template< class DiscreteFunctionSpace,
+            template< class > class ArrayAllocator = DefaultArrayAllocator >
   class TemporaryLocalFunctionFactory
   {
   public:
-    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
   private:
     typedef TemporaryLocalFunctionFactory
-      < DiscreteFunctionSpaceType, ArrayAllocatorImp >
+      < DiscreteFunctionSpaceType, ArrayAllocator >
       ThisType;
 
   public:
-    typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, ArrayAllocatorImp >
+    typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, ArrayAllocator >
       ObjectType;
 
   protected:
@@ -342,5 +298,7 @@ namespace Dune
   };
 
 }
+
+#include "temporarylocalfunction_inline.hh"
 
 #endif

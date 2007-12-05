@@ -1,12 +1,91 @@
 namespace Dune
 {
 
-  // --------------------------------------------------------------------------
-  // StandardLocalFunction
-  // --------------------------------------------------------------------------
+  // StandardLocalFunctionImpl
+  // -------------------------
 
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
+  : discreteFunction_( discreteFunction ),
+    values_(),
+    baseFunctionSet_(),
+    entity_( 0 ),
+    numDofs_( 0 ),
+    needCheckGeometry_( true )
+  {
+  }
+ 
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: StandardLocalFunctionImpl ( const ThisType &other )
+  : discreteFunction_( other.discreteFunction_ ),
+    values_( other.values_ ),
+    baseFunctionSet_( other.baseFunctionSet_ ),
+    entity_( other.entity_ ),
+    numDofs_( other.numDofs_ ),
+    needCheckGeometry_( other.needCheckGeometry_ )
+  {
+  }
+
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline
+  const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: RangeFieldType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: operator[] ( const int num ) const
+  {
+    assert( (num >= 0) && (num < numDofs()) );
+    return *(values_[ num ]);
+  }
+  
+
+  
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline
+  typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: RangeFieldType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: operator[] ( const int num )
+  {
+    assert( (num >= 0) && (num < numDofs()) );
+    return *(values_[ num ]);
+  }
+
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline
+  const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: BaseFunctionSetType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: baseFunctionSet () const
+  {
+    assert( entity_ != 0 );
+    return baseFunctionSet_;
+  }
+
+
+  
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline
+  const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: EntityType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: entity () const
+  {
+    assert( entity_ != 0 );
+    return *entity_;
+  }
+
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline void StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
     :: init( const EntityType &entity )
   {
     const DiscreteFunctionSpaceType &space = discreteFunction_.space();
@@ -40,266 +119,119 @@ namespace Dune
   }
 
 
-  
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class PointType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: evaluate ( const PointType &x,
-                  RangeType &ret ) const
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline int StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: numDofs () const
   {
-    ret = 0;
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      RangeType phi;
-      baseSet.evaluate( i, x, phi );
-      ret.axpy( (*values_[ i ]), phi );
-    }
+    return numDofs_;
   }
 
 
-#if 0
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class QuadratureType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: evaluate ( const QuadratureType &quadrature,
-                  const int quadPoint,
-                  RangeType &ret ) const
+
+  // StandardLocalFunctionImpl (for CombinedSpace)
+  // ---------------------------------------------
+
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
+  : discreteFunction_( discreteFunction ),
+    values_(),
+    baseFunctionSet_(),
+    entity_( 0 ),
+    numScalarDofs_( 0 ),
+    needCheckGeometry_( true )
   {
-    ret = 0;
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      RangeType phi;
-      baseSet.evaluate( i, quadrature, quadPoint, phi );
-      ret.axpy( (*values_[ i ]), phi );
-    }
-  }
-#endif
-
-
-      
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class PointType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: jacobian( const PointType &x,
-                 JacobianRangeType &ret ) const
-  {
-    JacobianRangeType refJacobian( 0 );
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      JacobianRangeType grad;
-      baseSet.jacobian( i, x, grad );
-      for( int j = 0; j < dimRange; ++j )
-        refJacobian[ j ].axpy( *(values_[ i ]), grad[ j ] );
-    }
-
-    const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( coordinate( x ) );
-    for( int i = 0; i < dimRange; ++i )
-      ret[ i ] = FMatrixHelp :: mult( gjit, refJacobian[ i ] );
   }
 
 
- 
-#if 0
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class QuadratureType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: jacobian( const QuadratureType &quadrature,
-                 const int quadPoint,
-                 JacobianRangeType &ret ) const
+
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: StandardLocalFunctionImpl ( const ThisType &other )
+  : discreteFunction_( other.discreteFunction_ ),
+    values_( other.values_ ),
+    baseFunctionSet_( other.baseFunctionSet_ ),
+    entity_( other.entity_ ),
+    numScalarDofs_( other.numScalarDofs_ ),
+    needCheckGeometry_( other.needCheckGeometry_ )
   {
-    const DomainType &x = quadrature.point( quadPoint );
-
-    JacobianRangeType refJacobian( 0 );
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      JacobianRangeType grad;
-      baseSet.jacobian( i, quadrature, quadPoint, grad );
-      for( int j = 0; j < dimRange; ++j )
-        refJacobian[ j ].axpy( *(values_[ i ]), grad[ j ] );
-    }
-
-    const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( x );
-    for( int i = 0; i < dimRange; ++i )
-      ret[ i ] = FMatrixHelp :: mult( gjit, refJacobian[ i ] );
   }
-#endif
 
 
   
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class PointType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const PointType &x,
-              const RangeType &factor )
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline
+  const typename StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: RangeFieldType &
+  StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: operator[] ( const int num ) const
   {
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      RangeType phi;
-      baseSet.evaluate( i, x, phi );
-      *(values_[ i ]) += phi * factor;
-    }
+    assert( (num >= 0) && (num < numDofs()) );
+    return *(values_[ num ]);
   }
 
-  
-
-#if 0
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class QuadratureType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const QuadratureType &quadrature,
-              const int quadPoint,
-              const RangeType &factor )
-  {
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      RangeType phi;
-      baseSet.evaluate( i, quadrature, quadPoint, phi );
-      *(values_[ i ]) += phi * factor;
-    }
-  }
-#endif
 
   
-  
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class PointType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const PointType &x,
-              const JacobianRangeType &factor )
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline
+  typename StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: RangeFieldType &
+  StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: operator[] ( const int num )
   {
-    JacobianRangeType factorInv;
-    rightMultiply( factor, coordinate( x ), factorInv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      JacobianRangeType grad;
-      baseSet.jacobian( i, x, grad );
-      for( int j = 0; j < dimRange; ++j )
-        *(values_[ i ]) += grad[ j ] * factorInv[ j ];
-    }
+    assert( (num >= 0) && (num < numDofs()) );
+    return *(values_[ num ]);
   }
 
+
   
- 
-#if 0
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class QuadratureType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const QuadratureType &quadrature,
-              const int quadPoint,
-              const JacobianRangeType &factor )
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline
+  const typename StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: BaseFunctionSetType &
+  StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: baseFunctionSet () const
   {
-    JacobianRangeType factorInv;
-    rightMultiply( factor, quadrature.point( quadPoint ), factorInv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      JacobianRangeType grad;
-      baseSet.jacobian( i, quadrature, quadPoint, grad );
-      for( int j = 0; j < dimRange; ++j )
-        *(values_[ i ]) += grad[ j ] * factorInv[ j ];
-    }
+    assert( entity_ != 0 );
+    return baseFunctionSet_;
   }
-#endif
 
 
   
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class PointType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const PointType &x,
-              const RangeType &factor1,
-              const JacobianRangeType &factor2 )
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline
+  const typename StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: EntityType &
+  StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: entity () const
   {
-    JacobianRangeType factor2Inv;
-    rightMultiply( factor2, coordinate( x ), factor2Inv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      RangeType phi;
-      baseSet.evaluate( i, x, phi );
-      *(values_[ i ]) += phi * factor1;
-      JacobianRangeType grad;
-      baseSet.jacobian( i, x, grad );
-      for( int j = 0; j < dimRange; ++j )
-        *(values_[ i ]) += grad[ j ] * factor2Inv[ j ];
-    }
+    assert( entity_ != 0 );
+    return *entity_;
   }
-  
-
-  
-#if 0
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  template< class QuadratureType >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: axpy ( const QuadratureType &quadrature,
-              const int quadPoint,
-              const RangeType &factor1,
-              const JacobianRangeType &factor2 )
-  {
-    JacobianRangeType factor2Inv;
-    rightMultiply( factor2, quadrature.point( quadPoint ), factor2Inv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numDofs_; ++i )
-    {
-      RangeType phi;
-      baseSet.evaluate( i, quadrature, quadPoint, phi );
-      *(values_[ i ]) += phi * factor1;
-      JacobianRangeType grad;
-      baseSet.jacobian( i, quadrature, quadPoint, grad );
-      for( int j = 0; j < dimRange; ++j )
-        *(values_[ i ]) += grad[ j ] * factor2Inv[ j ];
-    }
-  }
-#endif
 
 
     
-  template< class DiscreteFunctionImp, class DiscreteFunctionSpaceImp >
-  inline void StandardLocalFunction< DiscreteFunctionImp, DiscreteFunctionSpaceImp >
-    :: rightMultiply( const JacobianRangeType &factor,
-                      const DomainType &x,
-                      JacobianRangeType &ret ) 
-  {
-    const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( x );
-    
-    const int rows = JacobianRangeType :: rows;
-    for( int i = 0; i < rows; ++i )
-    {
-      const int cols = JacobianRangeType :: cols;
-      for( int j = 0; j < cols; ++j )
-      {
-        RangeFieldType value( 0 );
-        for( int k = 0; k < cols; ++k )
-          value += factor[ i ][ k ] * gjit[ k ][ j ];
-        ret[ i ][ j ] = value;
-      }
-    }
-  }
-
-
-
-  // --------------------------------------------------------------------------
-  // StandardLocalFunction (for CombinedSpace)
-  // --------------------------------------------------------------------------
- 
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline void StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
     :: init( const EntityType &entity )
   {
     const DiscreteFunctionSpaceType &space = discreteFunction_.space();
@@ -334,280 +266,74 @@ namespace Dune
   }
 
 
-
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class PointType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: evaluate ( const PointType &x,
-                  RangeType &ret ) const
+  
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline int StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: numDofs () const
   {
-    ret = 0;
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarRangeType phi;
-      baseSet.evaluateScalar( i, x, phi );
-      for( int j = 0; j < N; ++j )
-        ret[ j ] += phi[ 0 ] * (*(values_[ i*N + j ]));
-    }
+    return N * numScalarDofs_;
   }
-
-
-
-#if 0
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class QuadratureType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: evaluate ( const QuadratureType &quadrature,
-                  const int quadPoint,
-                  RangeType &ret ) const
-  {
-    ret = 0;
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarRangeType phi;
-      baseSet.evaluateScalar( i, quadrature, quadPoint, phi );
-      for( int j = 0; j < N; ++j )
-        ret[ j ] += phi[ 0 ] * (*(values_[ i*N + j ]));
-    }
-  }
-#endif
-
-
-      
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class PointType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: jacobian( const PointType &x,
-                 JacobianRangeType &ret ) const
-  {
-    ret = 0;
-
-    const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( coordinate( x ) );
-
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarJacobianRangeType gradPhiRef, gradPhi;
-      baseSet.jacobianScalar( i, x, gradPhiRef );
-      gjit.umv( gradPhiRef[ 0 ], gradPhi[ 0 ] );
-      
-      for( int j = 0; j < N; ++j )
-        ret[ j ].axpy( *(values_[ i*N + j ]), gradPhi[ 0 ] );
-    }
-  }
-
-
-
-#if 0
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class QuadratureType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: jacobian( const QuadratureType &quadrature,
-                 const int quadPoint,
-                 JacobianRangeType &ret ) const
-  {
-    ret = 0;
-     
-    const DomainType &x = quadrature.point( quadPoint );
-    const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( x );
-
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarJacobianRangeType gradPhiRef, gradPhi;
-      baseSet.jacobianScalar( i, quadrature, quadPoint, gradPhiRef );
-      gjit.umv( gradPhiRef[ 0 ], gradPhi[ 0 ] );
-      
-      for( int j = 0; j < N; ++j )
-        ret[ j ].axpy( *(values_[ i*N + j ]), gradPhi[ 0 ] );
-    }
-  }
-#endif
 
 
   
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class PointType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const PointType &x,
-              const RangeType &factor )
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline int StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: numScalarDofs () const
   {
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarRangeType phi;
-      baseSet.evaluateScalar( i, x, phi );
-      for( int j = 0; j < N; ++j )
-        *(values_[ i*N + j ]) += phi[ 0 ] * factor[ j ];
-    }
+    return numScalarDofs_;
   }
-
-  
- 
-#if 0
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class QuadratureType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const QuadratureType &quadrature,
-              const int quadPoint,
-              const RangeType &factor )
-  {
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarRangeType phi;
-      baseSet.evaluateScalar( i, quadrature, quadPoint, phi );
-      for( int j = 0; j < N; ++j )
-        *(values_[ i*N + j ]) += phi[ 0 ] * factor[ j ];
-    }
-  }
-#endif
-
-  
-  
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class PointType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const PointType &x,
-              const JacobianRangeType &factor )
-  {
-    JacobianRangeType factorInv;
-    rightMultiply( factor, coordinate( x ), factorInv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarJacobianRangeType grad;
-      baseSet.jacobianScalar( i, x, grad );
-      for( int j = 0; j < N; ++j )
-        *(values_[ i*N + j ]) += grad[ 0 ] * factorInv[ j ];
-    }
-  }
-
-  
- 
-#if 0
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class QuadratureType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const QuadratureType &quadrature,
-              const int quadPoint,
-              const JacobianRangeType &factor )
-  {
-    JacobianRangeType factorInv;
-    rightMultiply( factor, quadrature.point( quadPoint ), factorInv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarJacobianRangeType grad;
-      baseSet.jacobianScalar( i, quadrature, quadPoint, grad );
-      for( int j = 0; j < N; ++j )
-        *(values_[ i*N + j ]) += grad[ 0 ] * factorInv[ j ];
-    }
-  }
-#endif
 
 
   
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class PointType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const PointType &x,
-              const RangeType &factor1,
-              const JacobianRangeType &factor2 )
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline void StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: mapLocalDofs ( const DofStoragePolicyType< PointBased > p,
+                      const EntityType &entity,
+                      const DiscreteFunctionSpaceType &space )
   {
-    JacobianRangeType factor2Inv;
-    rightMultiply( factor2, coordinate( x ), factor2Inv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
+    const int numDofs = this->numDofs();
+    for( int i = 0; i < numDofs; i += N )
     {
-      ScalarRangeType phi;
-      baseSet.evaluateScalar( i, x, phi );
-      ScalarJacobianRangeType grad;
-      baseSet.jacobianScalar( i, x, grad );
+      const int baseindex = space.mapToGlobal( entity, i );
       for( int j = 0; j < N; ++j )
-        *(values_[ i*N + j ]) += phi[ 0 ] * factor1[ j ] + grad[ 0 ] * factor2Inv[ j ];
-    }
-  }
-
-  
- 
-#if 0
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  template< class QuadratureType >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: axpy ( const QuadratureType &quadrature,
-              const int quadPoint,
-              const RangeType &factor1,
-              const JacobianRangeType &factor2 )
-  {
-    JacobianRangeType factor2Inv;
-    rightMultiply( factor2, quadrature.point( quadPoint ), factor2Inv );
-    
-    const BaseFunctionSetType &baseSet = baseFunctionSet();
-    for( int i = 0; i < numScalarDofs_; ++i )
-    {
-      ScalarRangeType phi;
-      baseSet.evaluateScalar( i, quadrature, quadPoint, phi );
-      ScalarJacobianRangeType grad;
-      baseSet.jacobianScalar( i, quadrature, quadPoint, grad );
-      for( int j = 0; j < N; ++j )
-        *(values_[ i*N + j ]) += phi[ 0 ] * factor1[ j ] + grad[ 0 ] * factor2Inv[ j ];
-    }
-  }
-#endif
-
-
-    
-  template< class DiscreteFunctionImp,
-            class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy >
-  inline void StandardLocalFunction
-    < DiscreteFunctionImp, CombinedSpace< ContainedFunctionSpaceImp, N, policy > >
-    :: rightMultiply( const JacobianRangeType &factor,
-                      const DomainType &x,
-                      JacobianRangeType &ret )
-  {
-    const GeometryJacobianInverseType &gjit
-      = entity().geometry().jacobianInverseTransposed( x );
-    
-    const int rows = JacobianRangeType :: rows;
-    for( int i = 0; i < rows; ++i )
-    {
-      const int cols = JacobianRangeType :: cols;
-      for( int j = 0; j < cols; ++j )
       {
-        RangeFieldType value( 0 );
-        for( int k = 0; k < cols; ++k )
-          value += factor[ i ][ k ] * gjit[ k ][ j ];
-        ret[ i ][ j ] = value;
+        const int dof = i+j;
+        const int index = baseindex + j;
+        assert( index == space.mapToGlobal( entity, dof ) );
+        values_[ dof ] = &(discreteFunction_.dof( index ));
       }
     }
   }
-  
+
+
+
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline void StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    :: mapLocalDofs ( const DofStoragePolicyType< VariableBased > p,
+                      const EntityType &entity,
+                      const DiscreteFunctionSpaceType &space )
+  {
+    const int numDofs = this->numDofs();
+    const int scalarSize = space.containedSpace().size();
+    for( int i = 0; i < numDofs; i += N )
+    {
+      const int baseindex = space.mapToGlobal( entity, i );
+      for( int j = 0; j < N; ++j )
+      {
+        const int dof = i + j;
+        const int index = baseindex + j * scalarSize;
+        assert( index == space.mapToGlobal( entity, dof ) );
+        values_[ dof ] = &(discreteFunction_.dof( index ));
+      }
+    }
+  }
+ 
 }
