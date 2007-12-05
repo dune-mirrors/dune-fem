@@ -226,13 +226,14 @@ namespace Dune
      *
      *  \note This method expects the matrix of the FEM simulation
      *
-     *  \param[in]   onlineMatrix   matrix which corresponds the bilinearform in the lagrange space
-     *  \param[out]  offlineMatrix  projected matrix to the lower dimensional RB space
+     *  \param[in]   matrixOffline  matrix which corresponds the bilinearform
+     *                              in the lagrange space
+     *  \param[out]  matrixOnline   projected matrix to the lower dimensional
+     *                              RB space
      */
-
-    template< class MatrixOnlineType , class MatrixOfflineType >
-    inline void restrictMatrix ( const MatrixOnlineType &matrixOnline,
-                                 MatrixOfflineType &matrixOffline ) const;
+    template< class MatrixOfflineType , class MatrixOnlineType >
+    inline void restrictMatrix ( const MatrixOfflineType &matrixOffline,
+                                 MatrixOnlineType &matrixOnline ) const;
 
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits > &in );
