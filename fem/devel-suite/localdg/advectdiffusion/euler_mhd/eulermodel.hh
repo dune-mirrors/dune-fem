@@ -390,8 +390,8 @@ void EulerFlux<2>::jacobian(const double gamma,
     cerr << "negative internal energy density " << rhoeps 
 	 << " in analyticalFlux: "
 	 << u << endl;
-  */
   assert(rhoeps>1e-10);
+  */
   double v[2] = {u[1]/u[0],u[2]/u[0]};
   
   A[0] = du[1][0] + du[1][1];
