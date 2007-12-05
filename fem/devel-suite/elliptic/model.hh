@@ -312,7 +312,7 @@ namespace Dune
         return BaseType :: Robin;
         
       default:
-        ostringstream stream;
+        std :: ostringstream stream;
         stream << "Unknown boundary id: " << boundaryId << ".";
         DUNE_THROW( RangeError, stream.str() );
       }
