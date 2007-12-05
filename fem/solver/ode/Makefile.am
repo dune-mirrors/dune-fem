@@ -19,7 +19,7 @@ libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@
 libodesolver_la_LIBADD  = 
 endif
 
-#libodesolver_la_SOURCES = odeobjectfiles.cc 
+libodesolver_la_SOURCES = odeobjectfiles.cc 
 
 ode_HEADERS = communicator.hpp mpicommunicator.hpp emptycommunicator.hpp \
 blas.hpp  iterative_solver.hpp limiter.hpp \
