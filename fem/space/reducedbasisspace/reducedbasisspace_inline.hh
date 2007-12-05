@@ -26,51 +26,50 @@ namespace Dune
   template< class BaseFunctionImp >
   template< class DiscreteFunctionType >
   inline void ReducedBasisSpace< BaseFunctionImp >
-    :: restrictVector ( const BaseFunctionType &sourceFunction,
-                 DiscreteFunctionType &destFunction ) const
+    :: restrictFunction ( const BaseFunctionType &sourceFunction,
+                          DiscreteFunctionType &destFunction ) const
   {
-    typedef typename DiscreteFunctionType :: RangeFieldType DofType;
-
     const unsigned int size = baseFunctionList_.size();
+    assert( size == destFunction.size() );
 
-    destFunction.clear();
     for( unsigned int i = 0; i < size; ++i )
     {
       const BaseFunctionType &baseFunction = *(baseFunctionList_[ i ]);
-      destFunction.addScaled( baseFunction, sourceFunction );
+      destFunction.dof( i )
+        = baseFunction.scalarProductDofs( sourceFunction );
     }
   }
 
-  
+
+
   template< class BaseFunctionImp > 
-  template< class MatrixOnlineType , class MatrixOfflineType >
+  template< class MatrixOfflineType, class MatrixOnlineType >
   inline void ReducedBasisSpace< BaseFunctionImp >
-    :: restrictMatrix ( const MatrixOnlineType &matrixOnline,
-                 MatrixOfflineType &matrixOffline ) const
+    :: restrictMatrix ( const MatrixOfflineType &matrixOffline,
+                        MatrixOnlineType &matrixOnline ) const
   {
-
     const unsigned int size = baseFunctionList_.size();
-    assert( size == matrixOffline.cols() );
-    assert( matrixOnline.cols() == baseFunctionSpace.size());
-    matrixOffline.clear();
-    BaseFunctionType Sphi("Sphi", baseFunctionSpace_);
+    assert( (size > 0) && (matrixOnline.cols() == size)
+            && (matrixOnline.rows == size) );
+    assert( (matrixOffline.cols() == baseFunctionSpace_.size()) 
+            && (matrixOffline.rows() == baseFunctionSpace_.size()) );
 
+    BaseFunctionType Sphi( baseFunctionList_[ 0 ] );
     for( unsigned int i = 0; i < size; ++i )
     {
-      const BaseFunctionType &baseFunction = *(baseFunctionList_[ i ]);
-      matrixOnline.mult(baseFunction, Sphi);
+      const BaseFunctionType &phi = *(baseFunctionList_[ i ]);
+      matrixOffline( phi, Sphi );
 
       for( unsigned int j = 0; j < size; ++j)
       {
-      const BaseFunctionType &baseFunctionj = *(baseFunctionList_[ j ]);
-      double val = Sphi * baseFunctionj ;
-      matrixOffline.set(i,j,val);
+        const BaseFunctionType &psi = *(baseFunctionList_[ j ]);
+        matrixOnline.set( i, j, Sphi.scalarProductDofs( psi ) );
       }
     }
   }
 
 
-  
+
   template< class BaseFunctionImp >
   template< class StreamTraits >
   inline void ReducedBasisSpace< BaseFunctionImp >

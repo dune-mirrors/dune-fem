@@ -218,8 +218,8 @@ namespace Dune
      *                               function
      */
     template< class DiscreteFunctionType >
-    inline void restrictVector ( const BaseFunctionType &sourceFunction,
-                          DiscreteFunctionType &destFunction ) const;
+    inline void restrictFunction ( const BaseFunctionType &sourceFunction,
+                                   DiscreteFunctionType &destFunction ) const;
 
     /** \brief restrict a bilinearform which operates in the high dimensional space to a lower dimensional matrix which 
      *         operates in the reducedbasisspace
@@ -232,7 +232,7 @@ namespace Dune
 
     template< class MatrixOnlineType , class MatrixOfflineType >
     inline void restrictMatrix ( const MatrixOnlineType &matrixOnline,
-                 MatrixOfflineType &matrixOffline ) const;
+                                 MatrixOfflineType &matrixOffline ) const;
 
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits > &in );
