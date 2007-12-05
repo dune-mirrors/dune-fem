@@ -24,7 +24,7 @@ namespace Dune {
   // operator satisfying the SpaceOperatorInterface.
   SpaceOperatorInterface<DestinationType>* passTree 
     = CreatePassTree::create( pass0_ , pass1 , pass2 );
-  @encode
+  @endcode
 */
 template <class Model, template <class,class> class PassType>
 class CreatePass
