@@ -15,7 +15,7 @@ namespace Dune{
       To plug an \ref Function "analytical function" 
       into a operator taking 
       \ref DiscreteFunctionInterface "discrete functions",
-      i.e., expecting \ref LocalFunctionInterface "local functions"
+      i.e., expecting \ref LocalFunction "local functions"
       a wrapper can be applied to the analytical function
       instance.
       The resulting class is still a \ref Function "Function"

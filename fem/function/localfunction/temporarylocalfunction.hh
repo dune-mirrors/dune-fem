@@ -11,6 +11,25 @@ namespace Dune
             template< class > class ArrayAllocator = DefaultArrayOverAllocator >
   class TemporaryLocalFunctionImpl;
 
+  template< class DiscreteFunctionSpace,
+            template< class > class ArrayAllocator = DefaultArrayOverAllocator >
+  class TemporaryLocalFunction;
+
+
+
+  template< class DiscreteFunctionSpace,
+            template< class > class ArrayAllocator >
+  struct TemporaryLocalFunctionTraits
+  {
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+    typedef TemporaryLocalFunctionImpl
+      < DiscreteFunctionSpaceType, ArrayAllocator >
+      LocalFunctionImpType;
+    typedef TemporaryLocalFunction
+      < DiscreteFunctionSpaceType, ArrayAllocator >
+      LocalFunctionUserType;
+  };
+
 
   
   /** \ingroup LocalFunction
@@ -29,29 +48,29 @@ namespace Dune
    *                                  local function shall belong to
    */
   template< class DiscreteFunctionSpace,
-            template< class > class ArrayAllocator = DefaultArrayOverAllocator >
+            template< class > class ArrayAllocator >
   class TemporaryLocalFunction
   : public LocalFunction
-    < DiscreteFunctionSpace,
-      TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >,
-      TemporaryLocalFunction< DiscreteFunctionSpace, ArrayAllocator > >
+    < TemporaryLocalFunctionTraits< DiscreteFunctionSpace, ArrayAllocator > >
   {
   public:
+    typedef TemporaryLocalFunctionTraits
+      < DiscreteFunctionSpace, ArrayAllocator >
+      Traits;
+
     //! type of the discrete function space
-    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+    typedef typename Traits :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
     
     //! type of the local function implementation (engine concept)
-    typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, ArrayAllocator >
-      LocalFunctionImpType;
+    typedef typename Traits :: LocalFunctionImpType LocalFunctionImpType;
 
   private:
     typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, ArrayAllocator >
       ThisType;
-    typedef LocalFunction< DiscreteFunctionSpaceType, LocalFunctionImpType, ThisType >
-      BaseType;
+    typedef LocalFunction< Traits > BaseType;
 
-    friend class LocalFunction
-      < DiscreteFunctionSpaceType, LocalFunctionImpType, ThisType >;
+    friend class LocalFunction< Traits >;
 
   public:
     typedef typename BaseType :: EntityType EntityType;

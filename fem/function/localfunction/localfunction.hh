@@ -33,25 +33,25 @@ namespace Dune
    *  The LocalFunctionInterface defines the functionality that can be expected
    *  from such a local function.
    */
-  template< class DiscreteFunctionSpace,
-            class LocalFunctionImp,
-            class LocalFunctionUser >
+  template< class LocalFunctionTraits >
   class LocalFunction
   {
   public:
+    //! type of the traits
+    typedef LocalFunctionTraits Traits;
+
     //! type of the discrete function space, the local function belongs to
-    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+    typedef typename Traits :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
 
     //! type of the local function implementation (engine concept)
-    typedef LocalFunctionImp LocalFunctionImpType;
+    typedef typename Traits :: LocalFunctionImpType LocalFunctionImpType;
 
     //! type of the user implementation (Barton-Nackman)
-    typedef LocalFunctionUser LocalFunctionUserType;
+    typedef typename Traits :: LocalFunctionUserType LocalFunctionUserType;
 
     //! type of the local function (this type!)
-    typedef LocalFunction
-      < DiscreteFunctionSpaceType, LocalFunctionImpType, LocalFunctionUserType >
-      LocalFunctionType;
+    typedef LocalFunction< Traits > LocalFunctionType;
 
   private:
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
@@ -96,6 +96,20 @@ namespace Dune
     inline RangeFieldType &operator[] ( const int num )
     {
       return asImp()[ num ];
+    }
+
+    template< class T >
+    inline LocalFunctionType &operator+= ( const LocalFunction< T > &other )
+    {
+      asImp() += other;
+      return *this;
+    }
+
+    template< class T >
+    inline LocalFunctionType &operator-= ( const LocalFunction< T > &other )
+    {
+      asImp() -= other;
+      return *this;
     }
 
     /** \brief axpy operation for local function
@@ -333,15 +347,15 @@ namespace Dune
   protected:
     inline const LocalFunctionImpType &asImp () const
     {
-      const LocalFunctionUser &user
-        = static_cast< const LocalFunctionUser & >( *this );
+      const LocalFunctionUserType &user
+        = static_cast< const LocalFunctionUserType & >( *this );
       return user.asImp();
     }
     
     inline LocalFunctionImpType &asImp ()
     {
-      LocalFunctionUser &user
-        = static_cast< LocalFunctionUser & >( *this );
+      LocalFunctionUserType &user
+        = static_cast< LocalFunctionUserType & >( *this );
       return user.asImp();
     }
   };
@@ -402,6 +416,12 @@ namespace Dune
       GeometryJacobianInverseType;
 
   public:
+    template< class T >
+    inline void operator+= ( const LocalFunction< T > &other );
+
+    template< class T >
+    inline void operator-= ( const LocalFunction< T > &other );
+
     /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
     template< class PointType >
     inline void evaluate( const PointType &x,
@@ -497,6 +517,12 @@ namespace Dune
       ScalarJacobianRangeType;
       
   public:
+    template< class T >
+    inline void operator+= ( const LocalFunction< T > &other );
+
+    template< class T >
+    inline void operator-= ( const LocalFunction< T > &other );
+
     /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
     template< class PointType >
     inline void axpy ( const PointType &x,

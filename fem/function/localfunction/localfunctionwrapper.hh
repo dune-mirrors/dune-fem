@@ -16,6 +16,24 @@ namespace Dune
 //  template< class DiscreteFunctionSpaceType, class LocalFunctionImp >
 //  class LocalFunctionDefault;
 
+  template< class LocalFunctionStorage >
+  class LocalFunctionWrapper;
+
+
+
+  template< class LocalFunctionStorage >
+  struct LocalFunctionWrapperTraits
+  {
+    typedef LocalFunctionStorage LocalFunctionStorageType;
+    typedef typename LocalFunctionStorageType :: ObjectType
+      LocalFunctionImpType;
+    typedef typename LocalFunctionImpType :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
+    typedef LocalFunctionWrapper< LocalFunctionStorageType >
+      LocalFunctionUserType;
+  };
+
+
 
   //**************************************************************************
   //
@@ -26,30 +44,28 @@ namespace Dune
   //! acts like a local functions 
   template < class LocalFunctionStorage >
   class LocalFunctionWrapper
-  : public LocalFunction
-    < typename LocalFunctionStorage :: ObjectType :: DiscreteFunctionSpaceType,
-      typename LocalFunctionStorage :: ObjectType,
-      LocalFunctionWrapper< LocalFunctionStorage >
-    >
+  : public LocalFunction< LocalFunctionWrapperTraits< LocalFunctionStorage > >
   {
   public:
+    //! type of the traits
+    typedef LocalFunctionWrapperTraits< LocalFunctionStorage > Traits;
+
     //! type of the local function storage
-    typedef LocalFunctionStorage LocalFunctionStorageType;
+    typedef typename Traits :: LocalFunctionStorageType
+      LocalFunctionStorageType;
 
     //! type of wrapped local function implementation 
-    typedef typename LocalFunctionStorageType :: ObjectType LocalFunctionImpType;
+    typedef typename Traits :: LocalFunctionImpType LocalFunctionImpType;
 
     //! type of discrete function space 
-    typedef typename LocalFunctionImpType :: DiscreteFunctionSpaceType
+    typedef typename Traits :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
     
   private:
     typedef LocalFunctionWrapper< LocalFunctionStorageType > ThisType;
-    typedef LocalFunction< DiscreteFunctionSpaceType, LocalFunctionImpType, ThisType >
-      BaseType;
+    typedef LocalFunction< Traits > BaseType;
 
-    friend class LocalFunction
-      < DiscreteFunctionSpaceType, LocalFunctionImpType, ThisType >;
+    friend class LocalFunction< Traits >;
     
   private:
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;

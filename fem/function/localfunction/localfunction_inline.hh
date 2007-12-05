@@ -5,6 +5,36 @@ namespace Dune
   // --------------------
 
   template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  template< class T >
+  inline void
+  LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
+    :: operator+= ( const LocalFunction< T > &other )
+  {
+    const int numDofs = asImp().numDofs();
+    assert( numDofs == other.numDofs() );
+
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] += other[ i ];
+  }
+
+
+
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  template< class T >
+  inline void
+  LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
+    :: operator-= ( const LocalFunction< T > &other )
+  {
+    const int numDofs = asImp().numDofs();
+    assert( numDofs == other.numDofs() );
+
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] -= other[ i ];
+  }
+
+
+
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
   template< class PointType >
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
     :: evaluate ( const PointType &x,
@@ -164,6 +194,38 @@ namespace Dune
 
   // LocalFunctionDefault (for CombinedSpace)
   // ----------------------------------------
+
+  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
+            class LocalFunctionImp >
+  template< class T >
+  inline void LocalFunctionDefault
+    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
+    :: operator+= ( const LocalFunction< T > &other )
+  {
+    const int numDofs = asImp().numDofs();
+    assert( numDofs == other.numDofs() );
+
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] += other[ i ];
+  }
+
+
+
+  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
+            class LocalFunctionImp >
+  template< class T >
+  inline void LocalFunctionDefault
+    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
+    :: operator-= ( const LocalFunction< T > &other )
+  {
+    const int numDofs = asImp().numDofs();
+    assert( numDofs == other.numDofs() );
+
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] -= other[ i ];
+  }
+
+
 
   template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
             class LocalFunctionImp >
