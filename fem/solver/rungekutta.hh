@@ -22,7 +22,8 @@ using namespace std;
 
     \remarks 
     The interface for ODE solvers is defined by the class
-    OdeSolverInterface.
+    OdeSolverInterface. The interface for discretization operators
+    working with the OdeSolvers is described by the class SpaceOperatorInterface.
  @{
  **/
 
