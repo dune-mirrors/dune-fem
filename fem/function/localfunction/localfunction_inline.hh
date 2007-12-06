@@ -8,13 +8,9 @@ namespace Dune
   template< class T >
   inline void
   LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
-    :: operator+= ( const LocalFunction< T > &other )
+    :: operator+= ( const LocalFunction< T > &lf )
   {
-    const int numDofs = asImp().numDofs();
-    assert( numDofs == other.numDofs() );
-
-    for( int i = 0; i < numDofs; ++i )
-      asImp()[ i ] += other[ i ];
+    asImp().axpy( 1, lf );
   }
 
 
@@ -23,13 +19,25 @@ namespace Dune
   template< class T >
   inline void
   LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
-    :: operator-= ( const LocalFunction< T > &other )
+    :: operator-= ( const LocalFunction< T > &lf )
+  {
+    asImp().axpy( -1, lf );
+  }
+
+
+  
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  template< class T >
+  inline void
+  LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
+    :: axpy ( const RangeFieldType s,
+              const LocalFunction< T > &lf )
   {
     const int numDofs = asImp().numDofs();
-    assert( numDofs == other.numDofs() );
+    assert( numDofs == lf.numDofs() );
 
     for( int i = 0; i < numDofs; ++i )
-      asImp()[ i ] -= other[ i ];
+      asImp()[ i ] += s * lf[ i ];
   }
 
 
@@ -200,13 +208,9 @@ namespace Dune
   template< class T >
   inline void LocalFunctionDefault
     < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
-    :: operator+= ( const LocalFunction< T > &other )
+    :: operator+= ( const LocalFunction< T > &lf )
   {
-    const int numDofs = asImp().numDofs();
-    assert( numDofs == other.numDofs() );
-
-    for( int i = 0; i < numDofs; ++i )
-      asImp()[ i ] += other[ i ];
+    asImp().axpy( 1, lf );
   }
 
 
@@ -216,13 +220,26 @@ namespace Dune
   template< class T >
   inline void LocalFunctionDefault
     < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
-    :: operator-= ( const LocalFunction< T > &other )
+    :: operator-= ( const LocalFunction< T > &lf )
+  {
+    asImp().axpy( -1, lf );
+  }
+
+
+  
+  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
+            class LocalFunctionImp >
+  template< class T >
+  inline void LocalFunctionDefault
+    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
+    :: axpy ( const RangeFieldType s,
+              const LocalFunction< T > &lf )
   {
     const int numDofs = asImp().numDofs();
-    assert( numDofs == other.numDofs() );
+    assert( numDofs == lf.numDofs() );
 
     for( int i = 0; i < numDofs; ++i )
-      asImp()[ i ] -= other[ i ];
+      asImp()[ i ] += s * lf[ i ];
   }
 
 

@@ -98,17 +98,53 @@ namespace Dune
       return asImp()[ num ];
     }
 
+    /** \brief add another local function to this one
+     *
+     *  \note The local function to add may be any implementation of a
+     *        LocalFunction.
+     *
+     *  \param[in]  lf  local function to add
+     *
+     *  \returns a reference to this local function (i.e., *this)
+     */
     template< class T >
-    inline LocalFunctionType &operator+= ( const LocalFunction< T > &other )
+    inline LocalFunctionType &operator+= ( const LocalFunction< T > &lf )
     {
-      asImp() += other;
+      asImp() += lf;
       return *this;
     }
 
+    /** \brief subtract another local function to this one
+     *
+     *  \note The local function to suctract may be any implementation of a
+     *        LocalFunction.
+     *
+     *  \param[in]  lf  local function to subtract
+     *
+     *  \returns a reference to this local function (i.e., *this)
+     */
     template< class T >
-    inline LocalFunctionType &operator-= ( const LocalFunction< T > &other )
+    inline LocalFunctionType &operator-= ( const LocalFunction< T > &lf )
     {
-      asImp() -= other;
+      asImp() -= lf;
+      return *this;
+    }
+
+    /** \brief add a multiple of another local function to this one
+     *
+     *  \note The local function to add may be any implementation of a
+     *        LocalFunction.
+     *
+     *  \param[in]  s   scalar factor to scale lf with
+     *  \param[in]  lf  local function to add
+     *
+     *  \returns a reference to this local function (i.e., *this)
+     */
+    template< class T >
+    inline LocalFunctionType &axpy ( const RangeFieldType s,
+                                     const LocalFunction< T > &lf )
+    {
+      asImp().axpy( s, lf );
       return *this;
     }
 
@@ -416,11 +452,18 @@ namespace Dune
       GeometryJacobianInverseType;
 
   public:
+    /** \copydoc Dune::LocalFunction::operator+=(const LocalFunction<T> &lf) */
     template< class T >
-    inline void operator+= ( const LocalFunction< T > &other );
+    inline void operator+= ( const LocalFunction< T > &lf );
 
+    /** \copydoc Dune::LocalFunction::operator-=(const LocalFunction<T> &lf) */
     template< class T >
-    inline void operator-= ( const LocalFunction< T > &other );
+    inline void operator-= ( const LocalFunction< T > &lf );
+
+    /** \copydoc Dune::LocalFunction::axpy(const RangeFieldType s,const LocalFunction<T> &lf) */
+    template< class T >
+    inline void axpy ( const RangeFieldType s,
+                       const LocalFunction< T > &lf );
 
     /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
     template< class PointType >
@@ -517,11 +560,18 @@ namespace Dune
       ScalarJacobianRangeType;
       
   public:
+    /** \copydoc Dune::LocalFunction::operator+=(const LocalFunction<T> &lf) */
     template< class T >
-    inline void operator+= ( const LocalFunction< T > &other );
+    inline void operator+= ( const LocalFunction< T > &lf );
 
+    /** \copydoc Dune::LocalFunction::operator-=(const LocalFunction<T> &lf) */
     template< class T >
-    inline void operator-= ( const LocalFunction< T > &other );
+    inline void operator-= ( const LocalFunction< T > &lf );
+
+    /** \copydoc Dune::LocalFunction::axpy(const RangeFieldType s,const LocalFunction<T> &lf) */
+    template< class T >
+    inline void axpy ( const RangeFieldType s,
+                       const LocalFunction< T > &lf );
 
     /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
     template< class PointType >
