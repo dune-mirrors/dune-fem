@@ -272,7 +272,7 @@ operator -= ( const DiscreteFunctionType& g )
    *  \param[in]   in  stream to read from
    *  \param[out]  df  discrete function to read
    *
-   *  \returns the output stream (for concatenation)
+   *  \returns the input stream (for concatenation)
    */
   template< class StreamTraits, class DiscreteFunctionTraits >
   inline InStreamInterface< StreamTraits > &

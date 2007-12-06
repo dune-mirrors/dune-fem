@@ -104,7 +104,15 @@ namespace Dune
       out << baseFunction( i );
   }
 
-  
+  /** \brief write a ReducedBasisSpace into an output stream
+   *  \relates ReducedBasisSpace
+   *  \relatesalso OutStreamInterface
+   *
+   *  \param[in]  out    stream to write to
+   *  \param[in]  space  ReducedBasisSpace to write
+   *
+   *  \returns the output stream (for concatenation)
+   */
   template< class StreamTraits, class BaseFunctionType >
   inline OutStreamInterface< StreamTraits > &
     operator<< ( OutStreamInterface< StreamTraits > &out,
@@ -114,6 +122,15 @@ namespace Dune
     return out;
   }
 
+  /** \brief read a ReducedBasisSpace from an input stream
+   *  \relates ReducedBasisSpace
+   *  \relatesalso InStreamInterface
+   *
+   *  \param[in]   in     stream to read from
+   *  \param[out]  space  ReducedBasisSpace to read
+   *
+   *  \returns the input stream (for concatenation)
+   */
   template< class StreamTraits, class BaseFunctionType >
   inline InStreamInterface< StreamTraits > &
     operator>> ( InStreamInterface< StreamTraits > &in,
