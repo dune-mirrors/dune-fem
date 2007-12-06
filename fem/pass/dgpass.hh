@@ -220,7 +220,6 @@ namespace Dune {
       if (time_) 
       {
         time_->provideTimeStepEstimate(dtMin_);
-        time_->provideTimeStepEstimate(1.);
       }
       
       // call finalize 
