@@ -21,9 +21,8 @@ DISTCHECK_CONFIGURE_FLAGS = --with-dune-common="$(DUNE_COMMON_ROOT)" --with-dune
 
 include $(top_srcdir)/am/global-rules
 
+SOURCEFILE_MASK = -name \*.h -o -name \*.hh -o -name \*.c -o -name \*.cc
+
 # add library name, authors list, and license to progam files
 dist-hook:
-	find $(distdir) -name "*.h" -exec ./addauthors.sh ./AUTHORS {} \;
-	find $(distdir) -name "*.hh" -exec ./addauthors.sh ./AUTHORS {} \;
-	find $(distdir) -name "*.c" -exec ./addauthors.sh ./AUTHORS {} \;
-	find $(distdir) -name "*.cc" -exec ./addauthors.sh ./AUTHORS {} \;
+	find $(distdir) \( $(SOURCEFILE_MASK) \) -exec scripts/addauthors.sh ./AUTHORS {} \;
