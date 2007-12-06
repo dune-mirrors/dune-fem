@@ -232,15 +232,16 @@ namespace Dune
     template< class Traits >
     inline void read ( DiscreteFunctionInterface< Traits > &df)
     {
+      int size;
+      read( size );
+      if( size != df.size() )
+        DUNE_THROW( IOError, "MatlabInStream: Reading vector of different size." ); 
+      typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
+      typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType; 
 
-    read(df.size());
-
-    typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
-    typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
-
-    const DofIteratorType end = df.dend();
-    for( DofIteratorType it = df.dbegin(); it != end; ++it )
-      read(*it);
+      const DofIteratorType end = df.dend();
+      for( DofIteratorType it = df.dbegin(); it != end; ++it )
+        read(*it);
     }
 
 
