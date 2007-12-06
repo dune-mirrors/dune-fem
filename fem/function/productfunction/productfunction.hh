@@ -10,7 +10,6 @@
 #include <dune/common/array.hh>
 #include <dune/common/geometrytype.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/function/common/localfunction.hh>
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/io/file/xdrio.hh>
