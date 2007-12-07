@@ -120,7 +120,7 @@ namespace Dune {
     GlobalArgumentType arg("Arg", spc);
     DestinationType dest("Dest", spc);
 
-    p2(arg, dest);
+    //p2(arg, dest);
 
     //_fail("Not implemented yet");
   }

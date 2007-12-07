@@ -4,7 +4,7 @@
 #include <config.h>
 
 #ifndef GRIDDIM 
-#define GRIDDIM 2
+#define GRIDDIM 3
 #endif
 const int dimension = GRIDDIM;
 
