@@ -19,7 +19,7 @@ namespace Dune {
     typedef GridImp GridType;
     typedef PassStubTraits<GridType> Traits;
     typedef ProblemStub DiscreteModelType;
-    typedef FunctionSpace<double, double, 3, 1> FunctionSpaceType;
+    typedef FunctionSpace<double, double, GridType :: dimension, 1> FunctionSpaceType;
     typedef typename FunctionSpaceType :: RangeType  RangeType;
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
