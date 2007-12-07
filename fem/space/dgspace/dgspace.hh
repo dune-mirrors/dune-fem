@@ -148,7 +148,10 @@ namespace Dune {
         allGeomTypes(gridPart.indexSet());
       
       int maxNumDofs = -1;
-      for(int cd=0; cd<2; ++cd)
+
+      // for dim = 1 only get basefunctions for codim 0
+      const int codims = ( GridType :: dimension < 2 ) ? 1 : 2;
+      for(int cd=0; cd<codims; ++cd)
       {
         // get types for codim 0 and 1   
         const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(cd);
