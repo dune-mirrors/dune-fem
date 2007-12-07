@@ -20,16 +20,17 @@ namespace Dune {
   class DiscreteModelStub;
 
   struct DGStubTraits {
-    typedef FunctionSpace<double, double, 3, 1> FunctionSpaceType;
+    enum { dim = GridType :: dimension };
     typedef LeafGridPart<GridType> GridPartType;
+    typedef FunctionSpace<double, double, dim , 1> FunctionSpaceType;
     typedef LagrangeDiscreteFunctionSpace<
       FunctionSpaceType, GridPartType, 1> DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType SpaceType;
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     typedef ElementQuadrature< GridPartType, 0> VolumeQuadratureType;
     typedef ElementQuadrature< GridPartType, 1>  FaceQuadratureType;
-    typedef FieldVector<double, 3> DomainType;
-    typedef FieldVector<double, 2> FaceDomainType;
+    typedef FieldVector<double, dim > DomainType;
+    typedef FieldVector<double, dim > FaceDomainType;
     typedef DiscreteFunctionSpaceType::RangeType RangeType;
     typedef DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 

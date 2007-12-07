@@ -18,7 +18,7 @@ namespace Dune {
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
     typedef LeafGridPart<GridType> GridPartType;
-    typedef FunctionSpace<double, double, 3, 1> FunctionSpaceType;
+    typedef FunctionSpace<double, double, GridType :: dimension , 1> FunctionSpaceType;
     typedef LagrangeDiscreteFunctionSpace<
       FunctionSpaceType, GridPartType, polOrd> DiscreteFunctionSpaceType;
     
@@ -40,5 +40,4 @@ namespace Dune {
   };
   
 } // end namespace Dune
-
 #endif
