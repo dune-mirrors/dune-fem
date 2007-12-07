@@ -4,6 +4,7 @@
 //- system includes 
 #include <iostream>
 #include <cmath> 
+#include <limits>
 
 //- Dune includes 
 #include <dune/fem/io/file/xdrio.hh>
@@ -351,6 +352,84 @@ namespace Dune
     }
   };
 
+}
+
+namespace std
+{
+
+  template<>
+  struct numeric_limits< Dune :: Double >
+  {
+    static const bool is_specialized = true;
+
+    static const int radix = numeric_limits< double > :: radix;
+    static const int digits = numeric_limits< double > :: digits;
+    static const int digits10 = numeric_limits< double > :: digits10;
+
+    static const bool is_signed = numeric_limits< double > :: is_signed;
+    static const bool is_integer = numeric_limits< double > :: is_integer;
+    static const bool is_exact = numeric_limits< double > :: is_exact;
+
+    inline static Dune :: Double min () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: min() );
+    }
+
+    inline static Dune :: Double max () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: max() );
+    }
+
+    inline static Dune :: Double epsilon () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: epsilon() );
+    }
+
+    inline static Dune :: Double round_error () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: round_error() );
+    }
+
+    inline static Dune :: Double infinity () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: infinity() );
+    }
+
+    inline static Dune :: Double quiet_NaN () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: quiet_NaN() );
+    }
+
+    inline static Dune :: Double signaling_NaN () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: signaling_NaN() );
+    }
+
+    inline static Dune :: Double denorm_min () throw ()
+    {
+      return Dune :: Double( numeric_limits< double > :: denorm_min() );
+    }
+
+    static const int min_exponent = numeric_limits< double > :: min_exponent;
+    static const int max_exponent = numeric_limits< double > :: max_exponent;
+    static const int min_exponent10 = numeric_limits< double > :: min_exponent10;
+    static const int max_exponent10 = numeric_limits< double > :: max_exponent10;
+
+    static const bool has_infinity = numeric_limits< double > :: has_infinity;
+    static const bool has_quiet_NaN = numeric_limits< double > :: has_quiet_NaN;
+    static const bool has_signaling_NaN = numeric_limits< double > :: has_signaling_NaN;
+    static const float_denorm_style has_denorm = numeric_limits< double > :: has_denorm;
+    static const bool has_denorm_loss = numeric_limits< double > :: has_denorm_loss;
+
+    static const bool is_iec559 = numeric_limits< double > :: is_iec559;
+    static const bool is_bounded = numeric_limits< double > :: is_bounded;
+    static const bool is_modulo = numeric_limits< double > :: is_modulo;
+
+    static const bool traps = numeric_limits< double > :: traps;
+    static const bool tinyness_before = numeric_limits< double > :: tinyness_before;
+    static const float_round_style round_style
+      = numeric_limits< double > :: round_style;
+  };
 }
 
 #include "double_inline.hh"
