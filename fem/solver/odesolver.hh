@@ -262,12 +262,14 @@ public:
   // initialize 
   void initialize(const DestinationType& U0)
   {
-    if( tp_.deltaT() < 0 ) 
+    if( ! this->initialized_ ) 
     {
       BaseType::initialize(U0);
 
       // global min of dt 
       tp_.syncTimeStep(); 
+
+      this->initialized_ = true;
     }
   }
  
@@ -540,13 +542,14 @@ public:
   // initialize 
   void initialize(const DestinationType& U0)
   {
-    if( tp_.deltaT() < 0 ) 
+    if( ! this->initialized_ ) 
     {
       // call initialize 
       BaseType::initialize(U0);
 
       // global min of dt 
       tp_.syncTimeStep(); 
+      this->initialized_ = true;
     }
   }
   
