@@ -11,6 +11,7 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       debug.hh \
 	       double.hh \
 	       double_inline.hh \
+	       engineconcept.hh \
 	       entityfunction.hh \
 	       eoc.hh \
 	       example.cc \

@@ -182,24 +182,6 @@ namespace Dune
 
 
 
-  template< class DiscreteFunctionSpace, class LocalFunctionImp >
-  inline const LocalFunctionImp &
-  LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
-    :: asImp () const
-  {
-    return static_cast< const LocalFunctionImp & >( *this );
-  }
-  
-  template< class DiscreteFunctionSpace, class LocalFunctionImp >
-  inline LocalFunctionImp &
-  LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
-    :: asImp ()
-  {
-    return static_cast< LocalFunctionImp & >( *this );
-  }
-
-
-
   // LocalFunctionDefault (for CombinedSpace)
   // ----------------------------------------
 
@@ -394,28 +376,6 @@ namespace Dune
         ret[ i ][ j ] = value;
       }
     }
-  }
-
-
-
-  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
-            class LocalFunctionImp >
-  inline const LocalFunctionImp &
-  LocalFunctionDefault
-    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
-    :: asImp () const
-  {
-    return static_cast< const LocalFunctionImp & >( *this );
-  }
-  
-  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
-            class LocalFunctionImp >
-  inline LocalFunctionImp &
-  LocalFunctionDefault
-    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
-    :: asImp ()
-  {
-    return static_cast< LocalFunctionImp & >( *this );
   }
 
 }

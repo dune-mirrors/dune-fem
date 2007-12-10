@@ -65,7 +65,7 @@ namespace Dune
     typedef LocalFunctionWrapper< LocalFunctionStorageType > ThisType;
     typedef LocalFunction< Traits > BaseType;
 
-    friend class LocalFunction< Traits >;
+    friend class EngineWrapper< LocalFunctionImpType, ThisType >;
     
   private:
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;

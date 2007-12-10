@@ -1,12 +1,8 @@
 #ifndef DUNE_FEM_LOCALFUNCTION_HH
 #define DUNE_FEM_LOCALFUNCTION_HH
 
-#include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/misc/engineconcept.hh>
 #include <dune/fem/space/common/dofstorage.hh>
-
-#ifndef DUNE_FEM_COMPATIBILITY
-#define DUNE_FEM_COMPATIBILITY 1
-#endif
 
 namespace Dune
 {
@@ -35,6 +31,8 @@ namespace Dune
    */
   template< class LocalFunctionTraits >
   class LocalFunction
+  : public EngineWrapper< typename LocalFunctionTraits :: LocalFunctionImpType,
+                          typename LocalFunctionTraits :: LocalFunctionUserType >
   {
   public:
     //! type of the traits
@@ -50,6 +48,11 @@ namespace Dune
     //! type of the user implementation (Barton-Nackman)
     typedef typename Traits :: LocalFunctionUserType LocalFunctionUserType;
 
+  private:
+    typedef EngineWrapper< LocalFunctionImpType, LocalFunctionUserType >
+      BaseType;
+
+  public:
     //! type of the local function (this type!)
     typedef LocalFunction< Traits > LocalFunctionType;
 
@@ -76,6 +79,9 @@ namespace Dune
     //! type of base function set  
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
+
+  protected:
+    using BaseType :: asImp;
 
   public:
     /** \brief access to local dofs (read-only)
@@ -379,21 +385,6 @@ namespace Dune
     {
       return asImp().numDofs();
     }
- 
-  protected:
-    inline const LocalFunctionImpType &asImp () const
-    {
-      const LocalFunctionUserType &user
-        = static_cast< const LocalFunctionUserType & >( *this );
-      return user.asImp();
-    }
-    
-    inline LocalFunctionImpType &asImp ()
-    {
-      LocalFunctionUserType &user
-        = static_cast< LocalFunctionUserType & >( *this );
-      return user.asImp();
-    }
   };
 
 
@@ -409,10 +400,14 @@ namespace Dune
    */
   template< class DiscreteFunctionSpace, class LocalFunctionImp >
   class LocalFunctionDefault
+  : public EngineDefault< LocalFunctionImp >
   {
   public:
     //! type of  discrete function space the local function belongs to
     typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+
+  private:
+    typedef EngineDefault< LocalFunctionImp > BaseType;
 
   private:
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
@@ -450,6 +445,9 @@ namespace Dune
     typedef FieldMatrix
       < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
       GeometryJacobianInverseType;
+
+  protected:
+    using BaseType :: asImp;
 
   public:
     /** \copydoc Dune::LocalFunction::operator+=(const LocalFunction<T> &lf) */
@@ -495,9 +493,6 @@ namespace Dune
     inline void rightMultiply ( const JacobianRangeType &factor,
                                 const DomainType &x,
                                 JacobianRangeType &result ) const;
-
-    inline const LocalFunctionImp &asImp () const;
-    inline LocalFunctionImp &asImp ();
   };
 
 
@@ -510,11 +505,15 @@ namespace Dune
             class LocalFunctionImp >
   class LocalFunctionDefault
     < CombinedSpace< ContainedFunctionSpaceImp, N, policy >, LocalFunctionImp >
+  : public EngineDefault< LocalFunctionImp >
   {
   public:
     //! type of  discrete function space the local function belongs to
     typedef CombinedSpace< ContainedFunctionSpaceImp, N, policy >
       DiscreteFunctionSpaceType;
+
+  private:
+    typedef EngineDefault< LocalFunctionImp > BaseType;
 
   private:
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
@@ -558,6 +557,9 @@ namespace Dune
       ScalarRangeType;
     typedef typename DiscreteFunctionSpaceType :: ContainedJacobianRangeType
       ScalarJacobianRangeType;
+
+  protected:
+    using BaseType :: asImp;
       
   public:
     /** \copydoc Dune::LocalFunction::operator+=(const LocalFunction<T> &lf) */
@@ -610,9 +612,6 @@ namespace Dune
     inline void rightMultiply ( const JacobianRangeType &factor,
                                 const DomainType &x,
                                 JacobianRangeType &result ) const;
-
-    inline const LocalFunctionImp &asImp () const;
-    inline LocalFunctionImp &asImp ();
   };
 
   /** \} */

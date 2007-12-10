@@ -70,7 +70,7 @@ namespace Dune
       ThisType;
     typedef LocalFunction< Traits > BaseType;
 
-    friend class LocalFunction< Traits >;
+    friend class EngineWrapper< LocalFunctionImpType, ThisType >;
 
   public:
     typedef typename BaseType :: EntityType EntityType;
