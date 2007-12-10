@@ -4,12 +4,29 @@
 namespace Dune
 {
 
-  template< class FunctionSpaceImp >
-  class RightHandSide
-  : public Function< FunctionSpaceImp, RightHandSide< FunctionSpaceImp > >
+  template< class FunctionSpace >
+  class QuadraticProblem
   {
   public:
-    typedef FunctionSpaceImp FunctionSpaceType;
+    typedef FunctionSpace FunctionSpaceType;
+
+  private:
+    class RightHandSide;
+    class ExactSolution;
+
+  public:
+    typedef RightHandSide RightHandSideType;
+    typedef ExactSolution ExactSolutionType;
+  };
+
+
+
+  template< class FunctionSpace >
+  class QuadraticProblem< FunctionSpace > :: RightHandSide
+  : public Function< FunctionSpace, RightHandSide >
+  {
+  public:
+    typedef FunctionSpace FunctionSpaceType;
   
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: RangeType RangeType;
@@ -18,8 +35,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
     
   private:
-    typedef RightHandSide< FunctionSpaceType > ThisType;
-    typedef Function< FunctionSpaceType, ThisType > BaseType;
+    typedef Function< FunctionSpaceType, RightHandSide > BaseType;
 
   public:
     inline RightHandSide ( const FunctionSpaceType &functionSpace )
@@ -55,12 +71,12 @@ namespace Dune
 
 
 
-  template< class FunctionSpaceImp >
-  class ExactSolution
-  : public Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
+  template< class FunctionSpace >
+  class QuadraticProblem< FunctionSpace > :: ExactSolution
+  : public Function< FunctionSpace, ExactSolution >
   {
   public:
-    typedef FunctionSpaceImp FunctionSpaceType;
+    typedef FunctionSpace FunctionSpaceType;
     
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: RangeType RangeType;
@@ -69,8 +85,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   private:
-    typedef ExactSolution< FunctionSpaceType > ThisType;
-    typedef Function< FunctionSpaceType, ThisType > BaseType;
+    typedef Function< FunctionSpaceType, ExactSolution > BaseType;
 
   public:
     inline ExactSolution ( FunctionSpaceType &functionSpace )
@@ -93,62 +108,6 @@ namespace Dune
     inline void evaluate ( const DomainType &x, RangeFieldType t, RangeType &y ) const
     {
       evaluate( x, y );
-    }
-  };
-
-
-
-  template< class FunctionSpaceImp >
-  class LaplaceModel
-  : public DiffusionModelDefault< FunctionSpaceImp, LaplaceModel< FunctionSpaceImp > >,
-    public BoundaryModelDefault< FunctionSpaceImp, LaplaceModel< FunctionSpaceImp > >
-  {
-  public:
-    typedef FunctionSpaceImp FunctionSpaceType;
-
-  private:
-    typedef LaplaceModel< FunctionSpaceType > ThisType;
-    typedef DiffusionModelDefault< FunctionSpaceType, ThisType > DiffusionModelBaseType;
-    typedef BoundaryModelDefault< FunctionSpaceType, ThisType > BoundaryModelBaseType;
-
-  public:
-    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-
-    typedef typename FunctionSpaceType :: DomainType DomainType;
-    typedef typename FunctionSpaceType :: RangeType RangeType;
-
-    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-
-    typedef typename BoundaryModelBaseType :: BoundaryType BoundaryType;
-
-  public:
-    using DiffusionModelBaseType :: diffusiveFlux;
-
-  public:
-    template< class EntityType, class PointType >
-    inline void diffusiveFlux ( const EntityType &entity,
-                                const PointType &x,
-                                const JacobianRangeType &gradient,
-                                JacobianRangeType &flux ) const
-    {
-      // since we want to model the Laplace equation, just the identical flux.
-      flux = gradient;
-    }
-
-    template< class IntersectionIteratorType >
-    inline BoundaryType boundaryType ( const IntersectionIteratorType &intersection ) const
-    {
-      return BoundaryModelBaseType :: Dirichlet;
-    }
-
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void dirichletValues ( const IntersectionIteratorType &intersection,
-                                  const QuadratureType &quadrature,
-                                  int point,
-                                  RangeType &phi ) const
-    {
-      phi = 0;
     }
   };
 

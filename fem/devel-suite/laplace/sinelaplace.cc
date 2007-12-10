@@ -1,7 +1,10 @@
 #include <config.h>
 
 //#define USE_GRAPE HAVE_GRAPE
-//#define SINEPROBLEM
+#ifndef PROBLEM
+#warning "PROBLEM not defined. Using SineProblem..."
+#define PROBLEM SineProblem
+#endif
 
 #ifdef POLORDER
   enum { polynomialOrder = POLORDER };
@@ -34,13 +37,10 @@
 #include <dune/fem/operator/cachedlinearoperator.hh>
 
 //- local includes
+#include "model.hh"
+#include "quadraticproblem.hh"
+#include "sineproblem.hh"
 #include "sinespace.hh"
-
-#ifdef SINEPROBLEM
-  #include "sineproblem.hh"
-#else
-  #include "quadraticproblem.hh"
-#endif
 
 
 using namespace Dune;
@@ -79,15 +79,17 @@ typedef double FieldType;
 
 typedef FunctionSpace< FieldType, FieldType, dimworld, 1 > FunctionSpaceType;
 
+typedef PROBLEM< FunctionSpaceType > ProblemType;
+
+typedef ProblemType :: RightHandSideType RightHandSideType;
+typedef ProblemType :: ExactSolutionType ExactSolutionType;
+
+typedef LaplaceModel< ProblemType > LaplaceModelType;
+
 typedef LeafGridPart< GridType > GridPartType;
 
-typedef LaplaceModel< FunctionSpaceType > LaplaceModelType;
-
-typedef RightHandSide< FunctionSpaceType > RightHandSideType;
-typedef DiscreteFunctionAdapter< RightHandSideType, GridPartType > GridRightHandSideType;
-
-typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
-
+typedef DiscreteFunctionAdapter< RightHandSideType, GridPartType >
+  GridRightHandSideType;
 typedef SineDiffusionOperatorTraits< GridRightHandSideType, polynomialOrder >
   DiffusionOperatorTraitsType;
 typedef DiffusionOperator< DiffusionOperatorTraitsType, LaplaceModelType > LaplaceOperatorType;
