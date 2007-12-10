@@ -185,6 +185,8 @@
 */
   /** @defgroup InterfaceHelper Interface helper methods
       @ingroup HelperClasses */
+  /** \defgroup EngineConcept The Engine Concept
+    * \ingroup HelperClasses */
   /** @defgroup Testing Testing facilities
       @ingroup HelperClasses */
   /** @defgroup VectorClasses Array and Vector interfaces
