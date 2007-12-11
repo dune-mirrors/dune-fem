@@ -76,6 +76,15 @@ namespace Dune
   class EngineWrapper
   {
   protected:
+    EngineWrapper ()
+    {
+    }
+    
+  private:
+    // Prohibit automatic copying of the interface
+    EngineWrapper ( const EngineWrapper & );
+    
+  protected:
     /** \brief obtain the implementation from the user class (const version)
      *
      *  Ths method uses the Barton-Nackman trick, to obtain a reference to the
