@@ -154,6 +154,20 @@
 
 using namespace Dune;
 
+typedef LeafGridPart< GridType > GridPartType;
+
+typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+typedef LagrangeDiscreteFunctionSpace
+  < FunctionSpaceType, GridPartType, polynomialOrder >
+  DiscreteFunctionSpaceType;
+
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+  DiscreteFunctionType;
+
+typedef DefaultMatrixElementIntegratorTraits< DiscreteFunctionType, 100 >
+  ElementIntegratorTraitsType;
+
+/*
 // definition of traits class, which already defines various 
 // basic settings such as gridparts, etc.
 // if you want another settings, simply generate your own Traits class
@@ -161,6 +175,7 @@ typedef EllipticElementIntegratorTraits< GridType, polynomialOrder >
   ElementIntegratorTraitsType;
 
 typedef ElementIntegratorTraitsType :: FunctionSpaceType FunctionSpaceType;
+*/
 
 #ifdef POISSON
   typedef PoissonModel< FunctionSpaceType > EllipticModelType;
@@ -177,6 +192,7 @@ typedef ElementIntegratorTraitsType :: FunctionSpaceType FunctionSpaceType;
   #endif
 #endif // if ELLIPTIC
 
+/*
 //! the grid part we are using 
 //typedef LevelGridPart < GridType > GridPartType;
 //typedef LeafGridPart<GridType> GridPartImpType;
@@ -202,6 +218,7 @@ typedef ElementIntegratorTraitsType::DiscreteFunctionSpaceType
 //typedef DFAdapt < FuncSpaceType > DiscreteFunctionType;
 //typedef AdaptiveDiscreteFunction < FuncSpaceType > DiscreteFunctionType;
 typedef ElementIntegratorTraitsType::DiscreteFunctionType DiscreteFunctionType;
+*/
 
 //! define the discrete laplace operator, see ./fem.cc
 // typedef LaplaceFEOp< DiscreteFunctionType, Tensor, 1 > LaplaceOperatorType;

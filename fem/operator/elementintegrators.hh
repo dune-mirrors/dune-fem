@@ -121,6 +121,54 @@ namespace Dune
  
 
   
+  template< class DiscreteFunction, unsigned int elmatsize >
+  struct DefaultMatrixElementIntegratorTraits
+  {
+    typedef DiscreteFunction DiscreteFunctionType;
+
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
+
+    typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType
+      FunctionSpaceType;
+    
+    typedef typename FunctionSpaceType :: DomainType DomainType;
+    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+
+    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+      BaseFunctionSetType;
+
+    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+
+    typedef typename GridPartType :: GridType GridType;
+
+    enum { dimworld = GridType :: dimensionworld };
+    enum { dim = GridType :: dimension };
+
+    enum { elementMatrixSize = elmatsize };
+    typedef FieldMatrixAdapter
+      < FieldMatrix< double, elementMatrixSize, elementMatrixSize > >
+      ElementMatrixType; 
+
+    typedef CachingQuadrature< GridPartType, 0 > ElementQuadratureType; 
+    typedef CachingQuadrature< GridPartType, 1 > IntersectionQuadratureType; 
+    enum { quadDegree = 2 * DiscreteFunctionSpaceType :: polynomialOrder + 2 };
+    
+    //- derived types
+    typedef typename GridPartType :: IntersectionIteratorType
+      IntersectionIteratorType;
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    typedef typename GridType :: template Codim< 0 > :: EntityPointer
+      EntityPointerType;
+    typedef typename EntityType :: ctype CoordType; 
+  };
+
+
+  
 /*! @addtogroup EllipticOperator
  * Description: several implementations of element-matrix and 
 **              element-rhs-integrators, 
