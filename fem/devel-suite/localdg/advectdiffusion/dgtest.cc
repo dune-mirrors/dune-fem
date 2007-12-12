@@ -88,6 +88,8 @@ int main(int argc, char ** argv, char ** envp) {
     cfl=atof(argv[6]);
 //#endif
   
+  std::cout << " CFL : " << cfl << std::endl;
+  
   InitialDataType problem(epsilon,true);
 	
   string myoutput = "eoc.tex";
