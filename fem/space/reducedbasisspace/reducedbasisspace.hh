@@ -181,7 +181,7 @@ namespace Dune
     inline void crop ( unsigned int n )
     {
       const unsigned int size = baseFunctionList_.size();
-      assert( n < size );
+      assert( n <= size );
       for( unsigned int i = n; i < size; ++i )
         delete baseFunctionList_[ i ];
       baseFunctionList_.resize( n );
