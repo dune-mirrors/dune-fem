@@ -13,7 +13,8 @@ then
 echo "Something went wrong"
 exit 1
 fi
-./dgtest grid${dimw}d.dgf.ALUgrid ${repeats} ${level} ${epsilonne} ${grape} 1.0
+./dgtest grid${dimw}d.dgf ${repeats} ${level} ${epsilonne} ${grape} 1.0
+#./dgtest grid${dimw}d.dgf.ALUgrid ${repeats} ${level} ${epsilonne} ${grape} 1.0
 #./dgtest box${dimw}d.dgf.ALUgrid ${repeats} ${level} ${epsilonne} ${grape} 1.0
 # mv eoc.tex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex
 # pdflatex ${gridtype}_pol${polorder}_p${problem}_eps${epsilonne}.tex

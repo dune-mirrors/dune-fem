@@ -165,7 +165,9 @@ namespace Dune
   {
     const GeometryJacobianInverseType &gjit
       = asImp().entity().geometry().jacobianInverseTransposed( x );
-    
+
+    FieldMatrixHelper :: multiply( factor, gjit, ret );
+#if 0
     const int rows = JacobianRangeType :: rows;
     for( int i = 0; i < rows; ++i )
     {
@@ -178,6 +180,7 @@ namespace Dune
         ret[ i ][ j ] = value;
       }
     }
+#endif
   }
 
 
@@ -363,7 +366,9 @@ namespace Dune
   {
     const GeometryJacobianInverseType &gjit
       = asImp().entity().geometry().jacobianInverseTransposed( x );
-    
+
+    FieldMatrixHelper :: multiply( factor, gjit, ret );
+#if 0
     const int rows = JacobianRangeType :: rows;
     for( int i = 0; i < rows; ++i )
     {
@@ -376,6 +381,7 @@ namespace Dune
         ret[ i ][ j ] = value;
       }
     }
+#endif
   }
 
 }

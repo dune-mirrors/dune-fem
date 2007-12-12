@@ -16,6 +16,7 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       eoc.hh \
 	       example.cc \
                femtuples.hh \
+	       fieldmatrixhelper.hh \
                gridwidth.hh \
 	       h1norm.hh \
 	       h1norm_inline.hh \
