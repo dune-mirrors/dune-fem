@@ -3,7 +3,7 @@ polorder=2
 gridtype=ALUGRID_SIMPLEX
 epsilonne=1.0
 grape=100
-level=4
+level=3
 repeats=1
 dimw=2
 
