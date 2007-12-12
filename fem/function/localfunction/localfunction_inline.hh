@@ -83,7 +83,8 @@ namespace Dune
     const GeometryJacobianInverseType &gjit
       = asImp().entity().geometry().jacobianInverseTransposed( coordinate( x ) );
     for( int i = 0; i < dimRange; ++i )
-      ret[ i ] = FMatrixHelp :: mult( gjit, refJacobian[ i ] );
+      // ret[ i ] = FMatrixHelp :: mult( gjit, refJacobian[ i ] );
+      FieldMatrixHelper :: multiply( gjit, refJacobian[ i ], ret[ i ] );
   }
  
 
@@ -272,7 +273,8 @@ namespace Dune
     {
       ScalarJacobianRangeType gradPhiRef, gradPhi;
       baseSet.jacobianScalar( i, x, gradPhiRef );
-      gjit.umv( gradPhiRef[ 0 ], gradPhi[ 0 ] );
+      // gjit.umv( gradPhiRef[ 0 ], gradPhi[ 0 ] );
+      FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi[ 0 ] );
       
       for( int j = 0; j < N; ++j )
         ret[ j ].axpy( asImp()[ i*N + j ], gradPhi[ 0 ] );
