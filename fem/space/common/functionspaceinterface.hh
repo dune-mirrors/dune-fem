@@ -1,6 +1,8 @@
 #ifndef DUNE_FUNCTIONSPACEINTERFACE_HH
 #define DUNE_FUNCTIONSPACEINTERFACE_HH
 
+#include <dune/common/fvector.hh>
+
 namespace Dune{
 
 /*! @addtogroup FunctionSpace 
