@@ -12,7 +12,7 @@ FEMDIR=`pwd`
 CHECKLOG=$WORKINGDIR/check-tests.out
 make -i check &> $CHECKLOG
 
-errors=`grep "\\"error\\"" $CHECKLOG | wc -l`
+errors=`grep error: $CHECKLOG | wc -l`
 if test $errors -gt 0 ; then
   echo "Error: $errors compile time errors occurred."
   exit 1
