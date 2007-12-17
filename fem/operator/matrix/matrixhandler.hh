@@ -972,6 +972,7 @@ namespace Dune {
     size_t size (const EntityType& en) const
     {
       LocalMatrixType localMat(matrix_,en, rowSpace_, en, colSpace_ );
+      enum { dim = EntityType :: dimension };
       enum { factor = ((dim)*2 + 1) };
       size_t s = localMat.rows() * localMat.cols();
       s *= factor;
