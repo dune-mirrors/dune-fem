@@ -510,8 +510,7 @@ namespace Dune {
           } // end neighbor 
 
           // use ghost cell for limiting 
-          //if( Capabilities::IsUnstructured<GridType>::v && nit.boundary() && dimension < 3 )
-          if( nit.boundary() ) //&& dimension < 3 )
+          if( nit.boundary() )
           {
             // assume same value on ghost element
             nbVals.push_back(RangeType(0));
@@ -534,10 +533,9 @@ namespace Dune {
           
         } // end intersection iterator 
 
-        //const size_t neighbors = (nbVals.size() > dim) ? nbVals.size() : 0;
+        // get number of found neighbors 
         const size_t neighbors = nbVals.size();
 
-        //if( Capabilities::IsUnstructured<GridType>::v ) 
         /*
         {
           bool allNegative = true;
@@ -692,7 +690,6 @@ namespace Dune {
               for(size_t m=0; m<vSize; ++m)
               {
                 const size_t k = v[m];
-                // skip allready contained values 
                 const DomainType& omega = barys[k];
 
                 const double g = D * omega;
@@ -720,7 +717,6 @@ namespace Dune {
           }
           
           // take maximum of limited functions 
-          //if( neighbors > 0 )
           {
             RangeType max (0);
             std::vector< size_t > number(dimRange,0);
@@ -754,7 +750,6 @@ namespace Dune {
             {
               if( limit[r] ) 
               {
-                //for(int i=0; i<numBasis; ++i) 
                 {
                   const int dofIdx = dofConversion_.combinedDof(0,r);
                   limitEn[dofIdx] = 0;
@@ -764,7 +759,7 @@ namespace Dune {
             
             RangeType ret, tmp;
             // get quadrature for barycenter 
-            VolumeQuadratureType quad( en, spc_.order() * 2 );
+            VolumeQuadratureType quad( en, 2 );
 
             typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType  BaseFunctionSetType;
             //! Note: BaseFunctions must be ortho-normal!!!!
@@ -790,7 +785,7 @@ namespace Dune {
                 if( limit[r] )
                 {
                   // only take linear functions components 
-                  for(int i=0; i<numBasis; ++i)
+                  for(int i=0; i<dim+1; ++i)
                   {
                     const int dofIdx = dofConversion_.combinedDof(i,r);
                     // here evaluateScalar could be used 
