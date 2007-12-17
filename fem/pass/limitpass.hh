@@ -536,7 +536,6 @@ namespace Dune {
         // get number of found neighbors 
         const size_t neighbors = nbVals.size();
 
-        /*
         {
           bool allNegative = true;
           bool allPositive = true;
@@ -545,10 +544,10 @@ namespace Dune {
           {
             for(int r=0; r<dimRange; ++r)
             {
-              if(limit[r] )//&& (std::abs(nbVals[n][r]) > 1e-12) ) 
+              if(limit[r] ) 
               {
-                if( nbVals[n][r] > 0 ) allNegative = false;
-                if( nbVals[n][r] < 0 ) allPositive = false;
+                if( nbVals[n][r] >= 0 ) allNegative = false;
+                if( nbVals[n][r] <= 0 ) allPositive = false;
               }
             }
           }
@@ -556,7 +555,6 @@ namespace Dune {
           // stay with the p-zero version  
           if( allNegative || allPositive ) return ;
         }
-        */
 
         typedef FieldMatrix<double, dim, dim> MatrixType;
         MatrixType matrix(0);
