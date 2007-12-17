@@ -3,7 +3,6 @@
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/alugrid.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include "../pass.hh"
 #include "../discretemodel.hh"

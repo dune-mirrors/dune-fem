@@ -5,8 +5,6 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/grid/common/gridpart.hh>
-#include <dune/grid/alugrid.hh>
-
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 namespace Dune {
