@@ -9,6 +9,8 @@
 #include <dune/common/utility.hh>
 
 #include <dune/grid/common/grid.hh>
+#include <dune/grid/io/file/dgfparser/entitykey.hh>
+
 
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/discretemodel.hh>
@@ -21,6 +23,9 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
+
+#include <dune/fem/operator/artificialdiffusion.hh>
+#include <dune/fem/operator/matrix/blockmatrix.hh>
 
 //*************************************************************
 namespace Dune {  
@@ -199,10 +204,13 @@ namespace Dune {
 
     typedef AdaptiveDiscreteFunction< LagrangeSpaceType > P1FunctionType; 
     typedef AdaptiveDiscreteFunction< DG0SpaceType > DG0FunctionType; 
+
+    typedef ArtificialDiffusion<DestinationType> ArtificialDiffusionType;
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange,
      dimDomain = DiscreteFunctionSpaceType::DimDomain};
+    enum { dimension = GridType :: dimension };
     typedef FieldVector<double, dimDomain-1> FaceDomainType;
   public:
     //- Public methods
@@ -219,19 +227,35 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
-      //contGridPart_( const_cast<GridType&> (gridPart_.grid()) ),
-      //lagrangeSpace_( contGridPart_ ),
-      //dg0Space_( const_cast<GridPartType&> (gridPart_)),
-      //p1Function_( "p1-func" , lagrangeSpace_ ),
-      //dg0Function_( "dg-0-func", dg0Space_ ),
       orderPower_( -((spc_.order()+1.0)/2.0)),
       dofConversion_(dimRange),
       faceQuadOrd_(spc_.order()),
       jump_(0),
       jump2_(0),
-      gradientFlux_(1.0,10.0)
+      gradientFlux_(1.0,10.0),
+      artDiff_(0),
+      comboSet_()  
     {
-      //dg0Function_.clear();
+      {
+        typedef AllGeomTypes< typename GridPartType :: IndexSetType,
+                              GridType> AllGeomTypesType;
+        AllGeomTypesType allGeomTypes( gridPart_.indexSet() );
+        const std::vector<Dune::GeometryType>& geomTypes =
+          allGeomTypes.geomTypes(0);
+
+        for(size_t i=0; i<geomTypes.size(); ++i)
+        {
+          typedef typename Geometry :: ctype coordType;
+          enum { dim = GridType :: dimension };
+          const ReferenceElement< coordType, dim > & refElem =
+                 ReferenceElements< coordType, dim >::general( geomTypes[i] );
+
+          // store local coordinates of barycenter 
+          baryCenterMap_[ geomTypes[i] ] = refElem.position(0,0);
+          //std::cout << "Local barycenter = " << baryCenterMap_[ geomTypes[i] ] << "\n";
+        }
+      }
+
       // we need the flux here 
       assert(problem.hasFlux());
     }
@@ -249,26 +273,6 @@ namespace Dune {
       dest_ = &dest;
       dest_->clear();
       caller_.setArgument(*arg_);
-
-      /*
-      // get function to limit 
-      const DestinationType& U = *(Element<0>::get(*arg_));
-
-      WeightDefault<GridPartType> weight; 
-      //VtxProjectionImpl::project( U , p1Function_ , weight );
-      VtxProjectionImpl::project( dg0Function_ , p1Function_ , weight );
-      //p1Function_.print(std::cout);
-
-      dg0Function_.clear();
-      L2ProjectionImpl::project( U , dg0Function_ );
-
-      {
-        GrapeDataDisplay< GridType > grape(U.space().gridPart());
-        grape.addData(dg0Function_);
-        grape.addData(p1Function_);
-        grape.dataDisplay(U);
-      }
-      */
     }
     
     //! Some management.
@@ -307,6 +311,8 @@ namespace Dune {
       
       double radius = 0.0;
       const GeometryType geomType = geo.type();
+      const DomainType enBary = geo.global( baryCenterMap_[geomType] );
+      
       if ( geomType.isSimplex() )
       {
         const int numcorners = geo.corners();
@@ -355,7 +361,7 @@ namespace Dune {
 
       JacobianRangeType enGrad;
       JacobianRangeType nbGrad;
-      
+
       IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
            nit != endnit; ++nit) 
@@ -404,7 +410,7 @@ namespace Dune {
       for (int r=0; r<dimRange; ++r) 
       {
         double jumpr = std::abs(totaljump[r]);
-        if (jumpr*hPowPolOrder*circume > 1) 
+        if ( jumpr*hPowPolOrder*circume > 1 ) 
         {
           limit[r] = true;
           limiter = true;
@@ -413,58 +419,18 @@ namespace Dune {
           limit[r] = false;
       }
        
-      /*
-      if( limiter )
-      {
-        typedef typename P1FunctionType :: LocalFunctionType P1LocalFunctionType;
-
-        // get quadrature 
-        VolumeQuadratureType quad(en, 2 * U.space().order() );
-        const int quadNop = quad.nop();
-
-        P1LocalFunctionType lf = p1Function_.localFunction( en ); 
-
-        RangeType ret, tmp;
-        // L2 Projection 
-        {
-          typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType  BaseFunctionSetType;
-          //! Note: BaseFunctions must be ortho-normal!!!!
-          const BaseFunctionSetType& baseset = limitEn.baseFunctionSet();
-
-          const int numDofs = limitEn.numDofs();
-          for(int qP = 0; qP < quadNop ; ++qP)
-          {
-            lf.evaluate(quad,qP, ret);
-            for(int i=0; i<numDofs; ++i)
-            {
-              baseset.evaluate(i,quad,qP, tmp);
-              limitEn[i] += quad.weight(qP) * (ret * tmp) ;
-            }
-          }
-        }
-      }
-      else 
-      {
-        // copy function 
-        const int numDofs = limitEn.numDofs();
-        for (int i=0; i<numDofs; ++i) 
-        {
-          limitEn[i] = uEn[i];
-        }
-      }
-      */
-
-      // apply limitation 
+      // prepare limitEn 
       for (int r=0; r<dimRange; ++r) 
       {
         if (limit[r]) 
         {
-          // dof 0 
+          // set to zero
           {
             const int dofIdx = dofConversion_.combinedDof(0,r);
             limitEn[dofIdx] = uEn[dofIdx];
           }
-          // all other dofs are set to zero
+          
+          // set to zero
           for (int i=1; i<numBasis; ++i) 
           {
             const int dofIdx = dofConversion_.combinedDof(i,r);
@@ -473,7 +439,7 @@ namespace Dune {
         }
         else 
         {
-          // copy function 
+          // copy function since we do not limit anything
           for (int i=0; i<numBasis; ++i) 
           {
             const int dofIdx = dofConversion_.combinedDof(i,r);
@@ -482,10 +448,30 @@ namespace Dune {
         }
       }
 
-      /*
       if( limiter )
       {
-        bool zeroIt = false;
+        // default is zero 
+        typedef FieldVector< DomainType , dimRange > DeoModType; 
+        DeoModType deoMod;
+
+        std::vector< DeoModType > deoMods;
+        deoMods.reserve( 20 );
+        std::vector< CheckType > comboVec;
+        comboVec.reserve( 20 );
+
+        std::vector< DomainType > barys;
+        std::vector< RangeType >  nbVals;
+
+        barys.reserve( 6 );
+        nbVals.reserve( 6 );
+
+        // get quadrature for barycenter 
+        VolumeQuadratureType volQuad( en, 0 );
+
+        RangeType enVal; 
+        // evalaute function  
+        uEn.evaluate( volQuad[0] , enVal );
+
         IntersectionIteratorType endnit = gridPart_.iend(en); 
         for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
              nit != endnit; ++nit) 
@@ -493,93 +479,488 @@ namespace Dune {
           // check all neighbors 
           if (nit.neighbor()) 
           {
-            typedef TwistUtility<GridType> TwistUtilityType;
-            // conforming case 
-            if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
-            {
-              FaceQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
-              FaceQuadratureType faceQuadOuter(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::OUTSIDE);
+            EntityPointerType ep = nit.outside();
+            EntityType& nb = *ep;
+            
+            // get U on entity
+            const LocalFunctionType uNb = U.localFunction(nb);
 
-              zeroIt = limitFunc(nit,faceQuadInner,faceQuadOuter,uEn);
-            }
-            else  
-            { // non-conforming case 
-              typedef typename FaceQuadratureType :: NonConformingQuadratureType NonConformingQuadratureType;
-              NonConformingQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
-              NonConformingQuadratureType faceQuadOuter(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::OUTSIDE);
+            // get quadrature for barycenter 
+            VolumeQuadratureType nbQuad( nb, 0 );
 
-              zeroIt = limitFunc(nit,faceQuadInner,faceQuadOuter,uEn);
-            }
+            RangeType nbVal;
+            // evaluate function  
+            uNb.evaluate( nbQuad[0] , nbVal);
+
+            // calculate difference 
+            nbVal -= enVal;
+
+            // store value 
+            nbVals.push_back(nbVal);
+
+            const Geometry& nbGeo = nb.geometry();
+            
+            DomainType nbBary = nbGeo.global( baryCenterMap_[ nbGeo.type() ] );
+            // calculate difference 
+            nbBary -= enBary;
+
+            // store value 
+            barys.push_back(nbBary);
+
+          } // end neighbor 
+
+          // use ghost cell for limiting 
+          //if( Capabilities::IsUnstructured<GridType>::v && nit.boundary() && dimension < 3 )
+          if( nit.boundary() ) //&& dimension < 3 )
+          {
+            // assume same value on ghost element
+            nbVals.push_back(RangeType(0));
+
+            DomainType tmp (nit.intersectionGlobal()[0]);
+            tmp -= enBary;
+            tmp *= 2.0;
+
+            FieldVector<double,dim-1> faceMid(0.5);
+
+            DomainType nbBary = nit.unitOuterNormal(faceMid);
+            const double factor = nbBary * tmp;
+
+            // calculate new value 
+            nbBary *= factor;
+
+            // store value 
+            barys.push_back(nbBary);
           }
-          if ( zeroIt ) break;
+          
         } // end intersection iterator 
 
-        if( zeroIt )
+        //const size_t neighbors = (nbVals.size() > dim) ? nbVals.size() : 0;
+        const size_t neighbors = nbVals.size();
+
+        //if( Capabilities::IsUnstructured<GridType>::v ) 
+        /*
         {
-          // apply limitation 
-          for (int r=0; r<dimRange; ++r) 
+          bool allNegative = true;
+          bool allPositive = true;
+          // check whether all differences are positive or negative 
+          for(size_t n=0; n<neighbors; ++n) 
           {
-            // dof 0 
+            for(int r=0; r<dimRange; ++r)
             {
-              const int dofIdx = dofConversion_.combinedDof(0,r);
-              limitEn[dofIdx] = uEn[dofIdx];
-            }
-            // all other dofs are set to zero
-            for (int i=1; i<numBasis; ++i) 
-            {
-              const int dofIdx = dofConversion_.combinedDof(i,r);
-              limitEn[dofIdx] = 0.;
+              if(limit[r] )//&& (std::abs(nbVals[n][r]) > 1e-12) ) 
+              {
+                if( nbVals[n][r] > 0 ) allNegative = false;
+                if( nbVals[n][r] < 0 ) allPositive = false;
+              }
             }
           }
+          
+          // stay with the p-zero version  
+          if( allNegative || allPositive ) return ;
         }
-        else 
+        */
+
+        typedef FieldMatrix<double, dim, dim> MatrixType;
+        MatrixType matrix(0);
+        MatrixType inverse(0);
+        DomainType rhs(0);
+        
+        // create combination set 
+        setupComboSet( neighbors );
+
+        // calculate linear functions 
+        // D(x) = U_i + D_i * (x - w_i)
+        typedef typename ComboSetType :: const_iterator iterator; 
+        const iterator endit = comboSet_.end();
+        for(iterator it = comboSet_.begin(); it != endit; ++it) 
         {
-          typedef typename P1FunctionType :: LocalFunctionType P1LocalFunctionType;
-            const int numDofs = limitEn.numDofs();
-              for(int i=0; i<numDofs; ++i)
+          // get tuple of numbers 
+          const KeyType& v = (*it).first; 
+
+          // setup matrix 
+          for(int i=0; i<dim; ++i) 
+          {
+            matrix[i] = barys[ v[i] ];
+          }
+
+          // create new instance of limiter coefficients  
+          DeoModType dM;
+
+          const double det = FMatrixHelp :: invertMatrix(matrix,inverse);
+          if( std::abs( det ) > 0 )
+          {
+            // calculate D
+            for(int r=0; r<dimRange; ++r)
+            {
+              for(int i=0; i<dim; ++i) 
               {
-                limitEn[i] = 0.0;
+                rhs[i] = nbVals[ v[i] ][r];
               }
 
-          // get quadrature 
-          VolumeQuadratureType quad(en, 2 * U.space().order() );
-          const int quadNop = quad.nop();
+              DomainType& D = dM[r];
 
-          P1LocalFunctionType lf = p1Function_.localFunction( en ); 
+              // set to zero 
+              D = 0;
+              // get solution 
+              inverse.umv( rhs, D );
+            }
 
-          RangeType ret, tmp;
+            // store linear function 
+            deoMods.push_back( dM );
+            comboVec.push_back( (*it).second );
+          }
+#if 1
+          else 
+          {
+            // apply least square by adding another point 
+            // this should make the linear system solvable 
+             
+            std::vector<int> nV( dim );
+            for(int i=0; i<dim; ++i) nV[i] = v[i];
+
+            // take first point of list of pionts to check 
+            CheckType check ( (*it).second );
+            assert( check.size() > 0 );
+
+            bool matrixSingular = true ;
+            int count = 1; 
+            while ( matrixSingular && check.size() > 0 ) 
+            {
+              // take new entry
+              nV.push_back(check[0]);
+              // remove point from points to check list 
+              check.erase( check.begin () );
+
+              if( count == 1 ) 
+              {
+                matrixSingular = 
+                  applyLeastSquare<dim+1>( barys,
+                                    nbVals,
+                                    nV,
+                                    dM,
+                                    matrix,
+                                    inverse,
+                                    rhs );
+              }
+              else if( count == 2 ) 
+              {
+                matrixSingular = 
+                  applyLeastSquare<dim+2>( barys,
+                                    nbVals,
+                                    nV,
+                                    dM,
+                                    matrix,
+                                    inverse,
+                                    rhs );
+              }
+              else 
+              {
+                // should work for 1 or 2 otherwise error 
+                DUNE_THROW(InvalidStateException,"Matrix singular in Limiter");
+              }
+
+              ++count;
+              assert( count <= dim );
+            }
+
+            if( ! matrixSingular ) 
+            {
+              // store linear function
+              deoMods.push_back( dM );
+              // store vector with points to check 
+              comboVec.push_back( check );
+            }
+          }
+#endif
+        }
+
+        // Limiting 
+        {
+          const size_t numFunctions = deoMods.size();
+          // for all functions check with all values 
+          for(size_t j=0; j<numFunctions; ++j) 
+          {
+            const std::vector<int> & v = comboVec[j];
+
+            // loop over dimRange 
+            for(int r=0; r<dimRange; ++r) 
+            {
+              double mini = 1.0;
+              DomainType& D = deoMods[j][r];
+              
+              const size_t vSize = v.size();
+              for(size_t m=0; m<vSize; ++m)
+              {
+                const size_t k = v[m];
+                // skip allready contained values 
+                const DomainType& omega = barys[k];
+
+                const double g = D * omega;
+                const double d = nbVals[k][r];
+                const double gd = g * d;
+
+                double m_l = 1.0;
+                
+                // if product smaller than limit take it as zero 
+                if( gd <= 1e-12 )
+                {
+                  m_l = 0.0;
+                }
+                else if( (gd > 0.) && (std::abs(g) > std::abs(d)) ) 
+                {
+                  m_l = (d/g);
+                }
+
+                mini = std::min( m_l , mini );
+              }
+
+              // scale linear function 
+              D *= mini;
+            }
+          }
+          
+          // take maximum of limited functions 
+          //if( neighbors > 0 )
+          {
+            RangeType max (0);
+            std::vector< size_t > number(dimRange,0);
+            for(int r=0; r<dimRange; ++r) 
+            {
+              max[r] = deoMods[0][r].two_norm();
+            }
+
+            for(size_t l=1; l<numFunctions; ++l) 
+            {
+              for(int r=0; r<dimRange; ++r) 
+              {
+                double D_abs = deoMods[l][r].two_norm();
+                if( D_abs > max[r] ) 
+                {
+                  number[r] = l;
+                  max[r] = D_abs;
+                }
+              }
+            }
+            
+            for(int r=0; r<dimRange; ++r) 
+            {
+              deoMod[r] = deoMods[ number[r] ][r];
+            }
+          }
+
           // L2 Projection 
           {
+            for(int r=0; r<dimRange; ++r) 
+            {
+              if( limit[r] ) 
+              {
+                //for(int i=0; i<numBasis; ++i) 
+                {
+                  const int dofIdx = dofConversion_.combinedDof(0,r);
+                  limitEn[dofIdx] = 0;
+                }
+              }
+            }
+            
+            RangeType ret, tmp;
+            // get quadrature for barycenter 
+            VolumeQuadratureType quad( en, spc_.order() * 2 );
+
             typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType  BaseFunctionSetType;
             //! Note: BaseFunctions must be ortho-normal!!!!
             const BaseFunctionSetType& baseset = limitEn.baseFunctionSet();
-
-            const int numDofs = limitEn.numDofs();
+            const int quadNop = quad.nop();
             for(int qP = 0; qP < quadNop ; ++qP)
             {
-              lf.evaluate(quad,qP, ret);
-              for(int i=0; i<numDofs; ++i)
+              // get global coordinate 
+              DomainType point = geo.global( quad.point( qP ) );
+              point -= enBary;
+
+              // get quadrature weight 
+              const double intel = quad.weight(qP);
+
+              // evaluate linear function 
+              for(int r=0; r<dimRange; ++r) 
               {
-                baseset.evaluate(i,quad,qP, tmp);
-                limitEn[i] += quad.weight(qP) * (ret * tmp) ;
+                ret[r] = enVal[r] + (deoMod[r] * point);
+              }
+
+              for(int r=0; r<dimRange; ++r) 
+              {
+                if( limit[r] )
+                {
+                  // only take linear functions components 
+                  for(int i=0; i<numBasis; ++i)
+                  {
+                    const int dofIdx = dofConversion_.combinedDof(i,r);
+                    // here evaluateScalar could be used 
+                    baseset.evaluate(dofIdx, quad[qP] , tmp);
+                    limitEn[dofIdx] += intel * (ret * tmp) ;
+                  }
+                }
               }
             }
           }
         }
-      }
-      else 
-      {
-        // copy function 
-        const int numDofs = limitEn.numDofs();
-        for (int i=0; i<numDofs; ++i) 
-        {
-          limitEn[i] = uEn[i];
-        }
-      }
-      */
+      } //end if limiter 
     }
     
   private:
+    // matrix = A^T * A 
+    template <class NewMatrixType, class MatrixType> 
+    void multiply_AT_A(const NewMatrixType& A, MatrixType& matrix) const
+    {
+      assert( (int) MatrixType :: rows == (int) NewMatrixType :: cols );
+      typedef typename MatrixType :: field_type value_type;
+
+      for(int row=0; row< MatrixType :: rows; ++row)
+      {
+        for(int col=0; col< MatrixType :: cols; ++col)
+        {
+          value_type sum = 0;
+          for(int k=0; k<NewMatrixType :: rows;  ++k)
+          {
+            sum += A[k][row] * A[k][col];
+          }
+          matrix[row][col] = sum;
+        }
+      }
+    }
+
+    template <int newDim, 
+              class BaryVectorType, class NbValVectorType,
+              class FunctionType, class MatrixType, class VectorType> 
+    bool applyLeastSquare(const BaryVectorType& barys,
+                          const NbValVectorType& nbVals,
+                          const std::vector<int> &nV,
+                          FunctionType& dM, 
+                          MatrixType& matrix, 
+                          MatrixType& inverse, 
+                          VectorType& rhs) const 
+    {
+      enum { dim = dimension };
+
+      // apply least square by adding another point 
+      // this should make the linear system solvable 
+       
+      // need new matrix type containing one row more  
+      typedef FieldMatrix<double, newDim , dim> NewMatrixType;
+      typedef FieldVector<double, newDim > NewVectorType;
+
+      // new matrix 
+      NewMatrixType A ;
+
+      // create matrix 
+      for(int k=0; k<newDim; ++k) 
+      {
+        A[k] = barys[ nV[k] ];
+      }
+
+      // matrix = A^T * A 
+      multiply_AT_A(A, matrix);
+
+      // invert matrix 
+      const double det = FMatrixHelp :: invertMatrix(matrix,inverse);
+
+      if( std::abs( det ) > 0 )
+      {
+        // now matrix has to be invertable 
+        //assert( std::abs( det ) > 0 );
+        
+        // need new right hand side 
+        NewVectorType newRhs;
+        
+        // calculate D
+        for(int r=0; r<dimRange; ++r)
+        {
+          // get right hand side 
+          for(int i=0; i<newDim; ++i) 
+          {
+            newRhs[i] = nbVals[ nV[i] ][r];
+          }
+          
+          // convert newRhs to matrix 
+          rhs = 0;
+          A.umtv(newRhs, rhs);
+          
+          DomainType& D = dM[r];
+
+          // set to zero 
+          D = 0;
+          // get solution 
+          inverse.umv( rhs, D );
+
+        }
+        
+        // return false because matrix is invertable 
+        return false;
+      }
+
+      // matrix is still singular 
+      return true;
+    }
+    
+    // setup set storing combinations of linear functions 
+    void setupComboSet(const int neighbors) const 
+    {
+      if( spc_.multipleGeometryTypes() || (comboSet_.size() == 0) )
+      {
+        // clear set 
+        comboSet_.clear();
+
+        // maximal number of neighbors 
+        std::vector<int> v(dimension,0);
+        std::vector<int> null;
+
+        for(int n=0; n<neighbors; ++n)
+        {
+          v[0] = n;
+          if( dimension > 1 )
+          {
+            for(int j=n+1; j<neighbors; ++j) 
+            {
+              v[1] = j;
+              if( dimension > 2 )
+              {
+                for(int l=j+1; l<neighbors; ++l) 
+                {
+                  v[2] = l;
+                  comboSet_.insert( VectorCompType( v, null ) );
+                }
+              }
+              else 
+              {
+                comboSet_.insert( VectorCompType( v, null ) );
+              }
+            }
+          }
+          else 
+          {
+            comboSet_.insert( VectorCompType( v, null ) );
+          }
+        }
+
+        typedef typename ComboSetType :: iterator iterator; 
+        const iterator endit = comboSet_.end();
+        for(iterator it = comboSet_.begin(); it != endit; ++it) 
+        {
+          const KeyType& v = (*it).first;
+          CheckType& check = const_cast<CheckType&> ((*it).second);
+
+          // insert all j that are not equal to one of the used in v 
+          for(int j=0; j<neighbors; ++j) 
+          {
+            bool c = true; 
+            for(int i=0; i<dimension; ++i) 
+            {
+              if( v[i] == (int) j ) c = false;
+            }
+            if( c ) check.push_back(j);
+          }
+        }
+      }
+    }
+
     template <class QuadratureImp>
     void applyLocalNeighbor(IntersectionIteratorType & nit,
             const QuadratureImp & faceQuadInner,
@@ -603,45 +984,6 @@ namespace Dune {
           totaljump += jump_;
         }
       }
-    }
-
-    template <class QuadratureImp>
-    bool limitFunc(IntersectionIteratorType & nit,
-            const QuadratureImp & faceQuadInner,
-            const QuadratureImp & faceQuadOuter,
-            const LocalFunctionType& uEn) const 
-    {
-      // get function to limit 
-      const DestinationType& U = *(Element<0>::get(*arg_));
-
-      // get neighbor entity
-      EntityPointerType ep = nit.outside();
-      EntityType& nb = *ep; 
-
-      // get U on entity
-      const LocalFunctionType uNb = U.localFunction(nb);
-
-      JacobianRangeType uLeft;
-
-      //VolumeQuadratureType quad(nb,0);
-      JacobianRangeType uRight;
-      //uNb.jacobian( quad, 0 , uRight ); 
-
-      const int faceQuadNop = faceQuadInner.nop();
-      for(int l=0; l<faceQuadNop; ++l) 
-      {
-        const DomainType normal = nit.integrationOuterNormal(faceQuadInner.localPoint(l));
-
-        uEn.jacobian( faceQuadInner, l , uLeft );
-        uNb.jacobian( faceQuadOuter, l , uRight );
-
-        double enSign = ( normal * uLeft[0] );
-        double nbSign = ( normal * uRight[0] );
-
-        if( enSign < 0.0 && nbSign > 0.0 ) return true;
-        if( enSign > 0.0 && nbSign < 0.0 ) return true;
-      }
-      return false;
     }
 
     template <class QuadratureImp>
@@ -707,17 +1049,22 @@ namespace Dune {
 
     const DiscreteFunctionSpaceType& spc_;
     const GridPartType& gridPart_;
-    //ContGridPartType contGridPart_;
-    //LagrangeSpaceType lagrangeSpace_;
-    //DG0SpaceType dg0Space_;
-    //mutable P1FunctionType p1Function_;
-    //mutable DG0FunctionType dg0Function_;
     const double orderPower_;
     const DofConversionUtilityType dofConversion_; 
     const int faceQuadOrd_;
     mutable RangeType jump_; 
     mutable RangeType jump2_;
     GradientFlux gradientFlux_;
+
+    mutable std::map< const GeometryType, DomainType > baryCenterMap_; 
+
+    mutable ArtificialDiffusionType* artDiff_;
+
+    typedef DGFEntityKey<int> KeyType;
+    typedef std::vector<int> CheckType;
+    typedef std::pair< KeyType, CheckType > VectorCompType;
+    typedef std::set< VectorCompType > ComboSetType;
+    mutable ComboSetType comboSet_;
   }; // end DGLimitPass 
 
 } // end namespace Dune 
