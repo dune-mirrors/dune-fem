@@ -96,7 +96,7 @@ class L2Projection
 
     const DiscreteFunctionSpaceType& space =  discFunc.space();
 
-    // discFunc.clear();
+    discFunc.clear();
 
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
@@ -205,7 +205,7 @@ public:
 // ********************************************************************
 // ********************************************************************
 // ********************************************************************
-const int RANGE = 2;
+const int RANGE = 10;
 typedef FunctionSpace < GridType :: ctype, double , dimw , RANGE > FuncSpace;
 typedef FunctionSpace < GridType :: ctype, double , dimw , 1 > SingleFuncSpace;
 typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
@@ -233,19 +233,18 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
    DiscreteFunctionSpaceType linFuncSpace ( part );
    ExactSolution<DiscreteFunctionSpaceType> f ( linFuncSpace ); 
        
-   solution.clear();
-
    //! perform l2-projection
    typedef  DiscreteFunctionSpaceType :: SubSpaceType SubDFSType;
    typedef  DiscreteFunctionType :: SubDiscreteFunctionType SubDFType;
    typedef  DiscreteFunctionSpaceType :: RangeType RangeType; 
-   for (int i=0;i<RangeType::dimension; ++i) {
-     SubDFType sol0 = solution.subFunction(i);
-     ExactSolution<SubDFSType> f0 (linFuncSpace.subSpace(i),i ); 
-     L2Projection<SubDFType>:: project(f0, sol0);
+   L2Projection<DiscreteFunctionType>:: project(f, solution);
+   {
+     for (int i=0;i<RangeType::dimension; i+=3) {
+       SubDFType sol0 = solution.subFunction(i);
+       ExactSolution<SubDFSType> f0 (linFuncSpace.subSpace(i),i ); 
+       L2Projection<SubDFType>:: project(f0, sol0);
+     }
    }
-   // L2Projection<DiscreteFunctionType>::
-   //  project(f, solution);
 
    // calculation L2 error 
    // pol ord for calculation the error chould by higher than 

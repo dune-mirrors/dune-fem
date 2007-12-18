@@ -44,7 +44,7 @@ namespace Dune
       delete set; 
     }
   }
-  
+#if 0
   //- class SubMapper
   template <class CombinedSpaceImp>
   inline
@@ -67,5 +67,5 @@ namespace Dune
     const int containedGlobal = mapper_.mapToGlobal(en, localNum);
     return utilGlobal_.combinedDof(containedGlobal, component_);
   }
-
+#endif
 } // end namespace Dune

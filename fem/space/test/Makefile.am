@@ -12,6 +12,7 @@ check_PROGRAMS = $(ADAPTPROG) l2projection lagrangeinterpolation legendretest co
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
+combinedtest_SOURCES = combinedtest.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
 legendretest_SOURCES = legendretest.cc

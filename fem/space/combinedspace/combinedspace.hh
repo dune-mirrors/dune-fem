@@ -155,7 +155,9 @@ namespace Dune {
     typedef typename Traits::IndexSetType IndexSetType;
 
     typedef typename Traits::DofConversionType DofConversionType;
-    typedef SubSpace<ThisType> SubSpaceType;
+    // typedef SubSpace<ThisType> SubSpaceType;
+    typedef ContainedDiscreteFunctionSpaceType SubSpaceType;
+    typedef SubMapper<ThisType> SubMapperType;
 
     typedef typename ContainedDiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
     enum { spaceId_ = 13 };
@@ -231,8 +233,9 @@ namespace Dune {
     const SubSpaceType& subSpace(int i) const
     {
       assert( i >= 0 && i< N );
-      assert( subSpaces_[i] );
-      return *(subSpaces_[i]);
+      return spc_;
+      // assert( subSpaces_[i] );
+      // return *(subSpaces_[i]);
     }
 
     //! return reference to contained space  
@@ -260,7 +263,7 @@ namespace Dune {
     mutable MapperType mapper_;
     typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
     mutable BaseFunctionMapType baseSetMap_; 
-    std::vector<SubSpaceType*> subSpaces_;
+    // std::vector<SubSpaceType*> subSpaces_;
     const DofManagerType & dm_;
 
   }; // end class CombinedSpace  

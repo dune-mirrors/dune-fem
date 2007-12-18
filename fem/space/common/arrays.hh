@@ -192,6 +192,7 @@ protected:
 
   StaticArray(const StaticArray&);
 public:
+  typedef T FieldType;
   //! definition conforming to STL  
   typedef T value_type;
   

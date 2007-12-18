@@ -297,116 +297,43 @@ namespace Dune {
   public:
     //- Public methods
     SubMapper(const CombinedSpaceType& spc,
-              ContainedMapperType& mapper,
               int component) :
       spc_(spc),
-      mapper_(mapper),
+      mapper_(spc.containedSpace().mapper()),
       component_(component),
       utilGlobal_(spc.containedSpace(),
                   spc.myPolicy() == PointBased ? 
                   spc.numComponents() :
                   spc.size()/spc.numComponents())
     {}
-
+    SubMapper(const ThisType& other) :
+      spc_(other.spc_),
+      mapper_(other.mapper_),
+      component_(other.component_),
+      utilGlobal_(other.utilGlobal_) {}
+    /*
+    ThisType& operator=(const ThisType& other) {
+      spc_ = other.spc_;
+      mapper_ = other.mapper_;
+      component_ = other.component_;
+      utilGlobal_ = other.utilGlobal_;
+    }
+    */
     //! Total number of degrees of freedom
-    int size() const;
-
-    //! Map a local degree of freedom on an entity to a global one
-    template <class EntityType>
-    int mapToGlobal(EntityType& en, int localNum) const;
-
-    //- Method inherited from mapper interface
-    //! if grid has changed determine new size 
-    //! (to be called once per timestep, therefore virtual )
-    int newSize() const { 
-      assert(false); // should never get here
-      return -1;
+    int size() const {
+      return mapper_.size();
     }
-  
-    /*
-    //! old size
-    int oldSize() const { 
-      assert(false); // should never get here
-      return -1;
+    int operator()(int containedGlobal) const {
+      utilGlobal_.newSize(mapper_.size());
+      return utilGlobal_.combinedDof(
+          containedGlobal, component_);
     }
-
-    //! calc new insertion points for dof of different codim 
-    //! (to be called once per timestep, therefore virtual )
-    void calcInsertPoints () { 
-      assert(false); // should never get here
-    }
-    */
-    
-    //! return max number of local dofs per entity 
-    int numDofs () const { 
-      assert(false); // should never get here
-      return -1;
-    }
-
-    //! return old index in dof array of given index ( for dof compress ) 
-    int oldIndex (const int hole,const int block) const {
-      assert(false); // should never get here
-      return -1;
-    } 
-    
-    //! return new index in dof array 
-    int newIndex (const int hole,const int block) const {
-      assert(false); // should never get here
-      return -1;
-    }
-
-    /*
-    //! return estimate for size that is addtional needed for restriction 
-    //! of data
-    int additionalSizeEstimate() const {
-      assert(false); // should never get here
-      return -1;
-    }
-    */
-    //! return number of holes in the data
-    int numberOfHoles(const int block) const {
-      assert(false); // should never get here
-      return -1;
-    }
- 
-    //! returnn number of mem blocks
-    int numBlocks() const{
-      assert(false); // should never get here
-      return -1;
-    }
-    
-    //! update offset information
-    void update(){
-      assert(false); // should never get here
-    }
-    
-    //! return current old offset of block
-    int oldOffSet(const int block) const{
-      assert(false); // should never get here
-      return -1;
-    }
-    
-    //! return current offset of block
-    int offSet(const int block) const{
-      assert(false); // should never get here
-      return -1;
-    }
-
-    //! return true if compress will affect data
-    bool needsCompress () const{
-      assert(false); // should never get here
-      return false;
-    }
-  private:
-    //- Forbidden member
-    SubMapper(const ThisType& other);
-    ThisType& operator=(const ThisType& other);
 
   private:
     //- Data members
     const CombinedSpaceType& spc_;
-    mutable ContainedMapperType& mapper_;
-    const int component_;
+    const ContainedMapperType& mapper_;
+    int component_;
 
     mutable DofConversionType utilGlobal_;
   };
