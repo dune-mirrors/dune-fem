@@ -1,6 +1,7 @@
 #ifndef DUNE_TWISTUTILITY_HH
 #define DUNE_TWISTUTILITY_HH
 
+// defines some basic types
 #include <dune/common/interfaces.hh>
 
 #ifdef ENABLE_ALUGRID
