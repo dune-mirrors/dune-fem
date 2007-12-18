@@ -17,6 +17,10 @@ const int polOrder = POLORDER;
 #include <iostream>
 #include <dune/common/stdstreams.cc>
 
+#if defined YASPGRID 
+#define USE_YASPGRID 1
+#endif
+
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
@@ -50,9 +54,13 @@ const int polOrder = POLORDER;
 
 using namespace Dune;
 
+#if USE_YASPGRID
+typedef LeafGridPart< GridType > GridPartType;
+#else
 //! type of the grid partition we are using 
 typedef AdaptiveLeafGridPart< GridType > GridPartType;
 // typedef HierarchicGridPart< GridType > GridPartType;
+#endif
 
 //! type of the function space
 typedef FunctionSpace< double, double, GRIDDIM, 1 > FunctionSpaceType;
@@ -408,6 +416,12 @@ void algorithm ( GridType &grid,
 
 int main ( int argc, char **argv )
 {
+#if USE_YASPGRID 
+  std::cerr << std::endl;
+  std::cerr << "WARNING: Lagrange Adaptation test disabled, because YaspGrid sucks!";
+  std::cerr << std::endl;
+#else
+
   if( argc != 2 ) {
     std :: cerr << "Usage: " << argv[ 0 ] << "<maxlevel>" << std :: endl;
     exit( 1 );
@@ -434,6 +448,7 @@ int main ( int argc, char **argv )
   for( int i = ml - 1; i >= 0; --i )
     algorithm( *gridptr, solution, -step, 1 );
 
+#endif
   return 0;
 }
 
