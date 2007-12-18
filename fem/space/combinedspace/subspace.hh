@@ -104,8 +104,11 @@ namespace Dune {
 
     enum { polynomialOrder = CombinedSpaceType::polynomialOrder};
 
-    //! polynom order
-    int polynomOrder() const { return spc_.polynomOrder(); }
+    /** @copydoc DiscreteFunctionSpaceInterface::order */
+    int order () const
+    {
+      return spc_.order();
+    }
 
     //! access to gridPart
     GridPartType& gridPart() { return spc_.gridPart(); }
@@ -167,35 +170,40 @@ namespace Dune {
   // Idea: wrap contained base function set, since this is exactly what you 
   // need here (except for when you go for ranges of subfunctions...)
   template< class CombinedSpaceImp >
+  struct SubBaseFunctionSetTraits {
+    typedef SubSpaceTraits<CombinedSpaceImp> SpaceTraits;
+    typedef typename SpaceTraits::FunctionSpaceType FunctionSpaceType;
+    typedef SubBaseFunctionSet<CombinedSpaceImp> BaseFunctionSetType;
+  };
+  template< class CombinedSpaceImp >
   class SubBaseFunctionSet
-  : public BaseFunctionSetDefault< SubSpaceTraits< CombinedSpaceImp > >
+  : public BaseFunctionSetDefault< SubBaseFunctionSetTraits< CombinedSpaceImp > >
   {
   public:
     //! type of the associated CombinedSpace
     typedef CombinedSpaceImp CombinedSpaceType;
     
     //! type of the traits
-    typedef SubSpaceTraits< CombinedSpaceType > Traits;
-
+    typedef SubBaseFunctionSetTraits< CombinedSpaceType > Traits;
+    typedef typename Traits::SpaceTraits SpaceTraits;
   private:
-    typedef SubBaseFunctionSet< CombinedSpaceType > ThisType;
     typedef BaseFunctionSetDefault< Traits > BaseType;
 
   public:
-    typedef typename Traits :: DiscreteFunctionSpaceType 
+    typedef typename SpaceTraits :: DiscreteFunctionSpaceType 
       DiscreteFunctionSpaceType;
 
-    typedef typename Traits :: DomainType DomainType;
-    typedef typename Traits :: RangeType RangeType;
-    typedef typename Traits :: JacobianRangeType JacobianRangeType;
+    typedef typename SpaceTraits :: DomainType DomainType;
+    typedef typename SpaceTraits :: RangeType RangeType;
+    typedef typename SpaceTraits :: JacobianRangeType JacobianRangeType;
 
   private:
-    typedef typename Traits :: CombinedRangeType CombinedRangeType;
-    typedef typename Traits :: CombinedJacobianRangeType
+    typedef typename SpaceTraits :: CombinedRangeType CombinedRangeType;
+    typedef typename SpaceTraits :: CombinedJacobianRangeType
       CombinedJacobianRangeType;
-    enum { CombinedDimRange = Traits::CombinedDimRange };
+    enum { CombinedDimRange = SpaceTraits::CombinedDimRange };
 
-    typedef typename Traits :: CombinedBaseFunctionSetType
+    typedef typename SpaceTraits :: CombinedBaseFunctionSetType
       CombinedBaseFunctionSetType;
 
   protected:
@@ -203,8 +211,8 @@ namespace Dune {
     const int component_;
     
   public:
-    using BaseType :: evaluate;
-    using BaseType :: jacobian;
+    // using BaseType :: evaluate;
+    // using BaseType :: jacobian;
 
   public:
     SubBaseFunctionSet( const CombinedBaseFunctionSetType bSet,
@@ -214,9 +222,15 @@ namespace Dune {
     {
     }
 
+    inline GeometryType geometryType () const
+    {
+      return bSet_.geometryType();
+    }
+    
     /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
     inline int numBaseFunctions () const
     {
+      return bSet_.numDifferentBaseFunctions();
       assert( bSet_.numBaseFunctions() % CombinedDimRange == 0 );
       return bSet_.numBaseFunctions() / CombinedDimRange;
     }
@@ -228,6 +242,8 @@ namespace Dune {
                            const PointType &x,
                            RangeType &phi ) const
     {
+      bSet_.evaluateScalar(baseFunction,diffVariable,x,phi);
+      return;
       // Assumption: dimRange == 1
       CombinedRangeType tmp;
       bSet_.evaluate( baseFunction, diffVariable, x, tmp );
@@ -240,6 +256,8 @@ namespace Dune {
                     const PointType &x,
                     RangeType &phi ) const
     {
+      bSet_.evaluateScalar(baseFunction,x,phi);
+      return;
       // Assumption: dimRange == 1
       CombinedRangeType tmp;
       bSet_.evaluate( baseFunction, x, tmp );

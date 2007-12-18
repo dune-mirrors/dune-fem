@@ -60,11 +60,11 @@ namespace Dune
   mapToGlobal(EntityType& en, int localNum) const
   {
     utilGlobal_.newSize(mapper_.size()); // ok, since pointbased specialisation does nothing for newSize
+    /*
     int globalNum = utilGlobal_.combinedDof(localNum, component_); 
     return mapper_.mapToGlobal(en,globalNum);
-    
+    */
     const int containedGlobal = mapper_.mapToGlobal(en, localNum);
-
     return utilGlobal_.combinedDof(containedGlobal, component_);
   }
 
