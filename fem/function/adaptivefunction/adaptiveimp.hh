@@ -144,7 +144,7 @@ namespace Dune {
     //! destructor 
     virtual ~AdaptiveFunctionImplementation();
 
-  private:
+  protected:
     virtual const LeafType& interface() const = 0;
     const DiscreteFunctionSpaceType& spc_;
     std::string name_;

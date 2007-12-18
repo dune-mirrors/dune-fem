@@ -10,6 +10,7 @@
 #include <dune/fem/space/common/dofmanager.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/vectorfunction/vectorfunction.hh>
 
 //- Local includes
 #include "adaptiveimp.hh"
@@ -303,8 +304,12 @@ namespace Dune
     typedef typename Traits :: LocalFunctionFactoryType  LocalFunctionFactoryType;
     //- Additional typedefs
     // typedef SubSpace<DiscreteFunctionSpaceType> SubSpaceType;
+    // typedef typename DiscreteFunctionSpaceType::SubSpaceType SubSpaceType;
+    // typedef AdaptiveDiscreteFunction<SubSpaceType> SubDiscreteFunctionType;
     typedef typename DiscreteFunctionSpaceType::SubSpaceType SubSpaceType;
-    typedef AdaptiveDiscreteFunction<SubSpaceType> SubDiscreteFunctionType;
+    typedef typename DiscreteFunctionSpaceType::SubMapperType SubMapperType;
+    typedef SubVector<DofStorageType,SubMapperType> SubDofVectorType;
+    typedef VectorDiscreteFunction<SubSpaceType,SubDofVectorType> SubDiscreteFunctionType;
    
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
@@ -316,7 +321,11 @@ namespace Dune
     : BaseType( spc, lfFactory_ ),
       Imp( name, spc ),
       lfFactory_( *this )
-    {}
+    {
+      for (int i=0;i<N;i++) 
+        subDofVector_[i] = new SubDofVectorType
+           (this->dofStorage(), SubMapperType(this->spc_,i));
+    }
 
     //! Constructor
     template <class VectorPointerType>
@@ -325,8 +334,11 @@ namespace Dune
                              VectorPointerType * vector)
     : BaseType( spc, lfFactory_ ),
       Imp( name, spc , vector ),
-      lfFactory_( *this )
-    {}
+      lfFactory_( *this ) {
+      for (int i=0;i<N;i++) 
+        subDofVector_[i] = new SubDofVectorType
+           (this->dofStorage(), SubMapperType(this->spc_,i));
+      }
     
     //! Constructor
     AdaptiveDiscreteFunction(std::string name,
@@ -335,14 +347,22 @@ namespace Dune
     : BaseType( spc, lfFactory_ ),
       Imp( name, spc , dofVec ),
       lfFactory_( *this )
-    {}
+    {
+      for (int i=0;i<N;i++) 
+        subDofVector_[i] = new SubDofVectorType
+           (this->dofStorage(), SubMapperType(this->spc_,i));
+    }
 
     //! Copy constructor
     AdaptiveDiscreteFunction(const MyType& other)
     : BaseType( other.space(), lfFactory_ ),
       Imp(other),
       lfFactory_( *this )
-    {}
+    {
+      for (int i=0;i<N;i++) 
+        subDofVector_[i] = new SubDofVectorType
+           (this->dofStorage(), SubMapperType(this->spc_,i));
+    }
     
     ~AdaptiveDiscreteFunction();
     
@@ -434,6 +454,7 @@ namespace Dune
     
   private:
     const MyType& interface() const { return *this; }
+    SubDofVectorType* subDofVector_[N]; 
   }; // end class AdaptiveDiscreteFunction (specialised for CombinedSpace)
   
 } // end namespace Dune
