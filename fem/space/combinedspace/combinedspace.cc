@@ -8,7 +8,6 @@ namespace Dune {
     spc_(gridpart),
     mapper_(spc_, spc_.mapper()),
     baseSetMap_(),
-    // subSpaces_(N,(SubSpaceType*) 0),
     dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
   {
     // get types for codim 0  
@@ -31,16 +30,12 @@ namespace Dune {
       }
     }
 
-    // for (int i=0; i<N; ++i) 
-    //  subSpaces_[i] = new SubSpaceType(*this,i);
   }
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
   ~CombinedSpace() 
   {
-    // for (int i=0;i<N; ++i) delete subSpaces_[i];
-
     typedef typename BaseFunctionMapType :: iterator iterator;
     iterator end = baseSetMap_.end();
     for (iterator it = baseSetMap_.begin(); it != end; ++it)

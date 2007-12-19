@@ -154,8 +154,6 @@ namespace Dune {
     typedef typename Traits::IndexSetType IndexSetType;
 
     typedef typename Traits::DofConversionType DofConversionType;
-    // typedef SubSpace<ThisType> SubSpaceType;
-    typedef ContainedDiscreteFunctionSpaceType SubSpaceType;
     typedef CombinedSubMapper<ThisType> SubMapperType;
 
     typedef typename ContainedDiscreteFunctionSpaceType :: 
@@ -229,15 +227,6 @@ namespace Dune {
     //! policy of this space
     DofStoragePolicy myPolicy() const{ return DofConversionType::policy(); }
  
-    //! return subspace for ith component
-    const SubSpaceType& subSpace(int i) const
-    {
-      assert( i >= 0 && i< N );
-      return spc_;
-      // assert( subSpaces_[i] );
-      // return *(subSpaces_[i]);
-    }
-
     //! return reference to contained space  
     const ContainedDiscreteFunctionSpaceType& containedSpace() const  { return spc_; }
 
@@ -245,9 +234,6 @@ namespace Dune {
     //- Private typedefs
     typedef typename Traits::ContainedMapperType ContainedMapperType;
    
-    //- Friend
-    // friend class SubSpace<ThisType>;
-    
   private:
     //- Private methods
     CombinedSpace(const ThisType& other);
@@ -263,7 +249,6 @@ namespace Dune {
     mutable MapperType mapper_;
     typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
     mutable BaseFunctionMapType baseSetMap_; 
-    // std::vector<SubSpaceType*> subSpaces_;
     const DofManagerType & dm_;
 
   }; // end class CombinedSpace  
@@ -278,7 +263,6 @@ namespace Dune {
   public:
     //- Friends
     friend class CombinedSpace<DiscreteFunctionSpaceImp, N, policy>;
-    // friend class SubSpace<CombinedSpace<DiscreteFunctionSpaceImp, N, policy> >;
 
   public:
     //- Typedefs and enums
