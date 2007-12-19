@@ -60,12 +60,12 @@ typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 //! see dune/fem/lagrangebase.hh
 typedef FunctionSpace < double , double, GRIDDIM , 5 > FuncSpace;
 typedef FunctionSpace < double , double, GRIDDIM , 1 > SingleFuncSpace;
-typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-   polOrd,CachingStorage> DiscreteFunctionSpaceType;
+// typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+//    polOrd,CachingStorage> DiscreteFunctionSpaceType;
 typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
   polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-// typedef CombinedSpace<SingleDiscreteFunctionSpaceType,5,VariableBased> 
-//   DiscreteFunctionSpaceType;
+typedef CombinedSpace<SingleDiscreteFunctionSpaceType,5,PointBased> 
+   DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
