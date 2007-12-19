@@ -16,7 +16,6 @@
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
-#include "subspace.hh"
 
 #include "combineddofstorage.hh"
 
@@ -157,9 +156,10 @@ namespace Dune {
     typedef typename Traits::DofConversionType DofConversionType;
     // typedef SubSpace<ThisType> SubSpaceType;
     typedef ContainedDiscreteFunctionSpaceType SubSpaceType;
-    typedef SubMapper<ThisType> SubMapperType;
+    typedef CombinedSubMapper<ThisType> SubMapperType;
 
-    typedef typename ContainedDiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
+    typedef typename ContainedDiscreteFunctionSpaceType :: 
+    BlockMapperType BlockMapperType;
     enum { spaceId_ = 13 };
     
     CompileTimeChecker<(Traits::ContainedDimRange == 1)>
@@ -246,7 +246,7 @@ namespace Dune {
     typedef typename Traits::ContainedMapperType ContainedMapperType;
    
     //- Friend
-    friend class SubSpace<ThisType>;
+    // friend class SubSpace<ThisType>;
     
   private:
     //- Private methods
@@ -278,7 +278,7 @@ namespace Dune {
   public:
     //- Friends
     friend class CombinedSpace<DiscreteFunctionSpaceImp, N, policy>;
-    friend class SubSpace<CombinedSpace<DiscreteFunctionSpaceImp, N, policy> >;
+    // friend class SubSpace<CombinedSpace<DiscreteFunctionSpaceImp, N, policy> >;
 
   public:
     //- Typedefs and enums
