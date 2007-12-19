@@ -241,11 +241,10 @@ double algorithm (GridType& grid,
    typedef typename DiscreteFunctionSpaceType :: 
      RangeType RangeType; 
    typedef typename SubDFSType :: RangeType SubRangeType;
-   // L2Projection<DiscreteFunctionType>:: project(f, solution);
-   
+   L2Projection<DiscreteFunctionType>:: project(f, solution);
    {
-     for (int i=0;i<RangeType::dimension; i+=1) {
-       SubDFType& sol0 = solution.subFunction(i);
+     for (int i=0;i<RangeType::dimension; i+=3) {
+       SubDFType sol0 = solution.subFunction(i);
        ExactSolution<SubDFSType> f0 (sol0.space(),i ); 
        L2Projection<SubDFType>:: project(f0, sol0);
      }
@@ -261,7 +260,7 @@ double algorithm (GridType& grid,
    
    {
      for (int i=0;i<RangeType::dimension; ++i) {
-       SubDFType& sol0 = solution.subFunction(i);
+       SubDFType sol0 = solution.subFunction(i);
        ExactSolution<SubDFSType> f0 (linFuncSpace.containedSpace(),i ); 
        L2Error < SubDFType > l2err0;
        SubRangeType error0 = l2err0.norm(f0,sol0,0.0);
@@ -316,7 +315,6 @@ int main (int argc, char **argv)
       }
     }
   }
-#if 0
   {
     GridPtr<GridType> gridptr(macroGridName);
     GridType& grid=*gridptr;
@@ -343,7 +341,6 @@ int main (int argc, char **argv)
       }
     }
   }
-#endif
   delete [] error;
   return 0;
 }
