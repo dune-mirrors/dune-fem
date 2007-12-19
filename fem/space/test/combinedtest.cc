@@ -8,6 +8,7 @@ static const int dimw = dimworld;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/combinedspace/combinedspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/combinedfunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/cachequad.hh>
@@ -206,46 +207,50 @@ public:
 // ********************************************************************
 // ********************************************************************
 const int RANGE = 10;
-typedef FunctionSpace < GridType :: ctype, double , dimw , RANGE > FuncSpace;
-typedef FunctionSpace < GridType :: ctype, double , dimw , 1 > SingleFuncSpace;
-typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
-	polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-
-//! define the function space our unkown belong to 
-//! see dune/fem/lagrangebase.hh
-// typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-//	polOrd,CachingStorage> DiscreteFunctionSpaceType;
-typedef CombinedSpace<SingleDiscreteFunctionSpaceType,RANGE,PointBased> 
-        DiscreteFunctionSpaceType;
-
-//! define the type of discrete function we are using , see
-//! dune/fem/discfuncarray.hh
-typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > 
-        DiscreteFunctionType;
+typedef FunctionSpace < GridType :: ctype, double , 
+			dimw , RANGE > FuncSpace;
+typedef FunctionSpace < GridType :: ctype, double , 
+			dimw , 1 > SingleFuncSpace;
+typedef DiscontinuousGalerkinSpace<
+  SingleFuncSpace,GridPartType, 
+  polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
+typedef AdaptiveDiscreteFunction < 
+  SingleDiscreteFunctionSpaceType > SingleDiscreteFunctionType;
 
 //! Get the Dofmanager type
 typedef DofManager<GridType> DofManagerType;
-typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+typedef DofManagerFactory<DofManagerType> 
+        DofManagerFactoryType;
 
-double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
+template <class DiscreteFunctionType>
+double algorithm (GridType& grid, 
+		  DiscreteFunctionType& solution  , int turn )
 {
-   GridPartType part ( grid );
-   DiscreteFunctionSpaceType linFuncSpace ( part );
-   ExactSolution<DiscreteFunctionSpaceType> f ( linFuncSpace ); 
+  typedef typename 
+    DiscreteFunctionType::DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
+  const DiscreteFunctionSpaceType& 
+    linFuncSpace = solution.space();
+  ExactSolution<DiscreteFunctionSpaceType> f (linFuncSpace); 
        
    //! perform l2-projection
-   typedef  DiscreteFunctionSpaceType :: ContainedSpaceType SubDFSType;
-   typedef  DiscreteFunctionType :: SubDiscreteFunctionType SubDFType;
-   typedef  DiscreteFunctionSpaceType :: RangeType RangeType; 
-   L2Projection<DiscreteFunctionType>:: project(f, solution);
+   typedef typename DiscreteFunctionSpaceType :: 
+     ContainedSpaceType SubDFSType;
+   typedef typename DiscreteFunctionType :: 
+     SubDiscreteFunctionType SubDFType;
+   typedef typename DiscreteFunctionSpaceType :: 
+     RangeType RangeType; 
+   typedef typename SubDFSType :: RangeType SubRangeType;
+   // L2Projection<DiscreteFunctionType>:: project(f, solution);
+   
    {
-     for (int i=0;i<RangeType::dimension; i+=3) {
-       SubDFType sol0 = solution.subFunction(i);
+     for (int i=0;i<RangeType::dimension; i+=1) {
+       SubDFType& sol0 = solution.subFunction(i);
        ExactSolution<SubDFSType> f0 (sol0.space(),i ); 
        L2Projection<SubDFType>:: project(f0, sol0);
      }
    }
-
+   
    // calculation L2 error 
    // pol ord for calculation the error chould by higher than 
    // pol for evaluation the basefunctions 
@@ -253,27 +258,17 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
    RangeType error = l2err.norm(f ,solution, 0.0);
    for(int i=0; i<RangeType::dimension; ++i)
      std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
-
+   
    {
      for (int i=0;i<RangeType::dimension; ++i) {
-       SubDFType sol0 = solution.subFunction(i);
+       SubDFType& sol0 = solution.subFunction(i);
        ExactSolution<SubDFSType> f0 (linFuncSpace.containedSpace(),i ); 
        L2Error < SubDFType > l2err0;
-       typedef SubDFSType :: RangeType SubRangeType;
        SubRangeType error0 = l2err0.norm(f0,sol0,0.0);
        std::cout << "\n L2 SubError[" << i << "]-Error[" << i << "]  : " 
                  << error0[0]-error[i] << "\n\n";
      }
    }
-
-#if HAVE_GRAPE
-   // if Grape was found, then display last solution 
-   if(0 && turn > 0)
-   {
-     GrapeDataDisplay < GridType > grape(part); 
-     grape.dataDisplay( solution );
-   }
-#endif
    
    return sqrt(error*error);
 }
@@ -297,27 +292,58 @@ int main (int argc, char **argv)
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.dgf";
 
-  GridPtr<GridType> gridptr(macroGridName);
-  GridType& grid=*gridptr;
-  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
-
-  GridPartType part ( grid );
-  DiscreteFunctionSpaceType linFuncSpace ( part );
-  DiscreteFunctionType solution ( "sol", linFuncSpace );
-  solution.clear();
-  
-  for(int i=0; i<ml; i+=step)
   {
-    grid.globalRefine(step);
-    DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
-    dm.resize();
-    error[i] = algorithm ( grid , solution , i==ml-1);
-    if (i>0) 
-    {
-      double eoc = log( error[i-step]/error[i]) / M_LN2; 
-      std::cout << "EOC = " << eoc << " \n";
+    GridPtr<GridType> gridptr(macroGridName);
+    GridType& grid=*gridptr;
+    const int step = Dune::DGFGridInfo<GridType>::
+      refineStepsForHalf();
+    GridPartType part ( grid );
+    typedef CombinedDiscreteFunction<
+      SingleDiscreteFunctionType,RANGE > DiscreteFunctionType;
+    SingleDiscreteFunctionSpaceType singFuncSpace ( part );
+    SingleDiscreteFunctionType singSol("sol",singFuncSpace);
+    DiscreteFunctionType solution ( singSol );
+    solution.clear();
+    for(int i=0; i<ml; i+=step) {
+      grid.globalRefine(step);
+      DofManagerType& dm = DofManagerFactoryType :: 
+	      getDofManager( grid );
+      dm.resize();
+      error[i] = algorithm ( grid , solution , i==ml-1);
+      if (i>0) {
+	double eoc = log( error[i-step]/error[i]) / M_LN2; 
+	std::cout << "EOC = " << eoc << " \n";
+      }
     }
   }
+#if 0
+  {
+    GridPtr<GridType> gridptr(macroGridName);
+    GridType& grid=*gridptr;
+    const int step = Dune::DGFGridInfo<GridType>::
+      refineStepsForHalf();
+    GridPartType part ( grid );
+    typedef CombinedSpace
+      <SingleDiscreteFunctionSpaceType,RANGE> 
+      DiscreteFunctionSpaceType;
+    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>
+      DiscreteFunctionType;
+    DiscreteFunctionSpaceType funcSpace(part);
+    DiscreteFunctionType solution ( "sol",funcSpace );
+    solution.clear();
+    for(int i=0; i<ml; i+=step) {
+      grid.globalRefine(step);
+      DofManagerType& dm = DofManagerFactoryType :: 
+	getDofManager( grid );
+      dm.resize();
+      error[i] = algorithm ( grid , solution , i==ml-1);
+      if (i>0) {
+	double eoc = log( error[i-step]/error[i]) / M_LN2; 
+	std::cout << "EOC = " << eoc << " \n";
+      }
+    }
+  }
+#endif
   delete [] error;
   return 0;
 }

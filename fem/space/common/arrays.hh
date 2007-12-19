@@ -279,6 +279,14 @@ public:
     return *this;
   }
  
+  //! operator *=  
+  ThisType& operator *= (double a)
+  {
+    const int s = size();
+    for(int i=0; i<s; ++i) vec_[i] *= a;
+    return *this;
+  }
+  
   //! axpy operation  
   void axpy (const ThisType& org, const T scalar)
   {
