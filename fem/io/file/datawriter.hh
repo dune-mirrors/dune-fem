@@ -20,8 +20,10 @@
 
 namespace Dune {
 
-/** \brief class managing our data output. 
-    Available output formats are GRAPE, VTK and VTK Vertex projected. 
+/** @ingroup Checkpointing 
+   \brief Implementation of the IOInterface. 
+   This class is managing our data output. 
+   Available output formats are GRAPE, VTK and VTK Vertex projected. 
 */    
 template <class GridImp, 
           class DataImp> 
