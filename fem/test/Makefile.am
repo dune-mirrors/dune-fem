@@ -16,7 +16,8 @@ AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
 
 TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_adaptive      dgl2projection_blockvector \
-						dgl2projection_cmbpoint      dgl2projection_cmbvariable
+	    dgl2projection_fv \
+	    dgl2projection_cmbpoint      dgl2projection_cmbvariable
 
 
 TESTS = $(TESTPROGS)
@@ -30,6 +31,9 @@ lagrangeinterpolation_quadratic_CPPFLAGS = -DPOLORDER=2 -DCOUNT_FLOPS $(AM_CPPFL
 
 dgl2projection_adaptive_SOURCES = dgl2projection.cc
 dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
+
+dgl2projection_fv_SOURCES = dgl2projection.cc
+dgl2projection_fv_CPPFLAGS = -DUSE_FVSPACE -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 dgl2projection_cmbpoint_SOURCES = dgl2projection.cc
 dgl2projection_cmbpoint_CPPFLAGS = -DPOLORDER=1 -DUSE_COMBINEDSPACE $(AM_CPPFLAGS)
