@@ -167,13 +167,13 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionInterface::clear */
     inline void clear() {
       for (int i=0;i<N;i++)
-	func_[i]->clear();
+	      func_[i]->clear();
     }
     /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
     inline void assign( const DiscreteFunctionType &g )
     {
       for (int i=0;i<N;i++)
-	func_[i]->assign(g.subFunction(i));
+	      func_[i]->assign(g.subFunction(i));
     }
     /** \copydoc Dune::DiscreteFunctionDefault::size */ 
     inline int size() const
@@ -185,7 +185,7 @@ namespace Dune
     inline ThisType &operator += ( const ThisType &g )
     {
       for (int i=0;i<N;i++)
-	*func_[i] += g.subFunction(i);
+	      *func_[i] += g.subFunction(i);
       return *this;
     }
     /** \copydoc Dune::DiscreteFunctionDefault::operator-=
@@ -254,15 +254,23 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionDefault::dofs(unsigned int index) const */
     inline const RangeFieldType &dof(unsigned int index) const
     {
+      /*
       int variable = index % N;
       int point = index / N;
+      */
+      int variable = index / func_[0]->size();
+      int point    = index % func_[0]->size();
       return func_[variable]->dof(point);
     }
     /** \copydoc Dune::DiscreteFunctionDefault::dofs(unsigned int index) */
     inline RangeFieldType &dof ( unsigned int index )
     {
+      /*
       int variable = index % N;
       int point = index / N;
+      */
+      int variable = index / func_[0]->size();
+      int point    = index % func_[0]->size();
       return func_[variable]->dof(point);
     }
     
@@ -287,7 +295,7 @@ namespace Dune
       return func_[0]->dend();
     }
     
-    inline ContainedDiscreteFunctionType& subFunction(int i) {
+    inline ContainedDiscreteFunctionType subFunction(int i) {
       return *(func_[i]);
     }
     inline ContainedDiscreteFunctionSpaceType& subSpace() {
