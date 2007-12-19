@@ -6,24 +6,53 @@
 namespace Dune
 {
 
-/*======================================================================*/
-/*!
- *  \class ReducedBasisMapper
- *  \brief provides the mapper for the reduced basis space 
- *
- *  This class just performs the identity mapping.
- *
- */
-/*======================================================================*/
-  template< class BaseFunctionListImp >
-  class ReducedBasisMapper
-  : public DofMapperDefault< ReducedBasisMapper< BaseFunctionListImp > >
+  template< class GridPartImp, class BaseFunctionListImp >
+  class ReducedBasisMapper;
+
+
+
+  template< class GridPartImp, class BaseFunctionListImp >
+  struct ReducedBasisMapperTraits
   {
-  public:
+    typedef GridPartImp GridPartType;
+    
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
+      EntityType;
+    
     typedef BaseFunctionListImp BaseFunctionListType;
 
+    typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
+      DofMapperType;
+    
+    typedef DefaultDofMapIterator< GridPartImp, DofMapperType >
+      DofMapIteratorType;
+  };
+
+
+
+  /** \class ReducedBasisMapper
+   *  \brief provides the mapper for the reduced basis space 
+   *
+   *  This mapper just performs the identity mapping.
+   */
+  template< class GridPartImp, class BaseFunctionListImp >
+  class ReducedBasisMapper
+  : public DofMapperDefault
+    < ReducedBasisMapperTraits< GridPartImp, BaseFunctionListImp > >
+  {
+  public:
+    typedef ReducedBasisMapperTraits< GridPartImp, BaseFunctionListImp >
+      Traits;
+   
+    typedef typename Traits :: BaseFunctionListType BaseFunctionListType;
+    
+    typedef typename Traits :: GridPartType GridPartType;
+    typedef typename Traits :: EntityType EntityType;
+    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
+
   private:
-    typedef ReducedBasisMapper< BaseFunctionListType > ThisType;
+    typedef ReducedBasisMapper< GridPartType, BaseFunctionListType > ThisType;
+    typedef DofMapperDefault< Traits > BaseType;
 
   protected:
     const BaseFunctionListType &baseFunctionList_;
@@ -34,8 +63,22 @@ namespace Dune
     {
     }
 
-    template< class EntityType >
-    int mapToGlobal ( const EntityType &entity, int localDof )
+    /** \copydoc Dune::DofMapperInterface::begin(const EntityType &entity) const */
+    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    {
+      return DofMapIteratorType
+        ( DofMapIteratorType :: beginIterator, entity, *this );
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
+    inline DofMapIteratorType end ( const EntityType &entity ) const
+    {
+      return DofMapIteratorType
+        ( DofMapIteratorType :: endIterator, entity, *this );
+    }
+
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,int localDof) const */
+    int mapToGlobal ( const EntityType &entity, int localDof ) const
     {
       return localDof;
     }

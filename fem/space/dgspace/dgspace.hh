@@ -11,8 +11,6 @@
 // -Dune includes 
 #include <dune/grid/common/grid.hh>
 
-
-//- local includes 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
@@ -20,6 +18,7 @@
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
+//- local includes 
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
 #include "legendredgbasefunctions.hh"
@@ -108,7 +107,7 @@ namespace Dune {
     typedef typename Traits::BlockMapperType BlockMapperType; 
 
     //! mapper singleton key 
-    typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
+    typedef MapperSingletonKey< GridPartType > MapperSingletonKeyType;
     //! mapper factory 
     typedef MapperSingletonFactory< MapperSingletonKeyType , 
               MapperType > MapperSingletonFactoryType;
@@ -128,20 +127,15 @@ namespace Dune {
   public:
     //- Constructors and destructors
     /** \brief Constructor taking grid part */
-    explicit DiscontinuousGalerkinSpaceBase(GridPartType& gridPart) :
-      BaseType (gridPart),
-      mapper_(0),
-      blockMapper_(0),
+    explicit DiscontinuousGalerkinSpaceBase( GridPartType &gridPart )
+    : BaseType( gridPart ),
+      mapper_( 0 ),
+      blockMapper_( 0 ),
       baseFuncSet_(),
-      dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
+      dm_( DofManagerFactoryType::getDofManager( gridPart.grid() ) )
     {
-      // add index set to list of indexset of dofmanager 
-      typedef typename Traits::GridPartType::IndexSetType IndexSetType;
-      DofManagerType & dm = 
-        DofManagerFactoryType::getDofManager(gridPart.grid());
-
-      dm.addIndexSet(gridPart.grid(), 
-                     const_cast<IndexSetType&>(gridPart.indexSet()));
+      dm_.addIndexSet
+        ( gridPart.grid(), const_cast< IndexSetType & >( gridPart.indexSet() ) );
 
       // create info for all geom types 
       AllGeomTypes<IndexSetType,typename Traits::GridType>
@@ -170,7 +164,7 @@ namespace Dune {
       }
 
       assert( maxNumDofs > 0 );
-      MapperSingletonKeyType key(gridPart.indexSet(),maxNumDofs);
+      MapperSingletonKeyType key( gridPart, maxNumDofs );
       mapper_ = & MapperProviderType::getObject(key);
 
       assert( mapper_ );
@@ -283,7 +277,7 @@ namespace Dune {
       if( !blockMapper_ )
       {
         // create mapper with 1 dof for locating the block per element 
-        MapperSingletonKeyType key(this->gridPart().indexSet(),1);
+        MapperSingletonKeyType key(this->gridPart(),1);
         blockMapper_ = & BlockMapperProviderType::getObject(key);
       }
       return *blockMapper_;
@@ -330,7 +324,7 @@ namespace Dune {
     mutable BaseFunctionMapType baseFuncSet_;
 
     //! dof manager 
-    const DofManagerType & dm_;
+    DofManagerType &dm_;
   };
 
 
@@ -369,10 +363,10 @@ namespace Dune {
     //typedef BaseFunctionSetImp BaseFunctionSetType;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     //
-    typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+    typedef DGMapper< GridPartType, polOrd, DimRange > MapperType;
 
     //! mapper for block vector function 
-    typedef DGMapper<IndexSetType, polOrd, 1> BlockMapperType;
+    typedef DGMapper< GridPartType, polOrd, 1 > BlockMapperType;
     
     //! number of base functions * dimRange 
     enum { localBlockSize = DimRange * 
@@ -504,10 +498,10 @@ namespace Dune {
     typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
 
-    typedef DGMapper<IndexSetType, polOrd, DimRange> MapperType;
+    typedef DGMapper< GridPartType, polOrd, DimRange > MapperType;
 
     //! mapper with only one dof 
-    typedef DGMapper<IndexSetType, polOrd, 1> BlockMapperType;
+    typedef DGMapper< GridPartType, polOrd, 1 > BlockMapperType;
 
     //! number of base functions * dimRange 
     enum { localBlockSize = DimRange * 

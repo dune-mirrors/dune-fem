@@ -55,10 +55,10 @@ namespace Dune {
     
     typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
-    typedef FiniteVolumeMapper<IndexSetType,polOrd,DimRange> MapperType;
+    typedef FiniteVolumeMapper< GridPartType, polOrd, DimRange > MapperType;
 
     // type of mapper for block vector functions 
-    typedef FiniteVolumeMapper<IndexSetType,polOrd,1> BlockMapperType;
+    typedef FiniteVolumeMapper< GridPartType, polOrd, 1 > BlockMapperType;
 
     // always 1 for FVSpace Base , to be revised 
     enum { localBlockSize = 1 };

@@ -56,7 +56,7 @@ namespace Dune
 
     typedef typename BaseFunctionSetType :: BaseFunctionListType BaseFunctionListType;
 
-    typedef ReducedBasisMapper< BaseFunctionListType >
+    typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
       MapperType;
   };
 

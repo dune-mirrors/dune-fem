@@ -2,6 +2,7 @@
 #define DUNE_DOFMAPPERINTERFACE_HH
 
 //- Dune includes
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
 
 namespace Dune {
@@ -31,9 +32,28 @@ namespace Dune {
    Also during grid adaptation this mapper knows about old and new indices
    of entities. 
 */
-template <class DofMapperImp> 
+template< class DofMapperTraits >
 class DofMapperInterface
+: public BartonNackmanInterface< DofMapperInterface< DofMapperTraits >,
+                                 typename DofMapperTraits :: DofMapperType >
 {
+public:
+  typedef DofMapperTraits Traits;
+
+  typedef typename Traits :: DofMapperType DofMapperType;
+  
+private:
+  typedef DofMapperInterface< Traits > ThisType;
+  typedef BartonNackmanInterface< ThisType, DofMapperType > BaseType;
+
+public:
+  typedef typename Traits :: EntityType EntityType;
+
+  typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
+
+protected:
+  using BaseType :: asImp;
+
 public: 
   //! return number of dofs for special function space and grid on
   //! specified level
@@ -43,8 +63,25 @@ public:
     return asImp().size();
   }
 
-  //! map a local dof num of a given entity to a global dof num
-  template <class EntityType>
+  inline DofMapIteratorType begin ( const EntityType &entity ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().begin( entity ) );
+    return asImp().begin( entity );
+  }
+
+  inline DofMapIteratorType end ( const EntityType &entity ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().end( entity ) );
+    return asImp().end( entity );
+  }
+
+  /** \brief map a local DoF number to a global one
+   *
+   *  \param[in]  entity    entity the DoF belongs to
+   *  \param[in]  localDof  local number of the DoF
+   *
+   *  \returns global number of the DoF
+   */
   int mapToGlobal ( const EntityType &entity, const int localDof ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity ,localDof));
@@ -68,7 +105,13 @@ public:
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());
     return asImp().numDofs();
-  } 
+  }
+
+  inline int numDofs ( const EntityType &entity ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( entity ) );
+    return asImp().numDofs( entity );
+  }
 
   //! return number of holes for data block 
   int numberOfHoles(const int block) const 
@@ -126,19 +169,94 @@ public:
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numBlocks());
     return asImp().numBlocks();
   }
-  
-private:  
-  //! Barton-Nackman trick 
-  DofMapperImp &asImp()  { return static_cast<DofMapperImp &>(*this); };
-  //! Barton-Nackman trick 
-  const DofMapperImp &asImp() const { return static_cast<const DofMapperImp &>(*this); };
 };
 
-//! Default implementation for DofMappers, empty at this moment
-template <class DofMapperImp> 
-class DofMapperDefault : public DofMapperInterface<DofMapperImp>
+
+
+template< class EntityImp, class DofMapperImp >
+class DefaultDofMapIterator
 {
 public:
+  typedef EntityImp EntityType;
+  typedef DofMapperImp DofMapperType;
+
+  enum IteratorType { beginIterator, endIterator };
+
+private:
+  typedef DefaultDofMapIterator< EntityType, DofMapperType > ThisType;
+
+protected:
+  const EntityType &entity_;
+  const DofMapperType &dofMapper_;
+  int dof_;
+  
+public:
+  inline DefaultDofMapIterator ( const IteratorType type,
+                                 const EntityType &entity,
+                                 const DofMapperType &dofMapper )
+  : entity_( entity ),
+    dofMapper_( dofMapper ),
+    dof_( type == beginIterator ? 0 : dofMapper_.numDofs( entity ) )
+  {}
+
+  inline DefaultDofMapIterator ( const ThisType &other )
+  : entity_( other.entity_ ),
+    dofMapper_( other.dofMapper_ ),
+    dof_( other.dof_ )
+  {}
+
+  inline ThisType &operator++ ()
+  {
+    ++dof_;
+    return *this;
+  }
+
+  inline bool operator== ( const ThisType &other ) const
+  {
+    return dof_ == other.dof_;
+  }
+
+  inline bool operator!= ( const ThisType &other ) const
+  {
+    return dof_ != other.dof_;
+  }
+
+  inline int local () const
+  {
+    return dof_;
+  }
+
+  inline int global () const
+  {
+    return dofMapper_.mapToGlobal( entity_, dof_ );
+  }
+};
+
+
+
+//! Default implementation for DofMappers, empty at this moment
+template< class DofMapperTraits >
+class DofMapperDefault
+: public DofMapperInterface< DofMapperTraits >
+{
+public:
+  typedef DofMapperTraits Traits;
+
+  typedef typename Traits :: EntityType EntityType;
+
+private:
+  typedef DofMapperDefault< Traits > ThisType;
+  typedef DofMapperInterface< Traits > BaseType;
+
+protected:
+  using BaseType :: asImp;
+  
+public:
+  inline int numDofs ( const EntityType &entity ) const
+  {
+    return asImp().numDofs ();
+  }
+
   //! update mapper, default does nothing 
   void update () {}
 
@@ -150,13 +268,9 @@ public:
 
   //! return number of supported blocks, default is 1  
   int numBlocks() const { return 1; }
-  
-private:  
-  //! Barton-Nackman trick 
-  DofMapperImp &asImp()  { return static_cast<DofMapperImp &>(*this); };
-  //! Barton-Nackman trick 
-  const DofMapperImp &asImp() const { return static_cast<const DofMapperImp &>(*this); };
 }; 
+
+
 
 //! Key for Mapper singleton list 
 template <class IndexSetImp>

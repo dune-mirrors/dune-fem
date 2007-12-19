@@ -52,15 +52,14 @@ namespace Dune {
     return spc_.size()*N;
   }
 
-  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  template <class EntityType>
-  inline int CombinedMapper<DiscreteFunctionSpaceImp, N, policy>::
-  mapToGlobal(EntityType& en, int localNum) const 
+  template< class ContainedSpaceImp, int N, DofStoragePolicy policy >
+  inline int CombinedMapper< ContainedSpaceImp, N, policy >
+    :: mapToGlobal ( const EntityType &entity, int localNum ) const 
   {
     const int component = utilLocal_.component(localNum);
     const int containedLocal = utilLocal_.containedDof(localNum);
  
-    const int containedGlobal = spc_.mapToGlobal(en, containedLocal);
+    const int containedGlobal = spc_.mapToGlobal( entity, containedLocal );
     
     return utilGlobal_.combinedDof(containedGlobal, component);
   }

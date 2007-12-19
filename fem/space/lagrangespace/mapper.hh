@@ -8,6 +8,7 @@
 //- Dune-Fem includes 
 #include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/dofmapperinterface.hh>
 
 //- local includes 
 #include "lagrangepoints.hh"
@@ -19,13 +20,45 @@ namespace Dune
   template< class GridPartImp, unsigned int polOrder, unsigned int dimrange >
   class LagrangeMapper;
 
+
+  
+  template< class GridPartImp, unsigned int polOrder, unsigned int dimrange >
+  struct LagrangeMapperTraits
+  {
+    typedef GridPartImp GridPartType;
+    
+    enum { polynomialOrder = polOrder };
+
+    //! dimension of the discrete function space's range
+    enum { dimRange = dimrange };
+
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
+      EntityType;
+
+    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange >
+      DofMapperType;
+
+    typedef DefaultDofMapIterator< EntityType, DofMapperType >
+      DofMapIteratorType;
+  };
+
+
+  
   template< class GridPartImp, unsigned int dimrange >
   class LagrangeMapper< GridPartImp, 1, dimrange >
-  : public DofMapperDefault< LagrangeMapper< GridPartImp, 1, dimrange > >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPartImp, 1, dimrange > >
   {
   public:
+    typedef LagrangeMapperTraits< GridPartImp, 1, dimrange > Traits;
+    
     //! type of the grid part
-    typedef GridPartImp GridPartType;
+    typedef typename Traits :: GridPartType GridPartType;
+
+    //! type of entities (codim 0)
+    typedef typename Traits :: EntityType EntityType;
+
+    //! type of DofMapIterator
+    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
     
     //! type of the underlying grid
     typedef typename GridPartType :: GridType GridType;
@@ -37,14 +70,15 @@ namespace Dune
     enum { dimension = GridType :: dimension };
 
     //! order of the Lagrange polynoms
-    enum { polynomialOrder = 1 };
+    enum { polynomialOrder = Traits :: polynomialOrder };
 
     //! dimension of the discrete function space's range
-    enum { DimRange = dimrange };
+    enum { dimRange = Traits :: dimRange };
+    enum { DimRange = Traits :: dimRange };
 
   private:
-    typedef LagrangeMapper< GridPartType, polynomialOrder, DimRange > ThisType;
-    typedef DofMapperDefault< ThisType > BaseType;
+    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
+    typedef DofMapperDefault< Traits > BaseType;
 
   public:
     //! type of the index set
@@ -66,11 +100,12 @@ namespace Dune
     LagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
     : indexSet_( gridPart.indexSet() )
-    , maxDofs_ (0)
+    , maxDofs_ ( 0 )
     {
       typedef typename LagrangePointSetMapType :: iterator IteratorType;
       IteratorType end = lagrangePointSet.end();
-      for( IteratorType it = lagrangePointSet.begin(); it != end; ++it ) {
+      for( IteratorType it = lagrangePointSet.begin(); it != end; ++it )
+      {
         const LagrangePointSetType *set = (*it).second;
         if( set == NULL )
           continue;
@@ -85,57 +120,73 @@ namespace Dune
     {
     }
 
-    /** \copydoc Dune::DofMapperInterface::size
-     */
+    /** \copydoc Dune::DofMapperInterface::size() const */
     int size () const
     {
-      return DimRange * indexSet_.size( dimension );
+      return dimRange * indexSet_.size( dimension );
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal
-     */
-    template< class EntityType >
+    /** \copydoc Dune::DofMapperInterface::begin(const EntityType &entity) const */
+    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    {
+      return DofMapIteratorType
+        ( DofMapIteratorType :: beginIterator, entity, *this );
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
+    inline DofMapIteratorType end ( const EntityType &entity ) const
+    {
+      return DofMapIteratorType
+        ( DofMapIteratorType :: endIterator, entity, *this );
+    }
+
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int local ) const
     {
-      const int coordinate = local % DimRange;
-      const int localDof = local / DimRange;
+      const int coordinate = local % dimRange;
+      const int localDof = local / dimRange;
       const int globalDof
         = indexSet_.template subIndex< dimension >( entity, localDof );
-      return DimRange * globalDof + coordinate;
+      return dimRange * globalDof + coordinate;
     }
 
     /** \copydoc Dune::DofMapperInterface::oldIndex
      */
     int oldIndex ( int hole, int ) const
     {
-      const int coordinate = hole % DimRange;
-      const int setHole = hole / DimRange;
+      const int coordinate = hole % dimRange;
+      const int setHole = hole / dimRange;
       const int setIndex = indexSet_.oldIndex( setHole, dimension );
-      return setIndex * DimRange + coordinate;
+      return setIndex * dimRange + coordinate;
     }
 
     /** \copydoc Dune::DofMapperInterface::newIndex
      */
     int newIndex ( int hole , int ) const
     {
-      const int coordinate = hole % DimRange;
-      const int setHole = hole / DimRange;
+      const int coordinate = hole % dimRange;
+      const int setHole = hole / dimRange;
       const int setIndex = indexSet_.newIndex( setHole, dimension );
-      return setIndex * DimRange + coordinate;
+      return setIndex * dimRange + coordinate;
     }
 
     /** \copydoc Dune::DofMapperInterface::numberOfHoles
      */
     int numberOfHoles ( int ) const
     {
-      return DimRange * indexSet_.numberOfHoles( dimension );
+      return dimRange * indexSet_.numberOfHoles( dimension );
     }
 
-    /** \copydoc Dune::DofMapperInterface::numDofs
-     */
+    /** \copydoc Dune::DofMapperInterface::numDofs() const */
     int numDofs () const
     {
-      return DimRange * maxDofs_;
+      return dimRange * maxDofs_;
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    int numDofs ( const EntityType &entity ) const
+    {
+      return dimRange * entity.template count< dimension >();
     }
 
     /** \copydoc Dune::DofMapperInterface::newSize
@@ -157,12 +208,20 @@ namespace Dune
 
   template< class GridPartImp, unsigned int dimrange >
   class LagrangeMapper< GridPartImp, 2, dimrange >
-  : public DofMapperDefault< LagrangeMapper< GridPartImp, 2, dimrange > >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPartImp, 2, dimrange > >
   {
   public:
-    //! type of the grid part
-    typedef GridPartImp GridPartType;
+    typedef LagrangeMapperTraits< GridPartImp, 2, dimrange > Traits;
     
+    //! type of the grid part
+    typedef typename Traits :: GridPartType GridPartType;
+
+    //! type of entities (codim 0)
+    typedef typename Traits :: EntityType EntityType;
+
+    //! type of DofMapIterator
+    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
+ 
     //! type of the underlying grid
     typedef typename GridPartType :: GridType GridType;
 
@@ -173,14 +232,15 @@ namespace Dune
     enum { dimension = GridType :: dimension };
 
     //! order of the Lagrange polynoms
-    enum { polynomialOrder = 2 };
+    enum { polynomialOrder = Traits :: polynomialOrder };
 
     //! dimension of the discrete function space's range
-    enum { DimRange = dimrange };
+    enum { dimRange = Traits :: dimRange };
+    enum { DimRange = Traits :: dimRange };
 
   private:
-    typedef LagrangeMapper< GridPartType, polynomialOrder, DimRange > ThisType;
-    typedef DofMapperDefault< ThisType > BaseType;
+    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
+    typedef DofMapperDefault< Traits > BaseType;
 
   public:
     //! type of the index set
@@ -205,8 +265,7 @@ namespace Dune
     template< unsigned int codim >
     class IndexSetCodimCallImp
     : public IndexSetCodimCall< GridPartType, codim >
-    {
-    };
+    {};
     
     typedef CodimMap< dimension+1, IndexSetCodimCallImp >
       IndexSetCodimCallMapType;
@@ -278,16 +337,28 @@ namespace Dune
     //! return overall number of degrees of freedom 
     int size () const
     {
-      return DimRange * size_;
+      return dimRange * size_;
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal
-     */
-    template< class EntityType >
+    /** \copydoc Dune::DofMapperInterface::begin(const EntityType &entity) const */
+    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    {
+      return DofMapIteratorType
+        ( DofMapIteratorType :: beginIterator, entity, *this );
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
+    inline DofMapIteratorType end ( const EntityType &entity ) const
+    {
+      return DofMapIteratorType
+        ( DofMapIteratorType :: endIterator, entity, *this );
+    }
+
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int local ) const
     {
-      const int coordinate = local % DimRange;
-      const int localDof = local / DimRange;
+      const int coordinate = local % dimRange;
+      const int localDof = local / dimRange;
       
       // unsigned int codim, subEntity;
       const LagrangePointSetType *set
@@ -297,7 +368,7 @@ namespace Dune
       const int subIndex
         = indexSetCodimCall_[ dofInfo.codim ]
             .subIndex( indexSet_, entity, dofInfo.subEntity );
-      return DimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
+      return dimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
     }
 
     /** \copydoc Dune::DofMapperInterface::oldIndex
@@ -305,11 +376,11 @@ namespace Dune
     int oldIndex ( const int num, const int codim ) const
     {
       // corresponding number of set is newn 
-      const int newn  = static_cast<int> (num / DimRange);
+      const int newn  = static_cast<int> (num / dimRange);
       // local number of dof is local 
-      const int local = (num % DimRange);
+      const int local = (num % dimRange);
       // codim to be revised 
-      return DimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
+      return dimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
     }
 
     /** \copydoc Dune::DofMapperInterface::newIndex
@@ -317,11 +388,11 @@ namespace Dune
     int newIndex ( const int num , const int codim) const
     {
       // corresponding number of set is newn 
-      const int newn  = static_cast<int> (num / DimRange);
+      const int newn  = static_cast<int> (num / dimRange);
       // local number of dof is local 
-      const int local = (num % DimRange);
+      const int local = (num % dimRange);
       // codim to be revised 
-      return DimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
+      return dimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
     }
 
     /** \copydoc Dune::DofMapperInterface::numberOfHoles
@@ -329,7 +400,7 @@ namespace Dune
     int numberOfHoles ( const int codim ) const
     {
       return (maxDofs_[ codim ] > 0) ? 
-        (DimRange * indexSet_.numberOfHoles( codim )) : 0;
+        (dimRange * indexSet_.numberOfHoles( codim )) : 0;
     }
 
     /** \copydoc Dune::DofMapperInterface::update
@@ -367,7 +438,7 @@ namespace Dune
     int oldOffSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
-      return DimRange * oldOffSet_[ block ];
+      return dimRange * oldOffSet_[ block ];
     }
 
     /** \copydoc Dune::DofMapperInterface::newOffset
@@ -375,14 +446,19 @@ namespace Dune
     int offSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
-      return DimRange * offset_[ block ];
+      return dimRange * offset_[ block ];
     }
 
-    /** \copydoc Dune::DofMapperInterface::numDofs
-     */
+    /** \copydoc Dune::DofMapperInterface::numDofs() const */
     int numDofs () const
     {
       return numDofs_;
+    }
+
+    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    int numDofs ( const EntityType &entity ) const
+    {
+      return lagrangePointSet_[ entity.geometry().type() ]->size();
     }
 
     /** \copydoc Dune::DofMapperInterface::newSize
@@ -394,7 +470,7 @@ namespace Dune
       {
         newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
-      return DimRange * newSize;
+      return dimRange * newSize;
     }
 
     /** \copydoc Dune::DofMapperInterface::needsCompress
