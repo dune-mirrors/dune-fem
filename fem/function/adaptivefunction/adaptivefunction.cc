@@ -21,7 +21,7 @@ namespace Dune
   AdaptiveDiscreteFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   subFunction(int component) 
   {
-     const SubSpaceType& subSpace = this->space().subSpace(component);
+     const SubSpaceType& subSpace = this->space().containedSpace();
      return SubDiscreteFunctionType(std::string("Subfunction of ")+this->name(),
                                     subSpace,*(subDofVector_[component]));
   }

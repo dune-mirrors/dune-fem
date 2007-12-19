@@ -26,10 +26,6 @@ namespace Dune
   //- Forward declarations of Combined Space 
   template <class, int , DofStoragePolicy > 
   class CombinedSpace;
-  /*
-  template <class CombinedSpaceImp>
-  class SubSpace;
-  */
 
   
   //- Class definitions
@@ -303,10 +299,7 @@ namespace Dune
     //! type of local functions factory 
     typedef typename Traits :: LocalFunctionFactoryType  LocalFunctionFactoryType;
     //- Additional typedefs
-    // typedef SubSpace<DiscreteFunctionSpaceType> SubSpaceType;
-    // typedef typename DiscreteFunctionSpaceType::SubSpaceType SubSpaceType;
-    // typedef AdaptiveDiscreteFunction<SubSpaceType> SubDiscreteFunctionType;
-    typedef typename DiscreteFunctionSpaceType::SubSpaceType SubSpaceType;
+    typedef typename DiscreteFunctionSpaceType::ContainedDiscreteFunctionSpaceType SubSpaceType;
     typedef typename DiscreteFunctionSpaceType::SubMapperType SubMapperType;
     typedef SubVector<DofStorageType,SubMapperType> SubDofVectorType;
     typedef VectorDiscreteFunction<SubSpaceType,SubDofVectorType> SubDiscreteFunctionType;
