@@ -20,6 +20,9 @@
 
 namespace Dune {
 
+/** \brief class managing our data output. 
+    Available output formats are GRAPE, VTK and VTK Vertex projected. 
+*/    
 template <class GridImp, 
           class DataImp> 
 class DataWriter : public IOInterface 
@@ -181,7 +184,7 @@ public:
     # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
     OutputFormat: 0
     
-    # GrapeDisplay (0 = no, 1= yes)
+    # GrapeDisplay (0 = no, 1 = yes)
     GrapeDisplay: 0 
     
     # SaveStep (write data every `saveStep' time period 
@@ -298,7 +301,7 @@ protected:
 public:
   /** \brief write data for given time and timestep 
       \param time actual simulation time 
-      \param timestep actual time step
+      \param timestep actual time step number 
   */
   virtual void write(double time, int timestep) const 
   {
@@ -420,7 +423,9 @@ protected:
   }
 
 public:  
-  //! save structured macro grid file 
+  /** \brief save structured macro grid file 
+    \param macroFileName filename which contains the macro file 
+  */
   virtual void saveMacroGrid(const std::string macroFileName) const 
   {
     IOInterface :: writeMacroGrid( grid_, macroFileName, path_, datapref_);
