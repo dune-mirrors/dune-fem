@@ -106,6 +106,15 @@ namespace Dune
       assert( baseArray_.size() == indexMapper_.range() );
     }
 
+    inline SubArray ( const ThisType &other )
+    : baseArray_( other.baseArray_ ),
+      indexMapper_( other.indexMapper_ )
+    {}
+
+  private:
+    ThisType &operator= ( const ThisType &other );
+
+  public:
     inline const ElementType &operator[] ( unsigned int index ) const
     {
       return baseArray_[ indexMapper_[ index ] ];
@@ -147,7 +156,7 @@ namespace Dune
   private:
     BaseVectorType &baseVector_;
     const IndexMapperType &indexMapper_;
-    ThisType& operator=(const ThisType&);
+
   public:
     inline SubVector( BaseVectorType &baseVector,
                       const IndexMapperType &indexMapper )
@@ -159,11 +168,16 @@ namespace Dune
 
       assert( baseVector_.size() == indexMapper_.range() );
     }
-    SubVector(const ThisType& other) : 
-      baseVector_(other.baseVector_),
-      indexMapper_(other.indexMapper_) {
-    }
+    
+    inline SubVector ( const ThisType &other )
+    : baseVector_( other.baseVector_ ),
+      indexMapper_( other.indexMapper_ )
+    {}
 
+  private:
+    ThisType &operator= ( const ThisType &other );
+
+  public:
     inline const FieldType &operator[] ( unsigned int index ) const
     {
       return baseVector_[ indexMapper_[ index ] ];
