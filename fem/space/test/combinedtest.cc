@@ -215,7 +215,7 @@ typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType,
 //! see dune/fem/lagrangebase.hh
 // typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
 //	polOrd,CachingStorage> DiscreteFunctionSpaceType;
-typedef CombinedSpace<SingleDiscreteFunctionSpaceType,RANGE,VariableBased> 
+typedef CombinedSpace<SingleDiscreteFunctionSpaceType,RANGE,PointBased> 
         DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
