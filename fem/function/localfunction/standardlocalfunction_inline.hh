@@ -300,11 +300,12 @@ namespace Dune
     const int numDofs = this->numDofs();
     for( int i = 0; i < numDofs; i += N )
     {
-      const int baseindex = space.mapToGlobal( entity, i );
-      for( int j = 0; j < N; ++j )
+      // const int baseindex = space.mapToGlobal( entity, i );
+      int index = space.mapToGlobal( entity, i );
+      for( int j = 0; j < N; ++j, ++index )
       {
         const int dof = i+j;
-        const int index = baseindex + j;
+        // const int index = baseindex + j;
         assert( index == space.mapToGlobal( entity, dof ) );
         values_[ dof ] = &(discreteFunction_.dof( index ));
       }
@@ -325,11 +326,12 @@ namespace Dune
     const int scalarSize = space.containedSpace().size();
     for( int i = 0; i < numDofs; i += N )
     {
-      const int baseindex = space.mapToGlobal( entity, i );
-      for( int j = 0; j < N; ++j )
+      // const int baseindex = space.mapToGlobal( entity, i );
+      int index = space.mapToGlobal( entity, i );
+      for( int j = 0; j < N; ++j, index+=scalarSize )
       {
         const int dof = i + j;
-        const int index = baseindex + j * scalarSize;
+        // const int index = baseindex + j * scalarSize;
         assert( index == space.mapToGlobal( entity, dof ) );
         values_[ dof ] = &(discreteFunction_.dof( index ));
       }
