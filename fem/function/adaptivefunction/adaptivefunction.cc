@@ -9,6 +9,10 @@ namespace Dune
      CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
   ~AdaptiveDiscreteFunction() 
   {
+    for (int i=0;i<N;i++) {
+      delete subDofVector_[i];
+      delete subDofMapper_[i];
+    }
   }
   
   template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>

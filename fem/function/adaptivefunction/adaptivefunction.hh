@@ -322,9 +322,10 @@ namespace Dune
       Imp( name, spc ),
       lfFactory_( *this )
     {
-      for (int i=0;i<N;i++) 
-        subDofVector_[i] = new SubDofVectorType
-           (this->dofStorage(), SubMapperType(this->spc_,i));
+      for (int i=0;i<N;i++) {
+        subDofMapper_[i] = new SubMapperType(this->spc_,i);
+        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
+      }
     }
 
     //! Constructor
@@ -335,10 +336,11 @@ namespace Dune
     : BaseType( spc, lfFactory_ ),
       Imp( name, spc , vector ),
       lfFactory_( *this ) {
-      for (int i=0;i<N;i++) 
-        subDofVector_[i] = new SubDofVectorType
-           (this->dofStorage(), SubMapperType(this->spc_,i));
+      for (int i=0;i<N;i++) {
+        subDofMapper_[i] = new SubMapperType(this->spc_,i);
+        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
       }
+    }
     
     //! Constructor
     AdaptiveDiscreteFunction(std::string name,
@@ -348,9 +350,10 @@ namespace Dune
       Imp( name, spc , dofVec ),
       lfFactory_( *this )
     {
-      for (int i=0;i<N;i++) 
-        subDofVector_[i] = new SubDofVectorType
-           (this->dofStorage(), SubMapperType(this->spc_,i));
+      for (int i=0;i<N;i++) {
+        subDofMapper_[i] = new SubMapperType(this->spc_,i);
+        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
+      }
     }
 
     //! Copy constructor
@@ -359,9 +362,10 @@ namespace Dune
       Imp(other),
       lfFactory_( *this )
     {
-      for (int i=0;i<N;i++) 
-        subDofVector_[i] = new SubDofVectorType
-           (this->dofStorage(), SubMapperType(this->spc_,i));
+      for (int i=0;i<N;i++) {
+        subDofMapper_[i] = new SubMapperType(this->spc_,i);
+        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
+      }
     }
     
     ~AdaptiveDiscreteFunction();
@@ -454,6 +458,7 @@ namespace Dune
     
   private:
     const MyType& interface() const { return *this; }
+    SubMapperType* subDofMapper_[N];
     SubDofVectorType* subDofVector_[N]; 
   }; // end class AdaptiveDiscreteFunction (specialised for CombinedSpace)
   
