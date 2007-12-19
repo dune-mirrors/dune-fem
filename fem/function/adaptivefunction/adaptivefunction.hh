@@ -10,6 +10,7 @@
 #include <dune/fem/space/common/dofmanager.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/storage/subarray.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 
 //- Local includes
