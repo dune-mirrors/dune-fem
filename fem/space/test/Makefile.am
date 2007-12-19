@@ -1,5 +1,5 @@
 POLORDER = 2
-GRIDTYPE = ALUGRID_SIMPLEX
+#GRIDTYPE = ALUGRID_SIMPLEX
 #GRIDDIM = 2
 
 CXXFLAGS=-g -Wall
@@ -17,4 +17,3 @@ lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
 legendretest_SOURCES = legendretest.cc
 
-CXXFLAGS=-g
