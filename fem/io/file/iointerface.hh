@@ -68,19 +68,21 @@ public:
   //! destructor 
   virtual ~IOInterface () {}
 
-  //! write data to disc
-  //! \param time actual time of computation 
-  //! \param timestep current number of time step 
+  /** \brief write data to disc
+     \param[in] time actual time of computation 
+     \param[in] timestep current number of time step 
+  */
   virtual void write(double time, int timestep) const = 0; 
 
   //! display data if HAVE_GRAPE is 1  
   virtual void display() const = 0; 
 
-  //! \brief save structured macro grid 
-  //! \param macroFileName is the macro which should be saved in DGF format  
+  /** \brief save structured macro grid 
+     \param[in] macroFileName is the macro which should be saved in DGF format  
+  */
   virtual void saveMacroGrid(const std::string macroFileName) const = 0;
   
-  // create given path in combination with rank 
+  //! create given path in combination with rank 
   static void createPath(const std::string& path)
   {
     // try to open directory 
@@ -108,7 +110,7 @@ public:
     }
   }
   
-  // create given path in combination with rank 
+  //! create given path in combination with rank 
   static std::string createPathName(const std::string& pathPref, int rank )
   {
     std::string path(pathPref);
@@ -142,6 +144,8 @@ public:
     path = ".";
     return path;
   }
+  
+  /** \brief create global path for data output */
   template <class CommunicatorType>
   static void createGlobalPath(const CommunicatorType& comm,
           const std::string& path) 

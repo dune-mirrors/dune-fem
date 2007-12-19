@@ -23,7 +23,8 @@ namespace Dune {
 /** @ingroup Checkpointing 
    \brief Implementation of the IOInterface. 
    This class is managing our data output. 
-   Available output formats are GRAPE, VTK and VTK Vertex projected. 
+   Available output formats are GRAPE, VTK and VTK Vertex projected
+   using the VtxProjection operator. 
 */    
 template <class GridImp, 
           class DataImp> 
@@ -301,10 +302,7 @@ protected:
   }
 
 public:
-  /** \brief write data for given time and timestep 
-      \param time actual simulation time 
-      \param timestep actual time step number 
-  */
+  /** \copydoc IOInterface::write */
   virtual void write(double time, int timestep) const 
   {
     // only write data time > saveTime  
@@ -436,7 +434,12 @@ public:
 }; // end class DataWriter 
   
 
-#if 0
+/** @ingroup Checkpointing 
+   \brief Implementation of the IOInterface. 
+   This class is managing our checkpointing. 
+   The data will be stored in GRAPE output format, meaning that every
+   checkpoint also is a visualizable data set. 
+*/    
 template <class GridImp, 
           class DataImp> 
 class CheckPointer : public DataWriter<GridImp,DataImp> 
@@ -464,6 +467,24 @@ class CheckPointer : public DataWriter<GridImp,DataImp>
   }
   
 public: 
+  /** \brief Constructor generating a cechkpointer 
+    \param grid corresponding grid 
+    \param data Tuple containing discrete functions to write 
+    \param paramfile parameter file containing parameters for data writer
+    \param checkFile filename for restoring state of program from
+           previous runs (default is zero, which means start from new)
+    \param lb LoadBalancer instance 
+      (default is zero, which means start  from new)
+
+    \note In Addition to the parameters read by DataWriter this class 
+          reads the following parameters: 
+
+    # write checkpoint every `CheckPointStep' time step
+    CheckPointStep: 500 
+
+    # store checkpoint information to file `CheckPointFile'
+    CheckPointFile: checkpoint
+  */
   CheckPointer(const GridType & grid, OutPutDataType& data, 
                const std::string paramfile,
                const char * checkFile = 0,
@@ -520,7 +541,14 @@ public:
     }
   }
 
-  //! restore grid 
+  /** \brief restore grid from previous runs 
+    \param[in] paramFile parameter filename  
+    \param[in] checkFile checkPoint filename 
+    \param[in] rank number of my process 
+    \param[inout] tp TimeProvider to set time and timestep to
+
+    \return Pointer to restored grid 
+  */
   template <class TimeProviderImp> 
   static GridType* restoreGrid(const std::string paramfile, 
                                const std::string checkFile,
@@ -578,7 +606,8 @@ public:
     return grid;
   }
 
-  //! restore data, assumes that all objects have been created before
+  /** \brief restores data, assumes that all objects have been created before
+  */
   void restoreData()
   {
     // now add timestamp and rank 
@@ -598,7 +627,7 @@ public:
     dm.dofCompress();
   }
 
-  //! write check point for given time, timestep
+  /** \copydoc IOInterface::write */
   virtual void write(double time, int timestep) const 
   {
     // only write data time > saveTime  
@@ -623,7 +652,10 @@ public:
     return;
   }
 
-  // returns actual balance counter 
+  /** returns actual balance counter, for restoreing LoadBalancer 
+    \return Restored load balance counter 
+   */
+  
   int balanceCounter () const 
   {
     return balanceRecover_;
@@ -693,7 +725,6 @@ private:
   }
 
 }; // end class CheckPointer 
-#endif
   
 } // end namespace DataIO 
 #endif
