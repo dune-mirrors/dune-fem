@@ -10,6 +10,7 @@
 
 #include <dune/fem/storage/arrayallocator.hh>
 #include <dune/fem/storage/array.hh>
+#include <dune/fem/io/streams/streams.hh>
 
 /*! @addtogroup VectorClasses
     @{
@@ -724,55 +725,6 @@ namespace Dune
       return sz;
     }
   };
-
-  /*! \class SubVector
-   *  \brief docme
-   */
-  template< class VectorImp, class Mapper >
-  class SubVector
-  : public VectorDefault< typename VectorImp::FieldType, SubVector< VectorImp, Mapper > >
-  {
-  public:
-    //! field type of vector
-    typedef VectorImp VectorType;
-    typedef Mapper MapperType;
-    typedef typename VectorType::FieldType FieldType;
-    typedef SubVector<VectorType,MapperType> ThisType;
-    typedef VectorDefault<FieldType, ThisType > BaseType;
-
-  private:
-    VectorType& vec_;
-    MapperType mapper_;
-
-  public:
-    //! Constructor setting up an uninitialized vector
-    inline SubVector (VectorType& vec,MapperType map) :
-      vec_(vec), mapper_(map)
-    {
-    }
-
-    //! Copy constructor setting up a vector with the data of another one
-    inline SubVector ( const ThisType &v ) :
-      vec_(v.vec_), mapper_(v.mapper_)
-    {
-    }
-
-    inline const FieldType &operator[] ( unsigned int index ) const
-    {
-      return vec_[mapper_(index)];
-    }
-
-    inline FieldType &operator[] ( unsigned int index )
-    {
-      return vec_[mapper_(index)];
-    }
-
-    inline unsigned int size () const
-    {
-      mapper_.size();
-    }
-  };
-
 
   
   template< class Vector1Type, class Vector2Type >

@@ -127,7 +127,7 @@ namespace Dune
   // SubVector
   template< class BaseVectorImp, class IndexMapperImp >
   class SubVector
-  : public VectorDefault< typename BaseVectorImp :: ElementType,
+  : public VectorDefault< typename BaseVectorImp :: FieldType,
                           SubVector< BaseVectorImp, IndexMapperImp > >
   {
   public:
@@ -147,7 +147,7 @@ namespace Dune
   private:
     BaseVectorType &baseVector_;
     const IndexMapperType &indexMapper_;
-      
+    ThisType& operator=(const ThisType&);
   public:
     inline SubVector( BaseVectorType &baseVector,
                       const IndexMapperType &indexMapper )
@@ -158,6 +158,10 @@ namespace Dune
       typedef CheckIndexMapperInterface< IndexMapperType > __CheckIndexMapperType__;
 
       assert( baseVector_.size() == indexMapper_.range() );
+    }
+    SubVector(const ThisType& other) : 
+      baseVector_(other.baseVector_),
+      indexMapper_(other.indexMapper_) {
     }
 
     inline const FieldType &operator[] ( unsigned int index ) const
