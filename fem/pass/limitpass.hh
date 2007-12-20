@@ -114,6 +114,16 @@ namespace Dune {
       }
     }
 
+    template <class ArgumentTuple>
+    double boundaryFlux(IntersectionIterator& it,
+                        double time, const FaceDomainType& x,
+                        const ArgumentTuple& uLeft, 
+                        RangeType& gLeft) const
+    { 
+      gLeft = 0 ;
+      return 0.0;
+    }
+
   protected:
     template <class ArgumentTuple>
     bool checkDirection(IntersectionIterator& it,
@@ -127,7 +137,7 @@ namespace Dune {
       const UType& argULeft = Element<0>::get(uLeft);
       model_.velocity(this->inside(),time,it.intersectionSelfLocal().global(x),
                       argULeft,velocity_);
-      //return true;//((it.outerNormal(x) * velocity_) < 0);
+      // check inflow boundary 
       return ((it.outerNormal(x) * velocity_) < 0);
     }
 
@@ -237,7 +247,8 @@ namespace Dune {
       jump2_(0),
       gradientFlux_(1.0,10.0),
       artDiff_(0),
-      comboSet_()  
+      comboSet_(),
+      tvdAttribute_( true )
     {
       {
         typedef AllGeomTypes< typename GridPartType :: IndexSetType,
@@ -533,8 +544,23 @@ namespace Dune {
           // use ghost cell for limiting 
           if( nit.boundary() )
           {
-            // assume same value on ghost element
-            nbVals.push_back(RangeType(0));
+            RangeType nbVal;
+            RangeType avg(0);
+
+            // get quadrature with lowest order  
+            FaceQuadratureType faceQuadInner(gridPart_,nit, 0 ,FaceQuadratureType::INSIDE);
+            
+            const int quadNop = faceQuadInner.nop();
+            for(int l=0; l<quadNop; ++l) 
+            {
+              // assume same value on ghost element
+              caller_.boundaryFlux(nit, faceQuadInner, l, nbVal);
+              avg += nbVal;
+            }
+            avg *= 1.0/(RangeFieldType) quadNop;
+
+            // store value 
+            nbVals.push_back( avg );
 
             typedef typename IntersectionIteratorType :: Geometry LocalGeometryType;
             const LocalGeometryType& interGeo = nit.intersectionGlobal();
@@ -586,7 +612,7 @@ namespace Dune {
         DomainType rhs(0);
         
         // create combination set 
-        setupComboSet( neighbors );
+        setupComboSet( neighbors , geomType );
 
         // calculate linear functions 
         // D(x) = U_i + D_i * (x - w_i)
@@ -645,7 +671,7 @@ namespace Dune {
             CheckType check ( (*it).second );
             assert( check.size() > 0 );
 
-            if( dim == 3 ) 
+            if( geomType.isHexahedron() ) 
             {
               int dir = 0;
               bool found = false;
@@ -784,8 +810,15 @@ namespace Dune {
             }
           }
 
+          // apply TVD switch to final function 
+          if ( tvdAttribute_ )
+          {
+            tvdSwitch( geo, enBary, nbVals, deoMod );
+          } 
+
           // L2 Projection 
           {
+            // set zero dof to zero
             for(int r=0; r<dimRange; ++r) 
             {
               if( limit[r] ) 
@@ -839,6 +872,72 @@ namespace Dune {
     }
     
   private:
+    // make limiting scheme TVD 
+    template <class FunctionType, class NbVectorType> 
+    void tvdSwitch(const Geometry& geo, 
+                   const DomainType& enBary,
+                   const NbVectorType& nbVals,
+                   FunctionType& deoMod) const 
+    {
+      const size_t neighbors = nbVals.size();
+      assert( neighbors > 0 );
+
+      RangeType uMax;
+      RangeType uMin;
+      const RangeType& nb0 = nbVals[0];
+      // get initial maximum difference 
+      for(int r=0; r<dimRange; ++r) 
+      {
+        uMax[r] = nb0[r];
+        uMin[r] = nb0[r];
+      }
+      
+      // get maxima and minima  
+      for(size_t m=1; m<neighbors; ++m)
+      {
+        const RangeType& tmp = nbVals[m];
+        for(int r=0; r<dimRange; ++r) 
+        {
+          if( tmp[r] > uMax[r] ) uMax[r] = tmp[r];
+          if( tmp[r] < uMin[r] ) uMin[r] = tmp[r];
+        }
+      }
+      
+      // now take suitable scale 
+      RangeType mini (1);
+      const int corners = geo.corners();
+      for(int i=0; i<corners; ++i) 
+      {
+        // get global coordinate 
+        DomainType point = geo[i];
+        point -= enBary;
+        
+        for(int r=0; r<dimRange; ++r) 
+        {
+          DomainType& D = deoMod[r];
+          const RangeFieldType value = std::abs(D * point); 
+          if( value > 0 ) 
+          {
+            {
+              const RangeFieldType factor = std::abs(uMax[r] / value);
+              mini[r] = std::min( mini[r] , factor );
+            }
+            {
+              const RangeFieldType factor = std::abs(uMin[r] / value);
+              mini[r] = std::min( mini[r] , factor );
+            }
+          }
+        }
+      }
+
+      //std::cout << "Mini = " << mini << "\n";
+      // scale linear function 
+      for(int r=0; r<dimRange; ++r) 
+      {
+        deoMod[r] *= mini[r];
+      }
+    }
+
     // evaluate average of local function lf on entity en 
     void evalAverage(const EntityType& en, 
                      const LocalFunctionType& lf,
@@ -897,6 +996,14 @@ namespace Dune {
                           MatrixType& inverse, 
                           VectorType& rhs) const 
     {
+      /*
+      std::cout << "Go with nV = {":
+      for(int k=0; k<newDim; ++k) 
+      {
+        std::cout << nV[k] << ",";
+      }
+      std::cout << "} \n";
+      */
       enum { dim = dimension };
 
       // apply least square by adding another point 
@@ -923,9 +1030,6 @@ namespace Dune {
 
       if( std::abs( det ) > 0 )
       {
-        // now matrix has to be invertable 
-        //assert( std::abs( det ) > 0 );
-        
         // need new right hand side 
         NewVectorType newRhs;
         
@@ -960,7 +1064,7 @@ namespace Dune {
     }
     
     // setup set storing combinations of linear functions 
-    void setupComboSet(const int neighbors) const 
+    void setupComboSet(const int neighbors, const GeometryType& geomType) const 
     {
       if( spc_.multipleGeometryTypes() || (comboSet_.size() == 0) )
       {
@@ -971,31 +1075,73 @@ namespace Dune {
         std::vector<int> v(dimension,0);
         std::vector<int> null;
 
-        for(int n=0; n<neighbors; ++n)
+        if( geomType.isHexahedron() )
         {
-          v[0] = n;
-          if( dimension > 1 )
+          /*
+          for(int i=0; i<dimension; ++i) 
           {
-            for(int j=n+1; j<neighbors; ++j) 
+            v[0] = 2 * i;
+            v[1] = 2 * i + 1;
+            v[2] = (2 * i + 2) % neighbors; 
+            comboSet_.insert( VectorCompType( v, null ) );
+          }
+          */
+          for(int n=0; n<2; ++n)
+          {
+            v[0] = n;
+            if( dimension > 1 )
             {
-              v[1] = j;
-              if( dimension > 2 )
+              for(int j=2; j<4; ++j) 
               {
-                for(int l=j+1; l<neighbors; ++l) 
+                v[1] = j;
+                if( dimension > 2 )
                 {
-                  v[2] = l;
+                  for(int l=4; l<6; ++l) 
+                  {
+                    v[2] = l;
+                    comboSet_.insert( VectorCompType( v, null ) );
+                  }
+                }
+                else 
+                {
                   comboSet_.insert( VectorCompType( v, null ) );
                 }
               }
-              else 
-              {
-                comboSet_.insert( VectorCompType( v, null ) );
-              }
+            }
+            else 
+            {
+              comboSet_.insert( VectorCompType( v, null ) );
             }
           }
-          else 
+        }
+        else 
+        {
+          for(int n=0; n<neighbors; ++n)
           {
-            comboSet_.insert( VectorCompType( v, null ) );
+            v[0] = n;
+            if( dimension > 1 )
+            {
+              for(int j=n+1; j<neighbors; ++j) 
+              {
+                v[1] = j;
+                if( dimension > 2 )
+                {
+                  for(int l=j+1; l<neighbors; ++l) 
+                  {
+                    v[2] = l;
+                    comboSet_.insert( VectorCompType( v, null ) );
+                  }
+                }
+                else 
+                {
+                  comboSet_.insert( VectorCompType( v, null ) );
+                }
+              }
+            }
+            else 
+            {
+              comboSet_.insert( VectorCompType( v, null ) );
+            }
           }
         }
 
@@ -1005,6 +1151,12 @@ namespace Dune {
         {
           const KeyType& v = (*it).first;
           CheckType& check = const_cast<CheckType&> ((*it).second);
+
+          // debug output 
+          std::cout << "Found key = {";
+          for(int i=0; i<dimension; ++i) 
+            std::cout << v[i] << ",";
+          std::cout << "} \n";
 
           // insert all j that are not equal to one of the used in v 
           for(int j=0; j<neighbors; ++j) 
@@ -1125,6 +1277,9 @@ namespace Dune {
     typedef std::pair< KeyType, CheckType > VectorCompType;
     typedef std::set< VectorCompType > ComboSetType;
     mutable ComboSetType comboSet_;
+
+    // if true scheme is TVD 
+    const bool tvdAttribute_; 
   }; // end DGLimitPass 
 
 } // end namespace Dune 
