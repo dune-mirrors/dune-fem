@@ -74,6 +74,7 @@ namespace Dune
     //! return size of function space 
     //! see dofmanager.hh for definition of IndexSet, which 
     //! is a wrapper for en.index 
+    /** \copydoc DofMapperInterface::size */
     int size () const
     {
       // return number of dofs * number of elements 
@@ -95,31 +96,36 @@ namespace Dune
       return DofMapIteratorType( type, numberOfDofs_ );
     }
 
-    //! map Entity an local Dof number to global Dof number 
-    //! see dofmanager.hh for definition of IndexSet, which 
-    //! is a wrapper for en.index 
+    /** \copydoc DofMapperInterface::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, int localNum ) const
     {
       const int baseIndex = indexSet_.index( entity ) * numberOfDofs_;
-      // const int baseIndex
-      //   = indexSet_.template index< 0 >( entity, 0 ) * numberOfDofs_;
-
       return baseIndex + localNum;
-    };
+    }
 
-    //! default implementation if not overlaoded 
+    /** \copydoc DofMapperInterface::mapToGlobal
+        \note This implementation is returing zero because 
+              DG Spaces only have element dofs. 
+    */
+    template <class EntityImp> 
+    int mapToGlobal ( const EntityImp &entity, int localNum ) const
+    {
+      return 0;
+    }
+
+    /** \copydoc DofMapperInterface::numDofs */
     int numDofs () const
     {
       return numberOfDofs_;
     }
 
-    //! only called once, if grid was adapted 
+    /** \copydoc DofMapperInterface::newSize */
     int newSize() const
     {
       return this->size();
     }
 
-    //! return old index, for dof manager only 
+    /** \copydoc DofMapperInterface::oldIndex */
     int oldIndex (const int hole, int ) const
     {
       // corresponding number of set is newn 
@@ -129,7 +135,7 @@ namespace Dune
       return (numberOfDofs_ * indexSet_.oldIndex(newn,0)) + local;
     }
 
-    //! return new index, for dof manager only 
+    /** \copydoc DofMapperInterface::newIndex */
     int newIndex (const int hole, int ) const
     {
       // corresponding number of set is newn 
@@ -139,15 +145,14 @@ namespace Dune
       return (numberOfDofs_ * indexSet_.newIndex(newn,0)) + local;
     }
 
-    //! return size of grid entities per level and codim 
-    //! for dof mapper 
+    /** \copydoc DofMapperInterface::numberOfHoles */
     int numberOfHoles ( int ) const
     {
       // this index set works only for codim = 0 at the moment
       return numberOfDofs_ * indexSet_.numberOfHoles(0);
     }
 
-    //! return whether the data has to be compressed or not
+    /** \copydoc DofMapperInterface::needsCompress */
     bool needsCompress() const 
     {
       return indexSet_.needsCompress();
