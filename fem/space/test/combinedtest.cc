@@ -206,7 +206,7 @@ public:
 // ********************************************************************
 // ********************************************************************
 // ********************************************************************
-const int RANGE = 10;
+const int RANGE = 3;
 typedef FunctionSpace < GridType :: ctype, double , 
 			dimw , RANGE > FuncSpace;
 typedef FunctionSpace < GridType :: ctype, double , 
@@ -229,10 +229,6 @@ double algorithm (GridType& grid,
   typedef typename 
     DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  const DiscreteFunctionSpaceType& 
-    linFuncSpace = solution.space();
-  ExactSolution<DiscreteFunctionSpaceType> f (linFuncSpace); 
-       
    //! perform l2-projection
    typedef typename DiscreteFunctionSpaceType :: 
      ContainedSpaceType SubDFSType;
@@ -241,31 +237,32 @@ double algorithm (GridType& grid,
    typedef typename DiscreteFunctionSpaceType :: 
      RangeType RangeType; 
    typedef typename SubDFSType :: RangeType SubRangeType;
+   RangeType error(0);
+  const DiscreteFunctionSpaceType& 
+    linFuncSpace = solution.space();
+  ExactSolution<DiscreteFunctionSpaceType> f (linFuncSpace); 
    L2Projection<DiscreteFunctionType>:: project(f, solution);
-   {
-     for (int i=0;i<RangeType::dimension; i+=3) {
-       SubDFType sol0 = solution.subFunction(i);
-       ExactSolution<SubDFSType> f0 (sol0.space(),i ); 
-       L2Projection<SubDFType>:: project(f0, sol0);
-     }
-   }
-   
-   // calculation L2 error 
-   // pol ord for calculation the error chould by higher than 
-   // pol for evaluation the basefunctions 
-   L2Error < DiscreteFunctionType > l2err;
-   RangeType error = l2err.norm(f ,solution, 0.0);
-   for(int i=0; i<RangeType::dimension; ++i)
-     std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
-   
-   {
+   for (int method=0;method<2;method++) {
+     // calculation L2 error 
+     // pol ord for calculation the error chould by higher than 
+     // pol for evaluation the basefunctions 
+     L2Error < DiscreteFunctionType > l2err;
+     error = l2err.norm(f ,solution, 0.0);
+     for(int i=0; i<RangeType::dimension; ++i)
+       std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
      for (int i=0;i<RangeType::dimension; ++i) {
-       SubDFType sol0 = solution.subFunction(i);
+       SubDFType& sol0 = solution.subFunction(i);
        ExactSolution<SubDFSType> f0 (linFuncSpace.containedSpace(),i ); 
        L2Error < SubDFType > l2err0;
        SubRangeType error0 = l2err0.norm(f0,sol0,0.0);
        std::cout << "\n L2 SubError[" << i << "]-Error[" << i << "]  : " 
                  << error0[0]-error[i] << "\n\n";
+     }
+     solution.clear();
+     for (int i=0;i<RangeType::dimension; i+=1) {
+       SubDFType& sol0 = solution.subFunction(i);
+       ExactSolution<SubDFSType> f0 (sol0.space(),i ); 
+       L2Projection<SubDFType>:: project(f0, sol0);
      }
    }
    
