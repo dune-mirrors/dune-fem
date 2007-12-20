@@ -71,7 +71,7 @@ namespace Dune {
   public:
     typedef LimiterDefaultTraits<GlobalTraitsImp,Model> Traits;
     
-    typedef Selector<0> SelectorType;
+    typedef Selector<1> SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
@@ -233,7 +233,8 @@ namespace Dune {
     //! \param spc Space belonging to the discrete function local to this pass
     LimitDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
-                const DiscreteFunctionSpaceType& spc) :
+                const DiscreteFunctionSpaceType& spc,
+                const std::string paramFile = "" ) :
       BaseType(pass, spc),
       caller_(problem),
       arg_(0),
@@ -248,8 +249,9 @@ namespace Dune {
       gradientFlux_(1.0,10.0),
       artDiff_(0),
       comboSet_(),
-      tvdAttribute_( true )
+      tvdAttribute_( getTvdParameter(paramFile) )
     {
+      
       {
         typedef AllGeomTypes< typename GridPartType :: IndexSetType,
                               GridType> AllGeomTypesType;
@@ -301,6 +303,17 @@ namespace Dune {
     }
     
   private:
+    // get tvd parameter from parameter file 
+    bool getTvdParameter(const std::string& paramFile) const 
+    {
+      int tvd = 0;
+      if( paramFile != "" ) 
+      {
+        readParameter( paramFile , "TVD", tvd );
+      }
+      return (tvd == 1) ? true : false;
+    }
+
     //! In the preparations, store pointers to the actual arguments and 
     //! destinations. Filter out the "right" arguments for this pass.
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
@@ -315,8 +328,9 @@ namespace Dune {
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
       caller_.finalize();
-      DestinationType* U = const_cast<DestinationType*>(Element<0>::get(*arg_));
-      U->assign(dest);
+      //DestinationType* U = const_cast<DestinationType*>(Element<0>::get(*arg_));
+      //dest.assign( *U );
+      //U->assign(dest);
     }
 
     //! Perform the limitation on all elements.
@@ -398,7 +412,7 @@ namespace Dune {
       JacobianRangeType enGrad;
       JacobianRangeType nbGrad;
 
-      IntersectionIteratorType endnit = gridPart_.iend(en); 
+      const IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
            nit != endnit; ++nit) 
       {
@@ -443,16 +457,29 @@ namespace Dune {
 
       // determ whether limitation is necessary  
       bool limiter = false;
+      int refinementMarker = 0;
+      
       for (int r=0; r<dimRange; ++r) 
       {
         double jumpr = std::abs(totaljump[r]);
-        if ( jumpr*hPowPolOrder*circume > 1 ) 
+        const double indicator = jumpr*hPowPolOrder*circume ;
+        if ( indicator > 1 ) 
         {
           limit[r] = true;
           limiter = true;
+
+          if( en.level () < 2 )
+          {
+            // mark for refinement 
+            refinementMarker = 1;
+          }
         }
-        else
-          limit[r] = false;
+        else if ( indicator < 0.5 ) 
+        {
+          //std::cout << indicator << " indicator \n";
+          // mark for coarsening 
+          refinementMarker = -1;
+        }
       }
        
       // prepare limitEn 
@@ -484,6 +511,17 @@ namespace Dune {
         }
       }
 
+      {
+      // get grid 
+      GridType& grid = const_cast<GridType&> (gridPart_.grid());
+      
+      const IntersectionIteratorType endnit = gridPart_.iend(en); 
+      IntersectionIteratorType nit = gridPart_.ibegin(en); 
+      if( nit == endnit ) return ;
+
+      // mark element for refinement 
+      grid.mark( refinementMarker , nit.inside() );
+
       if( limiter )
       {
         // default is zero 
@@ -506,9 +544,8 @@ namespace Dune {
         // evaluate function  
         evalAverage(en, uEn, enVal );
 
-        IntersectionIteratorType endnit = gridPart_.iend(en); 
-        for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
-             nit != endnit; ++nit) 
+        // loop over all neighbors 
+        for ( ; nit != endnit; ++nit) 
         {
           // check all neighbors 
           if (nit.neighbor()) 
@@ -716,7 +753,7 @@ namespace Dune {
             }
 
             bool matrixSingular = 
-                applyLeastSquare<dim+1>( barys,
+                applyLeastSquare( barys,
                                   nbVals,
                                   nV,
                                   dM,
@@ -869,6 +906,7 @@ namespace Dune {
           }
         }
       } //end if limiter 
+      }
     }
     
   private:
@@ -985,8 +1023,7 @@ namespace Dune {
     }
 
     // solve system by applying least square method 
-    template <int newDim, 
-              class BaryVectorType, class NbValVectorType,
+    template <class BaryVectorType, class NbValVectorType,
               class FunctionType, class MatrixType, class VectorType> 
     bool applyLeastSquare(const BaryVectorType& barys,
                           const NbValVectorType& nbVals,
@@ -996,15 +1033,10 @@ namespace Dune {
                           MatrixType& inverse, 
                           VectorType& rhs) const 
     {
-      /*
-      std::cout << "Go with nV = {":
-      for(int k=0; k<newDim; ++k) 
-      {
-        std::cout << nV[k] << ",";
-      }
-      std::cout << "} \n";
-      */
+      // dimension 
       enum { dim = dimension };
+      // new dimension is dim + 1 
+      enum { newDim = dim + 1 };
 
       // apply least square by adding another point 
       // this should make the linear system solvable 
@@ -1062,89 +1094,71 @@ namespace Dune {
       // matrix is still singular 
       return true;
     }
+
+    template <class SetType, int dim> 
+    struct FillVector
+    {
+      static void fill(const int neighbors, 
+                       const int start,
+                       SetType& comboSet,
+                       std::vector<int>& v) 
+      {
+        assert( (int) v.size() > dim );
+        for(int n = start; n<neighbors; ++n)
+        {
+          v[dim] = n;
+          FillVector<SetType, dim+1> :: fill( neighbors, 
+                                              n + 1,
+                                              comboSet,
+                                              v);
+        }
+      } 
+                       
+    };
+    
+    template <class SetType> 
+    struct FillVector<SetType, dimension-1 >
+    {
+      enum { dim = dimension-1 };
+      static void fill(const int neighbors, 
+                       const int start,
+                       SetType& comboSet,
+                       std::vector<int>& v) 
+      {
+        assert( (int) v.size() == dimension );
+        for(int n = start; n<neighbors; ++n)
+        {
+          v[dim] = n;
+          comboSet.insert( VectorCompType( v, std::vector<int> () ) );
+        }
+      } 
+    };
     
     // setup set storing combinations of linear functions 
     void setupComboSet(const int neighbors, const GeometryType& geomType) const 
     {
-      if( spc_.multipleGeometryTypes() || (comboSet_.size() == 0) )
+      // in case of non-conforming grid or grid with more than one
+      // element type this has to be re-build on every element
+      if( ( ! GridPartType :: conforming ) || 
+          spc_.multipleGeometryTypes() || 
+          (comboSet_.size() == 0) ) 
       {
         // clear set 
         comboSet_.clear();
 
         // maximal number of neighbors 
         std::vector<int> v(dimension,0);
-        std::vector<int> null;
+        FillVector<ComboSetType, 0> :: fill(neighbors,0, comboSet_, v );
 
-        if( geomType.isHexahedron() )
+        // create set containing all numbers 
+        std::set<int> constNumbers;
+        typedef std::set<int> :: iterator el_iterator;
+        for(int i = 0; i<neighbors; ++i)
         {
-          /*
-          for(int i=0; i<dimension; ++i) 
-          {
-            v[0] = 2 * i;
-            v[1] = 2 * i + 1;
-            v[2] = (2 * i + 2) % neighbors; 
-            comboSet_.insert( VectorCompType( v, null ) );
-          }
-          */
-          for(int n=0; n<2; ++n)
-          {
-            v[0] = n;
-            if( dimension > 1 )
-            {
-              for(int j=2; j<4; ++j) 
-              {
-                v[1] = j;
-                if( dimension > 2 )
-                {
-                  for(int l=4; l<6; ++l) 
-                  {
-                    v[2] = l;
-                    comboSet_.insert( VectorCompType( v, null ) );
-                  }
-                }
-                else 
-                {
-                  comboSet_.insert( VectorCompType( v, null ) );
-                }
-              }
-            }
-            else 
-            {
-              comboSet_.insert( VectorCompType( v, null ) );
-            }
-          }
+          constNumbers.insert(i);
         }
-        else 
-        {
-          for(int n=0; n<neighbors; ++n)
-          {
-            v[0] = n;
-            if( dimension > 1 )
-            {
-              for(int j=n+1; j<neighbors; ++j) 
-              {
-                v[1] = j;
-                if( dimension > 2 )
-                {
-                  for(int l=j+1; l<neighbors; ++l) 
-                  {
-                    v[2] = l;
-                    comboSet_.insert( VectorCompType( v, null ) );
-                  }
-                }
-                else 
-                {
-                  comboSet_.insert( VectorCompType( v, null ) );
-                }
-              }
-            }
-            else 
-            {
-              comboSet_.insert( VectorCompType( v, null ) );
-            }
-          }
-        }
-
+          
+        const int checkSize = neighbors - dimension ;
         typedef typename ComboSetType :: iterator iterator; 
         const iterator endit = comboSet_.end();
         for(iterator it = comboSet_.begin(); it != endit; ++it) 
@@ -1152,21 +1166,36 @@ namespace Dune {
           const KeyType& v = (*it).first;
           CheckType& check = const_cast<CheckType&> ((*it).second);
 
-          // debug output 
-          std::cout << "Found key = {";
-          for(int i=0; i<dimension; ++i) 
-            std::cout << v[i] << ",";
-          std::cout << "} \n";
+          // reserve memory 
+          check.reserve ( checkSize );
 
-          // insert all j that are not equal to one of the used in v 
-          for(int j=0; j<neighbors; ++j) 
+          /*
+          if( neighbors > 3 )
           {
-            bool c = true; 
+            // debug output 
+            std::cout << "Found key = {";
             for(int i=0; i<dimension; ++i) 
-            {
-              if( v[i] == (int) j ) c = false;
-            }
-            if( c ) check.push_back(j);
+              std::cout << v[i] << ",";
+            std::cout << "} \n";
+          }
+          */
+
+          // get set containing all numbers 
+          std::set<int> numbers (constNumbers);
+          
+          // remove the key values 
+          for(int i=0; i<dimension; ++i) 
+          {
+            el_iterator el = numbers.find( v[i] );
+            numbers.erase( el );
+          }
+          
+          // generate check vector 
+          el_iterator endel = numbers.end(); 
+          for(el_iterator elit = numbers.begin(); 
+              elit != endel; ++ elit)
+          {
+            check.push_back( *elit );
           }
         }
       }
