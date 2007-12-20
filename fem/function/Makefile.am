@@ -3,13 +3,15 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 SUBDIRS = common \
           localfunction \
-					adaptivefunction \
-					blockvectorfunction \
-					productfunction \
-					vectorfunction
+	  adaptivefunction \
+	  combinedfunction \
+	  blockvectorfunction \
+	  productfunction \
+	  vectorfunction
 
 functiondir =  $(includedir)/dune/fem/function
 function_HEADERS = adaptivefunction.hh \
                    blockvectorfunction.hh \
-									 productfunction.hh \
-									 vectorfunction.hh
+		   combinedfunction.hh \
+		   productfunction.hh \
+		   vectorfunction.hh
