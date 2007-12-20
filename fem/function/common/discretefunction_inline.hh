@@ -126,14 +126,15 @@ operator += ( const DiscreteFunctionType& g )
 
 // operator -=
 template<class DiscreteFunctionTraits>
+template<class DFType>
 inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
 DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator -= ( const DiscreteFunctionType& g ) 
+operator -= ( const DFType& g ) 
 {
   assert(this->size() == g.size());
 
   DofIteratorType endit = this->dend ();
-  ConstDofIteratorType git = g.dbegin ();
+  typename DFType::ConstDofIteratorType git = g.dbegin ();
   for(DofIteratorType it = this->dbegin(); it != endit; ++it, ++git) 
   {
     *it -= *git;

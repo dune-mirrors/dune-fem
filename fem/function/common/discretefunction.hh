@@ -361,7 +361,8 @@ namespace Dune
         \param[in] g discrete function which is substracted from this discrete function 
         \return reference to this (i.e. *this)
     */
-    DiscreteFunctionType& operator -= (const DiscreteFunctionType& g) 
+    template <class DFType>
+    DiscreteFunctionType& operator -= (const DFType& g) 
     {
       CHECK_INTERFACE_IMPLEMENTATION(asImp().operator -= (g));
       return asImp().operator -= (g);
@@ -638,7 +639,8 @@ namespace Dune
         \param[in] g discrete function which is substracted from this discrete function 
         \return reference to this (i.e. *this)
     */
-    DiscreteFunctionType& operator -= (const DiscreteFunctionType& g);
+    template <class DFType>
+    DiscreteFunctionType& operator -= (const DFType& g);
  
     /** \brief multiply all DoFs with a scalar factor
      *
