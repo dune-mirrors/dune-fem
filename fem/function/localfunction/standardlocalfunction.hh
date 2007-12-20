@@ -244,6 +244,7 @@ namespace Dune
     
     inline int numScalarDofs () const;
 
+#if 0
   protected:
     inline void mapLocalDofs ( const DofStoragePolicyType< PointBased > p,
                                const EntityType &entity,
@@ -252,6 +253,7 @@ namespace Dune
     inline void mapLocalDofs ( const DofStoragePolicyType< VariableBased > p,
                                const EntityType &entity,
                                const DiscreteFunctionSpaceType &space );
+#endif
   };
 
 
