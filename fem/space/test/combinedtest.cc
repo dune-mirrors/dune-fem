@@ -288,56 +288,64 @@ int main (int argc, char **argv)
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.dgf";
 
+  typedef CombinedDiscreteFunction<
+    SingleDiscreteFunctionType,RANGE > DiscreteFunctionType1;
+  DiscreteFunctionType1* solution1;
   {
     GridPtr<GridType> gridptr(macroGridName);
     GridType& grid=*gridptr;
     const int step = Dune::DGFGridInfo<GridType>::
       refineStepsForHalf();
     GridPartType part ( grid );
-    typedef CombinedDiscreteFunction<
-      SingleDiscreteFunctionType,RANGE > DiscreteFunctionType;
     SingleDiscreteFunctionSpaceType singFuncSpace ( part );
     SingleDiscreteFunctionType singSol("sol",singFuncSpace);
-    DiscreteFunctionType solution ( singSol );
-    solution.clear();
+    solution1 = new DiscreteFunctionType1( singSol );
+    solution1->clear();
     for(int i=0; i<ml; i+=step) {
       grid.globalRefine(step);
       DofManagerType& dm = DofManagerFactoryType :: 
 	      getDofManager( grid );
       dm.resize();
-      error[i] = algorithm ( grid , solution , i==ml-1);
+      error[i] = algorithm ( grid , *solution1 , i==ml-1);
       if (i>0) {
 	double eoc = log( error[i-step]/error[i]) / M_LN2; 
 	std::cout << "EOC = " << eoc << " \n";
       }
     }
   }
+  typedef CombinedSpace
+     <SingleDiscreteFunctionSpaceType,RANGE,VariableBased> 
+      DiscreteFunctionSpaceType2;
+  typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType2>
+      DiscreteFunctionType2;
+  DiscreteFunctionType2* solution2;
   {
     GridPtr<GridType> gridptr(macroGridName);
     GridType& grid=*gridptr;
     const int step = Dune::DGFGridInfo<GridType>::
       refineStepsForHalf();
     GridPartType part ( grid );
-    typedef CombinedSpace
-      <SingleDiscreteFunctionSpaceType,RANGE> 
-      DiscreteFunctionSpaceType;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>
-      DiscreteFunctionType;
-    DiscreteFunctionSpaceType funcSpace(part);
-    DiscreteFunctionType solution ( "sol",funcSpace );
-    solution.clear();
+    DiscreteFunctionSpaceType2 funcSpace(part);
+    solution2 = new DiscreteFunctionType2 ( "sol",funcSpace );
+    solution2->clear();
     for(int i=0; i<ml; i+=step) {
       grid.globalRefine(step);
       DofManagerType& dm = DofManagerFactoryType :: 
 	getDofManager( grid );
       dm.resize();
-      error[i] = algorithm ( grid , solution , i==ml-1);
+      error[i] = algorithm ( grid , *solution2 , i==ml-1);
       if (i>0) {
 	double eoc = log( error[i-step]/error[i]) / M_LN2; 
 	std::cout << "EOC = " << eoc << " \n";
       }
     }
   }
+  (*solution1) -= (*solution2);
+  std::cout << "Difference of function: " 
+	    << solution1->scalarProductDofs(*solution1) 
+            << std::endl;
+  delete solution1;
+  delete solution2;
   delete [] error;
   return 0;
 }
