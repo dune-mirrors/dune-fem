@@ -91,6 +91,16 @@ namespace Dune
       return indexSet_.index( entity ) * dimrange + localNum;
     }
 
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,int localNum) const 
+        \note This method returns zero since the current FV
+        implementation only supports p = 0! 
+    */
+    template <class EntityImp>
+    inline int mapToGlobal ( const EntityImp &entity, int localNum ) const
+    {
+      return 0; 
+    }
+
     //! return old index for hole 
     int oldIndex ( const int hole, int ) const
     {   
