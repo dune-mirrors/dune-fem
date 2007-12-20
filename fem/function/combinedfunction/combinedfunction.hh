@@ -177,12 +177,12 @@ namespace Dune
       for (int i=0;i<N;i++)
 	      func_[i]->assign(g.subFunction(i));
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::size */ 
+    /** \copydoc Dune::DiscreteFunctionInterface::size() const */ 
     inline int size() const
     {
       return func_[0]->size()*N;
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::operator+=
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=
      */ 
     inline ThisType &operator += ( const ThisType &g )
     {
@@ -190,7 +190,7 @@ namespace Dune
 	      *func_[i] += g.subFunction(i);
       return *this;
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::operator-=
+    /** \copydoc Dune::DiscreteFunctionInterface::operator-=
      */ 
     inline BaseType &operator-= ( const ThisType &g )
     {
@@ -198,19 +198,19 @@ namespace Dune
 	*func_[i] -= g.subFunction(i);
      return *this;
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::operator*=(const RangeFieldType &scalar) */    
+    /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
     DiscreteFunctionType& operator *= (const RangeFieldType &scalar) {
       for (int i=0;i<N;i++)
 	*func_[i] *= scalar;
       return *this;
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::operator*=(const RangeFieldType &scalar) */    
+    /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
     DiscreteFunctionType& operator /= (const RangeFieldType &scalar) {
       for (int i=0;i<N;i++)
 	*func_[i] /= scalar;
       return *this;
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::addScaled
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled
      */
     inline void addScaled( const ThisType &g,
                            const RangeFieldType &s )
@@ -218,7 +218,7 @@ namespace Dune
       for (int i=0;i<N;i++)
 	func_[i]->addScaled(g.subFunction(i),s);
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::scalarProductDofs(const DiscreteFunctionType &g) */
+    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionType &g) const */
     RangeFieldType scalarProductDofs ( const DiscreteFunctionType &g ) const
     {
       double ret=func_[0]->scalarProductDofs(g.subFunction(0));
@@ -226,26 +226,26 @@ namespace Dune
 	ret += func_[i]->scalarProductDofs(g.subFunction(i));
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::read(InStreamInterface< StreamTraits>& in) */
+    /** \copydoc Dune::DiscreteFunctionInterface::read(Dune::InStreamInterface &in) */
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits >& in)
     {
       for (int i=0;i<N;i++)
 	func_[i]->read(in);
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::write(OutStreamInterface< StreamTraits>& out) */
+    /** \copydoc Dune::DiscreteFunctionInterface::write(Dune::OutStreamInterface &out) const */
     template< class StreamTraits >
-    inline void write ( OutStreamInterface< StreamTraits>& out) const
+    inline void write ( OutStreamInterface< StreamTraits >& out) const
     {
       for (int i=0;i<N;i++)
 	func_[i]->write(out);
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::print(std :: ostream &out) */
+    /** \copydoc Dune::DiscreteFunctionInterface::print(std::ostream &out) const */
     inline void print( std :: ostream &out ) const {
       for (int i=0;i<N;i++)
 	func_[i]->print(out);
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::dofValid */
+    /** \copydoc Dune::DiscreteFunctionInterface::dofsValid() const */
     inline bool dofsValid () const {
       bool ret = func_[0]->dofsValid();
       for (int i=1;i<N;i++)
@@ -253,7 +253,6 @@ namespace Dune
       return ret;
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::dofs(unsigned int index) const */
     inline const RangeFieldType &dof(unsigned int index) const
     {
       /*
@@ -264,7 +263,6 @@ namespace Dune
       int point    = index % func_[0]->size();
       return func_[variable]->dof(point);
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::dofs(unsigned int index) */
     inline RangeFieldType &dof ( unsigned int index )
     {
       /*
@@ -276,22 +274,22 @@ namespace Dune
       return func_[variable]->dof(point);
     }
     
-    /** \copydoc Dune::DiscreteFunctionDefault::dbegin */
+    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() const */
     inline ConstDofIteratorType dbegin () const
     {
       return func_[0]->dbegin();
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::dend */
+    /** \copydoc Dune::DiscreteFunctionInterface::dend() const */
     inline ConstDofIteratorType dend () const
     {
       return func_[0]->dend();
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::dbegin */
+    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() */
     inline DofIteratorType dbegin ()
     {
       return func_[0]->dbegin();
     }
-    /** \copydoc Dune::DiscreteFunctionDefault::dend */
+    /** \copydoc Dune::DiscreteFunctionInterface::dend() */
     inline DofIteratorType dend ()
     {
       return func_[0]->dend();

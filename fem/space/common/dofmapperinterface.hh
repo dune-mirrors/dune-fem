@@ -63,12 +63,34 @@ public:
     return asImp().size();
   }
 
+  /** \brief obtain a begin iterator for the mapping on an entity
+   *
+   *  To obtain the entire mapping of local DoF numbers to global DoF numbers,
+   *  using these iterators can be much more efficient than calling
+   *  mapToGlobal for each local DoF.
+   *
+   *  \param[in]  entity  entity (codimension 0) for which the mapping shall
+   *                      be iterated
+   *
+   *  \returns begin iterator for the local DoF mapping
+   */
   inline DofMapIteratorType begin ( const EntityType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().begin( entity ) );
     return asImp().begin( entity );
   }
-
+  
+  /** \brief obtain an end iterator for the mapping on an entity
+   *
+   *  To obtain the entire mapping of local DoF numbers to global DoF numbers,
+   *  using these iterators can be much more efficient than calling
+   *  mapToGlobal for each local DoF.
+   *
+   *  \param[in]  entity  entity (codimension 0) for which the mapping shall
+   *                      be iterated
+   *
+   *  \returns end iterator for the local DoF mapping
+   */
   inline DofMapIteratorType end ( const EntityType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().end( entity ) );
@@ -106,7 +128,13 @@ public:
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());
     return asImp().numDofs();
   }
-
+  
+  /** \brief obtain number of DoFs on an entity
+   * 
+   *  \param[in]  entity  entity of codimension 0
+   *  
+   *  \returns number of DoFs on the entity
+   */
   inline int numDofs ( const EntityType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( entity ) );

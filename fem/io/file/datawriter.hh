@@ -542,10 +542,10 @@ public:
   }
 
   /** \brief restore grid from previous runs 
-    \param[in] paramFile parameter filename  
+    \param[in] paramfile parameter filename  
     \param[in] checkFile checkPoint filename 
     \param[in] rank number of my process 
-    \param[inout] tp TimeProvider to set time and timestep to
+    \param tp TimeProvider to set time and timestep to
 
     \return Pointer to restored grid 
   */
