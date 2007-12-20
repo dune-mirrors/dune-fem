@@ -169,12 +169,12 @@ namespace Dune
       assert( baseVector_.size() == indexMapper_.range() );
     }
     
-    inline SubVector ( const ThisType &other )
-    : baseVector_( other.baseVector_ ),
-      indexMapper_( other.indexMapper_ )
-    {}
 
   private:
+    inline SubVector ( const ThisType &other );
+    // : baseVector_( other.baseVector_ ),
+    //  indexMapper_( other.indexMapper_ )
+    //{}
     ThisType &operator= ( const ThisType &other );
 
   public:
