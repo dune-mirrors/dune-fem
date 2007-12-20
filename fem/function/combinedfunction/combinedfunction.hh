@@ -198,8 +198,8 @@ namespace Dune
     using BaseType::operator-=;
     inline BaseType &operator-= ( const ThisType &g )
     {
-      std::cout << "     special operator -= in combineddf" 
-		<< std::endl;
+      // std::cout << "     special operator -= in combineddf" 
+      //	<< std::endl;
       for (int i=0;i<N;i++)
 	*func_[i] -= g.subFunction(i);
      return *this;
