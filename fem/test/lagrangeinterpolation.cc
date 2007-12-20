@@ -1,3 +1,5 @@
+#undef NDEBUG
+
 #include <config.h>
 #include <iostream>
 
