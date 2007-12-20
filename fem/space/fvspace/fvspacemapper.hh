@@ -74,14 +74,14 @@ namespace Dune
     inline DofMapIteratorType begin ( const EntityType &entity ) const
     {
       const int baseIndex = indexSet_.index( entity ) * dimrange;
-      const typename DofMapIteratorType :: BeginIterator type;
+      typename DofMapIteratorType :: BeginIterator type;
       return DofMapIteratorType( type, baseIndex );
     }
     
     /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const
     {
-      const typename DofMapIteratorType :: EndIterator type; 
+      typename DofMapIteratorType :: EndIterator type; 
       return DofMapIteratorType( type, dimrange );
     }
 

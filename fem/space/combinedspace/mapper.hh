@@ -89,7 +89,7 @@ namespace Dune
     {}
 
     inline CombinedDofMapIterator ( const ThisType &other )
-    : dofUtil_( other.dofUtil ),
+    : dofUtil_( other.dofUtil_ ),
       containedIterator_( other.containedIterator_ ),
       component_( other.component_ )
     {}
