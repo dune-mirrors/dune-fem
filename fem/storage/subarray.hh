@@ -166,7 +166,7 @@ namespace Dune
       typedef CheckVectorInterface< BaseVectorType > __CheckBaseVectorType__;
       typedef CheckIndexMapperInterface< IndexMapperType > __CheckIndexMapperType__;
 
-      assert( baseVector_.size() == (int) indexMapper_.range() );
+      assert( (unsigned int)baseVector_.size() == indexMapper_.range() );
     }
     
 
