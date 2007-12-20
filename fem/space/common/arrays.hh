@@ -279,14 +279,31 @@ public:
     return *this;
   }
  
-  //! operator *=  
-  ThisType& operator *= (double a)
+  //! operator *= multiplies array with a scalar  
+  ThisType& operator *= (const T scalar)
   {
     const int s = size();
-    for(int i=0; i<s; ++i) vec_[i] *= a;
+    for(int i=0; i<s; ++i) vec_[i] *= scalar;
     return *this;
   }
   
+  //! operator /= divides array with a scalar  
+  ThisType& operator /= (const T scalar)
+  {
+    const T scalar_1 = (((T) 1)/scalar); 
+    const int s = size();
+    for(int i=0; i<s; ++i) vec_[i] *= scalar_1;
+    return *this;
+  }
+  
+  //! operator = assign all entrys to given scalar value  
+  ThisType& operator= (const T scalar)
+  {
+    const int s = size();
+    for(int i=0; i<s; ++i) vec_[i] = scalar;
+    return *this;
+  }
+
   //! axpy operation  
   void axpy (const ThisType& org, const T scalar)
   {
@@ -310,14 +327,6 @@ public:
     std::memmove(dest, src, length * sizeof(T));
   }
  
-  //! operator = assign all entrys with value t 
-  ThisType& operator= (const T t)
-  {
-    const int s = size();
-    for(int i=0; i<s; ++i) vec_[i] = t;
-    return *this;
-  }
-
   //! Comparison operator
   //! The comparison operator checks for object identity, i.e. if this and
   //! other are the same objects in memory rather than containing the same data
