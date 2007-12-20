@@ -202,7 +202,8 @@ namespace Dune
     inline DofMapIteratorType end ( const EntityType &entity ) const;
 
     //! Map a local degree of freedom on an entity to a global one
-    inline int mapToGlobal( const EntityType &entity,
+    template <class EntityImp> 
+    inline int mapToGlobal( const EntityImp &entity,
                             int localNum ) const;
 
     //- Method inherited from mapper interface

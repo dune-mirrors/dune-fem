@@ -47,8 +47,9 @@ namespace Dune
 
   
   template< class ContainedSpace, int N, DofStoragePolicy policy >
+  template< class EntityImp >
   inline int CombinedMapper< ContainedSpace, N, policy >
-    :: mapToGlobal ( const EntityType &entity, int localNum ) const 
+    :: mapToGlobal ( const EntityImp &entity, int localNum ) const 
   {
     const int component = utilLocal_.component(localNum);
     const int containedLocal = utilLocal_.containedDof(localNum);
