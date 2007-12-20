@@ -316,9 +316,13 @@ namespace Dune
       Imp( name, spc ),
       lfFactory_( *this )
     {
+      const SubSpaceType& subSpace = spc.containedSpace();
       for (int i=0;i<N;i++) {
         subDofMapper_[i] = new SubMapperType(this->spc_,i);
         subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
+        subDiscFunc_[i]  = new SubDiscreteFunctionType(
+                               std::string("Subfunction of ")+this->name(),
+                               subSpace,*(subDofVector_[i]));
       }
     }
 
@@ -330,9 +334,13 @@ namespace Dune
     : BaseType( spc, lfFactory_ ),
       Imp( name, spc , vector ),
       lfFactory_( *this ) {
+      const SubSpaceType& subSpace = spc.containedSpace();
       for (int i=0;i<N;i++) {
         subDofMapper_[i] = new SubMapperType(this->spc_,i);
         subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
+        subDiscFunc_[i]  = new SubDiscreteFunctionType(
+                               std::string("Subfunction of ")+this->name(),
+                               subSpace,*(subDofVector_[i]));
       }
     }
     
@@ -344,9 +352,13 @@ namespace Dune
       Imp( name, spc , dofVec ),
       lfFactory_( *this )
     {
+      const SubSpaceType& subSpace = spc.containedSpace();
       for (int i=0;i<N;i++) {
         subDofMapper_[i] = new SubMapperType(this->spc_,i);
         subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
+        subDiscFunc_[i]  = new SubDiscreteFunctionType(
+                               std::string("Subfunction of ")+this->name(),
+                               subSpace,*(subDofVector_[i]));
       }
     }
 
@@ -356,9 +368,13 @@ namespace Dune
       Imp(other),
       lfFactory_( *this )
     {
+      const SubSpaceType& subSpace = other.space().containedSpace();
       for (int i=0;i<N;i++) {
         subDofMapper_[i] = new SubMapperType(this->spc_,i);
         subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
+        subDiscFunc_[i]  = new SubDiscreteFunctionType(
+                               std::string("Subfunction of ")+this->name(),
+                               subSpace,*(subDofVector_[i]));
       }
     }
     
@@ -438,7 +454,7 @@ namespace Dune
     using Imp::leakPointer;
     
     //- Additional methods
-    SubDiscreteFunctionType subFunction(int component);
+    SubDiscreteFunctionType& subFunction(int component);
 
     int numComponents() const { return N; }
 
@@ -454,6 +470,7 @@ namespace Dune
     const MyType& interface() const { return *this; }
     SubMapperType* subDofMapper_[N];
     SubDofVectorType* subDofVector_[N]; 
+    SubDiscreteFunctionType* subDiscFunc_[N];
   }; // end class AdaptiveDiscreteFunction (specialised for CombinedSpace)
   
 } // end namespace Dune

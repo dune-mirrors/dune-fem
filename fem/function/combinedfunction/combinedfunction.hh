@@ -128,7 +128,9 @@ namespace Dune
 
   public:
     //- Public methods
-    //! Constructor
+    //! Constructor 
+    //! WARNING: here we have to use a const cast for the
+    //! function space!
     CombinedDiscreteFunction(ContainedDiscreteFunctionType& func) 
       : BaseType( spc_, lfFactory_ ),
 	spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(func.space()).gridPart()),
@@ -295,7 +297,7 @@ namespace Dune
       return func_[0]->dend();
     }
     
-    inline ContainedDiscreteFunctionType subFunction(int i) {
+    inline ContainedDiscreteFunctionType& subFunction(int i) {
       return *(func_[i]);
     }
     inline ContainedDiscreteFunctionSpaceType& subSpace() {
