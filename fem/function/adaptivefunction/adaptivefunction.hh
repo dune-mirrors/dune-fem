@@ -454,7 +454,13 @@ namespace Dune
     using Imp::leakPointer;
     
     //- Additional methods
-    SubDiscreteFunctionType& subFunction(int component);
+    SubDiscreteFunctionType& subFunction(int component) {
+      return *subDiscFunc_[component];
+    }
+    const SubDiscreteFunctionType& 
+      subFunction(int component) const {
+      return *subDiscFunc_[component];
+    }
 
     int numComponents() const { return N; }
 

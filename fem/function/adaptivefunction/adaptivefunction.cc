@@ -16,13 +16,4 @@ namespace Dune
     }
   }
   
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  typename AdaptiveDiscreteFunction<
-    CombinedSpace<ContainedFunctionSpaceImp, N, p> >::SubDiscreteFunctionType&
-  AdaptiveDiscreteFunction<CombinedSpace<ContainedFunctionSpaceImp, N, p> >::
-  subFunction(int component) 
-  {
-    return *subDiscFunc_[component];
-  }
-
 } // end namespace Dune
