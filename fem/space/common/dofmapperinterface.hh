@@ -97,6 +97,15 @@ public:
     return asImp().end( entity );
   }
 
+  /** return new size of space, i.e. after adaptation 
+    \returns new size of space 
+  */
+  int newSize() const 
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().newSize());
+    return asImp().newSize();
+  }
+
   /** \brief map a local DoF number to a global one
    *
    *  \param[in]  entity    entity the DoF belongs to
@@ -108,13 +117,6 @@ public:
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity ,localDof));
     return asImp().mapToGlobal( entity , localDof );
-  }
-
-  //! return new size of space, i.e. after adaptation 
-  int newSize() const 
-  {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().newSize());
-    return asImp().newSize();
   }
  
   /** \brief obtain maximal number of DoFs on one entity
@@ -129,6 +131,21 @@ public:
     return asImp().numDofs();
   }
   
+  /** \brief map a local DoF number of an entity to a global one
+   *
+   *  \param[in]  entity    entity the DoF belongs to
+   *  \param[in]  localDof  local number of the DoF
+   *
+   *  \returns global number of the DoF
+   */
+  template <class EntityImp> 
+  int mapEntityDofsToGlobal ( const EntityImp &entity, const int localDof ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(
+        asImp().mapEntityDofsToGlobal(entity ,localDof));
+    return asImp().mapEntityDofsToGlobal( entity , localDof );
+  }
+ 
   /** \brief obtain number of DoFs on an entity
    * 
    *  \param[in]  entity  entity of codimension 0
@@ -141,28 +158,28 @@ public:
     return asImp().numDofs( entity );
   }
 
-  //! return number of holes for data block 
+  /** \brief return number of holes for data block */
   int numberOfHoles(const int block) const 
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numberOfHoles(block));
     return asImp().numberOfHoles(block); 
   }
   
-  //! return old index of hole for data block 
+  /** \brief return old index of hole for data block */
   int oldIndex (const int hole, const int block) const 
   { 
     CHECK_INTERFACE_IMPLEMENTATION(asImp().oldIndex(hole,block));
     return asImp().oldIndex(hole,block); 
   }
     
-  //! return new index of hole for data block 
+  /** \brief return new index of hole for data block */
   int newIndex (const int hole, const int block) const 
   { 
     CHECK_INTERFACE_IMPLEMENTATION(asImp().newIndex(hole,block));
     return asImp().newIndex(hole,block); 
   }
 
-  //! return true if compress will affect data  
+  /** \brief return true if compress will affect data */
   bool needsCompress () const 
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().needsCompress());
@@ -177,21 +194,21 @@ public:
         asImp().update());
   }
 
-  //! return old offsets for given block 
+  /** \brief return old offsets for given block */
   int oldOffSet(const int block) const
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().oldOffSet(block));
     return asImp().oldOffSet(block);
   }
 
-  //! return current offsets for given block 
+  /** \brief return current offsets for given block */
   int offSet(const int block) const
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().offSet(block));
     return asImp().offSet(block);
   }
 
-  //! return number of supported blocks  
+  /** return number of supported blocks */
   int numBlocks() const
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numBlocks());
@@ -280,6 +297,9 @@ protected:
   using BaseType :: asImp;
   
 public:
+  /** \copydoc DofMapperInterface::numDofs( const EntityType &entity ) 
+      \note This implementation just returns number of all dofs 
+  */
   inline int numDofs ( const EntityType &entity ) const
   {
     return asImp().numDofs ();
