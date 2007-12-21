@@ -113,8 +113,14 @@ namespace Dune
       return 0;
     }
 
-    /** \copydoc DofMapperInterface::numDofs */
+    /** \copydoc DofMapperInterface::numDofs() const */
     int numDofs () const
+    {
+      return numberOfDofs_;
+    }
+    
+    /** \copydoc DofMapperInterface::numDofs(const EntityType &entity) const */
+    int numDofs ( const EntityType &entity ) const
     {
       return numberOfDofs_;
     }
