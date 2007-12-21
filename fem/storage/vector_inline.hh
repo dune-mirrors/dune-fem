@@ -255,9 +255,7 @@ namespace Dune
     return out;
   }
 
-
-
-  void match ( std :: istream &in, char excepted )
+  inline void match ( std :: istream &in, char excepted )
   {
     char c = 0;
     in >> c;
