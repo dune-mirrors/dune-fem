@@ -24,7 +24,7 @@ namespace Dune
     typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
       DofMapperType;
     
-    typedef DefaultDofMapIterator< GridPartImp, DofMapperType >
+    typedef DefaultDofMapIterator< EntityType, DofMapperType >
       DofMapIteratorType;
   };
 
@@ -83,36 +83,49 @@ namespace Dune
       return localDof;
     }
 
+    /** \copydoc Dune::DofMapperInterface::needsCompress() const */
     bool needsCompress () const
     {
       return false;
     }
 
+    /** \copydoc Dune::DofMapperInterface::newIndex(const int hole,const int block) const */
     int newIndex ( const int hole, const int block ) const
     {
       return -1;
     }
 
+    /** \copydoc Dune::DofMapperInterface::newSize() const */
     int newSize () const
     {
       return size();
     }
 
+    /** \copydoc Dune::DofMapperInterface::numberOfHoles(const int block) const */
     int numberOfHoles ( const int block ) const
     {
       return 0;
     }
 
+    /** \copydoc Dune::DofMapperInterface::numDofs() const */
     int numDofs () const
     {
       return size();
     }
+   
+    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    int numDofs ( const EntityType &entity ) const
+    {
+      return size();
+    }
 
+    /** \copydoc Dune::DofMapperInterface::oldIndex(const int hole,const int block) const */
     int oldIndex ( const int hole, const int block ) const
     {
       return -1;
     }
 
+    /** \copydoc Dune::DofMapperInterface::size() const */
     int size () const
     {
       return baseFunctionList_.size();
