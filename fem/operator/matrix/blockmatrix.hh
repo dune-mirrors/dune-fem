@@ -198,7 +198,7 @@ public:
     } 
   };
 
-  // this = A * B
+  //! this = A^T * A 
   void multiply_AT_A(const DenseMatrix & A) 
   {
     resize(A.cols() , A.cols());
