@@ -23,7 +23,9 @@ namespace Dune {
   ///////////////////////////////////////////////////////
   // --BlockMatrixHandle
   //////////////////////////////////////////////////////
-  template <class LittleBlockType, class DiscreteFunctionType> 
+  template <class LittleBlockType, 
+            class RowDiscreteFunctionType, 
+            class ColDiscreteFunctionType = RowDiscreteFunctionType> 
   class ImprovedBCRSMatrix : public BCRSMatrix<LittleBlockType> 
   {
     public:
@@ -66,13 +68,16 @@ namespace Dune {
       typedef typename BaseType :: ConstRowIterator ConstRowIterator;
 
       //! type of discrete function space 
-      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType SpaceType;
+      typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
 
-      //! type of block vector 
-      typedef typename DiscreteFunctionType :: DofStorageType  BlockVectorType; 
+      //! type of row block vector 
+      typedef typename RowDiscreteFunctionType :: DofStorageType  RowBlockVectorType; 
+
+      //! type of column block vector 
+      typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType; 
 
       //! type of used communication manager  
-      typedef CommunicationManager<SpaceType> CommunicationManagerType; 
+      typedef CommunicationManager<RowSpaceType> CommunicationManagerType; 
 
     private:  
       size_type nz_;
@@ -81,7 +86,7 @@ namespace Dune {
       int localCols_;
 
       //! our function space, needed for communication  
-      const SpaceType* space_; 
+      const RowSpaceType* rowSpace_; 
 
       //! communication manager 
       mutable CommunicationManagerType* comm_;
@@ -90,12 +95,12 @@ namespace Dune {
 
     public:
       //! constructor used by ISTLMatrixObject
-      ImprovedBCRSMatrix(const SpaceType & space, 
+      ImprovedBCRSMatrix(const RowSpaceType & space, 
                          CommunicationManagerType& comm,
                          size_type rows, size_type cols)
         : BaseType (rows,cols,BaseType::row_wise)
         , nz_(0)
-        , space_(&space)
+        , rowSpace_(&space)
         , comm_(&comm)         
       {
       }
@@ -104,7 +109,7 @@ namespace Dune {
       ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
         : BaseType (rows,cols, BaseType::row_wise)
         , nz_(nz)
-        , space_(0)
+        , rowSpace_(0)
         , comm_(0)         
       {
       }
@@ -115,7 +120,7 @@ namespace Dune {
         , nz_(org.nz_)
         , localRows_(org.localRows_)
         , localCols_(org.localCols_)
-        , space_(org.space_)
+        , rowSpace_(org.rowSpace_)
         , comm_(org.comm_)
         , overlapRows_(org.overlapRows_) 
       {}
@@ -266,30 +271,30 @@ namespace Dune {
       }
 
       //! communicate block vector 
-      void communicate(const BlockVectorType& arg) const 
+      void communicate(const RowBlockVectorType& arg) const 
       {
         if(comm_)
         {
-          assert( space_ );
+          assert( rowSpace_ );
           // if serial run, just return 
-          if(space_->grid().comm().size() <= 1) 
+          if(rowSpace_->grid().comm().size() <= 1) 
           {
             return;
           }
 
           // exchange data 
-          DiscreteFunctionType tmp("ImprovedBCRSMatrix::communicate_tmp",*space_,arg);
+          RowDiscreteFunctionType tmp("ImprovedBCRSMatrix::communicate_tmp",*rowSpace_,arg);
           comm_->exchange( tmp );
         }
       }
 
       //! apply matrix: \f$ y = A(x) \f$
-      double residuum(const BlockVectorType& rhs, BlockVectorType& x) const 
+      double residuum(const ColBlockVectorType& rhs, RowBlockVectorType& x) const 
       {
         // exchange data 
         communicate( x );
 
-        typedef typename BlockVectorType :: block_type LittleBlockVectorType; 
+        typedef typename ColBlockVectorType :: block_type LittleBlockVectorType; 
         LittleBlockVectorType tmp; 
         double res = 0.0;
 
@@ -320,9 +325,9 @@ namespace Dune {
           }
         }
 
-        if( space_ ) 
+        if( rowSpace_ ) 
         {
-          return space_->grid().comm().sum( res );
+          return rowSpace_->grid().comm().sum( res );
         }
         else 
         {
@@ -331,7 +336,7 @@ namespace Dune {
       }
 
       //! apply matrix: \f$ y = A(x) \f$
-      void mult(const BlockVectorType& x, BlockVectorType& y) const 
+      void mult(const RowBlockVectorType& x, ColBlockVectorType& y) const 
       {
         // exchange data 
         communicate( x );
@@ -346,7 +351,7 @@ namespace Dune {
       }
 
       //! apply scaled: \f$ y = y + \alpha A(x) \f$
-      void multAdd(field_type alpha, const BlockVectorType& x, BlockVectorType& y) const 
+      void multAdd(field_type alpha, const RowBlockVectorType& x, ColBlockVectorType& y) const 
       {
         // exchange data 
         communicate( x );
@@ -359,7 +364,7 @@ namespace Dune {
 
     private:  
       // delete all vector entries that belong not to interior entities 
-      void deleteNonInterior(BlockVectorType& y) const
+      void deleteNonInterior(ColBlockVectorType& y) const
       {
         // set all entries belonging to non-interior elements to zero 
         const int overlap = overlapRows_.size();
@@ -466,18 +471,24 @@ namespace Dune {
     
     typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
 
-    typedef BlockVectorDiscreteFunction< RowSpaceType >  DiscreteFunctionType; 
-    typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType; 
+    typedef BlockVectorDiscreteFunction< RowSpaceType >     RowDiscreteFunctionType; 
+    typedef BlockVectorDiscreteFunction< ColumnSpaceType >  ColumnDiscreteFunctionType; 
+    
+    typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType; 
+    typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType; 
 
     typedef typename RowSpaceType :: BlockMapperType RowMapperType; 
     typedef typename ColumnSpaceType :: BlockMapperType ColMapperType; 
 
   public:
     //! type of used matrix 
-    typedef ImprovedBCRSMatrix< LittleBlockType , DiscreteFunctionType > MatrixType;
+    typedef ImprovedBCRSMatrix< LittleBlockType , 
+                                RowDiscreteFunctionType , 
+                                ColumnDiscreteFunctionType > MatrixType;
    
     //! type of preconditioner 
-    typedef PreconditionerWrapper<BlockVectorType,BlockVectorType> PreconditionMatrixType;
+    typedef PreconditionerWrapper<RowBlockVectorType,
+                      ColumnBlockVectorType> PreconditionMatrixType;
 
     struct LocalMatrixTraits
     {
@@ -890,37 +901,37 @@ namespace Dune {
       // SSOR 
       else if( preconditioning_ == ssor )
       {
-        typedef SeqSSOR<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        typedef SeqSSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // SOR 
       else if(preconditioning_ == sor )
       {
-        typedef SeqSOR<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        typedef SeqSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // ILU-0 
       else if(preconditioning_ == ilu_0)
       {
-        typedef SeqILU0<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        typedef SeqILU0<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), relaxFactor_, (PreconditionerType*)0);
       }
       // ILU-n
       else if(preconditioning_ == ilu_n)
       {
-        typedef SeqILUn<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        typedef SeqILUn<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // Gauss-Seidel
       else if(preconditioning_ == gauss_seidel)
       {
-        typedef SeqGS<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        typedef SeqGS<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // Jacobi 
       else if(preconditioning_ == jacobi)
       {
-        typedef SeqJac<MatrixType,BlockVectorType,BlockVectorType> PreconditionerType;
+        typedef SeqJac<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       else 
