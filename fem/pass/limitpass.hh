@@ -231,6 +231,7 @@ namespace Dune {
     //! \param problem Actual problem definition (see problem.hh)
     //! \param pass Previous pass
     //! \param spc Space belonging to the discrete function local to this pass
+    //! \param paramFile Name of parameter file (defaults to empty)
     LimitDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 const DiscreteFunctionSpaceType& spc,
