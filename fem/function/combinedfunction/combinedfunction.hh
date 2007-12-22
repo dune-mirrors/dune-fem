@@ -233,14 +233,14 @@ namespace Dune
       return ret;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::read(Dune::InStreamInterface &in) */
+    /** \copydoc Dune::DiscreteFunctionInterface::read */
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits >& in)
     {
       for (int i=0;i<N;i++)
 	func_[i]->read(in);
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::write(Dune::OutStreamInterface &out) const */
+    /** \copydoc Dune::DiscreteFunctionInterface::write */
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits >& out) const
     {
