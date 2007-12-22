@@ -297,7 +297,7 @@ protected:
   using BaseType :: asImp;
   
 public:
-  /** \copydoc DofMapperInterface::numDofs( const EntityType &entity ) 
+  /** \copydoc DofMapperInterface::numDofs( const EntityType &entity ) const
       \note This implementation just returns number of all dofs 
   */
   inline int numDofs ( const EntityType &entity ) const
