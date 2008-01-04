@@ -1,9 +1,6 @@
 #ifndef DUNE_ADAPTMANAGER_HH
 #define DUNE_ADAPTMANAGER_HH
 
-//- Dune includes 
-#include <dune/common/array.hh>
-
 //- local includes 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/operator/common/objpointer.hh>
