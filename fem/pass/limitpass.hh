@@ -71,7 +71,11 @@ namespace Dune {
   public:
     typedef LimiterDefaultTraits<GlobalTraitsImp,Model> Traits;
     
+#ifdef USE_LIMITER_AFTER
     typedef Selector<1> SelectorType;
+#else
+    typedef Selector<0> SelectorType;
+#endif
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
@@ -137,8 +141,16 @@ namespace Dune {
       const UType& argULeft = Element<0>::get(uLeft);
       model_.velocity(this->inside(),time,it.intersectionSelfLocal().global(x),
                       argULeft,velocity_);
+
+      // calculate scalar product of normal and velocity 
+      const double scalarProduct = it.outerNormal(x) * velocity_;
+
       // check inflow boundary 
-      return ((it.outerNormal(x) * velocity_) < 0);
+      // in case of product zero also check 
+      // (otherwise errors on problems with only diffusion)
+      return (scalarProduct < 0) ? true : // inflow intersection 
+               (scalarProduct > 0) ? false :  // outflow intersection
+               (velocity_.two_norm() < 1e-12); // velocity zero 
     }
 
   protected:
@@ -225,12 +237,22 @@ namespace Dune {
     enum { dimension = GridType :: dimension };
     typedef typename GridType :: ctype ctype; 
     typedef FieldVector<ctype, dimDomain-1> FaceDomainType;
+
+    //! is true if grid is structured grid 
+    enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
+
   public:
     //- Public methods
-    //! Constructor
-    //! \param problem Actual problem definition (see problem.hh)
-    //! \param pass Previous pass
-    //! \param spc Space belonging to the discrete function local to this pass
+    /** \brief Constructor
+      \param problem Actual problem definition (see problem.hh)
+      \param pass Previous pass
+      \param spc Space belonging to the discrete function local to this pass
+      \param paramFile parameter file (optional) containing whether to use TVD
+            switch or not:  
+            
+        # 0 == TVB , 1 == TVD 
+        TVD: 0  # defaut value 
+    */
     //! \param paramFile Name of parameter file (defaults to empty)
     LimitDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
@@ -272,7 +294,6 @@ namespace Dune {
 
             // store local coordinates of barycenter 
             baryCenterMap_[ geomTypes[i] ] = refElem.position(0,0);
-            //std::cout << "Local barycenter = " << baryCenterMap_[ geomTypes[i] ] << "\n";
           }
         }
         
@@ -290,7 +311,6 @@ namespace Dune {
 
             // store local coordinates of barycenter 
             faceCenterMap_[ geomTypes[i] ] = refElem.position(0,0);
-            //std::cout << "Local barycenter = " << baryCenterMap_[ geomTypes[i] ] << "\n";
           }
         }
       }
@@ -303,7 +323,7 @@ namespace Dune {
     virtual ~LimitDGPass() {
     }
     
-  private:
+  protected:    
     // get tvd parameter from parameter file 
     bool getTvdParameter(const std::string& paramFile) const 
     {
@@ -315,9 +335,38 @@ namespace Dune {
       return (tvd == 1) ? true : false;
     }
 
+    //! The actual computations are performed as follows. First, prepare
+    //! the grid walkthrough, then call applyLocal on each entity and then
+    //! call finalize.
+    void compute(const ArgumentType& arg, DestinationType& dest) const
+    {
+      // limitation only necessary if order > 0
+      if( spc_.order() > 0 )
+      {
+        // prepare, i.e. set argument and destination 
+        prepare(arg, dest);
+
+        // dod limitation 
+        IteratorType endit = spc_.end();
+        for (IteratorType it = spc_.begin(); it != endit; ++it) 
+        {
+          applyLocal(*it);
+        }
+        // finalize
+        finalize(arg, dest);
+      }
+      else 
+      {
+        // otherwise just copy 
+        const DestinationType& U = *(Element<0>::get(arg));
+        dest.assign(U);
+      }
+    }
+
+  public:    
     //! In the preparations, store pointers to the actual arguments and 
     //! destinations. Filter out the "right" arguments for this pass.
-    virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
+    void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
@@ -326,16 +375,17 @@ namespace Dune {
     }
     
     //! Some management.
-    virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
+    void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
       caller_.finalize();
-      //DestinationType* U = const_cast<DestinationType*>(Element<0>::get(*arg_));
-      //dest.assign( *U );
-      //U->assign(dest);
+#ifndef USE_LIMITER_AFTER
+      DestinationType* U = const_cast<DestinationType*>(Element<0>::get(*arg_));
+      U->assign(dest);
+#endif
     }
 
     //! Perform the limitation on all elements.
-    virtual void applyLocal(EntityType& en) const
+    void applyLocal(EntityType& en) const
     {
       enum { dim = EntityType :: dimension };
       // check argument is not zero
@@ -359,11 +409,23 @@ namespace Dune {
       
       // number of scalar base functions
       const int numBasis = limitEn.numDofs()/dimRange;
-      
-      double radius = 0.0;
+
+      // if a component is true, then this component has to be limited 
+      FieldVector<bool,dimRange> limit(false);
+
+      RangeType totaljump(0);
+
+      // calculate circume during neighbor check 
+      double circume = 0.0;
+
+      // determ whether limitation is necessary  
+      bool limiter = false;
+      int refinementMarker = 0;
+
       const GeometryType geomType = geo.type();
       const DomainType enBary = geo.global( baryCenterMap_[geomType] );
-      
+
+      double radius = 0.0;
       if ( geomType.isSimplex() )
       {
         const int numcorners = geo.corners();
@@ -399,16 +461,8 @@ namespace Dune {
         DUNE_THROW(NotImplemented,"Unsupported geometry type!");
       }
             
-      const double hPowPolOrder = (1.0/(geo.volume())) * pow(radius, orderPower_);// -((order+1.0)/2.0) );
-      //const double hPowPolOrder = pow(4.0*M_SQRT2*radius, orderPower_);// -((order+1.0)/2.0) );
-      // get value of U in barycenter
-
-      FieldVector<bool,dimRange> limit(false);
-
-      RangeType totaljump(0);
-
-      // calculate circume during neighbor check 
-      double circume = 0.0;
+      // calculate h factor 
+      const double hPowPolOrder = (1.0/(geo.volume())) * pow(radius, orderPower_);
 
       JacobianRangeType enGrad;
       JacobianRangeType nbGrad;
@@ -454,28 +508,25 @@ namespace Dune {
         }
       } // end intersection iterator 
        
-      circume = (circume > 0.0) ? 1.0/circume : 0.0;
+      // multiply h pol ord with circume 
+      const double circFactor = (circume > 0.0) ? (hPowPolOrder / circume) : 0.0;
 
-      // determ whether limitation is necessary  
-      bool limiter = false;
-      int refinementMarker = 0;
-      
       for (int r=0; r<dimRange; ++r) 
       {
-        double jumpr = std::abs(totaljump[r]);
-        const double indicator = jumpr*hPowPolOrder*circume ;
+        const double jumpr = std::abs(totaljump[r]);
+        const double indicator = jumpr * circFactor;
         if ( indicator > 1 ) 
         {
           limit[r] = true;
           limiter = true;
 
-          if( en.level () < 2 )
+          if( indicator > 10 && en.level () < 2 )
           {
             // mark for refinement 
             refinementMarker = 1;
           }
         }
-        else if ( indicator < 0.5 ) 
+        else if ( indicator < 0.9 ) 
         {
           //std::cout << indicator << " indicator \n";
           // mark for coarsening 
@@ -512,11 +563,9 @@ namespace Dune {
         }
       }
 
-      {
       // get grid 
       GridType& grid = const_cast<GridType&> (gridPart_.grid());
       
-      const IntersectionIteratorType endnit = gridPart_.iend(en); 
       IntersectionIteratorType nit = gridPart_.ibegin(en); 
       if( nit == endnit ) return ;
 
@@ -654,7 +703,7 @@ namespace Dune {
 
         // calculate linear functions 
         // D(x) = U_i + D_i * (x - w_i)
-        typedef typename ComboSetType :: const_iterator iterator; 
+        typedef typename ComboSetType :: iterator iterator; 
         const iterator endit = comboSet_.end();
         for(iterator it = comboSet_.begin(); it != endit; ++it) 
         {
@@ -702,73 +751,101 @@ namespace Dune {
             // apply least square by adding another point 
             // this should make the linear system solvable 
              
-            std::vector<int> nV( dim );
+            // creare vector with size = dim+1
+            // the first dim components are equal to v 
+            std::vector<int> nV( dim+1 );
             for(int i=0; i<dim; ++i) nV[i] = v[i];
 
             // take first point of list of pionts to check 
             CheckType check ( (*it).second );
             assert( check.size() > 0 );
 
-            if( geomType.isHexahedron() ) 
+            // get check iterator 
+            typedef typename CheckType :: iterator CheckIteratorType; 
+            CheckIteratorType checkIt = check.begin();
+            const CheckIteratorType checkEnd = check.end();
+
+            // we start with a singular matrix 
+            bool matrixSingular = true ;
+            
+            // test all other number to make matrix regular 
+            while ( matrixSingular ) 
             {
-              int dir = 0;
-              bool found = false;
-              while ( ! found ) 
+              // matrix should be regular now 
+              if( checkIt == checkEnd )
               {
-                found = true ;
-                if( dir > 3 ) abort();
-                int test = (int) check[dir]/2;
-                for(size_t i=0; i<dim; ++i) 
+                // should work for 1 or 2 otherwise error 
+                DUNE_THROW(InvalidStateException,"Matrix singular in Limiter");
+              }
+
+              // assign last element 
+              nV[dim] = *checkIt ;
+              
+              matrixSingular = 
+                  applyLeastSquare( barys,
+                                    nbVals,
+                                    nV,
+                                    dM,
+                                    matrix,
+                                    inverse,
+                                    rhs );
+
+              // if solving was successful break before incrementing iterator 
+              if( ! matrixSingular ) 
+              {
+                // check for structured grids 
+                if( StructuredGrid ) 
                 {
-                  int ch = (int) nV[i]/2;   
-                  if( ch == test ) 
+                  CheckIteratorType checkBegin = check.begin();
+                  // swap entries in case the found is not the first 
+                  if( checkIt != checkBegin )
                   {
-                    ++dir; 
-                    found = false;
-                    break ;
+                    int swap = *checkBegin; 
+                    *checkBegin = *checkIt; 
+                    *checkIt = swap;
+                    checkIt = check.begin();
+
+                    // apply changes to set to have 
+                    // only one iteration next time 
+                    const_cast<CheckType&> ((*it).second) = check;
                   }
                 }
+
+                // break since we already got a regular matrix 
+                break ;
               }
 
-              assert( dir < (int) check.size() );
+              // go to next check element
+              ++checkIt;
+            }
 
-              nV.push_back( check[dir] );
-              typedef typename CheckType :: iterator iterator; 
-              iterator endch = check.end();
-              for(iterator itch = check.begin(); itch != endch; ++itch)
+            // remember value that is donin to be erased 
+            const int eraseVal = *checkIt;
+
+            // erase the element that was used for 
+            // applying least square from the list 
+            check.erase( checkIt );
+
+            // don't check in dependend direction 
+            // otherwise minimum will be zero 
+            // in 2d this situation cannot occur 
+            if( dim > 2 )
+            {
+              const DomainType& checkBary = barys[ eraseVal ];
+              for(checkIt = check.begin(); checkIt != checkEnd; ++checkIt)
               {
-                if( *itch == dir ) 
+                DomainType diff ( barys[ *checkIt ] );
+                diff += checkBary; 
+                
+                // this difference should not be zero, otherwise erase entry 
+                if( diff.two_norm() < 1e-12 ) 
                 {
-                  check.erase ( itch );
-                  break ;
+                  check.erase( checkIt );
+                  break;
                 }
               }
             }
-            else 
-            {
-              assert( check.size() > 0 );
-              // take new entry
-              nV.push_back(check[0]);
-              // remove point from points to check list 
-              check.erase( check.begin () );
-            }
-
-            bool matrixSingular = 
-                applyLeastSquare( barys,
-                                  nbVals,
-                                  nV,
-                                  dM,
-                                  matrix,
-                                  inverse,
-                                  rhs );
-
-            // matrix should be regular now 
-            if( matrixSingular )
-            {
-              // should work for 1 or 2 otherwise error 
-              DUNE_THROW(InvalidStateException,"Matrix singular in Limiter");
-            }
-
+            
             // store linear function
             deoMods.push_back( dM );
             // store vector with points to check 
@@ -787,36 +864,40 @@ namespace Dune {
             // loop over dimRange 
             for(int r=0; r<dimRange; ++r) 
             {
-              double mini = 1.0;
+              RangeFieldType minimalFactor = 1.0;
               DomainType& D = deoMods[j][r];
               
               const size_t vSize = v.size();
               for(size_t m=0; m<vSize; ++m)
               {
+                // get current number of entry 
                 const size_t k = v[m];
                 const DomainType& omega = barys[k];
 
+                // evaluate values for limiter function 
                 const RangeFieldType g = D * omega;
                 const RangeFieldType d = nbVals[k][r];
                 const RangeFieldType gd = g * d;
 
-                double m_l = 1.0;
+                RangeFieldType localFactor = 1.0;
                 
-                // if product smaller than limit take it as zero 
-                if( gd <= 1e-8 )
+                // if product smaller than zero set m_l to zero 
+                // because functions have different sign 
+                if( gd <= 1e-8 ) 
                 {
-                  m_l = 0.0;
+                  localFactor = 0.0;
                 }
-                else if( (gd > 0.) && (std::abs(g) > std::abs(d)) ) 
+                else if( std::abs(g) > std::abs(d) ) 
                 {
-                  m_l = (d/g);
+                  localFactor = (d/g);
                 }
 
-                mini = std::min( m_l , mini );
+                // take minimum 
+                minimalFactor = std::min( localFactor , minimalFactor );
               }
 
               // scale linear function 
-              D *= mini;
+              D *= minimalFactor;
             }
           }
           
@@ -907,7 +988,6 @@ namespace Dune {
           }
         }
       } //end if limiter 
-      }
     }
     
   private:
@@ -1049,6 +1129,8 @@ namespace Dune {
       // new matrix 
       NewMatrixType A ;
 
+      assert( (int) nV.size() == newDim );
+
       // create matrix 
       for(int k=0; k<newDim; ++k) 
       {
@@ -1085,7 +1167,6 @@ namespace Dune {
           D = 0;
           // get solution 
           inverse.umv( rhs, D );
-
         }
         
         // return false because matrix is invertable 
@@ -1153,7 +1234,7 @@ namespace Dune {
 
         // create set containing all numbers 
         std::set<int> constNumbers;
-        typedef std::set<int> :: iterator el_iterator;
+        typedef typename std::set<int> :: iterator el_iterator;
         for(int i = 0; i<neighbors; ++i)
         {
           constNumbers.insert(i);
@@ -1169,17 +1250,6 @@ namespace Dune {
 
           // reserve memory 
           check.reserve ( checkSize );
-
-          /*
-          if( neighbors > 3 )
-          {
-            // debug output 
-            std::cout << "Found key = {";
-            for(int i=0; i<dimension; ++i) 
-              std::cout << v[i] << ",";
-            std::cout << "} \n";
-          }
-          */
 
           // get set containing all numbers 
           std::set<int> numbers (constNumbers);
@@ -1250,33 +1320,6 @@ namespace Dune {
       }
     }
 
-    //! The actual computations are performed as follows. First, prepare
-    //! the grid walkthrough, then call applyLocal on each entity and then
-    //! call finalize.
-    void compute(const ArgumentType& arg, DestinationType& dest) const
-    {
-      // limitation only necessary if order > 0
-      if( spc_.order() > 0 )
-      {
-        // prepare, i.e. set argument and destination 
-        prepare(arg, dest);
-
-        // dod limitation 
-        IteratorType endit = spc_.end();
-        for (IteratorType it = spc_.begin(); it != endit; ++it) {
-          applyLocal(*it);
-        }
-        // finalize
-        finalize(arg, dest);
-      }
-      else 
-      {
-        // otherwise just copy 
-        const DestinationType& U = *(Element<0>::get(arg));
-        dest.assign(U);
-      }
-    }
-    
     // make private 
     LimitDGPass();
     LimitDGPass(const LimitDGPass&);
