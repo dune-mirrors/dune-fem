@@ -5,7 +5,6 @@
 #include <vector>
 
 //- dune inclues
-//#include <dune/common/array.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/fem/storage/array.hh>
