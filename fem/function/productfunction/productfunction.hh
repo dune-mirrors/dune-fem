@@ -7,7 +7,6 @@
 
 //- Dune includes 
 
-#include <dune/common/array.hh>
 #include <dune/common/geometrytype.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/dofiterator.hh>
