@@ -44,7 +44,7 @@ between two \ref DiscreteFunctionSpace "discrete function spaces":
 \f$ L_h : U_h \to V_h \f$.
 This operator might for example be a second order elliptic operator, a
 first order hyperbolic operator, or a projector operator. Basic
-operator can be combined to construct more complex operators. In addition to
+operators can be combined to construct more complex operators. In addition to
 standard vector space operations, the most flexible construction process
 is the \ref Pass "pass concept",
 which implements the nesting of operators allowing to
@@ -72,7 +72,7 @@ Here is a short list of available simple operators:
   and up to order 10 discontinuous).
 - discontinuous Galerkin method for first order hyperbolic balance laws 
   (up to order 10).
-- Lagrange und L2 Type projections
+- Lagrange and L2 Type projections
 .
 
 By combining these operators in the fashion describt above
@@ -111,7 +111,7 @@ reorganization of the dofs during adaptation and grid
 reorganization. To use this
 feature the Dune::AdaptationManager should be used. 
 
-For handling parallel task the
+For handling parallel tasks the
 Dune::CommunicationManager is available which
 performs the required communication for a given set of 
 discrete functions. 
@@ -133,7 +133,7 @@ for the basis functions at the quadrature points.
 \section IOSec Input and Output
 <!---------------------------------------------->
 
-Output routins of simulation results are available
+Output routines of simulation results are available
 for Grape and in vtk - as used for example by
 paraview.
 Furthermore checkpointing of the data and the underlying
