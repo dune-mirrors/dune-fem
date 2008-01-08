@@ -84,7 +84,22 @@ class EulerModel {
   
   // has flux 
   bool hasSource() const { return false; }
-  
+
+  // needed for limitation
+  inline  void velocity(
+             const typename Traits::EntityType& en,
+             double time,
+             const DomainType& x,
+             const RangeType& u,
+             DomainType& velocity) const
+  {
+    for(int i=0; i<dimDomain; ++i) 
+    {
+      // check again 
+      velocity[i] = u[i+1];
+    }
+  }
+
   inline  void analyticalFlux(typename Traits::EntityType& en,
 			      double time,  
 			      const typename Traits::DomainType& x,
@@ -347,7 +362,7 @@ void EulerFlux<2>::analyticalFlux(const double gamma,
 				  const FieldVector<double,2+2>& u,
 				  FieldMatrix<double,2+2,2>& f) const {
   assert(u[0]>1e-10);
-  double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
+  const double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
   /*
   if (rhoeps<1e-10) 
     cerr << "negative internal energy density " << rhoeps 
@@ -361,6 +376,21 @@ void EulerFlux<2>::analyticalFlux(const double gamma,
   f[1][0] = v[0]*u[1]+p;     f[1][1] = v[1]*u[1];
   f[2][0] = v[0]*u[2];       f[2][1] = v[1]*u[2]+p;
   f[e][0] = v[0]*(u[e]+p);   f[e][1] = v[1]*(u[e]+p);
+}
+
+template <>
+inline
+double EulerFlux<3>::pressure(const double gamma,const RangeType& u) const {
+  assert(u[0]>1e-10);
+  const double rhoeps = u[e]-0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3])/u[0];
+  /*
+  if (rhoeps<1e-10) 
+    cerr << "negative internal energy density " << rhoeps 
+	 << " in analyticalFlux: "
+	 << u << endl;
+   */
+  assert(rhoeps>1e-10);
+  return (gamma-1)*rhoeps;
 }
 template <>
 inline
@@ -487,11 +517,25 @@ public:
     evaluate(0,arg,res);
   }
   template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg,double t, RangeType& res) const 
+  {
+    evaluate(t,arg,res);
+  }
+  template <class DomainType, class RangeType>
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
     DomainType c(0.0);
     DomainType x = arg;
     x -= c;
     double r2 = 0.25*0.25;
+    res=0;
+    if (x*x<r2) {
+      res[0] = 1.0;
+      res[3] = 1.0/(gamma-1.);
+    } else {
+      res[0] = 0.125;
+      res[3] = 0.1/(gamma-1.);
+    }
+    return;
     res[1] = cos(0.2*M_PI);
     res[2] = sin(0.2*M_PI);
     x[0] -= t*res[1];

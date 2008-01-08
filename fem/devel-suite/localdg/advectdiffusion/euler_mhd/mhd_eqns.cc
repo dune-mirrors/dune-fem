@@ -2907,8 +2907,8 @@ namespace Mhd {
         fb=ener_a(b,f1,f2); 
       }  
 
-    float fc,q,r,s,tol1,xm;
-    float p =0.0;
+    float fc,r,s,tol1,xm;
+    float p =0.0, q=0.0;
 
     if ((fa > 0.0 && fb > 0.0) || (fa < 0.0 && fb < 0.0))
       cerr<<"Root must be bracketed in zbrent (" 
