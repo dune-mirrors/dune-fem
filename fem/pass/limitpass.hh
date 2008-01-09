@@ -83,14 +83,26 @@ namespace Dune {
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename DomainType :: field_type DomainFieldType;
+
+    enum { dimRange = RangeType :: dimension };
     
   public:
-    LimiterDefaultDiscreteModel(const Model& mod) 
-      : model_(mod) , velocity_(0) {}
+    /** \brief default limiter discrete model */
+    LimiterDefaultDiscreteModel(const Model& mod, const DomainFieldType veloEps = 1e-12) 
+      : model_(mod) , velocity_(0) , veloEps_(veloEps) 
+    {}
 
+    //! \brief returns false 
     bool hasSource() const { return false; }
+    //! \brief returns true 
     bool hasFlux() const   { return true;  }
     
+    /** \brief numericalFlux of for limiter evaluateing the difference
+         of the solution in the current integration point if we are a an
+         inflow intersection.
+         This is needed for the shock detection.
+    */
     template <class ArgumentTuple>
     double numericalFlux(IntersectionIterator& it,
                          double time, const FaceDomainType& x,
@@ -118,6 +130,10 @@ namespace Dune {
       }
     }
 
+    /** \brief boundaryFlux to evaluate the difference of the interior solution 
+        with the boundary value. This is needed for the limiter. 
+        The default returns 0, meaning that we use the interior value as ghost value. 
+    */
     template <class ArgumentTuple>
     double boundaryFlux(IntersectionIterator& it,
                         double time, const FaceDomainType& x,
@@ -128,7 +144,18 @@ namespace Dune {
       return 0.0;
     }
 
+    /** \brief ensure physicality of solution 
+    */
+    FieldVector<bool,dimRange> physicalValue(const RangeType& uLeft) const 
+    { 
+      FieldVector<bool,dimRange> p(true);
+      if( uLeft[0] <= 0 ) p[0] = false; 
+      if( uLeft[dimRange-1] <= 0 ) p[dimRange-1] = false; 
+      return p;
+    }
+
   protected:
+    //! returns true, if we have an inflow boundary
     template <class ArgumentTuple>
     bool checkDirection(IntersectionIterator& it,
                         double time, const FaceDomainType& x,
@@ -150,12 +177,13 @@ namespace Dune {
       // (otherwise errors on problems with only diffusion)
       return (scalarProduct < 0) ? true : // inflow intersection 
                (scalarProduct > 0) ? false :  // outflow intersection
-               (velocity_.two_norm() < 1e-12); // velocity zero 
+               (velocity_.two_norm() < veloEps_); // velocity zero 
     }
 
   protected:
     const Model& model_;
     mutable DomainType velocity_;
+    const DomainFieldType veloEps_;
   };
 
 
@@ -260,6 +288,7 @@ namespace Dune {
                 const std::string paramFile = "" ) :
       BaseType(pass, spc),
       caller_(problem),
+      problem_(problem),
       arg_(0),
       dest_(0),
       spc_(spc),
@@ -511,6 +540,7 @@ namespace Dune {
       // multiply h pol ord with circume 
       const double circFactor = (circume > 0.0) ? (hPowPolOrder / circume) : 0.0;
 
+      //for (int r=0; r<dimRange; ++r) 
       for (int r=0; r<dimRange; ++r) 
       {
         const double jumpr = std::abs(totaljump[r]);
@@ -689,7 +719,8 @@ namespace Dune {
             }
           }
           
-          // stay with the p-zero version  
+          // stay with the p-zero version 
+          // in case of local maximum or minimum 
           if( allNegative || allPositive ) return ;
         }
 
@@ -762,26 +793,23 @@ namespace Dune {
 
             // get check iterator 
             typedef typename CheckType :: iterator CheckIteratorType; 
-            CheckIteratorType checkIt = check.begin();
             const CheckIteratorType checkEnd = check.end();
 
-            // we start with a singular matrix 
-            bool matrixSingular = true ;
+            // take first entry as start value 
+            CheckIteratorType checkIt = check.begin();
             
-            // test all other number to make matrix regular 
-            while ( matrixSingular ) 
+            // matrix should be regular now 
+            if( checkIt == checkEnd )
             {
-              // matrix should be regular now 
-              if( checkIt == checkEnd )
-              {
-                // should work for 1 or 2 otherwise error 
-                DUNE_THROW(InvalidStateException,"Matrix singular in Limiter");
-              }
+              // should work for 1 or 2 otherwise error 
+              DUNE_THROW(InvalidStateException,"Check vector has no entries!");
+            }
 
-              // assign last element 
-              nV[dim] = *checkIt ;
-              
-              matrixSingular = 
+            // assign last element 
+            nV[dim] = *checkIt ;
+            
+            // apply least square again 
+            bool matrixSingular = 
                   applyLeastSquare( barys,
                                     nbVals,
                                     nV,
@@ -790,33 +818,48 @@ namespace Dune {
                                     inverse,
                                     rhs );
 
-              // if solving was successful break before incrementing iterator 
-              if( ! matrixSingular ) 
-              {
-                // check for structured grids 
-                if( StructuredGrid ) 
-                {
-                  CheckIteratorType checkBegin = check.begin();
-                  // swap entries in case the found is not the first 
-                  if( checkIt != checkBegin )
-                  {
-                    int swap = *checkBegin; 
-                    *checkBegin = *checkIt; 
-                    *checkIt = swap;
-                    checkIt = check.begin();
-
-                    // apply changes to set to have 
-                    // only one iteration next time 
-                    const_cast<CheckType&> ((*it).second) = check;
-                  }
-                }
-
-                // break since we already got a regular matrix 
-                break ;
-              }
-
+            // test all other number to make matrix regular 
+            while ( matrixSingular ) 
+            {
               // go to next check element
               ++checkIt;
+              
+              // matrix should be regular now 
+              if( checkIt == checkEnd )
+              {
+                // should work for 1 or 2 otherwise error 
+                DUNE_THROW(InvalidStateException,"Matrix singular in Limiter!");
+              }
+
+              // assign last element 
+              nV[dim] = *checkIt ;
+
+              matrixSingular = 
+                  applyLeastSquare( barys,
+                                    nbVals,
+                                    nV,
+                                    dM,
+                                    matrix,
+                                    inverse,
+                                    rhs );
+            }
+
+            // check for structured grids 
+            if( StructuredGrid ) 
+            {
+              CheckIteratorType checkBegin = check.begin();
+              // swap entries in case the found is not the first 
+              if( checkIt != checkBegin )
+              {
+                int swap = *checkBegin; 
+                *checkBegin = *checkIt; 
+                *checkIt = swap;
+                checkIt = check.begin();
+
+                // apply changes to set to have 
+                // only one iteration next time 
+                const_cast<CheckType&> ((*it).second) = check;
+              }
             }
 
             // remember value that is donin to be erased 
@@ -878,19 +921,14 @@ namespace Dune {
                 const RangeFieldType g = D * omega;
                 const RangeFieldType d = nbVals[k][r];
                 const RangeFieldType gd = g * d;
-
-                RangeFieldType localFactor = 1.0;
                 
                 // if product smaller than zero set m_l to zero 
                 // because functions have different sign 
-                if( gd <= 1e-8 ) 
-                {
-                  localFactor = 0.0;
-                }
-                else if( std::abs(g) > std::abs(d) ) 
-                {
-                  localFactor = (d/g);
-                }
+                // NOTE: theoretically here should be tested with zero 
+                // but due to rouding errors we take 1e-8 
+                const RangeFieldType localFactor = 
+                      ( gd <= 1e-8 ) ? 0 : 
+                      ( std::abs(g) > std::abs(d) ) ? (d/g) : 1;
 
                 // take minimum 
                 minimalFactor = std::min( localFactor , minimalFactor );
@@ -985,6 +1023,31 @@ namespace Dune {
                 }
               }
             }
+            
+            /*
+            // evaluate function  
+            evalAverage(en, limitEn, enVal );
+
+            FieldVector<bool, dimRange> phys = problem_.physicalValue( enVal );
+            // set zero dof to zero
+            for(int r=0; r<dimRange; ++r) 
+            {
+              if( ! phys[r] ) 
+              {
+                {
+                  const int dofIdx = dofConversion_.combinedDof(0,r);
+                  limitEn[dofIdx] = uEn[dofIdx];
+                }
+                
+                // set to zero
+                for (int i=1; i<numBasis; ++i) 
+                {
+                  const int dofIdx = dofConversion_.combinedDof(i,r);
+                  limitEn[dofIdx] = 0.;
+                }
+              }
+            }
+            */
           }
         }
       } //end if limiter 
@@ -1177,6 +1240,7 @@ namespace Dune {
       return true;
     }
 
+    // fill combination vector recursive 
     template <class SetType, int dim> 
     struct FillVector
     {
@@ -1198,6 +1262,7 @@ namespace Dune {
                        
     };
     
+    // termination of fill combination vector 
     template <class SetType> 
     struct FillVector<SetType, dimension-1 >
     {
@@ -1327,6 +1392,7 @@ namespace Dune {
     
   private:
     mutable DiscreteModelCallerType caller_;
+    const DiscreteModelType& problem_; 
     
     mutable ArgumentType* arg_;
     mutable DestinationType* dest_;
