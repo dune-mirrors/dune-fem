@@ -20,18 +20,6 @@ DOXYGENINSTALL = *.html *.css *.png *.gif
 DOXYFILE_OVERWRITE = echo "PROJECT_NAME = $(PACKAGE_NAME)"; \
                      echo "PROJECT_NUMBER = $(PACKAGE_VERSION)";
 	
-if WML
-# themeing doxygen
-DOXYGENHEADER = doxy-header.html
-DOXYGENHEADERBUILD = $(DOXYGENHEADER).build
-DOXYGENFOOTER = doxy-footer.html
-DOXYGENSTYLESHEET = dune-doxy.css
-DOXYFILE_OVERWRITE += echo "HTML_HEADER = $(DOXYGENHEADER)"; \
-  echo "HTML_FOOTER = $(DOXYGENFOOTER)"; \
-  echo "HTML_STYLESHEET = $(DOXYGENSTYLESHEET)";
-endif
-
-												
 DOXYFILE_OVERWRITE_HTML = $(DOXYFILE_OVERWRITE) \
                           echo "HTML_OUTPUT = $(DOXYGEN_HTML)"; \
 													echo "FILE_PATTERNS += *.dev";
