@@ -479,10 +479,28 @@ public:
       return ;
     }
 
+    // reserve memory + overestimate 
+    reserve( nsize );
+    // set new size 
+    this->size_ = nsize;
+  }
+
+  //! reserve vector size with new mSize 
+  //! if mSize is smaller then actual memSize, 
+  //! then nothing is done 
+  void reserve ( int mSize )
+  {
+    // check whether we already have the mem size 
+    // and if just do nothing 
+    if( mSize <= memSize_ ) 
+    {
+      return ;
+    }
+
     assert( memoryFactor_ >= 1.0 );
-    const double overEstimate = memoryFactor_ * nsize;
+    const double overEstimate = memoryFactor_ * mSize;
     const int nMemSize = (int) overEstimate;
-    assert( nMemSize >= nsize );
+    assert( nMemSize >= mSize );
 
     if( !this->vec_ )
     {
@@ -500,8 +518,7 @@ public:
       // reallocate memory 
       this->vec_ = AllocatorType :: realloc (this->vec_,memSize_,nMemSize);
     }
-
-    this->size_ = nsize;
+    // set new mem size 
     memSize_ = nMemSize;
   }
 

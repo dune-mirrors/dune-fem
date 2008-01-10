@@ -402,7 +402,7 @@ public:
     if( mapper_.needsCompress() )
     {
       const int nSize = size() + (needed * elementMemory());
-      array_.resize( nSize );
+      array_.reserve( nSize );
     }
     else 
     {
