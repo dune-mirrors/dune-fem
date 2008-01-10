@@ -73,7 +73,7 @@ namespace Dune {
      
       // get data handler type from space  
       typedef typename SpaceType :: template CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
-      DataHandleType dataHandle(df);
+      DataHandleType dataHandle = df.dataHandle();
 
       // communicate data 
       gridPart_.communicate( dataHandle, interFace_ , dir_ );

@@ -146,7 +146,7 @@ namespace Dune
     inline bool contains (const int codim) const
     { 
       CHECK_INTERFACE_IMPLEMENTATION( asImp().contains() );
-      return asImp().contains(); 
+      return asImp().contains(codim); 
     }
 
     /** \brief return true if the space contains globally continuous functions
@@ -330,6 +330,15 @@ namespace Dune
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().mapToGlobal( entity, localDof ) );
       return asImp().mapToGlobal( entity, localDof );
+    }
+
+    /** \brief Creates DataHandle for given discrete function */
+    template <class DiscreteFunctionImp>
+    inline typename CommDataHandle<DiscreteFunctionImp> :: Type 
+    createDataHandle(DiscreteFunctionImp& df) const 
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().createDataHandle( df ) );
+      return asImp().createDataHandle( df );
     }
 
   protected:
@@ -522,6 +531,17 @@ namespace Dune
                              const int localDof ) const
     {
       return mapper().mapToGlobal( entity, localDof );
+    }
+
+    /** \brief Default implementation of data handle creation that 
+        call constructor and apssing only discrete function */
+    template <class DiscreteFunctionImp>
+    inline typename Traits :: template CommDataHandle<DiscreteFunctionImp> :: Type 
+    createDataHandle(DiscreteFunctionImp& df) const 
+    {
+      // create data handle object 
+      return typename Traits :: 
+        template CommDataHandle<DiscreteFunctionImp> :: Type ( df );
     }
   };
 
