@@ -75,7 +75,7 @@ namespace Dune {
       //! type of data handle 
       typedef DGCommunicationHandler<DiscreteFunctionImp> Type;
       //! type of operation to perform on scatter 
-      typedef DFCommunication :: Copy OperationType;
+      typedef DFCommunicationOperation :: Copy OperationType;
     };
   };
   //
