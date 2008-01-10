@@ -19,6 +19,7 @@
 //- local includes 
 #include "basefunctions.hh"
 #include "mapper.hh"
+#include "lagrangedatahandle.hh"
 
 namespace Dune
 {
@@ -78,6 +79,18 @@ namespace Dune
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp>  BaseFunctionSetType;
 
     enum { localBlockSize = DimRange };
+
+    /** \brief defines type of data handle for communication 
+        for this type of space.
+    */
+    template <class DiscreteFunctionImp>
+    struct CommDataHandle
+    {
+      //! type of data handle 
+      typedef LagrangeCommunicationHandler<DiscreteFunctionImp> Type;
+      //! type of operatation to perform on scatter 
+      typedef DFCommunicationOperation :: Add OperationType;
+    };
   };
 
 
@@ -309,6 +322,13 @@ namespace Dune
         if( lagrangePointSet != NULL )
           delete lagrangePointSet;
       }
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+    inline bool contains(const int codim) const
+    {
+      DUNE_THROW(NotImplemented,"Method not implemented!");
+      return true;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */

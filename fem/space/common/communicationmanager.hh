@@ -27,7 +27,7 @@
 #endif
 
 //- Dune-fem includes 
-#include <dune/fem/function/common/dfcommunication.hh>
+#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/singletonlist.hh>
 #include <dune/fem/space/common/arrays.hh>
 
@@ -39,8 +39,9 @@ namespace Dune {
   
   //! \brief Default CommunicationManager class just using the grids communicate
   //! method 
-  template <class SpaceImp, 
-            class OperationImp = DFCommunicationOperation::Copy >
+  template <class SpaceImp> 
+    //, 
+    //        class OperationImp = DFCommunicationOperation::Copy >
   class DefaultCommunicationManager 
   {
     typedef SpaceImp SpaceType; 
@@ -49,12 +50,19 @@ namespace Dune {
     // gridPart for communication 
     const GridPartType & gridPart_; 
 
+    const InterfaceType interFace_;
+    const CommunicationDirection dir_;
+    
     DefaultCommunicationManager(const DefaultCommunicationManager &);
   public:
     //! constructor taking space, but here only storing gridPart for
     //! communication
-    DefaultCommunicationManager(const SpaceType & space)
+    DefaultCommunicationManager(const SpaceType & space,
+                                const InterfaceType interFace = InteriorBorder_All_Interface ,
+                                const CommunicationDirection dir = ForwardCommunication)
       : gridPart_(space.gridPart()) 
+      , interFace_( interFace )
+      , dir_ ( dir )
     {}
 
     template <class DiscreteFunctionType> 
@@ -63,25 +71,23 @@ namespace Dune {
       // if serial run, just return   
       if(gridPart_.grid().comm().size() <= 1) return;
      
-      // get data handler 
-      typedef DiscreteFunctionCommunicationHandler<DiscreteFunctionType,OperationImp>
-           DataHandleType;
+      // get data handler type from space  
+      typedef typename SpaceType :: template CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
       DataHandleType dataHandle(df);
 
       // communicate data 
-      gridPart_.communicate( dataHandle, InteriorBorder_All_Interface , ForwardCommunication);
+      gridPart_.communicate( dataHandle, interFace_ , dir_ );
     }
   };
   
 #ifndef USE_CACHED_COMM_MANAGER
   // if no ALUGrid found, supply default implementation 
   //! \brief use Default CommunicationManager as Communication Manager 
-  template <class SpaceImp, 
-            class OperationImp = DFCommunicationOperation::Copy >
+  template <class SpaceImp> 
   class CommunicationManager 
-  : public DefaultCommunicationManager<SpaceImp,OperationImp> 
+  : public DefaultCommunicationManager<SpaceImp> 
   {
-    typedef DefaultCommunicationManager<SpaceImp,OperationImp> BaseType;
+    typedef DefaultCommunicationManager<SpaceImp> BaseType;
     CommunicationManager(const CommunicationManager &);
   public:
     //! constructor taking space, but here only storing gridPart for
@@ -112,13 +118,8 @@ namespace Dune {
       typedef DiscreteFunctionImp DiscreteFunctionType;
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       
-      // operation to perform 
-      typedef typename DFCommunicationOperation :: Copy OperationType;
-      
-      typedef CommunicationManager<DiscreteFunctionSpaceType,OperationType> CommunicationManagerType; 
+      typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
     
-      typedef DiscreteFunctionCommunicationHandler<DiscreteFunctionType,OperationType> DataHandleType;
-     
       DiscreteFunctionType& df_;
       CommunicationManagerType comm_;
     public:  

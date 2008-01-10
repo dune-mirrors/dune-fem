@@ -16,7 +16,7 @@
 #endif
 
 //- Dune-fem includes 
-#include <dune/fem/function/common/dfcommunication.hh>
+#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/singletonlist.hh>
 #include <dune/fem/space/common/arrays.hh>
 
@@ -110,6 +110,26 @@ namespace Dune {
        LinkBuilder< LinkStorageImp , IndexMapVectorType , SpaceType > ,
        int >
     {
+      template <int dummy, int codim> 
+      struct CheckInterior 
+      {
+        inline static bool check(const PartitionType p) 
+        {
+          DUNE_THROW(NotImplemented,"Method not implemented!");
+          return true; 
+        }
+      };
+
+      // codim 0 specialization 
+      template <int dummy> 
+      struct CheckInterior<dummy,0>
+      {
+        inline static bool check(const PartitionType p) 
+        {
+          return (p == InteriorEntity); 
+        }
+      };
+      
     public:
       typedef int DataType;
 
@@ -124,6 +144,8 @@ namespace Dune {
       IndexMapVectorType & recvIndexMap_;
 
       const SpaceType & space_;
+      typedef typename SpaceType :: MapperType MapperType; 
+      const MapperType& mapper_; 
 
     public:
       LinkBuilder(LinkStorageType & linkStorage,
@@ -136,12 +158,13 @@ namespace Dune {
         , sendIndexMap_(sendIdxMap)
         , recvIndexMap_(recvIdxMap)
         , space_(space)
+        , mapper_(space.mapper())
       {
       }
 
       bool contains (int dim, int codim) const
       {
-        return (codim == 0);
+        return space_.contains(codim);
       }
 
       bool fixedsize (int dim, int codim) const
@@ -163,19 +186,21 @@ namespace Dune {
       {
         // assert that we get the same size of data we sent 
         assert( n == 1 );
-        
+
         // build local mapping 
-        const int numDofs = space_.baseFunctionSet(en).numBaseFunctions(); 
+        const int numDofs = mapper_.numDofs( en );
         std::vector<int> indices(numDofs);
+
         // copy numDofs 
         for(int i=0; i<numDofs; ++i) 
         {
-          indices[i] = space_.mapToGlobal( en , i ); 
+          indices[i] = mapper_.mapEntityDofsToGlobal( en , i ); 
         }
 
         // Interior entities belong to send area and other entities, i.e.
         // Overlap and Ghost, belong to receive area 
-        const bool interiorEn = (en.partitionType() == InteriorEntity); 
+        const bool interiorEn = 
+          CheckInterior<-1,EntityType :: codimension>::check(en.partitionType());
         
         // read links and insert mapping 
         DataType val;
@@ -582,11 +607,10 @@ namespace Dune {
   };
 
   //! Proxy class to DependencyCache which is singleton per space 
-  template <class SpaceImp, 
-            class OperationImp = DFCommunicationOperation::Copy >
+  template <class SpaceImp> 
   class CommunicationManager 
   {
-    typedef CommunicationManager<SpaceImp,OperationImp> ThisType;
+    typedef CommunicationManager<SpaceImp> ThisType;
     
     // type of communication manager object which does communication 
     typedef DependencyCache<SpaceImp> DependencyCacheType;
@@ -626,12 +650,13 @@ namespace Dune {
 
     MPAccessInterfaceType& mpAccess() { return cache_.mpAccess(); }
 
-    //! exchange discrete function to all procs we share data with 
-    //! by using given OperationImp when receiving data from other procs 
+    //! exchange discrete function to all procs we share data 
     template <class DiscreteFunctionType> 
     void exchange(DiscreteFunctionType & df) 
     {
-      cache_.exchange( df, (OperationImp*) 0 );
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+        :: template CommDataHandle<DiscreteFunctionType> :: OperationType OperationType;
+      cache_.exchange( df, (OperationType*) 0 );
     }
     
     //! write given df to given buffer 
@@ -647,7 +672,9 @@ namespace Dune {
     void readBuffer(ObjectStreamVectorType& osv, 
                     DiscreteFunctionType & df) const 
     {
-      cache_.readBuffer(osv, df , (OperationImp *) 0 );
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+        :: template CommDataHandle<DiscreteFunctionType> :: OperationType OperationType;
+      cache_.readBuffer(osv, df , (OperationType *) 0 );
     }
 
     //! rebuild underlying cache if necessary 
@@ -678,15 +705,14 @@ namespace Dune {
     //! communicated object implementation  
     template <class DiscreteFunctionImp,
               class MPAccessType,
-              class ObjectStreamVectorType,
-              class OperationImp>
+              class ObjectStreamVectorType>
     class DiscreteFunctionCommunicator 
     : public DiscreteFunctionCommunicatorInterface<MPAccessType,ObjectStreamVectorType> 
     {
       typedef DiscreteFunctionImp DiscreteFunctionType;
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-      typedef CommunicationManager<DiscreteFunctionSpaceType,OperationImp> CommunicationManagerType; 
+      typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
     
       // object to communicate 
       DiscreteFunctionType& df_;
@@ -771,8 +797,7 @@ namespace Dune {
       // type of communication object 
       typedef DiscreteFunctionCommunicator<DiscreteFunctionImp,
                                            MPAccessInterfaceType,
-                                           ObjectStreamVectorType,
-                                           DFCommunicationOperation::Copy> CommObj;
+                                           ObjectStreamVectorType> CommObj;
       CommObj * obj = new CommObj(df);
       objList_.push_back(obj);
 

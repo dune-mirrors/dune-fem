@@ -22,6 +22,7 @@
 #include "dgmapper.hh"
 #include "dgbasefunctions.hh"
 #include "legendredgbasefunctions.hh"
+#include "dgdatahandle.hh"
 
 namespace Dune {
 
@@ -247,6 +248,12 @@ namespace Dune {
       return BaseFunctionSetType(baseFuncSet_[geomType]);
     }
 
+    /** @copydoc DiscreteFunctionSpaceInterface::contains */
+    bool contains (const int codim) const
+    {
+      return (codim == 0);
+    }
+  
     /** @copydoc DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
@@ -371,6 +378,18 @@ namespace Dune {
     //! number of base functions * dimRange 
     enum { localBlockSize = DimRange * 
         DGNumberOfBaseFunctions<polOrd,DimDomain>::numBaseFunctions }; 
+    
+    /** \brief defines type of data handle for communication 
+        for this type of space.
+    */
+    template <class DiscreteFunctionImp>
+    struct CommDataHandle
+    {
+      //! type of data handle 
+      typedef DGCommunicationHandler<DiscreteFunctionImp> Type;
+      //! type of operation to perform on scatter 
+      typedef DFCommunicationOperation :: Copy OperationType;
+    };
   };
 
   //! \brief A discontinuous Galerkin space
@@ -507,6 +526,17 @@ namespace Dune {
     enum { localBlockSize = DimRange * 
         NumLegendreBaseFunctions<polOrd,DimDomain>::numBaseFct }; 
 
+    /** \brief defines type of data handle for communication 
+        for this type of space.
+    */
+    template <class DiscreteFunctionImp>
+    struct CommDataHandle
+    {
+      //! type of data handle 
+      typedef DGCommunicationHandler<DiscreteFunctionImp> Type;
+      //! type of operation to perform on scatter 
+      typedef DFCommunicationOperation :: Copy OperationType;
+    };
   };
 
   /** \brief A discontinuous Galerkin space using tensor product base

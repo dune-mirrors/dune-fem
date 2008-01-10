@@ -91,6 +91,18 @@ namespace Dune
 
     enum { DimRange = FunctionSpaceType::DimRange,
            DimDomain = FunctionSpaceType::DimDomain };
+
+    //! \brief defines type of data handle for communication 
+    template <class DiscreteFunctionImp>
+    struct CommDataHandle
+    {
+      //! \brief uses type of contained space 
+      typedef typename ContainedDiscreteFunctionSpaceType:: template
+        CommDataHandle<DiscreteFunctionImp> :: Type Type;
+      //! \brief type of operation to perform on scatter 
+      typedef typename ContainedDiscreteFunctionSpaceType:: template
+        CommDataHandle<DiscreteFunctionImp> :: OperationType OperationType;
+    };
   public:
     //- Friends
     friend class CombinedSpace<DiscreteFunctionSpaceImp, N, policy>;

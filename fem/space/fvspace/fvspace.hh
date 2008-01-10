@@ -19,6 +19,9 @@
 #include "fvspacebasefunctions.hh"
 #include "fvspacemapper.hh"
 
+// use dg data handle 
+#include <dune/fem/space/dgspace/dgdatahandle.hh>
+
 // * Note: the dofmanager could be removed from the space altogether now.
 // (Maybe this wouldn't be a clever move, though. In my view of a perfect Dune,
 // there would be one DofManager per space and the DiscreteFunctions wouldn't
@@ -62,6 +65,18 @@ namespace Dune {
 
     // always 1 for FVSpace Base , to be revised 
     enum { localBlockSize = 1 };
+    
+    /** \brief defines type of data handle for communication 
+        for this type of space.
+    */
+    template <class DiscreteFunctionImp>
+    struct CommDataHandle
+    {
+      //! type of data handle 
+      typedef DGCommunicationHandler<DiscreteFunctionImp> Type;
+      //! type of operation to perform on scatter 
+      typedef DFCommunication :: Copy OperationType;
+    };
   };
   //
   //  --FiniteVolumeSpace
@@ -199,9 +214,15 @@ namespace Dune {
     inline explicit FiniteVolumeSpace(GridPartType & g);
 
     //! Desctructor 
-    virtual ~FiniteVolumeSpace (); 
+    ~FiniteVolumeSpace (); 
 
-    //! continuous
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+    inline bool contains(const int codim) const
+    {   
+      return (polynomialOrder == 0) ? (codim == 0) : true;
+    }
+    
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     bool continuous() const { return (polynomialOrder == 0) ? false : true; }
  
     //! return type of this function space 

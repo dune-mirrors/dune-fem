@@ -6,4 +6,4 @@ lagrangespacedir = $(includedir)/dune/fem/space/lagrangespace
 lagrangespace_HEADERS = adaptmanager.hh \
 genericgeometry.hh indexsetcodimcall.hh  lagrangespace.hh \
 basefunctions.hh  genericbasefunctions.hh  genericlagrangepoints.hh \
-lagrangepoints.hh     mapper.hh
+lagrangepoints.hh     mapper.hh  lagrangedatahandle.hh

@@ -85,7 +85,21 @@ namespace Dune
     typedef typename GridPartType::GridType GridType;
     //! type of used dune index set 
     typedef typename GridPartType::IndexSetType IndexSetType;
-    
+
+    /** \brief defines type of data handle for communication 
+        for this type of space.
+    */
+    template <class DiscreteFunctionImp>
+    struct CommDataHandle
+    {
+      //! type of data handle from traits 
+      typedef typename FunctionSpaceTraits :: 
+        template CommDataHandle<DiscreteFunctionImp> :: Type  Type;
+      //! type of operation to perform on scatter 
+      typedef typename FunctionSpaceTraits :: 
+        template CommDataHandle<DiscreteFunctionImp> :: OperationType  OperationType;
+    };
+
     /** \brief iterator type traversing the set of 
         entities defining the discrete  function space 
         (only codim 0 at the moment, to be revised)
@@ -124,6 +138,17 @@ namespace Dune
       return asImp().baseFunctionSet( entity );
     }
   
+    /** \brief return true if the space contains dofs for given codimension 
+     *  \param codim codimension to check dofs for 
+     *  
+     *  \return true if codimension is contained 
+     */
+    inline bool contains (const int codim) const
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().contains() );
+      return asImp().contains(); 
+    }
+
     /** \brief return true if the space contains globally continuous functions
      *
      *  For example, a LagrangeDiscreteFunctionSpace returns \b true and a

@@ -71,7 +71,7 @@ private:
   DofManagerType& dm_;
   
   //! is true if grid is structured grid 
-  enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };; 
+  enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
   
   // my type, to be revised 
   enum { myType = (StructuredGrid) ? -1 : 665 };
