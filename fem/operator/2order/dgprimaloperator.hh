@@ -19,7 +19,6 @@
 
 #include <dune/fem/space/combinedspace.hh>
 
-#include <dune/fem/function/common/dfcommunication.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/arrays.hh>
 
