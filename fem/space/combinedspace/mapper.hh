@@ -202,9 +202,13 @@ namespace Dune
     inline DofMapIteratorType end ( const EntityType &entity ) const;
 
     //! Map a local degree of freedom on an entity to a global one
-    template <class EntityImp> 
-    inline int mapToGlobal( const EntityImp &entity,
+    inline int mapToGlobal( const EntityType &entity,
                             int localNum ) const;
+
+    /** \copydoc DofMapperInterface::mapEntityDofsToGlobal */
+    template <class EntityImp>
+    inline int mapEntityDofsToGlobal( const EntityImp &entity,
+                                      int localNum ) const;
 
     //- Method inherited from mapper interface
     //! if grid has changed determine new size 
@@ -221,7 +225,8 @@ namespace Dune
     inline int numDofs () const;
 
     /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
-    inline int numDofs ( const EntityType &entity ) const;
+    template <class EntityImp>
+    inline int numDofs ( const EntityImp &entity ) const;
 
     //! return number of holes in the data 
     inline int numberOfHoles ( const int block ) const;

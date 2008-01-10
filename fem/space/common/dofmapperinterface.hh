@@ -152,7 +152,8 @@ public:
    *  
    *  \returns number of DoFs on the entity
    */
-  inline int numDofs ( const EntityType &entity ) const
+  template <class EntityImp> 
+  inline int numDofs ( const EntityImp &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( entity ) );
     return asImp().numDofs( entity );
@@ -293,16 +294,38 @@ private:
   typedef DofMapperDefault< Traits > ThisType;
   typedef DofMapperInterface< Traits > BaseType;
 
+  //! default implementation returns 0 
+  template <class MapperType, int codim>
+  struct NumDofs
+  {
+    inline static int dofs(const MapperType& mapper) 
+    {
+      return 0;
+    }
+  };
+  
+  //! codim 0 specialization 
+  template <class MapperType>
+  struct NumDofs<MapperType,0>
+  {
+    inline static int dofs(const MapperType& mapper) 
+    {
+      return mapper.numDofs();
+    }
+  };
+
 protected:
   using BaseType :: asImp;
+  using BaseType :: numDofs;
   
 public:
   /** \copydoc DofMapperInterface::numDofs( const EntityType &entity ) const
       \note This implementation just returns number of all dofs 
   */
-  inline int numDofs ( const EntityType &entity ) const
+  template <class EntityImp>
+  inline int numDofs ( const EntityImp &entity ) const
   {
-    return asImp().numDofs ();
+    return NumDofs<ThisType, EntityImp :: codimension>::dofs(*this);
   }
 
   //! update mapper, default does nothing 

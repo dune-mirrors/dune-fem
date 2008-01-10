@@ -103,28 +103,15 @@ namespace Dune
       return baseIndex + localDof;
     }
 
-    /** \copydoc DofMapperInterface::mapToGlobal
-        \note This implementation is returing zero because 
-              DG Spaces only have element dofs. 
-    */
-    template <class EntityImp> 
-    int mapToGlobal ( const EntityImp &entity, int localDof ) const
-    {
-      return 0;
-    }
-
     /** \copydoc DofMapperInterface::numDofs() const */
     int numDofs () const
     {
       return numberOfDofs_;
     }
-    
-    /** \copydoc DofMapperInterface::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
-    {
-      return numberOfDofs_;
-    }
 
+    // use numDofs default implementation 
+    using BaseType :: numDofs;
+    
     /** \copydoc DofMapperInterface::newSize */
     int newSize() const
     {

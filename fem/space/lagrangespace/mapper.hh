@@ -183,10 +183,20 @@ namespace Dune
       return dimRange * maxDofs_;
     }
     
-    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapperInterface::mapEntityDofsToGlobal */
+    template <class EntityImp>
+    int mapEntityDofsToGlobal ( const EntityImp &entity, const int localDof ) const 
     {
-      return dimRange * entity.template count< dimension >();
+      DUNE_THROW(NotImplemented,"Method not implemented!");
+      return 0;
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    template <class EntityImp>
+    int numDofs ( const EntityImp &entity ) const
+    {
+      return (EntityImp :: codimension == (int) dimension) ? 
+          (dimRange * entity.template count< dimension >()) : 0;
     }
 
     /** \copydoc Dune::DofMapperInterface::newSize
@@ -455,8 +465,17 @@ namespace Dune
       return numDofs_;
     }
 
+    /** \copydoc Dune::DofMapperInterface::mapEntityDofsToGlobal */
+    template <class EntityImp>
+    int mapEntityDofsToGlobal ( const EntityImp &entity, const int localDof ) const 
+    {
+      DUNE_THROW(NotImplemented,"Method not implemented!");
+      return 0;
+    }
+    
     /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
+    template <class EntityImp>
+    int numDofs ( const EntityImp &entity ) const
     {
       return lagrangePointSet_[ entity.geometry().type() ]->size();
     }
