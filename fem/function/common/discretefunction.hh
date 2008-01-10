@@ -125,6 +125,10 @@ namespace Dune
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
 
+    //! type of data handle to use in communication 
+    typedef typename DiscreteFunctionSpaceType :: template
+      CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
+
   protected:
     using BaseType :: asImp;
 
@@ -328,6 +332,13 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( g ) );
     }
 
+    /** \brief return reference to data handle object */
+    DataHandleType dataHandle()
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().dataHandle());
+      return asImp().dataHandle();
+    }
+
 #if 0
     /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const */
     inline void evaluate ( const DomainType &x,
@@ -525,6 +536,10 @@ namespace Dune
     //! type of local functions
     typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 
+    //! type of data handle to use in communication 
+    typedef typename DiscreteFunctionSpaceType :: template
+      CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
+
   private:    
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
@@ -662,6 +677,12 @@ namespace Dune
       return asImp();
     }
 
+    /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
+    DataHandleType dataHandle()
+    {
+      return this->space().createDataHandle( asImp() );
+    }
+    
     inline bool operator== ( const DiscreteFunctionType &g ) const;
     
     inline bool operator!= ( const DiscreteFunctionType &g ) const
