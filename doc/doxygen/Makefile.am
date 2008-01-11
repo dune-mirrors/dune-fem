@@ -1,12 +1,11 @@
 # if documentation was enabled 
 if BUILD_DOCS
-WHAT = # bestpractice.html
 DOXYGEN_HTML = html 
 DOXYGEN_DIST = html-dist
 
 DISTCLEANFILES = doxygen.log doxygen-tag doxygen-dist-tag doxygen.out
 
-all: $(WHAT) $(DOXYGEN_HTML)
+all: $(DOXYGEN_HTML)
 
 # setting like in dune-web
 BASEDIR=../..
@@ -22,16 +21,15 @@ DOXYFILE_OVERWRITE = echo "PROJECT_NAME = $(PACKAGE_NAME)"; \
 	
 DOXYFILE_OVERWRITE_HTML = $(DOXYFILE_OVERWRITE) \
                           echo "HTML_OUTPUT = $(DOXYGEN_HTML)"; \
-													echo "FILE_PATTERNS += *.dev";
+			  echo "FILE_PATTERNS += *.dev";
 DOXYFILE_OVERWRITE_DIST = $(DOXYFILE_OVERWRITE) \
                           echo "HTML_OUTPUT = $(DOXYGEN_DIST)"; \
-													echo "INTERNAL_DOCS = NO";
+			  echo "INTERNAL_DOCS = NO";
 
 #we need this in the distribution
-EXTRA_DIST = $(WHAT) $(DOXYGEN_DIST) $(DOXYGENHEADER) doxy-footer.html $(PAGES)
+EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES)
 
 doxygendir = $(datadir)/doc/dune-fem/doxygen
-doxygen_DATA = $(WHAT)
 
 
 install-data-local: $(DOXYGEN_DIST)
@@ -98,13 +96,13 @@ web-install: doxygen-install
 # nice trick from the GNU make infopage to force a rule to run
 FORCE:
 
-include $(top_srcdir)/am/webstuff
+#include $(top_srcdir)/am/webstuff
 
 clean-local:
 	if test -e Doxydep; then rm -rf html html-dist; fi
 	rm -rf latex *~
 
-CLEANFILES = $(WHAT) doxygen-tag doxygen-dist-tag $(DOXYGENHEADER)
+CLEANFILES = doxygen-tag doxygen-dist-tag
 
 # end BUILD_DOCS
 endif
