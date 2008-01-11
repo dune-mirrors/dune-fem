@@ -70,7 +70,36 @@ namespace Dune
     
     return utilGlobal_.combinedDof( containedGlobal, component );
   }
+
+
   
+  template< class ContainedSpace, int N, DofStoragePolicy policy >
+  inline int CombinedMapper< ContainedSpace, N, policy >
+    :: maxNumDofs () const
+  {
+    return mapper_.maxNumDofs() * numComponents;
+  }
+
+
+
+  template< class ContainedSpace, int N, DofStoragePolicy policy >
+  inline int CombinedMapper< ContainedSpace, N, policy >
+    :: numDofs ( const EntityType &entity ) const
+  {
+    return mapper_.numDofs( entity ) * numComponents;
+  }
+
+
+  
+  template< class ContainedSpace, int N, DofStoragePolicy policy >
+  template< class Entity >
+  inline int CombinedMapper< ContainedSpace, N, policy >
+    :: numEntityDofs ( const Entity &entity ) const
+  {
+    return mapper_.numEntityDofs( entity ) * numComponents;
+  }
+
+
   
   template< class ContainedSpace, int N, DofStoragePolicy policy >
   inline int CombinedMapper< ContainedSpace, N, policy >
@@ -125,23 +154,6 @@ namespace Dune
     const int containedNew = mapper_.oldIndex(contained,0);
 
     return tmpUtilGlobal.combinedDof(containedNew, component);
-  }
-
-
-  
-  template< class ContainedSpace, int N, DofStoragePolicy policy >
-  inline int CombinedMapper< ContainedSpace, N, policy >
-    :: numDofs () const
-  {
-    return mapper_.numDofs() * numComponents;
-  }
-
-  template< class ContainedSpace, int N, DofStoragePolicy policy >
-  template< class EntityImp > 
-  inline int CombinedMapper< ContainedSpace, N, policy >
-    :: numDofs ( const EntityImp &entity ) const
-  {
-    return mapper_.numDofs( entity ) * numComponents;
   }
 
 

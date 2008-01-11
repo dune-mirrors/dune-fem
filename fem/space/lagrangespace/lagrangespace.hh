@@ -325,10 +325,9 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
-    inline bool contains(const int codim) const
+    inline bool contains ( const int codim ) const
     {
-      DUNE_THROW(NotImplemented,"Method not implemented!");
-      return true;
+      return mapper().contains( codim );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */

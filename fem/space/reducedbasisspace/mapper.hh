@@ -77,12 +77,34 @@ namespace Dune
         ( DofMapIteratorType :: endIterator, entity, *this );
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,int localDof) const */
-    int mapToGlobal ( const EntityType &entity, int localDof ) const
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
+    inline int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       return localDof;
     }
 
+    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
+    template< class Entity >
+    inline int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+    {
+      DUNE_THROW( NotImplemented, "ReducedBasisSpace cannot map entity DoFs." );
+      return 0;
+    }
+
+    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    inline int maxNumDofs () const
+    {
+      return size();
+    }
+
+    /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const */
+    template< class Entity >
+    inline int numEntityDofs ( const Entity &entity ) const
+    {
+      DUNE_THROW( NotImplemented, "ReducedBasisSpace cannot map entity DoFs." );
+      return 0;
+    }
+   
     /** \copydoc Dune::DofMapperInterface::needsCompress() const */
     bool needsCompress () const
     {
@@ -105,18 +127,6 @@ namespace Dune
     int numberOfHoles ( const int block ) const
     {
       return 0;
-    }
-
-    /** \copydoc Dune::DofMapperInterface::numDofs() const */
-    int numDofs () const
-    {
-      return size();
-    }
-   
-    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
-    {
-      return size();
     }
 
     /** \copydoc Dune::DofMapperInterface::oldIndex(const int hole,const int block) const */

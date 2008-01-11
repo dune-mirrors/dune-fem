@@ -95,10 +95,8 @@ namespace Dune
       return indexSet_.index( entity ) * dimrange + localNum;
     }
     
-    using BaseType :: numDofs;
-
-    /** \copydoc Dune::DofMapperInterface::numDofs() const */
-    int numDofs () const 
+    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    int maxNumDofs () const 
     {
       return dimrange;
     }

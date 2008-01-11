@@ -10,9 +10,10 @@ GRIDTYPE = YASPGRID
 GRIDDIM = 2
 
 # linker flags
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) ../libfem.la
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 # preprocessor flags
-AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
+AM_CXXFLAGS = -O0 -g -Wall $(ALL_PKG_CXXFLAGS)
 
 TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_adaptive      dgl2projection_blockvector \

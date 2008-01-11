@@ -103,10 +103,8 @@ namespace Dune
       return baseIndex + localDof;
     }
 
-    using BaseType :: numDofs;
-
-    /** \copydoc DofMapperInterface::numDofs() const */
-    int numDofs () const
+    /** \copydoc DofMapperInterface::maxNumDofs() const */
+    int maxNumDofs () const
     {
       return numberOfDofs_;
     }

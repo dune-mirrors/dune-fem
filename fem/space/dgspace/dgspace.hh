@@ -169,7 +169,7 @@ namespace Dune {
       mapper_ = & MapperProviderType::getObject(key);
 
       assert( mapper_ );
-      assert( mapper_->numDofs() == maxNumDofs );
+      assert( mapper_->maxNumDofs() == maxNumDofs );
     }
 
     /** @copydoc DiscreteFunctionSpaceInterface::sequence const */

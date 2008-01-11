@@ -377,7 +377,7 @@ public:
   //! return number of dofs on one element 
   int elementMemory () const 
   {
-    return mapper_.numDofs();
+    return mapper_.maxNumDofs();
   }
 
   //! resize the memory with the new size 

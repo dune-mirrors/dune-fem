@@ -163,11 +163,13 @@ namespace Dune
       return dimRange * indexSet_.index( entity ) + localDof;
     }
     
-    /** \copydoc Dune::DofMapperInterface::numDofs() const */
-    int numDofs () const
+    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    int maxNumDofs () const
     {
       return dimRange * maxDofs_;
     }
+
+    using BaseType :: numDofs;
     
     /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
@@ -410,11 +412,13 @@ namespace Dune
       return 0;
     }
     
-    /** \copydoc Dune::DofMapperInterface::numDofs() const */
-    inline int numDofs () const
+    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    inline int maxNumDofs () const
     {
       return numDofs_;
     }
+
+    using BaseType :: numDofs;
 
     /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
     inline int numDofs ( const EntityType &entity ) const

@@ -133,14 +133,25 @@ public:
       ( asImp().mapEntityDofToGlobal(entity ,localDof) );
     return asImp().mapEntityDofToGlobal( entity , localDof );
   }
- 
+  
   /** \brief obtain maximal number of DoFs on one entity
+   */
+  int maxNumDofs () const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().maxNumDofs());
+    return asImp().maxNumDofs();
+  }
+
+  /** \brief obtain maximal number of DoFs on one entity
+   *  \deprecated
+   * 
+   *  \note Use Dune::DofMapperInterface::maxNumDofs instead.
    * 
    *  \note The naming of this method is misleading since the number of DoFs on
    *        one entity need not be constant (e.g. Lagrange base functions on a
    *        hybrid grid).
    */
-  int numDofs () const 
+  int DUNE_DEPRECATED numDofs () const
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());
     return asImp().numDofs();
@@ -338,7 +349,6 @@ private:
 
 protected:
   using BaseType :: asImp;
-  using BaseType :: numDofs;
   
 public:
   /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,const int localDof) const
@@ -358,13 +368,19 @@ public:
     return 0;
   }
 
+  /** \copydoc Dune::DofMapperInterface::numDofs() const */
+  int DUNE_DEPRECATED numDofs () const
+  {
+    return asImp().maxNumDofs();
+  }
+
   /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const
    *  \note This implementation just returns the maximal number of DoFs on an
    *        entity.
    */
   inline int numDofs ( const EntityType &entity ) const
   {
-    return asImp().numDofs();
+    return asImp().maxNumDofs();
   }
 
   /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const

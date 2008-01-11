@@ -53,7 +53,7 @@ int main ()
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
 
-    std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().numDofs() << std :: endl;
+    std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().maxNumDofs() << std :: endl;
 
     //! perform Lagrange interpolation
     LagrangeInterpolation< DiscreteFunctionType >

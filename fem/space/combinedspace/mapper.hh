@@ -164,6 +164,7 @@ namespace Dune
     typedef CombinedMapper
       < ContainedDiscreteFunctionSpaceType, numComponents, policy >
       ThisType;
+    typedef DofMapperDefault< Traits > BaseType;
 
     friend class CombinedSpace
       < ContainedDiscreteFunctionSpaceType, numComponents, policy>;
@@ -208,7 +209,19 @@ namespace Dune
     /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,int localDof) const */
     template< class Entity >
     inline int mapEntityDofToGlobal( const Entity &entity,
-                                     int localNum ) const;
+                                     int localDof ) const;
+
+    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    inline int maxNumDofs () const;
+
+    using BaseType :: numDofs;
+
+    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    inline int numDofs ( const EntityType &entity ) const;
+
+    /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const */
+    template< class Entity >
+    inline int numEntityDofs ( const Entity &entity ) const;
 
     //- Method inherited from mapper interface
     //! if grid has changed determine new size 
@@ -220,13 +233,6 @@ namespace Dune
 
     //! return old index in dof array of given index ( for dof compress ) 
     inline int oldIndex ( const int hole, const int block ) const;
-
-    /** \copydoc Dune::DofMapperInterface::numDofs() const */
-    inline int numDofs () const;
-
-    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
-    template <class EntityImp>
-    inline int numDofs ( const EntityImp &entity ) const;
 
     //! return number of holes in the data 
     inline int numberOfHoles ( const int block ) const;
