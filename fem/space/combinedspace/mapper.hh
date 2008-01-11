@@ -201,14 +201,14 @@ namespace Dune
     /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const;
 
-    //! Map a local degree of freedom on an entity to a global one
+    /** \copyDoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,int localDof) const */
     inline int mapToGlobal( const EntityType &entity,
-                            int localNum ) const;
+                            int localDof ) const;
 
-    /** \copydoc DofMapperInterface::mapEntityDofsToGlobal */
-    template <class EntityImp>
-    inline int mapEntityDofsToGlobal( const EntityImp &entity,
-                                      int localNum ) const;
+    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,int localDof) const */
+    template< class Entity >
+    inline int mapEntityDofToGlobal( const Entity &entity,
+                                     int localNum ) const;
 
     //- Method inherited from mapper interface
     //! if grid has changed determine new size 

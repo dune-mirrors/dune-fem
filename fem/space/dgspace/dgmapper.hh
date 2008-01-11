@@ -97,21 +97,20 @@ namespace Dune
     }
 
     /** \copydoc DofMapperInterface::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int localDof) const
+    int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       const int baseIndex = indexSet_.index( entity ) * numberOfDofs_;
       return baseIndex + localDof;
     }
+
+    using BaseType :: numDofs;
 
     /** \copydoc DofMapperInterface::numDofs() const */
     int numDofs () const
     {
       return numberOfDofs_;
     }
-
-    // use numDofs default implementation 
-    using BaseType :: numDofs;
-    
+   
     /** \copydoc DofMapperInterface::newSize */
     int newSize() const
     {

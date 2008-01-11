@@ -47,28 +47,28 @@ namespace Dune
   
   template< class ContainedSpace, int N, DofStoragePolicy policy >
   inline int CombinedMapper< ContainedSpace, N, policy >
-    :: mapToGlobal ( const EntityType &entity, int localNum ) const 
+    :: mapToGlobal ( const EntityType &entity, int localDof ) const 
   {
-    const int component = utilLocal_.component(localNum);
-    const int containedLocal = utilLocal_.containedDof(localNum);
+    const int component = utilLocal_.component( localDof );
+    const int containedLocal = utilLocal_.containedDof( localDof );
  
     const int containedGlobal = spc_.mapToGlobal( entity, containedLocal );
     
-    return utilGlobal_.combinedDof(containedGlobal, component);
+    return utilGlobal_.combinedDof( containedGlobal, component );
   }
 
   template< class ContainedSpace, int N, DofStoragePolicy policy >
-  template< class EntityImp >
+  template< class Entity >
   inline int CombinedMapper< ContainedSpace, N, policy >
-    :: mapEntityDofsToGlobal ( const EntityImp &entity, int localNum ) const 
+    :: mapEntityDofToGlobal ( const Entity &entity, int localDof ) const 
   {
-    const int component = utilLocal_.component(localNum);
-    const int containedLocal = utilLocal_.containedDof(localNum);
+    const int component = utilLocal_.component( localDof );
+    const int containedLocal = utilLocal_.containedDof( localDof );
  
     const int containedGlobal = 
-      spc_.mapper().mapEntityDofsToGlobal( entity, containedLocal );
+      spc_.mapper().mapEntityDofToGlobal( entity, containedLocal );
     
-    return utilGlobal_.combinedDof(containedGlobal, component);
+    return utilGlobal_.combinedDof( containedGlobal, component );
   }
   
   

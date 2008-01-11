@@ -45,6 +45,10 @@ namespace Dune
   public:
     typedef FiniteVolumeMapperTraits< GridPartImp, 0, dimrange > Traits;
 
+  private:
+    typedef DofMapperDefault< Traits > BaseType;
+
+  public:
     typedef typename Traits :: IndexSetType IndexSetType;
 
     typedef typename Traits :: EntityType EntityType;
@@ -55,7 +59,7 @@ namespace Dune
     enum { numCodims = IndexSetType::ncodim };
 
     const IndexSetType &indexSet_;
-      
+
   public:
     inline FiniteVolumeMapper ( const IndexSetType &indexSet,
                                 int numDofs ) 
@@ -90,106 +94,40 @@ namespace Dune
     {
       return indexSet_.index( entity ) * dimrange + localNum;
     }
-
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,int localNum) const 
-        \note This method returns zero since the current FV
-        implementation only supports p = 0! 
-    */
-    template <class EntityImp>
-    inline int mapToGlobal ( const EntityImp &entity, int localNum ) const
-    {
-      return 0; 
-    }
-
-    //! return old index for hole 
-    int oldIndex ( const int hole, int ) const
-    {   
-      // corresponding number of set is newn 
-      const int newn  = static_cast<int> (hole/dimrange);
-      // local number of dof is local 
-      const int local = (hole % dimrange); 
-      return (dimrange * indexSet_.oldIndex(newn,0)) + local;
-    }
-
-    //! return new index for hole 
-    int newIndex (const int hole, int ) const
-    {
-      // corresponding number of set is newn 
-      const int newn = static_cast<int> (hole / dimrange);
-      // local number of dof is local 
-      const int local = (hole % dimrange); 
-      return (dimrange * indexSet_.newIndex(newn,0)) + local;
-    }
-
-    //! return numbber of exsiting hole 
-    int numberOfHoles ( int ) const
-    {   
-      // this index set works only for codim = 0 at the moment
-      return dimrange * indexSet_.numberOfHoles(0);
-    }
     
-    // is called once and calcs the insertion points too
-    int newSize() const 
-    {
-      return this->size();
-    }
+    using BaseType :: numDofs;
 
-    //! return number of dof per element 
+    /** \copydoc Dune::DofMapperInterface::numDofs() const */
     int numDofs () const 
     {
       return dimrange;
     }
 
-    //! return the sets needsCompress 
-    bool needsCompress () const { return indexSet_.needsCompress(); }
-  };
-
-#if 0
-  template <class IndexSetImp>
-  class FiniteVolumeMapper<IndexSetImp,0,1>
-  : public DofMapperDefault < FiniteVolumeMapper <IndexSetImp,0,1> > 
-  {
-    // corresp. index set 
-    const IndexSetImp & indexSet_;
-  public:
-    typedef IndexSetImp IndexSetType;
-    
-    FiniteVolumeMapper ( const IndexSetType  & is , int numDofs ) : indexSet_ (is) {}
-
-    // we have virtual function ==> virtual destructor 
-    virtual ~FiniteVolumeMapper () {}
-
-    //! return size of function space, here number of elements 
-    int size () const
+    /** \copydoc Dune::DofMapperInterface::oldIndex(const int hole,const int block) const */
+    int oldIndex ( const int hole, const int block ) const
     {
-      return indexSet_.size(0);
+      assert( block == 0 );
+
+      const int ishole = hole / dimrange;
+      const int local = hole % dimrange;
+      return dimrange * indexSet_.oldIndex( ishole, 0) + local;
     }
-    
-    //! map Entity an local Dof number to global Dof number 
-    //! for polOrd = 0
-    template <class EntityType>
-    int mapToGlobal (EntityType &en, int localNum ) const
+
+    /** \copydoc Dune::DofMapperInterface::newIndex(const int hole,const int block) const */
+    int newIndex ( const int hole, const int block ) const
     {
-      return indexSet_.template index<0> (en,localNum);
+      assert( block == 0 );
+
+      const int ishole = hole / dimrange;
+      const int local = hole % dimrange;
+      return dimrange * indexSet_.newIndex( ishole, 0) + local;
     }
 
-    //! return old index of hole 
-    int oldIndex (const int hole, int ) const
-    {   
-      return indexSet_.oldIndex(hole,0);
-    }
-
-    //! return new index of hole 
-    int newIndex (const int hole, int ) const
+    /** \copydoc Dune::DofMapperInterface::numberOfHoles(const int block) const */
+    int numberOfHoles ( const int block ) const
     {
-      return indexSet_.newIndex(hole,0);
-    }
-
-    //! return number of holes 
-    int numberOfHoles ( int ) const
-    {   
-      // this index set works only for codim = 0 at the moment
-      return indexSet_.numberOfHoles(0);
+      assert( block == 0 );
+      return dimrange * indexSet_.numberOfHoles( 0 );
     }
     
     // is called once and calcs the insertion points too
@@ -198,16 +136,12 @@ namespace Dune
       return this->size();
     }
 
-    //! return number of dof per entity, here this method returns 1
-    int numDofs () const 
-    {
-      return 1;
-    }
-
     //! return the sets needsCompress 
-    bool needsCompress () const { return indexSet_.needsCompress(); }
+    bool needsCompress () const
+    {
+      return indexSet_.needsCompress();
+    }
   };
-#endif
 
 } // end namespace Dune 
 

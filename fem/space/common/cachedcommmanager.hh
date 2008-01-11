@@ -188,13 +188,13 @@ namespace Dune {
         assert( n == 1 );
 
         // build local mapping 
-        const int numDofs = mapper_.numDofs( en );
+        const int numDofs = mapper_.numEntityDofs( en );
         std::vector<int> indices(numDofs);
 
         // copy numDofs 
         for(int i=0; i<numDofs; ++i) 
         {
-          indices[i] = mapper_.mapEntityDofsToGlobal( en , i ); 
+          indices[i] = mapper_.mapEntityDofToGlobal( en , i ); 
         }
 
         // Interior entities belong to send area and other entities, i.e.

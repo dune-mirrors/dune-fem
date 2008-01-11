@@ -118,6 +118,21 @@ public:
     CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity ,localDof));
     return asImp().mapToGlobal( entity , localDof );
   }
+  
+   /** \brief map a local DoF number of an entity to a global one
+   *
+   *  \param[in]  entity    entity the DoF belongs to
+   *  \param[in]  localDof  local number of the DoF
+   *
+   *  \returns global number of the DoF
+   */
+  template< class Entity > 
+  int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION
+      ( asImp().mapEntityDofToGlobal(entity ,localDof) );
+    return asImp().mapEntityDofToGlobal( entity , localDof );
+  }
  
   /** \brief obtain maximal number of DoFs on one entity
    * 
@@ -130,33 +145,38 @@ public:
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());
     return asImp().numDofs();
   }
-  
-  /** \brief map a local DoF number of an entity to a global one
-   *
-   *  \param[in]  entity    entity the DoF belongs to
-   *  \param[in]  localDof  local number of the DoF
-   *
-   *  \returns global number of the DoF
-   */
-  template <class EntityImp> 
-  int mapEntityDofsToGlobal ( const EntityImp &entity, const int localDof ) const
-  {
-    CHECK_INTERFACE_IMPLEMENTATION(
-        asImp().mapEntityDofsToGlobal(entity ,localDof));
-    return asImp().mapEntityDofsToGlobal( entity , localDof );
-  }
- 
+
   /** \brief obtain number of DoFs on an entity
    * 
    *  \param[in]  entity  entity of codimension 0
    *  
    *  \returns number of DoFs on the entity
    */
-  template <class EntityImp> 
-  inline int numDofs ( const EntityImp &entity ) const
+  inline int numDofs ( const EntityType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( entity ) );
     return asImp().numDofs( entity );
+  }
+
+  /** \brief obtain number of DoFs actually belonging to an entity
+   *
+   *  In contrast to numDofs, this method returns the number of DoFs actually
+   *  associated with an entity (usually a subentity). We have the following
+   *  relation for an entity \f$E\f$ of codimension 0:
+   *  \f[
+   *  \mathrm{numDofs}( E ) = \sum_{e \subset E} \mathrm{numEntityDofs}( e ),
+   *  \f]
+   *  where \f$\subset\f$ denotes the subentity relation.
+   * 
+   *  \param[in]  entity  entity of codimension
+   *  
+   *  \returns number of DoFs on the entity
+   */
+  template< class Entity >
+  inline int numEntityDofs ( const Entity &entity ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().numEntityDofs( entity ) );
+    return asImp().numEntityDofs( entity );
   }
 
   /** \brief return number of holes for data block */
@@ -294,6 +314,7 @@ private:
   typedef DofMapperDefault< Traits > ThisType;
   typedef DofMapperInterface< Traits > BaseType;
 
+#if 0
   //! default implementation returns 0 
   template <class MapperType, int codim>
   struct NumDofs
@@ -313,19 +334,46 @@ private:
       return mapper.numDofs();
     }
   };
+#endif
 
 protected:
   using BaseType :: asImp;
   using BaseType :: numDofs;
   
 public:
-  /** \copydoc DofMapperInterface::numDofs( const EntityType &entity ) const
-      \note This implementation just returns number of all dofs 
-  */
-  template <class EntityImp>
-  inline int numDofs ( const EntityImp &entity ) const
+  /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,const int localDof) const
+   *  \note The default implementation associates all DoFs with codimension 0.
+   */
+  int mapEntityDofToGlobal ( const EntityType &entity, const int localDof ) const
   {
-    return NumDofs<ThisType, EntityImp :: codimension>::dofs(*this);
+    return mapToGlobal( entity, localDof );
+  }
+  
+  /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,const int localDof) const
+   *  \note The default implementation associates all DoFs with codimension 0.
+   */
+  template< class Entity > 
+  int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+  {
+    return 0;
+  }
+
+  /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const
+   *  \note This implementation just returns the maximal number of DoFs on an
+   *        entity.
+   */
+  inline int numDofs ( const EntityType &entity ) const
+  {
+    return asImp().numDofs();
+  }
+
+  /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const
+   *  \note The default implementation associates all DoFs with codimension 0.
+   */
+  template< class Entity >
+  inline int numEntityDofs ( const Entity &entity ) const
+  {
+    return (Entity :: codimension == 0 ? asImp().numDofs( entity ) : 0);
   }
 
   //! update mapper, default does nothing 

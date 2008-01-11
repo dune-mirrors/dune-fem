@@ -141,17 +141,59 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapperInterface::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int local ) const
+    inline int mapToGlobal ( const EntityType &entity,
+                             const int localDof ) const
     {
-      const int coordinate = local % dimRange;
-      const int localDof = local / dimRange;
-      const int globalDof
-        = indexSet_.template subIndex< dimension >( entity, localDof );
-      return dimRange * globalDof + coordinate;
+      const int coordinate = localDof % dimRange;
+      const int localPoint = localDof / dimRange;
+      const int globalPoint
+        = indexSet_.template subIndex< dimension >( entity, localPoint );
+      return dimRange * globalPoint + coordinate;
     }
 
-    /** \copydoc Dune::DofMapperInterface::oldIndex
-     */
+    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal */
+    template< class Entity >
+    inline int mapEntityDofToGlobal ( const Entity &entity,
+                                      const int localDof ) const
+    {
+      if( Entity :: codimension != (unsigned int) dimension )
+        DUNE_THROW( RangeError, "No such local DoF." );
+
+      assert( (localDof >= 0) && (localDof < dimRange) );
+      return dimRange * indexSet_.index( entity ) + localDof;
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::numDofs() const */
+    int numDofs () const
+    {
+      return dimRange * maxDofs_;
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    int numDofs ( const EntityType &entity ) const
+    {
+      return dimRange * entity.template count< dimension >();
+    }
+
+    template< class Entity >
+    inline int numEntityDofs ( const Entity &entity ) const
+    {
+      return (Entity :: codimension == (unsigned int) dimension ? dimRange : 0);
+    }
+
+    /** \brief Check, whether any DoFs are associated with a codimension */
+    inline bool contains ( unsigned int codim ) const
+    {
+      return (codim == dimension);
+    }
+
+    /** \brief Check, whether the data in a codimension has fixed size */
+    inline bool fixedDataSize ( unsigned int codim ) const
+    {
+      return true;
+    }
+   
+    /** \copydoc Dune::DofMapperInterface::oldIndex */
     int oldIndex ( int hole, int ) const
     {
       const int coordinate = hole % dimRange;
@@ -160,8 +202,7 @@ namespace Dune
       return setIndex * dimRange + coordinate;
     }
 
-    /** \copydoc Dune::DofMapperInterface::newIndex
-     */
+    /** \copydoc Dune::DofMapperInterface::newIndex */
     int newIndex ( int hole , int ) const
     {
       const int coordinate = hole % dimRange;
@@ -175,28 +216,6 @@ namespace Dune
     int numberOfHoles ( int ) const
     {
       return dimRange * indexSet_.numberOfHoles( dimension );
-    }
-
-    /** \copydoc Dune::DofMapperInterface::numDofs() const */
-    int numDofs () const
-    {
-      return dimRange * maxDofs_;
-    }
-    
-    /** \copydoc Dune::DofMapperInterface::mapEntityDofsToGlobal */
-    template <class EntityImp>
-    int mapEntityDofsToGlobal ( const EntityImp &entity, const int localDof ) const 
-    {
-      DUNE_THROW(NotImplemented,"Method not implemented!");
-      return 0;
-    }
-    
-    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
-    template <class EntityImp>
-    int numDofs ( const EntityImp &entity ) const
-    {
-      return (EntityImp :: codimension == (int) dimension) ? 
-          (dimRange * entity.template count< dimension >()) : 0;
     }
 
     /** \copydoc Dune::DofMapperInterface::newSize
@@ -381,8 +400,51 @@ namespace Dune
       return dimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
     }
 
-    /** \copydoc Dune::DofMapperInterface::oldIndex
-     */
+    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal */
+    template< class Entity >
+    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
+    {
+      // As soon as the numEntityDofs-Method is implemented, just map them linearly.
+      // Twists don't play a role for 2nd order!
+      DUNE_THROW( NotImplemented, "LagrangeMapper of 2nd order cannot map entity DoFs, yet." );
+      return 0;
+    }
+    
+    /** \copydoc Dune::DofMapperInterface::numDofs() const */
+    inline int numDofs () const
+    {
+      return numDofs_;
+    }
+
+    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    inline int numDofs ( const EntityType &entity ) const
+    {
+      return lagrangePointSet_[ entity.geometry().type() ]->size();
+    }
+
+    /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const */
+    template< class Entity >
+    inline int numEntityDofs ( const Entity &entity ) const
+    {
+      // Obtain the number of entity dofs for an arbitrary geometry!
+      // LagrangePointSet cannot be used here!
+      DUNE_THROW( NotImplemented, "LagrangeMapper of 2nd order cannot map entity DoFs, yet." );
+      return 0;
+    }
+    
+    /** \brief Check, whether any DoFs are associated with a codimension */
+    inline bool contains ( unsigned int codim ) const
+    {
+      return true;
+    }
+
+    /** \brief Check, whether the data in a codimension has fixed size */
+    inline bool fixedDataSize ( unsigned int codim ) const
+    {
+      return false;
+    }
+
+    /** \copydoc Dune::DofMapperInterface::oldIndex */
     int oldIndex ( const int num, const int codim ) const
     {
       // corresponding number of set is newn 
@@ -393,8 +455,7 @@ namespace Dune
       return dimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
     }
 
-    /** \copydoc Dune::DofMapperInterface::newIndex
-     */
+    /** \copydoc Dune::DofMapperInterface::newIndex */
     int newIndex ( const int num , const int codim) const
     {
       // corresponding number of set is newn 
@@ -405,16 +466,14 @@ namespace Dune
       return dimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
     }
 
-    /** \copydoc Dune::DofMapperInterface::numberOfHoles
-     */
+    /** \copydoc Dune::DofMapperInterface::numberOfHoles */
     int numberOfHoles ( const int codim ) const
     {
       return (maxDofs_[ codim ] > 0) ? 
         (dimRange * indexSet_.numberOfHoles( codim )) : 0;
     }
 
-    /** \copydoc Dune::DofMapperInterface::update
-     */
+    /** \copydoc Dune::DofMapperInterface::update */
     void update()
     {
       // assure that update is only called once per 
@@ -457,27 +516,6 @@ namespace Dune
     {
       assert( (block >= 0) && (block < numBlocks()) );
       return dimRange * offset_[ block ];
-    }
-
-    /** \copydoc Dune::DofMapperInterface::numDofs() const */
-    int numDofs () const
-    {
-      return numDofs_;
-    }
-
-    /** \copydoc Dune::DofMapperInterface::mapEntityDofsToGlobal */
-    template <class EntityImp>
-    int mapEntityDofsToGlobal ( const EntityImp &entity, const int localDof ) const 
-    {
-      DUNE_THROW(NotImplemented,"Method not implemented!");
-      return 0;
-    }
-    
-    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
-    template <class EntityImp>
-    int numDofs ( const EntityImp &entity ) const
-    {
-      return lagrangePointSet_[ entity.geometry().type() ]->size();
     }
 
     /** \copydoc Dune::DofMapperInterface::newSize

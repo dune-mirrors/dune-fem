@@ -7,161 +7,101 @@
 
 #include <dune/fem/space/common/commoperations.hh>
 
-namespace Dune {
+namespace Dune
+{
 
-/** @addtogroup DFComm  
-    @{
-**/
-
-  /** \brief Communication data handle for DiscreteFunctions based on
-      discontinuous spaces such as DG or FV spaces.
-      \param DiscreteFunctionImp type of discrete function to be
-      communicated 
-  */
-  template <class DiscreteFunctionImp>
-  class LagrangeCommunicationHandler 
-   : public CommDataHandleIF<LagrangeCommunicationHandler <DiscreteFunctionImp > ,
-                             typename DiscreteFunctionImp :: RangeFieldType >
+  /** \class   LagrangeCommunicationHandler
+   *  \ingroup DFComm
+   *  \brief   Communication handler for Lagrange discrete functions
+   *
+   *  \param  DiscreteFunction  type of discrete function to be communicated
+   */
+  template< class DiscreteFunction,
+            class Operation = DFCommunicationOperation :: Add >
+  class LagrangeCommunicationHandler
+  : public CommDataHandleIF
+    < LagrangeCommunicationHandler< DiscreteFunction, Operation >,
+      typename DiscreteFunction :: RangeFieldType >
   {
-    // type of mathematical operation 
-    typedef DFCommunicationOperation::Copy OperationImp;
-
-    //! empty for higher codims 
-    template <class MessageBufferImp, class EntityType, int codim> 
-    struct HandleData
-    {
-      static void gather (DiscreteFunctionImp& discreteFunction,
-                          MessageBufferImp& buff, const EntityType& en)
-      {
-      }
-      static void scatter (DiscreteFunctionImp& discreteFunction,
-          MessageBufferImp& buff, const EntityType& en, size_t n)
-      {
-      }
-      static size_t size (DiscreteFunctionImp& discreteFunction,const EntityType& en)
-      {
-        return 0;
-      }
-    };  
-    
-    template <class MessageBufferImp, class EntityType> 
-    struct HandleData<MessageBufferImp,EntityType,0>
-    {
-      typedef typename DiscreteFunctionImp :: LocalFunctionType LocalFunctionType; 
-
-      //! gather data 
-      static void gather (DiscreteFunctionImp& discreteFunction,
-                          MessageBufferImp& buff, const EntityType& en)
-      {
-        // get local function 
-        LocalFunctionType lf = discreteFunction.localFunction(en);
-        const int numDofs = lf.numDofs(); 
-        // for all local dofs, write data to buffer 
-        for(int i=0; i<numDofs; ++i) 
-        {
-          buff.write( lf[i] );
-        }
-      }
-      
-      //! scatter data 
-      static void scatter (DiscreteFunctionImp& discreteFunction,
-          MessageBufferImp& buff, const EntityType& en, size_t n)
-      {
-        LocalFunctionType lf = discreteFunction.localFunction(en);
-        const int numDofs = lf.numDofs(); 
-        DataType val; 
-        // for all local dofs, read data from buffer 
-        // and apply operation 
-        for(int i=0; i<numDofs; ++i) 
-        {
-          buff.read( val );
-
-          // apply given operation  
-          OperationImp::apply(val , lf[i]);
-        }
-      }
-      
-      //! return local dof size to be communicated 
-      static size_t size (DiscreteFunctionImp& discreteFunction,const EntityType& en)
-      {
-        // return size of local function 
-        LocalFunctionType lf = discreteFunction.localFunction(en);
-        return lf.numDofs(); 
-      }
-    };
-    
   public:  
-    typedef DiscreteFunctionImp DiscreteFunctionType;
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-    typedef typename DiscreteFunctionType::RangeFieldType DataType;
+    typedef DiscreteFunction DiscreteFunctionType;
+    
+    typedef typename DiscreteFunctionType :: RangeiFieldType DataType;
+
+  private:
+    typedef CommDataHandleIF< LagrangeCommunicationHandler, DataType > BaseType;
+
+  public:
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
+
+    typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+    
+  protected:
+    mutable DiscreteFunctionType &function_; 
+    const MapperType &mapper_;
+
+  public:
+    LagrangeCommunicationHandler( DiscreteFunctionType &function )
+    : function_( function ),
+      mapper_( function.space().mapper() )
+    {} 
+    
+    LagrangeCommunicationHandler( const LagrangeCommunicationHandler &other )
+    : function_( other.function_ ),
+      mapper_( other.mapper_ )
+    {}
+    
   private:  
     //! cannot be implemented because of the reference
-    LagrangeCommunicationHandler & operator = (const LagrangeCommunicationHandler & org);
+    LagrangeCommunicationHandler &operator= ( const LagrangeCommunicationHandler & );
 
-    // discrete function to communicate 
-    mutable DiscreteFunctionType & discreteFunction_; 
-
-    const int containedCodim_; 
-    const bool fixedSize_;
   public:
-    LagrangeCommunicationHandler(DiscreteFunctionType & df) 
-      : discreteFunction_(df) 
-      , containedCodim_(0) 
-      , fixedSize_ (! df.space().multipleGeometryTypes())
+    inline bool contains ( int dim, int codim ) const
     {
-      // if space is continuous, check contained codim again 
-      assert( ! df.space().continuous() );
-      //std::cout << fixedSize_ << "\n";
-    }
-    
-    LagrangeCommunicationHandler(const LagrangeCommunicationHandler & org)
-      : discreteFunction_(org.discreteFunction_) 
-      , containedCodim_(org.containedCodim_)
-      , fixedSize_(org.fixedSize_)
-    {
+      return mapper_.contains( codim );
     }
 
-    bool contains (int dim, int codim) const
+    inline bool fixedsize (int dim, int codim) const
     {
-      DUNE_THROW(NotImplemented,"Method not implemented yet!");
-      return false; 
-    }
-
-    bool fixedsize (int dim, int codim) const
-    {
-      DUNE_THROW(NotImplemented,"Method not implemented yet!");
-      return false; 
+      return mapper_.fixedDataSize( codim );
     }
 
     //! read buffer and apply operation 
-    template<class MessageBufferImp, class EntityType>
-    void gather (MessageBufferImp& buff, const EntityType& en) const
+    template< class MessageBuffer, class Entity >
+    void gather ( MessageBuffer &buffer, const Entity &entity ) const
     {
-      DUNE_THROW(NotImplemented,"Method not implemented yet!");
-      //enum { codim = EntityType :: codimension };
-      //HandleData<MessageBufferImp,EntityType,codim>::gather(discreteFunction_,buff,en);
+      const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
+      for( unsigned int i = 0; i < numEntityDofs; ++i )
+      {
+        const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
+        buffer.write( function_.dof( index ) );
+      }
     }
 
     //! read buffer and apply operation 
-    template<class MessageBufferImp, class EntityType>
-    void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+    template< class MessageBuffer, class Entity >
+    void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
     {
-      DUNE_THROW(NotImplemented,"Method not implemented yet!");
-      //enum { codim = EntityType :: codimension };
-      //HandleData<MessageBufferImp,EntityType,codim>::scatter(discreteFunction_,buff,en,n);
+      const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
+      for( unsigned int i = 0; i < numEntityDofs; ++i )
+      {
+        const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
+
+        DataType value;
+        buffer.read( value );
+        
+        Operation :: apply( value, function_.dof( index ) );
+      }
     }
 
     //! return local dof size to be communicated 
-    template <class EntityType>
-    size_t size (const EntityType& en) const
+    template< class Entity >
+    size_t size ( const Entity &entity ) const
     {
-      DUNE_THROW(NotImplemented,"Method not implemented yet!");
-      return 0;
-      //enum { codim = EntityType :: codimension };
-      //return HandleData<EntityType,EntityType,codim>::size(discreteFunction_,en);
+      return mapper_.numEntityDofs( entity );
     }
   };
   
-//@} 
 } // end namespace Dune
 #endif
