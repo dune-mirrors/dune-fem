@@ -26,7 +26,7 @@ namespace Dune
   public:  
     typedef DiscreteFunction DiscreteFunctionType;
     
-    typedef typename DiscreteFunctionType :: RangeiFieldType DataType;
+    typedef typename DiscreteFunctionType :: RangeFieldType DataType;
 
   private:
     typedef CommDataHandleIF< LagrangeCommunicationHandler, DataType > BaseType;

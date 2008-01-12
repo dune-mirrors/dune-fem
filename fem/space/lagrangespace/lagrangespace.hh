@@ -80,16 +80,16 @@ namespace Dune
 
     enum { localBlockSize = DimRange };
 
-    /** \brief defines type of data handle for communication 
-        for this type of space.
-    */
-    template <class DiscreteFunctionImp>
+    /** \brief defines type of communication data handle for this type of space
+     */
+    template< class DiscreteFunction,
+              class Operation = DFCommunicationOperation :: Add >
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef LagrangeCommunicationHandler<DiscreteFunctionImp> Type;
+      typedef LagrangeCommunicationHandler< DiscreteFunction, Operation > Type;
       //! type of operatation to perform on scatter 
-      typedef DFCommunicationOperation :: Add OperationType;
+      typedef Operation OperationType;
     };
   };
 
