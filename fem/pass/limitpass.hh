@@ -271,17 +271,17 @@ namespace Dune {
 
   public:
     //- Public methods
-    /** \brief Constructor
-      \param problem Actual problem definition (see problem.hh)
-      \param pass Previous pass
-      \param spc Space belonging to the discrete function local to this pass
-      \param paramFile parameter file (optional) containing whether to use TVD
-            switch or not:  
-            
-        # 0 == TVB , 1 == TVD 
-        TVD: 0  # defaut value 
-    */
-    //! \param paramFile Name of parameter file (defaults to empty)
+    /** \brief constructor
+     * 
+     *  \param  problem    Actual problem definition (see problem.hh)
+     *  \param  pass       Previous pass
+     *  \param  spc        Space belonging to the discrete function local to
+     *                     this pass
+     *  \param  paramFile  parameter file (optional) containing whether to use
+     *                     TVD switch or not:
+     *                     # 0 == TVB , 1 == TVD 
+     *                     TVD: 0  # defaut value 
+     */
     LimitDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 const DiscreteFunctionSpaceType& spc,
