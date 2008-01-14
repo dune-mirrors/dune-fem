@@ -262,8 +262,10 @@ public:
     , myRank_(grid_.comm().rank())
     , outputFormat_(grape)
   {
-    saveMacroGrid( gridName );
+    // initialize class 
     init(paramfile);
+    // save macro grid for structured grids 
+    saveMacroGrid( gridName );
   }
 
   /** \brief Constructor creating data writer 

@@ -217,6 +217,8 @@ public:
   {
     // do nothing for unstructured grids 
     if( Capabilities::IsUnstructured<GridImp>::v ) return;
+    // only store grid on rank 0
+    if( grid.comm().rank() > 0) return ;
     
     // create file descriptor 
     std::ifstream gridin(macroname.c_str());
