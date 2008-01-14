@@ -23,9 +23,13 @@ namespace Dune {
 // forward declarations 
 template <class T>
 class DefaultDofAllocator;
-  
+
 template <class T, class AllocatorType = DefaultDofAllocator<T> >
 class MutableArray;
+
+template<class ArrayType>
+struct SpecialArrayFeatures;
+
 
 //! oriented to the STL Allocator funtionality 
 template <class T>
@@ -553,6 +557,56 @@ private:
     }
     this->size_ = 0;
     memSize_ = 0;
+  }
+};
+
+/** \brief Specialization of SpecialArrayFeatures for MutableArray */
+template<class ValueType>
+struct SpecialArrayFeatures<MutableArray<ValueType> >
+{
+  typedef MutableArray<ValueType> ArrayType;
+  static size_t used(const ArrayType & array)  
+  {
+    return array.usedMemorySize();
+  }
+  static void setMemoryFactor(ArrayType & array, const double memFactor) 
+  {
+    array.setMemoryFactor(memFactor);
+  }
+
+  static void memMoveBackward(ArrayType& array, const int length,
+            const int oldStartIdx, const int newStartIdx)
+  {
+    //array.memmove(length,oldStartIdx,newStartIdx);
+    // get new end of block which is offSet + (length of block - 1) 
+    int newIdx = newStartIdx + length - 1; 
+    // copy all entries backwards 
+    for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
+    {
+      // move value to new location 
+      array[newIdx] = array[oldIdx];
+#ifndef NDEBUG
+      // for debugging purpose 
+      array[oldIdx ] = 0.0;
+#endif
+    }
+  }
+  static void memMoveForward(ArrayType& array, const int length,
+            const int oldStartIdx, const int newStartIdx)
+  {
+    //array.memmove(length,oldStartIdx,newStartIdx);
+    const int upperBound = oldStartIdx + length;
+    // get new off set that should be smaller then old one
+    int newIdx = newStartIdx;
+    for(int oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
+    {
+      // copy to new location 
+      array[newIdx] = array[oldIdx];
+#ifndef NDEBUG 
+      // for debugging issues only 
+      array[oldIdx] = 0.0;
+#endif
+    }
   }
 };
 

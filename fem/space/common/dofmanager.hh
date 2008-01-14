@@ -34,18 +34,28 @@ namespace Dune {
 template <class GridType> class DofManager;
 template <class DofManagerImp> class DofManagerFactory;
 
+/** \brief SpecialArrayFeatures is a wrapper class to extend some array
+    classes with some special features needed for the MemObject.
+    There exsist a specialization for MutableArray. 
+ */ 
 template<class ArrayType>
 struct SpecialArrayFeatures
 {
+  /** \brief value type of array, i.e. double */ 
   typedef typename ArrayType :: value_type ValueType;
+
+  /** \brief return used memory size of Array */
   static size_t used(const ArrayType & array)  
   {
     return array.size() * sizeof(ValueType);
   }
+  
+  /** \brief set memory overestimate factor, here does nothing */ 
   static void setMemoryFactor(ArrayType & array, const double memFactor) 
   {
   }
 
+  /** \brief move memory blocks backwards */
   static void memMoveBackward(ArrayType& array, const int length,
             const int oldStartIdx, const int newStartIdx)
   {
@@ -63,6 +73,7 @@ struct SpecialArrayFeatures
     }
   }
 
+  /** \brief move memory blocks forward */
   static void memMoveForward(ArrayType& array, const int length,
             const int oldStartIdx, const int newStartIdx)
   {
@@ -80,56 +91,6 @@ struct SpecialArrayFeatures
     }
   }
 };
-
-template<class ValueType>
-struct SpecialArrayFeatures<MutableArray<ValueType> >
-{
-  typedef MutableArray<ValueType> ArrayType;
-  static size_t used(const ArrayType & array)  
-  {
-    return array.usedMemorySize();
-  }
-  static void setMemoryFactor(ArrayType & array, const double memFactor) 
-  {
-    array.setMemoryFactor(memFactor);
-  }
-
-  static void memMoveBackward(ArrayType& array, const int length,
-            const int oldStartIdx, const int newStartIdx)
-  {
-    //array.memmove(length,oldStartIdx,newStartIdx);
-    // get new end of block which is offSet + (length of block - 1) 
-    int newIdx = newStartIdx + length - 1; 
-    // copy all entries backwards 
-    for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
-    {
-      // move value to new location 
-      array[newIdx] = array[oldIdx];
-#ifndef NDEBUG
-      // for debugging purpose 
-      array[oldIdx ] = 0.0;
-#endif
-    }
-  }
-  static void memMoveForward(ArrayType& array, const int length,
-            const int oldStartIdx, const int newStartIdx)
-  {
-    //array.memmove(length,oldStartIdx,newStartIdx);
-    const int upperBound = oldStartIdx + length;
-    // get new off set that should be smaller then old one
-    int newIdx = newStartIdx;
-    for(int oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
-    {
-      // copy to new location 
-      array[newIdx] = array[oldIdx];
-#ifndef NDEBUG 
-      // for debugging issues only 
-      array[oldIdx] = 0.0;
-#endif
-    }
-  }
-};
-
 
 //******************************************************************
 //
@@ -271,7 +232,12 @@ public:
 //! interface of MemObjects to store for DofManager 
 class MemObjectInterface 
 {
+protected:
+  //! do not allow to create explicit instances 
+  MemObjectInterface () {}
+  
 public:
+  //! destructor 
   virtual ~MemObjectInterface() {};
   
   //! resize memory 
@@ -294,11 +260,14 @@ public:
 
   //! return size of mem used by MemObject 
   virtual int usedMemorySize() const = 0;
+
+  //! enable dof compression in MemObject
+  virtual void enableDofCompression() = 0;
 };
 
 
-template <class MemObjectType> class CheckMemObjectResize;
 template <class MemObjectType> class ResizeMemoryObjects;
+template <class MemObjectType> class ReserveMemoryObjects;
 
 /*! 
   A MemObject holds the memory for one DiscreteFunction and the
@@ -313,9 +282,11 @@ template <class MemObjectType> class ResizeMemoryObjects;
 template <class MapperType , class DofArrayType>
 class MemObject : public MemObjectInterface
 {
+  // interface for MemObject lists
   typedef LocalInterface< int > MemObjectCheckType;
 private:
-  typedef MemObject < MapperType , DofArrayType> ThisType;
+  // type of this class 
+  typedef MemObject <MapperType , DofArrayType> ThisType;
   
   // the dof set stores number of dofs on entity for each codim
   mutable MapperType & mapper_;
@@ -326,37 +297,46 @@ private:
   // name of mem object, i.e. name of discrete function 
   std::string name_;
 
-  CheckMemObjectResize < ThisType > checkResize_; 
-  ResizeMemoryObjects  < ThisType > resizeMemObj_; 
+  ResizeMemoryObjects < ThisType > resizeMemObj_; 
+  ReserveMemoryObjects  < ThisType > reserveMemObj_; 
 
-  MemObjectCheckType & resizeList_; 
   MemObjectCheckType & memResizeList_; 
+  MemObjectCheckType & memReserveList_; 
 
+  // true if data need to be compressed 
+  bool dataNeedCompress_;
+
+  // prohibit copying 
+  MemObject(const MemObject& );
 public:  
   // Constructor of MemObject, only to call from DofManager 
   MemObject ( MapperType & mapper, std::string name ,
-    MemObjectCheckType & resizeList, 
     MemObjectCheckType & memResizeList,
+    MemObjectCheckType & memReserveList,
     const double memFactor) 
     : mapper_ (mapper) , array_( mapper_.size() ), name_ (name) 
-    , checkResize_(*this) , resizeMemObj_(*this) 
-    , resizeList_(resizeList) , memResizeList_(memResizeList)
+    , resizeMemObj_(*this) 
+    , reserveMemObj_(*this)
+    , memResizeList_(memResizeList)
+    , memReserveList_(memReserveList)
+    , dataNeedCompress_(false)
   {
-    // add the special object to the checkResize list object 
-    resizeList_ += checkResize_; 
-  
-    // the same for the resize call  
+    // add the special object to the memResize list object 
     memResizeList_ += resizeMemObj_; 
+    
+    // the same for the reserve call  
+    memReserveList_ += reserveMemObj_; 
     
     // set memory over estimate factor, only for DofArray 
     SpecialArrayFeatures<DofArrayType>::setMemoryFactor(array_,memFactor);
   } 
 
-  virtual ~MemObject() 
+  //! \brief destructor deleting MemObject from resize and reserve List
+  ~MemObject() 
   {
     // remove from list 
-    resizeList_.remove( checkResize_ );
     memResizeList_.remove( resizeMemObj_ );
+    memReserveList_.remove( reserveMemObj_ );
   }
 
   //! returns name of this vector 
@@ -417,7 +397,7 @@ public:
   void dofCompress () 
   {
     const int nSize = newSize();
-    if( mapper_.needsCompress() )
+    if( dataNeedCompress_ && mapper_.needsCompress() )
     {
       const int oldSize = mapper_.size();
       // update mapper to new sizes 
@@ -451,6 +431,12 @@ public:
   int usedMemorySize() const 
   {
     return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
+  }
+
+  //! enable dof compression for this MemObject
+  void enableDofCompression() 
+  {
+    dataNeedCompress_ = true;
   }
 
 private:  
@@ -503,7 +489,6 @@ private:
                        oldOffSet, mapper_.offSet(block)); 
     }
   }
-
 };
 
 
@@ -528,16 +513,12 @@ private:
   // name of mem object, i.e. name of discrete function 
   std::string name_;
 
-  CheckMemObjectResize < ThisType > checkResize_; 
-  ResizeMemoryObjects  < ThisType > resizeMemObj_; 
-
 public:  
   // Constructor of MemObject, only to call from DofManager 
   DummyMemObject ( const MapperType & mapper, 
                    std::string name , const VectorPointerType * vector ) 
     : mapper_ (mapper) 
     , array_( mapper_.size() , const_cast<VectorPointerType *> (vector) ), name_ (name) 
-    , checkResize_(*this) , resizeMemObj_(*this) 
     {
     } 
 
@@ -593,6 +574,13 @@ public:
   {
     return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
   }
+  
+  //! does nothing here
+  void markForDofCompression() 
+  {
+    assert( (true) ? 
+        (std::cerr << "WARNING: DummyMemObject's may not compress vectors! \n" , 1) : 1);
+  }
 };
 
 //! Dummy Object storing array, here pointer and array are of the same type 
@@ -613,16 +601,12 @@ private:
   // name of mem object, i.e. name of discrete function 
   std::string name_;
 
-  CheckMemObjectResize < ThisType > checkResize_; 
-  ResizeMemoryObjects  < ThisType > resizeMemObj_; 
-
 public:  
   // Constructor of MemObject, only to call from DofManager 
   DummyMemObject ( const MapperType & mapper, 
                    std::string name , const VectorPointerType * vector ) 
     : mapper_ (mapper) 
     , array_(const_cast<VectorPointerType&> (*vector)), name_ (name) 
-    , checkResize_(*this) , resizeMemObj_(*this) 
   {
     assert( vector );
   } 
@@ -679,6 +663,13 @@ public:
   {
     return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
   }
+
+  //! does nothing here
+  void markForDofCompression() 
+  {
+    assert( (true) ? 
+        (std::cerr << "WARNING: DummyMemObject's may not compress vectors! \n" , 1) : 1);
+  }
 };
 
 template <class IndexSetType, class EntityType>
@@ -720,27 +711,7 @@ public:
 };
 
 template <class MemObjectType> 
-class CheckMemObjectResize 
-: public LocalInlinePlus < CheckMemObjectResize < MemObjectType > , int > 
-{
-private:
-  // the dof set stores number of dofs on entity for each codim
-  const MemObjectType & memobj_;
-
-public:  
-  // Constructor of MemObject, only to call from DofManager 
-  CheckMemObjectResize ( const MemObjectType & mo ) : memobj_ (mo) {} 
-
-  // if resize is needed the check is set to true 
-  void apply ( int & check )
-  {
-    if( memobj_.resizeNeeded() ) check = 1; 
-  }
-};
-
-// this class is the object for a single MemObject to 
-template <class MemObjectType> 
-class ResizeMemoryObjects  
+class ResizeMemoryObjects 
 : public LocalInlinePlus < ResizeMemoryObjects < MemObjectType > , int > 
 {
 private:
@@ -750,6 +721,29 @@ private:
 public:  
   // Constructor of MemObject, only to call from DofManager 
   ResizeMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {} 
+  ResizeMemoryObjects ( const ResizeMemoryObjects& org ) 
+    : memobj_(org.memobj_)
+  {}
+
+  // resize mem object, parameter not needed 
+  void apply ( int & )
+  {
+    memobj_.resize();
+  }
+};
+
+// this class is the object for a single MemObject to 
+template <class MemObjectType> 
+class ReserveMemoryObjects  
+: public LocalInlinePlus < ReserveMemoryObjects < MemObjectType > , int > 
+{
+private:
+  // the dof set stores number of dofs on entity for each codim
+  MemObjectType & memobj_;
+
+public:  
+  // Constructor of MemObject, only to call from DofManager 
+  ReserveMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {} 
 
   // reserve for at least chunkSize new values 
   void apply ( int & chunkSize )
@@ -785,7 +779,9 @@ public:
   {
     insert_.apply( father );
     remove_.apply( son );
-    dm_.checkMemorySize();
+
+    // resize memory 
+    dm_.resizeMemory();
   }  
 
   //! prolong data to children 
@@ -794,7 +790,9 @@ public:
   {
     remove_.apply( father );
     insert_.apply( son );
-    dm_.checkMemorySize();
+    
+    // resize memory 
+    dm_.resizeMemory();
   }
   
 };
@@ -860,7 +858,8 @@ private:
   // index set for mapping 
   mutable DataCollectorType dataInliner_;
   mutable DataCollectorType dataXtractor_;
- 
+
+  //! type of IndexSet change interfaces 
   typedef LocalInterface<typename GridType::
         template Codim<0>::Entity> LocalIndexSetObjectsType;
 
@@ -869,8 +868,10 @@ private:
   mutable LocalIndexSetObjectsType insertIndices_;
   mutable LocalIndexSetObjectsType removeIndices_;
 
-  mutable MemObjectCheckType checkResize_;
+  // lists containing all MemObjects 
+  // to have fast access during resize and reserve 
   mutable MemObjectCheckType resizeMemObjs_;
+  mutable MemObjectCheckType reserveMemObjs_;
 
   //! if chunk size if small then defaultChunkSize is used 
   const int defaultChunkSize_; 
@@ -881,6 +882,8 @@ private:
 public: 
   typedef IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType >
     IndexSetRestrictProlongType;
+  // this class needs to call resizeMemory 
+  friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType > ;
 
 private:
   // combine object holding all index set for restrict and prolong 
@@ -976,7 +979,7 @@ public:
     return ! insertIndices_.empty(); 
   }
    
-  //! return used memory size of all MemObjects in bytes 
+  /** \brief return used memory size of all MemObjects in bytes. */
   int usedMemorySize () const 
   {
     int used = 0;
@@ -988,32 +991,20 @@ public:
     return used;
   }
   
-  //! this method resizes the memory before restriction is done 
-  //! this will increase the sequence counter by 1 
+  /** \brief resize memory before data restriction 
+      during grid adaptation is done.
+  */ 
   void resizeForRestrict () 
   {
     ++sequence_;
-    resizeDofMem();
+    resizeMemory();
   }
   
-  //! check if there is still enough memory 
-  void checkMemorySize () 
-  {
-    // here it is necessary that this is fast, therefore we use 
-    // the combined objects technique 
-    int check = 0;
-    checkResize_.apply( check );
-    if( check ) 
-    {
-      int chunkSize = defaultChunkSize_; 
-      resizeMemObjs_.apply ( chunkSize );
-    }
-  }
- 
-  //! reserve memory for at least nsize elements 
-  //! this will increase the sequence counter by 1 
-  //! if useNsize is true, then nsize will be used as chunk size 
-  //! otherwise max( nsize, defaultChunkSize_ )
+  /** \brief reserve memory for at least nsize elements 
+      this will increase the sequence counter by 1 
+      if useNsize is true, then nsize will be used as chunk size 
+      otherwise max( nsize, defaultChunkSize_ )
+  */ 
   void reserveMemory (int nsize, bool useNsize = false ) 
   {
     ++sequence_;
@@ -1021,16 +1012,18 @@ public:
     assert( localChunkSize > 0 );
 
     // reserves (size + chunkSize * elementMemory), see above 
-    resizeMemObjs_.apply ( localChunkSize );
+    reserveMemObjs_.apply ( localChunkSize );
   }
 
-  //! return number of sequence, if dofmanagers memory was changed by
-  //! calling some method like resize, then also this number will increase
-  //! \note The increase of this number could be larger than 1 
+  /** \brief return number of sequence, if dofmanagers memory was changed by
+      calling some method like resize, then also this number will increase
+     \note The increase of this number could be larger than 1 
+  */
   int sequence () const { return sequence_; }
 
-  //! resize indexsets memory due to what the mapper has as new size 
-  //! this will increase the sequence counter by 1 
+  /** \brief Resize index sets and memory due to what the mapper has as new size.
+      \note This will increase the sequence counter by 1. 
+  */
   void resize()
   {
     // new number in grid series 
@@ -1041,45 +1034,49 @@ public:
     {
       (*it)->resize(); 
     }
-    resizeDofMem();
+    resizeMemory();
   }
 
-  //! inserts index to all index sets added to dof manager
+  /** \brief Inserts index to all index sets added to dof manager. */
   template <class EntityType>
   void insertNewIndex (EntityType & en )
   {
+    // insert new index 
     insertIndices_.apply( en );
+
+    // resize memory 
+    resizeMemory();
   }
           
-  //! removes index to all index sets added to dof manager
+  /** \brief Removes index from all index sets added to dof manager. */
   template <class EntityType>
   void removeOldIndex (EntityType & en )
   {
     removeIndices_.apply( en );
   }
- 
-private:
+
+protected:  
   //! resize the MemObject if necessary 
-  void resizeDofMem()
+  void resizeMemory()
   {
-    ListIteratorType endit  = memList_.end();
-    for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
-    {
-      (*it)->resize ();
-    }
+    int dummy = -1;
+    // pass dummy parameter 
+    resizeMemObjs_.apply ( dummy ); 
   }
   
 public:
-  //! compress all data that is hold by this dofmanager 
-  //! this will increase the sequence counter by 1 
+  /** \brief Compress all data that is hold by this dofmanager 
+      \note This will increase the sequence counter by 1.
+      \note This method is deprecated! 
+  */
   void dofCompress() 
   {
     compress();
   }
   
-  //! compress all data that is hold by this dofmanager 
-  //! this will increase the sequence counter by 1 
-  //- --compress
+  /** \brief Compress all data that is hold by this dofmanager 
+      \note  This will increase the sequence counter by 1.
+  */
   void compress() 
   {
     // mark next sequence 
@@ -1260,7 +1257,9 @@ addDofSet(const DofStorageType *, MapperType & mapper, std::string name)
   typedef MemObject<MapperType,DofStorageType> MemObjectType; 
   MemObjectType * obj = 
     new MemObjectType ( mapper, name , 
-                        checkResize_ , resizeMemObjs_ , memoryFactor_ ); 
+                        resizeMemObjs_ , 
+                        reserveMemObjs_ ,
+                        memoryFactor_ ); 
   
   // push_front, makes search faster 
   memList_.push_front( obj );    
