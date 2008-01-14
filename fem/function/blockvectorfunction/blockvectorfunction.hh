@@ -314,6 +314,9 @@ public:
       \return constant reference to leakPointer */
   const LeakPointerType& leakPointer() const { return leakPtr_; }
 
+  /** \copydoc enable dof compression for this discrete function */
+  void enableDofCompression();
+
 private:  
   LocalFunctionFactoryType lfFactory_;
 

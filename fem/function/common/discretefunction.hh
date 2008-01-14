@@ -462,6 +462,16 @@ namespace Dune
         \return \b true if operation was successful 
     */
     virtual bool read_pgm(const std::string filename) const = 0;
+    
+    /** \brief Enable this discrete function for dof compression, 
+         i.e. during grdi changes a dof compression 
+         is done when the DofManagers compress is called. 
+    */
+    inline void enableDofCompression()
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+          asImp().enableDofCompression() );
+    }
   };
 
 
@@ -794,6 +804,12 @@ namespace Dune
     /** \copydoc DiscreteFunctionInterface::write_pgm */
     virtual bool write_pgm(const std::string filename) const { return true; }
   
+    /** \copydoc Dune::DiscreteFunctionInterface::enableDofCompression() 
+        \note Default implementation is empty. 
+     */
+    inline void enableDofCompression()
+    {
+    }
   public:
     //this methods are used by the LocalFunctionStorage class 
 

@@ -325,4 +325,12 @@ namespace Dune {
     return true;
   }
   
+  template<class DiscreteFunctionSpaceImp>
+  void AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
+  enableDofCompression() 
+  {
+    assert( memPair_.first );
+    memPair_.first->enableDofCompression();
+  }
+  
 } // end namespace Dune

@@ -243,11 +243,8 @@ namespace Dune
     using Imp::read_pgm;
 
     using Imp::leakPointer;
+    using Imp::enableDofCompression;
 
-#if 0
-  protected:  
-    using Imp::newObject;
-#endif
     //- Forbidden members
   private:
     const MyType& interface() const { return *this; }
@@ -435,15 +432,6 @@ namespace Dune
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
-#if 0
-    /** \brief  @copydoc DiscreteFunctionDefault::localFunction */
-    template <class EntityType> 
-    LocalFunctionType localFunction (const EntityType &en) { return LocalFunctionType(en,*this); }
-    /** \brief  @copydoc DiscreteFunctionDefault::localFunction */
-    template <class EntityType> 
-    const LocalFunctionType localFunction (const EntityType &en) const { return LocalFunctionType(en,*this); }
-    // using Imp::localFunction;
-#endif
     using Imp::write_xdr;
     using Imp::read_xdr;
     using Imp::write_ascii;
@@ -452,6 +440,7 @@ namespace Dune
     using Imp::read_pgm;
 
     using Imp::leakPointer;
+    using Imp::enableDofCompression;
     
     //- Additional methods
     SubDiscreteFunctionType& subFunction(int component) {
@@ -464,14 +453,6 @@ namespace Dune
 
     int numComponents() const { return N; }
 
-#if 0
-  public:
-    friend class DiscreteFunctionInterface<MyTraits>;
-
-  protected:
-    using Imp::newObject;
-#endif
-    
   private:
     const MyType& interface() const { return *this; }
     SubMapperType* subDofMapper_[N];

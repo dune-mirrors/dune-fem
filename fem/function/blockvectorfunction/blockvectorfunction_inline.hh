@@ -323,5 +323,13 @@ setLocal( GridIteratorType &it , const RangeFieldType & scalar )
     localFunc_[i] = scalar;
 }
 
+template<class DiscreteFunctionSpaceType>
+inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
+enableDofCompressoin()
+{
+  assert( memPair_.first );
+  memPair_.first->enableDofCompression();
+}
+
 } // end namespace Dune 
 #endif

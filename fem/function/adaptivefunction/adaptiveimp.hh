@@ -144,6 +144,9 @@ namespace Dune {
     //! destructor 
     virtual ~AdaptiveFunctionImplementation();
 
+    //! enable dof compressiion for this discrete function 
+    void enableDofCompression(); 
+
   protected:
     virtual const LeafType& interface() const = 0;
     const DiscreteFunctionSpaceType& spc_;
