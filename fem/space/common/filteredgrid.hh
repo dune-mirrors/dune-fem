@@ -37,10 +37,12 @@ namespace Dune {
 //***************************************************************************
 
   //! Type definitions 
-  template <class FilterImp, class GridImp>
-  struct DefaultFilterTraits {
+  template <class FilterImp, class GridPartImp>
+  struct DefaultFilterTraits 
+  {
     typedef FilterImp FilterType;
-    typedef GridImp GridType;
+    typedef GridPartImp GridPartType; 
+    typedef typename GridPartType :: GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;   
     typedef typename GridType::template Codim<0>::EntityPointer EntityPointerCodim0Type;
 
@@ -68,17 +70,19 @@ namespace Dune {
     typedef typename FilterTraits::FilterType FilterType;  
     //! \brief type of Grid implementation
     typedef typename FilterTraits::GridType GridType;
+    //! \brief type of original grid part 
+    typedef typename FilterTraits::GridPartType GridPartType;
     //! \brief type of Entity with codim=0 
     typedef typename FilterTraits::EntityCodim0Type EntityCodim0Type; 
     //! \brief type of EntityPointer with codim=0 
     typedef typename FilterTraits::EntityPointerCodim0Type EntityPointerCodim0Type;
       
-    inline int has0Entity(EntityCodim0Type & e) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entitiy(e)));
+    inline bool has0Entity(EntityCodim0Type & e) const {
+      CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entity(e)));
       return asImp().has0Entity(e);
     }
-    inline int has0Entity(EntityPointerCodim0Type & e) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entitiy(e)));
+    inline bool has0Entity(EntityPointerCodim0Type & e) const {
+      CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entity(e)));
       return asImp().has0Entity(e);
     }
     template<class IntersectionIteratorType>
@@ -96,82 +100,140 @@ namespace Dune {
       CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionNeighbor<IntersectionIteratorType>(it)));
       return asImp().intersectionNeighbor<IntersectionIteratorType>(it);
     }
+
+    //! return object instance of filter for object creation  
+    inline static FilterType createObject(const GridPartType& gridPart)
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( FilterType :: createObject(gridPart));
+      return FilterType :: createObject(gridPart);
+    }
+
   protected: 
     //! do not create explict instances of this class 
     FilterInterface () {}  
 
-  private:
+  protected:
     // Barton-Nackman 
-    FilterType& asImp() { 
-      return static_cast<GridType&>(*this); 
-    }
+    FilterType& asImp() { return static_cast<FilterType&>(*this); }
     
     // const Barton-Nackman 
-    const FilterType& asImp() const { 
-      return static_cast<const GridType&>(*this);
-    }  
-  
+    const FilterType& asImp() const { return static_cast<const FilterType&>(*this); }  
   }; // end FilteredInterface
+
+  template <class FilterTraits>
+  class FilterDefaultImplementation : public FilterInterface<FilterTraits>
+  {
+    typedef FilterInterface<FilterTraits> BaseType;
+    using BaseType :: asImp;
+    using BaseType :: has0Entity;
+  public:
+    //! \brief Type of the filter implementation
+    typedef typename FilterTraits::FilterType FilterType;  
+    //! \brief type of Grid implementation
+    typedef typename FilterTraits::GridType GridType;
+    //! \brief type of Entity with codim=0 
+    typedef typename FilterTraits::EntityCodim0Type EntityCodim0Type; 
+    //! \brief type of EntityPointer with codim=0 
+    typedef typename FilterTraits::EntityPointerCodim0Type EntityPointerCodim0Type;
+    //! \brief type of original grid part 
+    typedef typename FilterTraits::GridPartType GridPartType;
+      
+    //! \brief default createObject method calling FilterType(gridPart) 
+    inline static FilterType createObject(const GridPartType& gridPart)
+    {
+      return FilterType(gridPart);      
+    }
+  };
   
 //***************************************************************************
 // 
-// RadialFilter
+// Example: RadialFilter
 //
 //***************************************************************************
 
-  template <class GridType>
+  /**! \brief RadialFilter is an example filter class cutting out a
+       circle with given center and radius 
+  */
+  template <class GridPartType>
   class RadialFilter : 
-    public FilterInterface<DefaultFilterTraits<RadialFilter<GridType>, GridType> >
+    public FilterInterface<DefaultFilterTraits<RadialFilter<GridPartType>, GridPartType> >
   {
-
   public:
-    typedef DefaultFilterTraits<RadialFilter<GridType>, GridType> Traits;
-    typedef FilterInterface<DefaultFilterTraits<RadialFilter<GridType>,GridType> > BaseType;
+    typedef DefaultFilterTraits<RadialFilter<GridPartType>, GridType> Traits;
+    typedef FilterInterface<DefaultFilterTraits<RadialFilter<GridPartType>,GridPartType> > BaseType;
     typedef typename BaseType::FilterType FilterType;
     typedef typename BaseType::EntityCodim0Type EntityCodim0Type;
     typedef typename BaseType::EntityPointerCodim0Type EntityPointerCodim0Type;
 
   private:
+    typedef RadialFilter<GridPartType> ThisType;
+
     typedef typename GridType::Traits::template Codim<0>::Geometry GeometryType;
     enum{dim = GeometryType::dimension};
     typedef typename Dune::FieldVector<typename GridType::ctype, dim> FieldVectorType;
 
   public:
-    RadialFilter(FieldVectorType center, double radius) : center_(center), radius_(radius){ }
+    //! constructor defining center and radius of circle to cut out 
+    RadialFilter(const FieldVectorType& center, 
+                 const double radius) 
+      : center_(center), radius_(radius)
+    {}
 
-    inline int has0Entity(EntityPointerCodim0Type & e) const {
+    //! copy constructor 
+    RadialFilter(const ThisType& org) 
+      : center_(org.center_), radius_(org.radius_)
+    {}
+
+    //! check whether bary center is inside of circle 
+    inline bool has0Entity(EntityPointerCodim0Type & e) const {
       return has0Entity(*e);
     }
     
-    // a very expensive computation...
-    inline int has0Entity(EntityCodim0Type & e) const {
+    //! check whether bary center is inside of circle 
+    inline bool has0Entity(EntityCodim0Type & e) const 
+    {
       const GeometryType& geom = e.geometry();
       FieldVectorType weigh(0);
       for(int i = 0; i < geom.corners(); ++i)
         weigh += geom[i];
       weigh /= geom.corners();
       weigh -= center_;
-      // return 1;
-      // if (weigh[0]>0 && weigh[1]<0) return 0; else return 1;
       double dist = weigh.two_norm();
-      return (dist <= radius_) ? 0 : 1;
+      return (dist <= radius_);
     }
+    
+    //! return what boundary id we have in case of boundary intersection 
+    //! which is either it.boundary == true or has0Entity (it.ouside()) == false 
+    //! so here true is a good choice 
     template <class IntersectionIteratorType>
-    inline bool intersectionBoundary(IntersectionIteratorType & it) const {
+    inline bool intersectionBoundary(IntersectionIteratorType & it) const 
+    {
       return true;
     }
+    //! return what boundary id we have in case of boundary intersection 
+    //! which is either it.boundary == true or has0Entity (it.ouside()) == false 
     template <class IntersectionIteratorType>
     inline int intersectionBoundaryId(IntersectionIteratorType & it) const {
       return 1;
     }
+
+    //! if has0Entity is true then we have an interior entity 
     template <class IntersectionIteratorType>
     inline bool intersectionNeighbor(IntersectionIteratorType & it) const {
       return true;
     }
 
+    static ThisType createObject(const GridPartType& gridPart) 
+    {
+      DUNE_THROW(NotImplemented,"Method createObject not implemented");
+      FieldVectorType center(0);
+      double radius = 0;
+      return ThisType(center, radius);
+    }
+
   private:
-    FieldVectorType center_;
-    double radius_;
+    const FieldVectorType center_;
+    const double radius_;
   }; // end RadialFilter
 
 //***************************************************************************
@@ -245,11 +307,22 @@ namespace Dune {
   public:
     //- Public methods
     //! Constructor
-    FilteredGridPart(GridType& grid, FilterType &filter) :
+    FilteredGridPart(GridType& grid, const FilterType& filter) :
       GridPartImp(grid),   // This is only legal for LeafGridPart and HierarchicGridParts!
                            // A constructor LevelGridPart(GridType grid) exists, but will  
                            // return a LevelGridPart<GridType, maxLevel>.
       filter_(filter),
+      maxlevel_(0)
+    {
+      updateStatus();
+    }
+
+    //! constructor only taking grid 
+    FilteredGridPart(GridType& grid) :
+      GridPartImp(grid),   // This is only legal for LeafGridPart and HierarchicGridParts!
+                           // A constructor LevelGridPart(GridType grid) exists, but will  
+                           // return a LevelGridPart<GridType, maxLevel>.
+      filter_( FilterType :: createObject(static_cast<const GridPartImp&> (*this) )), 
       maxlevel_(0)
     {
       updateStatus();
@@ -306,42 +379,44 @@ namespace Dune {
     FilterType & filter() const { return filter_; }
 
   private: 
-    FilterType & filter_;
+    FilterType filter_;
     int maxlevel_;
 
   private:
     //**********************************************************************
     // IteratorWrapper
     //**********************************************************************
-
     template <class GridPartType, int cd, class IteratorType>
-    struct IteratorWrapper : public IteratorType {
-     
-      public:
-      inline IteratorWrapper(const GridPartType * gridPart, FilterType & filter,  bool endIter):
+    class IteratorWrapper : public IteratorType 
+    {
+    public:
+      inline IteratorWrapper(const GridPartType* gridPart, 
+                             const FilterType& filter,  
+                             bool endIter) :
         IteratorType(endIter?gridPart->template end<cd>():gridPart->template begin<cd>()),
         gridPart_(gridPart),
         filter_(filter),          
       	endIter_(gridPart->template end<cd>())
-        { 
-	        if (!endIter)
-	          if(!filter_.has0Entity(*this))
-	            operator++();           
-        }
+      { 
+        if (!endIter)
+          if(! filter_.has0Entity(*this) )
+            operator++();           
+      }
 
-        inline IteratorWrapper & operator++()
-        {	  
-          do {
-            IteratorType::operator++();
-      	    if (*this==endIter_) break;
-          } while(!filter_.has0Entity(*this));
-          return *this;
-        }
+      //! overloaded increment 
+      inline IteratorWrapper & operator++()
+      {	  
+        do {
+          IteratorType::operator++();
+          if (*this==endIter_) break;
+        } while(!filter_.has0Entity(*this));
+        return *this;
+      }
         
-      private:
-        const GridPartType * gridPart_;        
-        FilterType & filter_;
-        const IteratorType endIter_;
+    protected:
+      const GridPartType * gridPart_;        
+      const FilterType & filter_;
+      const IteratorType endIter_;
     }; // end IteratorWrapper
 
     //**********************************************************************
@@ -349,14 +424,13 @@ namespace Dune {
     //**********************************************************************
 
     template <class GridPartType, class IteratorType>
-    struct IntersectionIteratorWrapper : public IteratorType {
-
+    class IntersectionIteratorWrapper : public IteratorType 
+    {
       // type of codim 0 entity      
-      //typedef typename GridPartType::EntityCodim0Type EntityCodim0Type;
       typedef typename GridPartType::GridType::template Codim<0>::EntityPointer EntityPointerCodim0Type;
       typedef typename GridPartType::GridType::template Codim<0>::Entity EntityCodim0Type;
       
-      private:
+    private:
       struct neighborInfo {   
         public:
         neighborInfo() : boundary_(false), boundaryId_(-1), neighbor_(false) { }
@@ -373,10 +447,13 @@ namespace Dune {
         bool neighbor_;        
       } nInfo;
 
-      public:
-      inline IntersectionIteratorWrapper(const GridPartType * gridPart, FilterType & filter, 
-                                         const EntityCodim0Type & en, bool endIter):
-        IteratorType(endIter?gridPart->iend(en):gridPart->ibegin(en)),
+     public:
+      //! constructor 
+      inline IntersectionIteratorWrapper(const GridPartType * gridPart, 
+                                         const FilterType & filter, 
+                                         const EntityCodim0Type & en, 
+                                         bool endIter):
+        IteratorType(endIter ? gridPart->iend(en) : gridPart->ibegin(en)),
         gridPart_(gridPart),
         filter_(filter),          
        	endIter_(gridPart->iend(en))
@@ -386,15 +463,22 @@ namespace Dune {
         }
         
       private:
-        inline void writeNeighborInfo() {
-          if (IteratorType::neighbor()) { 
+        //! write information for current intersection 
+        inline void writeNeighborInfo() 
+        {
+          if (IteratorType::neighbor()) 
+          { 
             EntityPointerCodim0Type neigh = this->outside();
-            if (filter_.has0Entity(neigh)) {
+            // if hasEnttiy then this is an inside entity 
+            if (filter_.has0Entity(neigh)) 
+            {
               nInfo.boundary_ = false;
               nInfo.boundaryId_ = 0;
               nInfo.neighbor_ = true;
             }
-            else {
+            else 
+            {
+              // otherwise get boundary information from filter 
               nInfo.boundary_ =
                 filter_.intersectionBoundary(static_cast<IteratorType &>(*this));
               nInfo.boundaryId_ =
@@ -403,7 +487,9 @@ namespace Dune {
                 filter_.intersectionNeighbor(static_cast<IteratorType &>(*this));
             }
           }
-          else {
+          else 
+          {
+            // for real boundary get boundary from filter 
             nInfo.boundary_ = true;
             nInfo.boundaryId_ =
               filter_.intersectionBoundaryId(static_cast<IteratorType &>(*this));
@@ -411,23 +497,29 @@ namespace Dune {
           }    
         }
     
-        public:
+      public:
+        //! increment intersection iterator 
         inline IntersectionIteratorWrapper & operator++()
         {         
-          if (*this!=endIter_)
+          // increment real iterator 
+          if (*this != endIter_)
             IteratorType::operator++();
-          if (*this!=endIter_)    
+          
+          if ( *this != endIter_)    
             writeNeighborInfo();
           return *this;
         }
           
+        //! overloaded boundary method 
         inline bool boundary() const  { return nInfo.boundary_; }
+        //! overloaded boundaryId method 
         inline int boundaryId() const { return nInfo.boundaryId_; }
+        //! overloaded neighbor method 
         inline bool neighbor() const { return nInfo.neighbor_; }
 
-      private:
+      protected:
         const GridPartType * gridPart_;        
-        FilterType & filter_;
+        const FilterType & filter_;
         const IteratorType endIter_;        
     }; // end IntersectionIteratorWrapper
    
