@@ -157,12 +157,32 @@ public:
     this->second().addToList(comm);    
   }
 };
+
+
 /** \brief This is a general restriction/prolongation operator
     which is speciallized for some discreteFunctionSpaces (e.g. DG)
  */
-template <class DiscreteFunctionType> class RestrictProlongDefault :
-    public RestrictProlongInterface<RestrictProlongTraits<RestrictProlongDefault<DiscreteFunctionType> > > {
-  private:
+template <class TraitsImp>
+class RestrictProlongDefaultImplementation 
+: public RestrictProlongInterface<TraitsImp> 
+{
+protected:
+  template <class DiscreteFunctionType> 
+  RestrictProlongDefaultImplementation(DiscreteFunctionType&
+      discreteFunction) 
+  {
+    discreteFunction.enableDofCompression();
+  }
+};
+
+/** \brief This is a general restriction/prolongation operator
+    which is speciallized for some discreteFunctionSpaces (e.g. DG)
+ */
+template <class DiscreteFunctionType> class RestrictProlongDefault
+: public RestrictProlongDefaultImplementation
+      <RestrictProlongTraits<RestrictProlongDefault<DiscreteFunctionType> > > 
+{
+private:
   RestrictProlongDefault();
 };
 
@@ -171,9 +191,12 @@ template <class DiscreteFunctionType> class RestrictProlongDefault :
 */
 template <class DiscreteFunctionType>
 class RestrictProlongPieceWiseConstantData : 
-public RestrictProlongInterface<
+public RestrictProlongDefaultImplementation<
   RestrictProlongTraits<RestrictProlongPieceWiseConstantData< DiscreteFunctionType > > >
 {
+  typedef RestrictProlongDefaultImplementation<
+      RestrictProlongTraits<RestrictProlongPieceWiseConstantData<
+      DiscreteFunctionType > > > BaseType;
 public:  
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
@@ -184,7 +207,8 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
 public:  
   //! Constructor
-  RestrictProlongPieceWiseConstantData( DiscreteFunctionType & df ) : df_ (df), weight_(-1.0)
+  RestrictProlongPieceWiseConstantData( DiscreteFunctionType & df ) 
+    : BaseType(df), df_ (df), weight_(-1.0)
   {
     // make sure index set can be used for adaptive computations 
   }
