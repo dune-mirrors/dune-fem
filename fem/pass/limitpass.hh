@@ -82,6 +82,7 @@ namespace Dune {
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridType::template Codim<0>::EntityPointer EntityPointerType;
     typedef typename DomainType :: field_type DomainFieldType;
 
     enum { dimRange = RangeType :: dimension };
@@ -143,14 +144,10 @@ namespace Dune {
       return 0.0;
     }
 
-    /** \brief ensure physicality of solution 
-    */
-    FieldVector<bool,dimRange> physicalValue(const RangeType& uLeft) const 
-    { 
-      FieldVector<bool,dimRange> p(true);
-      if( uLeft[0] <= 0 ) p[0] = false; 
-      if( uLeft[dimRange-1] <= 0 ) p[dimRange-1] = false; 
-      return p;
+    /** \brief adaptation method */
+    void adaptation(GridType& grid, EntityPointerType& ep, 
+                    const double indicator) const 
+    {
     }
 
   protected:
@@ -434,18 +431,18 @@ namespace Dune {
       
       // number of scalar base functions
       const int numBasis = limitEn.numDofs()/dimRange;
+      // sanity check
+      assert( numBasis * dimRange == limitEn.numDofs() );
 
       // if a component is true, then this component has to be limited 
       FieldVector<bool,dimRange> limit(false);
+      // determ whether limitation is necessary  
+      bool limiter = false;
 
       RangeType totaljump(0);
 
       // calculate circume during neighbor check 
       double circume = 0.0;
-
-      // determ whether limitation is necessary  
-      bool limiter = false;
-      int refinementMarker = 0;
 
       const GeometryType geomType = geo.type();
       const DomainType enBary = geo.global( baryCenterMap_[geomType] );
@@ -536,27 +533,26 @@ namespace Dune {
       // multiply h pol ord with circume 
       const double circFactor = (circume > 0.0) ? (hPowPolOrder / circume) : 0.0;
 
-      for (int r=0; r<dimRange; ++r) 
+      // get grid 
+      GridType& grid = const_cast<GridType&> (gridPart_.grid());
+      
+      IntersectionIteratorType nit = gridPart_.ibegin(en); 
+      if( nit == endnit ) return ;
+      EntityPointerType inside = nit.inside();
+
+      for(int r=0; r<dimRange; ++r) 
       {
         const double jumpr = std::abs(totaljump[r]);
         const double indicator = jumpr * circFactor;
-        if ( indicator > 1 ) 
+
+        if( indicator > 1 ) 
         {
           limit[r] = true;
           limiter = true;
+        }
 
-          if( indicator > 10 && en.level () < 2 )
-          {
-            // mark for refinement 
-            refinementMarker = 1;
-          }
-        }
-        else if ( indicator < 0.9 ) 
-        {
-          //std::cout << indicator << " indicator \n";
-          // mark for coarsening 
-          refinementMarker = -1;
-        }
+        // call problem adaptation for setting refinement marker 
+        problem_.adaptation( grid, inside, indicator );
       }
        
       // prepare limitEn 
@@ -587,15 +583,6 @@ namespace Dune {
           }
         }
       }
-
-      // get grid 
-      GridType& grid = const_cast<GridType&> (gridPart_.grid());
-      
-      IntersectionIteratorType nit = gridPart_.ibegin(en); 
-      if( nit == endnit ) return ;
-
-      // mark element for refinement 
-      grid.mark( refinementMarker , nit.inside() );
 
       if( limiter )
       {
