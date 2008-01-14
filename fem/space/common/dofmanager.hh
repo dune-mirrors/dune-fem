@@ -542,7 +542,7 @@ public:
   //! return number of dofs on one element 
   int elementMemory () const 
   {
-    return mapper_.numDofs();
+    return mapper_.maxNumDofs();
   }
 
   //! resize the memory with the new size 
@@ -576,7 +576,7 @@ public:
   }
   
   //! does nothing here
-  void markForDofCompression() 
+  void enableDofCompression() 
   {
     assert( (true) ? 
         (std::cerr << "WARNING: DummyMemObject's may not compress vectors! \n" , 1) : 1);
@@ -631,7 +631,7 @@ public:
   //! return number of dofs on one element 
   int elementMemory () const 
   {
-    return mapper_.numDofs();
+    return mapper_.maxNumDofs();
   }
 
   //! resize the memory with the new size 
@@ -665,7 +665,7 @@ public:
   }
 
   //! does nothing here
-  void markForDofCompression() 
+  void enableDofCompression() 
   {
     assert( (true) ? 
         (std::cerr << "WARNING: DummyMemObject's may not compress vectors! \n" , 1) : 1);
