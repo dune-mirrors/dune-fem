@@ -5,6 +5,7 @@ SUBDIRS = test
 reducedbasisspacedir = $(includedir)/dune/fem/space/reducedbasisspace
 reducedbasisspace_HEADERS = basefunctionset.hh \
                             basefunctionset_inline.hh \
-														mapper.hh \
-                            reducedbasisspace.hh \
-														reducedbasisspace_inline.hh
+			    commdatahandle.hh \
+			    mapper.hh \
+			    reducedbasisspace.hh \
+			    reducedbasisspace_inline.hh

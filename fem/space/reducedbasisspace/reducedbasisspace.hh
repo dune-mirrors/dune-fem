@@ -3,6 +3,7 @@
 
 #include "basefunctionset.hh"
 #include "mapper.hh"
+#include "commdatahandle.hh"
 
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -15,15 +16,6 @@ namespace Dune
 
 
 
-/*======================================================================*/
-/*!
- *  \class ReducedBasisSpaceTraits 
- *  \brief The ReducedBasisSpaceTraits class provides  the traits for the RBspace
- *
- *  many typedefs
- *
- */
-/*======================================================================*/
   template< class BaseFunctionImp >
   class ReducedBasisSpaceTraits
   {
@@ -58,25 +50,30 @@ namespace Dune
 
     typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
       MapperType;
+
+    template< class DiscreteFunction,
+              class Operation = DFCommunicationOperation :: Add >
+    struct CommDataHandle
+    {
+      // This is just a phony data handle doing nothing
+      typedef ReducedBasisCommDataHandle< DiscreteFunction, Operation > Type;
+      typedef Operation OperationType;
+    };
   };
 
 
   
 
-/*======================================================================*/
-/*!
- *  \class ReducedBasisSpace 
- *  \brief The ReducedBasisSpace class provides the space for RB simulations 
- *
- *  The basis consists of discrete functions as basis functions. These discrete functions 
- *  have an underlying arbitrary space. Consequently they inhert most of the 
- *  structure from this space.
- *  Initially the space is empty and by using the add function you can bulid this space 
- *  and discrete functions. 
- *  
- *
- */
-/*======================================================================*/
+  /*! \class ReducedBasisSpace
+   *  \brief provides the space for reduced basis simulations 
+   *
+   *  The basis consists of discrete functions as basis functions. These
+   *  discrete functions have an underlying arbitrary space. Consequently they
+   *  inhert most of the structure from this space.
+   *  
+   *  Initially the space is empty and by using the add function you can bulid this
+   *  space and discrete functions.
+   */
   template< class BaseFunctionImp >
   class ReducedBasisSpace
   : public DiscreteFunctionSpaceDefault< ReducedBasisSpaceTraits< BaseFunctionImp > >
