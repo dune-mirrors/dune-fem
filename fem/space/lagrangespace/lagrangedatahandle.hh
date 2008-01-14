@@ -1,7 +1,6 @@
 #ifndef DUNE_LAGRANGESPACEDATAHANDLE_HH
 #define DUNE_LAGRANGESPACEDATAHANDLE_HH
 
-#include <dune/fem/misc/utility.hh>
 //- Dune includes 
 #include <dune/grid/common/datahandleif.hh>
 
@@ -38,12 +37,12 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
     
   protected:
-    mutable DiscreteFunctionType &function_; 
+    DiscreteFunctionType *const function_;
     const MapperType &mapper_;
 
   public:
     LagrangeCommunicationHandler( DiscreteFunctionType &function )
-    : function_( function ),
+    : function_( &function ),
       mapper_( function.space().mapper() )
     {} 
     
@@ -62,7 +61,7 @@ namespace Dune
       return mapper_.contains( codim );
     }
 
-    inline bool fixedsize (int dim, int codim) const
+    inline bool fixedsize ( int dim, int codim) const
     {
       return mapper_.fixedDataSize( codim );
     }
@@ -75,7 +74,7 @@ namespace Dune
       for( unsigned int i = 0; i < numEntityDofs; ++i )
       {
         const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
-        buffer.write( function_.dof( index ) );
+        buffer.write( function_->dof( index ) );
       }
     }
 
@@ -91,7 +90,7 @@ namespace Dune
         DataType value;
         buffer.read( value );
         
-        Operation :: apply( value, function_.dof( index ) );
+        Operation :: apply( value, function_->dof( index ) );
       }
     }
 
