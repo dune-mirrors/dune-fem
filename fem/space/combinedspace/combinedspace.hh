@@ -188,6 +188,9 @@ namespace Dune
     //! destructor
     ~CombinedSpace();
 
+    //! \copydoc DiscreteFunctionSpaceInterface::contains */
+    bool contains(const int codim) const { return spc_.contains(codim); }
+
     //! continuous?
     bool continuous() const { return spc_.continuous(); }
 
