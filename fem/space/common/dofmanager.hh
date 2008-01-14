@@ -369,6 +369,9 @@ public:
   //! resize the memory with the new size 
   void resize ( const int nSize ) 
   {
+    // if the size is allready correct, do nothing
+    if( nSize == size() ) return ;
+
     // resize memory 
     array_.resize( nSize );
     // update mapper and move array 
