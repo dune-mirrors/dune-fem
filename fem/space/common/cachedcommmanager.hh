@@ -39,7 +39,6 @@ namespace Dune {
     // index map for send and receive data 
     class CommunicationIndexMap
     {
-      //MutableArray<int> index_;  
       MutableArray<int> index_;
       CommunicationIndexMap(const CommunicationIndexMap&);
     public:
@@ -410,9 +409,9 @@ namespace Dune {
       
     //! exchange data of discrete function 
     template<class DiscreteFunctionType, class OperationImp>
-    void exchange(DiscreteFunctionType& df, const OperationImp *)
+    void exchange(DiscreteFunctionType& discreteFunction, 
+                  const OperationImp *)
     {
-      typedef typename DiscreteFunctionType :: DofType DofType;
       // if serial run, just return   
       if(mySize_ <= 1) return;
        
@@ -426,7 +425,7 @@ namespace Dune {
         // reset buffers, keeps memory  
         buffer_[l].clear();
 
-        writeBuffer( l , buffer_[l] , df.leakPointer(), (DofType *) 0 );
+        writeBuffer( l , buffer_[l] , discreteFunction );
       }
 
       // exchange data to other procs 
@@ -435,37 +434,34 @@ namespace Dune {
       // read buffers 
       for(int l=0; l<links; ++l) 
       {
-        readBuffer( l , buffer_[l] , df.leakPointer() ,
-                    (DofType *) 0, (OperationImp *) 0 );
+        readBuffer( l , buffer_[l] , discreteFunction, (OperationImp *) 0 );
       }
     }
 
     //! write data of discrete function to buffer 
     template<class DiscreteFunctionType>
     void writeBuffer(ObjectStreamVectorType & osv,
-                     DiscreteFunctionType& df) const 
+                     const DiscreteFunctionType& discreteFunction) const 
     {
-      typedef typename DiscreteFunctionType :: DofType DofType;
       const int links = nlinks();
       // write buffers 
       for(int l=0; l<links; ++l) 
       {
-        writeBuffer( l , osv[l] , df.leakPointer(), (DofType *) 0);
+        writeBuffer( l , osv[l] , discreteFunction);
       }
     }
     
     //! read data of discrete function from buffer  
     template<class DiscreteFunctionType, class OperationImp>
     void readBuffer(ObjectStreamVectorType & osv,
-                    DiscreteFunctionType& df, const OperationImp *o) const 
+                    DiscreteFunctionType& discreteFunction, 
+                    const OperationImp *o) const 
     {
-      typedef typename DiscreteFunctionType :: DofType DofType;
       const int links = nlinks();
       // write buffers 
       for(int l=0; l<links; ++l) 
       {
-        readBuffer( l, osv[l] , df.leakPointer(), 
-                    (DofType*) 0, (OperationImp *) 0); 
+        readBuffer( l, osv[l] , discreteFunction, (OperationImp *) 0); 
       }
     }
     
@@ -478,44 +474,43 @@ namespace Dune {
     
   private:  
     // write data of DataImp& vector to object stream 
-    template <class DataImp, class DofType> 
+    template <class DiscreteFunctionImp> 
     void writeBuffer(const int link, 
                      ObjectStreamType & str, 
-                     const DataImp& data,
-                     const DofType* ) const 
+                     const DiscreteFunctionImp& discreteFunction) const 
     {
       const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
       const int size = indexMap.size();
 
+      typedef typename DiscreteFunctionImp :: DofType DofType;
       // reserve buffer memory at once 
       str.reserve( str.size() + (size * sizeof(DofType)) );
 
       // dirty hack to have faster access to stream 
       UnsaveObjectStream& os = (UnsaveObjectStream &) str;
-      DofType val = 0;
       for(int i=0; i<size; ++i)
       {
-        val = data[ indexMap[i] ];
-        os.writeUnsave( val );
+        os.writeUnsave( discreteFunction.dof( indexMap[i] ) );
       }
     }
 
     // read data from object stream to DataImp& data vector 
-    template <class DataImp, class DofType, class OperationImp> 
+    template <class DiscreteFunctionImp, class OperationImp> 
     void readBuffer(const int link, 
                     ObjectStreamType & str, 
-                    DataImp& data, const DofType*,
+                    DiscreteFunctionImp& discreteFunction,
                     const OperationImp *) const 
     {
       UnsaveObjectStream& os = (UnsaveObjectStream &) str;
       const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
+      typedef typename DiscreteFunctionImp :: DofType DofType;
       DofType val;
       const int size = indexMap.size();
       for(int i=0; i<size; ++i)
       {
         os.readUnsave( val );
         // apply operation 
-        OperationImp::apply(val , data[ indexMap[i] ] );
+        OperationImp::apply(val , discreteFunction.dof( indexMap[i] ) );
       }
     }
     
