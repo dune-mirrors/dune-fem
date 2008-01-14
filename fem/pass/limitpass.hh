@@ -6,7 +6,7 @@
 
 //- Dune includes 
 #include <dune/common/fvector.hh>
-#include <dune/common/utility.hh>
+#include <dune/fem/misc/utility.hh>
 
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/io/file/dgfparser/entitykey.hh>
@@ -24,8 +24,7 @@
 #include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
 
-#include <dune/fem/operator/artificialdiffusion.hh>
-#include <dune/fem/operator/matrix/blockmatrix.hh>
+//#include <dune/fem/operator/artificialdiffusion.hh>
 
 //*************************************************************
 namespace Dune {  
@@ -257,8 +256,6 @@ namespace Dune {
     typedef AdaptiveDiscreteFunction< LagrangeSpaceType > P1FunctionType; 
     typedef AdaptiveDiscreteFunction< DG0SpaceType > DG0FunctionType; 
 
-    typedef ArtificialDiffusion<DestinationType> ArtificialDiffusionType;
-    
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::DimRange,
      dimDomain = DiscreteFunctionSpaceType::DimDomain};
@@ -299,7 +296,6 @@ namespace Dune {
       jump_(0),
       jump2_(0),
       gradientFlux_(1.0,10.0),
-      artDiff_(0),
       comboSet_(),
       tvdAttribute_( getTvdParameter(paramFile) )
     {
@@ -540,7 +536,6 @@ namespace Dune {
       // multiply h pol ord with circume 
       const double circFactor = (circume > 0.0) ? (hPowPolOrder / circume) : 0.0;
 
-      //for (int r=0; r<dimRange; ++r) 
       for (int r=0; r<dimRange; ++r) 
       {
         const double jumpr = std::abs(totaljump[r]);
@@ -862,33 +857,10 @@ namespace Dune {
               }
             }
 
-            // remember value that is donin to be erased 
-            const int eraseVal = *checkIt;
-
             // erase the element that was used for 
             // applying least square from the list 
             check.erase( checkIt );
 
-            // don't check in dependend direction 
-            // otherwise minimum will be zero 
-            // in 2d this situation cannot occur 
-            if( dim > 2 )
-            {
-              const DomainType& checkBary = barys[ eraseVal ];
-              for(checkIt = check.begin(); checkIt != checkEnd; ++checkIt)
-              {
-                DomainType diff ( barys[ *checkIt ] );
-                diff += checkBary; 
-                
-                // this difference should not be zero, otherwise erase entry 
-                if( diff.two_norm() < 1e-12 ) 
-                {
-                  check.erase( checkIt );
-                  break;
-                }
-              }
-            }
-            
             // store linear function
             deoMods.push_back( dM );
             // store vector with points to check 
@@ -920,15 +892,15 @@ namespace Dune {
                 // evaluate values for limiter function 
                 const RangeFieldType g = D * omega;
                 const RangeFieldType d = nbVals[k][r];
-                const RangeFieldType gd = g * d;
                 
-                // if product smaller than zero set m_l to zero 
-                // because functions have different sign 
-                // NOTE: theoretically here should be tested with zero 
-                // but due to rouding errors we take 1e-8 
-                const RangeFieldType localFactor = 
-                      ( gd <= 1e-8 ) ? 0 : 
-                      ( std::abs(g) > std::abs(d) ) ? (d/g) : 1;
+                // if product smaller than zero set localFactor to zero 
+                // otherwise d/g until 1 
+                RangeFieldType localFactor = 
+                      ( (g * d) < 0 ) ? 0 : 
+                      ( (std::abs(g) > std::abs(d)) ) ? (d/g) : 1;
+                
+                // check rounding errors and in case do nothing  
+                if( std::abs(g) * std::abs(d) < 1e-15 ) localFactor = 1;
 
                 // take minimum 
                 minimalFactor = std::min( localFactor , minimalFactor );
@@ -1023,31 +995,6 @@ namespace Dune {
                 }
               }
             }
-            
-            /*
-            // evaluate function  
-            evalAverage(en, limitEn, enVal );
-
-            FieldVector<bool, dimRange> phys = problem_.physicalValue( enVal );
-            // set zero dof to zero
-            for(int r=0; r<dimRange; ++r) 
-            {
-              if( ! phys[r] ) 
-              {
-                {
-                  const int dofIdx = dofConversion_.combinedDof(0,r);
-                  limitEn[dofIdx] = uEn[dofIdx];
-                }
-                
-                // set to zero
-                for (int i=1; i<numBasis; ++i) 
-                {
-                  const int dofIdx = dofConversion_.combinedDof(i,r);
-                  limitEn[dofIdx] = 0.;
-                }
-              }
-            }
-            */
           }
         }
       } //end if limiter 
@@ -1141,8 +1088,9 @@ namespace Dune {
         val += tmp;
       }
 
+      assert( quadNop > 0 );
       // devide by number of evaluation points 
-      val *= 1.0/(RangeFieldType) quadNop;
+      val *= 1.0/((RangeFieldType) quadNop);
     }
 
     // matrix = A^T * A 
@@ -1408,8 +1356,6 @@ namespace Dune {
 
     mutable std::map< const GeometryType, DomainType > baryCenterMap_; 
     mutable std::map< const GeometryType, FaceDomainType > faceCenterMap_; 
-
-    mutable ArtificialDiffusionType* artDiff_;
 
     typedef DGFEntityKey<int> KeyType;
     typedef std::vector<int> CheckType;
