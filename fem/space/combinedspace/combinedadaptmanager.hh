@@ -26,10 +26,13 @@ namespace Dune{
  */
 template <class DiscreteFunctionImp, int polOrd> 
 class RestrictProlongCombinedSpace
-: public RestrictProlongInterface< 
+: public RestrictProlongDefaultImplementation< 
   RestrictProlongTraits< RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
                                                      > >
 {
+  typedef RestrictProlongDefaultImplementation< 
+  RestrictProlongTraits< RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
+                                                     > > BaseType;
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -45,9 +48,11 @@ public:
   enum { dimRange = FunctionSpaceType :: DimRange };
 public:  
   //! Constructor
-  RestrictProlongCombinedSpace( DiscreteFunctionType & df ) : 
-    df_ (df) , quadord_(2*df.space().order()),
-    weight_(-1.0)
+  RestrictProlongCombinedSpace( DiscreteFunctionType & df ) 
+    : BaseType(df)
+    , df_ (df)
+    , quadord_(2*df.space().order())
+    , weight_(-1.0)
   {
     // make sure that index set is used that can handle adaptivity 
     assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
