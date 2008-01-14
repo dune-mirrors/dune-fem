@@ -4,16 +4,23 @@
 #ifndef DATADISP_READIOTUPLE_CC
 #define DATADISP_READIOTUPLE_CC
 
+//- system includes 
 #include <stack> 
 
-#define LARGE 1.0E308
-
+//- include grape io stuff 
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/grapedataio.hh>
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/file/iointerface.hh>
 
-void dataDispErrorExit(std::string msg);
+//! type of used grid 
+typedef GridType GR_GridType;
+
+//! type of GrapeDisplay 
+typedef GrapeDataDisplay<GR_GridType> GrapeDispType;
+
+//! type of discrete function tuple 
+typedef GR_InputType GR_DiscFuncType;
 
 static std::stack<GR_GridType *> gridStack;
 static std::stack<GrapeDispType *> dispStack;
@@ -21,14 +28,21 @@ static std::stack<GrapeDispType *> dispStack;
 static GrapeDataIO <GR_GridType> dataIO;
 
 template <class T> 
-void deleteObjects(std::stack<T *> & stack);
+inline void deleteObjects(std::stack<T *> & stack);
 
-GrapeDispType * readTupleData(const char * path, const char * filename, 
+inline void dataDispErrorExit(std::string msg) 
+{
+  std::cerr << msg << std::endl; 
+  std::cerr.flush();
+  exit(EXIT_FAILURE);
+}
+
+inline GrapeDispType * readTupleData(const char * path, const char * filename, 
             double & time , int n, 
             int ntime, int myRank,
             INFO* info)
 {
-  GR_GridType * grid;
+  GR_GridType * grid = 0;
 
   assert(filename);
   std::string fn (filename);
@@ -46,22 +60,20 @@ GrapeDispType * readTupleData(const char * path, const char * filename,
   // discrete functions of non-valid data are removed 
   IOTuple<GR_DiscFuncType>::addToDisplayOrRemove(*disp,dinf,time,*tup);
 
-  addError(*disp,*grid,time,*(tup->first()));
+  // do some post processing 
+  postProcessing(*disp,*grid,time,*(tup->first()));
   return disp;
 }
 
 // setup the hole data tree for grape 
-INFO * readData(INFO * info , const char * path, int i_start, int i_end, 
+inline INFO * readData(INFO * info , const char * path, int i_start, int i_end, 
     int i_delta, int n, double timestep, int numProcs) 
 {
-  double t_start = LARGE;
-  double t_end = -LARGE, t_act = 0.0;
+  double t_start = 1e308;
+  double t_end = -t_start, t_act = 0.0;
   typedef CombinedGrapeDisplay < GrapeDispType > CombinedDisplayType; 
 
-  
-  CombinedGrapeDisplay < GrapeDispType > * comdisp = 0 ;
-  //if( numProcs > 1 ) 
-    comdisp = new CombinedDisplayType ();
+  CombinedGrapeDisplay < GrapeDispType > * comdisp = new CombinedDisplayType ();
   
   int  ntime, n_step = 0;
   
@@ -70,7 +82,6 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
     printf("timestep = %d | last timestep = %d | stepsize = %d\n", ntime, i_end, i_delta);
     {
       int anzProcs = numProcs;
-      //if(numProcs > 1) anzProcs--;
       
       for(int proc=0; proc<anzProcs; ++proc)
       {
@@ -118,7 +129,7 @@ INFO * readData(INFO * info , const char * path, int i_start, int i_end,
 }
 
 template <class T> 
-void deleteObjects(std::stack<T *> & stack) 
+inline void deleteObjects(std::stack<T *> & stack) 
 {
   while(! stack.empty() )
   {
@@ -129,21 +140,14 @@ void deleteObjects(std::stack<T *> & stack)
   return;
 }
  
-void dataDispErrorExit(std::string msg) 
-{
-  std::cerr << msg << std::endl; 
-  std::cerr.flush();
-  exit(EXIT_FAILURE);
-}
-
-void deleteAllObjects() 
+inline void deleteAllObjects() 
 {
   deleteObjects(dispStack);
   deleteObjects(gridStack);
   return ;
 }
 
-bool readDataInfo(std::string path, DATAINFO * dinf, 
+inline bool readDataInfo(std::string path, DATAINFO * dinf, 
     const int timestamp, const int dataSet) 
 {
   std::cout << "Reading data base for " << dinf->name << "! \n";

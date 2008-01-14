@@ -10,8 +10,23 @@
 #include <dirent.h>
 
 //- Dune includes 
-#include "leng.hh"
 #include <dune/fem/io/file/iointerface.hh>
+
+template<class T>
+struct TupleLength  {
+  enum { value = 1 + TupleLength<typename T::Type2>::value };
+};
+
+template<>
+ struct TupleLength<Tuple<Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil> > {
+ enum { value = 0 };
+};
+
+template<>
+struct TupleLength<Nil> {
+  enum { value = 0 };
+};
+
 
 // return number of procs of data set 
 int scanProcsPaths(const std::string globalPath, 
@@ -112,7 +127,7 @@ int readParameterList (int argc, char **argv)
       info[n].name = argv[i+1];
       info[n].datinf = 0;
       info[n].fix_mesh = 0;
-      for (int df=0;df<Dune::length<GR_DiscFuncType>::value;++df) 
+      for (int df=0;df<TupleLength<GR_DiscFuncType>::value;++df) 
       {
         DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
         assert(dinf);
@@ -195,7 +210,10 @@ int readParameterList (int argc, char **argv)
     }
   }
   
+  // initialize time scenes
   timeSceneInit(info, n , numberProcessors);
+
+  // read all data 
   readData(info, path.c_str(),i_start,i_end,i_delta,n,timestep,numberProcessors);
   
   std::cout << "Displaying data of " << numberProcessors << " processors! \n";
@@ -207,8 +225,6 @@ int readParameterList (int argc, char **argv)
     std::string cmd("rm manager.replay");
     system(cmd.c_str());
   }
-
-  //deleteAllObjects();
 
   return (EXIT_SUCCESS);
 }
