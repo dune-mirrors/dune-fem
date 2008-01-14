@@ -17,10 +17,6 @@ const int polOrder = POLORDER;
 #include <iostream>
 #include <dune/common/stdstreams.cc>
 
-#if defined YASPGRID 
-#define USE_YASPGRID 1
-#endif
-
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
@@ -32,12 +28,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
-#ifndef GRIDDIM 
-  #define GRIDDIM dimworld 
-#endif
-
 #if HAVE_GRAPE
-//#if HAVE_GRAPE && (GRIDDIM > 1)
   #define USE_GRAPE WANT_GRAPE
 #else
   #define USE_GRAPE 0
@@ -54,16 +45,56 @@ const int polOrder = POLORDER;
 
 using namespace Dune;
 
-#if USE_YASPGRID
-typedef LeafGridPart< GridType > GridPartType;
-#else
-//! type of the grid partition we are using 
-typedef AdaptiveLeafGridPart< GridType > GridPartType;
-// typedef HierarchicGridPart< GridType > GridPartType;
-#endif
+
+
+// Check for YaspGrid
+// ------------------
+
+// forward declaration for main
+int Main ( int argc, char **argv );
+
+template< class Grid >
+struct CheckYasp
+{
+  typedef Grid GridType;
+
+  typedef AdaptiveLeafGridPart< GridType > GridPartType;
+  
+  inline static int CallMain ( int argc, char **argv )
+  {
+    return Main( argc, argv );
+  }
+};
+
+template< int dim, int dimworld >
+struct CheckYasp< YaspGrid< dim, dimworld > >
+{
+  typedef YaspGrid< dim, dimworld > GridType;
+  
+  typedef LeafGridPart< GridType > GridPartType;
+
+  inline static int CallMain ( int argc, char **argv )
+  {
+    std :: cerr << "WARNING: Lagrange Adaptation test disabled, because YaspGrid sucks!"
+                << std :: endl;
+    return 0;
+  }
+};
+
+int main ( int argc, char **argv )
+{
+  return CheckYasp< GridType > :: CallMain( argc, argv );
+}
+
+
+
+// Type Definitions
+// ----------------
+
+typedef CheckYasp< GridType > :: GridPartType GridPartType;
 
 //! type of the function space
-typedef FunctionSpace< double, double, GRIDDIM, 1 > FunctionSpaceType;
+typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
 
 //! type of the discrete function space our unkown belongs to
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
@@ -414,14 +445,8 @@ void algorithm ( GridType &grid,
 
 
 
-int main ( int argc, char **argv )
+int Main ( int argc, char **argv )
 {
-#if USE_YASPGRID 
-  std::cerr << std::endl;
-  std::cerr << "WARNING: Lagrange Adaptation test disabled, because YaspGrid sucks!";
-  std::cerr << std::endl;
-#else
-
   if( argc != 2 ) {
     std :: cerr << "Usage: " << argv[ 0 ] << "<maxlevel>" << std :: endl;
     exit( 1 );
@@ -430,7 +455,7 @@ int main ( int argc, char **argv )
   int ml = atoi( argv[ 1 ] );
 
   char tmp[ 100 ]; 
-  sprintf( tmp, "%ddgrid.dgf", GRIDDIM );
+  sprintf( tmp, "%ddgrid.dgf", dimworld );
   GridPtr< GridType > gridptr( tmp );
 
   const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
@@ -448,7 +473,5 @@ int main ( int argc, char **argv )
   for( int i = ml - 1; i >= 0; --i )
     algorithm( *gridptr, solution, -step, 1 );
 
-#endif
   return 0;
 }
-
