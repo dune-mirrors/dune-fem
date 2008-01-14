@@ -254,23 +254,26 @@ public:
   {
     // do nothing for unstructured grids 
     if( Capabilities::IsUnstructured<GridImp>::v ) return;
-    
-    std::string filename(orgPath);
-    filename += "/";
-    filename += prefix;
-    filename += "_grid.global";
 
-    std::string destFilename(destPath);
-    destFilename += "/";
-    destFilename += prefix;
-    destFilename += "_grid.macro";
+    if( g.comm().rank() == 0)
+    {
+      std::string filename(orgPath);
+      filename += "/";
+      filename += prefix;
+      filename += "_grid.global";
 
-    std::string cmd("cp ");
-    cmd += filename; cmd += " ";
-    cmd += destFilename;
+      std::string destFilename(destPath);
+      destFilename += "/";
+      destFilename += prefix;
+      destFilename += "_grid.macro";
 
-    // copy file to actual path 
-    system(cmd.c_str());
+      std::string cmd("cp ");
+      cmd += filename; cmd += " ";
+      cmd += destFilename;
+
+      // copy file to actual path 
+      system(cmd.c_str());
+    }
   }
 
 protected:
