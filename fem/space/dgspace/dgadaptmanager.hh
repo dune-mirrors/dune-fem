@@ -25,11 +25,15 @@ namespace Dune{
  */
 template <class DiscreteFunctionImp, int polOrd> 
 class RestrictProlongDiscontinuousSpace
-: public RestrictProlongInterface<
+: public RestrictProlongDefaultImplementation<
   RestrictProlongTraits< RestrictProlongDiscontinuousSpace< DiscreteFunctionImp,
                                                             polOrd
                                                           > > >
 {
+  typedef RestrictProlongDefaultImplementation<
+  RestrictProlongTraits< RestrictProlongDiscontinuousSpace< DiscreteFunctionImp,
+                                                            polOrd
+                                                          > > > BaseType;
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -43,9 +47,11 @@ public:
   typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
 public:  
   //! Constructor
-  RestrictProlongDiscontinuousSpace( DiscreteFunctionType & df ) : 
-    df_ (df) , quadord_(2*df.space().order()),
-    weight_(-1.0)
+  RestrictProlongDiscontinuousSpace( DiscreteFunctionType & df ) 
+    : BaseType(df)
+    , df_ (df) 
+    , quadord_(2*df.space().order())
+    , weight_(-1.0)
   {
     // make sure that index set is used that can handle adaptivity 
     assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
