@@ -27,6 +27,8 @@ const int polOrder = POLORDER;
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/misc/h1norm.hh>
 
 #if HAVE_GRAPE
   #define USE_GRAPE WANT_GRAPE
@@ -88,6 +90,70 @@ int main ( int argc, char **argv )
 
 
 
+// Function, we will interpolate
+// -----------------------------
+
+template< class FunctionSpace >
+class ExactSolution
+: public Function< FunctionSpace, ExactSolution< FunctionSpace > >
+{
+public:
+  typedef FunctionSpace FunctionSpaceType;
+
+private:
+  typedef ExactSolution< FunctionSpaceType > ThisType;
+  typedef Function< FunctionSpaceType, ThisType > BaseType;
+
+public:
+  typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+  typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+
+  typedef typename FunctionSpaceType :: DomainType DomainType;
+  typedef typename FunctionSpaceType :: RangeType RangeType;
+  typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+public:
+  ExactSolution ( FunctionSpaceType &functionSpace )
+  : BaseType( functionSpace )
+  {
+  }
+
+  void evaluate ( const DomainType &x,
+                  RangeType &phi ) const
+  {
+    phi = 1;
+    for( int i = 0; i < DomainType :: dimension; ++i )
+      // phi[ 0 ] += x[ i ] * x[ i ]; 
+      phi[ 0 ] *= sin( M_PI * x[ i ] ); 
+  }
+
+  void evaluate ( const DomainType &x,
+                  RangeFieldType t,
+                  RangeType &phi ) const
+  {
+    evaluate( x, phi );
+  }
+
+  void jacobian( const DomainType &x,
+                 JacobianRangeType &Dphi ) const
+  {
+    Dphi = 1;
+    for( int i = 0; i < DomainType :: dimension; ++i )
+      for( int j = 0; j < DomainType :: dimension; ++j )
+        // Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
+        Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
+  }
+
+  void jacobian( const DomainType &x,
+                 RangeFieldType t,
+                 JacobianRangeType &Dphi ) const
+  {
+    jacobian( x, Dphi );
+  }
+};
+
+
+
 // Type Definitions
 // ----------------
 
@@ -103,7 +169,10 @@ typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder
 //! type of the discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
+typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
+typedef DiscreteFunctionAdapter< ExactSolutionType, GridPartType >
+  GridExactSolutionType;
 
 //! type of the DoF manager
 typedef DofManager< GridType > DofManagerType;
@@ -119,229 +188,6 @@ typedef AdaptationManager< GridType, RestrictProlongOperatorType >
 
 
 
-//! exact function we will interpolate
-class ExactSolution
-: public Function< FunctionSpaceType, ExactSolution >
-{
-public:
-  typedef FunctionSpaceType :: DomainFieldType DomainFieldType;
-  typedef FunctionSpaceType :: RangeFieldType RangeFieldType;
-
-  typedef FunctionSpaceType :: DomainType DomainType;
-  typedef FunctionSpaceType :: RangeType RangeType;
-  typedef FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-
-private:
-  typedef ExactSolution ThisType;
-  typedef Function< FunctionSpaceType, ThisType > BaseType;
-
-public:
-  ExactSolution( FunctionSpaceType &functionSpace )
-  : BaseType( functionSpace )
-  {
-  }
-
-  void evaluate( const DomainType &x, RangeType &phi ) const
-  {
-    phi = 1;
-    for( int i = 0; i < DomainType :: dimension; ++i )
-      // phi[ 0 ] += x[ i ] * x[ i ]; 
-      phi[ 0 ] *= sin( M_PI * x[ i ] ); 
-  }
-
-  void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
-  {
-    evaluate( x, phi );
-  }
-
-  void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const
-  {
-    Dphi = 1;
-    for( int i = 0; i < DomainType :: dimension; ++i )
-      for( int j = 0; j < DomainType :: dimension; ++j )
-        // Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
-        Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
-  }
-
-  void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
-  {
-    jacobian( x, Dphi );
-  }
-};
- 
-
-
-// calculates \Vert u - u_h \Vert_{L^2}
-template< class DiscreteFunctionImp >
-class L2Error
-{
-public:
-  typedef DiscreteFunctionImp DiscreteFunctionType;
-    
-  typedef typename DiscreteFunctionType :: FunctionSpaceType
-    DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionType :: LocalFunctionType
-    LocalFunctionType;
-  
-  typedef typename DiscreteFunctionSpaceType :: DomainFieldType
-    DomainFieldType;
-  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-  typedef typename DiscreteFunctionSpaceType :: RangeFieldType
-    RangeFieldType;
-  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
-  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-  
-  enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
-
-  typedef typename GridPartType :: GridType GridType;
-  typedef typename GridType :: template Codim< 0 > :: Entity Entity0Type;
-  typedef typename Entity0Type :: Geometry GeometryType;
- 
-  
-public:
-  template< class FunctionType >
-  static RangeFieldType norm ( const FunctionType &function,
-                               DiscreteFunctionType &discreteFunction,
-                               double time,
-                               int polOrder )
-  {
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
-    const DiscreteFunctionSpaceType &discreteFunctionSpace
-      = discreteFunction.space();
-
-    RangeFieldType error( 0 );
-    IteratorType endit = discreteFunctionSpace.end();
-    for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
-    {
-      CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
-
-      const GeometryType &geometry = (*it).geometry();
-      
-      const int numQuadraturePoints = quadrature.nop();
-      for( int qp = 0; qp < numQuadraturePoints; ++qp )
-      {
-        const DomainType &x = quadrature.point( qp );
-        const double weight
-          = quadrature.weight( qp ) * geometry.integrationElement( x );
-
-        RangeType phi, psi;
-        function.evaluate( geometry.global( x ), time, phi );
-        localFunction.evaluate( quadrature[ qp ], psi );
-
-        for( int i = 0; i < DimRange; ++i )
-          error += weight * SQR( phi[ i ] - psi[ i ] );
-      }
-    }
-    
-    return sqrt( error );
-  }
-
-  template< class FunctionType >
-  static RangeFieldType norm ( const FunctionType &function,
-                               DiscreteFunctionType &discreteFunction,
-                               double time )
-  {
-    const DiscreteFunctionSpaceType &discreteFunctionSpace
-      = discreteFunction.space();
-    const int polOrder = 2 * discreteFunctionSpace.order() + 2;
-    return norm( function, discreteFunction, time, polOrder );
-  }
-};
-
-
-
-// calculates \Vert u - u_h \Vert_{H^1}
-template< class DiscreteFunctionImp >
-class H1Error
-{
-public:
-  typedef DiscreteFunctionImp DiscreteFunctionType;
-    
-  typedef typename DiscreteFunctionType :: FunctionSpaceType
-    DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionType :: LocalFunctionType
-    LocalFunctionType;
- 
-  typedef typename DiscreteFunctionSpaceType :: DomainFieldType
-    DomainFieldType;
-  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-  typedef typename DiscreteFunctionSpaceType :: RangeFieldType
-    RangeFieldType;
-  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
-  typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
-    JacobianRangeType;
-  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-
-  enum { DimDomain = DiscreteFunctionSpaceType :: DimDomain };
-  enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
-
-  typedef typename GridPartType :: GridType GridType;
-  typedef typename GridType :: template Codim< 0 > :: Entity Entity0Type;
-  typedef typename Entity0Type :: Geometry GeometryType;
- 
-  
-public:
-  template< class FunctionType >
-  static RangeFieldType norm ( const FunctionType &function,
-                               DiscreteFunctionType &discreteFunction,
-                               double time,
-                               int polOrder )
-  {
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
-    const DiscreteFunctionSpaceType &discreteFunctionSpace
-      = discreteFunction.space();
-
-    RangeFieldType error( 0 );
-    IteratorType endit = discreteFunctionSpace.end();
-    for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
-    {
-      CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
-
-      const GeometryType &geometry = (*it).geometry();
-      
-      const int numQuadraturePoints = quadrature.nop();
-      for( int qp = 0; qp < numQuadraturePoints; ++qp )
-      {
-        const DomainType &x = quadrature.point( qp );
-        const DomainType &y = geometry.global( x );
-        const double weight
-          = quadrature.weight( qp ) * geometry.integrationElement( x );
-
-        RangeType phi, psi;
-        function.evaluate( y, time, phi );
-        localFunction.evaluate( quadrature[ qp ], psi );
-
-        JacobianRangeType Dphi, Dpsi;
-        function.jacobian( y, time, Dphi );
-        localFunction.jacobian( quadrature[ qp ], Dpsi );
-
-        for( int i = 0; i < DimRange; ++i ) {
-          RangeFieldType localError = SQR( phi[ i ] - psi[ i ] );
-          for( int j = 0; j < DimDomain; ++j )
-            localError += SQR(Dphi[ i ][ j ] - Dpsi[ i ][ j ]);
-          error += weight * localError;
-        }
-      }
-    }
-    
-    return sqrt( error );
-  }
-
-  template< class FunctionType >
-  static RangeFieldType norm ( const FunctionType &function,
-                               DiscreteFunctionType &discreteFunction,
-                               double time )
-  {
-    const DiscreteFunctionSpaceType &discreteFunctionSpace
-      = discreteFunction.space();
-    const int polOrder = 2 * discreteFunctionSpace.order() + 2;
-    return norm( function, discreteFunction, time, polOrder );
-  }
-};
 
  
 
@@ -381,24 +227,32 @@ void adapt ( GridType &grid, DiscreteFunctionType &solution, int step )
 
 
 
-void algorithm ( GridType &grid, 
+void algorithm ( GridPartType &gridPart,
                  DiscreteFunctionType &solution, 
-                 int step, int turn )
+                 int step,
+                 int turn )
 {
+  const unsigned int polOrder
+    = DiscreteFunctionSpaceType :: polynomialOrder + 1;
+  
   FunctionSpaceType functionSpace;
-  ExactSolution f( functionSpace );
+  ExactSolutionType fexact( functionSpace );
+  GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
+
+  L2Norm< GridPartType > l2norm( gridPart );
+  H1Norm< GridPartType > h1norm( gridPart );
   
   LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
-  double preL2error = L2Error< DiscreteFunctionType > :: norm( f, solution, 0 );
-  double preH1error = H1Error< DiscreteFunctionType > :: norm( f, solution, 0 );
+  double preL2error = l2norm.distance( f, solution );
+  double preH1error = h1norm.distance( f, solution );
 
   std :: cout << "L2 error before adaption: " << preL2error << std :: endl;
   std :: cout << "H1 error before adaption: " << preH1error << std :: endl; 
   
-  adapt( grid, solution, step );
+  adapt( gridPart.grid(), solution, step );
   
-  double postL2error = L2Error< DiscreteFunctionType > :: norm( f, solution, 0 );
-  double postH1error = H1Error< DiscreteFunctionType > :: norm( f, solution, 0 );
+  double postL2error = l2norm.distance( f, solution );
+  double postH1error = h1norm.distance( f, solution );
 
   std :: cout << "L2 error after "
               << (step < 0 ? "restriction" : "prolongation")
@@ -409,21 +263,21 @@ void algorithm ( GridType &grid,
   
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
     if( turn > 0 ) {
-      GrapeDataDisplay< GridType > grape( grid );
+      GrapeDataDisplay< GridType > grape( gridPart.grid() );
       grape.dataDisplay( solution );
     }
   #endif
 
   LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
-  double newL2error = L2Error< DiscreteFunctionType > :: norm( f, solution, 0 );
-  double newH1error = H1Error< DiscreteFunctionType > :: norm( f, solution, 0 );
+  double newL2error = l2norm.distance( f, solution );
+  double newH1error = h1norm.distance( f, solution );
 
   std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
   std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl; 
   
   #if USE_GRAPE && SHOW_INTERPOLATION
     if( turn > 0 ) {
-      GrapeDataDisplay< GridType > grape( grid );
+      GrapeDataDisplay< GridType > grape( gridPart.grid );
       grape.dataDisplay( solution );
     }
   #endif
@@ -436,7 +290,7 @@ void algorithm ( GridType &grid,
 
   #if WRITE_DATA
     GrapeDataIO< GridType > dataio; 
-    dataio.writeGrid( grid, xdr, "gridout", 0, turn );
+    dataio.writeGrid( gridPart.grid(), xdr, "gridout", 0, turn );
     dataio.writeData( solution, xdr, "sol", turn );
   #endif
 
@@ -467,11 +321,11 @@ int Main ( int argc, char **argv )
 
   std :: cout << std :: endl << "Refining: " << std :: endl;
   for( int i = 0; i < ml; ++i )
-    algorithm( *gridptr, solution, step, (i == ml-1) );
+    algorithm( gridPart, solution, step, (i == ml-1) );
   
   std :: cout << std :: endl << "Coarsening:" << std::endl;
   for( int i = ml - 1; i >= 0; --i )
-    algorithm( *gridptr, solution, -step, 1 );
+    algorithm( gridPart, solution, -step, 1 );
 
   return 0;
 }
