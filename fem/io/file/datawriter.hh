@@ -1,15 +1,20 @@
-#ifndef FUELCELL_DATAWRITER_HH
-#define FUELCELL_DATAWRITER_HH
+#ifndef DUNE_DATAWRITER_HH
+#define DUNE_DATAWRITER_HH
+
+#define USE_VTKWRITER
 
 //- Dune includes 
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
-#include <dune/fem/io/file/vtkio.hh>
 
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/operator/projection/vtxprojection.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+
+#ifdef USE_VTKWRITER
+#include <dune/fem/io/file/vtkio.hh>
+#include <dune/fem/operator/projection/vtxprojection.hh>
+#endif
 
 // define whether to use grape of not 
 #define USE_GRAPE HAVE_GRAPE
@@ -32,6 +37,7 @@ class DataWriter : public IOInterface
 {
 
 protected:  
+#ifdef USE_VTKWRITER
   template <class VTKIOType>
   class VTKListEntry 
   {
@@ -140,6 +146,7 @@ protected:
     typedef VTKListEntry<VTKOut> VTKListEntryType;
     std::vector<VTKListEntryType *> vec_;
   };
+#endif
 
 protected:  
   enum OutputFormat { grape = 0 , vtk = 1 , vtkvtx = 2 };
@@ -200,6 +207,52 @@ public:
     EndTime: 1.0
   */
   DataWriter(const GridType & grid, OutPutDataType& data, 
+             const std::string paramfile) DUNE_DEPRECATED 
+    : grid_(grid), data_(data) 
+    , writeStep_(0)
+    , saveTime_(0.0)
+    , saveStep_(0.1)
+    , endTime_(1.0)
+    , myRank_(grid_.comm().rank())
+    , outputFormat_(grape)
+  {
+    init(paramfile);
+  }
+
+  /** \brief Constructor creating data writer 
+    \param grid corresponding grid 
+    \param gridName corresponding macro grid name (needed for structured grids)
+    \param data Tuple containing discrete functions to write 
+    \param paramfile parameter file containing parameters for data writer
+    \note Possible values are (copy this to your parameter file):
+
+    # verbosity (0 = no, 1 = yes)
+    verbose: 0
+    
+    # OutputPath 
+    OutputPath: ./
+    
+    # name for data set  
+    OutputPrefix: solution
+    
+    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
+    OutputFormat: 0
+    
+    # GrapeDisplay (0 = no, 1 = yes)
+    GrapeDisplay: 0 
+    
+    # SaveStep (write data every `saveStep' time period 
+    SaveStep: 0.01
+
+    # StartTime of simulation
+    StartTime: 0.0
+
+    # EndTime of simulation
+    EndTime: 1.0
+  */
+  DataWriter(const GridType & grid, 
+             const std::string& gridName, 
+             OutPutDataType& data, 
              const std::string paramfile)
     : grid_(grid), data_(data) 
     , writeStep_(0)
@@ -209,6 +262,7 @@ public:
     , myRank_(grid_.comm().rank())
     , outputFormat_(grape)
   {
+    saveMacroGrid( gridName );
     init(paramfile);
   }
 
@@ -325,11 +379,13 @@ public:
         IOTuple<OutPutDataType>::output(dataio, 
           grid_ ,time, writeStep_, timeStepPath , datapref_, data_ , verbose_ );
       }
+#ifdef USE_VTKWRITER
       else if ( outputFormat_ == vtk || outputFormat_ == vtkvtx )
       {
         // write data in vtk output format 
         writeVTKOutput( Element<0>::get(data_), time );
       }
+#endif
       else 
       {
         DUNE_THROW(NotImplemented,"DataWriter::write: wrong output format");
@@ -348,6 +404,7 @@ public:
   }
 
 protected:
+#ifdef USE_VTKWRITER
   template <class DFType> 
   void writeVTKOutput(const DFType* func, double time) const 
   {
@@ -406,6 +463,7 @@ protected:
       vtkio.write( name.c_str(), Dune::VTKOptions::ascii );
     }
   }
+#endif
 
   //! display data with grape 
   virtual void display() const 
@@ -469,6 +527,83 @@ class CheckPointer : public DataWriter<GridImp,DataImp>
 public: 
   /** \brief Constructor generating a cechkpointer 
     \param grid corresponding grid 
+    \param gridName name of macro grid file (for structured grids)
+    \param data Tuple containing discrete functions to write 
+    \param paramfile parameter file containing parameters for data writer
+    \param checkFile filename for restoring state of program from
+           previous runs (default is zero, which means start from new)
+    \param lb LoadBalancer instance 
+      (default is zero, which means start  from new)
+
+    \note In Addition to the parameters read by DataWriter this class 
+          reads the following parameters: 
+
+    # write checkpoint every `CheckPointStep' time step
+    CheckPointStep: 500 
+
+    # store checkpoint information to file `CheckPointFile'
+    CheckPointFile: checkpoint
+  */
+  CheckPointer(const GridType & grid, 
+               const std::string& gridName, 
+               OutPutDataType& data, 
+               const std::string paramfile,
+               const char * checkFile = 0,
+               const LoadBalancerInterface* lb = 0) 
+    : BaseType(grid,gridName,data,paramfile) 
+    , checkPointStep_(500)
+    , checkPointNumber_(1)
+    , lb_(lb)
+    , balanceRecover_(0)
+  {
+    this->datapref_ = checkPointPrefix();
+    readParameter(paramfile,"CheckPointStep",checkPointStep_, this->verbose_ );
+
+    if( checkFile )
+    {
+      checkPointFile_ = checkFile;
+
+      // read last counter 
+      bool ok = readCheckPoint();
+
+      // read name of check point file 
+      std::string dummyfile;
+      readParameter(paramfile,"CheckPointFile",dummyfile, this->verbose_ );
+      checkPointFile_ = this->path_; checkPointFile_ += "/"; checkPointFile_ += dummyfile;
+
+      // if check point couldn't be opened, try again   
+      if(!ok)
+      {
+        ok = readCheckPoint();
+        if( ! ok )
+        {
+          std::cerr <<"ERROR: unable to open checkpoint file! \n";
+          exit(1);
+        }
+      }
+
+      // copy parameter file 
+      std::string cmd("cp ");
+      cmd += paramfile; cmd += " "; cmd += this->path_;
+
+      // copy parameter file to outpath 
+      system (cmd.c_str());
+    }
+    else
+    {
+      // read name of check point file 
+      std::string dummyfile;
+      readParameter(paramfile,"CheckPointFile",dummyfile, this->verbose_ );
+      checkPointFile_ = this->path_; checkPointFile_ += "/"; 
+      checkPointFile_ += dummyfile;
+
+      // read last counter 
+      readCheckPoint();
+    }
+  }
+
+  /** \brief Constructor generating a cechkpointer 
+    \param grid corresponding grid 
     \param data Tuple containing discrete functions to write 
     \param paramfile parameter file containing parameters for data writer
     \param checkFile filename for restoring state of program from
@@ -488,7 +623,7 @@ public:
   CheckPointer(const GridType & grid, OutPutDataType& data, 
                const std::string paramfile,
                const char * checkFile = 0,
-               const LoadBalancerInterface* lb = 0) 
+               const LoadBalancerInterface* lb = 0) DUNE_DEPRECATED
     : BaseType(grid,data,paramfile) 
     , checkPointStep_(500)
     , checkPointNumber_(1)
