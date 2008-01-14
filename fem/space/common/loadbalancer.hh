@@ -241,6 +241,9 @@ public:
 
         dm_.addDataXtractor( *gdx );
       }
+
+      // enable this discrete function for dof compression 
+      df.enableDofCompression();
     }
   }
  
