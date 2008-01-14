@@ -13,7 +13,7 @@
  *  \endcode
  *  Alternatively, use the date DD.MM.YYYY specify the revision by
  *  \code
- *  svn update -r "{YYYY-MM-DD}"
+ *  svn update -r "{YYYYMMDD}"
  *  \endcode
  *
  *  \section svnstatus Obtaining a List of Files You Changed
