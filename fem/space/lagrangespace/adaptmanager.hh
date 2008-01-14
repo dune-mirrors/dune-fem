@@ -21,7 +21,7 @@ namespace Dune
       < LagrangeDiscreteFunctionSpace
         < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
     > >
-  : public RestrictProlongInterface
+  : public RestrictProlongDefaultImplementation
     < RestrictProlongTraits
       < RestrictProlongDefault
         < DiscreteFunctionImp
@@ -29,6 +29,13 @@ namespace Dune
             < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
     > > > >
   {
+    typedef RestrictProlongDefaultImplementation
+    < RestrictProlongTraits
+      < RestrictProlongDefault
+        < DiscreteFunctionImp
+          < LagrangeDiscreteFunctionSpace
+            < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
+    > > > > BaseType;
   public:
     //! type of the discrete function space
     typedef LagrangeDiscreteFunctionSpace
@@ -72,7 +79,8 @@ namespace Dune
   public:
     //! constructor
     RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
-    : discreteFunction_( discreteFunction ),
+    : BaseType( discreteFunction ),
+      discreteFunction_( discreteFunction ),
       discreteFunctionSpace_( discreteFunction_.space() )
     {
       // make sure the index set can handle adaptivity
