@@ -325,7 +325,7 @@ setLocal( GridIteratorType &it , const RangeFieldType & scalar )
 
 template<class DiscreteFunctionSpaceType>
 inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-enableDofCompressoin()
+enableDofCompression()
 {
   assert( memPair_.first );
   memPair_.first->enableDofCompression();
