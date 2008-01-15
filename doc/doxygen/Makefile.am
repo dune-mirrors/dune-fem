@@ -3,7 +3,7 @@ if BUILD_DOCS
 DOXYGEN_HTML = html 
 DOXYGEN_DIST = html-dist
 
-DISTCLEANFILES = doxygen.log doxygen-tag doxygen-dist-tag doxygen.out
+DISTCLEANFILES = doxygen.log doxygen-tag doxygen-dist-tag doxygen.out doxygen-dist.out
 
 all: $(DOXYGEN_HTML)
 
@@ -21,9 +21,11 @@ DOXYFILE_OVERWRITE = echo "PROJECT_NAME = $(PACKAGE_NAME)"; \
 	
 DOXYFILE_OVERWRITE_HTML = $(DOXYFILE_OVERWRITE) \
                           echo "HTML_OUTPUT = $(DOXYGEN_HTML)"; \
+			  echo "WARN_LOGFILE = doxygen.out"; \
 			  echo "FILE_PATTERNS += *.dev";
 DOXYFILE_OVERWRITE_DIST = $(DOXYFILE_OVERWRITE) \
                           echo "HTML_OUTPUT = $(DOXYGEN_DIST)"; \
+			  echo "WARN_LOGFILE = doxygen-dist.out"; \
 			  echo "INTERNAL_DOCS = NO";
 
 #we need this in the distribution
@@ -57,11 +59,12 @@ doxygen-tag: FORCE $(DOXYGENHEADERBUILD)
 	@set -e; \
 	if test -e Doxyfile; then \
 	  if test ! -e doxygen-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-tag -print`" != x || test x"`find . \( $(ADDITIONALDOCS) -o -name \*.dev \) -a -newer doxygen-tag -print`" != x ; then \
-			echo "Creating documentation (running doxygen) ..." ; \
+	    echo "Creating documentation (running doxygen) ..." ; \
 	    ( cat Doxyfile; $(DOXYFILE_OVERWRITE_HTML) ) > Doxyfile.tmp; \
 	    $(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \
 	    rm -f Doxyfile.tmp; \
 	    touch doxygen-tag ; \
+	    cat doxygen.out ; \
 	  fi; \
 	fi
 
@@ -70,12 +73,13 @@ doxygen-dist-tag: FORCE $(DOXYGENHEADERBUILD)
 	@set -e; \
 	if test -e Doxyfile; then \
 	  if test ! -e doxygen-dist-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-dist-tag -print`" != x || test x"`find . \( $(ADDITIONALDOCS) \) -a -newer doxygen-dist-tag -print`" != x ; then \
-			echo "Creating distribution documentation (running doxygen) ..." ; \
-		  ( cat Doxyfile; $(DOXYFILE_OVERWRITE_DIST) ) > Doxyfile.tmp; \
-	  	$(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \
-		  rm -f Doxyfile.tmp; \
-			touch doxygen-dist-tag ; \
-		fi \
+	    echo "Creating distribution documentation (running doxygen) ..." ; \
+	    ( cat Doxyfile; $(DOXYFILE_OVERWRITE_DIST) ) > Doxyfile.tmp; \
+	    $(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \
+	    rm -f Doxyfile.tmp; \
+	    touch doxygen-dist-tag ; \
+	    cat doxygen-dist.out ; \
+	  fi \
 	fi
 
 html: doxygen-tag
