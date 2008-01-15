@@ -8,22 +8,27 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
+#include <dune/fem/function/common/scalarproducts.hh>
+
 namespace Dune {
 
+#if 0
   //! Default implementation for the scalar case
-  template<class X ,class CommunicatorType>
+  template<class X ,class SpaceImp, class CommunicatorType>
   class ParaScalarProduct : public ScalarProduct<X>
   {
+    const SpaceImp& space_;
     const CommunicatorType& comm_;
   public:
-    ParaScalarProduct(const CommunicatorType& comm) : comm_(comm) {} 
+    ParaScalarProduct(const SpaceImp& space) 
+      : space_(space) , comm_(space_.grid().comm()) {} 
 
     //! export types
     typedef X domain_type;
     typedef typename X:: block_type :: field_type field_type;
     
     //! define the category
-    enum {category=SolverCategory::sequential};
+    enum { category=SolverCategory::sequential };
     
     /*! \brief Dot product of two vectors. 
       It is assumed that the vectors are consistent on the interior+border
@@ -31,9 +36,22 @@ namespace Dune {
      */
     virtual field_type dot (const X& x, const X& y)
     {
-      field_type val = x*y;
-      val = comm_.sum( val );
-      return val;
+      field_type skp = 0;
+      size_t i = 0;
+      const size_t slaveDofs = slaveDofs_.size();
+      for(size_t slave = 0; slave<slaveDofs; ++slave)
+      {
+        const size_t nextSlave = slaveDofs[slave];
+        // evaluate skp for all master dofs 
+        for(; i<nextSlave; ++i) 
+        {
+          skp += x[i] * y[i];
+        }
+      }
+
+      // make global sum 
+      skp = comm_.sum( skp );
+      return skp;
     }
 
     /*! \brief Norm of a right-hand side vector. 
@@ -41,11 +59,10 @@ namespace Dune {
      */
     virtual double norm (const X& x)
     {
-      double val = x.two_norm();
-      val = comm_.sum( val ); 
-      return val;
+      return std::sqrt( dot(x,x) );
     }
   };
+#endif
 
   //=====================================================================
   // Implementation for ISTL-matrix based operator
@@ -147,7 +164,7 @@ private:
       // verbose only in verbose mode and for rank 0 
       int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
         
-      ParaScalarProduct<BlockVectorType,CommunicatorType> scp(comm); 
+      ParallelScalarProduct<DiscreteFunctionImp> scp(dest.space());
 
       /*
       double residuum = 0.0;
@@ -280,7 +297,7 @@ private:
 
       int verb = (verbose) ? 2 : 0;
         
-      ParaScalarProduct<BlockVectorType,CommunicatorType> scp(comm); 
+      ParallelScalarProduct<DiscreteFunctionImp> scp(dest.space()); 
       CGSolver<BlockVectorType> solver(mat,scp,
           const_cast<PreconditionerType&> (preconditioner),
           reduction,maxIter,verb);    
