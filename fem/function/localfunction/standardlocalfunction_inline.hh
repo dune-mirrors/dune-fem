@@ -8,7 +8,7 @@ namespace Dune
   inline StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
     :: StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
   : discreteFunction_( discreteFunction ),
-    values_(),
+    values_( discreteFunction_.space().mapper().maxNumDofs() ),
     baseFunctionSet_(),
     entity_( 0 ),
     numDofs_( 0 ),
@@ -107,7 +107,6 @@ namespace Dune
 
         // note, do not use baseFunctionSet() here, entity might no have been set
         numDofs_ = baseFunctionSet_.numBaseFunctions();
-        values_.resize( numDofs_ );
 
         needCheckGeometry_ = space.multipleGeometryTypes();
       }
@@ -117,6 +116,7 @@ namespace Dune
     entity_ = &entity;
     assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
 
+    assert( numDofs_ <= values_.size() );
     const MapperType &mapper = space.mapper();
     const DofMapIteratorType end = mapper.end( entity );
     for( DofMapIteratorType it = mapper.begin( entity ); it != end; ++it )
@@ -124,9 +124,6 @@ namespace Dune
       assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
       values_[ it.local() ] = &discreteFunction_.dof( it.global() );
     }
-    
-    // for( int i = 0; i < numDofs_; ++i )
-    //   values_[ i ] = &(discreteFunction_.dof( space.mapToGlobal( entity, i ) ));
   }
 
 
@@ -149,7 +146,7 @@ namespace Dune
     < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
     :: StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
   : discreteFunction_( discreteFunction ),
-    values_(),
+    values_( discreteFunction_.space().mapper().maxNumDofs() ),
     baseFunctionSet_(),
     entity_( 0 ),
     numScalarDofs_( 0 ),
@@ -264,7 +261,6 @@ namespace Dune
 
         // note, do not use baseFunctionSet() here, entity might no have been set
         numScalarDofs_ = baseFunctionSet_.numDifferentBaseFunctions();
-        values_.resize( N * numScalarDofs_ );
 
         needCheckGeometry_ = space.multipleGeometryTypes();
       }
@@ -274,6 +270,7 @@ namespace Dune
     entity_ = &entity;
     assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
 
+    assert( N * numScalarDofs_ <= values_.size() );
     const MapperType &mapper = space.mapper();
     const DofMapIteratorType end = mapper.end( entity );
     for( DofMapIteratorType it = mapper.begin( entity ); it != end; ++it )
@@ -281,12 +278,6 @@ namespace Dune
       assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
       values_[ it.local() ] = &discreteFunction_.dof( it.global() );
     }
-
-    /*
-    assert( values_.size() == (unsigned int)(N * numScalarDofs_) );
-    DofStoragePolicyType< policy > p;
-    mapLocalDofs( p, entity, space );
-    */
   }
 
 
@@ -311,57 +302,4 @@ namespace Dune
     return numScalarDofs_;
   }
 
-
-  
-#if 0
-  template< class DiscreteFunction,
-            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
-  inline void StandardLocalFunctionImpl
-    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
-    :: mapLocalDofs ( const DofStoragePolicyType< PointBased > p,
-                      const EntityType &entity,
-                      const DiscreteFunctionSpaceType &space )
-  {
-    const int numDofs = this->numDofs();
-    for( int i = 0; i < numDofs; i += N )
-    {
-      // const int baseindex = space.mapToGlobal( entity, i );
-      int index = space.mapToGlobal( entity, i );
-      for( int j = 0; j < N; ++j, ++index )
-      {
-        const int dof = i+j;
-        // const int index = baseindex + j;
-        assert( index == space.mapToGlobal( entity, dof ) );
-        values_[ dof ] = &(discreteFunction_.dof( index ));
-      }
-    }
-  }
-
-
-
-  template< class DiscreteFunction,
-            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
-  inline void StandardLocalFunctionImpl
-    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
-    :: mapLocalDofs ( const DofStoragePolicyType< VariableBased > p,
-                      const EntityType &entity,
-                      const DiscreteFunctionSpaceType &space )
-  {
-    const int numDofs = this->numDofs();
-    const int scalarSize = space.containedSpace().size();
-    for( int i = 0; i < numDofs; i += N )
-    {
-      // const int baseindex = space.mapToGlobal( entity, i );
-      int index = space.mapToGlobal( entity, i );
-      for( int j = 0; j < N; ++j, index+=scalarSize )
-      {
-        const int dof = i + j;
-        // const int index = baseindex + j * scalarSize;
-        assert( index == space.mapToGlobal( entity, dof ) );
-        values_[ dof ] = &(discreteFunction_.dof( index ));
-      }
-    }
-  }
-#endif
- 
 }

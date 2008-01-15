@@ -86,7 +86,7 @@ namespace Dune
     const EntityType *entity_;
 
     // number of local dofs
-    int numDofs_;
+    unsigned int numDofs_;
 
     bool needCheckGeometry_;
 
@@ -208,7 +208,7 @@ namespace Dune
     const EntityType *entity_;
 
     // number of local dofs (in the scalar case)
-    int numScalarDofs_;
+    unsigned int numScalarDofs_;
 
     bool needCheckGeometry_;
 
