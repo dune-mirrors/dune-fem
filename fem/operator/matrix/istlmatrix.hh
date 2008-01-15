@@ -184,8 +184,8 @@ namespace Dune {
         if( gridPart.template begin<0> () == gridPart.template end<0> () ) return ;
         {
           // initialize some values 
-          localRows_ = rowMapper.numDofs(); 
-          localCols_ = colMapper.numDofs(); 
+          localRows_ = rowMapper.maxNumDofs(); 
+          localCols_ = colMapper.maxNumDofs(); 
 
           // map of indices 
           // necessary because element traversal not necessaryly is in
@@ -546,8 +546,8 @@ namespace Dune {
         : BaseType( rowSpace, colSpace )
         , rowMapper_(mObj.rowMapper())
         , colMapper_(mObj.colMapper())
-        , numRows_( rowMapper_.numDofs() )
-        , numCols_( colMapper_.numDofs() )
+        , numRows_( rowMapper_.maxNumDofs() )
+        , numCols_( colMapper_.maxNumDofs() )
         , matrixObj_(mObj)
         , geomType_(GeometryType::simplex,0)
       {
@@ -562,16 +562,14 @@ namespace Dune {
           BaseType :: init ( rowEntity , colEntity );
 
           geomType_ = rowEntity.geometry().type();
-          numRows_  = rowMapper_.numDofs();
-          numCols_  = colMapper_.numDofs();
+          numRows_  = rowMapper_.numDofs(rowEntity);
+          numCols_  = colMapper_.numDofs(colEntity);
           matrices_.resize( numRows_ );
 
           MatrixType& matrix = matrixObj_.matrix();
-          //std::cout << matrices_.size() << " size rows \n";
           for(int i=0; i<numRows_; ++i)
           {
             matrices_[i].resize( numCols_ );
-            //std::cout << matrices_[i].size() << " size col \n";
             const int rowIdx = rowMapper_.mapToGlobal(rowEntity,i);
             for(int j=0; j<numCols_; ++j) 
             {
