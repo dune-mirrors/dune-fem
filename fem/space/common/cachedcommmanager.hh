@@ -181,11 +181,10 @@ namespace Dune {
 
       //! read buffer and apply operation 
       template<class MessageBufferImp, class EntityType>
-      void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+      void scatter (MessageBufferImp& buff, 
+                    const EntityType& en, 
+                    const size_t dataSize)
       {
-        // assert that we get the same size of data we sent 
-        assert( n == 1 );
-
         // build local mapping 
         const int numDofs = mapper_.numEntityDofs( en );
         std::vector<int> indices(numDofs);
@@ -201,26 +200,30 @@ namespace Dune {
         const bool interiorEn = 
           CheckInterior<-1,EntityType :: codimension>::check(en.partitionType());
         
-        // read links and insert mapping 
-        DataType val;
+        // read links and insert to mappings 
+        for(size_t i=0; i<dataSize; ++i) 
+        {
+          // create data type 
+          DataType val;
         
-        // read rank of other side 
-        buff.read( val );  
+          // read rank of other side 
+          buff.read( val );  
+          
+          // check that value of rank is within valid range 
+          assert( val < mySize_ );
+          assert( val >= 0 );
         
-        // check that value of rank is within valid range 
-        assert( val < mySize_ );
-        assert( val >= 0 );
-      
-        // insert rank of link into set of links
-        linkStorage_.insert( val );
+          // insert rank of link into set of links
+          linkStorage_.insert( val );
 
-        if(interiorEn) 
-        {
-          sendIndexMap_[val].insert( indices );
-        }
-        else 
-        {
-          recvIndexMap_[val].insert( indices );
+          if(interiorEn) 
+          {
+            sendIndexMap_[val].insert( indices );
+          }
+          else 
+          {
+            recvIndexMap_[val].insert( indices );
+          }
         }
       }
 
