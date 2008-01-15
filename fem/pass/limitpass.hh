@@ -146,7 +146,7 @@ namespace Dune {
 
     /** \brief adaptation method */
     void adaptation(GridType& grid, EntityPointerType& ep, 
-                    const double indicator) const 
+                    const RangeType& indicator) const 
     {
     }
 
@@ -542,19 +542,17 @@ namespace Dune {
 
       for(int r=0; r<dimRange; ++r) 
       {
-        const double jumpr = std::abs(totaljump[r]);
-        const double indicator = jumpr * circFactor;
-
-        if( indicator > 1 ) 
+        totaljump[r] = std::abs(totaljump[r]) * circFactor;
+        if( totaljump[r] > 1 )
         {
           limit[r] = true;
           limiter = true;
         }
-
-        // call problem adaptation for setting refinement marker 
-        problem_.adaptation( grid, inside, indicator );
       }
-       
+      
+      // call problem adaptation for setting refinement marker 
+      problem_.adaptation( grid, inside, totaljump );
+      
       // prepare limitEn 
       for (int r=0; r<dimRange; ++r) 
       {
