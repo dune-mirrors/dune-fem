@@ -16,6 +16,12 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/gridpartutility.hh>
 
+// in case of ISTL found include some more headers 
+#if HAVE_DUNE_ISTL
+#include <dune/istl/scalarproducts.hh>
+#include <dune/fem/function/blockvectorfunction.hh>
+#endif
+
 namespace Dune { 
   
 /** @addtogroup Communication Communication 
@@ -253,12 +259,44 @@ namespace Dune {
     const int size () const { return slaveDofs_.size(); }
 
   public:
+    void insert(const std::vector<int> & indices)
+    {
+      slaveDofs_.insert( indices );
+    }
+    
+    void initialize()
+    {
+      sequence_ = -1;
+      slaveDofs_.clear();
+    }
+    
+    void finalize() 
+    {
+      // sort number for cache efficiency 
+      slaveDofs_.sort();
+
+      // store actual sequence number 
+      sequence_ = space_.sequence();
+    }
+    
+    //! check if grid has changed and rebuild cache if necessary 
+    void rebuild() 
+    {
+      // check whether grid has changed. 
+      if(sequence_ != space_.sequence()) 
+      {
+        initialize();
+        buildMaps();
+        finalize();
+      }
+    }
+    
+  protected:  
     // build linkage and index maps 
     void buildMaps() 
     {
-      slaveDofs_.clear();
-
-      if( ! space_.continuous() )
+      // for discontinuous spaces we don't have to communicate 
+      if( ! space_.continuous() ) 
       {
         typedef typename GridPartNewPartitionType<GridPartType,All_Partition>:: NewGridPartType NewGridPartType;
         typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
@@ -287,14 +325,13 @@ namespace Dune {
           }
         }
 
-        // insert overall size 
         {
-          std::vector<int> indices(1);
-          indices[0] = mapper_.size();
+          // insert overall size at the end
+          std::vector<int> indices(1, mapper_.size() );
           slaveDofs_.insert( indices );
         }
 
-        slaveDofs_.print(std::cout,0);
+        //slaveDofs_.print(std::cout,myRank_);
       }
       else 
       {
@@ -321,18 +358,6 @@ namespace Dune {
       }
     }
 
-    //! check if grid has changed and rebuild cache if necessary 
-    void rebuild() 
-    {
-      // check whether grid has changed. 
-      if(sequence_ != space_.sequence()) 
-      {
-        buildMaps();
-
-        // store actual sequence number 
-        sequence_ = space_.sequence();
-      }
-    }
   };
 
   //! Key for CommManager singleton list 
@@ -466,6 +491,28 @@ namespace Dune {
   class ParallelScalarProduct<BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > 
   : public ScalarProduct<typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> :: DofStorageType >
   {
+    template<class SlaveDofsImp>
+    class SlaveDofsProxy
+    {
+    protected:  
+      SlaveDofsImp& slaveDofs_;
+      SlaveDofsProxy(const SlaveDofsProxy& org); 
+    public:
+      SlaveDofsProxy(SlaveDofsImp& sd) : slaveDofs_(sd) 
+      {
+        slaveDofs_.initialize();
+      }
+      ~SlaveDofsProxy() 
+      { 
+        slaveDofs_.finalize(); 
+      }
+
+      void insert(const std::vector<int> & indices)
+      {
+        slaveDofs_.insert( indices );
+      }
+    };
+
     //! discrete function type 
     typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> DiscreteFunctionType;
     //! type of this class 
@@ -482,14 +529,17 @@ namespace Dune {
     //! type of used mapper 
     typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
     
+  public:  
     // type of communication manager object which does communication 
     typedef SlaveDofs<DiscreteFunctionSpaceType,MapperType> SlaveDofsType;
+  private:  
 
     typedef SlaveDofsSingletonKey<DiscreteFunctionSpaceType,MapperType> KeyType;
     typedef SlaveDofsFactory<KeyType, SlaveDofsType> FactoryType;
 
     typedef SingletonList< KeyType , SlaveDofsType , FactoryType > SlaveDofsProviderType;
   public:
+    typedef SlaveDofsProxy<SlaveDofsType> BuildProxyType;
     //! export types
     typedef BlockVectorType domain_type;
     typedef typename BlockVectorType :: block_type :: field_type field_type;
@@ -519,6 +569,10 @@ namespace Dune {
     {
       SlaveDofsProviderType::removeObject(slaveDofs_);
     }
+
+    std::auto_ptr<BuildProxyType> buildProxy() { return std::auto_ptr<BuildProxyType> (new BuildProxyType(slaveDofs_)); }
+
+    const SlaveDofsType& slaveDofs() const { return slaveDofs_; }
 
     /*! \brief Dot product of two discrete functions. 
       It is assumed that the vectors are consistent on the interior+border
@@ -555,7 +609,7 @@ namespace Dune {
     RangeFieldType scalarProductDofs(const BlockVectorType& x,
                                      const BlockVectorType& y) const 
     {
-//#if HAVE_MPI
+#if HAVE_MPI
       // rebuild slave dofs if grid was changed  
       slaveDofs_.rebuild();
 
@@ -572,13 +626,12 @@ namespace Dune {
         // set i to next valid value 
         i = nextSlave + 1;
       }
-
       scp = space_.grid().comm().sum( scp );
       return scp;
-//#else 
-//      // return build-in scalar product 
-//      return x * y;
-//#endif
+#else 
+      // return build-in scalar product 
+      return x * y;
+#endif
     }
   };
 #endif
