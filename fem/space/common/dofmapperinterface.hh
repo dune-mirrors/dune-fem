@@ -389,7 +389,7 @@ public:
   template< class Entity >
   inline int numEntityDofs ( const Entity &entity ) const
   {
-    return (Entity :: codimension == 0 ? asImp().numDofs( entity ) : 0);
+    return (Entity :: codimension == 0 ? asImp().maxNumDofs() : 0);
   }
 
   //! update mapper, default does nothing 
