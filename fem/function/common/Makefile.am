@@ -3,5 +3,6 @@ common_HEADERS = dfcommunication.hh \
                  discretefunction.hh \
                  discretefunctionadapter.hh \
                  discretefunction_inline.hh \
-		 dofiterator.hh \
-		 function.hh
+                 dofiterator.hh \
+                 function.hh \
+                 scalarproducts.hh
