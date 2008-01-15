@@ -17,6 +17,7 @@
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
+#include <dune/fem/function/common/scalarproducts.hh>
 
 namespace Dune { 
 
@@ -68,7 +69,7 @@ namespace Dune {
       typedef typename BaseType :: ConstRowIterator ConstRowIterator;
 
       //! type of discrete function space 
-      typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
+      typedef typename ColDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
 
       //! type of row block vector 
       typedef typename RowDiscreteFunctionType :: DofStorageType  RowBlockVectorType; 
@@ -77,7 +78,8 @@ namespace Dune {
       typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType; 
 
       //! type of used communication manager  
-      typedef CommunicationManager<RowSpaceType> CommunicationManagerType; 
+      typedef CommunicationManager<ColSpaceType> CommunicationManagerType; 
+      typedef ParallelScalarProduct<ColDiscreteFunctionType> ParallelScalarProductType; 
 
     private:  
       size_type nz_;
@@ -86,22 +88,23 @@ namespace Dune {
       int localCols_;
 
       //! our function space, needed for communication  
-      const RowSpaceType* rowSpace_; 
+      const ColSpaceType* colSpace_; 
 
       //! communication manager 
       mutable CommunicationManagerType* comm_;
-
-      std::vector<int> overlapRows_;
+      const ParallelScalarProductType* scp_;
 
     public:
       //! constructor used by ISTLMatrixObject
-      ImprovedBCRSMatrix(const RowSpaceType & space, 
+      ImprovedBCRSMatrix(const ColSpaceType & space, 
                          CommunicationManagerType& comm,
+                         const ParallelScalarProductType& scp,
                          size_type rows, size_type cols)
         : BaseType (rows,cols,BaseType::row_wise)
         , nz_(0)
-        , rowSpace_(&space)
-        , comm_(&comm)         
+        , colSpace_(&space)
+        , comm_(&comm)
+        , scp_(&scp)
       {
       }
 
@@ -109,8 +112,9 @@ namespace Dune {
       ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
         : BaseType (rows,cols, BaseType::row_wise)
         , nz_(nz)
-        , rowSpace_(0)
+        , colSpace_(0)
         , comm_(0)         
+        , scp_(0)
       {
       }
       
@@ -120,9 +124,9 @@ namespace Dune {
         , nz_(org.nz_)
         , localRows_(org.localRows_)
         , localCols_(org.localCols_)
-        , rowSpace_(org.rowSpace_)
+        , colSpace_(org.colSpace_)
         , comm_(org.comm_)
-        , overlapRows_(org.overlapRows_) 
+        , scp_(org.scp_)
       {}
 
       //! matrix multiplication for OEM solvers 
@@ -157,31 +161,17 @@ namespace Dune {
       }
 
       //! setup matrix entires 
-      template <class GridPartType, 
-                class RowMapperType, class ColMapperType,
+      template <class RowMapperType, class ColMapperType,
                 class StencilCreatorImp> 
-      void setup(const GridPartType& gridPart, 
+      void setup(const ColSpaceType& colSpace, 
                  const RowMapperType & rowMapper, 
                  const ColMapperType & colMapper,
                  const StencilCreatorImp& stencil, 
                  bool verbose = false) 
       { 
-        /*
-        // only works for non-hybrid grids so far 
-        if( gridPart.indexSet().geomTypes(0).size() > 1 )
-        {
-          DUNE_THROW(NotImplemented,"ISTLMatrix::setup: use of matrix for hybrid grids not implemented yet!");
-        }
-        */
-
-        // get size estimate   
-        int size = rowMapper.size();
-        size = (int) size / 10;
-        overlapRows_.reserve( size );
-        overlapRows_.resize(0);
-
         // if empty grid, do nothing
-        if( gridPart.template begin<0> () == gridPart.template end<0> () ) return ;
+        if( colSpace.begin() == colSpace.end() ) return ;
+        
         {
           // initialize some values 
           localRows_ = rowMapper.maxNumDofs(); 
@@ -192,8 +182,8 @@ namespace Dune {
           // ascending order 
           std::map< int , std::set<int> > indices;
 
-          // call stencil creator 
-          stencil.setup(gridPart,rowMapper,colMapper,indices,overlapRows_);
+          // build matrix entries
+          stencil.setup(colSpace, rowMapper, colMapper, indices , (ColDiscreteFunctionType*) 0);
 
           // type of create interator 
           typedef typename BaseType :: CreateIterator CreateIteratorType; 
@@ -214,9 +204,6 @@ namespace Dune {
           }
         }
 
-        // sort overlap rows because of cache efficiency 
-        std::sort(overlapRows_.begin(), overlapRows_.end());
-
         // in verbose mode some output 
         if(verbose)  
         {
@@ -227,30 +214,13 @@ namespace Dune {
       //! clear Matrix, i.e. set all entires to 0
       void clear() 
       {
+        RowIteratorType endi=this->end();
+        for (RowIteratorType i=this->begin(); i!=endi; ++i)
         {
-          RowIteratorType endi=this->end();
-          for (RowIteratorType i=this->begin(); i!=endi; ++i)
+          ColIteratorType endj = (*i).end();
+          for (ColIteratorType j=(*i).begin(); j!=endj; ++j)
           {
-            ColIteratorType endj = (*i).end();
-            for (ColIteratorType j=(*i).begin(); j!=endj; ++j)
-            {
-              (*j) = 0;
-            }
-          }
-        }
-
-        if( LittleBlockType :: rows == LittleBlockType :: cols )
-        {
-          // for non-interior entities set diag to 1 for ILU Preconditioner 
-          const int overlap = overlapRows_.size();
-          for(int i=0; i<overlap; ++i)
-          {
-            const int idx = overlapRows_[i]; 
-            LittleBlockType& diag = this->operator[](idx)[idx];
-            for(int k=0; k<LittleBlockType :: rows; ++k)  
-            {
-              diag[k][k] = 1;
-            }
+            (*j) = 0;
           }
         }
       }
@@ -271,19 +241,19 @@ namespace Dune {
       }
 
       //! communicate block vector 
-      void communicate(const RowBlockVectorType& arg) const 
+      void communicate(ColBlockVectorType& arg) const 
       {
         if(comm_)
         {
-          assert( rowSpace_ );
+          assert( colSpace_ );
           // if serial run, just return 
-          if(rowSpace_->grid().comm().size() <= 1) 
+          if(colSpace_->grid().comm().size() <= 1) 
           {
             return;
           }
 
           // exchange data 
-          RowDiscreteFunctionType tmp("ImprovedBCRSMatrix::communicate_tmp",*rowSpace_,arg);
+          ColDiscreteFunctionType tmp("ImprovedBCRSMatrix::communicate_tmp",*colSpace_,arg);
           comm_->exchange( tmp );
         }
       }
@@ -291,8 +261,13 @@ namespace Dune {
       //! apply matrix: \f$ y = A(x) \f$
       double residuum(const ColBlockVectorType& rhs, RowBlockVectorType& x) const 
       {
+        assert( colSpace_ );
         // exchange data 
         communicate( x );
+
+        assert( scp_ );
+        typedef typename ParallelScalarProductType :: SlaveDofsType SlaveDofsType;
+        const SlaveDofsType& slaveDofs = scp_->slaveDofs();
 
         typedef typename ColBlockVectorType :: block_type LittleBlockVectorType; 
         LittleBlockVectorType tmp; 
@@ -300,10 +275,10 @@ namespace Dune {
 
         std::set<int> overlapRow;
 
-        const size_t overL = overlapRows_.size();
-        for(size_t k=0; k<overL; ++k) 
+        const int overL = slaveDofs.size();
+        for(int k=0; k<overL; ++k) 
         {
-          overlapRow.insert( overlapRows_[k] ); 
+          overlapRow.insert( slaveDofs[k] ); 
         }
 
         ConstRowIterator endi= this->end();
@@ -325,9 +300,9 @@ namespace Dune {
           }
         }
 
-        if( rowSpace_ ) 
+        if( colSpace_ ) 
         {
-          return rowSpace_->grid().comm().sum( res );
+          return colSpace_->grid().comm().sum( res );
         }
         else 
         {
@@ -338,50 +313,40 @@ namespace Dune {
       //! apply matrix: \f$ y = A(x) \f$
       void mult(const RowBlockVectorType& x, ColBlockVectorType& y) const 
       {
-        // exchange data 
-        communicate( x );
-
         // clear vector  
         y = 0;
+
         // multiply 
         this->umv(x,y);
 
-        // delete non interior entries 
-        deleteNonInterior(y);
+        // exchange data 
+        communicate( y );
       }
 
       //! apply scaled: \f$ y = y + \alpha A(x) \f$
       void multAdd(field_type alpha, const RowBlockVectorType& x, ColBlockVectorType& y) const 
       {
-        // exchange data 
-        communicate( x );
-
         this->usmv(alpha,x,y);
 
-        // delete non interior entries 
-        deleteNonInterior(y);
-      }
-
-    private:  
-      // delete all vector entries that belong not to interior entities 
-      void deleteNonInterior(ColBlockVectorType& y) const
-      {
-        // set all entries belonging to non-interior elements to zero 
-        const int overlap = overlapRows_.size();
-        for(int i=0; i<overlap; ++i)
-        {
-          y[overlapRows_[i]] = 0;
-        }
+        // exchange data 
+        communicate( y );
       }
   };
 
   //! wrapper class to store perconditioner 
   //! as the interface class does not have to category 
   //! enum 
-  template<class X, class Y>
-  class PreconditionerWrapper : public Preconditioner<X,Y>
+  template<class MatrixImp>
+  class PreconditionerWrapper 
+    : public Preconditioner<typename MatrixImp :: RowBlockVectorType,
+                            typename MatrixImp :: ColBlockVectorType>
   {
+    typedef MatrixImp MatrixType;
+    typedef typename MatrixImp :: RowBlockVectorType X;
+    typedef typename MatrixImp :: ColBlockVectorType Y;
+            
     typedef Preconditioner<X,Y> PreconditionerInterfaceType;
+    MatrixType* matrix_;
     PreconditionerInterfaceType* preconder_; 
     
     //! set preconder to zero 
@@ -396,26 +361,44 @@ namespace Dune {
 
     enum {
       //! \brief The category the precondtioner is part of.
-      category=SolverCategory::sequential};
+      category=SolverCategory::sequential };
 
     //! set preconder to zero 
-    PreconditionerWrapper () : preconder_(0) {}
+    PreconditionerWrapper () : matrix_(0) , preconder_(0) {}
     
     //! create preconditioner of given type 
-    template <class MatrixType, class PreconditionerType>
+    template <class PreconditionerType>
     PreconditionerWrapper(MatrixType & m, int iter, field_type relax, const PreconditionerType*) 
-      : preconder_(new PreconditionerType(m,iter,relax)) {}
+      : matrix_(&m)
+      , preconder_(0) 
+    {
+      PreconditionerType* pre = new PreconditionerType(m,iter,relax); 
+      preconder_ = pre;
+    }
     
     //! create preconditioner of given type 
-    template <class MatrixType, class PreconditionerType>
+    template <class PreconditionerType>
     PreconditionerWrapper(MatrixType & m, field_type relax, const PreconditionerType*) 
-      : preconder_(new PreconditionerType(m,relax)) {}
+      : matrix_(&m)
+      , preconder_(0)
+    {
+      PreconditionerType* pre = new PreconditionerType(m,relax); 
+      preconder_ = pre;
+    }
     
     //! \copydoc Preconditioner 
     virtual void pre (X& x, Y& b) 
     {
+      // all the implemented Preconditioners do nothing in pre and post 
+#ifndef NDEBUG 
       // apply preconditioner
-      if( preconder_ ) preconder_->pre(x,b);
+      if( preconder_ ) 
+      {
+        X tmp (x);
+        preconder_->pre(x,b);
+        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
+      }
+#endif
     }
 
     //! \copydoc Preconditioner 
@@ -425,6 +408,9 @@ namespace Dune {
       {
         // apply preconditioner
         preconder_->apply(v,d);
+        // communicate result 
+        assert( matrix_ );
+        matrix_->communicate( v );
       }
       else 
       {
@@ -434,9 +420,18 @@ namespace Dune {
     }
 
     //! \copydoc Preconditioner 
-    virtual void post (X& x) {
+    virtual void post (X& x) 
+    {
+      // all the implemented Preconditioners do nothing in pre and post 
+#ifndef NDEBUG 
       // apply preconditioner
-      if( preconder_ ) preconder_->post(x);
+      if( preconder_ ) 
+      {
+        X tmp(x);
+        preconder_->post(x);
+        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
+      }
+#endif
     }
 
     // every abstract base class has a virtual destructor
@@ -487,8 +482,7 @@ namespace Dune {
                                 ColumnDiscreteFunctionType > MatrixType;
    
     //! type of preconditioner 
-    typedef PreconditionerWrapper<RowBlockVectorType,
-                      ColumnBlockVectorType> PreconditionMatrixType;
+    typedef PreconditionerWrapper<MatrixType> PreconditionMatrixType;
 
     struct LocalMatrixTraits
     {
@@ -699,10 +693,12 @@ namespace Dune {
     typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
   private:  
-    typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
+    typedef CommunicationManager<ColumnSpaceType> CommunicationManagerType;
+    typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
 
     const RowSpaceType & rowSpace_;
     const ColumnSpaceType & colSpace_;
+    ParallelScalarProductType scp_;
 
     // sepcial row mapper 
     RowMapperType& rowMapper_;
@@ -749,14 +745,17 @@ namespace Dune {
                      const std::string& paramfile)
       : rowSpace_(rowSpace)
       , colSpace_(colSpace)
+      // create scp to have at least one instance 
+      // otherwise instance will be deleted during setup
+      , scp_(colSpace_)
       // get new mappers with number of dofs without considerung block size 
       , rowMapper_( rowSpace.blockMapper() )
-      , colMapper_( colSpace.blockMapper())
+      , colMapper_( colSpace.blockMapper() )
       , size_(-1)
       , sequence_(-1)
       , matrix_(0)
       , preconder_(0)
-      , comm_(rowSpace_)
+      , comm_(colSpace_)
       , numIterations_(5)
       , relaxFactor_(1.1)
       , preconditioning_(none)
@@ -776,16 +775,6 @@ namespace Dune {
         readParameter(paramfile,"Pre-relaxation",relaxFactor_, output);
       }
 
-      // only ILU-0 works savely in parallel
-      if(rowSpace_.grid().comm().size() > 1)
-      {
-        if( (preconditioning_ != none) && (preconditioning_ != ilu_0) )
-        {
-          std::cerr << "ERROR: Only Preconditioner ILU-0 works in parallel! " << std::endl;
-          abort();
-        }
-      }
-      
       assert( rowMapper_.size() == colMapper_.size() );
     }
 
@@ -834,8 +823,8 @@ namespace Dune {
         delete matrix_; matrix_ = 0;
         delete preconder_; preconder_ = 0;
 
-        matrix_ = new MatrixType(rowSpace_, comm_, rowMapper_.size(), colMapper_.size());
-        matrix().setup(rowSpace_.gridPart(),rowMapper(),colMapper(),stencil,verbose);
+        matrix_ = new MatrixType(colSpace_, comm_, scp_, rowMapper_.size(), colMapper_.size());
+        matrix().setup(colSpace_,rowMapper(),colMapper(),stencil,verbose);
 
         sequence_ = rowSpace_.sequence();
       }
@@ -909,7 +898,7 @@ namespace Dune {
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
       // ILU-0 
-      else if(preconditioning_ == ilu_0)
+      if(preconditioning_ == ilu_0)
       {
         typedef SeqILU0<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), relaxFactor_, (PreconditionerType*)0);
