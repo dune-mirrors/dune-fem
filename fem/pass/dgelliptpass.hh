@@ -327,6 +327,12 @@ namespace Dune {
     {
       // re-compute matrix 
       op_.computeMatrix( arg, rhs_ );
+
+      if( problem_.hasRHS() ) 
+      {
+        // do data exchange 
+        comm_.exchange( rhs_ );
+      }
     }
 
     //! Some timestep size management.
@@ -342,11 +348,11 @@ namespace Dune {
       // calculate new maxIter  
       maxIter_ = maxIterFactor_ * spc_.size();
 
-      // solve the system 
-      invOp_(rhs_,dest);
-
       // do data exchange 
       comm_.exchange( dest );
+      
+      // solve the system 
+      invOp_(rhs_,dest);
     } 
 
     template <class FuncType, class GradType>
