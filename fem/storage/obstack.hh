@@ -121,6 +121,7 @@ namespace Dune
       }
     }
 
+#if 0
     inline void reallocate ( unsigned int oldSize,
                              unsigned int newSize,
                              ElementPtrType &array ) const
@@ -128,6 +129,7 @@ namespace Dune
       DUNE_THROW( NotImplemented,
                   "Reallocating an object on an object stack is not possible." );
     }
+#endif
 
   private:
     static inline ObStack& obStack ()

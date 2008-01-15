@@ -51,6 +51,13 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().reallocate( oldSize, newSize, array ) );
     }
+
+    inline void reserve ( unsigned int newSize,
+                          ElementPtrType &array ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().reserve( newSize, array ) );
+    }
   };
 
 
@@ -89,6 +96,12 @@ namespace Dune
 
       free( array );
       array = newArray;
+    }
+
+    // by default, do nothing
+    inline void reserve ( unsigned int newSize,
+                          ElementPtrType &array ) const
+    {
     }
   };
 
@@ -289,12 +302,13 @@ namespace Dune
       size_ = other.size_;
     }
 
+#if 0
     inline operator const ElementPtrType () const
     {
       return ptr_;
     }
+#endif
 
-#if 0
     inline ElementType &operator* () const
     {
       return *ptr_;
@@ -305,7 +319,6 @@ namespace Dune
       assert( index < size_ );
       return ptr_[ index ];
     }
-#endif
   };
 
 
@@ -411,10 +424,17 @@ namespace Dune
                              ElementPtrType &array ) const
     {
       const unsigned int newAllocSize = (newSize * memFactor_) / 1024;
-      if( (newSize > array.size_) || (newAllocSize < array.size_) )
+      if( array.size_ < newSize )
+        reserve( newAllocSize );
+    }
+
+    inline void reserve ( unsigned int newSize,
+                          ElementPtrType &array ) const
+    {
+      if( newSize > array.size_ )
       {
-        allocator_.reallocate( array.size_, newAllocSize, array.ptr_ );
-        array.size_ = newAllocSize;
+        allocator_.reallocate( array.size_, newSize, array.ptr_ );
+        array.size_ = newSize;
       }
     }
   };

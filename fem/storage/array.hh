@@ -6,14 +6,12 @@
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
 #include <dune/fem/storage/arrayallocator.hh>
-/*! @addtogroup VectorClasses
-    @{
-*/
 
 namespace Dune
 {
 
   /** \class ArrayInterface
+   *  \ingroup VectorClasses
    *  \brief abstract array interface
    */
   template< class TraitsImp >
@@ -244,6 +242,7 @@ namespace Dune
 
   
   /** \class ArrayDefault
+   *  \ingroup VectorClasses
    *  \brief default implementation of the ArrayInterface
    */
   template< class ElementImp, class ArrayImp >
@@ -326,6 +325,7 @@ namespace Dune
 
 
   /** \class ArrayWrapper
+   *  \ingroup VectorClasses
    *  \brief implementation of the ArrayInterface wrapping a pointer to an
    *         array of elements
    */
@@ -572,6 +572,5 @@ namespace Dune
 }
 
 #include "array_inline.hh"
-//! @}
 
 #endif
