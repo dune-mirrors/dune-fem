@@ -25,21 +25,25 @@ public:
   }
 
   //! create entries for element and neighbors 
-  template <class GridPartImp, 
+  template <class SpaceImp, 
             class RowMapperType,
             class ColMapperType,
             class MatrixStructureMapImp,
-            class OverlapVectorImp>
-  static inline void setup(const GridPartImp& gP, 
+            class DiscreteFunctionType>
+  static inline void setup(const SpaceImp& space, 
                            const RowMapperType& rowMapper,
                            const ColMapperType& colMapper,
                            MatrixStructureMapImp& indices,
-                           OverlapVectorImp& overlapRows)
+                           const DiscreteFunctionType*)
   {
+    typedef typename SpaceImp :: GridPartType GridPartImp;
+    GridPartImp& gridP = const_cast<GridPartImp&> (space.gridPart());
+           
+    
     typedef typename GridPartNewPartitionType<
       GridPartImp,All_Partition> :: NewGridPartType GridPartType; 
 
-    GridPartType gridPart ( const_cast<GridPartImp&> (gP).grid());
+    GridPartType gridPart ( gridP.grid() );
 
     // define used types 
     typedef typename GridPartType :: GridType GridType;
@@ -49,14 +53,13 @@ public:
     // clear map 
     indices.clear();
 
-    // we need All_Partition here to insert overlap entities 
     // only for diagonal 
     IteratorType endit = gridPart.template end<0>(); 
     for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it)
     {
       const EntityType & en = *it;
       // add all column entities to row  
-      fill(gridPart,en,rowMapper,colMapper,indices,overlapRows);
+      fill(gridPart,en,rowMapper,colMapper,indices);
     }
   }
 
@@ -71,8 +74,7 @@ protected:
                    const EntityImp& en,
                    const RowMapperImp& rowMapper,
                    const ColMapperImp& colMapper,
-                   std::map< int , std::set<int> >& indices,
-                   OverlapVectorImp& overlapRows)
+                   std::map< int , std::set<int> >& indices)
   {
     // type of local indices storage 
     typedef std::set< int >  LocalIndicesType; 

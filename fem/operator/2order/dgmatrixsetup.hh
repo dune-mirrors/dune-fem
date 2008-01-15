@@ -2,6 +2,7 @@
 #define DUNE_DGMATRIXSETUP_HH
 
 #include <dune/fem/space/common/gridpartutility.hh>
+#include <dune/fem/function/common/scalarproducts.hh>
 
 namespace Dune {
 
@@ -25,21 +26,30 @@ public:
   }
 
   //! create entries for element and neighbors 
-  template <class GridPartImp,    
+  template <class SpaceImp,    
             class RowMapperType,
             class ColMapperType,
             class MatrixStructureMapImp,
-            class OverlapVectorImp>
-  static inline void setup(const GridPartImp& gP,    
+            class DiscreteFunctionType>
+  static inline void setup(const SpaceImp& space,    
                            const RowMapperType& rowMapper,
                            const ColMapperType& colMapper,
                            MatrixStructureMapImp& indices,
-                           OverlapVectorImp& overlapRows)
+                           const DiscreteFunctionType* )
   {
+    typedef typename SpaceImp :: GridPartType GridPartImp;
+    GridPartImp& gridP = const_cast<GridPartImp&> (space.gridPart());
+
+    typedef ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
+    typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
+    
     typedef typename GridPartNewPartitionType<
       GridPartImp,All_Partition> :: NewGridPartType GridPartType;    
 
-    GridPartType gridPart ( const_cast<GridPartImp&> (gP).grid());
+    GridPartType gridPart ( gridP.grid() );
+    ParallelScalarProductType scp (space);
+
+    std::auto_ptr<BuildProxyType> buildProxy = scp.buildProxy();
 
     // define used types 
     typedef typename GridPartType :: GridType GridType;
@@ -56,7 +66,7 @@ public:
     {
       const EntityType & en = *it;
       // add all column entities to row  
-      fill(gridPart,en,rowMapper,colMapper,indices,overlapRows);
+      fill(gridPart,en,rowMapper,colMapper,indices, *buildProxy);
     }
   }
 
@@ -66,15 +76,15 @@ protected:
             class EntityImp,
             class RowMapperImp,
             class ColMapperImp,
-            class OverlapVectorImp>
+            class ParallelScalarProductType>
   static inline void fill(const GridPartImp& gridPart,
                    const EntityImp& en,
                    const RowMapperImp& rowMapper,
                    const ColMapperImp& colMapper,
                    std::map< int , std::set<int> >& indices,
-                   OverlapVectorImp& overlapRows)
+                   ParallelScalarProductType& slaveDofs)
   {
-    assert( rowMapper.numDofs () == 1 );
+    assert( rowMapper.maxNumDofs () == 1 );
     // get index for entity 
     const int elRowIndex = rowMapper.mapToGlobal( en, 0 ); 
 
@@ -85,11 +95,12 @@ protected:
     // insert diagonal for each element 
     localIndices.insert( elRowIndex );
 
+    std::vector<int> slaves;
+
     // if entity is not interior, insert into overlap entries 
     if(en.partitionType() != InteriorEntity)
     {
-      overlapRows.push_back( elRowIndex );
-      return ;
+      slaves.push_back( elRowIndex );
     }
 
     // insert neighbors 
@@ -116,13 +127,13 @@ protected:
         if( nb.partitionType() != InteriorEntity )
         {
           insertHere = true;
-          overlapRows.push_back( nbRowIndex );
+          slaves.push_back( nbRowIndex );
         }
 #endif
         // insert pair 
         if( insertHere )
         {
-          // insert neihgbor 
+          // insert neighbor 
           localIndices.insert( nbColIndex );
 
           // insert symetric part with swaped row-col
@@ -133,6 +144,8 @@ protected:
         }
       }
     }
+
+    slaveDofs.insert( slaves );
   }
 };
 
