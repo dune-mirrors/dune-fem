@@ -540,6 +540,11 @@ namespace Dune
         elements_[ i ] = other[ i ];
     }
 
+    inline void reserve ( unsigned int newSize )
+    {
+      allocator_.reserve( newSize, elements_ );
+    }
+
     inline void resize ( unsigned int newSize )
     {
       const unsigned int oldSize = size_;
