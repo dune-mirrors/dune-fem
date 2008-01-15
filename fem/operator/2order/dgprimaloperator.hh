@@ -518,6 +518,25 @@ namespace Dune {
       return 0.0;
     }
 
+    void compute(const ArgumentType& arg, DestinationType& dest) const
+    {
+      prepare(arg, dest);
+
+      typedef typename GridPartNewPartitionType<GridPartType,All_Partition>:: NewGridPartType NewGridPartType;
+      typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
+
+      NewGridPartType gridPart( const_cast<GridPartType&> (gridPart_).grid() );
+
+      IteratorType endit = gridPart. template end<0>();
+      for(IteratorType it = gridPart. template begin<0>();
+          it != endit; ++it)
+      {
+        applyLocal(*it);
+      }
+
+      finalize(arg, dest);
+    }
+
     //! compute matrix entries 
     void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
     {
@@ -734,14 +753,11 @@ namespace Dune {
   
       return betaEst;
     }
-      
+
     /////////////////////////////////
     //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
-      // only build Matrix in interior 
-      assert( en.partitionType() == InteriorEntity );
-      
       // get local element matrix 
       LocalMatrixType matrixEn = matrixObj_.localMatrix(en,en); 
 
@@ -808,7 +824,7 @@ namespace Dune {
 #ifdef DG_DOUBLE_FEATURE
           // get partition type 
           const bool nonInterior = 
-            ( nb.partitionType() != InteriorEntity );
+            ( nb.partitionType() == GhostEntity );
           // only once per intersection or when outside is not interior 
           if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
               || nonInterior
@@ -1198,7 +1214,7 @@ namespace Dune {
 #ifdef DG_DOUBLE_FEATURE
       // create matrix handles for neighbor 
       LocalMatrixType enMatrix = matrixObj_.localMatrix( nb, en ); 
-      
+
       // create matrix handles for neighbor 
       LocalMatrixType nbMatrix = matrixObj_.localMatrix( nb, nb ); 
 #else 
