@@ -386,10 +386,18 @@ public:
   /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const
    *  \note The default implementation associates all DoFs with codimension 0.
    */
+  inline int numEntityDofs ( const EntityType &entity ) const
+  {
+    return numDofs( entity );
+  }
+
+  /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const
+   *  \note The default implementation associates all DoFs with codimension 0.
+   */
   template< class Entity >
   inline int numEntityDofs ( const Entity &entity ) const
   {
-    return (Entity :: codimension == 0 ? asImp().maxNumDofs() : 0);
+    return 0;
   }
 
   //! update mapper, default does nothing 
