@@ -528,6 +528,7 @@ namespace Dune
     inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
                                               const DiscreteFunctionType &y ) const
     {
+#if HAVE_MPI
       // rebuild slave dofs if grid was changed
       slaveDofs_->rebuild();
       const int numSlaves = slaveDofs_->size();
@@ -546,6 +547,19 @@ namespace Dune
 
       scp = space_.grid().comm().sum( scp );
       return scp;
+#else 
+      RangeFieldType scp = 0;
+
+      ConstDofIteratorType endit = x.dend ();
+      ConstDofIteratorType git   = y.dbegin ();
+
+      // multiply
+      for(ConstDofIteratorType it = x.dbegin(); it != endit; ++it,++git)
+      {
+        scp += (*it) * (*git);
+      }
+      return scp;
+#endif
     }
   };
 
@@ -691,7 +705,7 @@ namespace Dune
           scp += x[i] * y[i];
         }
         // set i to next valid value 
-        i = nextSlave + 1;
+        ++i;
       }
       scp = space_.grid().comm().sum( scp );
       return scp;
