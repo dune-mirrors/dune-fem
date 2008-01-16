@@ -68,9 +68,21 @@ public:
       // add all column entities to row  
       fill(gridPart,en,rowMapper,colMapper,indices, *buildProxy);
     }
+
+    insertLast(rowMapper, *buildProxy);
   }
 
 protected:
+  template<class RowMapperImp, 
+           class ParallelScalarProductType>
+  static inline void insertLast(RowMapperImp& rowMapper,
+                  ParallelScalarProductType& slaveDofs)
+  {
+    // insert size as last ghost 
+    std::vector<int> slaves(1, rowMapper.size());
+    slaveDofs.insert( slaves );
+  }
+
   //! create entries for element and neighbors 
   template <class GridPartImp,
             class EntityImp,
