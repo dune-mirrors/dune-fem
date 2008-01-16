@@ -45,22 +45,18 @@ const int polOrder = POLORDER;
 #include <dune/fem/io/file/grapedataio.hh>
 
 
-using namespace Dune;
+// Check for unhealthy grids
+// -------------------------
 
-
-
-// Check for YaspGrid
-// ------------------
-
-// forward declaration for main
+// forward declaration of the real main method
 int Main ( int argc, char **argv );
 
 template< class Grid >
-struct CheckYasp
+struct CheckGridEnabled
 {
   typedef Grid GridType;
 
-  typedef AdaptiveLeafGridPart< GridType > GridPartType;
+  typedef Dune :: AdaptiveLeafGridPart< GridType > GridPartType;
   
   inline static int CallMain ( int argc, char **argv )
   {
@@ -68,12 +64,19 @@ struct CheckYasp
   }
 };
 
-template< int dim, int dimworld >
-struct CheckYasp< YaspGrid< dim, dimworld > >
+// disable YaspGrid
+namespace Dune
 {
-  typedef YaspGrid< dim, dimworld > GridType;
+  template< int dim, int dimworld >
+  class YaspGrid;
+}
+
+template< int dim, int dimworld >
+struct CheckGridEnabled< Dune :: YaspGrid< dim, dimworld > >
+{
+  typedef Dune :: YaspGrid< dim, dimworld > GridType;
   
-  typedef LeafGridPart< GridType > GridPartType;
+  typedef Dune :: LeafGridPart< GridType > GridPartType;
 
   inline static int CallMain ( int argc, char **argv )
   {
@@ -83,12 +86,36 @@ struct CheckYasp< YaspGrid< dim, dimworld > >
   }
 };
 
+// disable UGGrid
+namespace Dune
+{
+  template< int dim >
+  class UGGrid;
+}
+
+template< int dim >
+struct CheckGridEnabled< Dune :: UGGrid< dim > >
+{
+  typedef Dune :: UGGrid< dim > GridType;
+
+  typedef Dune :: LeafGridPart< GridType > GridPartType;
+
+  inline static int CallMain ( int argc, char **argv )
+  {
+    std :: cerr << "WARNING: Lagrange Adaptation test disabled, because UGGrid sucks!"
+                << std :: endl;
+    return 0;
+  }
+};
+
 int main ( int argc, char **argv )
 {
-  return CheckYasp< GridType > :: CallMain( argc, argv );
+  return CheckGridEnabled< GridType > :: CallMain( argc, argv );
 }
 
 
+
+using namespace Dune;
 
 // Function, we will interpolate
 // -----------------------------
@@ -157,7 +184,7 @@ public:
 // Type Definitions
 // ----------------
 
-typedef CheckYasp< GridType > :: GridPartType GridPartType;
+typedef CheckGridEnabled< GridType > :: GridPartType GridPartType;
 
 //! type of the function space
 typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
