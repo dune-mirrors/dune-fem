@@ -481,7 +481,7 @@ namespace Dune
     void update()
     {
       // assure that update is only called once per 
-      // dof manager resize 
+      // dof manager resize or compress 
       if( sequence_ != dm_.sequence() )
       {
         // calculate new size 
@@ -494,9 +494,6 @@ namespace Dune
         }
         sequence_ = dm_.sequence();
       }
-      else 
-        DUNE_THROW( InvalidStateException,
-                    "Update of mapper should only be called once per sequence" );
     }
 
     /** \copydoc Dune::DofMapperInterface::numBlocks
