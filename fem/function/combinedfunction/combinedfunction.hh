@@ -69,9 +69,9 @@ namespace Dune
   //! A class for combining N discrete function of the same
   //! type to a vector valued function
   template <class ContainedDiscreteFunctionImp,int N >
-  class CombinedDiscreteFunction : 
-      public DiscreteFunctionDefault<
-    CombinedDiscreteFunctionTraits<ContainedDiscreteFunctionImp,N> >
+  class CombinedDiscreteFunction
+  : public DiscreteFunctionDefault
+    < CombinedDiscreteFunctionTraits< ContainedDiscreteFunctionImp, N > >
   {
   public:
     //! Discrete function this discrete function belongs to
@@ -81,6 +81,9 @@ namespace Dune
     SubDiscreteFunctionType;
     //! Traits class with all necessary type definitions
     typedef CombinedDiscreteFunctionTraits<ContainedDiscreteFunctionType,N> Traits;
+
+    //! type of the interface of this discrete function
+    typedef DiscreteFunctionInterface< Traits > DiscreteFunctionInterfaceType;
 
   private:
     typedef CombinedDiscreteFunction< ContainedDiscreteFunctionType,N > ThisType;
@@ -224,12 +227,12 @@ namespace Dune
       for (int i=0;i<N;i++)
 	func_[i]->addScaled(g.subFunction(i),s);
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionType &g) const */
-    RangeFieldType scalarProductDofs ( const DiscreteFunctionType &g ) const
+    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionInterfaceType &other) const */
+    RangeFieldType scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
     {
-      double ret=func_[0]->scalarProductDofs(g.subFunction(0));
-      for (int i=1;i<N;i++)
-	ret += func_[i]->scalarProductDofs(g.subFunction(i));
+      RangeFieldType ret( 0 );
+      for( int i = 0; i < N; ++i )
+	ret += func_[ i ]->scalarProductDofs( other.asImp().subFunction( i ) );
       return ret;
     }
 

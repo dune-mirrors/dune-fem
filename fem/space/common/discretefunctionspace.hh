@@ -358,7 +358,7 @@ namespace Dune
 
 
   /** \brief check two spaces for equality
-   *  \relatesto DiscreteFunctionSpaceInterface
+   *  \relates DiscreteFunctionSpaceInterface
    *  
    *  This is a default implemented equality operator for discrete function
    *  spaces. It assumes the mapper to be a singleton and then compares the
