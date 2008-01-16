@@ -12,27 +12,32 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
+#include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 
 namespace Dune
 {
 
   //! \brief The Laplace operator
-  template< class DiscreteFunctionImp, class TensorImp >
+  template< class DiscreteFunction, class MatrixObject, class Tensor >
   class LaplaceFEOp
-  : public Operator< typename DiscreteFunctionImp :: RangeFieldType,
-                     typename DiscreteFunctionImp :: RangeFieldType,
-                     DiscreteFunctionImp,
-                     DiscreteFunctionImp >
+  : public Operator< typename DiscreteFunction :: RangeFieldType,
+                     typename DiscreteFunction :: RangeFieldType,
+                     DiscreteFunction,
+                     DiscreteFunction >
   {
   public:
     //! type of discrete functions
-    typedef DiscreteFunctionImp DiscreteFunctionType;
+    typedef DiscreteFunction DiscreteFunctionType;
 
+    //! type of the system matrix object
+    typedef MatrixObject MatrixObjectType;
+    
     //! type of tensor
-    typedef TensorImp TensorType;
+    typedef Tensor TensorType;
 
     //! type of this LaplaceFEOp
-    typedef LaplaceFEOp< DiscreteFunctionType, TensorType > LaplaceFEOpType;
+    typedef LaplaceFEOp< DiscreteFunctionType, MatrixObjectType, TensorType >
+      LaplaceFEOpType;
 
   private:
     typedef LaplaceFEOpType ThisType;
@@ -63,57 +68,22 @@ namespace Dune
     //! The grid's dimension
     enum { dimension = GridType :: dimension };
         
-    //! type of system matrix
-    typedef SparseRowMatrix< RangeFieldType > MatrixType;
-
     //! type of quadrature to be used
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
+    typedef typename MatrixObjectType :: LocalMatrixType LocalMatrixType;
+    
   private:
     enum { maxBaseFunctions = 100 };
     
   protected:
-    class Assembler
-    {
-    protected:
-      const LaplaceFEOpType &feop_;
-
-      mutable FieldMatrix< RangeFieldType, maxBaseFunctions, maxBaseFunctions >
-        localMatrix_;
-      mutable StandardArray< unsigned int, maxBaseFunctions >
-        localMap_;
-
-    public:
-      inline Assembler( const LaplaceFEOpType &feop )
-      : feop_( feop )
-      {
-      }
-      
-      template< class EntityType >
-      inline void operator() ( const EntityType &entity ) const
-      {
-        const DiscreteFunctionSpaceType &dfSpace = feop_.discreteFunctionSpace();
-      
-        // obtain local matrix
-        const unsigned int size
-          = feop_.assembleLocalMatrix( entity, localMatrix_ );
-
-        for( unsigned int i = 0; i < size; ++i )
-          localMap_[ i ] = dfSpace.mapToGlobal( entity, i );
-
-        for( unsigned int i = 0; i < size; ++i )
-        { 
-          for( unsigned int j = 0; j < size; ++j )
-            feop_.matrix_->add( localMap_[ i ], localMap_[ j ], localMatrix_[ i ][ j ] );
-        }
-      }
-    };
+    class Assembler;
    
   protected:
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;
 
     //! pointer to the system matrix 
-    mutable MatrixType *matrix_;
+    mutable MatrixObjectType matrixObject_;
  
     //! flag indicating whether the system matrix has been assembled
     mutable bool matrix_assembled_;
@@ -129,7 +99,7 @@ namespace Dune
     //! constructor
     inline explicit LaplaceFEOp( const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace ),
-      matrix_( 0 ),
+      matrixObject_( discreteFunctionSpace_, discreteFunctionSpace_ ),
       matrix_assembled_( false ),
       stiffTensor_( 0 )
     {
@@ -139,7 +109,7 @@ namespace Dune
     inline LaplaceFEOp( TensorType &stiffTensor,
                         const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace ),
-      matrix_( 0 ),
+      matrixObject_( discreteFunctionSpace_, discreteFunctionSpace_ ),
       matrix_assembled_( false ),
       stiffTensor_( &stiffTensor )
     { 
@@ -150,17 +120,12 @@ namespace Dune
     inline LaplaceFEOp ( const ThisType & );
 
   public:
-    virtual ~LaplaceFEOp ()
-    {
-      if( matrix_ != 0 )
-        delete matrix_;
-    }
-
     //! \brief apply the operator
     virtual void operator() ( const DiscreteFunctionType &u, 
                               DiscreteFunctionType &w ) const 
     {
-      systemMatrix().apply( u, w );
+      //systemMatrix().apply( u, w );
+      systemMatrix().multOEM( u.leakPointer(), w.leakPointer() );
     }
   
     /*! \brief obtain a reference to the system matrix 
@@ -170,11 +135,11 @@ namespace Dune
      *
      *  \returns a reference to the system matrix
      */
-    MatrixType &systemMatrix () const
+    MatrixObjectType &systemMatrix () const
     {
       if( !matrix_assembled_ )
         assemble();
-      return *matrix_;
+      return matrixObject_;
     }
 
     //! print the system matrix into a stream
@@ -201,6 +166,10 @@ namespace Dune
     {
       const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
 
+      LagrangeMatrixSetup stencil;
+      matrixObject_.reserve( stencil );
+
+#if 0
       // if the matrix has not been allocated, allocate it.
       if( this->matrix_ == 0 )
       {
@@ -209,12 +178,13 @@ namespace Dune
         matrix_ = new MatrixType( size, size, numNonZero );
         assert( matrix_ != 0 );
       }
+#endif
 
 #ifdef ENABLE_TIMING
       time_t starttime = time( NULL );
 #endif
       
-      matrix_->clear();
+      matrixObject_.clear();
       Assembler a( *this );
       dfSpace.forEach( a );
       //assembleOnGrid();
@@ -229,65 +199,13 @@ namespace Dune
     }
 
   protected:
-#if 0
-    /*! perform grid walkthrough and assemble matrix
-     *
-     *  For each element, the local element matrix is determined into the
-     *  given local matrix storage and distributed into the global matrix.
-     *  Distribution is performed by an add(row,col,val) method on the 
-     *  global matrix class.
-     */
-    void assembleOnGrid () const
-    {
-      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
-      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
-  
-      FieldMatrix< RangeFieldType, maxBaseFunctions, maxBaseFunctions > matrix;
-
-      const IteratorType end = dfSpace.end();
-      for( IteratorType it = dfSpace.begin(); it != end; ++it )
-        assembleOnEntity( *it, matrix );
-    }
-#endif
-
-#if 0
-    /*! perform matrix assemble for one entity
-     *
-     *  \param[in] entity entity for current local update
-     *  \param{in] localMatrix local matrix storate
-     */
-    template< class EntityType, class LocalMatrixImp >
-    void assembleOnEntity ( const EntityType &entity, 
-                            LocalMatrixImp &localMatrix ) const
-    {
-      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
-      //const BaseFunctionSetType baseSet = dfSpace.baseFunctionSet( entity );
-      //const int numBaseFunctions = baseSet.numBaseFunctions();
-      
-      // obtain local matrix
-      const unsigned int size
-        = assembleLocalMatrix( entity, localMatrix );
-
-      for( unsigned int i = 0; i < size; ++i )
-      { 
-        const unsigned int row = dfSpace.mapToGlobal( entity , i );
-        for( unsigned int j = 0; j < size; ++j )
-        {
-          const unsigned int col = dfSpace.mapToGlobal( entity, j );
-          matrix_->add( row, col, localMatrix[ i ][ j ] );
-        }
-      }
-    }
-#endif
-
     /*! assemble the local matrix
      *
      *  In the Finite Element Method, most base functions are zero on a given
      *  entity. To build the matrix on one entity, we only need to store a very
      *  limited amount of matrix entries, the socalled local matrix.
      */
-    template< class  EntityType, class LocalMatrixType >
+    template< class EntityType, class LocalMatrixType >
     unsigned int assembleLocalMatrix ( const EntityType &entity,
                                        LocalMatrixType &matrix ) const
     {
@@ -385,20 +303,72 @@ namespace Dune
       for( ; it != endit ; ++it ) {
         if( !it.boundary() )
           continue;
+
+        LocalMatrixType localMatrix = matrixObject_.localMatrix( entity, entity );
        
         const int face = it.numberInSelf();
         FaceDofIteratorType faceIt
           = lagrangePointSet.template beginSubEntity< faceCodim >( face );
         const FaceDofIteratorType faceEndIt
           = lagrangePointSet.template endSubEntity< faceCodim >( face );
-        for( ; faceIt != faceEndIt; ++faceIt ) {
+        for( ; faceIt != faceEndIt; ++faceIt )
+          localMatrix.unitRow( *faceIt );
+#if 0
+        {
           const unsigned int dof = dfSpace.mapToGlobal( entity, *faceIt );
           //matrix_->kroneckerKill( dof, dof );
           matrix_->unitRow( dof );
         }
+#endif
       }
     }
   };
+
+
+
+  template< class DiscreteFunction, class MatrixObject, class Tensor >
+  class LaplaceFEOp< DiscreteFunction, MatrixObject, Tensor > :: Assembler
+  {
+  protected:
+    const LaplaceFEOpType &feop_;
+
+    mutable FieldMatrix< RangeFieldType, maxBaseFunctions, maxBaseFunctions >
+      elementMatrix_;
+#if 0
+    mutable StandardArray< unsigned int, maxBaseFunctions >
+      localMap_;
+#endif
+
+  public:
+    inline Assembler( const LaplaceFEOpType &feop )
+    : feop_( feop )
+    {
+    }
+    
+    template< class EntityType >
+    inline void operator() ( const EntityType &entity ) const
+    {
+      //const DiscreteFunctionSpaceType &dfSpace = feop_.discreteFunctionSpace();
+    
+      // obtain local matrix
+      const unsigned int size
+        = feop_.assembleLocalMatrix( entity, elementMatrix_ );
+
+#if 0
+      for( unsigned int i = 0; i < size; ++i )
+        localMap_[ i ] = dfSpace.mapToGlobal( entity, i );
+#endif
+      LocalMatrixType localMatrix = feop_.matrixObject_.localMatrix( entity, entity );
+      
+      for( unsigned int i = 0; i < size; ++i )
+      { 
+        for( unsigned int j = 0; j < size; ++j )
+          localMatrix.add( i, j, elementMatrix_[ i ][ j ] );
+//          feop_.matrix_->add( localMap_[ i ], localMap_[ j ], localMatrix_[ i ][ j ] );
+      }
+    }
+  };
+
 
 
 

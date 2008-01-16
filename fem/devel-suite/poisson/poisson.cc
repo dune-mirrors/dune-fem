@@ -140,8 +140,13 @@ typedef LagrangeDiscreteFunctionSpace
 //! define the type of discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
+//! define the type of the system matrix object
+typedef SparseRowMatrixObject< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType >
+  MatrixObjectType;
+
 //! define the discrete laplace operator, see ./fem.cc
-typedef LaplaceFEOp< DiscreteFunctionType, TensorType > LaplaceOperatorType;
+typedef LaplaceFEOp< DiscreteFunctionType, MatrixObjectType, TensorType >
+  LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
 // see dune/fem/inverseoperators.hh 
