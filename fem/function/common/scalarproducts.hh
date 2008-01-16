@@ -521,16 +521,15 @@ namespace Dune
     inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
                                               const DiscreteFunctionType &y ) const
     {
-      // rebuild slave dofs if grid was changed
-      slaveDofs_->rebuild();
-      const int numSlaves = slaveDofs_->size();
+      SlaveDofsType &slaveDofs = this->slaveDofs();
 
       RangeFieldType scp = 0;
-      
       int i = 0;
+
+      const int numSlaves = slaveDofs.size();
       for( int slave = 0; slave < numSlaves; ++slave )
       {
-        const int nextSlave = slaveDofs_[ slave ];
+        const int nextSlave = slaveDofs[ slave ];
         for(; i < nextSlave; ++i )
           scp += x.dof( i ) * y.dof( i );
         // skip the slave dof
@@ -542,6 +541,13 @@ namespace Dune
     }
 
   protected:
+    inline SlaveDofsType &slaveDofs () const
+    {
+      // rebuild slave dofs if grid was changed
+      slaveDofs_->rebuild();
+      return *slaveDofs_;
+    }
+    
     inline static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
     {
       KeyType key( space, space.mapper() );
