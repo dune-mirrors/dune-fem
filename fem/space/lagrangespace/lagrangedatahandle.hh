@@ -83,13 +83,15 @@ namespace Dune
     void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
     {
       const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
+
+      assert( n == numEntityDofs );
       for( unsigned int i = 0; i < numEntityDofs; ++i )
       {
         const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
 
         DataType value;
         buffer.read( value );
-        
+
         Operation :: apply( value, function_->dof( index ) );
       }
     }
