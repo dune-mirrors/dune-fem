@@ -357,6 +357,25 @@ namespace Dune
 
 
 
+  /** \brief check two spaces for equality
+   *  \relatesto DiscreteFunctionSpaceInterface
+   *  
+   *  This is a default implemented equality operator for discrete function
+   *  spaces. It assumes the mapper to be a singleton and then compares the
+   *  addresses of the two mappers.
+   *
+   *  Note that this method can be specialized by implementing another version
+   *  that uses the exact traits of the discrete function space.
+   */
+  template< class Traits >
+  inline bool operator== ( const DiscreteFunctionSpaceInterface< Traits > &X,
+                           const DiscreteFunctionSpaceInterface< Traits > &Y )
+  {
+    return &(X.mapper()) == &(Y.mapper());
+  }
+
+
+
   //---------------------------------------------------------------------------
   //-
   //-  --DiscreteFunctionSpaceDefault
