@@ -1,7 +1,5 @@
 #include <config.h>
 
-// to use grape, set to WANT_GRAPE to 1
-#define WANT_GRAPE 1
 #define SHOW_INTERPOLATION 0
 #define SHOW_RESTRICT_PROLONG 1
 
@@ -10,6 +8,11 @@
 
 // to use generic adaption, set GENERIC_ADAPT to 1
 #define GENERIC_ADAPT 1
+
+// to use grape, set to WANT_GRAPE to 1
+#ifndef WANT_GRAPE
+#define WANT_GRAPE 0
+#endif
 
 // polynomial order of base functions
 const int polOrder = POLORDER;
