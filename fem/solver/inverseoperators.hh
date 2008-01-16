@@ -29,9 +29,6 @@ namespace Dune {
       Field spa=0, spn, q, quad;
 
       Field b = arg.scalarProductDofs( arg );
-#if 0
-      b = comm.sum( b );
-#endif
       const Field err = epsilon * b;
 
       DiscreteFunctionType r ( arg );
@@ -47,10 +44,6 @@ namespace Dune {
       p -= h;
 
       spn = r.scalarProductDofs( r );
-#if 0
-      // global sum 
-      spn = comm.sum( spn );
-#endif
    
       while((spn > err ) && (count++ < maxIter)) 
       {
@@ -67,10 +60,6 @@ namespace Dune {
         op( p, h );
     
         quad = p.scalarProductDofs( h );
-#if 0
-        // global sum 
-        quad = comm.sum( quad );
-#endif
         
         q    = spn / quad;
 
@@ -82,16 +71,11 @@ namespace Dune {
         // residuum neu berechnen *********************
     
         spn = r.scalarProductDofs( r ); 
-#if 0
-        // global sum 
-        spn = comm.sum( spn );
-#endif
         
-        if( verbose && (comm.rank() == 0))
-          std::cerr << count << " cg-Iterationen  " << count << " Residuum:" << spn << "        \r";
+        if( verbose && (comm.rank() == 0) )
+          std :: cerr << count << " cg-Iterationen  " << count << " Residuum:"
+                      << spn << std :: endl;
       }
-      if( verbose && (comm.rank() == 0))
-        std::cerr << "\n";
     }
   };
 
