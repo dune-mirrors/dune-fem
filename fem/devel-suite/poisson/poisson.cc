@@ -33,7 +33,7 @@
 **
 **************************************************************************/
 
-#define VERBOSE false
+#define VERBOSE true
 
 #include <config.h>
 
@@ -149,11 +149,9 @@ typedef LaplaceFEOp< DiscreteFunctionType, MatrixObjectType, TensorType >
   LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
-// see dune/fem/inverseoperators.hh 
-//typedef CGInverseOp < DiscreteFunctionType, LaplaceOperatorType >    InverseOperatorType;
-/****************************************/
-// or ../../solvers/oemsolver/oemsolvers.hh
-typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
+typedef CGInverseOp< DiscreteFunctionType, LaplaceOperatorType >
+  InverseOperatorType;
+//typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 //typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
@@ -282,7 +280,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   // check the right hand side for NaNs again
   if( !rhs.dofsValid() )
     std :: cout << "right hand side invalid after boundary treatment." << std :: endl;
-  
+
   solve( laplace, rhs, solution );
 
   //L2Error< DiscreteFunctionType > l2error;

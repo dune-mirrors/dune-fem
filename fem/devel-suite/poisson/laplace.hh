@@ -9,8 +9,9 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dune/fem/storage/array.hh>
-#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/quadrature/quadrature.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 
@@ -374,11 +375,11 @@ namespace Dune
 
   // Assembler for right rand side
   // note: this is not an L2-Projection
-  template< class DiscreteFunctionImp >
+  template< class DiscreteFunction >
   class RightHandSideAssembler
   {
   public:
-    typedef DiscreteFunctionImp DiscreteFunctionType;
+    typedef DiscreteFunction DiscreteFunctionType;
     
     typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
@@ -392,6 +393,9 @@ namespace Dune
     typedef typename GridPartType :: GridType GridType;
 
     enum { dimension = GridType :: dimension };
+
+    typedef CommunicationManager< DiscreteFunctionSpaceType >
+      CommunicationManagerType;
   
   public:
     // discreteFunction is an output parameter (kind of return value)
@@ -451,6 +455,9 @@ namespace Dune
           }
         }
       }
+
+      CommunicationManagerType communicate( discreteFunctionSpace );
+      communicate.exchange( discreteFunction );
     }
   };
 
