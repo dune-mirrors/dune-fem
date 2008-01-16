@@ -18,6 +18,7 @@
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
+#include <dune/fem/function/common/scalarproducts.hh>
 #include "dofiterator.hh"
 
 namespace Dune
@@ -83,18 +84,15 @@ namespace Dune
 
     //! type of associated discrete function space
     typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+     //! type of the discrete function interface (this type)
+    typedef DiscreteFunctionInterface< Traits > DiscreteFunctionInterfaceType;
  
   private:
-    typedef DiscreteFunctionInterface< Traits > ThisType;
+    typedef DiscreteFunctionInterfaceType ThisType;
     typedef Function< DiscreteFunctionSpaceType, DiscreteFunctionType > BaseType;
 
   public:
-#if 0
-    //! type of default implementation 
-    typedef DiscreteFunctionDefault<DiscreteFunctionTraits>
-      DiscreteFunctionDefaultType;
-#endif
-        
     //! type of domain field, i.e. type of coordinate component
     typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
     //! type of range field, i.e. dof type 
@@ -295,14 +293,15 @@ namespace Dune
 
     /** \brief Scalar product between the DoFs of two discrete functions
      *
-     *  \param[in]  g  discrete function to evaluate the scalar product with
+     *  \param[in]  other  discrete function to evaluate the scalar product with
      *
      *  \returns the scalar product of the DoF-vectors
      */
-    RangeFieldType scalarProductDofs ( const DiscreteFunctionType &g ) const
+    inline RangeFieldType
+    scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().scalarProductDofs( g ) );
-      return asImp().scalarProductDofs( g );
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().scalarProductDofs( other ) );
+      return asImp().scalarProductDofs( other );
     }
 
     /** \brief print all DoFs to a stream (for debugging purposes)
@@ -499,7 +498,11 @@ namespace Dune
   private:
     typedef DiscreteFunctionDefault< Traits > ThisType;
     typedef DiscreteFunctionInterface< Traits > BaseType;
-    
+
+    //! type of the discrete function (Barton-Nackman parameter)
+    typedef typename DiscreteFunctionTraits :: DiscreteFunctionType
+      DiscreteFunctionType;
+
   private:
     typedef DiscreteFunctionInterface< DiscreteFunctionTraits >
       DiscreteFunctionInterfaceType;
@@ -508,6 +511,9 @@ namespace Dune
       DiscreteFunctionDefaultType;
 
     enum { myId_ = 0 };
+
+    typedef ParallelScalarProduct< DiscreteFunctionInterfaceType >
+      ScalarProductType;
   
   public:
     //! type of discrete function space
@@ -528,10 +534,6 @@ namespace Dune
     typedef Mapping< DomainFieldType, RangeFieldType, DomainType, RangeType>
       MappingType;
 
-    //! type of the discrete function (Barton-Nackman parameter)
-    typedef typename DiscreteFunctionTraits :: DiscreteFunctionType
-      DiscreteFunctionType;
-
      //! type of the dof iterator
     typedef typename DiscreteFunctionTraits :: DofIteratorType DofIteratorType;
     //! type of the const dof iterator
@@ -550,11 +552,14 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: template
       CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
 
-  private:    
+  private: 
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
 
     DebugLock dofPointerLock_;
+
+  protected:
+    ScalarProductType scalarProduct_;
 
   protected:
     using BaseType :: asImp;
@@ -579,7 +584,8 @@ namespace Dune
     inline DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace,
                                      const LocalFunctionFactoryType &lfFactory )
     : DiscreteFunctionInterfaceType( dfSpace ),
-      lfStorage_( lfFactory )
+      lfStorage_( lfFactory ),
+      scalarProduct_( dfSpace )
     {
     }
 
@@ -652,7 +658,11 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
-    RangeFieldType scalarProductDofs( const DiscreteFunctionType &g ) const;
+    inline RangeFieldType
+    scalarProductDofs( const DiscreteFunctionInterfaceType &other ) const
+    {
+      return scalarProduct_.scalarProductDofs( *this, other );
+    }
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is added to this discrete function 

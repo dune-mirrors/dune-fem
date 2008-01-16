@@ -10,17 +10,16 @@
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/datahandleif.hh>
 
+// in case of ISTL found include some more headers 
+#if HAVE_DUNE_ISTL
+#include <dune/istl/scalarproducts.hh>
+#endif
+
 //- Dune-fem includes 
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/singletonlist.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/gridpartutility.hh>
-
-// in case of ISTL found include some more headers 
-#if HAVE_DUNE_ISTL
-#include <dune/istl/scalarproducts.hh>
-#include <dune/fem/function/blockvectorfunction.hh>
-#endif
 
 namespace Dune
 {
@@ -463,6 +462,7 @@ namespace Dune
 
 
 
+#if HAVE_MPI
   //! Proxy class to evaluate ScalarProduct 
   //! holding SlaveDofs which is singleton per space and mapper 
   template< class DiscreteFunction >
@@ -507,13 +507,6 @@ namespace Dune
     {
     }
 
-  protected:
-    inline static SlaveDofsType *getSlaveDofs ( DiscreteFunctionSpaceType &space )
-    {
-      KeyType key( space, space.mapper() );
-      return &(SlaveDofsProviderType :: getObject( key ));
-    }
-
   private:
     // prohibit copying
     ParallelScalarProduct( const ThisType & );
@@ -528,7 +521,6 @@ namespace Dune
     inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
                                               const DiscreteFunctionType &y ) const
     {
-#if HAVE_MPI
       // rebuild slave dofs if grid was changed
       slaveDofs_->rebuild();
       const int numSlaves = slaveDofs_->size();
@@ -547,30 +539,79 @@ namespace Dune
 
       scp = space_.grid().comm().sum( scp );
       return scp;
-#else 
+    }
+
+  protected:
+    inline static SlaveDofsType *getSlaveDofs ( DiscreteFunctionSpaceType &space )
+    {
+      KeyType key( space, space.mapper() );
+      return &(SlaveDofsProviderType :: getObject( key ));
+    }
+  };
+#else
+  //! Proxy class to evaluate ScalarProduct 
+  //! holding SlaveDofs which is singleton per space and mapper 
+  template< class DiscreteFunction >
+  class ParallelScalarProduct 
+  {
+  public:
+    typedef DiscreteFunction DiscreteFunctionType;
+
+  private:
+    typedef ParallelScalarProduct< DiscreteFunctionType > ThisType;
+
+  public:
+    //! type of the discrete function space
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
+
+    //! type of range field 
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType  RangeFieldType;
+
+    typedef typename DiscreteFunctionType :: ConstDofIteratorType
+      ConstDofIteratorType;
+
+  public:  
+    //! constructor taking space 
+    inline ParallelScalarProduct ( const DiscreteFunctionSpaceType & )
+    {
+    }
+
+  private:
+    // prohibit copying
+    ParallelScalarProduct( const ThisType & );
+
+  public:
+    inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
+                                              const DiscreteFunctionType &y ) const
+    {
       RangeFieldType scp = 0;
 
       ConstDofIteratorType endit = x.dend ();
-      ConstDofIteratorType git   = y.dbegin ();
+      ConstDofIteratorType xit = x.dbegin ();
+      ConstDofIteratorType yit = y.dbegin();
 
-      // multiply
-      for(ConstDofIteratorType it = x.dbegin(); it != endit; ++it,++git)
-      {
-        scp += (*it) * (*git);
-      }
+      for( ; xit != endit; ++xit, ++yit )
+        scp += (*xit) * (*yit);
       return scp;
-#endif
     }
   };
+#endif
 
 
 
 #if HAVE_DUNE_ISTL
+  template< class DiscreteFunctionSpaceImp >
+  class BlockVectorDiscreteFunction;
+
   //! Proxy class to evaluate ScalarProduct 
   //! holding SlaveDofs which is singleton per space and mapper 
-  template <class DiscreteFunctionSpaceImp> 
-  class ParallelScalarProduct<BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > 
-  : public ScalarProduct<typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> :: DofStorageType >
+  template< class DiscreteFunctionSpaceImp >
+  class ParallelScalarProduct
+    < BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > > 
+  : public ScalarProduct
+    < typename BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
+        :: DofStorageType >
   {
     template<class SlaveDofsImp>
     class SlaveDofsProxy

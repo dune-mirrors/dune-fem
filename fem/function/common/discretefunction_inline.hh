@@ -64,31 +64,8 @@ namespace Dune
     dofPointerLock_.unlock();
   }
 
-// scalarProductDofs
-template <class DiscreteFunctionTraits>
-inline typename DiscreteFunctionTraits::DiscreteFunctionSpaceType::RangeFieldType 
-DiscreteFunctionDefault<DiscreteFunctionTraits>::
-scalarProductDofs(const DiscreteFunctionType& g) const
-{
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType; 
-  assert(this->size() == g.size());
 
-  RangeFieldType skp = 0.;
-
-  ConstDofIteratorType endit = this->dend ();
-  ConstDofIteratorType git =  g.dbegin ();
-
-  // multiply
-  for(ConstDofIteratorType it = this->dbegin(); it != endit; ++it,++git)
-  {   
-    skp += (*it) * (*git);
-  }
   
-  return skp;
-}
-
-
-
   template< class DiscreteFunctionTraits >
   inline void
   DiscreteFunctionDefault<DiscreteFunctionTraits >
