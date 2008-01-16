@@ -425,7 +425,7 @@ namespace Dune
     {
       const unsigned int newAllocSize = (newSize * memFactor_) / 1024;
       if( array.size_ < newSize )
-        reserve( newAllocSize );
+        reserve( newAllocSize, array );
     }
 
     inline void reserve ( unsigned int newSize,
