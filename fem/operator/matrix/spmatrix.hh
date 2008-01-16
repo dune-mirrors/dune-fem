@@ -330,338 +330,368 @@ private:
   void removeObj();
 };
 
-template <class RowSpaceImp, class ColumnSpaceImp> 
-class SparseRowMatrixObject
-{
-public:
-  typedef RowSpaceImp RowSpaceType;
-  typedef ColumnSpaceImp ColumnSpaceType;
 
-private:
-  typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
-  typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> ThisType;
-public:  
-  typedef SparseRowMatrix<double> MatrixType;
-  typedef MatrixType PreconditionMatrixType;
 
-  template <class MatrixObjectImp> 
-  class LocalMatrix;
-
-  struct LocalMatrixTraits
-  {
-    typedef RowSpaceImp DomainSpaceType ;
-    typedef ColumnSpaceImp RangeSpaceType;
-    typedef typename RowSpaceImp :: RangeFieldType RangeFieldType;
-    typedef LocalMatrix<ThisType> LocalMatrixType;
-    typedef RangeFieldType LittleBlockType;
-  };
-  
-  //! LocalMatrix 
-  template <class MatrixObjectImp> 
-  class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
+  template< class DomainSpace, class RangeSpace >
+  class SparseRowMatrixObject
   {
   public:
-    //! type of base class 
-    typedef LocalMatrixDefault<LocalMatrixTraits> BaseType;
-
-    //! type of matrix object 
-    typedef MatrixObjectImp MatrixObjectType;
-    //! type of matrix 
-    typedef typename MatrixObjectImp :: MatrixType MatrixType;
-    //! type of entries of little blocks 
-    typedef typename RowSpaceType :: RangeFieldType DofType;
-    //! type of little blocks 
-    typedef DofType LittleBlockType;
+    typedef DomainSpace DomainSpaceType;
+    typedef RangeSpace RangeSpaceType;
 
   private:  
-    //! corresponding matrix 
-    MatrixType& matrix_; 
+    typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > ThisType;
+
+  protected:
+    typedef typename DomainSpaceType :: GridType GridType;
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+
+    template< class MatrixObject >
+    struct LocalMatrixTraits;
+
+    template< class MatrixObject >
+    class LocalMatrix;
     
-    //! global row numbers  
-    std::vector<int> row_;
+  public:  
+    typedef SparseRowMatrix< double > MatrixType;
+    typedef MatrixType PreconditionMatrixType;
+
+  public:
+    //! type of local matrix 
+    typedef LocalMatrix<ThisType> ObjectType;
+    typedef ThisType LocalMatrixFactoryType;
+    typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
+    //! type of local matrix 
+    typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
+
+    typedef CommunicationManager< RangeSpaceType > CommunicationManagerType;
+
+  protected:
+    const DomainSpaceType &domainSpace_;
+    const RangeSpaceType &rangeSpace_;
+    
+    int rowMaxNumbers_;
+    int sequence_;
+
+    mutable MatrixType matrix_;
+    bool preconditioning_;
+    PreconditionMatrixType * pcMatrix_;
+
+    mutable CommunicationManagerType communicate_;
+
+    mutable LocalMatrixStackType localMatrixStack_;
+
+  public:
+    //! setup matrix handler 
+    inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
+                                  const RangeSpaceType &rangeSpace,
+                                  const std :: string &paramfile = "" )
+    : domainSpace_( domainSpace ),
+      rangeSpace_( rangeSpace ),
+      rowMaxNumbers_( -1 ),
+      sequence_( -1 ),
+      matrix_(),
+      preconditioning_( false ),
+      pcMatrix_( 0 ),
+      communicate_( rangeSpace_ ),
+      localMatrixStack_( *this )
+    {
+      if( paramfile != "" )
+      {
+        int precon = 0;
+        readParameter( paramfile, "Preconditioning", precon );
+        preconditioning_ = (precon > 0 ? true : false);
+      }
+    }
+
+    //! return reference to stability matrix
+    inline MatrixType &matrix () const
+    {
+      return matrix_;
+    }
+
+    //! interface method from LocalMatrixFactory
+    inline ObjectType *newObject () const
+    {
+      return new ObjectType( *this, domainSpace_, rangeSpace_ );
+    }
+
+    //! return local matrix 
+    inline LocalMatrixType localMatrix( const EntityType &rowEntity,
+                                        const EntityType &colEntity ) const
+    {
+      return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
+    }
+
+    //! resize all matrices and clear them 
+    inline void clear ()
+    {
+      matrix_.clear();
+    }
+
+    //! return true if precoditioning matrix is provided 
+    bool hasPcMatrix () const
+    {
+      return preconditioning_;
+    }
+
+    PreconditionMatrixType &pcMatrix ()
+    { 
+      // this seems wrong -> break
+      assert( false );
+      return matrix_;
+    }
+
+    //! reserve memory corresponnding to size of spaces
+    template< class Stencil >
+    inline void reserve( const Stencil &, bool verbose = false )
+    {
+      if( sequence_ != domainSpace_.sequence() )
+      {
+        // if empty grid do nothing (can appear in parallel runs)
+        if( (domainSpace_.begin() != domainSpace_.end())
+            && (rangeSpace_.begin() != rangeSpace_.end()) )
+        {
+          
+          rowMaxNumbers_ = domainSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
+          int colMaxNumbers = rangeSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
+
+          rowMaxNumbers_ = std::max(rowMaxNumbers_, colMaxNumbers);
+
+          if( verbose )
+          {
+            std::cout << "Reserve Matrix with (" << domainSpace_.size() << "," << rangeSpace_.size()<< ")\n";
+            std::cout << "Number of base functions = (" << rowMaxNumbers_ << ")\n";
+          }
+
+          assert( rowMaxNumbers_ > 0 );
+
+          // factor for non-conforming grid is 4 in 3d and 2 in 2d  
+          //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+          const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
+
+          // upper estimate for number of neighbors 
+          enum { dim = GridType :: dimension };
+          rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
+
+          matrix_.reserve( domainSpace_.size(), rangeSpace_.size(), rowMaxNumbers_, 0.0 );
+        }
+        sequence_ = domainSpace_.sequence();
+      }
+    }
+
+    //! mult method of matrix object used by oem solver
+    void multOEM( const double *arg, double *dest ) const
+    {
+      matrix_.multOEM( arg, dest );
+      communicate( dest );
+    }
+
+    //! communicate data 
+    void communicate( const double *dest ) const
+    {
+      if( domainSpace_.grid().comm().size() <= 1 )
+        return;
+      
+      typedef AdaptiveDiscreteFunction< RangeSpaceType > DestinationType;
+
+      DestinationType tmp( "SparseRowMatrixObject::communicate_tmp", rangeSpace_, dest );
+      communicate_.exchange( tmp );
+    }
+
+    //! resort row numbering in matrix to have ascending numbering 
+    void resort() 
+    {
+      matrix_.resort();
+    }
+
+    void createPreconditionMatrix()
+    { 
+      /*
+      if(hasPcMatrix())
+      {
+        PreconditionMatrixType & diag = pcMatrix(); 
+        diag.clear();
+        
+        matrix_.addDiag( diag );
+    
+        double * diagPtr = diag.leakPointer();
+        const int singleSize = rowSpace_.size();
+        for(register int i=0; i<singleSize; ++i) 
+        {
+          double val = diagPtr[i];
+          // when using parallel Version , we could have zero on diagonal
+          // for ghost elements 
+          //assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0
+          if( std::abs( val ) > 0.0 )
+          {
+            val = 1.0/val;
+            diagPtr[i] = val;
+          }
+          else
+            diagPtr[i] = 1.0;
+        }
+      }
+      */
+    }
+  };
+
+
+
+  template< class DomainSpace, class RangeSpace >
+  template< class MatrixObject >
+  struct SparseRowMatrixObject< DomainSpace, RangeSpace > :: LocalMatrixTraits
+  {
+    typedef DomainSpace DomainSpaceType;
+    typedef RangeSpace RangeSpaceType;
+    
+    typedef typename SparseRowMatrixObject< DomainSpaceType, RangeSpaceType >
+      :: template LocalMatrix< MatrixObject > LocalMatrixType;
+
+    typedef typename RangeSpaceType :: RangeFieldType RangeFieldType;
+    typedef RangeFieldType LittleBlockType;
+  };
+
+
+
+  //! LocalMatrix 
+  template< class DomainSpace, class RangeSpace >
+  template< class MatrixObject >
+  class SparseRowMatrixObject< DomainSpace, RangeSpace > :: LocalMatrix
+  : public LocalMatrixDefault< LocalMatrixTraits< MatrixObject > >
+  {
+  public:
+    //! type of matrix object 
+    typedef MatrixObject MatrixObjectType;
+
+    //! type of the traits
+    typedef LocalMatrixTraits< MatrixObjectType > Traits;
+
+  private:
+    typedef LocalMatrixDefault< Traits > BaseType;
+
+  public:
+    //! type of matrix 
+    typedef typename MatrixObjectType :: MatrixType MatrixType;
+
+    //! type of entries of little blocks 
+    typedef typename Traits :: RangeFieldType RangeFieldType;
+
+    //! type of the DoFs
+    typedef RangeFieldType DofType;
+
+    //! type of little blocks 
+    typedef typename Traits :: LittleBlockType LittleBlockType;
+
+  protected:
+    MatrixType &matrix_; 
+    
+    //! global row numbers 
+    std :: vector< int > row_;
     //! global col numbers  
-    std::vector<int> col_;
+    std :: vector< int > col_;
+
+    using BaseType :: domainSpace_;
+    using BaseType :: rangeSpace_;
     
   public:  
     //! constructor taking entity and spaces for using mapToGlobal
     //! class RowSpaceType, class ColSpaceType> 
-    LocalMatrix(const MatrixObjectType & mObj,
-                const RowSpaceType & rowSpace,
-                const ColumnSpaceType & colSpace)
-      : BaseType(rowSpace,colSpace) 
-      , matrix_(mObj.matrix())
+    inline LocalMatrix( const MatrixObjectType &matrixObject,
+                        const DomainSpaceType &domainSpace,
+                        const RangeSpaceType &rangeSpace )
+    : BaseType( domainSpace, rangeSpace),
+      matrix_( matrixObject.matrix() )
     {
     }
+    
+  private: 
+    // prohibit copying 
+    LocalMatrix( const LocalMatrix & );
 
-    void init(const EntityType& rowEntity, const EntityType& colEntity)
+  public:
+    void init( const EntityType &rowEntity, const EntityType &colEntity )
     {
       // initialize base functions sets 
       BaseType :: init ( rowEntity , colEntity );
         
-      row_.resize(this->domainSpace_.baseFunctionSet(rowEntity).numBaseFunctions());
-      col_.resize(this->rangeSpace_.baseFunctionSet(colEntity).numBaseFunctions());
+      row_.resize( domainSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
+      col_.resize( rangeSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
 
-      {
-        const size_t rows = row_.size();
-        for(size_t i=0; i<rows; ++i) 
-          row_[i] = this->domainSpace_.mapToGlobal( rowEntity, i );
-      }
-      {
-        const size_t cols = col_.size();
-        for(size_t i=0; i<cols; ++i) 
-          col_[i] = this->rangeSpace_.mapToGlobal( colEntity, i );
-      }
+      const size_t rows = row_.size();
+      for( size_t i = 0; i < rows; ++i )
+        row_[ i ] = domainSpace_.mapToGlobal( rowEntity, i );
+      
+      const size_t cols = col_.size();
+      for( size_t i = 0; i < cols; ++i )
+        col_[ i ] = rangeSpace_.mapToGlobal( colEntity, i );
     }
 
-  private: 
-    //! copy not allowed 
-    LocalMatrix(const LocalMatrix &);
-
-  public:
     //! return number of rows 
-    int rows () const { return row_.size(); }
+    int rows () const
+    {
+      return row_.size();
+    }
 
     //! return number of columns 
-    int columns () const { return col_.size(); }
+    int columns () const
+    {
+      return col_.size();
+    }
 
     //! add value to matrix entry
-    void add(int localRow, int localCol , const DofType value)
+    void add( int localRow, int localCol, const DofType value )
     {
-      assert( localRow >= 0 );
-      assert( localCol >= 0 );
+      assert( (localRow >= 0) && (localRow < rows()) );
+      assert( (localCol >= 0) && (localCol < columns()) );
 
-      assert( localRow < (int) row_.size() );
-      assert( localCol < (int) col_.size() );
-      matrix_.add(row_[localRow],col_[localCol],value);
+      matrix_.add( row_[ localRow ], col_[ localCol ], value );
     }
 
     //! get matrix entry 
-    DofType get(int localRow, int localCol) const 
+    DofType get( int localRow, int localCol ) const
     {
-      assert( localRow >= 0 );
-      assert( localCol >= 0 );
+      assert( (localRow >= 0) && (localRow < rows()) );
+      assert( (localCol >= 0) && (localCol < columns()) );
 
-      assert( localRow < (int) row_.size() );
-      assert( localCol < (int) col_.size() );
-      return matrix_(row_[localRow],col_[localCol]);
+      return matrix_( row_[ localRow ], col_[ localCol ] );
     }
     
     //! set matrix entry to value 
-    void set(int localRow, int localCol, const DofType value)
+    void set( int localRow, int localCol, const DofType value )
     {
-      assert( localRow >= 0 );
-      assert( localCol >= 0 );
+      assert( (localRow >= 0) && (localRow < rows()) );
+      assert( (localCol >= 0) && (localCol < columns()) );
 
-      assert( localRow < (int) row_.size() );
-      assert( localCol < (int) col_.size() );
-      matrix_.set(row_[localRow],col_[localCol],value);
+      matrix_.set( row_[ localRow ], col_[ localCol ], value );
     }
 
     //! set matrix row to zero except diagonla entry 
-    void unitRow(const int localRow )
+    void unitRow( const int localRow )
     {
-      assert( localRow >= 0 );
-      assert( localRow < (int) row_.size() );
-      matrix_.unitRow(row_[localRow]); 
+      assert( (localRow >= 0) && (localRow < rows()) );
+      matrix_.unitRow( row_[ localRow ] );
     }
 
     //! clear all entries belonging to local matrix 
     void clear ()
     {
       const int row = rows();
-      for(int i=0; i<row; ++i)
-      {
-        matrix_.clearRow( row_[i] );
-      }
+      for( int i = 0; i < row; ++i )
+        matrix_.clearRow( row_[ i ] );
     }
 
     //! resort all global rows of matrix to have ascending numbering 
     void resort ()
     {
       const int row = rows();
-      for(int i=0; i<row; ++i)
-      {
-        matrix_.resortRow( row_[i] );
-      }
+      for( int i = 0; i < row; ++i )
+        matrix_.resortRow( row_[ i ] );
     }
   };
-
-public:
-  //! type of local matrix 
-  typedef LocalMatrix<ThisType> ObjectType;
-  typedef ThisType LocalMatrixFactoryType;
-  typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
-  //! type of local matrix 
-  typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
-
-// commented out, as AdaptiveDiscreteFunction is not known as type
-  typedef AdaptiveDiscreteFunction<RowSpaceType> DestinationType;
-
-  typedef CommunicationManager<RowSpaceType> CommunicationManagerType; 
-
-  const RowSpaceType & rowSpace_; 
-  const ColumnSpaceType & colSpace_;
-  
-  int rowMaxNumbers_;
-  int sequence_;
-
-  mutable MatrixType matrix_; 
-  bool preconditioning_;
-  PreconditionMatrixType * pcMatrix_;
-
-  mutable CommunicationManagerType communicate_;
-
-  mutable LocalMatrixStackType localMatrixStack_;
-
-  //! setup matrix handler 
-  SparseRowMatrixObject(const RowSpaceType & rowSpace, 
-                        const ColumnSpaceType & colSpace,
-                        const std::string& paramfile ) 
-    : rowSpace_(rowSpace)
-    , colSpace_(colSpace) 
-    , rowMaxNumbers_(-1)
-    , sequence_(-1)
-    , matrix_()
-    , preconditioning_(false)
-    , pcMatrix_(0)
-    , communicate_(rowSpace_)
-    , localMatrixStack_(*this)
-  {
-    if( paramfile != "" )
-    {
-      int precon = 0;
-      readParameter(paramfile,"Preconditioning",precon);
-      preconditioning_ = (precon > 0) ? true : false;
-    }
-  }
-
-  //! return reference to stability matrix 
-  MatrixType & matrix() const { return matrix_; }
-
-  //! interface method from LocalMatrixFactory 
-  ObjectType* newObject() const
-  {
-    return new ObjectType(*this,
-                          rowSpace_,
-                          colSpace_);
-  }
-
-  //! return local matrix 
-  LocalMatrixType localMatrix(const EntityType& rowEntity,
-                              const EntityType& colEntity) const
-  {
-    return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
-  }
-
-
-
-  //! resize all matrices and clear them 
-  void clear() 
-  {
-    matrix_.clear();
-  }
-
-  //! return true if precoditioning matrix is provided 
-  bool hasPcMatrix () const { return preconditioning_; }
-
-  PreconditionMatrixType& pcMatrix () { 
-    return matrix_;
-  }
-
-  //! reserve memory corresponnding to size of spaces 
-  template <class StencilImp> 
-  void reserve(const StencilImp&, bool verbose = false ) 
-  {
-    if(sequence_ != rowSpace_.sequence())
-    {
-      // if empty grid do nothing (can appear in parallel runs)
-      if( (rowSpace_.begin() != rowSpace_.end()) && 
-          (colSpace_.begin() != colSpace_.end()) )
-      {
-        
-        rowMaxNumbers_    = rowSpace_.baseFunctionSet(*(rowSpace_.begin())).numBaseFunctions();
-        int colMaxNumbers = colSpace_.baseFunctionSet(*(colSpace_.begin())).numBaseFunctions();
-
-        rowMaxNumbers_ = std::max(rowMaxNumbers_, colMaxNumbers);
-
-        if(verbose) 
-        {
-          std::cout << "Reserve Matrix with (" << rowSpace_.size() << "," << colSpace_.size()<< ")\n";
-          std::cout << "Number of base functions = (" << rowMaxNumbers_ << ")\n";
-        }
-
-        assert( rowMaxNumbers_ > 0 );
-
-        // factor for non-conforming grid is 4 in 3d and 2 in 2d  
-        //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
-        const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
-
-        // upper estimate for number of neighbors 
-        enum { dim = RowSpaceType :: GridType :: dimension };
-        rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
-
-        matrix_.reserve(rowSpace_.size(),colSpace_.size(),rowMaxNumbers_,0.0);
-      }
-      sequence_ = rowSpace_.sequence();
-    }
-  }
-
-  //! mult method of matrix object used by oem solver
-  void multOEM(const double * arg, double * dest) const 
-  {
-    communicate( arg );
-    matrix_.multOEM(arg,dest);
-  }
-
-  //! communicate data 
-  void communicate(const double * arg) const
-  {
-    if( rowSpace_.grid().comm().size() <= 1 ) return ;
-
-    DestinationType tmp("SparseRowMatrixObject::communicate_tmp",rowSpace_,arg);
-    communicate_.exchange( tmp );
-  }
-
-
-  //! resort row numbering in matrix to have ascending numbering 
-  void resort() 
-  {
-    matrix_.resort();
-  }
-
-  void createPreconditionMatrix()
-  { 
-    /*
-    if(hasPcMatrix())
-    {
-      PreconditionMatrixType & diag = pcMatrix(); 
-      diag.clear();
-      
-      matrix_.addDiag( diag );
-  
-      double * diagPtr = diag.leakPointer();
-      const int singleSize = rowSpace_.size();
-      for(register int i=0; i<singleSize; ++i) 
-      {
-        double val = diagPtr[i];
-        // when using parallel Version , we could have zero on diagonal
-        // for ghost elements 
-        //assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0
-        if( std::abs( val ) > 0.0 )
-        {
-          val = 1.0/val;
-          diagPtr[i] = val;
-        }
-        else
-          diagPtr[i] = 1.0;
-      }
-    }
-    */
-  }
-
-};
 
 } // end namespace Dune 
 
 #include "spmatrix.cc"
+
 #endif  
