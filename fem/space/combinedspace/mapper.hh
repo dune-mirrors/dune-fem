@@ -214,8 +214,6 @@ namespace Dune
     /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
     inline int maxNumDofs () const;
 
-    using BaseType :: numDofs;
-
     /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
     inline int numDofs ( const EntityType &entity ) const;
 
