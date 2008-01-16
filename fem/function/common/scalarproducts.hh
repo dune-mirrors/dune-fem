@@ -35,8 +35,8 @@ namespace Dune
   private:
     // index map for send and receive data 
     class CommunicationIndexMap;
-
-    template< class IndexMap, class Space >
+    typedef CommunicationIndexMap IndexMapType;
+    
     class LinkBuilder;
 
   public:
@@ -57,7 +57,6 @@ namespace Dune
     const int mySize_; 
     
     // type of communication indices 
-    typedef CommunicationIndexMap IndexMapType;
     IndexMapType slaveDofs_;
 
     //! know grid sequence number 
@@ -69,7 +68,7 @@ namespace Dune
                        const MapperType &mapper )
     : space_( space ),
       gridPart_( space_.gridPart() ),
-      mapper_( mapper )
+      mapper_( mapper ),
       myRank_( gridPart_.grid().comm().rank() ),
       mySize_( gridPart_.grid().comm().size() ),
       slaveDofs_(),
@@ -147,7 +146,7 @@ namespace Dune
 
   
   template< class SpaceImp, class MapperImp >
-  inline void SlaveDofs :: buildDiscontinuousMaps ()
+  inline void SlaveDofs<SpaceImp,MapperImp> :: buildDiscontinuousMaps ()
   {
     typedef typename GridPartNewPartitionType< GridPartType, All_Partition >
       :: NewGridPartType NewGridPartType;
@@ -188,9 +187,9 @@ namespace Dune
 
 
   template< class SpaceImp, class MapperImp >
-  inline void SlaveDofs :: buildCommunicatedMaps ()
+  inline void SlaveDofs<SpaceImp,MapperImp> :: buildCommunicatedMaps ()
   {
-    typedef LinkBuilder< IndexMapType, SpaceType > LinkBuilderHandleType; 
+    typedef LinkBuilder LinkBuilderHandleType; 
     LinkBuilderHandleType handle( slaveDofs_, space_ );
 
     gridPart_.communicate
@@ -219,7 +218,8 @@ namespace Dune
 
 
 
-  class SlaveDofs :: CommunicationIndexMap
+  template <class SpaceImp, class MapperImp> 
+  class SlaveDofs<SpaceImp,MapperImp> :: CommunicationIndexMap
   {
   protected:
     MutableArray< int > index_;
@@ -299,40 +299,14 @@ namespace Dune
   };
 
 
-
-  template< class IndexMap, class Space >
-  class SlaveDofs :: LinkBuilder
-  : public CommDataHandleIF< LinkBuilder< IndexMap, Space >, int >
+  template<class Space, class Mapper>
+  class SlaveDofs<Space,Mapper> :: LinkBuilder
+  : public CommDataHandleIF< LinkBuilder, int >
   {
   public:
-    typedef IndexMap IndexMapType;
     typedef Space SpaceType;
+    typedef Mapper MapperType;
 
-    typedef typename SpaceType :: MapperType MapperType;
-
-#if 0
-  private:
-    template< int dummy, int codim >
-    struct CheckInterior
-    {
-      inline static bool check( const PartitionType p )
-      {
-        DUNE_THROW( NotImplemented, "Method not implemented!" );
-        return true;
-      }
-    };
-
-    // codim 0 specialization 
-    template< int dummy >
-    struct CheckInterior< dummy, 0 >
-    {
-      inline static bool check( const PartitionType p )
-      {
-        return (p == InteriorEntity);
-      }
-    };
-#endif
-    
   public:
     typedef int DataType;
 
@@ -350,7 +324,7 @@ namespace Dune
     : myRank_( space.grid().comm().rank() ),
       mySize_( space.grid().comm().size() ),
       slaveDofs_( slaveDofs ),
-      space_( space )
+      space_( space ),
       mapper_( space.mapper() )
     {}
 
@@ -372,11 +346,11 @@ namespace Dune
       PartitionType ptype = entity.partitionType();
 
       if( (ptype == InteriorEntity) || (ptype == BorderEntity) )
-        buff.write( myRank_ );
+        buffer.write( myRank_ );
     }
 
     //! read buffer and apply operation 
-    template< class MessageBuffer, class Entity >
+    template< class MessageBuffer, class EntityType >
     inline void scatter ( MessageBuffer &buffer,
                           const EntityType &entity,
                           size_t n )
@@ -388,7 +362,7 @@ namespace Dune
       for( size_t i = 0; i < n; ++i )
       {
         int rank;
-        buff.read( rank );
+        buffer.read( rank );
         minRank = (rank < minRank ? rank : minRank);
       }
 
@@ -415,7 +389,7 @@ namespace Dune
     {
       PartitionType ptype = entity.partitionType();
 
-      return ((ptype == InteriorEntity) || (ptype == BorderEntity) : 1 : 0);
+      return ((ptype == InteriorEntity) || (ptype == BorderEntity) ? 1 : 0);
     }
   };
 
