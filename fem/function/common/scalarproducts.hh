@@ -542,7 +542,7 @@ namespace Dune
     }
 
   protected:
-    inline static SlaveDofsType *getSlaveDofs ( DiscreteFunctionSpaceType &space )
+    inline static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
     {
       KeyType key( space, space.mapper() );
       return &(SlaveDofsProviderType :: getObject( key ));
