@@ -1,5 +1,5 @@
-#ifndef DUNEFEM_SCALARPRODURCTS_HH
-#define DUNEFEM_SCALARPRODURCTS_HH
+#ifndef DUNE_FEM_SCALARPRODURCTS_HH
+#define DUNE_FEM_SCALARPRODURCTS_HH
 
 //- system includes 
 #include <iostream>
@@ -22,204 +22,36 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #endif
 
-namespace Dune { 
+namespace Dune
+{
   
 /** @addtogroup Communication Communication 
     @{
 **/
   
-  template <class SpaceImp, class MapperImp> 
+  template< class SpaceImp, class MapperImp >
   class SlaveDofs 
   {
+  private:
     // index map for send and receive data 
-    class CommunicationIndexMap
-    {
-      MutableArray<int> index_;
-      CommunicationIndexMap(const CommunicationIndexMap&);
-    public:
-      //! constructor creating empty map
-      CommunicationIndexMap() : index_(0) 
-      {
-        index_.setMemoryFactor(1.1);
-      }
+    class CommunicationIndexMap;
 
-      //! reserve memory 
-      void reserve( int size ) 
-      {
-        // resize array, memory factor will be used 
-        index_.resize( size );
-      }
+    template< class IndexMap, class Space >
+    class LinkBuilder;
 
-      //! clear index map 
-      void clear() 
-      {
-        // resize 0 will free memory 
-        index_.resize( 0 );
-      }
-
-      //! append index vector with idx 
-      void insert( const std::vector<int> & idx )
-      {
-        const int size = idx.size();
-        int count = index_.size();
-        // reserve memory 
-        reserve( count + size );
-        assert( index_.size() == (count+size));
-        // copy indices to index vector 
-        for(int i=0; i<size; ++i, ++count) 
-        { 
-          assert( idx[i] >= 0 );
-          index_[count] = idx[i]; 
-        }
-      }
-
-      //! return index map for entry i
-      const int operator [] (const int i) const 
-      {
-        assert( i >= 0 );
-        assert( i < (int) index_.size());
-        return index_[i];
-      }
-
-      //! return size of map
-      int size () const { return index_.size(); }
-
-      //! print  map for debugging only 
-      void print(std::ostream & s, int rank) const 
-      {
-        const int size = index_.size();
-        s << "Start print: size = " << size << std::endl;
-        for(int i=0; i<size; ++i) 
-        {
-          s<< rank << " idx["<<i<<"] = " << index_[i] << std::endl;
-        }
-        s << "End of Array\n";
-      }
-
-      void sort() 
-      {
-        std::sort( index_.begin(), index_.end() );
-      }
-    };
-
-    template <class IndexMapType, 
-              class SpaceType> 
-    class LinkBuilder
-     : public CommDataHandleIF<
-       LinkBuilder< IndexMapType , SpaceType > ,
-       int >
-    {
-      template <int dummy, int codim> 
-      struct CheckInterior 
-      {
-        inline static bool check(const PartitionType p) 
-        {
-          DUNE_THROW(NotImplemented,"Method not implemented!");
-          return true; 
-        }
-      };
-
-      // codim 0 specialization 
-      template <int dummy> 
-      struct CheckInterior<dummy,0>
-      {
-        inline static bool check(const PartitionType p) 
-        {
-          return (p == InteriorEntity); 
-        }
-      };
-      
-    public:
-      typedef int DataType;
-
-      const int myRank_;
-      const int mySize_; 
-      
-      IndexMapType & slaveDofs_;
-
-      const SpaceType & space_;
-      typedef typename SpaceType :: MapperType MapperType; 
-      const MapperType& mapper_; 
-
-    public:
-      LinkBuilder(IndexMapType& slaveDofs,
-                  const SpaceType & space)
-        : myRank_(space.grid().comm().rank()) 
-        , mySize_(space.grid().comm().size())
-        , slaveDofs_(slaveDofs)
-        , space_(space)
-        , mapper_(space.mapper())
-      {
-      }
-
-      bool contains (int dim, int codim) const
-      {
-        return space_.contains(codim);
-      }
-
-      bool fixedsize (int dim, int codim) const
-      {
-        return false;
-      }
-
-      //! read buffer and apply operation 
-      template<class MessageBufferImp, class EntityType>
-      void gather (MessageBufferImp& buff, const EntityType& en) const
-      {
-        // send rank 
-        buff.write( myRank_ );
-      }
-
-      //! read buffer and apply operation 
-      template<class MessageBufferImp, class EntityType>
-      void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
-      {
-        int rank; 
-        int minRank = myRank_;
-        for(size_t i=0; i<n; ++i) 
-        {
-          buff.read( rank );
-          if( rank < minRank ) minRank = rank;
-        }
-
-        // minimal rank means master 
-        if( minRank != myRank_ || en.partitionType() != InteriorEntity ) 
-        {
-          // build local mapping 
-          const int numDofs = mapper_.numEntityDofs( en );
-          std::vector<int> indices(numDofs);
-
-          // copy numDofs 
-          for(int i=0; i<numDofs; ++i) 
-          {
-            indices[i] = mapper_.mapEntityDofToGlobal( en , i ); 
-          }
-          
-          // insert slave Dofs 
-          slaveDofs_.insert( indices );
-        }
-      }
-
-      //! return local dof size to be communicated 
-      template<class EntityType>
-      size_t size (const EntityType& en) const
-      {
-        // size of data 
-        return 1; 
-      }
-    };
-
+  public:
     //! type of discrete function space 
     typedef SpaceImp SpaceType; 
     //! type of grid part 
-    typedef typename SpaceType :: GridPartType GridPartType; 
+    typedef typename SpaceType :: GridPartType GridPartType;
 
     //! type of used mapper 
     typedef MapperImp MapperType;
 
-    const SpaceType & space_; 
-    const GridPartType & gridPart_; 
-    const MapperType& mapper_;
+  protected:
+    const SpaceType &space_;
+    const GridPartType &gridPart_;
+    const MapperType &mapper_;
 
     const int myRank_;
     const int mySize_; 
@@ -227,50 +59,55 @@ namespace Dune {
     // type of communication indices 
     typedef CommunicationIndexMap IndexMapType;
     IndexMapType slaveDofs_;
-    // type of IndexMapVector 
 
     //! know grid sequence number 
     int sequence_; 
     
-    // do not copy this class 
-    SlaveDofs(const SlaveDofs &);
   public:
     //! constructor taking space 
-    SlaveDofs(const SpaceType & space, const MapperType& mapper)
-      : space_(space) , gridPart_(space_.gridPart()) 
-      , mapper_(mapper)
-      , myRank_(gridPart_.grid().comm().rank())
-      , mySize_(gridPart_.grid().comm().size())
-      , slaveDofs_()
-      , sequence_(-1)
-    {
-    }
+    inline SlaveDofs ( const SpaceType &space,
+                       const MapperType &mapper )
+    : space_( space ),
+      gridPart_( space_.gridPart() ),
+      mapper_( mapper )
+      myRank_( gridPart_.grid().comm().rank() ),
+      mySize_( gridPart_.grid().comm().size() ),
+      slaveDofs_(),
+      sequence_( -1 )
+    {}
 
-    //! destrcutor removeing mpAccess 
-    ~SlaveDofs()
-    {
-    }
-
-    const int operator [] (const int index) const 
-    {
-      return slaveDofs_[index];
-    }
-
-    const int size () const { return slaveDofs_.size(); }
+  private:
+    // prohibit copying
+    SlaveDofs ( const SlaveDofs & );
 
   public:
-    void insert(const std::vector<int> & indices)
+    //! destrcutor removeing mpAccess 
+    ~SlaveDofs()
+    {}
+
+    const int operator [] ( const int index ) const
+    {
+      return slaveDofs_[ index ];
+    }
+
+    const int size () const
+    {
+      return slaveDofs_.size();
+    }
+
+  public:
+    inline void insert( const std :: vector< int > &indices )
     {
       slaveDofs_.insert( indices );
     }
     
-    void initialize()
+    inline void initialize ()
     {
       sequence_ = -1;
       slaveDofs_.clear();
     }
     
-    void finalize() 
+    inline void finalize ()
     {
       // sort number for cache efficiency 
       slaveDofs_.sort();
@@ -280,10 +117,10 @@ namespace Dune {
     }
     
     //! check if grid has changed and rebuild cache if necessary 
-    void rebuild() 
+    inline void rebuild () 
     {
       // check whether grid has changed. 
-      if(sequence_ != space_.sequence()) 
+      if( sequence_ != space_.sequence() )
       {
         initialize();
         buildMaps();
@@ -293,132 +130,378 @@ namespace Dune {
     
   protected:  
     // build linkage and index maps 
-    void buildMaps() 
+    inline void buildMaps ()
     {
-      // for discontinuous spaces we don't have to communicate 
-      if( ! space_.continuous() ) 
+      if( !space_.continuous() )
+        buildDiscontinuousMaps();
+      else
+        buildCommunicatedMaps();
+    }
+    
+    // for discontinuous spaces we don't have to communicate
+    inline void buildDiscontinuousMaps ();
+
+    inline void buildCommunicatedMaps ();
+  };
+
+
+  
+  template< class SpaceImp, class MapperImp >
+  inline void SlaveDofs :: buildDiscontinuousMaps ()
+  {
+    typedef typename GridPartNewPartitionType< GridPartType, All_Partition >
+      :: NewGridPartType NewGridPartType;
+    typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
+
+    NewGridPartType gridPart( const_cast< GridPartType & >( gridPart_ ).grid() );
+
+    IteratorType endit = gridPart.template end<0>();
+    for( IteratorType it = gridPart.template begin<0>(); it != endit; ++it )
+    {
+      typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity
+        EntityType;
+      
+      const EntityType &entity = *it;
+      if( entity.partitionType() != InteriorEntity ) 
       {
-        typedef typename GridPartNewPartitionType<GridPartType,All_Partition>:: NewGridPartType NewGridPartType;
-        typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
+        // build local mapping 
+        const int numDofs = mapper_.numEntityDofs( entity );
+        std::vector< int > indices( numDofs );
 
-        NewGridPartType gridPart( const_cast<GridPartType&> (gridPart_).grid() );
+        // copy numDofs 
+        for( int i = 0; i < numDofs; ++i )
+          indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
 
-        IteratorType endit = gridPart. template end<0>();
-        for(IteratorType it = gridPart. template begin<0>();
-            it != endit; ++it)
-        {
-          typedef typename GridPartType :: GridType :: template Codim<0>::Entity EntityType;
-          const EntityType& en = *it; 
-          if(en.partitionType() != InteriorEntity ) 
-          {
-            // build local mapping 
-            const int numDofs = mapper_.numEntityDofs( en );
-            std::vector<int> indices(numDofs);
-
-            // copy numDofs 
-            for(int i=0; i<numDofs; ++i)
-            {
-              indices[i] = mapper_.mapEntityDofToGlobal( en , i );
-            }
-
-            slaveDofs_.insert( indices ); 
-          }
-        }
-
-        {
-          // insert overall size at the end
-          std::vector<int> indices(1, mapper_.size() );
-          slaveDofs_.insert( indices );
-        }
-
-        //slaveDofs_.print(std::cout,myRank_);
-      }
-      else 
-      {
-        DUNE_THROW(NotImplemented,"Do some work here, Martin!");
-
-        /*
-        // type of data handler 
-        typedef LinkBuilder< IndexMapType , SpaceType > LinkBuilderHandleType; 
-        LinkBuilderHandleType handle( slaveDofs_ , space_ );
-
-        // do communication to build up linkage 
-        if( gridPart_.grid().overlapSize(0) > 0 ) 
-        {
-          // case of YaspGrid, where Overlap is treated as ghost 
-          gridPart_.communicate( handle, InteriorBorder_All_Interface , ForwardCommunication );
-          gridPart_.communicate( handle, InteriorBorder_All_Interface , BackwardCommunication );
-        }
-        else 
-        {
-          // case of ALUGrid, where we have only the interior ghost situation 
-          gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
-        }
-        */
+        slaveDofs_.insert( indices ); 
       }
     }
 
+    {
+      // insert overall size at the end
+      std :: vector< int > indices( 1, mapper_.size() );
+      slaveDofs_.insert( indices );
+    }
+
+    //slaveDofs_.print(std::cout,myRank_);
+  }
+
+
+
+  template< class SpaceImp, class MapperImp >
+  inline void SlaveDofs :: buildCommunicatedMaps ()
+  {
+    typedef LinkBuilder< IndexMapType, SpaceType > LinkBuilderHandleType; 
+    LinkBuilderHandleType handle( slaveDofs_, space_ );
+
+    gridPart_.communicate
+      ( handle, InteriorBorder_All_Interface, ForwardCommunication );
+    
+    /*
+    if( gridPart_.grid().overlapSize( 0 ) > 0 )
+    {
+      // case of YaspGrid, where overlap is treated as ghost
+      gridPart_.communicate
+        ( handle, InteriorBorder_All_Interface, ForwardCommunication );
+      gridPart_.communicate
+        ( handle, InteriorBorder_All_Interface, BackwardCommunication );
+    }
+    else 
+    {
+      // case of ALUGrid, where we have only the interior ghost situation 
+      gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
+    }
+    */
+
+    // insert overall size at the end
+    std :: vector< int > indices( 1, mapper_.size() );
+    slaveDofs_.insert( indices );
+  }
+
+
+
+  class SlaveDofs :: CommunicationIndexMap
+  {
+  protected:
+    MutableArray< int > index_;
+
+  public:
+    //! constructor creating empty map
+    CommunicationIndexMap()
+    : index_( 0 )
+    {
+      index_.setMemoryFactor( 1.1 );
+    }
+
+  private:
+    // prohibit copying
+    CommunicationIndexMap( const CommunicationIndexMap& );
+
+  public:
+    //! reserve memory 
+    void reserve( int size ) 
+    {
+      // resize array, memory factor will be used 
+      index_.resize( size );
+    }
+
+    //! clear index map 
+    void clear() 
+    {
+      // resize 0 will free memory 
+      index_.resize( 0 );
+    }
+
+    //! append index vector with idx 
+    void insert( const std :: vector< int > &idx )
+    {
+      const int size = idx.size();
+      int count = index_.size();
+      
+      // reserve memory 
+      reserve( count + size );
+      assert( index_.size() == (count + size) );
+
+      // copy indices to index vector 
+      for( int i = 0; i < size; ++i, ++count )
+      { 
+        assert( idx[ i ] >= 0 );
+        index_[ count ] = idx[ i ];
+      }
+    }
+
+    //! return index map for entry i
+    const int operator [] ( const int i ) const
+    {
+      assert( (i >= 0) && (i < size()) );
+      return index_[ i ];
+    }
+
+    //! return size of map
+    int size () const
+    {
+      return index_.size();
+    }
+
+    //! print  map for debugging only 
+    void print( std :: ostream &s, int rank ) const
+    {
+      const int size = index_.size();
+      s << "Start print: size = " << size << std :: endl;
+      for( int i = 0; i < size; ++i )
+        s << rank << " idx[ " << i << " ] = " << index_[ i ] << std :: endl;
+      s << "End of Array" << std :: endl;
+    }
+
+    void sort() 
+    {
+      std :: sort( index_.begin(), index_.end() );
+    }
   };
 
-  //! Key for CommManager singleton list 
-  template <class SpaceImp, class MapperImp>
+
+
+  template< class IndexMap, class Space >
+  class SlaveDofs :: LinkBuilder
+  : public CommDataHandleIF< LinkBuilder< IndexMap, Space >, int >
+  {
+  public:
+    typedef IndexMap IndexMapType;
+    typedef Space SpaceType;
+
+    typedef typename SpaceType :: MapperType MapperType;
+
+#if 0
+  private:
+    template< int dummy, int codim >
+    struct CheckInterior
+    {
+      inline static bool check( const PartitionType p )
+      {
+        DUNE_THROW( NotImplemented, "Method not implemented!" );
+        return true;
+      }
+    };
+
+    // codim 0 specialization 
+    template< int dummy >
+    struct CheckInterior< dummy, 0 >
+    {
+      inline static bool check( const PartitionType p )
+      {
+        return (p == InteriorEntity);
+      }
+    };
+#endif
+    
+  public:
+    typedef int DataType;
+
+    const int myRank_;
+    const int mySize_;
+    
+    IndexMapType &slaveDofs_;
+
+    const SpaceType &space_;
+    const MapperType &mapper_;
+
+  public:
+    LinkBuilder( IndexMapType &slaveDofs,
+                 const SpaceType &space )
+    : myRank_( space.grid().comm().rank() ),
+      mySize_( space.grid().comm().size() ),
+      slaveDofs_( slaveDofs ),
+      space_( space )
+      mapper_( space.mapper() )
+    {}
+
+    bool contains ( int dim, int codim ) const
+    {
+      return space_.contains( codim );
+    }
+
+    bool fixedsize ( int dim, int codim ) const
+    {
+      return false;
+    }
+
+    //! read buffer and apply operation 
+    template< class MessageBuffer, class Entity >
+    inline void gather ( MessageBuffer &buffer,
+                         const Entity &entity ) const
+    {
+      PartitionType ptype = entity.partitionType();
+
+      if( (ptype == InteriorEntity) || (ptype == BorderEntity) )
+        buff.write( myRank_ );
+    }
+
+    //! read buffer and apply operation 
+    template< class MessageBuffer, class Entity >
+    inline void scatter ( MessageBuffer &buffer,
+                          const EntityType &entity,
+                          size_t n )
+    {
+      PartitionType ptype = entity.partitionType();
+      
+      int minRank
+        = ((ptype == InteriorEntity) || (ptype == BorderEntity) ? myRank_ : -1);
+      for( size_t i = 0; i < n; ++i )
+      {
+        int rank;
+        buff.read( rank );
+        minRank = (rank < minRank ? rank : minRank);
+      }
+
+      // minimal rank means master
+      assert( minRank != -1 );
+      if( minRank != myRank_ )
+      {
+        // build local mapping 
+        const int numDofs = mapper_.numEntityDofs( entity );
+        std :: vector< int > indices( numDofs );
+
+        // copy numDofs 
+        for( int i = 0; i < numDofs; ++i )
+          indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
+        
+        // insert slave Dofs 
+        slaveDofs_.insert( indices );
+      }
+    }
+
+    //! return local dof size to be communicated 
+    template< class Entity >
+    size_t size ( const Entity &entity ) const
+    {
+      PartitionType ptype = entity.partitionType();
+
+      return ((ptype == InteriorEntity) || (ptype == BorderEntity) : 1 : 0);
+    }
+  };
+
+  
+
+  //! Key for CommManager singleton list
+  template< class SpaceImp, class MapperImp >
   class SlaveDofsSingletonKey
   {
-    const SpaceImp& space_;
-    const MapperImp& mapper_;
+  public:
+    typedef SpaceImp SpaceType;
+    typedef MapperImp MapperType;
+    
+  protected:
+    const SpaceType &space_;
+    const MapperType *const mapper_;
+
   public:
     //! constructor taking space 
-    SlaveDofsSingletonKey(const SpaceImp & space, 
-                          const MapperImp& mapper) 
-      : space_(space) , mapper_(mapper) 
+    inline SlaveDofsSingletonKey ( const SpaceType &space, 
+                                   const MapperType &mapper )
+    : space_( space ),
+      mapper_( &mapper )
     {}
 
     //! copy constructor  
-    SlaveDofsSingletonKey(const SlaveDofsSingletonKey & org) 
-      : space_(org.space_), mapper_(org.mapper_)
+    inline SlaveDofsSingletonKey ( const SlaveDofsSingletonKey &other )
+    : space_( other.space_ ),
+      mapper_( other.mapper_ )
     {}
+    
     //! returns true if indexSet pointer and numDofs are equal 
-    bool operator == (const SlaveDofsSingletonKey & otherKey) const
+    inline bool operator== ( const SlaveDofsSingletonKey &other ) const
     {
-      // mapper of space is singleton 
-      return ( (&(space_.mapper()) == & (otherKey.space_.mapper()) ) && 
-               (&mapper_ == &otherKey.mapper_) 
-             );
+      return (space_ == other.space_) && (mapper_ == other.mapper_);
     }
 
     //! return reference to index set 
-    const SpaceImp & space() const { return space_; }
+    const SpaceType &space () const
+    {
+      return space_;
+    }
 
     //! return reference to index set 
-    const MapperImp & mapper() const { return mapper_; }
+    const MapperType &mapper () const
+    {
+      return *mapper_;
+    }
   };
+
+
 
   //! Factory class for SingletonList to tell how objects are created and
   //! how compared.
-  template <class KeyImp, class ObjectImp>
+  template< class KeyImp, class ObjectImp >
   class SlaveDofsFactory
   {
-    public:
+  public:
     //! create new communiaction manager   
-    static ObjectImp * createObject( const KeyImp & key )
+    static ObjectImp *createObject( const KeyImp &key )
     {
-      return new ObjectImp(key.space(),key.mapper());
+      return new ObjectImp( key.space(), key.mapper() );
     }
     
     //! delete comm manager  
-    static void deleteObject( ObjectImp * obj )
+    static void deleteObject( ObjectImp *obj )
     {
       delete obj; 
     }
   };
 
+
+
   //! Proxy class to evaluate ScalarProduct 
   //! holding SlaveDofs which is singleton per space and mapper 
-  template <class DiscreteFunctionImp> 
+  template< class DiscreteFunction >
   class ParallelScalarProduct 
   {
-    typedef ParallelScalarProduct<DiscreteFunctionImp> ThisType;
-    typedef DiscreteFunctionImp DiscreteFunctionType;
+  public:
+    typedef DiscreteFunction DiscreteFunctionType;
+
+  private:
+    typedef ParallelScalarProduct< DiscreteFunctionType > ThisType;
+
+  public:
+    //! type of the discrete function space
     typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
 
@@ -428,61 +511,71 @@ namespace Dune {
     //! type of used mapper 
     typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
     
-    // type of communication manager object which does communication 
-    typedef SlaveDofs<DiscreteFunctionSpaceType,MapperType> SlaveDofsType;
+    // type of communication manager object which does communication
+    typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
 
-    typedef SlaveDofsSingletonKey<DiscreteFunctionSpaceType,MapperType> KeyType;
-    typedef SlaveDofsFactory<KeyType, SlaveDofsType> FactoryType;
+    typedef SlaveDofsSingletonKey< DiscreteFunctionSpaceType, MapperType > KeyType;
+    typedef SlaveDofsFactory< KeyType, SlaveDofsType > FactoryType;
+    typedef SingletonList< KeyType, SlaveDofsType, FactoryType >
+      SlaveDofsProviderType;
 
-    typedef SingletonList< KeyType , SlaveDofsType , FactoryType > SlaveDofsProviderType;
-
-    const DiscreteFunctionSpaceType & space_; 
-
-    const KeyType key_;
+  protected:
+    const DiscreteFunctionSpaceType &space_; 
 
     // is singleton per space 
-    mutable SlaveDofsType & slaveDofs_;
+    SlaveDofsType *const slaveDofs_;
 
-    ParallelScalarProduct(const ThisType& org);
   public:  
     //! constructor taking space 
-    ParallelScalarProduct(const DiscreteFunctionSpaceType& space) 
-      : space_(space)
-      , key_(space_,space_.mapper())
-      , slaveDofs_(SlaveDofsProviderType::getObject(key_)) 
+    inline ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
+    : space_( space ),
+      slaveDofs_( getSlaveDofs( space_ ) )
     {
     }
 
+  protected:
+    inline static SlaveDofsType *getSlaveDofs ( DiscreteFunctionSpaceType &space )
+    {
+      KeyType key( space, space.mapper() );
+      return &(SlaveDofsProviderType :: getObject( key ));
+    }
+
+  private:
+    // prohibit copying
+    ParallelScalarProduct( const ThisType & );
+
+  public:
     //! remove object comm
-    ~ParallelScalarProduct() 
+    inline ~ParallelScalarProduct ()
     {
-      SlaveDofsProviderType::removeObject(slaveDofs_);
+      SlaveDofsProviderType :: removeObject( *slaveDofs_ );
     }
 
-    RangeFieldType scalarProductDofs(const DiscreteFunctionType& x,
-                                     const DiscreteFunctionType& y) const 
+    inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
+                                              const DiscreteFunctionType &y ) const
     {
-      // rebuild slave dofs if grid was changed  
-      slaveDofs_.rebuild();
+      // rebuild slave dofs if grid was changed
+      slaveDofs_->rebuild();
+      const int numSlaves = slaveDofs_->size();
 
       RangeFieldType scp = 0;
+      
       int i = 0;
-      const int slaveSize = slaveDofs_.size();
-      for(int slave = 0; slave<slaveSize; ++slave)
+      for( int slave = 0; slave < numSlaves; ++slave )
       {
-        const int nextSlave = slaveDofs_[slave];
-        for(; i<nextSlave; ++i) 
-        {
-          scp += x.dof(i) * y.dof(i);
-        }
-        // set i to next valid value 
-        i = nextSlave + 1;
+        const int nextSlave = slaveDofs_[ slave ];
+        for(; i < nextSlave; ++i )
+          scp += x.dof( i ) * y.dof( i );
+        // skip the slave dof
+        ++i;
       }
 
       scp = space_.grid().comm().sum( scp );
       return scp;
     }
   };
+
+
 
 #if HAVE_DUNE_ISTL
   //! Proxy class to evaluate ScalarProduct 
