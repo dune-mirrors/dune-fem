@@ -488,7 +488,7 @@ private:
     }
 
     //! communicate data 
-    void communicate( const double *dest ) const
+    void communicate( double *dest ) const
     {
       if( domainSpace_.grid().comm().size() <= 1 )
         return;
