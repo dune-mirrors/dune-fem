@@ -11,6 +11,7 @@
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
@@ -73,6 +74,18 @@ namespace Dune
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
     typedef typename MatrixObjectType :: LocalMatrixType LocalMatrixType;
+
+    // types for boundary treatment
+    // ----------------------------
+    typedef SlaveDofs
+      < DiscreteFunctionSpaceType, typename DiscreteFunctionSpaceType :: MapperType >
+      SlaveDofsType;
+    typedef SlaveDofsSingletonKey
+      < DiscreteFunctionSpaceType, typename DiscreteFunctionSpaceType :: MapperType >
+      SlaveDofsKeyType;
+    typedef SlaveDofsFactory< SlaveDofsKeyType, SlaveDofsType > SlaveDofsFactoryType;
+    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, SlaveDofsFactoryType >
+      SlaveDofsProviderType;
     
   private:
     enum { maxBaseFunctions = 100 };
@@ -91,6 +104,8 @@ namespace Dune
       
     TensorType *const stiffTensor_;
 
+    SlaveDofsType *const slaveDofs_;
+
   private:
     mutable JacobianRangeType grad;
 
@@ -102,7 +117,8 @@ namespace Dune
     : discreteFunctionSpace_( dfSpace ),
       matrixObject_( discreteFunctionSpace_, discreteFunctionSpace_ ),
       matrix_assembled_( false ),
-      stiffTensor_( 0 )
+      stiffTensor_( 0 ),
+      slaveDofs_( getSlaveDofs( discreteFunctionSpace_ ) )
     {
     }
         
@@ -112,7 +128,8 @@ namespace Dune
     : discreteFunctionSpace_( dfSpace ),
       matrixObject_( discreteFunctionSpace_, discreteFunctionSpace_ ),
       matrix_assembled_( false ),
-      stiffTensor_( &stiffTensor )
+      stiffTensor_( &stiffTensor ),
+      slaveDofs_( getSlaveDofs( discreteFunctionSpace_ ) )
     { 
     }
 
@@ -298,6 +315,9 @@ namespace Dune
 
       const LagrangePointSetType &lagrangePointSet
         = dfSpace.lagrangePointSet( entity );
+
+      SlaveDofsType &slaveDofs = this->slaveDofs();
+      int numSlaveDofs = slaveDofs.size();
  
       IntersectionIteratorType it = gridPart.ibegin( entity );
       const IntersectionIteratorType endit = gridPart.iend( entity );
@@ -313,15 +333,31 @@ namespace Dune
         const FaceDofIteratorType faceEndIt
           = lagrangePointSet.template endSubEntity< faceCodim >( face );
         for( ; faceIt != faceEndIt; ++faceIt )
-          localMatrix.unitRow( *faceIt );
-#if 0
         {
-          const unsigned int dof = dfSpace.mapToGlobal( entity, *faceIt );
-          //matrix_->kroneckerKill( dof, dof );
-          matrix_->unitRow( dof );
+          const int localDof = *faceIt;
+          localMatrix.unitRow( localDof );
+
+          const int globalDof = dfSpace.mapToGlobal( entity, localDof );
+          for( int i = 0; i < numSlaveDofs; ++i )
+          {
+            if( globalDof == slaveDofs[ i ] )
+              localMatrix.set( localDof, localDof, 0 );
+          }
         }
-#endif
       }
+    }
+
+  protected:
+    inline static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
+    {
+      SlaveDofsKeyType key( space, space.mapper() );
+      return &(SlaveDofsProviderType :: getObject( key ));
+    }
+
+    inline SlaveDofsType &slaveDofs () const
+    {
+      slaveDofs_->rebuild();
+      return *slaveDofs_;
     }
   };
 
