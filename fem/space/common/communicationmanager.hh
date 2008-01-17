@@ -9,6 +9,7 @@
 //- Dune includes  
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/fem/space/common/commoperations.hh>
 
 #if HAVE_ALUGRID && ALU3DGRID_PARALLEL 
 #define USE_CACHED_COMM_MANAGER 
@@ -65,14 +66,23 @@ namespace Dune {
       , dir_ ( dir )
     {}
 
+    //! exchange data for discrete function df by using the copy operation
     template <class DiscreteFunctionType> 
     void exchange(DiscreteFunctionType & df) 
+    {
+      exchange( df , (DFCommunicationOperation :: Copy *) 0 );
+    }
+
+    //! exchange data for discrete function df by using given operation 
+    template <class DiscreteFunctionType, class OperationImp > 
+    void exchange(DiscreteFunctionType & df, const OperationImp* ) 
     {
       // if serial run, just return   
       if(gridPart_.grid().comm().size() <= 1) return;
      
       // get data handler type from space  
-      typedef typename SpaceType :: template CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
+      typedef typename SpaceType :: 
+        template CommDataHandle<DiscreteFunctionType,OperationImp> :: Type DataHandleType;
       DataHandleType dataHandle = df.dataHandle();
 
       // communicate data 

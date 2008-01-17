@@ -411,7 +411,7 @@ namespace Dune {
     }
       
     //! exchange data of discrete function 
-    template<class DiscreteFunctionType, class OperationImp>
+    template<class DiscreteFunctionType, class OperationImp >
     void exchange(DiscreteFunctionType& discreteFunction, 
                   const OperationImp *)
     {
@@ -649,12 +649,19 @@ namespace Dune {
     MPAccessInterfaceType& mpAccess() { return cache_.mpAccess(); }
 
     //! exchange discrete function to all procs we share data 
+    //! using the copy operation 
     template <class DiscreteFunctionType> 
     void exchange(DiscreteFunctionType & df) 
     {
-      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
-        :: template CommDataHandle<DiscreteFunctionType> :: OperationType OperationType;
-      cache_.exchange( df, (OperationType*) 0 );
+      cache_.exchange( df, (DFCommunicationOperation :: Copy *) 0 );
+    }
+    
+    //! exchange discrete function to all procs we share data 
+    //! using the given operation 
+    template <class DiscreteFunctionType, class OperationImp> 
+    void exchange(DiscreteFunctionType & df, const OperationImp* ) 
+    {
+      cache_.exchange( df, (OperationImp*) 0 );
     }
     
     //! write given df to given buffer 
