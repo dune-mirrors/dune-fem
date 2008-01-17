@@ -16,49 +16,6 @@ namespace Dune {
   // Implementation for ISTL-matrix based operator
   //=====================================================================
 
-  /*! 
-    \brief Adapter to turn a matrix into a linear operator.
-    Adapts a matrix to the assembled linear operator interface
-  */
-  template<class MatrixType, class X, class Y>
-  class ParallelMatrixAdapter 
-    : public AssembledLinearOperator<MatrixType,X,Y>
-  {
-  public:
-    //! export types
-    typedef MatrixType  matrix_type;
-    typedef X domain_type;
-    typedef Y range_type;
-    typedef typename X::field_type field_type;
-
-    //! define the category
-    enum { category=SolverCategory::sequential };
-
-    //! constructor: just store a reference to a matrix
-    ParallelMatrixAdapter (const MatrixType& A) : matrix_(A) {}
-
-    //! apply operator to x:  \f$ y = A(x) \f$
-    virtual void apply (const X& x, Y& y) const
-    {
-      matrix_.mult(x,y);
-    }
-
-    //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
-    {
-      matrix_.multAdd(alpha,x,y);
-    }
-
-    //! get matrix via *
-    virtual const MatrixType& getmat () const
-    {
-      return matrix_;
-    }
-
-  private:
-    const MatrixType& matrix_;
-  };
-
 /** @ingroup OEMSolver
     @{
 **/
@@ -87,34 +44,26 @@ private:
                      DiscreteFunctionImp & dest,
                      double reduction, int maxIter, bool verbose)
     {
-      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      typedef typename OperatorImp :: PreconditionMatrixType PreconditionerType; 
-      const PreconditionerType& pre = op.preconditionMatrix();
-      solve(op.systemMatrix().matrix(),pre,
-            arg,dest,arg.space().grid().comm(),reduction,maxIter,verbose);
+      solve(op.systemMatrix(),
+            arg,dest,reduction,maxIter,verbose);
     }
 
-    template <class MatrixType, 
-              class PreconditionerType,
-              class DiscreteFunctionImp,
-              class CommunicatorType>
-    static void solve(const MatrixType & m,
-                 const PreconditionerType & preconditioner,
+    template <class MatrixObjType, 
+              class DiscreteFunctionImp>
+    static void solve(const MatrixObjType & mObj,
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
-                 const CommunicatorType& comm,
                  double absLimit, int maxIter, bool verbose)
     {
+      typedef typename MatrixObjType :: MatrixAdapterType MatrixAdapterType;
+      MatrixAdapterType matrix = mObj.matrixAdapter();
+      
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
-      MatrixOperatorType mat(const_cast<MatrixType&> (m));
 
       // verbose only in verbose mode and for rank 0 
       int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
         
-      ParallelScalarProduct<DiscreteFunctionImp> scp(dest.space());
-
-      double residuum = sqrt( m.residuum( arg.blockVector(), dest.blockVector()) );
+      double residuum = sqrt( matrix.residuum( arg.blockVector(), dest.blockVector()) );
       double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
 
       if( verbose ) 
@@ -122,9 +71,9 @@ private:
         std::cout << "ISTLSolver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
       }
 
-      BiCGSTABSolver<BlockVectorType> solver(mat,scp,
-          const_cast<PreconditionerType&> (preconditioner),
-          reduction,maxIter,verb);    
+      BiCGSTABSolver<BlockVectorType>
+        solver(matrix,matrix.scp(),matrix.preconditionAdapter(),
+               reduction,maxIter,verb);    
 
       InverseOperatorResult returnInfo;
   
@@ -226,8 +175,8 @@ private:
                  const CommunicatorType& comm,
                  double absLimit, int maxIter, bool verbose)
     {
+      /*
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
       MatrixOperatorType mat(const_cast<MatrixType&> (m));
 
       int verb = (verbose) ? 2 : 0;
@@ -249,6 +198,7 @@ private:
       InverseOperatorResult returnInfo;
   
       solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
+      */
     }
   };
 
