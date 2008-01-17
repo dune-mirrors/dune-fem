@@ -522,16 +522,25 @@ namespace Dune {
     {
       prepare(arg, dest);
 
-      typedef typename GridPartNewPartitionType<GridPartType,All_Partition>:: NewGridPartType NewGridPartType;
-      typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
-
-      NewGridPartType gridPart( const_cast<GridPartType&> (gridPart_).grid() );
-
-      IteratorType endit = gridPart. template end<0>();
-      for(IteratorType it = gridPart. template begin<0>();
-          it != endit; ++it)
+      IteratorType endit = spc_.end();
+      for (IteratorType it = spc_.begin(); it != endit; ++it) 
       {
         applyLocal(*it);
+      }
+            
+      // also calculate matrix for overlap 
+      if( spc_.grid().overlapSize(0) > 0 ) 
+      {
+        typedef typename GridPartNewPartitionType<GridPartType,Overlap_Partition>:: NewGridPartType NewGridPartType;
+        typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
+
+        NewGridPartType gridPart( const_cast<GridPartType&> (gridPart_).grid() );
+        IteratorType endit = gridPart. template end<0>();
+        for(IteratorType it = gridPart. template begin<0>();
+            it != endit; ++it)
+        {
+          applyLocal(*it);
+        }
       }
 
       finalize(arg, dest);
@@ -758,8 +767,9 @@ namespace Dune {
     //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
-      assert( en.partitionType() != GhostEntity ) ;
-
+      // this method should not be called for ghost entities 
+      assert( en.partitionType() != GhostEntity );
+      
       // get local element matrix 
       LocalMatrixType matrixEn = matrixObj_.localMatrix(en,en); 
 
@@ -850,6 +860,7 @@ namespace Dune {
                     faceQuadInner,faceQuadOuter, 
                     bsetEn,matrixEn
 #ifdef DG_DOUBLE_FEATURE
+                    //, true
                     , ! ghostEntity 
 #endif
                     );
@@ -877,6 +888,7 @@ namespace Dune {
                     nonConformingFaceQuadOuter, 
                     bsetEn,matrixEn
 #ifdef DG_DOUBLE_FEATURE
+                    //, true
                     , ! ghostEntity 
 #endif
                     );
@@ -1214,12 +1226,20 @@ namespace Dune {
       LocalMatrixType matrixNb = matrixObj_.localMatrix( en, nb );
      
 #ifdef DG_DOUBLE_FEATURE
-      const EntityType& neigh = (interior) ? nb : en;
-      // create matrix handles for neighbor 
-      LocalMatrixType enMatrix = matrixObj_.localMatrix( neigh, en ); 
+      // create matrix handles for neighbor (when called with ghost do nothing)
+      LocalMatrixType enMatrix = matrixObj_.localMatrix( nb, (interior) ? en : nb ); 
 
       // create matrix handles for neighbor 
-      LocalMatrixType nbMatrix = matrixObj_.localMatrix( neigh, neigh ); 
+      LocalMatrixType nbMatrix = matrixObj_.localMatrix( nb, nb ); 
+      
+      // set matrix to id matrix 
+      if( ! interior ) 
+      {
+        for(int k=0; k<numDofs; ++k) 
+        {
+          nbMatrix.set( k, k, 1);
+        }
+      }
 #else 
       bool useInterior = false;
 #endif
