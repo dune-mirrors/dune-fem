@@ -57,9 +57,13 @@
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/discreteoperatorimp.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
+#include <dune/fem/operator/matrix/istlmatrix.hh>
 #include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/istlsolver.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
@@ -114,9 +118,9 @@ using namespace Dune;
  *        for example, is not. If you want to use OEM solvers, the index set
  *        must be continuous. In such a case use AdaptiveLeafGridPart.
  */
-typedef LeafGridPart< GridType > GridPartType;
+//typedef LeafGridPart< GridType > GridPartType;
 //typedef LevelGridPart< GridType > GridPartType;
-//typedef AdaptiveLeafGridPart< GridType > GridPartType;
+typedef AdaptiveLeafGridPart< GridType > GridPartType;
 
 //! define the function space, \f[ \R^n \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -136,10 +140,12 @@ typedef LagrangeDiscreteFunctionSpace
   DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+//typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! define the type of the system matrix object
-typedef SparseRowMatrixObject< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType >
+//typedef SparseRowMatrixObject< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType >
+typedef ISTLMatrixObject< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType >
   MatrixObjectType;
 
 //! define the discrete laplace operator, see ./fem.cc
@@ -147,12 +153,13 @@ typedef LaplaceFEOp< DiscreteFunctionType, MatrixObjectType, TensorType >
   LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
-typedef CGInverseOp< DiscreteFunctionType, LaplaceOperatorType >
+//typedef CGInverseOp< DiscreteFunctionType, LaplaceOperatorType >
+typedef ISTLBICGSTABOp< DiscreteFunctionType, LaplaceOperatorType >
+//typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType>
+//typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType>
+//typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType>
+//typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType>
   InverseOperatorType;
-//typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
-//typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
-//typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
-//typedef OEMGMRESOp<DiscreteFunctionType,LaplaceOperatorType> InverseOperatorType;
 
 
 
@@ -285,7 +292,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   //DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
   H1Norm< GridPartType > norm( gridPart );
   double error = norm.distance( ugrid, solution );
-  std :: cout << "Error: " << error << std :: endl << std :: endl;
+  std :: cout << "H1-Error: " << error << std :: endl << std :: endl;
 
   #if (USE_GRAPE && HAVE_GRAPE)
   // if grape was found then display solution

@@ -13,7 +13,6 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 
 namespace Dune
@@ -74,6 +73,9 @@ namespace Dune
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
     typedef typename MatrixObjectType :: LocalMatrixType LocalMatrixType;
+    
+    typedef typename MatrixObjectType :: PreconditionMatrixType PreconditionMatrixType;
+    typedef typename MatrixObjectType :: MatrixType MatrixType;
 
     // types for boundary treatment
     // ----------------------------
@@ -143,7 +145,8 @@ namespace Dune
                               DiscreteFunctionType &w ) const 
     {
       //systemMatrix().apply( u, w );
-      systemMatrix().multOEM( u.leakPointer(), w.leakPointer() );
+      systemMatrix().matrix().mult( u.blockVector(), w.blockVector() );
+      //systemMatrix().multOEM( u.leakPointer(), w.leakPointer() );
     }
   
     /*! \brief obtain a reference to the system matrix 
@@ -159,6 +162,13 @@ namespace Dune
         assemble();
       return matrixObject_;
     }
+
+   //! return reference to preconditioning matrix, used by OEM-Solver
+   const PreconditionMatrixType &preconditionMatrix () const
+   {
+     return systemMatrix().pcMatrix();
+   }
+
 
     //! print the system matrix into a stream
     void print ( std :: ostream out = std :: cout ) const 
