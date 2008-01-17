@@ -4,6 +4,10 @@
 #include <dune/fem/space/common/gridpartutility.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 
+#if HAVE_DUNE_ISTL
+#include <dune/istl/operators.hh>
+#endif
+
 namespace Dune {
 
 ////////////////////////////////////////////////////////////
@@ -109,8 +113,7 @@ protected:
     LocalIndicesType& localIndices = indices[elRowIndex];
 
     // insert diagonal for each element 
-    if( en.partitionType() != GhostEntity )
-      localIndices.insert( elRowIndex );
+    localIndices.insert( elRowIndex );
 
     std::vector<int> slaves;
 
@@ -157,10 +160,10 @@ protected:
 
           // insert symetric part with swaped row-col
           LocalIndicesType& nbIndices = indices[nbRowIndex];
+          nbIndices.insert( nbColIndex );
+
           if( nbInsert )
           {
-            assert( nb.partitionType() != GhostEntity );
-            nbIndices.insert( nbColIndex );
             const int elColIndex = colMapper.mapToGlobal( en , 0 );
             nbIndices.insert( elColIndex );  
           }
@@ -171,6 +174,330 @@ protected:
     slaveDofs.insert( slaves );
   }
 };
+
+#if HAVE_DUNE_ISTL
+  template <class MatrixImp>
+  class DGParallelMatrixAdapter;
+
+  template <class RowSpaceImp, class ColSpaceImp>
+  struct DGISTLMatrixTraits
+  {
+    typedef RowSpaceImp RowSpaceType;
+    typedef ColSpaceImp ColumnSpaceType;
+    
+    typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
+
+    template <class MatrixImp>
+    struct Adapter
+    {   
+      // type of matrix adapter 
+      typedef DGParallelMatrixAdapter<MatrixImp> MatrixAdapterType;
+    };
+  };
+  
+  //! wrapper class to store perconditioner 
+  //! as the interface class does not have to category 
+  //! enum 
+  template<class MatrixImp>
+  class DGPreconditionerWrapper 
+    : public Preconditioner<typename MatrixImp :: RowBlockVectorType,
+                            typename MatrixImp :: ColBlockVectorType>
+  {
+    typedef MatrixImp MatrixType;
+    typedef typename MatrixImp :: RowBlockVectorType X;
+    typedef typename MatrixImp :: ColBlockVectorType Y;
+            
+    typedef Preconditioner<X,Y> PreconditionerInterfaceType;
+    MatrixType& matrix_;
+    mutable std::auto_ptr<PreconditionerInterfaceType> preconder_; 
+    const bool preEx_;
+    
+  public:
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+
+    enum {
+      //! \brief The category the precondtioner is part of.
+      category=SolverCategory::sequential };
+
+    //! set preconder to zero 
+    DGPreconditionerWrapper (const DGPreconditionerWrapper& org) 
+      : matrix_(org.matrix_) 
+      , preconder_(org.preconder_) 
+      , preEx_(org.preEx_)
+    {
+    }
+    
+    //! set preconder to zero 
+    DGPreconditionerWrapper (MatrixType& m) 
+      : matrix_(m) 
+      , preconder_()
+      , preEx_(false)  
+    {}
+    
+    //! create preconditioner of given type 
+    template <class PreconditionerType>
+    DGPreconditionerWrapper(MatrixType & m,
+                            int iter, field_type relax, const PreconditionerType*) 
+      : matrix_(m)
+      , preconder_(new PreconditionerType(m,iter,relax))
+      , preEx_(true) 
+    {
+    }
+    
+    //! create preconditioner of given type 
+    template <class PreconditionerType>
+    DGPreconditionerWrapper(MatrixType & m, 
+                            field_type relax, const PreconditionerType*) 
+      : matrix_(m)
+      , preconder_(new PreconditionerType(m,relax))
+      , preEx_(true) 
+    {
+    }
+    
+    //! \copydoc Preconditioner 
+    virtual void pre (X& x, Y& b) 
+    {
+      // all the implemented Preconditioners do nothing in pre and post 
+#ifndef NDEBUG 
+      // apply preconditioner
+      if( preEx_ ) 
+      {
+        X tmp (x);
+        preconder_->pre(x,b);
+        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
+      }
+#endif
+    }
+
+    //! \copydoc Preconditioner 
+    virtual void apply (X& v, const Y& d)
+    {
+      if( preEx_ ) 
+      {
+        // apply preconditioner
+        preconder_->apply(v,d);
+      }
+      else 
+      {
+        // just copy values 
+        v = d;
+      }
+    }
+
+    //! \copydoc Preconditioner 
+    virtual void post (X& x) 
+    {
+      // all the implemented Preconditioners do nothing in pre and post 
+#ifndef NDEBUG 
+      // apply preconditioner
+      if( preEx_ ) 
+      {
+        X tmp(x);
+        preconder_->post(x);
+        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
+      }
+#endif
+    }
+  };
+
+  /*! 
+    \brief Adapter to turn a matrix into a linear operator.
+    Adapts a matrix to the assembled linear operator interface
+  */
+  template <class MatrixImp>
+  class DGParallelMatrixAdapter
+    : public AssembledLinearOperator< MatrixImp,
+               typename MatrixImp :: RowBlockVectorType,
+               typename MatrixImp :: ColBlockVectorType>
+  {
+  public:
+    typedef MatrixImp MatrixType;
+    typedef DGPreconditionerWrapper<MatrixType> PreconditionAdapterType;
+    
+    typedef typename MatrixType :: RowDiscreteFunctionType RowDiscreteFunctionType;
+    typedef typename MatrixType :: ColDiscreteFunctionType ColumnDiscreteFunctionType;
+
+    typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
+    typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
+
+    typedef typename ColumnDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
+    typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
+    
+    typedef typename RowDiscreteFunctionType :: DofStorageType     X;
+    typedef typename ColumnDiscreteFunctionType :: DofStorageType  Y;
+  
+    //! export types
+    typedef MatrixType  matrix_type;
+    typedef X domain_type;
+    typedef Y range_type;
+    typedef typename X::field_type field_type;
+
+    //! define the category
+    enum { category=SolverCategory::sequential };
+
+  protected:  
+    MatrixType& matrix_;
+    const RowSpaceType& rowSpace_;
+    const ColSpaceType& colSpace_;
+
+    mutable CommunicationManagerType comm_;
+    ParallelScalarProductType scp_;
+
+    PreconditionAdapterType preconditioner_;
+    
+  public:  
+    //! constructor: just store a reference to a matrix
+    DGParallelMatrixAdapter (const DGParallelMatrixAdapter& org)
+      : matrix_(org.matrix_) 
+      , rowSpace_(org.rowSpace_)
+      , colSpace_(org.colSpace_)
+      , comm_(rowSpace_)
+      , scp_(colSpace_)
+      , preconditioner_(org.preconditioner_)
+    {}
+    //! constructor: just store a reference to a matrix
+    DGParallelMatrixAdapter (MatrixType& A,
+                             const RowSpaceType& rowSpace, 
+                             const ColSpaceType& colSpace) 
+      : matrix_(A) 
+      , rowSpace_(rowSpace)
+      , colSpace_(colSpace)
+      , comm_(rowSpace_)
+      , scp_(colSpace)
+      , preconditioner_(matrix_)
+    {}
+
+    //! constructor: just store a reference to a matrix
+    template <class PreconditionerType>
+    DGParallelMatrixAdapter (MatrixType& A,
+                             const RowSpaceType& rowSpace, 
+                             const ColSpaceType& colSpace,
+                             int iter, field_type relax, const PreconditionerType* dummy) 
+      : matrix_(A) 
+      , rowSpace_(rowSpace)
+      , colSpace_(colSpace)
+      , comm_(rowSpace_)
+      , scp_(colSpace_)
+      , preconditioner_(matrix_,iter,relax,dummy)
+    {}
+
+    //! constructor: just store a reference to a matrix
+    template <class PreconditionerType>
+    DGParallelMatrixAdapter (MatrixType& A,
+                             const RowSpaceType& rowSpace, 
+                             const ColSpaceType& colSpace, 
+                             field_type relax, const PreconditionerType* dummy) 
+      : matrix_(A) 
+      , rowSpace_(rowSpace)
+      , colSpace_(colSpace)
+      , comm_(rowSpace_)
+      , scp_(colSpace_)
+      , preconditioner_(matrix_,relax,dummy)
+    {}
+
+    //! return reference to preconditioner 
+    PreconditionAdapterType& preconditionAdapter() { return preconditioner_; }
+
+    //! return reference to preconditioner 
+    ParallelScalarProductType& scp() { return scp_; }
+
+    //! apply operator to x:  \f$ y = A(x) \f$
+    virtual void apply (const X& x, Y& y) const
+    {
+      // exchange data first 
+      communicate( x );
+      
+      // apply matrix 
+      y = 0 ;
+      matrix_.umv(x,y);
+
+      // delete non-interior 
+      scp_.deleteNonInterior( y );
+    }
+
+    //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+    {
+      // exchange data first 
+      communicate( x );
+      
+      // apply matrix 
+      matrix_.usmv(alpha,x,y);
+
+      // delete non-interior 
+      scp_.deleteNonInterior( y );
+    }
+
+    virtual double residuum(const Y& rhs, X& x) const 
+    {
+      // exchange data  
+      communicate( x );
+      
+      typedef typename ParallelScalarProductType :: SlaveDofsType SlaveDofsType;
+      const SlaveDofsType& slaveDofs = scp_.slaveDofs();
+      
+      typedef typename Y :: block_type LittleBlockVectorType;
+      LittleBlockVectorType tmp; 
+      double res = 0.0;
+      
+      // counter for rows 
+      int i = 0;
+      const int slaveSize = slaveDofs.size();
+      for(int slave = 0; slave<slaveSize; ++slave)
+      {
+        const int nextSlave = slaveDofs[slave];
+        for(; i<nextSlave; ++i) 
+        {
+          tmp = 0;
+          // get row 
+          typedef typename MatrixType :: row_type row_type;
+
+          const row_type& row = matrix_[i];
+          // multiply with row  
+          typedef typename MatrixType :: ConstColIterator ConstColIterator;
+          ConstColIterator endj = row.end();
+          for (ConstColIterator j = row.begin(); j!=endj; ++j)
+          {
+            (*j).umv(x[j.index()], tmp);
+          } 
+          
+          // substract right hand side 
+          tmp -= rhs[i];
+          
+          // add scalar product 
+          res += tmp.two_norm2();
+        } 
+        ++i;
+      }
+
+      // return global sum of residuum 
+      return rowSpace_.grid().comm().sum( res );
+    }
+
+    //! get matrix via *
+    virtual const MatrixType& getmat () const
+    {
+      return matrix_;
+    }
+  protected:
+    void communicate(const X& x) const 
+    {
+      if( rowSpace_.grid().comm().size() <= 1 ) return ;
+      
+      // create temporary discretet function object 
+      RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
+                                   rowSpace_, x );
+
+      // exchange data 
+      comm_.exchange( tmp );
+    }
+  };
+#endif
 
 } // end namespace Dune 
 #endif
