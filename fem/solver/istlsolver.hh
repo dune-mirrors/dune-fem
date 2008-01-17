@@ -12,58 +12,6 @@
 
 namespace Dune {
 
-#if 0
-  //! Default implementation for the scalar case
-  template<class X ,class SpaceImp, class CommunicatorType>
-  class ParaScalarProduct : public ScalarProduct<X>
-  {
-    const SpaceImp& space_;
-    const CommunicatorType& comm_;
-  public:
-    ParaScalarProduct(const SpaceImp& space) 
-      : space_(space) , comm_(space_.grid().comm()) {} 
-
-    //! export types
-    typedef X domain_type;
-    typedef typename X:: block_type :: field_type field_type;
-    
-    //! define the category
-    enum { category=SolverCategory::sequential };
-    
-    /*! \brief Dot product of two vectors. 
-      It is assumed that the vectors are consistent on the interior+border
-      partition.
-     */
-    virtual field_type dot (const X& x, const X& y)
-    {
-      field_type skp = 0;
-      size_t i = 0;
-      const size_t slaveDofs = slaveDofs_.size();
-      for(size_t slave = 0; slave<slaveDofs; ++slave)
-      {
-        const size_t nextSlave = slaveDofs[slave];
-        // evaluate skp for all master dofs 
-        for(; i<nextSlave; ++i) 
-        {
-          skp += x[i] * y[i];
-        }
-      }
-
-      // make global sum 
-      skp = comm_.sum( skp );
-      return skp;
-    }
-
-    /*! \brief Norm of a right-hand side vector. 
-      The vector must be consistent on the interior+border partition
-     */
-    virtual double norm (const X& x)
-    {
-      return std::sqrt( dot(x,x) );
-    }
-  };
-#endif
-
   //=====================================================================
   // Implementation for ISTL-matrix based operator
   //=====================================================================
@@ -84,7 +32,7 @@ namespace Dune {
     typedef typename X::field_type field_type;
 
     //! define the category
-    enum {category=SolverCategory::sequential};
+    enum { category=SolverCategory::sequential };
 
     //! constructor: just store a reference to a matrix
     ParallelMatrixAdapter (const MatrixType& A) : matrix_(A) {}
@@ -165,19 +113,6 @@ private:
       int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
         
       ParallelScalarProduct<DiscreteFunctionImp> scp(dest.space());
-
-      /*
-      double residuum = 0.0;
-      // calculate residuum to get estimate for reduction 
-      {
-        DiscreteFunctionType tmp( dest );
-        m.mult( dest.blockVector(), tmp.blockVector() );
-        tmp -= arg;
-        residuum = scp.dot( tmp.blockVector(), tmp.blockVector() );
-        residuum = sqrt( residuum );
-      }
-      double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
-      */
 
       double residuum = sqrt( m.residuum( arg.blockVector(), dest.blockVector()) );
       double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
@@ -260,7 +195,7 @@ class ISTLCGOp : public Operator<
 private:
   // no const reference, we make const later 
   mutable OperatorType &op_;
-  double reduction_;
+  const double absLimit_;
   int maxIter_;
   bool verbose_ ;
 
@@ -271,13 +206,13 @@ private:
     static void call(OperatorImp & op,
                      const DiscreteFunctionImp & arg,
                      DiscreteFunctionImp & dest,
-                     double reduction, int maxIter, bool verbose)
+                     double absLimit, int maxIter, bool verbose)
     {
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
       typedef typename OperatorImp :: PreconditionMatrixType PreconditionerType; 
       const PreconditionerType& pre = op.preconditionMatrix();
       solve(op.systemMatrix().matrix(),pre,
-            arg,dest,arg.space().grid().comm(),reduction,maxIter,verbose);
+            arg,dest,arg.space().grid().comm(),absLimit,maxIter,verbose);
     }
 
     template <class MatrixType, 
@@ -289,13 +224,22 @@ private:
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
                  const CommunicatorType& comm,
-                 double reduction, int maxIter, bool verbose)
+                 double absLimit, int maxIter, bool verbose)
     {
       typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
       typedef ParallelMatrixAdapter<MatrixType,BlockVectorType,BlockVectorType> MatrixOperatorType;
       MatrixOperatorType mat(const_cast<MatrixType&> (m));
 
       int verb = (verbose) ? 2 : 0;
+      
+      double residuum = sqrt( m.residuum( arg.blockVector(), dest.blockVector()) );
+      double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
+
+      if( verbose ) 
+      {
+        std::cout << "ISTLSolver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
+      }
+
         
       ParallelScalarProduct<DiscreteFunctionImp> scp(dest.space()); 
       CGSolver<BlockVectorType> solver(mat,scp,
@@ -320,7 +264,7 @@ public:
   */
   ISTLCGOp(OperatorType & op , double  reduction , double absLimit , 
            int maxIter , bool verbose ) 
-    : op_(op), reduction_ ( reduction ) 
+    : op_(op), absLimit_ ( absLimit ) 
     , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
   }
@@ -340,7 +284,7 @@ public:
   */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
-    SolverCaller<OperatorType,true>::call(op_,arg,dest,reduction_,maxIter_,verbose_);
+    SolverCaller<OperatorType,true>::call(op_,arg,dest,absLimit_,maxIter_,verbose_);
   }
 
 
