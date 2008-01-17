@@ -120,7 +120,9 @@ public:
     return vec_.size() * blockSize;
   }
 
-private:
+  BlockVectorType& blockVector() { return vec_; }
+  const BlockVectorType& blockVector() const { return vec_; }
+protected:
   BlockVectorType& vec_;
 };
 
