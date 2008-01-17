@@ -241,7 +241,7 @@ namespace Dune {
       }
 
       //! communicate block vector 
-      void communicate(ColBlockVectorType& arg) const 
+      void communicate(const ColBlockVectorType& arg) const 
       {
         if(comm_)
         {
@@ -273,51 +273,47 @@ namespace Dune {
         LittleBlockVectorType tmp; 
         double res = 0.0;
 
-        std::set<int> overlapRow;
-
-        const int overL = slaveDofs.size();
-        for(int k=0; k<overL; ++k) 
+        // counter for rows 
+        int i = 0;
+        const int slaveSize = slaveDofs.size();
+        for(int slave = 0; slave<slaveSize; ++slave) 
         {
-          overlapRow.insert( slaveDofs[k] ); 
-        }
-
-        ConstRowIterator endi= this->end();
-        for (ConstRowIterator i= this->begin(); i!=endi; ++i)
-        {
-          if( overlapRow.find(i.index()) == overlapRow.end() ) 
+          const int nextSlave = slaveDofs[slave];
+          for(; i<nextSlave; ++i) 
           {
             tmp = 0; 
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j = (*i).begin(); j!=endj; ++j)
+            // get row 
+            const row_type& row = this->operator [](i);
+            // multiply with row 
+            ConstColIterator endj = row.end();
+            for (ConstColIterator j = row.begin(); j!=endj; ++j)
             {
-              (*j).umv(x[j.index()],tmp);
+              (*j).umv(x[j.index()], tmp);
             }
+            
             // substract right hand side 
-            tmp -= rhs[i.index()];
+            tmp -= rhs[i];
 
             // add scalar product 
             res += tmp.two_norm2();
           }
+          ++i;
         }
 
-        if( colSpace_ ) 
-        {
-          return colSpace_->grid().comm().sum( res );
-        }
-        else 
-        {
-          return res;
-        }
+        return ( colSpace_ ) ? (colSpace_->grid().comm().sum( res )) : res;
       }
 
       //! apply matrix: \f$ y = A(x) \f$
       void mult(const RowBlockVectorType& x, ColBlockVectorType& y) const 
       {
+        //communicate( x );
         // clear vector  
         y = 0;
 
         // multiply 
         this->umv(x,y);
+
+        //scp_->deleteNonInterior( y );
 
         // exchange data 
         communicate( y );
@@ -326,8 +322,11 @@ namespace Dune {
       //! apply scaled: \f$ y = y + \alpha A(x) \f$
       void multAdd(field_type alpha, const RowBlockVectorType& x, ColBlockVectorType& y) const 
       {
+        //communicate( x );
+        
         this->usmv(alpha,x,y);
-
+        //scp_->deleteNonInterior( y );
+        
         // exchange data 
         communicate( y );
       }
@@ -336,7 +335,7 @@ namespace Dune {
   //! wrapper class to store perconditioner 
   //! as the interface class does not have to category 
   //! enum 
-  template<class MatrixImp>
+  template<class MatrixImp, class ScpType>
   class PreconditionerWrapper 
     : public Preconditioner<typename MatrixImp :: RowBlockVectorType,
                             typename MatrixImp :: ColBlockVectorType>
@@ -347,6 +346,7 @@ namespace Dune {
             
     typedef Preconditioner<X,Y> PreconditionerInterfaceType;
     MatrixType* matrix_;
+    const ScpType* scp_;
     PreconditionerInterfaceType* preconder_; 
     
     //! set preconder to zero 
@@ -364,12 +364,15 @@ namespace Dune {
       category=SolverCategory::sequential };
 
     //! set preconder to zero 
-    PreconditionerWrapper () : matrix_(0) , preconder_(0) {}
+    PreconditionerWrapper () : matrix_(0), scp_(0), preconder_(0) {}
     
     //! create preconditioner of given type 
     template <class PreconditionerType>
-    PreconditionerWrapper(MatrixType & m, int iter, field_type relax, const PreconditionerType*) 
+    PreconditionerWrapper(MatrixType & m,
+                          const ScpType& scp,
+                          int iter, field_type relax, const PreconditionerType*) 
       : matrix_(&m)
+      , scp_(&scp) 
       , preconder_(0) 
     {
       PreconditionerType* pre = new PreconditionerType(m,iter,relax); 
@@ -378,8 +381,11 @@ namespace Dune {
     
     //! create preconditioner of given type 
     template <class PreconditionerType>
-    PreconditionerWrapper(MatrixType & m, field_type relax, const PreconditionerType*) 
+    PreconditionerWrapper(MatrixType & m, 
+                          const ScpType& scp,
+                          field_type relax, const PreconditionerType*) 
       : matrix_(&m)
+      , scp_(&scp)
       , preconder_(0)
     {
       PreconditionerType* pre = new PreconditionerType(m,relax); 
@@ -406,6 +412,9 @@ namespace Dune {
     {
       if( preconder_ ) 
       {
+        //assert( scp_ );
+        //scp_->deleteNonInterior(const_cast<Y&> (d)); 
+
         // apply preconditioner
         preconder_->apply(v,d);
         // communicate result 
@@ -481,8 +490,9 @@ namespace Dune {
                                 RowDiscreteFunctionType , 
                                 ColumnDiscreteFunctionType > MatrixType;
    
+    typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
     //! type of preconditioner 
-    typedef PreconditionerWrapper<MatrixType> PreconditionMatrixType;
+    typedef PreconditionerWrapper<MatrixType,ParallelScalarProductType> PreconditionMatrixType;
 
     struct LocalMatrixTraits
     {
@@ -694,7 +704,6 @@ namespace Dune {
 
   private:  
     typedef CommunicationManager<ColumnSpaceType> CommunicationManagerType;
-    typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
 
     const RowSpaceType & rowSpace_;
     const ColumnSpaceType & colSpace_;
@@ -885,6 +894,7 @@ namespace Dune {
       {
         return new PreconditionMatrixType();
       }
+      /*
       // SSOR 
       else if( preconditioning_ == ssor )
       {
@@ -897,18 +907,21 @@ namespace Dune {
         typedef SeqSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
+      */
       // ILU-0 
+      //else if(preconditioning_ == ilu_0)
       if(preconditioning_ == ilu_0)
       {
         typedef SeqILU0<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), relaxFactor_, (PreconditionerType*)0);
+        return new PreconditionMatrixType(matrix(), scp_, relaxFactor_, (PreconditionerType*)0);
       }
       // ILU-n
       else if(preconditioning_ == ilu_n)
       {
         typedef SeqILUn<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
+        return new PreconditionMatrixType(matrix(), scp_, numIterations_ , relaxFactor_, (PreconditionerType*)0);
       }
+      /*
       // Gauss-Seidel
       else if(preconditioning_ == gauss_seidel)
       {
@@ -925,6 +938,7 @@ namespace Dune {
       {
         preConErrorMsg(preconditioning_);
       }
+      */
       return 0;
     }
 
