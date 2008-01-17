@@ -685,6 +685,19 @@ namespace Dune {
       matrix().multOEM( arg, dest );
     }
 
+    void apply(const RowDiscreteFunctionType& arg,
+               RowDiscreteFunctionType& dest) const 
+    {
+      dest.blockVector() = 0;
+      matrix().umv( arg.blockVector(), dest.blockVector() );
+    }
+
+    template <class RowDFType, class ColDFType>
+    void apply(const RowDFType& arg, ColDFType& dest) const 
+    {
+      matrix().multOEM(arg.leakPointer(), dest.leakPointer());
+    }
+
     //! mult method of matrix object used by oem solver
     void multOEM(const RowLeakPointerType& arg, ColumnLeakPointerType& dest) const
     {
