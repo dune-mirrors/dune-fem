@@ -6,6 +6,7 @@
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
+#include <dune/fem/operator/matrix/istlmatrix.hh>
 #endif
 
 namespace Dune {
@@ -175,15 +176,30 @@ protected:
   }
 };
 
+  template <class TraitsImp>
+  struct DGMatrixTraits
+  {
+    typedef typename TraitsImp :: RowSpaceType RowSpaceType;
+    typedef typename TraitsImp :: ColumnSpaceType ColumnSpaceType;
+
+    typedef ElementAndNeighbors StencilType; 
+    
+    typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
+  };
+  
 #if HAVE_DUNE_ISTL
+  // forward 
   template <class MatrixImp>
   class DGParallelMatrixAdapter;
 
+  // specialization for ISTL matrices 
   template <class RowSpaceImp, class ColSpaceImp>
-  struct DGISTLMatrixTraits
+  struct DGMatrixTraits<ISTLMatrixTraits<RowSpaceImp,ColSpaceImp> >
   {
     typedef RowSpaceImp RowSpaceType;
     typedef ColSpaceImp ColumnSpaceType;
+
+    typedef ElementAndNeighbors StencilType; 
     
     typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
 

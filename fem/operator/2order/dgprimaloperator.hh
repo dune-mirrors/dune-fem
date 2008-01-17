@@ -67,7 +67,7 @@ namespace Dune {
             http://www.mit.edu/~persson/pub/peraire07cdg.pdf
   */
   template <class DiscreteModelImp, class GradientPassImp, 
-            class PreviousPassImp, class MatrixObjectImp>
+            class PreviousPassImp, class MatrixObjectTraits>
   class DGPrimalOperator 
     : public LocalPass<DiscreteModelImp, PreviousPassImp> 
     , public OEMSolver::PreconditionInterface
@@ -78,7 +78,7 @@ namespace Dune {
     typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
 
     typedef DGPrimalOperator<DiscreteModelImp,GradientPassImp,
-            PreviousPassImp,MatrixObjectImp> ThisType;
+            PreviousPassImp,MatrixObjectTraits> ThisType;
 
     typedef GradientPassImp GradientPassType; 
     typedef typename GradientPassType :: DiscreteModelType
@@ -156,8 +156,11 @@ namespace Dune {
     typedef TemporaryLocalFunction< DiscreteGradientSpaceType > TemporaryLocalFunctionType;
     typedef MutableArray< std::auto_ptr< TemporaryLocalFunctionType > > TemporaryLocalFunctionArrayType;
 
+    typedef DGMatrixTraits< MatrixObjectTraits > MyOperatorTraits;
     //! type of underlying matrix implementation 
-    typedef MatrixObjectImp MatrixObjectType; 
+    typedef typename MatrixObjectTraits :: template MatrixObject<
+      MyOperatorTraits > :: MatrixObjectType MatrixObjectType;
+    //typedef MatrixObjectImp MatrixObjectType; 
 
     typedef typename MatrixObjectType::LocalMatrixType LocalMatrixType;
     typedef typename MatrixObjectType::MatrixType MatrixType;
@@ -553,11 +556,7 @@ namespace Dune {
       prepare( arg, rhs );
 
       // if grid has changed, then matrix structure is re-build
-      {
-        // object for creating the stencil 
-        ElementAndNeighbors stencil;
-        matrixObj_.reserve(stencil);
-      }
+      matrixObj_.reserve();
 
       // clear matrix 
       matrixObj_.clear();

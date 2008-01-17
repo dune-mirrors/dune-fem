@@ -245,6 +245,9 @@ namespace Dune {
   public:  
     //! type of traits 
     typedef TraitsImp Traits;
+
+    //! type of stencil defined by operator
+    typedef typename Traits :: StencilType StencilType;
     
     //! type of space defining row structure 
     typedef RowSpaceImp RowSpaceType; 
@@ -659,9 +662,7 @@ namespace Dune {
     }
 
     //! reserve matrix with right size 
-    template <class StencilCreatorImp>
-    void reserve(const StencilCreatorImp& stencil, 
-                 bool verbose = false) 
+    void reserve(bool verbose = false) 
     {
       // if grid sequence number changed, rebuild matrix 
       if(sequence_ != rowSpace_.sequence())
@@ -669,6 +670,7 @@ namespace Dune {
         delete matrix_; matrix_ = 0;
 
         matrix_ = new MatrixType(rowMapper_.size(), colMapper_.size());
+        StencilType stencil; 
         matrix().setup(colSpace_,rowMapper(),colMapper(),stencil,verbose);
 
         sequence_ = rowSpace_.sequence();
