@@ -480,13 +480,28 @@ private:
       }
     }
 
+    //! apply matrix to discrete function
+    template< class DomainFunction, class RangeFunction >
+    void apply ( const DomainFunction &arg, RangeFunction &dest ) const
+    {
+      matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
+      communicate_.exchange( dest );
+    }
+
     //! mult method of matrix object used by oem solver
     void multOEM( const double *arg, double *dest ) const
     {
-      matrix_.multOEM( arg, dest );
-      communicate( dest );
-    }
+      typedef AdaptiveDiscreteFunction< DomainSpaceType > DomainFunctionType;
+      typedef AdaptiveDiscreteFunction< RangeSpaceType > RangeFunctionType;
 
+      DomainFunctionType farg( "multOEM arg", domainSpace_, arg );
+      RangeFunctionType fdest( "multOEM dest", rangeSpace_, dest );
+      apply( farg, fdest );
+        
+      //matrix_.multOEM( arg, dest );
+      //communicate( dest );
+    }
+#if 0
     //! communicate data 
     void communicate( double *dest ) const
     {
@@ -498,6 +513,7 @@ private:
       DestinationType tmp( "SparseRowMatrixObject::communicate_tmp", rangeSpace_, dest );
       communicate_.exchange( tmp );
     }
+#endif
 
     //! resort row numbering in matrix to have ascending numbering 
     void resort() 
