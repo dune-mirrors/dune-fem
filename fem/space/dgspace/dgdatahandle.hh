@@ -18,14 +18,11 @@ namespace Dune {
       \param DiscreteFunctionImp type of discrete function to be
       communicated 
   */
-  template <class DiscreteFunctionImp>
+  template <class DiscreteFunctionImp, class OperationImp>
   class DGCommunicationHandler 
-   : public CommDataHandleIF<DGCommunicationHandler <DiscreteFunctionImp > ,
+   : public CommDataHandleIF<DGCommunicationHandler <DiscreteFunctionImp ,OperationImp> ,
                              typename DiscreteFunctionImp :: RangeFieldType >
   {
-    // type of mathematical operation 
-    typedef DFCommunicationOperation::Copy OperationImp;
-
     //! empty for higher codims 
     template <class MessageBufferImp, class EntityType, int codim> 
     struct HandleData

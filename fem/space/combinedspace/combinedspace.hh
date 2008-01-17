@@ -93,15 +93,16 @@ namespace Dune
            DimDomain = FunctionSpaceType::DimDomain };
 
     //! \brief defines type of data handle for communication 
-    template <class DiscreteFunctionImp>
+    template <class DiscreteFunctionImp,
+              class OperationImp = DFCommunicationOperation :: Copy>
     struct CommDataHandle
     {
       //! \brief uses type of contained space 
       typedef typename ContainedDiscreteFunctionSpaceType:: template
-        CommDataHandle<DiscreteFunctionImp> :: Type Type;
+        CommDataHandle<DiscreteFunctionImp,OperationImp> :: Type Type;
       //! \brief type of operation to perform on scatter 
       typedef typename ContainedDiscreteFunctionSpaceType:: template
-        CommDataHandle<DiscreteFunctionImp> :: OperationType OperationType;
+        CommDataHandle<DiscreteFunctionImp,OperationImp> :: OperationType OperationType;
     };
   public:
     //- Friends

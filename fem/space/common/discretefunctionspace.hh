@@ -9,6 +9,7 @@
 #include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
+#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 
@@ -89,15 +90,16 @@ namespace Dune
     /** \brief defines type of data handle for communication 
         for this type of space.
     */
-    template <class DiscreteFunctionImp>
+    template <class DiscreteFunctionImp, 
+              class OperationImp = DFCommunicationOperation :: Copy>
     struct CommDataHandle
     {
       //! type of data handle from traits 
       typedef typename FunctionSpaceTraits :: 
-        template CommDataHandle<DiscreteFunctionImp> :: Type  Type;
+        template CommDataHandle<DiscreteFunctionImp, OperationImp> :: Type  Type;
       //! type of operation to perform on scatter 
       typedef typename FunctionSpaceTraits :: 
-        template CommDataHandle<DiscreteFunctionImp> :: OperationType  OperationType;
+        template CommDataHandle<DiscreteFunctionImp, OperationImp> :: OperationType  OperationType;
     };
 
     /** \brief iterator type traversing the set of 

@@ -382,13 +382,14 @@ namespace Dune {
     /** \brief defines type of data handle for communication 
         for this type of space.
     */
-    template <class DiscreteFunctionImp>
+    template <class DiscreteFunctionImp,
+              class OperationImp = DFCommunicationOperation :: Copy>
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DGCommunicationHandler<DiscreteFunctionImp> Type;
+      typedef DGCommunicationHandler<DiscreteFunctionImp, OperationImp> Type;
       //! type of operation to perform on scatter 
-      typedef DFCommunicationOperation :: Copy OperationType;
+      typedef OperationImp OperationType;
     };
   };
 
@@ -529,13 +530,14 @@ namespace Dune {
     /** \brief defines type of data handle for communication 
         for this type of space.
     */
-    template <class DiscreteFunctionImp>
+    template <class DiscreteFunctionImp, 
+              class OperationImp = DFCommunicationOperation :: Copy>
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DGCommunicationHandler<DiscreteFunctionImp> Type;
+      typedef DGCommunicationHandler<DiscreteFunctionImp,OperationImp> Type;
       //! type of operation to perform on scatter 
-      typedef DFCommunicationOperation :: Copy OperationType;
+      typedef OperationImp OperationType;
     };
   };
 
