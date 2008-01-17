@@ -353,6 +353,9 @@ namespace Dune {
       
       // solve the system 
       invOp_(rhs_,dest);
+
+      // do data exchange 
+      comm_.exchange( dest );
     } 
 
     template <class FuncType, class GradType>
