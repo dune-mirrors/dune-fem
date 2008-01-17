@@ -75,7 +75,7 @@ namespace Dune {
 
     //! exchange data for discrete function df by using given operation 
     template <class DiscreteFunctionType, class OperationImp > 
-    void exchange(DiscreteFunctionType & df, const OperationImp* ) 
+    void exchange(DiscreteFunctionType & df, const OperationImp* op) 
     {
       // if serial run, just return   
       if(gridPart_.grid().comm().size() <= 1) return;
@@ -83,7 +83,7 @@ namespace Dune {
       // get data handler type from space  
       typedef typename SpaceType :: 
         template CommDataHandle<DiscreteFunctionType,OperationImp> :: Type DataHandleType;
-      DataHandleType dataHandle = df.dataHandle();
+      DataHandleType dataHandle = df.dataHandle( op );
 
       // communicate data 
       gridPart_.communicate( dataHandle, interFace_ , dir_ );

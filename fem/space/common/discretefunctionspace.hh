@@ -335,12 +335,12 @@ namespace Dune
     }
 
     /** \brief Creates DataHandle for given discrete function */
-    template <class DiscreteFunctionImp>
-    inline typename CommDataHandle<DiscreteFunctionImp> :: Type 
-    createDataHandle(DiscreteFunctionImp& df) const 
+    template <class DiscreteFunctionImp, class OperationImp>
+    inline typename CommDataHandle<DiscreteFunctionImp,OperationImp> :: Type 
+    createDataHandle(DiscreteFunctionImp& df, const OperationImp* op) const 
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().createDataHandle( df ) );
-      return asImp().createDataHandle( df );
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().createDataHandle( df , op) );
+      return asImp().createDataHandle( df ,op );
     }
 
   protected:
@@ -556,13 +556,14 @@ namespace Dune
 
     /** \brief Default implementation of data handle creation that 
         call constructor and apssing only discrete function */
-    template <class DiscreteFunctionImp>
-    inline typename Traits :: template CommDataHandle<DiscreteFunctionImp> :: Type 
-    createDataHandle(DiscreteFunctionImp& df) const 
+    template <class DiscreteFunctionImp, 
+              class OperationImp>
+    inline typename Traits :: template CommDataHandle<DiscreteFunctionImp,OperationImp> :: Type 
+    createDataHandle(DiscreteFunctionImp& df, const OperationImp* ) const 
     {
       // create data handle object 
       return typename Traits :: 
-        template CommDataHandle<DiscreteFunctionImp> :: Type ( df );
+        template CommDataHandle<DiscreteFunctionImp,OperationImp> :: Type ( df );
     }
   };
 
