@@ -80,7 +80,7 @@ namespace Dune {
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIteratorType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridType::template Codim<0>::EntityPointer EntityPointerType;
     typedef typename DomainType :: field_type DomainFieldType;
@@ -104,8 +104,9 @@ namespace Dune {
          This is needed for the shock detection.
     */
     template <class ArgumentTuple>
-    double numericalFlux(IntersectionIterator& it,
-                         double time, const FaceDomainType& x,
+    double numericalFlux(const IntersectionIteratorType& it,
+                         const double time, 
+                         const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          RangeType& gLeft,
@@ -135,13 +136,17 @@ namespace Dune {
         The default returns 0, meaning that we use the interior value as ghost value. 
     */
     template <class ArgumentTuple>
-    double boundaryFlux(IntersectionIterator& it,
-                        double time, const FaceDomainType& x,
+    double boundaryFlux(const IntersectionIteratorType& it,
+                        const double time, const FaceDomainType& x,
                         const ArgumentTuple& uLeft, 
                         RangeType& gLeft) const
     { 
       gLeft = 0 ;
       return 0.0;
+    }
+
+    void indicatorMax()
+    {
     }
 
     /** \brief adaptation method */
@@ -153,8 +158,8 @@ namespace Dune {
   protected:
     //! returns true, if we have an inflow boundary
     template <class ArgumentTuple>
-    bool checkDirection(IntersectionIterator& it,
-                        double time, const FaceDomainType& x,
+    bool checkDirection(const IntersectionIteratorType& it,
+                        const double time, const FaceDomainType& x,
                         const ArgumentTuple& uLeft, 
                         const ArgumentTuple& uRight,
                         RangeType& gLeft,
@@ -394,6 +399,8 @@ namespace Dune {
       dest_ = &dest;
       dest_->clear();
       caller_.setArgument(*arg_);
+
+      problem_.indicatorMax();
     }
     
     //! Some management.
@@ -485,6 +492,8 @@ namespace Dune {
             
       // calculate h factor 
       const double hPowPolOrder = (1.0/(geo.volume())) * pow(radius, orderPower_);
+      //const double hPowPolOrder = pow( sqrt(geo.volume()), orderPower_);
+      //const double hPowPolOrder = pow(radius, orderPower_);
 
       JacobianRangeType enGrad;
       JacobianRangeType nbGrad;
@@ -529,9 +538,30 @@ namespace Dune {
           applyBoundary(nit,faceQuadInner,totaljump,circume);
         }
       } // end intersection iterator 
-       
+
+      /*
+      // get || u ||
+      RangeFieldType sum = 0;
+      {
+        VolumeQuadratureType quadrature( en, spc_.order() * 2 );
+        const int numQuadraturePoints = quadrature.nop();
+        for( int qp = 0; qp < numQuadraturePoints; ++qp )
+        {
+          const RangeFieldType factor
+            = quadrature.weight( qp )
+              * geo.integrationElement( quadrature.point( qp )) / geo.volume();
+
+          RangeType uqp;
+          uEn.evaluate( quadrature[ qp ], uqp );
+
+          sum += factor * (uqp * uqp);
+        }
+        sum = std::sqrt(sum);
+      }
+      */
+
       // multiply h pol ord with circume 
-      const double circFactor = (circume > 0.0) ? (hPowPolOrder / circume) : 0.0;
+      const double circFactor = (circume > 0.0) ? (hPowPolOrder /( circume )) : 0.0;
 
       // get grid 
       GridType& grid = const_cast<GridType&> (gridPart_.grid());
