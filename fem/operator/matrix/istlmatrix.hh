@@ -109,11 +109,14 @@ namespace Dune {
         , localCols_(org.localCols_)
       {}
 
-      //! matrix multiplication for OEM solvers 
-      void multOEM (const double * arg, double * dest)
+      void multOEM (const double* arg, double* dest) const
       {
-        RowIteratorType endi=this->end();
-        for (RowIteratorType i=this->begin(); i!=endi; ++i)
+      //! matrix multiplication for OEM solvers 
+      //template <class LeakPtr>
+      //void multOEM (const LeakPtr& arg, LeakPtr& dest) const
+      //{
+        ConstRowIterator endi=this->end();
+        for (ConstRowIterator i=this->begin(); i!=endi; ++i)
         {
           const int r = i.index();
           {
@@ -124,8 +127,8 @@ namespace Dune {
             }
           }
 
-          ColIteratorType endj = (*i).end();
-          for (ColIteratorType j=(*i).begin(); j!=endj; ++j)
+          ConstColIterator endj = (*i).end();
+          for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
           {
             int row = r * localRows_;
             for(int k=0; k<localRows_; ++k, ++row) 
@@ -209,11 +212,11 @@ namespace Dune {
       void print(std::ostream & s) const 
       {
         std::cout << "Print ISTLMatrix \n";
-        RowIteratorType endi=this->end();
-        for (RowIteratorType i=this->begin(); i!=endi; ++i)
+        ConstRowIterator endi=this->end();
+        for (ConstRowIterator i=this->begin(); i!=endi; ++i)
         {
-          ColIteratorType endj = (*i).end();
-          for (ColIteratorType j=(*i).begin(); j!=endj; ++j)
+          ConstColIterator endj = (*i).end();
+          for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
           {
             s << (*j) << std::endl;
           }
@@ -272,7 +275,9 @@ namespace Dune {
     typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
 
     typedef BlockVectorDiscreteFunction< RowSpaceType >     RowDiscreteFunctionType; 
+    typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
     typedef BlockVectorDiscreteFunction< ColumnSpaceType >  ColumnDiscreteFunctionType; 
+    typedef typename ColumnDiscreteFunctionType :: LeakPointerType  ColumnLeakPointerType;
     
     typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType; 
     typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType; 
@@ -469,7 +474,6 @@ namespace Dune {
       // get entry of matrix 
       DofType get(int localRow, int localCol ) const
       {
-        return 0.0;
 #ifndef NDEBUG
         check(localRow,localCol);
 #endif
@@ -480,9 +484,8 @@ namespace Dune {
       void clear ()
       {
         for(int i=0; i<matrices_.size(); ++i)
-        {
-          (*matrices_[i]) = (DofType) 0;
-        }
+          for(int j=0; j<matrices_[i].size(); ++j)
+            (*matrices_[i][j]) = (DofType) 0;
       }
 
       //! empty as the little matrices are already sorted
@@ -560,7 +563,7 @@ namespace Dune {
       , scp_(colSpace_)
       , numIterations_(5)
       , relaxFactor_(1.1)
-      , preconditioning_(none)
+      , preconditioning_(ilu_0)
       , localMatrixStack_( *this )
     {
       if(paramfile != "")
@@ -677,17 +680,16 @@ namespace Dune {
       }
     }
 
-    //! mult method of matrix object used by oem solver
-    void multOEM(const double * arg, double * dest) const
+    void multOEM(const double* arg, double* dest) const
     {
-      matrix().multOEM(arg,dest);
+      matrix().multOEM( arg, dest );
     }
 
     //! mult method of matrix object used by oem solver
-    template <class LeakPtrImp> 
-    void multOEM(const LeakPtrImp& arg, LeakPtrImp& dest) const
+    void multOEM(const RowLeakPointerType& arg, ColumnLeakPointerType& dest) const
     {
-      DUNE_THROW(NotImplemented,"ISTLMatrixObject::multOEM for arbitrary type not implemented!");
+      dest.blockVector() = 0;
+      matrix().umv( arg.blockVector(), dest.blockVector() );
     }
 
     //! resort row numbering in matrix to have ascending numbering 

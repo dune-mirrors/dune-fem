@@ -330,7 +330,22 @@ private:
   void removeObj();
 };
 
+  template <class DomainSpace, class RangeSpace>
+  class SparseRowMatrixObject;
 
+  template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
+  struct SparseRowMatrixTraits
+  {
+    typedef RowSpaceImp RowSpaceType;
+    typedef ColSpaceImp ColumnSpaceType;
+    typedef SparseRowMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;
+
+    template <class OperatorTraits>
+    struct MatrixObject
+    {
+      typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> MatrixObjectType;
+    };
+  };
 
   template< class DomainSpace, class RangeSpace >
   class SparseRowMatrixObject
@@ -443,8 +458,7 @@ private:
     }
 
     //! reserve memory corresponnding to size of spaces
-    template< class Stencil >
-    inline void reserve( const Stencil &, bool verbose = false )
+    inline void reserve(bool verbose = false )
     {
       if( sequence_ != domainSpace_.sequence() )
       {

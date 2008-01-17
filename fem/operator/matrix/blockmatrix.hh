@@ -825,13 +825,34 @@ std::ostream& operator<< (std::ostream& s, const BlockMatrix<K> & matrix)
   return s;
 }
 
+template <class DomainSpace, class RangeSpace, class OperatorTraits >
+class BlockMatrixObject;
+
+template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
+struct BlockMatrixTraits
+{
+  typedef RowSpaceImp RowSpaceType;
+  typedef ColSpaceImp ColumnSpaceType;
+  typedef BlockMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;
+
+  template <class OperatorTraits>
+  struct MatrixObject
+  {
+    typedef BlockMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType;
+  };
+};
+
+
 //! matrix object holding a blockamtrix
-template <class RowSpaceImp, class ColumnSpaceImp> 
+template <class RowSpaceImp, class ColumnSpaceImp, class OperatorTraits> 
 class BlockMatrixObject
 {
 public:  
   typedef RowSpaceImp RowSpaceType;
   typedef ColumnSpaceImp ColumnSpaceType ;
+
+  typedef typename OperatorTraits :: StencilType StencilType;
+
 
   //! number of rows of blocks 
   enum { littleRows = RowSpaceType :: localBlockSize };
@@ -840,7 +861,7 @@ public:
 
   typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
 
-  typedef BlockMatrixObject<RowSpaceType,ColumnSpaceType> ThisType;
+  typedef BlockMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> ThisType;
 
   typedef BlockMatrix<double> MatrixType;
   typedef MatrixType PreconditionMatrixType;
@@ -911,7 +932,7 @@ public:
 
       MatrixType& matrix = matrixObj_.matrix();
       // get global block numbers 
-      const size_t rows = rowMapper_.numDofs();
+      const size_t rows = rowMapper_.numEntityDofs(rowEntity);
       {
         rows_.resize( rows );
         for(size_t i=0; i<rows; ++i)
@@ -921,7 +942,7 @@ public:
       }
 
       // get global block numbers 
-      const size_t cols = colMapper_.numDofs();
+      const size_t cols = colMapper_.numEntityDofs(colEntity);
       {
         cols_.resize( cols );
         for(size_t i=0; i<cols; ++i)
@@ -1136,8 +1157,7 @@ public:
   PreconditionMatrixType& pcMatrix () { return matrix(); }
 
   //! reserve memory corresponnding to size of spaces 
-  template <class StencilImp> 
-  void reserve(const StencilImp& stencil, bool verbose = false ) 
+  void reserve(bool verbose = false ) 
   {
     if(sequence_ != rowSpace_.sequence() )
     {
@@ -1167,6 +1187,7 @@ public:
           std::cout << "Number of base functions = (" << littleRows << "," << littleCols << ")\n";
         }
 
+        StencilType stencil;
         // get size of stencil  
         const int stencilSize =
           stencil.stencilSizeEstimate(rowSpace_.gridPart()); 

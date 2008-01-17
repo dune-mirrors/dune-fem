@@ -131,6 +131,25 @@ public:
 
 };
 
+template <class RowSpaceImp, class ColumnSpaceImp> 
+class OnTheFlyMatrixObject;
+
+template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
+struct OnTheFlyMatrixTraits
+{
+  typedef RowSpaceImp RowSpaceType;
+  typedef ColSpaceImp ColumnSpaceType;
+  typedef OnTheFlyMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;
+
+  template <class OperatorTraits>
+  struct MatrixObject
+  {
+    typedef OnTheFlyMatrixObject<RowSpaceType,ColumnSpaceType> MatrixObjectType;
+  };
+};
+
+
+
 //! matrix object holding a blockamtrix
 template <class RowSpaceImp, class ColumnSpaceImp> 
 class OnTheFlyMatrixObject
@@ -346,8 +365,7 @@ public:
   PreconditionMatrixType& pcMatrix () { return matrix(); }
 
   //! reserve memory corresponnding to size of spaces 
-  template <class StencilImp> 
-  void reserve(const StencilImp& stencil, bool verbose = false ) 
+  void reserve(bool verbose = false ) 
   {
   }
 
