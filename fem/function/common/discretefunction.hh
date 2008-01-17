@@ -123,10 +123,6 @@ namespace Dune
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
 
-    //! type of data handle to use in communication 
-    typedef typename DiscreteFunctionSpaceType :: template
-      CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
-
   protected:
     using BaseType :: asImp;
 
@@ -344,10 +340,13 @@ namespace Dune
     }
 
     /** \brief return reference to data handle object */
-    DataHandleType dataHandle()
+    template <class OperationImp> 
+    typename DiscreteFunctionSpaceType :: template 
+      CommDataHandle<DiscreteFunctionType,OperationImp> :: Type
+    dataHandle(const OperationImp * op)
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().dataHandle());
-      return asImp().dataHandle();
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().dataHandle(op));
+      return asImp().dataHandle(op);
     }
 
 #if 0
@@ -560,10 +559,6 @@ namespace Dune
     //! type of local functions
     typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 
-    //! type of data handle to use in communication 
-    typedef typename DiscreteFunctionSpaceType :: template
-      CommDataHandle<DiscreteFunctionType> :: Type DataHandleType;
-
   private: 
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
@@ -710,9 +705,12 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
-    DataHandleType dataHandle()
+    template <class OperationImp> 
+    typename DiscreteFunctionSpaceType :: template 
+      CommDataHandle<DiscreteFunctionType,OperationImp> :: Type
+    dataHandle(const OperationImp * op)
     {
-      return this->space().createDataHandle( asImp() );
+      return this->space().createDataHandle( asImp() , op );
     }
     
     inline bool operator== ( const DiscreteFunctionType &g ) const;
