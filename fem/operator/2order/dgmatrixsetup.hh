@@ -40,13 +40,17 @@ public:
     typedef typename SpaceImp :: GridPartType GridPartImp;
     GridPartImp& gridP = const_cast<GridPartImp&> (space.gridPart());
 
-    typedef ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
-    typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
-    
     typedef typename GridPartNewPartitionType<
       GridPartImp,All_Partition> :: NewGridPartType GridPartType;    
 
-    GridPartType gridPart ( gridP.grid() );
+    const GridPartType gridPart ( gridP.grid() );
+    
+    //typedef typename SpaceImp :: GridPartType GridPartType;
+    //const GridPartType& gridPart = space.gridPart();
+
+    typedef ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
+    typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
+    
     ParallelScalarProductType scp (space);
 
     std::auto_ptr<BuildProxyType> buildProxy = scp.buildProxy();
@@ -105,7 +109,8 @@ protected:
     LocalIndicesType& localIndices = indices[elRowIndex];
 
     // insert diagonal for each element 
-    localIndices.insert( elRowIndex );
+    if( en.partitionType() != GhostEntity )
+      localIndices.insert( elRowIndex );
 
     std::vector<int> slaves;
 
@@ -134,11 +139,13 @@ protected:
 
         // check whether to insert now 
         bool insertHere = (elRowIndex < nbRowIndex);
+        bool nbInsert = true;
 #if HAVE_MPI 
         // check partition type 
         if( nb.partitionType() != InteriorEntity )
         {
           insertHere = true;
+          nbInsert = nb.partitionType() != GhostEntity;
           slaves.push_back( nbRowIndex );
         }
 #endif
@@ -150,9 +157,13 @@ protected:
 
           // insert symetric part with swaped row-col
           LocalIndicesType& nbIndices = indices[nbRowIndex];
-          const int elColIndex = colMapper.mapToGlobal( en , 0 );
-          nbIndices.insert( nbColIndex );
-          nbIndices.insert( elColIndex );  
+          if( nbInsert )
+          {
+            assert( nb.partitionType() != GhostEntity );
+            nbIndices.insert( nbColIndex );
+            const int elColIndex = colMapper.mapToGlobal( en , 0 );
+            nbIndices.insert( elColIndex );  
+          }
         }
       }
     }

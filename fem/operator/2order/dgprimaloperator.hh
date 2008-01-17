@@ -518,7 +518,6 @@ namespace Dune {
       return 0.0;
     }
 
-    /*
     void compute(const ArgumentType& arg, DestinationType& dest) const
     {
       prepare(arg, dest);
@@ -537,7 +536,6 @@ namespace Dune {
 
       finalize(arg, dest);
     }
-    */
 
     //! compute matrix entries 
     void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
