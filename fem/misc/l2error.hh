@@ -31,7 +31,7 @@ namespace Dune
  */
 /*======================================================================*/
   
-  template <class DiscreteFunctionType, int n=0> 
+  template <class DiscreteFunctionType> 
   class L2Error
   {
     typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -119,21 +119,11 @@ namespace Dune
           const double det = quad.weight(qP) * 
               geo.integrationElement(quad.point(qP));
 
-          if (n==0) {
-            f.evaluate(geo.global(quad.point(qP)),time,ret);
-            lf.evaluate(quad[qP],phi);
-            for(int k=0; k<dimRange; ++k) 
-            {
-              error[k] += det * SQR(ret[k] - phi[k]);
-            }
-          } 
-          else if (n==1) 
+          f.evaluate(geo.global(quad.point(qP)),time,ret);
+          lf.evaluate(quad[qP],phi);
+          for(int k=0; k<dimRange; ++k) 
           {
-            f.evaluate(geo.global(quad.point(qP)),time,ret);
-            lf.evaluate(quad[qP],phi);
-            for(int k=0; k<dimRange; ++k) {
-              error[k] += det * SQR(ret[k] - phi[k]);
-            }
+            error[k] += det * SQR(ret[k] - phi[k]);
           }
         }
       }
