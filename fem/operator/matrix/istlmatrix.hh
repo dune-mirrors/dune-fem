@@ -749,9 +749,9 @@ namespace Dune {
     //!         - Preconditioning: {0,1,2,3,4,5,6} put -1 to get info
     //!         - Pre-iteration: number of iteration of preconditioner
     //!         - Pre-relaxation: relaxation factor   
-    ISTLMatrixObject(const RowSpaceType & rowSpace,
-                     const ColumnSpaceType & colSpace,
-                     const std::string& paramfile)
+    ISTLMatrixObject ( const RowSpaceType &rowSpace,
+                       const ColumnSpaceType &colSpace,
+                       const std :: string &paramfile = "" )
       : rowSpace_(rowSpace)
       , colSpace_(colSpace)
       // create scp to have at least one instance 
