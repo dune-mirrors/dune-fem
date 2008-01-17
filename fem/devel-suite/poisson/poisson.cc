@@ -33,7 +33,7 @@
 **
 **************************************************************************/
 
-#define VERBOSE true
+#define VERBOSE false
 
 #include <config.h>
 
@@ -60,8 +60,6 @@
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/solver/inverseoperators.hh>
-//#include <dune/fem/operator/lagrangeinterpolation.hh>
-//#include <dune/fem/misc/l2error.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
