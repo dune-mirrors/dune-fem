@@ -31,16 +31,14 @@ namespace Dune {
       Field b = arg.scalarProductDofs( arg );
       const Field err = epsilon * b;
 
-      DiscreteFunctionType r ( arg );
       DiscreteFunctionType h ( arg );
-      DiscreteFunctionType p ( arg );
     
       op( dest, h );
 
-      r.assign(h) ;
+      DiscreteFunctionType r ( h );
       r -= arg;
 
-      p.assign(arg);
+      DiscreteFunctionType p ( arg );
       p -= h;
 
       spn = r.scalarProductDofs( r );
