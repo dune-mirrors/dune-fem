@@ -365,6 +365,8 @@ public:
   template< class Entity > 
   int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
+    CompileTimeChecker< (Entity :: codimension > 0) >
+      __CHECK_ENTITY_CODIMENSION__;
     return 0;
   }
 
@@ -397,6 +399,8 @@ public:
   template< class Entity >
   inline int numEntityDofs ( const Entity &entity ) const
   {
+    CompileTimeChecker< (Entity :: codimension > 0) >
+      __CHECK_ENTITY_CODIMENSION__;
     return 0;
   }
 
