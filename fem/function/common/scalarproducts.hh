@@ -593,6 +593,7 @@ namespace Dune
     {
       RangeFieldType scp = 0;
 
+      typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;
       ConstDofIteratorType endit = x.dend ();
       ConstDofIteratorType xit = x.dbegin ();
       ConstDofIteratorType yit = y.dbegin();
@@ -677,18 +678,17 @@ namespace Dune
 
   protected:
     const DiscreteFunctionSpaceType & space_; 
-    const KeyType key_;
 
     // is singleton per space 
-    mutable SlaveDofsType & slaveDofs_;
+    mutable SlaveDofsType& slaveDofs_;
 
     ParallelScalarProduct(const ThisType& org);
   public:  
     //! constructor taking space 
     ParallelScalarProduct(const DiscreteFunctionSpaceType& space) 
       : space_(space)
-      , key_(space_,space_.blockMapper())
-      , slaveDofs_(SlaveDofsProviderType::getObject(key_)) 
+      , slaveDofs_(
+          SlaveDofsProviderType::getObject(KeyType(space_,space_.blockMapper()))) 
     {
     }
 
@@ -698,8 +698,10 @@ namespace Dune
       SlaveDofsProviderType::removeObject(slaveDofs_);
     }
 
+    //! return build proxy for setup slave dofs 
     std::auto_ptr<BuildProxyType> buildProxy() { return std::auto_ptr<BuildProxyType> (new BuildProxyType(slaveDofs_)); }
 
+    //! return reference to slave dofs
     const SlaveDofsType& slaveDofs() const { return slaveDofs_; }
 
     /*! \brief Dot product of two discrete functions. 
@@ -728,6 +730,31 @@ namespace Dune
     virtual double norm (const BlockVectorType& x)
     {
       return std::sqrt( const_cast<ThisType&> (*this).scalarProductDofs(x,x) );
+    }
+
+    //! delete slave values (for debugging)
+    void deleteNonInterior(BlockVectorType& x) const 
+    {
+#if HAVE_MPI
+      // case of ALUGrid and DGSpace or FVSpace 
+      const bool deleteGhostEntries = 
+          space_.grid().overlapSize(0) == 0 && 
+          ! space_.continuous();
+
+      // only delete ghost entries 
+      if( deleteGhostEntries ) 
+      {
+        // rebuild slave dofs if grid was changed  
+        slaveDofs_.rebuild();
+
+        // don't delete the last since this is the overall Size 
+        const int slaveSize = slaveDofs_.size() - 1;
+        for(int slave = 0; slave<slaveSize; ++slave)
+        {
+          x[ slaveDofs_[slave] ] = 0;
+        }
+      }
+#endif
     }
   protected:    
     /*! \brief Dot product of two block vectors. 
@@ -758,7 +785,9 @@ namespace Dune
       return scp;
 #else 
       // return build-in scalar product 
-      return x * y;
+      RangeFieldType scp = x * y;
+      scp = space_.grid().comm().sum( scp );
+      return scp;
 #endif
     }
   };
