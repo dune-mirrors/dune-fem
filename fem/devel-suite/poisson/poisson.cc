@@ -140,21 +140,20 @@ typedef LagrangeDiscreteFunctionSpace
   DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using
-//typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
-typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+//typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! define the type of the system matrix object
-//typedef SparseRowMatrixObject< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType >
-typedef ISTLMatrixObject< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType >
-  MatrixObjectType;
+typedef SparseRowMatrixTraits < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
+//typedef ISTLMatrixTraits < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
 
 //! define the discrete laplace operator, see ./fem.cc
-typedef LaplaceFEOp< DiscreteFunctionType, MatrixObjectType, TensorType >
+typedef LaplaceFEOp< DiscreteFunctionType, MatrixObjectTraits, TensorType >
   LaplaceOperatorType;
 
 //! define the inverse operator we are using to solve the system 
-//typedef CGInverseOp< DiscreteFunctionType, LaplaceOperatorType >
-typedef ISTLBICGSTABOp< DiscreteFunctionType, LaplaceOperatorType >
+typedef CGInverseOp< DiscreteFunctionType, LaplaceOperatorType >
+//typedef ISTLBICGSTABOp< DiscreteFunctionType, LaplaceOperatorType >
 //typedef OEMCGOp<DiscreteFunctionType,LaplaceOperatorType>
 //typedef OEMBICGSTABOp<DiscreteFunctionType,LaplaceOperatorType>
 //typedef OEMBICGSQOp<DiscreteFunctionType,LaplaceOperatorType>

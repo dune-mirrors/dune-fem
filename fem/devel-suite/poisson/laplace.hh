@@ -19,7 +19,7 @@ namespace Dune
 {
 
   //! \brief The Laplace operator
-  template< class DiscreteFunction, class MatrixObject, class Tensor >
+  template< class DiscreteFunction, class MatrixTraits, class Tensor >
   class LaplaceFEOp
   : public Operator< typename DiscreteFunction :: RangeFieldType,
                      typename DiscreteFunction :: RangeFieldType,
@@ -30,14 +30,11 @@ namespace Dune
     //! type of discrete functions
     typedef DiscreteFunction DiscreteFunctionType;
 
-    //! type of the system matrix object
-    typedef MatrixObject MatrixObjectType;
-    
     //! type of tensor
     typedef Tensor TensorType;
 
     //! type of this LaplaceFEOp
-    typedef LaplaceFEOp< DiscreteFunctionType, MatrixObjectType, TensorType >
+    typedef LaplaceFEOp< DiscreteFunctionType, MatrixTraits, TensorType >
       LaplaceFEOpType;
 
   private:
@@ -72,8 +69,10 @@ namespace Dune
     //! type of quadrature to be used
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
+    typedef typename MatrixTraits :: template 
+          MatrixObject< LagrangeMatrixTraits<MatrixTraits> > :: MatrixObjectType MatrixObjectType;
+
     typedef typename MatrixObjectType :: LocalMatrixType LocalMatrixType;
-    
     typedef typename MatrixObjectType :: PreconditionMatrixType PreconditionMatrixType;
     typedef typename MatrixObjectType :: MatrixType MatrixType;
 
@@ -144,8 +143,7 @@ namespace Dune
     virtual void operator() ( const DiscreteFunctionType &u, 
                               DiscreteFunctionType &w ) const 
     {
-      //systemMatrix().apply( u, w );
-      systemMatrix().matrix().mult( u.blockVector(), w.blockVector() );
+      systemMatrix().apply( u, w );
       //systemMatrix().multOEM( u.leakPointer(), w.leakPointer() );
     }
   
@@ -194,8 +192,7 @@ namespace Dune
     {
       const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
 
-      LagrangeMatrixSetup stencil;
-      matrixObject_.reserve( stencil );
+      matrixObject_.reserve();
 
 #if 0
       // if the matrix has not been allocated, allocate it.
