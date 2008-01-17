@@ -3,6 +3,7 @@
 
 #include <dune/fem/space/common/gridpartutility.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/space/common/commoperations.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
@@ -491,8 +492,9 @@ protected:
         ++i;
       }
 
+      res = rowSpace_.grid().comm().sum( res );
       // return global sum of residuum 
-      return rowSpace_.grid().comm().sum( res );
+      return std::sqrt( res );
     }
 
     //! get matrix via *
@@ -509,8 +511,8 @@ protected:
       RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
                                    rowSpace_, x );
 
-      // exchange data 
-      comm_.exchange( tmp );
+      // exchange data by copying 
+      comm_.exchange( tmp, (DFCommunicationOperation :: Copy*) 0);
     }
   };
 #endif
