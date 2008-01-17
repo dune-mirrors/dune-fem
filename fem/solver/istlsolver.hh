@@ -63,12 +63,12 @@ private:
       // verbose only in verbose mode and for rank 0 
       int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
         
-      double residuum = sqrt( matrix.residuum( arg.blockVector(), dest.blockVector()) );
+      double residuum = matrix.residuum( arg.blockVector(), dest.blockVector());
       double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
 
       if( verbose ) 
       {
-        std::cout << "ISTLSolver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
+        std::cout << "ISTL BiCG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
       }
 
       BiCGSTABSolver<BlockVectorType>
@@ -157,48 +157,40 @@ private:
                      DiscreteFunctionImp & dest,
                      double absLimit, int maxIter, bool verbose)
     {
-      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      typedef typename OperatorImp :: PreconditionMatrixType PreconditionerType; 
-      const PreconditionerType& pre = op.preconditionMatrix();
-      solve(op.systemMatrix().matrix(),pre,
-            arg,dest,arg.space().grid().comm(),absLimit,maxIter,verbose);
+      solve(op.systemMatrix(),
+            arg,dest,absLimit,maxIter,verbose);
     }
 
-    template <class MatrixType, 
-              class PreconditionerType,
-              class DiscreteFunctionImp,
-              class CommunicatorType>
-    static void solve(const MatrixType & m,
-                 const PreconditionerType & preconditioner,
+    template <class MatrixObjType, 
+              class DiscreteFunctionImp>
+    static void solve(const MatrixObjType & mObj,
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
-                 const CommunicatorType& comm,
                  double absLimit, int maxIter, bool verbose)
     {
-      /*
-      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      MatrixOperatorType mat(const_cast<MatrixType&> (m));
-
-      int verb = (verbose) ? 2 : 0;
+      typedef typename MatrixObjType :: MatrixAdapterType MatrixAdapterType;
+      MatrixAdapterType matrix = mObj.matrixAdapter();
       
-      double residuum = sqrt( m.residuum( arg.blockVector(), dest.blockVector()) );
+      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
+
+      // verbose only in verbose mode and for rank 0 
+      int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+        
+      double residuum = matrix.residuum( arg.blockVector(), dest.blockVector());
       double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
 
       if( verbose ) 
       {
-        std::cout << "ISTLSolver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
+        std::cout << "ISTL CG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
       }
 
-        
-      ParallelScalarProduct<DiscreteFunctionImp> scp(dest.space()); 
-      CGSolver<BlockVectorType> solver(mat,scp,
-          const_cast<PreconditionerType&> (preconditioner),
+      CGSolver<BlockVectorType> 
+        solver(matrix,matrix.scp(),matrix.preconditionAdapter(),
           reduction,maxIter,verb);    
 
       InverseOperatorResult returnInfo;
   
       solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
-      */
     }
   };
 
