@@ -221,21 +221,40 @@ namespace Dune {
       }
   };
 
+  template <class RowSpaceImp, class ColSpaceImp, class TraitsImp> 
+  class ISTLMatrixObject;
+  
+  template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
+  struct ISTLMatrixTraits
+  {
+    typedef RowSpaceImp RowSpaceType; 
+    typedef ColSpaceImp ColumnSpaceType; 
+    typedef ISTLMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;  
+    
+    template <class OperatorTraits>
+    struct MatrixObject 
+    {
+      typedef ISTLMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType; 
+    };
+  };
+
   //! MatrixObject handling an istl matrix 
-  template <class TraitsImp> 
-  class ISTLMatrixObject  
+  template <class RowSpaceImp, class ColSpaceImp, class TraitsImp> 
+  class ISTLMatrixObject
   {
   public:  
     //! type of traits 
     typedef TraitsImp Traits;
     
     //! type of space defining row structure 
-    typedef typename Traits :: RowSpaceType RowSpaceType;
+    typedef RowSpaceImp RowSpaceType; 
+    //typedef typename Traits :: RowSpaceType RowSpaceType;
     //! type of space defining column structure 
-    typedef typename Traits :: ColumnSpaceType ColumnSpaceType;
+    typedef ColSpaceImp ColumnSpaceType; 
+    //typedef typename Traits :: ColumnSpaceType ColumnSpaceType;
 
     //! type of this pointer 
-    typedef ISTLMatrixObject<Traits> ThisType;
+    typedef ISTLMatrixObject<RowSpaceType,ColumnSpaceType,Traits> ThisType;
 
 
   private:  
