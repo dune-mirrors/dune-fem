@@ -518,6 +518,7 @@ namespace Dune {
       return 0.0;
     }
 
+    /*
     void compute(const ArgumentType& arg, DestinationType& dest) const
     {
       prepare(arg, dest);
@@ -536,6 +537,7 @@ namespace Dune {
 
       finalize(arg, dest);
     }
+    */
 
     //! compute matrix entries 
     void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
@@ -758,6 +760,8 @@ namespace Dune {
     //! apply operator on entity 
     void applyLocal(EntityType& en) const
     {
+      assert( en.partitionType() != GhostEntity ) ;
+
       // get local element matrix 
       LocalMatrixType matrixEn = matrixObj_.localMatrix(en,en); 
 
@@ -823,11 +827,11 @@ namespace Dune {
 
 #ifdef DG_DOUBLE_FEATURE
           // get partition type 
-          const bool nonInterior = 
+          const bool ghostEntity = 
             ( nb.partitionType() == GhostEntity );
           // only once per intersection or when outside is not interior 
           if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
-              || nonInterior
+              || ghostEntity
             )
 #endif
           {
@@ -848,7 +852,7 @@ namespace Dune {
                     faceQuadInner,faceQuadOuter, 
                     bsetEn,matrixEn
 #ifdef DG_DOUBLE_FEATURE
-                    , ! nonInterior 
+                    , ! ghostEntity 
 #endif
                     );
             }
@@ -875,7 +879,7 @@ namespace Dune {
                     nonConformingFaceQuadOuter, 
                     bsetEn,matrixEn
 #ifdef DG_DOUBLE_FEATURE
-                    , ! nonInterior 
+                    , ! ghostEntity 
 #endif
                     );
             }
@@ -1212,11 +1216,12 @@ namespace Dune {
       LocalMatrixType matrixNb = matrixObj_.localMatrix( en, nb );
      
 #ifdef DG_DOUBLE_FEATURE
+      const EntityType& neigh = (interior) ? nb : en;
       // create matrix handles for neighbor 
-      LocalMatrixType enMatrix = matrixObj_.localMatrix( nb, en ); 
+      LocalMatrixType enMatrix = matrixObj_.localMatrix( neigh, en ); 
 
       // create matrix handles for neighbor 
-      LocalMatrixType nbMatrix = matrixObj_.localMatrix( nb, nb ); 
+      LocalMatrixType nbMatrix = matrixObj_.localMatrix( neigh, neigh ); 
 #else 
       bool useInterior = false;
 #endif
