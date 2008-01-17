@@ -25,11 +25,14 @@ namespace Dune {
   // --BlockMatrixHandle
   //////////////////////////////////////////////////////
   template <class LittleBlockType, 
-            class RowDiscreteFunctionType, 
-            class ColDiscreteFunctionType = RowDiscreteFunctionType> 
+            class RowDiscreteFunctionImp, 
+            class ColDiscreteFunctionImp = RowDiscreteFunctionImp> 
   class ImprovedBCRSMatrix : public BCRSMatrix<LittleBlockType> 
   {
     public:
+      typedef RowDiscreteFunctionImp RowDiscreteFunctionType;
+      typedef ColDiscreteFunctionImp ColDiscreteFunctionType;
+      
       typedef BCRSMatrix<LittleBlockType> BaseType; 
       typedef typename BaseType :: RowIterator RowIteratorType ;
       typedef typename BaseType :: ColIterator ColIteratorType ;
@@ -77,34 +80,17 @@ namespace Dune {
       //! type of column block vector 
       typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType; 
 
-      //! type of used communication manager  
-      typedef CommunicationManager<ColSpaceType> CommunicationManagerType; 
-      typedef ParallelScalarProduct<ColDiscreteFunctionType> ParallelScalarProductType; 
-
-    private:  
+    protected:  
       size_type nz_;
 
       int localRows_; 
       int localCols_;
 
-      //! our function space, needed for communication  
-      const ColSpaceType* colSpace_; 
-
-      //! communication manager 
-      mutable CommunicationManagerType* comm_;
-      const ParallelScalarProductType* scp_;
-
     public:
       //! constructor used by ISTLMatrixObject
-      ImprovedBCRSMatrix(const ColSpaceType & space, 
-                         CommunicationManagerType& comm,
-                         const ParallelScalarProductType& scp,
-                         size_type rows, size_type cols)
+      ImprovedBCRSMatrix(size_type rows, size_type cols)
         : BaseType (rows,cols,BaseType::row_wise)
         , nz_(0)
-        , colSpace_(&space)
-        , comm_(&comm)
-        , scp_(&scp)
       {
       }
 
@@ -112,9 +98,6 @@ namespace Dune {
       ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
         : BaseType (rows,cols, BaseType::row_wise)
         , nz_(nz)
-        , colSpace_(0)
-        , comm_(0)         
-        , scp_(0)
       {
       }
       
@@ -124,9 +107,6 @@ namespace Dune {
         , nz_(org.nz_)
         , localRows_(org.localRows_)
         , localCols_(org.localCols_)
-        , colSpace_(org.colSpace_)
-        , comm_(org.comm_)
-        , scp_(org.scp_)
       {}
 
       //! matrix multiplication for OEM solvers 
@@ -239,230 +219,24 @@ namespace Dune {
           }
         }
       }
-
-      //! communicate block vector 
-      void communicate(const ColBlockVectorType& arg) const 
-      {
-        if(comm_)
-        {
-          assert( colSpace_ );
-          // if serial run, just return 
-          if(colSpace_->grid().comm().size() <= 1) 
-          {
-            return;
-          }
-
-          // exchange data 
-          ColDiscreteFunctionType tmp("ImprovedBCRSMatrix::communicate_tmp",*colSpace_,arg);
-          comm_->exchange( tmp );
-        }
-      }
-
-      //! apply matrix: \f$ y = A(x) \f$
-      double residuum(const ColBlockVectorType& rhs, RowBlockVectorType& x) const 
-      {
-        assert( colSpace_ );
-        // exchange data 
-        communicate( x );
-
-        assert( scp_ );
-        typedef typename ParallelScalarProductType :: SlaveDofsType SlaveDofsType;
-        const SlaveDofsType& slaveDofs = scp_->slaveDofs();
-
-        typedef typename ColBlockVectorType :: block_type LittleBlockVectorType; 
-        LittleBlockVectorType tmp; 
-        double res = 0.0;
-
-        // counter for rows 
-        int i = 0;
-        const int slaveSize = slaveDofs.size();
-        for(int slave = 0; slave<slaveSize; ++slave) 
-        {
-          const int nextSlave = slaveDofs[slave];
-          for(; i<nextSlave; ++i) 
-          {
-            tmp = 0; 
-            // get row 
-            const row_type& row = this->operator [](i);
-            // multiply with row 
-            ConstColIterator endj = row.end();
-            for (ConstColIterator j = row.begin(); j!=endj; ++j)
-            {
-              (*j).umv(x[j.index()], tmp);
-            }
-            
-            // substract right hand side 
-            tmp -= rhs[i];
-
-            // add scalar product 
-            res += tmp.two_norm2();
-          }
-          ++i;
-        }
-
-        return ( colSpace_ ) ? (colSpace_->grid().comm().sum( res )) : res;
-      }
-
-      //! apply matrix: \f$ y = A(x) \f$
-      void mult(const RowBlockVectorType& x, ColBlockVectorType& y) const 
-      {
-        //communicate( x );
-        // clear vector  
-        y = 0;
-
-        // multiply 
-        this->umv(x,y);
-
-        //scp_->deleteNonInterior( y );
-
-        // exchange data 
-        communicate( y );
-      }
-
-      //! apply scaled: \f$ y = y + \alpha A(x) \f$
-      void multAdd(field_type alpha, const RowBlockVectorType& x, ColBlockVectorType& y) const 
-      {
-        //communicate( x );
-        
-        this->usmv(alpha,x,y);
-        //scp_->deleteNonInterior( y );
-        
-        // exchange data 
-        communicate( y );
-      }
-  };
-
-  //! wrapper class to store perconditioner 
-  //! as the interface class does not have to category 
-  //! enum 
-  template<class MatrixImp, class ScpType>
-  class PreconditionerWrapper 
-    : public Preconditioner<typename MatrixImp :: RowBlockVectorType,
-                            typename MatrixImp :: ColBlockVectorType>
-  {
-    typedef MatrixImp MatrixType;
-    typedef typename MatrixImp :: RowBlockVectorType X;
-    typedef typename MatrixImp :: ColBlockVectorType Y;
-            
-    typedef Preconditioner<X,Y> PreconditionerInterfaceType;
-    MatrixType* matrix_;
-    const ScpType* scp_;
-    PreconditionerInterfaceType* preconder_; 
-    
-    //! set preconder to zero 
-    PreconditionerWrapper (const PreconditionerWrapper&);
-  public:
-    //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
-    //! \brief The range type of the preconditioner.
-    typedef Y range_type;
-    //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
-
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::sequential };
-
-    //! set preconder to zero 
-    PreconditionerWrapper () : matrix_(0), scp_(0), preconder_(0) {}
-    
-    //! create preconditioner of given type 
-    template <class PreconditionerType>
-    PreconditionerWrapper(MatrixType & m,
-                          const ScpType& scp,
-                          int iter, field_type relax, const PreconditionerType*) 
-      : matrix_(&m)
-      , scp_(&scp) 
-      , preconder_(0) 
-    {
-      PreconditionerType* pre = new PreconditionerType(m,iter,relax); 
-      preconder_ = pre;
-    }
-    
-    //! create preconditioner of given type 
-    template <class PreconditionerType>
-    PreconditionerWrapper(MatrixType & m, 
-                          const ScpType& scp,
-                          field_type relax, const PreconditionerType*) 
-      : matrix_(&m)
-      , scp_(&scp)
-      , preconder_(0)
-    {
-      PreconditionerType* pre = new PreconditionerType(m,relax); 
-      preconder_ = pre;
-    }
-    
-    //! \copydoc Preconditioner 
-    virtual void pre (X& x, Y& b) 
-    {
-      // all the implemented Preconditioners do nothing in pre and post 
-#ifndef NDEBUG 
-      // apply preconditioner
-      if( preconder_ ) 
-      {
-        X tmp (x);
-        preconder_->pre(x,b);
-        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
-      }
-#endif
-    }
-
-    //! \copydoc Preconditioner 
-    virtual void apply (X& v, const Y& d)
-    {
-      if( preconder_ ) 
-      {
-        //assert( scp_ );
-        //scp_->deleteNonInterior(const_cast<Y&> (d)); 
-
-        // apply preconditioner
-        preconder_->apply(v,d);
-        // communicate result 
-        assert( matrix_ );
-        matrix_->communicate( v );
-      }
-      else 
-      {
-        // just copy values 
-        v = d;
-      }
-    }
-
-    //! \copydoc Preconditioner 
-    virtual void post (X& x) 
-    {
-      // all the implemented Preconditioners do nothing in pre and post 
-#ifndef NDEBUG 
-      // apply preconditioner
-      if( preconder_ ) 
-      {
-        X tmp(x);
-        preconder_->post(x);
-        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
-      }
-#endif
-    }
-
-    // every abstract base class has a virtual destructor
-    virtual ~PreconditionerWrapper () 
-    {
-      delete preconder_;
-      preconder_ = 0;
-    }
   };
 
   //! MatrixObject handling an istl matrix 
-  template <class RowSpaceImp, class ColumnSpaceImp> 
+  template <class TraitsImp> 
   class ISTLMatrixObject  
   {
   public:  
+    //! type of traits 
+    typedef TraitsImp Traits;
+    
     //! type of space defining row structure 
-    typedef RowSpaceImp RowSpaceType;
+    typedef typename Traits :: RowSpaceType RowSpaceType;
     //! type of space defining column structure 
-    typedef ColumnSpaceImp ColumnSpaceType;
+    typedef typename Traits :: ColumnSpaceType ColumnSpaceType;
 
     //! type of this pointer 
-    typedef ISTLMatrixObject<RowSpaceImp,ColumnSpaceImp> ThisType;
+    typedef ISTLMatrixObject<Traits> ThisType;
+
 
   private:  
     typedef typename RowSpaceType::GridType GridType; 
@@ -489,16 +263,17 @@ namespace Dune {
     typedef ImprovedBCRSMatrix< LittleBlockType , 
                                 RowDiscreteFunctionType , 
                                 ColumnDiscreteFunctionType > MatrixType;
+    typedef typename Traits :: template Adapter < MatrixType > ::  MatrixAdapterType MatrixAdapterType;
+    // get preconditioner type from MatrixAdapterType
+    typedef typename MatrixAdapterType :: PreconditionAdapterType PreconditionMatrixType;
+    typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
+    typedef typename MatrixAdapterType :: CommunicationManagerType CommunicationManagerType;
    
-    typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
-    //! type of preconditioner 
-    typedef PreconditionerWrapper<MatrixType,ParallelScalarProductType> PreconditionMatrixType;
-
     struct LocalMatrixTraits
     {
-      typedef RowSpaceImp DomainSpaceType ;
-      typedef ColumnSpaceImp RangeSpaceType;
-      typedef typename RowSpaceImp :: RangeFieldType RangeFieldType;
+      typedef RowSpaceType DomainSpaceType ;
+      typedef ColumnSpaceType RangeSpaceType;
+      typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
       typedef MatrixType LocalMatrixType;
       typedef typename MatrixType:: block_type LittleBlockType;
     };
@@ -703,11 +478,8 @@ namespace Dune {
     typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
   private:  
-    typedef CommunicationManager<ColumnSpaceType> CommunicationManagerType;
-
     const RowSpaceType & rowSpace_;
     const ColumnSpaceType & colSpace_;
-    ParallelScalarProductType scp_;
 
     // sepcial row mapper 
     RowMapperType& rowMapper_;
@@ -719,9 +491,9 @@ namespace Dune {
     int sequence_;
 
     mutable MatrixType* matrix_;
-    mutable PreconditionMatrixType* preconder_;
 
     CommunicationManagerType comm_;
+    ParallelScalarProductType scp_;
 
     int numIterations_; 
     double relaxFactor_; 
@@ -756,15 +528,14 @@ namespace Dune {
       , colSpace_(colSpace)
       // create scp to have at least one instance 
       // otherwise instance will be deleted during setup
-      , scp_(colSpace_)
       // get new mappers with number of dofs without considerung block size 
       , rowMapper_( rowSpace.blockMapper() )
       , colMapper_( colSpace.blockMapper() )
       , size_(-1)
       , sequence_(-1)
       , matrix_(0)
-      , preconder_(0)
-      , comm_(colSpace_)
+      , comm_(rowSpace_)
+      , scp_(colSpace_)
       , numIterations_(5)
       , relaxFactor_(1.1)
       , preconditioning_(none)
@@ -790,7 +561,6 @@ namespace Dune {
     //! destructor 
     ~ISTLMatrixObject() 
     {
-      delete preconder_;
       delete matrix_;
     }
 
@@ -801,19 +571,67 @@ namespace Dune {
       return *matrix_; 
     }
     
+    //! return matrix adapter object  
+    MatrixAdapterType matrixAdapter() const 
+    { 
+      // no preconditioner 
+      if( preconditioning_ == none )
+      {
+        return MatrixAdapterType(matrix(),rowSpace_,colSpace_);
+      }
+      // SSOR 
+      else if( preconditioning_ == ssor )
+      {
+        typedef SeqSSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
+                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+      }
+      // SOR 
+      else if(preconditioning_ == sor )
+      {
+        typedef SeqSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
+                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+      }
+      // ILU-0 
+      //else if(preconditioning_ == ilu_0)
+      if(preconditioning_ == ilu_0)
+      {
+        typedef SeqILU0<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
+                                 relaxFactor_,(PreconditionerType*)0);
+      }
+      // ILU-n
+      else if(preconditioning_ == ilu_n)
+      {
+        typedef SeqILUn<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
+                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+      }
+      // Gauss-Seidel
+      else if(preconditioning_ == gauss_seidel)
+      {
+        typedef SeqGS<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
+                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+      }
+      // Jacobi 
+      else if(preconditioning_ == jacobi)
+      {
+        typedef SeqJac<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
+                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+      }
+      else 
+      {
+        preConErrorMsg(preconditioning_);
+      }
+      return MatrixAdapterType(matrix(),rowSpace_,colSpace_ );
+    }
+    
     //! return true, because in case of no preconditioning we have empty
     //! preconditioner 
     bool hasPcMatrix () const { return true; }
-
-    //! return reference to preconditioner
-    const PreconditionMatrixType& pcMatrix () const  
-    { 
-      if( !preconder_ )
-      {
-        preconder_ = createPreconditioner();
-      }
-      return *preconder_; 
-    }
 
     //! set all matrix entries to zero 
     void clear()
@@ -830,9 +648,8 @@ namespace Dune {
       if(sequence_ != rowSpace_.sequence())
       {
         delete matrix_; matrix_ = 0;
-        delete preconder_; preconder_ = 0;
 
-        matrix_ = new MatrixType(colSpace_, comm_, scp_, rowMapper_.size(), colMapper_.size());
+        matrix_ = new MatrixType(rowMapper_.size(), colMapper_.size());
         matrix().setup(colSpace_,rowMapper(),colMapper(),stencil,verbose);
 
         sequence_ = rowSpace_.sequence();
@@ -884,62 +701,6 @@ namespace Dune {
                                 const EntityType& colEntity) const 
     {
       return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
-    }
-
-  private:  
-    PreconditionMatrixType* createPreconditioner() const
-    {
-      // no preconditioner 
-      if( preconditioning_ == none )
-      {
-        return new PreconditionMatrixType();
-      }
-      /*
-      // SSOR 
-      else if( preconditioning_ == ssor )
-      {
-        typedef SeqSSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
-      }
-      // SOR 
-      else if(preconditioning_ == sor )
-      {
-        typedef SeqSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
-      }
-      */
-      // ILU-0 
-      //else if(preconditioning_ == ilu_0)
-      if(preconditioning_ == ilu_0)
-      {
-        typedef SeqILU0<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), scp_, relaxFactor_, (PreconditionerType*)0);
-      }
-      // ILU-n
-      else if(preconditioning_ == ilu_n)
-      {
-        typedef SeqILUn<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), scp_, numIterations_ , relaxFactor_, (PreconditionerType*)0);
-      }
-      /*
-      // Gauss-Seidel
-      else if(preconditioning_ == gauss_seidel)
-      {
-        typedef SeqGS<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
-      }
-      // Jacobi 
-      else if(preconditioning_ == jacobi)
-      {
-        typedef SeqJac<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return new PreconditionMatrixType(matrix(), numIterations_ , relaxFactor_, (PreconditionerType*)0);
-      }
-      else 
-      {
-        preConErrorMsg(preconditioning_);
-      }
-      */
-      return 0;
     }
 
     void preConErrorMsg(int preCon) const 
