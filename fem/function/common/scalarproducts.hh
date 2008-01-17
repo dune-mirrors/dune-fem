@@ -593,7 +593,6 @@ namespace Dune
     {
       RangeFieldType scp = 0;
 
-      typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;
       ConstDofIteratorType endit = x.dend ();
       ConstDofIteratorType xit = x.dbegin ();
       ConstDofIteratorType yit = y.dbegin();
