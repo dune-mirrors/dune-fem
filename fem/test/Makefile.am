@@ -6,8 +6,8 @@ EXTRA_DIST = 2dgrid.dgf \
 	     exactsolution.hh \
 	     testgrid.hh
 
-GRIDTYPE = YASPGRID
-GRIDDIM = 2
+#GRIDTYPE = YASPGRID
+#GRIDDIM = 2
 
 # linker flags
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
