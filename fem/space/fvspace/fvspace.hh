@@ -69,14 +69,14 @@ namespace Dune {
     /** \brief defines type of data handle for communication 
         for this type of space.
     */
-    template <class DiscreteFunctionImp
-              class OperationImp = DFCommunicationOperation :: Copy >
+    template< class DiscreteFunction,
+              class Operation = DFCommunicationOperation :: Copy >
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DGCommunicationHandler<DiscreteFunctionImp,OperationImp> Type;
+      typedef DGCommunicationHandler< DiscreteFunction, Operation > Type;
       //! type of operation to perform on scatter 
-      typedef OperationImp OperationType;
+      typedef Operation OperationType;
     };
   };
   //
