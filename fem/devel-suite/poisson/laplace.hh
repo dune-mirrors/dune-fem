@@ -69,8 +69,9 @@ namespace Dune
     //! type of quadrature to be used
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
-    typedef typename MatrixTraits :: template 
-          MatrixObject< LagrangeMatrixTraits<MatrixTraits> > :: MatrixObjectType MatrixObjectType;
+    typedef typename MatrixTraits
+      :: template  MatrixObject< LagrangeMatrixTraits< MatrixTraits > >
+      :: MatrixObjectType MatrixObjectType;
 
     typedef typename MatrixObjectType :: LocalMatrixType LocalMatrixType;
     typedef typename MatrixObjectType :: PreconditionMatrixType PreconditionMatrixType;
@@ -144,7 +145,6 @@ namespace Dune
                               DiscreteFunctionType &w ) const 
     {
       systemMatrix().apply( u, w );
-      //systemMatrix().multOEM( u.leakPointer(), w.leakPointer() );
     }
   
     /*! \brief obtain a reference to the system matrix 
@@ -500,7 +500,7 @@ namespace Dune
       }
 
       CommunicationManagerType communicate( discreteFunctionSpace );
-      communicate.exchange( discreteFunction );
+      communicate.exchange( discreteFunction, (DFCommunicationOperation :: Add *) 0 );
     }
   };
 

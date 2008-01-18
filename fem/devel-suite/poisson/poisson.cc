@@ -118,9 +118,9 @@ using namespace Dune;
  *        for example, is not. If you want to use OEM solvers, the index set
  *        must be continuous. In such a case use AdaptiveLeafGridPart.
  */
-//typedef LeafGridPart< GridType > GridPartType;
+typedef LeafGridPart< GridType > GridPartType;
 //typedef LevelGridPart< GridType > GridPartType;
-typedef AdaptiveLeafGridPart< GridType > GridPartType;
+//typedef AdaptiveLeafGridPart< GridType > GridPartType;
 
 //! define the function space, \f[ \R^n \rightarrow \R \f]
 // see dune/common/functionspace.hh
