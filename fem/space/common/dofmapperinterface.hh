@@ -325,27 +325,14 @@ private:
   typedef DofMapperDefault< Traits > ThisType;
   typedef DofMapperInterface< Traits > BaseType;
 
-#if 0
-  //! default implementation returns 0 
-  template <class MapperType, int codim>
-  struct NumDofs
+  // checker struct to avoid compiler warnings 
+  template <class Entity>
+  struct CheckEntityCodimension 
   {
-    inline static int dofs(const MapperType& mapper) 
-    {
-      return 0;
-    }
+    CompileTimeChecker< (Entity :: codimension > 0) >
+      __CHECK_ENTITY_CODIMENSION__;
+    static inline void check() {}
   };
-  
-  //! codim 0 specialization 
-  template <class MapperType>
-  struct NumDofs<MapperType,0>
-  {
-    inline static int dofs(const MapperType& mapper) 
-    {
-      return mapper.numDofs();
-    }
-  };
-#endif
 
 protected:
   using BaseType :: asImp;
@@ -365,8 +352,7 @@ public:
   template< class Entity > 
   int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
-    CompileTimeChecker< (Entity :: codimension > 0) >
-      __CHECK_ENTITY_CODIMENSION__;
+    CheckEntityCodimension<Entity> :: check ();
     return 0;
   }
 
@@ -399,8 +385,7 @@ public:
   template< class Entity >
   inline int numEntityDofs ( const Entity &entity ) const
   {
-    CompileTimeChecker< (Entity :: codimension > 0) >
-      __CHECK_ENTITY_CODIMENSION__;
+    CheckEntityCodimension<Entity> :: check ();
     return 0;
   }
 
