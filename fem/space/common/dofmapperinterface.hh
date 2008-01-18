@@ -325,15 +325,6 @@ private:
   typedef DofMapperDefault< Traits > ThisType;
   typedef DofMapperInterface< Traits > BaseType;
 
-  // checker struct to avoid compiler warnings 
-  template <class Entity>
-  struct CheckEntityCodimension 
-  {
-    CompileTimeChecker< (Entity :: codimension > 0) >
-      __CHECK_ENTITY_CODIMENSION__;
-    static inline void check() {}
-  };
-
 protected:
   using BaseType :: asImp;
   
@@ -352,7 +343,8 @@ public:
   template< class Entity > 
   int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
-    CheckEntityCodimension<Entity> :: check ();
+    typedef CompileTimeChecker< (Entity :: codimension > 0) >
+      __CHECK_ENTITY_CODIMENSION__;
     return 0;
   }
 
@@ -385,7 +377,8 @@ public:
   template< class Entity >
   inline int numEntityDofs ( const Entity &entity ) const
   {
-    CheckEntityCodimension<Entity> :: check ();
+    typedef CompileTimeChecker< (Entity :: codimension > 0) >
+      __CHECK_ENTITY_CODIMENSION__;
     return 0;
   }
 
