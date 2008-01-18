@@ -391,13 +391,9 @@ namespace Dune
     virtual double residuum(const Y& rhs, X& x) const 
     {
       X tmp (x);
-      tmp = 0;
 
       this->apply(x,tmp);
       tmp -= rhs;
-
-      // exchange data  
-      communicate( tmp );
 
       // return global sum of residuum 
       return scp_.norm(tmp);

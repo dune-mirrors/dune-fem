@@ -499,7 +499,7 @@ private:
     void apply ( const DomainFunction &arg, RangeFunction &dest ) const
     {
       matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
-      communicate_.exchange( dest );
+      communicate_.exchange( dest, (DFCommunicationOperation :: Add *) 0 );
     }
 
     //! mult method of matrix object used by oem solver
