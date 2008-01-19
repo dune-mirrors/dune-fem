@@ -120,6 +120,15 @@ namespace Dune
       asImp() += lf;
       return *this;
     }
+    template< class T >
+    inline void assign ( const LocalFunction< T > &lf )
+    {
+      asImp().assign(lf);
+    }
+    inline void clear ( )
+    {
+      asImp().clear();
+    }
 
     /** \brief subtract another local function to this one
      *
@@ -459,6 +468,10 @@ namespace Dune
     template< class T >
     inline void operator-= ( const LocalFunction< T > &lf );
 
+    template< class T >
+    inline void assign ( const LocalFunction< T > &lf );
+    inline void clear ( );
+    
     /** \copydoc Dune::LocalFunction::axpy(const RangeFieldType s,const LocalFunction<T> &lf) */
     template< class T >
     inline void axpy ( const RangeFieldType s,
@@ -570,6 +583,10 @@ namespace Dune
     /** \copydoc Dune::LocalFunction::operator-=(const LocalFunction<T> &lf) */
     template< class T >
     inline void operator-= ( const LocalFunction< T > &lf );
+
+    template< class T >
+    inline void assign ( const LocalFunction< T > &lf );
+    inline void clear ( );
 
     /** \copydoc Dune::LocalFunction::axpy(const RangeFieldType s,const LocalFunction<T> &lf) */
     template< class T >
