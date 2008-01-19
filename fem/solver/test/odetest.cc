@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fem/operator/common/spaceoperatorif.hh>
 #include <fem/solver/rungekutta.hh>
-#include <fem/solver/multistep.hh>
+#include <fem/solver/multistepAdams.hh>
 
 using namespace Dune;
 using namespace DuneODE;

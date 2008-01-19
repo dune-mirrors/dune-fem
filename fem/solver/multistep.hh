@@ -24,7 +24,7 @@ using namespace std;
  **/
 
 
-/** \brief Base class for explicit multistep method. */
+/** \brief \newimplementation Base class for explicit multistep method. */
 template<class Operator>
 class ExplMultiStepBase 
 {
@@ -32,7 +32,7 @@ public:
   typedef typename Operator::DestinationType DestinationType;
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
   // typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
-private:
+protected:
   std::vector< std::vector<double> > a;
   std::vector<double> b;
   std::vector<double> c;
@@ -41,7 +41,7 @@ private:
   std::vector<DestinationType*> Uj;
   std::vector<DestinationType*> Fj;
   std::vector<double> deltat_;
-  bool msInit;
+  bool msInit,msFirst;
 protected:  
   const int ord_;
 
@@ -55,18 +55,18 @@ public:
   ExplMultiStepBase(Operator& op, TimeProvider& tp, 
                     int pord, bool verbose = true ) :
     a(0),b(0),c(0)
-    , steps_(3)
-    , gamma_(1./3.)
+    , steps_(pord+1)
+    , gamma_(0.5)  // 1./3. -> Shu
     , Uj(0)
     , Fj(0)
     , deltat_(steps_)
     , msInit(false)
+    , msFirst(true)
     , ord_(pord)
     , op_(op)
     , tp_(tp)
     , initialized_(false)
   {
-    assert(ord_==2);
     a.resize(ord_);
     for (int i=0; i<ord_; ++i)
     {
@@ -146,13 +146,12 @@ public:
       deltat_[Uj.size()-1] = tp_.deltaT();
       Uj.push_back(new DestinationType("UMS",op_.space()) );
       if (Uj.size()==steps_) {
+        Uj[steps_-1]->assign(U0);
         for (size_t i=0;i<steps_-1;i++) {
           op_(*(Uj[i]),(*Fj[i])); 
         }
         msInit=true;
       }
-      std::cerr << "Startup with deltat = "
-                << deltat_[0] << std::endl;
       return;
     }
     // now multistep
@@ -171,17 +170,24 @@ public:
     // Perform Update
     double alpha[steps_];
     double beta[steps_];
-    double w = deltat_[steps_-1]/deltat_[steps_-2];
     switch (steps_) {
     case 2: {
+      std::cerr << "the two step scheme of order 2 has negative beta coeffs and requires adjoint space operator!" << std::endl;
+      double w = deltat_[steps_-1]/deltat_[steps_-2];
       double alpha2 = (1.+2.*gamma_*w)/(1.+w);
       alpha[1] = -((1.-2.*gamma_)*w-1.)/alpha2;
       alpha[0] = -((2.*gamma_-1.)*w*w/(1.+w))/alpha2;
       beta[1]  = (1.+gamma_*w)/alpha2*deltat_[steps_-1];
       beta[0]  = -(gamma_*w)/alpha2*deltat_[steps_-1];
+      std::cout << "# MS Coeffs : " 
+    << alpha[0] << " " << alpha[1] << " " 
+    << alpha2 << "   " 
+    << beta[0] << " " << beta[1] << "  "
+    << deltat_[0] << " " << deltat_[1] 
+    << std::endl;
     } break;
     case 3: {
-      /* Shu
+      /* Shu 
       alpha[0] = 1./4.;
       alpha[1] = 0.;
       alpha[2] = 3./4.;
@@ -189,9 +195,9 @@ public:
       beta[1]  = 0.*deltat_[steps_-1];
       beta[2]  = 3./2.*deltat_[steps_-1];
       */
-      double w0 = deltat_[1]/deltat_[0];
-      double w1 = deltat_[2]/deltat_[1];
-      double g = w/(w0+w1);
+      double w1 = deltat_[1]/deltat_[0];
+      double w2 = deltat_[2]/deltat_[1];
+      double g = w1*w2/(1+w1);
       // CFL < 1-g -> TVD
       // therefore need g<1!
       assert(g<1);
@@ -201,18 +207,84 @@ public:
       beta[0]  = 0.*deltat_[steps_-1];
       beta[1]  = 0.*deltat_[steps_-1];
       beta[2]  = (1+g)*deltat_[steps_-1]; // always > 0
-    } break;
-    case 4: {
-      alpha[0] = 1./9.;
-      alpha[1] = 0.;
-      alpha[2] = 0.;
-      alpha[3] = 8./9.;
+      /*
+      double w1 = deltat_[1]/deltat_[0];
+      double w2 = deltat_[2]/deltat_[1];
+      double w1_1=1.+w1;
+      alpha[0] = (w1*w2-gamma_*w1*w1)/(w1_1*w1_1);
+      alpha[1] = gamma_;
+      alpha[2] = 1.-alpha[1]-alpha[0];
       beta[0]  = 0.*deltat_[steps_-1];
       beta[1]  = 0.*deltat_[steps_-1];
+      beta[2]  = (1+w1+w1*w2-gamma_/w2*(1.+2.*w1))/w1_1*
+                 deltat_[steps_-1]; // always > 0
+      */
+    } break;
+    case 4: {
+      /**/
+      alpha[0] = 11./27.; // 1./9.;
+      alpha[1] = 0.;
+      alpha[2] = 0.;
+      alpha[3] = 16./27.; // 8./9.;
+      beta[0]  = 4./9.*deltat_[steps_-1];      // 4./9.
+      beta[1]  = 0.*deltat_[steps_-1];
       beta[2]  = 0.*deltat_[steps_-1];
-      beta[3]  = 4./3.*deltat_[steps_-1];
+      beta[3]  = 16./9.*deltat_[steps_-1]; // 4./3.
+      /*
+      double k3 = deltat_[3];
+      double K2 = deltat_[0]+deltat_[1]+deltat_[2];
+      double K3 = K2 + k3;
+      double q1 = K3/K2;
+      double q2 = k3/K2;
+      double g = q2*q2*(3.+2.*q2);
+      alpha[0] = g;
+      alpha[1] = 0.;
+      alpha[2] = 0.;
+      alpha[3] = 1.-g;
+      beta[0]  = q2*q1*deltat_[steps_-1];      // 0.
+      beta[1]  = 0.*deltat_[steps_-1];
+      beta[2]  = 0.*deltat_[steps_-1];
+      beta[3]  = q1*q1*deltat_[steps_-1]; // 4./3.
+      */
     } break;
     }
+    #if 0 // !NDEBUG
+    { // Check order conditions
+      int p = 1;
+      double cond;
+      double M[steps_+1];
+      for (int j=0;j<=steps_;j++) {
+        M[j] = 0;
+        for (int i=0;i<j;i++)
+          M[j] += deltat_[i];
+      }
+      do {
+        cond = -1.;
+        for (int q=0;q<p;q++)
+        cond *= M[steps_];
+        for (int j=1;j<steps_;j++) {
+          double Mp=1;
+          for (int q=0;q<p-1;q++)
+            Mp *= M[j];
+          cond += (alpha[j]*M[j]+p*beta[j])*Mp;
+        }
+        if (p==1)
+          cond += beta[0];
+        std::cout << "# MS Cond for p= " << p 
+                  << " " << cond
+                  << std::endl;
+        ++p;
+      } while (fabs(cond)<1e-7 && p<10);
+      std::cout << "   # CFL and stability: "; 
+      for (int i=0;i<steps_;i++) {
+        if (fabs(beta[i])>1e-10) {
+          std::cout << alpha[i]/beta[i]*
+                       deltat_[steps_-1] << " ";
+        }
+      }
+      std::cout << std::endl;
+    }
+    #endif
     // Update
     U0 *= alpha[steps_-1];
     U0.addScaled(*(Fj[steps_-1]),beta[steps_-1]);
@@ -302,7 +374,7 @@ public:
     \param[in] verbose verbosity 
   */
   ExplMultiStep (Operator& op,int pord,double cfl, bool verbose = true ) :
-    TimeProvider(0.0,cfl/double(pord)),
+    TimeProvider(0.0,(cfl/double(pord))*0.95),
     BaseType(op,*this,pord,verbose),
     tp_(op.space().grid().comm(),*this), 
     savetime_(0.0), savestep_(1)
