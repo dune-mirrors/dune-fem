@@ -85,7 +85,11 @@ namespace Dune {
   {
     typedef std::auto_ptr<TwistMapperStrategy<ct, dim> > AutoPtrType;
     
-    if (dim == 1) {
+    if (dim == 0) {
+      helper_ = AutoPtrType(new
+      PointTwistMapperStrategy<ct,dim>(quad.geometry()));
+    }
+    else if (dim == 1) {
       helper_ = 
         AutoPtrType(new LineTwistMapperStrategy<ct, dim>(quad.geometry()));
     } 
@@ -175,6 +179,24 @@ namespace Dune {
     return storage;
   }
 
+  template <class ct, int dim>
+  PointTwistMapperStrategy<ct, dim>::
+  PointTwistMapperStrategy(GeometryType geo) :
+    TwistMapperStrategy<ct, dim>(0, 1),
+    refElem_(ReferenceElements<ct, dim>::cube(geo)),
+    mat_(0.)
+  {
+    assert(dim == 0);
+  }
+
+  template <class ct, int dim>
+  const typename TwistMapperStrategy<ct, dim>::MatrixType&
+  PointTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const 
+  {
+    assert(twist == 0);
+    mat_[0] = refElem_.position(0, 1);
+    return mat_;
+  }
   template <class ct, int dim>
   LineTwistMapperStrategy<ct, dim>::
   LineTwistMapperStrategy(GeometryType geo) :

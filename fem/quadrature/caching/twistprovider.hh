@@ -218,6 +218,26 @@ namespace Dune {
   };
 
   //! Implements the creator's functionality that depends on the underlying
+  //! geometry. This is the special implementation for points.
+  template <class ct, int dim>
+  class PointTwistMapperStrategy : public TwistMapperStrategy<ct, dim> {
+  public:
+    typedef TwistMapperStrategy<ct, dim> BaseType;
+    typedef typename BaseType::MatrixType MatrixType;
+
+  public:
+    PointTwistMapperStrategy(GeometryType geo);
+    
+    //! virtual desctructor because of virtual functions 
+    virtual ~PointTwistMapperStrategy() {}
+
+    virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
+    
+  private:
+    const ReferenceCube<ct, dim>& refElem_;
+    mutable MatrixType mat_;
+  };
+  //! Implements the creator's functionality that depends on the underlying
   //! geometry. This is the special implementation for line.
   template <class ct, int dim>
   class LineTwistMapperStrategy : public TwistMapperStrategy<ct, dim> {
