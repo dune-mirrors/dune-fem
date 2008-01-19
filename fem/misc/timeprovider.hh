@@ -108,11 +108,12 @@ namespace Dune {
 
     /** \brief augment time , i.e. \f$t = t + \triangle t\f$ and
         increase time step counter  */
-    void augmentTime()
+    double augmentTime()
     { 
       assert( lock_ );
       time_ += deltaT(); 
       ++timeStep_;
+      return time_;
     }
     
     /** \brief reset set time step estimate 
