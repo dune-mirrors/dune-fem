@@ -24,7 +24,26 @@ namespace Dune
     asImp().axpy( -1, lf );
   }
 
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  template< class T >
+  inline void 
+  LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
+  :: assign ( const LocalFunction< T > &lf ) {
+    const int numDofs = asImp().numDofs();
+    assert( numDofs == lf.numDofs() );
 
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] = lf[ i ];
+  }
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  inline void 
+  LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
+  :: clear ( ) {
+    const int numDofs = asImp().numDofs();
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] = 0.0;
+  }
+  
   
   template< class DiscreteFunctionSpace, class LocalFunctionImp >
   template< class T >
@@ -204,7 +223,8 @@ namespace Dune
   template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
             class LocalFunctionImp >
   template< class T >
-  inline void LocalFunctionDefault
+  inline void 
+  LocalFunctionDefault
     < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
     :: operator-= ( const LocalFunction< T > &lf )
   {
@@ -212,6 +232,30 @@ namespace Dune
   }
 
 
+  
+  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
+            class LocalFunctionImp >
+  template< class T >
+  inline void 
+  LocalFunctionDefault
+    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
+  :: assign ( const LocalFunction< T > &lf ) {
+    const int numDofs = asImp().numDofs();
+    assert( numDofs == lf.numDofs() );
+
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] = lf[ i ];
+  }
+  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
+            class LocalFunctionImp >
+  inline void 
+  LocalFunctionDefault
+    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
+  :: clear ( ) {
+    const int numDofs = asImp().numDofs();
+    for( int i = 0; i < numDofs; ++i )
+      asImp()[ i ] = 0.0;
+  }
   
   template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
             class LocalFunctionImp >
