@@ -3,6 +3,9 @@
 #include "modeldefault.hh"
 #include "mhd_eqns.hh"
 #include "rotator.hh"
+namespace EULERCHORIN {
+#include "chorjo.hh"
+}
 namespace EULERNUMFLUX {
 #include "euler_flux.hpp"
 }
@@ -344,6 +347,20 @@ void EulerFlux<1>::analyticalFlux(const double gamma,
 }
 template <>
 inline
+double EulerFlux<1>::pressure(const double gamma,const RangeType& u) const {
+  assert(u[0]>1e-10);
+  double rhoeps = u[e]-0.5*(u[1]*u[1])/u[0];
+  /*
+  if (rhoeps<1e-10) 
+    cerr << "negative internal energy density " << rhoeps 
+	 << " in analyticalFlux: "
+	 << u << endl;
+   */
+  assert(rhoeps>1e-10);
+  return (gamma-1)*rhoeps;
+}
+template <>
+inline
 double EulerFlux<2>::pressure(const double gamma,const RangeType& u) const {
   assert(u[0]>1e-10);
   double rhoeps = u[e]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0];
@@ -632,9 +649,27 @@ public:
   double gamma;
 };
 class U0Sod {
+  double ql,qr,ul,ur,pl,pr;
 public:
-  U0Sod() : gamma(1.4) {myName = "RP-Sod";}
-  U0Sod(double eps,int flag,bool diff_timestep=true) : gamma(1.4) {myName = "RP-Sod";}
+  U0Sod() : gamma(1.4) {
+    myName = "RP-Sod";
+    ql = 1.0;
+    qr = 0.125;
+    ul = 0.;
+    ur = 0.;
+    pl = 1.0;
+    pr = 0.1;
+  }
+  U0Sod(double eps,int flag,bool diff_timestep=true) 
+    : gamma(1.4) {
+    myName = "RP-Sod";
+    ql = 1.0;
+    qr = 0.125;
+    ul = 0.;
+    ur = 0.;
+    pl = 1.0;
+    pr = 0.1;
+  }
   double endtime() {
     return 0.4;
   }
@@ -643,25 +678,39 @@ public:
   }
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0,arg,res);
+    evaluate(0.,arg,res);
   }
   template <class DomainType, class RangeType>
-  void evaluate(double t,const DomainType& arg, RangeType& res) const {
-    if (arg[0]<0.) {
-      res[0]=1.;
-      res[1]=0.;
-      res[2]=0.;
-      res[3]=1./(gamma-1.0);
-    } else {
-      res[0]=0.125;
-      res[1]=0.;
-      res[2]=0.;
-      res[3]=0.1/(gamma-1.0);
+  void evaluate(double t,const DomainType& arg, 
+		RangeType& res) const {
+    double x = arg[0] - 0.5;
+    if (t>1e-8)
+      chorin(t,x,res[0],res[1],res[2]);
+    else {
+      if (x<0.) {
+	res[0]=ql; // 0.5;
+	res[1]=ul;
+	// res[2]=0.;
+	res[2]=pl;
+      } else {
+	res[0]=qr;
+	res[1]=ur;
+	// res[2]=0.;
+	res[2]=pr;
+      }
     }
     res[1] *= res[0];
-    res[2] *= res[0];
-    res[3] += 0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
+    // res[2] *= res[0];
+    res[2] = res[2]/(gamma-1.0)+0.5*(res[1]*res[1])/res[0];
   }
+  
+  void chorin(double t,double x,
+	      double& q_erg,double& u_erg,double& p_erg) const
+  {
+    EULERCHORIN::
+      lsg(x,t,&q_erg,&u_erg,&p_erg,ql,qr,ul,ur,pl,pr,gamma);
+  }
+
   void printmyInfo(std::string filename)
   {
     std::ostringstream filestream;
