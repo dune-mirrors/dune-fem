@@ -2,6 +2,7 @@
 #define DUNE_FEM_STREAMS_HH
 
 #include <string>
+#include <fstream>
 
 #include <dune/common/exceptions.hh>
 
