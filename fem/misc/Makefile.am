@@ -21,6 +21,7 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       h1norm.hh \
 	       h1norm_inline.hh \
                identity.hh \
+	       l1error.hh \
 	       l2error.hh \
 	       l2norm.hh \
 	       l2norm_inline.hh \
