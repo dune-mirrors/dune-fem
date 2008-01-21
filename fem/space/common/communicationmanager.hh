@@ -32,63 +32,88 @@
 #include <dune/fem/space/common/singletonlist.hh>
 #include <dune/fem/space/common/arrays.hh>
 
-namespace Dune { 
+namespace Dune
+{
   
 /** @addtogroup Communication Communication 
     @{
 **/
-  
-  //! \brief Default CommunicationManager class just using the grids communicate
-  //! method 
-  template <class SpaceImp> 
-    //, 
-    //        class OperationImp = DFCommunicationOperation::Copy >
+
+  /** \class DefaultCommunicationManager
+   *  \ingroup Communication
+   *  \brief default communication manager using just the grids communicate
+   *         method
+   */
+  template< class Space >
   class DefaultCommunicationManager 
   {
-    typedef SpaceImp SpaceType; 
-    typedef typename SpaceType :: GridPartType GridPartType; 
+  public:
+    typedef Space SpaceType; 
 
-    // gridPart for communication 
-    const GridPartType & gridPart_; 
+  protected:
+    typedef typename SpaceType :: GridPartType GridPartType;
 
-    const InterfaceType interFace_;
+  protected:
+    const GridPartType &gridPart_;
+
+    const InterfaceType interface_;
     const CommunicationDirection dir_;
     
-    DefaultCommunicationManager(const DefaultCommunicationManager &);
   public:
     //! constructor taking space, but here only storing gridPart for
     //! communication
-    DefaultCommunicationManager(const SpaceType & space,
-                                const InterfaceType interFace = InteriorBorder_All_Interface ,
-                                const CommunicationDirection dir = ForwardCommunication)
-      : gridPart_(space.gridPart()) 
-      , interFace_( interFace )
-      , dir_ ( dir )
+    inline DefaultCommunicationManager
+      ( const SpaceType &space,
+        const InterfaceType interface = InteriorBorder_All_Interface,
+        const CommunicationDirection dir = ForwardCommunication )
+    : gridPart_( space.gridPart() ),
+      interface_( interface ),
+      dir_ ( dir )
     {}
 
-    //! exchange data for discrete function df by using the copy operation
-    template <class DiscreteFunctionType> 
-    void exchange(DiscreteFunctionType & df) 
+  private:
+    // prohibit copying
+    DefaultCommunicationManager ( const DefaultCommunicationManager & );
+    
+  public:
+    /** \brief exchange data for a discrete function using the copy operation
+     *  
+     *  \param  function  discrete function to communicate
+     */
+    template< class DiscreteFunction >
+    inline void exchange ( DiscreteFunction &discreteFunction )
     {
-      exchange( df , (DFCommunicationOperation :: Copy *) 0 );
+      exchange( discreteFunction, (DFCommunicationOperation :: Copy *) 0 );
     }
 
-    //! exchange data for discrete function df by using given operation 
-    template <class DiscreteFunctionType, class OperationImp > 
-    void exchange(DiscreteFunctionType & df, const OperationImp* op) 
+    /** \brief exchange data for a discrete function using the given operation
+     *
+     *  The used operation is derived from the type of the op-pointer. The
+     *  actual pointer is not used.
+     *  
+     *  \param      discreteFnction  discrete function to communicate
+     *  \param[in]  opertion         a (phony) pointer to an operation
+     */
+    template< class DiscreteFunction, class Operation >
+    inline void exchange ( DiscreteFunction &discreteFunction,
+                           const Operation *operation )
     {
-      // if serial run, just return   
-      if(gridPart_.grid().comm().size() <= 1) return;
-     
-      // get data handler type from space  
-      typedef typename SpaceType :: 
-        template CommDataHandle<DiscreteFunctionType,OperationImp> :: Type DataHandleType;
-      DataHandleType dataHandle = df.dataHandle( op );
-
-      // communicate data 
-      gridPart_.communicate( dataHandle, interFace_ , dir_ );
+      // get type of data handle from the discrete function space
+      typedef typename SpaceType
+        :: template CommDataHandle< DiscreteFunction, Operation > :: Type
+        DataHandleType;
+      
+      // on serial runs: do nothing
+      if( gridPart_.grid().comm().size() <= 1 )
+        return;
+    
+      // communicate data
+      DataHandleType dataHandle = discreteFunction.dataHandle( operation );
+      gridPart_.communicate( dataHandle, interface_ , dir_ );
     }
   };
+
+
   
 #ifndef USE_CACHED_COMM_MANAGER
   // if no ALUGrid found, supply default implementation 
@@ -106,6 +131,8 @@ namespace Dune {
       : BaseType(space) 
     {}
   };
+
+
 
   //! Proxy class to DependencyCache which is singleton per space 
   class CommunicationManagerList  
@@ -199,5 +226,6 @@ namespace Dune {
 #endif 
   //@}
   
-} // end namespace Dune 
+} // end namespace Dune
+
 #endif

@@ -7,6 +7,7 @@
 #include <vector>
 
 //- Dune includes  
+#include <dune/common/misc.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/datahandleif.hh>
 
@@ -19,8 +20,10 @@
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/singletonlist.hh>
 #include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/space/common/entitycommhelper.hh>
 
-namespace Dune { 
+namespace Dune
+{
   
 /** @addtogroup Communication Communication 
     @{
@@ -33,282 +36,70 @@ namespace Dune {
   //! procedure, because no grid traversal is necessary to exchange data.
   //! this class is singleton for different discrete function space,
   //! because the dof mapping is always the same.
-  template <class SpaceImp> 
+  template< class Space >
   class DependencyCache 
   {
-    // index map for send and receive data 
-    class CommunicationIndexMap
-    {
-      MutableArray<int> index_;
-      CommunicationIndexMap(const CommunicationIndexMap&);
-    public:
-      //! constructor creating empty map
-      CommunicationIndexMap() : index_(0) 
-      {
-        index_.setMemoryFactor(1.1);
-      }
-
-      //! reserve memory 
-      void reserve( int size ) 
-      {
-        // resize array, memory factor will be used 
-        index_.resize( size );
-      }
-
-      //! clear index map 
-      void clear() 
-      {
-        // resize 0 will free memory 
-        index_.resize( 0 );
-      }
-
-      //! append index vector with idx 
-      void insert( const std::vector<int> & idx )
-      {
-        const int size = idx.size();
-        int count = index_.size();
-        // reserve memory 
-        reserve( count + size );
-        assert( index_.size() == (count+size));
-        // copy indices to index vector 
-        for(int i=0; i<size; ++i, ++count) 
-        { 
-          assert( idx[i] >= 0 );
-          index_[count] = idx[i]; 
-        }
-      }
-
-      //! return index map for entry i
-      const int operator [] (int i) const 
-      {
-        assert( i >= 0 );
-        assert( i < (int) index_.size());
-        return index_[i];
-      }
-
-      //! return size of map
-      int size () const { return index_.size(); }
-
-      //! print  map for debugging only 
-      void print(std::ostream & s, int rank) const 
-      {
-        const int size = index_.size();
-        s << "Start print: size = " << size << std::endl;
-        for(int i=0; i<size; ++i) 
-        {
-          s<< rank << " idx["<<i<<"] = " << index_[i] << std::endl;
-        }
-        s << "End of Array\n";
-      }
-    };
-
-    template <class LinkStorageImp, class IndexMapVectorType, 
-              class SpaceType> 
-    class LinkBuilder
-     : public CommDataHandleIF<
-       LinkBuilder< LinkStorageImp , IndexMapVectorType , SpaceType > ,
-       int >
-    {
-      template <int dummy, int codim> 
-      struct CheckInterior 
-      {
-        inline static bool check(const PartitionType p) 
-        {
-          DUNE_THROW(NotImplemented,"Method not implemented!");
-          return true; 
-        }
-      };
-
-      // codim 0 specialization 
-      template <int dummy> 
-      struct CheckInterior<dummy,0>
-      {
-        inline static bool check(const PartitionType p) 
-        {
-          return (p == InteriorEntity); 
-        }
-      };
-      
-    public:
-      typedef int DataType;
-
-      const int myRank_;
-      const int mySize_; 
-      
-      typedef LinkStorageImp LinkStorageType;
-      // discrete function to communicate 
-      mutable LinkStorageType & linkStorage_; 
-
-      IndexMapVectorType & sendIndexMap_;
-      IndexMapVectorType & recvIndexMap_;
-
-      const SpaceType & space_;
-      typedef typename SpaceType :: MapperType MapperType; 
-      const MapperType& mapper_; 
-
-    public:
-      LinkBuilder(LinkStorageType & linkStorage,
-            IndexMapVectorType & sendIdxMap, 
-            IndexMapVectorType & recvIdxMap,
-            const SpaceType & space)
-        : myRank_(space.grid().comm().rank()) 
-        , mySize_(space.grid().comm().size())
-        , linkStorage_(linkStorage)
-        , sendIndexMap_(sendIdxMap)
-        , recvIndexMap_(recvIdxMap)
-        , space_(space)
-        , mapper_(space.mapper())
-      {
-      }
-
-      bool contains (int dim, int codim) const
-      {
-        return space_.contains(codim);
-      }
-
-      bool fixedsize (int dim, int codim) const
-      {
-        return true;
-      }
-
-      //! read buffer and apply operation 
-      template<class MessageBufferImp, class EntityType>
-      void gather (MessageBufferImp& buff, const EntityType& en) const
-      {
-        // send rank 
-        buff.write( myRank_ );
-      }
-
-      //! read buffer and apply operation 
-      template<class MessageBufferImp, class EntityType>
-      void scatter (MessageBufferImp& buff, 
-                    const EntityType& en, 
-                    const size_t dataSize)
-      {
-        // build local mapping 
-        const int numDofs = mapper_.numEntityDofs( en );
-        std::vector<int> indices(numDofs);
-
-        // copy numDofs 
-        for(int i=0; i<numDofs; ++i) 
-        {
-          indices[i] = mapper_.mapEntityDofToGlobal( en , i ); 
-        }
-
-        // Interior entities belong to send area and other entities, i.e.
-        // Overlap and Ghost, belong to receive area 
-        const bool interiorEn = 
-          CheckInterior<-1,EntityType :: codimension>::check(en.partitionType());
-        
-        // read links and insert to mappings 
-        for(size_t i=0; i<dataSize; ++i) 
-        {
-          // create data type 
-          DataType val;
-        
-          // read rank of other side 
-          buff.read( val );  
-          
-          // check that value of rank is within valid range 
-          assert( val < mySize_ );
-          assert( val >= 0 );
-        
-          // insert rank of link into set of links
-          linkStorage_.insert( val );
-
-          if(interiorEn) 
-          {
-            sendIndexMap_[val].insert( indices );
-          }
-          else 
-          {
-            recvIndexMap_[val].insert( indices );
-          }
-        }
-      }
-
-      //! return local dof size to be communicated 
-      template<class EntityType>
-      size_t size (const EntityType& en) const
-      {
-        // size of data 
-        return 1; 
-      }
-    };
-
-    //! object stream with unsave writing and reading 
-    class UnsaveObjectStream : public ALU3DSPACE ObjectStream 
-    {
-      typedef ALU3DSPACE ObjectStream BaseType;
-    public:
-      // create empty object stream 
-      inline UnsaveObjectStream () : BaseType() {}
-      // copy constructor taking object stream 
-      inline UnsaveObjectStream (const ObjectStream & os) : BaseType(os) {}
-      // copy constructor 
-      inline UnsaveObjectStream (const UnsaveObjectStream & os) : BaseType(os) {}
-
-      // write value to stream without testing size 
-      template <class T> 
-      inline void writeUnsave (const T & a)
-      {
-        T & val = *((T *) this->getBuff( this->_wb) );
-        val = a;
-        this->_wb += sizeof(T) ;
-        assert( this->_wb <= this->_len );
-        return ;
-      } 
-      
-      // read value from stream without checking 
-      template <class T>
-      inline void readUnsave (T & a)
-      {
-        const T & val = *((const T *) this->getBuff(this->_rb) );
-        a = val;
-        this->_rb += sizeof(T);
-        assert( this->_rb <= this->_wb ); 
-        return ;
-      }
-    };
-
+  public:
     //! type of discrete function space 
-    typedef SpaceImp SpaceType; 
-    //! type of grid part 
-    typedef typename SpaceType :: GridPartType GridPartType; 
+    typedef Space SpaceType;
 
-    const SpaceType & space_; 
-    const GridPartType & gridPart_; 
+     //! type of grid part 
+    typedef typename SpaceType :: GridPartType GridPartType; 
+   
+    // for compatiblity with Robert's code
+    enum { treatOverlapAsGhosts = true };
+    
+  protected:
+    class CommunicationIndexMap;
+    
+    template< class LinkStorageImp, class IndexMapVectorType >
+    class LinkBuilder;
+
+    class UnsaveObjectStream;
+
+  protected:
+    // type of communication indices 
+    typedef CommunicationIndexMap IndexMapType;
+
+    // type of IndexMapVector
+    typedef IndexMapType *IndexMapVectorType;
+
+    // type of set of links 
+    typedef std :: set< int >  LinkStorageType;
+
+    // type of data handler 
+    typedef LinkBuilder< LinkStorageType, IndexMapVectorType >
+      LinkBuilderHandleType;
+
+    // ALUGrid send/recv buffers
+    typedef ALU3DSPACE ObjectStream ObjectStreamType;
+    
+    // type of communicator
+    typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType;
+    // type of communication implementation
+    typedef ALU3DSPACE MpAccessMPI MPAccessImplType;
+    
+     //! type of communication buffer vector 
+    typedef std :: vector< ObjectStreamType > ObjectStreamVectorType;
+  
+  protected:
+    const SpaceType &space_; 
+    const GridPartType &gridPart_; 
 
     const int myRank_;
     const int mySize_; 
     
-    typedef std::set<int>  LinkStorageType;
-    // type of set of links 
     LinkStorageType linkStorage_; 
 
-    // type of communication indices 
-    typedef CommunicationIndexMap IndexMapType;
-    // type of IndexMapVector 
-    typedef IndexMapType* IndexMapVectorType;
-    IndexMapType* recvIndexMap_;
-    IndexMapType* sendIndexMap_;
+    IndexMapType *recvIndexMap_;
+    IndexMapType *sendIndexMap_;
 
     // vector containing the links of this process 
-    std::vector < int > linkRank_;
-
-    // ALUGrid send/recv buffers 
-    typedef ALU3DSPACE ObjectStream   ObjectStreamType; 
-    
-    // type of communicator 
-    typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
-    // type of communication implementation 
-    typedef ALU3DSPACE MpAccessMPI   MPAccessImplType; 
+    std :: vector< int > linkRank_;
 
     // ALUGrid communicatior Class 
-    MPAccessInterfaceType * mpAccess_;
+    MPAccessInterfaceType *mpAccess_;
 
-    //! type of communication buffer vector 
-    typedef std::vector< ObjectStreamType > ObjectStreamVectorType;
     //! communication buffers 
     ObjectStreamVectorType buffer_;
 
@@ -318,202 +109,132 @@ namespace Dune {
     //! know grid sequence number 
     int sequence_; 
     
-    // do not copy this class 
-    DependencyCache(const DependencyCache &);
   public:
     //! constructor taking space 
-    DependencyCache(const SpaceType & space)
-      : space_(space) , gridPart_(space_.gridPart()) 
-      , myRank_(gridPart_.grid().comm().rank())
-      , mySize_(gridPart_.grid().comm().size())
-      , linkStorage_()
-      , recvIndexMap_(new IndexMapType[mySize_])
-      , sendIndexMap_(new IndexMapType[mySize_])
-      , linkRank_()
+    DependencyCache( const SpaceType &space )
+    : space_( space ),
+      gridPart_( space_.gridPart() ),
+      myRank_( gridPart_.grid().comm().rank() ),
+      mySize_( gridPart_.grid().comm().size() ),
+      linkStorage_(),
+      recvIndexMap_( new IndexMapType[ mySize_ ] ),
+      sendIndexMap_( new IndexMapType[ mySize_ ] ),
+      linkRank_()
       // create mpAccess with world communicator  
       // only when size > 1 
-      //, mpAccess_( (mySize_ > 1) ? 
-      //    (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0)
+      // mpAccess_( (mySize_ > 1) ? 
+      //    (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0),
       , mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) )
       , nLinks_(0)
       , sequence_(-1)
     {
     }
 
+  private:
+    // prohibit copying
+    DependencyCache ( const DependencyCache & );
+
+  public:
     //! destrcutor removeing mpAccess 
-    ~DependencyCache()
+    inline ~DependencyCache ()
     {
-      delete mpAccess_; mpAccess_ = 0;
-      delete [] sendIndexMap_; sendIndexMap_ = 0;
-      delete [] recvIndexMap_; recvIndexMap_ = 0;
+      delete mpAccess_;
+      mpAccess_ = 0;
+
+      delete [] sendIndexMap_;
+      sendIndexMap_ = 0;
+      
+      delete [] recvIndexMap_;
+      recvIndexMap_ = 0;
     }
 
   public:
     // build linkage and index maps 
-    void buildMaps() 
+    inline void buildMaps ();
+
+    //! return number of links
+    inline int nlinks () const
     {
-      linkStorage_.clear();
-      for(int i=0; i<mySize_; ++i)
-      {
-        recvIndexMap_[i].clear();
-        sendIndexMap_[i].clear();
-      }
-
-      // type of data handler 
-      typedef LinkBuilder< LinkStorageType , IndexMapVectorType , SpaceType > LinkBuilderHandleType; 
-      LinkBuilderHandleType handle( linkStorage_, sendIndexMap_, recvIndexMap_ , space_ );
-
-      // do communication to build up linkage 
-      if( gridPart_.grid().overlapSize(0) > 0 ) 
-      {
-        // case of YaspGrid, where Overlap is treated as ghost 
-        gridPart_.communicate( handle, InteriorBorder_All_Interface , ForwardCommunication );
-        gridPart_.communicate( handle, InteriorBorder_All_Interface , BackwardCommunication );
-      }
-      else 
-      {
-        // case of ALUGrid, where we have only the interior ghost situation 
-        gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
-      }
-
-      // remove old linkage 
-      mpAccess().removeLinkage(); 
-      // create new linkage 
-      mpAccess().insertRequestSymetric ( linkStorage_ );
-
-      // get real rank numbers for each link 
-      linkRank_ = mpAccess().dest();
-
-      // remember number of links 
-      nLinks_ = mpAccess().nlinks();
-
-      // resize buffer to number of links 
-      buffer_.resize( nLinks_ );
+      return nLinks_;
     }
 
-    //! return number of links 
-    int nlinks () const { return nLinks_; }
-
     //! check if grid has changed and rebuild cache if necessary 
-    void rebuild() 
+    inline void rebuild () 
     {
       // only in parallel we have to do something 
-      if( mySize_ <= 1 ) return ;
+      if( mySize_ <= 1 )
+        return;
 
-      // check whether grid has changed. 
-      if(sequence_ != space_.sequence()) 
+      // check whether grid has changed.
+      if( sequence_ != space_.sequence() )
       {
         buildMaps();
-
-        // store actual sequence number 
         sequence_ = space_.sequence();
       }
     }
       
     //! exchange data of discrete function 
-    template<class DiscreteFunctionType, class OperationImp >
-    void exchange(DiscreteFunctionType& discreteFunction, 
-                  const OperationImp *)
-    {
-      // if serial run, just return   
-      if(mySize_ <= 1) return;
-       
-      // check if rebuild is needed and update cache 
-      rebuild();
-      
-      const int links = nlinks();
-      // write buffers 
-      for(int l=0; l<links; ++l) 
-      {
-        // reset buffers, keeps memory  
-        buffer_[l].clear();
-
-        writeBuffer( l , buffer_[l] , discreteFunction );
-      }
-
-      // exchange data to other procs 
-      buffer_ = mpAccess().exchange( buffer_ );
-     
-      // read buffers 
-      for(int l=0; l<links; ++l) 
-      {
-        readBuffer( l , buffer_[l] , discreteFunction, (OperationImp *) 0 );
-      }
-    }
+    template< class DiscreteFunction, class Operation >
+    inline void exchange ( DiscreteFunction &discreteFunction,
+                           const Operation *operation );
 
     //! write data of discrete function to buffer 
-    template<class DiscreteFunctionType>
-    void writeBuffer(ObjectStreamVectorType & osv,
-                     const DiscreteFunctionType& discreteFunction) const 
-    {
-      const int links = nlinks();
-      // write buffers 
-      for(int l=0; l<links; ++l) 
-      {
-        writeBuffer( l , osv[l] , discreteFunction);
-      }
-    }
+    template< class DiscreteFunction >
+    inline void writeBuffer ( ObjectStreamVectorType &osv,
+                              const DiscreteFunction &discreteFunction ) const;
     
     //! read data of discrete function from buffer  
-    template<class DiscreteFunctionType, class OperationImp>
-    void readBuffer(ObjectStreamVectorType & osv,
-                    DiscreteFunctionType& discreteFunction, 
-                    const OperationImp *o) const 
-    {
-      const int links = nlinks();
-      // write buffers 
-      for(int l=0; l<links; ++l) 
-      {
-        readBuffer( l, osv[l] , discreteFunction, (OperationImp *) 0); 
-      }
-    }
+    template< class DiscreteFunctionType, class Operation >
+    inline void readBuffer ( ObjectStreamVectorType &osv,
+                             DiscreteFunctionType &discreteFunction,
+                             const Operation *operation ) const;
     
     //! return reference to mpAccess object
-    MPAccessInterfaceType& mpAccess() 
-    {   
+    inline MPAccessInterfaceType &mpAccess ()
+    {
       assert( mpAccess_ );
       return *mpAccess_;
     }
     
   private:  
     // write data of DataImp& vector to object stream 
-    template <class DiscreteFunctionImp> 
-    void writeBuffer(const int link, 
-                     ObjectStreamType & str, 
-                     const DiscreteFunctionImp& discreteFunction) const 
+    template< class DiscreteFunction >
+    inline void writeBuffer ( const int link,
+                              ObjectStreamType &str,
+                              const DiscreteFunction &discreteFunction ) const
     {
-      const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
+      const IndexMapType &indexMap = sendIndexMap_[ linkRank_[link ] ];
       const int size = indexMap.size();
 
-      typedef typename DiscreteFunctionImp :: DofType DofType;
+      typedef typename DiscreteFunction :: DofType DofType;
       // reserve buffer memory at once 
-      str.reserve( str.size() + (size * sizeof(DofType)) );
+      str.reserve( str.size() + (size * sizeof( DofType )) );
 
       // dirty hack to have faster access to stream 
-      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
-      for(int i=0; i<size; ++i)
-      {
-        os.writeUnsave( discreteFunction.dof( indexMap[i] ) );
-      }
+      UnsaveObjectStream &os = (UnsaveObjectStream &)str;
+      for( int i = 0; i < size; ++i )
+        os.writeUnsave( discreteFunction.dof( indexMap[ i ] ) );
     }
 
     // read data from object stream to DataImp& data vector 
-    template <class DiscreteFunctionImp, class OperationImp> 
-    void readBuffer(const int link, 
-                    ObjectStreamType & str, 
-                    DiscreteFunctionImp& discreteFunction,
-                    const OperationImp *) const 
+    template< class DiscreteFunction, class Operation >
+    inline void readBuffer ( const int link,
+                             ObjectStreamType &str, 
+                             DiscreteFunction &discreteFunction,
+                             const Operation *operation ) const 
     {
-      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
-      const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
-      typedef typename DiscreteFunctionImp :: DofType DofType;
-      DofType val;
+      typedef typename DiscreteFunction :: DofType DofType;
+
+      UnsaveObjectStream &os = (UnsaveObjectStream &)str;
+      
+      const IndexMapType &indexMap = recvIndexMap_[ linkRank_[ link ] ];
+
       const int size = indexMap.size();
-      for(int i=0; i<size; ++i)
+      for( int i = 0; i < size; ++i )
       {
-        os.readUnsave( val );
-        // apply operation 
-        OperationImp::apply(val , discreteFunction.dof( indexMap[i] ) );
+        DofType value;
+        os.readUnsave( value );
+        Operation :: apply( value, discreteFunction.dof( indexMap[ i ] ) );
       }
     }
     
@@ -561,8 +282,337 @@ namespace Dune {
         OperationImp::apply(val , data[ indexMap[i] ] );
       }
     }
-    
   };
+
+
+
+
+
+
+  // index map for send and receive data 
+  template< class SpaceImp >
+  class DependencyCache< SpaceImp > ::CommunicationIndexMap
+  {
+  protected:
+    MutableArray< int > index_;
+
+  public:
+    //! constructor creating empty map
+    CommunicationIndexMap() : index_(0) 
+    {
+      index_.setMemoryFactor( 1.1 );
+    }
+
+  private:
+    // prohibit copying
+    CommunicationIndexMap( const CommunicationIndexMap & );
+
+  public:
+    //! reserve memory 
+    void reserve( int size ) 
+    {
+      // resize array, memory factor will be used 
+      index_.resize( size );
+    }
+
+    //! clear index map 
+    void clear() 
+    {
+      // resize 0 will free memory 
+      index_.resize( 0 );
+    }
+
+    //! append index vector with idx 
+    void insert( const std::vector<int> & idx )
+    {
+      const int size = idx.size();
+      int count = index_.size();
+      // reserve memory 
+      reserve( count + size );
+      assert( index_.size() == (count+size));
+      // copy indices to index vector 
+      for(int i=0; i<size; ++i, ++count) 
+      { 
+        assert( idx[i] >= 0 );
+        index_[count] = idx[i]; 
+      }
+    }
+
+    //! return index map for entry i
+    const int operator [] (int i) const 
+    {
+      assert( i >= 0 );
+      assert( i < (int) index_.size());
+      return index_[i];
+    }
+
+    //! return size of map
+    int size () const { return index_.size(); }
+
+    //! print  map for debugging only 
+    void print(std::ostream & s, int rank) const 
+    {
+      const int size = index_.size();
+      s << "Start print: size = " << size << std::endl;
+      for(int i=0; i<size; ++i) 
+      {
+        s<< rank << " idx["<<i<<"] = " << index_[i] << std::endl;
+      }
+      s << "End of Array" << std :: endl;
+    }
+  };
+
+
+
+  template< class SpaceImp >
+  template< class LinkStorage, class IndexMapVectorType >
+  class DependencyCache< SpaceImp > :: LinkBuilder
+  : public CommDataHandleIF
+    < LinkBuilder< LinkStorage, IndexMapVectorType >, int >
+  {
+  public:
+    typedef LinkStorage LinkStorageType;
+
+    typedef typename SpaceType :: MapperType MapperType; 
+
+    typedef int DataType;
+
+    static const InterfaceType CommInterface = InteriorBorder_All_Interface;
+
+  protected:
+    const int myRank_;
+    const int mySize_; 
+    
+    LinkStorageType &linkStorage_; 
+
+    IndexMapVectorType &sendIndexMap_;
+    IndexMapVectorType &recvIndexMap_;
+
+    const SpaceType &space_;
+    const MapperType &mapper_; 
+
+  public:
+    LinkBuilder ( LinkStorageType &linkStorage,
+                  IndexMapVectorType &sendIdxMap,
+                  IndexMapVectorType &recvIdxMap,
+                  const SpaceType &space )
+    : myRank_( space.grid().comm().rank() ),
+      mySize_( space.grid().comm().size() ),
+      linkStorage_( linkStorage ),
+      sendIndexMap_( sendIdxMap ),
+      recvIndexMap_( recvIdxMap ),
+      space_( space ),
+      mapper_( space.mapper() )
+    {}
+
+    bool contains ( int dim, int codim ) const
+    {
+      return space_.contains( codim );
+    }
+
+    bool fixedsize ( int dim, int codim ) const
+    {
+      return true;
+    }
+
+    //! read buffer and apply operation 
+    template< class MessageBuffer, class Entity >
+    void gather ( MessageBuffer &buffer,
+                  const Entity &entity ) const
+    {
+      // send rank 
+      buffer.write( myRank_ );
+    }
+
+    //! read buffer and apply operation 
+    template< class MessageBuffer, class Entity >
+    void scatter ( MessageBuffer &buffer,
+                   const Entity &entity,
+                   const size_t dataSize )
+    {
+      // build local mapping 
+      const int numDofs = mapper_.numEntityDofs( entity );
+      std :: vector< int > indices( numDofs );
+      for( int i = 0; i < numDofs; ++i )
+        indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
+
+      const PartitionType p = entity.partitionType();
+      const bool send = EntityCommHelper< CommInterface > :: send( p );
+      const bool receive = EntityCommHelper< CommInterface > :: receive( p );
+      
+      // read links and insert to mappings 
+      for( size_t i = 0; i < dataSize; ++i )
+      {
+        // read rank of other side
+        DataType value;
+        buffer.read( value );  
+        assert( (value >= 0) && (value < mySize_) );
+        
+        // insert rank of link into set of links
+        linkStorage_.insert( value );
+
+        if( send )
+          sendIndexMap_[ value ].insert( indices );
+        if( receive )
+          recvIndexMap_[ value ].insert( indices );
+#if 0
+        if( interiorEntity )
+          sendIndexMap_[ value ].insert( indices );
+        else 
+          recvIndexMap_[ value ].insert( indices );
+#endif
+      }
+    }
+
+    //! return local dof size to be communicated 
+    template< class Entity >
+    size_t size ( const Entity &entity ) const
+    {
+      return 1; 
+    }
+  };
+
+
+
+  //! object stream with unsave writing and reading
+  template< class SpaceImp >
+  class DependencyCache< SpaceImp > :: UnsaveObjectStream
+  : public ALU3DSPACE ObjectStream 
+  {
+    typedef ALU3DSPACE ObjectStream BaseType;
+
+  public:
+    // create empty object stream 
+    inline UnsaveObjectStream () : BaseType() {}
+    // copy constructor taking object stream 
+    inline UnsaveObjectStream (const ObjectStream & os) : BaseType(os) {}
+    // copy constructor 
+    inline UnsaveObjectStream (const UnsaveObjectStream & os) : BaseType(os) {}
+
+    // write value to stream without testing size 
+    template <class T> 
+    inline void writeUnsave (const T & a)
+    {
+      T & val = *((T *) this->getBuff( this->_wb) );
+      val = a;
+      this->_wb += sizeof(T) ;
+      assert( this->_wb <= this->_len );
+      return ;
+    } 
+    
+    // read value from stream without checking 
+    template <class T>
+    inline void readUnsave (T & a)
+    {
+      const T & val = *((const T *) this->getBuff(this->_rb) );
+      a = val;
+      this->_rb += sizeof(T);
+      assert( this->_rb <= this->_wb ); 
+      return ;
+    }
+  };
+
+
+
+  template< class Space >
+  inline void DependencyCache< Space > :: buildMaps ()
+  {
+    linkStorage_.clear();
+    for( int i = 0; i < mySize_; ++i )
+    {
+      recvIndexMap_[ i ].clear();
+      sendIndexMap_[ i ].clear();
+    }
+
+    LinkBuilderHandleType handle
+      ( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
+
+    // do communication to build up linkage
+    if( treatOverlapAsGhosts && (gridPart_.grid().overlapSize( 0 ) > 0) )
+    {
+      // case of YaspGrid, where Overlap is treated as ghost 
+      gridPart_.communicate
+        ( handle, InteriorBorder_All_Interface, ForwardCommunication );
+      gridPart_.communicate
+        ( handle, InteriorBorder_All_Interface, BackwardCommunication );
+    }
+    else 
+      gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
+
+    // remove old linkage
+    mpAccess().removeLinkage();
+    // create new linkage
+    mpAccess().insertRequestSymetric ( linkStorage_ );
+
+    // get real rank numbers for each link 
+    linkRank_ = mpAccess().dest();
+
+    // remember number of links
+    nLinks_ = mpAccess().nlinks();
+
+    // resize buffer to number of links
+    buffer_.resize( nLinks_ );
+  }
+
+
+  template< class Space >
+  template< class DiscreteFunction, class Operation >
+  inline void DependencyCache< Space >
+    :: exchange ( DiscreteFunction &discreteFunction,
+                  const Operation *operation )
+  {
+    // on serial runs: do nothing 
+    if( mySize_ <= 1 )
+      return;
+     
+    // update cache 
+    rebuild();
+    
+    const int numLinks = nlinks();
+
+    // write buffers 
+    for( int link = 0; link < numLinks; ++link )
+    {
+      buffer_[ link ].clear();
+      writeBuffer( link, buffer_[ link ], discreteFunction );
+    }
+
+    // exchange data to other procs 
+    buffer_ = mpAccess().exchange( buffer_  );
+   
+    // read buffers 
+    for( int link = 0; link < numLinks; ++link )
+      readBuffer( link, buffer_[ link ], discreteFunction, operation );
+  }
+
+
+  template< class Space >
+  template< class DiscreteFunction >
+  inline void DependencyCache< Space >
+    :: writeBuffer ( ObjectStreamVectorType &osv,
+                     const DiscreteFunction &discreteFunction ) const
+  {
+    const int numLinks = nlinks();
+    // write buffers 
+    for( int link = 0; link < numLinks; ++link )
+      writeBuffer( link, osv[ link ], discreteFunction );
+  }
+ 
+
+  template< class Space >
+  template< class DiscreteFunction, class Operation >
+  inline void DependencyCache< Space >
+    :: readBuffer ( ObjectStreamVectorType &osv,
+                    DiscreteFunction &discreteFunction,
+                    const Operation *operation ) const
+  {
+    const int numLinks = nlinks();
+    // write buffers 
+    for( int link = 0; link < numLinks; ++link )
+      readBuffer( link, osv[ link ], discreteFunction, operation );
+  }
+
+
 
   //! Key for CommManager singleton list 
   template <class SpaceImp>
