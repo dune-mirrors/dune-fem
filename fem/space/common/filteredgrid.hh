@@ -159,6 +159,7 @@ namespace Dune {
     public FilterInterface<DefaultFilterTraits<RadialFilter<GridPartType>, GridPartType> >
   {
   public:
+    typedef typename GridPartType :: GridType GridType;
     typedef DefaultFilterTraits<RadialFilter<GridPartType>, GridType> Traits;
     typedef FilterInterface<DefaultFilterTraits<RadialFilter<GridPartType>,GridPartType> > BaseType;
     typedef typename BaseType::FilterType FilterType;
