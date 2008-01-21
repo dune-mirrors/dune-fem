@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map> 
 #include <vector>
+#include <limits>
 
 //- Dune includes  
 #include <dune/common/mpihelper.hh>
@@ -298,6 +299,7 @@ namespace Dune
   };
 
 
+
   template<class Space, class Mapper>
   class SlaveDofs<Space,Mapper> :: LinkBuilder
   : public CommDataHandleIF< LinkBuilder, int >
@@ -355,18 +357,20 @@ namespace Dune
                           size_t n )
     {
       PartitionType ptype = entity.partitionType();
-      
-      int minRank
-        = ((ptype == InteriorEntity) || (ptype == BorderEntity) ? myRank_ : -1);
+
+      int minRank = std :: numeric_limits< int > :: max();
+      if( (ptype == InteriorEntity) || (ptype == BorderEntity) )
+        minRank = myRank_;
       for( size_t i = 0; i < n; ++i )
       {
         int rank;
         buffer.read( rank );
+        assert( (rank >= 0) && (rank < mySize_) );
         minRank = (rank < minRank ? rank : minRank);
       }
 
       // minimal rank means master
-      assert( minRank != -1 );
+      assert( minRank < std :: numeric_limits< int > :: max() );
       if( minRank != myRank_ )
       {
         // build local mapping 
