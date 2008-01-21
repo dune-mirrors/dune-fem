@@ -392,6 +392,8 @@ namespace Dune
     template< class EntityType >
     inline void operator() ( const EntityType &entity ) const
     {
+      assert( entity.partitionType() == InteriorEntity );
+
       //const DiscreteFunctionSpaceType &dfSpace = feop_.discreteFunctionSpace();
     
       // obtain local matrix

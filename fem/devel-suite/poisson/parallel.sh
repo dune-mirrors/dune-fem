@@ -7,4 +7,4 @@ if test x$SLURM_NPROCS == x ; then
 fi
 
 export OMPI_MCA_mpi_yield_when_idle=1
-mpiexec -np $SLURM_NPROCS parallel 8
+nice -n 19 mpiexec -np $SLURM_NPROCS parallel 8
