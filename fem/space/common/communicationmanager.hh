@@ -78,7 +78,7 @@ namespace Dune
   public:
     /** \brief exchange data for a discrete function using the copy operation
      *  
-     *  \param  function  discrete function to communicate
+     *  \param  discreteFunction  discrete function to communicate
      */
     template< class DiscreteFunction >
     inline void exchange ( DiscreteFunction &discreteFunction )
@@ -91,8 +91,8 @@ namespace Dune
      *  The used operation is derived from the type of the op-pointer. The
      *  actual pointer is not used.
      *  
-     *  \param      discreteFnction  discrete function to communicate
-     *  \param[in]  opertion         a (phony) pointer to an operation
+     *  \param      discreteFunction  discrete function to communicate
+     *  \param[in]  operation         a (phony) pointer to an operation
      */
     template< class DiscreteFunction, class Operation >
     inline void exchange ( DiscreteFunction &discreteFunction,
