@@ -80,8 +80,10 @@ namespace Dune
   
   protected:
     const SpaceType &space_; 
-    const GridPartType &gridPart_; 
+    const GridPartType &gridPart_;
 
+    const InterfaceType interface_;
+    
     const int myRank_;
     const int mySize_; 
     
@@ -107,22 +109,24 @@ namespace Dune
     
   public:
     //! constructor taking space 
-    DependencyCache( const SpaceType &space )
+    DependencyCache ( const SpaceType &space,
+                      const InterfaceType interface = InteriorBorder_All_Interface )
     : space_( space ),
       gridPart_( space_.gridPart() ),
+      interface_( interface ),
       myRank_( gridPart_.grid().comm().rank() ),
       mySize_( gridPart_.grid().comm().size() ),
       linkStorage_(),
       recvIndexMap_( new IndexMapType[ mySize_ ] ),
       sendIndexMap_( new IndexMapType[ mySize_ ] ),
-      linkRank_()
+      linkRank_(),
       // create mpAccess with world communicator  
       // only when size > 1 
       // mpAccess_( (mySize_ > 1) ? 
       //    (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0),
-      , mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) )
-      , nLinks_(0)
-      , sequence_(-1)
+      mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) ),
+      nLinks_( 0 ),
+      sequence_( -1 )
     {
     }
 
@@ -148,6 +152,11 @@ namespace Dune
     // build linkage and index maps 
     inline void buildMaps ();
 
+  protected:
+    template< class LS, class IMV, InterfaceType CI >
+    inline void buildMaps ( LinkBuilder< LS, IMV, CI > &handle );
+
+  public:
     //! return number of links
     inline int nlinks () const
     {
@@ -507,15 +516,43 @@ namespace Dune
   template< class Space >
   inline void DependencyCache< Space > :: buildMaps ()
   {
+    if( interface_ == InteriorBorder_All_Interface )
+    {
+      LinkBuilder< LinkStorageType, IndexMapVectorType,
+                   InteriorBorder_All_Interface >
+        handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
+      buildMaps( handle );
+    }
+    else if( interface_ == InteriorBorder_InteriorBorder_Interface )
+    {
+      LinkBuilder< LinkStorageType, IndexMapVectorType,
+                   InteriorBorder_InteriorBorder_Interface >
+        handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
+      buildMaps( handle );
+    }
+    else if( interface_ == All_All_Interface )
+    {
+      LinkBuilder< LinkStorageType, IndexMapVectorType, All_All_Interface >
+        handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
+      buildMaps( handle );
+    }
+    else
+      DUNE_THROW( NotImplemented, "DependencyCache for the given interface has"
+                                  " not been implemented, yet." );
+  }
+
+
+  template< class Space >
+  template< class LS, class IMV, InterfaceType CI >
+  inline void DependencyCache< Space >
+    :: buildMaps ( LinkBuilder< LS, IMV, CI > &handle )
+  {
     linkStorage_.clear();
     for( int i = 0; i < mySize_; ++i )
     {
       recvIndexMap_[ i ].clear();
       sendIndexMap_[ i ].clear();
     }
-
-    LinkBuilder< LinkStorageType, IndexMapVectorType, InteriorBorder_All_Interface >
-      handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
 
     // do communication to build up linkage
     if( treatOverlapAsGhosts && (gridPart_.grid().overlapSize( 0 ) > 0) )
