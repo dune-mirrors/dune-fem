@@ -1,88 +1,125 @@
-#ifndef DUNE_INVERSE_OPERATORS_HH
-#define DUNE_INVERSE_OPERATORS_HH
+#ifndef DUNE_FEM_INVERSEOPERATORS_HH
+#define DUNE_FEM_INVERSEOPERATORS_HH
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 
-namespace Dune {
+namespace Dune
+{
 
-  /** \brief Implementation of the CG algorithm */
-  template <class OperatorType, class DiscreteFunctionType>
-  struct CGAlgorithm 
+  /** \class ConjugateGradientSolver
+   *  \ingroup OEMSolver
+   *  \brief   linear solver using the CG algorithm
+   *
+   *  \param  Operator  type of the operator to invert
+   */
+  template< class Operator >
+  class ConjugateGradientSolver
   {
-    /** solve Op(arg) - dest = 0 */      
-    static void cg (const OperatorType & op, 
-                    const DiscreteFunctionType& arg,
-                    DiscreteFunctionType& dest ,
-                    double epsilon , int maxIter , bool verbose ) 
-    {
-      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType FunctionSpaceType;
-      typedef typename FunctionSpaceType::RangeFieldType Field;
-      typedef typename FunctionSpaceType :: GridType GridType; 
+  public:
+    //! type of the operators to invert
+    typedef Operator OperatorType;
 
-      typedef typename GridType :: Traits :: CollectiveCommunication
-        CommunicatorType; 
-
-      const CommunicatorType & comm = arg.space().grid().comm();
-      
-      int count = 0;
-      Field spa=0, spn, q, quad;
-
-      Field b = arg.scalarProductDofs( arg );
-      const Field err = epsilon * b;
-
-      DiscreteFunctionType h ( arg );
+    //! field type of the operator's domain vectors
+    typedef typename OperatorType :: DomainFieldType DomainFieldType;
+    //! field type of the operator's range vectors
+    typedef typename OperatorType :: RangeFieldType RangeFieldType;
     
-      op( dest, h );
+    //! type of the operator's domain vectors
+    typedef typename OperatorType :: DomainType DomainType;
+    //! type of the operator's range vectors
+    typedef typename OperatorType :: RangeType RangeType;
 
-      DiscreteFunctionType r ( h );
-      r -= arg;
+  private:
+    typedef CompileTimeChecker< Conversion< DomainType, RangeType > :: sameType >
+      __DOMAINTYPE_MUST_EQUAL_RANGETYPE__;
 
-      DiscreteFunctionType p ( arg );
+  protected:
+    const RangeFieldType epsilon_;
+    const unsigned int maxIterations_;
+    const bool verbose_;
+    
+  public:
+    /** \brief constructor
+     *
+     *  \param[in]  epsilon        tolerance
+     *  \param[in]  maxIterations  maximum number of CG iterations
+     *  \param[in]  verbose        verbose output
+     */
+    inline ConjugateGradientSolver ( RangeFieldType epsilon,
+                                     unsigned int maxIterations,
+                                     bool verbose = false )
+    : epsilon_( epsilon ),
+      maxIterations_( maxIterations ),
+      verbose_( verbose )
+    {}
+
+  private:
+    // prohibit copying
+    ConjugateGradientSolver ( const ConjugateGradientSolver & );
+
+  public:
+    /** \brief solve \f$op( x ) = b\f$
+     *
+     *  \note The CG algorithm also works for positive semidefinite operators.
+     *        In this case, \f$x \cdot v = b \cdot v\f$ for all \f$v\f$ in the
+     *        operator's kernel.
+     *
+     *  \param[in]   op  linear operator to invert (must be symmetic and
+     *                   positive definite)
+     *  \param[in]   b   right hand side
+     *  \param       x   solution (must be initialized to a start value)
+     */
+    inline void solve ( const OperatorType &op,
+                        const RangeType &b,
+                        DomainType &x ) const
+    {
+      const bool verbose = (verbose_ && (b.space().grid().comm().rank() == 0));
+
+      const RangeFieldType tolerance = SQR( epsilon_ ) * b.scalarProductDofs( b );
+
+      RangeType h( b );
+      op( x, h );
+
+      RangeType r( h );
+      r -= b;
+
+      RangeType p( b );
       p -= h;
 
-      spn = r.scalarProductDofs( r );
+      RangeFieldType prevResiduum = 0;
+      RangeFieldType residuum = r.scalarProductDofs( r );
    
-      while((spn > err ) && (count++ < maxIter)) 
+      for( unsigned int count = 0;
+           (residuum > tolerance) && (count < maxIterations_); ++count )
       {
-        // fall ab der zweiten iteration *************
-    
-        if(count > 1)
+        if( count > 0 )
         { 
-          const Field e = spn / spa;
-          p *= e;
+          p *= (residuum / prevResiduum);
           p -= r;
         }
 
-        // grund - iterations - schritt **************
         op( p, h );
-    
-        quad = p.scalarProductDofs( h );
-        
-        q    = spn / quad;
 
-        dest.addScaled( p, q );
-        r.addScaled( h, q );
+        const RangeFieldType alpha = residuum / p.scalarProductDofs( h );
+        x.addScaled( p, alpha );
+        r.addScaled( h, alpha );
 
-        spa = spn;
-    
-        // residuum neu berechnen *********************
-    
-        spn = r.scalarProductDofs( r ); 
+        prevResiduum = residuum;
+        residuum = r.scalarProductDofs( r );
         
-        if( verbose && (comm.rank() == 0) )
-          std :: cerr << count << " cg-Iterationen  " << count << " Residuum:"
-                      << spn << std :: endl;
+        if( verbose )
+          std :: cerr << "CG-Iteration: " << count << ", Residuum: " << residuum
+                      << std :: endl;
       }
     }
   };
 
-  /** @ingroup OEMSolver
-      @{
-   **/
-  
-  /** \brief Inversion operator using CG algorithm, operator type is
-      Mapping. 
+
+ 
+  /** \class   CGInverseOperator
+   *  \ingroup OEMSolver
+   *  \brief   Inversion operator using CG algorithm, operator type is Mapping
    */
   template <class DiscreteFunctionType>
   class CGInverseOperator : public Operator<
@@ -103,6 +140,11 @@ namespace Dune {
     typedef typename BaseType :: DomainType DomainType;
     typedef typename BaseType :: RangeType RangeType;
 
+  protected:
+    const MappingType &operator_;
+
+    const ConjugateGradientSolver< MappingType > solver_;
+
   public:
     /** \brief constructor of CGInverseOperator
       \param[in] op Mapping describing operator to invert 
@@ -111,44 +153,32 @@ namespace Dune {
       \param[in] maxIter maximal iteration steps 
       \param[in] verbose verbosity 
     */
-    CGInverseOperator( const MappingType & op, 
+    CGInverseOperator( const MappingType &op,
                        double redEps,
                        double absLimit,
                        int maxIter,
-                       int verbose ) 
-      : op_(op), _redEps ( redEps ), epsilon_ ( absLimit*absLimit ) , 
-        maxIter_ (maxIter ) , _verbose ( verbose ) {
-    } 
+                       int verbose )
+    : operator_( op ),
+      solver_( absLimit, maxIter, (verbose > 0) )
+    {}
 
     /** \brief solve the system 
         \param[in] arg right hand side 
         \param[out] dest solution 
     */
-    virtual void operator()(const DomainType& arg, 
-                            RangeType& dest ) const 
+    virtual void operator() ( const DomainType &arg,
+                              RangeType &dest ) const
     {
-      CGAlgorithm<MappingType,DomainType>::cg(op_,arg,dest,epsilon_,maxIter_,(_verbose >0));
+      solver_.solve( operator_, arg, dest );
     }
-
-  private:
-    //! reference to operator which should be inverted 
-    const MappingType &op_;
-  
-    //! reduce error by this factor 
-    double _redEps; 
-
-    //! minial error to reach 
-    typename DiscreteFunctionType::RangeFieldType epsilon_;
-
-    //! number of maximal iterations
-    int maxIter_;
-
-    //! level of output 
-    int _verbose ;
   };
 
-  /** \brief Inversion operator using CG algorithm, operator type is
-      a template parameter. 
+
+
+  /** \class   CGInverseOp
+   *  \ingroup OEMSolver
+   *  \brief   Inversion operator using CG algorithm, operator type is a
+   *           template parameter.
    */
   template <class DiscreteFunctionType, class OperatorType>
   class CGInverseOp : public Operator<
@@ -156,6 +186,11 @@ namespace Dune {
     typename DiscreteFunctionType::RangeFieldType,
     DiscreteFunctionType,DiscreteFunctionType> 
   {
+  protected:
+    const OperatorType &operator_;
+
+    const ConjugateGradientSolver< OperatorType > solver_;
+
   public:
     /** \brief constructor of CGInverseOperator
       \param[in] op Mapping describing operator to invert 
@@ -164,41 +199,26 @@ namespace Dune {
       \param[in] maxIter maximal iteration steps 
       \param[in] verbose verbosity 
     */
-    CGInverseOp( OperatorType & op , double  redEps , double absLimit , int maxIter , int verbose ) : 
-      op_(op),
-      _redEps ( redEps ),
-      epsilon_ ( absLimit*absLimit ) , 
-      maxIter_ (maxIter ) ,
-      _verbose ( verbose )  
+    CGInverseOp( const OperatorType &op,
+                 double  redEps,
+                 double absLimit,
+                 int maxIter,
+                 int verbose )
+    : operator_( op ),
+      solver_( absLimit, maxIter, (verbose > 0) )
     {} 
 
     /** \brief solve the system 
         \param[in] arg right hand side 
         \param[out] dest solution 
     */
-    virtual void operator() (const DiscreteFunctionType& arg,
-                             DiscreteFunctionType& dest ) const 
+    virtual void operator() ( const DiscreteFunctionType &arg,
+                              DiscreteFunctionType &dest ) const
     {
-      CGAlgorithm<OperatorType,DiscreteFunctionType>::cg(op_,arg,dest,epsilon_,maxIter_,(_verbose >0));
+      solver_.solve( operator_, arg, dest );
     }
-  
-  private:
-    //! operator to invert 
-    OperatorType &op_;
-  
-    //! relative reduction 
-    double _redEps; 
-
-    //! absolut reduction  
-    typename DiscreteFunctionType::RangeFieldType epsilon_;
-
-    //! number of maximal iterations
-    int maxIter_;
-
-    //! level of output 
-    int _verbose ;
   };
 
-///@}
 } // end namespace Dune
+
 #endif
