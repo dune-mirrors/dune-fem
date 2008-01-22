@@ -42,19 +42,21 @@ namespace Dune
 
   public:
     //! type of discrete function space
-    typedef typename DiscreteFunctionType :: FunctionSpaceType
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
-        
-    //! type of jacobian
-    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
-      JacobianRangeType;
     //! field type of range
     typedef typename DiscreteFunctionSpaceType :: RangeFieldType
       RangeFieldType;
-    //! type of range vectors
-    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+       
+  protected:
+    //! type of jacobian
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
+      JacobianRangeType;
+    //! type of the base function set
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
+
+  public:
     //! type of grid partition
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
     //! type of grid
@@ -263,9 +265,10 @@ namespace Dune
           mygrad[ i ][ 0 ] = FMatrixHelp :: mult( inv, mygrad[ i ][ 0 ] );
         }
         
-        RangeFieldType weight = quad.weight( pt ) * volume;
+        typename DiscreteFunctionSpaceType :: RangeFieldType weight
+          = quad.weight( pt ) * volume;
         if( stiffTensor_ ) {
-          RangeType phi;
+          typename DiscreteFunctionSpaceType :: RangeType phi;
           stiffTensor_->evaluate( geometry.global( quad.point( pt ) ), phi );
           weight *= phi[ 0 ];
         }
