@@ -52,7 +52,7 @@ namespace Dune
   protected:
     class CommunicationIndexMap;
     
-    template< class LinkStorageImp, class IndexMapVectorType >
+    template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
     class LinkBuilder;
 
     class UnsaveObjectStream;
@@ -66,10 +66,6 @@ namespace Dune
 
     // type of set of links 
     typedef std :: set< int >  LinkStorageType;
-
-    // type of data handler 
-    typedef LinkBuilder< LinkStorageType, IndexMapVectorType >
-      LinkBuilderHandleType;
 
     // ALUGrid send/recv buffers
     typedef ALU3DSPACE ObjectStream ObjectStreamType;
@@ -364,20 +360,20 @@ namespace Dune
 
 
 
-  template< class SpaceImp >
-  template< class LinkStorage, class IndexMapVectorType >
-  class DependencyCache< SpaceImp > :: LinkBuilder
+  template< class Space >
+  template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
+  class DependencyCache< Space > :: LinkBuilder
   : public CommDataHandleIF
-    < LinkBuilder< LinkStorage, IndexMapVectorType >, int >
+    < LinkBuilder< LinkStorage, IndexMapVector, CommInterface >, int >
   {
   public:
     typedef LinkStorage LinkStorageType;
 
+    typedef IndexMapVector IndexMapVectorType;
+
     typedef typename SpaceType :: MapperType MapperType; 
 
     typedef int DataType;
-
-    static const InterfaceType CommInterface = InteriorBorder_All_Interface;
 
   protected:
     const int myRank_;
@@ -455,12 +451,6 @@ namespace Dune
           sendIndexMap_[ value ].insert( indices );
         if( receive )
           recvIndexMap_[ value ].insert( indices );
-#if 0
-        if( interiorEntity )
-          sendIndexMap_[ value ].insert( indices );
-        else 
-          recvIndexMap_[ value ].insert( indices );
-#endif
       }
     }
 
@@ -524,8 +514,8 @@ namespace Dune
       sendIndexMap_[ i ].clear();
     }
 
-    LinkBuilderHandleType handle
-      ( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
+    LinkBuilder< LinkStorageType, IndexMapVectorType, InteriorBorder_All_Interface >
+      handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
 
     // do communication to build up linkage
     if( treatOverlapAsGhosts && (gridPart_.grid().overlapSize( 0 ) > 0) )
