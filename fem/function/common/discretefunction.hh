@@ -301,6 +301,13 @@ namespace Dune
 
     /** \brief Scalar product between the DoFs of two discrete functions
      *
+     *  \note This is a parallel scalar product, so do not sum over all
+     *        processes after calling scalarProductDofs!
+     *
+     *  \note It is assumed that the discrete function has been communicated
+     *        (i.e., every local DoF hat the value of the corresponding global
+     *        DoF).
+     *
      *  \param[in]  other  discrete function to evaluate the scalar product with
      *
      *  \returns the scalar product of the DoF-vectors

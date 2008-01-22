@@ -6,5 +6,10 @@
  *  - The evaluation methods taking a Quadrature and an int as arguments are
  *    now mere fronts for the evaluate methods taking a PointType.
  *  - Local functions now use an \ref EngineConcept "engine concept".
+ *  - The method scalarProductDofs in \ref Dune::DiscreteFunctionInterface
+ *    "discrete functions" is now parallelized (do not communicate afterwards).
+ *  - Communication managers now support different communication operations
+ *    (i.e., copy, add, etc.) and different communication interfaces and
+ *    directions. Communication of higher codims should also work.
  *  .
  */
