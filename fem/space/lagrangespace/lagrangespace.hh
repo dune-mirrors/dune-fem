@@ -93,6 +93,56 @@ namespace Dune
     };
   };
 
+  //! Key for Mapper singleton list 
+  template <class GridPartImp, class LagrangePointSetMapImp>
+  class LagrangeMapperSingletonKey 
+  {
+    const GridPartImp & gridPart_; 
+    mutable LagrangePointSetMapImp& pointSet_;
+    const int polOrd_;
+  public:
+    //! constructor taking index set and numDofs 
+    LagrangeMapperSingletonKey(const GridPartImp & gridPart, 
+                               LagrangePointSetMapImp& pointSet,
+                               const int polOrd)
+      : gridPart_(gridPart) ,  pointSet_(pointSet) , polOrd_(polOrd) 
+    {}
+    //! copy constructor 
+    LagrangeMapperSingletonKey(const LagrangeMapperSingletonKey &org) 
+      : gridPart_(org.gridPart_) , pointSet_(org.pointSet_), polOrd_(org.polOrd_)
+    {}
+    //! returns true if indexSet pointer and numDofs are equal 
+    bool operator == (const LagrangeMapperSingletonKey & otherKey) const 
+    {
+      return ((&(gridPart_.indexSet()) == &(otherKey.gridPart().indexSet())) 
+              && (polOrd_ == otherKey.polOrd_));
+    }
+
+    //! return reference to index set 
+    const GridPartImp & gridPart() const { return gridPart_; }
+    //! return lagrange point map set  
+    LagrangePointSetMapImp& pointSet() const { return pointSet_; }
+
+  };
+
+  //! Factory class for SingletonList to tell how objects are created and
+  //! how compared.
+  template <class KeyImp, class ObjectImp>
+  class LagrangeMapperSingletonFactory
+  {
+    public:
+    //! create new mapper  
+    static ObjectImp * createObject( const KeyImp & key )
+    {
+      // create Object of MapperType = ObjectImp 
+      return new ObjectImp(key.gridPart(),key.pointSet());
+    }
+    //! delete mapper object 
+    static void deleteObject( ObjectImp * obj )
+    {
+      delete obj;
+    }
+  };
 
 
   /** \addtogroup LagrangeDiscreteFunctionSpace
@@ -218,6 +268,25 @@ namespace Dune
     //! type of DoF manager factory
     typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
+    //! mapper singleton key 
+    typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetMapType > MapperSingletonKeyType;
+
+    //! mapper factory 
+    typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType ,
+                                    MapperType > MapperSingletonFactoryType;
+
+    //! singleton list of mappers 
+    typedef SingletonList< MapperSingletonKeyType , MapperType ,
+                           MapperSingletonFactoryType > MapperProviderType;
+
+    //! mapper factory 
+    typedef MapperSingletonFactory< MapperSingletonKeyType ,
+                                    BlockMapperType > BlockMapperSingletonFactoryType;
+
+    //! singleton list of mappers 
+    typedef SingletonList< MapperSingletonKeyType , BlockMapperType ,
+                           BlockMapperSingletonFactoryType > BlockMapperProviderType;
+
   public:
     //! type of identifier for this discrete function space
     typedef int IdentifierType;
@@ -239,7 +308,7 @@ namespace Dune
     MapperType *mapper_;
 
     //! corresponding mapper
-    mutable BlockMapperType* blockMapper_;
+    BlockMapperType* blockMapper_;
 
     //! reference to the DoF manager
     DofManagerType &dofManager_;
@@ -286,8 +355,8 @@ namespace Dune
         }
       }
 
-      mapper_ = new LagrangeMapper< GridPartType, polynomialOrder, DimRange >
-                  ( this->gridPart_, lagrangePointSet_ );
+      MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
+      mapper_ = & MapperProviderType::getObject(key);
       assert( mapper_ != NULL );
     }
 
@@ -301,8 +370,8 @@ namespace Dune
     **/
     inline ~LagrangeDiscreteFunctionSpace ()
     {
-      delete blockMapper_;
-      delete mapper_;
+      if( blockMapper_ ) BlockMapperProviderType::removeObject( *blockMapper_ );
+      MapperProviderType::removeObject( *mapper_ );
 
       typedef typename BaseFunctionMapType :: iterator BFIteratorType;
       BFIteratorType bfend = baseFunctionSet_.end();
@@ -416,14 +485,15 @@ namespace Dune
       return *mapper_;
     }
 
-    /** \brief obtain the DoF mapper of this space
-        \return MapperType
+    /** \brief obtain the DoF block mapper of this space
+        \return BlockMapperType
     **/
     inline BlockMapperType& blockMapper () const
     {
       if( ! blockMapper_ )
       {
-        blockMapper_ = new BlockMapperType( this->gridPart_, lagrangePointSet_ ); 
+        MapperSingletonKeyType key( this->gridPart() , lagrangePointSet_, polynomialOrder ); 
+        blockMapper_ = & BlockMapperProviderType::getObject(key);
       }
       return *blockMapper_;
     }
