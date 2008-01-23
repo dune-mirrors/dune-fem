@@ -205,9 +205,11 @@ namespace Dune
     typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
     
-    typedef typename Traits::MapperType MapperType;
+    typedef typename Traits :: MapperType MapperType;
     typedef typename Traits :: BlockMapperType BlockMapperType;
 
+    typedef typename Traits :: ContainedMapperType ContainedMapperType;
+ 
     typedef typename Traits::GridType GridType;
     typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::IndexSetType IndexSetType;
@@ -229,49 +231,70 @@ namespace Dune
     //! constructor
     inline explicit CombinedSpace( GridPartType &gridpart );
 
+  private:
+    // prohibit copying
+    CombinedSpace ( const ThisType & );
+
+  public:
     //! destructor
     ~CombinedSpace();
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains(const int codim) const */
-    bool contains ( const int codim ) const
+    inline bool contains ( const int codim ) const
     {
-      return spc_.contains( codim );
+      return containedSpace().contains( codim );
     }
 
-    //! continuous?
-    bool continuous() const { return spc_.continuous(); }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous() const */
+    inline bool continuous () const
+    {
+      return containedSpace().continuous();
+    }
 
-    //! polynom order
-    int polynomOrder() const { return spc_.polynomOrder(); }
+#if 0
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::polynomOrder() const */
+    inline int polynomOrder () const
+    {
+      return containedSpace().polynomOrder();
+    }
+#endif
 
-    //! polynom order
-    int order() const { return spc_.order(); }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order() const */
+    inline int order () const
+    {
+      return containedSpace().order();
+    }
 
-    //! begin iterator
-    IteratorType begin() const { return spc_.begin(); }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin() const */
+    inline IteratorType begin () const
+    {
+      return containedSpace().begin();
+    }
 
-    //! end iterator
-    IteratorType end() const { return spc_.end(); }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end() const */
+    inline IteratorType end () const
+    {
+      return containedSpace().end();
+    }
 
     //! Return the identifier
-    DFSpaceIdentifier type () const
+    inline DFSpaceIdentifier type () const
     {
       return CombinedSpace_id;
     }
 
-    //! access to base function set
-    template <class EntityType>
-    const BaseFunctionSetType baseFunctionSet(const EntityType& en) const 
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+    template< class EntityType >
+    const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
-      return this->baseFunctionSet( en.geometry().type() );
+      return baseFunctionSet( entity.geometry().type() );
     }
 
     //! access to base function set for given id 
-    const BaseFunctionSetType 
-    baseFunctionSet(const GeometryType geomType) const 
+    const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
     {
-      assert(baseSetMap_.find( geomType ) != baseSetMap_.end());
-      return BaseFunctionSetType(baseSetMap_[geomType]);
+      assert( baseSetMap_.find( type ) != baseSetMap_.end() );
+      return BaseFunctionSetType( baseSetMap_[ type ] );
     }
 
     //! access to mapper
@@ -294,26 +317,26 @@ namespace Dune
     int sequence () const { return dm_.sequence(); }
 
     //! policy of this space
-    DofStoragePolicy myPolicy() const{ return DofConversionType::policy(); }
+    inline DofStoragePolicy myPolicy() const
+    {
+      return DofConversionType :: policy();
+    }
  
     //! return reference to contained space  
-    const ContainedDiscreteFunctionSpaceType& containedSpace() const  { return spc_; }
+    inline const ContainedDiscreteFunctionSpaceType &containedSpace () const
+    {
+      return containedSpace_;
+    }
 
-  private:
-    //- Private typedefs
-    typedef typename Traits::ContainedMapperType ContainedMapperType;
-   
-  private:
-    //- Private methods
-    CombinedSpace(const ThisType& other);
-
-    ContainedMapperType& containedMapper() const { 
-      return mapper_.containedMapper(); 
+    //! return a reference to the contained space's mapper
+    inline ContainedMapperType &containedMapper () const
+    { 
+      return containedSpace().mapper();
     }
 
   protected:
     //- Member data  
-    ContainedDiscreteFunctionSpaceType spc_;
+    ContainedDiscreteFunctionSpaceType containedSpace_;
 
     mutable MapperType mapper_;
     mutable BlockMapperType blockMapper_;
@@ -321,7 +344,6 @@ namespace Dune
     typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
     mutable BaseFunctionMapType baseSetMap_; 
     const DofManagerType & dm_;
-
   }; // end class CombinedSpace  
 
   /** @} **/  
