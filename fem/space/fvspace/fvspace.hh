@@ -270,7 +270,7 @@ namespace Dune {
     MapperType* mapper_; 
 
     //! mapper for block vector functions 
-    BlockMapperType* blockMapper_;
+    BlockMapperType& blockMapper_;
 
     //! reference to dof manager 
     const DofManagerType & dm_;

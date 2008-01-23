@@ -15,7 +15,9 @@ FiniteVolumeSpace (GridPartType & gridPart) :
     DefaultType(gridPart),
     baseFuncSet_(),
     mapper_(0),
-    blockMapper_(0),
+    blockMapper_(
+      BlockMapperProviderType::getObject( 
+        MapperSingletonKeyType (this->gridPart().indexSet(),1) )),
     dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
 {
   makeFunctionSpace(gridPart);
@@ -54,8 +56,11 @@ makeFunctionSpace (GridPartType& gridPart)
     }
   }
 
-  MapperSingletonKeyType key(gridPart.indexSet(),maxDofs);
-  mapper_ = & MapperProviderType::getObject(key);
+  {
+    MapperSingletonKeyType key(gridPart.indexSet(),maxDofs);
+    mapper_ = & MapperProviderType::getObject(key);
+  }
+  assert( mapper_ );
 }
   
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
@@ -72,10 +77,7 @@ inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStor
 
   baseFuncSet_.clear();
   MapperProviderType::removeObject(*mapper_);
-  if( blockMapper_ )
-  {
-    BlockMapperProviderType::removeObject(*blockMapper_);
-  }
+  BlockMapperProviderType::removeObject(blockMapper_);
 }  
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
@@ -115,12 +117,7 @@ template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class
 inline typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BlockMapperType&
 FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::blockMapper() const 
 {
-  if( !blockMapper_ )
-  {
-    MapperSingletonKeyType key(this->gridPart().indexSet(),1);
-    blockMapper_ = & BlockMapperProviderType::getObject(key);
-  }
-  return *blockMapper_;
+  return blockMapper_;
 }
    
 } // end namespace Dune 
