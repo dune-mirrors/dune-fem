@@ -4,11 +4,11 @@
 //- system includes 
 #include <iostream>
 #include <map> 
-#include <vector>
 #include <limits>
 
 //- Dune includes  
 #include <dune/common/mpihelper.hh>
+
 #include <dune/grid/common/datahandleif.hh>
 
 // in case of ISTL found include some more headers 
@@ -17,10 +17,10 @@
 #endif
 
 //- Dune-fem includes 
-#include <dune/fem/space/common/commoperations.hh>
+//#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/singletonlist.hh>
-#include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/gridpartutility.hh>
+#include <dune/fem/space/common/commindexmap.hh>
 
 namespace Dune
 {
@@ -32,11 +32,10 @@ namespace Dune
   template< class Space, class Mapper >
   class SlaveDofs 
   {
+  public:
+    class SingletonKey;
+
   private:
-    // index map for send and receive data 
-    class CommunicationIndexMap;
-    typedef CommunicationIndexMap IndexMapType;
-    
     class LinkBuilder;
 
   public:
@@ -47,6 +46,9 @@ namespace Dune
 
     //! type of used mapper 
     typedef Mapper MapperType;
+
+  protected:
+    typedef CommunicationIndexMap IndexMapType;
 
   protected:
     const SpaceType &space_;
@@ -64,11 +66,10 @@ namespace Dune
     
   public:
     //! constructor taking space 
-    inline SlaveDofs ( const SpaceType &space,
-                       const MapperType &mapper )
-    : space_( space ),
+    inline SlaveDofs ( const SingletonKey &key )
+    : space_( key.space() ),
       gridPart_( space_.gridPart() ),
-      mapper_( mapper ),
+      mapper_( key.mapper() ),
       myRank_( gridPart_.grid().comm().rank() ),
       mySize_( gridPart_.grid().comm().size() ),
       slaves_(),
@@ -80,10 +81,6 @@ namespace Dune
     SlaveDofs ( const SlaveDofs & );
 
   public:
-    //! destrcutor removeing mpAccess 
-    ~SlaveDofs()
-    {}
-
     const int operator [] ( const int index ) const
     {
       return slaves_[ index ];
@@ -202,87 +199,52 @@ namespace Dune
 
 
 
-  template< class Space, class Mapper > 
-  class SlaveDofs< Space, Mapper > :: CommunicationIndexMap
+  //! Key for CommManager singleton list
+  template< class Space, class Mapper >
+  class SlaveDofs< Space, Mapper > :: SingletonKey
   {
+  public:
+    typedef Space SpaceType;
+    typedef Mapper MapperType;
+    
   protected:
-    MutableArray< int > index_;
+    const SpaceType &space_;
+    const MapperType *const mapper_;
 
   public:
-    //! constructor creating empty map
-    CommunicationIndexMap()
-    : index_( 0 )
+    //! constructor taking space 
+    inline SingletonKey ( const SpaceType &space, 
+                          const MapperType &mapper )
+    : space_( space ),
+      mapper_( &mapper )
+    {}
+
+    //! copy constructor  
+    inline SingletonKey ( const SingletonKey &other )
+    : space_( other.space_ ),
+      mapper_( other.mapper_ )
+    {}
+    
+    //! returns true if indexSet pointer and numDofs are equal 
+    inline bool operator== ( const SingletonKey &other ) const
     {
-      index_.setMemoryFactor( 1.1 );
+      return (space_ == other.space_) && (mapper_ == other.mapper_);
     }
 
-  private:
-    // prohibit copying
-    CommunicationIndexMap( const CommunicationIndexMap& );
-
-  public:
-    //! reserve memory 
-    void reserve( int size ) 
+    //! return reference to index set 
+    const SpaceType &space () const
     {
-      // resize array, memory factor will be used 
-      index_.resize( size );
+      return space_;
     }
 
-    //! clear index map 
-    void clear() 
+    //! return reference to index set 
+    const MapperType &mapper () const
     {
-      // resize 0 will free memory 
-      index_.resize( 0 );
-    }
-
-    //! append index vector with idx 
-    void insert( const std :: vector< int > &idx )
-    {
-      const int size = idx.size();
-      int count = index_.size();
-      
-      // reserve memory 
-      reserve( count + size );
-      assert( index_.size() == (count + size) );
-
-      // copy indices to index vector 
-      for( int i = 0; i < size; ++i, ++count )
-      { 
-        assert( idx[ i ] >= 0 );
-        index_[ count ] = idx[ i ];
-      }
-    }
-
-    //! return index map for entry i
-    const int operator [] ( const int i ) const
-    {
-      assert( (i >= 0) && (i < size()) );
-      return index_[ i ];
-    }
-
-    //! return size of map
-    int size () const
-    {
-      return index_.size();
-    }
-
-    //! print  map for debugging only 
-    void print( std :: ostream &s, int rank ) const
-    {
-      const int size = index_.size();
-      s << "Start print: size = " << size << std :: endl;
-      for( int i = 0; i < size; ++i )
-        s << rank << " idx[ " << i << " ] = " << index_[ i ] << std :: endl;
-      s << "End of Array" << std :: endl;
-    }
-
-    void sort() 
-    {
-      std :: sort( index_.begin(), index_.end() );
+      return *mapper_;
     }
   };
 
-
+ 
 
   template< class Space, class Mapper >
   class SlaveDofs< Space,Mapper > :: LinkBuilder
@@ -380,72 +342,22 @@ namespace Dune
     }
   };
 
-  
 
-  //! Key for CommManager singleton list
-  template< class Space, class Mapper >
-  class SlaveDofsSingletonKey
+
+  template< class Object >
+  class Factory
   {
   public:
-    typedef Space SpaceType;
-    typedef Mapper MapperType;
-    
-  protected:
-    const SpaceType &space_;
-    const MapperType *const mapper_;
-
-  public:
-    //! constructor taking space 
-    inline SlaveDofsSingletonKey ( const SpaceType &space, 
-                                   const MapperType &mapper )
-    : space_( space ),
-      mapper_( &mapper )
-    {}
-
-    //! copy constructor  
-    inline SlaveDofsSingletonKey ( const SlaveDofsSingletonKey &other )
-    : space_( other.space_ ),
-      mapper_( other.mapper_ )
-    {}
-    
-    //! returns true if indexSet pointer and numDofs are equal 
-    inline bool operator== ( const SlaveDofsSingletonKey &other ) const
-    {
-      return (space_ == other.space_) && (mapper_ == other.mapper_);
-    }
-
-    //! return reference to index set 
-    const SpaceType &space () const
-    {
-      return space_;
-    }
-
-    //! return reference to index set 
-    const MapperType &mapper () const
-    {
-      return *mapper_;
-    }
-  };
-
-
-
-  //! Factory class for SingletonList to tell how objects are created and
-  //! how compared.
-  template< class Key, class Object >
-  class SlaveDofsFactory
-  {
-  public:
-    typedef Key KeyType;
     typedef Object ObjectType;
 
+    typedef typename ObjectType :: SingletonKey KeyType;
+
   public:
-    //! create new communiaction manager   
     static ObjectType *createObject( const KeyType &key )
     {
-      return new ObjectType( key.space(), key.mapper() );
+      return new ObjectType( key );
     }
     
-    //! delete comm manager  
     static void deleteObject( ObjectType *obj )
     {
       delete obj; 
@@ -481,10 +393,9 @@ namespace Dune
 
     // type of communication manager object which does communication
     typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
+    typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
 
-    typedef SlaveDofsSingletonKey< DiscreteFunctionSpaceType, MapperType > KeyType;
-    typedef SlaveDofsFactory< KeyType, SlaveDofsType > FactoryType;
-    typedef SingletonList< KeyType, SlaveDofsType, FactoryType >
+    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, Factory< SlaveDofsType > >
       SlaveDofsProviderType;
 
     typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
@@ -554,7 +465,7 @@ namespace Dune
     
     inline static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
     {
-      KeyType key( space, space.mapper() );
+      SlaveDofsKeyType key( space, space.blockMapper() );
       return &(SlaveDofsProviderType :: getObject( key ));
     }
   };

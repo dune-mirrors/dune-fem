@@ -1,13 +1,36 @@
 commondir =  $(includedir)/dune/fem/space/common
-common_HEADERS = codimindexset.hh filteredgrid.hh \
-adaptiveleafgridpart.hh   communicationmanager.hh cachedcommmanager.hh formula.hh \
-adaptiveleafindexset.hh   datacollector.hh          \
-functionspace.hh          functionspaceinterface.hh \
-adaptmanager.hh           discretefunctionspace.hh  geometryconversion.hh \
-allgeomtypes.hh           dofmanager.hh             idbasedleafgridpart.hh \
-basefunctionfactory.hh    dofmapperinterface.hh     idbasedleafindexset.hh \
-basefunctioninterface.hh  basefunctionsetinterface.hh  dofstorage.hh restrictprolonginterface.hh \
-boundary.hh               dynamictype.hh            singletonlist.hh \
-loadbalancer.hh           gridpartutility.hh  arrays.hh \
-periodicindexset.hh       periodicgridpart.hh commoperations.hh \
-entitycommhelper.hh
+common_HEADERS = adaptiveleafgridpart.hh \
+		 adaptiveleafindexset.hh \
+		 adaptmanager.hh \
+		 allgeomtypes.hh \
+		 arrays.hh \
+		 basefunctionfactory.hh \
+		 basefunctioninterface.hh \
+		 basefunctionsetinterface.hh \
+		 boundary.hh \
+		 cachedcommmanager.hh \
+                 codimindexset.hh \
+		 commindexmap.hh \
+		 commoperations.hh \
+		 communicationmanager.hh \
+		 datacollector.hh \
+		 discretefunctionspace.hh \
+		 dofmanager.hh \
+		 dofmapperinterface.hh \
+		 dofstorage.hh \
+		 dynamictype.hh \
+		 entitycommhelper.hh \
+                 filteredgrid.hh \
+		 formula.hh \
+		 functionspace.hh \
+		 functionspaceinterface.hh \
+		 geometryconversion.hh \
+		 gridpartutility.hh \
+		 idbasedleafgridpart.hh \
+		 idbasedleafindexset.hh \
+		 loadbalancer.hh \
+		 periodicgridpart.hh \
+		 periodicindexset.hh \
+		 restrictprolonginterface.hh \
+		 singletonlist.hh
+
