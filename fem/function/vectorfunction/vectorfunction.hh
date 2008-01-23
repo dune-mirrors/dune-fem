@@ -28,15 +28,16 @@ namespace Dune
       
       typedef unsigned int size_type;
 
+      typedef std :: pair< DofVectorType*, size_type > KeyType;
+
     protected:
       DofVectorType &dofVector_;
       const size_type first_;
 
     protected:
-      inline DofBlockProxy ( DofVectorType &dofVector,
-                             size_type first )
-      : dofVector_( dofVector ),
-        first_( first * size )
+      inline DofBlockProxy ( const KeyType key )
+      : dofVector_( *(key.first) ),
+        first_( size * key.second )
       {}
 
       inline DofBlockProxy ( const DofBlockProxy &other )
@@ -289,12 +290,14 @@ namespace Dune
 
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
-      return ConstDofBlockPtrType( dofVector(), index );
+      typename ConstDofBlockType :: KeyType key( &(dofVector()), index );
+      return ConstDofBlockPtrType( key );
     }
 
     inline DofBlockPtrType block ( unsigned int index )
     {
-      return DofBlockPtrType( dofVector(), index );
+      typename DofBlockType :: KeyType key( &(dofVector()), index );
+      return DofBlockPtrType( key );
     }
 
     inline const RangeFieldType &dof ( unsigned int index ) const
