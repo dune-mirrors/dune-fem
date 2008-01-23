@@ -12,6 +12,65 @@
 namespace Dune
 {
 
+  namespace VectorDiscreteFunctionHelper
+  {
+    template< class DofVector, class Dof, unsigned int Size >
+    class DofBlockProxy
+    {
+      friend class Envelope< DofBlockProxy >;
+
+    public:
+      typedef DofVector DofVectorType;
+
+      typedef Dof DofType;
+      
+      enum { size = Size };
+      
+      typedef unsigned int size_type;
+
+    protected:
+      DofVectorType &dofVector_;
+      const size_type first_;
+
+    protected:
+      inline DofBlockProxy ( DofVectorType &dofVector,
+                             size_type first )
+      : dofVector_( dofVector ),
+        first_( first * size )
+      {}
+
+      inline DofBlockProxy ( const DofBlockProxy &other )
+      : dofVector_( other.dofVector_ ),
+        first_( other.first_ )
+      {}
+
+    public:
+      inline DofBlockProxy &operator= ( const DofBlockProxy &other )
+      {
+        for( size_type i = 0; i < size; ++i )
+          (*this)[ i ] = other[ i ];
+        return *this;
+      }
+      
+      inline const DofType &operator[] ( size_type index ) const
+      {
+        return dofVector_[ first_ + index ];
+      }
+      
+      inline DofType &operator[] ( size_type index )
+      {
+        return dofVector_[ first_ + index ];
+      }
+     
+      inline size_type dim () const
+      {
+        return size;
+      }
+    };
+  }
+
+
+
   template< class DiscreteFunctionSpaceImp, class DofVectorImp >
   class VectorDiscreteFunction;
 
@@ -60,11 +119,11 @@ namespace Dune
 
     enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
 
-    typedef typename DiscreteFunctionType
-      :: template DofBlockProxy< DofType, blockSize >
+    typedef VectorDiscreteFunctionHelper :: DofBlockProxy
+      < DofVectorType, DofType, blockSize >
       DofBlockType;
-    typedef typename DiscreteFunctionType
-      :: template DofBlockProxy< const DofType, blockSize >
+    typedef VectorDiscreteFunctionHelper :: DofBlockProxy
+      < DofVectorType, const DofType, blockSize >
       ConstDofBlockType;
     typedef Envelope< DofBlockType > DofBlockPtrType;
     typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType;
@@ -132,10 +191,6 @@ namespace Dune
     typedef CompileTimeChecker
       < Conversion< RangeFieldType, DofType > :: sameType >
       Check_RangeFieldType_and_DofType_are_Equal;
-
-  protected:
-    template< class Dof, unsigned int Size >
-    class DofBlockProxy;
 
   private:
     const LocalFunctionFactoryType lfFactory_;
@@ -275,61 +330,6 @@ namespace Dune
     DofVectorType &dofVector ()
     {
       return *dofVector_;
-    }
-  };
-
-
-
-  template< class DiscreteFunctionSpace, class DofVector >
-  template< class Dof, unsigned int Size >
-  class VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > :: DofBlockProxy
-  {
-    friend class Envelope< DofBlockProxy >;
-
-  public:
-    typedef Dof DofType;
-    
-    enum { size = Size };
-    
-    typedef unsigned int size_type;
-
-  protected:
-    DofVectorType &dofVector_;
-    const size_type first_;
-
-  protected:
-    inline DofBlockProxy ( DofVectorType &dofVector,
-                           size_type first )
-    : dofVector_( dofVector ),
-      first_( first * size )
-    {}
-
-    inline DofBlockProxy ( const DofBlockProxy &other )
-    : dofVector_( other.dofVector_ ),
-      first_( other.first_ )
-    {}
-
-  public:
-    inline DofBlockProxy &operator= ( const DofBlockProxy &other )
-    {
-      for( size_type i = 0; i < size; ++i )
-        (*this)[ i ] = other[ i ];
-      return *this;
-    }
-    
-    inline const DofType &operator[] ( size_type index ) const
-    {
-      return dofVector_[ first_ + index ];
-    }
-    
-    inline DofType &operator[] ( size_type index )
-    {
-      return dofVector_[ first_ + index ];
-    }
-   
-    inline size_type dim () const
-    {
-      return size;
     }
   };
 
