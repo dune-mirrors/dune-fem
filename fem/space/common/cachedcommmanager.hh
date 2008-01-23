@@ -417,7 +417,6 @@ namespace Dune
       {
         indices[ i ] = blockMapper_.mapEntityDofToGlobal( entity, i );
       }
-      assert( indices.size() == 1 );
 
       const PartitionType p = entity.partitionType();
       const bool send = EntityCommHelper< CommInterface > :: send( p );
