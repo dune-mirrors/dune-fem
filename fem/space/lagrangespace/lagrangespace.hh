@@ -94,7 +94,7 @@ namespace Dune
   };
 
   //! Key for Mapper singleton list 
-  template <class GridPartImp, class LagrangePointSetMapImp>
+  template< class GridPartImp, class LagrangePointSetMapImp >
   class LagrangeMapperSingletonKey 
   {
     const GridPartImp & gridPart_; 
@@ -269,23 +269,27 @@ namespace Dune
     typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
     //! mapper singleton key 
-    typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetMapType > MapperSingletonKeyType;
+    typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetMapType >
+      MapperSingletonKeyType;
 
     //! mapper factory 
-    typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType ,
-                                    MapperType > MapperSingletonFactoryType;
+    typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, MapperType >
+      MapperSingletonFactoryType;
 
     //! singleton list of mappers 
-    typedef SingletonList< MapperSingletonKeyType , MapperType ,
-                           MapperSingletonFactoryType > MapperProviderType;
+    typedef SingletonList
+      < MapperSingletonKeyType, MapperType, MapperSingletonFactoryType >
+      MapperProviderType;
 
     //! mapper factory 
-    typedef MapperSingletonFactory< MapperSingletonKeyType ,
-                                    BlockMapperType > BlockMapperSingletonFactoryType;
+    typedef LagrangeMapperSingletonFactory
+      < MapperSingletonKeyType, BlockMapperType >
+      BlockMapperSingletonFactoryType;
 
     //! singleton list of mappers 
-    typedef SingletonList< MapperSingletonKeyType , BlockMapperType ,
-                           BlockMapperSingletonFactoryType > BlockMapperProviderType;
+    typedef SingletonList
+      < MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType >
+      BlockMapperProviderType;
 
   public:
     //! type of identifier for this discrete function space
@@ -308,10 +312,13 @@ namespace Dune
     MapperType *mapper_;
 
     //! corresponding mapper
-    BlockMapperType* blockMapper_;
+    BlockMapperType *blockMapper_;
 
     //! reference to the DoF manager
     DofManagerType &dofManager_;
+
+  public:
+    using BaseType :: gridPart;
 
   public:
     /** \brief Constructor generating a LagrangeBaseFunctionSet of the requested polynomial order for each element type of the grid 
@@ -319,12 +326,12 @@ namespace Dune
         \return 
     **/
     inline explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart )
-    : BaseType( gridPart )
-    , baseFunctionSet_()
-    , lagrangePointSet_()
-    , mapper_(0)
-    , blockMapper_(0)
-    , dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) )
+    : BaseType( gridPart ),
+      baseFunctionSet_(),
+      lagrangePointSet_(),
+      mapper_( 0 ),
+      blockMapper_( 0 ),
+      dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) )
     {
       const IndexSetType &indexSet = gridPart.indexSet();
       GridType &grid = gridPart.grid();
@@ -356,8 +363,10 @@ namespace Dune
       }
 
       MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
-      mapper_ = & MapperProviderType::getObject(key);
-      assert( mapper_ != NULL );
+      mapper_ = &MapperProviderType :: getObject(key);
+      assert( mapper_ != 0 );
+      blockMapper_ = &BlockMapperProviderType :: getObject( key );
+      assert( blockMapper_ != 0 );
     }
 
   private:
@@ -488,13 +497,9 @@ namespace Dune
     /** \brief obtain the DoF block mapper of this space
         \return BlockMapperType
     **/
-    inline BlockMapperType& blockMapper () const
+    inline BlockMapperType &blockMapper () const
     {
-      if( ! blockMapper_ )
-      {
-        MapperSingletonKeyType key( this->gridPart() , lagrangePointSet_, polynomialOrder ); 
-        blockMapper_ = & BlockMapperProviderType::getObject(key);
-      }
+      assert( blockMapper_ != 0 );
       return *blockMapper_;
     }
 
