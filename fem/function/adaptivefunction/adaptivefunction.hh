@@ -11,7 +11,6 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/storage/subarray.hh>
-#include <dune/fem/storage/envelope.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 
 //- Local includes
@@ -138,16 +137,10 @@ namespace Dune
 
     typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
 
-  protected:
-    template< class Dof, unsigned int Size >
-    class DofBlockProxy;
-
-  public:
-    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
-    typedef DofBlockProxy< DofType, blockSize > DofBlockType;
-    typedef DofBlockProxy< const DofType, blockSize > ConstDofBlockType;
-    typedef Envelope< DofBlockType > DofBlockPtrType;
-    typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType; 
+    typedef typename ImplementationType :: DofBlockType DofBlockType;
+    typedef typename ImplementationType :: ConstDofBlockType ConstDofBlockType;
+    typedef typename ImplementationType :: DofBlockPtrType DofBlockPtrType;
+    typedef typename ImplementationType :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
   protected:
     const LocalFunctionFactoryType lfFactory_;
@@ -232,16 +225,6 @@ namespace Dune
     using Imp :: dofVec_;
 
   public:
-    inline ConstDofBlockPtrType block ( unsigned int index ) const
-    {
-      return DofBlockPtrType( leakPointer() + (blockSize * index) );
-    }
-    
-    inline DofBlockPtrType block ( unsigned int index )
-    {
-      return DofBlockPtrType( leakPointer() + (blockSize * index) );
-    } 
-
     inline const RangeFieldType &dof ( unsigned int index ) const
     {
       return dofVec_[ index ];
@@ -265,98 +248,13 @@ namespace Dune
     using Imp::read_pgm;
 
     using Imp::leakPointer;
+    using Imp::block;
     using Imp::enableDofCompression;
 
     //- Forbidden members
   private:
     const MyType& interface() const { return *this; }
   }; // end class AdaptiveDiscreteFunction
-
-
-
-  template< class DiscreteFunctionSpace >
-  template< class Dof, unsigned int Size >
-  class AdaptiveDiscreteFunction< DiscreteFunctionSpace > :: DofBlockProxy
-  {
-    friend class Envelope< DofBlockProxy >;
-
-  public:
-    typedef Dof DofType;
-
-    enum { size = Size };
-
-    typedef std :: size_t size_type;
-
-  protected:
-    DofType *const dofBlock_;
-
-  public:
-    inline DofBlockProxy ( DofType *const dofBlock )
-    : dofBlock_( dofBlock )
-    {}
-
-  private:
-    inline DofBlockProxy ( const DofBlockProxy &other )
-    : dofBlock_( other.dofBlock_ )
-    {
-    }
-
-  public:
-    inline DofBlockProxy &operator= ( const DofBlockProxy &other )
-    {
-      for( size_type i = 0; i < size; ++i )
-        (*this)[ i ] = other[ i ];
-      return *this;
-    }
-    
-    inline const DofType &operator[] ( size_type index ) const
-    {
-      return dofBlock_[ index ];
-    }
-
-    inline DofType &operator[] ( size_type index )
-    {
-      return dofBlock_[ index ];
-    }
-
-    inline size_type dim () const
-    {
-      return size;
-    }
-  };
-
-
-
-#if 0
-  template< class DiscreteFunctionSpace >
-  template< class Size >
-  class AdaptiveDiscreteFunction< DiscreteFunctionSpace > :: ConstDofBlockProxy
-  {
-  public:
-    enum { size = Size };
-
-    typedef std :: size_t size_type;
-
-  protected:
-    const DofType *const dofBlock_;
-
-  protected:
-    inline DofBlockProxy ( const DofType *const dofBlock )
-    : dofBlock_( dofBlock )
-    {}
-
-  public:
-    inline const DofType &operator[] ( size_type index ) const
-    {
-      return dofBlock_[ index ];
-    }
-
-    inline size_type dim () const
-    {
-      return size;
-    }
-  };
-#endif
  
 
 
@@ -412,6 +310,12 @@ namespace Dune
    
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
+
+    typedef typename ImplementationType :: DofBlockType DofBlockType;
+    typedef typename ImplementationType :: ConstDofBlockType ConstDofBlockType;
+    typedef typename ImplementationType :: DofBlockPtrType DofBlockPtrType;
+    typedef typename ImplementationType :: ConstDofBlockPtrType ConstDofBlockPtrType;
+
   public:
     //- Public methods
     //! Constructor
@@ -548,6 +452,7 @@ namespace Dune
     using Imp::read_pgm;
 
     using Imp::leakPointer;
+    using Imp::block;
     using Imp::enableDofCompression;
     
     //- Additional methods

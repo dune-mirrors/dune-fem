@@ -8,7 +8,9 @@
 
 //- Dune includes
 #include <dune/common/exceptions.hh>
+
 #include <dune/fem/io/file/xdrio.hh>
+#include <dune/fem/storage/envelope.hh>
 
 namespace Dune {
 
@@ -57,6 +59,17 @@ namespace Dune {
 
     typedef typename Traits::DofType DofType;
     
+  protected:
+    template< class Dof, unsigned int Size >
+    class DofBlockProxy;
+
+  public:
+    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
+    typedef DofBlockProxy< DofType, blockSize > DofBlockType;
+    typedef DofBlockProxy< const DofType, blockSize > ConstDofBlockType;
+    typedef Envelope< DofBlockType > DofBlockPtrType;
+    typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType; 
+
   public:
     const std :: string &name () const;
     int size() const;
@@ -115,6 +128,17 @@ namespace Dune {
     DofType       * leakPointer ()       { return dofVec_.leakPointer(); }
     //! return pointer to underlying array 
     const DofType * leakPointer () const { return dofVec_.leakPointer(); }
+
+    inline ConstDofBlockPtrType block ( unsigned int index ) const
+    {
+      return DofBlockPtrType( leakPointer() + (blockSize * index) );
+    }
+    
+    inline DofBlockPtrType block ( unsigned int index )
+    {
+      return DofBlockPtrType( leakPointer() + (blockSize * index) );
+    } 
+    
   protected:
 #if 0
     //! return pointer to local function implementation 
@@ -157,6 +181,59 @@ namespace Dune {
   protected:
     DofStorageType& dofVec_;
   }; // end class AdaptiveFunctionImplementation
+
+
+  
+  template< class DiscreteFunctionSpace >
+  template< class Dof, unsigned int Size >
+  class AdaptiveFunctionImplementation< DiscreteFunctionSpace > :: DofBlockProxy
+  {
+    friend class Envelope< DofBlockProxy >;
+
+  public:
+    typedef Dof DofType;
+
+    enum { size = Size };
+
+    typedef std :: size_t size_type;
+
+  protected:
+    DofType *const dofBlock_;
+
+  public:
+    inline DofBlockProxy ( DofType *const dofBlock )
+    : dofBlock_( dofBlock )
+    {}
+
+  private:
+    inline DofBlockProxy ( const DofBlockProxy &other )
+    : dofBlock_( other.dofBlock_ )
+    {
+    }
+
+  public:
+    inline DofBlockProxy &operator= ( const DofBlockProxy &other )
+    {
+      for( size_type i = 0; i < size; ++i )
+        (*this)[ i ] = other[ i ];
+      return *this;
+    }
+    
+    inline const DofType &operator[] ( size_type index ) const
+    {
+      return dofBlock_[ index ];
+    }
+
+    inline DofType &operator[] ( size_type index )
+    {
+      return dofBlock_[ index ];
+    }
+
+    inline size_type dim () const
+    {
+      return size;
+    }
+  };
 
 } // end namespace Dune
 
