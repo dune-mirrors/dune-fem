@@ -37,10 +37,15 @@ struct BlockVectorDiscreteFunctionTraits
   enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
 
+  typedef FieldVector<RangeFieldType, localBlockSize > DofBlockType;
+  typedef const DofBlockType ConstDofBlockType;
+  typedef DofBlockType *DofBlockPtrType;
+  typedef const DofBlockType *ConstDofBlockPtrType;
+  
 #if HAVE_DUNE_ISTL
-  typedef BlockVector< FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
+  typedef BlockVector< DofBlockType > DofStorageType;
 #else 
-  typedef MutableArray < FieldVector<RangeFieldType, localBlockSize > > DofStorageType;
+  typedef MutableArray < DofBlockType > DofStorageType;
 #endif
 
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
@@ -203,8 +208,9 @@ public:
   //! type of block stored in block vector 
   typedef block_type DofBlockType;
 
-  typedef DofBlockType *DofBlockPtrType;
-  typedef const DofBlockType *ConstDofBlockPtrType;
+  typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
+  typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
+  typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
   
   //! type of index set 
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
