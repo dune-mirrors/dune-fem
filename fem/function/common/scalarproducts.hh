@@ -390,8 +390,9 @@ namespace Dune
     // type of communication manager object which does communication
     typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
     typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
+    typedef typename SlaveDofsType :: Factory FactoryType;
 
-    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, Factory >
+    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, FactoryType >
       SlaveDofsProviderType;
 
     typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
