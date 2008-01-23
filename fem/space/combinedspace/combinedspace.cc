@@ -2,13 +2,14 @@ namespace Dune
 {
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
-  inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>::
-  CombinedSpace(GridPartType& gridpart) :
-    BaseType(gridpart), 
-    spc_(gridpart),
-    mapper_(spc_, spc_.mapper()),
+  inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>
+    :: CombinedSpace( GridPartType &gridpart )
+  : BaseType( gridpart ),
+    spc_( gridpart ),
+    mapper_( spc_.mapper() ),
+    blockMapper_( spc_.blockMapper() ),
     baseSetMap_(),
-    dm_(DofManagerFactoryType::getDofManager(spc_.grid()))
+    dm_( DofManagerFactoryType :: getDofManager( spc_.grid() ) )
   {
     // get types for codim 0  
     AllGeomTypes<IndexSetType,typename Traits::GridType>

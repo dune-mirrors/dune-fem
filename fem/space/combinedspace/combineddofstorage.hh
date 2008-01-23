@@ -5,95 +5,126 @@
 #include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/storage/subarray.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   //! Utility class that helps in the transformation between dofs in the
   //! combined space and its enclosed spaces
-  template <class DiscreteFunctionSpaceImp, DofStoragePolicy p>
-  class CombinedDofConversionUtility; 
+  template< class ContainedMapper, DofStoragePolicy policy >
+  class CombinedDofConversionUtility;
 
 
   //! does the same as DofConversionUtility<PointBased>, just other
   //! construtor 
-  template <class DiscreteFunctionSpaceImp>
-  class CombinedDofConversionUtility<DiscreteFunctionSpaceImp,PointBased> 
-  : public DofConversionUtility<PointBased> 
+  template< class ContainedMapper >
+  class CombinedDofConversionUtility< ContainedMapper, PointBased >
+  : public DofConversionUtility< PointBased >
   {
   public:
-    CombinedDofConversionUtility(const DiscreteFunctionSpaceImp & , 
-                                 int numComponents) : 
-      DofConversionUtility<PointBased>(numComponents) {}
+    typedef ContainedMapper ContainedMapperType;
+
+  private:
+    typedef DofConversionUtility< PointBased > BaseType;
+
+  public:
+    inline CombinedDofConversionUtility ( const ContainedMapperType &,
+                                          int numComponents )
+    : BaseType( numComponents )
+    {}
   };
 
   //! Specialisation for VariableBased approach
-  template <class DiscreteFunctionSpaceImp>
-  class CombinedDofConversionUtility<DiscreteFunctionSpaceImp,VariableBased> {
+  template< class ContainedMapper >
+  class CombinedDofConversionUtility< ContainedMapper, VariableBased >
+  {
   public:
-    //! Constructor
-    //! \param spc the discrete function space
-    //! \param size Number of global dofs per component.
-    CombinedDofConversionUtility(const DiscreteFunctionSpaceImp & spc, int size) :
-      spc_(spc)
+    typedef ContainedMapper ContainedMapperType;
+
+  protected:
+    const ContainedMapperType &mapper_;
+
+  public:
+    /** \brief constructor
+     *  
+     *  \param[in]  mapper  mapper of the contained space
+     *  \param[in]  size    number of global DoFs per component
+     */
+    inline CombinedDofConversionUtility ( const ContainedMapperType &mapper,
+                                          int size )
+    : mapper_( mapper )
     {}
 
     //! Find out what type of policy this is.
-    static DofStoragePolicy policy() { return VariableBased; }
+    inline static DofStoragePolicy policy ()
+    {
+      return VariableBased;
+    }
 
     //! Set new size after adaptation.
-    void newSize(int size) {}
+    inline void newSize ( int size )
+    {}
 
     //! Component which the actual base function index gives a contribution
     //! \return is in range {0, dimRange-1}
-    int component(int combinedIndex) const { 
-      return combinedIndex / orgSize(); 
+    int component ( int combinedIndex ) const
+    { 
+      return combinedIndex / containedSize();
     }
 
     //! Number of the (scalar) base function belonging to base function index
-    int containedDof(int combinedIndex) const {
-      return combinedIndex % orgSize();
+    int containedDof ( int combinedIndex ) const
+    {
+      return combinedIndex % containedSize();
     }
 
     //! Reverse operation of containedDof, component
     //! i == combinedDof(containedDof(i), component(i))
-    int combinedDof(int containedIndex, int component) const {
-      return containedIndex + (component * orgSize());
+    int combinedDof ( int containedIndex, int component ) const
+    {
+      return containedIndex + (component * containedSize());
     }
 
-  private:
-    int orgSize () const { return spc_.size(); }
-    const DiscreteFunctionSpaceImp & spc_; 
+  protected:
+    inline int containedSize () const
+    {
+      return mapper_.size();
+    }
   };
 
 
-  template <class CombinedSpaceImp>
-  class CombinedSubMapper : 
-    public IndexMapperInterface<CombinedSubMapper< CombinedSpaceImp > >
+  
+  template< class CombinedSpace >
+  class CombinedSubMapper
+  : public IndexMapperInterface< CombinedSubMapper< CombinedSpace > >
   {
   public:
     //- Typedefs and enums
-    typedef CombinedSpaceImp CombinedSpaceType;
+    typedef CombinedSpace CombinedSpaceType;
     
-    typedef CombinedSubMapper<CombinedSpaceType> ThisType;
+  private:
+    typedef CombinedSubMapper< CombinedSpaceType > ThisType;
 
-    typedef typename CombinedSpaceType::ContainedDiscreteFunctionSpaceType 
-    ContainedDiscreteFunctionSpaceType; 
-    typedef typename ContainedDiscreteFunctionSpaceType::MapperType 
-    ContainedMapperType;
-    typedef typename CombinedSpaceType::DofConversionType DofConversionType;
+  public:
+    typedef typename CombinedSpaceType :: ContainedDiscreteFunctionSpaceType
+      ContainedDiscreteFunctionSpaceType;
+    typedef typename ContainedDiscreteFunctionSpaceType :: MapperType
+      ContainedMapperType;
+    typedef typename CombinedSpaceType :: DofConversionType DofConversionType;
 
   public:
     //- Public methods
-    CombinedSubMapper(const CombinedSpaceType& spc,
-              unsigned int component) :
-      mapper_(spc.containedSpace().mapper()),
-      component_(component),
-      utilGlobal_(spc.containedSpace(),
+    CombinedSubMapper ( const CombinedSpaceType &spc,
+                        unsigned int component )
+    : mapper_( spc.containedSpace().mapper() ),
+      component_( component ),
+      utilGlobal_( mapper_,
                   spc.myPolicy() == PointBased ? 
                   spc.numComponents() :
                   spc.size()/spc.numComponents())
     {
       assert(component_<CombinedSpaceType::DimRange);
     }
+
     CombinedSubMapper(const ThisType& other) :
       mapper_(other.mapper_),
       component_(other.component_),
@@ -120,6 +151,7 @@ namespace Dune {
     unsigned int component_;
     mutable DofConversionType utilGlobal_;
   };
+
 } // end namespace Dune
 
 #endif

@@ -7,12 +7,12 @@
 //- Local includes
 #include <dune/fem/space/common/dofmapperinterface.hh>
 
-#include "combineddofstorage.hh"
+#include <dune/fem/space/combinedspace/combineddofstorage.hh>
 
 namespace Dune
 {
   
-  template< class ContainedSpace, int N, DofStoragePolicy policy >
+  template< class ContainedMapper, int N, DofStoragePolicy policy >
   class CombinedMapper;
 
   template< class CombinedMapperTraits >
@@ -20,34 +20,24 @@ namespace Dune
 
 
 
-  template< class ContainedSpace, int N, DofStoragePolicy policy >
+  template< class ContainedMapper, int N, DofStoragePolicy policy >
   struct CombinedMapperTraits
   {
-    typedef ContainedSpace ContainedDiscreteFunctionSpaceType;
+    typedef ContainedMapper ContainedMapperType;
 
     enum { numComponents = N };
 
-    typedef CombinedMapperTraits
-      < ContainedDiscreteFunctionSpaceType, numComponents, policy >
+    typedef CombinedMapperTraits< ContainedMapperType, numComponents, policy >
       Traits;
 
-    typedef typename ContainedDiscreteFunctionSpaceType :: MapperType
-      ContainedMapperType;
+    typedef typename ContainedMapperType :: EntityType EntityType;
 
-    typedef typename ContainedDiscreteFunctionSpaceType :: GridPartType
-      GridPartType;
-
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
-    
-    typedef CombinedDofConversionUtility
-      < ContainedDiscreteFunctionSpaceType, policy >
+    typedef CombinedDofConversionUtility< ContainedMapperType, policy >
       GlobalDofConversionUtilityType;
     
     typedef CombinedDofMapIterator< Traits > DofMapIteratorType;
 
-    typedef CombinedMapper
-      < ContainedDiscreteFunctionSpaceType, numComponents, policy >
+    typedef CombinedMapper< ContainedMapperType, numComponents, policy >
       DofMapperType;
   };
 
@@ -148,30 +138,26 @@ namespace Dune
    *  \ingroup CombinedSpace
    *  \brief DofMapper for the CombinedSpace
    */
-  template< class ContainedSpace, int N, DofStoragePolicy policy >
+  template< class ContainedMapper, int N, DofStoragePolicy policy >
   class CombinedMapper
-  : public DofMapperDefault< CombinedMapperTraits< ContainedSpace, N, policy > >
+  : public DofMapperDefault< CombinedMapperTraits< ContainedMapper, N, policy > >
   {
   public:
-    typedef CombinedMapperTraits< ContainedSpace, N, policy > Traits;
+    typedef CombinedMapperTraits< ContainedMapper, N, policy > Traits;
 
     enum { numComponents = Traits :: numComponents };
 
-    typedef typename Traits :: ContainedDiscreteFunctionSpaceType
-      ContainedDiscreteFunctionSpaceType;
+    typedef typename Traits :: ContainedMapperType ContainedMapperType;
 
   private:
-    typedef CombinedMapper
-      < ContainedDiscreteFunctionSpaceType, numComponents, policy >
+    typedef CombinedMapper< ContainedMapperType, numComponents, policy >
       ThisType;
     typedef DofMapperDefault< Traits > BaseType;
 
-    friend class CombinedSpace
-      < ContainedDiscreteFunctionSpaceType, numComponents, policy>;
+    template< class ContainedSpace, int NC, DofStoragePolicy p >
+    friend class CombinedSpace;
 
   public:
-    typedef typename Traits :: ContainedMapperType ContainedMapperType;
-
     typedef typename Traits :: EntityType EntityType;
 
     typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
@@ -179,14 +165,20 @@ namespace Dune
     typedef typename Traits :: GlobalDofConversionUtilityType
       GlobalDofConversionUtilityType;
     
-    typedef CombinedDofConversionUtility
-      < ContainedDiscreteFunctionSpaceType, PointBased >
+    typedef CombinedDofConversionUtility< ContainedMapperType, PointBased >
       LocalDofConversionUtilityType;
+
+  protected:
+    //- Data members
+    ContainedMapperType *containedMapper_;
+
+    const LocalDofConversionUtilityType utilLocal_;
+    GlobalDofConversionUtilityType utilGlobal_;
+    //int oldSize_, size_;
 
   public:
     //! Constructor
-    inline CombinedMapper ( const ContainedDiscreteFunctionSpaceType &spc,
-                            ContainedMapperType &mapper );
+    inline explicit CombinedMapper ( ContainedMapperType &mapper );
 
   private:
     // prohibit copying
@@ -202,14 +194,14 @@ namespace Dune
     /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const;
 
-    /** \copyDoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,int localDof) const */
+    /** \copyDoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
     inline int mapToGlobal( const EntityType &entity,
-                            int localDof ) const;
+                            const int localDof ) const;
 
-    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,int localDof) const */
+    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
     template< class Entity >
     inline int mapEntityDofToGlobal( const Entity &entity,
-                                     int localDof ) const;
+                                     const int localDof ) const;
 
     /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
     inline int maxNumDofs () const;
@@ -261,14 +253,6 @@ namespace Dune
                                    int variableBased,
                                    Int2Type<VariableBased> );
 
-  protected:
-    //- Data members
-    const ContainedDiscreteFunctionSpaceType &spc_;
-    mutable ContainedMapperType &mapper_;
-
-    const LocalDofConversionUtilityType utilLocal_;
-    GlobalDofConversionUtilityType utilGlobal_;
-    int oldSize_, size_;
   }; // end class CombinedMapper
   
   /** @} **/  

@@ -21,6 +21,37 @@
 
 namespace Dune
 {
+  
+  namespace CombinedSpaceHelper
+  {
+
+    template< class ContainedSpace, int N, DofStoragePolicy policy >
+    struct BlockTraits;
+
+    template< class ContainedSpace, int N >
+    struct BlockTraits< ContainedSpace, N, PointBased >
+    {
+      enum { localBlockSize = N * ContainedSpace :: localBlockSize };
+
+      typedef CombinedMapper
+        < typename ContainedSpace :: Traits :: BlockMapperType, 1, PointBased >
+        BlockMapperType;
+    };
+
+    template< class ContainedSpace, int N >
+    struct BlockTraits< ContainedSpace, N, VariableBased >
+    {
+      enum { localBlockSize = ContainedSpace :: localBlockSize };
+
+      typedef CombinedMapper
+        < typename ContainedSpace :: Traits :: BlockMapperType, N, VariableBased >
+        BlockMapperType;
+    };
+
+  }
+
+
+  
   /** @addtogroup CombinedSpace
       Class to combine N scalar discrete function spaces.  
       Policies PointBased and VariableBased decide, how dof are stored in
@@ -31,14 +62,15 @@ namespace Dune
   */
   
   // Forward declarations
-  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
+  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased >
   class CombinedSpace;
 
 
 
   //! Traits class for CombinedSpace
-  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased>
-  struct CombinedSpaceTraits {
+  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
+  struct CombinedSpaceTraits
+  {
   private:
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
 
@@ -51,10 +83,12 @@ namespace Dune
     
     enum { ContainedDimRange = ContainedFunctionSpaceType::DimRange,
            ContainedDimDomain = ContainedFunctionSpaceType::DimDomain };
+
+    typedef CombinedSpaceHelper :: BlockTraits< DiscreteFunctionSpaceImp, N, policy >
+      BlockTraits;
+
   public:
-    enum { localBlockSize = N * ContainedSpaceTraits :: localBlockSize };
-    
-    typedef typename ContainedSpaceTraits::MapperType ContainedMapperType;
+    typedef typename ContainedSpaceTraits :: MapperType ContainedMapperType;
 
     typedef typename ContainedFunctionSpaceType::DomainFieldType 
     DomainFieldType;
@@ -76,7 +110,11 @@ namespace Dune
       BaseFunctionSetImp;
     typedef VectorialBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
 
-    typedef CombinedMapper<DiscreteFunctionSpaceImp, N, policy> MapperType;
+    typedef CombinedMapper< ContainedMapperType, N, policy > MapperType;
+    
+    enum { localBlockSize = BlockTraits :: localBlockSize };
+    //enum { localBlockSize = N * ContainedSpaceTraits :: localBlockSize };
+    typedef typename BlockTraits :: BlockMapperType BlockMapperType;
    
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
@@ -87,7 +125,8 @@ namespace Dune
     typedef typename ContainedSpaceTraits::IndexSetType IndexSetType;
     typedef typename ContainedSpaceTraits::IteratorType IteratorType;
 
-    typedef CombinedDofConversionUtility<DiscreteFunctionSpaceImp,policy> DofConversionType;
+    typedef CombinedDofConversionUtility< ContainedMapperType, policy >
+      DofConversionType;
 
     enum { DimRange = FunctionSpaceType::DimRange,
            DimDomain = FunctionSpaceType::DimDomain };
@@ -104,28 +143,32 @@ namespace Dune
       typedef typename ContainedDiscreteFunctionSpaceType:: template
         CommDataHandle<DiscreteFunctionImp,OperationImp> :: OperationType OperationType;
     };
-  public:
+
+  private:
     //- Friends
-    friend class CombinedSpace<DiscreteFunctionSpaceImp, N, policy>;
-    friend class CombinedMapper<DiscreteFunctionSpaceImp, N, policy>;
+    friend class CombinedSpace< DiscreteFunctionSpaceImp, N, policy >;
+    friend class CombinedMapper< ContainedMapperType, N, policy >;
   };
 
+
   
+
+  
+
   /** @brief 
       Combined Space Function Space
       **/
-  template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased>
-  class CombinedSpace :
-    public DiscreteFunctionSpaceDefault<
-    CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> 
-  > 
+  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
+  class CombinedSpace
+  : public DiscreteFunctionSpaceDefault
+    < CombinedSpaceTraits< DiscreteFunctionSpaceImp, N, policy > > 
   {
+  public:
+    typedef CombinedSpaceTraits< DiscreteFunctionSpaceImp, N, policy > Traits;
+    
   private:
-    // CompileTimeChecker<policy==PointBased> OnlyWorksWithPointBasedPolicy;
-    //- Private typedefs
-    typedef DiscreteFunctionSpaceDefault<
-    CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> 
-    > BaseType;
+    typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
+
   public:
     // polynomial Order is the same as for the single space 
     enum { CombinedFSpaceId = CombinedSpace_id };
@@ -134,7 +177,6 @@ namespace Dune
     
     //- Public typedefs and enums
     typedef CombinedSpace<DiscreteFunctionSpaceImp, N, policy> ThisType;
-    typedef CombinedSpaceTraits<DiscreteFunctionSpaceImp, N, policy> Traits;
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
     typedef typename ContainedDiscreteFunctionSpaceType::FunctionSpaceType
     ContainedSpaceType;
@@ -162,7 +204,10 @@ namespace Dune
                 ScalarFactoryType> SingletonFactoryType; 
     typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
+    
     typedef typename Traits::MapperType MapperType;
+    typedef typename Traits :: BlockMapperType BlockMapperType;
+
     typedef typename Traits::GridType GridType;
     typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::IndexSetType IndexSetType;
@@ -170,8 +215,6 @@ namespace Dune
     typedef typename Traits::DofConversionType DofConversionType;
     typedef CombinedSubMapper<ThisType> SubMapperType;
 
-    typedef typename ContainedDiscreteFunctionSpaceType :: 
-    BlockMapperType BlockMapperType;
     enum { spaceId_ = 13 };
     
     CompileTimeChecker<(Traits::ContainedDimRange == 1)>
@@ -232,10 +275,16 @@ namespace Dune
     }
 
     //! access to mapper
-    MapperType& mapper() const { return mapper_; }
+    inline MapperType &mapper () const
+    {
+      return mapper_;
+    }
 
     //! access to mapper
-    BlockMapperType& blockMapper() const { return spc_.blockMapper(); }
+    inline BlockMapperType &blockMapper () const
+    {
+      return blockMapper_;
+    }
 
     //- Additional methods
     //! number of components
@@ -267,6 +316,8 @@ namespace Dune
     ContainedDiscreteFunctionSpaceType spc_;
 
     mutable MapperType mapper_;
+    mutable BlockMapperType blockMapper_;
+
     typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
     mutable BaseFunctionMapType baseSetMap_; 
     const DofManagerType & dm_;
