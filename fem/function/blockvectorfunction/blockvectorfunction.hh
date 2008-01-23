@@ -136,7 +136,7 @@ protected:
 //! array for storing the dofs.  
 //!
 //**********************************************************************
-template<class DiscreteFunctionSpaceImp> 
+template< class DiscreteFunctionSpaceImp >
 class BlockVectorDiscreteFunction 
 : public DiscreteFunctionDefault <BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> > 
 {
@@ -156,9 +156,9 @@ public:
   //! needs additional mapper 
   typedef typename Traits :: MapperType MapperType; 
 
-  friend class BlockVectorLocalFunctionFactory< Traits > ;
-private:
+  friend class BlockVectorLocalFunctionFactory< Traits >;
 
+private:
   typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
   enum { myId_ = 0};
   
@@ -202,6 +202,9 @@ public:
 
   //! type of block stored in block vector 
   typedef block_type DofBlockType;
+
+  typedef DofBlockType *DofBlockPtrType;
+  typedef const DofBlockType *ConstDofBlockPtrType;
   
   //! type of index set 
   typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
@@ -209,6 +212,7 @@ public:
   //! type of LeakPointer 
   typedef typename Traits :: LeakPointerType LeakPointerType;
 
+public:
   //! \brief Constructor makes Discrete Function  
   BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
   
@@ -241,6 +245,16 @@ public:
   
   /** \copydoc Dune::DiscreteFunctionInterface::dend() const */ 
   ConstDofIteratorType dend () const;
+
+  inline ConstDofBlockPtrType block ( const unsigned int block ) const
+  {
+    return &(dofVec_[ block ]);
+  }
+  
+  inline DofBlockPtrType block ( const unsigned int block )
+  {
+    return &(dofVec_[ block ]);
+  }
 
   inline const RangeFieldType &dof ( const unsigned int index ) const
   {
@@ -348,7 +362,7 @@ private:
 
   //! hold one object for addLocal and setLocal and so on 
   LocalFunctionImp localFunc_;
-}; // end class BlockVectorDiscreteFunction 
+}; // end class BlockVectorDiscreteFunction
 
 
 
