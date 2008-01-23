@@ -119,6 +119,11 @@ namespace Dune
     //! Type of the constantdof iterator used in the discrete function implementation
     typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
+    typedef typename Traits :: DofBlockType DofBlockType;
+    typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
+    typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
+    typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
+
     //! type of mapping base class for this discrete function 
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
@@ -195,6 +200,18 @@ namespace Dune
       return asImp().size();
     }
     
+    inline ConstDofBlockPtrType block ( unsigned int index ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().block( index ) );
+      return asImp().block( index );
+    }
+    
+    inline DofBlockPtrType block ( unsigned int index )
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().block( index ) );
+      return asImp().block( index );
+    }
+ 
     inline const RangeFieldType &dof ( unsigned int index ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().dof( index ) );

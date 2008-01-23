@@ -29,7 +29,7 @@ namespace Dune
     @{
 **/
   
-  template< class SpaceImp, class MapperImp >
+  template< class Space, class Mapper >
   class SlaveDofs 
   {
   private:
@@ -41,12 +41,12 @@ namespace Dune
 
   public:
     //! type of discrete function space 
-    typedef SpaceImp SpaceType; 
+    typedef Space SpaceType; 
     //! type of grid part 
     typedef typename SpaceType :: GridPartType GridPartType;
 
     //! type of used mapper 
-    typedef MapperImp MapperType;
+    typedef Mapper MapperType;
 
   protected:
     const SpaceType &space_;
@@ -57,7 +57,7 @@ namespace Dune
     const int mySize_; 
     
     // type of communication indices 
-    IndexMapType slaveDofs_;
+    IndexMapType slaves_;
 
     //! know grid sequence number 
     int sequence_; 
@@ -71,7 +71,7 @@ namespace Dune
       mapper_( mapper ),
       myRank_( gridPart_.grid().comm().rank() ),
       mySize_( gridPart_.grid().comm().size() ),
-      slaveDofs_(),
+      slaves_(),
       sequence_( -1 )
     {}
 
@@ -86,30 +86,30 @@ namespace Dune
 
     const int operator [] ( const int index ) const
     {
-      return slaveDofs_[ index ];
+      return slaves_[ index ];
     }
 
     const int size () const
     {
-      return slaveDofs_.size();
+      return slaves_.size();
     }
 
   public:
     inline void insert( const std :: vector< int > &indices )
     {
-      slaveDofs_.insert( indices );
+      slaves_.insert( indices );
     }
     
     inline void initialize ()
     {
       sequence_ = -1;
-      slaveDofs_.clear();
+      slaves_.clear();
     }
     
     inline void finalize ()
     {
       // sort number for cache efficiency 
-      slaveDofs_.sort();
+      slaves_.sort();
 
       // store actual sequence number 
       sequence_ = space_.sequence();
@@ -145,8 +145,8 @@ namespace Dune
 
 
   
-  template< class SpaceImp, class MapperImp >
-  inline void SlaveDofs<SpaceImp,MapperImp> :: buildDiscontinuousMaps ()
+  template< class Space, class Mapper >
+  inline void SlaveDofs< Space, Mapper > :: buildDiscontinuousMaps ()
   {
     typedef typename GridPartNewPartitionType< GridPartType, All_Partition >
       :: NewGridPartType NewGridPartType;
@@ -171,14 +171,14 @@ namespace Dune
         for( int i = 0; i < numDofs; ++i )
           indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
 
-        slaveDofs_.insert( indices ); 
+        insert( indices ); 
       }
     }
 
     {
       // insert overall size at the end
       std :: vector< int > indices( 1, mapper_.size() );
-      slaveDofs_.insert( indices );
+      insert( indices );
     }
 
     //slaveDofs_.print(std::cout,myRank_);
@@ -186,40 +186,24 @@ namespace Dune
 
 
 
-  template< class SpaceImp, class MapperImp >
-  inline void SlaveDofs<SpaceImp,MapperImp> :: buildCommunicatedMaps ()
+  template< class Space, class Mapper >
+  inline void SlaveDofs< Space, Mapper > :: buildCommunicatedMaps ()
   {
     typedef LinkBuilder LinkBuilderHandleType; 
-    LinkBuilderHandleType handle( slaveDofs_, space_ );
+    LinkBuilderHandleType handle( slaves_, space_ );
 
     gridPart_.communicate
       ( handle, InteriorBorder_All_Interface, ForwardCommunication );
     
-    /*
-    if( gridPart_.grid().overlapSize( 0 ) > 0 )
-    {
-      // case of YaspGrid, where overlap is treated as ghost
-      gridPart_.communicate
-        ( handle, InteriorBorder_All_Interface, ForwardCommunication );
-      gridPart_.communicate
-        ( handle, InteriorBorder_All_Interface, BackwardCommunication );
-    }
-    else 
-    {
-      // case of ALUGrid, where we have only the interior ghost situation 
-      gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
-    }
-    */
-
     // insert overall size at the end
     std :: vector< int > indices( 1, mapper_.size() );
-    slaveDofs_.insert( indices );
+    insert( indices );
   }
 
 
 
-  template <class SpaceImp, class MapperImp> 
-  class SlaveDofs<SpaceImp,MapperImp> :: CommunicationIndexMap
+  template< class Space, class Mapper > 
+  class SlaveDofs< Space, Mapper > :: CommunicationIndexMap
   {
   protected:
     MutableArray< int > index_;
@@ -300,8 +284,8 @@ namespace Dune
 
 
 
-  template<class Space, class Mapper>
-  class SlaveDofs<Space,Mapper> :: LinkBuilder
+  template< class Space, class Mapper >
+  class SlaveDofs< Space,Mapper > :: LinkBuilder
   : public CommDataHandleIF< LinkBuilder, int >
   {
   public:
@@ -314,17 +298,17 @@ namespace Dune
     const int myRank_;
     const int mySize_;
     
-    IndexMapType &slaveDofs_;
+    IndexMapType &slaves_;
 
     const SpaceType &space_;
     const MapperType &mapper_;
 
   public:
-    LinkBuilder( IndexMapType &slaveDofs,
+    LinkBuilder( IndexMapType &slaves,
                  const SpaceType &space )
     : myRank_( space.grid().comm().rank() ),
       mySize_( space.grid().comm().size() ),
-      slaveDofs_( slaveDofs ),
+      slaves_( slaves ),
       space_( space ),
       mapper_( space.mapper() )
     {}
@@ -382,7 +366,7 @@ namespace Dune
           indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
         
         // insert slave Dofs 
-        slaveDofs_.insert( indices );
+        slaves_.insert( indices );
       }
     }
 
@@ -399,12 +383,12 @@ namespace Dune
   
 
   //! Key for CommManager singleton list
-  template< class SpaceImp, class MapperImp >
+  template< class Space, class Mapper >
   class SlaveDofsSingletonKey
   {
   public:
-    typedef SpaceImp SpaceType;
-    typedef MapperImp MapperType;
+    typedef Space SpaceType;
+    typedef Mapper MapperType;
     
   protected:
     const SpaceType &space_;
@@ -447,18 +431,22 @@ namespace Dune
 
   //! Factory class for SingletonList to tell how objects are created and
   //! how compared.
-  template< class KeyImp, class ObjectImp >
+  template< class Key, class Object >
   class SlaveDofsFactory
   {
   public:
+    typedef Key KeyType;
+    typedef Object ObjectType;
+
+  public:
     //! create new communiaction manager   
-    static ObjectImp *createObject( const KeyImp &key )
+    static ObjectType *createObject( const KeyType &key )
     {
-      return new ObjectImp( key.space(), key.mapper() );
+      return new ObjectType( key.space(), key.mapper() );
     }
     
     //! delete comm manager  
-    static void deleteObject( ObjectImp *obj )
+    static void deleteObject( ObjectType *obj )
     {
       delete obj; 
     }
@@ -487,8 +475,10 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: RangeFieldType  RangeFieldType;
 
     //! type of used mapper 
-    typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+    typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
     
+    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
+
     // type of communication manager object which does communication
     typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
 
@@ -496,6 +486,10 @@ namespace Dune
     typedef SlaveDofsFactory< KeyType, SlaveDofsType > FactoryType;
     typedef SingletonList< KeyType, SlaveDofsType, FactoryType >
       SlaveDofsProviderType;
+
+    typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
+    typedef typename DiscreteFunctionType :: ConstDofBlockPtrType
+      ConstDofBlockPtrType;
 
   protected:
     const DiscreteFunctionSpaceType &space_; 
@@ -535,7 +529,13 @@ namespace Dune
       {
         const int nextSlave = slaveDofs[ slave ];
         for(; i < nextSlave; ++i )
-          scp += x.dof( i ) * y.dof( i );
+        {
+          ConstDofBlockPtrType xPtr = x.block( i );
+          ConstDofBlockPtrType yPtr = y.block( i );
+          for( unsigned int j = 0; j < blockSize; ++j )
+            scp += (*xPtr)[ j ] * (*yPtr)[ j ];
+          // scp += x.dof( i ) * y.dof( i );
+        }
         // skip the slave dof
         ++i;
       }
@@ -610,7 +610,8 @@ namespace Dune
 
 
 
-#if HAVE_DUNE_ISTL
+#if 0
+//#if HAVE_DUNE_ISTL
   template< class DiscreteFunctionSpaceImp >
   class BlockVectorDiscreteFunction;
 

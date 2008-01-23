@@ -131,7 +131,7 @@ namespace Dune {
 
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
-      return DofBlockPtrType( leakPointer() + (blockSize * index) );
+      return ConstDofBlockPtrType( leakPointer() + (blockSize * index) );
     }
     
     inline DofBlockPtrType block ( unsigned int index )
@@ -200,12 +200,11 @@ namespace Dune {
   protected:
     DofType *const dofBlock_;
 
-  public:
+  protected:
     inline DofBlockProxy ( DofType *const dofBlock )
     : dofBlock_( dofBlock )
     {}
 
-  private:
     inline DofBlockProxy ( const DofBlockProxy &other )
     : dofBlock_( other.dofBlock_ )
     {

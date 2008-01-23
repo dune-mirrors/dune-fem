@@ -38,6 +38,9 @@ namespace Dune
  
     typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
+    typedef AdaptiveFunctionImplementation< DiscreteFunctionSpaceType >
+      ImplementationType;
+
     typedef StandardLocalFunctionFactory
       < AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > >
       LocalFunctionFactoryType;
@@ -66,6 +69,11 @@ namespace Dune
     typedef typename DofStorageType :: ConstDofIteratorType ConstDofIteratorType;
  
     typedef DofManager< GridType > DofManagerType;
+
+    typedef typename ImplementationType :: DofBlockType DofBlockType;
+    typedef typename ImplementationType :: ConstDofBlockType ConstDofBlockType;
+    typedef typename ImplementationType :: DofBlockPtrType DofBlockPtrType;
+    typedef typename ImplementationType :: ConstDofBlockPtrType ConstDofBlockPtrType;
   }; // end class AdaptiveDiscreteFunctionTraits
 
 
@@ -131,16 +139,16 @@ namespace Dune
     typedef typename Traits::DofIteratorType DofIteratorType;
     //! Read-only iterator over dof container
     typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
+    
+    typedef typename Traits :: DofBlockType DofBlockType;
+    typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
+    typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
+    typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
 
     typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
-
-    typedef typename ImplementationType :: DofBlockType DofBlockType;
-    typedef typename ImplementationType :: ConstDofBlockType ConstDofBlockType;
-    typedef typename ImplementationType :: DofBlockPtrType DofBlockPtrType;
-    typedef typename ImplementationType :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
   protected:
     const LocalFunctionFactoryType lfFactory_;
@@ -300,6 +308,11 @@ namespace Dune
     typedef typename Traits::DofIteratorType DofIteratorType;
     typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
 
+    typedef typename Traits :: DofBlockType DofBlockType;
+    typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
+    typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
+    typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
+
     //! type of local functions factory 
     typedef typename Traits :: LocalFunctionFactoryType  LocalFunctionFactoryType;
     //- Additional typedefs
@@ -310,11 +323,6 @@ namespace Dune
    
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
-
-    typedef typename ImplementationType :: DofBlockType DofBlockType;
-    typedef typename ImplementationType :: ConstDofBlockType ConstDofBlockType;
-    typedef typename ImplementationType :: DofBlockPtrType DofBlockPtrType;
-    typedef typename ImplementationType :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
   public:
     //- Public methods
