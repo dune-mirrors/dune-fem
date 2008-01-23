@@ -34,7 +34,12 @@ namespace Dune
     typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
 
-    typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+    typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
+
+  protected:
+    typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
+
+    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
     
   protected:
     DiscreteFunctionType *const function_;
@@ -43,7 +48,7 @@ namespace Dune
   public:
     LagrangeCommunicationHandler( DiscreteFunctionType &function )
     : function_( &function ),
-      mapper_( function.space().mapper() )
+      mapper_( function.space().blockMapper() )
     {} 
     
     LagrangeCommunicationHandler( const LagrangeCommunicationHandler &other )
@@ -74,7 +79,12 @@ namespace Dune
       for( unsigned int i = 0; i < numEntityDofs; ++i )
       {
         const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
-        buffer.write( function_->dof( index ) );
+        
+        DofBlockPtrType blockPtr = function_->block( index );
+        for( unsigned int j = 0; j < blockSize; ++j )
+          buffer.write( (*blockPtr)[ j ] );
+        
+        //buffer.write( function_->dof( index ) );
       }
     }
 
@@ -89,10 +99,16 @@ namespace Dune
       {
         const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
 
-        DataType value;
-        buffer.read( value );
+        DofBlockPtrType blockPtr = function_->block( index );
+        for( unsigned int j = 0; j < blockSize; ++j )
+        {
+          DataType value;
+          buffer.read( value );
 
-        Operation :: apply( value, function_->dof( index ) );
+          Operation :: apply( value, (*blockPtr)[ j ] );
+        }
+
+        //Operation :: apply( value, function_->dof( index ) );
       }
     }
 
@@ -100,7 +116,7 @@ namespace Dune
     template< class Entity >
     size_t size ( const Entity &entity ) const
     {
-      return mapper_.numEntityDofs( entity );
+      return blockSize * mapper_.numEntityDofs( entity );
     }
   };
   
