@@ -333,14 +333,7 @@ namespace Dune
       Imp( name, spc ),
       lfFactory_( *this )
     {
-      const SubSpaceType& subSpace = spc.containedSpace();
-      for (int i=0;i<N;i++) {
-        subDofMapper_[i] = new SubMapperType(this->spc_,i);
-        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
-        subDiscFunc_[i]  = new SubDiscreteFunctionType(
-                               std::string("Subfunction of ")+this->name(),
-                               subSpace,*(subDofVector_[i]));
-      }
+      initializeSubFunctions();
     }
 
     //! Constructor
@@ -350,15 +343,9 @@ namespace Dune
                              VectorPointerType * vector)
     : BaseType( spc, lfFactory_ ),
       Imp( name, spc , vector ),
-      lfFactory_( *this ) {
-      const SubSpaceType& subSpace = spc.containedSpace();
-      for (int i=0;i<N;i++) {
-        subDofMapper_[i] = new SubMapperType(this->spc_,i);
-        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
-        subDiscFunc_[i]  = new SubDiscreteFunctionType(
-                               std::string("Subfunction of ")+this->name(),
-                               subSpace,*(subDofVector_[i]));
-      }
+      lfFactory_( *this ) 
+    {
+      initializeSubFunctions();
     }
     
     //! Constructor
@@ -369,14 +356,7 @@ namespace Dune
       Imp( name, spc , dofVec ),
       lfFactory_( *this )
     {
-      const SubSpaceType& subSpace = spc.containedSpace();
-      for (int i=0;i<N;i++) {
-        subDofMapper_[i] = new SubMapperType(this->spc_,i);
-        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
-        subDiscFunc_[i]  = new SubDiscreteFunctionType(
-                               std::string("Subfunction of ")+this->name(),
-                               subSpace,*(subDofVector_[i]));
-      }
+      initializeSubFunctions();
     }
 
     //! Copy constructor
@@ -385,18 +365,15 @@ namespace Dune
       Imp(other),
       lfFactory_( *this )
     {
-      const SubSpaceType& subSpace = other.space().containedSpace();
-      for (int i=0;i<N;i++) {
-        subDofMapper_[i] = new SubMapperType(this->spc_,i);
-        subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
-        subDiscFunc_[i]  = new SubDiscreteFunctionType(
-                               std::string("Subfunction of ")+this->name(),
-                               subSpace,*(subDofVector_[i]));
-      }
+      initializeSubFunctions();
     }
     
+    //! destructor 
     ~AdaptiveDiscreteFunction();
-    
+
+  protected:  
+    // initialize sub functions 
+    void initializeSubFunctions() ;
 
   private:
     // local function factory 
