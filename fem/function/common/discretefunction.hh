@@ -212,18 +212,6 @@ namespace Dune
       return asImp().block( index );
     }
  
-    inline const RangeFieldType &dof ( unsigned int index ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().dof( index ) );
-      return asImp().dof( index );
-    }
-
-    inline RangeFieldType &dof ( unsigned int index )
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().dof( index ) );
-      return asImp().dof( index );
-    }
-      
     /** \brief obtain an iterator pointing to the first DoF (read-only)
      *
      *  \returns a DoF iterator pointing to first DoF (degre of freedom)
