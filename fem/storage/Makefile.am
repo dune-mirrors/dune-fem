@@ -4,12 +4,13 @@ AUTOMAKE_OPTIONS = foreign 1.5
 miscdir =  $(includedir)/dune/fem/storage
 misc_HEADERS = arrayallocator.hh \
                array.hh \
-							 array_inline.hh \
+	       array_inline.hh \
+	       envelope.hh \
                objectstack.hh \
                obstack.hh \
                rectarray.hh \
-							 referencecounter.hh \
-							 stlarray.hh \
+	       referencecounter.hh \
+	       stlarray.hh \
                subarray.hh \
                vector.hh \
                vector_inline.hh
