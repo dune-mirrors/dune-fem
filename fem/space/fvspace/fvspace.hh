@@ -63,8 +63,7 @@ namespace Dune {
     // type of mapper for block vector functions 
     typedef FiniteVolumeMapper< GridPartType, polOrd, 1 > BlockMapperType;
 
-    // always 1 for FVSpace Base , to be revised 
-    enum { localBlockSize = 1 };
+    enum { localBlockSize = DimRange };
     
     /** \brief defines type of data handle for communication 
         for this type of space.
