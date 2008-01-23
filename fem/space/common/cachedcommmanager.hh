@@ -212,13 +212,25 @@ namespace Dune
       const int size = indexMap.size();
 
       typedef typename DiscreteFunction :: DofType DofType;
+      enum { blockSize = DiscreteFunction :: 
+              DiscreteFunctionSpaceType :: localBlockSize };
       // reserve buffer memory at once 
-      str.reserve( str.size() + (size * sizeof( DofType )) );
+      str.reserve( str.size() + (size * blockSize * sizeof( DofType )) );
 
       // dirty hack to have faster access to stream 
       UnsaveObjectStream &os = (UnsaveObjectStream &)str;
       for( int i = 0; i < size; ++i )
-        os.writeUnsave( discreteFunction.dof( indexMap[ i ] ) );
+      {
+        // get dof block 
+        typedef typename DiscreteFunction :: ConstDofBlockPtrType ConstDofBlockPtrType;
+        ConstDofBlockPtrType blockPtr = discreteFunction.block( indexMap[i] );
+
+        // write dof block to stream  
+        for( int k = 0; k < blockSize; ++k )
+        {
+          os.writeUnsave( ((*blockPtr)[ k ]) );
+        }
+      }
     }
 
     // read data from object stream to DataImp& data vector 
@@ -230,6 +242,9 @@ namespace Dune
     {
       typedef typename DiscreteFunction :: DofType DofType;
 
+      enum { blockSize = DiscreteFunction :: 
+              DiscreteFunctionSpaceType :: localBlockSize };
+
       UnsaveObjectStream &os = (UnsaveObjectStream &)str;
       
       const IndexMapType &indexMap = recvIndexMap_[ linkRank_[ link ] ];
@@ -237,60 +252,20 @@ namespace Dune
       const int size = indexMap.size();
       for( int i = 0; i < size; ++i )
       {
+        // get dof block 
+        typedef typename DiscreteFunction :: DofBlockPtrType DofBlockPtrType;
+        DofBlockPtrType blockPtr = discreteFunction.block( indexMap[i] );
+
+        // read block 
         DofType value;
-        os.readUnsave( value );
-        Operation :: apply( value, discreteFunction.dof( indexMap[ i ] ) );
-      }
-    }
-    
-    // write data of double* vector to object stream 
-    template <class T>
-    void writeBuffer(const int link, 
-                     ObjectStreamType & str, 
-                     const T* data,
-                     const T* ) const 
-    {
-      const IndexMapType& indexMap = sendIndexMap_[ linkRank_ [link ] ]; 
-      const int size = indexMap.size();
-
-      // reserve buffer memory at once 
-      str.reserve( str.size() + (size * sizeof(T)) );
-
-      // dirty hack to have faster access to stream 
-      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
-      T val = 0;
-      for(int i=0; i<size; ++i)
-      {
-        val = data[ indexMap[i] ];
-        os.writeUnsave( val );
-      }
-    }
-
-    // read data from object stream to double* data vector 
-    template <class OperationImp, class T> 
-    void readBuffer(const int link, 
-                    ObjectStreamType & str, 
-                    T* data, const T*,
-                    const OperationImp *) const 
-    {
-      const IndexMapType& indexMap = recvIndexMap_[ linkRank_ [link ] ]; 
-
-      // dirty hack to have faster access to stream 
-      UnsaveObjectStream& os = (UnsaveObjectStream &) str;
-
-      T val;
-      const int size = indexMap.size();
-      for(int i=0; i<size; ++i)
-      {
-        os.readUnsave( val );
-        // apply operation 
-        OperationImp::apply(val , data[ indexMap[i] ] );
+        for( int k = 0; k < blockSize; ++k )  
+        {
+          os.readUnsave( value );
+          Operation :: apply( value, ((*blockPtr)[ k ]) );
+        }
       }
     }
   };
-
-
-
 
 
 
@@ -380,7 +355,7 @@ namespace Dune
 
     typedef IndexMapVector IndexMapVectorType;
 
-    typedef typename SpaceType :: MapperType MapperType; 
+    typedef typename SpaceType :: BlockMapperType BlockMapperType; 
 
     typedef int DataType;
 
@@ -394,7 +369,7 @@ namespace Dune
     IndexMapVectorType &recvIndexMap_;
 
     const SpaceType &space_;
-    const MapperType &mapper_; 
+    const BlockMapperType &blockMapper_; 
 
   public:
     LinkBuilder ( LinkStorageType &linkStorage,
@@ -407,7 +382,7 @@ namespace Dune
       sendIndexMap_( sendIdxMap ),
       recvIndexMap_( recvIdxMap ),
       space_( space ),
-      mapper_( space.mapper() )
+      blockMapper_( space.blockMapper() )
     {}
 
     bool contains ( int dim, int codim ) const
@@ -436,10 +411,13 @@ namespace Dune
                    const size_t dataSize )
     {
       // build local mapping 
-      const int numDofs = mapper_.numEntityDofs( entity );
+      const int numDofs = blockMapper_.numEntityDofs( entity );
       std :: vector< int > indices( numDofs );
       for( int i = 0; i < numDofs; ++i )
-        indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
+      {
+        indices[ i ] = blockMapper_.mapEntityDofToGlobal( entity, i );
+      }
+      assert( indices.size() == 1 );
 
       const PartitionType p = entity.partitionType();
       const bool send = EntityCommHelper< CommInterface > :: send( p );
@@ -456,9 +434,12 @@ namespace Dune
         // insert rank of link into set of links
         linkStorage_.insert( value );
 
+        // if we are on a send entity, insert into send cache 
         if( send )
           sendIndexMap_[ value ].insert( indices );
-        if( receive )
+
+        // if we are on a receive entity, insert into receive cache 
+        if( receive ) 
           recvIndexMap_[ value ].insert( indices );
       }
     }
