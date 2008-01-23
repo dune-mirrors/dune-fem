@@ -19,51 +19,61 @@ namespace Dune
 {
   
   //- Forward declarations
-  template <class ContainedDiscreteFunctionImp,int N>
+  template< class ContainedDiscreteFunction, int N >
   class CombinedDiscreteFunction;
-  template <class ContainedDiscreteFunctionImp,int N>
+  
+  template< class ContainedDiscreteFunction, int N >
   class CombinedDiscreteFunctionDofIterator;
 
   
   //- Class definitions
   //! Traits class for AdaptiveDiscreteFunction and 
   //! AdaptiveLocalFunction
-  template< class ContainedDiscreteFunctionImp,int N>
+  template< class ContainedDiscreteFunction, int N >
   struct CombinedDiscreteFunctionTraits
   {
-    typedef ContainedDiscreteFunctionImp 
-    ContainedDiscreteFunctionType;
-    typedef typename ContainedDiscreteFunctionType::
-    DiscreteFunctionSpaceType ContainedDiscreteFunctionSpaceType;
-    typedef CombinedSpace<ContainedDiscreteFunctionSpaceType,N,VariableBased>
-    DiscreteFunctionSpaceType;
-    typedef CombinedDiscreteFunction<ContainedDiscreteFunctionType,N> DiscreteFunctionType;
+    typedef ContainedDiscreteFunction ContainedDiscreteFunctionType;
+    typedef CombinedDiscreteFunction< ContainedDiscreteFunctionType, N >
+      DiscreteFunctionType;
+
+    typedef typename ContainedDiscreteFunctionType :: DiscreteFunctionSpaceType
+      ContainedDiscreteFunctionSpaceType;
+    typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, N, VariableBased >
+      DiscreteFunctionSpaceType;
+
     typedef StandardLocalFunctionFactory
-    <CombinedDiscreteFunctionTraits<ContainedDiscreteFunctionType,N> >
-    LocalFunctionFactoryType;
-    typedef LocalFunctionStack<LocalFunctionFactoryType> 
-    LocalFunctionStorageType;
-    typedef typename LocalFunctionStorageType :: 
-    LocalFunctionType LocalFunctionType;
-    typedef typename DiscreteFunctionSpaceType :: 
-    DomainType DomainType;
-    typedef typename DiscreteFunctionSpaceType :: 
-    RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType :: 
-    DomainFieldType DomainFieldType;
-    typedef typename DiscreteFunctionSpaceType :: 
-    RangeFieldType RangeFieldType;
-    typedef RangeFieldType DofType;
-    typedef typename DiscreteFunctionSpaceType :: 
-    JacobianRangeType JacobianRangeType;
-    typedef typename DiscreteFunctionSpaceType :: 
-    MapperType MapperType;
-    typedef typename DiscreteFunctionSpaceType :: 
-    GridType GridType;
+      < CombinedDiscreteFunctionTraits< ContainedDiscreteFunctionType, N > >
+      LocalFunctionFactoryType;
+    typedef LocalFunctionStack< LocalFunctionFactoryType >
+      LocalFunctionStorageType;
+    typedef typename LocalFunctionStorageType :: LocalFunctionType
+      LocalFunctionType;
+
+    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
     
-    typedef CombinedDiscreteFunctionDofIterator<ContainedDiscreteFunctionType,N>  DofIteratorType;
-    typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
+    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+    typedef RangeFieldType DofType;
+    typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+    
+    typedef CombinedDiscreteFunctionDofIterator< ContainedDiscreteFunctionType, N >
+      DofIteratorType;
+    typedef ConstDofIteratorDefault< DofIteratorType > ConstDofIteratorType;
+
+    typedef typename ContainedDiscreteFunctionType :: DofBlockType DofBlockType;
+    typedef typename ContainedDiscreteFunctionType :: ConstDofBlockType
+      ConstDofBlockType;
+    typedef typename ContainedDiscreteFunctionType :: DofBlockPtrType
+      DofBlockPtrType;
+    typedef typename ContainedDiscreteFunctionType :: ConstDofBlockPtrType
+      ConstDofBlockPtrType;
   }; // end class CombinedDiscreteFunctionTraits
+
+
 
   //! @ingroup CombinedDFunction
   //! A class for combining N discrete function of the same
@@ -130,6 +140,9 @@ namespace Dune
                     DomainType, RangeType> MappingType;
     typedef typename Traits :: LocalFunctionFactoryType 
     LocalFunctionFactoryType;
+
+    typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
+    typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
   public:
     //- Public methods
@@ -261,6 +274,22 @@ namespace Dune
       for (int i=1;i<N;i++)
 	ret |= func_[i]->dofsValid();
       return ret;
+    }
+
+    inline ConstDofBlockPtrType block ( unsigned int index ) const
+    {
+      const int containedSize = func_[ 0 ]->space().blockMapper().size();
+      const int component = index / containedSize;
+      const int containedIndex = index % containedSize;
+      return func_[ component ]->block( containedIndex );
+    }
+    
+    inline DofBlockPtrType block ( unsigned int index )
+    {
+      const int containedSize = func_[ 0 ]->space().blockMapper().size();
+      const int component = index / containedSize;
+      const int containedIndex = index % containedSize;
+      return func_[ component ]->block( containedIndex );
     }
 
     inline const RangeFieldType &dof(unsigned int index) const
