@@ -81,11 +81,10 @@ namespace Dune
 
     // types for boundary treatment
     // ----------------------------
-    typedef SlaveDofs
-      < DiscreteFunctionSpaceType, typename DiscreteFunctionSpaceType :: MapperType >
+    typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+    typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType >
       SlaveDofsType;
-    typedef SlaveDofsSingletonKey
-      < DiscreteFunctionSpaceType, typename DiscreteFunctionSpaceType :: MapperType >
+    typedef SlaveDofsSingletonKey< DiscreteFunctionSpaceType, MapperType >
       SlaveDofsKeyType;
     typedef SlaveDofsFactory< SlaveDofsKeyType, SlaveDofsType > SlaveDofsFactoryType;
     typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, SlaveDofsFactoryType >
