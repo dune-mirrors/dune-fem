@@ -39,6 +39,25 @@ namespace Dune
     class LinkBuilder;
 
   public:
+    class Factory
+    {
+    public:
+      typedef SlaveDofs<Space,Mapper> ObjectType;
+
+      typedef typename ObjectType :: SingletonKey KeyType;
+
+    public:
+      static ObjectType *createObject( const KeyType &key )
+      {
+        return new ObjectType( key );
+      }
+      
+      static void deleteObject( ObjectType *obj )
+      {
+        delete obj; 
+      }
+    };
+
     //! type of discrete function space 
     typedef Space SpaceType; 
     //! type of grid part 
@@ -343,29 +362,6 @@ namespace Dune
   };
 
 
-
-  template< class Object >
-  class Factory
-  {
-  public:
-    typedef Object ObjectType;
-
-    typedef typename ObjectType :: SingletonKey KeyType;
-
-  public:
-    static ObjectType *createObject( const KeyType &key )
-    {
-      return new ObjectType( key );
-    }
-    
-    static void deleteObject( ObjectType *obj )
-    {
-      delete obj; 
-    }
-  };
-
-
-
 #if HAVE_MPI
   //! Proxy class to evaluate ScalarProduct 
   //! holding SlaveDofs which is singleton per space and mapper 
@@ -395,7 +391,7 @@ namespace Dune
     typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
     typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
 
-    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, Factory< SlaveDofsType > >
+    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, Factory >
       SlaveDofsProviderType;
 
     typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
@@ -519,10 +515,7 @@ namespace Dune
   };
 #endif
 
-
-
-#if 0
-//#if HAVE_DUNE_ISTL
+#if HAVE_DUNE_ISTL
   template< class DiscreteFunctionSpaceImp >
   class BlockVectorDiscreteFunction;
 
@@ -578,8 +571,8 @@ namespace Dune
     typedef SlaveDofs<DiscreteFunctionSpaceType,MapperType> SlaveDofsType;
   private:  
 
-    typedef SlaveDofsSingletonKey<DiscreteFunctionSpaceType,MapperType> KeyType;
-    typedef SlaveDofsFactory<KeyType, SlaveDofsType> FactoryType;
+    typedef typename SlaveDofsType :: SingletonKey KeyType;
+    typedef typename SlaveDofsType :: Factory  FactoryType;
 
     typedef SingletonList< KeyType , SlaveDofsType , FactoryType > SlaveDofsProviderType;
   public:
