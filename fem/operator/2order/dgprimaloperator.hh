@@ -786,6 +786,16 @@ namespace Dune {
       const int numDofs = bsetEn.numBaseFunctions();
       assert( numDofs > 0 );
 
+      // set matrix to id matrix 
+      if( en.partitionType() != InteriorEntity ) 
+      {
+        for(int k=0; k<numDofs; ++k) 
+        {
+          matrixEn.set( k, k, 1);
+        }
+        return ;
+      }
+
       // local function for right hand side 
       SingleLFType singleRhs = dest_->localFunction(en); //rhs
       
@@ -835,7 +845,7 @@ namespace Dune {
 #ifdef DG_DOUBLE_FEATURE
           // get partition type 
           const bool ghostEntity = 
-            ( nb.partitionType() == GhostEntity );
+            ( nb.partitionType() != InteriorEntity );
           // only once per intersection or when outside is not interior 
           if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
               || ghostEntity
