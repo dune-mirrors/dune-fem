@@ -165,11 +165,16 @@ namespace Dune {
       }
 
       assert( maxNumDofs > 0 );
-      MapperSingletonKeyType key( gridPart, maxNumDofs );
-      mapper_ = & MapperProviderType::getObject(key);
-
+      {
+        MapperSingletonKeyType key( gridPart, maxNumDofs );
+        mapper_ = & MapperProviderType::getObject(key);
+      }
       assert( mapper_ );
       assert( mapper_->maxNumDofs() == maxNumDofs );
+      {
+        MapperSingletonKeyType key(this->gridPart(),1);
+        blockMapper_ = & BlockMapperProviderType::getObject(key);
+      }
     }
 
     /** @copydoc DiscreteFunctionSpaceInterface::sequence const */
@@ -187,10 +192,7 @@ namespace Dune {
       }
 
       MapperProviderType::removeObject( *mapper_ );
-      if( blockMapper_ ) 
-      {
-        BlockMapperProviderType::removeObject( *blockMapper_ );
-      }
+      BlockMapperProviderType::removeObject( *blockMapper_ );
     }
   
     /** @copydoc DiscreteFunctionSpaceInterface::type */
@@ -280,13 +282,7 @@ namespace Dune {
     */
     BlockMapperType& blockMapper() const 
     {
-      // only access mapper if really needed 
-      if( !blockMapper_ )
-      {
-        // create mapper with 1 dof for locating the block per element 
-        MapperSingletonKeyType key(this->gridPart(),1);
-        blockMapper_ = & BlockMapperProviderType::getObject(key);
-      }
+      assert( blockMapper_ );
       return *blockMapper_;
     }
 
