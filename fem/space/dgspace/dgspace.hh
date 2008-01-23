@@ -131,7 +131,8 @@ namespace Dune {
     explicit DiscontinuousGalerkinSpaceBase( GridPartType &gridPart )
     : BaseType( gridPart ),
       mapper_( 0 ),
-      blockMapper_( 0 ),
+      blockMapper_( BlockMapperProviderType::getObject(
+            MapperSingletonKeyType (this->gridPart(),1) )),
       baseFuncSet_(),
       dm_( DofManagerFactoryType::getDofManager( gridPart.grid() ) )
     {
@@ -171,10 +172,6 @@ namespace Dune {
       }
       assert( mapper_ );
       assert( mapper_->maxNumDofs() == maxNumDofs );
-      {
-        MapperSingletonKeyType key(this->gridPart(),1);
-        blockMapper_ = & BlockMapperProviderType::getObject(key);
-      }
     }
 
     /** @copydoc DiscreteFunctionSpaceInterface::sequence const */
@@ -192,7 +189,7 @@ namespace Dune {
       }
 
       MapperProviderType::removeObject( *mapper_ );
-      BlockMapperProviderType::removeObject( *blockMapper_ );
+      BlockMapperProviderType::removeObject( blockMapper_ );
     }
   
     /** @copydoc DiscreteFunctionSpaceInterface::type */
@@ -282,8 +279,7 @@ namespace Dune {
     */
     BlockMapperType& blockMapper() const 
     {
-      assert( blockMapper_ );
-      return *blockMapper_;
+      return blockMapper_;
     }
 
   protected:
@@ -319,7 +315,7 @@ namespace Dune {
     //! mapper for function space 
     MapperType* mapper_; 
     // mapper for blocks 
-    mutable BlockMapperType* blockMapper_;
+    BlockMapperType& blockMapper_;
 
     //! map holding base function sets
     typedef std::map < const GeometryType, const BaseFunctionSetImp* > BaseFunctionMapType;
