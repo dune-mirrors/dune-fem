@@ -90,30 +90,27 @@ namespace Dune
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
   };
 
@@ -242,30 +239,27 @@ namespace Dune
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
   };
  
@@ -518,30 +512,27 @@ namespace Dune
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
   };
  
@@ -680,30 +671,27 @@ namespace Dune
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
 
     virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const
     {
-      const LocalCoordinate< GeometryType, DomainType >
-        xlocal( const_cast< DomainType& >( x ) );
+      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
-      evaluate( point.localDofCoordinate_, diffVariable, 1, xlocal, phi );
+      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
   };
 }

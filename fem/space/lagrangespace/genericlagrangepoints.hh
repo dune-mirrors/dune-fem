@@ -27,7 +27,7 @@ namespace Dune
   public:
     typedef PointGeometry GeometryType;
     enum { dimension = GeometryType :: dimension };
-    typedef FieldVector< unsigned int, dimension > DofCoordinateType;
+    typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
  
     enum { polynomialOrder = order };
     
@@ -45,7 +45,6 @@ namespace Dune
 
   protected:
     DofCoordinateType dofCoordinate_;
-    LocalCoordinate< GeometryType, DofCoordinateType > localDofCoordinate_;
 
   public:
     template< unsigned int codim >
@@ -60,14 +59,12 @@ namespace Dune
 
   public:
     inline GenericLagrangePoint ( unsigned int index )
-    : localDofCoordinate_( dofCoordinate_ )
     {
-      dofCoordinate( index, localDofCoordinate_ );
+      dofCoordinate( index, dofCoordinate_ );
     }
     
     inline GenericLagrangePoint ( const ThisType &point )
-    : dofCoordinate_( point.dofCoordinate_ ),
-      localDofCoordinate_( dofCoordinate_ )
+    : dofCoordinate_( point.dofCoordinate_ )
     {
     }
 
@@ -94,14 +91,14 @@ namespace Dune
     inline void dofSubEntity ( unsigned int &codim,
                                unsigned int &subEntity )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity );
+      dofSubEntity( dofCoordinate_, codim, subEntity );
     }
     
     inline void dofSubEntity ( unsigned int &codim,
                                unsigned int &subEntity,
                                unsigned int &dofNumber )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity, dofNumber );
+      dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
     }
    
     static inline unsigned int entityDofNumber ( unsigned int codim,
@@ -120,13 +117,13 @@ namespace Dune
 
     inline unsigned int height ()
     {
-      return height( localDofCoordinate_ );
+      return height( dofCoordinate_ );
     }
 
     template< class FieldType >
     inline void local ( FieldVector< FieldType, dimension > &coordinate ) const
     {
-      const FieldType factor = 1 / (FieldType)polynomialOrder;
+      const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
       for( int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
@@ -184,7 +181,7 @@ namespace Dune
   public:
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
     enum { dimension = GeometryType :: dimension };
-    typedef FieldVector< unsigned int, dimension > DofCoordinateType;
+    typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
  
     enum { polynomialOrder = 0 };
 
@@ -202,7 +199,6 @@ namespace Dune
 
   protected:
     DofCoordinateType dofCoordinate_;
-    LocalCoordinate< GeometryType, DofCoordinateType > localDofCoordinate_;
 
   public:
     template< unsigned int codim >
@@ -222,14 +218,12 @@ namespace Dune
     
   public:
     inline GenericLagrangePoint ( unsigned int index )
-    : localDofCoordinate_( dofCoordinate_ )
     {
-      dofCoordinate( index, localDofCoordinate_ );
+      dofCoordinate( index, dofCoordinate_ );
     }
 
     inline GenericLagrangePoint ( const ThisType &point )
-    : dofCoordinate_( point.dofCoordinate_ ),
-      localDofCoordinate_( dofCoordinate_ )
+    : dofCoordinate_( point.dofCoordinate_ )
     {
     }
     
@@ -257,14 +251,14 @@ namespace Dune
     inline void dofSubEntity ( unsigned int &codim,
                                unsigned int &subEntity )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity );
+      dofSubEntity( dofCoordinate_, codim, subEntity );
     } 
     
     inline void dofSubEntity ( unsigned int &codim,
                                unsigned int &subEntity,
                                unsigned int &dofNumber )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity, dofNumber );
+      dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
     } 
     
     template< class LocalCoordinateType >
@@ -311,14 +305,14 @@ namespace Dune
 
     inline unsigned int height ()
     {
-      return height( localDofCoordinate_ );
+      return height( dofCoordinate_ );
     }
 
     template< class FieldType >
     inline void local ( FieldVector< FieldType, dimension > &coordinate ) const
     {
-      const FieldType factor = 1 / (FieldType)polynomialOrder;
-      for( int i = 0; i < dimension; ++i )
+      const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
+      for( unsigned int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
     
@@ -391,7 +385,7 @@ namespace Dune
   public:
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
     enum { dimension = GeometryType :: dimension };
-    typedef FieldVector< unsigned int, dimension > DofCoordinateType;
+    typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
  
     enum { polynomialOrder = order };
     
@@ -418,7 +412,6 @@ namespace Dune
    
   protected:
     DofCoordinateType dofCoordinate_;
-    LocalCoordinate< GeometryType, DofCoordinateType > localDofCoordinate_;
 
   public:
     template< unsigned int codim >
@@ -429,14 +422,12 @@ namespace Dune
 
   public:
     inline GenericLagrangePoint ( unsigned int index )
-    : localDofCoordinate_( dofCoordinate_ )
     {
-      dofCoordinate( index, localDofCoordinate_ );
+      dofCoordinate( index, dofCoordinate_ );
     }
     
     inline GenericLagrangePoint ( const ThisType &point )
-    : dofCoordinate_( point.dofCoordinate_ ),
-      localDofCoordinate_( dofCoordinate_ )
+    : dofCoordinate_( point.dofCoordinate_ )
     {
     }
 
@@ -483,14 +474,14 @@ namespace Dune
     inline void dofSubEntity ( unsigned int &codim,
                                unsigned int &subEntity )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity );
+      dofSubEntity( dofCoordinate_, codim, subEntity );
     }
 
     inline void dofSubEntity ( unsigned int &codim,
                                unsigned int &subEntity,
                                unsigned int &dofNumber )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity, dofNumber );
+      dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
     }
 
     template< class LocalCoordinateType >
@@ -571,13 +562,13 @@ namespace Dune
 
     inline unsigned int height ()
     {
-      return height( localDofCoordinate_ );
+      return height( dofCoordinate_ );
     }
 
     template< class FieldType >
     inline void local ( FieldVector< FieldType, dimension > &coordinate ) const
     {
-      const FieldType factor = 1 / (FieldType)polynomialOrder;
+      const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
       for( int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
@@ -768,7 +759,7 @@ namespace Dune
     typedef ProductGeometry< FirstGeometryType, SecondGeometryType >
       GeometryType;
     enum { dimension = GeometryType :: dimension };
-    typedef FieldVector< unsigned int, dimension > DofCoordinateType;
+    typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
 
     enum { polynomialOrder = order };
 
@@ -792,7 +783,6 @@ namespace Dune
    
   protected:
     DofCoordinateType dofCoordinate_;
-    LocalCoordinate< GeometryType, DofCoordinateType > localDofCoordinate_;
 
   private:
     template< unsigned int codim, unsigned int i >
@@ -840,14 +830,12 @@ namespace Dune
 
   public:
     inline GenericLagrangePoint ( unsigned int index )
-    : localDofCoordinate_( dofCoordinate_ )
     {
-      dofCoordinate( index, localDofCoordinate_ );
+      dofCoordinate( index, dofCoordinate_ );
     }
 
     inline GenericLagrangePoint ( const ThisType &point )
-    : dofCoordinate_( point.dofCoordinate_ ),
-      localDofCoordinate_( dofCoordinate_ )
+    : dofCoordinate_( point.dofCoordinate_ )
     {
     }
 
@@ -910,14 +898,14 @@ namespace Dune
    
     inline void dofSubEntity ( unsigned int &codim, unsigned int &subEntity )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity );
+      dofSubEntity( dofCoordinate_, codim, subEntity );
     } 
     
     inline void dofSubEntity ( unsigned int &codim,
                                unsigned int &subEntity,
                                unsigned int &dofNumber )
     {
-      dofSubEntity( localDofCoordinate_, codim, subEntity, dofNumber );
+      dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
     } 
 
     static inline unsigned int entityDofNumber ( unsigned int codim,
@@ -969,13 +957,13 @@ namespace Dune
 
     inline unsigned int height ()
     {
-      return height( localDofCoordinate_ );
+      return height( dofCoordinate_ );
     }
 
     template< class FieldType >
     inline void local ( FieldVector< FieldType, dimension > &coordinate ) const
     {
-      const FieldType factor = 1 / (FieldType)polynomialOrder;
+      const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
       for( int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }

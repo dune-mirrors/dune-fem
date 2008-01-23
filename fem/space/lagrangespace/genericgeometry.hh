@@ -443,89 +443,199 @@ namespace Dune
 
 
 
-  template< class GeometryType, class FieldVectorImp, unsigned int offset = 0 >
+  // Local Coordinates
+  // -----------------
+  
+  template< class Geometry, class Field, unsigned int offset = 0 >
   class LocalCoordinate;
 
 
   
-  template< class FieldVectorImp, unsigned int offset >
-  class LocalCoordinate< PointGeometry, FieldVectorImp, offset >
+  template< class Field, unsigned int offset >
+  class LocalCoordinate< PointGeometry, Field, offset >
   {
   public:
     typedef PointGeometry GeometryType;
 
     enum { dimension = GeometryType :: dimension };
 
-    typedef FieldVectorImp FieldVectorType;
-    typedef typename FieldVectorType :: field_type FieldType;
+    typedef Field FieldType;
 
   private:
-    typedef LocalCoordinate< GeometryType, FieldVectorType, offset > ThisType;
+    typedef LocalCoordinate< GeometryType, FieldType, offset > ThisType;
     
   public:
-    inline LocalCoordinate ( FieldVectorType &x )
+    inline LocalCoordinate ()
+    {}
+    
+    template< int sz >
+    inline explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
     {
+      typedef CompileTimeChecker< (sz >= offset + dimension) >
+        __CHECK_VECTOR_SIZE__;
     }
 
-    inline ThisType& operator= ( FieldType s )
+    inline ThisType &operator= ( const FieldType s )
     {
       return *this;
     }
+
+    template< int sz >
+    inline ThisType &operator= ( const FieldVector< FieldType, sz > &x )
+    {
+      typedef CompileTimeChecker< (sz >= offset + dimension) >
+        __CHECK_VECTOR_SIZE__;
+      return *this;
+    }
+    
+    inline ThisType &operator= ( const ThisType &v )
+    {
+      return *this;
+    }
+
+    inline ThisType &operator*= ( const FieldType s )
+    {
+      return *this;
+    }
+
+    inline ThisType &operator+= ( const ThisType &v )
+    {
+      return *this;
+    }
+
+    inline ThisType &operator-= ( const ThisType &v )
+    {
+      return *this;
+    }
+
+    inline const FieldType &operator[] ( const unsigned int i ) const
+    {
+      DUNE_THROW( RangeError, "LocalCoordinate: No such index." );
+    }
+
+    inline FieldType &operator[] ( const unsigned int i )
+    {
+      DUNE_THROW( RangeError, "LocalCoordinate: No such index." );
+    }
   };
 
-  template< class BaseGeometryType, class FieldVectorImp, unsigned int offset >
-  class LocalCoordinate< PyramidGeometry< BaseGeometryType >, FieldVectorImp, offset >
+
+
+  template< class BaseGeometry, class Field, unsigned int offset >
+  class LocalCoordinate< PyramidGeometry< BaseGeometry >, Field, offset >
   {
   public:
+    typedef BaseGeometry BaseGeometryType;
+    
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
 
     enum { dimension = GeometryType :: dimension };
 
-    typedef FieldVectorImp FieldVectorType;
-    typedef typename FieldVectorType :: field_type FieldType;
-
-    typedef LocalCoordinate< BaseGeometryType, FieldVectorType, offset >
+    typedef Field FieldType;
+    
+    typedef LocalCoordinate< BaseGeometry, FieldType, offset >
       BaseCoordinateType;
 
     enum { index = offset + BaseGeometryType :: dimension };
     
   private:
-    typedef LocalCoordinate< GeometryType, FieldVectorType, offset > ThisType;
+    typedef LocalCoordinate< GeometryType, FieldType, offset > ThisType;
 
   private:
-    FieldType &myCoordinate_;
+    FieldType myCoordinate_;
     BaseCoordinateType baseCoordinate_;
 
   public:
-    inline LocalCoordinate ( FieldVectorType &x )
+    inline LocalCoordinate ()
+    {}
+    
+    template< int sz >
+    inline explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
     : myCoordinate_( x[ index ] ),
       baseCoordinate_( x ) 
     {
+      typedef CompileTimeChecker< (sz >= offset + dimension) >
+        __CHECK_VECTOR_SIZE__;
     }
     
-    inline ThisType& operator= ( FieldType s )
+    inline ThisType &operator= ( const FieldType s )
     {
       myCoordinate_ = s;
       baseCoordinate_ = s;
       return *this;
     }
+    
+    template< int sz >
+    inline ThisType &operator= ( const FieldVector< FieldType, sz > &x )
+    {
+      typedef CompileTimeChecker< (sz >= offset + dimension) >
+        __CHECK_VECTOR_SIZE__;
+      
+      myCoordinate_ = x[ index ];
+      baseCoordinate_ = x;
+      return *this;
+    }
 
-    inline const FieldType& operator*() const
+    inline ThisType &operator= ( const ThisType &v )
+    {
+      myCoordinate_ = v.myCoordinate_;
+      baseCoordinate_ = v.baseCoordinate_;
+      return *this;
+    }
+
+    inline ThisType &operator*= ( const FieldType s )
+    {
+      myCoordinate_ *= s;
+      baseCoordinate_ *= s;
+      return *this;
+    }
+    
+    inline ThisType &operator+= ( const ThisType &v )
+    {
+      myCoordinate_ += v.myCoordinate_;
+      baseCoordinate_ += v.baseCoordinate_;
+      return *this;
+    }
+    
+    inline ThisType &operator-= ( const ThisType &v )
+    {
+      myCoordinate_ -= v.myCoordinate_;
+      baseCoordinate_ -= v.baseCoordinate_;
+      return *this;
+    }
+    
+    inline const FieldType &operator[] ( const unsigned int i ) const
+    {
+      if( i == index )
+        return myCoordinate_;
+      else
+        return baseCoordinate_[ i ];
+    }
+
+    inline FieldType &operator[] ( const unsigned int i )
+    {
+      if( i == index )
+        return myCoordinate_;
+      else
+        return baseCoordinate_[ i ];
+    }
+
+    inline const FieldType &operator* () const
     {
       return myCoordinate_;
     }
 
-    inline FieldType& operator*()
+    inline FieldType &operator* ()
     {
       return myCoordinate_;
     }
 
-    inline const BaseCoordinateType& base () const
+    inline const BaseCoordinateType &base () const
     {
       return baseCoordinate_;
     }
 
-    inline BaseCoordinateType& base ()
+    inline BaseCoordinateType &base ()
     {
       return baseCoordinate_;
     }
@@ -533,72 +643,136 @@ namespace Dune
 
 
 
-  template< class FirstGeometryType,
-            class SecondGeometryType,
-            class FieldVectorImp,
+  template< class FirstGeometry, class SecondGeometry, class Field,
             unsigned int offset >
-  class LocalCoordinate< ProductGeometry< FirstGeometryType,
-                                          SecondGeometryType >,
-                         FieldVectorImp,
-                         offset >
+  class LocalCoordinate
+    < ProductGeometry< FirstGeometry, SecondGeometry >, Field, offset >
   {
   public:
+    typedef FirstGeometry FirstGeometryType;
+    typedef SecondGeometry SecondGeometryType;
     typedef ProductGeometry< FirstGeometryType, SecondGeometryType >
       GeometryType;
 
     enum { dimension = GeometryType :: dimension };
 
-    typedef FieldVectorImp FieldVectorType;
-    typedef typename FieldVectorType :: field_type FieldType;
+    typedef Field FieldType;
 
-    typedef LocalCoordinate< FirstGeometryType, FieldVectorType, offset >
+  protected:
+    enum {
+      firstOffset = offset,
+      secondOffset = offset + FirstGeometryType :: dimension
+    };
+
+  public:
+    typedef LocalCoordinate< FirstGeometryType, FieldType, firstOffset >
       FirstCoordinateType;
-    typedef LocalCoordinate< SecondGeometryType,
-                             FieldVectorType,
-                             offset + FirstGeometryType :: dimension >
+    typedef LocalCoordinate< SecondGeometryType, FieldType, secondOffset >
       SecondCoordinateType;
 
   private:
-    typedef LocalCoordinate< GeometryType, FieldVectorType, offset > ThisType;
+    typedef LocalCoordinate< GeometryType, FieldType, offset > ThisType;
 
   private:
     FirstCoordinateType firstCoordinate_;
     SecondCoordinateType secondCoordinate_;
 
   public:
-    inline LocalCoordinate ( FieldVectorType &x )
+    inline LocalCoordinate ()
+    {}
+    
+    template< int sz >
+    inline explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
     : firstCoordinate_( x ),
       secondCoordinate_( x )
     {
+      typedef CompileTimeChecker< (sz >= offset + dimension) >
+        __CHECK_VECTOR_SIZE__;
     }
 
-    inline ThisType& operator= ( FieldType s )
+    inline ThisType &operator= ( const FieldType s )
     {
       firstCoordinate_ = s;
       secondCoordinate_ = s;
       return *this;
     }
+    
+    template< int sz >
+    inline ThisType &operator= ( const FieldVector< FieldType, sz > &x )
+    {
+      typedef CompileTimeChecker< (sz >= offset + dimension) >
+        __CHECK_VECTOR_SIZE__;
+      
+      firstCoordinate_ = x;
+      secondCoordinate_ = x;
+      return *this;
+    }
 
-    inline const FirstCoordinateType& first () const
+    inline ThisType &operator= ( const ThisType &v )
+    {
+      firstCoordinate_ = v;
+      secondCoordinate_ = v;
+      return *this;
+    }
+
+    inline ThisType &operator*= ( const FieldType s )
+    {
+      firstCoordinate_ *= s;
+      secondCoordinate_ *= s;
+      return *this;
+    }
+    
+    inline ThisType &operator+= ( const ThisType &v )
+    {
+      firstCoordinate_ += v;
+      secondCoordinate_ += v;
+      return *this;
+    }
+    
+    inline ThisType &operator-= ( const ThisType &v )
+    {
+      firstCoordinate_ -= v;
+      secondCoordinate_ -= v;
+      return *this;
+    }
+
+    inline const FieldType &operator[] ( const unsigned int i ) const
+    {
+      if( i < secondOffset )
+        return firstCoordinate_[ i ];
+      else
+        return secondCoordinate_[ i ];
+    }
+
+    inline FieldType &operator[] ( const unsigned int i )
+    {
+      if( i < secondOffset )
+        return firstCoordinate_[ i ];
+      else
+        return secondCoordinate_[ i ];
+    }
+
+    inline const FirstCoordinateType &first () const
     {
       return firstCoordinate_;
     }
 
-    inline FirstCoordinateType& first ()
+    inline FirstCoordinateType &first ()
     {
       return firstCoordinate_;
     }
 
-    inline const SecondCoordinateType& second () const
+    inline const SecondCoordinateType &second () const
     {
       return secondCoordinate_;
     }
 
-    inline SecondCoordinateType& second ()
+    inline SecondCoordinateType &second ()
     {
       return secondCoordinate_;
     }
   };
+
 }
 
 #endif
