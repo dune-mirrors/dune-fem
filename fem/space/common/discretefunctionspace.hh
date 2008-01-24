@@ -218,6 +218,16 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION( asImp().mapper() );
       return asImp().mapper();
     }
+
+    /** \brief get a reference to the block mapper
+     *
+     *  \returns refernce to the block mapper
+     */    
+    inline BlockMapperType &blockMapper () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().blockMapper() );
+      return asImp().blockMapper();
+    }
     
     /** \brief get reference to grid this discrete function space belongs to
      * 
