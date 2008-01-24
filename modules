@@ -73,6 +73,8 @@
           @ingroup DiscreteFunctionSpace */
       /** @defgroup CombinedSpace Wrapper from scalar to vector valued spaces 
           @ingroup DiscreteFunctionSpace */
+      /** @defgroup RBSpace Reduced Basis Space
+          @ingroup DiscreteFunctionSpace */
       /** @defgroup BaseFunction Base functions and base functiton sets
           @ingroup DiscreteFunctionSpace */
       /** @defgroup DofMapper DOF mapper 

@@ -11,16 +11,16 @@
 namespace Dune
 {
 
-  template< class BaseFunctionImp >
+  template< class BaseFunction >
   class ReducedBasisSpace;
 
 
 
-  template< class BaseFunctionImp >
+  template< class BaseFunction >
   class ReducedBasisSpaceTraits
   {
   public:
-    typedef BaseFunctionImp BaseFunctionType;
+    typedef BaseFunction BaseFunctionType;
 
   private:
     typedef ReducedBasisSpaceTraits< BaseFunctionType > ThisType;
@@ -51,6 +51,9 @@ namespace Dune
     typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
       MapperType;
 
+    enum { localBlockSize = 1 };
+    typedef MapperType BlockMapperType;
+
     template< class DiscreteFunction,
               class Operation = DFCommunicationOperation :: Add >
     struct CommDataHandle
@@ -62,10 +65,10 @@ namespace Dune
   };
 
 
-  
 
-  /*! \class ReducedBasisSpace
-   *  \brief provides the space for reduced basis simulations 
+  /** \class   ReducedBasisSpace
+   *  \ingroup RBSpace
+   *  \brief   provides the space for reduced basis simulations 
    *
    *  The basis consists of discrete functions as basis functions. These
    *  discrete functions have an underlying arbitrary space. Consequently they
@@ -73,14 +76,19 @@ namespace Dune
    *  
    *  Initially the space is empty and by using the add function you can bulid this
    *  space and discrete functions.
+   *
+   *  \param  BaseFunction  type of discrete function used to represend the
+   *                        base functions
    */
-  template< class BaseFunctionImp >
+  template< class BaseFunction >
   class ReducedBasisSpace
-  : public DiscreteFunctionSpaceDefault< ReducedBasisSpaceTraits< BaseFunctionImp > >
+  : public DiscreteFunctionSpaceDefault< ReducedBasisSpaceTraits< BaseFunction > >
   {
   public:
-    typedef BaseFunctionImp BaseFunctionType;
+    //! discrete function type of the base functions
+    typedef BaseFunction BaseFunctionType;
 
+    //! type of the traits
     typedef ReducedBasisSpaceTraits< BaseFunctionType > Traits;
 
   private:
@@ -88,16 +96,27 @@ namespace Dune
     typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
   public:
+    //! discrete function space, the base functions belong to
     typedef typename Traits :: BaseFunctionSpaceType BaseFunctionSpaceType;
+    //! function space, the base functions belong to
     typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
+
     typedef typename Traits :: GridPartType GridPartType;
     typedef typename Traits :: GridType GridType;
     typedef typename Traits :: IndexSetType IndexSetType;
+
+    //! type of the space's iterator
     typedef typename Traits :: IteratorType IteratorType;
 
     typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
     typedef typename Traits :: BaseFunctionListType BaseFunctionListType;
+
+    //! type of the DoF mapper
     typedef typename Traits :: MapperType MapperType;
+
+    enum { localBlockSize = Traits :: localBlockSize };
+    //! type of the block mapper
+    typedef typename Traits :: BlockMapperType BlockMapperType;
 
     enum { polynomialOrder = BaseFunctionSpaceType :: polynomialOrder };
 
@@ -107,31 +126,75 @@ namespace Dune
     mutable MapperType mapper_;
 
   public:
-    //! constructor the underlying basis is the argument
-    inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
-    : BaseType( baseFunctionSpace.gridPart() ),
-      baseFunctionSpace_( baseFunctionSpace ),
-      baseFunctionList_(),
-      mapper_( baseFunctionList_ )
-    {
-    }
+    /** \brief contructor
+     *
+     *  \param[in]  baseFunctionSpace  DiscreteFunctionSpace containing the
+     *                                 base functions belong to
+     */
+    inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace );
 
+    /** \brief contructor reading the base functions from a stream
+     *
+     *  \param[in]  baseFunctionSpace  DiscreteFunctionSpace containing the
+     *                                 base functions belong to
+     *  \param[in]  in                 stream to read the base functions from
+     */
     template< class StreamTraits >
     inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
-                               InStreamInterface< StreamTraits > &in )
-    : BaseType( baseFunctionSpace.gridPart() ),
-      baseFunctionSpace_( baseFunctionSpace ),
-      baseFunctionList_(),
-      mapper_( baseFunctionList_ )
+                               InStreamInterface< StreamTraits > &in );
+
+    inline ~ReducedBasisSpace ();
+
+
+    // Implementation of DiscreteFunctionSpaceInterface
+    // ------------------------------------------------
+    
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous() const */
+    inline bool continuous () const
     {
-      read( in );
+      return baseFunctionSpace_.continuous();
+    }
+    
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order() const */
+    inline int order () const
+    {
+      return baseFunctionSpace_.order();
     }
 
-    //! destructor to release the pointer of each entry
-    inline ~ReducedBasisSpace ()
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+    template< class EntityType >
+    inline const BaseFunctionSetType baseFunctionSet( const EntityType &entity ) const
     {
-      clear();
+      return BaseFunctionSetType( baseFunctionList_, entity );
     }
+
+    //! get dimension of value
+    inline int dimensionOfValue () const
+    {
+      return baseFunctionSpace_.dimensionOfValue;
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper() const */
+    inline MapperType &mapper () const
+    {
+      return mapper_;
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::blockMapper() const */
+    inline BlockMapperType &blockMapper () const
+    {
+      return mapper_;
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets () const */
+    inline bool multipleBaseFunctionSets () const
+    {
+      return true;
+    }
+
+
+    // ReducedBasisSpace Specific Methods
+    // ----------------------------------
 
     /** \brief add a base function to the reduced basis space
      *
@@ -141,12 +204,7 @@ namespace Dune
      *  \param[in]  baseFunction  base function to add to the reduced basis
      *                            space
      */
-    inline void addBaseFunction ( const BaseFunctionType &baseFunction )
-    {
-      BaseFunctionType *f = new BaseFunctionType( baseFunction );
-      assert( f != NULL );
-      baseFunctionList_.append( f );
-    }
+    inline void addBaseFunction ( const BaseFunctionType &baseFunction );
 
     /** \brief access a base function within the reduced basis space
      *
@@ -154,42 +212,22 @@ namespace Dune
      * 
      *  \returns a constant reference to the i-th base function
      */
-    inline const BaseFunctionType &baseFunction ( unsigned int i ) const
-    {
-      return *(baseFunctionList_[ i ]);
-    }
+    inline const BaseFunctionType &baseFunction ( unsigned int i ) const;
 
-    inline const BaseFunctionSpaceType &baseFunctionSpace () const
-    {
-      return baseFunctionSpace_;
-    }
+    inline const BaseFunctionSpaceType &baseFunctionSpace () const;
 
     /** \brief remove all base functions from the reduced basis space */
-    inline void clear ()
-    {
-      crop( 0 );
-    }
+    inline void clear ();
 
     /** \brief crop base function set to the first n base functions
      *
      *  \param[in]  n  number of base functions to keep (must be less or equal
      *                 to the current number of base functions)
      */
-    inline void crop ( unsigned int n )
-    {
-      const unsigned int size = baseFunctionList_.size();
-      assert( n <= size );
-      for( unsigned int i = n; i < size; ++i )
-        delete baseFunctionList_[ i ];
-      baseFunctionList_.resize( n );
-    }
-    
-    /** \brief obtain number of base functions within the reduced basis space
-     */
-    inline unsigned int numBaseFunctions () const
-    {
-      return baseFunctionList_.size();
-    }
+    inline void crop ( unsigned int n );
+
+    /** \brief obtain number of base functions within the reduced basis space */
+    inline unsigned int numBaseFunctions () const;
 
     /** \brief project a discrete function over this space to the discrete
      *         function space of the base functions
@@ -236,44 +274,7 @@ namespace Dune
     inline void read ( InStreamInterface< StreamTraits > &in );
    
     template< class StreamTraits >
-    inline void write ( OutStreamInterface< StreamTraits > &out );
-
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous() const */
-    inline bool continuous () const
-    {
-      return baseFunctionSpace_.continuous();
-    }
-    
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order() const */
-    inline int order () const
-    {
-      return baseFunctionSpace_.order();
-    }
-
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
-    template< class EntityType >
-    inline const BaseFunctionSetType baseFunctionSet( const EntityType &entity ) const
-    {
-      return BaseFunctionSetType( baseFunctionList_, entity );
-    }
-
-    //! get dimension of value
-    inline int dimensionOfValue () const
-    {
-      return baseFunctionSpace_.dimensionOfValue;
-    }
-
-    //! obtain the DoF mapper of this space
-    inline MapperType &mapper () const
-    {
-      return mapper_;
-    }
-
-    //! are there multiple base function sets per geometry type?
-    inline bool multipleBaseFunctionSets () const
-    {
-      return true;
-    }
+    inline void write ( OutStreamInterface< StreamTraits > &out ) const;
   };
   
 }
