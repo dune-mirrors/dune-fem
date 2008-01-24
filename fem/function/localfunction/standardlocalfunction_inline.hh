@@ -1,6 +1,8 @@
 namespace Dune
 {
 
+//#define CS_USEDOF
+
   // StandardLocalFunctionImpl
   // -------------------------
 
@@ -252,11 +254,17 @@ namespace Dune
     < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
     :: init ( const EntityType &entity )
   {
+#ifndef CS_USEDOF
     typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
     typedef typename BlockMapperType :: DofMapIteratorType DofMapIteratorType;
     enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
 
     typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
+#else
+#warning "CombinedSpace specialization uses DiscreteFunction.dof()"
+    typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+    typedef typename MapperType :: DofMapIteratorType DofMapIteratorType;
+#endif
 
     const DiscreteFunctionSpaceType &space = discreteFunction_.space();
     const bool multipleBaseSets = space.multipleBaseFunctionSets();
@@ -284,19 +292,25 @@ namespace Dune
     assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
 
     assert( N * numScalarDofs_ <= values_.size() );
+#ifndef CS_USEDOF
     const BlockMapperType &mapper = space.blockMapper();
+#else
+    const MapperType &mapper = space.mapper();
+#endif
     const DofMapIteratorType end = mapper.end( entity );
     for( DofMapIteratorType it = mapper.begin( entity ); it != end; ++it )
     {
       assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
       
+#ifndef CS_USEDOF
       DofBlockPtrType blockPtr = discreteFunction_.block( it.global() );
       
       const unsigned int localBlock = it.local() * blockSize;
       for( unsigned int i = 0; i < blockSize; ++i )
         values_[ localBlock + i ] = &((*blockPtr)[ i ]);
-      
-      // values_[ it.local() ] = &discreteFunction_.dof( it.global() );
+#else
+      values_[ it.local() ] = &discreteFunction_.dof( it.global() );
+#endif
     }
   }
 

@@ -288,6 +288,8 @@ int main (int argc, char **argv)
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.dgf";
 
+  std :: cout << "Polynomial Order: " << polOrd << std :: endl;
+
   typedef CombinedDiscreteFunction<
     SingleDiscreteFunctionType,RANGE > DiscreteFunctionType1;
   DiscreteFunctionType1* solution1;
