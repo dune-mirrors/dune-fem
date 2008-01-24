@@ -20,21 +20,23 @@ struct GridWidth
   {
     typedef typename GridPartType::IntersectionIteratorType
       IntersectionIteratorType;
+
+    typedef typename EntityType :: Geometry Geometry;
     enum { dim = EntityType::dimension };
 
     Dune::FieldVector<double, dim-1> tmp1(0.5);
-    
-    double vol = en.geometry().volume();
-    double fak = 2.0;
-    if(dim == 3) fak = 1.0;
+   
+    const Geometry& geo = en.geometry();
+    const double vol = geo.volume();
+    const double fak = (dim == 3) ? 1 : 2;
 
-    double minFace = 1e308;
+    double minFace = 0;
     IntersectionIteratorType endit = gridPart.iend(en);
     for(IntersectionIteratorType it = gridPart.ibegin(en);
         it != endit; ++it)
     {
       double face = it.integrationOuterNormal(tmp1).two_norm();
-      minFace = std::min(minFace,face);
+      minFace = std::max(minFace,face);
     }
     return fak*vol/minFace;
   }
@@ -70,32 +72,38 @@ struct GridWidth
   }   
 
   template <class EntityType> 
-  static inline double maxLeafEdgeWidth(const EntityType &en)
+  static inline std::pair<double,double> maxLeafEdgeWidth(const EntityType &en)
   {
+    std::pair<double,double> p(1e308, 0);
+
     typedef typename EntityType :: LeafIntersectionIterator IntersectionIteratorType;
+    typedef typename EntityType :: Geometry Geometry;
     enum { dim = EntityType::dimension };
 
     Dune::FieldVector<double, dim-1> tmp1(0.5);
     
-    double vol = en.geometry().volume();
-    double fak = 2.0;
-    if(dim == 3) fak = 1.0;
-
-    double minFace = 1e308;
+    const Geometry& geo = en.geometry();
+    const double vol = (dim == 3 || geo.type().isCube() ) ? geo.volume() : (2.*geo.volume());
+    
     IntersectionIteratorType endit = en.ileafend();
     for(IntersectionIteratorType it = en.ileafbegin();
         it != endit; ++it)
     {
-      double face = it.integrationOuterNormal(tmp1).two_norm();
-      minFace = std::min(minFace,face);
+      const double face = it.integrationOuterNormal(tmp1).two_norm();
+      p.first  = std::min( p.first , face);
+      p.second = std::max( p.second, face);
     }
-    return fak*vol/minFace;
+    p.first  = vol/p.first;
+    p.second = vol/p.second;
+    return p;
   }
 
   template <class GridType> 
-  static inline double calcLeafWidth (const GridType & grid)
+  static inline double calcLeafWidth (
+      const GridType & grid, double& maxwidth, double& minwidth )
   {     
-    double maxwidth = 0.0;
+    minwidth = 1e308;
+    maxwidth = 0;
     typedef typename GridType::template Codim<0> :: LeafIterator IteratorType; 
     
     // unstructured case 
@@ -105,8 +113,9 @@ struct GridWidth
       for(IteratorType it = grid.template leafbegin<0> (); 
           it != endit; ++it )
       {
-        double w = maxLeafEdgeWidth(*it);
-        if(w > maxwidth) maxwidth = w;
+        std::pair< double, double> p = maxLeafEdgeWidth(*it);
+        if(p.first > maxwidth) maxwidth = p.first;
+        if(p.second < minwidth) minwidth = p.second;
       }
     }
     else 
@@ -115,8 +124,9 @@ struct GridWidth
       IteratorType it = grid.template leafbegin<0> (); 
       if( it != grid.template leafend<0> () )
       {
-        double w = maxLeafEdgeWidth(*it);
-        if(w > maxwidth) maxwidth = w;
+        std::pair< double, double> p = maxLeafEdgeWidth(*it);
+        if(p.first > maxwidth) maxwidth = p.first;
+        if(p.second < minwidth) minwidth = p.second;
       }
     }
     return maxwidth;
@@ -132,13 +142,15 @@ public:
   //! type of singleton provider 
   typedef SingletonList< const GridType* , ThisType > ProviderType;
 
-private:
+protected:
   typedef DofManager<GridType> DofManagerType;
   typedef DofManagerFactory< DofManagerType > DMFactoryType;
 
   const GridType& grid_;
   const DofManagerType& dm_;
-  mutable double gridWidth_;
+  
+  mutable double maxWidth_;
+  mutable double minW_;
   mutable int sequence_;
 
   GridWidthProvider( const ThisType& );
@@ -147,19 +159,41 @@ public:
   GridWidthProvider(const GridType& grid) 
     : grid_( grid )
     , dm_( DMFactoryType::getDofManager( grid_ ))
-    , gridWidth_(-1.0)
+    , maxWidth_(-1.0)
+    , minW_(-1.0)
     , sequence_(-1)
   {}
 
   //! return characteristic grid width 
   double gridWidth () const 
   {
+    return maxGridWidth();
+  }
+  
+  //! return characteristic grid width 
+  double minGridWidth () const 
+  {
+    calcWidths();
+    return minW_;
+  }
+  
+  //! return characteristic grid width 
+  double maxGridWidth () const 
+  {
+    calcWidths();
+    return maxWidth_;
+  }
+
+protected:  
+  void calcWidths() const 
+  {
     if( dm_.sequence() != sequence_ )
     {
-      gridWidth_ = GridWidth::calcLeafWidth( grid_ );
+      GridWidth::calcLeafWidth( grid_ , this->maxWidth_ , this->minW_ );
+      assert( this->minW_ > 0 );
+      assert( this->maxWidth_ > 0 );
       sequence_  = dm_.sequence();
     }
-    return gridWidth_;
   }
 };
 
