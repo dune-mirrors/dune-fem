@@ -69,54 +69,71 @@ namespace Dune
   : public FunctionSpaceTraits :: FunctionSpaceType
   {
   public:
-    //- Typedefs and enums
     //! type of traits class 
-    typedef FunctionSpaceTraits Traits; 
-    //! type of DiscretefunctionSapce implementation (Barton-Nackman)
-    typedef typename FunctionSpaceTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    //! type of \ref Dune::FunctionSpaceInterface "function space" (define domain and range types)
-    typedef typename FunctionSpaceTraits::FunctionSpaceType FunctionSpaceType;
-    //! type of \ref Dune::BaseFunctionSetInterface "base function set" of this space 
-    typedef typename FunctionSpaceTraits::BaseFunctionSetType BaseFunctionSetType;
-    //! type of \ref Dune::DofMapperInterface "DoF mapper" of this space 
-    typedef typename FunctionSpaceTraits::MapperType MapperType;
-    //! type of underlying \ref GridPart "grid part" 
-    typedef typename FunctionSpaceTraits::GridPartType GridPartType;
-    //! type of underlying dune grid  
-    typedef typename GridPartType::GridType GridType;
-    //! type of used dune index set 
-    typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef FunctionSpaceTraits Traits;
 
-    /** \brief defines type of data handle for communication 
-        for this type of space.
-    */
-    template <class DiscreteFunctionImp, 
-              class OperationImp = DFCommunicationOperation :: Copy>
+    //! type of DiscretefunctionSapce implementation (Barton-Nackman)
+    typedef typename Traits :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
+    //! type of \ref Dune::FunctionSpaceInterface "function space"
+    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
+    
+  private:
+    typedef FunctionSpaceType BaseType;
+
+  public:
+    //! type of \ref Dune::BaseFunctionSetInterface "base function set" of this space 
+    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+    //! type of \ref Dune::DofMapperInterface "DoF mapper" of this space
+    typedef typename Traits :: MapperType MapperType;
+    //! type of block mapper of this space
+    typedef typename Traits :: BlockMapperType BlockMapperType;
+
+    //! type of underlying \ref GridPart "grid part" 
+    typedef typename Traits :: GridPartType GridPartType;
+
+    //! type of underlying dune grid  
+    typedef typename GridPartType :: GridType GridType;
+    //! type of used dune index set 
+    typedef typename GridPartType :: IndexSetType IndexSetType;
+    /** \brief type of iterator for grid traversal
+     *
+     *  \note Only grid traversal for codimension 0 is currently supported.
+     */
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType
+      IteratorType;
+    //! type of entity of codimension 0
+    typedef typename IteratorType :: Entity EntityType;
+ 
+    /** \brief defines type of data handle for communication
+     *  \param  DiscreteFunction  type of \ref Dune::DiscreteFunctionInterface
+     *                            "discrete function" to communicate
+     *  \param  Operation         type of operation to perform on communication
+     *                            (defaults to copy)
+     */
+    template< class DiscreteFunction,
+              class Operation = DFCommunicationOperation :: Copy >
     struct CommDataHandle
     {
-      //! type of data handle from traits 
-      typedef typename FunctionSpaceTraits :: 
-        template CommDataHandle<DiscreteFunctionImp, OperationImp> :: Type  Type;
-      //! type of operation to perform on scatter 
-      typedef typename FunctionSpaceTraits :: 
-        template CommDataHandle<DiscreteFunctionImp, OperationImp> :: OperationType  OperationType;
+      //! type of communication data handle
+      typedef typename Traits
+        :: template CommDataHandle< DiscreteFunction, Operation > :: Type
+        Type;
+
+      //! type of operation to perform on scatter
+      typedef typename Traits
+        :: template CommDataHandle< DiscreteFunction, Operation > :: OperationType
+        OperationType;
     };
 
-    /** \brief iterator type traversing the set of 
-        entities defining the discrete  function space 
-        (only codim 0 at the moment, to be revised)
-    */
-    typedef typename GridPartType:: template Codim<0>::IteratorType IteratorType;
-    
   public:
-    //- Public methods
     //! Constructor 
-    DiscreteFunctionSpaceInterface ()
-    : FunctionSpaceType() 
-    {
-    }
+    inline DiscreteFunctionSpaceInterface ()
+    : BaseType()
+    {}
 
-    //! Method provided by implementation
+    // Methods Provided by the Implementation
+    // --------------------------------------
 
     /** \brief return type identifier of discrete function space 
         \return return type identifier of discrete function space
@@ -129,35 +146,41 @@ namespace Dune
 
     /** \brief get base function set for given entity
      *
-     *  \param[in]  entity  entity for which base function is requested 
+     *  \param[in]  entity  entity (of codim 0) for which base function is
+     *                      requested
      *
      *  \returns BaseFunctionSet for the entity
      */
-    template< class EntityType >
     inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().baseFunctionSet( entity ) );
       return asImp().baseFunctionSet( entity );
     }
   
-    /** \brief return true if the space contains dofs for given codimension 
-     *  \param codim codimension to check dofs for 
+    /** \brief returns true if the space contains DoFs of given codimension
+     * 
+     *  \param[in]  codim  codimension to check for DoFs
      *  
-     *  \return true if codimension is contained 
+     *  \returns \b true if codimension contains DoFs,
+     *           \b false otherwise
      */
-    inline bool contains (const int codim) const
+    inline bool contains ( const int codim ) const
     { 
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().contains() );
-      return asImp().contains(codim); 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( codim ) );
+      return asImp().contains( codim ); 
     }
 
-    /** \brief return true if the space contains globally continuous functions
+    /** \brief returns true if the space contains only globally continuous
+     *         functions
      *
-     *  For example, a LagrangeDiscreteFunctionSpace returns \b true and a
-     *  DiscontinuousGalerkinSpace return \b false.
+     *  For example, a \ref Dune::LagrangeDiscreteFunctionSpace
+     *  "Lagrange space" returns \b true while a \ref
+     *  Dune::DiscontinuousGalerkinSpace "discontiuous Galerkin space" returns
+     *  \b false.
      *
-     *  \return \b true if the space contians globally continous functions,
-     *          \b false otherwise
+     *  \returns \b true  if the space contians only globally continous
+     *                    functions,
+     *           \b false otherwise
      */
     inline bool continuous () const
     { 
@@ -321,12 +344,11 @@ namespace Dune
      *  Maps an entity and a local DoF number to a global DoF number, i.e.,
      *  the index of the DoF within the DoF vector.
      *
-     *  \param[in]  entity    Entity for which mapping is done
+     *  \param[in]  entity    entity (of codim 0) for which the mapping is done
      *  \param[in]  localDof  local dof number
      *
      *  \returns global DoF number
      */    
-    template< class EntityType >
     inline int mapToGlobal ( const EntityType &entity,
                              const int localDof ) const
     {
@@ -334,13 +356,21 @@ namespace Dune
       return asImp().mapToGlobal( entity, localDof );
     }
 
-    /** \brief Creates DataHandle for given discrete function */
-    template <class DiscreteFunctionImp, class OperationImp>
-    inline typename CommDataHandle<DiscreteFunctionImp,OperationImp> :: Type 
-    createDataHandle(DiscreteFunctionImp& df, const OperationImp* op) const 
+    /** \brief Creates DataHandle for given discrete function
+     *
+     *  \param[in]  discreteFunction  \ref DiscreteFunctionInterface
+     *                                "discrete function" to create the data
+     *                                handle for
+     *  \param[in]  operation         operation to perform on scatter
+     */
+    template< class DiscreteFunction, class Operation >
+    inline typename CommDataHandle< DiscreteFunction, Operation > :: Type
+    createDataHandle ( DiscreteFunction& discreteFunction,
+                      const Operation *operation ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().createDataHandle( df , op) );
-      return asImp().createDataHandle( df ,op );
+      CHECK_INTERFACE_IMPLEMENTATION
+        ( asImp().createDataHandle( discreteFunction, operation ) );
+      return asImp().createDataHandle( discreteFunction, operation );
     }
 
   protected:
@@ -407,10 +437,12 @@ namespace Dune
   public:
     typedef typename FunctionSpaceTraits :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
-    typedef typename FunctionSpaceTraits::GridPartType  GridPartType;
-    typedef typename GridPartType:: template Codim<0>::IteratorType IteratorType;
-    typedef typename GridPartType :: GridType GridType;
-    typedef typename GridPartType :: IndexSetType IndexSetType;
+
+    typedef typename BaseType :: GridPartType GridPartType;
+    typedef typename BaseType :: GridType GridType;
+    typedef typename BaseType :: IndexSetType IndexSetType;
+    typedef typename BaseType :: IteratorType IteratorType;
+    typedef typename BaseType :: EntityType EntityType;
 
     typedef TemporaryLocalFunctionFactory< DiscreteFunctionSpaceType >
       LocalFunctionFactoryType;
@@ -419,11 +451,11 @@ namespace Dune
     typedef typename LocalFunctionStorageType :: LocalFunctionType
       LocalFunctionType;
 
-  public:
-    using BaseType :: mapper;
-    
   protected:
     using BaseType :: asImp;
+
+  public:
+    using BaseType :: mapper;
 
   protected:
     GridPartType &gridPart_;
@@ -448,11 +480,11 @@ namespace Dune
 
     /** obtain a local function for an entity (to store intermediate values)
      *  
-     *  \param[in]  entity  entity for which a local function is desired
+     *  \param[in]  entity  entity (of codim 0) for which a local function is
+     *                      desired
      *
      *  \returns a local function backed by a small, fast array
      */
-    template< class EntityType >
     LocalFunctionType localFunction ( const EntityType &entity ) const
     {
       return lfStorage_.localFunction( entity );
@@ -546,24 +578,29 @@ namespace Dune
       return false;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapToGlobal */
-    template< class EntityType >
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
     inline int mapToGlobal ( const EntityType &entity,
                              const int localDof ) const
     {
       return mapper().mapToGlobal( entity, localDof );
     }
 
-    /** \brief Default implementation of data handle creation that 
-        call constructor and apssing only discrete function */
-    template <class DiscreteFunctionImp, 
-              class OperationImp>
-    inline typename Traits :: template CommDataHandle<DiscreteFunctionImp,OperationImp> :: Type 
-    createDataHandle(DiscreteFunctionImp& df, const OperationImp* ) const 
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const
+     *
+     *  \note The default implementation is
+     *  \code
+     *  return CommDataHandle< DiscreteFunction, Operation > :: Type( discreteFunction );
+     *  \endcode
+     */
+    template< class DiscreteFunction, class Operation >
+    inline typename BaseType
+      :: template CommDataHandle< DiscreteFunction, Operation > :: Type
+    createDataHandle( DiscreteFunction &discreteFunction,
+                      const Operation *operation ) const
     {
-      // create data handle object 
-      return typename Traits :: 
-        template CommDataHandle<DiscreteFunctionImp,OperationImp> :: Type ( df );
+      return typename BaseType
+        :: template CommDataHandle< DiscreteFunction, Operation >
+        :: Type( discreteFunction );
     }
   };
 
