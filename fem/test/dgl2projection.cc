@@ -5,14 +5,6 @@
 
 #include <dune/grid/common/gridpart.hh>
 
-#include <dune/fem/misc/double.hh>
-#include <dune/fem/space/dgspace.hh>
-#if defined USE_COMBINEDSPACE
-#include <dune/fem/space/combinedspace.hh>
-#endif
-#if defined USE_FVSPACE
-#include <dune/fem/space/fvspace.hh>
-#endif
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #else
@@ -20,47 +12,16 @@
 #endif
 
 #include "testgrid.hh"
+#include "dfspace.hh"
 #include "dgl2projection.hh"
 #include "exactsolution.hh"
 
 using namespace Dune;
 
-// polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
-#ifdef POLORDER
-  const int polOrder = POLORDER;
-#else
-  const int polOrder = 1;
-#endif
-
 typedef HierarchicGridPart< GridType > GridPartType;
 
-#ifdef DIMRANGE
-  const int dimRange = DIMRANGE;
-#else
-  const int dimRange = 2;
-#endif
-
-typedef FunctionSpace< double, Double, dimworld, dimRange > FunctionSpaceType;
-#if defined USE_COMBINEDSPACE
-//typedef FunctionSpace < double , Double, dimworld, 1 > SingleFunctionSpace;
-typedef DiscontinuousGalerkinSpace
-  < FunctionSpaceType :: ScalarFunctionSpaceType, GridPartType, polOrder >
-  SingleDiscreteFunctionSpaceType;
-#  ifdef USE_VARIABLEBASE
-typedef CombinedSpace< SingleDiscreteFunctionSpaceType, dimRange, VariableBased >
-   DiscreteFunctionSpaceType;
-#  else
-typedef CombinedSpace< SingleDiscreteFunctionSpaceType, dimRange, PointBased >
-  DiscreteFunctionSpaceType;
-#  endif
-#elif defined USE_FVSPACE
-typedef FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0 >
-  DiscreteFunctionSpaceType;
-#else
-typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
-  DiscreteFunctionSpaceType;
-#endif
+typedef TestFunctionSpace FunctionSpaceType;
+typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
   
 #ifdef USE_BLOCKVECTORFUNCTION
 typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -76,7 +37,6 @@ int main ()
   {
     GridType &grid = TestGrid :: grid();
     const int step = TestGrid :: refineStepsForHalf();
-
     grid.globalRefine( 2*step );
 
     GridPartType gridPart( grid );
