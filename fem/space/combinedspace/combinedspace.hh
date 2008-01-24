@@ -33,19 +33,52 @@ namespace Dune
     {
       enum { localBlockSize = N * ContainedSpace :: localBlockSize };
 
-      typedef CombinedMapper
-        < typename ContainedSpace :: Traits :: BlockMapperType, 1, PointBased >
+      typedef typename ContainedSpace :: Traits :: BlockMapperType
+        ContainedBlockMapperType;
+
+      typedef CombinedMapper< ContainedBlockMapperType, 1, PointBased >
         BlockMapperType;
+
+      inline static ContainedBlockMapperType &
+      containedBlockMapper( const ContainedSpace &space )
+      {
+        return space.blockMapper();
+      }
     };
 
     template< class ContainedSpace, int N >
     struct BlockTraits< ContainedSpace, N, VariableBased >
     {
+      enum { localBlockSize = 1 };
+      
+      typedef typename ContainedSpace :: Traits :: MapperType
+        ContainedBlockMapperType;
+      
+      typedef CombinedMapper< ContainedBlockMapperType, N, VariableBased >
+        BlockMapperType;
+
+      inline static ContainedBlockMapperType &
+      containedBlockMapper( const ContainedSpace &space )
+      {
+        return space.mapper();
+      }
+
+      /* This would be the better definition. The problem is that the DoFs
+       * are not ordered blockwise
+       */
+#if 0
       enum { localBlockSize = ContainedSpace :: localBlockSize };
 
       typedef CombinedMapper
         < typename ContainedSpace :: Traits :: BlockMapperType, N, VariableBased >
         BlockMapperType;
+
+      inline static ContainedBlockMapperType &
+      containedBlockMapper( const ContainedSpace &space )
+      {
+        return space.blockMapper();
+      }
+#endif
     };
 
   }

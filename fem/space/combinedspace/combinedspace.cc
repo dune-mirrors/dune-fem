@@ -7,7 +7,7 @@ namespace Dune
   : BaseType( gridpart ),
     containedSpace_( gridpart ),
     mapper_( containedSpace_.mapper() ),
-    blockMapper_( containedSpace_.blockMapper() ),
+    blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) ),
     baseSetMap_(),
     dm_( DofManagerFactoryType :: getDofManager( containedSpace_.grid() ) )
   {
