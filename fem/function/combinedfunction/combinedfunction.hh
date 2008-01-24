@@ -278,6 +278,7 @@ namespace Dune
 
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
+      // This is wrong with the current implementation of CombinedSpace
       const int containedSize = func_[ 0 ]->space().blockMapper().size();
       const int component = index / containedSize;
       const int containedIndex = index % containedSize;
@@ -286,6 +287,7 @@ namespace Dune
     
     inline DofBlockPtrType block ( unsigned int index )
     {
+      // This is wrong with the current implementation of CombinedSpace
       const int containedSize = func_[ 0 ]->space().blockMapper().size();
       const int component = index / containedSize;
       const int containedIndex = index % containedSize;
