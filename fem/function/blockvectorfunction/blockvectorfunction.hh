@@ -1,5 +1,5 @@
-#ifndef DUNE_STATICFUNCTION_HH
-#define DUNE_STATICFUNCTION_HH
+#ifndef DUNE_FEM_BLOCKVECTORFUNCTION_HH
+#define DUNE_FEM_BLOCKVECTORFUNCTION_HH
 
 //- system includes
 #include <iostream>
@@ -8,6 +8,7 @@
 //- Dune inlcudes 
 #include <dune/common/exceptions.hh>
 #include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/dgspace/dgmapper.hh>
 
 #if HAVE_DUNE_ISTL 
