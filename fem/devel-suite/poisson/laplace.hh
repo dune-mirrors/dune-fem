@@ -84,7 +84,8 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
     typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
     typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
-    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, Factory< SlaveDofsType > >
+    typedef typename SlaveDofsType :: Factory SlaveDofsFactoryType;
+    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, SlaveDofsFactoryType >
       SlaveDofsProviderType;
     
   private:
