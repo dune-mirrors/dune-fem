@@ -1,4 +1,5 @@
 Module: dune-fem
+Version: 0.10
 Depends: dune-common dune-grid
 
 run_configure () {

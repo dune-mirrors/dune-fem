@@ -36,19 +36,20 @@ for OPT in "$@"; do
 	-h|--help) usage ; exit 0 ;;
 	*)
       
-      ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I ./m4"
-      if test -d "$OPT/m4"; then
-        ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/m4"
-      fi
-      if test -d "$OPT/am"; then
-        am_dir="$OPT/am"
-      fi
-	    if test -d "$OPT/share/aclocal"; then
-	      ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/share/aclocal"
-	    fi
-	    if test -d "$OPT/share/dune-common/am"; then
-	      am_dir="$OPT/share/dune-common/am"
-	    fi
+            ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I ./m4"
+            if test -d "$OPT/m4"; then
+             ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/m4"
+            fi
+            if test -d "$OPT/am"; then
+              am_dir="$OPT/am"
+            fi
+            if test -d "$OPT/share/aclocal"; then
+              ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/share/aclocal"
+            fi
+            if test -d "$OPT/share/dune-common/am"; then
+              am_dir="$OPT/share/dune-common/am"
+            fi
+            PATH=$PATH:$OPT/bin
             ;;
     esac
 done
@@ -83,6 +84,8 @@ libtoolize --force
 
 # prepare everything
 echo "--> aclocal..."
+rm -f aclocal.m4
+rm -rf autom4te.cache
 aclocal$AMVERSION $ACLOCAL_FLAGS
 
 # applications should provide a config.h for now

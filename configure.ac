@@ -1,7 +1,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.50)
-AC_INIT(dune-fem, 0.10, dune@mathematik.uni-freiburg.de)
+DUNE_AC_INIT
+#AC_INIT(dune-fem, 0.10, dune@mathematik.uni-freiburg.de)
 #AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 
@@ -11,8 +12,9 @@ AC_CONFIG_SRCDIR([fem/space/dgspace/dgspace.hh])
 AM_CONFIG_HEADER(config.h)
 
 # we need no more than the standard DUNE-stuff
-DUNE_CHECK_ALL_M([dune-common])
-DUNE_CHECK_ALL_M([dune-grid])
+DUNE_CHECK_ALL_M
+#DUNE_CHECK_ALL_M([dune-common])
+#DUNE_CHECK_ALL_M([dune-grid])
 
 # if istl not foud, its disabled 
 DUNE_CHECK_OPTIONAL([dune-istl],[istl/allocator.hh])
