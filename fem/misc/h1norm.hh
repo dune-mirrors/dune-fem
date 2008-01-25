@@ -22,10 +22,10 @@ namespace Dune
     class FunctionJacobianSquare;
 
   protected:
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType
-      GridIteratorType;
+    typedef typename BaseType :: GridIteratorType GridIteratorType;
+    typedef typename BaseType :: IntegratorType IntegratorType;
+
     typedef typename GridIteratorType :: Entity EntityType;
-    typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
   protected:
     using BaseType :: gridPart;

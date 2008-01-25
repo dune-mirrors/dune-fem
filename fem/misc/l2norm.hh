@@ -2,6 +2,7 @@
 #define DUNE_FEM_L2NORM_HH
 
 #include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/integrator.hh>
 
 namespace Dune
 {
@@ -27,6 +28,7 @@ namespace Dune
       GridIteratorType;
     typedef typename GridIteratorType :: Entity EntityType;
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
+    typedef Integrator< QuadratureType > IntegratorType;
 
   protected:
     const GridPartType &gridPart_;
@@ -90,10 +92,11 @@ namespace Dune
     typedef typename WeightFunctionType :: LocalFunctionType
       LocalWeightFunctionType;
     typedef typename WeightFunctionType :: RangeType WeightType;
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType
-      GridIteratorType;
+    
+    typedef typename BaseType :: GridIteratorType GridIteratorType;
+    typedef typename BaseType :: IntegratorType IntegratorType;
+
     typedef typename GridIteratorType :: Entity EntityType;
-    typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
   protected:
     const WeightFunctionType &weightFunction_;

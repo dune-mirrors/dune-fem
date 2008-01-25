@@ -41,8 +41,8 @@ namespace Dune
       FunctionSquare< LocalFunctionType > ulocal2( ulocal );
 
       FieldVector< RangeFieldType, 1 > localSum;
-      QuadratureType quadrature( entity, order );
-      quadrature.integrate( ulocal2, localSum );
+      IntegratorType integrator( entity, order );
+      integrator.integrate( ulocal2, localSum );
 
       sum += localSum[ 0 ];
     }
@@ -83,8 +83,8 @@ namespace Dune
       FunctionSquare< LocalDistanceType > dist2( dist );
       
       FieldVector< RangeFieldType, 1 > localSum;
-      QuadratureType quadrature( entity, order );
-      quadrature.integrate( dist2, localSum );
+      IntegratorType integrator( entity, order );
+      integrator.integrate( dist2, localSum );
 
       sum += localSum[ 0 ];
     }
@@ -219,8 +219,8 @@ namespace Dune
       WeightedFunctionSquare< LocalFunctionType > ulocal2( wflocal, ulocal );
 
       FieldVector< RangeFieldType, 1 > localSum;
-      QuadratureType quadrature( entity, order );
-      quadrature.integrate( ulocal2, localSum );
+      IntegratorType integrator( entity, order );
+      integrator.integrate( ulocal2, localSum );
 
       sum += localSum[ 0 ];
     }
@@ -265,8 +265,8 @@ namespace Dune
       WeightedFunctionSquare< LocalDistanceType > dist2( wflocal, dist );
       
       FieldVector< RangeFieldType, 1 > localSum;
-      QuadratureType quadrature( entity, order );
-      quadrature.integrate( dist2, localSum );
+      IntegratorType integrator( entity, order );
+      integrator.integrate( dist2, localSum );
 
       sum += localSum[ 0 ];
     }
