@@ -44,14 +44,13 @@ namespace Dune
 
 
   /** \copydoc Dune::CachingQuadrature */
-  template< typename GridPartImp >
-  class CachingQuadrature< GridPartImp, 0 >
-  : public CachingPointList
-    < GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0 > >
+  template< typename GridPart >
+  class CachingQuadrature< GridPart, 0 >
+  : public CachingPointList< GridPart, 0, ElementQuadratureTraits< GridPart, 0 > >
   {
   public:
     //! type of grid partition
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
     
     //! codimension of the element quadrature
     enum { codimension = 0 };
@@ -60,11 +59,8 @@ namespace Dune
     typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
     
     typedef CachingQuadrature< GridPartType, codimension > ThisType;
-    typedef CachingPointList< GridPartImp, codimension, IntegrationTraits >
+    typedef CachingPointList< GridPartType, codimension, IntegrationTraits >
       BaseType;
-
-  protected:
-    using BaseType :: quadImp;
 
   public:
     //! type of the grid
@@ -74,11 +70,29 @@ namespace Dune
     enum { dimension = BaseType::dimension };
 
     //! Just another name for double...
-    typedef typename BaseType::RealType RealType;
+    typedef typename BaseType :: RealType RealType;
     //! The type of the coordinates in the codim-0 reference element.
-    typedef typename BaseType::CoordinateType CoordinateType;
+    typedef typename BaseType :: CoordinateType CoordinateType;
     //! The type of the codim-0 entity.
-    typedef typename BaseType::Entity Entity;
+    typedef typename BaseType :: Entity EntityType;
+    
+  protected:
+    typedef typename EntityType :: Geometry GeometryType;
+
+#if DUNE_FEM_COMPATIBILITY
+  public:
+    typedef typename EntityType Entity;
+#endif
+
+  protected:
+    const EntityType &entity_;
+
+  protected:
+    using BaseType :: quadImp;
+
+  public:
+    using BaseType :: nop;
+    using BaseType :: point;
     
   public:
     /** \brief constructor
@@ -87,9 +101,10 @@ namespace Dune
      *                      lives
      *  \param[in]  order   desired minimal order of the quadrature
      */
-    CachingQuadrature( const Entity &entity,
+    CachingQuadrature( const EntityType &entity,
                        int order )
-    : BaseType( entity.geometry().type(), order )
+    : BaseType( entity.geometry().type(), order ),
+      entity_( entity )
     {
     }
 
@@ -100,7 +115,32 @@ namespace Dune
     CachingQuadrature( const ThisType &org ) 
     : BaseType( org )
     {
-    } 
+    }
+
+    template< class Function >
+    inline void integrate ( const Function &function,
+                            typename Function :: RangeType &ret ) const
+    {
+      typedef typename Function :: RangeType RangeType;
+      typedef typename Function :: RangeFieldType RangeFieldType;
+
+      const GeometryType &geometry = entity_.geometry();
+
+      ret = 0;
+      const unsigned int numQuadraturePoints = nop();
+      for( unsigned int pt = 0; pt < numQuadraturePoints; ++pt )
+      {
+        // evaluate function in quadrature point
+        RangeType phi;
+        function.evaluate( (*this)[ pt ], phi );
+       
+        // calculate the weight of the quadrature point
+        const RangeFieldType pointWeight
+          = geometry.integrationElement( point( pt ) ) * weight( pt );
+
+        ret.axpy( pointWeight, phi );
+      }
+    }
    
     /** \copydoc Dune::ElementQuadrature<GridPartImp,0>::weight */
     const RealType &weight ( size_t i ) const 
