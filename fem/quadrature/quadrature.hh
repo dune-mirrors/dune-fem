@@ -110,7 +110,7 @@ namespace Dune
    *  point, the point itself is returned. This makes it possible to have
    *  one evaluation method for the two different kinds of evaluation points.
    *
-   *  \param[in]  point  possibly wrapped point
+   *  \param[in]  x  possibly wrapped point
    *  
    *  \returns a reference to the actual point
    */
