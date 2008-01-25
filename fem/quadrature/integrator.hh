@@ -4,12 +4,28 @@
 namespace Dune
 {
 
+  /** \addtogroup Integrators
+   * 
+   *  Integrators are able to integrate a function.
+   */
+
+
+
+  /** \class   LocalIntegrator
+   *  \ingroup Integrators
+   *  \brief   integrator for a local function over a single entity
+   *
+   *  \param Quadrature  quadrature to use (either ElementQuadrature or
+   *                     CachingQuadrature)
+   */
   template< class Quadrature >
-  class Integrator
+  class LocalIntegrator
   {
   public:
+    //! type of quadrature to use
     typedef Quadrature QuadratureType;
 
+    //! type of the entity
     typedef typename QuadratureType :: EntityType EntityType;
 
   protected:
@@ -20,12 +36,33 @@ namespace Dune
     const QuadratureType quadrature_;
 
   public:
-    inline Integrator ( const EntityType &entity,
-                        unsigned int order )
+    /** \brief constructor
+     * 
+     *  \param[in]  entity  entity, for which the integrator is desired
+     *  \param[in]  order   polynomial order for which the used quadrature
+     *                      shall be exact
+     */
+    inline LocalIntegrator ( const EntityType &entity,
+                             unsigned int order )
     : entity_( entity ),
       quadrature_( entity, order )
     {}
 
+    /** \brief integrate a function
+     *
+     *  The function needs to have an evaluate method supporting
+     *  \ref Dune::QuadraturePointWrapper "wrapped quadrature points".
+     *  The declaration should look as follows:
+     *  \code
+     *  template< class Point >
+     *  evaluate( Point &x, RangeType &ret );
+     *  \endcode
+     *
+     *  \note The RangeType should be compatible with a Dune FieldVector.
+     *
+     *  \param[in]   function  function to integrate
+     *  \param[out]  ret       value of the integral
+     */
     template< class Function >
     inline void integrate ( const Function &function,
                             typename Function :: RangeType &ret ) const

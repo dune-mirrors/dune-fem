@@ -29,11 +29,16 @@ namespace Dune
    */
 
 
-  template< class QuadratureImp >
+  
+  /** \class   QuadraturePointWrapper
+   *  \ingroup Quadrature
+   *  \brief   wrapper for a (Quadrature,int) pair
+   */
+  template< class Quadrature >
   class QuadraturePointWrapper
   {
   public:
-    typedef QuadratureImp QuadratureType;
+    typedef Quadrature QuadratureType;
 
   private:
     typedef QuadraturePointWrapper< QuadratureType > ThisType;
@@ -68,11 +73,11 @@ namespace Dune
 
 
 
-  template< class PointImp >
+  template< class Point >
   struct QuadraturePointWrapperHelper
   {
-    typedef PointImp PointType;
-    typedef PointImp DomainType;
+    typedef Point PointType;
+    typedef Point DomainType;
 
     inline static const DomainType &point ( const PointType &x )
     {
@@ -82,9 +87,10 @@ namespace Dune
 
 
 
-  template< class QuadratureType >
-  struct QuadraturePointWrapperHelper< QuadraturePointWrapper< QuadratureType > >
+  template< class Quadrature >
+  struct QuadraturePointWrapperHelper< QuadraturePointWrapper< Quadrature > >
   {
+    typedef Quadrature QuadratureType;
     typedef QuadraturePointWrapper< QuadratureType > PointType;
     typedef typename QuadratureType :: CoordinateType DomainType;
 
@@ -96,11 +102,23 @@ namespace Dune
 
 
 
-  template< class PointType >
-  inline const typename QuadraturePointWrapperHelper< PointType > :: DomainType &
-    coordinate ( const PointType &x )
+  /** \brief   extract the real coordinate from a point
+   *  \relates Dune::QuadraturePointWrapper
+   *
+   *  This function unwraps a possibly \ref Dune::QuadraturePointWrapper
+   *  "wrapped quadrature point". If the point is not a wrapped quadrature
+   *  point, the point itself is returned. This makes it possible to have
+   *  one evaluation method for the two different kinds of evaluation points.
+   *
+   *  \param[in]  point  possibly wrapped point
+   *  
+   *  \returns a reference to the actual point
+   */
+  template< class Point >
+  inline const typename QuadraturePointWrapperHelper< Point > :: DomainType &
+    coordinate ( const Point &x )
   {
-    return QuadraturePointWrapperHelper< PointType > :: point( x );
+    return QuadraturePointWrapperHelper< Point > :: point( x );
   }
 
 

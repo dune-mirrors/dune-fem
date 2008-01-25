@@ -150,10 +150,12 @@
   /** @defgroup NonLinSolver Non linear solver
       @ingroup OperatorCommon */
 
-/** 
-   @defgroup Quadrature Quadratures
-   @ingroup FEM 
-*/
+/** @defgroup Integration Integration
+    @ingroup FEM */
+  /** @defgroup Quadrature Quadratures
+      @ingroup Integration */
+  /** @defgroup Integrators Integrators
+      @ingroup Integration */
 
 /** 
    @defgroup Adaptation Adaptation and Parallelization
