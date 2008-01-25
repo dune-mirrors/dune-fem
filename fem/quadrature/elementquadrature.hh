@@ -4,11 +4,12 @@
 #include "quadrature.hh"
 #include "elementpointlist.hh"
 
+#ifndef DUNE_FEM_COMPATIBILITY
+#define DUNE_FEM_COMPATIBILITY 1
+#endif
+
 namespace Dune
 {
-
-
-
   
   /*! \class ElementQuadrature
    *  \ingroup Quadrature
@@ -94,8 +95,7 @@ namespace Dune
     typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
       BaseType;
 
-    using BaseType :: quadImp;
-  
+ 
   public:
     //! type of the grid
     typedef typename GridPartType :: GridType GridType;
@@ -111,7 +111,16 @@ namespace Dune
     typedef typename IntegrationTraits :: CoordinateType CoordinateType;
     
     //! type of the codim-0 entity
-    typedef typename GridType :: template Codim< 0 > :: Entity Entity;
+    typedef typename BaseType :: Entity EntityType;
+    //typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+
+#if DUNE_FEM_COMPATIBILITY
+  public:
+    typedef EntityType Entity;
+#endif
+
+  protected:
+    using BaseType :: quadImp;
 
   public:
     /*! \brief constructor
@@ -120,7 +129,7 @@ namespace Dune
      *                      lives
      *  \param[in]  order   desired minimal order of the quadrature
      */
-    ElementQuadrature( const Entity &entity, int order )
+    ElementQuadrature( const EntityType &entity, int order )
     : BaseType( entity.geometry().type(), order )
     {
     }
@@ -133,7 +142,7 @@ namespace Dune
     : BaseType( org )
     {
     }
- 
+
     /** \copydoc Dune::Quadrature::weight */
     const RealType &weight( size_t i ) const
     {

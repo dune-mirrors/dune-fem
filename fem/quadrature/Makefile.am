@@ -2,20 +2,21 @@ SUBDIRS = caching test
 
 quadraturedir =  $(includedir)/dune/fem/quadrature
 quadrature_HEADERS = cachepointlist.hh \
-										 cachequad.hh \
-										 defaultquadratures.hh \
-										 dunequadratures.hh \
+		     cachequad.hh \
+		     defaultquadratures.hh \
+		     dunequadratures.hh \
                      elementpointlist.hh \
                      elementquadrature.hh \
-										 femquadratures.hh \
-										 femquadratures_inline.hh \
-                     gausspoints.hh \
-										 gausspoints_implementation.hh \
-										 idprovider.hh \
+		     femquadratures.hh \
+		     femquadratures_inline.hh \
+		     gausspoints.hh \
+		     gausspoints_implementation.hh \
+		     idprovider.hh \
+		     integrator.hh \
                      quadrature.hh \
-										 quadratureimp.hh \
+		     quadratureimp.hh \
                      quadratureimp_inline.hh \
-										 prismpoints.hh \
-										 pyramidpoints.hh \
-										 quadprovider.hh \
-										 simplexpoints.hh
+		     prismpoints.hh \
+		     pyramidpoints.hh \
+		     quadprovider.hh \
+		     simplexpoints.hh

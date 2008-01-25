@@ -76,24 +76,14 @@ namespace Dune
     //! The type of the codim-0 entity.
     typedef typename BaseType :: Entity EntityType;
     
-  protected:
-    typedef typename EntityType :: Geometry GeometryType;
-
 #if DUNE_FEM_COMPATIBILITY
   public:
-    typedef typename EntityType Entity;
+    typedef EntityType Entity;
 #endif
-
-  protected:
-    const EntityType &entity_;
 
   protected:
     using BaseType :: quadImp;
 
-  public:
-    using BaseType :: nop;
-    using BaseType :: point;
-    
   public:
     /** \brief constructor
      *
@@ -103,8 +93,7 @@ namespace Dune
      */
     CachingQuadrature( const EntityType &entity,
                        int order )
-    : BaseType( entity.geometry().type(), order ),
-      entity_( entity )
+    : BaseType( entity.geometry().type(), order )
     {
     }
 
@@ -117,31 +106,6 @@ namespace Dune
     {
     }
 
-    template< class Function >
-    inline void integrate ( const Function &function,
-                            typename Function :: RangeType &ret ) const
-    {
-      typedef typename Function :: RangeType RangeType;
-      typedef typename Function :: RangeFieldType RangeFieldType;
-
-      const GeometryType &geometry = entity_.geometry();
-
-      ret = 0;
-      const unsigned int numQuadraturePoints = nop();
-      for( unsigned int pt = 0; pt < numQuadraturePoints; ++pt )
-      {
-        // evaluate function in quadrature point
-        RangeType phi;
-        function.evaluate( (*this)[ pt ], phi );
-       
-        // calculate the weight of the quadrature point
-        const RangeFieldType pointWeight
-          = geometry.integrationElement( point( pt ) ) * weight( pt );
-
-        ret.axpy( pointWeight, phi );
-      }
-    }
-   
     /** \copydoc Dune::ElementQuadrature<GridPartImp,0>::weight */
     const RealType &weight ( size_t i ) const 
     {
