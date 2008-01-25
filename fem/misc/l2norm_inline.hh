@@ -26,7 +26,6 @@ namespace Dune
   L2Norm< GridPart > :: norm ( const DiscreteFunctionType &u ) const
   {
     typedef typename DiscreteFunctionType :: RangeFieldType RangeFieldType;
-    typedef typename DiscreteFunctionType :: RangeType RangeType;
 
     typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
 
@@ -37,7 +36,6 @@ namespace Dune
     for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
     {
       const EntityType &entity = *it;
-      //const GeometryType &geometry = entity.geometry();
 
       LocalFunctionType ulocal = u.localFunction( entity );
       FunctionSquare< LocalFunctionType > ulocal2( ulocal );
@@ -61,7 +59,6 @@ namespace Dune
                                    const VDiscreteFunctionType &v ) const
   {
     typedef typename UDiscreteFunctionType :: RangeFieldType RangeFieldType;
-    typedef typename UDiscreteFunctionType :: RangeType RangeType;
 
     typedef typename UDiscreteFunctionType :: LocalFunctionType ULocalFunctionType;
     typedef typename VDiscreteFunctionType :: LocalFunctionType VLocalFunctionType;
@@ -69,11 +66,11 @@ namespace Dune
     typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
-    RangeFieldType sum( 0 );
-    const unsigned int uorder = 2 * u.space().order();
-    const unsigned int vorder = 2 * v.space().order();
-    const unsigned int order = std :: max( uorder, vorder );
+    const unsigned int uorder = u.space().order();
+    const unsigned int vorder = v.space().order();
+    const unsigned int order = 2 * std :: max( uorder, vorder );
 
+    RangeFieldType sum( 0 );
     const GridIteratorType end = gridPart().template end< 0 >();
     for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
     {
@@ -137,6 +134,7 @@ namespace Dune
 
     typedef typename UFunctionType :: RangeFieldType RangeFieldType;
     typedef typename UFunctionType :: RangeType RangeType;
+    typedef typename UFunctionType :: JacobianRangeType JacobianRangeType;
 
   protected:
     const UFunctionType &u_;
@@ -156,6 +154,16 @@ namespace Dune
       RangeType phi;
       u_.evaluate( x, ret );
       v_.evaluate( x, phi );
+      ret -= phi;
+    }
+
+    template< class Point >
+    inline void jacobian ( const Point &x,
+                           JacobianRangeType &ret ) const
+    {
+      JacobianRangeType phi;
+      u_.jacobian( x, ret );
+      v_.jacobian( x, phi );
       ret -= phi;
     }
   };
@@ -194,18 +202,16 @@ namespace Dune
     :: norm ( const DiscreteFunctionType &u ) const
   {
     typedef typename DiscreteFunctionType :: RangeFieldType RangeFieldType;
-    typedef typename DiscreteFunctionType :: RangeType RangeType;
 
     typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
 
-    RangeFieldType sum( 0 );
     unsigned int order = 2 * u.space().order() + weightFunction_.space().order();
 
+    RangeFieldType sum( 0 );
     const GridIteratorType end = gridPart().template end< 0 >();
     for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
     {
       const EntityType &entity = *it;
-      const GeometryType &geometry = entity.geometry();
 
       LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
       LocalFunctionType ulocal = u.localFunction( entity );
@@ -232,7 +238,6 @@ namespace Dune
                   const VDiscreteFunctionType &v ) const
   {
     typedef typename UDiscreteFunctionType :: RangeFieldType RangeFieldType;
-    typedef typename UDiscreteFunctionType :: RangeType RangeType;
 
     typedef typename UDiscreteFunctionType :: LocalFunctionType ULocalFunctionType;
     typedef typename VDiscreteFunctionType :: LocalFunctionType VLocalFunctionType;
@@ -241,17 +246,16 @@ namespace Dune
       < ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
-    RangeFieldType sum( 0 );
-    const unsigned int uorder = 2 * u.space().order();
-    const unsigned int vorder = 2 * v.space().order();
-    const unsigned int order = std :: max( uorder, vorder )
+    const unsigned int uorder = u.space().order();
+    const unsigned int vorder = v.space().order();
+    const unsigned int order = 2 * std :: max( uorder, vorder )
                                + weightFunction_.space().order();
 
+    RangeFieldType sum( 0 );
     const GridIteratorType end = gridPart().template end< 0 >();
     for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
     {
       const EntityType &entity = *it;
-      const GeometryType &geometry = entity.geometry();
 
       LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
       ULocalFunctionType ulocal = u.localFunction( entity );

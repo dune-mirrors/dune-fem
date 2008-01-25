@@ -1,29 +1,35 @@
 #ifndef DUNE_FEM_H1NORM_HH
 #define DUNE_FEM_H1NORM_HH
 
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 namespace Dune
 {
 
-  template< class GridPartImp >
+  template< class GridPart >
   class H1Norm
+  : public L2Norm< GridPart >
   {
   public:
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
 
   private:
     typedef H1Norm< GridPartType > ThisType;
+    typedef L2Norm< GridPartType > BaseType;
+
+  protected:
+    template< class Function >
+    class FunctionJacobianSquare;
 
   protected:
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
       GridIteratorType;
     typedef typename GridIteratorType :: Entity EntityType;
-    typedef typename EntityType :: Geometry GeometryType;
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
   protected:
-    const GridPartType &gridPart_;
+    using BaseType :: gridPart;
+    using BaseType :: comm;
 
   public:
     inline explicit H1Norm ( const GridPartType &gridPart );
