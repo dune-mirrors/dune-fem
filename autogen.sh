@@ -38,9 +38,9 @@ for OPT in "$@"; do
       
             ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I ./m4"
             if test -d "$OPT/m4"; then
-             ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/m4"
+              ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/m4"
             fi
-            if test -d "$OPT/am"; then
+            if test \( -d "$OPT/am" \) -a ! \( -h "$OPT/am" \) ; then
               am_dir="$OPT/am"
             fi
             if test -d "$OPT/share/aclocal"; then
@@ -95,8 +95,8 @@ autoheader$ACVERSION
 # create a link to the dune-common am directory
 if [ -n "$am_dir" ] && [ -d $am_dir ]; then
   echo "--> linking dune-common/am..."
-  rm -f am
-  ln -s $am_dir am
+  #rm -f am
+  ln -nfs $am_dir am
 else
   echo
   echo "Error: Could not find dune-common/am!"
