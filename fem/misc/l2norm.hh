@@ -6,20 +6,26 @@
 namespace Dune
 {
 
-  template< class GridPartImp >
+  template< class GridPart >
   class L2Norm
   {
   public:
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
 
   private:
     typedef L2Norm< GridPartType > ThisType;
 
   protected:
+    template< class Function >
+    class FunctionSquare;
+
+    template< class UFunction, class VFunction >
+    class FunctionDistance;
+
+  protected:
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
       GridIteratorType;
     typedef typename GridIteratorType :: Entity EntityType;
-    typedef typename EntityType :: Geometry GeometryType;
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
   protected:
@@ -42,24 +48,44 @@ namespace Dune
     inline typename UDiscreteFunctionType :: RangeFieldType
     distance ( const UDiscreteFunctionType &u,
                const VDiscreteFunctionType &v ) const;
+
+  protected:
+    inline const GridPartType &gridPart () const
+    {
+      return gridPart_;
+    }
+
+    inline typename GridPartType :: GridType
+      :: template Codim< 0 > :: CollectiveCommunication 
+      comm () const
+    {
+      return gridPart().grid().comm();
+    }
   };
 
 
   
-  template< class WeightFunctionImp >
+  template< class WeightFunction >
   class WeightedL2Norm
+  : public L2Norm
+    < typename WeightFunction :: DiscreteFunctionSpaceType :: GridPartType >
   {
   public:
-    typedef WeightFunctionImp WeightFunctionType;
-    
-  private:
-    typedef WeightedL2Norm< WeightFunctionType > ThisType;
+    typedef WeightFunction WeightFunctionType;
 
-  public:
+   public:
     typedef typename WeightFunctionType :: DiscreteFunctionSpaceType
       WeightFunctionSpaceType;
     typedef typename WeightFunctionSpaceType :: GridPartType GridPartType;
+   
+  private:
+    typedef WeightedL2Norm< WeightFunctionType > ThisType;
+    typedef L2Norm< GridPartType > BaseType;
 
+  protected:
+    template< class Function >
+    class WeightedFunctionSquare;
+    
   protected:
     typedef typename WeightFunctionType :: LocalFunctionType
       LocalWeightFunctionType;
@@ -67,12 +93,14 @@ namespace Dune
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
       GridIteratorType;
     typedef typename GridIteratorType :: Entity EntityType;
-    typedef typename EntityType :: Geometry GeometryType;
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
   protected:
     const WeightFunctionType &weightFunction_;
-    const GridPartType &gridPart_;
+
+  protected:
+    using BaseType :: gridPart;
+    using BaseType :: comm;
 
   public:
     inline explicit WeightedL2Norm ( const WeightFunctionType &weightFunction );
