@@ -1,5 +1,7 @@
 #include <config.h>
 
+//#define L2ERROR
+
 //#define USE_GRAPE HAVE_GRAPE
 #ifndef PROBLEM
 #warning "PROBLEM not defined. Using SineProblem..."
@@ -32,6 +34,7 @@
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 //#include <dune/fem/misc/l2error.hh>
 #include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/misc/h1norm.hh>
 
 #include <dune/fem/operator/diffusionoperator.hh>
 #include <dune/fem/operator/dirichletboundaryoperator.hh>
@@ -131,9 +134,15 @@ FieldType algorithm ( const std :: string &gridFileName, int refinementLevel )
     grape.display();
   #endif
 
+#if defined L2ERROR
   L2Norm< GridPartType > l2norm( gridPart );
   DiscreteFunctionType :: RangeFieldType error = l2norm.distance( solution, gridExactSolution );
   std :: cout << "L2 error: " << error << std :: endl << std :: endl;
+#else
+  H1Norm< GridPartType > h1norm( gridPart );
+  DiscreteFunctionType :: RangeFieldType error = h1norm.distance( solution, gridExactSolution );
+  std :: cout << "H1 error: " << error << std :: endl << std :: endl;
+#endif
   return error;
 }
 
