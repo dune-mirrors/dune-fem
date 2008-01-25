@@ -30,7 +30,8 @@
 #include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
-#include <dune/fem/misc/l2error.hh>
+//#include <dune/fem/misc/l2error.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/operator/diffusionoperator.hh>
 #include <dune/fem/operator/dirichletboundaryoperator.hh>
@@ -59,6 +60,9 @@ typedef LeafGridPart< GridType > GridPartType;
 
 typedef DiscreteFunctionAdapter< RightHandSideType, GridPartType >
   GridRightHandSideType;
+typedef DiscreteFunctionAdapter< ExactSolutionType, GridPartType >
+  GridExactSolutionType;
+
 typedef DefaultDiffusionOperatorTraits< GridRightHandSideType, polynomialOrder >
   DiffusionOperatorTraitsType;
 typedef DiffusionOperator< DiffusionOperatorTraitsType, LaplaceModelType > LaplaceOperatorType;
@@ -116,17 +120,21 @@ FieldType algorithm ( const std :: string &gridFileName, int refinementLevel )
   solution.clear();
   inverseOperator( rhs, solution );
 
+  ExactSolutionType exactSolution( discreteFunctionSpace );
+  GridExactSolutionType gridExactSolution( "exact solution", exactSolution, gridPart,
+                                           DiscreteFunctionSpaceType :: polynomialOrder + 1 );
+
   #if USE_GRAPE
     GrapeDataDisplay< GridType > grape( *gridPtr );
-    grape.dataDisplay( solution );
+    grape.addData( solution );
+    grape.addData( gridExactSolution );
+    grape.display();
   #endif
 
-  ExactSolutionType exactSolution( discreteFunctionSpace );
-  L2Error< DiscreteFunctionType > l2error;
-  ExactSolutionType :: RangeType error = l2error.norm( exactSolution, solution );
-  std :: cout << "L2 error: " << error[ 0 ] << std :: endl << std :: endl;
-  
-  return error[ 0 ];
+  L2Norm< GridPartType > l2norm( gridPart );
+  DiscreteFunctionType :: RangeFieldType error = l2norm.distance( solution, gridExactSolution );
+  std :: cout << "L2 error: " << error << std :: endl << std :: endl;
+  return error;
 }
 
 
