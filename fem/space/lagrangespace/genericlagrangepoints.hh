@@ -13,16 +13,13 @@
 namespace Dune
 {
 
-  template< class GenericGeometryType, unsigned int order >
+  template< class GenericGeometryType, unsigned int order, bool bottom = true >
   class GenericLagrangePoint;
 
-  template< class GeometryType, unsigned int order, unsigned int codim >
-  class GenericLagrangePointCodim;
- 
 
   
-  template< unsigned int order >
-  class GenericLagrangePoint< PointGeometry, order >
+  template< unsigned int order, bool bottom >
+  class GenericLagrangePoint< PointGeometry, order, bottom >
   {
   public:
     typedef PointGeometry GeometryType;
@@ -31,7 +28,7 @@ namespace Dune
  
     enum { polynomialOrder = order };
     
-    template< class, unsigned int >
+    template< class, unsigned int, bool >
     friend class GenericLagrangePoint;
    
     template< class, class, unsigned int >
@@ -48,9 +45,8 @@ namespace Dune
 
   public:
     template< unsigned int codim >
-    class Codim
+    struct Codim
     {
-    public:
       static inline unsigned int maxDofs ()
       {
         return ((codim == 0) ? 1 : 0);
@@ -175,17 +171,20 @@ namespace Dune
 
 
   
-  template< class BaseGeometryType >
-  class GenericLagrangePoint< PyramidGeometry< BaseGeometryType >, 0 >
+  template< class BaseGeometry, bool bottom >
+  class GenericLagrangePoint< PyramidGeometry< BaseGeometry >, 0, bottom >
   {
   public:
+    typedef BaseGeometry BaseGeometryType;
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
+    
     enum { dimension = GeometryType :: dimension };
+
     typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
  
     enum { polynomialOrder = 0 };
 
-    template< class, unsigned int >
+    template< class, unsigned int, bool >
     friend class GenericLagrangePoint;
  
     template< class, class, unsigned int >
@@ -202,17 +201,14 @@ namespace Dune
 
   public:
     template< unsigned int codim >
-    class Codim
+    struct Codim
     {
-    public:
       static inline unsigned int maxDofs ()
       {
-        return ((codim == 0) ? 1 : 0);
-      }
-    
-      static inline unsigned int maxDofsReduction ()
-      {
-        return ((codim == dimension) ? 1 : 0);
+        if( bottom )
+          return ((codim == 0) ? 1 : 0);
+        else
+          return ((codim == dimension) ? 1 : 0);
       }
     };
     
@@ -232,7 +228,7 @@ namespace Dune
                                       unsigned int &codim,
                                       unsigned int &subEntity )
     {
-      codim = 0;
+      codim = (bottom ? 0 : dimension);
       subEntity = 0;
     }
     
@@ -242,7 +238,7 @@ namespace Dune
                                       unsigned int &subEntity,
                                       unsigned int &dofNumber )
     {
-      codim = 0;
+      codim = (bottom ? 0 : dimension);
       subEntity = 0;
       dofNumber = 0;
     }
@@ -261,39 +257,10 @@ namespace Dune
       dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
     } 
     
-    template< class LocalCoordinateType >
-    static inline void dofSubEntityReduction ( LocalCoordinateType &coordinate,
-                                               unsigned int &codim,
-                                               unsigned int &subEntity )
-    {
-      codim = dimension;
-      subEntity = 0;
-    }
-
-    template< class LocalCoordinateType >
-    static inline void dofSubEntityReduction ( LocalCoordinateType &coordinate,
-                                               unsigned int &codim,
-                                               unsigned int &subEntity,
-                                               unsigned int &dofNumber )
-    {
-      codim = dimension;
-      subEntity = 0;
-      dofNumber = 0;
-    }
-
     static inline unsigned int entityDofNumber ( unsigned int codim,
                                                  unsigned int subEntity,
                                                  unsigned int dof )
     {
-      //assert( (codim == 0) && (subEntity == 0) && (dof == 0) );
-      return 0;
-    }
-
-    static inline unsigned int entityDofNumberReduction ( unsigned int codim,
-                                                          unsigned int subEntity,
-                                                          unsigned int dof )
-    {
-      //assert( (codim == dimension) && (subEntity == 0) && (dof == 0) );
       return 0;
     }
 
@@ -324,14 +291,12 @@ namespace Dune
      */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
-      return ((codim == 0) ? 1 : 0);
+      if( bottom )
+        return ((codim == 0) ? 1 : 0);
+      else
+        return ((codim == dimension) ? 1 : 0);
     }
     
-    static inline unsigned int maxDofsReduction ( unsigned int codim )
-    {
-      return ((codim == dimension) ? 1 : 0);
-    }
-
     /** \brief obtain the number of DoFs on one entity
      * 
      *  \param[in]  codim      codimension of the entity
@@ -342,13 +307,10 @@ namespace Dune
     static inline unsigned int numDofs ( unsigned int codim,
                                          unsigned int subEntity )
     {
-      return ((codim == 0) ? 1 : 0);
-    }
-
-    static inline unsigned int numDofsReduction ( unsigned int codim,
-                                                  unsigned int subEntity )
-    {
-      return ((codim == dimension) ? 1 : 0);
+      if( bottom )
+        return ((codim == 0) ? 1 : 0);
+      else
+        return ((codim == dimension) ? 1 : 0);
     }
 
     /** \brief obtain the total number of DoFs in a codimension
@@ -359,14 +321,12 @@ namespace Dune
      */
     static inline unsigned int numDofs ( unsigned int codim )
     {
-      return ((codim == 0) ? 1 : 0);
+      if( bottom )
+        return ((codim == 0) ? 1 : 0);
+      else
+        return ((codim == dimension) ? 1 : 0);
     }
     
-    static inline unsigned int numDofsReduction ( unsigned int codim )
-    {
-      return ((codim == dimension) ? 1 : 0);
-    }
-
   protected:
     template< class LocalCoordinateType >
     static inline void dofCoordinate ( unsigned int index,
@@ -379,29 +339,29 @@ namespace Dune
 
 
 
-  template< class BaseGeometryType, unsigned int order >
-  class GenericLagrangePoint< PyramidGeometry< BaseGeometryType >, order >
+  template< class BaseGeometry, unsigned int order, bool bottom >
+  class GenericLagrangePoint< PyramidGeometry< BaseGeometry >, order, bottom >
   {
   public:
+    typedef BaseGeometry BaseGeometryType;
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
+    
     enum { dimension = GeometryType :: dimension };
+
     typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
  
     enum { polynomialOrder = order };
     
-    template< class, unsigned int >
+    template< class, unsigned int, bool >
     friend class GenericLagrangePoint;
     
     template< class, class, unsigned int >
     friend class GenericLagrangeBaseFunction;
     
-    template< class, unsigned int, unsigned int >
-    friend class GenericLagrangePointCodim;
-
   private:
     typedef GenericLagrangePoint< GeometryType, polynomialOrder > ThisType;
  
-    typedef GenericLagrangePoint< GeometryType, polynomialOrder - 1 >
+    typedef GenericLagrangePoint< GeometryType, polynomialOrder - 1, false >
       OrderReductionType;
     typedef GenericLagrangePoint< BaseGeometryType, polynomialOrder >
       DimensionReductionType;
@@ -415,10 +375,7 @@ namespace Dune
 
   public:
     template< unsigned int codim >
-    class Codim
-    : public GenericLagrangePointCodim< GeometryType, polynomialOrder, codim >
-    {
-    };
+    struct Codim;
 
   public:
     inline GenericLagrangePoint ( unsigned int index )
@@ -436,17 +393,20 @@ namespace Dune
                                       unsigned int &codim,
                                       unsigned int &subEntity )
     {
-      if( !useDimReduction( coordinate ) ) {
+      if( !useDimReduction( coordinate ) )
+      {
         --(*coordinate);
-        OrderReductionType :: dofSubEntityReduction
-          ( coordinate, codim, subEntity );
+        OrderReductionType :: dofSubEntity( coordinate, codim, subEntity );
         ++(*coordinate);
-        if( codim > 0 )
+
+        if( bottom && (codim > 0) )
           subEntity += BaseGeometryType :: numSubEntities( codim - 1 );
-      } else {
-        DimensionReductionType :: dofSubEntity
-          ( coordinate.base(), codim, subEntity );
-        ++codim;
+      }
+      else
+      {
+        DimensionReductionType :: dofSubEntity( coordinate.base(), codim, subEntity );
+        if( bottom )
+          ++codim;
       }
     }
     
@@ -456,17 +416,22 @@ namespace Dune
                                       unsigned int &subEntity,
                                       unsigned int &dofNumber )
     {
-      if( !useDimReduction( coordinate ) ) {
+      if( !useDimReduction( coordinate ) )
+      {
         --(*coordinate);
-        OrderReductionType :: template dofSubEntityReduction
-          ( coordinate, codim, subEntity, dofNumber );
+        OrderReductionType :: template dofSubEntity( coordinate, codim, subEntity, dofNumber );
         ++(*coordinate);
-        if( codim > 0 )
-          subEntity += BaseGeometryType :: numSubEntities( codim - 1 );
-      } else {
-        DimensionReductionType :: dofSubEntity
-          ( coordinate.base(), codim, subEntity, dofNumber );
-        ++codim;
+
+        if( bottom )
+          subEntity += (codim > 0 ? BaseGeometryType :: numSubEntities( codim - 1 ) : 0);
+        else
+          dofNumber += DimensionReductionType :: numDofs( codim, subEntity );
+      }
+      else
+      {
+        DimensionReductionType :: dofSubEntity( coordinate.base(), codim, subEntity, dofNumber );
+        if( bottom )
+          ++codim;
       }
     }
 
@@ -484,70 +449,36 @@ namespace Dune
       dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
     }
 
-    template< class LocalCoordinateType >
-    static inline void dofSubEntityReduction ( LocalCoordinateType &coordinate,
-                                               unsigned int &codim,
-                                               unsigned int &subEntity )
-    {
-      if( !useDimReduction( coordinate ) ) {
-        --(*coordinate);
-        OrderReductionType :: dofSubEntityReduction
-          ( coordinate, codim, subEntity );
-        ++(*coordinate);
-      } else
-        DimensionReductionType :: dofSubEntity
-          ( coordinate.base(), codim, subEntity );
-    }
- 
-    template< class LocalCoordinateType >
-    static inline void dofSubEntityReduction ( LocalCoordinateType &coordinate,
-                                               unsigned int &codim,
-                                               unsigned int &subEntity,
-                                               unsigned int &dofNumber )
-    {
-      if( !useDimReduction( coordinate ) ) {
-        --(*coordinate);
-        OrderReductionType :: dofSubEntityReduction
-          ( coordinate, codim, subEntity, dofNumber );
-        ++(*coordinate);
-        dofNumber += DimensionReductionType :: numDofs( codim, subEntity );
-      } else
-        DimensionReductionType :: dofSubEntity
-          ( coordinate.base(), codim, subEntity, dofNumber );
-    }
- 
     static inline unsigned int entityDofNumber ( unsigned int codim,
                                                  unsigned int subEntity,
                                                  unsigned int dof )
     {
-      if( codim == 0 )
-        return DimensionReductionType :: numLagrangePoints
-               + OrderReductionType :: entityDofNumberReduction
-                   ( codim, subEntity, dof );
+      if( bottom )
+      {
+        if( codim == 0 )
+          return OrderReductionType :: entityDofNumber( codim, subEntity, dof )
+                 + DimensionReductionType :: numLagrangePoints;
 
-      const unsigned int baseSubEntities = BaseGeometryType :: numSubEntities( codim - 1 );
-      if( subEntity >= baseSubEntities )
-        return DimensionReductionType :: numLagrangePoints
-               + OrderReductionType :: entityDofNumberReduction
-                   ( codim, subEntity - baseSubEntities, dof );
+        const unsigned int numBaseSubEntities
+          = BaseGeometryType :: numSubEntities( codim - 1 );
+        if( subEntity >= numBaseSubEntities )
+          return OrderReductionType :: entityDofNumber( codim, subEntity - numBaseSubEntities, dof )
+                 + DimensionReductionType :: numLagrangePoints;
+        else
+          return DimensionReductionType :: entityDofNumber( codim - 1, subEntity, dof );
+      }
       else
-        return DimensionReductionType :: entityDofNumber( codim - 1, subEntity, dof );
+      {
+        const unsigned int numBaseEntityDofs
+          = DimensionReductionType :: numDofs( codim, subEntity );
+        if( dof >=  numBaseEntityDofs )
+          return OrderReductionType :: entityDofNumber( codim, subEntity, dof - numBaseEntityDofs )
+                 + DimensionReductionType :: numLagrangePoints;
+        else
+          return DimensionReductionType :: entityDofNumber( codim, subEntity, dof );
+      }
     }
 
-    static inline unsigned int entityDofNumberReduction ( unsigned int codim,
-                                                          unsigned int subEntity,
-                                                          unsigned int dof )
-    {
-      const unsigned int baseEntityDofs
-        = DimensionReductionType :: numDofs( codim, subEntity );
-      if( dof >=  baseEntityDofs )
-        return DimensionReductionType :: numLagrangePoints
-               + OrderReductionType :: entityDofNumberReduction
-                   ( codim, subEntity, dof - baseEntityDofs );
-      else
-        return DimensionReductionType :: entityDofNumber( codim, subEntity, dof );
-    }
-    
     template< class LocalCoordinateType >
     static inline unsigned int height ( LocalCoordinateType &coordinate )
     {
@@ -582,23 +513,18 @@ namespace Dune
     static inline unsigned int maxDofs ( unsigned int codim )
     {
       const unsigned int maxOrderDofs
-        = OrderReductionType :: maxDofsReduction( codim );
+        = OrderReductionType :: maxDofs( codim );
 
-      if( codim == 0 )
+      if( bottom && (codim == 0) )
         return maxOrderDofs;
 
       const unsigned int maxDimDofs
-        = DimensionReductionType :: maxDofs( codim - 1 );
+        = DimensionReductionType :: maxDofs( bottom ? codim - 1 : codim );
 
-      return (maxDimDofs > maxOrderDofs) ? maxDimDofs : maxOrderDofs;
+      return (bottom ? std :: max( maxDimDofs, maxOrderDofs )
+                     : maxDimDofs + maxOrderDofs);
     }
 
-    static inline unsigned int maxDofsReduction ( unsigned int codim )
-    {
-      return DimensionReductionType :: maxDofs( codim )
-             + OrderReductionType :: maxDofsReduction( codim );
-    }
-   
     /** \brief obtain the number of DoFs on one entity
      * 
      *  \param[in]  codim      codimension of the entity
@@ -609,23 +535,23 @@ namespace Dune
     static inline unsigned int numDofs ( unsigned int codim,
                                          unsigned int subEntity )
     {
-      if( codim == 0 )
-        return OrderReductionType :: numDofsReduction( codim, subEntity );
+      if( bottom )
+      {
+        if( bottom && (codim == 0) )
+          return OrderReductionType :: numDofs( codim, subEntity );
       
-      const unsigned int baseSubEntities
-        = BaseGeometryType :: numSubEntities( codim - 1 );
-      if( subEntity < baseSubEntities )
-        return DimensionReductionType :: numDofs( codim - 1, subEntity );
+        const unsigned int numBaseSubEntities
+          = BaseGeometryType :: numSubEntities( codim - 1 );
+        if( subEntity < numBaseSubEntities )
+          return DimensionReductionType :: numDofs( codim - 1, subEntity );
+        else
+          return OrderReductionType :: numDofs( codim, subEntity - numBaseSubEntities );
+      }
       else
-        return OrderReductionType
-               :: numDofsReduction( codim, subEntity - baseSubEntities );
-    }
-
-    static inline unsigned int numDofsReduction ( unsigned int codim,
-                                                  unsigned int subEntity )
-    {
-      return DimensionReductionType :: numDofs( codim, subEntity )
-             + OrderReductionType :: numDofsReduction( codim, subEntity );
+      {
+        return DimensionReductionType :: numDofs( codim, subEntity )
+               + OrderReductionType :: numDofs( codim, subEntity );
+      }
     }
 
     /** \brief obtain the total number of DoFs in a codimension
@@ -636,18 +562,20 @@ namespace Dune
      */
     static inline unsigned int numDofs ( unsigned int codim )
     {
-      const unsigned int orderDofs
-        = OrderReductionType :: numDofsReduction( codim );
-      if( codim > 0 )
-        return orderDofs + DimensionReductionType :: numDofs( codim - 1 );
+      if( bottom )
+      {
+        const unsigned int orderDofs
+          = OrderReductionType :: numDofs( codim );
+        if( codim > 0 )
+          return orderDofs + DimensionReductionType :: numDofs( codim - 1 );
+        else
+          return orderDofs;
+      }
       else
-        return orderDofs;
-    }
-
-    static inline unsigned int numDofsReduction ( unsigned int codim )
-    {
-      return DimensionReductionType :: numDofs( codim )
-             + OrderReductionType :: numDofsReduction( codim );
+      {
+        return DimensionReductionType :: numDofs( codim )
+               + OrderReductionType :: numDofs( codim );
+      }
     }
 
     template< class LocalCoordinateType >
@@ -678,82 +606,34 @@ namespace Dune
 
 
  
-  template< class BaseGeometryType, unsigned int order, unsigned int codim >
-  class GenericLagrangePointCodim
-    < PyramidGeometry< BaseGeometryType >, order, codim >
+  template< class BaseGeometry, unsigned int order, bool bottom >
+  template< unsigned int codim >
+  struct GenericLagrangePoint< PyramidGeometry< BaseGeometry >, order, bottom >
+    :: Codim
   {
-  private:
-    typedef PyramidGeometry< BaseGeometryType > GeometryType;
-
-    typedef GenericLagrangePoint< GeometryType, order >
-      LagrangePointType;
-    
-    typedef typename LagrangePointType :: DimensionReductionType
-      DimensionReductionType;
-    typedef typename LagrangePointType :: OrderReductionType
-      OrderReductionType;
- 
-  public:
     static inline unsigned int maxDofs ()
     {
       const unsigned int maxOrderDofs
-        = OrderReductionType :: template Codim< codim > :: maxDofsReduction();
+        = OrderReductionType :: template Codim< codim > :: maxDofs();
 
       const unsigned int maxDimDofs
-        = DimensionReductionType :: template Codim< codim - 1 > :: maxDofs();
-      return (maxDimDofs > maxOrderDofs) ? maxDimDofs : maxOrderDofs;
-    }
+        = DimensionReductionType :: template Codim< (bottom ? codim - 1 : codim) >
+                                 :: maxDofs();
 
-    static inline unsigned int maxDofsReduction ()
-    {
-      return DimensionReductionType :: template Codim< codim > :: maxDofs()
-             + OrderReductionType :: template Codim< codim > :: maxDofsReduction();
-    }
-  };
-
-
-  
-  template< class BaseGeometryType, unsigned int order >
-  class GenericLagrangePointCodim
-    < PyramidGeometry< BaseGeometryType >, order, 0 >
-  {
-  private:
-    typedef PyramidGeometry< BaseGeometryType > GeometryType;
-
-    typedef GenericLagrangePoint< GeometryType, order >
-      LagrangePointType;
-    
-    typedef typename LagrangePointType :: DimensionReductionType
-      DimensionReductionType;
-    typedef typename LagrangePointType :: OrderReductionType
-      OrderReductionType;
-
-    enum { codim = 0 };
-
-  public:
-    static inline unsigned int maxDofs ()
-    {
-      const unsigned int maxOrderDofs
-        = OrderReductionType :: template Codim< codim > :: maxDofsReduction();
-
-      return maxOrderDofs;
-    }
-
-    static inline unsigned int maxDofsReduction ()
-    {
-      return DimensionReductionType :: template Codim< codim > :: maxDofs()
-             + OrderReductionType :: template Codim< codim > :: maxDofsReduction();
+      if( bottom )
+        return std :: max( maxDimDofs, maxOrderDofs );
+      else
+        return maxDimDofs + maxOrderDofs;
     }
   };
 
 
   
-  template< class FirstGeometryType,
-            class SecondGeometryType,
-            unsigned int order >
+  template< class FirstGeometryType, class SecondGeometryType,
+            unsigned int order, bool bottom >
   class GenericLagrangePoint< ProductGeometry< FirstGeometryType,
                                                SecondGeometryType >,
-                              order >
+                              order, bottom >
   {
   public:
     typedef ProductGeometry< FirstGeometryType, SecondGeometryType >
@@ -763,7 +643,7 @@ namespace Dune
 
     enum { polynomialOrder = order };
 
-    template< class, unsigned int >
+    template< class, unsigned int, bool >
     friend class GenericLagrangePoint;
  
     template< class, class, unsigned int >
