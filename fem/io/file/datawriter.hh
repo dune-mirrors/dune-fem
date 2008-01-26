@@ -404,6 +404,10 @@ public:
     }
     return;
   }
+  /** Return output path name */
+  const std::string& path() const {
+    return path_;
+  }
 
 protected:
 #ifdef USE_VTKWRITER
@@ -431,7 +435,7 @@ protected:
     if( vertexData ) 
     {
       // generate leaf grid part 
-      typedef AdaptiveLeafGridPart< GridType > GridPartType; 
+      typedef LeafGridPart< GridType > GridPartType; 
       GridPartType gridPart( const_cast<GridType&> (grid_) );
 
       // create vtk output handler 
