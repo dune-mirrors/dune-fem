@@ -366,6 +366,8 @@ namespace Dune {
       this->grid().communicate(data,iftype,dir);
     }
 
+    const FilterType & filter() const { return filter_; }
+
   private:   
     inline void updateStatus()
     {
@@ -375,9 +377,6 @@ namespace Dune {
     {
       maxlevel_ = GridPartImp::level();
     }
-
-  protected:
-    FilterType & filter() const { return filter_; }
 
   private: 
     FilterType filter_;
