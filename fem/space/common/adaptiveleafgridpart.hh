@@ -7,6 +7,7 @@
 //- local includes 
 #include "adaptiveleafindexset.hh"
 #include "singletonlist.hh"
+
 namespace Dune {
 
 /** @addtogroup AdaptiveLeafGP
@@ -30,10 +31,37 @@ struct AdaptiveLeafIndexSet;
 
 //! Type definitions for the LeafGridPart class
 template <class GridImp,PartitionIteratorType pitype>
-struct AdaptiveLeafGridPartTraits {
+struct AdaptiveLeafGridPartTraits 
+{
+  //! default is to use DGAdaptiveLeafIndexSet
+  template <class GridT, bool isGood> 
+  struct GoodGridChooser
+  {
+    // choose the adative index based on hierarhic index set
+    typedef AdaptiveLeafIndexSet<GridT> IndexSetType;
+  };
+
+  // the same for shitty grids 
+  template <class GridT> 
+  struct GoodGridChooser<GridT,false>
+  {
+    // the grids leaf index set wrapper for good 
+    typedef WrappedLeafIndexSet<GridT> IndexSetType;
+  };
+
+  //! type of the grid 
   typedef GridImp GridType;
-  typedef AdaptiveLeafGridPart<GridImp,pitype> GridPartType;
-  typedef AdaptiveLeafIndexSet<GridImp> IndexSetType;
+
+  //! type of the grid part , i.e. this type 
+  typedef AdaptiveLeafGridPart<GridType,pitype> GridPartType;
+
+  // choose index set dependend on grid type  
+  typedef GoodGridChooser<GridType,
+           Conversion<GridType,HasHierarchicIndexSet>::exists
+         > IndexSetChooserType;
+              
+  //! type of the index set 
+  typedef typename IndexSetChooserType :: IndexSetType IndexSetType;
 
   typedef typename GridType::template Codim<0>::Entity::
     LeafIntersectionIterator IntersectionIteratorType;

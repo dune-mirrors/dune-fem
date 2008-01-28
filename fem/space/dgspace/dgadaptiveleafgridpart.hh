@@ -15,50 +15,49 @@ namespace Dune {
 template <class GridImp,PartitionIteratorType pitype>
 struct DGAdaptiveLeafGridPart;
 
-//! default is to use DGAdaptiveLeafIndexSet
-template <class GridImp, bool unStructured, bool isGood> 
-struct GoodGridChooser
-{
-  // choose the adative index based on hierarhic index set
-  typedef DGAdaptiveLeafIndexSet<GridImp> IndexSetType;
-};
-
-// the same for shitty unstructured grids 
-template <class GridImp> 
-struct GoodGridChooser<GridImp,true,false>
-{
-  // choose the leaf index set based on local ids 
-  typedef IdBasedLeafIndexSet<GridImp> IndexSetType;
-};
-
-// for structured grids with no hierarchic index set choose 
-// the grids leaf index set 
-template <class GridImp> 
-struct GoodGridChooser<GridImp,false,false>
-{
-#if HAVE_MPI
-  // choose the adative index based on leaf index set
-  typedef DGAdaptiveLeafIndexSet<GridImp> IndexSetType;
-#else 
-  // the grids leaf index set wrapper for good 
-  typedef WrappedLeafIndexSet<GridImp> IndexSetType;
-#endif
-};
-
 template <class GridType>
 class DGAdaptiveLeafIndexSet; 
 
 //! Type definitions for the LeafGridPart class
 template <class GridImp,PartitionIteratorType pitype>
-struct DGAdaptiveLeafGridPartTraits {
-  
+struct DGAdaptiveLeafGridPartTraits 
+{
+  //! default is to use DGAdaptiveLeafIndexSet
+  template <class GridT, bool unStructured, bool isGood> 
+  struct GoodGridChooser
+  {
+    // choose the adative index based on hierarhic index set
+    typedef DGAdaptiveLeafIndexSet<GridT> IndexSetType;
+  };
+
+  // the same for shitty unstructured grids 
+  template <class GridT> 
+  struct GoodGridChooser<GridT,true,false>
+  {
+    // choose the leaf index set based on local ids 
+    typedef IdBasedLeafIndexSet<GridT> IndexSetType;
+  };
+
+  // for structured grids with no hierarchic index set choose 
+  // the grids leaf index set 
+  template <class GridT> 
+  struct GoodGridChooser<GridT,false,false>
+  {
+#if HAVE_MPI
+    // choose the adative index based on leaf index set
+    typedef DGAdaptiveLeafIndexSet<GridT> IndexSetType;
+#else 
+    // the grids leaf index set wrapper for good 
+    typedef WrappedLeafIndexSet<GridT> IndexSetType;
+#endif
+  };
+
   typedef GridImp GridType;
-  
-  typedef DGAdaptiveLeafGridPart<GridImp,pitype> GridPartType;
+  typedef DGAdaptiveLeafGridPart<GridType,pitype> GridPartType;
   // choose index set dependend on grid type  
-  typedef GoodGridChooser<GridImp,
+  typedef GoodGridChooser<GridType,
            Capabilities::IsUnstructured<GridType>::v,
-           Conversion<GridImp,HasHierarchicIndexSet>::exists
+           Conversion<GridType,HasHierarchicIndexSet>::exists
          > IndexSetChooserType;
               
   typedef typename IndexSetChooserType :: IndexSetType IndexSetType;
