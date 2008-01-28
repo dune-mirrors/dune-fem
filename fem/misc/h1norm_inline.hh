@@ -30,8 +30,9 @@ namespace Dune
     typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
 
     unsigned int order = 2 * u.space().order();
+    IntegratorType integrator( order );
 
-    RangeFieldType sum( 0 );
+    FieldVector< RangeFieldType, 1 > sum( 0 );
     const GridIteratorType end = gridPart().template end< 0 >();
     for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
     {
@@ -40,14 +41,10 @@ namespace Dune
       LocalFunctionType ulocal = u.localFunction( entity );
       FunctionJacobianSquare< LocalFunctionType > ulocal2( ulocal );
 
-      FieldVector< RangeFieldType, 1 > localSum;
-      IntegratorType integrator( entity, order );
-      integrator.integrate( ulocal2, localSum );
-
-      sum += localSum[ 0 ];
+      integrator.integrateAdd( entity, ulocal2, sum );
     }
 
-    return sqrt( comm().sum( sum ) );
+    return sqrt( comm().sum( sum[ 0 ] ) );
   }
 
  
@@ -70,8 +67,9 @@ namespace Dune
     const unsigned int uorder = u.space().order();
     const unsigned int vorder = v.space().order();
     const unsigned int order = 2 * std :: max( uorder, vorder );
+    IntegratorType integrator( order );
 
-    RangeFieldType sum( 0 );
+    FieldVector< RangeFieldType, 1 > sum( 0 );
     const GridIteratorType end = gridPart().template end< 0 >();
     for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
     {
@@ -83,14 +81,10 @@ namespace Dune
       LocalDistanceType dist( ulocal, vlocal );
       FunctionJacobianSquare< LocalDistanceType > dist2( dist );
 
-      FieldVector< RangeFieldType, 1 > localSum;
-      IntegratorType integrator( entity, order );
-      integrator.integrate( dist2, localSum );
-
-      sum += localSum;
+      integrator.integrateAdd( entity, dist2, sum );
     }
 
-    return sqrt( comm().sum( sum ) );
+    return sqrt( comm().sum( sum[ 0 ] ) );
   }
 
 

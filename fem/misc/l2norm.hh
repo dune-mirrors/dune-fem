@@ -28,7 +28,7 @@ namespace Dune
       GridIteratorType;
     typedef typename GridIteratorType :: Entity EntityType;
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
-    typedef LocalIntegrator< QuadratureType > IntegratorType;
+    typedef Integrator< QuadratureType > IntegratorType;
 
   protected:
     const GridPartType &gridPart_;
