@@ -159,16 +159,19 @@ namespace Dune
    *  \note For adaptive calculations one has to use index sets that are
    *  capable of adaption (i.e. the method adaptive returns true). See also
    *  AdaptiveLeafIndexSet.
-   *
+   */
+#if 0
    *  \bug For Lagrange spaces of order \f$\ge\f$ 2, the base functions
    *       sometimes (and unpredictably) return NaN or \f$\pm\infty\f$, when
    *       the code is compiled with gcc and optimization level is \f$\ge\f$ 2.
-   *
-   *  \{
    */
+#endif
 
-  /** \class LagrangeDiscreteFunctionSpace
-   *  \brief Lagrange discrete function space
+
+
+  /** \class   LagrangeDiscreteFunctionSpace
+   *  \ingroup LagrangeDiscreteFunctionSpace
+   *  \brief   Lagrange discrete function space
    */
   template< class FunctionSpaceImp,
             class GridPartImp,
@@ -509,8 +512,6 @@ namespace Dune
       return dofManager_.sequence();
     }
   };
-  
-  /** \} */
   
 } // end Dune namespace  
 
