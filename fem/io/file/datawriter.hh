@@ -434,8 +434,10 @@ protected:
 #else 
     if( vertexData ) 
     {
-      // generate leaf grid part 
-      typedef LeafGridPart< GridType > GridPartType; 
+      // generate adaptive leaf grid part 
+      // do not use leaf grid part since this will 
+      // create the grids leaf index set, which might not be wanted. 
+      typedef AdaptiveLeafGridPart< GridType > GridPartType; 
       GridPartType gridPart( const_cast<GridType&> (grid_) );
 
       // create vtk output handler 
