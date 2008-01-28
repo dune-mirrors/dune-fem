@@ -2,7 +2,11 @@
  *
  *  The change log lists the major steps taken between the different releases.
  *
- *  \section Changes from 0.9 to 0.10
+ *  \section Changes from 0.9.1 to 0.10
+ *  - Lagrange base functions have been fixed.
+ *  .
+ *
+ *  \section Changes from 0.9 to 0.9.1
  *  - The evaluation methods taking a Quadrature and an int as arguments are
  *    now mere fronts for the evaluate methods taking a PointType.
  *  - Local functions now use an \ref EngineConcept "engine concept".
