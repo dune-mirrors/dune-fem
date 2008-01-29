@@ -88,9 +88,6 @@ namespace Dune
     typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, SlaveDofsFactoryType >
       SlaveDofsProviderType;
     
-  private:
-    enum { maxBaseFunctions = 100 };
-    
   protected:
     class Assembler;
    
@@ -110,8 +107,6 @@ namespace Dune
   private:
     mutable JacobianRangeType grad;
 
-    mutable JacobianRangeType mygrad[ maxBaseFunctions ];
- 
   public:
     //! constructor
     inline explicit LaplaceFEOp( const DiscreteFunctionSpaceType &dfSpace )
@@ -223,63 +218,17 @@ namespace Dune
     }
 
   protected:
-    /*! assemble the local matrix
-     *
-     *  In the Finite Element Method, most base functions are zero on a given
-     *  entity. To build the matrix on one entity, we only need to store a very
-     *  limited amount of matrix entries, the socalled local matrix.
-     */
-    template< class EntityType, class LocalMatrixType >
-    unsigned int assembleLocalMatrix ( const EntityType &entity,
-                                       LocalMatrixType &matrix ) const
+    template< class Point >
+    inline RangeFieldType stiffTensor ( const Point &x ) const
     {
-      typedef typename EntityType :: Geometry GeometryType;
-
-      const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
-      const GeometryType &geometry = entity.geometry();
-
-      const BaseFunctionSetType baseSet
-        = dfSpace.baseFunctionSet( entity );
-      const unsigned int numBaseFunctions = baseSet.numBaseFunctions();
-            
-      assert( numBaseFunctions <= maxBaseFunctions );
-      for( unsigned int i = 0; i < numBaseFunctions; ++i )
-        for( unsigned int j = 0; j <= i; ++j ) 
-          matrix[ j ][ i ] = 0;
-
-      QuadratureType quad( entity, 2 * (polynomialOrder - 1) );
-      const unsigned int numQuadraturePoints = quad.nop();
-      for( unsigned int pt = 0; pt < numQuadraturePoints; ++pt ) {
-        // calc Jacobian inverse before volume is evaluated 
-        const FieldMatrix< double, dimension, dimension > &inv
-                    = geometry.jacobianInverseTransposed( quad.point( pt ) );
-        const double volume = geometry.integrationElement( quad.point( pt ) );
-
-        for( unsigned int i = 0; i < numBaseFunctions; ++i ) {
-          baseSet.jacobian( i, quad[ pt ], mygrad[ i ] ); 
-      
-          // multiply with transpose of jacobian inverse 
-          mygrad[ i ][ 0 ] = FMatrixHelp :: mult( inv, mygrad[ i ][ 0 ] );
-        }
-        
-        typename DiscreteFunctionSpaceType :: RangeFieldType weight
-          = quad.weight( pt ) * volume;
-        if( stiffTensor_ ) {
-          typename DiscreteFunctionSpaceType :: RangeType phi;
-          stiffTensor_->evaluate( geometry.global( quad.point( pt ) ), phi );
-          weight *= phi[ 0 ];
-        }
-        for( unsigned int i = 0; i < numBaseFunctions; ++i ) 
-          for ( unsigned int j = 0; j <= i; ++j ) 
-            matrix[ j ][ i ] += (mygrad[ i ][ 0 ] * mygrad[ j ][ 0 ]) * weight;
+      if( stiffTensor_ != 0 )
+      {
+        typename DiscreteFunctionSpaceType :: RangeType phi;
+        stiffTensor_->evaluate( x, phi );
+        return phi[ 0 ];
       }
-      
-      // symmetrize matrix
-      for( unsigned int i = 0; i < numBaseFunctions; ++i ) 
-        for( unsigned int j = numBaseFunctions; j > i; --j ) 
-          matrix[ j ][ i ] = matrix[ i ][ j ];
-
-      return numBaseFunctions;
+      else
+        return RangeFieldType( 1 );
     }
 
     void boundaryCorrectOnGrid () const
@@ -373,44 +322,69 @@ namespace Dune
   template< class DiscreteFunction, class MatrixObject, class Tensor >
   class LaplaceFEOp< DiscreteFunction, MatrixObject, Tensor > :: Assembler
   {
+    //static const unsigned int maxBaseFunctions = 100;
+    
   protected:
     const LaplaceFEOpType &feop_;
 
-    mutable FieldMatrix< RangeFieldType, maxBaseFunctions, maxBaseFunctions >
-      elementMatrix_;
-#if 0
-    mutable StandardArray< unsigned int, maxBaseFunctions >
-      localMap_;
-#endif
-
+    //mutable JacobianRangeType gradCache_[ maxBaseFunctions ];
+    mutable DynamicArray< JacobianRangeType > gradCache_;
+    mutable RangeFieldType weight_;
+ 
   public:
-    inline Assembler( const LaplaceFEOpType &feop )
-    : feop_( feop )
+    inline explicit Assembler ( const LaplaceFEOpType &feop )
+    : feop_( feop ),
+      gradCache_( feop_.discreteFunctionSpace().mapper().maxNumDofs() )
+    {}
+
+    inline void updateLocalMatrix ( LocalMatrixType &localMatrix ) const
     {
+      const unsigned int columns = localMatrix.columns();
+      for( unsigned int i = 0; i < columns; ++i )
+      {
+        localMatrix.add( i, i, weight_ * SQR( gradCache_[ i ][ 0 ] ) );
+        for ( unsigned int j = 0; j < i; ++j )
+        {
+          const RangeFieldType value
+            = weight_ * (gradCache_[ i ][ 0 ] * gradCache_[ j ][ 0 ]);
+          localMatrix.add( j, i, value );
+          localMatrix.add( i, j, value );
+        }
+      }
     }
-    
+
+   
     template< class EntityType >
     inline void operator() ( const EntityType &entity ) const
     {
       assert( entity.partitionType() == InteriorEntity );
 
-      //const DiscreteFunctionSpaceType &dfSpace = feop_.discreteFunctionSpace();
-    
-      // obtain local matrix
-      const unsigned int size
-        = feop_.assembleLocalMatrix( entity, elementMatrix_ );
+      const typename EntityType :: Geometry &geometry = entity.geometry();
 
-#if 0
-      for( unsigned int i = 0; i < size; ++i )
-        localMap_[ i ] = dfSpace.mapToGlobal( entity, i );
-#endif
-      LocalMatrixType localMatrix = feop_.matrixObject_.localMatrix( entity, entity );
+      LocalMatrixType localMatrix
+        = feop_.matrixObject_.localMatrix( entity, entity );
       
-      for( unsigned int i = 0; i < size; ++i )
-      { 
-        for( unsigned int j = 0; j < size; ++j )
-          localMatrix.add( i, j, elementMatrix_[ i ][ j ] );
-//          feop_.matrix_->add( localMap_[ i ], localMap_[ j ], localMatrix_[ i ][ j ] );
+      const BaseFunctionSetType &baseSet = localMatrix.domainBaseFunctionSet();
+      const unsigned int numBaseFunctions = baseSet.numBaseFunctions();
+            
+      QuadratureType quadrature( entity, 2 * (polynomialOrder - 1) );
+      const unsigned int numQuadraturePoints = quadrature.nop();
+      for( unsigned int pt = 0; pt < numQuadraturePoints; ++pt )
+      {
+        const typename QuadratureType :: CoordinateType &x
+          = quadrature.point( pt );
+
+        const FieldMatrix< double, dimension, dimension > &inv
+          = geometry.jacobianInverseTransposed( x );
+        for( unsigned int i = 0; i < numBaseFunctions; ++i )
+        {
+          baseSet.jacobian( i, quadrature[ pt ], gradCache_[ i ] );
+          gradCache_[ i ][ 0 ] = FMatrixHelp :: mult( inv, gradCache_[ i ][ 0 ] );
+        }
+        
+        weight_ = quadrature.weight( pt ) * geometry.integrationElement( x )
+                  * feop_.stiffTensor( geometry.global( x ) );
+        updateLocalMatrix( localMatrix );
       }
     }
   };
