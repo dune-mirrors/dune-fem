@@ -69,8 +69,6 @@ public:
   typedef SineReducedBasisSpace< DiscreteBaseFunctionSpaceType, 4 > DiscreteFunctionSpaceType;
 
   typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
-
-  typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 };
 
 
