@@ -33,13 +33,10 @@ for MODULE in $MODULES ; do
 
   if test "$MODULE" != "dune-fem" ; then
     echo
-    cached="/hosts/raid5/morgoth/dune/src/tarballs/$MODULE-1.0beta7.tar.gz"
+    cached="/hosts/raid5/morgoth/dune/src/tarballs/$MODULE-1.1svn.tar.gz"
     if test -e $cached ; then
       echo "Copying tarball from morgoth..."
       cp $cached .
-    else  
-      echo "Downloading tarball for $MODULE from dune-project.org..."
-      wget -q "http://www.dune-project.org/download/1.0beta7/$MODULE-1.0beta7.tar.gz"
     fi
   fi
 
