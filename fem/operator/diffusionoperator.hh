@@ -20,11 +20,11 @@
 namespace Dune
 {
 
-  template< class SourceFunctionImp, unsigned int polOrder >
+  template< class SourceFunction, unsigned int polOrder >
   class DefaultDiffusionOperatorTraits
   {
   public:
-    typedef SourceFunctionImp SourceFunctionType;
+    typedef SourceFunction SourceFunctionType;
 
     enum { polynomialOrder = polOrder };
 
@@ -42,42 +42,54 @@ namespace Dune
       DiscreteFunctionSpaceType;
 
     typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
-
-    typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
   };
 
 
-  template< class TraitsImp, class ModelImp >
+
+  template< class T, class Model >
   class LocalDiffusionOperator
   {
   public:
-    typedef TraitsImp TraitsType;
+    typedef T Traits;
 
-    typedef ModelImp ModelType;
+    typedef Model ModelType;
 
-    typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
+    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
 
-    typedef DiffusionModelInterface< FunctionSpaceType, ModelType > ModelInterfaceType;
+    typedef DiffusionModelInterface< FunctionSpaceType, ModelType >
+      ModelInterfaceType;
    
   private:
-    typedef LocalDiffusionOperator< TraitsType, ModelType > ThisType;
+    typedef LocalDiffusionOperator< Traits, ModelType > ThisType;
  
   public:
-    typedef typename TraitsType :: DiscreteFunctionSpaceType
+    typedef typename Traits :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
     typedef DiscreteFunctionSpaceType DomainFunctionSpaceType;
     typedef DiscreteFunctionSpaceType RangeFunctionSpaceType;
 
-    typedef typename TraitsType :: DiscreteFunctionType DiscreteFunctionType;
+    typedef typename Traits :: DiscreteFunctionType DiscreteFunctionType;
     typedef DiscreteFunctionType DomainFunctionType;
 
-    typedef typename TraitsType :: QuadratureType QuadratureType;
+    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
+      EntityType;
+
+    typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
     typedef typename QuadratureType :: CoordinateType QuadraturePointType;
  
     typedef typename DomainFunctionType :: RangeFieldType DomainFieldType;
     typedef DomainFieldType RangeFieldType;
 
-    enum { polynomialOrder = TraitsType :: polynomialOrder };
+    enum { polynomialOrder = Traits :: polynomialOrder };
+
+  protected:
+    typedef typename EntityType :: Geometry GeometryType;
+
+    typedef FieldMatrix< typename GeometryType :: ctype,
+                         GeometryType :: mydimension,
+                         GeometryType :: mydimension >
+      GeometryJacobianInverseType;
 
   protected:
     const ModelType &model_;
@@ -93,19 +105,12 @@ namespace Dune
     {
     }
  
-    template< class EntityType, class RangeLocalFunctionType >
+    template< class RangeLocalFunction >
     inline void operator() ( const EntityType &entity,
                              const DomainFunctionType &u,
-                             RangeLocalFunctionType &w ) const
+                             RangeLocalFunction &w ) const
     {
-      // geometry type for the entity
-      typedef typename EntityType :: Geometry GeometryType;
-
-      // type of Jacobian for the reference mapping
-      typedef FieldMatrix< typename GeometryType :: ctype,
-                           GeometryType :: mydimension,
-                           GeometryType :: mydimension > GeometryJacobianType;
-
+      typedef RangeLocalFunction RangeLocalFunctionType;
        // local function type for domain function
       typedef typename DomainFunctionType :: LocalFunctionType
         DomainLocalFunctionType;
@@ -142,7 +147,7 @@ namespace Dune
         const QuadraturePointType &point = quadrature.point( pt );
 
         // get jacobian inverse of reference mapping
-        const GeometryJacobianType &inv
+        const GeometryJacobianInverseType &inv
           = geometry.jacobianInverseTransposed( point );
 
         // weight of this point in the integral
@@ -172,20 +177,9 @@ namespace Dune
     }
 
     template< class EntityType, class LocalMatrixType >
-    inline void assembleMatrix
-      ( const EntityType &entity,
-        LocalMatrixType &localMatrix
-//        LocalMatrixInterface< typename LocalMatrixType :: Traits > &localMatrix
-      ) const
+    inline void assembleMatrix ( const EntityType &entity,
+                                 LocalMatrixType &localMatrix ) const
     {
-      // geometry type for the entity
-      typedef typename EntityType :: Geometry GeometryType;
-
-      // type of Jacobian for the reference mapping
-      typedef FieldMatrix< typename GeometryType :: ctype,
-                           GeometryType :: mydimension,
-                           GeometryType :: mydimension > GeometryJacobianType;
-     
       // type of base function sets
       typedef typename LocalMatrixType :: DomainBaseFunctionSetType
         DomainBaseFunctionSetType;
@@ -221,7 +215,7 @@ namespace Dune
         const QuadraturePointType &point = quadrature.point( pt );
 
         // get jacobian inverse of reference mapping
-        const GeometryJacobianType &inv
+        const GeometryJacobianInverseType &inv
           = geometry.jacobianInverseTransposed( point );
 
         // weight of this point in the integral

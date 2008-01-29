@@ -24,21 +24,21 @@ namespace Dune
    *  Here the matematical data is exactly the function \f$a\f$, which we call
    *  diffusive flux.
    *
-   *  \param  FunctionSpaceImp   function space to work in
-   *  \param  DiffusionModelImp  actual implementation (Barton-Nackman)
+   *  \param  FunctionSpace   function space to work in
+   *  \param  DiffusionModel  actual implementation (Barton-Nackman)
    */
-  template< class FunctionSpaceImp, class DiffusionModelImp >
+  template< class FunctionSpace, class DiffusionModel >
   class DiffusionModelInterface
   : public BartonNackmanInterface
-    < DiffusionModelInterface< FunctionSpaceImp, DiffusionModelImp >,
-      DiffusionModelImp >
+    < DiffusionModelInterface< FunctionSpace, DiffusionModel >,
+      DiffusionModel >
   {
   public:
     //! type of the function space we are using
-    typedef FunctionSpaceImp FunctionSpaceType;
+    typedef FunctionSpace FunctionSpaceType;
 
     //! type of the implementation (Barton-Nackman)
-    typedef DiffusionModelImp DiffusionModelType;
+    typedef DiffusionModel DiffusionModelType;
 
   private:
     typedef DiffusionModelInterface< FunctionSpaceType, DiffusionModelType >
