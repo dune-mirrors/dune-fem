@@ -366,6 +366,16 @@ namespace Dune
       return asImp().mapToGlobal( entity, localDof );
     }
 
+    /** \brief return maximal number of local DoFs
+     *
+     *  \returns an upper bound for the number of local DoFs
+     */
+    inline int maxNumLocalDofs () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().maxNumDofs() );
+      return asImp().maxNumDofs();
+    }
+
     /** \brief Creates DataHandle for given discrete function
      *
      *  \param[in]  discreteFunction  \ref DiscreteFunctionInterface
@@ -593,6 +603,12 @@ namespace Dune
                              const int localDof ) const
     {
       return mapper().mapToGlobal( entity, localDof );
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::maxNumLocalDofs */
+    inline int maxNumLocalDofs () const
+    {
+      return mapper().maxNumDofs();
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const

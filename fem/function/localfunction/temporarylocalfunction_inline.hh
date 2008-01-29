@@ -7,7 +7,7 @@ namespace Dune
   : discreteFunctionSpace_( dfSpace ),
     entity_( 0 ),
     baseFunctionSet_(),
-    dofs_(),
+    dofs_( discreteFunctionSpace_.maxNumLocalDofs() ),
     needCheckGeometry_( true )
   {
   }
@@ -21,7 +21,7 @@ namespace Dune
   : discreteFunctionSpace_( dfSpace ),
     entity_( &entity ),
     baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
-    dofs_( baseFunctionSet_.numBaseFunctions() ),
+    dofs_( discreteFunctionSpace_.maxNumLocalDofs() ),
     needCheckGeometry_( true )
   {
   }
@@ -48,6 +48,7 @@ namespace Dune
   TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
     :: operator[] ( const int num ) const
   {
+    assert( num < size() );
     return dofs_[ num ];
   }
 
@@ -60,6 +61,7 @@ namespace Dune
   TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
     :: operator[] ( const int num )
   {
+    assert( num < size() );
     return dofs_[ num ];
   }
 
@@ -107,10 +109,10 @@ namespace Dune
       if( multipleBaseSets || updateBaseSet )
       {
         baseFunctionSet_ = discreteFunctionSpace_.baseFunctionSet( entity );
-        dofs_.resize( baseFunctionSet_.numBaseFunctions() );
         needCheckGeometry_ = discreteFunctionSpace_.multipleGeometryTypes();
       }
     }
+    assert( baseFunctionSet_.numBaseFunctions() <= dofs_.size() );
 
     entity_ = &entity;
     assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
@@ -122,7 +124,7 @@ namespace Dune
   inline int TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
     :: numDofs () const
   {
-    return dofs_.size();
+    return baseFunctionSet_.numBaseFunctions();
   }
 
 }
