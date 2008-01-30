@@ -315,6 +315,21 @@ namespace Dune
       return asImp().entity();
     }
     
+    /** \brief evaluate a partial deriviaive of the local function
+     *
+     *  \param[in]   diffVariable  vector describing the desired partial
+     *                             derivative
+     *  \param[in]   x             evaluation point in local coordinates 
+     *  \param[out]  ret           value of the function in the given point
+     */
+    template< int diffOrder, class PointType >
+    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                           const PointType &x,
+                           RangeType &ret ) const
+    {
+      asImp().evaluate( diffVariable, x, ret );
+    }
+   
     /** \brief evaluate the local function
      *
      *  \param[in]   x    evaluation point in local coordinates 
@@ -336,9 +351,9 @@ namespace Dune
      *  \param[out]  ret         value of the function in the quadrature point
      */
     template< class QuadratureType >
-    inline void evaluate( const QuadratureType &quadrature,
-                          const int quadPoint, 
-                          RangeType &ret ) const
+    inline void evaluate ( const QuadratureType &quadrature,
+                           const int quadPoint, 
+                           RangeType &ret ) const
     {
       asImp().evaluate( quadrature[ quadPoint ], ret );
     }
@@ -477,10 +492,16 @@ namespace Dune
     inline void axpy ( const RangeFieldType s,
                        const LocalFunction< T > &lf );
 
+    /** \copydoc Dune::LocalFunction::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
+    template< int diffOrder, class PointType >
+    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                           const PointType &x,
+                           RangeType &ret ) const;
+
     /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
     template< class PointType >
-    inline void evaluate( const PointType &x,
-                          RangeType &ret ) const;
+    inline void evaluate ( const PointType &x,
+                           RangeType &ret ) const;
 
     /** \copydoc Dune::LocalFunction::jacobian(const PointType &x,JacobianRangeType &ret) const */
     template< class PointType >
@@ -608,6 +629,12 @@ namespace Dune
     inline void axpy ( const PointType &x,
                        const RangeType &factor1,
                        const JacobianRangeType &factor2 );
+
+    /** \copydoc Dune::LocalFunction::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
+    template< int diffOrder, class PointType >
+    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                           const PointType &x,
+                           RangeType &ret ) const;
 
     /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
     template< class PointType >

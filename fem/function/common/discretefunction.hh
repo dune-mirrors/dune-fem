@@ -5,21 +5,19 @@
 #include <string>
 
 //- Dune inlcudes 
-#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/common/grid.hh>
 
-
 //- local includes 
-#include "function.hh"
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/function/localfunction/localfunctionwrapper.hh>
+#include <dune/fem/function/common/dofiterator.hh>
+#include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include "dofiterator.hh"
+#include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 
 namespace Dune
 {
@@ -131,19 +129,21 @@ namespace Dune
   protected:
     using BaseType :: asImp;
 
-  public:
+  protected:
     /** \brief Constructor storing discrete function space
      *
      *  \param[in]  dfSpace  discrete function space 
      */
-    inline explicit DiscreteFunctionInterface
-      ( const DiscreteFunctionSpaceType &dfSpace )
+    inline explicit
+    DiscreteFunctionInterface ( const DiscreteFunctionSpaceType &dfSpace )
     : BaseType( dfSpace )
     {
     }
 
   private:
-    // Disallow copying
+    // prohibit copying
+    DiscreteFunctionInterface ( const ThisType &other );
+    // prohibit assignment
     ThisType &operator= ( const ThisType &other );
     
   public:
@@ -151,9 +151,8 @@ namespace Dune
      *
      *  \returns string holding name of discrete function
      */
-    const std :: string &name () const
+    inline const std :: string &name () const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().name() ); 
       return asImp().name();
     }
 
@@ -163,7 +162,7 @@ namespace Dune
      *  \returns a local function associated with the entity
      */
     template< class EntityType >
-    const LocalFunctionType localFunction ( const EntityType &entity ) const
+    inline const LocalFunctionType localFunction ( const EntityType &entity ) const
     {
       return asImp().localFunction( entity );
     }
@@ -174,7 +173,7 @@ namespace Dune
      *  \returns a local function associated with the entity
      */
     template< class EntityType >
-    LocalFunctionType localFunction ( const EntityType &entity )
+    inline LocalFunctionType localFunction ( const EntityType &entity )
     {
       return asImp().localFunction( entity );
     }
@@ -183,7 +182,7 @@ namespace Dune
      */
     inline void clear()
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
+      asImp().clear();
     }
 
     /** \brief obtain total number of DoFs
@@ -196,19 +195,16 @@ namespace Dune
      */
     inline int size() const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
       return asImp().size();
     }
     
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().block( index ) );
       return asImp().block( index );
     }
     
     inline DofBlockPtrType block ( unsigned int index )
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().block( index ) );
       return asImp().block( index );
     }
  
@@ -218,7 +214,6 @@ namespace Dune
      */
     inline ConstDofIteratorType dbegin () const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().dbegin() );
       return asImp().dbegin ();
     }
 
@@ -228,7 +223,6 @@ namespace Dune
      */
     inline ConstDofIteratorType dend () const 
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().dend() );
       return asImp().dend ();
     }
 
@@ -239,7 +233,6 @@ namespace Dune
      */
     inline DofIteratorType dbegin () 
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().dbegin () );
       return asImp().dbegin ();
     }
 
@@ -249,7 +242,6 @@ namespace Dune
      */
     inline DofIteratorType dend () 
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().dend () );
       return asImp().dend ();
     }
 
@@ -267,7 +259,6 @@ namespace Dune
      */
     inline RangeFieldType *allocDofPointer ()
     {
-      // cannot check this interface method
       return asImp().allocDofPointer();
     }
 
@@ -288,7 +279,7 @@ namespace Dune
      */
     inline void freeDofPointer( RangeFieldType *dofPointer )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().freeDofPointer( dofPointer ) );
+      asImp().freeDofPointer( dofPointer );
     }
 
     /** \brief axpy operation
@@ -301,7 +292,7 @@ namespace Dune
     inline void addScaled( const DiscreteFunctionType &g,
                            const RangeFieldType &s )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addScaled( g, s) );
+      asImp().addScaled( g, s );
     }
 
     /** \brief Scalar product between the DoFs of two discrete functions
@@ -320,7 +311,6 @@ namespace Dune
     inline RangeFieldType
     scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().scalarProductDofs( other ) );
       return asImp().scalarProductDofs( other );
     }
 
@@ -330,7 +320,7 @@ namespace Dune
      */
     inline void print( std :: ostream &out ) const
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().print( out ) );
+      asImp().print( out );
     }
 
     /** \brief check for NaNs
@@ -338,7 +328,6 @@ namespace Dune
      */
     inline bool dofsValid () const
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().dofsValid() );
       return asImp().dofsValid();
     }
     
@@ -348,7 +337,7 @@ namespace Dune
      */
     inline void assign( const DiscreteFunctionType &g )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( g ) );
+      asImp().assign( g );
     }
 
     /** \brief return reference to data handle object */
@@ -357,28 +346,8 @@ namespace Dune
       CommDataHandle<DiscreteFunctionType,OperationImp> :: Type
     dataHandle(const OperationImp * op)
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().dataHandle(op));
-      return asImp().dataHandle(op);
+      return asImp().dataHandle( op );
     }
-
-#if 0
-    /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const */
-    inline void evaluate ( const DomainType &x,
-                           RangeType &ret ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( x, ret ) );
-    }
-
-    /** \copydoc Dune::Functon::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */ 
-    template< int diffOrder >
-    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
-                           const DomainType &x,
-                           RangeType &ret ) const
-    { 
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluate( diffVariable, x, ret) );
-    }
-#endif
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is added to this discrete function 
@@ -386,8 +355,7 @@ namespace Dune
     */
     DiscreteFunctionType& operator += (const DiscreteFunctionType& g) 
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator += (g));
-      return asImp().operator += (g);
+      return asImp().operator+=( g );
     }
 
     /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
@@ -397,8 +365,7 @@ namespace Dune
     template <class DFType>
     DiscreteFunctionType& operator -= (const DFType& g) 
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator -= (g));
-      return asImp().operator -= (g);
+      return asImp().operator-=( g );
     }
  
     /** \brief multiply all degrees of freedom with given scalar factor using the dof iterators 
@@ -407,8 +374,7 @@ namespace Dune
     */
     DiscreteFunctionType& operator *= (const RangeFieldType &scalar)
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator *= (scalar));
-      return asImp().operator *= (scalar);
+      return asImp().operator*=( scalar );
     }
 
     /** \brief devide all degrees of freedom with given scalar factor using the dof iterators 
@@ -417,8 +383,7 @@ namespace Dune
     */
     DiscreteFunctionType& operator /= (const RangeFieldType &scalar)
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().operator /= (scalar));
-      return asImp().operator /= (scalar);
+      return asImp().operator/=( scalar );
     }
 
     /** \brief read the discrete function from a stream
@@ -428,7 +393,7 @@ namespace Dune
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits > &in )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().read( in ) );
+      asImp().read( in );
     }
 
     /** \brief write the discrete function into a stream
@@ -438,7 +403,7 @@ namespace Dune
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits > &out ) const
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().write( out ) );
+      asImp().write( out );
     }
     
     /** \brief read discrete function from file using XDR decoding
@@ -491,8 +456,7 @@ namespace Dune
     */
     inline void enableDofCompression()
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-          asImp().enableDofCompression() );
+      asImp().enableDofCompression();
     }
   };
 
@@ -571,6 +535,11 @@ namespace Dune
     //! type of local functions
     typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 
+    typedef typename Traits :: DofBlockType DofBlockType;
+    typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
+    typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
+    typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
+
   private: 
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
@@ -583,13 +552,6 @@ namespace Dune
   protected:
     using BaseType :: asImp;
 
-  public:
-    using BaseType :: dbegin;
-    using BaseType :: dend;
-    using BaseType :: evaluate;
-    using BaseType :: name;
-    using BaseType :: size;
-    
   protected:
     /** \brief Constructor storing discrete function space and local function
      *         factory
@@ -601,51 +563,33 @@ namespace Dune
      *  \param[in]  lfFactory  local function factory
      */
     inline DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace,
-                                     const LocalFunctionFactoryType &lfFactory )
-    : DiscreteFunctionInterfaceType( dfSpace ),
-      lfStorage_( lfFactory ),
-      scalarProduct_( dfSpace )
-    {
-    }
+                                     const LocalFunctionFactoryType &lfFactory );
 
   private:
     // prohibit copying
     inline DiscreteFunctionDefault ( const ThisType & );
 
   public:
-    inline ~DiscreteFunctionDefault ()
-    {
-      assert( !dofPointerLock_ );
-    }
+    inline ~DiscreteFunctionDefault ();
 
   private:
     // prohibit assignment
     ThisType &operator= ( const ThisType & );
     
   public:
-    /** \copydoc Dune::DiscreteFunctionInterface::print */
-    void print ( std :: ostream &out ) const;
+    // Default Implementations
+    // -----------------------
 
-    /** \copydoc Dune::DiscreteFunctionInterface::dofsValid */
-    inline bool dofsValid () const
-    {
-      const ConstDofIteratorType end = dend();
-      for( ConstDofIteratorType it = dbegin(); it != end; ++it )
-      {
-        if( *it != *it )
-          return false;
-      }
-      return true;
-    }
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
+    template< class EntityType >
+    inline const LocalFunctionType localFunction ( const EntityType &entity ) const;
     
-    /** \copydoc Dune::DiscreteFunctionInterface::clear */
-    void clear();
-
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
-    inline void assign( const DiscreteFunctionType &g );
-
-    /** \copydoc Dune::DiscreteFunctionInterface::addScaled */
-    void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+    template< class EntityType >
+    inline LocalFunctionType localFunction ( const EntityType &entity );
+  
+    /** \copydoc Dune::DiscreteFunctionInterface::clear() */
+    inline void clear();
     
     /** \copydoc Dune::DiscreteFunctionInterface::allocDofPointer
      *  
@@ -661,6 +605,28 @@ namespace Dune
      */
     inline void freeDofPointer( RangeFieldType *dofPointer );
 
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled */
+    void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
+    
+    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
+    inline RangeFieldType
+    scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const;
+
+    /** \copydoc Dune::DiscreteFunctionInterface::print */
+    void print ( std :: ostream &out ) const;
+    
+    /** \copydoc Dune::DiscreteFunctionInterface::dofsValid */
+    inline bool dofsValid () const;
+ 
+    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
+    inline void assign ( const DiscreteFunctionType &g );
+    
+    /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
+    template< class Operation >
+    typename DiscreteFunctionSpaceType
+      :: template CommDataHandle< DiscreteFunctionType, Operation > :: Type
+    dataHandle ( const Operation * op );
+ 
     /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const
      *
      *  The default implementation just does
@@ -670,18 +636,13 @@ namespace Dune
      *  \endcode
      */
     inline void evaluate ( const DomainType &x,
-                           RangeType &ret ) const
-    {
-      FieldVector< deriType, 0 > diffVariable;
-      asImp().evaluate( diffVariable, x, ret );
-    }
+                           RangeType &ret ) const;
 
-    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
-    inline RangeFieldType
-    scalarProductDofs( const DiscreteFunctionInterfaceType &other ) const
-    {
-      return scalarProduct_.scalarProductDofs( *this, other );
-    }
+    /** \copydoc Dune::Function::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
+    template< int diffOrder >
+    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                           const DomainType &x,
+                           RangeType &ret ) const;
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is added to this discrete function 
@@ -710,41 +671,7 @@ namespace Dune
      *  
      *  \returns reference to this discrete function (i.e. *this)
      */
-    inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
-    {
-      asImp() *= (RangeFieldType( 1 ) / scalar);
-      return asImp();
-    }
-
-    /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
-    template <class OperationImp> 
-    typename DiscreteFunctionSpaceType :: template 
-      CommDataHandle<DiscreteFunctionType,OperationImp> :: Type
-    dataHandle(const OperationImp * op)
-    {
-      return this->space().createDataHandle( asImp() , op );
-    }
-    
-    inline bool operator== ( const DiscreteFunctionType &g ) const;
-    
-    inline bool operator!= ( const DiscreteFunctionType &g ) const
-    {
-      return !(operator==( g ));
-    }
-    
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
-    template< class EntityType >
-    const LocalFunctionType localFunction ( const EntityType &entity ) const
-    {
-      return lfStorage_.localFunction( entity );
-    }
-    
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-    template< class EntityType >
-    LocalFunctionType localFunction ( const EntityType &entity )
-    {
-      return lfStorage_.localFunction( entity );
-    }
+    inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar );
 
     /** \copydoc Dune::DiscreteFunctionInterface::read */
     template< class StreamTraits >
@@ -754,104 +681,86 @@ namespace Dune
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits > &out ) const;
     
-     /** \copydoc Dune::DiscreteFunctionInterface::read_xdr
+    /** \copydoc Dune::DiscreteFunctionInterface::read_xdr
      * 
      *  \note The default implementation uses the read method to read the
      *        discrete function from an XDRFileInStream.
      */
-    virtual bool read_xdr( const std::string filename )
-    {
-      try
-      {
-        XDRFileInStream in( filename );
-        asImp().read( in );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
+    virtual bool read_xdr ( const std :: string filename );
  
     /** \copydoc Dune::DiscreteFunctionInterface::write_xdr
      *
      *  \note The default implementation uses the write method to write the
      *        discrete function to an XDRFileOutStream.
      */
-    virtual bool write_xdr ( const std :: string filename ) const
-    {
-      try
-      {
-        XDRFileOutStream out( filename );
-        asImp().write( out );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
+    virtual bool write_xdr ( const std :: string filename ) const;
     
     /** \copydoc Dune::DiscreteFunctionInterface::read_ascii
      * 
      *  \note The default implementation uses the read method to read the
      *        discrete function from an ASCIIInStream.
      */
-    virtual bool read_ascii ( const std :: string filename )
-    {
-      try
-      {
-        ASCIIInStream in( filename );
-        asImp().read( in );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
+    virtual bool read_ascii ( const std :: string filename );
  
     /** \copydoc Dune::DiscreteFunctionInterface::write_ascii
      *
      *  \note The default implementation uses the write method to write the
      *        discrete function to an ASSCIIOutStream.
      */
-    virtual bool write_ascii ( const std :: string filename ) const
-    {
-      try
-      {
-        ASCIIOutStream out( filename );
-        asImp().write( out );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
+    virtual bool write_ascii ( const std :: string filename ) const;
 
     /** \copydoc DiscreteFunctionInterface::read_pgm */
-    virtual bool read_pgm(const std::string filename) const { return true; }
+    virtual bool read_pgm ( const std :: string filename) const;
 
     /** \copydoc DiscreteFunctionInterface::write_pgm */
-    virtual bool write_pgm(const std::string filename) const { return true; }
-  
-    /** \copydoc Dune::DiscreteFunctionInterface::enableDofCompression() 
-        \note Default implementation is empty. 
-     */
-    inline void enableDofCompression()
-    {
-    }
-  public:
-    //this methods are used by the LocalFunctionStorage class 
+    virtual bool write_pgm ( const std :: string filename) const;
 
-    /** \brief return reference for local function storage  
-        \return reference to local function storage 
-    */
-    inline LocalFunctionStorageType& localFunctionStorage() const 
-    { 
-      return lfStorage_; 
-    }
+    /** \copydoc Dune::DiscreteFunctionInterface::enableDofCompression()
+     *
+     *  \note The default implementation does nothing.
+     */
+    inline void enableDofCompression ();
+
+
+  public:
+    // Non-Interface Methods
+    // ---------------------
+  
+    inline bool operator== ( const DiscreteFunctionType &g ) const;
+    
+    inline bool operator!= ( const DiscreteFunctionType &g ) const;
+  
+    /** \brief obtain the local function storage
+     *
+     *  \returns a reference to the local function storage
+     */
+    inline LocalFunctionStorageType &localFunctionStorage () const;
+
+
+  private:
+    // Unimplemented Interface Methods
+    // -------------------------------
+    
+    /** \copydoc Dune::DiscreteFunctionInterface::name() const */
+    const std :: string &name () const;
+
+    /** \copydoc Dune::DiscreteFunctionInterface::size() const */
+    int size () const;
+
+    /** \copydoc Dune::DiscreteFunctionInterface::block(unsigned int index) const */
+    ConstDofBlockPtrType block ( unsigned int index ) const;
+    /** \copydoc Dune::DiscreteFunctionInterface::block(unsigned int index) */
+    DofBlockPtrType block ( unsigned int index );
+
+    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() const */
+    ConstDofIteratorType dbegin () const;
+    /** \copydoc Dune::DiscreteFunctionInterface::dend() const */
+    ConstDofIteratorType dend () const;
+    
+    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() */
+    DofIteratorType dbegin ();
+    /** \copydoc Dune::DiscreteFunctionInterface::dend() */
+    DofIteratorType dend ();
   }; // end class DiscreteFunctionDefault 
   
 ///@} 

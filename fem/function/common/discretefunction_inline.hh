@@ -9,144 +9,387 @@
 namespace Dune 
 {
  
-  // Default Implementations 
+  // DiscreteFunctionDefault 
   // -----------------------
 
-  template< class DiscreteFunctionTraits >
-  inline void DiscreteFunctionDefault< DiscreteFunctionTraits > :: clear ()
+  template< class Traits >
+  inline DiscreteFunctionDefault< Traits >
+    :: DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace,
+                                 const LocalFunctionFactoryType &lfFactory )
+  : DiscreteFunctionInterfaceType( dfSpace ),
+    lfStorage_( lfFactory ),
+    scalarProduct_( dfSpace )
+  {}
+
+  
+  template< class Traits >
+  inline DiscreteFunctionDefault< Traits >
+    :: ~DiscreteFunctionDefault ()
   {
-    const DofIteratorType end = dend();
-    for( DofIteratorType it = dbegin(); it != end; ++it )
+    assert( !dofPointerLock_ );
+  }
+
+
+  template< class Traits >
+  template< class EntityType >
+  inline const typename DiscreteFunctionDefault< Traits > ::  LocalFunctionType
+  DiscreteFunctionDefault< Traits >
+    :: localFunction ( const EntityType &entity ) const
+  {
+    return lfStorage_.localFunction( entity );
+  }
+
+
+  template< class Traits >
+  template< class EntityType >
+  inline typename DiscreteFunctionDefault< Traits > ::  LocalFunctionType
+  DiscreteFunctionDefault< Traits >
+    :: localFunction ( const EntityType &entity )
+  {
+    return lfStorage_.localFunction( entity );
+  }
+
+
+  template< class Traits >
+  inline void DiscreteFunctionDefault< Traits > :: clear ()
+  {
+    const DofIteratorType end = BaseType :: dend();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
       *it = 0;
   }
 
-  template< class Traits >
-  inline void DiscreteFunctionDefault< Traits >
-    :: addScaled ( const DiscreteFunctionType &g,
-                   const RangeFieldType &s )
-  {
-    assert( this->size() == g.size() );
-    const DofIteratorType end = this->dend();
-    ConstDofIteratorType git = g.dbegin();
-    for( DofIteratorType it = this->dbegin(); it != end; ++it, ++git )
-      (*it) += s * (*git);
-  }
-
+  
   template< class Traits >
   inline typename DiscreteFunctionDefault< Traits > :: RangeFieldType *
   DiscreteFunctionDefault< Traits > :: allocDofPointer()
   {
     dofPointerLock_.lock();
 
-    const unsigned int size = this->size();
+    const unsigned int size = BaseType :: size();
     RangeFieldType *dofPointer = new RangeFieldType[ size ];
     
     unsigned int i = 0;
-    const DofIteratorType end = dend();
-    for( DofIteratorType it = dbegin(); it != end; ++it )
+    const DofIteratorType end = BaseType :: dend();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
       dofPointer[ i++ ] = *it;
     assert( i == size );
 
     return dofPointer;
   }
 
+  
   template< class Traits >
   inline void DiscreteFunctionDefault< Traits >
     :: freeDofPointer( RangeFieldType *dofPointer )
   {
     unsigned int i = 0;
-    const DofIteratorType end = dend();
-    for( DofIteratorType it = dbegin(); it != end; ++it )
+    const DofIteratorType end = BaseType :: dend();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
       *it = dofPointer[ i++ ];
-    assert( i == size() );
+    assert( i == BaseType :: size() );
 
     delete[] dofPointer;
     dofPointerLock_.unlock();
   }
 
 
+  template< class Traits >
+  inline void DiscreteFunctionDefault< Traits >
+    :: addScaled ( const DiscreteFunctionType &g,
+                   const RangeFieldType &s )
+  {
+    assert( BaseType :: size() == g.size() );
+    const DofIteratorType end = BaseType :: dend();
+    ConstDofIteratorType git = g.dbegin();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
+      (*it) += s * (*git);
+  }
+
+
+  template< class Traits >
+  inline typename DiscreteFunctionDefault< Traits > :: RangeFieldType
+  DiscreteFunctionDefault< Traits >
+    :: scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
+  {
+    return scalarProduct_.scalarProductDofs( *this, other );
+  }
+
   
-  template< class DiscreteFunctionTraits >
-  inline void
-  DiscreteFunctionDefault<DiscreteFunctionTraits >
+  template< class Traits >
+  inline void DiscreteFunctionDefault<Traits >
+    :: print ( std::ostream &out ) const
+  {
+    out << BaseType :: name() << std::endl;
+    
+    const ConstDofIteratorType end = BaseType :: dend();
+    for( ConstDofIteratorType dit = BaseType :: dbegin(); dit != end; ++dit )
+      out << (*dit) << std::endl;
+  }
+
+
+  template< class Traits >
+  inline bool DiscreteFunctionDefault< Traits >
+    :: dofsValid () const
+  {
+    const ConstDofIteratorType end = BaseType :: dend();
+    for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      if( *it != *it )
+        return false;
+
+    return true;
+  }
+
+  
+  template< class Traits >
+  inline void DiscreteFunctionDefault< Traits >
     :: assign( const DiscreteFunctionType &g )
   {
-    assert( size() == g.size() );
+    assert( BaseType :: size() == g.size() );
 
-    const DofIteratorType end = dend();
+    const DofIteratorType end = BaseType :: dend();
     ConstDofIteratorType git = g.dbegin();
-    for( DofIteratorType it = dbegin(); it != end; ++it, ++git )
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
       *it = *git;
   }
 
 
-
-// operator +=
-/** \todo This operator can add a discretefunction defined on all levels to another
- * one defined only on one level.  We should somehow issue a warning in this case.
- */
-template<class DiscreteFunctionTraits>
-inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
-DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator += ( const DiscreteFunctionType& g ) 
-{
-  assert(this->size() == g.size());
-
-  DofIteratorType endit = this->dend ();
-  ConstDofIteratorType git = g.dbegin ();
-  for(DofIteratorType it = this->dbegin(); it != endit; ++it, ++git) 
+  template< class Traits >
+  template< class Operation >
+  inline typename DiscreteFunctionDefault< Traits >
+    :: DiscreteFunctionSpaceType
+    :: template CommDataHandle
+       < typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType,
+         Operation >
+    :: Type
+  DiscreteFunctionDefault< Traits > :: dataHandle ( const Operation * op )
   {
-    *it += *git;
+    return BaseType :: space().createDataHandle( asImp(), op );
   }
-  return asImp();
-}
 
-// operator -=
-template<class DiscreteFunctionTraits>
-template<class DFType>
-inline typename DiscreteFunctionDefault<DiscreteFunctionTraits> :: DiscreteFunctionType&
-DiscreteFunctionDefault<DiscreteFunctionTraits >::
-operator -= ( const DFType& g ) 
-{
-  assert(this->size() == g.size());
 
-  DofIteratorType endit = this->dend ();
-  typename DFType::ConstDofIteratorType git = g.dbegin ();
-  for(DofIteratorType it = this->dbegin(); it != endit; ++it, ++git) 
+  template< class Traits >
+  inline void DiscreteFunctionDefault< Traits >
+    :: evaluate ( const DomainType &x,
+                  RangeType &ret ) const
   {
-    *it -= *git;
+    FieldVector< deriType, 0 > diffVariable;
+    BaseType :: evaluate( diffVariable, x, ret );
   }
-  return asImp();
-}
 
 
+  template< class Traits >
+  template< int diffOrder >
+  inline void DiscreteFunctionDefault< Traits >
+    :: evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                  const DomainType &x,
+                  RangeType &ret ) const
+  {
+    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+    typedef typename IteratorType :: Entity EntityType;
+    typedef typename EntityType :: Geometry GeometryType;
+    
+    const DiscreteFunctionSpaceType &space = BaseType :: space();
+    const IteratorType end = space.end();
+    for( IteratorType it = space.begin(); it != end; ++it )
+    {
+      const EntityType &entity = *it;
+      const GeometryType &geometry = entity.geometry();
 
-  // operator *=
-  template< class DiscreteFunctionTraits >
-  inline
-  typename DiscreteFunctionDefault< DiscreteFunctionTraits >
-    :: DiscreteFunctionType &
-  DiscreteFunctionDefault< DiscreteFunctionTraits >
+      const DomainType xlocal = geometry.local( x );
+      if( geometry.checkInside( xlocal ) )
+      {
+        const LocalFunctionType localFunction
+          = BaseType :: localFunction( entity );
+
+        localFunction.evaluate( diffVariable, xlocal, ret );
+        return;
+      }
+    }
+    DUNE_THROW( RangeError,
+                "DiscreteFunctionDefault :: evaluate: x is within domain." );
+  }
+
+
+  template< class Traits >
+  inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
+  DiscreteFunctionDefault< Traits >
+    :: operator+= ( const DiscreteFunctionType &g )
+  {
+    assert( BaseType :: size() == g.size() );
+
+    const DofIteratorType end = BaseType :: dend();
+    ConstDofIteratorType git = g.dbegin();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
+      *it += *git;
+    return asImp();
+  }
+
+
+  template< class Traits >
+  template< class DFType >
+  inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
+  DiscreteFunctionDefault< Traits >
+    :: operator-= ( const DFType &g )
+  {
+    assert( BaseType :: size() == g.size() );
+
+    const DofIteratorType end = BaseType :: dend();
+    typename DFType :: ConstDofIteratorType git = g.dbegin();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
+      *it -= *git;
+    return asImp();
+  }
+
+
+  template< class Traits >
+  inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
+  DiscreteFunctionDefault< Traits >
     :: operator*= ( const RangeFieldType &scalar )
   {
-    const DofIteratorType end = dend();
-    for( DofIteratorType it = dbegin(); it != end; ++it )
+    const DofIteratorType end = BaseType :: dend();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
       *it *= scalar;
     return asImp();
   }
 
 
+  template< class Traits >
+  inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
+  DiscreteFunctionDefault< Traits >
+    :: operator/= ( const RangeFieldType &scalar )
+  {
+    return BaseType :: operator*=( RangeFieldType( 1 ) / scalar );
+  }
 
-  template< class DiscreteFunctionTraits >
-  inline bool DiscreteFunctionDefault< DiscreteFunctionTraits >
+
+  template< class Traits >
+  template< class StreamTraits >
+  inline void DiscreteFunctionDefault< Traits >
+    :: read ( InStreamInterface< StreamTraits > &in )
+  {
+    int sz;
+    in >> sz;
+    if( sz != BaseType :: size() )
+      DUNE_THROW( IOError, "Trying to read discrete function of different size." );
+
+    const DofIteratorType end = BaseType :: dend();
+    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      in >> *it;
+  }
+
+
+  template< class Traits >
+  template< class StreamTraits >
+  inline void DiscreteFunctionDefault< Traits >
+    :: write ( OutStreamInterface< StreamTraits > &out ) const
+  {
+    out << BaseType :: size();
+
+    const ConstDofIteratorType end = BaseType :: dend();
+    for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      out << *it;
+  }
+
+  template< class Traits >
+  bool DiscreteFunctionDefault< Traits >
+    :: read_xdr ( const std :: string filename )
+  {
+    try
+    {
+      XDRFileInStream in( filename );
+      BaseType :: read( in );
+      return true;
+    }
+    catch( Exception e )
+    {
+      return false;
+    }
+  }
+ 
+  
+  template< class Traits >
+  bool DiscreteFunctionDefault< Traits >
+    :: write_xdr ( const std :: string filename ) const
+  {
+    try
+    {
+      XDRFileOutStream out( filename );
+      BaseType :: write( out );
+      return true;
+    }
+    catch( Exception e )
+    {
+      return false;
+    }
+  }
+  
+  
+  template< class Traits >
+  bool DiscreteFunctionDefault< Traits >
+    :: read_ascii ( const std :: string filename )
+  {
+    try
+    {
+      ASCIIInStream in( filename );
+      BaseType :: read( in );
+      return true;
+    }
+    catch( Exception e )
+    {
+      return false;
+    }
+  }
+ 
+  
+  template< class Traits >
+  bool DiscreteFunctionDefault< Traits >
+    :: write_ascii ( const std :: string filename ) const
+  {
+    try
+    {
+      ASCIIOutStream out( filename );
+      BaseType :: write( out );
+      return true;
+    }
+    catch( Exception e )
+    {
+      return false;
+    }
+  }
+
+
+  template< class Traits >
+  bool DiscreteFunctionDefault< Traits >
+    :: read_pgm ( const std :: string filename ) const
+  {
+    return true;
+  }
+
+
+  template< class Traits >
+  bool DiscreteFunctionDefault< Traits >
+    :: write_pgm ( const std :: string filename ) const
+  {
+    return true;
+  }
+
+
+  template< class Traits >
+  inline void DiscreteFunctionDefault< Traits >
+    :: enableDofCompression ()
+  {}
+
+
+  template< class Traits >
+  inline bool DiscreteFunctionDefault< Traits >
     :: operator== ( const DiscreteFunctionType &g ) const
   {
-    if( size() != g.size() )
+    if( BaseType :: size() != g.size() )
       return false;
     
-    const ConstDofIteratorType end = dend();
+    const ConstDofIteratorType end = BaseType :: dend();
 
-    ConstDofIteratorType fit = dbegin();
+    ConstDofIteratorType fit = BaseType :: dbegin();
     ConstDofIteratorType git = g.dbegin();
     for( ; fit != end; ++fit, ++git )
       if( *fit != *git )
@@ -154,49 +397,21 @@ operator -= ( const DFType& g )
     
     return true;
   }
-
-
-  // print 
-  template< class DiscreteFunctionTraits >
-  inline void DiscreteFunctionDefault<DiscreteFunctionTraits >
-    :: print ( std::ostream &out ) const
+  
+ 
+  template< class Traits >
+  inline bool DiscreteFunctionDefault< Traits >
+    :: operator!= ( const DiscreteFunctionType &g ) const
   {
-    out << name() << std::endl;
-    
-    const ConstDofIteratorType end = dend();
-    for( ConstDofIteratorType dit = dbegin(); dit != end; ++dit )
-      out << (*dit) << std::endl;
+    return !(operator==( g ));
   }
 
-
-
-  template< class DiscreteFunctionTraits >
-  template< class StreamTraits >
-  inline void DiscreteFunctionDefault< DiscreteFunctionTraits >
-    :: read ( InStreamInterface< StreamTraits > &in )
+  
+  template< class Traits >
+  inline typename DiscreteFunctionDefault< Traits > :: LocalFunctionStorageType &
+  DiscreteFunctionDefault< Traits > :: localFunctionStorage () const
   {
-    int sz;
-    in >> sz;
-    if( sz != size() )
-      DUNE_THROW( IOError, "Trying to read discrete function of different size." );
-
-    const DofIteratorType end = dend();
-    for( DofIteratorType it = dbegin(); it != end; ++it )
-      in >> *it;
-  }
-
-
-
-  template< class DiscreteFunctionTraits >
-  template< class StreamTraits >
-  inline void DiscreteFunctionDefault< DiscreteFunctionTraits >
-    :: write ( OutStreamInterface< StreamTraits > &out ) const
-  {
-    out << size();
-
-    const ConstDofIteratorType end = dend();
-    for( ConstDofIteratorType it = dbegin(); it != end; ++it )
-      out << *it;
+    return lfStorage_;
   }
 
 
@@ -212,10 +427,10 @@ operator -= ( const DFType& g )
    *
    *  \returns the STL stream (for concatenation)
    */
-  template< class DiscreteFunctionTraits >
+  template< class Traits >
   inline std :: ostream &
     operator<< ( std :: ostream &out,
-                 const DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
+                 const DiscreteFunctionInterface< Traits > &df )
   {
     df.print( out );
     return out;
@@ -232,10 +447,10 @@ operator -= ( const DFType& g )
    *
    *  \returns the output stream (for concatenation)
    */
-  template< class StreamTraits, class DiscreteFunctionTraits >
+  template< class StreamTraits, class Traits >
   inline OutStreamInterface< StreamTraits > &
     operator<< ( OutStreamInterface< StreamTraits > &out,
-                 const DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
+                 const DiscreteFunctionInterface< Traits > &df )
   {
     df.write( out );
     return out;
@@ -252,10 +467,10 @@ operator -= ( const DFType& g )
    *
    *  \returns the input stream (for concatenation)
    */
-  template< class StreamTraits, class DiscreteFunctionTraits >
+  template< class StreamTraits, class Traits >
   inline InStreamInterface< StreamTraits > &
     operator>> ( InStreamInterface< StreamTraits > &in,
-                 DiscreteFunctionInterface< DiscreteFunctionTraits > &df )
+                 DiscreteFunctionInterface< Traits > &df )
   {
     df.read( in );
     return in;

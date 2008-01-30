@@ -62,6 +62,27 @@ namespace Dune
 
 
   template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  template< int diffOrder, class PointType >
+  inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
+    :: evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                  const PointType &x,
+                  RangeType &ret ) const
+  {
+    const BaseFunctionSetType &baseSet = asImp().baseFunctionSet();
+
+    ret = 0;
+    const int numDofs = asImp().numDofs();
+    for( int i = 0; i < numDofs; ++i )
+    {
+      RangeType phi;
+      baseSet.evaluate( i, diffVariable, x, phi );
+      ret.axpy( asImp()[ i ], phi );
+    }
+  }
+
+
+  
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
   template< class PointType >
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
     :: evaluate ( const PointType &x,
@@ -187,20 +208,6 @@ namespace Dune
       = asImp().entity().geometry().jacobianInverseTransposed( x );
 
     FieldMatrixHelper :: multiply( factor, gjit, ret );
-#if 0
-    const int rows = JacobianRangeType :: rows;
-    for( int i = 0; i < rows; ++i )
-    {
-      const int cols = JacobianRangeType :: cols;
-      for( int j = 0; j < cols; ++j )
-      {
-        RangeFieldType value( 0 );
-        for( int k = 0; k < cols; ++k )
-          value += factor[ i ][ k ] * gjit[ k ][ j ];
-        ret[ i ][ j ] = value;
-      }
-    }
-#endif
   }
 
 
@@ -272,6 +279,28 @@ namespace Dune
       asImp()[ i ] += s * lf[ i ];
   }
 
+
+  template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
+            class LocalFunctionImp >
+  template< int diffOrder, class PointType >
+  inline void LocalFunctionDefault
+    < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
+    :: evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                  const PointType &x,
+                  RangeType &ret ) const
+  {
+    const BaseFunctionSetType &baseSet = asImp().baseFunctionSet();
+
+    ret = 0;
+    const int numScalarDofs = asImp().numScalarDofs();
+    for( int i = 0; i < numScalarDofs; ++i )
+    {
+      ScalarRangeType phi;
+      baseSet.evaluateScalar( i, diffVariable, x, phi );
+      for( int j = 0; j < N; ++j )
+        ret[ j ] += phi[ 0 ] * asImp()[ i*N + j ];
+    }
+  }
 
 
   template< class ContainedFunctionSpace, int N, DofStoragePolicy policy,
@@ -414,20 +443,6 @@ namespace Dune
       = asImp().entity().geometry().jacobianInverseTransposed( x );
 
     FieldMatrixHelper :: multiply( factor, gjit, ret );
-#if 0
-    const int rows = JacobianRangeType :: rows;
-    for( int i = 0; i < rows; ++i )
-    {
-      const int cols = JacobianRangeType :: cols;
-      for( int j = 0; j < cols; ++j )
-      {
-        RangeFieldType value( 0 );
-        for( int k = 0; k < cols; ++k )
-          value += factor[ i ][ k ] * gjit[ k ][ j ];
-        ret[ i ][ j ] = value;
-      }
-    }
-#endif
   }
 
 }
