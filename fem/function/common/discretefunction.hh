@@ -741,25 +741,17 @@ namespace Dune
     // Unimplemented Interface Methods
     // -------------------------------
     
-    /** \copydoc Dune::DiscreteFunctionInterface::name() const */
     const std :: string &name () const;
 
-    /** \copydoc Dune::DiscreteFunctionInterface::size() const */
     int size () const;
 
-    /** \copydoc Dune::DiscreteFunctionInterface::block(unsigned int index) const */
     ConstDofBlockPtrType block ( unsigned int index ) const;
-    /** \copydoc Dune::DiscreteFunctionInterface::block(unsigned int index) */
     DofBlockPtrType block ( unsigned int index );
 
-    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() const */
     ConstDofIteratorType dbegin () const;
-    /** \copydoc Dune::DiscreteFunctionInterface::dend() const */
     ConstDofIteratorType dend () const;
     
-    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() */
     DofIteratorType dbegin ();
-    /** \copydoc Dune::DiscreteFunctionInterface::dend() */
     DofIteratorType dend ();
   }; // end class DiscreteFunctionDefault 
   
