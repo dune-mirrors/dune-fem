@@ -1,12 +1,9 @@
 #ifndef DUNE_LAPLACE_HH
 #define DUNE_LAPLACE_HH
 
-#ifdef ENABLE_TIMING
-#include <time.h>
-#endif
-
 //- Dune includes
 #include <dune/common/fmatrix.hh>
+#include <dune/common/timer.hh>
 
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/quadrature.hh>
@@ -103,6 +100,10 @@ namespace Dune
     TensorType *const stiffTensor_;
 
     SlaveDofsType *const slaveDofs_;
+   
+#ifdef ENABLE_TIMING
+    Timer timer_;
+#endif
 
   private:
     mutable JacobianRangeType grad;
@@ -173,45 +174,25 @@ namespace Dune
       return discreteFunctionSpace_;
     }
 
-    /*! 
-     *   assemble: perform grid-walkthrough and assemble global matrix
-     * 
-     *   If the matrix storage is 
-     *   not allocated, new storage is allocated by newEmptyMatrix.
-     *   the begin and end iterators are determined and the assembling
-     *   of the global matrix initiated by call of assembleOnGrid and 
-     *   bndCorrectOnGrid. The assemled flag is set. 
-     */
+    /** \brief perform a grid walkthrough and assemble the global matrix */
     void assemble () const 
     {
       const DiscreteFunctionSpaceType &dfSpace = discreteFunctionSpace();
 
       matrixObject_.reserve();
 
-#if 0
-      // if the matrix has not been allocated, allocate it.
-      if( this->matrix_ == 0 )
-      {
-        const int size = dfSpace.size();
-        const int numNonZero = 8 * (1 << dimension) * polynomialOrder;
-        matrix_ = new MatrixType( size, size, numNonZero );
-        assert( matrix_ != 0 );
-      }
-#endif
-
 #ifdef ENABLE_TIMING
-      time_t starttime = time( NULL );
+      timer_.reset();
 #endif
       
       matrixObject_.clear();
       Assembler a( *this );
       dfSpace.forEach( a );
-      //assembleOnGrid();
+
       boundaryCorrectOnGrid();
 
 #ifdef ENABLE_TIMING
-      time_t endtime = time( NULL );
-      std :: cout << "Time to assemble matrix: " << (endtime - starttime) << std :: endl;
+      std :: cout << "Time to assemble matrix: " << timer_.elapsed() << std :: endl;
 #endif
 
       matrix_assembled_ = true;
