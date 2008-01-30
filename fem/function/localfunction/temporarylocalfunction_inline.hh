@@ -48,7 +48,7 @@ namespace Dune
   TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
     :: operator[] ( const int num ) const
   {
-    assert( num < size() );
+    assert( num < numDofs() );
     return dofs_[ num ];
   }
 
@@ -61,7 +61,7 @@ namespace Dune
   TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
     :: operator[] ( const int num )
   {
-    assert( num < size() );
+    assert( num < numDofs() );
     return dofs_[ num ];
   }
 
