@@ -109,12 +109,9 @@ namespace Dune {
         , localCols_(org.localCols_)
       {}
 
+      /*
       void multOEM (const double* arg, double* dest) const
       {
-      //! matrix multiplication for OEM solvers 
-      //template <class LeakPtr>
-      //void multOEM (const LeakPtr& arg, LeakPtr& dest) const
-      //{
         ConstRowIterator endi=this->end();
         for (ConstRowIterator i=this->begin(); i!=endi; ++i)
         {
@@ -142,6 +139,7 @@ namespace Dune {
           }
         }
       }
+      */
 
       //! setup matrix entires 
       template <class RowMapperType, class ColMapperType,
@@ -292,7 +290,7 @@ namespace Dune {
                                 ColumnDiscreteFunctionType > MatrixType;
     typedef typename Traits :: template Adapter < MatrixType > ::  MatrixAdapterType MatrixAdapterType;
     // get preconditioner type from MatrixAdapterType
-    typedef typename MatrixAdapterType :: PreconditionAdapterType PreconditionMatrixType;
+    typedef ThisType PreconditionMatrixType;
     typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
     typedef typename MatrixAdapterType :: CommunicationManagerType CommunicationManagerType;
    
@@ -536,6 +534,10 @@ namespace Dune {
 
     mutable LocalMatrixStackType localMatrixStack_;
 
+    mutable MatrixAdapterType* matrixAdap_;
+    mutable RowBlockVectorType* Arg_;
+    mutable ColumnBlockVectorType* Dest_;
+
     // prohibit copy constructor 
     ISTLMatrixObject(const ISTLMatrixObject&); 
   public:  
@@ -565,6 +567,9 @@ namespace Dune {
       , relaxFactor_(1.1)
       , preconditioning_(ilu_0)
       , localMatrixStack_( *this )
+      , matrixAdap_(0)
+      , Arg_(0)
+      , Dest_(0)
     {
       if(paramfile != "")
       {
@@ -586,6 +591,9 @@ namespace Dune {
     //! destructor 
     ~ISTLMatrixObject() 
     {
+      delete Dest_;
+      delete Arg_;
+      delete matrixAdap_;
       delete matrix_;
     }
 
@@ -657,6 +665,7 @@ namespace Dune {
     //! return true, because in case of no preconditioning we have empty
     //! preconditioner 
     bool hasPcMatrix () const { return true; }
+    const PreconditionMatrixType& pcMatrix() const { return *this; }
 
     //! set all matrix entries to zero 
     void clear()
@@ -680,9 +689,74 @@ namespace Dune {
       }
     }
 
+    //! we only have right precondition
+    bool rightPrecondition() const { return true; }
+
+    void precondition(const double* arg, double* dest) const
+    {
+      if( ! matrixAdap_ ) 
+      { 
+        matrixAdap_ = new MatrixAdapterType(matrixAdapter());
+        delete Arg_; delete Dest_;
+        Arg_  = new RowBlockVectorType( rowMapper_.size() );
+        Dest_ = new ColumnBlockVectorType( colMapper_.size() );
+      }
+      double2Block(arg,*Arg_);
+      (*Dest_) = 0;
+      // not parameter swaped for preconditioner 
+      matrixAdap_->preconditionAdapter().apply(*Dest_, *Arg_);
+      block2Double(*Dest_, dest);
+    }
+
+    // copy double to block vector 
+    void double2Block(const double* arg, RowBlockVectorType& dest) const 
+    {
+      typedef typename RowBlockVectorType :: block_type BlockType;
+      const size_t blocks = dest.size();
+      int idx = 0;
+      for(size_t i=0; i<blocks; ++i) 
+      {
+        BlockType& block = dest[i];
+        enum { blockSize = BlockType :: dimension };
+        for(int j=0; j<blockSize; ++j, ++idx) 
+        {
+          block[j] = arg[idx];
+        }
+      }
+    }
+      
+    // copy block vector to double 
+    void block2Double(const ColumnBlockVectorType& arg, double* dest) const 
+    {
+      typedef typename ColumnBlockVectorType :: block_type BlockType;
+      const size_t blocks = arg.size();
+      int idx = 0;
+      for(size_t i=0; i<blocks; ++i) 
+      {
+        const BlockType& block = arg[i];
+        enum { blockSize = BlockType :: dimension };
+        for(int j=0; j<blockSize; ++j, ++idx) 
+        {
+          dest[idx] = block[j];
+        }
+      }
+    }
+      
     void multOEM(const double* arg, double* dest) const
     {
-      matrix().multOEM( arg, dest );
+      if( ! matrixAdap_ ) 
+      { 
+        matrixAdap_ = new MatrixAdapterType(matrixAdapter());
+        delete Arg_; delete Dest_;
+        Arg_  = new RowBlockVectorType( rowMapper_.size() );
+        Dest_ = new ColumnBlockVectorType( colMapper_.size() );
+      }
+      double2Block(arg,*Arg_);
+      (*Dest_) = 0;
+      // not parameter swaped for preconditioner 
+      matrix().umv(*Arg_, *Dest_ );
+      block2Double(*Dest_, dest);
+      //matrix().multOEM( arg, dest );
     }
 
     void apply(const RowDiscreteFunctionType& arg,
