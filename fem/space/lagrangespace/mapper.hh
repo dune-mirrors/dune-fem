@@ -12,7 +12,6 @@
 
 //- local includes 
 #include "lagrangepoints.hh"
-#include "indexsetcodimcall.hh"
 
 namespace Dune
 {
@@ -293,20 +292,19 @@ namespace Dune
     typedef typename LagrangePointSetType :: DofInfo DofInfo;
 
   private:
-    template< unsigned int codim >
-    class IndexSetCodimCallImp
-    : public IndexSetCodimCall< GridPartType, codim >
-    {};
+    struct CodimCallInterface;
     
-    typedef CodimMap< dimension+1, IndexSetCodimCallImp >
-      IndexSetCodimCallMapType;
+    template< unsigned int codim >
+    struct CodimCall;
+
+    typedef CodimMap< dimension+1, CodimCall > CodimCallMapType;
 
   private:
     // reference to dof manager needed for debug issues 
     const DofManagerType& dm_;
 
     const IndexSetType &indexSet_;
-    const IndexSetCodimCallMapType indexSetCodimCall_;
+    const CodimCallMapType codimCall_;
     
     LagrangePointSetMapType &lagrangePointSet_;
 
@@ -397,19 +395,23 @@ namespace Dune
       const DofInfo& dofInfo = set->dofInfo( localDof );
       
       const int subIndex
-        = indexSetCodimCall_[ dofInfo.codim ]
-            .subIndex( indexSet_, entity, dofInfo.subEntity );
-      return dimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
+        = codimCall_[ dofInfo.codim ].subIndex( *this, entity, dofInfo.subEntity );
+      
+      const int globalDof
+        = dimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
+      assert( globalDof == codimCall_[ dofInfo.codim ].mapEntityDofToGlobal
+                             ( *this, entity, dofInfo.subEntity, coordinate ) );
+      return globalDof;
     }
 
     /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal */
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
-      // As soon as the numEntityDofs-Method is implemented, just map them linearly.
-      // Twists don't play a role for 2nd order!
-      DUNE_THROW( NotImplemented, "LagrangeMapper of 2nd order cannot map entity DoFs, yet." );
-      return 0;
+      assert( localDof < dimRange );
+      const int globalDofPt
+        = offset_[ Entity :: codimension ] + indexSet_.index( entity );
+      return dimRange * globalDofPt + localDof;
     }
     
     /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
@@ -430,10 +432,8 @@ namespace Dune
     template< class Entity >
     inline int numEntityDofs ( const Entity &entity ) const
     {
-      // Obtain the number of entity dofs for an arbitrary geometry!
-      // LagrangePointSet cannot be used here!
-      DUNE_THROW( NotImplemented, "LagrangeMapper of 2nd order cannot map entity DoFs, yet." );
-      return 0;
+      // This implementation only works for nonhybrid grids (simplices or cubes)
+      return dimRange * maxDofs_[ Entity :: codimension ];
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
@@ -538,6 +538,59 @@ namespace Dune
       return indexSet_.needsCompress();
     }
   };
+
+
+  
+  template< class GridPart, unsigned int dimrange >
+  struct LagrangeMapper< GridPart, 2, dimrange > :: CodimCallInterface
+  {
+    typedef LagrangeMapper< GridPart, 2, dimrange > MapperType;
+
+    virtual ~CodimCallInterface ()
+    {}
+
+    virtual int subIndex ( const MapperType &mapper,
+                           const EntityType &entity,
+                           int i ) const = 0;
+
+    virtual int mapEntityDofToGlobal ( const MapperType &mapper,
+                                       const EntityType &entity,
+                                       int subEntity,
+                                       int localDof ) const = 0;
+  };
+
+
+
+  template< class GridPart, unsigned int dimrange >
+  template< unsigned int codim >
+  struct LagrangeMapper< GridPart, 2, dimrange > :: CodimCall
+  : public CodimCallInterface
+  {
+    typedef LagrangeMapper< GridPart, 2, dimrange > MapperType;
+
+    typedef CodimCallInterface BaseType;
+
+    virtual int subIndex ( const MapperType &mapper,
+                           const EntityType &entity,
+                           int i ) const
+    {
+      return mapper.indexSet_.template subIndex< codim >( entity, i );
+    }
+
+    virtual int mapEntityDofToGlobal ( const MapperType &mapper,
+                                       const EntityType &entity,
+                                       int subEntity,
+                                       int localDof ) const
+    {
+      typedef typename EntityType :: template Codim< codim > :: EntityPointer
+        SubEntityPtrType;
+
+      const SubEntityPtrType subEntityPtr
+        = entity.template entity< codim >( subEntity );
+      return mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
+    }
+  };
+
  
 } // end namespace Dune 
 
