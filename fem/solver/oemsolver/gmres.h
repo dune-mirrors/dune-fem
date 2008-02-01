@@ -27,7 +27,8 @@ template<bool usePC ,
 inline
 std::pair<int,double> 
 gmres_algo (const CommunicatorType & comm,
-       int m, int n, const Matrix &A, const PC_Matrix & C, const double *rhs , double *x, double eps,
+       int m, int n, const Matrix &A, const PC_Matrix & C, 
+       const double *b , double *x, double eps,
        bool detailed ) 
 {
   if ( n<=0 )
@@ -75,17 +76,8 @@ gmres_algo (const CommunicatorType & comm,
   double **v = new doubleP[m+1];
 
   // tmp mem for pc mult 
-  double * tmp = 0; 
-  double * newRhs = 0;
+  double * tmp = (usePC) ? (new double[n]) : 0; 
 
-  if( usePC ) 
-  {
-    tmp = new double[n];
-    newRhs = new double[n];
-    mult(C,rhs,newRhs);
-  }
-  const double * b = (usePC) ? newRhs : rhs;
-  
   double error = -1.0;
 
   for ( int i=0; i<=m; ++i ) 
@@ -127,8 +119,6 @@ gmres_algo (const CommunicatorType & comm,
         dgemv(DuneCBlas::Transpose,n,j+1,1.,V,n,v[j+1],1,0.,U+u0j,1);
 
         // global sum 
-        //double & Uu0j = U[uij];
-        //Uu0j = comm.sum( Uu0j );
         comm.sum( U+u0j, j+1 );
         
         dgemv(DuneCBlas::NoTranspose,n,j+1,-1.,V,n,U+u0j,1,1.,v[j+1],1);
@@ -181,6 +171,9 @@ gmres_algo (const CommunicatorType & comm,
     its = m*(io-1)+j;
   }
 
+  // if right preconditioning then do back solve 
+  MultType :: back_solve(n,C,x,tmp);
+  
 #ifdef USE_MEMPROVIDER
   gmresMem.reset();
 #else 
@@ -193,12 +186,11 @@ gmres_algo (const CommunicatorType & comm,
   delete[] v;
 #endif
 
-  if( usePC ) 
+  if( tmp ) 
   {
-    delete[] newRhs;
     delete[] tmp;
   }
-  
+
   return std::pair<int,double> (its,error);
 }
 
