@@ -108,7 +108,7 @@ namespace Dune
         numSubEntities
           = MetaIf
             <
-              MetaBool< (codim > 0) >,
+              (codim > 0),
               MetaPlus
               <
                 MetaInt

@@ -7,11 +7,15 @@
 
 //- Dune-Fem includes 
 #include <dune/fem/misc/codimmap.hh>
+#include <dune/fem/misc/gridhelper.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/dofmapperinterface.hh>
 
 //- local includes 
 #include "lagrangepoints.hh"
+
+// note: this check needs entities for all codimensions
+//#define LAGRANGE_CHECK_MAPPING
 
 namespace Dune
 {
@@ -396,11 +400,13 @@ namespace Dune
       
       const int subIndex
         = codimCall_[ dofInfo.codim ].subIndex( *this, entity, dofInfo.subEntity );
-      
+
       const int globalDof
         = dimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
+#if LAGRANGE_CHECK_MAPPING
       assert( globalDof == codimCall_[ dofInfo.codim ].mapEntityDofToGlobal
                              ( *this, entity, dofInfo.subEntity, coordinate ) );
+#endif
       return globalDof;
     }
 
@@ -553,10 +559,12 @@ namespace Dune
                            const EntityType &entity,
                            int i ) const = 0;
 
+#if LAGRANGE_CHECK_MAPPING
     virtual int mapEntityDofToGlobal ( const MapperType &mapper,
                                        const EntityType &entity,
                                        int subEntity,
                                        int localDof ) const = 0;
+#endif
   };
 
 
@@ -576,7 +584,7 @@ namespace Dune
     {
       return mapper.indexSet_.template subIndex< codim >( entity, i );
     }
-
+#if LAGRANGE_CHECK_MAPPING
     virtual int mapEntityDofToGlobal ( const MapperType &mapper,
                                        const EntityType &entity,
                                        int subEntity,
@@ -589,8 +597,8 @@ namespace Dune
         = entity.template entity< codim >( subEntity );
       return mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
     }
+#endif
   };
-
  
 } // end namespace Dune 
 
