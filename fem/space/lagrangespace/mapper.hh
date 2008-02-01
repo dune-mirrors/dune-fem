@@ -414,7 +414,7 @@ namespace Dune
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
-      assert( localDof < dimRange );
+      assert( localDof < numEntityDofs( entity ) );
       const int globalDofPt
         = offset_[ Entity :: codimension ] + indexSet_.index( entity );
       return dimRange * globalDofPt + localDof;
