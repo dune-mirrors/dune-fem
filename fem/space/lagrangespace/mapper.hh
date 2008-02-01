@@ -16,15 +16,15 @@
 namespace Dune
 {
   
-  template< class GridPartImp, unsigned int polOrder, unsigned int dimrange >
+  template< class GridPart, unsigned int polOrder, unsigned int dimrange >
   class LagrangeMapper;
 
 
   
-  template< class GridPartImp, unsigned int polOrder, unsigned int dimrange >
+  template< class GridPart, unsigned int polOrder, unsigned int dimrange >
   struct LagrangeMapperTraits
   {
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
     
     enum { polynomialOrder = polOrder };
 
@@ -43,12 +43,12 @@ namespace Dune
 
 
   
-  template< class GridPartImp, unsigned int dimrange >
-  class LagrangeMapper< GridPartImp, 1, dimrange >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPartImp, 1, dimrange > >
+  template< class GridPart, unsigned int dimrange >
+  class LagrangeMapper< GridPart, 1, dimrange >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimrange > >
   {
   public:
-    typedef LagrangeMapperTraits< GridPartImp, 1, dimrange > Traits;
+    typedef LagrangeMapperTraits< GridPart, 1, dimrange > Traits;
     
     //! type of the grid part
     typedef typename Traits :: GridPartType GridPartType;
@@ -236,12 +236,12 @@ namespace Dune
 
 
 
-  template< class GridPartImp, unsigned int dimrange >
-  class LagrangeMapper< GridPartImp, 2, dimrange >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPartImp, 2, dimrange > >
+  template< class GridPart, unsigned int dimrange >
+  class LagrangeMapper< GridPart, 2, dimrange >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 2, dimrange > >
   {
   public:
-    typedef LagrangeMapperTraits< GridPartImp, 2, dimrange > Traits;
+    typedef LagrangeMapperTraits< GridPart, 2, dimrange > Traits;
     
     //! type of the grid part
     typedef typename Traits :: GridPartType GridPartType;
