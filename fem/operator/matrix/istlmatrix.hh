@@ -692,20 +692,58 @@ namespace Dune {
     //! we only have right precondition
     bool rightPrecondition() const { return true; }
 
+    //! not fast but works, double is copied to block vector 
+    //! and after application copied back
     void precondition(const double* arg, double* dest) const
     {
+      createBlockVectors();
+      
       if( ! matrixAdap_ ) 
       { 
         matrixAdap_ = new MatrixAdapterType(matrixAdapter());
-        delete Arg_; delete Dest_;
-        Arg_  = new RowBlockVectorType( rowMapper_.size() );
-        Dest_ = new ColumnBlockVectorType( colMapper_.size() );
       }
-      double2Block(arg,*Arg_);
-      (*Dest_) = 0;
+
+      assert( Arg_ );
+      assert( Dest_ );
+
+      RowBlockVectorType& Arg = *Arg_;
+      ColumnBlockVectorType & Dest = *Dest_;
+      
+      // copy from double 
+      double2Block(arg, Arg);
+      
+      // set Dest to zero 
+      Dest = 0;
+      
+      assert( matrixAdap_ );
       // not parameter swaped for preconditioner 
-      matrixAdap_->preconditionAdapter().apply(*Dest_, *Arg_);
-      block2Double(*Dest_, dest);
+      matrixAdap_->preconditionAdapter().apply(Dest , Arg);
+      // copy back 
+      block2Double( Dest , dest);
+    }
+      
+    //! mult method for OEM Solver 
+    void multOEM(const double* arg, double* dest) const
+    {
+      createBlockVectors();
+      
+      assert( Arg_ );
+      assert( Dest_ );
+
+      RowBlockVectorType& Arg = *Arg_;
+      ColumnBlockVectorType & Dest = *Dest_;
+      
+      // copy from double 
+      double2Block(arg, Arg);
+      
+      // set Dest to zero 
+      Dest = 0;
+      
+      // not parameter swaped for preconditioner 
+      matrix().umv( Arg, Dest );
+
+      //  copy back 
+      block2Double( Dest , dest);
     }
 
     // copy double to block vector 
@@ -741,24 +779,16 @@ namespace Dune {
         }
       }
     }
-      
-    void multOEM(const double* arg, double* dest) const
+
+    void createBlockVectors() const
     {
-      if( ! matrixAdap_ ) 
+      if( ! Arg_ || ! Dest_ ) 
       { 
-        matrixAdap_ = new MatrixAdapterType(matrixAdapter());
         delete Arg_; delete Dest_;
         Arg_  = new RowBlockVectorType( rowMapper_.size() );
         Dest_ = new ColumnBlockVectorType( colMapper_.size() );
       }
-      double2Block(arg,*Arg_);
-      (*Dest_) = 0;
-      // not parameter swaped for preconditioner 
-      matrix().umv(*Arg_, *Dest_ );
-      block2Double(*Dest_, dest);
-      //matrix().multOEM( arg, dest );
     }
-
     void apply(const RowDiscreteFunctionType& arg,
                RowDiscreteFunctionType& dest) const 
     {
