@@ -8,6 +8,7 @@
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
 #include <dune/fem/operator/matrix/istlmatrix.hh>
+#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #endif
 
 namespace Dune {
@@ -212,116 +213,6 @@ protected:
     };
   };
   
-  //! wrapper class to store perconditioner 
-  //! as the interface class does not have to category 
-  //! enum 
-  template<class MatrixImp>
-  class DGPreconditionerWrapper 
-    : public Preconditioner<typename MatrixImp :: RowBlockVectorType,
-                            typename MatrixImp :: ColBlockVectorType>
-  {
-    typedef MatrixImp MatrixType;
-    typedef typename MatrixImp :: RowBlockVectorType X;
-    typedef typename MatrixImp :: ColBlockVectorType Y;
-            
-    typedef Preconditioner<X,Y> PreconditionerInterfaceType;
-    MatrixType& matrix_;
-    mutable std::auto_ptr<PreconditionerInterfaceType> preconder_; 
-    const bool preEx_;
-    
-  public:
-    //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
-    //! \brief The range type of the preconditioner.
-    typedef Y range_type;
-    //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
-
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::sequential };
-
-    //! set preconder to zero 
-    DGPreconditionerWrapper (const DGPreconditionerWrapper& org) 
-      : matrix_(org.matrix_) 
-      , preconder_(org.preconder_) 
-      , preEx_(org.preEx_)
-    {
-    }
-    
-    //! set preconder to zero 
-    DGPreconditionerWrapper (MatrixType& m) 
-      : matrix_(m) 
-      , preconder_()
-      , preEx_(false)  
-    {}
-    
-    //! create preconditioner of given type 
-    template <class PreconditionerType>
-    DGPreconditionerWrapper(MatrixType & m,
-                            int iter, field_type relax, const PreconditionerType*) 
-      : matrix_(m)
-      , preconder_(new PreconditionerType(m,iter,relax))
-      , preEx_(true) 
-    {
-    }
-    
-    //! create preconditioner of given type 
-    template <class PreconditionerType>
-    DGPreconditionerWrapper(MatrixType & m, 
-                            field_type relax, const PreconditionerType*) 
-      : matrix_(m)
-      , preconder_(new PreconditionerType(m,relax))
-      , preEx_(true) 
-    {
-    }
-    
-    //! \copydoc Preconditioner 
-    virtual void pre (X& x, Y& b) 
-    {
-      // all the implemented Preconditioners do nothing in pre and post 
-#ifndef NDEBUG 
-      // apply preconditioner
-      if( preEx_ ) 
-      {
-        X tmp (x);
-        preconder_->pre(x,b);
-        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
-      }
-#endif
-    }
-
-    //! \copydoc Preconditioner 
-    virtual void apply (X& v, const Y& d)
-    {
-      if( preEx_ ) 
-      {
-        // apply preconditioner
-        preconder_->apply(v,d);
-      }
-      else 
-      {
-        // just copy values 
-        v = d;
-      }
-    }
-
-    //! \copydoc Preconditioner 
-    virtual void post (X& x) 
-    {
-      // all the implemented Preconditioners do nothing in pre and post 
-#ifndef NDEBUG 
-      // apply preconditioner
-      if( preEx_ ) 
-      {
-        X tmp(x);
-        preconder_->post(x);
-        assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
-      }
-#endif
-    }
-  };
-
   /*! 
     \brief Adapter to turn a matrix into a linear operator.
     Adapts a matrix to the assembled linear operator interface
@@ -334,7 +225,7 @@ protected:
   {
   public:
     typedef MatrixImp MatrixType;
-    typedef DGPreconditionerWrapper<MatrixType> PreconditionAdapterType;
+    typedef PreconditionerWrapper<MatrixType> PreconditionAdapterType;
     
     typedef typename MatrixType :: RowDiscreteFunctionType RowDiscreteFunctionType;
     typedef typename MatrixType :: ColDiscreteFunctionType ColumnDiscreteFunctionType;

@@ -61,6 +61,48 @@ public:
   }
 };
 
+//////////////////////////////////////////////////////////
+//
+// Preconditioner Interface to use linear solvers from pardg
+//
+//////////////////////////////////////////////////////////
+template <class PreconditionerImp>
+class PreconditionerImpl 
+#ifdef USE_PARDG_ODE_SOLVER
+: public pardg::Function 
+#endif
+{
+  const PreconditionerImp& pre_;
+  int size_; 
+public:
+  PreconditionerImpl(const PreconditionerImp& pre, int size = 0) 
+    : pre_(pre), size_(size) 
+  {}
+
+  void setSize( int size ) { size_ = size; }
+
+  void operator () (const double *arg, double * dest, int i = 0 ) 
+  {
+    pre_.precondition(arg,dest);
+  }
+  
+  void mult(const double *arg, double * dest) const
+  {
+    pre_.precondition(arg,dest);
+  }
+  
+  int dim_of_argument(int i = 0) const 
+  { 
+    assert( i == 0 );
+    return size_;
+  }
+  int dim_of_value(int i = 0) const 
+  { 
+    assert( i == 0 );
+    return size_;
+  }
+};
+
 // use cblas implementations 
 using namespace DuneCBlas;  
 
@@ -766,32 +808,19 @@ private:
       // project vectors onto interior  
       if(op.hasPreconditionMatrix())
       {
-        OEMSolver::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
+        OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
         solver.set_preconditioner(pre);
         
         // note argument and destination are toggled 
         solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
 
         solver.unset_preconditioner();
-        return ;
       }
-      
-      // for parallel run we need fake pre con
-      if( arg.space().grid().comm().size() > 1 )
+      else 
       {
-        OEMSolver :: FakeConditioner fake(size,opSolve);
-        OEMSolver::SolverInterfaceImpl<FakeConditioner> pre(fake,size);
-        solver.set_preconditioner(pre);
-
         // note argument and destination are toggled 
         solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
-        solver.unset_preconditioner();
-
-        return ;
       }
-      
-      // note argument and destination are toggled 
-      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
     }
     
     template <class OperatorImp, class DiscreteFunctionImp> 
@@ -929,7 +958,7 @@ private:
     {
       int size = arg.space().size();
       OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-      OEMSolver::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
+      OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
       solver.set_preconditioner(pre);
       
       solver.set_max_number_of_iterations(size);
@@ -1033,7 +1062,7 @@ public:
                    // OEMSolver::PreconditionInterface
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                    // call solver, see above 
-                   call(solver_,op_.systemMatrix(),arg,dest);
+                   call(solver_,op_,arg,dest);
       
     // finalize operator  
     finalize ();
@@ -1077,7 +1106,7 @@ private:
       OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       solver.set_max_number_of_iterations(size);
 
-      OEMSolver::SolverInterfaceImpl<PreConMatrix> pre(pm,size); 
+      OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
       solver.set_preconditioner(pre);
 
       // note argument and destination are toggled 

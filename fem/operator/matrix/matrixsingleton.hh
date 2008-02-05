@@ -107,9 +107,9 @@ public:
   //! return reference to system matrix
   MatrixType & matrix() const { return matrixObj_.matrix(); }
   //! return true if preconditioner exists 
-  bool hasPcMatrix() const { return matrixObj_.hasPcMatrix(); }
+  bool hasPreconditionMatrix() const { return matrixObj_.hasPreconditionMatrix(); }
   //! return reference to preconditioner 
-  const PreconditionMatrixType& pcMatrix () const { return matrixObj_.pcMatrix(); }
+  const PreconditionMatrixType& preconditionMatrix () const { return matrixObj_.preconditionMatrix(); }
 
   //! reserve memory for matrix and build structure 
   void reserve(bool verbose = false) { matrixObj_.reserve(verbose); }

@@ -1151,10 +1151,10 @@ public:
   }
 
   //! return true if precoditioning matrix is provided 
-  bool hasPcMatrix () const { return preconditioning_; }
+  bool hasPreconditionMatrix () const { return preconditioning_; }
 
   //! return reference to preconditioner (here also systemMatrix)
-  PreconditionMatrixType& pcMatrix () { return matrix(); }
+  const PreconditionMatrixType& preconditionMatrix () const { return matrix(); }
 
   //! reserve memory corresponnding to size of spaces 
   void reserve(bool verbose = false ) 

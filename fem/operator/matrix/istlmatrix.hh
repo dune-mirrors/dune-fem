@@ -19,7 +19,8 @@
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 
-namespace Dune { 
+namespace Dune
+{ 
 
   ///////////////////////////////////////////////////////
   // --BlockMatrixHandle
@@ -108,38 +109,6 @@ namespace Dune {
         , localRows_(org.localRows_)
         , localCols_(org.localCols_)
       {}
-
-      /*
-      void multOEM (const double* arg, double* dest) const
-      {
-        ConstRowIterator endi=this->end();
-        for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-        {
-          const int r = i.index();
-          {
-            int row = i.index() * localRows_;
-            for(int k=0; k<localRows_; ++k, ++row)
-            {
-              dest[row] = 0.0;
-            }
-          }
-
-          ConstColIterator endj = (*i).end();
-          for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          {
-            int row = r * localRows_;
-            for(int k=0; k<localRows_; ++k, ++row) 
-            {
-              int col = j.index() * localCols_;
-              for(int c=0; c<localCols_; ++c, ++col)
-              {
-                dest[row] += (*j)[k][c] * arg[col]; 
-              }
-            }
-          }
-        }
-      }
-      */
 
       //! setup matrix entires 
       template <class RowMapperType, class ColMapperType,
@@ -588,13 +557,11 @@ namespace Dune {
       assert( rowMapper_.size() == colMapper_.size() );
     }
 
+  public:  
     //! destructor 
     ~ISTLMatrixObject() 
     {
-      delete Dest_;
-      delete Arg_;
-      delete matrixAdap_;
-      delete matrix_;
+      removeObj();
     }
 
     //! return reference to system matrix 
@@ -663,9 +630,12 @@ namespace Dune {
     }
     
     //! return true, because in case of no preconditioning we have empty
-    //! preconditioner 
-    bool hasPcMatrix () const { return true; }
+    //! preconditioner (used by OEM methods)
+    bool hasPreconditionMatrix() const { return true; }
     const PreconditionMatrixType& pcMatrix() const { return *this; }
+
+    //! return reference to preconditioner object (used by OEM methods)
+    const PreconditionMatrixType& preconditionMatrix() const { return *this; }
 
     //! set all matrix entries to zero 
     void clear()
@@ -679,7 +649,7 @@ namespace Dune {
       // if grid sequence number changed, rebuild matrix 
       if(sequence_ != rowSpace_.sequence())
       {
-        delete matrix_; matrix_ = 0;
+        removeObj();
 
         matrix_ = new MatrixType(rowMapper_.size(), colMapper_.size());
         StencilType stencil; 
@@ -692,6 +662,7 @@ namespace Dune {
     //! we only have right precondition
     bool rightPrecondition() const { return true; }
 
+    //! precondition method for OEM Solvers 
     //! not fast but works, double is copied to block vector 
     //! and after application copied back
     void precondition(const double* arg, double* dest) const
@@ -718,6 +689,7 @@ namespace Dune {
       assert( matrixAdap_ );
       // not parameter swaped for preconditioner 
       matrixAdap_->preconditionAdapter().apply(Dest , Arg);
+
       // copy back 
       block2Double( Dest , dest);
     }
@@ -745,7 +717,8 @@ namespace Dune {
       //  copy back 
       block2Double( Dest , dest);
     }
-
+    
+    //! apply with discrete functions 
     // copy double to block vector 
     void double2Block(const double* arg, RowBlockVectorType& dest) const 
     {
@@ -796,6 +769,7 @@ namespace Dune {
       matrix().umv( arg.blockVector(), dest.blockVector() );
     }
 
+    //! apply 
     template <class RowDFType, class ColDFType>
     void apply(const RowDFType& arg, ColDFType& dest) const 
     {
@@ -837,12 +811,14 @@ namespace Dune {
                             colSpace_);
     }
 
+    //! return local matrix object 
     LocalMatrixType localMatrix(const EntityType& rowEntity, 
                                 const EntityType& colEntity) const 
     {
       return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
     }
 
+  protected:  
     void preConErrorMsg(int preCon) const 
     {
       std::cerr << "ERROR: Wrong precoditioning number (p = " << preCon;
@@ -858,6 +834,59 @@ namespace Dune {
       assert(false);
       exit(1);
     }
+
+    void removeObj() 
+    {
+      delete Dest_; Dest_ = 0;
+      delete Arg_;  Arg_ = 0;
+      delete matrixAdap_; matrixAdap_ = 0;
+      delete matrix_; matrix_ = 0;
+    }
+
+    // copy double to block vector 
+    void double2Block(const double* arg, RowBlockVectorType& dest) const 
+    {
+      typedef typename RowBlockVectorType :: block_type BlockType;
+      const size_t blocks = dest.size();
+      int idx = 0;
+      for(size_t i=0; i<blocks; ++i) 
+      {
+        BlockType& block = dest[i];
+        enum { blockSize = BlockType :: dimension };
+        for(int j=0; j<blockSize; ++j, ++idx) 
+        {
+          block[j] = arg[idx];
+        }
+      }
+    }
+      
+    // copy block vector to double 
+    void block2Double(const ColumnBlockVectorType& arg, double* dest) const 
+    {
+      typedef typename ColumnBlockVectorType :: block_type BlockType;
+      const size_t blocks = arg.size();
+      int idx = 0;
+      for(size_t i=0; i<blocks; ++i) 
+      {
+        const BlockType& block = arg[i];
+        enum { blockSize = BlockType :: dimension };
+        for(int j=0; j<blockSize; ++j, ++idx) 
+        {
+          dest[idx] = block[j];
+        }
+      }
+    }
+
+    void createBlockVectors() const
+    {
+      if( ! Arg_ || ! Dest_ ) 
+      { 
+        delete Arg_; delete Dest_;
+        Arg_  = new RowBlockVectorType( rowMapper_.size() );
+        Dest_ = new ColumnBlockVectorType( colMapper_.size() );
+      }
+    }
+    
   };
 
 } // end namespace Dune 

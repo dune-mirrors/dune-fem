@@ -597,12 +597,12 @@ namespace Dune {
     
     //! return reference to preconditioning matrix, used by OEM-Solver
     const PreconditionMatrixType & preconditionMatrix () const { 
-      return matrixObj_.pcMatrix(); 
+      return matrixObj_.preconditionMatrix(); 
     }
 
     //! returns true if preconditioning matrix has been build 
     bool hasPreconditionMatrix() const  { 
-      return matrixObj_.hasPcMatrix(); 
+      return matrixObj_.hasPreconditionMatrix(); 
     }
            
     //! In the preparations, store pointers to the actual arguments and 

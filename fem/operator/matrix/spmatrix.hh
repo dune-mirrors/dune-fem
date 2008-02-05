@@ -445,15 +445,14 @@ private:
     }
 
     //! return true if precoditioning matrix is provided 
-    bool hasPcMatrix () const
+    bool hasPreconditionMatrix () const
     {
       return preconditioning_;
     }
 
-    PreconditionMatrixType &pcMatrix ()
+    //! return reference to preconditioner 
+    const PreconditionMatrixType &preconditionMatrix () const 
     { 
-      // this seems wrong -> break
-      assert( false );
       return matrix_;
     }
 
@@ -537,32 +536,6 @@ private:
 
     void createPreconditionMatrix()
     { 
-      /*
-      if(hasPcMatrix())
-      {
-        PreconditionMatrixType & diag = pcMatrix(); 
-        diag.clear();
-        
-        matrix_.addDiag( diag );
-    
-        double * diagPtr = diag.leakPointer();
-        const int singleSize = rowSpace_.size();
-        for(register int i=0; i<singleSize; ++i) 
-        {
-          double val = diagPtr[i];
-          // when using parallel Version , we could have zero on diagonal
-          // for ghost elements 
-          //assert( (spc_.grid().comm().size() > 1) ? 1 : (std::abs( val ) > 0.0
-          if( std::abs( val ) > 0.0 )
-          {
-            val = 1.0/val;
-            diagPtr[i] = val;
-          }
-          else
-            diagPtr[i] = 1.0;
-        }
-      }
-      */
     }
   };
 
