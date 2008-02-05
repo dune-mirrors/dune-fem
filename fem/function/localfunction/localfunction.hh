@@ -120,11 +120,18 @@ namespace Dune
       asImp() += lf;
       return *this;
     }
+
+    /** \brief assign all DoFs of this local function 
+     *
+     *  \param[in]  lf  local function to assign DoFs from 
+     */
     template< class T >
     inline void assign ( const LocalFunction< T > &lf )
     {
       asImp().assign(lf);
     }
+
+    /** \brief set all DoFs to zero */
     inline void clear ( )
     {
       asImp().clear();
