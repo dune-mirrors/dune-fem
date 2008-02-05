@@ -17,6 +17,7 @@
 //- local includes 
 #include "allgeomtypes.hh"
 #include "singletonlist.hh"
+#include "dofstorage.hh"
 
 namespace Dune
 {
@@ -483,8 +484,9 @@ namespace Dune
     const LocalFunctionFactoryType lfFactory_;
     mutable LocalFunctionStorageType lfStorage_;
  
-    // true if grid has more than one geometry type (hybrid grids)
-    const bool multipleGeometryTypes_;
+    // set of all geometry types possible 
+    typedef AllGeomTypes< IndexSetType, GridType > AllGeometryTypes;
+    const AllGeometryTypes allGeomTypes_;
  
   public:
     //! constructor
@@ -493,8 +495,7 @@ namespace Dune
       gridPart_( gridPart ),
       lfFactory_( asImp() ),
       lfStorage_( lfFactory_ ),
-      multipleGeometryTypes_( AllGeomTypes< IndexSetType, GridType > 
-                                :: multipleGeomTypes() )
+      allGeomTypes_( gridPart.indexSet() )
     {
     }
 
@@ -586,7 +587,7 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleGeometryTypes */
     inline bool multipleGeometryTypes () const
     {
-      return multipleGeometryTypes_;
+      return allGeomTypes_.multipleGeomTypes();
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets
@@ -628,6 +629,20 @@ namespace Dune
         :: template CommDataHandle< DiscreteFunction, Operation >
         :: Type( discreteFunction );
     }
+
+  protected:  
+    /** \brief returns true if the grid has more than one geometry type
+     *
+     *  \return \b true if the underlying grid has more than one geometry type
+     *          (hybrid grid), \b false otherwise 
+     */
+    inline const std::vector<GeometryType>& geomTypes(int codim) const 
+    { 
+      return allGeomTypes_.geomTypes(codim);
+    }
+
+    // only combined space should use geomTypes 
+    template <class , int , DofStoragePolicy> friend class CombinedSpace;
   };
 
 

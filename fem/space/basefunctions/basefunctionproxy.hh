@@ -261,7 +261,7 @@ namespace Dune
       baseFunctionSet().evaluateScalar( baseFunction, x, phi );
     }
 
-#if DUNE_FEM_COMPATIBILIGY
+#if DUNE_FEM_COMPATIBILITY
     template< class QuadratureType >
     inline void evaluateScalar ( const int baseFunction,
                                  const QuadratureType &quadrature,

@@ -11,11 +11,7 @@ namespace Dune
     baseSetMap_(),
     dm_( DofManagerFactoryType :: getDofManager( containedSpace_.grid() ) )
   {
-    // get types for codim 0  
-    AllGeomTypes<IndexSetType,typename Traits::GridType>
-      allGeomTypes(gridpart.indexSet());
-    
-    const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(0);
+    const std::vector<GeometryType>& geomTypes = containedSpace_.geomTypes(0);
     int maxNumDofs = -1;
     // create mappers and base sets for all existing geom types
     for(size_t i=0; i<geomTypes.size(); ++i)
@@ -30,7 +26,6 @@ namespace Dune
         maxNumDofs = std::max(maxNumDofs,baseSet->numBaseFunctions());
       }
     }
-
   }
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>

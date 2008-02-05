@@ -128,7 +128,9 @@ namespace Dune {
   public:
     //- Constructors and destructors
     /** \brief Constructor taking grid part */
-    explicit DiscontinuousGalerkinSpaceBase( GridPartType &gridPart )
+    template <class GeometryTypes> 
+    explicit DiscontinuousGalerkinSpaceBase( GridPartType &gridPart, 
+                                             const GeometryTypes& allGeomTypes)
     : BaseType( gridPart ),
       mapper_( 0 ),
       blockMapper_( BlockMapperProviderType::getObject(
@@ -139,10 +141,6 @@ namespace Dune {
       dm_.addIndexSet
         ( gridPart.grid(), const_cast< IndexSetType & >( gridPart.indexSet() ) );
 
-      // create info for all geom types 
-      AllGeomTypes<IndexSetType,typename Traits::GridType>
-        allGeomTypes(gridPart.indexSet());
-      
       int maxNumDofs = -1;
 
       // for dim = 1 only get basefunctions for codim 0
@@ -155,16 +153,20 @@ namespace Dune {
         // create mappers and base sets for all existing geom types
         for(size_t i=0; i<geomTypes.size(); ++i)
         {
-	        if(baseFuncSet_.find( geomTypes[i] ) == baseFuncSet_.end() )
+          // get geometry type 
+          const GeometryType type = geomTypes[i];
+
+	        if(baseFuncSet_.find( type ) == baseFuncSet_.end())
           {
-      	    const BaseFunctionSetImp* set = & setBaseFuncSetPointer(geomTypes[i]);
+      	    const BaseFunctionSetImp* set = & setBaseFuncSetPointer( type );
             assert( set );
-            baseFuncSet_[ geomTypes[i] ] = set;
+            baseFuncSet_[ type ] = set;
             maxNumDofs = std::max(maxNumDofs,set->numBaseFunctions());
           }
         }
       }
 
+      // create mapper 
       assert( maxNumDofs > 0 );
       {
         MapperSingletonKeyType key( gridPart, maxNumDofs );
@@ -282,7 +284,7 @@ namespace Dune {
       return blockMapper_;
     }
 
-  protected:
+  protected:  
     //! \brief prohibited empty constructor  
     DiscontinuousGalerkinSpaceBase();
     //! \brief prohibited empty copy constructor  
@@ -459,11 +461,16 @@ namespace Dune {
     typedef SingletonList<const GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
 
+  protected:
+    // set of geometry types 
+    typedef AllGeomTypes<IndexSetType,typename Traits::GridType> GeometryTypes;
+    
   public:
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
-    DiscontinuousGalerkinSpaceBase <Traits> (gridPart) {}
+      DiscontinuousGalerkinSpaceBase <Traits> (gridPart, GeometryTypes(gridPart.indexSet()))
+    {}
 
     /** \brief ! get object from singleton list 
       \param[in] type 
@@ -613,7 +620,9 @@ namespace Dune {
     //- Constructors and destructors
     /** Constructor */
     LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart) :
-      DiscontinuousGalerkinSpaceBase<Traits> (gridPart) {}
+      DiscontinuousGalerkinSpaceBase<Traits> (gridPart,gridPart.indexSet()) 
+    {
+    }
 
     //! get base set from singleton list 
     static BaseFunctionSetImp& setBaseFuncSetPointer(GeometryType type) 
@@ -624,6 +633,15 @@ namespace Dune {
     static void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
     {
       SingletonProviderType::removeObject(set);
+    }
+
+    // return cueb for all codims 
+    const std::vector<GeometryType>& geomTypes(int codim) const 
+    {
+      // make sure grid only contains cube elements 
+      assert( this->indexSet().geomTypes(codim).size() == 1 );
+      assert( this->indexSet().geomTypes(codim)[0].isCube() );
+      return this->indexSet().geomTypes(codim); 
     }
   };
   //@}

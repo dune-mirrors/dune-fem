@@ -129,14 +129,12 @@ template<int dim,int i,int PolOrd>
 
     virtual BaseFunctionType* baseFunction(int i) const 
     {
-      GeometryType type = this->geometry();
-      assert(type.isCube());
-	
-      return new LegendreDGBaseFunction<FunctionSpaceType ,polOrd>(i);
-      
-      DUNE_THROW(NotImplemented, 
-                 "The chosen geometry type is not implemented");
-      return 0;
+      // only for cubes we have LegendreBaseFunctions 
+      if( ! this->geometry().isCube() )
+      {
+        DUNE_THROW(NotImplemented,"LegendreBaseFunctions only implemented for cubes!");
+      }
+      return new LegendreDGBaseFunction<FunctionSpaceType ,polOrd> (i);
     }
     
     virtual int numBaseFunctions() const 
@@ -146,5 +144,4 @@ template<int dim,int i,int PolOrd>
   };
 
 } // end namespace Dune
-
 #endif
