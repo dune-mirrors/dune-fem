@@ -86,11 +86,6 @@ namespace Dune {
     typedef DiscontinuousGalerkinBaseFunctionFactory<
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
-    //! type of dof manager 
-    typedef DofManager<typename Traits::GridType> DofManagerType;
-    //! type of dof manager factory 
-    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType::DimRange };
 
@@ -135,12 +130,8 @@ namespace Dune {
       mapper_( 0 ),
       blockMapper_( BlockMapperProviderType::getObject(
             MapperSingletonKeyType (this->gridPart(),1) )),
-      baseFuncSet_(),
-      dm_( DofManagerFactoryType::getDofManager( gridPart.grid() ) )
+      baseFuncSet_()
     {
-      dm_.addIndexSet
-        ( gridPart.grid(), const_cast< IndexSetType & >( gridPart.indexSet() ) );
-
       int maxNumDofs = -1;
 
       // for dim = 1 only get basefunctions for codim 0
@@ -176,9 +167,6 @@ namespace Dune {
       assert( mapper_->maxNumDofs() == maxNumDofs );
     }
 
-    /** @copydoc DiscreteFunctionSpaceInterface::sequence const */
-    int sequence () const { return dm_.sequence(); }
-    
     /** \brief Destructor */
     virtual ~DiscontinuousGalerkinSpaceBase () 
     {
@@ -323,9 +311,6 @@ namespace Dune {
     typedef std::map < const GeometryType, const BaseFunctionSetImp* > BaseFunctionMapType;
     //! base function set map 
     mutable BaseFunctionMapType baseFuncSet_;
-
-    //! dof manager 
-    DofManagerType &dm_;
   };
 
 

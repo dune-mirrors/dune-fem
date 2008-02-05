@@ -203,9 +203,6 @@ namespace Dune {
     typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
 
-    typedef DofManager<GridType> DofManagerType;
-    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-
   public:
     //! remember polynomial order 
     enum { polynomialOrder =  polOrd };
@@ -250,9 +247,6 @@ namespace Dune {
     //! Return the dof mapper of the space
     BlockMapperType& blockMapper() const;
 
-    //! \brief return index in grid sequences 
-    int sequence () const { return dm_.sequence(); }
-
   protected:
     //! create functions space
     void makeFunctionSpace (GridPartType& gridPart); 
@@ -270,9 +264,6 @@ namespace Dune {
 
     //! mapper for block vector functions 
     BlockMapperType& blockMapper_;
-
-    //! reference to dof manager 
-    const DofManagerType & dm_;
   }; // end class FiniteVolumeSpace
 
 /** @} **/  

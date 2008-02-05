@@ -213,8 +213,7 @@ namespace Dune
     virtual void apply (const X& x, Y& y) const
     {
       // apply matrix 
-      y = 0 ;
-      matrix_.umv(x,y);
+      matrix_.mv(x,y);
 
       // exchange data first 
       communicate( y );

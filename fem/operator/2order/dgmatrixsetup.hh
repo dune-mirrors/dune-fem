@@ -320,9 +320,8 @@ protected:
       // exchange data first 
       communicate( x );
       
-      // apply matrix 
-      y = 0 ;
-      matrix_.umv(x,y);
+      // apply vector to matrix 
+      matrix_.mv(x,y);
 
       // delete non-interior 
       scp_.deleteNonInterior( y );

@@ -317,9 +317,6 @@ namespace Dune
     //! corresponding mapper
     BlockMapperType *blockMapper_;
 
-    //! reference to the DoF manager
-    DofManagerType &dofManager_;
-
   public:
     using BaseType :: gridPart;
 
@@ -333,13 +330,9 @@ namespace Dune
       baseFunctionSet_(),
       lagrangePointSet_(),
       mapper_( 0 ),
-      blockMapper_( 0 ),
-      dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) )
+      blockMapper_( 0 )
     {
       const IndexSetType &indexSet = gridPart.indexSet();
-      GridType &grid = gridPart.grid();
-      
-      dofManager_.addIndexSet( grid, const_cast< IndexSetType& >( indexSet ) );
 
       AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
       const std :: vector< GeometryType >& geometryTypes
@@ -504,12 +497,6 @@ namespace Dune
     {
       assert( blockMapper_ != 0 );
       return *blockMapper_;
-    }
-
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::sequence */
-    inline int sequence () const
-    {
-      return dofManager_.sequence();
     }
   };
   

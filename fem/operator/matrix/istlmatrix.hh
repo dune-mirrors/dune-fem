@@ -708,11 +708,8 @@ namespace Dune
       // copy from double 
       double2Block(arg, Arg);
       
-      // set Dest to zero 
-      Dest = 0;
-      
-      // not parameter swaped for preconditioner 
-      matrix().umv( Arg, Dest );
+      // call mult method of matrix 
+      matrix().mv( Arg, Dest );
 
       //  copy back 
       block2Double( Dest , dest);

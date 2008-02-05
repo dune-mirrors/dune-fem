@@ -17,8 +17,7 @@ FiniteVolumeSpace (GridPartType & gridPart) :
     mapper_(0),
     blockMapper_(
       BlockMapperProviderType::getObject( 
-        MapperSingletonKeyType (this->gridPart().indexSet(),1) )),
-    dm_(DofManagerFactoryType::getDofManager(gridPart.grid()))
+        MapperSingletonKeyType (this->gridPart().indexSet(),1) ))
 {
   makeFunctionSpace(gridPart);
 }
@@ -27,13 +26,6 @@ template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class
 inline void FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 makeFunctionSpace (GridPartType& gridPart) 
 {
-  // add index set to list of indexset of dofmanager 
-  typedef DofManager<GridType> DofManagerType;
-  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-  DofManagerType & dm = DofManagerFactoryType::getDofManager(gridPart.grid());
-  dm.addIndexSet(gridPart.grid(), 
-      const_cast<typename GridPartType::IndexSetType&>(gridPart.indexSet()));
-  
   // search the macro grid for diffrent element types 
   AllGeomTypes< typename GridPartType::IndexSetType ,
                 typename GridPartType::GridType > 

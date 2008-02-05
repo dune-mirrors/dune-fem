@@ -12,6 +12,7 @@
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 
 //- local includes 
@@ -478,6 +479,11 @@ namespace Dune
   public:
     using BaseType :: mapper;
 
+    //! type of DoF manager
+    typedef DofManager< GridType > DofManagerType;
+    //! type of DoF manager factory
+    typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
+
   protected:
     GridPartType &gridPart_;
 
@@ -487,6 +493,9 @@ namespace Dune
     // set of all geometry types possible 
     typedef AllGeomTypes< IndexSetType, GridType > AllGeometryTypes;
     const AllGeometryTypes allGeomTypes_;
+
+    // reference to dof manager 
+    DofManagerType& dofManager_;
  
   public:
     //! constructor
@@ -495,8 +504,24 @@ namespace Dune
       gridPart_( gridPart ),
       lfFactory_( asImp() ),
       lfStorage_( lfFactory_ ),
-      allGeomTypes_( gridPart.indexSet() )
+      allGeomTypes_( gridPart.indexSet() ),
+      dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) )
     {
+      // add index set to list in dof manager  
+      dofManager_.addIndexSet( gridPart.indexSet() );
+    }
+
+    //! destructor removing index set from dof manager 
+    ~DiscreteFunctionSpaceDefault() 
+    {
+      // remove from list in dof manager  
+      dofManager_.removeIndexSet( this->indexSet() );
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::sequence */
+    inline int sequence () const
+    { 
+      return dofManager_.sequence();
     }
 
     /** obtain a local function for an entity (to store intermediate values)

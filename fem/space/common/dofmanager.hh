@@ -123,6 +123,12 @@ public:
   //! return address of index set 
   virtual void * address () const = 0;
 
+  //! increase reference counter 
+  virtual void increaseCounter () = 0 ; 
+
+  //! decrease counter, returns true if counter is zero 
+  virtual bool decreaseCounter () = 0 ; 
+
   //! return type of set 
   virtual int typeOfSet () const = 0;
 
@@ -151,17 +157,20 @@ private:
   LocalIndexSetObjectsType & indexSetList_; 
   LocalIndexSetObjectsType & insertList_; 
   LocalIndexSetObjectsType & removeList_; 
+
+  size_t referenceCounter_;
 public:  
   // Constructor of MemObject, only to call from DofManager 
-  IndexSetObject ( IndexSetType & iset 
+  IndexSetObject ( const IndexSetType & iset 
       , LocalIndexSetObjectsType & indexSetList
       , LocalIndexSetObjectsType & insertList 
       , LocalIndexSetObjectsType & removeList) 
-   : indexSet_ (iset) 
+   : indexSet_ (const_cast<IndexSetType &> (iset)) 
    , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_) 
    , indexSetList_(indexSetList) 
    , insertList_(insertList) 
    , removeList_(removeList)
+   , referenceCounter_(1)
   {
     indexSetList_ += *this;
     if( indexSet_.needsCompress() ) 
@@ -203,6 +212,18 @@ public:
   void * address() const 
   {
     return (void *)&indexSet_;
+  }
+
+  //! increase counter by one 
+  void increaseCounter () 
+  {
+    ++referenceCounter_;
+  }
+
+  bool decreaseCounter () 
+  {
+    --referenceCounter_;
+    return referenceCounter_ == 0;
   }
 
   int typeOfSet() const 
@@ -946,7 +967,11 @@ public:
   
   //! add new index set to the list of the indexsets of this dofmanager
   template <class IndexSetType>
-  inline void addIndexSet (const GridType &grid, IndexSetType &iset); 
+  inline void addIndexSet (const IndexSetType &iset); 
+
+  //! remove index set from the indexsets list of this dofmanager
+  template <class IndexSetType>
+  inline void removeIndexSet (const IndexSetType &iset); 
 
   //! add dofset to dof manager 
   //! this method should be called at signIn of DiscreteFucntion, and there
@@ -1218,11 +1243,8 @@ removeDofSet (const MemObjectInterface & obj)
 template <class GridType>
 template <class IndexSetType>
 inline void DofManager<GridType>::
-addIndexSet (const GridType &grid, IndexSetType &iset)
+addIndexSet (const IndexSetType &iset)
 {
-  if(&grid_ != &grid)
-    DUNE_THROW(DofManError,"DofManager can only be used for one grid! \n");
-
   typedef typename GridType::template Codim<0>::Entity EntityType;
   typedef IndexSetObject< IndexSetType, EntityType > IndexSetObjectType;
   
@@ -1234,6 +1256,7 @@ addIndexSet (const GridType &grid, IndexSetType &iset)
     if( (*it)->address() == &iset )
     {
       indexSet = static_cast<IndexSetObjectType *> ((*it));
+      indexSet->increaseCounter();
       break;
     }
   }
@@ -1243,9 +1266,34 @@ addIndexSet (const GridType &grid, IndexSetType &iset)
     indexSet = new IndexSetObjectType ( iset, indexSets_ , insertIndices_ , removeIndices_  );
       
     IndexSetObjectInterface * iobj = indexSet;
-    indexList_.push_back( iobj );
+    // push to front to search latest index sets fast
+    indexList_.push_front( iobj );
   }
   return ; 
+}
+
+template <class GridType>
+template <class IndexSetType>
+inline void DofManager<GridType>::
+removeIndexSet (const IndexSetType &iset)
+{
+  // search object in list an remove it
+  IndexListIteratorType endit = indexList_.end();
+  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+  {
+    if( (*it)->address() == &iset )
+    {
+      // if ref counter is zero, delete object from list 
+      if ( (*it)->decreaseCounter() )
+      {
+        indexList_.erase( it );
+      }
+      return ;
+    }
+  }
+
+  // we should never get here
+  DUNE_THROW(InvalidStateException,"Could not remove index set!");
 }
 
 template <class GridType>
