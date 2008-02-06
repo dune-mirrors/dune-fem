@@ -1,10 +1,8 @@
 #ifndef DUNE_ADAPTIVELEAFINDEXSET_HH
 #define DUNE_ADAPTIVELEAFINDEXSET_HH
 
-//- Dune includes 
-#include <dune/grid/common/defaultindexsets.hh>
-
 //- local includes 
+#include <dune/fem/space/common/persistentindexsets.hh>
 #include <dune/fem/space/common/codimindexset.hh>
 #include <dune/fem/io/file/xdrio.hh>
 
@@ -28,7 +26,7 @@ namespace Dune {
 template <class GridType>
 class AdaptiveLeafIndexSet : 
   public IndexSet<GridType, AdaptiveLeafIndexSet<GridType>, DefaultLeafIteratorTypes<GridType> >,
-  public DefaultGridIndexSetBase <GridType>
+  public PersistentIndexSet <GridType, AdaptiveLeafIndexSet<GridType> >
 {
 public:
   enum { ncodim = GridType::dimension + 1 };
@@ -253,6 +251,8 @@ private:
     }
   };
 
+  //! type of base class 
+  typedef PersistentIndexSet <GridType, AdaptiveLeafIndexSet<GridType> > BaseType;
   //! type of this class 
   typedef AdaptiveLeafIndexSet < GridType > ThisType;
   
@@ -294,7 +294,7 @@ public:
 
   //! Constructor
   AdaptiveLeafIndexSet (const GridType & grid) 
-    : DefaultGridIndexSetBase <GridType> (grid) 
+    : BaseType(grid) 
     , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
     , marked_ (false) , markAllU_ (false) 
     , higherCodims_ (false) // higherCodims are not used by default 

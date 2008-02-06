@@ -3,9 +3,9 @@
 
 //- Dune includes 
 #include <dune/common/exceptions.hh>
-#include <dune/grid/common/defaultindexsets.hh>
 
 //- local includes 
+#include <dune/fem/space/common/persistentindexsets.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/codimindexset.hh>
 
@@ -29,7 +29,7 @@ namespace Dune {
 template <class GridType>
 class DGAdaptiveLeafIndexSet : 
   public IndexSet<GridType, DGAdaptiveLeafIndexSet<GridType>, DefaultLeafIteratorTypes<GridType> >,
-  public DefaultGridIndexSetBase <GridType>
+  public PersistentIndexSet <GridType, DGAdaptiveLeafIndexSet<GridType> >
 {
 public:
   enum { ncodim = GridType::dimension + 1 };
@@ -59,16 +59,11 @@ public:
     }
   };
   
-private:
+protected:
+  //! type of base class 
+  typedef PersistentIndexSet <GridType, DGAdaptiveLeafIndexSet<GridType> > BaseType;
   //! type of this class 
   typedef DGAdaptiveLeafIndexSet < GridType > ThisType;
-  
-  //! type of DofManger and factory 
-  typedef DofManager<GridType> DofManagerType; 
-  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-
-  //! dof manager 
-  DofManagerType& dm_;
   
   //! is true if grid is structured grid 
   enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
@@ -102,12 +97,11 @@ public:
 
   //! Constructor
   DGAdaptiveLeafIndexSet (const GridType & grid) 
-    : DefaultGridIndexSetBase <GridType> (grid) 
-    , dm_( DofManagerFactoryType::getDofManager(grid) )
-    , codimLeafSet_( dm_.memoryFactor() )
+    : BaseType(grid) 
+    , codimLeafSet_( this->dofManager_.memoryFactor() )
     , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
     , compressed_(true) // at start the set is compressed 
-    , sequence_(dm_.sequence())
+    , sequence_(this->dofManager_.sequence())
   {
     // set the codim of this codim set, here always 0
     codimLeafSet_.setCodim( 0 );
@@ -308,7 +302,7 @@ public:
       // in parallel runs check sequence number of dof manager 
       if( this->grid_.comm().size() > 1 )
       {
-        if( sequence_ == dm_.sequence() ) return false;
+        if( sequence_ == this->dofManager_.sequence() ) return false;
       }
       else 
       {
@@ -337,7 +331,7 @@ public:
     bool haveToCopy = codimLeafSet_.compress(); 
 
     compressed_ = true;
-    sequence_ = dm_.sequence();
+    sequence_ = this->dofManager_.sequence();
     return haveToCopy;
   }
 

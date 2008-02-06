@@ -507,15 +507,6 @@ namespace Dune
       allGeomTypes_( gridPart.indexSet() ),
       dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) )
     {
-      // add index set to list in dof manager  
-      dofManager_.addIndexSet( gridPart.indexSet() );
-    }
-
-    //! destructor removing index set from dof manager 
-    ~DiscreteFunctionSpaceDefault() 
-    {
-      // remove from list in dof manager  
-      dofManager_.removeIndexSet( this->indexSet() );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::sequence */

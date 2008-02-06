@@ -382,7 +382,7 @@ public:
 template <class GridType>
 class IdBasedLeafIndexSet : 
   public IndexSet<GridType, IdBasedLeafIndexSet<GridType>, DefaultLeafIteratorTypes<GridType> >,
-  public DefaultGridIndexSetBase <GridType>
+  public PersistentIndexSet<GridType, IdBasedLeafIndexSet<GridType> >
 {
 public:
   enum { ncodim = GridType::dimension + 1 };
@@ -565,6 +565,8 @@ private:
     }
   };
 
+  //! type of base class 
+  typedef PersistentIndexSet<GridType, IdBasedLeafIndexSet<GridType> >  BaseType;
   //! type of this class 
   typedef IdBasedLeafIndexSet < GridType > ThisType;
   
@@ -600,7 +602,7 @@ public:
 
   //! Constructor
   IdBasedLeafIndexSet (const GridType & grid) 
-    : DefaultGridIndexSetBase <GridType> (grid) ,  
+    : BaseType(grid) ,  
     leafSet_( grid.leafIndexSet() ) , 
     idSet_  ( grid.localIdSet() ), 
     marked_ (false) , markAllU_ (false) , higherCodims_ (true), 
@@ -655,7 +657,14 @@ public:
   {
     return persistentLeafSet().size();
   }
-  
+
+  //! \brief return size of grid entities per geometry type
+  int size (GeometryType type) const
+  {
+    // return size using the other method
+    return size(dim - type.dim(), type);
+  }
+
   //! return size of grid entities per level and codim 
   int size ( int codim ) const
   {

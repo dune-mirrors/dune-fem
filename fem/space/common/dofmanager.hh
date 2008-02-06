@@ -111,6 +111,20 @@ struct SpecialArrayFeatures
   */
 class IndexSetObjectInterface 
 {
+  IndexSetObjectInterface(const IndexSetObjectInterface& org);
+protected:  
+  // use address of object as id 
+  typedef const void * IdentifierType;
+  // pointer to compare index sets 
+  IdentifierType setPtr_;
+  // reference counter 
+  size_t referenceCounter_;
+  
+  template <class IndexSetType>
+  IndexSetObjectInterface(const IndexSetType& set) 
+    : setPtr_( getIdentifier(set) ) , referenceCounter_(1) 
+  {}
+
 public:
   virtual ~IndexSetObjectInterface () {}
   //! resize of index set 
@@ -120,15 +134,6 @@ public:
   //! returns true if set generally needs a compress 
   virtual bool needsCompress () const = 0;
 
-  //! return address of index set 
-  virtual void * address () const = 0;
-
-  //! increase reference counter 
-  virtual void increaseCounter () = 0 ; 
-
-  //! decrease counter, returns true if counter is zero 
-  virtual bool decreaseCounter () = 0 ; 
-
   //! return type of set 
   virtual int typeOfSet () const = 0;
 
@@ -136,6 +141,37 @@ public:
   virtual void read_xdr(const char * filename, int timestep) = 0;
   //! read and write method of index sets 
   virtual void write_xdr(const char * filename, int timestep) const = 0;
+
+  //! increase reference counter 
+  template <class IndexSetType>
+  bool increaseReference(const IndexSetType& set) 
+  {
+    // if index sets are the same, return true and increase counter 
+    return ( equals( set ) ) ? (++referenceCounter_,true) : false;
+  } 
+
+  template <class IndexSetType>
+  bool decreaseReference(const IndexSetType& set) 
+  {
+    // if index sets are the same, 
+    // decrease and return true if counter zero 
+    return ( equals( set ) ) ? (--referenceCounter_ == 0) : false;
+  }
+  
+private:
+  template <class IndexSetType>
+  bool equals(const IndexSetType& set) const
+  {
+    // if index sets are the same 
+    return (getIdentifier(set) == setPtr_ );  
+  }
+
+  template <class IndexSetType>
+  IdentifierType getIdentifier(const IndexSetType& set) const 
+  {
+    return static_cast<IdentifierType> (&set); 
+  } 
+    
 };
 
 template <class IndexSetType, class EntityType> class RemoveIndicesFromSet;
@@ -146,7 +182,7 @@ class IndexSetObject : public IndexSetObjectInterface ,
         public LocalInlinePlus < IndexSetObject<IndexSetType,EntityType> , EntityType >
 {
   typedef LocalInterface<EntityType> LocalIndexSetObjectsType;
-private:
+protected: 
   // the dof set stores number of dofs on entity for each codim
   IndexSetType & indexSet_;
 
@@ -158,20 +194,24 @@ private:
   LocalIndexSetObjectsType & insertList_; 
   LocalIndexSetObjectsType & removeList_; 
 
-  size_t referenceCounter_;
 public:  
-  // Constructor of MemObject, only to call from DofManager 
+  //! type of base class 
+  typedef IndexSetObjectInterface BaseType;
+  
+  //! Constructor of MemObject, only to call from DofManager 
   IndexSetObject ( const IndexSetType & iset 
       , LocalIndexSetObjectsType & indexSetList
       , LocalIndexSetObjectsType & insertList 
       , LocalIndexSetObjectsType & removeList) 
-   : indexSet_ (const_cast<IndexSetType &> (iset)) 
+   : BaseType( iset )
+   , indexSet_ (const_cast<IndexSetType &> (iset)) 
    , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_) 
    , indexSetList_(indexSetList) 
    , insertList_(insertList) 
    , removeList_(removeList)
-   , referenceCounter_(1)
   {
+    this->setPtr_ = (void *) &indexSet_;
+    
     indexSetList_ += *this;
     if( indexSet_.needsCompress() ) 
     {
@@ -180,6 +220,7 @@ public:
     }
   } 
 
+  //! desctructor 
   ~IndexSetObject () 
   {
     indexSetList_.remove( *this );
@@ -206,24 +247,6 @@ public:
   bool needsCompress () const 
   {
     return indexSet_.needsCompress (); 
-  }
-
-  //! return address of index set 
-  void * address() const 
-  {
-    return (void *)&indexSet_;
-  }
-
-  //! increase counter by one 
-  void increaseCounter () 
-  {
-    ++referenceCounter_;
-  }
-
-  bool decreaseCounter () 
-  {
-    --referenceCounter_;
-    return referenceCounter_ == 0;
   }
 
   int typeOfSet() const 
@@ -1253,11 +1276,11 @@ addIndexSet (const IndexSetType &iset)
   IndexListIteratorType endit = indexList_.end();
   for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
   {
-    if( (*it)->address() == &iset )
+    // check equality 
+    // and increase counter if equal
+    if( (*it)->increaseReference(iset) )
     {
       indexSet = static_cast<IndexSetObjectType *> ((*it));
-      // increase reference counter 
-      indexSet->increaseCounter();
       break;
     }
   }
@@ -1276,21 +1299,25 @@ addIndexSet (const IndexSetType &iset)
 template <class GridType>
 template <class IndexSetType>
 inline void DofManager<GridType>::
-removeIndexSet (const IndexSetType &iset)
+removeIndexSet (const IndexSetType &set)
 {
+  typedef typename GridType::template Codim<0>::Entity EntityType;
+  typedef IndexSetObject< IndexSetType, EntityType > IndexSetObjectType;
+  
   // search object in list an remove it
   IndexListIteratorType endit = indexList_.end();
   for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
   {
-    if( (*it)->address() == &iset )
+    // decrease reference counter 
+    // and delete if refernce is zero
+    if( (*it)->decreaseReference( set ) )
     {
-      // if ref counter is zero, delete object from list 
-      if ( (*it)->decreaseCounter() )
-      {
-        IndexSetObjectInterface * iobj = *it;
-        indexList_.erase( it );
-        delete iobj;
-      }
+      // get obj pointer  
+      IndexSetObjectInterface* set = *it;
+      // remove from list 
+      indexList_.erase( it );
+      // delete proxy 
+      delete set;
       return ;
     }
   }

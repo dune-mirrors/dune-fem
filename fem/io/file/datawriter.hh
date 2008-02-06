@@ -426,7 +426,7 @@ protected:
       static bool called = false; 
       if( ! called ) 
       {
-        std::cerr << "WARNING: vertexData output no tworking with YaspGrid! \n"; 
+        std::cerr << "WARNING: vertexData output not working with YaspGrid! \n"; 
         called = true;
       }
     }
