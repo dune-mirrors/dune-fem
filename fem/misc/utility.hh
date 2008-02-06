@@ -1,4 +1,9 @@
-#ifndef DUNE_UTILITY_HH
+#ifndef DUNE_FEM_UTILITY_HH
+#define DUNE_FEM_UTILITY_HH
+
+#if defined DUNE_UTILITY_HH
+#error "Including <dune/fem/misc/utility.hh> prohibits including <dune/common/utility.hh>"
+#endif
 #define DUNE_UTILITY_HH
 
 #include "femtuples.hh"
