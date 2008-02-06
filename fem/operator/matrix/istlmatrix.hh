@@ -19,8 +19,7 @@
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 
-namespace Dune
-{ 
+namespace Dune { 
 
   ///////////////////////////////////////////////////////
   // --BlockMatrixHandle
@@ -632,7 +631,6 @@ namespace Dune
     //! return true, because in case of no preconditioning we have empty
     //! preconditioner (used by OEM methods)
     bool hasPreconditionMatrix() const { return true; }
-    const PreconditionMatrixType& pcMatrix() const { return *this; }
 
     //! return reference to preconditioner object (used by OEM methods)
     const PreconditionMatrixType& preconditionMatrix() const { return *this; }
@@ -669,11 +667,6 @@ namespace Dune
     {
       createBlockVectors();
       
-      if( ! matrixAdap_ ) 
-      { 
-        matrixAdap_ = new MatrixAdapterType(matrixAdapter());
-      }
-
       assert( Arg_ );
       assert( Dest_ );
 
@@ -708,76 +701,38 @@ namespace Dune
       // copy from double 
       double2Block(arg, Arg);
       
-      // call mult method of matrix 
-      matrix().mv( Arg, Dest );
+      // call mult of matrix adapter  
+      assert( matrixAdap_ );
+      matrixAdap_->apply( Arg, Dest );
 
       //  copy back 
       block2Double( Dest , dest);
     }
     
     //! apply with discrete functions 
-    // copy double to block vector 
-    void double2Block(const double* arg, RowBlockVectorType& dest) const 
-    {
-      typedef typename RowBlockVectorType :: block_type BlockType;
-      const size_t blocks = dest.size();
-      int idx = 0;
-      for(size_t i=0; i<blocks; ++i) 
-      {
-        BlockType& block = dest[i];
-        enum { blockSize = BlockType :: dimension };
-        for(int j=0; j<blockSize; ++j, ++idx) 
-        {
-          block[j] = arg[idx];
-        }
-      }
-    }
-      
-    // copy block vector to double 
-    void block2Double(const ColumnBlockVectorType& arg, double* dest) const 
-    {
-      typedef typename ColumnBlockVectorType :: block_type BlockType;
-      const size_t blocks = arg.size();
-      int idx = 0;
-      for(size_t i=0; i<blocks; ++i) 
-      {
-        const BlockType& block = arg[i];
-        enum { blockSize = BlockType :: dimension };
-        for(int j=0; j<blockSize; ++j, ++idx) 
-        {
-          dest[idx] = block[j];
-        }
-      }
-    }
-
-    void createBlockVectors() const
-    {
-      if( ! Arg_ || ! Dest_ ) 
-      { 
-        delete Arg_; delete Dest_;
-        Arg_  = new RowBlockVectorType( rowMapper_.size() );
-        Dest_ = new ColumnBlockVectorType( colMapper_.size() );
-      }
-    }
     void apply(const RowDiscreteFunctionType& arg,
                RowDiscreteFunctionType& dest) const 
     {
-      dest.blockVector() = 0;
-      matrix().umv( arg.blockVector(), dest.blockVector() );
+      createMatrixAdapter();
+      assert( matrixAdap_ );
+      matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
     }
 
     //! apply 
     template <class RowDFType, class ColDFType>
     void apply(const RowDFType& arg, ColDFType& dest) const 
     {
-      matrix().multOEM(arg.leakPointer(), dest.leakPointer());
+      createMatrixAdapter();
+      assert( matrixAdap_ );
+      matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
     }
 
     //! mult method of matrix object used by oem solver
     void multOEM(const RowLeakPointerType& arg, ColumnLeakPointerType& dest) const
     {
-      dest.blockVector() = 0;
-      matrix().umv( arg.blockVector(), dest.blockVector() );
+      createMatrixAdapter();
+      assert( matrixAdap_ );
+      matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
     }
 
     //! resort row numbering in matrix to have ascending numbering 
@@ -881,6 +836,16 @@ namespace Dune
         delete Arg_; delete Dest_;
         Arg_  = new RowBlockVectorType( rowMapper_.size() );
         Dest_ = new ColumnBlockVectorType( colMapper_.size() );
+      }
+
+      createMatrixAdapter ();
+    }
+
+    void createMatrixAdapter () const 
+    {
+      if( ! matrixAdap_ ) 
+      { 
+        matrixAdap_ = new MatrixAdapterType(matrixAdapter());
       }
     }
     
