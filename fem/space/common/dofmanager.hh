@@ -1256,6 +1256,7 @@ addIndexSet (const IndexSetType &iset)
     if( (*it)->address() == &iset )
     {
       indexSet = static_cast<IndexSetObjectType *> ((*it));
+      // increase reference counter 
       indexSet->increaseCounter();
       break;
     }
@@ -1286,7 +1287,9 @@ removeIndexSet (const IndexSetType &iset)
       // if ref counter is zero, delete object from list 
       if ( (*it)->decreaseCounter() )
       {
+        IndexSetObjectInterface * iobj = *it;
         indexList_.erase( it );
+        delete iobj;
       }
       return ;
     }
