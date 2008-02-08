@@ -4,10 +4,12 @@
 namespace OEMSolver 
 {
 
+/** \brief Interface class for use of Preconditioners with the OEM solvers.
+*/
 class PreconditionInterface 
 {
 public:
-  // type of this class 
+  //! type of this class 
   typedef PreconditionInterface ThisType; 
 
   //! return reference to precondition matrix 

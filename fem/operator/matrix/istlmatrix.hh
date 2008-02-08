@@ -533,7 +533,7 @@ namespace Dune {
       , scp_(colSpace_)
       , numIterations_(5)
       , relaxFactor_(1.1)
-      , preconditioning_(ilu_0)
+      , preconditioning_(none)
       , localMatrixStack_( *this )
       , matrixAdap_(0)
       , Arg_(0)
@@ -593,8 +593,7 @@ namespace Dune {
                                  numIterations_ , relaxFactor_,(PreconditionerType*)0);
       }
       // ILU-0 
-      //else if(preconditioning_ == ilu_0)
-      if(preconditioning_ == ilu_0)
+      else if(preconditioning_ == ilu_0)
       {
         typedef SeqILU0<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
@@ -630,7 +629,7 @@ namespace Dune {
     
     //! return true, because in case of no preconditioning we have empty
     //! preconditioner (used by OEM methods)
-    bool hasPreconditionMatrix() const { return true; }
+    bool hasPreconditionMatrix() const { return (preconditioning_ != none); }
 
     //! return reference to preconditioner object (used by OEM methods)
     const PreconditionMatrixType& preconditionMatrix() const { return *this; }
@@ -718,13 +717,11 @@ namespace Dune {
       matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
     }
 
-    //! apply 
+    //! apply with arbitrary discrete functions calls multOEM 
     template <class RowDFType, class ColDFType>
     void apply(const RowDFType& arg, ColDFType& dest) const 
     {
-      createMatrixAdapter();
-      assert( matrixAdap_ );
-      matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+      multOEM( arg.leakPointer(), dest.leakPointer ());
     }
 
     //! mult method of matrix object used by oem solver

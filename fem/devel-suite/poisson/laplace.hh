@@ -21,8 +21,11 @@ namespace Dune
   : public Operator< typename DiscreteFunction :: RangeFieldType,
                      typename DiscreteFunction :: RangeFieldType,
                      DiscreteFunction,
-                     DiscreteFunction >
+                     DiscreteFunction >,
+    public OEMSolver::PreconditionInterface                 
   {
+    // needs to be friend for conversion check 
+    friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
   public:
     //! type of discrete functions
     typedef DiscreteFunction DiscreteFunctionType;
@@ -131,6 +134,8 @@ namespace Dune
     }
 
   private:
+    // needs to be friend for conversion check 
+    friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
     // prohibit copying
     inline LaplaceFEOp ( const ThisType & );
 
@@ -156,11 +161,15 @@ namespace Dune
       return matrixObject_;
     }
 
-   //! return reference to preconditioning matrix, used by OEM-Solver
-   const PreconditionMatrixType &preconditionMatrix () const
-   {
-     return systemMatrix().pcMatrix();
-   }
+
+    //! return reference to preconditioning matrix, used by OEM-Solver
+    const PreconditionMatrixType &preconditionMatrix () const
+    {
+      return systemMatrix().preconditionMatrix();
+    }
+
+    //! return true if preconditioning is enabled
+    bool hasPreconditionMatrix () const { return matrixObject_.hasPreconditionMatrix(); }
 
 
     //! print the system matrix into a stream
