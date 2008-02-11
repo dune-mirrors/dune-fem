@@ -134,11 +134,11 @@ namespace Dune
   {
     const unsigned int size = baseFunctionList_.size();
     assert( (size > 0) && (matrixOnline.cols() == size)
-            && (matrixOnline.rows == size) );
+            && (matrixOnline.rows() == size) );
     assert( (matrixOffline.cols() == baseFunctionSpace_.size()) 
             && (matrixOffline.rows() == baseFunctionSpace_.size()) );
 
-    BaseFunctionType Sphi( baseFunctionList_[ 0 ] );
+    BaseFunctionType Sphi( *(baseFunctionList_[ 0 ]) );
     for( unsigned int i = 0; i < size; ++i )
     {
       const BaseFunctionType &phi = *(baseFunctionList_[ i ]);
