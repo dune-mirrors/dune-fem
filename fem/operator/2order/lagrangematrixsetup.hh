@@ -4,7 +4,7 @@
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
 #include <dune/fem/operator/matrix/istlmatrix.hh>
-#include <dune/fem/operator/matrix/preconditionwrapper.hh>
+#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #endif
 
 namespace Dune
