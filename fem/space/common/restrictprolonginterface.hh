@@ -202,6 +202,7 @@ public:
 
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType SpaceType; 
   typedef typename SpaceType :: GridPartType GridPartType;
+  typedef typename SpaceType :: GridType GridType;
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
@@ -210,7 +211,8 @@ public:
   RestrictProlongPieceWiseConstantData( DiscreteFunctionType & df ) 
     : BaseType(df), df_ (df), weight_(-1.0)
   {
-    // make sure index set can be used for adaptive computations 
+    // make sure that index set is used that can handle adaptivity 
+    assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
   }
 
   //! if weight is set, then ists assumend that we have always the same
