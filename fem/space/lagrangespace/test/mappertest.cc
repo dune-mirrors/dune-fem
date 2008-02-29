@@ -5,16 +5,17 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   void LagrangeMapper_Test :: run()
   {
     GridPtr< GridType > gridPtr( gridFile_ );
     GridType& grid = *gridPtr;
-    grid.globalRefine( 2 );
+    //grid.globalRefine( 2 );
     GridPartType gridPart( grid );
 
-    typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+    typedef FunctionSpace< double, double, dimworld, dimworld > FunctionSpaceType;
 
     typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
       OneSpaceType;
@@ -33,6 +34,16 @@ namespace Dune {
       checkDiscreteFunction( space );
     }
     #endif
+
+    #ifdef TEST_THIRD_ORDER
+    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 3 >
+      ThreeSpaceType;
+    {
+      std :: cout << "Testing cubic function." << std :: endl;
+      ThreeSpaceType space( gridPart );
+      checkDiscreteFunction( space );
+    }
+    #endif
   }
 
 
@@ -44,31 +55,63 @@ namespace Dune {
     
     typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
     typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;
+    typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
     typedef typename SpaceType :: IteratorType IteratorType;
+    typedef typename IteratorType :: Entity EntityType;
+    typedef typename EntityType :: Geometry GeometryType;
+
+    std :: cout << "size of space: " << space.size() << std :: endl;
 
     DiscreteFunctionType u( "u", space );
     u.clear();
 
     int errors = 0;
 
-    IteratorType eit = space.end();
+    const IteratorType eit = space.end();
     for( IteratorType it = space.begin(); it != eit; ++it )
     {
-      LocalFunctionType ulocal = u.localFunction( *it );
-      
-      const int numDofs = ulocal.numDofs();
-      std :: cout << numDofs << "  ";
-      for( int i = 0; i < numDofs; ++i )
-        ulocal[ i ] += 1.0;
+      const EntityType &entity = *it;
+      const GeometryType &geometry = entity.geometry();
+
+      const LagrangePointSetType &lagrangePoints = space.lagrangePointSet( entity );
+      const int numLPoints = lagrangePoints.nop();
+
+      LocalFunctionType ulocal = u.localFunction( entity );
+
+      assert( numLPoints * dimworld == ulocal.numDofs() );
+      for( int i = 0; i < numLPoints; ++i )
+      {
+        FieldVector< double, dimworld > x
+          = geometry.global( lagrangePoints.point( i ) );
+        for( int j = 0; j < dimworld; ++j )
+          ulocal[ i * dimworld + j ] = x[ j ];
+      }
     }
 
-    DofIteratorType deit = u.dend();
-    for( DofIteratorType dit = u.dbegin(); dit != deit; ++dit ) {
-      if( *dit < 0.5 )
-        errors++;
-      std :: cout << *dit << "  ";
+    for( IteratorType it = space.begin(); it != eit; ++it )
+    {
+      const EntityType &entity = *it;
+      const GeometryType &geometry = entity.geometry();
+
+      const LagrangePointSetType &lagrangePoints = space.lagrangePointSet( entity );
+      const int numLPoints = lagrangePoints.nop();
+
+      LocalFunctionType ulocal = u.localFunction( entity );
+      
+      assert( numLPoints * dimworld == ulocal.numDofs() );
+      for( int i = 0; i < numLPoints; ++i )
+      {
+        FieldVector< double, dimworld > x
+          = geometry.global( lagrangePoints.point( i ) );
+        FieldVector< double, dimworld > y;
+        ulocal.evaluate( lagrangePoints[ i ], y );
+        if( (y - x).two_norm() > 1e-6 )
+        {
+          std :: cout << x << " != " << y << std :: endl;
+          ++errors;
+        }
+      }
     }
-    std :: cout << std :: endl;
 
     assert( errors == 0 );
   }

@@ -13,4 +13,4 @@ generic_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DDIMENSION=$(DIMENSION) -DPOLORDER=$(POL
 testdir=$(includedir)/dune/fem/space/lagrangespace/test
 test_HEADERS = basefunctiontest.hh  mappertest.hh basefunctiontest.cc \
 mappertest.cc
-EXTRA_DIST = cube.dgf  onesimplex.dgf
+EXTRA_DIST = 2dgrid.dgf cube.dgf  onesimplex.dgf

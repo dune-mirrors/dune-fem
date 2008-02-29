@@ -1,5 +1,7 @@
 #include <config.h>
 
+#define USE_TWISTFREE_MAPPER
+
 #include <dune/fem/misc/suite.hh>
 using namespace Dune;
 
@@ -11,7 +13,8 @@ int main()
   //std :: string gridFile( "../../../examples/elliptic/square.dgf" );
   //std :: string gridFile( "onesimplex.dgf" );
   //std :: string gridFile( "cube.dgf" );
-  std :: string gridFile( "../../test/2dgrid.dgf" );
+  //std :: string gridFile( "../../test/2dgrid.dgf" );
+  std :: string gridFile( "2dgrid.dgf" );
   //std :: string gridFile( "../../../examples/poisson/3dgrid.al" );
   
   Suite suite("Basefunction tests");
