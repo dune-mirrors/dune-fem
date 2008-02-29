@@ -9,7 +9,7 @@ OPTIM_CPPFLAGS = -g -Wall --param max-inline-insns-single=1000 --param large-fun
 
 noinst_PROGRAMS = serial parallel
 serial_SOURCES = poisson.cc
-serial_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(POISSON_CPPFLAGS) $(OPTIM_CPPFLAGS) -DUSE_GRAPE=0
+serial_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(POISSON_CPPFLAGS) $(OPTIM_CPPFLAGS) -DUSE_GRAPE=1
 
 parallel_SOURCES = poisson.cc
 parallel_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(POISSON_CPPFLAGS) $(OPTIM_CPPFLAGS) $(MPI_CPPFLAGS)

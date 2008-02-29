@@ -35,6 +35,8 @@
 
 #define VERBOSE false
 
+#define USE_TWISTFREE_MAPPER
+
 #include <config.h>
 
 #ifdef ENABLE_TIMING
