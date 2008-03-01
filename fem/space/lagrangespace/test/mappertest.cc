@@ -60,6 +60,11 @@ namespace Dune
     typedef typename IteratorType :: Entity EntityType;
     typedef typename EntityType :: Geometry GeometryType;
 
+    typedef typename SpaceType :: GridType GridType;
+    for( unsigned int i = 0; i <= GridType :: dimension; ++i )
+      std :: cout << "size of codimension " << i << ": "
+                  << space.grid().size( i ) << std :: endl;
+
     std :: cout << "size of space: " << space.size() << std :: endl;
 
     DiscreteFunctionType u( "u", space );
@@ -73,7 +78,8 @@ namespace Dune
       const EntityType &entity = *it;
       const GeometryType &geometry = entity.geometry();
 
-      const LagrangePointSetType &lagrangePoints = space.lagrangePointSet( entity );
+      const LagrangePointSetType &lagrangePoints
+        = space.lagrangePointSet( entity );
       const int numLPoints = lagrangePoints.nop();
 
       LocalFunctionType ulocal = u.localFunction( entity );
@@ -93,7 +99,8 @@ namespace Dune
       const EntityType &entity = *it;
       const GeometryType &geometry = entity.geometry();
 
-      const LagrangePointSetType &lagrangePoints = space.lagrangePointSet( entity );
+      const LagrangePointSetType &lagrangePoints
+        = space.lagrangePointSet( entity );
       const int numLPoints = lagrangePoints.nop();
 
       LocalFunctionType ulocal = u.localFunction( entity );

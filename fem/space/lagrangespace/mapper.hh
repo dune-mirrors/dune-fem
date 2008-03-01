@@ -325,11 +325,12 @@ namespace Dune
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
-    : dm_( DMFactoryType :: getDofManager(gridPart.grid()) )
-    , indexSet_( gridPart.indexSet() )
-    , lagrangePointSet_( lagrangePointSet )
-    , sequence_( dm_.sequence() )
+    : dm_( DMFactoryType :: getDofManager(gridPart.grid()) ),
+      indexSet_( gridPart.indexSet() ),
+      lagrangePointSet_( lagrangePointSet ),
+      sequence_( dm_.sequence() )
     {
+      numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
         maxDofs_[ codim ] = 0;
       
@@ -338,15 +339,13 @@ namespace Dune
       for( IteratorType it = lagrangePointSet_.begin(); it != end; ++it )
       {
         const LagrangePointSetType *set = (*it).second;
-        if( set == NULL )
+        if( set == 0 )
           continue;
         
+        numDofs_ = std :: max( numDofs_, set->size() );
         for( int codim = 0; codim <= dimension; ++codim )
-        {
-          const unsigned int setDofs = set->numDofs( codim );
-          unsigned int &maxDofs = maxDofs_[ codim ];
-          maxDofs = (maxDofs >= setDofs) ? maxDofs : setDofs;
-        }
+          maxDofs_[ codim ]
+            = std :: max( maxDofs_[ codim ], set->maxDofs( codim ) );
       }
 
       size_ = 0;
@@ -356,16 +355,11 @@ namespace Dune
         oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
-
-      numDofs_ = 0;
-      for( int codim = 0; codim <= dimension; ++codim )
-        numDofs_ += maxDofs_[ codim ];
     }
     
     //! destructor 
     virtual ~LagrangeMapper ()
-    {
-    }
+    {}
 
     //! return overall number of degrees of freedom 
     int size () const
@@ -696,6 +690,7 @@ namespace Dune
       lagrangePointSet_( lagrangePointSet ),
       sequence_( dm_.sequence() )
     {
+      numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
         maxDofs_[ codim ] = 0;
       
@@ -704,15 +699,13 @@ namespace Dune
       for( IteratorType it = lagrangePointSet_.begin(); it != end; ++it )
       {
         const LagrangePointSetType *set = (*it).second;
-        if( set == NULL )
+        if( set == 0 )
           continue;
-        
+
+        numDofs_ = std :: max( numDofs_, set->size() );
         for( int codim = 0; codim <= dimension; ++codim )
-        {
-          const unsigned int setDofs = set->numDofs( codim );
-          unsigned int &maxDofs = maxDofs_[ codim ];
-          maxDofs = (maxDofs >= setDofs) ? maxDofs : setDofs;
-        }
+          maxDofs_[ codim ]
+            = std :: max( maxDofs_[ codim ], set->maxDofs( codim ) );
       }
 
       size_ = 0;
@@ -722,16 +715,11 @@ namespace Dune
         oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
-
-      numDofs_ = 0;
-      for( int codim = 0; codim <= dimension; ++codim )
-        numDofs_ += maxDofs_[ codim ];
     }
     
     //! destructor 
     virtual ~LagrangeMapper ()
-    {
-    }
+    {}
 
     //! return overall number of degrees of freedom 
     int size () const
