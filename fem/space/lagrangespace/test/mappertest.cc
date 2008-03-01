@@ -60,17 +60,25 @@ namespace Dune
     typedef typename IteratorType :: Entity EntityType;
     typedef typename EntityType :: Geometry GeometryType;
 
+#if 0
     typedef typename SpaceType :: GridType GridType;
     for( unsigned int i = 0; i <= GridType :: dimension; ++i )
       std :: cout << "size of codimension " << i << ": "
                   << space.grid().size( i ) << std :: endl;
+#endif
 
-    std :: cout << "size of space: " << space.size() << std :: endl;
+    std :: cout << "size of space: " << space.size() << " (= "
+                << (space.size() / dimworld) << " * " << dimworld << ")"
+                << std :: endl;
 
     DiscreteFunctionType u( "u", space );
     u.clear();
 
     int errors = 0;
+
+    std :: cout << std :: endl << "Phase I: "
+                << "Setting each DoF of a discrete function to its global "
+                << "coordinate..." << std :: endl;
 
     const IteratorType eit = space.end();
     for( IteratorType it = space.begin(); it != eit; ++it )
@@ -87,13 +95,29 @@ namespace Dune
       assert( numLPoints * dimworld == ulocal.numDofs() );
       for( int i = 0; i < numLPoints; ++i )
       {
+        const FieldVector< double, dimworld > &lpoint
+          = lagrangePoints.point( i );
         FieldVector< double, dimworld > x
-          = geometry.global( lagrangePoints.point( i ) );
+          = geometry.global( lpoint );
+
         for( int j = 0; j < dimworld; ++j )
           ulocal[ i * dimworld + j ] = x[ j ];
+
+        FieldVector< double, dimworld > y( 0 );
+        ulocal.evaluate( lagrangePoints[ i ], y );
+        if( (y - x).two_norm() > 1e-10 )
+        {
+          std :: cout << "point " << i << " ( " << lpoint << " ): "
+                      << x << " != " << y << std :: endl;
+          ++errors;
+        }
       }
     }
 
+    std :: cout << std :: endl << "Phase II: "
+                << "Verifying that each DoF of the discrete function "
+                << "containts its global" << std :: endl
+                << "          coordinate..." << std :: endl;
     for( IteratorType it = space.begin(); it != eit; ++it )
     {
       const EntityType &entity = *it;
@@ -108,13 +132,17 @@ namespace Dune
       assert( numLPoints * dimworld == ulocal.numDofs() );
       for( int i = 0; i < numLPoints; ++i )
       {
+        const FieldVector< double, dimworld > &lpoint
+          = lagrangePoints.point( i );
         FieldVector< double, dimworld > x
-          = geometry.global( lagrangePoints.point( i ) );
-        FieldVector< double, dimworld > y;
+          = geometry.global( lpoint );
+
+        FieldVector< double, dimworld > y( 0 );
         ulocal.evaluate( lagrangePoints[ i ], y );
-        if( (y - x).two_norm() > 1e-6 )
+        if( (y - x).two_norm() > 1e-10 )
         {
-          std :: cout << x << " != " << y << std :: endl;
+          std :: cout << "point " << i << " ( " << lpoint << " ): "
+                      << x << " != " << y << std :: endl;
           ++errors;
         }
       }
@@ -122,6 +150,5 @@ namespace Dune
 
     assert( errors == 0 );
   }
-
     
 } // End namespace Dune

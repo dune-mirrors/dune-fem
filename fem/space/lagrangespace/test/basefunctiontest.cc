@@ -40,6 +40,17 @@ namespace Dune {
       checkLagrangeBase( space );
     }
     #endif
+
+    #ifdef TEST_THIRD_ORDER
+    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 3 >
+      ThreeSpaceType;
+    {
+      std :: cout << "Cubic Base Functions" << std :: endl;
+      ThreeSpaceType space( gridPart );
+      checkLagrangeBase( space );
+    }
+    #endif
+
   }
   
   template< class SpaceType > 
@@ -61,8 +72,9 @@ namespace Dune {
       const int numBaseFct = baseSet.numBaseFunctions();
 
       const LagrangePointSetType& pointSet = space.lagrangePointSet( *it );
+      const int numPoints = pointSet.size();
      
-      for( int i = 0; i < numBaseFct; ++i ) 
+      for( int i = 0; i < numPoints; ++i ) 
       {
         RangeType phi( 0.0 );
        
@@ -70,9 +82,11 @@ namespace Dune {
        
         // evaluate on lagrange point 
         baseSet.evaluate( i , x , phi ); 
-        if( std :: abs( phi[ 0 ] - 1.0 ) >= 1e-10 ) {
-          std :: cout << "Base function " << i << " failed at " << x << " (" << phi[ 0 ] << " != 1)!" << std :: endl;
-          errors++;
+        if( std :: abs( phi[ 0 ] - 1.0 ) >= 1e-10 )
+        {
+          std :: cout << "Base function " << i << " failed at " << x
+                      << " (" << phi[ 0 ] << " != 1)!" << std :: endl;
+          ++errors;
         }
         
         for( int j = 0; j < numBaseFct; ++j ) 
@@ -82,9 +96,11 @@ namespace Dune {
 
           // evaluate on lagrange point 
           baseSet.evaluate( j , x, phi ); 
-          if( std :: abs( phi[ 0 ] ) >= 1e-10 ) {
-            std :: cout << "Base function " << j << " failed at " << x << " (" << phi[ 0 ] << " != 0)!" << std :: endl;
-            errors++;
+          if( std :: abs( phi[ 0 ] ) >= 1e-10 )
+          {
+            std :: cout << "Base function " << j << " failed at " << x
+                        << " (" << phi[ 0 ] << " != 0)!" << std :: endl;
+            ++errors;
           }
         }
       }

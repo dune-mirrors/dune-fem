@@ -2,6 +2,10 @@
 
 #define USE_TWISTFREE_MAPPER
 
+#define LAGRANGE_CHECK_MAPPING 1
+#define TEST_SECOND_ORDER
+#define TEST_THIRD_ORDER
+
 #include <dune/fem/misc/suite.hh>
 using namespace Dune;
 

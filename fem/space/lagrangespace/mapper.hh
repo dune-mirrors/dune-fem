@@ -754,14 +754,15 @@ namespace Dune
       
       const int entityDof = dofInfo.dofNumber * dimRange + coordinate;
 
+      const int codim = dofInfo.codim;
       const int subIndex
-        = codimCall_[ dofInfo.codim ].subIndex( *this, entity, dofInfo.subEntity )
-          * maxDofs_[ dofInfo.codim ];
+        = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
 
       const int globalDof
-        = dimRange * (offset_[ dofInfo.codim ] + subIndex) + entityDof;
+        = dimRange * (offset_[ codim ] + subIndex * maxDofs_[ codim ])
+          + entityDof;
 #if LAGRANGE_CHECK_MAPPING
-      assert( globalDof == codimCall_[ dofInfo.codim ].mapEntityDofToGlobal
+      assert( globalDof == codimCall_[ codim ].mapEntityDofToGlobal
                              ( *this, entity, dofInfo.subEntity, entityDof ) );
 #endif
       return globalDof;
@@ -771,10 +772,12 @@ namespace Dune
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
+      const unsigned int codim = Entity :: codimension;
+
       assert( localDof < numEntityDofs( entity ) );
-      const int globalDofPt
-        = offset_[ Entity :: codimension ] + indexSet_.index( entity );
-      return dimRange * globalDofPt + localDof;
+      const int offset = offset_[ codim ]
+                         + indexSet_.index( entity ) * maxDofs_[ codim ];
+      return dimRange * offset + localDof;
     }
     
     /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
