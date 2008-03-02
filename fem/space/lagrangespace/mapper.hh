@@ -8,14 +8,12 @@
 //- Dune-Fem includes 
 #include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/gridhelper.hh>
+#include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/dofmapperinterface.hh>
 
 //- local includes 
 #include "lagrangepoints.hh"
-
-// note: this check needs entities for all codimensions
-//#define LAGRANGE_CHECK_MAPPING
 
 namespace Dune
 {
@@ -391,16 +389,16 @@ namespace Dune
       const LagrangePointSetType *set
         = lagrangePointSet_[ entity.geometry().type() ];
       const DofInfo& dofInfo = set->dofInfo( localDof );
-      
+
+      const unsigned int codim = dofInfo.codim;
       const int subIndex
-        = codimCall_[ dofInfo.codim ].subIndex( *this, entity, dofInfo.subEntity );
+        = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
 
       const int globalDof
-        = dimRange * (offset_[ dofInfo.codim ] + subIndex) + coordinate;
-#if LAGRANGE_CHECK_MAPPING
-      assert( globalDof == codimCall_[ dofInfo.codim ].mapEntityDofToGlobal
-                             ( *this, entity, dofInfo.subEntity, coordinate ) );
-#endif
+        = dimRange * (offset_[ codim ] + subIndex) + coordinate;
+
+      assert( codimCall_[ codim ].checkMapEntityDofToGlobal
+                ( *this, entity, dofInfo.subEntity, coordinate, globalDof ) );
       return globalDof;
     }
 
@@ -551,12 +549,12 @@ namespace Dune
                            const EntityType &entity,
                            int i ) const = 0;
 
-#if LAGRANGE_CHECK_MAPPING
-    virtual int mapEntityDofToGlobal ( const MapperType &mapper,
-                                       const EntityType &entity,
-                                       int subEntity,
-                                       int localDof ) const = 0;
-#endif
+    virtual bool
+    checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                const EntityType &entity,
+                                const int subEntity,
+                                const int localDof,
+                                const int globalDof ) const = 0;
   };
 
 
@@ -576,20 +574,48 @@ namespace Dune
     {
       return mapper.indexSet_.template subIndex< codim >( entity, i );
     }
-#if LAGRANGE_CHECK_MAPPING
-    virtual int mapEntityDofToGlobal ( const MapperType &mapper,
-                                       const EntityType &entity,
-                                       int subEntity,
-                                       int localDof ) const
+
+    virtual bool checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                             const EntityType &entity,
+                                             const int subEntity,
+                                             const int localDof,
+                                             const int globalDof ) const
+    {
+      typedef Capabilities :: hasEntity< GridType, codim > HasEntity;
+
+      return checkMapEntityDofToGlobal
+        ( mapper, entity, subEntity, localDof, globalDof,
+          MetaBool< HasEntity :: v >() );
+    }
+
+    inline bool
+    checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                const EntityType &entity,
+                                const int subEntity,
+                                const int localDof,
+                                const int globalDof,
+                                const MetaBool< true > hasEntity ) const
     {
       typedef typename EntityType :: template Codim< codim > :: EntityPointer
         SubEntityPtrType;
 
       const SubEntityPtrType subEntityPtr
         = entity.template entity< codim >( subEntity );
-      return mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
+      const int globalEntityDof
+        = mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
+      return (globalEntityDof == globalDof);
     }
-#endif
+
+    inline bool
+    checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                const EntityType &entity,
+                                const int subEntity,
+                                const int localDof,
+                                const int globalDof,
+                                const MetaBool< false > hasEntity ) const
+    {
+      return true;
+    }
   };
 
 
@@ -754,17 +780,16 @@ namespace Dune
       
       const int entityDof = dofInfo.dofNumber * dimRange + coordinate;
 
-      const int codim = dofInfo.codim;
+      const unsigned int codim = dofInfo.codim;
       const int subIndex
         = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
 
       const int globalDof
         = dimRange * (offset_[ codim ] + subIndex * maxDofs_[ codim ])
           + entityDof;
-#if LAGRANGE_CHECK_MAPPING
-      assert( globalDof == codimCall_[ codim ].mapEntityDofToGlobal
-                             ( *this, entity, dofInfo.subEntity, entityDof ) );
-#endif
+
+      assert( codimCall_[ codim ].checkMapEntityDofToGlobal
+                ( *this, entity, dofInfo.subEntity, entityDof, globalDof ) );
       return globalDof;
     }
 
@@ -917,12 +942,12 @@ namespace Dune
                            const EntityType &entity,
                            int i ) const = 0;
 
-#if LAGRANGE_CHECK_MAPPING
-    virtual int mapEntityDofToGlobal ( const MapperType &mapper,
-                                       const EntityType &entity,
-                                       int subEntity,
-                                       int localDof ) const = 0;
-#endif
+    virtual bool
+    checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                const EntityType &entity,
+                                const int subEntity,
+                                const int localDof,
+                                const int globalDof ) const = 0;
   };
 
 
@@ -942,20 +967,48 @@ namespace Dune
     {
       return mapper.indexSet_.template subIndex< codim >( entity, i );
     }
-#if LAGRANGE_CHECK_MAPPING
-    virtual int mapEntityDofToGlobal ( const MapperType &mapper,
-                                       const EntityType &entity,
-                                       int subEntity,
-                                       int localDof ) const
+
+    virtual bool checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                             const EntityType &entity,
+                                             const int subEntity,
+                                             const int localDof,
+                                             const int globalDof ) const
+    {
+      typedef Capabilities :: hasEntity< GridType, codim > HasEntity;
+
+      return checkMapEntityDofToGlobal
+        ( mapper, entity, subEntity, localDof, globalDof,
+          MetaBool< HasEntity :: v >() );
+    }
+
+    inline bool
+    checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                const EntityType &entity,
+                                const int subEntity,
+                                const int localDof,
+                                const int globalDof,
+                                const MetaBool< true > hasEntity ) const
     {
       typedef typename EntityType :: template Codim< codim > :: EntityPointer
         SubEntityPtrType;
 
       const SubEntityPtrType subEntityPtr
         = entity.template entity< codim >( subEntity );
-      return mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
+      const int globalEntityDof
+        = mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
+      return (globalEntityDof == globalDof);
     }
-#endif
+
+    inline bool
+    checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                const EntityType &entity,
+                                const int subEntity,
+                                const int localDof,
+                                const int globalDof,
+                                const MetaBool< false > hasEntity ) const
+    {
+      return true;
+    }
   };
 #endif
 
