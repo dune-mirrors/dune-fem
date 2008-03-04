@@ -225,6 +225,14 @@ public:
   {
     op.timeProvider(this);
   }
+  ExplRungeKutta(Operator& op,int pord,double cfl, double startTime, bool verbose = true ) :
+    TimeProvider(startTime,cfl),
+    BaseType(op,*this,pord,verbose),
+    tp_(op.space().grid().comm(),*this), 
+    savetime_(0.0), savestep_(1)
+  {
+    op.timeProvider(this);
+  }
 
   void initialize(const DestinationType& U0)
   {
