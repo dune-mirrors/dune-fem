@@ -14,13 +14,8 @@ namespace Dune
 
   struct SimplexMaxOrder 
   {
-#ifdef ENABLE_PARDG 
+    // uses implementation from parDG
     enum { maxOrder1 = 39, maxOrder2 = 13, maxOrder3 = 12 };
-#elif defined HAVE_ALBERTA_FOUND
-    enum { maxOrder1 = 19, maxOrder2 = 17, maxOrder3 = 7 };
-#else
-    enum { maxOrder1 = 19, maxOrder2 = 12 , maxOrder3 = 5 };
-#endif
   };
           
   /*  \class SimplexQuadrature

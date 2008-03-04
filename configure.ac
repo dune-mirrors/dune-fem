@@ -67,10 +67,6 @@ AC_CHECK_FILE([fem/devel-suite/Makefile.am],
                                 fem/devel-suite/laplace/Makefile])],
               [])
               
-AC_CHECK_FILE([fem/quadrature/extra/Makefile.am],
-              [AC_CONFIG_FILES([fem/quadrature/extra/Makefile])],
-              [])
-
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile

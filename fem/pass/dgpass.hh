@@ -260,11 +260,11 @@ namespace Dune {
       /////////////////////////////
       // Surface integral part
       /////////////////////////////
-      double nbvol;
 
       IntersectionIteratorType endnit = gridPart_.iend(en);
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
       {
+        double nbvol;
         double wspeedS = 0.0;
         if (nit.neighbor()) 
         {

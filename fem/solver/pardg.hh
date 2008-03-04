@@ -31,6 +31,7 @@ namespace pardg {
 #include <vector.hpp>
 }
 
+#include <quadrature.hpp>  
 #include <ode_solver.hpp>
 #include <linear_solver.hpp>
 
@@ -42,6 +43,7 @@ namespace pardg {
 #include "ode/vector.hpp"
 }
 
+#include "ode/quadrature.hpp"  
 #include "ode/blas.hpp"
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"

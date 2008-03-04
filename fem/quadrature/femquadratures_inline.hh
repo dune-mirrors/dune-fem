@@ -1,14 +1,7 @@
 namespace Dune
 {
 
-// use pardg quadratures, otherwise ALBERTAs or UGs 
-#ifdef ENABLE_PARDG 
 #define SimplexPointsAdapter ParDGSimplexPointsAdapter
-#elif defined HAVE_ALBERTA_FOUND
-#define SimplexPointsAdapter AlbertaSimplexPointsAdapter
-#else 
-#define SimplexPointsAdapter UGSimplexPointsAdapter
-#endif
 
 // only if we use dune-fem quadratures  
   template <class ct, int dim>

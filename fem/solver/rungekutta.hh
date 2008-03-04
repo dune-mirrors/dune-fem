@@ -225,11 +225,19 @@ public:
   {
     op.timeProvider(this);
   }
+  
+  /** \brief constructor 
+    \param[in] op Operator \f$L\f$ 
+    \param[in] pord polynomial order 
+    \param[in] cfl cfl number 
+    \param[in] startTime start time of time stepper  
+    \param[in] verbose verbosity 
+  */
   ExplRungeKutta(Operator& op,int pord,double cfl, double startTime, bool verbose = true ) :
     TimeProvider(startTime,cfl),
     BaseType(op,*this,pord,verbose),
     tp_(op.space().grid().comm(),*this), 
-    savetime_(0.0), savestep_(1)
+    savetime_(startTime), savestep_(1)
   {
     op.timeProvider(this);
   }

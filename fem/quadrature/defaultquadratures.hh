@@ -11,31 +11,12 @@
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 
-/*
-#ifndef HAVE_ALBERTA_FOUND
-#ifdef HAVE_ALBERTA
-#if HAVE_ALBERTA 
-#define HAVE_ALBERTA_FOUND
-#warning "Use ALBERTA quadratures!"
-#endif
-#endif
-#endif
-*/
-
-// use quadratures from dune-grid 
-#ifndef ENABLE_PARDG 
-#define USE_DUNE_QUADRATURES
-#endif
-
-// do not use ALBERTA Quadratures at the moment 
-#undef HAVE_ALBERTA_FOUND
-#ifdef HAVE_ALBERTA_FOUND
-// inlcude albertagrid.hh includes the needed alberta.h 
-#include <dune/grid/albertagrid.hh>
-#endif
+// don't use quadratures from dune-grid 
+//#define USE_DUNE_QUADRATURES
 
 // include quadrature points 
 #ifdef USE_DUNE_QUADRATURES
+#warning "Don't use DUNE Quadratures!!!" 
 #include "dunequadratures.hh"
 #else
 #include "femquadratures.hh"
@@ -126,6 +107,4 @@ namespace Dune
 } // end namespace Dune
 
 #undef USE_DUNE_QUADRATURES
-#undef HAVE_ALBERTA_FOUND
-
 #endif

@@ -37,3 +37,8 @@
 #include "bicgstab.cpp"
 #include "cg.cpp"
 #include "vector.cpp"
+
+#include "quadrature0d.cpp"
+#include "quadrature1d.cpp"
+#include "quadrature2d.cpp"
+#include "quadrature3d.cpp"
