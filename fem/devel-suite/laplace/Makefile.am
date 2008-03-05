@@ -1,6 +1,6 @@
 # IGNORE_HEADERS
 
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) -lblas
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 
 noinst_PROGRAMS = laplace sinelaplace
 laplace_SOURCES = laplace.cc

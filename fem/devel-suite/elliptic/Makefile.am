@@ -10,7 +10,7 @@ GRIDDIM = 2
 POLORDER = 1
 PROBLEM = POISSON
 
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) -lblas
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 
 noinst_PROGRAMS = elliptic
 elliptic_SOURCES = elliptic.cc

@@ -8,7 +8,7 @@ EXTRA_DIST = testgrid.hh
 AM_CXXFLAGS=-g -Wall
 
 # linker flags
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) ../../../libfem.la
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) $(LOCAL_LIBS)
 # preprocessor flags
 AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
 

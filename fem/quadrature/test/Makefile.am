@@ -6,7 +6,7 @@ EXTRA_DIST = cachequad_test.hh \
              sgrid_fixture.hh \
              quad_test.hh
 
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) 
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
 
 check_PROGRAMS = tester 
