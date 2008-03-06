@@ -1,5 +1,6 @@
 Module: dune-fem
 Version: 0.10
+Maintainer: dune@mathematik.uni-freiburg.de
 Depends: dune-common dune-grid
 
 run_configure () {
