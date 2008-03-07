@@ -15,6 +15,29 @@ namespace Dune
   : public Exception
   {};
 
+  class ParameterInvalid
+  : public Exception
+  {};
+
+
+
+  template< class T >
+  class ValidateNotLess
+  {
+  protected:
+    const T threshold_;
+
+  public:
+    inline ValidateNotLess ( const T &threshold )
+    : threshold_( threshold )
+    {}
+
+    inline bool operator() ( const T &value ) const
+    {
+      return value >= threshold_;
+    }
+  };
+
 
 
   /** \class Parameter
@@ -168,6 +191,15 @@ namespace Dune
       }
     }
 
+    inline void replace ( const std :: string &key,
+                          const std :: string &value )
+    {
+      if( verbose_ )
+        std :: cout << "Parameter: Replacing " << key << " = " << value
+                    << std :: endl;
+      params_[ key ] = value;
+    }
+
   public:
     /** \brief add parameters from a file to the container
      * 
@@ -206,6 +238,76 @@ namespace Dune
       parse( instance().map( key ), value );
     }
     
+    /** \brief get an optional parameter from the container
+     *
+     *  \note This method returns a default value, if the parameter cannot be
+     *        found.
+     *
+     *  \param[in]   key           name of the parameter to get
+     *  \param[in]   defaultValue  default value for this parameter
+     *  \param[out]  value         value of the parameter
+     */
+    template< class T >
+    inline static void get ( const std :: string &key,
+                             const T &defaultValue,
+                             T &value )
+    {
+      std :: ostringstream out;
+      out << defaultValue;
+      parse( instance().map( key, out.str() ), value );
+    }
+
+    /** \brief get a mandatory parameter from the container
+     *
+     *  \note This method throws an exception, if the parameter cannot be
+     *        found.
+     *
+     *  \param[in]   key        name of the parameter to get
+     *  \param[in]   validator  validator for the parameter value
+     *  \param[out]  value      value of the parameter
+     */
+    template< class T, class Validator >
+    inline static void getValid ( const std :: string &key,
+                                  const Validator &validator,
+                                  T &value )
+    {
+      parse( instance().map( key ), value );
+      if( !validator( value ) )
+      {
+        std :: ostringstream message;
+        message << "Parameter '" << key << "' invalid.";
+        DUNE_THROW( ParameterInvalid, message.str() );
+      }
+    }
+
+    /** \brief get an optional parameter from the container
+     *
+     *  \note This method returns a default value, if the parameter cannot be
+     *        found.
+     *
+     *  \param[in]   key           name of the parameter to get
+     *  \param[in]   defaultValue  default value for this parameter
+     *  \param[in]   validator     validator for the parameter value
+     *  \param[out]  value         value of the parameter
+     */
+    template< class T, class Validator >
+    inline static void getValid ( const std :: string &key,
+                                  const T &defaultValue,
+                                  const Validator &validator,
+                                  T &value )
+    {
+      std :: ostringstream out;
+      out << defaultValue;
+      parse( instance().map( key, out.str() ), value );
+      if( !validator( value ) )
+      {
+        std :: cerr << "Warning: Parameter '" << key << "' is invalid."
+                    << std :: endl;
+        instance().replace( key, out.str() );
+        parse( out.str(), value );
+      }
+    }
+    
     /** \brief get a mandatory parameter from the container
      *
      *  \note This method throws an exception, if the parameter cannot be
@@ -230,25 +332,6 @@ namespace Dune
      *
      *  \param[in]   key           name of the parameter to get
      *  \param[in]   defaultValue  default value for this parameter
-     *  \param[out]  value         value of the parameter
-     */
-    template< class T >
-    inline static void get ( const std :: string &key,
-                             const T &defaultValue,
-                             T &value )
-    {
-      std :: ostringstream out;
-      out << defaultValue;
-      parse( instance().map( key, out.str() ), value );
-    }
-
-    /** \brief get an optional parameter from the container
-     *
-     *  \note This method returns a default value, if the parameter cannot be
-     *        found.
-     *
-     *  \param[in]   key           name of the parameter to get
-     *  \param[in]   defaultValue  default value for this parameter
      *
      *  \returns value of the parameter
      */
@@ -258,6 +341,47 @@ namespace Dune
     {
       T value;
       get( key, defaultValue, value );
+      return value;
+    }
+    
+    /** \brief get an optional parameter from the container
+     *
+     *  \note This method returns a default value, if the parameter cannot be
+     *        found.
+     *
+     *  \param[in]   key           name of the parameter to get
+     *  \param[in]   validator     validator for the parameter value
+     *
+     *  \returns value of the parameter
+     */
+    template< class T, class Validator >
+    inline static T getValidValue ( const std :: string &key,
+                                    const Validator &validator )
+    {
+      T value;
+      getValid( key, validator, value );
+      return value;
+    }
+
+
+    /** \brief get an optional parameter from the container
+     *
+     *  \note This method returns a default value, if the parameter cannot be
+     *        found.
+     *
+     *  \param[in]   key           name of the parameter to get
+     *  \param[in]   defaultValue  default value for this parameter
+     *  \param[in]   validator     validator for the parameter value
+     *
+     *  \returns value of the parameter
+     */
+    template< class T, class Validator >
+    inline static T getValidValue ( const std :: string &key,
+                                    const T &defaultValue,
+                                    const Validator &validator )
+    {
+      T value;
+      getValid( key, defaultValue, validator, value );
       return value;
     }
 
