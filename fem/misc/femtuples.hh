@@ -393,7 +393,7 @@ namespace Dune{
      * @return The N-th element of the tuple.
      */
     template<typename T1, typename T2>
-    static typename TupleAccessTraits<
+    static inline typename TupleAccessTraits<
       typename ElementType<N,Pair<T1,T2> >::type
     >::NonConstType
     get(Pair<T1,T2>& tuple)
@@ -407,7 +407,7 @@ namespace Dune{
      * @return The N-th element of the tuple.
      */
     template<typename T1, typename T2>
-    static typename TupleAccessTraits<
+    static inline typename TupleAccessTraits<
       typename ElementType<N,Pair<T1,T2> >::type
     >::ConstType
     get(const Pair<T1,T2>& tuple)
@@ -428,7 +428,7 @@ namespace Dune{
      * @return The first element of the tuple.
      */
     template<typename T1, typename T2>
-    static typename TupleAccessTraits<T1>::NonConstType get(Pair<T1,T2>& tuple)
+    static inline typename TupleAccessTraits<T1>::NonConstType get(Pair<T1,T2>& tuple)
     {
       return tuple.first();
     }
@@ -439,16 +439,14 @@ namespace Dune{
      * @return The first element of the tuple.
      */
     template<typename T1, typename T2>
-    static typename TupleAccessTraits<T1>::ConstType get(const Pair<T1,T2>& tuple)
+    static inline typename TupleAccessTraits<T1>::ConstType get(const Pair<T1,T2>& tuple)
     {
       return tuple.first();
     }
   };
 
-  template<int i, typename T1, typename T2, typename T3, typename T4,
-	   typename T5, typename T6, typename T7, typename T8, typename T9>
-  typename TupleAccessTraits<typename ElementType<i, Tuple<T1,T2,T3,T4,T5,T6,T7,T8,T9> >::type>
-  ::NonConstType 
+  template<int i, typename T1, typename T2, typename T3, typename T4,typename T5, typename T6, typename T7, typename T8, typename T9>
+  inline typename TupleAccessTraits<typename ElementType<i, Tuple<T1,T2,T3,T4,T5,T6,T7,T8,T9> >::type> :: NonConstType 
   get(Tuple<T1,T2,T3,T4,T5,T6,T7,T8,T9>& t)
   {
     return ElementAccess<i>::get(t);
@@ -684,7 +682,6 @@ namespace Dune{
   {
     return first_;
   }
- 
   
   template<typename T1, typename T2>
   inline typename TupleAccessTraits<T2>::NonConstType
@@ -726,7 +723,7 @@ namespace Dune{
 
   template<typename T1>
   template<typename T2>
-  Pair<T1,Nil>& Pair<T1,Nil>::operator=(const Pair<T2,Nil>& other)
+  inline Pair<T1,Nil>& Pair<T1,Nil>::operator=(const Pair<T2,Nil>& other)
   {
     first_ = other.first_;
     return *this;
@@ -734,7 +731,7 @@ namespace Dune{
 
   
   template<typename T1>
-  Pair<T1,Nil>& Pair<T1,Nil>::operator=(const Pair& other)
+  inline Pair<T1,Nil>& Pair<T1,Nil>::operator=(const Pair& other)
   {
     first_ = other.first_;
     return *this;
@@ -753,6 +750,31 @@ namespace Dune{
   {
     return first_;
   }
+
+  ///////////////////////////////////////
+  //  
+  //  TupleLength
+  //
+  ///////////////////////////////////////
+  
+  //! length of a tuple 
+  template<class T>
+    struct TupleLength  {
+        enum { value = 1 + TupleLength<typename T::Type2>::value };
+    };
+
+  //! length of an empty tuple is zero  
+  template<>
+     struct TupleLength<Tuple<Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil> > {
+        enum { value = 0 };
+     };
+
+  //! length of an empty tuple is zero  
+  template<>
+    struct TupleLength<Nil> {
+        enum { value = 0 };
+    };
+
  
 } // end namespace Dune 
 #endif
