@@ -10,22 +10,8 @@
 #include <dirent.h>
 
 //- Dune includes 
+#include <dune/fem/misc/femtuples.hh>
 #include <dune/fem/io/file/iointerface.hh>
-
-template<class T>
-struct TupleLength  {
-  enum { value = 1 + TupleLength<typename T::Type2>::value };
-};
-
-template<>
- struct TupleLength<Tuple<Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil> > {
- enum { value = 0 };
-};
-
-template<>
-struct TupleLength<Nil> {
-  enum { value = 0 };
-};
 
 
 // return number of procs of data set 
