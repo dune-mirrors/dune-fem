@@ -4,6 +4,7 @@
 #include <map>
 #include <queue>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <dune/common/exceptions.hh>
@@ -22,6 +23,22 @@ namespace Dune
 
 
   template< class T >
+  class ValidateNotGreater
+  {
+  protected:
+    const T threshold_;
+
+  public:
+    inline ValidateNotGreater ( const T &threshold )
+    : threshold_( threshold )
+    {}
+
+    inline bool operator() ( const T &value ) const
+    {
+      return value <= threshold_;
+    }
+  };
+  template< class T >
   class ValidateNotLess
   {
   protected:
@@ -35,6 +52,72 @@ namespace Dune
     inline bool operator() ( const T &value ) const
     {
       return value >= threshold_;
+    }
+  };
+  template< class T >
+  class ValidateIsLess
+  {
+  protected:
+    const T threshold_;
+
+  public:
+    inline ValidateIsLess ( const T &threshold )
+    : threshold_( threshold )
+    {}
+
+    inline bool operator() ( const T &value ) const
+    {
+      return value < threshold_;
+    }
+  };
+  template< class T >
+  class ValidateIsGreater
+  {
+  protected:
+    const T threshold_;
+
+  public:
+    inline ValidateIsGreater ( const T &threshold )
+    : threshold_( threshold )
+    {}
+
+    inline bool operator() ( const T &value ) const
+    {
+      return value > threshold_;
+    }
+  };
+  template< class T >
+  class ValidateInOpenInterval
+  {
+  protected:
+    const T lThreshold_,rThreshold_;
+
+  public:
+    inline ValidateInOpenInterval ( const T &lThreshold, const T &rThreshold )
+    : lThreshold_( lThreshold ),
+      rThreshold_( rThreshold )
+    {}
+
+    inline bool operator() ( const T &value ) const
+    {
+      return (value > lThreshold_ && value < rThreshold_); 
+    }
+  };
+  template< class T >
+  class ValidateInClosedInterval
+  {
+  protected:
+    const T lThreshold_,rThreshold_;
+
+  public:
+    inline ValidateInClosedInterval ( const T &lThreshold, const T &rThreshold )
+    : lThreshold_( lThreshold ),
+      rThreshold_( rThreshold )
+    {}
+
+    inline bool operator() ( const T &value ) const
+    {
+      return (value >= lThreshold_ && value <= rThreshold_); 
     }
   };
 
