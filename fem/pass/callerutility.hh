@@ -21,13 +21,8 @@ namespace Dune {
   {
     typedef CompileTimeChecker<
       static_cast<int>(MaxIndex<SelectorImp>::value) < 
-      static_cast<int>(Length<ArgTupleImp>::value)
+      static_cast<int>(TupleLength<ArgTupleImp>::value)
     > Maximal_index_of_selector_exceeds_argument_length;
-    //typedef CompileTimeChecker<
-      //static_cast<int>(MaxIndex<typename SelectorImp::Base>::value) < 
-      //static_cast<int>(Length<ArgTupleImp>::value)
-      //> Maximal_index_of_selector_exceeds_argument_length;
-
     
     typedef SelectorImp SelectorType;
     //typedef typename SelectorImp::Base SelectorType;
