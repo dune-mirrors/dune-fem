@@ -42,7 +42,7 @@ namespace Dune {
   };
 
   //! Wrapper interface for DG base functions
-  template <class FunctionSpaceType>
+  template <class FunctionSpaceType, int baseNum >
   class DGBaseFunctionWrapper 
   {
   protected:
@@ -93,103 +93,101 @@ namespace Dune {
     /// 1d functions 
     ////////////////////////////
     // eval function
-    RangeFieldType eval_line(const int i,const DomainType & xi ) const
+    RangeFieldType eval_line(const DomainType & xi ) const
     {
-      return OrthonormalBase_1D::eval_line(i,&xi[0]); 
+      return OrthonormalBase_1D::eval_line(baseNum,&xi[0]); 
     }
 
     // eval gradient 
-    RangeFieldType grad_line(const int i, const int comp, const DomainType & xi) const
+    RangeFieldType grad_line(const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_1D::grad_line(i,&xi[0],
-                                     grad_);
+      OrthonormalBase_1D::grad_line(baseNum,&xi[0],grad_);
       return grad_[comp];
     }
 
     ///////////////////////////////////
     //  2d functions 
     //////////////////////////////////
-    RangeFieldType eval_triangle_2d (const int i, const DomainType & xi ) const
+    RangeFieldType eval_triangle_2d (const DomainType & xi ) const
     {
-      return OrthonormalBase_2D::eval_triangle_2d(i,&xi[0]);
+      return OrthonormalBase_2D::eval_triangle_2d(baseNum,&xi[0]);
     }
     
-    RangeFieldType eval_quadrilateral_2d (const int i, const DomainType & xi ) const
+    RangeFieldType eval_quadrilateral_2d (const DomainType & xi ) const
     {
-      return OrthonormalBase_2D::eval_quadrilateral_2d(i,
-                                                       &xi[0]);  
+      return OrthonormalBase_2D::eval_quadrilateral_2d(baseNum,&xi[0]);  
     }
     
-    RangeFieldType grad_triangle_2d (const int i, const int comp, const DomainType & xi) const
+    RangeFieldType grad_triangle_2d (const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_2D::grad_triangle_2d(i,&xi[0],grad_);
+      OrthonormalBase_2D::grad_triangle_2d(baseNum,&xi[0],grad_);
       return grad_[comp];
     }
     
-    RangeFieldType grad_quadrilateral_2d (const int i, const int comp, const DomainType & xi) const 
+    RangeFieldType grad_quadrilateral_2d (const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_2D::grad_quadrilateral_2d(i, &xi[0], grad_); 
+      OrthonormalBase_2D::grad_quadrilateral_2d(baseNum, &xi[0], grad_); 
       return grad_[comp];
     }
 
     //////////////////////////////////////
     //  3d functions 
     //////////////////////////////////////
-    RangeFieldType eval_tetrahedron_3d (const int i, const DomainType & xi ) const
+    RangeFieldType eval_tetrahedron_3d (const DomainType & xi ) const
     {
-      return OrthonormalBase_3D::eval_tetrahedron_3d(i,&xi[0]); 
+      return OrthonormalBase_3D::eval_tetrahedron_3d(baseNum,&xi[0]); 
     }
     
-    RangeFieldType eval_pyramid_3d (const int i, const DomainType & xi ) const
+    RangeFieldType eval_pyramid_3d (const DomainType & xi ) const
     {
-      return OrthonormalBase_3D::eval_pyramid_3d(i,&xi[0]); 
+      return OrthonormalBase_3D::eval_pyramid_3d(baseNum,&xi[0]); 
     }
     
-    RangeFieldType eval_prism_3d (const int i, const DomainType & xi ) const
+    RangeFieldType eval_prism_3d (const DomainType & xi ) const
     {
-      return OrthonormalBase_3D::eval_prism_3d(i,&xi[0]); 
+      return OrthonormalBase_3D::eval_prism_3d(baseNum,&xi[0]); 
     }
     
-    RangeFieldType eval_hexahedron_3d (const int i, const DomainType & xi ) const
+    RangeFieldType eval_hexahedron_3d (const DomainType & xi ) const
     {
-      return OrthonormalBase_3D::eval_hexahedron_3d(i,&xi[0]); 
+      return OrthonormalBase_3D::eval_hexahedron_3d(baseNum,&xi[0]); 
     }
    
-    RangeFieldType grad_tetrahedron_3d (const int i, const int comp, const DomainType & xi) const 
+    RangeFieldType grad_tetrahedron_3d (const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_3D::grad_tetrahedron_3d(i,&xi[0],grad_);
+      OrthonormalBase_3D::grad_tetrahedron_3d(baseNum,&xi[0],grad_);
       return grad_[comp];
     }
     
-    RangeFieldType grad_pyramid_3d (const int i, const int comp, const DomainType & xi) const
+    RangeFieldType grad_pyramid_3d (const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_3D::grad_pyramid_3d(i,&xi[0], grad_); 
+      OrthonormalBase_3D::grad_pyramid_3d(baseNum,&xi[0], grad_); 
       return grad_[comp];
     }
 
-    RangeFieldType grad_prism_3d (const int i, const int comp, const DomainType & xi) const 
+    RangeFieldType grad_prism_3d (const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_3D::grad_prism_3d(i,&xi[0], grad_ ); 
+      OrthonormalBase_3D::grad_prism_3d(baseNum,&xi[0], grad_ ); 
       return grad_[comp];
     }
 
-    RangeFieldType grad_hexahedron_3d (const int i, const int comp, const DomainType & xi) const
+    RangeFieldType grad_hexahedron_3d (const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_3D::grad_hexahedron_3d(i,&xi[0], grad_ ); 
+      OrthonormalBase_3D::grad_hexahedron_3d(baseNum,&xi[0], grad_ ); 
       return grad_[comp];
     }
 
   }; // end class DGBaseFunctionWrapper
 
   //! Base class for DG base functions
-  template <class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType, int polOrd>
+  template <class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType, int polOrd, int baseNum>
   class DGBaseFunction;
 
   //! Specialisation for triangles
-  template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd> :
+  template <class FunctionSpaceType, int polOrd, int baseNum>
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd, baseNum> :
     public BaseFunctionInterface<FunctionSpaceType>,
-    private DGBaseFunctionWrapper<FunctionSpaceType>
+    private DGBaseFunctionWrapper<FunctionSpaceType, baseNum>
   {
   private:
     //- Local typedefs
@@ -197,16 +195,12 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
-  private:
-    //- Local data
-    const int baseNum_;
-
   public:
-    DGBaseFunction(int baseNum) :
-      DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
+    DGBaseFunction() :
+      DGBaseFunctionWrapper<FunctionSpaceType,baseNum>()
+    {
       // Check if base number is valid
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+      assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
@@ -216,13 +210,13 @@ namespace Dune {
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = this->eval_line(baseNum_, x);
+      phi = this->eval_line(x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = this->grad_line(baseNum_, diffVariable[0], x);
+      phi = this->grad_line(diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -232,17 +226,17 @@ namespace Dune {
     }
 
     static int numBaseFunctions() {
-      return DGBaseFunctionWrapper<FunctionSpaceType>::
+      return DGBaseFunctionWrapper<FunctionSpaceType, baseNum>::
         numBaseFunctions(static_cast<int>(polOrd));
     }
 
   }; // end class DGBaseFunction<FunctionSpaceType, triangle, polOrd>
 
   //! Specialisation for triangles
-  template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd> :
+  template <class FunctionSpaceType, int polOrd, int baseNum >
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd, baseNum > :
     public BaseFunctionInterface<FunctionSpaceType>,
-    private DGBaseFunctionWrapper<FunctionSpaceType>
+    private DGBaseFunctionWrapper<FunctionSpaceType, baseNum>
   {
   private:
     //- Local typedefs
@@ -250,16 +244,12 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
-  private:
-    //- Local data
-    const int baseNum_;
-
   public:
-    DGBaseFunction(int baseNum) :
-      DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
+    DGBaseFunction() :
+      DGBaseFunctionWrapper<FunctionSpaceType,baseNum>()
+    {
       // Check if base number is valid
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+      assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
@@ -268,13 +258,13 @@ namespace Dune {
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      phi = this->eval_triangle_2d(baseNum_, x);
+      phi = this->eval_triangle_2d(x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = this->grad_triangle_2d(baseNum_, diffVariable[0], x);
+      phi = this->grad_triangle_2d(diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -284,34 +274,29 @@ namespace Dune {
     }
 
     static int numBaseFunctions() {
-      return DGBaseFunctionWrapper<FunctionSpaceType>::
+      return DGBaseFunctionWrapper<FunctionSpaceType,baseNum>::
         numBaseFunctions(static_cast<int>(polOrd));
     }
 
   }; // end class DGBaseFunction<FunctionSpaceType, triangle, polOrd>
 
   //! Specialisation for quadrilaterals
-  template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Quadrilateral, polOrd> :
+  template <class FunctionSpaceType, int polOrd, int baseNum >
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Quadrilateral, polOrd, baseNum > :
     public BaseFunctionInterface<FunctionSpaceType>,
-    private DGBaseFunctionWrapper<FunctionSpaceType>
+    private DGBaseFunctionWrapper<FunctionSpaceType, baseNum>
   {
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-  
-  private:
-    //- Local data
-    int baseNum_;
 
   public:
-    DGBaseFunction(int baseNum) :
-      DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) 
+    DGBaseFunction() :
+      DGBaseFunctionWrapper<FunctionSpaceType,baseNum>()
     {
       // Check if base number is valid
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+      assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
@@ -321,15 +306,13 @@ namespace Dune {
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
-      phi = this->eval_quadrilateral_2d(baseNum_, x);
+      phi = this->eval_quadrilateral_2d(x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
-      phi = this->grad_quadrilateral_2d(baseNum_, diffVariable[0], x);
+      phi = this->grad_quadrilateral_2d(diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -339,31 +322,27 @@ namespace Dune {
     }
 
     static int numBaseFunctions() {
-      return DGBaseFunctionWrapper<FunctionSpaceType>::
+      return DGBaseFunctionWrapper<FunctionSpaceType,baseNum>::
         numBaseFunctions(static_cast<int>(polOrd));
     }
   }; // end class DGBaseFunction<FunctionSpaceType, quadrilateral, polOrd>
 
   //! Specialisation for tetrahedrons
-  template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Tetrahedron, polOrd> :
+  template <class FunctionSpaceType, int polOrd, int baseNum >
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Tetrahedron, polOrd, baseNum> :
     public BaseFunctionInterface<FunctionSpaceType>,
-    private DGBaseFunctionWrapper<FunctionSpaceType>
+    private DGBaseFunctionWrapper<FunctionSpaceType, baseNum>
   {
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
-  private:
-    //- Local data
-    const int baseNum_;
-
   public:
-    DGBaseFunction(int baseNum) :
-      DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+    DGBaseFunction() :
+      DGBaseFunctionWrapper<FunctionSpaceType,baseNum>()
+    {
+      assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
@@ -372,13 +351,13 @@ namespace Dune {
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      phi = this->eval_tetrahedron_3d(baseNum_, x);
+      phi = this->eval_tetrahedron_3d(x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = this->grad_tetrahedron_3d(baseNum_, diffVariable[0], x);
+      phi = this->grad_tetrahedron_3d(diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -388,32 +367,28 @@ namespace Dune {
     }
 
     static int numBaseFunctions() {
-      return DGBaseFunctionWrapper<FunctionSpaceType>::
+      return DGBaseFunctionWrapper<FunctionSpaceType,baseNum>::
         numBaseFunctions(static_cast<int>(polOrd));
     }
 
   }; // end class DGBaseFunction<FunctionSpaceType, tetrahedron, polOrd>
 
   //! Specialisation for pyramids
-  template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Pyramid, polOrd> :
+  template <class FunctionSpaceType, int polOrd, int baseNum>
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Pyramid, polOrd, baseNum> :
     public BaseFunctionInterface<FunctionSpaceType>,
-    private DGBaseFunctionWrapper<FunctionSpaceType>
+     private DGBaseFunctionWrapper<FunctionSpaceType,baseNum>
   {
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
-  private:
-    //- Local data
-    const int baseNum_;
-
   public:
-    DGBaseFunction(int baseNum) :
-      DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+    DGBaseFunction() :
+      DGBaseFunctionWrapper<FunctionSpaceType,baseNum>()
+    {
+      assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
@@ -421,14 +396,15 @@ namespace Dune {
     ~DGBaseFunction() {}
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      phi = this->eval_pyramid_3d(baseNum_, x);
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = this->eval_pyramid_3d(x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = this->grad_pyramid_3d(baseNum_, diffVariable[0], x);
+      phi = this->grad_pyramid_3d(diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -437,32 +413,28 @@ namespace Dune {
     }
 
     static int numBaseFunctions() {
-      return DGBaseFunctionWrapper<FunctionSpaceType>::
+      return DGBaseFunctionWrapper<FunctionSpaceType,baseNum>::
         numBaseFunctions(static_cast<int>(polOrd));
     }
 
   }; // end class DGBaseFunction<FunctionSpaceType, pyramid, polOrd>
 
   //! Specialisation for prisms
-  template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Prism, polOrd> :
+  template <class FunctionSpaceType, int polOrd, int baseNum>
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Prism, polOrd, baseNum> :
     public BaseFunctionInterface<FunctionSpaceType>,
-    private DGBaseFunctionWrapper<FunctionSpaceType>
+     private DGBaseFunctionWrapper<FunctionSpaceType,baseNum>
   {
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
-  private:
-    //- Local data
-    const int baseNum_;
-
   public:
-    DGBaseFunction(int baseNum) :
-      DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+    DGBaseFunction() :
+      DGBaseFunctionWrapper<FunctionSpaceType,baseNum>()
+    {
+      assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
@@ -471,13 +443,13 @@ namespace Dune {
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
-      phi = this->eval_prism_3d(baseNum_, x);
+      phi = this->eval_prism_3d(x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = this->grad_prism_3d(baseNum_, diffVariable[0], x );
+      phi = this->grad_prism_3d(diffVariable[0], x );
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -486,32 +458,28 @@ namespace Dune {
     }
 
     static int numBaseFunctions() {
-      return DGBaseFunctionWrapper<FunctionSpaceType>::
+      return DGBaseFunctionWrapper<FunctionSpaceType,baseNum>::
         numBaseFunctions(static_cast<int>(polOrd));
     }
 
   }; // end class DGBaseFunction<FunctionSpaceType, prism, polOrd>
 
   //! Specialisation for hexahedrons
-  template <class FunctionSpaceType, int polOrd>
-  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd> :
+  template <class FunctionSpaceType, int polOrd, int baseNum>
+  class DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd, baseNum > :
     public BaseFunctionInterface<FunctionSpaceType>,
-    private DGBaseFunctionWrapper<FunctionSpaceType>
+     private DGBaseFunctionWrapper<FunctionSpaceType,baseNum>
   {
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
   
-  private:
-    //- Local data
-    const int baseNum_;
-
   public:
-    DGBaseFunction(int baseNum) :
-      DGBaseFunctionWrapper<FunctionSpaceType>(),
-      baseNum_(baseNum) {
-      assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
+    DGBaseFunction() :
+      DGBaseFunctionWrapper<FunctionSpaceType,baseNum>()
+    {
+      assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
       assert(FunctionSpaceType::DimRange == 1);
     }
@@ -519,14 +487,15 @@ namespace Dune {
     ~DGBaseFunction() {}
 
     virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
-                          const DomainType& x, RangeType& phi) const {
-      phi = this->eval_hexahedron_3d(baseNum_, x);
+                          const DomainType& x, RangeType& phi) const 
+    {
+      phi = this->eval_hexahedron_3d(x);
     }
     
     virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      phi = this->grad_hexahedron_3d(baseNum_,diffVariable[0], x);
+      phi = this->grad_hexahedron_3d(diffVariable[0], x);
     }
 
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
@@ -535,7 +504,7 @@ namespace Dune {
     }
 
     static int numBaseFunctions() {
-      return DGBaseFunctionWrapper<FunctionSpaceType>::
+      return DGBaseFunctionWrapper<FunctionSpaceType,baseNum>::
         numBaseFunctions(static_cast<int>(polOrd));
     }
 
@@ -557,22 +526,24 @@ namespace Dune {
 
     virtual BaseFunctionType* baseFunction(int i) const 
     {
+      // see orthonormalbase_mod.cc for max number of base functions 
+      enum { maxBaseFunctions = 164 };
       switch (GeometryIdentifier::fromGeo(this->geometry())) 
       {
         case GeometryIdentifier::Line:
-          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd>(i);
+          return BaseFunctionCreator<GeometryIdentifier::Line, maxBaseFunctions, 0>::create(i);
         case GeometryIdentifier::Triangle:
-          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd>(i);
+          return BaseFunctionCreator<GeometryIdentifier::Triangle, maxBaseFunctions, 0>::create(i);
         case GeometryIdentifier::Quadrilateral:
-          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Quadrilateral, polOrd>(i);
+          return BaseFunctionCreator<GeometryIdentifier::Quadrilateral, maxBaseFunctions, 0>::create(i);
         case GeometryIdentifier::Tetrahedron:
-          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Tetrahedron, polOrd>(i);
+          return BaseFunctionCreator<GeometryIdentifier::Tetrahedron, maxBaseFunctions, 0>::create(i);
         case GeometryIdentifier::Pyramid:
-          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Pyramid, polOrd>(i);
+          return BaseFunctionCreator<GeometryIdentifier::Pyramid, maxBaseFunctions, 0>::create(i);
         case GeometryIdentifier::Prism:
-          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Prism, polOrd>(i);
+          return BaseFunctionCreator<GeometryIdentifier::Prism, maxBaseFunctions, 0>::create(i);
         case GeometryIdentifier::Hexahedron:
-          return new DGBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd>(i);
+          return BaseFunctionCreator<GeometryIdentifier::Hexahedron, maxBaseFunctions, 0>::create(i);
         default:
           DUNE_THROW(NotImplemented, 
                      "The chosen geometry type is not implemented");
@@ -584,10 +555,46 @@ namespace Dune {
     {
       // call numBaseFunctions from Wrapper class depending on 
       // geometry's dimension 
-      return DGBaseFunctionWrapper<FunctionSpaceType> 
+      return DGBaseFunctionWrapper<FunctionSpaceType,0> 
                 :: numBaseFunctions( polOrd , this->geometry().dim() );
     }
+
+  protected:
+    template <GeometryIdentifier::IdentifierType GeomId, int maxBaseNum, int baseNum> 
+    struct BaseFunctionCreator
+    {
+      // create base function if i equals baseNum 
+      static BaseFunctionType* create(const int i) 
+      {
+        if ( i == baseNum ) 
+        {
+          return new DGBaseFunction<FunctionSpaceType, GeomId, polOrd, baseNum> ();
+        }
+        else 
+        {
+          return BaseFunctionCreator<GeomId,maxBaseNum,baseNum+1>::create( i );
+        }
+      }
+    };
     
+    template <GeometryIdentifier::IdentifierType GeomId, int maxBaseNum> 
+    struct BaseFunctionCreator<GeomId,maxBaseNum,maxBaseNum>
+    {
+      enum { baseNum = maxBaseNum }; 
+      // create base function if i equals baseNum 
+      static inline BaseFunctionType* create(const int i) 
+      {
+        if ( i == baseNum ) 
+        {
+          return new DGBaseFunction<FunctionSpaceType, GeomId, polOrd, baseNum> ();
+        }
+        else 
+        {
+          DUNE_THROW(NotImplemented,"BaseFunction " << baseNum << " not found");
+          return 0;
+        }
+      }
+    };  
   };
 
 } // end namespace Dune

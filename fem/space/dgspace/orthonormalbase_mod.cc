@@ -19,10 +19,9 @@ namespace OrthonormalBase_1D
 /****************************************************************************/
 /* \phi_i(x,y) for lines */
 double  
-eval_line ( int i, DomainType xi )
+eval_line ( const int i, DomainType xi )
 {
-	double x;
-	x=xi[0]; 
+	const double &x = xi[0];
 
 	switch (i)
 	  {
@@ -116,10 +115,9 @@ eval_line ( int i, DomainType xi )
 
 /* \nabla\phi_i(x,y) for triangle */
 void  
-grad_line ( int i, DomainType xi, JacobianRangeType grad )
+grad_line ( const int i, DomainType xi, JacobianRangeType grad )
 {
-	double x;
-	x=xi[0];
+	const double &x = xi[0];
 
 	switch (i)	{
 	case ( 0 ):
@@ -212,10 +210,10 @@ namespace OrthonormalBase_2D
 
 /* \phi_i(x,y) for triangle */
 double  
-eval_triangle_2d ( int i, DomainType xi )
+eval_triangle_2d ( const int i, DomainType xi )
 {
-	double x,y;
-	x=xi[0]; y=xi[1];
+	const double &x = xi[0];
+  const double &y = xi[1];
 
 	switch (i)	{
 		#if (PMAX2D>=0)
@@ -1114,10 +1112,10 @@ eval_triangle_2d ( int i, DomainType xi )
 
 /* \nabla\phi_i(x,y) for triangle */
 void  
-grad_triangle_2d ( int i, DomainType xi, JacobianRangeType grad )
+grad_triangle_2d ( const int i, DomainType xi, JacobianRangeType grad )
 {
-	double x, y;
-	x=xi[0]; y=xi[1];
+	const double &x = xi[0];
+  const double &y = xi[1];
 
 	switch (i)	{
 		#if (PMAX2D>=0)
@@ -2443,10 +2441,10 @@ grad_triangle_2d ( int i, DomainType xi, JacobianRangeType grad )
 
 /* \phi_i(x,y) for quadrilateral */
 double  
-eval_quadrilateral_2d ( int i, DomainType xi )
+eval_quadrilateral_2d ( const int i, DomainType xi )
 {
-	double x,y;
-	x=xi[0]; y=xi[1];
+	const double &x = xi[0];
+  const double &y = xi[1];
 
 	switch (i)	{
 		#if (PMAX2D>=0)
@@ -3016,10 +3014,10 @@ eval_quadrilateral_2d ( int i, DomainType xi )
 
 /* \nabla\phi_i(x,y) for quadrilateral */
 void  
-grad_quadrilateral_2d ( int i, DomainType xi, JacobianRangeType grad )
+grad_quadrilateral_2d ( const int i, DomainType xi, JacobianRangeType grad )
 {
-	double x, y;
-	x=xi[0]; y=xi[1];
+	const double &x = xi[0];
+  const double &y = xi[1];
 
 	switch (i)	{
 		#if (PMAX2D>=0)
@@ -3817,10 +3815,11 @@ namespace OrthonormalBase_3D
 
 /* \phi_i(x,y,z) for tetrahedron */
 double  
-eval_tetrahedron_3d ( int i, DomainType xi )
+eval_tetrahedron_3d ( const int i, DomainType xi )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
@@ -13090,10 +13089,11 @@ eval_tetrahedron_3d ( int i, DomainType xi )
 
 /* \nabla\phi_i(x,y,z) for tetrahedron */
 void  
-grad_tetrahedron_3d ( int i, DomainType xi, JacobianRangeType grad )
+grad_tetrahedron_3d ( const int i, DomainType xi, JacobianRangeType grad )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
@@ -31654,10 +31654,11 @@ grad_tetrahedron_3d ( int i, DomainType xi, JacobianRangeType grad )
 
 /* \phi_i(x,y,z) for pyramid */
 double  
-eval_pyramid_3d ( int i, DomainType xi )
+eval_pyramid_3d ( const int i, DomainType xi )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
@@ -40135,10 +40136,11 @@ eval_pyramid_3d ( int i, DomainType xi )
 
 /* \nabla\phi_i(x,y,z) for pyramid */
 void  
-grad_pyramid_3d ( int i, DomainType xi, JacobianRangeType grad )
+grad_pyramid_3d ( const int i, DomainType xi, JacobianRangeType grad )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
@@ -56984,10 +56986,11 @@ grad_pyramid_3d ( int i, DomainType xi, JacobianRangeType grad )
 
 /* \phi_i(x,y,z) for prim */
 double  
-eval_prism_3d ( int i, DomainType xi )
+eval_prism_3d ( const int i, DomainType xi )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
@@ -61901,10 +61904,11 @@ eval_prism_3d ( int i, DomainType xi )
 
 /* \nabla\phi_i(x,y,z) for prim */
 void  
-grad_prism_3d ( int i, DomainType xi, JacobianRangeType grad )
+grad_prism_3d ( const int i, DomainType xi, JacobianRangeType grad )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
@@ -71071,10 +71075,11 @@ grad_prism_3d ( int i, DomainType xi, JacobianRangeType grad )
 
 /* \phi_i(x,y,z) for hexahedron */
 double  
-eval_hexahedron_3d ( int i, DomainType xi )
+eval_hexahedron_3d ( const int i, DomainType xi )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
@@ -74272,10 +74277,11 @@ eval_hexahedron_3d ( int i, DomainType xi )
 
 /* \nabla\phi_i(x,y,z) for hexahedron */
 void  
-grad_hexahedron_3d ( int i, DomainType xi, JacobianRangeType grad )
+grad_hexahedron_3d ( const int i, DomainType xi, JacobianRangeType grad )
 {
-	double x, y, z;
-	x=xi[0]; y=xi[1]; z=xi[2];
+	const double &x = xi[0];
+  const double &y = xi[1];
+  const double &z = xi[2];
 
 	switch (i)	{
 		#if (PMAX3D>=0)
