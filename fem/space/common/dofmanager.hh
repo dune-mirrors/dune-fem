@@ -15,7 +15,7 @@
 #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
-#include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/io/parameter.hh>
 
 //- local includes 
 #include "singletonlist.hh"
@@ -946,25 +946,13 @@ private:
     defaultChunkSize_( 128 ),
     sequence_( 0 ),
     indexRPop_( *this, insertIndices_ , removeIndices_ ),
-    memoryFactor_( 1.1 )
-  { 
-    const bool output = (grid_.comm().rank() == 0);
-
-    std :: string parameterFileName( "dofmanager.param" );
-    readParameter( parameterFileName, "MemoryFactor", memoryFactor_, output, false );
-
-    if( memoryFactor_ < 1.0 ) 
-    {
-      std :: cerr << "Warning: Chosen MemoryFactor < 1.0, using 1.0 instead."
-                  << std :: endl;
-      memoryFactor_ = 1.0;
-    }
-
-    if( output )
-    {
-      std :: cout << "Created DofManager: memoryFactor = " << memoryFactor_ << "."
-                  << std :: endl;
-    }
+    memoryFactor_( Parameter :: getValidValue
+      ( "fem.dofmanager.memoryfactor",  double( 1.1 ), ValidateNotLess< double >( 1.0 ) ) )
+  {
+    if( Parameter :: verbose() && (grid_.comm().rank() == 0) )
+      std :: cout << "DofManager: Created for " << grid.name()
+                  << " with memory factor " << memoryFactor_
+                  << "." << std :: endl;
   }
 
   // copy of dofmanagers is forbidden 
