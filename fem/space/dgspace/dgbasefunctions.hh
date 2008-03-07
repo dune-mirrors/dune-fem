@@ -62,22 +62,33 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
 
-    static int numBaseFunctions(int polOrder) {
-      switch (dimDomain) {
-      case 1:
-        return (polOrder + 1);
-      case 2:
-        return (polOrder + 2) * (polOrder + 1) / 2;
-      case 3:
-        return ((polOrder+1)*(polOrder+2)*(2*polOrder+3)/6 +
+  public:  
+    /** \brief return number of base functions depending on polynomial order
+               and dimension of domain */
+    static int numBaseFunctions(const int polOrder, const int dimension) 
+    {
+      switch (dimension) 
+      {
+        case 1:
+          return (polOrder + 1);
+        case 2:
+          return (polOrder + 2) * (polOrder + 1) / 2;
+        case 3:
+          return ((polOrder+1)*(polOrder+2)*(2*polOrder+3)/6 +
                          (polOrder+1)*(polOrder+2)/2)/2;
-      default:
-        DUNE_THROW(NotImplemented, "DGBaseFunctionWrapper only supports 2D and 3D Domain");
+        default:
+          DUNE_THROW(NotImplemented, "DGBaseFunctionWrapper only supports 1D, 2D and 3D Domain");
       }
       assert(false); // can't get here!
       return -1;
     }
-
+  
+  protected:
+    // numBaseFunctions for derived classes 
+    static int numBaseFunctions(int polOrder) 
+    {
+      return numBaseFunctions(polOrder, dimDomain);
+    }
     ////////////////////////////
     /// 1d functions 
     ////////////////////////////
@@ -569,21 +580,12 @@ namespace Dune {
       return 0;
     }
 
-    virtual int numBaseFunctions() const {
-      switch (FunctionSpaceType::DimDomain) {
-      case 1:
-  return (polOrd + 1);
-      case 2:
-        return (polOrd + 2) * (polOrd + 1) / 2;
-      case 3:
-        return ((polOrd+1)*(polOrd+2)*(2*polOrd+3)/6 +
-                         (polOrd+1)*(polOrd+2)/2)/2;
-      default:
-        DUNE_THROW(NotImplemented, 
-                   "DGBaseFunctionWrapper only supports 2D and 3D Domain");
-      }
-      assert(false); // can't get here!
-      return -1;
+    virtual int numBaseFunctions() const 
+    {
+      // call numBaseFunctions from Wrapper class depending on 
+      // geometry's dimension 
+      return DGBaseFunctionWrapper<FunctionSpaceType> 
+                :: numBaseFunctions( polOrd , this->geometry().dim() );
     }
     
   };
