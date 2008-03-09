@@ -11,6 +11,9 @@
 
 namespace Dune
 {
+/*! @addtogroup Parameter
+ *
+ */
 
   class ParameterNotFound
   : public Exception
@@ -178,7 +181,7 @@ namespace Dune
       return params_[ key ];
     }
 
-    inline void insert ( const std :: string s,
+    inline bool insert ( const std :: string s,
                          std :: queue< std :: string > &includes )
     {
       const unsigned int size = s.size();
@@ -213,7 +216,7 @@ namespace Dune
       }
 
       if( value_start >= size )
-        return;
+        return false;
 
       std :: string key = s.substr( key_start, key_end - key_start );
       std :: string value = s.substr( value_start, size - value_start );
@@ -226,6 +229,7 @@ namespace Dune
       }
       else
         includes.push( value );
+      return true;
     }
 
     template< class T >
@@ -294,15 +298,23 @@ namespace Dune
     }
 
     /** \brief add parameters from the command line to the container
+     *  parameters found are removed from the argument list
      * 
      * \param[in]  argc  number of arguments (as given to main)
      * \param[in]  argv  vector of arguments (as given to main)
      */
-    inline static void append ( int argc, char **argv )
+    inline static void append ( int& argc, char **argv )
     {
       std :: queue< std :: string > includes;
-      for( int i = 1; i < argc; ++i )
-        instance().insert( std :: string( argv[ i ] ), includes );
+      for( int i = 1; i < argc; ++i ) {
+     	  if (instance().insert( std :: string( argv[ i ] ), includes )) {
+	        for (int j = i+1; j < argc; ++j) {
+	          argv[j-1] = argv[j];
+	        }
+	        --i;
+	        --argc;
+	      }
+      }
       instance().processIncludes( includes );
     }
 
