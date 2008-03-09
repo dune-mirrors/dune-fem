@@ -226,11 +226,8 @@ void adapt(GridType& grid,
   {
     Iterator it = space.begin();  
     Iterator endit = space.end();
-    int c=0;
     for(; it != endit ; ++it) {
-      if (c/1==0)
-        grid.mark(mark,it);
-      c++;
+      grid.mark(mark,it);
     } 
     adop.adapt();
     std::cout << message << std::endl;

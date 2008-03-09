@@ -3,7 +3,7 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 
 POISSON_CPPFLAGS = -D$(GRIDTYPE) -DGRIDDIM=$(GRIDDIM) -DPOLORDER=$(POLORDER) -DPROBLEM=$(PROBLEM)
-OPTIM_CPPFLAGS = -g -Wall # --param max-inline-insns-single=1000 --param large-function-growth=1500
+OPTIM_CPPFLAGS = -g -Wall --param max-inline-insns-single=1000 --param large-function-growth=1500
 
 
 
@@ -25,4 +25,3 @@ PROBLEM=0
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(POISSON_CPPFLAGS) $(OPTIM_CPPFLAGS)
 #AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -D$(GRIDTYPE) -DGRIDDIM=$(GRIDDIM) -DPOLORDER=$(POLORDER) -Wall -O3 -unroll -DNDEBUG --param max-inline-insns-single=1000 --param large-function-growth=1500
 
-CXXFLAGS=

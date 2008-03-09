@@ -317,11 +317,11 @@ class ExplicitRungeKuttaSolver :
     timeProvider_(tp)
   {
     // CFL upper estimate 
-    // double cfl = 0.45 / (2.0 * pord+1);
+    double cfl = 0.45 / (2.0 * pord+1);
 
     // maximal allowed cfl number 
-    // tp.provideCflEstimate(cfl); 
-    // assert( tp.cfl() <= 1.0 );
+    tp.provideCflEstimate(cfl); 
+    assert( tp.cfl() <= 1.0 );
 
     if(verbose) 
     {

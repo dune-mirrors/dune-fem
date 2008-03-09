@@ -17,9 +17,6 @@ typedef IOTupleType GR_InputType;
 
 // preprocessing method fill in some method if Uh 
 // should be changed before displaying
-// An example implementation computing the error of an
-// approximation can be found in the apply method of the class
-// DisplayErrorFunction in file errordisplay.hh
 template <class GrapeDispType, 
           class GR_GridType,
           class DestinationType>
