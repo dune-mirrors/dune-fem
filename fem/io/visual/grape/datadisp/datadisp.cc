@@ -27,10 +27,13 @@ using namespace Dune;
 #include <dune/fem/io/visual/grape/datadisp/printhelp.cc>
 #include <dune/fem/io/visual/grape/datadisp/readiotupledata.cc>
 #include <dune/fem/io/visual/grape/datadisp/readioparams.cc> 
+#include <dune/fem/io/parameter.hh>
+#include <dune/fem/function/common/discretefunctionadapter.hh>
 
 int main(int argc, char **argv)
 {
-  try {
+  try {			         
+    Parameter::append(argc,argv);
     if (argc < 2)
     {
       print_help(argv[0]);
