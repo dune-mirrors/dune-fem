@@ -38,7 +38,18 @@ public:
   virtual ~SpaceOperatorInterface() {}
 
   //! apply operator 
-  virtual void operator () (const DestinationType& arg, DestinationType& dest) const = 0;
+  virtual void applyIntersection (const typename 
+	       SpaceType::IntersectionIteratorType& iter,
+			   double time,
+			   const DestinationType& arg, 
+				  double& ret,int&) const = 0;
+  virtual void applyElement (const typename 
+			SpaceType::IteratorType::EntityType& en,
+			double time,
+	                const DestinationType& x,
+			double& ret) const = 0;
+  virtual void operator () (const DestinationType& arg, 
+			    DestinationType& dest) const = 0;
 
   //! return reference to space (needed by ode solvers)
   virtual const SpaceType& space() const = 0;

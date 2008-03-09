@@ -357,7 +357,7 @@ private:
     if(restr || ref)
     {
       // compress index sets and data 
-      dm_.compress();
+      // dm_.compress();
     }
 
     // do cleanup 

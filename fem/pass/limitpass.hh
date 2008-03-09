@@ -119,8 +119,13 @@ namespace Dune {
  
       if( checkDirection(it,time,x,uLeft,uRight,gLeft,gRight) )
       {
-        gLeft  = argULeft;
-        gLeft -= argURight;
+        // double pLeft  = model_.pressure(argULeft);
+        // double pRight = model_.pressure(argURight);
+        // double pJmp = pLeft - pRight;
+        // gLeft  = pJmp;
+        // gRight = pJmp; 
+        gLeft  = argURight;
+        gLeft -= argULeft;
         gRight = gLeft;
         return it.integrationOuterNormal( x ).two_norm();
       }
@@ -180,7 +185,10 @@ namespace Dune {
                (scalarProduct > 0) ? false :  // outflow intersection
                (velocity_.two_norm() < veloEps_); // velocity zero 
     }
-
+  public:
+  const Model& model() const {
+    return model_;
+  }
   protected:
     const Model& model_;
     mutable DomainType velocity_;
@@ -292,16 +300,17 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
-      orderPower_( -((spc_.order()+1.0)/2.0)),
+      // orderPower_( -((spc_.order()+1.0)/2.0)),
+      orderPower_( -((spc_.order()+1.)/2.0)),
       dofConversion_(dimRange),
       faceQuadOrd_(spc_.order()),
       jump_(0),
       jump2_(0),
       gradientFlux_(1.0,10.0),
       comboSet_(),
+      tol_( getTol(paramFile) ),
       tvdAttribute_( getTvdParameter(paramFile) )
     {
-      
       {
         typedef AllGeomTypes< typename GridPartType :: IndexSetType,
                               GridType> AllGeomTypesType;
@@ -360,6 +369,15 @@ namespace Dune {
         readParameter( paramFile , "TVD", tvd );
       }
       return (tvd == 1) ? true : false;
+    }
+    double getTol(const std::string& paramFile) const 
+    {
+      double tol = 1;
+      if( paramFile != "" ) 
+      {
+        readParameter( paramFile , "LimitTol", tol );
+      }
+      return tol;
     }
 
     //! The actual computations are performed as follows. First, prepare
@@ -459,11 +477,15 @@ namespace Dune {
       {
         const int numcorners = geo.corners();
         DomainType diff;
-        for(int n=0; n<numcorners; ++n)
+        diff = geo[1] - geo[0];
+        radius = diff.two_norm();
+        for(int n=1; n<numcorners; ++n)
         {
           diff = geo[(n+1)%numcorners] - geo[n];
-          radius = std::max(diff.two_norm(),radius);
+          // radius = std::max(diff.two_norm(),radius);
+          radius = std::min(diff.two_norm(),radius);
         }
+        // radius = 2.*geo.volume()/radius;
       }
       else if ( geomType.isCube() )
       {
@@ -490,14 +512,18 @@ namespace Dune {
         DUNE_THROW(NotImplemented,"Unsupported geometry type!");
       }
             
+      // radius = sqrt(geo.volume());
       // calculate h factor 
-      const double hPowPolOrder = (1.0/(geo.volume())) * pow(radius, orderPower_);
+      const double hPowPolOrder = 
+        // sqrt(1.0/(geo.volume())) * 
+        pow(radius, orderPower_);
       //const double hPowPolOrder = pow( sqrt(geo.volume()), orderPower_);
       //const double hPowPolOrder = pow(radius, orderPower_);
 
       JacobianRangeType enGrad;
       JacobianRangeType nbGrad;
 
+      bool isBnd = false;
       const IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); 
            nit != endnit; ++nit) 
@@ -536,6 +562,8 @@ namespace Dune {
         {
           FaceQuadratureType faceQuadInner(gridPart_,nit,faceQuadOrd_,FaceQuadratureType::INSIDE);
           applyBoundary(nit,faceQuadInner,totaljump,circume);
+          isBnd = 
+            !problem_.model().hasBoundaryValue(nit,0,faceQuadInner.localPoint(0));
         }
       } // end intersection iterator 
 
@@ -570,16 +598,17 @@ namespace Dune {
       if( nit == endnit ) return ;
       EntityPointerType inside = nit.inside();
 
+      totaljump = totaljump[0]/tol_; 
       for(int r=0; r<dimRange; ++r) 
       {
         totaljump[r] = std::abs(totaljump[r]) * circFactor;
-        if( totaljump[r] > 1 )
+        if( isBnd || totaljump[r] > 1.)
         {
           limit[r] = true;
           limiter = true;
         }
       }
-      
+
       // call problem adaptation for setting refinement marker 
       problem_.adaptation( grid, inside, totaljump );
       
@@ -712,6 +741,7 @@ namespace Dune {
         // get number of found neighbors 
         const size_t neighbors = nbVals.size();
 
+        if (isBnd) return;
         // check maxima and minima 
         {
           bool allNegative = true;
@@ -731,7 +761,7 @@ namespace Dune {
           
           // stay with the p-zero version 
           // in case of local maximum or minimum 
-          if( allNegative || allPositive ) return ;
+          if( allNegative || allPositive) return ;
         }
 
         typedef FieldMatrix<RangeFieldType, dim, dim> MatrixType;
@@ -1012,6 +1042,28 @@ namespace Dune {
             }
           }
         }
+        // Check physical
+        {
+          RangeType u;
+          const int corners = geo.corners();
+          for(int i=0; i<corners; ++i) {
+            DomainType x(0);
+            if (i==1) x[0]=1.;
+            if (i==2) x[1]=1.;
+            limitEn.evaluate(x,u);
+            double p = 0.4*(u[3]-0.5*(u[1]*u[1]+u[2]*u[2])/u[0]);
+            if (p<1e-8) {
+              for(int r=0; r<dimRange; ++r) {
+                for(int j=1; j<numBasis; ++j) {
+                  const int dofIdx = 
+                    dofConversion_.combinedDof(j,r);
+                  limitEn[dofIdx]=0.;
+                }
+              }
+              break;
+            }
+          }
+        }
       } //end if limiter 
     }
     
@@ -1060,7 +1112,7 @@ namespace Dune {
         {
           DomainType& D = deoMod[r];
           const RangeFieldType value = std::abs(D * point); 
-          if( value > 0 ) 
+          if( value > 1e-8 ) 
           {
             {
               const RangeFieldType factor = std::abs(uMax[r] / value);
@@ -1073,7 +1125,6 @@ namespace Dune {
           }
         }
       }
-
       //std::cout << "Mini = " << mini << "\n";
       // scale linear function 
       for(int r=0; r<dimRange; ++r) 
@@ -1378,7 +1429,8 @@ namespace Dune {
     typedef std::set< VectorCompType > ComboSetType;
     mutable ComboSetType comboSet_;
 
-    // if true scheme is TVD 
+    double tol_;
+    // if true scheme is TVD
     const bool tvdAttribute_; 
   }; // end DGLimitPass 
 
