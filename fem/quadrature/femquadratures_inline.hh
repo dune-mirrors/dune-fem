@@ -104,11 +104,12 @@ namespace Dune
     order_ = gp.order(m);
 	  
     // fill in all the gauss points
-    for (int i = 0; i < m; ++i) {
+		int n = gp.power(m,dim);		
+    for (int i = 0; i < n; ++i) {
       CoordinateType local(0.0);
 
-      local[0] = gp.point(m, 0);
-      double weight = gp.weight(m, 0);
+      local[0] = gp.point(m, i);
+      double weight = gp.weight(m, i);
       
       this->addQuadraturePoint(local, weight);
     }
