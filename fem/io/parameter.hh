@@ -81,9 +81,16 @@ namespace Dune
    *  int globalFlag;
    *  int main(int argc,char** argv) {
    *    Dune::Parameter::append(argc,argv);
-   *    int startTime = Dune::Parameter::getValue("starttime",0.0);
-   *    int endTime   = Dune::Parameter::getValue("endtime",Dune::ValidateGreater(startTime));
+   *    double startTime = Dune::Parameter::getValue<double>("starttime",0.0);
+   *    double endTime   = Dune::Parameter::getValue<double>("endtime",Dune::ValidateGreater(startTime));
    *    Dune::Parameter::get("flag",0,globalFlag);
+   *    if (Dune::Parameter::verbose()) {
+   *      std::cout << "Computing from " << startTime << " to " << endTime << std::endl;
+   *    }
+   *    ...
+   *    ofstream results(Dune::Parameter::prefix()+"/results");
+   *    ...
+   *    Dune::Parameter::write("parameter.log");
    *  }
    *  \endcode
    */
@@ -560,7 +567,7 @@ namespace Dune
       return value;
     }
 
-    /** \brief obtain the value for fem.prefix
+    /** \brief obtain the value for fem.prefix defaults to '.'
      */
     inline static const std :: string &prefix ()
     {
@@ -579,7 +586,7 @@ namespace Dune
      *  This method writes all paramters in the database to the given file.
      *  The parameters are stored in alphabetical order. Includes are not used.
      *
-     *  \param[in]  filename  name of the file to store the parameters in
+     *  \param[in]  filename  name of the file to store the parameters in; prefix() is used.
      */
     inline static void write ( const std :: string &filename )
     {
