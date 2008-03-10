@@ -21,7 +21,9 @@ namespace Dune
    *  \endcode
    *  at the head of your main function. Parameters are strings of the
    *  format "key: value". Any command line argument containing a colon
-   *  will thus be interpreted as a parameter.
+   *  will thus be interpreted as a parameter. Note that parameter keys
+   *  are parsed case sensitive and that parameters found will be
+   *  removed from the command line.
    *
    *  There are 8 static methods in Parameter to obtain the value of a
    *  parameter. They are divided by the following criteria:
@@ -50,7 +52,7 @@ namespace Dune
    *  - All parameters in the current file (or the command line) are added
    *    first.
    *  - If there were includes, they are processed in the order of appearance.
-   *  - Should a thus included file have includes, they are added depth-first,
+   *  - Should an included file have includes, they are added depth-first,
    *    i.e., The includes of one included file are parsed down to the last
    *    file included, before the includes of the next included file are
    *    considered.
@@ -62,6 +64,28 @@ namespace Dune
    *  fem.<group>.<parameter>
    *  \endcode
    *  The group name can be omitted if necessary.
+   *  
+   *  An example is the parameter 
+   *  \code 
+   *  fem.verbose
+   *  \endcode
+   *  This can beused throughout the the program; by calling:
+   *  \code
+   *  Parameter::verbose()
+   *  \endcode
+   *  If verbose is set, information concerning the parameters read will
+   *  be output to stdout.
+   *
+   *  Here is an example usage:
+   *  \code
+   *  int globalFlag;
+   *  int main(int argc,char** argv) {
+   *    Dune::Parameter::append(argc,argv);
+   *    int startTime = Dune::Parameter::getValue("starttime",0.0);
+   *    int endTime   = Dune::Parameter::getValue("endtime",Dune::ValidateGreater(startTime));
+   *    Dune::Parameter::get("flag",0,globalFlag);
+   *  }
+   *  \endcode
    */
 
   class ParameterNotFound
@@ -107,13 +131,13 @@ namespace Dune
     }
   };
   template< class T >
-  class ValidateIsLess
+  class ValidateLess
   {
   protected:
     const T threshold_;
 
   public:
-    inline ValidateIsLess ( const T &threshold )
+    inline ValidateLess ( const T &threshold )
     : threshold_( threshold )
     {}
 
@@ -123,13 +147,13 @@ namespace Dune
     }
   };
   template< class T >
-  class ValidateIsGreater
+  class ValidateGreater
   {
   protected:
     const T threshold_;
 
   public:
-    inline ValidateIsGreater ( const T &threshold )
+    inline ValidateGreater ( const T &threshold )
     : threshold_( threshold )
     {}
 
@@ -138,41 +162,26 @@ namespace Dune
       return value > threshold_;
     }
   };
-  template< class T >
-  class ValidateInOpenInterval
+  template< class T,bool leftClosed, bool rightClosed>
+  class ValidateInterval
   {
   protected:
     const T lThreshold_,rThreshold_;
 
   public:
-    inline ValidateInOpenInterval ( const T &lThreshold, const T &rThreshold )
+    inline ValidateOpenInterval ( const T &lThreshold, const T &rThreshold )
     : lThreshold_( lThreshold ),
       rThreshold_( rThreshold )
     {}
 
     inline bool operator() ( const T &value ) const
     {
-      return (value > lThreshold_ && value < rThreshold_); 
+      bool ret = true;
+      ret &= (leftClosed?  value>=lThreshold_ : value>lThreshold_);
+      ret &= (rightClosed? value<=rThreshold_ : value<rThreshold_);
+      return ret;
     }
   };
-  template< class T >
-  class ValidateInClosedInterval
-  {
-  protected:
-    const T lThreshold_,rThreshold_;
-
-  public:
-    inline ValidateInClosedInterval ( const T &lThreshold, const T &rThreshold )
-    : lThreshold_( lThreshold ),
-      rThreshold_( rThreshold )
-    {}
-
-    inline bool operator() ( const T &value ) const
-    {
-      return (value >= lThreshold_ && value <= rThreshold_); 
-    }
-  };
-
 
 
   /** \class Parameter
@@ -189,6 +198,8 @@ namespace Dune
     typedef Parameter ThisType;
 
   private:
+    std :: string curFileName;
+    int curLine;
     std :: map< std :: string, std :: string > params_;
     bool verbose_;
     
@@ -218,14 +229,24 @@ namespace Dune
     }
 
     inline const std :: string &map ( const std :: string &key,
-                                      const std :: string &value )
+                                      const std :: string &value,
+                                      bool verbFound = false)
     {
       if( params_.find( key ) == params_.end() )
       {
         if( verbose_ )
-          std :: cout << "Parameter: Adding " << key << " = " << value
+          std :: cout << curFileName_ << "[" << curLineNumber_ << "]"
+                      << " : ";
+          std :: cout << "Adding " << key << " = " << value
                       << std :: endl;
         params_[ key ] = value;
+      }
+      else if (vebFound && verbose_) {
+        std :: cout << curFileName_ << "[" << curLineNumber_ << "]"
+                    << " : ";
+        std :: cout << "Ignored " << key << " = " << value
+                    << " using " << params_[key]
+                    << std::endl;
       }
       return params_[ key ];
     }
@@ -272,7 +293,7 @@ namespace Dune
 
       if( key != "paramfile" )
       {
-        const std :: string &actual_value = map( key, value );
+        const std :: string &actual_value = map( key, value, true );
         if( key == "fem.verbose" )
           parse( actual_value, verbose_ );
       }
@@ -297,11 +318,14 @@ namespace Dune
       std :: ifstream file( filename.c_str() );
       if( file.is_open() )
       {
+        curFileName_ = filename;
+        curLineNumber_ = 0;
         std :: queue< std :: string > includes;
         while( !file.eof() )
         {
           std :: string line;
           std :: getline( file, line );
+          curLineNumber_++;
           if( line.size() == 0 )
             continue;
 
@@ -355,15 +379,17 @@ namespace Dune
     inline static void append ( int& argc, char **argv )
     {
       std :: queue< std :: string > includes;
-      for( int i = 1; i < argc; ++i )
+      instance().curFileName_ = "programm arguments";
+      int &i = instance().curLineNumber_;
+      for( i = 1 ; i < argc; ++i )
       {
         if( instance().insert( std :: string( argv[ i ] ), includes ) )
         {
-	  for( int j = i+1; j < argc; ++j )
+	        for( int j = i+1; j < argc; ++j )
             argv[j-1] = argv[j];
-	  --i;
-	  --argc;
-	}
+	        --i;
+	        --argc;
+	      }
       }
       instance().processIncludes( includes );
     }
@@ -397,6 +423,8 @@ namespace Dune
                              const T &defaultValue,
                              T &value )
     {
+      curFileName_ = "using default";
+      curLineNumber_ = 0;
       std :: ostringstream out;
       out << defaultValue;
       parse( instance().map( key, out.str() ), value );
@@ -441,6 +469,8 @@ namespace Dune
                                   const Validator &validator,
                                   T &value )
     {
+      curFileName_ = "using default";
+      curLineNumber_ = 0;
       std :: ostringstream out;
       out << defaultValue;
       parse( instance().map( key, out.str() ), value );
