@@ -104,7 +104,7 @@ namespace Dune
     order_ = gp.order(m);
 	  
     // fill in all the gauss points
-		int n = gp.power(m,dim);		
+		int n = gp.power(m,1);		
     for (int i = 0; i < n; ++i) {
       CoordinateType local(0.0);
 
