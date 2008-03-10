@@ -176,7 +176,7 @@ namespace Dune
     const T lThreshold_,rThreshold_;
 
   public:
-    inline ValidateOpenInterval ( const T &lThreshold, const T &rThreshold )
+    inline ValidateInterval ( const T &lThreshold, const T &rThreshold )
     : lThreshold_( lThreshold ),
       rThreshold_( rThreshold )
     {}
@@ -205,8 +205,8 @@ namespace Dune
     typedef Parameter ThisType;
 
   private:
-    std :: string curFileName;
-    int curLine;
+    std :: string curFileName_;
+    int curLineNumber_;
     std :: map< std :: string, std :: string > params_;
     bool verbose_;
     
@@ -248,7 +248,7 @@ namespace Dune
                       << std :: endl;
         params_[ key ] = value;
       }
-      else if (vebFound && verbose_) {
+      else if (verbFound && verbose_) {
         std :: cout << curFileName_ << "[" << curLineNumber_ << "]"
                     << " : ";
         std :: cout << "Ignored " << key << " = " << value
@@ -430,8 +430,8 @@ namespace Dune
                              const T &defaultValue,
                              T &value )
     {
-      curFileName_ = "using default";
-      curLineNumber_ = 0;
+      instance().curFileName_ = "using default";
+      instance().curLineNumber_ = 0;
       std :: ostringstream out;
       out << defaultValue;
       parse( instance().map( key, out.str() ), value );
@@ -476,8 +476,8 @@ namespace Dune
                                   const Validator &validator,
                                   T &value )
     {
-      curFileName_ = "using default";
-      curLineNumber_ = 0;
+      instance().curFileName_ = "using default";
+      instance().curLineNumber_ = 0;
       std :: ostringstream out;
       out << defaultValue;
       parse( instance().map( key, out.str() ), value );
