@@ -57,14 +57,9 @@ int main(int argc, char ** argv, char ** envp) {
 	std::string filename;
 	Parameter::get("fem.localdg.gridfile", filename);
   GridPtr<GridType> grid(filename); // ,MPI_COMM_WORLD);
-  int repeats;
-	Parameter::get("fem.localdg.repeats", repeats);
-  int startlevel;
-	Parameter::get("fem.localdg.startlevel", startlevel);
-  double epsilon;
-	Parameter::get("fem.localdg.epsilon", epsilon);
-  int graped;
-	Parameter::get("fem.localdg.grape", graped);
+  int repeats = Parameter::getValue<int>("fem.localdg.repeats");
+  int startlevel = Parameter::getValue<int>("fem.localdg.startlevel");
+  int graped = Parameter::getValue<int>("fem.localdg.grape");
 	// CFL:
   double cfl;
   switch (order) 
@@ -239,6 +234,7 @@ int main(int argc, char ** argv, char ** envp) {
   }
   
   eocoutput.printTexEnd(timer.elapsed());
+	Parameter::write("parameter.log");
 
   }
   catch (Dune::Exception &e) {

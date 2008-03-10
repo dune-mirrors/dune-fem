@@ -71,7 +71,17 @@ typedef Dune::HierarchicGridPart<GridType> GridPartType;
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
 #elif PROBLEM == 5
 #include "euler_mhd/eulermodel.hh"
-   typedef U0Smooth1D InitialDataType;
+   typedef U0RotatingCone InitialDataType;
+   typedef EulerModel<GridPartType,InitialDataType> ModelType;
+   typedef HLLNumFlux<ModelType> FluxType;
+   // typedef DWNumFlux<ModelType> FluxType;
+   typedef DGAdvectionOperator<ModelType,HLLNumFlux,order> DgType;
+   //typedef DuneODE::ImplTimeStepper<DgType> ODEType;
+   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+   //typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+#elif PROBLEM == 6
+#include "euler_mhd/eulermodel.hh"
+   typedef U0RP InitialDataType;
    typedef EulerModel<GridPartType,InitialDataType> ModelType;
    typedef HLLNumFlux<ModelType> FluxType;
    // typedef DWNumFlux<ModelType> FluxType;

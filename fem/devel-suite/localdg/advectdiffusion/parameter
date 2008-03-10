@@ -1,6 +1,6 @@
 # Default parameter file for fem/localdg/advectdiffusion/dgtest.cc
 
-fem.localdg.cfl: 0.15
+# fem.localdg.cfl: 0.15
 
 fem.localdg.diff_tstep: true
 
@@ -13,4 +13,9 @@ fem.localdg.gridfile: grid2d.dgf
 fem.localdg.repeats: 2
 
 fem.localdg.startlevel: 3
+
+# Parameters for Euler RP
+# RPData: [1., -1., 1.,    1., 1., 1.]
+# RPGamma: 1.4
+# RPT: 0.05
 

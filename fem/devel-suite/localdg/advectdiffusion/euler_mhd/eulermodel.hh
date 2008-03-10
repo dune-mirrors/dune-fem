@@ -122,7 +122,8 @@ class EulerModel {
   inline bool hasBoundaryValue(typename Traits::IntersectionIterator& it,
 			       double time, 
 			       const typename Traits::FaceDomainType& x) const {
-    return (abs(it.boundaryId()) != 4);
+		return true;
+    // return (abs(it.boundaryId()) != 4);
   }
   inline double boundaryFlux(typename Traits::IntersectionIterator& it,
 			     double time, 
@@ -143,6 +144,9 @@ class EulerModel {
 			     const typename Traits::FaceDomainType& x,
 			     const RangeType& uLeft, 
 			     RangeType& uRight) const {
+    DomainType xgl=it.intersectionGlobal().global(x);
+    problem_.evaluate(time,xgl,uRight);
+		return;
     uRight=uLeft;
     if (abs(it.boundaryId()) == 1) {
       const typename Traits::DomainType normal = it.integrationOuterNormal(x);  
@@ -517,81 +521,28 @@ double EulerFlux<3>::maxSpeed(const double gamma,
 }
 
 /*****************************************************************/
-// Initial Data
-class U0Smooth1D {
-public:
-  U0Smooth1D() : gamma(1.4),myName("Advection") { }
-  void printmyInfo(string filename) {}
-  double endtime() {
-    return 0.2;
-  }
-  double gamma;
-  string myName;
-
-  template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0,arg,res);
-  }
-  template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg,double t, RangeType& res) const 
-  {
-    evaluate(t,arg,res);
-  }
-  template <class DomainType, class RangeType>
-  void evaluate(double t,const DomainType& arg, RangeType& res) const {
-    DomainType c(0.0);
-    DomainType x = arg;
-    x -= c;
-    double r2 = 0.25*0.25;
-    res=0;
-    if (x*x<r2) {
-      res[0] = 1.0;
-      res[3] = 1.0/(gamma-1.);
-    } else {
-      res[0] = 0.125;
-      res[3] = 0.1/(gamma-1.);
-    }
-    return;
-    res[1] = cos(0.2*M_PI);
-    res[2] = sin(0.2*M_PI);
-    x[0] -= t*res[1];
-    x[1] -= t*res[2];
-    if (x[0]*x[0]+x[1]*x[1]<r2) {
-      res[0] = cos((x[0]*x[0]+x[1]*x[1])/r2*M_PI)+1.;
-      res[0] *= res[0];
-      res[0] /= 4.;
-    } else {
-      res[0] = 0.;
-    }
-    res[0] += 0.5;
-    /*
-    if (arg[0]*arg[0] < 0.25) {
-      // res[0] = cos(arg[0]*M_PI*2.)+2;
-      res[0] = -8.*(arg[0]*arg[0]-0.25)+1.;
-    }
-    else {
-      res[0] = 1.0;
-    }
-    */
-    res[1] = cos(0.2*M_PI);
-    res[2] = sin(0.2*M_PI);
-    res[3] = 0.3/(gamma-1.0);
-    res[1] *= res[0];
-    res[2] *= res[0];
-    res[3] += 0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
-  }
-};
 class U0RotatingCone {
 public:
-  U0RotatingCone() : gamma(1.4) {}
+  U0RotatingCone() : gamma(1.4), myName("Rotating Cone")  {}
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg, RangeType& res) const {
     evaluate(0,arg,res);
   }
+  double endtime() {
+    return 1.0;
+  }
+  double saveinterval() {
+    return 0.1;
+  }
+  template <class DomainType, class RangeType>
+  void evaluate(const DomainType& arg,double t, RangeType& res) const
+  {
+    evaluate(t,arg,res);
+ }
   template <class DomainType, class RangeType>
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
     res*=0.;
-    DomainType c(0.5);
+    DomainType c(0.35);
     DomainType x=arg;
     x-=c;
     double r2=0.04;
@@ -602,7 +553,7 @@ public:
       res[0] = 1.0;
     }
     x=arg;
-    x-=DomainType(1.0);
+    x-=DomainType(0.5);
     if (DomainType::size>1) {
       res[1] = x[1]*res[0];
       res[2] = -x[0]*res[0];
@@ -618,134 +569,86 @@ public:
 	0.5*(res[1]*res[1])/res[0];
     }
   }
-  double gamma;
-};
-class U0VW {
-public:
-  U0VW() : gamma(1.4) {}
-  template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0,arg,res);
-  }
-  template <class DomainType, class RangeType>
-  void evaluate(double t,const DomainType& arg, RangeType& res) const {
-    if (arg[0]<0.25) {
-      res[0]=1.;
-      res[1]=-1.;
-      res[1]=0.;
-      res[2]=0.;
-      res[3]=1./(1.4-1.0);
-    } else {
-      res[0]=1.; 
-      res[1]=1.;
-      res[2]=0.;
-      res[3]=1.0/(1.4-1.0);
-    }
-    res[1] *= res[0];
-    res[2] *= res[0];
-    res[3] += 0.5*res[1]*res[1]/res[0];
+  void printmyInfo(std::string filename)
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+
+    ofs << "Problem: " << myName << "\n\n"
+        << "gamma = " << gamma << "\n\n";
+    ofs << "\n\n";
+
+    ofs.close();
+
   }
   double gamma;
+  std::string myName;
 };
-class U0Sod {
-  double ql,qr,ul,ur,pl,pr;
+
+class U0RP {
+  double T,startTime;
+  FieldVectorAdapter<FieldVector<double,6> > Ulr;
 public:
-  U0Sod() : gamma(1.4) {
+  U0RP() : T(0.4), startTime(0), gamma(1.4) {
     myName = "RP-Sod";
-    ql = 1.0;
-    qr = 0.125;
-    ul = 0.;
-    ur = 0.;
-    pl = 1.0;
-    pr = 0.1;
-  }
-  U0Sod(double eps,int flag,bool diff_timestep=true) 
-    : gamma(1.4) {
-    myName = "RP-Sod";
-    ql = 1.0;
-    qr = 0.125;
-    ul = 0.;
-    ur = 0.;
-    pl = 1.0;
-    pr = 0.1;
+    // default is sod's rp
+    Ulr[0] = 1.0;
+    Ulr[3] = 0.125;
+    Ulr[1] = 0.;
+    Ulr[4] = 0.;
+    Ulr[2] = 1.0;
+    Ulr[5] = 0.1;
+    Parameter::get("RPData",Ulr,Ulr);
+    Parameter::get("RPGamma",gamma,gamma);
+    Parameter::get("RPT",T,T);
+    Parameter::get("StartTime",startTime,startTime);
   }
   double endtime() {
-    return 0.4;
+    return T;
   }
   double saveinterval() {
     return 0.01;
   }
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0.,arg,res);
+    evaluate(startTime,arg,res);
   }
   template <class DomainType, class RangeType>
-  void evaluate(double t,const DomainType& arg, 
-		RangeType& res) const {
-    double x = arg[0] - 0.5;
-    if (t>1e-8)
-      chorin(t,x,res[0],res[1],res[2]);
+  void evaluate(const DomainType& arg,double t, RangeType& res) const
+  {
+    evaluate(t,arg,res);
+ }
+  template <class DomainType, class RangeType>
+  void evaluate(double t,const DomainType& arg, RangeType& res) const {
+    res[2] = 0.;
+    if (t>1e-8) {
+      chorin(t,arg[0]-0.5,res[0],res[1],res[3]);
+    }
     else {
-      if (x<0.) {
-	res[0]=ql; // 0.5;
-	res[1]=ul;
-	// res[2]=0.;
-	res[2]=pl;
+      if (arg[0]<0.5) {
+        res[0]=Ulr[0];
+        res[1]=Ulr[1];
+        res[3]=Ulr[2];
       } else {
-	res[0]=qr;
-	res[1]=ur;
-	// res[2]=0.;
-	res[2]=pr;
+        res[0]=Ulr[3];
+        res[1]=Ulr[4];
+        res[3]=Ulr[5];
       }
     }
     res[1] *= res[0];
-    // res[2] *= res[0];
-    res[2] = res[2]/(gamma-1.0)+0.5*(res[1]*res[1])/res[0];
+    res[2] *= res[0];
+    res[3] = res[3]/(gamma-1.0)+
+      0.5*(res[1]*res[1]+res[2]*res[2])/res[0];
   }
-  
   void chorin(double t,double x,
-	      double& q_erg,double& u_erg,double& p_erg) const
+        double& q_erg,double& u_erg,double& p_erg) const
   {
     EULERCHORIN::
-      lsg(x,t,&q_erg,&u_erg,&p_erg,ql,qr,ul,ur,pl,pr,gamma);
-  }
-
-  void printmyInfo(std::string filename)
-  {
-    std::ostringstream filestream;
-    filestream << filename;
-
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-	
-    ofs << "Problem: " << myName << "\n\n"
-	<< "gamma = " << gamma << "\n\n";
-    ofs	<< "\n\n";
-	
-    ofs.close();
-			
-  }
-  double gamma;
-  std::string myName;
-};
-class FFS {
-public:
-  FFS() : gamma(1.4) {myName = "FFS";}
-  double endtime() {
-    return 3.0;
-  }
-  double saveinterval() {
-    return 0.1;
-  }
-  template <class DomainType, class RangeType>
-  void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0,arg,res);
-  }
-  template <class DomainType, class RangeType>
-  void evaluate(double t,const DomainType& arg, RangeType& res) const {
-    res[0]=1.4;
-    res[1]=3.0*1.4;
-    res[2]=0.;
-    res[3]=8.8;
+      lsg(x,t,&q_erg,&u_erg,&p_erg,
+    Ulr[0],Ulr[3],Ulr[1],Ulr[4],Ulr[2],Ulr[5],
+    gamma);
   }
   void printmyInfo(std::string filename)
   {
@@ -753,14 +656,16 @@ public:
     filestream << filename;
 
     std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-	
+
     ofs << "Problem: " << myName << "\n\n"
-	<< "gamma = " << gamma << "\n\n";
-    ofs	<< "\n\n";
-	
+        << "gamma = " << gamma << "\n\n";
+    ofs << "\n\n";
+
     ofs.close();
-			
+
   }
   double gamma;
   std::string myName;
 };
+
+
