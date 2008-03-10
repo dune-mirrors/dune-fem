@@ -37,7 +37,7 @@ The order of these group definitions determines the order in which the groups
 appear in the "Modules" page of the documentation. Only the major groups which
 have no obvious class attached to them are documented in the modules file. All
 others are just declared. Their documentation should be in some obvious header
-file for example before the namespace Dune is oppened or directly following.
+file for example before the namespace Dune is opened or directly following.
 Preceed the documentation by
 \verbatim
 \addtogroup Groupname 
