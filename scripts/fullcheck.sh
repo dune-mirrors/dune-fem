@@ -51,10 +51,16 @@ if test ! -e $MINIMALOPTS ; then
   exit 1
 fi
 
+minimal_configure()
+{
+  $DUNECONTROL --opts=$MINIMALOPTS all 2>&1 | dd conv=notrunc \
+    > $WORKINGDIR/minimal-svn-conf.out
+}
+
 echo
 echo "Configuring with minimal options..."
 cd $DUNEDIR
-if ! $DUNECONTROL --opts=$MINIMALOPTS all &> $WORKINGDIR/minimal-svn-conf.out ; then
+if ! minimal_configure ; then
   echo "Fatal: Cannot configure with minimal options (see $WORKINGDIR/minimal-svn-conf.out)."
   exit 1
 fi
