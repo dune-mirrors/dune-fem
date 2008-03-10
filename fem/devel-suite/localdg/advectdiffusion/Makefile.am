@@ -1,15 +1,13 @@
 # IGNORE_HEADERS
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) 
-noinst_PROGRAMS = advectdiff dgtest #euler dgtest dgtest1 #datadisp 
-advectdiff_SOURCES = main.cc
-#euler_SOURCES = euler.cc
+noinst_PROGRAMS = dgtest # datadisp 
 dgtest_SOURCES = dgtest.cc
 
 GRIDTYPE = YASPGRID
 GRIDDIM = 2
-PROBLEM = 1
-POLORDER = 0
+PROBLEM = 3
+POLORDER = 2
 
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DGRIDDIM=$(GRIDDIM) -DPROBLEM=$(PROBLEM) -DPOLORDER=$(POLORDER) -D$(GRIDTYPE)
 

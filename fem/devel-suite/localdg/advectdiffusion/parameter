@@ -1,0 +1,16 @@
+# Default parameter file for fem/localdg/advectdiffusion/dgtest.cc
+
+fem.localdg.cfl: 0.15
+
+fem.localdg.diff_tstep: true
+
+fem.localdg.epsilon: 0.1
+
+fem.localdg.grape: 100
+
+fem.localdg.gridfile: grid2d.dgf
+
+fem.localdg.repeats: 2
+
+fem.localdg.startlevel: 3
+

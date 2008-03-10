@@ -20,8 +20,12 @@ class BurgersModel {
   BurgersModel(GridType& grid,
         const ProblemType& problem) :
     problem_(problem),
-    epsilon(problem.epsilon), 
-    tstep_eps((problem.diff_tstep)?problem.epsilon:0) {}
+    epsilon(problem.epsilon) 
+  {
+		bool diff_tstep;	
+		Parameter::get("fem.localdg.diff_tstep",diff_tstep);
+		tstep_eps = (diff_tstep)? epsilon:0;
+	}
   inline  void analyticalFlux(typename Traits::EntityType& en,
             double time,  
             const typename Traits::DomainType& x,
@@ -134,9 +138,12 @@ class AdvectionDiffusionModel {
         const ProblemType& problem) :
     problem_(problem),
     velocity_(0), 
-    epsilon(problem.epsilon), 
-    tstep_eps((problem.diff_tstep)?problem.epsilon:0) 
+    epsilon(problem.epsilon) 
   {
+		bool diff_tstep;	
+		Parameter::get("fem.localdg.diff_tstep",diff_tstep);
+		tstep_eps = (diff_tstep)? epsilon:0;
+
     if(ConstantVelocity) 
     {
       // get constant velocity 

@@ -5,8 +5,8 @@ class U0 {
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0(double eps,bool diff_timestep=true) :
-    velocity_(0), epsilon(eps), diff_tstep(diff_timestep) {
+  U0() : velocity_(0) { 
+		  Parameter::get("fem.localdg.epsilon",epsilon);
       velocity_[0]=0.8;
       velocity_[1]=0.8;
       
@@ -61,6 +61,12 @@ class U0 {
   }
   
   
+  void evaluate(const DomainType& arg, double t, RangeType& res) const 
+	{
+	  evaluate(t, arg, res);
+		return;
+	}
+	
   void evaluate(double t,const DomainType& arg, RangeType& res) const {
     
     res = 0.;
@@ -91,7 +97,7 @@ class U0 {
       }
   }
   
-  void printmyInfo(string filename)
+  void printmyInfo(std::string filename)
   {
     std::ostringstream filestream;
     filestream << filename;
@@ -129,8 +135,7 @@ class U0 {
     
   DomainType velocity_;
   double epsilon;
-  bool diff_tstep;
-  string myName;
+	std::string myName;
   int max_n_of_coefs;
   double common_coef_x[2];
   double sin_coef_x[2];
@@ -150,7 +155,7 @@ class U0Disc : public U0<GridType> {
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0Disc(double eps,bool diff_timestep=true) : BaseType(eps,diff_timestep) {
+  U0Disc() : BaseType() {
     this->myName = "Discontinuous AdvectDiff";
     this->velocity_[0] = 1.0;
     this->velocity_[1] = 0.0;
@@ -164,6 +169,12 @@ class U0Disc : public U0<GridType> {
     evaluate(0.0,arg,res);
   }
   
+  void evaluate(const DomainType& arg, double t, RangeType& res) const 
+	{
+	  evaluate(t, arg, res);
+		return;
+	}
+
   void evaluate(double t,const DomainType& arg, RangeType& res) const 
   {
     //BaseType::evaluate(t,arg,res); 
@@ -172,7 +183,7 @@ class U0Disc : public U0<GridType> {
       res = 2.0;
   }
   
-  void printmyInfo(string filename)
+  void printmyInfo(std::string filename)
   {
     std::ostringstream filestream;
     filestream << filename;

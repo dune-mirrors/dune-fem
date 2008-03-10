@@ -1,12 +1,12 @@
 DGF
 Interval
--1.5 0       #p0
-1.5 0.5   #p1
-12 2 #nx ny nz
-#
+0 0   % first corner 
+1 1   % second corner
+4 4   % 1 cells in x and 1 in y direction
+# 
 
 BOUNDARYDOMAIN
-2    -1 -1   0.0001 30
-2    -1 -1   30 0.0001
-default 3
+2 -1 -1 0 2  %left side
+default 3    % all boundaries have id 1
 #BOUNDARYDOMAIN
+# unitcube.dgf 

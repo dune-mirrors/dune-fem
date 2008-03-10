@@ -37,8 +37,8 @@ typedef Dune::HierarchicGridPart<GridType> GridPartType;
    typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
    typedef LLFFlux<ModelType> FluxType;
    typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
-   // typedef DuneODE::ExplRungeKutta<DgType> ODEType;
-   typedef DuneODE::ExplMultiStep<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   //typedef DuneODE::ExplMultiStep<DgType> ODEType;
 #elif PROBLEM == 2
    #include "scalarmodels.hh"
    #include "initburgers.cc"
@@ -48,8 +48,8 @@ typedef Dune::HierarchicGridPart<GridType> GridPartType;
    //typedef DGLimitedAdvectionOperator<ModelType,LLFFlux,order> DgType;
    //typedef DGAdvectionDiffusionOperator<ModelType,LLFFlux,order> DgType;
    typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
-   //typedef DuneODE::ExplRungeKutta<DgType> ODEType;
-   typedef DuneODE::ExplMultiStep<DgType> ODEType;
+   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
+   // typedef DuneODE::ExplMultiStep<DgType> ODEType;
 #elif PROBLEM == 3
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"
@@ -58,8 +58,8 @@ typedef Dune::HierarchicGridPart<GridType> GridPartType;
    // typedef LLFFlux<ModelType> FluxType;
    typedef UpwindFlux<ModelType> FluxType;
    typedef DGAdvectionDiffusionOperator<ModelType,UpwindFlux,order> DgType;
-//   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
-   typedef DuneODE::ImplTimeStepper<DgType> ODEType;
+   typedef DuneODE::ExplTimeStepper<DgType> ODEType;
+   // typedef DuneODE::ImplTimeStepper<DgType> ODEType;
 #elif PROBLEM == 4
 #include "scalarmodels.hh"
 #include "initadvectdiff.cc"

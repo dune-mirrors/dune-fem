@@ -520,8 +520,7 @@ double EulerFlux<3>::maxSpeed(const double gamma,
 // Initial Data
 class U0Smooth1D {
 public:
-  U0Smooth1D(double,bool diff_timestep=true) : gamma(1.4),myName("Advection") {}
-
+  U0Smooth1D() : gamma(1.4),myName("Advection") { }
   void printmyInfo(string filename) {}
   double endtime() {
     return 0.2;
@@ -730,7 +729,7 @@ public:
 };
 class FFS {
 public:
-  FFS(double eps,int flag,bool diff_timestep=true) : gamma(1.4) {myName = "FFS";}
+  FFS() : gamma(1.4) {myName = "FFS";}
   double endtime() {
     return 3.0;
   }

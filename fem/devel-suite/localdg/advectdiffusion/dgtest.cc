@@ -17,6 +17,7 @@ const double globalTimeStep = 1e-3;
 #include <dune/grid/common/quadraturerules.hh>
 
 #include <dune/fem/io/file/grapedataio.hh>
+#include <dune/fem/misc/l2error.hh>
 
 #include <iostream>
 #include <string>
@@ -26,16 +27,14 @@ const double globalTimeStep = 1e-3;
 #endif
 
 #include <dune/common/timer.hh>
-
 #include <dune/common/mpihelper.hh>
-
-using namespace std;
+#include <dune/fem/io/parameter.hh>
 
 #include "models.hh"
-using namespace Dune;
-
 #include "stuff.cc"
-#include "robstuff.cc"
+
+using namespace std;
+using namespace Dune;
 
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
@@ -47,32 +46,26 @@ int main(int argc, char ** argv, char ** envp) {
   try {
 
   // *** Initialization
-  if (argc<2) {
-    cout << "Call: dgtest gridfilename [ref-steps=1] [start-level=0] [epsilon=0.01] [use-grape=0]" << endl;
-    exit(EXIT_FAILURE);  
-  }
+	
+	Parameter::append(argc, argv);
+  if (argc==2) Parameter::append(argv[1]);
+	else Parameter::append("parameter");
 	
   // Polynomial and ODE order
   // Grid:
-  GridPtr<GridType> grid(argv[1]); // ,MPI_COMM_WORLD);
 	
-  int repeats = 1;
-  if (argc>2)
-    repeats=atoi(argv[2]);
-	
-  int startlevel = 0;
-  if (argc>3)
-    startlevel=atoi(argv[3]);
-	
-  double epsilon = 0.01;
-  if (argc>4)
-    epsilon=atof(argv[4]);
-	
-  int graped = 0;
-  if (argc>5)
-    graped=atoi(argv[5]);
-		
-  // CFL:
+	std::string filename;
+	Parameter::get("fem.localdg.gridfile", filename);
+  GridPtr<GridType> grid(filename); // ,MPI_COMM_WORLD);
+  int repeats;
+	Parameter::get("fem.localdg.repeats", repeats);
+  int startlevel;
+	Parameter::get("fem.localdg.startlevel", startlevel);
+  double epsilon;
+	Parameter::get("fem.localdg.epsilon", epsilon);
+  int graped;
+	Parameter::get("fem.localdg.grape", graped);
+	// CFL:
   double cfl;
   switch (order) 
   {
@@ -82,15 +75,10 @@ int main(int argc, char ** argv, char ** envp) {
     case 3: cfl=0.05;  break;
     case 4: cfl=0.09; break;
   }
-
-//#if PROBLEM == 5 
-  if (argc>6)
-    cfl=atof(argv[6]);
-//#endif
-  
+	Parameter::get("fem.localdg.cfl", cfl, cfl);
   std::cout << " CFL : " << cfl << std::endl;
-  
-  InitialDataType problem(epsilon,true);
+
+  InitialDataType problem;
 	
   string myoutput = "eoc.tex";
   EocOutput eocoutput(myoutput);
