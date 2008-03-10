@@ -239,23 +239,41 @@ namespace Dune
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
-    const PrismPoints& points = PrismPoints::instance();
+    SimplexPointsAdapter<2> simplexPoints(order);
+    int simplexOrder = simplexPoints.order();
 
+		const GaussPts& gp = GaussPts::instance();
+    // find the right Gauss Rule from given order
     int m = 0;
-    for (int i = 0; i < PrismPoints::numQuads; ++i) {
-      if (points.order(i) >= order_) {
+    for (int i = 0; i <= GaussPts::MAXP; i++) {
+      if (gp.order(i)>=order_) {
         m = i;
         break;
       }
     }
-
     if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
-    order_ = points.order(m);
+    
+		int gaussOrder = gp.order(m);
+    int minOrder = ((simplexOrder < gaussOrder) ? simplexOrder : gaussOrder);
+    order_ = minOrder;
+  
+    int numSimplexPoints = simplexPoints.numPoints();
+    int numGaussPoints = gp.power(m,1);
 
-    // fill in the points
-    for (int i = 0; i < points.numPoints(m); ++i) {
-      this->addQuadraturePoint(points.point(m, i), points.weight(m, i));
-    }
+		FieldVector<ct, 3> local;
+		double weight, simplexWeight;
+    
+    for (int i = 0; i < numSimplexPoints; ++i) {
+			local[0] = simplexPoints.point(i)[0];
+			local[1] = simplexPoints.point(i)[1];
+			simplexWeight = simplexPoints.weight(i);
+      for (int j = 0; j < numGaussPoints; ++j) {
+				local[2] = gp.point(m,j);
+				weight = simplexWeight;
+				weight *= gp.weight(m,j);
+        this->addQuadraturePoint(local, weight);
+      }    
+		}
   }
 
   template <class ct>

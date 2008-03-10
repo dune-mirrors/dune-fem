@@ -5,7 +5,6 @@
 
 // quadrature storage classes 
 #include "gausspoints.hh"
-#include "prismpoints.hh"
 #include "pyramidpoints.hh"
 #include "simplexpoints.hh"
 
@@ -488,7 +487,7 @@ namespace Dune
     /** \brief maximal order of available quadratures */
     static size_t maxOrder () 
     {
-      return PrismPoints :: highest_order;
+      return SimplexMaxOrder::maxOrder2;
     }
   };
 

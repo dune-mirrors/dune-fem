@@ -16,7 +16,6 @@ quadrature_HEADERS = cachepointlist.hh \
                      quadrature.hh \
 		     quadratureimp.hh \
                      quadratureimp_inline.hh \
-		     prismpoints.hh \
 		     pyramidpoints.hh \
 		     quadprovider.hh \
 		     simplexpoints.hh
