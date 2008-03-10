@@ -182,6 +182,8 @@
       @ingroup IOGroup */
   /** @defgroup InOutStreams Input and output streams
       @ingroup IOGroup */
+  /** @defgroup Parameter Parameters
+      @ingroup IOGroup */
 
 /** 
    @defgroup HelperClasses Utility classes

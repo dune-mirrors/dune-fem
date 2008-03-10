@@ -11,9 +11,58 @@
 
 namespace Dune
 {
-/*! @addtogroup Parameter
- *
- */
+  
+  /** \addtogroup Parameter
+   *
+   *  Handling Parameters, i.e., values that can be set after compilation, in
+   *  dune-fem is extremely easy. Just add
+   *  \code
+   *  Dune :: Parameter :: append( argc, argv );
+   *  \endcode
+   *  at the head of your main function. Parameters are strings of the
+   *  format "key: value". Any command line argument containing a colon
+   *  will thus be interpreted as a parameter.
+   *
+   *  There are 8 static methods in Parameter to obtain the value of a
+   *  parameter. They are divided by the following criteria:
+   *  - \b Default \b Value: The methods taking a default value will return the
+   *    default, if the parameter has not been specified by the user.
+   *    Additionally, they will add "\e key : \e value" to the database. The
+   *    methods not taking a default value will throw an exception, if the
+   *    parameter could not be found in the database.
+   *  - \b Return \b Value: For convenience, there is always a method (called
+   *    getValue) returning the value of the parameter. If you do not want to
+   *    rely on return value optimization, use the method (called get) taking
+   *    a reference to the return variable as an argument.
+   *  - \b Validation: It is often necessary to make sure the value satisfies
+   *    certain constraints. For this purpose, some methods take a validator
+   *    as an argument.
+   *  .
+   *
+   *  Of course, you don't have to pass every parameter on the command line.
+   *  They can also be gathered in files. Parameter provides a kind of include
+   *  mechanism. Whenever a parameter with key "paramfile" is encountered, the
+   *  value is interpreted as a paramter file to include.
+   *
+   *  If a parameter is defined multiply, the first definition is added to the
+   *  database. All later definitions are ignored. Therefore it is important to
+   *  know the exact behaviour of the "paramfile" parameter:
+   *  - All parameters in the current file (or the command line) are added
+   *    first.
+   *  - If there were includes, they are processed in the order of appearance.
+   *  - Should a thus included file have includes, they are added depth-first,
+   *    i.e., The includes of one included file are parsed down to the last
+   *    file included, before the includes of the next included file are
+   *    considered.
+   *  .
+   *
+   *  All parameter names defined by dune-fem should conform to the following
+   *  naming convention:
+   *  \code
+   *  fem.<group>.<parameter>
+   *  \endcode
+   *  The group name can be omitted if necessary.
+   */
 
   class ParameterNotFound
   : public Exception
@@ -181,7 +230,7 @@ namespace Dune
       return params_[ key ];
     }
 
-    inline bool insert ( const std :: string s,
+    inline bool insert ( const std :: string &s,
                          std :: queue< std :: string > &includes )
     {
       const unsigned int size = s.size();
@@ -306,14 +355,15 @@ namespace Dune
     inline static void append ( int& argc, char **argv )
     {
       std :: queue< std :: string > includes;
-      for( int i = 1; i < argc; ++i ) {
-     	  if (instance().insert( std :: string( argv[ i ] ), includes )) {
-	        for (int j = i+1; j < argc; ++j) {
-	          argv[j-1] = argv[j];
-	        }
-	        --i;
-	        --argc;
-	      }
+      for( int i = 1; i < argc; ++i )
+      {
+        if( instance().insert( std :: string( argv[ i ] ), includes ) )
+        {
+	  for( int j = i+1; j < argc; ++j )
+            argv[j-1] = argv[j];
+	  --i;
+	  --argc;
+	}
       }
       instance().processIncludes( includes );
     }
@@ -494,7 +544,10 @@ namespace Dune
       return instance().verbose_;
     }
   
-    /** \brief write all parameters into a file
+    /** \brief write the parameter database to a file
+     *
+     *  This method writes all paramters in the database to the given file.
+     *  The parameters are stored in alphabetical order. Includes are not used.
      *
      *  \param[in]  filename  name of the file to store the parameters in
      */
