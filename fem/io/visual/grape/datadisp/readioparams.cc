@@ -36,6 +36,8 @@ int scanProcsPaths(const std::string globalPath,
   return procs;
 }
 
+  std::string path,solprefix;
+
 int readParameterList (int argc, char **argv)
 {
   int   i, i_start, i_end;
@@ -43,10 +45,9 @@ int readParameterList (int argc, char **argv)
   int    n = 0, n_info = 10;
 
   int    i_delta = 1;
-  std::string path;
   const  char *replay = 0;
   REAL   timestep = 1.0e-3;
-
+  
   info = (INFO *) malloc(n_info*sizeof(INFO));
   assert(info != 0);
   
@@ -59,7 +60,26 @@ int readParameterList (int argc, char **argv)
     print_help("datadisp");
     return(0);
   }
-
+  if (argc == 3) {
+    path = Parameter::prefix();
+    std::string dummyfile;
+    Parameter::get("fem.datawriter.datafileprefix",solprefix);
+    info[n].name = solprefix.c_str();
+    info[n].datinf = 0;
+    info[n].fix_mesh = 0;
+    for (int df=0;df<TupleLength<GR_DiscFuncType>::value;++df)  {
+      DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
+      assert(dinf);
+      dinf->name = solprefix.c_str();
+      dinf->base_name = 0; 
+      dinf->comp = 0;
+      dinf->dimVal = 0;
+      dinf->next = info[n].datinf; 
+      info[n].datinf = dinf;
+    }
+    n++;
+  }
+  
   i_start = atoi(argv[1]);
   i_end = atoi(argv[2]);
 

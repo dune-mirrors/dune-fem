@@ -6,7 +6,7 @@
 //- Dune includes 
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
-
+#include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -38,7 +38,7 @@
  *  Data files are generated in the directly
  *  given by the \b fem.prefix parameter and
  *  with the file prefix chosen via the parameter
- *  \b fem.fileprefix.
+ *  \b fem.datafileprefix.
  *
  **/
 
@@ -186,6 +186,7 @@ protected:
   mutable double saveTime_;
 
   double saveStep_;
+  int saveCount_;
   double endTime_;
   const int myRank_;
 
@@ -238,7 +239,7 @@ public:
     init(paramfile);
   }
 
-  /** \brief Constructor creating data writer 
+   /** \brief Constructor creating data writer 
     \param grid corresponding grid 
     \param gridName corresponding macro grid name (needed for structured grids)
     \param data Tuple containing discrete functions to write 
@@ -272,7 +273,7 @@ public:
   DataWriter(const GridType & grid, 
              const std::string& gridName, 
              OutPutDataType& data, 
-             const std::string paramfile)
+             const std::string paramfile) DUNE_DEPRECATED
     : grid_(grid), data_(data) 
     , writeStep_(0)
     , saveTime_(0.0)
@@ -295,7 +296,7 @@ public:
   */ 
   DataWriter(const GridType & grid, OutPutDataType& data, 
              const std::string paramfile,
-             double time)
+             double time) DUNE_DEPRECATED
     : grid_(grid), data_(data) 
     , writeStep_(0) 
     , saveTime_(0.0)
@@ -314,10 +315,120 @@ public:
     }
   }
 
+ /** \brief Constructor creating data writer 
+    \param grid corresponding grid 
+    \param gridName corresponding macro grid name (needed for structured grids)
+    \param data Tuple containing discrete functions to write 
+
+    The DataWriter is tuned through \ref Parameter.
+    \note Possible values for the parameters are 
+    (copy this to your parameter file):
+
+    # OutputPath 
+    fem.prefix: ./
+    # name for data set  
+    fem.datawriter.datafileprefix: solution
+    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
+    fem.datawriter.outputformat: 0
+    # GrapeDisplay (0 = no, 1 = yes)
+    fem.datawriter.grapedisplay: 0 
+    # SaveStep (write data every `saveStep' time period, <=0 deactivates) 
+    fem.datawriter.savestep: 0.1
+    # SaveCount (write data every saveCount time steps, <=0 deactivates)
+    fem.datawriter.savecount: -1
+  */
+  DataWriter(const GridType & grid, 
+             const std::string& gridName, 
+             OutPutDataType& data,
+	     double startTime,
+	     double endTime)
+    : grid_(grid), data_(data) 
+    , writeStep_(0)
+    , saveTime_(startTime)
+    , saveStep_(0.1)
+    , saveCount_(-1)
+    , endTime_(endTime)
+    , myRank_(grid_.comm().rank())
+    , outputFormat_(grape)
+  {
+    // initialize class 
+    init();
+    // save macro grid for structured grids 
+    saveMacroGrid( gridName );
+  }
+
+  /** \brief Constructor creating data writer 
+    \param grid corresponding grid 
+    \param data Tuple containing discrete functions to write 
+    \param time for restarted jobs get time from outside 
+  */ 
+  DataWriter(const GridType & grid, OutPutDataType& data, 
+             double time,
+	     double startTime,
+	     double endTime)
+    : grid_(grid), data_(data) 
+    , writeStep_(0) 
+    , saveTime_(startTime)
+    , saveStep_(0.1)
+    , saveCount_(-1)
+    , endTime_(endTime)
+    , myRank_(grid_.comm().rank())
+    , outputFormat_(grape)
+  {
+    init();
+
+    // set old values according to new time 
+    while(saveTime_ < time) 
+    {
+      ++writeStep_;
+      saveTime_ += saveStep_;
+    }
+  }
+
   //! destructor 
   virtual ~DataWriter() {}
 
 protected:  
+  void init() 
+  {
+    // read verbose parameter 
+    verbose_ = Parameter::verbose();
+
+    path_ = Parameter::prefix();
+    // create path if not already exists 
+    // IOInterface :: createGlobalPath ( grid_.comm(), path_ );
+
+    // write parameter file 
+    Parameter::write("parameter.log");
+    
+    // get prefix for data files
+    {
+      std::string dummyfile;
+      Parameter::get("fem.datawriter.datafileprefix",dummyfile);
+      datapref_ += dummyfile;
+    }
+
+    int outputFormat = Parameter::getValidValue<int>("fem.datawriter.outputformat",0,
+						ValidateInterval<int,true,true>(0,2));
+    switch( outputFormat ) 
+    {
+      case 0: outputFormat_ = grape; break;
+      case 1: outputFormat_ = vtk; break;
+      case 2: outputFormat_ = vtkvtx; break;
+      default:
+        DUNE_THROW(NotImplemented,"DataWriter::init: wrong output format");
+    }
+
+    int gpdisp = Parameter::getValue("fem.datawriter.grapedisplay",0);
+    grapeDisplay_ = (gpdisp == 1) ? true : false;
+
+    // get parameters for data writing
+    Parameter::get("fem.datawriter.savestep",saveStep_);
+    Parameter::get("fem.datawriter.savecount",saveCount_);
+    Parameter::get("fem.datawriter.starttime",saveTime_,saveTime_);
+    Parameter::get("fem.datawriter.endtime",endTime_,endTime_);
+  }
+
   void init(const std::string& paramfile) 
   {
     const bool verboseOutput = (myRank_ == 0);
@@ -381,7 +492,9 @@ public:
   virtual void write(double time, int timestep) const 
   {
     // only write data time > saveTime  
-    if( (time >= saveTime_ ) || (time >= endTime_) )
+    if( (saveStep_>0 && time >= saveTime_ ) || 
+	(time >= endTime_) ||
+	(saveCount_>0 && timestep%saveCount_) )
     {
       // check online display 
       display(); 

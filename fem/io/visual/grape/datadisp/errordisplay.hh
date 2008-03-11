@@ -49,7 +49,7 @@ class DisplayErrorFunction {
   private:
     typedef typename ConsType::LocalFunctionType ConsLocalFunctionType;
     ConsLocalFunctionType lUh_;
-    SolutionDataType initU0_;
+    SolutionType initU0_;
     double time_;
     const GeometryImp* geometry_;
     bool initialized_;
