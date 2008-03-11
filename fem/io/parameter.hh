@@ -241,11 +241,12 @@ namespace Dune
     {
       if( params_.find( key ) == params_.end() )
       {
-        if( verbose_ )
+        if( verbose_ ) {
           std :: cout << curFileName_ << "[" << curLineNumber_ << "]"
                       << " : ";
           std :: cout << "Adding " << key << " = " << value
                       << std :: endl;
+        }
         params_[ key ] = value;
       }
       else if (verbFound && verbose_) {
