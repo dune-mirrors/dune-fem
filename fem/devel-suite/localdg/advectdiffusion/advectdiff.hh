@@ -6,7 +6,7 @@
 #include <string>
 
 // Dune includes
-#include <dune/common/utility.hh>
+// #include <dune/common/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 
 #include <dune/fem/pass/dgpass.hh>

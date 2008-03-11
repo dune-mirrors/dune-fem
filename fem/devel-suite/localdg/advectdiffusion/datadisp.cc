@@ -1,78 +1,33 @@
 //************************************************************
-//
-//  (C) written and directed by Robert Kloefkorn 
-//
+  // Example
+  // ./datadisp 0 5 -m solution -p . paramfile:parameter 
 //************************************************************
-#include <iostream>
-#include <vector>
-#include <assert.h>
-#include <string.h>
-
 #include <config.h>
-#include <dune/common/stdstreams.cc>
-
-using namespace Dune;
 
 
-#define LARGE 1.0E308
-
-static const int dim = DUNE_PROBLEM_DIM; 
-
-#include <dune/fem/dfadapt.hh>
-#include <dune/fem/lagrangebase.hh>
-#include <dune/fem/dfadapt.hh>
-#include <dune/common/stack.hh>
-
-//#include <../../../space/dgspace/dgleafindexset.hh>
-#include <dune/grid/common/gridpart.hh>
-
-#include <dune/io/file/grapedataio.hh>
-
-
-typedef double REAL;
-
-#include <dune/io/visual/grapedatadisplay.hh>
-#include <dune/io/visual/combinedgrapedisplay.hh>
-
-#include "../../../visual/grape/datadisp/printhelp.cc"
-
+///////////////////////////////////////////////////
+//
+// Include your header defining all necessary types 
+//
+///////////////////////////////////////////////////
 #include "models.hh"
+// type of discrete function tuple to restore 
+typedef IOTupleType GR_InputType;
 
-typedef GridType                                        GR_GridType;
-typedef DgType::SpaceType                               GR_FunctionSpaceType;
-typedef DofManager<GR_GridType>                         GR_DofManagerType;
-typedef DofManagerFactory <GR_DofManagerType>           GR_DofManagerFactoryType;
-typedef DgType::GridPartType                            GR_GridPartType;
-//typedef DefaultGridPart<GR_GridType,typename DGGridPartType::IndexSetType> GR_GridPartType; 
-typedef GR_GridPartType::IndexSetType GR_IndexSetType;
-
-typedef DgType::DiscreteFunctionSpaceType               GR_DiscFuncSpaceType;
-typedef DgType::DestinationType                         GR_DiscFuncType;
-typedef GrapeDataDisplay<GR_GridType > GrapeDispType;
-
-#include "../../../visual/grape/datadisp/readdata.cc"
-#include "../../../visual/grape/datadisp/readparams.cc" 
-#include "../../../visual/grape/datadisp/readfile.cc" 
-
-
-int main(int argc, char **argv)
+#include <dune/fem/io/visual/grape/datadisp/errordisplay.hh>
+// preprocessing method fill in some method if Uh 
+// should be changed before displaying
+template <class GrapeDispType, 
+          class GR_GridType,
+          class DestinationType>
+void postProcessing(GrapeDispType& disp,
+                    const GR_GridType& grid,
+                    const double time,
+                    const DestinationType& Uh)
 {
-
-  if (argc < 2)
-  {
-    print_help("datadisp");
-    return(0);
-  }   
-
-  if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "-help"))
-  {
-      print_help("dunedisp");
-      return(0);
-  }
-
-  if(argc > 2) 
-    return readParameterList(argc,argv);
-  else 
-    return readParameterFile(argc,argv);
- 
+  DisplayErrorFunction<DestinationType,InitialDataType>::
+    apply(disp,grid,time,Uh);
 }
+// include main program 
+#include <dune/fem/io/visual/grape/datadisp/datadisp.cc>
+

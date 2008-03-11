@@ -522,11 +522,17 @@ double EulerFlux<3>::maxSpeed(const double gamma,
 
 /*****************************************************************/
 class U0RotatingCone {
+  double startTime_;
 public:
-  U0RotatingCone() : gamma(1.4), myName("Rotating Cone")  {}
+  U0RotatingCone() : 
+    startTime_(Parameter::getValue<double>("fem.localdg.starttime",0.0)),
+	       gamma(1.4)
+  {
+    myName = "Rotating Cone"; 
+  }
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0,arg,res);
+    evaluate(startTime_,arg,res);
   }
   double endtime() {
     return 1.0;
@@ -588,10 +594,13 @@ public:
 };
 
 class U0RP {
-  double T,startTime;
+  double startTime_;
+  double T;
   FieldVectorAdapter<FieldVector<double,6> > Ulr;
 public:
-  U0RP() : T(0.4), startTime(0), gamma(1.4) {
+  U0RP() : 
+    startTime_(Parameter::getValue<double>("fem.localdg.starttime",0.0)),
+    T(0.4), gamma(1.4) {
     myName = "RP-Sod";
     // default is sod's rp
     Ulr[0] = 1.0;
@@ -603,7 +612,6 @@ public:
     Parameter::get("RPData",Ulr,Ulr);
     Parameter::get("RPGamma",gamma,gamma);
     Parameter::get("RPT",T,T);
-    Parameter::get("StartTime",startTime,startTime);
   }
   double endtime() {
     return T;
@@ -613,7 +621,7 @@ public:
   }
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(startTime,arg,res);
+    evaluate(startTime_,arg,res);
   }
   template <class DomainType, class RangeType>
   void evaluate(const DomainType& arg,double t, RangeType& res) const

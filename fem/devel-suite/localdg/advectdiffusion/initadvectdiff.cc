@@ -1,52 +1,54 @@
 template <class GridType>
 class U0 {
+  double startTime_;
  public:
   enum { ConstantVelocity = true };
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0() : velocity_(0) { 
-		  Parameter::get("fem.localdg.epsilon",epsilon);
-      velocity_[0]=0.8;
-      velocity_[1]=0.8;
-      
-      max_n_of_coefs = 2;
-      
-      //x coordinate
-      common_coef_x[0] = 2.0;
-      sin_coef_x[0] = 0.8;
-      cos_coef_x[0] = 0.6;
-        
-      //x coordinate
-      common_coef_x[1] = 0.7;
-      sin_coef_x[1] = 0.2;
-      cos_coef_x[1] = 0.9;
-            
-      //y coordinate    
-      common_coef_y[0] = 1.0;
-      sin_coef_y[0] = 0.4;
-      cos_coef_y[0] = 1.2;
-
+  U0() : startTime_(Parameter::getValue<double>("fem.localdg.starttime",0.0)),
+	 velocity_(0) { 
+    Parameter::get("fem.localdg.epsilon",epsilon);
+    velocity_[0]=0.8;
+    velocity_[1]=0.8;
     
-      //y coordinate    
-      common_coef_y[1] = 0.5;
-      sin_coef_y[1] = 0.1;
-      cos_coef_y[1] = 0.3;
-      
-      
-      //z coordinate
-      common_coef_z[0] = 1.3;
-      sin_coef_z[0] = -0.4;
-      cos_coef_z[0] = 0.1;
+    max_n_of_coefs = 2;
+    
+    //x coordinate
+    common_coef_x[0] = 2.0;
+    sin_coef_x[0] = 0.8;
+    cos_coef_x[0] = 0.6;
+    
+    //x coordinate
+    common_coef_x[1] = 0.7;
+    sin_coef_x[1] = 0.2;
+    cos_coef_x[1] = 0.9;
+    
+    //y coordinate    
+    common_coef_y[0] = 1.0;
+    sin_coef_y[0] = 0.4;
+    cos_coef_y[0] = 1.2;
+    
+    
+    //y coordinate    
+    common_coef_y[1] = 0.5;
+    sin_coef_y[1] = 0.1;
+    cos_coef_y[1] = 0.3;
+    
+    
+    //z coordinate
+    common_coef_z[0] = 1.3;
+    sin_coef_z[0] = -0.4;
+    cos_coef_z[0] = 0.1;
+    
+    //z coordinate    
+    common_coef_z[1] = 0.1;
+    sin_coef_z[1] = 0.2;
+    cos_coef_z[1] = -0.3;
+    
+    myName = "AdvectDiff";
+  }
   
-      //z coordinate    
-      common_coef_z[1] = 0.1;
-      sin_coef_z[1] = 0.2;
-      cos_coef_z[1] = -0.3;
-      
-      myName = "AdvectDiff";
-    }
-
   void velocity(const DomainType& x, DomainType& v) const
   {
     v = velocity_;
@@ -57,7 +59,7 @@ class U0 {
   }
     
   void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0,arg,res);
+    evaluate(startTime_,arg,res);
   }
   
   
@@ -149,16 +151,18 @@ class U0 {
 };
 template <class GridType>
 class U0Disc : public U0<GridType> {
+  double startTime_;
  public:
   enum { ConstantVelocity = true };
   typedef U0<GridType> BaseType;
   enum { dimDomain = GridType::dimensionworld };  
   typedef FieldVector<double,dimDomain> DomainType;
   typedef FieldVector<double,1> RangeType;
-  U0Disc() : BaseType() {
+  U0Disc() : BaseType(),
+	     startTime_(Parameter::getValue<double>("fem.localdg.starttime",0.0)) { 
     this->myName = "Discontinuous AdvectDiff";
     this->velocity_[0] = 1.0;
-    this->velocity_[1] = 0.0;
+    this->velocity_[1] = 0.1;
   }
 
   double endtime() {
@@ -166,20 +170,22 @@ class U0Disc : public U0<GridType> {
   }
     
   void evaluate(const DomainType& arg, RangeType& res) const {
-    evaluate(0.0,arg,res);
+    evaluate(startTime_,arg,res);
   }
-  
-  void evaluate(const DomainType& arg, double t, RangeType& res) const 
-	{
-	  evaluate(t, arg, res);
-		return;
-	}
+	       
+  void evaluate(const DomainType& arg, double t, RangeType& res) const {
+    evaluate(t, arg, res);
+    return;
+  }
 
   void evaluate(double t,const DomainType& arg, RangeType& res) const 
   {
     //BaseType::evaluate(t,arg,res); 
     res = 1.0;
-    if (arg[0]-this->velocity_[0]*t<-0.5)
+    DomainType x(this->velocity_);
+    x *= -t;
+    x += arg-DomainType(0.2);
+    if (x[0]*x[1]>0.)
       res = 2.0;
   }
   

@@ -2,20 +2,38 @@
 
 # fem.localdg.cfl: 0.15
 
-fem.localdg.diff_tstep: true
+fem.localdg.diff_tstep: 0
 
-fem.localdg.epsilon: 0.1
-
-fem.localdg.grape: 100
+fem.localdg.epsilon: 0.
 
 fem.localdg.gridfile: grid2d.dgf
 
-fem.localdg.repeats: 2
+fem.localdg.repeats: 5
 
-fem.localdg.startlevel: 3
+fem.localdg.startlevel: 1
 
-# Parameters for Euler RP
+fem.localdg.starttime: 0
+
+fem.localdg.endtime: 0.5
+
+# Parameters for Euler RP (PROBLEM 6)
 # RPData: [1., -1., 1.,    1., 1., 1.]
 # RPGamma: 1.4
 # RPT: 0.05
 
+# Output parameters
+# OutputPath 	
+fem.prefix: ./
+# name for data set  
+fem.datawriter.datafileprefix: solution
+# format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
+fem.datawriter.outputformat: 0
+# GrapeDisplay (0 = no, 1 = yes)
+fem.datawriter.grapedisplay: 0
+# SaveStep (write data every `saveStep' time period, <=0 deactivates) 
+fem.datawriter.savestep: 0.1
+# SaveCount (write data every saveCount time steps, <=0 deactivates)
+fem.datawriter.savecount: -1
+
+# General Parameters
+fem.verbose: 1

@@ -16,19 +16,15 @@ const double globalTimeStep = 1e-3;
 #include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/quadraturerules.hh>
 
-#include <dune/fem/io/file/grapedataio.hh>
 #include <dune/fem/misc/l2error.hh>
 
 #include <iostream>
 #include <string>
 
-#if HAVE_GRAPE
-#include <dune/grid/io/visual/grapedatadisplay.hh>
-#endif
-
 #include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/io/file/datawriter.hh>
 
 #include "models.hh"
 #include "stuff.cc"
@@ -47,20 +43,20 @@ int main(int argc, char ** argv, char ** envp) {
 
   // *** Initialization
 	
-	Parameter::append(argc, argv);
+  Parameter::append(argc, argv);
   if (argc==2) Parameter::append(argv[1]);
-	else Parameter::append("parameter");
-	
+  else Parameter::append("parameter");
+    
   // Polynomial and ODE order
   // Grid:
 	
-	std::string filename;
-	Parameter::get("fem.localdg.gridfile", filename);
+  std::string filename;
+  Parameter::get("fem.localdg.gridfile", filename);
   GridPtr<GridType> grid(filename); // ,MPI_COMM_WORLD);
+  double startTime = Parameter::getValue<double>("fem.localdg.starttime",0.0);
   int repeats = Parameter::getValue<int>("fem.localdg.repeats");
   int startlevel = Parameter::getValue<int>("fem.localdg.startlevel");
-  int graped = Parameter::getValue<int>("fem.localdg.grape");
-	// CFL:
+  // CFL:
   double cfl;
   switch (order) 
   {
@@ -70,7 +66,7 @@ int main(int argc, char ** argv, char ** envp) {
     case 3: cfl=0.05;  break;
     case 4: cfl=0.09; break;
   }
-	Parameter::get("fem.localdg.cfl", cfl, cfl);
+  Parameter::get("fem.localdg.cfl", cfl, cfl);
   std::cout << " CFL : " << cfl << std::endl;
 
   InitialDataType problem;
@@ -92,12 +88,7 @@ int main(int argc, char ** argv, char ** envp) {
   L2Error<DgType::DestinationType> L2err;
   FieldVector<double,ModelType::dimRange> err;
 
-  // printSGrid(0,0,dg.space(),U);
-	
-  //int n=0;
-  //double nextsave=0.;
-  //double savestep=0.05;
-  double maxtime = problem.endtime();
+  double endTime = problem.endtime();
   int level=0;
 	
   FieldVector<double,dimworld> upwind(1.);
@@ -109,36 +100,11 @@ int main(int argc, char ** argv, char ** envp) {
   for(int eocloop=0;eocloop < repeats; ++eocloop) {
     // *** Operator typedefs
     DgType dg(*grid,eulerflux,upwind);
-    ODEType ode(dg,rksteps,cfl); 
-
-    // set timestep size as it is fixed 
-#ifdef EULER_PERFORMANCE
-    // only for Euler Performance Test
-    ode.resetTimeStepEstimate();
-    ode.provideTimeStepEstimate(globalTimeStep);
-    ode.syncTimeStep();
-#endif
+    ODEType ode(dg,rksteps,cfl,startTime); 
     
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
     DgType::DestinationType tmp("tmp",dg.space());
-    // DofManagerType& dm = DofManagerFactoryType :: getDofManager( *grid );  
-    // grid->preAdapt();
-    // dm.resizeForRestrict();
-    // grid->globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
-    // dm.resize();
-    // dm.dofCompress();
-    // grid->postAdapt();
-    
-    /*		 DgType::DestinationType tmp("tmp",dg.space());
-      {
-      initialize(*problem,U);
-      dg.limit(U,tmp);
-      }
-      ode.solve(U);
-      dg.limit(U,tmp);
-      
-    */
     
     initialize(problem,U);
     dg.limit(U,tmp);
@@ -146,48 +112,35 @@ int main(int argc, char ** argv, char ** envp) {
     if (eocloop==0) 
       eocoutput.printInput(problem,*grid,ode,argv[1]);
     
-#if HAVE_GRAPE 
-    if(graped > 0) {
-      GrapeDataDisplay< GridType > grape(U.space().gridPart());
-      grape.dataDisplay(U);
-    }
-#endif 
+    IOTupleType dataTup ( &U );
+    typedef DataWriter< GridType, IOTupleType > DataWriterType;
+    DataWriterType dataWriter( *grid, filename, dataTup,startTime,endTime);
     
-    double t=0.0;
+    double t=startTime;
     int counter=0;
     FieldVector<double,ModelType::dimRange> projectionError = L2err.norm(problem,U,t);  
     cout << "Projection error " << problem.myName << ": " << projectionError << endl;
 	
     double maxdt=0.,mindt=1.e10,averagedt=0.;
     // *** Time loop
-    while (t<maxtime) 
+    dataWriter.write(t , counter );  
+    while (t<endTime) 
     {
       double ldt = -t;
       t=ode.solve(U);
-
-#ifdef EULER_PERFORMANCE
-      // only for Euler Performance Test
-      ode.resetTimeStepEstimate();
-      ode.provideTimeStepEstimate(globalTimeStep);
-      ode.syncTimeStep();
-#endif
-      //std::cout << "Current time = " << t << ", dt = " << ode.deltaT() << "\n";
-      
-#if HAVE_GRAPE 
-      if(graped > 0)
-      {
-        if(counter%graped == 0 && counter > 0) 
-        {
-          GrapeDataDisplay< GridType > grape(U.space().gridPart());
-          grape.dataDisplay(U);
-        }
+      if (!U.dofsValid()) {
+	std::cout << "Invalid DOFs" << std::endl;
+	dataWriter.write(1e10, counter );  
+	abort();
       }
-#endif 
+      
+      dataWriter.write(t, counter );  
+      
       ldt += t;
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
-      // dg.limit(U,tmp);
+      dg.limit(U,tmp);
       dg.switchupwind();
       if(0 && counter%100 == 0) 
       {
@@ -205,6 +158,7 @@ int main(int argc, char ** argv, char ** envp) {
       ++counter;
     }
     
+    dataWriter.write(t, counter );  
     averagedt /= double(counter);
 
     err = L2err.norm(problem,U,t);
@@ -214,12 +168,7 @@ int main(int argc, char ** argv, char ** envp) {
     zeit = timer.elapsed()-prevzeit;
     eocoutput.printTexAddError(fehler,prevfehler,zeit,grid->size(0),counter,averagedt);
    
-#if HAVE_GRAPE
-    if(graped>0 && eocloop == repeats-1) {
-      GrapeDataDisplay< GridType > grape(*grid);
-      grape.dataDisplay(U);
-    }
-#endif
+    
     
     if(zeit > 3000.)
       break;
@@ -234,7 +183,7 @@ int main(int argc, char ** argv, char ** envp) {
   }
   
   eocoutput.printTexEnd(timer.elapsed());
-	Parameter::write("parameter.log");
+  Parameter::write("parameter.log");
 
   }
   catch (Dune::Exception &e) {

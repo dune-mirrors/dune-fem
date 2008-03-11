@@ -90,3 +90,5 @@ typedef Dune::HierarchicGridPart<GridType> GridPartType;
    typedef DuneODE::ExplTimeStepper<DgType> ODEType;
    //typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #endif
+
+typedef Tuple< DgType :: DestinationType * > IOTupleType;
