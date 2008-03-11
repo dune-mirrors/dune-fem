@@ -63,7 +63,7 @@ int readParameterList (int argc, char **argv)
   if (argc == 3) {
     path = Parameter::prefix();
     std::string dummyfile;
-    Parameter::get("fem.datawriter.datafileprefix",solprefix);
+    Parameter::get("fem.io.datafileprefix",solprefix);
     info[n].name = solprefix.c_str();
     info[n].datinf = 0;
     info[n].fix_mesh = 0;

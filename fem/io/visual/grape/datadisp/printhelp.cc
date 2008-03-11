@@ -7,6 +7,15 @@
 
 static void print_help(const char *funcName)
 {
+  printf("Alternative 1:\n");
+  printf("usage: %s paramfile:paramfile <i_start> <i_end>", funcName);
+  printf("%s reads a sequence of grids with discretefunctions\n",            
+   funcName);
+  printf("      and displays all data with GRAPE\n");
+  printf("      The parameters fem.prefix and fem.io.datafileprefix \n");
+  printf("      are read from the parameterfile. \n");
+
+  printf("Alternative 2:\n");
   printf("usage: %s <i_start> <i_end> -i increment", funcName);
   printf(" [-h] [-help] [-p path] ");
   printf("[-m grid] [-s df] [-v vecdf] [[-s drv] [-v drdv]] [-replay manager.replay file]\n");
@@ -17,8 +26,8 @@ static void print_help(const char *funcName)
   printf("options:\n");
   printf("   -h or -help: display this help\n");
   printf("   -f: use one fixed grid (from non adaptive simulations)\n");
-  printf("   -p path: read data from path 'path'\n");
-  printf("   -m grid: basename of grids is 'grid'; default: 'grid'\n");
+  printf("   -p path: read data from path \n");
+  printf("   -m grid: basename of data files \n");
   printf("   -s df:  read discrete function with basename 'df'\n");
 
   printf("Example\n");

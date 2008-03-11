@@ -26,9 +26,11 @@
 
 /** @addtogroup Checkpointing
  *
- *  In both cases the Dune::DataWritter is used,
+ *  Data can be written to disk in three formats or can
+ *  be visualized in GraPE online during a simulation.
+ *  In each cases the Dune::DataWritter is used,
  *  the format is choosen through the parameter
- *  \b fem.outputformat;
+ *  \b fem.io.outputformat;
  *  values are
  *  - 0: write data in GraPE format which can also
  *       be used for checkpointing - this format
@@ -36,20 +38,62 @@
  *  - 1: VTK cell data
  *  - 2: VTK vertex data
  *  .
- *  Data files are generated in the directly
+ *  To see the data simultaniously in GraPE the parameter
+ *  \b fem.io.grapedisplay has to be set to 1.
+ *
+ *  Since the GraPE output format is lossless
+ *  it is also used by the Dune::Checkpointer
+ *  class which also writes data to files
+ *  but alternates between to filenames -
+ *  while the Dune::DataWriter should be used
+ *  to store data for postprocessing, the
+ *  Dune::Checkpointer facility should be used 
+ *  to be able to restart computations after
+ *  a unexpected termination of a simulation.
+ *  
+ *  Data files are generated in the directory
  *  given by the \b fem.prefix parameter and
  *  with the file prefix chosen via the parameter
- *  \b fem.datafileprefix.
+ *  \b fem.io.datafileprefix. The data to be
+ *  saved to disk is given to the Dune::DataWriter instance
+ *  through a reference to a Dune::Tuple of 
+ *  discrete function pointer.
+ *
+ *  For a time series, data can be either written for a fixed
+ *  time step, or after a fixed number of iterations using the
+ *  parameters
+ *  \b fem.io.savestep or \b fem.io.savecount,
+ *  respectivly.
+ *  If a series of data is to be written without a real
+ *  time variable available, e.g., a series of refined grids,
+ *  startTime=0, endTime=100,
+ *  \b fem.io.savestep=-1 and \b fem.io.savecount=1
+ *  is a good choice to make; data is then written
+ *  using \b datawriter.write(step,step).
+ *
+ *  The following code snippet demonstrated the
+ *  general usage of the Dune::DataWriter:
+ *  \code
+ *  typedef Dune::Tuple< DestinationType* > IOTupleType;
+ *  IOTupleType dataTup ( &U );
+ *  typedef DataWriter< GridType, IOTupleType > DataWriterType;
+ *  DataWriterType dataWriter( grid,gridfilename,dataTup,startTime,endTime );
+ *  for (counter=0;time<endTime;counter++) {
+ *    ...
+ *    dataWriter.write(time,counter);
+ *  }
+ *  \endcode
  *
  **/
 
 namespace Dune {
 
 /** @ingroup Checkpointing 
-   \brief Implementation of the IOInterface. 
-   This class is managing our data output. 
+   \brief Implementation of the Dune::IOInterface. 
+   This class manages data output.
    Available output formats are GRAPE, VTK and VTK Vertex projected
-   using the VtxProjection operator. 
+   using the VtxProjection operator. Details can be
+   found in \ref Checkpointing.
 */    
 template <class GridImp, 
           class DataImp> 
@@ -320,6 +364,8 @@ public:
     \param grid corresponding grid 
     \param gridName corresponding macro grid name (needed for structured grids)
     \param data Tuple containing discrete functions to write 
+    \param startTime starting time for a time dependent simulation
+    \param endTime final time of a time dependent simulation
 
     The DataWriter is tuned through \ref Parameter.
     \note Possible values for the parameters are 
@@ -328,21 +374,21 @@ public:
     # OutputPath 
     fem.prefix: ./
     # name for data set  
-    fem.datawriter.datafileprefix: solution
+    fem.io.datafileprefix: solution
     # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
-    fem.datawriter.outputformat: 0
+    fem.io.outputformat: 0
     # GrapeDisplay (0 = no, 1 = yes)
-    fem.datawriter.grapedisplay: 0 
+    fem.io.grapedisplay: 0 
     # SaveStep (write data every `saveStep' time period, <=0 deactivates) 
-    fem.datawriter.savestep: 0.1
+    fem.io.savestep: 0.1
     # SaveCount (write data every saveCount time steps, <=0 deactivates)
-    fem.datawriter.savecount: -1
+    fem.io.savecount: -1
   */
   DataWriter(const GridType & grid, 
              const std::string& gridName, 
              OutPutDataType& data,
-	     double startTime,
-	     double endTime)
+	           double startTime,
+	           double endTime)
     : grid_(grid), data_(data) 
     , writeStep_(0)
     , saveTime_(startTime)
@@ -362,11 +408,13 @@ public:
     \param grid corresponding grid 
     \param data Tuple containing discrete functions to write 
     \param time for restarted jobs get time from outside 
+    \param startTime starting time for a time dependent simulation
+    \param endTime final time of a time dependent simulation
   */ 
   DataWriter(const GridType & grid, OutPutDataType& data, 
              double time,
-	     double startTime,
-	     double endTime)
+       	     double startTime,
+	           double endTime)
     : grid_(grid), data_(data) 
     , writeStep_(0) 
     , saveTime_(startTime)
@@ -405,11 +453,11 @@ protected:
     // get prefix for data files
     {
       std::string dummyfile;
-      Parameter::get("fem.datawriter.datafileprefix",dummyfile);
+      Parameter::get("fem.io.datafileprefix",dummyfile);
       datapref_ += dummyfile;
     }
 
-    int outputFormat = Parameter::getValidValue<int>("fem.datawriter.outputformat",0,
+    int outputFormat = Parameter::getValidValue<int>("fem.io.outputformat",0,
 						ValidateInterval<int,true,true>(0,2));
     switch( outputFormat ) 
     {
@@ -420,14 +468,14 @@ protected:
         DUNE_THROW(NotImplemented,"DataWriter::init: wrong output format");
     }
 
-    int gpdisp = Parameter::getValue("fem.datawriter.grapedisplay",0);
+    int gpdisp = Parameter::getValue("fem.io.grapedisplay",0);
     grapeDisplay_ = (gpdisp == 1) ? true : false;
 
     // get parameters for data writing
-    Parameter::get("fem.datawriter.savestep",saveStep_);
-    Parameter::get("fem.datawriter.savecount",saveCount_);
-    Parameter::get("fem.datawriter.starttime",saveTime_,saveTime_);
-    Parameter::get("fem.datawriter.endtime",endTime_,endTime_);
+    Parameter::get("fem.io.savestep",saveStep_);
+    Parameter::get("fem.io.savecount",saveCount_);
+    Parameter::get("fem.io.starttime",saveTime_,saveTime_);
+    Parameter::get("fem.io.endtime",endTime_,endTime_);
   }
 
   void init(const std::string& paramfile) 
@@ -635,9 +683,17 @@ public:
 
 /** @ingroup Checkpointing 
    \brief Implementation of the IOInterface. 
-   This class is managing our checkpointing. 
+   This class manages checkpointing. 
+
    The data will be stored in GRAPE output format, meaning that every
-   checkpoint also is a visualizable data set. 
+   checkpoint is also a visualizable data set. 
+   Constructor and write are simular to the
+   Dune::DataWriter, but in addition a
+   static method Dune::CheckPointer::restoreData
+   is provided. The template arguments are
+   the type of the grid and a tuple type
+   of pointers to the discrete functions types
+   to be stored.
 */    
 template <class GridImp, 
           class DataImp> 
@@ -647,7 +703,6 @@ class CheckPointer : public DataWriter<GridImp,DataImp>
   
   typedef GridImp GridType;
   typedef DataImp OutPutDataType; 
-  
 
   int checkPointStep_;
   mutable int checkPointNumber_;
@@ -666,17 +721,84 @@ class CheckPointer : public DataWriter<GridImp,DataImp>
   }
   
 public: 
-  /** \brief Constructor generating a cechkpointer 
+  /** \brief Constructor generating a checkpointer 
+    \param grid corresponding grid 
+    \param gridName name of macro grid file (for structured grids)
+    \param data Tuple containing discrete functions to write 
+    \param checkFile filename for restoring state of program from
+           previous runs (default is a null pointer, 
+           which means start from new)
+    \param lb LoadBalancer instance 
+      (default is zero, which means start from new)
+
+    \note In Addition to the parameters read by the DataWriter this class 
+          reads the following parameters: 
+
+    # write checkpoint every `CheckPointStep' time step
+    fem.io.checkpointstep: 500 
+    # store checkpoint information to file `CheckPointFile'
+    fem.checkpointfile: checkpoint
+  */
+  CheckPointer(const GridType & grid, 
+               const std::string& gridName, 
+               OutPutDataType& data, 
+               const char * checkFile = 0,
+               const LoadBalancerInterface* lb = 0) 
+    : BaseType(grid,gridName,data) 
+    , checkPointStep_(500)
+    , checkPointNumber_(1)
+    , lb_(lb)
+    , balanceRecover_(0)
+  {
+    this->datapref_ = checkPointPrefix();
+    Parameter::get("fem.io.checkpointstep",checkPointStep_,checkPointStep_);
+    if( checkFile )
+    {
+      checkPointFile_ = checkFile;
+      // read last counter 
+      bool ok = readCheckPoint();
+      // read name of check point file 
+      std::string dummyfile;
+      Parameter::get("fem.io.checkpointfile",dummyfile);
+      checkPointFile_ = this->path_; 
+      checkPointFile_ += "/"; 
+      checkPointFile_ += dummyfile;
+      // if check point couldn't be opened, try again   
+      if(!ok)
+      {
+        ok = readCheckPoint();
+        if( ! ok )
+        {
+          std::cerr <<"ERROR: unable to open checkpoint file! \n";
+          exit(1);
+        }
+      }
+    }
+    else
+    {
+      // read name of check point file 
+      std::string dummyfile;
+      Parameter::get("fem.io.checkpointfile",dummyfile);
+      checkPointFile_ = this->path_; 
+      checkPointFile_ += "/"; 
+      checkPointFile_ += dummyfile;
+      // read last counter 
+      readCheckPoint();
+    }
+    Parameter::write("parameter.log");
+  }
+  /** \brief Constructor generating a checkpointer 
     \param grid corresponding grid 
     \param gridName name of macro grid file (for structured grids)
     \param data Tuple containing discrete functions to write 
     \param paramfile parameter file containing parameters for data writer
     \param checkFile filename for restoring state of program from
-           previous runs (default is zero, which means start from new)
+           previous runs (default is a null pointer, 
+           which means start from new)
     \param lb LoadBalancer instance 
-      (default is zero, which means start  from new)
+      (default is zero, which means start from new)
 
-    \note In Addition to the parameters read by DataWriter this class 
+    \note In Addition to the parameters read by the DataWriter this class 
           reads the following parameters: 
 
     # write checkpoint every `CheckPointStep' time step
@@ -690,7 +812,7 @@ public:
                OutPutDataType& data, 
                const std::string paramfile,
                const char * checkFile = 0,
-               const LoadBalancerInterface* lb = 0) 
+               const LoadBalancerInterface* lb = 0) DUNE_DEPRECATED
     : BaseType(grid,gridName,data,paramfile) 
     , checkPointStep_(500)
     , checkPointNumber_(1)
@@ -818,10 +940,9 @@ public:
   }
 
   /** \brief restore grid from previous runs 
-    \param[in] paramfile parameter filename  
     \param[in] checkFile checkPoint filename 
     \param[in] rank number of my process 
-    \param tp TimeProvider to set time and timestep to
+    \param tp TimeProvider to restore time and timestep to
 
     \return Pointer to restored grid 
   */
@@ -830,6 +951,69 @@ public:
                                const std::string checkFile,
                                const int rank, 
                                TimeProviderImp& tp)
+  {
+    GrapeDataIO<GridType> dataio;
+    std::string datapref( checkPointPrefix() );
+    std::string path;
+    std::string checkPointFile;
+
+    int checkPointNumber = 0;
+    // if given checkpointfile is not valid use default checkpoint file 
+    if( ! readParameter(checkFile,"LastCheckPoint",checkPointNumber) )
+    {
+      // read default path
+      path = IOInterface::readPath(paramfile);
+      // set checkpointfile 
+      checkPointFile = path;
+      // read name of check point file 
+      std::string dummyfile;
+      readParameter(paramfile,"CheckPointFile",dummyfile);
+      checkPointFile += "/"; checkPointFile += dummyfile;
+      readParameter(checkPointFile,"LastCheckPoint",checkPointNumber);
+    }
+    else
+    {
+      if( ! readParameter(checkFile,"RecoverPath",path) )
+      {
+        // read default path
+        path = IOInterface::readPath(paramfile);
+      }
+    }
+
+    int timeStep = 0;
+    // try to read time step, if fails default value is taken
+    readParameter(checkPointFile,"TimeStep",timeStep);
+
+    // now add timestamp and rank 
+    path = IOInterface::createRecoverPath(
+        path, rank, datapref, checkPointNumber );
+
+    // time is set during grid restore  
+    double time = 0.0; 
+
+    GridType* grid = 
+      IOTuple<OutPutDataType>::restoreGrid(dataio, time, 
+          checkPointNumber , 
+          path, datapref);
+
+    tp.setTime( time, timeStep );
+    
+    return grid;
+  }
+
+  /** \brief restore grid from previous runs 
+    \param[in] paramfile parameter filename  
+    \param[in] checkFile checkPoint filename 
+    \param[in] rank number of my process 
+    \param tp TimeProvider to restore time and timestep to
+
+    \return Pointer to restored grid 
+  */
+  template <class TimeProviderImp> 
+  static GridType* restoreGrid(const std::string paramfile, 
+                               const std::string checkFile,
+                               const int rank, 
+                               TimeProviderImp& tp) DUNE_DEPRECATED
   {
     GrapeDataIO<GridType> dataio;
 
