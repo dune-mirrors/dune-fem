@@ -3,6 +3,76 @@
 //  (C) written and directed by Robert Kloefkorn 
 //
 //************************************************************
+
+namespace Dune {
+/** \addtogroup Visualization
+ *  
+ *  Data written in the GraPE format
+ *  using the Dune::DataWriter class
+ *  can be either directly visualized during
+ *  the computation or can be read separately
+ *  with the datadisp utility file. More
+ *  detail on how to write data to files 
+ *  can be found in \ref Checkpointing.
+ *
+ *  If data is to be visualized during a computation
+ *  the Dune::DataWriter can also be used by
+ *  setting the parameter \b fem.grapedisplay 
+ *  to 1. Each time a file is written to disk,
+ *  the data is simultaneously displayed in 
+ *  GraPE. By pressing the exit button in GraPE
+ *  the computation is resumed.
+ *
+ *  For reading data from disk into GraPE the
+ *  programm fem/io/visual/grape/datadisp/datadisp.cc
+ *  can be used. An example of its usage can be
+ *  found in the file 
+ *  fem/io/visual/grape/datadisp/programtemplate.cc
+ *
+ *  In the simplest case the following 
+ *  program can be used:
+ *  \code
+ *  typedef IOTupleType GR_InputType;
+ *  template <class GrapeDispType,
+ *            class GR_GridType,
+ *            class DestinationType>
+ *  void postProcessing(const GrapeDispType& disp,
+ *                      const GR_GridType& grid,
+ *                      const double time,
+ *                      const DestinationType& Uh)
+ *  {}                                                                               
+ *  #include <dune/fem/io/visual/grape/datadisp/datadisp.cc>
+ *  \endcode
+ *
+ *  In the file included in the last line
+ *  the function main() is defined. 
+ *  The resulting executable expects the start
+ *  and end index of the data files which are to
+ *  be read. The file prefix and the directory
+ *  are prescribed through runtime parameters with 
+ *  the same keys used in the Dune::DataWriter
+ *  described in \ref Checkpointing.
+ *
+ *  The type GR_InputType should be a tuple
+ *  type holding the types of the discrete functions
+ *  to be read.
+ *  The \b postProcessing method is called after
+ *  each data set is read. The corresponding
+ *  discrete functions are passed in the third
+ *  parameter; the first parameter holds the
+ *  grape handle. Further data, e.g., errors
+ *  and derived values, can be added to the
+ *  display by using the method
+ *  disp.addData(...) as described in the
+ *  class Dune::GrapeDataDisplay.
+ *  An example which adds the difference between
+ *  a discrete solution and an analytical 
+ *  solution can be found in 
+ *  fem/io/visual/grape/datadisp/errordisplay.hh.
+ *
+ **/
+}
+
 #include <iostream>
 #include <vector>
 #include <cassert>

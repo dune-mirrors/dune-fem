@@ -1,4 +1,4 @@
-template <class ConsType,class InitialDataType>
+template <class ConsType,class SolutionType>
 class DisplayErrorFunction {
   struct Error {
     typedef typename ConsType::DiscreteFunctionSpaceType::GridPartType 
@@ -49,7 +49,7 @@ class DisplayErrorFunction {
   private:
     typedef typename ConsType::LocalFunctionType ConsLocalFunctionType;
     ConsLocalFunctionType lUh_;
-    InitialDataType initU0_;
+    SolutionDataType initU0_;
     double time_;
     const GeometryImp* geometry_;
     bool initialized_;

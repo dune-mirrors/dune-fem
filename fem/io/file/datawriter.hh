@@ -23,6 +23,25 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+/** @addtogroup Checkpointing
+ *
+ *  In both cases the Dune::DataWritter is used,
+ *  the format is choosen through the parameter
+ *  \b fem.outputformat;
+ *  values are
+ *  - 0: write data in GraPE format which can also
+ *       be used for checkpointing - this format
+ *       is basicly loss free.
+ *  - 1: VTK cell data
+ *  - 2: VTK vertex data
+ *  .
+ *  Data files are generated in the directly
+ *  given by the \b fem.prefix parameter and
+ *  with the file prefix chosen via the parameter
+ *  \b fem.fileprefix.
+ *
+ **/
+
 namespace Dune {
 
 /** @ingroup Checkpointing 
