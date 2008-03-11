@@ -14,6 +14,7 @@
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/space/dgspace.hh>
+#include <dune/fem/operator/common/spaceoperatorif.hh>
 #include "discretemodels.hh"
 
 //#include "limitpass.hh"
@@ -23,9 +24,15 @@
 namespace Dune {  
   template <class Model,template<class M> class NumFlux,int polOrd >
   class DGAdvectionDiffusionOperator : 
-    public Operator<double,double,
+  public SpaceOperatorInterface<
+	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+  >
+#if 0
+  public Operator<double,double,
 	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType,
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType> {
+	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType> 
+#endif
+  {
   public:
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
@@ -115,9 +122,15 @@ namespace Dune {
 /**************************************************************/
   template <class Model,template<class M> class NumFlux,int polOrd >
   class DGAdvectionOperator : 
+  public SpaceOperatorInterface<
+	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+  >
+#if 0
     public Operator<double,double,
 		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,false,true>::Traits::DiscreteFunctionType,
-		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,false,true>::Traits::DiscreteFunctionType> {
+		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,false,true>::Traits::DiscreteFunctionType> 
+#endif
+  {
   public:
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
@@ -192,9 +205,15 @@ namespace Dune {
 /**************************************************************/
   template <class Model,template<class M> class NumFlux,int polOrd >
   class DGDiffusionOperator : 
+  public SpaceOperatorInterface<
+	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+  >
+#if 0
     public Operator<double,double,
 		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,false>::Traits::DiscreteFunctionType,
-		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,false>::Traits::DiscreteFunctionType> {
+		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,false>::Traits::DiscreteFunctionType> 
+#endif 
+  {
   public:
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };

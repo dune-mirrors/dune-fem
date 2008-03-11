@@ -70,7 +70,7 @@ int main(int argc, char ** argv, char ** envp) {
   std::cout << " CFL : " << cfl << std::endl;
 
   int printCount = Parameter::getValue("fem.localdg.printcount",-1);
-  
+
   InitialDataType problem;
 	
   string myoutput = "eoc.tex";
@@ -102,8 +102,11 @@ int main(int argc, char ** argv, char ** envp) {
   for(int eocloop=0;eocloop < repeats; ++eocloop) {
     // *** Operator typedefs
     DgType dg(*grid,eulerflux,upwind);
-    TimeProvider tp(startTime,cfl);
-    ODEType ode(dg,tp,rksteps,true); 
+    TimeProvider sertp(startTime,cfl);
+    typedef GridType :: Traits :: CollectiveCommunication CommunicatorType;
+    ParallelTimeProvider<CommunicatorType> tp(grid->comm(),sertp);
+    ODEType ode(dg,sertp,rksteps,Parameter::verbose()); 
+    dg.timeProvider(&sertp);
     
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
@@ -127,13 +130,16 @@ int main(int argc, char ** argv, char ** envp) {
     double maxdt=0.,mindt=1.e10,averagedt=0.;
     // *** Time loop
     dataWriter.write(t , counter );  
-    tp.setDeltaT(1e-1);
+    sertp.setDeltaT(1e-1);
     ode.initialize(U);
+    tp.syncTimeStep();
     while (t<endTime) 
     {
       double ldt = -t;
+      tp.resetTimeStepEstimate();
       ode.solve(U);
       tp.augmentTime();
+      tp.syncTimeStep();
       t = tp.time();
       ldt += t;
       if (!U.dofsValid()) {
@@ -143,7 +149,7 @@ int main(int argc, char ** argv, char ** envp) {
       }
       
       dataWriter.write(t, counter );  
-      if (printCount>0 && counter%printCount) {
+      if (printCount>0 && counter%printCount==0) {
         std::cout << "step: " << counter << " time: " << t << " deltaT:" << ldt << std::endl;
       }
       

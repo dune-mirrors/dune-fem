@@ -1,22 +1,15 @@
+fem.verbose: 1
+
 # Default parameter file for fem/localdg/advectdiffusion/dgtest.cc
-
-# fem.localdg.cfl: 0.15
-
 fem.localdg.diff_tstep: 0
-
 fem.localdg.epsilon: 0.
-
 fem.localdg.gridfile: grid2d.dgf
-
-fem.localdg.repeats: 5
-
+fem.localdg.repeats: 4
 fem.localdg.startlevel: 1
-
 fem.localdg.starttime: 0
-
 fem.localdg.endtime: 0.5
-
 fem.localdg.printcount: 1
+# fem.localdg.cfl: 0.15
 
 # Parameters for Euler RP (PROBLEM 6)
 # RPData: [1., -1., 1.,    1., 1., 1.]
@@ -37,5 +30,3 @@ fem.io.savestep: 0.1
 # SaveCount (write data every saveCount time steps, <=0 deactivates)
 fem.io.savecount: -1
 
-# General Parameters
-fem.verbose: 1
