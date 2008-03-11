@@ -151,6 +151,15 @@ public:
     assert( ode_ );
     return *ode_;
   }
+  void printmyInfo(string filename) const 
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "Explicit ODE solver, steps: " << this->ord_ << "\n\n";
+    ofs.close();
+    //this->op_.printmyInfo(filename);
+  }
   
 protected:
   int ord_;
@@ -327,16 +336,6 @@ public:
       savetime_+=0.001;
     }
   }
-  void printmyInfo(string filename) const 
-  {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ExplTimeStepper, steps: " << this->ord_ << "\n\n";
-    ofs << "                 cfl: " << tp_.cfl() << "\\\\\n\n";
-    ofs.close();
-    this->op_.printmyInfo(filename);
-  }
  private:
   Dune::ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
@@ -405,6 +404,14 @@ public:
   {
     assert( ode_ );
     return *ode_;
+  }
+  void printmyInfo(string filename) const {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "Implicit ODE solver, steps: " << this->ord_ << "\n\n";
+    ofs.close();
+    // this->op_.printmyInfo(filename);
   }
   
 protected:
@@ -605,15 +612,6 @@ public:
     }
   }
   
-  void printmyInfo(string filename) const {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ImplTimeStepper, steps: " << this->ord_ << "\n\n";
-    ofs << "                 cfl: " << tp_.cfl() << "\\\\\n\n";
-    ofs.close();
-    this->op_.printmyInfo(filename);
-  }
 private:
   Dune::ParallelTimeProvider<DuneCommunicatorType> tp_;
   int savestep_;
@@ -736,16 +734,15 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     {
       std::ofstream ofs(filestream.str().c_str(), std::ios::app);
       ofs << "SemiImplTimeStepper, steps: " << ord_ << "\n\n";
-      ofs << "                     cfl: " << tp_.cfl() << "\\\\\n\n";
       ofs << "Explicite Operator:\\\\\n\n";
       ofs.close();
-      opexpl_.printmyInfo(filename);
+      // opexpl_.printmyInfo(filename);
     }
     {
       std::ofstream ofs(filestream.str().c_str(), std::ios::app);
       ofs << "Implicite Operator:\\\\\n\n";
       ofs.close();
-      opimpl_.printmyInfo(filename);
+      // opimpl_.printmyInfo(filename);
     }
   }
  private:
