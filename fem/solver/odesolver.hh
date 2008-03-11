@@ -376,6 +376,7 @@ public:
     }
     ode_->set_linear_solver(linsolver_);
     ode_->set_tolerance(1.0e-6);
+    ode_->set_max_number_of_iterations(15);
     if( verbose ) 
     {
       ode_->IterativeSolver::set_output(cout);
@@ -413,6 +414,7 @@ public:
     ofs.close();
     // this->op_.printmyInfo(filename);
   }
+>>>>>>> .r3242
   
 protected:
   int ord_;
@@ -492,14 +494,13 @@ public:
       timeProvider_.unlock();
     
       convergence = this->odeSolver().step(time , dt , u);
-
       // restore saved time 
       timeProvider_.lock();
     
       if(!convergence) 
       {
         double cfl = 0.5 * timeProvider_.cfl();
-        timeProvider_.provideCflEstimate(cfl); 
+        timeProvider_.setCfl(cfl); 
         // output only on rank 0
         if(U0.space().grid().comm().rank() == 0 )
         {
@@ -513,6 +514,15 @@ public:
         DUNE_THROW(InvalidStateException,"ImplicitOdeSolver: no convergence of solver!");
       }
     }
+    if (this->odeSolver().number_of_iterations()<10) {
+      double cfl = 2.0 * timeProvider_.cfl();
+      timeProvider_.setCfl(cfl); 
+      if(U0.space().grid().comm().rank() == 0 )
+      {
+        derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
+      }
+    }
+
   }
 
 private:
@@ -650,7 +660,8 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     initialized_(false)
   {
     op_expl.timeProvider(this);
-    linsolver_.set_tolerance(1.0e-8,false);
+    // linsolver_.set_tolerance(1.0e-8,false);
+    linsolver_.set_tolerance(1.0e-3,false);
     linsolver_.set_max_number_of_iterations(1000);
     switch (pord) {
       case 1: ode_=new pardg::SemiImplicitEuler(comm_,impl_,expl_); break;
@@ -661,7 +672,8 @@ class SemiImplTimeStepper : public Dune::TimeProvider
                 abort();
     }
     ode_->set_linear_solver(linsolver_);
-    ode_->set_tolerance(1.0e-6);
+    // ode_->set_tolerance(1.0e-6);
+    ode_->set_tolerance(1.0e-2);
     if( verbose ) 
     { 
       ode_->IterativeSolver::set_output(cout);
