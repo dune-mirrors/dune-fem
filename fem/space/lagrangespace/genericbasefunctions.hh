@@ -13,16 +13,22 @@
 namespace Dune
 {
 
-  template< class FunctionSpaceType, class GeometryType, unsigned int order >
+  template< class FunctionSpace, class GeometryType, unsigned int order >
   class GenericLagrangeBaseFunction;
  
 
 
-  template< class FunctionSpaceType, unsigned int order >
-  class GenericLagrangeBaseFunction< FunctionSpaceType, PointGeometry, order >
-  : public BaseFunctionInterface< FunctionSpaceType >
+  template< class FunctionSpace, unsigned int order >
+  class GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order >
   {
+    typedef GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order >
+      ThisType;
+    
+    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+
   public:
+    typedef FunctionSpace FunctionSpaceType;
+
     typedef PointGeometry GeometryType;
       
     enum { polynomialOrder = order };
@@ -30,7 +36,7 @@ namespace Dune
     typedef GenericLagrangePoint< GeometryType, polynomialOrder >
       LagrangePointType;
     enum { numBaseFunctions = LagrangePointType :: numLagrangePoints };
-   
+
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: RangeType RangeType;
 
@@ -38,23 +44,12 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   private:
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         GeometryType,
-                                         polynomialOrder >
-      ThisType;
-    typedef BaseFunctionInterface< FunctionSpaceType > BaseType;
-
-  private:
-    CompileTimeChecker< (FunctionSpaceType :: DimRange == 1) > __assert_DimRange__;
-    
     const LagrangePointType lagrangePoint_;
 
   public:
     inline GenericLagrangeBaseFunction( unsigned int baseNum )
-    : BaseType(),
-      lagrangePoint_( baseNum ) 
-    {
-    }
+    : lagrangePoint_( baseNum ) 
+    {}
 
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
@@ -86,27 +81,11 @@ namespace Dune
       phi[ 0 ] = 0;
     }
 
-    virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
+    template< int diffOrder >
+    inline void
+    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+               const DomainType &x,
+               RangeType &phi ) const
     {
       const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
@@ -116,13 +95,19 @@ namespace Dune
 
 
 
-  template< class FunctionSpaceType, class BaseGeometryType >
-  class GenericLagrangeBaseFunction< FunctionSpaceType,
-                                     PyramidGeometry< BaseGeometryType >,
-                                     0 >
-  : public BaseFunctionInterface< FunctionSpaceType >
+  template< class FunctionSpace, class BaseGeometryType >
+  class GenericLagrangeBaseFunction
+    < FunctionSpace, PyramidGeometry< BaseGeometryType >, 0 >
   {
+    typedef GenericLagrangeBaseFunction
+      < FunctionSpace, PyramidGeometry< BaseGeometryType >, 0 >
+      ThisType;
+    
+    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+
   public:
+    typedef FunctionSpace FunctionSpaceType;
+
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
       
     enum { polynomialOrder = 0 };
@@ -139,23 +124,12 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   private:
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         GeometryType,
-                                         polynomialOrder >
-      ThisType;
-    typedef BaseFunctionInterface< FunctionSpaceType > BaseType;
-
-  private:
-    CompileTimeChecker< (FunctionSpaceType :: DimRange == 1) > __assert_DimRange__;
-
     const LagrangePointType lagrangePoint_;
 
   public:
     inline GenericLagrangeBaseFunction( unsigned int baseNum )
-    : BaseType(),
-      lagrangePoint_( baseNum )
-    {
-    }
+    : lagrangePoint_( baseNum )
+    {}
 
     template< class LocalDofCoordinateType,
               class LocalCoordinateType,
@@ -235,27 +209,11 @@ namespace Dune
         ( dofCoordinate, diffVariable, factor, x, phi );
     }
 
-    virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
+    template< int diffOrder >
+    inline void
+    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+               const DomainType &x,
+               RangeType &phi ) const
     {
       const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
@@ -265,15 +223,19 @@ namespace Dune
  
 
   
-  template< class FunctionSpaceType,
-            class BaseGeometryType,
-            unsigned int order >
-  class GenericLagrangeBaseFunction< FunctionSpaceType,
-                                     PyramidGeometry< BaseGeometryType >,
-                                     order >
-  : public BaseFunctionInterface< FunctionSpaceType >
+  template< class FunctionSpace, class BaseGeometryType, unsigned int order >
+  class GenericLagrangeBaseFunction
+    < FunctionSpace, PyramidGeometry< BaseGeometryType >, order >
   {
+    typedef GenericLagrangeBaseFunction
+      < FunctionSpace, PyramidGeometry< BaseGeometryType >, order >
+      ThisType;
+    
+    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+
   public:
+    typedef FunctionSpace FunctionSpaceType;
+
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
       
     enum { polynomialOrder = order };
@@ -290,32 +252,20 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   private:
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         GeometryType,
-                                         polynomialOrder >
-      ThisType;
-    typedef BaseFunctionInterface< FunctionSpaceType > BaseType;
-
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         BaseGeometryType,
-                                         polynomialOrder >
+    typedef GenericLagrangeBaseFunction
+      < FunctionSpaceType, BaseGeometryType, polynomialOrder >
       DimensionReductionType;
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         GeometryType,
-                                         polynomialOrder - 1 >
+    typedef GenericLagrangeBaseFunction
+      < FunctionSpaceType, GeometryType, polynomialOrder - 1 >
       OrderReductionType;
 
   private:
-    CompileTimeChecker< (FunctionSpaceType :: DimRange == 1) > __assert_DimRange__;
-
     const LagrangePointType lagrangePoint_;
 
   public:
     inline GenericLagrangeBaseFunction( unsigned int baseNum )
-    : BaseType(),
-      lagrangePoint_( baseNum )
-    {
-    }
+    : lagrangePoint_( baseNum )
+    {}
 
     template< class LocalDofCoordinateType,
               class LocalCoordinateType,
@@ -508,27 +458,11 @@ namespace Dune
         ( dofCoordinate, diffVariable, factor, x, phi );
     }
 
-    virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
+    template< int diffOrder >
+    inline void
+    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+               const DomainType &x,
+               RangeType &phi ) const
     {
       const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );
@@ -538,17 +472,23 @@ namespace Dune
  
 
   
-  template< class FunctionSpaceType,
-            class FirstGeometryType,
-            class SecondGeometryType,
+  template< class FunctionSpace,
+            class FirstGeometryType, class SecondGeometryType,
             unsigned int order >
-  class GenericLagrangeBaseFunction< FunctionSpaceType,
-                                     ProductGeometry< FirstGeometryType,
-                                                      SecondGeometryType >,
-                                     order >
-  : public BaseFunctionInterface< FunctionSpaceType >
+  class GenericLagrangeBaseFunction
+    < FunctionSpace, ProductGeometry< FirstGeometryType, SecondGeometryType >,
+      order >
   {
+    typedef GenericLagrangeBaseFunction
+      < FunctionSpace, ProductGeometry< FirstGeometryType, SecondGeometryType >,
+        order >
+      ThisType;
+    
+    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+
   public:
+    typedef FunctionSpace FunctionSpaceType;
+
     typedef ProductGeometry< FirstGeometryType, SecondGeometryType >
       GeometryType;
       
@@ -565,32 +505,20 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
   private:
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         GeometryType,
-                                         polynomialOrder >
-      ThisType;
-    typedef BaseFunctionInterface< FunctionSpaceType > BaseType;
-
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         FirstGeometryType,
-                                         polynomialOrder >
+    typedef GenericLagrangeBaseFunction
+      < FunctionSpaceType, FirstGeometryType, polynomialOrder >
       FirstReductionType;
-    typedef GenericLagrangeBaseFunction< FunctionSpaceType,
-                                         SecondGeometryType,
-                                         polynomialOrder >
+    typedef GenericLagrangeBaseFunction
+      < FunctionSpaceType, SecondGeometryType, polynomialOrder >
       SecondReductionType;
 
   private:
-    CompileTimeChecker< (FunctionSpaceType :: DimRange == 1) > __assert_DimRange__;
-
     const LagrangePointType lagrangePoint_;
 
   public:
     inline GenericLagrangeBaseFunction( unsigned int baseNum )
-    : BaseType(),
-      lagrangePoint_( baseNum )
-    {
-    }
+    : lagrangePoint_( baseNum )
+    {}
 
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
@@ -667,27 +595,11 @@ namespace Dune
       phi[ 0 ] += psi1[ 0 ] * psi2[ 0 ];
     }
 
-    virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
-    {
-      const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
-      LagrangePointType point( lagrangePoint_ );
-      evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
-    }
-
-    virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
-                            const DomainType &x,
-                            RangeType &phi ) const
+    template< int diffOrder >
+    inline void
+    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+               const DomainType &x,
+               RangeType &phi ) const
     {
       const LocalCoordinate< GeometryType, DomainFieldType > xlocal( x );
       LagrangePointType point( lagrangePoint_ );

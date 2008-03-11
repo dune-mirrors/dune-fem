@@ -7,46 +7,71 @@
 namespace Dune
 {
    
-  template< class FunctionSpaceType,
-            GeometryType :: BasicType type,
-            unsigned int dim,
-            unsigned int order >
+  template< class FunctionSpace, GeometryType :: BasicType type,
+            unsigned int dim,  unsigned int pOrder >
   class LagrangeBaseFunction
-  : public GenericLagrangeBaseFunction
-    < FunctionSpaceType,
-      typename GeometryWrapper< type, dim > :: GenericGeometryType,
-      order >
+  : public BaseFunctionInterface< FunctionSpace >
   {
-  private:
+    typedef LagrangeBaseFunction< FunctionSpace, type, dim, pOrder > ThisType;
+    typedef BaseFunctionInterface< FunctionSpace > BaseType;
+
+    typedef typename GeometryWrapper< type, dim > :: GenericGeometryType
+      GenericGeometryType;
     typedef GenericLagrangeBaseFunction
-      < FunctionSpaceType,
-        typename GeometryWrapper< type, dim > :: GenericGeometryType,
-        order >
-      BaseType;
-    typedef LagrangeBaseFunction< FunctionSpaceType, type, dim, order >
-      ThisType;
-
+      < FunctionSpace, GenericGeometryType, pOrder >
+      GenericBaseFunctionType;
+      
   public:
-    enum { dimension = BaseType :: GeometryType :: dimension };
+    enum { dimension = GenericGeometryType :: dimension };
     
-    enum { polynomialOrder = BaseType :: polynomialOrder };
+    enum { polynomialOrder = GenericBaseFunctionType :: polynomialOrder };
 
-    enum { numBaseFunctions = BaseType :: numBaseFunctions };
+    enum { numBaseFunctions = GenericBaseFunctionType :: numBaseFunctions };
 
-    typedef typename BaseType :: DomainType DomainType;
-    typedef typename BaseType :: RangeType RangeType;
+    typedef typename GenericBaseFunctionType :: DomainType DomainType;
+    typedef typename GenericBaseFunctionType :: RangeType RangeType;
 
-    typedef typename BaseType :: DomainFieldType DomainFieldType;
-    typedef typename BaseType :: RangeFieldType RangeFieldType;
+    typedef typename GenericBaseFunctionType :: DomainFieldType DomainFieldType;
+    typedef typename GenericBaseFunctionType :: RangeFieldType RangeFieldType;
 
     typedef LagrangePoint< type, dim, polynomialOrder > LagrangePointType;
-    typedef LagrangePointListImplementation< DomainFieldType, type, dim, polynomialOrder >
+    typedef LagrangePointListImplementation
+      < DomainFieldType, type, dim, polynomialOrder >
       LagrangePointListType;
+
+  protected:
+    GenericBaseFunctionType baseFunction_;
 
   public:
     inline LagrangeBaseFunction( unsigned int baseNum )
-    : BaseType( baseNum )
+    : BaseType(),
+      baseFunction_( baseNum )
+    {}
+
+    virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable,
+                            const DomainType &x,
+                            RangeType &phi ) const
     {
+      baseFunction_.evaluate( diffVariable, x, phi );
+    }
+    
+    virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
+                            const DomainType &x,
+                            RangeType &phi ) const
+    {
+      baseFunction_.evaluate( diffVariable, x, phi );
+    }
+
+    virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
+                            const DomainType &x,
+                            RangeType &phi ) const
+    {
+      baseFunction_.evaluate( diffVariable, x, phi );
+    }
+
+    virtual int order () const
+    {
+      return polynomialOrder;
     }
   };
 
