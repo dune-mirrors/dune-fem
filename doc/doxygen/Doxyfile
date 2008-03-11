@@ -447,7 +447,8 @@ WARN_LOGFILE           =  doxygen.out
 INPUT                  = modules \
                          ../../modules \
                          pages \
-                         ../../fem
+                         ../../fem \
+                         ../../fem/io/visual/grape/datadisp/datadisp.cc
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
