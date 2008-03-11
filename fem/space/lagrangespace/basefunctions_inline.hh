@@ -50,7 +50,7 @@ namespace Dune
   int LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
     :: order () const
   {
-    return polynomialOrder;
+    return pOrder;
   }
 
 
@@ -63,7 +63,7 @@ namespace Dune
     :: LagrangeBaseFunctionFactory ( GeometryType geometry )
   : BaseType( geometry )
   {
-    assert( this->geometry().dim() == dimension );
+    assert( this->geometry().dim() == dim );
   }
 
 
@@ -74,8 +74,7 @@ namespace Dune
 
 
   template< class ScalarFunctionSpace, unsigned int dim, unsigned int pOrder >
-  typename LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >
-    :: BaseFunctionType *
+  BaseFunctionInterface< ScalarFunctionSpace > *
   LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >
    :: baseFunction ( int i ) const
   {
@@ -84,16 +83,12 @@ namespace Dune
     switch( basicType )
     {
     case GeometryType :: simplex:
-      return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                       GeometryType :: simplex, dimension,
-                                       polynomialOrder >
-                                     ( i );
+      return new LagrangeBaseFunction
+        < ScalarFunctionSpace, GeometryType :: simplex, dim, pOrder >( i );
 
     case GeometryType :: cube:
-      return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                       GeometryType :: cube, dimension,
-                                       polynomialOrder >
-                                     ( i );
+      return new LagrangeBaseFunction
+        < ScalarFunctionSpace, GeometryType :: cube, dim, pOrder >( i );
 
     default:
       DUNE_THROW( NotImplemented, "No such geometry type implemented." );
@@ -110,16 +105,14 @@ namespace Dune
     switch( basicType )
     {
     case GeometryType :: simplex:
-      return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                   GeometryType :: simplex, dimension,
-                                   polynomialOrder >
-               :: numBaseFunctions;
+      return LagrangeBaseFunction
+               < ScalarFunctionSpace, GeometryType :: simplex, dim, pOrder >
+               :: GenericBaseFunctionType :: numBaseFunctions;
 
     case GeometryType :: cube:
-      return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                   GeometryType :: cube, dimension,
-                                   polynomialOrder >
-               :: numBaseFunctions;
+      return LagrangeBaseFunction
+               < ScalarFunctionSpace, GeometryType :: cube, dim, pOrder >
+               :: GenericBaseFunctionType :: numBaseFunctions;
 
     default:
       DUNE_THROW( NotImplemented, "No such geometry type implemented." );
@@ -133,7 +126,7 @@ namespace Dune
     :: LagrangeBaseFunctionFactory ( GeometryType geometry )
   : BaseType( geometry )
   {
-    assert( this->geometry().dim() == dimension );
+    assert( this->geometry().dim() == 3 );
   }
 
 
@@ -144,8 +137,7 @@ namespace Dune
 
   
   template< class ScalarFunctionSpace, unsigned int pOrder >
-  typename LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
-    :: BaseFunctionType *
+  BaseFunctionInterface< ScalarFunctionSpace > *
   LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
     :: baseFunction ( int i ) const
   {
@@ -154,28 +146,20 @@ namespace Dune
     switch( basicType )
     {
     case GeometryType :: simplex:
-      return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                       GeometryType :: simplex, dimension,
-                                       polynomialOrder >
-                                     ( i );
+      return new LagrangeBaseFunction
+        < ScalarFunctionSpace, GeometryType :: simplex, 3, pOrder >( i );
 
     case GeometryType :: cube:
-      return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                       GeometryType :: cube, dimension,
-                                       polynomialOrder >
-                                     ( i );
+      return new LagrangeBaseFunction
+        < ScalarFunctionSpace, GeometryType :: cube, 3, pOrder >( i );
 
     case GeometryType :: pyramid:
-      return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                       GeometryType :: pyramid, dimension,
-                                       polynomialOrder >
-                                     ( i );
+      return new LagrangeBaseFunction
+        < ScalarFunctionSpace, GeometryType :: pyramid, 3, pOrder >( i );
 
     case GeometryType :: prism:
-      return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                       GeometryType :: prism, dimension,
-                                       polynomialOrder >
-                                     ( i );
+      return new LagrangeBaseFunction
+        < ScalarFunctionSpace, GeometryType :: prism, 3, pOrder >( i );
 
     default:
       DUNE_THROW( NotImplemented, "No such geometry type implemented." );
@@ -192,28 +176,24 @@ namespace Dune
     switch( basicType )
     {
     case GeometryType :: simplex:
-      return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                   GeometryType :: simplex, dimension,
-                                   polynomialOrder >
-               :: numBaseFunctions;
+      return LagrangeBaseFunction
+               < ScalarFunctionSpace, GeometryType :: simplex, 3, pOrder >
+               :: GenericBaseFunctionType :: numBaseFunctions;
 
     case GeometryType :: cube:
-      return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                   GeometryType :: cube, dimension,
-                                   polynomialOrder >
-               :: numBaseFunctions;
+      return LagrangeBaseFunction
+               < ScalarFunctionSpace, GeometryType :: cube, 3, pOrder >
+               :: GenericBaseFunctionType :: numBaseFunctions;
 
     case GeometryType :: pyramid:
-      return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                   GeometryType :: pyramid, dimension,
-                                   polynomialOrder >
-               :: numBaseFunctions;
+      return LagrangeBaseFunction
+               < ScalarFunctionSpace, GeometryType :: pyramid, 3, pOrder >
+               :: GenericBaseFunctionType :: numBaseFunctions;
 
     case GeometryType :: prism:
-      return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                   GeometryType :: prism, dimension,
-                                   polynomialOrder >
-               :: numBaseFunctions;
+      return LagrangeBaseFunction
+               < ScalarFunctionSpace, GeometryType :: prism, 3, pOrder >
+               :: GenericBaseFunctionType :: numBaseFunctions;
 
     default:
       DUNE_THROW( NotImplemented, "No such geometry type implemented." );
