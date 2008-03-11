@@ -69,6 +69,8 @@ int main(int argc, char ** argv, char ** envp) {
   Parameter::get("fem.localdg.cfl", cfl, cfl);
   std::cout << " CFL : " << cfl << std::endl;
 
+  int printCount = Parameter::getValue("fem.localdg.printcount",-1);
+  
   InitialDataType problem;
 	
   string myoutput = "eoc.tex";
@@ -100,7 +102,8 @@ int main(int argc, char ** argv, char ** envp) {
   for(int eocloop=0;eocloop < repeats; ++eocloop) {
     // *** Operator typedefs
     DgType dg(*grid,eulerflux,upwind);
-    ODEType ode(dg,rksteps,cfl,startTime); 
+    TimeProvider tp(startTime,cfl);
+    ODEType ode(dg,tp,rksteps,true); 
     
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
@@ -124,19 +127,26 @@ int main(int argc, char ** argv, char ** envp) {
     double maxdt=0.,mindt=1.e10,averagedt=0.;
     // *** Time loop
     dataWriter.write(t , counter );  
+    tp.setDeltaT(1e-1);
+    ode.initialize(U);
     while (t<endTime) 
     {
       double ldt = -t;
-      t=ode.solve(U);
+      ode.solve(U);
+      tp.augmentTime();
+      t = tp.time();
+      ldt += t;
       if (!U.dofsValid()) {
-	std::cout << "Invalid DOFs" << std::endl;
-	dataWriter.write(1e10, counter );  
-	abort();
+	      std::cout << "Invalid DOFs" << std::endl;
+	      dataWriter.write(1e10, counter );  
+	      abort();
       }
       
       dataWriter.write(t, counter );  
+      if (printCount>0 && counter%printCount) {
+        std::cout << "step: " << counter << " time: " << t << " deltaT:" << ldt << std::endl;
+      }
       
-      ldt += t;
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
