@@ -5,7 +5,8 @@ noinst_LTLIBRARIES = libspace.la
 
 # construct only from sub-libraries
 libspace_la_SOURCES =
-libspace_la_LIBADD = dgspace/libdgspace.la
+libspace_la_LIBADD = dgspace/libdgspace.la \
+                     lagrangespace/liblagrangespace.la
 
 SUBDIRS = common test dgspace fvspace lagrangespace combinedspace \
 basefunctions reducedbasisspace 

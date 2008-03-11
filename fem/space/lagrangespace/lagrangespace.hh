@@ -32,15 +32,14 @@ namespace Dune
 
 
 
-  template< class FunctionSpaceImp,
-            class GridPartImp,
-            unsigned int polOrder,
-            template< class > class BaseFunctionStorageImp = CachingStorage >
+  template< class FunctionSpace, class GridPart, unsigned int polOrder,
+            template< class > class BaseFunctionStorage = CachingStorage >
   struct LagrangeDiscreteFunctionSpaceTraits
   {
-    CompileTimeChecker< (polOrder > 0) > __LagrangeSpace_only_defined_for_polOrder_greater_zero__;
+    CompileTimeChecker< (polOrder > 0) >
+      __LagrangeSpace_only_defined_for_polOrder_greater_zero__;
     
-    typedef FunctionSpaceImp FunctionSpaceType;
+    typedef FunctionSpace FunctionSpaceType;
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
@@ -50,7 +49,7 @@ namespace Dune
       ScalarFunctionSpaceType;
     enum { DimRange = FunctionSpaceType :: DimRange };
     
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridPartType :: IndexSetType IndexSetType;
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
@@ -58,10 +57,8 @@ namespace Dune
 
     enum { polynomialOrder = polOrder };
     
-    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType,
-                                           GridPartType,
-                                           polynomialOrder,
-                                           BaseFunctionStorageImp >
+    typedef LagrangeDiscreteFunctionSpace
+      < FunctionSpaceType, GridPartType, polynomialOrder, BaseFunctionStorage >
       DiscreteFunctionSpaceType;
     typedef LagrangeMapper< GridPartType, polynomialOrder, DimRange >
       MapperType;
@@ -71,8 +68,7 @@ namespace Dune
       BlockMapperType;
     
     // implementation of basefunction set 
-    typedef VectorialBaseFunctionSet< FunctionSpaceType,
-                                      BaseFunctionStorageImp >
+    typedef VectorialBaseFunctionSet< FunctionSpaceType, BaseFunctionStorage >
         BaseFunctionSetImp;
 
     // exported type 
