@@ -37,22 +37,78 @@ namespace Dune {
    - VTK, e.g., for paraview
    - Matlab 
    .
-**/
-/*  
+   In addition data can be visualized in GraPE online during 
+   a simulation by setting the parameter
+   \b fem.io.grapedisplay to one.
+   In each cases the Dune::DataWritter or the Dune::Checkpointer 
+   are used, the format is choosen through the parameter
+   \b fem.io.outputformat;
+   values are
+   - 0: write data in GraPE format which can also
+        be used for checkpointing - this format
+        is basicly loss free.
+   - 1: VTK cell data
+   - 2: VTK vertex data
+   .
+  
    The \ref CheckPointIO "checkpointing facility" 
    writes both the grid state, a number of
-   discrete function and other parameters
+   discrete function, and other parameters
    provided by the user. This information can
    then be read from disc to continue the simulation
-   from the save state. Using the \ref GrapeIO
+   from the saved state. Using the \ref GrapeIO
    "datadisp" programm the checkpoint files can also
    be used for visualization purposes.
-*/
-/**
+
    \remark The interface class for general output
            of DiscreteFunctions to disc is given
-           by IOInterface.
-*/
+           by IOInterface. A general purpose data writter
+           is provided by the class Dune::DataWriter.
+
+   Since the GraPE output format is lossless
+   it is also used by the Dune::CheckPointer
+   class which also writes data to files
+   but alternates between to filenames -
+   while the Dune::DataWriter should be used
+   to store data for postprocessing, the
+   Dune::CheckPointer facility should be used 
+   to be able to restart computations after
+   a unexpected termination of a simulation.
+   
+   Data files are generated in the directory
+   given by the \b fem.prefix parameter and
+   with the file prefix chosen via the parameter
+   \b fem.io.datafileprefix. The data to be
+   saved to disk is given to the Dune::DataWriter instance
+   through a reference to a Dune::Tuple of 
+   discrete function pointer.
+ 
+   For a time series, data can be either written for a fixed
+   time step, or after a fixed number of iterations using the
+   parameters
+   \b fem.io.savestep or \b fem.io.savecount,
+   respectivly.
+   If a series of data is to be written without a real
+   time variable available, e.g., a series of refined grids,
+   startTime=0, endTime=100,
+   \b fem.io.savestep=-1 and \b fem.io.savecount=1
+   is a good choice to make; data is then written
+   using \b datawriter.write(step,step).
+ 
+   The following code snippet demonstrated the
+   general usage of the Dune::DataWriter:
+   \code
+   typedef Dune::Tuple< DestinationType > IOTupleType;
+   IOTupleType dataTup ( &U );
+   typedef DataWriter< GridType, IOTupleType > DataWriterType;
+   DataWriterType dataWriter( grid,gridfilename,dataTup,startTime,endTime );
+   for (counter=0;time<endTime;counter++) {
+     ...
+     dataWriter.write(time,counter);
+   }
+   \endcode
+**/
+
 
 /** @ingroup Checkpointing
  \brief IOInterface to write data to hard disk 
@@ -127,7 +183,14 @@ public:
   
   //! standard path reading and creation method 
   //! rank is added to output path 
-  static std::string readPath(const std::string& paramfile)
+  static std::string readPath()
+  {
+    return Parameter::prefix();
+  }
+
+  //! standard path reading and creation method 
+  //! rank is added to output path 
+  static std::string readPath(const std::string& paramfile) DUNE_DEPRECATED
   {
     std::string path;
 
