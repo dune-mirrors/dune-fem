@@ -5,6 +5,7 @@ SUBDIRS = test
 lagrangespacedir = $(includedir)/dune/fem/space/lagrangespace
 lagrangespace_HEADERS = adaptmanager.hh \
 			basefunctions.hh \
+			basefunction_inline.hh \
 			genericbasefunctions.hh \
 			genericgeometry.hh \
 			genericlagrangepoints.hh \

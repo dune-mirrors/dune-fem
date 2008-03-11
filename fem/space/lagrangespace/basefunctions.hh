@@ -43,218 +43,83 @@ namespace Dune
     GenericBaseFunctionType baseFunction_;
 
   public:
-    inline LagrangeBaseFunction( unsigned int baseNum )
-    : BaseType(),
-      baseFunction_( baseNum )
-    {}
+    LagrangeBaseFunction( unsigned int baseNum );
 
     virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable,
                             const DomainType &x,
-                            RangeType &phi ) const
-    {
-      baseFunction_.evaluate( diffVariable, x, phi );
-    }
+                            RangeType &phi ) const;
     
     virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
                             const DomainType &x,
-                            RangeType &phi ) const
-    {
-      baseFunction_.evaluate( diffVariable, x, phi );
-    }
+                            RangeType &phi ) const;
 
     virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
                             const DomainType &x,
-                            RangeType &phi ) const
-    {
-      baseFunction_.evaluate( diffVariable, x, phi );
-    }
+                            RangeType &phi ) const;
 
-    virtual int order () const
-    {
-      return polynomialOrder;
-    }
+    virtual int order () const;
   };
 
 
 
-  template< class ScalarFunctionSpaceImp, unsigned int dim, unsigned int order >
+  template< class ScalarFunctionSpace, unsigned int dim, unsigned int pOrder >
   class LagrangeBaseFunctionFactory
-  : public BaseFunctionFactory< ScalarFunctionSpaceImp >
+  : public BaseFunctionFactory< ScalarFunctionSpace >
   {
+    typedef LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >
+      ThisType;
+    typedef BaseFunctionFactory< ScalarFunctionSpace > BaseType;
+
   public:
-    typedef ScalarFunctionSpaceImp ScalarFunctionSpaceType;
+    typedef ScalarFunctionSpace ScalarFunctionSpaceType;
 
     typedef BaseFunctionInterface< ScalarFunctionSpaceType > BaseFunctionType;
 
     enum { dimension = dim };
 
-    enum { polynomialOrder = order };
-
-  private:
-    typedef BaseFunctionFactory< ScalarFunctionSpaceType > BaseType;
-    typedef LagrangeBaseFunctionFactory
-      < ScalarFunctionSpaceType, dimension, polynomialOrder >
-      ThisType;
+    enum { polynomialOrder = pOrder };
 
   public:
-    LagrangeBaseFunctionFactory ( GeometryType geometry )
-    : BaseType( geometry )
-    {
-      assert( this->geometry().dim() == dimension );
-    }
+    LagrangeBaseFunctionFactory ( GeometryType geometry );
 
-    virtual ~LagrangeBaseFunctionFactory ()
-    {
-    }
+    virtual ~LagrangeBaseFunctionFactory ();
 
-    virtual BaseFunctionType* baseFunction ( int i ) const
-    {
-      const GeometryType :: BasicType basicType = this->geometry().basicType();
+    virtual BaseFunctionType *baseFunction ( int i ) const;
 
-      switch( basicType ) {
-      case GeometryType :: simplex:
-        return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                         GeometryType :: simplex, dimension,
-                                         polynomialOrder >
-                                       ( i );
-
-      case GeometryType :: cube:
-        return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                         GeometryType :: cube, dimension,
-                                         polynomialOrder >
-                                       ( i );
-
-      default:
-        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-      }
-    }
-    
-    virtual int numBaseFunctions () const
-    {
-      const GeometryType :: BasicType basicType = this->geometry().basicType();
-
-      switch( basicType ) {
-      case GeometryType :: simplex:
-        return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                     GeometryType :: simplex, dimension,
-                                     polynomialOrder >
-                 :: numBaseFunctions;
-
-      case GeometryType :: cube:
-        return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                     GeometryType :: cube, dimension,
-                                     polynomialOrder >
-                 :: numBaseFunctions;
-
-      default:
-        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-      }
-    }
+    virtual int numBaseFunctions () const;
   };
 
 
 
-  template< class ScalarFunctionSpaceImp, unsigned int polOrder >
-  class LagrangeBaseFunctionFactory< ScalarFunctionSpaceImp, 3, polOrder >
-  : public BaseFunctionFactory< ScalarFunctionSpaceImp >
+  template< class ScalarFunctionSpace, unsigned int pOrder >
+  class LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
+  : public BaseFunctionFactory< ScalarFunctionSpace >
   {
+    typedef LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
+      ThisType;
+    typedef BaseFunctionFactory< ScalarFunctionSpace > BaseType;
+
   public:
-    typedef ScalarFunctionSpaceImp ScalarFunctionSpaceType;
+    typedef ScalarFunctionSpace ScalarFunctionSpaceType;
 
     typedef BaseFunctionInterface< ScalarFunctionSpaceType > BaseFunctionType;
 
     enum { dimension = 3 };
 
-    enum { polynomialOrder = polOrder };
-
-  private:
-    typedef BaseFunctionFactory< ScalarFunctionSpaceType > BaseType;
-    typedef LagrangeBaseFunctionFactory
-      < ScalarFunctionSpaceType, dimension, polynomialOrder >
-      ThisType;
+    enum { polynomialOrder = pOrder };
 
   public:
-    LagrangeBaseFunctionFactory ( GeometryType geometry )
-    : BaseType( geometry )
-    {
-      assert( this->geometry().dim() == dimension );
-    }
+    LagrangeBaseFunctionFactory ( GeometryType geometry );
 
-    virtual ~LagrangeBaseFunctionFactory ()
-    {
-    }
+    virtual ~LagrangeBaseFunctionFactory ();
 
-    virtual BaseFunctionType* baseFunction ( int i ) const
-    {
-      const GeometryType :: BasicType basicType = this->geometry().basicType();
+    virtual BaseFunctionType *baseFunction ( int i ) const;
 
-      switch( basicType ) {
-      case GeometryType :: simplex:
-        return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                         GeometryType :: simplex, dimension,
-                                         polynomialOrder >
-                                       ( i );
-
-      case GeometryType :: cube:
-        return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                         GeometryType :: cube, dimension,
-                                         polynomialOrder >
-                                       ( i );
-
-      case GeometryType :: pyramid:
-        return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                         GeometryType :: pyramid, dimension,
-                                         polynomialOrder >
-                                       ( i );
-
-      case GeometryType :: prism:
-        return new LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                         GeometryType :: prism, dimension,
-                                         polynomialOrder >
-                                       ( i );
-
-      default:
-        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-      }
-    }
-    
-    virtual int numBaseFunctions () const
-    {
-      const GeometryType :: BasicType basicType = this->geometry().basicType();
-
-      switch( basicType ) {
-      case GeometryType :: simplex:
-        return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                     GeometryType :: simplex, dimension,
-                                     polynomialOrder >
-                 :: numBaseFunctions;
-
-      case GeometryType :: cube:
-        return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                     GeometryType :: cube, dimension,
-                                     polynomialOrder >
-                 :: numBaseFunctions;
-
-      case GeometryType :: pyramid:
-        return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                     GeometryType :: pyramid, dimension,
-                                     polynomialOrder >
-                 :: numBaseFunctions;
-
-      case GeometryType :: prism:
-        return LagrangeBaseFunction< ScalarFunctionSpaceType,
-                                     GeometryType :: prism, dimension,
-                                     polynomialOrder >
-                 :: numBaseFunctions;
-
-      default:
-        DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-      }
-    }
+    virtual int numBaseFunctions () const;
   };
-
-
   
 }
+
+#include "basefunction_inline.hh"
 
 #endif
