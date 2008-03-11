@@ -6,6 +6,7 @@
 //- Dune includes 
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
