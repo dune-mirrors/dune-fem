@@ -414,7 +414,6 @@ public:
     ofs.close();
     // this->op_.printmyInfo(filename);
   }
->>>>>>> .r3242
   
 protected:
   int ord_;
