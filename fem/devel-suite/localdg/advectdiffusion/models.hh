@@ -8,7 +8,9 @@
 
 using namespace Dune;
 // Approximations Ordnung
-enum {order=POLORDER,rksteps=POLORDER+1}; 
+// enum {order=POLORDER,rksteps=POLORDER+1}; 
+const int order= POLORDER;
+const int rksteps = POLORDER+1; 
 
 // Gitter view Auswahl
 //typedef LeafGridPart<GridType> GridPartType;
