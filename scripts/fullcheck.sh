@@ -54,7 +54,7 @@ fi
 minimal_configure()
 {
   $DUNECONTROL --opts=$MINIMALOPTS all 2>&1 | dd conv=notrunc \
-    > $WORKINGDIR/minimal-svn-conf.out
+    > $WORKINGDIR/minimal-svn-conf.out 2>/dev/null
 }
 
 echo
