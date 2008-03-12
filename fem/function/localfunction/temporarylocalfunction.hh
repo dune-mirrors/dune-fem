@@ -189,8 +189,8 @@ namespace Dune
     //! field type of range vectors
     typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
 
-    enum { DimDomain = DiscreteFunctionSpaceType :: DimDomain };
-    enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
+    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
 
   protected:
     typedef DynamicArray< RangeFieldType, ArrayAllocator > DofArrayType;

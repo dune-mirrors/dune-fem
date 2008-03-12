@@ -74,14 +74,6 @@ namespace Dune
     //! type of the entity, the local function lives on
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
 
-#if 0
-    enum { dimrange = DiscreteFunctionSpaceType::DimRange };
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
-    enum { DimRange = DiscreteFunctionSpaceType::DimRange };
-    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
-    enum { DimDomain = DiscreteFunctionSpaceType::DimDomain };
-#endif
-
   protected:
     // type of stack entry 
     typedef typename LocalFunctionStorageType :: PointerType

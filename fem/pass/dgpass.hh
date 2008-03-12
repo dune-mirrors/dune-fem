@@ -100,7 +100,7 @@ namespace Dune {
     typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType;
     
     // Range of the destination
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
 
     // type of local id set 
     typedef typename GridType::Traits::LocalIdSet LocalIdSetType; 

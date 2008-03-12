@@ -103,8 +103,8 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
         
     // Range of the destination
-    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
     enum { cols = JacobianRangeType :: cols };
     enum { rows = JacobianRangeType :: rows };
     enum { dim = GridType :: dimension };

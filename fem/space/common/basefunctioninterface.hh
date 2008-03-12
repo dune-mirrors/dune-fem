@@ -58,18 +58,18 @@ class BaseFunctionInterface
 public:
   //! \brief type of function space 
   typedef FunctionSpaceImp FunctionSpaceType;
-  //! \brief type of domain vector, i.e. element of R^DimDomain 
+  //! \brief type of domain vector, i.e. element of \f$R^{dimDomain}\f$
   typedef typename FunctionSpaceType::DomainType DomainType;
-  //! \brief type of range vector, i.e. element of R^DimRange 
+  //! \brief type of range vector, i.e. element of \f$R^{dimRange}\f$
   typedef typename FunctionSpaceType::RangeType RangeType;
   //! \brief type of domain vector components, i.e. double 
   typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
   //! \brief type of range vector components, i.e. double 
   typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
   //! \brief dimension of domain 
-  enum { DimDomain = FunctionSpaceType::DimDomain };
+  enum { dimDomain = FunctionSpaceType::dimDomain };
   //! \brief dimension of range 
-  enum { DimRange  = FunctionSpaceType::DimRange  };
+  enum { dimRange  = FunctionSpaceType::dimRange };
 
   //! empty constructor 
   BaseFunctionInterface () {}

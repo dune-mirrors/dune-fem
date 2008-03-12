@@ -122,14 +122,14 @@ namespace Dune
                   spc.numComponents() :
                   spc.size()/spc.numComponents())
     {
-      assert(component_<CombinedSpaceType::DimRange);
+      assert(component_<CombinedSpaceType::dimRange);
     }
 
     CombinedSubMapper(const ThisType& other) :
       mapper_(other.mapper_),
       component_(other.component_),
       utilGlobal_(other.utilGlobal_) { 
-      assert(component_<CombinedSpaceType::DimRange);
+      assert(component_<CombinedSpaceType::dimRange);
     }
 
     //! Total number of degrees of freedom
@@ -137,7 +137,7 @@ namespace Dune
       return mapper_.size();
     }
     inline unsigned int range () const {
-      return size()*CombinedSpaceType::DimRange;
+      return size()*CombinedSpaceType::dimRange;
     }
     inline const unsigned int operator[] ( unsigned int index ) const {
       utilGlobal_.newSize(mapper_.size());

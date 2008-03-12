@@ -51,7 +51,7 @@ namespace Dune {
     DGBaseFunctionWrapper() {}
     virtual ~DGBaseFunctionWrapper() {}
     
-    enum { dimDomain = FunctionSpaceType::DimDomain };
+    enum { dimDomain = FunctionSpaceType::dimDomain };
 
     // temporary variable for grad evaluation 
     mutable double grad_[dimDomain];
@@ -204,7 +204,7 @@ namespace Dune {
       // Check if base number is valid
       assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
 
     ~DGBaseFunction() {}
@@ -253,7 +253,7 @@ namespace Dune {
       // Check if base number is valid
       assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
 
     ~DGBaseFunction() {}
@@ -300,7 +300,7 @@ namespace Dune {
       // Check if base number is valid
       assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
 
     ~DGBaseFunction() {}
@@ -346,7 +346,7 @@ namespace Dune {
     {
       assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
 
     ~DGBaseFunction() {}
@@ -392,7 +392,7 @@ namespace Dune {
     {
       assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
 
     ~DGBaseFunction() {}
@@ -438,7 +438,7 @@ namespace Dune {
     {
       assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
 
     ~DGBaseFunction() {}
@@ -483,7 +483,7 @@ namespace Dune {
     {
       assert(baseNum >= 0 && baseNum < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
 
     ~DGBaseFunction() {}
@@ -521,7 +521,7 @@ namespace Dune {
 
     typedef ScalarFunctionSpaceImp FunctionSpaceType;
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
-    enum {dimDomain = FunctionSpaceType::DimDomain};
+    enum {dimDomain = FunctionSpaceType::dimDomain};
   public:
     DiscontinuousGalerkinBaseFunctionFactory(GeometryType geo) :
       BaseFunctionFactory<ScalarFunctionSpaceImp>(geo)

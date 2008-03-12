@@ -53,12 +53,12 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
 
   typedef typename GridPartType :: GridType GridType;
   
-    enum { dimR = 1 };
-    enum { dimD = DiscreteFunctionSpaceType::DimDomain - 1 };
+    enum { dimRange = 1 };
+    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain - 1 };
     enum { polOrdN = DiscreteFunctionSpaceType::polynomialOrder };
 
-  typedef FunctionSpace<DomainFieldType,RangeFieldType,dimD,dimR> FaceSpaceType;
-  typedef FunctionSpace<DomainFieldType,RangeFieldType,DiscreteFunctionSpaceType::DimDomain,dimR> ElSpaceType;
+  typedef FunctionSpace<DomainFieldType,RangeFieldType,dimDomain,dimRange> FaceSpaceType;
+  typedef FunctionSpace<DomainFieldType,RangeFieldType,DiscreteFunctionSpaceType::dimDomain,dimRange> ElSpaceType;
 
   enum { gradPolOrd = ((polOrdN - 1) < 0) ? 0 : (polOrdN - 1) };
   enum { bubblePolOrd = ((polOrdN - 2) < 0) ? 0 : (polOrdN - 2) };

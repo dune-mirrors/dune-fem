@@ -41,7 +41,7 @@ namespace Dune
     typedef DiscontinuousGalerkinSpace
       < FunctionSpaceType :: ScalarFunctionSpaceType, GridPartType, polOrder >
       SingleDiscreteFunctionSpaceType;
-    enum { dimRange = FunctionSpaceType :: DimRange };
+    enum { dimRange = FunctionSpaceType :: dimRange };
 
 #ifdef USE_VARIABLEBASE
     static const DofStoragePolicy policy = VariableBased;

@@ -44,7 +44,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
-    enum { DimRange = FunctionSpaceType::DimRange };
+    enum { dimRange = FunctionSpaceType :: dimRange };
 
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
@@ -58,12 +58,12 @@ namespace Dune {
     
     typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
-    typedef FiniteVolumeMapper< GridPartType, polOrd, DimRange > MapperType;
+    typedef FiniteVolumeMapper< GridPartType, polOrd, dimRange > MapperType;
 
     // type of mapper for block vector functions 
     typedef FiniteVolumeMapper< GridPartType, polOrd, 1 > BlockMapperType;
 
-    enum { localBlockSize = DimRange };
+    enum { localBlockSize = dimRange };
     
     /** \brief defines type of data handle for communication 
         for this type of space.
@@ -147,8 +147,8 @@ namespace Dune {
     //! id is neighbor of the beast
     static const IdentifierType id = 665;
 
-    /** \copydoc FunctionSpace::DimRange */
-    enum { DimRange = FunctionSpaceType::DimRange };
+    /** \copydoc FunctionSpace::dimRange */
+    enum { dimRange = FunctionSpaceType::dimRange };
 
     //! size of local blocks, here always 1 
     enum { localBlockSize = Traits :: localBlockSize };

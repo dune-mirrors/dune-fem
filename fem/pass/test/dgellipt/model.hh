@@ -256,8 +256,8 @@ public:
   //! interface methods for the initial data
   class RHSData : public Function < FuncSpaceType , RHSData > 
   {
-    enum { dimDom = FuncSpaceType :: DimDomain };
-    typedef DataFunctionIF<dimDom,DomainFieldType,RangeFieldType> DataFunctionType;
+    enum { dimDomain = FuncSpaceType :: dimDomain };
+    typedef DataFunctionIF<dimDomain,DomainFieldType,RangeFieldType> DataFunctionType;
 
     const DataFunctionType& func_;
   public:  
@@ -291,8 +291,8 @@ public:
     typedef typename FuncSpaceType::RangeFieldType RangeFieldType;
     typedef typename FuncSpaceType::DomainType DomainType;
 
-    enum { dimDom = FuncSpaceType :: DimDomain };
-    typedef DataFunctionIF<dimDom,DomainFieldType,RangeFieldType> DataFunctionType;
+    enum { dimDomain = FuncSpaceType :: dimDomain };
+    typedef DataFunctionIF<dimDomain,DomainFieldType,RangeFieldType> DataFunctionType;
 
     const DataFunctionType& data_;
   public:
@@ -323,8 +323,8 @@ public:
     typedef typename FuncSPCType::RangeType RangeType;
     typedef typename FuncSPCType::RangeFieldType RangeFieldType;
     typedef typename FuncSPCType::DomainType DomainType;
-    enum { dimDom = FuncSpaceType :: DimDomain };
-    typedef DataFunctionIF<dimDom,DomainFieldType,RangeFieldType> DataFunctionType;
+    enum { dimDomain = FuncSpaceType :: dimDomain };
+    typedef DataFunctionIF<dimDomain,DomainFieldType,RangeFieldType> DataFunctionType;
 
     const DataFunctionType& data_;
   public:

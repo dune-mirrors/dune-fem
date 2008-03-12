@@ -36,7 +36,7 @@ struct VtxProjectionImpl
     // typedef typename GridPartType::GridType GridType;
 
     typename ArgFunctionSpaceType::RangeType val;
-    const unsigned int DimRange = ArgFunctionSpaceType::DimRange;
+    const unsigned int dimRange = ArgFunctionSpaceType :: dimRange;
     const DiscreteFunctionSpaceType& space =  discFunc.space();
     typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
             LagrangePointSetType;
@@ -68,9 +68,9 @@ struct VtxProjectionImpl
         larg.evaluate(point, val);
         double w = weight(point);
         val *= w;
-        for( unsigned int coordinate = 0; coordinate < DimRange; ++coordinate ) {
-          ldf[ DimRange * dof + coordinate ] += val[coordinate];
-          lw[  DimRange * dof + coordinate ] += w;
+        for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate ) {
+          ldf[ dimRange * dof + coordinate ] += val[coordinate];
+          lw[  dimRange * dof + coordinate ] += w;
         }
       }
     }

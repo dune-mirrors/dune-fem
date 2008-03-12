@@ -54,9 +54,9 @@ namespace Dune
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
     //! dimension of the domain
-    enum { dimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
     //! dimension of the range
-    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
     
     //! type of base function sets
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
@@ -168,9 +168,9 @@ namespace Dune
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
     //! dimension of the domain
-    enum { dimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
     //! dimension of the range
-    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
     
     //! type of base function sets
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType

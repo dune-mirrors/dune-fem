@@ -18,12 +18,12 @@
 namespace Dune
 {
   
-  template< class GridPart, unsigned int polOrder, unsigned int dimrange >
+  template< class GridPart, unsigned int polOrder, unsigned int dimR >
   class LagrangeMapper;
 
 
   
-  template< class GridPart, unsigned int polOrder, unsigned int dimrange >
+  template< class GridPart, unsigned int polOrder, unsigned int dimR >
   struct LagrangeMapperTraits
   {
     typedef GridPart GridPartType;
@@ -31,7 +31,7 @@ namespace Dune
     enum { polynomialOrder = polOrder };
 
     //! dimension of the discrete function space's range
-    enum { dimRange = dimrange };
+    enum { dimRange = dimR };
 
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
       EntityType;
@@ -45,12 +45,12 @@ namespace Dune
 
 
   
-  template< class GridPart, unsigned int dimrange >
-  class LagrangeMapper< GridPart, 1, dimrange >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimrange > >
+  template< class GridPart, unsigned int dimR >
+  class LagrangeMapper< GridPart, 1, dimR >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimR > >
   {
   public:
-    typedef LagrangeMapperTraits< GridPart, 1, dimrange > Traits;
+    typedef LagrangeMapperTraits< GridPart, 1, dimR > Traits;
     
     //! type of the grid part
     typedef typename Traits :: GridPartType GridPartType;
@@ -75,7 +75,6 @@ namespace Dune
 
     //! dimension of the discrete function space's range
     enum { dimRange = Traits :: dimRange };
-    enum { DimRange = Traits :: dimRange };
 
   private:
     typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
@@ -238,12 +237,12 @@ namespace Dune
 
 
 
-  template< class GridPart, unsigned int dimrange >
-  class LagrangeMapper< GridPart, 2, dimrange >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 2, dimrange > >
+  template< class GridPart, unsigned int dimR >
+  class LagrangeMapper< GridPart, 2, dimR >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 2, dimR > >
   {
   public:
-    typedef LagrangeMapperTraits< GridPart, 2, dimrange > Traits;
+    typedef LagrangeMapperTraits< GridPart, 2, dimR > Traits;
     
     //! type of the grid part
     typedef typename Traits :: GridPartType GridPartType;
@@ -268,7 +267,6 @@ namespace Dune
 
     //! dimension of the discrete function space's range
     enum { dimRange = Traits :: dimRange };
-    enum { DimRange = Traits :: dimRange };
 
   private:
     typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
@@ -537,10 +535,10 @@ namespace Dune
 
 
   
-  template< class GridPart, unsigned int dimrange >
-  struct LagrangeMapper< GridPart, 2, dimrange > :: CodimCallInterface
+  template< class GridPart, unsigned int dimR >
+  struct LagrangeMapper< GridPart, 2, dimR > :: CodimCallInterface
   {
-    typedef LagrangeMapper< GridPart, 2, dimrange > MapperType;
+    typedef LagrangeMapper< GridPart, 2, dimR > MapperType;
 
     virtual ~CodimCallInterface ()
     {}
@@ -559,12 +557,12 @@ namespace Dune
 
 
 
-  template< class GridPart, unsigned int dimrange >
+  template< class GridPart, unsigned int dimR >
   template< unsigned int codim >
-  struct LagrangeMapper< GridPart, 2, dimrange > :: CodimCall
+  struct LagrangeMapper< GridPart, 2, dimR > :: CodimCall
   : public CodimCallInterface
   {
-    typedef LagrangeMapper< GridPart, 2, dimrange > MapperType;
+    typedef LagrangeMapper< GridPart, 2, dimR > MapperType;
 
     typedef CodimCallInterface BaseType;
 
@@ -626,12 +624,12 @@ namespace Dune
   // Note: This mapper assumes that the grid is "twist-free".
 
 #ifdef USE_TWISTFREE_MAPPER
-  template< class GridPart, unsigned int polOrder, unsigned int dimrange >
+  template< class GridPart, unsigned int polOrder, unsigned int dimR >
   class LagrangeMapper
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder, dimrange > >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder, dimR > >
   {
   public:
-    typedef LagrangeMapperTraits< GridPart, polOrder, dimrange > Traits;
+    typedef LagrangeMapperTraits< GridPart, polOrder, dimR > Traits;
     
     //! type of the grid part
     typedef typename Traits :: GridPartType GridPartType;
@@ -656,7 +654,6 @@ namespace Dune
 
     //! dimension of the discrete function space's range
     enum { dimRange = Traits :: dimRange };
-    enum { DimRange = Traits :: dimRange };
 
   private:
     typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
@@ -930,10 +927,10 @@ namespace Dune
 
 
 
-  template< class GridPart, unsigned int polOrder, unsigned int dimrange >
-  struct LagrangeMapper< GridPart, polOrder, dimrange > :: CodimCallInterface
+  template< class GridPart, unsigned int polOrder, unsigned int dimR >
+  struct LagrangeMapper< GridPart, polOrder, dimR > :: CodimCallInterface
   {
-    typedef LagrangeMapper< GridPart, polOrder, dimrange > MapperType;
+    typedef LagrangeMapper< GridPart, polOrder, dimR > MapperType;
 
     virtual ~CodimCallInterface ()
     {}
@@ -952,12 +949,12 @@ namespace Dune
 
 
 
-  template< class GridPart, unsigned int polOrder, unsigned int dimrange >
+  template< class GridPart, unsigned int polOrder, unsigned int dimR >
   template< unsigned int codim >
-  struct LagrangeMapper< GridPart, polOrder, dimrange > :: CodimCall
+  struct LagrangeMapper< GridPart, polOrder, dimR > :: CodimCall
   : public CodimCallInterface
   {
-    typedef LagrangeMapper< GridPart, polOrder, dimrange > MapperType;
+    typedef LagrangeMapper< GridPart, polOrder, dimR > MapperType;
 
     typedef CodimCallInterface BaseType;
 

@@ -259,8 +259,8 @@ namespace Dune {
     typedef AdaptiveDiscreteFunction< DG0SpaceType > DG0FunctionType; 
 
     // Range of the destination
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange,
-     dimDomain = DiscreteFunctionSpaceType::DimDomain};
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange,
+     dimDomain = DiscreteFunctionSpaceType::dimDomain};
     enum { dimension = GridType :: dimension };
     typedef typename GridType :: ctype ctype; 
     typedef FieldVector<ctype, dimDomain-1> FaceDomainType;

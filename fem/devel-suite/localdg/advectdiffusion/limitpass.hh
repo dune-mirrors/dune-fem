@@ -68,8 +68,8 @@ namespace Dune {
     typedef DofConversionUtility< PointBased > DofConversionUtilityType;
     
     // Range of the destination
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange,
-     dimDomain = DiscreteFunctionSpaceType::DimDomain};
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange,
+     dimDomain = DiscreteFunctionSpaceType::dimDomain};
     typedef FieldVector<double, dimDomain-1> FaceDomainType;
   public:
     //- Public methods

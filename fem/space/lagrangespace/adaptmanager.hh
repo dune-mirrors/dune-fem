@@ -66,7 +66,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
       LagrangePointSetType;
 
-    enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
 
     typedef typename LagrangePointSetType :: template Codim< 0 >
                                           :: SubEntityIteratorType
@@ -122,8 +122,8 @@ namespace Dune
         if( geometryInFather.checkInside( pointInSon ) ) {
           RangeType phi;
           sonFunction.evaluate( pointInSon, phi );
-          for( unsigned int coordinate = 0; coordinate < DimRange; ++coordinate )
-            fatherFunction[ DimRange * dof + coordinate ] = phi[ coordinate ];
+          for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
+            fatherFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
         }
       }
     }
@@ -153,8 +153,8 @@ namespace Dune
         
         RangeType phi;
         fatherFunction.evaluate( pointInFather, phi );
-        for( unsigned int coordinate = 0; coordinate < DimRange; ++coordinate )
-          sonFunction[ DimRange * dof + coordinate ] = phi[ coordinate ];
+        for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
+          sonFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
       }
     }
   };

@@ -21,7 +21,7 @@ namespace Dune {
   class CachingInterface;
    
   template <class FunctionSpaceImp>
-  class StorageBase : public StorageInterface<FunctionSpaceImp::DimDomain> 
+  class StorageBase : public StorageInterface<FunctionSpaceImp::dimDomain> 
 
   {
   public:
@@ -143,7 +143,7 @@ namespace Dune {
     typedef CachingStorage< FunctionSpaceType > ThisType;
     typedef StorageBase< FunctionSpaceType > BaseType;
     
-    friend class StorageInterface< FunctionSpaceType :: DimDomain >;
+    friend class StorageInterface< FunctionSpaceType :: dimDomain >;
     
   public:
     typedef BaseFunctionFactory< FunctionSpaceType > FactoryType;

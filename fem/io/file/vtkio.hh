@@ -18,8 +18,8 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::GridPartType GridPartType;
     typedef typename FunctionSpaceType::IteratorType::Entity EntityType;
-    enum {DimRange=FunctionSpaceType::DimRange,
-          DimDomain=FunctionSpaceType::DimDomain};
+    enum {dimRange=FunctionSpaceType::dimRange,
+          dimDomain=FunctionSpaceType::dimDomain};
     //! constructor taking discrete function 
     VTKFunctionWrapper(const DiscreteFunctionType& df,
                        int component)
@@ -27,7 +27,7 @@ namespace Dune
         component_(component) {}
     //! return number of components
     virtual int ncomps () const {
-      return (component_>=0) ? 1 : DimRange;
+      return (component_>=0) ? 1 : dimRange;
     }
     //! evaluate single component comp in
     //! the entity
@@ -88,11 +88,11 @@ namespace Dune
                       bool vector=false )
     {
       typedef typename DF::FunctionSpaceType FunctionSpaceType;
-      enum {DimRange=FunctionSpaceType::DimRange};
+      enum {dimRange=FunctionSpaceType::dimRange};
       if (vector) {
         BaseType::addCellData(new VTKFunctionWrapper<DF>(df,-1)); 
       } else {
-        for (int i=0;i<DimRange;++i) 
+        for (int i=0;i<dimRange;++i) 
           BaseType::addCellData(new VTKFunctionWrapper<DF>(df,i)); 
       }
     }
@@ -102,11 +102,11 @@ namespace Dune
                         bool vector=false )
     {
       typedef typename DF::FunctionSpaceType FunctionSpaceType;
-      enum {DimRange=FunctionSpaceType::DimRange};
+      enum {dimRange=FunctionSpaceType::dimRange};
       if (vector) {
         BaseType::addVertexData(new VTKFunctionWrapper<DF>(df,-1)); 
       } else {
-        for (int i=0;i<DimRange;++i) 
+        for (int i=0;i<dimRange;++i) 
           BaseType::addVertexData(new VTKFunctionWrapper<DF>(df,i)); 
       }
     }

@@ -24,10 +24,10 @@ namespace Dune
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
 
-    enum { DimDomain = FunctionSpaceType :: DimDomain };
-    enum { DimRange = FunctionSpaceType :: DimRange };
+    enum { dimDomain = FunctionSpaceType :: dimDomain };
+    enum { dimRange = FunctionSpaceType :: dimRange };
 
-    typedef FieldVector< int, DimDomain > CoefficientType;
+    typedef FieldVector< int, dimDomain > CoefficientType;
     
   protected:
     const CoefficientType coefficient_;
@@ -43,7 +43,7 @@ namespace Dune
     inline void evaluate ( const DomainType &x, RangeType &y ) const
     {
       y = 1;
-      for( unsigned int i = 0; i < DimDomain; ++i )
+      for( unsigned int i = 0; i < dimDomain; ++i )
       {
         /*
         if( coefficient_[ i ] < 0 )

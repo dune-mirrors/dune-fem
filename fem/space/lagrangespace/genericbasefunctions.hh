@@ -24,7 +24,7 @@ namespace Dune
     typedef GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order >
       ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
 
   public:
     typedef FunctionSpace FunctionSpaceType;
@@ -103,7 +103,7 @@ namespace Dune
       < FunctionSpace, PyramidGeometry< BaseGeometryType >, 0 >
       ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
 
   public:
     typedef FunctionSpace FunctionSpaceType;
@@ -231,7 +231,7 @@ namespace Dune
       < FunctionSpace, PyramidGeometry< BaseGeometryType >, order >
       ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
 
   public:
     typedef FunctionSpace FunctionSpaceType;
@@ -484,7 +484,7 @@ namespace Dune
         order >
       ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: DimRange == 1) > __check_DimRange__;
+    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
 
   public:
     typedef FunctionSpace FunctionSpaceType;

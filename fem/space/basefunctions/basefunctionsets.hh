@@ -170,8 +170,8 @@ namespace Dune
 
     enum
     {
-      DimDomain = FunctionSpaceType :: DimDomain,
-      DimRange = FunctionSpaceType :: DimRange
+      dimDomain = FunctionSpaceType :: dimDomain,
+      dimRange = FunctionSpaceType :: dimRange
     };
     
     typedef RangeFieldType DofType;
@@ -194,7 +194,7 @@ namespace Dune
     //! Constructor
     inline explicit VectorialBaseFunctionSet ( const FactoryType &factory )
     : storage_( factory ),
-      util_( FunctionSpaceType::DimRange )
+      util_( FunctionSpaceType::dimRange )
     {
     }
 
@@ -209,7 +209,7 @@ namespace Dune
     
     inline int numBaseFunctions () const
     {
-      return numDifferentBaseFunctions() * DimRange;
+      return numDifferentBaseFunctions() * dimRange;
     }
 
     inline int numDifferentBaseFunctions () const

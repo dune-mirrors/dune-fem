@@ -47,7 +47,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
     typedef typename FunctionSpaceType :: ScalarFunctionSpaceType
       ScalarFunctionSpaceType;
-    enum { DimRange = FunctionSpaceType :: DimRange };
+    enum { dimRange = FunctionSpaceType :: dimRange };
     
     typedef GridPart GridPartType;
     typedef typename GridPartType :: GridType GridType;
@@ -60,7 +60,7 @@ namespace Dune
     typedef LagrangeDiscreteFunctionSpace
       < FunctionSpaceType, GridPartType, polynomialOrder, BaseFunctionStorage >
       DiscreteFunctionSpaceType;
-    typedef LagrangeMapper< GridPartType, polynomialOrder, DimRange >
+    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange >
       MapperType;
     
     // mapper for block 
@@ -74,7 +74,7 @@ namespace Dune
     // exported type 
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp>  BaseFunctionSetType;
 
-    enum { localBlockSize = DimRange };
+    enum { localBlockSize = dimRange };
 
     /** \brief defines type of communication data handle for this type of space
      */
@@ -212,7 +212,7 @@ namespace Dune
     //! type for function space's range
     typedef typename Traits :: RangeType RangeType;
     //! dimension of function space's range
-    enum { DimRange = FunctionSpaceType :: DimRange };
+    enum { dimRange = FunctionSpaceType :: dimRange };
     //! type of scalar function space
     typedef typename Traits :: ScalarFunctionSpaceType ScalarFunctionSpaceType;
    

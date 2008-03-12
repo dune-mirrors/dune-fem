@@ -161,7 +161,7 @@ protected:
         CachingStorage> LowerSpaceType; 
      
       enum { dim = GridType::dimension };
-      enum { dimRange = DiscreteFunctionSpaceType:: DimRange };
+      enum { dimRange = DiscreteFunctionSpaceType:: dimRange };
       
       // get space 
       const DiscreteFunctionSpaceType& space =  discFunc.space();

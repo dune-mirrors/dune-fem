@@ -19,7 +19,7 @@ template<class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType>
 class FVBaseFunction < FunctionSpaceType, ElType, 0 >  
 : public BaseFunctionInterface<FunctionSpaceType> 
 {
-  enum { DimRange = FunctionSpaceType::DimRange };
+  enum { dimRange = FunctionSpaceType::dimRange };
   int baseNum_;
 
   typedef typename FunctionSpaceType::DomainType DomainType;
@@ -31,7 +31,7 @@ public:
     BaseFunctionInterface<FunctionSpaceType> (),
     baseNum_ ( baseNum ) 
   { 
-    assert((baseNum_ >= 0) || (baseNum_ < DimRange));
+    assert((baseNum_ >= 0) || (baseNum_ < dimRange));
   }
   
   virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
@@ -119,7 +119,7 @@ public:
   
   virtual int numBaseFunctions() const 
   {
-    const int dimRange = FunctionSpaceType::DimRange;
+    const int dimRange = FunctionSpaceType::dimRange;
     switch (GeometryIdentifier::fromGeo(this->geometry())) 
     {
       case GeometryIdentifier::Line:

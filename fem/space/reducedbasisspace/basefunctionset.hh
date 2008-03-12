@@ -76,8 +76,8 @@ namespace Dune
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
     typedef typename FunctionSpaceType :: HessianRangeType HessianRangeType;
 
-    enum { DimDomain = FunctionSpaceType :: DimDomain };
-    enum { DimRange = FunctionSpaceType :: DimRange };
+    enum { dimDomain = FunctionSpaceType :: dimDomain };
+    enum { dimRange = FunctionSpaceType :: dimRange };
 
     typedef DynamicArray< BaseFunctionType* > BaseFunctionListType;
 

@@ -4,32 +4,39 @@
 #include <dune/fem/space/common/functionspaceinterface.hh>
 #include <dune/common/fmatrix.hh>
 
-namespace Dune{
+namespace Dune
+{
 
 // Forward declaration of
 // base class for vector valued function spaces.
-template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
+template< class DomainField, class RangeField, int dimD, int dimR >
 class FunctionSpace;
 
 //! \brief Traits class for vector function spaces 
-template <typename DomainFieldImp,typename RangeFieldImp,int n,int m>
-struct VectorSpaceTraits {
+template< class DomainField, class RangeField, int dimD,int dimR >
+struct VectorSpaceTraits
+{
   /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
-  typedef DomainFieldImp DomainFieldType;
+  typedef DomainField DomainFieldType;
   /** \copydoc Dune::FunctionSpaceInterface::RangeFieldType */
-  typedef RangeFieldImp RangeFieldType;
-  /** \copydoc Dune::FunctionSpaceInterface::DomainType */
-  typedef FieldVector<DomainFieldImp, n> DomainType;
-  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
-  typedef FieldVector<RangeFieldImp, m> RangeType;
-  /** \brief linear mapping type */
-  typedef FieldMatrix<RangeFieldImp, m, n> LinearMappingType;
-  /** \brief scalar function space type */
-  typedef FunctionSpace<DomainFieldImp,RangeFieldImp,n,1> ScalarFunctionSpaceType;
-  /** \brief dimension of domain vector space */
-  enum { DimRange = m};
+  typedef RangeField RangeFieldType;
+
   /** \brief dimension of range vector space */
-  enum { DimDomain = n };
+  enum { dimDomain = dimD };
+  /** \brief dimension of domain vector space */
+  enum { dimRange = dimR };
+
+  /** \copydoc Dune::FunctionSpaceInterface::DomainType */
+  typedef FieldVector< DomainFieldType, dimDomain > DomainType;
+  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
+  typedef FieldVector< RangeFieldType, dimRange> RangeType;
+  
+  /** \brief linear mapping type */
+  typedef FieldMatrix< RangeFieldType, dimRange, dimDomain > LinearMappingType;
+
+  /** \brief scalar function space type */
+  typedef FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >
+    ScalarFunctionSpaceType;
 };
 
 /** @ingroup FunctionSpace
@@ -38,12 +45,12 @@ struct VectorSpaceTraits {
     FunctionSpace defines what the types of the domain vector
     space and the range vector space for a function are. 
 */
-template< typename DomainFieldImp, typename RangeFieldImp, int n, int m >
+template< class DomainField, class RangeField, int dimD, int dimR >
 class FunctionSpace
-: public FunctionSpaceInterface< VectorSpaceTraits< DomainFieldImp, RangeFieldImp, n, m > >
+: public FunctionSpaceInterface
+    < VectorSpaceTraits< DomainField, RangeField, dimD, dimR > >
 {
-private:
-  typedef FunctionSpace< DomainFieldImp, RangeFieldImp, n, m > ThisType;
+  typedef FunctionSpace< DomainField, RangeField, dimD, dimR > ThisType;
 
 public:
   typedef ThisType FunctionSpaceType;
@@ -196,9 +203,9 @@ struct MatrixSpaceTraits {
   /** \brief scalar function space type */
   typedef MatrixFunctionSpace<DomainFieldImp,RangeFieldImp,n,1,1> ScalarFunctionSpaceType;
   /** \brief dimension of domain vector space */
-  enum { DimRange = m1 * m2};
+  enum { dimRange = m1 * m2};
   /** \brief dimension of range vector space */
-  enum { DimDomain = n };
+  enum { dimDomain = n };
 };
 
 /*! @ingroup FunctionSpace 

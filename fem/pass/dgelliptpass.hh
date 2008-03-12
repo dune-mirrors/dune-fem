@@ -76,8 +76,8 @@ namespace Dune {
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
     // Range of the destination
-    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
     enum { cols = JacobianRangeType :: cols };
     enum { rows = JacobianRangeType :: rows };
     
@@ -204,10 +204,8 @@ namespace Dune {
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
    
     // Range of the destination
-    enum { dimR = DiscreteFunctionSpaceType::DimRange };
-    enum { dimD = DiscreteFunctionSpaceType::DimDomain };
-    enum { dimRange  = DiscreteFunctionSpaceType :: DimRange }; 
-    enum { dimDomain = DiscreteFunctionSpaceType :: DimDomain }; 
+    enum { dimRange  = DiscreteFunctionSpaceType :: dimRange }; 
+    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain }; 
                     
     // Types extracted from the discrete function space type
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
@@ -421,8 +419,8 @@ namespace Dune {
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
     // Range of the destination
-    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
     enum { cols = JacobianRangeType :: cols };
     enum { rows = JacobianRangeType :: rows };
     

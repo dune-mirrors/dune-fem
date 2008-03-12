@@ -47,9 +47,9 @@ namespace Dune
   public:
     //! type of function space 
     typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
-    //! type of domain vector, i.e. element of R^DimDomain 
+    //! type of domain vector, i.e. element of R^dimDomain 
     typedef typename FunctionSpaceType::DomainType DomainType;
-    //! type of range vector, i.e. element of R^DimRange 
+    //! type of range vector, i.e. element of R^dimRange 
     typedef typename FunctionSpaceType::RangeType RangeType;
     //! type of domain vector components, i.e. double 
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
@@ -60,9 +60,9 @@ namespace Dune
     //! range type of second derivate 
     typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
     //! dimension of domain 
-    enum { DimDomain = FunctionSpaceType::DimDomain };
+    enum { dimDomain = FunctionSpaceType :: dimDomain };
     //! dimension of range 
-    enum { DimRange  = FunctionSpaceType::DimRange  };
+    enum { dimRange  = FunctionSpaceType :: dimRange  };
 
     //! type of BaseFunctions 
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
@@ -515,7 +515,7 @@ namespace Dune
       asImp().jacobian( baseFunction, x, gradPhi );
 
       RangeFieldType result = 0;
-      for( int i = 0; i < FunctionSpaceType :: DimRange; ++i )
+      for( int i = 0; i < FunctionSpaceType :: dimRange; ++i )
       {
         DomainType gradScaled( 0 );
         jacobianInverseTransposed.umv( gradPhi[ i ], gradScaled );

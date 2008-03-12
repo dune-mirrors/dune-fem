@@ -75,7 +75,7 @@ namespace Dune {
     typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType;
     
     // Range of the destination
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
   public:
     //- Public methods
     //! Constructor

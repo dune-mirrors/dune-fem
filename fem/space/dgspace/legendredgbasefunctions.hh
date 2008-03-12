@@ -83,7 +83,7 @@ template<int dim,int i,int PolOrd>
       // Check if base number is valid
       assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
       // Only for scalar function spaces
-      assert(FunctionSpaceType::DimRange == 1);
+      assert(FunctionSpaceType::dimRange == 1);
     }
     
     ~LegendreDGBaseFunction() {}
@@ -139,7 +139,7 @@ template<int dim,int i,int PolOrd>
     
     virtual int numBaseFunctions() const 
     {
-      return NumLegendreBaseFunctions<polOrd,FunctionSpaceType::DimDomain>::numBaseFct;
+      return NumLegendreBaseFunctions<polOrd,FunctionSpaceType::dimDomain>::numBaseFct;
     }
   };
 

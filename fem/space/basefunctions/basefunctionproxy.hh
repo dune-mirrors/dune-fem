@@ -40,11 +40,8 @@ namespace Dune
   public:
     typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
 
-    enum { dimrange = FunctionSpaceType::DimRange };
-    enum { dimRange = FunctionSpaceType::DimRange };
-    enum { DimRange = FunctionSpaceType::DimRange };
-    enum { dimDomain = FunctionSpaceType::DimDomain };
-    enum { DimDomain = FunctionSpaceType::DimDomain };
+    enum { dimRange = FunctionSpaceType :: dimRange };
+    enum { dimDomain = FunctionSpaceType :: dimDomain };
 
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainType DomainType;
@@ -179,11 +176,8 @@ namespace Dune
     typedef typename BaseFunctionSetImp :: ScalarRangeType ScalarRangeType;
     typedef typename BaseFunctionSetImp :: ScalarJacobianRangeType ScalarJacobianRangeType;
 
-    enum { dimrange = FunctionSpaceType::DimRange };
-    enum { dimRange = FunctionSpaceType::DimRange };
-    enum { DimRange = FunctionSpaceType::DimRange };
-    enum { dimDomain = FunctionSpaceType::DimDomain };
-    enum { DimDomain = FunctionSpaceType::DimDomain };
+    enum { dimRange = FunctionSpaceType :: dimRange };
+    enum { dimDomain = FunctionSpaceType :: dimDomain };
 
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainType DomainType;

@@ -414,8 +414,8 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
-    enum { n = DiscreteFunctionSpaceType::DimDomain };
-    enum { m = DiscreteFunctionSpaceType::DimRange };
+    enum { n = DiscreteFunctionSpaceType::dimDomain };
+    enum { m = DiscreteFunctionSpaceType::dimRange };
 
     std::ofstream file( filename.c_str() );
 
@@ -464,8 +464,8 @@ readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timest
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
-    enum { tn = DiscreteFunctionSpaceType::DimDomain };
-    enum { tm = DiscreteFunctionSpaceType::DimRange };
+    enum { tn = DiscreteFunctionSpaceType::dimDomain };
+    enum { tm = DiscreteFunctionSpaceType::dimRange };
 
     int n,m;
     GrapeIOStringType r,d;

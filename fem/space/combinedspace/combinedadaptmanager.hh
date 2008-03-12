@@ -45,7 +45,7 @@ public:
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
   typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
 
-  enum { dimRange = FunctionSpaceType :: DimRange };
+  enum { dimRange = FunctionSpaceType :: dimRange };
 public:  
   //! Constructor
   RestrictProlongCombinedSpace( DiscreteFunctionType & df ) 

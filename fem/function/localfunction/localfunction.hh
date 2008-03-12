@@ -466,9 +466,9 @@ namespace Dune
       BaseFunctionSetType;
 
     //! dimension of the domain
-    enum { dimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
     //! dimension of the range
-    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
 
   protected:
     //! type of entity's geometry
@@ -582,9 +582,9 @@ namespace Dune
       BaseFunctionSetType;
 
     //! dimension of the domain
-    enum { dimDomain = DiscreteFunctionSpaceType :: DimDomain };
+    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
     //! dimension of the range
-    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
 
   protected:
     //! type of entity's geometry

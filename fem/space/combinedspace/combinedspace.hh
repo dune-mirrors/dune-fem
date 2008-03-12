@@ -114,8 +114,8 @@ namespace Dune
     typedef typename ContainedSpaceTraits::BaseFunctionSetType 
     ContainedBaseFunctionSetType;
     
-    enum { ContainedDimRange = ContainedFunctionSpaceType::DimRange,
-           ContainedDimDomain = ContainedFunctionSpaceType::DimDomain };
+    enum { ContainedDimRange = ContainedFunctionSpaceType::dimRange,
+           ContainedDimDomain = ContainedFunctionSpaceType::dimDomain };
 
     typedef CombinedSpaceHelper :: BlockTraits< DiscreteFunctionSpaceImp, N, policy >
       BlockTraits;
@@ -161,8 +161,8 @@ namespace Dune
     typedef CombinedDofConversionUtility< ContainedMapperType, policy >
       DofConversionType;
 
-    enum { DimRange = FunctionSpaceType::DimRange,
-           DimDomain = FunctionSpaceType::DimDomain };
+    enum { dimRange = FunctionSpaceType :: dimRange,
+           dimDomain = FunctionSpaceType :: dimDomain };
 
     //! \brief defines type of data handle for communication 
     template <class DiscreteFunctionImp,

@@ -87,7 +87,7 @@ namespace Dune {
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
-    enum { dimRange = Traits::FunctionSpaceType::DimRange };
+    enum { dimRange = Traits::FunctionSpaceType :: dimRange };
 
     //! The polynom order of the base functions
     enum { PolOrd = polOrd };
@@ -333,8 +333,8 @@ namespace Dune {
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
 
-    enum { DimRange  = FunctionSpaceType::DimRange };
-    enum { DimDomain = FunctionSpaceType::DimDomain };
+    enum { dimRange  = FunctionSpaceType::dimRange };
+    enum { dimDomain = FunctionSpaceType::dimDomain };
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -349,14 +349,14 @@ namespace Dune {
     //typedef BaseFunctionSetImp BaseFunctionSetType;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     //
-    typedef DGMapper< GridPartType, polOrd, DimRange > MapperType;
+    typedef DGMapper< GridPartType, polOrd, dimRange > MapperType;
 
     //! mapper for block vector function 
     typedef DGMapper< GridPartType, polOrd, 1 > BlockMapperType;
     
     //! number of base functions * dimRange 
-    enum { localBlockSize = DimRange * 
-        DGNumberOfBaseFunctions<polOrd,DimDomain>::numBaseFunctions }; 
+    enum { localBlockSize = dimRange * 
+        DGNumberOfBaseFunctions<polOrd,dimDomain>::numBaseFunctions }; 
     
     /** \brief defines type of data handle for communication 
         for this type of space.
@@ -412,10 +412,10 @@ namespace Dune {
     typedef typename Traits::IndexSetType IndexSetType;
 
     //! Dimension of the range vector field
-    enum { dimRange = Traits::FunctionSpaceType::DimRange };
+    enum { dimRange = Traits::FunctionSpaceType::dimRange };
 
     //! Dimension of the domain vector field
-    enum { dimDomain = Traits::FunctionSpaceType::DimDomain };
+    enum { dimDomain = Traits::FunctionSpaceType::dimDomain };
 
     //! The polynom order of the base functions
     enum { PolOrd = polOrd };
@@ -487,8 +487,8 @@ namespace Dune {
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
 
-    enum { DimRange  = FunctionSpaceType::DimRange };
-    enum { DimDomain = FunctionSpaceType::DimDomain };
+    enum { dimRange  = FunctionSpaceType::dimRange };
+    enum { dimDomain = FunctionSpaceType::dimDomain };
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -502,14 +502,14 @@ namespace Dune {
     typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
 
-    typedef DGMapper< GridPartType, polOrd, DimRange > MapperType;
+    typedef DGMapper< GridPartType, polOrd, dimRange > MapperType;
 
     //! mapper with only one dof 
     typedef DGMapper< GridPartType, polOrd, 1 > BlockMapperType;
 
     //! number of base functions * dimRange 
-    enum { localBlockSize = DimRange * 
-        NumLegendreBaseFunctions<polOrd,DimDomain>::numBaseFct }; 
+    enum { localBlockSize = dimRange * 
+        NumLegendreBaseFunctions<polOrd,dimDomain>::numBaseFct }; 
 
     /** \brief defines type of data handle for communication 
         for this type of space.
@@ -573,9 +573,8 @@ namespace Dune {
       typename Traits::FunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
-    enum { dimRange  = Traits::FunctionSpaceType::DimRange };
-    enum { DimRange  = Traits::FunctionSpaceType::DimRange };
-    enum { DimDomain = Traits::FunctionSpaceType::DimDomain };
+    enum { dimRange  = Traits::FunctionSpaceType::dimRange };
+    enum { dimDomain = Traits::FunctionSpaceType::dimDomain };
 
     //! The polynom order of the base functions
     enum { PolOrd = polOrd };
