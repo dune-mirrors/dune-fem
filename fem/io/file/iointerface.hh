@@ -40,7 +40,9 @@ namespace Dune {
    In addition data can be visualized in GraPE online during 
    a simulation by setting the parameter
    \b fem.io.grapedisplay to one.
-   In each cases the Dune::DataWritter or the Dune::Checkpointer 
+   With the exception of Matlab output
+   the Dune::DataWritter or the 
+   Dune::Checkpointer 
    are used, the format is choosen through the parameter
    \b fem.io.outputformat;
    values are
@@ -50,13 +52,15 @@ namespace Dune {
    - 1: VTK cell data
    - 2: VTK vertex data
    .
+   Utilities for Matlab output are availabe
+   through the Dune::MatlabHelper.
   
-   The \ref CheckPointIO "checkpointing facility" 
+   The \ref Dune::CheckPointer "checkpointing facility" 
    writes both the grid state, a number of
    discrete function, and other parameters
    provided by the user. This information can
    then be read from disc to continue the simulation
-   from the saved state. Using the \ref GrapeIO
+   from the saved state. Using the \ref Visualization
    "datadisp" programm the checkpoint files can also
    be used for visualization purposes.
 
