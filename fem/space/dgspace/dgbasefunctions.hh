@@ -6,8 +6,10 @@
 #include <dune/grid/common/grid.hh>
 
 //- Local includes
+#include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/space/common/basefunctionfactory.hh>
+#include <dune/fem/space/common/functionspace.hh>
 #include "orthonormalbase_mod.hh"
 
 namespace Dune {
@@ -15,7 +17,7 @@ namespace Dune {
   template <int polOrder, int dimDomain> 
   struct DGNumberOfBaseFunctions
   {
-    enum { numBaseFunctions = 0 };
+    // enum { numBaseFunctions = 0 };
   };
   
   //! number of base functions for dimDomain = 1 
@@ -519,6 +521,7 @@ namespace Dune {
 
     typedef ScalarFunctionSpaceImp FunctionSpaceType;
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
+    enum {dimDomain = FunctionSpaceType::DimDomain};
   public:
     DiscontinuousGalerkinBaseFunctionFactory(GeometryType geo) :
       BaseFunctionFactory<ScalarFunctionSpaceImp>(geo)
@@ -527,7 +530,8 @@ namespace Dune {
     virtual BaseFunctionType* baseFunction(int i) const 
     {
       // see orthonormalbase_mod.cc for max number of base functions 
-      enum { maxBaseFunctions = 164 };
+      // enum { maxBaseFunctions = 164 };
+      enum { maxBaseFunctions = DGNumberOfBaseFunctions<polOrd,dimDomain>::numBaseFunctions };
       switch (GeometryIdentifier::fromGeo(this->geometry())) 
       {
         case GeometryIdentifier::Line:
@@ -596,6 +600,237 @@ namespace Dune {
       }
     };  
   };
+
+
+
+#ifndef COMPILE_LIB
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 1, 1 >, 0 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 1, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 1, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 1, 1 >, 1 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 1, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 1, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 1, 1 >, 2 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 1, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 1, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 1, 1 >, 3 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 1, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 1, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 0 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 2, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 2, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 1 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 2, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 2, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 2 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 2, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 2, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 3 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 2, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 2, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 3, 1 >, 0 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 3, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 3, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 3, 1 >, 1 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 3, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 3, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+  
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 3, 1 >, 2 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 3, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 3, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+
+
+  template<>
+  class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 3, 1 >, 3 >
+  : public BaseFunctionFactory< FunctionSpace< double, double, 3, 1 > > 
+  {
+    typedef FunctionSpace< double, double, 3, 1 > ScalarFunctionSpace;
+    
+  public:
+    DiscontinuousGalerkinBaseFunctionFactory( GeometryType geometry )
+    : BaseFunctionFactory< ScalarFunctionSpace >( geometry )
+    {}
+
+    virtual BaseFunctionInterface< ScalarFunctionSpace > *
+    baseFunction ( int i ) const;
+
+    virtual int numBaseFunctions () const;
+  };
+#endif
 
 } // end namespace Dune
 #endif
