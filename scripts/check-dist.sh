@@ -51,6 +51,12 @@ done
 
 TESTDIR=`mktemp -d -p $WORKINGDIR dune-tmp-XXXXXX`
 
+do_configure()
+{
+  $DUNECONTROL --opts=$OPTSDIR/$OPTS all 2>&1 | dd conv=notrunc \
+    > $CONFIGLOG 2>/dev/null
+}
+
 errors=0
 for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
   echo
@@ -66,7 +72,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
   done
 
   CONFIGLOG="$WORKINGDIR/${OPTS%.opts}-conf.out"
-  if ! $DUNECONTROL --opts=$OPTSDIR/$OPTS all &> $CONFIGLOG ; then
+  if do_configure ; then
     echo "Error: Cannot configure with $OPTS (see $CONFIGLOG)"
     errors=$((errors+1))
     continue
