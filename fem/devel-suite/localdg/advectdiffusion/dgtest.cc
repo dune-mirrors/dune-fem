@@ -6,9 +6,7 @@
 const double globalTimeStep = 1e-3;
 #endif
 
-// inlcude template meta fvector 
-#include "fvector.hh"
-
+#include <dune/common/fvector.hh>
 #include <dune/fem/misc/utility.hh>
 #include <dune/grid/common/gridpart.hh>
 
