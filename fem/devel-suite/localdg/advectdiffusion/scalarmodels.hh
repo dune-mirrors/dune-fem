@@ -23,7 +23,7 @@ class BurgersModel {
     epsilon(problem.epsilon) 
   {
 		bool diff_tstep;	
-		Parameter::get("fem.localdg.diff_tstep",diff_tstep);
+		Parameter::get("fem.localdg.diffusion_timestep",diff_tstep);
 		tstep_eps = (diff_tstep)? epsilon:0;
 	}
   inline  void analyticalFlux(typename Traits::EntityType& en,
@@ -141,7 +141,7 @@ class AdvectionDiffusionModel {
     epsilon(problem.epsilon) 
   {
 		bool diff_tstep;	
-		Parameter::get("fem.localdg.diff_tstep",diff_tstep);
+		Parameter::get("fem.localdg.diffusion_timestep",diff_tstep);
 		tstep_eps = (diff_tstep)? epsilon:0;
 
     if(ConstantVelocity) 

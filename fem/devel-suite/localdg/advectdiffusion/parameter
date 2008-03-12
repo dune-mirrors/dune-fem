@@ -1,7 +1,7 @@
 fem.verbose: 1
 
 # Default parameter file for fem/localdg/advectdiffusion/dgtest.cc
-fem.localdg.diff_tstep: 0
+fem.localdg.diffusion_timestep: 0
 fem.localdg.epsilon: 0.
 fem.localdg.gridfile: grid2d.dgf
 fem.localdg.repeats: 4
