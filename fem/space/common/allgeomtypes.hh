@@ -3,6 +3,7 @@
 
 //- system includes 
 #include <vector>
+#include <map>
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
@@ -15,11 +16,96 @@
 namespace Dune
 {
 
+  /**  \brief ReferenceVolume and local bary center keeper class. 
+   */
+  template< class GridImp >
+  class GeometryInformation  
+  {
+  public:
+    //! grid type 
+    typedef GridImp GridType;
+
+    //! dimension 
+    enum { dim = GridType :: dimension };
+
+    //! coordinate type 
+    typedef typename GridType :: ctype ctype;
+
+    //! type of reference element 
+    typedef ReferenceElement< ctype, dim > ReferenceElementType; 
+
+    //! type of domain vector 
+    typedef FieldVector<ctype, dim> DomainType;
+
+    //! map that stores the volume of the reference element  
+    typedef std::map<const Dune::GeometryType, double>  ReferenceVolumeMapType;
+
+    //! map that stores the barycenter of the reference element  
+    typedef std::map<const Dune::GeometryType, DomainType>  BaryCenterMapType;
+
+    //! type of this class 
+    typedef GeometryInformation < GridType > ThisType;
+
+  protected:
+    mutable BaryCenterMapType localCenters_;
+    mutable ReferenceVolumeMapType referenceVolumes_;
+    
+  public:
+    GeometryInformation( const GeometryInformation& other ) 
+      : localCenters_( other.localCenters_ ) 
+      , referenceVolumes_( other.referenceVolumes_ )
+    {
+    }
+
+    //! constructor storing index set reference 
+    inline explicit GeometryInformation()
+      : localCenters_()
+      , referenceVolumes_ ()
+    {
+    }
+    
+    //! return local bary center for geometry of type type 
+    const DomainType& localCenter(const GeometryType& type) const 
+    {
+      assert( localCenters_.find( type ) != localCenters_.end() );
+      return localCenters_[ type ];
+    }
+
+    //! return volume of reference element for geometry of type type 
+    const double referenceVolume(const GeometryType& type) const 
+    {
+      assert( referenceVolumes_.find( type ) != referenceVolumes_.end() );
+      return referenceVolumes_[ type ];
+    }
+
+    //! return reference element for type 
+    static const ReferenceElementType& 
+      referenceElement(const GeometryType& type ) 
+    {
+      return ReferenceElements<ctype , dim> ::general( type );
+    }
+
+  protected:  
+    //! build maps 
+    void buildMaps(const std::vector<GeometryType> & geomTypes)
+    {
+      for(size_t i=0; i<geomTypes.size(); ++i) 
+      {
+        // get local bary center 
+        const ReferenceElementType& refElem = referenceElement( geomTypes[i] );
+        localCenters_[ geomTypes[i] ] = refElem.position(0,0);
+        referenceVolumes_[ geomTypes[i] ] = refElem.volume();
+      }
+    }
+
+  };
+
+
   /**  \brief default implementation uses method geomTypes of given index
        set. Used in DiscreteFunctionSpaces.
    */
   template< class IndexSetImp, class GridImp >
-  class AllGeomTypes 
+  class AllGeomTypes : public GeometryInformation< GridImp > 
   {
   public:
     typedef IndexSetImp IndexSetType;
@@ -34,10 +120,11 @@ namespace Dune
   public:
     //! constructor storing index set reference 
     inline explicit AllGeomTypes( const IndexSetType &indexSet )
-    : indexSet_( indexSet )
+      : indexSet_( indexSet )
     {
+      this->buildMaps( indexSet_.geomTypes(0) );
     }
-    
+
     //! returns vector with geometry tpyes this index set has indices for
     const std :: vector< GeometryType > &geomTypes ( int codim ) const
     {
@@ -58,7 +145,8 @@ namespace Dune
       sets not usable in this case. 
   */
   template< class IndexSetImp, int dimworld >
-  class AllGeomTypes< IndexSetImp, UGGrid< dimworld > >
+  class AllGeomTypes< IndexSetImp, UGGrid< dimworld > > 
+    : public GeometryInformation< UGGrid< dimworld > > 
   {
   public:
     typedef IndexSetImp IndexSetType;
@@ -111,6 +199,8 @@ namespace Dune
           geomTypes_[2].push_back( GeometryType(GeometryType::cube,1));
         }
       }
+
+      this->buildMaps( geomTypes_[0] );
     }                  
     
     //! returns vector with geometry types this index set has indices for
