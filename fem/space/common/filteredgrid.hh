@@ -276,20 +276,22 @@ namespace Dune {
     struct IntersectionIteratorWrapper;
     // type of this
     typedef FilteredGridPart<GridPartImp, FilterImp, pitype> ThisType;
-    // type of underlying GridPart
-    //typedef GridPartImp GridPartType;
-    // type of filter
-    typedef FilterImp FilterType;
     // the codim 0 entities type
     //typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
     // the original IntersectionIteratorType
     typedef typename GridPartImp::IntersectionIteratorType IntersectionIteratorImpType;
 
   public:
+    //! type of filter
+    typedef FilterImp FilterType;
+
     //- Public typedefs and enums    
     //! Grid implementation type
     typedef typename GridPartImp::GridType GridType;
+
+    //! type of underlying grid part 
     typedef FilteredGridPart<GridPartImp, FilterImp, pitype> GridPartType;
+
     //! The index set of the gridpart implementation
     typedef typename GridPartImp::IndexSetType IndexSetType;
     //! The corresponding IntersectionIterator 
