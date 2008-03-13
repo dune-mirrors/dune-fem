@@ -121,24 +121,24 @@ namespace Dune
 
   };
 
-  //! Factory class for SingletonList to tell how objects are created and
-  //! how compared.
-  template <class KeyImp, class ObjectImp>
-  class LagrangeMapperSingletonFactory
+
+  
+  // Factory class for SingletonList to tell how objects are created and
+  // how compared.
+  template< class Key, class Object >
+  struct LagrangeMapperSingletonFactory
   {
-    public:
-    //! create new mapper  
-    static ObjectImp * createObject( const KeyImp & key )
+    static Object *createObject( const Key &key )
     {
-      // create Object of MapperType = ObjectImp 
-      return new ObjectImp(key.gridPart(),key.pointSet());
+      return new Object( key.gridPart(), key.pointSet() );
     }
-    //! delete mapper object 
-    static void deleteObject( ObjectImp * obj )
+    
+    static void deleteObject( Object *obj )
     {
       delete obj;
     }
   };
+
 
 
   /** \addtogroup LagrangeDiscreteFunctionSpace
@@ -156,12 +156,6 @@ namespace Dune
    *  capable of adaption (i.e. the method adaptive returns true). See also
    *  AdaptiveLeafIndexSet.
    */
-#if 0
-   *  \bug For Lagrange spaces of order \f$\ge\f$ 2, the base functions
-   *       sometimes (and unpredictably) return NaN or \f$\pm\infty\f$, when
-   *       the code is compiled with gcc and optimization level is \f$\ge\f$ 2.
-   */
-#endif
 
 
 
