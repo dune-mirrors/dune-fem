@@ -9,7 +9,17 @@ libdgspace_la_SOURCES = dgbasefunctions_1.cc \
 libdgspace_la_CPPFLAGS = $(AM_CPPFLAGS) -DCOMPILE_LIB
 
 dgspacedir =  $(includedir)/dune/fem/space/dgspace
-dgspace_HEADERS = dgbasefunctions.hh  legendredgbasefunctions.hh \
-dgadaptiveleafgridpart.hh  dgleafindexset.hh   legendrepoly.hh \
-dgadaptiveleafindexset.hh  dgmapper.hh orthonormalbase_mod.hh \
-dgadaptmanager.hh dgspace.hh dgadaptoperator.hh dgdatahandle.hh
+dgspace_HEADERS = dgadaptiveleafgridpart.hh \
+                  dgadaptiveleafindexset.hh \
+                  dgadaptmanager.hh \
+		  dgadaptoperator.hh \
+		  dgbasefunctions.hh \
+		  dgdatahandle.hh \
+		  dgleafindexset.hh \
+		  dgmapper.hh \
+		  dgspace.hh \
+                  legendredgbasefunctions.hh \
+		  legendrepoly.hh \
+		  orthonormalbase_mod.hh
+
+EXTRA_DIST = orthonormalbase_mod.cc
