@@ -7,6 +7,7 @@ using namespace Dune;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/quadrature/cachequad.hh>
@@ -68,7 +69,8 @@ typedef CombinedSpace<SingleDiscreteFunctionSpaceType,5,PointBased>
    DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+//typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
 
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;

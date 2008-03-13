@@ -48,6 +48,7 @@ namespace Dune
 
     //! field type for the vector
     typedef typename Traits :: FieldType FieldType;
+    typedef FieldType value_type;
 
     //! type of constant iterator
     typedef typename Traits :: ConstIteratorType ConstIteratorType;
@@ -619,6 +620,9 @@ namespace Dune
     {
       fields_.assign( v );
     }
+
+    inline void reserve ( unsigned int newSize )
+    {}
 
     inline void resize ( unsigned int newSize )
     {

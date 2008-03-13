@@ -1,2 +1,3 @@
 vectorfunctiondir =  $(includedir)/dune/fem/function/vectorfunction
-vectorfunction_HEADERS = vectorfunction.hh
+vectorfunction_HEADERS = managedvectorfunction.hh \
+                         vectorfunction.hh

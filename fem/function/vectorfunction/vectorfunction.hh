@@ -1,11 +1,11 @@
-#ifndef DUNE_FEM_VECTORFUNCTION_VECTORFUNCTION_HH
-#define DUNE_FEM_VECTORFUNCTION_VECTORFUNCTION_HH
+#ifndef DUNE_FEM_VECTORFUNCTION_HH
+#define DUNE_FEM_VECTORFUNCTION_HH
 
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/storage/envelope.hh>
-#include <dune/fem/space/common/dofmanager.hh>
+//#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
 
@@ -72,29 +72,29 @@ namespace Dune
 
 
 
-  template< class DiscreteFunctionSpaceImp, class DofVectorImp >
+  template< class DiscreteFunctionSpace, class DofVector >
   class VectorDiscreteFunction;
 
 
 
-  template< class DiscreteFunctionSpaceImp, class DofVectorImp >
+  template< class DiscreteFunctionSpace, class DofVector >
   struct VectorDiscreteFunctionTraits
   {
-    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
-    typedef DofVectorImp DofVectorType;
+    typedef DofVector DofVectorType;
 
-    typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >
+    typedef VectorDiscreteFunctionTraits
+      < DiscreteFunctionSpaceType, DofVectorType >
+      DiscreteFunctionTraits;
+    typedef VectorDiscreteFunction
+      < DiscreteFunctionSpaceType, DofVectorType >
       DiscreteFunctionType;
 
-    typedef StandardLocalFunctionFactory
-      < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceType,
-	                              DofVectorType > >
+    typedef StandardLocalFunctionFactory< DiscreteFunctionTraits >
       LocalFunctionFactoryType;
-
     typedef LocalFunctionStack< LocalFunctionFactoryType >
       LocalFunctionStorageType;
-
     typedef typename LocalFunctionStorageType :: LocalFunctionType
       LocalFunctionType;
 
@@ -110,7 +110,7 @@ namespace Dune
       JacobianRangeType;
 
     typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+    //typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
     typedef typename DofVectorType :: FieldType DofType;
     typedef DofVectorType DofStorageType;
@@ -129,32 +129,30 @@ namespace Dune
     typedef Envelope< DofBlockType > DofBlockPtrType;
     typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType;
 
-    typedef DofManager< GridType > DofManagerType;
+    //typedef DofManager< GridType > DofManagerType;
   };
 
 
 
-  template< class DiscreteFunctionSpaceImp, class DofVectorImp >
+  template< class DiscreteFunctionSpace, class DofVector >
   class VectorDiscreteFunction
   : public DiscreteFunctionDefault
-    < VectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp, DofVectorImp > >
+    < VectorDiscreteFunctionTraits< DiscreteFunctionSpace, DofVector > >
   {
   public:
     //! type of this class's traits
-    typedef VectorDiscreteFunctionTraits
-      < DiscreteFunctionSpaceImp, DofVectorImp >
+    typedef VectorDiscreteFunctionTraits< DiscreteFunctionSpace, DofVector >
       Traits;
 
     //! type of the associated discrete function space
     typedef typename Traits :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
-
     //! type of the DoF storage array
     typedef typename Traits :: DofVectorType DofVectorType;
 
   private:
-    typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >
-      ThisType;
+    typedef VectorDiscreteFunction
+      < DiscreteFunctionSpaceType, DofVectorType > ThisType;
     typedef DiscreteFunctionDefault< Traits > BaseType;
 
   public:
@@ -186,8 +184,7 @@ namespace Dune
     typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
   private:
-    typedef CheckVectorInterface< DofVectorType >
-      CheckDofVectorType;
+    typedef CheckVectorInterface< DofVectorType > CheckDofVectorType;
 
     typedef CompileTimeChecker
       < Conversion< RangeFieldType, DofType > :: sameType >
