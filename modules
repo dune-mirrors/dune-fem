@@ -198,7 +198,9 @@
         the resulting files can not be used for 
         checkpointing since the grid hierarchy
         is lost. 
-      - Matlab: ...
+      - Matlab: Discrete functions and SparseRowMatrix
+        can be written to disk using the Dune::MatlabHelper class. 
+        Utility functions for Matlab are available in the fem/io/matlab directory.
 */
   /** @defgroup Checkpointing I/O for discrete functions and checkpointing
       @ingroup IOGroup */
