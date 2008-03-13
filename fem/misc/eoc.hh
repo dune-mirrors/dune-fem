@@ -107,6 +107,22 @@ class EocOutput {
     finalized = true;
   }
   //! header information on setting for this simulation
+  //! at the moment a grid class and a class with
+  //! a method 
+  //!   printTexInfo(std::ostream&) const
+  //! should be provided.
+  template <class GridType,class InfoType>
+  void printInput(const GridType& grid,
+                  const InfoType& info) {
+    std::ostringstream filestreamBody;
+    filestreamBody << outputFile << "_body.tex";
+    std::ofstream ofsBody(filestreamBody.str().c_str(), std::ios::app);
+    ofsBody  << "Grid: "      << grid.name() << "\\\\"
+	           << "\n";
+	  info.printTexInfo(ofsBody);
+    ofsBody.close();
+  }
+  //! header information on setting for this simulation
   //! at the moment a grid class and 
   //! two other clases are passed to this method
   //! which should implement a method
@@ -115,7 +131,7 @@ class EocOutput {
             class SolverType>
   void printInput(const ProblemType& problem, 
                   const GridType& grid,
-                  const SolverType& solver) {
+                  const SolverType& solver) DUNE_DEPRECATED {
     std::ostringstream filestreamBody;
     filestreamBody << outputFile << "_body.tex";
     std::ofstream ofsBody(filestreamBody.str().c_str(), std::ios::app);
