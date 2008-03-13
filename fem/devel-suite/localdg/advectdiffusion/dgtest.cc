@@ -146,10 +146,10 @@ int main(int argc, char ** argv, char ** envp) {
 	      abort();
       }
       
-      dataWriter.write(t, counter );  
       if (printCount>0 && counter%printCount==0) {
         std::cout << "step: " << counter << " time: " << t << " deltaT:" << ldt << std::endl;
       }
+      dataWriter.write(t, counter );  
       
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
