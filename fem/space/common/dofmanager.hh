@@ -333,7 +333,7 @@ private:
   typedef MemObject <MapperType , DofArrayType> ThisType;
   
   // the dof set stores number of dofs on entity for each codim
-  mutable MapperType & mapper_;
+  MapperType *mapper_;
 
   // Array which the dofs are stored in 
   DofArrayType array_;
@@ -354,16 +354,19 @@ private:
   MemObject(const MemObject& );
 public:  
   // Constructor of MemObject, only to call from DofManager 
-  MemObject ( MapperType & mapper, std::string name ,
-    MemObjectCheckType & memResizeList,
-    MemObjectCheckType & memReserveList,
-    const double memFactor) 
-    : mapper_ (mapper) , array_( mapper_.size() ), name_ (name) 
-    , resizeMemObj_(*this) 
-    , reserveMemObj_(*this)
-    , memResizeList_(memResizeList)
-    , memReserveList_(memReserveList)
-    , dataNeedCompress_(false)
+  inline MemObject ( MapperType &mapper,
+                     const std :: string &name,
+                     MemObjectCheckType &memResizeList,
+                     MemObjectCheckType &memReserveList,
+                     const double memFactor )
+  : mapper_( &mapper ),
+    array_( mapper.size() ),
+    name_( name ),
+    resizeMemObj_( *this ),
+    reserveMemObj_( *this ),
+    memResizeList_( memResizeList ),
+    memReserveList_( memReserveList ),
+    dataNeedCompress_( false )
   {
     // add the special object to the memResize list object 
     memResizeList_ += resizeMemObj_; 
@@ -376,7 +379,7 @@ public:
   } 
 
   //! \brief destructor deleting MemObject from resize and reserve List
-  ~MemObject() 
+  inline ~MemObject ()
   {
     // remove from list 
     memResizeList_.remove( resizeMemObj_ );
@@ -387,7 +390,10 @@ public:
   const char * name () const { return name_.c_str(); }
 
   //! if grid changed, then calulate new size of dofset 
-  int newSize () const { return mapper_.newSize(); }  
+  inline int newSize () const
+  {
+    return mapper().newSize();
+  }
 
   //! return size of underlying array 
   int size () const { return array_.size(); }
@@ -399,9 +405,9 @@ public:
   }
 
   //! return number of dofs on one element 
-  int elementMemory () const 
+  inline int elementMemory () const
   {
-    return mapper_.maxNumDofs();
+    return mapper().maxNumDofs();
   }
 
   //! resize the memory with the new size 
@@ -423,10 +429,10 @@ public:
   }
 
   //! reserve memory for what is comming 
-  void reserve( const int needed ) 
+  inline void reserve ( const int needed )
   {
     // if index set is compressible, then add requested size 
-    if( mapper_.needsCompress() )
+    if( mapper().needsCompress() )
     {
       const int nSize = size() + (needed * elementMemory());
       array_.reserve( nSize );
@@ -435,7 +441,7 @@ public:
     {
       // if compress is not needed just resize with given size 
       // therefore use newSize to enleage array 
-      assert( ! mapper_.needsCompress() );
+      assert( ! mapper().needsCompress() );
       array_.resize( newSize() );
     }
   }
@@ -444,25 +450,26 @@ public:
   void dofCompress () 
   {
     const int nSize = newSize();
-    if( dataNeedCompress_ && mapper_.needsCompress() )
+    if( dataNeedCompress_ && mapper().needsCompress() )
     {
-      const int oldSize = mapper_.size();
+      const int oldSize = mapper().size();
       // update mapper to new sizes 
-      mapper_.update();
+      mapper().update();
 
-      const int numBlocks = mapper_.numBlocks();
-      for(int block = 0; block<numBlocks; ++block)
+      const int numBlocks = mapper().numBlocks();
+      for( int block = 0; block < numBlocks; ++block )
       {
-        moveToFront(oldSize,block);
+        moveToFront( oldSize, block );
 
         // run over all holes and copy array vules to new place 
-        const int holes = mapper_.numberOfHoles(block); 
-        for(int i=0; i<holes; ++i)
+        const int holes = mapper().numberOfHoles( block );
+        for( int i = 0; i < holes; ++i )
         {
-          assert( mapper_.newIndex(i,block) < nSize );
-          // move from old location to new 
-          array_[ mapper_.newIndex(i,block) ] 
-            = array_[ mapper_.oldIndex(i,block) ];
+          const int oldIndex = mapper().oldIndex( i, block );
+          const int newIndex = mapper().newIndex( i, block );
+
+          assert( newIndex < nSize );
+          array_[ newIndex ] = array_[ oldIndex ];
         }
       }
     }
@@ -486,54 +493,63 @@ public:
     dataNeedCompress_ = true;
   }
 
-private:  
+private:
+  inline MapperType &mapper () const
+  {
+    return *mapper_;
+  }
+  
   // move array to rear insertion points 
-  void moveToRear() 
+  void moveToRear ()
   {
     // calculate new insertion points 
-    const int oldSize = mapper_.size();
+    const int oldSize = mapper().size();
 
     // update mapper to new sizes 
-    mapper_.update();
+    mapper().update();
 
     // now check all blocks beginning with the largest 
-    const int numBlocks = mapper_.numBlocks();
-    for(int block = numBlocks-1; block>=0; --block)
+    const int numBlocks = mapper().numBlocks();
+    for( int block = numBlocks-1; block >= 0; --block )
     {
       // get old off set 
-      const int oldOffSet = mapper_.oldOffSet(block);
+      const int oldOffSet = mapper().oldOffSet( block );
       // if off set is not zero  
-      if(oldOffSet > 0)
+      if( oldOffSet > 0 )
       {
-        // get upperBound 
-        const int upperBound = (block == numBlocks-1) ? 
-                      oldSize : mapper_.oldOffSet(block+1);
+        const int newOffSet = mapper().offSet( block );
+        // get upperBound
+        const int upperBound
+          = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
+        const int blockSize = upperBound - oldOffSet;
 
         // move block backward 
-        SpecialArrayFeatures<DofArrayType>::
-          memMoveBackward(array_, upperBound-oldOffSet,
-                          oldOffSet, mapper_.offSet(block)); 
+        SpecialArrayFeatures< DofArrayType >
+          :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
       }
     }
   }
 
   //! move block to front again 
-  void moveToFront(const int oldSize, const int block) 
+  void moveToFront ( const int oldSize, const int block )
   {
     // get insertion point from block
-    const int oldOffSet = mapper_.oldOffSet(block);
+    const int oldOffSet = mapper().oldOffSet( block );
 
+    const int numBlocks = mapper().numBlocks();
     // only if block is not starting from zero 
-    if(oldOffSet > 0)
+    if( oldOffSet > 0 )
     {
+      const int newOffSet = mapper().offSet( block );
+      
       // for last section upperBound is size 
-      const int upperBound = (block == mapper_.numBlocks()-1) ? 
-                   oldSize : mapper_.oldOffSet(block+1);
+      const int upperBound
+        = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
+      const int blockSize = upperBound - oldOffSet;
 
       // move block forward 
-      SpecialArrayFeatures<DofArrayType>::
-        memMoveForward(array_, upperBound-oldOffSet,
-                       oldOffSet, mapper_.offSet(block)); 
+      SpecialArrayFeatures< DofArrayType >
+        :: memMoveForward( array_, blockSize, oldOffSet, newOffSet ); 
     }
   }
 };
