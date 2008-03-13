@@ -68,6 +68,7 @@
 #include <dune/fem/solver/istlsolver.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
+#include <dune/fem/io/visual/grape/datadisp/errordisplay.hh>
 
 //- local inlcudes 
 #include "laplace.hh"
@@ -300,8 +301,9 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   if( turn > 0 )
   {
     GrapeDataDisplay < GridType > grape( *gridptr );
+    DisplayErrorFunction< DiscreteFunctionType, ExactSolutionType, false>
+      displayErrorFunction( grape, solution, u );
     grape.addData( solution );
-    grape.addData( ugrid );
     grape.display();
   }
   #endif
