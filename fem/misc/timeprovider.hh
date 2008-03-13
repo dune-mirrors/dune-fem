@@ -280,9 +280,9 @@ namespace Dune {
     void setTime(const double time) { tp_.setTime(time); }
 
     /** @copydoc TimeProvider::resetTimeStepEstimate */
-    void resetTimeStepEstimate() 
+    void resetTimeStepEstimate(double estimate = std::numeric_limits<double>::max()) 
     {
-      tp_.resetTimeStepEstimate(); 
+      tp_.resetTimeStepEstimate(estimate); 
     }
     
     /** @copydoc TimeProvider::timeStepEstimate */
