@@ -119,10 +119,11 @@ namespace Dune {
     /** \brief reset set time step estimate 
         by setting ti to big value 
     */
-    void resetTimeStepEstimate() 
+    void resetTimeStepEstimate(double estimate =
+        std::numeric_limits<double>::max()) 
     {
       // reset estimate 
-      dtEstimate_ = std::numeric_limits<double>::max();
+      dtEstimate_ = estimate; // std::numeric_limits<double>::max();
     }
     
     /** \brief  return time step size estimate  
