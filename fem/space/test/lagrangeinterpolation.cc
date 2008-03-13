@@ -1,5 +1,20 @@
-#include <iostream>
 #include <config.h>
+
+// Preprocessor Definitions
+// ------------------------
+
+// allow higher order Lagrange mappers
+#define USE_TWISTFREE_MAPPER
+
+// unset to use L^2 error
+#define USE_H1ERROR
+
+
+
+// Includes
+// --------
+
+#include <iostream>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
@@ -19,9 +34,6 @@
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
-
-// unset to use L^2 error
-#define USE_H1ERROR
 
 using namespace Dune;
 
