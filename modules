@@ -175,32 +175,22 @@
 /** 
    @defgroup IOGroup Input and output
    @ingroup FEM 
-      There is direct support for saving and
-      visualizing data
-      using the GraPE library,
-      for generating VTK output, 
-      and Matlab data files.
-      - GraPE: data can be either visualized 
-        directly during a computation by
-        using the Dune::DataWriter class.
-        The same format is also used for
-        \ref Checkpointing checkpointing and
-        can be use through the 
-        \ref Visualization datadisp 
-        program which can read a time series 
-        of data.
-      - VTK: discrete functions can be written 
-        to a file either
-        as element data (piecewise constant) and
-        vertex data (piecewise linear) data
-        on a flat grid. Again the 
-        Dune::DataWriter class is used but
-        the resulting files can not be used for 
-        checkpointing since the grid hierarchy
-        is lost. 
+      There is direct support for saving and visualizing data using the GraPE
+      library, for generating VTK output, and Matlab data files.
+      - GraPE: Data can be either visualized directly during a computation
+        using the \ref Dune::DataWriter "DataWriter" class. The same format is
+        also used for \ref Checkpointing "checkpointing". It can be visualized
+        through the \ref Visualization "datadisp program" which can also read a
+        time series of data.
+      - VTK: Discrete functions can be written to a file
+        either as element data (piecewise constant function)
+        or as vertex data (piecewise linear function)
+        on a flat grid. Again, the \ref Dune::DataWriter "DataWriter" is used.
+        Note that the resulting files cannot be used for checkpointing since
+        the grid hierarchy is lost. 
       - Matlab: Discrete functions and SparseRowMatrix
-        can be written to disk using the Dune::MatlabHelper class. 
-        Utility functions for Matlab are available in the fem/io/matlab directory.
+        can be written to disk using the \ref Dune::MatlabHelper "MatlabHelper"
+        class. Utility functions for Matlab are available in "fem/io/matlab".
 */
   /** @defgroup Checkpointing I/O for discrete functions and checkpointing
       @ingroup IOGroup */
