@@ -284,6 +284,7 @@ namespace Dune
       {
         DimensionReductionType :: evaluate
           ( dofCoordinate.base(), diffVariable, myfactor * factor, x.base(), phi );
+
         const unsigned int height
           = LagrangePointType :: height( dofCoordinate );
         for( unsigned int i = 0; i < height; ++i )
@@ -295,11 +296,12 @@ namespace Dune
           phi -= psi;
         }
         (*dofCoordinate) -= height;
-      } else {
+      }
+      else
+      {
         --(*dofCoordinate);
-        OrderReductionType :: template evaluate< LocalDofCoordinateType,
-                                                 LocalCoordinateType,
-                                                 porder >
+        OrderReductionType :: template evaluate
+          < LocalDofCoordinateType, LocalCoordinateType, porder >
           ( dofCoordinate, diffVariable, factor, x, phi );
         ++(*dofCoordinate);
         phi[ 0 ] *= (polynomialOrder / ((RangeFieldType)(*dofCoordinate)))
@@ -315,9 +317,8 @@ namespace Dune
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      return evaluate< LocalDofCoordinateType,
-                       LocalCoordinateType,
-                       polynomialOrder >
+      return evaluate
+        < LocalDofCoordinateType, LocalCoordinateType, polynomialOrder >
         ( dofCoordinate, diffVariable, factor, x, phi );
     }
    
@@ -336,12 +337,18 @@ namespace Dune
 
       FieldVector< deriType, 0 > dv;
 
-      if( LagrangePointType :: useDimReduction( dofCoordinate ) ) {
-        DimensionReductionType :: evaluate
-          ( dofCoordinate.base(), diffVariable, myfactor * factor, x.base(), phi );
+      if( LagrangePointType :: useDimReduction( dofCoordinate ) )
+      {
+        if( diffVariable[ 0 ] != LocalDofCoordinateType :: index )
+          DimensionReductionType :: evaluate
+            ( dofCoordinate.base(), diffVariable, myfactor * factor, x.base(), phi );
+        else
+          phi = 0;
+
         const unsigned int height
           = LagrangePointType :: height( dofCoordinate );
-        for( unsigned int i = 0; i < height; ++i ) {
+        for( unsigned int i = 0; i < height; ++i )
+        {
           ++(*dofCoordinate);
           RangeType psi;
           evaluate< LocalDofCoordinateType, LocalCoordinateType, porder >
@@ -349,25 +356,25 @@ namespace Dune
           phi -= psi;
         }
         (*dofCoordinate) -= height;
-      } else {
+      }
+      else
+      {
         --(*dofCoordinate);
-        OrderReductionType :: template evaluate< LocalDofCoordinateType,
-                                                 LocalCoordinateType,
-                                                 porder >
+        OrderReductionType :: template evaluate
+          < LocalDofCoordinateType, LocalCoordinateType, porder >
           ( dofCoordinate, diffVariable, factor, x, phi );
         phi *= (myfactor * factor * (*x) - myshift);
-        if( diffVariable[ 0 ] == LocalDofCoordinateType :: index ) {
+
+        if( diffVariable[ 0 ] == LocalDofCoordinateType :: index )
+        {
           RangeType psi;
-          OrderReductionType :: template evaluate< LocalDofCoordinateType,
-                                                   LocalCoordinateType,
-                                                   porder >
+          OrderReductionType :: template evaluate
+            < LocalDofCoordinateType, LocalCoordinateType, porder >
             ( dofCoordinate, dv, factor, x, psi );
-          // psi *= factor; phi += psi;
-          phi.axpy( factor, psi );
+          phi.axpy( myfactor * factor, psi );
         }
         ++(*dofCoordinate);
-        phi *= (myfactor * polynomialOrder)
-             / ((RangeFieldType)(*dofCoordinate));
+        phi *= (polynomialOrder) / ((RangeFieldType)(*dofCoordinate));
       }
     }
     
@@ -379,9 +386,8 @@ namespace Dune
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      return evaluate< LocalDofCoordinateType,
-                       LocalCoordinateType,
-                       polynomialOrder >
+      return evaluate
+        < LocalDofCoordinateType, LocalCoordinateType, polynomialOrder >
         ( dofCoordinate, diffVariable, factor, x, phi );
     }
    
@@ -401,12 +407,19 @@ namespace Dune
       FieldVector< deriType, 1 > dv0( diffVariable[ 0 ] );
       FieldVector< deriType, 1 > dv1( diffVariable[ 1 ] );
 
-      if( LagrangePointType :: useDimReduction( dofCoordinate ) ) {
+      if( LagrangePointType :: useDimReduction( dofCoordinate ) )
+      {
+        if( (diffVariable[ 0 ] != LocalDofCoordinateType :: index)
+            && (diffVariable[ 1 ] != LocalDofCoordinateType :: index) )
         DimensionReductionType :: evaluate
           ( dofCoordinate.base(), diffVariable, myfactor * factor, x.base(), phi );
+        else
+          phi = 0;
+
         const unsigned int height
           = LagrangePointType :: height( dofCoordinate );
-        for( unsigned int i = 0; i < height; ++i ) {
+        for( unsigned int i = 0; i < height; ++i )
+        {
           ++(*dofCoordinate);
           RangeType psi;
           evaluate< LocalDofCoordinateType, LocalCoordinateType, porder >
@@ -414,33 +427,34 @@ namespace Dune
           phi -= psi;
         }
         (*dofCoordinate) -= height;
-      } else {
+      }
+      else
+      {
         RangeType psi;
         --(*dofCoordinate);
-        OrderReductionType :: template evaluate< LocalDofCoordinateType,
-                                                 LocalCoordinateType,
-                                                 porder >
+        OrderReductionType :: template evaluate
+          < LocalDofCoordinateType, LocalCoordinateType, porder >
           ( dofCoordinate, diffVariable, factor, x, phi );
         phi *= (myfactor * factor * (*x) - myshift);
-        if( diffVariable[ 0 ] == LocalDofCoordinateType :: index ) {
-          OrderReductionType :: template evaluate< LocalDofCoordinateType,
-                                                   LocalCoordinateType,
-                                                   porder >
+        
+        if( diffVariable[ 0 ] == LocalDofCoordinateType :: index )
+        {
+          OrderReductionType :: template evaluate
+            < LocalDofCoordinateType, LocalCoordinateType, porder >
             ( dofCoordinate, dv1, factor, x, psi );
-          //psi *= factor; phi += psi;
-          phi.axpy( factor, psi );
+          phi.axpy( myfactor * factor, psi );
         }
-        if( diffVariable[ 1 ] == LocalDofCoordinateType :: index ) {
-          OrderReductionType :: template evaluate< LocalDofCoordinateType,
-                                                   LocalCoordinateType,
-                                                   porder >
+        
+        if( diffVariable[ 1 ] == LocalDofCoordinateType :: index )
+        {
+          OrderReductionType :: template evaluate
+            < LocalDofCoordinateType, LocalCoordinateType, porder >
             ( dofCoordinate, dv0, factor, x, psi );
-          // psi *= factor; phi += psi;
-          phi.axpy( factor, psi );
+          phi.axpy( myfactor * factor, psi );
         }
+        
         ++(*dofCoordinate);
-        phi *= (myfactor * myfactor * polynomialOrder)
-             / ((RangeFieldType)(*dofCoordinate));
+        phi *= (polynomialOrder) / ((RangeFieldType)(*dofCoordinate));
       }
     }
     
