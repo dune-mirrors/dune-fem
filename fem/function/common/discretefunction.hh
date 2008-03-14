@@ -126,6 +126,15 @@ namespace Dune
     typedef Mapping<DomainFieldType, RangeFieldType,
                     DomainType, RangeType> MappingType;
 
+    template< class Operation >
+    struct CommDataHandle
+    {
+      typedef typename DiscreteFunctionSpaceType
+        :: template CommDataHandle< DiscreteFunctionType, Operation > :: Type
+        Type;
+    };
+
+
   protected:
     using BaseType :: asImp;
 
@@ -341,12 +350,11 @@ namespace Dune
     }
 
     /** \brief return reference to data handle object */
-    template <class OperationImp> 
-    typename DiscreteFunctionSpaceType :: template 
-      CommDataHandle<DiscreteFunctionType,OperationImp> :: Type
-    dataHandle(const OperationImp * op)
+    template< class Operation >
+    typename CommDataHandle< Operation > :: Type
+    dataHandle( const Operation *operation )
     {
-      return asImp().dataHandle( op );
+      return asImp().dataHandle( operation );
     }
 
     /** \brief add all degrees of freedom from given discrete function using the dof iterators 
@@ -540,6 +548,11 @@ namespace Dune
     typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
     typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
+    template< class Operation >
+    struct CommDataHandle
+    : public BaseType :: template CommDataHandle< Operation >
+    {};
+
   private: 
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
@@ -623,9 +636,8 @@ namespace Dune
     
     /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
     template< class Operation >
-    typename DiscreteFunctionSpaceType
-      :: template CommDataHandle< DiscreteFunctionType, Operation > :: Type
-    dataHandle ( const Operation * op );
+    typename CommDataHandle< Operation > :: Type
+    dataHandle ( const Operation *operation );
  
     /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const
      *

@@ -156,14 +156,10 @@ namespace Dune
   template< class Traits >
   template< class Operation >
   inline typename DiscreteFunctionDefault< Traits >
-    :: DiscreteFunctionSpaceType
-    :: template CommDataHandle
-       < typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType,
-         Operation >
-    :: Type
-  DiscreteFunctionDefault< Traits > :: dataHandle ( const Operation * op )
+    :: template CommDataHandle< Operation > :: Type
+  DiscreteFunctionDefault< Traits > :: dataHandle ( const Operation *operation )
   {
-    return BaseType :: space().createDataHandle( asImp(), op );
+    return BaseType :: space().createDataHandle( asImp(), operation );
   }
 
 
