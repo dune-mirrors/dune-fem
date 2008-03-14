@@ -217,8 +217,7 @@ namespace Dune
       name_( other.name() ),
       dofVector_( new DofVectorType( other.dofVector() ) ),
       freeDofVector_( true )
-    {
-    }
+    {}
 
     inline ~VectorDiscreteFunction ()
     {
@@ -307,6 +306,16 @@ namespace Dune
       return dofVector()[ index ];
     }
 
+    inline const RangeFieldType *leakPointer () const
+    {
+      return dofVector().leakPointer();
+    }
+
+    inline RangeFieldType *leakPointer ()
+    {
+      return dofVector().leakPointer();
+    }
+
     inline const std :: string &name () const
     {
       return name_;
@@ -332,6 +341,22 @@ namespace Dune
       return *dofVector_;
     }
   };
+
+
+
+  // Capabilibies
+  // ------------
+
+  namespace Capabilities
+  {
+
+    template< class DiscreteFunctionSpace, class DofVector >
+    struct HasLeakPointer
+      < VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
+    : public HasLeakPointer< DofVector >
+    {};
+    
+  }
 
 };
 
