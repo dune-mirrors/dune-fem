@@ -230,6 +230,7 @@ namespace Dune
 
 
 
+#if 0
   template< class Element, template< class > class WrappedArrayAllocator >
   class ArrayOverAllocator;
 
@@ -414,6 +415,7 @@ namespace Dune
   class DefaultArrayOverAllocator
   : public ArrayOverAllocator< Element, DefaultArrayAllocator >
   {};
+#endif
 
 }
 
