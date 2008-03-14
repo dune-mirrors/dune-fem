@@ -98,12 +98,9 @@ namespace Dune
     inline void exchange ( DiscreteFunction &discreteFunction,
                            const Operation *operation )
     {
-      typedef typename DiscreteFunction :: DiscreteFunctionType
-        DiscreteFunctionType;
-
       // get type of data handle from the discrete function space
-      typedef typename SpaceType
-        :: template CommDataHandle< DiscreteFunctionType, Operation > :: Type
+      typedef typename DiscreteFunction
+        :: template CommDataHandle< Operation > :: Type
         DataHandleType;
       
       // on serial runs: do nothing
