@@ -20,6 +20,8 @@ namespace Dune
     typedef ManagedDiscreteFunction< BaseType > ThisType;
 
   public:
+    typedef ThisType DiscreteFunctionType;
+
     typedef typename BaseType :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
     typedef typename BaseType :: DofVectorType DofVectorType;
@@ -31,7 +33,7 @@ namespace Dune
 
   protected:
     DofManagerType *dofManager_;
-    std :: pair< MemObjectInterface *, DofVectorType * > memPair_;
+    MemObjectInterface *memObject_;
 
   public:
     inline ManagedDiscreteFunction ( const std :: string &name,
@@ -55,8 +57,14 @@ namespace Dune
 
     inline ~ManagedDiscreteFunction ()
     {
-      if( memPair_.first )
-        dofManager_->removeDofSet( *(memPair_.first) );
+      assert( memObject_ );
+      dofManager_->removeDofSet( *memObject_ );
+    }
+
+    inline void enableDofCompression ()
+    {
+      assert( memObject_ );
+      memObject_->enableDofCompression();
     }
 
   private:
@@ -66,9 +74,11 @@ namespace Dune
     {
       dofManager_ = &DofManagerFactory< DofManagerType >
                        :: getDofManager( dfSpace.grid() );
-      memPair_
+
+      std :: pair< MemObjectInterface *, DofVectorType * > memPair
         = dofManager_->addDofSet( (DofVector *)0, dfSpace.mapper(), name );
-      return *(memPair_.second);
+      memObject_ = memPair.first;
+      return *(memPair.second);
     }
   };
 
