@@ -42,7 +42,7 @@ namespace Dune
                            const SolutionType &solution,
                            const double time = 0 )
     : gridPart_( Uh.space().gridPart() ),
-      error_( Uh, solution ),
+      error_( Uh, solution, time ),
       errorFunction_( "error", error_, gridPart_ )
     {
       disp.addData( errorFunction_, "error", time );
