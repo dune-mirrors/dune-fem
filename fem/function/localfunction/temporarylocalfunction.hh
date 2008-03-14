@@ -8,11 +8,11 @@ namespace Dune
 {
   
   template< class DiscreteFunctionSpace,
-            template< class > class ArrayAllocator = DefaultArrayOverAllocator >
+            template< class > class ArrayAllocator = DefaultArrayAllocator >
   class TemporaryLocalFunctionImpl;
 
   template< class DiscreteFunctionSpace,
-            template< class > class ArrayAllocator = DefaultArrayOverAllocator >
+            template< class > class ArrayAllocator = DefaultArrayAllocator >
   class TemporaryLocalFunction;
 
 
