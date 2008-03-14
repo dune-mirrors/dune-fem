@@ -73,7 +73,9 @@
 
 //- local inlcudes 
 #include "laplace.hh"
-#if (PROBLEM==1)
+#if (PROBLEM==2)
+#include "cornerproblem.hh"
+#elif (PROBLEM==1)
 #include "albertaproblem.hh"
 #else
 #include "problem.hh"
@@ -261,7 +263,7 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   ExactSolutionType u( discreteFunctionSpace ); 
 
   GridExactSolutionType ugrid( "exact solution", u, gridPart, DiscreteFunctionSpaceType :: polynomialOrder + 1 );
-  
+
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
   DiscreteFunctionType rhs( "rhs", discreteFunctionSpace );
@@ -292,11 +294,15 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
 
   solve( laplace, rhs, solution );
 
-  //L2Error< DiscreteFunctionType > l2error;
-  //DiscreteFunctionSpaceType :: RangeType error = l2error.norm( u, solution );
+#if 0
+  L2Norm< GridPartType > norm( gridPart );
+  double error = norm.distance( ugrid, solution );
+  std :: cout << "L2-Error: " << error << std :: endl << std :: endl;
+#else
   H1Norm< GridPartType > norm( gridPart );
   double error = norm.distance( ugrid, solution );
   std :: cout << "H1-Error: " << error << std :: endl << std :: endl;
+#endif
 
   #if (USE_GRAPE && HAVE_GRAPE)
   // if grape was found then display solution
