@@ -8,26 +8,23 @@
 namespace Dune
 {
  
-  template< class TraitsImp >
+  template< class Traits >
   class ArrayAllocatorInterface
-  : public BartonNackmanInterface< ArrayAllocatorInterface< TraitsImp >,
-                                   typename TraitsImp :: ArrayAllocatorType >
+  : public BartonNackmanInterface< ArrayAllocatorInterface< Traits >,
+                                   typename Traits :: ArrayAllocatorType >
   {
-  public:
-    typedef TraitsImp TraitsType;
-
-    typedef typename TraitsType :: ArrayAllocatorType ArrayAllocatorType;
-
-  private:
-    typedef ArrayAllocatorInterface< TraitsType > ThisType;
-    typedef BartonNackmanInterface< ThisType, ArrayAllocatorType > BaseType;
+    typedef ArrayAllocatorInterface< Traits > ThisType;
+    typedef BartonNackmanInterface
+      < ThisType, typename Traits :: ArrayAllocatorType >
+      BaseType;
 
   public:
+    typedef typename Traits :: ArrayAllocatorType ArrayAllocatorType;
+
     typedef ThisType ArrayAllocatorInterfaceType;
     
-    typedef typename TraitsType :: ElementType ElementType;
-
-    typedef typename TraitsType :: ElementPtrType ElementPtrType;
+    typedef typename Traits :: ElementType ElementType;
+    typedef typename Traits :: ElementPtrType ElementPtrType;
 
   protected:
     using BaseType :: asImp;
@@ -62,25 +59,20 @@ namespace Dune
 
 
 
-  template< class TraitsImp >
+  template< class Traits >
   class ArrayAllocatorDefault
-  : public ArrayAllocatorInterface< TraitsImp >
+  : public ArrayAllocatorInterface< Traits >
   {
-  public:
-    typedef TraitsImp TraitsType;
-    
-  private:
-    typedef ArrayAllocatorDefault< TraitsType > ThisType;
-    typedef ArrayAllocatorInterface< TraitsType > BaseType;
+    typedef ArrayAllocatorDefault< Traits > ThisType;
+    typedef ArrayAllocatorInterface< Traits > BaseType;
 
   public:
     using BaseType :: allocate;
     using BaseType :: free;
 
   public:
-    typedef typename TraitsType :: ElementType ElementType;
-
-    typedef typename TraitsType :: ElementPtrType ElementPtrType;
+    typedef typename Traits :: ElementType ElementType;
+    typedef typename Traits :: ElementPtrType ElementPtrType;
 
   public:
     inline void reallocate ( unsigned int oldSize,
@@ -101,64 +93,56 @@ namespace Dune
     // by default, do nothing
     inline void reserve ( unsigned int newSize,
                           ElementPtrType &array ) const
-    {
-    }
+    {}
   };
 
 
 
-  template< class ElementImp >
+  template< class Element >
   class StandardArrayAllocator;
 
-  template< class ElementImp >
+  template< class Element >
   class CArrayAllocator;
 
 
 
   // Choose a default array allocator
   #ifndef USE_CARRAYALLOCATOR
-    template< class ElementType >
+    template< class Element >
     class DefaultArrayAllocator
-    : public StandardArrayAllocator< ElementType >
-    {
-    };
+    : public StandardArrayAllocator< Element >
+    {};
   #else
-    template< class ElementType >
+    template< class Element >
     class DefaultArrayAllocator
-    : public CArrayAllocator< ElementType >
-    {
-    };
+    : public CArrayAllocator< Element >
+    {};
   #endif
 
 
   
-  template< class ElementImp >
+  template< class Element >
   struct StandardArrayAllocatorTraits
   {
-    typedef ElementImp ElementType;
-
-    typedef ElementImp *ElementPtrType;
+    typedef Element ElementType;
+    typedef Element *ElementPtrType;
 
     typedef StandardArrayAllocator< ElementType > ArrayAllocatorType;
   };
 
 
 
-  template< class ElementImp >
+  template< class Element >
   class StandardArrayAllocator
-  : public ArrayAllocatorDefault< StandardArrayAllocatorTraits< ElementImp > >
+  : public ArrayAllocatorDefault< StandardArrayAllocatorTraits< Element > >
   {
-  public:
-    typedef ElementImp ElementType;
-
-    typedef StandardArrayAllocatorTraits< ElementType > TraitsType;
-
-  private:
-    typedef StandardArrayAllocator< ElementType > ThisType;
-    typedef ArrayAllocatorDefault< TraitsType > BaseType;
+    typedef StandardArrayAllocator< Element > ThisType;
+    typedef StandardArrayAllocatorTraits< Element > Traits;
+    typedef ArrayAllocatorDefault< Traits > BaseType;
 
   public:
-    typedef typename TraitsType :: ElementPtrType ElementPtrType;
+    typedef typename Traits :: ElementType ElementType;
+    typedef typename Traits :: ElementPtrType ElementPtrType;
     
   public:
     inline void allocate ( unsigned int size,
@@ -185,33 +169,29 @@ namespace Dune
 
 
 
-  template< class ElementImp >
+  template< class Element >
   struct CArrayAllocatorTraits
   {
-    typedef ElementImp ElementType;
+    typedef Element ElementType;
 
-    typedef ElementImp *ElementPtrType;
+    typedef Element *ElementPtrType;
 
     typedef CArrayAllocator< ElementType > ArrayAllocatorType;
   };
 
 
 
-  template< class ElementImp >
+  template< class Element >
   class CArrayAllocator
-  : public ArrayAllocatorDefault< CArrayAllocatorTraits< ElementImp > >
+  : public ArrayAllocatorDefault< CArrayAllocatorTraits< Element > >
   {
+    typedef CArrayAllocator< Element > ThisType;
+    typedef CArrayAllocatorTraits< Element > Traits;
+    typedef ArrayAllocatorDefault< Traits > BaseType;
+    
   public:
-    typedef ElementImp ElementType;
-
-    typedef CArrayAllocatorTraits< ElementType > TraitsType;
-
-  private:
-    typedef CArrayAllocator< ElementType > ThisType;
-    typedef ArrayAllocatorDefault< TraitsType > BaseType;
-
-  public:
-    typedef typename TraitsType :: ElementPtrType ElementPtrType;
+    typedef typename Traits :: Element ElementType;
+    typedef typename Traits :: ElementPtrType ElementPtrType;
     
   public:
     inline void allocate ( unsigned int size,
@@ -250,27 +230,25 @@ namespace Dune
 
 
 
-  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  template< class Element, template< class > class WrappedArrayAllocator >
   class ArrayOverAllocator;
 
 
 
-  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  template< class Element, template< class > class WrappedArrayAllocator >
   class ArrayOverAllocatorElementPointer
   {
+    typedef ArrayOverAllocatorElementPointer< Element, WrappedArrayAllocator >
+      ThisType;
+    
+    friend class ArrayOverAllocator< Element, WrappedArrayAllocator >;
+    
   public:
-    typedef ElementImp ElementType;
+    typedef Element ElementType;
 
-    typedef WrappedArrayAllocatorImp< ElementType > WrappedArrayAllocatorType;
+    typedef WrappedArrayAllocator< ElementType > WrappedArrayAllocatorType;
 
     typedef typename WrappedArrayAllocatorType :: ElementPtrType ElementPtrType;
-
-  private:
-    typedef ArrayOverAllocatorElementPointer
-      < ElementType, WrappedArrayAllocatorImp >
-      ThisType;
-
-    friend class ArrayOverAllocator< ElementType, WrappedArrayAllocatorImp >;
 
   protected:
     ElementPtrType ptr_;
@@ -280,21 +258,18 @@ namespace Dune
     inline ArrayOverAllocatorElementPointer ()
     : ptr_( 0 ),
       size_( 0 )
-    {
-    }
+    {}
 
     inline ArrayOverAllocatorElementPointer ( const ElementPtrType ptr,
                                               const unsigned int size )
     : ptr_( ptr ),
       size_( size )
-    {
-    }
+    {}
 
     inline ArrayOverAllocatorElementPointer ( const ThisType &other )
     : ptr_( other.ptr_ ),
       size_( other.size_ )
-    {
-    }
+    {}
 
     inline ThisType &operator= ( const ThisType &other )
     {
@@ -302,12 +277,15 @@ namespace Dune
       size_ = other.size_;
     }
 
-#if 0
-    inline operator const ElementPtrType () const
+    inline operator const ElementType * () const
     {
-      return ptr_;
+      return (ElementType *)ptr_;
     }
-#endif
+
+    inline operator ElementType * () const
+    {
+      return (ElementType *)ptr_;
+    }
 
     inline ElementType &operator* () const
     {
@@ -323,42 +301,38 @@ namespace Dune
 
 
 
-  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  template< class Element, template< class > class WrappedArrayAllocator >
   struct ArrayOverAllocatorTraits
   {
-    typedef ElementImp ElementType;
+    typedef Element ElementType;
 
-    typedef WrappedArrayAllocatorImp< ElementType > WrappedArrayAllocatorType;
+    typedef WrappedArrayAllocator< ElementType > WrappedArrayAllocatorType;
 
     typedef ArrayOverAllocatorElementPointer
-      < ElementType, WrappedArrayAllocatorImp >
+      < ElementType, WrappedArrayAllocator >
       ElementPtrType;
 
-    typedef ArrayOverAllocator< ElementType, WrappedArrayAllocatorImp >
+    typedef ArrayOverAllocator< ElementType, WrappedArrayAllocator >
       ArrayAllocatorType;
   };
 
 
 
-  template< class ElementImp, template< class > class WrappedArrayAllocatorImp >
+  template< class Element, template< class > class WrappedArrayAllocator >
   class ArrayOverAllocator
   : public ArrayAllocatorDefault
-    < ArrayOverAllocatorTraits< ElementImp, WrappedArrayAllocatorImp > >
+    < ArrayOverAllocatorTraits< Element, WrappedArrayAllocator > >
   {
-  public:
-    typedef ElementImp ElementType;
-
-    typedef ArrayOverAllocatorTraits< ElementType, WrappedArrayAllocatorImp >
-      TraitsType;
-
-  private:
-    typedef ArrayOverAllocator< ElementType, WrappedArrayAllocatorImp > ThisType;
-    typedef ArrayAllocatorDefault< TraitsType > BaseType;
+    typedef ArrayOverAllocator< Element, WrappedArrayAllocator > ThisType;
+    typedef ArrayOverAllocatorTraits< Element, WrappedArrayAllocator > Traits;
+    typedef ArrayAllocatorDefault< Traits > BaseType;
 
   public:
-    typedef typename TraitsType :: ElementPtrType ElementPtrType;
+    typedef typename Traits :: ElementType ElementType;
 
-    typedef typename TraitsType :: WrappedArrayAllocatorType
+    typedef typename Traits :: ElementPtrType ElementPtrType;
+
+    typedef typename Traits :: WrappedArrayAllocatorType
       WrappedArrayAllocatorType;
 
   protected:
@@ -369,14 +343,12 @@ namespace Dune
     inline explicit ArrayOverAllocator ( const unsigned int memFactor = 1152 )
     : allocator_(),
       memFactor_( memFactor )
-    {
-    }
+    {}
 
     inline explicit ArrayOverAllocator ( const double memFactor )
     : allocator_(),
       memFactor_( (int)(memFactor * 1024) )
-    {
-    }
+    {}
 
 
     inline explicit
@@ -384,21 +356,18 @@ namespace Dune
                          const unsigned int memFactor = 1152 )
     : allocator_( allocator ),
       memFactor_( memFactor )
-    {
-    }
+    {}
 
     inline ArrayOverAllocator ( const WrappedArrayAllocatorType &allocator,
                                 const double memFactor )
     : allocator_( allocator ),
       memFactor_( (int)(memFactor * 1024) )
-    {
-    }
+    {}
 
     inline ArrayOverAllocator ( const ThisType &other )
     : allocator_( other.allocator_ ),
       memFactor_( other.memFactor_ )
-    {
-    }
+    {}
 
     inline ThisType &operator= ( const ThisType &other )
     {
@@ -441,11 +410,10 @@ namespace Dune
 
 
 
-  template< class ElementType >
+  template< class Element >
   class DefaultArrayOverAllocator
-  : public ArrayOverAllocator< ElementType, DefaultArrayAllocator >
-  {
-  };
+  : public ArrayOverAllocator< Element, DefaultArrayAllocator >
+  {};
 
 }
 

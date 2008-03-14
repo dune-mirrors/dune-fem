@@ -533,31 +533,28 @@ namespace Dune
    *  An implementation of VectorInterface using a DynamicArray to provide the
    *  fields.
    */
-  template< class FieldImp,
-            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
+  template< class Field,
+            template< class > class ArrayAllocator = DefaultArrayAllocator >
   class DynamicVector
-  : public VectorDefault< FieldImp, DynamicVector< FieldImp, ArrayAllocatorImp > >
+  : public VectorDefault< Field, DynamicVector< Field, ArrayAllocator > >
   {
+    typedef DynamicVector< Field, ArrayAllocator > ThisType;
+    typedef VectorDefault< Field, ThisType > BaseType;
+
   public:
     //! field type of the vector
-    typedef FieldImp FieldType;
+    typedef Field FieldType;
 
-  private:
-    typedef DynamicVector< FieldType, ArrayAllocatorImp > ThisType;
-    typedef VectorDefault< FieldType, ThisType > BaseType;
-
-  public:
     using BaseType :: assign;
     
   protected:
-    DynamicArray< FieldType, ArrayAllocatorImp > fields_;
+    DynamicArray< FieldType, ArrayAllocator > fields_;
 
   public:
     //! Constructor setting up a vector of a specified size
     inline explicit DynamicVector ( unsigned int size = 0 )
     : fields_( size )
-    {
-    }
+    {}
 
     //! Constructor setting up a vector iniitialized with a constant value
     inline DynamicVector ( unsigned int size,
@@ -621,8 +618,20 @@ namespace Dune
       fields_.assign( v );
     }
 
+    inline const FieldType *leakPointer () const
+    {
+      return fields_.leakPointer();
+    }
+
+    inline FieldType *leakPointer ()
+    {
+      return fields_.leakPointer();
+    }
+    
     inline void reserve ( unsigned int newSize )
-    {}
+    {
+      fields_.reserve( newSize );
+    }
 
     inline void resize ( unsigned int newSize )
     {
@@ -785,7 +794,9 @@ namespace Dune
     }
   };
 
-  /*! \class PairOfVector
+
+
+  /** \class PairOfVector
    *  \brief Combines two classes implementing the vector interface to
    *         produce a long vector.
 
@@ -860,6 +871,22 @@ namespace Dune
       return this->first().size() + this->second().size();
     }
   };
+
+  
+
+  // Capabilities
+  // ------------
+
+  namespace Capabilities
+  {
+
+    template< class Field, template< class > class ArrayAllocator >
+    struct HasLeakPointer< DynamicVector< Field, ArrayAllocator > >
+    : public MetaBool< true >
+    {};
+    
+  }
+  
 }
 
 #include "vector_inline.hh"

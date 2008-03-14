@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/misc/metaprogramming.hh>
 
 #include <dune/fem/storage/arrayallocator.hh>
 
@@ -426,20 +427,19 @@ namespace Dune
 
 
 
-  template< class ElementImp,
-            template< class > class ArrayAllocatorImp = DefaultArrayAllocator >
+  template< class Element,
+            template< class > class ArrayAllocator = DefaultArrayAllocator >
   class DynamicArray
-  : public ArrayDefault< ElementImp, DynamicArray< ElementImp, ArrayAllocatorImp > >
+  : public ArrayDefault< Element, DynamicArray< Element, ArrayAllocator > >
   {
-  public:
-    typedef ElementImp ElementType;
+    typedef DynamicArray< Element, ArrayAllocator > ThisType;
+    typedef ArrayDefault< Element, ThisType > BaseType;
 
-  private:
-    typedef DynamicArray< ElementType, ArrayAllocatorImp > ThisType;
-    typedef ArrayDefault< ElementType, ThisType > BaseType;
+  public:
+    typedef Element ElementType;
 
   protected:
-    typedef ArrayAllocatorImp< ElementType > ArrayAllocatorType;
+    typedef ArrayAllocator< ElementType > ArrayAllocatorType;
     
     typedef typename ArrayAllocatorType :: ElementPtrType ElementPtrType;
 
@@ -540,6 +540,16 @@ namespace Dune
         elements_[ i ] = other[ i ];
     }
 
+    inline ElementType *leakPointer ()
+    {
+      return (ElementType *)elements_;
+    }
+
+    inline const ElementType *leakPointer () const
+    {
+      return (const ElementType *)elements_;
+    }
+
     inline void reserve ( unsigned int newSize )
     {
       allocator_.reserve( newSize, elements_ );
@@ -573,6 +583,26 @@ namespace Dune
       return size_;
     }
   };
+
+
+
+  // Capabilities
+  // ------------
+  
+  namespace Capabilities
+  {
+
+    template< class Array >
+    struct HasLeakPointer
+    : public MetaBool< false >
+    {};
+
+    template< class Element, template< class > class ArrayAllocator >
+    struct HasLeakPointer< DynamicArray< Element, ArrayAllocator > >
+    : public MetaBool< true >
+    {};
+
+  }
 
 }
 
