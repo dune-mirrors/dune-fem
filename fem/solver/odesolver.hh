@@ -134,7 +134,7 @@ public:
     // initialized dt on first call
     if ( ! initialized_ )     
     {
-      DestinationType tmp("tmp",this->op_.space());
+      DestinationType tmp(U0);
       this->op_(U0,tmp);
       initialized_ = true;
       return true;
@@ -390,7 +390,7 @@ public:
     // initialized dt on first call
     if ( ! initialized_ )     
     {
-      DestinationType tmp("tmp",this->op_.space());
+      DestinationType tmp(U0);
       this->op_(U0,tmp);
       initialized_ = true;
       return true;
@@ -690,7 +690,7 @@ class SemiImplTimeStepper : public Dune::TimeProvider
 
     if ( ! initialized_ ) 
     {
-      typename OperatorExpl::DestinationType tmp("tmp",opexpl_.space());
+      typename OperatorExpl::DestinationType tmp(U0);
       opexpl_(U0,tmp);
       
       // calculate global min of dt 
