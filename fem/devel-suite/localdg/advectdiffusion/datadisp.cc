@@ -25,8 +25,9 @@ void postProcessing(GrapeDispType& disp,
                     const double time,
                     const DestinationType& Uh)
 {
-  DisplayErrorFunction<DestinationType,InitialDataType>::
-    apply(disp,grid,time,Uh);
+	InitialDataType* U0 = new InitialDataType();
+  typedef DisplayErrorFunction<DestinationType,InitialDataType, true> ErrorFunctionType;
+	ErrorFunctionType	* errorFunction = new ErrorFunctionType(disp,Uh,*U0,time);
 }
 // include main program 
 #include <dune/fem/io/visual/grape/datadisp/datadisp.cc>
