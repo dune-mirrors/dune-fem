@@ -8,6 +8,7 @@ fem.localdg.repeats: 4
 fem.localdg.startlevel: 1
 fem.localdg.starttime: 0
 fem.localdg.endtime: 0.5
+fem.localdg.global_tstep: 1e4 
 fem.localdg.printcount: 1
 # fem.localdg.cfl: 0.15
 

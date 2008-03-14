@@ -124,22 +124,24 @@ int main(int argc, char ** argv, char ** envp) {
     int counter=0;
     FieldVector<double,ModelType::dimRange> projectionError = L2err.norm(problem,U,t);  
     cout << "Projection error " << problem.myName << ": " << projectionError << endl;
-	
-    double maxdt=0.,mindt=1.e10,averagedt=0.;
+
+
+    const double globalTimeStep = Parameter::getValue<double>("fem.localdg.global_tstep");
+		double maxdt=0.,mindt=1.e10,averagedt=0.;
     // *** Time loop
-    dataWriter.write(t , counter );  
-    sertp.setDeltaT(1e-1);
+    dataWriter.write(t , counter );
+    tp.resetTimeStepEstimate(globalTimeStep);
     ode.initialize(U);
     tp.syncTimeStep();
+
     while (t<endTime) 
     {
-      double ldt = -t;
-      tp.resetTimeStepEstimate();
+      tp.resetTimeStepEstimate(globalTimeStep);
       ode.solve(U);
       tp.augmentTime();
       tp.syncTimeStep();
       t = tp.time();
-      ldt += t;
+      double ldt = tp.deltaT();
       if (!U.dofsValid()) {
 	      std::cout << "Invalid DOFs" << std::endl;
 	      dataWriter.write(1e10, counter );  
