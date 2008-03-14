@@ -72,7 +72,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
   done
 
   CONFIGLOG="$WORKINGDIR/${OPTS%.opts}-conf.out"
-  if do_configure ; then
+  if ! do_configure ; then
     echo "Error: Cannot configure with $OPTS (see $CONFIGLOG)"
     errors=$((errors+1))
     continue
