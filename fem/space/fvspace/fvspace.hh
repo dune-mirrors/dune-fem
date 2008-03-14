@@ -266,6 +266,30 @@ namespace Dune {
     BlockMapperType& blockMapper_;
   }; // end class FiniteVolumeSpace
 
+
+/** \brief This is a restriction/prolongation operator for FV data of order zero.
+ */
+template <class DiscreteFunctionImp,
+          class FunctionSpaceImp, 
+          class GridPartImp, 
+          template <class> class StorageImp> 
+class RestrictProlongDefaultImplementation< 
+  DiscreteFunctionImp,
+  FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, 0,StorageImp> 
+  > :
+public RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> 
+{
+public:
+  typedef DiscreteFunctionImp DiscreteFunctionType;
+  typedef RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> BaseType; 
+public:  
+  //! Constructor
+  RestrictProlongDefaultImplementation( DiscreteFunctionType & df ) : 
+    BaseType ( df ) 
+  {
+  }
+};
+
 /** @} **/  
 } // end namespace Dune
 

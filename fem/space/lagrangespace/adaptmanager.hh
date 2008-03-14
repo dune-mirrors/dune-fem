@@ -11,25 +11,25 @@ namespace Dune
    *  \brief Restriction / prolongation operator for Lagrange discrete
    *         function spaces
    */
-  template< template< class > class DiscreteFunctionImp,
+  template< class DiscreteFunctionImp,
             class FunctionSpaceImp,
             class GridPartImp,
             int polOrder,
             template< class > class StorageImp >
-  class RestrictProlongDefault
+  class RestrictProlongDefaultImplementation
     < DiscreteFunctionImp
       < LagrangeDiscreteFunctionSpace
         < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
     > >
-  : public RestrictProlongDefaultImplementation
+  : public RestrictProlongInterface
     < RestrictProlongTraits
-      < RestrictProlongDefault
+      < RestrictProlongDefaultImplementation
         < DiscreteFunctionImp
           < LagrangeDiscreteFunctionSpace
             < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
     > > > >
   {
-    typedef RestrictProlongDefaultImplementation
+    typedef RestrictProlongInterface
     < RestrictProlongTraits
       < RestrictProlongDefault
         < DiscreteFunctionImp
@@ -43,8 +43,7 @@ namespace Dune
       DiscreteFunctionSpaceType;
 
     //! type of the discrete function
-    typedef DiscreteFunctionImp< DiscreteFunctionSpaceType >
-      DiscreteFunctionType;
+    typedef DiscreteFunctionImp DiscreteFunctionType;
 
     //! field type of the discrete function's domain
     typedef typename DiscreteFunctionType :: DomainFieldType DomainFieldType;
@@ -79,8 +78,7 @@ namespace Dune
   public:
     //! constructor
     RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
-    : BaseType( discreteFunction ),
-      discreteFunction_( discreteFunction ),
+    : discreteFunction_( discreteFunction ),
       discreteFunctionSpace_( discreteFunction_.space() )
     {
       // make sure the index set can handle adaptivity

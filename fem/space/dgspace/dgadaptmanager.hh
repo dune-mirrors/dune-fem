@@ -25,15 +25,11 @@ namespace Dune{
  */
 template <class DiscreteFunctionImp, int polOrd> 
 class RestrictProlongDiscontinuousSpace
-: public RestrictProlongDefaultImplementation<
-  RestrictProlongTraits< RestrictProlongDiscontinuousSpace< DiscreteFunctionImp,
-                                                            polOrd
-                                                          > > >
+: public RestrictProlongInterface<RestrictProlongTraits< 
+  RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > >
 {
-  typedef RestrictProlongDefaultImplementation<
-  RestrictProlongTraits< RestrictProlongDiscontinuousSpace< DiscreteFunctionImp,
-                                                            polOrd
-                                                          > > > BaseType;
+  typedef RestrictProlongInterface<RestrictProlongTraits< 
+  RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > > BaseType;
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -48,8 +44,7 @@ public:
 public:  
   //! Constructor
   RestrictProlongDiscontinuousSpace( DiscreteFunctionType & df ) 
-    : BaseType(df)
-    , df_ (df) 
+    : df_ (df) 
     , quadord_(2*df.space().order())
     , weight_(-1.0)
   {
@@ -147,7 +142,7 @@ private:
 
 /** \brief This is a restriction/prolongation operator for DG data of order zero. 
  */
-template <class DiscreteFunctionImp> 
+  template <class DiscreteFunctionImp> 
 class RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,0> :
 public RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> 
 {
@@ -165,30 +160,27 @@ public:
 /** \brief specialization of RestrictProlongDefault for
     DiscontinuousGalerkinSpace.
 */
-template <template <class> class DiscFunc,
+template <class DiscFunc,
           class FunctionSpaceImp, 
           class GridPartImp, 
           int polOrd, 
           template <class> class StorageImp> 
-class RestrictProlongDefault< 
-        DiscFunc<
-           DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> 
-                >           > 
+class RestrictProlongDefaultImplementation< 
+  DiscFunc,
+  DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> 
+  > 
 : public RestrictProlongDiscontinuousSpace<
-       DiscFunc< DiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp,polOrd,StorageImp> >,
-       polOrd >
+  DiscFunc,polOrd >
 {
 public:
   //! type of discrete function 
-  typedef DiscFunc<DiscontinuousGalerkinSpace<FunctionSpaceImp, 
-                   GridPartImp, 
-                   polOrd,
-                   StorageImp> > DiscreteFunctionType;
+  typedef DiscFunc DiscreteFunctionType;
   //! type of base class  
-  typedef RestrictProlongDiscontinuousSpace<DiscreteFunctionType,polOrd> BaseType;
+  typedef RestrictProlongDiscontinuousSpace<DiscreteFunctionType,polOrd> 
+          BaseType;
 public:  
   //! Constructor
-  RestrictProlongDefault ( DiscreteFunctionType & df ) : 
+  RestrictProlongDefaultImplementation ( DiscreteFunctionType & df ) : 
     BaseType(df) 
   {
   }
@@ -197,28 +189,23 @@ public:
 /** \brief specialization of RestrictProlongDefault for
     LegendreDiscontinuousGalerkinSpace.
 */
-template <template <class> class DiscFunc,
+template <class DiscFunc,
           class FunctionSpaceImp, 
           class GridPartImp, 
           int polOrd, 
           template <class> class StorageImp> 
-class RestrictProlongDefault<DiscFunc<
- LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> > > 
-: public RestrictProlongDiscontinuousSpace<
-      DiscFunc< LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp,polOrd,StorageImp> >,
-      polOrd >
+class RestrictProlongDefaultImplementation<DiscFunc,
+ LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> > 
+: public RestrictProlongDiscontinuousSpace<DiscFunc,polOrd >
 {
 public:
   //! type of discrete function 
-  typedef DiscFunc<LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, 
-                   GridPartImp, 
-                   polOrd,
-                   StorageImp> > DiscreteFunctionType;
+  typedef DiscFunc DiscreteFunctionType;
   //! type of base class  
   typedef RestrictProlongDiscontinuousSpace<DiscreteFunctionType,polOrd> BaseType;
 public:  
   //! Constructor
-  RestrictProlongDefault( DiscreteFunctionType & df ) : 
+  RestrictProlongDefaultImplementation( DiscreteFunctionType & df ) : 
     BaseType(df) 
   {
   }

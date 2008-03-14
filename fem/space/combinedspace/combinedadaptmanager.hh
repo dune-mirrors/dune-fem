@@ -26,13 +26,13 @@ namespace Dune{
  */
 template <class DiscreteFunctionImp, int polOrd> 
 class RestrictProlongCombinedSpace
-: public RestrictProlongDefaultImplementation< 
-  RestrictProlongTraits< RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
-                                                     > >
+: public RestrictProlongInterface<RestrictProlongTraits< 
+         RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
+         > >
 {
-  typedef RestrictProlongDefaultImplementation< 
-  RestrictProlongTraits< RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
-                                                     > > BaseType;
+  typedef RestrictProlongInterface<RestrictProlongTraits< 
+         RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
+         > > BaseType;
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -49,8 +49,7 @@ public:
 public:  
   //! Constructor
   RestrictProlongCombinedSpace( DiscreteFunctionType & df ) 
-    : BaseType(df)
-    , df_ (df)
+    : df_ (df)
     , quadord_(2*df.space().order())
     , weight_(-1.0)
   {
@@ -178,7 +177,7 @@ private:
 
 /** \brief This is a restriction/prolongation operator for 
     combined DG data with polynomial order 0. 
- */
+*/
 template <class DiscreteFunctionImp> 
 class RestrictProlongCombinedSpace<DiscreteFunctionImp,0>
 : public RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> 
@@ -196,28 +195,24 @@ public:
 /** \brief specialization of RestrictProlongDefault for
     CombinedSpace.
 */
-template <template <class> class DiscFunc,
+template <class DiscFunc,
           class DiscreteFunctionSpaceImp, 
           int N, 
           DofStoragePolicy policy> 
-class RestrictProlongDefault< 
-        DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
-                            > 
+class RestrictProlongDefaultImplementation< 
+  DiscFunc,CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
 : public RestrictProlongCombinedSpace<
-        DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >,
-        DiscreteFunctionSpaceImp :: polynomialOrder
-                                     >
+  DiscFunc,DiscreteFunctionSpaceImp :: polynomialOrder >
 {
 public:
   //! type of discrete function 
-  typedef DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > DiscreteFunctionType;
+  typedef DiscFunc DiscreteFunctionType;
   //! type of base class  
   typedef RestrictProlongCombinedSpace<
-      DiscFunc<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >, 
-        DiscreteFunctionSpaceImp :: polynomialOrder > BaseType;
+      DiscFunc, DiscreteFunctionSpaceImp :: polynomialOrder > BaseType;
 public:  
   //! Constructor
-  RestrictProlongDefault ( DiscreteFunctionType & df ) : 
+  RestrictProlongDefaultImplementation ( DiscreteFunctionType & df ) : 
     BaseType(df) 
   {
   }

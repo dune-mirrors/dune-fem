@@ -161,27 +161,32 @@ public:
 
 /** \brief This is a general restriction/prolongation operator
     which is speciallized for some discreteFunctionSpaces (e.g. DG)
+    ,i.e., over the second template argument.
+    The RestrictProlongDefault class is then one which should be
+    applied by the user.
  */
-template <class TraitsImp>
-class RestrictProlongDefaultImplementation 
-: public RestrictProlongInterface<TraitsImp> 
+template <class DiscreteFunctionType,class DiscreteFunctionSpace>
+class RestrictProlongDefaultImplementation;
+
+/** \brief This is a wrapper for the default implemented
+    restriction/prolongation operator, which only takes a discrete
+    function template 
+ */
+template <class DiscreteFunctionType> 
+class RestrictProlongDefault
+: public RestrictProlongDefaultImplementation<
+           DiscreteFunctionType,
+           typename DiscreteFunctionType::DiscreteFunctionSpaceType >
 {
-protected:
-  template <class DiscreteFunctionType> 
-  RestrictProlongDefaultImplementation(DiscreteFunctionType&
-      discreteFunction) 
-  {
+  typedef RestrictProlongDefaultImplementation<
+           DiscreteFunctionType,
+           typename DiscreteFunctionType::DiscreteFunctionSpaceType >
+  BaseType;
+public:
+  RestrictProlongDefault(DiscreteFunctionType& discreteFunction) :
+    BaseType(discreteFunction) {
     discreteFunction.enableDofCompression();
   }
-};
-
-/** \brief This is a general restriction/prolongation operator
-    which is speciallized for some discreteFunctionSpaces (e.g. DG)
- */
-template <class DiscreteFunctionType> class RestrictProlongDefault
-: public RestrictProlongDefaultImplementation
-      <RestrictProlongTraits<RestrictProlongDefault<DiscreteFunctionType> > > 
-{
 private:
   RestrictProlongDefault();
 };
@@ -189,14 +194,14 @@ private:
 /** \brief This is a simple restriction/prolongation operator for
  piecewise constant data stored on elements. 
 */
+ 
 template <class DiscreteFunctionType>
 class RestrictProlongPieceWiseConstantData : 
-public RestrictProlongDefaultImplementation<
-  RestrictProlongTraits<RestrictProlongPieceWiseConstantData< DiscreteFunctionType > > >
+public RestrictProlongInterface<RestrictProlongTraits< 
+  RestrictProlongPieceWiseConstantData<DiscreteFunctionType> > >
 {
-  typedef RestrictProlongDefaultImplementation<
-      RestrictProlongTraits<RestrictProlongPieceWiseConstantData<
-      DiscreteFunctionType > > > BaseType;
+  typedef RestrictProlongInterface<RestrictProlongTraits< 
+  RestrictProlongPieceWiseConstantData<DiscreteFunctionType> > > BaseType;
 public:  
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
@@ -209,7 +214,7 @@ public:
 public:  
   //! Constructor
   RestrictProlongPieceWiseConstantData( DiscreteFunctionType & df ) 
-    : BaseType(df), df_ (df), weight_(-1.0)
+    : df_ (df), weight_(-1.0)
   {
     // make sure that index set is used that can handle adaptivity 
     assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
