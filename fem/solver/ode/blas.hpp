@@ -2,7 +2,6 @@
 #define BLAS_HPP
 
 #include <cstring>
-
 #ifdef USE_EXTERNAL_BLAS
 // use atlas cblas 
 extern "C" {
@@ -10,7 +9,7 @@ extern "C" {
 }
 #else
 // use own blas implementation
-#include "subblas.hpp"
+#include <dune/fem/solver/ode/subblas.hpp>
 #endif
 
 // non standard functions (?)
