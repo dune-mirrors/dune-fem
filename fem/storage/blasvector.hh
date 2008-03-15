@@ -13,20 +13,14 @@ public VectorDefault<double,BlasVector> {
   bool owner_;
 public:
   typedef double FieldType;
-  BlasVector(int n);
-  BlasVector(int n, const double *a);
+  BlasVector(unsigned int n);
+  BlasVector(unsigned int n, const double *a);
   BlasVector(const BlasVector &v); // copy constructor
   ~BlasVector();
   
   // element access
-  double& operator()(int i);
-  double operator()(int i) const;
-  double& operator[](int i);
-  double operator[](int i) const;
-
-  // conversion operators
-  operator double*();
-  operator const double *() const;
+  double& operator[](unsigned int i);
+  double operator[](unsigned int i) const;
 
   // assignment operators
   BlasVector& operator=(const BlasVector& v);
@@ -74,7 +68,7 @@ private:
 // class BlasVector inline implementation
 
 inline 
-BlasVector::BlasVector(int pn) : owner_(true),
+BlasVector::BlasVector(unsigned int pn) : owner_(true),
 n(pn), totalSize(pn), data(new double[pn])
 {
   assert(data);
@@ -83,7 +77,7 @@ n(pn), totalSize(pn), data(new double[pn])
 
 
 inline 
-BlasVector::BlasVector(int pn, const double *a) : owner_(false),
+BlasVector::BlasVector(unsigned int pn, const double *a) : owner_(false),
 n(pn), totalSize(pn), data(const_cast<double*>(a))
 {
   assert(data);
@@ -107,33 +101,16 @@ BlasVector::~BlasVector()
     delete[] data;
 }
 
-
 inline
-double& BlasVector::operator()(int i)
+double& BlasVector::operator[](unsigned int i)
 {
-  assert(i>=0 && i<n);
+  assert(i<n);
   return data[i];
 }
 
 
 inline
-double BlasVector::operator()(int i) const
-{
-  assert(i>=0 && i<n);
-  return data[i];
-}
-
-
-inline
-double& BlasVector::operator[](int i)
-{
-  assert(i>=0 && i<n);
-  return data[i];
-}
-
-
-inline
-double BlasVector::operator[](int i) const
+double BlasVector::operator[](unsigned int i) const
 {
   assert(i>=0 && i<n);
   return data[i];
