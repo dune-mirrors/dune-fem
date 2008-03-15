@@ -129,9 +129,10 @@ class EocOutput {
   //!   printTexInfo(std::ostream&) const
   template <class GridType,class ProblemType,
             class SolverType>
-  void printInput(const ProblemType& problem, 
+  void DUNE_DEPRECATED 
+       printInput(const ProblemType& problem, 
                   const GridType& grid,
-                  const SolverType& solver) DUNE_DEPRECATED {
+                  const SolverType& solver) {
     std::ostringstream filestreamBody;
     filestreamBody << outputFile << "_body.tex";
     std::ofstream ofsBody(filestreamBody.str().c_str(), std::ios::app);
