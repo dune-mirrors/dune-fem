@@ -360,4 +360,6 @@ namespace Dune
 
 };
 
+#include "managedvectorfunction.hh"
+
 #endif

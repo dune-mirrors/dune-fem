@@ -766,6 +766,8 @@ namespace Dune
     DofIteratorType dbegin ();
     DofIteratorType dend ();
   }; // end class DiscreteFunctionDefault 
+  template< class DiscreteFunction >
+  class ManagedDiscreteFunction;
   
 ///@} 
 } // end namespace Dune

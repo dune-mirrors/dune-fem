@@ -458,6 +458,32 @@ namespace Dune
     SubDiscreteFunctionType* subDiscFunc_[N];
   }; // end class AdaptiveDiscreteFunction (specialised for CombinedSpace)
   
+template <class DiscreteFunctionSpaceImp>
+class ManagedDiscreteFunction<AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> > :
+public AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> {
+  typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
+public:
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+  typedef ManagedDiscreteFunction<BaseType> ThisType;
+  //! Constructor
+  ManagedDiscreteFunction(std::string name,
+                           const DiscreteFunctionSpaceType& spc)
+  : BaseType( name, spc) {}
+  //! Constructor
+  template <class VectorPointerType>
+  ManagedDiscreteFunction(std::string name,
+                           const DiscreteFunctionSpaceType& spc,
+                           VectorPointerType * vector)
+  : BaseType( name,spc,vector) {}
+  //! Constructor
+  ManagedDiscreteFunction(std::string name,
+                           const DiscreteFunctionSpaceType& spc,
+                           typename BaseType::DofStorageType& dofVec) 
+  : BaseType( name,spc,dofVec) {}
+  //! Copy constructor
+  ManagedDiscreteFunction(const ThisType& other)
+  : BaseType( other ) {} 
+};
 } // end namespace Dune
 
 #include "adaptivefunction.cc"

@@ -486,6 +486,22 @@ private:
   mutable int idx_;
 
 }; // end DofIteratorBlockVectorDiscreteFunction 
+template <class DiscreteFunctionSpaceImp>
+class ManagedDiscreteFunction<BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > :
+public BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> {
+  typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
+public:
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+  typedef ManagedDiscreteFunction<BaseType> ThisType;
+  //! \brief Constructor makes Discrete Function  
+  ManagedDiscreteFunction ( const DiscreteFunctionSpaceType & f ) : BaseType(f) {}
+  //! \brief Constructor makes Discrete Function with name 
+  ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) : BaseType(name,f) {}
+  //! \brief Constructor makes Discrete Function  
+  ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const typename BaseType::DofStorageType & data ) : BaseType(name,f,data) {}
+  //! \brief Constructor makes Discrete Function from copy 
+  ManagedDiscreteFunction (const ThisType & df) : BaseType(df) {}
+};
 
 } // end namespace Dune
 
