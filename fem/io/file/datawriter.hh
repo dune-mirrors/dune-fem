@@ -951,10 +951,11 @@ public:
     \return Pointer to restored grid 
   */
   template <class TimeProviderImp> 
-  static GridType* restoreGrid(const std::string paramfile, 
+  static DUNE_DEPRECATED
+  GridType* restoreGrid(const std::string paramfile, 
                                const std::string checkFile,
                                const int rank, 
-                               TimeProviderImp& tp) // DUNE_DEPRECATED
+                               TimeProviderImp& tp) 
   {
     GrapeDataIO<GridType> dataio;
 
