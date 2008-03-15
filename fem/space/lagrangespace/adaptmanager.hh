@@ -1,6 +1,8 @@
 #ifndef DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
 #define DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
 
+#include <dune/fem/space/common/restrictprolonginterface.hh>
+
 #include "lagrangespace.hh"
 
 namespace Dune
@@ -11,40 +13,35 @@ namespace Dune
    *  \brief Restriction / prolongation operator for Lagrange discrete
    *         function spaces
    */
-  template< class DiscreteFunctionImp,
-            class FunctionSpaceImp,
-            class GridPartImp,
-            int polOrder,
-            template< class > class StorageImp >
+  template< class DiscreteFunction, class FunctionSpace, class GridPart,
+            int polOrder, template< class > class Storage >
   class RestrictProlongDefaultImplementation
-    < DiscreteFunctionImp
-      < LagrangeDiscreteFunctionSpace
-        < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
-    > >
+    < DiscreteFunction,
+      LagrangeDiscreteFunctionSpace
+        < FunctionSpace, GridPart, polOrder, Storage > >
   : public RestrictProlongInterface
-    < RestrictProlongTraits
-      < RestrictProlongDefaultImplementation
-        < DiscreteFunctionImp
-          < LagrangeDiscreteFunctionSpace
-            < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
-    > > > >
+    < RestrictProlongTraits< RestrictProlongDefaultImplementation
+        < DiscreteFunction,
+          LagrangeDiscreteFunctionSpace
+            < FunctionSpace, GridPart, polOrder, Storage > > > >
   {
-    typedef RestrictProlongInterface
-    < RestrictProlongTraits
-      < RestrictProlongDefault
-        < DiscreteFunctionImp
-          < LagrangeDiscreteFunctionSpace
-            < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
-    > > > > BaseType;
   public:
+    //! type of the discrete function
+    typedef DiscreteFunction DiscreteFunctionType;
+
     //! type of the discrete function space
     typedef LagrangeDiscreteFunctionSpace
-      < FunctionSpaceImp, GridPartImp, polOrder, StorageImp >
+      < FunctionSpace, GridPart, polOrder, Storage >
       DiscreteFunctionSpaceType;
 
-    //! type of the discrete function
-    typedef DiscreteFunctionImp DiscreteFunctionType;
+  private:
+    typedef RestrictProlongDefaultImplementation
+      < DiscreteFunctionType, DiscreteFunctionSpaceType >
+      ThisType;
+    typedef RestrictProlongInterface< RestrictProlongTraits< ThisType > >
+      BaseType;
 
+  public:
     //! field type of the discrete function's domain
     typedef typename DiscreteFunctionType :: DomainFieldType DomainFieldType;
     //! type of the discrete function's domain
@@ -67,8 +64,8 @@ namespace Dune
 
     enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
 
-    typedef typename LagrangePointSetType :: template Codim< 0 >
-                                          :: SubEntityIteratorType
+    typedef typename LagrangePointSetType
+      :: template Codim< 0 > :: SubEntityIteratorType
       EntityDofIteratorType;
 
   private:
@@ -77,7 +74,9 @@ namespace Dune
     
   public:
     //! constructor
-    RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
+    inline explicit
+    RestrictProlongDefaultImplementation
+      ( DiscreteFunctionType &discreteFunction )
     : discreteFunction_( discreteFunction ),
       discreteFunctionSpace_( discreteFunction_.space() )
     {
