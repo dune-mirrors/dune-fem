@@ -1,6 +1,7 @@
 #include <config.h>
 
 #include "../basefunctions.hh"
+#include "../lagrangepoints.hh"
 
 using namespace Dune;
 
@@ -23,14 +24,15 @@ typedef FunctionSpace< double, double, DIMENSION, 1 > FunctionSpaceType;
 typedef FunctionSpaceType :: DomainType DomainType;
 typedef FunctionSpaceType :: RangeType RangeType;
 
-typedef LagrangeBaseFunction< FunctionSpaceType,
-                              GeometryType :: GEOMETRYTYPE,
-                              DIMENSION,
-                              POLORDER >
-  BaseFunctionType;
+typedef LagrangeBaseFunctionFactory< FunctionSpaceType, DIMENSION, POLORDER >
+  BaseFunctionFactoryType;
+typedef BaseFunctionInterface< FunctionSpaceType > BaseFunctionType;
 
-typedef BaseFunctionType :: LagrangePointType LagrangePointType;
-typedef BaseFunctionType :: LagrangePointListType LagrangePointListType;
+typedef LagrangePoint< GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
+  LagrangePointType;
+typedef LagrangePointListImplementation
+  < double, GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
+  LagrangePointListType;
 
 
 
@@ -70,7 +72,10 @@ public:
 
 int main( int argc, char **argv )
 {
-  const unsigned int numBaseFunctions = BaseFunctionType :: numBaseFunctions;
+  GeometryType geometryType( GeometryType :: GEOMETRYTYPE, DIMENSION );
+  BaseFunctionFactoryType baseFunctionFactory ( geometryType );
+
+  const unsigned int numBaseFunctions = baseFunctionFactory.numBaseFunctions();
 
   std :: cout << "Number of base functions: " << numBaseFunctions;
   std :: cout << std :: endl << std :: endl;
@@ -82,7 +87,8 @@ int main( int argc, char **argv )
   unsigned int indexErrors = 0;
   unsigned int pointSetErrors = 0;
   LagrangePointListType pointSet( 0 );
-  for( unsigned int i = 0; i < numBaseFunctions; ++i ) {
+  for( unsigned int i = 0; i < numBaseFunctions; ++i )
+  {
     LagrangePointType point( i );
 
     DomainType x;
@@ -129,13 +135,15 @@ int main( int argc, char **argv )
   std :: cout << std :: endl;
   
   errors = 0;
-  for( unsigned int j = 0; j < numBaseFunctions; ++j ) {
-    BaseFunctionType baseFunction( j );
+  for( unsigned int j = 0; j < numBaseFunctions; ++j )
+  {
+    BaseFunctionType &baseFunction = *(baseFunctionFactory.baseFunction( j ));
 
     #if (VERBOSITY_LEVEL >= 1)
       std :: cout << "Base function: " << j << std :: endl;
     #endif
-    for( unsigned int i = 0; i < numBaseFunctions; ++i ) {
+    for( unsigned int i = 0; i < numBaseFunctions; ++i )
+    {
       LagrangePointType point( i );
 
       DomainType x;
@@ -155,6 +163,8 @@ int main( int argc, char **argv )
         std :: cout << std :: endl;
       #endif
     }
+
+    delete &baseFunction;
     #if (VERBOSITY_LEVEL >= 1)
       std :: cout << std :: endl;
     #endif
@@ -176,8 +186,9 @@ int main( int argc, char **argv )
       FieldVector< deriType, 1 > derivative( k );
 
       RangeType sum( 0 );
-      for( unsigned int j = 0; j < numBaseFunctions; ++j ) {
-        BaseFunctionType baseFunction( j );
+      for( unsigned int j = 0; j < numBaseFunctions; ++j )
+      {
+        BaseFunctionType &baseFunction = *(baseFunctionFactory.baseFunction( j ));
 
         RangeType phi;
         baseFunction.evaluate( derivative, x, phi );
@@ -185,6 +196,8 @@ int main( int argc, char **argv )
           std :: cout << "BaseFunction " << j << ", derivative " << k << ": " << phi[ 0 ] << std :: endl;
         #endif
         sum += phi;
+
+        delete &baseFunction;
       }
 
       #if (VERBOSITY_LEVEL >= 1)
