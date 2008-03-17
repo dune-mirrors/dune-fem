@@ -26,7 +26,66 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
   protected:
-    struct Error;
+    struct Error
+    {
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      
+      typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType
+        FunctionSpaceType;
+      typedef typename FunctionSpaceType :: DomainType DomainType;
+      typedef typename FunctionSpaceType :: RangeType RangeType;
+      typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+      static const int dimDomain = DiscreteFunctionSpaceType :: dimDomain;
+      static const int dimRange = DiscreteFunctionSpaceType :: dimRange;
+
+    protected:
+      typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
+        EntityType;
+      typedef typename EntityType :: Geometry GeometryType;
+
+    protected:
+      LocalFunctionType lUh_;
+      const SolutionType &initU0_;
+      const GeometryType *geometry_;
+      const double time_;
+      bool initialized_;
+
+    public:
+      Error ( const DiscreteFunctionType &Uh,
+              const SolutionType &solution,
+              double time = 0 )
+      : lUh_( Uh ), 
+        initU0_( solution ),
+        geometry_( 0 ),
+        time_( time ),
+        initialized_( false )
+      {}
+
+      template< class PointType >
+      void evaluate ( const PointType &x, RangeType& ret) const
+      {
+        assert(initialized_);
+        lUh_.evaluate( x, ret );
+        DomainType global = geometry_->global( coordinate( x ) );
+        RangeType phi;
+        initU0_.evaluate( time_, global, phi );
+        ret -= phi;
+      }
+
+      template< class PointType >
+      void jacobian ( const PointType &x, JacobianRangeType &ret ) const
+      {
+        abort();
+      }
+
+      inline void init ( const EntityType &entity )
+      {
+        lUh_.init( entity );
+        geometry_ = &( entity.geometry() );
+        initialized_ = true;
+      }
+    };
 
     typedef LocalFunctionAdapter< Error > ErrorFunctionType;
     
@@ -54,69 +113,6 @@ namespace Dune
   };
 
 
-  template< class DiscreteFunctionType, class SolutionType >
-  struct DisplayErrorFunction< DiscreteFunctionType, SolutionType, true >
-    :: Error
-  {
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-    
-    typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType
-      FunctionSpaceType;
-    typedef typename FunctionSpaceType :: DomainType DomainType;
-    typedef typename FunctionSpaceType :: RangeType RangeType;
-    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-
-    static const int dimDomain = DiscreteFunctionSpaceType :: dimDomain;
-    static const int dimRange = DiscreteFunctionSpaceType :: dimRange;
-
-  protected:
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
-    typedef typename EntityType :: Geometry GeometryType;
-
-  protected:
-    LocalFunctionType lUh_;
-    const SolutionType &initU0_;
-    const GeometryType *geometry_;
-    const double time_;
-    bool initialized_;
-
-  public:
-    Error ( const DiscreteFunctionType &Uh,
-            const SolutionType &solution,
-            double time = 0 )
-    : lUh_( Uh ), 
-      initU0_( solution ),
-      geometry_( 0 ),
-      time_( time ),
-      initialized_( false )
-    {}
-
-    template< class PointType >
-    void evaluate ( const PointType &x, RangeType& ret) const
-    {
-      assert(initialized_);
-      lUh_.evaluate( x, ret );
-      DomainType global = geometry_->global( coordinate( x ) );
-      RangeType phi;
-      initU0_.evaluate( time_, global, phi );
-      ret -= phi;
-    }
-
-    template< class PointType >
-    void jacobian ( const PointType &x, JacobianRangeType &ret ) const
-    {
-      abort();
-    }
-
-    inline void init ( const EntityType &entity )
-    {
-      lUh_.init( entity );
-      geometry_ = &( entity.geometry() );
-      initialized_ = true;
-    }
-  };
-
 
   template< class DiscreteFunction, class SolutionType >
   class DisplayErrorFunction< DiscreteFunction, SolutionType, false >
@@ -134,7 +130,63 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
   protected:
-    struct Error;
+    struct Error
+    {
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      
+      typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType
+        FunctionSpaceType;
+      typedef typename FunctionSpaceType :: DomainType DomainType;
+      typedef typename FunctionSpaceType :: RangeType RangeType;
+      typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+      static const int dimDomain = DiscreteFunctionSpaceType :: dimDomain;
+      static const int dimRange = DiscreteFunctionSpaceType :: dimRange;
+
+    protected:
+      typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
+        EntityType;
+      typedef typename EntityType :: Geometry GeometryType;
+
+    protected:
+      LocalFunctionType lUh_;
+      const SolutionType &initU0_;
+      const GeometryType *geometry_;
+      bool initialized_;
+
+    public:
+      Error ( const DiscreteFunctionType &Uh,
+              const SolutionType &solution )
+      : lUh_( Uh ),
+        initU0_( solution ),
+        geometry_( 0 ),
+        initialized_( false )
+      {}
+
+      template< class PointType >
+      void evaluate ( const PointType &x, RangeType& ret) const
+      {
+        assert(initialized_);
+        lUh_.evaluate( x, ret );
+        DomainType global = geometry_->global( coordinate( x ) );
+        RangeType phi;
+        initU0_.evaluate( global, phi );
+        ret -= phi;
+      }
+
+      template< class PointType >
+      void jacobian ( const PointType &x, JacobianRangeType &ret ) const
+      {
+        abort();
+      }
+
+      inline void init ( const EntityType &entity )
+      {
+        lUh_.init( entity );
+        geometry_ = &( entity.geometry() );
+        initialized_ = true;
+      }
+    };
 
     typedef LocalFunctionAdapter< Error > ErrorFunctionType;
     typedef DiscreteFunctionAdapter< SolutionType, GridPartType >
@@ -163,67 +215,6 @@ namespace Dune
   private:
     DisplayErrorFunction ( const ThisType & );
     ThisType &operator= ( const ThisType & );
-  };
-
-
-  template< class DiscreteFunctionType, class SolutionType >
-  struct DisplayErrorFunction< DiscreteFunctionType, SolutionType, false >
-    :: Error
-  {
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-    
-    typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType
-      FunctionSpaceType;
-    typedef typename FunctionSpaceType :: DomainType DomainType;
-    typedef typename FunctionSpaceType :: RangeType RangeType;
-    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-
-    static const int dimDomain = DiscreteFunctionSpaceType :: dimDomain;
-    static const int dimRange = DiscreteFunctionSpaceType :: dimRange;
-
-  protected:
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
-    typedef typename EntityType :: Geometry GeometryType;
-
-  protected:
-    LocalFunctionType lUh_;
-    const SolutionType &initU0_;
-    const GeometryType *geometry_;
-    bool initialized_;
-
-  public:
-    Error ( const DiscreteFunctionType &Uh,
-            const SolutionType &solution )
-    : lUh_( Uh ),
-      initU0_( solution ),
-      geometry_( 0 ),
-      initialized_( false )
-    {}
-
-    template< class PointType >
-    void evaluate ( const PointType &x, RangeType& ret) const
-    {
-      assert(initialized_);
-      lUh_.evaluate( x, ret );
-      DomainType global = geometry_->global( coordinate( x ) );
-      RangeType phi;
-      initU0_.evaluate( global, phi );
-      ret -= phi;
-    }
-
-    template< class PointType >
-    void jacobian ( const PointType &x, JacobianRangeType &ret ) const
-    {
-      abort();
-    }
-
-    inline void init ( const EntityType &entity )
-    {
-      lUh_.init( entity );
-      geometry_ = &( entity.geometry() );
-      initialized_ = true;
-    }
   };
 
 }
