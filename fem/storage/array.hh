@@ -512,7 +512,7 @@ namespace Dune
       return elements_[ index ];
     }
 
-    inline void append ( const ElementType element )
+    inline void append ( const ElementType &element )
     {
       const unsigned int oldSize = size_;
       resize( oldSize + 1 );
@@ -566,7 +566,7 @@ namespace Dune
     }
 
     inline void resize ( unsigned int newSize,
-                         const ElementType defaultElement )
+                         const ElementType &defaultElement )
     {
       const unsigned int oldSize = size_;
       if( newSize == oldSize )
