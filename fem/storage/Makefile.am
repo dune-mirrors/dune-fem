@@ -5,6 +5,7 @@ miscdir =  $(includedir)/dune/fem/storage
 misc_HEADERS = arrayallocator.hh \
                array.hh \
 	       array_inline.hh \
+	       blasvector.hh \
 	       envelope.hh \
                objectstack.hh \
                obstack.hh \
