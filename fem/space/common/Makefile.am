@@ -32,6 +32,5 @@ common_HEADERS = adaptiveleafgridpart.hh \
      periodicgridpart.hh \
      periodicindexset.hh \
      restrictprolonginterface.hh \
-     singletonlist.hh \
      persistentindexsets.hh
 

@@ -12,6 +12,7 @@ misc_HEADERS = arrayallocator.hh \
                rectarray.hh \
 	       referencecounter.hh \
 	       stlarray.hh \
+	       singletonlist.hh \
                subarray.hh \
                vector.hh \
                vector_inline.hh

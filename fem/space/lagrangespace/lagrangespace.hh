@@ -221,19 +221,16 @@ namespace Dune
     typedef std :: map< const GeometryType, const BaseFunctionSetImp* >
       BaseFunctionMapType;
     //! type of base function factory
-    typedef LagrangeBaseFunctionFactory< ScalarFunctionSpaceType,
-                                         dimension,
-                                         polynomialOrder >
+    typedef LagrangeBaseFunctionFactory
+      < ScalarFunctionSpaceType, dimension, polynomialOrder >
       ScalarFactoryType;
     //! type of singleton base function factory
-    typedef BaseFunctionSetSingletonFactory< GeometryType,
-                                             BaseFunctionSetImp,
-                                             ScalarFactoryType >
+    typedef BaseFunctionSetSingletonFactory
+      < GeometryType, BaseFunctionSetImp, ScalarFactoryType >
       BaseFunctionSetSingletonFactoryType;
     //! type of singleton list (singleton provider) for base functions
-    typedef SingletonList< GeometryType,
-                           BaseFunctionSetImp,
-                           BaseFunctionSetSingletonFactoryType >
+    typedef SingletonList
+      < GeometryType, BaseFunctionSetImp, BaseFunctionSetSingletonFactoryType >
       BaseFunctionSetSingletonProviderType;
 
     //! type of a Lagrange point set
@@ -331,7 +328,8 @@ namespace Dune
       {
         const GeometryType &geometryType = geometryTypes[ i ];
         
-        if( baseFunctionSet_.find( geometryType ) == baseFunctionSet_.end() ) {
+        if( baseFunctionSet_.find( geometryType ) == baseFunctionSet_.end() )
+        {
           const BaseFunctionSetImp *baseFunctionSet
             = &(BaseFunctionSetSingletonProviderType
                 :: getObject( geometryType ));
@@ -339,8 +337,8 @@ namespace Dune
           baseFunctionSet_[ geometryType ] = baseFunctionSet;
         }
 
-        if( lagrangePointSet_.find( geometryType )
-            == lagrangePointSet_.end() ) {
+        if( lagrangePointSet_.find( geometryType ) == lagrangePointSet_.end() )
+        {
           const LagrangePointSetType *lagrangePointSet
             = new LagrangePointSetType( geometryType );
           assert( lagrangePointSet != NULL );

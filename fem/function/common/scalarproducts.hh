@@ -18,7 +18,7 @@
 
 //- Dune-fem includes 
 //#include <dune/fem/space/common/commoperations.hh>
-#include <dune/fem/space/common/singletonlist.hh>
+#include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/gridpartutility.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 

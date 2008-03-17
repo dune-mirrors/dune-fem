@@ -28,8 +28,8 @@
 #endif
 
 //- Dune-fem includes 
+#include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/commoperations.hh>
-#include <dune/fem/space/common/singletonlist.hh>
 #include <dune/fem/space/common/arrays.hh>
 
 namespace Dune

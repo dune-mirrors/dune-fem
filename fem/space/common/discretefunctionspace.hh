@@ -12,12 +12,11 @@
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-
 
 //- local includes 
 #include "allgeomtypes.hh"
-#include "singletonlist.hh"
 #include "dofstorage.hh"
 
 namespace Dune

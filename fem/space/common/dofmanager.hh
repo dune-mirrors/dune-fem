@@ -14,16 +14,17 @@
 // here are the default grid index set defined 
 #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
+#include <dune/fem/storage/singletonlist.hh>
 
 #include <dune/fem/io/parameter.hh>
 
 //- local includes 
-#include "singletonlist.hh"
 #include "dofmapperinterface.hh"
 #include "datacollector.hh"
 #include "arrays.hh"
 
-namespace Dune {
+namespace Dune
+{
 
 /** @addtogroup DofManager  
 
@@ -878,20 +879,20 @@ class DofManError : public Exception {};
  which is mostly a wrapper for the grid indices. 
 */
 // --DofManager 
-template <class GridImp> 
-class DofManager : public IsDofManager 
+template< class Grid > 
+class DofManager
+: public IsDofManager 
 {
-public:  
-  //! type of Grid this DofManager belongs to 
-  typedef GridImp GridType;
+  typedef DofManager< Grid > ThisType;
 
-private:
-  typedef DofManager< GridType > ThisType;
-
-  friend class DefaultSingletonFactory< const GridType*, ThisType >; 
+  friend class DefaultSingletonFactory< const Grid*, ThisType >;
   friend class DofManagerFactory< ThisType >;
   friend class Conversion< ThisType, IsDofManager >;
- 
+
+public:  
+  //! type of Grid this DofManager belongs to 
+  typedef Grid GridType;
+
 public:
   typedef typename GridObjectStreamOrDefault<
     GridType, DummyObjectStream>::ObjectStreamType ObjectStreamType;
@@ -908,7 +909,7 @@ private:
   typedef std::list<IndexSetObjectInterface * > IndexListType;
   typedef typename IndexListType::iterator IndexListIteratorType;
   typedef typename IndexListType::const_iterator ConstIndexListIteratorType;
-  
+
   // list with MemObjects, for each DiscreteFunction we have one MemObject
   ListType memList_;
 
@@ -916,7 +917,7 @@ private:
   IndexListType indexList_;
 
   // the dofmanager belong to one grid only 
-  const GridType & grid_;
+  const GridType &grid_;
 
   // index set for mapping 
   mutable DataCollectorType dataInliner_;
@@ -957,16 +958,17 @@ private:
   //**********************************************************
   //**********************************************************
   //! Constructor 
-  inline explicit DofManager ( const GridType &grid ) 
-  : grid_( grid ),
+  inline explicit DofManager ( const GridType *grid ) 
+  : grid_( *grid ),
     defaultChunkSize_( 128 ),
     sequence_( 0 ),
     indexRPop_( *this, insertIndices_ , removeIndices_ ),
     memoryFactor_( Parameter :: getValidValue
-      ( "fem.dofmanager.memoryfactor",  double( 1.1 ), ValidateNotLess< double >( 1.0 ) ) )
+      ( "fem.dofmanager.memoryfactor",  double( 1.1 ),
+        ValidateNotLess< double >( 1.0 ) ) )
   {
     if( Parameter :: verbose() && (grid_.comm().rank() == 0) )
-      std :: cout << "DofManager: Created for " << grid.name()
+      std :: cout << "DofManager: Created for " << grid_.name()
                   << " with memory factor " << memoryFactor_
                   << "." << std :: endl;
   }
@@ -1438,65 +1440,85 @@ read_xdr(const std::string filename , int timestep)
   return true;
 }
 
-
-//! DofManagerFactory guarantees that only one instance of a dofmanager 
-//! per grid is generated. If getDofManager is called with a grid for which
-//! already a mamager exists, then the reference to this manager is returned. 
-template <class DofManagerImp>
-class DofManagerFactory 
-{
-  typedef DofManagerImp DofManagerType;
-  typedef typename DofManagerType :: GridType GridType; 
-  typedef const GridType* KeyType;
-
-  // type of Base class 
-  typedef SingletonList< KeyType , DofManagerImp> DMProviderType;
-public:  
-  //! return reference to the DofManager for the given grid. 
-  //! If the object does not exist, then it is created first.
-  inline static DofManagerType & getDofManager (const GridType & grid) 
-  {
-    DofManagerType * dm = getDmFromList(grid); 
-    if(!dm) 
-    {
-      return DMProviderType::getObject(&grid);
-    }
-    return *dm;
-  } 
-
-  //! delete the dof manager that belong to the given grid 
-  inline static void deleteDofManager (DofManagerType & dm ) 
-  {
-    DMProviderType::removeObject(&dm);
-  }
-
-  //! writes DofManager of corresponding grid, when DofManager exists 
-  inline static bool 
-  writeDofManager(const GridType & grid, const std::string filename, int timestep)
-  {
-    DofManagerType * dm = getDmFromList(grid); 
-    if(dm) return dm->write(filename,timestep);
-    return false;
-  }
-
-  //! reads DofManager of corresponding grid, when DofManager exists 
-  inline static bool 
-  readDofManager(const GridType & grid, const std::string filename, int timestep)
-  {
-    DofManagerType * dm = getDmFromList(grid); 
-    if(dm) return dm->read(filename,timestep);
-    return false;
-  }
-
-private: 
-  // return pointer to dof manager for given grid 
-  inline static DofManagerType * getDmFromList(const GridType &grid)
-  {
-    return (DMProviderType::getObjFromList( &grid )).first;
-  }
-};
-
 //@} 
 
+
+
+  /** \class DofManagerFactory
+   *  \ingroup DofManager
+   *  \brief Singleton provider for the DofManager
+   *
+   *  DofManagerFactory guarantees that at most one instance of DofManager
+   *  is generated for each grid.
+   */
+  template< class DofManager >
+  class DofManagerFactory
+  {
+    typedef DofManagerFactory< DofManager > ThisType;
+
+  public:
+    typedef DofManager DofManagerType;
+
+  private:
+    typedef typename DofManagerType :: GridType GridType; 
+    typedef const GridType *KeyType;
+
+    typedef SingletonList< KeyType, DofManagerType > DMProviderType;
+
+  public:
+    /** \brief obtain a reference to the DofManager for a given grid
+     *
+     *  \param[in]  grid  grid for which the DofManager is desired
+     *
+     *  \returns a reference to the singleton instance of the DofManager
+     */
+    inline static DofManagerType &getDofManager ( const GridType &grid )
+    {
+      DofManagerType *dm = getDmFromList( grid );
+      if( !dm )
+        return DMProviderType :: getObject( &grid );
+      return *dm;
+    } 
+
+    //! delete the dof manager that belong to the given grid 
+    inline static void deleteDofManager ( DofManagerType &dm )
+    {
+      DMProviderType :: removeObject( &dm );
+    }
+
+    //! writes DofManager of corresponding grid, when DofManager exists 
+    inline static bool 
+    writeDofManager ( const GridType &grid,
+                      const std :: string &filename,
+                      int timestep )
+    {
+      DofManagerType *dm = getDmFromList( grid );
+      if( dm )
+        return dm->write( filename, timestep );
+      return false;
+    }
+
+    //! reads DofManager of corresponding grid, when DofManager exists 
+    inline static bool 
+    readDofManager ( const GridType &grid,
+                     const std :: string &filename,
+                     int timestep )
+    {
+      DofManagerType *dm = getDmFromList( grid );
+      if( dm )
+        return dm->read( filename, timestep );
+      return false;
+    }
+
+  private: 
+    // return pointer to dof manager for given grid 
+    inline static DofManagerType *getDmFromList( const GridType &grid )
+    {
+      return (DMProviderType :: getObjFromList( &grid )).first;
+    }
+  };
+
+
 } // end namespace Dune 
+
 #endif
