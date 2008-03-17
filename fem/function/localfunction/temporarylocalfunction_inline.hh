@@ -112,7 +112,7 @@ namespace Dune
         needCheckGeometry_ = discreteFunctionSpace_.multipleGeometryTypes();
       }
     }
-    assert( baseFunctionSet_.numBaseFunctions() <= dofs_.size() );
+    assert( (unsigned int)baseFunctionSet_.numBaseFunctions() <= dofs_.size() );
 
     entity_ = &entity;
     assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
