@@ -13,7 +13,7 @@ namespace Dune
    *  In debug mode, this counter wraps a standard integer type, 
    *  otherwise its size is zero.
    *
-   *  \Note The comparison operators always return true, 
+   *  \note The comparison operators always return true, 
    *  if NDEBUG is defined!
    */
   template< class CounterImp = unsigned int >
@@ -88,7 +88,7 @@ namespace Dune
      *  Compares to DebugCounters for equality. If NDEBUG is defined, the
      *  result will be true.
      *
-     *  \Note Due to the implicit conversion, the second argument may also be
+     *  \note Due to the implicit conversion, the second argument may also be
      *        of CounterType.
      *
      *  \param[in]  other  DebugCounter to compare this one to
@@ -109,7 +109,7 @@ namespace Dune
      *  Compares to DebugCounters for inequality. If NDEBUG is defined, the
      *  result will be true.
      *
-     *  \Note Due to the implicit conversion, the second argument may also be
+     *  \note Due to the implicit conversion, the second argument may also be
      *        of CounterType.
      *
      *  \param[in]  other  DebugCounter to compare this one to

@@ -357,13 +357,15 @@ namespace Dune
       return asImp().dataHandle( operation );
     }
 
-    /** \brief add all degrees of freedom from given discrete function using the dof iterators 
-        \param[in] g discrete function which is added to this discrete function 
-        \return reference to this (i.e. *this)
-    */
-    DiscreteFunctionType& operator += (const DiscreteFunctionType& g) 
+    /** \brief add another discrete function to this one
+     *
+     *  \param[in]  g  discrete function to add 
+     *
+     *  \returns a reference to this discrete function (i.e. *this)
+     */
+    inline DiscreteFunctionType &operator+= ( const DiscreteFunctionType &g )
     {
-      return asImp().operator+=( g );
+      return asImp() += g;
     }
 
     /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
@@ -376,22 +378,26 @@ namespace Dune
       return asImp().operator-=( g );
     }
  
-    /** \brief multiply all degrees of freedom with given scalar factor using the dof iterators 
-        \param[in] scalar factor with which all dofs are scaled 
-        \return reference to this (i.e. *this)
-    */
-    DiscreteFunctionType& operator *= (const RangeFieldType &scalar)
+    /** \brief multiply all DoFs by a scalar factor
+     *
+     *  \param[in]  scalar  factor to muliply all DoFs by
+     *
+     *  \returns a reference to this discrete function (i.e. *this)
+     */
+    inline DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
     {
-      return asImp().operator*=( scalar );
+      return asImp() *= scalar;
     }
 
-    /** \brief devide all degrees of freedom with given scalar factor using the dof iterators 
-        \param[in] scalar factor with which all dofs are devided  
-        \return reference to this (i.e. *this)
-    */
-    DiscreteFunctionType& operator /= (const RangeFieldType &scalar)
+    /** \brief devide all DoFs by a scalar factor
+     *
+     *  \param[in]  scalar  factor to divide all DoFs by
+     *
+     *  \returns a reference to this discrete function (i.e. *this)
+     */
+    inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
     {
-      return asImp().operator/=( scalar );
+      return asImp() /= scalar;
     }
 
     /** \brief read the discrete function from a stream
@@ -660,7 +666,7 @@ namespace Dune
         \param[in] g discrete function which is added to this discrete function 
         \return reference to this (i.e. *this)
     */
-    DiscreteFunctionType& operator += (const DiscreteFunctionType& g);
+    inline DiscreteFunctionType &operator+= ( const DiscreteFunctionType &g );
 
     /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is substracted from this discrete function 

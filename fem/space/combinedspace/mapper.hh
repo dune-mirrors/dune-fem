@@ -194,7 +194,7 @@ namespace Dune
     /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const;
 
-    /** \copyDoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
+    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
     inline int mapToGlobal( const EntityType &entity,
                             const int localDof ) const;
 

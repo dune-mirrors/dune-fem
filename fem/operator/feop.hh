@@ -1,14 +1,3 @@
-/**************************************************************************
-**       Title: feop
-**    $RCSfile: feop.hh,v $
-**   $Revision$$Name:  $
-**       $Date$
-**   Copyright: GPL $Author$
-** Description: Implementation of a finite element operator class for 
-**              general elliptic problems. An example of the use is given
-**              in fem/examples/elliptic.
-**************************************************************************/
-
 #ifndef DUNE_FEOP_HH
 #define DUNE_FEOP_HH
 
@@ -23,13 +12,11 @@
 // include temporary old and new sparsematrix class
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
-
-
 namespace Dune
 {
 
-  /*! @ingroup EllipticOperator
-   *  \class FEOp 
+  /** \class FEOp 
+   *  \ingroup EllipticOperator
    *  \brief The FEOp class provides an example of a Finite Element Operator 
    *     
    *  The class is an operator used for general elliptic problems, specialized 
@@ -307,11 +294,11 @@ namespace Dune
         delete matrixDirichletColumns_;
     }
 
-    /*! print: print matrix to output stream
+    /** \brief print matrix to output stream
      *
-     *  \note only makes sense in ASSEMBLED mode
+     *  \note This method only makes sense in ASSEMBLED mode.
      *
-     *  \param[in] out stream to print matrix to
+     *  \param[in]  out  stream to print matrix to (defaults to std::cout)
      */
     void print ( std :: ostream &out = std :: cout ) const 
     {
@@ -322,11 +309,11 @@ namespace Dune
       systemMatrix().print( out );
     }
 
-    /*!  systemMatrix: obtain assembled system matrix
+    /** \brief obtain assembled system matrix
      *
-     *   \note This method only makes sense in ASSEMBLED mode.
+     *  \note This method only makes sense in ASSEMBLED mode.
      *
-     *   \return reference to assembled system matrix
+     *  \returns a reference to assembled system matrix
      */
     SystemMatrixType& systemMatrix () const
     {
@@ -339,38 +326,18 @@ namespace Dune
       return *matrix_;
     }
   
-// /*======================================================================*/
-// /*! 
-//  *   getLocalMatrix: get local element matrix 
-//  *
-//  *   method providing a local element matrix. This method is required
-//  *   for satisfying the FEOpInterface.
-//  *
-//  *   ??? is this necessary after current implementation of FEOp ???
-//  *
-//  *   \param 
-//  *
-//  *   \exception 
-//  *
-//  *   \return
-//  */
-// /*======================================================================*/
-//   ... getLocalMatrix(...);
-  
-
-    /*! 
-     *   operator(): application operator
+    /** \brief application operator
      *
-     *   In case of ASSEMBLED-mode a global
-     *   apply() on the matrix is called, i.e. a matrix-vector-multiplication 
-     *   with the vector arg is performed, the result stored in dest. This is 
-     *   an implicit requirement on the MatrixImp class!
+     *   In case of ASSEMBLED-mode a global apply() on the matrix is called,
+     *   i.e. a matrix-vector-multiplication with the vector arg is performed,
+     *   the result stored in dest. This is an implicit requirement on the
+     *   MatrixImp class!
      *   
      *   In case of ON_THE_FLY, the method is not yet implemented.
      *
-     *   \param arg reference on the argument for the matrix-vector multiplication 
-     *
-     *   \param dest reference to storage for the destination vector
+     *   \param[in]   arg   reference on the argument for the matrix-vector
+     *                      multiplication 
+     *   \param[out]  dest  reference to storage for the destination vector
      */
     virtual void operator() ( const DiscreteFunctionType &arg,
                               DiscreteFunctionType &dest ) const
@@ -382,218 +349,15 @@ namespace Dune
                     "operator() in FEOP needs to be implemented for ON_THE_FLY!" );
     }
 
-// /*======================================================================*/
-// /*! 
-//  *  prepareGlobal: store argument and destination 
-//  *
-//  *  The storage for argument and destination is asserted and saved and
-//  *  the destination vector is cleared.
-//  *
-//  *   \param argument and destination storage 
-//  */
-// /*======================================================================*/
-//   void prepareGlobal(const DiscreteFunctionType &Arg, DiscreteFunctionType & Dest )  
-//   DUNE_DEPRECATED 
-//   { 
-//     arg_  = &Arg.argument();
-//     dest_ = &Dest.destination();
-//     assert(arg_ != NULL); assert(dest_ != NULL);
-//     dest_->clear();
-//   };
+    /** \brief method required by oemsolvers */
+    void finalize ()
+    { 
+    };
 
-//   //! 
-
-/*======================================================================*/
-/*! 
- *   finalize: method required by oemsolvers
- *
- *   method does nothing
- */
-/*======================================================================*/
-  
-  void finalize() 
-        { 
-// *   The members of the argument and dest-pointer are set to NULL hereby
-// *   detaching the user specified storage from any future operations of 
-// *   FEOp. 
-//     arg_ = NULL; dest_ = NULL;
-   };
-
-// ! 
-// /*======================================================================*/
-// /*! 
-//  *   applyLocal: makes local multiply on the fly
-//  *
-//  *   the global operator matrix is not set up, but the local element 
-//  *   matrices are used for incremental matrix-vector multiplication.
-//  *   A grid-walkthrough and applyLocal results in a complete matrix-vector
-//  *   multiplication
-//  * 
-//  *   \param the entity
-//  */
-// /*======================================================================*/
-
-//   template <class EntityType>
-//   void applyLocal ( EntityType &en ) const 
-//   {
-//     const DiscreteFunctionType & arg  = (*arg_);
-//     DiscreteFunctionType & dest = (*dest_);
-
-//     typedef typename DiscreteFunctionType::FunctionSpace DiscreteFunctionSpaceType;
-//     typedef typename DiscreteFunctionSpaceType::GridType GridType; 
-    
-//     typedef typename EntityType::IntersectionIterator NeighIt;
-    
-//     typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType 
-//                      BaseFunctionSetType;
-
-//     typedef typename DiscreteFunctionSpaceType::RangeType RangeVecType;
-//     typedef typename DiscreteFunctionSpaceType::JacobianRange JacobianRange;
-//     typedef typename DiscreteFunctionSpaceType::DomainType DomainVecType;
-
-//     typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
-//     typedef typename DiscreteFunctionType::ConstDofIteratorType ConstDofIteratorType;
-
-//     DofIteratorType dest_it = dest.dbegin();
-//     ConstDofIteratorType arg_it = arg.dbegin();
-      
-//     const BaseFunctionSetType & baseSet = functionSpace_.getBaseFunctionSet( en );
-//     int numOfBaseFct = baseSet.numBaseFunctions();  
-
-//     // get localMatrixsize from ElementMatrixTraits
-//     ...
-//     assert( numOfBaseFct <= maxnumOfBaseFct );
-
-//     FieldMatrix<double, maxnumOfBaseFct, maxnumOfBaseFct> mat;
-    
-//     getLocalMatrix( en, numOfBaseFct, mat);
-
-//     if(this->scalar_ == 1.)
-//     {
-//       for(int i=0; i<numOfBaseFct; i++) 
-//       {  
-//         int row = functionSpace_.mapToGlobal( en , i );
-//         for (int j=0; j<numOfBaseFct; j++ ) 
-//         {
-//           int col = functionSpace_.mapToGlobal( en , j );   
-
-//           // scalar comes from LocalOperatorDefault, if operator is scaled,
-//           // i.e. with timestepsize
-//           dest_it[ row ] += arg_it[ col ] * mat[i][j];
-//         }
-//       }
-//     }
-//     else 
-//     {
-//       for(int i=0; i<numOfBaseFct; i++) 
-//       {  
-//         int row = functionSpace_.mapToGlobal( en , i );
-//         for (int j=0; j<numOfBaseFct; j++ ) 
-//         {
-//           int col = functionSpace_.mapToGlobal( en , j );   
-
-//           // scalar comes from LocalOperatorDefault, if operator is scaled,
-//           // i.e. with timestepsize
-//           double val = (this->scalar_) * mat[i][j];
-
-//           dest_it[ row ] += arg_it[ col ] * val;
-//         }
-//       }
-//     }
-//   }; // end applyLocal
-
-
-
-// /*======================================================================*/
-// /*! 
-//  *   finalizeLocal: corrects the mapping in order to take into account 
-//  *                  dirichlet boundary conditions.
-//  * 
-//  *   The dofs are assumed to be correlated to the local vertex numbers of 
-//  *   the element, so only Lagrange basis are possible by this.
-//  *   The dirichlet-treatment is then simple copying of the argument DOF 
-//  *   to the destination DOF in case of Dirichlet boundary points. So the 
-//  *   assumption is, that the argument already contains correct 
-//  *   Dirichlet values.
-//  *
-//  *   \param the entity on which correction is to be performed
-//  */
-// /*======================================================================*/
- 
-//   template <class EntityType>
-//   void finalizeLocal ( EntityType &en ) const 
-//   {
-//     // eliminate the Dirichlet rows and columns 
-//     typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
-//     typedef typename DiscreteFunctionSpaceType::GridType GridType;
-//     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-//     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
- 
-//     const DiscreteFunctionType & arg  = (*arg_);
-//     DiscreteFunctionType & dest = (*dest_);
-
-//     const GridPartType & gridPart = arg.getFunctionsSpace().gridPart();
-
-//     typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
-//     typedef typename DiscreteFunctionType::ConstDofIteratorType ConstDofIteratorType;
-
-//     DofIteratorType dest_it = dest.dbegin();
-//     ConstDofIteratorType arg_it = arg.dbegin();
-
-//     const GeometryType t = en.geometry().type();
-
-//     const IntersectionIteratorType endnit = gridPart.iend(en);
-//     for(IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit ; ++nit)
-//     {
-//       if(nit.boundary())
-//       {
-//         int face = nit.numberInSelf();
-//         enum { dim = EntityType :: dimension };
-//         typedef typename EntityType :: ctype coordType;
-        
-//         const int faceCodim = 1;
-
-//         if(t.isSimplex())
-//         {
-//           if( nit.boundaryId() != 0 )
-//           {
-//             static ReferenceSimplex< coordType, dim > refElem;
-//             int novx = refElem.size( face, faceCodim , dim );
-//             assert( novx == dim );
-//             for(int j=0; j<novx ; j++)
-//             {
-//               // get all local numbers located on the face 
-//               int vx  = refElem.subEntity(face, faceCodim , j , dim );
-//               // get global dof numbers of this vertices 
-//               int col = functionSpace_.mapToGlobal( en, vx);
-//               // set solution on dirichlet bnd 
-//               dest_it[col] = arg_it[col];
-//             }
-//           }
-//         }
-//         if(t.isCube())
-//         {
-//           static ReferenceCube< coordType, dim > refElem;
-//           int novx = refElem.size( face, faceCodim , dim );
-//           for(int j=0; j<novx ; j++)
-//           {
-//             // get all local numbers located on the face 
-//             int vx  = refElem.subEntity(face, faceCodim , j , dim );
-//             // get global dof numbers of this vertices 
-//             int col = functionSpace_.mapToGlobal( en, vx );
-//             // set solution on dirichlet bnd 
-//             dest_it[col] = arg_it[col];
-//           }
-//         }
-//       }
-//     }
-//   }// end finalizeLocal
-
-    /*! 
-     *   assemble: perform grid-walkthrough and assemble global matrix
+    /**  \brief perform grid-walkthrough and assemble global matrix
      * 
-     *   If the matrix storage is not allocated, new storage is allocated by 
-     *   allocateSystemMatrix. 
+     *   If the matrix storage is not allocated, new storage is allocated by
+     *   allocateSystemMatrix.
      *   The begin and end iterators are determined, 
      *   the assembling of the global matrix is initiated by call of 
      *   assembleOnGrid 
@@ -643,49 +407,7 @@ namespace Dune
       matrix_assembled_ = true;
     };
 
-// the following can be removed, if the RhsAssembly is performed externally
-
-// /*======================================================================*/
-// /*! 
-//  *   assembleRhs: assembly of rhs of an elliptic problem with dirichlet
-//  *                treatment
-//  *
-//  *   generate the vector b required for solving an elliptic problem M u = b
-//  *   the dirichlet-difs are set to g_D.
-//  *
-//  *   \param rhs a reference to the rhs discrete function
-//  */
-// /*======================================================================*/
-  
-//   void assembleRhs(DiscreteFunctionType& rhs)
-//         {
-//           assert(opMode_==ASSEMBLED);
-          
-//           typedef typename DiscreteFunctionType::FunctionSpaceType 
-//               DiscreteFunctionSpaceType;
-//           typedef typename DiscreteFunctionSpaceType::GridType GridType; 
-//           typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-          
-//           {
-//             // generate rhs and generate dirichlet-values in dirichlet DOFs  
-//             // both is done in one step, as the BndCorrection can not be done
-//             // without grid-walkthrough. So both steps are performed in one
-//             // grid walkthrough
-//             IteratorType it    = functionSpace_.begin(); 
-//             IteratorType endit = functionSpace_.end(); 
-            
-//             assembleBndCorrectRhsOnGrid(it, endit, rhs);
-//           }
-          
-//           // in case of dirichletTreatment by Kronecker-kill: 
-//           // generate vector b_sym;
-          
-//           if (dirichletMode_==KRONECKER_ROWS_COLS)
-//               rhsKroneckerColumnsTreatment(rhs);
-//         }
-  
-    /*! 
-     *   markForReassembling: mark the local variables to be no longer actual
+    /**  \brief mark the local variables to be no longer actual
      *
      *   method marks the global matrix and the Dirichlet-DOF-list for 
      *   reassembly. This must be called, if the underlying model or 
@@ -701,29 +423,23 @@ namespace Dune
       matrix_assembled_ = false;
     }
   
-/*======================================================================*/
-/*! 
- *   matrixKroneckerColumnsTreatment: produce kronecker-columns in matrix
- *
- *   This method can be called after Matrix assembly.
- *   The method changes the matrix M (given above), such that 
- *   kronecker-columns 
- *   are produced for dirichlet DOFs. For symmetric problems this results in a 
- *   symmetric matrix, which is beneficial for system-solvers. Note, that the 
- *   right-hand side similarly has to be modified by 
- *   rhsKroneckerColumnsTreatment(rhs) in 
- *   order to give the identical result. The old matrix values are stored in 
- *   a member variable in order to be able to process arbitrary many RHS 
- *   vectors afterwards.
- *
- *   The new matrix has entries
- *
- *               /   kronecker(i,j)     if x_i OR x_j is Dirichlet-Bnd.Point 
- *   M_ij_sym :=<    M_ij               otherwise
- */
-/*======================================================================*/
-
-  void matrixKroneckerColumnsTreatment() const
+    /** \brief produce kronecker-columns in matrix
+     *
+     *   This method can be called after Matrix assembly. It changes the matrix
+     *   M (given above), such that kronecker-columns are produced for
+     *   Dirichlet DoFs. For symmetric problems this results in a symmetric
+     *   matrix, which is beneficial for system-solvers. Note, that the
+     *   right-hand side similarly has to be modified by
+     *   rhsKroneckerColumnsTreatment in  order to give the identical result.
+     *   The old matrix values are stored in a member variable in order to be
+     *   able to process arbitrary many right hand side vectors afterwards.
+     *
+     *   The new matrix has entries
+     *
+     *               /   kronecker(i,j)     if x_i OR x_j is Dirichlet-Bnd.Point 
+     *   M_ij_sym :=<    M_ij               otherwise
+     */
+    void matrixKroneckerColumnsTreatment() const
         {
           if (verbose_)
               std::cout << "entered matrixKroneckerColumnsTreatment of FEOp\n";
@@ -835,31 +551,29 @@ namespace Dune
               determineRealNonZeros();
         };
   
-/*======================================================================*/
-/*! 
- *   rhsKroneckerColumnsTreatment: modify computed right-hand side for 
- *                               dirichlet nodes.
- *
- *   Method is an optional postprocessing step 
- *   method changes the right-hand-side b (assumed to be given as defined 
- *   above), such that the symmetrized matrix (after application of 
- *   matrixKroneckerColumnsTreatment) 
- *   with the new rhs produces the same solution as the old matrix M with 
- *   the old rhs b. The new vector has entries:
- *
- *               /    b_i                         if x_i is Dirichlet-Bnd.Point
- *    b_i_sym :=<   
- *               \    b_i - sum_{x_j Dirichlet-Point} M_ij g_D(x_j)   otherwise
- *
- *   Note that the values g_D(x_j) are exactly assumed to be the values of
- *   the provided vector b_j, which is used for implementation instead of
- *   reevaluating the boundary values. 
- *
- *   \param rhs a reference to the assembled rhs b
- */
-/*======================================================================*/
-
-  void rhsKroneckerColumnsTreatment(DiscreteFunctionType& rhs) const
+    /** \brief modify computed right-hand side for dirichlet nodes
+     *
+     *  This method is an optional postprocessing step. It changes the
+     *  right-hand-side \f$b\f$ (assumed to be given as defined above), such
+     *  that the symmetrized matrix \f$\tilde M\f$ (after application of
+     *  matrixKroneckerColumnsTreatment) with the new rhs produces the same
+     *  solution as the original matrix \f$M\f$ with the original rhs \f$b\f$.
+     *  The new vector has the following entries:
+     *  \f{displaymath}
+     *  \tilde b_i = \left\lbrace\begin{array}{ll}
+     *    b_i,
+     *      & \enspace \mbox{if} \enspace x_i \in \Gamma_D,\\
+     *    b_i - \sum_{x_j \in \Gamma_D} M_{ij} g_D( x_j )
+     *      & \enspace \mbox{otherwise}.
+     *  \end{array}\right.
+     *  \f}
+     *
+     *  \note The values \f$g_D( x_j )\f$ are exactly assumed to be the values
+     *  of the provided vector \f$b\f$. The boundary data is not reevaluated.
+     *
+     *  \param  rhs  a reference to the assembled right-hand side \f$b\f$
+     */
+    void rhsKroneckerColumnsTreatment(DiscreteFunctionType& rhs) const
         {
           assert(isDirichletDOF_);
           assert(matrixDirichletColumns_);
@@ -1106,36 +820,10 @@ namespace Dune
         std :: cout << " end of bndCorrectMatrix" << std :: endl;
     }
 
-// /*======================================================================*/
-// /*! 
-//  *   assembleBndCorrectRhsOnGrid: assemble righ hand side vector 
-//  *
-//  *   the right hand side vector b defined by the current model is computed
-//  *   The dirichlet-DOFs are set to exact dirichlet-values.
-//  *
-//  *   \param it begin iterator for grid walkthrough
-//  *
-//  *   \param endit end iterator for grid walkthrough
-//  *
-//  *   \param rhs right hand side vector storage
-//  */
-// /*======================================================================*/
-
-//   void assembleBndCorrectRhsOnGrid(it, endit, rhs)
-//         {
-//           ...
-//         };
-
-
-
-/*======================================================================*/
-/*! 
- *   determineRealNonZeros()
- *
- *   \return the maximum real number of nonzero entries in the system matrix
- */
-/*======================================================================*/
-
+  /** \brief obtain the maximum number of nonzero entries in the system matrix
+   *
+   *  \returns the maximum real number of nonzero entries in the system matrix
+   */
   int determineRealNonZeros() const
   {
     // search number of nonzeros
