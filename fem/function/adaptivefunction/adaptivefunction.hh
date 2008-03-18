@@ -205,16 +205,14 @@ namespace Dune
       Imp :: assignFunction( g );
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::operator+=
-     */ 
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */ 
     inline ThisType &operator += ( const ThisType &g )
     {
       Imp :: addFunction( g );
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::operator-=
-     */ 
+    /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DiscreteFunctionType &g) */ 
     inline BaseType &operator-= ( const ThisType &g )
     {
       Imp::substractFunction(g);
@@ -388,14 +386,14 @@ namespace Dune
       Imp :: assignFunction( g );
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::operator+= */
-    inline ThisType &operator += ( const ThisType &g )
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */
+    inline ThisType &operator+= ( const ThisType &g )
     {
       Imp::addFunction(g);
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::operator-= */
+    /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DiscreteFunctionType &g) */
     inline ThisType &operator-= ( const ThisType &g )
     {
       Imp::substractFunction(g);

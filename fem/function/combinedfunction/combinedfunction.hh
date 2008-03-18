@@ -201,14 +201,15 @@ namespace Dune
     {
       return func_[0]->size()*N;
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=
-     */ 
-    inline ThisType &operator += ( const ThisType &g )
+
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */
+    inline ThisType &operator+= ( const ThisType &g )
     {
       for (int i=0;i<N;i++)
 	      *func_[i] += g.subFunction(i);
       return *this;
     }
+
     /** \copydoc Dune::DiscreteFunctionInterface::operator-=
      */ 
     using BaseType::operator-=;

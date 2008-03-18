@@ -662,10 +662,7 @@ namespace Dune
                            const DomainType &x,
                            RangeType &ret ) const;
 
-    /** \brief add all degrees of freedom from given discrete function using the dof iterators 
-        \param[in] g discrete function which is added to this discrete function 
-        \return reference to this (i.e. *this)
-    */
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */
     inline DiscreteFunctionType &operator+= ( const DiscreteFunctionType &g );
 
     /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
