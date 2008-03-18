@@ -1,6 +1,8 @@
 #ifndef DUNE_DISCRETEMODEL_HH
 #define DUNE_DISCRETEMODEL_HH
 
+//- Dune includes 
+#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/fvector.hh>
 #include "selection.hh"
 
@@ -34,6 +36,8 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     //! Vector type of the function space's range
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    //! Vector type of the function space's range field type 
+    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
     //! Matrix type of the function space's jacobian
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
     //! Type of GridPart 
@@ -45,6 +49,23 @@ namespace Dune {
     //! Element (codim 0 entity) of the grid
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
+    //! dimRange 
+    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+
+    // mass factor type 
+    template <class MatrixType> struct ExtractMatrix;
+
+    template <template <class,int,int> class MatrixType,
+              class ctype, int dimD, int dimR 
+              > 
+    struct ExtractMatrix<MatrixType<ctype,dimD,dimR> >
+    {
+      typedef MatrixType<RangeFieldType,dimRange,dimRange> Type;
+    };
+
+    //! type of mass factor 
+    typedef typename ExtractMatrix<JacobianRangeType> :: Type MassFactorType ;
+
   public:
     //! Returns true if problem has a flux contribution.
     //! If you program this method to return true, make sure to implement
@@ -55,6 +76,9 @@ namespace Dune {
     //! If you program this method to return true, make sure to implement
     //! method source well.
     bool hasSource() const { return asImp().hasSource(); }
+
+    //! Returns true if problem has a mass matrix factor disctinct from the identity
+    bool hasMass() const { return asImp().hasMass(); }
 
     //! \brief Computes the numerical flux at a cell interface.
     //! Interface method for calculating the numerical flux at cell interfaces.
@@ -77,12 +101,18 @@ namespace Dune {
     //! the maximum admissible timestep size.
     template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux(IntersectionIterator& it,
-                         double time, const FaceDomainType& x,
+                         const double time, 
+                         const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          RangeType& gLeft,
                          RangeType& gRight)
-    { return asImp().numericalFlux(); }
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux(it, time, x, 
+                                   uLeft, uRight, gLeft, gRight) );
+      return asImp().numericalFlux(it, time, x, 
+                                   uLeft, uRight, gLeft, gRight); 
+    }
 
     //! \brief Computes the flux at the boundary
     //! Special kind of numerical flux. The intersection iterator provides
@@ -98,10 +128,15 @@ namespace Dune {
     //! the maximum admissible timestep size.
     template <class ArgumentTuple, class FaceDomainType>
     double boundaryFlux(IntersectionIterator& it,
-                        double time, const FaceDomainType& x,
+                        const double time, 
+                        const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
                         RangeType& gLeft)
-    { return asImp().boundaryFlux(); }
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( 
+        asImp().boundaryFlux(it, time, x, uLeft, gLeft) );
+      return asImp().boundaryFlux(it, time, x, uLeft, gLeft);
+    }
 
     //! \brief Computes the analytical flux of the problem.
     //! Analytical flux of the problem.
@@ -113,9 +148,14 @@ namespace Dune {
     //! \param f The analytical flux (return value)
     template <class ArgumentTuple>
     void analyticalFlux(EntityType& en,
-                        double time, const DomainType& x,
-                        const ArgumentTuple& u, JacobianRangeType& f) 
-    { asImp().analyticalFlux(); }
+                        const double time, 
+                        const DomainType& x,
+                        const ArgumentTuple& u, 
+                        JacobianRangeType& f) 
+    { 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+              asImp().analyticalFlux(en, time, x, u, f) ); 
+    }
 
     //! \brief Implements the source term of the problem.
     //! Source term contribution. The source term can contain parts of the
@@ -130,27 +170,54 @@ namespace Dune {
     //! \param s The source contribution (return value).
     template <class ArgumentTuple, class JacobianTuple>
     void source(EntityType& en, 
-                double time, const DomainType& x,
+                const double time, 
+                const DomainType& x,
                 const ArgumentTuple& u, 
                 const JacobianTuple& jac, 
                 RangeType& s) 
-    { asImp().source(); }
+    { 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+          asImp().source(en, time, x, u, jac, s) ); 
+    }
+
+    //! \brief Implements the mass factor term of the problem.
+    //! Mass term contribution. 
+    //! \param en Entity where the mass is to be evaluated
+    //! \param time Global time.
+    //! \param x Reference element coordinate where the mass is evaluated
+    //! \param u Tuple of the states of the previous passes and of the global
+    //! \param m The mass contribution (return value).
+    //! default implementation sets this factor to 1.0 
+    template <class ArgumentTuple>
+    void mass(const EntityType& en, 
+              const double time, 
+              const DomainType& x,
+              const ArgumentTuple& u, 
+              MassFactorType& m)
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+          asImp().mass(en, time, x, u, m) ); 
+    }
 
     //! \brief Passes the active entity to the model.
     //! This can be used, to set local functions required as data function
     //! in the model.
     //! \param en active Entity 
     void setEntity(EntityType& en) 
-    { asImp().setEntity(en); }
+    { 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setEntity(en) ); 
+    }
+
     //! \brief Passes the active neigbor entity to the model.
     //! This can be used, to set local functions required as data functions 
     //! in the model.
     //! \param nb active neighbor Entity 
     void setNeighbor(EntityType& nb) 
-    { asImp().setNeighbor(nb); }
+    { 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setNeighbor(nb) ); 
+    }
 
-
-  private:
+  protected:
     DiscreteModelType& asImp() { return static_cast<DiscreteModelType&>(*this); }
     const DiscreteModelType& asImp() const { return static_cast<const DiscreteModelType&>(*this); }
   };
@@ -160,19 +227,25 @@ namespace Dune {
   //! implement them if not needed.
   template <class DiscreteModelTraits>
   class DiscreteModelDefault : 
-    public DiscreteModelInterface<DiscreteModelTraits> {
+    public DiscreteModelInterface<DiscreteModelTraits> 
+  {
+    typedef DiscreteModelInterface<DiscreteModelTraits> BaseType;
   public:
     typedef DiscreteModelTraits Traits;
     typedef typename Traits::DiscreteModelType DiscreteModelType;
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
     typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+
+    typedef typename BaseType :: MassFactorType MassFactorType;
+
     //! Selector for data tuple to use as arguments for all methods;
     //! this fixes the template type ArgumentTuple.
     //! If this discrete model is used for a pass n+1, i.e., follwoing
@@ -194,6 +267,10 @@ namespace Dune {
     //! \copydoc DiscreteModelInterface::hasSource 
     //! \return false 
     bool hasSource() const { return false; }
+    
+    //! \copydoc DiscreteModelInterface::hasMass 
+    //! \return false  
+    bool hasMass() const { return false; }
     
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
@@ -245,6 +322,28 @@ namespace Dune {
     { 
       assert(!this->hasSource()); 
       s = 0.0;
+    }
+
+    //! empty implementation for mass factor 
+    //! default implementation sets this factor to 1.0 
+    template <class ArgumentTuple>
+    void mass(const EntityType& en, 
+              const double time, 
+              const DomainType& x,
+              const ArgumentTuple& u, 
+              MassFactorType& m)
+    {
+      enum { rows = MassFactorType :: rows };
+      enum { cols = MassFactorType :: cols };
+      // default implementation sets mass factor to identity 
+      for(int i=0; i<rows; ++i) 
+      {
+        // set diagonal to 1 
+        m[i][i] = 1;
+        // and all other values to 0
+        for(int j=i+1; j<cols; ++j) 
+          m[i][j] = m[j][i] = 0;
+      }
     }
 
     //! Empty implementation 

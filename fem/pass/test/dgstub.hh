@@ -39,6 +39,7 @@ namespace Dune {
   class DiscreteModelStub : 
     public DiscreteModelDefault<DGStubTraits>
   {
+    typedef DiscreteModelDefault<DGStubTraits> BaseType;
   public:
     typedef Selector<0>::Base SelectorType;
 
@@ -57,12 +58,15 @@ namespace Dune {
     typedef Traits::DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
     typedef GridPartType :: IntersectionIteratorType IntersectionIterator;
     typedef GridType::Codim<0>::Entity EntityType;
+
+    typedef BaseType :: MassFactorType MassFactorType; 
  
     typedef FieldVector<double, 3> DomainType;
   
   public:
     bool hasFlux() const { return true; }
     bool hasSource() const { return true; }
+    bool hasMass () const { return true; }
 
     template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux(IntersectionIterator& it,
@@ -99,6 +103,15 @@ namespace Dune {
                 const JacobianTuple& jac, 
                 RangeType& s)
     { std::cout << "S()" << std::endl; }
+
+    template <class ArgumentTuple>
+    void mass(const EntityType& en,
+              const double time,
+              const DomainType& x,
+              const ArgumentTuple& u,
+              MassFactorType& m)
+    { std::cout << "M()" << std::endl; }
+
   };
 
 } // end namespace Dune

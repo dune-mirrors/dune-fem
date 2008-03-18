@@ -352,7 +352,8 @@ namespace LDGExample {
       typedef BlockMatrixObject<DiscreteFunctionSpaceType,
                                 DiscreteFunctionSpaceType> MatrixObjectType; 
 #endif
-      typedef DGPrimalOperator<ThisType,PreviousPassType,ElliptPrevPassType, MatrixObjectTraits> LocalOperatorType;
+      typedef DGPrimalOperator<ThisType,PreviousPassType,
+                ElliptPrevPassType, MatrixObjectTraits> LocalOperatorType;
 
 #if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;

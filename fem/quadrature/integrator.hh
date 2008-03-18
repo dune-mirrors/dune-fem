@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_INTEGRATOR_HH
 #define DUNE_FEM_INTEGRATOR_HH
 
+//- Dune includes 
+#include <dune/fem/quadrature/quadrature.hh>
+
 namespace Dune
 {
 

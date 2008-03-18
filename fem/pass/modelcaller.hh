@@ -45,6 +45,8 @@ namespace Dune {
       JacobianRangeTypeEvaluator, LocalFunctionTupleType> JacobianCreator;
     typedef typename JacobianCreator::ResultType JacobianRangeTupleType;
 
+    //! type of mass matrix factor (see discretemodel.hh)
+    typedef typename DiscreteModelType :: MassFactorType MassFactorType;
   public:
     DiscreteModelCaller(DiscreteModelType& problem) :
       problem_(problem),
@@ -241,15 +243,22 @@ namespace Dune {
                       jacobians_, res);
     }
 
-    void mass(Entity& en, VolumeQuadratureType& quad, int quadPoint,
-              JacobianRangeType& res)
+    //! return true when a mass matrix has to be build  
+    bool hasMass () const  { return problem_.hasMass(); }
+
+    //! evaluate mass matrix factor 
+    void mass(const Entity& en,
+              const VolumeQuadratureType& quad,
+              const int quadPoint,
+              MassFactorType& m)
     {
+      // evaluate local functions 
       evaluateQuad( quad, quadPoint,
-                   data_->localFunctionsSelf(), valuesEn_);
-      evaluateJacobianQuad(en, quad, quadPoint);
+                    data_->localFunctionsSelf(), valuesEn_);
+      // call problem implementation 
       problem_.mass(en, time_, quad.point(quadPoint),
                     valuesEn_,
-                    jacobians_, res);
+                    m);
     }
     
   protected:
@@ -273,7 +282,8 @@ namespace Dune {
 
     template <class QuadratureType>
     inline
-    void evaluateQuad(QuadratureType& quad, int quadPoint, 
+    void evaluateQuad(const QuadratureType& quad, 
+                      const int quadPoint, 
                       LocalFunctionTupleType& lfs, 
                       RangeTupleType& ranges) 
     {

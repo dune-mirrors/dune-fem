@@ -303,7 +303,7 @@ namespace Dune {
 
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
-    enum { codimension = GridType :: dimension - DimDomain }; 
+    enum { codimension = GridType :: dimension - dimDomain }; 
 
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
@@ -462,7 +462,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
-    enum { codimension = GridType :: dimension - DimDomain }; 
+    enum { codimension = GridType :: dimension - dimDomain }; 
 
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;

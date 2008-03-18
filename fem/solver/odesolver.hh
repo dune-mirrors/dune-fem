@@ -257,6 +257,16 @@ class ExplTimeStepper : public Dune::TimeProvider,
   typedef typename DestinationType :: DiscreteFunctionSpaceType 
     :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
 public:
+  ExplTimeStepper(Operator& op,int pord, double cfl, double startTime,bool verbose = false) :
+    Dune::TimeProvider(startTime,cfl),
+    BaseType(op,*this,pord,verbose),
+    tp_(this->op_.space().grid().comm(), *this ),
+    savestep_(1),
+    savetime_(0.0)
+  {
+    op.timeProvider(this);
+    assert( this->cfl() <= 1.0 );
+  }
   ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
     Dune::TimeProvider(0.0,cfl),
     BaseType(op,*this,pord,verbose),

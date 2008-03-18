@@ -35,22 +35,27 @@ public:
   //! destination type 
   typedef typename Model :: Traits :: DiscreteFunctionType DestinationType;
 
+  //! type of space operator 
+  typedef SpaceOperatorInterface<DestinationType> SpaceOperatorIFType;
 protected:
   Model& model_;
   const DiscreteFunctionSpaceType& space_;
+  SpaceOperatorIFType* passPointer_;
 
 public:
   //! constructor 
   //! \param model DiscreteModel 
   //! \param space DiscreteFunctionSpace
   CreatePass(Model& model, const DiscreteFunctionSpaceType& space)
-    : model_(model) , space_(space)
+    : model_(model) , space_(space) , passPointer_(0) 
   {
   }
 
   //! copy constructor
   CreatePass(const CreatePass& org)
-    : model_(org.model_) , space_(org.space_)
+    : model_(org.model_),
+      space_(org.space_),
+      passPointer_( org.passPointer_ )
   {
   }
 
@@ -63,8 +68,13 @@ public:
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_);
+
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     // remember previous object for delete 
     obj->saveObjPointer(prevObj);
     return obj;
@@ -79,8 +89,13 @@ public:
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevPass,space_);
+
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     return obj;
   }
   
@@ -93,8 +108,13 @@ public:
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevPass,space_);
+
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     return obj;
   }
   
@@ -107,11 +127,23 @@ public:
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_);
+    
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     // remember previous object for delete 
     obj->saveObjPointer(prevObj);
     return obj;
+  }
+
+  //! return pointer to destination  
+  const DestinationType* destination() const 
+  {
+    assert( passPointer_ );
+    return passPointer_->destination();
   }
 };
 
@@ -130,10 +162,13 @@ public:
   //! destination type 
   typedef typename Model :: Traits :: DiscreteFunctionType DestinationType;
 
+  //! type of space operator 
+  typedef SpaceOperatorInterface<DestinationType> SpaceOperatorIFType;
 protected:
   Model& model_;
   DiscreteFunctionSpaceType& space_;
   const std::string paramFile_;
+  SpaceOperatorIFType* passPointer_;
 
 public:
   //! constructor 
@@ -141,13 +176,18 @@ public:
   //! \param space DiscreteFunctionSpace
   //! \param paramfile parameter file passes through 
   CreateFeaturedPass(Model& model, DiscreteFunctionSpaceType& space, std::string paramfile = "")
-    : model_(model) , space_(space) , paramFile_(paramfile)
+    : model_(model), 
+      space_(space), 
+      paramFile_(paramfile),  
+      passPointer_(0)
   {
   }
 
   //! copy constructor
   CreateFeaturedPass(const CreateFeaturedPass& org)
-    : model_(org.model_) , space_(org.space_) , paramFile_(org.paramFile_)
+    : model_(org.model_) , space_(org.space_),
+      paramFile_(org.paramFile_),
+      passPointer_(org.passPointer_)
   {
   }
 
@@ -160,8 +200,13 @@ public:
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
+
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     // remember previous object for delete 
     obj->saveObjPointer(prevObj);
     return obj;
@@ -176,8 +221,13 @@ public:
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevPass,space_,paramFile_);
+
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     return obj;
   }
   
@@ -190,8 +240,13 @@ public:
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevPass,space_,paramFile_);
+
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     return obj;
   }
   
@@ -204,11 +259,23 @@ public:
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
+
     // create pass storage 
     ObjPtrType* obj = new ObjPtrType(pass);
+
+    // remember pass obj 
+    passPointer_ = obj;
+
     // remember previous object for delete 
     obj->saveObjPointer(prevObj);
     return obj;
+  }
+
+  //! return pointer to destination  
+  const DestinationType* destination() const 
+  {
+    assert( passPointer_ );
+    return passPointer_->destination();
   }
 };
 

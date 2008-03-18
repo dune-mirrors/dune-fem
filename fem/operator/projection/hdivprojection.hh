@@ -95,13 +95,28 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
   typedef typename AllSpacesType :: FaceDiscreteSpaceType    FaceDiscreteSpaceType;
 
   const DiscreteFunctionSpaceType& space_;
+  GridPartType & gridPart_;
+  const FaceDiscreteSpaceType faceSpace_;
+  const ElementDiscreteSpaceType elSpace_;
+  const ElementGradientSpaceType gradSpace_;
+
  public:
   //! constructor taking space 
   HdivProjection(const DiscreteFunctionSpaceType& space) : 
-    space_(space) {}
+    space_(space),
+    gridPart_(const_cast<GridPartType &> (space.gridPart())),
+    faceSpace_( gridPart_ ),
+    elSpace_( gridPart_ ),
+    gradSpace_( gridPart_ )
+  {}
 
   HdivProjection(const HdivProjection& org) : 
-    space_(org.space_) {}
+    space_(org.space_),
+    gridPart_( org.gridPart_),
+    faceSpace_( gridPart_ ),
+    elSpace_( gridPart_ ),
+    gradSpace_( gridPart_ )
+  {}
 
   //! return reference to space 
   virtual const DiscreteFunctionSpaceType& space() const 
@@ -446,7 +461,7 @@ private:
     static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 
     {
       const GeometryType geoType (GeometryType::cube,dim-1);
-      return space.subBaseFunctionSet( geoType, true ); 
+      return space.baseFunctionSet( geoType ); 
     }
   };
 
@@ -458,7 +473,7 @@ private:
     static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 
     {
       const GeometryType geoType (en.geometry().type().basicType(),dim-1);
-      return space.subBaseFunctionSet( geoType, true ); 
+      return space.baseFunctionSet( geoType ); 
     }
   };
 #endif
@@ -492,16 +507,11 @@ private:
     // for polOrd 0 this is not working 
     if(space.order() < 1 ) return ;
 
-    GridPartType & gridPart = const_cast<GridPartType &> (space.gridPart());
     const int polOrd = 2 * space.order() + 2;
 
     // only working for polOrd = 1 at the moment 
     //assert( space.order() == 1 );
     
-    FaceDiscreteSpaceType faceSpace(gridPart);
-    ElementDiscreteSpaceType elSpace(gridPart);
-    ElementGradientSpaceType gradSpace(gridPart);
-
     typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ; 
     typedef typename FaceDiscreteSpaceType :: RangeType FaceRangeType; 
     
@@ -538,15 +548,15 @@ private:
     //std::cout << numDofs << " numDofs \n";
 
     const FaceBSetType faceSet = 
-      GetSubBaseFunctionSet<FaceBSetType,GridType>::faceBaseSet( *start , faceSpace ); 
+      GetSubBaseFunctionSet<FaceBSetType,GridType>::faceBaseSet( *start , faceSpace_ ); 
     // number of dofs on faces 
     const int numFaceDofs = faceSet.numBaseFunctions();
     
-    const ElementBaseSetType elSet = elSpace.baseFunctionSet(*start);
+    const ElementBaseSetType elSet = elSpace_.baseFunctionSet(*start);
     const int numBubbleDofs = elSet.numBaseFunctions();
     //std::cout << numBubbleDofs << " bubbleDofs \n";
   
-    const GradientBaseSetType gradSet = gradSpace.baseFunctionSet(*start);
+    const GradientBaseSetType gradSet = gradSpace_.baseFunctionSet(*start);
     // in case of linear space the is zero 
     const int numGradDofs = (space.order() <= 1) ? 0 : gradSet.numBaseFunctions();
     // std::cout << numGradDofs << " numGradDofs \n";
@@ -622,7 +632,7 @@ private:
         }
 
         // fill non-symetric matrix 
-        fillMatrix(gridPart,en,uDG,faceSpace,polOrd,numDofs,numFaceDofs,
+        fillMatrix(gridPart_,en,uDG,faceSpace_,polOrd,numDofs,numFaceDofs,
                    rets,matrix,rhs);
 
         // apply least square 
@@ -648,7 +658,7 @@ private:
 
         assert( cols == rows );
         // fill inv and fRhs directly 
-        fillMatrix(gridPart,en,uDG,faceSpace,polOrd,numDofs,numFaceDofs,
+        fillMatrix(gridPart_,en,uDG,faceSpace_,polOrd,numDofs,numFaceDofs,
                    rets,inv,fRhs);
       }
 
@@ -712,7 +722,7 @@ private:
     {
       // get base function set of face 
       const FaceBSetType & faceSet =
-        faceSpace.subBaseFunctionSet(nit.intersectionGlobal().type());
+        faceSpace.baseFunctionSet(nit.intersectionGlobal().type());
      
       const int firstRow = nit.numberInSelf() * numFaceDofs;
       

@@ -1,16 +1,3 @@
-/**************************************************************
- * Known problems:
- * 1) works only with ortho-normal basefunction set
- *    we should have multiplication with inverse mass matrix on baseset
- * 2) Caching does not work with non-conforming grids
- *    here a switch is required
- * 3) would be good to pass quadrature to discrete model
- *    prehaps also a setEntity method on the discrete model
- * 4) hexaedrons with non-linear mapping will definitly not work
- *    (-> diplom thesis!)
-*****************************************************************/
-
-
 #ifndef DUNE_DGPASS_HH
 #define DUNE_DGPASS_HH
 
@@ -34,6 +21,9 @@
 
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/allgeomtypes.hh> 
+#include <dune/fem/space/common/arrays.hh> 
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/operator/1order/localmassmatrix.hh>
 
 namespace Dune {
 /*! @addtogroup PassHyp
@@ -84,6 +74,8 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename DiscreteFunctionSpaceType:: BaseFunctionSetType
+      BaseFunctionSetType; 
 
     // Types extracted from the underlying grids
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
@@ -97,13 +89,17 @@ namespace Dune {
       DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
 
     // type of Communication Manager 
-    typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType;
+    typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::dimRange };
 
     // type of local id set 
-    typedef typename GridType::Traits::LocalIdSet LocalIdSetType; 
+    typedef typename GridPartType::IndexSetType IndexSetType; 
+    typedef TemporaryLocalFunction< DiscreteFunctionSpaceType > TemporaryLocalFunctionType;
+
+    //! type of local mass matrix 
+    typedef LocalDGMassMatrix< DiscreteModelType > LocalMassMatrixType;
 
   public:
     //- Public methods
@@ -124,9 +120,12 @@ namespace Dune {
       dest_(0),
       spc_(spc),
       gridPart_(spc_.gridPart()),
-      localIdSet_(spc_.grid().localIdSet()),
+      indexSet_(gridPart_.indexSet()),
+      visited_(0),
       communicationManager_(spc_),
       refVolMap_ (),
+      updEn_(spc_),
+      updNeigh_(spc_),
       dtMin_(std::numeric_limits<double>::max()),
       fMat_(0.0),
       valEn_(0.0),
@@ -141,27 +140,9 @@ namespace Dune {
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
           (2*spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
-        (2*spc_.order()+1) : faceQuadOrd )
+        (2*spc_.order()+1) : faceQuadOrd ),
+      localMassMatrix_( spc_ , volumeQuadOrd_ ) 
     {
-      {
-        typedef AllGeomTypes< typename GridPartType :: IndexSetType,
-                              GridType> AllGeomTypesType;
-        AllGeomTypesType allGeomTypes( gridPart_.indexSet() );
-        const std::vector<Dune::GeometryType>& geomTypes =
-          allGeomTypes.geomTypes(0);
-
-        for(size_t i=0; i<geomTypes.size(); ++i)
-        {
-          typedef typename Geometry :: ctype coordType; 
-          enum { dim = GridType :: dimension };
-          const ReferenceElement< coordType, dim > & refElem =
-                 ReferenceElements< coordType, dim >::general( geomTypes[i] );
-      
-          // store volume of reference element
-          refVolMap_[ geomTypes[i] ] = refElem.volume();
-        }
-      }
-
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
     }
@@ -194,9 +175,17 @@ namespace Dune {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
 
+      // clear destination 
       dest_->clear();
 
+      // set arguments to caller 
       caller_.setArgument(*arg_);
+
+      // resize indicator function 
+      visited_.resize( indexSet_.size(0) );
+      // set all values to false 
+      const int indSize = visited_.size();
+      for(int i=0; i<indSize; ++i) visited_[i] = false;
 
       // time initialisation
       dtMin_ = std::numeric_limits<double>::max();
@@ -231,14 +220,18 @@ namespace Dune {
     {
       //- statements
       caller_.setEntity(en);
-      LocalFunctionType updEn = dest_->localFunction(en);
+
+      // init local function 
+      initLocalFunction( en , updEn_ );
+
+      // get reference 
+      TemporaryLocalFunctionType& updEn = updEn_;
 
       // only call geometry once, who know what is done in this function 
       const Geometry & geo = en.geometry();
 
+      // get volume of element 
       const double vol = geo.volume(); 
-      assert( refVolMap_.find (  geo.type() ) != refVolMap_.end() );
-      const double massVolElinv = refVolMap_[ geo.type() ] / vol;
 
       // only apply volumetric integral if order > 0 
       // otherwise this contribution is zero 
@@ -248,120 +241,166 @@ namespace Dune {
         // if only flux, evaluate only flux 
         if ( problem_.hasFlux() && !problem_.hasSource() ) 
         {
-          evalVolumetricPartFlux(en, geo, updEn , massVolElinv);
+          evalVolumetricPartFlux(en, geo, updEn);
         }
         else 
         {
           // evaluate flux and source 
-          evalVolumetricPartBoth(en, geo, updEn , massVolElinv);
+          evalVolumetricPartBoth(en, geo, updEn);
         }
       }
 
       /////////////////////////////
       // Surface integral part
       /////////////////////////////
-
-      IntersectionIteratorType endnit = gridPart_.iend(en);
-      for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
+      if ( problem_.hasFlux() ) 
       {
-        double nbvol;
-        double wspeedS = 0.0;
-        if (nit.neighbor()) 
+        IntersectionIteratorType endnit = gridPart_.iend(en);
+        for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
         {
-          // get neighbor 
-          EntityPointerType ep = nit.outside();
-          EntityType & nb = *ep;
-    
-          if (localIdSet_.id(en) < localIdSet_.id(nb) && en.level()==nb.level() 
-              || en.level() > nb.level()
-#if HAVE_MPI 
-              || nb.partitionType() != InteriorEntity
-#endif
-              ) 
+          double nbvol;
+          double wspeedS = 0.0;
+          if (nit.neighbor()) 
           {
-            typedef TwistUtility<GridType> TwistUtilityType;
-            // for conforming situations apply Quadrature given
-            if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
+            // get neighbor 
+            EntityPointerType ep = nit.outside();
+            EntityType & nb = *ep;
+      
+            if ( ! visited_[ indexSet_.index( nb ) ] ) 
             {
-              FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
-                                               FaceQuadratureType::INSIDE);
-        
-              FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
-                                               FaceQuadratureType::OUTSIDE);
-              // apply neighbor part, return is volume of neighbor which is
-              // needed below 
-              nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
-                        faceQuadInner,faceQuadOuter,
-                        updEn,
-                        wspeedS);
-            }
-            else
-            { 
-              // for non-conforming situations apply the non-conforming 
-              // type of the qaudrature 
-               
-              // we only should get here whne a non-conforming situation 
-              // occurs in a non-conforming grid 
-              assert( GridPartType :: conforming == false );
+              // init local function 
+              initLocalFunction( nb, updNeigh_ );
 
-              typedef typename FaceQuadratureType :: NonConformingQuadratureType
-                NonConformingFaceQuadratureType;
+              typedef TwistUtility<GridType> TwistUtilityType;
+              // for conforming situations apply Quadrature given
+              if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
+              {
+                FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                                 FaceQuadratureType::INSIDE);
+          
+                FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
+                                                 FaceQuadratureType::OUTSIDE);
+                // apply neighbor part, return is volume of neighbor which is
+                // needed below 
+                nbvol = applyLocalNeighbor(nit,en,nb,
+                          faceQuadInner,faceQuadOuter,
+                          updEn, updNeigh_ , 
+                          wspeedS);
+              }
+              else
+              { 
+                // for non-conforming situations apply the non-conforming 
+                // type of the qaudrature 
+                 
+                // we only should get here whne a non-conforming situation 
+                // occurs in a non-conforming grid 
+                assert( GridPartType :: conforming == false );
 
-              NonConformingFaceQuadratureType 
-                  nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
-                                             NonConformingFaceQuadratureType::INSIDE);
+                typedef typename FaceQuadratureType :: NonConformingQuadratureType
+                  NonConformingFaceQuadratureType;
 
-              NonConformingFaceQuadratureType 
-                  nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
-                                             NonConformingFaceQuadratureType::OUTSIDE);
+                NonConformingFaceQuadratureType 
+                    nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                               NonConformingFaceQuadratureType::INSIDE);
 
-              // apply neighbor part, return is volume of neighbor which is
-              // needed below 
-              nbvol = applyLocalNeighbor(nit,en,nb,massVolElinv,
-                        nonConformingFaceQuadInner,
-                        nonConformingFaceQuadOuter,
-                        updEn,
-                        wspeedS);
-            }
+                NonConformingFaceQuadratureType 
+                    nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
+                                               NonConformingFaceQuadratureType::OUTSIDE);
 
-          }
-            
-        } // end if neighbor
+                // apply neighbor part, return is volume of neighbor which is
+                // needed below 
+                nbvol = applyLocalNeighbor(nit,en,nb,
+                          nonConformingFaceQuadInner,
+                          nonConformingFaceQuadOuter,
+                          updEn, updNeigh_ , 
+                          wspeedS);
+              }
 
-        if (nit.boundary()) 
-        {
-          FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_, 
-                                           FaceQuadratureType::INSIDE);
-          nbvol = vol;
-          caller_.setNeighbor(en);
-          const int faceQuadInner_nop = faceQuadInner.nop();
-          for (int l = 0; l < faceQuadInner_nop; ++l) 
+              // add update to real function 
+              updateFunction(nb, updNeigh_ );
+
+            } // end if do something 
+              
+          } // end if neighbor
+
+          if (nit.boundary()) 
           {
-            // eval boundary Flux  
-            wspeedS += caller_.boundaryFlux(nit, faceQuadInner, l, valEn_ )
-                     * faceQuadInner.weight(l);
-            
-            // apply weights 
-            valEn_ *= -faceQuadInner.weight(l) * massVolElinv;
+            FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_, 
+                                             FaceQuadratureType::INSIDE);
+            nbvol = vol;
+            caller_.setNeighbor(en);
+            const int faceQuadInner_nop = faceQuadInner.nop();
+            for (int l = 0; l < faceQuadInner_nop; ++l) 
+            {
+              // eval boundary Flux  
+              wspeedS += caller_.boundaryFlux(nit, faceQuadInner, l, valEn_ )
+                       * faceQuadInner.weight(l);
+              
+              // apply weights 
+              valEn_ *= -faceQuadInner.weight(l);
 
-            // add factor 
-            updEn.axpy( faceQuadInner[l], valEn_  );
+              // add factor 
+              updEn.axpy( faceQuadInner[l], valEn_  );
+            }
+          } // end if boundary
+          
+          if (wspeedS > minLimit_ ) 
+          {
+            double minvolS = std::min(vol,nbvol);
+            dtMin_ = std::min(dtMin_,minvolS/wspeedS);
           }
-        } // end if boundary
-        
-        if (wspeedS > minLimit_ ) 
-        {
-          double minvolS = std::min(vol,nbvol);
-          dtMin_ = std::min(dtMin_,minvolS/wspeedS);
-        }
-      }
+        } // end boundary  
+
+      } // end intersection loop
+
+      // add update to real function 
+      updateFunctionAndApplyMass(en, updEn );
+
+      // this entity is finised by now 
+      visited_[ indexSet_.index( en ) ] = true ;
+    }
+
+    // initialize local update function 
+    template <class LocalFunctionImp>
+    void initLocalFunction(EntityType& en, LocalFunctionImp& update) const 
+    {
+      // init local function  
+      update.init( en );
+      // clear dof values 
+      update.clear();
+    }
+
+    //! add update to destination 
+    template <class LocalFunctionImp>
+    void updateFunction(EntityType& en, 
+                        LocalFunctionImp& update) const 
+    {
+      // get local function and add update 
+      LocalFunctionType function = dest_->localFunction(en);
+      function += update;
+    }
+
+    //! add update to destination 
+    template <class LocalFunctionImp>
+    void updateFunctionAndApplyMass(
+                        EntityType& en, 
+                        LocalFunctionImp& update) const
+    {
+      // get local function and add update 
+      LocalFunctionType function = dest_->localFunction(en);
+      function += update;
+
+      // apply local inverse mass matrix 
+      localMassMatrix_.applyInverse( caller_, en, function );
     }
 
     //////////////////////////////////////////
     // Volumetric integral part only flux 
     //////////////////////////////////////////
-    void evalVolumetricPartFlux(EntityType& en , const Geometry& geo , 
-        LocalFunctionType& updEn , const double massVolElinv ) const
+    template <class LocalFunctionImp>
+    void evalVolumetricPartFlux(EntityType& en, 
+                                const Geometry& geo , 
+                                LocalFunctionImp& updEn) const
     {
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
@@ -371,11 +410,12 @@ namespace Dune {
         caller_.analyticalFlux(en, volQuad, l, fMat_ );
         
         const double intel = geo.integrationElement(volQuad.point(l))
-                             * massVolElinv * volQuad.weight(l);
+                           * volQuad.weight(l);
         
+        // apply integration weights 
         fMat_ *= intel;
 
-        // add fMat 
+        // add values to local function 
         updEn.axpy( volQuad[l], fMat_);
       }
     }
@@ -383,8 +423,10 @@ namespace Dune {
     //////////////////////////////////////////
     // Volumetric integral part only flux 
     //////////////////////////////////////////
-    void evalVolumetricPartBoth(EntityType& en , const Geometry& geo , 
-        LocalFunctionType& updEn , const double massVolElinv ) const
+    template <class LocalFunctionImp>
+    void evalVolumetricPartBoth(EntityType& en, 
+                                const Geometry& geo, 
+                               LocalFunctionImp& updEn) const
     {
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
@@ -394,48 +436,51 @@ namespace Dune {
         caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
         
         const double intel = geo.integrationElement(volQuad.point(l))
-                             * massVolElinv*volQuad.weight(l);
+                           * volQuad.weight(l);
         
+        // apply integration weights 
         source_ *= intel;
         fMat_   *= intel;
         
+        // add values to local function 
         updEn.axpy(volQuad[l],source_,fMat_);
       }
     }
     
-    template <class QuadratureImp>  
+    template <class QuadratureImp, class LocalFunctionImp >  
     double applyLocalNeighbor(IntersectionIteratorType & nit, 
             EntityType & en, EntityType & nb, 
-            const double massVolElinv, 
             const QuadratureImp & faceQuadInner, 
             const QuadratureImp & faceQuadOuter,
-            LocalFunctionType & updEn,
+            LocalFunctionImp & updEn,
+            LocalFunctionImp & updNeigh,
             double & wspeedS) const 
     {
       // make Entity known in caller  
       caller_.setNeighbor(nb);
       
-      // get local function  
-      LocalFunctionType updNeigh = dest_->localFunction(nb);
-
       // get goemetry of neighbor 
       const Geometry & nbGeo = nb.geometry();
 
+      // get neighbors volume 
       const double nbvol = nbGeo.volume(); 
-      assert( refVolMap_.find (  nbGeo.type() ) != refVolMap_.end() );
-      const double massVolNbinv = refVolMap_[ nbGeo.type() ] / nbvol;
       
       const int faceQuadInner_nop = faceQuadInner.nop();
       for (int l = 0; l < faceQuadInner_nop; ++l) 
       {
-        wspeedS += caller_.numericalFlux(nit, faceQuadInner, faceQuadOuter,l, valEn_, valNeigh_)
+        wspeedS += caller_.numericalFlux(nit, 
+                                         faceQuadInner, 
+                                         faceQuadOuter,
+                                         l, 
+                                         valEn_, valNeigh_)
                  * faceQuadInner.weight(l);
         
         // apply weights 
-        valEn_    *= -faceQuadInner.weight(l)*massVolElinv;
-        valNeigh_ *=  faceQuadOuter.weight(l)*massVolNbinv;
+        valEn_    *= -faceQuadInner.weight(l);
+        valNeigh_ *=  faceQuadOuter.weight(l);
         
-        updEn.axpy( faceQuadInner[l], valEn_ );
+        // add values to local functions 
+        updEn.axpy   ( faceQuadInner[l], valEn_ );
         updNeigh.axpy( faceQuadOuter[l], valNeigh_ );
       }
       return nbvol;
@@ -455,9 +500,16 @@ namespace Dune {
 
     const DiscreteFunctionSpaceType& spc_;
     const GridPartType & gridPart_;
-    const LocalIdSetType& localIdSet_;
+    const IndexSetType& indexSet_;
+
+    // indicator for grid walk 
+    mutable MutableArray<bool> visited_;
+
     mutable CommunicationManagerType communicationManager_;
     mutable RefVolumeMapType refVolMap_;
+
+    mutable TemporaryLocalFunctionType updEn_;
+    mutable TemporaryLocalFunctionType updNeigh_;
 
     mutable double dtMin_;
   
@@ -474,6 +526,7 @@ namespace Dune {
     FieldVector<int, 0> diffVar_;
 
     const int volumeQuadOrd_, faceQuadOrd_;
+    LocalMassMatrixType localMassMatrix_;
   };
 //! @}  
 } // end namespace Dune

@@ -318,14 +318,11 @@ namespace Dune {
     LocalFunctionEvaluateQuad(const QuadratureImp& quad,
                               const int quadPoint) :
       quadPoint_( quad[quadPoint] )
-     // quad_(quad),
-     // quadPoint_(quadPoint)
     {}
 
     //! Evaluation of a local function
     template <class LFType, class RangeType>
     void visit(LFType& lf, RangeType& res) {
-      //lf.evaluate(quad_ [quadPoint_] , res);
       lf.evaluate( quadPoint_ , res);
     }
 
@@ -336,8 +333,6 @@ namespace Dune {
 
   private:
     const QuadraturePointWrapperType quadPoint_;
-    //const QuadratureImp& quad_;
-    //const int quadPoint_;
   };
 
   template <class DomainImp>

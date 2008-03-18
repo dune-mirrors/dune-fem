@@ -7,9 +7,9 @@ EXTRA_DIST=dune.module
 #AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
-DIST_SUBDIRS = doc fem lib
+DIST_SUBDIRS = fem lib doc
 if BUILD_DOCS
-SUBDIRS = doc fem lib
+SUBDIRS = fem lib doc
 else
 SUBDIRS = fem lib
 endif

@@ -46,6 +46,9 @@ public:
   //!pass time provider to underlying operator, default implementation
   //! does nothing 
   virtual void timeProvider(TimeProvider* tp) {}
+
+  //! return reference to pass's local memory  
+  virtual const DestinationType* destination() const { return 0; }
 };
 
 //! only for kepping the pointer 
@@ -96,6 +99,13 @@ public:
   { 
     assert( op_ );
     return (*op_); 
+  }
+
+  //! return reference to pass's local memory  
+  const DestinationType* destination() const 
+  {
+    (*op_).allocateLocalMemory();
+    return & ((*op_).destination());
   }
 };
 
@@ -148,6 +158,13 @@ public:
   { 
     assert( op_ );
     (*op_).timeProvider(tp); 
+  }
+
+  //! return reference to pass's local memory  
+  const DestinationType* destination() const 
+  {
+    (*op_).allocateLocalMemory();
+    return & ((*op_).destination());
   }
 };
 

@@ -167,7 +167,11 @@ namespace Dune
     {
       assert( geometry.isCube() || geometry.isSimplex() );
       assert( order >= 0 );
-      return QuadCreator< 0 > :: template provideQuad< PointQuadratureType > ( geometry, order );
+      //return QuadCreator< 0 > :: template provideQuad< PointQuadratureType > ( geometry, order );
+      static PointQuadratureType quad( geometry, 
+                                       order, 
+                                       IdProvider ::instance().newId()); 
+      return quad; 
     }
 
     //! Access to the quadrature implementations.
