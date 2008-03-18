@@ -89,7 +89,13 @@ namespace Dune {
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType :: dimRange };
 
-    //! The polynom order of the base functions
+    //! codimension of space 
+    enum { codimension = Traits :: codimension };
+
+    //! type of entity of this space 
+    typedef typename GridType :: template Codim< codimension > :: Entity  EntityType;
+
+    //! The polynom order of the base functions (deprecated)
     enum { PolOrd = polOrd };
     
     //! The polynom order of the base functions
@@ -123,9 +129,8 @@ namespace Dune {
   public:
     //- Constructors and destructors
     /** \brief Constructor taking grid part */
-    template <class GeometryTypes> 
     explicit DiscontinuousGalerkinSpaceBase( GridPartType &gridPart, 
-                                             const GeometryTypes& allGeomTypes)
+                                             const std::vector<GeometryType>& geomTypes)
     : BaseType( gridPart ),
       mapper_( 0 ),
       blockMapper_( BlockMapperProviderType::getObject(
@@ -134,26 +139,18 @@ namespace Dune {
     {
       int maxNumDofs = -1;
 
-      // for dim = 1 only get basefunctions for codim 0
-      const int codims = ( GridType :: dimension < 2 ) ? 1 : 2;
-      for(int cd=0; cd<codims; ++cd)
+      // create mappers and base sets for all existing geom types
+      for(size_t i=0; i<geomTypes.size(); ++i)
       {
-        // get types for codim 0 and 1   
-        const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(cd);
+        // get geometry type 
+        const GeometryType type = geomTypes[i];
 
-        // create mappers and base sets for all existing geom types
-        for(size_t i=0; i<geomTypes.size(); ++i)
+        if(baseFuncSet_.find( type ) == baseFuncSet_.end())
         {
-          // get geometry type 
-          const GeometryType type = geomTypes[i];
-
-	        if(baseFuncSet_.find( type ) == baseFuncSet_.end())
-          {
-      	    const BaseFunctionSetImp* set = & setBaseFuncSetPointer( type );
-            assert( set );
-            baseFuncSet_[ type ] = set;
-            maxNumDofs = std::max(maxNumDofs,set->numBaseFunctions());
-          }
+          const BaseFunctionSetImp* set = & setBaseFuncSetPointer( type );
+          assert( set );
+          baseFuncSet_[ type ] = set;
+          maxNumDofs = std::max(maxNumDofs,set->numBaseFunctions());
         }
       }
 
@@ -188,37 +185,12 @@ namespace Dune {
       return DGSpace_id;
     }
   
-    //! return reference to base functions set according to the geometry's geometry type 
-    /**\brief return reference to base functions set according to the geometry's geometry type 
-       \param[in] geo
-       \return BasefunctipnSetType
-    */
-    template<class Geometry>
-    const BaseFunctionSetType
-    subBaseFunctionSet (const Geometry & geo) const 
-    {
-      return this->baseFunctionSet(geo);
-    }
-    
-    //! return reference to base functions set according to the geometry's geometry type 
-    /**\brief return reference to base functions set according to the geometry's geometry type 
-       \param[in] type geometry type 
-       \param[in] dummy for function overloading 
-       \return BasefunctipnSetType
-    */
-    const BaseFunctionSetType
-    subBaseFunctionSet (const GeometryType & type, bool dummy ) const 
-    {
-      return this->baseFunctionSet(type);
-    }
-    
     /**\brief return reference to base functions set according to the entity's geometry type 
        \param[in] en entity type 
        \return BaseFunctionSetType
     */
-    template <class Entity>
     const BaseFunctionSetType
-    baseFunctionSet (const Entity& en) const 
+    baseFunctionSet (const EntityType & en) const 
     {
       return this->baseFunctionSet(en.geometry().type());
     }
@@ -231,8 +203,6 @@ namespace Dune {
     const BaseFunctionSetType
     baseFunctionSet (const GeometryType geomType) const 
     {
-      //assert(baseFuncSet_.find( geomType ) != baseFuncSet_.end());
-      //return *baseFuncSet_[geomType];
       assert(baseFuncSet_.find( geomType ) != baseFuncSet_.end());
       return BaseFunctionSetType(baseFuncSet_[geomType]);
     }
@@ -240,7 +210,7 @@ namespace Dune {
     /** @copydoc DiscreteFunctionSpaceInterface::contains */
     bool contains (const int codim) const
     {
-      return (codim == 0);
+      return (codim == codimension);
     }
   
     /** @copydoc DiscreteFunctionSpaceInterface::continuous */
@@ -324,17 +294,20 @@ namespace Dune {
 
   //! Traits class for DiscontinuousGalerkinSpace
   template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp>
-  struct DiscontinuousGalerkinSpaceTraits {
+  struct DiscontinuousGalerkinSpaceTraits 
+  {
     enum { polynomialOrder = polOrd };
     typedef FunctionSpaceImp FunctionSpaceType;
     typedef GridPartImp GridPartType;
-
     typedef typename GridPartType::GridType GridType;
-    typedef typename GridPartType::IndexSetType IndexSetType;
-    typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
 
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
+    enum { codimension = GridType :: dimension - DimDomain }; 
+
+    typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
+
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -417,7 +390,10 @@ namespace Dune {
     //! Dimension of the domain vector field
     enum { dimDomain = Traits::FunctionSpaceType::dimDomain };
 
-    //! The polynom order of the base functions
+    //! codimension of space 
+    enum { codimension = Traits :: codimension };
+
+    //! The polynom order of the base functions (deprecated)
     enum { PolOrd = polOrd };
     
     //! The polynom order of the base functions
@@ -454,7 +430,7 @@ namespace Dune {
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
-      DiscontinuousGalerkinSpaceBase <Traits> (gridPart, GeometryTypes(gridPart.indexSet()))
+      DiscontinuousGalerkinSpaceBase <Traits> (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes(codimension) )
     {}
 
     /** \brief ! get object from singleton list 
@@ -484,11 +460,13 @@ namespace Dune {
     enum { polynomialOrder = polOrd };
 
     typedef typename GridPartType::GridType GridType;
-    typedef typename GridPartType::IndexSetType IndexSetType;
-    typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
-
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
+    enum { codimension = GridType :: dimension - DimDomain }; 
+
+    typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
+
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -565,7 +543,6 @@ namespace Dune {
     typedef typename Traits::IteratorType IteratorType;
     //! Grid type
     typedef typename Traits::GridType GridType;
-    typedef typename GridType :: template Codim<0> :: Entity EntityCodim0Type; 
     //! Index set of space
     typedef typename Traits::IndexSetType IndexSetType;
 
@@ -576,7 +553,10 @@ namespace Dune {
     enum { dimRange  = Traits::FunctionSpaceType::dimRange };
     enum { dimDomain = Traits::FunctionSpaceType::dimDomain };
 
-    //! The polynom order of the base functions
+    //! codimension of space 
+    enum { codimension = Traits :: codimension };
+
+    //! The polynom order of the base functions (deprecated)
     enum { PolOrd = polOrd };
     
     //! The polynom order of the base functions
@@ -604,7 +584,7 @@ namespace Dune {
     //- Constructors and destructors
     /** Constructor */
     LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart) :
-      DiscontinuousGalerkinSpaceBase<Traits> (gridPart,gridPart.indexSet()) 
+      DiscontinuousGalerkinSpaceBase<Traits> (gridPart, gridPart.indexSet().geomTypes(codimension) ) 
     {
     }
 
