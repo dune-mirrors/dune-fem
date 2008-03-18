@@ -378,50 +378,89 @@ namespace Dune
 
 
 
-  template< class ElementImp, unsigned int arraysize >
-  class StandardArray
-  : public ArrayDefault< ElementImp, StandardArray< ElementImp, arraysize > >
+  /** \class FixedSizeArray
+   *  \ingroup VectorClasses
+   *  \brief standard array with fixed size
+   *
+   *  This array's size is a compile time constant. Hence, the memory needed
+   *  to store the array elements can be provided within the object. There
+   *  is no need to allocate it dynamically.
+   *
+   *  Basically, FixedSizeArray is just a standard C++ array. It's strength
+   *  lies in the following two properties:
+   *  - It can be passed by value or reference. A standard C++ array is always
+   *    passed as a pointer.
+   *  - It satisfies the array interface. It can be used whenever this
+   *    interface is explicitly required.
+   *  .
+   *
+   *  \param  Element  type of the array elements (must be default
+   *                   constructable)
+   *  \param  Size     number of elements in the array
+   */
+  template< class Element, unsigned int Size >
+  class FixedSizeArray
+  : public ArrayDefault< Element, FixedSizeArray< Element, Size > >
   {
-  public:
-    typedef ElementImp ElementType;
+    typedef FixedSizeArray< Element, Size > ThisType;
+    typedef ArrayDefault< Element, ThisType > BaseType;
 
-  private:
-    typedef StandardArray< ElementType, arraysize > ThisType;
-    typedef ArrayDefault< ElementType, ThisType > BaseType;
+  public:
+    //! type of the array elements
+    typedef Element ElementType;
+
+    //! compile time constant size of the array
+    static const unsigned int fixedSize = Size;
 
   protected:
-    ElementType elements_[ arraysize ];
+    ElementType elements_[ fixedSize ];
 
   public:
-    inline StandardArray ()
-    {
-    }
+    /** \brief default constructor
+     *  
+     *  The array elements are not initialized with this constructor
+     */
+    inline FixedSizeArray ()
+    {}
 
-    inline explicit StandardArray ( const ElementType &element )
+    /** \brief initializing constructor
+     *
+     *  Initializes the entire array with a default value
+     *
+     *  \param[in]  element  default value
+     */
+    inline explicit FixedSizeArray ( const ElementType &element )
     {
       assign( element );
     }
 
-    inline StandardArray ( const ThisType &other )
+    /** \brief copy constructor
+     *
+     *  \param[in]  other  array to copy
+     */
+    inline FixedSizeArray ( const ThisType &other )
     {
       assign( other );
     }
-   
+  
+    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) const */
     inline const ElementType &operator[] ( unsigned int index ) const
     {
-      assert( index < arraysize );
+      assert( index < fixedSize );
       return elements_[ index ];
     }
 
+    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) */
     inline ElementType &operator[] ( unsigned int index )
     {
-      assert( index < arraysize );
+      assert( index < fixedSize );
       return elements_[ index ];
     }
 
+    /** \copydoc Dune::ArrayInterface::size() const */
     inline unsigned int size () const
     {
-      return arraysize;
+      return fixedSize;
     }
   };
 
