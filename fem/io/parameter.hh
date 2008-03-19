@@ -591,7 +591,6 @@ namespace Dune
      */
     inline static void write ( const std :: string &filename )
     {
-      typedef std :: map< std :: string, std :: string > :: iterator iterator;
 
       std :: string fullname( prefix() );
       fullname += "/";
@@ -603,12 +602,24 @@ namespace Dune
         std :: cerr << "Warning: Unable to write parameter file '"
                     << filename << "'" << std :: endl;
       }
+      write(file);
+      file.close();
+    }
 
+    /** \brief write the parameter database to a stream
+     *
+     *  This method writes all paramters in the database to the given
+     *  stream.
+     *
+     *  \param[in]  out stream for the parameters.
+     */
+    inline static void write ( std :: ostream &out )
+    {
+      typedef std :: map< std :: string, std :: string > :: iterator iterator;
       const iterator end = instance().params_.end();
       for( iterator it = instance().params_.begin(); it != end; ++it )
-        file << it->first << ": " << it->second << std :: endl;
+        out << it->first << ": " << it->second << std :: endl;
 
-      file.close();
     }
   };
   
