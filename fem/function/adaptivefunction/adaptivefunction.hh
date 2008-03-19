@@ -212,7 +212,7 @@ namespace Dune
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DiscreteFunctionType &g) */ 
+    /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DFType &g) */ 
     inline BaseType &operator-= ( const ThisType &g )
     {
       Imp::substractFunction(g);
@@ -393,7 +393,7 @@ namespace Dune
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DiscreteFunctionType &g) */
+    /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DFType &g) */
     inline ThisType &operator-= ( const ThisType &g )
     {
       Imp::substractFunction(g);
