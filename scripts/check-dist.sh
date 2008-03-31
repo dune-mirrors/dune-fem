@@ -53,8 +53,14 @@ TESTDIR=`mktemp -d -p $WORKINGDIR dune-tmp-XXXXXX`
 
 do_configure()
 {
-  $DUNECONTROL --opts=$OPTSDIR/$OPTS all 2>&1 | dd conv=notrunc \
-    > $CONFIGLOG 2>/dev/null
+  local check=`mktemp -p $WORKINGDIR check.XXXXXX`
+  {
+    $DUNECONTROL --opts=$OPTSDIR/$OPTS all
+    echo $? > $check
+  } 2>&1 | dd conv=notrunc > $CONFIGLOG 2>/dev/null
+  local return_value=`cat $check`
+  rm $check
+  return $return_value
 }
 
 errors=0

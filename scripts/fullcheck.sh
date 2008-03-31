@@ -53,8 +53,14 @@ fi
 
 minimal_configure()
 {
-  $DUNECONTROL --opts=$MINIMALOPTS all 2>&1 | dd conv=notrunc \
-    > $WORKINGDIR/minimal-svn-conf.out 2>/dev/null
+  local check=`mktemp -p $WORKINGDIR check.XXXXXX`
+  {
+    $DUNECONTROL --opts=$MINIMALOPTS all
+    echo $? > $check
+  } 2>&1 | dd conv=notrunc > $WORKINGDIR/minimal-svn-conf.out 2>/dev/null
+  local return_value=`cat $check`
+  rm $check
+  return $return_value
 }
 
 echo
