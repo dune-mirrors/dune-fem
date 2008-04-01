@@ -77,24 +77,41 @@ namespace Dune {
     //! \brief type of EntityPointer with codim=0 
     typedef typename FilterTraits::EntityPointerCodim0Type EntityPointerCodim0Type;
       
+    //! returns true if the given entity of the pointer in the domain 
     inline bool has0Entity(EntityCodim0Type & e) const {
       CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entity(e)));
       return asImp().has0Entity(e);
     }
+    
+    //! returns true if the given entity is in the domain 
     inline bool has0Entity(EntityPointerCodim0Type & e) const {
       CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entity(e)));
       return asImp().has0Entity(e);
     }
+    
+    //! returns true if an intersection is interior 
+    //! (allows boundarys within a given domain)
+    template<class IntersectionIteratorType>
+    inline bool interiorIntersection(const IntersectionIteratorType & it) const {
+      CHECK_INTERFACE_IMPLEMENTATION((asImp().interiorIntersection(it)));
+      return asImp().interiorIntersection(it);
+    }
+
+    //! returns true if an intersection is a boundary intersection 
     template<class IntersectionIteratorType>
     inline bool intersectionBoundary(IntersectionIteratorType & it) const {
       CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionBoundary<IntersectionIteratorType>(it)));
       return asImp().intersectionBoundary<IntersectionIteratorType>(it);
     }
+    
+    //! returns the boundary id for an intersection 
     template<class IntersectionIteratorType>
     inline int intersectionBoundaryId(IntersectionIteratorType & it) const {
       CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionBoundaryId<IntersectionIteratorType>(it)));
       return asImp().intersectionBoundaryId<IntersectionIteratorType>(it);
     }
+
+    //! returns true if for an intersection a neighbor exsits 
     template<class IntersectionIteratorType>
     inline bool intersectionNeighbor(IntersectionIteratorType & it) const {
       CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionNeighbor<IntersectionIteratorType>(it)));
@@ -138,6 +155,13 @@ namespace Dune {
     //! \brief type of original grid part 
     typedef typename FilterTraits::GridPartType GridPartType;
       
+    //! default implementation returns hasEntity0 from neighbor
+    template<class IntersectionIteratorType>
+    inline bool interiorIntersection(IntersectionIteratorType & it) const 
+    {
+      return asImp().has0Entity( it.outside() );
+    }
+
     //! \brief default createObject method calling FilterType(gridPart) 
     inline static FilterType createObject(const GridPartType& gridPart)
     {
@@ -470,32 +494,27 @@ namespace Dune {
         {
           if (IteratorType::neighbor()) 
           { 
-            EntityPointerCodim0Type neigh = this->outside();
             // if hasEnttiy then this is an inside entity 
-            if (filter_.has0Entity(neigh)) 
+            if ( filter_.interiorIntersection( asBase() ) )
             {
-              nInfo.boundary_ = false;
+              nInfo.boundary_   = false;
               nInfo.boundaryId_ = 0;
-              nInfo.neighbor_ = true;
+              nInfo.neighbor_   = true;
             }
             else 
             {
               // otherwise get boundary information from filter 
-              nInfo.boundary_ =
-                filter_.intersectionBoundary(static_cast<IteratorType &>(*this));
-              nInfo.boundaryId_ =
-                filter_.intersectionBoundaryId(static_cast<IteratorType &>(*this));
-              nInfo.neighbor_ =
-                filter_.intersectionNeighbor(static_cast<IteratorType &>(*this));
+              nInfo.boundary_   = filter_.intersectionBoundary( asBase() );
+              nInfo.boundaryId_ = filter_.intersectionBoundaryId( asBase() );
+              nInfo.neighbor_   = filter_.intersectionNeighbor( asBase() );
             }
           }
           else 
           {
             // for real boundary get boundary from filter 
-            nInfo.boundary_ = true;
-            nInfo.boundaryId_ =
-              filter_.intersectionBoundaryId(static_cast<IteratorType &>(*this));
-            nInfo.neighbor_ = false;
+            nInfo.boundary_   = true;
+            nInfo.boundaryId_ = filter_.intersectionBoundaryId( asBase() );
+            nInfo.neighbor_   = false;
           }    
         }
     
@@ -520,6 +539,9 @@ namespace Dune {
         inline bool neighbor() const { return nInfo.neighbor_; }
 
       protected:
+        //! return reference to base class 
+        IteratorType & asBase() { return static_cast<IteratorType &>(*this); }
+        
         const GridPartType * gridPart_;        
         const FilterType & filter_;
         const IteratorType endIter_;        

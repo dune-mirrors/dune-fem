@@ -347,10 +347,10 @@ namespace LDGExample {
 #if USE_DUNE_ISTL                                
       typedef ISTLMatrixTraits<DiscreteFunctionSpaceType> MatrixObjectTraits;
 #else 
-      //typedef SparseRowMatrixObject<DiscreteFunctionSpaceType,
-      //                              DiscreteFunctionSpaceType> MatrixObjectType; 
-      typedef BlockMatrixObject<DiscreteFunctionSpaceType,
-                                DiscreteFunctionSpaceType> MatrixObjectType; 
+      //typedef SparseRowMatrixTraits<DiscreteFunctionSpaceType,
+      //                              DiscreteFunctionSpaceType> MatrixObjectTraits; 
+      typedef BlockMatrixTraits<DiscreteFunctionSpaceType,
+                                DiscreteFunctionSpaceType> MatrixObjectTraits; 
 #endif
       typedef DGPrimalOperator<ThisType,PreviousPassType,
                 ElliptPrevPassType, MatrixObjectTraits> LocalOperatorType;
