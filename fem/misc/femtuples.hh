@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_TUPLES_HH
 #define DUNE_FEM_TUPLES_HH
 
+#include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
 
 #if HAVE_TUPLE || HAVE_TR1_TUPLE
@@ -534,7 +535,7 @@ namespace Dune{
   template<typename T1, typename U1>
   inline bool operator!=(const Pair<T1,Nil>& Tuple1, const Pair<U1,Nil>& Tuple2)
   {
-    IsTrue<IsInteroperable<T1,U1>::value>::yes();
+    dune_static_assert( (IsInteroperable< T1, U1 > :: value), "error" );
     return (Tuple1.first()!=Tuple2.first());
   }
 
