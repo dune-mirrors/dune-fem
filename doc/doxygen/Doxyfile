@@ -17,12 +17,14 @@
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
+# PROJECT_NAME is set automatically for dune.module
 #PROJECT_NAME           = dune-fem
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
+# PROJECt_NUMBER is set automatically from dune.module
 #PROJECT_NUMBER         = 0.9
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
@@ -994,7 +996,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-PREDEFINED             = DOXYGEN HAVE_MPI:=1
+PREDEFINED             = DOXYGEN HAVE_MPI:=1 DUNE_DEPRECATED:="/** \deprecated */"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 
