@@ -7,9 +7,6 @@
 #include <string>
 #include <list>
 
-//- Dune includes 
-#include <dune/common/dlist.hh>
-
 namespace Dune
 {
 
@@ -56,8 +53,8 @@ namespace Dune
     typedef std :: pair< KeyType, ValueType > ListObjType;
 
   private:
-    typedef DoubleLinkedList< ListObjType > ListType;
-    typedef typename ListType :: Iterator ListIteratorType;
+    typedef std :: list< ListObjType > ListType;
+    typedef typename ListType :: iterator ListIteratorType;
 
     class SingletonListStorage;
 
@@ -99,7 +96,7 @@ namespace Dune
       assert( object );
       ValueType value( object, new unsigned int( 1 ) );
       ListObjType tmp( key, value ); 
-      singletonList().insert_after( singletonList().rbegin(), tmp );
+      singletonList().push_back( tmp );
       return *object;
     } 
 
@@ -171,17 +168,13 @@ namespace Dune
 
   public:  
     inline SingletonListStorage ()
+    : singletonList_()
     {}
     
     inline ~SingletonListStorage ()
-    { 
-      const ListIteratorType end = singletonList().rend();
-      ListIteratorType it = singletonList().rbegin(); 
-      while( it != end )
-      {
-        deleteItem( it );
-        it = singletonList().rbegin();
-      }
+    {
+      while( !singletonList().empty() )
+        deleteItem( singletonList().begin() );
     }
 
     ListType &singletonList ()
