@@ -182,7 +182,7 @@ namespace Dune
       return singletonList_;
     }
 
-    void deleteItem ( ListIteratorType &it )
+    void deleteItem ( const ListIteratorType &it )
     {
       ValueType val = (*it).second; 
       // remove from list
