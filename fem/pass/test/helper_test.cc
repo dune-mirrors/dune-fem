@@ -88,14 +88,14 @@ namespace Dune {
     //LocalFunctionCreator<DFPairType> lfc(dft);
     //   LFTupleType lft = lfc.evaluate();
 
-    const bool sameLf = SameType<LFPairType, LFTupleType>::value;
+    const bool sameLf = is_same<LFPairType, LFTupleType>::value;
     _test(sameLf == true);
 
     RTupleType rt = Creator<RangeTypeEvaluator, LFPairType>::apply(lft);
     //RangeVectorCreator<LFPairType> rc(lft);
     //RTupleType rt = rc.evaluate();
 
-    const bool sameR = SameType<RPairType, RTupleType>::value;
+    const bool sameR = is_same<RPairType, RTupleType>::value;
     _test(sameR == true);
   }
 

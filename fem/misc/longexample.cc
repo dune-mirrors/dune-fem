@@ -112,7 +112,7 @@ struct CombGlobalInter : public PairOfInterfaces<T1,T2> {
   CombGlobalInter(T1 t1,T2 t2) : PairOfInterfaces<T1,T2>(t1,t2),
     local_(t1.reflocal(),t2.reflocal()) {
     // same type?
-    IsTrue<SameType<GType,G2Type>::value>::yes();
+    IsTrue<is_same<GType,G2Type>::value>::yes();
     // same reference?
     // if (&(t1.g())!=&(t2.g())) abort();
   }
