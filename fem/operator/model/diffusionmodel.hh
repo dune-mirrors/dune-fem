@@ -4,10 +4,6 @@
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/operator/common/mapping.hh>
 
-#ifndef DUNE_FEM_COMPATIBILITY
-#define DUNE_FEM_COMPATIBILITY 1
-#endif
-
 namespace Dune
 {
 
@@ -101,28 +97,6 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().diffusiveFlux( entity, x, gradient, flux ) );
     }
-
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a quadrature
-     *         point
-     *
-     *  \param[in]  entity      entity to evaluate the flux on
-     *  \param[in]  quadrature  quadrature to use
-     *  \param[in]  quadPoint   number of the point within the quadrature
-     *  \param[in]  gradient    \f$\nabla u\f$ in the evaluation point
-     *  \param[out] flux        variable to receive the evaluated flux
-     */
-    template< class EntityType, class QuadratureType >
-    inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                const int quadPoint,
-                                const JacobianRangeType &gradient,
-                                JacobianRangeType &flux ) const
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().diffusiveFlux( entity, quadrature, quadPoint, gradient, flux ) );
-    }
-#endif
   };
 
 
@@ -181,25 +155,6 @@ namespace Dune
       FieldVector< deriType, 0 > diffVar;
       asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
     }
-
-#if DUNE_FEM_COMPATIBILITY
-    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
-     *
-     *  The default implementation calls
-     *  \code
-     *  diffusiveFlux( entity, quadrature[ quadpoint ], gradient, flux );
-     *  \endcode
-     */
-    template< class EntityType, class QuadratureType >
-    inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                const int quadPoint,
-                                const JacobianRangeType &gradient,
-                                JacobianRangeType &flux ) const
-    {
-      asImp().diffusiveFlux( entity, quadrature[ quadPoint ], gradient, flux );
-    }
-#endif
   };
 
 }

@@ -48,13 +48,6 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-#if DUNE_FEM_COMPATIBILITY
-    using BaseType :: evaluate;
-    using BaseType :: jacobian;
-    using BaseType :: evaluateSingle;
-    using BaseType :: evaluateGradientSingle;
-#endif
-
   protected:
     // base function set 
     const BaseFunctionSetImp *baseSet_; 
@@ -234,19 +227,6 @@ namespace Dune
       baseFunctionSet().evaluateScalar( baseFunction, diffVariable, x, phi );
     }
   
-#if DUNE_FEM_COMPATIBILITY
-    template< int diffOrd, class QuadratureType >
-    inline void evaluateScalar ( const int baseFunction,
-                                 const FieldVector< int, diffOrd > &diffVariable,
-                                 const QuadratureType &quadrature,
-                                 const int quadPoint,
-                                 ScalarRangeType &phi ) const
-    {
-      baseFunctionSet().evaluateScalar
-        ( baseFunction, diffVariable, quadrature[ quadPoint ], phi );
-    }
-#endif
-   
     template< class PointType >
     inline void evaluateScalar ( const int baseFunction,
                                  const PointType &x,
@@ -255,17 +235,6 @@ namespace Dune
       baseFunctionSet().evaluateScalar( baseFunction, x, phi );
     }
 
-#if DUNE_FEM_COMPATIBILITY
-    template< class QuadratureType >
-    inline void evaluateScalar ( const int baseFunction,
-                                 const QuadratureType &quadrature,
-                                 const int quadPoint,
-                                 ScalarRangeType &phi ) const
-    {
-      baseFunctionSet().evaluateScalar( baseFunction, quadrature[ quadPoint ], phi );
-    }
-#endif
-
     template< class PointType >
     inline void jacobianScalar ( const int baseFunction,
                                  const PointType &x,
@@ -273,17 +242,6 @@ namespace Dune
     {
       baseFunctionSet().jacobianScalar( baseFunction, x, gradPhi );
     }
-
-#if DUNE_FEM_COMPATIBILITY
-    template< class QuadratureType >
-    inline void jacobianScalar ( const int baseFunction,
-                                 const QuadratureType &quadrature,
-                                 const int quadPoint,
-                                 ScalarJacobianRangeType &phi ) const
-    {
-      baseFunctionSet().jacobianScalar( baseFunction, quadrature[ quadPoint ], phi );
-    }
-#endif
   };
 
   /** \} */

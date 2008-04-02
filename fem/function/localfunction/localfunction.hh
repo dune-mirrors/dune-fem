@@ -190,30 +190,6 @@ namespace Dune
       asImp().axpy( x, factor );
     }
   
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief axpy operation for local function
-     *
-     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
-     *  functions by \f$\varphi_i\f$, this function performs the following
-     *  operation:
-     *  \f[
-     *  u_i = u_i + factor \cdot \varphi_i( x )
-     *  \f]
-     *
-     *  \param[in]  quadrature  quadrature to use
-     *  \param[in]  quadPoint   number of the quadrature point wihin the
-     *                          quadrature
-     *  \param[in]  factor      axpy factor
-     */
-    template< class QuadratureType >
-    inline void axpy ( const QuadratureType &quadrature,
-                       const int quadPoint, 
-                       const RangeType &factor )
-    {
-      asImp().axpy( quadrature[ quadPoint ], factor );
-    }
-#endif
-    
     /** \brief axpy operation for local function
      *
      *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
@@ -233,30 +209,6 @@ namespace Dune
       asImp().axpy( x, factor );
     }
 
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief axpy operation for local function
-     *
-     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
-     *  functions by \f$\varphi_i\f$, this function performs the following
-     *  operation:
-     *  \f[
-     *  u_i = u_i + factor \cdot \nabla\varphi_i( x )
-     *  \f]
-     *
-     *  \param[in]  quadrature  quadrature to use
-     *  \param[in]  quadPoint   number of the quadrature point wihin the
-     *                          quadrature
-     *  \param[in]  factor      axpy factor
-     */
-    template< class QuadratureType >
-    inline void axpy ( const QuadratureType &quadrature,
-                       const int quadPoint, 
-                       const JacobianRangeType &factor)
-    {
-      asImp().axpy( quadrature[ quadPoint ], factor );
-    }
-#endif
-    
     /** \brief axpy operation for local function
      *
      *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
@@ -277,32 +229,6 @@ namespace Dune
     {
       asImp().axpy( x, factor1, factor2 );
     }
-   
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief axpy operation for local function
-     *
-     *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
-     *  functions by \f$\varphi_i\f$, this function performs the following
-     *  operation:
-     *  \f[
-     *  u_i = u_i + factor1 \cdot \varphi_i( x ) + factor2 \cdot \nabla\varphi_i( x )
-     *  \f]
-     *
-     *  \param[in]  quadrature  quadrature to use
-     *  \param[in]  quadPoint   number of the quadrature point wihin the
-     *                          quadrature
-     *  \param[in]  factor1     axpy factor for \f$\varphi( x )\f$
-     *  \param[in]  factor2     axpy factor for \f$\nabla\varphi( x )\f$
-     */
-    template< class QuadratureType >
-    inline void axpy ( const QuadratureType &quadrature,
-                       const int quadPoint,
-                       const RangeType &factor1,
-                       const JacobianRangeType &factor2 )
-    {
-      asImp().axpy( quadrature[ quadPoint ], factor1, factor2 );
-    }
-#endif
 
     /** \brief obtain the base function set for this local function
      *
@@ -349,23 +275,6 @@ namespace Dune
       asImp().evaluate( x, ret );
     }
 
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief evaluate the local function in a quadrature point
-     *
-     *  \param[in]   quadrature  quadrature to use
-     *  \param[in]   quadPoint   number of the quadrature point within the
-     *                           quadrature
-     *  \param[out]  ret         value of the function in the quadrature point
-     */
-    template< class QuadratureType >
-    inline void evaluate ( const QuadratureType &quadrature,
-                           const int quadPoint, 
-                           RangeType &ret ) const
-    {
-      asImp().evaluate( quadrature[ quadPoint ], ret );
-    }
-#endif
-
     inline void init ( const EntityType &entity )
     {
       asImp().init( entity );
@@ -386,26 +295,6 @@ namespace Dune
       asImp().jacobian( x, ret );
     }
 
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief evaluate Jacobian of the local function in a quadrature point
-     *
-     *  \note Though the Jacobian is evaluated on the reference element, the
-     *        return value is the Jacobian with respect to the actual entity.
-     *
-     *  \param[in]   quadrature  quadrature to use
-     *  \param[in]   quadPoint   number of the quadrature point within the
-     *                           quadrature
-     *  \param[out]  ret         Jacobian of the function in the quadrature point
-     */
-    template< class QuadratureType >
-    void jacobian ( const QuadratureType &quadrature,
-                    const int quadPoint,
-                    JacobianRangeType &ret ) const
-    {
-      asImp().jacobian( quadrature[ quadPoint ], ret );
-    }
-#endif
-   
     /** \brief obtain the number of local DoFs
      *
      *  Obtain the number of local DoFs of this local function. The value is

@@ -115,28 +115,6 @@ namespace Dune
         ( asImp().convectiveFlux( entity, x, phi, flux ) );
     }
    
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief evaluate the convective flux in a quadrature point
-     *
-     *  \param[in]   entity      entity to evaluate the flux on
-     *  \param[in]   quadrature  quadrature to use
-     *  \param[in]   quadPoint   number of the point within the quadrature
-     *  \param[in]   phi         value of the solution in the evaluation point
-     *  \param[out]  flux        variable to receive the evaluated flux
-     */
-    template< class EntityType, class QuadratureType >
-    inline void convectiveFlux ( const EntityType &entity,
-                                 const QuadratureType &quadrature,
-                                 const int quadPoint,
-                                 const RangeType &phi,
-                                 JacobianRangeType &flux ) const
-    {
-      assert( Properties :: hasConvectiveFlux );
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().convectiveFlux( entity, quadrature, quadPoint, phi, flux ) );
-    }
-#endif
-    
     /** \brief evaluate the mass in a point
      *
      *  \param[in]   entity      entity to evaluate the mass on
@@ -153,26 +131,6 @@ namespace Dune
         ( asImp().mass( entity, x, ret ) );
     }
 
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief evaluate the mass in a quadrature point
-     *
-     *  \param[in]   entity      entity to evaluate the mass on
-     *  \param[in]   quadrature  quadrature to use
-     *  \param[in]   quadPoint   number of the point within the quadrature
-     *  \param[out]  ret         variable to receive the evaluated mass
-     */
-    template< class EntityType, class QuadratureType >
-    inline void mass ( const EntityType &entity,
-                       const QuadratureType &quadrature,
-                       const int quadPoint,
-                       RangeType &ret ) const
-    {
-      assert( Properties :: hasMass );
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().mass( entity, quadrature, quadPoint, ret ) );
-    }
-#endif
-    
     /** \brief evaluate the source in a point
      *
      *  \param[in]   entity      entity to evaluate the source on
@@ -188,39 +146,6 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().source( entity, x, ret ) );
     }
-
-#if DUNE_FEM_COMPATIBILITY
-    /** \brief evaluate the source in a quadrature point
-     *
-     *  \param[in]   entity      entity to evaluate the source on
-     *  \param[in]   quadrature  quadrature to use
-     *  \param[in]   quadPoint   number of the point within the quadrature
-     *  \param[out]  ret         variable to receive the evaluated source
-     */
-    template< class EntityType, class QuadratureType >
-    inline void source ( const EntityType &entity,
-                         const QuadratureType &quadrature,
-                         const int quadPoint,
-                         RangeType &ret ) const
-    {
-      assert( Properties :: hasSource );
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().source( entity, quadrature, quadPoint, ret ) );
-    }
-#endif
-
-#if 0
-  protected:
-    inline const LinearEllipticModelImp &asImp () const
-    {
-      return static_cast< const LinearEllipticModelImp & >( *this );
-    }
-
-    inline LinearEllipticModelImp &asImp ()
-    {
-      return static_cast< LinearEllipticModelImp & >( *this );
-    }
-#endif
   };
 
 
@@ -326,25 +251,6 @@ namespace Dune
       asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
     }
    
-#if DUNE_FEM_COMPATIBILITY
-    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const JacobianRangeType &gradient,JacobianRangeType &flux) const
-     *
-     *  The default implementation calls
-     *  \code
-     *  diffusiveFlux( entity, quadrature[ quadpoint ], gradient, flux );
-     *  \endcode
-     */
-    template< class EntityType, class QuadratureType >
-    inline void diffusiveFlux ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                const int quadPoint,
-                                const JacobianRangeType &gradient,
-                                JacobianRangeType &flux ) const
-    {
-      asImp().diffusiveFlux( entity, quadrature[ quadPoint ], gradient, flux );
-    }
-#endif
-
     /** \copydoc Dune::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const PointType &x,const RangeType &phi,JacobianRangeType &flux) const
      *
      *  The default implementation returns 0.
@@ -359,25 +265,6 @@ namespace Dune
       flux = 0;
     }
 
-#if DUNE_FEM_COMPATIBILITY
-    /** \copydoc Dune::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,const RangeType &phi,JacobianRangeType &flux) const
-     *
-     *  The default implementation calls
-     *  \code
-     *  convectiveFlux( entity, quadrature[ quadPoint ], phi, ret );
-     *  \endcode
-     */
-    template< class EntityType, class QuadratureType >
-    inline void convectiveFlux ( const EntityType &entity,
-                                 const QuadratureType &quadrature,
-                                 const int quadPoint,
-                                 const RangeType &phi,
-                                 JacobianRangeType &flux ) const
-    {
-      asImp().convectiveFlux( entity, quadrature[ quadPoint ], phi, flux );
-    }
-#endif
-
     /** \copydoc Dune::LinearEllipticModelInterface::mass(const EntityType &entity,const PointType &x,RangeType &ret) const
      *
      *  The default implementation returns 0.
@@ -391,24 +278,6 @@ namespace Dune
       ret = 0;
     }
 
-#if DUNE_FEM_COMPATIBILITY
-    /** \copydoc Dune::LinearEllipticModelInterface::mass(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
-     *
-     *  The default implementation calls
-     *  \code
-     *  mass( entity, quadrature[ quadPoint ], ret );
-     *  \endcode
-     */
-    template< class EntityType, class QuadratureType >
-    inline void mass ( const EntityType &entity,
-                       const QuadratureType &quadrature,
-                       const int quadPoint,
-                       RangeType &ret ) const
-    {
-      asImp().mass( entity, quadrature[ quadPoint ], ret );
-    }
-#endif
-    
     /** \copydoc Dune::LinearEllipticModelInterface::source(const EntityType &entity,const PointType &x,RangeType &ret) const
      *
      *  The default implementation returns 0.
@@ -421,24 +290,6 @@ namespace Dune
       assert( Properties :: hasSource );
       ret = 0;
     }
-   
-#if DUNE_FEM_COMPATIBILITY
-    /** \copydoc Dune::LinearEllipticModelInterface::source(const EntityType &entity,const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const
-     *
-     *  The default implementation calls
-     *  \code
-     *  source( entity, quadrature[ quadPoint ], ret );
-     *  \endcode
-     */
-    template< class EntityType, class QuadratureType >
-    inline void source ( const EntityType &entity,
-                         const QuadratureType &quadrature,
-                         const int quadPoint,
-                         RangeType &ret ) const
-    {
-      asImp().source( entity, quadrature[ quadPoint ], ret );
-    }
-#endif
   };
 
 }
