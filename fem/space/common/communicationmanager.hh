@@ -11,7 +11,13 @@
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/fem/space/common/commoperations.hh>
 
-#if HAVE_ALUGRID && ALU3DGRID_PARALLEL 
+// include ALUGrid to check whether the 
+// parallel version is avaiable 
+#if HAVE_ALUGRID 
+#include <dune/grid/alugrid.hh>
+#endif
+
+#if ALU3DGRID_PARALLEL 
 #define USE_CACHED_COMM_MANAGER 
 #else 
 #ifndef NDEBUG 

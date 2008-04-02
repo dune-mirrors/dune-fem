@@ -11,22 +11,22 @@ namespace Dune {
 
 /////////////////////////////////////////////////////////////////////////
 //
-//  --AdaptiveLeafIndexGridPart 
+//  --IdBasedLeafGridPart 
 //
 /////////////////////////////////////////////////////////////////////////
 
 // forward deklaration of grid part 
 template <class GridImp,PartitionIteratorType pitype>
-struct DefaultAdaptiveLeafGridPart;
+struct IdBasedLeafGridPart;
 template <class GridImp>
 struct DefaultAdaptiveLeafIndexSet;
 
 //! Type definitions for the LeafGridPart class
 template <class GridImp,PartitionIteratorType pitype>
-struct DefaultAdaptiveLeafGridPartTraits {
+struct IdBasedLeafGridPartTraits {
   typedef GridImp GridType;
-  typedef DefaultAdaptiveLeafGridPart<GridImp,pitype> GridPartType;
-  typedef DefaultAdaptiveLeafIndexSet<GridImp> IndexSetType;
+  typedef IdBasedLeafGridPart<GridImp,pitype> GridPartType;
+  typedef IdBasedLeafIndexSet<GridImp> IndexSetType;
 
   typedef typename GridType::template Codim<0>::Entity::
     LeafIntersectionIterator IntersectionIteratorType;
@@ -35,20 +35,33 @@ struct DefaultAdaptiveLeafGridPartTraits {
   struct Codim {
     typedef typename GridImp::template Codim<cd>::template Partition<pitype>::LeafIterator IteratorType;
   };
+
+  //! \brief is true if grid on this view only has conformingi intersections 
+  enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
 };
 
-/** \brief GridPart for AdaptiveLeafIndexSet. Used underlying index set is
-    singleton for each grid object.   
-*/
+/** @ingroup AdaptiveLeafGP
+    \brief IdBasedLeafGridPart with
+    indexset only for codimension 0 entities.
+
+    Special implementation of the AdaptiveLeafGridPart with
+    an underlying index set is only defined for 
+    entities with codimension 0 for use with
+    the Dune::DiscontinuousGalerkinSpace of FiniteVolumeSpaces.
+
+    The underlying \ref IdBasedLeafIndexSet "index set" is
+    a singleton for each different grid. 
+    NOTE: The indices are stored in maps using the LocalIdSet of the grid 
+          to generate these maps. 
+    */
 template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 
-class DefaultAdaptiveLeafGridPart
-: public GridPartDefault<DefaultAdaptiveLeafGridPartTraits<GridImp,pitype> > 
+class IdBasedLeafGridPart
+: public GridPartDefault<IdBasedLeafGridPartTraits<GridImp,pitype> > 
 {
-  typedef SingletonList<GridImp,typename DefaultAdaptiveLeafGridPartTraits<GridImp,pitype>::IndexSetType > IndexSetProviderType;  
 public:
   //- Public typedefs and enums
   //! Type definitions
-  typedef DefaultAdaptiveLeafGridPartTraits<GridImp,pitype> Traits;
+  typedef IdBasedLeafGridPartTraits<GridImp,pitype> Traits;
   //! Grid implementation type
   typedef typename Traits::GridType GridType;
   //! The leaf index set of the grid implementation
@@ -63,19 +76,26 @@ public:
     typedef typename Traits::template Codim<cd>::IteratorType IteratorType;
   };
 
-private:
+  //! \brief is true if grid on this view only has conforming intersections 
+  enum { conforming = Traits :: conforming };
+
+protected:
+  // singleton provider 
+  typedef SingletonList<const GridType* , IndexSetType > IndexSetProviderType;  
+
+  // type of entity of codim 0
   typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
 public:
   //- Public methods
   //! Constructor
-  DefaultAdaptiveLeafGridPart(const GridType& grid) :
-    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(grid) )
+  IdBasedLeafGridPart(GridType& grid) :
+    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(&grid) )
   {}
 
   /** \brief Destrcutor removeing index set, if only one reference left, index set
       removed.  */
-  ~DefaultAdaptiveLeafGridPart() 
+  ~IdBasedLeafGridPart() 
   { 
     IndexSetProviderType::removeObject(this->indexSet());
   }

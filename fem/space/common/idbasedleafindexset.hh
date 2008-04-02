@@ -56,6 +56,9 @@ private:
   int nextFreeIndex_;
 
   int oldIds_;
+
+  // no copying 
+  IdBasedCodimIndexSet (const IdBasedCodimIndexSet& );
 public:
   //! Constructor
   IdBasedCodimIndexSet (const IdSetType & idSet, const IndexSetType & indexSet) 
@@ -84,7 +87,6 @@ public:
     }
 
     checkConsecutive();
-    //std::cout << "Created maps \n";
   }
 
   //! make to index numbers consecutive 
@@ -107,16 +109,12 @@ public:
     int actSize = leafIndex_.size ();
     nextFreeIndex_ = actSize;
 
+    // remove old values since they are not used anymore
     holes_.clear();
     holesId_.clear();
-    HolesIndicesType holesIdx(oldLeafIndex_.size());   
-    for(size_t i=0; i<holesIdx.size(); ++i)
-      holesIdx[i] = -1;
 
-    //std::cout << "Start compressing, found " << oldIds_ << " elements \n";
-    //std::cout << "Size of leafindex set = " << indexSet_.size(0) << "\n";
-
-    //assert( actSize == indexSet_.size(codim) );
+    // create holes index vector 
+    HolesIndicesType holesIdx(oldLeafIndex_.size(), -1);   
 
     int noHole = 0;
     {
@@ -127,13 +125,13 @@ public:
       {
         int idx = (*it).second;
         assert( idx >= 0 );
-        // normaly one would check >= 0, but does not work for UGGrid
-        if( (idx < actSize) && (idx > 0) )
+        
+        // check if index is valid and is a hole 
+        if( (idx < actSize) && (idx >= 0) )
         {
           // if id is not in the new set, then its a hole 
           if( leafId_.find(idx) == leafId_.end() )
           {
-            //std::cout << "Found hole " << idx << " \n";
             holesIdx[noHole] = idx;
             ++noHole;
           }
@@ -141,10 +139,9 @@ public:
       }
     }
 
-    //std::cout << "Found " << noHole << " holes \n";
-
     assert( (leafIndex_.size() != (size_t) actSize) ? 
         (std::cerr << actSize << " s|ls " << leafIndex_.size() << "\n",0) : 1);
+
     {
       int hole = 0;
       typedef typename IndexStorageType :: iterator iterator;
@@ -152,7 +149,6 @@ public:
       for(iterator it = leafIndex_.begin(); it != end; ++it) 
       {
         int idx = (*it).second;
-        //std::cout << "Check leaf index " << idx << " \n";
         if( idx >= nextFreeIndex_ ) 
         {
           IdType id = (*it).first; 
@@ -162,20 +158,16 @@ public:
           int newIdx = -1; 
           if( hole >= noHole )
           {
-            //std::cout << "Run out of holes \n";
             newIdx = nextFreeIndex_; 
             ++nextFreeIndex_; 
           }
           else 
           {
             newIdx = holesIdx[hole];
-            //std::cout << "got hole " << newIdx << "\n";
           }
           ++hole;
           
           (*it).second = newIdx;
-          //leafIndex_.erase(id);
-          //leafIndex_[id] = newIdx;
 
           leafId_.erase(idx); 
           leafId_[newIdx] = id;
@@ -184,37 +176,12 @@ public:
       }
     }
 
-    //std::cout << "We have " << numberOfHoles() << " holes \n";
+    // clear old values 
     oldLeafIndex_.clear();
- 
-    /*
-    {
-      typedef typename IndexStorageType :: const_iterator iterator;
-      iterator end = leafIndex_.end();
-      for(iterator it = leafIndex_.begin(); it != end; ++it) 
-      {
-        IdType id = (*it).first;
-        int idx = (*it).second;
-        iterator end2 = leafIndex_.end();
-        for(iterator it2 = leafIndex_.begin(); it2 != end; ++it2) 
-        {
-          IdType id2 = (*it2).first;
-          if( id2 != id ) 
-          {
-            if(idx == (*it2).second)
-            {
-              std::cout << id << " id and " << id2 << " have index " << idx << "\n";
-              assert( idx != (*it2).second); 
-            }
-          }
-          
-        }
-      }
-      
-    }
-    */
     
-    //checkConsecutive();
+    // check that index set is consecutive 
+    // only done in debug mode 
+    checkConsecutive();
     return true; 
   }
 
@@ -226,8 +193,6 @@ public:
     for(iterator it = leafIndex_.begin(); it != end; ++it) 
     {
       int idx = (*it).second;
-      //if( idx >= nextFreeIndex_ ) 
-      //  std::cout << "index to big " << idx << " " << nextFreeIndex_ << "\n";
       assert( idx < nextFreeIndex_ );
     }
 #endif
@@ -295,7 +260,6 @@ public:
   void checkIndex (const EntityType & en) 
   {
     IdType id = idSet_.id(en);
-    //std::cout << id << " check id \n";
     if(leafIndex_.find(id) == leafIndex_.end())
     {
       if(oldLeafIndex_.find(id) == oldLeafIndex_.end())
@@ -309,13 +273,10 @@ public:
       {
         ++oldIds_;
         int idx = oldLeafIndex_[id];
-        //std::cout << "Found old index " << idx << "\n";
         leafIndex_[id]  = idx; 
         leafId_   [idx] = id;
       }
     }
-
-    //std::cout << "Index of id " << id << " is " << leafIndex_[id] << "\n";
   }
   
   // insert element and create index for element number  
@@ -331,19 +292,10 @@ public:
     }
   }
   
-  // insert element and create index for element number  
+  // remove index actually is done in compression 
   template <class EntityType> 
   void remove ( const EntityType & en ) 
   {
-    /*
-    IdType id = idSet_.id(en);
-    if(leafIndex_.find(id) != leafIndex_.end())
-    {
-      int idx = leafIndex_[id];
-      leafIndex_.erase(id);
-      leafId_.erase(idx);  
-    }
-    */
   }
   
   void print (const char * msg, bool oldtoo = false ) const {};
@@ -421,150 +373,6 @@ private:
     }
   };
 
-  //***************************************************************************//
-  
-  // direct index return from method index (const EntityType & en )
-  template <class AdLeafSet, class HSetImp, class EntityType, int enCodim >
-  struct DirectIndexWrapper
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, 
-                             const EntityType & en, bool cdUsed )
-    {
-      return hset.index(en);
-    }
-  };
-
-  //**************************************************************//
-
-  // index return from method index (const EntityType & en, int num )
-  // this puts the index method and the subIndex methods together 
-  template <class AdLeafSet, class HSetImp, class EntityType, int enCodim, int codim >
-  struct IndexWrapper
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, 
-                             const EntityType & en , int num )
-    {
-      return hset.index(en);
-    }
-  };
-
-  //! if codim > codim of entity use subIndex 
-  template <class AdLeafSet, class HSetImp, class EntityType>
-  struct IndexWrapper<AdLeafSet,HSetImp,EntityType,0,1>
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, 
-                             const EntityType & en , int num )
-    {
-      enum { codim = 1 };
-      return hset.template subIndex<codim> (en , num ) ;
-    }
-  };
-
-  //! if codim > codim of entity use subIndex 
-  template <class AdLeafSet, class HSetImp, class EntityType>
-  struct IndexWrapper<AdLeafSet,HSetImp,EntityType,0,2>
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, 
-                             const EntityType & en , int num )
-    {
-      enum { codim = 2 };
-      return hset.template subIndex<codim> (en , num ) ;
-    }
-  };
-
-  //! if codim > codim of entity use subIndex 
-  template <class AdLeafSet, class HSetImp, class EntityType>
-  struct IndexWrapper<AdLeafSet,HSetImp,EntityType,0,3>
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, 
-                             const EntityType & en , int num )
-    {
-      enum { codim = 3 };
-      return hset.template subIndex<codim> (en , num ) ;
-    }
-  };
-
-  //******************************************************************
-  //  partial specialisation for the insertion of all sub entity indices 
-  //******************************************************************
-  template <class HSetImp, class CodimLeafSet, class EntityType, int codim> 
-  struct PartialSpec 
-  {
-    // only for higher codims 
-    CompileTimeChecker< (codim > 1) ? true : false> check; 
-    
-    static inline void iterateCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      CodimLeafSet & lset = cls[codim];
-
-      // if codim is used then insert all sub entities of this codim 
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); i++)
-        {
-          lset.insert( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-      
-      PartialSpec<HSetImp,CodimLeafSet,EntityType,codim-1> :: 
-        iterateCodims (hIndexSet, cls, en , cdUsed );
-    }
-    
-    static inline void removeCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      CodimLeafSet & lset = cls[codim];
-
-      // if codim is already used, then also remove entities of this codim
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); i++)
-        {
-          lset.remove( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-      
-      PartialSpec<HSetImp,CodimLeafSet,EntityType,codim-1> :: 
-        removeCodims (hIndexSet, cls, en , cdUsed );
-    }
-  };
- 
-  // specialisation for codim 1 is then end of the loop
-  template <class HSetImp, class CodimLeafSet, class EntityType> 
-  struct PartialSpec<HSetImp,CodimLeafSet,EntityType,1> 
-  {
-    static inline void iterateCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      enum { codim = 1 };
-      CodimLeafSet & lset = cls[codim];
-      // if codim is already used, then also insert entities of this codim
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); i++)
-        {
-          lset.insert( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-    }
-    
-    static inline void removeCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      enum { codim = 1 };
-      CodimLeafSet & lset = cls[codim];
-      // if codim is already used, then also remove entities of this codim
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); i++)
-        {
-          lset.remove( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-    }
-  };
-
   //! type of base class 
   typedef PersistentIndexSet<GridType, IdBasedLeafIndexSet<GridType> >  BaseType;
   //! type of this class 
@@ -581,39 +389,34 @@ private:
 
   enum { dim = GridType :: dimension };
 
-  // flag for codim is in use or not 
-  mutable bool codimUsed_ [ncodim];
-  
-  // true if all entities that we use are marked as USED 
-  bool marked_;
-
-  // true if the used entities were marked by grid walkthrough 
-  bool markAllU_;
-
-  // true if any of the higher codims is used 
-  mutable bool higherCodims_;
-
   typedef IdBasedCodimIndexSet<LocalIdSetType,LeafIndexSetType,0> IdBasedCodimIndexSetType;
   mutable IdBasedCodimIndexSetType pLeafSet_;
+  
+  // true if all entities that we use are marked as USED 
+  bool compressed_;
 
+  // no copying 
+  IdBasedLeafIndexSet (const ThisType& ); 
 public:
   //! type traits of this class
   typedef DefaultLeafIteratorTypes<GridType> Traits; 
 
   //! Constructor
-  IdBasedLeafIndexSet (const GridType & grid) 
-    : BaseType(grid) ,  
-    leafSet_( grid.leafIndexSet() ) , 
-    idSet_  ( grid.localIdSet() ), 
-    marked_ (false) , markAllU_ (false) , higherCodims_ (true), 
-    pLeafSet_(idSet_,leafSet_)
-  {
-    // codim 0 is used by default
-    codimUsed_[0] = true;
+  inline explicit IdBasedLeafIndexSet ( const GridType &grid )
+  : BaseType( grid ),
+    leafSet_( grid.leafIndexSet() ),
+    idSet_( grid.localIdSet() ),
+    pLeafSet_( idSet_, leafSet_),
+    compressed_( true )
+  {}
 
-    // all higher codims are not used by default
-    for(int i=1; i<ncodim; i++) codimUsed_[i] = false;
-  }
+  inline explicit IdBasedLeafIndexSet ( const GridType *const grid )
+  : BaseType( *grid ),
+    leafSet_( grid->leafIndexSet() ),
+    idSet_( grid->localIdSet() ),
+    pLeafSet_( idSet_, leafSet_),
+    compressed_( true )
+  {}
 
   //! Destructor
   virtual ~IdBasedLeafIndexSet () {};
@@ -738,20 +541,19 @@ public:
   void insertNewIndex (const typename GridType::template Codim<0>::Entity & en )  
   {
     this->insert( en );
-    marked_ = true;
   }
 
   //! Unregister entity which will be removed from the grid
   void removeOldIndex (const typename GridType::template Codim<0>::Entity & en )
   {
     this->remove( en ); 
-    marked_ = true;
   }
 
   void resize () 
   {
-    // give all entities that lie below the old entities new numbers 
-    //markAllBelowOld ();
+    // give all entities that lie below 
+    // the old entities new numbers 
+    markAllBelowOld ();
   }
 
   //! for dof manager, to check whether it has to copy dof or not 
@@ -766,19 +568,20 @@ public:
   //! return true, if at least one hole was closed 
   bool compress ()
   {
-    //std::cout << "Start compressing index set\n";
+    // if already compressed, do nothing 
+    if ( compressed_ ) return false;
+
+    // prepare for resize 
     persistentLeafSet().resize();
+
     // if not marked, mark which indices are still used 
     markAllUsed(); 
 
     // true if a least one dof must be copied 
     bool haveToCopy = persistentLeafSet().compress(); 
 
-    // next turn mark again 
-    marked_   = false;
-    markAllU_ = false;
-    
-    //std::cout << "Finished compressing index set\n";
+    // now index set is in compressed state  
+    compressed_ = true;
     return haveToCopy;
   }
 
@@ -787,6 +590,7 @@ public:
   void insert (const EntityCodim0Type & en)
   {
     persistentLeafSet().insert(en);
+    compressed_ = false;
   }
 
   //! set indices to unsed so that they are cleaned on compress  
@@ -794,6 +598,7 @@ public:
   void remove (const EntityCodim0Type & en)
   {
     persistentLeafSet().remove(en);
+    compressed_ = false;
   }
 
   //! return approximate size that is used during restriction 
@@ -808,8 +613,6 @@ public:
   template <int codim, class EntityType>
   int index (const EntityType & en, int num) const
   {
-    //return IndexWrapper<ThisType,LeafIndexSetType,EntityType,EntityType::codimension,codim>::
-    //         index(*this,leafSet_,en,num);
     return persistentLeafSet().index(en,num);
   }
   
@@ -858,7 +661,6 @@ private:
     }
     else 
     {
-      //this->insert ( en );
       this->remove ( en );
       // set unused here, because index is only needed for prolongation 
     }
@@ -887,8 +689,6 @@ private:
     {
       persistentLeafSet().checkIndex( *it );
     }
-    //std::cout << "Checked all old indices \n";
-    marked_ = true;
   }
   
   //! give all entities that lie below the old entities new numbers 
@@ -898,39 +698,40 @@ private:
   //! element 
   void markAllBelowOld () 
   {
-    typedef typename GridType::template Codim<0>::LevelIterator LevelIteratorType; 
+    typedef typename GridType::
+      template Codim<0>::LevelIterator LevelIteratorType; 
 
-    int maxlevel = this->grid_.maxLevel();
-    
-    for(int level = 0; level<=maxlevel; level++)
+    // iterate over macro level and check all entities hierachically 
+    const LevelIteratorType macroend = this->grid_.template lend  <0> (0);
+    for(LevelIteratorType macroit = this->grid_.template lbegin<0> (0);
+        macroit != macroend; ++macroit )
     {
-      LevelIteratorType levelend    = this->grid_.template lend  <0> (level);
-      for(LevelIteratorType levelit = this->grid_.template lbegin<0> (level);
-          levelit != levelend; ++levelit )
-      {
-        typedef typename GridType::template Codim<0>::
-              Entity::HierarchicIterator HierarchicIteratorType; 
-       
-        // if we have index all entities below need new numbers 
-        bool areNew = false; 
-
-        // check whether we can insert or not 
-        areNew = insertNewIndex ( *levelit , levelit->isLeaf() , areNew ); 
-        
-        HierarchicIteratorType endit  = levelit->hend   ( level + 1 );
-        for(HierarchicIteratorType it = levelit->hbegin ( level + 1 ); it != endit ; ++it )
-        {
-          // areNew == true, then index is inserted 
-          areNew = insertNewIndex  ( *it , it->isLeaf() , areNew ); 
-        }
-
-      } // end grid walk trough
-    } // end for all levels 
-
-    // means on compress we have to mark the leaf level 
-    marked_ = false;
-    markAllU_ = true;
+      checkEntity( *macroit , false );
+    } // end grid walk trough
   }
+
+  //! check whether entity can be inserted or not 
+  void checkEntity(const EntityCodim0Type& en, const bool wasNew )
+  {
+    typedef typename EntityCodim0Type :: HierarchicIterator HierarchicIteratorType;
+
+    // check whether we can insert or not 
+    const bool isNew = insertNewIndex ( en , en.isLeaf() , wasNew );
+
+    // if entity is not leaf go deeper 
+    if( ! en.isLeaf() )
+    {
+      const int level = en.level() + 1;
+
+      // got to next level 
+      const HierarchicIteratorType endit  = en.hend   ( level );
+      for(HierarchicIteratorType it = en.hbegin ( level ); it != endit ; ++it )
+      {
+        checkEntity( *it , isNew );
+      }
+    }
+  }
+
 
   //! count elements by iterating over grid and compare 
   //! entities of given codim with given type 
