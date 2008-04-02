@@ -5,6 +5,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
+#include <dune/fem/misc/checkgeomaffinity.hh>
 
 namespace Dune {
 
@@ -152,25 +153,8 @@ public:
   //! check whether all geometry mappings are affine 
   bool checkAffinity() const 
   {
-    bool affinity = true ;
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-    IteratorType endit = spc_.end();
-    for(IteratorType it = spc_.begin(); it != endit; ++it)
-    {
-      // get quadrature of desired order 
-      VolumeQuadratureType volQuad( *it, volumeQuadOrd_ );
-      const int nop = volQuad.nop();
-      const Geometry& geo = it->geometry();
-
-      // check all integration elements against the first 
-      const double oldIntel = geo.integrationElement( volQuad.point(0) );
-      for(int l=0; l<nop; ++l)
-      {
-        const double intel = geo.integrationElement( volQuad.point(l) );
-        if( std::abs( oldIntel - intel ) > 1e-12 ) affinity = false;
-      }
-    }
-    return affinity;
+    return GeometryAffinityCheck<VolumeQuadratureType> :: 
+      checkAffinity( spc_.begin(), spc_.end(), volumeQuadOrd_);
   }
 
   //! build local mass matrix 

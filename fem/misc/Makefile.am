@@ -36,4 +36,5 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       test.hh \
 	       timeprovider.hh \
 	       timeutility.hh \
-               utility.hh
+               utility.hh \
+         checkgeomaffinity.hh      
