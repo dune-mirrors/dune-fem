@@ -10,6 +10,8 @@
 //- Dune includes 
 // defines function readParameter 
 #include <dune/fem/io/file/asciiparser.hh>
+// defines Parameter 
+#include <dune/fem/io/parameter.hh>
 
 // grape data io 
 #include <dune/fem/io/file/grapedataio.hh>
