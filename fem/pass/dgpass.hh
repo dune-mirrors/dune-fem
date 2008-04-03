@@ -32,6 +32,14 @@ namespace Dune {
 **   v + div(f(x,u)) + A(x,u)\nabla u &=& S(x,u)  \quad\mbox{in}\quad \Omega    \\
 ** \f}
 ** where \f$ u \f$ is the argument and \f$ v \f$ is computed.
+** Weak formulation on a cell T: 
+** \f[
+** \int_T v \phi = -\int_{\partial T} g \phi + \int_T f \cdot \nabla \phi + \int_T Q \phi 
+** \f]
+** with \f$ g \approx f \cdot n + \tilde{A}[u] \cdot n \f$ and \f$ Q \approx S - A \nabla u \f$
+** where \f$ \tilde{A} \f$ denotes the arithmetic average and \f$ [u] \f$ the jump of 
+** \f$ u \f$ over the cell interface.\\
+** The discrete model provides the \b analyticalFlux f, the \b source Q and the \b numericalFlux g.
 ** @{
 **************************************************************************/
 
