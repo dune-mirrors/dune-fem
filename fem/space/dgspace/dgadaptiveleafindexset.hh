@@ -270,16 +270,25 @@ public:
         this->grid_.comm().size() > 1 )
     {
       codimLeafSet_.clear();
+
       // this should only be the case of YaspGrid
-      markAllBelowOld<Interior_Partition> ();
+      markAllBelowOld<Interior_Partition>();
       markAllBelowOld<All_Partition>();
       compressed_ = true;
     }
     else 
 #endif
     {
-      // mark all children 
+      // use a hierarchic walk to mark new elements 
       markAllBelowOld<All_Partition> ();
+
+#if HAVE_MPI
+      if( this->grid_.comm().size() > 1 )
+      {
+        // make sure that also ghosts have indices 
+        markAllUsed<Ghost_Partition>();
+      }
+#endif
     }
   }
 
@@ -469,38 +478,42 @@ private:
   //! there for we start to give new number for all elements below the old
   //! element 
   template <PartitionIteratorType pitype>
-  void markAllBelowOld () 
+  void markAllBelowOld() 
   {
-    typedef typename GridType::template Codim<0>::
-          template Partition<pitype> :: LevelIterator LevelIteratorType; 
-
-    int maxlevel = this->grid_.maxLevel();
-   
     codimLeafSet_.set2Unused(); 
-    
-    for(int level = 0; level<=maxlevel; ++level)
-    {
-      LevelIteratorType levelend    = this->grid_.template lend  <0,pitype> (level);
-      for(LevelIteratorType levelit = this->grid_.template lbegin<0,pitype> (level);
-          levelit != levelend; ++levelit )
-      {
-        typedef typename GridType::template Codim<0>::
-              Entity::HierarchicIterator HierarchicIteratorType; 
-       
-        // if we have index all entities below need new numbers 
-        bool areNew = false; 
 
-        // check whether we can insert or not 
-        areNew = insertNewIndex ( *levelit , levelit->isLeaf() , areNew ); 
-        
-        HierarchicIteratorType endit  = levelit->hend   ( level + 1 );
-        for(HierarchicIteratorType it = levelit->hbegin ( level + 1 ); it != endit ; ++it )
-        {
-          // areNew == true, then index is inserted 
-          areNew = insertNewIndex  ( *it , it->isLeaf() , areNew ); 
-        }
-      } // end grid walk trough
-    } // end for all levels 
+    typedef typename GridType::
+      template Codim<0>::template Partition<pitype>:: LevelIterator LevelIteratorType;
+
+    // iterate over macro level and check all entities hierachically 
+    const LevelIteratorType macroend = this->grid_.template lend  <0,pitype> (0);
+    for(LevelIteratorType macroit = this->grid_.template lbegin<0,pitype> (0);
+        macroit != macroend; ++macroit )
+    {
+      checkEntity( *macroit , false );
+    } // end grid walk trough
+  }
+
+  //! check whether entity can be inserted or not 
+  void checkEntity(const EntityCodim0Type& en, const bool wasNew )
+  {
+    typedef typename EntityCodim0Type :: HierarchicIterator HierarchicIteratorType;
+
+    // check whether we can insert or not 
+    const bool isNew = insertNewIndex ( en , en.isLeaf() , wasNew );
+
+    // if entity is not leaf go deeper 
+    if( ! en.isLeaf() )
+    {
+      const int level = en.level() + 1;
+
+      // got to next level 
+      const HierarchicIteratorType endit  = en.hend   ( level );
+      for(HierarchicIteratorType it = en.hbegin ( level ); it != endit ; ++it )
+      {
+        checkEntity( *it , isNew );
+      }
+    }
   }
 
 public:
