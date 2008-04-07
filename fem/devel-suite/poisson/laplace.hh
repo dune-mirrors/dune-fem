@@ -84,8 +84,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
     typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
     typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
-    typedef typename SlaveDofsType :: Factory SlaveDofsFactoryType;
-    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, SlaveDofsFactoryType >
+    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType >
       SlaveDofsProviderType;
     
   protected:
@@ -230,7 +229,7 @@ namespace Dune
       const IteratorType end = dfSpace.end();
       for( IteratorType it = dfSpace.begin(); it != end; ++it )
       {
-        if( it->hasBoundaryIntersections() )
+        if( it.hasBoundaryIntersections() )
           boundaryCorrectOnEntity( *it );
       }
     }
@@ -267,7 +266,8 @@ namespace Dune
  
       IntersectionIteratorType it = gridPart.ibegin( entity );
       const IntersectionIteratorType endit = gridPart.iend( entity );
-      for( ; it != endit ; ++it ) {
+      for( ; it != endit ; ++it )
+      {
         if( !it.boundary() )
           continue;
 
