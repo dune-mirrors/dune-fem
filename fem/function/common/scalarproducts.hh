@@ -39,25 +39,6 @@ namespace Dune
     class LinkBuilder;
 
   public:
-    class Factory
-    {
-    public:
-      typedef SlaveDofs<Space,Mapper> ObjectType;
-
-      typedef typename ObjectType :: SingletonKey KeyType;
-
-    public:
-      static ObjectType *createObject( const KeyType &key )
-      {
-        return new ObjectType( key );
-      }
-      
-      static void deleteObject( ObjectType *obj )
-      {
-        delete obj; 
-      }
-    };
-
     //! type of discrete function space 
     typedef Space SpaceType; 
     //! type of grid part 
@@ -390,9 +371,8 @@ namespace Dune
     // type of communication manager object which does communication
     typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
     typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
-    typedef typename SlaveDofsType :: Factory FactoryType;
 
-    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType, FactoryType >
+    typedef SingletonList< SlaveDofsKeyType, SlaveDofsType >
       SlaveDofsProviderType;
 
     typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
@@ -570,12 +550,11 @@ namespace Dune
   public:  
     // type of communication manager object which does communication 
     typedef SlaveDofs<DiscreteFunctionSpaceType,MapperType> SlaveDofsType;
+
   private:  
-
     typedef typename SlaveDofsType :: SingletonKey KeyType;
-    typedef typename SlaveDofsType :: Factory  FactoryType;
-
-    typedef SingletonList< KeyType , SlaveDofsType , FactoryType > SlaveDofsProviderType;
+    typedef SingletonList< KeyType, SlaveDofsType > SlaveDofsProviderType;
+    
   public:
     typedef SlaveDofsProxy<SlaveDofsType> BuildProxyType;
     //! export types
