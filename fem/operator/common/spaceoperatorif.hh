@@ -5,7 +5,6 @@
 #include <utility>
 
 //-Dune fem includes 
-#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/objpointer.hh>
 
@@ -43,12 +42,25 @@ public:
   //! return reference to space (needed by ode solvers)
   virtual const SpaceType& space() const = 0;
 
-  //!pass time provider to underlying operator, default implementation
-  //! does nothing 
-  virtual void timeProvider(TimeProvider* tp) {}
+  /** \brief set time for operators 
+      \param time current time of evaluation 
+  */
+  virtual void setTime(const double time) = 0 ;
+
+  /** \brief returns maximal possible dt to assure stabil 
+       explicit Runge Kutta ODE Solver. */
+  virtual double timeStepEstimate () const = 0;
 
   //! return reference to pass's local memory  
   virtual const DestinationType* destination() const { return 0; }
+
+  template <class TimeProviderImp> 
+  void DUNE_DEPRECATED timeProvider(TimeProviderImp* tp)
+  {
+    assert( tp );
+    // deprecated method 
+    this->setTime( tp->time() );
+  }
 };
 
 //! only for kepping the pointer 
@@ -94,6 +106,12 @@ public:
     return (*op_).space(); 
   }
     
+  /** @copydoc SpaceOperatorInterface::setTime  */
+  void setTime(const double time) { (*op_).setTime(time); }
+
+  /** @copydoc SpaceOperatorInterface::timeStepEstimate */
+  double timeStepEstimate () const { return (*op_).timeStepEstimate(); }
+
   //! return reference to pass 
   OperatorType& pass() 
   { 
@@ -153,12 +171,11 @@ public:
     return (*op_).space(); 
   }
   
-  //! pass timeprovider to internal operator 
-  void timeProvider(TimeProvider* tp) 
-  { 
-    assert( op_ );
-    (*op_).timeProvider(tp); 
-  }
+  /** @copydoc SpaceOperatorInterface::setTime  */
+  void setTime(const double time) { (*op_).setTime(time); }
+
+  /** @copydoc SpaceOperatorInterface::timeStepEstimate */
+  double timeStepEstimate () const { return (*op_).timeStepEstimate(); }
 
   //! return reference to pass's local memory  
   const DestinationType* destination() const 

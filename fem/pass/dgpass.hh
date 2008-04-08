@@ -142,7 +142,6 @@ namespace Dune {
       baseNeigh_(0.0),
       source_(0.0),
       grads_(0.0),
-      time_(0),
       minLimit_(2.0*std::numeric_limits<double>::min()),
       diffVar_(),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
@@ -159,20 +158,19 @@ namespace Dune {
     virtual ~LocalDGPass() {
     }
 
+    //! print tex info
     void printTexInfo(std::ostream& out) const {
       BaseType::printTexInfo(out);
       out << "LocalDGPass: "
           << "\\\\ \n";
     }
-    //! Stores the time provider passed by the base class in order to have
-    //! access to the global time
-    virtual void processTimeProvider(TimeProvider* time) {
-      time_ = time;
-    }
-
-    //! Estimate for the timestep size
-    double timeStepEstimate() const {
-      return dtMin_;
+    
+    //! Estimate for the timestep size 
+    double timeStepEstimate() const 
+    {
+      // factor for LDG  Discretization 
+      const double p = 2 * spc_.order() + 1;
+      return dtMin_ / p;
     }
 
   protected:
@@ -195,16 +193,11 @@ namespace Dune {
       const int indSize = visited_.size();
       for(int i=0; i<indSize; ++i) visited_[i] = false;
 
-      // time initialisation
+      // time initialisation to max value 
       dtMin_ = std::numeric_limits<double>::max();
-      if (time_) 
-      {
-        caller_.setTime(time_->time());
-      }
-      else 
-      {
-        caller_.setTime(0.0);
-      }
+
+      // time is member of pass 
+      caller_.setTime( this->time() );
     }
 
     //! Some timestep size management.
@@ -212,12 +205,6 @@ namespace Dune {
     {
       // communicate calculated function 
       communicationManager_.exchange( dest );
-      
-      // if time provider exists, check dtMin_
-      if (time_) 
-      {
-        time_->provideTimeStepEstimate(dtMin_);
-      }
       
       // call finalize 
       caller_.finalize();
@@ -529,7 +516,6 @@ namespace Dune {
     mutable RangeType baseNeigh_;
     mutable RangeType source_;
     mutable DomainType grads_;
-    TimeProvider* time_;
     const double minLimit_;
     FieldVector<int, 0> diffVar_;
 

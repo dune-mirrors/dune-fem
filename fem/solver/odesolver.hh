@@ -37,8 +37,8 @@ class OperatorWrapper : public pardg::Function
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
  public:
   //! constructor 
-  OperatorWrapper(const Operator& op, Dune::TimeProvider& tp) 
-    : op_(op) , space_(op_.space()) , tp_(tp) 
+  OperatorWrapper(Operator& op) 
+    : op_(op) , space_(op_.space()) 
   {}
 
   //! apply operator applies space operator and creates temporary
@@ -51,7 +51,7 @@ class OperatorWrapper : public pardg::Function
     DestinationType dest("DEST",space_,f);
     
     // set actual time of iteration step
-    tp_.setTime(time());
+    op_.setTime( this->time() );
     
     // call operator apply 
     op_(arg,dest);
@@ -82,11 +82,9 @@ class OperatorWrapper : public pardg::Function
   }
 private:
   // operator to call 
-  const Operator& op_;
+  Operator& op_;
   // discrete function space 
   const SpaceType& space_;
-  // time provider 
-  Dune::TimeProvider& tp_;
 };
 
 
@@ -108,7 +106,7 @@ public:
     ord_(pord),
     comm_(pardg::Communicator::instance()),
     op_(op),
-    expl_(op,tp),
+    expl_(op),
     ode_(0),
     initialized_(false)
   {
@@ -185,13 +183,6 @@ public:
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
   {
-    // CFL upper estimate 
-    double cfl = 0.45 / (2.0 * pord+1);
-
-    // maximal allowed cfl number 
-    tp.provideCflEstimate(cfl); 
-    assert( tp.cfl() <= 1.0 );
-
     if(verbose) 
     {
       std::cout << "ExplicitOdeSolver: cfl = " << tp.cfl() << "!\n";
@@ -205,6 +196,7 @@ public:
   void initialize(const DestinationType& U0)
   {
     BaseType :: initialize (U0);
+    timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
   }
 
   //! solve system 
@@ -218,6 +210,7 @@ public:
     
     // get dt 
     const double dt = timeProvider_.deltaT();
+    
     // should be larger then zero 
     assert( dt > 0.0 );
     
@@ -227,20 +220,17 @@ public:
     // get leakPointer 
     double* u = U0.leakPointer();
     
-    // time can is changeable now 
-    timeProvider_.unlock();
-    
     // call ode solver 
     const bool convergence = this->odeSolver().step(time, dt , u);
 
-    // restore saved time 
-    timeProvider_.lock();
+    // set time step estimate of operator 
+    timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
     
     assert(convergence);
     if(!convergence) 
     {
-      std::cerr << "No Convergence of ExplTimeStepper! \n";
-      abort();
+      timeProvider_.invalidateTimeStep();
+      std::cerr << "No Convergence of ExplicitOdeSolver! \n";
     }
   }
 
@@ -257,24 +247,33 @@ class ExplTimeStepper : public Dune::TimeProvider,
   typedef typename DestinationType :: DiscreteFunctionSpaceType 
     :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
 public:
-  ExplTimeStepper(Operator& op,int pord, double cfl, double startTime,bool verbose = false) :
-    Dune::TimeProvider(startTime,cfl),
-    BaseType(op,*this,pord,verbose),
+  ExplTimeStepper(Operator& op,int pord, double cfl) :
+    Dune::TimeProvider(0.0,cfl),
+    BaseType(op,*this,pord,false),
     tp_(this->op_.space().grid().comm(), *this ),
     savestep_(1),
     savetime_(0.0)
   {
-    op.timeProvider(this);
     assert( this->cfl() <= 1.0 );
   }
-  ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose = false) :
+  
+  ExplTimeStepper(Operator& op,int pord, double cfl, bool verbose ) :
     Dune::TimeProvider(0.0,cfl),
-    BaseType(op,*this,pord,verbose),
+    BaseType(op,*this,pord,true),
     tp_(this->op_.space().grid().comm(), *this ),
     savestep_(1),
     savetime_(0.0)
   {
-    op.timeProvider(this);
+    assert( this->cfl() <= 1.0 );
+  }
+
+  ExplTimeStepper(Operator& op,int pord, double cfl, double startTime) :
+    Dune::TimeProvider(startTime,cfl),
+    BaseType(op,*this,pord,false),
+    tp_(this->op_.space().grid().comm(), *this ),
+    savestep_(1),
+    savetime_(startTime)
+  {
     assert( this->cfl() <= 1.0 );
   }
 
@@ -285,6 +284,9 @@ public:
     {
       BaseType::initialize(U0);
 
+      // set time step estimate of operator 
+      tp_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
+    
       // global min of dt 
       tp_.syncTimeStep(); 
 
@@ -309,30 +311,22 @@ public:
     const double t  = tp_.time();
     const double dt = tp_.deltaT();
 
-    // time can is changeable now 
-    tp_.unlock();
-    
     // solve ode 
     const bool convergence = this->odeSolver().step(t, dt, u);
 
-    // restore saved time 
-    tp_.lock();
+    // set time step estimate of operator 
+    tp_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
     
     assert(convergence);
     if(!convergence) 
     {
       std::cerr << "No Convergence of ExplTimeStepper! \n";
-      abort();
+      tp_.invalidateTimeStep();
     }
 
-    // set new time to t + deltaT 
-    tp_.augmentTime();
-    // check time increment 
-    assert( std::abs( tp_.time() - (t+dt) ) <1e-10);
-    
-    // global min of new dt 
-    tp_.syncTimeStep();
-    
+    // increase time step 
+    tp_.next();
+
     // return time 
     return tp_.time();
   }
@@ -367,7 +361,7 @@ public:
     ord_(pord),
     comm_(pardg::Communicator::instance()),
     op_(op),
-    impl_(op,tp),
+    impl_(op),
     ode_(0),
     linsolver_(comm_,cycle),
     initialized_(false)
@@ -468,6 +462,9 @@ public:
     cfl_ = timeProvider_.cfl();
     // initialize solver 
     BaseType :: initialize (U0);
+
+    // set time step estimate of operator 
+    timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
   }
 
   //! solve 
@@ -499,13 +496,10 @@ public:
       // get pointer to solution
       double* u = U0.leakPointer();
       
-      // restore saved time 
-      timeProvider_.unlock();
-    
       convergence = this->odeSolver().step(time , dt , u);
-      // restore saved time 
-      timeProvider_.lock();
-    
+      // set time step estimate of operator 
+      timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
+      
       if(!convergence) 
       {
         double cfl = 0.5 * timeProvider_.cfl();
@@ -562,7 +556,6 @@ public:
     savestep_(1),
     savetime_(0.0)
   {
-    op.timeProvider(this);
   }
   
   // initialize 
@@ -595,15 +588,13 @@ public:
     
     const double t  = tp_.time();
     const double dt = tp_.deltaT();
-    // time can is changeable now 
-    tp_.unlock();
 
     // call ode solver  
     const bool convergence =  this->odeSolver().step(t, dt, u);
 
-    // restore global time 
-    tp_.lock();
-    
+    // set time step estimate of operator 
+    tp_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
+
     assert(convergence);
     if(!convergence) 
     {
@@ -611,13 +602,8 @@ public:
       abort();
     }
 
-    // calls setTime(t+ this->dt_);
-    tp_.augmentTime(); 
-    // check time increment 
-    assert( std::abs( tp_.time() - (t+dt) ) <1e-10);
-    
-    // calculate global min of dt 
-    tp_.syncTimeStep();
+    // next time step 
+    tp_.next();
 
     return tp_.time();
   }
@@ -658,8 +644,8 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     comm_(pardg::Communicator::instance()),
     opexpl_(op_expl),
     opimpl_(op_impl),
-    expl_(op_expl,*this),
-    impl_(op_impl,*this),
+    expl_(op_expl),
+    impl_(op_impl),
     ode_(0),
     // linsolver_(comm_,cycle),
     linsolver_(comm_),
@@ -668,7 +654,6 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     savetime_(0.0), 
     initialized_(false)
   {
-    op_expl.timeProvider(this);
     // linsolver_.set_tolerance(1.0e-8,false);
     linsolver_.set_tolerance(1.0e-3,false);
     linsolver_.set_max_number_of_iterations(1000);
@@ -715,28 +700,22 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     
     const double t  = tp_.time();
     const double dt = tp_.deltaT();
-    // time can is changeable now 
-    tp_.unlock();
     
     const bool convergence = ode_->step( t, dt, u);
+
+    // set time step estimate of operator 
+    tp_.provideTimeStepEstimate( this->opexpl_.timeStepEstimate() );
+
     assert(convergence);
     if(!convergence) 
     {
       std::cerr << "No Convergence of ImplTimeStepper! \n";
       abort();
     }
-
-    // restore global time 
-    tp_.lock();
     
-    // calls setTime(t+dt_);
-    tp_.augmentTime();
-    // check time increment 
-    assert( std::abs( tp_.time() - (t+dt) ) <1e-10);
+    // next time step 
+    tp_.next();
     
-    // calculate global min of dt 
-    tp_.syncTimeStep();
-
     return tp_.time();
   }
 
@@ -749,7 +728,8 @@ class SemiImplTimeStepper : public Dune::TimeProvider
     }
   }
   
-  void printmyInfo(string filename) const {
+  void printmyInfo(string filename) const 
+  {
     std::ostringstream filestream;
     filestream << filename;
     {

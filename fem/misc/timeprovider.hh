@@ -6,6 +6,7 @@
 #include <cassert>
 
 //- Dune includes 
+#include <dune/common/exceptions.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 
 namespace Dune {
@@ -27,14 +28,13 @@ namespace Dune {
     /** \brief constructor taking initial time, default is zero
         \param[in] startTime initial time 
      */
-    TimeProvider(double startTime = 0.0) : 
+    TimeProvider(const double startTime = 0.0) : 
       time_(startTime),
-      savedTime_(time_),
       dt_(-1.0),
       dtEstimate_(0.0),
       cfl_(1.0),
       timeStep_(0),
-      lock_(true)
+      synced_(false)
     {
       resetTimeStepEstimate();
     }
@@ -43,14 +43,13 @@ namespace Dune {
         \param[in] startTime initial time 
         \param[in] cfl initial cfl number 
     */
-    TimeProvider(double startTime , double cfl ) : 
+    TimeProvider(const double startTime , const double cfl ) : 
       time_(startTime),
-      savedTime_(time_),
       dt_(-1.0),
       dtEstimate_(0.0),
       cfl_(cfl),
       timeStep_(0),
-      lock_(true)
+      synced_(false)
     {
       resetTimeStepEstimate();
     }
@@ -58,59 +57,67 @@ namespace Dune {
     //! destructor 
     ~TimeProvider() {}
 
+    /** \brief goto next time step */
+    void next() 
+    {
+      // if already syncronized do nothing 
+      if( syncronized() ) return ;
+      
+      // increase time by delta t 
+      augmentTime(); 
+      
+      // set new delta t 
+      syncTimeStep();
+    }
+
     /** \brief return current time 
         \return current time 
     */
     double time() const { return time_; }
-
-    /** \brief stores current global time */
-    void unlock() 
-    {
-      lock_ = false;
-      savedTime_ = time_;
-    }
     
-    /** \brief restores saved global time */
-    void lock () 
-    {
-      lock_ = true;
-      time_ = savedTime_;
-    }
-
     /** \brief set time step estimate to minimum of given value and
                internal time step estiamte 
          \param[in] dtEstimate time step size estimate 
     */
     void provideTimeStepEstimate(const double dtEstimate) {
       dtEstimate_ = std::min(dtEstimate_, dtEstimate);
-    }
-    
-    /** \brief set internal time to given time 
-         \param[in] time new time 
-    */
-    void setTime(const double time) 
-    { 
-      assert( ! lock_ );
-      time_ = time; 
+      synced_ = false ;
     }
 
-    /** \brief set internal time to given time 
-         and time step counter to given counter 
+    /** \brief count current time step a not valid */
+    void invalidateTimeStep() 
+    {
+      DUNE_THROW(InvalidStateException,"TimeStep invalid!");
+    }
+    
+    /** \brief restore time and timestep from outside 
+         (i.e. from former calculation)  
          \param[in] time new time 
          \param[in] timeStep new time step counter 
     */
-    void setTime(const double time, const int timeStep )  
+    void restore(const double time, const int timeStep )  
     { 
-      assert( ! lock_ );
       time_ = time; 
       timeStep_ = timeStep;
+    }
+    
+    /** \brief restore time and timestep from outside 
+         (i.e. from former calculation)  
+         \param[in] time new time 
+         \param[in] timeStep new time step counter 
+    */
+    void setTime(const double time, const int timeStep ) DUNE_DEPRECATED
+    { 
+      restore(time, timeStep);
     }
 
     /** \brief augment time , i.e. \f$t = t + \triangle t\f$ and
         increase time step counter  */
     double augmentTime()
     { 
-      assert( lock_ );
+      // if already syncronized do nothing 
+      if( syncronized() ) return time_ ;
+
       time_ += deltaT(); 
       ++timeStep_;
       return time_;
@@ -164,12 +171,14 @@ namespace Dune {
       return dt_ * cfl_;
     }
 
-    /** \brief  sets time step size 
+    /** \brief sets time step size to size of dt 
+        \param dt new time step size 
     */
-    void setDeltaT (double dt)
+    void setDeltaT (const double dt)
     {
-      assert(dt > 0.0 );
-      dt_ = dt/cfl_;
+      resetTimeStepEstimate();
+      provideTimeStepEstimate(dt);
+      syncTimeStep();
     }
     
     /** \brief  syncronize time step, i.e. set timeStep to values of current 
@@ -177,19 +186,28 @@ namespace Dune {
     */
     void syncTimeStep() 
     {
+      // if already syncronized do nothing 
+      if( syncronized() ) return ;
+
       // save current time step 
       dt_ = dtEstimate_;
       // reset estimate 
       resetTimeStepEstimate();
+
+      // now up to date 
+      synced_ = true ;
     }
 
     /** \brief return current time step counter 
         \return current time step counter 
     */
-    int timeStep () const 
-    {
-      return timeStep_;
-    }
+    int timeStep () const {  return timeStep_;  }
+
+    /** \brief returns true if TimeProvider is in syncronized state,
+        i.e. after next has been called. 
+    */
+    bool syncronized () const { return synced_; }
+
   private:
     //! do not copy this class 
     TimeProvider(const TimeProvider&);
@@ -197,12 +215,11 @@ namespace Dune {
     
   protected:
     double time_;
-    double savedTime_;
     double dt_;
     double dtEstimate_;
     double cfl_;
     int timeStep_;
-    bool lock_;
+    bool synced_;
   };
   
   /** \brief improved class for 
@@ -261,7 +278,7 @@ namespace Dune {
       : comm_(comm), tp_(tp)
     {}
     
-    //! return internal time 
+    /** @copydoc TimeProvider::time */ 
     double time() const { return tp_.time(); }
     
     /** @copydoc TimeProvider::provideTimeStepEstimate */
@@ -270,19 +287,28 @@ namespace Dune {
       tp_.provideTimeStepEstimate(dtEstimate);
     }
 
-    /** @copydoc TimeProvider::lock */
-    void lock() { tp_.lock(); }
-    
-    /** @copydoc TimeProvider::unlock */
-    void unlock() { tp_.unlock(); }
-    
-    /** @copydoc TimeProvider::setTime */
-    void setTime(const double time) { tp_.setTime(time); }
-
     /** @copydoc TimeProvider::resetTimeStepEstimate */
     void resetTimeStepEstimate(double estimate = std::numeric_limits<double>::max()) 
     {
       tp_.resetTimeStepEstimate(estimate); 
+    }
+
+    /** @copydoc TimeProvider::next */
+    void next() 
+    {
+      // if already synced do nothing 
+      if( tp_.syncronized() ) return ;
+      
+      // increase time by delta t 
+      augmentTime(); 
+      // sync new time step size 
+      syncTimeStep();
+    }
+    
+    /** @copydoc TimeProvider::invalidateTimeStep */
+    void invalidateTimeStep() 
+    {
+      tp_.invalidateTimeStep();
     }
     
     /** @copydoc TimeProvider::timeStepEstimate */
@@ -298,10 +324,7 @@ namespace Dune {
     double deltaT () const { return tp_.deltaT(); }
     
     /** @copydoc TimeProvider::timeStep */
-    int timeStep() const 
-    {
-      return tp_.timeStep();
-    }
+    int timeStep() const { return tp_.timeStep(); }
 
     /** @copydoc TimeProvider::syncTimeStep 
         
@@ -310,6 +333,9 @@ namespace Dune {
     */ 
     void syncTimeStep() 
     {
+      // do nothing if already synced 
+      if( tp_.syncronized() ) return ;
+
       // get time step estimate 
       double dt = timeStepEstimate(); 
       // do min over all processors 
@@ -323,13 +349,11 @@ namespace Dune {
     /** @copydoc TimeProvider::augmentTime */
     double augmentTime() 
     {
-      // increase time 
-      tp_.augmentTime();
-      // return new time 
-      return time();
+      // increase time (if not syncronized )
+      return tp_.augmentTime();
     }
 
-  private:
+  protected:
     //! communicator  
     const CommunicatorType& comm_;
     //! serial time provider 

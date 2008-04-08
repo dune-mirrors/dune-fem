@@ -11,7 +11,8 @@
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
-namespace Dune {
+namespace Dune
+{
 
 /*! @ingroup GradientOperator 
  * Description: Solver for equations of the form
@@ -73,6 +74,8 @@ namespace Dune {
 
     // type of Communication Manager 
     typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType;
+    
+    typedef typename DiscreteModelType :: MassFactorType MassFactorType;
     
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
@@ -171,7 +174,7 @@ namespace Dune {
           bsetEn.evaluate(i, volQuad[l], tau_ );
 
           // apply mass factor 
-          FMatrixHelp::multAssign(massVal_,tau_,tauTmp_);
+          massVal_.mv(tau_,tauTmp_);
             
           massMatrix_[i] += bsetEn.evaluateSingle(i, volQuad[l], tauTmp_ ) * intel;
         }
@@ -211,7 +214,7 @@ namespace Dune {
 
     mutable RangeType tau_;
     mutable RangeType tauTmp_;
-    mutable JacobianRangeType massVal_;
+    mutable MassFactorType massVal_;
     const double factor_;
 
     mutable std::vector<RangeFieldType> massMatrix_;

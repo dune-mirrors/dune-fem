@@ -147,15 +147,15 @@ public:
       // Compute Steps
       op_(U0, *(Upd[0]));
       initialized_ = true;
+      
+      // provide operators time step estimate 
+      tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
     }
   }
   
   //! solve the system 
   void solve(DestinationType& U0) 
   {
-    // time might change 
-    tp_.unlock();
-    
     // get cfl * timeStepEstimate 
     const double dt = tp_.deltaT();
     // get time 
@@ -164,6 +164,9 @@ public:
     // Compute Steps
     op_(U0, *(Upd[0]));
     
+    // provide operators time step estimate 
+    tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
+
     for (int i=1; i<ord_; ++i) 
     {
       (Upd[ord_])->assign(U0);
@@ -173,10 +176,13 @@ public:
       }
 
       // set new time 
-      tp_.setTime( t + c[i]*dt );
+      op_.setTime( t + c[i]*dt );
 
       // apply operator 
-      op_(*(Upd[ord_]),*(Upd[i]));
+      op_( *(Upd[ord_]), *(Upd[i]) );
+      
+      // provide operators time step estimate 
+      tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
     }
 
     // Perform Update
@@ -184,14 +190,11 @@ public:
     {
       U0.addScaled(*(Upd[j]),(b[j]*dt));
     }
-    
-    // restore global time 
-    tp_.lock();
   }
 
 protected:
   // operator to solve for 
-  const Operator& op_;
+  Operator& op_;
   // time provider 
   TimeProvider& tp_;
   // init flag 
@@ -217,13 +220,12 @@ public:
     \param[in] cfl cfl number 
     \param[in] verbose verbosity 
   */
-  ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) :
-    TimeProvider(0.0,cfl),
-    BaseType(op,*this,pord,verbose),
-    tp_(op.space().grid().comm(),*this), 
-    savetime_(0.0), savestep_(1)
+  ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) DUNE_DEPRECATED 
+    : TimeProvider(0.0,cfl),
+      BaseType(op,*this,pord,verbose),
+      tp_(op.space().grid().comm(),*this), 
+      savetime_(0.0), savestep_(1)
   {
-    op.timeProvider(this);
   }
   
   /** \brief constructor 
@@ -233,13 +235,12 @@ public:
     \param[in] startTime start time of time stepper  
     \param[in] verbose verbosity 
   */
-  ExplRungeKutta(Operator& op,int pord,double cfl, double startTime, bool verbose = true ) :
-    TimeProvider(startTime,cfl),
-    BaseType(op,*this,pord,verbose),
-    tp_(op.space().grid().comm(),*this), 
-    savetime_(startTime), savestep_(1)
+  ExplRungeKutta(Operator& op,int pord,double cfl, double startTime, bool verbose = true ) DUNE_DEPRECATED 
+    : TimeProvider(startTime,cfl),
+      BaseType(op,*this,pord,verbose),
+      tp_(op.space().grid().comm(),*this), 
+      savetime_(startTime), savestep_(1)
   {
-    op.timeProvider(this);
   }
 
   void initialize(const DestinationType& U0)
@@ -261,12 +262,10 @@ public:
     // solve ode 
     BaseType :: solve (U0);
     
-    // calls setTime ( t + dt ); 
-    this->tp_.augmentTime();
+    // increase time step 
+    this->tp_.next();
     
-    // global min of dt and reset of dtEstimate 
-    this->tp_.syncTimeStep();
-    
+    // return current time 
     return this->tp_.time();
   }
   
@@ -313,16 +312,8 @@ class ExplicitRungeKuttaSolver :
     \param[in] verbose verbosity 
   */
   ExplicitRungeKuttaSolver(OperatorType& op, TimeProvider& tp, int pord, bool verbose = false) :
-    BaseType(op,tp,pord,verbose),
-    timeProvider_(tp)
+    BaseType(op,tp,pord,verbose)
   {
-    // CFL upper estimate 
-    double cfl = 0.45 / (2.0 * pord+1);
-
-    // maximal allowed cfl number 
-    tp.provideCflEstimate(cfl); 
-    assert( tp.cfl() <= 1.0 );
-
     if(verbose) 
     {
       std::cout << "ExplicitRungeKuttaSolver: cfl = " << tp.cfl() << "!\n";
@@ -350,9 +341,6 @@ class ExplicitRungeKuttaSolver :
     // solve ode 
     BaseType :: solve(U0);
   }
-
-private:
-  TimeProvider& timeProvider_;
 };
 
 /** @} **/

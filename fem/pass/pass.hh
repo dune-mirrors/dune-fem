@@ -11,9 +11,6 @@
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
 
-// * must go away
-#include <dune/fem/misc/timeprovider.hh>
-
 namespace Dune {
 
   /*! @addtogroup Pass 
@@ -45,8 +42,9 @@ namespace Dune {
     NextArgumentType localArgument() const { return nullType(); }
     //! No memory needs to be allocated.
     void allocateLocalMemory() {}
-    //! We don't need no time either
-    void timeProvider(TimeProvider*) {}
+
+    //! StartPass does not need a time 
+    void setTime(const double) {}
   };
 
   /**
@@ -129,7 +127,8 @@ namespace Dune {
     Pass(PreviousPassType& pass) :
       destination_(0),
       deleteHandler_(0),
-      previousPass_(pass)
+      previousPass_(pass),
+      time_(0.0)
     {
       // this ensures that the last pass doesn't allocate temporary memory
       // (its destination discrete function is provided from outside).
@@ -144,7 +143,10 @@ namespace Dune {
       if( deleteHandler_ ) deleteHandler_->freeLocalMemory(destination_);
       destination_ = 0;
     }
-    void printTexInfo(std::ostream& out) const {
+
+    //! printTex info of operator 
+    void printTexInfo(std::ostream& out) const 
+    {
       previousPass_.printTexInfo(out);
     }
 
@@ -165,10 +167,14 @@ namespace Dune {
     virtual void allocateLocalMemory() = 0;
 
     //! Set time provider (which gives you access to the global time).
-    void timeProvider(TimeProvider* time) {
-      previousPass_.timeProvider(time);
-      processTimeProvider(time);
+    void setTime(const double t) 
+    {
+      previousPass_.setTime(t);
+      time_ = t;
     }
+
+    //! return current time of calculation 
+    double time() const { return time_; }
 
     const DestinationType & destination () const 
     {
@@ -190,10 +196,6 @@ namespace Dune {
       return NextArgumentType(destination_, nextArg );
     }
 
-    //! With this method, you can get access to the TimeProvider, if needed.
-    //! By default, nothing is done, ie the TimeProvider is discarded.
-    virtual void processTimeProvider(TimeProvider* time) {}
-
   protected:
     //! Does the actual computations. Needs to be overridden in the derived
     //! clases
@@ -208,6 +210,9 @@ namespace Dune {
 
     // previous pass 
     PreviousPassType& previousPass_;
+
+    // current calculation time 
+    double time_;
     
   }; // end class Pass
 
