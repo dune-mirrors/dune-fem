@@ -361,7 +361,7 @@ namespace Dune {
       arg_(0),
       dest_(0),
       spc_(spc),
-      gridPart_(const_cast<GridPartType &> (spc_.gridPart())),
+      gridPart_(spc_.gridPart()),
       gradientSpace_(gridPart_),
       localIdSet_(gridPart_.grid().localIdSet()),
       gridWidth_ ( GridWidthProviderType :: getObject( &spc_.grid())),
@@ -537,7 +537,7 @@ namespace Dune {
         typedef typename GridPartNewPartitionType<GridPartType,Overlap_Partition>:: NewGridPartType NewGridPartType;
         typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
 
-        NewGridPartType gridPart( const_cast<GridPartType&> (gridPart_).grid() );
+        NewGridPartType gridPart( gridPart_.grid() );
         IteratorType endit = gridPart. template end<0>();
         for(IteratorType it = gridPart. template begin<0>();
             it != endit; ++it)

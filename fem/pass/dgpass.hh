@@ -166,7 +166,7 @@ namespace Dune {
     }
     
     //! Estimate for the timestep size 
-    double timeStepEstimate() const 
+    double timeStepEstimateImpl() const 
     {
       // factor for LDG  Discretization 
       const double p = 2 * spc_.order() + 1;

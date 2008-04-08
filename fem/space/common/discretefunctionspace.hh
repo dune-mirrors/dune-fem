@@ -484,7 +484,7 @@ namespace Dune
     typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
   protected:
-    GridPartType &gridPart_;
+    mutable GridPartType &gridPart_;
 
     const LocalFunctionFactoryType lfFactory_;
     mutable LocalFunctionStorageType lfStorage_;
@@ -539,17 +539,11 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart() const */
-    inline const GridPartType &gridPart () const
+    inline GridPartType &gridPart () const
     {
       return gridPart_;
     }
    
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart() */
-    inline GridPartType &gridPart ()
-    {
-      return gridPart_;
-    }
-
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::indexSet() const */
     inline const IndexSetType &indexSet () const
     {

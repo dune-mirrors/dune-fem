@@ -104,7 +104,7 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
   //! constructor taking space 
   HdivProjection(const DiscreteFunctionSpaceType& space) : 
     space_(space),
-    gridPart_(const_cast<GridPartType &> (space.gridPart())),
+    gridPart_(space.gridPart()),
     faceSpace_( gridPart_ ),
     elSpace_( gridPart_ ),
     gradSpace_( gridPart_ )
@@ -912,7 +912,7 @@ public:
     typedef typename GridType :: template Codim<0> :: Entity EntityType; 
     
     const DiscreteFunctionSpaceType& space = velo.space();
-    GridPartType & gridPart = const_cast<GridPartType &> (space.gridPart());
+    GridPartType & gridPart = space.gridPart();
     int polOrd = space.order() + 1;
 
     // get local id set 

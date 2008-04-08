@@ -332,6 +332,7 @@ namespace Dune {
     {
     }
 
+    //! compute method 
     virtual void compute(const ArgumentType& arg, DestinationType& dest) const
     {
       // prepare operator 

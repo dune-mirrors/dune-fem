@@ -3,6 +3,7 @@
 
 //- System includes
 #include <string>
+#include <limits>
 
 //- Dune includes
 #include <dune/fem/misc/femtuples.hh>
@@ -45,6 +46,12 @@ namespace Dune {
 
     //! StartPass does not need a time 
     void setTime(const double) {}
+
+    //! time step estimate here is max 
+    double timeStepEstimateImpl () const 
+    { 
+      return std::numeric_limits<double>::max(); 
+    }
   };
 
   /**
@@ -173,9 +180,20 @@ namespace Dune {
       time_ = t;
     }
 
+    /** \brief return time step estimate for explicit Runge Kutta solver, calls 
+         recursively the method timeStepEstimateImpl of all previous passes. 
+         Make sure to overload the method timeStepEstimateImpl in your
+         implementation if this method really does something. */
+    double timeStepEstimate() const 
+    {
+      return std::min( previousPass_.timeStepEstimateImpl(),
+                       this->timeStepEstimateImpl() );
+    }
+
     //! return current time of calculation 
     double time() const { return time_; }
 
+    //! return reference to internal discrete function 
     const DestinationType & destination () const 
     {
       assert(destination_);
@@ -201,6 +219,13 @@ namespace Dune {
     //! clases
     virtual void compute(const TotalArgumentType& arg, 
                          DestinationType& dest) const = 0;
+
+    //! derived passes have to implement this method 
+    //! returning the time step estimate 
+    virtual double timeStepEstimateImpl() const 
+    {
+      return std::numeric_limits<double>::max(); 
+    }
 
   protected:
     // ? Really do this? Can't you allocate the memory directly?

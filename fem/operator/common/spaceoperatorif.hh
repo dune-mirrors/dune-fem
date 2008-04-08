@@ -45,11 +45,14 @@ public:
   /** \brief set time for operators 
       \param time current time of evaluation 
   */
-  virtual void setTime(const double time) = 0 ;
+  virtual void setTime(const double time) {}
 
   /** \brief returns maximal possible dt to assure stabil 
        explicit Runge Kutta ODE Solver. */
-  virtual double timeStepEstimate () const = 0;
+  virtual double timeStepEstimate () const 
+  {
+    return std::numeric_limits<double>::max();  
+  }
 
   //! return reference to pass's local memory  
   virtual const DestinationType* destination() const { return 0; }

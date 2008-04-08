@@ -377,6 +377,14 @@ namespace Dune
     {
       instance().processFile( filename );
     }
+   
+    template <class T>
+    inline static void replaceKey ( const std :: string& key, const T& value)
+    {
+      std::stringstream valueStr;
+      valueStr << value;
+      instance().replace( key,valueStr.str() );
+    }
 
     /** \brief add parameters from the command line to the container
      *  parameters found are removed from the argument list

@@ -66,7 +66,7 @@ public:
                   artificial diffusion values for 
   */
   ArtificialDiffusion(const DiscreteFunctionType& df) 
-    : df_(df), diffusionSpace_( const_cast<GridPartType&> (df.space().gridPart()))
+    : df_(df), diffusionSpace_( df.space().gridPart())
     , diffusion_(df_.name() + "-art-diff", diffusionSpace_ )
     , gridWidth_( GridWidthProviderType :: getObject( &(df_.space().grid())))                                                        
   {}
@@ -166,7 +166,7 @@ protected:
       // get space 
       const DiscreteFunctionSpaceType& space =  discFunc.space();
       // get grid part  
-      GridPartType& gridPart = const_cast<GridPartType&> (space.gridPart());  
+      GridPartType& gridPart = space.gridPart();  
       
       // clear destination 
       diffusion.clear();

@@ -45,7 +45,7 @@ public:
                            const DiscreteFunctionType* )
   {
     typedef typename SpaceImp :: GridPartType GridPartImp;
-    GridPartImp& gridP = const_cast<GridPartImp&> (space.gridPart());
+    GridPartImp& gridP = space.gridPart();
 
     typedef typename GridPartNewPartitionType<
       GridPartImp,All_Partition> :: NewGridPartType GridPartType;    
