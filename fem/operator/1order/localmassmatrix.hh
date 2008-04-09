@@ -14,12 +14,11 @@ namespace Dune {
 */
 
 /** \brief Local Mass Matrix for DG Operators */ 
-template <class DiscreteModelType> 
+template <class DiscreteFunctionSpaceImp, class VolumeQuadratureImp> 
 class LocalDGMassMatrix 
 {
 public:  
-  typedef typename DiscreteModelType :: 
-      Traits :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
   enum { numDofs_ = DiscreteFunctionSpaceType :: localBlockSize };
   typedef typename DiscreteFunctionSpaceType :: RangeFieldType ctype;
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
@@ -32,7 +31,7 @@ public:
   typedef typename GridType :: template Codim<0> :: Entity EntityType;
   typedef typename GridType :: template Codim<0> :: Geometry Geometry;
 
-  typedef typename DiscreteModelType::Traits::VolumeQuadratureType  VolumeQuadratureType;
+  typedef VolumeQuadratureImp VolumeQuadratureType;
 
   //! is true if grid is structured grid 
   enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
@@ -52,6 +51,21 @@ protected:
   mutable RangeType phiMass_[numDofs_];
 
   const bool affine_;
+
+  //! dummy caller 
+  struct NoMassDummyCaller
+  {
+    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    typedef FieldMatrix<ctype, dimRange, dimRange> MassFactorType;
+    // return false since we don;t have a mass term
+    bool hasMass() const { return false; }
+    void mass(const EntityType&,
+              const VolumeQuadratureType&,
+              const int, 
+              const MassFactorType&) const
+    {
+    }
+  };
 
 public:
   //! constructor taking space and volume quadrature order 
@@ -76,6 +90,7 @@ public:
 
 public:  
   //! apply local dg mass matrix to local function lf
+  //! using the massFactor method of the caller 
   template <class MassCallerType, class LocalFunctionType> 
   void applyInverse(MassCallerType& caller, 
                     const EntityType& en, 
@@ -126,10 +141,20 @@ public:
     }
   }
 
+  //! apply local dg mass matrix to local function lf without mass factor 
+  template <class LocalFunctionType> 
+  void applyInverse(const EntityType& en, 
+                    LocalFunctionType& lf) const 
+  {
+    NoMassDummyCaller caller;
+    applyInverse(caller, en, lf );
+  }
+
 public:  
   //! returns true if geometry mapping is affine 
   bool affine () const { return affine_; }
 
+protected:
   //! setup and return affinity 
   bool setup() const 
   {
@@ -177,14 +202,12 @@ public:
     }
     else 
     {
-      buildMatrixNoMassFactor(caller, en, geo, set, volQuad, matrix);
+      buildMatrixNoMassFactor(en, geo, set, volQuad, matrix);
     }
   }
 
   //! build local mass matrix with mass factor 
-  template <class MassCallerType> 
   void buildMatrixNoMassFactor(
-                   MassCallerType& caller,
                    const EntityType& en,
                    const Geometry& geo, 
                    const BaseFunctionSetType& set,
