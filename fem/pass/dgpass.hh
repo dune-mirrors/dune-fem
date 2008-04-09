@@ -214,18 +214,19 @@ namespace Dune {
     {
       //- statements
       caller_.setEntity(en);
+
       // init local function 
       initLocalFunction( en , updEn_ );
-      // get reference 
-      TemporaryLocalFunctionType& updEn = updEn_;
 
-      applyLocal(en,updEn);
+      // call real apply local 
+      applyLocal(en, updEn_);
+      
       // add update to real function 
-      updateFunctionAndApplyMass(en, updEn );
+      updateFunctionAndApplyMass(en, updEn_ );
     }
 
     //! local integration 
-    void applyLocal(EntityType& en,TemporaryLocalFunctionType& updEn) const
+    void applyLocal(EntityType& en, TemporaryLocalFunctionType& updEn) const
     {
       // only call geometry once, who know what is done in this function 
       const Geometry & geo = en.geometry();
@@ -355,7 +356,7 @@ namespace Dune {
 
       // this entity is finised by now 
       visited_[ indexSet_.index( en ) ] = true ;
-		}
+    }
 
     // initialize local update function 
     template <class LocalFunctionImp>
