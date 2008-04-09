@@ -2,9 +2,11 @@
 #define DUNE_L2PROJECTION_HH
 
 #include <dune/fem/quadrature/cachequad.hh>
-// #include <dune/grid/utility/twistutility.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/operator/1order/localmassmatrix.hh>
+
 namespace Dune 
 {
 
@@ -13,12 +15,39 @@ struct L2ProjectionImpl
   template <int dummy, bool isDiscreteFunction> 
   struct ProjectChooser
   {
+    template <class FunctionImp, class FunctionSpace> 
+    class FunctionAdapter
+    { 
+      const FunctionImp& function_;
+    public:  
+      typedef FunctionSpace FunctionSpaceType;
+      typedef typename FunctionSpaceType :: RangeType RangeType;
+      typedef typename FunctionSpaceType :: DomainType DomainType;
+      FunctionAdapter(const FunctionImp& f) : function_(f) {}
+
+      void evaluate(const DomainType& local,
+                    RangeType& ret) const 
+      {
+        function_.evaluate( local , ret );
+      }
+    };
+    
     template <class FunctionImp, class DiscreteFunctionImp>
     static void project(const FunctionImp& f, 
                         DiscreteFunctionImp& discFunc,
                         int polOrd) 
     {
-      L2ProjectionImpl::projectFunction(f, discFunc, polOrd);
+      // some typedefs 
+      typedef typename DiscreteFunctionImp :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      typedef FunctionAdapter<FunctionImp, typename  DiscreteFunctionSpaceType :: FunctionSpaceType> FunctionAdapterType;
+      // create function adapter in case of incorrect implementation 
+      FunctionAdapterType af( f );
+      // create discrete function adapter 
+      DiscreteFunctionAdapter< FunctionAdapterType, GridPartType> adapter(
+          "L2projection::adapter" , f , discFunc.space().gridPart());
+      
+      L2ProjectionImpl::projectFunction(adapter, discFunc, polOrd);
     }
   };
 
@@ -30,7 +59,7 @@ struct L2ProjectionImpl
                         DiscreteFunctionImp& discFunc,
                         int polOrd) 
     {
-      L2ProjectionImpl::projectDiscreteFunction(f, discFunc, polOrd);
+      L2ProjectionImpl::projectFunction(f, discFunc, polOrd);
     }
   };
 
@@ -40,11 +69,13 @@ struct L2ProjectionImpl
     ProjectChooser<0, Conversion<FunctionImp, IsDiscreteFunction> ::exists > :: project(f,discFunc,polOrd_);
   }
 
+protected:  
   template <class FunctionImp, class DiscreteFunctionImp>
-  static void projectDiscreteFunction(const FunctionImp& func, 
-          DiscreteFunctionImp& discFunc, int polOrd_ = -1) 
+  static void projectFunction(const FunctionImp& func, 
+                              DiscreteFunctionImp& discFunc, 
+                              int polOrd_ = -1) 
   {
-    typedef typename DiscreteFunctionImp::FunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
@@ -57,23 +88,39 @@ struct L2ProjectionImpl
     typename DiscreteFunctionSpaceType::RangeType phi (0.0);
     const DiscreteFunctionSpaceType& space =  discFunc.space();
 
-    int polOrd = polOrd_;
-    if (polOrd == -1) 
-      polOrd = 2 * space.order();
+    // type of quadrature 
+    typedef CachingQuadrature<GridPartType,0> QuadratureType; 
+    // type of local mass matrix 
+    typedef LocalDGMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
 
+    const int quadOrd = (polOrd_ == -1) ? (2 * space.order()) : polOrd_;
+    
+    // create local mass matrix object
+    LocalMassMatrixType massMatrix( space, quadOrd );
+
+    // check whether geometry mappings are affine or not 
+    const bool affineMapping = massMatrix.affine();
+
+    // clear destination
     discFunc.clear();
 
-    Iterator endit = space.end();
+    const Iterator endit = space.end();
     for(Iterator it = space.begin(); it != endit ; ++it) 
     {
-      typename GridType::template Codim<0>::Entity& en = *it; 
+      // get entity 
+      const typename GridType::template Codim<0>::Entity& en = *it; 
+      // get geometry 
+      const typename GridType::template Codim<0>::Geometry& geo = en.geometry(); 
       
-      // Get quadrature rule
-      CachingQuadrature<GridPartType,0> quad(en, polOrd);
+      // get quadrature 
+      QuadratureType quad(en, quadOrd);
+      
+      // get local function of destination 
       LocalFuncType lf = discFunc.localFunction(en);
-      LocalFType f = func.localFunction(en);
+      // get local function of argument 
+      const LocalFType f = func.localFunction(en);
 
-      //! Note: BaseFunctions must be ortho-normal!!!!
+      // get base function set 
       const BaseFunctionSetType & baseset = lf.baseFunctionSet();
 
       const int quadNop = quad.nop();
@@ -81,63 +128,26 @@ struct L2ProjectionImpl
 
       for(int qP = 0; qP < quadNop ; ++qP) 
       {
+        const double intel = (affineMapping) ? 
+             quad.weight(qP) : // affine case 
+             quad.weight(qP) * geo.integrationElement( quad.point(qP) ); // general case 
+
+        // evaluate function 
         f.evaluate(quad[qP], ret);
+        
+        // do projection 
         for(int i=0; i<numDofs; ++i) 
         {
           baseset.evaluate(i, quad[qP], phi);
-          lf[i] += quad.weight(qP) * (ret * phi) ;
+          lf[i] += intel * (ret * phi) ;
         }
       }
-    }
-  }
-  
-  template <class FunctionImp, class DiscreteFunctionImp>
-  static void projectFunction(const FunctionImp& f, DiscreteFunctionImp& discFunc, int polOrd_ = -1) 
-  {
-    typedef typename DiscreteFunctionImp::FunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
-    typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
-    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
-    typedef typename GridPartType::GridType GridType;
 
-    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
-    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
-    const DiscreteFunctionSpaceType& space =  discFunc.space();
-
-    int polOrd = polOrd_;
-    if (polOrd == -1) 
-      polOrd = 2 * space.order();
-
-    discFunc.clear();
-
-    Iterator endit = space.end();
-    for(Iterator it = space.begin(); it != endit ; ++it) 
-    {
-      typename GridType::template Codim<0>::Entity& en = *it; 
-      
-      // Get quadrature rule
-      CachingQuadrature<GridPartType,0> quad(en, polOrd);
-      LocalFuncType lf = discFunc.localFunction(en);
-
-      //! Note: BaseFunctions must be ortho-normal!!!!
-      const BaseFunctionSetType & baseset = lf.baseFunctionSet();
-
-      const typename GridType::template Codim<0>::Entity::Geometry& 
-        itGeom = en.geometry();
-     
-      const int quadNop = quad.nop();
-      const int numDofs = lf.numDofs();
-
-      for(int qP = 0; qP < quadNop ; ++qP) 
+      // in case of non-linear mapping apply inverse 
+      if ( ! affineMapping ) 
       {
-        f.evaluate(itGeom.global(quad.point(qP)), ret);
-        for(int i=0; i<numDofs; ++i) 
-        {
-          baseset.evaluate(i, quad[qP], phi);
-          lf[i] += quad.weight(qP) * (ret * phi) ;
-        }
-      }
+        massMatrix.applyInverse( en, lf );
+      } 
     }
   }
 };
