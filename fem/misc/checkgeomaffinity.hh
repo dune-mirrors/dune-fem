@@ -28,7 +28,7 @@ struct GeometryAffinityCheck
 
       // check all integration elements against the first 
       const double oldIntel = geo.integrationElement( volQuad.point(0) );
-      for(int l=0; l<nop; ++l)
+      for(int l=1; l<nop; ++l)
       {
         const double intel = geo.integrationElement( volQuad.point(l) );
         if( std::abs( oldIntel - intel ) > 1e-12 ) affinity = false;
