@@ -136,6 +136,39 @@ protected:
     return true;
   }
   
+  template <class ctype, int dim> 
+  class ReferenceNormals
+  {
+    const FieldVector<ctype,dim-1> mid_; 
+    enum { numberOfNormals = 2 * dim };
+    FieldVector<ctype,dim> refNormal_[numberOfNormals];
+  public:
+    ReferenceNormals () : mid_(0.5) 
+    {
+      for(int i=0; i<numberOfNormals; ++i) 
+      {
+        // get i-th reference normal 
+        FieldVector<ctype,dim>& refNormal = refNormal_[i];
+        // reset normal 
+        refNormal = 0;
+        // set one component 
+        int comp = ((int) i/2);
+        refNormal[comp] = ((i % 2) == 0) ? -1 : 1;
+      }
+    }
+
+    const FieldVector<ctype,dim>& referenceNormal(const int i) const 
+    {
+      assert( i >= 0 && i< numberOfNormals );
+      return refNormal_[i];
+    } 
+    
+    const FieldVector<ctype,dim-1>& faceMidPoint() const 
+    {
+      return mid_;
+    }
+  };
+
 public:  
   // check that element is provided following the DUNE reference cube  
   template <class IntersectionIteratorType>
@@ -145,35 +178,30 @@ public:
         
     typedef typename IntersectionIteratorType :: Entity EntityType;
     typedef typename EntityType :: ctype ctype; 
-    enum { dim = EntityType :: dimension }; 
+    enum { dimworld = EntityType :: dimensionworld }; 
 
-    FieldVector<ctype,dim-1> mid(0.5);
-    const int nis = nit.numberInSelf();
+    // get reference normals 
+    static const ReferenceNormals<ctype,dimworld> normals;
+    
     // get current normal  
-    const FieldVector<ctype,dim> unitNormal = nit.unitOuterNormal(mid);
-    // get reference normal 
-    FieldVector<ctype,dim> refNormal(0); 
-    int comp = (int) (nis/2);
-    refNormal[comp] = ((nis % 2) == 0) ? -1 : 1;
-
-    //std::cout << "nis = " << nis << " " << refNormal << " " << unitNormal<< "\n";
-    refNormal -= unitNormal;
+    FieldVector<ctype,dimworld> unitNormal = nit.unitOuterNormal(normals.faceMidPoint());
+    unitNormal -= normals.referenceNormal( nit.numberInSelf() );
 
     // if normals are not equal grid is not cartesian 
-    if( refNormal.two_norm() > 1e-10 ) return false;
+    if( unitNormal.infinity_norm() > 1e-10 ) return false;
           
     return true;
   }       
 
   
   //! check whether all the is grid is a cartesian grid 
-  template <class GridType, class IndexSetType>
-  static inline bool check(const GridType& grid, const IndexSetType& indexSet)
+  template <class GridPartType>
+  static inline bool check(const GridPartType& gridPart)
   {
-    bool cartesian = doCheck( grid , indexSet );
+    bool cartesian = doCheck( gridPart.grid() , gridPart.indexSet() );
     int val = (cartesian) ? 1 : 0;
     // take global minimum  
-    val = grid.comm().min( val );
+    val = gridPart.grid().comm().min( val );
     return (val == 1) ? true : false;
   }
 };
