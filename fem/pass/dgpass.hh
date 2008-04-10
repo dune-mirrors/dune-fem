@@ -212,9 +212,6 @@ namespace Dune {
 
     void applyLocal(EntityType& en) const 
     {
-      //- statements
-      caller_.setEntity(en);
-
       // init local function 
       initLocalFunction( en , updEn_ );
 
@@ -228,6 +225,9 @@ namespace Dune {
     //! local integration 
     void applyLocal(EntityType& en, TemporaryLocalFunctionType& updEn) const
     {
+      //- statements
+      caller_.setEntity(en);
+
       // only call geometry once, who know what is done in this function 
       const Geometry & geo = en.geometry();
 
