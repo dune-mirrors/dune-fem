@@ -10,7 +10,6 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       combineinterface.hh \
 	       debug.hh \
 	       double.hh \
-	       double_inline.hh \
 	       engineconcept.hh \
 	       eoc.hh \
 	       example.cc \
