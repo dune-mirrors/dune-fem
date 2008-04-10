@@ -199,13 +199,13 @@ public:
       \param[in] filename name of file to which discrete function should be written using pgm 
       \return <b>true</b> if operation was successful 
    */
-  virtual bool write_pgm(const std::string filename) const;
+  virtual bool DUNE_DEPRECATED write_pgm(const std::string filename) const;
 
   /** \brief read discrete function from file with given filename using pgm decoding
       \param[in] filename name of file from which discrete function should be read using pgm 
       \return <b>true</b> if operation was successful 
   */
-  virtual bool read_pgm(const std::string filename); 
+  virtual bool DUNE_DEPRECATED read_pgm(const std::string filename); 
 
   /** \brief returns name of discrete function 
       \return string holding name of discrete function 

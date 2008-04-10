@@ -320,10 +320,10 @@ public:
   virtual bool read_ascii( const std::string filename );
 
   /** \copydoc DiscreteFunctionDefault::write_pgm  */
-  virtual bool write_pgm(const std::string filename) const;
+  virtual bool DUNE_DEPRECATED write_pgm(const std::string filename) const;
 
   /** \copydoc DiscreteFunctionDefault::read_pgm  */
-  virtual bool read_pgm(const std::string filename); 
+  virtual bool DUNE_DEPRECATED read_pgm(const std::string filename); 
 
   /** \brief return reference to internal block vector 
       \return reference to blockVector */ 

@@ -119,10 +119,10 @@ namespace Dune {
     virtual bool read_ascii(const std::string filename);
 
     //! write function data in pgm fromat file
-    virtual bool write_pgm(const std::string filename) const;
+    virtual bool DUNE_DEPRECATED write_pgm(const std::string filename) const;
     
     //! read function data from pgm fromat file
-    virtual bool read_pgm(const std::string filename); 
+    virtual bool DUNE_DEPRECATED read_pgm(const std::string filename); 
     
     //! return pointer to underlying array 
     DofType       * leakPointer ()       { return dofVec_.leakPointer(); }
