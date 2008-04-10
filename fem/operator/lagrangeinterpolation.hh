@@ -44,8 +44,6 @@ namespace Dune
      *  globally) at the Lagrange points and writes the values into a discrete
      *  function.
      *
-     *  \note To interpolate discrete functions, use interpolateEntityFunction.
-     *
      *  \param[in] function function to interpolate
      *
      *  \param[out] discreteFunction discrete function to receive the

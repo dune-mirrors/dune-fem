@@ -82,40 +82,4 @@ namespace Dune
     }
   }
 
-
-
-#if DUNE_FEM_COMPATIBILITY
-  template< class DiscreteFunctionImp >
-  template< class EntityFunctionType >
-  inline void LagrangeInterpolation< DiscreteFunctionImp >
-    :: interpolateEntityFunction ( EntityFunctionType &function,
-                                   DiscreteFunctionType &discreteFunction )
-  {
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
-    const DiscreteFunctionSpaceType &functionSpace
-      = discreteFunction.space();
-
-    //discreteFunction.clear();
-
-    IteratorType endit = functionSpace.end();
-    for( IteratorType it = functionSpace.begin(); it != endit; ++it )
-    {
-      const LagrangePointSetType &lagrangePointSet
-        = functionSpace.lagrangePointSet( *it );
-
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
-      function.init( *it );
-      
-      const int numDofs = localFunction.numDofs();
-      for( int i = 0; i < numDofs; ++i )
-      {
-        RangeType phi;
-        function.evaluate( lagrangePointSet.point( i ), phi );
-        localFunction[ i ] = phi[ 0 ];
-      }
-    }
-  }
-#endif
-  
 }
