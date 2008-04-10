@@ -26,15 +26,16 @@ namespace Dune
     inline ObStack ()
     {
       obstack_init( &info_ );
-      // align on 8 byte boundaries
-      obstack_alignment_mask( &info_ ) = 7;
+      // align on 16 byte boundaries
+      obstack_alignment_mask( &info_ ) = 15;
     }
 
     inline ObStack ( unsigned int chunkSize )
     {
       obstack_init( &info_ );
       obstack_chunk_size( &info_ ) = chunkSize;
-      obstack_alignment_mask( &info_ ) = 7;
+      // align on 16 byte boundaries
+      obstack_alignment_mask( &info_ ) = 15;
     }
 
     inline ~ObStack ()
@@ -66,29 +67,29 @@ namespace Dune
 
 
 
-  template< class ElementImp >
+  template< class Element >
   class ObStackArrayAllocator;
 
 
 
-  template< class ElementImp >
+  template< class Element >
   struct ObStackArrayAllocatorTraits
   {
-    typedef ElementImp ElementType;
+    typedef Element ElementType;
 
-    typedef ElementImp *ElementPtrType;
+    typedef Element *ElementPtrType;
 
     typedef ObStackArrayAllocator< ElementType > ArrayAllocatorType;
   };
 
 
 
-  template< class ElementImp >
+  template< class Element >
   class ObStackArrayAllocator
-  : public ArrayAllocatorDefault< ObStackArrayAllocatorTraits< ElementImp > >
+  : public ArrayAllocatorDefault< ObStackArrayAllocatorTraits< Element > >
   {
   public:
-    typedef ElementImp ElementType;
+    typedef Element ElementType;
 
     typedef ObStackArrayAllocatorTraits< ElementType > TraitsType;
 
@@ -121,20 +122,10 @@ namespace Dune
       }
     }
 
-#if 0
-    inline void reallocate ( unsigned int oldSize,
-                             unsigned int newSize,
-                             ElementPtrType &array ) const
-    {
-      DUNE_THROW( NotImplemented,
-                  "Reallocating an object on an object stack is not possible." );
-    }
-#endif
-
   private:
     static inline ObStack& obStack ()
     {
-      static ObStack stack( 2 << 18 );
+      static ObStack stack( 2 << 20 );
       return stack;
     }
   };
