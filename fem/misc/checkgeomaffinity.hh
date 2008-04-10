@@ -115,6 +115,8 @@ protected:
       for(IntersectionIteratorType nit = en.ilevelbegin();
           nit != endnit; ++nit)
       {
+        if( ! checkIntersection(nit) ) return false;
+
         if( nit.neighbor() )
         {
           EntityPointerType ep = nit.outside();
@@ -135,6 +137,35 @@ protected:
   }
   
 public:  
+  // check that element is provided following the DUNE reference cube  
+  template <class IntersectionIteratorType>
+  static bool checkIntersection(const IntersectionIteratorType& nit)  
+  {     
+    if ( ! nit.intersectionGlobal().type().isCube() ) return false;
+        
+    typedef typename IntersectionIteratorType :: Entity EntityType;
+    typedef typename EntityType :: ctype ctype; 
+    enum { dim = EntityType :: dimension }; 
+
+    FieldVector<ctype,dim-1> mid(0.5);
+    const int nis = nit.numberInSelf();
+    // get current normal  
+    const FieldVector<ctype,dim> unitNormal = nit.unitOuterNormal(mid);
+    // get reference normal 
+    FieldVector<ctype,dim> refNormal(0); 
+    int comp = (int) (nis/2);
+    refNormal[comp] = ((nis % 2) == 0) ? -1 : 1;
+
+    //std::cout << "nis = " << nis << " " << refNormal << " " << unitNormal<< "\n";
+    refNormal -= unitNormal;
+
+    // if normals are not equal grid is not cartesian 
+    if( refNormal.two_norm() > 1e-10 ) return false;
+          
+    return true;
+  }       
+
+  
   //! check whether all the is grid is a cartesian grid 
   template <class GridType, class IndexSetType>
   static inline bool check(const GridType& grid, const IndexSetType& indexSet)
