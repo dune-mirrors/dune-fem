@@ -75,25 +75,6 @@ namespace Dune
     inline static void interpolateDiscreteFunction
       ( const FunctionType &function,
         DiscreteFunctionType &discreteFunction );
-
-#if DUNE_FEM_COMPATIBILITY
-  public:
-    /** interpolate an entity-function into a Lagrange discrete function
-     *
-     *  This Method evaluates the given function (which can be evaluated
-     *  locally at the Lagrange points and writes the values into a discrete
-     *  function.
-     *
-     *  \param[in] function function to interpolate
-     *
-     *  \param[out] discreteFunction discrete function to receive the
-     *              interpolation
-     */
-    template< class EntityFunctionType >
-    inline static void interpolateEntityFunction
-      ( EntityFunctionType &function,
-        DiscreteFunctionType &discreteFunction ) DUNE_DEPRECATED;
-#endif
   };
 
 }
