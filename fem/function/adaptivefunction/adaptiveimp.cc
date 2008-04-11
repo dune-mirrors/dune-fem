@@ -162,39 +162,6 @@ namespace Dune {
   {
     return dofVec_.end();
   }
- 
-#if 0
-  template <class DiscreteFunctionSpaceImp>
-  typename AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  LocalFunctionImp* 
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  newObject() const
-  {
-    return new LocalFunctionImp(spc_, dofVec_);
-  }
-#endif
-
-#if 0
-  template <class DiscreteFunctionSpaceImp>
-  template <class EntityType>
-  typename 
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::LocalFunctionType
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  localFunction(const EntityType& en)
-  {
-    return LocalFunctionType(en, this->interface());
-  } 
-
-  template <class DiscreteFunctionSpaceImp>
-  template <class EntityType>
-  const typename 
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::LocalFunctionType
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  localFunction(const EntityType& en) const
-  {
-    return LocalFunctionType(en, this->interface());
-  } 
-#endif
 
   //- Read/write methods
   template<class DiscreteFunctionSpaceImp>
