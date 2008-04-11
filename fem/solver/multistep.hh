@@ -156,16 +156,20 @@ public:
     }
     // now multistep
 
-    // time might change 
-    tp_.unlock();
-    
     // get cfl * timeStepEstimate 
     deltat_[steps_-1] = tp_.deltaT();
     // get time 
 
     // Compute Steps
     Uj[steps_-1]->assign(U0);
+
+    // set new time 
+    op_.setTime( tp_.time() );
+
     op_(*(Uj[steps_-1]), *(Fj[steps_-1]));
+
+    // provide time step estimate 
+    tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
 
     // Perform Update
     double alpha[steps_];
@@ -302,23 +306,25 @@ public:
     }
     Uj[steps_-1] = Utmp;
     Fj[steps_-1] = Ftmp;
-    // restore global time 
-    tp_.lock();
   }
   //! solve the system 
   void solveRK(DestinationType& U0) 
   {
     DestinationType Uval("Utmp",op_.space());
-    // time might change 
-    tp_.unlock();
     
     // get cfl * timeStepEstimate 
     const double dt = tp_.deltaT();
     // get time 
     const double t = tp_.time();
 
+    // set new time 
+    op_.setTime( t );
+
     // Compute Steps
     op_(U0, *(Fj[0]));
+
+    // provide time step estimate 
+    tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
     
     for (int i=1; i<ord_; ++i) 
     {
@@ -329,10 +335,13 @@ public:
       }
 
       // set new time 
-      tp_.setTime( t + c[i]*dt );
+      op_.setTime( t + c[i]*dt );
 
       // apply operator 
       op_(Uval,*(Fj[i]));
+
+      // provide time step estimate 
+      tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
     }
 
     // Perform Update
@@ -340,9 +349,6 @@ public:
     {
       U0.addScaled(*(Fj[j]),(b[j]*dt));
     }
-    
-    // restore global time 
-    tp_.lock();
   }
 
 protected:
