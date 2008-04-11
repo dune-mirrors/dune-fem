@@ -281,7 +281,8 @@ namespace Dune
 
     in >> name_;
     
-    if( in.readInt() != BaseType :: size() )
+    if( in.readInt() != BaseType :: size() && 
+        BaseType :: size() != this->space().size() ) // only read compressed vectors 
       DUNE_THROW( IOError, "Trying to read discrete function of different size." );
 
     const DofIteratorType end = BaseType :: dend();
