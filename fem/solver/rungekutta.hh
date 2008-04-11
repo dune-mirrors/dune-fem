@@ -161,6 +161,9 @@ public:
     // get time 
     const double t = tp_.time();
 
+    // set new time 
+    op_.setTime( t );
+
     // Compute Steps
     op_(U0, *(Upd[0]));
     
