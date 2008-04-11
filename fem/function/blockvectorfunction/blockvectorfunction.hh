@@ -307,6 +307,7 @@ public:
   /** \copydoc Dune::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;
 
+#if DUNE_FEM_COMPATIBILITY
   /** \copydoc Dune::DiscreteFunctionDefault::write_xdr */
   virtual bool write_xdr( const std::string filename ) const;
 
@@ -318,6 +319,7 @@ public:
 
   /** \copydoc Dune::DiscreteFunctionDefault::read_ascii */
   virtual bool read_ascii( const std::string filename );
+#endif
 
   /** \copydoc DiscreteFunctionDefault::write_pgm  */
   virtual bool DUNE_DEPRECATED write_pgm(const std::string filename) const;

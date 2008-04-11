@@ -246,10 +246,13 @@ namespace Dune
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
+
+#if DUNE_FEM_COMPATIBILITY
     using Imp::write_xdr;
     using Imp::read_xdr;
     using Imp::write_ascii;
     using Imp::read_ascii;
+#endif
     using Imp::write_pgm;
     using Imp::read_pgm;
 
@@ -427,10 +430,13 @@ namespace Dune
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
+
+#if DUNE_FEM_COMPATIBILITY
     using Imp::write_xdr;
     using Imp::read_xdr;
     using Imp::write_ascii;
     using Imp::read_ascii;
+#endif
     using Imp::write_pgm;
     using Imp::read_pgm;
 

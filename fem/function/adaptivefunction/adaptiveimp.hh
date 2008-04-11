@@ -95,6 +95,7 @@ namespace Dune {
     //! operator -= 
     void substractFunction(const ThisType& org);
   
+#if DUNE_FEM_COMPATIBILITY
     //! write data of discrete function to file filename|timestep 
     //! with xdr methods 
     virtual bool write_xdr(const std::string filename) const;
@@ -108,6 +109,7 @@ namespace Dune {
     
     //! read function data from file filename|timestep in ascii Format
     virtual bool read_ascii(const std::string filename);
+#endif
 
     //! write function data in pgm fromat file
     virtual bool DUNE_DEPRECATED write_pgm(const std::string filename) const;

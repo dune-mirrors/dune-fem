@@ -169,6 +169,7 @@ processXdrs(XDRStream& xdr) const
   return true;
 }
 
+#if DUNE_FEM_COMPATIBILITY
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 write_xdr( const std::string filename ) const
@@ -237,6 +238,7 @@ read_ascii( const std::string filename )
   }
   return false;
 }
+#endif
 
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::

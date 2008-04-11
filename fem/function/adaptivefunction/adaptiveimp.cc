@@ -163,6 +163,7 @@ namespace Dune {
     return dofVec_.end();
   }
 
+#if DUNE_FEM_COMPATIBILITY
   //- Read/write methods
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
@@ -247,6 +248,7 @@ namespace Dune {
     }
     return false;
   }
+#endif
 
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
