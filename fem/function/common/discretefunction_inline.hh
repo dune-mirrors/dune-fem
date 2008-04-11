@@ -296,7 +296,12 @@ namespace Dune
     :: write ( OutStreamInterface< StreamTraits > &out ) const
   {
     out << DuneFEM :: versionId();
-    out << name();
+    out << name_;
+  
+    // only allow write when vector is compressed 
+    if( BaseType :: size() != this->space().size() )
+      DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
+    
     out << BaseType :: size();
 
     const ConstDofIteratorType end = BaseType :: dend();
