@@ -12,36 +12,36 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include "orthonormalbase_mod.hh"
 
-namespace Dune {
+namespace Dune
+{
   
-  template <int polOrder, int dimDomain> 
-  struct DGNumberOfBaseFunctions
-  {
-    // enum { numBaseFunctions = 0 };
-  };
+  // Number of DG Base Functions
+  // ---------------------------
+
+  template< int polOrder, int dimDomain >
+  struct DGNumberOfBaseFunctions;
   
-  //! number of base functions for dimDomain = 1 
-  template <int polOrder> 
-  struct DGNumberOfBaseFunctions<polOrder,1> 
+  template< int polOrder >
+  struct DGNumberOfBaseFunctions< polOrder, 1 >
   {
     enum { numBaseFunctions = polOrder + 1 };
   };
   
-  //! number of base functions for dimDomain = 2 
-  template <int polOrder> 
-  struct DGNumberOfBaseFunctions<polOrder,2> 
+  template< int polOrder >
+  struct DGNumberOfBaseFunctions< polOrder, 2 >
   {
     enum { numBaseFunctions = (polOrder + 2) * (polOrder + 1) / 2};
   };
 
-  //! number of base functions for dimDomain = 3 
-  template <int polOrder> 
-  struct DGNumberOfBaseFunctions<polOrder,3> 
+  template< int polOrder >
+  struct DGNumberOfBaseFunctions< polOrder, 3 >
   {
     enum { numBaseFunctions = ((polOrder+1)
             *(polOrder+2)*(2*polOrder+3)/6 
               + (polOrder+1)*(polOrder+2)/2)/2 };
   };
+
+
 
   //! Wrapper interface for DG base functions
   template <class FunctionSpaceType, int baseNum >
