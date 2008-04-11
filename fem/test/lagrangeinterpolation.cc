@@ -69,7 +69,10 @@ int main ()
     XDRFileInStream in( "solution-xdr.tmp" );
     in >> readback;
     if( readback != solution )
+    {
+      std :: cerr << "xdr read/write gives different function." << std :: endl;
       return 1;
+    }
 
     ASCIIOutStream aout( "solution-ascii.tmp" );
     aout << solution;
@@ -78,7 +81,10 @@ int main ()
     ASCIIInStream ain( "solution-ascii.tmp" );
     ain >> readback;
     if( readback != solution )
+    {
+      std :: cerr << "ascii read/write gives different function." << std :: endl;
       return 1;
+    }
 
     return 0;
   }
