@@ -238,7 +238,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readUnsignedInt */
-    inline void readUnsignedInt ( unsigned int value )
+    inline void readUnsignedInt ( unsigned int &value )
     {
       stream_ >> value;
       if( !valid () )

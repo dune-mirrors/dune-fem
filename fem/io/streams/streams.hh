@@ -175,6 +175,17 @@ namespace Dune
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readDouble( value ) );
     }
+
+    /** \brief read a double from the stream
+     *
+     *  \returns a double read from the stream
+     */
+    inline double readDouble ()
+    {
+      double value;
+      readDouble( value );
+      return value;
+    }
     
     /** \brief read a float from the stream
      *
@@ -185,6 +196,17 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readFloat( value ) );
     }
     
+    /** \brief read a double from the stream
+     *
+     *  \returns a double read from the stream
+     */
+    inline float readFloat ()
+    {
+      float value;
+      readFloat( value );
+      return value;
+    }
+    
     /** \brief read an int from the stream
      *
      *  \param[out]  value  reference to the variable to read from the stream
@@ -192,6 +214,17 @@ namespace Dune
     inline void readInt ( int &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readInt( value ) );
+    }
+    
+    /** \brief read an int from the stream
+     *
+     *  \returns an int read from the stream
+     */
+    inline int readInt ()
+    {
+      int value;
+      readInt( value );
+      return value;
     }
 
     /** \brief read a string from the stream
@@ -210,6 +243,17 @@ namespace Dune
     inline void readUnsignedInt ( unsigned int &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readUnsignedInt( value ) );
+    }
+
+    /** \brief read an unsigned int from the stream
+     *
+     *  \returns an unsigned int read from the stream
+     */
+    inline unsigned int readUnsignedInt ()
+    {
+      unsigned int value;
+      readUnsignedInt( value );
+      return value;
     }
 
   protected:
