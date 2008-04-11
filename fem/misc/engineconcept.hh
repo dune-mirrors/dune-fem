@@ -1,10 +1,6 @@
 #ifndef DUNE_FEM_ENGINE_HH
 #define DUNE_FEM_ENGINE_HH
 
-#ifndef DUNE_FEM_COMPATIBILITY
-#define DUNE_FEM_COMPATIBILITY 1
-#endif
-
 namespace Dune
 {
 
