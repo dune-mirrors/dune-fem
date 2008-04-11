@@ -17,9 +17,9 @@ namespace Dune
     typedef DuneFEM ThisType;
 
   public:
-    enum { MajorVersion = DUNE_FEM_VERSION_MAJOR };
-    enum { MinorVersion = DUNE_FEM_VERSION_MINOR };
-    enum { Revision = DUNE_FEM_VERSION_REVISION };
+    static const unsigned int MajorVersion = DUNE_FEM_VERSION_MAJOR;
+    static const unsigned int MinorVersion = DUNE_FEM_VERSION_MINOR;
+    static const unsigned int Revision = DUNE_FEM_VERSION_REVISION;
 
   private:
     DuneFEM ();
@@ -29,11 +29,32 @@ namespace Dune
     static inline std :: string version ()
     {
       std :: ostringstream s;
-      s << "dune-fem " << MajorVersion << "." << MinorVersion
+      s << "dune-fem " << MajorVersion
+        << "." << MinorVersion
         << "." << Revision;
       return s.str();
     }
-    
+
+    static inline std :: string version ( unsigned int versionId )
+    {
+      std :: ostringstream s;
+      s << "dune-fem " << (versionId >> 24)
+        << "." << ((versionId >> 16) & 0xff)
+        << "." << (versionId & 0xffff);
+      return s.str();
+    }
+
+    static inline unsigned int versionId ( unsigned int majorVersion,
+                                           unsigned int minorVersion,
+                                           unsigned int revision )
+    {
+      return (majorVersion << 24) + (minorVersion << 16) + revision;
+    }
+
+    static inline unsigned int versionId ()
+    {
+      return versionId( MajorVersion, MinorVersion, Revision );
+    }
   };
   
 };
