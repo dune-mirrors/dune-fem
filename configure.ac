@@ -110,6 +110,7 @@ AC_CONFIG_FILES([Makefile
      fem/io/Makefile
      fem/io/file/Makefile
      fem/io/streams/Makefile
+     fem/io/streams/test/Makefile
      fem/io/matlab/Makefile
      fem/io/matlab/m/Makefile
      fem/io/matlab/test/Makefile

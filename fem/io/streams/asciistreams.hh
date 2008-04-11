@@ -56,8 +56,7 @@ namespace Dune
     inline explicit ASCIIOutStream ( std :: ostream &stream )
     : stream_( stream ),
       mustFreeStream_( false )
-    {
-    }
+    {}
 
     /** \brief constructor
      *
@@ -66,8 +65,7 @@ namespace Dune
     inline explicit ASCIIOutStream ( const std :: string filename )
     : stream_( *(new std :: ofstream( filename.c_str() )) ),
       mustFreeStream_( true )
-    {
-    }
+    {}
 
     /** \brief destructor */
     inline ~ASCIIOutStream ()
@@ -117,7 +115,11 @@ namespace Dune
      */
     inline void writeString ( const std :: string &s )
     {
-      stream_ << s << std :: endl;
+      const unsigned int length = s.length();
+      stream_ << length;
+      for( unsigned int i = 0; i < length; ++i )
+        stream_.put( s[ i ] );
+      stream_ << std :: endl;
       if( !valid () )
         writeError();
     }
@@ -181,8 +183,7 @@ namespace Dune
     inline ASCIIInStream ( std :: istream &stream )
     : stream_( stream ),
       mustFreeStream_( false )
-    {
-    }
+    {}
 
     /** \brief constructor
      *
@@ -191,8 +192,7 @@ namespace Dune
     inline ASCIIInStream ( const std :: string filename )
     : stream_( *(new std :: ifstream( filename.c_str() )) ),
       mustFreeStream_( true )
-    {
-    }
+    {}
 
     /** \brief destructor */
     inline ~ASCIIInStream ()
@@ -232,7 +232,10 @@ namespace Dune
      */
     inline void readString ( std :: string &s )
     {
-      stream_ >> s;
+      unsigned int length;
+      stream_ >> length;
+      for( unsigned int i = 0; i < length; ++i )
+        s += stream_.get();
       if( !valid () )
         readError();
     }

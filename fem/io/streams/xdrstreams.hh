@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_XDRSTREAMS_HH
 #define DUNE_FEM_XDRSTREAMS_HH
 
+#include <cassert>
 #include <rpc/xdr.h>
 
 #include <dune/fem/io/streams/streams.hh>
