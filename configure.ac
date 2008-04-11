@@ -24,12 +24,12 @@ DUNE_PATH_PARDG
 
 AC_ARG_ENABLE(
   compatibility,
-  AC_HELP_STRING([--disable-compatibility],
-                 [don't try to be compatible with older interface versions]))
-if test x$enable_compatibility == xno ; then
-  AC_DEFINE(DUNE_FEM_COMPATIBILITY,0,[Shall dune-fem try to be compatible with older interface versions?])
+  AC_HELP_STRING([--enable-compatibility],
+                 [try to be compatible with older dune-fem versions]))
+if test x$enable_compatibility == xyes ; then
+  AC_DEFINE(DUNE_FEM_COMPATIBILITY,1,[Shall dune-fem be compatible with older versions?])
 else
-  AC_DEFINE(DUNE_FEM_COMPATIBILITY,1,[Shall dune-fem try to be compatible with older interface versions?])
+  AC_DEFINE(DUNE_FEM_COMPATIBILITY,0,[Shall dune-fem be compatible with older versions?])
 fi
 
 
