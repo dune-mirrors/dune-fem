@@ -193,18 +193,16 @@ namespace Dune
   private:
     const LocalFunctionFactoryType lfFactory_;
 
-    const std :: string name_;
     DofVectorType *const dofVector_;
     const bool freeDofVector_;
 
   public:
     //! Constructor
-    inline VectorDiscreteFunction ( const std :: string name,
+    inline VectorDiscreteFunction ( const std :: string &name,
                                     const DiscreteFunctionSpaceType &dfSpace,
                                     DofVectorType &dofVector )
-    : BaseType( dfSpace, lfFactory_ ),
+    : BaseType( name, dfSpace, lfFactory_ ),
       lfFactory_( *this ),
-      name_( name ),
       dofVector_( &dofVector ),
       freeDofVector_( false )
     {
@@ -212,9 +210,8 @@ namespace Dune
     }
 
     inline VectorDiscreteFunction ( const ThisType &other )
-    : BaseType( other.space(), lfFactory_ ),
+    : BaseType( other.name(), other.space(), lfFactory_ ),
       lfFactory_( *this ),
-      name_( other.name() ),
       dofVector_( new DofVectorType( other.dofVector() ) ),
       freeDofVector_( true )
     {}
@@ -314,11 +311,6 @@ namespace Dune
     inline RangeFieldType *leakPointer ()
     {
       return dofVector().leakPointer();
-    }
-
-    inline const std :: string &name () const
-    {
-      return name_;
     }
 
     inline RangeFieldType scalarProductDofs ( const ThisType &u ) const

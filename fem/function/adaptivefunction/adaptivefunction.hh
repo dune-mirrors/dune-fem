@@ -156,44 +156,40 @@ namespace Dune
   public:
     //- Public methods
     //! Constructor
-    AdaptiveDiscreteFunction( std :: string name,
+    AdaptiveDiscreteFunction( const std :: string &name,
                               const DiscreteFunctionSpaceType &spc )
-    : BaseType( spc, lfFactory_ ),
+    : BaseType( name, spc, lfFactory_ ),
       Imp( name, spc ),
       lfFactory_( *this )
-    {
-    }
+    {}
 
     //! Constructor
     template <class VectorPointerType>
-    AdaptiveDiscreteFunction( std :: string name,
+    AdaptiveDiscreteFunction( const std :: string &name,
                               const DiscreteFunctionSpaceType &spc,
                               VectorPointerType *vector)
-    : BaseType( spc, lfFactory_ ),
+    : BaseType( name, spc, lfFactory_ ),
       Imp( name, spc, vector ),
       lfFactory_( *this )
-    {
-    }
+    {}
 
     //! Constructor for SubDiscreteFunctions
     //! This constructor is only called internally
-    AdaptiveDiscreteFunction( std :: string name,
+    AdaptiveDiscreteFunction( const std :: string &name,
                               const DiscreteFunctionSpaceType &spc,
                               DofStorageType &dofVec )
-    : BaseType( spc, lfFactory_ ),
-      Imp(name, spc, dofVec),
+    : BaseType( name, spc, lfFactory_ ),
+      Imp( name, spc, dofVec ),
       lfFactory_( *this )
-    {
-    }
+    {}
 
     //! Copy constructor
     //! The copy constructor copies the dofs
-    AdaptiveDiscreteFunction(const MyType &other)
-    : BaseType( other.space(), lfFactory_ ),
-      Imp( other ),
+    AdaptiveDiscreteFunction( const ThisType & other )
+    : BaseType( "copy of " + other.name(), other.space(), lfFactory_ ),
+      Imp( BaseType :: name(), other ),
       lfFactory_( *this )
-    {
-    }
+    {}
 
   private:
     ThisType &operator= ( const ThisType &other );
@@ -242,7 +238,6 @@ namespace Dune
     }
 
     using Imp::clear;
-    using Imp::name;
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;
@@ -328,9 +323,9 @@ namespace Dune
   public:
     //- Public methods
     //! Constructor
-    AdaptiveDiscreteFunction(std::string name,
-                             const DiscreteFunctionSpaceType& spc)
-    : BaseType( spc, lfFactory_ ),
+    AdaptiveDiscreteFunction ( const std :: string &name,
+                               const DiscreteFunctionSpaceType &spc)
+    : BaseType( name, spc, lfFactory_ ),
       Imp( name, spc ),
       lfFactory_( *this )
     {
@@ -339,10 +334,10 @@ namespace Dune
 
     //! Constructor
     template <class VectorPointerType>
-    AdaptiveDiscreteFunction(std::string name,
-                             const DiscreteFunctionSpaceType& spc,
-                             VectorPointerType * vector)
-    : BaseType( spc, lfFactory_ ),
+    AdaptiveDiscreteFunction ( const std :: string &name,
+                               const DiscreteFunctionSpaceType &spc,
+                               VectorPointerType *vector )
+    : BaseType( name, spc, lfFactory_ ),
       Imp( name, spc , vector ),
       lfFactory_( *this ) 
     {
@@ -350,10 +345,10 @@ namespace Dune
     }
     
     //! Constructor
-    AdaptiveDiscreteFunction(std::string name,
-                             const DiscreteFunctionSpaceType& spc,
-                             DofStorageType& dofVec) 
-    : BaseType( spc, lfFactory_ ),
+    AdaptiveDiscreteFunction ( const std :: string &name,
+                               const DiscreteFunctionSpaceType &spc,
+                               DofStorageType &dofVec ) 
+    : BaseType( name, spc, lfFactory_ ),
       Imp( name, spc , dofVec ),
       lfFactory_( *this )
     {
@@ -361,9 +356,9 @@ namespace Dune
     }
 
     //! Copy constructor
-    AdaptiveDiscreteFunction(const MyType& other)
-    : BaseType( other.space(), lfFactory_ ),
-      Imp(other),
+    AdaptiveDiscreteFunction ( const ThisType &other )
+    : BaseType( "copy of " + other.name(), other.space(), lfFactory_ ),
+      Imp( BaseType :: name(), other ),
       lfFactory_( *this )
     {
       initializeSubFunctions();
@@ -426,7 +421,6 @@ namespace Dune
     }
 
     using Imp::clear;
-    using Imp::name;
     using Imp::size;
     using Imp::dbegin;
     using Imp::dend;

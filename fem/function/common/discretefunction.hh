@@ -8,6 +8,7 @@
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
+#include <dune/fem/version.hh>
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/io/streams/streams.hh>
@@ -146,8 +147,7 @@ namespace Dune
     inline explicit
     DiscreteFunctionInterface ( const DiscreteFunctionSpaceType &dfSpace )
     : BaseType( dfSpace )
-    {
-    }
+    {}
 
   private:
     // prohibit copying
@@ -559,13 +559,14 @@ namespace Dune
     : public BaseType :: template CommDataHandle< Operation >
     {};
 
-  private: 
+  private:
     // the local function storage 
     mutable LocalFunctionStorageType lfStorage_;
 
     DebugLock dofPointerLock_;
 
   protected:
+    std :: string name_;
     ScalarProductType scalarProduct_;
 
   protected:
@@ -581,7 +582,8 @@ namespace Dune
      *  \param[in]  dfSpace  discrete function space 
      *  \param[in]  lfFactory  local function factory
      */
-    inline DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace,
+    inline DiscreteFunctionDefault ( const std :: string &name,
+                                     const DiscreteFunctionSpaceType &dfSpace,
                                      const LocalFunctionFactoryType &lfFactory );
 
   private:
@@ -598,6 +600,9 @@ namespace Dune
   public:
     // Default Implementations
     // -----------------------
+
+    /** \copydoc Dune::DiscreteFunctionInterface::name() const */
+    const std :: string &name () const;
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
     template< class EntityType >
@@ -756,8 +761,6 @@ namespace Dune
     // Unimplemented Interface Methods
     // -------------------------------
     
-    const std :: string &name () const;
-
     int size () const;
 
     ConstDofBlockPtrType block ( unsigned int index ) const;
@@ -769,6 +772,8 @@ namespace Dune
     DofIteratorType dbegin ();
     DofIteratorType dend ();
   }; // end class DiscreteFunctionDefault 
+
+
   template< class DiscreteFunction >
   class ManagedDiscreteFunction;
   

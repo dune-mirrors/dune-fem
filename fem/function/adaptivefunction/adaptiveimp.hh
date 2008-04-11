@@ -71,7 +71,6 @@ namespace Dune {
     typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType; 
 
   public:
-    const std :: string &name () const;
     int size() const;
 
     DofIteratorType dbegin();
@@ -137,22 +136,23 @@ namespace Dune {
     DofStorageType& dofStorage() { return dofVec_; }
 
     //! normal constructor creating discrete function 
-    AdaptiveFunctionImplementation(std::string name,
-                                   const DiscreteFunctionSpaceType& spc);
+    AdaptiveFunctionImplementation ( const std :: string &name,
+                                     const DiscreteFunctionSpaceType &spc );
 
     // Constructor getting vector from outside 
     template <class VectorPointerType>
-    AdaptiveFunctionImplementation(std::string name,
-                                   const DiscreteFunctionSpaceType& spc,
-                                   VectorPointerType * vector);
+    AdaptiveFunctionImplementation ( const std :: string &name,
+                                     const DiscreteFunctionSpaceType &spc,
+                                     VectorPointerType *vector );
     
     //! create adaptive discrete function with name, space and vector
-    AdaptiveFunctionImplementation(std::string name,
-                                   const DiscreteFunctionSpaceType& spc,
-                                   DofStorageType& dofVec);
+    AdaptiveFunctionImplementation( const std :: string &name,
+                                    const DiscreteFunctionSpaceType &spc,
+                                    DofStorageType& dofVec );
     
     //! copy constructor 
-    AdaptiveFunctionImplementation(const ThisType& other);
+    AdaptiveFunctionImplementation( const std :: string &name,
+                                    const ThisType& other );
     //! destructor 
     virtual ~AdaptiveFunctionImplementation();
 
@@ -162,7 +162,6 @@ namespace Dune {
   protected:
     virtual const LeafType& interface() const = 0;
     const DiscreteFunctionSpaceType& spc_;
-    std::string name_;
     DofManagerType& dm_;
     std::pair<MemObjectInterface*, DofStorageType*> memPair_; 
 

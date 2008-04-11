@@ -1,14 +1,13 @@
-
-
-namespace Dune {
+namespace Dune
+{
+  
   template <class DiscreteFunctionSpaceImp>
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  AdaptiveFunctionImplementation(std::string name,
-                                 const DiscreteFunctionSpaceType& spc) :
-    spc_(spc),
-    name_(name),
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>
+    :: AdaptiveFunctionImplementation ( const std :: string &name,
+                                        const DiscreteFunctionSpaceType &spc )
+  : spc_(spc),
     dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
-    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, spc.mapper(), name_)),
+    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, spc.mapper(), name)),
     dofVec_(*memPair_.second)
   {
   }
@@ -16,25 +15,22 @@ namespace Dune {
   // create discrete function with vector 
   template <class DiscreteFunctionSpaceImp>
   template <class VectorPointerType> 
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  AdaptiveFunctionImplementation(std::string name,
-                                 const DiscreteFunctionSpaceType& spc,
-                                 VectorPointerType * vector
-                                 ) :
-    spc_(spc),
-    name_(name),
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>
+    :: AdaptiveFunctionImplementation ( const std :: string &name,
+                                        const DiscreteFunctionSpaceType &spc,
+                                        VectorPointerType *vector )
+  : spc_(spc),
     dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
-    memPair_(dm_.addDummyDofSet((DofStorageType *) 0, spc.mapper(), name_, vector )),
+    memPair_(dm_.addDummyDofSet((DofStorageType *) 0, spc.mapper(), name, vector )),
     dofVec_(*memPair_.second)
   {}
 
   template <class DiscreteFunctionSpaceImp>
-  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  AdaptiveFunctionImplementation(std::string name,
-                                 const DiscreteFunctionSpaceType& spc,
-                                 DofStorageType& dofVec) :
-    spc_(spc),
-    name_(name),
+  AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>
+    :: AdaptiveFunctionImplementation( const std :: string &name,
+                                       const DiscreteFunctionSpaceType &spc,
+                                       DofStorageType &dofVec)
+  : spc_(spc),
     dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
     memPair_(std::pair<MemObjectInterface*, DofStorageType*>(0, 0)),
     dofVec_(dofVec)
@@ -42,11 +38,11 @@ namespace Dune {
 
   template <class DiscreteFunctionSpaceImp>
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  AdaptiveFunctionImplementation(const ThisType& other) :
-    spc_(other.spc_),
-    name_(std::string("copy of")+other.name_),
+  AdaptiveFunctionImplementation( const std :: string &name,
+                                  const ThisType &other )
+  : spc_( other.spc_ ),
     dm_(other.dm_),
-    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, other.spc_.mapper(), name_)),
+    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, other.spc_.mapper(), name)),
     dofVec_(*memPair_.second)
   {
     // copy values
@@ -66,14 +62,6 @@ namespace Dune {
     }
   }
  
-  template< class DiscreteFunctionSpaceImp >
-  const std :: string &
-  AdaptiveFunctionImplementation< DiscreteFunctionSpaceImp >
-    :: name () const 
-  {
-    return name_;
-  }
-
   template <class DiscreteFunctionSpaceImp>
   inline void 
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::

@@ -14,10 +14,12 @@ namespace Dune
 
   template< class Traits >
   inline DiscreteFunctionDefault< Traits >
-    :: DiscreteFunctionDefault ( const DiscreteFunctionSpaceType &dfSpace,
+    :: DiscreteFunctionDefault ( const std :: string &name,
+                                 const DiscreteFunctionSpaceType &dfSpace,
                                  const LocalFunctionFactoryType &lfFactory )
   : DiscreteFunctionInterfaceType( dfSpace ),
     lfStorage_( lfFactory ),
+    name_( name ),
     scalarProduct_( dfSpace )
   {}
 
@@ -27,6 +29,13 @@ namespace Dune
     :: ~DiscreteFunctionDefault ()
   {
     assert( !dofPointerLock_ );
+  }
+
+
+  template< class Traits >
+  inline const std :: string &DiscreteFunctionDefault< Traits > :: name () const
+  {
+    return name_;
   }
 
 
@@ -263,9 +272,16 @@ namespace Dune
   inline void DiscreteFunctionDefault< Traits >
     :: read ( InStreamInterface< StreamTraits > &in )
   {
-    int sz;
-    in >> sz;
-    if( sz != BaseType :: size() )
+    unsigned int versionId = in.readUnsignedInt();
+    if( versionId < DuneFEM :: versionId( 0, 9, 1 ) )
+      DUNE_THROW( IOError, "Trying to read outdated file." );
+    else if( versionId > DuneFEM :: versionId() )
+      std :: cerr << "Warning: Reading discrete function from newer version: "
+                  << DuneFEM :: version( versionId ) << std :: endl;
+
+    in >> name_;
+    
+    if( in.readInt() != BaseType :: size() )
       DUNE_THROW( IOError, "Trying to read discrete function of different size." );
 
     const DofIteratorType end = BaseType :: dend();
@@ -279,6 +295,8 @@ namespace Dune
   inline void DiscreteFunctionDefault< Traits >
     :: write ( OutStreamInterface< StreamTraits > &out ) const
   {
+    out << DuneFEM :: versionId();
+    out << name();
     out << BaseType :: size();
 
     const ConstDofIteratorType end = BaseType :: dend();

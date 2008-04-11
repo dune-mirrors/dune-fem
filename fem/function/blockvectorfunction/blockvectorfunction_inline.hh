@@ -4,80 +4,75 @@
 namespace Dune 
 {
 
-// Constructor making discrete function  
-template<class DiscreteFunctionSpaceType>
-inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-BlockVectorDiscreteFunction(const DiscreteFunctionSpaceType & f) 
-  : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
-  , lfFactory_( *this )
-  , name_ ( "no name" )
-  , mapper_( f.blockMapper() ) 
-  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
-  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
-  , dofVec_( *memPair_.second ) 
-  , leakPtr_(dofVec_)
-  , localFunc_( *this )
-{
-}
+  template< class DiscreteFunctionSpaceImp >
+  inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
+    :: BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType &f ) 
+  : BaseType( "no name ", f, lfFactory_ ), 
+    lfFactory_( *this ),
+    mapper_( f.blockMapper() ) ,
+    dm_(DofManagerFactoryType::getDofManager(f.grid())),
+    memPair_(dm_.addDofSet(&dofVec_, mapper_, BaseType :: name())),
+    dofVec_( *memPair_.second ),
+    leakPtr_(dofVec_),
+    localFunc_( *this )
+  {}
 
-// Constructor making discrete function  
-template<class DiscreteFunctionSpaceType>
-inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-BlockVectorDiscreteFunction(const std::string name, const DiscreteFunctionSpaceType & f ) 
-  : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
-  , lfFactory_( *this )
-  , name_ ( name )
-  , mapper_( f.blockMapper() ) 
-  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
-  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
-  , dofVec_( *memPair_.second ) 
-  , leakPtr_(dofVec_)
-  , localFunc_( *this )
-{
-}
 
-// Constructor making discrete function  
-template<class DiscreteFunctionSpaceType>
-inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-BlockVectorDiscreteFunction(const std::string name, 
-    const DiscreteFunctionSpaceType & f, const DofStorageType & data ) 
-  : DiscreteFunctionDefaultType ( f , lfFactory_ ) 
-  , lfFactory_( *this )
-  , name_ ( name )
-  , mapper_( f.blockMapper() ) 
-  , dm_(DofManagerFactoryType::getDofManager(f.grid()))
-  , memPair_(dm_.addDummyDofSet(&dofVec_, mapper_, name_, &data)) 
-  , dofVec_( *memPair_.second ) 
-  , leakPtr_(dofVec_)
-  , localFunc_( *this )
-{
-}
+  template< class DiscreteFunctionSpaceImp >
+  inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
+    :: BlockVectorDiscreteFunction ( const std :: string &name,
+                                     const DiscreteFunctionSpaceType &f )
+  : BaseType( name, f, lfFactory_ ),
+    lfFactory_( *this ),
+    mapper_( f.blockMapper() ),
+    dm_(DofManagerFactoryType::getDofManager(f.grid())),
+    memPair_(dm_.addDofSet(&dofVec_, mapper_, name)),
+    dofVec_( *memPair_.second ),
+    leakPtr_(dofVec_),
+    localFunc_( *this )
+  {}
 
-template< class DiscreteFunctionSpaceType >
-inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
-  :: BlockVectorDiscreteFunction ( const ThisType &df ) 
-: DiscreteFunctionDefaultType( df.functionSpace_, lfFactory_ )
-  , lfFactory_( *this )
-  , mapper_( df.functionSpace_.blockMapper() ) 
-  , dm_(df.dm_)
-  , memPair_(dm_.addDofSet(&dofVec_, mapper_, name_)) 
-  , dofVec_( *memPair_.second ) 
-  , leakPtr_(dofVec_)
-  , localFunc_( *this )
-{
-  name_ = df.name_;
-  built_ = df.built_; 
+  
+  template< class DiscreteFunctionSpaceImp >
+  inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
+    :: BlockVectorDiscreteFunction ( const std :: string &name,
+                                     const DiscreteFunctionSpaceType &f,
+                                     const DofStorageType &data )
+  : BaseType( name, f , lfFactory_ ),
+    lfFactory_( *this ),
+    mapper_( f.blockMapper() ),
+    dm_(DofManagerFactoryType::getDofManager(f.grid())),
+    memPair_(dm_.addDummyDofSet(&dofVec_, mapper_, name, &data)),
+    dofVec_( *memPair_.second ),
+    leakPtr_(dofVec_),
+    localFunc_( *this )
+  {}
 
-  dofVec_ = df.dofVec_;
-} 
+  
+  template< class DiscreteFunctionSpaceImp >
+  inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
+    :: BlockVectorDiscreteFunction ( const ThisType &other ) 
+  : BaseType( other.name(), other.functionSpace_, lfFactory_ ),
+    lfFactory_( *this ),
+    mapper_( other.functionSpace_.blockMapper() ),
+    dm_( other.dm_ ),
+    memPair_( dm_.addDofSet( &dofVec_, mapper_, BaseType :: name() ) ),
+    dofVec_( *memPair_.second ),
+    leakPtr_( dofVec_ ),
+    localFunc_( *this )
+  {
+    built_ = other.built_; 
+    dofVec_ = other.dofVec_;
+  } 
 
-// Desctructor 
-template<class DiscreteFunctionSpaceType>
-inline BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-~BlockVectorDiscreteFunction() 
-{
-  dm_.removeDofSet(*memPair_.first);
-}
+  
+  template< class DiscreteFunctionSpaceImp >
+  inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
+    :: ~BlockVectorDiscreteFunction ()
+  {
+    dm_.removeDofSet( *memPair_.first );
+  }
+
 
 template<class DiscreteFunctionSpaceType>
 inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::clear ()
@@ -90,7 +85,7 @@ template< class DiscreteFunctionSpaceType >
 inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   :: print ( std::ostream &out ) const
 {
-  out << "BlockVectorDiscreteFunction '" << name_ << "'" << std :: endl;
+  out << "BlockVectorDiscreteFunction '" << name() << "'" << std :: endl;
   
   const ConstDofIteratorType end = dend();
   for( ConstDofIteratorType dit = dbegin(); dit != end; ++dit )

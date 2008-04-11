@@ -144,8 +144,14 @@ protected:
 //**********************************************************************
 template< class DiscreteFunctionSpaceImp >
 class BlockVectorDiscreteFunction 
-: public DiscreteFunctionDefault <BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> > 
+: public DiscreteFunctionDefault
+  < BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > > 
 {
+  typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
+  typedef DiscreteFunctionDefault
+    < BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
+    BaseType;
+
   typedef DiscreteFunctionDefault<BlockVectorDiscreteFunctionTraits <DiscreteFunctionSpaceImp> >
   DiscreteFunctionDefaultType;
 
@@ -165,7 +171,6 @@ public:
   friend class BlockVectorLocalFunctionFactory< Traits >;
 
 private:
-  typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceImp> ThisType;
   enum { myId_ = 0};
   
 public:
@@ -221,19 +226,24 @@ public:
 
 public:
   //! \brief Constructor makes Discrete Function  
-  BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType & f ) ;
+  BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType &f );
   
   //! \brief Constructor makes Discrete Function with name 
-  BlockVectorDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) ;
+  BlockVectorDiscreteFunction ( const std :: string &name,
+                                const DiscreteFunctionSpaceType &f );
   
   //! \brief Constructor makes Discrete Function  
-  BlockVectorDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const DofStorageType & data ) ;
+  BlockVectorDiscreteFunction ( const std :: string &name,
+                                const DiscreteFunctionSpaceType &f,
+                                const DofStorageType &data );
   
   //! \brief Constructor makes Discrete Function from copy 
-  BlockVectorDiscreteFunction (const ThisType & df); 
+  BlockVectorDiscreteFunction ( const ThisType &other ); 
 
   /**  \brief delete stack of free local functions belonging to this discrete function */
   ~BlockVectorDiscreteFunction ();
+
+  using BaseType :: name;
 
 #if 0
   /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
@@ -271,12 +281,6 @@ public:
   inline RangeFieldType &dof ( const unsigned int index )
   {
     return leakPtr_[ index ];
-  }
-
-  /** \copydoc Dune::DiscreteFunctionInterface::name */
-  inline const std::string &name () const
-  {
-    return name_;
   }
 
   /** \copydoc Dune::DiscreteFunctionInterface::size */
@@ -348,9 +352,6 @@ private:
   //! write/read data to/from xdr stream 
   bool processXdrs(XDRStream& xdr) const;
   
-  //! the name of the function
-  std::string name_;
-
   // single mapper for blocks 
   MapperType& mapper_;
 
