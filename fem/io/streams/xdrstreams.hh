@@ -80,8 +80,8 @@ namespace Dune
     inline void writeString ( const std :: string &s )
     {
       assert( s.size() < maxStringSize );
-      char *cs = s.c_str();
-      if( xdr_string( xdrs(), &cs, maxStringSize ) == 0 )
+      const char *cs = s.c_str();
+      if( xdr_string( xdrs(), (char **)&cs, maxStringSize ) == 0 )
         writeError();
     }
 
