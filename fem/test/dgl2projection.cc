@@ -7,6 +7,9 @@
 
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
+#elif defined USE_VECTORFUNCTION
+#include <dune/fem/storage/vector.hh>
+#include <dune/fem/function/vectorfunction.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #endif
@@ -22,11 +25,19 @@ typedef HierarchicGridPart< GridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
-  
-#ifdef USE_BLOCKVECTORFUNCTION
-typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+
+#if defined USE_BLOCKVECTORFUNCTION
+typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
+  DiscreteFunctionType;
+#elif defined USE_VECTORFUNCTION
+typedef ManagedDiscreteFunction
+  < VectorDiscreteFunction
+    < DiscreteFunctionSpaceType,
+      DynamicVector< FunctionSpaceType :: RangeFieldType > > >
+  DiscreteFunctionType;
 #else
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+  DiscreteFunctionType;
 #endif
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
