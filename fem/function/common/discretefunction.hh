@@ -579,7 +579,8 @@ namespace Dune
      *  The discrete function space is passed to the interface class and the
      *  local function storage is initialized.
      * 
-     *  \param[in]  dfSpace  discrete function space 
+     *  \param[in]  name       name of the discrete function
+     *  \param[in]  dfSpace    discrete function space 
      *  \param[in]  lfFactory  local function factory
      */
     inline DiscreteFunctionDefault ( const std :: string &name,
