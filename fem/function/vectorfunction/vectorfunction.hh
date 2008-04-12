@@ -5,6 +5,7 @@
 
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/storage/envelope.hh>
+#include <dune/fem/function/common/dofblock.hh>
 //#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
@@ -12,6 +13,7 @@
 namespace Dune
 {
 
+#if 0
   namespace VectorDiscreteFunctionHelper
   {
     template< class DofVector, class Dof, unsigned int Size >
@@ -69,6 +71,7 @@ namespace Dune
       }
     };
   }
+#endif
 
 
 
@@ -120,16 +123,21 @@ namespace Dune
 
     enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
 
+#if 0
     typedef VectorDiscreteFunctionHelper :: DofBlockProxy
       < DofVectorType, DofType, blockSize >
       DofBlockType;
     typedef VectorDiscreteFunctionHelper :: DofBlockProxy
       < DofVectorType, const DofType, blockSize >
       ConstDofBlockType;
+#endif
+    typedef DofBlockProxy< DiscreteFunctionType, DofType, blockSize >
+      DofBlockType;
+    typedef DofBlockProxy
+      < const DiscreteFunctionType, const DofType, blockSize >
+      ConstDofBlockType;
     typedef Envelope< DofBlockType > DofBlockPtrType;
     typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType;
-
-    //typedef DofManager< GridType > DofManagerType;
   };
 
 
@@ -283,13 +291,21 @@ namespace Dune
 
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
+#if 0
       typename ConstDofBlockType :: KeyType key( &(dofVector()), index );
+      return ConstDofBlockPtrType( key );
+#endif
+      typename ConstDofBlockType :: KeyType key( this, index );
       return ConstDofBlockPtrType( key );
     }
 
     inline DofBlockPtrType block ( unsigned int index )
     {
+#if 0
       typename DofBlockType :: KeyType key( &(dofVector()), index );
+      return DofBlockPtrType( key );
+#endif
+      typename DofBlockType :: KeyType key( this, index );
       return DofBlockPtrType( key );
     }
 
