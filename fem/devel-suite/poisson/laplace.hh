@@ -229,7 +229,7 @@ namespace Dune
       const IteratorType end = dfSpace.end();
       for( IteratorType it = dfSpace.begin(); it != end; ++it )
       {
-        if( it.hasBoundaryIntersections() )
+        if( it->hasBoundaryIntersections() )
           boundaryCorrectOnEntity( *it );
       }
     }
