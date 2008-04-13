@@ -33,9 +33,9 @@ for MODULE in $MODULES ; do
 
   if test "$MODULE" != "dune-fem" ; then
     echo
-    cached="/hosts/raid5/morgoth/dune/src/tarballs/$MODULE-1.1svn.tar.gz"
+    cached="/usr/people/dune/src/tarballs/$MODULE-1.2svn.tar.gz"
     if test -e $cached ; then
-      echo "Copying tarball from morgoth..."
+      echo "Copying tarball from backup ($cached)..."
       cp $cached .
     fi
   fi
