@@ -3,8 +3,8 @@
 
 // These two lines define the dune-fem version.
 #define DUNE_FEM_VERSION_MAJOR 0
-#define DUNE_FEM_VERSION_MINOR 10
-#define DUNE_FEM_VERSION_REVISION 0
+#define DUNE_FEM_VERSION_MINOR 9
+#define DUNE_FEM_VERSION_REVISION 2
 
 #include <sstream>
 

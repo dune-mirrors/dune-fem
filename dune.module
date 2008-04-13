@@ -1,5 +1,5 @@
 Module: dune-fem
-Version: 0.10
+Version: 0.9.2
 Maintainer: dune@mathematik.uni-freiburg.de
 Depends: dune-common dune-grid
 
