@@ -209,13 +209,13 @@ namespace Dune
       return *this;
     }
 
-    inline bool operator== ( const ThisType &other )
+    inline bool operator== ( const ThisType &other ) const
     {
       assert( &(other.array_) == &array_ );
       return index_ == other.index_;
     }
 
-    inline bool operator!= ( const ThisType &other )
+    inline bool operator!= ( const ThisType &other ) const
     {
       return !(*this == other);
     }
