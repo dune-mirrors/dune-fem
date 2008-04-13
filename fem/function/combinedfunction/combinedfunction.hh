@@ -150,7 +150,7 @@ namespace Dune
     //! WARNING: here we have to use a const cast for the
     //! function space!
     CombinedDiscreteFunction(ContainedDiscreteFunctionType& func) 
-      : BaseType( spc_, lfFactory_ ),
+      : BaseType( "", spc_, lfFactory_ ),
 	spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(func.space()).gridPart()),
 	lfFactory_( *this )
     {
@@ -161,7 +161,7 @@ namespace Dune
     //! Copy constructor
     //! The copy constructor copies the dofs
     CombinedDiscreteFunction(const ThisType &other)
-      : BaseType( other.space(), lfFactory_ ),
+      : BaseType( "", other.space(), lfFactory_ ),
 	spc_(other.spc_),
 	lfFactory_( *this )
     {
