@@ -10,6 +10,8 @@
 #elif defined USE_VECTORFUNCTION
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/function/vectorfunction.hh>
+#elif defined USE_ATTACHEDFUNCTION
+#include <dune/fem/function/attachedfunction/function.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #endif
@@ -34,6 +36,9 @@ typedef ManagedDiscreteFunction
   < VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
       DynamicVector< FunctionSpaceType :: RangeFieldType > > >
+  DiscreteFunctionType;
+#elif defined USE_ATTACHEDFUNCTION
+typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #else
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >

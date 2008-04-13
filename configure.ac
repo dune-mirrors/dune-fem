@@ -93,6 +93,7 @@ AC_CONFIG_FILES([Makefile
      fem/function/common/Makefile
      fem/function/localfunction/Makefile
      fem/function/adaptivefunction/Makefile
+     fem/function/attachedfunction/Makefile
      fem/function/blockvectorfunction/Makefile
      fem/function/combinedfunction/Makefile
      fem/function/productfunction/Makefile
