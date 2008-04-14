@@ -3,7 +3,6 @@
 
 #if PROBLEM == 5 
 #define EULER_PERFORMANCE
-const double globalTimeStep = 1e-3;
 #endif
 
 #include <dune/common/fvector.hh>
@@ -104,7 +103,6 @@ int main(int argc, char ** argv, char ** envp) {
     typedef GridType :: Traits :: CollectiveCommunication CommunicatorType;
     ParallelTimeProvider<CommunicatorType> tp(grid->comm(),sertp);
     ODEType ode(dg,sertp,rksteps,Parameter::verbose()); 
-    dg.timeProvider(&sertp);
     
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
@@ -126,36 +124,38 @@ int main(int argc, char ** argv, char ** envp) {
     cout << "Projection error " << problem.myName << ": " << projectionError << endl;
 
 
-    const double globalTimeStep = Parameter::getValue<double>("fem.localdg.global_tstep");
+    const double maxTimeStep = 
+      Parameter::getValue("fem.localdg.max_tstep",std::numeric_limits<double>::max());
 		double maxdt=0.,mindt=1.e10,averagedt=0.;
     // *** Time loop
-    dataWriter.write(t , counter );
-    tp.resetTimeStepEstimate(globalTimeStep);
+    tp.provideTimeStepEstimate(maxTimeStep);
     ode.initialize(U);
-    tp.syncTimeStep();
-
-    while (t<endTime) 
+    for (tp.init();tp.time()<endTime;tp.next())
     {
-      tp.resetTimeStepEstimate(globalTimeStep);
+      const double tnow = tp.time();
+      const double ldt = tp.deltaT();
+      const double tnext = tnow + ldt;
+      const int counter = tp.timeStep();
+
+      if (printCount>0 && counter%printCount==0) {
+        std::cout << "step: " << counter << " time: " << tnow << " deltaT:" << ldt << std::endl;
+      }
+      dataWriter.write(tnow , counter );
+
+      tp.provideTimeStepEstimate(maxTimeStep);
       ode.solve(U);
-      tp.augmentTime();
-      tp.syncTimeStep();
-      t = tp.time();
-      double ldt = tp.deltaT();
+      
       if (!U.dofsValid()) {
 	      std::cout << "Invalid DOFs" << std::endl;
-	      dataWriter.write(1e10, counter );  
+	      dataWriter.write(1e10, counter+1 );  
 	      abort();
       }
-      
-      if (printCount>0 && counter%printCount==0) {
-        std::cout << "step: " << counter << " time: " << t << " deltaT:" << ldt << std::endl;
-      }
-      dataWriter.write(t, counter );  
       
       mindt = (ldt<mindt)?ldt:mindt;
       maxdt = (ldt>maxdt)?ldt:maxdt;
       averagedt += ldt;
+
+      dg.setTime(tnext);
       dg.limit(U,tmp);
       dg.switchupwind();
       if(0 && counter%100 == 0) 
@@ -165,26 +165,23 @@ int main(int argc, char ** argv, char ** envp) {
         {
           averagedt /= double(counter);
           cout << "Solution doing nasty things!" << std::endl;
-          cout << t << endl;
+          cout << tnow << endl;
           eocoutput.printTexAddError(err[0],prevfehler,-1,grid->size(0),counter,averagedt);
           eocoutput.printTexEnd(timer.elapsed());
           exit(EXIT_FAILURE);
         }
       }
-      ++counter;
     }
     
-    dataWriter.write(t, counter );  
-    averagedt /= double(counter);
+    dataWriter.write(tp.time(), tp.timeStep() );  
+    averagedt /= double(tp.timeStep());
 
-    err = L2err.norm(problem,U,t);
+    err = L2err.norm(problem,U,tp.time());
     cout << "Error " << problem.myName << ": " << err << endl;
     
     fehler = err.two_norm();		
     zeit = timer.elapsed()-prevzeit;
     eocoutput.printTexAddError(fehler,prevfehler,zeit,grid->size(0),counter,averagedt);
-   
-    
     
     if(zeit > 3000.)
       break;
@@ -193,7 +190,7 @@ int main(int argc, char ** argv, char ** envp) {
       grid->globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
       ++level;
     }
-    prevzeit = zeit;
+    prevzeit = timer.elapsed();
     prevfehler = fehler;
     ++maxit;
   }

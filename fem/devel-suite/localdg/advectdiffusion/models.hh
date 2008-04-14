@@ -36,7 +36,6 @@ typedef Dune::HierarchicGridPart<GridType> GridPartType;
    typedef AdvectionDiffusionModel<GridPartType,InitialDataType> ModelType;
    typedef LLFFlux<ModelType> FluxType;
    typedef DGAdvectionOperator<ModelType,LLFFlux,order> DgType;
-   typedef DuneODE::ExplRungeKutta<DgType> ODEType;
 #elif PROBLEM == 2
    #include "scalarmodels.hh"
    #include "initburgers.cc"

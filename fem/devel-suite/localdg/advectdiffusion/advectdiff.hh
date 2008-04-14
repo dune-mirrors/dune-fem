@@ -78,13 +78,11 @@ namespace Dune {
       pass1_(problem1_, pass0_, space1_),
       pass2_(problem2_, pass1_, space2_) 
     {}
-    void timeProvider(TimeProvider* timeprovider)
-    {
-      time_ = timeprovider;
-      pass2_.timeProvider(timeprovider);
+    void setTime(double time) {
+      pass2_.setTime(time);
     }
-    void setTime(double time) const {
-      time_->setTime(time);
+    double timeStepEstimate() const {
+      return pass2_.timeStepEstimate();
     }
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
@@ -169,17 +167,17 @@ namespace Dune {
       problem2_(model_,numflux_),
       pass2_(problem2_, pass0_, space2_) 
     {}
-    void timeProvider(TimeProvider* timeprovider)
-    {
-      pass2_.timeProvider(timeprovider);
+    void setTime(double time) {
+      pass2_.setTime(time);
+    }
+    double timeStepEstimate() const {
+      return pass2_.timeStepEstimate();
     }
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
     }
     const SpaceType& space() const {
       return space2_;
-    }
-    void setTime(double time) const {
     }
     void switchupwind() {}
     void limit(const DestinationType& arg,DestinationType& dest) const {
@@ -259,9 +257,11 @@ namespace Dune {
       pass1_(problem1_, pass0_, space1_),
       pass2_(problem2_, pass1_, space2_) 
     {}
-    void timeProvider(TimeProvider* timeprovider)
-    {
-      pass2_.timeProvider(timeprovider);
+    void setTime(double time) {
+      pass2_.setTime(time);
+    }
+    double timeStepEstimate() const {
+      return pass2_.timeStepEstimate();
     }
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
@@ -272,8 +272,6 @@ namespace Dune {
     void switchupwind() {upwind_*=(-1.);}
     const SpaceType& space() const {
       return space2_;
-    }
-    void setTime(double time) const {
     }
     void printmyInfo(std::string filename) const {
       std::ostringstream filestream;
@@ -350,13 +348,11 @@ namespace Dune {
       pass1_(problem1_, pass0_, space1_),
       pass2_(problem2_, pass1_, space2_) 
     {}
-    void timeProvider(TimeProvider* timeprovider)
-    {
-      time_ = timeprovider;
-      pass2_.timeProvider(timeprovider);
+    void setTime(double time) {
+      pass2_.setTime(time);
     }
-    void setTime(double time) const {
-      time_->setTime(time);
+    double timeStepEstimate() const {
+      return pass2_.timeStepEstimate();
     }
     void operator()(const DestinationType& arg, DestinationType& dest) const {
       pass2_(arg,dest);
