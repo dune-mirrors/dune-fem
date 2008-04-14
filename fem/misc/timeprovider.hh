@@ -21,6 +21,24 @@ namespace Dune {
     runs (i.e. TimeProvider and ImprovedTimeProvider) 
     and a wrapper using these two for parallel runs
     (i.e. ParallelTimeProvider).
+
+    \note 
+    An example time loop could look as follows:
+
+    @code
+
+    // create time provider 
+    TimeProvider tp ( startTime, clf );
+
+    // creates time step estimate 
+    odeSolver.initialize( U );
+
+    for( tp.init(); tp.time() < endTime; tp.next() )
+    {
+      // do calculation 
+    }
+
+    @endcode
   */
   class TimeProvider 
   {
@@ -57,6 +75,12 @@ namespace Dune {
     //! destructor 
     ~TimeProvider() {}
 
+    /** \brief init dt with given estimate */
+    void init() 
+    {
+      syncTimeStep();
+    }
+    
     /** \brief goto next time step */
     void next() 
     {
@@ -126,11 +150,10 @@ namespace Dune {
     /** \brief reset set time step estimate 
         by setting ti to big value 
     */
-    void resetTimeStepEstimate(double estimate =
-        std::numeric_limits<double>::max()) 
+    void resetTimeStepEstimate() 
     {
       // reset estimate 
-      dtEstimate_ = estimate; // std::numeric_limits<double>::max();
+      dtEstimate_ = std::numeric_limits<double>::max();
     }
     
     /** \brief  return time step size estimate  
@@ -288,11 +311,17 @@ namespace Dune {
     }
 
     /** @copydoc TimeProvider::resetTimeStepEstimate */
-    void resetTimeStepEstimate(double estimate = std::numeric_limits<double>::max()) 
+    void resetTimeStepEstimate() 
     {
-      tp_.resetTimeStepEstimate(estimate); 
+      tp_.resetTimeStepEstimate(); 
     }
 
+    /** @copydoc TimeProvider::init */
+    void init() 
+    {
+      syncTimeStep();
+    }
+    
     /** @copydoc TimeProvider::next */
     void next() 
     {
