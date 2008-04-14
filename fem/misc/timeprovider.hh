@@ -7,67 +7,105 @@
 
 //- Dune includes 
 #include <dune/common/exceptions.hh>
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 
-namespace Dune {
+namespace Dune
+{
 
-/** @ingroup ODESolver 
-
-    \brief A TimeProvider is a class for managing the global simulation time of
-    time-dependent simulations. 
-
-    \remarks 
-    There exsist three implementations of time provider, two for serial
-    runs (i.e. TimeProvider and ImprovedTimeProvider) 
-    and a wrapper using these two for parallel runs
-    (i.e. ParallelTimeProvider).
-
-    \note 
-    An example time loop could look as follows:
-
-    @code
-
-    // create time provider 
-    TimeProvider tp ( startTime, clf );
-
-    // creates time step estimate 
-    odeSolver.initialize( U );
-
-    for( tp.init(); tp.time() < endTime; tp.next() )
-    {
-      // do calculation 
-    }
-
-    @endcode
-  */
+  /** \class   TimeProvider
+   *  \ingroup ODESolver
+   *  \brief   manager for global simulation time of time-dependent solutions
+   *
+   *  When calculating possibly multiple time-dependent solutions, it is often
+   *  necessary to use the same time in all calculations. This means that we
+   *  have to use the same time step for all our calculations. A TimeProvider
+   *  keeps track of this information in a simple and unified way.
+   *
+   *  An example time loop could look as follows:
+   *  \code
+   *  // create time provider
+   *  TimeProvider tp( startTime );
+   *
+   *  // set the initial time step estimate
+   *  odeSolver.initialize( U );
+   *
+   *  // time loop
+   *  for( tp.init(); tp.time() < endTime; tp.next() )
+   *  {
+   *    // do calculation
+   *  }
+   *  \endcode
+   *
+   *  Within the time loop, both tp.time() and tp.deltaT() are fixed and cannot
+   *  be altered. Within the time loop, the user provides (upper) estimates for
+   *  the next time step. This is usually implicitly done by the ODE solvers.
+   *  The minimum of all those estimates is taken as the basis for the next
+   *  time step.
+   *
+   *  Obviously, we need to provide an initial estimate. In the above example,
+   *  this is done by the initialize method of the ODE solver. On tp.init(),
+   *  the first time step (deltaT) is set based on the estimate.
+   *
+   *  In order to allow the user to incluence the calculation of the next time
+   *  step from the estimate, the time provider also maintains a CFL constant
+   *  (which is constant during the entire simulation). The time stap is then
+   *  calculated as follows:
+   *  \f[
+   *  \mathrm{deltaT} = \mathrm{cfl} * \mathrm{timeStepEstimate}.
+   *  \f]
+   *
+   *  \remark There exist two implementations of a time provider, one for
+   *          serial runs (TimeProvider) and a wrapper for parallel runs
+   *          (ParallelTimeProvider).
+   */
   class TimeProvider 
   {
+    typedef TimeProvider ThisType;
+
   public:
-    /** \brief constructor taking initial time, default is zero
-        \param[in] startTime initial time 
+    /** \brief default constructor */
+    inline TimeProvider()
+    : time_( Parameter :: getValue( "fem.timeprovider.starttime",
+                                    (double)0.0 ) ),
+      dt_( -1.0 ),
+      dtEstimate_( 0.0 ),
+      cfl_( Parameter :: getValidValue( "fem.timeprovider.cfl", (double)1.0,
+                                        ValidateGreater< double >( 0.0 ) ) ),
+      timeStep_( 0 ),
+      synced_( false )
+    {
+      resetTimeStepEstimate();
+    }
+
+    /** \brief constructor taking start time
+     *
+     *  \param[in]  startTime  initial time
      */
-    TimeProvider(const double startTime = 0.0) : 
-      time_(startTime),
-      dt_(-1.0),
-      dtEstimate_(0.0),
-      cfl_(1.0),
-      timeStep_(0),
-      synced_(false)
+    inline explicit TimeProvider( const double startTime )
+    : time_( startTime ),
+      dt_( -1.0 ),
+      dtEstimate_( 0.0 ),
+      cfl_( Parameter :: getValidValue( "fem.timeprovider.timestep.factor", (double)1.0,
+                                        ValidateGreater< double >( 0.0 ) ) ),
+      timeStep_( 0 ),
+      synced_( false )
     {
       resetTimeStepEstimate();
     }
     
-    /** \brief constructor taking start time and cfl number 
-        \param[in] startTime initial time 
-        \param[in] cfl initial cfl number 
-    */
-    TimeProvider(const double startTime , const double cfl ) : 
-      time_(startTime),
-      dt_(-1.0),
-      dtEstimate_(0.0),
-      cfl_(cfl),
-      timeStep_(0),
-      synced_(false)
+    /** \brief constructor taking start time and CFL constant
+     *
+     *  \param[in]  startTime  initial time
+     *  \param[in]  cfl        CFL constant
+     */
+    TimeProvider( const double startTime, const double cfl ) DUNE_DEPRECATED
+    : time_( startTime ),
+      dt_( -1.0 ),
+      dtEstimate_( 0.0 ),
+      cfl_( cfl ),
+      timeStep_( 0 ),
+      synced_( false )
     {
       resetTimeStepEstimate();
     }
@@ -75,15 +113,26 @@ namespace Dune {
     //! destructor 
     ~TimeProvider() {}
 
-    /** \brief init dt with given estimate */
-    void init() 
+    /** \brief init dt with given estimate
+     *
+     *  \param[in]  maxTimeStep  maximum allowd time step (default to
+     *                           numeric_limits< double > :: max())
+     */
+    void init( double maxTimeStep = std :: numeric_limits< double > :: max() ) 
     {
+      provideTimeStepEstimate( maxTimeStep );
       syncTimeStep();
     }
     
-    /** \brief goto next time step */
-    void next() 
+    /** \brief goto next time step
+     * 
+     *  \param[in]  maxTimeStep  maximum allowed time step (defaults to
+     *                           numeric_limits< double > :: max())
+     */
+    void next ( double maxTimeStep = std :: numeric_limits< double > :: max() ) 
     {
+      provideTimeStepEstimate( maxTimeStep );
+
       // if already syncronized do nothing 
       if( syncronized() ) return ;
       
@@ -232,9 +281,8 @@ namespace Dune {
     bool syncronized () const { return synced_; }
 
   private:
-    //! do not copy this class 
-    TimeProvider(const TimeProvider&);
-    TimeProvider& operator=(const TimeProvider&);
+    TimeProvider( const ThisType & );
+    ThisType &operator=( const ThisType & );
     
   protected:
     double time_;
@@ -244,10 +292,14 @@ namespace Dune {
     int timeStep_;
     bool synced_;
   };
+
+
   
   /** \brief improved class for 
       for time and time step estimate handling
       also reads parameter from parameter file 
+
+      \deprecated
   */
   class ImprovedTimeProvider : public TimeProvider 
   {
@@ -258,7 +310,7 @@ namespace Dune {
         \param[in] rank rank of process, output is only shown for process 0 (default value is 0) 
     */
     ImprovedTimeProvider(const std::string paramFile = "",
-                         const int rank = 0) 
+                         const int rank = 0) DUNE_DEPRECATED
       : TimeProvider() 
     {
       this->time_ = readStartTime(paramFile, rank);
@@ -286,6 +338,8 @@ namespace Dune {
       return cfl;
     }
   };
+
+
 
   /** \brief TimeProvider that is working in a parallel program */
   template <class CommunicatorType>
