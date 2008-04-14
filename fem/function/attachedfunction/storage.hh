@@ -196,13 +196,6 @@ namespace Dune
       return *this;
     }
 
-    // this method is for compatibility with DofManager only
-    inline ThisType &operator= ( const ElementType &element )
-    {
-      // do nothing
-      return *this;
-    }
-
     inline const ElementType &operator[] ( unsigned int index ) const
     {
       return dofs_[ index ];

@@ -67,10 +67,6 @@ struct SpecialArrayFeatures
     {
       // move value to new location 
       array[newIdx] = array[oldIdx];
-#ifndef NDEBUG
-      // for debugging purpose 
-      array[oldIdx ] = 0.0;
-#endif
     }
   }
 
@@ -85,10 +81,6 @@ struct SpecialArrayFeatures
     {
       // copy to new location 
       array[newIdx] = array[oldIdx];
-#ifndef NDEBUG 
-      // for debugging issues only 
-      array[oldIdx] = 0.0;
-#endif
     }
   }
 };
