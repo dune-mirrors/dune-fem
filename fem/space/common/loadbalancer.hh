@@ -135,6 +135,10 @@ public:
   //! destructor 
   virtual ~LoadBalancer () 
   {
+    // clear objects from dof managers list 
+    dm_.clearDataInliners();
+    dm_.clearDataXtractors();
+
     // remove data collectors 
     for(size_t i=0; i<collList_.size(); ++i)
     {

@@ -237,10 +237,11 @@ public:
     typedef LocalInterface<DataCollectorParamType> LocalInterfaceType;
   };
   
+  //! empty constructor 
   DataCollectorInterface () : dc_ (0) {}
   
-    /** \brief Virtual desctructor */
-    virtual ~DataCollectorInterface() {}
+  /** \brief Virtual desctructor */
+  virtual ~DataCollectorInterface() { clear(); }
 
   //! all adaptation operators have this method which adapts the
   //! corresponding grid and organizes the restriction prolongation process
@@ -334,6 +335,12 @@ public:
     return (*this);
   }
 
+  //! clear object list 
+  virtual void clear() 
+  {
+    dc_ = 0;
+    dcConv_ = 0;
+  }
 private: 
   MyType *dc_;
   MyType *dcConv_;

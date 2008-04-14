@@ -13,7 +13,7 @@
 
 // include ALUGrid to check whether the 
 // parallel version is avaiable 
-#if HAVE_ALUGRID 
+#if defined ENABLE_ALUGRID 
 #include <dune/grid/alugrid.hh>
 #endif
 

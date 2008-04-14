@@ -1171,11 +1171,23 @@ public:
     dataInliner_ += d;
   }
 
+  //! clear data inliner list 
+  void clearDataInliners ()
+  {
+    dataInliner_.clear();
+  }
+
   //! add data handler for data xtracting to dof manager
   template <class DataCollType>
   void addDataXtractor ( DataCollType & d)
   {
     dataXtractor_ += d;
+  }
+
+  //! clear data xtractor list 
+  void clearDataXtractors ()
+  {
+    dataXtractor_.clear();
   }
 
   //! packs all data of this entity en and all child entities  
