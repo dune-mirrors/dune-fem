@@ -62,10 +62,19 @@ namespace Dune
   class TimeProvider 
   {
     typedef TimeProvider ThisType;
+    
+  protected:
+    double time_;
+    double dt_;
+    double dtEstimate_;
+    double cfl_;
+    int timeStep_;
+    bool synced_;
+    bool valid_;
 
   public:
     /** \brief default constructor */
-    inline TimeProvider()
+    inline TimeProvider ()
     : time_( Parameter :: getValue( "fem.timeprovider.starttime",
                                     (double)0.0 ) ),
       dt_( -1.0 ),
@@ -73,7 +82,8 @@ namespace Dune
       cfl_( Parameter :: getValidValue( "fem.timeprovider.cfl", (double)1.0,
                                         ValidateGreater< double >( 0.0 ) ) ),
       timeStep_( 0 ),
-      synced_( false )
+      synced_( false ),
+      valid_( false )
     {
       resetTimeStepEstimate();
     }
@@ -82,14 +92,15 @@ namespace Dune
      *
      *  \param[in]  startTime  initial time
      */
-    inline explicit TimeProvider( const double startTime )
+    inline explicit TimeProvider ( const double startTime )
     : time_( startTime ),
       dt_( -1.0 ),
       dtEstimate_( 0.0 ),
       cfl_( Parameter :: getValidValue( "fem.timeprovider.timestep.factor", (double)1.0,
                                         ValidateGreater< double >( 0.0 ) ) ),
       timeStep_( 0 ),
-      synced_( false )
+      synced_( false ),
+      valid_( false )
     {
       resetTimeStepEstimate();
     }
@@ -99,20 +110,32 @@ namespace Dune
      *  \param[in]  startTime  initial time
      *  \param[in]  cfl        CFL constant
      */
-    TimeProvider( const double startTime, const double cfl ) DUNE_DEPRECATED
+    inline TimeProvider ( const double startTime, const double cfl ) DUNE_DEPRECATED
     : time_( startTime ),
       dt_( -1.0 ),
       dtEstimate_( 0.0 ),
       cfl_( cfl ),
       timeStep_( 0 ),
-      synced_( false )
+      synced_( false ),
+      valid_( false )
     {
       resetTimeStepEstimate();
     }
     
-    //! destructor 
-    ~TimeProvider() {}
+  private:
+    // prohibit copying
+    TimeProvider( const ThisType & );
 
+  public:
+    //! destructor 
+    inline ~TimeProvider()
+    {}
+
+  private:
+    // prohibit assignment
+    ThisType &operator=( const ThisType & );
+
+  public:
     /** \brief init dt with given estimate
      *
      *  \param[in]  maxTimeStep  maximum allowd time step (default to
@@ -122,6 +145,7 @@ namespace Dune
     {
       provideTimeStepEstimate( maxTimeStep );
       syncTimeStep();
+      valid_ = true;
     }
     
     /** \brief goto next time step
@@ -141,27 +165,61 @@ namespace Dune
       
       // set new delta t 
       syncTimeStep();
+      valid_ = true;
     }
 
-    /** \brief return current time 
-        \return current time 
-    */
-    double time() const { return time_; }
+    /** \brief obtain the current time
+     *
+     *  \returns the current time
+     */
+    inline double time () const
+    {
+      return time_;
+    }
     
+    /** \brief obtain number of the current time step
+     *
+     *  \return the current time step counter
+     */
+    inline int timeStep () const
+    {
+      return timeStep_;
+    }
+ 
+    /** \brief obtain the size of the current time step
+     *
+     *  \returns the size of the current time step
+     */
+    inline double deltaT () const
+    {
+      assert( (dt_ * cfl_) > 0.0 );
+      return dt_ * cfl_;
+    }
+
+    inline bool timeStepValid () const
+    {
+      return valid_;
+    }
+   
     /** \brief set time step estimate to minimum of given value and
                internal time step estiamte 
          \param[in] dtEstimate time step size estimate 
     */
-    void provideTimeStepEstimate(const double dtEstimate) {
+    inline void provideTimeStepEstimate ( const double dtEstimate )
+    {
       dtEstimate_ = std::min(dtEstimate_, dtEstimate);
       synced_ = false ;
     }
 
     /** \brief count current time step a not valid */
-    void invalidateTimeStep() 
+    inline void invalidateTimeStep ()
     {
-      DUNE_THROW(InvalidStateException,"TimeStep invalid!");
+      valid_ = false;
     }
+
+
+    // old methods, possibly deprecated in future
+    // ------------------------------------------
     
     /** \brief restore time and timestep from outside 
          (i.e. from former calculation)  
@@ -234,15 +292,6 @@ namespace Dune
       cfl_ = std::min(cfl_, cfl );
     }
     
-    /** \brief  return time step size times cfl number
-        \return \f$\triangle t \cdot CFL\f$ 
-    */
-    double deltaT () const 
-    {
-      assert( (dt_ * cfl_) > 0.0 );
-      return dt_ * cfl_;
-    }
-
     /** \brief sets time step size to size of dt 
         \param dt new time step size 
     */
@@ -270,27 +319,10 @@ namespace Dune
       synced_ = true ;
     }
 
-    /** \brief return current time step counter 
-        \return current time step counter 
-    */
-    int timeStep () const {  return timeStep_;  }
-
     /** \brief returns true if TimeProvider is in syncronized state,
         i.e. after next has been called. 
     */
     bool syncronized () const { return synced_; }
-
-  private:
-    TimeProvider( const ThisType & );
-    ThisType &operator=( const ThisType & );
-    
-  protected:
-    double time_;
-    double dt_;
-    double dtEstimate_;
-    double cfl_;
-    int timeStep_;
-    bool synced_;
   };
 
 
