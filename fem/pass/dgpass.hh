@@ -11,8 +11,7 @@
 #include "discretemodel.hh"
 #include "modelcaller.hh"
 
-// * needs to move
-#include <dune/fem/misc/timeprovider.hh>
+#include <dune/fem/solver/timeprovider.hh>
 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>

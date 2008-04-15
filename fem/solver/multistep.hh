@@ -10,8 +10,9 @@
 #include <cassert>
 
 //- Dune includes 
-#include <dune/fem/misc/timeprovider.hh>
+#include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/solver/rungekutta.hh>
+
 namespace DuneODE 
 {
 

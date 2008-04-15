@@ -15,8 +15,8 @@
 #endif
 
 //- Dune includes 
-#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
+#include <dune/fem/solver/timeprovider.hh>
 
 //- include runge kutta ode solver 
 #include <dune/fem/solver/rungekutta.hh>
