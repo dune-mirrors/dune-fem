@@ -53,7 +53,7 @@ public:
     \param[in] pord polynomial order
     \param[in] verbose verbosity 
   */
-  ExplMultiStepBase(Operator& op, TimeProvider& tp, 
+  ExplMultiStepBase(Operator& op, TimeProviderBase& tp, 
                     int pord, bool verbose = true ) :
     a(0),b(0),c(0)
     , steps_(pord+1)
@@ -356,11 +356,12 @@ protected:
   // operator to solve for 
   const Operator& op_;
   // time provider 
-  TimeProvider& tp_;
+  TimeProviderBase& tp_;
   // init flag 
   bool initialized_;
 };
 
+#if 0
 /** \brief Exlicit multi step ODE solver that also behaves like a time
     stepper. */
 template<class Operator>
@@ -442,8 +443,13 @@ private:
   double savetime_;
   int savestep_;
 };
+#endif
 
-/** \brief Exlicit multi step ODE solver. */
+/** \brief Exlicit multi step ODE solver.
+ *
+ *  \todo port usage of CFL constant to new time provider interface, i.e., use
+ *        the CFL constant saved in this solver
+ */
 template<class DestinationImp>
 class ExplicitMultiStepSolver : 
   public OdeSolverInterface<DestinationImp> ,
@@ -452,28 +458,25 @@ class ExplicitMultiStepSolver :
   typedef DestinationImp DestinationType; 
   typedef SpaceOperatorInterface<DestinationImp> OperatorType;
   typedef ExplMultiStepBase<OperatorType> BaseType;
- public:
+
+private:
+  TimeProviderBase &timeProvider_;
+  double cfl_;
+
+public:
   /** \brief constructor 
     \param[in] op Operator \f$L\f$ 
     \param[in] tp TimeProvider 
     \param[in] pord polynomial order 
     \param[in] verbose verbosity 
   */
-  ExplicitMultiStepSolver(OperatorType& op, TimeProvider& tp, int pord, bool verbose = false) :
+  ExplicitMultiStepSolver(OperatorType& op, TimeProviderBase& tp, int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
-    timeProvider_(tp)
+    timeProvider_(tp),
+    cfl_( std :: min( 0.45 / (2.0 * pord+1) / double(pord), 1.0 ) )
   {
-    // CFL upper estimate 
-    double cfl = 0.45 / (2.0 * pord+1) / double(pord);
-
-    // maximal allowed cfl number 
-    tp.provideCflEstimate(cfl); 
-    assert( tp.cfl() <= 1.0 );
-
     if(verbose) 
-    {
-      std::cout << "ExplicitMultiStepSolver: cfl = " << tp.cfl() << "!\n";
-    } 
+      std::cout << "ExplicitMultiStepSolver: cfl = " << cfl_ << "!" << std :: endl;
   }
 
   //! destructor 
@@ -497,9 +500,6 @@ class ExplicitMultiStepSolver :
     // solve ode 
     BaseType :: solve(U0);
   }
-
-private:
-  TimeProvider& timeProvider_;
 };
 
 /** @} **/

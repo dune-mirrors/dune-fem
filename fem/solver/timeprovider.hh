@@ -7,11 +7,115 @@
 
 //- Dune includes 
 #include <dune/common/exceptions.hh>
+
+#include <dune/fem/misc/commhelper.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 
 namespace Dune
 {
+
+  /** \class   TimeProviderBase
+   *  \ingroup ODESolver
+   *  \brief   gereral base for time providers
+   */
+  class TimeProviderBase
+  {
+    typedef TimeProviderBase ThisType;
+
+  protected:
+    double time_;
+    int timeStep_;
+    double dt_;
+    bool valid_;
+    double dtEstimate_;
+
+  public:
+    inline TimeProviderBase ()
+    : time_( Parameter :: getValue( "fem.timeprovider.starttime",
+                                    (double)0.0 ) ),
+      timeStep_( 0 ),
+      valid_( false )
+    {
+      initTimeStepEstimate();
+    }
+
+    inline explicit TimeProviderBase ( const double startTime )
+    : time_( startTime ),
+      timeStep_( 0 ),
+      valid_( false )
+    {
+      initTimeStepEstimate();
+    }
+
+  private:
+    TimeProviderBase ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
+
+  public:
+    /** \brief obtain the current time
+     *
+     *  \returns the current time
+     */
+    inline double time () const
+    {
+      return time_;
+    }
+    
+    /** \brief obtain number of the current time step
+     *
+     *  \return the current time step counter
+     */
+    inline int timeStep () const
+    {
+      assert( timeStepValid() );
+      return timeStep_;
+    }
+ 
+    /** \brief obtain the size of the current time step
+     *
+     *  \returns the size of the current time step
+     */
+    inline double deltaT () const
+    {
+      assert( timeStepValid() );
+      return dt_;
+    }
+
+    inline bool timeStepValid () const
+    {
+      return valid_;
+    }
+   
+    /** \brief set time step estimate to minimum of given value and
+               internal time step estiamte 
+         \param[in] dtEstimate time step size estimate 
+    */
+    inline void provideTimeStepEstimate ( const double dtEstimate )
+    {
+      dtEstimate_ = std :: min( dtEstimate_, dtEstimate );
+    }
+
+    /** \brief count current time step a not valid */
+    inline void invalidateTimeStep ()
+    {
+      valid_ = false;
+    }
+
+  protected:
+    inline void advance ()
+    {
+      time_ += deltaT();
+      ++timeStep_;
+    }
+
+    inline void initTimeStepEstimate ()
+    {
+      dtEstimate_ = std :: numeric_limits< double > :: max();
+    }
+  };
+
+
 
   /** \class   TimeProvider
    *  \ingroup ODESolver
@@ -59,81 +163,82 @@ namespace Dune
    *          serial runs (TimeProvider) and a wrapper for parallel runs
    *          (ParallelTimeProvider).
    */
-  class TimeProvider 
+  template< class CommProvider = DefaultCollectiveCommunicationType >
+  class TimeProvider;
+
+
+
+  template< class C >
+  class TimeProvider< CollectiveCommunication< C > >
+  : public TimeProviderBase
   {
-    typedef TimeProvider ThisType;
-    
-  protected:
-    double time_;
-    double dt_;
-    double dtEstimate_;
-    double cfl_;
-    int timeStep_;
-    bool synced_;
-    bool valid_;
+    typedef TimeProvider< CollectiveCommunication< C > > ThisType;
+    typedef TimeProviderBase BaseType;
 
   public:
-    /** \brief default constructor */
-    inline TimeProvider ()
-    : time_( Parameter :: getValue( "fem.timeprovider.starttime",
-                                    (double)0.0 ) ),
-      dt_( -1.0 ),
-      dtEstimate_( 0.0 ),
-      cfl_( Parameter :: getValidValue( "fem.timeprovider.cfl", (double)1.0,
-                                        ValidateGreater< double >( 0.0 ) ) ),
-      timeStep_( 0 ),
-      synced_( false ),
-      valid_( false )
-    {
-      resetTimeStepEstimate();
-    }
+    typedef CollectiveCommunication< C > CollectiveCommunicationType;
+
+  protected:
+    typedef CollectiveCommunicationHelper< CollectiveCommunicationType >
+      CollectiveCommHelperType;
+    
+  protected:
+    const CollectiveCommunicationType &comm_;
+    const double cfl_;
+
+    using BaseType :: dt_;
+    using BaseType :: dtEstimate_;
+    using BaseType :: valid_;
+    using BaseType :: timeStep_;
+
+  public:
+    /** \brief default constructor
+     *
+     *  \param[in]  comm  collective communication (optional)
+     */
+    inline explicit
+    TimeProvider ( const CollectiveCommunicationType &comm
+                     = CollectiveCommHelperType :: defaultCommunication() )
+    : BaseType(),
+      comm_( comm ),
+      cfl_( Parameter :: getValidValue( "fem.timeprovider.factor", (double)1.0,
+                                        ValidateGreater< double >( 0.0 ) ) )
+    {}
 
     /** \brief constructor taking start time
      *
      *  \param[in]  startTime  initial time
+     *  \param[in]  comm       collective communication (optional)
      */
-    inline explicit TimeProvider ( const double startTime )
-    : time_( startTime ),
-      dt_( -1.0 ),
-      dtEstimate_( 0.0 ),
+    inline explicit
+    TimeProvider ( const double startTime,
+                   const CollectiveCommunicationType &comm
+                     = CollectiveCommHelperType :: defaultCommunication() )
+    : BaseType( startTime ),
+      comm_( comm ),
       cfl_( Parameter :: getValidValue( "fem.timeprovider.timestep.factor", (double)1.0,
-                                        ValidateGreater< double >( 0.0 ) ) ),
-      timeStep_( 0 ),
-      synced_( false ),
-      valid_( false )
-    {
-      resetTimeStepEstimate();
-    }
+                                        ValidateGreater< double >( 0.0 ) ) )
+    {}
     
     /** \brief constructor taking start time and CFL constant
      *
      *  \param[in]  startTime  initial time
      *  \param[in]  cfl        CFL constant
+     *  \param[in]  comm       collective communication (optional)
      */
-    inline TimeProvider ( const double startTime, const double cfl ) DUNE_DEPRECATED
-    : time_( startTime ),
-      dt_( -1.0 ),
-      dtEstimate_( 0.0 ),
-      cfl_( cfl ),
-      timeStep_( 0 ),
-      synced_( false ),
-      valid_( false )
-    {
-      resetTimeStepEstimate();
-    }
+    inline
+    TimeProvider ( const double startTime,
+                   const double cfl,
+                   const CollectiveCommunicationType &comm
+                     = CollectiveCommHelperType :: defaultCommunication() )
+    : BaseType( startTime ),
+      comm_( comm ),
+      cfl_( cfl )
+    {}
     
   private:
-    // prohibit copying
-    TimeProvider( const ThisType & );
-
-  public:
-    //! destructor 
-    inline ~TimeProvider()
-    {}
-
-  private:
-    // prohibit assignment
-    ThisType &operator=( const ThisType & );
+    TimeProvider ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
 
   public:
     /** \brief init dt with given estimate
@@ -144,8 +249,7 @@ namespace Dune
     void init( double maxTimeStep = std :: numeric_limits< double > :: max() ) 
     {
       provideTimeStepEstimate( maxTimeStep );
-      syncTimeStep();
-      valid_ = true;
+      initTimeStep();
     }
     
     /** \brief goto next time step
@@ -157,64 +261,22 @@ namespace Dune
     {
       provideTimeStepEstimate( maxTimeStep );
 
-      // if already syncronized do nothing 
-      if( syncronized() ) return ;
-      
-      // increase time by delta t 
-      augmentTime(); 
-      
-      // set new delta t 
-      syncTimeStep();
+      advance();
+      initTimeStep();
+    }
+
+  protected:
+    using BaseType :: advance;
+    using BaseType :: initTimeStepEstimate;
+
+    inline void initTimeStep ()
+    {
+      dt_ = cfl_ * dtEstimate_;
+      dt_ = comm_.min( dt_ );
+      assert( dt_ > 0.0 );
       valid_ = true;
-    }
 
-    /** \brief obtain the current time
-     *
-     *  \returns the current time
-     */
-    inline double time () const
-    {
-      return time_;
-    }
-    
-    /** \brief obtain number of the current time step
-     *
-     *  \return the current time step counter
-     */
-    inline int timeStep () const
-    {
-      return timeStep_;
-    }
- 
-    /** \brief obtain the size of the current time step
-     *
-     *  \returns the size of the current time step
-     */
-    inline double deltaT () const
-    {
-      assert( (dt_ * cfl_) > 0.0 );
-      return dt_ * cfl_;
-    }
-
-    inline bool timeStepValid () const
-    {
-      return valid_;
-    }
-   
-    /** \brief set time step estimate to minimum of given value and
-               internal time step estiamte 
-         \param[in] dtEstimate time step size estimate 
-    */
-    inline void provideTimeStepEstimate ( const double dtEstimate )
-    {
-      dtEstimate_ = std::min(dtEstimate_, dtEstimate);
-      synced_ = false ;
-    }
-
-    /** \brief count current time step a not valid */
-    inline void invalidateTimeStep ()
-    {
-      valid_ = false;
+      initTimeStepEstimate();
     }
 
 
@@ -244,236 +306,113 @@ namespace Dune
 
     /** \brief augment time , i.e. \f$t = t + \triangle t\f$ and
         increase time step counter  */
-    double augmentTime()
+    double augmentTime() DUNE_DEPRECATED
     { 
-      // if already syncronized do nothing 
-      if( syncronized() ) return time_ ;
-
-      time_ += deltaT(); 
-      ++timeStep_;
+      advance();
       return time_;
     }
     
     /** \brief reset set time step estimate 
         by setting ti to big value 
     */
-    void resetTimeStepEstimate() 
+    void resetTimeStepEstimate() DUNE_DEPRECATED
     {
-      // reset estimate 
-      dtEstimate_ = std::numeric_limits<double>::max();
+      initTimeStepEstimate();
     }
     
     /** \brief  return time step size estimate  
         \return time step size estimate  
     */
-    double timeStepEstimate() const {
+    double timeStepEstimate() const DUNE_DEPRECATED
+    {
       return dtEstimate_;
     }
 
     /** \brief  return cfl number 
         \return cfl number 
     */
-    double cfl () const { return cfl_; } 
+    double cfl () const DUNE_DEPRECATED
+    {
+      return cfl_;
+    }
     
     /** \brief set internal cfl to given value
         \param[in] cfl new cfl number 
     */
-    void setCfl(const double cfl) 
+    void setCfl(const double cfl) DUNE_DEPRECATED DUNE_DEPRECATED
     {
-      cfl_ = cfl;
+      //cfl_ = cfl;
     }
     
     /** \brief set internal cfl to minimum of given value and internal
         cfl number 
         \param[in] cfl cfl estimate 
     */
-    void provideCflEstimate(const double cfl) 
+    void provideCflEstimate(const double cfl) DUNE_DEPRECATED
     {
-      cfl_ = std::min(cfl_, cfl );
+      //cfl_ = std::min(cfl_, cfl );
     }
     
     /** \brief sets time step size to size of dt 
         \param dt new time step size 
     */
-    void setDeltaT (const double dt)
+    void setDeltaT (const double dt) DUNE_DEPRECATED
     {
-      resetTimeStepEstimate();
-      provideTimeStepEstimate(dt);
-      syncTimeStep();
+      //resetTimeStepEstimate();
+      //provideTimeStepEstimate(dt);
+      //syncTimeStep();
     }
     
     /** \brief  syncronize time step, i.e. set timeStep to values of current 
         estimate and reset estimate 
     */
-    void syncTimeStep() 
+    void syncTimeStep() DUNE_DEPRECATED 
     {
-      // if already syncronized do nothing 
-      if( syncronized() ) return ;
-
-      // save current time step 
-      dt_ = dtEstimate_;
-      // reset estimate 
-      resetTimeStepEstimate();
-
-      // now up to date 
-      synced_ = true ;
+      initTimeStep();
     }
 
     /** \brief returns true if TimeProvider is in syncronized state,
         i.e. after next has been called. 
     */
-    bool syncronized () const { return synced_; }
-  };
-
-
-  
-  /** \brief improved class for 
-      for time and time step estimate handling
-      also reads parameter from parameter file 
-
-      \deprecated
-  */
-  class ImprovedTimeProvider : public TimeProvider 
-  {
-  public:
-    /** \brief constructor 
-        \param[in] paramFile parameter file to read start time and cfl number
-                   keywords are "StartTime" and "CFL" 
-        \param[in] rank rank of process, output is only shown for process 0 (default value is 0) 
-    */
-    ImprovedTimeProvider(const std::string paramFile = "",
-                         const int rank = 0) DUNE_DEPRECATED
-      : TimeProvider() 
+    bool syncronized () const DUNE_DEPRECATED
     {
-      this->time_ = readStartTime(paramFile, rank);
-      this->cfl_  = readCFL(paramFile, rank);
-    }
-
-  private:
-    //! do not copy this class 
-    ImprovedTimeProvider(const ImprovedTimeProvider&);
-    ImprovedTimeProvider& operator=(const ImprovedTimeProvider&);
-
-    // read parameter start time from given file
-    double readStartTime(const std::string& file, const int rank) const 
-    {
-      double startTime = 0.0;
-      readParameter(file,"StartTime",startTime, (rank == 0) );
-      return startTime;
-    }
-    
-    // read parameter CFL from given file
-    double readCFL(const std::string& file, const int rank) const 
-    {
-      double cfl = 1.0;
-      readParameter(file,"CFL",cfl, (rank == 0) );
-      return cfl;
+      return false;
     }
   };
 
 
 
-  /** \brief TimeProvider that is working in a parallel program */
-  template <class CommunicatorType>
-  class ParallelTimeProvider
+  template< class CommProvider >
+  class TimeProvider
+  : public TimeProvider
+    < typename CommProvider :: Traits :: CollectiveCommunication >
   {
+    typedef TimeProvider< CommProvider > ThisType;
+    typedef TimeProvider
+      < typename CommProvider :: Traits :: CollectiveCommunication >
+      BaseType;
+
   public:
-    /** \brief constructor communicator and serial time provider
-        \param[in] comm communicator 
-        \param[in] tp serial time provider 
-    */
-    ParallelTimeProvider(const CommunicatorType& comm,
-                         TimeProvider& tp)
-      : comm_(comm), tp_(tp)
+    typedef typename CommProvider :: Traits :: CollectiveCommunication
+      CollectiveCommunicationType;
+
+  public:
+    inline explicit TimeProvider ( const CommProvider &comm )
+    : BaseType( comm.comm() )
+    {}
+
+    inline TimeProvider ( const double startTime,
+                          const CommProvider &comm )
+    : BaseType( startTime, comm.comm() )
     {}
     
-    /** @copydoc TimeProvider::time */ 
-    double time() const { return tp_.time(); }
-    
-    /** @copydoc TimeProvider::provideTimeStepEstimate */
-    void provideTimeStepEstimate(const double dtEstimate) 
-    {
-      tp_.provideTimeStepEstimate(dtEstimate);
-    }
-
-    /** @copydoc TimeProvider::resetTimeStepEstimate */
-    void resetTimeStepEstimate() 
-    {
-      tp_.resetTimeStepEstimate(); 
-    }
-
-    /** @copydoc TimeProvider::init */
-    void init() 
-    {
-      syncTimeStep();
-    }
-    
-    /** @copydoc TimeProvider::next */
-    void next() 
-    {
-      // if already synced do nothing 
-      if( tp_.syncronized() ) return ;
-      
-      // increase time by delta t 
-      augmentTime(); 
-      // sync new time step size 
-      syncTimeStep();
-    }
-    
-    /** @copydoc TimeProvider::invalidateTimeStep */
-    void invalidateTimeStep() 
-    {
-      tp_.invalidateTimeStep();
-    }
-    
-    /** @copydoc TimeProvider::timeStepEstimate */
-    double timeStepEstimate() const 
-    {
-      return tp_.timeStepEstimate();
-    }
-
-    /** @copydoc TimeProvider::cfl */
-    double cfl () const { return tp_.cfl(); } 
-    
-    /** @copydoc TimeProvider::deltaT */
-    double deltaT () const { return tp_.deltaT(); }
-    
-    /** @copydoc TimeProvider::timeStep */
-    int timeStep() const { return tp_.timeStep(); }
-
-    /** @copydoc TimeProvider::syncTimeStep 
-        
-        \note Here a global communication to minimize the time step size
-        over all time step sizes from all processors is done. 
-    */ 
-    void syncTimeStep() 
-    {
-      // do nothing if already synced 
-      if( tp_.syncronized() ) return ;
-
-      // get time step estimate 
-      double dt = timeStepEstimate(); 
-      // do min over all processors 
-      dt = comm_.min( dt );
-      // set time step estimate 
-      tp_.provideTimeStepEstimate(dt);
-      // set timeStep and reset estimate 
-      tp_.syncTimeStep();
-    }
-
-    /** @copydoc TimeProvider::augmentTime */
-    double augmentTime() 
-    {
-      // increase time (if not syncronized )
-      return tp_.augmentTime();
-    }
-
-  protected:
-    //! communicator  
-    const CommunicatorType& comm_;
-    //! serial time provider 
-    TimeProvider& tp_;
+    inline TimeProvider ( const double startTime,
+                          const double cfl,
+                          const CommProvider &comm )
+    : BaseType( startTime, cfl, comm.comm() )
+    {}
   };
-  
+
 } // end namespace Dune
+
 #endif

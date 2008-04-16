@@ -76,7 +76,7 @@ public:
     \param[in] pord polynomial order 
     \param[in] verbose verbosity 
   */
-  ExplRungeKuttaBase(Operator& op, TimeProvider& tp, 
+  ExplRungeKuttaBase(Operator& op, TimeProviderBase& tp, 
                      int pord, bool verbose = true ) :
     a(0),b(0),c(0), Upd(0),
     ord_(pord),
@@ -200,11 +200,12 @@ protected:
   // operator to solve for 
   Operator& op_;
   // time provider 
-  TimeProvider& tp_;
+  TimeProviderBase& tp_;
   // init flag 
   bool initialized_;
 };
 
+#if 0
 /** \brief Exlicit RungeKutta ODE solver that also behaves like a time
     stepper. */
 template<class Operator>
@@ -298,6 +299,7 @@ private:
   double savetime_;
   int savestep_;
 };
+#endif
 
 /** \brief Exlicit RungeKutta ODE solver. */
 template<class DestinationImp>
@@ -315,14 +317,9 @@ class ExplicitRungeKuttaSolver :
     \param[in] pord polynomial order 
     \param[in] verbose verbosity 
   */
-  ExplicitRungeKuttaSolver(OperatorType& op, TimeProvider& tp, int pord, bool verbose = false) :
+  ExplicitRungeKuttaSolver(OperatorType& op, TimeProviderBase &tp, int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose)
-  {
-    if(verbose) 
-    {
-      std::cout << "ExplicitRungeKuttaSolver: cfl = " << tp.cfl() << "!\n";
-    } 
-  }
+  {}
 
   //! destructor 
   virtual ~ExplicitRungeKuttaSolver() {}

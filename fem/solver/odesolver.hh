@@ -100,7 +100,7 @@ class ExplTimeStepperBase
   typedef typename Operator::DestinationType DestinationType; 
 public:
   ExplTimeStepperBase(Operator& op, 
-                      Dune::TimeProvider& tp, 
+                      Dune::TimeProviderBase& tp, 
                       int pord, 
                       bool verbose) :
     ord_(pord),
@@ -179,15 +179,10 @@ class ExplicitOdeSolver :
   typedef ExplTimeStepperBase<OperatorType> BaseType; 
 public:
   //! constructor 
-  ExplicitOdeSolver(OperatorType& op, Dune::TimeProvider& tp, int pord, bool verbose = false) :
+  ExplicitOdeSolver(OperatorType& op, Dune :: TimeProviderBase &tp, int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp)
-  {
-    if(verbose) 
-    {
-      std::cout << "ExplicitOdeSolver: cfl = " << tp.cfl() << "!\n";
-    } 
-  }
+  {}
 
   //! destructor 
   virtual ~ExplicitOdeSolver() {}
@@ -235,9 +230,10 @@ public:
   }
 
 private:
-  Dune::TimeProvider& timeProvider_;
+  Dune::TimeProviderBase& timeProvider_;
 };
 
+#if 0
 template<class Operator>
 class ExplTimeStepper : public Dune::TimeProvider, 
                         public ExplTimeStepperBase<Operator>  
@@ -345,6 +341,7 @@ public:
   int savestep_;
   double savetime_;
 };
+#endif
 
 //////////////////////////////////////////////////////////////////
 //
@@ -356,7 +353,7 @@ class ImplTimeStepperBase
 {
   typedef typename Operator :: DestinationType DestinationType; 
 public:
-  ImplTimeStepperBase(Operator& op, Dune::TimeProvider& tp, 
+  ImplTimeStepperBase(Operator& op, Dune :: TimeProviderBase &tp, 
                       int pord, bool verbose) :
     ord_(pord),
     comm_(pardg::Communicator::instance()),
@@ -444,8 +441,13 @@ class ImplicitOdeSolver :
   typedef DestinationImp DestinationType;
   typedef SpaceOperatorInterface<DestinationImp> OperatorType;
   typedef ImplTimeStepperBase<OperatorType> BaseType;
+
+private:
+  Dune :: TimeProviderBase &timeProvider_;
+  double cfl_;
+
 public:
-  ImplicitOdeSolver(OperatorType& op, Dune::TimeProvider& tp,
+  ImplicitOdeSolver(OperatorType& op, Dune::TimeProviderBase& tp,
                     int pord, bool verbose = false) :
     BaseType(op,tp,pord,verbose),
     timeProvider_(tp),
@@ -459,12 +461,12 @@ public:
   void initialize(const DestinationType& U0)
   {
     // get current cfl estimate 
-    cfl_ = timeProvider_.cfl();
+    //cfl_ = timeProvider_.cfl();
     // initialize solver 
     BaseType :: initialize (U0);
 
     // set time step estimate of operator 
-    timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
+    timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
   }
 
   //! solve 
@@ -479,14 +481,6 @@ public:
     bool convergence = false;
     int cycle = 0;
 
-    // if cfl has been changed 
-    // then try to reach old value 
-    if( cfl_ > timeProvider_.cfl() ) 
-    {
-      double cfl = 2.0 * timeProvider_.cfl();
-      timeProvider_.setCfl(cfl);
-    }
-    
     while( !convergence )
     {
       const double dt   = timeProvider_.deltaT();
@@ -498,16 +492,18 @@ public:
       
       convergence = this->odeSolver().step(time , dt , u);
       // set time step estimate of operator 
-      timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
+      timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
       
       if(!convergence) 
       {
-        double cfl = 0.5 * timeProvider_.cfl();
-        timeProvider_.setCfl(cfl); 
+        cfl_ *= 0.5;
+        //double cfl = 0.5 * timeProvider_.cfl();
+        //timeProvider_.setCfl(cfl); 
         // output only on rank 0
         if(U0.space().grid().comm().rank() == 0 )
         {
-          derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
+          derr << "New cfl number is "<< cfl_ << std :: endl;
+          //derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
         }
       }
 
@@ -517,23 +513,22 @@ public:
         DUNE_THROW(InvalidStateException,"ImplicitOdeSolver: no convergence of solver!");
       }
     }
-    if (this->odeSolver().number_of_iterations()<10) {
-      double cfl = 2.0 * timeProvider_.cfl();
-      timeProvider_.setCfl(cfl); 
+    if (this->odeSolver().number_of_iterations()<10)
+    {
+      cfl_ *= 2.0;
+      //double cfl = 2.0 * timeProvider_.cfl();
+      //timeProvider_.setCfl(cfl); 
       if(U0.space().grid().comm().rank() == 0 )
       {
-        derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
+        derr << "New cfl number is "<< cfl_ << std :: endl;
+        //derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
       }
     }
-
   }
-
-private:
-  Dune::TimeProvider& timeProvider_;
-  double cfl_;
 };
 
 
+#if 0
 ///////////////////////////////////////////////////////
 //
 //  --ImplTimeStepper 
@@ -622,8 +617,10 @@ private:
   int savestep_;
   double savetime_;
 };
+#endif
 
 
+#if 0
 //////////////////////////////////////////////////////////////
 //
 //
@@ -763,6 +760,7 @@ class SemiImplTimeStepper : public Dune::TimeProvider
   double savetime_;
   bool initialized_;
 };
+#endif
 #endif
 /**
  @} 
