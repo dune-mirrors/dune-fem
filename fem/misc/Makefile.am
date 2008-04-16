@@ -8,6 +8,7 @@ misc_HEADERS = adaptiveindexmapper.hh \
                boundaryidentifier.hh \
 	       codimmap.hh \
 	       combineinterface.hh \
+	       commhelper.hh \
 	       debug.hh \
 	       double.hh \
 	       engineconcept.hh \
