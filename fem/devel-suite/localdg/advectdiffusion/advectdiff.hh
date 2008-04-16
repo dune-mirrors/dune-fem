@@ -115,7 +115,6 @@ namespace Dune {
     Pass0Type pass0_;
     Pass1Type pass1_;
     Pass2Type pass2_;
-    mutable TimeProvider* time_;
   };
 /**************************************************************/
   template <class Model,template<class M> class NumFlux,int polOrd >
@@ -384,7 +383,6 @@ namespace Dune {
     Pass0Type pass0_;
     Pass1Type pass1_;
     Pass2Type pass2_;
-    mutable TimeProvider* time_;
   };
 }
 #endif

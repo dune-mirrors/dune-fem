@@ -99,10 +99,10 @@ int main(int argc, char ** argv, char ** envp) {
   for(int eocloop=0;eocloop < repeats; ++eocloop) {
     // *** Operator typedefs
     DgType dg(*grid,eulerflux,upwind);
-    TimeProvider sertp(startTime,cfl);
-    typedef GridType :: Traits :: CollectiveCommunication CommunicatorType;
-    ParallelTimeProvider<CommunicatorType> tp(grid->comm(),sertp);
-    ODEType ode(dg,sertp,rksteps,Parameter::verbose()); 
+
+    TimeProvider< GridType > tp( startTime, cfl, *grid );
+    
+    ODEType ode( dg, tp, rksteps, Parameter :: verbose() );
     
     // *** Initial data
     DgType::DestinationType U("U", dg.space());
@@ -128,9 +128,8 @@ int main(int argc, char ** argv, char ** envp) {
       Parameter::getValue("fem.localdg.max_tstep",std::numeric_limits<double>::max());
 		double maxdt=0.,mindt=1.e10,averagedt=0.;
     // *** Time loop
-    tp.provideTimeStepEstimate(maxTimeStep);
     ode.initialize(U);
-    for (tp.init();tp.time()<endTime;tp.next())
+    for( tp.init( maxTimeStep ); tp.time() < endTime; tp.next( maxTimeStep ) )
     {
       const double tnow = tp.time();
       const double ldt = tp.deltaT();
@@ -142,7 +141,6 @@ int main(int argc, char ** argv, char ** envp) {
       }
       dataWriter.write(tnow , counter );
 
-      tp.provideTimeStepEstimate(maxTimeStep);
       ode.solve(U);
       
       if (!U.dofsValid()) {
