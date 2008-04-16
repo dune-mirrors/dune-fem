@@ -28,8 +28,8 @@ namespace Dune
       subDofMapper_[i] = new SubMapperType(this->spc_,i);
       subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
       subDiscFunc_[i]  = new SubDiscreteFunctionType(
-                             std::string("Subfunction of ")+this->name(),
-                             subSpace,*(subDofVector_[i]));
+                               std::string(this->name() + "_sub"),
+                               subSpace,*(subDofVector_[i]));
     }
   }
 } // end namespace Dune

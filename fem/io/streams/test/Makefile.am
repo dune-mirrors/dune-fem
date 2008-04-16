@@ -10,3 +10,6 @@ TESTS = test-streams
 check_PROGRAMS = test-streams
 
 test_streams_SOURCES = test-streams.cc
+
+streamstestdir =  $(includedir)/dune/fem/io/streams/test
+streamstest_HEADERS = test-streams.cc 

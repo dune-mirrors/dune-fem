@@ -2,6 +2,7 @@
 #define DUNE_ADAPTMANAGER_HH
 
 //- local includes 
+#include <dune/common/timer.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/operator/common/objpointer.hh>
 
@@ -83,6 +84,12 @@ public:
   virtual int balanceCounter () const 
   { 
     return (am_) ? (am_->balanceCounter()) : 0; 
+  }
+
+  /** \brief time that last adaptation cycle took */
+  virtual double adaptationTime () const 
+  {
+    return 0.0;
   }
  
 private: 
@@ -192,6 +199,7 @@ public:
     , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
     , rpOp_ (rpOp) 
     , adaptationMethod_(generic)
+    , adaptTime_(0.0)
   {
     const bool output = (grid_.comm().rank() == 0);
     if( paramFile != "")
@@ -266,9 +274,15 @@ public:
   */
   virtual void adapt ()
   {
+    // get stopwatch 
+    Timer timer; 
+
     AdaptationMethod<ThisType,GridType,
       Conversion<GridType,HasHierarchicIndexSet>::exists>::
         adapt(*this,grid_,dm_,rpOp_,adaptationMethod_);
+    
+    // take time 
+    adaptTime_ = timer.elapsed();
   }
 
   //! \brief default load balancing method which does nothing
@@ -282,7 +296,13 @@ public:
   { 
     return 0; 
   }
- 
+
+  /** @copydoc AdaptationManagerInterface::adaptationTime */
+  virtual double adaptationTime() const 
+  {
+    return adaptTime_;
+  }
+
 private:  
   /** \brief generic adaptation procedure
      adapt defines the grid walkthrough before and after grid adaptation.
@@ -447,7 +467,11 @@ protected:
   //! Restriction and Prolongation Operator 
   mutable RestProlOperatorImp & rpOp_;
 
+  //! method identifier 
   AdaptationMethodType adaptationMethod_;
+
+  //! time that adaptation took 
+  double adaptTime_;
 };
 
 /*! \brief This class manages the adaptation process including a load
@@ -462,6 +486,7 @@ class AdaptationLoadBalanceManager :
   typedef LoadBalancer<GridType> Base2Type;
 
   mutable CommunicationManagerList commList_;
+  double balanceTime_ ;
 
   // do not copy 
   AdaptationLoadBalanceManager(const AdaptationLoadBalanceManager&);
@@ -487,6 +512,12 @@ public:
   { 
     return Base2Type :: balanceCounter ();
   }
+
+  /** @copydoc LoadBalancerInterface::loadBalanceTime */
+  virtual double loadBalanceTime() const 
+  {
+    return balanceTime_;
+  }
   
   /** @copydoc AdaptationManagerInterface::adapt */ 
   virtual void adapt () 
@@ -497,11 +528,17 @@ public:
     // if adaptation is enabled 
     if( this->adaptive() )
     {
+      // get stopwatch 
+      Timer timer; 
+    
       // do load balancing 
       loadBalance ();
 
       // exchange all modified data 
       commList_.exchange();
+
+      // get time  
+      this->balanceTime_ = timer.elapsed();
     }
   }
 };

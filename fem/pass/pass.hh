@@ -278,7 +278,8 @@ namespace Dune {
               std::string passName = "LocalPass") :
       BaseType(pass),
       spc_(spc),
-      passName_(passName )
+      passName_(passName ),
+      computeTime_(0.0)
     {}
 
     //! Destructor
@@ -304,6 +305,15 @@ namespace Dune {
       return spc_; 
     }
 
+    //! return accumulated time needed by pass's operator ()  
+    //! this method also resets the compute time to zero 
+    virtual double computeTime() const 
+    {
+      double ct = computeTime_;
+      computeTime_ = 0.0;
+      return ct;
+    }
+
   protected:
     //! Actions to be carried out before a global grid walkthrough.
     //! To be overridden in a derived class.
@@ -323,6 +333,9 @@ namespace Dune {
     //! call finalize.
     void compute(const ArgumentType& arg, DestinationType& dest) const 
     {
+      // get stopwatch 
+      Timer timer; 
+      
       prepare(arg, dest);
       
       IteratorType endit = spc_.end();
@@ -331,11 +344,15 @@ namespace Dune {
       }
 
       finalize(arg, dest);
+
+      // accumulate time 
+      computeTime_ += timer.elapsed();
     }    
 
-  private:
+  protected:
     const DiscreteFunctionSpaceType& spc_;
     const std::string passName_;
+    mutable double computeTime_;
   };
   
 } // end namespace Dune

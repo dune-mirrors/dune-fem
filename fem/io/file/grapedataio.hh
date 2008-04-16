@@ -460,7 +460,7 @@ template <class DiscreteFunctionType>
 inline bool GrapeDataIO<GridType> :: 
 readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timestep)
 {
-    typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 

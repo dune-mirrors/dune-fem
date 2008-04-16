@@ -6,10 +6,12 @@
 #include <set>
 
 //- local includes 
+#include <dune/common/timer.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/file/asciiparser.hh>
+
 
 namespace Dune{
 
@@ -43,6 +45,12 @@ public:
     \return number of cycles since last application of load balance 
   */
   virtual int balanceCounter () const = 0;
+
+  /** \brief time that last load balance cycle took */
+  virtual double loadBalanceTime () const 
+  {
+    return 0.0;
+  }
 };
 
 /*! \brief This class manages the adaptation process. 
@@ -118,6 +126,7 @@ public:
     , balanceCounter_(balanceCounter)
     , localList_()
     , collList_()
+    , balanceTime_(0.0)
   {
     const bool output = (grid_.comm().rank() == 0);
     if( paramFile != "")
@@ -158,6 +167,9 @@ public:
   //! do load balance every balanceStep_ step 
   bool loadBalance () 
   {
+    // get stopwatch 
+    Timer timer ; 
+    
     bool changed = false;
     // if balance counter has readed balanceStep do load balance
     if( (balanceCounter_ >= balanceStep_) && (balanceStep_ > 0) )
@@ -172,7 +184,16 @@ public:
     // increase balanceCounter if balancing is enabled 
     if( balanceStep_ > 0 ) ++balanceCounter_;
 
+    // get time 
+    balanceTime_ = timer.elapsed();
+
     return changed;
+  }
+
+  /** @copydoc LoadBalancerInterface::loadBalanceTime */
+  virtual double loadBalanceTime() const 
+  {
+    return balanceTime_;
   }
 
   //! add discrete function to data inliner/xtractor list 
@@ -269,6 +290,9 @@ protected:
 
   // list of already added discrete functions 
   std::set< const IsDiscreteFunction * > listOfFcts_;
+
+  // time for last load balance call
+  double balanceTime_;
 };
 
 /** @} end documentation group */
