@@ -8,6 +8,7 @@
 //- Dune includes
 #include <dune/fem/misc/femtuples.hh>
 #include <dune/fem/misc/utility.hh>
+#include <dune/common/timer.hh>
 
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
