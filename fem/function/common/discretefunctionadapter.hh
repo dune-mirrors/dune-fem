@@ -233,7 +233,7 @@ namespace Dune{
       return name_;
     }
 
-  private:    
+  protected:    
     DiscreteFunctionSpaceType space_;
     //! reference to function 
     const FunctionType& function_; 
@@ -241,6 +241,150 @@ namespace Dune{
     const std::string name_;
   };
 
+  namespace {
+    template <class FunctionImp,class GridPartType,bool>
+    struct ConvertDFTypeHelper;
+    template <class FunctionImp,class GridPartType>
+    struct ConvertDFTypeHelper<FunctionImp,GridPartType,true> 
+    {
+      typedef ConvertDFTypeHelper<FunctionImp,GridPartType,true> 
+        ThisType;
+      enum {compatible =
+        Conversion<GridPartType,typename
+          FunctionImp::DiscreteFunctionSpaceType::GridPartType>::exists};
+      typedef FunctionImp FunctionType;
+      typedef typename FunctionType::DiscreteFunctionSpaceType DFSType;
+      ConvertDFTypeHelper(const std::string& name,const FunctionImp& func,const GridPartType& gp) :
+        func_(func) {}
+      ConvertDFTypeHelper(const ConvertDFTypeHelper& other) :
+        func_(other.func_) {}
+      const FunctionType& function() const {
+        return func_;
+      }
+      const DFSType& space() const {
+        return func_.space();
+      }
+      private:
+      const FunctionImp& func_;
+    };
+    template <class FunctionImp,class GridPartType>
+    struct ConvertDFTypeHelper<FunctionImp,GridPartType,false> :
+      DiscreteFunctionAdapter<FunctionImp,GridPartType>
+    {
+      typedef ConvertDFTypeHelper<FunctionImp,GridPartType,false>
+        ThisType;
+      typedef DiscreteFunctionAdapter<FunctionImp,GridPartType> BaseType;
+      typedef BaseType FunctionType;
+      typedef typename FunctionType::DiscreteFunctionSpaceType DFSType;
+      ConvertDFTypeHelper(const std::string& name,const FunctionImp& func,const GridPartType& gp) :
+        BaseType(name,func,gp) {}
+      ConvertDFTypeHelper(const ConvertDFTypeHelper& other) :
+        BaseType(other) {}
+      const FunctionType& function() const {
+        return *this;
+      }
+      const DFSType& space() const {
+        return BaseType::space();
+      }
+    };
+  }
+  template <class FunctionImp,class GridPartImp>
+  class ConvertToGridFunction : 
+    public Function<typename
+           ConvertDFTypeHelper<FunctionImp,GridPartImp,
+           Conversion< FunctionImp, HasLocalFunction > :: exists
+           >::DFSType,ConvertToGridFunction<FunctionImp,GridPartImp>
+           >,
+    public HasLocalFunction
+  {
+  public:
+    typedef FunctionImp FunctionType;
+    typedef GridPartImp GridPartType;
+  private:
+    enum { hasLocalFunction = Conversion< FunctionType, HasLocalFunction > :: exists  };
+    typedef ConvertToGridFunction<FunctionType,GridPartImp>
+      ThisType;
+    typedef ConvertDFTypeHelper<FunctionImp,GridPartImp,hasLocalFunction>
+      Helper;
+    typedef Function<typename Helper::DFSType,ThisType> BaseType;
+    typedef typename Helper::FunctionType ConvertedType;
+  public:
+    //! type of discrete function space 
+    typedef typename ConvertedType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    // type of discrete function space
+    typedef typename ConvertedType :: FunctionSpaceType FunctionSpaceType; 
+
+    //! type of grid 
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
+    //! jacobian type (from function space)
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    //! type of codim 0 entity
+    typedef typename GridType :: template Codim<0> :: Entity EntityType; 
+
+    //! type of local function to export 
+    typedef typename ConvertedType::LocalFunctionType LocalFunctionType; 
+
+    //! constructor
+    ConvertToGridFunction(const std::string& name,
+                          const FunctionImp& func,
+                          const GridPartType& gridPart) :
+      BaseType(helper_.space()),
+      name_(name),
+      helper_(name,func,gridPart) {}
+    ConvertToGridFunction( const ThisType &other ) 
+    : BaseType(other),
+      name_(other.name_),
+      helper_(other.helper_)
+    {}
+
+    //! evaluate function on local coordinate local 
+    void evaluate(const DomainType& global, RangeType& result) const 
+    {
+      helper_.function().evaluate(global,result);  
+    }
+
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
+    const LocalFunctionType localFunction( const EntityType &entity ) const 
+    {
+      return helper_.function().localFunction(entity);
+    }
+
+    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
+    LocalFunctionType localFunction( const EntityType &entity )
+    {
+      return helper_.function().localFunction(entity);
+    }
+
+    /** \copydoc Dune::DiscreteFunctionInterface::name */
+    inline const std :: string &name() const
+    {
+      return name_;
+    }
+  private:
+    const std::string name_;
+    Helper helper_;
+  };
+  template <class FunctionImp,class GridPartImp>
+  ConvertToGridFunction<FunctionImp,GridPartImp>
+  convertToGridFunction(const std::string& name,
+                        const FunctionImp& func,
+                        const GridPartImp& gridPart) {
+    return ConvertToGridFunction<FunctionImp,GridPartImp>
+      (name,func,gridPart);
+  }
+  
+
+  
   /** \brief LocalFunctionAdapter wrapped a class with a local evaluate method
    *         into a grid function. 
    *
