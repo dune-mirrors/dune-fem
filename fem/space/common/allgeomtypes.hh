@@ -18,7 +18,7 @@ namespace Dune
 
   /**  \brief ReferenceVolume and local bary center keeper class. 
    */
-  template< class GridImp >
+  template< class GridImp , int codim>
   class GeometryInformation  
   {
   public:
@@ -26,7 +26,7 @@ namespace Dune
     typedef GridImp GridType;
 
     //! dimension 
-    enum { dim = GridType :: dimension };
+    enum { dim = GridType :: dimension - codim };
 
     //! coordinate type 
     typedef typename GridType :: ctype ctype;
@@ -44,26 +44,36 @@ namespace Dune
     typedef std::map<const Dune::GeometryType, DomainType>  BaryCenterMapType;
 
     //! type of this class 
-    typedef GeometryInformation < GridType > ThisType;
+    typedef GeometryInformation < GridType , codim > ThisType;
 
   protected:
     mutable BaryCenterMapType localCenters_;
     mutable ReferenceVolumeMapType referenceVolumes_;
     
+    //! constructor creating empty geometry information 
+    inline explicit GeometryInformation()
+      : localCenters_()
+      , referenceVolumes_ ()
+    {
+    }
+
   public:
+    //! creating geometry information due to given geometry types list 
+    GeometryInformation( const std::vector<GeometryType> & geomTypes)
+      : localCenters_() 
+      , referenceVolumes_()
+    {
+      buildMaps( geomTypes );
+    }
+
+    //! copy constructor 
     GeometryInformation( const GeometryInformation& other ) 
       : localCenters_( other.localCenters_ ) 
       , referenceVolumes_( other.referenceVolumes_ )
     {
     }
 
-    //! constructor storing index set reference 
-    inline explicit GeometryInformation()
-      : localCenters_()
-      , referenceVolumes_ ()
-    {
-    }
-    
+  public:  
     //! return local bary center for geometry of type type 
     const DomainType& localCenter(const GeometryType& type) const 
     {
@@ -105,7 +115,7 @@ namespace Dune
        set. Used in DiscreteFunctionSpaces.
    */
   template< class IndexSetImp, class GridImp >
-  class AllGeomTypes : public GeometryInformation< GridImp > 
+  class AllGeomTypes : public GeometryInformation< GridImp , 0> 
   {
   public:
     typedef IndexSetImp IndexSetType;
@@ -146,7 +156,7 @@ namespace Dune
   */
   template< class IndexSetImp, int dimworld >
   class AllGeomTypes< IndexSetImp, UGGrid< dimworld > > 
-    : public GeometryInformation< UGGrid< dimworld > > 
+    : public GeometryInformation< UGGrid< dimworld > , 0 > 
   {
   public:
     typedef IndexSetImp IndexSetType;
