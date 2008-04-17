@@ -7,4 +7,5 @@ streamsdir =  $(includedir)/dune/fem/io/streams
 streams_HEADERS = asciistreams.hh \
                   streams.hh \
                   streams_inline.hh \
-									xdrstreams.hh
+		  virtualstreams.hh \
+		  xdrstreams.hh
