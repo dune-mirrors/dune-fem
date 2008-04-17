@@ -60,7 +60,7 @@ public:
  */
 template <class GridType>
 class LoadBalancer 
-: public LoadBalancerInterface 
+: virtual public LoadBalancerInterface 
 {  
   // type of this 
   typedef LoadBalancer<GridType> ThisType;

@@ -26,7 +26,7 @@ namespace Dune{
  This Class is the result of a combination of different
  AdaptationOperators. It is the same principle as with Mapping. 
 */ 
-class AdaptationManagerInterface : public LoadBalancerInterface 
+class AdaptationManagerInterface : virtual public LoadBalancerInterface 
 {
 public:
   //! \brief default constructor 
