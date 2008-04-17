@@ -11,6 +11,7 @@
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
+#include <dune/fem/io/streams/virtualstreams.hh>
 
 #include "testgrid.hh"
 #include "exactsolution.hh"
@@ -38,6 +39,20 @@ typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
 
 
+void writeOut ( VirtualOutStream out, const DiscreteFunctionType &solution )
+{
+  out << solution;
+  out.flush();
+}
+
+void readBack ( VirtualInStream in, DiscreteFunctionType &solution )
+{
+  solution.clear();
+  in >> solution;
+}
+
+
+
 int main ()
 {
   try
@@ -62,12 +77,14 @@ int main ()
     // Let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );
     
-    XDRFileOutStream out( "solution-xdr.tmp" );
-    out << solution;
-    out.flush();
-    readback.clear();
-    XDRFileInStream in( "solution-xdr.tmp" );
-    in >> readback;
+    XDRFileOutStream xout( "solution-xdr.tmp" );
+    writeOut( virtualize( xout ), solution );
+    //out << solution;
+    //out.flush();
+    //readback.clear();
+    XDRFileInStream xin( "solution-xdr.tmp" );
+    readBack( virtualize( xin ), readback );
+    //in >> readback;
     if( readback != solution )
     {
       std :: cerr << "xdr read/write gives different function." << std :: endl;
@@ -75,11 +92,13 @@ int main ()
     }
 
     ASCIIOutStream aout( "solution-ascii.tmp" );
-    aout << solution;
-    aout.flush();
-    readback.clear();
+    writeOut( virtualize( aout ), solution );
+    //aout << solution;
+    //aout.flush();
+    //readback.clear();
     ASCIIInStream ain( "solution-ascii.tmp" );
-    ain >> readback;
+    readBack( virtualize( ain ), readback );
+    //ain >> readback;
     if( readback != solution )
     {
       std :: cerr << "ascii read/write gives different function." << std :: endl;
