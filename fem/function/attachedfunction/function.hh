@@ -186,6 +186,13 @@ namespace Dune
       return container_.size();
     }
 
+    inline void swap ( ThisType &other )
+    {
+      const unsigned int myslot = slot_;
+      slot_ = other.slot_;
+      other.slot_ = myslot;
+    }
+
   protected:
     inline const ContainerType &container () const
     {
