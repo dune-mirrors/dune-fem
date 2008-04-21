@@ -9,6 +9,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dune/fem/misc/validator.hh>
+
 namespace Dune
 {
   
@@ -103,92 +105,6 @@ namespace Dune
   : public Exception
   {};
 
-
-
-  template< class T >
-  class ValidateNotGreater
-  {
-  protected:
-    const T threshold_;
-
-  public:
-    inline ValidateNotGreater ( const T &threshold )
-    : threshold_( threshold )
-    {}
-
-    inline bool operator() ( const T &value ) const
-    {
-      return value <= threshold_;
-    }
-  };
-  template< class T >
-  class ValidateNotLess
-  {
-  protected:
-    const T threshold_;
-
-  public:
-    inline ValidateNotLess ( const T &threshold )
-    : threshold_( threshold )
-    {}
-
-    inline bool operator() ( const T &value ) const
-    {
-      return value >= threshold_;
-    }
-  };
-  template< class T >
-  class ValidateLess
-  {
-  protected:
-    const T threshold_;
-
-  public:
-    inline ValidateLess ( const T &threshold )
-    : threshold_( threshold )
-    {}
-
-    inline bool operator() ( const T &value ) const
-    {
-      return value < threshold_;
-    }
-  };
-  template< class T >
-  class ValidateGreater
-  {
-  protected:
-    const T threshold_;
-
-  public:
-    inline ValidateGreater ( const T &threshold )
-    : threshold_( threshold )
-    {}
-
-    inline bool operator() ( const T &value ) const
-    {
-      return value > threshold_;
-    }
-  };
-  template< class T,bool leftClosed, bool rightClosed>
-  class ValidateInterval
-  {
-  protected:
-    const T lThreshold_,rThreshold_;
-
-  public:
-    inline ValidateInterval ( const T &lThreshold, const T &rThreshold )
-    : lThreshold_( lThreshold ),
-      rThreshold_( rThreshold )
-    {}
-
-    inline bool operator() ( const T &value ) const
-    {
-      bool ret = true;
-      ret &= (leftClosed?  value>=lThreshold_ : value>lThreshold_);
-      ret &= (rightClosed? value<=rThreshold_ : value<rThreshold_);
-      return ret;
-    }
-  };
 
 
   /** \class Parameter
