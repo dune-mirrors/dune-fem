@@ -6,6 +6,7 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       adaptiveindexmapper_inline.hh \
 	       bartonnackmaninterface.hh \
                boundaryidentifier.hh \
+	       checkgeomaffinity.hh \
 	       codimmap.hh \
 	       combineinterface.hh \
 	       commhelper.hh \
@@ -36,4 +37,4 @@ misc_HEADERS = adaptiveindexmapper.hh \
 	       timeprovider.hh \
 	       timeutility.hh \
                utility.hh \
-         checkgeomaffinity.hh      
+	       validator.hh
