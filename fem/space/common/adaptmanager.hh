@@ -100,6 +100,73 @@ private:
 //! deprecated typedef 
 typedef AdaptationManagerInterface AdaptMapping;
 
+/** \brief AdaptationMethod is a simple adaptation method reader class. */
+template <class GridType>
+class AdaptationMethod : virtual public AdaptationManagerInterface 
+{  
+public:  
+  //! type of adaptation method 
+  enum AdaptationMethodType { none = 0, //!< no adaptation is performed 
+                              generic = 1, //!< a generic restriction and prolongation algorithm is used  
+                              callback = 2 //!< the callback mechanism from AlbertaGrid and ALUGrid is used 
+                            };
+  
+public:
+  /** \brief constructor of AdaptationMethod 
+     \param grid Grid that adaptation method is read for  
+     \param paramFile optional parameter file which contains 
+        the following two lines:
+        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
+        AdaptationMethod: 1 # default value 
+  */   
+  AdaptationMethod(const GridType & grid,
+                   std::string paramFile = "") 
+    : adaptationMethod_(generic)
+  {
+    const bool output = (grid.comm().rank() == 0);
+    if( paramFile != "")
+    {
+      int am = 1;
+      readParameter(paramFile,"AdaptationMethod",am, output);
+      if(am == 2) adaptationMethod_ = callback;
+      else if(am == 1) adaptationMethod_ = generic;
+      else adaptationMethod_ = none;
+    }
+
+    // for structred grid adaptation is disabled 
+    if(! Capabilities::IsUnstructured<GridType>::v ) 
+    {
+      std::cerr << "WARNING: AdaptationMethod: adaptation disabled for structured grid! \n";
+      adaptationMethod_ = none;
+    }
+      
+    if( output )
+    {
+      std::cout << "Created AdaptationMethod: adaptation method = " << methodName() << std::endl;
+    }
+  }
+
+  //! virtual destructor 
+  virtual ~AdaptationMethod () {}
+
+  /** @copydoc AdaptationManagerInterface::methodName */
+  virtual const char * methodName() const 
+  {
+    switch (adaptationMethod_) {
+      case generic: return "generic";
+      case callback: return "callback";              
+      case none: return "no adaptation";
+      default:  return "unknown method";
+    }
+  }
+
+  /** @copydoc AdaptationManagerInterface::adaptive */
+  virtual bool adaptive () const { return adaptationMethod_ != none; }
+  
+protected:  
+  //! method identifier 
+  AdaptationMethodType adaptationMethod_;
+};
 
 /*! This could be seen as a hack, but is not
   With this method we define the class CombineRestProl which is only 
@@ -121,10 +188,12 @@ typedef AdaptationManagerInterface AdaptMapping;
  for data set where it is necessary to keep the data.
  */
 template <class GridType, class RestProlOperatorImp >
-class AdaptationManager :
-  public AdaptationManagerInterface , public ObjPointerStorage 
+class AdaptationManager 
+: public AdaptationMethod<GridType> 
+, public ObjPointerStorage 
 {  
-  enum AdaptationMethodType { none = 0, generic = 1, callback = 2 };
+  typedef AdaptationMethod<GridType> BaseType;
+  typedef typename BaseType :: AdaptationMethodType AdaptationMethodType; 
   
   template <class AdaptManager, class GridImp, bool isGoodGrid> 
   struct AdaptationMethod
@@ -135,14 +204,14 @@ class AdaptationManager :
                       AdaptationMethodType adaptMethod) 
     {
       // use generic adapt method 
-      if( adaptMethod == generic ) 
+      if( adaptMethod == BaseType :: generic ) 
       {
         am.template genericAdapt<All_Partition> ();
         return ;
       }
       
       // use grid call back adapt method 
-      if( adaptMethod == callback ) 
+      if( adaptMethod == BaseType :: callback ) 
       {
         grid.adapt(dm,rpop); 
         return ;
@@ -159,7 +228,7 @@ class AdaptationManager :
                       AdaptationMethodType adaptMethod) 
     {
       // use generic adapt method 
-      if(adaptMethod != none ) 
+      if(adaptMethod != BaseType :: none ) 
       {
         am.template genericAdapt<All_Partition> ();
         return ;
@@ -171,19 +240,10 @@ class AdaptationManager :
   typedef DofManager< GridType > DofManagerType; 
   typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
-public:  
-  const char * methodName() const 
-  {
-    switch (adaptationMethod_) {
-      case generic: return "generic";
-      case callback: return "callback";              
-      case none: return "no adaptation";
-      default:  return "unknown method";
-    }
-  }
 
-  typedef typename GridType :: Traits :: LocalIdSet LocalIdSet;
 public:
+  typedef typename GridType :: Traits :: LocalIdSet LocalIdSet;
+
   /** \brief constructor of AdaptationManager 
      \param grid Grid that adaptation is done for 
      \param rpOp restriction and prlongation operator that describes how the 
@@ -195,40 +255,16 @@ public:
   */   
   AdaptationManager (GridType & grid, RestProlOperatorImp & rpOp,
       std::string paramFile = "") 
-    : grid_(grid) 
+    : BaseType(grid,paramFile)
+    , grid_(grid) 
     , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
     , rpOp_ (rpOp) 
-    , adaptationMethod_(generic)
     , adaptTime_(0.0)
   {
-    const bool output = (grid_.comm().rank() == 0);
-    if( paramFile != "")
-    {
-      int am = 1;
-      readParameter(paramFile,"AdaptationMethod",am, output);
-      if(am == 2) adaptationMethod_ = callback;
-      else if(am == 1) adaptationMethod_ = generic;
-      else adaptationMethod_ = none;
-    }
-
-    // for structred grid adaptation is disabled 
-    if(! Capabilities::IsUnstructured<GridType>::v ) 
-    {
-      std::cerr << "WARNING: AdaptationManager: adaptation disabled for structured grid! \n";
-      adaptationMethod_ = none;
-    }
-      
-    if( output )
-    {
-      std::cout << "Created AdaptationManager: adaptation method = " << methodName() << std::endl;
-    }
   }
 
   //! destructor 
   virtual ~AdaptationManager () {}
-
-  /** @copydoc AdaptationManagerInterface::adaptive */
-  bool adaptive () const { return adaptationMethod_ != none; }
 
   /*! 
    Add to AdaptationManagers means that the RestProlOperators will be combined.
@@ -279,7 +315,7 @@ public:
 
     AdaptationMethod<ThisType,GridType,
       Conversion<GridType,HasHierarchicIndexSet>::exists>::
-        adapt(*this,grid_,dm_,rpOp_,adaptationMethod_);
+        adapt(*this,grid_,dm_,rpOp_,this->adaptationMethod_);
     
     // take time 
     adaptTime_ = timer.elapsed();
@@ -466,9 +502,6 @@ protected:
   
   //! Restriction and Prolongation Operator 
   mutable RestProlOperatorImp & rpOp_;
-
-  //! method identifier 
-  AdaptationMethodType adaptationMethod_;
 
   //! time that adaptation took 
   double adaptTime_;
