@@ -17,8 +17,9 @@ endif
 solverdir =  $(includedir)/dune/fem/solver
 solver_HEADERS = inverseoperators.hh \
                  istlsolver.hh \
-								 odesolver.hh \
-								 oemsolver.hh \
-								 multistep.hh \
-								 pardg.hh \
-                 rungekutta.hh
+		 odesolver.hh \
+		 oemsolver.hh \
+		 multistep.hh \
+		 pardg.hh \
+                 rungekutta.hh \
+		 timeprovider.hh
