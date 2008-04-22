@@ -10,20 +10,12 @@ namespace Dune {
 //! if verbose is true then an output of what was read is given
 //! the token '%' or '#' stands for comment 
 template< class T > 
-bool readParameter( const std::string filename, 
+static inline bool readParameter( std::istream& file, 
                     const std::string keyword, 
                     T & data,
                     bool verbose = true,
                     bool warn = true )
 {
-  std::ifstream file (filename.c_str());
-  if( !file.is_open() )
-  {
-    if( warn )
-      std::cerr << "WARNING: couldn't open file '" << filename << "' in " <<  __FILE__<< " line: " << __LINE__ << std::endl;
-    return false;
-  }
-
   bool readData = false;
   while (! file.eof() )
   {
@@ -62,9 +54,6 @@ bool readParameter( const std::string filename,
     }
   }
   
-  // close file 
-  file.close();
-
   // if data was read sucessfully 
   if(readData)
   {
@@ -84,6 +73,31 @@ bool readParameter( const std::string filename,
   }
 
   return readData;
+}
+
+//! reads data folowing the given keyword 
+//! if verbose is true then an output of what was read is given
+//! the token '%' or '#' stands for comment 
+template< class T > 
+static inline bool readParameter( const std::string filename, 
+                    const std::string keyword, 
+                    T & data,
+                    bool verbose = true,
+                    bool warn = true )
+{
+  std::ifstream file (filename.c_str());
+  if( !file.is_open() )
+  {
+    if( warn )
+      std::cerr << "WARNING: couldn't open file '" << filename << "' in " <<  __FILE__<< " line: " << __LINE__ << std::endl;
+    return false;
+  }
+  const bool result = readParameter( file, keyword, data, verbose, warn );
+
+  // close file 
+  file.close();
+
+  return result;
 }
 
 } // end namespace 
