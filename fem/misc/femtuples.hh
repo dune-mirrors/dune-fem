@@ -64,9 +64,9 @@ namespace Dune{
      * @param t2 The value of the second field.
      */
     template<typename T2, typename T3, typename T4, typename T5,
-	     typename T6, typename T7, typename T8, typename T9>
+       typename T6, typename T7, typename T8, typename T9>
     Pair(typename TupleAccessTraits<T1>::ParameterType t1, T2& t2, T3& t3, T4& t4, T5& t5, 
-	 T6& t6, T7& t7, T8& t8, T9& t9);
+   T6& t6, T7& t7, T8& t8, T9& t9);
 
     /**
      * @brief Constructor
@@ -153,7 +153,7 @@ namespace Dune{
      * @param t2 The value for the second field.
      */
     Pair(typename TupleAccessTraits<T1>::ParameterType first, const Nil&, const Nil&, const Nil&, const Nil&,
-	 const Nil&, const Nil&, const Nil&, const Nil&);
+   const Nil&, const Nil&, const Nil&, const Nil&);
     
     /**
      * @brief Constructor.
@@ -161,7 +161,7 @@ namespace Dune{
      * @param t2 The value for the second field.
      */
     Pair(typename TupleAccessTraits<T1>::ParameterType first, 
-	 const Nil&);
+   const Nil&);
 
     Pair();
     
@@ -205,7 +205,7 @@ namespace Dune{
    * @brief Converts the Tuple to a list of pairs.
    */
   template<typename T1, typename T2, typename T3, typename T4, typename T5,
-	   typename T6, typename T7, typename T8, typename T9>
+     typename T6, typename T7, typename T8, typename T9>
   struct TupleToPairs
   {
     typedef Pair<T1, typename TupleToPairs<T2,T3,T4,T5,T6,T7,T8,T9,Nil>::Type > Type;
@@ -238,8 +238,8 @@ namespace Dune{
    \endcode
    */
   template<typename T1, typename T2 = Nil, typename T3 = Nil, 
-	   typename T4 = Nil, typename T5 = Nil,typename T6 = Nil, 
-	   typename T7 = Nil, typename T8 = Nil, typename T9 = Nil>
+     typename T4 = Nil, typename T5 = Nil,typename T6 = Nil, 
+     typename T7 = Nil, typename T8 = Nil, typename T9 = Nil>
   class Tuple : public TupleToPairs<T1,T2,T3,T4,T5,T6,T7,T8,T9>::Type
   {
   public:
@@ -251,23 +251,23 @@ namespace Dune{
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1)
       : FirstPair(t1, nullType(), nullType(), nullType(), 
-		  nullType(), nullType(), nullType(), nullType(), 
-		  nullType())
+      nullType(), nullType(), nullType(), nullType(), 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
-	  typename TupleAccessTraits<T2>::ParameterType t2)
+    typename TupleAccessTraits<T2>::ParameterType t2)
       : FirstPair(t1, t2, nullType(), nullType(), 
-		  nullType(), nullType(), nullType(), nullType(), 
-		  nullType())
+      nullType(), nullType(), nullType(), nullType(), 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
           typename TupleAccessTraits<T2>::ParameterType t2,
           typename TupleAccessTraits<T3>::ParameterType t3)
       : FirstPair(t1, t2, t3, nullType(), 
-		  nullType(), nullType(), nullType(), nullType(), 
-		  nullType())
+      nullType(), nullType(), nullType(), nullType(), 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
@@ -275,8 +275,8 @@ namespace Dune{
           typename TupleAccessTraits<T3>::ParameterType t3,
           typename TupleAccessTraits<T4>::ParameterType t4)
       : FirstPair(t1, t2, t3, t4, 
-		  nullType(), nullType(), nullType(), nullType(), 
-		  nullType())
+      nullType(), nullType(), nullType(), nullType(), 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
@@ -285,8 +285,8 @@ namespace Dune{
           typename TupleAccessTraits<T4>::ParameterType t4,
           typename TupleAccessTraits<T5>::ParameterType t5)
       : FirstPair(t1, t2, t3, t4, 
-		  t5, nullType(), nullType(), nullType(), 
-		  nullType())
+      t5, nullType(), nullType(), nullType(), 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
@@ -296,8 +296,8 @@ namespace Dune{
           typename TupleAccessTraits<T5>::ParameterType t5,
           typename TupleAccessTraits<T6>::ParameterType t6)
       : FirstPair(t1, t2, t3, t4, 
-		  t5, t6, nullType(), nullType(), 
-		  nullType())
+      t5, t6, nullType(), nullType(), 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
@@ -308,8 +308,8 @@ namespace Dune{
           typename TupleAccessTraits<T6>::ParameterType t6,
           typename TupleAccessTraits<T7>::ParameterType t7)
       : FirstPair(t1, t2, t3, t4, 
-		  t5, t6, t7, nullType(), 
-		  nullType())
+      t5, t6, t7, nullType(), 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
@@ -321,8 +321,8 @@ namespace Dune{
           typename TupleAccessTraits<T7>::ParameterType t7,
           typename TupleAccessTraits<T8>::ParameterType t8)
       : FirstPair(t1, t2, t3, t4,
-		  t5, t6, t7, t8, 
-		  nullType())
+      t5, t6, t7, t8, 
+      nullType())
     {}
 
     Tuple(typename TupleAccessTraits<T1>::ParameterType t1,
@@ -463,7 +463,7 @@ namespace Dune{
     enum{ 
       // @brief The number of Elements in the Tuple.
       value=Size<typename T::FirstPair>::value
-	};
+  };
     
     
   };
@@ -630,10 +630,10 @@ namespace Dune{
 
   template<typename T1, typename TT>
   template<typename T2, typename T3, typename T4, typename T5,
-	   typename T6, typename T7, typename T8, typename T9>
+     typename T6, typename T7, typename T8, typename T9>
   inline Pair<T1,TT>::Pair(typename TupleAccessTraits<T1>::ParameterType first, 
-			   T2& t2, T3& t3, T4& t4, T5& t5, 
-			   T6& t6, T7& t7, T8& t8, T9& t9)
+         T2& t2, T3& t3, T4& t4, T5& t5, 
+         T6& t6, T7& t7, T8& t8, T9& t9)
     : first_(first), second_(t2,t3,t4,t5,t6,t7,t8,t9, nullType())
   {}
 
@@ -700,14 +700,14 @@ namespace Dune{
 
   template<typename T1>
   inline Pair<T1,Nil>::Pair(typename TupleAccessTraits<T1>::ParameterType first,
-			    const Nil&, const Nil&, const Nil&, const Nil&,
-			    const Nil&, const Nil&, const Nil&, const Nil&)
+          const Nil&, const Nil&, const Nil&, const Nil&,
+          const Nil&, const Nil&, const Nil&, const Nil&)
     : first_(first)
   {}
 
   template <typename T1>
   inline Pair<T1, Nil>::Pair(typename TupleAccessTraits<T1>::ParameterType first,
-			     const Nil&)
+           const Nil&)
     : first_(first)
   {}
 
@@ -752,6 +752,11 @@ namespace Dune{
     return first_;
   }
 
+} // end namespace Dune 
+#endif // end if HAVE_TUPLE || HAVE_TR1_TUPLE
+#endif // end ifdef Tuple 
+
+namespace Dune { 
   ///////////////////////////////////////
   //  
   //  TupleLength
@@ -760,24 +765,20 @@ namespace Dune{
   
   //! length of a tuple 
   template<class T>
-    struct TupleLength  {
-        enum { value = 1 + TupleLength<typename T::Type2>::value };
-    };
+  struct TupleLength  {
+    enum { value = 1 + TupleLength<typename T::Type2>::value };
+  };
 
   //! length of an empty tuple is zero  
   template<>
-     struct TupleLength<Tuple<Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil> > {
-        enum { value = 0 };
-     };
+  struct TupleLength<Tuple<Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil> > {
+    enum { value = 0 };
+  };
 
   //! length of an empty tuple is zero  
   template<>
-    struct TupleLength<Nil> {
-        enum { value = 0 };
-    };
-
- 
+  struct TupleLength<Nil> {
+    enum { value = 0 };
+  };
 } // end namespace Dune 
-#endif
-#endif
 #endif
