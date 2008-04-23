@@ -2,6 +2,7 @@
 #define DUNE_CREATEPASS_HH
 
 #include <dune/fem/operator/common/spaceoperatorif.hh>
+#include <dune/fem/pass/pass.hh>
 
 namespace Dune {
 
@@ -10,20 +11,20 @@ namespace Dune {
   and creates with the parameter PreviousPass in the method create the
   desired pass. The advantage here is, that no typedefs have to be done.
 
-  To generate a pass tree one  only has to use the following example code:
+  To generate a pass tree one only has to use the following example code:
   @code 
   // diffusion pass
   typedef CreatePass<DiscreteModel1Type,LocalDGPass> Pass1Type;
-  Pass1Type pass1 ( problem1_, space1_ );
+  Pass1Type pass1 ( discreteModel1_, space1_ );
 
   // advection pass
   typedef CreatePass<DiscreteModel2Type,LocalDGPass> Pass2Type;
-  Pass2Type pass2 ( problem2_, space2_ );
+  Pass2Type pass2 ( discreteModel2_, space2_ );
 
   // create pass tree and return pointer to resulting 
   // operator satisfying the SpaceOperatorInterface.
   SpaceOperatorInterface<DestinationType>* passTree 
-    = CreatePassTree::create( pass0_ , pass1 , pass2 );
+    = CreatePassTree::create( pass1 , pass2 );
   @endcode
 */
 template <class Model, template <class,class> class PassType>
@@ -51,6 +52,14 @@ public:
   {
   }
 
+  //! constructor 
+  //! \param model DiscreteModel (or discrete function)
+  //! \param space DiscreteFunctionSpace
+  CreatePass(const Model& model, const DiscreteFunctionSpaceType& space)
+    : model_(const_cast<Model&> (model)) , space_(space) , passPointer_(0) 
+  {
+  }
+
   //! copy constructor
   CreatePass(const CreatePass& org)
     : model_(org.model_),
@@ -62,7 +71,7 @@ public:
   //! creation method
   template <class PreviousPass>
   SpaceOperatorPtr<PassType<Model,PreviousPass> >*
-  create(SpaceOperatorPtr<PreviousPass>* prevObj)
+  create(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
     typedef PassType<Model,PreviousPass> RealPassType;
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
@@ -80,48 +89,10 @@ public:
     return obj;
   }
   
-  //! creation method
-  template <class PreviousPass>
-  SpaceOperatorPtr<PassType<Model,PreviousPass> >*
-  createFirst(PreviousPass& prevPass)
-  {
-    typedef PassType<Model,PreviousPass> RealPassType;
-    typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
-    // create pass 
-    RealPassType* pass = new RealPassType(model_,prevPass,space_);
-
-    // create pass storage 
-    ObjPtrType* obj = new ObjPtrType(pass);
-
-    // remember pass obj 
-    passPointer_ = obj;
-
-    return obj;
-  }
-  
-  //! creation method
-  template <class PreviousPass>
-  SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
-  createLast(PreviousPass& prevPass)
-  {
-    typedef PassType<Model,PreviousPass> RealPassType;
-    typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
-    // create pass 
-    RealPassType* pass = new RealPassType(model_,prevPass,space_);
-
-    // create pass storage 
-    ObjPtrType* obj = new ObjPtrType(pass);
-
-    // remember pass obj 
-    passPointer_ = obj;
-
-    return obj;
-  }
-  
   //! last creation method 
   template <class PreviousPass>
   SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
-  createLast(SpaceOperatorPtr<PreviousPass>* prevObj)
+  createLast(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
     typedef PassType<Model,PreviousPass> RealPassType;
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
@@ -137,6 +108,148 @@ public:
     // remember previous object for delete 
     obj->saveObjPointer(prevObj);
     return obj;
+  }
+
+  //! return pointer to space operator if 
+  SpaceOperatorIFType* pass() 
+  {
+    assert( passPointer_ );
+    return passPointer_;    
+  }
+
+  //! return pointer to destination  
+  const DestinationType* destination() const 
+  {
+    assert( passPointer_ );
+    return passPointer_->destination();
+  }
+};
+
+
+//! DiscreteModelWrapper to combine DiscreteModel and Selector 
+template <class DiscreteModelImp, class SelectorImp> 
+class DiscreteModelWrapper 
+: public ObjPointerStorage,
+  public DiscreteModelImp 
+{
+  // type of base class 
+  typedef DiscreteModelImp BaseType;
+public:
+  //! exporting given type of selector 
+  typedef SelectorImp SelectorType;
+  //! constructor calling the copy constructor of the base type
+  DiscreteModelWrapper(const BaseType& base)
+   : BaseType(base) // calling copy constructor of base 
+  {}
+
+  //! copy constructor 
+  DiscreteModelWrapper(const DiscreteModelWrapper& other)
+   : BaseType(other) // calling copy constructor of base 
+  {}
+};
+
+//! create pass with previous unknown selector 
+template <class Model, class SelectorImp, template <class,class> class PassType>
+class CreateSelectedPass
+{
+public:  
+  //! type of discrete function space
+  typedef typename Model :: Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  //! destination type 
+  typedef typename Model :: Traits :: DiscreteFunctionType DestinationType;
+
+  //! type of space operator 
+  typedef SpaceOperatorInterface<DestinationType> SpaceOperatorIFType;
+
+  //! type of discrete model 
+  typedef DiscreteModelWrapper<Model,SelectorImp> DiscreteModelType;
+protected:
+  DiscreteModelType* model_;
+  const DiscreteFunctionSpaceType& space_;
+  SpaceOperatorIFType* passPointer_;
+  bool owner_;
+
+public:
+  //! constructor 
+  //! \param model DiscreteModel 
+  //! \param space DiscreteFunctionSpace
+  CreateSelectedPass(Model& model, const DiscreteFunctionSpaceType& space)
+    : model_(new DiscreteModelType(model)) 
+    , space_(space) 
+    , passPointer_(0)
+    , owner_(true)
+  {
+  }
+
+  //! copy constructor
+  CreateSelectedPass(const CreateSelectedPass& org)
+    : model_(new DiscreteModelType(org.model_)),
+      space_(org.space_),
+      passPointer_( org.passPointer_ ),
+      owner_(true)
+  {
+  }
+
+  //! destructor deleting model if still owner 
+  ~CreateSelectedPass() 
+  {
+    if( owner_ ) delete model_;
+    model_ = 0;
+  }
+
+  //! creation method
+  template <class PreviousPass>
+  SpaceOperatorPtr<PassType<DiscreteModelType,PreviousPass> >*
+  create(SpaceOperatorStorage<PreviousPass>* prevObj)
+  {
+    typedef PassType<DiscreteModelType,PreviousPass> RealPassType;
+    typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
+    // create pass 
+    RealPassType* pass = new RealPassType(*model_,prevObj->pass(),space_);
+
+    // create pass storage 
+    ObjPtrType* obj = new ObjPtrType(pass, model_ );
+    
+    // don't delete model anymore 
+    owner_ = false;
+
+    // remember pass obj 
+    passPointer_ = obj;
+
+    // remember previous object for delete 
+    obj->saveObjPointer(prevObj);
+    return obj;
+  }
+  
+  //! last creation method 
+  template <class PreviousPass>
+  SpaceOperatorWrapper<PassType<DiscreteModelType,PreviousPass> >*
+  createLast(SpaceOperatorStorage<PreviousPass>* prevObj)
+  {
+    typedef PassType<DiscreteModelType,PreviousPass> RealPassType;
+    typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
+    // create pass 
+    RealPassType* pass = new RealPassType(*model_,prevObj->pass(),space_);
+    
+    // create pass storage 
+    ObjPtrType* obj = new ObjPtrType(pass, model_);
+    
+    // don't delete model anymore 
+    owner_ = false;
+
+    // remember pass obj 
+    passPointer_ = obj;
+
+    // remember previous object for delete 
+    obj->saveObjPointer(prevObj);
+    return obj;
+  }
+
+  //! return pointer to space operator if 
+  SpaceOperatorIFType* pass() 
+  {
+    assert( passPointer_ );
+    return passPointer_;    
   }
 
   //! return pointer to destination  
@@ -194,7 +307,7 @@ public:
   //! creation method
   template <class PreviousPass>
   SpaceOperatorPtr<PassType<Model,PreviousPass> >*
-  create(SpaceOperatorPtr<PreviousPass>* prevObj)
+  create(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
     typedef PassType<Model,PreviousPass> RealPassType;
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
@@ -212,48 +325,10 @@ public:
     return obj;
   }
   
-  //! creation method
-  template <class PreviousPass>
-  SpaceOperatorPtr<PassType<Model,PreviousPass> >*
-  createFirst(PreviousPass& prevPass)
-  {
-    typedef PassType<Model,PreviousPass> RealPassType;
-    typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
-    // create pass 
-    RealPassType* pass = new RealPassType(model_,prevPass,space_,paramFile_);
-
-    // create pass storage 
-    ObjPtrType* obj = new ObjPtrType(pass);
-
-    // remember pass obj 
-    passPointer_ = obj;
-
-    return obj;
-  }
-  
-  //! creation method
-  template <class PreviousPass>
-  SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
-  createLast(PreviousPass& prevPass)
-  {
-    typedef PassType<Model,PreviousPass> RealPassType;
-    typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
-    // create pass 
-    RealPassType* pass = new RealPassType(model_,prevPass,space_,paramFile_);
-
-    // create pass storage 
-    ObjPtrType* obj = new ObjPtrType(pass);
-
-    // remember pass obj 
-    passPointer_ = obj;
-
-    return obj;
-  }
-  
   //! last creation method 
   template <class PreviousPass>
   SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
-  createLast(SpaceOperatorPtr<PreviousPass>* prevObj)
+  createLast(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
     typedef PassType<Model,PreviousPass> RealPassType;
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
@@ -281,88 +356,125 @@ public:
 
 /** \brief create pass tree from given list of discrete models 
  */
-struct CreatePassTree
+class CreatePassTree
 {
+protected:   
+  //! method that creates first pass 
+  template <class DestinationType>
+  inline static SpaceOperatorStorage< StartPass<DestinationType> >* createStartPass() 
+  {
+    typedef StartPass<DestinationType> StartPassType;
+    typedef SpaceOperatorStorage<StartPassType> ObjPtrType;
+
+    // create start pass 
+    StartPassType* startPass = new StartPassType ();
+
+    // create pass storage 
+    ObjPtrType* obj = new ObjPtrType(startPass);
+
+    // return obj 
+    return obj;
+  }
+ 
+public:  
+  //! create 1 pass 
+  template <class LastModel>
+  inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*  
+  create(LastModel& ml)
+  {
+    return ml.createLast( createStartPass<typename LastModel :: DestinationType> () );
+  }
+
   //! create 2 passes 
   template <class FirstModel,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*  
   create(FirstModel& mf,
-               LastModel& ml)
+         LastModel& ml)
   {
-    return ml.createLast( mf );
+    return ml.createLast( mf.create( createStartPass<typename LastModel :: DestinationType>() ) );
   }
 
   //! create 3 passes 
-  template <class StartModel,
+  template <class Mod0,
             class Mod1,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*
-  create(StartModel& sm,
-               Mod1& m1,
-               LastModel& mlast)
+  create(Mod0& m0,
+         Mod1& m1,
+         LastModel& mlast)
   {
-    return mlast.createLast( m1.createFirst( sm ) );
+    return mlast.createLast( 
+          m1.create( 
+            m0.create( createStartPass<typename LastModel :: DestinationType> () )
+                   ) 
+                           );
   }
 
   //! create 4 passes 
-  template <class StartModel,
+  template <class Mod0,
             class Mod1,
             class Mod2,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*
-  create(StartModel& sm,
-               Mod1& m1,
-               Mod2& m2,
-               LastModel& mlast)
+  create(Mod0& m0,
+         Mod1& m1,
+         Mod2& m2,
+         LastModel& mlast)
   {
-    return mlast.createLast( m2.create( m1.createFirst( sm ) ) );
+    return mlast.createLast( m2.create( m1.create( 
+            m0.create( createStartPass<typename LastModel :: DestinationType> () )
+              ) ) );
   }
 
   //! create 5 passes 
-  template <class StartModel,
+  template <class Mod0,
             class Mod1,
             class Mod2,
             class Mod3,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*
-  create(StartModel& sm,
-               Mod1& m1,
-               Mod2& m2,
-               Mod3& m3,
-               LastModel& mlast)
+  create(Mod0& m0,
+         Mod1& m1,
+         Mod2& m2,
+         Mod3& m3,
+         LastModel& mlast)
   {
     return
       mlast.createLast( 
         m3.create(
           m2.create(
-            m1.createFirst( sm ))));
+            m1.create( 
+              m0.create( createStartPass<typename LastModel :: DestinationType> () )
+              ))));
   }
   
   //! create 6 passes 
-  template <class StartModel,
+  template <class Mod0,
             class Mod1,
             class Mod2,
             class Mod3,
             class Mod4,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*
-  create(StartModel& sm,
-               Mod1& m1,
-               Mod2& m2,
-               Mod3& m3,
-               Mod4& m4,
-               LastModel& mlast)
+  create(Mod0& m0,
+         Mod1& m1,
+         Mod2& m2,
+         Mod3& m3,
+         Mod4& m4,
+         LastModel& mlast)
   {
     return
       mlast.createLast( 
               m4.create(
                 m3.create(
                   m2.create(
-                    m1.createFirst( sm )))) );
+                    m1.create( 
+                      m0.create( createStartPass<typename LastModel :: DestinationType> () )
+                      )))) );
   }
   //! create 7 passes 
-  template <class StartModel,
+  template <class Mod0,
             class Mod1,
             class Mod2,
             class Mod3,
@@ -370,13 +482,13 @@ struct CreatePassTree
             class Mod5,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*
-  create(StartModel& sm,
-               Mod1& m1,
-               Mod2& m2,
-               Mod3& m3,
-               Mod4& m4,
-               Mod5& m5,
-               LastModel& mlast)
+  create(Mod0& m0,
+         Mod1& m1,
+         Mod2& m2,
+         Mod3& m3,
+         Mod4& m4,
+         Mod5& m5,
+         LastModel& mlast)
   {
     return
       mlast.createLast( 
@@ -384,11 +496,13 @@ struct CreatePassTree
               m4.create(
                 m3.create(
                   m2.create(
-                    m1.createFirst( sm )))) ));
+                    m1.create( 
+                      m0.create( createStartPass<typename LastModel :: DestinationType> () )
+                      )))) ));
   }
   
   //! create 8 passes 
-  template <class StartModel,
+  template <class Mod0,
             class Mod1,
             class Mod2,
             class Mod3,
@@ -397,14 +511,14 @@ struct CreatePassTree
             class Mod6,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*
-  create(StartModel& sm,
-               Mod1& m1,
-               Mod2& m2,
-               Mod3& m3,
-               Mod4& m4,
-               Mod5& m5,
-               Mod6& m6,
-               LastModel& mlast)
+  create(Mod0& m0,
+         Mod1& m1,
+         Mod2& m2,
+         Mod3& m3,
+         Mod4& m4,
+         Mod5& m5,
+         Mod6& m6,
+         LastModel& mlast)
   {
     return
       mlast.createLast( 
@@ -413,10 +527,12 @@ struct CreatePassTree
               m4.create(
                 m3.create(
                   m2.create(
-                    m1.createFirst( sm )))) )));
+                    m1.create( 
+                      m0.create( createStartPass<typename LastModel :: DestinationType> () )
+                      )))) )));
   }
   //! create 9 passes 
-  template <class StartModel,
+  template <class Mod0,
             class Mod1,
             class Mod2,
             class Mod3,
@@ -426,15 +542,15 @@ struct CreatePassTree
             class Mod7,
             class LastModel>
   inline static SpaceOperatorInterface<typename LastModel :: DestinationType>*
-  create(StartModel& sm,
-               Mod1& m1,
-               Mod2& m2,
-               Mod3& m3,
-               Mod4& m4,
-               Mod5& m5,
-               Mod6& m6,
-               Mod7& m7,
-               LastModel& mlast)
+  create(Mod0& m0,
+         Mod1& m1,
+         Mod2& m2,
+         Mod3& m3,
+         Mod4& m4,
+         Mod5& m5,
+         Mod6& m6,
+         Mod7& m7,
+         LastModel& mlast)
   {
     return
       mlast.createLast( 
@@ -444,7 +560,9 @@ struct CreatePassTree
               m4.create(
                 m3.create(
                   m2.create(
-                    m1.createFirst( sm )))) ))));
+                    m1.create( 
+                      m0.create( createStartPass<typename LastModel :: DestinationType> () )
+                      )))) ))));
   }
 };
 
