@@ -6,9 +6,9 @@
 #include <limits>
 
 //- Dune includes
+#include <dune/common/timer.hh>
 #include <dune/fem/misc/femtuples.hh>
 #include <dune/fem/misc/utility.hh>
-#include <dune/common/timer.hh>
 
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
@@ -34,6 +34,11 @@ namespace Dune {
     typedef Nil NextArgumentType;
     
   public:
+    //! empty constructor 
+    StartPass() {} 
+    //! copy constructor 
+    StartPass(const StartPass&) {}
+    
     //- Public methods
     //! The pass method does nothing.
     void pass(const GlobalArgumentType& arg) const {
@@ -239,7 +244,6 @@ namespace Dune {
 
     // current calculation time 
     double time_;
-    
   }; // end class Pass
 
 
