@@ -13,8 +13,8 @@
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/ellipticmodelcaller.hh>
 
-#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
+#include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
 #include <dune/fem/space/combinedspace.hh>
@@ -512,7 +512,8 @@ namespace Dune {
 
     //! Stores the time provider passed by the base class in order to have
     //! access to the global time
-    virtual void processTimeProvider(TimeProvider* time) {
+    virtual void setTime ( const double time )
+    {
       time_ = time;
     }
 
@@ -620,12 +621,7 @@ namespace Dune {
         globalBeta_ = betaFactor_/gridWidth_.gridWidth();
       }
 
-      if (time_) {
-        caller_.setTime(time_->time());
-      }
-      else {
-        caller_.setTime(0.0);
-      }
+      caller_.setTime( time_ );
     }
 
     //! Some timestep size management.
@@ -1789,8 +1785,8 @@ namespace Dune {
     const LocalIdSetType & localIdSet_;
     const GridWidthType& gridWidth_;
     
-    // time provider 
-    TimeProvider* time_;
+    // time
+    double time_;
 
     const int volumeQuadOrd_;
     const int faceQuadOrd_;
