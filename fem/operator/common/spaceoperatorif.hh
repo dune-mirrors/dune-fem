@@ -24,6 +24,7 @@ class SpaceOperatorInterface
                    DestinationImp>
 {
 protected:
+  // only allow derived class to call this constructor  
   SpaceOperatorInterface() {}
 
 public:
@@ -33,7 +34,7 @@ public:
   //! type of discrete function space 
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
   
-  // destructor 
+  //! destructor 
   virtual ~SpaceOperatorInterface() {}
 
   //! apply operator 
@@ -68,12 +69,60 @@ public:
 
 //! only for kepping the pointer 
 template <class OperatorType>
-class SpaceOperatorPtr
-: public SpaceOperatorInterface<typename OperatorType::DestinationType>,
-  public ObjPointerStorage                  
+class SpaceOperatorStorage
+: public ObjPointerStorage                  
 {
+  //! copying not allowed 
+  SpaceOperatorStorage(const SpaceOperatorStorage& org);
+  SpaceOperatorStorage& operator = (const SpaceOperatorStorage& org);
+  
+protected:  
+  // operator storage 
+  mutable OperatorType* op_;
+  // model storage  
+  ObjPointerStorage* model_;
+  
+public:
+  //! constructor storing pointer 
+  SpaceOperatorStorage(OperatorType * op)
+    : op_(op), model_(0)
+  {}
+  
+  //! constructor storing pointer 
+  SpaceOperatorStorage(OperatorType * op, ObjPointerStorage* model)
+    : op_(op), model_(model)
+  {}
+
+  //! destructor deletes operator 
+  ~SpaceOperatorStorage()
+  {
+    // delete operator before destructor of base class is called
+    delete op_; op_ = 0;
+    delete model_; model_ = 0;
+  }
+
+  //! return reference to pass 
+  OperatorType& pass() const
+  { 
+    assert( op_ );
+    return (*op_); 
+  }
+};
+
+//! only for kepping the pointer 
+template <class OperatorType>
+class SpaceOperatorPtr
+: public SpaceOperatorStorage< OperatorType >,
+  public SpaceOperatorInterface<typename OperatorType::DestinationType>
+{
+  //! type of base class 
+  typedef SpaceOperatorStorage< OperatorType > BaseType;
+
+  // use pass method of base 
+  using BaseType :: pass;
+  
+  //! type of destination 
   typedef typename OperatorType::DestinationType DestinationType;
-  OperatorType* op_;
   
   //! type of discrete function space 
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
@@ -85,18 +134,19 @@ class SpaceOperatorPtr
 public:
   //! constructor storing pointer 
   SpaceOperatorPtr(OperatorType * op)
-    : op_(op)
+    : BaseType(op)
   {}
 
-  //! destructor deletes operator 
-  ~SpaceOperatorPtr()
-  {
-    // delete operator before destructor of base class is called
-    delete op_; op_ = 0;
-  }
+  //! constructor storing pointer 
+  SpaceOperatorPtr(OperatorType * op, ObjPointerStorage* model)
+    : BaseType(op,model)
+  {}
+
+  //! destructor 
+  virtual ~SpaceOperatorPtr() {}
 
   //! application operator does nothing here
-  void operator () (const DestinationType& arg, DestinationType& dest) const
+  virtual void operator () (const DestinationType& arg, DestinationType& dest) const
   {
     // this method should not be called 
     assert(false);
@@ -104,41 +154,33 @@ public:
   }
 
   //! return reference to space 
-  const SpaceType& space() const 
-  {
-    return (*op_).space(); 
-  }
+  const SpaceType& space() const { return pass().space(); }
     
   /** @copydoc SpaceOperatorInterface::setTime  */
-  void setTime(const double time) { (*op_).setTime(time); }
+  void setTime(const double time) { pass().setTime(time); }
 
   /** @copydoc SpaceOperatorInterface::timeStepEstimate */
-  double timeStepEstimate () const { return (*op_).timeStepEstimate(); }
-
-  //! return reference to pass 
-  OperatorType& pass() 
-  { 
-    assert( op_ );
-    return (*op_); 
-  }
+  double timeStepEstimate () const { return pass().timeStepEstimate(); }
 
   //! return reference to pass's local memory  
   const DestinationType* destination() const 
   {
-    (*op_).allocateLocalMemory();
-    return & ((*op_).destination());
+    pass().allocateLocalMemory();
+    return & (pass().destination());
   }
 };
 
 //! apply wrapper 
 template <class OperatorType>
 class SpaceOperatorWrapper
-: public SpaceOperatorInterface<typename OperatorType::DestinationType>,
-  public ObjPointerStorage                  
+: public SpaceOperatorPtr< OperatorType >
 {
-  // operator pointer 
-  OperatorType* op_;
+  //! type of base class 
+  typedef SpaceOperatorPtr< OperatorType > BaseType;
 
+  // use pass method of base 
+  using BaseType :: pass;
+  
   //! copying not allowed
   SpaceOperatorWrapper(const SpaceOperatorWrapper& org);
   SpaceOperatorWrapper& operator = (const SpaceOperatorWrapper& org);
@@ -148,43 +190,20 @@ public:
   //! type of discrete function space 
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
   
-  
   //! constructor storing pointer 
   SpaceOperatorWrapper(OperatorType * op)
-    : op_(op)
+    : BaseType(op)
   {}
     
-  //! destructor deletes operator 
-  ~SpaceOperatorWrapper()
-  {
-    // delete operator before destructor of base class is called
-    delete op_; op_ = 0;
-  }
+  //! constructor storing pointer 
+  SpaceOperatorWrapper(OperatorType * op, ObjPointerStorage* model)
+    : BaseType(op,model)
+  {}
 
   //! call application operator of internal operator  
   void operator () (const DestinationType& arg, DestinationType& dest) const
   {
-    assert( op_ );
-    (*op_)(arg,dest);
-  }
-  
-  //! return reference to space 
-  const SpaceType& space() const 
-  {
-    return (*op_).space(); 
-  }
-  
-  /** @copydoc SpaceOperatorInterface::setTime  */
-  void setTime(const double time) { (*op_).setTime(time); }
-
-  /** @copydoc SpaceOperatorInterface::timeStepEstimate */
-  double timeStepEstimate () const { return (*op_).timeStepEstimate(); }
-
-  //! return reference to pass's local memory  
-  const DestinationType* destination() const 
-  {
-    (*op_).allocateLocalMemory();
-    return & ((*op_).destination());
+    pass()(arg,dest);
   }
 };
 
