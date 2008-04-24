@@ -1,3 +1,11 @@
 filedir =  $(includedir)/dune/fem/io/file
-file_HEADERS = asciiparser.hh  grapedataio.hh grapetuple.hh \
-iointerface.hh iotuple.hh iolock.hh xdrio.hh vtkio.hh datawriter.hh 
+file_HEADERS = asciiparser.hh \
+	       datawriter.hh \
+               grapedataio.hh \
+	       grapetuple.hh \
+	       iointerface.hh \
+	       iolock.hh \
+	       iotuple.hh \
+	       persistencemanager.hh \
+	       vtkio.hh \
+	       xdrio.hh
