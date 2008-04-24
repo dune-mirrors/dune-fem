@@ -26,12 +26,12 @@
 
 namespace Dune {
 
-/** @ingroup Checkpointing 
+/** @ingroup DiscFuncIO
    \brief Implementation of the Dune::IOInterface. 
    This class manages data output.
    Available output formats are GRAPE, VTK and VTK Vertex projected
    using the VtxProjection operator. Details can be
-   found in \ref Checkpointing.
+   found in \ref DiscFuncIO.
 */    
 template <class GridImp, 
           class DataImp> 
@@ -622,7 +622,7 @@ public:
 }; // end class DataWriter 
   
 
-/** @ingroup Checkpointing 
+/** @ingroup Checkpointing
    \brief Implementation of the IOInterface. 
    This class manages checkpointing. 
 

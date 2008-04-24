@@ -23,7 +23,7 @@
 namespace Dune
 {
 /*======================================================================*/
-/*! @ingroup Checkpointing
+/*! @ingroup DiscFuncIO
  *  \class MatlabHelper
  *  \brief The MatlabHelper class provides functionality for exporting
  *         Dune Structures to Matlab.

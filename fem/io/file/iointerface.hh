@@ -28,7 +28,7 @@
 #endif
 
 namespace Dune {
-/** @addtogroup Checkpointing
+/** @addtogroup DiscFuncIO
    The package dune-fem provides a number 
    of possibilities to write data to disk either
    for visualization and debugging purposes or
@@ -116,7 +116,7 @@ namespace Dune {
 **/
 
 
-/** @ingroup Checkpointing
+/** @ingroup DiscFuncIO
  \brief IOInterface to write data to hard disk 
  \interfaceclass
 */ 

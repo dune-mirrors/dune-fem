@@ -192,13 +192,15 @@
         can be written to disk using the \ref Dune::MatlabHelper "MatlabHelper"
         class. Utility functions for Matlab are available in "fem/io/matlab".
 */
-  /** @defgroup Checkpointing I/O for discrete functions and checkpointing
+  /** @defgroup DiscFuncIO I/O for discrete functions
+      @ingroup IOGroup */
+  /** @defgroup Checkpointing Managing of persistent objects for checkpointing
+      @ingroup IOGroup */
+  /** @defgroup Parameter Concept for run time parameter
       @ingroup IOGroup */
   /** @defgroup Visualization Visualization
       @ingroup IOGroup */
   /** @defgroup InOutStreams Input and output streams
-      @ingroup IOGroup */
-  /** @defgroup Parameter Concept for run time parameter files
       @ingroup IOGroup */
 
 /** 

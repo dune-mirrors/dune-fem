@@ -13,7 +13,7 @@ namespace Dune {
  *  the computation or can be read separately
  *  with the datadisp utility file. More
  *  detail on how to write data to files 
- *  can be found in \ref Checkpointing.
+ *  can be found in \ref DiscFuncIO.
  *
  *  If data is to be visualized during a computation
  *  the Dune::DataWriter can also be used by
@@ -51,7 +51,7 @@ namespace Dune {
  *  be read. The file prefix and the directory
  *  are prescribed through runtime parameters with 
  *  the same keys used in the Dune::DataWriter
- *  described in \ref Checkpointing.
+ *  described in \ref DiscFuncIO.
  *
  *  The type GR_InputType should be a tuple
  *  type holding the types of the discrete functions

@@ -10,14 +10,88 @@
 
 namespace Dune
 {
+/** @addtogroup Checkpointing
+ *  
+ *  The Dune::PersistenceManager manages a list of persistent
+ *  object the state should be recovered during a restart process.
+ *  The singleton instance is available using persistenceManager.
+ *
+ *  Variables of any type can be added to the manager
+ *  using operator<< and removed through operator>>.
+ *  For general types the state is written to an ascii file
+ *  \c checkpoint through the call to PersistenceManager::backup(path).
+ *  
+ *  Finer control is available for user defined classes by 
+ *  deriving these from the Dune::PersistentObject class and
+ *  implementing the virtual functions \c backup and \c restore.
+ *  Values can then either be written to the ascii file
+ *  \c checkpoint using the method
+ *  Dune::PersistenceManager::backupValue giving a token and
+ *  the value to store (a structure simular to the Dune::Parameter
+ *  files is used).
+ *  If data is to be written to a different stream a unique filename
+ *  can be obtained from the Dune::PersistenceManager using the
+ *  \c uniqueFileName method.
+ *
+ *  If a class is derived from Dune::AutoPersistenceObject 
+ *  then instances of this class are automatically added to the
+ *  PersistenceManager on construction and removed on destruction;
+ *  again the virtual methods backup/restore must be provided.
+ *
+ *  The restart process is activated through the method \c restore.
+ *  Note that care must be taken to add the objects in exactly
+ *  the same order when using the PersistenceManager for creating
+ *  the backup file as when used to restore the saved states.
+ *
+ *  The Dune::Parameter class is automatically backuped and restored.
+ *  For the restore process the saved parameter file is read first and
+ *  existing values for parameters are replaced by these values.
+ *  Therefore it is possible to reread the state of a variable 
+ *  orignally defined through a run time parameter using the Parameter
+ *  class:
+ *  \code 
+ *  class A : public Dune::AutoPersistent {
+ *    int var_,b_;
+ *    ComplexType U_;
+ *    A() : var_(Dune::Parameter::getValue("token",0,var_) {}
+ *    virtual backup() {
+ *      // note var_ is saved in the parameter file
+ *
+ *      // write b to ascii file 
+ *      PersistenceManager::backupValue("b",b);
+ *      
+ *      // write U to stream
+ *      ofstream out((PersistenceManager::uniqueFileName()+"classA").c_str());
+ *      U.write(out);
+ *    }
+ *    virtual restore() {
+ *      // set var_ through parameter file
+ *      var_= Dune::Parameter::getValue<int>("token",var_);
+ *      
+ *      // read b from ascii file 
+ *      PersistenceManager::restoreValue("b",b);
+ *      
+ *      // read U from stream
+ *      ifstream in((PersistenceManager::uniqueFileName()+"classA").c_str());
+ *      U.read(in);
+ *    }
+ *  };
+ *  \endcode
+ *  
+ **/
 
   class PersistenceManager;
   
+  /** \class   PersistentObject
+   *  \ingroup Checkpointing
+   *  \brief   base class for persistent objects
+   */
   class PersistentObject 
   {
     typedef PersistentObject ThisType;
 
   public:
+    virtual ~PersistentObject() {}
     virtual void backup ( ) const {}
     virtual void restore ( ) {}
     virtual void* pointer() {
@@ -25,6 +99,11 @@ namespace Dune
     }
   };
   
+  /** \class   PersistenceManager
+   *  \ingroup Checkpointing
+   *  \brief   class with singleton instance managing all
+   *           persistent objects
+   */
   class PersistenceManager
   {
     typedef PersistenceManager ThisType;
@@ -251,6 +330,7 @@ namespace Dune
     struct ObjectWrapper : public PersistentObject {
       ObjectWrapper(ObjectType& obj) :
         obj_(obj) {}
+      virtual ~ObjectWrapper() {}
       virtual void backup ( ) const {
         PersistenceManager::backupValue(
           "_token"+PersistenceManager::uniqueFileName(),obj_
@@ -273,6 +353,10 @@ namespace Dune
 
 
 
+  /** \class   AutoPersistentObject
+   *  \ingroup Checkpointing
+   *  \brief   base class for auto persistent objects
+   */
   class AutoPersistentObject
   : public PersistentObject
   {
@@ -290,7 +374,7 @@ namespace Dune
       PersistenceManager :: insert( *this );
     }
 
-    inline ~AutoPersistentObject ()
+    inline virtual ~AutoPersistentObject ()
     {
       PersistenceManager :: remove( *this );
     }
