@@ -116,7 +116,7 @@ namespace Dune
    *  This class adheres to the singleton concept, i.e., all methods are static
    *  and internally use a single instance of this object to store all data.
    */
-  class Parameter
+  class Parameter 
   {
     typedef Parameter ThisType;
 
@@ -292,6 +292,12 @@ namespace Dune
     inline static void append ( const std :: string &filename )
     {
       instance().processFile( filename );
+    }
+
+    /** \brief clear all parameters
+     */
+    inline static void clear() {
+      instance().params_.clear();
     }
    
     template <class T>
@@ -545,6 +551,7 @@ namespace Dune
         out << it->first << ": " << it->second << std :: endl;
 
     }
+
   };
   
 }
