@@ -100,7 +100,7 @@ int main(int argc, char ** argv, char ** envp) {
     // *** Operator typedefs
     DgType dg(*grid,eulerflux,upwind);
 
-    TimeProvider< GridType > tp( startTime, cfl, *grid );
+    GridTimeProvider< GridType > tp( startTime, cfl, *grid );
     
     ODEType ode( dg, tp, rksteps, Parameter :: verbose() );
     
