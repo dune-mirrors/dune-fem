@@ -1,12 +1,12 @@
 #ifndef DUNE_FEM_PERSISTENCE_HH
 #define DUNE_FEM_PERSISTENCE_HH
 
-#include <map>
 #include <fstream>
+#include <list>
 
-#include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/virtualstreams.hh>
 #include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
@@ -20,36 +20,18 @@ namespace Dune
   public:
     virtual void backup ( ) const {}
     virtual void restore ( ) {}
-  };
-  template <class ObjectType,bool isPersistent>
-  struct WrappObject;  
-  template <class ObjectType> 
-  struct WrappObject<ObjectType,true>
-  {
-    static PersistentObject* apply(ObjectType& obj) {
-      return &obj;
+    virtual void* pointer() {
+      return this;
     }
   };
-  template <class ObjectType> 
-  struct WrappObject<ObjectType,false> 
-  {
-    struct ObjectWrapper : public PersistentObject {
-      ObjectWrapper(ObjectType& obj) :
-        obj_(obj) {}
-      virtual void backup ( ) const;
-      virtual void restore ( );
-      ObjectType& obj_;
-    };
-    static PersistentObject* apply(ObjectType& obj) {
-      return new ObjectWrapper(obj);
-    }
-  };
+  
   class PersistenceManager
   {
     typedef PersistenceManager ThisType;
-
+    template <class ObjectType,bool isPersistent>
+    struct WrappObject;  
   private:
-    typedef std :: vector< std::pair<PersistentObject *, unsigned int > > PersistentType;
+    typedef std :: list < std::pair<PersistentObject *, unsigned int > > PersistentType;
     typedef PersistentType :: iterator IteratorType;
 
   private:
@@ -66,31 +48,36 @@ namespace Dune
   public:
     template <class ObjectType>
     inline void insertObject( ObjectType& object) {
+      IteratorType end = objects_.end();
+      for (IteratorType it=objects_.begin(); it!=end; ++it) {
+        if (it->first->pointer()==&object) {
+          ++it->second;
+          return;
+        }
+      }
       PersistentObject* obj = 
         WrappObject<ObjectType,
                     Dune::Conversion<ObjectType,PersistentObject>::exists>
         ::apply(object);
-      for (int i=0;i<objects_.size();i++) {
-        if (objects_[i].first==obj) {
-          objects_[i].second++;
-          return;
-        }
-      }
       objects_.push_back(std::make_pair(obj,1));
     }
 
-    inline void removeObject ( PersistentObject &object )
+    template <class ObjectType>
+    inline void removeObject ( ObjectType &object )
     {
-      /*
-      typedef PersistentMapType :: iterator IteratorType;
-      
-      IteratorType it = objects_.find( &object );
-      if( it != objects_.end() )
-      {
-        if( (--it->second) == 0 )
-          erase( it );
+      IteratorType end = objects_.end();
+      for (IteratorType it=objects_.begin(); it!=end; ++it) {
+        if (it->first->pointer()==&object) {
+          --it->second;
+          if (it->second==0) {
+            PersistentObject* obj = it->first;
+            objects_.erase(it);
+            if (!Dune::Conversion<ObjectType,PersistentObject>::exists)
+              delete obj;
+          }
+          return;
+        }
       }
-      */
     }
 
     inline void backupObjects ( const std::string& path ) 
@@ -193,7 +180,10 @@ namespace Dune
       fileCounter_=0;
       lineNo_=0;
       outAsciStream_.open((path_+"checkpoint").c_str());  
+      outAsciStream_ << std::scientific;
+      outAsciStream_.precision(16);
       outAsciStream_ << "Persistent Objects" << std::endl;
+      Parameter::write(path_+"parameter");
     }
     void startRestore(const std::string& path) {
       path_=path+"/";
@@ -211,6 +201,9 @@ namespace Dune
       inAsciStream_ >> tmp;
       std::cout << tmp << " ";
       std::cout << std::endl;
+
+      Parameter::clear();
+      Parameter::append(path_+"parameter");
     }
     void closeAsci() {
       if (outAsciStream_.is_open())
@@ -237,12 +230,47 @@ namespace Dune
     return pm;
   }
 
+  template <class ObjectType>
   inline PersistenceManager &operator>> ( PersistenceManager &pm,
-                                          PersistentObject &object )
+                                          ObjectType &object )
   {
     pm.removeObject( object );
     return pm;
   }
+
+  template <class ObjectType> 
+  struct PersistenceManager::WrappObject<ObjectType,true>
+  {
+    static PersistentObject* apply(ObjectType& obj) {
+      return &obj;
+    }
+  };
+  template <class ObjectType> 
+  struct PersistenceManager::WrappObject<ObjectType,false> 
+  {
+    struct ObjectWrapper : public PersistentObject {
+      ObjectWrapper(ObjectType& obj) :
+        obj_(obj) {}
+      virtual void backup ( ) const {
+        PersistenceManager::backupValue(
+          "_token"+PersistenceManager::uniqueFileName(),obj_
+        );
+      }
+      virtual void restore ( ) {
+        PersistenceManager::restoreValue(
+          "_token"+PersistenceManager::uniqueFileName(),obj_
+        );
+      }
+      virtual void* pointer() {
+        return &obj_;
+      }
+      ObjectType& obj_;
+    };
+    static PersistentObject* apply(ObjectType& obj) {
+      return new ObjectWrapper(obj);
+    }
+  };
+
 
 
   class AutoPersistentObject
@@ -267,21 +295,6 @@ namespace Dune
       PersistenceManager :: remove( *this );
     }
   };
-
-  template <class ObjectType> 
-  void WrappObject<ObjectType,false> ::
-       ObjectWrapper :: backup ( ) const {
-    PersistenceManager::backupValue(
-        "_token"+PersistenceManager::uniqueFileName(),obj_
-    );
-  }
-  template <class ObjectType> 
-  void WrappObject<ObjectType,false> ::
-       ObjectWrapper :: restore ( ) {
-    PersistenceManager::restoreValue(
-        "_token"+PersistenceManager::uniqueFileName(),obj_
-    );
-  }
 
 }
 
