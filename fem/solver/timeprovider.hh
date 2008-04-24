@@ -11,6 +11,8 @@
 #include <dune/fem/misc/commhelper.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/io/file/persistencemanager.hh>
+#include <dune/fem/misc/femtuples.hh>
 
 namespace Dune
 {
@@ -19,7 +21,7 @@ namespace Dune
    *  \ingroup ODESolver
    *  \brief   gereral base for time providers
    */
-  class TimeProviderBase
+  class TimeProviderBase : public AutoPersistentObject
   {
     typedef TimeProviderBase ThisType;
 
@@ -48,6 +50,17 @@ namespace Dune
       initTimeStepEstimate();
     }
 
+    void backup() const {
+      Tuple<const double&,const int&,const double&,const bool&,const double&>
+        values(time_,timeStep_,dt_,valid_,dtEstimate_);
+      PersistenceManager::backupValue("timeprovider",values);
+    }
+    void restore() {
+      Tuple<double&,int&,double&,bool&,double&>
+        values(time_,timeStep_,dt_,valid_,dtEstimate_);
+      PersistenceManager::restoreValue("timeprovider",values);
+    }
+    
   private:
     TimeProviderBase ( const ThisType & );
     ThisType &operator= ( const ThisType & );
@@ -216,7 +229,7 @@ namespace Dune
                      = CollectiveCommHelperType :: defaultCommunication() )
     : BaseType( startTime ),
       comm_( comm ),
-      cfl_( Parameter :: getValidValue( "fem.timeprovider.timestep.factor", (double)1.0,
+      cfl_( Parameter :: getValidValue( "fem.timeprovider.factor", (double)1.0,
                                         ValidateGreater< double >( 0.0 ) ) )
     {}
     
@@ -279,7 +292,7 @@ namespace Dune
       initTimeStepEstimate();
     }
 
-
+  public:
     // old methods, possibly deprecated in future
     // ------------------------------------------
     
@@ -377,6 +390,16 @@ namespace Dune
     bool syncronized () const DUNE_DEPRECATED
     {
       return false;
+    }
+
+    virtual void backup() const {
+      BaseType::backup();
+    }
+    virtual void restore() {
+      BaseType::restore();
+      const_cast<double&>(cfl_) 
+        =  Parameter :: getValidValue<double>( "fem.timeprovider.factor",
+                           ValidateGreater< double >( 0.0 ) ) ;
     }
   };
 
