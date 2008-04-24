@@ -37,6 +37,7 @@ namespace Dune
     inline VirtualOutStreamObject ()
     : refCount( 0 )
     {}
+    virtual ~VirtualOutStreamObject() {}
     
   public:
     virtual void flush () = 0;
@@ -88,7 +89,7 @@ namespace Dune
       ++stream_->refCount;
     }
 
-    inline ~VirtualOutStream ()
+    inline virtual ~VirtualOutStream ()
     {
       if( --stream_->refCount == 0 )
         delete stream_;
@@ -147,6 +148,7 @@ namespace Dune
     inline VirtualInStreamObject ()
     : refCount( 0 )
     {}
+    virtual ~VirtualInStreamObject() {}
     
   public:
     virtual void readDouble ( double &value ) = 0;
@@ -197,7 +199,7 @@ namespace Dune
       ++stream_->refCount;
     }
 
-    inline ~VirtualInStream ()
+    inline virtual ~VirtualInStream ()
     {
       if( --stream_->refCount == 0 )
         delete stream_;
