@@ -20,6 +20,33 @@ using namespace Dune;
 using namespace std;
 
 /** @addtogroup ODESolver
+ 
+    A variety of runge kutta have so far been implemented based
+    on the \c pardg package. 
+    These include explicit ssp methods upto order 4
+    through Dune::ExplicitRungeKuttaSolver and Dune::ExplicitTimeStepper
+    (where the second version uses \c pardg).
+    Furthermore implicit methods and IMEX schemes up to order 
+    4 can be used through Dune::ImplicitOdeSolver
+    and Dune::SemiImplicitOdeSolver. 
+    Each of these clases require an operator defining the right hand
+    side for its construction; the template argument is a
+    Dune::DiscreteFunctionSpace and the operator has to be derived
+    from the Dune::SpaceOperatorInterface<DiscreteFunctionSpace>.
+    Further arguments in the constructor are an instance of the
+    Dune::Timeprovider and the requested order of the scheme which can
+    be choses during runtime.
+
+    The managment of the simulation time is performed by an instance of the
+    Dune::TimeProvider class. The time at which the space operator is
+    to be evaluated is passed to the operator in the \c setTime method on
+    the Dune::SpaceOperatorInterface and it is assumed that
+    through the method \c timeStepEstimate on the
+    Dune::SpaceOperatorInterface an upper estimate for the time
+    step is provided satifying at the least the stability
+    restriction of the forward euler method. This estimate is then 
+    multiplied by an additional factor depending on the ode solver used
+    and then passed to the instance of the Dune::TimeProvider.
 
     \remarks 
     The interface for ODE solvers is defined by the class
