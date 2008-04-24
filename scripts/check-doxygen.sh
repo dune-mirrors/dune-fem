@@ -6,15 +6,20 @@ if test $# -lt 1 ; then
 fi
 
 cd $1
+FEMDIR=`pwd`
 
 errors=0
-if test -s ./doc/doxygen/doxygen.out ; then
+
+DOXYGEN_OUT="$FEMDIR/doc/doxygen/doxygen.out"
+if test -s $DOXYGEN_OUT ; then
   errors=$((errors+1))
-  echo "Warning: Doxygen output not empty!"
+  echo "Warning: Doxygen output not empty (see $DOXYGEN_OUT)!"
 fi
-if test -s ./doc/doxygen/html/_formulas.log ; then
+
+DOXYGEN_FORMULALOG="$FEMDIR/doc/doxygen/html/_formulas.log"
+if test -s $DOXYGEN_FORMULALOG ; then
   errors=$((errors+1))
-  echo "Warning: Problem in documentation with latex code - _formulars.log not empty!"
+  echo "Warning: Problem in documentation with latex code (see $DOXYGEN_FORMULALOG)!"
 fi
 
 if test $errors -gt 0 ; then
