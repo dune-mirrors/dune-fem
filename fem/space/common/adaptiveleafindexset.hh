@@ -258,6 +258,7 @@ private:
   
   // my type, to be revised 
   enum { myType = 6 };
+  enum { myVersionTag = -665 };
 
   typedef CodimIndexSet CodimIndexSetType; 
   mutable CodimIndexSetType codimLeafSet_[ncodim];
@@ -302,9 +303,10 @@ public:
   {
     // codim 0 is used by default
     codimUsed_[0] = true;
+
     // all higher codims are not used by default
     for(int i=1; i<ncodim; ++i) codimUsed_[i] = false;
-
+    
     // set the codim of each Codim Set. 
     for(int i=0; i<ncodim; ++i) codimLeafSet_[i].setCodim( i );
 
@@ -365,7 +367,7 @@ public:
     return codimLeafSet_[codim].size();
   }
   
-  //! return size of grid entities per level and codim 
+  //! return size of grid entities of given codim 
   int size ( int codim ) const
   {
     assert( hIndexSet_.geomTypes(codim).size() == 1 ); 
@@ -730,7 +732,7 @@ private:
 public:
 
   // write indexset to xdr file 
-  bool write_xdr(const std::basic_string<char> filename, int timestep) 
+  bool write_xdr(const std::string filename, int timestep) 
   {
     const char *path = "";
     std::string fnstr = genFilename(path,filename, timestep);
@@ -738,42 +740,97 @@ public:
     // create write stream 
     XDRWriteStream xdr(fnstr);
     
+    // write new verion tag 
+    int newVerion = myVersionTag;
+    xdr.inout( newVerion );
+    
     int type = myType;
     xdr.inout( type );
 
     bool success = true;
+
+    // write whether codim is used 
+    for(int i=0; i<ncodim; ++i) 
+    {
+      success |= xdr.inout( codimUsed_[i] );
+    }
+
     // write all sets 
-    for(int i=0; i<ncodim; i++) 
+    for(int i=0; i<ncodim; ++i) 
       success |= codimLeafSet_[i].processXdr(xdr);
     
     return success;
   }
 
   //! read index set from given xdr file 
-  bool read_xdr(const std::basic_string<char> filename , int timestep)
+  bool read_xdr(const std::string filename , int timestep)
   {
     const char *path = "";
     std::string fnstr = genFilename(path,filename, timestep);
     
     // create read stream 
     XDRReadStream xdr( fnstr );
-    
-    int type = myType;
-    xdr.inout( type );
-    if( (type != 2) && (type != myType) )
-    {
-      std::cerr << "\nERROR: AdaptiveLeafIndexSet: wrong type choosen! \n\n";
-      assert(type == myType);
-    }
+
+    // check type 
+    int newVersionTag = myVersionTag;
+    xdr.inout( newVersionTag );
+
+    // true if given file has new version 
+    const bool newVersion = (newVersionTag == myVersionTag);
 
     bool success = true;
+
+    // if newVersionTag == myType then older version and 
+    // scipt reading of codimUsed 
+    int type = (newVersion) ? myType : newVersionTag;
+
+    // if new version the read type, 
+    // otherwise newVersionTag is the type info
+    if( newVersion )
+    {
+      // read type 
+      xdr.inout( type );
+    }
+
+    // index set type check  
+    if( (type != 2) && (type != myType) )
+    {
+      DUNE_THROW(InvalidStateException,"AdaptiveLeafIndexSet::read_xdr: wrong type " << type << " given! Expected " << myType);
+    }
+
+    // read codim used 
+    if( newVersion )
+    {
+      // read codim is usage 
+      for(int i=0; i<ncodim; ++i) 
+      {
+        success |= xdr.inout( codimUsed_[i] );
+      }
+    }
+    else 
+    {
+      // set to used by default 
+      for(int i=0; i<ncodim; ++i) 
+      {
+        codimUsed_[i] = true; 
+      }
+    }
+    
     if(type == 2) 
       success |= codimLeafSet_[0].processXdr(xdr);
     else 
     {
-      for(int i=0; i<ncodim; i++) 
+      for(int i=0; i<ncodim; ++i) 
         success |= codimLeafSet_[i].processXdr(xdr);
     }
+
+    // in parallel runs we have to compress here
+    if(this->grid_.comm().size() > 1)
+    {
+      // mark for compress 
+      compressed_ = false;
+    }
+    
     return success;
   }
 
