@@ -11,6 +11,7 @@
 #include <dune/fem/space/common/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/quadrature/cachequad.hh>
 
 #ifdef USE_VTKWRITER
 #include <dune/fem/io/file/vtkio.hh>
@@ -29,9 +30,8 @@ namespace Dune {
 /** @ingroup DiscFuncIO
    \brief Implementation of the Dune::IOInterface. 
    This class manages data output.
-   Available output formats are GRAPE, VTK and VTK Vertex projected
-   using the VtxProjection operator. Details can be
-   found in \ref DiscFuncIO.
+   Available output formats are GRAPE, VTK, VTK Vertex projected using the 
+	 VtxProjection operator and gnuplot. Details can be found in \ref DiscFuncIO.
 */    
 template <class GridImp, 
           class DataImp> 
@@ -151,7 +151,7 @@ protected:
 #endif
 
 protected:  
-  enum OutputFormat { grape = 0 , vtk = 1 , vtkvtx = 2 };
+  enum OutputFormat { grape = 0 , vtk = 1 , vtkvtx = 2 , gnuplot = 3 };
 
   typedef GridImp GridType;
   typedef DataImp OutPutDataType; 
@@ -194,7 +194,7 @@ public:
     # name for data set  
     OutputPrefix: solution
     
-    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
+    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data, 3 = gnuplot
     OutputFormat: 0
     
     # GrapeDisplay (0 = no, 1 = yes)
@@ -239,7 +239,7 @@ public:
     # name for data set  
     OutputPrefix: solution
     
-    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
+    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data, 3 = gnuplot
     OutputFormat: 0
     
     # GrapeDisplay (0 = no, 1 = yes)
@@ -316,7 +316,7 @@ public:
     fem.prefix: ./
     # name for data set  
     fem.io.datafileprefix: solution
-    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data
+    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data, 3 = gnuplot
     fem.io.outputformat: 0
     # GrapeDisplay (0 = no, 1 = yes)
     fem.io.grapedisplay: 0 
@@ -399,12 +399,13 @@ protected:
     }
 
     int outputFormat = Parameter::getValidValue<int>("fem.io.outputformat",0,
-						ValidateInterval<int,true,true>(0,2));
+						ValidateInterval<int,true,true>(0,3));
     switch( outputFormat ) 
     {
       case 0: outputFormat_ = grape; break;
       case 1: outputFormat_ = vtk; break;
       case 2: outputFormat_ = vtkvtx; break;
+      case 3: outputFormat_ = gnuplot; break;
       default:
         DUNE_THROW(NotImplemented,"DataWriter::init: wrong output format");
     }
@@ -459,6 +460,7 @@ protected:
       case 0: outputFormat_ = grape; break;
       case 1: outputFormat_ = vtk; break;
       case 2: outputFormat_ = vtkvtx; break;
+      case 3: outputFormat_ = gnuplot; break;
       default:
         DUNE_THROW(NotImplemented,"DataWriter::init: wrong output format");
     }
@@ -510,7 +512,11 @@ public:
         writeVTKOutput( Element<0>::get(data_), time );
       }
 #endif
-      else 
+			else if ( outputFormat_ == gnuplot )
+			{
+				writeGnuPlotOutput( Element<0>::get(data_), time );
+			}
+			else 
       {
         DUNE_THROW(NotImplemented,"DataWriter::write: wrong output format");
       }
@@ -595,6 +601,45 @@ protected:
   }
 #endif
 
+  // write to gnuplot file format
+  template <class DFType> 
+  void writeGnuPlotOutput(const DFType* func, double time) const
+	{
+    typedef typename DFType :: Traits Traits;
+    typedef typename Traits :: LocalFunctionType LocalFunctionType;
+    typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+
+    typedef typename Traits :: DomainType DomainType;
+    typedef typename Traits :: RangeType RangeType;
+ 
+    enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
+    enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
+
+    // generate filename
+    std::string name = genFilename( path_, datapref_, writeStep_ );
+    name += ".gnu";
+    std::ofstream gnuout(name.c_str());
+
+    // start iteration
+		IteratorType endit = func->space().end();
+		for (IteratorType it = func->space().begin(); it != endit; ++it) {
+			CachingQuadrature<GridPartType,0> quad(*it,2);
+			LocalFunctionType lf = func->localFunction(*it);
+			for (int i=0;i<quad.nop();++i) {
+				RangeType u;
+				DomainType x = it->geometry().global(quad.point(i));
+				lf.evaluate(quad[i],u);
+        for (int i = 0; i < dimDomain; ++i) 
+  				gnuout << x[i] << " ";
+        for (int i = 0; i < dimRange; ++i) 
+  				gnuout << u[i] << " ";
+				gnuout << "\n";
+			}
+		}
+	}
+	
   //! display data with grape 
   virtual void display() const 
   {
