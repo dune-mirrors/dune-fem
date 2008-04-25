@@ -529,11 +529,6 @@ public:
     // check type of set 
     int type = myType;
     xdr.inout( type );
-    if(type != myType)
-    {
-      std::cerr << "\nERROR: AdaptiveLeafIndexSet: wrong type choosen! \n\n";
-      assert(type == myType);
-    }
 
     return codimLeafSet_.processXdr(xdr);
   }
@@ -551,10 +546,10 @@ public:
     int type = myType;
     xdr.inout( type );
 
+    // check type 
     if( (type != 2) && (type != myType) )
     {
-      std::cerr << "\nERROR: AdaptiveLeafIndexSet: wrong type choosen! \n\n";
-      assert(type == myType);
+      DUNE_THROW(InvalidStateException,"DGAdaptiveLeafIndexSet::read_xdr: wrong type " << type << " given! Expected " << myType);
     }
 
     bool success = codimLeafSet_.processXdr(xdr);
