@@ -42,7 +42,14 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
             int ntime, int myRank,
             INFO* info)
 {
-  GR_GridType * grid = 0;
+  // check whether we use a fixed mesh 
+  const bool fixedMesh = (info->fix_mesh == 1) ? true : false;
+
+  // the grid is new if not a fixed mesh or the stack is empty 
+  const bool newGrid = ( ! fixedMesh || gridStack.empty() );
+
+  // init grid 
+  GR_GridType * grid = ( ! newGrid ) ? gridStack.top() : 0;
 
   assert(filename);
   std::string fn (filename);
@@ -52,7 +59,8 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
     IOTuple<GR_DiscFuncType>::input(dataIO,grid,time,ntime,path,fn);
   std::cout << "Finished reading grid" << std::endl;
 
-  gridStack.push(grid);
+  // push all new grids to grid stack 
+  if( newGrid ) gridStack.push(grid);
   
   GrapeDispType * disp = new GrapeDispType ( *grid, myRank );  
   dispStack.push(disp);
