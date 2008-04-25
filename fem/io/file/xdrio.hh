@@ -52,6 +52,23 @@ struct XdrIO<int>
 
 // xdr method for int   
 template <> 
+struct XdrIO<bool>
+{
+  // read/write data to xdr stream 
+  static inline int io(XDR * xdrs,bool& value)
+  {
+    assert( xdrs );
+    // convert to char  
+    char val = (value == true) ? 1 : 0;
+    int ret = xdr_char(xdrs, &val);
+    // convert back 
+    value = (val == 1) ? true : false;
+    return ret;
+  }
+};
+
+// xdr method for int   
+template <> 
 struct XdrIO<long>
 {
   // read/write data to xdr stream 
