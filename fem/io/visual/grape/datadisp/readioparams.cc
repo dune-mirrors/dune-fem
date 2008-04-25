@@ -47,6 +47,7 @@ int readParameterList (int argc, char **argv)
   int    i_delta = 1;
   const  char *replay = 0;
   REAL   timestep = 1.0e-3;
+  bool fixedMesh = false;
   
   info = (INFO *) malloc(n_info*sizeof(INFO));
   assert(info != 0);
@@ -149,7 +150,7 @@ int readParameterList (int argc, char **argv)
     }
     else if (!strcmp(argv[i], "-f"))
     {
-      info[n].fix_mesh = 1;
+      fixedMesh = true;
       i += 1;
     }
     else if (!strcmp(argv[i], "-p"))
@@ -188,6 +189,14 @@ int readParameterList (int argc, char **argv)
       int result = system(cmd.c_str());
 
       if(result != 0) replay = 0;
+    }
+  }
+
+  if( fixedMesh ) 
+  {
+    for(int j=0; j<n; ++j) 
+    {
+      info[j].fix_mesh = 1;
     }
   }
  
