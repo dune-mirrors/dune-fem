@@ -301,7 +301,16 @@ struct IOTuple : public IOTupleBase
 
     // now read all data 
     IOTupleHelper<T1,T2,0>::restore(*ret,dataio,dname,n);
+    
+    typedef DofManager<GridType> DofManagerType;
+    typedef DofManagerFactory<DofManagerType> DMFactoryType;
+
+    // get dof manager 
+    DofManagerType& dm = DMFactoryType::getDofManager(*grid);
    
+    // compress all data 
+    dm.compress();
+    
     std::cout << "    FINISHED!" << std::endl;
     return ret;
   }
