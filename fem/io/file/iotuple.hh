@@ -20,7 +20,7 @@ struct IOTupleCaller
 {
   template <class DataIO,class GridType>
   static DiscFuncType* createData(DataIO& dataio,std::string name,int n,
-			     GridType& grid) 
+           GridType& grid) 
   {
     typedef typename DiscFuncType::DiscreteFunctionSpaceType SpaceType;
     typedef typename SpaceType::GridPartType GridPartType;
@@ -60,7 +60,7 @@ struct IOTupleCaller
   
   template <class DataIO>
   static void output(DataIO& dataio,std::string name,int n,
-		     const DiscFuncType& df) 
+         const DiscFuncType& df) 
   {
     std::stringstream dataname;
     dataname << name << "_" << N;
@@ -73,7 +73,7 @@ struct IOTupleCaller
   
   template <class Disp,class DINFO>
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
-			   DiscFuncType& df) 
+         DiscFuncType& df) 
   {
     assert( dinf->comp );
     std::cout << "adding to display " << dinf->name << std::endl;
@@ -98,7 +98,7 @@ struct IOTupleHelper
   
   template <class DataIO,class GridType>
   static ReturnType createData(DataIO& dataio,std::string name,int n,
-			  GridType& grid) {
+        GridType& grid) {
     T2 next = NextType::createData(dataio,name,n,grid);
     T1* df = IOTupleCaller<N,T1>::createData(dataio,name,n,grid);
     return ReturnType(df,next);
@@ -118,19 +118,19 @@ struct IOTupleHelper
   
   template <class DataIO>
   static void output(DataIO& dataio,std::string name,int n,
-		     const ThisType& tup) {
+         const ThisType& tup) {
     IOTupleCaller<N,T1>::output(dataio,name,n,*(tup.first()));
     NextType::output(dataio,name,n,tup.second());
   }
   template <class Disp,class DINFO>
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
-			   ThisType& tup) {
+         ThisType& tup) {
     NextType::addToDisplay(disp,dinf->next,time,tup.second());
     IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
   }
   template <class Disp,class DINFO>
   static void addToDisplayOrRemove(Disp& disp,const DINFO* dinf,double time,
-			   ThisType& tup) 
+         ThisType& tup) 
   {
     NextType::addToDisplayOrRemove(disp,dinf->next,time,tup.second());
 
@@ -161,7 +161,7 @@ struct IOTupleHelper<T1,Nil,N>
   
   template <class DataIO,class GridType>
   static ReturnType createData(DataIO& dataio,std::string name,int n,
-			  GridType& grid) {
+        GridType& grid) {
     return ReturnType(IOTupleCaller<N,T1>::
                 createData(dataio,name,n,grid),nullType());
   }
@@ -176,12 +176,12 @@ struct IOTupleHelper<T1,Nil,N>
 
   template <class DataIO>
   static void output(DataIO& dataio,std::string name,int n,
-		     const ThisType& tup) {
+         const ThisType& tup) {
     IOTupleCaller<N,T1>::output(dataio,name,n,*(tup.first()));
   }
   template <class Disp,class DINFO>
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
-			   ThisType& tup) {
+         ThisType& tup) {
     IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
   }
 
@@ -249,8 +249,8 @@ struct IOTuple : public IOTupleBase
   static typename DataIO :: GridType*  
   restoreGrid(DataIO& dataio,
               double& t,int n,
-			        std::string path,
-			        std::string name) 
+              std::string path,
+              std::string name) 
   {
     std::string gname ( gridName(path,name) );
     // check if lock file exists, and if exit 
@@ -262,9 +262,9 @@ struct IOTuple : public IOTupleBase
   
   template <class GridType>
   static void restoreDofManager(const GridType& grid,
-         int n,
-			   std::string path,
-			   std::string name) 
+                                int n,
+                                std::string path,
+                                std::string name) 
   {
     std::cout << "Reading Dof Manager" << std::endl;
     typedef DofManager<GridType> DofManagerType;
@@ -283,11 +283,17 @@ struct IOTuple : public IOTupleBase
   
   template <class DataIO,class GridType>
   static ReturnType* input(DataIO& dataio,GridType*& grid,double& t,int n,
-			   std::string path,
-			   std::string name) 
+                           std::string path,
+                           std::string name) 
   {
-    // read grid 
-    grid = IOTuple<TupType>::restoreGrid(dataio,t,n,path,name);
+    // true if grid has to be read 
+    const bool newGrid = (grid == 0);
+
+    if( newGrid ) 
+    {
+      // create and read grid 
+      grid = IOTuple<TupType>::restoreGrid(dataio,t,n,path,name);
+    }
     
     std::string dname( dataName(path,name) );
     std::cout << "Reading data from " << dname << std::endl;
@@ -296,8 +302,11 @@ struct IOTuple : public IOTupleBase
     ReturnType* ret =
       new ReturnType(IOTupleHelper<T1,T2,0>::createData(dataio,dname,n,*grid));
     
-    // now read dofmanager and index sets 
-    IOTuple<TupType>::restoreDofManager(*grid,n,path,name);
+    if( newGrid ) 
+    {
+      // now read dofmanager and index sets 
+      IOTuple<TupType>::restoreDofManager(*grid,n,path,name);
+    }
 
     // now read all data 
     IOTupleHelper<T1,T2,0>::restore(*ret,dataio,dname,n);
@@ -305,11 +314,14 @@ struct IOTuple : public IOTupleBase
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DMFactoryType;
 
-    // get dof manager 
-    DofManagerType& dm = DMFactoryType::getDofManager(*grid);
+    if( newGrid ) 
+    {
+      // get dof manager 
+      DofManagerType& dm = DMFactoryType::getDofManager(*grid);
    
-    // compress all data 
-    dm.compress();
+      // compress all data 
+      dm.compress();
+    }
     
     std::cout << "    FINISHED!" << std::endl;
     return ret;
@@ -345,10 +357,10 @@ struct IOTuple : public IOTupleBase
   //! write grid and data to given directory 
   template <class DataIO,class GridType>
   static void output(DataIO& dataio,GridType& grid,
-         double t,int n,
-		     std::string path,
-		     std::string name, 
-         const Pair<T1*,T2>& tup, bool verbose = true ) 
+                     double t,int n,
+                     std::string path,
+                     std::string name, 
+                     const Pair<T1*,T2>& tup, bool verbose = true ) 
   {
     std::string gname( gridName( path, name ) );
     
@@ -379,14 +391,14 @@ struct IOTuple : public IOTupleBase
   
   template <class Disp,class DINFO>
   static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
-			   Pair<T1*,T2>& tup) 
+                           Pair<T1*,T2>& tup) 
   {
     IOTupleHelper<T1,T2,0>::addToDisplay(disp,dinf,time,tup);
   }
 
   template <class Disp,class DINFO>
   static void addToDisplayOrRemove(Disp& disp,const DINFO* dinf,double time,
-			   Pair<T1*,T2>& tup) 
+                                   Pair<T1*,T2>& tup) 
   {
     IOTupleHelper<T1,T2,0>::addToDisplayOrRemove(disp,dinf,time,tup);
   }
