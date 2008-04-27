@@ -625,7 +625,7 @@ protected:
     // start iteration
 		IteratorType endit = func->space().end();
 		for (IteratorType it = func->space().begin(); it != endit; ++it) {
-			CachingQuadrature<GridPartType,0> quad(*it,func->space().polynomialOrder);
+			CachingQuadrature<GridPartType,0> quad(*it,func->space().order());
 			LocalFunctionType lf = func->localFunction(*it);
 			for (int i=0;i<quad.nop();++i) {
 				RangeType u;
