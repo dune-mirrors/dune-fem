@@ -1,6 +1,8 @@
 #ifndef DUNE_LAGRANGESPACEDATAHANDLE_HH
 #define DUNE_LAGRANGESPACEDATAHANDLE_HH
 
+#include <cassert>
+
 //- Dune includes 
 #include <dune/grid/common/datahandleif.hh>
 

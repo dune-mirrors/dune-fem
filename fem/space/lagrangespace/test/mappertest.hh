@@ -2,12 +2,21 @@
 #define DUNE_LAGRANGEMAPPER_TEST_HH
 
 #include <string>
+
+#include <dune/grid/common/gridpart.hh>
+
 #include <dune/fem/misc/test.hh>
 
-namespace Dune {
+namespace Dune
+{
 
-  class LagrangeMapper_Test : public Test {
+  template< class Grid >
+  class LagrangeMapper_Test
+  : public Test
+  {
   public:
+    typedef Grid GridType;
+
     typedef LeafGridPart< GridType > GridPartType;
       
     LagrangeMapper_Test( std :: string gridFile )

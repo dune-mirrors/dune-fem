@@ -22,7 +22,7 @@ int main()
   
   Suite suite("Basefunction tests");
   suite.addTest( new LagrangeBase_Test(gridFile));
-  suite.addTest( new LagrangeMapper_Test( gridFile ) );
+  suite.addTest( new LagrangeMapper_Test< GridType >( gridFile ) );
 
   suite.run();
   suite.report();

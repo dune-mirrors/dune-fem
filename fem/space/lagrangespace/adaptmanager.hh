@@ -1,6 +1,8 @@
 #ifndef DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
 #define DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
 
+#include <dune/grid/common/capabilities.hh>
+
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
 #include "lagrangespace.hh"

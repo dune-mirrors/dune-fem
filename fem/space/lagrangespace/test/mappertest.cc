@@ -8,7 +8,8 @@
 namespace Dune
 {
 
-  void LagrangeMapper_Test :: run()
+  template< class Grid >
+  void LagrangeMapper_Test< Grid > :: run()
   {
     GridPtr< GridType > gridPtr( gridFile_ );
     GridType& grid = *gridPtr;
@@ -47,9 +48,11 @@ namespace Dune
   }
 
 
-  
+
+  template< class Grid >
   template< class SpaceType >
-  void LagrangeMapper_Test :: checkDiscreteFunction( const SpaceType &space )
+  void LagrangeMapper_Test< Grid >
+    :: checkDiscreteFunction( const SpaceType &space )
   {
     typedef AdaptiveDiscreteFunction< SpaceType > DiscreteFunctionType;
     

@@ -2,6 +2,7 @@
 #define DUNE_GENERICGEOMETRY_HH
 
 #include <dune/common/misc.hh>
+#include <dune/common/fvector.hh>
 #include <dune/common/geometrytype.hh>
 
 #include <dune/fem/misc/metaprogramming.hh>

@@ -1,3 +1,8 @@
+#ifndef DUNE_LAGRANGESPACE_BASEFUNCTIONS_INLINE_HH
+#define DUNE_LAGRANGESPACE_BASEFUNCTIONS_INLINE_HH
+
+#include "basefunctions.hh"
+
 namespace Dune
 {
 
@@ -201,3 +206,5 @@ namespace Dune
   }
 
 }
+
+#endif
