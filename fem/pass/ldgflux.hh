@@ -1,6 +1,9 @@
 #ifndef DUNE_LDGFLUX_CC
 #define DUNE_LDGFLUX_CC
 
+#include <cassert>
+#include <cmath>
+
 // Numerical Upwind-Flux
 template <class ModelImp>
 class LDGFlux
