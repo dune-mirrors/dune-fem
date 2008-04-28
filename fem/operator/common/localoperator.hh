@@ -1,6 +1,8 @@
 #ifndef DUNE_LOCALOPERATORS_HH
 #define DUNE_LOCALOPERATORS_HH
 
+#include <iostream>
+
 #include "objpointer.hh"
 
 namespace Dune 
