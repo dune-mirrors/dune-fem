@@ -2,8 +2,10 @@
 #define DUNE_DATACOLLECTOR_HH
 
 //-System includes
+#include <cassert>
 #include <vector>
 #include <utility>
+#include <iostream>
 
 //-Dune includes 
 #include <dune/common/interfaces.hh>

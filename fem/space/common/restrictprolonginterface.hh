@@ -3,6 +3,7 @@
 
 //- Dune includes 
 #include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/grid/common/capabilities.hh>
 
 //- local includes 
 #include <dune/fem/misc/combineinterface.hh>

@@ -1,6 +1,9 @@
 #ifndef DUNE_GEOMETRYCONVERSION_HH
 #define DUNE_GEOMETRYCONVERSION_HH
 
+#include <cassert>
+#include <iostream>
+
 #include <dune/common/geometrytype.hh>
 
 namespace Dune { 

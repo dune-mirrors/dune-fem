@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_ENTITYCOMMHELPER_HH
 #define DUNE_FEM_ENTITYCOMMHELPER_HH
 
+#include <dune/grid/common/grid.hh>
+
 namespace Dune
 {
 

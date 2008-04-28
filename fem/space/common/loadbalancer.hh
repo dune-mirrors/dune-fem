@@ -2,8 +2,10 @@
 #define DUNE_LOADBALANCER_HH
 
 //- system includes 
+#include <cassert>
 #include <vector>
 #include <set>
+#include <iostream>
 
 //- local includes 
 #include <dune/common/timer.hh>
