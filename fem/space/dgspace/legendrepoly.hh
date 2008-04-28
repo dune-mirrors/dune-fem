@@ -1,7 +1,10 @@
 #ifndef DUNE_LEGENDREPOLY_HH
 #define DUNE_LEGENDREPOLY_HH
 
-namespace Dune {
+#include <cassert>
+
+namespace Dune
+{
 
 class LegendrePoly
 {
