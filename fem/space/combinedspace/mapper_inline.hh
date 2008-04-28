@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_COMBINEDSPACE_MAPPER_INLINE_HH
+#define DUNE_FEM_COMBINEDSPACE_MAPPER_INLINE_HH
+
+#include "mapper.hh"
+
 namespace Dune
 {
 
@@ -302,3 +307,5 @@ namespace Dune
 #endif
 
 } // end namespace Dune
+
+#endif
