@@ -7,7 +7,6 @@ common_HEADERS = adaptiveleafgridpart.hh \
      basefunctionfactory.hh \
      basefunctioninterface.hh \
      basefunctionsetinterface.hh \
-     boundary.hh \
      cachedcommmanager.hh \
                  codimindexset.hh \
      commindexmap.hh \
@@ -21,7 +20,6 @@ common_HEADERS = adaptiveleafgridpart.hh \
      dynamictype.hh \
      entitycommhelper.hh \
                  filteredgrid.hh \
-     formula.hh \
      functionspace.hh \
      functionspaceinterface.hh \
      geometryconversion.hh \
