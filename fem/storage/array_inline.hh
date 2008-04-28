@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_ARRAY_INLINE_HH
+#define DUNE_FEM_ARRAY_INLINE_HH
+
+#include "array.hh"
+
 namespace Dune
 {
 
@@ -39,3 +44,5 @@ namespace Dune
   }
   
 }
+
+#endif

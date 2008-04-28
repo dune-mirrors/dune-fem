@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_REFERENCECOUNTER_HH
 #define DUNE_FEM_REFERENCECOUNTER_HH
 
+#include <cassert>
+
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
 namespace Dune
