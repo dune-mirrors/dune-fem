@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_ATTACHEDFUNCTION_STORAGE_HH
 #define DUNE_FEM_ATTACHEDFUNCTION_STORAGE_HH
 
+#include <dune/fem/storage/array.hh>
+#include <dune/fem/io/parameter.hh>
+
 namespace Dune
 {
 

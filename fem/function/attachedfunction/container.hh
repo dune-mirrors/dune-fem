@@ -1,8 +1,8 @@
 #ifndef DUNE_FEM_ATTACHEDFUNCTION_CONTAINER_HH
 #define DUNE_FEM_ATTACHEDFUNCTION_CONTAINER_HH
 
-#include <dune/fem/storage/array.hh>
 #include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 #include <dune/fem/function/attachedfunction/storage.hh>
 #include <dune/fem/function/attachedfunction/slotiterator.hh>
