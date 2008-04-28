@@ -128,6 +128,7 @@ AC_CONFIG_FILES([Makefile
      fem/storage/Makefile
      fem/test/Makefile
      lib/Makefile
+     scripts/check-header.sh
      dune-fem.pc])
 AC_OUTPUT
 

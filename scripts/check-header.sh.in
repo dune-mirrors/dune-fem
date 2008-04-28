@@ -1,0 +1,44 @@
+#!/bin/bash
+
+if test $# -lt 2 ; then
+  echo "Usage: $0 <dune-fem-dir> <header>"
+  exit 1
+fi
+
+CXX="@CXX@"
+
+WORKINGDIR=`pwd`
+cd $1
+FEMDIR=`pwd`
+HEADER=$2
+
+if ! test -e $HEADER ; then
+  echo "'$HEADER' does not exist."
+  exit 1
+fi
+
+cd $WORKINGDIR
+BASEFILE=`mktemp -p . tmp-header-XXXXXX`
+MAKEFILE=$BASEFILE.make
+CCFILE=$BASEFILE.cc
+OFILE=$BASEFILE.o
+
+echo "GRIDTYPE=@GRIDTYPE@" >> $MAKEFILE
+echo "GRIDDIM=@GRIDDIM@" >> $MAKEFILE
+echo ".cc.o:" >> $MAKEFILE
+echo -e -n "\t$CXX -c -I$FEMDIR" >> $MAKEFILE
+echo '@CPPFLAGS@ @ALL_PKG_CPPFLAGS@ @CXXFLAGS@ -o $@ $<' >> $MAKEFILE
+
+echo "#include <config.h>" >> $CCFILE
+echo "#include <${HEADER}>" >> $CCFILE
+echo "int main () {}" >> $CCFILE
+
+make -f $MAKEFILE $OFILE 1>/dev/null
+SUCCESS=$?
+
+rm -f $OFILE
+rm -f $CCFILE
+rm -f $MAKEFILE
+rm -f $BASEFILE
+
+exit $SUCCESS
