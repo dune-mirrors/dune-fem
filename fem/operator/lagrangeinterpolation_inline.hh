@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_LAGRANGEINTERPOLATION_INLINE_HH
+#define DUNE_FEM_LAGRANGEINTERPOLATION_INLINE_HH
+
+#include "lagrangeinterpolation.hh"
+
 namespace Dune 
 {
 
@@ -83,3 +88,5 @@ namespace Dune
   }
 
 }
+
+#endif
