@@ -37,7 +37,7 @@ errors=0
 echo
 echo "Checking Makefile.am's *_HEADERS variables..."
 cd $WORKINGDIR
-if ! $SCRIPTSDIR/check-headers.sh $FEMDIR ; then
+if ! $SCRIPTSDIR/check-headers.sh ; then
   errors=$((errors+1))
 fi
 

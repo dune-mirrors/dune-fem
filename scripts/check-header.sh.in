@@ -1,16 +1,18 @@
 #!/bin/bash
 
-if test $# -lt 2 ; then
-  echo "Usage: $0 <dune-fem-dir> <header>"
+if test $# -lt 1 ; then
+  echo "Usage: $0 <header>"
   exit 1
 fi
 
 CXX="@CXX@"
 
 WORKINGDIR=`pwd`
-cd $1
+cd `dirname $0`
+SCRIPTSDIR=`pwd`
+cd "$SCRIPTSDIR/.."
 FEMDIR=`pwd`
-HEADER=$2
+HEADER=$1
 
 if ! test -e $HEADER ; then
   echo "'$HEADER' does not exist."

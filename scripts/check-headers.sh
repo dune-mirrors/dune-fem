@@ -1,14 +1,21 @@
 #!/bin/bash
 
-if test $# -lt 1 ; then
-  echo "Usage: $0 <dune-fem-dir>"
-  exit 1
-fi
-
 WORKINGDIR=`pwd`
-cd $1
+cd `dirname $0`
+SCRIPTSDIR=`pwd`
+cd "$SCRIPTSDIR/.."
 FEMDIR=`pwd`
-SCRIPTSDIR=`dirname $0`
+
+compile=1
+for arg in $@ ; do
+  if test "x$arg" == "xfast" ; then
+    compile=0
+    continue
+  fi
+
+  echo "Usage: $0 [fast]"
+  exit 1
+done
 
 errors=0
 for directory in `find fem -type d | sed "/fem.*\/\..*/ d"` ; do
@@ -51,15 +58,16 @@ for directory in `find fem -type d | sed "/fem.*\/\..*/ d"` ; do
       fi
     done
 
-    for filename in `ls $directory | sed '/.*.hh/ p ; d'` ; do
-      cd $WORKINGDIR
-      if ! $SHELL $SCRIPTSDIR/check-header.sh $FEMDIR $directory/$filename ; then
-        echo "Error: Header does not compile: $directory/$filename"
-        echo "       (see above compiler output for more information)"
-        errors=$((errors+1))
-      fi
-    done
-    cd $FEMDIR
+    if test $compile -ne 0 ; then
+      for filename in `ls $directory | sed '/.*.hh/ p ; d'` ; do
+        cd $WORKINGDIR
+        if ! $SHELL $SCRIPTSDIR/check-header.sh $directory/$filename &>/dev/null ; then
+          echo "Error: Header does not compile: $directory/$filename"
+          errors=$((errors+1))
+        fi
+      done
+      cd $FEMDIR
+    fi
 
   else
     echo "Warning: Makefile.am not found in $directory"
