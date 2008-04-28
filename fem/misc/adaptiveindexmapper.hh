@@ -64,8 +64,8 @@ namespace Dune
   protected:
     enum IndexState { Unused = -1, Used = 1, New = 2, Deleted = -2 };
 
-    typedef DynamicArray< unsigned int, DefaultArrayOverAllocator > IndexArrayType;
-    typedef DynamicArray< char, DefaultArrayOverAllocator > StateArrayType;
+    typedef DynamicArray< unsigned int > IndexArrayType;
+    typedef DynamicArray< char > StateArrayType;
 
   public:
     typedef IndexMapperHole HoleType;

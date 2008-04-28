@@ -1,10 +1,14 @@
 #ifndef DUNE_NONCONFORMITYLEVEL_HH
 #define DUNE_NONCONFORMITYLEVEL_HH
 
+#include <cassert>
+#include <iostream>
+
 //- Dune includes 
 #include <dune/common/timer.hh>
 
-namespace Dune {
+namespace Dune
+{
 
 /** \brief For a given grid entities are marked such that the level of
  non-conformity is adjusted to a given number, for example 1. 

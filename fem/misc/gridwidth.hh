@@ -4,6 +4,7 @@
 //- Dune includes 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/capabilities.hh>
+
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
@@ -48,7 +49,8 @@ namespace Dune
     static inline double calcGridWidth (const GridPartType & gridPart)
     {     
       double maxwidth = 0.0;
-      typedef typename GridPartType::template Codim<0> :: IteratorType IteratorType; 
+      typedef typename GridPartType :: GridType GridType;
+      typedef typename GridPartType::template Codim<0> :: IteratorType IteratorType;
       
       // unstructured case 
       if( Capabilities::IsUnstructured<GridType>::v )

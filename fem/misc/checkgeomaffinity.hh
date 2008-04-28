@@ -3,6 +3,7 @@
 
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/space/common/allgeomtypes.hh>
 
 namespace Dune {
 

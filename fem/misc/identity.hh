@@ -2,7 +2,7 @@
 #define DUNE_IDENTITY_HH
 
 // Dune includes
-#include <dune/common/operator.hh>
+#include <dune/fem/operator/common/operator.hh>
 
 // Local includes
 #include "inverseoperatorfactory.hh"

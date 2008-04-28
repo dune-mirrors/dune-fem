@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_H1NORM_INLINE_HH
+#define DUNE_FEM_H1NORM_INLINE_HH
+
+#include "h1norm.hh"
+
 namespace Dune
 {
 
@@ -125,3 +130,5 @@ namespace Dune
   };
 
 }
+
+#endif

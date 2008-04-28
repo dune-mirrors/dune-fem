@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_L2NORM_INLINE_HH
+#define DUNE_FEM_L2NORM_INLINE_HH
+
+#include "l2norm.hh"
+
 namespace Dune
 {
 
@@ -300,3 +305,5 @@ namespace Dune
 
 
 }
+
+#endif

@@ -1,12 +1,16 @@
 #ifndef DUNE_EOCOUTPUT_HH
 #define DUNE_EOCOUTPUT_HH
 
-#include<sstream>
-#include<fstream>
-#include<cassert>
-#include<dune/common/fvector.hh>
+#include <cassert>
+#include <sstream>
+#include <fstream>
+#include <vector>
 
-namespace Dune{
+#include <dune/common/fvector.hh>
+
+namespace Dune
+{
+
 /**  
     @ingroup HelperClasses
     \brief Write a self contained tex table and a gnuplot
@@ -20,7 +24,8 @@ namespace Dune{
     but can also be used to combine runs with different
     parameters.
  */
-class EocOutput {
+class EocOutput
+{
   std::string outputFile;
   int level;
   std::vector<double> prevError;

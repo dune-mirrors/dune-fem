@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_ADAPTIVEINDEXMAPPER_INLINE_HH
+#define DUNE_FEM_ADAPTIVEINDEXMAPPER_INLINE_HH
+
+#include "adaptiveindexmapper.hh"
+
 namespace Dune
 {
 
@@ -80,3 +85,5 @@ namespace Dune
   }
   
 }
+
+#endif

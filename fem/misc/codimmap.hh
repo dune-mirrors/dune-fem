@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_CODIMMAP_HH
 #define DUNE_FEM_CODIMMAP_HH
 
+#include <dune/common/misc.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 
 namespace Dune

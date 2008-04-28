@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDHELPER_HH
 #define DUNE_FEM_GRIDHELPER_HH
 
+#include <dune/grid/common/capabilities.hh>
+
 #include <dune/fem/misc/metaprogramming.hh>
 
 namespace Dune
