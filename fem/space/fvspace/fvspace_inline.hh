@@ -7,6 +7,8 @@
 //- Dune includes 
 #include <dune/fem/space/common/allgeomtypes.hh>
 
+#include <dune/fem/space/fvspace.hh>
+
 namespace Dune {
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
