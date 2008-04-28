@@ -1,6 +1,8 @@
 #ifndef DUNE_CACHEDLINEAROPERATOR_HH
 #define DUNE_CACHEDLINEAROPERATOR_HH
 
+#include <dune/fem/operator/common/operator.hh>
+
 namespace Dune
 {
   //! @ingroup LinearDiscOperatos 

@@ -10,12 +10,13 @@
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 #include <dune/fem/space/fvspace.hh>
+#include <dune/fem/space/dgspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 
 #include <dune/fem/misc/gridwidth.hh>
 
-
-namespace Dune {
+namespace Dune
+{
 
 /** \ingroup DiscreteOperator 
     \class ArtificialDiffusion

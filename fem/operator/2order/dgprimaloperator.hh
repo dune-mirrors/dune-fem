@@ -101,6 +101,7 @@ namespace Dune {
     typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
         
     // Range of the destination
     enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
@@ -118,7 +119,6 @@ namespace Dune {
                            PointBased > DiscreteGradientSpaceType; 
 
     // Types extracted from the discrete function space type
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename GridPartType :: GridType :: Traits :: LocalIdSet LocalIdSetType; 
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
