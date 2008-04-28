@@ -128,9 +128,11 @@ int main(int argc, char ** argv, char ** envp) {
       Parameter::getValue("fem.localdg.max_tstep",std::numeric_limits<double>::max());
 		double maxdt=0.,mindt=1.e10,averagedt=0.;
     // *** Time loop
+    tp.provideTimeStepEstimate(maxTimeStep);
     ode.initialize(U);
-    for( tp.init( maxTimeStep ); tp.time() < endTime; tp.next( maxTimeStep ) )
+    for( tp.init( ); tp.time() < endTime; tp.next( ) )
     {
+      tp.provideTimeStepEstimate(maxTimeStep);
       const double tnow = tp.time();
       const double ldt = tp.deltaT();
       const double tnext = tnow + ldt;
