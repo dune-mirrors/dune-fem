@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_STANDARDLOCALFUNCTION_INLINE_HH
+#define DUNE_FEM_STANDARDLOCALFUNCTION_INLINE_HH
+
+#include "standardlocalfunction.hh"
+
 namespace Dune
 {
 
@@ -322,3 +327,5 @@ namespace Dune
   }
 
 }
+
+#endif

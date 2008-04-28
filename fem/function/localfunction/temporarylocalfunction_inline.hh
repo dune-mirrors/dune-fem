@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_TEMPORARYLOCALFUNCTION_INLINE_HH
+#define DUNE_FEM_TEMPORARYLOCALFUNCTION_INLINE_HH
+
+#include "temporarylocalfunction.hh"
+
 namespace Dune
 {
 
@@ -128,3 +133,5 @@ namespace Dune
   }
 
 }
+
+#endif

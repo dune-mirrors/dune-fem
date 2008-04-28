@@ -1,6 +1,8 @@
 #ifndef DUNE_BLOCKVECTORFUNCTION_INLINE_HH
 #define DUNE_BLOCKVECTORFUNCTION_INLINE_HH
 
+#include "blockvectorfunction.hh"
+
 namespace Dune 
 {
 
