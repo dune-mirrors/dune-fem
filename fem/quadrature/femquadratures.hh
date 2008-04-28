@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_FEMQUADRATURES_HH
 #define DUNE_FEM_FEMQUADRATURES_HH
 
+#include <dune/common/geometrytype.hh>
+
 #include <dune/fem/quadrature/quadratureimp.hh>
 
 // quadrature storage classes 

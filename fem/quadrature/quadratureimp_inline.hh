@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_QUADRATUREIMP_INLINE_HH
+#define DUNE_FEM_QUADRATUREIMP_INLINE_HH
+
+#include "quadratureimp.hh"
+
 namespace Dune
 {
   
@@ -16,3 +21,5 @@ namespace Dune
   }
 
 } // end namespace Dune
+
+#endif

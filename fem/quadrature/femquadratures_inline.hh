@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_FEMQUADRATURES_INLINE_HH
+#define DUNE_FEM_FEMQUADRATURES_INLINE_HH
+
+#include "femquadratures.hh"
+
 namespace Dune
 {
 
@@ -302,3 +307,5 @@ namespace Dune
   }
   
 } // end namespace Dune
+
+#endif

@@ -4,8 +4,7 @@
 #include <cassert>
 
 #include <dune/common/fvector.hh>
-//#include <dune/common/exceptions.hh>
-//#include <dune/grid/common/grid.hh>
+#include <dune/common/geometrytype.hh>
 
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/idprovider.hh>

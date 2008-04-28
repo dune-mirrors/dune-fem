@@ -1,6 +1,8 @@
 #ifndef DUNE_GAUSSPOINTS_IMPLEMENTATION_HH 
 #define DUNE_GAUSSPOINTS_IMPLEMENTATION_HH 
 
+#include "gausspoints.hh"
+
 namespace Dune
 {
   inline GaussPts :: GaussPts ()
