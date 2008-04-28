@@ -3,6 +3,7 @@
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
+#include <dune/istl/preconditioners.hh>
 #endif
 
 namespace Dune {

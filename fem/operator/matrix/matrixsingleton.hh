@@ -1,7 +1,7 @@
 #ifndef DUNE_MATRIXSINGLETON_HH
 #define DUNE_MATRIXSINGLETON_HH
 
-#include <dune/fem/space/common/singletonlist.hh>
+#include <dune/fem/storage/singletonlist.hh>
 
 namespace Dune {
 
