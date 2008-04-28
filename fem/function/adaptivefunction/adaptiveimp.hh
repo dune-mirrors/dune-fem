@@ -11,6 +11,7 @@
 
 #include <dune/fem/io/file/xdrio.hh>
 #include <dune/fem/storage/envelope.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune {
 
