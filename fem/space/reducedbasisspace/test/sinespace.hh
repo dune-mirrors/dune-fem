@@ -2,6 +2,8 @@
 #define DUNE_FEM_REDUCEDBASISSPACE_SINESPACE_HH
 
 #include <dune/fem/space/reducedbasisspace.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/operator/lagrangeinterpolation.hh>
 
 namespace Dune
 {

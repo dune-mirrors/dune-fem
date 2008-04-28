@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_REDUCEDBASISSPACE_REDUCEDBASISSPACE_INLINE_HH
+#define DUNE_FEM_REDUCEDBASISSPACE_REDUCEDBASISSPACE_INLINE_HH
+
+#include "reducedbasisspace.hh"
+
 namespace Dune
 {
 
@@ -229,3 +234,5 @@ namespace Dune
   }
   
 }
+
+#endif

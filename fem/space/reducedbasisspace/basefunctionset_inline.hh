@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_INLINE_HH
+#define DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_INLINE_HH
+
+#include "basefunctionset.hh"
+
 namespace Dune
 {
 
@@ -64,3 +69,5 @@ namespace Dune
   }
 
 }
+
+#endif
