@@ -1,3 +1,8 @@
+#ifndef DUNE_FEM_STREAMS_INLINE_HH
+#define DUNE_FEM_STREAMS_INLINE_HH
+
+#include "streams.hh"
+
 namespace Dune
 {
 
@@ -94,3 +99,5 @@ namespace Dune
   }
 
 }
+
+#endif

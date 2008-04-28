@@ -1,6 +1,7 @@
 #ifndef DUNE_ASCIIPARSER_HH
 #define DUNE_ASCIIPARSER_HH
 
+#include <iostream>
 #include <fstream>
 #include <string>
 
