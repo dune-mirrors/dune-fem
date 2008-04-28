@@ -1,6 +1,8 @@
 #ifndef __OEM_TMPMEM_HH__
 #define __OEM_TMPMEM_HH__
 
+#include <cassert>
+
 // temporay mem 
 class OEMTmpMem
 {
