@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_DOFBLOCK_HH
 #define DUNE_FEM_DOFBLOCK_HH
 
+#include <utility>
+
 #include <dune/fem/storage/envelope.hh>
 
 namespace Dune

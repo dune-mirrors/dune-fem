@@ -1,10 +1,12 @@
-#ifndef DUNE_DISCRETEFUNCTION_CC
-#define DUNE_DISCRETEFUNCTION_CC
+#ifndef DUNE_DISCRETEFUNCTION_INLINE_HH
+#define DUNE_DISCRETEFUNCTION_INLINE_HH
 
 #include <fstream>
 
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/streams/streams.hh>
+
+#include "discretefunction.hh"
 
 namespace Dune 
 {
