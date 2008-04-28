@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_SOURCEPROJECTION_HH
 #define DUNE_FEM_SOURCEPROJECTION_HH
 
+#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/operator/integrationoperator.hh>
+
 namespace Dune
 {
 

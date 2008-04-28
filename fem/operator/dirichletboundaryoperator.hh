@@ -5,6 +5,7 @@
 
 #include <dune/fem/storage/array.hh>
 
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/model/boundarymodel.hh>
 
 namespace Dune
