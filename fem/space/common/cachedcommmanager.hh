@@ -9,6 +9,7 @@
 //- Dune includes  
 #include <dune/common/misc.hh>
 #include <dune/common/mpihelper.hh>
+#include <dune/grid/common/grid.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 #if HAVE_ALUGRID

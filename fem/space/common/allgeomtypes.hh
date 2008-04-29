@@ -7,6 +7,7 @@
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
+#include <dune/grid/common/referenceelements.hh>
 
 #define USE_UG HAVE_UG 
 #if USE_UG 
