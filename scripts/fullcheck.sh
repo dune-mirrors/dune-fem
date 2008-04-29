@@ -37,7 +37,7 @@ errors=0
 echo
 echo "Checking Makefile.am's *_HEADERS variables..."
 cd $WORKINGDIR
-if ! $SCRIPTSDIR/check-headers.sh ; then
+if ! $SCRIPTSDIR/check-headers.sh fast ; then
   errors=$((errors+1))
 fi
 
@@ -69,6 +69,17 @@ cd $DUNEDIR
 if ! minimal_configure ; then
   echo "Fatal: Cannot configure with minimal options (see $WORKINGDIR/minimal-svn-conf.out)."
   exit 1
+fi
+
+
+# check headers
+# -------------
+
+echo
+echo "Checking headers..."
+cd $WORKINGDIR
+if ! $SCRIPTSDIR/check-headers.sh ; then
+  errors=$((errors+1))
 fi
 
 # check documentation
