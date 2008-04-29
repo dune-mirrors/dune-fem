@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_DEBUG_HH
 #define DUNE_FEM_DEBUG_HH
 
+#include <cassert>
+
 namespace Dune
 {
 
