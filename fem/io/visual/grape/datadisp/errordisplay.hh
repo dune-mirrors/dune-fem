@@ -26,6 +26,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
   protected:
+    /** \cond */
     struct Error
     {
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
@@ -86,6 +87,7 @@ namespace Dune
         initialized_ = true;
       }
     };
+    /** \endcond */
 
     typedef LocalFunctionAdapter< Error > ErrorFunctionType;
     
@@ -130,6 +132,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
   protected:
+    /** \cond */
     struct Error
     {
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
@@ -187,6 +190,7 @@ namespace Dune
         initialized_ = true;
       }
     };
+    /** \endcond */
 
     typedef LocalFunctionAdapter< Error > ErrorFunctionType;
     typedef DiscreteFunctionAdapter< SolutionType, GridPartType >
