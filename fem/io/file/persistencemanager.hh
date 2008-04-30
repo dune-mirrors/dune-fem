@@ -4,10 +4,12 @@
 #include <fstream>
 #include <list>
 
+#include <dune/common/static_assert.hh>
+#include <dune/common/typetraits.hh>
+
 #include <dune/fem/io/streams/virtualstreams.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/parameter.hh>
-
 namespace Dune
 {
   
@@ -153,7 +155,6 @@ namespace Dune
         ++it->second;
         return;
       }
-
       PersistentObject *obj = 
         WrapObject< ObjectType, IsPersistent< ObjectType > :: value >
         :: apply( object );
@@ -323,6 +324,14 @@ namespace Dune
     PersistenceManager::instance();
   }
 
+  template <class ObjectType>
+  inline PersistenceManager &operator<< ( PersistenceManager &pm,
+                                          ObjectType *object )
+  {
+    CompileTimeChecker<false> 
+     do_not_add_pointer_to_PersistenceManager;
+    return pm;
+  }
   template <class ObjectType>
   inline PersistenceManager &operator<< ( PersistenceManager &pm,
                                           ObjectType &object )
