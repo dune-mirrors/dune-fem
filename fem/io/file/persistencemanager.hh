@@ -10,6 +10,7 @@
 
 namespace Dune
 {
+  
 /** @addtogroup Checkpointing
  *  
  *  The Dune::PersistenceManager manages a list of persistent
@@ -90,15 +91,31 @@ namespace Dune
   {
     typedef PersistentObject ThisType;
 
+    friend class PersistenceManager;
+
   public:
     virtual ~PersistentObject() {}
-    virtual void backup ( ) const {}
-    virtual void restore ( ) {}
-    virtual void* pointer() {
+    virtual void backup () const = 0;
+    virtual void restore () = 0;
+   
+  protected:
+    virtual void *pointer ()
+    {
       return this;
     }
   };
+
+
   
+  template< class ObjectType >
+  struct IsPersistent
+  {
+    static const bool value
+      = Dune :: Conversion< ObjectType *, PersistentObject * > :: exists;
+  };
+ 
+
+
   /** \class   PersistenceManager
    *  \ingroup Checkpointing
    *  \brief   class with singleton instance managing all
@@ -108,14 +125,14 @@ namespace Dune
   {
     typedef PersistenceManager ThisType;
     template <class ObjectType,bool isPersistent>
-    struct WrappObject;  
+    struct WrapObject;  
   private:
     typedef std :: list < std::pair<PersistentObject *, unsigned int > > PersistentType;
     typedef PersistentType :: iterator IteratorType;
 
   private:
     PersistentType objects_;
-    
+   
   private:
     inline PersistenceManager () :
       fileCounter_(0), lineNo_(), path_()
@@ -125,37 +142,42 @@ namespace Dune
     ThisType &operator= ( const ThisType & );
 
   public:
-    template <class ObjectType>
-    inline void insertObject( ObjectType& object) {
+    template< class ObjectType >
+    inline void insertObject( ObjectType &object )
+    {
       IteratorType end = objects_.end();
-      for (IteratorType it=objects_.begin(); it!=end; ++it) {
-        if (it->first->pointer()==&object) {
-          ++it->second;
-          return;
-        }
+      for( IteratorType it = objects_.begin(); it != end; ++it )
+      {
+        if( it->first->pointer() != &object )
+          continue;
+        ++it->second;
+        return;
       }
-      PersistentObject* obj = 
-        WrappObject<ObjectType,
-                    Dune::Conversion<ObjectType,PersistentObject>::exists>
-        ::apply(object);
-      objects_.push_back(std::make_pair(obj,1));
+
+      PersistentObject *obj = 
+        WrapObject< ObjectType, IsPersistent< ObjectType > :: value >
+        :: apply( object );
+      objects_.push_back( std :: make_pair( obj, 1 ) );
     }
 
-    template <class ObjectType>
+    template< class ObjectType >
     inline void removeObject ( ObjectType &object )
     {
       IteratorType end = objects_.end();
-      for (IteratorType it=objects_.begin(); it!=end; ++it) {
-        if (it->first->pointer()==&object) {
-          --it->second;
-          if (it->second==0) {
-            PersistentObject* obj = it->first;
-            objects_.erase(it);
-            if (!Dune::Conversion<ObjectType,PersistentObject>::exists)
-              delete obj;
-          }
-          return;
+      for( IteratorType it = objects_.begin(); it != end; ++it )
+      {
+        if( it->first->pointer() != &object )
+          continue;
+          
+        --it->second;
+        if( it->second == 0 )
+        {
+          PersistentObject *obj = it->first;
+          objects_.erase( it );
+          if( !IsPersistent< ObjectType > :: value )
+            delete obj;
         }
+        return;
       }
     }
 
@@ -309,6 +331,7 @@ namespace Dune
     return pm;
   }
 
+  
   template <class ObjectType>
   inline PersistenceManager &operator>> ( PersistenceManager &pm,
                                           ObjectType &object )
@@ -317,37 +340,57 @@ namespace Dune
     return pm;
   }
 
-  template <class ObjectType> 
-  struct PersistenceManager::WrappObject<ObjectType,true>
+  
+  template< class ObjectType >
+  struct PersistenceManager :: WrapObject< ObjectType, true >
   {
-    static PersistentObject* apply(ObjectType& obj) {
+    inline static PersistentObject *apply( ObjectType &obj )
+    {
       return &obj;
     }
   };
-  template <class ObjectType> 
-  struct PersistenceManager::WrappObject<ObjectType,false> 
+
+  
+  template< class ObjectType >
+  struct PersistenceManager :: WrapObject< ObjectType, false >
+  : public PersistentObject
   {
-    struct ObjectWrapper : public PersistentObject {
-      ObjectWrapper(ObjectType& obj) :
-        obj_(obj) {}
-      virtual ~ObjectWrapper() {}
-      virtual void backup ( ) const {
-        PersistenceManager::backupValue(
-          "_token"+PersistenceManager::uniqueFileName(),obj_
-        );
-      }
-      virtual void restore ( ) {
-        PersistenceManager::restoreValue(
-          "_token"+PersistenceManager::uniqueFileName(),obj_
-        );
-      }
-      virtual void* pointer() {
-        return &obj_;
-      }
-      ObjectType& obj_;
-    };
-    static PersistentObject* apply(ObjectType& obj) {
-      return new ObjectWrapper(obj);
+    typedef WrapObject< ObjectType, false > ThisType;
+    typedef PersistentObject BaseType;
+
+  private:
+    ObjectType& obj_;
+    
+    WrapObject( ObjectType &obj )
+    : obj_( obj )
+    {}
+    
+  public:
+    virtual ~WrapObject ()
+    {}
+    
+    virtual void backup () const
+    {
+      PersistenceManager :: backupValue
+        ( "_token"+PersistenceManager::uniqueFileName(), obj_ );
+    }
+    
+    virtual void restore ()
+    {
+      PersistenceManager :: restoreValue
+        ( "_token"+PersistenceManager::uniqueFileName(), obj_ );
+    }
+    
+  protected:
+    virtual void *pointer ()
+    {
+      return &obj_;
+    }
+    
+  public:
+    inline static PersistentObject *apply( ObjectType &obj )
+    {
+      return new ThisType( obj );
     }
   };
 
