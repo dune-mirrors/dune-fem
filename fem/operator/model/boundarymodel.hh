@@ -68,7 +68,7 @@ namespace Dune
      *
      *  \param[in]  intersection intersection on which the quadrature point lies
      *
-     *  \param{in]  quadrature   quadrature to use
+     *  \param[in]  quadrature   quadrature to use
      *
      *  \param[in]  point        index of the evaluation point within the
      *                           quadrature
