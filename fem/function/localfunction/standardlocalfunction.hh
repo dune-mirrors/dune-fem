@@ -192,9 +192,6 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: ContainedJacobianRangeType
       ScalarJacobianRangeType;
       
-    template< DofStoragePolicy >
-    struct DofStoragePolicyType {};
-
   protected:
     DiscreteFunctionType &discreteFunction_;
     
@@ -243,17 +240,6 @@ namespace Dune
     inline int numDofs () const;
     
     inline int numScalarDofs () const;
-
-#if 0
-  protected:
-    inline void mapLocalDofs ( const DofStoragePolicyType< PointBased > p,
-                               const EntityType &entity,
-                               const DiscreteFunctionSpaceType &space );
-
-    inline void mapLocalDofs ( const DofStoragePolicyType< VariableBased > p,
-                               const EntityType &entity,
-                               const DiscreteFunctionSpaceType &space );
-#endif
   };
 
 
