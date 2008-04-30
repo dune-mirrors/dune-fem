@@ -6,13 +6,9 @@
 namespace Dune
 {
 
-  /** \addtogroup DofManager
-   *  \{
-   */
-
-
-  /** \class DoFIteratorInterrace
-   *  \brief interface for DoF iterators of discrete functions
+  /** \class   DofIteratorInterface
+   *  \ingroup DofManager
+   *  \brief   interface for DoF iterators of discrete functions
    *
    *  The DoF iterator is an efficient way of walking through the DoFs of a
    *  discrete function.
@@ -134,15 +130,10 @@ namespace Dune
 
 
 
-  //************************************************************************
-  //
-  //  --DofIteratorDefault 
-  //
-  //  Default implementation for some extra functionality for
-  //  DofIterator. This class provides an default implementation for
-  //  random access of the dofs. 
-  //
-  //************************************************************************
+  /** \class   DofIteratorDefault
+   *  \ingroup DofManager
+   *  \brief   default implementation of DofManagerInterface
+   */
   template< class DofImp, class DofIteratorImp >
   class DofIteratorDefault
   : public DofIteratorInterface< DofImp, DofIteratorImp >
@@ -179,7 +170,7 @@ namespace Dune
       return *asImp();
     }
 
-    /** \copydoc Dune::DofIteratorInterface::operator!=
+    /* \copydoc Dune::DofIteratorInterface::operator!=
      *
      *  \note The default implementation is just
      *  \code
@@ -191,7 +182,7 @@ namespace Dune
       return !asImp().operator==( other );
     }
 
-    /** \copydoc Dune::DofIteratorInterface::index */
+    /** \copydoc Dune::DofIteratorInterface::index() const */
     inline int index () const
     {
       DofIteratorType it( asImp() );
@@ -295,8 +286,6 @@ namespace Dune
       return it_.vector();
     }
   }; // end class DofIteratorDefault
-
-  /** \} */
 
 } // end namespace Dune 
 
