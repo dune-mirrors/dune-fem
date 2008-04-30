@@ -75,7 +75,7 @@ namespace Dune
 
   
   
-  //! \copydoc Dune::CachingPointList
+  /** \copydoc Dune::CachingPointList */
   template< class GridPartImp, class IntegrationTraits >
   class CachingPointList< GridPartImp, 0, IntegrationTraits >
   : public ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >,
@@ -147,7 +147,7 @@ namespace Dune
  
 
 
-  //! \copydoc Dune::CachingPointList
+  /** \copydoc Dune::CachingPointList */
   template< typename GridPartImp, class IntegrationTraits >
   class CachingPointList< GridPartImp, 1, IntegrationTraits >
   : public ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >, 
