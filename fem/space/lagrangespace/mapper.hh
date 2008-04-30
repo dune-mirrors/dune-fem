@@ -534,7 +534,7 @@ namespace Dune
   };
 
 
-  
+/** \cond */
   template< class GridPart, unsigned int dimR >
   struct LagrangeMapper< GridPart, 2, dimR > :: CodimCallInterface
   {
@@ -554,9 +554,11 @@ namespace Dune
                                 const int localDof,
                                 const int globalDof ) const = 0;
   };
+/** \endcond */
 
 
 
+/** \cond */
   template< class GridPart, unsigned int dimR >
   template< unsigned int codim >
   struct LagrangeMapper< GridPart, 2, dimR > :: CodimCall
@@ -615,6 +617,7 @@ namespace Dune
       return true;
     }
   };
+  /** \endcond */
 
 
 

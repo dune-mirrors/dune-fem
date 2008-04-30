@@ -45,13 +45,7 @@ namespace Dune
 
   public:
     template< unsigned int codim >
-    struct Codim
-    {
-      static inline unsigned int maxDofs ()
-      {
-        return ((codim == 0) ? 1 : 0);
-      }
-    };
+    struct Codim;
 
   public:
     inline GenericLagrangePoint ( unsigned int index )
@@ -128,7 +122,7 @@ namespace Dune
      * 
      *  \param[in]  codim  codimension, the information is desired for
      *
-     *  \retunns maximal number of DoFs for one entity in the codimension
+     *  \returns maximal number of DoFs for one entity in the codimension
      */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
@@ -171,6 +165,21 @@ namespace Dune
 
 
   
+  /** \cond */
+  template< unsigned int order, bool bottom >
+  template< unsigned int codim >
+  struct GenericLagrangePoint< PointGeometry, order, bottom > :: Codim
+  {
+    static inline unsigned int maxDofs ()
+    {
+      return ((codim == 0) ? 1 : 0);
+    }
+  };
+  /** \endcond */
+
+
+
+  
   template< class BaseGeometry, bool bottom >
   class GenericLagrangePoint< PyramidGeometry< BaseGeometry >, 0, bottom >
   {
@@ -201,16 +210,7 @@ namespace Dune
 
   public:
     template< unsigned int codim >
-    struct Codim
-    {
-      static inline unsigned int maxDofs ()
-      {
-        if( bottom )
-          return ((codim == 0) ? 1 : 0);
-        else
-          return ((codim == dimension) ? 1 : 0);
-      }
-    };
+    struct Codim;
     
   public:
     inline GenericLagrangePoint ( unsigned int index )
@@ -287,7 +287,7 @@ namespace Dune
      * 
      *  \param[in]  codim  codimension, the information is desired for
      *
-     *  \retunns maximal number of DoFs for one entity in the codimension
+     *  \returns maximal number of DoFs for one entity in the codimension
      */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
@@ -336,6 +336,25 @@ namespace Dune
       coordinate = 0;
     }
   };
+
+
+
+  /** \cond */
+  template< class BaseGeometry, bool bottom >
+  template< unsigned int codim >
+  struct GenericLagrangePoint< PyramidGeometry< BaseGeometry >, 0, bottom >
+    :: Codim
+  {
+    static inline unsigned int maxDofs ()
+    {
+      if( bottom )
+        return ((codim == 0) ? 1 : 0);
+      else
+        return ((codim == dimension) ? 1 : 0);
+    }
+  };
+  /** \endcond */
+
 
 
 
@@ -508,7 +527,7 @@ namespace Dune
      * 
      *  \param[in]  codim  codimension, the information is desired for
      *
-     *  \retunns maximal number of DoFs for one entity in the codimension
+     *  \returns maximal number of DoFs for one entity in the codimension
      */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
@@ -605,7 +624,8 @@ namespace Dune
   };
 
 
- 
+
+  /** \cond */
   template< class BaseGeometry, unsigned int order, bool bottom >
   template< unsigned int codim >
   struct GenericLagrangePoint< PyramidGeometry< BaseGeometry >, order, bottom >
@@ -626,6 +646,7 @@ namespace Dune
         return maxDimDofs + maxOrderDofs;
     }
   };
+  /** \endcond */
 
 
   
@@ -666,47 +687,11 @@ namespace Dune
 
   private:
     template< unsigned int codim, unsigned int i >
-    class CodimIterator
-    {
-    public:
-      static inline unsigned int maxDofs ()
-      {
-        const unsigned int n
-          = FirstReductionType :: template Codim< codim - i > :: maxDofs()
-          * SecondReductionType :: template Codim< i > :: maxDofs();
-      
-        const unsigned int m = CodimIterator< codim, i-1 > :: maxDofs();
-        return ((m > n) ? m : n);
-      }
-    };
-    
-    template< unsigned int codim >
-    class CodimIterator< codim, 0 >
-    {
-    private:
-      enum { i = 0 };
-
-    public:
-      static inline unsigned int maxDofs ()
-      {
-        const unsigned int n
-          = FirstReductionType :: template Codim< codim - i > :: maxDofs()
-          * SecondReductionType :: template Codim< i > :: maxDofs();
-        
-        return n;
-      }
-    };
+    struct CodimIterator;
 
   public:
     template< unsigned int codim >
-    class Codim
-    {
-    public:
-      static inline unsigned int maxDofs ()
-      {
-        return CodimIterator< codim, codim > :: maxDofs();
-      }
-    };
+    struct Codim;
 
   public:
     inline GenericLagrangePoint ( unsigned int index )
@@ -716,8 +701,7 @@ namespace Dune
 
     inline GenericLagrangePoint ( const ThisType &point )
     : dofCoordinate_( point.dofCoordinate_ )
-    {
-    }
+    {}
 
     template< class LocalCoordinateType >
     static inline void dofSubEntity( LocalCoordinateType &coordinate,
@@ -852,7 +836,7 @@ namespace Dune
      * 
      *  \param[in]  codim  codimension, the information is desired for
      *
-     *  \retunns maximal number of DoFs for one entity in the codimension
+     *  \returns maximal number of DoFs for one entity in the codimension
      */
     static inline unsigned int maxDofs ( unsigned int codim )
     {
@@ -932,6 +916,67 @@ namespace Dune
       SecondReductionType :: dofCoordinate( secondIndex, coordinate.second() );
     }
   };
+
+
+  /** \cond */
+  template< class FirstGeometryType, class SecondGeometryType,
+            unsigned int order, bool bottom >
+  template< unsigned int codim >
+  struct GenericLagrangePoint
+    < ProductGeometry< FirstGeometryType, SecondGeometryType >, order, bottom >
+    :: Codim
+  {
+    static inline unsigned int maxDofs ()
+    {
+      return CodimIterator< codim, codim > :: maxDofs();
+    }
+  };
+  /** \endcond */
+
+
+
+  /** \cond */
+  template< class FirstGeometryType, class SecondGeometryType,
+            unsigned int order, bool bottom >
+  template< unsigned int codim, unsigned int i >
+  struct GenericLagrangePoint
+    < ProductGeometry< FirstGeometryType, SecondGeometryType >, order, bottom >
+    :: CodimIterator
+  {
+    static inline unsigned int maxDofs ()
+    {
+      const unsigned int n
+        = FirstReductionType :: template Codim< codim - i > :: maxDofs()
+        * SecondReductionType :: template Codim< i > :: maxDofs();
+    
+      const unsigned int m = CodimIterator< codim, i-1 > :: maxDofs();
+      return ((m > n) ? m : n);
+    }
+  };
+   
+
+  template< class FirstGeometryType, class SecondGeometryType,
+            unsigned int order, bool bottom >
+  template< unsigned int codim >
+  struct GenericLagrangePoint
+    < ProductGeometry< FirstGeometryType, SecondGeometryType >, order, bottom >
+    :: CodimIterator< codim, 0 >
+  {
+  private:
+    enum { i = 0 };
+
+  public:
+    static inline unsigned int maxDofs ()
+    {
+      const unsigned int n
+        = FirstReductionType :: template Codim< codim - i > :: maxDofs()
+        * SecondReductionType :: template Codim< i > :: maxDofs();
+      
+      return n;
+    }
+  };
+  /** \endcond */
+
 }
 
 #endif
