@@ -12,6 +12,10 @@ FEMDIR=`pwd`
 CHECKLOG=$WORKINGDIR/check-tests.out
 make -i check &> $CHECKLOG
 
+warnings=`grep warning: $CHECKLOG | wc -l`
+if test $warnings -gt 0 ; then
+  echo "Warning: $warnings compiler warnings occurred."
+fi
 errors=`grep error: $CHECKLOG | wc -l`
 if test $errors -gt 0 ; then
   echo "Error: $errors compile time errors occurred."
