@@ -5,7 +5,6 @@
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/pass/discretemodel.hh>
-#include <dune/fem/misc/timeprovider.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
