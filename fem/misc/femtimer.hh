@@ -33,7 +33,14 @@ namespace Dune {
    *  The singleton instance can either be accessed
    *  through FemTimer::instance or through the
    *  reference femTimer.
-   *  For timing the execution time of any part
+   *  Note that the following usage is only
+   *  available if \c FEMTIMER is defined 
+   *  otherwise all methods of the class
+   *  FemTimer with the exception of \c start
+   *  and \c stop used for the \c TIMEDEXECUTION
+   *  macro are empty.
+   *  
+   *  For computing the execution time of any part
    *  of a code, first get a unique id from the
    *  FemTimer by calling 
    *  \code
@@ -95,6 +102,7 @@ namespace Dune {
    *  first the main timing followed by the
    *  relative time used in each sub timing.
    */
+#ifdef FEMTIMER
 class FemTimer {
   Timer timer_;
   std::stack<double> timesS_;
@@ -102,10 +110,12 @@ class FemTimer {
   std::vector<std::vector<double> > timesV_;
   std::vector<std::string> timesVName_;
   std::ofstream output_;
+  int stepCount_;
   FemTimer() : timesS_(), 
                startTimesV_(),
                timesV_(0), timesVName_(0),
-               output_()
+               output_(),
+               stepCount_(0)
   {}
   void push_time() {
     timesS_.push(timer_.elapsed());
@@ -175,7 +185,8 @@ class FemTimer {
     }
     output_ << std::endl;
   }
-  void printToFile(const std::string& fileName) {
+  void printToFile(const std::string& fileName,
+                   int step) {
     if (!output_.is_open()) {
       output_.open(fileName.c_str());
       if (!output_) abort();
@@ -184,8 +195,34 @@ class FemTimer {
                 << timesVName_[i];
       }
       output_ << std::endl;
+      stepCount_=0;
     }
-    printToFile();
+    if (stepCount_%step==0) {
+      printToFile();
+    }
+    stepCount_++;
+  }
+  void printToFile(const TimeProviderBase& tp,
+                   const std::string& fileName,
+                   int step) {
+    if (!output_.is_open()) {
+      output_.open(fileName.c_str());
+      if (!output_) abort();
+      output_ << std::setw(13) << "Time";
+      output_ << std::setw(13) << "dt";
+      for (unsigned int i=0;i<timesV_.size();++i) {
+        output_ << std::setw(10+(timesV_[i].size()-1)*4) 
+                << timesVName_[i];
+      }
+      output_ << std::endl;
+      stepCount_=0;
+    }
+    if (stepCount_%step==0) {
+      output_ << std::setw(10) << std::scientific << tp.time() << " ";
+      output_ << std::setw(10) << std::scientific << tp.deltaT() << " ";
+      printToFile();
+    }
+    stepCount_++;
   }
   // **************************************
   public:
@@ -223,10 +260,68 @@ class FemTimer {
   static void print(std::ostream& out,const std::string msg="") {
     instance().print_timer(out,msg);
   }
-  static void printFile(const std::string& fileName) {
-    instance().printToFile(fileName);
+  static void printFile(const std::string& fileName,
+                        int step=1) {
+    instance().printToFile(fileName,step);
+  }
+  static void printFile(const TimeProviderBase& tp,
+                        const std::string& fileName,
+                        int step=1) {
+    instance().printToFile(tp,fileName,step);
   }
 };
+#else
+class FemTimer {
+  Timer timer_;
+  std::stack<double> timesS_;
+  FemTimer()   {}
+  void push_time() {
+    timesS_.push(timer_.elapsed());
+  }
+  double pop_time() {
+    double ret = timer_.elapsed()-timesS_.top();
+    timesS_.pop();
+    return ret;
+  }
+  // **************************************
+  public:
+  static FemTimer& instance() {
+    static FemTimer instance_;
+    return instance_;
+  }
+  static void start() {
+    instance().push_time();
+  }
+  static double stop() {
+    return instance().pop_time();
+  }
+  static unsigned int addTo(const std::string& name, int nr=0) {
+    return -1;
+  }
+  static void start(int id,int nr=0) {
+  }
+  static double stop(int id,int nr=0) {
+    return 0.;
+  }
+  static void reset() {
+  }
+  static void reset(int id) {
+  }
+  static void reset(int id,int nr) {
+  }
+  static void print(std::ostream& out,int id) {
+  }
+  static void print(std::ostream& out,const std::string msg="") {
+  }
+  static void printFile(const std::string& fileName,
+                        int step=1) {
+  }
+  static void printFile(const TimeProviderBase& tp,
+                        const std::string& fileName,
+                        int step=1) {
+  }
+};
+#endif
 namespace {
   FemTimer& femTimer = FemTimer::instance();
 };
