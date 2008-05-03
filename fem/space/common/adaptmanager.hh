@@ -15,6 +15,19 @@ namespace Dune{
     Here the interfaces and algorithms for adapatation of a grid are
     described and implemented. 
 
+    The strategy for restrict/prolong of data is chosen through the
+    parameter
+     \parametername \c fem.adaptation.method \n
+                    method used for 
+                    prolongation/restriction of data during grid
+                    refinement;
+                    defaults to generic \n
+    Values are:
+     - 0 == none: no adaptation is performed
+     - 1 == generic: works on all grids 
+     - 2 == callback: only AlbertaGrid and ALUGrid
+     .
+     
     \remarks 
     The Interface of Adaptation Manager is described by the class
     AdaptationManagerInterface.
@@ -118,20 +131,25 @@ public:
         the following two lines:
         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
         AdaptationMethod: 1 # default value 
+
   */   
   AdaptationMethod(const GridType & grid,
                    std::string paramFile = "") 
     : adaptationMethod_(generic)
   {
     const bool output = (grid.comm().rank() == 0);
+    int am = 1;
     if( paramFile != "")
     {
-      int am = 1;
       readParameter(paramFile,"AdaptationMethod",am, output);
-      if(am == 2) adaptationMethod_ = callback;
-      else if(am == 1) adaptationMethod_ = generic;
-      else adaptationMethod_ = none;
     }
+    else {
+      am = Parameter::getValidValue<int>("fem.adaptation.method",am,
+                      ValidateInterval<int,true,true>(0,2));
+    }
+    if(am == 2) adaptationMethod_ = callback;
+    else if(am == 1) adaptationMethod_ = generic;
+    else adaptationMethod_ = none;
 
     // for structred grid adaptation is disabled 
     if(! Capabilities::IsUnstructured<GridType>::v ) 
