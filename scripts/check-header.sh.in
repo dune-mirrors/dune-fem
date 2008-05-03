@@ -33,6 +33,7 @@ echo '@CPPFLAGS@ @ALL_PKG_CPPFLAGS@ @CXXFLAGS@ -o $@ $<' >> $MAKEFILE
 
 echo "#include <config.h>" >> $CCFILE
 echo "#include <${HEADER}>" >> $CCFILE
+echo "#include <${HEADER}>" >> $CCFILE
 echo "int main () {}" >> $CCFILE
 
 make -f $MAKEFILE $OFILE 1>/dev/null
