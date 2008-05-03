@@ -50,7 +50,7 @@ namespace Dune {
    values are
    - 0: write data in GraPE format which can also
         be used for checkpointing - this format
-        is basicly loss free.
+        is basicly lossless.
    - 1: VTK cell data
    - 2: VTK vertex data
    .
@@ -113,6 +113,22 @@ namespace Dune {
      dataWriter.write(time,counter);
    }
    \endcode
+
+    \femparam{fem.prefix, path used for all file output, ./}
+    \femparam{fem.io.datafileprefix, prefix used for all data files}
+    \femparam{fem.io.outputformat, output format, 0} 
+              values are: 
+                   - 0 = GRAPE (lossless format), 
+                   - 1 = VTK, 
+                   - 2 = VTK vertex data, 
+                   - 3 = gnuplot
+                   .
+    \femparam{fem.io.grapedisplay, use grape for online visualization; default is 0 (no)}
+    \femparam{fem.io.savestep, interval for writting data files}
+     use value <0 to deativate
+    \femparam{fem.io.savecount, number of time steps between writting
+                                file}
+    use value <0 to deactivate
 **/
 
 
