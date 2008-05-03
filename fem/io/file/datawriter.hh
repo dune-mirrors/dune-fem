@@ -308,22 +308,9 @@ public:
     \param startTime starting time for a time dependent simulation
     \param endTime final time of a time dependent simulation
 
-    The DataWriter is tuned through \ref Parameter.
-    \note Possible values for the parameters are 
-    (copy this to your parameter file):
+    The DataWriter is tuned through \ref Parameter
+    desribed under \ref DiscFuncIO.
 
-    # OutputPath 
-    fem.prefix: ./
-    # name for data set  
-    fem.io.datafileprefix: solution
-    # format of output: 0 = GRAPE, 1 = VTK, 2 = VTK vertex data, 3 = gnuplot
-    fem.io.outputformat: 0
-    # GrapeDisplay (0 = no, 1 = yes)
-    fem.io.grapedisplay: 0 
-    # SaveStep (write data every `saveStep' time period, <=0 deactivates) 
-    fem.io.savestep: 0.1
-    # SaveCount (write data every saveCount time steps, <=0 deactivates)
-    fem.io.savecount: -1
   */
   DataWriter(const GridType & grid, 
              const std::string& gridName, 
@@ -486,7 +473,7 @@ public:
     // only write data time > saveTime  
     if( (saveStep_>0 && time >= saveTime_ ) || 
 	(time >= endTime_) ||
-	(saveCount_>0 && timestep%saveCount_) )
+	(saveCount_>0 && timestep%saveCount_==0) )
     {
       // check online display 
       display(); 
