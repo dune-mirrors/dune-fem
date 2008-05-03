@@ -181,6 +181,9 @@ TAB_SIZE               = 8
 # ALIASES  = 
 # ALIASES += "hasdefault=<br><b>Has a default implementation</b><br><br>"
 ALIASES += notcleardoc="\xrefitem notcleardoc \"documentation will be extended\" \"Needs extended documentation\"" 
+ALIASES += parametername="\xrefitem parametername \"DUNE-FEM parameter\" \"Parameters used in DUNE-FEM \""
+ALIASES += femparam{2}="\parametername <tt>\1</tt> \2 \n\n no default\n "
+ALIASES += femparam{3}="\parametername <tt>\1</tt> \2 \n\n default: <tt>\3</tt>\n"
 ALIASES += interfaceclass="\xrefitem interfaceclass \"An interface class\" \"Main interface classes\""
 ALIASES += newimplementation="\xrefitem newimplementation \"Newly added\" \"New interface implementation and other gadgets\""
 
