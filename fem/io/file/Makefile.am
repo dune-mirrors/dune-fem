@@ -2,8 +2,7 @@ SUBDIRS = test
 filedir =  $(includedir)/dune/fem/io/file
 file_HEADERS = asciiparser.hh \
 	       datawriter.hh \
-         grapedataio.hh \
-	       grapetuple.hh \
+	       grapedataio.hh \
 	       iointerface.hh \
 	       iolock.hh \
 	       iotuple.hh \
