@@ -223,6 +223,13 @@ namespace Dune
    *  the class Dune::GridTimeProvider using the GridType as
    *  template argument can be used instead, with the same
    *  functionality.
+   *
+     \parametername \c fem.timeprovider.factor \n
+                    multiplication factor to use for each time step;
+                    defaults to 1.
+     \parametername \c fem.timeprovider.starttime \n
+                    time used for initializing the starting time
+                    defaults to zero.
    */
   template< class CommProvider = DefaultCollectiveCommunicationType >
   class TimeProvider {
@@ -234,6 +241,7 @@ namespace Dune
    *  This implementation of a timeprovider takes a CollectiveCommunicate 
    *  for parallel runs which default to a default communicator
    *  which also works for seriellel simulations.
+   *
    */
   template< class C >
   class TimeProvider< CollectiveCommunication< C > >
@@ -276,6 +284,7 @@ namespace Dune
      *
      *  \param[in]  startTime  initial time
      *  \param[in]  comm       collective communication (optional)
+     
      */
     inline explicit
     TimeProvider ( const double startTime,
