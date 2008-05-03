@@ -110,6 +110,7 @@ AC_CONFIG_FILES([Makefile
      fem/operator/projection/Makefile
      fem/io/Makefile
      fem/io/file/Makefile
+     fem/io/file/test/Makefile
      fem/io/streams/Makefile
      fem/io/streams/test/Makefile
      fem/io/matlab/Makefile
