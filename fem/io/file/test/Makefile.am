@@ -5,3 +5,4 @@ check_PROGRAMS = persistencemanagertest
 
 persistencemanagertest_SOURCES = persistencemanagertest.cc
 
+CXXFLAGS = -g

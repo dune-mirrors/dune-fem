@@ -32,6 +32,7 @@ struct TestClass2 : public PersistentObject {
   double b;
 };
 struct TestClassA : public AutoPersistentObject {
+  TestClassA() : a(42.), b(42.) {}
   TestClassA(double pa,double pb) : a(pa), b(pb) {}
   void calc() {
     b=b*b;
@@ -70,6 +71,7 @@ int main (int argc, char **argv) {
   }
   TestClass2 test2(1.0);
   TestClassA testA(5.0,2.0);
+  TestClassA* testAptr = new TestClassA[10]; 
   persistenceManager << b << test2;
 
   typedef YaspGrid<2> GridType;
@@ -96,6 +98,10 @@ int main (int argc, char **argv) {
     Parameter::get("test",1e5,param);
     *aPtr = -17.;
     PersistenceManager::backup("backup");
+  }
+  {
+    TestClassA testa(testA);
+    delete [] testAptr;
   }
   PersistenceManager::backup("backup.end");
   cout << "WERTE: " << a << " " << b << " " << s << " ,  "
