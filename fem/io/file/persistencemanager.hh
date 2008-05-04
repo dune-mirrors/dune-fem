@@ -137,10 +137,11 @@ namespace Dune
     std::string path_;
     std::ifstream inAsciStream_;
     std::ofstream outAsciStream_;
-    bool closed_;
+    bool closed_,invalid_;
     
     inline PersistenceManager () :
-      fileCounter_(0), lineNo_(), path_(), closed_(false)
+      fileCounter_(0), lineNo_(), path_(), 
+      closed_(false), invalid_(false)
     {}
     PersistenceManager ( const ThisType & );
     ThisType &operator= ( const ThisType & );
@@ -149,20 +150,20 @@ namespace Dune
     template< class ObjectType >
     inline void insertObject( ObjectType &object )
     {
-      if (closed_) {
-        #ifndef NDEBUG 
-        std::cerr << "WARNING: new object added to PersistenceManager "
-                  << "although backup/restore has been called - "
-                  << "Object will be ignored!" << std::endl;
-        #endif
-        return;
-      }
       IteratorType end = objects_.end();
       for( IteratorType it = objects_.begin(); it != end; ++it )
       {
         if( it->first->pointer() != &object )
           continue;
         ++it->second;
+        return;
+      }
+      if (closed_) {
+        #ifndef NDEBUG 
+        std::cerr << "WARNING: new object added to PersistenceManager "
+                  << "although backup/restore has been called - "
+                  << "Object will be ignored!" << std::endl;
+        #endif
         return;
       }
       PersistentObject *obj = 
@@ -174,14 +175,6 @@ namespace Dune
     template< class ObjectType >
     inline void removeObject ( ObjectType &object )
     {
-      if (closed_) {
-        #ifndef NDEBUG 
-        std::cerr << "WARNING: object removed from PersistenceManager "
-                  << "although backup/restore has been called - "
-                  << "Object will be ignored!" << std::endl;
-        #endif
-        return;
-      }
       IteratorType end = objects_.end();
       for( IteratorType it = objects_.begin(); it != end; ++it )
       {
@@ -191,6 +184,7 @@ namespace Dune
         --it->second;
         if( it->second == 0 )
         {
+          if (closed_) invalid_=true;
           PersistentObject *obj = it->first;
           objects_.erase( it );
           if( !IsPersistent< ObjectType > :: value )
@@ -202,6 +196,14 @@ namespace Dune
 
     inline void backupObjects ( const std::string& path ) 
     {
+      if (invalid_) {
+        #ifndef NDEBUG 
+        std::cerr << "WARNING: backup called although objects "
+                  << "have been removed from the PersistenceManager! "
+                  << "Backup ignored!" << std::endl;
+        #endif
+        return;
+      }
       closed_=true;
       startBackup(path);
       typedef PersistentType :: iterator IteratorType;
@@ -214,6 +216,14 @@ namespace Dune
     
     inline void restoreObjects ( const std::string& path) 
     {
+      if (invalid_) {
+        #ifndef NDEBUG 
+        std::cerr << "WARNING: restore called although objects "
+                  << "have been removed from the PersistenceManager! "
+                  << "Restore ignored!" << std::endl;
+        #endif
+        return;
+      }
       closed_=true;
       startRestore(path);
       typedef PersistentType :: iterator IteratorType;
