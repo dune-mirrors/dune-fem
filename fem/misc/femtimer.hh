@@ -7,6 +7,9 @@
 #include <iomanip>
 
 #include <dune/common/timer.hh>
+
+#include <dune/fem/solver/timeprovider.hh>
+
 namespace Dune {
  /** \class   FemTimer
    *  \ingroup HelperClasses
@@ -49,7 +52,13 @@ namespace Dune {
    *  where \c name is a string used for output
    *  and subMarkers is an integer value greaten
    *  or equal to one, which can be used to 
-   *  time parts of the program.
+   *  time parts of the program. This can for example
+   *  be done in the constructor of an operator.
+   *  Remember to return the id to the FemTimer
+   *  by calling 
+   *  \code
+   *  femTimer.removeFrom(id);
+   *  \endcode
    *
    *  To start and stop the time keeping for a given program
    *  write
@@ -111,11 +120,13 @@ class FemTimer {
   std::vector<std::string> timesVName_;
   std::ofstream output_;
   int stepCount_;
+  bool changed_;
   FemTimer() : timesS_(), 
                startTimesV_(),
                timesV_(0), timesVName_(0),
                output_(),
-               stepCount_(0)
+               stepCount_(0),
+               changed_(true)
   {}
   void push_time() {
     timesS_.push(timer_.elapsed());
@@ -130,7 +141,20 @@ class FemTimer {
     timesV_.push_back(std::vector<double>(nr));
     timesVName_.push_back(name);
     reset_timer(timesV_.size()-1);
+    changed_=true;
     return timesV_.size()-1;
+  }
+  void remove(unsigned int id) {
+    timesV_[id].clear();
+    startTimesV_[id].clear();
+    timesVName_[id] = "";
+    changed_=true;
+  }
+  void remove() {
+    timesV_.clear();
+    startTimesV_.clear();
+    timesVName_.clear();
+    changed_=true;
   }
   void start_timer(int id,int nr) {
     startTimesV_[id][nr] = timer_.elapsed();
@@ -176,12 +200,14 @@ class FemTimer {
   }
   void printToFile() {
     for (unsigned int i=0;i<timesV_.size();++i) {
-      output_ << std::setw(6) << inMS(timesV_[i][0]) << " ( ";
-      for (unsigned int nr=1;nr<timesV_[i].size();++nr) {
-        output_ << std::setw(2) << inProz(timesV_[i][nr]/timesV_[i][0])
-               << "% ";
+      if (timesV_[i].size()>0) {
+        output_ << std::setw(6) << inMS(timesV_[i][0]) << " ( ";
+        for (unsigned int nr=1;nr<timesV_[i].size();++nr) {
+          output_ << std::setw(3) << inProz(timesV_[i][nr]/timesV_[i][0])
+                  << "% ";
+        }
+        output_ << ") ";
       }
-      output_ << ") ";
     }
     output_ << std::endl;
   }
@@ -190,12 +216,17 @@ class FemTimer {
     if (!output_.is_open()) {
       output_.open(fileName.c_str());
       if (!output_) abort();
+      changed_=true;
+    }
+    if (changed_) {
       for (unsigned int i=0;i<timesV_.size();++i) {
-        output_ << std::setw(10+(timesV_[i].size()-1)*4) 
-                << timesVName_[i];
+        if (timesV_[i].size()>0) 
+          output_ << std::setw(10+(timesV_[i].size()-1)*5) 
+                  << timesVName_[i];
       }
       output_ << std::endl;
       stepCount_=0;
+      changed_=false;
     }
     if (stepCount_%step==0) {
       printToFile();
@@ -208,14 +239,19 @@ class FemTimer {
     if (!output_.is_open()) {
       output_.open(fileName.c_str());
       if (!output_) abort();
-      output_ << std::setw(13) << "Time";
-      output_ << std::setw(13) << "dt";
+      changed_=true;
+    }
+    if (changed_) {
+      output_ << std::setw(12) << "Time" << " ";
+      output_ << std::setw(12) << "dt" << " ";
       for (unsigned int i=0;i<timesV_.size();++i) {
-        output_ << std::setw(10+(timesV_[i].size()-1)*4) 
-                << timesVName_[i];
+        if (timesV_[i].size()>0) 
+          output_ << std::setw(10+(timesV_[i].size()-1)*5) 
+                  << timesVName_[i];
       }
       output_ << std::endl;
       stepCount_=0;
+      changed_=false;
     }
     if (stepCount_%step==0) {
       output_ << std::setw(10) << std::scientific << tp.time() << " ";
@@ -238,6 +274,12 @@ class FemTimer {
   }
   static unsigned int addTo(const std::string& name, int nr=0) {
     return instance().add(name,nr+1);
+  }
+  static void removeFrom(unsigned int id) {
+    instance().remove(id);
+  }
+  static void removeAll() {
+    instance().remove();
   }
   static void start(int id,int nr=0) {
     instance().start_timer(id,nr);
