@@ -132,15 +132,16 @@ namespace Dune
   private:
     typedef std :: list < std::pair<PersistentObject *, unsigned int > > PersistentType;
     typedef PersistentType :: iterator IteratorType;
-
-  private:
     PersistentType objects_;
-   
-  private:
+    int fileCounter_,lineNo_;
+    std::string path_;
+    std::ifstream inAsciStream_;
+    std::ofstream outAsciStream_;
+    bool closed_;
+    
     inline PersistenceManager () :
-      fileCounter_(0), lineNo_(), path_()
+      fileCounter_(0), lineNo_(), path_(), closed_(false)
     {}
-
     PersistenceManager ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
@@ -148,6 +149,14 @@ namespace Dune
     template< class ObjectType >
     inline void insertObject( ObjectType &object )
     {
+      if (closed_) {
+        #ifndef NDEBUG 
+        std::cerr << "WARNING: new object added to PersistenceManager "
+                  << "although backup/restore has been called - "
+                  << "Object will be ignored!" << std::endl;
+        #endif
+        return;
+      }
       IteratorType end = objects_.end();
       for( IteratorType it = objects_.begin(); it != end; ++it )
       {
@@ -165,6 +174,14 @@ namespace Dune
     template< class ObjectType >
     inline void removeObject ( ObjectType &object )
     {
+      if (closed_) {
+        #ifndef NDEBUG 
+        std::cerr << "WARNING: object removed from PersistenceManager "
+                  << "although backup/restore has been called - "
+                  << "Object will be ignored!" << std::endl;
+        #endif
+        return;
+      }
       IteratorType end = objects_.end();
       for( IteratorType it = objects_.begin(); it != end; ++it )
       {
@@ -185,6 +202,7 @@ namespace Dune
 
     inline void backupObjects ( const std::string& path ) 
     {
+      closed_=true;
       startBackup(path);
       typedef PersistentType :: iterator IteratorType;
 
@@ -196,6 +214,7 @@ namespace Dune
     
     inline void restoreObjects ( const std::string& path) 
     {
+      closed_=true;
       startRestore(path);
       typedef PersistentType :: iterator IteratorType;
 
@@ -317,10 +336,6 @@ namespace Dune
       if (inAsciStream_.is_open())
         inAsciStream_.close();
     }
-    int fileCounter_,lineNo_;
-    std::string path_;
-    std::ifstream inAsciStream_;
-    std::ofstream outAsciStream_;
   };
   
   namespace {
