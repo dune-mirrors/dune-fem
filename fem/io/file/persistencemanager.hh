@@ -9,6 +9,7 @@
 
 #include <dune/fem/io/streams/virtualstreams.hh>
 #include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 namespace Dune
 {
@@ -281,6 +282,9 @@ namespace Dune
       path_=path+"/";
       fileCounter_=0;
       lineNo_=0;
+
+      IOInterface::createPath(path_);
+      
       outAsciStream_.open((path_+"checkpoint").c_str());  
       outAsciStream_ << std::scientific;
       outAsciStream_.precision(16);
