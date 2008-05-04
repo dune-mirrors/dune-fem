@@ -1,5 +1,5 @@
-#ifndef DUNE_IDENTITY_HH
 #define DUNE_IDENTITY_HH
+#ifndef DUNE_IDENTITY_HH
 
 // Dune includes
 #include <dune/fem/operator/common/operator.hh>
