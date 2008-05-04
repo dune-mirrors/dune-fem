@@ -10,6 +10,9 @@
 #ifndef __PROBEUTILITY_HH__
 #define __PROBEUTILITY_HH__
 
+#include <cassert>
+#include <cmath>
+
 namespace Dune
 {
 
