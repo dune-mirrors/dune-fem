@@ -1,5 +1,5 @@
 #ifndef DUNE_LEGENDREDGBASEFUNCTIONS_HH
-#define DUNE_LEDENDREDGBASEFUNCTIONS_HH
+#define DUNE_LEGENDREDGBASEFUNCTIONS_HH
 
 // Dune includes
 #include <dune/grid/common/grid.hh>
