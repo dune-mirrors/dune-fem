@@ -1,8 +1,9 @@
-#ifndef DUNE_IO_DXDATA_HH
 #define DUNE_IO_DXDATA_HH
+#ifndef DUNE_IO_DXDATA_HH
 
 //- System includes
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 //- Dune includes
