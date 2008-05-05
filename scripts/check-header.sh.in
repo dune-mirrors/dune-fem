@@ -32,6 +32,7 @@ echo -e -n "\t$CXX -c -I$FEMDIR" >> $MAKEFILE
 echo '@CPPFLAGS@ @ALL_PKG_CPPFLAGS@ @CXXFLAGS@ -o $@ $<' >> $MAKEFILE
 
 echo "#include <config.h>" >> $CCFILE
+echo "#define HEADER_CHECK" >> $CCFILE
 echo "#include <${HEADER}>" >> $CCFILE
 echo "#include <${HEADER}>" >> $CCFILE
 echo "int main () {}" >> $CCFILE
