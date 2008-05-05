@@ -146,6 +146,15 @@ public:
   //! destructor 
   virtual ~IOInterface () {}
 
+  /** \brief Returns true, if DataWriter will write data with given parameters.
+     \param[in] time actual time of computation
+     \param[in] timestep current number of time step
+     \return returns true, if DataWriter will write data with given parameters, false otherwise
+
+     Call this method before DataWriter::write(time, timestep), otherwise it will always return false.
+  */
+  virtual bool willWrite(double time, int timestep) const = 0;
+
   /** \brief write data to disc
      \param[in] time actual time of computation 
      \param[in] timestep current number of time step 

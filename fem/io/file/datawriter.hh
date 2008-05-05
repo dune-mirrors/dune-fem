@@ -467,13 +467,7 @@ protected:
   }
 
 public:
-  /** \brief This method returns true, if DataWriter will write data with given parameters.
-    \param time actual time of computation
-    \param timestep current number of time step
-    \return returns true, if DataWriter will write data with given parameters, false otherwise
-
-    This method should always be called before DataWriter::write(time, timestep).
-  */
+  /** \copydoc IOInterface::willWrite */	
   virtual bool willWrite(double time, int timestep) const
   {
     // only write data time > saveTime
@@ -482,7 +476,6 @@ public:
              (saveCount_> 0 && timestep%saveCount_ == 0 )
            );
   }
-
 	
   /** \copydoc IOInterface::write */
   virtual void write(double time, int timestep) const 
