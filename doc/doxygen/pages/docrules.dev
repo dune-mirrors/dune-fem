@@ -22,6 +22,22 @@ dune-fem/doc/doxygen.out. So this file should be empty...
 - A new implementation can be marked as such by adding \\newimplementation to
   the documentation. This helps others to get an overview over new additions.
   Again, a related page linking all new classes is generated.
+- Global parameters (using the Dune::Parameter class) should be
+  documented (e.g. in the documentation of the class using this
+  parameter) through the command 
+  \c femparameter
+  This command takes three arguments: 
+  first argument is the name of the parameter, e.g., \c fem.timeprovider.factor,
+  the second argument is a brief description and the third argument
+  is a default value (if present, otherwise use two arguments).
+  Example:
+  \code
+    \femparameter{fem.timeprovider.factor,a global factor for reducing the
+                  timestep,1.}
+    \femparameter{fem.example, a parmeter without default}
+  \endcode
+  Note the comma for seperating parameters for the command. If the
+  description needs a comma in the text use \c \\,.
 .
 
 The following are of course only guidlines - please add to them.
