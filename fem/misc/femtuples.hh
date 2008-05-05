@@ -612,22 +612,6 @@ namespace Dune{
   }
 
   /**
-   * @brief Read a pair or  Tuple.
-   */
-  template<typename T1, typename T2>
-  inline std::istream& operator>>(std::istream& os, Pair<T1,T2>& pair)
-  {
-    os>>pair.first()>>pair.second();
-    return os;
-  }
-
-  template<typename T1>
-  inline std::istream& operator>>(std::istream& os, Pair<T1,Nil>& pair)
-  {
-    os>>pair.first();
-    return os;
-  }
-  /**
    * @brief Print aa pair or  Tuple.
    */
   template<typename T1, typename T2>
@@ -772,7 +756,26 @@ namespace Dune{
 #endif // end if HAVE_TUPLE || HAVE_TR1_TUPLE
 #endif // end ifdef Tuple 
 
-namespace Dune { 
+namespace Dune
+{
+
+  /**
+   * @brief Read a pair or  Tuple.
+   */
+  template<typename T1, typename T2>
+  inline std::istream& operator>>(std::istream& os, Pair<T1,T2>& pair)
+  {
+    os>>pair.first()>>pair.second();
+    return os;
+  }
+
+  template<typename T1>
+  inline std::istream& operator>>(std::istream& os, Pair<T1,Nil>& pair)
+  {
+    os>>pair.first();
+    return os;
+  }
+
   ///////////////////////////////////////
   //  
   //  TupleLength
