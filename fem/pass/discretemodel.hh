@@ -282,7 +282,7 @@ namespace Dune {
                          RangeType& gLeft,
                          RangeType& gRight)
     { 
-      assert(!this->hasFlux()); 
+      assert(!this->asImp().hasFlux()); 
       gLeft = 0.0;
       gRight = 0.0;
       return 0.0;
@@ -296,7 +296,7 @@ namespace Dune {
                         const ArgumentTuple& uLeft,
                         RangeType& gLeft)
     {
-      assert(!this->hasFlux());
+      assert(!this->asImp().hasFlux());
       gLeft = 0.0;
       return 0.0;
     }
@@ -308,7 +308,7 @@ namespace Dune {
                         double time, const DomainType& x,
                         const ArgumentTuple& u, JacobianRangeType& f)
     { 
-      assert(!this->hasFlux()); 
+      assert(!this->asImp().hasFlux()); 
       f = 0.0;
     }
 
@@ -320,7 +320,7 @@ namespace Dune {
                 const ArgumentTuple& u, const JacobianTuple& jac, 
                 RangeType& s)
     { 
-      assert(!this->hasSource()); 
+      assert(!this->asImp().hasSource()); 
       s = 0.0;
     }
 
