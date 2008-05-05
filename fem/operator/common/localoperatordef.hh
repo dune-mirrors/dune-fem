@@ -1,3 +1,6 @@
+// This is not a normal header, so don't check it
+#ifndef HEADER_CHECK
+
 //*************************************************
 void LocalOperatorFunctionToCall () const
 {
@@ -45,3 +48,5 @@ void LocalOperatorFunctionToCall (Arg1 & arg1, Arg2 & arg2, Arg3 & arg3 , Arg4 &
 }
 
 #undef LocalOperatorFunctionToCall
+
+#endif // HEADER_CHECK

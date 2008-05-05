@@ -1,6 +1,9 @@
 // no define of include variable because the file can be included more than
 // once 
 
+// This is not a normal header, do not check it
+#ifndef HEADER_CHECK
+
 #ifndef PARAM_CLASSNAME 
 #error "PARAM_CLASSNAME must be defined! \n"
 #endif
@@ -69,4 +72,5 @@ private:
 #undef PARAM_CLASSNAME
 #endif
 
+#endif // HEADER_CHECK
 // end file 
