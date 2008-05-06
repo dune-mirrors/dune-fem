@@ -25,31 +25,39 @@ namespace Dune {
   template <class Model,template<class M> class NumFlux,int polOrd >
   class DGAdvectionDiffusionOperator : 
   public SpaceOperatorInterface<
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+	   //typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+     typename PassTraits< Model , Model::Traits::dimRange , polOrd >::DestinationType
   >
 #if 0
   public Operator<double,double,
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType,
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType> 
+	   typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType,
+	   typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType> 
 #endif
   {
   public:
+
+    enum PassIdType{ u , pass1 , pass2 };  
+    
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
 
     typedef NumFlux<Model> NumFluxType;
     typedef typename Model::Traits::GridType GridType;
 
-    typedef TransportDiffusionDiscreteModel1<Model,NumFluxType,polOrd> DiscreteModel1Type;
-    typedef TransportDiffusionDiscreteModel2<Model,NumFluxType,polOrd,true,true> DiscreteModel2Type;
+    typedef AdvDiffDModel1< Model , NumFluxType , polOrd
+              , (int)u > DiscreteModel1Type;
+    
+    typedef AdvDiffDModel2< Model , NumFluxType , polOrd
+              , (int)u , (int)pass1 > DiscreteModel2Type;
+    
     typedef typename DiscreteModel1Type::Traits Traits1;
     typedef typename DiscreteModel2Type::Traits Traits2;
 
     typedef typename Traits2::DomainType DomainType;
     typedef typename Traits2::DiscreteFunctionType DiscreteFunction2Type;
-    typedef StartPass<DiscreteFunction2Type> Pass0Type;
-    typedef LocalDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
-    typedef LocalDGPass<DiscreteModel2Type, Pass1Type> Pass2Type;
+    typedef StartPass< DiscreteFunction2Type , (int)u > Pass0Type;
+    typedef LocalDGPass< DiscreteModel1Type , Pass0Type , (int)pass1 > Pass1Type;
+    typedef LocalDGPass< DiscreteModel2Type , Pass1Type , (int)pass2 > Pass2Type;
 
     typedef typename Traits1::DiscreteFunctionSpaceType 
       Space1Type;
@@ -120,28 +128,39 @@ namespace Dune {
   template <class Model,template<class M> class NumFlux,int polOrd >
   class DGAdvectionOperator : 
   public SpaceOperatorInterface<
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+	   //typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+     typename PassTraits< Model , Model::Traits::dimRange , polOrd >::DestinationType
   >
 #if 0
     public Operator<double,double,
-		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,false,true>::Traits::DiscreteFunctionType,
-		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,false,true>::Traits::DiscreteFunctionType> 
+		    typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,false,true>::Traits::DiscreteFunctionType,
+		    typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,false,true>::Traits::DiscreteFunctionType> 
 #endif
   {
   public:
+
+    //enum PassIdType{ u = 0 , pass1 = 5 , pass2 = 24 };  
+    struct PassIdType
+    { 
+      static const int u = 0; 
+      static const int pass1 = 5; 
+      static const int pass2 = 24; 
+    };  
+
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
 
     typedef NumFlux<Model> NumFluxType;
     typedef typename Model::Traits::GridType GridType;
 
-    typedef TransportDiffusionDiscreteModel2<Model,NumFluxType,polOrd,false,true> DiscreteModel2Type;
+    typedef AdvDiffDModel3< Model , NumFluxType , polOrd
+              , PassIdType::u > DiscreteModel2Type;
      typedef typename DiscreteModel2Type::Traits Traits2;
 
     typedef typename Traits2::DomainType DomainType;
     typedef typename Traits2::DiscreteFunctionType DiscreteFunction2Type;
-    typedef StartPass<DiscreteFunction2Type> Pass0Type;
-    typedef LocalDGPass<DiscreteModel2Type, Pass0Type> Pass2Type;
+    typedef StartPass< DiscreteFunction2Type , PassIdType::u > Pass0Type;
+    typedef LocalDGPass<DiscreteModel2Type, Pass0Type, PassIdType::pass2 > Pass2Type;
 
     // typedef typename Traits2::SingleDiscreteFunctionSpaceType SDFSType;
     typedef typename Traits2::DiscreteFunctionSpaceType Space2Type;
@@ -203,31 +222,45 @@ namespace Dune {
   template <class Model,template<class M> class NumFlux,int polOrd >
   class DGDiffusionOperator : 
   public SpaceOperatorInterface<
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+	   //typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+     typename PassTraits< Model , Model::Traits::dimRange , polOrd >::DestinationType
   >
 #if 0
     public Operator<double,double,
-		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,false>::Traits::DiscreteFunctionType,
-		    typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,false>::Traits::DiscreteFunctionType> 
+		    typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,false>::Traits::DiscreteFunctionType,
+		    typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,false>::Traits::DiscreteFunctionType> 
 #endif 
   {
   public:
+
+    //enum PassIdType{ u = 0 , pass1 = 5 , pass2 = 24 };  
+    struct PassIdType
+    { 
+      static const int u = 0; 
+      static const int pass1 = 5; 
+      static const int pass2 = 24; 
+    };  
+    
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
 
     typedef NumFlux<Model> NumFluxType;
     typedef typename Model::Traits::GridType GridType;
 
-    typedef TransportDiffusionDiscreteModel1<Model,NumFluxType,polOrd> DiscreteModel1Type;
-    typedef TransportDiffusionDiscreteModel2<Model,NumFluxType,polOrd,true,false> DiscreteModel2Type;
+    typedef AdvDiffDModel1<Model,NumFluxType,polOrd
+              , PassIdType::u > DiscreteModel1Type;
+    
+    typedef AdvDiffDModel4< Model , NumFluxType , polOrd
+              , PassIdType::u , PassIdType::pass1 > DiscreteModel2Type;
+    
     typedef typename DiscreteModel1Type::Traits Traits1;
     typedef typename DiscreteModel2Type::Traits Traits2;
 
     typedef typename Traits2::DomainType DomainType;
     typedef typename Traits2::DiscreteFunctionType DiscreteFunction2Type;
-    typedef StartPass<DiscreteFunction2Type> Pass0Type;
-    typedef LocalDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
-    typedef LocalDGPass<DiscreteModel2Type, Pass1Type> Pass2Type;
+    typedef StartPass< DiscreteFunction2Type , PassIdType::u > Pass0Type;
+    typedef LocalDGPass<DiscreteModel1Type, Pass0Type , PassIdType::pass1 > Pass1Type;
+    typedef LocalDGPass<DiscreteModel2Type, Pass1Type , PassIdType::pass2 > Pass2Type;
 
     typedef typename Traits1::DiscreteFunctionSpaceType 
       Space1Type;
@@ -299,9 +332,22 @@ namespace Dune {
   template <class Model,template<class M> class NumFlux,int polOrd >
   class DGLimitedAdvectionOperator : 
     public Operator<double,double,
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType,
-	   typename TransportDiffusionDiscreteModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType> {
+	   //typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType,
+	   //typename AdvDiffDModel2<Model,NumFlux<Model>,polOrd,true,true>::Traits::DiscreteFunctionType
+     typename PassTraits< Model , Model::Traits::dimRange , polOrd >::DestinationType ,
+     typename PassTraits< Model , Model::Traits::dimRange , polOrd >::DestinationType
+       > 
+  {
   public:
+    
+    //enum PassIdType{ u = 0 , pass1 = 5 , pass2 = 24 };  
+    struct PassIdType
+    { 
+      static const int u = 0; 
+      static const int pass1 = 5; 
+      static const int pass2 = 24; 
+    };  
+    
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
 
@@ -311,15 +357,16 @@ namespace Dune {
     // define limiter discrete model 
     typedef LimiterDefaultDiscreteModel<PassTraits<Model,dimRange,polOrd>, Model> DiscreteModel1Type;
 
-    typedef TransportDiffusionDiscreteModel2<Model,NumFluxType,polOrd,false,true> DiscreteModel2Type;
+    typedef AdvDiffDModel4< Model , NumFluxType , polOrd
+              , PassIdType::u > DiscreteModel2Type;
     typedef typename DiscreteModel1Type::Traits Traits1;
     typedef typename DiscreteModel2Type::Traits Traits2;
 
     typedef typename Traits2::DomainType DomainType;
     typedef typename Traits2::DiscreteFunctionType DiscreteFunction2Type;
-    typedef StartPass<DiscreteFunction2Type> Pass0Type;
-    typedef LimitDGPass<DiscreteModel1Type, Pass0Type> Pass1Type;
-    typedef LocalDGPass<DiscreteModel2Type, Pass1Type> Pass2Type;
+    typedef StartPass< DiscreteFunction2Type , PassIdType::u > Pass0Type;
+    typedef LimitDGPass<DiscreteModel1Type, Pass0Type , PassIdType::pass1 > Pass1Type;
+    typedef LocalDGPass<DiscreteModel2Type, Pass1Type , PassIdType::pass2 > Pass2Type;
 
     typedef typename Traits1::DiscreteFunctionSpaceType 
       Space1Type;

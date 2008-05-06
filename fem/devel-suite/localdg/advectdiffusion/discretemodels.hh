@@ -24,17 +24,44 @@
 
 //*************************************************************
 namespace Dune {  
-  template <class Model,class NumFlux,int polOrd >
-  class TransportDiffusionDiscreteModel1;
-  template <class Model,int polOrd >
-  class LimiterDiscreteModel1;
-  template <class Model,class NumFlux,int polOrd,
-	    bool withDiffusion,bool withAdvection >
-  class TransportDiffusionDiscreteModel2;
+  
 
+  template < class Model , class NumFlux , int polOrd 
+             , int passId1 = -1
+             >
+  class AdvDiffDModel1;
+  
+
+  template < class Model , int polOrd
+             , int passId1 = -1
+             >
+  class LimiterDiscreteModel1;
+  
+
+  template < class Model , class NumFlux , int polOrd
+             , int passId1 = -1
+             , int passId2 = -1
+             >
+  class AdvDiffDModel2; // true,true
+  
+
+  template < class Model , class NumFlux , int polOrd
+             , int passId1 = -1
+             >
+  class AdvDiffDModel3; // false,true
+
+  
+  template < class Model , class NumFlux , int polOrd
+             , int passId1 = -1
+             , int passId2 = -1
+             >
+  class AdvDiffDModel4; // true,false
+
+  
   // MethodOrderTraits
   template <class Model,int dimRange,int polOrd>
-  class PassTraits {
+  class PassTraits 
+  {
   public:
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridPartType GridPartType;
@@ -59,9 +86,13 @@ namespace Dune {
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
     //typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
   };
+
+
   // DiscreteModelTraits
-  template <class Model,class NumFlux,int polOrd >
-  struct TransportDiffusionTraits1 
+  template <class Model,class NumFlux,int polOrd 
+             , int passId1 = -1
+             >
+  struct AdvDiffTraits1 
   {
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
@@ -85,11 +116,17 @@ namespace Dune {
     typedef typename DestinationType::RangeType RangeType;
     typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
-    typedef TransportDiffusionDiscreteModel1<Model,NumFlux,polOrd> DiscreteModelType;
+    typedef AdvDiffDModel1<Model,NumFlux,polOrd 
+             , passId1
+             > DiscreteModelType;
   };
-  template <class Model,class NumFlux,int polOrd,
-	    bool withDiffusion,bool withAdvection>
-  struct TransportDiffusionTraits2
+
+  
+  template< class Model,class NumFlux,int polOrd
+             , int passId1 = -1
+             , int passId2 = -1
+             >
+  struct AdvDiffTraits2
   {
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
@@ -112,9 +149,83 @@ namespace Dune {
     typedef typename DestinationType::RangeType RangeType;
     typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
-    typedef TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,withDiffusion,withAdvection> DiscreteModelType;
+    typedef AdvDiffDModel2<Model,NumFlux,polOrd
+             , passId1
+             , passId2
+             > DiscreteModelType;
   };
-  template <class Model,int polOrd >
+
+
+  template< class Model,class NumFlux,int polOrd
+             , int passId1 = -1
+             >
+  struct AdvDiffTraits3
+  {
+    typedef typename Model::Traits ModelTraits;
+    typedef typename ModelTraits::GridType GridType;
+
+    enum { dimRange = ModelTraits::dimRange };
+    enum { dimDomain = ModelTraits::dimDomain };
+
+    typedef PassTraits<Model,dimRange,polOrd> Traits;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+    // typedef typename Traits::SingleDiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
+    
+    typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename Traits::FaceQuadratureType FaceQuadratureType;
+    typedef typename Traits::GridPartType GridPartType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename Traits::DestinationType DestinationType;
+    typedef DestinationType DiscreteFunctionType;
+
+    typedef typename DestinationType::DomainType DomainType;
+    typedef typename DestinationType::RangeType RangeType;
+    typedef typename DestinationType::JacobianRangeType JacobianRangeType;
+
+    typedef AdvDiffDModel3<Model,NumFlux,polOrd
+             , passId1
+             > DiscreteModelType;
+  };
+
+  
+  template< class Model,class NumFlux,int polOrd
+             , int passId1 = -1
+             , int passId2 = -1
+             >
+  struct AdvDiffTraits4
+  {
+    typedef typename Model::Traits ModelTraits;
+    typedef typename ModelTraits::GridType GridType;
+
+    enum { dimRange = ModelTraits::dimRange };
+    enum { dimDomain = ModelTraits::dimDomain };
+
+    typedef PassTraits<Model,dimRange,polOrd> Traits;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+    // typedef typename Traits::SingleDiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
+    
+    typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
+    typedef typename Traits::FaceQuadratureType FaceQuadratureType;
+    typedef typename Traits::GridPartType GridPartType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename Traits::DestinationType DestinationType;
+    typedef DestinationType DiscreteFunctionType;
+
+    typedef typename DestinationType::DomainType DomainType;
+    typedef typename DestinationType::RangeType RangeType;
+    typedef typename DestinationType::JacobianRangeType JacobianRangeType;
+
+    typedef AdvDiffDModel4<Model,NumFlux,polOrd
+             , passId1
+             , passId2
+             > DiscreteModelType;
+  };
+
+  
+  template < class Model,int polOrd
+             , int passId1 = -1
+             , int passId2 = -1
+             >
   struct LimiterTraits1 
   {
     typedef typename Model::Traits ModelTraits;
@@ -141,16 +252,30 @@ namespace Dune {
     typedef typename DestinationType::RangeType RangeType;
     typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
-    typedef LimiterDiscreteModel1<Model,polOrd> DiscreteModelType;
+    typedef LimiterDiscreteModel1< Model , polOrd 
+             , passId1
+             > DiscreteModelType;
   };
+
+  
   // Passes
-  template <class Model,class NumFlux,int polOrd>
-  class TransportDiffusionDiscreteModel1 :
-    public DiscreteModelDefault<TransportDiffusionTraits1<Model,NumFlux,polOrd> > {
+  template < class Model , class NumFlux , int polOrd
+             , int passId1
+             >
+  class AdvDiffDModel1 :
+    public DiscreteModelDefault< AdvDiffTraits1< Model , NumFlux , polOrd
+             , passId1
+             > 
+             , passId1
+             >
+  {
   public:
-    typedef TransportDiffusionTraits1<Model,NumFlux,polOrd> Traits;
+    typedef AdvDiffTraits1< Model , NumFlux , polOrd 
+             , passId1
+             > Traits;
     
-    typedef Selector<0> SelectorType;
+    typedef Selector< 0 > OldSelectorType;
+    typedef Selector< passId1 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
@@ -160,7 +285,7 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity EntityType;
     
   public:
-    TransportDiffusionDiscreteModel1(const DomainType& upwind,
+    AdvDiffDModel1(const DomainType& upwind,
 				     const Model& mod,
 				     const NumFlux& numf) :
       upwind_(upwind),
@@ -253,12 +378,26 @@ namespace Dune {
     const NumFlux& numflux_;
     const double cflDiffinv_;
   };
-  template <class Model,class NumFlux,int polOrd>
-  class TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,true,true> : 
-    public DiscreteModelDefault<TransportDiffusionTraits2<Model,NumFlux,polOrd,true,true> > {
+
+  
+  template <class Model,class NumFlux,int polOrd
+             , int passId1
+             , int passId2
+             >
+  class AdvDiffDModel2 :
+    public DiscreteModelDefault< AdvDiffTraits2< Model , NumFlux , polOrd
+             , passId1
+             , passId2
+             > >
+  {
   public:
-    typedef TransportDiffusionTraits2<Model,NumFlux,polOrd,true,true> Traits;
-    typedef Selector<0, 1> SelectorType;
+    typedef AdvDiffTraits2<Model,NumFlux,polOrd
+             , passId1
+             , passId2
+             > Traits;
+    
+    typedef Selector<0, 1> OldSelectorType;
+    typedef Selector< passId1 , passId2 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     
@@ -269,7 +408,7 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
   public:
-    TransportDiffusionDiscreteModel2(const DomainType& upwind,
+    AdvDiffDModel2(const DomainType& upwind,
 				     const Model& mod,const NumFlux& numf) :
       upwind_(upwind),
       model_(mod),
@@ -376,12 +515,24 @@ namespace Dune {
     const Model& model_;
     const NumFlux& numflux_;
   };
-  template <class Model,class NumFlux,int polOrd>
-  class TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,false,true> : 
-    public DiscreteModelDefault<TransportDiffusionTraits2<Model,NumFlux,polOrd,false,true> > {
+
+  
+  template <class Model,class NumFlux,int polOrd
+             , int passId1
+             >
+  class AdvDiffDModel3 :
+    public DiscreteModelDefault< AdvDiffTraits3< Model , NumFlux , polOrd
+             , passId1
+             >
+             , passId1
+             >
+  {
   public:
-    typedef TransportDiffusionTraits2<Model,NumFlux,polOrd,false,true> Traits;
-    typedef Selector<0> SelectorType;
+    typedef AdvDiffTraits3< Model , NumFlux , polOrd 
+             , passId1
+             > Traits;
+    typedef Selector<0> OldSelectorType;
+    typedef Selector< passId1 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     
@@ -392,7 +543,7 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
   public:
-    TransportDiffusionDiscreteModel2(const Model& mod,const NumFlux& numf) :
+    AdvDiffDModel3(const Model& mod,const NumFlux& numf) :
       model_(mod),
       numflux_(numf) {}
 
@@ -451,12 +602,27 @@ namespace Dune {
     const Model& model_;
     const NumFlux& numflux_;
   };
-  template <class Model,class NumFlux,int polOrd>
-  class TransportDiffusionDiscreteModel2<Model,NumFlux,polOrd,true,false> : 
-    public DiscreteModelDefault<TransportDiffusionTraits2<Model,NumFlux,polOrd,true,false> > {
+  
+  template <class Model,class NumFlux,int polOrd
+             , int passId1
+             , int passId2
+             >
+  class AdvDiffDModel4 :
+    public DiscreteModelDefault< AdvDiffTraits4< Model , NumFlux , polOrd
+             , passId1
+             , passId2
+             >
+             , passId1
+             , passId2
+             >
+  {
   public:
-    typedef TransportDiffusionTraits2<Model,NumFlux,polOrd,true,false> Traits;
-    typedef Selector<0, 1> SelectorType;
+    typedef AdvDiffTraits4< Model , NumFlux , polOrd 
+             , passId1
+             , passId2
+             > Traits;
+    typedef Selector<0, 1> OldSelectorType;
+    typedef Selector< passId1 , passId2 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     
@@ -467,7 +633,7 @@ namespace Dune {
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
   public:
-    TransportDiffusionDiscreteModel2(const DomainType& upwind,
+    AdvDiffDModel4(const DomainType& upwind,
 				     const Model& mod,const NumFlux& numf) :
       upwind_(upwind),
       model_(mod),
@@ -557,14 +723,21 @@ namespace Dune {
   // **********************************************
   // **********************************************
   // **********************************************
-  template <class Model,int polOrd>
+  template <class Model,int polOrd
+             , int passId1
+             >
   class LimiterDiscreteModel1 :
-    public DiscreteModelDefault<LimiterTraits1<Model,polOrd> > 
+    public DiscreteModelDefault< LimiterTraits1< Model , polOrd
+             , passId1
+             > >
   {
-  public:
-    typedef LimiterTraits1<Model,polOrd> Traits;
+    public:
+    typedef LimiterTraits1< Model , polOrd
+             , passId1
+             > Traits;
     
-    typedef Selector<0> SelectorType;
+    typedef Selector<0> OldSelectorType;
+    typedef Selector< passId1 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
