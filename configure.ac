@@ -13,11 +13,9 @@ AM_CONFIG_HEADER(config.h)
 
 # we need no more than the standard DUNE-stuff
 DUNE_CHECK_ALL_M
-#DUNE_CHECK_ALL_M([dune-common])
-#DUNE_CHECK_ALL_M([dune-grid])
 
 # if istl not foud, its disabled 
-DUNE_CHECK_OPTIONAL([dune-istl],[istl/allocator.hh])
+#DUNE_CHECK_OPTIONAL([dune-istl],[istl/allocator.hh])
 
 # check dennis package 
 DUNE_PATH_PARDG

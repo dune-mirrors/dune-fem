@@ -1,7 +1,9 @@
 Module: dune-fem
 Version: 0.9.2
 Maintainer: dune@mathematik.uni-freiburg.de
-Depends: dune-common dune-grid
+# Temporarily make dune-istl a dependency
+Depends: dune-common dune-grid dune-istl
+# Suggests: dune-istl
 
 run_configure () {
   run_default_configure "$@"
