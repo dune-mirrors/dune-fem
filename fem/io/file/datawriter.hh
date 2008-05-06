@@ -18,7 +18,7 @@
 #include <dune/fem/operator/projection/vtxprojection.hh>
 #endif
 
-// define whether to use grape of not 
+// define whether to use grape or not 
 #define USE_GRAPE HAVE_GRAPE
 
 #if USE_GRAPE
@@ -84,6 +84,7 @@ protected:
       WeightDefault<GridPartType> weight;
       VtxProjectionImpl::project( df_, *func_, weight );
       vtkio.addVertexData( *func_ );
+      vtkio.addVectorVertexData( *func_ );
     }
   };
 
@@ -103,10 +104,12 @@ protected:
       if(df->space().order() > 0)
       {
         vtkOut_.addVertexData( *df );
+        vtkOut_.addVectorVertexData( *df );
       }
       else 
       {
         vtkOut_.addCellData( *df ); 
+        vtkOut_.addVectorCellData( *df );
       }
     }
 
