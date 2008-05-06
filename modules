@@ -7,7 +7,6 @@
 
    Only @addtogroup is used in the code documentation.
 */
-
   
 /** 
    @defgroup GridPart View of grid for defining discrete functions
