@@ -200,14 +200,15 @@ namespace Dune {
 
       Limiting is done by simply setting the polynomial order to zero.
   */
-  template <class DiscreteModelImp, class PreviousPassImp>
+  template< class DiscreteModelImp , class PreviousPassImp , int passId  = -1 >
   class LimitDGPass :
-    public LocalPass<DiscreteModelImp, PreviousPassImp> 
+    public LocalPass< DiscreteModelImp , PreviousPassImp , passId > 
   {
   public:
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
+    typedef LocalPass< DiscreteModelImp , PreviousPassImp , passId > BaseType;
+    typedef LimitDGPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
     
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
@@ -243,8 +244,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef DiscreteModelCaller<
-      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+    typedef CompatibleConvertSelector< ThisType , SelectorType
+              , ThisType::passId == -1 > CompatibleConvertSelectorType;
+    typedef DiscreteModelCaller< DiscreteModelType 
+                                 , ArgumentType 
+                                 , CompatibleConvertSelectorType
+                               > DiscreteModelCallerType;
 
     typedef DofConversionUtility< PointBased > DofConversionUtilityType;
 

@@ -39,9 +39,10 @@ namespace Dune {
      transport the velocity function comes from a different pass but has to
      be inserted into the species pass. 
    */
-  template <class DiscreteFunctionImp, class PreviousPassImp>
+  template< class DiscreteFunctionImp , class PreviousPassImp , int passIdImp  = -1 >
   class InsertFunctionPass 
-    : public Pass<DiscreteModelDefault<EmptyDiscreteModelTraits<DiscreteFunctionImp> >, PreviousPassImp>
+    : public Pass< DiscreteModelDefault< EmptyDiscreteModelTraits< DiscreteFunctionImp > >
+                   , PreviousPassImp , passIdImp >
   {
     //! make sure DiscreteFunctionImp provides local functions 
     enum { hasLocalFunction = Conversion<DiscreteFunctionImp,HasLocalFunction>:: exists };
@@ -54,10 +55,10 @@ namespace Dune {
     //! type of discrete model for this class 
     typedef DiscreteModelDefault<Traits> DiscreteModelImp;
     //! Base class
-    typedef Pass<DiscreteModelImp, PreviousPassImp> BaseType;
+    typedef Pass<DiscreteModelImp, PreviousPassImp , passIdImp > BaseType;
 
     //! type of this class 
-    typedef InsertFunctionPass<DiscreteFunctionImp,PreviousPassImp> ThisType;
+    typedef InsertFunctionPass<DiscreteFunctionImp,PreviousPassImp , passIdImp > ThisType;
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;

@@ -27,7 +27,7 @@ namespace Dune {
     = CreatePassTree::create( pass1 , pass2 );
   @endcode
 */
-template <class Model, template <class,class> class PassType>
+template< class Model , template <class,class,int> class PassType , int passId  = -1 >
 class CreatePass
 {
 public:  
@@ -70,10 +70,10 @@ public:
 
   //! creation method
   template <class PreviousPass>
-  SpaceOperatorPtr<PassType<Model,PreviousPass> >*
+  SpaceOperatorPtr< PassType< Model , PreviousPass , passId > >*
   create(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
-    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef PassType< Model , PreviousPass , passId > RealPassType;
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_);
@@ -91,10 +91,10 @@ public:
   
   //! last creation method 
   template <class PreviousPass>
-  SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
+  SpaceOperatorWrapper< PassType< Model , PreviousPass , passId > >*
   createLast(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
-    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef PassType< Model , PreviousPass , passId > RealPassType;
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_);

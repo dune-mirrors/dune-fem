@@ -23,6 +23,7 @@
 #include <dune/fem/space/common/arrays.hh> 
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
+#include <dune/fem/pass/selection.hh>
 
 namespace Dune {
 /*! @addtogroup PassHyp
@@ -44,15 +45,16 @@ namespace Dune {
 
   //! Concrete implementation of Pass for first hyperbolic systems using
   //! LDG
-  template <class DiscreteModelImp, class PreviousPassImp>
+  template <class DiscreteModelImp, class PreviousPassImp , int passIdImp = -1 >
   class LocalDGPass :
-    public LocalPass<DiscreteModelImp, PreviousPassImp> 
+    public LocalPass< DiscreteModelImp , PreviousPassImp , passIdImp > 
   {
+    typedef LocalDGPass< DiscreteModelImp , PreviousPassImp , passIdImp > ThisType;
   public:
     
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
+    typedef LocalPass< DiscreteModelImp , PreviousPassImp , passIdImp > BaseType;
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
@@ -92,8 +94,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef DiscreteModelCaller<
-      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+    typedef CompatibleConvertSelector< ThisType , SelectorType 
+               , ThisType::passId == -1 > CompatibleConvertSelectorType;
+    typedef DiscreteModelCaller< DiscreteModelType 
+                                 , ArgumentType 
+                                 , CompatibleConvertSelectorType
+                               > DiscreteModelCallerType;
 
     // type of Communication Manager 
     typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;

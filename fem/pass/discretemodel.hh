@@ -225,7 +225,18 @@ namespace Dune {
   //! Default implementation of the DiscreteModelInterface where methods for 
   //! the fluxes and the source term do nothing, so that the user needn't
   //! implement them if not needed.
-  template <class DiscreteModelTraits>
+  //! N1, ..., N9 are passIds on which model depends
+  template< class DiscreteModelTraits
+            , int N1 = -1 
+            , int N2 = -1 
+            , int N3 = -1 
+            , int N4 = -1 
+            , int N5 = -1 
+            , int N6 = -1 
+            , int N7 = -1 
+            , int N8 = -1 
+            , int N9 = -1 
+            >
   class DiscreteModelDefault : 
     public DiscreteModelInterface<DiscreteModelTraits> 
   {
@@ -258,7 +269,7 @@ namespace Dune {
     //! ArgumentTuple is now filled with the values of these three
     //! functions and can be accessed by...
 
-    typedef Selector<0> SelectorType;
+    typedef Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 > SelectorType;
   public:
     //! \copydoc DiscreteModelInterface::hasFlux 
     //! \return false 

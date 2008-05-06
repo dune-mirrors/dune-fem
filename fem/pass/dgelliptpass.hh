@@ -28,16 +28,15 @@ namespace Dune {
 **************************************************************************/
 
   //! Concrete implementation of Pass for elliptic equations using LDG
-  template <class DiscreteModelImp, class PreviousPassImp>
+  template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
   class LocalDGElliptGradientPass :
-    public LocalPass<DiscreteModelImp, PreviousPassImp> 
+    public LocalPass< DiscreteModelImp , PreviousPassImp , passId > 
   {
+    typedef LocalDGElliptGradientPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
   public:
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
-
-    typedef LocalDGElliptGradientPass<DiscreteModelImp,PreviousPassImp> ThisType;
+    typedef LocalPass< DiscreteModelImp , PreviousPassImp , passId > BaseType;
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
@@ -72,8 +71,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef EllipticDiscreteModelCaller<
-      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+    typedef CompatibleConvertSelector< ThisType , SelectorType
+              , ThisType::passId == -1 > CompatibleConvertSelectorType;
+    typedef EllipticDiscreteModelCaller< DiscreteModelType
+                                         , ArgumentType
+                                         , CompatibleConvertSelectorType
+                                       > DiscreteModelCallerType;
 
     // Range of the destination
     enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
@@ -160,17 +163,16 @@ namespace Dune {
 
   
   //! Concrete implementation of Pass for LDG.
-  template <class DiscreteModelImp, class PreviousPassImp>
+  template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
   class LocalDGElliptPass :
-    public LocalPass<DiscreteModelImp, typename PreviousPassImp:: PreviousPassType> 
+    public LocalPass< DiscreteModelImp , typename PreviousPassImp:: PreviousPassType , passId > 
   {
+    typedef LocalDGElliptPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
   public:
     typedef typename PreviousPassImp::PreviousPassType  PreviousPassType;
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass<DiscreteModelImp, PreviousPassType> BaseType;
-
-    typedef LocalDGElliptPass<DiscreteModelImp,PreviousPassImp> ThisType;
+    typedef LocalPass< DiscreteModelImp , PreviousPassType , passId > BaseType;
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
@@ -200,8 +202,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef DiscreteModelCaller<
-      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+    typedef CompatibleConvertSelector< ThisType , SelectorType , 
+              ThisType::passId == -1 > CompatibleConvertSelectorType;
+    typedef DiscreteModelCaller< DiscreteModelType
+                                 , ArgumentType
+                                 , CompatibleConvertSelectorType
+                               > DiscreteModelCallerType;
    
     // Range of the destination
     enum { dimRange  = DiscreteFunctionSpaceType :: dimRange }; 
@@ -372,16 +378,15 @@ namespace Dune {
   };
 
   //! Concrete implementation of Pass for LDG.
-  template <class DiscreteModelImp, class PreviousPassImp>
+  template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
   class LocalDGElliptGradPass :
-    public LocalPass<DiscreteModelImp, PreviousPassImp> 
+    public LocalPass< DiscreteModelImp , PreviousPassImp, passId > 
   {
+    typedef LocalDGElliptGradPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
   public:
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
-
-    typedef LocalDGElliptGradPass<DiscreteModelImp,PreviousPassImp> ThisType;
+    typedef LocalPass< DiscreteModelImp , PreviousPassImp , passId > BaseType;
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
@@ -416,8 +421,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef DiscreteModelCaller<
-      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+    typedef CompatibleConvertSelectorType< ThisType , SelectorType
+              , ThisType::passId == -1 > CompatibleConvertSelectorType;
+    typedef DiscreteModelCaller< DiscreteModelType
+                                 , ArgumentType
+                                 , CompatibleCovertSelectorType
+                               > DiscreteModelCallerType;
 
     // Range of the destination
     enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };

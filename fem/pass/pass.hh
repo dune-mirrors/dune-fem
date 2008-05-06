@@ -22,12 +22,13 @@ namespace Dune {
    * @brief End marker for a compile-time list of passes.
    *
    */
-  template <class ArgumentImp>
+  template < class ArgumentImp , int passIdImp  = -1 >
   class StartPass {
   public:
     //- Enums and typedefs
     //! The start pass has index 0.
     enum {passNum=0};
+    enum{ passId = passIdImp };
     //! The argument (and destination) type of the overall operator
     typedef ArgumentImp GlobalArgumentType;
     //! End marker for tuple of return types of the passes
@@ -69,16 +70,17 @@ namespace Dune {
    * used in the computations of the pass. The computations must be implemented
    * in the compute method of the derived classes.
    */
-  template <class DiscreteModelImp, class PreviousPassImp>
+  template <class DiscreteModelImp, class PreviousPassImp , int passIdImp>
   class Pass :
     public Operator<typename PreviousPassImp::GlobalArgumentType::RangeFieldType, 
                     typename DiscreteModelImp::Traits::DestinationType::RangeFieldType,
                     typename PreviousPassImp::GlobalArgumentType, 
                     typename DiscreteModelImp::Traits::DestinationType>
   {
-    template <class PT, class PP>
+    template <class PT, class PP, int PI>
     friend class Pass;
   public:
+    enum{ passId = passIdImp };
     //! little interface class for deleting discrete function 
     //! held by this class 
     template <class ObjectToDelete>
@@ -249,9 +251,9 @@ namespace Dune {
 
   //! Specialisation of Pass which provides a grid walk-through, but leaves
   //! open what needs to be done on each elements.
-  template <class DiscreteModelImp, class PreviousPassImp>
+  template <class DiscreteModelImp, class PreviousPassImp , int passIdImp >
   class LocalPass :
-    public Pass<DiscreteModelImp, PreviousPassImp>
+    public Pass< DiscreteModelImp , PreviousPassImp , passIdImp>
     //public Pass<DiscreteModelImp, PreviousPassImp>::DeleteHandler
   {
   public:
@@ -259,7 +261,7 @@ namespace Dune {
     typedef PreviousPassImp PreviousPassType;
 
     //! Base class
-    typedef Pass<DiscreteModelImp, PreviousPassImp> BaseType;
+    typedef Pass< DiscreteModelImp , PreviousPassImp , passIdImp > BaseType;
     //! The type of the argument (and destination) type of the overall
     //! operator
     
