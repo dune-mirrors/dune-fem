@@ -363,8 +363,10 @@ public:
     linsolver_(comm_,cycle),
     initialized_(false)
   {
-    linsolver_.set_tolerance(1.0e-8,false);
-    linsolver_.set_max_number_of_iterations(10000);
+    //linsolver_.set_tolerance(1.0e-8,false);
+    linsolver_.set_tolerance(1.0e-6,false);
+    //linsolver_.set_max_number_of_iterations(10000);
+    linsolver_.set_max_number_of_iterations(30);
     switch (pord) 
     {
       case 1: ode_ = new pardg::ImplicitEuler(comm_,impl_); break;
@@ -376,8 +378,10 @@ public:
                 abort();
     }
     ode_->set_linear_solver(linsolver_);
-    ode_->set_tolerance(1.0e-6);
+    //ode_->set_tolerance(1.0e-6);
+    ode_->set_tolerance(1.0e-8);
     ode_->set_max_number_of_iterations(15);
+    
     if( verbose ) 
     {
       ode_->IterativeSolver::set_output(cout);
@@ -423,7 +427,8 @@ protected:
   OperatorWrapper<Operator> impl_;
   pardg::DIRK* ode_;
   pardg::GMRES linsolver_;
-  enum { cycle = 20 };
+  //enum { cycle = 20 };
+  enum { cycle = 15 };
   bool initialized_;
 };
 
@@ -460,8 +465,6 @@ public:
   //! initialize solver 
   void initialize(const DestinationType& U0)
   {
-    // get current cfl estimate 
-    //cfl_ = timeProvider_.cfl();
     // initialize solver 
     BaseType :: initialize (U0);
 
@@ -478,53 +481,57 @@ public:
       DUNE_THROW(InvalidStateException,"ImplicitOdeSolver wasn't initialized before first call!");
     }
 
-    bool convergence = false;
-    int cycle = 0;
+    const int min_it = 14;
+    const int max_it = 16;
+    const double sigma = 1.1;
+    
+    const double dt   = timeProvider_.deltaT();
+    assert( dt > 0.0 );
+    const double time = timeProvider_.time();
 
-    while( !convergence )
-    {
-      const double dt   = timeProvider_.deltaT();
-      assert( dt > 0.0 );
-      const double time = timeProvider_.time();
+     // get pointer to solution
+    double* u = U0.leakPointer();
+      
+    const bool convergence = this->odeSolver().step(time , dt , u);
+    const int iter = this->linsolver_.number_of_iterations();
+     // set time step estimate of operator 
 
-      // get pointer to solution
-      double* u = U0.leakPointer();
-      
-      convergence = this->odeSolver().step(time , dt , u);
-      // set time step estimate of operator 
-      timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
-      
-      if(!convergence) 
-      {
-        cfl_ *= 0.5;
-        //double cfl = 0.5 * timeProvider_.cfl();
-        //timeProvider_.setCfl(cfl); 
+    if (convergence) {
+    // control the number of iterations of the linear solver
+    // the values for min_it and max_it has to be determined by experience
+      if (iter < min_it) {
+        cfl_ *= sigma;
         // output only on rank 0
         if(U0.space().grid().comm().rank() == 0 )
         {
-          derr << "New cfl number is "<< cfl_ << std :: endl;
-          //derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
+          derr << " New cfl number is: "<< cfl_ << "\n";
         }
       }
-
-      ++cycle;
-      if( cycle > 25 ) 
-      {
-        DUNE_THROW(InvalidStateException,"ImplicitOdeSolver: no convergence of solver!");
-      }
-    }
-    if (this->odeSolver().number_of_iterations()<10)
-    {
-      cfl_ *= 2.0;
-      //double cfl = 2.0 * timeProvider_.cfl();
-      //timeProvider_.setCfl(cfl); 
-      if(U0.space().grid().comm().rank() == 0 )
-      {
-        derr << "New cfl number is "<< cfl_ << std :: endl;
-        //derr << "New cfl number is "<< timeProvider_.cfl() << "\n";
-      }
-    }
-  }
+      else if (iter > max_it) {
+        cfl_ *= (double)max_it/(sigma*(double)iter);
+        // output only on rank 0
+         if(U0.space().grid().comm().rank() == 0 )
+         {
+           derr << " New cfl number is: "<< cfl_ << "\n";
+         }
+     }
+    timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
+    
+     this->linsolver_.reset_number_of_iterations();
+     std::cout << "number of iterations of linear solver  " << iter << std::endl;
+   }
+   else {
+       cfl_ *= 0.5;
+       timeProvider_.provideTimeStepEstimate( cfl_ * dt );
+       timeProvider_.invalidateTimeStep();
+        // output only on rank 0
+        if(U0.space().grid().comm().rank() == 0 )
+        {
+          derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
+        }
+   }
+      
+ }
 };
 
 
