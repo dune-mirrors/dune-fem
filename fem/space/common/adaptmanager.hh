@@ -198,7 +198,7 @@ protected:
 #define PARAM_FUNC_2 prolongLocal 
 #define PARAM_FUNC_3 calcFatherChildWeight 
 #define PARAM_FUNC_4 addToCommunicator 
-#include <dune/fem/operator/common/combine.hh>
+#include <dune/fem/operator/common/combine.inc>
 
 /*! \brief This class manages the adaptation process. 
  If the method adapt is called, then the grid is adapted and also 

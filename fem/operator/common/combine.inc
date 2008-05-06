@@ -1,9 +1,6 @@
 // no define of include variable because the file can be included more than
 // once 
 
-// This is not a normal header, do not check it
-#ifndef HEADER_CHECK
-
 #ifndef PARAM_CLASSNAME 
 #error "PARAM_CLASSNAME must be defined! \n"
 #endif
@@ -32,13 +29,13 @@ public:
 
 #ifdef PARAM_FUNC_1  
 #define LocalOperatorFunctionToCall PARAM_FUNC_1
-#include "localoperatordef.hh"
+#include "localoperatordef.inc"
 #undef PARAM_FUNC_1
 #endif
   
 #ifdef PARAM_FUNC_2  
 #define LocalOperatorFunctionToCall PARAM_FUNC_2
-#include "localoperatordef.hh"
+#include "localoperatordef.inc"
 #undef PARAM_FUNC_2
 #endif
   
@@ -47,19 +44,19 @@ public:
 #define CALL_B_NOT
 #endif
 #define LocalOperatorFunctionToCall PARAM_FUNC_3
-#include "localoperatordef.hh"
+#include "localoperatordef.inc"
 #undef PARAM_FUNC_3
 #endif
   
 #ifdef PARAM_FUNC_4  
 #define LocalOperatorFunctionToCall PARAM_FUNC_4
-#include "localoperatordef.hh"
+#include "localoperatordef.inc"
 #undef PARAM_FUNC_4
 #endif
   
 #ifdef PARAM_FUNC_5  
 #define LocalOperatorFunctionToCall PARAM_FUNC_5
-#include "localoperatordef.hh"
+#include "localoperatordef.inc"
 #undef PARAM_FUNC_5
 #endif
 
@@ -71,6 +68,4 @@ private:
 
 #undef PARAM_CLASSNAME
 #endif
-
-#endif // HEADER_CHECK
 // end file 

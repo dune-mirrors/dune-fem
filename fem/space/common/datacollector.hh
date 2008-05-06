@@ -36,7 +36,7 @@ template <class LocalOp, class ParamType> class LocalInlinePlus;
 #define PARAM_CLASSNAME CombinedLocalDataCollect 
 #define PARAM_INHERIT LocalInlinePlus  
 #define PARAM_FUNC_1 apply 
-#include <dune/fem/operator/common/combine.hh>
+#include <dune/fem/operator/common/combine.inc>
 
 template <class ParamT>
 class LocalInterface : public ObjPointerStorage
