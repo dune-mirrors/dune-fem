@@ -1,10 +1,24 @@
 #ifndef DUNE_FEM_VERSION_HH
 #define DUNE_FEM_VERSION_HH
 
-// These two lines define the dune-fem version.
+// These three lines define the dune-fem version.
 #define DUNE_FEM_VERSION_MAJOR 0
 #define DUNE_FEM_VERSION_MINOR 9
 #define DUNE_FEM_VERSION_REVISION 2
+
+
+// Macros for version comparison
+#define DUNE_FEM_VERSION_EQUAL(major,minor) \
+  ((DUNE_FEM_VERSION_MAJOR == major) && (DUNE_FEM_VERSION_MINOR == minor))
+#define DUNE_FEM_VERSION_EQUAL_REVISON(major,minor,revision) \
+  (DUNE_FEM_VERSION_EQUAL(major,minor) \
+   && (DUNE_FEM_VERSION_REVISION == revision))
+
+#define DUNE_FEM_VERSION_NEWER(major,minor,revision) \
+  ((DUNE_FEM_VERSION_MAJOR > major) \
+   || ((DUNE_FEM_VERSION_MAJOR == major) && (DUNE_FEM_VERSION_MINOR > minor)) \
+   || ((DUNE_FEM_VERSION_MAJOR == major) && (DUNE_FEM_VERSION_MINOR == minor) \
+       && (DUNE_FEM_VERSION_REVISION >= revision)))
 
 #include <sstream>
 
