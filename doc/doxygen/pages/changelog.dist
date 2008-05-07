@@ -5,6 +5,14 @@
  *  \section Changes from 0.9.1 to 0.10
  *  - Lagrange base functions have been fixed.
  *  .
+ 
+ *  \section Changes from 0.9.1 to 0.9.2
+ *  - Pass now has 3rd template argument passId, which is by default set to
+ *    -1
+ *  - in addition to new Pass, new CreatePass isn't compatible any more 
+ *    with old passes. To plug a pass into new CreatePass one must use new Pass
+ *  .
+ 
  *
  *  \section Changes from 0.9 to 0.9.1
  *  - The evaluation methods taking a Quadrature and an int as arguments are
