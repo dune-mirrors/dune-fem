@@ -20,7 +20,7 @@ namespace Dune {
 
     Quadrature<double, dim> quad(simplex, dim);
 
-    PointProvider<double, dim, 0>::registerQuadrature(quad);
+    PointProvider<double, dim, 0>::registerQuadrature(quad.ipList());
 
     const PointVectorType& points = 
       PointProvider<double, dim, 0>::getPoints(quad.id(), simplex);
@@ -55,8 +55,8 @@ namespace Dune {
     Quadrature<double, 1> quad1(quadImp);
     Quadrature<double, 1> quad2(quadImp);
 
-    PointProviderType::getMappers(quad1, simplex);
-    PointProviderType::getMappers(quad2, simplex);    
+    PointProviderType::getMappers(quad1.ipList(), simplex);
+    PointProviderType::getMappers(quad2.ipList(), simplex);    
 
     const PointVectorType& p1 = 
       PointProviderType::getPoints(quad1.id(), simplex);
@@ -99,7 +99,7 @@ namespace Dune {
     Quadrature<double, 2> quadQuad(quadImpQuad);
 
     const MapperVectorType& mvh = 
-      PointProvider2Type::getMappers(quadQuad, quadrilateral);
+      PointProvider2Type::getMappers(quadQuad.ipList() , quadrilateral);
     for (size_t i = 0; i < mvh.size(); ++i) {
       std::cout << mvh[i][0] << ", ";
     }
@@ -129,7 +129,7 @@ namespace Dune {
     quadImpTri.newQuadraturePoint(pt, 1.0);
     Quadrature<double, 2> quadTri(quadImpTri);
 
-    PointProvider2Type::getMappers(quadTri, triangle);
+    PointProvider2Type::getMappers(quadTri.ipList() , triangle);
     const PointProvider2Type::GlobalPointVectorType& ptsTetra =
       PointProvider2Type::getPoints(quadTri.id(), triangle);
     
@@ -149,9 +149,9 @@ namespace Dune {
     quadImpLine.newQuadraturePoint(pl, 1.0);
     Quadrature<double, 1> quadLine(quadImpLine);
 
-    PointProvider1Type::getMappers(quadLine, lineC);
+    PointProvider1Type::getMappers(quadLine.ipList(), quadrilateral );
     const PointProvider1Type::GlobalPointVectorType& ptsQuad = 
-      PointProvider1Type::getPoints(quadLine.id(), lineC);
+      PointProvider1Type::getPoints(quadLine.id(), quadrilateral);
 
     _test(ptsQuad.size() == 4);
     tmp2[0] = 0.;
@@ -168,9 +168,10 @@ namespace Dune {
     quadImpLine2.newQuadraturePoint(pl, 1.0);
 
     Quadrature<double, 1> quadLine2(quadImpLine2);
-    PointProvider1Type::getMappers(quadLine2, lineS);
+    PointProvider1Type::getMappers(quadLine2.ipList() , triangle);
+
     const PointProvider1Type::GlobalPointVectorType& ptsTri = 
-      PointProvider1Type::getPoints(quadLine2.id(), lineS);
+      PointProvider1Type::getPoints(quadLine2.id(), triangle);
 
     _test(ptsTri.size() == 3);
     tmp2 = 0.5;

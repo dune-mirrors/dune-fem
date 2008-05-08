@@ -35,7 +35,7 @@ namespace Dune {
     Quadrature<double, 1> quad(quadImp);
  
     const TwistStorageType& storage =
-      TwistProvider<double, 1>::getTwistStorage(quad);
+      TwistProvider<double, 1>::getTwistStorage(quad.ipList());
 
     // Test minTwist, maxTwist
     _test(storage.minTwist() == 0);
@@ -79,7 +79,7 @@ namespace Dune {
     Quadrature<double, 2> quad(quadImp);
   
     const TwistStorageType& storage =
-      TwistProvider<double, 2>::getTwistStorage(quad);
+      TwistProvider<double, 2>::getTwistStorage(quad.ipList());
 
     // Test minTwist, maxTwist
     _test(storage.minTwist() == -3);
@@ -154,7 +154,7 @@ namespace Dune {
     Quadrature<double, 2> quad(quadImp);
   
     const TwistStorageType& storage =
-      TwistProvider<double, 2>::getTwistStorage(quad);
+      TwistProvider<double, 2>::getTwistStorage(quad.ipList());
 
     // Test minTwist, maxTwist
     _test(storage.minTwist() == -4);
@@ -242,11 +242,12 @@ namespace Dune {
     GeometryType line(GeometryType::simplex,1);
     TestQuadrature<double, 1> quadImp(line, 0);
     quadImp.newQuadraturePoint(begin, 0.5);
+    quadImp.newQuadraturePoint(end, 0.5);
     
     Quadrature<double, 1> quad(quadImp);
     
     const TwistStorageType& storage =
-      TwistProvider<double, 1>::getTwistStorage(quad);
+      TwistProvider<double, 1>::getTwistStorage(quad.ipList());
     
     // Test points
     const PointVectorType& points = storage.getPoints();

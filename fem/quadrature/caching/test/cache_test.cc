@@ -1,13 +1,17 @@
 #include <config.h>
 
 #include <dune/grid/sgrid.hh>
-
-#include <dune/grid/alugrid.hh>
-#include <dune/grid/albertagrid.hh>
-
 #include "sgrid_fixture.hh"
+
+#ifdef ENABLE_ALUGRID
+#include <dune/grid/alugrid.hh>
 #include "alugrid_fixture.hh"
+#endif
+
+#ifdef ENABLE_ALBERTA
+#include <dune/grid/albertagrid.hh>
 #include "albertagrid_fixture.hh"
+#endif
 
 #include "cache_test.hh"
 
@@ -23,13 +27,15 @@ namespace Dune {
 
   void CacheProvider_Test::hexaTest()
   {
+#ifdef ENABLE_ALUGRID
     const int dim = 3;
     const int codim = 1;
 
     typedef ALUGridFixture<hexa> FixType;
     typedef FixType::GridType GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
-    typedef CacheProviderType::QuadratureType QuadratureType;
+    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+    //typedef CacheProviderType::QuadratureType QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
@@ -65,18 +71,20 @@ namespace Dune {
       }
 
     }
-
+#endif
   }
 
   void CacheProvider_Test::tetraTest()
   {
+#ifdef ENABLE_ALUGRID
     const int dim = 3;
     const int codim = 1;
 
     typedef ALUGridFixture<tetra> FixType;
     typedef FixType::GridType GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
-    typedef CacheProviderType::QuadratureType QuadratureType;
+    //typedef CacheProviderType::QuadratureType QuadratureType;
+    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
@@ -110,18 +118,20 @@ namespace Dune {
         }
       }
     }
-
+#endif
   }
 
   void CacheProvider_Test::triangleTest()
   {
+#ifdef ENALBE_ALBERTA
     const int dim = 2;
     const int codim = 1;
 
     typedef AlbertaGridFixture<dim, dim> FixType;
     typedef FixType::GridType GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
-    typedef CacheProviderType::QuadratureType QuadratureType;
+    //typedef CacheProviderType::QuadratureType QuadratureType;
+    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
@@ -155,6 +165,7 @@ namespace Dune {
         }
       }
     }
+#endif
   }
 
   void CacheProvider_Test::quadTest()
@@ -165,7 +176,8 @@ namespace Dune {
     typedef SGridFixture<dim, dim> FixType;
     typedef FixType::GridType GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
-    typedef CacheProviderType::QuadratureType QuadratureType;
+    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+    //typedef CacheProviderType::QuadratureType QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
