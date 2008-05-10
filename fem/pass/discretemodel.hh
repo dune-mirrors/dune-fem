@@ -271,17 +271,32 @@ namespace Dune {
 
     typedef Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 > SelectorType;
   public:
-    //! \copydoc DiscreteModelInterface::hasFlux 
-    //! \return false 
-    bool hasFlux() const { return false; }
+    /** \copydoc Dune::DiscreteModelInterface::hasFlux() const
+     *
+     *  The default implementation always returns false
+     */
+    inline bool hasFlux () const
+    {
+      return false;
+    }
     
-    //! \copydoc DiscreteModelInterface::hasSource 
-    //! \return false 
-    bool hasSource() const { return false; }
+    /** \copydoc Dune::DiscreteModelInterface::hasSource() const
+     *
+     *  The default implementation always returns false
+     */
+    inline bool hasSource () const
+    {
+      return false;
+    }
     
-    //! \copydoc DiscreteModelInterface::hasMass 
-    //! \return false  
-    bool hasMass() const { return false; }
+    /** \copydoc Dune::DiscreteModelInterface::hasMass() const
+     *
+     *  The default implementation always returns false
+     */
+    inline bool hasMass () const
+    {
+      return false;
+    }
     
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.

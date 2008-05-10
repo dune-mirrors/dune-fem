@@ -8,6 +8,7 @@
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/selection.hh>
 #include <dune/fem/pass/ellipticdiscretemodel.hh>
 #include <dune/fem/pass/ellipticmodelcaller.hh>
 
@@ -71,12 +72,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CompatibleConvertSelector< ThisType , SelectorType
-              , ThisType::passId == -1 > CompatibleConvertSelectorType;
-    typedef EllipticDiscreteModelCaller< DiscreteModelType
-                                         , ArgumentType
-                                         , CompatibleConvertSelectorType
-                                       > DiscreteModelCallerType;
+    typedef CompatibleConvertSelector
+      < ThisType , SelectorType, ThisType::passId == -1 >
+      CompatibleConvertSelectorType;
+    typedef EllipticDiscreteModelCaller
+      < DiscreteModelType, ArgumentType, CompatibleConvertSelectorType >
+      DiscreteModelCallerType;
 
     // Range of the destination
     enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
@@ -202,12 +203,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CompatibleConvertSelector< ThisType , SelectorType , 
-              ThisType::passId == -1 > CompatibleConvertSelectorType;
-    typedef DiscreteModelCaller< DiscreteModelType
-                                 , ArgumentType
-                                 , CompatibleConvertSelectorType
-                               > DiscreteModelCallerType;
+    typedef CompatibleConvertSelector
+      < ThisType, SelectorType, ThisType::passId == -1 >
+      CompatibleConvertSelectorType;
+    typedef DiscreteModelCaller
+      < DiscreteModelType, ArgumentType, CompatibleConvertSelectorType >
+      DiscreteModelCallerType;
    
     // Range of the destination
     enum { dimRange  = DiscreteFunctionSpaceType :: dimRange }; 
@@ -421,12 +422,12 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CompatibleConvertSelectorType< ThisType , SelectorType
-              , ThisType::passId == -1 > CompatibleConvertSelectorType;
-    typedef DiscreteModelCaller< DiscreteModelType
-                                 , ArgumentType
-                                 , CompatibleCovertSelectorType
-                               > DiscreteModelCallerType;
+    typedef CompatibleConvertSelector
+      < ThisType , SelectorType, ThisType::passId == -1 >
+      CompatibleConvertSelectorType;
+    typedef DiscreteModelCaller
+      < DiscreteModelType, ArgumentType, CompatibleConvertSelectorType >
+      DiscreteModelCallerType;
 
     // Range of the destination
     enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
