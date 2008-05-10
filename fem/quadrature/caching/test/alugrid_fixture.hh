@@ -1,9 +1,11 @@
 #ifndef DUNE_ALUGRID_FIXTURE_HH
 #define DUNE_ALUGRID_FIXTURE_HH
 
+#if ENABLE_ALUGRID
 #include <dune/grid/alugrid.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   template <ALU3dGridElementType type>
   class ALUGridFixture {
@@ -23,5 +25,6 @@ namespace Dune {
 
 
 } // end namespace Dune
+#endif
 
 #endif
