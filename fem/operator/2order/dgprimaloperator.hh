@@ -67,15 +67,16 @@ namespace Dune {
             http://www.mit.edu/~persson/pub/peraire07cdg.pdf
   */
   template <class DiscreteModelImp, class GradientPassImp, 
-            class PreviousPassImp, class MatrixObjectTraits>
+            class PreviousPassImp, class MatrixObjectTraits,
+            int pId = -1 >
   class DGPrimalOperator 
-    : public LocalPass<DiscreteModelImp, PreviousPassImp> 
+    : public LocalPass< DiscreteModelImp, PreviousPassImp, pId > 
     , public OEMSolver::PreconditionInterface
   {
   public:
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass<DiscreteModelImp, PreviousPassImp> BaseType;
+    typedef LocalPass< DiscreteModelImp, PreviousPassImp, pId > BaseType;
 
     typedef DGPrimalOperator<DiscreteModelImp,GradientPassImp,
             PreviousPassImp,MatrixObjectTraits> ThisType;
