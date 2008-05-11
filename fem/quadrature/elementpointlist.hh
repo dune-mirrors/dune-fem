@@ -243,6 +243,7 @@ namespace Dune
 
     //! Type of the intersection iterator
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     // For compatibility
     typedef IntersectionIteratorType IntersectionIterator;
@@ -277,7 +278,7 @@ namespace Dune
      *        a cube (otherwise elementGeometry() returns a wrong geometry).
      */
     ElementIntegrationPointList ( const GridPartType &gridPart, 
-                                  const IntersectionIterator &intersection, 
+                                  const IntersectionType &intersection, 
                                   int order,
                                   Side side )
     : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
@@ -427,6 +428,8 @@ namespace Dune
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
   private:
+    typedef typename IntersectionIteratorType :: Intersection
+      IntersectionType;
     typedef typename IntersectionIteratorType :: LocalGeometry ReferenceGeometry;
 
   protected:
@@ -449,7 +452,7 @@ namespace Dune
      *  \note This a a specialized version of the constructor for UGGrid. 
      */
     ElementIntegrationPointList ( const GridPartType& gridPart, 
-                                  const IntersectionIterator &intersection, 
+                                  const IntersectionType &intersection, 
                                   int order,
                                   Side side )
     : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 

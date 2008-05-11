@@ -183,6 +183,7 @@ namespace Dune
 
     //! type of the intersection iterator
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     // just for compatibility (shoud be removed)
     typedef IntersectionIteratorType IntersectionIterator;
@@ -208,6 +209,13 @@ namespace Dune
      */
     ElementQuadrature ( const GridPartType &gridPart,
                         const IntersectionIteratorType &intersection, 
+                        int order, 
+                        typename BaseType :: Side side )
+    : BaseType( gridPart, *intersection, order, side )
+    {
+    }
+    ElementQuadrature ( const GridPartType &gridPart,
+                        const IntersectionType &intersection, 
                         int order, 
                         typename BaseType :: Side side )
     : BaseType( gridPart, intersection, order, side )

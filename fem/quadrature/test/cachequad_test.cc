@@ -71,12 +71,13 @@ namespace Dune {
     typedef typename GridType::ctype ctype;
 
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection Intersection;
     typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
     typedef CachingQuadrature<GridPartType, codim> QuadratureType;
     typedef PointProvider<ctype, dim, codim> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
-    typedef typename IntersectionIterator::LocalGeometry LocalGeometryType;
-    typedef typename IntersectionIterator::Geometry GlobalGeometryType;
+    typedef typename Intersection::LocalGeometry LocalGeometryType;
+    typedef typename Intersection::Geometry GlobalGeometryType;
     typedef FieldVector<ctype,dim> DomainType;
 
     IteratorType enditer = gridPart.template end<0> ();
@@ -94,21 +95,22 @@ namespace Dune {
       for (IntersectionIterator it = gridPart.ibegin( *eiter );
            it != endit; ++it) 
       {
+        const Intersection& inter=*it;
         if( dim > 2 )
         {
-          checkLocalIntersectionConsistency( *it.inside(),
-              it.intersectionSelfLocal(), it.numberInSelf() );
-          if( it.neighbor() ) 
+          checkLocalIntersectionConsistency( *inter.inside(),
+              inter.intersectionSelfLocal(), inter.numberInSelf() );
+          if( inter.neighbor() ) 
           {
-            checkLocalIntersectionConsistency( *it.outside(),
-                it.intersectionNeighborLocal(), it.numberInNeighbor() );
+            checkLocalIntersectionConsistency( *inter.outside(),
+                inter.intersectionNeighborLocal(), inter.numberInNeighbor() );
           }
         }
 
-        const LocalGeometryType& geo = it.intersectionSelfLocal();
+        const LocalGeometryType& geo = inter.intersectionSelfLocal();
         typedef TwistUtility<GridType> TwistUtilityType; 
 
-        QuadratureType quad(gridPart, it, quadOrd , QuadratureType :: INSIDE);
+        QuadratureType quad(gridPart, inter, quadOrd , QuadratureType :: INSIDE);
 
         const PointVectorType& points = 
           PointProviderType::getPoints(quad.id(), geomType);
@@ -134,12 +136,12 @@ namespace Dune {
           //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
         }
 
-        if( it.neighbor ())
+        if( inter.neighbor ())
         {
-          if( TwistUtilityType::conforming( gridPart.grid(), it ))
+          if( TwistUtilityType::conforming( gridPart.grid(), inter ))
           {
-            const LocalGeometryType& nGeo = it.intersectionNeighborLocal();
-            QuadratureType outerQuad(gridPart, it, quadOrd , QuadratureType::OUTSIDE);
+            const LocalGeometryType& nGeo = inter.intersectionNeighborLocal();
+            QuadratureType outerQuad(gridPart, inter, quadOrd , QuadratureType::OUTSIDE);
             
             for (int i = 0; i < outerQuad.nop(); ++i) 
             {

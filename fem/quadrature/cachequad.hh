@@ -154,6 +154,7 @@ namespace Dune
 
     //! Type of the intersection iterator
     typedef typename BaseType::IntersectionIterator IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection IntersectionType;
 
     //! type of quadrature used for non-conforming intersections  
     typedef ElementQuadrature< GridPartImp, codimension > NonConformingQuadratureType; 
@@ -176,6 +177,13 @@ namespace Dune
      */
     CachingQuadrature( const GridPartType &gridPart, 
                        const IntersectionIterator &intersection,
+                       int order,
+                       typename BaseType :: Side side )
+    : BaseType(gridPart,*intersection, order, side)
+    {
+    }
+    CachingQuadrature( const GridPartType &gridPart, 
+                       const IntersectionType &intersection,
                        int order,
                        typename BaseType :: Side side )
     : BaseType(gridPart,intersection, order, side)

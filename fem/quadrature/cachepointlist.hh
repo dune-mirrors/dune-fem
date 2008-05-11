@@ -189,6 +189,7 @@ namespace Dune
 
     //! Type of the intersection iterator
     typedef typename BaseType::IntersectionIterator IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection IntersectionType;
 
     //! type of quadrature used for non-conforming intersections  
     typedef BaseType NonConformingQuadratureType; 
@@ -219,7 +220,7 @@ namespace Dune
      *                            which the ElementQuadrature shall be created
      */
     CachingPointList ( const GridPartType &gridPart,
-                       const IntersectionIterator &intersection,
+                       const IntersectionType &intersection,
                        int order,
                        typename BaseType :: Side side)
       : BaseType( gridPart, intersection, order, side ),
@@ -231,7 +232,7 @@ namespace Dune
           ) )
     {
       // make sure CachingPointList is only created for conforming intersections
-      assert( TwistUtilityType :: conforming( gridPart.grid(), intersection ) );
+      // assert( TwistUtilityType :: conforming( gridPart.grid(), intersection ) );
     }
 
     /** \brief copy constructor

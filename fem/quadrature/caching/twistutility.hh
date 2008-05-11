@@ -100,7 +100,9 @@ namespace Dune {
   public:
     typedef AlbertaGrid<dim, dimW> GridType;
     typedef typename GridType::Traits::LeafIntersectionIterator  LeafIntersectionIterator;
+    typedef typename LeafIntersectionIterator::Intersection  LeafIntersection;
     typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
+    typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) :
@@ -109,12 +111,12 @@ namespace Dune {
 
     //! \brief return twist for inner face 
     static inline int twistInSelf(const GridType & grid, 
-                           const LeafIntersectionIterator& it) {
+                           const LeafIntersection& it) {
       return grid.getRealIntersectionIterator(it).twistInSelf();
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersectionIterator& it) const {
+    int twistInSelf(const LeafIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInSelf();
     }
     
@@ -123,13 +125,13 @@ namespace Dune {
     //}
 
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersectionIterator& it) const {
+    int twistInNeighbor(const LeafIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInNeighbor();
     }
     
     //! \brief return twist for outer face 
     static inline int twistInNeighbor(const GridType & grid, 
-                               const LeafIntersectionIterator& it)
+                               const LeafIntersection& it)
     {
       return grid.getRealIntersectionIterator(it).twistInNeighbor();
     }
@@ -160,7 +162,9 @@ namespace Dune {
   public:
     typedef ALUSimplexGrid<3,3> GridType;
     typedef GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
+    typedef LeafIntersectionIterator::Intersection LeafIntersection;
     typedef GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
+    typedef LevelIntersectionIterator::Intersection LevelIntersection;
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) :
@@ -176,22 +180,22 @@ namespace Dune {
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersectionIterator& it) const {
+    int twistInSelf(const LeafIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInSelf();
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LevelIntersectionIterator& it) const {
+    int twistInSelf(const LevelIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInSelf();
     }
 
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersectionIterator& it) const {
+    int twistInNeighbor(const LeafIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInNeighbor();
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersectionIterator& it) const {
+    int twistInNeighbor(const LevelIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInNeighbor();
     }
 
@@ -233,7 +237,9 @@ namespace Dune {
   public:
     typedef ALUCubeGrid<3,3> GridType;
     typedef GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
+    typedef LeafIntersectionIterator::Intersection LeafIntersection;
     typedef GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
+    typedef LevelIntersectionIterator::Intersection LevelIntersection;
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) :
@@ -249,17 +255,17 @@ namespace Dune {
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersectionIterator& it) const {
+    int twistInSelf(const LeafIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInSelf();
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LevelIntersectionIterator& it) const {
+    int twistInSelf(const LevelIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInSelf();
     }
 
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersectionIterator& it) const {
+    int twistInNeighbor(const LeafIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInNeighbor();
     }
     
@@ -272,7 +278,7 @@ namespace Dune {
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersectionIterator& it) const {
+    int twistInNeighbor(const LevelIntersection& it) const {
       return grid_.getRealIntersectionIterator(it).twistInNeighbor();
     }
 
@@ -306,40 +312,42 @@ namespace Dune {
   public:
     typedef ALUSimplexGrid<2, 2> GridType;
     typedef GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
+    typedef LeafIntersectionIterator::Intersection LeafIntersection;
     typedef GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
+    typedef LevelIntersectionIterator::Intersection LevelIntersection;
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) : grid_(grid) {}
 
     //! \brief return twist for inner face 
-    static inline int twistInSelf(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInSelf(const GridType &, const LeafIntersection&)
     {
       return 0;
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersectionIterator& it) const {
+    int twistInSelf(const LeafIntersection& it) const {
       return 0;
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LevelIntersectionIterator& it) const {
+    int twistInSelf(const LevelIntersection& it) const {
       return 0;
     }
 
     //! \brief return twist for outer face 
-    static inline int twistInNeighbor(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInNeighbor(const GridType &, const LeafIntersection&)
     {
       return 1;
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersectionIterator& it) const {
+    int twistInNeighbor(const LeafIntersection& it) const {
       return 1;
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersectionIterator& it) const {
+    int twistInNeighbor(const LevelIntersection& it) const {
       return 1;
     }
 
@@ -371,40 +379,42 @@ namespace Dune {
   public:
     typedef ALUConformGrid<2, 2> GridType;
     typedef GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
+    typedef LeafIntersectionIterator::Intersection LeafIntersection;
     typedef GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
+    typedef LevelIntersectionIterator::Intersection LevelIntersection;
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) : grid_(grid) {}
 
     //! \brief return twist for inner face 
-    static inline int twistInSelf(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInSelf(const GridType &, const LeafIntersection&)
     {
       return 0;
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersectionIterator& it) const {
+    int twistInSelf(const LeafIntersection& it) const {
       return 0;
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LevelIntersectionIterator& it) const {
+    int twistInSelf(const LevelIntersection& it) const {
       return 0;
     }
 
     //! \brief return twist for outer face 
-    static inline int twistInNeighbor(const GridType &, const LeafIntersectionIterator&)
+    static inline int twistInNeighbor(const GridType &, const LeafIntersection&)
     {
       return 1;
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersectionIterator& it) const {
+    int twistInNeighbor(const LeafIntersection& it) const {
       return 1;
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersectionIterator& it) const {
+    int twistInNeighbor(const LevelIntersection& it) const {
       return 1;
     }
 
