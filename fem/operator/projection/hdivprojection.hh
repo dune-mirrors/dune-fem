@@ -123,11 +123,17 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
   {
     return space_; 
   }
+  virtual void setTime(double) {
+  }
+  virtual double timeStepEstimate() const {
+    return 0.;
+  }
 
   //! return sum of jumps of discrete function normal to intersection 
   static double normalJump(const DiscreteFunctionType &discFunc, const int polyOrder = -1 ) 
   {
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType :: Intersection IntersectionType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
     typedef typename GridType :: template Codim<0> :: Entity EntityType;
     typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
@@ -163,16 +169,17 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
       for(IntersectionIteratorType nit = gridPart.ibegin(en);
           nit != endnit; ++nit)
       {
+        const IntersectionType& inter=*nit;
         // only interior faces are considered 
-        if(nit.neighbor() )
+        if(inter.neighbor() )
         {
-          EntityPointerType neighEp = nit.outside();
+          EntityPointerType neighEp = inter.outside();
           EntityType&            nb = *neighEp;
           
           if(idSet.id( en ) < idSet.id( nb ))
           {
-            FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-            FaceQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+            FaceQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
+            FaceQuadratureType faceQuadOuter(gridPart, inter, polOrd, FaceQuadratureType::OUTSIDE);
 
             const LocalFuncType neighLf = discFunc.localFunction(nb);
             
@@ -180,7 +187,7 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
             for (int l = 0; l < quadNop ; ++l)
             {
               DomainType normal = 
-                nit.unitOuterNormal(faceQuadInner.localPoint(l));
+                inter.unitOuterNormal(faceQuadInner.localPoint(l));
 
               lf.evaluate(faceQuadInner[l], ret);
               neighLf.evaluate(faceQuadOuter[l], neighRet);
@@ -689,6 +696,7 @@ private:
                   ArrayType& rets, MatrixType& matrix, VectorType& rhs) const
   {
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
     typedef typename GridType :: template Codim<0> :: Entity EntityType;
     typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
 
@@ -720,16 +728,17 @@ private:
     for(IntersectionIteratorType nit = gridPart.ibegin(en);
         nit != endnit; ++nit)
     {
+      const IntersectionType& inter=*nit;
       // get base function set of face 
       const FaceBSetType & faceSet =
-        faceSpace.baseFunctionSet(nit.intersectionGlobal().type());
+        faceSpace.baseFunctionSet(inter.intersectionGlobal().type());
      
-      const int firstRow = nit.numberInSelf() * numFaceDofs;
+      const int firstRow = inter.numberInSelf() * numFaceDofs;
       
       // only interior faces are considered 
-      if(nit.neighbor())
+      if(inter.neighbor())
       {
-        EntityPointerType neighEp = nit.outside();
+        EntityPointerType neighEp = inter.outside();
         // get neighbor entity 
         const EntityType&   nb = *neighEp;
   
@@ -738,11 +747,11 @@ private:
 
         typedef TwistUtility<GridType> TwistUtilityType;
         // for conforming situations apply Quadrature given
-        if( TwistUtilityType::conforming(gridPart.grid(),nit) )
+        if( TwistUtilityType::conforming(gridPart.grid(),inter) )
         {
           // create quadratures 
-          FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-          FaceQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+          FaceQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
+          FaceQuadratureType faceQuadOuter(gridPart, inter, polOrd, FaceQuadratureType::OUTSIDE);
 
           applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,
                              bSet,faceSet, uLF, uNeighLf,
@@ -757,8 +766,8 @@ private:
           typedef typename FaceQuadratureType ::
             NonConformingQuadratureType NonConformingQuadratureType;
           // create quadratures 
-          NonConformingQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-          NonConformingQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+          NonConformingQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
+          NonConformingQuadratureType faceQuadOuter(gridPart, inter, polOrd, FaceQuadratureType::OUTSIDE);
 
           applyLocalNeighbor(nit,faceQuadInner,faceQuadOuter,
                              bSet,faceSet, uLF, uNeighLf, 
@@ -771,15 +780,15 @@ private:
       }
      
       // only interior faces are considered 
-      if(nit.boundary())
+      if(inter.boundary())
       {
         // create quadrature 
-        FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
+        FaceQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
         const int quadNop = faceQuadInner.nop();
         for (int l = 0; l < quadNop ; ++l)
         {
           DomainType unitNormal = 
-            nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+            inter.integrationOuterNormal(faceQuadInner.localPoint(l));
 
           const double faceVol = unitNormal.two_norm();
           unitNormal *= 1.0/faceVol;
@@ -842,13 +851,14 @@ private:
                           MatrixType& matrix,
                           RHSType& rhs)
   {
+    const typename IntersectionIteratorType::Intersection& inter = *nit;
     const int quadNop = faceQuadInner.nop();
     const int numDofs = uLF.numDofs();
 
     for (int l = 0; l < quadNop ; ++l)
     {
       DomainType unitNormal = 
-        nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+        inter.integrationOuterNormal(faceQuadInner.localPoint(l));
 
       // get unit outer normal 
       const double faceVol = unitNormal.two_norm();
@@ -930,15 +940,17 @@ public:
       const double enVol = en.geometry().volume();
       
       typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+      typedef typename IntersectionIteratorType :: Intersection IntersectionType;
       IntersectionIteratorType endnit = gridPart.iend(en);
       for(IntersectionIteratorType nit = gridPart.ibegin(en);
           nit != endnit; ++nit)
       {
+        const IntersectionType& inter=*nit;
         double enError = 0.0;
         // only interior faces are considered 
-        if(nit.neighbor())
+        if(inter.neighbor())
         {
-          EntityPointerType neighEp = nit.outside();
+          EntityPointerType neighEp = inter.outside();
           EntityType&            nb = *neighEp;
           const double enVol_nbVol = 0.5 * (enVol + nb.geometry().volume());
 
@@ -958,11 +970,11 @@ public:
             
             typedef TwistUtility<GridType> TwistUtilityType;
             // for conforming situations apply Quadrature given
-            if( TwistUtilityType::conforming(gridPart.grid(),nit) )
+            if( TwistUtilityType::conforming(gridPart.grid(),inter) )
             {
               // create quadratures 
-              FaceQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-              FaceQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+              FaceQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
+              FaceQuadratureType faceQuadOuter(gridPart, inter, polOrd, FaceQuadratureType::OUTSIDE);
 
               applyLocalNeighEstimator(nit,nb,faceQuadInner,faceQuadOuter,
                                  uLF, uNeighLf, enVol_nbVol, interiorEntity, 
@@ -974,8 +986,8 @@ public:
               typedef typename FaceQuadratureType ::
                 NonConformingQuadratureType NonConformingQuadratureType;
               // create quadratures 
-              NonConformingQuadratureType faceQuadInner(gridPart, nit, polOrd, FaceQuadratureType::INSIDE);
-              NonConformingQuadratureType faceQuadOuter(gridPart, nit, polOrd, FaceQuadratureType::OUTSIDE);
+              NonConformingQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
+              NonConformingQuadratureType faceQuadOuter(gridPart, inter, polOrd, FaceQuadratureType::OUTSIDE);
 
               applyLocalNeighEstimator(nit,nb,faceQuadInner,faceQuadOuter,
                                  uLF, uNeighLf, enVol_nbVol, interiorEntity, 
@@ -1010,6 +1022,7 @@ private:
                           double& enError,
                           AdaptationType& adaptation)
   {
+    const typename IntersectionIteratorType::Intersection& inter=*nit;
     enum { dim = GridType :: dimension };
     RangeType jump; 
     RangeType neighRet;
@@ -1019,7 +1032,7 @@ private:
     for (int l = 0; l < quadNop ; ++l)
     {
       DomainType unitNormal = 
-        nit.integrationOuterNormal(faceQuadInner.localPoint(l));
+        inter.integrationOuterNormal(faceQuadInner.localPoint(l));
       
       double faceVol = unitNormal.two_norm();
       unitNormal *= 1.0/faceVol;

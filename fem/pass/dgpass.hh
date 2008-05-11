@@ -88,6 +88,7 @@ namespace Dune {
 
     // Types extracted from the underlying grids
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
     typedef typename GridType::template Codim<0>::Geometry Geometry;
 
 
@@ -264,12 +265,13 @@ namespace Dune {
         IntersectionIteratorType endnit = gridPart_.iend(en);
         for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
         {
+          const IntersectionType& inter=*nit;
           double nbvol;
           double wspeedS = 0.0;
-          if (nit.neighbor()) 
+          if (inter.neighbor()) 
           {
             // get neighbor 
-            EntityPointerType ep = nit.outside();
+            EntityPointerType ep = inter.outside();
             EntityType & nb = *ep;
       
             if ( ! visited_[ indexSet_.index( nb ) ] ) 
@@ -279,12 +281,12 @@ namespace Dune {
 
               typedef TwistUtility<GridType> TwistUtilityType;
               // for conforming situations apply Quadrature given
-              if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
+              if( TwistUtilityType::conforming(gridPart_.grid(),inter) )
               {
-                FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+                FaceQuadratureType faceQuadInner(gridPart_, inter, faceQuadOrd_,
                                                  FaceQuadratureType::INSIDE);
           
-                FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
+                FaceQuadratureType faceQuadOuter(gridPart_, inter, faceQuadOrd_,
                                                  FaceQuadratureType::OUTSIDE);
                 // apply neighbor part, return is volume of neighbor which is
                 // needed below 
@@ -306,11 +308,11 @@ namespace Dune {
                   NonConformingFaceQuadratureType;
 
                 NonConformingFaceQuadratureType 
-                    nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
+                    nonConformingFaceQuadInner(gridPart_, inter, faceQuadOrd_,
                                                NonConformingFaceQuadratureType::INSIDE);
 
                 NonConformingFaceQuadratureType 
-                    nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
+                    nonConformingFaceQuadOuter(gridPart_,inter, faceQuadOrd_,
                                                NonConformingFaceQuadratureType::OUTSIDE);
 
                 // apply neighbor part, return is volume of neighbor which is
@@ -329,9 +331,9 @@ namespace Dune {
               
           } // end if neighbor
 
-          if (nit.boundary()) 
+          if (inter.boundary()) 
           {
-            FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_, 
+            FaceQuadratureType faceQuadInner(gridPart_, inter, faceQuadOrd_, 
                                              FaceQuadratureType::INSIDE);
             nbvol = vol;
             caller_.setNeighbor(en);
