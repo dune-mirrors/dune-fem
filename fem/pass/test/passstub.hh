@@ -1,15 +1,16 @@
 #ifndef DUNE_PASSSTUB_HH
 #define DUNE_PASSSTUB_HH
 
-#include <dune/fem/space/lagrangespace.hh>
-#include <dune/grid/common/gridpart.hh>
-#include <dune/fem/function/adaptivefunction.hh>
-#include "../pass.hh"
-#include "../discretemodel.hh"
-
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+#include <dune/grid/common/gridpart.hh>
 
-namespace Dune {
+#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include "dune/fem/pass/pass.hh"
+#include "dune/fem/pass/discretemodel.hh"
+
+namespace Dune
+{
 
   class ProblemStub;
 
@@ -30,22 +31,29 @@ namespace Dune {
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
   };
 
-  template <class PreviousPassImp>
-  class PassStub : public Pass<PassStubTraits<GridType> , PreviousPassImp> 
+  template< class PreviousPass, int pId = -1 >
+  class PassStub
+  : public Pass< PassStubTraits< GridType >, PreviousPass, pId >
   {
+    typedef PassStub< PreviousPass, pId > ThisType;
+    typedef Pass< PassStubTraits< GridType >, PreviousPass, pId > BaseType;
+
   public:
-    typedef PassStubTraits<GridType> PassStubTraitsType;
-    typedef Pass<PassStubTraitsType , PreviousPassImp> BaseType;
+    typedef PassStubTraits< GridType > PassStubTraitsType;
+    typedef PreviousPass PreviousPassType;
+
     typedef typename BaseType::TotalArgumentType ArgumentType;
     typedef typename PassStubTraitsType::DestinationType DestinationType;
+
   public:
-    PassStub(PreviousPassImp& prev) :
-      BaseType(prev) {}
+    explicit PassStub( PreviousPassType &previousPass )
+    : BaseType( previousPass )
+    {}
       
     virtual void compute(const ArgumentType& arg, DestinationType& dest) const
     {}
+
     virtual void allocateLocalMemory() {}
-  private:
   };
 
 
