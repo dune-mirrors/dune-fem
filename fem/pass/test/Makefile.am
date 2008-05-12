@@ -1,9 +1,9 @@
 # IGNORE_HEADERS
 
-SUBDIRS = dgellipt
+# SUBDIRS = dgellipt
 
 # test programs 
-check_PROGRAMS = tester 
+# check_PROGRAMS = tester 
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
