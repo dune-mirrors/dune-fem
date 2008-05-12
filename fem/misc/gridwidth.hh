@@ -39,7 +39,7 @@ namespace Dune
       for(IntersectionIteratorType it = gridPart.ibegin(en);
           it != endit; ++it)
       {
-        double face = it.integrationOuterNormal(tmp1).two_norm();
+        double face = it->integrationOuterNormal(tmp1).two_norm();
         minFace = std::max(minFace,face);
       }
       return fak*vol/minFace;
@@ -94,7 +94,7 @@ namespace Dune
       for(IntersectionIteratorType it = en.ileafbegin();
           it != endit; ++it)
       {
-        const double face = it.integrationOuterNormal(tmp1).two_norm();
+        const double face = it->integrationOuterNormal(tmp1).two_norm();
         p.first  = std::min( p.first , face);
         p.second = std::max( p.second, face);
       }

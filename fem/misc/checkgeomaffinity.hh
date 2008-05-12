@@ -116,11 +116,12 @@ protected:
       for(IntersectionIteratorType nit = en.ilevelbegin();
           nit != endnit; ++nit)
       {
-        if( ! checkIntersection(nit) ) return false;
+        const typename IntersectionIteratorType::Intersection& inter=*nit;
+        if( ! checkIntersection(inter) ) return false;
 
-        if( nit.neighbor() )
+        if( inter.neighbor() )
         {
-          EntityPointerType ep = nit.outside();
+          EntityPointerType ep = inter.outside();
           const EntityType& nb = *ep;
           const Geometry& nbGeo = nb.geometry();
           
@@ -130,7 +131,7 @@ protected:
           diff /= diff.two_norm();
 
           // scalar product should be 1 or -1 
-          if( std::abs(std::abs((diff * nit.unitOuterNormal(mid))) - 1.0) > 1e-12 ) return false;
+          if( std::abs(std::abs((diff * inter.unitOuterNormal(mid))) - 1.0) > 1e-12 ) return false;
         }
       }
     }
@@ -172,12 +173,12 @@ protected:
 
 public:  
   // check that element is provided following the DUNE reference cube  
-  template <class IntersectionIteratorType>
-  static bool checkIntersection(const IntersectionIteratorType& nit)  
+  template <class IntersectionType>
+  static bool checkIntersection(const IntersectionType& nit)  
   {     
     if ( ! nit.intersectionGlobal().type().isCube() ) return false;
         
-    typedef typename IntersectionIteratorType :: Entity EntityType;
+    typedef typename IntersectionType :: Entity EntityType;
     typedef typename EntityType :: ctype ctype; 
     enum { dimworld = EntityType :: dimensionworld }; 
 
