@@ -90,7 +90,7 @@ namespace Dune {
    *  ...
    *  femTimer.start(id,2);
    *  f2(); // call to a second function
-   *  femTimer.end(id,1);
+   *  femTimer.end(id,2);
    *  ...
    *  femTimer.end(id);
    *  \endcode
@@ -127,7 +127,19 @@ class FemTimer {
                output_(),
                stepCount_(0),
                changed_(true)
-  {}
+  {
+    push_time();
+  }
+  ~FemTimer() {
+    double totalTime = pop_time();
+    std::cout << "#  ******** TOTAL RUNTIME: " << totalTime 
+              << "   ******** " << std::endl;
+    if (output_.is_open()) {
+      output_ << "#  ******** TOTAL RUNTIME: " << totalTime
+              << "   ******** " << std::endl;
+      output_.close();
+    }
+  }
   void push_time() {
     timesS_.push(timer_.elapsed());
   }
@@ -136,13 +148,25 @@ class FemTimer {
     timesS_.pop();
     return ret;
   }
+  // ********************************************************
   unsigned int add(const std::string& name,int nr) {
-    startTimesV_.push_back(std::vector<double>(nr));
-    timesV_.push_back(std::vector<double>(nr));
-    timesVName_.push_back(name);
-    reset_timer(timesV_.size()-1);
+    int id;
+    for (id=0;id<int(timesV_.size());++id) {
+      if (timesV_[id].size()==0) 
+        break;
+    }
+    if (id==int(timesV_.size())) {
+      startTimesV_.push_back(std::vector<double>(nr));
+      timesV_.push_back(std::vector<double>(nr));
+      timesVName_.push_back(name);
+    } else {
+      startTimesV_[id] = std::vector<double>(nr);
+      timesV_[id] = std::vector<double>(nr);
+      timesVName_[id] = name;
+    }
+    reset_timer(id);
     changed_=true;
-    return timesV_.size()-1;
+    return id;
   }
   void remove(unsigned int id) {
     timesV_[id].clear();
@@ -156,17 +180,22 @@ class FemTimer {
     timesVName_.clear();
     changed_=true;
   }
-  void start_timer(int id,int nr) {
+  // ******************************************
+  void start_timer(int id,int nr)
+  {
     startTimesV_[id][nr] = timer_.elapsed();
+    assert( startTimesV_[ id ][ 0 ] >= 0. );
   }
   double stop_timer(int id,int nr) {
-    double ret = timer_.elapsed()-
-                 startTimesV_[id][nr]; 
+    assert( (startTimesV_[ id ][ nr ] >= 0.) && (startTimesV_[ id ][ 0 ] >= 0.) );
+    double ret = timer_.elapsed() - startTimesV_[id][nr];
+    startTimesV_[ id ][ nr ] = -1.;
     timesV_[id][nr] += ret;
     return ret;
   }
   void reset_timer(int id,int nr) {
     timesV_[id][nr] = 0.;
+    startTimesV_[ id ][ nr ] = -1.;
   }
   void reset_timer(int id) {
     for (unsigned int i=0;i<timesV_[id].size();++i)
@@ -176,6 +205,7 @@ class FemTimer {
     for (unsigned int i=0;i<timesV_.size();++i)
       reset_timer(i);
   }
+  // *****************************************************
   void print_timer(std::ostream& out,int id) {
     out << "(" << timesVName_[id] << ":";
     out << timesV_[id][0];
@@ -189,21 +219,21 @@ class FemTimer {
       print_timer(out,i);
     out << std::endl;
   }
-  // write in milli seconds
   inline size_t inMS(const double t) 
   {
     return (size_t (t * 1e3));
   }
-  inline size_t inProz(const double p) 
+  inline size_t inProz(const double p,double rel) 
   {
-    return (size_t (p * 1e2));
+    size_t ret = (size_t)((p / rel) * 100.);
+    return std :: min( ret, size_t(100) );
   }
   void printToFile() {
     for (unsigned int i=0;i<timesV_.size();++i) {
       if (timesV_[i].size()>0) {
         output_ << std::setw(6) << inMS(timesV_[i][0]) << " ( ";
         for (unsigned int nr=1;nr<timesV_[i].size();++nr) {
-          output_ << std::setw(3) << inProz(timesV_[i][nr]/timesV_[i][0])
+          output_ << std::setw(3) << inProz(timesV_[i][nr],timesV_[i][0])
                   << "% ";
         }
         output_ << ") ";
@@ -242,6 +272,7 @@ class FemTimer {
       changed_=true;
     }
     if (changed_) {
+      output_ << std::endl << std::endl;
       output_ << std::setw(12) << "Time" << " ";
       output_ << std::setw(12) << "dt" << " ";
       for (unsigned int i=0;i<timesV_.size();++i) {
@@ -260,6 +291,8 @@ class FemTimer {
     }
     stepCount_++;
   }
+  // **************************************
+  // **************************************
   // **************************************
   public:
   static FemTimer& instance() {
@@ -302,13 +335,11 @@ class FemTimer {
   static void print(std::ostream& out,const std::string msg="") {
     instance().print_timer(out,msg);
   }
-  static void printFile(const std::string& fileName,
-                        int step=1) {
+  static void printFile(const std::string& fileName, int step=1) {
     instance().printToFile(fileName,step);
   }
   static void printFile(const TimeProviderBase& tp,
-                        const std::string& fileName,
-                        int step=1) {
+                        const std::string& fileName, int step=1) {
     instance().printToFile(tp,fileName,step);
   }
 };
@@ -355,12 +386,10 @@ class FemTimer {
   }
   static void print(std::ostream& out,const std::string msg="") {
   }
-  static void printFile(const std::string& fileName,
-                        int step=1) {
+  static void printFile(const std::string& fileName, int step=1) {
   }
   static void printFile(const TimeProviderBase& tp,
-                        const std::string& fileName,
-                        int step=1) {
+                        const std::string& fileName, int step=1) {
   }
 };
 #endif
