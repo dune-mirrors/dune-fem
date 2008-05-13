@@ -14,17 +14,18 @@ namespace Dune
 
 
 
-  template< class GridImp >
+  template< class Grid >
   class PeriodicLeafIntersectionIterator
   {
-  public:
-    typedef GridImp GridType;
-
-  private:
-    typedef PeriodicLeafIntersectionIterator< GridType > ThisType;
-
+    typedef PeriodicLeafIntersectionIterator< Grid > ThisType;
+      
     template< class, PartitionIteratorType >
     friend class PeriodicLeafGridPart;
+
+  public:
+    typedef Grid GridType;
+
+    typedef ThisType Intersection;
 
   protected:
     typedef typename GridType :: template Codim< 0 > :: Entity Codim0EntityType;
@@ -63,14 +64,12 @@ namespace Dune
     inline explicit
     PeriodicLeafIntersectionIterator ( WrappedIteratorType wrappedIterator )
     : wrappedIterator_( wrappedIterator )
-    {
-    };
+    {}
 
   public:
     inline PeriodicLeafIntersectionIterator ( const ThisType &other )
     : wrappedIterator_( other.wrappedIterator_ )
-    {
-    }
+    {}
 
     inline ThisType &operator= ( const ThisType &other )
     {
@@ -82,6 +81,16 @@ namespace Dune
     {
       ++wrappedIterator_;
       return *this;
+    }
+
+    inline const Intersection &operator* () const
+    {
+      return *this;
+    }
+
+    inline const Intersection *operator-> () const
+    {
+      return this;
     }
 
     inline bool operator== ( const ThisType &other ) const
@@ -108,18 +117,18 @@ namespace Dune
     inline int neighbor () const
     {
       // IntersectionIterator specifies that we should return true!
-      return wrappedIterator_.neighbor();
+      return wrappedIterator_->neighbor();
     }
 
     inline EntityPointer inside () const
     {
-      return wrappedIterator_.inside();
+      return wrappedIterator_->inside();
     }
 
     inline EntityPointer outside () const
     {
-      if( wrappedIterator_.neighbor() )
-        return wrappedIterator_.outside();
+      if( wrappedIterator_->neighbor() )
+        return wrappedIterator_->outside();
       else
         DUNE_THROW( NotImplemented, "PeriodicLeafIntersectionIteratorWrapper: "
                                     "outside on boundary not implemented yet." );
@@ -127,13 +136,13 @@ namespace Dune
 
     inline const LocalGeometry &intersectionSelfLocal () const
     {
-      return wrappedIterator_.intersectionSelfLocal();
+      return wrappedIterator_->intersectionSelfLocal();
     }
 
     inline const LocalGeometry &intersectionNeighborLocal () const
     {
-      if( wrappedIterator_.neighbor() )
-        return wrappedIterator_.intersectionNeighborLocal();
+      if( wrappedIterator_->neighbor() )
+        return wrappedIterator_->intersectionNeighborLocal();
       else
         DUNE_THROW( NotImplemented, "PeriodicLeafIntersectionIteratorWrapper: "
                                     "outside on boundary not implemented yet." );
@@ -141,32 +150,32 @@ namespace Dune
 
     inline const Geometry &intersectionGlobal () const
     {
-      return wrappedIterator_.intersectionGlobal();
+      return wrappedIterator_->intersectionGlobal();
     }
 
     inline int numberInSelf () const
     {
-      return wrappedIterator_.numberInSelf();
+      return wrappedIterator_->numberInSelf();
     }
 
     inline int numberInNeighbor () const
     {
-      return wrappedIterator_.numberInNeighbor();
+      return wrappedIterator_->numberInNeighbor();
     }
 
     inline DomainType outerNormal ( const LocalDomainType &x ) const
     {
-      return wrappedIterator_.outerNormal( x );
+      return wrappedIterator_->outerNormal( x );
     }
 
     inline DomainType integrationOuterNormal ( const LocalDomainType &x ) const
     {
-      return wrappedIterator_.integrationOuterNormal( x );
+      return wrappedIterator_->integrationOuterNormal( x );
     }
 
     inline DomainType unitOuterNormal ( const LocalDomainType &x ) const
     {
-      return wrappedIterator_.unitOuterNormal( x );
+      return wrappedIterator_->unitOuterNormal( x );
     }
 
   protected:
