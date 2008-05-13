@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = test
+#SUBDIRS = test
 
 passdir =  $(includedir)/dune/fem/pass
 pass_HEADERS = callerutility.hh  createpass.hh insertfunctionpass.hh \
