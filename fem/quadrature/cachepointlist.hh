@@ -214,7 +214,7 @@ namespace Dune
      *        ElementIntegrationPointList<GridPartImp,1>).
      * 
      *  \param[in]  gridPart      grid partition
-     *  \param[in]  intersection  intersection iterator
+     *  \param[in]  intersection  intersection
      *  \param[in]  order         desired order of the quadrature
      *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
      *                            which the ElementQuadrature shall be created

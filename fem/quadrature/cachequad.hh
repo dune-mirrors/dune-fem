@@ -153,9 +153,9 @@ namespace Dune
     typedef typename BaseType::CoordinateType CoordinateType;
 
     //! Type of the intersection iterator
-    typedef typename BaseType::IntersectionIterator IntersectionIterator;
-    typedef typename IntersectionIterator::Intersection IntersectionType;
-
+    typedef typename BaseType :: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType :: Intersection IntersectionType;
+    
     //! type of quadrature used for non-conforming intersections  
     typedef ElementQuadrature< GridPartImp, codimension > NonConformingQuadratureType; 
 
@@ -170,25 +170,26 @@ namespace Dune
      *        ElementQuadrature<GridPartImp,1>).
      * 
      *  \param[in]  gridPart      grid partition
-     *  \param[in]  intersection  intersection iterator
+     *  \param[in]  intersection  intersection
      *  \param[in]  order         desired order of the quadrature
      *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
      *                            which the ElementQuadrature shall be created
      */
     CachingQuadrature( const GridPartType &gridPart, 
-                       const IntersectionIterator &intersection,
-                       int order,
-                       typename BaseType :: Side side )
-    : BaseType(gridPart,*intersection, order, side)
-    {
-    }
-    CachingQuadrature( const GridPartType &gridPart, 
                        const IntersectionType &intersection,
                        int order,
                        typename BaseType :: Side side )
-    : BaseType(gridPart,intersection, order, side)
-    {
-    }
+    : BaseType( gridPart, intersection, order, side )
+    {}
+
+    CachingQuadrature( const GridPartType &gridPart, 
+                       const typename PhonyIntersectionIterator
+                         < IntersectionType, IntersectionIteratorType > :: Type
+                         &intersection, 
+                       int order,
+                       typename BaseType :: Side side ) DUNE_DEPRECATED
+    : BaseType(gridPart,*intersection, order, side)
+    {}
 
     /** \brief copy constructor
      *

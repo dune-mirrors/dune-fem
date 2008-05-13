@@ -269,7 +269,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in]  gridPart      grid partition (a dummy here)
-     *  \param[in]  intersection  intersection iterator
+     *  \param[in]  intersection  intersection
      *  \param[in]  order         desired order of the quadrature
      *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
      *                            which the ElementQuadrature shall be created

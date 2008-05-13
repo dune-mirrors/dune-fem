@@ -30,6 +30,7 @@ misc_HEADERS = adaptiveindexmapper.hh \
                longexample.cc \
                metaprogramming.hh \
                nonconformitylevel.hh \
+	       phonyiit.hh \
 	       probeutility.hh \
 	       suite.cc \
 	       suite.hh \
