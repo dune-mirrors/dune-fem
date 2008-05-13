@@ -70,8 +70,6 @@ AC_CONFIG_FILES([Makefile
      doc/doxygen/Makefile
      fem/Makefile
      fem/pass/Makefile
-     fem/pass/test/Makefile
-     fem/pass/test/dgellipt/Makefile
      fem/space/Makefile
      fem/space/test/Makefile
      fem/space/basefunctions/Makefile
@@ -130,4 +128,6 @@ AC_CONFIG_FILES([Makefile
      scripts/check-header.sh
      dune-fem.pc])
 AC_OUTPUT
+#     fem/pass/test/Makefile
+#     fem/pass/test/dgellipt/Makefile
 
