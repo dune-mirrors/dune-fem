@@ -455,7 +455,8 @@ namespace Dune {
       // type of codim 0 entity      
       typedef typename GridPartType::GridType::template Codim<0>::EntityPointer EntityPointerCodim0Type;
       typedef typename GridPartType::GridType::template Codim<0>::Entity EntityCodim0Type;
-      
+      typedef IntersectionIteratorWrapper<GridPartType,IteratorType>
+        ThisType;
     private:
       struct neighborInfo {   
         public:
@@ -519,6 +520,7 @@ namespace Dune {
         }
     
       public:
+        typedef ThisType Intersection;
         //! increment intersection iterator 
         inline IntersectionIteratorWrapper & operator++()
         {         
@@ -537,6 +539,7 @@ namespace Dune {
         inline int boundaryId() const { return nInfo.boundaryId_; }
         //! overloaded neighbor method 
         inline bool neighbor() const { return nInfo.neighbor_; }
+        inline const Intersection& operator*() const { return *this; }
 
       protected:
         //! return reference to base class 
