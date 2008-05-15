@@ -229,19 +229,31 @@ namespace Dune
     inline explicit SelectorPair ( const BaseType &other )
     : BaseType( other )
     {}
+    
+    template< int id >
+    inline const typename Get< id > :: Type &get () const
+    {
+      return Element< id > :: get( *this );
+    }
+
+    template< int id >
+    inline typename Get< id > :: Type &get ()
+    {
+      return Element< id > :: get( *this );
+    }
 
     template< int id >
     inline const typename Get< id > :: Type &
     operator[] ( const Int2Type< id > idVariable ) const
     {
-      return Element< id > :: get( *this );
+      return get< id >();
     }
 
     template< int id >
     inline typename Get< id > :: Type &
     operator[] ( const Int2Type< id > idVariable )
     {
-      return Element< id > :: get( *this );
+      get< id >();
     }
   };
 
