@@ -121,9 +121,12 @@ namespace Dune
     typedef Parameter ThisType;
 
   private:
+    typedef std :: map< std :: string, std :: string > ParameterMapType;
+
+  private:
     std :: string curFileName_;
     int curLineNumber_;
-    std :: map< std :: string, std :: string > params_;
+    ParameterMapType params_;
     bool verbose_;
     
   private:
@@ -140,39 +143,48 @@ namespace Dune
       return theInstance;
     }
 
+    inline const std :: string *find ( const std :: string &key )
+    {
+      ParameterMapType :: iterator it = params_.find( key );
+      return (it != params_.end()) ? &(it->second) : 0;
+    }
+
     inline const std :: string &map ( const std :: string &key )
     {
-      if( params_.find( key ) == params_.end() )
-      {
-        std :: ostringstream message;
-        message << "Parameter '" << key << "' not found.";
-        DUNE_THROW( ParameterNotFound, message.str() );
-      }
-      return params_[ key ];
+      const std :: string *value = find( key );
+      if( value != 0 )
+        return *value;
+
+      std :: ostringstream message;
+      message << "Parameter '" << key << "' not found.";
+      DUNE_THROW( ParameterNotFound, message.str() );
     }
 
     inline const std :: string &map ( const std :: string &key,
                                       const std :: string &value,
                                       bool verbFound = false)
     {
-      if( params_.find( key ) == params_.end() )
+      std :: pair< ParameterMapType :: iterator, bool > info
+        = params_.insert( std :: make_pair( key, value ) );
+
+      if( !info.second )
       {
-        if( verbose_ ) {
-          std :: cout << curFileName_ << "[" << curLineNumber_ << "]"
-                      << " : ";
-          std :: cout << "Adding " << key << " = " << value
-                      << std :: endl;
+        if( verbose_ )
+        {
+          std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
+          std :: cout << "Adding " << key << " = " << value << std :: endl;
         }
-        params_[ key ] = value;
       }
-      else if (verbFound && verbose_) {
-        std :: cout << curFileName_ << "[" << curLineNumber_ << "]"
-                    << " : ";
-        std :: cout << "Ignored " << key << " = " << value
-                    << " using " << params_[key]
-                    << std::endl;
+      else
+      {
+        if (verbFound && verbose_)
+        {
+          std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
+          std :: cout << "Ignored " << key << " = " << value
+                      << ", using " << info.first->second << std::endl;
+        }
       }
-      return params_[ key ];
+      return info.first->second;
     }
 
     inline bool insert ( const std :: string &s,
@@ -330,6 +342,18 @@ namespace Dune
 	      }
       }
       instance().processIncludes( includes );
+    }
+    
+    /** \brief find out, whether a parameter is defined in the container
+     *
+     *  \param[in]   key    name of the parameter to check
+     *
+     *  \returns \b true, if the parameter is found in the container,
+     *           \b false otherwise
+     */
+    inline static bool exists ( const std :: string &key )
+    {
+      return (instance().find( key ) != 0);
     }
 
     /** \brief get a mandatory parameter from the container
@@ -551,7 +575,6 @@ namespace Dune
         out << it->first << ": " << it->second << std :: endl;
 
     }
-
   };
   
 }
