@@ -34,7 +34,12 @@ namespace Dune {
     //! The type of the next stage of the filter.
     typedef Filter<ArgTupleImp, typename SelectorType::Type2> NextFilterType;
     //! The filtered tuple resulting from this filter stage.
-    typedef Pair<AppendType, typename NextFilterType::ResultType> ResultType;
+    // typedef Pair<AppendType, typename NextFilterType::ResultType> ResultType;
+    
+    typedef SelectorPair
+      < SelectorType, AppendType, typename NextFilterType :: ResultType >
+      ResultType;
+    
     
     //! Extracts the elements specified by the selector template argument.
     //! \param arg Argument tuple.
@@ -131,8 +136,27 @@ namespace Dune {
    * function (plus a copy constructor...)
    * \note Don't forget to delete the local functions in the end!
    */
-  template <class DFTupleType>
-  class LocalFunctionCreator {};
+  template< class DFTupleType >
+  class LocalFunctionCreator
+  {};
+
+  template< class Selector, class Head, class Tail >
+  class LocalFunctionCreator< SelectorPair< Selector, Head, Tail > >
+  : public LocalFunctionCreator< Pair< Head, Tail > >
+  {
+    typedef LocalFunctionCreator< Pair< Head, Tail > > BaseType;
+
+  public:
+    typedef typename BaseType :: ResultType PairResultType;
+    typedef SelectorPair
+      < Selector, typename PairResultType :: Type1, typename PairResultType :: Type2 >
+      ResultType;
+
+    static inline ResultType apply( const Pair< Head, Tail > &pairs )
+    {
+      return ResultType( BaseType :: apply( pairs ) );
+    }
+  };
 
   /**
    * @brief Specialisation for standard tuple element
@@ -182,7 +206,32 @@ namespace Dune {
    * @brief Generates a tuple based on types defined by another tuple.
    */
   template <template <class> class TypeEvaluator, class LFTupleType>
-  class Creator {};
+  class Creator
+  {};
+
+  template< template< class > class TypeEvaluator,
+            class Selector, class Head, class Tail >
+  class Creator< TypeEvaluator, SelectorPair< Selector, Head, Tail > >
+  : public Creator< TypeEvaluator, Pair< Head, Tail > >
+  {
+    typedef Creator< TypeEvaluator, Pair< Head, Tail > > BaseType;
+
+  public:
+    typedef typename BaseType :: ResultType PairResultType;
+    typedef SelectorPair
+      < Selector, typename PairResultType :: Type1, typename PairResultType :: Type2 >
+      ResultType;
+
+    static inline ResultType apply ()
+    {
+      return ResultType( BaseType :: apply() );
+    }
+    
+    static inline ResultType apply ( Pair< Head, Tail > &pairs )
+    {
+      return ResultType( BaseType :: apply( pairs ) );
+    }
+  };
   
   /**
    * @brief Specialisation for standard element.

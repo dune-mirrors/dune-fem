@@ -759,6 +759,94 @@ namespace Dune{
 namespace Dune
 {
 
+#if 0
+  // makeTuple
+  // ---------
+  
+  template< class T1 >
+  inline Tuple< T1 >
+  makeTuple ( const T1 &p1 )
+  {
+    typedef Tuple< T1 > TupleType;
+    return TupleType( p1 );
+  }
+
+  template< class T1, class T2 >
+  inline Tuple< T1, T2 >
+  makeTuple ( const T1 &p1, const T2 &p2 )
+  {
+    typedef Tuple< T1, T2 > TupleType;
+    return TupleType( p1, p2 );
+  }
+  
+  template< class T1, class T2, class T3 >
+  inline Tuple< T1, T2, T3 >
+  makeTuple ( const T1 &p1, const T2 &p2, const T3 &p3 )
+  {
+    typedef Tuple< T1, T2, T3 > TupleType;
+    return TupleType( p1, p2, p3 );
+  }
+  
+  template< class T1, class T2, class T3, class T4 >
+  inline Tuple< T1, T2, T3, T4 >
+  makeTuple ( const T1 &p1, const T2 &p2, const T3 &p3, const T4 &p4 )
+  {
+    typedef Tuple< T1, T2, T3, T4 > TupleType;
+    return TupleType( p1, p2, p3, p4 );
+  }
+  
+  template< class T1, class T2, class T3, class T4, class T5 >
+  inline Tuple< T1, T2, T3, T4, T5 >
+  makeTuple ( const T1 &p1, const T2 &p2, const T3 &p3, const T4 &p4,
+              const T5 &p5 )
+  {
+    typedef Tuple< T1, T2, T3, T4, T5 > TupleType;
+    return TupleType( p1, p2, p3, p4, p5 );
+  }
+  
+  template< class T1, class T2, class T3, class T4, class T5, class T6 >
+  inline Tuple< T1, T2, T3, T4, T5, T6 >
+  makeTuple ( const T1 &p1, const T2 &p2, const T3 &p3, const T4 &p4,
+              const T5 &p5, const T6 &p6 )
+  {
+    typedef Tuple< T1, T2, T3, T4, T5, T6 > TupleType;
+    return TupleType( p1, p2, p3, p4, p5, p6 );
+  }
+  
+  template< class T1, class T2, class T3, class T4, class T5, class T6,
+            class T7 >
+  inline Tuple< T1, T2, T3, T4, T5, T6, T7 >
+  makeTuple ( const T1 &p1, const T2 &p2, const T3 &p3, const T4 &p4,
+              const T5 &p5, const T6 &p6, const T7 &p7 )
+  {
+    typedef Tuple< T1, T2, T3, T4, T5, T6, T7 > TupleType;
+    return TupleType( p1, p2, p3, p4, p5, p6, p7 );
+  }
+  
+  template< class T1, class T2, class T3, class T4, class T5, class T6,
+            class T7, class T8 >
+  inline Tuple< T1, T2, T3, T4, T5, T6, T7, T8 >
+  makeTuple ( const T1 &p1, const T2 &p2, const T3 &p3, const T4 &p4,
+              const T5 &p5, const T6 &p6, const T7 &p7, const T8 &p8 )
+  {
+    typedef Tuple< T1, T2, T3, T4, T5, T6, T7, T8 > TupleType;
+    return TupleType( p1, p2, p3, p4, p5, p6, p7, p8 );
+  }
+  
+  template< class T1, class T2, class T3, class T4, class T5, class T6,
+            class T7, class T8, class T9 >
+  inline Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 >
+  makeTuple ( const T1 &p1, const T2 &p2, const T3 &p3, const T4 &p4,
+              const T5 &p5, const T6 &p6, const T7 &p7, const T8 &p8,
+              const T9 &p9 )
+  {
+    typedef Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > TupleType;
+    return TupleType( p1, p2, p3, p4, p5, p6, p7, p8, p9 );
+  }
+#endif
+
+
+
   /**
    * @brief Read a pair or  Tuple.
    */

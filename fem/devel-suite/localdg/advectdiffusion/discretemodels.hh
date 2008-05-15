@@ -308,6 +308,7 @@ namespace Dune {
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       const UType& argULeft = Element<0>::get(uLeft);
       const UType& argURight = Element<0>::get(uRight);
+
       JacobianRangeType diffmatrix;
       RangeType diffflux(0.);
       /* central differences      
@@ -558,12 +559,21 @@ namespace Dune {
                          RangeType& gLeft,
                          RangeType& gRight)
     { 
+      /*
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
       const UType& argULeft = Element<0>::get(uLeft);
       const UType& argURight = Element<0>::get(uRight);
+      */
+
+      Int2Type< 0 > idVariable;
+      
+      typedef typename ArgumentTuple :: template Get< 0 > ::Type UType;
+      const UType& argULeft = uLeft[ idVariable ];
+      //const UType& argURight = uRight[ idVariable ];
+      
       // Advection
       double ldt=numflux_.
-	numericalFlux(it,time,x,argULeft,argURight,gLeft,gRight);
+	numericalFlux(it,time,x,argULeft,uRight[ idVariable ],gLeft,gRight);
       return ldt;
     }
 

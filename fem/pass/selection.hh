@@ -6,7 +6,9 @@
 #include <dune/fem/misc/utility.hh> 
 #include <dune/fem/pass/pass.hh>
 
-namespace Dune {
+namespace Dune
+{
+
   /**
    * @brief Converts a selector definition to a set of pairs.
    *
@@ -191,6 +193,56 @@ namespace Dune {
   struct SelectorPrint< Nil >
   {
     static void apply() {}
+  };
+
+
+
+  template< class Selector, class Head, class Tail >
+  struct SelectorPair
+  : public Pair< Head, Tail >
+  {
+    typedef SelectorPair< Selector, Head, Tail > ThisType;
+    typedef Pair< Head, Tail > BaseType;
+
+  public:
+    // For compatibility with ElementAccess, ElementType
+    typedef BaseType FirstPair;
+
+    typedef Selector SelectorType;
+
+    template< int id >
+    struct Get
+    {
+      typedef typename ElementType< id, ThisType > :: Type Type;
+    };
+
+  public:
+    inline SelectorPair ( typename TupleAccessTraits< Head > :: ParameterType head,
+                          Tail &tail )
+    : BaseType( head, tail )
+    {}
+
+    inline SelectorPair ( const ThisType &other )
+    : BaseType( other )
+    {}
+
+    inline explicit SelectorPair ( const BaseType &other )
+    : BaseType( other )
+    {}
+
+    template< int id >
+    inline const typename Get< id > :: Type &
+    operator[] ( const Int2Type< id > idVariable ) const
+    {
+      return Element< id > :: get( *this );
+    }
+
+    template< int id >
+    inline typename Get< id > :: Type &
+    operator[] ( const Int2Type< id > idVariable )
+    {
+      return Element< id > :: get( *this );
+    }
   };
 
 } // end namespace Dune
