@@ -141,8 +141,10 @@ namespace Dune
    * Here, MyEvaluator is a helper struct that extracts the correct type from
    * the storage types of the tuple defined by the tuple ATuple.
    */
-  template <template <class> class TypeEvaluator, class TupleType>
-  struct ForEachType {};
+  template< template< class > class TypeEvaluator, class TupleType >
+  struct ForEachType
+  : ForEachType< TypeEvaluator, typename TupleType :: FirstPair >
+  {};
 
   /**
    * @brief Specialisation for standard tuple element
