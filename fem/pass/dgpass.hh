@@ -95,11 +95,10 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CompatibleConvertSelector< ThisType , SelectorType 
-               , ThisType::passId == -1 > CompatibleConvertSelectorType;
+    typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
     typedef DiscreteModelCaller< DiscreteModelType 
                                  , ArgumentType 
-                                 , CompatibleConvertSelectorType
+                                 , CombinedSelectorType
                                > DiscreteModelCallerType;
 
     // type of Communication Manager 

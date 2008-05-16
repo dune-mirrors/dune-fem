@@ -139,13 +139,7 @@ namespace Dune {
   {
   public:
 
-    //enum PassIdType{ u = 0 , pass1 = 5 , pass2 = 24 };  
-    struct PassIdType
-    { 
-      static const int u = 0; 
-      static const int pass1 = 5; 
-      static const int pass2 = 24; 
-    };  
+    enum PassIdType{ u = 25 , pass1 = 5 , pass2 = 24 };  
 
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
@@ -153,14 +147,13 @@ namespace Dune {
     typedef NumFlux<Model> NumFluxType;
     typedef typename Model::Traits::GridType GridType;
 
-    typedef AdvDiffDModel3< Model , NumFluxType , polOrd
-              , PassIdType::u > DiscreteModel2Type;
+    typedef AdvDiffDModel3< Model , NumFluxType , polOrd , u > DiscreteModel2Type;
      typedef typename DiscreteModel2Type::Traits Traits2;
 
     typedef typename Traits2::DomainType DomainType;
     typedef typename Traits2::DiscreteFunctionType DiscreteFunction2Type;
-    typedef StartPass< DiscreteFunction2Type , PassIdType::u > Pass0Type;
-    typedef LocalDGPass<DiscreteModel2Type, Pass0Type, PassIdType::pass2 > Pass2Type;
+    typedef StartPass< DiscreteFunction2Type , u > Pass0Type;
+    typedef LocalDGPass<DiscreteModel2Type, Pass0Type, pass2 > Pass2Type;
 
     // typedef typename Traits2::SingleDiscreteFunctionSpaceType SDFSType;
     typedef typename Traits2::DiscreteFunctionSpaceType Space2Type;
@@ -233,13 +226,7 @@ namespace Dune {
   {
   public:
 
-    //enum PassIdType{ u = 0 , pass1 = 5 , pass2 = 24 };  
-    struct PassIdType
-    { 
-      static const int u = 0; 
-      static const int pass1 = 5; 
-      static const int pass2 = 24; 
-    };  
+    enum PassIdType{ u = 25 , pass1 = 5 , pass2 = 24 };  
     
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
@@ -247,20 +234,19 @@ namespace Dune {
     typedef NumFlux<Model> NumFluxType;
     typedef typename Model::Traits::GridType GridType;
 
-    typedef AdvDiffDModel1<Model,NumFluxType,polOrd
-              , PassIdType::u > DiscreteModel1Type;
+    typedef AdvDiffDModel1<Model,NumFluxType,polOrd , u > DiscreteModel1Type;
     
     typedef AdvDiffDModel4< Model , NumFluxType , polOrd
-              , PassIdType::u , PassIdType::pass1 > DiscreteModel2Type;
+              , u , pass1 > DiscreteModel2Type;
     
     typedef typename DiscreteModel1Type::Traits Traits1;
     typedef typename DiscreteModel2Type::Traits Traits2;
 
     typedef typename Traits2::DomainType DomainType;
     typedef typename Traits2::DiscreteFunctionType DiscreteFunction2Type;
-    typedef StartPass< DiscreteFunction2Type , PassIdType::u > Pass0Type;
-    typedef LocalDGPass<DiscreteModel1Type, Pass0Type , PassIdType::pass1 > Pass1Type;
-    typedef LocalDGPass<DiscreteModel2Type, Pass1Type , PassIdType::pass2 > Pass2Type;
+    typedef StartPass< DiscreteFunction2Type , u > Pass0Type;
+    typedef LocalDGPass<DiscreteModel1Type, Pass0Type , pass1 > Pass1Type;
+    typedef LocalDGPass<DiscreteModel2Type, Pass1Type , pass2 > Pass2Type;
 
     typedef typename Traits1::DiscreteFunctionSpaceType 
       Space1Type;
@@ -340,13 +326,7 @@ namespace Dune {
   {
   public:
     
-    //enum PassIdType{ u = 0 , pass1 = 5 , pass2 = 24 };  
-    struct PassIdType
-    { 
-      static const int u = 0; 
-      static const int pass1 = 5; 
-      static const int pass2 = 24; 
-    };  
+    enum PassIdType{ u = 25 , pass1 = 5 , pass2 = 24 };  
     
     enum { dimRange = Model::dimRange };
     enum { dimDomain = Model::Traits::dimDomain };
@@ -358,15 +338,15 @@ namespace Dune {
     typedef LimiterDefaultDiscreteModel<PassTraits<Model,dimRange,polOrd>, Model> DiscreteModel1Type;
 
     typedef AdvDiffDModel4< Model , NumFluxType , polOrd
-              , PassIdType::u > DiscreteModel2Type;
+              , u > DiscreteModel2Type;
     typedef typename DiscreteModel1Type::Traits Traits1;
     typedef typename DiscreteModel2Type::Traits Traits2;
 
     typedef typename Traits2::DomainType DomainType;
     typedef typename Traits2::DiscreteFunctionType DiscreteFunction2Type;
-    typedef StartPass< DiscreteFunction2Type , PassIdType::u > Pass0Type;
-    typedef LimitDGPass<DiscreteModel1Type, Pass0Type , PassIdType::pass1 > Pass1Type;
-    typedef LocalDGPass<DiscreteModel2Type, Pass1Type , PassIdType::pass2 > Pass2Type;
+    typedef StartPass< DiscreteFunction2Type , u > Pass0Type;
+    typedef LimitDGPass<DiscreteModel1Type, Pass0Type , pass1 > Pass1Type;
+    typedef LocalDGPass<DiscreteModel2Type, Pass1Type , pass2 > Pass2Type;
 
     typedef typename Traits1::DiscreteFunctionSpaceType 
       Space1Type;

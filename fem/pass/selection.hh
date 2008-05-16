@@ -15,15 +15,7 @@ namespace Dune
    * A selector is a tuple where the integer constants are converted using
    * Int2Type and the end marker is mapped from -1 to Nil.
    */
-  template <int N1, 
-            int N2, 
-            int N3, 
-            int N4, 
-            int N5, 
-            int N6, 
-            int N7, 
-            int N8, 
-            int N9>
+  template <int N1, int N2, int N3, int N4, int N5, int N6, int N7, int N8, int N9>
   struct SelectorToPairs {
     typedef Pair<
       Int2Type<N1>, 
@@ -66,17 +58,17 @@ namespace Dune
   };
   
 
-  // go through pass tree and give pass number
-  // of which passId is equal to template-given id
+  /**
+   * @brief Gives back passNum of the pass which passId
+   * is equal to template-given id
+   *
+   */
   template< class Pass, int id >
   struct FindPass
   {
-    CompileTimeChecker< (Pass::passId != -1) > __USE_ONLY_ONE_TYPE_OF_SELECTOR_IN_ALL_DMODELS__;
-    //typedef typename Pass :: DiscreteModelType DMType;
+    //CompileTimeChecker< (Pass::passId != -1) > __USE_ONLY_ONE_TYPE_OF_SELECTOR_IN_ALL_DMODELS__;
     typedef typename Pass :: PreviousPassType PreviousPassType;
-    //enum {  passNum = ( (int)DMType::id == (int)id ? (int)Pass :: passNum
-    //                 : (int)FindPass< PreviousPassType, id > :: passNum ) };
-    enum {  passNum = ( (int)Pass::passId == (int)id ? (int)Pass :: passNum
+    enum { passNum = ( (int)Pass::passId == (int)id ? (int)Pass :: passNum
                      : (int)FindPass< PreviousPassType, id > :: passNum ) };
   private:
     // no need to have instance of this class
@@ -92,69 +84,36 @@ namespace Dune
   };
 
 
-    /**
-     *
-     * @brief Given a pass tree and a selector, that takes ids of passes
-     * it gives a selector that contains corresponding pass numbers.
-     *
-     */
-  template< class Pass, class Selector >
-  struct ConvertSelector;
-
-
-  // switch from type Selector to type SelectorToPoints = Selector :: Base
-  template< class Pass, int N1, int N2, int N3, int N4, int N5, int N6, int N7, int N8, int N9 >
-  struct ConvertSelector< Pass, Selector< N1, N2, N3, N4, N5, N6, N7, N8, N9 > >
-  : public ConvertSelector< Pass, typename Selector< N1, N2, N3, N4, N5, N6, N7, N8, N9 > :: Base >
-  {};
-
-
-  template< class Pass, int id, class Tail >
-  struct ConvertSelector< Pass, Pair< Int2Type< id >, Tail > >
+  /**
+   *
+   * @brief Converts passId to passDiff ( number which tells how much to count
+   * backwards from the last pass to get the pass which passId is
+   * equal to template-given id )
+   *
+   */
+  template < class Pass , int id >
+  struct PassIdToPassDiff
   {
-    enum { passNum = FindPass< typename Pass::PreviousPassType , id > :: passNum };
+    enum { passNum = (int)FindPass< typename Pass::PreviousPassType , id >::passNum };
+    CompileTimeChecker< (passNum != -1) > __ASSERT_PASS_ID_FOUND__;
     enum { passDiff = ((passNum == 0) ? 0 : Pass::passNum - passNum) };
-    typedef Pair< Int2Type< passDiff >, typename ConvertSelector< Pass, Tail > :: Base > Base;
-
-    // in case pass with model.id = id hasn't been founded
-    // then produce compile error ( by creating instance of undefined
-    // class CompileTimeChecker< false >
-    CompileTimeChecker< (passNum != -1) > __Assert_Pass_Id_Found__;
-  private:
-    // no need to have instance of this class
-    ConvertSelector();
   };
 
 
-  template< class Pass >
-  struct ConvertSelector< Pass, Nil >
-  {
-    typedef Nil Base;
-  };
-
-
-#if 1
-  template< class Pass , class Selector , bool old >
-  struct CompatibleConvertSelector;
-
+  template< class Pass , class Selector > 
+  struct CombinedSelector;
   
-  template< class Pass , class Selector >
-  struct CompatibleConvertSelector< Pass , Selector , true >
-  {
-    typedef typename Selector::Base Base;
-  private:
-    // no need to have instance of this class
-    CompatibleConvertSelector();
-  };
 
+  template< class Pass , int N1, int N2, int N3, int N4, int N5, int N6, int N7, int N8, int N9 > 
+  struct CombinedSelector< Pass 
+    , Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 > >
+  {
+    typedef Pass PassType;
+    typedef typename Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Base Base;
+    typedef CombinedSelector< Pass , Selector< N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 , -1 > > Type2;
+  };
   
-  template< class Pass , class Selector >
-  struct CompatibleConvertSelector< Pass , Selector , false >
-  {
-    typedef typename ConvertSelector< Pass , Selector >::Base Base;
-  };
-#endif
-
+  
 
   template <class SelectorType>
   struct MaxIndex {
@@ -177,7 +136,6 @@ namespace Dune
 
   template< class > struct SelectorPrint;
 
-
   template< class H , class T>
   struct SelectorPrint< Pair< H , T > >
   {
@@ -196,6 +154,20 @@ namespace Dune
   };
 
 
+  template< class SelectorImp , int id , int diff = 0>
+  struct Id2convertedId
+  {
+    enum { num = ( (int)SelectorImp::Base::Type1::value == (int)id ? diff :
+                   Id2convertedId< typename SelectorImp::Base::Type2 , id , diff+1 >::num ) };
+  };
+
+  // specialization 
+  template< int id , int diff >
+  struct Id2convertedId< Selector<-1,-1,-1,-1,-1,-1,-1,-1,-1> , id , diff >
+  {
+    enum { num = -1 };
+  };
+
 
   template< class Selector, class Head, class Tail >
   struct SelectorPair
@@ -213,7 +185,9 @@ namespace Dune
     template< int id >
     struct Get
     {
-      typedef typename ElementType< id, ThisType > :: Type Type;
+      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      //typedef typename ElementType< convertedId, BaseType > :: Type Type;
+      typedef typename ElementType< id, BaseType > :: Type Type;
     };
 
   public:
@@ -233,13 +207,19 @@ namespace Dune
     template< int id >
     inline const typename Get< id > :: Type &get () const
     {
-      return Element< id > :: get( *this );
+      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      //CompileTimeChecker< (convertedId == -1) > __ASSERT_ARGUMENT_TUPLE_ID_FOUND__;
+      //return Element< convertedId > :: get( (const BaseType&)(*this) );
+      return Element< id > :: get( (const BaseType&)(*this) );
     }
 
     template< int id >
     inline typename Get< id > :: Type &get ()
     {
-      return Element< id > :: get( *this );
+      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      //CompileTimeChecker< (convertedId == -1) > __ASSERT_ARGUMENT_TUPLE_ID_FOUND__;
+      //return Element< convertedId > :: get( (BaseType&)(*this) );
+      return Element< id > :: get( (BaseType&)(*this) );
     }
 
     template< int id >

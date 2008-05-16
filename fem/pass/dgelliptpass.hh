@@ -72,11 +72,9 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CompatibleConvertSelector
-      < ThisType , SelectorType, ThisType::passId == -1 >
-      CompatibleConvertSelectorType;
+    typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
     typedef EllipticDiscreteModelCaller
-      < DiscreteModelType, ArgumentType, CompatibleConvertSelectorType >
+      < DiscreteModelType, ArgumentType, CombinedSelectorType >
       DiscreteModelCallerType;
 
     // Range of the destination
@@ -203,11 +201,9 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CompatibleConvertSelector
-      < ThisType, SelectorType, ThisType::passId == -1 >
-      CompatibleConvertSelectorType;
+    typedef CombinedSelector< ThisType, SelectorType > CombinedSelectorType;
     typedef DiscreteModelCaller
-      < DiscreteModelType, ArgumentType, CompatibleConvertSelectorType >
+      < DiscreteModelType, ArgumentType, CombinedSelectorType >
       DiscreteModelCallerType;
    
     // Range of the destination
@@ -422,11 +418,9 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CompatibleConvertSelector
-      < ThisType , SelectorType, ThisType::passId == -1 >
-      CompatibleConvertSelectorType;
+    typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
     typedef DiscreteModelCaller
-      < DiscreteModelType, ArgumentType, CompatibleConvertSelectorType >
+      < DiscreteModelType, ArgumentType, CombinedSelectorType >
       DiscreteModelCallerType;
 
     // Range of the destination

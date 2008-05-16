@@ -11,7 +11,7 @@ namespace Dune {
 
   /**
    * @brief Extracts elements from a tuple based on a Selector definition
-   *
+   *                                                                                                                                                                           
    * Use this class to extract the elements from a tuple. The selector 
    * specifies the elements to be extracted by indicating their index. The
    * extracted elements are again stored in a tuple.
@@ -24,28 +24,29 @@ namespace Dune {
       static_cast<int>(TupleLength<ArgTupleImp>::value)
     > Maximal_index_of_selector_exceeds_argument_length;
     
-    typedef SelectorImp SelectorType;
-    //typedef typename SelectorImp::Base SelectorType;
+    //typedef SelectorImp SelectorType;
+    typedef typename SelectorImp::Base SelectorType;
 
     //! The index of the extracted element.
-    enum { index = ElementType<0, SelectorType>::Type::value };
+    enum { index = (int)PassIdToPassDiff< typename SelectorImp::PassType
+                     , ElementType<0, SelectorType>::Type::value > :: passDiff };
     //! The type of the extracted element.
     typedef typename ElementType<index, ArgTupleImp>::Type AppendType;
     //! The type of the next stage of the filter.
-    typedef Filter<ArgTupleImp, typename SelectorType::Type2> NextFilterType;
+    typedef Filter< ArgTupleImp , typename SelectorImp::Type2 > NextFilterType;
+    
     //! The filtered tuple resulting from this filter stage.
     // typedef Pair<AppendType, typename NextFilterType::ResultType> ResultType;
-    
     typedef SelectorPair
       < SelectorType, AppendType, typename NextFilterType :: ResultType >
       ResultType;
-    
     
     //! Extracts the elements specified by the selector template argument.
     //! \param arg Argument tuple.
     static inline ResultType apply(ArgTupleImp& arg) {
       typename NextFilterType::ResultType nextFilter = NextFilterType::apply(arg);
-      return ResultType(Element<index>::get(arg), nextFilter);
+      return ResultType( Pair< AppendType , typename NextFilterType::ResultType >
+                         ( Element<index>::get(arg) , nextFilter ) );
     }
   };
   
@@ -57,15 +58,20 @@ namespace Dune {
    * of the tuple, an ugly compile-time error will occur... (I'll switch that
    * off as soon as I can)
    */ 
-  template <class ArgTupleImp>
-  struct Filter<ArgTupleImp, Nil>
+
+  template < class ArgTupleImp , class Pass , int N1>
+  struct Filter<ArgTupleImp, CombinedSelector< Pass , Selector<N1,-1,-1,-1,-1,-1,-1,-1,-1> > >
   {
+    typedef Selector<N1,-1,-1,-1,-1,-1,-1,-1,-1> SelectorType;
+    enum { index = (int)PassIdToPassDiff< Pass , N1 > :: passDiff };
+    typedef typename ElementType< index , ArgTupleImp>::Type AppendType;
+
     //! The closure of a tuple is always Nil
-    typedef Nil ResultType;
+    typedef SelectorPair< SelectorType , AppendType , Nil > ResultType;
     
     //! Provides the closure of the filtered tuple
     static inline ResultType apply(ArgTupleImp& arg) {
-      return nullType();
+      return ResultType( Pair< AppendType , Nil >(Element<index>::get(arg) , nullType() ) );
     }
   };
 

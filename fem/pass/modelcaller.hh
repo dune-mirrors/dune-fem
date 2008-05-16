@@ -20,7 +20,8 @@ namespace Dune {
   public:
     typedef DiscreteModelImp DiscreteModelType;
     typedef ArgumentImp TotalArgumentType;
-    typedef typename SelectorImp::Base SelectorType;
+    //typedef typename SelectorImp::Base SelectorType;
+    typedef SelectorImp SelectorType;
 
     typedef typename DiscreteModelType::Traits Traits;
     typedef typename Traits::DomainType DomainType;
