@@ -32,4 +32,4 @@ fi
 #  exit 1
 #fi
 
-exit retvalue
+exit $retvalue
