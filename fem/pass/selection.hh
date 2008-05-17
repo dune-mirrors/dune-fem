@@ -60,13 +60,14 @@ namespace Dune
 
   /**
    * @brief Gives back passNum of the pass which passId
-   * is equal to template-given id
+   * is equal to template-given id. Also checks if all 
+   * passes have passId
    *
    */
   template< class Pass, int id >
   struct FindPass
   {
-    //CompileTimeChecker< (Pass::passId != -1) > __USE_ONLY_ONE_TYPE_OF_SELECTOR_IN_ALL_DMODELS__;
+    CompileTimeChecker< (Pass::passId != -1) > __ASSERT_ALL_PASSES_HAVE_PASSID_OR_NONE__;
     typedef typename Pass :: PreviousPassType PreviousPassType;
     enum { passNum = ( (int)Pass::passId == (int)id ? (int)Pass :: passNum
                      : (int)FindPass< PreviousPassType, id > :: passNum ) };
@@ -88,18 +89,43 @@ namespace Dune
    *
    * @brief Converts passId to passDiff ( number which tells how much to count
    * backwards from the last pass to get the pass which passId is
-   * equal to template-given id )
+   * equal to template-given id, with exception that 0 means StartPass )
    *
    */
   template < class Pass , int id >
-  struct PassIdToPassDiff
+  struct PassId2PassDiff
   {
     enum { passNum = (int)FindPass< typename Pass::PreviousPassType , id >::passNum };
     CompileTimeChecker< (passNum != -1) > __ASSERT_PASS_ID_FOUND__;
     enum { passDiff = ((passNum == 0) ? 0 : Pass::passNum - passNum) };
   };
 
+  template< class Pass , int id , bool passHasId >
+  struct CompatiblePassId2PassDiff;
 
+  template< class Pass , int id >
+  struct CompatiblePassId2PassDiff< Pass , id , true >
+  { 
+    // in this case template-given id is passId
+    enum { passDiff = PassId2PassDiff< Pass , id >::passDiff };
+  };
+  
+  template< class Pass , int id >
+  struct CompatiblePassId2PassDiff< Pass , id , false >
+  { 
+    // in this case template-given id is already passDiff
+    enum { passDiff = id };
+    // check if all pases don't have passId
+    CompileTimeChecker< Pass::PreviousPassType::passId == -1 > __ASSERT_ALL_PASSES_HAVE_PASSID_OR_NONE__;
+    typedef CompatiblePassId2PassDiff< typename Pass::PreviousPassType , id , false > CheckPassIds;
+  };
+  
+
+  /**
+   *
+   * @brief Carries PassType and Selector to Filter
+   *
+   */
   template< class Pass , class Selector > 
   struct CombinedSelector;
   
@@ -133,7 +159,12 @@ namespace Dune
     enum { value = -1 };
   };
 
-
+  
+  /**
+   *
+   * @brief For checking if everything is ok with types
+   *
+   */
   template< class > struct SelectorPrint;
 
   template< class H , class T>
@@ -146,27 +177,35 @@ namespace Dune
     }
   };
 
-
   template< >
   struct SelectorPrint< Nil >
   {
     static void apply() {}
   };
 
-
-  template< class SelectorImp , int id , int diff = 0>
+  
+  /**
+   *
+   * @brief Converts TupleId to TupleDiff ( number which tells how much to count
+   * backwards from the last tuple element to get the tuple element which value is
+   * equal to template-given Id )
+   *
+   */
+  template< class SelectorBaseImp , int id , int diff = 0 >
   struct Id2convertedId
   {
-    enum { num = ( (int)SelectorImp::Base::Type1::value == (int)id ? diff :
-                   Id2convertedId< typename SelectorImp::Base::Type2 , id , diff+1 >::num ) };
+    enum { num = ( (int)SelectorBaseImp::Type1::value == id ? diff :
+                   Id2convertedId< typename SelectorBaseImp::Type2 , id , diff+1 >::num ) };
+    //CompileTimeChecker< (num != -1) > __ASSERT_ARGUMENT_TUPLE_ID_FOUND__;
   };
 
   // specialization 
   template< int id , int diff >
-  struct Id2convertedId< Selector<-1,-1,-1,-1,-1,-1,-1,-1,-1> , id , diff >
+  struct Id2convertedId< Selector< -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 >::Base , id , diff >
   {
-    enum { num = -1 };
+    enum { num =  -1 };
   };
+
 
 
   template< class Selector, class Head, class Tail >
@@ -181,13 +220,13 @@ namespace Dune
     typedef BaseType FirstPair;
 
     typedef Selector SelectorType;
-
+    
     template< int id >
     struct Get
     {
-      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
-      //typedef typename ElementType< convertedId, BaseType > :: Type Type;
-      typedef typename ElementType< id, BaseType > :: Type Type;
+      enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      typedef typename ElementType< convertedId, BaseType > :: Type Type;
+      //typedef typename ElementType< id, BaseType > :: Type Type;
     };
 
   public:
@@ -207,19 +246,17 @@ namespace Dune
     template< int id >
     inline const typename Get< id > :: Type &get () const
     {
-      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
-      //CompileTimeChecker< (convertedId == -1) > __ASSERT_ARGUMENT_TUPLE_ID_FOUND__;
-      //return Element< convertedId > :: get( (const BaseType&)(*this) );
-      return Element< id > :: get( (const BaseType&)(*this) );
+      enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      return Element< convertedId > :: get( (const BaseType&)(*this) );
+      //return Element< id > :: get( (const BaseType&)(*this) );
     }
 
     template< int id >
     inline typename Get< id > :: Type &get ()
     {
-      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
-      //CompileTimeChecker< (convertedId == -1) > __ASSERT_ARGUMENT_TUPLE_ID_FOUND__;
-      //return Element< convertedId > :: get( (BaseType&)(*this) );
-      return Element< id > :: get( (BaseType&)(*this) );
+      enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      return Element< convertedId > :: get( (BaseType&)(*this) );
+      //return Element< id > :: get( (BaseType&)(*this) );
     }
 
     template< int id >

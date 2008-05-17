@@ -269,6 +269,7 @@ namespace Dune {
              , passId1
              >
   {
+    Int2Type< passId1 > uVar;
   public:
     typedef AdvDiffTraits1< Model , NumFlux , polOrd 
              , passId1
@@ -305,9 +306,10 @@ namespace Dune {
                          RangeType& gRight)
     { 
       const DomainType normal = it.integrationOuterNormal(x);
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType& argULeft = Element<0>::get(uLeft);
-      const UType& argURight = Element<0>::get(uRight);
+      
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //const UType& argULeft = Element<0>::get(uLeft);
+      //const UType& argURight = Element<0>::get(uRight);
 
       JacobianRangeType diffmatrix;
       RangeType diffflux(0.);
@@ -321,13 +323,13 @@ namespace Dune {
       diffflux*=0.5;
       */
       if (upwind_*normal>0)
-	model_.diffusion(*it.inside(),time,
-			 it.intersectionSelfLocal().global(x),
-			 argULeft,diffmatrix);
+	model_.diffusion( *it.inside() , time ,
+			 it.intersectionSelfLocal().global(x)
+       , uLeft[ uVar ] , diffmatrix );
       else
-	model_.diffusion(*it.outside(),time,
-			 it.intersectionNeighborLocal().global(x),
-			 argURight,diffmatrix);
+	model_.diffusion( *it.outside() , time ,
+			 it.intersectionNeighborLocal().global(x) ,
+			 uRight[ uVar ] , diffmatrix );
       diffmatrix.umv(normal,diffflux);
       gLeft = diffflux;
       gRight = diffflux;
@@ -341,24 +343,26 @@ namespace Dune {
                         RangeType& gLeft)
     {
       const DomainType normal = it.integrationOuterNormal(x);
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType& argULeft = Element<0>::get(uLeft);
+      
+      typedef typename ArgumentTuple::template Get< passId1 >::Type UType;
+      //const UType& argULeft = Element<0>::get(uLeft);
+      
       JacobianRangeType diffmatrix;
       gLeft*=0.;
       if (upwind_*normal>0)
 	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
-			 argULeft,diffmatrix);
+			 uLeft[ uVar ] , diffmatrix );
       else if (model_.hasBoundaryValue(it,time,x)) {
 	UType uRight;
-	model_.boundaryValue(it,time,x,argULeft,uRight);
+	model_.boundaryValue(it,time,x,uLeft[ uVar ] , uRight);
 	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
 			 uRight,diffmatrix);
       } else {
 	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
-			 argULeft,diffmatrix);
+			 uLeft[ uVar ] , diffmatrix );
       }
       diffmatrix.umv(normal,gLeft);
       return model_.diffusionTimeStep()*cflDiffinv_; 
@@ -369,9 +373,10 @@ namespace Dune {
                         double time, const DomainType& x,
                         const ArgumentTuple& u, JacobianRangeType& f)
     { 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType& argU = Element<0>::get(u);
-      model_.diffusion(en,time,x,argU,f);
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //const UType& argU = Element<0>::get(u);
+      
+      model_.diffusion(en,time,x,u[ uVar ],f);
     }
   private:
     const DomainType& upwind_;
@@ -391,6 +396,8 @@ namespace Dune {
              , passId2
              > >
   {
+    Int2Type< passId1 > uVar;
+    Int2Type< passId2 > vVar;
   public:
     typedef AdvDiffTraits2<Model,NumFlux,polOrd
              , passId1
@@ -428,15 +435,17 @@ namespace Dune {
                          RangeType& gRight)
     { 
       const DomainType normal = it.integrationOuterNormal(x);
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      typedef typename ElementType<1, ArgumentTuple>::Type WType;
-      const UType& argULeft = Element<0>::get(uLeft);
-      const WType& argWLeft = Element<1>::get(uLeft);
-      const UType& argURight = Element<0>::get(uRight);
-      const WType& argWRight = Element<1>::get(uRight);
+      
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //typedef typename ElementType<1, ArgumentTuple>::Type WType;
+      //const UType& argULeft = Element<0>::get(uLeft);
+      //const WType& argWLeft = Element<1>::get(uLeft);
+      //const UType& argURight = Element<0>::get(uRight);
+      //const WType& argWRight = Element<1>::get(uRight);
+      
       // Advection
       double ldt=numflux_.
-	numericalFlux(it,time,x,argULeft,argURight,gLeft,gRight);
+	numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
       // Diffusion
       JacobianRangeType diffmatrix;
       RangeType diffflux(0.);
@@ -455,11 +464,11 @@ namespace Dune {
       if (upwind_*normal<0)
 	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
-			 argULeft,argWLeft,diffmatrix);
+			 uLeft[ uVar ] , uLeft[ vVar ] , diffmatrix );
       else
 	model_.diffusion(*it.outside(),time,
 			 it.intersectionNeighborLocal().global(x),
-			 argURight,argWRight,diffmatrix);
+			 uRight[ uVar ] , uRight[ vVar ] , diffmatrix );
       diffmatrix.umv(normal,diffflux);
       gLeft += diffflux;
       gRight += diffflux;
@@ -473,24 +482,26 @@ namespace Dune {
                         RangeType& gLeft)
     {
       const DomainType normal = it.integrationOuterNormal(x);
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      typedef typename ElementType<1, ArgumentTuple>::Type WType;
-      const UType& argULeft = Element<0>::get(uLeft);
-      const WType& argWLeft = Element<1>::get(uLeft);
+      
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //typedef typename ElementType<1, ArgumentTuple>::Type WType;
+      //const UType& argULeft = Element<0>::get(uLeft);
+      //const WType& argWLeft = Element<1>::get(uLeft);
+      
       // Advection
       double ldt=0.;
       if (model_.hasBoundaryValue(it,time,x)) {
 	RangeType uRight,gRight;
-	model_.boundaryValue(it,time,x,argULeft,uRight);
-	ldt = numflux_.numericalFlux(it,time,x,argULeft,uRight,gLeft,gRight);
+	model_.boundaryValue( it , time , x , uLeft[ uVar ] , uRight );
+	ldt = numflux_.numericalFlux( it , time , x , uLeft[ uVar ], uRight , gLeft , gRight );
 	// Diffusion
 	JacobianRangeType diffmatrix;
 	model_.diffusion(*it.inside(),time,
 			 it.intersectionSelfLocal().global(x),
-			 argULeft,argWLeft,diffmatrix);
+			 uLeft[ uVar ] , uLeft[ vVar ] , diffmatrix );
 	diffmatrix.umv(normal,gLeft);
       } else {
-        ldt = model_.boundaryFlux(it,time,x,argULeft,argWLeft,gLeft);
+        ldt = model_.boundaryFlux( it , time , x , uLeft[ uVar ] , uLeft[ vVar ] , gLeft );
       }
       return ldt;
     }
@@ -500,15 +511,16 @@ namespace Dune {
                         double time, const DomainType& x,
                         const ArgumentTuple& u, JacobianRangeType& f)
     { 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      typedef typename ElementType<1, ArgumentTuple>::Type WType;
-      const UType& argU = Element<0>::get(u);
-      const WType& argW = Element<1>::get(u);
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //typedef typename ElementType<1, ArgumentTuple>::Type WType;
+      //const UType& argU = Element<0>::get(u);
+      //const WType& argW = Element<1>::get(u);
+      
       // Advection
-      model_.analyticalFlux(en,time,x,argU,f);
+      model_.analyticalFlux( en , time , x , u[ uVar ] , f );
       // Diffusion
       JacobianRangeType diffmatrix;
-      model_.diffusion(en,time,x,argU,argW,diffmatrix);
+      model_.diffusion( en , time , x , u[ uVar ] , u[ vVar ] , diffmatrix );
       f += diffmatrix;
     }
   private:
@@ -528,7 +540,7 @@ namespace Dune {
              , passId1
              >
   {
-    Int2Type< 0 > uVar;
+    Int2Type< passId1 > uVar;
 
   public:
     typedef AdvDiffTraits3< Model , NumFlux , polOrd 
@@ -567,13 +579,13 @@ namespace Dune {
       const UType& argURight = Element<0>::get(uRight);
       */
 
-      typedef typename ArgumentTuple :: template Get< 0 > ::Type UType;
-      const UType& argULeft = uLeft.template get< 0 >();
+      //typedef typename ArgumentTuple :: template Get< 0 > ::Type UType;
+      //const UType& argULeft = uLeft.template get< 0 >();
       //const UType& argURight = uRight[ uVar ];
       
       // Advection
       double ldt=numflux_.
-	numericalFlux(it,time,x,argULeft,uRight[ uVar ],gLeft,gRight);
+	numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
       return ldt;
     }
 
@@ -584,16 +596,18 @@ namespace Dune {
                         RangeType& gLeft)
     {
       const DomainType normal = it.integrationOuterNormal(x);
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType& argULeft = Element<0>::get(uLeft);
+      
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //const UType& argULeft = Element<0>::get(uLeft);
+      
       // Advection
       double ldt=0.;
       if (model_.hasBoundaryValue(it,time,x)) {
 	RangeType uRight,gRight;
-	model_.boundaryValue(it,time,x,argULeft,uRight);
-	ldt = numflux_.numericalFlux(it,time,x,argULeft,uRight,gLeft,gRight);
+	model_.boundaryValue( it , time , x , uLeft[ uVar ] , uRight );
+	ldt = numflux_.numericalFlux( it , time , x , uLeft[ uVar ] , uRight , gLeft , gRight );
       } else {
-        ldt = model_.boundaryFlux(it,time,x,argULeft,gLeft);
+        ldt = model_.boundaryFlux( it , time , x , uLeft[ uVar ] , gLeft );
       }
       return ldt;
     }
@@ -603,10 +617,11 @@ namespace Dune {
                         double time, const DomainType& x,
                         const ArgumentTuple& u, JacobianRangeType& f)
     { 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType& argU = Element<0>::get(u);
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //const UType& argU = Element<0>::get(u);
+      
       // Advection
-      model_.analyticalFlux(en,time,x,argU,f);
+      model_.analyticalFlux( en , time , x , u[ uVar ] , f );
     }
   private:
     const Model& model_;
@@ -626,6 +641,8 @@ namespace Dune {
              , passId2
              >
   {
+    Int2Type< passId1 > uVar;
+    Int2Type< passId2 > vVar;
   public:
     typedef AdvDiffTraits4< Model , NumFlux , polOrd 
              , passId1
@@ -661,12 +678,14 @@ namespace Dune {
                          RangeType& gRight)
     { 
       const DomainType normal = it.integrationOuterNormal(x);
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      typedef typename ElementType<1, ArgumentTuple>::Type WType;
-      const UType& argULeft = Element<0>::get(uLeft);
-      const WType& argWLeft = Element<1>::get(uLeft);
-      const UType& argURight = Element<0>::get(uRight);
-      const WType& argWRight = Element<1>::get(uRight);
+      
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //typedef typename ElementType<1, ArgumentTuple>::Type WType;
+      //const UType& argULeft = Element<0>::get(uLeft);
+      //const WType& argWLeft = Element<1>::get(uLeft);
+      //const UType& argURight = Element<0>::get(uRight);
+      //const WType& argWRight = Element<1>::get(uRight);
+      
       double ldt=0;
       // Diffusion
       gLeft*=0.;
@@ -674,11 +693,11 @@ namespace Dune {
       if (upwind_*normal<0)
 	ldt=model_.diffusion(*it.inside(),time,
 			     it.intersectionSelfLocal().global(x),
-			     argULeft,argWLeft,diffmatrix);
+			     uLeft[ uVar ] , uLeft[ vVar ] , diffmatrix );
       else
 	ldt=model_.diffusion(*it.outside(),time,
 			     it.intersectionNeighborLocal().global(x),
-			     argURight,argWRight,diffmatrix);
+			     uRight[ uVar ] , uRight[ vVar ] , diffmatrix );
       diffmatrix.umv(normal,gLeft);
       gRight = gLeft;
       return ldt;
@@ -691,23 +710,25 @@ namespace Dune {
                         RangeType& gLeft)
     {
       const DomainType normal = it.integrationOuterNormal(x);
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      typedef typename ElementType<1, ArgumentTuple>::Type WType;
-      const UType& argULeft = Element<0>::get(uLeft);
-      const WType& argWLeft = Element<1>::get(uLeft);
+      
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //typedef typename ElementType<1, ArgumentTuple>::Type WType;
+      //const UType& argULeft = Element<0>::get(uLeft);
+      //const WType& argWLeft = Element<1>::get(uLeft);
+      
       double ldt=0.;
       // Diffusion
       if (model_.hasBoundaryValue(it,time,x)) {
 	gLeft*=0.;
 	RangeType uRight,gRight;
-	model_.boundaryValue(it,time,x,argULeft,uRight);
+	model_.boundaryValue( it , time , x , uLeft[uVar ] , uRight );
 	JacobianRangeType diffmatrix;
 	ldt=model_.diffusion(*it.inside(),time,
 			     it.intersectionSelfLocal().global(x),
-			     argULeft,argWLeft,diffmatrix);
+			     uLeft[ uVar ] , uLeft[ vVar ] , diffmatrix );
 	diffmatrix.umv(normal,gLeft);
       } else {
-        ldt = model_.boundaryFlux(it,time,x,argULeft,argWLeft,gLeft);
+        ldt = model_.boundaryFlux( it , time , x , uLeft[ uVar ] , uLeft[ vVar ] , gLeft );
       }
       return ldt;
     }
@@ -717,13 +738,14 @@ namespace Dune {
                         double time, const DomainType& x,
                         const ArgumentTuple& u, JacobianRangeType& f)
     { 
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      typedef typename ElementType<1, ArgumentTuple>::Type WType;
-      const UType& argU = Element<0>::get(u);
-      const WType argW = Element<1>::get(u);
+      //typedef typename ElementType<0, ArgumentTuple>::Type UType;
+      //typedef typename ElementType<1, ArgumentTuple>::Type WType;
+      //const UType& argU = Element<0>::get(u);
+      //const WType argW = Element<1>::get(u);
+      
       // Diffusion
       JacobianRangeType diffmatrix;
-      model_.diffusion(en,time,x,argU,argW,f);
+      model_.diffusion( en , time , x , u[ uVar ] , u[ vVar ] , f );
     }
   private:
     const DomainType& upwind_;
@@ -741,6 +763,7 @@ namespace Dune {
              , passId1
              > >
   {
+    Int2Type< passId1 > uVar;
     public:
     typedef LimiterTraits1< Model , polOrd
              , passId1

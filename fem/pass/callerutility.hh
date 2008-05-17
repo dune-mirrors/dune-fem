@@ -28,8 +28,9 @@ namespace Dune {
     typedef typename SelectorImp::Base SelectorType;
 
     //! The index of the extracted element.
-    enum { index = (int)PassIdToPassDiff< typename SelectorImp::PassType
-                     , ElementType<0, SelectorType>::Type::value > :: passDiff };
+    enum { index = (int)CompatiblePassId2PassDiff< typename SelectorImp::PassType
+                     , ElementType<0, SelectorType>::Type::value 
+                     , ((int)SelectorImp::PassType::passId != -1) > :: passDiff };
     //! The type of the extracted element.
     typedef typename ElementType<index, ArgTupleImp>::Type AppendType;
     //! The type of the next stage of the filter.
@@ -62,8 +63,9 @@ namespace Dune {
   template < class ArgTupleImp , class Pass , int N1>
   struct Filter<ArgTupleImp, CombinedSelector< Pass , Selector<N1,-1,-1,-1,-1,-1,-1,-1,-1> > >
   {
-    typedef Selector<N1,-1,-1,-1,-1,-1,-1,-1,-1> SelectorType;
-    enum { index = (int)PassIdToPassDiff< Pass , N1 > :: passDiff };
+    typedef typename Selector<N1,-1,-1,-1,-1,-1,-1,-1,-1>::Base SelectorType;
+    enum { index = (int)CompatiblePassId2PassDiff< Pass , N1 
+                   , (Pass::passId != -1) > :: passDiff };
     typedef typename ElementType< index , ArgTupleImp>::Type AppendType;
 
     //! The closure of a tuple is always Nil
