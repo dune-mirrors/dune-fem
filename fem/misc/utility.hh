@@ -147,7 +147,7 @@ namespace Dune
   {};
 
   /**
-   * @brief Specialisation for standard tuple element
+   * Specialisation for standard tuple element
    */  
   template <template <class> class TypeEvaluator, class Head, class Tail>
   struct ForEachType<TypeEvaluator, Pair<Head, Tail> > {
@@ -157,7 +157,7 @@ namespace Dune
   };
   
   /**
-   * @brief Specialisation for last element
+   * Specialisation for last element
    */
   template <template <class> class TypeEvaluator>
   struct ForEachType<TypeEvaluator, Nil> {
