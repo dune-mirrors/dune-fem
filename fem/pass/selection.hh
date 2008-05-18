@@ -207,6 +207,155 @@ namespace Dune
   };
 
 
+  /**
+   *
+   * @brief MatchTuplesForType gives the type of Tuple
+   * entry which has same offset in tuple like the Selector entry 
+   * that matches the template-given id
+   *
+   */
+  template< class Pair , class Tuple , int id , bool matched >
+  struct MatchTuplesHelperForType
+  {};
+  
+  template< class SelectorHead , class SelectorTail , 
+            class TupleHead , class TupleTail , int id >
+  struct MatchTuplesHelperForType< Pair< SelectorHead , SelectorTail > , 
+                            Pair< TupleHead , TupleTail > , id , false >
+  {
+    typedef typename MatchTuplesHelperForType
+      < SelectorTail , TupleTail, id 
+        , (int)SelectorTail::Type1::value == id >::Type Type;
+  };
+  
+  template< class SelectorHead ,  
+            class TupleHead , class TupleTail , int id >
+  struct MatchTuplesHelperForType< Pair< SelectorHead , Nil > , 
+                                   Pair< TupleHead , TupleTail > , id , false >
+  {
+    // when unable to match selector values with template-given id
+    // then return Nil as a type
+    typedef Nil Type;
+  };
+
+  template< class SelectorHead , class SelectorTail , 
+            class TupleHead , class TupleTail , int id >
+  struct MatchTuplesHelperForType< Pair< SelectorHead , SelectorTail > , 
+                            Pair< TupleHead , TupleTail > , id , true >
+  {
+    typedef TupleHead Type;
+  };
+
+  template< class SelectorBase , class Tuple , int id >
+  struct MatchTuplesForType
+  {
+    typedef typename MatchTuplesHelperForType
+      < SelectorBase , Tuple , id , (int)SelectorBase::Type1::value == id >
+      ::Type Type;
+  };
+
+
+
+  /**
+   *
+   * @brief MatchTuplesForValue gives the value of Tuple
+   * entry which has same offset in tuple like the Selector entry 
+   * that matches the template-given id
+   *
+   */
+  template< class Pair , class Tuple , int id , bool matched >
+  struct MatchTuplesHelperForValue
+  {};
+  
+  template< class SelectorHead , class SelectorTail , 
+            class TupleHead , class TupleTail , int id >
+  struct MatchTuplesHelperForValue< Pair< SelectorHead , SelectorTail > , 
+                            Pair< TupleHead , TupleTail > , id , false >
+  {
+    static inline typename TupleAccessTraits
+      < typename MatchTuplesForType< Pair< SelectorHead , SelectorTail>
+                   , Pair< TupleHead , TupleTail > , id > ::Type > 
+      :: ConstType
+      get( const Pair< TupleHead , TupleTail >& tuple )
+    {
+      return MatchTuplesHelperForValue
+        < SelectorTail , TupleTail , id
+          , (int)SelectorTail::Type1::value == id > :: get( tuple.second() );
+    }
+    
+    static inline typename TupleAccessTraits
+      < typename MatchTuplesForType< Pair< SelectorHead , SelectorTail>
+                   , Pair< TupleHead , TupleTail > , id > ::Type > 
+      :: NonConstType
+      get( Pair< TupleHead , TupleTail >& tuple )
+    {
+      return MatchTuplesHelperForValue
+        < SelectorTail , TupleTail , id
+          , (int)SelectorTail::Type1::value == id > :: get( tuple.second() );
+    }
+  };
+  
+  template< class SelectorHead ,  
+            class TupleHead , class TupleTail , int id >
+  struct MatchTuplesHelperForValue< Pair< SelectorHead , Nil > , 
+                                   Pair< TupleHead , TupleTail > , id , false >
+  {
+    // when unable to match selector values with template-given id
+    // then return nulltype() as a value
+    static inline typename TupleAccessTraits< Nil > :: ConstType
+      get( const Pair< TupleHead , TupleTail >& tuple )
+    {
+      return Nil();
+    }
+    
+    static inline typename TupleAccessTraits< Nil > :: NonConstType
+      get( Pair< TupleHead , TupleTail >& tuple )
+    {
+      return Nil();
+    }
+  };
+
+  template< class SelectorHead , class SelectorTail , 
+            class TupleHead , class TupleTail , int id >
+  struct MatchTuplesHelperForValue< Pair< SelectorHead , SelectorTail > , 
+                            Pair< TupleHead , TupleTail > , id , true >
+  {
+    static inline typename TupleAccessTraits< TupleHead > :: ConstType
+      get( const Pair< TupleHead , TupleTail >& tuple )
+    {
+      return tuple.first();
+    }
+    
+    static inline typename TupleAccessTraits< TupleHead > :: NonConstType
+      get( Pair< TupleHead , TupleTail >& tuple )
+    {
+      return tuple.first();
+    }
+  };
+
+  template< class SelectorBase , class Tuple , int id >
+  struct MatchTuplesForValue
+  {
+    static inline typename TupleAccessTraits
+      < typename MatchTuplesForType< SelectorBase , Tuple , id > :: Type > 
+      :: ConstType  get( const Tuple& tuple )
+    {
+      return MatchTuplesHelperForValue
+      < SelectorBase , Tuple , id , (int)SelectorBase::Type1::value == id >
+      ::get( tuple );
+    }
+    
+    static inline typename TupleAccessTraits
+      < typename MatchTuplesForType< SelectorBase , Tuple , id > :: Type > 
+      :: NonConstType  get( Tuple& tuple )
+    {
+      return MatchTuplesHelperForValue
+      < SelectorBase , Tuple , id , (int)SelectorBase::Type1::value == id >
+      ::get( tuple );
+    }
+  };
+
+
 
   template< class Selector, class Head, class Tail >
   struct SelectorPair
@@ -224,9 +373,10 @@ namespace Dune
     template< int id >
     struct Get
     {
-      enum { convertedId = Id2convertedId< SelectorType , id >::num };
-      typedef typename ElementType< convertedId, BaseType > :: Type Type;
+      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      //typedef typename ElementType< convertedId, BaseType > :: Type Type;
       //typedef typename ElementType< id, BaseType > :: Type Type;
+      typedef typename MatchTuplesForType< SelectorType , BaseType , id > :: Type Type;
     };
 
   public:
@@ -246,17 +396,19 @@ namespace Dune
     template< int id >
     inline const typename Get< id > :: Type &get () const
     {
-      enum { convertedId = Id2convertedId< SelectorType , id >::num };
-      return Element< convertedId > :: get( (const BaseType&)(*this) );
+      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      //return Element< convertedId > :: get( (const BaseType&)(*this) );
       //return Element< id > :: get( (const BaseType&)(*this) );
+      return MatchTuplesForValue< SelectorType , BaseType , id > :: get( (const BaseType&)(*this) );
     }
 
     template< int id >
     inline typename Get< id > :: Type &get ()
     {
-      enum { convertedId = Id2convertedId< SelectorType , id >::num };
-      return Element< convertedId > :: get( (BaseType&)(*this) );
+      //enum { convertedId = Id2convertedId< SelectorType , id >::num };
+      //return Element< convertedId > :: get( (BaseType&)(*this) );
       //return Element< id > :: get( (BaseType&)(*this) );
+      return MatchTuplesForValue< SelectorType , BaseType , id > :: get( (BaseType&)(*this) );
     }
 
     template< int id >
@@ -270,7 +422,7 @@ namespace Dune
     inline typename Get< id > :: Type &
     operator[] ( const Int2Type< id > idVariable )
     {
-      get< id >();
+      return get< id >();
     }
   };
 
