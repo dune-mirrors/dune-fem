@@ -96,7 +96,7 @@ namespace Dune
   struct PassId2PassDiff
   {
     enum { passNum = (int)FindPass< typename Pass::PreviousPassType , id >::passNum };
-    CompileTimeChecker< (passNum != -1) > __ASSERT_PASS_ID_FOUND__;
+    CompileTimeChecker< (passNum != -1) > __ASSERT_PASS_ID_FOUND_AND_ASSERT_ALL_PASSES_HAVE_ID_OR_NONE;
     enum { passDiff = ((passNum == 0) ? 0 : Pass::passNum - passNum) };
   };
 
