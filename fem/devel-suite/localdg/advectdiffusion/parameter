@@ -5,7 +5,7 @@ fem.localdg.diffusion_timestep: 0
 fem.localdg.epsilon: 0.
 fem.localdg.gridfile: grid2d.dgf
 fem.localdg.repeats: 4
-fem.localdg.startlevel: 1
+fem.localdg.startlevel: 0
 fem.localdg.starttime: 0
 fem.localdg.endtime: 0.5
 fem.localdg.global_tstep: 1e4 
