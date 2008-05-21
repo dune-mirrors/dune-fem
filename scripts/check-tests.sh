@@ -22,7 +22,7 @@ if test $errors -gt 0 ; then
   echo "Error: $errors compile time errors occurred."
   retvalue=1
 fi
-urefs=`grep ": undefined reference" $CHECK_LOG | wc -l`
+urefs=`grep ": undefined reference" $CHECKLOG | wc -l`
 if test $urefs -gt 0 ; then
   echo "Error: $urefs undefined linker references occurred."
   retvalue=1
