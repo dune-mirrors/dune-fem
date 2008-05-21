@@ -143,22 +143,19 @@ namespace Dune
    */
   template< template< class > class TypeEvaluator, class TupleType >
   struct ForEachType
+  /** \cond */
   : ForEachType< TypeEvaluator, typename TupleType :: FirstPair >
+  /** \endcond */
   {};
 
-  /**
-   * Specialisation for standard tuple element
-   */  
+  // Specialisation for standard tuple element
   template <template <class> class TypeEvaluator, class Head, class Tail>
   struct ForEachType<TypeEvaluator, Pair<Head, Tail> > {
     //! Defines type corresponding to the subtuple defined by Pair<Head, Tail>
     typedef Pair<typename TypeEvaluator<Head>::Type, 
                  typename ForEachType<TypeEvaluator, Tail>::Type> Type;
   };
-  
-  /**
-   * Specialisation for last element
-   */
+  // Specialisation for last element
   template <template <class> class TypeEvaluator>
   struct ForEachType<TypeEvaluator, Nil> {
     typedef Nil Type;
