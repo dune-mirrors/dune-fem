@@ -1,6 +1,15 @@
 #ifndef PARDG_INCLUDE_HH
 #define PARDG_INCLUDE_HH
 
+#include <unistd.h>
+#include <time.h>
+#include <sys/times.h>
+
+#include <cassert>
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+
 //#ifdef ENABLE_PARDG 
 #define USE_PARDG_ODE_SOLVER 
 //#endif
