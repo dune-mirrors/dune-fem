@@ -268,12 +268,12 @@ namespace Dune
       const IntersectionIteratorType endit = gridPart.iend( entity );
       for( ; it != endit ; ++it )
       {
-        if( !it.boundary() )
+        if( !it->boundary() )
           continue;
 
         LocalMatrixType localMatrix = matrixObject_.localMatrix( entity, entity );
        
-        const int face = it.numberInSelf();
+        const int face = it->numberInSelf();
         FaceDofIteratorType faceIt
           = lagrangePointSet.template beginSubEntity< faceCodim >( face );
         const FaceDofIteratorType faceEndIt
