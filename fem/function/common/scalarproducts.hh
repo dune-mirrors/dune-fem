@@ -92,7 +92,12 @@ namespace Dune
     }
 
   public:
-    inline void insert( const std :: vector< int > &indices )
+    inline void insert ( const int &index )
+    {
+      slaves_.insert( index );
+    }
+    
+    inline void insert ( const std :: vector< int > &indices )
     {
       slaves_.insert( indices );
     }
@@ -105,10 +110,6 @@ namespace Dune
     
     inline void finalize ()
     {
-      // sort number for cache efficiency 
-      slaves_.sort();
-
-      // store actual sequence number 
       sequence_ = space_.sequence();
     }
     
@@ -192,9 +193,7 @@ namespace Dune
     gridPart_.communicate
       ( handle, InteriorBorder_All_Interface, ForwardCommunication );
     
-    // insert overall size at the end
-    std :: vector< int > indices( 1, mapper_.size() );
-    insert( indices );
+    insert( mapper_.size() );
   }
 
 
@@ -302,33 +301,23 @@ namespace Dune
                           const EntityType &entity,
                           size_t n )
     {
-      PartitionType ptype = entity.partitionType();
-
-      int minRank = std :: numeric_limits< int > :: max();
-      if( (ptype == InteriorEntity) || (ptype == BorderEntity) )
-        minRank = myRank_;
-      for( size_t i = 0; i < n; ++i )
+      if( n > 0 )
       {
+        assert( n == 1 );
         int rank;
         buffer.read( rank );
         assert( (rank >= 0) && (rank < mySize_) );
-        minRank = (rank < minRank ? rank : minRank);
-      }
 
-      // minimal rank means master
-      assert( minRank < std :: numeric_limits< int > :: max() );
-      if( minRank != myRank_ )
-      {
-        // build local mapping 
-        const int numDofs = mapper_.numEntityDofs( entity );
-        std :: vector< int > indices( numDofs );
+        const PartitionType ptype = entity.partitionType();
+        const bool interiorBorder
+          = ((ptype == InteriorEntity) || (ptype == BorderEntity));
 
-        // copy numDofs 
-        for( int i = 0; i < numDofs; ++i )
-          indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
-        
-        // insert slave Dofs 
-        slaves_.insert( indices );
+        if( !interiorBorder || (rank < myRank_) )
+        {
+          const int numDofs = mapper_.numEntityDofs( entity );
+          for( int i = 0; i < numDofs; ++i )
+            slaves_.insert( mapper_.mapEntityDofToGlobal( entity, i ) );
+        }
       }
     }
 
