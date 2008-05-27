@@ -1,12 +1,12 @@
 #include <config.h>
 
-#include "orthonormalbase_mod.cc"
+#include "orthonormalbase_3d.cc"
 #include "dgbasefunctions.hh"
 
 namespace Dune
 {
 
-  namespace Library
+  namespace
   {
 
     template< unsigned int dim, int pOrder >

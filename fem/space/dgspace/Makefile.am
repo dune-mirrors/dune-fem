@@ -22,4 +22,4 @@ dgspace_HEADERS = dgadaptiveleafgridpart.hh \
 		  legendrepoly.hh \
 		  orthonormalbase_mod.hh
 
-EXTRA_DIST = orthonormalbase_mod.cc
+EXTRA_DIST = orthonormalbase_1d.cc orthonormalbase_2d.cc orthonormalbase_3d.cc
