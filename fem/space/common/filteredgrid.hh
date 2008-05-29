@@ -540,6 +540,7 @@ namespace Dune {
         //! overloaded neighbor method 
         inline bool neighbor() const { return nInfo.neighbor_; }
         inline const Intersection& operator*() const { return *this; }
+        inline const Intersection* operator->() const { return this; }
 
       protected:
         //! return reference to base class 
