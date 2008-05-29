@@ -19,7 +19,18 @@ namespace Dune
 
   /** \class   TimeProviderBase
    *  \ingroup ODESolver
-   *  \brief   gereral base for time providers
+   *  \brief   gereral base for time providers 
+   *
+   *  This class consists of the methods required for example in the
+   *  ODE Solvers, e.g., provideTimeStepEstimate and 
+   *  provideTimeStepUpperBound.
+   *  InvalidateTimeStep can be used to mark this time step as invalid.
+   *  Furthermore, method for accessing the simulation time, the
+   *  time step counter and the time step size are provided.
+   *
+   *  The derived class TimeProvider provides the additional method
+   *  required for implementing a time loop.
+   *  
    */
   class TimeProviderBase : public AutoPersistentObject
   {
@@ -31,6 +42,7 @@ namespace Dune
     double dt_;
     bool valid_;
     double dtEstimate_;
+    double dtUpperBound_;
 
   public:
     inline TimeProviderBase ()
@@ -105,7 +117,15 @@ namespace Dune
     {
       dtEstimate_ = std :: min( dtEstimate_, dtEstimate );
     }
-
+    /** \brief set upper bound for time step to minimum of given value and
+               internal bound
+         \param[in] upperBound time step size estimate 
+    */
+    inline void provideTimeStepUpperBound ( const double upperBound )
+    {
+      dtUpperBound_ = std :: min( dtUpperBound_, upperBound );
+    }
+    
     /** \brief count current time step a not valid */
     inline void invalidateTimeStep ()
     {
@@ -131,6 +151,7 @@ namespace Dune
     inline void initTimeStepEstimate ()
     {
       dtEstimate_ = std :: numeric_limits< double > :: max();
+      dtUpperBound_ = std :: numeric_limits< double > :: max();
     }
   };
 
@@ -263,6 +284,7 @@ namespace Dune
 
     using BaseType :: dt_;
     using BaseType :: dtEstimate_;
+    using BaseType :: dtUpperBound_;
     using BaseType :: valid_;
     using BaseType :: timeStep_;
 
@@ -359,13 +381,21 @@ namespace Dune
       initTimeStep(timeStep);
     }
 
+    /** \brief  return the global factor number 
+        \return time step factor 
+    */
+    double factor () const
+    {
+      return cfl_;
+    }
+
   protected:
     using BaseType :: advance;
     using BaseType :: initTimeStepEstimate;
 
     inline void initTimeStep (double dtEstimate)
     {
-      dt_ = cfl_ * dtEstimate;
+      dt_ = std::min(cfl_ * dtEstimate,dtUpperBound_);
       dt_ = comm_.min( dt_ );
       assert( dt_ > 0.0 );
       valid_ = true;
