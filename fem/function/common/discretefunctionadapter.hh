@@ -105,6 +105,7 @@ namespace Dune{
     typedef typename GridType :: template Codim<0> :: Entity EntityType; 
 
     private:
+    class LocalFunctionStorage;
     class LocalFunction
     {
       //! type of geometry 
@@ -137,6 +138,11 @@ namespace Dune{
         : function_(org.function_) 
         , geometry_(org.geometry_)  
       {}
+      
+      LocalFunction(LocalFunctionStorage& storage) 
+        : function_(storage.function().function_)
+        , geometry_(0) 
+      {}
 
       //! evaluate local function 
       template< class PointType >
@@ -146,30 +152,12 @@ namespace Dune{
         function_.evaluate( global, ret );
       }
 
-      //! evaluate local function 
-      template< class QuadratureType >
-      void evaluate( const QuadratureType &quadrature,
-                     const int quadPoint,
-                     RangeType &ret ) const 
-      {
-        evaluate( quadrature[ quadPoint ], ret );
-      }
-
       //! jacobian of local function 
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
         DomainType global = geometry_->global( coordinate( x ) );
         function_.jacobian( global, ret );
-      }
-
-      //! jacobian of local function 
-      template< class QuadratureType >
-      void jacobian ( const QuadratureType &quadrature,
-                      const int quadPoint,
-                      JacobianRangeType &ret ) const 
-      {
-        jacobian( quadrature[ quadPoint ], ret );
       }
 
       //! init local function
@@ -183,9 +171,11 @@ namespace Dune{
       const GeometryImp* geometry_;
     };
 
+
     public:
     //! type of local function to export 
     typedef LocalFunction LocalFunctionType; 
+    typedef LocalFunctionStorage LocalFunctionStorageType;
 
     // reference to function this local belongs to
     inline DiscreteFunctionAdapter
@@ -195,6 +185,7 @@ namespace Dune{
         unsigned int order = DiscreteFunctionSpaceType :: polynomialOrder )
     : BaseType(space_),
       space_( gridPart, order ),
+      localFunctionStorage_( *this ),
       function_( f ),
       name_( name )
     {
@@ -204,6 +195,7 @@ namespace Dune{
     DiscreteFunctionAdapter( const ThisType &other ) 
     : BaseType( other ),
       space_( other.space_ ),
+      localFunctionStorage_( *this ),
       function_( other.function_ ),
       name_( other.name_ )
     {
@@ -218,13 +210,20 @@ namespace Dune{
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
     const LocalFunctionType localFunction( const EntityType &entity ) const 
     {
-      return LocalFunctionType( entity, *this );
+      return localFunctionStorage().localFunction( entity );
+      //return LocalFunctionType( entity, *this );
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
     LocalFunctionType localFunction( const EntityType &entity )
     {
-      return LocalFunctionType( entity, *this );
+      return localFunctionStorage().localFunction( entity );
+      //return LocalFunctionType( entity, *this );
+    }
+
+    inline LocalFunctionStorageType &localFunctionStorage () const
+    {
+      return localFunctionStorage_;
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::name */
@@ -235,11 +234,61 @@ namespace Dune{
 
   protected:    
     DiscreteFunctionSpaceType space_;
+    mutable LocalFunctionStorageType localFunctionStorage_;
     //! reference to function 
     const FunctionType& function_; 
     
     const std::string name_;
   };
+
+
+
+  template< class Function, class GridPart >
+  class DiscreteFunctionAdapter< Function, GridPart > :: LocalFunctionStorage
+  {
+    typedef LocalFunctionStorage ThisType;
+    typedef DiscreteFunctionAdapter< Function, GridPart > DiscreteFunctionType;
+
+  public:
+    typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+
+  private:
+    DiscreteFunctionType &discreteFunction_;
+
+  public:
+    inline explicit
+    LocalFunctionStorage ( DiscreteFunctionType &discreteFunction )
+    : discreteFunction_( discreteFunction )
+    {}
+
+  private:
+    LocalFunctionStorage ( const ThisType & );
+    ThisType operator= ( const ThisType & );
+
+  public:
+    inline LocalFunctionType localFunction ()
+    {
+      return LocalFunctionType( discreteFunction_ );
+    }
+
+    template< class Entity >
+    inline const LocalFunctionType localFunction ( const Entity &entity ) const
+    {
+      return LocalFunctionType( entity, discreteFunction_ );
+    }
+
+    template< class Entity >
+    inline LocalFunctionType localFunction ( const Entity &entity )
+    {
+      return LocalFunctionType( entity, discreteFunction_ );
+    }
+
+    DiscreteFunctionType& function() {
+      return discreteFunction_;
+    }
+  };
+
+  
 
   namespace {
     template <class FunctionImp,class GridPartType,bool>
@@ -382,7 +431,6 @@ namespace Dune{
     return ConvertToGridFunction<FunctionImp,GridPartImp>
       (name,func,gridPart);
   }
-  
 
   
   /** \brief LocalFunctionAdapter wrapped a class with a local evaluate method
