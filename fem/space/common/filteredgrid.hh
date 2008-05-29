@@ -180,12 +180,12 @@ namespace Dune {
   */
   template <class GridPartType>
   class RadialFilter : 
-    public FilterInterface<DefaultFilterTraits<RadialFilter<GridPartType>, GridPartType> >
+    public FilterDefaultImplementation<DefaultFilterTraits<RadialFilter<GridPartType>, GridPartType> >
   {
   public:
     typedef typename GridPartType :: GridType GridType;
     typedef DefaultFilterTraits<RadialFilter<GridPartType>, GridType> Traits;
-    typedef FilterInterface<DefaultFilterTraits<RadialFilter<GridPartType>,GridPartType> > BaseType;
+    typedef FilterDefaultImplementation<DefaultFilterTraits<RadialFilter<GridPartType>,GridPartType> > BaseType;
     typedef typename BaseType::FilterType FilterType;
     typedef typename BaseType::EntityCodim0Type EntityCodim0Type;
     typedef typename BaseType::EntityPointerCodim0Type EntityPointerCodim0Type;
@@ -382,7 +382,11 @@ namespace Dune {
     }
 
     //! Returns maxlevel of the grid
-    int level() const { return maxlevel_; }
+    int level() const
+    {
+      DUNE_THROW(Dune::NotImplemented,"Method FilteredGridPart::level() not implemented");
+      return maxlevel_;
+    }
 
     //! corresponding communication method for this grid part
     template <class DataHandleImp,class DataType>
@@ -392,8 +396,9 @@ namespace Dune {
       this->grid().communicate(data,iftype,dir);
     }
 
+    //! return reference to filter 
     const FilterType & filter() const { return filter_; }
-
+    
   private:   
     inline void updateStatus()
     {
@@ -493,30 +498,30 @@ namespace Dune {
         //! write information for current intersection 
         inline void writeNeighborInfo() 
         {
-          if (IteratorType::neighbor()) 
-          { 
-            // if hasEnttiy then this is an inside entity 
+          if (IteratorType::neighbor())
+          {
+            // if hasEnttiy then this is an inside entity
             if ( filter_.interiorIntersection( asBase() ) )
             {
               nInfo.boundary_   = false;
               nInfo.boundaryId_ = 0;
               nInfo.neighbor_   = true;
             }
-            else 
+            else
             {
-              // otherwise get boundary information from filter 
+              // otherwise get boundary information from filter
               nInfo.boundary_   = filter_.intersectionBoundary( asBase() );
               nInfo.boundaryId_ = filter_.intersectionBoundaryId( asBase() );
               nInfo.neighbor_   = filter_.intersectionNeighbor( asBase() );
             }
           }
-          else 
+          else
           {
-            // for real boundary get boundary from filter 
+            // for real boundary get boundary from filter
             nInfo.boundary_   = true;
             nInfo.boundaryId_ = filter_.intersectionBoundaryId( asBase() );
             nInfo.neighbor_   = false;
-          }    
+          }
         }
     
       public:
