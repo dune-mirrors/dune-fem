@@ -265,10 +265,20 @@ namespace Dune {
     //! Assume the following: \$ u_{n+1} = p_{n+1}(u_n,u_{n-1},..,u_1,u_0) \$
     //! where $u_0=u$ is the global argument of the combined passes.
     //! If \$ p_{n+1} \$ only depends on \$ u_0,u_2,u_n \$ then the
-    //! following selector can be used: \c Selector<0,2,n>. Then
+    //! following selector can be used: \c Selector<0,n-1,1>. Then
     //! ArgumentTuple is now filled with the values of these three
     //! functions and can be accessed by...
-
+    //! Other way of filling the ArgumentTuple with corresponding pass
+    //! results is when one uses passIds. In this case if \$ u_{n+1} \$
+    //! depends on the passes with following passIds: firstPassId , passId2 
+    //! , passId5 then the desired Selector is 
+    //! Selector< firstPassId , passId2 , passId5 > ...
+    //! If there's no SelectorType in user-implemented DiscreteModel then
+    //! this Selector is used. Therefore it's good to pass passIds to this class
+    //! and avoid writing SelectorType in user-implemented DiscreteModel.
+    //! The point where a user specifies what's going to be in the Selector is
+    //! in the template declaration of the DiscreteModel where one names
+    //! passIds necessary for this DiscreteModel
     typedef Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 > SelectorType;
   public:
     /** \copydoc Dune::DiscreteModelInterface::hasFlux() const
@@ -384,9 +394,19 @@ namespace Dune {
   //! Default implementation of the DiscreteModelInterface where methods for 
   //! the fluxes and the source term do nothing, so that the user needn't
   //! implement them if not needed.
-  template <class DiscreteModelTraits>
+  template <class DiscreteModelTraits
+            , int N1 = -1 
+            , int N2 = -1 
+            , int N3 = -1 
+            , int N4 = -1 
+            , int N5 = -1 
+            , int N6 = -1 
+            , int N7 = -1 
+            , int N8 = -1 
+            , int N9 = -1 
+            >
   class DiscreteModelDefaultWithInsideOutSide : 
-    public DiscreteModelDefault<DiscreteModelTraits> 
+    public DiscreteModelDefault<DiscreteModelTraits,N1,N2,N3,N4,N5,N6,N7,N8,N9> 
   {
   public:
     typedef DiscreteModelTraits Traits;

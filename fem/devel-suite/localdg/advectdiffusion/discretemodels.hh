@@ -263,11 +263,8 @@ namespace Dune {
              , int passId1
              >
   class AdvDiffDModel1 :
-    public DiscreteModelDefault< AdvDiffTraits1< Model , NumFlux , polOrd
-             , passId1
-             > 
-             , passId1
-             >
+    public DiscreteModelDefault
+      < AdvDiffTraits1< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
     Int2Type< passId1 > uVar;
   public:
@@ -275,8 +272,8 @@ namespace Dune {
              , passId1
              > Traits;
     
-    typedef Selector< 0 > OldSelectorType;
-    typedef Selector< passId1 > SelectorType;
+    //typedef Selector< 0 > OldSelectorType;
+    //typedef Selector< passId1 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
@@ -391,10 +388,9 @@ namespace Dune {
              , int passId2
              >
   class AdvDiffDModel2 :
-    public DiscreteModelDefault< AdvDiffTraits2< Model , NumFlux , polOrd
-             , passId1
-             , passId2
-             > >
+    public DiscreteModelDefault
+      < AdvDiffTraits2< Model , NumFlux , polOrd , passId1 , passId2 > 
+        , passId1 , passId2 >
   {
     Int2Type< passId1 > uVar;
     Int2Type< passId2 > vVar;
@@ -404,8 +400,8 @@ namespace Dune {
              , passId2
              > Traits;
     
-    typedef Selector<0, 1> OldSelectorType;
-    typedef Selector< passId1 , passId2 > SelectorType;
+    //typedef Selector<0, 1> OldSelectorType;
+    //typedef Selector< passId1 , passId2 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     
@@ -534,20 +530,15 @@ namespace Dune {
              , int passId1
              >
   class AdvDiffDModel3 :
-    public DiscreteModelDefault< AdvDiffTraits3< Model , NumFlux , polOrd
-             , passId1
-             >
-             , passId1
-             >
+    public DiscreteModelDefault
+      < AdvDiffTraits3< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
     Int2Type< passId1 > uVar;
 
   public:
-    typedef AdvDiffTraits3< Model , NumFlux , polOrd 
-             , passId1
-             > Traits;
-    typedef Selector<0> OldSelectorType;
-    typedef Selector< passId1 > SelectorType;
+    typedef AdvDiffTraits3< Model , NumFlux , polOrd , passId1 > Traits;
+    //typedef Selector<0> OldSelectorType;
+    //typedef Selector< passId1 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     
@@ -648,8 +639,8 @@ namespace Dune {
              , passId1
              , passId2
              > Traits;
-    typedef Selector<0, 1> OldSelectorType;
-    typedef Selector< passId1 , passId2 > SelectorType;
+    //typedef Selector<0, 1> OldSelectorType;
+    //typedef Selector< passId1 , passId2 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     
@@ -759,9 +750,8 @@ namespace Dune {
              , int passId1
              >
   class LimiterDiscreteModel1 :
-    public DiscreteModelDefault< LimiterTraits1< Model , polOrd
-             , passId1
-             > >
+    public DiscreteModelDefault
+      < LimiterTraits1< Model , polOrd , passId1 > , passId1 >
   {
     Int2Type< passId1 > uVar;
     public:
@@ -769,8 +759,8 @@ namespace Dune {
              , passId1
              > Traits;
     
-    typedef Selector<0> OldSelectorType;
-    typedef Selector< passId1 > SelectorType;
+    //typedef Selector<0> OldSelectorType;
+    //typedef Selector< passId1 > SelectorType;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
