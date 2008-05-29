@@ -81,7 +81,7 @@ namespace Dune
       for( int i = 0; i < numDofs; ++i )
       {
         RangeType phi;
-        f_local.evaluate( lagrangePointSet, i, phi );
+        f_local.evaluate( lagrangePointSet[ i ], phi );
         df_local[ i ] = phi[ 0 ];
       }
     }

@@ -111,7 +111,7 @@ namespace Dune
 
         // evaluate argument function
         DomainFunctionRangeType phi;
-        u_local.evaluate( quadrature, pt, phi );
+        u_local.evaluate( quadrature[ pt ], phi );
         
         // multiply with all base functions
         for( unsigned int i = 0; i < numDofs; ++i )
