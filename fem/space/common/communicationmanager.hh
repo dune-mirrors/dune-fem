@@ -134,8 +134,10 @@ namespace Dune
   public:
     //! constructor taking space, but here only storing gridPart for
     //! communication
-    CommunicationManager(const SpaceImp & space) 
-      : BaseType(space) 
+    CommunicationManager(const SpaceImp & space,  
+        const InterfaceType interface = InteriorBorder_All_Interface,
+        const CommunicationDirection dir = ForwardCommunication )
+      : BaseType(space,interface,dir) 
     {}
   };
 

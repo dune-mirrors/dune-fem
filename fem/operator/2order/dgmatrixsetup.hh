@@ -80,20 +80,11 @@ public:
       fill(gridPart,en,rowMapper,colMapper,indices, *buildProxy);
     }
 
-    insertLast(rowMapper, *buildProxy);
+    // insert size as last ghost 
+    buildProxy->insert( rowMapper.size() );
   }
 
 protected:
-  template<class RowMapperImp, 
-           class ParallelScalarProductType>
-  static inline void insertLast(RowMapperImp& rowMapper,
-                  ParallelScalarProductType& slaveDofs)
-  {
-    // insert size as last ghost 
-    std::vector<int> slaves(1, rowMapper.size());
-    slaveDofs.insert( slaves );
-  }
-
   //! create entries for element and neighbors 
   template <class GridPartImp,
             class EntityImp,
@@ -118,12 +109,10 @@ protected:
     // insert diagonal for each element 
     localIndices.insert( elRowIndex );
 
-    std::vector<int> slaves;
-
     // if entity is not interior, insert into overlap entries 
     if(en.partitionType() != InteriorEntity)
     {
-      slaves.push_back( elRowIndex );
+      slaveDofs.insert( elRowIndex );
     }
 
     // insert neighbors 
@@ -152,7 +141,7 @@ protected:
         {
           insertHere = true;
           nbInsert = nb.partitionType() != GhostEntity;
-          slaves.push_back( nbRowIndex );
+          slaveDofs.insert( nbRowIndex );
         }
 #endif
         // insert pair 
@@ -173,8 +162,6 @@ protected:
         }
       }
     }
-
-    slaveDofs.insert( slaves );
   }
 };
 

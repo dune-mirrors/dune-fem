@@ -3,6 +3,7 @@
 
 //- system includes 
 #include <iostream>
+#include <set>
 #include <map> 
 #include <limits>
 
@@ -60,6 +61,7 @@ namespace Dune
     
     // type of communication indices 
     IndexMapType slaves_;
+    std::set<int> slaveSet_;
 
     //! know grid sequence number 
     int sequence_; 
@@ -92,27 +94,33 @@ namespace Dune
     }
 
   public:
-    inline void insert ( const int &index )
+    //! insert index 
+    inline void insert( const int index )
     {
-      slaves_.insert( index );
+      slaveSet_.insert( index );
     }
     
-    inline void insert ( const std :: vector< int > &indices )
-    {
-      slaves_.insert( indices );
-    }
-    
+    //! initialize 
     inline void initialize ()
     {
       sequence_ = -1;
+      slaveSet_.clear();
       slaves_.clear();
     }
     
+    //! finalize 
     inline void finalize ()
     {
+      // insert slaves 
+      slaves_.set( slaveSet_ );
+      
+      // remove memory 
+      slaveSet_.clear();
+      
+      // store actual sequence number 
       sequence_ = space_.sequence();
     }
-    
+
     //! check if grid has changed and rebuild cache if necessary 
     inline void rebuild () 
     {
@@ -163,23 +171,17 @@ namespace Dune
       {
         // build local mapping 
         const int numDofs = mapper_.numEntityDofs( entity );
-        std::vector< int > indices( numDofs );
 
         // copy numDofs 
         for( int i = 0; i < numDofs; ++i )
-          indices[ i ] = mapper_.mapEntityDofToGlobal( entity, i );
-
-        insert( indices ); 
+        {
+          insert( mapper_.mapEntityDofToGlobal( entity, i ) );
+        }
       }
     }
 
-    {
-      // insert overall size at the end
-      std :: vector< int > indices( 1, mapper_.size() );
-      insert( indices );
-    }
-
-    //slaveDofs_.print(std::cout,myRank_);
+    // insert overall size at the end
+    insert( mapper_.size() );
   }
 
 
@@ -188,11 +190,12 @@ namespace Dune
   inline void SlaveDofs< Space, Mapper > :: buildCommunicatedMaps ()
   {
     typedef LinkBuilder LinkBuilderHandleType; 
-    LinkBuilderHandleType handle( slaves_, space_ );
+    LinkBuilderHandleType handle( *this, space_ , mapper_ );
 
     gridPart_.communicate
       ( handle, InteriorBorder_All_Interface, ForwardCommunication );
     
+    // insert overall size at the end
     insert( mapper_.size() );
   }
 
@@ -253,12 +256,15 @@ namespace Dune
     typedef Space SpaceType;
     typedef Mapper MapperType;
 
+    enum { nCodim = SpaceType :: GridType :: dimension + 1 };
+
   public:
     typedef int DataType;
 
     const int myRank_;
     const int mySize_;
     
+    typedef SlaveDofs< Space,Mapper > IndexMapType;
     IndexMapType &slaves_;
 
     const SpaceType &space_;
@@ -266,13 +272,15 @@ namespace Dune
 
   public:
     LinkBuilder( IndexMapType &slaves,
-                 const SpaceType &space )
+                 const SpaceType &space,
+                 const MapperType& mapper )
     : myRank_( space.grid().comm().rank() ),
       mySize_( space.grid().comm().size() ),
       slaves_( slaves ),
       space_( space ),
-      mapper_( space.mapper() )
-    {}
+      mapper_( mapper )
+    {
+    }
 
     bool contains ( int dim, int codim ) const
     {
@@ -289,13 +297,16 @@ namespace Dune
     inline void gather ( MessageBuffer &buffer,
                          const Entity &entity ) const
     {
-      PartitionType ptype = entity.partitionType();
+      const PartitionType ptype = entity.partitionType();
 
       if( (ptype == InteriorEntity) || (ptype == BorderEntity) )
         buffer.write( myRank_ );
     }
 
     //! read buffer and apply operation 
+    //! scatter is called for one every entity 
+    //! several times depending on how much data 
+    //! was gathered 
     template< class MessageBuffer, class EntityType >
     inline void scatter ( MessageBuffer &buffer,
                           const EntityType &entity,
@@ -325,8 +336,7 @@ namespace Dune
     template< class Entity >
     size_t size ( const Entity &entity ) const
     {
-      PartitionType ptype = entity.partitionType();
-
+      const PartitionType ptype = entity.partitionType();
       return ((ptype == InteriorEntity) || (ptype == BorderEntity) ? 1 : 0);
     }
   };
@@ -364,7 +374,6 @@ namespace Dune
     typedef SingletonList< SlaveDofsKeyType, SlaveDofsType >
       SlaveDofsProviderType;
 
-    typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
     typedef typename DiscreteFunctionType :: ConstDofBlockPtrType
       ConstDofBlockPtrType;
 
@@ -393,6 +402,7 @@ namespace Dune
       SlaveDofsProviderType :: removeObject( *slaveDofs_ );
     }
 
+    //! evaluate scalar product and omit slave nodes 
     inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
                                               const DiscreteFunctionType &y ) const
     {
@@ -411,12 +421,13 @@ namespace Dune
           ConstDofBlockPtrType yPtr = y.block( i );
           for( unsigned int j = 0; j < blockSize; ++j )
             scp += (*xPtr)[ j ] * (*yPtr)[ j ];
-          // scp += x.dof( i ) * y.dof( i );
         }
+
         // skip the slave dof
         ++i;
       }
 
+      // do global sum 
       scp = space_.grid().comm().sum( scp );
       return scp;
     }
@@ -469,6 +480,7 @@ namespace Dune
     ParallelScalarProduct( const ThisType & );
 
   public:
+    //! return scalar product of dofs 
     inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
                                               const DiscreteFunctionType &y ) const
     {
@@ -498,6 +510,7 @@ namespace Dune
     < typename BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
         :: DofStorageType >
   {
+    //! class for building scalar product dofs used in DGMatrixSetup
     template<class SlaveDofsImp>
     class SlaveDofsProxy
     {
@@ -505,18 +518,20 @@ namespace Dune
       SlaveDofsImp& slaveDofs_;
       SlaveDofsProxy(const SlaveDofsProxy& org); 
     public:
+      //! constructor 
       SlaveDofsProxy(SlaveDofsImp& sd) : slaveDofs_(sd) 
       {
         slaveDofs_.initialize();
       }
+      //! destructor 
       ~SlaveDofsProxy() 
       { 
         slaveDofs_.finalize(); 
       }
-
-      void insert(const std::vector<int> & indices)
+      //! insert index 
+      void insert(const int idx)
       {
-        slaveDofs_.insert( indices );
+        slaveDofs_.insert( idx );
       }
     };
 

@@ -510,23 +510,7 @@ private:
       DomainFunctionType farg( "multOEM arg", domainSpace_, arg );
       RangeFunctionType fdest( "multOEM dest", rangeSpace_, dest );
       apply( farg, fdest );
-        
-      //matrix_.multOEM( arg, dest );
-      //communicate( dest );
     }
-#if 0
-    //! communicate data 
-    void communicate( double *dest ) const
-    {
-      if( domainSpace_.grid().comm().size() <= 1 )
-        return;
-      
-      typedef AdaptiveDiscreteFunction< RangeSpaceType > DestinationType;
-
-      DestinationType tmp( "SparseRowMatrixObject::communicate_tmp", rangeSpace_, dest );
-      communicate_.exchange( tmp );
-    }
-#endif
 
     //! resort row numbering in matrix to have ascending numbering 
     void resort() 

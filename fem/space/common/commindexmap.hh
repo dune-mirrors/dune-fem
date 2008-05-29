@@ -41,35 +41,39 @@ namespace Dune
       resize( 0 );
     }
 
-    void insert ( const int &idx )
-    {
-      const int size = this->size();
-      int pos = 0;
-      for( ; pos < size; ++pos )
-      {
-        const int current = indices_[ pos ];
-        if( current >= idx )
-        {
-          if( current == idx )
-            return;
-          else
-            break;
-        }
-      }
-
-      resize( size + 1 );
-      for( int i = size; i > pos; --i )
-        indices_[ i ] = indices_[ i-1 ];
-      indices_[ pos ] = idx;
-    }
-
     //! append index vector with idx 
+    //! result is unsorted 
     void insert( const std :: vector< int > &idx )
     {
-      const int count = idx.size();
-      reserve( count + size() );
-      for( int i = 0; i < count; ++i )
-        insert( idx[ i ] );
+      const int size = idx.size();
+      int count = indices_.size();
+
+      // reserve memory 
+      resize( count + size );
+      assert( indices_.size() == (count + size) );
+
+      // copy indices to index vector 
+      for( int i = 0; i < size; ++i, ++count )
+      {
+        assert( idx[ i ] >= 0 );
+        indices_[ count ] = idx[ i ];
+      }
+    }
+
+    //! insert sorted set of indices  
+    void set( const std :: set<int> &idxSet )
+    {
+      // resize to given new size 
+      resize( idxSet.size() );
+      
+      // copy all elements from set to array 
+      int count = 0;
+      typedef std :: set<int> :: const_iterator iterator; 
+      const iterator end = idxSet.end();
+      for(iterator it = idxSet.begin(); it != end; ++it, ++count) 
+      {
+        indices_[count] = *it;
+      }
     }
 
     //! return size of map
@@ -87,9 +91,6 @@ namespace Dune
         s << rank << " idx[ " << i << " ] = " << indices_[ i ] << std :: endl;
       s << "End of Array" << std :: endl;
     }
-
-    void sort () DUNE_DEPRECATED
-    {}
 
   private:
     inline void resize ( int size ) 
