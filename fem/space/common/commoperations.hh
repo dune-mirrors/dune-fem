@@ -278,6 +278,11 @@ namespace Dune {
     //! just copy data 
     struct Copy 
     {
+      static const char * name () 
+      {
+        return "Copy";
+      }
+      
       template <class DataType> 
       static inline void apply(const DataType & arg, DataType & dest) 
       {
@@ -288,6 +293,11 @@ namespace Dune {
     //! sum up data  
     struct Add 
     {
+      static const char * name () 
+      {
+        return "Add";
+      }
+      
       template <class DataType> 
       static inline void apply(const DataType & arg, DataType & dest) 
       {
@@ -298,6 +308,11 @@ namespace Dune {
     //! keep minimum   
     struct Min 
     {
+      static const char * name () 
+      {
+        return "Min";
+      }
+      
       template <class DataType> 
       static inline void apply(const DataType & arg, DataType & dest) 
       {
@@ -308,6 +323,11 @@ namespace Dune {
     //! keep maximum   
     struct Max 
     {
+      static const char * name () 
+      {
+        return "Max";
+      }
+      
       template <class DataType> 
       static inline void apply(const DataType & arg, DataType & dest) 
       {
