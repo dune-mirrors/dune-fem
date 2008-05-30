@@ -2,6 +2,7 @@
 #define DUNE_FEM_COMMINDEXMAP_HH
 
 //- system includes
+#include <set>
 #include <vector>
 
 //- Dune includes
