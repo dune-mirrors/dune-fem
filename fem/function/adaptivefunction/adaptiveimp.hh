@@ -124,11 +124,13 @@ namespace Dune {
 
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
+      assert( blockSize * (index + 1) <= (unsigned int)size() );
       return ConstDofBlockPtrType( leakPointer() + (blockSize * index) );
     }
     
     inline DofBlockPtrType block ( unsigned int index )
     {
+      assert( blockSize * (index + 1) <= (unsigned int)size() );
       return DofBlockPtrType( leakPointer() + (blockSize * index) );
     } 
     
