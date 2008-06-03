@@ -85,8 +85,6 @@ namespace Dune
         DofBlockPtrType blockPtr = function_->block( index );
         for( unsigned int j = 0; j < blockSize; ++j )
           buffer.write( (*blockPtr)[ j ] );
-        
-        //buffer.write( function_->dof( index ) );
       }
     }
 
@@ -109,8 +107,6 @@ namespace Dune
 
           Operation :: apply( value, (*blockPtr)[ j ] );
         }
-
-        //Operation :: apply( value, function_->dof( index ) );
       }
     }
 

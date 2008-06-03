@@ -38,7 +38,7 @@ int scanProcsPaths(const std::string globalPath,
 
   std::string path,solprefix;
 
-int readParameterList (int argc, char **argv)
+int readParameterList (int argc, char **argv, bool displayData = true ) 
 {
   int   i, i_start, i_end;
   INFO * info = 0;
@@ -231,9 +231,12 @@ int readParameterList (int argc, char **argv)
   // read all data 
   readData(info, path.c_str(),i_start,i_end,i_delta,n,timestep,numberProcessors);
   
-  std::cout << "Displaying data of " << numberProcessors << " processors! \n";
-  // run grape 
-  displayTimeScene(info,numberProcessors);
+  if( displayData ) 
+  {
+    std::cout << "Displaying data of " << numberProcessors << " processors! \n";
+    // run grape 
+    displayTimeScene(info,numberProcessors);
+  }
   
   if(replay) 
   {

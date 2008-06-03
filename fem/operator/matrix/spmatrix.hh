@@ -408,7 +408,7 @@ private:
       matrix_(),
       preconditioning_( false ),
       pcMatrix_( 0 ),
-      communicate_( rangeSpace_ ),
+      communicate_( rangeSpace_ , InteriorBorder_All_Interface ),
       localMatrixStack_( *this )
     {
       if( paramfile != "" )

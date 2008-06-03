@@ -39,7 +39,7 @@ inline void dataDispErrorExit(std::string msg)
 
 inline GrapeDispType * readTupleData(const char * path, const char * filename, 
             double & time , int n, 
-            int ntime, int myRank,
+            int timestep, int myRank,
             INFO* info)
 {
   // check whether we use a fixed mesh 
@@ -56,7 +56,7 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
   DATAINFO * dinf = info[n].datinf;
 
   IOTuple<GR_DiscFuncType>::ReturnType* tup = 
-    IOTuple<GR_DiscFuncType>::input(dataIO,grid,time,ntime,path,fn);
+    IOTuple<GR_DiscFuncType>::input(dataIO,grid,time,timestep,path,fn);
   std::cout << "Finished reading grid" << std::endl;
 
   // push all new grids to grid stack 
@@ -69,7 +69,7 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
   IOTuple<GR_DiscFuncType>::addToDisplayOrRemove(*disp,dinf,time,*tup);
 
   // do some post processing 
-  postProcessing(*disp,*grid,time,*(tup->first()));
+  postProcessing(*disp,*grid,time,timestep,*(tup->first()));
   return disp;
 }
 
@@ -104,7 +104,7 @@ inline INFO * readData(INFO * info , const char * path, int i_start, int i_end,
             IOInterface::createRecoverPath(path,proc,info[i].name,ntime);
 
           newdisp = readTupleData(newpath.c_str(), info[i].name, 
-                                t_act , i , ntime, proc,   info);
+                                  t_act , i , ntime, proc,   info);
 
           if( comdisp )
           {

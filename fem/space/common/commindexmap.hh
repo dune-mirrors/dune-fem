@@ -93,7 +93,33 @@ namespace Dune
       s << "End of Array" << std :: endl;
     }
 
-  private:
+    //! write all indices to buffer
+    template <class CommBuffer> 
+    void writeToBuffer(CommBuffer& buffer) const 
+    {
+      const int idxSize = indices_.size(); 
+      buffer.write( indices_.size() );
+      for(int i=0; i<idxSize; ++i) 
+      {
+        buffer.write( indices_[i] );
+      }
+    }
+
+    //! read all indices from buffer
+    template <class CommBuffer> 
+    void readFromBuffer(CommBuffer& buffer) 
+    {
+      int idxSize; 
+      buffer.read( idxSize );
+      indices_.resize( idxSize );
+      for(int i=0; i<idxSize; ++i) 
+      {
+        buffer.read( indices_[i] );
+      }
+    }
+
+  protected:  
+    //! resize map with size size  
     inline void resize ( int size ) 
     {
       indices_.resize( size );
@@ -103,6 +129,7 @@ namespace Dune
     {
       indices_.reserve( size );
     }
+    
   };
 
 }

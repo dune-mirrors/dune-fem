@@ -4,6 +4,7 @@
 //- system includes 
 #include <iostream>
 #include <map> 
+#include <queue>
 #include <vector>
 
 //- Dune includes  
@@ -22,6 +23,7 @@
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/entitycommhelper.hh>
+#include <dune/fem/space/common/commindexmap.hh>
 
 namespace Dune
 {
@@ -47,15 +49,6 @@ namespace Dune
      //! type of grid part 
     typedef typename SpaceType :: GridPartType GridPartType; 
    
-    // for compatiblity with Robert's code
-    enum { treatOverlapAsGhosts = true };
-    
-  protected:
-    class CommunicationIndexMap;
-    
-    template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
-    class LinkBuilder;
-
     class UnsaveObjectStream;
 
   protected:
@@ -84,6 +77,7 @@ namespace Dune
     const GridPartType &gridPart_;
 
     const InterfaceType interface_;
+    const CommunicationDirection dir_; 
     
     const int myRank_;
     const int mySize_; 
@@ -108,13 +102,19 @@ namespace Dune
     //! know grid sequence number 
     int sequence_; 
     
+  protected:
+    template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
+    class LinkBuilder;
+
   public:
     //! constructor taking space 
     DependencyCache ( const SpaceType &space,
-                      const InterfaceType interface = InteriorBorder_All_Interface )
+                      const InterfaceType interface, 
+                      const CommunicationDirection dir) 
     : space_( space ),
       gridPart_( space_.gridPart() ),
       interface_( interface ),
+      dir_(dir),
       myRank_( gridPart_.grid().comm().rank() ),
       mySize_( gridPart_.grid().comm().size() ),
       linkStorage_(),
@@ -154,6 +154,9 @@ namespace Dune
     inline void buildMaps ();
 
   protected:
+    // check consistency of maps 
+    inline void checkConsistency ();
+
     template< class LS, class IMV, InterfaceType CI >
     inline void buildMaps ( LinkBuilder< LS, IMV, CI > &handle );
 
@@ -204,6 +207,7 @@ namespace Dune
     
   private:  
     // write data of DataImp& vector to object stream 
+    // --writeBuffer 
     template< class DiscreteFunction >
     inline void writeBuffer ( const int link,
                               ObjectStreamType &str,
@@ -235,11 +239,12 @@ namespace Dune
     }
 
     // read data from object stream to DataImp& data vector 
+    // --readBuffer 
     template< class DiscreteFunction, class Operation >
     inline void readBuffer ( const int link,
                              ObjectStreamType &str, 
                              DiscreteFunction &discreteFunction,
-                             const Operation *operation ) const 
+                             const Operation * ) const 
     {
       typedef typename DiscreteFunction :: DofType DofType;
 
@@ -247,7 +252,8 @@ namespace Dune
               DiscreteFunctionSpaceType :: localBlockSize };
 
       UnsaveObjectStream &os = (UnsaveObjectStream &)str;
-      
+
+      // get index map of rank belonging to link  
       const IndexMapType &indexMap = recvIndexMap_[ linkRank_[ link ] ];
 
       const int size = indexMap.size();
@@ -268,83 +274,7 @@ namespace Dune
     }
   };
 
-
-
-  // index map for send and receive data 
-  template< class SpaceImp >
-  class DependencyCache< SpaceImp > ::CommunicationIndexMap
-  {
-  protected:
-    MutableArray< int > index_;
-
-  public:
-    //! constructor creating empty map
-    CommunicationIndexMap() : index_(0) 
-    {
-      index_.setMemoryFactor( 1.1 );
-    }
-
-  private:
-    // prohibit copying
-    CommunicationIndexMap( const CommunicationIndexMap & );
-
-  public:
-    //! reserve memory 
-    void reserve( int size ) 
-    {
-      // resize array, memory factor will be used 
-      index_.resize( size );
-    }
-
-    //! clear index map 
-    void clear() 
-    {
-      // resize 0 will free memory 
-      index_.resize( 0 );
-    }
-
-    //! append index vector with idx 
-    void insert( const std::vector<int> & idx )
-    {
-      const int size = idx.size();
-      int count = index_.size();
-      // reserve memory 
-      reserve( count + size );
-      assert( index_.size() == (count+size));
-      // copy indices to index vector 
-      for(int i=0; i<size; ++i, ++count) 
-      { 
-        assert( idx[i] >= 0 );
-        index_[count] = idx[i]; 
-      }
-    }
-
-    //! return index map for entry i
-    const int operator [] (int i) const 
-    {
-      assert( i >= 0 );
-      assert( i < (int) index_.size());
-      return index_[i];
-    }
-
-    //! return size of map
-    int size () const { return index_.size(); }
-
-    //! print  map for debugging only 
-    void print(std::ostream & s, int rank) const 
-    {
-      const int size = index_.size();
-      s << "Start print: size = " << size << std::endl;
-      for(int i=0; i<size; ++i) 
-      {
-        s<< rank << " idx["<<i<<"] = " << index_[i] << std::endl;
-      }
-      s << "End of Array" << std :: endl;
-    }
-  };
-
-
-
+  // --LinkBuilder 
   template< class Space >
   template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
   class DependencyCache< Space > :: LinkBuilder
@@ -384,16 +314,67 @@ namespace Dune
       recvIndexMap_( recvIdxMap ),
       space_( space ),
       blockMapper_( space.blockMapper() )
-    {}
+    {
+    }
 
+  protected:  
+    void sendBackSendMaps() 
+    {
+      // create ALU communicator 
+      MPAccessImplType mpAccess ( MPIHelper::getCommunicator() );
+
+      // build linkage 
+      mpAccess.removeLinkage();
+      // insert new linkage 
+      mpAccess.insertRequestSymetric( linkStorage_ );        
+      // get destination ranks 
+      std::vector<int> dest = mpAccess.dest();
+      // get number of links 
+      const int nlinks = mpAccess.nlinks();
+      
+      // create buffers 
+      ObjectStreamVectorType osv( nlinks );
+
+      //////////////////////////////////////////////////////////////
+      //
+      //  at this point complete send maps exsist on receiving side, 
+      //  so send them back to sending side 
+      //
+      //////////////////////////////////////////////////////////////
+
+      // write all send maps to buffer 
+      for(int link=0; link<nlinks; ++link) 
+      {
+        sendIndexMap_[ dest[link] ].writeToBuffer( osv[link] );
+      }
+
+      // exchange data 
+      osv = mpAccess.exchange( osv );
+
+      // read all send maps from buffer 
+      for(int link=0; link<nlinks; ++link) 
+      {
+        sendIndexMap_[ dest[link] ].readFromBuffer( osv[link] );
+      }
+    }
+    
+  public:  
+    //! desctructor 
+    ~LinkBuilder() 
+    {
+      sendBackSendMaps();
+    }
+
+    //! returns true if combination is contained 
     bool contains ( int dim, int codim ) const
     {
       return space_.contains( codim );
     }
 
+    //! return whether we have a fixed size 
     bool fixedsize ( int dim, int codim ) const
     {
-      return true;
+      return false;
     }
 
     //! read buffer and apply operation 
@@ -401,8 +382,24 @@ namespace Dune
     void gather ( MessageBuffer &buffer,
                   const Entity &entity ) const
     {
-      // send rank 
-      buffer.write( myRank_ );
+      // check whether we are a sending entity 
+      const PartitionType myPartitionType = entity.partitionType();
+      const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
+
+      // if we send data then send rank and dofs 
+      if( send )
+      {
+        // send rank for linkage 
+        buffer.write( myRank_ );
+
+        // then send all dof numbers 
+        const int numDofs = blockMapper_.numEntityDofs( entity );
+        for( int i = 0; i < numDofs; ++i )
+        {
+          DataType idx = blockMapper_.mapEntityDofToGlobal( entity, i );
+          buffer.write( idx );
+        }
+      }
     }
 
     //! read buffer and apply operation 
@@ -411,36 +408,54 @@ namespace Dune
                    const Entity &entity,
                    const size_t dataSize )
     {
-      // build local mapping 
-      const int numDofs = blockMapper_.numEntityDofs( entity );
-      std :: vector< int > indices( numDofs );
-      for( int i = 0; i < numDofs; ++i )
-      {
-        indices[ i ] = blockMapper_.mapEntityDofToGlobal( entity, i );
-      }
-
-      const PartitionType p = entity.partitionType();
-      const bool send = EntityCommHelper< CommInterface > :: send( p );
-      const bool receive = EntityCommHelper< CommInterface > :: receive( p );
-      
-      // read links and insert to mappings 
-      for( size_t i = 0; i < dataSize; ++i )
+      // if data size > 0 then other side is sender 
+      if( dataSize > 0 ) 
       {
         // read rank of other side
-        DataType value;
-        buffer.read( value );  
-        assert( (value >= 0) && (value < mySize_) );
+        DataType rank;
+        buffer.read( rank );  
+        assert( (rank >= 0) && (rank < mySize_) );
+
+        // check whether we are a sending entity 
+        const PartitionType myPartitionType = entity.partitionType();
+        const bool receive = EntityCommHelper< CommInterface > :: receive( myPartitionType );
         
         // insert rank of link into set of links
-        linkStorage_.insert( value );
+        linkStorage_.insert( rank );
 
-        // if we are on a send entity, insert into send cache 
-        if( send )
-          sendIndexMap_[ value ].insert( indices );
+        // read indices from stream 
+        std::vector<int> indices( dataSize - 1 );
+        for(size_t i=0; i<dataSize-1; ++i) 
+        {
+          buffer.read( indices[i] );  
+        }
 
-        // if we are on a receive entity, insert into receive cache 
+        // if we are a receiving entity 
         if( receive ) 
-          recvIndexMap_[ value ].insert( indices );
+        {
+          //////////////////////////////////////////////////////////
+          //
+          // Problem here: sending and receiving order might differ
+          // Solution: sort all dofs after receiving order and send 
+          // senders dofs back at the end 
+          //
+          //////////////////////////////////////////////////////////
+          
+          // if data has been send and we are receive entity 
+          // then insert indices into send map of rank 
+          sendIndexMap_[ rank ].insert( indices );
+          
+          // build local mapping for receiving of dofs 
+          const int numDofs = blockMapper_.numEntityDofs( entity );
+          indices.resize( numDofs );
+          for( int i = 0; i < numDofs; ++i )
+          {
+            indices[ i ] = blockMapper_.mapEntityDofToGlobal( entity, i );
+          }
+
+          // insert receiving dofs 
+          recvIndexMap_[ rank ].insert( indices );
+        }
       }
     }
 
@@ -448,7 +463,9 @@ namespace Dune
     template< class Entity >
     size_t size ( const Entity &entity ) const
     {
-      return 1; 
+      const PartitionType myPartitionType = entity.partitionType();
+      const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
+      return (send) ? (blockMapper_.numEntityDofs( entity ) + 1) : 0;
     }
   };
 
@@ -520,6 +537,10 @@ namespace Dune
     else
       DUNE_THROW( NotImplemented, "DependencyCache for the given interface has"
                                   " not been implemented, yet." );
+#ifndef NDEBUG
+    // checks that sizes of index maps are equal on sending and receiving proc 
+    checkConsistency(); 
+#endif
   }
 
 
@@ -535,17 +556,8 @@ namespace Dune
       sendIndexMap_[ i ].clear();
     }
 
-    // do communication to build up linkage
-    if( treatOverlapAsGhosts && (gridPart_.grid().overlapSize( 0 ) > 0) )
-    {
-      // case of YaspGrid, where Overlap is treated as ghost 
-      gridPart_.communicate
-        ( handle, InteriorBorder_All_Interface, ForwardCommunication );
-      gridPart_.communicate
-        ( handle, InteriorBorder_All_Interface, BackwardCommunication );
-    }
-    else 
-      gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
+    // make one all to all communication to build up communication pattern 
+    gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
 
     // remove old linkage
     mpAccess().removeLinkage();
@@ -560,8 +572,58 @@ namespace Dune
 
     // resize buffer to number of links
     buffer_.resize( nLinks_ );
+
   }
 
+  template< class Space >
+  inline void DependencyCache< Space >
+    :: checkConsistency ()  
+  {
+    /////////////////////////////
+    // consistency check 
+    /////////////////////////////
+
+    // check that order and size are consistent 
+    for(int l=0; l<nLinks_; ++l) 
+    {
+      buffer_[l].clear();
+      const int sendSize = sendIndexMap_[ linkRank_[ l ] ].size();
+      buffer_[l].write( sendSize );
+      for(int i=0; i<sendSize; ++i) 
+      {
+        buffer_[l].write( i );
+      }
+    }
+
+    // exchange data to other procs 
+    buffer_ = mpAccess().exchange( buffer_  );
+  
+    // check that order and size are consistent 
+    for(int l=0; l<nLinks_; ++l) 
+    {
+      const int recvSize = recvIndexMap_[ linkRank_[ l ] ].size();
+      int sendedSize;
+      buffer_[l].read( sendedSize );
+
+      // compare sizes, must be the same 
+      if( recvSize != sendedSize )
+      {
+        DUNE_THROW(InvalidStateException,"Sizes do not match!" << sendedSize << " o|r " << recvSize);
+      }
+
+      for(int i=0; i<recvSize; ++i) 
+      {
+        int idx;
+        buffer_[l].read( idx );
+        
+        // ordering should be the same on both sides 
+        if( i != idx ) 
+        {
+          DUNE_THROW(InvalidStateException,"Wrong ordering of send and recv maps!");
+        }
+      }
+    }
+  }
 
   template< class Space >
   template< class DiscreteFunction, class Operation >
@@ -572,7 +634,7 @@ namespace Dune
     // on serial runs: do nothing 
     if( mySize_ <= 1 )
       return;
-     
+
     // update cache 
     rebuild();
     
@@ -627,11 +689,18 @@ namespace Dune
   class CommManagerSingletonKey
   {
     const SpaceImp & space_;
+    const InterfaceType interface_; 
+    const CommunicationDirection dir_;
   public:
     //! constructor taking space 
-    CommManagerSingletonKey(const SpaceImp & space) : space_(space) {}
+    CommManagerSingletonKey(const SpaceImp & space,
+                            const InterfaceType interface,
+                            const CommunicationDirection dir) 
+      : space_(space), interface_(interface), dir_(dir) {}
+
     //! copy constructor  
-    CommManagerSingletonKey(const CommManagerSingletonKey & org) : space_(org.space_) {}
+    CommManagerSingletonKey(const CommManagerSingletonKey & org) 
+      : space_(org.space_), interface_(org.interface_), dir_(org.dir_) {}
     //! returns true if indexSet pointer and numDofs are equal 
     bool operator == (const CommManagerSingletonKey & otherKey) const
     {
@@ -641,6 +710,10 @@ namespace Dune
 
     //! return reference to index set 
     const SpaceImp & space() const { return space_; }
+    //! return communication interface 
+    const InterfaceType interface() const { return interface_; }
+    //! return communication direction  
+    const CommunicationDirection direction() const { return dir_; }
   };
 
   //! Factory class for SingletonList to tell how objects are created and
@@ -652,7 +725,9 @@ namespace Dune
     //! create new communiaction manager   
     static ObjectImp * createObject( const KeyImp & key )
     {
-      return new ObjectImp(key.space());
+      return new ObjectImp(key.space(),
+                           key.interface(),
+                           key.direction());
     }
     
     //! delete comm manager  
@@ -690,9 +765,11 @@ namespace Dune
     CommunicationManager(const ThisType& org);
   public:  
     //! constructor taking space 
-    CommunicationManager(const SpaceType & space) 
+    CommunicationManager(const SpaceType & space,
+                         const InterfaceType interface = InteriorBorder_All_Interface,
+                         const CommunicationDirection dir = ForwardCommunication )
       : space_(space)
-      , key_(space_)
+      , key_(space_,interface,dir)
       , mySize_(space_.grid().comm().size())
       , cache_(CommunicationProviderType::getObject(key_)) 
     {
