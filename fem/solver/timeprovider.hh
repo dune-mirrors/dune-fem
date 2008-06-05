@@ -41,6 +41,7 @@ namespace Dune
     int timeStep_;
     double dt_;
     bool valid_;
+    bool dtValid_;
     double dtEstimate_;
     double dtUpperBound_;
 
@@ -49,7 +50,8 @@ namespace Dune
     : time_( Parameter :: getValue( "fem.timeprovider.starttime",
                                     (double)0.0 ) ),
       timeStep_( 0 ),
-      valid_( false )
+      valid_( false ),
+      dtValid_( false )
     {
       initTimeStepEstimate();
     }
@@ -57,7 +59,8 @@ namespace Dune
     inline explicit TimeProviderBase ( const double startTime )
     : time_( startTime ),
       timeStep_( 0 ),
-      valid_( false )
+      valid_( false ),
+      dtValid_( false )
     {
       initTimeStepEstimate();
     }
@@ -73,6 +76,7 @@ namespace Dune
       Tuple<double&,int&,double&,bool&,double&>
         values(time_,timeStep_,dt_,valid_,dtEstimate_);
       PersistenceManager::restoreValue("timeprovider",values);
+      dtValid_=true;
     }
     
   private:
@@ -116,6 +120,7 @@ namespace Dune
     inline void provideTimeStepEstimate ( const double dtEstimate )
     {
       dtEstimate_ = std :: min( dtEstimate_, dtEstimate );
+      dtValid_ = true;
     }
     /** \brief set upper bound for time step to minimum of given value and
                internal bound
@@ -124,6 +129,7 @@ namespace Dune
     inline void provideTimeStepUpperBound ( const double upperBound )
     {
       dtUpperBound_ = std :: min( dtUpperBound_, upperBound );
+      dtValid_ = true;
     }
     
     /** \brief count current time step a not valid */
@@ -152,6 +158,7 @@ namespace Dune
     {
       dtEstimate_ = std :: numeric_limits< double > :: max();
       dtUpperBound_ = std :: numeric_limits< double > :: max();
+      dtValid_ = false;
     }
   };
 
@@ -364,6 +371,7 @@ namespace Dune
      */
     void next ( ) 
     {
+      assert(this->dtValid_);
       advance();
       initTimeStep(dtEstimate_);
     }
