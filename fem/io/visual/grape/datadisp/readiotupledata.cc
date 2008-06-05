@@ -4,6 +4,9 @@
 #ifndef DATADISP_READIOTUPLE_CC
 #define DATADISP_READIOTUPLE_CC
 
+// needed in readiotparams.cc 
+#define USE_GRAPE_DISPLAY
+
 //- system includes 
 #include <stack> 
 
@@ -154,85 +157,4 @@ inline void deleteAllObjects()
   deleteObjects(gridStack);
   return ;
 }
-
-inline bool readDataInfo(std::string path, DATAINFO * dinf, 
-    const int timestamp, const int dataSet) 
-{
-  std::cout << "Reading data base for " << dinf->name << "! \n";
-  std::string dataname = 
-    IOTupleBase::dataName( 
-      IOInterface::createRecoverPath(path,0, dinf->name, timestamp),
-      dinf->name);
-
-  {
-    std::stringstream dummy; 
-    dummy << dataSet; 
-    dataname += "_";
-    dataname += dummy.str();
-  }
-  
-  std::cerr << "reading dofs from: " << dataname << std::endl;
-
-  std::ifstream check ( dataname.c_str() );
-  if( ! check ) 
-  {
-    std::cerr << "Removing non-valid data set `" << dataname << "'\n";
-    // comp = 0 marks non-valid data set 
-    dinf->comp = 0;
-    return false;
-  }
-  
-  int fakedata = 1;
-  bool fake = readParameter(dataname,"Fake_data",fakedata);
-  
-  std::cerr << "FAKE: " << fake << " " << fakedata << std::endl;
-  if( (!fake) || (!fakedata) )
-  {
-    std::string dummy; 
-    readParameter(dataname,"DataBase",dummy);
-    std::string * basename = new std::string (dummy);
-    std::cout << "Read Function: " << *basename << std::endl;
-    dinf->base_name = basename->c_str();
-    dinf->name = basename->c_str();
-    dinf->dimVal = 1;
-    if (!dinf->comp)
-    {
-       dinf->comp = new int [1];
-    }
-    dinf->comp[0] = 0;
-  }
-  else
-  {
-    std::string dummy; 
-    readParameter(dataname,"DataBase",dummy);
-    std::string * basename = new std::string (dummy);
-    std::cout << "Read Function: " << *basename << std::endl;
-    dinf->base_name = basename->c_str();
-
-    int dimrange;
-    readParameter(dataname,"Dim_Range",dimrange);
-    if(dimrange <= 0) dataDispErrorExit("wrong dimrange");
-
-    int dimVal = 1;
-    readParameter(dataname,"Dim_Domain",dimVal);
-    if((dimVal <= 0) || (dimVal > dimrange)) dataDispErrorExit("wrong DimVal");
-    dinf->dimVal = dimVal;
-
-    int * comp = new int [dimVal];
-    for(int k=0; k<dimVal; k++)
-    {
-      std::stringstream tmpDummy; 
-      tmpDummy << k; 
-      
-      std::string compkey ("comp_");
-      compkey += tmpDummy.str();
-      
-      bool couldread = readParameter(dataname,compkey.c_str(),comp[k]);
-      if(!couldread) dataDispErrorExit("wrong " + compkey);
-    }
-    dinf->comp = comp;
-  }
-  return true;
-}
-
 #endif

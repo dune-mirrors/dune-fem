@@ -152,6 +152,12 @@ struct IOTupleHelper
     NextType::addToDisplay(disp,tup.second());
     IOTupleCaller<N,T1>::addToDisplay(disp,*(tup.first()));
   }
+  
+  static void removeData(ThisType& tup) 
+  {
+    NextType::removeData(tup.second());
+    IOTupleCaller<N,T1>::removeData(tup.first());
+  }
 };
 
 template <class T1,int N>
@@ -206,6 +212,11 @@ struct IOTupleHelper<T1,Nil,N>
   static void addToDisplay(Disp& disp,ThisType& tup) 
   {
     IOTupleCaller<N,T1>::addToDisplay(disp,*(tup.first()));
+  }
+  
+  static void removeData(ThisType& tup) 
+  {
+    IOTupleCaller<N,T1>::removeData(tup.first());
   }
 };
 
@@ -409,6 +420,12 @@ struct IOTuple : public IOTupleBase
   {
     IOTupleHelper<T1,T2,0>::addToDisplay(disp,tup);
   }
+  
+  static void removeData(Pair<T1*,T2>& tup) 
+  {
+    IOTupleHelper<T1,T2,0>::removeData(tup);
+  }
+
 };
 
 } // end namespace Dune 

@@ -13,9 +13,88 @@
 #include <dune/fem/misc/femtuples.hh>
 #include <dune/fem/io/file/iointerface.hh>
 
+inline bool readDataInfo(std::string path, DATAINFO * dinf, 
+    const int timestamp, const int dataSet) 
+{
+  std::cout << "Reading data base for " << dinf->name << "! \n";
+  std::string dataname = 
+    IOTupleBase::dataName( 
+      IOInterface::createRecoverPath(path,0, dinf->name, timestamp),
+      dinf->name);
+
+  {
+    std::stringstream dummy; 
+    dummy << dataSet; 
+    dataname += "_";
+    dataname += dummy.str();
+  }
+  
+  std::cerr << "reading dofs from: " << dataname << std::endl;
+
+  std::ifstream check ( dataname.c_str() );
+  if( ! check ) 
+  {
+    std::cerr << "Removing non-valid data set `" << dataname << "'\n";
+    // comp = 0 marks non-valid data set 
+    dinf->comp = 0;
+    return false;
+  }
+  
+  int fakedata = 1;
+  bool fake = readParameter(dataname,"Fake_data",fakedata);
+  
+  std::cerr << "FAKE: " << fake << " " << fakedata << std::endl;
+  if( (!fake) || (!fakedata) )
+  {
+    std::string dummy; 
+    readParameter(dataname,"DataBase",dummy);
+    std::string * basename = new std::string (dummy);
+    std::cout << "Read Function: " << *basename << std::endl;
+    dinf->base_name = basename->c_str();
+    dinf->name = basename->c_str();
+    dinf->dimVal = 1;
+    if (!dinf->comp)
+    {
+       dinf->comp = new int [1];
+    }
+    dinf->comp[0] = 0;
+  }
+  else
+  {
+    std::string dummy; 
+    readParameter(dataname,"DataBase",dummy);
+    std::string * basename = new std::string (dummy);
+    std::cout << "Read Function: " << *basename << std::endl;
+    dinf->base_name = basename->c_str();
+
+    int dimrange;
+    readParameter(dataname,"Dim_Range",dimrange);
+    if(dimrange <= 0) dataDispErrorExit("wrong dimrange");
+
+    int dimVal = 1;
+    readParameter(dataname,"Dim_Domain",dimVal);
+    if((dimVal <= 0) || (dimVal > dimrange)) dataDispErrorExit("wrong DimVal");
+    dinf->dimVal = dimVal;
+
+    int * comp = new int [dimVal];
+    for(int k=0; k<dimVal; k++)
+    {
+      std::stringstream tmpDummy; 
+      tmpDummy << k; 
+      
+      std::string compkey ("comp_");
+      compkey += tmpDummy.str();
+      
+      bool couldread = readParameter(dataname,compkey.c_str(),comp[k]);
+      if(!couldread) dataDispErrorExit("wrong " + compkey);
+    }
+    dinf->comp = comp;
+  }
+  return true;
+}
 
 // return number of procs of data set 
-int scanProcsPaths(const std::string globalPath, 
+inline int scanProcsPaths(const std::string globalPath, 
                    const std::string dataPrefix,
                    int step)
 {
@@ -36,9 +115,9 @@ int scanProcsPaths(const std::string globalPath,
   return procs;
 }
 
-  std::string path,solprefix;
+std::string path,solprefix;
 
-int readParameterList (int argc, char **argv, bool displayData = true ) 
+inline int readParameterList (int argc, char **argv, bool displayData = true ) 
 {
   int   i, i_start, i_end;
   INFO * info = 0;
@@ -175,6 +254,8 @@ int readParameterList (int argc, char **argv, bool displayData = true )
     printf("i = %d, argc = %d\n", i, argc);
   }
  
+  // defined in readiotupledata.cc 
+#ifdef USE_GRAPE_DISPLAY
   if(replay)
   {
     std::string replayfile(replay);
@@ -191,7 +272,7 @@ int readParameterList (int argc, char **argv, bool displayData = true )
       if(result != 0) replay = 0;
     }
   }
-
+/*
   if( fixedMesh ) 
   {
     for(int j=0; j<n; ++j) 
@@ -199,6 +280,8 @@ int readParameterList (int argc, char **argv, bool displayData = true )
       info[j].fix_mesh = 1;
     }
   }
+*/
+#endif
  
   // scan for max number of processor paths  
   int numberProcessors = 0;
@@ -225,12 +308,15 @@ int readParameterList (int argc, char **argv, bool displayData = true )
     }
   }
   
+#ifdef USE_GRAPE_DISPLAY
   // initialize time scenes
   timeSceneInit(info, n , numberProcessors);
+#endif
 
   // read all data 
   readData(info, path.c_str(),i_start,i_end,i_delta,n,timestep,numberProcessors);
   
+#ifdef USE_GRAPE_DISPLAY
   if( displayData ) 
   {
     std::cout << "Displaying data of " << numberProcessors << " processors! \n";
@@ -243,6 +329,7 @@ int readParameterList (int argc, char **argv, bool displayData = true )
     std::string cmd("rm manager.replay");
     system(cmd.c_str());
   }
+#endif
 
   return (EXIT_SUCCESS);
 }
