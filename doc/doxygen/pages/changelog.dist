@@ -11,6 +11,10 @@
  *    -1
  *  - in addition to new Pass, new CreatePass isn't compatible any more 
  *    with old passes. To plug a pass into new CreatePass one must use new Pass
+ *  - in addition to new Pass, class Selector that is given to the class
+ *    DiscreteModelCaller as a third template parameter, has to be wrapped 
+ *    by CombinedSelector< ThisType , Selector >, and then the class
+ *    DiscreteModelCaller must take this wrapper instead of the class Selector
  *  .
  
  *
