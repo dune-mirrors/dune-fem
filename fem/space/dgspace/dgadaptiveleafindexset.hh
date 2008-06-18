@@ -37,6 +37,19 @@ class DGAdaptiveLeafIndexSet :
 public:
   enum { ncodim = GridType::dimension + 1 };
 
+protected:
+  //! type of base class 
+  typedef ConsecutivePersistentIndexSet<
+        GridType, 
+        DGAdaptiveLeafIndexSet<GridType>, 
+        DefaultLeafIteratorTypes<GridType> 
+          > BaseType;
+
+public:  
+  //! type of index 
+  typedef typename BaseType :: IndexType IndexType;
+
+protected:
   template <class CodimLeafSet,class HIndexSet, int codim>
   struct Index
   {
@@ -62,14 +75,6 @@ public:
     }
   };
   
-protected:
-  //! type of base class 
-  typedef ConsecutivePersistentIndexSet<
-        GridType, 
-        DGAdaptiveLeafIndexSet<GridType>, 
-        DefaultLeafIteratorTypes<GridType> 
-          > BaseType;
-
   //! type of this class 
   typedef DGAdaptiveLeafIndexSet < GridType > ThisType;
 
@@ -311,7 +316,7 @@ public:
   /** \brief return global index for dof mapper */
   //- --index 
   template <int codim, class EntityType>
-  int indexImp (const EntityType & en, int num) const
+  inline IndexType indexImp (const EntityType & en, int num) const
   {
     return Index<CodimIndexSetType,HIndexSetType,codim>::index(codimLeafSet_,hIndexSet_,en);
   }

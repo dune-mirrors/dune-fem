@@ -44,6 +44,8 @@ protected:
   typedef DuneGridIndexSetAdapter<GridImp, Imp, IteratorTraits > ThisType;
 
 public:
+  //! type of index (i.e. unsigned int)
+  typedef typename DuneIndexSetType :: IndexType IndexType;
 
   using DuneIndexSetType :: index; 
 
@@ -77,7 +79,7 @@ public:
   //****************************************************************
   //! return global index of entity 
   template <class EntityType>
-  inline int index (const EntityType & en) const
+  inline IndexType index (const EntityType & en) const
   {
     // return index of entity 
     enum { codim = EntityType::codimension };
@@ -86,7 +88,7 @@ public:
 
   //! return subIndex of given entity
   template <int cd>
-  inline int subIndex (const EntityCodim0Type & en, const int localNum) const
+  inline IndexType subIndex (const EntityCodim0Type & en, const int localNum) const
   {
     // return sub index of entity 
     return this->template index<cd> (en, localNum);
@@ -100,7 +102,7 @@ public:
 protected:
   //! return index for entity  
   template <int codim, class EntityType>
-  inline int indexImp (const EntityType & entity , const int localNum) const
+  inline IndexType indexImp (const EntityType & entity , const int localNum) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().template indexImp<codim> ( entity , localNum ) );
     return asImp().template indexImp<codim> ( entity , localNum );
@@ -114,7 +116,7 @@ public:
   //////////////////////////////////////////////////////////////////
   //! return index for entity  
   template <int codim, class EntityType>
-  inline int index (const EntityType & entity , const int localNum) const
+  inline IndexType index (const EntityType & entity , const int localNum) const
   {
     return this->template indexImp<codim> ( entity , localNum );
   } 
