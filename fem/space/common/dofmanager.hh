@@ -12,14 +12,13 @@
 #include <dune/common/interfaces.hh>
 
 // here are the default grid index set defined 
-#include <dune/grid/common/defaultindexsets.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 #include <dune/fem/io/parameter.hh>
 
 //- local includes 
-#include "dofmapperinterface.hh"
+#include "dofmapper.hh"
 #include "datacollector.hh"
 #include "arrays.hh"
 
@@ -125,7 +124,7 @@ public:
   //! compress of index set 
   virtual bool compress () = 0;
   //! returns true if set generally needs a compress 
-  virtual bool needsCompress () const = 0;
+  virtual bool consecutive () const = 0;
 
   //! return type of set 
   virtual int typeOfSet () const = 0;
@@ -206,7 +205,7 @@ public:
     this->setPtr_ = (void *) &indexSet_;
     
     indexSetList_ += *this;
-    if( indexSet_.needsCompress() ) 
+    if( indexSet_.consecutive() ) 
     {
       insertList_ += insertIdxObj_; 
       removeList_ += removeIdxObj_;
@@ -217,7 +216,7 @@ public:
   ~IndexSetObject () 
   {
     indexSetList_.remove( *this );
-    if( indexSet_.needsCompress() ) 
+    if( indexSet_.consecutive() ) 
     {
       insertList_.remove( insertIdxObj_ ); 
       removeList_.remove( removeIdxObj_ );
@@ -237,9 +236,9 @@ public:
   }
 
   //! returns whether the set needs a compress after adaptation 
-  bool needsCompress () const 
+  bool consecutive () const 
   {
-    return indexSet_.needsCompress (); 
+    return indexSet_.consecutive (); 
   }
 
   int typeOfSet() const 
@@ -425,7 +424,7 @@ public:
   inline void reserve ( const int needed )
   {
     // if index set is compressible, then add requested size 
-    if( mapper().needsCompress() )
+    if( mapper_.consecutive() )
     {
       const int nSize = size() + (needed * elementMemory());
       array_.reserve( nSize );
@@ -434,7 +433,7 @@ public:
     {
       // if compress is not needed just resize with given size 
       // therefore use newSize to enleage array 
-      assert( ! mapper().needsCompress() );
+      assert( ! mapper_.consecutive() );
       array_.resize( newSize() );
     }
   }
@@ -443,7 +442,7 @@ public:
   void dofCompress () 
   {
     const int nSize = newSize();
-    if( dataNeedCompress_ && mapper().needsCompress() )
+    if( dataNeedCompress_ && mapper_.consecutive() )
     {
       const int oldSize = mapper().size();
       // update mapper to new sizes 
@@ -740,10 +739,10 @@ public:
   // Constructor of MemObject, only to call from DofManager 
   RemoveIndicesFromSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
 
-  //! apply wraps the removeOldIndex Method of the index set 
-  void apply ( EntityType & en )
+  //! apply wraps the removeEntity Method of the index set 
+  inline void apply ( EntityType & en )
   {
-    indexSet_.removeOldIndex( en );
+    indexSet_.removeEntity( en );
   }
 };
 
@@ -759,10 +758,10 @@ public:
   // Constructor of MemObject, only to call from DofManager 
   InsertIndicesToSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
 
-  //! apply wraps the insertNewIndex method of the index set
-  void apply ( EntityType & en )
+  //! apply wraps the insertEntity method of the index set
+  inline void apply ( EntityType & en )
   {
-    indexSet_.insertNewIndex( en );
+    indexSet_.insertEntity( en );
   }
 };
 
@@ -782,7 +781,7 @@ public:
   {}
 
   // resize mem object, parameter not needed 
-  void apply ( int & )
+  inline void apply ( int & )
   {
     memobj_.resize();
   }
@@ -802,7 +801,7 @@ public:
   ReserveMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {} 
 
   // reserve for at least chunkSize new values 
-  void apply ( int & chunkSize )
+  inline void apply ( int & chunkSize )
   {
     memobj_.reserve( chunkSize );  
   }
@@ -831,7 +830,7 @@ public:
 
   //! restrict data to father 
   template <class EntityType>
-  void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const
+  inline void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const
   {
     insert_.apply( father );
     remove_.apply( son );
@@ -842,7 +841,7 @@ public:
 
   //! prolong data to children 
   template <class EntityType>
-  void prolongLocal ( EntityType & father, EntityType & son , bool initialize ) const
+  inline void prolongLocal ( EntityType & father, EntityType & son , bool initialize ) const
   {
     remove_.apply( father );
     insert_.apply( son );
@@ -1086,9 +1085,9 @@ public:
     resizeMemory();
   }
 
-  /** \brief Inserts index to all index sets added to dof manager. */
+  /** \brief Inserts entity to all index sets added to dof manager. */
   template <class EntityType>
-  void insertNewIndex (EntityType & en )
+  inline void insertEntity(EntityType & en )
   {
     // insert new index 
     insertIndices_.apply( en );
@@ -1097,9 +1096,9 @@ public:
     resizeMemory();
   }
           
-  /** \brief Removes index from all index sets added to dof manager. */
+  /** \brief Removes entity from all index sets added to dof manager. */
   template <class EntityType>
-  void removeOldIndex (EntityType & en )
+  inline void removeEntity(EntityType & en )
   {
     removeIndices_.apply( en );
   }
