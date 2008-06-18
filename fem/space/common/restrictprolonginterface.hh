@@ -7,6 +7,7 @@
 
 //- local includes 
 #include <dune/fem/misc/combineinterface.hh>
+#include <dune/fem/space/common/emptyindexset.hh>
 
 namespace Dune{
 /** @addtogroup RestrictProlongInterface 
@@ -159,6 +160,42 @@ public:
   }
 };
 
+/** \brief Interface default implementation for derived classes. 
+    Note the difference to RestrictProlongDefaultImplementation, which
+    represents the implementation for certain spaces. 
+*/
+template <class TraitsImp>
+class RestrictProlongInterfaceDefault 
+ : public RestrictProlongInterface <TraitsImp> 
+{
+  template <class IndexSetType, bool persistent>
+  struct Persistent
+  {
+    static inline bool check(const IndexSetType& indexSet)
+    {
+      return indexSet.persistent();
+    }
+  };
+
+  template <class IndexSetType>
+  struct Persistent<IndexSetType,false>
+  {
+    static inline bool check(const IndexSetType& indexSet)
+    {
+      return indexSet.adaptive();
+    }
+  };
+  
+public:  
+  //! check persistence of index set (also includes backward compatibility) 
+  template <class IndexSetType>
+  inline bool checkPersistent(const IndexSetType& indexSet) const
+  {
+    return Persistent< IndexSetType,
+                       Conversion<IndexSetType,EmptyIndexSet>::exists
+                     >::check(indexSet);
+  }
+};
 
 /** \brief This is a general restriction/prolongation operator
     which is speciallized for some discreteFunctionSpaces (e.g. DG)
@@ -198,7 +235,7 @@ private:
  
 template <class DiscreteFunctionType>
 class RestrictProlongPieceWiseConstantData : 
-public RestrictProlongInterface<RestrictProlongTraits< 
+public RestrictProlongInterfaceDefault<RestrictProlongTraits< 
   RestrictProlongPieceWiseConstantData<DiscreteFunctionType> > >
 {
   typedef RestrictProlongInterface<RestrictProlongTraits< 

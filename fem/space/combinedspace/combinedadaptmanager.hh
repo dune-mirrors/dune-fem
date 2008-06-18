@@ -26,11 +26,11 @@ namespace Dune{
  */
 template <class DiscreteFunctionImp, int polOrd> 
 class RestrictProlongCombinedSpace
-: public RestrictProlongInterface<RestrictProlongTraits< 
+: public RestrictProlongInterfaceDefault<RestrictProlongTraits< 
          RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
          > >
 {
-  typedef RestrictProlongInterface<RestrictProlongTraits< 
+  typedef RestrictProlongInterfaceDefault<RestrictProlongTraits< 
          RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
          > > BaseType;
 

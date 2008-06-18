@@ -25,11 +25,13 @@ namespace Dune{
  */
 template <class DiscreteFunctionImp, int polOrd> 
 class RestrictProlongDiscontinuousSpace
-: public RestrictProlongInterface<RestrictProlongTraits< 
+: public RestrictProlongInterfaceDefault<RestrictProlongTraits< 
   RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > >
 {
-  typedef RestrictProlongInterface<RestrictProlongTraits< 
+  typedef RestrictProlongInterfaceDefault<RestrictProlongTraits< 
   RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > > BaseType;
+
+  
   using BaseType :: checkPersistent;
   
 public:

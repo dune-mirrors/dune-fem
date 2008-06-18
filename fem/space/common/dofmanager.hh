@@ -325,7 +325,7 @@ private:
   typedef MemObject <MapperType , DofArrayType> ThisType;
   
   // the dof set stores number of dofs on entity for each codim
-  MapperType *mapper_;
+  mutable MapperType &mapper_;
 
   // Array which the dofs are stored in 
   DofArrayType array_;
@@ -351,7 +351,7 @@ public:
                      MemObjectCheckType &memResizeList,
                      MemObjectCheckType &memReserveList,
                      const double memFactor )
-  : mapper_( &mapper ),
+  : mapper_( mapper ),
     array_( mapper.size() ),
     name_( name ),
     resizeMemObj_( *this ),
@@ -424,7 +424,7 @@ public:
   inline void reserve ( const int needed )
   {
     // if index set is compressible, then add requested size 
-    if( mapper_.consecutive() )
+    if( mapper().consecutive() )
     {
       const int nSize = size() + (needed * elementMemory());
       array_.reserve( nSize );
@@ -433,7 +433,7 @@ public:
     {
       // if compress is not needed just resize with given size 
       // therefore use newSize to enleage array 
-      assert( ! mapper_.consecutive() );
+      assert( ! mapper().consecutive() );
       array_.resize( newSize() );
     }
   }
@@ -442,7 +442,7 @@ public:
   void dofCompress () 
   {
     const int nSize = newSize();
-    if( dataNeedCompress_ && mapper_.consecutive() )
+    if( dataNeedCompress_ && mapper().consecutive() )
     {
       const int oldSize = mapper().size();
       // update mapper to new sizes 
@@ -485,10 +485,10 @@ public:
     dataNeedCompress_ = true;
   }
 
-private:
+protected:
   inline MapperType &mapper () const
   {
-    return *mapper_;
+    return mapper_;
   }
   
   // move array to rear insertion points 

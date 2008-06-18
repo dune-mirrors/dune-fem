@@ -21,15 +21,12 @@ namespace Dune
     < DiscreteFunction,
       LagrangeDiscreteFunctionSpace
         < FunctionSpace, GridPart, polOrder, Storage > >
-  : public RestrictProlongInterface
+  : public RestrictProlongInterfaceDefault
     < RestrictProlongTraits< RestrictProlongDefaultImplementation
         < DiscreteFunction,
           LagrangeDiscreteFunctionSpace
             < FunctionSpace, GridPart, polOrder, Storage > > > >
   {
-
-    using BaseType :: checkPersistent;
-
   public:
     //! type of the discrete function
     typedef DiscreteFunction DiscreteFunctionType;
@@ -43,9 +40,10 @@ namespace Dune
     typedef RestrictProlongDefaultImplementation
       < DiscreteFunctionType, DiscreteFunctionSpaceType >
       ThisType;
-    typedef RestrictProlongInterface< RestrictProlongTraits< ThisType > >
+    typedef RestrictProlongInterfaceDefault< RestrictProlongTraits< ThisType > >
       BaseType;
 
+    using BaseType :: checkPersistent;
   public:
     //! field type of the discrete function's domain
     typedef typename DiscreteFunctionType :: DomainFieldType DomainFieldType;
