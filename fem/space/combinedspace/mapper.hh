@@ -5,8 +5,7 @@
 #include <dune/common/misc.hh>
 
 //- Local includes
-#include <dune/fem/space/common/dofmapperinterface.hh>
-
+#include <dune/fem/space/common/dofmapper.hh>
 #include <dune/fem/space/combinedspace/combineddofstorage.hh>
 
 namespace Dune
@@ -188,28 +187,28 @@ namespace Dune
     //! Total number of degrees of freedom
     inline int size () const;
     
-    /** \copydoc Dune::DofMapperInterface::begin(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
     inline DofMapIteratorType begin ( const EntityType &entity ) const;
     
-    /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const;
 
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
+    /** \copydoc Dune::DofMapper::mapToGlobal(const EntityType &entity,const int localDof) const */
     inline int mapToGlobal( const EntityType &entity,
                             const int localDof ) const;
 
-    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
+    /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
     template< class Entity >
     inline int mapEntityDofToGlobal( const Entity &entity,
                                      const int localDof ) const;
 
-    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    /** \copydoc Dune::DofMapper::maxNumDofs() const */
     inline int maxNumDofs () const;
 
-    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     inline int numDofs ( const EntityType &entity ) const;
 
-    /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const */
+    /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
     inline int numEntityDofs ( const Entity &entity ) const;
 
@@ -240,7 +239,7 @@ namespace Dune
     inline int offSet ( const int block ) const;
 
     //! return true if compress will affect data  
-    inline bool needsCompress () const;
+    inline bool consecutive () const;
 
   protected:
     inline ContainedMapperType &containedMapper () const;

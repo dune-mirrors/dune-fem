@@ -33,6 +33,9 @@ class RestrictProlongCombinedSpace
   typedef RestrictProlongInterface<RestrictProlongTraits< 
          RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
          > > BaseType;
+
+  using BaseType :: checkPersistent;
+  
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -54,7 +57,7 @@ public:
     , weight_(-1.0)
   {
     // make sure that index set is used that can handle adaptivity 
-    assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
+    assert( (Capabilities::IsUnstructured<GridType>::v) ? ( checkPersistent(df_.space().indexSet()) ) : true );
   }
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
@@ -69,6 +72,9 @@ public:
   void restrictLocal ( EntityType &father, EntityType &son, 
            bool initialize ) const
   {
+    // make sure that index set is used that can handle adaptivity 
+    assert( checkPersistent(df_.space().indexSet()) );
+    
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
 
     typename FunctionSpaceType::RangeType ret (0.0);
@@ -120,6 +126,9 @@ public:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
+    // make sure that index set is used that can handle adaptivity 
+    assert( checkPersistent(df_.space().indexSet()) );
+    
     //assert( son.state() == REFINED );
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::ContainedRangeType phi (0.0);

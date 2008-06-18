@@ -270,9 +270,9 @@ namespace Dune
 
   template< class ContainedMapper, int N, DofStoragePolicy policy >
   inline bool CombinedMapper< ContainedMapper, N, policy >
-    :: needsCompress () const
+    :: consecutive () const
   {
-    return containedMapper().needsCompress();
+    return containedMapper().consecutive();
   }
 
 

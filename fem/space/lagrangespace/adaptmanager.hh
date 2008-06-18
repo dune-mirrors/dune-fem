@@ -27,6 +27,9 @@ namespace Dune
           LagrangeDiscreteFunctionSpace
             < FunctionSpace, GridPart, polOrder, Storage > > > >
   {
+
+    using BaseType :: checkPersistent;
+
   public:
     //! type of the discrete function
     typedef DiscreteFunction DiscreteFunctionType;
@@ -84,7 +87,7 @@ namespace Dune
     {
       // make sure the index set can handle adaptivity
       assert( (Capabilities :: IsUnstructured< GridType > :: v) ?
-              discreteFunction.space().indexSet().adaptive() : true );
+             ( checkPersistent(discreteFunction_.space().indexSet()) ) : true );
     }
 
     //! if weight is set, it is assumed that the proportion between father's
@@ -100,6 +103,9 @@ namespace Dune
                          EntityType &son,
                          bool initialize ) const
     {
+      // make sure the index set can handle adaptivity
+      assert( checkPersistent(discreteFunction_.space().indexSet()) );
+
       typedef typename EntityType :: Geometry GeometryType;
 
       LocalFunctionType fatherFunction = discreteFunction_.localFunction( father );
@@ -131,6 +137,9 @@ namespace Dune
     template< class EntityType >
     void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
     {
+      // make sure the index set can handle adaptivity
+      assert( checkPersistent(discreteFunction_.space().indexSet()) );
+
       typedef typename EntityType :: Geometry GeometryType;
 
       LocalFunctionType fatherFunction = discreteFunction_.localFunction( father );
@@ -157,7 +166,5 @@ namespace Dune
       }
     }
   };
-    
 }
-
 #endif

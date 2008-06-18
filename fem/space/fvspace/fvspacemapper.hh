@@ -2,7 +2,7 @@
 #define DUNE_FVSPACEMAPPER_HH
 
 //- Dune includes 
-#include <dune/fem/space/common/dofmapperinterface.hh>
+#include <dune/fem/space/common/dofmapper.hh>
 #include <dune/fem/space/dgspace/dgmapper.hh>
 
 namespace Dune
@@ -74,7 +74,7 @@ namespace Dune
       return indexSet_.size( 0 ) * dimrange;
     }
 
-     /** \copydoc Dune::DofMapperInterface::begin(const EntityType &entity) const */
+     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
     inline DofMapIteratorType begin ( const EntityType &entity ) const
     {
       const int baseIndex = indexSet_.index( entity ) * dimrange;
@@ -82,26 +82,26 @@ namespace Dune
       return DofMapIteratorType( type, baseIndex );
     }
     
-    /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const
     {
       typename DofMapIteratorType :: EndIterator type; 
       return DofMapIteratorType( type, dimrange );
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,int localNum) const */
+    /** \copydoc Dune::DofMapper::mapToGlobal(const EntityType &entity,int localNum) const */
     inline int mapToGlobal ( const EntityType &entity, int localNum ) const
     {
       return indexSet_.index( entity ) * dimrange + localNum;
     }
     
-    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    /** \copydoc Dune::DofMapper::maxNumDofs() const */
     int maxNumDofs () const 
     {
       return dimrange;
     }
 
-    /** \copydoc Dune::DofMapperInterface::oldIndex(const int hole,const int block) const */
+    /** \copydoc Dune::DofMapper::oldIndex(const int hole,const int block) const */
     int oldIndex ( const int hole, const int block ) const
     {
       assert( block == 0 );
@@ -111,7 +111,7 @@ namespace Dune
       return dimrange * indexSet_.oldIndex( ishole, 0) + local;
     }
 
-    /** \copydoc Dune::DofMapperInterface::newIndex(const int hole,const int block) const */
+    /** \copydoc Dune::DofMapper::newIndex(const int hole,const int block) const */
     int newIndex ( const int hole, const int block ) const
     {
       assert( block == 0 );
@@ -121,7 +121,7 @@ namespace Dune
       return dimrange * indexSet_.newIndex( ishole, 0) + local;
     }
 
-    /** \copydoc Dune::DofMapperInterface::numberOfHoles(const int block) const */
+    /** \copydoc Dune::DofMapper::numberOfHoles(const int block) const */
     int numberOfHoles ( const int block ) const
     {
       assert( block == 0 );
@@ -134,10 +134,10 @@ namespace Dune
       return this->size();
     }
 
-    //! return the sets needsCompress 
-    bool needsCompress () const
+    //! return the sets consecutive 
+    bool consecutive () const
     {
-      return indexSet_.needsCompress();
+      return BaseType::checkConsecutive(indexSet_);
     }
   };
 
