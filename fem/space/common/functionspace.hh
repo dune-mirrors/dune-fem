@@ -69,6 +69,7 @@ template <typename K,int n,int m>
 class RangeMatrix : public FieldMatrix<K,n,m> {
  public:
   typedef FieldMatrix<K,n,m> BaseType;
+  typedef typename BaseType::row_type RowType;
   enum {
     //! The number of rows.
     rows = BaseType::rows,
