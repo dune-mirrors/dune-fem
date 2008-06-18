@@ -585,7 +585,7 @@ private:
     ldc_.apply( p );
 
     // remove entity from index sets 
-    dm_.removeOldIndex( en );
+    dm_.removeEntity( en );
   }
   
   // read data of entity 
@@ -598,7 +598,7 @@ private:
     if( leaf_ && !en.isLeaf() ) return;
 
     // insert entity into index sets 
-    dm_.insertNewIndex( en );
+    dm_.insertEntity( en );
 
     ParamType p( &str , &en );
     // apply local operators 
