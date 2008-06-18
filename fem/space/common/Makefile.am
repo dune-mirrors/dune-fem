@@ -8,7 +8,7 @@ common_HEADERS = adaptiveleafgridpart.hh \
      basefunctioninterface.hh \
      basefunctionsetinterface.hh \
      cachedcommmanager.hh \
-                 codimindexset.hh \
+     codimindexset.hh \
      commindexmap.hh \
      commoperations.hh \
      communicationmanager.hh \
@@ -16,10 +16,11 @@ common_HEADERS = adaptiveleafgridpart.hh \
      discretefunctionspace.hh \
      dofmanager.hh \
      dofmapperinterface.hh \
+     dofmapper.hh \
      dofstorage.hh \
      dynamictype.hh \
      entitycommhelper.hh \
-                 filteredgrid.hh \
+     filteredgrid.hh \
      functionspace.hh \
      functionspaceinterface.hh \
      geometryconversion.hh \
@@ -30,5 +31,6 @@ common_HEADERS = adaptiveleafgridpart.hh \
      periodicgridpart.hh \
      periodicindexset.hh \
      restrictprolonginterface.hh \
-     persistentindexsets.hh
-
+     persistentindexsets.hh \
+     dunefemindexsets.hh \
+     emptyindexset.hh
