@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_REDUCEDBASISSPACE_MAPPER_HH
 #define DUNE_FEM_REDUCEDBASISSPACE_MAPPER_HH
 
-#include <dune/fem/space/common/dofmapperinterface.hh>
+#include <dune/fem/space/common/dofmapper.hh>
 
 namespace Dune
 {
@@ -63,27 +63,27 @@ namespace Dune
     {
     }
 
-    /** \copydoc Dune::DofMapperInterface::begin(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
     inline DofMapIteratorType begin ( const EntityType &entity ) const
     {
       return DofMapIteratorType
         ( DofMapIteratorType :: beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const
     {
       return DofMapIteratorType
         ( DofMapIteratorType :: endIterator, entity, *this );
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
+    /** \copydoc Dune::DofMapper::mapToGlobal(const EntityType &entity,const int localDof) const */
     inline int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       return localDof;
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
+    /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
     template< class Entity >
     inline int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
     {
@@ -91,13 +91,13 @@ namespace Dune
       return 0;
     }
 
-    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    /** \copydoc Dune::DofMapper::maxNumDofs() const */
     inline int maxNumDofs () const
     {
       return size();
     }
 
-    /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const */
+    /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
     inline int numEntityDofs ( const Entity &entity ) const
     {
@@ -105,37 +105,37 @@ namespace Dune
       return 0;
     }
    
-    /** \copydoc Dune::DofMapperInterface::needsCompress() const */
-    bool needsCompress () const
+    /** \copydoc Dune::DofMapper::consecutive() const */
+    bool consecutive () const
     {
       return false;
     }
 
-    /** \copydoc Dune::DofMapperInterface::newIndex(const int hole,const int block) const */
+    /** \copydoc Dune::DofMapper::newIndex(const int hole,const int block) const */
     int newIndex ( const int hole, const int block ) const
     {
       return -1;
     }
 
-    /** \copydoc Dune::DofMapperInterface::newSize() const */
+    /** \copydoc Dune::DofMapper::newSize() const */
     int newSize () const
     {
       return size();
     }
 
-    /** \copydoc Dune::DofMapperInterface::numberOfHoles(const int block) const */
+    /** \copydoc Dune::DofMapper::numberOfHoles(const int block) const */
     int numberOfHoles ( const int block ) const
     {
       return 0;
     }
 
-    /** \copydoc Dune::DofMapperInterface::oldIndex(const int hole,const int block) const */
+    /** \copydoc Dune::DofMapper::oldIndex(const int hole,const int block) const */
     int oldIndex ( const int hole, const int block ) const
     {
       return -1;
     }
 
-    /** \copydoc Dune::DofMapperInterface::size() const */
+    /** \copydoc Dune::DofMapper::size() const */
     int size () const
     {
       return baseFunctionList_.size();
