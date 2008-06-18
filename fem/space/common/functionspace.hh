@@ -100,9 +100,23 @@ class RangeMatrix : public FieldMatrix<K,n,m> {
       \return reference to element in row r and column c 
   */
   const K operator()(int r,int c) const {
-    return static_cast<BaseType&>(*this)[r][c];
+    return static_cast<const BaseType&>(*this)[r][c];
   }
-  
+  /** \brief access to row r 
+      \param[in] r row 
+      \return reference to row r 
+  */
+  const RowType& row(int r) const{
+    return static_cast<BaseType&>(*this)[r];
+  }
+ /** \brief access to row r 
+      \param[in] r row 
+      \return reference to row r 
+ */
+  RowType& row(int r){
+    return static_cast<BaseType&>(*this)[r];
+  }
+
   /** \brief access i element where row = i/col and column = i%col 
       \param[in] i element number ot access 
       \return reference to element in row i/col and column i%col 
@@ -183,7 +197,7 @@ class MatrixMapping :
       \return Reference to row 
   */
   const FieldVector<DomainFieldImp,n>& operator[](int i) const {
-    return static_cast<BaseType&>(*this)[i];
+    return static_cast<const BaseType&>(*this)[i];
   }
 };
 
