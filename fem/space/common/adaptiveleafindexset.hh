@@ -231,6 +231,9 @@ private:
     AdaptiveLeafIndexSet<GridType>, 
     DefaultLeafIteratorTypes<GridType> 
       > BaseType ;
+
+  //! type of index 
+  typedef typename BaseType :: IndexType IndexType;
   
   //! type of this class 
   typedef AdaptiveLeafIndexSet < GridType > ThisType;
@@ -451,7 +454,7 @@ public:
   //! for dof mapper 
   // --index 
   template <int codim, class EntityType>
-  int indexImp (const EntityType & en, const int localNum) const
+  IndexType indexImp (const EntityType & en, const int localNum) const
   {
     return IndexWrapper<ThisType,HIndexSetType,CodimIndexSetType,EntityType,EntityType::codimension,codim>::
            index(*this,hIndexSet_,codimLeafSet_,en, localNum, codimUsed_);

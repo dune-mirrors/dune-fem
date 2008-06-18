@@ -383,6 +383,9 @@ private:
         DefaultLeafIteratorTypes<GridType>
         > BaseType;
 
+  //! type of index 
+  typedef typename BaseType :: IndexType IndexType;
+
   //! type of this class 
   typedef IdBasedLeafIndexSet < GridType > ThisType;
 
@@ -554,7 +557,7 @@ public:
   //! for dof mapper 
   // --index 
   template <int codim, class EntityType>
-  int indexImp (const EntityType & en, int num) const
+  IndexType indexImp (const EntityType & en, int num) const
   {
     return persistentLeafSet().index(en,num);
   }
