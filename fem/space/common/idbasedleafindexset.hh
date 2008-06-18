@@ -333,8 +333,11 @@ public:
 
 template <class GridType>
 class IdBasedLeafIndexSet : 
-  public IndexSet<GridType, IdBasedLeafIndexSet<GridType>, DefaultLeafIteratorTypes<GridType> >,
-  public PersistentIndexSet<GridType, IdBasedLeafIndexSet<GridType> >
+  public ConsecutivePersistentIndexSet<
+        GridType, 
+        IdBasedLeafIndexSet<GridType>,
+        DefaultLeafIteratorTypes<GridType>
+        >
 {
 public:
   enum { ncodim = GridType::dimension + 1 };
@@ -374,9 +377,17 @@ private:
   };
 
   //! type of base class 
-  typedef PersistentIndexSet<GridType, IdBasedLeafIndexSet<GridType> >  BaseType;
+  typedef ConsecutivePersistentIndexSet<
+        GridType, 
+        IdBasedLeafIndexSet<GridType>,
+        DefaultLeafIteratorTypes<GridType>
+        > BaseType;
+
   //! type of this class 
   typedef IdBasedLeafIndexSet < GridType > ThisType;
+
+  //! fro consecutive method 
+  friend class Conversion< ThisType, EmptyIndexSet> ;
   
   // my type, to be revised 
   enum { myType = 8 };
@@ -424,9 +435,6 @@ public:
   //! return type of index set, for GrapeDataIO
   int type () const { return myType; }
 
-  //! this index set can be used for adaptive computations 
-  bool adaptive () const { return true; }
-
   //! return name of index set, for GrapeDataIO
   std::string name () const { return "IdBasedLeafIndexSet"; }
 
@@ -435,26 +443,6 @@ public:
   //  INTERFACE METHODS for DUNE INDEX SETS 
   //
   //****************************************************************
-
-  //! return global index 
-  //! for dof mapper 
-  // --index 
-  template <class EntityType>
-  int index (const EntityType & en) const
-  {
-    // this IndexWrapper provides specialisations for each codim 
-    // see this class above 
-    return this->template index<0> (en,0);
-  }
-  
-  //! return subIndex of given entity
-  // see specialisation for codim 0 below 
-  template <int cd>
-  int subIndex (const EntityCodim0Type & en, int num) const
-  {
-    return this->template index<cd> (en,num);
-  }
-
   //! return size of grid entities per level and codim 
   int size ( int codim , GeometryType type ) const
   {
@@ -516,37 +504,16 @@ public:
   //  METHODS for Adaptation with DofManger 
   //
   //****************************************************************
-
-  //! insert index for father, mark childs index for removal  
-  template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) 
+  //! insert entity into set 
+  void insertEntity(const typename GridType::template Codim<0>::Entity & en )  
   {
-    // important, first remove old, because 
-    // on father indices might be used aswell 
-    removeOldIndex( son );
-    insertNewIndex( father );
-  }
-
-  //! insert indices for children , mark fathers index for removal  
-  template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) 
-  {
-    // important, first remove old, because 
-    // on children indices might be used aswell 
-    removeOldIndex( father );
-    insertNewIndex( son );
-  }
-
-  //! insert new index to set 
-  void insertNewIndex (const typename GridType::template Codim<0>::Entity & en )  
-  {
-    this->insert( en );
+    this->insertIndex( en );
   }
 
   //! Unregister entity which will be removed from the grid
-  void removeOldIndex (const typename GridType::template Codim<0>::Entity & en )
+  void removeEntity(const typename GridType::template Codim<0>::Entity & en )
   {
-    this->remove( en ); 
+    this->removeIndex( en ); 
   }
 
   void resize () 
@@ -555,14 +522,6 @@ public:
     // the old entities new numbers 
     markAllBelowOld ();
   }
-
-  //! for dof manager, to check whether it has to copy dof or not 
-  bool indexIsNew (int num, int codim) const
-  {
-    return persistentLeafSet().indexIsNew(num);
-  }
-
-  bool needsCompress () const { return true; }
 
   //! make to index numbers consecutive 
   //! return true, if at least one hole was closed 
@@ -585,22 +544,6 @@ public:
     return haveToCopy;
   }
 
-  //! memorise index 
-  // --insert
-  void insert (const EntityCodim0Type & en)
-  {
-    persistentLeafSet().insert(en);
-    compressed_ = false;
-  }
-
-  //! set indices to unsed so that they are cleaned on compress  
-  // --remove
-  void remove (const EntityCodim0Type & en)
-  {
-    persistentLeafSet().remove(en);
-    compressed_ = false;
-  }
-
   //! return approximate size that is used during restriction 
   int additionalSizeEstimate () const 
   { 
@@ -611,30 +554,46 @@ public:
   //! for dof mapper 
   // --index 
   template <int codim, class EntityType>
-  int index (const EntityType & en, int num) const
+  int indexImp (const EntityType & en, int num) const
   {
     return persistentLeafSet().index(en,num);
   }
   
   //! return number of exisiting holes 
-  int numberOfHoles(int codim)  const
+  int numberOfHoles(const int codim)  const
   {
     return persistentLeafSet().numberOfHoles();
   }
 
   //! return old index, for dof manager only 
-  int oldIndex (int num, int codim ) const
+  int oldIndex (const int hole, const int codim ) const
   {
-    return persistentLeafSet().oldIndex(num);
+    return persistentLeafSet().oldIndex( hole );
   }
 
   //! return new index, for dof manager only returns index 
-  int newIndex (int num , int codim ) const
+  int newIndex (const int hole , const int codim ) const
   {
-    return persistentLeafSet().newIndex(num);
+    return persistentLeafSet().newIndex( hole );
   }
 
-private:
+protected:
+  //! memorise index 
+  // --insertIndex
+  void insertIndex(const EntityCodim0Type & en)
+  {
+    persistentLeafSet().insert(en);
+    compressed_ = false;
+  }
+
+  //! set indices to unsed so that they are cleaned on compress  
+  // --removeIndex
+  void removeIndex(const EntityCodim0Type & en)
+  {
+    persistentLeafSet().remove(en);
+    compressed_ = false;
+  }
+
   // insert index if entities lies below used entity, return 
   // false if not , otherwise return true
   bool insertNewIndex (const EntityCodim0Type & en, bool isLeaf , bool canInsert )
@@ -642,7 +601,7 @@ private:
     // if entity isLeaf then we insert index 
     if(isLeaf)
     {
-      this->insert (en );
+      this->insertIndex(en );
       return true;
     }
     
@@ -661,7 +620,7 @@ private:
     }
     else 
     {
-      this->remove ( en );
+      this->removeIndex( en );
       // set unused here, because index is only needed for prolongation 
     }
     return true;
