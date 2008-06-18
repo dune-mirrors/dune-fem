@@ -85,7 +85,7 @@ namespace Dune
   public:
     //! type of \ref Dune::BaseFunctionSetInterface "base function set" of this space 
     typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
-    //! type of \ref Dune::DofMapperInterface "DoF mapper" of this space
+    //! type of \ref Dune::DofMapper "DoF mapper" of this space
     typedef typename Traits :: MapperType MapperType;
     //! type of block mapper of this space
     typedef typename Traits :: BlockMapperType BlockMapperType;
