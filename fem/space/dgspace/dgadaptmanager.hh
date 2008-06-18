@@ -30,6 +30,8 @@ class RestrictProlongDiscontinuousSpace
 {
   typedef RestrictProlongInterface<RestrictProlongTraits< 
   RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > > BaseType;
+  using BaseType :: checkPersistent;
+  
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -45,11 +47,12 @@ public:
   //! Constructor
   RestrictProlongDiscontinuousSpace( DiscreteFunctionType & df ) 
     : df_ (df) 
-    , quadord_(2*df.space().order())
+    , quadord_( 2 * df.space().order() )
     , weight_(-1.0)
   {
     // make sure that index set is used that can handle adaptivity 
-    assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
+    assert( (Capabilities::IsUnstructured<GridType>::v) ? 
+        ( checkPersistent(df_.space().indexSet()) ) : true );
   }
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
@@ -64,6 +67,9 @@ public:
   void restrictLocal ( EntityType &father, EntityType &son, 
            bool initialize ) const
   {
+    // make sure that index set is used that can handle adaptivity 
+    assert( checkPersistent(df_.space().indexSet()) );
+    
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
     assert( !father.isLeaf() );
@@ -103,6 +109,9 @@ public:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
+    // make sure that index set is used that can handle adaptivity 
+    assert( checkPersistent(df_.space().indexSet()) );
+    
     //assert( son.state() == REFINED );
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
