@@ -5,7 +5,7 @@
 #include <dune/common/exceptions.hh>
 
 //- local includes 
-#include <dune/fem/space/common/persistentindexsets.hh>
+#include <dune/fem/space/common/dunefemindexsets.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/codimindexset.hh>
 
@@ -28,8 +28,11 @@ namespace Dune {
 */
 template <class GridType>
 class DGAdaptiveLeafIndexSet : 
-  public IndexSet<GridType, DGAdaptiveLeafIndexSet<GridType>, DefaultLeafIteratorTypes<GridType> >,
-  public PersistentIndexSet <GridType, DGAdaptiveLeafIndexSet<GridType> >
+  public ConsecutivePersistentIndexSet<
+        GridType, 
+        DGAdaptiveLeafIndexSet<GridType>, 
+        DefaultLeafIteratorTypes<GridType> 
+          >
 {
 public:
   enum { ncodim = GridType::dimension + 1 };
@@ -61,9 +64,17 @@ public:
   
 protected:
   //! type of base class 
-  typedef PersistentIndexSet <GridType, DGAdaptiveLeafIndexSet<GridType> > BaseType;
+  typedef ConsecutivePersistentIndexSet<
+        GridType, 
+        DGAdaptiveLeafIndexSet<GridType>, 
+        DefaultLeafIteratorTypes<GridType> 
+          > BaseType;
+
   //! type of this class 
   typedef DGAdaptiveLeafIndexSet < GridType > ThisType;
+
+  //! fro consecutive method 
+  friend class Conversion< ThisType, EmptyIndexSet> ;
   
   //! is true if grid is structured grid 
   enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
@@ -136,29 +147,6 @@ public:
   //  INTERFACE METHODS for DUNE INDEX SETS 
   //
   //****************************************************************
-
-  // --index 
-  /** \brief return global index for dof mapper (Dune interface)
-  */
-  template <class EntityType>
-  int index (const EntityType & en) const
-  {
-    enum { codim = EntityType::codimension };
-    // this IndexWrapper provides specialisations for each codim 
-    // see this class above 
-    return Index<CodimIndexSetType,HIndexSetType,codim>::index(codimLeafSet_,hIndexSet_,en);
-  }
-  
-  // see specialisation for codim 0 below 
-  //! \brief  return subIndex of given entity
-  template <int cd>
-  int subIndex (const EntityCodim0Type & en, int) const
-  {
-    // this IndexWrapper provides specialisations for each codim 
-    // see this class above 
-    return Index<CodimIndexSetType,HIndexSetType,cd>::index(codimLeafSet_,hIndexSet_,en);
-  }
-
   //! \brief return size of grid entities per level and codim 
   int size (GeometryType type) const
   {
@@ -211,42 +199,21 @@ public:
   //  METHODS for Adaptation with DofManger 
   //
   //****************************************************************
-
-  //! \brief insert index for father, mark childs index for removal  
-  template <class EntityType>
-  void restrictLocal ( EntityType& father, EntityType& son, bool initialize ) const
-  {
-    // important, first remove old, because 
-    // on father indices might be used aswell 
-    removeOldIndex( son );
-    insertNewIndex( father );
-  }
-
-  //! \brief insert indices for children , mark fathers index for removal  
-  template <class EntityType>
-  void prolongLocal ( EntityType& father, EntityType& son, bool initialize ) const
-  {
-    // important, first remove old, because 
-    // on children indices might be used aswell 
-    removeOldIndex( father );
-    insertNewIndex( son );
-  }
- 
   //! \brief insert new index to set 
-  void insertNewIndex (const typename GridType::template Codim<0>::Entity & en )  
+  void insertEntity (const typename GridType::template Codim<0>::Entity & en )  
   {
     resizeVectors();
     
     // insert entity in set 
-    this->insert( en );
+    this->insertIndex( en );
   }
 
   //! \brief un-register entity which will be removed from the grid
-  void removeOldIndex (const typename GridType::template Codim<0>::Entity & en )
+  void removeEntity (const typename GridType::template Codim<0>::Entity & en )
   {
     // only indices that are contained should be removed 
     assert( codimLeafSet_.index( hIndexSet_.index( en )) >= 0 );
-    this->remove( en ); 
+    this->removeIndex( en ); 
   }
 
   //! \brief reallocate the vector for new size
@@ -291,9 +258,6 @@ public:
 #endif
     }
   }
-
-  //! \brief this index set can be used for adaptive calculations 
-  bool adaptive () const { return true; }
 
   //- --compress 
   /** \brief 
@@ -344,12 +308,39 @@ public:
     return haveToCopy;
   }
 
-  //! \brief this index set needs compress after adaptation, here true is returned  
-  bool needsCompress () const { return true; }
+  /** \brief return global index for dof mapper */
+  //- --index 
+  template <int codim, class EntityType>
+  int indexImp (const EntityType & en, int num) const
+  {
+    return Index<CodimIndexSetType,HIndexSetType,codim>::index(codimLeafSet_,hIndexSet_,en);
+  }
+ 
+  //! \brief return number of holes of the sets indices 
+  int numberOfHoles ( const int codim ) const
+  {
+    assert( codim == 0 );
+    return codimLeafSet_.numberOfHoles(); 
+  }
 
+  //! \brief return old index, for dof manager only 
+  int oldIndex (const int num, const int codim ) const
+  {
+    assert( codim == 0 );
+    return codimLeafSet_.oldIndex(num); 
+  }
+
+  //! \brief return new index, for dof manager only returns index 
+  int newIndex (const int num , const int codim ) const
+  {
+    assert( codim == 0 );
+    return codimLeafSet_.newIndex(num); 
+  }
+
+protected:
   //! \brief memorise index 
-  //- --insert
-  void insert (const EntityCodim0Type & en)
+  //- --insertIndex
+  void insertIndex(const EntityCodim0Type & en)
   {
     const int idx = hIndexSet_.index(en);
     if( !codimLeafSet_.exists( idx ) ) 
@@ -372,8 +363,8 @@ public:
   }
 
   //! \brief set indices to unsed so that they are cleaned on compress  
-  //- --remove
-  void remove (const EntityCodim0Type & en)
+  //- --removeIndex
+  void removeIndex(const EntityCodim0Type & en)
   {
     const int idx = hIndexSet_.index(en);
     // if state is NEW or USED the index of all entities is removed 
@@ -384,37 +375,6 @@ public:
     }
   }
 
-  /** \brief return global index for dof mapper 
-    */
-  //- --index 
-  template <int codim, class EntityType>
-  int index (const EntityType & en, int num) const
-  {
-    return Index<CodimIndexSetType,HIndexSetType,codim>::index(codimLeafSet_,hIndexSet_,en);
-  }
- 
-  //! \brief return number of holes of the sets indices 
-  int numberOfHoles ( int codim ) const
-  {
-    assert( codim == 0 );
-    return codimLeafSet_.numberOfHoles(); 
-  }
-
-  //! \brief return old index, for dof manager only 
-  int oldIndex (int num, int codim ) const
-  {
-    assert( codim == 0 );
-    return codimLeafSet_.oldIndex(num); 
-  }
-
-  //! \brief return new index, for dof manager only returns index 
-  int newIndex (int num , int codim ) const
-  {
-    assert( codim == 0 );
-    return codimLeafSet_.newIndex(num); 
-  }
-
-private:
   // insert index if entities lies below used entity, return 
   // false if not , otherwise return true
   bool insertNewIndex (const EntityCodim0Type & en, bool isLeaf , bool canInsert )
@@ -422,7 +382,7 @@ private:
     // if entity isLeaf then we insert index 
     if(isLeaf)
     {
-      this->insert (en );
+      this->insertIndex(en );
       return true;
     }
     
@@ -443,9 +403,9 @@ private:
     else 
     {
       // we insert to get an index 
-      this->insert ( en );
+      this->insertIndex( en );
       // we remove to unmark, because this is not a leaf entity 
-      this->remove ( en );
+      this->removeIndex( en );
     }
     return true;
   }
@@ -468,7 +428,7 @@ private:
     for(LeafIteratorType it = this->grid_.template leafbegin<0,pitype> (); 
         it != endit ; ++it )
     {
-      this->insert( *it );
+      this->insertIndex( *it );
     }
   }
   
@@ -500,7 +460,7 @@ private:
     typedef typename EntityCodim0Type :: HierarchicIterator HierarchicIteratorType;
 
     // check whether we can insert or not 
-    const bool isNew = insertNewIndex ( en , en.isLeaf() , wasNew );
+    const bool isNew = insertNewIndex( en , en.isLeaf() , wasNew );
 
     // if entity is not leaf go deeper 
     if( ! en.isLeaf() )
