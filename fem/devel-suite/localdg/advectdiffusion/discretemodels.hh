@@ -586,7 +586,7 @@ namespace Dune {
                         const ArgumentTuple& uLeft,
                         RangeType& gLeft)
     {
-      const DomainType normal = it.integrationOuterNormal(x);
+      const DomainType normal = it->integrationOuterNormal(x);
       
       //typedef typename ElementType<0, ArgumentTuple>::Type UType;
       //const UType& argULeft = Element<0>::get(uLeft);

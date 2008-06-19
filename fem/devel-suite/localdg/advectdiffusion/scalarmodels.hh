@@ -233,7 +233,7 @@ class AdvectionDiffusionModel {
            RangeType& uRight) const 
   {
     // Dirichlet
-    DomainType xgl=it.intersectionGlobal().global(x);
+    DomainType xgl=it->intersectionGlobal().global(x);
     problem_.evaluate(time,xgl,uRight);
   }
   inline double diffusionTimeStep() const {
