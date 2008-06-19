@@ -129,6 +129,7 @@ AC_CONFIG_FILES([Makefile
      fem/misc/Makefile
      fem/storage/Makefile
      fem/test/Makefile
+     fem/gridpart/Makefile
      lib/Makefile
      scripts/check-header.sh
      dune-fem.pc])
