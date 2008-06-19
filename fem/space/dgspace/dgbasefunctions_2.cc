@@ -6,25 +6,13 @@
 namespace Dune
 {
 
-  namespace
-  {
-
-    template< unsigned int dim, int pOrder >
-    void Instantiate_DGBaseFunctionFactory ()
-    {
-      DiscontinuousGalerkinBaseFunctionFactory
-        < FunctionSpace< double, double, dim, 1 >, pOrder >
-        factory( GeometryType( GeometryType :: simplex, dim ) );
-      factory.numBaseFunctions();
-    }
-    
-    void Instantiate_DGSpace_Templates ()
-    {
-      Instantiate_DGBaseFunctionFactory< 2, 0 >();
-      Instantiate_DGBaseFunctionFactory< 2, 1 >();
-      Instantiate_DGBaseFunctionFactory< 2, 2 >();
-      Instantiate_DGBaseFunctionFactory< 2, 3 >();
-    }
-  }
+  template class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 0 >;
+  template class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 1 >;
+  template class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 2 >;
+  template class DiscontinuousGalerkinBaseFunctionFactory
+    < FunctionSpace< double, double, 2, 1 >, 3 >;
   
 }
