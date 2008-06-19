@@ -244,15 +244,9 @@ void solve ( LaplaceOperatorType &laplace,
 
 
 
-double algorithm ( std :: string &filename, int maxlevel, int turn )
+double algorithm ( GridType &grid, int turn )
 {
-  GridPtr< GridType > gridptr( filename ); 
-  
-  gridptr->loadBalance();
-
-  gridptr->globalRefine( maxlevel );
-
-  GridPartType gridPart( *gridptr );
+  GridPartType gridPart( grid );
 
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
   std::cout << std :: endl << "Solving for " << discreteFunctionSpace.size()
@@ -304,20 +298,33 @@ double algorithm ( std :: string &filename, int maxlevel, int turn )
   std :: cout << "H1-Error: " << error << std :: endl << std :: endl;
 #endif
 
-  #if (USE_GRAPE && HAVE_GRAPE)
+#if (USE_GRAPE && HAVE_GRAPE)
   // if grape was found then display solution
   if( turn > 0 )
   {
-    GrapeDataDisplay < GridType > grape( *gridptr );
+    GrapeDataDisplay < GridType > grape( grid );
     DisplayErrorFunction< DiscreteFunctionType, ExactSolutionType, false>
       displayErrorFunction( grape, solution, u );
     grape.addData( solution );
     grape.display();
   }
-  #endif
+#endif
 
   //return error[ 0 ];
   return error;
+}
+
+
+
+double algorithm ( std :: string &filename, int maxlevel, int turn )
+{
+  GridPtr< GridType > gridptr( filename ); 
+  
+  gridptr->loadBalance();
+
+  gridptr->globalRefine( maxlevel );
+
+  return algorithm( *gridptr, turn );
 }
 
 
@@ -336,7 +343,8 @@ int main( int argc, char **argv )
 {
   const MPIHelper &mpi = MPIHelper :: instance( argc, argv );
   
-  try {
+  try
+  {
     if( argc < 2 )
     {
       if( mpi.rank() == 0 )
@@ -364,7 +372,7 @@ int main( int argc, char **argv )
     
     return 0;
   }
-  catch( Exception exception )
+  catch( Exception &exception )
   {
     if( mpi.rank() == 0 )
       std :: cerr << exception << std :: endl;
