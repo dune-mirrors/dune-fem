@@ -2,7 +2,7 @@
 AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
-SUBDIRS = pass space function quadrature operator solver storage io misc test
+SUBDIRS = pass space function gridpart quadrature operator solver storage io misc test
 
 noinst_LTLIBRARIES = libfem.la
 
