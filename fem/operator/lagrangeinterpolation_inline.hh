@@ -61,6 +61,7 @@ namespace Dune
                                      DiscreteFunctionType &discreteFunction )
   {
     typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
 
     typedef typename FunctionType :: LocalFunctionType FunctionLocalFunctionType;
 
@@ -77,12 +78,13 @@ namespace Dune
       FunctionLocalFunctionType f_local = function.localFunction( *it );
       LocalFunctionType df_local = discreteFunction.localFunction( *it );
       
+      // assume point based local dofs 
       const int numDofs = df_local.numDofs();
       for( int i = 0; i < numDofs; ++i )
       {
         RangeType phi;
         f_local.evaluate( lagrangePointSet[ i ], phi );
-        df_local[ i ] = phi[ 0 ];
+        df_local[ i ] = phi[ i % dimRange ];
       }
     }
   }
