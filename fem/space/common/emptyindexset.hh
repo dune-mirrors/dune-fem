@@ -7,6 +7,8 @@
 #include <rpc/xdr.h>
 #include <cassert>
 
+#include <dune/fem/pass/misc.hh>
+
 /** @file
  @brief Provides default empty index set class for persistent index sets. 
 */
