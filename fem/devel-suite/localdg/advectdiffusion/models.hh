@@ -1,5 +1,5 @@
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include "advectdiff.hh"
 
 #include <dune/fem/solver/rungekutta.hh>

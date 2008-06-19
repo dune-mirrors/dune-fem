@@ -1,6 +1,6 @@
 #include <dune/common/array.hh>
 #include <dune/common/fvector.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/grid/io/visual/grapedatadisplay.hh>

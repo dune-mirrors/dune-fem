@@ -20,7 +20,7 @@
 //- dune includes
 #include <dune/common/stdstreams.cc>
 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh> 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 #if USE_GRAPE

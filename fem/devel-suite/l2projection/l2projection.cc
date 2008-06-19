@@ -30,7 +30,7 @@ typedef AlbertaGrid< dimp, dimw > GridType;
 #endif
 
 //- Dune includes 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/grid/common/referenceelements.hh>
 
 #include "../../operator/discreteoperatorimp.hh"

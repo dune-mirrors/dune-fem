@@ -6,7 +6,7 @@
 #include <dune/fem/discfuncarray.hh>
 #include <dune/fem/transfer/adaptoperator.hh>
 #include <dune/fem/common/boundary.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/lagrangebase.hh>
 #include <dune/fem/dofmanager.hh>
 

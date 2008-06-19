@@ -118,7 +118,7 @@
 #include <dune/common/stdstreams.cc>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh> 
 
 #include <dune/fem/operator/feop.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>

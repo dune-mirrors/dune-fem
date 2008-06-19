@@ -1,7 +1,7 @@
 #include <config.h>
 
 #include <iostream>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 #include <dune/fem/io/matlab/matlabstream.hh>

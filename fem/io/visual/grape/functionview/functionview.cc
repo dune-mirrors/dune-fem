@@ -112,7 +112,7 @@ typedef ALUCubeGrid<dim,dimworld> GridType;
 //#include <dune/fem/discfuncarray.hh>
 #include <dune/fem/discretefunction/dfadapt.hh>
 #include <dune/fem/space/lagrangespace/lagrange.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 #if AGRID 
 //typedef FunctionSpace < double , double, dim , dim > FuncSpace;

@@ -31,7 +31,7 @@
 #endif
 
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/io/file/grapedataio.hh>
 #include <dune/fem/l2projection.hh>
 #include "../../misc/inverseoperatorfactory.hh"

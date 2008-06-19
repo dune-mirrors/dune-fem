@@ -25,7 +25,7 @@ typedef Dune::YaspGrid<dimw,dimw> GridType;
 #include <dune/fem/quadrature/cachequad.hh> 
 
 #include <dune/fem/space/common/adaptiveleafgridpart.hh> 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
 

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 #include <dune/fem/misc/test.hh>
 

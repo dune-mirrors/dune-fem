@@ -1,8 +1,7 @@
 #ifndef DUNE_FEM_MATLABSTREAM_HH
 #define DUNE_FEM_MATLABSTREAM_HH
 
-#include <dune/grid/common/gridpart.hh>
-
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/operator/matrix/blockmatrix.hh>

@@ -2,7 +2,7 @@
 #define DUNE_IDBASEDLEAFGRIDPART_HH
 
 //- Dune includes 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 //- local includes 
 #include "idbasedleafindexset.hh"

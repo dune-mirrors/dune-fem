@@ -7,10 +7,9 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/fem/misc/utility.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh> 
 
 #include <dune/common/misc.hh>
-#include <dune/grid/common/gridpart.hh>
 #include <dune/grid/common/quadraturerules.hh>
 
 #include <dune/fem/misc/l2error.hh>

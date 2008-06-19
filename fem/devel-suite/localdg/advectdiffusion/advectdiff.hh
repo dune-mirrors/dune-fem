@@ -7,7 +7,7 @@
 
 // Dune includes
 // #include <dune/common/utility.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/discretemodel.hh>

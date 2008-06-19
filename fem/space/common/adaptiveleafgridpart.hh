@@ -2,8 +2,7 @@
 #define DUNE_ADAPTIVELEAFGRIDPART_HH
 
 //- Dune includes 
-#include <dune/grid/common/gridpart.hh>
-
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 //- local includes 

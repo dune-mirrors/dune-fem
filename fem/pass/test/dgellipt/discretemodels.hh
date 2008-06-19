@@ -12,7 +12,7 @@
 #include <dune/common/utility.hh>
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
 #include <dune/fem/misc/boundaryidentifier.hh>

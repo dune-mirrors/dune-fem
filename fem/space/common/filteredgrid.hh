@@ -11,7 +11,7 @@
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/grid/common/sizecache.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>

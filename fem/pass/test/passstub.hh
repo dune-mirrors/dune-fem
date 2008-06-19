@@ -2,7 +2,7 @@
 #define DUNE_PASSSTUB_HH
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>

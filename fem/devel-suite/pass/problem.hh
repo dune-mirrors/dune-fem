@@ -20,7 +20,7 @@
 #endif
 
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 //#include <dune/quadrature/fixedorder.hh>
 #include "../../quadrature/quadrature.hh"
 #include "../../quadrature/cachequad.hh"

@@ -3,7 +3,7 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>

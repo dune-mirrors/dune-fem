@@ -2,7 +2,8 @@
 #define DUNE_FEM_PERIODICGRIDPART_HH
 
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/common/gridpart.hh>
+
+#include <dune/fem/gridpart/gridpart.hh>
 
 #include "periodicindexset.hh"
 

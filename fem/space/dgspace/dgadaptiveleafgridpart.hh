@@ -2,7 +2,7 @@
 #define DGADAPTIVELEAFGRIDPART_HH
 
 //- Dune includes 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/idbasedleafindexset.hh>
 

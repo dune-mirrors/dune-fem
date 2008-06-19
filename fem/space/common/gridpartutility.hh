@@ -4,7 +4,7 @@
 //- System includes
 
 //- Dune includes
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 
 /** @file
   @brief Provides other partition types of the same grid part 

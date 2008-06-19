@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <dune/grid/common/gridpart.hh>
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 #include <dune/grid/yaspgrid.hh>
