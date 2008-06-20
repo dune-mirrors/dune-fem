@@ -1,6 +1,5 @@
 commondir =  $(includedir)/dune/fem/space/common
 common_HEADERS = adaptiveleafgridpart.hh \
-     adaptiveleafindexset.hh \
      adaptmanager.hh \
      allgeomtypes.hh \
      arrays.hh \
@@ -26,10 +25,8 @@ common_HEADERS = adaptiveleafgridpart.hh \
      geometryconversion.hh \
      gridpartutility.hh \
      idbasedleafgridpart.hh \
-     idbasedleafindexset.hh \
      loadbalancer.hh \
      periodicgridpart.hh \
-     periodicindexset.hh \
      restrictprolonginterface.hh \
      persistentindexsets.hh \
      dunefemindexsets.hh \
