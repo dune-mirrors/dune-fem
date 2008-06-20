@@ -17,47 +17,45 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/deprecated.hh>
 
-
-/*! @addtogroup GridPart
-    @ingroup Grid
-  
-  @section GridPart1 What is a GridPart ?
-  <!--============================-->
-  A Dune::GridPart define a view for a given grid, which can basically be seen
-  as a container for entities of different co-dimensions. The most
-  prominent example of such views are Leafgrids and Levelgrids - but
-  also a set of entities satisfying a certain constraint, e.g., belonging
-  to a certain domain, can be accessed using the GridParts interface. 
- 
-  The Dune::Grid instance is passed to the GridPart which then
-  provides iterators over the entities in the view; also intersection iterators
-  suitable for element in the view can be obtained from the GridPart. 
-  Finally the GridPart provides a Dune::IndexSet with indices for all 
-  entities in the view. For parallel computations the GridPart interface
-  also provides the suitable communication method.   
-
-  @section GridPart3 GridPart Interface and available Implementations
-  <!--==========================-->
-
-  This interface is implemented by the class template Dune::GridPartInterface. 
-  For a full documentation see the description of this class.
-  A short list of the most important methods is:
-  - The pair of methods begin()/end() provide begin and end iterators
-    for the entities.
-  - The methods ibegin(entity)/iend(entity) 
-    begin and end intersection iterators for a given entity. 
-  - The index set is accessed via the method indexSet() and the underlying
-    grid using the method grid().
-  .
-
-  For a level or leaf view of the grid use the implementations
-  Dune::LevelGridPart and Dune::LeafGridPart, respectively. A first
-  implementation of a view using a general filter is available 
-  in the dune-fem package (Dune::FilteredGridPart).
-*/
-
 namespace Dune
 {
+
+  /** \addtogroup GridPart
+   *
+   * Grid parts allow to define a view on a given DUNE grid, treating the
+   * underlying grid as a container for entities.
+   *
+   * All parts of the dune-fem package rely on grid parts to access the entities
+   * of the grid. For example, discrete functions are defined on the set of
+   * entities accesseable by the given GridPart implementation using the iterator
+   * and index set provided by the GridPart.
+   *
+   * \section GridPart Interface and available Implementations
+   * 
+   * The interface for a GridPart is implemented by the class template
+   * GridPartInterface. Basically, a GridPart provides the following
+   * functionality:
+   * - The underlying grid can be accessed through the grid method.
+   * - The indexSet method provides a suitable dune-fem index set for the grid
+   *   part.
+   * - Pairs of begin / end methods provide iterators over the entities of a
+   *   given codimension belonging to the grid part.
+   * - A pair of ibegin / iend methods provide suitable intersection iterators
+   *   for a given entity of codimension 0.
+   * - For parallel computations, a suitable communicate method is provided.
+   * .
+   *
+   * The following grid parts have been implemented:
+   * - LeafGridPart: A view of the leaf grid,
+   * - LevelGridPart: A view of a given grid level,
+   * - FilteredGridPart: A view filtering another grid part.
+   *
+   * \todo Implement a grid part for a given grid view (Suggestion: use the
+   *       name GridPart).
+   */
+
+
+
   /** 
    * @addtogroup GridPart
    *
