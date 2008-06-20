@@ -4,8 +4,7 @@
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/gridpart/gridpart.hh>
-
-#include "periodicindexset.hh"
+#include <dune/fem/gridpart/periodicindexset.hh>
 
 namespace Dune
 {

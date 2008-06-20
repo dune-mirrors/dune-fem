@@ -7,7 +7,7 @@
 
 //- local includes 
 #include <dune/fem/misc/combineinterface.hh>
-#include <dune/fem/space/common/emptyindexset.hh>
+#include <dune/fem/gridpart/emptyindexset.hh>
 
 namespace Dune{
 /** @addtogroup RestrictProlongInterface 

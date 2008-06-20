@@ -5,9 +5,9 @@
 #include <dune/common/exceptions.hh>
 
 //- local includes 
-#include <dune/fem/space/common/dunefemindexsets.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/common/codimindexset.hh>
+#include <dune/fem/gridpart/dunefemindexsets.hh>
+#include <dune/fem/gridpart/codimindexset.hh>
 
 #include <dune/fem/io/file/xdrio.hh>
 

@@ -7,7 +7,6 @@ common_HEADERS = adaptiveleafgridpart.hh \
      basefunctioninterface.hh \
      basefunctionsetinterface.hh \
      cachedcommmanager.hh \
-     codimindexset.hh \
      commindexmap.hh \
      commoperations.hh \
      communicationmanager.hh \

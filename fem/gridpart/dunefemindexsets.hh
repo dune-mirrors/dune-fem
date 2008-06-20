@@ -12,7 +12,7 @@
 #include <dune/grid/common/indexidset.hh>
 
 //- Dune fem includes 
-#include <dune/fem/space/common/emptyindexset.hh>
+#include <dune/fem/gridpart/emptyindexset.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 /** @file

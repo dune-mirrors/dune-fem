@@ -3,8 +3,8 @@
 
 //- Dune includes 
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/idbasedleafindexset.hh>
 #include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/space/common/idbasedleafindexset.hh>
 
 //- local includes 
 #include "dgadaptiveleafindexset.hh"

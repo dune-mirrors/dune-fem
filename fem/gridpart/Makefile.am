@@ -1,6 +1,7 @@
 gridpartdir = $(includedir)/dune/fem/gridpart
 gridpart_HEADERS = adaptiveleafgridpart.hh \
                    adaptiveleafindexset.hh \
+		   codimindexset.hh \
 		   dunefemindexsets.hh \
 		   emptyindexset.hh \
 		   filteredgrid.hh \
@@ -9,5 +10,4 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
 		   idbasedleafgridpart.hh \
 		   idbasedleafindexset.hh \
 		   periodicgridpart.hh \
-		   periodicindexset.hh \
-		   persistentindexsets.hh
+		   periodicindexset.hh
