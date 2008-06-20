@@ -473,8 +473,6 @@ namespace Dune
       The HierarchicIndexSet is basically the LocalIdSet of the grid 
       extended by a size method to implement the IndexSet interface. 
       For all other grids the default LeafIndexSet is selected.
-
-      \deprected
   */
   template <class GridImp, PartitionIteratorType pitype = Interior_Partition>
   class HierarchicGridPart :
@@ -560,7 +558,6 @@ namespace Dune
   };
 
   //! Type definitions for the HierarchicGridPart class
-  /** \deprected */
   template <class GridImp,PartitionIteratorType pitype>
   struct HierarchicGridPartTraits {
     /** \brief The type of the grid */
