@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <cstring>
 #include <mpi.h>
 #include "random.hpp"
 #include "timer.hpp"

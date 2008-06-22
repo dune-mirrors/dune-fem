@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 
 //#ifdef ENABLE_PARDG 
