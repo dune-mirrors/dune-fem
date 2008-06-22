@@ -207,10 +207,10 @@ protected:
  */
 template <class GridType, class RestProlOperatorImp >
 class AdaptationManager 
-: public AdaptationMethod<GridType> 
-, public ObjPointerStorage 
+: public Dune :: AdaptationMethod< GridType >,
+  public ObjPointerStorage 
 {  
-  typedef AdaptationMethod<GridType> BaseType;
+  typedef Dune :: AdaptationMethod< GridType > BaseType;
   typedef typename BaseType :: AdaptationMethodType AdaptationMethodType; 
   
   template <class AdaptManager, class GridImp, bool isGoodGrid> 

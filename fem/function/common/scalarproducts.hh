@@ -3,6 +3,7 @@
 
 //- system includes 
 #include <iostream>
+#include <memory>
 #include <set>
 #include <map> 
 #include <limits>

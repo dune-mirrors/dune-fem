@@ -3,6 +3,9 @@
 
 //- System includes 
 #include <cassert>
+#include <cstring>
+#include <cstdlib>
+
 #include <string>
 
 //- Dune includes 
