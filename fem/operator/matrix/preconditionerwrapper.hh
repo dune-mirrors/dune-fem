@@ -25,6 +25,35 @@ namespace Dune {
     MatrixType& matrix_;
     mutable std::auto_ptr<PreconditionerInterfaceType> preconder_; 
     const bool preEx_;
+
+    template <class XImp, class YImp> 
+    struct Apply
+    {
+      inline static void apply(PreconditionerInterfaceType& preconder,
+			       XImp& v, const YImp& d)
+      {
+      }
+
+      inline static void copy(XImp& v, const YImp& d)
+      {
+      }
+   };
+
+    template <class XImp> 
+    struct Apply<XImp,XImp>
+    {
+
+      inline static void apply(PreconditionerInterfaceType& preconder,
+			       XImp& v, const XImp& d)
+      {
+	preconder.apply( v ,d );
+      }
+
+      inline static void copy(X& v, const Y& d) 
+      {
+	v = d;
+      }
+    };
     
   public:
     //! \brief The domain type of the preconditioner.
@@ -76,6 +105,7 @@ namespace Dune {
     //! \copydoc Preconditioner 
     virtual void pre (X& x, Y& b) 
     {
+      /*
       // all the implemented Preconditioners do nothing in pre and post 
 #ifndef NDEBUG 
       // apply preconditioner
@@ -86,6 +116,7 @@ namespace Dune {
         assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
       }
 #endif
+      */
     }
 
     //! \copydoc Preconditioner 
@@ -94,12 +125,11 @@ namespace Dune {
       if( preEx_ ) 
       {
         // apply preconditioner
-        preconder_->apply(v,d);
+        Apply<X,Y>::apply( *preconder_ , v, d );
       }
       else 
       {
-        // just copy values 
-        v = d;
+	 Apply<X,Y>::copy( v, d );
       }
     }
 
