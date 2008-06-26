@@ -8,7 +8,7 @@
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
-#include <dune/fem/space/common/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
