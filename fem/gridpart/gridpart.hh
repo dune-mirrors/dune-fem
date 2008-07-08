@@ -271,8 +271,8 @@ namespace Dune
     
     //! copy constructor
     LevelGridPart(const LevelGridPart& other) :
-      GridPartDefault<Traits>(other.grid_,isetWrapper_),
-      isetWrapper_(other.grid_,other.level_),
+      GridPartDefault<Traits>(const_cast<GridType&>(other.grid()),isetWrapper_),
+      isetWrapper_(other.grid(),other.level_),
       level_(other.level_) {}
     
     //! Returns first iterator on this level
@@ -388,8 +388,8 @@ namespace Dune
 
     //! copy constructor
     LeafGridPart(const LeafGridPart& other) :
-      GridPartDefault<Traits>(other.grid_,isetWrapper_),
-      isetWrapper_(other.grid_) 
+      GridPartDefault<Traits>(const_cast<GridType&>(other.grid()),isetWrapper_),
+      isetWrapper_(other.grid()) 
     {}
     
     //! Begin iterator on the leaf level
@@ -512,8 +512,8 @@ namespace Dune
 
     //! copy constructor
     HierarchicGridPart(const HierarchicGridPart& other) :
-      GridPartDefault<Traits>(other.grid_, isetWrapper_),
-      isetWrapper_(other.grid_) {}
+      GridPartDefault<Traits>(const_cast<GridType&>(other.grid()), isetWrapper_),
+      isetWrapper_(other.grid()) {}
 
     //! Begin iterator on the leaf level
     template <int cd>
