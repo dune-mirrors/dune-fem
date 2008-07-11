@@ -323,7 +323,7 @@ public:
     } 
         
     // read interval information of structured grid 
-    IntervalBlock interval(gridin);
+    dgf :: IntervalBlock interval(gridin);
     if(!interval.isactive()) 
     {
       std::cerr<<"Did not find IntervalBlock in macro grid file `" << macroname << "' ! \n";
@@ -374,7 +374,8 @@ public:
 
 protected:
   template <int dimworld> 
-  static void saveMacroGridImp(IntervalBlock& interval, std::string filename) 
+  static void saveMacroGridImp ( dgf :: IntervalBlock& interval,
+                                std::string filename )
   {
     FieldVector<double,dimworld> lang;
     FieldVector<int,dimworld>    anz;
