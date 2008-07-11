@@ -273,6 +273,12 @@ public:
     return (state(num) != UNUSED);
   }
  
+  //! return true if index is valid   
+  bool validIndex( const int num ) const
+  {
+    return (leafIndex_ [ num ] >= 0);
+  }
+ 
   //! return number of holes 
   int numberOfHoles () const
   {
