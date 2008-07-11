@@ -24,7 +24,6 @@ void printMap (std::ostream& s, const MapType& m)
   s << std::endl;
 }
   
-
 //! \brief LeafIndexSet based on local ids using std::map to build mapping
 //!from id to index 
 template <class IdSetImp, class IndexSetImp, int codim>  
@@ -38,16 +37,19 @@ private:
   typedef std::map< IdType, int  > IndexStorageType;
   typedef std::map< int , IdType > IdStorageType;
   typedef std::vector < int > HolesIndicesType;
+
+  typedef MutableArray<int> IndexVectorType;
   
   // the mapping of the global to leaf index 
   mutable IndexStorageType leafIndex_;
-
   mutable IdStorageType leafId_;
-  mutable IdStorageType holesId_;
 
   // old indices 
-  mutable IndexStorageType holes_;
   mutable IndexStorageType oldLeafIndex_;
+
+  // list of old and new index for all holes 
+  mutable IndexVectorType oldIndexVec_;
+  mutable IndexVectorType newIndexVec_;
 
   const IdSetType    & idSet_;
   const IndexSetType & indexSet_;
@@ -66,6 +68,10 @@ public:
       nextFreeIndex_ (indexSet_.size(codim)) 
   {
     createMaps();
+    
+    // set memory over estimation 
+    oldIndexVec_.setMemoryFactor( 1.1 );
+    newIndexVec_.setMemoryFactor( 1.1 );
   }
 
   void createMaps () 
@@ -109,10 +115,6 @@ public:
     int actSize = leafIndex_.size ();
     nextFreeIndex_ = actSize;
 
-    // remove old values since they are not used anymore
-    holes_.clear();
-    holesId_.clear();
-
     // create holes index vector 
     HolesIndicesType holesIdx(oldLeafIndex_.size(), -1);   
 
@@ -143,18 +145,23 @@ public:
         (std::cerr << actSize << " s|ls " << leafIndex_.size() << "\n",0) : 1);
 
     {
+      // resize hole lists 
+      oldIndexVec_.resize( actSize );
+      newIndexVec_.resize( actSize );
+      
       int hole = 0;
       typedef typename IndexStorageType :: iterator iterator;
-      iterator end = leafIndex_.end();
+      const iterator end = leafIndex_.end();
       for(iterator it = leafIndex_.begin(); it != end; ++it) 
       {
-        int idx = (*it).second;
+        const int idx = (*it).second;
         if( idx >= nextFreeIndex_ ) 
         {
-          IdType id = (*it).first; 
-          holesId_[hole] = id;
-          holes_[id] = idx; 
+          assert( hole < oldIndexVec_.size() );
 
+          // put to old idx list 
+          oldIndexVec_[hole] = idx;
+          
           int newIdx = -1; 
           if( hole >= noHole )
           {
@@ -165,15 +172,28 @@ public:
           {
             newIdx = holesIdx[hole];
           }
-          ++hole;
           
+          assert( hole < newIndexVec_.size() );
+          
+          // store new index 
+          newIndexVec_[hole] = newIdx;
+          
+          // set new index to index map 
           (*it).second = newIdx;
 
           leafId_.erase(idx); 
-          leafId_[newIdx] = id;
+          leafId_[newIdx] = (*it).first;
+
+          // next hole 
+          ++hole;
         }
+
         assert( (*it).second < size() ); 
       }
+
+      // set current number of holes
+      oldIndexVec_.resize( hole );
+      newIndexVec_.resize( hole );
     }
 
     // clear old values 
@@ -233,28 +253,22 @@ public:
   //! return number of existing holes 
   int numberOfHoles () const
   {
-    return holes_.size();
+    assert( oldIndexVec_.size() == newIndexVec_.size() );
+    return oldIndexVec_.size();
   }
 
   //! return old index, for dof manager only 
-  int oldIndex ( int idx ) const
+  int oldIndex ( const int idx ) const
   {
-    assert( holesId_.find(idx) != holesId_.end() );
-    IdType id = holesId_[idx];
-    assert( holes_.find(id) != holes_.end() );
-    return holes_[id]; 
+    return oldIndexVec_[ idx ];
   }
 
   //! return new index, for dof manager only returns index 
-  int newIndex ( int idx ) const
+  int newIndex ( const int idx ) const
   {
-    assert( holesId_.find(idx) != holesId_.end() );
-    IdType id = holesId_[idx];
-    assert( leafIndex_.find(id) != leafIndex_.end() ); 
-    assert( leafIndex_[id] < size() );
-    return leafIndex_[id]; 
+    return newIndexVec_[ idx ];
   }
-
+  
   // check index   
   template <class EntityType> 
   void checkIndex (const EntityType & en) 
