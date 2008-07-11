@@ -397,7 +397,7 @@ protected:
     {
       // if index >= 0, then all children may  also appear in the set 
       // from now on, indices can be inserted, otherwise go deeper 
-      return ( codimLeafSet_.index( hIndexSet_.index (en ) ) >= 0 );
+      return codimLeafSet_.validIndex( hIndexSet_.index (en ) );
     }
     else 
     {
