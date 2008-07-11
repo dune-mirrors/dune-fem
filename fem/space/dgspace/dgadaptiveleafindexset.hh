@@ -396,14 +396,8 @@ protected:
     if(!canInsert) 
     {
       // if index >= 0, then all children may  also appear in the set 
-      // from now on, indices can be inserted 
-      if( codimLeafSet_.index( hIndexSet_.index (en ) ) >= 0 )
-      {
-        return true; 
-      }
-
-      // we have to go deeper 
-      return false;
+      // from now on, indices can be inserted, otherwise go deeper 
+      return ( codimLeafSet_.index( hIndexSet_.index (en ) ) >= 0 );
     }
     else 
     {
