@@ -311,9 +311,7 @@ public:
   {
     // do nothing for unstructured grids 
     if( Capabilities::IsUnstructured<GridImp>::v ) return;
-    // only store grid on rank 0
-    if( grid.comm().rank() > 0) return ;
-    
+
     // create file descriptor 
     std::ifstream gridin(macroname.c_str());
     if( !gridin) 
@@ -337,7 +335,7 @@ public:
 
     enum { dimworld = GridImp :: dimensionworld };
 
-    saveMacroGridImp<dimworld> (interval,filename); 
+    saveMacroGridImp<dimworld> (grid.comm().rank(), interval, filename); 
     return;
   }
 
@@ -351,12 +349,13 @@ public:
     // do nothing for unstructured grids 
     if( Capabilities::IsUnstructured<GridImp>::v ) return;
 
-    if( g.comm().rank() == 0)
     {
       std::string filename(orgPath);
       filename += "/";
       filename += prefix;
-      filename += "_grid.global";
+      filename += "_grid";
+      // add rank 
+      filename += strRank(g.comm().rank());
 
       std::string destFilename(destPath);
       destFilename += "/";
@@ -373,8 +372,18 @@ public:
   }
 
 protected:
+  //! create string containing rank 
+  static std::string strRank(const int rank)
+  {
+    std::stringstream tmp;
+    tmp << "." << rank;
+    return tmp.str();
+  }
+
+  //! write my partition as macro grid 
   template <int dimworld> 
-  static void saveMacroGridImp ( dgf :: IntervalBlock& interval,
+  static void saveMacroGridImp (const int rank,
+                                dgf :: IntervalBlock& interval,
                                 std::string filename )
   {
     FieldVector<double,dimworld> lang;
@@ -389,33 +398,49 @@ protected:
       h[i] = lang[i]/anz[i];
     }
 
-#if HAVE_MPI 
-    // write sub grid 
+    // write sub grid for this rank 
     {
-      typedef FieldVector<int,dimworld> iTupel;
+      std::string subfilename (filename);
+      // add rank 
+      subfilename += strRank(rank);
 
-      // origin is zero 
-      iTupel o(0);
-
-      iTupel o_interior;
-      iTupel s_interior;
-
-      enum { tag = MultiYGrid<dimworld,double> ::tag };
-      Torus<dimworld> torus(MPI_COMM_WORLD,tag,anz);
-      torus.partition( torus.rank() , o,anz,
-                       o_interior,s_interior);
-
-      FieldVector<double,dimworld> origin(0.0);
-      FieldVector<double,dimworld> sublang(0.0);
-      for(int i=0; i<dimworld; ++i)
+#if HAVE_MPI 
       {
-        origin[i] = o_interior[i] * h[i];
-        sublang[i] = origin[i] + (s_interior[i] * h[i]);
-      }
+        typedef FieldVector<int,dimworld> iTupel;
 
-      writeStructuredGrid(filename,origin,sublang,s_interior);
-    }
+        // origin is zero 
+        iTupel o(0);
+
+        iTupel o_interior;
+        iTupel s_interior;
+
+        enum { tag = MultiYGrid<dimworld,double> ::tag };
+        Torus<dimworld> torus(MPI_COMM_WORLD,tag,anz);
+        torus.partition( torus.rank() , o,anz,
+                         o_interior,s_interior);
+
+        FieldVector<double,dimworld> origin(0.0);
+        FieldVector<double,dimworld> sublang(0.0);
+        for(int i=0; i<dimworld; ++i)
+        {
+          origin[i] = o_interior[i] * h[i];
+          sublang[i] = origin[i] + (s_interior[i] * h[i]);
+        }
+
+        writeStructuredGrid(subfilename,origin,sublang,s_interior);
+      }
+#else
+      {
+        // in serial this should be zero 
+        assert( rank == 0 );
+        FieldVector<double,dimworld> zero(0.0);
+        writeStructuredGrid(subfilename,zero,lang,anz);
+      }
 #endif
+    }
+
+    // write global grid on rank 0 
+    if (rank == 0 )
     {
       // write global file for recovery 
       filename += ".global";
