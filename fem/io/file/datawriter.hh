@@ -31,7 +31,7 @@ namespace Dune {
    \brief Implementation of the Dune::IOInterface. 
    This class manages data output.
    Available output formats are GRAPE, VTK, VTK Vertex projected using the 
-	 VtxProjection operator and gnuplot. Details can be found in \ref DiscFuncIO.
+   VtxProjection operator and gnuplot. Details can be found in \ref DiscFuncIO.
 */    
 template <class GridImp, 
           class DataImp> 
@@ -318,8 +318,8 @@ public:
   DataWriter(const GridType & grid, 
              const std::string& gridName, 
              OutPutDataType& data,
-	           double startTime,
-	           double endTime)
+             double startTime,
+             double endTime)
     : grid_(grid), data_(data) 
     , writeStep_(0)
     , saveTime_(startTime)
@@ -344,8 +344,8 @@ public:
   */ 
   DataWriter(const GridType & grid, OutPutDataType& data, 
              double time,
-       	     double startTime,
-	           double endTime)
+             double startTime,
+             double endTime)
     : grid_(grid), data_(data) 
     , writeStep_(0) 
     , saveTime_(startTime)
@@ -389,7 +389,7 @@ protected:
     }
 
     int outputFormat = Parameter::getValidValue<int>("fem.io.outputformat",0,
-						ValidateInterval<int,true,true>(0,3));
+            ValidateInterval<int,true,true>(0,3));
     switch( outputFormat ) 
     {
       case 0: outputFormat_ = grape; break;
@@ -470,7 +470,7 @@ protected:
   }
 
 public:
-  /** \copydoc IOInterface::willWrite */	
+  /** \copydoc IOInterface::willWrite */  
   virtual bool willWrite(double time, int timestep) const
   {
     // only write data time > saveTime
@@ -479,7 +479,7 @@ public:
              (saveCount_> 0 && timestep%saveCount_ == 0 )
            );
   }
-	
+  
   /** \copydoc IOInterface::write */
   virtual void write(double time, int timestep) const 
   {
@@ -510,11 +510,11 @@ public:
         writeVTKOutput( Element<0>::get(data_), time );
       }
 #endif
-			else if ( outputFormat_ == gnuplot )
-			{
-				writeGnuPlotOutput( Element<0>::get(data_), time );
-			}
-			else 
+      else if ( outputFormat_ == gnuplot )
+      {
+        writeGnuPlotOutput( Element<0>::get(data_), time );
+      }
+      else 
       {
         DUNE_THROW(NotImplemented,"DataWriter::write: wrong output format");
       }
@@ -543,8 +543,10 @@ protected:
     // check whether to use vertex data of discontinuous data 
     const bool vertexData = (outputFormat_ == vtkvtx);
 
+    const int psize = grid_.comm().size();
+
     // generate filename 
-    std::string name = genFilename( path_, datapref_, writeStep_ );
+    std::string name = genFilename( (psize > 1) ?  "" : path_ , datapref_, writeStep_ );
 
 #ifdef YASPGRID 
     if( vertexData )
@@ -575,7 +577,16 @@ protected:
       VTKOutputerLagrange< VTKIOType > io( vtkio );
       forEach.apply( io );
 
-      vtkio.write( name.c_str(), Dune::VTKOptions::ascii );
+      if( psize > 1 ) 
+      {
+        // write all data 
+        vtkio.pwrite( name.c_str(), path_.c_str(), "" , Dune::VTKOptions::binaryappended );
+      }
+      else 
+      {
+        // write all data serial 
+        vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
+      }
     }
     else
 #endif 
@@ -593,8 +604,16 @@ protected:
       VTKOutputerDG< VTKIOType > io( vtkio );
       forEach.apply( io );
 
-      // write all data 
-      vtkio.write( name.c_str(), Dune::VTKOptions::ascii );
+      if( psize > 1 ) 
+      {
+        // write all data 
+        vtkio.pwrite( name.c_str(), path_.c_str(), "" , Dune::VTKOptions::binaryappended );
+      }
+      else 
+      {
+        // write all data serial 
+        vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
+      }
     }
   }
 #endif
@@ -602,7 +621,7 @@ protected:
   // write to gnuplot file format
   template <class DFType> 
   void writeGnuPlotOutput(const DFType* func, double time) const
-	{
+  {
     typedef typename DFType :: Traits Traits;
     typedef typename Traits :: LocalFunctionType LocalFunctionType;
     typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -621,23 +640,23 @@ protected:
     std::ofstream gnuout(name.c_str());
 
     // start iteration
-		IteratorType endit = func->space().end();
-		for (IteratorType it = func->space().begin(); it != endit; ++it) {
-			CachingQuadrature<GridPartType,0> quad(*it,func->space().order());
-			LocalFunctionType lf = func->localFunction(*it);
-			for (int i=0;i<quad.nop();++i) {
-				RangeType u;
-				DomainType x = it->geometry().global(quad.point(i));
-				lf.evaluate(quad[i],u);
+    IteratorType endit = func->space().end();
+    for (IteratorType it = func->space().begin(); it != endit; ++it) {
+      CachingQuadrature<GridPartType,0> quad(*it,func->space().order());
+      LocalFunctionType lf = func->localFunction(*it);
+      for (int i=0;i<quad.nop();++i) {
+        RangeType u;
+        DomainType x = it->geometry().global(quad.point(i));
+        lf.evaluate(quad[i],u);
         for (int i = 0; i < dimDomain; ++i) 
-  				gnuout << x[i] << " ";
+          gnuout << x[i] << " ";
         for (int i = 0; i < dimRange; ++i) 
-  				gnuout << u[i] << " ";
-				gnuout << "\n";
-			}
-		}
-	}
-	
+          gnuout << u[i] << " ";
+        gnuout << "\n";
+      }
+    }
+  }
+  
   //! display data with grape 
   virtual void display() const 
   {
