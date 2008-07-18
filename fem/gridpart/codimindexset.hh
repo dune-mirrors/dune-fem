@@ -105,6 +105,7 @@ public:
   //! clear set 
   void clear() 
   {
+    // remove all information 
     {
       const int size = state_.size();
       for(int i=0; i<size; ++i) state_[i] = UNUSED;
@@ -114,6 +115,8 @@ public:
       const int size = leafIndex_.size();
       for(int i=0; i<size; ++i) leafIndex_[i] = -1;
     }
+    // reset next free index 
+    nextFreeIndex_ = 0;
   }
 
   //! set all entries to unused 
@@ -273,10 +276,10 @@ public:
     return (state(num) != UNUSED);
   }
  
-  //! return true if index is valid   
-  bool validIndex( const int num ) const
+  //! return true if index is valid 
+  bool validIndex ( const int num ) const
   {
-    return (leafIndex_ [ num ] >= 0);
+    return (leafIndex_[ num ] >= 0);
   }
  
   //! return number of holes 
