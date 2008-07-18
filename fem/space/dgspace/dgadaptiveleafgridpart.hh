@@ -19,7 +19,7 @@ namespace Dune
   template< class Grid >
   class DGAdaptiveLeafIndexSet;
 
-  //! Type definitions for the LeafGridPart class
+  //! Type definitions for the DGAdaptiveLeafGridPart class
   template< class Grid, PartitionIteratorType pitype >
   struct DGAdaptiveLeafGridPartTraits
   {
@@ -40,17 +40,12 @@ namespace Dune
     };
 
     // for structured grids with no hierarchic index set choose 
-    // the grids leaf index set 
+    // the DGAdaptiveLeafIndexSet based on the LeafIndexSet 
     template< class GridT >
     struct GoodGridChooser< GridT, false, false >
     {
-  #if HAVE_MPI
       // choose the adative index based on leaf index set
       typedef DGAdaptiveLeafIndexSet< GridT > IndexSetType;
-  #else 
-      // the grids leaf index set wrapper for good 
-      typedef WrappedLeafIndexSet< GridT > IndexSetType;
-  #endif
     };
 
     typedef Grid GridType;
