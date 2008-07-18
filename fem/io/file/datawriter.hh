@@ -543,10 +543,11 @@ protected:
     // check whether to use vertex data of discontinuous data 
     const bool vertexData = (outputFormat_ == vtkvtx);
 
-    const int psize = grid_.comm().size();
+    // check whether we have parallel run  
+    const bool parallel = (grid_.comm().size() > 1);
 
-    // generate filename 
-    std::string name = genFilename( (psize > 1) ?  "" : path_ , datapref_, writeStep_ );
+    // generate filename, with path only for serial run  
+    std::string name = genFilename( (parallel) ?  "" : path_ , datapref_, writeStep_ );
 
 #ifdef YASPGRID 
     if( vertexData )
@@ -577,9 +578,9 @@ protected:
       VTKOutputerLagrange< VTKIOType > io( vtkio );
       forEach.apply( io );
 
-      if( psize > 1 ) 
+      if( parallel ) 
       {
-        // write all data 
+        // write all data for parallel run 
         vtkio.pwrite( name.c_str(), path_.c_str(), "" , Dune::VTKOptions::binaryappended );
       }
       else 
@@ -604,9 +605,9 @@ protected:
       VTKOutputerDG< VTKIOType > io( vtkio );
       forEach.apply( io );
 
-      if( psize > 1 ) 
+      if( parallel  ) 
       {
-        // write all data 
+        // write all data for parallel run 
         vtkio.pwrite( name.c_str(), path_.c_str(), "" , Dune::VTKOptions::binaryappended );
       }
       else 
