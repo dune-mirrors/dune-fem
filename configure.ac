@@ -2,20 +2,18 @@
 
 AC_PREREQ(2.50)
 DUNE_AC_INIT
-#AC_INIT(dune-fem, 0.10, dune@mathematik.uni-freiburg.de)
-#AM_INIT_AUTOMAKE(dune-fem, 0.0, dune@mathematik.uni-freiburg.de)
 AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 
 # check if we're in the right directory
 AC_CONFIG_SRCDIR([fem/space/dgspace/dgspace.hh])
 # which header-file is created
-AM_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER([config.h])
 
 # we need no more than the standard DUNE-stuff
 DUNE_CHECK_ALL_M
 
-# if istl not foud, its disabled 
-#DUNE_CHECK_OPTIONAL([dune-istl],[istl/allocator.hh])
+# parse dune-fem version
+DUNE_FEM_PARSE_VERSION
 
 # check dennis package 
 DUNE_PATH_PARDG
@@ -132,6 +130,6 @@ AC_CONFIG_FILES([Makefile
      fem/gridpart/Makefile
      lib/Makefile
      scripts/check-header.sh
+     fem/version.hh
      dune-fem.pc])
 AC_OUTPUT
-

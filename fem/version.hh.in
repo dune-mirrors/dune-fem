@@ -2,10 +2,13 @@
 #define DUNE_FEM_VERSION_HH
 
 // These three lines define the dune-fem version.
-#define DUNE_FEM_VERSION_MAJOR 0
-#define DUNE_FEM_VERSION_MINOR 9
-#define DUNE_FEM_VERSION_REVISION 2
+#define DUNE_FEM_VERSION_MAJOR @DUNE_FEM_VERSION_MAJOR@
+#define DUNE_FEM_VERSION_MINOR @DUNE_FEM_VERSION_MINOR@
+#define DUNE_FEM_VERSION_REVISION @DUNE_FEM_VERSION_REVISION@
 
+// These two lines define the dune-grid version.
+#define DUNE_GRID_VERSION_MAJOR @DUNE_GRID_VERSION_MAJOR@
+#define DUNE_GRID_VERSION_MINOR @DUNE_GRID_VERSION_MINOR@
 
 // Macros for version comparison
 #define DUNE_FEM_VERSION_EQUAL(major,minor) \
