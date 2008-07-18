@@ -122,20 +122,8 @@ public:
     // set the codim of this codim set, here always 0
     codimLeafSet_.setCodim( 0 );
 
-#if HAVE_MPI
-    if( StructuredGrid  && 
-        this->grid_.comm().size() > 1 )
-    {
-      // this should only be the case of YaspGrid
-      markAllUsed<Interior_Partition> ();
-      markAllUsed<All_Partition>();
-    }
-    else 
-#endif
-    {
-      // give all entities that lie below the old entities new numbers 
-      markAllUsed<All_Partition> ();
-    }
+    // setup all needed indices 
+    setupIndexSet();
   }
 
   //! Destructor
@@ -289,21 +277,8 @@ public:
       }
     }
 
-#if HAVE_MPI
-    if( StructuredGrid && 
-        this->grid_.comm().size() > 1 )
-    {
-      // this should only be the case of YaspGrid
-      markAllUsed<Interior_Partition> ();
-      markAllUsed<All_Partition>();
-    }
-    else 
-#endif
-    {
-      // mark all leaf elements  
-      // needs a leaf traversal 
-      markAllUsed<All_Partition> (); 
-    }
+    // mark all still needed indices 
+    setupIndexSet();
 
     // true if a least one dof must be copied 
     bool haveToCopy = codimLeafSet_.compress(); 
@@ -407,6 +382,36 @@ protected:
       this->removeIndex( en );
     }
     return true;
+  }
+
+  //! mark all indices of interest 
+  void setupIndexSet ()
+  {
+    // for structured grids clear all information 
+    // this in only done when setting up grids or after 
+    // read of parallel data on serial grids 
+    if( StructuredGrid )
+    {
+      // clear all information 
+      codimLeafSet_.clear();
+    }
+
+#if HAVE_MPI
+    // for YaspGrid we need all interior indices first 
+    // so we can use SGrid for the visualization :(
+    if( StructuredGrid  &&
+        this->grid_.comm().size() > 1 )
+    {
+      // we should only get here for YaspGrid
+      markAllUsed<Interior_Partition> ();
+      markAllUsed<All_Partition>();
+    }
+    else
+#endif
+    {
+      // give all entities that lie on the leaf level new numbers 
+      markAllUsed<All_Partition> ();
+    }
   }
 
   //! mark indices that are still used and give new indices to 
@@ -517,6 +522,12 @@ public:
     if(this->grid_.comm().size() > 1) 
     {
       // mark for compress 
+      compressed_ = false;
+    }
+
+    // for parallel data read in serial program we need compression 
+    if(StructuredGrid && (hIndexSet_.size(0) != codimLeafSet_.size()) )
+    {
       compressed_ = false;
     }
     return success;
