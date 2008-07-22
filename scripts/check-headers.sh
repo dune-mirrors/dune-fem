@@ -46,7 +46,7 @@ for directory in `find fem -type d | sed "/fem.*\/\..*/ d"` ; do
       fi
     done
 
-    for filename in `ls $directory | sed '/.*.hh/ p ; d'` ; do
+    for filename in `ls -1 $directory | sed '/.*\.hh$/ p ; d'` ; do
       found="false"
       for header in $headers ; do
         if test "x$header" = "x$filename" ; then
