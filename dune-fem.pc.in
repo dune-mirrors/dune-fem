@@ -4,11 +4,12 @@ libdir=@libdir@
 includedir=@includedir@
 CXX=@CXX@
 CC=@CC@
+DEPENDENCIES=@REQUIRES@
 
-Name: Dune-FEM
+Name: @PACKAGE_NAME@
 Version: @VERSION@
-Description: the Dune-fem Module 
-URL: http://www.dune-project.org/
-Requires:
-Libs: 
+Description: The Dune FEM module 
+URL: http://dune.mathematik.uni-freiburg.de/
+Requires: ${DEPENDENCIES}
+Libs: -L${libdir} -ldunefem
 Cflags: -I${includedir}
