@@ -7,7 +7,19 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-//- Dune includes 
+
+//- Dune includes
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+
+#include <dune/fem/version.hh>
+
+#if DUNE_GRID_VERSION_NEWER(1,2)
+#define DGFNAMESPACE dgf::
+#else
+#define DGFNAMESPACE
+#endif
+
 // defines function readParameter 
 #include <dune/fem/io/file/asciiparser.hh>
 // defines Parameter 
@@ -19,15 +31,14 @@
 // input and output of tuples 
 #include <dune/fem/io/file/iotuple.hh>
 
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
-
 // if grape was configured then include headers 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-namespace Dune {
+namespace Dune
+{
+
 /** @addtogroup DiscFuncIO
    The package dune-fem provides a number 
    of possibilities to write data to disk either
@@ -321,7 +332,7 @@ public:
     } 
         
     // read interval information of structured grid 
-    dgf :: IntervalBlock interval(gridin);
+    DGFNAMESPACE IntervalBlock interval(gridin);
     if(!interval.isactive()) 
     {
       std::cerr<<"Did not find IntervalBlock in macro grid file `" << macroname << "' ! \n";
@@ -383,7 +394,7 @@ protected:
   //! write my partition as macro grid 
   template <int dimworld> 
   static void saveMacroGridImp (const int rank,
-                                dgf :: IntervalBlock& interval,
+                                DGFNAMESPACE IntervalBlock& interval,
                                 std::string filename )
   {
     FieldVector<double,dimworld> lang;

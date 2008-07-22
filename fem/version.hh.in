@@ -6,11 +6,13 @@
 #define DUNE_FEM_VERSION_MINOR @DUNE_FEM_VERSION_MINOR@
 #define DUNE_FEM_VERSION_REVISION @DUNE_FEM_VERSION_REVISION@
 
+
 // These two lines define the dune-grid version.
 #define DUNE_GRID_VERSION_MAJOR @DUNE_GRID_VERSION_MAJOR@
 #define DUNE_GRID_VERSION_MINOR @DUNE_GRID_VERSION_MINOR@
 
-// Macros for version comparison
+
+// Macros for version comparison (dune-fem)
 #define DUNE_FEM_VERSION_EQUAL(major,minor) \
   ((DUNE_FEM_VERSION_MAJOR == major) && (DUNE_FEM_VERSION_MINOR == minor))
 #define DUNE_FEM_VERSION_EQUAL_REVISON(major,minor,revision) \
@@ -22,6 +24,16 @@
    || ((DUNE_FEM_VERSION_MAJOR == major) && (DUNE_FEM_VERSION_MINOR > minor)) \
    || ((DUNE_FEM_VERSION_MAJOR == major) && (DUNE_FEM_VERSION_MINOR == minor) \
        && (DUNE_FEM_VERSION_REVISION >= revision)))
+
+
+// Macros for version comparison (dune-grid)
+#define DUNE_GRID_VERSION_EQUAL(major,minor) \
+  ((DUNE_GRID_VERSION_MAJOR == major) && (DUNE_GRID_VERSION_MINOR == minor))
+
+#define DUNE_GRID_VERSION_NEWER(major,minor) \
+  ((DUNE_GRID_VERSION_MAJOR > major) \
+   || ((DUNE_GRID_VERSION_MAJOR == major) && (DUNE_GRID_VERSION_MINOR >= minor)))
+
 
 #include <sstream>
 
