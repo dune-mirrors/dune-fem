@@ -12,6 +12,7 @@ namespace Dune {
   public:
     virtual void run();
 
+    void prismTest();
     void hexaTest();
     void tetraTest();
     void triangleTest();

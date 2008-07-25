@@ -13,6 +13,13 @@
 #include "albertagrid_fixture.hh"
 #endif
 
+#include <dune/grid/uggrid.hh>
+
+#define USE_PRISMGRID
+#ifdef USE_PRISMGRID
+//#include <dune/prismgrid/dgfgridtype.hh> 
+#endif
+
 #include "cache_test.hh"
 
 namespace Dune {
@@ -21,8 +28,67 @@ namespace Dune {
   {
     hexaTest();
     tetraTest();
+    prismTest();
+    /*
     triangleTest();
     quadTest();
+    */
+  }
+
+  void CacheProvider_Test::prismTest()
+  {
+#ifdef USE_PRISMGRID 
+    const int dim = 3;
+    const int codim = 1;
+
+    //typedef PrismGrid<dim, dim> GridType;
+    typedef UGGrid<dim> GridType;
+    
+    typedef CacheProvider<GridType, codim> CacheProviderType;
+    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+
+    typedef CacheProviderType::MapperType MapperType;
+    typedef PointProvider<double, dim, codim> PointProviderType;
+    typedef PointProviderType::GlobalPointVectorType PointVectorType;
+
+    GeometryType elemGeo = GeometryType(GeometryType::prism,3);
+
+    // Get reference element
+    const ReferenceElement<double, dim>& refElem =
+      ReferenceElements<double, dim>::general(elemGeo);
+    
+    // Loop over all faces
+    for (int i = 0; i < refElem.size(codim); ++i) 
+    {
+      GeometryType faceGeo = (refElem.size(i,codim,dim) == dim) ? 
+          GeometryType(GeometryType::simplex,2) :
+          GeometryType(GeometryType::cube,2);
+
+      // Build quadrature
+      QuadratureType quad(faceGeo, 3);
+
+      // Ask for one mapper so that the points get registered
+      CacheProviderType::getMapper(quad, elemGeo, 0, 0);
+
+      const PointVectorType& points =
+        PointProviderType::getPoints(quad.id(), elemGeo);
+
+      const MapperType& m = 
+        CacheProviderType::getMapper(quad, elemGeo, i, 0);
+      
+      _test(m.size() == (size_t) quad.nop());
+      
+      // Loop over all points
+      for (size_t j = 0; j < m.size(); ++j) 
+      {
+        for (int d = 0; d < dim; ++d) {
+          _floatTest(points[m[j]][d], 
+                     refElem.global<codim>(quad.point(j), i, codim)[d]);
+        }
+      }
+
+    }
+#endif
   }
 
   void CacheProvider_Test::hexaTest()
