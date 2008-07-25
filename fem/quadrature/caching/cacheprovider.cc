@@ -24,8 +24,10 @@ namespace Dune {
     const int maxTwist = twistMappers.maxTwist();
     const int minTwist = twistMappers.minTwist();
 
+    QuadratureKeyType key ( elementGeometry, quad.id() );
     MapperIteratorType it = mappers_.insert
-      (std::make_pair(quad.id(), CacheStorageType(numFaces, maxTwist))).first;
+      (std::make_pair( key,
+                       CacheStorageType(numFaces, maxTwist))).first;
 
     for (int face = 0; face < numFaces; ++face) 
     {
@@ -50,8 +52,10 @@ namespace Dune {
 
     const int numFaces = pointMappers.size();
 
+    QuadratureKeyType key ( elementGeometry, quad.id() );
+    
     MapperIteratorType it = 
-      mappers_.insert(std::make_pair(quad.id(),
+      mappers_.insert(std::make_pair(key,
                                      CacheStorageType(numFaces))).first;
 
     for (int face = 0; face < numFaces; ++face) {

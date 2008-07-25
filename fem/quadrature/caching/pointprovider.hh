@@ -29,17 +29,18 @@ namespace Dune {
   public:
     typedef typename Traits::QuadratureType QuadratureType;
     typedef typename Traits::PointVectorType GlobalPointVectorType;
+    typedef typename Traits::QuadratureKeyType QuadratureKeyType;
     
   public:
     inline
     static void registerQuadrature(const QuadratureType& quad);
     
     inline
-    static const GlobalPointVectorType& getPoints(size_t id,
-                                                  GeometryType elementGeo);
+    static const GlobalPointVectorType& getPoints(const size_t id,
+                                                  const GeometryType& elementGeo);
 
   private:
-    typedef std::map<size_t, GlobalPointVectorType> PointContainerType;
+    typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
     typedef typename PointContainerType::iterator PointIteratorType;
 
   private:
@@ -61,23 +62,24 @@ namespace Dune {
     typedef typename Traits::MapperVectorType MapperVectorType;
     typedef FieldVector<ct, dim> GlobalPointType;
     typedef std::vector<GlobalPointType> GlobalPointVectorType;
+    typedef typename Traits::QuadratureKeyType QuadratureKeyType;
     
   public:
     inline
     static const MapperVectorType& getMappers(const QuadratureType& quad,
-                                              GeometryType elementGeo);
+                                              const GeometryType& elementGeo);
     // Access for non-symmetric quadratures
     inline
     static const MapperVectorType& getMappers(const QuadratureType& quad,
                                               const LocalPointVectorType& pts,
-                                              GeometryType elementGeo);
+                                              const GeometryType& elementGeo);
     inline
-    static const GlobalPointVectorType& getPoints(size_t id,
-                                                  GeometryType elementGeo);
+    static const GlobalPointVectorType& getPoints(const size_t id,
+                                                  const GeometryType& elementGeo);
     
   private:
-    typedef std::map<size_t, GlobalPointVectorType> PointContainerType;
-    typedef std::map<size_t, MapperVectorType> MapperContainerType;
+    typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
+    typedef std::map<const QuadratureKeyType, MapperVectorType> MapperContainerType;
     typedef typename PointContainerType::iterator PointIteratorType;
     typedef typename MapperContainerType::iterator MapperIteratorType;
 

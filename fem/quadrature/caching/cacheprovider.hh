@@ -137,6 +137,7 @@ namespace Dune {
   template <class GridImp>
   class CacheProvider<GridImp, 1>
   {
+  public:
   private:
     enum { codim = 1 };
     enum { dim = GridImp::dimension };
@@ -146,6 +147,7 @@ namespace Dune {
   public:
     typedef typename Traits::QuadratureType QuadratureType;
     typedef typename Traits::MapperType MapperType;
+    typedef typename Traits::QuadratureKeyType QuadratureKeyType;
 
   public:
     template <class QuadratureImpl>
@@ -156,8 +158,11 @@ namespace Dune {
     {
       // get quadrature implementation 
       const QuadratureType& quad = quadImpl.ipList();
-      MapperIteratorType it = mappers_.find(quad.id());
-
+      
+      QuadratureKeyType key (elementGeometry,quad.id());
+      
+      MapperIteratorType it = mappers_.find( key );
+      
       if (it == mappers_.end()) {
         Int2Type< Capabilities::IsUnstructured<GridImp>::v> i2t;
         it = CacheProvider<GridImp, 1>::createMapper(quad, 
@@ -174,7 +179,7 @@ namespace Dune {
        Capabilities::IsUnstructured<GridImp>::v> 
         CacheStorageType; 
     typedef typename Traits::MapperVectorType MapperVectorType;
-    typedef std::map<size_t, CacheStorageType> MapperContainerType;
+    typedef std::map<const QuadratureKeyType, CacheStorageType> MapperContainerType;
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:

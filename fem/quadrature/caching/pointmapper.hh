@@ -9,6 +9,39 @@
 
 namespace Dune {
 
+  class QuadratureKey  
+  {
+  protected:
+    const size_t id_;
+    
+    static inline size_t quadId2MapperId(const GeometryType& elemGeo, const size_t quadId) 
+    {
+      // split between different geometry basic types 
+      const int basicType = elemGeo.basicType();
+      assert( basicType >= 0 );
+      return basicType * 65536 + quadId; 
+    }
+  public:  
+  
+    QuadratureKey(const GeometryType& geoType, const size_t id) 
+      : id_( quadId2MapperId(geoType, id)) 
+    {}
+    
+    QuadratureKey(const QuadratureKey& other) 
+      : id_(other.id_)
+    {}
+    
+    bool operator < (const QuadratureKey& other) const 
+    {
+      return (id_ < other.id_);
+    }
+    
+    bool operator == (const QuadratureKey& other) const 
+    {
+      return id_ == other.id_;
+    }
+  };
+    
   template <class ct, int dim>
   struct CachingTraits {
     //! type of integration point list implementation, fix type here 
@@ -19,10 +52,14 @@ namespace Dune {
     typedef std::vector<size_t>       MapperType;
     typedef std::vector<MapperType>   MapperVectorType;
 
+    typedef QuadratureKey QuadratureKeyType;
+
     // minimal twist is -4 for hexahedrons 
     // so we add 4 to start from zero 
     enum { twistOffset_ = 4 };
+
   };
+  
 
 } // end namespace Dune
 
