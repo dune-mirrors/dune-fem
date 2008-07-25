@@ -89,6 +89,29 @@ namespace Dune {
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
     static inline bool conforming (const GridType &, const IntersectionIterator&) { return true; }
+
+    /** \brief return geometry type of inside or outside entity */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside) 
+    {
+      if( Capabilities::IsUnstructured<GridType>::v ) 
+      {
+        return (inside) ? intersection.inside()->type() :  
+                          intersection.outside()->type();  
+      }
+      else 
+      {
+#ifndef NDEBUG
+        GeometryType geoType( GeometryType::cube, GridType :: dimension );
+        GeometryType realType = (inside) ? intersection.inside()->type() :
+                                           intersection.outside()->type();
+        assert ( realType == geoType );
+#endif
+        return GeometryType( GeometryType::cube, GridType :: dimension );
+      }
+    }
   };
   
 #ifdef ENABLE_ALBERTA
@@ -148,6 +171,16 @@ namespace Dune {
     template <class IntersectionIterator> 
     static inline bool conforming (const GridType & grid, 
                             const IntersectionIterator& it) { return true; }
+    
+    /** \brief return element geometry type of inside or outside entity 
+    */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside)
+    {
+      return GeometryType( GeometryType::simplex, GridType :: dimension );
+    }
   private:
     const GridType& grid_;
   };
@@ -220,6 +253,16 @@ namespace Dune {
                      const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
+    }
+    
+    /** \brief return element geometry type of inside or outside entity 
+    */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside)
+    {
+      return GeometryType( GeometryType::simplex, GridType :: dimension );
     }
   private:
     TwistUtility(const TwistUtility&);
@@ -296,6 +339,16 @@ namespace Dune {
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
     }
+    
+    /** \brief return element geometry type of inside or outside entity 
+    */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside)
+    {
+      return GeometryType( GeometryType::cube, GridType :: dimension );
+    }
   private:
     TwistUtility(const TwistUtility&);
     TwistUtility& operator=(const TwistUtility&);
@@ -365,6 +418,16 @@ namespace Dune {
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
     }
+    
+    /** \brief return element geometry type of inside or outside entity 
+    */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside)
+    {
+      return GeometryType( GeometryType::simplex, GridType :: dimension );
+    }
   private:
     TwistUtility(const TwistUtility&);
     TwistUtility& operator=(const TwistUtility&);
@@ -432,6 +495,17 @@ namespace Dune {
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
     }
+    
+    /** \brief return element geometry type of inside or outside entity 
+    */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside)
+    {
+      return GeometryType( GeometryType::simplex, GridType :: dimension );
+    }
+    
   private:
     TwistUtility(const TwistUtility&);
     TwistUtility& operator=(const TwistUtility&);
@@ -508,6 +582,16 @@ namespace Dune {
     { 
       return (it.neighbor()) ? 
         (it.inside()->level() == it.outside()->level()) : true; 
+    }
+    
+    /** \brief return geometry type of inside or outside entity */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside) 
+    {
+      return (inside) ? intersection.inside()->type() :  
+                        intersection.outside()->type();  
     }
   };
 
@@ -680,6 +764,16 @@ namespace Dune {
     { 
       return (it.neighbor()) ? 
         (conformanceCheck(*it.inside(), *it.outside())) : true; 
+    }
+    
+    /** \brief return geometry type of inside or outside entity */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside) 
+    {
+      return (inside) ? intersection.inside()->type() :  
+                        intersection.outside()->type();  
     }
   };
 #endif
