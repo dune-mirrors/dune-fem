@@ -31,10 +31,8 @@ namespace Dune {
     hexaTest();
     tetraTest();
     prismTest();
-    /*
     triangleTest();
     quadTest();
-    */
   }
 
   void CacheProvider_Test::prismTest()
