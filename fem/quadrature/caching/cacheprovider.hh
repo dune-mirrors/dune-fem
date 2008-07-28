@@ -43,7 +43,8 @@ namespace Dune {
       mappers_(other.mappers_)
     {}
 
-    void addMapper(const MapperType& faceMapper, const MapperType& twistMapper,
+    void addMapper(const MapperType& faceMapper, 
+                   const MapperType& twistMapper,
                    int faceIndex, int faceTwist)
     {
       assert(twistMapper.size() == faceMapper.size());
@@ -60,6 +61,7 @@ namespace Dune {
 
     const MapperType& getMapper(int faceIndex, int faceTwist) const
     {
+      assert( faceTwist + Traits::twistOffset_ >= 0 );
       return mappers_[faceIndex][faceTwist + Traits::twistOffset_];
     }
 
@@ -159,11 +161,12 @@ namespace Dune {
       // get quadrature implementation 
       const QuadratureType& quad = quadImpl.ipList();
       
-      QuadratureKeyType key (elementGeometry,quad.id());
+      QuadratureKeyType key (elementGeometry, quad );
       
       MapperIteratorType it = mappers_.find( key );
       
-      if (it == mappers_.end()) {
+      if (it == mappers_.end()) 
+      {
         Int2Type< Capabilities::IsUnstructured<GridImp>::v> i2t;
         it = CacheProvider<GridImp, 1>::createMapper(quad, 
                                                      elementGeometry, 
