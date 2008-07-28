@@ -13,9 +13,11 @@
 #include "albertagrid_fixture.hh"
 #endif
 
-#include <dune/grid/uggrid.hh>
-
+#ifdef ENABLE_UGGRID
 #define USE_PRISMGRID
+#include <dune/grid/uggrid.hh>
+#endif
+
 #ifdef USE_PRISMGRID
 //#include <dune/prismgrid/dgfgridtype.hh> 
 #endif
