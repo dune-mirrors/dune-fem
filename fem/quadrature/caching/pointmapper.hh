@@ -17,9 +17,8 @@ namespace Dune {
     static inline size_t quadId2MapperId(const GeometryType& elemGeo, const size_t quadId) 
     {
       // split between different geometry basic types 
-      const int basicType = elemGeo.basicType();
-      assert( basicType >= 0 );
-      return basicType * 65536 + quadId; 
+      assert( (int)elemGeo.basicType() >= 0 );
+      return elemGeo.basicType() * 65536 + quadId; 
     }
   public:  
   
