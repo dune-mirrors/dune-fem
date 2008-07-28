@@ -107,7 +107,7 @@ namespace Dune
       // if multiple base sets skip geometry call
       bool updateBaseSet = true;
       if( !multipleBaseSets && (entity_ != 0) )
-        updateBaseSet = (baseFunctionSet_.geometryType() != entity.geometry().type());
+        updateBaseSet = (baseFunctionSet_.geometryType() != entity.type());
       
       if( multipleBaseSets || updateBaseSet )
       {
@@ -122,7 +122,7 @@ namespace Dune
 
     // cache entity
     entity_ = &entity;
-    assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
+    assert( baseFunctionSet_.geometryType() == entity.type() );
 
     assert( numDofs_ <= values_.size() );
     const BlockMapperType &mapper = space.blockMapper();
@@ -271,7 +271,7 @@ namespace Dune
       // if multiple base sets skip geometry call
       bool updateBaseSet = true;
       if( !multipleBaseSets && (entity_ != 0) )
-        updateBaseSet = (baseFunctionSet_.geometryType() != entity.geometry().type());
+        updateBaseSet = (baseFunctionSet_.geometryType() != entity.type());
       
       if( multipleBaseSets || updateBaseSet )
       {
@@ -286,7 +286,7 @@ namespace Dune
 
     // cache entity
     entity_ = &entity;
-    assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
+    assert( baseFunctionSet_.geometryType() == entity.type() );
 
     assert( N * numScalarDofs_ <= values_.size() );
     const BlockMapperType &mapper = space.blockMapper();

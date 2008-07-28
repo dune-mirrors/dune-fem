@@ -109,7 +109,7 @@ namespace Dune
       // if multiple base sets skip geometry call
       bool updateBaseSet = true;
       if( !multipleBaseSets && (entity_ != 0) )
-        updateBaseSet = (baseFunctionSet_.geometryType() != entity.geometry().type());
+        updateBaseSet = (baseFunctionSet_.geometryType() != entity.type());
       
       if( multipleBaseSets || updateBaseSet )
       {
@@ -120,7 +120,7 @@ namespace Dune
     assert( (unsigned int)baseFunctionSet_.numBaseFunctions() <= dofs_.size() );
 
     entity_ = &entity;
-    assert( baseFunctionSet_.geometryType() == entity.geometry().type() );
+    assert( baseFunctionSet_.geometryType() == entity.type() );
   }
 
 
