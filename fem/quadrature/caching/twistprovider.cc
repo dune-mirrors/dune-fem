@@ -97,16 +97,17 @@ namespace Dune {
     {
       assert (dim == 2);
 
-      GeometryType geoType = quad.geometry();
-      if(geoType.isTriangle()) {
+      const GeometryType geoType = quad.geometry();
+      if(geoType.isTriangle()) 
+      {
         helper_ = 
-          AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>(quad.geometry()));
+          AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>( geoType ) );
         return ;
       }
       if( geoType.isQuadrilateral())
       {
         helper_ = 
-         AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>(quad.geometry()));
+         AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>( geoType ) );
         return ;
       }
       DUNE_THROW(NotImplemented, 
