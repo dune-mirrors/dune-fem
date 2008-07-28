@@ -18,6 +18,7 @@ namespace Dune {
     {
       // split between different geometry basic types 
       assert( (int)elemGeo.basicType() >= 0 );
+      assert( quadId < 65536 );
       return elemGeo.basicType() * 65536 + quadId; 
     }
   public:  
