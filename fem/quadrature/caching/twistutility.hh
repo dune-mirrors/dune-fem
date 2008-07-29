@@ -531,8 +531,8 @@ namespace Dune {
     TwistUtility(const GridType& grid) {}
 
     //! \brief return 0 for inner face 
-    template <class IntersectionIterator> 
-    static inline int twistInSelf(const GridType &, const IntersectionIterator& it)
+    template <class Intersection> 
+    static inline int twistInSelf(const GridType &, const Intersection& it)
     {
       // for simplex twist is 0 
       // for cube twist is 1 for side 0 and 3 
@@ -541,8 +541,8 @@ namespace Dune {
         (it.numberInSelf() == 1 || it.numberInSelf() == 2) ? 0 : 1;
     }    
     //! \brief return 0 for inner face 
-    template <class IntersectionIterator> 
-    int twistInSelf(const IntersectionIterator& it) const 
+    template <class Intersection> 
+    int twistInSelf(const Intersection& it) const 
     {
       // for simplex twist is 0 
       // for cube twist is 1 for side 0 and 3 
@@ -552,16 +552,16 @@ namespace Dune {
     }
     
     //! \brief return 0 for outer face 
-    template <class IntersectionIterator> 
-    int twistInNeighbor(const IntersectionIterator& it) const {
+    template <class Intersection> 
+    int twistInNeighbor(const Intersection& it) const {
       assert( it.neighbor() );
       return (it.outside()->type().isSimplex()) ? 1 : 
         (it.numberInNeighbor() == 1 || it.numberInNeighbor() == 2) ? 1 : 0;
     }
 
     //! \brief return 0 for outer face 
-    template <class IntersectionIterator> 
-    static inline int twistInNeighbor(const GridType &, const IntersectionIterator& it) 
+    template <class Intersection> 
+    static inline int twistInNeighbor(const GridType &, const Intersection& it) 
     {
       assert( it.neighbor() );
       return (it.outside()->type().isSimplex()) ? 1 : 
