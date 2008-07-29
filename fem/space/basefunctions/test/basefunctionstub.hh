@@ -4,8 +4,8 @@
 #include <cmath>
 
 // Dune includes
-#include <dune/fem/common/basefunctions.hh>
-#include <dune/fem/common/basefunctionfactory.hh>
+#include <dune/fem/space/common/basefunctioninterface.hh>
+#include <dune/fem/space/common/basefunctionfactory.hh>
 
 namespace Dune {
 
