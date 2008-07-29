@@ -15,35 +15,17 @@ namespace Dune {
     const size_t id_;
     
     static inline size_t quadId2MapperId(const GeometryType& elemGeo, 
-                                         const GeometryType& faceGeo,
                                          const size_t quadId) 
     {
       // split between different geometry basic types 
       assert( (int)elemGeo.basicType() >= 0 );
-
-      const size_t offset = 4096;
-      const size_t elemId = elemGeo.basicType() * offset;
-      const size_t faceId = faceGeo.basicType() * offset;
-      
-      assert( quadId < offset );
-      return elemId * faceId + quadId;
+      assert( quadId < 65536 );
+      return ((int)elemGeo.basicType()) * 65536 + quadId;
     }
   public:  
-  
-    template <class QuadratureType>
-    QuadratureKey(const QuadratureType& quad) 
-      : id_( quadId2MapperId(quad.geometry(), quad.geometry(), quad.id())) 
-    {}
-    
     QuadratureKey(const GeometryType& geoType, const size_t id) 
-      : id_( quadId2MapperId(geoType, geoType, id)) 
+      : id_( quadId2MapperId(geoType, id)) 
     {}
-    
-    template <class QuadratureType> 
-    QuadratureKey(const GeometryType& elemGeoType, const QuadratureType& quad)  
-      : id_( quadId2MapperId(elemGeoType, elemGeoType, quad.id())) 
-    {
-    }
     
     QuadratureKey(const QuadratureKey& other) 
       : id_(other.id_)

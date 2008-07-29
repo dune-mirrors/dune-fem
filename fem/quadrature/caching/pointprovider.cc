@@ -13,7 +13,7 @@ namespace Dune {
   void PointProvider<ct, dim, 0>::
   registerQuadrature(const QuadratureType& quad)
   {
-    QuadratureKeyType key( quad );
+    QuadratureKeyType key( quad.geometry(), quad.id() );
     
     if (points_.find( key ) == points_.end()) 
     {
@@ -52,7 +52,7 @@ namespace Dune {
   PointProvider<ct, dim, 1>::getMappers(const QuadratureType& quad,
                                         const GeometryType& elementGeo) 
   {
-    QuadratureKeyType key( elementGeo , quad );
+    QuadratureKeyType key( elementGeo , quad.id() );
     
     MapperIteratorType it = mappers_.find( key );
     if (it == mappers_.end()) {
@@ -72,7 +72,7 @@ namespace Dune {
                                         const LocalPointVectorType& pts,
                                         const GeometryType& elementGeo)
   {
-    QuadratureKeyType key( elementGeo, quad );
+    QuadratureKeyType key( elementGeo, quad.id() );
     
     MapperIteratorType it = mappers_.find( key );
     if (it == mappers_.end()) {
@@ -106,7 +106,7 @@ namespace Dune {
     const int numGlobalPoints = numFaces*numLocalPoints;
     
     // generate key 
-    QuadratureKeyType key ( elementGeo, quad );
+    QuadratureKeyType key ( elementGeo, quad.id() );
     
     PointIteratorType pit = 
       points_.insert(std::make_pair(key, 

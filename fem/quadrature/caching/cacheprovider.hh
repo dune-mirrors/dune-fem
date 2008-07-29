@@ -161,7 +161,7 @@ namespace Dune {
       // get quadrature implementation 
       const QuadratureType& quad = quadImpl.ipList();
       
-      QuadratureKeyType key (elementGeometry, quad );
+      QuadratureKeyType key (elementGeometry, quad.id() );
       
       MapperIteratorType it = mappers_.find( key );
       
