@@ -157,6 +157,7 @@ namespace Dune
     return addEntry<0>(id);
   }
 
+  //--addEntry
   template <class FunctionSpaceImp>
   template <int codimension>
   inline typename CachingStorage<FunctionSpaceImp>::ReturnPairType
