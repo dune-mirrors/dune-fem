@@ -56,7 +56,7 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-#include <dune/fem/space/common/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
