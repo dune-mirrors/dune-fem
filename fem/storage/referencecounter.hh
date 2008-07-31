@@ -302,7 +302,9 @@ namespace Dune
         object_->removeReference();
       object_ = other.object_;
       if( object_ != 0 )
-        object_.addReference();
+        object_->addReference();
+
+      return *this;
     }
 
     /** \brief dereference the ObjectPointer
