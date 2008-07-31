@@ -106,6 +106,12 @@ public:
 // use cblas implementations 
 using namespace DuneCBlas;  
 
+using DuneCBlas :: daxpy;
+using DuneCBlas :: dcopy;
+using DuneCBlas :: ddot;
+using DuneCBlas :: dnrm2;
+using DuneCBlas :: dscal;
+
 //! this method is called from all solvers and is only a wrapper
 //! this method is mainly from SparseRowMatrix 
 template <class MatrixImp, class VectorType>
