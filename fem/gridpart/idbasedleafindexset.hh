@@ -61,39 +61,27 @@ private:
 
   // no copying 
   IdBasedCodimIndexSet (const IdBasedCodimIndexSet& );
+
 public:
   //! Constructor
-  IdBasedCodimIndexSet (const IdSetType & idSet, const IndexSetType & indexSet) 
-    : idSet_(idSet), indexSet_(indexSet) , 
-      nextFreeIndex_ (indexSet_.size(codim)) 
+  template< class Iterator >
+  IdBasedCodimIndexSet ( const IdSetType &idSet,
+                         const IndexSetType &indexSet,
+                         const Iterator &begin,
+                         const Iterator &end )
+  : idSet_( idSet ),
+    indexSet_( indexSet ),
+    nextFreeIndex_( indexSet_.size( codim ) )
   {
-    createMaps();
-    
+    createMaps( begin, end );
+
     // set memory over estimation 
     oldIndexVec_.setMemoryFactor( 1.1 );
     newIndexVec_.setMemoryFactor( 1.1 );
   }
 
-  void createMaps () 
-  {
-    typedef typename IndexSetType :: template Codim<codim> ::
-      template Partition<All_Partition> :: Iterator IteratorType; 
-
-    IteratorType end = indexSet_.template end<codim,All_Partition> (); 
-    for(IteratorType it = indexSet_.template begin<codim,All_Partition>(); 
-        it != end; ++it )
-    {
-      IdType id = idSet_.id(*it);
-      if(leafIndex_.find(id) == leafIndex_.end())
-      {
-        int idx = indexSet_.index(*it);
-        leafIndex_[id] = idx;    
-        leafId_  [idx] = id;
-      }
-    }
-
-    checkConsecutive();
-  }
+  template< class Iterator >
+  void createMaps ( const Iterator &begin, const Iterator &end );
 
   //! make to index numbers consecutive 
   //! return true, if at least one hole was closed 
@@ -328,6 +316,28 @@ public:
   }
 }; // end of class 
 
+
+  template< class IdSetImp, class IndexSetImp, int codim >
+  template< class Iterator >
+  void IdBasedCodimIndexSet< IdSetImp, IndexSetImp, codim >
+    :: createMaps ( const Iterator &begin, const Iterator &end )
+  {
+    for( Iterator it = begin; it != end; ++it )
+    {
+      IdType id = idSet_.id(*it);
+      if(leafIndex_.find(id) == leafIndex_.end())
+      {
+        int idx = indexSet_.index(*it);
+        leafIndex_[id] = idx;    
+        leafId_  [idx] = id;
+      }
+    }
+
+    checkConsecutive();
+  }
+
+
+
 //******************************************************************
 //
 // Indexset that provides consecutive indicies for the leaf level
@@ -434,7 +444,8 @@ public:
   : BaseType( grid ),
     leafSet_( grid.leafIndexSet() ),
     idSet_( grid.localIdSet() ),
-    pLeafSet_( idSet_, leafSet_),
+    pLeafSet_( idSet_, leafSet_,
+               grid.template leafbegin< 0 >(), grid.template leafEnd< 0 >() ),
     compressed_( true )
   {}
 
@@ -442,7 +453,8 @@ public:
   : BaseType( *grid ),
     leafSet_( grid->leafIndexSet() ),
     idSet_( grid->localIdSet() ),
-    pLeafSet_( idSet_, leafSet_),
+    pLeafSet_( idSet_, leafSet_,
+               grid->template leafbegin< 0 >(), grid->template leafend< 0 >() ),
     compressed_( true )
   {}
 
@@ -488,7 +500,8 @@ public:
   {
     return leafSet_.geomTypes(codim);
   }
-  
+ 
+#if INDEXSET_HAS_ITERATORS
   /** @brief Iterator to one past the last entity of given codim for partition type
    *  Here the grids leaf iterator is used 
    */
@@ -508,6 +521,7 @@ public:
   {
     return leafSet_.template begin<cd,pitype> ();
   }
+#endif
 
   //! \brief returns true if entity is contained in index set 
   template <class EntityType>
@@ -711,20 +725,8 @@ protected:
 
   //! count elements by iterating over grid and compare 
   //! entities of given codim with given type 
-  template <int codim>
-  int countElements( GeometryType type ) const 
-  {
-    typedef typename Traits :: template Codim <codim> :: 
-        template Partition<All_Partition> :: Iterator IteratorType;
-
-    int count = 0;
-    IteratorType endit  = end<codim,All_Partition> ();
-    for(IteratorType it = begin<codim,All_Partition> (); it != endit; ++it)
-    {
-      if( it->geometry().type() == type ) count++;
-    }
-    return count; 
-  }
+  template< int codim >
+  int countElements ( GeometryType type ) const;
   
   // print interal data, for debugging only 
   // print if only done, if DEBUG_LEAFINDEXSET is defined 
@@ -818,6 +820,32 @@ public:
 
 }; // end of class AdaptiveLeafIndexSet 
 
+
+
+template< class GridType >
+template< int codim >
+inline int IdBasedLeafIndexSet< GridType >
+  :: countElements ( GeometryType type ) const
+{
+  typedef typename GridType :: template Codim< codim >
+    :: template Partition< All_Partition > :: Iterator
+    IteratorType;
+
+  const GridType &grid = this->grid_;
+
+  int count = 0;
+  const IteratorType begin = grid.template leafbegin< codim, All_Partition >();
+  const IteratorType end = grid.template leafend< codim, All_Partition >();
+  for( IteratorType it = begin; it != end; ++it )
+  {
+    if( it->type() == type )
+      ++count;
+  }
+  return count; 
+}
+
+
+
 template <class GridType> 
 inline void IdBasedLeafIndexSet<GridType>::
 print (const char * msg, bool oldtoo ) const 
@@ -846,5 +874,3 @@ print (const char * msg, bool oldtoo ) const
 } // end namespace Dune 
 
 #endif
-
-

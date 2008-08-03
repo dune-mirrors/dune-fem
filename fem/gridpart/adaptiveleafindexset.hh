@@ -338,7 +338,8 @@ public:
   {
     return hIndexSet_.geomTypes(codim);
   }
-  
+ 
+#if defined INDEXSET_HAS_ITERATORS
   /** @brief Iterator to one past the last entity of given codim for partition type
    *  Here the grids leaf iterator is used 
    */
@@ -358,6 +359,7 @@ public:
   {
     return this->grid_.template leafbegin<cd,pitype> ();
   }
+#endif
  
   //! \brief returns true if entity is contained in index set 
   template <class EntityType>
@@ -643,20 +645,8 @@ protected:
 
   //! count elements by iterating over grid and compare 
   //! entities of given codim with given type 
-  template <int codim>
-  int countElements( GeometryType type ) const 
-  {
-    typedef typename Traits :: template Codim <codim> :: 
-        template Partition<All_Partition> :: Iterator IteratorType;
-
-    int count = 0;
-    IteratorType endit  = end<codim,All_Partition> ();
-    for(IteratorType it = begin<codim,All_Partition> (); it != endit; ++it)
-    {
-      if( it->geometry().type() == type ) count++;
-    }
-    return count; 
-  }
+  template< int codim >
+  inline int countElements ( GeometryType type ) const;
   
   // print interal data, for debugging only 
   // print if only done, if DEBUG_LEAFINDEXSET is defined 
@@ -769,5 +759,30 @@ public:
 
 }; // end of class AdaptiveLeafIndexSet 
 
+
+
+template< class GridType >
+template< int codim >
+inline int AdaptiveLeafIndexSet< GridType >
+  :: countElements ( GeometryType type ) const
+{
+  typedef typename GridType :: template Codim< codim >
+    :: template Partition< All_Partition > :: Iterator
+    IteratorType;
+
+  const GridType &grid = this->grid_;
+
+  int count = 0;
+  const IteratorType begin = grid.template leafbegin< codim, All_Partition >();
+  const IteratorType end = grid.template leafend< codim, All_Partition >();
+  for( IteratorType it = begin; it != end; ++it )
+  {
+    if( it->type() == type )
+      ++count;
+  }
+  return count; 
+}
+
 } // end namespace Dune 
+
 #endif

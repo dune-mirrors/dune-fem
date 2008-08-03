@@ -12,12 +12,17 @@
 #include <dune/grid/common/indexidset.hh>
 
 //- Dune fem includes 
+#include <dune/fem/version.hh>
 #include <dune/fem/gridpart/emptyindexset.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 /** @file
  @brief Provides default index set class for persistent index sets. 
 */
+
+#if (!defined INDEXSET_HAS_ITERATORS) && (!DUNE_GRID_VERSION_NEWER(1,2))
+#define INDEXSET_HAS_ITERATORS
+#endif
 
 namespace Dune {
 
