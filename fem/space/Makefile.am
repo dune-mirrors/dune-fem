@@ -13,9 +13,8 @@ basefunctions reducedbasisspace
 
 spacedir = $(includedir)/dune/fem/space
 space_HEADERS = adaptoperator.hh \
-								combinedspace.hh \
+		combinedspace.hh \
                 dgspace.hh \
-								fvspace.hh \
+		fvspace.hh \
                 lagrangespace.hh \
-								leafindexset.hh \
                 reducedbasisspace.hh
