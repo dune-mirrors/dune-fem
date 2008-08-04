@@ -207,7 +207,7 @@ namespace Dune
     typedef PeriodicLeafGridPart< GridType, pitype > GridPartType;
    
     //! type of the index set
-    typedef WrappedPeriodicLeafIndexSet< GridType > IndexSetType;
+    typedef PeriodicLeafIndexSet< GridType > IndexSetType;
 
     //! type of codim 0 entities
     typedef typename GridType :: template Codim< 0 > :: Entity Codim0EntityType;
