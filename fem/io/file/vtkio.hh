@@ -2,14 +2,34 @@
 #define VTKIO_HH
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/fem/version.hh>
+#include <dune/fem/gridpart/gridpartview.hh>
 
 namespace Dune
 {
 
+#if DUNE_GRID_VERSION_NEWER(1,2)
+  template< class GridPart >
+  struct VTKWriterSelector
+  {
+    typedef Dune :: VTKWriter
+      < typename GridPart :: GridType, GridPartView< GridPart > >
+      VTKWriter;
+  };
+#else
+  template< class GridPart >
+  struct VTKWriterSelector
+  {
+    typedef Dune :: VTKWriter
+      < typename GridPart :: GridType, typename GridPart :: IndexSetType >
+      VTKWriter;
+  };
+#endif
+
   template <class DF>
   class VTKFunctionWrapper : 
-    public VTKWriter<typename DF::FunctionSpaceType::GridPartType::GridType,
-                     typename DF::FunctionSpaceType::GridPartType::IndexSetType>::VTKFunction {
+    public VTKWriterSelector< typename DF :: DiscreteFunctionSpaceType :: GridPartType > :: VTKWriter :: VTKFunction 
+  {
   public:
     typedef DF DiscreteFunctionType;
     typedef typename DF::LocalFunctionType LocalFunctionType;
@@ -63,8 +83,7 @@ namespace Dune
   //! /brief Output using VTK
   template< class GridPartImp >
   class VTKIO
-  : public VTKWriter< typename GridPartImp :: GridType,
-                      typename GridPartImp :: IndexSetType >
+  : public VTKWriterSelector< GridPartImp > :: VTKWriter
   {
   public:
     typedef GridPartImp GridPartType;
@@ -74,13 +93,18 @@ namespace Dune
 
   private:
     typedef VTKIO< GridPartType > ThisType;
-    typedef VTKWriter< GridType, IndexSetType > BaseType;
+    typedef typename VTKWriterSelector< GridPartImp > :: VTKWriter BaseType;
     
     const GridPartType& gridPart_;
   public:
     //! constructor  
     VTKIO( const GridPartType &gridPart, VTKOptions::DataMode dm = VTKOptions::conforming )
+
+#if DUNE_GRID_VERSION_NEWER(1,2)
+    : BaseType( GridPartView<GridPartType>(gridPart) , dm )
+#else
     : BaseType( gridPart.grid(), gridPart.indexSet() , dm )
+#endif
     , gridPart_( gridPart )
     {
     }

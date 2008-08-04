@@ -1,18 +1,20 @@
 #ifndef DUNE_FEM_GRIDVIEW_HH
 #define DUNE_FEM_GRIDVIEW_HH
 
+#include<dune/fem/version.hh>
+
 namespace Dune
 {
 
 #if DUNE_GRID_VERSION_NEWER(1,2)
   template< class GridPart >
-  class GridPartView;
+  class GridPartViewImpl;
 
 
   template< class GridPart >
   struct GridPartViewTraits
   {
-    typedef GridPartGridView< GridPart > GridViewImp;
+    typedef GridPartViewImpl< GridPart > GridViewImp;
     
     typedef typename GridPart :: GridType Grid;
     typedef typename GridPart :: IndexSetType IndexSet;
@@ -34,11 +36,9 @@ namespace Dune
 
 
   template< class GridPart >
-  class GridPartView
-  : public GridView< GridPartViewTraits< GridPart > >
+  class GridPartViewImpl
   {
-    typedef GridPartView< GridPart > ThisType;
-    typedef GridView< GridPartViewTraits< GridPart > > BaseType;
+    typedef GridPartViewImpl< GridPart > ThisType;
 
   public:
     typedef GridPart GridPartType;
@@ -73,11 +73,11 @@ namespace Dune
     const GridPartType &gridPart_;
     
   public:
-    explicit GridPartView ( const GridPartType &gridPart )
+    explicit GridPartViewImpl ( const GridPartType &gridPart )
     : gridPart_( gridPart )
     {}
 
-    GridPartView ( const ThisType &other )
+    GridPartViewImpl ( const ThisType &other )
     : gridPart_( other.gridPart_ )
     {}
 
@@ -129,6 +129,27 @@ namespace Dune
     {
       gridPart_.communicate( data, iftype, dir );
     }
+  };
+
+
+
+  template< class GridPart >
+  class GridPartView
+  : public GridView< GridPartViewTraits< GridPart > >
+  {
+    typedef GridPartView< GridPart > ThisType;
+    typedef GridView< GridPartViewTraits< GridPart > > BaseType;
+
+    typedef typename BaseType :: GridViewImp GridViewImp;
+
+  public:
+    explicit GridPartView ( const GridPart &gridPart )
+    : BaseType( GridViewImp( gridPart ) )
+    {}
+
+    GridPartView ( const ThisType &other )
+    : BaseType( other )
+    {}
   };
 #endif
   

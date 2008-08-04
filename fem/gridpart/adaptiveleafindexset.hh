@@ -767,7 +767,7 @@ inline int AdaptiveLeafIndexSet< GridType >
   :: countElements ( GeometryType type ) const
 {
   typedef typename GridType :: template Codim< codim >
-    :: template Partition< All_Partition > :: Iterator
+    :: template Partition< All_Partition > :: LeafIterator
     IteratorType;
 
   const GridType &grid = this->grid_;
