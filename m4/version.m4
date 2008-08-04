@@ -18,6 +18,9 @@ AC_DEFUN([DUNE_FEM_PARSE_VERSION],[
     AC_MSG_ERROR([Cannot parse dune-grid version: $DUNE_GRID_VERSION])
   fi
   AC_MSG_NOTICE([Parsed dune-grid version: $DUNE_GRID_VERSION_MAJOR.$DUNE_GRID_VERSION_MINOR])
+  if test \( $DUNE_GRID_VERSION_MAJOR -lt 1 \) -o \( \( $DUNE_GRID_VERSION_MAJOR -eq 1 \) -a \( $DUNE_GRID_VERSION_MINOR -lt 1 \) \) ; then
+    AC_MSG_ERROR([Your 'dune-grid' version too old; at least version 1.1 is required.])
+  fi
   AC_SUBST(DUNE_GRID_VERSION_MAJOR,$DUNE_GRID_VERSION_MAJOR)
   AC_SUBST(DUNE_GRID_VERSION_MINOR,$DUNE_GRID_VERSION_MINOR)
 ])
