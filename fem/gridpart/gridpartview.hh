@@ -1,16 +1,15 @@
 #ifndef DUNE_FEM_GRIDVIEW_HH
 #define DUNE_FEM_GRIDVIEW_HH
 
-#include <dune/grid/common/datahandleif.hh>
-#include <dune/grid/common/gridenums.hh>
-#include <dune/grid/common/gridview.hh>
-
 #include <dune/fem/version.hh>
+
+#if DUNE_GRID_VERSION_NEWER(1,2)
+
+#include <dune/grid/common/gridview.hh>
 
 namespace Dune
 {
 
-#if DUNE_GRID_VERSION_NEWER(1,2)
   template< class GridPart >
   class GridPartViewImpl;
 
@@ -155,8 +154,9 @@ namespace Dune
     : BaseType( other )
     {}
   };
-#endif
   
 }
+
+#endif
 
 #endif
