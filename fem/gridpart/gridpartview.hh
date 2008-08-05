@@ -1,7 +1,11 @@
 #ifndef DUNE_FEM_GRIDVIEW_HH
 #define DUNE_FEM_GRIDVIEW_HH
 
-#include<dune/fem/version.hh>
+#include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/gridenums.hh>
+#include <dune/grid/common/gridview.hh>
+
+#include <dune/fem/version.hh>
 
 namespace Dune
 {
