@@ -13,7 +13,7 @@ namespace Dune
   struct VTKWriterSelector
   {
     typedef Dune :: VTKWriter
-      < typename GridPart :: GridType, GridPartView< GridPart > >
+      < typename GridPart :: GridType, typename GridPart :: GridViewType >
       VTKWriter;
   };
 #else
@@ -96,22 +96,24 @@ namespace Dune
     typedef typename VTKWriterSelector< GridPartImp > :: VTKWriter BaseType;
     
     const GridPartType& gridPart_;
+
   public:
     //! constructor  
-    VTKIO( const GridPartType &gridPart, VTKOptions::DataMode dm = VTKOptions::conforming )
-
+    explicit VTKIO ( const GridPartType &gridPart,
+                     VTKOptions :: DataMode dm = VTKOptions :: conforming )
 #if DUNE_GRID_VERSION_NEWER(1,2)
-    : BaseType( GridPartView<GridPartType>(gridPart) , dm )
+    : BaseType( gridPart.gridView(), dm ),
 #else
-    : BaseType( gridPart.grid(), gridPart.indexSet() , dm )
+    : BaseType( gridPart.grid(), gridPart.indexSet(), dm ),
 #endif
-    , gridPart_( gridPart )
-    {
-    }
+      gridPart_( gridPart )
+    {}
 
     //! return grid part 
-    const GridPartType& gridPart() const { return gridPart_; }
-
+    const GridPartType &gridPart () const
+    {
+      return gridPart_;
+    }
 
     template< class DF >
     void addCellData( DF &df)

@@ -17,6 +17,8 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/deprecated.hh>
 
+#include <dune/fem/gridpart/gridpartview.hh>
+
 namespace Dune
 {
 
@@ -77,8 +79,11 @@ namespace Dune
   //! corresponding intersection iterators and a appropriate communication
   //! method. 
   //! GridParts are used to parametrize spaces (see DiscreteFunctionSpaceDefault [in dune-fem]).
-  template <class GridPartTraits>
-  class GridPartInterface {
+  template< class GridPartTraits >
+  class GridPartInterface
+  {
+    typedef GridPartInterface< GridPartTraits > ThisType;
+
   public:
     //! \brief Type of the Traits
     typedef GridPartTraits Traits;
@@ -101,6 +106,11 @@ namespace Dune
     
     //! \brief is true if grid on this view only has conforming intersections 
     enum { conforming = GridPartTraits :: conforming };
+
+#if DUNE_GRID_VERSION_NEWER(1,2)
+    typedef GridView< GridPartViewTraits< GridPartType > > GridViewType;
+#endif
+    
   public:
     //! \brief Returns const reference to the underlying grid
     const GridType & grid () const 
@@ -114,6 +124,14 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
       return asImp().grid(); 
     }
+
+#if DUNE_GRID_VERSION_NEWER(1,2)
+    GridViewType gridView () const
+    {
+      typedef typename GridViewType :: GridViewImp Impl;
+      return GridViewType( Impl( asImp() ) );
+    }
+#endif
     
     //! \brief Returns reference to index set of the underlying grid
     const IndexSetType& indexSet() const 
