@@ -10,6 +10,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/misc/validator.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
@@ -19,13 +20,15 @@ namespace Dune
    *  Handling Parameters, i.e., values that can be set after compilation, in
    *  dune-fem is extremely easy. Just add
    *  \code
+   *  Dune :: MPIManager :: initialize( argc, argv );
    *  Dune :: Parameter :: append( argc, argv );
    *  \endcode
    *  at the head of your main function. Parameters are strings of the
    *  format "key: value". Any command line argument containing a colon
-   *  will thus be interpreted as a parameter. Note that parameter keys
-   *  are parsed case sensitive and that parameters found will be
-   *  removed from the command line.
+   *  will thus be interpreted as a parameter.
+   *
+   *  \note Parameter keys are case sensitive.
+   *  \note Found parameters are removed from the command line.
    *
    *  There are 8 static methods in Parameter to obtain the value of a
    *  parameter. They are divided by the following criteria:
@@ -127,13 +130,14 @@ namespace Dune
     std :: string curFileName_;
     int curLineNumber_;
     ParameterMapType params_;
-    bool verbose_;
+    int verboseRank_;
     
   private:
     inline Parameter ()
-    : verbose_( false )
+    : verboseRank_( -1 )
     {}
 
+    // Prohibit copying and assignment
     inline Parameter ( const ThisType & );
     inline ThisType &operator= ( const ThisType & );
 
@@ -143,158 +147,26 @@ namespace Dune
       return theInstance;
     }
 
-    inline const std :: string *find ( const std :: string &key )
-    {
-      ParameterMapType :: iterator it = params_.find( key );
-      return (it != params_.end()) ? &(it->second) : 0;
-    }
+    inline const std :: string *find ( const std :: string &key );
 
-    inline const std :: string &map ( const std :: string &key )
-    {
-      const std :: string *value = find( key );
-      if( value != 0 )
-        return *value;
-
-      std :: ostringstream message;
-      message << "Parameter '" << key << "' not found.";
-      DUNE_THROW( ParameterNotFound, message.str() );
-    }
+    inline const std :: string &map ( const std :: string &key );
 
     inline const std :: string &map ( const std :: string &key,
                                       const std :: string &value,
-                                      bool verbFound = false)
-    {
-      std :: pair< ParameterMapType :: iterator, bool > info
-        = params_.insert( std :: make_pair( key, value ) );
-
-      if( !info.second )
-      {
-        if( verbose_ )
-        {
-          std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
-          std :: cout << "Adding " << key << " = " << value << std :: endl;
-        }
-      }
-      else
-      {
-        if (verbFound && verbose_)
-        {
-          std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
-          std :: cout << "Ignored " << key << " = " << value
-                      << ", using " << info.first->second << std::endl;
-        }
-      }
-      return info.first->second;
-    }
+                                      bool verbFound = false );
 
     inline bool insert ( const std :: string &s,
-                         std :: queue< std :: string > &includes )
-    {
-      const unsigned int size = s.size();
-
-      unsigned int key_start = 0;
-      for( ; key_start < size; ++key_start )
-      {
-        if( (s[ key_start ] != ' ') && (s[ key_start ] != '\t') )
-          break;
-      }
-
-      unsigned int key_end = key_start;
-      for( ; key_end < size; ++key_end )
-      {
-        const char &c = s[ key_end ];
-        if( (c == ' ') || (c == '\t') || (c == ':') )
-          break;
-      }
-
-      unsigned int value_start = key_end;
-      for( ; value_start < size ; ++value_start )
-      {
-        if( s[ value_start ] == ':' )
-          break;
-      }
-      ++value_start;
-      
-      for( ; value_start < size; ++value_start )
-      {
-        if( (s[ value_start ] != ' ') && (s[ value_start ] != '\t') )
-          break;
-      }
-
-      if( value_start >= size )
-        return false;
-
-      std :: string key = s.substr( key_start, key_end - key_start );
-      std :: string value = s.substr( value_start, size - value_start );
-
-      if( key != "paramfile" )
-      {
-        const std :: string &actual_value = map( key, value, true );
-        if( key == "fem.verbose" )
-          parse( actual_value, verbose_ );
-      }
-      else
-        includes.push( value );
-      return true;
-    }
+                         std :: queue< std :: string > &includes );
 
     template< class T >
-    inline static void parse ( const std :: string &s, T &value )
-    {
-      std :: istringstream in( s );
-      in >> value;
-    }
+    inline static void parse ( const std :: string &s, T &value );
 
-    inline void processFile ( const std :: string &filename )
-    {
-      if( verbose_ )
-        std :: cout << "Parameter: Processing '" << filename << "'..."
-                     << std :: endl;
-      
-      std :: ifstream file( filename.c_str() );
-      if( file.is_open() )
-      {
-        curFileName_ = filename;
-        curLineNumber_ = 0;
-        std :: queue< std :: string > includes;
-        while( !file.eof() )
-        {
-          std :: string line;
-          std :: getline( file, line );
-          curLineNumber_++;
-          if( line.size() == 0 )
-            continue;
+    inline void processFile ( const std :: string &filename );
 
-          if( (line[ 0 ] != '%') && (line[ 0 ] != '#') )
-            insert( line, includes );
-        }
-        file.close();
-
-        processIncludes( includes );
-      }
-      else
-        std :: cerr << "Warning: Unable to read parameter file '"
-                    << filename << "'" << std :: endl;
-    }
-
-    inline void processIncludes( std :: queue< std :: string > &includes )
-    {
-      while( !includes.empty() )
-      {
-        std :: string filename = includes.front();
-        includes.pop();
-        processFile( filename );
-      }
-    }
+    inline void processIncludes( std :: queue< std :: string > &includes );
 
     inline void replace ( const std :: string &key,
-                          const std :: string &value )
-    {
-      if( verbose_ )
-        std :: cout << "Parameter: Replacing " << key << " = " << value
-                    << std :: endl;
-      params_[ key ] = value;
-    }
+                          const std :: string &value );
 
   public:
     /** \brief add parameters from a file to the container
@@ -320,29 +192,16 @@ namespace Dune
       instance().replace( key,valueStr.str() );
     }
 
-    /** \brief add parameters from the command line to the container
-     *  parameters found are removed from the argument list
+    /** \brief add parameters from the command line
+     *
+     *  This mehtod adds all parameters (strings containing a colon) in the
+     *  command line to the container. The parameters are then removed from the
+     *  command line.
      * 
      * \param[in]  argc  number of arguments (as given to main)
      * \param[in]  argv  vector of arguments (as given to main)
      */
-    inline static void append ( int& argc, char **argv )
-    {
-      std :: queue< std :: string > includes;
-      instance().curFileName_ = "programm arguments";
-      int &i = instance().curLineNumber_;
-      for( i = 1 ; i < argc; ++i )
-      {
-        if( instance().insert( std :: string( argv[ i ] ), includes ) )
-        {
-	        for( int j = i+1; j < argc; ++j )
-            argv[j-1] = argv[j];
-	        --i;
-	        --argc;
-	      }
-      }
-      instance().processIncludes( includes );
-    }
+    inline static void append ( int &argc, char **argv );
     
     /** \brief find out, whether a parameter is defined in the container
      *
@@ -383,14 +242,7 @@ namespace Dune
     template< class T >
     inline static void get ( const std :: string &key,
                              const T &defaultValue,
-                             T &value )
-    {
-      instance().curFileName_ = "using default";
-      instance().curLineNumber_ = 0;
-      std :: ostringstream out;
-      out << defaultValue;
-      parse( instance().map( key, out.str() ), value );
-    }
+                             T &value );
 
     /** \brief get a mandatory parameter from the container
      *
@@ -404,16 +256,7 @@ namespace Dune
     template< class T, class Validator >
     inline static void getValid ( const std :: string &key,
                                   const Validator &validator,
-                                  T &value )
-    {
-      parse( instance().map( key ), value );
-      if( !validator( value ) )
-      {
-        std :: ostringstream message;
-        message << "Parameter '" << key << "' invalid.";
-        DUNE_THROW( ParameterInvalid, message.str() );
-      }
-    }
+                                  T &value );
 
     /** \brief get an optional parameter from the container
      *
@@ -429,21 +272,7 @@ namespace Dune
     inline static void getValid ( const std :: string &key,
                                   const T &defaultValue,
                                   const Validator &validator,
-                                  T &value )
-    {
-      instance().curFileName_ = "using default";
-      instance().curLineNumber_ = 0;
-      std :: ostringstream out;
-      out << defaultValue;
-      parse( instance().map( key, out.str() ), value );
-      if( !validator( value ) )
-      {
-        std :: cerr << "Warning: Parameter '" << key << "' is invalid."
-                    << std :: endl;
-        instance().replace( key, out.str() );
-        parse( out.str(), value );
-      }
-    }
+                                  T &value );
     
     /** \brief get a mandatory parameter from the container
      *
@@ -455,7 +284,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T >
-    inline static T getValue ( const std :: string &key )
+    static T getValue ( const std :: string &key )
     {
       T value;
       get( key, value );
@@ -473,8 +302,8 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T >
-    inline static T getValue ( const std :: string &key,
-                               const T &defaultValue )
+    static T getValue ( const std :: string &key,
+                        const T &defaultValue )
     {
       T value;
       get( key, defaultValue, value );
@@ -492,8 +321,8 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T, class Validator >
-    inline static T getValidValue ( const std :: string &key,
-                                    const Validator &validator )
+    static T getValidValue ( const std :: string &key,
+                             const Validator &validator )
     {
       T value;
       getValid( key, validator, value );
@@ -513,27 +342,59 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T, class Validator >
-    inline static T getValidValue ( const std :: string &key,
-                                    const T &defaultValue,
-                                    const Validator &validator )
+    static T getValidValue ( const std :: string &key,
+                             const T &defaultValue,
+                             const Validator &validator )
     {
       T value;
       getValid( key, defaultValue, validator, value );
       return value;
     }
 
+    /** \brief obtain common output path
+     *
+     *  For parallel jobs you need two different output paths:
+     *  - Data common to all processes should be written to commonOutputPath().
+     *    Only one process (i.e., rank 0) should write this data.
+     *  - Data unique to each process should be written to outputPath().
+     *    Each process should write this data.
+     *  .
+     * 
+     *  \returns value of parameter 'fem.prefix', which defaults to '.'.
+     */
+    static std :: string commonOutputPath ()
+    {
+      return instance().map( "fem.prefix", "." );
+    }
+
+    /** \brief obtain unique output path for this process
+     *
+     *  For parallel jobs you need two different output paths:
+     *  - Data common to all processes should be written to commonOutputPath().
+     *    Only one process (i.e., rank 0) should write this data.
+     *  - Data unique to each process should be written to outputPath().
+     *    Each process should write this data.
+     *  .
+     *
+     *  \returns <prefix>/p<rank>, where
+     *  - <prefix> denotes the value of 'fem.prefix', which defaults to '.',
+     *  - <rank> denots the this processes rank.
+     *  .
+     */
+    inline static std :: string outputPath ();
+
     /** \brief obtain the value for fem.prefix defaults to '.'
      */
-    inline static const std :: string &prefix ()
+    static DUNE_DEPRECATED const std :: string &prefix ()
     {
       return instance().map( "fem.prefix", "." );
     }
 
     /** \brief obtain the cached value for fem.verbose
      */
-    inline static bool verbose ()
+    static bool verbose ()
     {
-      return instance().verbose_;
+      return (instance().verboseRank_ == MPIManager :: rank());
     }
   
     /** \brief write the parameter database to a file
@@ -541,42 +402,326 @@ namespace Dune
      *  This method writes all paramters in the database to the given file.
      *  The parameters are stored in alphabetical order. Includes are not used.
      *
+     *  \note This method is safe for parallel jobs. Parameters are only written
+     *        on rank 0.
+     *
      *  \param[in]  filename  name of the file to store the parameters in; prefix() is used.
      */
-    inline static void write ( const std :: string &filename )
-    {
-
-      std :: string fullname( prefix() );
-      fullname += "/";
-      fullname += filename;
-
-      std :: ofstream file( fullname.c_str() );
-      if( !file.is_open() )
-      {
-        std :: cerr << "Warning: Unable to write parameter file '"
-                    << filename << "'" << std :: endl;
-      }
-      write(file);
-      file.close();
-    }
+    inline static void write ( const std :: string &filename );
 
     /** \brief write the parameter database to a stream
      *
-     *  This method writes all paramters in the database to the given
-     *  stream.
+     *  This method writes all paramters in the database to the given stream.
+     *
+     *  \note This method is \b not safe for parallel jobs. Parameters are
+     *        written on all ranks.
      *
      *  \param[in]  out stream for the parameters.
      */
-    inline static void write ( std :: ostream &out )
-    {
-      typedef std :: map< std :: string, std :: string > :: iterator iterator;
-      const iterator end = instance().params_.end();
-      for( iterator it = instance().params_.begin(); it != end; ++it )
-        out << it->first << ": " << it->second << std :: endl;
-
-    }
+    inline static void write ( std :: ostream &out );
   };
+
+
+
+  // Private Methods
+  // ---------------
+
+  inline const std :: string *
+  Parameter :: find ( const std :: string &key )
+  {
+    ParameterMapType :: iterator it = params_.find( key );
+    return (it != params_.end()) ? &(it->second) : 0;
+  }
+
+  inline const std :: string &
+  Parameter :: map ( const std :: string &key )
+  {
+    const std :: string *value = find( key );
+    if( value != 0 )
+      return *value;
+
+    std :: ostringstream message;
+    message << "Parameter '" << key << "' not found.";
+    DUNE_THROW( ParameterNotFound, message.str() );
+  }
+
+  inline const std :: string &
+  Parameter :: map ( const std :: string &key,
+                     const std :: string &value,
+                     bool verbFound )
+  {
+    std :: pair< ParameterMapType :: iterator, bool > info
+      = params_.insert( std :: make_pair( key, value ) );
+
+    if( !info.second )
+    {
+      if( verbose() )
+      {
+        std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
+        std :: cout << "Adding " << key << " = " << value << std :: endl;
+      }
+    }
+    else
+    {
+      if( verbFound && verbose() )
+      {
+        std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
+        std :: cout << "Ignored " << key << " = " << value
+                    << ", using " << info.first->second << std::endl;
+      }
+    }
+    return info.first->second;
+  }
+
+  inline bool
+  Parameter :: insert ( const std :: string &s,
+                        std :: queue< std :: string > &includes )
+  {
+    const unsigned int size = s.size();
+
+    unsigned int key_start = 0;
+    for( ; key_start < size; ++key_start )
+    {
+      if( (s[ key_start ] != ' ') && (s[ key_start ] != '\t') )
+        break;
+    }
+
+    unsigned int key_end = key_start;
+    for( ; key_end < size; ++key_end )
+    {
+      const char &c = s[ key_end ];
+      if( (c == ' ') || (c == '\t') || (c == ':') )
+        break;
+    }
+
+    unsigned int value_start = key_end;
+    for( ; value_start < size ; ++value_start )
+    {
+      if( s[ value_start ] == ':' )
+        break;
+    }
+    ++value_start;
+    
+    for( ; value_start < size; ++value_start )
+    {
+      if( (s[ value_start ] != ' ') && (s[ value_start ] != '\t') )
+        break;
+    }
+
+    if( value_start >= size )
+      return false;
+
+    std :: string key = s.substr( key_start, key_end - key_start );
+    std :: string value = s.substr( value_start, size - value_start );
+
+    if( key != "paramfile" )
+    {
+      const std :: string &actual_value = map( key, value, true );
+      if( key == "fem.verbose" )
+      {
+        bool verbose;
+        parse( actual_value, verbose );
+        verboseRank_ = (verbose ? MPIManager :: rank() : -1);
+        std :: cout << "Warning: Using deprecated parameter 'fem.verbose'; "
+                    << "use 'fem.verboserank' instead." << std :: endl;
+      }
+      if( key == "fem.verboserank" )
+      {
+        parse( actual_value, verboseRank_ );
+        if( (verboseRank_ < -1) || (verboseRank_ >= MPIManager :: size() ) )
+        {
+          std :: cout << "Warning: Parameter 'fem.verboserank' is neither a "
+                      << "valid rank nor -1." << std :: endl;
+        }
+      }
+    }
+    else
+      includes.push( value );
+    return true;
+  }
+
+  template< class T >
+  inline void
+  Parameter :: parse ( const std :: string &s, T &value )
+  {
+    std :: istringstream in( s );
+    in >> value;
+  }
+
+  inline void
+  Parameter :: processFile ( const std :: string &filename )
+  {
+    if( verbose() )
+      std :: cout << "Parameter: Processing '" << filename << "'..."
+                   << std :: endl;
+    
+    std :: ifstream file( filename.c_str() );
+    if( file.is_open() )
+    {
+      curFileName_ = filename;
+      curLineNumber_ = 0;
+      std :: queue< std :: string > includes;
+      while( !file.eof() )
+      {
+        std :: string line;
+        std :: getline( file, line );
+        curLineNumber_++;
+        if( line.size() == 0 )
+          continue;
+
+        if( (line[ 0 ] != '%') && (line[ 0 ] != '#') )
+          insert( line, includes );
+      }
+      file.close();
+
+      processIncludes( includes );
+    }
+    else
+      std :: cerr << "Warning: Unable to read parameter file '"
+                  << filename << "'" << std :: endl;
+  }
+
+  inline void
+  Parameter :: processIncludes( std :: queue< std :: string > &includes )
+  {
+    while( !includes.empty() )
+    {
+      std :: string filename = includes.front();
+      includes.pop();
+      processFile( filename );
+    }
+  }
+
+  inline void
+  Parameter :: replace ( const std :: string &key,
+                         const std :: string &value )
+  {
+    if( verbose() )
+      std :: cout << "Parameter: Replacing " << key << " = " << value
+                  << std :: endl;
+    params_[ key ] = value;
+  }
+
+
+
+  // Public methods
+  // --------------
+
+  inline void
+  Parameter :: append ( int &argc, char **argv )
+  {
+    std :: queue< std :: string > includes;
+    instance().curFileName_ = "programm arguments";
+    int &i = instance().curLineNumber_;
+    for( i = 1 ; i < argc; ++i )
+    {
+      if( !instance().insert( std :: string( argv[ i ] ), includes ) )
+        continue;
+
+      for( int j = i+1; j < argc; ++j )
+        argv[ j-1 ] = argv[ j ];
+      --i;
+      --argc;
+    }
+    instance().processIncludes( includes );
+  }
+
+  template< class T >
+  inline void
+  Parameter :: get ( const std :: string &key,
+                     const T &defaultValue,
+                     T &value )
+  {
+    instance().curFileName_ = "using default";
+    instance().curLineNumber_ = 0;
+    std :: ostringstream out;
+    out << defaultValue;
+    parse( instance().map( key, out.str() ), value );
+  }
+
+  template< class T, class Validator >
+  inline void
+  Parameter :: getValid ( const std :: string &key,
+                          const Validator &validator,
+                          T &value )
+  {
+    parse( instance().map( key ), value );
+    if( !validator( value ) )
+    {
+      std :: ostringstream message;
+      message << "Parameter '" << key << "' invalid.";
+      DUNE_THROW( ParameterInvalid, message.str() );
+    }
+  }
+
+  template< class T, class Validator >
+  inline void
+  Parameter :: getValid ( const std :: string &key,
+                          const T &defaultValue,
+                          const Validator &validator,
+                          T &value )
+  {
+    instance().curFileName_ = "using default";
+    instance().curLineNumber_ = 0;
+    std :: ostringstream out;
+    out << defaultValue;
+    parse( instance().map( key, out.str() ), value );
+    if( !validator( value ) )
+    {
+      std :: cerr << "Warning: Parameter '" << key << "' is invalid."
+                  << std :: endl;
+      instance().replace( key, out.str() );
+      parse( out.str(), value );
+    }
+  }
   
+  inline std :: string
+  Parameter :: outputPath ()
+  {
+    const std :: string &prefix = instance().map( "fem.prefix", "." );
+    std :: ostringstream path;
+    if( !prefix.empty() )
+    {
+      path << prefix;
+      if( prefix[ prefix.length()-1 ] != '/' )
+        path << '/';
+    }
+    else
+      path << "./";
+    path << 'p' << MPIManager :: rank();
+    return path.str();
+  }
+
+  inline void
+  Parameter :: write ( const std :: string &filename )
+  {
+    // only write one parameter log file
+    if( MPIManager :: rank() != 0 )
+      return;
+
+    std :: string fullname( commonOutputPath() );
+    fullname += "/";
+    fullname += filename;
+
+    std :: ofstream file( fullname.c_str() );
+    if( !file.is_open() )
+    {
+      std :: cerr << "Warning: Unable to write parameter file '"
+                  << filename << "'" << std :: endl;
+    }
+    write( file );
+    file.close();
+  }
+
+  inline void
+  Parameter :: write ( std :: ostream &out )
+  {
+    typedef std :: map< std :: string, std :: string > :: iterator iterator;
+    const iterator end = instance().params_.end();
+    for( iterator it = instance().params_.begin(); it != end; ++it )
+      out << it->first << ": " << it->second << std :: endl;
+  }
+
 }
 
 #endif

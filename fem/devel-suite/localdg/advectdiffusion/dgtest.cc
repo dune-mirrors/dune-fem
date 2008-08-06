@@ -31,9 +31,10 @@ using namespace Dune;
 typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
-int main(int argc, char ** argv, char ** envp) {
-
-  MPIHelper::instance(argc,argv);
+int main(int argc, char ** argv, char ** envp)
+{
+  MPIManager :: initialize( argc, argv );
+  //MPIHelper::instance(argc,argv);
 
   try {
 
