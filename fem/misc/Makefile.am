@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 miscdir =  $(includedir)/dune/fem/misc
 misc_HEADERS = bartonnackmaninterface.hh \
-         boundaryidentifier.hh \
+               boundaryidentifier.hh \
 	       checkgeomaffinity.hh \
 	       codimmap.hh \
 	       combineinterface.hh \
@@ -13,20 +13,21 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       engineconcept.hh \
 	       eoc.hh \
 	       example.cc \
-				 femtimer.hh \
-         femtuples.hh \
+	       femtimer.hh \
+               femtuples.hh \
 	       fieldmatrixhelper.hh \
 	       gridhelper.hh \
-         gridwidth.hh \
+               gridwidth.hh \
 	       h1norm.hh \
 	       h1norm_inline.hh \
-         identity.hh \
+               identity.hh \
 	       l1error.hh \
 	       l2error.hh \
 	       l2norm.hh \
 	       l2norm_inline.hh \
                longexample.cc \
                metaprogramming.hh \
+	       mpimanager.hh \
                nonconformitylevel.hh \
 	       phonyiit.hh \
 	       probeutility.hh \
