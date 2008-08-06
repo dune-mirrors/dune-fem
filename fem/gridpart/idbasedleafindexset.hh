@@ -445,7 +445,7 @@ public:
     leafSet_( grid.leafIndexSet() ),
     idSet_( grid.localIdSet() ),
     pLeafSet_( idSet_, leafSet_,
-               grid.template leafbegin< 0 >(), grid.template leafEnd< 0 >() ),
+               grid.template leafbegin< 0 >(), grid.template leafend< 0 >() ),
     compressed_( true )
   {}
 
