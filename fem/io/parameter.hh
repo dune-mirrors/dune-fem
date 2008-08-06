@@ -27,7 +27,7 @@ namespace Dune
    *  format "key: value". Any command line argument containing a colon
    *  will thus be interpreted as a parameter.
    *
-   *  \note Parameter keys are case sensitive.
+   *  \note All parameter keys are case sensitive.
    *  \note Found parameters are removed from the command line.
    *
    *  There are 8 static methods in Parameter to obtain the value of a
@@ -72,30 +72,44 @@ namespace Dune
    *  
    *  An example is the parameter 
    *  \code 
-   *  fem.verbose
+   *  fem.verboserank
    *  \endcode
    *  This can beused throughout the the program; by calling:
    *  \code
-   *  Parameter::verbose()
+   *  Parameter :: verbose()
    *  \endcode
    *  If verbose is set, information concerning the parameters read will
    *  be output to stdout.
    *
    *  Here is an example usage:
    *  \code
+   *  #include <dune/fem/io/parameter.hh>
+   *  
+   *  using Dune :: Parameter;
+   *
    *  int globalFlag;
-   *  int main(int argc,char** argv) {
-   *    Dune::Parameter::append(argc,argv);
-   *    double startTime = Dune::Parameter::getValue<double>("starttime",0.0);
-   *    double endTime   = Dune::Parameter::getValue<double>("endtime",Dune::ValidateGreater(startTime));
-   *    Dune::Parameter::get("flag",0,globalFlag);
-   *    if (Dune::Parameter::verbose()) {
-   *      std::cout << "Computing from " << startTime << " to " << endTime << std::endl;
-   *    }
-   *    ...
-   *    ofstream results(Dune::Parameter::prefix()+"/results");
-   *    ...
-   *    Dune::Parameter::write("parameter.log");
+   *
+   *  int main ( int argc, char **argv )
+   *  {
+   *    Dune :: MPIManager :: initialize( argc, argv );
+   *    Parameter :: append( argc, argv );
+   *
+   *    // get parameters
+   *    double startTime = Parameter :: getValue< double >( "starttime", 0.0 );
+   *    Dune :: ValidateGreater< double > validator( startTime );
+   *    double endTime = Parameter :: getValidValue< double >( "endtime", validator );
+   *    Parameter :: get( "flag", 0, globalFlag );
+   *    
+   *    if( Parameter :: verbose() )
+   *      std :: cout << "Computing from " << startTime << " to " << endTime << std::endl;
+   *    
+   *    // ...
+   *
+   *    std :: ofstream results( (Parameter :: outputPrefix() + "/results").c_str() );
+   *
+   *    // ...
+   *
+   *    Parameter :: write( "parameter.log" );
    *  }
    *  \endcode
    */
@@ -376,16 +390,16 @@ namespace Dune
      *    Each process should write this data.
      *  .
      *
-     *  \returns <prefix>/p<rank>, where
-     *  - <prefix> denotes the value of 'fem.prefix', which defaults to '.',
-     *  - <rank> denots the this processes rank.
+     *  \returns \<prefix\>/p\<rank\>, where
+     *  - \<prefix\> denotes the value of 'fem.prefix', which defaults to '.',
+     *  - \<rank\> denots the this processes rank.
      *  .
      */
     inline static std :: string outputPath ();
 
     /** \brief obtain the value for fem.prefix defaults to '.'
      */
-    static DUNE_DEPRECATED const std :: string &prefix ()
+    DUNE_DEPRECATED static const std :: string &prefix ()
     {
       return instance().map( "fem.prefix", "." );
     }
