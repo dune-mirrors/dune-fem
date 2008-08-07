@@ -171,8 +171,19 @@ namespace Dune
     inline void rebuild () 
     {
       // only in parallel we have to do something 
-      if( mySize_ <= 1 )
-        return;
+      if( mySize_ <= 1 ) return;
+
+#ifndef NDEBUG
+      // make sure buildMaps is called on every process 
+      // otherwise the programs wait here until forever 
+      int willRebuild = (sequence_ != space_.sequence()) ? 1 : 0;
+      const int myRebuild = willRebuild;
+
+      // send willRebuild from rank 0 to all 
+      gridPart_.grid().comm().broadcast( &willRebuild, 1 , 0);
+
+      assert( willRebuild == myRebuild );
+#endif
 
       // check whether grid has changed.
       if( sequence_ != space_.sequence() )
