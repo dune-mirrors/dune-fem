@@ -586,6 +586,8 @@ public:
       loadBalance ();
 
       // exchange all modified data 
+      // this also rebuilds the dependecy cache of the 
+      // cached communication manager if used 
       commList_.exchange();
 
       // get time  
