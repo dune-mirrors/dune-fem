@@ -265,7 +265,8 @@ namespace Dune {
         for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
         {
           const IntersectionType& inter=*nit;
-          double nbvol;
+          //double nbvol;
+          double nbvol = vol;
           double wspeedS = 0.0;
           if (inter.neighbor()) 
           {
@@ -329,12 +330,11 @@ namespace Dune {
             } // end if do something 
               
           } // end if neighbor
-
-          if (inter.boundary()) 
+          else if( inter.boundary() )
           {
             FaceQuadratureType faceQuadInner(gridPart_, inter, faceQuadOrd_, 
                                              FaceQuadratureType::INSIDE);
-            nbvol = vol;
+            //nbvol = vol;
             caller_.setNeighbor(en);
             const int faceQuadInner_nop = faceQuadInner.nop();
             for (int l = 0; l < faceQuadInner_nop; ++l) 
@@ -356,9 +356,9 @@ namespace Dune {
             double minvolS = std::min(vol,nbvol);
             dtMin_ = std::min(dtMin_,minvolS/wspeedS);
           }
-        } // end boundary  
+        } // end intersection loop
 
-      } // end intersection loop
+      } // end if problem_.hasFlux()
 
       // this entity is finised by now 
       visited_[ indexSet_.index( en ) ] = true ;
