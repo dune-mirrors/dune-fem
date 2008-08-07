@@ -173,8 +173,23 @@ public:
     Timer timer ; 
     
     bool changed = false;
+
     // if balance counter has readed balanceStep do load balance
-    if( (balanceCounter_ >= balanceStep_) && (balanceStep_ > 0) )
+    const bool callBalance = ( (balanceCounter_ >= balanceStep_) && (balanceStep_ > 0) );
+
+#ifndef NDEBUG
+    // make sure load balance is called on every process 
+    int willCall = (callBalance) ? 1 : 0;
+    const int iCall = willCall;
+
+    // send info from rank 0 to all other 
+    grid_.comm().broadcast(&willCall, 1 , 0);
+
+    assert( willCall == iCall );
+#endif
+    
+    // if balance counter has readed balanceStep do load balance
+    if( callBalance )
     {
       // call grids load balance, only implemented in ALUGrid right now
       changed = grid_.loadBalance( dm_ ); 
