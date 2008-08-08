@@ -8,18 +8,19 @@
 #include <dune/grid/alugrid.hh>
 #endif
 
-#ifdef ENABLE_ALBERTA
-#include <dune/grid/albertagrid.hh>
-#endif
+//#ifdef ENABLE_ALBERTA
+//#include <dune/grid/albertagrid.hh>
+//#endif
 
 #ifdef ENABLE_UG
 #include <dune/grid/uggrid.hh>
 #endif
 
-#include <dune/grid/sgrid.hh>
-#include <dune/grid/yaspgrid.hh>
+//#include <dune/grid/sgrid.hh>
+//#include <dune/grid/yaspgrid.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   /** \brief Utility to get twist from IntersectionIterator, 
       if provided by grid (i.e. AlbertaGrid, ALUGrid)
@@ -115,6 +116,9 @@ namespace Dune {
   };
   
 #ifdef ENABLE_ALBERTA
+  template< int dim, int dimW >
+  class AlbertaGrid;
+  
   /** \brief Specialization of TwistUtility for AlbertaGrid. 
   */
   template <int dim, int dimW>
