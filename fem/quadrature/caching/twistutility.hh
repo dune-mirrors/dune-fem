@@ -1,8 +1,13 @@
 #ifndef DUNE_TWISTUTILITY_HH
 #define DUNE_TWISTUTILITY_HH
 
-// defines some basic types
+#include <cassert>
+
 #include <dune/common/interfaces.hh>
+#include <dune/common/static_assert.hh>
+#include <dune/common/geometrytype.hh>
+
+#include <dune/grid/common/capabilities.hh>
 
 #ifdef ENABLE_ALUGRID
 #include <dune/grid/alugrid.hh>
@@ -44,15 +49,16 @@ namespace Dune
         - sign(t)<0:  corner[0] of inside/outside face is equal to
                       corner[t'] of intersection with t' = abs(t)+1.
   */
-  template <class GridImp> 
+  template< class Grid > 
   class TwistUtility
   {
-    // this default implementation only is for SGrid, YaspGrid, UGGrid
-    // and OneDGrid. 
-    CompileTimeChecker<Conversion<GridImp,HasHierarchicIndexSet>::exists == false>
-      implement_specialized_twist_utility;
+    dune_static_assert( (!Conversion< Grid, HasHierarchicIndexSet > :: exists),
+                        "The default TwistUtility is only for SGrid, "
+			"YaspGrid, UGGrid and OneDGrid." );
+
   public:
-    typedef GridImp GridType;
+    typedef Grid GridType;
+
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) {}
