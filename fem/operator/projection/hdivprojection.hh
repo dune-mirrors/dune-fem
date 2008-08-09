@@ -16,7 +16,16 @@
 #include <dune/grid/uggrid.hh>
 #endif
 
-namespace Dune {
+namespace Dune
+{
+
+  // External Forward Declarations
+  // -----------------------------
+
+  template< int dim, int dimworld >
+  class YaspGrid;
+
+
 
 /** 
     \ingroup HdivProjectionOperator 
