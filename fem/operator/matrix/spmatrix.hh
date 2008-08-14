@@ -330,7 +330,7 @@ private:
   void removeObj();
 };
 
-  template <class DomainSpace, class RangeSpace>
+  template <class DomainSpace, class RangeSpace, class TraitsImp>
   class SparseRowMatrixObject;
 
   template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -343,19 +343,25 @@ private:
     template <class OperatorTraits>
     struct MatrixObject
     {
-      typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> MatrixObjectType;
+      typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType;
     };
   };
 
-  template< class DomainSpace, class RangeSpace >
+  template< class DomainSpace, class RangeSpace , class TraitsImp >
   class SparseRowMatrixObject
   {
   public:
+    //! type of traits 
+    typedef TraitsImp Traits;
+
+    //! type of stencil class 
+    typedef typename Traits :: StencilType StencilType;
+    
     typedef DomainSpace DomainSpaceType;
     typedef RangeSpace RangeSpaceType;
 
   private:  
-    typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > ThisType;
+    typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Traits > ThisType;
 
   protected:
     typedef typename DomainSpaceType :: GridType GridType;
@@ -385,7 +391,6 @@ private:
     const DomainSpaceType &domainSpace_;
     const RangeSpaceType &rangeSpace_;
     
-    int rowMaxNumbers_;
     int sequence_;
 
     mutable MatrixType matrix_;
@@ -403,7 +408,6 @@ private:
                                   const std :: string &paramfile = "" )
     : domainSpace_( domainSpace ),
       rangeSpace_( rangeSpace ),
-      rowMaxNumbers_( -1 ),
       sequence_( -1 ),
       matrix_(),
       preconditioning_( false ),
@@ -466,28 +470,19 @@ private:
             && (rangeSpace_.begin() != rangeSpace_.end()) )
         {
           
-          rowMaxNumbers_ = domainSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
-          int colMaxNumbers = rangeSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
-
-          rowMaxNumbers_ = std::max(rowMaxNumbers_, colMaxNumbers);
-
           if( verbose )
           {
+            int rowMaxNumbers = domainSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
+            int colMaxNumbers = rangeSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
+
             std::cout << "Reserve Matrix with (" << domainSpace_.size() << "," << rangeSpace_.size()<< ")\n";
-            std::cout << "Number of base functions = (" << rowMaxNumbers_ << ")\n";
+            std::cout << "Number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
           }
 
-          assert( rowMaxNumbers_ > 0 );
+          // upper estimate for number of non-zeros 
+          const int nonZeros = StencilType :: nonZerosEstimate( rangeSpace_ );
 
-          // factor for non-conforming grid is 4 in 3d and 2 in 2d  
-          //const int factor = (Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
-          const int factor = 1; //(Capabilities::isLeafwiseConforming<GridType>::v) ? 1 : (2 * (dim-1));
-
-          // upper estimate for number of neighbors 
-          enum { dim = GridType :: dimension };
-          rowMaxNumbers_ *= (factor * dim * 2) + 1; // e.g. 7 for dim = 3
-
-          matrix_.reserve( domainSpace_.size(), rangeSpace_.size(), rowMaxNumbers_, 0.0 );
+          matrix_.reserve( domainSpace_.size(), rangeSpace_.size(), nonZeros, 0.0 );
         }
         sequence_ = domainSpace_.sequence();
       }
@@ -525,14 +520,14 @@ private:
 
 
 
-  template< class DomainSpace, class RangeSpace >
+  template< class DomainSpace, class RangeSpace , class TraitsImp >
   template< class MatrixObject >
-  struct SparseRowMatrixObject< DomainSpace, RangeSpace > :: LocalMatrixTraits
+  struct SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > :: LocalMatrixTraits
   {
     typedef DomainSpace DomainSpaceType;
     typedef RangeSpace RangeSpaceType;
     
-    typedef typename SparseRowMatrixObject< DomainSpaceType, RangeSpaceType >
+    typedef typename SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, TraitsImp >
       :: template LocalMatrix< MatrixObject > LocalMatrixType;
 
     typedef typename RangeSpaceType :: RangeFieldType RangeFieldType;
@@ -542,9 +537,9 @@ private:
 
 
   //! LocalMatrix 
-  template< class DomainSpace, class RangeSpace >
+  template< class DomainSpace, class RangeSpace, class TraitsImp>
   template< class MatrixObject >
-  class SparseRowMatrixObject< DomainSpace, RangeSpace > :: LocalMatrix
+  class SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > :: LocalMatrix
   : public LocalMatrixDefault< LocalMatrixTraits< MatrixObject > >
   {
   public:
