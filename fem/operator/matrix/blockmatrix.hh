@@ -1187,13 +1187,12 @@ public:
           std::cout << "Number of base functions = (" << littleRows << "," << littleCols << ")\n";
         }
 
-        StencilType stencil;
-        // get size of stencil  
-        const int stencilSize =
-          stencil.stencilSizeEstimate(rowSpace_.gridPart()); 
+        // get number of non-zeros 
+        const int nonZerosBlocks = 
+          StencilType :: nonZerosEstimate( colSpace_ ) / ColumnSpaceType :: localBlockSize ; 
 
         // upper estimate for number of neighbors 
-        matrix().reserve(rowSize, colSize , littleRows , littleCols , stencilSize );
+        matrix().reserve(rowSize, colSize , littleRows , littleCols , nonZerosBlocks );
       }
       // set new sequence number 
       sequence_ = rowSpace_.sequence();
