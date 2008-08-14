@@ -71,6 +71,8 @@
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/io/visual/grape/datadisp/errordisplay.hh>
 
+#include <dune/fem/misc/mpimanager.hh>
+
 //- local inlcudes 
 #include "laplace.hh"
 #if (PROBLEM==2)
@@ -341,13 +343,15 @@ std :: string getMacroGridName( unsigned int dimension )
 // main programm, run algorithm twice to calc EOC 
 int main( int argc, char **argv )
 {
-  const MPIHelper &mpi = MPIHelper :: instance( argc, argv );
+  // initialize MPI 
+  MPIManager :: initialize( argc, argv );
+  const int rank = MPIManager :: rank ();
   
   try
   {
     if( argc < 2 )
     {
-      if( mpi.rank() == 0 )
+      if( rank == 0 )
         std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel> [macrogrid]"
                     << std :: endl;
       return 1;
@@ -358,7 +362,7 @@ int main( int argc, char **argv )
 
     std :: string macroGridName
       = (argc > 2 ? argv[ 2 ] : getMacroGridName( GridType :: dimension ));
-    if( mpi.rank() == 0 )
+    if( rank == 0 )
       std :: cout << "loading macro grid: " << macroGridName << std :: endl;
     
     const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
@@ -374,7 +378,7 @@ int main( int argc, char **argv )
   }
   catch( Exception &exception )
   {
-    if( mpi.rank() == 0 )
+    if( rank == 0 )
       std :: cerr << exception << std :: endl;
     return 1;
   }
