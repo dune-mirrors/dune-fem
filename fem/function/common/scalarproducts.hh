@@ -190,12 +190,28 @@ namespace Dune
   template< class Space, class Mapper >
   inline void SlaveDofs< Space, Mapper > :: buildCommunicatedMaps ()
   {
-    typedef LinkBuilder LinkBuilderHandleType; 
-    LinkBuilderHandleType handle( *this, space_ , mapper_ );
+    // we have to skip communication when parallel program is 
+    // executed only on one processor 
+    // otherwise YaspGrid and Lagrange polorder=2 fails :( 
+    if( space_.grid().comm().size() > 1 )
+    {
+      try
+      {
+        typedef LinkBuilder LinkBuilderHandleType;
+        LinkBuilderHandleType handle( *this, space_ , mapper_ );
 
-    gridPart_.communicate
-      ( handle, InteriorBorder_All_Interface, ForwardCommunication );
-    
+        gridPart_.communicate
+          ( handle, InteriorBorder_All_Interface, ForwardCommunication );
+      }
+      // catch possible exceptions here to have a clue where it happend 
+      catch ( Exception& e )
+      {
+        std::cerr << e << std::endl;
+        std::cerr << "Exception thrown in: " << __FILE__ << " line:" << __LINE__ << std::endl;
+        abort();
+      }
+    }
+
     // insert overall size at the end
     insert( mapper_.size() );
   }
