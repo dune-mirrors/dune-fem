@@ -1,7 +1,7 @@
 #ifndef DUNE_DGMATRIXSETUP_HH
 #define DUNE_DGMATRIXSETUP_HH
 
-#include <dune/fem/space/common/gridpartutility.hh>
+#include <dune/fem/gridpart/gridpartutility.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/space/common/commoperations.hh>
 
@@ -25,11 +25,12 @@ class ElementAndNeighbors
 {
 public:
   //! get number of entries per row for a block matrix, 
-  //! i.e. here number of neighbors + 1
-  template <class GridPartImp> 
-  static inline int stencilSizeEstimate(const GridPartImp& gridPart) 
+  //! i.e. here number of (neighbors + 1) * maxNumDofs 
+  template <class Space> 
+  static inline int nonZerosEstimate(const Space& space) 
   {
-    return (GridPartImp :: GridType :: dimension * 2) + 1; 
+    return ((Space :: GridType :: dimension * 2) + 1) 
+      * space.mapper().maxNumDofs(); 
   }
 
   //! create entries for element and neighbors 

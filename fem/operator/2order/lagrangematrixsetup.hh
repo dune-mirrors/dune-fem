@@ -18,11 +18,11 @@ namespace Dune
   {
   public:
     //! get number of entries per row for a block matrix, 
-    //! i.e. here number of neighboring nodes + 1 
-    template< class GridPart >
-    static inline int stencilSizeEstimate ( const GridPart &gridPart )
+    template< class Space >
+    static inline int nonZerosEstimate( const Space &space )
     {
-      return 15;//(GridPartImp :: GridType :: dimension * 2) + 1;
+      enum { dimension = Space :: GridType :: dimension };
+      return 8 * (1 << dimension) * space.order();
     }
 
     //! create entries for element and neighbors 
