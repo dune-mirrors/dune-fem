@@ -312,12 +312,9 @@ namespace Dune
   template< class DiscreteFunction, class MatrixObject, class Tensor >
   class LaplaceFEOp< DiscreteFunction, MatrixObject, Tensor > :: Assembler
   {
-    //static const unsigned int maxBaseFunctions = 100;
-    
   protected:
     const LaplaceFEOpType &feop_;
 
-    //mutable JacobianRangeType gradCache_[ maxBaseFunctions ];
     mutable DynamicArray< JacobianRangeType > gradCache_;
     mutable RangeFieldType weight_;
  
@@ -332,7 +329,7 @@ namespace Dune
       const unsigned int columns = localMatrix.columns();
       for( unsigned int i = 0; i < columns; ++i )
       {
-        localMatrix.add( i, i, weight_ * SQR( gradCache_[ i ][ 0 ] ) );
+        localMatrix.add( i, i, weight_ * (gradCache_[ i ][ 0 ] * gradCache_[ i ][ 0 ]  ) );
         for ( unsigned int j = 0; j < i; ++j )
         {
           const RangeFieldType value
