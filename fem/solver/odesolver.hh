@@ -792,7 +792,8 @@ public:
          cfl_ *= sigma;
          cfl_ = std::min(1.,cfl_); 
         // output only on rank 0
-        if(U0.space().grid().comm().rank() == 0 )
+        if(U0.space().grid().comm().rank() == 0 &&
+           Parameter::verbose())
         {
           derr << " New cfl number is: "<< cfl_ << "\n";
         }
@@ -800,7 +801,7 @@ public:
       else if (iter > max_it) {
         cfl_ *= (double)max_it/(sigma*(double)iter);
         // output only on rank 0
-         if(U0.space().grid().comm().rank() == 0 )
+         if(Parameter::verbose() && U0.space().grid().comm().rank() == 0 )
          {
            derr << " New cfl number is: "<< cfl_ << "\n";
          }
@@ -808,14 +809,17 @@ public:
       timeProvider_.provideTimeStepEstimate( cfl_ * this->explOp_.timeStepEstimate() );
     
      this->linsolver_.reset_number_of_iterations();
-     std::cout << "number of iterations of linear solver  " << iter << std::endl;
+     if(Parameter::verbose() && U0.space().grid().comm().rank() == 0 ) 
+     {
+       std::cout << "number of iterations of linear solver  " << iter << std::endl;
+     }
    }
    else {
      cfl_ *= 0.5;
      timeProvider_.provideTimeStepEstimate( cfl_ * dt );
      timeProvider_.invalidateTimeStep();
      // output only on rank 0
-     if(U0.space().grid().comm().rank() == 0 )
+     if(Parameter::verbose() && U0.space().grid().comm().rank() == 0 )
      {
        derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
      }
