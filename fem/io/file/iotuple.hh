@@ -11,6 +11,7 @@
 #include <dune/fem/misc/femtuples.hh>
 #include <dune/fem/misc/utility.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/io/file/iolock.hh>
 #include <dune/fem/io/file/iointerface.hh>
 
@@ -20,8 +21,10 @@ template <int N,class DiscFuncType>
 struct IOTupleCaller 
 {
   template <class DataIO,class GridType>
-  static DiscFuncType* createData(DataIO& dataio,std::string name,int n,
-           GridType& grid) 
+  static DiscFuncType* createData(DataIO& dataio,
+                                  const std::string& name, 
+                                  const int n,
+                                  GridType& grid) 
   {
     typedef typename DiscFuncType::DiscreteFunctionSpaceType SpaceType;
     typedef typename SpaceType::GridPartType GridPartType;
@@ -46,22 +49,39 @@ struct IOTupleCaller
   
   template <class DataIO>
   static void restore(DiscFuncType* df, 
-                      DataIO& dataio,std::string name,int n) 
+                      DataIO& dataio,
+                      const std::string& name, 
+                      const int n,
+                      bool verbose = true ) 
   {
     std::stringstream dataname;
     dataname << name << "_" << N; 
-    std::cout << "    Dataset from " << dataname.str() << std::endl;
+    if( verbose ) 
+      std::cout << "    Dataset from " << dataname.str() << std::endl;
     assert( df );
     
     // check if lock file exists, and if exit 
     FileIOCheckError check( dataname.str() );
 
-    dataio.readData(*df, dataname.str().c_str(), n);
+    // read data 
+    dataio.readData(*df, dataname.str(), n);
+
+    /*
+    // create non-cached communication manager  
+    DefaultCommunicationManager< typename DiscFuncType ::
+      DiscreteFunctionSpaceType > comm( df->space(), InteriorBorder_All_Interface );
+
+    // do a copy of data from interior 
+    // to other partition types 
+    comm.exchange( *df , (DFCommunicationOperation :: Copy *) 0 );
+    */
   }
   
   template <class DataIO>
-  static void output(DataIO& dataio,std::string name,int n,
-         const DiscFuncType& df) 
+  static void output(DataIO& dataio,
+                     const std::string& name,
+                     const int n,
+                     const DiscFuncType& df) 
   {
     std::stringstream dataname;
     dataname << name << "_" << N;
@@ -69,7 +89,7 @@ struct IOTupleCaller
     // create lock file which is removed after sucessful backup 
     FileIOLock lock( dataname.str() );
       
-    dataio.writeData(df, xdr, dataname.str().c_str(), n);
+    dataio.writeData(df, xdr, dataname.str(), n);
   }
   
   template <class Disp,class DINFO>
@@ -108,30 +128,44 @@ struct IOTupleHelper
   template <class DataIO>
   static void 
   restore(ReturnType ret,
-          DataIO& dataio, std::string name, int n)
+          DataIO& dataio, 
+          const std::string& name, 
+          const int n, 
+          bool verbose = true 
+          )
   {
     T2 next = ret.second();
-    NextType::restore(next,dataio,name,n);
+    NextType::restore(next,dataio,name,n,verbose);
     
     T1* df = ret.first();
-    IOTupleCaller<N,T1>::restore(df,dataio,name,n);
+    IOTupleCaller<N,T1>::restore(df,dataio,name,n,verbose);
   }
   
   template <class DataIO>
-  static void output(DataIO& dataio,std::string name,int n,
-         const ThisType& tup) {
+  static void output(DataIO& dataio,
+                     const std::string& name,
+                     const int n,
+                     const ThisType& tup) 
+  {
     IOTupleCaller<N,T1>::output(dataio,name,n,*(tup.first()));
     NextType::output(dataio,name,n,tup.second());
   }
+  
   template <class Disp,class DINFO>
-  static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
-         ThisType& tup) {
+  static void addToDisplay(Disp& disp,
+                           const DINFO* dinf,
+                           double time,
+                           ThisType& tup) 
+  {
     NextType::addToDisplay(disp,dinf->next,time,tup.second());
     IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
   }
+  
   template <class Disp,class DINFO>
-  static void addToDisplayOrRemove(Disp& disp,const DINFO* dinf,double time,
-         ThisType& tup) 
+  static void addToDisplayOrRemove(Disp& disp,
+                                   const DINFO* dinf,
+                                   double time,
+                                   ThisType& tup) 
   {
     NextType::addToDisplayOrRemove(disp,dinf->next,time,tup.second());
 
@@ -146,6 +180,7 @@ struct IOTupleHelper
       tup = ThisType(0,tup.second());
     }
   }
+  
   template <class Disp>
   static void addToDisplay(Disp& disp, ThisType& tup) 
   {
@@ -167,34 +202,49 @@ struct IOTupleHelper<T1,Nil,N>
   typedef Pair<T1*,Nil> ThisType;
   
   template <class DataIO,class GridType>
-  static ReturnType createData(DataIO& dataio,std::string name,int n,
-        GridType& grid) {
+  static ReturnType createData(DataIO& dataio,
+                               const std::string& name,
+                               int n,
+                               GridType& grid) 
+  {
     return ReturnType(IOTupleCaller<N,T1>::
                 createData(dataio,name,n,grid),nullType());
   }
   
   template <class DataIO>
   static void restore(ReturnType ret, 
-        DataIO& dataio,std::string name,int n)
+                      DataIO& dataio, 
+                      const std::string& name, 
+                      const int n,
+                      bool verbose = true )
   {
     T1 * df = ret.first();
-    IOTupleCaller<N,T1>::restore(df,dataio,name,n);
+    IOTupleCaller<N,T1>::restore(df,dataio,name,n,verbose);
   }
 
   template <class DataIO>
-  static void output(DataIO& dataio,std::string name,int n,
-         const ThisType& tup) {
+  static void output(DataIO& dataio,
+                     const std::string& name,
+                     const int n,
+                     const ThisType& tup) 
+  {
     IOTupleCaller<N,T1>::output(dataio,name,n,*(tup.first()));
   }
+  
   template <class Disp,class DINFO>
-  static void addToDisplay(Disp& disp,const DINFO* dinf,double time,
-         ThisType& tup) {
+  static void addToDisplay(Disp& disp,  
+                           const DINFO* dinf,
+                           double time,
+                           ThisType& tup) 
+  {
     IOTupleCaller<N,T1>::addToDisplay(disp,dinf,time,*(tup.first()));
   }
 
   template <class Disp,class DINFO>
-  static void addToDisplayOrRemove(
-      Disp& disp,const DINFO* dinf,double time, ThisType& tup) 
+  static void addToDisplayOrRemove(Disp& disp,
+                                   const DINFO* dinf,
+                                   double time, 
+                                   ThisType& tup) 
   {
     // if comp is zero data set is not valid 
     if( dinf->comp )
@@ -276,17 +326,23 @@ struct IOTuple : public IOTupleBase
   static void restoreDofManager(const GridType& grid,
                                 int n,
                                 std::string path,
-                                std::string name) 
+                                std::string name,
+                                bool verbose = true ) 
   {
-    std::cout << "Reading Dof Manager" << std::endl;
+    if( verbose ) 
+      std::cout << "Reading Dof Manager" << std::endl;
+    
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DMFactoryType;
     std::string dmname;
     dmname = gridName(path,name) + "_dm";
     DofManagerType& dm = DMFactoryType::getDofManager(grid);
-    std::cout << "    from file " << dmname << std::endl;
+
+    if( verbose ) 
+      std::cout << "    from file " << dmname << std::endl;
+
     // read dofmanager, i.e. read all index sets 
-    DMFactoryType::readDofManager(grid,dmname,n);
+    DMFactoryType::readDofManager(grid,dmname,n,verbose);
     
     // resize all data because size of index set might have changed  
     // NOTE: avoid resize of index sets by using resizeForRestict 
@@ -343,16 +399,19 @@ struct IOTuple : public IOTupleBase
   template <class DataIO,class GridType>
   static void restoreData(ReturnType& data, 
          DataIO& dataio,const GridType& grid,
-         int n, std::string path, std::string name) 
+         int n, std::string path, std::string name, bool verbose = false ) 
   {
     std::string dname( dataName(path,name) );
-    std::cout << "Reading data from " << dname << std::endl;
-   
+    if( verbose )
+    {
+      std::cout << "P["<< grid.comm().rank()<< "] Reading data from " << dname << std::endl;
+    }
+
     // read dofmanager and index sets 
-    IOTuple<TupType>::restoreDofManager(grid,n,path,name);
+    IOTuple<TupType>::restoreDofManager(grid,n,path,name,verbose);
 
     // read all data now 
-    IOTupleHelper<T1,T2,0>::restore(data,dataio,dname,n);
+    IOTupleHelper<T1,T2,0>::restore(data,dataio,dname,n,verbose);
 
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DMFactoryType;
@@ -362,8 +421,11 @@ struct IOTuple : public IOTupleBase
     
     // compress all data 
     dm.compress();
-    
-    std::cout << "    FINISHED!" << std::endl;
+
+    if( verbose ) 
+    {
+      std::cout << "P["<<grid.comm().rank()<< "]  FINISHED!" << std::endl;
+    }
   }
 
   //! write grid and data to given directory 
@@ -387,7 +449,7 @@ struct IOTuple : public IOTupleBase
       FileIOLock lock( gname );
       
       // write grid 
-      dataio.writeGrid(grid, xdr, gname.c_str(), t, n);
+      dataio.writeGrid(grid, xdr, gname, t, n);
     }
 
     std::string dname( dataName(path, name ) );
