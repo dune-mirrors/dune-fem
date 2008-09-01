@@ -17,6 +17,7 @@
 //- Dune includes 
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/solver/timeprovider.hh>
+#include <dune/fem/io/parameter.hh>
 
 //- include runge kutta ode solver 
 #include <dune/fem/solver/rungekutta.hh>
@@ -229,7 +230,7 @@ public:
     }
   }
 
-private:
+protected:
   Dune::TimeProviderBase& timeProvider_;
 };
 
@@ -386,44 +387,50 @@ public:
     const int iter = this->linsolver_.number_of_iterations();
      // set time step estimate of operator 
 
-    if (convergence) {
-    // control the number of iterations of the linear solver
-    // the values for min_it and max_it has to be determined by experience
-      if (iter < min_it) {
+    if (convergence) 
+    {
+      // control the number of iterations of the linear solver
+      // the values for min_it and max_it has to be determined by experience
+      if (iter < min_it) 
+      {
         cfl_ *= sigma;
-        // output only on rank 0
-        if(U0.space().grid().comm().rank() == 0 )
+        // output only in verbose mode 
+        if( Parameter::verbose() )
         {
           derr << " New cfl number is: "<< cfl_ << "\n";
         }
       }
-      else if (iter > max_it) {
+      else if (iter > max_it) 
+      {
         cfl_ *= (double)max_it/(sigma*(double)iter);
-        // output only on rank 0
-         if(U0.space().grid().comm().rank() == 0 )
-         {
-           derr << " New cfl number is: "<< cfl_ << "\n";
-         }
-     }
-    timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
-    
-     this->linsolver_.reset_number_of_iterations();
-     std::cout << "number of iterations of linear solver  " << iter << std::endl;
-   }
-   else {
-       cfl_ *= 0.5;
-       timeProvider_.provideTimeStepEstimate( cfl_ * dt );
-       timeProvider_.invalidateTimeStep();
-        // output only on rank 0
-        if(U0.space().grid().comm().rank() == 0 )
+        
+        // output only in verbose mode
+        if( Parameter :: verbose() )
         {
-          derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
+          derr << " New cfl number is: "<< cfl_ << "\n";
         }
-   }
+      }
       
+      timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
+    
+      this->linsolver_.reset_number_of_iterations();
+      std::cout << "number of iterations of linear solver  " << iter << std::endl;
+   }
+   else 
+   {
+     cfl_ *= 0.5;
+     timeProvider_.provideTimeStepEstimate( cfl_ * dt );
+     timeProvider_.invalidateTimeStep();
+     
+     // output only in verbose mode 
+     if( Parameter :: verbose () )
+     {
+       derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
+     }
+   }
  }
-};
 
+}; // end ImplicitOdeSolver
 
 //////////////////////////////////////////////////////////////////
 //
@@ -533,7 +540,7 @@ class SemiImplicitOdeSolver :
   typedef SpaceOperatorInterface<DestinationImp> OperatorType;
   typedef SemiImplTimeStepperBase<OperatorType, OperatorType> BaseType;
 
-private:
+protected:
   Dune :: TimeProviderBase &timeProvider_;
   double cfl_;
 
@@ -566,7 +573,6 @@ public:
     {
       DUNE_THROW(InvalidStateException,"ImplicitOdeSolver wasn't initialized before first call!");
     }
-
     
     const int min_it = 14;
     const int max_it = 16;
@@ -583,54 +589,61 @@ public:
     const int iter = this->linsolver_.number_of_iterations();
     // set time step estimate of operator 
 
-    if (convergence) {
-    // control the number of iterations of the linear solver
-    // the values for min_it and max_it has to be determined by experience
-      if (iter < min_it) {
+    if (convergence) 
+    {
+      // control the number of iterations of the linear solver
+      // the values for min_it and max_it has to be determined by experience
+      if (iter < min_it) 
+      {
          cfl_ *= sigma;
          cfl_ = std::min(1.,cfl_); 
-        // output only on rank 0
-        if(U0.space().grid().comm().rank() == 0 &&
-           Parameter::verbose())
+        // output only in verbose mode 
+        if( Parameter::verbose() )
         {
           derr << " New cfl number is: "<< cfl_ << "\n";
         }
       }
-      else if (iter > max_it) {
+      else if (iter > max_it) 
+      {
         cfl_ *= (double)max_it/(sigma*(double)iter);
-        // output only on rank 0
-         if(Parameter::verbose() && U0.space().grid().comm().rank() == 0 )
-         {
-           derr << " New cfl number is: "<< cfl_ << "\n";
-         }
+        
+        // output only in verbose mode 
+        if( Parameter::verbose() )
+        {
+          derr << " New cfl number is: "<< cfl_ << "\n";
+        }
       }
       timeProvider_.provideTimeStepEstimate( cfl_ * this->explOp_.timeStepEstimate() );
     
-     this->linsolver_.reset_number_of_iterations();
-     if(Parameter::verbose() && U0.space().grid().comm().rank() == 0 ) 
-     {
-       std::cout << "number of iterations of linear solver  " << iter << std::endl;
-     }
-   }
-   else {
-     cfl_ *= 0.5;
-     timeProvider_.provideTimeStepEstimate( cfl_ * dt );
-     timeProvider_.invalidateTimeStep();
-     // output only on rank 0
-     if(Parameter::verbose() && U0.space().grid().comm().rank() == 0 )
-     {
-       derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
-     }
-   }
- }
+      this->linsolver_.reset_number_of_iterations();
+      if( Parameter::verbose() ) 
+      {
+        std::cout << "number of iterations of linear solver  " << iter << std::endl;
+      }
+    }
+    else 
+    {
+      cfl_ *= 0.5;
+      timeProvider_.provideTimeStepEstimate( cfl_ * dt );
+      timeProvider_.invalidateTimeStep();
+      
+      // output only in verbose mode 
+      if( Parameter::verbose() )
+      {
+        derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
+      }
+    }
+  }
 
-};
+}; // end SemiImplicitOdeSolver
 
-#endif
+#endif // USE_PARDG_ODE_SOLVER
+ 
 /**
  @} 
 **/
-}
+
+} // end namespace DuneODE
 
 #undef USE_EXTERNAL_BLAS
 #endif
