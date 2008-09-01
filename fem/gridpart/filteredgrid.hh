@@ -610,14 +610,16 @@ namespace Dune {
         //! increment intersection iterator 
         inline IntersectionIteratorWrapper & operator++()
         { 
+          // if iterator in-valid , od nothing 
+          if (*this == endIter_) return *this; 
+          
           // increment real iterator 
-          if (*this != endIter_)
-          {
-            IteratorType::operator++();
-            if( *this == endIter_ ) return *this; 
+          IteratorType::operator++();
+          if( *this == endIter_ ) return *this; 
             
-            writeNeighborInfo();
-          }
+          // write new infos 
+          writeNeighborInfo();
+
           return *this;
         }
           
