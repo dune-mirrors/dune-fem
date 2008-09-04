@@ -4,6 +4,7 @@
 #include <dune/fem/space/lagrangespace/lagrangespace.hh>
 // #include <dune/grid/utility/twistutility.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
 namespace Dune 
 {
 
@@ -33,6 +34,7 @@ struct VtxProjectionImpl
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
     typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
+    typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
     // typedef typename GridPartType::GridType GridType;
 
     typename ArgFunctionSpaceType::RangeType val;
@@ -74,6 +76,12 @@ struct VtxProjectionImpl
         }
       }
     }
+
+    // Communicate for distributed runs:
+    CommunicationManagerType communicate( space );
+    communicate.exchange( discFunc, (DFCommunicationOperation :: Add *) 0 );
+    communicate.exchange( weightDF, (DFCommunicationOperation :: Add *) 0 );
+
     typename DiscreteFunctionImp::DofIteratorType
       itdof = discFunc.dbegin();
     const typename DiscreteFunctionImp::DofIteratorType
