@@ -395,8 +395,8 @@ namespace Dune {
     RangeTupleType valuesNeigh_;
     JacobianRangeTupleType jacobians_;
 
-    Entity* self_;
-    Entity* neighbor_;
+    // Entity* self_;
+    // Entity* neighbor_;
     
     double time_;
   };
