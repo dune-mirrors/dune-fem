@@ -1,6 +1,8 @@
 #ifndef DUNE_PRECONDITIONERWRAPPER_HH
 #define DUNE_PRECONDITIONERWRAPPER_HH
 
+#include <memory>
+
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
 #include <dune/istl/preconditioners.hh>
