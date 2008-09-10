@@ -1093,11 +1093,18 @@ public:
     dm.dofCompress();
   }
 
+  /** \copydoc IOInterface::willWrite */  
+  virtual bool willWrite(double time, int timestep) const
+  {
+    return ( ((timestep % checkPointStep_) == 0) && timestep > 0 );
+  }
+
   /** \copydoc IOInterface::write */
   virtual void write(double time, int timestep) const 
   {
     // only write data time > saveTime  
-    if( ((timestep % checkPointStep_) == 0) && timestep > 0 )
+    // if( ((timestep % checkPointStep_) == 0) && timestep > 0 )
+    if( willWrite(time,timestep) )
     {
       // toggle between 0 and 1 
       checkPointNumber_ = (checkPointNumber_ == 0) ? 1 : 0;
