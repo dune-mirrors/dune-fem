@@ -16,3 +16,6 @@ misc_HEADERS = arrayallocator.hh \
                subarray.hh \
                vector.hh \
                vector_inline.hh
+
+include $(top_srcdir)/am/global-rules
+

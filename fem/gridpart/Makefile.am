@@ -12,3 +12,6 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
 		   idbasedleafindexset.hh \
 		   periodicgridpart.hh \
 		   periodicindexset.hh
+
+include $(top_srcdir)/am/global-rules
+

@@ -8,3 +8,6 @@ ADAPTPROG =  prod
 
 check_PROGRAMS = $(ADAPTPROG)
 prod_SOURCES = productfunctiontest.cc
+
+include $(top_srcdir)/am/global-rules
+

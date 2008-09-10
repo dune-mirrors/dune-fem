@@ -9,3 +9,6 @@ streams_HEADERS = asciistreams.hh \
                   streams_inline.hh \
 		  virtualstreams.hh \
 		  xdrstreams.hh
+
+include $(top_srcdir)/am/global-rules
+

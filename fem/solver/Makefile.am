@@ -23,3 +23,6 @@ solver_HEADERS = inverseoperators.hh \
 		 pardg.hh \
                  rungekutta.hh \
 		 timeprovider.hh
+
+include $(top_srcdir)/am/global-rules
+

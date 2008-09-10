@@ -39,3 +39,6 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       timeutility.hh \
                utility.hh \
 	       validator.hh
+
+include $(top_srcdir)/am/global-rules
+

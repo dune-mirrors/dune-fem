@@ -12,3 +12,6 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 check_PROGRAMS = tester 
 tester_SOURCES = main.cc ../../misc/test.cc ../../misc/suite.cc \
 	quad_test.cc cachequad_test.cc 
+
+include $(top_srcdir)/am/global-rules
+

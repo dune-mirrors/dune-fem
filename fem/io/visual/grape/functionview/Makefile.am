@@ -9,3 +9,6 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 #functionview_SOURCES = functionview.cc 
 
 #EXTRA_DIST = functionview.cc
+
+include $(top_srcdir)/am/global-rules
+

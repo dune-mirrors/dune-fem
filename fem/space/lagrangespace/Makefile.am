@@ -19,3 +19,6 @@ noinst_LTLIBRARIES = liblagrangespace.la
 liblagrangespace_la_SOURCES = basefunctions.cc
 liblagrangespace_la_CPPFLAGS = $(AM_CPPFLAGS) -DCOMPILE_FEMLIB
 liblagrangespace_la_LIBADD =
+
+include $(top_srcdir)/am/global-rules
+

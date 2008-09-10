@@ -12,3 +12,6 @@ datadisp_HEADERS = dataconvert.cc \
 		   programtemplate.cc \
 		   readiotupledata.cc \
                    readioparams.cc
+
+include $(top_srcdir)/am/global-rules
+

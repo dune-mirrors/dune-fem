@@ -30,3 +30,6 @@ common_HEADERS = adaptiveleafgridpart.hh \
      persistentindexsets.hh \
      dunefemindexsets.hh \
      emptyindexset.hh
+
+include $(top_srcdir)/am/global-rules
+

@@ -11,3 +11,6 @@ gridview_SOURCES = gridview.cc
 
 gridviewdir =  $(includedir)/dune/fem/io/visual/grape/gridview
 gridview_HEADERS = gridview.cc
+
+include $(top_srcdir)/am/global-rules
+

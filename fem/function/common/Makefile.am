@@ -7,3 +7,6 @@ common_HEADERS = dfcommunication.hh \
                  dofiterator.hh \
                  function.hh \
                  scalarproducts.hh
+
+include $(top_srcdir)/am/global-rules
+

@@ -14,3 +14,6 @@ testdir=$(includedir)/dune/fem/space/lagrangespace/test
 test_HEADERS = basefunctiontest.hh  mappertest.hh basefunctiontest.cc \
 mappertest.cc
 EXTRA_DIST = 2dgrid.dgf cube.dgf  onesimplex.dgf
+
+include $(top_srcdir)/am/global-rules
+

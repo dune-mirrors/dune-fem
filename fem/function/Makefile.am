@@ -17,3 +17,6 @@ function_HEADERS = adaptivefunction.hh \
 		   combinedfunction.hh \
 		   productfunction.hh \
 		   vectorfunction.hh
+
+include $(top_srcdir)/am/global-rules
+

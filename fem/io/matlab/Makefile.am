@@ -5,3 +5,6 @@ DIST_SUBDIRS = m test
 
 matlab_HEADERS = matlabhelper.hh \
                  matlabstream.hh
+
+include $(top_srcdir)/am/global-rules
+

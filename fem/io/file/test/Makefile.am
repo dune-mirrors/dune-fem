@@ -6,3 +6,6 @@ check_PROGRAMS = persistencemanagertest
 persistencemanagertest_SOURCES = persistencemanagertest.cc
 
 CXXFLAGS = -g
+
+include $(top_srcdir)/am/global-rules
+

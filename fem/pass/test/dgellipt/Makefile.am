@@ -24,3 +24,6 @@ EXTRA_DIST = benchmark.cc problem.cc discretemodels.hh  discretization.hh  model
 CLEANFILES = dgfparser.log grid2d.dgf.* manager.*.log
 
 # CXXFLAGS =
+
+include $(top_srcdir)/am/global-rules
+

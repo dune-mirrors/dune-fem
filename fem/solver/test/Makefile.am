@@ -10,3 +10,6 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER)
 odetest_SOURCES = odetest.cc
 odesystemtest_SOURCES = odesystemtest.cc
 CXXFLAGS=-O3 -DNOFEL=$(size) -DNDEBUG # -Wall
+
+include $(top_srcdir)/am/global-rules
+

@@ -9,3 +9,6 @@ point_test.hh  sgrid_fixture.hh
 check_PROGRAMS = tester 
 tester_SOURCES = main.cc ../../../misc/test.cc ../../../misc/suite.cc \
 	refelem_test.cc cache_test.cc twist_test.cc point_test.cc
+
+include $(top_srcdir)/am/global-rules
+

@@ -6,3 +6,6 @@ io_HEADERS = parameter.hh
 
 # do everything in the subdirs
 SUBDIRS = file streams visual matlab
+
+include $(top_srcdir)/am/global-rules
+

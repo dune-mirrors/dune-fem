@@ -15,3 +15,6 @@ AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
 check_PROGRAMS = test
 
 test_SOURCES = test.cc
+
+include $(top_srcdir)/am/global-rules
+

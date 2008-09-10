@@ -63,3 +63,6 @@ mapper_cmbpoint_CPPFLAGS = -DPOLORDER=1 -DUSE_COMBINEDSPACE $(AM_CPPFLAGS)
 
 mapper_cmbvariable_SOURCES = mapper.cc
 mapper_cmbvariable_CPPFLAGS = -DPOLORDER=1 -DUSE_COMBINEDSPACE -DUSE_VARIABLEBASE $(AM_CPPFLAGS)
+
+include $(top_srcdir)/am/global-rules
+

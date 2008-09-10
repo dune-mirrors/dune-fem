@@ -18,3 +18,6 @@ space_HEADERS = adaptoperator.hh \
 		fvspace.hh \
                 lagrangespace.hh \
                 reducedbasisspace.hh
+
+include $(top_srcdir)/am/global-rules
+
