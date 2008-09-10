@@ -2,6 +2,7 @@
 #define DUNE_SPACEOPERATORIF_HH
 
 //- system includes 
+#include <limits>
 #include <utility>
 
 //-Dune fem includes 
