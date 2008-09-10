@@ -177,7 +177,7 @@ class EocOutput {
     ofs.close();
   }
 
-		
+  template <class GridType>
   void printInput(InitialDataType& u0, GridType& grid,ODEType& ode, 
 		  char *arg)
   {
