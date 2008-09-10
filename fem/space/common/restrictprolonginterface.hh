@@ -254,8 +254,6 @@ public:
   RestrictProlongPieceWiseConstantData( DiscreteFunctionType & df ) 
     : df_ (df), weight_(-1.0)
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( (Capabilities::IsUnstructured<GridType>::v) ? (df.space().indexSet().adaptive()) : true );
   }
 
   //! if weight is set, then ists assumend that we have always the same
@@ -270,7 +268,7 @@ public:
   template <class EntityType>
   void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
-    assert( df_.space().indexSet().adaptive() );
+    assert( this->checkPersistent(df_.space().indexSet()) );
 
     assert( !father.isLeaf() );
 
@@ -302,7 +300,7 @@ public:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
-    assert( df_.space().indexSet().adaptive() );
+    assert( this->checkPersistent(df_.space().indexSet()) );
     
     LocalFunctionType vati = df_.localFunction( father);
     LocalFunctionType sohn = df_.localFunction( son   );
