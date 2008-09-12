@@ -1,4 +1,4 @@
-MODULEDIR=/hosts/morgoth/raid5/dune/modules_$HOSTTYPE
+MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="CXX=g++ \
 --disable-documentation \
 --with-grid-dim=2 \
