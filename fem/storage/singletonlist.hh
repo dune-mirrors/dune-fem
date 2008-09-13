@@ -130,7 +130,7 @@ namespace Dune
           return (*it).second; 
         }
       }
-      return ValueType(0,0);
+      return ValueType( (ObjectType *)0, (unsigned int *)0 );
     }
 
   protected:
