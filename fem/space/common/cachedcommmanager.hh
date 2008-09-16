@@ -9,6 +9,7 @@
 
 //- Dune includes  
 #include <dune/common/misc.hh>
+#include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/datahandleif.hh>
@@ -102,6 +103,11 @@ namespace Dune
     //! know grid sequence number 
     int sequence_; 
     
+    // exchange time 
+    double exchangeTime_;
+    // setup time 
+    double buildTime_;
+
   protected:
     template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
     class LinkBuilder;
@@ -127,7 +133,9 @@ namespace Dune
       //    (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0),
       mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) ),
       nLinks_( 0 ),
-      sequence_( -1 )
+      sequence_( -1 ),
+      exchangeTime_( 0.0 ),
+      buildTime_( 0.0 )
     {
     }
 
@@ -150,6 +158,23 @@ namespace Dune
     }
 
   public:
+    //! return communication interface 
+    InterfaceType communicationInterface() const {
+      return interface_;
+    }
+
+    //! return communcation direction 
+    CommunicationDirection communicationDirection() const
+    {
+      return dir_;
+    }
+
+    //! return time needed for last build 
+    double buildTime() const { return buildTime_; }
+
+    //! return time needed for last exchange  
+    double exchangeTime() const { return exchangeTime_; }
+
     // build linkage and index maps 
     inline void buildMaps ();
 
@@ -188,8 +213,14 @@ namespace Dune
       // check whether grid has changed.
       if( sequence_ != space_.sequence() )
       {
+        // take timer needed for rebuild 
+        Timer buildTime;
+
         buildMaps();
         sequence_ = space_.sequence();
+
+        // store time needed 
+        buildTime_ = buildTime.elapsed();
       }
     }
       
@@ -791,6 +822,23 @@ namespace Dune
     {
       CommunicationProviderType::removeObject(cache_);
     }
+
+    //! return communication interface 
+    InterfaceType communicationInterface() const {
+      return cache_.communicationInterface();
+    }
+
+    //! return communcation direction 
+    CommunicationDirection communicationDirection() const
+    {
+      return cache_.communicationDirection();
+    }
+
+    //! return time needed for last build 
+    double buildTime() const { return cache_.buildTime(); }
+
+    //! return time needed for last exchange  
+    double exchangeTime() const { return cache_.exchangeTime(); }
 
     MPAccessInterfaceType& mpAccess() { return cache_.mpAccess(); }
 
