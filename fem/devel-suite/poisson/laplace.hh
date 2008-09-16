@@ -7,7 +7,6 @@
 
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/quadrature.hh>
-#include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
@@ -400,9 +399,6 @@ namespace Dune
 
     enum { dimension = GridType :: dimension };
 
-    typedef CommunicationManager< DiscreteFunctionSpaceType >
-      CommunicationManagerType;
-  
   public:
     // discreteFunction is an output parameter (kind of return value)
     template< int polOrd, class FunctionType >
@@ -462,8 +458,8 @@ namespace Dune
         }
       }
 
-      CommunicationManagerType communicate( discreteFunctionSpace );
-      communicate.exchange( discreteFunction, (DFCommunicationOperation :: Add *) 0 );
+      // communicate data 
+      discreteFunctionSpace.communicate( discreteFunction );
     }
   };
 
