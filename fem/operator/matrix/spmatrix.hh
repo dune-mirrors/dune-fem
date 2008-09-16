@@ -6,7 +6,6 @@
 
 //- local includes 
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
-#include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/operator/common/localmatrix.hh> 
 #include <dune/fem/operator/common/localmatrixwrapper.hh> 
 
@@ -385,8 +384,6 @@ private:
     //! type of local matrix 
     typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
-    typedef CommunicationManager< RangeSpaceType > CommunicationManagerType;
-
   protected:
     const DomainSpaceType &domainSpace_;
     const RangeSpaceType &rangeSpace_;
@@ -396,8 +393,6 @@ private:
     mutable MatrixType matrix_;
     bool preconditioning_;
     PreconditionMatrixType * pcMatrix_;
-
-    mutable CommunicationManagerType communicate_;
 
     mutable LocalMatrixStackType localMatrixStack_;
 
@@ -412,7 +407,6 @@ private:
       matrix_(),
       preconditioning_( false ),
       pcMatrix_( 0 ),
-      communicate_( rangeSpace_ , InteriorBorder_All_Interface ),
       localMatrixStack_( *this )
     {
       if( paramfile != "" )
@@ -492,8 +486,11 @@ private:
     template< class DomainFunction, class RangeFunction >
     void apply ( const DomainFunction &arg, RangeFunction &dest ) const
     {
+      // apply matrix vector multiplication 
       matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
-      communicate_.exchange( dest, (DFCommunicationOperation :: Add *) 0 );
+
+      // communicate data 
+      rangeSpace_.communicate( dest );
     }
 
     //! mult method of matrix object used by oem solver

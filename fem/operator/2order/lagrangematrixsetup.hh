@@ -126,7 +126,6 @@ namespace Dune
     typedef typename MatrixType :: ColDiscreteFunctionType ColumnDiscreteFunctionType;
 
     typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
-    typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
 
     typedef typename ColumnDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
     typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
@@ -148,7 +147,6 @@ namespace Dune
     const RowSpaceType& rowSpace_;
     const ColSpaceType& colSpace_;
 
-    mutable CommunicationManagerType comm_;
     mutable ParallelScalarProductType scp_;
 
     PreconditionAdapterType preconditioner_;
@@ -159,7 +157,6 @@ namespace Dune
       : matrix_(org.matrix_) 
       , rowSpace_(org.rowSpace_)
       , colSpace_(org.colSpace_)
-      , comm_(rowSpace_)
       , scp_(colSpace_)
       , preconditioner_(org.preconditioner_)
     {}
@@ -170,7 +167,6 @@ namespace Dune
       : matrix_(A) 
       , rowSpace_(rowSpace)
       , colSpace_(colSpace)
-      , comm_(rowSpace_)
       , scp_(colSpace)
       , preconditioner_(matrix_)
     {}
@@ -184,7 +180,6 @@ namespace Dune
       : matrix_(A) 
       , rowSpace_(rowSpace)
       , colSpace_(colSpace)
-      , comm_(rowSpace_)
       , scp_(colSpace_)
       , preconditioner_(matrix_,iter,relax,dummy)
     {}
@@ -198,7 +193,6 @@ namespace Dune
       : matrix_(A) 
       , rowSpace_(rowSpace)
       , colSpace_(colSpace)
-      , comm_(rowSpace_)
       , scp_(colSpace_)
       , preconditioner_(matrix_,relax,dummy)
     {}
@@ -254,8 +248,8 @@ namespace Dune
       ColumnDiscreteFunctionType tmp ("LagrangeParallelMatrixAdapter::communicate",
                                    colSpace_, y );
 
-      // exchange data 
-      comm_.exchange( tmp , (DFCommunicationOperation :: Add *) 0 );
+      // exchange data (default operation is add)
+      colSpace_.communicate( tmp );
     }
   };
 #endif
