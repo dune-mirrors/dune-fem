@@ -28,7 +28,7 @@ namespace Dune
   template< class Grid, PartitionIteratorType pitype >
   class AdaptiveLeafGridPart;
 
-  template< class Grid >
+  template< class Grid, PartitionIteratorType pitype >
   class AdaptiveLeafIndexSet;
 
   //! Type definitions for the LeafGridPart class

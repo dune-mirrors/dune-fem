@@ -23,11 +23,11 @@ namespace Dune {
 
   Future work. Index set for each codim.
 */
-template <class GridType>
+template <class GridType, PartitionIteratorType pitype = All_Partition >
 class AdaptiveLeafIndexSet : 
   public ConsecutivePersistentIndexSet <
     GridType, 
-    AdaptiveLeafIndexSet<GridType>, 
+    AdaptiveLeafIndexSet<GridType,pitype>, 
     DefaultLeafIteratorTypes<GridType> 
       >
 {
@@ -80,8 +80,8 @@ private:
     static inline int index (const AdLeafSet & ls , const HSetImp & hset, const CodimLeafSet (&cls)[ncodim], 
                              const EntityType & en , int num , bool (&cdUsed)[ncodim] )
     {
-      assert(cls[codim].index ( hset.index( en ) ) >= 0 );
       if(!cdUsed[codim]) ls.template setUpCodimSet<codim> ();
+      assert(cls[codim].index ( hset.index( en ) ) >= 0 );
       return cls[codim].index ( hset.index( en ) );
     }
   };
@@ -228,7 +228,7 @@ private:
   //! type of base class 
   typedef ConsecutivePersistentIndexSet <
     GridType, 
-    AdaptiveLeafIndexSet<GridType>, 
+    AdaptiveLeafIndexSet<GridType,pitype>, 
     DefaultLeafIteratorTypes<GridType> 
       > BaseType ;
 
@@ -236,7 +236,7 @@ private:
   typedef typename BaseType :: IndexType IndexType;
   
   //! type of this class 
-  typedef AdaptiveLeafIndexSet < GridType > ThisType;
+  typedef AdaptiveLeafIndexSet < GridType, pitype > ThisType;
 
   //! for consecutive method 
   friend class Conversion< ThisType, EmptyIndexSet> ;
@@ -343,21 +343,21 @@ public:
   /** @brief Iterator to one past the last entity of given codim for partition type
    *  Here the grids leaf iterator is used 
    */
-  template<int cd, PartitionIteratorType pitype>
+  template<int cd, PartitionIteratorType pt>
   typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
-    template Partition<pitype>::Iterator end () const
+    template Partition<pt>::Iterator end () const
   {
-    return this->grid_.template leafend<cd,pitype> ();
+    return this->grid_.template leafend<cd,pt> ();
   }
 
   /** @brief Iterator to first entity of given codimension and partition type.
    *  Here the grids leaf iterator is used 
    */
-  template<int cd, PartitionIteratorType pitype>
+  template<int cd, PartitionIteratorType pt>
   typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
-    template Partition<pitype>::Iterator begin () const
+    template Partition<pt>::Iterator begin () const
   {
-    return this->grid_.template leafbegin<cd,pitype> ();
+    return this->grid_.template leafbegin<cd,pt> ();
   }
 #endif
  
@@ -560,10 +560,11 @@ protected:
     for(int i=0; i<ncodim; i++) 
       if(codimUsed_[i]) codimLeafSet_[i].set2Unused(); 
     
-    typedef typename GridType:: template Codim<0> :: LeafIterator LeafIteratorType; 
+    typedef typename GridType:: template Codim<0> :: 
+      template Partition<pitype> :: LeafIterator LeafIteratorType; 
     // walk over leaf level on locate all needed entities  
-    LeafIteratorType endit  = this->grid_.template leafend<0>   ();
-    for(LeafIteratorType it = this->grid_.template leafbegin<0> (); 
+    LeafIteratorType endit  = this->grid_.template leafend<0,pitype>   ();
+    for(LeafIteratorType it = this->grid_.template leafbegin<0,pitype> (); 
         it != endit ; ++it )
     {
       this->insertIndex( *it );
@@ -580,10 +581,12 @@ protected:
     // resize if necessary 
     codimLeafSet_[codim].resize( hIndexSet_.size(codim) );
     
-    typedef typename GridType:: template Codim<codim> :: LeafIterator LeafIteratorType; 
+    typedef typename GridType:: template Codim<codim> :: 
+      template Partition<pitype> :: LeafIterator LeafIteratorType; 
     // walk over leaf level on locate all needed entities  
-    LeafIteratorType endit  = this->grid_.template leafend<codim>  ();
-    for(LeafIteratorType it = this->grid_.template leafbegin<codim>(); 
+    LeafIteratorType endit  = this->grid_.template leafend<codim,pitype>  ();
+    for(LeafIteratorType it = 
+        this->grid_.template leafbegin<codim,pitype>(); 
         it != endit ; ++it )
     {
       codimLeafSet_[codim].insert( hIndexSet_.index ( *it ) );
@@ -601,7 +604,8 @@ protected:
   //! element 
   void markAllBelowOld () 
   {
-    typedef typename GridType::template Codim<0>::LevelIterator LevelIteratorType; 
+    typedef typename GridType:: template Codim<0> :: 
+      template Partition<pitype> :: LevelIterator LevelIteratorType; 
 
     int maxlevel = this->grid_.maxLevel();
    
@@ -615,8 +619,10 @@ protected:
     
     for(int level = 0; level<=maxlevel; level++)
     {
-      LevelIteratorType levelend    = this->grid_.template lend  <0> (level);
-      for(LevelIteratorType levelit = this->grid_.template lbegin<0> (level);
+      LevelIteratorType levelend    = 
+        this->grid_.template lend  <0,pitype> (level);
+      for(LevelIteratorType levelit = 
+          this->grid_.template lbegin<0,pitype> (level);
           levelit != levelend; ++levelit )
       {
         typedef typename GridType::template Codim<0>::
@@ -761,20 +767,20 @@ public:
 
 
 
-template< class GridType >
+template< class GridType, PartitionIteratorType pitype >
 template< int codim >
-inline int AdaptiveLeafIndexSet< GridType >
+inline int AdaptiveLeafIndexSet< GridType , pitype >
   :: countElements ( GeometryType type ) const
 {
   typedef typename GridType :: template Codim< codim >
-    :: template Partition< All_Partition > :: LeafIterator
+    :: template Partition< pitype > :: LeafIterator
     IteratorType;
 
   const GridType &grid = this->grid_;
 
   int count = 0;
-  const IteratorType begin = grid.template leafbegin< codim, All_Partition >();
-  const IteratorType end = grid.template leafend< codim, All_Partition >();
+  const IteratorType begin = grid.template leafbegin< codim, pitype >();
+  const IteratorType end = grid.template leafend< codim, pitype >();
   for( IteratorType it = begin; it != end; ++it )
   {
     if( it->type() == type )
