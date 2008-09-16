@@ -64,6 +64,8 @@
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
+#include <dune/fem/operator/matrix/blockmatrix.hh>
+#include <dune/fem/operator/matrix/ontheflymatrix.hh>
 #include <dune/fem/operator/matrix/istlmatrix.hh>
 #include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/solver/istlsolver.hh>
@@ -126,9 +128,9 @@ using namespace Dune;
  *        for example, is not. If you want to use OEM solvers, the index set
  *        must be continuous. In such a case use AdaptiveLeafGridPart.
  */
-typedef LeafGridPart< GridType > GridPartType;
+//typedef LeafGridPart< GridType > GridPartType;
 //typedef LevelGridPart< GridType > GridPartType;
-//typedef AdaptiveLeafGridPart< GridType > GridPartType;
+typedef AdaptiveLeafGridPart< GridType > GridPartType;
 
 //! define the function space, \f[ \R^n \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -154,6 +156,8 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionTy
 
 //! define the type of the system matrix object
 typedef SparseRowMatrixTraits < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
+//typedef BlockMatrixTraits < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
+//typedef OnTheFlyMatrixTraits< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
 //typedef ISTLMatrixTraits < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
 
 //! define the discrete laplace operator, see ./fem.cc
@@ -365,11 +369,20 @@ int main( int argc, char **argv )
     if( rank == 0 )
       std :: cout << "loading macro grid: " << macroGridName << std :: endl;
     
+    GridPtr< GridType > gridptr( macroGridName ); 
+  
+    gridptr->loadBalance();
+
     const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
     level = (level > step ? level - step : 0);
     
+    gridptr->globalRefine( level * step );
+    
     for( int i = 0; i < 2; ++i )
-      error[ i ] = algorithm( macroGridName, level + i*step, i );
+    {
+      gridptr->globalRefine( step * i );
+      error[ i ] = algorithm( *gridptr, i );
+    }
 
     const double eoc = log( error[ 0 ] / error[ 1 ] ) / M_LN2;
     std :: cout << "EOC = " << eoc << std :: endl;
