@@ -400,7 +400,7 @@ private:
     //! setup matrix handler 
     inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                                   const RangeSpaceType &rangeSpace,
-                                  const std :: string &paramfile = "" )
+                                  const std :: string paramfile = "" )
     : domainSpace_( domainSpace ),
       rangeSpace_( rangeSpace ),
       sequence_( -1 ),
