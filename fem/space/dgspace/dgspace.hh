@@ -130,8 +130,10 @@ namespace Dune {
     //- Constructors and destructors
     /** \brief Constructor taking grid part */
     explicit DiscontinuousGalerkinSpaceBase( GridPartType &gridPart, 
-                                             const std::vector<GeometryType>& geomTypes)
-    : BaseType( gridPart ),
+                                             const std::vector<GeometryType>& geomTypes,
+                                             const InterfaceType commInterface,
+                                             const CommunicationDirection commDirection)
+    : BaseType( gridPart , commInterface, commDirection ),
       mapper_( 0 ),
       blockMapper_( BlockMapperProviderType::getObject(
             MapperSingletonKeyType (this->gridPart(),1) )),
@@ -429,8 +431,11 @@ namespace Dune {
   public:
     //- Constructors and destructors
     /** Constructor */
-    DiscontinuousGalerkinSpace(GridPartImp& gridPart) :
-      DiscontinuousGalerkinSpaceBase <Traits> (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes(codimension) )
+    DiscontinuousGalerkinSpace(GridPartImp& gridPart,
+                               const InterfaceType commInterface = InteriorBorder_All_Interface,
+                               const CommunicationDirection commDirection = ForwardCommunication ) :
+      DiscontinuousGalerkinSpaceBase <Traits> (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes(codimension),
+            commInterface, commDirection)
     {}
 
     /** \brief ! get object from singleton list 
@@ -583,8 +588,11 @@ namespace Dune {
   public:
     //- Constructors and destructors
     /** Constructor */
-    LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart) :
-      DiscontinuousGalerkinSpaceBase<Traits> (gridPart, gridPart.indexSet().geomTypes(codimension) ) 
+    LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart,
+                               const InterfaceType commInterface = InteriorBorder_All_Interface,
+                               const CommunicationDirection commDirection = ForwardCommunication) :
+      DiscontinuousGalerkinSpaceBase<Traits> (gridPart, gridPart.indexSet().geomTypes(codimension) ,  
+            commInterface, commDirection ) 
     {
     }
 
