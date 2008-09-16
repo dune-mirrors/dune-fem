@@ -11,8 +11,8 @@ static const int dimw = dimworld;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/cachequad.hh>
 
-#include <dune/fem/space/common/adaptiveleafgridpart.hh> 
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/misc/double.hh>

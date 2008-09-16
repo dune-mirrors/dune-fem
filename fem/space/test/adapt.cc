@@ -231,7 +231,7 @@ void adapt(GridType& grid,
     Iterator it = space.begin();  
     Iterator endit = space.end();
     for(; it != endit ; ++it) {
-      grid.mark(mark,it);
+      grid.mark(mark, *it);
     } 
     adop.adapt();
     std::cout << message << std::endl;
@@ -242,7 +242,7 @@ void adapt(GridType& grid,
     Iterator it = space.begin();  
     Iterator endit = space.end();
     for(; it != endit ; ++it) {
-      grid.mark(mark,it);
+      grid.mark(mark, *it);
     } 
     grid.adapt(dm,rp);
     std::cout << message << "NOT GERNERIC!" << std::endl;

@@ -23,7 +23,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
-#include <dune/fem/space/common/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/lagrangespace/adaptmanager.hh>
@@ -243,7 +243,7 @@ void adapt ( GridType &grid, DiscreteFunctionType &solution, int step )
     IteratorType it = discreteFunctionSpace.begin();
     const IteratorType endit = discreteFunctionSpace.end();
     for( ; it != endit; ++it )
-      grid.mark( mark, it );
+      grid.mark( mark, *it );
       
     #if GENERIC_ADAPT
       std :: cout << message << std::endl;
