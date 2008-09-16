@@ -14,6 +14,8 @@
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
+
 
 //- local includes 
 #include "allgeomtypes.hh"
@@ -113,7 +115,9 @@ namespace Dune
      *                            (defaults to copy)
      */
     template< class DiscreteFunction,
-              class Operation = DFCommunicationOperation :: Copy >
+              class Operation =  // get default type from traits 
+                typename Traits :: template CommDataHandle< DiscreteFunction > :: OperationType
+            >
     struct CommDataHandle
     {
       //! type of communication data handle
@@ -126,6 +130,9 @@ namespace Dune
         :: template CommDataHandle< DiscreteFunction, Operation > :: OperationType
         OperationType;
     };
+
+    //! type of communication manager 
+    typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
 
   public:
     //! Constructor 
@@ -367,6 +374,59 @@ namespace Dune
       return asImp().mapToGlobal( entity, localDof );
     }
 
+
+    /** \brief return the communication interface appropriate for this space 
+        \return communication interface 
+    */
+    InterfaceType communicationInterface() const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().communicationInterface() );
+      return asImp().communicationInterface();
+    }
+
+    /** \brief return the communication direction appropriate for this space 
+        \return communication direction  
+    */
+    CommunicationDirection communicationDirection() const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().communicationDirection() );
+      return asImp().communicationDirection();
+    }
+
+    /** \brief return reference to communicator (see CommunicationManager)
+        \return reference to communicator 
+    */
+    const CommunicationManagerType& communicator() const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().communicator() );
+      return asImp().communicator();
+    }
+
+    /** \brief communicate data for given discrete function by using the
+               space's default communication operation 
+        \param[inout] discreteFunction discrete function for which data
+                      is communicated 
+    */
+    template <class DiscreteFunction>
+    void communicate(DiscreteFunction& discreteFunction) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+          asImp().communicate( discreteFunction ) );
+    }
+
+    /** \brief communicate data for given discrete function by using the
+               given communication operation 
+        \param[inout] discreteFunction discrete function for which data
+                      is communicated 
+        \param[in]    op  communication operation (see DFCommunicationOperation)
+    */
+    template <class DiscreteFunction, class Operation>
+    void communicate(DiscreteFunction& discreteFunction, const Operation* op) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+          asImp().communicate( discreteFunction , op ) );
+    }
+
     /** \brief return maximal number of local DoFs
      *
      *  \returns an upper bound for the number of local DoFs
@@ -483,6 +543,8 @@ namespace Dune
     //! type of DoF manager factory
     typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
+    //! type of communication manager 
+    typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
   protected:
     mutable GridPartType &gridPart_;
 
@@ -495,16 +557,22 @@ namespace Dune
 
     // reference to dof manager 
     DofManagerType& dofManager_;
+
+    // communication manager 
+    mutable CommunicationManagerType communicator_;
  
   public:
     //! constructor
-    inline explicit DiscreteFunctionSpaceDefault( GridPartType &gridPart )
+    inline explicit DiscreteFunctionSpaceDefault( GridPartType &gridPart,
+        const InterfaceType commInterface = InteriorBorder_All_Interface,
+        const CommunicationDirection commDirection = ForwardCommunication )
     : BaseType(),
       gridPart_( gridPart ),
       lfFactory_( asImp() ),
       lfStorage_( lfFactory_ ),
       allGeomTypes_( gridPart.indexSet() ),
-      dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) )
+      dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) ),
+      communicator_( asImp() , commInterface , commDirection )
     {
     }
 
@@ -619,6 +687,43 @@ namespace Dune
     inline int maxNumLocalDofs () const
     {
       return mapper().maxNumDofs();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicationInterface() */
+    InterfaceType communicationInterface() const
+    {
+      return communicator_.communicationInterface();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicationInterface() */
+    CommunicationDirection communicationDirection() const
+    {
+      return communicator_.communicationDirection();
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicator() */
+    const CommunicationManagerType& communicator() const
+    {
+      return communicator_;
+    }
+
+    /** \copydoc  Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction& discreteFunction) */
+    template <class DiscreteFunction>
+    void communicate(DiscreteFunction& discreteFunction) const
+    {
+      // get type of default operation 
+      typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: template
+        CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
+
+      // exchange data 
+      communicate( discreteFunction, (DefaultOperationType*) 0);
+    }
+
+    /** \copydoc  Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction& discreteFunction, const Operation *) */
+    template <class DiscreteFunction, class Operation>
+    void communicate(DiscreteFunction& discreteFunction, const Operation* ) const
+    {
+      communicator_.exchange( discreteFunction, (Operation *) 0);
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const

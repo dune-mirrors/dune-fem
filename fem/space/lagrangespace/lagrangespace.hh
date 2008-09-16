@@ -312,8 +312,10 @@ namespace Dune
         \param[in] gridPart 
         \return 
     **/
-    inline explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart )
-    : BaseType( gridPart ),
+    inline explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart,
+        const InterfaceType commInterface = InteriorBorder_InteriorBorder_Interface,
+        const CommunicationDirection commDirection = ForwardCommunication )
+    : BaseType( gridPart, commInterface, commDirection ),
       baseFunctionSet_(),
       lagrangePointSet_(),
       mapper_( 0 ),
