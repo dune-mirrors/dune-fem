@@ -3,8 +3,10 @@ namespace Dune
   
   template <class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy>
   inline CombinedSpace<DiscreteFunctionSpaceImp, N, policy>
-    :: CombinedSpace( GridPartType &gridpart )
-  : BaseType( gridpart ),
+    :: CombinedSpace( GridPartType &gridpart,
+         const InterfaceType commInterface,
+         const CommunicationDirection commDirection)
+  : BaseType( gridpart, commInterface, commDirection  ),
     containedSpace_( gridpart ),
     mapper_( containedSpace_.mapper() ),
     blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) ),

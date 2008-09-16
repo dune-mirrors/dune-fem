@@ -11,8 +11,10 @@ namespace Dune
 
   template< class BaseFunction >
   inline ReducedBasisSpace< BaseFunction >
-    :: ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
-  : BaseType( baseFunctionSpace.gridPart() ),
+    :: ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace, 
+        const InterfaceType commInterface,
+        const CommunicationDirection commDirection)
+  : BaseType( baseFunctionSpace.gridPart(), commInterface, commDirection  ),
     baseFunctionSpace_( baseFunctionSpace ),
     baseFunctionList_(),
     mapper_( baseFunctionList_ )
@@ -24,8 +26,10 @@ namespace Dune
   template< class StreamTraits >
   inline ReducedBasisSpace< BaseFunction >
     :: ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
-                           InStreamInterface< StreamTraits > &in )
-  : BaseType( baseFunctionSpace.gridPart() ),
+                           InStreamInterface< StreamTraits > &in, 
+                           const InterfaceType commInterface,
+                           const CommunicationDirection commDirection)
+  : BaseType( baseFunctionSpace.gridPart(), commInterface, commDirection  ),
     baseFunctionSpace_( baseFunctionSpace ),
     baseFunctionList_(),
     mapper_( baseFunctionList_ )

@@ -204,11 +204,19 @@ namespace Dune {
             SingletonFactoryType > SingletonProviderType;
 
   public:
+    //! default communication interface 
+    static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
+
+    //! default communication direction 
+    static const CommunicationDirection defaultDirection =  ForwardCommunication;
+
     //! remember polynomial order 
     enum { polynomialOrder =  polOrd };
 
     //! Constructor generating Finite Volume Space 
-    inline explicit FiniteVolumeSpace(GridPartType & g);
+    inline explicit FiniteVolumeSpace(GridPartType & g,
+          const InterfaceType commInterface = defaultInterface ,
+          const CommunicationDirection commDirection = defaultDirection );
 
     //! Desctructor 
     ~FiniteVolumeSpace (); 

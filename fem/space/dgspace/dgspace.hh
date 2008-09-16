@@ -127,6 +127,12 @@ namespace Dune {
             BlockMapperSingletonFactoryType > BlockMapperProviderType;
 
   public:
+    //! default communication interface 
+    static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
+
+    //! default communication direction 
+    static const CommunicationDirection defaultDirection =  ForwardCommunication;
+
     //- Constructors and destructors
     /** \brief Constructor taking grid part */
     explicit DiscontinuousGalerkinSpaceBase( GridPartType &gridPart, 
@@ -425,6 +431,8 @@ namespace Dune {
             SingletonFactoryType > SingletonProviderType;
 
   protected:
+    typedef DiscontinuousGalerkinSpaceBase <Traits> BaseImpType;
+
     // set of geometry types 
     typedef AllGeomTypes<IndexSetType,typename Traits::GridType> GeometryTypes;
     
@@ -432,10 +440,10 @@ namespace Dune {
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpace(GridPartImp& gridPart,
-                               const InterfaceType commInterface = InteriorBorder_All_Interface,
-                               const CommunicationDirection commDirection = ForwardCommunication ) :
-      DiscontinuousGalerkinSpaceBase <Traits> (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes(codimension),
-            commInterface, commDirection)
+                               const InterfaceType commInterface = BaseImpType :: defaultInterface,
+                               const CommunicationDirection commDirection = BaseImpType :: defaultDirection ) :
+      BaseImpType (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes(codimension),
+                   commInterface, commDirection)
     {}
 
     /** \brief ! get object from singleton list 
@@ -585,14 +593,16 @@ namespace Dune {
     //! size of local blocks 
     enum { localBlockSize = Traits::localBlockSize };
 
+  protected:
+    typedef DiscontinuousGalerkinSpaceBase <Traits> BaseImpType;
   public:
     //- Constructors and destructors
     /** Constructor */
     LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart,
-                               const InterfaceType commInterface = InteriorBorder_All_Interface,
-                               const CommunicationDirection commDirection = ForwardCommunication) :
-      DiscontinuousGalerkinSpaceBase<Traits> (gridPart, gridPart.indexSet().geomTypes(codimension) ,  
-            commInterface, commDirection ) 
+                               const InterfaceType commInterface = BaseImpType :: defaultInterface ,
+                               const CommunicationDirection commDirection = BaseImpType :: defaultDirection ) :
+      BaseImpType (gridPart, gridPart.indexSet().geomTypes(codimension) ,  
+                   commInterface, commDirection ) 
     {
     }
 

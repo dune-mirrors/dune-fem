@@ -308,13 +308,19 @@ namespace Dune
     using BaseType :: gridPart;
 
   public:
+    //! default communication interface 
+    static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
+
+    //! default communication direction 
+    static const CommunicationDirection defaultDirection = ForwardCommunication;
+
     /** \brief Constructor generating a LagrangeBaseFunctionSet of the requested polynomial order for each element type of the grid 
         \param[in] gridPart 
         \return 
     **/
     inline explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart,
-        const InterfaceType commInterface = InteriorBorder_InteriorBorder_Interface,
-        const CommunicationDirection commDirection = ForwardCommunication )
+        const InterfaceType commInterface = defaultInterface,
+        const CommunicationDirection commDirection = defaultDirection )
     : BaseType( gridPart, commInterface, commDirection ),
       baseFunctionSet_(),
       lagrangePointSet_(),

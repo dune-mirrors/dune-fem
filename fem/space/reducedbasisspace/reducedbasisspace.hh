@@ -126,22 +126,36 @@ namespace Dune
     mutable MapperType mapper_;
 
   public:
+    //! default communication interface 
+    static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
+
+    //! default communication direction 
+    static const CommunicationDirection defaultDirection =  ForwardCommunication;
+
     /** \brief contructor
      *
      *  \param[in]  baseFunctionSpace  DiscreteFunctionSpace containing the
      *                                 base functions belong to
+     *  \param[in]  commInterface      communication interface 
+     *  \param[in]  CommunicationDirection communication direction 
      */
-    inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace );
+    inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
+          const InterfaceType commInterface = defaultInterface ,
+          const CommunicationDirection commDirection = defaultDirection );
 
     /** \brief contructor reading the base functions from a stream
      *
      *  \param[in]  baseFunctionSpace  DiscreteFunctionSpace containing the
      *                                 base functions belong to
      *  \param[in]  in                 stream to read the base functions from
+     *  \param[in]  commInterface      communication interface 
+     *  \param[in]  CommunicationDirection communication direction 
      */
     template< class StreamTraits >
     inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
-                               InStreamInterface< StreamTraits > &in );
+                               InStreamInterface< StreamTraits > &in ,
+                               const InterfaceType commInterface = defaultInterface ,
+                               const CommunicationDirection commDirection = defaultDirection );
 
     inline ~ReducedBasisSpace ();
 
