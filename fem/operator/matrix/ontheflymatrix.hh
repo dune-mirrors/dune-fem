@@ -131,7 +131,7 @@ public:
 
 };
 
-template <class RowSpaceImp, class ColumnSpaceImp> 
+template <class RowSpaceImp, class ColumnSpaceImp, class TraitsImp> 
 class OnTheFlyMatrixObject;
 
 template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -144,14 +144,14 @@ struct OnTheFlyMatrixTraits
   template <class OperatorTraits>
   struct MatrixObject
   {
-    typedef OnTheFlyMatrixObject<RowSpaceType,ColumnSpaceType> MatrixObjectType;
+    typedef OnTheFlyMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType;
   };
 };
 
 
 
 //! matrix object holding a blockamtrix
-template <class RowSpaceImp, class ColumnSpaceImp> 
+template <class RowSpaceImp, class ColumnSpaceImp, class TraitsImp> 
 class OnTheFlyMatrixObject
 {
 public:  
@@ -165,7 +165,7 @@ public:
 
   typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
 
-  typedef OnTheFlyMatrixObject<RowSpaceType,ColumnSpaceType> ThisType;
+  typedef OnTheFlyMatrixObject<RowSpaceType,ColumnSpaceType,TraitsImp> ThisType;
 
   typedef OnTheFlyMatrix<double> MatrixType;
   typedef MatrixType PreconditionMatrixType;
@@ -328,7 +328,7 @@ public:
   //!         - Preconditioning: {0 == no, 1 == yes} used is SSOR 
   OnTheFlyMatrixObject(const RowSpaceType & rowSpace, 
                        const ColumnSpaceType & colSpace,
-                       const std::string& paramfile) 
+                       const std::string paramfile = "" ) 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
     , matrix_()
@@ -368,6 +368,14 @@ public:
   void reserve(bool verbose = false ) 
   {
   }
+
+  //! apply matrix to discrete function
+  template< class DomainFunction, class RangeFunction >
+  void apply ( const DomainFunction &arg, RangeFunction &dest ) const
+  {
+    abort();
+  }
+
 
   //! mult method of matrix object used by oem solver
   void multOEM(const double * arg, double * dest) const 
