@@ -7,6 +7,7 @@
 #include <vector>
 
 //- Dune includes  
+#include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/grid.hh>
@@ -58,13 +59,12 @@ namespace Dune
     typedef Space SpaceType; 
 
   protected:
-    typedef typename SpaceType :: GridPartType GridPartType;
-
-  protected:
-    const GridPartType &gridPart_;
+    const SpaceType& space_;
 
     const InterfaceType interface_;
     const CommunicationDirection dir_;
+
+    double exchangeTime_;
     
   public:
     //! constructor taking space, but here only storing gridPart for
@@ -73,9 +73,10 @@ namespace Dune
       ( const SpaceType &space,
         const InterfaceType interface = InteriorBorder_All_Interface,
         const CommunicationDirection dir = ForwardCommunication )
-    : gridPart_( space.gridPart() ),
+    : space_( space ),
       interface_( interface ),
-      dir_ ( dir )
+      dir_ ( dir ),
+      exchangeTime_(0.0)
     {}
 
   private:
@@ -83,6 +84,29 @@ namespace Dune
     DefaultCommunicationManager ( const DefaultCommunicationManager & );
     
   public:
+    /** \brief return communication interface */
+    InterfaceType communicationInterface() const {
+      return interface_;
+    }
+
+    /** \brief return communication direction */
+    CommunicationDirection communicationDirection() const
+    {
+      return dir_;
+    }
+
+    /** \brief return time needed for last build 
+
+        \return time needed for last build of caches (if needed)
+    */
+    double buildTime() const { return 0.0; }
+
+    /** \brief return time needed for last exchange of data  
+
+        \return time needed for last exchange of data 
+    */
+    double exchangeTime() const { return exchangeTime_; }
+
     /** \brief exchange data for a discrete function using the copy operation
      *  
      *  \param  discreteFunction  discrete function to communicate
@@ -90,7 +114,11 @@ namespace Dune
     template< class DiscreteFunction >
     inline void exchange ( DiscreteFunction &discreteFunction )
     {
-      exchange( discreteFunction, (DFCommunicationOperation :: Copy *) 0 );
+      // get type of default operation 
+      typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: 
+        template CommDataHandle< DiscreteFunction > :: OperationType DefaultOperationType;
+      
+      exchange( discreteFunction, (DefaultOperationType *) 0 );
     }
 
     /** \brief exchange data for a discrete function using the given operation
@@ -111,12 +139,18 @@ namespace Dune
         DataHandleType;
       
       // on serial runs: do nothing
-      if( gridPart_.grid().comm().size() <= 1 )
+      if( space_.grid().comm().size() <= 1 )
         return;
+
+      // get stopwatch 
+      Timer exchangeT;
     
       // communicate data
       DataHandleType dataHandle = discreteFunction.dataHandle( operation );
-      gridPart_.communicate( dataHandle, interface_ , dir_ );
+      space_.gridPart().communicate( dataHandle, interface_ , dir_ );
+
+      // store time 
+      exchangeTime_ = exchangeT.elapsed();
     }
   };
 
