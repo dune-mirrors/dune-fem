@@ -201,7 +201,7 @@ namespace Dune
         LinkBuilderHandleType handle( *this, space_ , mapper_ );
 
         gridPart_.communicate
-          ( handle, InteriorBorder_All_Interface, ForwardCommunication );
+          ( handle, space_.communicationInterface(), space_.communicationDirection() );
       }
       // catch possible exceptions here to have a clue where it happend 
       catch ( Exception& e )
