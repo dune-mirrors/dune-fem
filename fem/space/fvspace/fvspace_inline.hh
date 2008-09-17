@@ -16,7 +16,7 @@ inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStor
 FiniteVolumeSpace (GridPartType & gridPart,
         const InterfaceType commInterface,
         const CommunicationDirection commDirection) :
-    DefaultType(gridPart, commInterface, commDirection)
+    DefaultType(gridPart, commInterface, commDirection),
     baseFuncSet_(),
     mapper_(0),
     blockMapper_(
