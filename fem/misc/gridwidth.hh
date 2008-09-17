@@ -6,7 +6,7 @@
 #include <dune/grid/common/capabilities.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
-#include <dune/fem/space/common/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune {
