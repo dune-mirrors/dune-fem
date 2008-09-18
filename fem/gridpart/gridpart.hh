@@ -107,7 +107,7 @@ namespace Dune
     //! \brief is true if grid on this view only has conforming intersections 
     enum { conforming = GridPartTraits :: conforming };
 
-#if DUNE_GRID_VERSION_NEWER(1,2)
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     typedef GridView< GridPartViewTraits< GridPartType > > GridViewType;
 #endif
     
@@ -125,7 +125,7 @@ namespace Dune
       return asImp().grid(); 
     }
 
-#if DUNE_GRID_VERSION_NEWER(1,2)
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     GridViewType gridView () const
     {
       typedef typename GridViewType :: GridViewImp Impl;

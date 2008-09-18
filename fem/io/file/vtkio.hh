@@ -8,7 +8,7 @@
 namespace Dune
 {
 
-#if DUNE_GRID_VERSION_NEWER(1,2)
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
   template< class GridPart >
   struct VTKWriterSelector
   {
@@ -101,7 +101,7 @@ namespace Dune
     //! constructor  
     explicit VTKIO ( const GridPartType &gridPart,
                      VTKOptions :: DataMode dm = VTKOptions :: conforming )
-#if DUNE_GRID_VERSION_NEWER(1,2)
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     : BaseType( gridPart.gridView(), dm ),
 #else
     : BaseType( gridPart.grid(), gridPart.indexSet(), dm ),

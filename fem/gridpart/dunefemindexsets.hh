@@ -22,7 +22,7 @@
 
 // define INDEXSET_HAS_ITERATORS for older dune-grid
 #ifndef INDEXSET_HAS_ITERATORS
-#if ! DUNE_GRID_VERSION_NEWER(1,2)
+#if ! DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
 #define INDEXSET_HAS_ITERATORS
 #endif
 #endif

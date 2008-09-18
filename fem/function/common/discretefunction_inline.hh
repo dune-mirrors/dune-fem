@@ -276,11 +276,11 @@ namespace Dune
   {
 #if ! DUNE_FEM_COMPATIBILITY
     unsigned int versionId = in.readUnsignedInt();
-    if( versionId < DuneFEM :: versionId( 0, 9, 1 ) )
+    if( versionId < DUNE_VERSION_ID(0,9,1) )
       DUNE_THROW( IOError, "Trying to read outdated file." );
-    else if( versionId > DuneFEM :: versionId() )
+    else if( versionId > DUNE_MODULE_VERSION_ID(DUNE_FEM) )
       std :: cerr << "Warning: Reading discrete function from newer version: "
-                  << DuneFEM :: version( versionId ) << std :: endl;
+                  << versionId << std :: endl;
 
     in >> name_;
 #endif
@@ -301,7 +301,7 @@ namespace Dune
     :: write ( OutStreamInterface< StreamTraits > &out ) const
   {
 #if ! DUNE_FEM_COMPATIBILITY
-    out << DuneFEM :: versionId();
+    out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
     out << name_;
 #endif
   

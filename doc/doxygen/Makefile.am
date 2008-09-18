@@ -3,18 +3,9 @@ if BUILD_DOCS
 DOXYGEN_HTML = html 
 DOXYGEN_DIST = html-dist
 
-DISTCLEANFILES = doxygen.log doxygen-tag doxygen-dist-tag doxygen.out doxygen-dist.out
-
-all: $(DOXYGEN_HTML)
-
-# setting like in dune-web
-BASEDIR=../..
-CURDIR=doc/doxygen
-EXTRAINSTALL = doxygen.log
-
-# EXTRAINSTALL in the html subdirectory
-DOXYGENINSTALL = *.html *.css *.png *.gif
-
+# what files does the doxygen-generated stuff depend on (find-syntax)
+DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
+ADDITIONALDOCS = -name Doxyfile -o -name modules -o -name \*.dist -o -name \*.dev
 
 DOXYFILE_OVERWRITE = echo "PROJECT_NAME = $(PACKAGE_NAME)"; \
                      echo "PROJECT_NUMBER = $(PACKAGE_VERSION)";
@@ -28,11 +19,56 @@ DOXYFILE_OVERWRITE_DIST = $(DOXYFILE_OVERWRITE) \
 			  echo "WARN_LOGFILE = doxygen-dist.out"; \
 			  echo "INTERNAL_DOCS = NO";
 
-#we need this in the distribution
-EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES)
+# ----------------------------------------------------------------------------
 
 doxygendir = $(datadir)/doc/dune-fem/doxygen
 
+DISTCLEANFILES = doxygen.log doxygen-tag doxygen-dist-tag doxygen.out doxygen-dist.out
+# we need this in the distribution
+EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES)
+# these files should be removed on 'make clean'
+CLEANFILES = stamp doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
+
+all: $(DOXYGEN_HTML)
+
+FORCE:
+
+# check dependencies ourself to be robust (make stamp newer than any dependency)
+stamp: FORCE
+	@set -e; \
+	if test ! -e stamp \
+	|| test x"`find . \( $(ADDITIONALDOCS) \) -a -newer stamp`" != x \
+	|| test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer stamp`" != x ; \
+	then \
+	  touch stamp; \
+	fi
+
+html: doxygen.out
+
+html-dist: doxygen-dist.out
+
+doxygen.out: Doxyfile stamp
+	@echo "Creating documentation (running doxygen)..."
+	@( cat Doxyfile; $(DOXYFILE_OVERWRITE_HTML) ) > Doxyfile.tmp
+	@$(DOXYGEN) Doxyfile.tmp > dogygen.log 2>&1
+	@rm -f Doxyfile.tmp
+	@cat doxygen.out
+
+doxygen-dist.out: Doxyfile stamp
+	@echo "Creating distrubition documentation (running doxygen)..."
+	@( cat Doxyfile; $(DOXYFILE_OVERWRITE_DIST) ) > Doxyfile.tmp
+	@$(DOXYGEN) Doxyfile.tmp > dogygen-dist.log 2>&1
+	@rm -f Doxyfile.tmp
+	@cat doxygen-dist.out
+
+
+# setting like in dune-web
+BASEDIR=../..
+CURDIR=doc/doxygen
+EXTRAINSTALL = doxygen.log
+
+# EXTRAINSTALL in the html subdirectory
+DOXYGENINSTALL = *.html *.css *.png *.gif
 
 install-data-local: $(DOXYGEN_DIST)
 	$(mkinstalldirs) $(DESTDIR)/$(doxygendir); \
@@ -45,46 +81,10 @@ uninstall-local:
 	rm -f $(DESTDIR)/$(doxygendir)/*.html $(DESTDIR)/$(doxygendir)/*.css \
 	$(DESTDIR)/$(doxygendir)/*.png $(DESTDIR)/$(doxygendir)/*.gif
 
-# what files does the doxygen-generated stuff depend on (find-syntax)
-DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
-ADDITIONALDOCS = -name Doxyfile -o -name modules -o -name \*.dist
-
 # as all doxygen files fill be installed in the html subdirectory
 # the BASEDIR has to be adjusted
 %.build: FORCE
 	$(MAKE) $* BASEDIR=../../..
-
-# check dependency ourself to be robust
-doxygen-tag: FORCE $(DOXYGENHEADERBUILD)
-	@set -e; \
-	if test -e Doxyfile; then \
-	  if test ! -e doxygen-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-tag -print`" != x || test x"`find . \( $(ADDITIONALDOCS) -o -name \*.dev \) -a -newer doxygen-tag -print`" != x ; then \
-	    echo "Creating documentation (running doxygen) ..." ; \
-	    ( cat Doxyfile; $(DOXYFILE_OVERWRITE_HTML) ) > Doxyfile.tmp; \
-	    $(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \
-	    rm -f Doxyfile.tmp; \
-	    touch doxygen-tag ; \
-	    cat doxygen.out ; \
-	  fi; \
-	fi
-
-
-doxygen-dist-tag: FORCE $(DOXYGENHEADERBUILD)
-	@set -e; \
-	if test -e Doxyfile; then \
-	  if test ! -e doxygen-dist-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -newer doxygen-dist-tag -print`" != x || test x"`find . \( $(ADDITIONALDOCS) \) -a -newer doxygen-dist-tag -print`" != x ; then \
-	    echo "Creating distribution documentation (running doxygen) ..." ; \
-	    ( cat Doxyfile; $(DOXYFILE_OVERWRITE_DIST) ) > Doxyfile.tmp; \
-	    $(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \
-	    rm -f Doxyfile.tmp; \
-	    touch doxygen-dist-tag ; \
-	    cat doxygen-dist.out ; \
-	  fi \
-	fi
-
-html: doxygen-tag
-
-html-dist: doxygen-dist-tag
 
 # how to install the doxygen documentation
 doxygen-install:
@@ -97,16 +97,11 @@ doxygen-install:
 
 web-install: doxygen-install
 
-# nice trick from the GNU make infopage to force a rule to run
-FORCE:
-
 #include $(top_srcdir)/am/webstuff
 
 clean-local:
 	if test -e Doxydep; then rm -rf html html-dist; fi
 	rm -rf latex *~
-
-CLEANFILES = doxygen-tag doxygen-dist-tag
 
 # end BUILD_DOCS
 endif
