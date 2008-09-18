@@ -402,11 +402,11 @@ namespace Dune
       return asImp().communicator();
     }
 
-    /** \brief communicate data for given discrete function by using the
-               space's default communication operation 
-        \param[inout] discreteFunction discrete function for which data
-                      is communicated 
-    */
+    /** \brief communicate data for given discrete function using the space's
+     *         default communication operation
+     *
+     *  \param  discreteFunction  discrete function to be communicated
+     */
     template <class DiscreteFunction>
     void communicate(DiscreteFunction& discreteFunction) const
     {
@@ -414,12 +414,12 @@ namespace Dune
           asImp().communicate( discreteFunction ) );
     }
 
-    /** \brief communicate data for given discrete function by using the
-               given communication operation 
-        \param[inout] discreteFunction discrete function for which data
-                      is communicated 
-        \param[in]    op  communication operation (see DFCommunicationOperation)
-    */
+    /** \brief communicate data for given discrete function
+     *
+     *  \param      discreteFunction  discrete function to be communicated
+     *  \param[in]  op                communication operation to use
+     *                                (see DFCommunicationOperation)
+     */
     template <class DiscreteFunction, class Operation>
     void communicate(DiscreteFunction& discreteFunction, const Operation* op) const
     {
@@ -707,7 +707,7 @@ namespace Dune
       return communicator_;
     }
 
-    /** \copydoc  Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction& discreteFunction) */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction) const */
     template <class DiscreteFunction>
     void communicate(DiscreteFunction& discreteFunction) const
     {
@@ -719,9 +719,9 @@ namespace Dune
       communicate( discreteFunction, (DefaultOperationType*) 0);
     }
 
-    /** \copydoc  Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction& discreteFunction, const Operation *) */
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction, const Operation *) const */
     template <class DiscreteFunction, class Operation>
-    void communicate(DiscreteFunction& discreteFunction, const Operation* ) const
+    void communicate(DiscreteFunction& discreteFunction, const Operation *op ) const
     {
       communicator_.exchange( discreteFunction, (Operation *) 0);
     }

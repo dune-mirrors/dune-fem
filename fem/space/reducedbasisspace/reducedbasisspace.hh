@@ -137,11 +137,12 @@ namespace Dune
      *  \param[in]  baseFunctionSpace  DiscreteFunctionSpace containing the
      *                                 base functions belong to
      *  \param[in]  commInterface      communication interface 
-     *  \param[in]  CommunicationDirection communication direction 
+     *  \param[in]  commDirection      communication direction 
      */
-    inline explicit ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
-          const InterfaceType commInterface = defaultInterface ,
-          const CommunicationDirection commDirection = defaultDirection );
+    inline explicit
+    ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
+                        const InterfaceType commInterface = defaultInterface ,
+                        const CommunicationDirection commDirection = defaultDirection );
 
     /** \brief contructor reading the base functions from a stream
      *
@@ -149,13 +150,14 @@ namespace Dune
      *                                 base functions belong to
      *  \param[in]  in                 stream to read the base functions from
      *  \param[in]  commInterface      communication interface 
-     *  \param[in]  CommunicationDirection communication direction 
+     *  \param[in]  commDirection      communication direction 
      */
     template< class StreamTraits >
-    inline ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
-                               InStreamInterface< StreamTraits > &in ,
-                               const InterfaceType commInterface = defaultInterface ,
-                               const CommunicationDirection commDirection = defaultDirection );
+    inline
+    ReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace,
+                        InStreamInterface< StreamTraits > &in ,
+                        const InterfaceType commInterface = defaultInterface ,
+                        const CommunicationDirection commDirection = defaultDirection );
 
     inline ~ReducedBasisSpace ();
 
