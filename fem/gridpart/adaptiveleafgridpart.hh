@@ -89,7 +89,7 @@ namespace Dune
       The underlying \ref AdaptiveLeafIndexSet "index set" is defined for
       entities of all codimensions. 
   */
-  template< class Grid, PartitionIteratorType pitype = Interior_Partition >
+  template< class Grid, PartitionIteratorType pitype = InteriorBorder_Partition >
   class AdaptiveLeafGridPart
   : public GridPartDefault< AdaptiveLeafGridPartTraits< Grid, pitype > >
   {

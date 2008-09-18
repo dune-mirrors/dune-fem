@@ -242,7 +242,7 @@ namespace Dune
   };
 
   //! \brief Selects a specific level of a grid
-  template <class GridImp, PartitionIteratorType pitype = Interior_Partition>
+  template <class GridImp, PartitionIteratorType pitype = InteriorBorder_Partition>
   class LevelGridPart : 
     public GridPartDefault<LevelGridPartTraits<GridImp,pitype> > {
   public:
@@ -367,7 +367,7 @@ namespace Dune
   };
 
   //! \brief Selects the leaf level of a grid
-  template <class GridImp, PartitionIteratorType pitype = Interior_Partition>
+  template <class GridImp, PartitionIteratorType pitype = InteriorBorder_Partition>
   class LeafGridPart :
     public GridPartDefault<LeafGridPartTraits<GridImp,pitype> > {
   public:
@@ -490,7 +490,7 @@ namespace Dune
       extended by a size method to implement the IndexSet interface. 
       For all other grids the default LeafIndexSet is selected.
   */
-  template <class GridImp, PartitionIteratorType pitype = Interior_Partition>
+  template <class GridImp, PartitionIteratorType pitype = InteriorBorder_Partition>
   class HierarchicGridPart :
     public GridPartDefault< HierarchicGridPartTraits<GridImp,pitype> > {
   public:
