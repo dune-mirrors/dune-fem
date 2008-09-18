@@ -289,7 +289,7 @@ namespace Dune {
  A FilteredGridPart allows to extract a set of entities from a grid
  satisfying a given constrainted defined through a filter class.
 **/ 
-  template <class GridPartImp, class FilterImp, PartitionIteratorType pitype = Interior_Partition>
+  template <class GridPartImp, class FilterImp, PartitionIteratorType pitype = InteriorBorder_Partition>
   class FilteredGridPart :
     public GridPartImp
   {
