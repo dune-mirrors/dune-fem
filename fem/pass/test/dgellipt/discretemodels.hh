@@ -89,7 +89,7 @@ namespace LDGExample {
   //  --Gradient Traits 
   //
   ///////////////////////////////////////////////////////
-  template <class Model,class NumFlux,int polOrd, int passId >
+  template <class Model,class NumFlux,int polOrd, int passId = -1 >
   class GradientDiscreteModel ; 
     
   template <class Model,class NumFlux,int polOrd, int passId = -1 >
@@ -126,7 +126,7 @@ namespace LDGExample {
   public:
     enum { polynomialOrder = polOrd };
 
-    typedef GradientTraits<Model,NumFlux,polOrd> Traits;
+    typedef GradientTraits< Model , NumFlux , polOrd , passId > Traits;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
 
@@ -290,7 +290,7 @@ namespace LDGExample {
   //  --Laplace Traits 
   //
   ///////////////////////////////////////////////////////////
-  template <class Model,class NumFlux,int polOrd, int passId >
+  template <class Model,class NumFlux,int polOrd, int passId = -1 >
   class LaplaceDiscreteModel;
 
   template <class Model,class NumFlux,int polOrd, int passId = -1 >
@@ -350,8 +350,12 @@ namespace LDGExample {
       typedef BlockMatrixTraits<DiscreteFunctionSpaceType,
                                 DiscreteFunctionSpaceType> MatrixObjectTraits; 
 #endif
+      //! The pass id for DGPrimalOperator-pass should be something different than, 
+      //! template-given passId, which is given for this template class.
+      //! Since this is the last pass, doesn't play role, 
+      //! but it's pass id can not be -1 or omitted
       typedef DGPrimalOperator<ThisType,PreviousPassType,
-                ElliptPrevPassType, MatrixObjectTraits> LocalOperatorType;
+                ElliptPrevPassType, MatrixObjectTraits, passId > LocalOperatorType;
 
 #if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
@@ -376,7 +380,7 @@ namespace LDGExample {
   public:
     enum { polynomialOrder = polOrd };
 
-    typedef LaplaceTraits<Model,NumFlux,polOrd> Traits;
+    typedef LaplaceTraits< Model , NumFlux , polOrd , passId > Traits;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
 
@@ -591,11 +595,11 @@ namespace LDGExample {
     const NumFlux& numflux_;
   };
 
-  template <class ModelImp, class NumFluxImp, int polOrd, int passId >
+  template <class ModelImp, class NumFluxImp, int polOrd, int passId = -1 >
   class VelocityDiscreteModel;
 
   // DiscreteModelTraits
-  template <class ModelImp,class NumFluxImp, int polOrd, int passId = -1  >
+  template <class ModelImp,class NumFluxImp, int polOrd, int passId = -1 >
   struct VelocityTraits
   {
     enum { myPolOrd = polOrd-1 };
@@ -638,6 +642,8 @@ namespace LDGExample {
 
     typedef VelocityDiscreteModel<ModelImp,NumFluxImp,polOrd,passId> DiscreteModelType;
   };
+
+
   template <class ModelImp,class NumFluxImp,int polOrd, int passId >
   class VelocityDiscreteModel :
     public DiscreteModelDefaultWithInsideOutSide<
@@ -646,8 +652,8 @@ namespace LDGExample {
     // do not copy this class 
     VelocityDiscreteModel(const VelocityDiscreteModel&);
   public:
-    typedef VelocityTraits<ModelImp,NumFluxImp,polOrd> Traits;
-
+    typedef VelocityTraits< ModelImp , NumFluxImp , polOrd , passId > Traits;
+    
     // select Pressure, which comes from pass before 
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;

@@ -78,8 +78,9 @@ namespace Dune {
     //! Base class
     typedef LocalPass< DiscreteModelImp, PreviousPassImp, pId > BaseType;
 
-    typedef DGPrimalOperator<DiscreteModelImp,GradientPassImp,
-            PreviousPassImp,MatrixObjectTraits> ThisType;
+    typedef DGPrimalOperator
+      < DiscreteModelImp , GradientPassImp , PreviousPassImp , MatrixObjectTraits , pId > 
+            ThisType;
 
     typedef GradientPassImp GradientPassType; 
     typedef typename GradientPassType :: DiscreteModelType
@@ -87,8 +88,14 @@ namespace Dune {
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
+
     //! Repetition of template arguments
-    typedef PreviousPassImp PreviousPassType;
+
+    //! Slavko: 
+    //! I need to switch PreviousPassType
+    //! to be GradientPassImp instead PreviousPassImp
+    //typedef PreviousPassImp PreviousPassType;
+    typedef GradientPassImp PreviousPassType;
 
     // Types from the base class
     typedef typename BaseType::Entity EntityType; 
@@ -132,8 +139,9 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
+    typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
     typedef EllipticDiscreteModelCaller<
-      DiscreteModelType, ArgumentType, SelectorType> DiscreteModelCallerType;
+      DiscreteModelType, ArgumentType, CombinedSelectorType > DiscreteModelCallerType;
 
     typedef typename GridType :: ctype ctype;
     typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
