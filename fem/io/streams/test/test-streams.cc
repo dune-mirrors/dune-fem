@@ -18,36 +18,44 @@ struct Data
 template< class Traits >
 void write ( OutStreamInterface< Traits > &out, const Data &data )
 {
-  out << DuneFEM :: versionId();
-  out << DuneFEM :: version();
+  // out << DuneFEM :: versionId();
+  // out << DuneFEM :: version();
+
+  out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
+  // out << DUNE_FEM_VERSION;
   
   out << data.my_string << data.my_uint << data.my_double
       << data.my_int << data.my_float;
 
-  out << DuneFEM :: versionId();
+  // out << DuneFEM :: versionId();
+  out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
 }
 
 template< class Traits >
 bool read ( InStreamInterface< Traits > &in, const Data &data )
 {
   unsigned int versionId = in.readUnsignedInt();
-  if( versionId != DuneFEM :: versionId() )
+  // if( versionId != DuneFEM :: versionId() )
+  if( versionId != DUNE_MODULE_VERSION_ID(DUNE_FEM) )
   {
     std :: cerr << "Incorrect versionId read back: "
-                << versionId << " != " << DuneFEM :: versionId()
+                << versionId << " != " << DUNE_MODULE_VERSION_ID(DUNE_FEM)
                 << std :: endl;
     return false;
   }
 
+  /*
   std :: string version;
   in >> version;
-  if( version != DuneFEM :: version() )
+  // if( version != DuneFEM :: version() )
+  if( version != DUNE_FEM_VERSION )
   {
     std :: cerr << "Incorrect version read back: "
-                << version << " != " << DuneFEM :: version()
+                << version << " != " << DUNE_FEM_VERSION
                 << std :: endl;
     return false;
   }
+  */
 
   Data check;
   in >> check.my_string >> check.my_uint >> check.my_double
@@ -57,10 +65,11 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
               << ", " << check.my_double << ", " << check.my_int
               << ", " << check.my_float << std :: endl;
 
-  if( in.readUnsignedInt() != DuneFEM :: versionId() )
+  versionId = in.readUnsignedInt();
+  if( versionId != DUNE_MODULE_VERSION_ID(DUNE_FEM) )
   {
     std :: cerr << "Incorrect versionId read back: "
-                << versionId << " != " << DuneFEM :: versionId()
+                << versionId << " != " << DUNE_MODULE_VERSION_ID(DUNE_FEM)
                 << std :: endl;
     return false;
   }
