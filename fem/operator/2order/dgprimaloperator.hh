@@ -94,7 +94,6 @@ namespace Dune {
     //! Slavko: 
     //! I need to switch PreviousPassType
     //! to be GradientPassImp instead PreviousPassImp
-    //typedef PreviousPassImp PreviousPassType;
     typedef GradientPassImp PreviousPassType;
 
     // Types from the base class
@@ -361,10 +360,9 @@ namespace Dune {
     */         
     DGPrimalOperator(DiscreteModelType& problem, 
                 GradientPassType & gradPass,
-                PreviousPassType& pass, 
                 const DiscreteFunctionSpaceType& spc,
                 const std::string paramFile = "")
-      : BaseType(pass, spc),
+      : BaseType(gradPass.previousPass(), spc),
       caller_(problem),
       problem_(problem),
       arg_(0),
@@ -373,7 +371,7 @@ namespace Dune {
       gridPart_(spc_.gridPart()),
       gradientSpace_(gridPart_),
       localIdSet_(gridPart_.grid().localIdSet()),
-      gridWidth_ ( GridWidthProviderType :: getObject( &spc_.grid())),
+      gridWidth_ ( GridWidthProviderType :: getObject( & spc_.grid())),
       time_(0),
       volumeQuadOrd_(2* spc_.order() ),
       faceQuadOrd_(2*spc_.order() + 2),
